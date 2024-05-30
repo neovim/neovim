@@ -14,7 +14,8 @@ local M = {}
 local function starsetf(ft, opts)
   return {
     function(path, bufnr)
-      local f = type(ft) == 'function' and ft(path, bufnr) or ft
+      -- Note: when `ft` is a function its return value may be nil.
+      local f = type(ft) ~= 'function' and ft or ft(path, bufnr)
       if not vim.g.ft_ignore_pat then
         return f
       end
@@ -247,6 +248,8 @@ local extension = {
   bzl = 'bzl',
   bazel = 'bzl',
   BUILD = 'bzl',
+  mdh = 'c',
+  epro = 'c',
   qc = 'c',
   cabal = 'cabal',
   cairo = 'cairo',
@@ -544,6 +547,7 @@ local extension = {
   inf = 'inform',
   INF = 'inform',
   ii = 'initng',
+  inko = 'inko',
   inp = detect.inp,
   ms = detect_seq(detect.nroff, 'xmath'),
   iss = 'iss',
@@ -568,6 +572,7 @@ local extension = {
   jsx = 'javascriptreact',
   clp = 'jess',
   jgr = 'jgraph',
+  jjdescription = 'jj',
   j73 = 'jovial',
   jov = 'jovial',
   jovial = 'jovial',
@@ -840,6 +845,7 @@ local extension = {
   psf = 'psf',
   psl = 'psl',
   pug = 'pug',
+  purs = 'purescript',
   arr = 'pyret',
   pxd = 'pyrex',
   pyx = 'pyrex',
@@ -942,11 +948,13 @@ local extension = {
   sexp = 'sexplib',
   bash = detect.bash,
   bats = detect.bash,
+  cygport = detect.bash,
   ebuild = detect.bash,
   eclass = detect.bash,
   env = detect.sh,
   ksh = detect.ksh,
   sh = detect.sh,
+  mdd = 'sh',
   sieve = 'sieve',
   siv = 'sieve',
   sig = detect.sig,
@@ -964,6 +972,7 @@ local extension = {
   cdf = 'skill',
   sl = 'slang',
   ice = 'slice',
+  slint = 'slint',
   score = 'slrnsc',
   sol = 'solidity',
   smali = 'smali',
@@ -1014,6 +1023,8 @@ local extension = {
   mata = 'stata',
   ado = 'stata',
   stp = 'stp',
+  styl = 'stylus',
+  stylus = 'stylus',
   quark = 'supercollider',
   sface = 'surface',
   svelte = 'svelte',
@@ -1036,6 +1047,7 @@ local extension = {
   tk = 'tcl',
   jacl = 'tcl',
   tl = 'teal',
+  templ = 'templ',
   tmpl = 'template',
   ti = 'terminfo',
   dtx = 'tex',
@@ -1046,7 +1058,6 @@ local extension = {
   pgf = 'tex',
   nlo = 'tex',
   nls = 'tex',
-  out = 'tex',
   thm = 'tex',
   eps_tex = 'tex',
   pygtex = 'tex',
@@ -1423,6 +1434,10 @@ local filename = {
   ['/etc/host.conf'] = 'hostconf',
   ['/etc/hosts.allow'] = 'hostsaccess',
   ['/etc/hosts.deny'] = 'hostsaccess',
+  ['hyprland.conf'] = 'hyprlang',
+  ['hyprpaper.conf'] = 'hyprlang',
+  ['hypridle.conf'] = 'hyprlang',
+  ['hyprlock.conf'] = 'hyprlang',
   ['/.icewm/menu'] = 'icemenu',
   ['.indent.pro'] = 'indent',
   indentrc = 'indent',
@@ -1435,6 +1450,7 @@ local filename = {
   ['.firebaserc'] = 'json',
   ['.prettierrc'] = 'json',
   ['.stylelintrc'] = 'json',
+  ['flake.lock'] = 'json',
   ['.babelrc'] = 'jsonc',
   ['.eslintrc'] = 'jsonc',
   ['.hintrc'] = 'jsonc',
@@ -1478,6 +1494,7 @@ local filename = {
   ['/etc/mail/aliases'] = 'mailaliases',
   mailcap = 'mailcap',
   ['.mailcap'] = 'mailcap',
+  Kbuild = 'make',
   ['/etc/man.conf'] = 'manconf',
   ['man.config'] = 'manconf',
   ['maxima-init.mac'] = 'maxima',
@@ -1501,6 +1518,7 @@ local filename = {
   ['.octaverc'] = 'octave',
   octaverc = 'octave',
   ['octave.conf'] = 'octave',
+  ['.ondirrc'] = 'ondir',
   opam = 'opam',
   ['pacman.log'] = 'pacmanlog',
   ['/etc/pam.conf'] = 'pamconf',
@@ -1619,7 +1637,7 @@ local filename = {
   ['.xsdbcmdhistory'] = 'tcl',
   ['texmf.cnf'] = 'texmf',
   COPYING = 'text',
-  README = 'text',
+  README = detect_seq(detect.haredoc, 'text'),
   LICENSE = 'text',
   AUTHORS = 'text',
   tfrc = 'tf',
@@ -2138,6 +2156,7 @@ local pattern = {
   ['.*/%.init/.*%.conf'] = 'upstart',
   ['.*/usr/share/upstart/.*%.override'] = 'upstart',
   ['.*%.[Ll][Oo][Gg]'] = detect.log,
+  ['.*/etc/config/.*'] = starsetf(detect.uci),
   ['.*%.vhdl_[0-9].*'] = starsetf('vhdl'),
   ['.*%.ws[fc]'] = 'wsh',
   ['.*/Xresources/.*'] = starsetf('xdefaults'),
@@ -2300,7 +2319,6 @@ end
 --- vim.filetype.add {
 ---   pattern = {
 ---     ['.*'] = {
----       priority = -math.huge,
 ---       function(path, bufnr)
 ---         local content = vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] or ''
 ---         if vim.regex([[^#!.*\\<mine\\>]]):match_str(content) ~= nil then
@@ -2309,6 +2327,7 @@ end
 ---           return 'drawing'
 ---         end
 ---       end,
+---       { priority = -math.huge },
 ---     },
 ---   },
 --- }

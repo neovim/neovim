@@ -1,12 +1,14 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+
 local eq = t.eq
-local exec_lua = t.exec_lua
-local clear = t.clear
-local feed = t.feed
-local fn = t.fn
+local exec_lua = n.exec_lua
+local clear = n.clear
+local feed = n.feed
+local fn = n.fn
 local assert_log = t.assert_log
-local check_close = t.check_close
+local check_close = n.check_close
 
 local testlog = 'Xtest_lua_ui_event_log'
 
@@ -35,6 +37,9 @@ describe('vim.ui_attach', function()
       [2] = { bold = true },
       [3] = { background = Screen.colors.Grey },
       [4] = { background = Screen.colors.LightMagenta },
+      [5] = { reverse = true },
+      [6] = { reverse = true, bold = true },
+      [7] = { background = Screen.colors.Yellow1 },
     })
     screen:attach()
   end)
@@ -112,7 +117,7 @@ describe('vim.ui_attach', function()
 
   it('does not crash on exit', function()
     fn.system({
-      t.nvim_prog,
+      n.nvim_prog,
       '-u',
       'NONE',
       '-i',
@@ -124,7 +129,7 @@ describe('vim.ui_attach', function()
       '--cmd',
       'quitall!',
     })
-    eq(0, t.eval('v:shell_error'))
+    eq(0, n.eval('v:shell_error'))
   end)
 
   it('can receive accurate message kinds even if they are history', function()
@@ -152,6 +157,89 @@ describe('vim.ui_attach', function()
         },
       },
     }, actual, vim.inspect(actual))
+  end)
+
+  it('ui_refresh() activates correct capabilities without remote UI', function()
+    screen:detach()
+    exec_lua('vim.ui_attach(ns, { ext_cmdline = true }, on_event)')
+    eq(1, n.api.nvim_get_option_value('cmdheight', {}))
+    exec_lua('vim.ui_detach(ns)')
+    exec_lua('vim.ui_attach(ns, { ext_messages = true }, on_event)')
+    n.api.nvim_set_option_value('cmdheight', 1, {})
+    screen:attach()
+    eq(1, n.api.nvim_get_option_value('cmdheight', {}))
+  end)
+
+  it("ui_refresh() sets 'cmdheight' for all open tabpages with ext_messages", function()
+    exec_lua('vim.cmd.tabnew()')
+    exec_lua('vim.ui_attach(ns, { ext_messages = true }, on_event)')
+    exec_lua('vim.cmd.tabnext()')
+    eq(0, n.api.nvim_get_option_value('cmdheight', {}))
+  end)
+
+  it('avoids recursive flushing and invalid memory access with :redraw', function()
+    exec_lua([[
+      _G.cmdline = 0
+      vim.ui_attach(ns, { ext_messages = true }, function(ev)
+        vim.cmd.redraw()
+        _G.cmdline = _G.cmdline + (ev == 'cmdline_show' and 1 or 0)
+      end
+    )]])
+    feed(':')
+    eq(1, exec_lua('return _G.cmdline'))
+    n.assert_alive()
+    feed('version<CR><CR>v<Esc>')
+    n.assert_alive()
+  end)
+
+  it("preserved 'incsearch/command' screen state after :redraw from ext_cmdline", function()
+    exec_lua([[
+      vim.cmd.norm('ifoobar')
+      vim.cmd('1split cmdline')
+      local buf = vim.api.nvim_get_current_buf()
+      vim.cmd.wincmd('p')
+      vim.ui_attach(ns, { ext_cmdline = true }, function(event, ...)
+        if event == 'cmdline_show' then
+          local content = select(1, ...)
+          vim.api.nvim_buf_set_lines(buf, -2, -1, false, {content[1][2]})
+          vim.cmd('redraw')
+        end
+        return true
+      end)
+    ]])
+    -- Updates a cmdline window
+    feed(':cmdline')
+    screen:expect({
+      grid = [[
+        cmdline                                 |
+        {5:cmdline [+]                             }|
+        fooba^r                                  |
+        {6:[No Name] [+]                           }|
+                                                |
+      ]],
+    })
+    -- Does not clear 'incsearch' highlighting
+    feed('<Esc>/foo')
+    screen:expect({
+      grid = [[
+        foo                                     |
+        {5:cmdline [+]                             }|
+        {5:foo}ba^r                                  |
+        {6:[No Name] [+]                           }|
+                                                |
+      ]],
+    })
+    -- Shows new cmdline state during 'inccommand'
+    feed('<Esc>:%s/bar/baz')
+    screen:expect({
+      grid = [[
+        %s/bar/baz                              |
+        {5:cmdline [+]                             }|
+        foo{7:ba^z}                                  |
+        {6:[No Name] [+]                           }|
+                                                |
+      ]],
+    })
   end)
 end)
 

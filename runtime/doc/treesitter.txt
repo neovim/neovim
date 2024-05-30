@@ -18,18 +18,31 @@ changes. This documentation may also not fully reflect the latest changes.
 PARSER FILES                                              *treesitter-parsers*
 
 Parsers are the heart of treesitter. They are libraries that treesitter will
-search for in the `parser` runtime directory. By default, Nvim bundles parsers
-for C, Lua, Vimscript, Vimdoc and Treesitter query files, but parsers can be
-installed via a plugin like https://github.com/nvim-treesitter/nvim-treesitter
-or even manually.
+search for in the `parser` runtime directory.
+
+Nvim includes these parsers:
+
+- C
+- Lua
+- Markdown
+- Vimscript
+- Vimdoc
+- Treesitter query files |ft-query-plugin|
+
+You can install more parsers manually, or with a plugin like
+https://github.com/nvim-treesitter/nvim-treesitter .
 
 Parsers are searched for as `parser/{lang}.*` in any 'runtimepath' directory.
 If multiple parsers for the same language are found, the first one is used.
 (NOTE: This typically implies the priority "user config > plugins > bundled".)
-A parser can also be loaded manually using a full path: >lua
+
+To load a parser from its filepath: >lua
 
     vim.treesitter.language.add('python', { path = "/path/to/python.so" })
 <
+Parser names are assumed to be lower case if the file system is
+case-sensitive.
+
 To associate certain |filetypes| with a treesitter language (name of parser),
 use |vim.treesitter.language.register()|. For example, to use the `xml`
 treesitter parser for buffers with filetype `svg` or `xslt`, use: >lua
@@ -65,6 +78,8 @@ An instance `TSNode` of a treesitter node supports the following methods.
 
 TSNode:parent()                                         *TSNode:parent()*
     Get the node's immediate parent.
+    Prefer |TSNode:child_containing_descendant()|
+    for iterating over the node's ancestors.
 
 TSNode:next_sibling()                                   *TSNode:next_sibling()*
     Get the node's next sibling.
@@ -100,6 +115,9 @@ TSNode:named_child_count()                         *TSNode:named_child_count()*
 TSNode:named_child({index})                              *TSNode:named_child()*
     Get the node's named child at the given {index}, where zero represents the
     first named child.
+
+TSNode:child_containing_descendant({descendant})  *TSNode:child_containing_descendant()*
+    Get the node's child that contains {descendant}.
 
 TSNode:start()                                          *TSNode:start()*
     Get the node's start position. Return three values: the row, column and
@@ -731,8 +749,7 @@ get_captures_at_pos({bufnr}, {row}, {col})
       • {col}    (`integer`) Position column
 
     Return: ~
-        (`table[]`) List of captures
-        `{ capture = "name", metadata = { ... } }`
+        (`{capture: string, lang: string, metadata: table}[]`)
 
 get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position
@@ -1309,7 +1326,11 @@ LanguageTree:included_regions()              *LanguageTree:included_regions()*
         (`table<integer, Range6[]>`)
 
 LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
-    Invalidates this parser and all its children
+    Invalidates this parser and its children.
+
+    Should only be called when the tracked state of the LanguageTree is not
+    valid against the parse tree in treesitter. Doesn't clear filesystem
+    cache. Called often, so needs to be fast.
 
     Parameters: ~
       • {reload}  (`boolean?`)

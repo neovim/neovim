@@ -1,10 +1,11 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
+local clear = n.clear
 local eq = t.eq
-local exec_lua = t.exec_lua
-local insert = t.insert
-local assert_alive = t.assert_alive
+local exec_lua = n.exec_lua
+local insert = n.insert
+local assert_alive = n.assert_alive
 
 before_each(clear)
 
@@ -141,5 +142,31 @@ describe('treesitter node API', function()
 
     eq(28, lua_eval('root:byte_length()'))
     eq(3, lua_eval('child:byte_length()'))
+  end)
+
+  it('child_containing_descendant() works', function()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    exec_lua([[
+      tree = vim.treesitter.get_parser(0, "c"):parse()[1]
+      root = tree:root()
+      main = root:child(0)
+      body = main:child(2)
+      statement = body:child(1)
+      declarator = statement:child(1)
+      value = declarator:child(1)
+    ]])
+
+    eq(lua_eval('main:type()'), lua_eval('root:child_containing_descendant(value):type()'))
+    eq(lua_eval('body:type()'), lua_eval('main:child_containing_descendant(value):type()'))
+    eq(lua_eval('statement:type()'), lua_eval('body:child_containing_descendant(value):type()'))
+    eq(
+      lua_eval('declarator:type()'),
+      lua_eval('statement:child_containing_descendant(value):type()')
+    )
+    eq(vim.NIL, lua_eval('declarator:child_containing_descendant(value)'))
   end)
 end)

@@ -1,14 +1,16 @@
-local t = require('test.functional.testutil')()
-local eq = t.eq
-local eval = t.eval
-local clear = t.clear
-local source = t.source
-local exc_exec = t.exc_exec
-local pcall_err = t.pcall_err
-local fn = t.fn
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local command = t.command
-local feed = t.feed
+
+local eq = t.eq
+local eval = n.eval
+local clear = n.clear
+local source = n.source
+local exc_exec = n.exc_exec
+local pcall_err = t.pcall_err
+local fn = n.fn
+local command = n.command
+local feed = n.feed
 local is_os = t.is_os
 
 describe('execute()', function()

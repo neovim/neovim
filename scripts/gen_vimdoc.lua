@@ -273,6 +273,7 @@ local config = {
       'buf.lua',
       'diagnostic.lua',
       'codelens.lua',
+      'completion.lua',
       'inlay_hint.lua',
       'tagfunc.lua',
       'semantic_tokens.lua',
@@ -359,6 +360,21 @@ local config = {
     fn_xform = function(fun)
       fun.table = true
       fun.name = vim.split(fun.name, '.', { plain = true })[2]
+    end,
+  },
+  health = {
+    filename = 'health.txt',
+    files = {
+      'runtime/lua/vim/health.lua',
+    },
+    section_order = {
+      'health.lua',
+    },
+    section_fmt = function(_name)
+      return 'Checkhealth'
+    end,
+    helptag_fmt = function(name)
+      return name:lower()
     end,
   },
 }
@@ -614,6 +630,12 @@ local function render_fun_header(fun, cfg)
   if fun.classvar then
     nm = fmt('%s:%s', fun.classvar, nm)
   end
+  if nm == 'vim.bo' then
+    nm = 'vim.bo[{bufnr}]'
+  end
+  if nm == 'vim.wo' then
+    nm = 'vim.wo[{winid}][{bufnr}]'
+  end
 
   local proto = fun.table and nm or nm .. '(' .. table.concat(args, ', ') .. ')'
 
@@ -768,10 +790,17 @@ local function render_funs(funs, classes, cfg)
     ret[#ret + 1] = render_fun(f, classes, cfg)
   end
 
-  -- Sort via prototype
+  -- Sort via prototype. Experimental API functions ("nvim__") sort last.
   table.sort(ret, function(a, b)
     local a1 = ('\n' .. a):match('\n[a-zA-Z_][^\n]+\n')
     local b1 = ('\n' .. b):match('\n[a-zA-Z_][^\n]+\n')
+
+    local a1__ = a1:find('^%s*nvim__') and 1 or 0
+    local b1__ = b1:find('^%s*nvim__') and 1 or 0
+    if a1__ ~= b1__ then
+      return a1__ < b1__
+    end
+
     return a1:lower() < b1:lower()
   end)
 
@@ -785,7 +814,7 @@ local function get_script_path()
 end
 
 local script_path = get_script_path()
-local base_dir = vim.fs.dirname(assert(vim.fs.dirname(script_path)))
+local base_dir = vim.fs.dirname(vim.fs.dirname(script_path))
 
 local function delete_lines_below(doc_file, tokenstr)
   local lines = {} --- @type string[]
@@ -937,7 +966,7 @@ local function gen_target(cfg)
       end
     end
     -- FIXME: Using f_base will confuse `_meta/protocol.lua` with `protocol.lua`
-    local f_base = assert(vim.fs.basename(f))
+    local f_base = vim.fs.basename(f)
     sections[f_base] = make_section(f_base, cfg, briefs_txt, funs_txt)
   end
 

@@ -253,6 +253,7 @@ static int ctrl_x_mode = CTRL_X_NORMAL;
 
 static int compl_matches = 0;           ///< number of completion matches
 static char *compl_pattern = NULL;
+static size_t compl_patternlen = 0;
 static Direction compl_direction = FORWARD;
 static Direction compl_shows_dir = FORWARD;
 static int compl_pending = 0;           ///< > 1 for postponed CTRL-N
@@ -565,6 +566,18 @@ static bool match_at_original_text(const compl_T *const match)
 static bool is_first_match(const compl_T *const match)
 {
   return match == compl_first_match;
+}
+
+static void do_autocmd_completedone(int c)
+{
+  save_v_event_T save_v_event;
+  dict_T *v_event = get_v_event(&save_v_event);
+
+  tv_dict_add_str(v_event, S_LEN("reason"), (c == Ctrl_Y ? "accept" : "cancel"));
+  tv_dict_set_keys_readonly(v_event);
+
+  ins_apply_autocmds(EVENT_COMPLETEDONE);
+  restore_v_event(v_event, &save_v_event);
 }
 
 /// Check that character "c" is part of the item currently being
@@ -1185,6 +1198,10 @@ static int ins_compl_build_pum(void)
   // match after it, don't highlight anything.
   bool shown_match_ok = match_at_original_text(compl_shown_match);
 
+  if (strequal(compl_leader, compl_orig_text) && !shown_match_ok) {
+    compl_shown_match = compl_no_select ? compl_first_match : compl_first_match->cp_next;
+  }
+
   compl_T *shown_compl = NULL;
   bool did_find_shown_match = false;
   int cur = -1;
@@ -1307,26 +1324,30 @@ void ins_compl_show_pum(void)
   }
 }
 
-/// used for set or update info
-void compl_set_info(int pum_idx)
+/// check selected is current match.
+///
+/// @param selected the item which is selected.
+/// @return bool    return true when is current match otherwise is false.
+bool compl_match_curr_select(int selected)
 {
-  compl_T *comp = compl_first_match;
-  char *pum_text = compl_match_array[pum_idx].pum_text;
-
-  while (comp != NULL) {
-    if (pum_text == comp->cp_str
-        || pum_text == comp->cp_text[CPT_ABBR]) {
-      comp->cp_text[CPT_INFO] = compl_match_array[pum_idx].pum_info;
-
-      // if comp is current match update completed_item value
-      if (comp == compl_curr_match) {
-        dict_T *dict = ins_compl_dict_alloc(compl_curr_match);
-        set_vim_var_dict(VV_COMPLETED_ITEM, dict);
-      }
-      break;
-    }
-    comp = comp->cp_next;
+  if (selected < 0) {
+    return false;
   }
+  compl_T *match = compl_first_match;
+  int selected_idx = -1, list_idx = 0;
+  do {
+    if (!match_at_original_text(match)) {
+      if (compl_curr_match != NULL
+          && compl_curr_match->cp_number == match->cp_number) {
+        selected_idx = list_idx;
+        break;
+      }
+      list_idx += 1;
+    }
+    match = match->cp_next;
+  } while (match != NULL && !is_first_match(match));
+
+  return selected == selected_idx;
 }
 
 #define DICT_FIRST      (1)     ///< use just first element in "dict"
@@ -1579,6 +1600,7 @@ static char *find_line_end(char *ptr)
 static void ins_compl_free(void)
 {
   XFREE_CLEAR(compl_pattern);
+  compl_patternlen = 0;
   XFREE_CLEAR(compl_leader);
 
   if (compl_first_match == NULL) {
@@ -1613,6 +1635,7 @@ void ins_compl_clear(void)
   compl_started = false;
   compl_matches = 0;
   XFREE_CLEAR(compl_pattern);
+  compl_patternlen = 0;
   XFREE_CLEAR(compl_leader);
   edit_submode_extra = NULL;
   kv_destroy(compl_orig_extmarks);
@@ -2103,7 +2126,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   }
   // Trigger the CompleteDone event to give scripts a chance to act
   // upon the end of completion.
-  ins_apply_autocmds(EVENT_COMPLETEDONE);
+  do_autocmd_completedone(c);
 
   return retval;
 }
@@ -2192,7 +2215,7 @@ bool ins_compl_prep(int c)
   } else if (ctrl_x_mode == CTRL_X_LOCAL_MSG) {
     // Trigger the CompleteDone event to give scripts a chance to act
     // upon the (possibly failed) completion.
-    ins_apply_autocmds(EVENT_COMPLETEDONE);
+    do_autocmd_completedone(c);
   }
 
   may_trigger_modechanged();
@@ -2987,7 +3010,7 @@ done:
 static void get_next_include_file_completion(int compl_type)
 {
   find_pattern_in_path(compl_pattern, compl_direction,
-                       strlen(compl_pattern), false, false,
+                       compl_patternlen, false, false,
                        ((compl_type == CTRL_X_PATH_DEFINES
                          && !(compl_cont_status & CONT_SOL))
                         ? FIND_DEFINE : FIND_ANY),
@@ -3070,8 +3093,7 @@ static void get_next_cmdline_completion(void)
   char **matches;
   int num_matches;
   if (expand_cmdline(&compl_xp, compl_pattern,
-                     (int)strlen(compl_pattern),
-                     &num_matches, &matches) == EXPAND_OK) {
+                     (int)compl_patternlen, &num_matches, &matches) == EXPAND_OK) {
     ins_compl_add_matches(num_matches, matches, false);
   }
 }
@@ -3213,8 +3235,8 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
                                               compl_direction, compl_pattern);
     } else {
       found_new_match = searchit(NULL, st->ins_buf, st->cur_match_pos,
-                                 NULL, compl_direction, compl_pattern, 1,
-                                 SEARCH_KEEP + SEARCH_NFMSG, RE_LAST, NULL);
+                                 NULL, compl_direction, compl_pattern, compl_patternlen,
+                                 1, SEARCH_KEEP + SEARCH_NFMSG, RE_LAST, NULL);
     }
     msg_silent--;
     if (!compl_started || st->set_match_pos) {
@@ -3898,7 +3920,8 @@ static bool ins_compl_use_match(int c)
 
 /// Get the pattern, column and length for normal completion (CTRL-N CTRL-P
 /// completion)
-/// Sets the global variables: compl_col, compl_length and compl_pattern.
+/// Sets the global variables: compl_col, compl_length, compl_pattern and
+/// compl_patternlen.
 /// Uses the global variables: compl_cont_status and ctrl_x_mode
 static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
 {
@@ -3915,21 +3938,23 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
     }
   } else if (compl_status_adding()) {
     char *prefix = "\\<";
+    size_t prefixlen = STRLEN_LITERAL("\\<");
 
     // we need up to 2 extra chars for the prefix
-    compl_pattern = xmalloc(quote_meta(NULL, line + compl_col, compl_length) + 2);
+    compl_pattern = xmalloc(quote_meta(NULL, line + compl_col,
+                                       compl_length) + prefixlen);
     if (!vim_iswordp(line + compl_col)
         || (compl_col > 0
             && (vim_iswordp(mb_prevptr(line, line + compl_col))))) {
       prefix = "";
+      prefixlen = 0;
     }
     STRCPY(compl_pattern, prefix);
-    quote_meta(compl_pattern + strlen(prefix),
-               line + compl_col, compl_length);
+    quote_meta(compl_pattern + prefixlen, line + compl_col, compl_length);
   } else if (--startcol < 0
              || !vim_iswordp(mb_prevptr(line, line + startcol + 1))) {
     // Match any word of at least two chars
-    compl_pattern = xstrdup("\\<\\k\\k");
+    compl_pattern = xstrnsave(S_LEN("\\<\\k\\k"));
     compl_col += curs_col;
     compl_length = 0;
   } else {
@@ -3961,6 +3986,8 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
     }
   }
 
+  compl_patternlen = strlen(compl_pattern);
+
   return OK;
 }
 
@@ -3979,6 +4006,8 @@ static int get_wholeline_compl_info(char *line, colnr_T curs_col)
   } else {
     compl_pattern = xstrnsave(line + compl_col, (size_t)compl_length);
   }
+
+  compl_patternlen = strlen(compl_pattern);
 
   return OK;
 }
@@ -4005,6 +4034,7 @@ static int get_filename_compl_info(char *line, int startcol, colnr_T curs_col)
   compl_col += startcol;
   compl_length = (int)curs_col - startcol;
   compl_pattern = addstar(line + compl_col, (size_t)compl_length, EXPAND_FILES);
+  compl_patternlen = strlen(compl_pattern);
 
   return OK;
 }
@@ -4014,7 +4044,8 @@ static int get_filename_compl_info(char *line, int startcol, colnr_T curs_col)
 static int get_cmdline_compl_info(char *line, colnr_T curs_col)
 {
   compl_pattern = xstrnsave(line, (size_t)curs_col);
-  set_cmd_context(&compl_xp, compl_pattern, (int)strlen(compl_pattern), curs_col, false);
+  compl_patternlen = (size_t)curs_col;
+  set_cmd_context(&compl_xp, compl_pattern, (int)compl_patternlen, curs_col, false);
   if (compl_xp.xp_context == EXPAND_UNSUCCESSFUL
       || compl_xp.xp_context == EXPAND_NOTHING) {
     // No completion possible, use an empty pattern to get a
@@ -4100,6 +4131,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
   char *line = ml_get(curwin->w_cursor.lnum);
   compl_length = curs_col - compl_col;
   compl_pattern = xstrnsave(line + compl_col, (size_t)compl_length);
+  compl_patternlen = (size_t)compl_length;
 
   return OK;
 }
@@ -4125,6 +4157,7 @@ static int get_spell_compl_info(int startcol, colnr_T curs_col)
   // Need to obtain "line" again, it may have become invalid.
   char *line = ml_get(curwin->w_cursor.lnum);
   compl_pattern = xstrnsave(line + compl_col, (size_t)compl_length);
+  compl_patternlen = (size_t)compl_length;
 
   return OK;
 }
@@ -4320,6 +4353,7 @@ static int ins_compl_start(void)
   if (ins_compl_add(compl_orig_text, -1, NULL, NULL, false, NULL, 0,
                     flags, false) != OK) {
     XFREE_CLEAR(compl_pattern);
+    compl_patternlen = 0;
     XFREE_CLEAR(compl_orig_text);
     kv_destroy(compl_orig_extmarks);
     return FAIL;
@@ -4566,7 +4600,7 @@ void free_insexpand_stuff(void)
 static void spell_back_to_badword(void)
 {
   pos_T tpos = curwin->w_cursor;
-  spell_bad_len = spell_move_to(curwin, BACKWARD, true, true, NULL);
+  spell_bad_len = spell_move_to(curwin, BACKWARD, SMT_ALL, true, NULL);
   if (curwin->w_cursor.col != tpos.col) {
     start_arrow(&tpos);
   }

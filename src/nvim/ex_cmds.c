@@ -3100,8 +3100,9 @@ void sub_set_replacement(SubReplacementString sub)
 /// @param[in]  save Save pattern to options, history
 ///
 /// @returns true if :substitute can be replaced with a join command
-static bool sub_joining_lines(exarg_T *eap, char *pat, const char *sub, const char *cmd, bool save)
-  FUNC_ATTR_NONNULL_ARG(1, 3, 4)
+static bool sub_joining_lines(exarg_T *eap, char *pat, size_t patlen, const char *sub,
+                              const char *cmd, bool save)
+  FUNC_ATTR_NONNULL_ARG(1, 4, 5)
 {
   // TODO(vim): find a generic solution to make line-joining operations more
   // efficient, avoid allocating a string that grows in size.
@@ -3139,10 +3140,10 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, const char *sub, const ch
 
     if (save) {
       if ((cmdmod.cmod_flags & CMOD_KEEPPATTERNS) == 0) {
-        save_re_pat(RE_SUBST, pat, magic_isset());
+        save_re_pat(RE_SUBST, pat, patlen, magic_isset());
       }
       // put pattern in history
-      add_to_history(HIST_SEARCH, pat, true, NUL);
+      add_to_history(HIST_SEARCH, pat, patlen, true, NUL);
     }
 
     return true;
@@ -3333,6 +3334,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
   };
   char *pat = NULL;
   char *sub = NULL;  // init for GCC
+  size_t patlen = 0;
   int delimiter;
   bool has_second_delim = false;
   int sublen;
@@ -3384,12 +3386,14 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
         which_pat = RE_SEARCH;              // use last '/' pattern
       }
       pat = "";                   // empty search pattern
+      patlen = 0;
       delimiter = (uint8_t)(*cmd++);                   // remember delimiter character
       has_second_delim = true;
     } else {          // find the end of the regexp
       which_pat = RE_LAST;                  // use last used regexp
       delimiter = (uint8_t)(*cmd++);                   // remember delimiter character
       pat = cmd;                            // remember start of search pat
+      patlen = strlen(pat);
       cmd = skip_regexp_ex(cmd, delimiter, magic_isset(), &eap->arg, NULL, NULL);
       if (cmd[0] == delimiter) {            // end delimiter found
         *cmd++ = NUL;                       // replace it with a NUL
@@ -3416,6 +3420,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
       return 0;
     }
     pat = NULL;                 // search_regcomp() will use previous pattern
+    patlen = 0;
     sub = xstrdup(old_sub.sub);
 
     // Vi compatibility quirk: repeating with ":s" keeps the cursor in the
@@ -3423,7 +3428,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, cmdpreview_ns <= 0)) {
+  if (sub != NULL && sub_joining_lines(eap, pat, patlen, sub, cmd, cmdpreview_ns <= 0)) {
     xfree(sub);
     return 0;
   }
@@ -3478,7 +3483,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     return 0;
   }
 
-  if (search_regcomp(pat, NULL, RE_SUBST, which_pat,
+  if (search_regcomp(pat, patlen, NULL, RE_SUBST, which_pat,
                      (cmdpreview_ns > 0 ? 0 : SEARCH_HIS), &regmatch) == FAIL) {
     if (subflags.do_error) {
       emsg(_(e_invcmd));
@@ -4391,6 +4396,7 @@ void ex_global(exarg_T *eap)
 
   char delim;                 // delimiter, normally '/'
   char *pat;
+  size_t patlen;
   regmmatch_T regmatch;
 
   // When nesting the command works on one line.  This allows for
@@ -4426,6 +4432,7 @@ void ex_global(exarg_T *eap)
     }
     cmd++;
     pat = "";
+    patlen = 0;
   } else if (*cmd == NUL) {
     emsg(_("E148: Regular expression missing from global"));
     return;
@@ -4435,6 +4442,7 @@ void ex_global(exarg_T *eap)
     delim = *cmd;               // get the delimiter
     cmd++;                      // skip delimiter if there is one
     pat = cmd;                  // remember start of pattern
+    patlen = strlen(pat);
     cmd = skip_regexp_ex(cmd, delim, magic_isset(), &eap->arg, NULL, NULL);
     if (cmd[0] == delim) {                  // end delimiter found
       *cmd++ = NUL;                         // replace it with a NUL
@@ -4442,7 +4450,7 @@ void ex_global(exarg_T *eap)
   }
 
   char *used_pat;
-  if (search_regcomp(pat, &used_pat, RE_BOTH, which_pat,
+  if (search_regcomp(pat, patlen, &used_pat, RE_BOTH, which_pat,
                      SEARCH_HIS, &regmatch) == FAIL) {
     emsg(_(e_invcmd));
     return;

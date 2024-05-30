@@ -1,11 +1,12 @@
 -- Test suite for testing interactions with the incremental sync algorithms powering the LSP client
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local api = t.api
-local clear = t.clear
+local api = n.api
+local clear = n.clear
 local eq = t.eq
-local exec_lua = t.exec_lua
-local feed = t.feed
+local exec_lua = n.exec_lua
+local feed = n.feed
 
 before_each(function()
   clear()

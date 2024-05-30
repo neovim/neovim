@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local eq, eval, clear, write_file, source, insert =
-  t.eq, t.eval, t.clear, t.write_file, t.source, t.insert
+  t.eq, n.eval, n.clear, t.write_file, n.source, n.insert
 local pcall_err = t.pcall_err
-local command = t.command
-local feed_command = t.feed_command
-local fn = t.fn
-local api = t.api
+local command = n.command
+local feed_command = n.feed_command
+local fn = n.fn
+local api = n.api
 local skip = t.skip
 local is_os = t.is_os
 local is_ci = t.is_ci

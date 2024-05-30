@@ -4,8 +4,8 @@ LIBUV_SHA256 8c253adb0f800926a6cbd1c6576abae0bc8eb86a4f891049b72f9e5b7dc58f33
 MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/c-6.0.1.tar.gz
 MSGPACK_SHA256 58d5fe49d0ee2b374d60a61aabf8028b2c92004e6f11bff04e74b639fc8ad541
 
-LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/d06beb0480c5d1eb53b3343e78063950275aa281.tar.gz
-LUAJIT_SHA256 6abd146a1dfa240a965748f63221633446affa2a715e3eb03879136e3efb95f4
+LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/93e87998b24021b94de8d1c8db244444c46fb6e9.tar.gz
+LUAJIT_SHA256 026eb4531cddff20acc72ec97378ccfc30326173c491d6c01834b48b42a80518
 
 LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz
 LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
@@ -13,8 +13,8 @@ LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 UNIBILIUM_URL https://github.com/neovim/unibilium/archive/d72c3598e7ac5d1ebf86ee268b8b4ed95c0fa628.tar.gz
 UNIBILIUM_SHA256 9c4747c862ab5e3076dcf8fa8f0ea7a6b50f20ec5905618b9536655596797487
 
-LIBVTERM_URL https://github.com/neovim/libvterm/archive/v0.3.3.tar.gz
-LIBVTERM_SHA256 0babe3ab42c354925dadede90d352f054aa9c4ae6842ea803a20c9741e172e56
+LIBVTERM_URL https://github.com/neovim/libvterm/archive/0a15c6e983b0db7ef8276e0792414a805d01bdaf.tar.gz
+LIBVTERM_SHA256 c4683e7a2d71c04781fd0ab7719a94202800e97a9e091514c16983bb732b0fa7
 
 LUV_URL https://github.com/luvit/luv/releases/download/1.48.0-2/luv-1.48.0-2.tar.gz
 LUV_SHA256 2c3a1ddfebb4f6550293a40ee789f7122e97647eede51511f57203de48c03b7a
@@ -41,21 +41,26 @@ GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47f5c
 LIBICONV_URL https://github.com/neovim/deps/raw/b9bf36eb31f27e8136d907da38fa23518927737e/opt/libiconv-1.17.tar.gz
 LIBICONV_SHA256 8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313
 
-TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.21.0.tar.gz
-TREESITTER_C_SHA256 6f0f5d1b71cf8ffd8a37fb638c6022fa1245bd630150b538547d52128ce0ea7e
+TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.21.3.tar.gz
+TREESITTER_C_SHA256 75a3780df6114cd37496761c4a7c9fd900c78bee3a2707f590d78c0ca3a24368
 TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.1.0.tar.gz
 TREESITTER_LUA_SHA256 230cfcbfa74ed1f7b8149e9a1f34c2efc4c589a71fe0f5dc8560622f8020d722
 TREESITTER_VIM_URL https://github.com/neovim/tree-sitter-vim/archive/v0.4.0.tar.gz
 TREESITTER_VIM_SHA256 9f856f8b4a10ab43348550fa2d3cb2846ae3d8e60f45887200549c051c66f9d5
 TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v2.5.1.tar.gz
 TREESITTER_VIMDOC_SHA256 063645096504b21603585507c41c6d8718ff3c11b2150c5bfc31e8f3ee9afea3
-TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/archive/v0.2.0.tar.gz
-TREESITTER_QUERY_SHA256 5a0ee26c4af94adb9ab850a518613f75e7040354f5b049a5b85457ebf579ae8b
+TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/archive/v0.4.0.tar.gz
+TREESITTER_QUERY_SHA256 d3a423ab66dc62b2969625e280116678a8a22582b5ff087795222108db2f6a6e
 TREESITTER_PYTHON_URL https://github.com/tree-sitter/tree-sitter-python/archive/v0.21.0.tar.gz
 TREESITTER_PYTHON_SHA256 720304a603271fa89e4430a14d6a81a023d6d7d1171b1533e49c0ab44f1e1c13
 TREESITTER_BASH_URL https://github.com/tree-sitter/tree-sitter-bash/archive/v0.21.0.tar.gz
 TREESITTER_BASH_SHA256 f0515efda839cfede851adb24ac154227fbc0dfb60c6c11595ecfa9087d43ceb
 TREESITTER_MARKDOWN_URL https://github.com/MDeiml/tree-sitter-markdown/archive/v0.2.3.tar.gz
 TREESITTER_MARKDOWN_SHA256 4909d6023643f1afc3ab219585d4035b7403f3a17849782ab803c5f73c8a31d5
-TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.22.5.tar.gz
-TREESITTER_SHA256 6bc22ca7e0f81d77773462d922cf40b44bfd090d92abac75cb37dbae516c2417
+TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.22.6.tar.gz
+TREESITTER_SHA256 e2b687f74358ab6404730b7fb1a1ced7ddb3780202d37595ecd7b20a8f41861f
+
+UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.79.0.tar.gz
+UNCRUSTIFY_SHA256 e7afaeabf636b7f0ce4e3e9747b95f7bd939613a8db49579755dddf44fedca5f
+LUA_DEV_DEPS_URL https://github.com/neovim/deps/raw/5a1f71cceb24990a0b15fd9a472a5f549f019248/opt/lua-dev-deps.tar.gz
+LUA_DEV_DEPS_SHA256 27db2495f5eddc7fc191701ec9b291486853530c6125609d3197d03481e8d5a2

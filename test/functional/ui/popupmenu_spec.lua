@@ -1,17 +1,19 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local assert_alive = t.assert_alive
-local clear, feed = t.clear, t.feed
-local source = t.source
-local insert = t.insert
-local api = t.api
-local async_meths = t.async_meths
-local command = t.command
-local fn = t.fn
+
+local assert_alive = n.assert_alive
+local clear, feed = n.clear, n.feed
+local source = n.source
+local insert = n.insert
+local api = n.api
+local async_meths = n.async_meths
+local command = n.command
+local fn = n.fn
 local eq = t.eq
 local pcall_err = t.pcall_err
-local exec_lua = t.exec_lua
-local exec = t.exec
+local exec_lua = n.exec_lua
+local exec = n.exec
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -1592,13 +1594,13 @@ describe('builtin popupmenu', function()
     describe('floating window preview #popup', function()
       it('pum popup preview', function()
         --row must > 10
-        screen:try_resize(30, 11)
+        screen:try_resize(40, 11)
         exec([[
           funct Omni_test(findstart, base)
             if a:findstart
               return col(".") - 1
             endif
-            return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three"}]
+            return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "looooooooooooooong"}]
           endfunc
           set omnifunc=Omni_test
           set completeopt=menu,popup
@@ -1606,121 +1608,35 @@ describe('builtin popupmenu', function()
           funct Set_info()
             let comp_info = complete_info()
             if comp_info['selected'] == 2
-              call nvim_complete_set(comp_info['selected'], {"info": "3info"})
+              call nvim__complete_set(comp_info['selected'], {"info": "3info"})
             endif
           endfunc
           autocmd CompleteChanged * call Set_info()
         ]])
         feed('Gi<C-x><C-o>')
-
         --floating preview in right
         if multigrid then
           screen:expect {
             grid = [[
           ## grid 1
-            [2:------------------------------]|*10
-            [3:------------------------------]|
+            [2:----------------------------------------]|*10
+            [3:----------------------------------------]|
           ## grid 2
-            one^                           |
-            {1:~                             }|*9
+            one^                                     |
+            {1:~                                       }|*9
           ## grid 3
-            {2:-- }{5:match 1 of 3}               |
+            {2:-- }{5:match 1 of 3}                         |
           ## grid 4
             {n:1info}|
             {n:     }|
           ## grid 5
-            {s:one            }|
-            {n:two            }|
-            {n:three          }|
+            {s:one                }|
+            {n:two                }|
+            {n:looooooooooooooong }|
           ]],
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100 },
-              [4] = { 1001, 'NW', 1, 1, 15, true, 50 },
-            },
-          }
-        else
-          screen:expect {
-            grid = [[
-            one^                           |
-            {s:one            }{n:1info}{1:          }|
-            {n:two                 }{1:          }|
-            {n:three          }{1:               }|
-            {1:~                             }|*6
-            {2:-- }{5:match 1 of 3}               |
-          ]],
-            unchanged = true,
-          }
-        end
-
-        -- test nvim_complete_set_info
-        feed('<C-N><C-N>')
-        vim.uv.sleep(10)
-        if multigrid then
-          screen:expect {
-            grid = [[
-          ## grid 1
-            [2:------------------------------]|*10
-            [3:------------------------------]|
-          ## grid 2
-            three^                         |
-            {1:~                             }|*9
-          ## grid 3
-            {2:-- }{5:match 3 of 3}               |
-          ## grid 4
-            {n:3info}|
-            {n:     }|
-          ## grid 5
-            {n:one            }|
-            {n:two            }|
-            {s:three          }|
-          ]],
-            float_pos = {
-              [5] = { -1, 'NW', 2, 1, 0, false, 100 },
-              [4] = { 1001, 'NW', 1, 1, 15, true, 50 },
-            },
-          }
-        else
-          screen:expect {
-            grid = [[
-            three^                         |
-            {n:one            3info}{1:          }|
-            {n:two                 }{1:          }|
-            {s:three          }{1:               }|
-            {1:~                             }|*6
-            {2:-- }{5:match 3 of 3}               |
-          ]],
-          }
-        end
-        -- make sure info has set
-        feed('<C-y>')
-        eq('3info', exec_lua('return vim.v.completed_item.info'))
-
-        -- preview in left
-        feed('<ESC>cc')
-        insert(('test'):rep(5))
-        feed('i<C-x><C-o>')
-        if multigrid then
-          screen:expect {
-            grid = [[
-          ## grid 1
-            [2:------------------------------]|*10
-            [3:------------------------------]|
-          ## grid 2
-            itesttesttesttesttesone^t      |
-            {1:~                             }|*9
-          ## grid 3
-            {2:-- }{5:match 1 of 3}               |
-          ## grid 5
-            {s: one      }|
-            {n: two      }|
-            {n: three    }|
-          ## grid 6
-            {n:1info}|
-            {n:     }|
-          ]],
-            float_pos = {
-              [5] = { -1, 'NW', 2, 1, 19, false, 100 },
-              [6] = { 1002, 'NW', 1, 1, 1, true, 50 },
+              [4] = { 1001, 'NW', 1, 1, 19, false, 50 },
             },
             win_viewport = {
               [2] = {
@@ -1728,7 +1644,123 @@ describe('builtin popupmenu', function()
                 topline = 0,
                 botline = 2,
                 curline = 0,
-                curcol = 23,
+                curcol = 3,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+              [4] = {
+                win = 1001,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 0,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+            },
+          }
+        else
+          screen:expect {
+            grid = [[
+            one^                                     |
+            {s:one                }{n:1info}{1:                }|
+            {n:two                     }{1:                }|
+            {n:looooooooooooooong }{1:                     }|
+            {1:~                                       }|*6
+            {2:-- }{5:match 1 of 3}                         |
+          ]],
+          }
+        end
+
+        -- info window position should be adjusted when new leader add
+        feed('<C-P>o')
+        if multigrid then
+          screen:expect {
+            grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*10
+            [3:----------------------------------------]|
+          ## grid 2
+            o^                                       |
+            {1:~                                       }|*9
+          ## grid 3
+            {2:-- }{8:Back at original}                     |
+          ## grid 4
+            {n:1info}|
+            {n:     }|
+          ## grid 5
+            {n:one            }|
+          ]],
+            float_pos = {
+              [5] = { -1, 'NW', 2, 1, 0, false, 100 },
+              [4] = { 1001, 'NW', 1, 1, 15, false, 50 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 1,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+              [4] = {
+                win = 1001,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 0,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+            },
+          }
+        else
+          screen:expect {
+            grid = [[
+            o^                                       |
+            {n:one            1info}{1:                    }|
+            {1:~              }{n:     }{1:                    }|
+            {1:~                                       }|*7
+            {2:-- }{8:Back at original}                     |
+          ]],
+          }
+        end
+
+        -- test nvim__complete_set_info
+        feed('<ESC>cc<C-X><C-O><C-N><C-N>')
+        vim.uv.sleep(10)
+        if multigrid then
+          screen:expect {
+            grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*10
+            [3:----------------------------------------]|
+          ## grid 2
+            looooooooooooooong^                      |
+            {1:~                                       }|*9
+          ## grid 3
+            {2:-- }{5:match 3 of 3}                         |
+          ## grid 5
+            {n:one                }|
+            {n:two                }|
+            {s:looooooooooooooong }|
+          ## grid 6
+            {n:3info}|
+            {n:     }|
+          ]],
+            float_pos = {
+              [5] = { -1, 'NW', 2, 1, 0, false, 100 },
+              [6] = { 1002, 'NW', 1, 1, 19, false, 50 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 18,
                 linecount = 1,
                 sum_scroll_delta = 0,
               },
@@ -1746,12 +1778,73 @@ describe('builtin popupmenu', function()
         else
           screen:expect {
             grid = [[
-            itesttesttesttesttesone^t      |
-            {1:~}{n:1info}{1:             }{s: one      }{1: }|
-            {1:~}{n:     }{1:             }{n: two      }{1: }|
-            {1:~                  }{n: three    }{1: }|
-            {1:~                             }|*6
-            {2:-- }{5:match 1 of 3}               |
+            looooooooooooooong^                      |
+            {n:one                3info}{1:                }|
+            {n:two                     }{1:                }|
+            {s:looooooooooooooong }{1:                     }|
+            {1:~                                       }|*6
+            {2:-- }{5:match 3 of 3}                         |
+          ]],
+          }
+        end
+
+        -- preview in left
+        feed('<ESC>cc')
+        insert(('test'):rep(5))
+        feed('i<C-x><C-o>')
+        if multigrid then
+          screen:expect {
+            grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*10
+            [3:----------------------------------------]|
+          ## grid 2
+            itesttesttesttesttesone^t                |
+            {1:~                                       }|*9
+          ## grid 3
+            {2:-- }{5:match 1 of 3}                         |
+          ## grid 5
+            {s: one                }|
+            {n: two                }|
+            {n: looooooooooooooong }|
+          ## grid 7
+            {n:1info}|
+            {n:     }|
+          ]],
+            float_pos = {
+              [7] = { 1003, 'NW', 1, 1, 14, false, 50 },
+              [5] = { -1, 'NW', 2, 1, 19, false, 100 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 23,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+              [7] = {
+                win = 1003,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 0,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+            },
+          }
+        else
+          screen:expect {
+            grid = [[
+            itesttesttesttesttesone^t                |
+            {1:~             }{n:1info}{s: one                }{1: }|
+            {1:~             }{n:      two                }{1: }|
+            {1:~                  }{n: looooooooooooooong }{1: }|
+            {1:~                                       }|*6
+            {2:-- }{5:match 1 of 3}                         |
           ]],
           }
         end

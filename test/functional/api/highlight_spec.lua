@@ -1,14 +1,16 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local eq, eval = t.eq, t.eval
-local command = t.command
-local exec_capture = t.exec_capture
-local api = t.api
-local fn = t.fn
+
+local clear = n.clear
+local eq, eval = t.eq, n.eval
+local command = n.command
+local exec_capture = n.exec_capture
+local api = n.api
+local fn = n.fn
 local pcall_err = t.pcall_err
 local ok = t.ok
-local assert_alive = t.assert_alive
+local assert_alive = n.assert_alive
 
 describe('API: highlight', function()
   clear()

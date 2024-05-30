@@ -7,6 +7,7 @@
 --- `vim.iter()`:
 ---
 --- - List tables (arrays, |lua-list|) yield only the value of each element.
+---   - Holes (nil values) are allowed.
 ---   - Use |Iter:enumerate()| to also pass the index to the next stage.
 ---   - Or initialize with ipairs(): `vim.iter(ipairs(…))`.
 --- - Non-list tables (|lua-dict|) yield both the key and value of each element.
@@ -60,9 +61,6 @@
 --- vim.iter(rb):totable()
 --- -- { "a", "b" }
 --- ```
----
---- In addition to the |vim.iter()| function, the |vim.iter| module provides
---- convenience functions like |vim.iter.filter()| and |vim.iter.totable()|.
 
 --- LuaLS is bad at generics which this module mostly deals with
 --- @diagnostic disable:no-unknown
@@ -83,13 +81,13 @@ end
 
 --- Special case implementations for iterators on list tables.
 ---@nodoc
----@class ListIter : Iter
+---@class ArrayIter : Iter
 ---@field _table table Underlying table data
 ---@field _head number Index to the front of a table iterator
 ---@field _tail number Index to the end of a table iterator (exclusive)
-local ListIter = {}
-ListIter.__index = setmetatable(ListIter, Iter)
-ListIter.__call = function(self)
+local ArrayIter = {}
+ArrayIter.__index = setmetatable(ArrayIter, Iter)
+ArrayIter.__call = function(self)
   return self:next()
 end
 
@@ -113,36 +111,34 @@ end
 
 local function sanitize(t)
   if type(t) == 'table' and getmetatable(t) == packedmt then
-    -- Remove length tag
+    -- Remove length tag and metatable
     t.n = nil
+    setmetatable(t, nil)
   end
   return t
 end
 
---- Flattens a single list-like table. Errors if it attempts to flatten a
+--- Flattens a single array-like table. Errors if it attempts to flatten a
 --- dict-like table
----@param v table table which should be flattened
+---@param t table table which should be flattened
 ---@param max_depth number depth to which the table should be flattened
 ---@param depth number current iteration depth
 ---@param result table output table that contains flattened result
 ---@return table|nil flattened table if it can be flattened, otherwise nil
-local function flatten(v, max_depth, depth, result)
-  if depth < max_depth and type(v) == 'table' then
-    local i = 0
-    for _ in pairs(v) do
-      i = i + 1
-
-      if v[i] == nil then
+local function flatten(t, max_depth, depth, result)
+  if depth < max_depth and type(t) == 'table' then
+    for k, v in pairs(t) do
+      if type(k) ~= 'number' or k <= 0 or math.floor(k) ~= k then
         -- short-circuit: this is not a list like table
         return nil
       end
 
-      if flatten(v[i], max_depth, depth + 1, result) == nil then
+      if flatten(v, max_depth, depth + 1, result) == nil then
         return nil
       end
     end
-  else
-    result[#result + 1] = v
+  elseif t ~= nil then
+    result[#result + 1] = t
   end
 
   return result
@@ -201,7 +197,7 @@ function Iter:filter(f)
 end
 
 ---@private
-function ListIter:filter(f)
+function ArrayIter:filter(f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
   for i = self._head, self._tail - inc, inc do
@@ -236,11 +232,11 @@ end
 ---@return Iter
 ---@diagnostic disable-next-line:unused-local
 function Iter:flatten(depth) -- luacheck: no unused args
-  error('flatten() requires a list-like table')
+  error('flatten() requires an array-like table')
 end
 
 ---@private
-function ListIter:flatten(depth)
+function ArrayIter:flatten(depth)
   depth = depth or 1
   local inc = self._head < self._tail and 1 or -1
   local target = {}
@@ -250,7 +246,7 @@ function ListIter:flatten(depth)
 
     -- exit early if we try to flatten a dict-like table
     if flattened == nil then
-      error('flatten() requires a list-like table')
+      error('flatten() requires an array-like table')
     end
 
     for _, v in pairs(flattened) do
@@ -330,7 +326,7 @@ function Iter:map(f)
 end
 
 ---@private
-function ListIter:map(f)
+function ArrayIter:map(f)
   local inc = self._head < self._tail and 1 or -1
   local n = self._head
   for i = self._head, self._tail - inc, inc do
@@ -363,7 +359,7 @@ function Iter:each(f)
 end
 
 ---@private
-function ListIter:each(f)
+function ArrayIter:each(f)
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     f(unpack(self._table[i]))
@@ -374,7 +370,7 @@ end
 --- Collect the iterator into a table.
 ---
 --- The resulting table depends on the initial source in the iterator pipeline.
---- List-like tables and function iterators will be collected into a list-like
+--- Array-like tables and function iterators will be collected into an array-like
 --- table. If multiple values are returned from the final stage in the iterator
 --- pipeline, each value will be included in a table.
 ---
@@ -391,7 +387,7 @@ end
 --- -- { { 'a', 1 }, { 'c', 3 } }
 --- ```
 ---
---- The generated table is a list-like table with consecutive, numeric indices.
+--- The generated table is an array-like table with consecutive, numeric indices.
 --- To create a map-like table with arbitrary keys, use |Iter:fold()|.
 ---
 ---
@@ -411,12 +407,12 @@ function Iter:totable()
 end
 
 ---@private
-function ListIter:totable()
-  if self.next ~= ListIter.next or self._head >= self._tail then
+function ArrayIter:totable()
+  if self.next ~= ArrayIter.next or self._head >= self._tail then
     return Iter.totable(self)
   end
 
-  local needs_sanitize = getmetatable(self._table[1]) == packedmt
+  local needs_sanitize = getmetatable(self._table[self._head]) == packedmt
 
   -- Reindex and sanitize.
   local len = self._tail - self._head
@@ -453,20 +449,25 @@ function Iter:join(delim)
   return table.concat(self:totable(), delim)
 end
 
---- Folds ("reduces") an iterator into a single value.
+--- Folds ("reduces") an iterator into a single value. [Iter:reduce()]()
 ---
 --- Examples:
 ---
 --- ```lua
 --- -- Create a new table with only even values
---- local t = { a = 1, b = 2, c = 3, d = 4 }
---- local it = vim.iter(t)
---- it:filter(function(k, v) return v % 2 == 0 end)
---- it:fold({}, function(t, k, v)
----   t[k] = v
----   return t
---- end)
---- -- { b = 2, d = 4 }
+--- vim.iter({ a = 1, b = 2, c = 3, d = 4 })
+---   :filter(function(k, v) return v % 2 == 0 end)
+---   :fold({}, function(acc, k, v)
+---     acc[k] = v
+---     return acc
+---   end) --> { b = 2, d = 4 }
+---
+--- -- Get the "maximum" item of an iterable.
+--- vim.iter({ -99, -4, 3, 42, 0, 0, 7 })
+---   :fold({}, function(acc, v)
+---     acc.max = math.max(v, acc.max or v)
+---     return acc
+---   end) --> { max = 42 }
 --- ```
 ---
 ---@generic A
@@ -491,7 +492,7 @@ function Iter:fold(init, f)
 end
 
 ---@private
-function ListIter:fold(init, f)
+function ArrayIter:fold(init, f)
   local acc = init
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
@@ -523,7 +524,7 @@ function Iter:next()
 end
 
 ---@private
-function ListIter:next()
+function ArrayIter:next()
   if self._head ~= self._tail then
     local v = self._table[self._head]
     local inc = self._head < self._tail and 1 or -1
@@ -546,11 +547,11 @@ end
 ---
 ---@return Iter
 function Iter:rev()
-  error('rev() requires a list-like table')
+  error('rev() requires an array-like table')
 end
 
 ---@private
-function ListIter:rev()
+function ArrayIter:rev()
   local inc = self._head < self._tail and 1 or -1
   self._head, self._tail = self._tail - inc, self._head - inc
   return self
@@ -574,11 +575,11 @@ end
 ---
 ---@return any
 function Iter:peek()
-  error('peek() requires a list-like table')
+  error('peek() requires an array-like table')
 end
 
 ---@private
-function ListIter:peek()
+function ArrayIter:peek()
   if self._head ~= self._tail then
     return self._table[self._head]
   end
@@ -633,7 +634,7 @@ function Iter:find(f)
   return unpack(result)
 end
 
---- Gets the first value in a |list-iterator| that satisfies a predicate, starting from the end.
+--- Gets the first value satisfying a predicate, from the end of a |list-iterator|.
 ---
 --- Advances the iterator. Returns nil and drains the iterator if no value is found.
 ---
@@ -655,11 +656,11 @@ end
 ---@return any
 ---@diagnostic disable-next-line: unused-local
 function Iter:rfind(f) -- luacheck: no unused args
-  error('rfind() requires a list-like table')
+  error('rfind() requires an array-like table')
 end
 
 ---@private
-function ListIter:rfind(f)
+function ArrayIter:rfind(f)
   if type(f) ~= 'function' then
     local val = f
     f = function(v)
@@ -707,10 +708,10 @@ function Iter:take(n)
 end
 
 ---@private
-function ListIter:take(n)
-  local inc = self._head < self._tail and 1 or -1
+function ArrayIter:take(n)
+  local inc = self._head < self._tail and n or -n
   local cmp = self._head < self._tail and math.min or math.max
-  self._tail = cmp(self._tail, self._head + n * inc)
+  self._tail = cmp(self._tail, self._head + inc)
   return self
 end
 
@@ -720,19 +721,19 @@ end
 ---
 --- ```lua
 --- local it = vim.iter({1, 2, 3, 4})
---- it:nextback()
+--- it:pop()
 --- -- 4
---- it:nextback()
+--- it:pop()
 --- -- 3
 --- ```
 ---
 ---@return any
-function Iter:nextback()
-  error('nextback() requires a list-like table')
+function Iter:pop()
+  error('pop() requires an array-like table')
 end
 
 --- @nodoc
-function ListIter:nextback()
+function ArrayIter:pop()
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     self._tail = self._tail - inc
@@ -742,27 +743,27 @@ end
 
 --- Gets the last value of a |list-iterator| without consuming it.
 ---
---- See also |Iter:last()|.
----
 --- Example:
 ---
 --- ```lua
 --- local it = vim.iter({1, 2, 3, 4})
---- it:peekback()
+--- it:rpeek()
 --- -- 4
---- it:peekback()
+--- it:rpeek()
 --- -- 4
---- it:nextback()
+--- it:pop()
 --- -- 4
 --- ```
 ---
+---@see Iter.last
+---
 ---@return any
-function Iter:peekback()
-  error('peekback() requires a list-like table')
+function Iter:rpeek()
+  error('rpeek() requires an array-like table')
 end
 
 ---@nodoc
-function ListIter:peekback()
+function ArrayIter:rpeek()
   if self._head ~= self._tail then
     local inc = self._head < self._tail and 1 or -1
     return self._table[self._tail - inc]
@@ -791,7 +792,7 @@ function Iter:skip(n)
 end
 
 ---@private
-function ListIter:skip(n)
+function ArrayIter:skip(n)
   local inc = self._head < self._tail and n or -n
   self._head = self._head + inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -800,27 +801,27 @@ function ListIter:skip(n)
   return self
 end
 
---- Skips `n` values backwards from the end of a |list-iterator| pipeline.
+--- Discards `n` values from the end of a |list-iterator| pipeline.
 ---
 --- Example:
 ---
 --- ```lua
---- local it = vim.iter({ 1, 2, 3, 4, 5 }):skipback(2)
+--- local it = vim.iter({ 1, 2, 3, 4, 5 }):rskip(2)
 --- it:next()
 --- -- 1
---- it:nextback()
+--- it:pop()
 --- -- 3
 --- ```
 ---
 ---@param n number Number of values to skip.
 ---@return Iter
 ---@diagnostic disable-next-line: unused-local
-function Iter:skipback(n) -- luacheck: no unused args
-  error('skipback() requires a list-like table')
+function Iter:rskip(n) -- luacheck: no unused args
+  error('rskip() requires an array-like table')
 end
 
 ---@private
-function ListIter:skipback(n)
+function ArrayIter:rskip(n)
   local inc = self._head < self._tail and n or -n
   self._tail = self._tail - inc
   if (inc > 0 and self._head > self._tail) or (inc < 0 and self._head < self._tail) then
@@ -831,63 +832,49 @@ end
 
 --- Gets the nth value of an iterator (and advances to it).
 ---
+--- If `n` is negative, offsets from the end of a |list-iterator|.
+---
 --- Example:
 ---
 --- ```lua
----
 --- local it = vim.iter({ 3, 6, 9, 12 })
 --- it:nth(2)
 --- -- 6
 --- it:nth(2)
 --- -- 12
 ---
+--- local it2 = vim.iter({ 3, 6, 9, 12 })
+--- it2:nth(-2)
+--- -- 9
+--- it2:nth(-2)
+--- -- 3
 --- ```
 ---
----@param n number The index of the value to return.
+---@param n number Index of the value to return. May be negative if the source is a |list-iterator|.
 ---@return any
 function Iter:nth(n)
   if n > 0 then
     return self:skip(n - 1):next()
-  end
-end
-
---- Gets the nth value from the end of a |list-iterator| (and advances to it).
----
---- Example:
----
---- ```lua
----
---- local it = vim.iter({ 3, 6, 9, 12 })
---- it:nthback(2)
---- -- 9
---- it:nthback(2)
---- -- 3
----
---- ```
----
----@param n number The index of the value to return.
----@return any
-function Iter:nthback(n)
-  if n > 0 then
-    return self:skipback(n - 1):nextback()
+  elseif n < 0 then
+    return self:rskip(math.abs(n) - 1):pop()
   end
 end
 
 --- Sets the start and end of a |list-iterator| pipeline.
 ---
---- Equivalent to `:skip(first - 1):skipback(len - last + 1)`.
+--- Equivalent to `:skip(first - 1):rskip(len - last + 1)`.
 ---
 ---@param first number
 ---@param last number
 ---@return Iter
 ---@diagnostic disable-next-line: unused-local
 function Iter:slice(first, last) -- luacheck: no unused args
-  error('slice() requires a list-like table')
+  error('slice() requires an array-like table')
 end
 
 ---@private
-function ListIter:slice(first, last)
-  return self:skip(math.max(0, first - 1)):skipback(math.max(0, self._tail - last - 1))
+function ArrayIter:slice(first, last)
+  return self:skip(math.max(0, first - 1)):rskip(math.max(0, self._tail - last - 1))
 end
 
 --- Returns true if any of the items in the iterator match the given predicate.
@@ -953,6 +940,8 @@ end
 ---
 --- ```
 ---
+---@see Iter.rpeek
+---
 ---@return any
 function Iter:last()
   local last = self:next()
@@ -965,7 +954,7 @@ function Iter:last()
 end
 
 ---@private
-function ListIter:last()
+function ArrayIter:last()
   local inc = self._head < self._tail and 1 or -1
   local v = self._table[self._tail - inc]
   self._head = self._tail
@@ -1010,7 +999,7 @@ function Iter:enumerate()
 end
 
 ---@private
-function ListIter:enumerate()
+function ArrayIter:enumerate()
   local inc = self._head < self._tail and 1 or -1
   for i = self._head, self._tail - inc, inc do
     local v = self._table[i]
@@ -1040,17 +1029,14 @@ function Iter.new(src, ...)
 
     local t = {}
 
-    -- O(n): scan the source table to decide if it is a list (consecutive integer indices 1…n).
-    local count = 0
-    for _ in pairs(src) do
-      count = count + 1
-      local v = src[count]
-      if v == nil then
+    -- O(n): scan the source table to decide if it is an array (only positive integer indices).
+    for k, v in pairs(src) do
+      if type(k) ~= 'number' or k <= 0 or math.floor(k) ~= k then
         return Iter.new(pairs(src))
       end
-      t[count] = v
+      t[#t + 1] = v
     end
-    return ListIter.new(t)
+    return ArrayIter.new(t)
   end
 
   if type(src) == 'function' then
@@ -1078,67 +1064,19 @@ function Iter.new(src, ...)
   return it
 end
 
---- Create a new ListIter
+--- Create a new ArrayIter
 ---
----@param t table List-like table. Caller guarantees that this table is a valid list.
+---@param t table Array-like table. Caller guarantees that this table is a valid array. Can have
+---               holes (nil values).
 ---@return Iter
 ---@private
-function ListIter.new(t)
+function ArrayIter.new(t)
   local it = {}
   it._table = t
   it._head = 1
   it._tail = #t + 1
-  setmetatable(it, ListIter)
+  setmetatable(it, ArrayIter)
   return it
-end
-
---- Collects an |iterable| into a table.
----
---- ```lua
---- -- Equivalent to:
---- vim.iter(f):totable()
---- ```
----
----@param f function Iterator function
----@return table
-function M.totable(f, ...)
-  return Iter.new(f, ...):totable()
-end
-
---- Filters a table or other |iterable|.
----
---- ```lua
---- -- Equivalent to:
---- vim.iter(src):filter(f):totable()
---- ```
----
----@see |Iter:filter()|
----
----@param f fun(...):boolean Filter function. Accepts the current iterator or table values as
----                       arguments and returns true if those values should be kept in the
----                       final table
----@param src table|function Table or iterator function to filter
----@return table
-function M.filter(f, src, ...)
-  return Iter.new(src, ...):filter(f):totable()
-end
-
---- Maps a table or other |iterable|.
----
---- ```lua
---- -- Equivalent to:
---- vim.iter(src):map(f):totable()
---- ```
----
----@see |Iter:map()|
----
----@param f fun(...): any? Map function. Accepts the current iterator or table values as
----                        arguments and returns one or more new values. Nil values are removed
----                        from the final table.
----@param src table|function Table or iterator function to filter
----@return table
-function M.map(f, src, ...)
-  return Iter.new(src, ...):map(f):totable()
 end
 
 return setmetatable(M, {

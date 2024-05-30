@@ -1,15 +1,17 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear, feed = t.clear, t.feed
-local source = t.source
-local command = t.command
-local assert_alive = t.assert_alive
-local poke_eventloop = t.poke_eventloop
-local exec = t.exec
-local eval = t.eval
+
+local clear, feed = n.clear, n.feed
+local source = n.source
+local command = n.command
+local assert_alive = n.assert_alive
+local poke_eventloop = n.poke_eventloop
+local exec = n.exec
+local eval = n.eval
 local eq = t.eq
 local is_os = t.is_os
-local api = t.api
+local api = n.api
 
 local function new_screen(opt)
   local screen = Screen.new(25, 5)
@@ -832,6 +834,7 @@ local function test_cmdline(linegrid)
     command('norm icurwin')
     feed(':')
     api.nvim_win_set_cursor(win, { 1, 7 })
+    api.nvim__redraw({ win = win, cursor = true })
     screen:expect {
       grid = [[
       curwin                   |
@@ -1705,19 +1708,24 @@ describe('cmdheight=0', function()
     ]])
   end)
 
-  it('cannot be resized at all with external messages', function()
+  it('can be resized with external messages', function()
     clear()
     screen = new_screen({ rgb = true, ext_messages = true })
     command('set laststatus=2 mouse=a')
     command('resize -1')
     screen:expect([[
       ^                         |
+      {1:~                        }|*2
+      {3:[No Name]                }|
+                               |
+    ]])
+    api.nvim_input_mouse('left', 'press', '', 0, 3, 10)
+    poke_eventloop()
+    api.nvim_input_mouse('left', 'drag', '', 0, 4, 10)
+    screen:expect([[
+      ^                         |
       {1:~                        }|*3
       {3:[No Name]                }|
     ]])
-    api.nvim_input_mouse('left', 'press', '', 0, 6, 10)
-    poke_eventloop()
-    api.nvim_input_mouse('left', 'drag', '', 0, 5, 10)
-    screen:expect_unchanged()
   end)
 end)

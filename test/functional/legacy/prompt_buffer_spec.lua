@@ -1,12 +1,14 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local feed = t.feed
-local source = t.source
-local clear = t.clear
-local command = t.command
-local expect = t.expect
-local poke_eventloop = t.poke_eventloop
-local api = t.api
+
+local feed = n.feed
+local source = n.source
+local clear = n.clear
+local command = n.command
+local expect = n.expect
+local poke_eventloop = n.poke_eventloop
+local api = n.api
 local eq = t.eq
 local neq = t.neq
 

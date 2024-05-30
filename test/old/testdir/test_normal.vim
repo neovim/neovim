@@ -3823,8 +3823,8 @@ func Test_normal_vert_scroll_longline()
   call assert_equal(11, line('.'))
   call assert_equal(1, winline())
   exe "normal \<C-B>"
-  call assert_equal(10, line('.'))
-  call assert_equal(4, winline())
+  call assert_equal(11, line('.'))
+  call assert_equal(5, winline())
   exe "normal \<C-B>\<C-B>"
   call assert_equal(5, line('.'))
   call assert_equal(5, winline())
@@ -4257,4 +4257,35 @@ func Test_halfpage_cursor_startend()
   bwipe!
 endfunc
 
+" Test for Ctrl-F/B moving the cursor to the window boundaries.
+func Test_page_cursor_topbot()
+  10new
+  call setline(1, range(1, 100))
+  exe "norm! gg2\<C-F>"
+  call assert_equal(17, line('.'))
+  exe "norm! \<C-B>"
+  call assert_equal(18, line('.'))
+  exe "norm! \<C-B>\<C-F>"
+  call assert_equal(9, line('.'))
+  bwipe!
+endfunc
+
+" Test for Ctrl-D with long line
+func Test_halfpage_longline()
+  10new
+  call setline(1, ['long'->repeat(1000), 'short'])
+  exe "norm! \<C-D>"
+  call assert_equal(2, line('.'))
+  bwipe!
+endfunc
+
+" Test for Ctrl-E with long line and very narrow window,
+" used to cause an inifite loop
+func Test_scroll_longline_no_loop()
+  4vnew
+  setl smoothscroll number showbreak=> scrolloff=2
+  call setline(1, repeat(['Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'], 3))
+  exe "normal! \<C-E>"
+  bwipe!
+endfunc
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

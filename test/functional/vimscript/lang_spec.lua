@@ -1,6 +1,8 @@
-local t = require('test.functional.testutil')()
-local clear, eval, eq = t.clear, t.eval, t.eq
-local exc_exec, source = t.exc_exec, t.source
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, eval, eq = n.clear, n.eval, t.eq
+local exc_exec, source = n.exc_exec, n.source
 
 describe('vimscript', function()
   before_each(clear)

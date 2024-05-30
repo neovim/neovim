@@ -120,8 +120,9 @@ function M.dir(path, opts)
     skip = { opts.skip, { 'function' }, true },
   })
 
+  path = M.normalize(path)
   if not opts.depth or opts.depth == 1 then
-    local fs = vim.uv.fs_scandir(M.normalize(path))
+    local fs = vim.uv.fs_scandir(path)
     return function()
       if not fs then
         return
@@ -137,7 +138,7 @@ function M.dir(path, opts)
       --- @type string, integer
       local dir0, level = unpack(table.remove(dirs, 1))
       local dir = level == 1 and dir0 or M.joinpath(path, dir0)
-      local fs = vim.uv.fs_scandir(M.normalize(dir))
+      local fs = vim.uv.fs_scandir(dir)
       while fs do
         local name, t = vim.uv.fs_scandir_next(fs)
         if not name then
@@ -197,13 +198,6 @@ end
 --- Examples:
 ---
 --- ```lua
---- -- location of Cargo.toml from the current buffer's path
---- local cargo = vim.fs.find('Cargo.toml', {
----   upward = true,
----   stop = vim.uv.os_homedir(),
----   path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
---- })
----
 --- -- list all test directories under the runtime directory
 --- local test_dirs = vim.fs.find(
 ---   {'test', 'tst', 'testdir'},
@@ -334,6 +328,63 @@ function M.find(names, opts)
   return matches
 end
 
+--- Find the first parent directory containing a specific "marker", relative to a file path or
+--- buffer.
+---
+--- If the buffer is unnamed (has no backing file) or has a non-empty 'buftype' then the search
+--- begins from Nvim's |current-directory|.
+---
+--- Example:
+---
+--- ```lua
+--- -- Find the root of a Python project, starting from file 'main.py'
+--- vim.fs.root(vim.fs.joinpath(vim.env.PWD, 'main.py'), {'pyproject.toml', 'setup.py' })
+---
+--- -- Find the root of a git repository
+--- vim.fs.root(0, '.git')
+---
+--- -- Find the parent directory containing any file with a .csproj extension
+--- vim.fs.root(0, function(name, path)
+---   return name:match('%.csproj$') ~= nil
+--- end)
+--- ```
+---
+--- @param source integer|string Buffer number (0 for current buffer) or file path (absolute or
+---               relative to the |current-directory|) to begin the search from.
+--- @param marker (string|string[]|fun(name: string, path: string): boolean) A marker, or list
+---               of markers, to search for. If a function, the function is called for each
+---               evaluated item and should return true if {name} and {path} are a match.
+--- @return string? # Directory path containing one of the given markers, or nil if no directory was
+---                   found.
+function M.root(source, marker)
+  assert(source, 'missing required argument: source')
+  assert(marker, 'missing required argument: marker')
+
+  local path ---@type string
+  if type(source) == 'string' then
+    path = source
+  elseif type(source) == 'number' then
+    if vim.bo[source].buftype ~= '' then
+      path = assert(vim.uv.cwd())
+    else
+      path = vim.api.nvim_buf_get_name(source)
+    end
+  else
+    error('invalid type for argument "source": expected string or buffer number')
+  end
+
+  local paths = M.find(marker, {
+    upward = true,
+    path = vim.fn.fnamemodify(path, ':p:h'),
+  })
+
+  if #paths == 0 then
+    return nil
+  end
+
+  return vim.fs.dirname(paths[1])
+end
+
 --- Split a Windows path into a prefix and a body, such that the body can be processed like a POSIX
 --- path. The path must use forward slashes as path separator.
 ---
@@ -411,11 +462,9 @@ end
 --- @return string Resolved path.
 local function path_resolve_dot(path)
   local is_path_absolute = vim.startswith(path, '/')
-  -- Split the path into components and process them
-  local path_components = vim.split(path, '/')
   local new_path_components = {}
 
-  for _, component in ipairs(path_components) do
+  for component in vim.gsplit(path, '/') do
     if component == '.' or component == '' then -- luacheck: ignore 542
       -- Skip `.` components and empty components
     elseif component == '..' then
@@ -443,6 +492,8 @@ end
 --- Expand environment variables.
 --- (default: `true`)
 --- @field expand_env? boolean
+---
+--- @field package _fast? boolean
 ---
 --- Path is a Windows path.
 --- (default: `true` in Windows, `false` otherwise)
@@ -483,11 +534,13 @@ end
 function M.normalize(path, opts)
   opts = opts or {}
 
-  vim.validate({
-    path = { path, { 'string' } },
-    expand_env = { opts.expand_env, { 'boolean' }, true },
-    win = { opts.win, { 'boolean' }, true },
-  })
+  if not opts._fast then
+    vim.validate({
+      path = { path, { 'string' } },
+      expand_env = { opts.expand_env, { 'boolean' }, true },
+      win = { opts.win, { 'boolean' }, true },
+    })
+  end
 
   local win = opts.win == nil and iswin or not not opts.win
   local os_sep_local = win and '\\' or '/'
@@ -511,11 +564,17 @@ function M.normalize(path, opts)
     path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
   end
 
-  -- Convert path separator to `/`
-  path = path:gsub(os_sep_local, '/')
+  if win then
+    -- Convert path separator to `/`
+    path = path:gsub(os_sep_local, '/')
+  end
 
   -- Check for double slashes at the start of the path because they have special meaning
-  local double_slash = vim.startswith(path, '//') and not vim.startswith(path, '///')
+  local double_slash = false
+  if not opts._fast then
+    double_slash = vim.startswith(path, '//') and not vim.startswith(path, '///')
+  end
+
   local prefix = ''
 
   if win then
@@ -532,10 +591,15 @@ function M.normalize(path, opts)
     prefix = prefix:gsub('/+', '/')
   end
 
-  -- Resolve `.` and `..` components and remove extraneous slashes from path, then recombine prefix
-  -- and path. Preserve leading double slashes as they indicate UNC paths and DOS device paths in
+  if not opts._fast then
+    -- Resolve `.` and `..` components and remove extraneous slashes from path, then recombine prefix
+    -- and path.
+    path = path_resolve_dot(path)
+  end
+
+  -- Preserve leading double slashes as they indicate UNC paths and DOS device paths in
   -- Windows and have implementation-defined behavior in POSIX.
-  path = (double_slash and '/' or '') .. prefix .. path_resolve_dot(path)
+  path = (double_slash and '/' or '') .. prefix .. path
 
   -- Change empty path to `.`
   if path == '' then

@@ -1,10 +1,11 @@
 -- ShaDa registers saving/reading support
-local t = require('test.functional.testutil')()
-local nvim_command, fn, eq = t.command, t.fn, t.eq
-
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
+
+local nvim_command, fn, eq = n.command, n.fn, t.eq
 local reset, clear = t_shada.reset, t_shada.clear
-local expect_exit = t.expect_exit
+local expect_exit = n.expect_exit
 
 local setreg = function(name, contents, typ)
   if type(contents) == 'string' then

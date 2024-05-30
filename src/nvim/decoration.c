@@ -346,7 +346,12 @@ char *next_virt_text_chunk(VirtText vt, size_t *pos, int *attr)
   for (; text == NULL && *pos < kv_size(vt); (*pos)++) {
     text = kv_A(vt, *pos).text;
     int hl_id = kv_A(vt, *pos).hl_id;
-    *attr = hl_combine_attr(*attr, hl_id > 0 ? syn_id2attr(hl_id) : 0);
+    if (hl_id >= 0) {
+      *attr = MAX(*attr, 0);
+      if (hl_id > 0) {
+        *attr = hl_combine_attr(*attr, syn_id2attr(hl_id));
+      }
+    }
   }
   return text;
 }
@@ -454,21 +459,18 @@ static void decor_range_add_from_inline(DecorState *state, int start_row, int st
   if (decor.ext) {
     DecorVirtText *vt = decor.data.ext.vt;
     while (vt) {
-      decor_range_add_virt(state, start_row, start_col, end_row, end_col, vt, owned,
-                           DECOR_PRIORITY_BASE);
+      decor_range_add_virt(state, start_row, start_col, end_row, end_col, vt, owned);
       vt = vt->next;
     }
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
-      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id,
-                         DECOR_PRIORITY_BASE);
+      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id);
       idx = sh->next;
     }
   } else {
     DecorSignHighlight sh = decor_sh_from_inline(decor.data.hl);
-    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id,
-                       DECOR_PRIORITY_BASE);
+    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id);
   }
 }
 
@@ -478,8 +480,7 @@ static void decor_range_insert(DecorState *state, DecorRange range)
   size_t index;
   for (index = kv_size(state->active) - 1; index > 0; index--) {
     DecorRange item = kv_A(state->active, index - 1);
-    if ((item.priority < range.priority)
-        || ((item.priority == range.priority) && (item.subpriority <= range.subpriority))) {
+    if (item.priority <= range.priority) {
       break;
     }
     kv_A(state->active, index) = kv_A(state->active, index - 1);
@@ -488,7 +489,7 @@ static void decor_range_insert(DecorState *state, DecorRange range)
 }
 
 void decor_range_add_virt(DecorState *state, int start_row, int start_col, int end_row, int end_col,
-                          DecorVirtText *vt, bool owned, DecorPriority subpriority)
+                          DecorVirtText *vt, bool owned)
 {
   bool is_lines = vt->flags & kVTIsLines;
   DecorRange range = {
@@ -498,15 +499,13 @@ void decor_range_add_virt(DecorState *state, int start_row, int start_col, int e
     .attr_id = 0,
     .owned = owned,
     .priority = vt->priority,
-    .subpriority = subpriority,
     .draw_col = -10,
   };
   decor_range_insert(state, range);
 }
 
 void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end_row, int end_col,
-                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id,
-                        DecorPriority subpriority)
+                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id)
 {
   if (sh->flags & kSHIsSign) {
     return;
@@ -519,7 +518,6 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
     .attr_id = 0,
     .owned = owned,
     .priority = sh->priority,
-    .subpriority = subpriority,
     .draw_col = -10,
   };
 
@@ -742,14 +740,15 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
 
   if (kv_size(signs)) {
     int width = wp->w_minscwidth == SCL_NUM ? 1 : wp->w_scwidth;
-    int idx = MIN(width, num_text) - 1;
+    int len = MIN(width, num_text);
+    int idx = 0;
     qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(kv_A(signs, 0)), sign_item_cmp);
 
     for (size_t i = 0; i < kv_size(signs); i++) {
       DecorSignHighlight *sh = kv_A(signs, i).sh;
-      if (idx >= 0 && sh->text[0]) {
+      if (idx < len && sh->text[0]) {
         memcpy(sattrs[idx].text, sh->text, SIGN_WIDTH * sizeof(sattr_T));
-        sattrs[idx--].hl_id = sh->hl_id;
+        sattrs[idx++].hl_id = sh->hl_id;
       }
       if (*num_id == 0) {
         *num_id = sh->number_hl_id;
@@ -797,7 +796,7 @@ void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState 
   }
 
   // Allocate an array of integers holding the number of signs in the range.
-  int *count = xcalloc(sizeof(int), (size_t)(row2 + 1 - row1));
+  int *count = xcalloc((size_t)(row2 + 1 - row1), sizeof(int));
   MarkTreeIter itr[1];
   MTPair pair = { 0 };
 

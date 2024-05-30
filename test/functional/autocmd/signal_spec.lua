@@ -1,10 +1,11 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local fn = t.fn
-local next_msg = t.next_msg
+local fn = n.fn
+local next_msg = n.next_msg
 local is_os = t.is_os
 local skip = t.skip
 

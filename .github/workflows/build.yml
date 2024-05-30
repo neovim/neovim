@@ -23,7 +23,7 @@ env:
 jobs:
   old-cmake:
     name: Test oldest supported cmake
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       CMAKE_URL: 'https://cmake.org/files/v3.13/cmake-3.13.0-Linux-x86_64.sh'
@@ -56,7 +56,7 @@ jobs:
 
   use-existing-src:
     name: Test USE_EXISTING_SRC_DIR=ON builds with no network access
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup

@@ -1,25 +1,23 @@
-local t = require('test.functional.testutil')()
+---@diagnostic disable: no-unknown
 
-local buf_lines = t.buf_lines
-local clear = t.clear
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local buf_lines = n.buf_lines
+local clear = n.clear
 local eq = t.eq
-local exec_lua = t.exec_lua
-local feed = t.feed
-local api = t.api
-local fn = t.fn
+local exec_lua = n.exec_lua
+local feed = n.feed
+local api = n.api
+local fn = n.fn
 local matches = t.matches
 local pcall_err = t.pcall_err
-local poke_eventloop = t.poke_eventloop
+local poke_eventloop = n.poke_eventloop
 local retry = t.retry
 
 describe('vim.snippet', function()
   before_each(function()
     clear()
-
-    exec_lua([[
-      vim.keymap.set({ 'i', 's' }, '<Tab>', function() vim.snippet.jump(1) end, { buffer = true })
-      vim.keymap.set({ 'i', 's' }, '<S-Tab>', function() vim.snippet.jump(-1) end, { buffer = true })
-    ]])
   end)
   after_each(clear)
 
@@ -96,9 +94,9 @@ describe('vim.snippet', function()
 
   it('does not jump outside snippet range', function()
     test_expand_success({ 'function $1($2)', '  $0', 'end' }, { 'function ()', '  ', 'end' })
-    eq(false, exec_lua('return vim.snippet.jumpable(-1)'))
+    eq(false, exec_lua('return vim.snippet.active({ direction = -1 })'))
     feed('<Tab><Tab>i')
-    eq(false, exec_lua('return vim.snippet.jumpable(1)'))
+    eq(false, exec_lua('return vim.snippet.active( { direction = 1 })'))
   end)
 
   it('navigates backwards', function()
@@ -245,7 +243,7 @@ describe('vim.snippet', function()
   it('correctly indents with newlines', function()
     local curbuf = api.nvim_get_current_buf()
     test_expand_success(
-      { 'function($2)\n$3\nend' },
+      { 'function($2)\n\t$3\nend' },
       { 'function()', '  ', 'end' },
       [[
       vim.opt.sw = 2
@@ -254,7 +252,16 @@ describe('vim.snippet', function()
     )
     api.nvim_buf_set_lines(curbuf, 0, -1, false, {})
     test_expand_success(
-      { 'func main() {\n$1\n}' },
+      { 'function($2)\n$3\nend' },
+      { 'function()', '', 'end' },
+      [[
+      vim.opt.sw = 2
+      vim.opt.expandtab = true
+    ]]
+    )
+    api.nvim_buf_set_lines(curbuf, 0, -1, false, {})
+    test_expand_success(
+      { 'func main() {\n\t$1\n}' },
       { 'func main() {', '\t', '}' },
       [[
       vim.opt.sw = 4
@@ -262,5 +269,38 @@ describe('vim.snippet', function()
       vim.opt.expandtab = false
     ]]
     )
+    api.nvim_buf_set_lines(curbuf, 0, -1, false, {})
+    test_expand_success(
+      { '${1:name} :: ${2}\n${1:name} ${3}= ${0:undefined}' },
+      {
+        'name :: ',
+        'name = undefined',
+      },
+      [[
+      vim.opt.sw = 4
+      vim.opt.ts = 4
+      vim.opt.expandtab = false
+    ]]
+    )
+  end)
+
+  it('restores snippet navigation keymaps', function()
+    -- Create a buffer keymap in insert mode that deletes all lines.
+    local curbuf = api.nvim_get_current_buf()
+    exec_lua('vim.api.nvim_buf_set_keymap(..., "i", "<Tab>", "<cmd>normal ggdG<cr>", {})', curbuf)
+
+    test_expand_success({ 'var $1 = $2' }, { 'var  = ' })
+
+    -- While the snippet is active, <Tab> should navigate between tabstops.
+    feed('x')
+    poke_eventloop()
+    feed('<Tab>0')
+    eq({ 'var x = 0' }, buf_lines(0))
+
+    exec_lua('vim.snippet.stop()')
+
+    -- After exiting the snippet, the buffer keymap should be restored.
+    feed('<Esc>O<cr><Tab>')
+    eq({ '' }, buf_lines(0))
   end)
 end)

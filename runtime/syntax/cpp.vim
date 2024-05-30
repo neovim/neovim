@@ -2,7 +2,8 @@
 " Language:	C++
 " Current Maintainer:	vim-jp (https://github.com/vim-jp/vim-cpp)
 " Previous Maintainer:	Ken Shan <ccshan@post.harvard.edu>
-" Last Change:	2023 Dec 08
+" Last Change:	2024 May 04
+"   2024 May 04 by Vim Project (fix digit separator in octals and floats)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -55,11 +56,11 @@ if !exists("cpp_no_cpp14")
   syn match cppNumbers		display transparent "\<\d\|\.\d" contains=cppNumber,cppFloat
   syn match cppNumber		display contained "\<0\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
   syn match cppNumber		display contained "\<[1-9]\('\=\d\+\)*\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
-  syn match cppNumber		display contained "\<0\o\+\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppNumber		display contained "\<0\('\=\o\+\)\+\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
   syn match cppNumber		display contained "\<0b[01]\('\=[01]\+\)*\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
   syn match cppNumber		display contained "\<0x\x\('\=\x\+\)*\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
-  syn match cppFloat		display contained "\<\d\+\.\d*\(e[-+]\=\d\+\)\=\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
-  syn match cppFloat		display contained "\<\.\d\+\(e[-+]\=\d\+\)\=\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppFloat		display contained "\<\d\('\=\d\+\)*\.\(\d\('\=\d\+\)*\)\=\(e[-+]\=\d\+\)\=\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppFloat		display contained "\.\d\('\=\d\+\)*\(e[-+]\=\d\+\)\=\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
   syn match cppFloat		display contained "\<\d\+e[-+]\=\d\+\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
   syn region cppString		start=+\(L\|u\|u8\|U\)\="+ skip=+\\\\\|\\"\|\\$+ excludenl end=+"\(sv\|s\|_\i*\)\=+ end='$' contains=cSpecial,cFormat,@Spell
 endif

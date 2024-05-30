@@ -10,6 +10,8 @@ local function get_value_set(tbl)
   return value_set
 end
 
+local sysname = vim.uv.os_uname().sysname
+
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
 local protocol = {}
 
@@ -736,14 +738,16 @@ function protocol.make_client_capabilities()
       completion = {
         dynamicRegistration = false,
         completionItem = {
-          -- Until we can actually expand snippet, move cursor and allow for true snippet experience,
-          -- this should be disabled out of the box.
-          -- However, users can turn this back on if they have a snippet plugin.
-          snippetSupport = false,
+          snippetSupport = true,
           commitCharactersSupport = false,
           preselectSupport = false,
           deprecatedSupport = false,
           documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
+          resolveSupport = {
+            properties = {
+              'additionalTextEdits',
+            },
+          },
         },
         completionItemKind = {
           valueSet = get_value_set(constants.CompletionItemKind),
@@ -835,7 +839,10 @@ function protocol.make_client_capabilities()
         refreshSupport = true,
       },
       didChangeWatchedFiles = {
-        dynamicRegistration = true,
+        -- TODO(lewis6991): do not advertise didChangeWatchedFiles on Linux
+        -- or BSD since all the current backends are too limited.
+        -- Ref: #27807, #28058, #23291, #26520
+        dynamicRegistration = sysname == 'Darwin' or sysname == 'Windows_NT',
         relativePatternSupport = true,
       },
       inlayHint = {

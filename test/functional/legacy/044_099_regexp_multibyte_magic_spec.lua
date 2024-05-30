@@ -3,9 +3,10 @@
 --
 -- This test contains both "test44" and "test99" from the old test suite.
 
-local t = require('test.functional.testutil')()
-local feed, insert = t.feed, t.insert
-local clear, feed_command, expect = t.clear, t.feed_command, t.expect
+local n = require('test.functional.testnvim')()
+
+local feed, insert = n.feed, n.insert
+local clear, feed_command, expect = n.clear, n.feed_command, n.expect
 
 -- Runs the test protocol with the given 'regexpengine' setting. In the old test
 -- suite the test protocol was duplicated in test44 and test99, the only

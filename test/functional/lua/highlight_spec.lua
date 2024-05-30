@@ -1,11 +1,96 @@
-local t = require('test.functional.testutil')()
-local exec_lua = t.exec_lua
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
+
+local exec_lua = n.exec_lua
 local eq = t.eq
 local neq = t.neq
-local eval = t.eval
-local command = t.command
-local clear = t.clear
-local api = t.api
+local eval = n.eval
+local command = n.command
+local clear = n.clear
+local api = n.api
+
+describe('vim.highlight.range', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(60, 6)
+    screen:add_extra_attr_ids({
+      [100] = { foreground = Screen.colors.Blue, background = Screen.colors.Yellow, bold = true },
+    })
+    screen:attach()
+    api.nvim_set_option_value('list', true, {})
+    api.nvim_set_option_value('listchars', 'eol:$', {})
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      'asdfghjkl',
+      '«口=口»',
+      'qwertyuiop',
+      '口口=口口',
+      'zxcvbnm',
+    })
+  end)
+
+  it('works with charwise selection', function()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('')
+      vim.highlight.range(0, ns, 'Search', { 1, 5 }, { 3, 10 })
+    ]])
+    screen:expect([[
+      ^asdfghjkl{1:$}                                                  |
+      «口{10:=口»}{100:$}                                                    |
+      {10:qwertyuiop}{100:$}                                                 |
+      {10:口口=口}口{1:$}                                                  |
+      zxcvbnm{1:$}                                                    |
+                                                                  |
+    ]])
+  end)
+
+  it('works with linewise selection', function()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('')
+      vim.highlight.range(0, ns, 'Search', { 0, 0 }, { 4, 0 }, { regtype = 'V' })
+    ]])
+    screen:expect([[
+      {10:^asdfghjkl}{100:$}                                                  |
+      {10:«口=口»}{100:$}                                                    |
+      {10:qwertyuiop}{100:$}                                                 |
+      {10:口口=口口}{100:$}                                                  |
+      {10:zxcvbnm}{100:$}                                                    |
+                                                                  |
+    ]])
+  end)
+
+  it('works with blockwise selection', function()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('')
+      vim.highlight.range(0, ns, 'Search', { 0, 0 }, { 4, 4 }, { regtype = '\022' })
+    ]])
+    screen:expect([[
+      {10:^asdf}ghjkl{1:$}                                                  |
+      {10:«口=}口»{1:$}                                                    |
+      {10:qwer}tyuiop{1:$}                                                 |
+      {10:口口}=口口{1:$}                                                  |
+      {10:zxcv}bnm{1:$}                                                    |
+                                                                  |
+    ]])
+  end)
+
+  it('works with blockwise selection with width', function()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('')
+      vim.highlight.range(0, ns, 'Search', { 0, 4 }, { 4, 7 }, { regtype = '\0226' })
+    ]])
+    screen:expect([[
+      ^asdf{10:ghjkl}{1:$}                                                  |
+      «口={10:口»}{1:$}                                                    |
+      qwer{10:tyuiop}{1:$}                                                 |
+      口口{10:=口口}{1:$}                                                  |
+      zxcv{10:bnm}{1:$}                                                    |
+                                                                  |
+    ]])
+  end)
+end)
 
 describe('vim.highlight.on_yank', function()
   before_each(function()
@@ -19,7 +104,7 @@ describe('vim.highlight.on_yank', function()
       vim.cmd('bwipeout!')
     ]])
     vim.uv.sleep(10)
-    t.feed('<cr>') -- avoid hang if error message exists
+    n.feed('<cr>') -- avoid hang if error message exists
     eq('', eval('v:errmsg'))
   end)
 
@@ -41,9 +126,9 @@ describe('vim.highlight.on_yank', function()
       vim.api.nvim_buf_set_mark(0,"]",1,1,{})
       vim.highlight.on_yank({timeout = math.huge, on_macro = true, event = {operator = "y"}})
     ]])
-    neq({}, api.nvim_win_get_ns(0))
+    neq({}, api.nvim__win_get_ns(0))
     command('wincmd w')
-    eq({}, api.nvim_win_get_ns(0))
+    eq({}, api.nvim__win_get_ns(0))
   end)
 
   it('removes old highlight if new one is created before old one times out', function()
@@ -53,7 +138,7 @@ describe('vim.highlight.on_yank', function()
       vim.api.nvim_buf_set_mark(0,"]",1,1,{})
       vim.highlight.on_yank({timeout = math.huge, on_macro = true, event = {operator = "y"}})
     ]])
-    neq({}, api.nvim_win_get_ns(0))
+    neq({}, api.nvim__win_get_ns(0))
     command('wincmd w')
     exec_lua([[
       vim.api.nvim_buf_set_mark(0,"[",1,1,{})
@@ -61,6 +146,6 @@ describe('vim.highlight.on_yank', function()
       vim.highlight.on_yank({timeout = math.huge, on_macro = true, event = {operator = "y"}})
     ]])
     command('wincmd w')
-    eq({}, api.nvim_win_get_ns(0))
+    eq({}, api.nvim__win_get_ns(0))
   end)
 end)

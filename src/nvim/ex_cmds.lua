@@ -1,6 +1,6 @@
 local bit = require 'bit'
 
-local module = {}
+local M = {}
 
 -- Description of the values below is contained in ex_cmds_defs.h file.
 -- "EX_" prefix is omitted.
@@ -32,14 +32,14 @@ local FILES = bit.bor(XFILE, EXTRA)
 local WORD1 = bit.bor(EXTRA, NOSPC)
 local FILE1 = bit.bor(FILES, NOSPC)
 
-module.flags = {
+M.flags = {
   RANGE = RANGE,
   DFLALL = DFLALL,
   PREVIEW = PREVIEW,
 }
 
 -- The following table is described in ex_cmds_defs.h file.
-module.cmds = {
+M.cmds = {
   {
     command = 'append',
     flags = bit.bor(BANG, RANGE, ZEROR, TRLBAR, CMDWIN, LOCK_OK, MODIFY),
@@ -337,7 +337,7 @@ module.cmds = {
   {
     command = 'caddbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -373,7 +373,7 @@ module.cmds = {
   {
     command = 'cbuffer',
     flags = bit.bor(BANG, RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -459,7 +459,7 @@ module.cmds = {
   {
     command = 'cgetbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -1329,7 +1329,7 @@ module.cmds = {
   {
     command = 'laddbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -1353,7 +1353,7 @@ module.cmds = {
   {
     command = 'lbuffer',
     flags = bit.bor(BANG, RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -1451,7 +1451,7 @@ module.cmds = {
   {
     command = 'lgetbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_OTHER',
+    addr_type = 'ADDR_LINES',
     func = 'ex_cbuffer',
   },
   {
@@ -3359,4 +3359,4 @@ module.cmds = {
   },
 }
 
-return module
+return M

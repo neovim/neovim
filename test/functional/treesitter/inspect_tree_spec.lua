@@ -1,17 +1,19 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local insert = t.insert
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local insert = n.insert
 local dedent = t.dedent
 local eq = t.eq
-local exec_lua = t.exec_lua
-local feed = t.feed
+local exec_lua = n.exec_lua
+local feed = n.feed
 
 describe('vim.treesitter.inspect_tree', function()
   before_each(clear)
 
   local expect_tree = function(x)
     local expected = vim.split(vim.trim(dedent(x)), '\n')
-    local actual = t.buf_lines(0) ---@type string[]
+    local actual = n.buf_lines(0) ---@type string[]
     eq(expected, actual)
   end
 
@@ -111,5 +113,58 @@ describe('vim.treesitter.inspect_tree', function()
               (block_continuation)) ; [2, 0] - [2, 0] markdown
             (fenced_code_block_delimiter)))) ; [2, 0] - [2, 3] markdown
       ]]
+  end)
+
+  it('updates source and tree buffer windows and closes them correctly', function()
+    insert([[
+      print()
+      ]])
+
+    -- setup two windows for the source buffer
+    exec_lua([[
+      source_win = vim.api.nvim_get_current_win()
+      vim.api.nvim_open_win(0, false, {
+        win = 0,
+        split = 'left'
+      })
+    ]])
+
+    -- setup three windows for the tree buffer
+    exec_lua([[
+      vim.treesitter.start(0, 'lua')
+      vim.treesitter.inspect_tree()
+      tree_win = vim.api.nvim_get_current_win()
+      tree_win_copy_1 = vim.api.nvim_open_win(0, false, {
+        win = 0,
+        split = 'left'
+      })
+      tree_win_copy_2 = vim.api.nvim_open_win(0, false, {
+        win = 0,
+        split = 'left'
+      })
+    ]])
+
+    -- close original source window
+    exec_lua('vim.api.nvim_win_close(source_win, false)')
+
+    -- navigates correctly to the remaining source buffer window
+    feed('<CR>')
+    eq('', n.api.nvim_get_vvar('errmsg'))
+
+    -- close original tree window
+    exec_lua([[
+       vim.api.nvim_set_current_win(tree_win_copy_1)
+       vim.api.nvim_win_close(tree_win, false)
+    ]])
+
+    -- navigates correctly to the remaining source buffer window
+    feed('<CR>')
+    eq('', n.api.nvim_get_vvar('errmsg'))
+
+    -- close source buffer window and all remaining tree windows
+    t.pcall_err(exec_lua, 'vim.api.nvim_win_close(0, false)')
+
+    eq(false, exec_lua('return vim.api.nvim_win_is_valid(tree_win_copy_1)'))
+    eq(false, exec_lua('return vim.api.nvim_win_is_valid(tree_win_copy_2)'))
   end)
 end)

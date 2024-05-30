@@ -1,6 +1,8 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local exec_lua = t.exec_lua
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local exec_lua = n.exec_lua
 local eq = t.eq
 
 local function system_sync(cmd, opts)

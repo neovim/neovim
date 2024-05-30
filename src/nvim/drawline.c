@@ -1415,7 +1415,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       pos_T pos = wp->w_cursor;
       wp->w_cursor.lnum = lnum;
       wp->w_cursor.col = linecol;
-      size_t len = spell_move_to(wp, FORWARD, true, true, &spell_hlf);
+      size_t len = spell_move_to(wp, FORWARD, SMT_ALL, true, &spell_hlf);
 
       // spell_move_to() may call ml_get() and make "line" invalid
       line = ml_get_buf(wp->w_buffer, lnum);
@@ -1595,6 +1595,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       if (has_decor && wlv.row == startrow + wlv.filler_lines) {
         // hide virt_text on text hidden by 'nowrap' or 'smoothscroll'
         decor_redraw_col(wp, (colnr_T)(ptr - line) - 1, wlv.off, true, &decor_state);
+      }
+      if (wlv.col >= grid->cols) {
+        wlv.col = wlv.off = grid->cols;
+        goto end_check;
       }
     }
 
@@ -2650,13 +2654,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         conceal_cursor_used = conceal_cursor_line(curwin);
       }
 
-      // When the window is too narrow draw all "@" lines.
-      if (leftcols_width >= wp->w_grid.cols && is_wrapped) {
-        win_draw_end(wp, schar_from_ascii('@'), true, wlv.row, wp->w_grid.rows, HLF_AT);
-        set_empty_rows(wp, wlv.row);
-        wlv.row = endrow;
-      }
-
       break;
     }
 
@@ -2844,10 +2841,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
     }
 
+end_check:
     // At end of screen line and there is more to come: Display the line
     // so far.  If there is no more to display it is caught above.
     if (wlv.col >= grid->cols && (!has_foldtext || virt_line_offset >= 0)
-        && (*ptr != NUL
+        && (wlv.col <= leftcols_width
+            || *ptr != NUL
             || wlv.filler_todo > 0
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL && lcs_eol_todo)
             || (wlv.n_extra != 0 && (wlv.sc_extra != NUL || *wlv.p_extra != NUL))

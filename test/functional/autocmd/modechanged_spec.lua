@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
-local clear, eval, eq = t.clear, t.eval, t.eq
-local feed, command = t.feed, t.command
-local exec_lua = t.exec_lua
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, eval, eq = n.clear, n.eval, t.eq
+local feed, command = n.feed, n.command
+local exec_lua = n.exec_lua
 
 describe('ModeChanged', function()
   before_each(function()

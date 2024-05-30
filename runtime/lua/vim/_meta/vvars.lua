@@ -54,9 +54,10 @@ vim.v.cmdbang = ...
 --- @type string
 vim.v.collate = ...
 
---- Dictionary containing the most recent `complete-items` after
---- `CompleteDone`.  Empty if the completion failed, or after
---- leaving and re-entering insert mode.
+--- Dictionary containing the `complete-items` for the most
+--- recently completed word after `CompleteDone`.  Empty if the
+--- completion failed, or after leaving and re-entering insert
+--- mode.
 --- Note: Plugins can modify the value to emulate the builtin
 --- `CompleteDone` event behavior.
 --- @type any
@@ -194,6 +195,7 @@ vim.v.errors = ...
 ---   changed_window   Is `v:true` if the event fired while
 ---                    changing window  (or tab) on `DirChanged`.
 ---   status           Job status or exit code, -1 means "unknown". `TermClose`
+---   reason           Reason for completion being done. `CompleteDone`
 --- @type any
 vim.v.event = ...
 

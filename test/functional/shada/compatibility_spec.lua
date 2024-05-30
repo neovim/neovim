@@ -1,9 +1,10 @@
 -- ShaDa compatibility support
-local t = require('test.functional.testutil')()
-local nvim_command, fn, eq = t.command, t.fn, t.eq
-local exc_exec = t.exc_exec
-
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
+
+local nvim_command, fn, eq = n.command, n.fn, t.eq
+local exc_exec = n.exc_exec
 local reset, clear, get_shada_rw = t_shada.reset, t_shada.clear, t_shada.get_shada_rw
 local read_shada_file = t_shada.read_shada_file
 

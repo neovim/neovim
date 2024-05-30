@@ -1,9 +1,11 @@
 -- Test for a lot of variations of the 'fileformats' option
 
-local t = require('test.functional.testutil')()
-local feed, clear, command = t.feed, t.clear, t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local feed, clear, command = n.feed, n.clear, n.command
 local eq, write_file = t.eq, t.write_file
-local poke_eventloop = t.poke_eventloop
+local poke_eventloop = n.poke_eventloop
 
 describe('fileformats option', function()
   setup(function()
@@ -254,7 +256,7 @@ describe('fileformats option', function()
     command('set nobinary ff&')
 
     -- Assert buffer contents.  This has to be done manually as
-    -- t.expect() calls t.dedent() which messes up the white space
+    -- n.expect() calls t.dedent() which messes up the white space
     -- and carriage returns.
     eq(
       'unix\n'..
@@ -387,6 +389,6 @@ describe('fileformats option', function()
       '10\n'..
       'unix\n'..
       'unix',
-      t.curbuf_contents())
+      n.curbuf_contents())
   end)
 end)

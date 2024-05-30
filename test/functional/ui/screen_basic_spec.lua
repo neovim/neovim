@@ -1,15 +1,18 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local spawn, set_session, clear = t.spawn, t.set_session, t.clear
-local feed, command = t.feed, t.command
-local insert = t.insert
+
+local spawn, set_session, clear = n.spawn, n.set_session, n.clear
+local feed, command = n.feed, n.command
+local exec = n.exec
+local insert = n.insert
 local eq = t.eq
-local fn, api = t.fn, t.api
+local fn, api = n.fn, n.api
 
 describe('screen', function()
   local screen
   local nvim_argv = {
-    t.nvim_prog,
+    n.nvim_prog,
     '-u',
     'NONE',
     '-i',
@@ -700,7 +703,7 @@ describe('Screen default colors', function()
     local extra = (light and ' background=light') or ''
 
     local nvim_argv = {
-      t.nvim_prog,
+      n.nvim_prog,
       '-u',
       'NONE',
       '-i',
@@ -816,4 +819,40 @@ it("showcmd doesn't cause empty grid_line with redrawdebug=compositor #22593", f
                        d          |
   ]],
   }
+end)
+
+it("scrolling in narrow window doesn't draw over separator #29033", function()
+  clear()
+  local screen = Screen.new(60, 8)
+  screen:attach()
+  feed('100Oa<Esc>gg')
+  exec([[
+    set number nowrap
+    vsplit
+    set scrollbind
+    wincmd l
+    set scrollbind
+    wincmd |
+  ]])
+  screen:expect([[
+    {8: }│{8:  1 }^a                                                     |
+    {8: }│{8:  2 }a                                                     |
+    {8: }│{8:  3 }a                                                     |
+    {8: }│{8:  4 }a                                                     |
+    {8: }│{8:  5 }a                                                     |
+    {8: }│{8:  6 }a                                                     |
+    {2:< }{3:[No Name] [+]                                             }|
+                                                                |
+  ]])
+  feed('<C-F>')
+  screen:expect([[
+    {8: }│{8:  5 }^a                                                     |
+    {8: }│{8:  6 }a                                                     |
+    {8: }│{8:  7 }a                                                     |
+    {8: }│{8:  8 }a                                                     |
+    {8: }│{8:  9 }a                                                     |
+    {8: }│{8: 10 }a                                                     |
+    {2:< }{3:[No Name] [+]                                             }|
+                                                                |
+  ]])
 end)

@@ -1,12 +1,14 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local eq = t.eq
-local insert = t.insert
-local exec_lua = t.exec_lua
-local command = t.command
-local feed = t.feed
-local poke_eventloop = t.poke_eventloop
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+
+local clear = n.clear
+local eq = t.eq
+local insert = n.insert
+local exec_lua = n.exec_lua
+local command = n.command
+local feed = n.feed
+local poke_eventloop = n.poke_eventloop
 
 before_each(clear)
 
@@ -393,6 +395,28 @@ t3]])
     }, get_fold_levels())
 
     command([[set foldminlines=1 foldnestmax=1]])
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '1',
+      [4] = '1',
+      [5] = '1',
+      [6] = '1',
+    }, get_fold_levels())
+  end)
+
+  it('handles quantified patterns', function()
+    insert([[
+import hello
+import hello
+import hello
+import hello
+import hello
+import hello]])
+
+    exec_lua([[vim.treesitter.query.set('python', 'folds', '(import_statement)+ @fold')]])
+    parse('python')
 
     eq({
       [1] = '>1',

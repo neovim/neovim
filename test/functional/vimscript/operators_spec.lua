@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local eq = t.eq
-local eval = t.eval
-local clear = t.clear
+local eval = n.eval
+local clear = n.clear
 
 describe('Division operator', function()
   before_each(clear)

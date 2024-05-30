@@ -173,6 +173,16 @@ func Test_substitute_repeat()
   call feedkeys("Qsc\<CR>y", 'tx')
   bwipe!
 endfunc
+
+" Test :s with ? as delimiter.
+func Test_substitute_question_delimiter()
+  new
+  call setline(1, '??:??')
+  %s?\?\??!!?g
+  call assert_equal('!!:!!', getline(1))
+  bwipe!
+endfunc
+
 " Test %s/\n// which is implemented as a special case to use a
 " more efficient join rather than doing a regular substitution.
 func Test_substitute_join()

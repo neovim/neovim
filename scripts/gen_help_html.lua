@@ -50,6 +50,7 @@ local spell_dict = {
 local spell_ignore_files = {
   ['backers.txt'] = true,
   ['news.txt'] = { 'tree-sitter' }, -- in news, may refer to the upstream "tree-sitter" library
+  ['news-0.10.txt'] = { 'tree-sitter' },
 }
 local language = nil
 
@@ -63,13 +64,20 @@ local new_layout = {
   ['channel.txt'] = true,
   ['deprecated.txt'] = true,
   ['develop.txt'] = true,
+  ['dev_style.txt'] = true,
+  ['dev_theme.txt'] = true,
+  ['dev_tools.txt'] = true,
+  ['dev_vimpatch.txt'] = true,
+  ['faq.txt'] = true,
   ['lua.txt'] = true,
   ['luaref.txt'] = true,
   ['news.txt'] = true,
+  ['news-0.9.txt'] = true,
+  ['news-0.10.txt'] = true,
   ['nvim.txt'] = true,
-  ['pi_health.txt'] = true,
   ['provider.txt'] = true,
   ['ui.txt'] = true,
+  ['vim_diff.txt'] = true,
 }
 
 -- TODO: These known invalid |links| require an update to the relevant docs.
@@ -523,6 +531,8 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return ('%s<a href="%s">%s</a>%s'):format(ws(), fixed_url, fixed_url, removed_chars)
   elseif node_name == 'word' or node_name == 'uppercase_name' then
     return text
+  elseif node_name == 'note' then
+    return ('<b>%s</b>'):format(text)
   elseif node_name == 'h1' or node_name == 'h2' or node_name == 'h3' then
     if is_noise(text, stats.noise_lines) then
       return '' -- Discard common "noise" lines.
@@ -685,6 +695,8 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return string.format('%s</span>', s)
     end
     return s
+  elseif node_name == 'modeline' then
+    return ''
   elseif node_name == 'ERROR' then
     if ignore_parse_error(opt.fname, trimmed) then
       return text
@@ -824,8 +836,7 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
     <link rel="preconnect" href="https://X185E15FPG-dsn.algolia.net" crossorigin />
 
-    <link href="/css/normalize.min.css" rel="stylesheet">
-    <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/css/main.css" rel="stylesheet">
     <link href="help.css" rel="stylesheet">
     <link href="/highlight/styles/neovim.min.css" rel="stylesheet">
@@ -1086,14 +1097,19 @@ local function gen_css(fname)
       padding-bottom: 10px;
       /* Tabs are used for alignment in old docs, so we must match Vim's 8-char expectation. */
       tab-size: 8;
-      white-space: pre;
+      white-space: pre-wrap;
       font-size: 16px;
       font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
+      word-wrap: break-word;
     }
-    .old-help-para pre {
-      /* All text in .old-help-para is formatted as "white-space:pre" so text following <pre> is
-         already visually separated by the linebreak. */
+    .old-help-para pre, .old-help-para pre:hover {
+      /* Text following <pre> is already visually separated by the linebreak. */
       margin-bottom: 0;
+      /* Long lines that exceed the textwidth should not be wrapped (no "pre-wrap").
+         Since text may overflow horizontally, we make the contents to be scrollable
+         (only if necessary) to prevent overlapping with the navigation bar at the right. */
+      white-space: pre;
+      overflow-x: auto;
     }
 
     /* TODO: should this rule be deleted? help tags are rendered as <code> or <span>, not <a> */
@@ -1356,7 +1372,7 @@ function M.validate(help_dir, include, parser_path)
   parser_path = parser_path and vim.fn.expand(parser_path) or nil
 
   for _, f in ipairs(helpfiles) do
-    local helpfile = assert(vim.fs.basename(f))
+    local helpfile = vim.fs.basename(f)
     local rv = validate_one(f, parser_path)
     print(('validated (%-4s errors): %s'):format(#rv.parse_errors, helpfile))
     if #rv.parse_errors > 0 then
@@ -1414,17 +1430,14 @@ end
 ---    :help files, we can be precise about the tolerances here.
 --- @param help_dir? string e.g. '$VIMRUNTIME/doc' or './runtime/doc'
 function M.test_gen(help_dir)
-  local tmpdir = assert(vim.fs.dirname(vim.fn.tempname()))
+  local tmpdir = vim.fs.dirname(vim.fn.tempname())
   help_dir = vim.fn.expand(help_dir or '$VIMRUNTIME/doc')
   print('doc path = ' .. vim.uv.fs_realpath(help_dir))
 
-  local rv = M.gen(
-    help_dir,
-    tmpdir,
-    -- Because gen() is slow (~30s), this test is limited to a few files.
-    { 'pi_health.txt', 'help.txt', 'index.txt', 'nvim.txt' }
-  )
-  eq(4, #rv.helpfiles)
+  -- Because gen() is slow (~30s), this test is limited to a few files.
+  local input = { 'help.txt', 'index.txt', 'nvim.txt' }
+  local rv = M.gen(help_dir, tmpdir, input)
+  eq(#input, #rv.helpfiles)
   eq(0, rv.err_count, 'parse errors in :help docs')
   eq({}, rv.invalid_links, 'invalid tags in :help docs')
 end

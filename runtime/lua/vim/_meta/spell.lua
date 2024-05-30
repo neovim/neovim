@@ -3,11 +3,11 @@
 -- luacheck: no unused args
 
 --- Check {str} for spelling errors. Similar to the Vimscript function
---- |spellbadword()|.
+--- [spellbadword()].
 ---
 --- Note: The behaviour of this function is dependent on: 'spelllang',
 --- 'spellfile', 'spellcapcheck' and 'spelloptions' which can all be local to
---- the buffer. Consider calling this with |nvim_buf_call()|.
+--- the buffer. Consider calling this with [nvim_buf_call()].
 ---
 --- Example:
 ---
@@ -20,7 +20,7 @@
 --- ```
 ---
 --- @param str string
---- @return {[1]: string, [2]: string, [3]: string}[]
+--- @return {[1]: string, [2]: 'bad'|'rare'|'local'|'caps', [3]: integer}[]
 ---   List of tuples with three items:
 ---     - The badly spelled word.
 ---     - The type of the spelling error:

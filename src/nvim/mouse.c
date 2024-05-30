@@ -467,7 +467,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       if (regname == '.') {
         insert_reg(regname, true);
       } else {
-        if (regname == 0 && eval_has_provider("clipboard")) {
+        if (regname == 0 && eval_has_provider("clipboard", false)) {
           regname = '*';
         }
         if ((State & REPLACE_FLAG) && !yank_register_mline(regname)) {
@@ -819,7 +819,7 @@ popupexit:
   // Middle mouse click: Put text before cursor.
   if (which_button == MOUSE_MIDDLE) {
     int c2;
-    if (regname == 0 && eval_has_provider("clipboard")) {
+    if (regname == 0 && eval_has_provider("clipboard", false)) {
       regname = '*';
     }
     if (yank_register_mline(regname)) {
@@ -1621,16 +1621,21 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     }
 
     if (win->w_skipcol > 0 && lnum == win->w_topline) {
-      // Adjust for 'smoothscroll' clipping the top screen lines.
-      // A similar formula is used in curs_columns().
       int width1 = win->w_width_inner - win_col_off(win);
-      int skip_lines = 0;
-      if (win->w_skipcol > width1) {
-        skip_lines = (win->w_skipcol - width1) / (width1 + win_col_off2(win)) + 1;
-      } else if (win->w_skipcol > 0) {
-        skip_lines = 1;
+
+      if (width1 > 0) {
+        int skip_lines = 0;
+
+        // Adjust for 'smoothscroll' clipping the top screen lines.
+        // A similar formula is used in curs_columns().
+        if (win->w_skipcol > width1) {
+          skip_lines = (win->w_skipcol - width1) / (width1 + win_col_off2(win)) + 1;
+        } else if (win->w_skipcol > 0) {
+          skip_lines = 1;
+        }
+
+        count -= skip_lines;
       }
-      count -= skip_lines;
     }
 
     if (count > row) {

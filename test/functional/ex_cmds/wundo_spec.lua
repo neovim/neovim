@@ -1,8 +1,13 @@
 -- Specs for :wundo and underlying functions
 
-local t = require('test.functional.testutil')()
-local command, clear, eval, spawn, nvim_prog, set_session =
-  t.command, t.clear, t.eval, t.spawn, t.nvim_prog, t.set_session
+local n = require('test.functional.testnvim')()
+
+local command = n.command
+local clear = n.clear
+local eval = n.eval
+local spawn = n.spawn
+local nvim_prog = n.nvim_prog
+local set_session = n.set_session
 
 describe(':wundo', function()
   before_each(clear)

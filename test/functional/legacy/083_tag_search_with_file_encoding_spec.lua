@@ -1,12 +1,14 @@
 -- Tests for tag search with !_TAG_FILE_ENCODING.
 
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local insert, source, clear, expect, write_file =
-  t.insert, t.source, t.clear, t.expect, t.write_file
+  n.insert, n.source, n.clear, n.expect, t.write_file
 
 local function has_iconv()
   clear() -- ensures session
-  return 1 == t.eval('has("iconv")')
+  return 1 == n.eval('has("iconv")')
 end
 
 describe('tag search with !_TAG_FILE_ENCODING', function()

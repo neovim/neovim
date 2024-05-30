@@ -55,8 +55,8 @@ function vim.inspect_pos(bufnr, row, col, filter)
   bufnr = bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr
 
   local results = {
-    treesitter = {},
-    syntax = {},
+    treesitter = {}, --- @type table[]
+    syntax = {}, --- @type table[]
     extmarks = {},
     semantic_tokens = {},
     buffer = bufnr,
@@ -93,7 +93,7 @@ function vim.inspect_pos(bufnr, row, col, filter)
   end
 
   -- namespace id -> name map
-  local nsmap = {}
+  local nsmap = {} --- @type table<integer,string>
   for name, id in pairs(vim.api.nvim_get_namespaces()) do
     nsmap[id] = name
   end

@@ -1,5 +1,7 @@
-local t = require('test.functional.testutil')()
-local api = t.api
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local api = n.api
 local write_file = t.write_file
 local concat_tables = t.concat_tables
 
@@ -24,7 +26,7 @@ local function reset(o)
   elseif o.args then
     args = concat_tables(args, o.args)
   end
-  t.clear {
+  n.clear {
     args_rm = args_rm,
     args = args,
   }
@@ -32,7 +34,7 @@ local function reset(o)
 end
 
 local clear = function()
-  t.expect_exit(t.command, 'qall!')
+  n.expect_exit(n.command, 'qall!')
   os.remove(tmpname)
 end
 

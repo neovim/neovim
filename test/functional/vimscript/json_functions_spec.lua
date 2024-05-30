@@ -1,14 +1,16 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local fn = t.fn
-local api = t.api
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local fn = n.fn
+local api = n.api
 local eq = t.eq
-local eval = t.eval
-local command = t.command
-local exc_exec = t.exc_exec
+local eval = n.eval
+local command = n.command
+local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 local NIL = vim.NIL
-local source = t.source
+local source = n.source
 
 describe('json_decode() function', function()
   local restart = function(...)

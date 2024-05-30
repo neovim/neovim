@@ -69,7 +69,7 @@
 /// It is shared between do_source() and getsourceline().
 /// This is required, because it needs to be handed to do_cmdline() and
 /// sourcing can be done recursively.
-struct source_cookie {
+typedef struct {
   FILE *fp;                     ///< opened file for sourcing
   char *nextline;               ///< if not NULL: line that was read ahead
   linenr_T sourcing_lnum;       ///< line number of the source file
@@ -83,7 +83,7 @@ struct source_cookie {
   int dbg_tick;                 ///< debug_tick when breakpoint was set
   int level;                    ///< top nesting level of sourced file
   vimconv_T conv;               ///< type of conversion
-};
+} source_cookie_T;
 
 typedef struct {
   char *path;
@@ -1628,14 +1628,14 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
     const char *appname = get_appname();
     size_t appname_len = strlen(appname);
     assert(appname_len < (IOSIZE - sizeof("-data")));
-    xstrlcpy(IObuff, appname, appname_len + 1);
+    xmemcpyz(IObuff, appname, appname_len);
 #if defined(MSWIN)
     if (type == kXDGDataHome || type == kXDGStateHome) {
       xstrlcat(IObuff, "-data", IOSIZE);
       appname_len += 5;
     }
 #endif
-    xstrlcpy(dest, IObuff, appname_len + 1);
+    xmemcpyz(dest, IObuff, appname_len);
     dest += appname_len;
     if (suf1 != NULL) {
       *dest++ = PATHSEP;
@@ -1822,20 +1822,20 @@ void ex_options(exarg_T *eap)
 /// @return address holding the next breakpoint line for a source cookie
 linenr_T *source_breakpoint(void *cookie)
 {
-  return &((struct source_cookie *)cookie)->breakpoint;
+  return &((source_cookie_T *)cookie)->breakpoint;
 }
 
 /// @return  the address holding the debug tick for a source cookie.
 int *source_dbg_tick(void *cookie)
 {
-  return &((struct source_cookie *)cookie)->dbg_tick;
+  return &((source_cookie_T *)cookie)->dbg_tick;
 }
 
 /// @return  the nesting level for a source cookie.
 int source_level(void *cookie)
   FUNC_ATTR_PURE
 {
-  return ((struct source_cookie *)cookie)->level;
+  return ((source_cookie_T *)cookie)->level;
 }
 
 /// Special function to open a file without handle inheritance.
@@ -1887,11 +1887,6 @@ static bool concat_continued_line(garray_T *const ga, const int init_growsize, c
   ga_concat_len(ga, line + 1, len - 1);
   return true;
 }
-
-typedef struct {
-  linenr_T curr_lnum;
-  const linenr_T final_lnum;
-} GetBufferLineCookie;
 
 typedef struct {
   char *buf;
@@ -2009,15 +2004,15 @@ void cmd_source_buffer(const exarg_T *const eap, bool ex_lua)
     ga_append(&ga, NL);
   }
   ((char *)ga.ga_data)[ga.ga_len - 1] = NUL;
-  const GetStrLineCookie cookie = {
-    .buf = ga.ga_data,
-    .offset = 0,
-  };
   if (ex_lua || strequal(curbuf->b_p_ft, "lua")
       || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
     char *name = ex_lua ? ":{range}lua" : ":source (no file)";
-    nlua_source_using_linegetter(get_str_line, (void *)&cookie, name);
+    nlua_source_str(ga.ga_data, name);
   } else {
+    const GetStrLineCookie cookie = {
+      .buf = ga.ga_data,
+      .offset = 0,
+    };
     source_using_linegetter((void *)&cookie, get_str_line, ":source (no file)");
   }
   ga_clear(&ga);
@@ -2052,7 +2047,7 @@ int do_source_str(const char *cmd, const char *traceback_name)
 /// If a scriptitem_T was found or created "*ret_sid" is set to the SID.
 int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
 {
-  struct source_cookie cookie;
+  source_cookie_T cookie;
   uint8_t *firstline = NULL;
   int retval = FAIL;
   int save_debug_break_level = debug_break_level;
@@ -2440,7 +2435,7 @@ linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
   FUNC_ATTR_PURE
 {
   return fgetline == getsourceline
-         ? ((struct source_cookie *)cookie)->sourcing_lnum
+         ? ((source_cookie_T *)cookie)->sourcing_lnum
          : SOURCING_LNUM;
 }
 
@@ -2546,7 +2541,7 @@ void f_getscriptinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///         some error.
 char *getsourceline(int c, void *cookie, int indent, bool do_concat)
 {
-  struct source_cookie *sp = (struct source_cookie *)cookie;
+  source_cookie_T *sp = (source_cookie_T *)cookie;
   char *line;
 
   // If breakpoints have been added/deleted need to check for it.
@@ -2560,8 +2555,8 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
   // Set the current sourcing line number.
   SOURCING_LNUM = sp->sourcing_lnum + 1;
   // Get current line.  If there is a read-ahead line, use it, otherwise get
-  // one now.
-  if (sp->finished) {
+  // one now.  "fp" is NULL if actually using a string.
+  if (sp->finished || sp->fp == NULL) {
     line = NULL;
   } else if (sp->nextline == NULL) {
     line = get_one_sourceline(sp);
@@ -2624,7 +2619,7 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
   return line;
 }
 
-static char *get_one_sourceline(struct source_cookie *sp)
+static char *get_one_sourceline(source_cookie_T *sp)
 {
   garray_T ga;
   int len;
@@ -2730,7 +2725,7 @@ retry:
 /// Without the multi-byte feature it's simply ignored.
 void ex_scriptencoding(exarg_T *eap)
 {
-  struct source_cookie *sp;
+  source_cookie_T *sp;
   char *name;
 
   if (!getline_equal(eap->ea_getline, eap->cookie, getsourceline)) {
@@ -2745,7 +2740,7 @@ void ex_scriptencoding(exarg_T *eap)
   }
 
   // Setup for conversion from the specified encoding to 'encoding'.
-  sp = (struct source_cookie *)getline_cookie(eap->ea_getline, eap->cookie);
+  sp = (source_cookie_T *)getline_cookie(eap->ea_getline, eap->cookie);
   convert_setup(&sp->conv, name, p_enc);
 
   if (name != eap->arg) {
@@ -2769,8 +2764,7 @@ void ex_finish(exarg_T *eap)
 void do_finish(exarg_T *eap, bool reanimate)
 {
   if (reanimate) {
-    ((struct source_cookie *)getline_cookie(eap->ea_getline,
-                                            eap->cookie))->finished = false;
+    ((source_cookie_T *)getline_cookie(eap->ea_getline, eap->cookie))->finished = false;
   }
 
   // Cleanup (and deactivate) conditionals, but stop when a try conditional
@@ -2782,8 +2776,7 @@ void do_finish(exarg_T *eap, bool reanimate)
     eap->cstack->cs_pending[idx] = CSTP_FINISH;
     report_make_pending(CSTP_FINISH, NULL);
   } else {
-    ((struct source_cookie *)getline_cookie(eap->ea_getline,
-                                            eap->cookie))->finished = true;
+    ((source_cookie_T *)getline_cookie(eap->ea_getline, eap->cookie))->finished = true;
   }
 }
 
@@ -2793,7 +2786,7 @@ void do_finish(exarg_T *eap, bool reanimate)
 bool source_finished(LineGetter fgetline, void *cookie)
 {
   return getline_equal(fgetline, cookie, getsourceline)
-         && ((struct source_cookie *)getline_cookie(fgetline, cookie))->finished;
+         && ((source_cookie_T *)getline_cookie(fgetline, cookie))->finished;
 }
 
 /// Return the autoload script name for a function or variable name

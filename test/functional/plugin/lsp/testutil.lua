@@ -1,10 +1,10 @@
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local exec_lua = t.exec_lua
-local run = t.run
-local stop = t.stop
-local api = t.api
+local clear = n.clear
+local exec_lua = n.exec_lua
+local run = n.run
+local stop = n.stop
+local api = n.api
 local NIL = vim.NIL
 
 local M = {}
@@ -39,8 +39,7 @@ M.create_server_definition = [[
         })
         local handler = handlers[method]
         if handler then
-          local response, err = handler(method, params)
-          callback(err, response)
+          handler(method, params, callback)
         elseif method == 'initialize' then
           callback(nil, {
             capabilities = opts.capabilities or {}

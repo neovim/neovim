@@ -1,9 +1,10 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local call = t.call
-local clear = t.clear
+local call = n.call
+local clear = n.clear
 local eq = t.eq
-local expect = t.expect
+local expect = n.expect
 
 describe('getline()', function()
   before_each(function()

@@ -49,6 +49,7 @@
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "auto/pathdef.h"
 # include "os/env.c.generated.h"
 #endif
 
@@ -473,17 +474,9 @@ void init_homedir(void)
     var = os_homedir();
   }
 
-  if (var != NULL) {
-    // Change to the directory and get the actual path.  This resolves
-    // links.  Don't do it when we can't return.
-    if (os_dirname(os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
-        var = IObuff;
-      }
-      if (os_chdir(os_buf) != 0) {
-        emsg(_(e_prev_dir));
-      }
-    }
+  // Get the actual path.  This resolves links.
+  if (var != NULL && os_realpath(var, IObuff, IOSIZE) != NULL) {
+    var = IObuff;
   }
 
   // Fall back to current working directory if home is not found
@@ -1195,7 +1188,7 @@ bool os_setenv_append_path(const char *fname)
   const char *tail = path_tail_with_sep((char *)fname);
   size_t dirlen = (size_t)(tail - fname);
   assert(tail >= fname && dirlen + 1 < sizeof(os_buf));
-  xstrlcpy(os_buf, fname, dirlen + 1);
+  xmemcpyz(os_buf, fname, dirlen);
   const char *path = os_getenv("PATH");
   const size_t pathlen = path ? strlen(path) : 0;
   const size_t newlen = pathlen + dirlen + 2;

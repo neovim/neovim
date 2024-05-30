@@ -1,22 +1,24 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local command = t.command
+
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local eval = t.eval
-local expect = t.expect
-local feed = t.feed
-local insert = t.insert
-local fn = t.fn
-local api = t.api
+local eval = n.eval
+local expect = n.expect
+local feed = n.feed
+local insert = n.insert
+local fn = n.fn
+local api = n.api
 local neq = t.neq
 local ok = t.ok
 local retry = t.retry
-local source = t.source
-local poke_eventloop = t.poke_eventloop
+local source = n.source
+local poke_eventloop = n.poke_eventloop
 local sleep = vim.uv.sleep
-local testprg = t.testprg
-local assert_alive = t.assert_alive
+local testprg = n.testprg
+local assert_alive = n.assert_alive
 
 local default_text = [[
   Inc substitution on
@@ -2592,6 +2594,12 @@ it(':substitute with inccommand, timer-induced :redraw #9777', function()
     {2:[Preview]                     }|
     :%s/foo/ZZZ^                   |
   ]])
+
+  -- Also with nvim__redraw()
+  command('call timer_start(10, {-> nvim__redraw(#{flush:1})}, {"repeat":-1})')
+  command('call timer_start(10, {-> nvim__redraw(#{statusline:1})}, {"repeat":-1})')
+  sleep(20) -- Allow some timer activity.
+  screen:expect_unchanged()
 end)
 
 it(':substitute with inccommand, allows :redraw before first separator is typed #18857', function()

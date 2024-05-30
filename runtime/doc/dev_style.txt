@@ -6,7 +6,7 @@
 
 Nvim style guide                                        *dev-style*
 
-This is style guide for developers working on Nvim's source code.
+Style guidelines for developers working Nvim's source code.
 
 License: CC-By 3.0 https://creativecommons.org/licenses/by/3.0/
 

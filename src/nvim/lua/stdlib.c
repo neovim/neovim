@@ -543,14 +543,27 @@ static int nlua_iconv(lua_State *lstate)
   return 1;
 }
 
-// Update foldlevels (e.g., by evaluating 'foldexpr') for all lines in the current window without
-// invoking other side effects. Unlike `zx`, it does not close manually opened folds and does not
-// open folds under the cursor.
+// Update foldlevels (e.g., by evaluating 'foldexpr') for the given line range in the given window,
+// without invoking other side effects. Unlike `zx`, it does not close manually opened folds and
+// does not open folds under the cursor.
 static int nlua_foldupdate(lua_State *lstate)
 {
-  curwin->w_foldinvalid = true;  // recompute folds
-  foldUpdate(curwin, 1, (linenr_T)MAXLNUM);
-  curwin->w_foldinvalid = false;
+  handle_T window = (handle_T)luaL_checkinteger(lstate, 1);
+  win_T *win = handle_get_window(window);
+  if (!win) {
+    return luaL_error(lstate, "invalid window");
+  }
+  // input is zero-based end-exclusive range
+  linenr_T top = (linenr_T)luaL_checkinteger(lstate, 2) + 1;
+  if (top < 1 || top > win->w_buffer->b_ml.ml_line_count) {
+    return luaL_error(lstate, "invalid top");
+  }
+  linenr_T bot = (linenr_T)luaL_checkinteger(lstate, 3);
+  if (top > bot) {
+    return luaL_error(lstate, "invalid bot");
+  }
+
+  foldUpdate(win, top, bot);
 
   return 0;
 }

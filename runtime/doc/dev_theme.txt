@@ -4,9 +4,9 @@
                             NVIM REFERENCE MANUAL
 
 
-Nvim theme style guide                                        *dev-theme*
+Nvim colorscheme guidelines                                   *dev-theme*
 
-This is style guide for developers working on Nvim's default color scheme.
+Style guidelines for developing Nvim's default colorscheme.
 
 License: CC-By 3.0 https://creativecommons.org/licenses/by/3.0/
 
@@ -17,19 +17,15 @@ Design
 
 - Be "Neovim branded", i.e. have mostly "green-blue" feel plus one or two
   colors reserved for very occasional user attention.
-
 - Be oriented for 'termguicolors' (true colors) while being extra minimal for
   'notermguicolors' (16 colors) as fallback.
-
 - Be accessible, i.e. have high enough contrast ratio (as defined in
   https://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef).
   This means to have value at least 7 for |hl-Normal| and 4.5 for some common
   cases (|hl-Visual|, `Comment` with set 'cursorline', colored syntax, `Diff*`,
   |hl-Search|).
-
 - Be suitable for dark and light backgrounds via exchange of dark and light
   palettes.
-
 - Be usable, i.e. provide enough visual feedback for common objects.
 
 
@@ -38,39 +34,29 @@ Palettes
 
 - There are two separate palettes: dark and light. They all contain the same
   set of colors exported as `NvimDark*` and `NvimLight*` colors respectively.
-
 - The dark palette is used for background in the dark color scheme and for
   foreground in the light color scheme; and vice versa. This introduces
   recognizable visual system without too standing out.
-
 - Actual computation of palettes should be done in a perceptually uniform
   color space. Oklch is a good choice.
-
 - Each palette has the following colors (descriptions are for dark background;
   reverse for light one):
-
     - Four shades of colored "cold" greys for general UI.
-
         - Dark ones (from darkest to lightest) are reserved as background for
           |hl-NormalFloat| (considered as "black"), |hl-Normal| (background),
           |hl-CursorLine|, |hl-Visual|.
-
         - Light ones (also from darkest to lightest) are reserved for
           `Comment`, |hl-StatusLine|/|hl-TabLine|, |hl-Normal| (foreground),
           and color considered as "white".
-
 - Six colors to provide enough terminal colors: red, yellow, green, cyan,
   blue, magenta.
   They should have (reasonably) similar lightness and chroma to make them
   visually coherent. Lightness should be as equal to the palette's basic grey
   (which is used for |hl-Normal|) as possible. They should have (reasonably)
   different hues to make them visually separable.
-
 - For 16 colors:
-
     - Greys are not used and are replaced with the foreground and background
       colors of the terminal emulator.
-
     - Non-grey colors fall back to terminal colors as ordered in ANSI codes
       (https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit),
       that is red (1, 9), green (2, 10), yellow (3, 11), blue (4, 12),
@@ -78,33 +64,25 @@ Palettes
       To increase contrast, colors 1-6 are used for light background and 9-14
       for dark background.
 
-
 ==============================================================================
 Highlight groups
 
 Use:
 
 - Grey shades for general UI according to their design.
-
 - Bold text for keywords (`Statement` highlight group). This is an important
   choice to increase accessibility for people with color deficiencies, as it
   doesn't rely on actual color.
-
 - Green for strings, |hl-DiffAdd| (as background), |hl-DiagnosticOk|, and some
   minor text UI elements.
-
 - Cyan as main syntax color, i.e. for function usage (`Function` highlight
   group), |hl-DiffText|, |hl-DiagnosticInfo|, and some minor text UI elements.
-
 - Red to generally mean high user attention, i.e. errors; in particular for
   |hl-ErrorMsg|, |hl-DiffDelete|, |hl-DiagnosticError|.
-
 - Yellow very sparingly to mean mild user attention, i.e. warnings. That is,
   |hl-DiagnosticWarn| and |hl-WarningMsg|.
-
 - Blue very sparingly as |hl-DiagnosticHint| and some additional important
   syntax group (like `Identifier`).
-
 - Magenta very carefully (if at all).
 
 In case of 16 colors:
@@ -113,9 +91,7 @@ In case of 16 colors:
   colors can be used as foreground". This means that in any
   foreground/background combination there should be background and one
   non-background color.
-
 - Use 0 (black) or 15 (bright white) as foreground for non-grey background,
   depending on whether normal background is light or dark.
-
 
  vim:tw=78:ts=8:et:ft=help:norl:

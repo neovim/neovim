@@ -1,9 +1,10 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local clear = t.clear
-local command = t.command
-local exc_exec = t.exc_exec
+local clear = n.clear
+local command = n.command
+local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 
 before_each(clear)

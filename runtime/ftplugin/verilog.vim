@@ -3,6 +3,7 @@
 " Maintainer:	Chih-Tsun Huang <cthuang@cs.nthu.edu.tw>
 " Last Change:	2017 Aug 25 by Chih-Tsun Huang
 "		2024 Jan 14 by Vim Project (browsefilter)
+"		2024 May 20 by Riley Bruins <ribru17@gmail.com> (commentstring)
 " URL:	    	http://www.cs.nthu.edu.tw/~cthuang/vim/ftplugin/verilog.vim
 "
 " Credits:
@@ -22,7 +23,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " Undo the plugin effect
-let b:undo_ftplugin = "setlocal fo< com< tw<"
+let b:undo_ftplugin = "setlocal fo< com< tw< cms<"
     \ . "| unlet! b:browsefilter b:match_ignorecase b:match_words"
 
 " Set 'formatoptions' to break comment lines but not other lines,
@@ -31,6 +32,7 @@ setlocal fo-=t fo+=croqlm1
 
 " Set 'comments' to format dashed lists in comments.
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
+setlocal commentstring=//\ %s
 
 " Format comments to be up to 78 characters long
 if &textwidth == 0 

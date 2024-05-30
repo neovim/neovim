@@ -1,8 +1,9 @@
 -- Test for benchmarking the RE engine.
 
-local t = require('test.functional.testutil')()
-local insert, source = t.insert, t.source
-local clear, command = t.clear, t.command
+local n = require('test.functional.testnvim')()
+
+local insert, source = n.insert, n.source
+local clear, command = n.clear, n.command
 
 -- Temporary file for gathering benchmarking results for each regexp engine.
 local result_file = 'benchmark.out'

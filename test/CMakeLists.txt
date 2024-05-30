@@ -19,7 +19,7 @@ if(LUA_HAS_FFI)
       ${TEST_OPTIONS}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     USES_TERMINAL)
-  add_dependencies(unittest lua-dev-deps nvim)
+  add_dependencies(unittest lua_dev_deps nvim)
 else()
   message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
 endif()
@@ -35,7 +35,7 @@ add_custom_target(functionaltest
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
   DEPENDS printenv-test printargs-test shell-test pwsh-test streams-test tty-test
   USES_TERMINAL)
-add_dependencies(functionaltest lua-dev-deps nvim)
+add_dependencies(functionaltest lua_dev_deps nvim)
 
 add_custom_target(benchmark
   COMMAND ${CMAKE_COMMAND}
@@ -44,4 +44,4 @@ add_custom_target(benchmark
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
   DEPENDS tty-test
   USES_TERMINAL)
-add_dependencies(benchmark lua-dev-deps nvim)
+add_dependencies(benchmark lua_dev_deps nvim)

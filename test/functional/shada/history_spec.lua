@@ -1,10 +1,12 @@
 -- ShaDa history saving/reading support
-local t = require('test.functional.testutil')()
-local nvim_command, fn, api, nvim_feed, eq = t.command, t.fn, t.api, t.feed, t.eq
-local assert_alive = t.assert_alive
-local expect_exit = t.expect_exit
-
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
+
+local nvim_command, fn, api, nvim_feed, eq = n.command, n.fn, n.api, n.feed, t.eq
+local assert_alive = n.assert_alive
+local expect_exit = n.expect_exit
+
 local reset, clear = t_shada.reset, t_shada.clear
 
 describe('ShaDa support code', function()
@@ -114,6 +116,12 @@ describe('ShaDa support code', function()
     nvim_feed('gg0n')
     eq({ 0, 2, 3, 0 }, fn.getpos('.'))
     eq(1, api.nvim_get_vvar('searchforward'))
+    -- Autocommands shouldn't cause search pattern to change
+    nvim_command('autocmd User * :')
+    nvim_command('doautocmd User')
+    nvim_feed('gg0n')
+    eq({ 0, 2, 3, 0 }, fn.getpos('.'))
+    eq(1, api.nvim_get_vvar('searchforward'))
   end)
 
   it('dumps and loads last search pattern with offset and backward direction', function()
@@ -125,6 +133,12 @@ describe('ShaDa support code', function()
     reset()
     api.nvim_set_option_value('wrapscan', false, {})
     fn.setline('.', { 'foo', 'bar--' })
+    nvim_feed('G$n')
+    eq({ 0, 2, 3, 0 }, fn.getpos('.'))
+    eq(0, api.nvim_get_vvar('searchforward'))
+    -- Autocommands shouldn't cause search pattern to change
+    nvim_command('autocmd User * :')
+    nvim_command('doautocmd User')
     nvim_feed('G$n')
     eq({ 0, 2, 3, 0 }, fn.getpos('.'))
     eq(0, api.nvim_get_vvar('searchforward'))

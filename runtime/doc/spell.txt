@@ -51,6 +51,17 @@ To search for the next misspelled word:
 							*[S*
 [S			Like "]S" but search backwards.
 
+							*]r*
+]r			Move to next "rare" word after the cursor.
+			A count before the command can be used to repeat.
+			'wrapscan' applies.
+
+							*[r*
+[r			Like "]r" but search backwards, find the "rare"
+			word before the cursor.  Doesn't recognize words
+			split over two lines, thus may stop at words that are
+			not highlighted as rare.
+
 
 To add words to your own word list:
 

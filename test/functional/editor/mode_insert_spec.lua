@@ -1,14 +1,16 @@
 -- Insert-mode tests.
 
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear, feed, insert = t.clear, t.feed, t.insert
-local expect = t.expect
-local command = t.command
+
+local clear, feed, insert = n.clear, n.feed, n.insert
+local expect = n.expect
+local command = n.command
 local eq = t.eq
-local eval = t.eval
-local curbuf_contents = t.curbuf_contents
-local api = t.api
+local eval = n.eval
+local curbuf_contents = n.curbuf_contents
+local api = n.api
 
 describe('insert-mode', function()
   before_each(function()
@@ -178,12 +180,6 @@ describe('insert-mode', function()
 
   it('multi-char mapping updates screen properly #25626', function()
     local screen = Screen.new(60, 6)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-      [1] = { bold = true, reverse = true }, -- StatusLine
-      [2] = { reverse = true }, -- StatusLineNC
-      [3] = { bold = true }, -- ModeMsg
-    })
     screen:attach()
     command('vnew')
     insert('foo\nfoo\nfoo')
@@ -195,10 +191,10 @@ describe('insert-mode', function()
       grid = [[
       foo                           │                             |
       foo                           │β^jβ                          |
-      foo                           │{0:~                            }|
-      {0:~                             }│{0:~                            }|
-      {2:[No Name] [+]                  }{1:[No Name] [+]                }|
-      {3:-- INSERT --}                                                |
+      foo                           │{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {2:[No Name] [+]                  }{3:[No Name] [+]                }|
+      {5:-- INSERT --}                                                |
     ]],
     }
     feed('k')
@@ -206,9 +202,9 @@ describe('insert-mode', function()
       grid = [[
       foo                           │                             |
       foo                           │^βββ                          |
-      foo                           │{0:~                            }|
-      {0:~                             }│{0:~                            }|
-      {2:[No Name] [+]                  }{1:[No Name] [+]                }|
+      foo                           │{1:~                            }|
+      {1:~                             }│{1:~                            }|
+      {2:[No Name] [+]                  }{3:[No Name] [+]                }|
                                                                   |
     ]],
     }
@@ -223,10 +219,10 @@ describe('insert-mode', function()
     end
 
     local function test_cols(expected_cols)
-      local cols = { { t.fn.col('.'), t.fn.virtcol('.') } }
+      local cols = { { n.fn.col('.'), n.fn.virtcol('.') } }
       for _ = 2, #expected_cols do
         feed('<BS>')
-        table.insert(cols, { t.fn.col('.'), t.fn.virtcol('.') })
+        table.insert(cols, { n.fn.col('.'), n.fn.virtcol('.') })
       end
       eq(expected_cols, cols)
     end

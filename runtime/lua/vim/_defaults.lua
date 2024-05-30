@@ -107,26 +107,31 @@ do
           vim.inspect(cmd.cmd)
         )
       end
-
-      if err then
-        vim.notify(err, vim.log.levels.ERROR)
-      end
+      return err
     end
 
     local gx_desc =
       'Opens filepath or URI under cursor with the system handler (file explorer, web browser, …)'
     vim.keymap.set({ 'n' }, 'gx', function()
-      do_open(vim.fn.expand('<cfile>'))
+      local err = do_open(require('vim.ui')._get_url())
+      if err then
+        vim.notify(err, vim.log.levels.ERROR)
+      end
     end, { desc = gx_desc })
     vim.keymap.set({ 'x' }, 'gx', function()
       local lines =
         vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'), { type = vim.fn.mode() })
       -- Trim whitespace on each line and concatenate.
-      do_open(table.concat(vim.iter(lines):map(vim.trim):totable()))
+      local err = do_open(table.concat(vim.iter(lines):map(vim.trim):totable()))
+      if err then
+        vim.notify(err, vim.log.levels.ERROR)
+      end
     end, { desc = gx_desc })
   end
 
-  --- Default maps for built-in commenting
+  --- Default maps for built-in commenting.
+  ---
+  --- See |gc-default| and |gcc-default|.
   do
     local operator_rhs = function()
       return require('vim._comment').operator()
@@ -142,6 +147,64 @@ do
       require('vim._comment').textobject()
     end
     vim.keymap.set({ 'o' }, 'gc', textobject_rhs, { desc = 'Comment textobject' })
+  end
+
+  --- Default maps for LSP functions.
+  ---
+  --- These are mapped unconditionally to avoid different behavior depending on whether an LSP
+  --- client is attached. If no client is attached, or if a server does not support a capability, an
+  --- error message is displayed rather than exhibiting different behavior.
+  ---
+  --- See |grr|, |grn|, |gra|, |i_CTRL-S|.
+  do
+    vim.keymap.set('n', 'grn', function()
+      vim.lsp.buf.rename()
+    end, { desc = 'vim.lsp.buf.rename()' })
+
+    vim.keymap.set({ 'n', 'x' }, 'gra', function()
+      vim.lsp.buf.code_action()
+    end, { desc = 'vim.lsp.buf.code_action()' })
+
+    vim.keymap.set('n', 'grr', function()
+      vim.lsp.buf.references()
+    end, { desc = 'vim.lsp.buf.references()' })
+
+    vim.keymap.set('i', '<C-S>', function()
+      vim.lsp.buf.signature_help()
+    end, { desc = 'vim.lsp.buf.signature_help()' })
+  end
+
+  --- Map [d and ]d to move to the previous/next diagnostic. Map <C-W>d to open a floating window
+  --- for the diagnostic under the cursor.
+  ---
+  --- See |[d-default|, |]d-default|, and |CTRL-W_d-default|.
+  do
+    vim.keymap.set('n', ']d', function()
+      vim.diagnostic.jump({ count = vim.v.count1 })
+    end, { desc = 'Jump to the next diagnostic in the current buffer' })
+
+    vim.keymap.set('n', '[d', function()
+      vim.diagnostic.jump({ count = -vim.v.count1 })
+    end, { desc = 'Jump to the previous diagnostic in the current buffer' })
+
+    vim.keymap.set('n', ']D', function()
+      vim.diagnostic.jump({ count = math.huge, wrap = false })
+    end, { desc = 'Jump to the last diagnostic in the current buffer' })
+
+    vim.keymap.set('n', '[D', function()
+      vim.diagnostic.jump({ count = -math.huge, wrap = false })
+    end, { desc = 'Jump to the first diagnostic in the current buffer' })
+
+    vim.keymap.set('n', '<C-W>d', function()
+      vim.diagnostic.open_float()
+    end, { desc = 'Show diagnostics under the cursor' })
+
+    vim.keymap.set(
+      'n',
+      '<C-W><C-D>',
+      '<C-W>d',
+      { remap = true, desc = 'Show diagnostics under the cursor' }
+    )
   end
 end
 
@@ -193,8 +256,9 @@ do
 
   vim.api.nvim_create_autocmd('TermRequest', {
     group = nvim_terminal_augroup,
-    desc = 'Respond to OSC foreground/background color requests',
+    desc = 'Handles OSC foreground/background color requests',
     callback = function(args)
+      --- @type integer
       local channel = vim.bo[args.buf].channel
       if channel == 0 then
         return
@@ -238,232 +302,146 @@ do
         return
       end
       vim.v.swapchoice = 'e' -- Choose "(E)dit".
-      vim.notify(('W325: Ignoring swapfile from Nvim process %d'):format(info.pid))
+      vim.notify(
+        ('W325: Ignoring swapfile from Nvim process %d'):format(info.pid),
+        vim.log.levels.WARN
+      )
     end,
   })
-end
 
--- Only do the following when the TUI is attached
-local tty = nil
-for _, ui in ipairs(vim.api.nvim_list_uis()) do
-  if ui.chan == 1 and ui.stdout_tty then
-    tty = ui
-    break
-  end
-end
-
-if tty then
-  local group = vim.api.nvim_create_augroup('nvim_tty', {})
-
-  --- Set an option after startup (so that OptionSet is fired), but only if not
-  --- already set by the user.
-  ---
-  --- @param option string Option name
-  --- @param value any Option value
-  local function setoption(option, value)
-    if vim.api.nvim_get_option_info2(option, {}).was_set then
-      -- Don't do anything if option is already set
-      return
-    end
-
-    -- Wait until Nvim is finished starting to set the option to ensure the
-    -- OptionSet event fires.
-    if vim.v.vim_did_enter == 1 then
-      vim.o[option] = value
-    else
-      vim.api.nvim_create_autocmd('VimEnter', {
-        group = group,
-        once = true,
-        nested = true,
-        callback = function()
-          setoption(option, value)
-        end,
-      })
+  -- Only do the following when the TUI is attached
+  local tty = nil
+  for _, ui in ipairs(vim.api.nvim_list_uis()) do
+    if ui.chan == 1 and ui.stdout_tty then
+      tty = ui
+      break
     end
   end
 
-  --- Guess value of 'background' based on terminal color.
-  ---
-  --- We write Operating System Command (OSC) 11 to the terminal to request the
-  --- terminal's background color. We then wait for a response. If the response
-  --- matches `rgba:RRRR/GGGG/BBBB/AAAA` where R, G, B, and A are hex digits, then
-  --- compute the luminance[1] of the RGB color and classify it as light/dark
-  --- accordingly. Note that the color components may have anywhere from one to
-  --- four hex digits, and require scaling accordingly as values out of 4, 8, 12,
-  --- or 16 bits. Also note the A(lpha) component is optional, and is parsed but
-  --- ignored in the calculations.
-  ---
-  --- [1] https://en.wikipedia.org/wiki/Luma_%28video%29
-  do
-    --- Parse a string of hex characters as a color.
+  if tty then
+    local group = vim.api.nvim_create_augroup('nvim_tty', {})
+
+    --- Set an option after startup (so that OptionSet is fired), but only if not
+    --- already set by the user.
     ---
-    --- The string can contain 1 to 4 hex characters. The returned value is
-    --- between 0.0 and 1.0 (inclusive) representing the intensity of the color.
-    ---
-    --- For instance, if only a single hex char "a" is used, then this function
-    --- returns 0.625 (10 / 16), while a value of "aa" would return 0.664 (170 /
-    --- 256).
-    ---
-    --- @param c string Color as a string of hex chars
-    --- @return number? Intensity of the color
-    local function parsecolor(c)
-      if #c == 0 or #c > 4 then
-        return nil
+    --- @param option string Option name
+    --- @param value any Option value
+    local function setoption(option, value)
+      if vim.api.nvim_get_option_info2(option, {}).was_set then
+        -- Don't do anything if option is already set
+        return
       end
 
-      local val = tonumber(c, 16)
-      if not val then
-        return nil
+      -- Wait until Nvim is finished starting to set the option to ensure the
+      -- OptionSet event fires.
+      if vim.v.vim_did_enter == 1 then
+        --- @diagnostic disable-next-line:no-unknown
+        vim.o[option] = value
+      else
+        vim.api.nvim_create_autocmd('VimEnter', {
+          group = group,
+          once = true,
+          nested = true,
+          callback = function()
+            setoption(option, value)
+          end,
+        })
       end
-
-      local max = tonumber(string.rep('f', #c), 16)
-      return val / max
     end
 
-    --- Parse an OSC 11 response
+    --- Guess value of 'background' based on terminal color.
     ---
-    --- Either of the two formats below are accepted:
+    --- We write Operating System Command (OSC) 11 to the terminal to request the
+    --- terminal's background color. We then wait for a response. If the response
+    --- matches `rgba:RRRR/GGGG/BBBB/AAAA` where R, G, B, and A are hex digits, then
+    --- compute the luminance[1] of the RGB color and classify it as light/dark
+    --- accordingly. Note that the color components may have anywhere from one to
+    --- four hex digits, and require scaling accordingly as values out of 4, 8, 12,
+    --- or 16 bits. Also note the A(lpha) component is optional, and is parsed but
+    --- ignored in the calculations.
     ---
-    ---   OSC 11 ; rgb:<red>/<green>/<blue>
-    ---
-    --- or
-    ---
-    ---   OSC 11 ; rgba:<red>/<green>/<blue>/<alpha>
-    ---
-    --- where
-    ---
-    ---   <red>, <green>, <blue>, <alpha> := h | hh | hhh | hhhh
-    ---
-    --- The alpha component is ignored, if present.
-    ---
-    --- @param resp string OSC 11 response
-    --- @return string? Red component
-    --- @return string? Green component
-    --- @return string? Blue component
-    local function parseosc11(resp)
-      local r, g, b
-      r, g, b = resp:match('^\027%]11;rgb:(%x+)/(%x+)/(%x+)$')
-      if not r and not g and not b then
-        local a
-        r, g, b, a = resp:match('^\027%]11;rgba:(%x+)/(%x+)/(%x+)/(%x+)$')
-        if not a or #a > 4 then
-          return nil, nil, nil
+    --- [1] https://en.wikipedia.org/wiki/Luma_%28video%29
+    do
+      --- Parse a string of hex characters as a color.
+      ---
+      --- The string can contain 1 to 4 hex characters. The returned value is
+      --- between 0.0 and 1.0 (inclusive) representing the intensity of the color.
+      ---
+      --- For instance, if only a single hex char "a" is used, then this function
+      --- returns 0.625 (10 / 16), while a value of "aa" would return 0.664 (170 /
+      --- 256).
+      ---
+      --- @param c string Color as a string of hex chars
+      --- @return number? Intensity of the color
+      local function parsecolor(c)
+        if #c == 0 or #c > 4 then
+          return nil
         end
+
+        local val = tonumber(c, 16)
+        if not val then
+          return nil
+        end
+
+        local max = tonumber(string.rep('f', #c), 16)
+        return val / max
       end
 
-      if r and g and b and #r <= 4 and #g <= 4 and #b <= 4 then
-        return r, g, b
-      end
-
-      return nil, nil, nil
-    end
-
-    local timer = assert(vim.uv.new_timer())
-
-    local id = vim.api.nvim_create_autocmd('TermResponse', {
-      group = group,
-      nested = true,
-      callback = function(args)
-        local resp = args.data ---@type string
-        local r, g, b = parseosc11(resp)
-        if r and g and b then
-          local rr = parsecolor(r)
-          local gg = parsecolor(g)
-          local bb = parsecolor(b)
-
-          if rr and gg and bb then
-            local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
-            local bg = luminance < 0.5 and 'dark' or 'light'
-            setoption('background', bg)
+      --- Parse an OSC 11 response
+      ---
+      --- Either of the two formats below are accepted:
+      ---
+      ---   OSC 11 ; rgb:<red>/<green>/<blue>
+      ---
+      --- or
+      ---
+      ---   OSC 11 ; rgba:<red>/<green>/<blue>/<alpha>
+      ---
+      --- where
+      ---
+      ---   <red>, <green>, <blue>, <alpha> := h | hh | hhh | hhhh
+      ---
+      --- The alpha component is ignored, if present.
+      ---
+      --- @param resp string OSC 11 response
+      --- @return string? Red component
+      --- @return string? Green component
+      --- @return string? Blue component
+      local function parseosc11(resp)
+        local r, g, b
+        r, g, b = resp:match('^\027%]11;rgb:(%x+)/(%x+)/(%x+)$')
+        if not r and not g and not b then
+          local a
+          r, g, b, a = resp:match('^\027%]11;rgba:(%x+)/(%x+)/(%x+)/(%x+)$')
+          if not a or #a > 4 then
+            return nil, nil, nil
           end
-
-          return true
         end
-      end,
-    })
 
-    io.stdout:write('\027]11;?\007')
+        if r and g and b and #r <= 4 and #g <= 4 and #b <= 4 then
+          return r, g, b
+        end
 
-    timer:start(1000, 0, function()
-      -- Delete the autocommand if no response was received
-      vim.schedule(function()
-        -- Suppress error if autocommand has already been deleted
-        pcall(vim.api.nvim_del_autocmd, id)
-      end)
-
-      if not timer:is_closing() then
-        timer:close()
+        return nil, nil, nil
       end
-    end)
-  end
-
-  --- If the TUI (term_has_truecolor) was able to determine that the host
-  --- terminal supports truecolor, enable 'termguicolors'. Otherwise, query the
-  --- terminal (using both XTGETTCAP and SGR + DECRQSS). If the terminal's
-  --- response indicates that it does support truecolor enable 'termguicolors',
-  --- but only if the user has not already disabled it.
-  do
-    if tty.rgb then
-      -- The TUI was able to determine truecolor support
-      setoption('termguicolors', true)
-    else
-      local caps = {} ---@type table<string, boolean>
-      require('vim.termcap').query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
-        if not found then
-          return
-        end
-
-        caps[cap] = true
-        if caps.Tc or caps.RGB or (caps.setrgbf and caps.setrgbb) then
-          setoption('termguicolors', true)
-        end
-      end)
 
       local timer = assert(vim.uv.new_timer())
-
-      -- Arbitrary colors to set in the SGR sequence
-      local r = 1
-      local g = 2
-      local b = 3
 
       local id = vim.api.nvim_create_autocmd('TermResponse', {
         group = group,
         nested = true,
         callback = function(args)
           local resp = args.data ---@type string
-          local decrqss = resp:match('^\027P1%$r([%d;:]+)m$')
+          local r, g, b = parseosc11(resp)
+          if r and g and b then
+            local rr = parsecolor(r)
+            local gg = parsecolor(g)
+            local bb = parsecolor(b)
 
-          if decrqss then
-            -- The DECRQSS SGR response first contains attributes separated by
-            -- semicolons, followed by the SGR itself with parameters separated
-            -- by colons. Some terminals include "0" in the attribute list
-            -- unconditionally; others do not. Our SGR sequence did not set any
-            -- attributes, so there should be no attributes in the list.
-            local attrs = vim.split(decrqss, ';')
-            if #attrs ~= 1 and (#attrs ~= 2 or attrs[1] ~= '0') then
-              return false
-            end
-
-            -- The returned SGR sequence should begin with 48:2
-            local sgr = attrs[#attrs]:match('^48:2:([%d:]+)$')
-            if not sgr then
-              return false
-            end
-
-            -- The remaining elements of the SGR sequence should be the 3 colors
-            -- we set. Some terminals also include an additional parameter
-            -- (which can even be empty!), so handle those cases as well
-            local params = vim.split(sgr, ':')
-            if #params ~= 3 and (#params ~= 4 or (params[1] ~= '' and params[1] ~= '1')) then
-              return true
-            end
-
-            if
-              tonumber(params[#params - 2]) == r
-              and tonumber(params[#params - 1]) == g
-              and tonumber(params[#params]) == b
-            then
-              setoption('termguicolors', true)
+            if rr and gg and bb then
+              local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
+              local bg = luminance < 0.5 and 'dark' or 'light'
+              setoption('background', bg)
             end
 
             return true
@@ -471,16 +449,7 @@ if tty then
         end,
       })
 
-      -- Write SGR followed by DECRQSS. This sets the background color then
-      -- immediately asks the terminal what the background color is. If the
-      -- terminal responds to the DECRQSS with the same SGR sequence that we
-      -- sent then the terminal supports truecolor.
-      local decrqss = '\027P$qm\027\\'
-      if os.getenv('TMUX') then
-        decrqss = string.format('\027Ptmux;%s\027\\', decrqss:gsub('\027', '\027\027'))
-      end
-      -- Reset attributes first, as other code may have set attributes.
-      io.stdout:write(string.format('\027[0m\027[48;2;%d;%d;%dm%s', r, g, b, decrqss))
+      io.stdout:write('\027]11;?\007')
 
       timer:start(1000, 0, function()
         -- Delete the autocommand if no response was received
@@ -494,13 +463,114 @@ if tty then
         end
       end)
     end
+
+    --- If the TUI (term_has_truecolor) was able to determine that the host
+    --- terminal supports truecolor, enable 'termguicolors'. Otherwise, query the
+    --- terminal (using both XTGETTCAP and SGR + DECRQSS). If the terminal's
+    --- response indicates that it does support truecolor enable 'termguicolors',
+    --- but only if the user has not already disabled it.
+    do
+      if tty.rgb then
+        -- The TUI was able to determine truecolor support
+        setoption('termguicolors', true)
+      else
+        local caps = {} ---@type table<string, boolean>
+        require('vim.termcap').query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
+          if not found then
+            return
+          end
+
+          caps[cap] = true
+          if caps.Tc or caps.RGB or (caps.setrgbf and caps.setrgbb) then
+            setoption('termguicolors', true)
+          end
+        end)
+
+        local timer = assert(vim.uv.new_timer())
+
+        -- Arbitrary colors to set in the SGR sequence
+        local r = 1
+        local g = 2
+        local b = 3
+
+        local id = vim.api.nvim_create_autocmd('TermResponse', {
+          group = group,
+          nested = true,
+          callback = function(args)
+            local resp = args.data ---@type string
+            local decrqss = resp:match('^\027P1%$r([%d;:]+)m$')
+
+            if decrqss then
+              -- The DECRQSS SGR response first contains attributes separated by
+              -- semicolons, followed by the SGR itself with parameters separated
+              -- by colons. Some terminals include "0" in the attribute list
+              -- unconditionally; others do not. Our SGR sequence did not set any
+              -- attributes, so there should be no attributes in the list.
+              local attrs = vim.split(decrqss, ';')
+              if #attrs ~= 1 and (#attrs ~= 2 or attrs[1] ~= '0') then
+                return false
+              end
+
+              -- The returned SGR sequence should begin with 48:2
+              local sgr = attrs[#attrs]:match('^48:2:([%d:]+)$')
+              if not sgr then
+                return false
+              end
+
+              -- The remaining elements of the SGR sequence should be the 3 colors
+              -- we set. Some terminals also include an additional parameter
+              -- (which can even be empty!), so handle those cases as well
+              local params = vim.split(sgr, ':')
+              if #params ~= 3 and (#params ~= 4 or (params[1] ~= '' and params[1] ~= '1')) then
+                return true
+              end
+
+              if
+                tonumber(params[#params - 2]) == r
+                and tonumber(params[#params - 1]) == g
+                and tonumber(params[#params]) == b
+              then
+                setoption('termguicolors', true)
+              end
+
+              return true
+            end
+          end,
+        })
+
+        -- Write SGR followed by DECRQSS. This sets the background color then
+        -- immediately asks the terminal what the background color is. If the
+        -- terminal responds to the DECRQSS with the same SGR sequence that we
+        -- sent then the terminal supports truecolor.
+        local decrqss = '\027P$qm\027\\'
+        if os.getenv('TMUX') then
+          decrqss = string.format('\027Ptmux;%s\027\\', decrqss:gsub('\027', '\027\027'))
+        end
+        -- Reset attributes first, as other code may have set attributes.
+        io.stdout:write(string.format('\027[0m\027[48;2;%d;%d;%dm%s', r, g, b, decrqss))
+
+        timer:start(1000, 0, function()
+          -- Delete the autocommand if no response was received
+          vim.schedule(function()
+            -- Suppress error if autocommand has already been deleted
+            pcall(vim.api.nvim_del_autocmd, id)
+          end)
+
+          if not timer:is_closing() then
+            timer:close()
+          end
+        end)
+      end
+    end
   end
 end
 
---- Default 'grepprg' to ripgrep if available.
-if vim.fn.executable('rg') == 1 then
-  -- Match :grep default, otherwise rg searches cwd by default
-  -- Use -uuu to make ripgrep not do its default filtering
-  vim.o.grepprg = 'rg --vimgrep -uuu $* ' .. (vim.fn.has('unix') == 1 and '/dev/null' or 'nul')
-  vim.o.grepformat = '%f:%l:%c:%m'
+--- Default options
+do
+  --- Default 'grepprg' to ripgrep if available.
+  if vim.fn.executable('rg') == 1 then
+    -- Use -uu to make ripgrep not check ignore files/skip dot-files
+    vim.o.grepprg = 'rg --vimgrep -uu '
+    vim.o.grepformat = '%f:%l:%c:%m'
+  end
 end

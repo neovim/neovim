@@ -1,14 +1,17 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local exec_lua = t.exec_lua
+local clear = n.clear
+local exec_lua = n.exec_lua
 local eq = t.eq
-local mkdir_p = t.mkdir_p
-local rmdir = t.rmdir
-local nvim_dir = t.nvim_dir
+local mkdir_p = n.mkdir_p
+local rmdir = n.rmdir
+local nvim_dir = n.nvim_dir
+local command = n.command
+local api = n.api
 local test_build_dir = t.paths.test_build_dir
 local test_source_path = t.paths.test_source_path
-local nvim_prog = t.nvim_prog
+local nvim_prog = n.nvim_prog
 local is_os = t.is_os
 local mkdir = t.mkdir
 
@@ -274,6 +277,57 @@ describe('vim.fs', function()
           end, opts)
         )
       )
+    end)
+  end)
+
+  describe('root()', function()
+    before_each(function()
+      command('edit test/functional/fixtures/tty-test.c')
+    end)
+
+    it('works with a single marker', function()
+      eq(test_source_path, exec_lua([[return vim.fs.root(0, '.git')]]))
+    end)
+
+    it('works with multiple markers', function()
+      local bufnr = api.nvim_get_current_buf()
+      eq(
+        vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
+        exec_lua([[return vim.fs.root(..., {'CMakeLists.txt', '.git'})]], bufnr)
+      )
+    end)
+
+    it('works with a function', function()
+      ---@type string
+      local result = exec_lua([[
+        return vim.fs.root(0, function(name, path)
+          return name:match('%.txt$')
+        end)
+      ]])
+      eq(vim.fs.joinpath(test_source_path, 'test/functional/fixtures'), result)
+    end)
+
+    it('works with a filename argument', function()
+      eq(test_source_path, exec_lua([[return vim.fs.root(..., '.git')]], nvim_prog))
+    end)
+
+    it('works with a relative path', function()
+      eq(
+        test_source_path,
+        exec_lua([[return vim.fs.root(..., '.git')]], vim.fs.basename(nvim_prog))
+      )
+    end)
+
+    it('uses cwd for unnamed buffers', function()
+      command('new')
+      eq(test_source_path, exec_lua([[return vim.fs.root(0, '.git')]]))
+    end)
+
+    it("uses cwd for buffers with non-empty 'buftype'", function()
+      command('new')
+      command('set buftype=nofile')
+      command('file lua://')
+      eq(test_source_path, exec_lua([[return vim.fs.root(0, '.git')]]))
     end)
   end)
 

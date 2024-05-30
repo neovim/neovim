@@ -461,8 +461,24 @@ nasm_loose_syntax	unofficial parser allowed syntax not as Error
 nasm_ctx_outside_macro	contexts outside macro not as Error
 nasm_no_warn		potentially risky syntax not as ToDo
 
+ASTRO						*astro.vim* *ft-astro-syntax*
 
-ASPPERL and ASPVBS			*ft-aspperl-syntax* *ft-aspvbs-syntax*
+Configuration
+
+The following variables control certain syntax highlighting features.
+You can add them to your .vimrc: >
+	let g:astro_typescript = "enable"
+<
+Enables TypeScript and TSX for ".astro" files. Default Value: "disable" >
+	let g:astro_stylus = "enable"
+<
+Enables Stylus for ".astro" files. Default Value: "disable"
+
+NOTE: You need to install an external plugin to support stylus in astro files.
+
+
+ASPPERL							*ft-aspperl-syntax*
+ASPVBS							*ft-aspvbs-syntax*
 
 `*.asp` and `*.asa` files could be either Perl or Visual Basic script.  Since it's
 hard to detect this you can set two global variables to tell Vim what you are
@@ -998,9 +1014,9 @@ Two syntax highlighting files exist for Euphoria. One for Euphoria
 version 3.1.1, which is the default syntax highlighting file, and one for
 Euphoria version 4.0.5 or later.
 
-Euphoria version 3.1.1 (https://www.rapideuphoria.com/) is still necessary
-for developing applications for the DOS platform, which Euphoria version 4
-(https://www.openeuphoria.org/) does not support.
+Euphoria version 3.1.1 (https://www.rapideuphoria.com/ link seems dead) is
+still necessary for developing applications for the DOS platform, which
+Euphoria version 4 (https://www.openeuphoria.org/) does not support.
 
 The following file extensions are auto-detected as Euphoria file type: >
 
@@ -1057,7 +1073,8 @@ Elixir.
 
 FLEXWIKI				*flexwiki.vim* *ft-flexwiki-syntax*
 
-FlexWiki is an ASP.NET-based wiki package available at https://www.flexwiki.com
+FlexWiki is an ASP.NET-based wiki package available at
+https://www.flexwiki.com
 NOTE: This site currently doesn't work, on Wikipedia is mentioned that
 development stopped in 2009.
 
@@ -1527,15 +1544,25 @@ Function names are not highlighted, as the way to find functions depends on
 how you write Java code.  The syntax file knows two possible ways to highlight
 functions:
 
-If you write function declarations that are always indented by either
-a tab, 8 spaces or 2 spaces you may want to set >
+If you write function declarations that are consistently indented by either
+a tab, or a space . . . or eight space character(s), you may want to set >
 	:let java_highlight_functions="indent"
+	:let java_highlight_functions="indent1"
+	:let java_highlight_functions="indent2"
+	:let java_highlight_functions="indent3"
+	:let java_highlight_functions="indent4"
+	:let java_highlight_functions="indent5"
+	:let java_highlight_functions="indent6"
+	:let java_highlight_functions="indent7"
+	:let java_highlight_functions="indent8"
+Note that in terms of 'shiftwidth', this is the leftmost step of indentation.
 However, if you follow the Java guidelines about how functions and classes are
-supposed to be named (with respect to upper and lowercase), use >
+supposed to be named (with respect to upper- and lowercase) and there is any
+amount of indentation, you may want to set >
 	:let java_highlight_functions="style"
-If both options do not work for you, but you would still want function
-declarations to be highlighted create your own definitions by changing the
-definitions in java.vim or by creating your own java.vim which includes the
+If neither setting does work for you, but you would still want function
+declarations to be highlighted, create your own definitions by changing the
+definitions in java.vim or by creating your own java.vim that includes the
 original one and then adds the code to highlight functions.
 
 In Java 1.1 the functions System.out.println() and System.err.println() should
@@ -1597,6 +1624,15 @@ default. To disable concealment: >
 
 To disable syntax highlighting of errors: >
 	let g:vim_json_warnings = 0
+
+
+JQ				*jq.vim* *jq_quote_highlight* *ft-jq-syntax*
+
+To disable numbers having their own color add the following to your vimrc: >
+	hi link jqNumber Normal
+
+If you want quotes to have different highlighting than strings >
+	let g:jq_quote_highlight = 1
 
 
 LACE						*lace.vim* *ft-lace-syntax*
@@ -2197,8 +2233,8 @@ perl_string_as_statement, it will be highlighted as in the second line.
 The syncing has 3 options.  The first two switch off some triggering of
 synchronization and should only be needed in case it fails to work properly.
 If while scrolling all of a sudden the whole screen changes color completely
-then you should try and switch off one of those.  Let me know if you can
-figure out the line that causes the mistake.
+then you should try and switch off one of those.  Let the developer know if
+you can figure out the line that causes the mistake.
 
 One triggers on "^\s*sub\s*" and the other on "^[$@%]" more or less. >
 
@@ -3253,6 +3289,19 @@ set "tf_minlines" to the value you desire.  Example: >
 
 	:let tf_minlines = your choice
 <
+TYPESCRIPT				*typescript.vim* *ft-typescript-syntax*
+				*typescriptreact.vim* *ft-typescriptreact-syntax*
+
+There is one option to control the TypeScript syntax highlighting.
+
+						*g:typescript_host_keyword*
+When this variable is set to 1, host-specific APIs such as `addEventListener`
+are highlighted. To disable set it to zero in your .vimrc: >
+
+	let g:typescript_host_keyword = 0
+<
+The default value is 1.
+
 VIM			*vim.vim*		*ft-vim-syntax*
 			*g:vimsyn_minlines*	*g:vimsyn_maxlines*
 There is a trade-off between more accurate syntax highlighting versus screen
@@ -3810,7 +3859,9 @@ Whether or not it is actually concealed depends on the value of the
 'conceallevel' option.  The 'concealcursor' option is used to decide whether
 concealable items in the current line are displayed unconcealed to be able to
 edit the line.
-Another way to conceal text is with |matchadd()|.
+
+Another way to conceal text is with |matchadd()|, but internally this works a
+bit differently |syntax-vs-match|.
 
 concealends						*:syn-concealends*
 
@@ -3818,7 +3869,9 @@ When the "concealends" argument is given, the start and end matches of
 the region, but not the contents of the region, are marked as concealable.
 Whether or not they are actually concealed depends on the setting on the
 'conceallevel' option. The ends of a region can only be concealed separately
-in this way when they have their own highlighting via "matchgroup"
+in this way when they have their own highlighting via "matchgroup".  The
+|synconcealed()| function can be used to retrieve information about conealed
+items.
 
 cchar							*:syn-cchar*
 							*E844*
@@ -5016,6 +5069,8 @@ QuickFixLine	Current |quickfix| item in the quickfix window. Combined with
 							*hl-Search*
 Search		Last search pattern highlighting (see 'hlsearch').
 		Also used for similar items that need to stand out.
+							*hl-SnippetTabstop*
+SnippetTabstop	Tabstops in snippets. |vim.snippet|
 							*hl-SpecialKey*
 SpecialKey	Unprintable characters: Text displayed differently from what
 		it really is. But not 'listchars' whitespace. |hl-Whitespace|

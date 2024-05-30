@@ -126,6 +126,7 @@ int file_open_fd(FileDescriptor *const ret_fp, const int fd, const int flags)
     ret_fp->rv->data = ret_fp;
     ret_fp->rv->full_cb = (rbuffer_callback)&file_rb_write_full_cb;
   }
+  ret_fp->bytes_read = 0;
   return 0;
 }
 
@@ -140,6 +141,18 @@ int file_open_stdin(FileDescriptor *fp)
   return error;
 }
 
+/// opens buffer for reading
+void file_open_buffer(FileDescriptor *ret_fp, char *data, size_t len)
+{
+  ret_fp->wr = false;
+  ret_fp->non_blocking = false;
+  ret_fp->fd = -1;
+  ret_fp->eof = true;
+  ret_fp->rv = rbuffer_new_wrap_buf(data, len);
+  ret_fp->_error = 0;
+  ret_fp->bytes_read = 0;
+}
+
 /// Close file and free its buffer
 ///
 /// @param[in,out]  fp  File to close.
@@ -149,6 +162,11 @@ int file_open_stdin(FileDescriptor *fp)
 int file_close(FileDescriptor *const fp, const bool do_fsync)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (fp->fd < 0) {
+    rbuffer_free(fp->rv);
+    return 0;
+  }
+
   const int flush_error = (do_fsync ? file_fsync(fp) : file_flush(fp));
   const int close_error = os_close(fp->fd);
   rbuffer_free(fp->rv);
@@ -294,6 +312,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf, const size_t 
                                         fp->non_blocking);
         if (r_ret >= 0) {
           read_remaining -= (size_t)r_ret;
+          fp->bytes_read += (size - read_remaining);
           return (ptrdiff_t)(size - read_remaining);
         } else if (r_ret < 0) {
           return r_ret;
@@ -314,6 +333,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf, const size_t 
       called_read = true;
     }
   }
+  fp->bytes_read += (size - read_remaining);
   return (ptrdiff_t)(size - read_remaining);
 }
 
@@ -364,15 +384,4 @@ ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
   } while (read_bytes < size && !file_eof(fp));
 
   return (ptrdiff_t)read_bytes;
-}
-
-/// Print error which occurs when failing to write msgpack data
-///
-/// @param[in]  error  Error code of the error to print.
-///
-/// @return -1 (error return for msgpack_packer callbacks).
-int msgpack_file_write_error(const int error)
-{
-  semsg(_("E5420: Failed to write to file: %s"), os_strerror(error));
-  return -1;
 }

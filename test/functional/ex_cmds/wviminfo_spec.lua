@@ -1,6 +1,8 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local command, eq, neq, write_file = t.command, t.eq, t.neq, t.write_file
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local command, eq, neq, write_file = n.command, t.eq, t.neq, t.write_file
 local read_file = t.read_file
 local is_os = t.is_os
 

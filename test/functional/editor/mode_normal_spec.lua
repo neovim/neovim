@@ -1,10 +1,13 @@
 -- Normal mode tests.
 
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local feed = t.feed
-local fn = t.fn
-local command = t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
+
+local clear = n.clear
+local feed = n.feed
+local fn = n.fn
+local command = n.command
 local eq = t.eq
 
 describe('Normal mode', function()
@@ -18,5 +21,24 @@ describe('Normal mode', function()
     command('setlocal winblend=10 winhighlight=Visual:Search')
     feed('k')
     eq(pos, fn.getcurpos())
+  end)
+
+  it('&showcmd does not crash with :startinsert #28419', function()
+    local screen = Screen.new(60, 17)
+    screen:attach()
+    fn.termopen(
+      { n.nvim_prog, '--clean', '--cmd', 'startinsert' },
+      { env = { VIMRUNTIME = os.getenv('VIMRUNTIME') } }
+    )
+    screen:expect({
+      grid = [[
+        ^                                                            |
+        ~                                                           |*13
+        [No Name]                                 0,1            All|
+        -- INSERT --                                                |
+                                                                    |
+      ]],
+      attr_ids = {},
+    })
   end)
 end)

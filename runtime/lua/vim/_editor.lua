@@ -494,6 +494,7 @@ do
   vim.t = make_dict_accessor('t')
 end
 
+--- @deprecated
 --- Gets a dict of line segment ("chunk") positions for the region from `pos1` to `pos2`.
 ---
 --- Input and output positions are byte positions, (0,0)-indexed. "End of line" column
@@ -507,6 +508,8 @@ end
 ---@return table region Dict of the form `{linenr = {startcol,endcol}}`. `endcol` is exclusive, and
 ---whole lines are returned as `{startcol,endcol} = {0,-1}`.
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
+  vim.deprecate('vim.region', 'vim.fn.getregionpos()', '0.13')
+
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end
@@ -1031,6 +1034,42 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
   }
 end
 
+do
+  local function truncated_echo(msg)
+    -- Truncate message to avoid hit-enter-prompt
+    local max_width = vim.o.columns * math.max(vim.o.cmdheight - 1, 0) + vim.v.echospace
+    local msg_truncated = string.sub(msg, 1, max_width)
+    vim.api.nvim_echo({ { msg_truncated, 'WarningMsg' } }, true, {})
+  end
+
+  local notified = false
+
+  function vim._truncated_echo_once(msg)
+    if not notified then
+      truncated_echo(msg)
+      notified = true
+      return true
+    end
+    return false
+  end
+end
+
+--- This is basically the same as debug.traceback(), except the full paths are shown.
+local function traceback()
+  local level = 4
+  local backtrace = { 'stack traceback:' }
+  while true do
+    local info = debug.getinfo(level, 'Sl')
+    if not info then
+      break
+    end
+    local msg = ('  %s:%s'):format(info.source:sub(2), info.currentline)
+    table.insert(backtrace, msg)
+    level = level + 1
+  end
+  return table.concat(backtrace, '\n')
+end
+
 --- Shows a deprecation message to the user.
 ---
 ---@param name        string     Deprecated feature (function, API, etc.).
@@ -1042,55 +1081,46 @@ end
 ---
 ---@return string|nil # Deprecated message, or nil if no message was shown.
 function vim.deprecate(name, alternative, version, plugin, backtrace)
-  vim.validate {
-    name = { name, 'string' },
-    alternative = { alternative, 'string', true },
-    version = { version, 'string', true },
-    plugin = { plugin, 'string', true },
-  }
   plugin = plugin or 'Nvim'
-
-  -- Only issue warning if feature is hard-deprecated as specified by MAINTAIN.md.
-  -- e.g., when planned to be removed in version = '0.12' (soft-deprecated since 0.10-dev),
-  -- show warnings since 0.11, including 0.11-dev (hard_deprecated_since = 0.11-dev).
   if plugin == 'Nvim' then
-    local current_version = vim.version() ---@type vim.Version
-    local removal_version = assert(vim.version.parse(version))
-    local is_hard_deprecated ---@type boolean
+    require('vim.deprecated.health').add(name, version, traceback(), alternative)
 
-    if removal_version.minor > 0 then
-      local hard_deprecated_since = assert(vim.version._version({
-        major = removal_version.major,
-        minor = removal_version.minor - 1,
-        patch = 0,
-        prerelease = 'dev', -- Show deprecation warnings in devel (nightly) version as well
-      }))
-      is_hard_deprecated = (current_version >= hard_deprecated_since)
-    else
-      -- Assume there will be no next minor version before bumping up the major version;
-      -- therefore we can always show a warning.
-      assert(removal_version.minor == 0, vim.inspect(removal_version))
-      is_hard_deprecated = true
-    end
+    -- Only issue warning if feature is hard-deprecated as specified by MAINTAIN.md.
+    -- Example: if removal_version is 0.12 (soft-deprecated since 0.10-dev), show warnings starting at
+    -- 0.11, including 0.11-dev
+    local major, minor = version:match('(%d+)%.(%d+)')
+    major, minor = tonumber(major), tonumber(minor)
 
+    local hard_deprecated_since = string.format('nvim-%d.%d', major, minor - 1)
+    -- Assume there will be no next minor version before bumping up the major version
+    local is_hard_deprecated = minor == 0 or vim.fn.has(hard_deprecated_since) == 1
     if not is_hard_deprecated then
       return
     end
-  end
 
-  local msg = ('%s is deprecated'):format(name)
-  msg = alternative and ('%s, use %s instead.'):format(msg, alternative) or (msg .. '.')
-  msg = ('%s%s\nThis feature will be removed in %s version %s'):format(
-    msg,
-    (plugin == 'Nvim' and ' :help deprecated' or ''),
-    plugin,
-    version
-  )
-  local displayed = vim.notify_once(msg, vim.log.levels.WARN)
-  if displayed and backtrace ~= false then
-    vim.notify(debug.traceback('', 2):sub(2), vim.log.levels.WARN)
+    local msg = ('%s is deprecated. Run ":checkhealth vim.deprecated" for more information'):format(
+      name
+    )
+
+    local displayed = vim._truncated_echo_once(msg)
+    return displayed and msg or nil
+  else
+    vim.validate {
+      name = { name, 'string' },
+      alternative = { alternative, 'string', true },
+      version = { version, 'string', true },
+      plugin = { plugin, 'string', true },
+    }
+
+    local msg = ('%s is deprecated'):format(name)
+    msg = alternative and ('%s, use %s instead.'):format(msg, alternative) or (msg .. '.')
+    msg = ('%s\nFeature will be removed in %s %s'):format(msg, plugin, version)
+    local displayed = vim.notify_once(msg, vim.log.levels.WARN)
+    if displayed and backtrace ~= false then
+      vim.notify(debug.traceback('', 2):sub(2), vim.log.levels.WARN)
+    end
+    return displayed and msg or nil
   end
-  return displayed and msg or nil
 end
 
 require('vim._options')

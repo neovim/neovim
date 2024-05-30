@@ -2,9 +2,10 @@
 -- Since this script is sourced we need to explicitly break changes up in
 -- undo-able pieces.  Do that by setting 'undolevels'.
 
-local t = require('test.functional.testutil')()
-local feed, insert = t.feed, t.insert
-local clear, feed_command, expect = t.clear, t.feed_command, t.expect
+local n = require('test.functional.testnvim')()
+
+local feed, insert = n.feed, n.insert
+local clear, feed_command, expect = n.clear, n.feed_command, n.expect
 
 describe('72', function()
   setup(clear)

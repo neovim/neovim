@@ -1,8 +1,9 @@
-local t = require('test.functional.testutil')()
-local command = t.command
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear, feed, feed_command = t.clear, t.feed, t.feed_command
-local exec = t.exec
+
+local command = n.command
+local clear, feed, feed_command = n.clear, n.feed, n.feed_command
+local exec = n.exec
 
 describe(':drop', function()
   local screen

@@ -1,8 +1,10 @@
-local t = require('test.functional.testutil')()
-local clear, command = t.clear, t.command
-local expect, feed = t.expect, t.feed
-local eq, eval = t.eq, t.eval
-local fn = t.fn
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, command = n.clear, n.command
+local expect, feed = n.expect, n.feed
+local eq, eval = t.eq, n.eval
+local fn = n.fn
 
 describe(':emenu', function()
   before_each(function()

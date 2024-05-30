@@ -51,6 +51,9 @@ mapclear!
 aunmenu *
 tlunmenu *
 
+" Undo the 'grepprg' and 'grepformat' setting in _defaults.lua.
+set grepprg& grepformat&
+
 " roughly equivalent to test_setmouse() in Vim
 func Ntest_setmouse(row, col)
   call nvim_input_mouse('move', '', '', 0, a:row - 1, a:col - 1)

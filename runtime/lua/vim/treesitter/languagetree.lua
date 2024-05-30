@@ -225,7 +225,10 @@ function LanguageTree:_log(...)
   self._logger('nvim', table.concat(msg, ' '))
 end
 
---- Invalidates this parser and all its children
+--- Invalidates this parser and its children.
+---
+--- Should only be called when the tracked state of the LanguageTree is not valid against the parse
+--- tree in treesitter. Doesn't clear filesystem cache. Called often, so needs to be fast.
 ---@param reload boolean|nil
 function LanguageTree:invalidate(reload)
   self._valid = false
@@ -458,24 +461,6 @@ function LanguageTree:parse(range)
   end
 
   return self._trees
-end
-
----@deprecated Misleading name. Use `LanguageTree:children()` (non-recursive) instead,
----            add recursion yourself if needed.
---- Invokes the callback for each |LanguageTree| and its children recursively
----
----@param fn fun(tree: vim.treesitter.LanguageTree, lang: string)
----@param include_self? boolean Whether to include the invoking tree in the results
-function LanguageTree:for_each_child(fn, include_self)
-  vim.deprecate('LanguageTree:for_each_child()', 'LanguageTree:children()', '0.11')
-  if include_self then
-    fn(self, self._lang)
-  end
-
-  for _, child in pairs(self._children) do
-    --- @diagnostic disable-next-line:deprecated
-    child:for_each_child(fn, true)
-  end
 end
 
 --- Invokes the callback for each |LanguageTree| recursively.
@@ -758,7 +743,6 @@ local has_parser = vim.func._memoize(1, function(lang)
 end)
 
 --- Return parser name for language (if exists) or filetype (if registered and exists).
---- Also attempts with the input lower-cased.
 ---
 ---@param alias string language or filetype name
 ---@return string? # resolved parser name
@@ -772,16 +756,7 @@ local function resolve_lang(alias)
     return alias
   end
 
-  if has_parser(alias:lower()) then
-    return alias:lower()
-  end
-
   local lang = vim.treesitter.language.get_lang(alias)
-  if lang and has_parser(lang) then
-    return lang
-  end
-
-  lang = vim.treesitter.language.get_lang(alias:lower())
   if lang and has_parser(lang) then
     return lang
   end
@@ -808,7 +783,7 @@ function LanguageTree:_get_injection(match, metadata)
       -- Lang should override any other language tag
       if name == 'injection.language' then
         local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
-        lang = resolve_lang(text)
+        lang = resolve_lang(text:lower()) -- language names are always lower case
       elseif name == 'injection.filename' then
         local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
         local ft = vim.filetype.match({ filename = text })

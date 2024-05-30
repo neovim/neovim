@@ -20,6 +20,7 @@ error('Cannot require a meta file')
 ---@field descendant_for_range fun(self: TSNode, start_row: integer, start_col: integer, end_row: integer, end_col: integer): TSNode?
 ---@field named_descendant_for_range fun(self: TSNode, start_row: integer, start_col: integer, end_row: integer, end_col: integer): TSNode?
 ---@field parent fun(self: TSNode): TSNode?
+---@field child_containing_descendant fun(self: TSNode, descendant: TSNode): TSNode?
 ---@field next_sibling fun(self: TSNode): TSNode?
 ---@field prev_sibling fun(self: TSNode): TSNode?
 ---@field next_named_sibling fun(self: TSNode): TSNode?
@@ -60,8 +61,16 @@ local TSNode = {}
 ---@field captures string[]
 ---@field patterns table<integer, (integer|string)[][]>
 
+--- @param lang string
+vim._ts_inspect_language = function(lang) end
+
 ---@return integer
 vim._ts_get_language_version = function() end
+
+--- @param path string
+--- @param lang string
+--- @param symbol_name? string
+vim._ts_add_language = function(path, lang, symbol_name) end
 
 ---@return integer
 vim._ts_get_minimum_language_version = function() end

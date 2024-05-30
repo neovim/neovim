@@ -266,6 +266,19 @@ func Test_zz_recording_with_select_mode_utf8_gui()
   call Run_test_recording_with_select_mode_utf8()
 endfunc
 
+func Test_recording_with_super_mod()
+  if "\<D-j>"[-1:] == '>'
+    throw 'Skipped: <D- modifier not supported'
+  endif
+
+  nnoremap <D-j> <Ignore>
+  let s = repeat("\<D-j>", 1000)
+  " This used to crash Vim
+  call feedkeys($'qr{s}q', 'tx')
+  call assert_equal(s, @r)
+  nunmap <D-j>
+endfunc
+
 " Test for executing the last used register (@)
 func Test_last_used_exec_reg()
   " Test for the @: command

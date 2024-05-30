@@ -63,6 +63,7 @@
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/secure.h"
+#include "nvim/lua/treesitter.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
@@ -355,6 +356,12 @@ int main(int argc, char **argv)
     ui_client_channel_id = rv;
   }
 
+  if (ui_client_channel_id) {
+    time_finish();
+    ui_client_run(remote_ui);  // NORETURN
+  }
+  assert(!ui_client_channel_id && !use_builtin_ui);
+
   TIME_MSG("expanding arguments");
 
   if (params.diff_mode && params.window_count == -1) {
@@ -396,12 +403,6 @@ int main(int argc, char **argv)
   if (!stdin_isatty && !params.input_istext && silent_mode && exmode_active) {
     input_start();
   }
-
-  if (ui_client_channel_id) {
-    time_finish();
-    ui_client_run(remote_ui);  // NORETURN
-  }
-  assert(!ui_client_channel_id && !use_builtin_ui);
 
   // Wait for UIs to set up Nvim or show early messages
   // and prompts (--cmd, swapfile dialog, …).
@@ -641,7 +642,7 @@ int main(int argc, char **argv)
 
   // WORKAROUND(mhi): #3023
   if (cb_flags & CB_UNNAMEDMASK) {
-    eval_has_provider("clipboard");
+    eval_has_provider("clipboard", false);
   }
 
   if (params.luaf != NULL) {
@@ -1099,23 +1100,13 @@ static void command_line_scan(mparm_T *parmp)
           // set stdout to binary to avoid crlf in --api-info output
           _setmode(STDOUT_FILENO, _O_BINARY);
 #endif
-          FileDescriptor fp;
-          const int fof_ret = file_open_fd(&fp, STDOUT_FILENO,
-                                           kFileWriteOnly);
-          if (fof_ret != 0) {
-            semsg(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
-          }
 
           String data = api_metadata_raw();
-          const ptrdiff_t written_bytes = file_write(&fp, data.data, data.size);
+          const ptrdiff_t written_bytes = os_write(STDOUT_FILENO, data.data, data.size, false);
           if (written_bytes < 0) {
-            msgpack_file_write_error((int)written_bytes);
+            semsg(_("E5420: Failed to write to file: %s"), os_strerror((int)written_bytes));
           }
 
-          const int ff_ret = file_flush(&fp);
-          if (ff_ret < 0) {
-            msgpack_file_write_error(ff_ret);
-          }
           os_exit(0);
         } else if (STRICMP(argv[0] + argv_idx, "headless") == 0) {
           headless_mode = true;
@@ -1442,6 +1433,19 @@ scripterror:
       // Add the file to the global argument list.
       ga_grow(&global_alist.al_ga, 1);
       char *p = xstrdup(argv[0]);
+
+      // On Windows expand "~\" or "~/" prefix in file names to profile directory.
+#ifdef MSWIN
+      if (*p == '~' && (p[1] == '\\' || p[1] == '/')) {
+        char *profile_dir = vim_getenv("HOME");
+        size_t size = strlen(profile_dir) + strlen(p);
+        char *tilde_expanded = xmalloc(size);
+        snprintf(tilde_expanded, size, "%s%s", profile_dir, p + 1);
+        xfree(p);
+        xfree(profile_dir);
+        p = tilde_expanded;
+      }
+#endif
 
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
           && !os_isdir(alist_name(&GARGLIST[0]))) {

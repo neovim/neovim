@@ -1,9 +1,11 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local exec_lua = t.exec_lua
-local api = t.api
-local source = t.source
+
+local clear = n.clear
+local exec_lua = n.exec_lua
+local api = n.api
+local source = n.source
 local eq = t.eq
 
 local function sizeoflong()

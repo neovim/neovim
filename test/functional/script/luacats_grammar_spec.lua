@@ -1,4 +1,5 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+
 local eq = t.eq
 
 local grammar = require('scripts/luacats_grammar')
@@ -150,5 +151,12 @@ describe('luacats grammar', function()
     kind = 'field',
     name = '[1]',
     type = 'integer',
+  })
+
+  test('@param type `T` this is a generic type', {
+    desc = 'this is a generic type',
+    kind = 'param',
+    name = 'type',
+    type = '`T`',
   })
 end)

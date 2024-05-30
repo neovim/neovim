@@ -236,21 +236,25 @@ func Test_map_meta_multibyte()
 endfunc
 
 func Test_map_super_quotes()
-  if has('gui_gtk') || has('gui_gtk3') || has("macos")
-    imap <D-"> foo
-    call feedkeys("Go-\<*D-\">-\<Esc>", "xt")
-    call assert_equal("-foo-", getline('$'))
-    set nomodified
-    iunmap <D-">
+  if "\<D-j>"[-1:] == '>'
+    throw 'Skipped: <D- modifier not supported'
   endif
+
+  imap <D-"> foo
+  call feedkeys("Go-\<*D-\">-\<Esc>", "xt")
+  call assert_equal("-foo-", getline('$'))
+  set nomodified
+  iunmap <D-">
 endfunc
 
 func Test_map_super_multibyte()
-  if has('gui_gtk') || has('gui_gtk3') || has("macos")
-    imap <D-á> foo
-    call assert_match('i  <D-á>\s*foo', execute('imap'))
-    iunmap <D-á>
+  if "\<D-j>"[-1:] == '>'
+    throw 'Skipped: <D- modifier not supported'
   endif
+
+  imap <D-á> foo
+  call assert_match('i  <D-á>\s*foo', execute('imap'))
+  iunmap <D-á>
 endfunc
 
 func Test_abbr_after_line_join()
@@ -1716,7 +1720,7 @@ endfunc
 func Test_showcmd_part_map()
   CheckRunVimInTerminal
 
-  let lines =<< trim eval END
+  let lines =<< trim END
     set notimeout showcmd
     nnoremap ,a <Ignore>
     nnoremap ;a <Ignore>
@@ -1736,20 +1740,21 @@ func Test_showcmd_part_map()
   for c in [',', ';', 'À', 'Ë', 'β', 'ω', '…']
     call term_sendkeys(buf, c)
     call WaitForAssert({-> assert_equal(c, trim(term_getline(buf, 6)))})
-    call term_sendkeys(buf, "\<C-C>:echo\<CR>")
-    call WaitForAssert({-> assert_equal('', term_getline(buf, 6))})
+    call term_sendkeys(buf, 'a')
+    call WaitForAssert({-> assert_equal('', trim(term_getline(buf, 6)))})
   endfor
 
   call term_sendkeys(buf, "\<C-W>")
   call WaitForAssert({-> assert_equal('^W', trim(term_getline(buf, 6)))})
-  call term_sendkeys(buf, "\<C-C>:echo\<CR>")
-  call WaitForAssert({-> assert_equal('', term_getline(buf, 6))})
+  call term_sendkeys(buf, 'a')
+  call WaitForAssert({-> assert_equal('', trim(term_getline(buf, 6)))})
 
-  " Use feedkeys() as terminal buffer cannot forward this
+  " Use feedkeys() as terminal buffer cannot forward unsimplified Ctrl-W.
+  " This is like typing Ctrl-W with modifyOtherKeys enabled.
   call term_sendkeys(buf, ':call feedkeys("\<*C-W>", "m")' .. " | echo\<CR>")
   call WaitForAssert({-> assert_equal('^W', trim(term_getline(buf, 6)))})
-  call term_sendkeys(buf, "\<C-C>:echo\<CR>")
-  call WaitForAssert({-> assert_equal('', term_getline(buf, 6))})
+  call term_sendkeys(buf, 'a')
+  call WaitForAssert({-> assert_equal('', trim(term_getline(buf, 6)))})
 
   call StopVimInTerminal(buf)
 endfunc

@@ -1,6 +1,8 @@
-local t = require('test.functional.testutil')()
-local clear, eq, ok = t.clear, t.eq, t.ok
-local neq, command, fn = t.neq, t.command, t.fn
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, eq, ok = n.clear, t.eq, t.ok
+local neq, command, fn = t.neq, n.command, n.fn
 local matches = t.matches
 local reltime, reltimestr, reltimefloat = fn.reltime, fn.reltimestr, fn.reltimefloat
 

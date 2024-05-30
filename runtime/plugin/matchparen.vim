@@ -1,6 +1,6 @@
 " Vim plugin for showing matching parens
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Oct 20
+" Last Change:	2024 May 18
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Exit quickly when:
@@ -218,7 +218,7 @@ command NoMatchParen call s:NoMatchParen()
 
 func s:NoMatchParen()
   let w = winnr()
-  noau windo silent! call matchdelete(3)
+  noau windo call s:Remove_Matches()
   unlet! g:loaded_matchparen
   exe "noau ". w . "wincmd w"
   au! matchparen

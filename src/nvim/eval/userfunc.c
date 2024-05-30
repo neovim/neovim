@@ -345,7 +345,7 @@ int get_lambda_tv(char **arg, typval_T *rettv, evalarg_T *evalarg)
     char *p = xmalloc(len);
     ((char **)(newlines.ga_data))[newlines.ga_len++] = p;
     STRCPY(p, "return ");
-    xstrlcpy(p + 7, start, (size_t)(end - start) + 1);
+    xmemcpyz(p + 7, start, (size_t)(end - start));
     if (strstr(p + 7, "a:") == NULL) {
       // No a: variables are used for sure.
       flags |= FC_NOARGS;
@@ -2365,7 +2365,7 @@ void ex_function(exarg_T *eap)
   // Read the body of the function, until ":endfunction" is found.
   if (KeyTyped) {
     // Check if the function already exists, don't let the user type the
-    // whole function before telling him it doesn't work!  For a script we
+    // whole function before telling them it doesn't work!  For a script we
     // need to skip the body to be able to find what follows.
     if (!eap->skip && !eap->forceit) {
       if (fudi.fd_dict != NULL && fudi.fd_newkey == NULL) {

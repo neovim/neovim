@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     TypeScript
 " Maintainer:   Herrington Darkholme
-" Last Change:  2023 Aug 13
+" Last Change:  2024 May 24
 " Based On:     Herrington Darkholme's yats.vim
 " Changes:      Go to https://github.com/HerringtonDarkholme/yats.vim for recent changes.
 " Origin:       https://github.com/othree/yajs

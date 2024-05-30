@@ -112,7 +112,11 @@ Basic types ~
   Dictionary (msgpack: map)
   Object
 <
-  Note: empty Array is accepted as a valid argument for Dictionary parameter.
+  Note:
+    - Empty Array is accepted as a valid Dictionary parameter.
+    - Functions cannot cross RPC boundaries. But API functions (e.g.
+      |nvim_create_autocmd()|) may support Lua function parameters for non-RPC
+      invocations.
 
 Special types (msgpack EXT) ~
 
@@ -504,8 +508,9 @@ Extended marks (extmarks) represent buffer annotations that track text changes
 in the buffer. They can represent cursors, folds, misspelled words, anything
 that needs to track a logical location in the buffer over time. |api-indexing|
 
-Extmark position works like "bar" cursor: it exists between characters. Thus,
-the maximum extmark index on a line is 1 more than the character index: >
+Extmark position works like a "vertical bar" cursor: it exists between
+characters. Thus, the maximum extmark index on a line is 1 more than the
+character index: >
 
      f o o b a r      line contents
      0 1 2 3 4 5      character positions (0-based)
@@ -579,109 +584,6 @@ created for extmark changes.
 ==============================================================================
 Global Functions                                                  *api-global*
 
-nvim__get_runtime({pat}, {all}, {opts})                  *nvim__get_runtime()*
-    Find files in runtime directories
-
-    Attributes: ~
-        |api-fast|
-
-    Parameters: ~
-      • {pat}   pattern of files to search for
-      • {all}   whether to return all matches or only the first
-      • {opts}  is_lua: only search Lua subdirs
-
-    Return: ~
-        list of absolute paths to the found files
-
-nvim__id({obj})                                                   *nvim__id()*
-    Returns object given as argument.
-
-    This API function is used for testing. One should not rely on its presence
-    in plugins.
-
-    Parameters: ~
-      • {obj}  Object to return.
-
-    Return: ~
-        its argument.
-
-nvim__id_array({arr})                                       *nvim__id_array()*
-    Returns array given as argument.
-
-    This API function is used for testing. One should not rely on its presence
-    in plugins.
-
-    Parameters: ~
-      • {arr}  Array to return.
-
-    Return: ~
-        its argument.
-
-nvim__id_dictionary({dct})                             *nvim__id_dictionary()*
-    Returns dictionary given as argument.
-
-    This API function is used for testing. One should not rely on its presence
-    in plugins.
-
-    Parameters: ~
-      • {dct}  Dictionary to return.
-
-    Return: ~
-        its argument.
-
-nvim__id_float({flt})                                       *nvim__id_float()*
-    Returns floating-point value given as argument.
-
-    This API function is used for testing. One should not rely on its presence
-    in plugins.
-
-    Parameters: ~
-      • {flt}  Value to return.
-
-    Return: ~
-        its argument.
-
-nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
-    NB: if your UI doesn't use hlstate, this will not return hlstate first
-    time.
-
-nvim__invalidate_glyph_cache()                *nvim__invalidate_glyph_cache()*
-    For testing. The condition in schar_cache_clear_if_full is hard to reach,
-    so this function can be used to force a cache clear in a test.
-
-nvim__stats()                                                  *nvim__stats()*
-    Gets internal stats.
-
-    Return: ~
-        Map of various internal stats.
-
-nvim_call_atomic({calls})                                 *nvim_call_atomic()*
-    Calls many API methods atomically.
-
-    This has two main usages:
-    1. To perform several requests from an async context atomically, i.e.
-       without interleaving redraws, RPC requests from other clients, or user
-       interactions (however API methods may trigger autocommands or event
-       processing which have such side effects, e.g. |:sleep| may wake
-       timers).
-    2. To minimize RPC overhead (roundtrips) of a sequence of many requests.
-
-    Attributes: ~
-        |RPC| only
-
-    Parameters: ~
-      • {calls}  an array of calls, where each call is described by an array
-                 with two elements: the request name, and an array of
-                 arguments.
-
-    Return: ~
-        Array of two elements. The first is an array of return values. The
-        second is NIL if all calls succeeded. If a call resulted in an error,
-        it is a three-element array with the zero-based index of the call
-        which resulted in an error, the error type and the error message. If
-        an error occurred, the values from all preceding calls will still be
-        returned.
-
 nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
     Send data to channel `id`. For a job, it writes it to the stdin of the
     process. For the stdio channel |channel-stdio|, it writes to Nvim's
@@ -699,21 +601,6 @@ nvim_chan_send({chan}, {data})                              *nvim_chan_send()*
     Parameters: ~
       • {chan}  id of the channel
       • {data}  data to write. 8-bit clean: can contain NUL bytes.
-
-nvim_complete_set({index}, {opts})                       *nvim_complete_set()*
-    Set info for the completion candidate index. if the info was shown in a
-    window, then the window and buffer ids are returned for further
-    customization. If the text was not shown, an empty dict is returned.
-
-    Parameters: ~
-      • {index}  the completion candidate index
-      • {opts}   Optional parameters.
-                 • info: (string) info text.
-
-    Return: ~
-        Dictionary containing these keys:
-        • winid: (number) floating window id
-        • bufnr: (number) buffer id in floating window
 
 nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
     Creates a new, empty, unnamed buffer.
@@ -1574,23 +1461,127 @@ nvim_strwidth({text})                                        *nvim_strwidth()*
     Return: ~
         Number of cells
 
-nvim_subscribe({event})                                     *nvim_subscribe()*
-    Subscribes to event broadcasts.
+nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
+    EXPERIMENTAL: this API may change in the future.
 
-    Attributes: ~
-        |RPC| only
-
-    Parameters: ~
-      • {event}  Event type string
-
-nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
-    Unsubscribes to event broadcasts.
-
-    Attributes: ~
-        |RPC| only
+    Sets info for the completion item at the given index. If the info text was
+    shown in a window, returns the window and buffer ids, or empty dict if not
+    shown.
 
     Parameters: ~
-      • {event}  Event type string
+      • {index}  Completion candidate index
+      • {opts}   Optional parameters.
+                 • info: (string) info text.
+
+    Return: ~
+        Dictionary containing these keys:
+        • winid: (number) floating window id
+        • bufnr: (number) buffer id in floating window
+
+nvim__get_runtime({pat}, {all}, {opts})                  *nvim__get_runtime()*
+    Find files in runtime directories
+
+    Attributes: ~
+        |api-fast|
+
+    Parameters: ~
+      • {pat}   pattern of files to search for
+      • {all}   whether to return all matches or only the first
+      • {opts}  is_lua: only search Lua subdirs
+
+    Return: ~
+        list of absolute paths to the found files
+
+nvim__id({obj})                                                   *nvim__id()*
+    Returns object given as argument.
+
+    This API function is used for testing. One should not rely on its presence
+    in plugins.
+
+    Parameters: ~
+      • {obj}  Object to return.
+
+    Return: ~
+        its argument.
+
+nvim__id_array({arr})                                       *nvim__id_array()*
+    Returns array given as argument.
+
+    This API function is used for testing. One should not rely on its presence
+    in plugins.
+
+    Parameters: ~
+      • {arr}  Array to return.
+
+    Return: ~
+        its argument.
+
+nvim__id_dictionary({dct})                             *nvim__id_dictionary()*
+    Returns dictionary given as argument.
+
+    This API function is used for testing. One should not rely on its presence
+    in plugins.
+
+    Parameters: ~
+      • {dct}  Dictionary to return.
+
+    Return: ~
+        its argument.
+
+nvim__id_float({flt})                                       *nvim__id_float()*
+    Returns floating-point value given as argument.
+
+    This API function is used for testing. One should not rely on its presence
+    in plugins.
+
+    Parameters: ~
+      • {flt}  Value to return.
+
+    Return: ~
+        its argument.
+
+nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
+    NB: if your UI doesn't use hlstate, this will not return hlstate first
+    time.
+
+nvim__invalidate_glyph_cache()                *nvim__invalidate_glyph_cache()*
+    For testing. The condition in schar_cache_clear_if_full is hard to reach,
+    so this function can be used to force a cache clear in a test.
+
+nvim__redraw({opts})                                          *nvim__redraw()*
+    EXPERIMENTAL: this API may change in the future.
+
+    Instruct Nvim to redraw various components.
+
+    Parameters: ~
+      • {opts}  Optional parameters.
+                • win: Target a specific |window-ID| as described below.
+                • buf: Target a specific buffer number as described below.
+                • flush: Update the screen with pending updates.
+                • valid: When present mark `win`, `buf`, or all windows for
+                  redraw. When `true`, only redraw changed lines (useful for
+                  decoration providers). When `false`, forcefully redraw.
+                • range: Redraw a range in `buf`, the buffer in `win` or the
+                  current buffer (useful for decoration providers). Expects a
+                  tuple `[first, last]` with the first and last line number of
+                  the range, 0-based end-exclusive |api-indexing|.
+                • cursor: Immediately update cursor position on the screen in
+                  `win` or the current window.
+                • statuscolumn: Redraw the 'statuscolumn' in `buf`, `win` or
+                  all windows.
+                • statusline: Redraw the 'statusline' in `buf`, `win` or all
+                  windows.
+                • winbar: Redraw the 'winbar' in `buf`, `win` or all windows.
+                • tabline: Redraw the 'tabline'.
+
+    See also: ~
+      • |:redraw|
+
+nvim__stats()                                                  *nvim__stats()*
+    Gets internal stats.
+
+    Return: ~
+        Map of various internal stats.
 
 
 ==============================================================================
@@ -2767,8 +2758,8 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                   • url: A URL to associate with this extmark. In the TUI, the
                     OSC 8 control sequence is used to generate a clickable
                     hyperlink to this URL.
-                  • scoped: boolean that indicates that the extmark should
-                    only be displayed in the namespace scope. (experimental)
+                  • scoped: boolean (EXPERIMENTAL) enables "scoping" for the
+                    extmark. See |nvim__win_add_ns()|
 
     Return: ~
         Id of the created/updated extmark
@@ -2850,27 +2841,23 @@ nvim_set_decoration_provider({ns_id}, {opts})
                     ["end", tick]
 <
 
-nvim_win_add_ns({window}, {ns_id})                         *nvim_win_add_ns()*
-    Adds the namespace scope to the window.
+nvim__win_add_ns({window}, {ns_id})                       *nvim__win_add_ns()*
+    EXPERIMENTAL: this API will change in the future.
+
+    Scopes a namespace to the a window, so extmarks in the namespace will be
+    active only in the given window.
 
     Parameters: ~
       • {window}  Window handle, or 0 for current window
-      • {ns_id}   the namespace to add
+      • {ns_id}   Namespace
 
     Return: ~
         true if the namespace was added, else false
 
-nvim_win_get_ns({window})                                  *nvim_win_get_ns()*
-    Gets all the namespaces scopes associated with a window.
+nvim__win_del_ns({window}, {ns_id})                       *nvim__win_del_ns()*
+    EXPERIMENTAL: this API will change in the future.
 
-    Parameters: ~
-      • {window}  Window handle, or 0 for current window
-
-    Return: ~
-        a list of namespaces ids
-
-nvim_win_remove_ns({window}, {ns_id})                   *nvim_win_remove_ns()*
-    Removes the namespace scope from the window.
+    Unscopes a namespace (un-binds it from the given scope).
 
     Parameters: ~
       • {window}  Window handle, or 0 for current window
@@ -2878,6 +2865,17 @@ nvim_win_remove_ns({window}, {ns_id})                   *nvim_win_remove_ns()*
 
     Return: ~
         true if the namespace was removed, else false
+
+nvim__win_get_ns({window})                                *nvim__win_get_ns()*
+    EXPERIMENTAL: this API will change in the future.
+
+    Gets the namespace scopes for a given window.
+
+    Parameters: ~
+      • {window}  Window handle, or 0 for current window
+
+    Return: ~
+        a list of namespaces ids
 
 
 ==============================================================================
@@ -3261,13 +3259,15 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
 <
                   • title: Title (optional) in window border, string or list.
                     List should consist of `[text, highlight]` tuples. If
-                    string, the default highlight group is `FloatTitle`.
+                    string, or a tuple lacks a highlight, the default
+                    highlight group is `FloatTitle`.
                   • title_pos: Title position. Must be set with `title`
                     option. Value can be one of "left", "center", or "right".
                     Default is `"left"`.
                   • footer: Footer (optional) in window border, string or
                     list. List should consist of `[text, highlight]` tuples.
-                    If string, the default highlight group is `FloatFooter`.
+                    If string, or a tuple lacks a highlight, the default
+                    highlight group is `FloatFooter`.
                   • footer_pos: Footer position. Must be set with `footer`
                     option. Value can be one of "left", "center", or "right".
                     Default is `"left"`.
@@ -3474,7 +3474,8 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
                    Vimscript function name, if string) called when the
                    event(s) is triggered. Lua callback can return a truthy
                    value (not `false` or `nil`) to delete the autocommand.
-                   Receives a table argument with these keys:
+                   Receives one argument, a table with these keys:
+                                                                  *event-args*
                    • id: (number) autocommand id
                    • event: (string) name of the triggered event
                      |autocmd-events|
@@ -3483,7 +3484,7 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
                    • buf: (number) expanded value of <abuf>
                    • file: (string) expanded value of <afile>
                    • data: (any) arbitrary data passed from
-                     |nvim_exec_autocmds()|
+                     |nvim_exec_autocmds()|                       *event-data*
                  • command (string) optional: Vim command to execute on event.
                    Cannot be used with {callback}
                  • once (boolean) optional: defaults to false. Run the

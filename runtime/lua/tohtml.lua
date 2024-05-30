@@ -57,6 +57,24 @@
 --- @field [3] any[][] virt_text
 --- @field [4] any[][] overlay_text
 
+--- @type string[]
+local notifications = {}
+
+---@param msg string
+local function notify(msg)
+  if #notifications == 0 then
+    vim.schedule(function()
+      if #notifications > 1 then
+        vim.notify(('TOhtml: %s (+ %d more warnings)'):format(notifications[1], #notifications - 1))
+      elseif #notifications == 1 then
+        vim.notify('TOhtml: ' .. notifications[1])
+      end
+      notifications = {}
+    end)
+  end
+  table.insert(notifications, msg)
+end
+
 local HIDE_ID = -1
 -- stylua: ignore start
 local cterm_8_to_hex={
@@ -168,6 +186,8 @@ local background_color_cache = nil
 --- @type string?
 local foreground_color_cache = nil
 
+local len = vim.api.nvim_strwidth
+
 --- @see https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
 --- @param color "background"|"foreground"|integer
 --- @return string?
@@ -215,7 +235,7 @@ local function cterm_to_hex(colorstr)
   if hex then
     cterm_color_cache[color] = hex
   else
-    vim.notify_once("Info(TOhtml): Couldn't get terminal colors, using fallback")
+    notify("Couldn't get terminal colors, using fallback")
     local t_Co = tonumber(vim.api.nvim_eval('&t_Co'))
     if t_Co <= 8 then
       cterm_color_cache = cterm_8_to_hex
@@ -241,7 +261,7 @@ local function get_background_color()
   end
   local hex = try_query_terminal_color('background')
   if not hex or not hex:match('#%x%x%x%x%x%x') then
-    vim.notify_once("Info(TOhtml): Couldn't get terminal background colors, using fallback")
+    notify("Couldn't get terminal background colors, using fallback")
     hex = vim.o.background == 'light' and '#ffffff' or '#000000'
   end
   background_color_cache = hex
@@ -259,7 +279,7 @@ local function get_foreground_color()
   end
   local hex = try_query_terminal_color('foreground')
   if not hex or not hex:match('#%x%x%x%x%x%x') then
-    vim.notify_once("Info(TOhtml): Couldn't get terminal foreground colors, using fallback")
+    notify("Couldn't get terminal foreground colors, using fallback")
     hex = vim.o.background == 'light' and '#000000' or '#ffffff'
   end
   foreground_color_cache = hex
@@ -292,9 +312,12 @@ local function style_line_insert_virt_text(style_line, col, val)
 end
 
 --- @param state vim.tohtml.state
---- @param hl string|integer|nil
+--- @param hl string|integer|string[]|integer[]?
 --- @return nil|integer
 local function register_hl(state, hl)
+  if type(hl) == 'table' then
+    hl = hl[#hl]
+  end
   if type(hl) == 'nil' then
     return
   elseif type(hl) == 'string' then
@@ -467,7 +490,7 @@ local function _styletable_extmarks_highlight(state, extmark, namespaces)
   ---TODO(altermo) LSP semantic tokens (and some other extmarks) are only
   ---generated in visible lines, and not in the whole buffer.
   if (namespaces[extmark[4].ns_id] or ''):find('vim_lsp_semantic_tokens') then
-    vim.notify_once('Info(TOhtml): lsp semantic tokens are not supported, HTML may be incorrect')
+    notify('lsp semantic tokens are not supported, HTML may be incorrect')
     return
   end
   local srow, scol, erow, ecol =
@@ -481,8 +504,15 @@ end
 
 --- @param state vim.tohtml.state
 --- @param extmark {[1]:integer,[2]:integer,[3]:integer,[4]:vim.api.keyset.set_extmark|any}
-local function _styletable_extmarks_virt_text(state, extmark)
+--- @param namespaces table<integer,string>
+local function _styletable_extmarks_virt_text(state, extmark, namespaces)
   if not extmark[4].virt_text then
+    return
+  end
+  ---TODO(altermo) LSP semantic tokens (and some other extmarks) are only
+  ---generated in visible lines, and not in the whole buffer.
+  if (namespaces[extmark[4].ns_id] or ''):find('vim_lsp_inlayhint') then
+    notify('lsp inlay hints are not supported, HTML may be incorrect')
     return
   end
   local styletable = state.style
@@ -510,7 +540,7 @@ local function _styletable_extmarks_virt_text(state, extmark)
       else
         style_line_insert_virt_text(styletable[row + 1], col + 1, { i[1], hlid })
       end
-      virt_text_len = virt_text_len + #i[1]
+      virt_text_len = virt_text_len + len(i[1])
     end
     if extmark[4].virt_text_pos == 'overlay' then
       styletable_insert_range(state, row + 1, col + 1, row + 1, col + virt_text_len + 1, HIDE_ID)
@@ -521,11 +551,9 @@ local function _styletable_extmarks_virt_text(state, extmark)
     hl_mode = 'blend',
     hl_group = 'combine',
   }
-  for opt, val in ipairs(not_supported) do
+  for opt, val in pairs(not_supported) do
     if extmark[4][opt] == val then
-      vim.notify_once(
-        ('Info(TOhtml): extmark.%s="%s" is not supported, HTML may be incorrect'):format(opt, val)
-      )
+      notify(('extmark.%s="%s" is not supported, HTML may be incorrect'):format(opt, val))
     end
   end
 end
@@ -586,7 +614,7 @@ local function styletable_extmarks(state)
     _styletable_extmarks_conceal(state, v)
   end
   for _, v in ipairs(extmarks) do
-    _styletable_extmarks_virt_text(state, v)
+    _styletable_extmarks_virt_text(state, v, namespaces)
   end
   for _, v in ipairs(extmarks) do
     _styletable_extmarks_virt_lines(state, v)
@@ -611,9 +639,7 @@ local function styletable_folds(state)
     end
   end
   if has_folded and type(({ pcall(vim.api.nvim_eval, vim.o.foldtext) })[2]) == 'table' then
-    vim.notify_once(
-      'Info(TOhtml): foldtext returning a table is half supported, HTML may be incorrect'
-    )
+    notify('foldtext returning a table with highlights is not supported, HTML may be incorrect')
   end
 end
 
@@ -759,7 +785,7 @@ local function styletable_statuscolumn(state)
       statuscolumn,
       { winid = state.winid, use_statuscol_lnum = row, highlights = true }
     )
-    local width = vim.api.nvim_strwidth(status.str)
+    local width = len(status.str)
     if width > minwidth then
       minwidth = width
     end
@@ -774,7 +800,7 @@ local function styletable_statuscolumn(state)
     for k, v in ipairs(hls) do
       local text = str:sub(v.start + 1, hls[k + 1] and hls[k + 1].start or nil)
       if k == #hls then
-        text = text .. (' '):rep(minwidth - vim.api.nvim_strwidth(str))
+        text = text .. (' '):rep(minwidth - len(str))
       end
       if text ~= '' then
         local hlid = register_hl(state, v.group)
@@ -794,7 +820,6 @@ local function styletable_listchars(state)
   local function utf8_sub(str, i, j)
     return vim.fn.strcharpart(str, i - 1, j and j - i + 1 or nil)
   end
-  local len = vim.api.nvim_strwidth
   --- @type table<string,string>
   local listchars = vim.opt_local.listchars:get()
   local ids = setmetatable({}, {

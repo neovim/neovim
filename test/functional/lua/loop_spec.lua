@@ -1,15 +1,17 @@
 -- Test suite for testing interactions with API bindings
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local fn = t.fn
-local api = t.api
-local clear = t.clear
+
+local fn = n.fn
+local api = n.api
+local clear = n.clear
 local sleep = vim.uv.sleep
-local feed = t.feed
+local feed = n.feed
 local eq = t.eq
-local eval = t.eval
+local eval = n.eval
 local matches = t.matches
-local exec_lua = t.exec_lua
+local exec_lua = n.exec_lua
 local retry = t.retry
 
 before_each(clear)
@@ -131,6 +133,20 @@ describe('vim.uv', function()
       {5:-- INSERT --}                                      |
     ]])
     eq({ blocking = false, mode = 'n' }, exec_lua('return _G.mode'))
+
+    exec_lua([[
+      local timer = vim.uv.new_timer()
+      timer:start(20, 0, function ()
+        _G.is_fast = vim.in_fast_event()
+        timer:close()
+        _G.value = vim.fn.has("nvim-0.5")
+        _G.unvalue = vim.fn.has("python3")
+      end)
+    ]])
+
+    screen:expect({ any = [[{3:Vim:E5560: Vimscript function must not be called i}]] })
+    feed('<cr>')
+    eq({ 1, nil }, exec_lua('return {_G.value, _G.unvalue}'))
   end)
 
   it("is equal to require('luv')", function()

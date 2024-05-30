@@ -63,7 +63,6 @@ typedef struct {
   PackerBuffer packer;
 
   const char *cur_event;  ///< name of current event (might get multiple arglists)
-  Array call_buf;  ///< buffer for constructing a single arg list (max 16 elements!)
 
   // We start packing the two outermost msgpack arrays before knowing the total
   // number of elements. Thus track the location where array size will need

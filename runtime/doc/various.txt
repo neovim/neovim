@@ -14,6 +14,7 @@ Various commands					*various*
 							*CTRL-L*
 CTRL-L			Clears and redraws the screen.  The redraw may happen
 			later, after processing typeahead.
+			See also |nvim__redraw()|.
 							*CTRL-L-default*
 			By default, also clears search highlighting
 			|:nohlsearch| and updates diffs |:diffupdate|.
@@ -21,6 +22,7 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 
 							*:mod* *:mode*
 :mod[e]			Clears and redraws the screen.
+			See also |nvim__redraw()|.
 
 							*:redr* *:redraw*
 :redr[aw][!]		Redraws pending screen updates now, or the entire
@@ -28,6 +30,7 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			|:mode| or |CTRL-L|.
 			Useful to update the screen during a script or
 			function (or a mapping if 'lazyredraw' set).
+			See also |nvim__redraw()|.
 
 						*:redraws* *:redrawstatus*
 :redraws[tatus][!]	Redraws the status line and window bar of the current
@@ -35,11 +38,12 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			included. Redraws the commandline instead if it contains
 			the 'ruler'. Useful if 'statusline' or 'winbar' includes
 			an item that doesn't cause automatic updating.
+			See also |nvim__redraw()|.
 
 						*:redrawt* *:redrawtabline*
 :redrawt[abline]	Redraw the tabline.  Useful to update the tabline when
 			'tabline' includes an item that doesn't trigger
-			automatic updating.
+			automatic updating. See also |nvim__redraw()|.
 
 							*N<Del>*
 <Del>			When entering a number: Remove the last digit.
@@ -396,6 +400,7 @@ gx			Opens the current filepath or URL (decided by
 			   |:command|    - filter by command name
 			   |:files|      - filter by file name
 			   |:highlight|  - filter by highlight group
+			   |:history|    - filter by history commands
 			   |:jumps|      - filter by file name
 			   |:let|        - filter by variable name
 			   |:list|       - filter whole line
@@ -574,6 +579,10 @@ Acting on multiple lines behaves as follows:
 - Otherwise all affected lines are converted to comments; blank lines are
   transformed to empty comments (e.g. `/**/`). Comment markers are aligned to
   the least indented line.
+
+Matching 'commentstring' does not account for whitespace in comment markers.
+Removing comment markers is first attempted exactly, with fallback to using
+markers trimmed from whitespace.
 
 If the filetype of the buffer is associated with a language for which a
 |treesitter| parser is installed, then |vim.filetype.get_option()| is called

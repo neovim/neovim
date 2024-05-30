@@ -32,6 +32,18 @@ static inline char *strappend(char *const dst, const char *const src)
 
 typedef kvec_t(char) StringBuilder;
 
+// Return the length of a string literal
+#define STRLEN_LITERAL(s) (sizeof(s) - 1)
+
+/// Store a key/value pair
+typedef struct {
+  int key;        ///< the key
+  char *value;    ///< the value string
+  size_t length;  ///< length of the value string
+} keyvalue_T;
+
+#define KEYVALUE_ENTRY(k, v) { (k), (v), STRLEN_LITERAL(v) }
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "strings.h.generated.h"
 #endif

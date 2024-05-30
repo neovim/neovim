@@ -215,7 +215,7 @@ end
 ---@param start_row integer
 ---@param new_end integer
 function TSHighlighter:on_bytes(_, _, start_row, _, _, _, _, _, new_end)
-  api.nvim__buf_redraw_range(self.bufnr, start_row, start_row + new_end + 1)
+  api.nvim__redraw({ buf = self.bufnr, range = { start_row, start_row + new_end + 1 } })
 end
 
 ---@package
@@ -227,7 +227,7 @@ end
 ---@param changes Range6[]
 function TSHighlighter:on_changedtree(changes)
   for _, ch in ipairs(changes) do
-    api.nvim__buf_redraw_range(self.bufnr, ch[1], ch[4] + 1)
+    api.nvim__redraw({ buf = self.bufnr, range = { ch[1], ch[4] + 1 } })
   end
 end
 

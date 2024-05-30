@@ -1,15 +1,17 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local clear = t.clear
-local command = t.command
+
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local exec = t.exec
-local eval = t.eval
-local exec_lua = t.exec_lua
-local feed = t.feed
-local api = t.api
+local exec = n.exec
+local eval = n.eval
+local exec_lua = n.exec_lua
+local feed = n.feed
+local api = n.api
 local pcall_err = t.pcall_err
-local assert_alive = t.assert_alive
+local assert_alive = n.assert_alive
 
 local mousemodels = { 'extend', 'popup', 'popup_setpos' }
 
@@ -235,7 +237,7 @@ describe('statuscolumn', function()
       {2:    }{1:  │ }aaaaa                                        |
       {0:>!}{2:  }{1: 5│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2:    }{1:  │ }aaaaa                                        |
-      {1:>>}{0:>!}{1: 6│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {0:>!}{1:>> 6│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2:    }{1:  │ }aaaaa                                        |
       {2:    }{1: 7│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2:    }{1:  │ }aaaaa                                        |
@@ -254,7 +256,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 5│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 6│>>}{0:>!}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1: 6│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 7│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
@@ -271,7 +273,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 5│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 6│>>}{0:>!}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1: 6│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 7│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
@@ -289,7 +291,7 @@ describe('statuscolumn', function()
       {2: }{1: 4│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 5│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 5│}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 6│>>}{0:>!}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1: 6│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 6│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 7│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 7│}{2:    }{1: }aaaaaa                                      |
@@ -307,7 +309,7 @@ describe('statuscolumn', function()
       {2: }{1: 4│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 3│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 3│}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 2│>>}{0:>!}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1: 2│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 2│}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1: 1│}{2:    }{1: }aaaaaa                                      |
@@ -324,7 +326,7 @@ describe('statuscolumn', function()
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 3│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 2│>>}{0:>!}{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1: 2│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
       {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
@@ -915,5 +917,58 @@ describe('statuscolumn', function()
       {8:100 }^99                           |
                                        |
     ]])
+  end)
+
+  it('forces a rebuild with nvim__redraw', function()
+    screen:try_resize(40, 4)
+    -- Current window
+    command([[
+      let g:insert = v:false
+      set nonu stc=%{g:insert?'insert':''}
+      vsplit
+      au InsertEnter * let g:insert = v:true | call nvim__redraw(#{statuscolumn:1, win:0})
+      au InsertLeave * let g:insert = v:false | call nvim__redraw(#{statuscolumn:1, win:0})
+    ]])
+    feed('i')
+    screen:expect({
+      grid = [[
+        {8:insert}^aaaaa         │aaaaa              |
+        {8:insert}aaaaa         │aaaaa              |
+        {3:[No Name] [+]        }{2:[No Name] [+]      }|
+        {5:-- INSERT --}                            |
+      ]],
+    })
+    feed('<esc>')
+    screen:expect({
+      grid = [[
+        ^aaaaa               │aaaaa              |
+        aaaaa               │aaaaa              |
+        {3:[No Name] [+]        }{2:[No Name] [+]      }|
+                                                |
+      ]],
+    })
+    -- All windows
+    command([[
+      au! InsertEnter * let g:insert = v:true | call nvim__redraw(#{statuscolumn:1})
+      au! InsertLeave * let g:insert = v:false | call nvim__redraw(#{statuscolumn:1})
+    ]])
+    feed('i')
+    screen:expect({
+      grid = [[
+        {8:insert}^aaaaa         │{8:insert}aaaaa        |
+        {8:insert}aaaaa         │{8:insert}aaaaa        |
+        {3:[No Name] [+]        }{2:[No Name] [+]      }|
+        {5:-- INSERT --}                            |
+      ]],
+    })
+    feed('<esc>')
+    screen:expect({
+      grid = [[
+        ^aaaaa               │aaaaa              |
+        aaaaa               │aaaaa              |
+        {3:[No Name] [+]        }{2:[No Name] [+]      }|
+                                                |
+      ]],
+    })
   end)
 end)

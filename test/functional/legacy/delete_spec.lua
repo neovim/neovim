@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
-local clear, source = t.clear, t.source
-local eq, eval, command = t.eq, t.eval, t.command
-local exc_exec = t.exc_exec
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, source = n.clear, n.source
+local eq, eval, command = t.eq, n.eval, n.command
+local exc_exec = n.exc_exec
 
 describe('Test for delete()', function()
   before_each(clear)

@@ -1,12 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local clear = t.clear
-local insert = t.insert
-local exec_lua = t.exec_lua
-local feed = t.feed
-local command = t.command
-local api = t.api
+local clear = n.clear
+local insert = n.insert
+local exec_lua = n.exec_lua
+local feed = n.feed
+local command = n.command
+local api = n.api
 local eq = t.eq
 
 before_each(clear)
@@ -483,7 +484,7 @@ describe('treesitter highlighting (C)', function()
     exec_lua [[
       vim.treesitter.language.register("c", "foo")
       local parser = vim.treesitter.get_parser(0, "c", {
-        injections = {c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "fOO")) (preproc_function_def value: (preproc_arg) @injection.content (#set! injection.language "fOO"))'}
+        injections = {c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "foo")) (preproc_function_def value: (preproc_arg) @injection.content (#set! injection.language "foo"))'}
       })
       local highlighter = vim.treesitter.highlighter
       test_hl = highlighter.new(parser, {queries = {c = hl_query}})
@@ -872,7 +873,7 @@ describe('treesitter highlighting (help)', function()
     ]],
     }
 
-    t.api.nvim_buf_set_text(0, 0, 1, 0, 5, { 'lua' })
+    n.api.nvim_buf_set_text(0, 0, 1, 0, 5, { 'lua' })
 
     screen:expect {
       grid = [[
@@ -885,7 +886,7 @@ describe('treesitter highlighting (help)', function()
     ]],
     }
 
-    t.api.nvim_buf_set_text(0, 0, 1, 0, 4, { 'ruby' })
+    n.api.nvim_buf_set_text(0, 0, 1, 0, 4, { 'ruby' })
 
     screen:expect {
       grid = [[

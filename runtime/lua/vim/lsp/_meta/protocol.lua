@@ -2534,8 +2534,14 @@ error('Cannot require a meta file')
 ---@proposed
 ---@field inlineCompletionProvider? boolean|lsp.InlineCompletionOptions
 ---
+---Text document specific server capabilities.
+---
+---@since 3.18.0
+---@proposed
+---@field textDocument? lsp._anonym12.textDocument
+---
 ---Workspace specific server capabilities.
----@field workspace? lsp._anonym12.workspace
+---@field workspace? lsp._anonym14.workspace
 ---
 ---Experimental server capabilities.
 ---@field experimental? lsp.LSPAny
@@ -2598,8 +2604,10 @@ error('Cannot require a meta file')
 ---appears in the user interface.
 ---@field source? string
 ---
----The diagnostic's message. It usually appears in the user interface
----@field message string
+---The diagnostic's message. It usually appears in the user interface.
+---
+---@since 3.18.0 - support for `MarkupContent`. This is guarded by the client capability `textDocument.diagnostic.markupMessageSupport`.
+---@field message string|lsp.MarkupContent
 ---
 ---Additional metadata about the diagnostic.
 ---
@@ -2684,7 +2692,7 @@ error('Cannot require a meta file')
 ---capabilities.
 ---
 ---@since 3.17.0
----@field completionItem? lsp._anonym13.completionItem
+---@field completionItem? lsp._anonym15.completionItem
 
 ---Hover options.
 ---@class lsp.HoverOptions: lsp.WorkDoneProgressOptions
@@ -2811,6 +2819,8 @@ error('Cannot require a meta file')
 ---errors are currently presented to the user for the given range. There is no guarantee
 ---that these accurately reflect the error state of the resource. The primary parameter
 ---to compute code actions is the provided range.
+---
+---Note that the client should check the `textDocument.diagnostic.markupMessageSupport` server capability before sending diagnostics with markup messages to a server.
 ---@field diagnostics lsp.Diagnostic[]
 ---
 ---Requested kind of actions to return.
@@ -3146,7 +3156,7 @@ error('Cannot require a meta file')
 ---@class lsp.NotebookDocumentSyncOptions
 ---
 ---The notebooks to be synced
----@field notebookSelector (lsp._anonym14.notebookSelector|lsp._anonym16.notebookSelector)[]
+---@field notebookSelector (lsp._anonym16.notebookSelector|lsp._anonym18.notebookSelector)[]
 ---
 ---Whether save notification should be forwarded to
 ---the server. Will only be honored if mode === `notebook`.
@@ -3514,7 +3524,7 @@ error('Cannot require a meta file')
 ---anymore since the information is outdated).
 ---
 ---@since 3.17.0
----@field staleRequestSupport? lsp._anonym18.staleRequestSupport
+---@field staleRequestSupport? lsp._anonym20.staleRequestSupport
 ---
 ---Client capabilities specific to regular expressions.
 ---
@@ -3590,7 +3600,7 @@ error('Cannot require a meta file')
 ---create file, rename file and delete file changes.
 ---
 ---@since 3.16.0
----@field changeAnnotationSupport? lsp._anonym19.changeAnnotationSupport
+---@field changeAnnotationSupport? lsp._anonym21.changeAnnotationSupport
 
 ---@class lsp.DidChangeConfigurationClientCapabilities
 ---
@@ -3617,20 +3627,20 @@ error('Cannot require a meta file')
 ---@field dynamicRegistration? boolean
 ---
 ---Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
----@field symbolKind? lsp._anonym20.symbolKind
+---@field symbolKind? lsp._anonym22.symbolKind
 ---
 ---The client supports tags on `SymbolInformation`.
 ---Clients supporting tags have to handle unknown tags gracefully.
 ---
 ---@since 3.16.0
----@field tagSupport? lsp._anonym21.tagSupport
+---@field tagSupport? lsp._anonym23.tagSupport
 ---
 ---The client support partial workspace symbols. The client will send the
 ---request `workspaceSymbol/resolve` to the server to resolve additional
 ---properties.
 ---
 ---@since 3.17.0
----@field resolveSupport? lsp._anonym22.resolveSupport
+---@field resolveSupport? lsp._anonym24.resolveSupport
 
 ---The client capabilities of a {@link ExecuteCommandRequest}.
 ---@class lsp.ExecuteCommandClientCapabilities
@@ -3775,9 +3785,9 @@ error('Cannot require a meta file')
 ---
 ---The client supports the following `CompletionItem` specific
 ---capabilities.
----@field completionItem? lsp._anonym23.completionItem
+---@field completionItem? lsp._anonym25.completionItem
 ---
----@field completionItemKind? lsp._anonym27.completionItemKind
+---@field completionItemKind? lsp._anonym29.completionItemKind
 ---
 ---Defines how the client handles whitespace and indentation
 ---when accepting a completion item that uses multi line
@@ -3794,7 +3804,7 @@ error('Cannot require a meta file')
 ---capabilities.
 ---
 ---@since 3.17.0
----@field completionList? lsp._anonym28.completionList
+---@field completionList? lsp._anonym30.completionList
 
 ---@class lsp.HoverClientCapabilities
 ---
@@ -3813,7 +3823,7 @@ error('Cannot require a meta file')
 ---
 ---The client supports the following `SignatureInformation`
 ---specific properties.
----@field signatureInformation? lsp._anonym29.signatureInformation
+---@field signatureInformation? lsp._anonym31.signatureInformation
 ---
 ---The client supports to send additional context information for a
 ---`textDocument/signatureHelp` request. A client that opts into
@@ -3891,7 +3901,7 @@ error('Cannot require a meta file')
 ---
 ---Specific capabilities for the `SymbolKind` in the
 ---`textDocument/documentSymbol` request.
----@field symbolKind? lsp._anonym31.symbolKind
+---@field symbolKind? lsp._anonym33.symbolKind
 ---
 ---The client supports hierarchical document symbols.
 ---@field hierarchicalDocumentSymbolSupport? boolean
@@ -3901,7 +3911,7 @@ error('Cannot require a meta file')
 ---Clients supporting tags have to handle unknown tags gracefully.
 ---
 ---@since 3.16.0
----@field tagSupport? lsp._anonym32.tagSupport
+---@field tagSupport? lsp._anonym34.tagSupport
 ---
 ---The client supports an additional label presented in the UI when
 ---registering a document symbol provider.
@@ -3920,7 +3930,7 @@ error('Cannot require a meta file')
 ---set the request can only return `Command` literals.
 ---
 ---@since 3.8.0
----@field codeActionLiteralSupport? lsp._anonym33.codeActionLiteralSupport
+---@field codeActionLiteralSupport? lsp._anonym35.codeActionLiteralSupport
 ---
 ---Whether code action supports the `isPreferred` property.
 ---
@@ -3943,7 +3953,7 @@ error('Cannot require a meta file')
 ---properties via a separate `codeAction/resolve` request.
 ---
 ---@since 3.16.0
----@field resolveSupport? lsp._anonym35.resolveSupport
+---@field resolveSupport? lsp._anonym37.resolveSupport
 ---
 ---Whether the client honors the change annotations in
 ---text edits and resource operations returned via the
@@ -4051,12 +4061,12 @@ error('Cannot require a meta file')
 ---Specific options for the folding range kind.
 ---
 ---@since 3.17.0
----@field foldingRangeKind? lsp._anonym36.foldingRangeKind
+---@field foldingRangeKind? lsp._anonym38.foldingRangeKind
 ---
 ---Specific options for the folding range.
 ---
 ---@since 3.17.0
----@field foldingRange? lsp._anonym37.foldingRange
+---@field foldingRange? lsp._anonym39.foldingRange
 
 ---@class lsp.SelectionRangeClientCapabilities
 ---
@@ -4075,7 +4085,7 @@ error('Cannot require a meta file')
 ---Clients supporting tags have to handle unknown tags gracefully.
 ---
 ---@since 3.15.0
----@field tagSupport? lsp._anonym38.tagSupport
+---@field tagSupport? lsp._anonym40.tagSupport
 ---
 ---Whether the client interprets the version property of the
 ---`textDocument/publishDiagnostics` notification's parameter.
@@ -4119,7 +4129,7 @@ error('Cannot require a meta file')
 ---`request.range` are both set to true but the server only provides a
 ---range provider the client might not render a minimap correctly or might
 ---even decide to not show any semantic tokens at all.
----@field requests lsp._anonym39.requests
+---@field requests lsp._anonym41.requests
 ---
 ---The token types that the client supports.
 ---@field tokenTypes string[]
@@ -4202,7 +4212,7 @@ error('Cannot require a meta file')
 ---
 ---Indicates which properties a client can resolve lazily on an inlay
 ---hint.
----@field resolveSupport? lsp._anonym42.resolveSupport
+---@field resolveSupport? lsp._anonym44.resolveSupport
 
 ---Client capabilities specific to diagnostic pull requests.
 ---
@@ -4216,6 +4226,9 @@ error('Cannot require a meta file')
 ---
 ---Whether the clients supports related documents for document diagnostic pulls.
 ---@field relatedDocumentSupport? boolean
+---
+---Whether the client supports `MarkupContent` in diagnostic messages.
+---@field markupMessageSupport? boolean
 
 ---Client capabilities specific to inline completions.
 ---
@@ -4244,7 +4257,7 @@ error('Cannot require a meta file')
 ---@class lsp.ShowMessageRequestClientCapabilities
 ---
 ---Capabilities specific to the `MessageActionItem` type.
----@field messageActionItem? lsp._anonym43.messageActionItem
+---@field messageActionItem? lsp._anonym45.messageActionItem
 
 ---Client capabilities for the showDocument request.
 ---
@@ -4671,7 +4684,7 @@ error('Cannot require a meta file')
 ---@since 3.17.0
 ---@alias lsp.DocumentDiagnosticReport lsp.RelatedFullDocumentDiagnosticReport|lsp.RelatedUnchangedDocumentDiagnosticReport
 
----@alias lsp.PrepareRenameResult lsp.Range|lsp._anonym44.PrepareRenameResult|lsp._anonym45.PrepareRenameResult
+---@alias lsp.PrepareRenameResult lsp.Range|lsp._anonym46.PrepareRenameResult|lsp._anonym47.PrepareRenameResult
 
 ---A document selector is the combination of one or many document filters.
 ---
@@ -4692,7 +4705,7 @@ error('Cannot require a meta file')
 
 ---An event describing a change to a text document. If only a text is provided
 ---it is considered to be the full content of the document.
----@alias lsp.TextDocumentContentChangeEvent lsp._anonym46.TextDocumentContentChangeEvent|lsp._anonym47.TextDocumentContentChangeEvent
+---@alias lsp.TextDocumentContentChangeEvent lsp._anonym48.TextDocumentContentChangeEvent|lsp._anonym49.TextDocumentContentChangeEvent
 
 ---MarkedString can be used to render human readable text. It is either a markdown string
 ---or a code-block that provides a language and a code snippet. The language identifier
@@ -4706,7 +4719,7 @@ error('Cannot require a meta file')
 ---
 ---Note that markdown strings will be sanitized - that means html will be escaped.
 ---@deprecated use MarkupContent instead.
----@alias lsp.MarkedString string|lsp._anonym48.MarkedString
+---@alias lsp.MarkedString string|lsp._anonym50.MarkedString
 
 ---A document filter describes a top level text document or
 ---a notebook cell document.
@@ -4739,14 +4752,14 @@ error('Cannot require a meta file')
 ---\@sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`
 ---
 ---@since 3.17.0
----@alias lsp.TextDocumentFilter lsp._anonym49.TextDocumentFilter|lsp._anonym50.TextDocumentFilter|lsp._anonym51.TextDocumentFilter
+---@alias lsp.TextDocumentFilter lsp._anonym51.TextDocumentFilter|lsp._anonym52.TextDocumentFilter|lsp._anonym53.TextDocumentFilter
 
 ---A notebook document filter denotes a notebook document by
 ---different properties. The properties will be match
 ---against the notebook's URI (same as with documents)
 ---
 ---@since 3.17.0
----@alias lsp.NotebookDocumentFilter lsp._anonym52.NotebookDocumentFilter|lsp._anonym53.NotebookDocumentFilter|lsp._anonym54.NotebookDocumentFilter
+---@alias lsp.NotebookDocumentFilter lsp._anonym54.NotebookDocumentFilter|lsp._anonym55.NotebookDocumentFilter|lsp._anonym56.NotebookDocumentFilter
 
 ---The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:
 ---- `*` to match one or more characters in a path segment
@@ -4856,7 +4869,19 @@ error('Cannot require a meta file')
 ---The client's version as defined by the client.
 ---@field version? string
 
----@class lsp._anonym12.workspace
+---@class lsp._anonym13.textDocument.diagnostic
+---
+---Whether the server supports `MarkupContent` in diagnostic messages.
+---@field markupMessageSupport? boolean
+
+---@class lsp._anonym12.textDocument
+---
+---Capabilities specific to the diagnostic pull model.
+---
+---@since 3.18.0
+---@field diagnostic? lsp._anonym13.textDocument.diagnostic
+
+---@class lsp._anonym14.workspace
 ---
 ---The server supports workspace folder.
 ---
@@ -4868,7 +4893,7 @@ error('Cannot require a meta file')
 ---@since 3.16.0
 ---@field fileOperations? lsp.FileOperationOptions
 
----@class lsp._anonym13.completionItem
+---@class lsp._anonym15.completionItem
 ---
 ---The server has support for completion item label
 ---details (see also `CompletionItemLabelDetails`) when
@@ -4876,20 +4901,6 @@ error('Cannot require a meta file')
 ---
 ---@since 3.17.0
 ---@field labelDetailsSupport? boolean
-
----@class lsp._anonym15.notebookSelector.cells
----
----@field language string
-
----@class lsp._anonym14.notebookSelector
----
----The notebook to be synced If a string
----value is provided it matches against the
----notebook type. '*' matches every notebook.
----@field notebook string|lsp.NotebookDocumentFilter
----
----The cells of the matching notebook to be synced.
----@field cells? lsp._anonym15.notebookSelector.cells[]
 
 ---@class lsp._anonym17.notebookSelector.cells
 ---
@@ -4900,12 +4911,26 @@ error('Cannot require a meta file')
 ---The notebook to be synced If a string
 ---value is provided it matches against the
 ---notebook type. '*' matches every notebook.
+---@field notebook string|lsp.NotebookDocumentFilter
+---
+---The cells of the matching notebook to be synced.
+---@field cells? lsp._anonym17.notebookSelector.cells[]
+
+---@class lsp._anonym19.notebookSelector.cells
+---
+---@field language string
+
+---@class lsp._anonym18.notebookSelector
+---
+---The notebook to be synced If a string
+---value is provided it matches against the
+---notebook type. '*' matches every notebook.
 ---@field notebook? string|lsp.NotebookDocumentFilter
 ---
 ---The cells of the matching notebook to be synced.
----@field cells lsp._anonym17.notebookSelector.cells[]
+---@field cells lsp._anonym19.notebookSelector.cells[]
 
----@class lsp._anonym18.staleRequestSupport
+---@class lsp._anonym20.staleRequestSupport
 ---
 ---The client will actively cancel the request.
 ---@field cancel boolean
@@ -4915,14 +4940,14 @@ error('Cannot require a meta file')
 ---response with error code `ContentModified`
 ---@field retryOnContentModified string[]
 
----@class lsp._anonym19.changeAnnotationSupport
+---@class lsp._anonym21.changeAnnotationSupport
 ---
 ---Whether the client groups edits with equal labels into tree nodes,
 ---for instance all edits labelled with "Changes in Strings" would
 ---be a tree node.
 ---@field groupsOnLabel? boolean
 
----@class lsp._anonym20.symbolKind
+---@class lsp._anonym22.symbolKind
 ---
 ---The symbol kind values the client supports. When this
 ---property exists the client also guarantees that it will
@@ -4934,32 +4959,32 @@ error('Cannot require a meta file')
 ---the initial version of the protocol.
 ---@field valueSet? lsp.SymbolKind[]
 
----@class lsp._anonym21.tagSupport
+---@class lsp._anonym23.tagSupport
 ---
 ---The tags supported by the client.
 ---@field valueSet lsp.SymbolTag[]
 
----@class lsp._anonym22.resolveSupport
+---@class lsp._anonym24.resolveSupport
 ---
 ---The properties that a client can resolve lazily. Usually
 ---`location.range`
 ---@field properties string[]
 
----@class lsp._anonym24.completionItem.tagSupport
+---@class lsp._anonym26.completionItem.tagSupport
 ---
 ---The tags supported by the client.
 ---@field valueSet lsp.CompletionItemTag[]
 
----@class lsp._anonym25.completionItem.resolveSupport
+---@class lsp._anonym27.completionItem.resolveSupport
 ---
 ---The properties that a client can resolve lazily.
 ---@field properties string[]
 
----@class lsp._anonym26.completionItem.insertTextModeSupport
+---@class lsp._anonym28.completionItem.insertTextModeSupport
 ---
 ---@field valueSet lsp.InsertTextMode[]
 
----@class lsp._anonym23.completionItem
+---@class lsp._anonym25.completionItem
 ---
 ---Client supports snippets as insert text.
 ---
@@ -4988,7 +5013,7 @@ error('Cannot require a meta file')
 ---a resolve call.
 ---
 ---@since 3.15.0
----@field tagSupport? lsp._anonym24.completionItem.tagSupport
+---@field tagSupport? lsp._anonym26.completionItem.tagSupport
 ---
 ---Client support insert replace edit to control different behavior if a
 ---completion item is inserted in the text or should replace text.
@@ -5001,14 +5026,14 @@ error('Cannot require a meta file')
 ---and `details` could be resolved lazily.
 ---
 ---@since 3.16.0
----@field resolveSupport? lsp._anonym25.completionItem.resolveSupport
+---@field resolveSupport? lsp._anonym27.completionItem.resolveSupport
 ---
 ---The client supports the `insertTextMode` property on
 ---a completion item to override the whitespace handling mode
 ---as defined by the client (see `insertTextMode`).
 ---
 ---@since 3.16.0
----@field insertTextModeSupport? lsp._anonym26.completionItem.insertTextModeSupport
+---@field insertTextModeSupport? lsp._anonym28.completionItem.insertTextModeSupport
 ---
 ---The client has support for completion item label
 ---details (see also `CompletionItemLabelDetails`).
@@ -5016,7 +5041,7 @@ error('Cannot require a meta file')
 ---@since 3.17.0
 ---@field labelDetailsSupport? boolean
 
----@class lsp._anonym27.completionItemKind
+---@class lsp._anonym29.completionItemKind
 ---
 ---The completion item kind values the client supports. When this
 ---property exists the client also guarantees that it will
@@ -5028,7 +5053,7 @@ error('Cannot require a meta file')
 ---the initial version of the protocol.
 ---@field valueSet? lsp.CompletionItemKind[]
 
----@class lsp._anonym28.completionList
+---@class lsp._anonym30.completionList
 ---
 ---The client supports the following itemDefaults on
 ---a completion list.
@@ -5040,7 +5065,7 @@ error('Cannot require a meta file')
 ---@since 3.17.0
 ---@field itemDefaults? string[]
 
----@class lsp._anonym30.signatureInformation.parameterInformation
+---@class lsp._anonym32.signatureInformation.parameterInformation
 ---
 ---The client supports processing label offsets instead of a
 ---simple label string.
@@ -5048,14 +5073,14 @@ error('Cannot require a meta file')
 ---@since 3.14.0
 ---@field labelOffsetSupport? boolean
 
----@class lsp._anonym29.signatureInformation
+---@class lsp._anonym31.signatureInformation
 ---
 ---Client supports the following content formats for the documentation
 ---property. The order describes the preferred format of the client.
 ---@field documentationFormat? lsp.MarkupKind[]
 ---
 ---Client capabilities specific to parameter information.
----@field parameterInformation? lsp._anonym30.signatureInformation.parameterInformation
+---@field parameterInformation? lsp._anonym32.signatureInformation.parameterInformation
 ---
 ---The client supports the `activeParameter` property on `SignatureInformation`
 ---literal.
@@ -5070,7 +5095,7 @@ error('Cannot require a meta file')
 ---@since 3.18.0
 ---@field noActiveParameterSupport? boolean
 
----@class lsp._anonym31.symbolKind
+---@class lsp._anonym33.symbolKind
 ---
 ---The symbol kind values the client supports. When this
 ---property exists the client also guarantees that it will
@@ -5082,12 +5107,12 @@ error('Cannot require a meta file')
 ---the initial version of the protocol.
 ---@field valueSet? lsp.SymbolKind[]
 
----@class lsp._anonym32.tagSupport
+---@class lsp._anonym34.tagSupport
 ---
 ---The tags supported by the client.
 ---@field valueSet lsp.SymbolTag[]
 
----@class lsp._anonym34.codeActionLiteralSupport.codeActionKind
+---@class lsp._anonym36.codeActionLiteralSupport.codeActionKind
 ---
 ---The code action kind values the client supports. When this
 ---property exists the client also guarantees that it will
@@ -5095,18 +5120,18 @@ error('Cannot require a meta file')
 ---to a default value when unknown.
 ---@field valueSet lsp.CodeActionKind[]
 
----@class lsp._anonym33.codeActionLiteralSupport
+---@class lsp._anonym35.codeActionLiteralSupport
 ---
 ---The code action kind is support with the following value
 ---set.
----@field codeActionKind lsp._anonym34.codeActionLiteralSupport.codeActionKind
+---@field codeActionKind lsp._anonym36.codeActionLiteralSupport.codeActionKind
 
----@class lsp._anonym35.resolveSupport
+---@class lsp._anonym37.resolveSupport
 ---
 ---The properties that a client can resolve lazily.
 ---@field properties string[]
 
----@class lsp._anonym36.foldingRangeKind
+---@class lsp._anonym38.foldingRangeKind
 ---
 ---The folding range kind values the client supports. When this
 ---property exists the client also guarantees that it will
@@ -5114,7 +5139,7 @@ error('Cannot require a meta file')
 ---to a default value when unknown.
 ---@field valueSet? lsp.FoldingRangeKind[]
 
----@class lsp._anonym37.foldingRange
+---@class lsp._anonym39.foldingRange
 ---
 ---If set, the client signals that it supports setting collapsedText on
 ---folding ranges to display custom labels instead of the default text.
@@ -5122,52 +5147,52 @@ error('Cannot require a meta file')
 ---@since 3.17.0
 ---@field collapsedText? boolean
 
----@class lsp._anonym38.tagSupport
+---@class lsp._anonym40.tagSupport
 ---
 ---The tags supported by the client.
 ---@field valueSet lsp.DiagnosticTag[]
 
----@class lsp._anonym40.requests.range
+---@class lsp._anonym42.requests.range
 
----@class lsp._anonym41.requests.full
+---@class lsp._anonym43.requests.full
 ---
 ---The client will send the `textDocument/semanticTokens/full/delta` request if
 ---the server provides a corresponding handler.
 ---@field delta? boolean
 
----@class lsp._anonym39.requests
+---@class lsp._anonym41.requests
 ---
 ---The client will send the `textDocument/semanticTokens/range` request if
 ---the server provides a corresponding handler.
----@field range? boolean|lsp._anonym40.requests.range
+---@field range? boolean|lsp._anonym42.requests.range
 ---
 ---The client will send the `textDocument/semanticTokens/full` request if
 ---the server provides a corresponding handler.
----@field full? boolean|lsp._anonym41.requests.full
+---@field full? boolean|lsp._anonym43.requests.full
 
----@class lsp._anonym42.resolveSupport
+---@class lsp._anonym44.resolveSupport
 ---
 ---The properties that a client can resolve lazily.
 ---@field properties string[]
 
----@class lsp._anonym43.messageActionItem
+---@class lsp._anonym45.messageActionItem
 ---
 ---Whether the client supports additional attributes which
 ---are preserved and send back to the server in the
 ---request's response.
 ---@field additionalPropertiesSupport? boolean
 
----@class lsp._anonym44.PrepareRenameResult
+---@class lsp._anonym46.PrepareRenameResult
 ---
 ---@field range lsp.Range
 ---
 ---@field placeholder string
 
----@class lsp._anonym45.PrepareRenameResult
+---@class lsp._anonym47.PrepareRenameResult
 ---
 ---@field defaultBehavior boolean
 
----@class lsp._anonym46.TextDocumentContentChangeEvent
+---@class lsp._anonym48.TextDocumentContentChangeEvent
 ---
 ---The range of the document that changed.
 ---@field range lsp.Range
@@ -5180,18 +5205,18 @@ error('Cannot require a meta file')
 ---The new text for the provided range.
 ---@field text string
 
----@class lsp._anonym47.TextDocumentContentChangeEvent
+---@class lsp._anonym49.TextDocumentContentChangeEvent
 ---
 ---The new text of the whole document.
 ---@field text string
 
----@class lsp._anonym48.MarkedString
+---@class lsp._anonym50.MarkedString
 ---
 ---@field language string
 ---
 ---@field value string
 
----@class lsp._anonym49.TextDocumentFilter
+---@class lsp._anonym51.TextDocumentFilter
 ---
 ---A language id, like `typescript`.
 ---@field language string
@@ -5202,7 +5227,7 @@ error('Cannot require a meta file')
 ---A glob pattern, like **/*.{ts,js}. See TextDocumentFilter for examples.
 ---@field pattern? string
 
----@class lsp._anonym50.TextDocumentFilter
+---@class lsp._anonym52.TextDocumentFilter
 ---
 ---A language id, like `typescript`.
 ---@field language? string
@@ -5213,7 +5238,7 @@ error('Cannot require a meta file')
 ---A glob pattern, like **/*.{ts,js}. See TextDocumentFilter for examples.
 ---@field pattern? string
 
----@class lsp._anonym51.TextDocumentFilter
+---@class lsp._anonym53.TextDocumentFilter
 ---
 ---A language id, like `typescript`.
 ---@field language? string
@@ -5224,7 +5249,7 @@ error('Cannot require a meta file')
 ---A glob pattern, like **/*.{ts,js}. See TextDocumentFilter for examples.
 ---@field pattern string
 
----@class lsp._anonym52.NotebookDocumentFilter
+---@class lsp._anonym54.NotebookDocumentFilter
 ---
 ---The type of the enclosing notebook.
 ---@field notebookType string
@@ -5235,7 +5260,7 @@ error('Cannot require a meta file')
 ---A glob pattern.
 ---@field pattern? string
 
----@class lsp._anonym53.NotebookDocumentFilter
+---@class lsp._anonym55.NotebookDocumentFilter
 ---
 ---The type of the enclosing notebook.
 ---@field notebookType? string
@@ -5246,7 +5271,7 @@ error('Cannot require a meta file')
 ---A glob pattern.
 ---@field pattern? string
 
----@class lsp._anonym54.NotebookDocumentFilter
+---@class lsp._anonym56.NotebookDocumentFilter
 ---
 ---The type of the enclosing notebook.
 ---@field notebookType? string

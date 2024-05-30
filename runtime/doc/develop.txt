@@ -4,7 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
-Development of Nvim					*development* *dev*
+Development of Nvim                                     *development* *dev*
 
 This reference describes design constraints and guidelines, for developing
 Nvim applications or Nvim itself.
@@ -16,13 +16,13 @@ Nvim is free and open source.  Everybody is encouraged to contribute.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-Design goals						*design-goals*
+Design goals                                            *design-goals*
 
 Most important things come first (roughly).  Some items conflict; this is
 intentional.  A balance must be found.
 
 
-NVIM IS... IMPROVED					*design-improved*
+NVIM IS... IMPROVED                                     *design-improved*
 
 The Neo bits of Nvim should make it a better Vim, without becoming a
 completely different editor.
@@ -35,7 +35,7 @@ completely different editor.
   never break.
 
 
-NVIM IS... WELL DOCUMENTED				*design-documented*
+NVIM IS... WELL DOCUMENTED                              *design-documented*
 
 - A feature that isn't documented is a useless feature.  A patch for a new
   feature must include the documentation.
@@ -44,7 +44,7 @@ NVIM IS... WELL DOCUMENTED				*design-documented*
   item is easier to find.
 
 
-NVIM IS... FAST AND SMALL				*design-speed-size*
+NVIM IS... FAST AND SMALL                               *design-speed-size*
 
 Keep Nvim small and fast. This directly affects versatility and usability.
 - Computers are becoming faster and bigger each year.  Vim can grow too, but
@@ -59,7 +59,7 @@ Keep Nvim small and fast. This directly affects versatility and usability.
   ("composability").
 
 
-NVIM IS... MAINTAINABLE					*design-maintain*
+NVIM IS... MAINTAINABLE                                 *design-maintain*
 
 - The source code should not become a mess.  It should be reliable code.
 - Use comments in a useful way!  Quoting the function name and argument names
@@ -70,7 +70,7 @@ NVIM IS... MAINTAINABLE					*design-maintain*
   knowledge spread to other parts of the code.
 
 
-NVIM IS... NOT						*design-not*
+NVIM IS... NOT                                          *design-not*
 
 Nvim is not an operating system; instead it should be composed with other
 tools or hosted as a component. Marvim once said: "Unlike Emacs, Nvim does not
@@ -78,10 +78,10 @@ include the kitchen sink... but it's good for plumbing."
 
 
 ==============================================================================
-Developer guidelines				        *dev-guidelines*
+Developer guidelines                                    *dev-guidelines*
 
 
-PROVIDERS						*dev-provider*
+PROVIDERS                                               *dev-provider*
 
 A primary goal of Nvim is to allow extension of the editor without special
 knowledge in the core.  Some core functions are delegated to "providers"
@@ -115,7 +115,7 @@ For example, the Python provider is implemented by the
 to 2 only if a valid external Python host is found.  Then `has("python")`
 reflects whether Python support is working.
 
-							*provider-reload*
+                                                        *provider-reload*
 Sometimes a GUI or other application may want to force a provider to
 "reload".  To reload a provider, undefine its "loaded" flag, then use
 |:runtime| to reload it: >vim
@@ -124,7 +124,7 @@ Sometimes a GUI or other application may want to force a provider to
     :runtime autoload/provider/clipboard.vim
 
 
-DOCUMENTATION						*dev-doc*
+DOCUMENTATION                                           *dev-doc*
 
 - "Just say it". Avoid mushy, colloquial phrasing in all documentation
   (docstrings, user manual, website materials, newsletters, …). Don't mince
@@ -159,6 +159,12 @@ DOCUMENTATION						*dev-doc*
       not "the user host terminal".
     - Use "tui-" to prefix help tags related to the host terminal, and "TUI"
       in prose if possible.
+- Rough guidelines on where Lua documentation should end up:
+    - Nvim API functions `vim.api.nvim_*` should be in `api.txt`.
+    - If the module is big and not relevant to generic and lower-level Lua
+      functionality, then it's a strong candidate for separation. Example:
+      `treesitter.txt`
+    - Otherwise, add them to `lua.txt`
 
 Documentation format ~
 
@@ -230,7 +236,7 @@ in src/nvim/api/win_config.c like this: >
 
 
 Lua docstrings ~
-							*dev-lua-doc*
+                                                        *dev-lua-doc*
 Lua documentation lives in the source code, as docstrings on the function
 definitions.  The |lua-vim| :help is generated from the docstrings.
 
@@ -289,7 +295,7 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
     --- @returns false if client should cancel the paste.
 
 
-LUA STDLIB DESIGN GUIDELINES				*dev-lua*
+LUA STDLIB DESIGN GUIDELINES                            *dev-lua*
 
 See also |dev-naming|.
 
@@ -304,13 +310,21 @@ See also |dev-naming|.
   - accept iterable instead of table
     - exception: in some cases iterable doesn't make sense, e.g. spair() sorts
       the input by definition, so there is no reason for it to accept an
-      iterable, because the input needs to be "hydrated", it can't operate on
+      iterable, because the input needs to be "reified"; it can't operate on
       a "stream".
   - return iterable instead of table
   - mimic the pairs() or ipairs() interface if the function is intended to be
     used in a "for" loop.
+  - when a result-or-error interface is needed, return `result|nil, nil|errmsg`: >
+    ---@return Foo|nil # Result object, or nil if not found.
+    ---@return nil|string # Error message on failure, or nil on success.
+<
+    - Examples: |vim.ui.open()| |io.open()| |luv-error-handling|
 
+                                                        *dev-patterns*
 Interface conventions ~
+
+Where possible, these patterns apply to _both_ Lua and the API:
 
 - When accepting a buffer id, etc., 0 means "current buffer", nil means "all
   buffers".  Likewise for window id, tabpage id, etc.
@@ -322,8 +336,19 @@ Interface conventions ~
     filter(table, opts, function() … end)
     BAD:
     filter(function() … end, table, opts)
+- "Enable" ("toggle") interface and behavior:
+  - `enable(…, nil)` and `enable(…, {buf=nil})` are synonyms and control the
+    the "global" enablement of a feature.
+    - `is_enabled(nil)` and `is_enabled({buf=nil})`, likewise, query the
+      global state of the feature.
+  - `enable(…, {buf: number})` sets a buffer-local "enable" flag.
+    - `is_enabled({buf: number})`, likewise, queries the buffer-local state of
+      the feature.
+  - See |vim.lsp.inlay_hint.enable()| and |vim.lsp.inlay_hint.is_enabled()|
+    for a reference implementation of these "best practices".
+  - NOTE: open questions: https://github.com/neovim/neovim/issues/28603
 
-API DESIGN GUIDELINES					*dev-api*
+API DESIGN GUIDELINES                                   *dev-api*
 
 See also |dev-naming|.
 
@@ -363,18 +388,22 @@ Naming conventions ~
 In general, look for precedent when choosing a name, that is, look at existing
 (non-deprecated) functions. In particular, see below...
 
-							*dev-name-common*
+                                                        *dev-name-common*
 Use existing common {verb} names (actions) if possible:
     - add:          Appends or inserts into a collection
     - attach:       Listens to something to get events from it (TODO: rename to "on"?)
     - call:         Calls a function
+    - cancel:       Cancels or dismisses an event or interaction, typically
+                    user-initiated and without error. (Compare "abort", which
+                    cancels and signals error/failure.)
     - clear:        Clears state but does not destroy the container
     - create:       Creates a new (non-trivial) thing (TODO: rename to "def"?)
     - del:          Deletes a thing (or group of things)
     - detach:       Dispose attached listener (TODO: rename to "un"?)
-    - enable:       Enables/disables functionality.
+    - enable:       Enables/disables functionality. Signature should be
+                    `enable(enable?:boolean, filter?:table)`.
     - eval:         Evaluates an expression
-    - exec:         Executes code
+    - exec:         Executes code, may return a result
     - fmt:          Formats
     - get:          Gets things (often by a query)
     - inspect:      Presents a high-level, often interactive, view
@@ -382,18 +411,22 @@ Use existing common {verb} names (actions) if possible:
     - open:         Opens something (a buffer, window, …)
     - parse:        Parses something into a structured form
     - set:          Sets a thing (or group of things)
+    - start:        Spin up a long-lived process. Prefer "enable" except when
+                    "start" is obviously more appropriate.
+    - stop:         Inverse of "start". Teardown a long-lived process.
     - try_{verb}:   Best-effort operation, failure returns null or error obj
 
 Do NOT use these deprecated verbs:
     - disable:      Prefer `enable(enable: boolean)`.
+    - exit:         Prefer "cancel" (or "stop" if appropriate).
     - is_disabled:  Prefer `is_enabled()`.
     - list:         Redundant with "get"
     - notify:       Redundant with "print", "echo"
     - show:         Redundant with "print", "echo"
     - toggle:       Prefer `enable(not is_enabled())`.
 
-Use consistent names for {noun} (nouns) in API functions: buffer is called
-"buf" everywhere, not "buffer" in some places and "buf" in others.
+Use consistent names for {topic} in API functions: buffer is called "buf"
+everywhere, not "buffer" in some places and "buf" in others.
     - buf:          Buffer
     - chan:         |channel|
     - cmd:          Command
@@ -406,12 +439,12 @@ Use consistent names for {noun} (nouns) in API functions: buffer is called
     - win:          Window
 
 Do NOT use these deprecated nouns:
-    - buffer
+    - buffer        Use "buf" instead
     - callback      Use on_foo instead
-    - command
-    - window
+    - command       Use "cmd" instead
+    - window        Use "win" instead
 
-							*dev-name-events*
+                                                        *dev-name-events*
 Use the "on_" prefix to name event-handling callbacks and also the interface for
 "registering" such handlers (on_key). The dual nature is acceptable to avoid
 a confused collection of naming conventions for these related concepts.
@@ -425,14 +458,17 @@ Use this format to name API (RPC) events: >
 Example: >
     nvim_buf_changedtick_event
 <
-							*dev-name-api*
+                                                        *dev-api-name*
 Use this format to name new RPC |API| functions: >
-    nvim_{noun}_{verb}_{arbitrary-qualifiers}
+    nvim_{topic}_{verb}_{arbitrary-qualifiers}
 
-If the function acts on an object then {noun} is the name of that object
-(e.g. "buf" or "win"). If the function operates in a "global" context then
-{noun} is usually omitted (but consider "namespacing" your global operations
-with a {noun} that groups functions under a common concept).
+Do not add new nvim_buf/nvim_win/nvim_tabpage APIs, unless you are certain the
+concept will NEVER be applied to more than one "scope". That is, {topic}
+should be the TOPIC ("ns", "extmark", "option", …) that acts on the scope(s)
+(buf/win/tabpage/global), it should NOT be the scope. Instead the scope should
+be a parameter (typically manifest as mutually-exclusive buf/win/… flags like
+|nvim_get_option_value()|, or less commonly as a `scope: string` field like
+|nvim_get_option_info2()|).
 
 - Example: `nvim_get_keymap('v')` operates in a global context (first
   parameter is not a Buffer). The "get" verb indicates that it gets anything
@@ -442,9 +478,61 @@ with a {noun} that groups functions under a common concept).
   and uses the "del" {verb}.
 
 
-API-CLIENT						*dev-api-client*
+INTERFACE PATTERNS                                      *dev-api-patterns*
 
-							*api-client*
+Prefer adding a single `nvim_{topic}_{verb}_…` interface for a given topic.
+
+Example: >
+
+    nvim_ns_add(
+      ns_id: int,
+      filter: {
+        handle: integer (buf/win/tabpage id)
+        scope: "global" | "win" | "buf" | "tabpage"
+      }
+    ): { ok: boolean }
+
+    nvim_ns_get(
+      ns_id: int,
+      filter: {
+        handle: integer (buf/win/tabpage id)
+        scope: "global" | "win" | "buf" | "tabpage"
+      }
+    ): { ids: int[] }
+
+    nvim_ns_del(
+      ns_id: int,
+      filter: {
+        handle: integer (buf/win/tabpage id)
+        scope: "global" | "win" | "buf" | "tabpage"
+      }
+    ): { ok: boolean }
+
+
+Anti-Example:
+
+Creating separate `nvim_xx`, `nvim_buf_xx`, `nvim_win_xx`, and
+`nvim_tabpage_xx`, functions all for the same `xx` topic, requires 4x the
+amount of documentation, tests, boilerplate, and interfaces, which users must
+comprehend, maintainers must maintain, etc. Thus the following is NOT
+recommended (compare these 12(!) functions to the above 3 functions): >
+
+    nvim_add_ns(…)
+    nvim_buf_add_ns(…)
+    nvim_win_add_ns(…)
+    nvim_tabpage_add_ns(…)
+    nvim_del_ns(…)
+    nvim_buf_del_ns(…)
+    nvim_win_del_ns(…)
+    nvim_tabpage_del_ns(…)
+    nvim_get_ns(…)
+    nvim_buf_get_ns(…)
+    nvim_win_get_ns(…)
+    nvim_tabpage_get_ns(…)
+
+API-CLIENT                                              *dev-api-client*
+
+                                                        *api-client*
 API clients wrap the Nvim |API| to provide idiomatic "SDKs" for their
 respective platforms (see |jargon|). You can build a new API client for your
 favorite platform or programming language.
@@ -452,9 +540,10 @@ favorite platform or programming language.
 List of API clients:
     https://github.com/neovim/neovim/wiki/Related-projects#api-clients
 
-							*pynvim*
-The Python client is the reference implementation for API clients.
-    https://github.com/neovim/pynvim
+                                                        *node-client* *pynvim*
+These clients can be considered the "reference implementation" for API clients:
+- https://github.com/neovim/node-client
+- https://github.com/neovim/pynvim
 
 Standard Features ~
 
@@ -505,7 +594,7 @@ API client implementation guidelines ~
     https://github.com/msgpack-rpc/msgpack-rpc
 
 
-EXTERNAL UI						*dev-ui*
+EXTERNAL UI                                             *dev-ui*
 
 External UIs should be aware of the |api-contract|. In particular, future
 versions of Nvim may add new items to existing events. The API is strongly
@@ -531,6 +620,8 @@ External UIs are expected to implement these common features:
   published in this event. See also "mouse_on", "mouse_off".
 - UIs generally should NOT set |$NVIM_APPNAME| (unless explicitly requested by
   the user).
+- Support the text decorations/attributes given by |ui-event-hl_attr_define|.
+  The "url" attr should be presented as a clickable hyperlink.
 
 
  vim:tw=78:ts=8:sw=4:et:ft=help:norl:

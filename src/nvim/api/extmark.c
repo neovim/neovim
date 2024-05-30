@@ -121,7 +121,7 @@ Array virt_text_to_array(VirtText vt, bool hl_name, Arena *arena)
     Array hl_array = arena_array(arena, i < j ? j - i + 1 : 0);
     for (; i < j; i++) {
       int hl_id = kv_A(vt, i).hl_id;
-      if (hl_id > 0) {
+      if (hl_id >= 0) {
         ADD_C(hl_array, hl_group_name(hl_id, hl_name));
       }
     }
@@ -131,11 +131,11 @@ Array virt_text_to_array(VirtText vt, bool hl_name, Arena *arena)
     Array chunk = arena_array(arena, 2);
     ADD_C(chunk, CSTR_AS_OBJ(text));
     if (hl_array.size > 0) {
-      if (hl_id > 0) {
+      if (hl_id >= 0) {
         ADD_C(hl_array, hl_group_name(hl_id, hl_name));
       }
       ADD_C(chunk, ARRAY_OBJ(hl_array));
-    } else if (hl_id > 0) {
+    } else if (hl_id >= 0) {
       ADD_C(chunk, hl_group_name(hl_id, hl_name));
     }
     ADD_C(chunks, ARRAY_OBJ(chunk));
@@ -489,8 +489,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   used together with virt_text.
 ///               - url: A URL to associate with this extmark. In the TUI, the OSC 8 control
 ///                   sequence is used to generate a clickable hyperlink to this URL.
-///               - scoped: boolean that indicates that the extmark should only be
-///                   displayed in the namespace scope. (experimental)
+///               - scoped: boolean (EXPERIMENTAL) enables "scoping" for the extmark. See
+///                 |nvim__win_add_ns()|
 ///
 /// @param[out]  err   Error details, if any
 /// @return Id of the created/updated extmark
@@ -761,32 +761,20 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       col2 = c;
     }
 
-    DecorPriority subpriority = DECOR_PRIORITY_BASE;
-    if (HAS_KEY(opts, set_extmark, _subpriority)) {
-      VALIDATE_RANGE((opts->_subpriority >= 0 && opts->_subpriority <= UINT16_MAX),
-                     "_subpriority", {
-        goto error;
-      });
-      subpriority = (DecorPriority)opts->_subpriority;
-    }
-
     if (kv_size(virt_text.data.virt_text)) {
-      decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_text, NULL), true,
-                           subpriority);
+      decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_text, NULL), true);
     }
     if (kv_size(virt_lines.data.virt_lines)) {
-      decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_lines, NULL), true,
-                           subpriority);
+      decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_lines, NULL), true);
     }
     if (url != NULL) {
       DecorSignHighlight sh = DECOR_SIGN_HIGHLIGHT_INIT;
       sh.url = url;
-      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, 0, 0, subpriority);
+      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, 0, 0);
     }
     if (has_hl) {
       DecorSignHighlight sh = decor_sh_from_inline(hl);
-      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id,
-                         subpriority);
+      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id);
     }
   } else {
     if (opts->ephemeral) {
@@ -1177,7 +1165,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
 
     String str = chunk.items[0].data.string;
 
-    int hl_id = 0;
+    int hl_id = -1;
     if (chunk.size == 2) {
       Object hl = chunk.items[1];
       if (hl.type == kObjectTypeArray) {
@@ -1227,13 +1215,15 @@ String nvim__buf_debug_extmarks(Buffer buffer, Boolean keys, Boolean dot, Error 
   return mt_inspect(buf->b_marktree, keys, dot);
 }
 
-/// Adds the namespace scope to the window.
+/// EXPERIMENTAL: this API will change in the future.
+///
+/// Scopes a namespace to the a window, so extmarks in the namespace will be active only in the
+/// given window.
 ///
 /// @param window Window handle, or 0 for current window
-/// @param ns_id the namespace to add
+/// @param ns_id Namespace
 /// @return true if the namespace was added, else false
-Boolean nvim_win_add_ns(Window window, Integer ns_id, Error *err)
-  FUNC_API_SINCE(12)
+Boolean nvim__win_add_ns(Window window, Integer ns_id, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
@@ -1246,17 +1236,20 @@ Boolean nvim_win_add_ns(Window window, Integer ns_id, Error *err)
 
   set_put(uint32_t, &win->w_ns_set, (uint32_t)ns_id);
 
-  changed_window_setting(win);
+  if (map_has(uint32_t, win->w_buffer->b_extmark_ns, (uint32_t)ns_id)) {
+    changed_window_setting(win);
+  }
 
   return true;
 }
 
-/// Gets all the namespaces scopes associated with a window.
+/// EXPERIMENTAL: this API will change in the future.
+///
+/// Gets the namespace scopes for a given window.
 ///
 /// @param window Window handle, or 0 for current window
 /// @return a list of namespaces ids
-ArrayOf(Integer) nvim_win_get_ns(Window window, Arena *arena, Error *err)
-  FUNC_API_SINCE(12)
+ArrayOf(Integer) nvim__win_get_ns(Window window, Arena *arena, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
@@ -1272,13 +1265,14 @@ ArrayOf(Integer) nvim_win_get_ns(Window window, Arena *arena, Error *err)
   return rv;
 }
 
-/// Removes the namespace scope from the window.
+/// EXPERIMENTAL: this API will change in the future.
+///
+/// Unscopes a namespace (un-binds it from the given scope).
 ///
 /// @param window Window handle, or 0 for current window
 /// @param ns_id the namespace to remove
 /// @return true if the namespace was removed, else false
-Boolean nvim_win_remove_ns(Window window, Integer ns_id, Error *err)
-  FUNC_API_SINCE(12)
+Boolean nvim__win_del_ns(Window window, Integer ns_id, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
@@ -1291,7 +1285,9 @@ Boolean nvim_win_remove_ns(Window window, Integer ns_id, Error *err)
 
   set_del(uint32_t, &win->w_ns_set, (uint32_t)ns_id);
 
-  changed_window_setting(win);
+  if (map_has(uint32_t, win->w_buffer->b_extmark_ns, (uint32_t)ns_id)) {
+    changed_window_setting(win);
+  }
 
   return true;
 }

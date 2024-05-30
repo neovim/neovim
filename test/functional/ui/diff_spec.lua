@@ -1,15 +1,16 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local feed = t.feed
-local clear = t.clear
-local command = t.command
-local insert = t.insert
+local feed = n.feed
+local clear = n.clear
+local command = n.command
+local insert = n.insert
 local write_file = t.write_file
 local dedent = t.dedent
-local exec = t.exec
+local exec = n.exec
 local eq = t.eq
-local api = t.api
+local api = n.api
 
 before_each(clear)
 

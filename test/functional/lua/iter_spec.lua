@@ -1,4 +1,5 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+
 local eq = t.eq
 local matches = t.matches
 local pcall_err = t.pcall_err
@@ -116,6 +117,9 @@ describe('vim.iter', function()
       eq({ { 1, 1 }, { 2, 4 }, { 3, 9 } }, it:totable())
     end
 
+    -- Holes in array-like tables are removed
+    eq({ 1, 2, 3 }, vim.iter({ 1, nil, 2, nil, 3 }):totable())
+
     do
       local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):map(tonumber)
       eq({ 1, 4, 17, 2, 9, 3 }, it:totable())
@@ -141,7 +145,7 @@ describe('vim.iter', function()
     eq({ 3, 2, 1 }, vim.iter({ 1, 2, 3 }):rev():totable())
 
     local it = vim.iter(string.gmatch('abc', '%w'))
-    matches('rev%(%) requires a list%-like table', pcall_err(it.rev, it))
+    matches('rev%(%) requires an array%-like table', pcall_err(it.rev, it))
   end)
 
   it('skip()', function()
@@ -168,19 +172,19 @@ describe('vim.iter', function()
     end
   end)
 
-  it('skipback()', function()
+  it('rskip()', function()
     do
       local q = { 4, 3, 2, 1 }
-      eq(q, vim.iter(q):skipback(0):totable())
-      eq({ 4, 3, 2 }, vim.iter(q):skipback(1):totable())
-      eq({ 4, 3 }, vim.iter(q):skipback(2):totable())
-      eq({ 4 }, vim.iter(q):skipback(#q - 1):totable())
-      eq({}, vim.iter(q):skipback(#q):totable())
-      eq({}, vim.iter(q):skipback(#q + 1):totable())
+      eq(q, vim.iter(q):rskip(0):totable())
+      eq({ 4, 3, 2 }, vim.iter(q):rskip(1):totable())
+      eq({ 4, 3 }, vim.iter(q):rskip(2):totable())
+      eq({ 4 }, vim.iter(q):rskip(#q - 1):totable())
+      eq({}, vim.iter(q):rskip(#q):totable())
+      eq({}, vim.iter(q):rskip(#q + 1):totable())
     end
 
     local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-    matches('skipback%(%) requires a list%-like table', pcall_err(it.skipback, it, 0))
+    matches('rskip%(%) requires an array%-like table', pcall_err(it.rskip, it, 0))
   end)
 
   it('slice()', function()
@@ -194,7 +198,7 @@ describe('vim.iter', function()
     eq({ 8, 9, 10 }, vim.iter(q):slice(8, 11):totable())
 
     local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-    matches('slice%(%) requires a list%-like table', pcall_err(it.slice, it, 1, 3))
+    matches('slice%(%) requires an array%-like table', pcall_err(it.slice, it, 1, 3))
   end)
 
   it('nth()', function()
@@ -221,19 +225,19 @@ describe('vim.iter', function()
     end
   end)
 
-  it('nthback()', function()
+  it('nth(-x) advances in reverse order starting from end', function()
     do
       local q = { 4, 3, 2, 1 }
-      eq(nil, vim.iter(q):nthback(0))
-      eq(1, vim.iter(q):nthback(1))
-      eq(2, vim.iter(q):nthback(2))
-      eq(3, vim.iter(q):nthback(3))
-      eq(4, vim.iter(q):nthback(4))
-      eq(nil, vim.iter(q):nthback(5))
+      eq(nil, vim.iter(q):nth(0))
+      eq(1, vim.iter(q):nth(-1))
+      eq(2, vim.iter(q):nth(-2))
+      eq(3, vim.iter(q):nth(-3))
+      eq(4, vim.iter(q):nth(-4))
+      eq(nil, vim.iter(q):nth(-5))
     end
 
     local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
-    matches('skipback%(%) requires a list%-like table', pcall_err(it.nthback, it, 1))
+    matches('rskip%(%) requires an array%-like table', pcall_err(it.nth, it, -1))
   end)
 
   it('take()', function()
@@ -355,7 +359,7 @@ describe('vim.iter', function()
 
     do
       local it = vim.iter(vim.gsplit('hi', ''))
-      matches('peek%(%) requires a list%-like table', pcall_err(it.peek, it))
+      matches('peek%(%) requires an array%-like table', pcall_err(it.peek, it))
     end
   end)
 
@@ -416,38 +420,38 @@ describe('vim.iter', function()
 
     do
       local it = vim.iter(vim.gsplit('AbCdE', ''))
-      matches('rfind%(%) requires a list%-like table', pcall_err(it.rfind, it, 'E'))
+      matches('rfind%(%) requires an array%-like table', pcall_err(it.rfind, it, 'E'))
     end
   end)
 
-  it('nextback()', function()
+  it('pop()', function()
     do
       local it = vim.iter({ 1, 2, 3, 4 })
-      eq(4, it:nextback())
-      eq(3, it:nextback())
-      eq(2, it:nextback())
-      eq(1, it:nextback())
-      eq(nil, it:nextback())
-      eq(nil, it:nextback())
+      eq(4, it:pop())
+      eq(3, it:pop())
+      eq(2, it:pop())
+      eq(1, it:pop())
+      eq(nil, it:pop())
+      eq(nil, it:pop())
     end
 
     do
       local it = vim.iter(vim.gsplit('hi', ''))
-      matches('nextback%(%) requires a list%-like table', pcall_err(it.nextback, it))
+      matches('pop%(%) requires an array%-like table', pcall_err(it.pop, it))
     end
   end)
 
-  it('peekback()', function()
+  it('rpeek()', function()
     do
       local it = vim.iter({ 1, 2, 3, 4 })
-      eq(4, it:peekback())
-      eq(4, it:peekback())
-      eq(4, it:nextback())
+      eq(4, it:rpeek())
+      eq(4, it:rpeek())
+      eq(4, it:pop())
     end
 
     do
       local it = vim.iter(vim.gsplit('hi', ''))
-      matches('peekback%(%) requires a list%-like table', pcall_err(it.peekback, it))
+      matches('rpeek%(%) requires an array%-like table', pcall_err(it.rpeek, it))
     end
   end)
 
@@ -481,18 +485,20 @@ describe('vim.iter', function()
     local m = { a = 1, b = { 2, 3 }, d = { 4 } }
     local it = vim.iter(m)
 
-    local flat_err = 'flatten%(%) requires a list%-like table'
+    local flat_err = 'flatten%(%) requires an array%-like table'
     matches(flat_err, pcall_err(it.flatten, it))
 
     -- cases from the documentation
     local simple_example = { 1, { 2 }, { { 3 } } }
     eq({ 1, 2, { 3 } }, vim.iter(simple_example):flatten():totable())
 
-    local not_list_like = vim.iter({ [2] = 2 })
-    matches(flat_err, pcall_err(not_list_like.flatten, not_list_like))
+    local not_list_like = { [2] = 2 }
+    eq({ 2 }, vim.iter(not_list_like):flatten():totable())
 
-    local also_not_list_like = vim.iter({ nil, 2 })
-    matches(flat_err, pcall_err(not_list_like.flatten, also_not_list_like))
+    local also_not_list_like = { nil, 2 }
+    eq({ 2 }, vim.iter(also_not_list_like):flatten():totable())
+
+    eq({ 1, 2, 3 }, vim.iter({ nil, { 1, nil, 2 }, 3 }):flatten():totable())
 
     local nested_non_lists = vim.iter({ 1, { { a = 2 } }, { { nil } }, { 3 } })
     eq({ 1, { a = 2 }, { nil }, 3 }, nested_non_lists:flatten():totable())

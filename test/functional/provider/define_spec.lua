@@ -1,8 +1,10 @@
-local t = require('test.functional.testutil')()
-local eval, command = t.eval, t.command
-local eq, run, stop = t.eq, t.run, t.stop
-local clear = t.clear
-local api = t.api
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local eval, command = n.eval, n.command
+local eq, run, stop = t.eq, n.run, n.stop
+local clear = n.clear
+local api = n.api
 
 local function get_prefix(sync)
   if sync then
@@ -28,7 +30,7 @@ local function runx(sync, handler, on_setup)
   local function setup_cb(...)
     on_setup(...)
     -- need to stop on setup callback because there's two session:request
-    -- calls in `request/testutil.lua`. The second call will always return
+    -- calls in `request/testnvim.lua`. The second call will always return
     -- after pending notification/request callbacks are processed
     stop()
   end
@@ -324,7 +326,7 @@ local function function_specs_for(fn, sync, first_arg_factory, init)
       end)
 
       it('with range', function()
-        t.insert([[
+        n.insert([[
           foo
           bar
           baz

@@ -1,6 +1,8 @@
-local t = require('test.functional.testutil')()
-local clear, eval = t.clear, t.eval
-local command = t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, eval = n.clear, n.eval
+local command = n.command
 local eq = t.eq
 local pcall_err = t.pcall_err
 

@@ -1,10 +1,11 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local eval = t.eval
-local feed = t.feed
-local clear = t.clear
-local command = t.command
+local eval = n.eval
+local feed = n.feed
+local clear = n.clear
+local command = n.command
 
 describe('v:count/v:count1', function()
   before_each(function()

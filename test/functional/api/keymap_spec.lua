@@ -1,15 +1,16 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local eq, neq = t.eq, t.neq
-local exec_lua = t.exec_lua
-local exec = t.exec
-local feed = t.feed
-local fn = t.fn
-local api = t.api
+local exec_lua = n.exec_lua
+local exec = n.exec
+local feed = n.feed
+local fn = n.fn
+local api = n.api
 local matches = t.matches
-local source = t.source
+local source = n.source
 local pcall_err = t.pcall_err
 
 local shallowcopy = t.shallowcopy
@@ -1146,7 +1147,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     feed('asdf\n')
 
     eq(1, exec_lua [[return GlobalCount]])
-    eq('\nNo mapping found', t.exec_capture('nmap asdf'))
+    eq('\nNo mapping found', n.exec_capture('nmap asdf'))
   end)
 
   it('no double-free when unmapping simplifiable lua mappings', function()
@@ -1170,13 +1171,13 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     feed('<C-I>\n')
 
     eq(1, exec_lua [[return GlobalCount]])
-    eq('\nNo mapping found', t.exec_capture('nmap <C-I>'))
+    eq('\nNo mapping found', n.exec_capture('nmap <C-I>'))
   end)
 
   it('can set descriptions on mappings', function()
     api.nvim_set_keymap('n', 'lhs', 'rhs', { desc = 'map description' })
     eq(generate_mapargs('n', 'lhs', 'rhs', { desc = 'map description' }), get_mapargs('n', 'lhs'))
-    eq('\nn  lhs           rhs\n                 map description', t.exec_capture('nmap lhs'))
+    eq('\nn  lhs           rhs\n                 map description', n.exec_capture('nmap lhs'))
   end)
 
   it('can define !-mode abbreviations with lua callbacks', function()
@@ -1331,7 +1332,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
   it('does not crash when setting mapping in a non-existing buffer #13541', function()
     pcall_err(api.nvim_buf_set_keymap, 100, '', 'lsh', 'irhs<Esc>', {})
-    t.assert_alive()
+    n.assert_alive()
   end)
 
   it('can make lua mappings', function()
@@ -1426,7 +1427,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
     feed('asdf\n')
 
     eq(1, exec_lua [[return GlobalCount]])
-    eq('\nNo mapping found', t.exec_capture('nmap asdf'))
+    eq('\nNo mapping found', n.exec_capture('nmap asdf'))
   end)
 
   it('no double-free when unmapping simplifiable lua mappings', function()
@@ -1450,6 +1451,6 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
     feed('<C-I>\n')
 
     eq(1, exec_lua [[return GlobalCount]])
-    eq('\nNo mapping found', t.exec_capture('nmap <C-I>'))
+    eq('\nNo mapping found', n.exec_capture('nmap <C-I>'))
   end)
 end)

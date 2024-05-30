@@ -4105,4 +4105,19 @@ func Test_SwapExists_set_other_buf_modified()
   bwipe!
 endfunc
 
+func Test_BufEnter_botline()
+  set hidden
+  call writefile(range(10), 'Xxx1', 'D')
+  call writefile(range(20), 'Xxx2', 'D')
+  edit Xxx1
+  edit Xxx2
+  au BufEnter Xxx1 call assert_true(line('w$') > 1)
+  edit Xxx1
+
+  bwipe! Xxx1
+  bwipe! Xxx2
+  au! BufEnter Xxx1
+  set hidden&vim
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

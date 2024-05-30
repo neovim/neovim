@@ -811,7 +811,7 @@ static void find_word(matchinf_T *mip, int mode)
             if (ptr == mip->mi_word) {
               spell_casefold(mip->mi_win, ptr, wlen, fword, MAXWLEN);
             } else {
-              xstrlcpy(fword, ptr, (size_t)endlen[endidxcnt] + 1);
+              xmemcpyz(fword, ptr, (size_t)endlen[endidxcnt]);
             }
           }
           if (!can_compound(slang, fword, mip->mi_compflags)) {
@@ -1290,11 +1290,11 @@ static inline bool can_syn_spell(win_T *wp, linenr_T lnum, int col)
 /// to after badly spelled word before the cursor.
 ///
 /// @param dir  FORWARD or BACKWARD
-/// @param allwords  true for "[s"/"]s", false for "[S"/"]S"
+/// @param behaviour  Behaviour of the function
 /// @param attrp  return: attributes of bad word or NULL (only when "dir" is FORWARD)
 ///
 /// @return  0 if not found, length of the badly spelled word otherwise.
-size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *attrp)
+size_t spell_move_to(win_T *wp, int dir, smt_T behaviour, bool curline, hlf_T *attrp)
 {
   pos_T found_pos;
   size_t found_len = 0;
@@ -1398,7 +1398,9 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
 
       if (attr != HLF_COUNT) {
         // We found a bad word.  Check the attribute.
-        if (allwords || attr == HLF_SPB) {
+        if (behaviour == SMT_ALL
+            || (behaviour == SMT_BAD && attr == HLF_SPB)
+            || (behaviour == SMT_RARE && attr == HLF_SPR)) {
           // When searching forward only accept a bad word after
           // the cursor.
           if (dir == BACKWARD
@@ -1810,7 +1812,7 @@ void count_common_word(slang_T *lp, char *word, int len, uint8_t count)
   } else if (len >= MAXWLEN) {
     return;
   } else {
-    xstrlcpy(buf, word, (size_t)len + 1);
+    xmemcpyz(buf, word, (size_t)len);
     p = buf;
   }
 
@@ -1868,7 +1870,7 @@ int init_syl_tab(slang_T *slang)
     }
 
     syl_item_T *syl = GA_APPEND_VIA_PTR(syl_item_T, &slang->sl_syl_items);
-    xstrlcpy(syl->sy_chars, s, (size_t)l + 1);
+    xmemcpyz(syl->sy_chars, s, (size_t)l);
     syl->sy_len = l;
   }
   return OK;
@@ -2253,7 +2255,7 @@ static void use_midword(slang_T *lp, win_T *wp)
       char *bp = xstrnsave(wp->w_s->b_spell_ismw_mb, (size_t)n + (size_t)l);
       xfree(wp->w_s->b_spell_ismw_mb);
       wp->w_s->b_spell_ismw_mb = bp;
-      xstrlcpy(bp + n, p, (size_t)l + 1);
+      xmemcpyz(bp + n, p, (size_t)l);
     }
     p += l;
   }
@@ -2663,16 +2665,16 @@ void ex_spellrepall(exarg_T *eap)
   const size_t repl_to_len = strlen(repl_to);
   const int addlen = (int)(repl_to_len - repl_from_len);
 
-  const size_t frompatlen = repl_from_len + 7;
-  char *frompat = xmalloc(frompatlen);
-  snprintf(frompat, frompatlen, "\\V\\<%s\\>", repl_from);
+  const size_t frompatsize = repl_from_len + 7;
+  char *frompat = xmalloc(frompatsize);
+  size_t frompatlen = (size_t)snprintf(frompat, frompatsize, "\\V\\<%s\\>", repl_from);
   p_ws = false;
 
   sub_nsubs = 0;
   sub_nlines = 0;
   curwin->w_cursor.lnum = 0;
   while (!got_int) {
-    if (do_search(NULL, '/', '/', frompat, 1, SEARCH_KEEP, NULL) == 0
+    if (do_search(NULL, '/', '/', frompat, frompatlen, 1, SEARCH_KEEP, NULL) == 0
         || u_save_cursor() == FAIL) {
       break;
     }

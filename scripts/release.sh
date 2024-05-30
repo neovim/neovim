@@ -31,23 +31,17 @@ __DATE=$(date +'%Y-%m-%d')
 __LAST_TAG=$(git describe --abbrev=0)
 [ -z "$__LAST_TAG" ] && { echo 'ERROR: no tag found'; exit 1; }
 __VERSION_MAJOR=$(grep 'set(NVIM_VERSION_MAJOR' CMakeLists.txt\
-  |$__sed 's/.*NVIM_VERSION_MAJOR ([[:digit:]]).*/\1/')
+  |$__sed 's/.*NVIM_VERSION_MAJOR ([[:digit:]]+).*/\1/')
 __VERSION_MINOR=$(grep 'set(NVIM_VERSION_MINOR' CMakeLists.txt\
-  |$__sed 's/.*NVIM_VERSION_MINOR ([[:digit:]]).*/\1/')
+  |$__sed 's/.*NVIM_VERSION_MINOR ([[:digit:]]+).*/\1/')
 __VERSION_PATCH=$(grep 'set(NVIM_VERSION_PATCH' CMakeLists.txt\
-  |$__sed 's/.*NVIM_VERSION_PATCH ([[:digit:]]).*/\1/')
+  |$__sed 's/.*NVIM_VERSION_PATCH ([[:digit:]]+).*/\1/')
 __VERSION="${__VERSION_MAJOR}.${__VERSION_MINOR}.${__VERSION_PATCH}"
 __API_LEVEL=$(grep 'set(NVIM_API_LEVEL ' CMakeLists.txt\
-  |$__sed 's/.*NVIM_API_LEVEL ([[:digit:]]).*/\1/')
+  |$__sed 's/.*NVIM_API_LEVEL ([[:digit:]]+).*/\1/')
 { [ -z "$__VERSION_MAJOR" ] || [ -z "$__VERSION_MINOR" ] || [ -z "$__VERSION_PATCH" ]; } \
   &&  { echo "ERROR: version parse failed: '${__VERSION}'"; exit 1; }
 __RELEASE_MSG="NVIM v${__VERSION}
-
-FEATURES:
-
-FIXES:
-
-CHANGES:
 
 "
 __BUMP_MSG="version bump"
@@ -55,13 +49,17 @@ __BUMP_MSG="version bump"
 echo "Most recent tag: ${__LAST_TAG}"
 echo "Release version: ${__VERSION}"
 
+_git_log_pretty() {
+  git cliff --config scripts/cliff.toml --unreleased || echo 'git cliff failed'
+}
+
 _do_release_commit() {
   $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) "-dev"/\1 ""/' CMakeLists.txt
   if grep '(NVIM_API_PRERELEASE true)' CMakeLists.txt > /dev/null; then
     $__sed -i.bk 's/(NVIM_API_PRERELEASE) true/\1 false/' CMakeLists.txt
     build/bin/nvim --api-info > "test/functional/fixtures/api_level_$__API_LEVEL.mpack"
     git add "test/functional/fixtures/api_level_${__API_LEVEL}.mpack"
-    build/bin/nvim -u NONE -l scripts/gen_vimdoc.lua
+    VIMRUNTIME=./runtime build/bin/nvim -u NONE -l scripts/gen_vimdoc.lua
     git add -u -- runtime/doc/
   fi
 
@@ -73,7 +71,7 @@ _do_release_commit() {
     echo "Building changelog since ${__LAST_TAG}..."
 
     git add CMakeLists.txt
-    (echo "${__RELEASE_MSG}"; ./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:[^[:space:]]') | git commit --edit -F -
+    (echo "${__RELEASE_MSG}"; _git_log_pretty) | git commit --edit -F -
   fi
 
   git tag --sign -a v"${__VERSION}" -m "NVIM v${__VERSION}"

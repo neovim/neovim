@@ -2133,6 +2133,7 @@ M.funcs = {
     name = 'exepath',
     params = { { 'expr', 'any' } },
     signature = 'exepath({expr})',
+    returns = 'string',
   },
   exists = {
     args = 1,
@@ -4370,14 +4371,14 @@ M.funcs = {
       The optional argument {opts} is a Dict and supports the
       following items:
 
-      	type		Specify the region's selection type
-      			(default: "v"):
-      	    "v"		for |charwise| mode
-      	    "V"		for |linewise| mode
-      	    "<CTRL-V>"	for |blockwise-visual| mode
+      	type		Specify the region's selection type.
+      			See |getregtype()| for possible values,
+      			except that the width can be omitted
+      			and an empty string cannot be used.
+      			(default: "v")
 
       	exclusive	If |TRUE|, use exclusive selection
-      			for the end position
+      			for the end position.
       			(default: follow 'selection')
 
       You can get the last selection type by |visualmode()|.
@@ -4413,6 +4414,46 @@ M.funcs = {
     params = { { 'pos1', 'table' }, { 'pos2', 'table' }, { 'opts', 'table' } },
     returns = 'string[]',
     signature = 'getregion({pos1}, {pos2} [, {opts}])',
+  },
+  getregionpos = {
+    args = { 2, 3 },
+    base = 1,
+    desc = [=[
+      Same as |getregion()|, but returns a list of positions
+      describing the buffer text segments bound by {pos1} and
+      {pos2}.
+      The segments are a pair of positions for every line: >
+      	[[{start_pos}, {end_pos}], ...]
+      <
+      The position is a |List| with four numbers:
+          [bufnum, lnum, col, off]
+      "bufnum" is the buffer number.
+      "lnum" and "col" are the position in the buffer.  The first
+      column is 1.
+      If the "off" number of a starting position is non-zero, it is
+      the offset in screen columns from the start of the character.
+      E.g., a position within a <Tab> or after the last character.
+      If the "off" number of an ending position is non-zero, it is
+      the offset of the character's first cell not included in the
+      selection, otherwise all its cells are included.
+
+      Apart from the options supported by |getregion()|, {opts} also
+      supports the following:
+
+      	eol		If |TRUE|, indicate positions beyond
+      			the end of a line with "col" values
+      			one more than the length of the line.
+      			If |FALSE|, positions are limited
+      			within their lines, and if a line is
+      			empty or the selection is entirely
+      			beyond the end of a line, a "col"
+      			value of 0 is used for both positions.
+      			(default: |FALSE|)
+    ]=],
+    name = 'getregionpos',
+    params = { { 'pos1', 'table' }, { 'pos2', 'table' }, { 'opts', 'table' } },
+    returns = 'integer[][][]',
+    signature = 'getregionpos({pos1}, {pos2} [, {opts}])',
   },
   getregtype = {
     args = { 0, 1 },
@@ -4470,11 +4511,12 @@ M.funcs = {
 
       Examples: >vim
       	echo getscriptinfo({'name': 'myscript'})
-      	echo getscriptinfo({'sid': 15}).variables
+      	echo getscriptinfo({'sid': 15})[0].variables
       <
     ]=],
     name = 'getscriptinfo',
     params = { { 'opts', 'table' } },
+    returns = 'vim.fn.getscriptinfo.ret[]',
     signature = 'getscriptinfo([{opts}])',
   },
   gettabinfo = {
@@ -4905,6 +4947,7 @@ M.funcs = {
       	endif
       <
     ]=],
+    fast = true,
     name = 'has',
     params = { { 'feature', 'any' } },
     returns = '0|1',
@@ -7901,6 +7944,7 @@ M.funcs = {
     name = 'printf',
     params = { { 'fmt', 'any' }, { 'expr1', 'any' } },
     signature = 'printf({fmt}, {expr1} ...)',
+    returns = 'string',
   },
   prompt_getprompt = {
     args = 1,
@@ -9900,10 +9944,11 @@ M.funcs = {
       Otherwise encloses {string} in single-quotes and replaces all
       "'" with "'\''".
 
-      If {special} is a |non-zero-arg|:
-      - Special items such as "!", "%", "#" and "<cword>" will be
-        preceded by a backslash. The backslash will be removed again
-        by the |:!| command.
+      The {special} argument adds additional escaping of keywords
+      used in Vim commands. If it is a |non-zero-arg|:
+      - Special items such as "!", "%", "#" and "<cword>" (as listed
+        in |expand()|) will be preceded by a backslash.
+        The backslash will be removed again by the |:!| command.
       - The <NL> character is escaped.
 
       If 'shell' contains "csh" in the tail:
@@ -11620,6 +11665,10 @@ M.funcs = {
       	synconcealed(lnum, 4)   [1, 'X', 2]
       	synconcealed(lnum, 5)   [1, 'X', 2]
       	synconcealed(lnum, 6)   [0, '', 0]
+
+      Note: Doesn't consider |matchadd()| highlighting items,
+      since syntax and matching highlighting are two different
+      mechanisms |syntax-vs-match|.
     ]=],
     name = 'synconcealed',
     params = { { 'lnum', 'integer' }, { 'col', 'integer' } },

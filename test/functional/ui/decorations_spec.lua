@@ -1,17 +1,18 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local clear = t.clear
-local feed = t.feed
-local insert = t.insert
-local exec_lua = t.exec_lua
-local exec = t.exec
+local clear = n.clear
+local feed = n.feed
+local insert = n.insert
+local exec_lua = n.exec_lua
+local exec = n.exec
 local expect_events = t.expect_events
-local api = t.api
-local fn = t.fn
-local command = t.command
+local api = n.api
+local fn = n.fn
+local command = n.command
 local eq = t.eq
-local assert_alive = t.assert_alive
+local assert_alive = n.assert_alive
 local pcall_err = t.pcall_err
 
 describe('decorations providers', function()
@@ -723,48 +724,7 @@ describe('decorations providers', function()
     end
     ]]
 
-    t.assert_alive()
-  end)
-
-  it('supports subpriorities (order of definitions in a query file #27131)', function()
-    insert(mulholland)
-    setup_provider [[
-      local test_ns = api.nvim_create_namespace('mulholland')
-      function on_do(event, ...)
-        if event == "line" then
-          local win, buf, line = ...
-          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
-            end_row = line + 1,
-            hl_eol = true,
-            hl_group = 'Comment',
-            ephemeral = true,
-            priority = 100,
-            _subpriority = 20,
-          })
-
-          -- This extmark is set last but has a lower subpriority, so the first extmark "wins"
-          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
-            end_row = line + 1,
-            hl_eol = true,
-            hl_group = 'String',
-            ephemeral = true,
-            priority = 100,
-            _subpriority = 10,
-          })
-        end
-      end
-    ]]
-
-    screen:expect{grid=[[
-      {4:// just to see if there was an accident }|
-      {4:// on Mulholland Drive                  }|
-      {4:try_start();                            }|
-      {4:bufref_T save_buf;                      }|
-      {4:switch_buffer(&save_buf, buf);          }|
-      {4:posp = getmark(mark, false);            }|
-      {4:restore_buffer(&save_buf);^              }|
-                                              |
-    ]]}
+    n.assert_alive()
   end)
 
   it('is not invoked repeatedly in Visual mode with vim.schedule() #20235', function()
@@ -2438,7 +2398,7 @@ describe('extmark decorations', function()
                                                         |
     ]]}
 
-    t.assert_alive()
+    n.assert_alive()
   end)
 
   it('priority ordering of overlay or win_col virtual text at same position', function()
@@ -4268,7 +4228,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     screen:expect{grid=[[
       {16:refactor(khash): }take size of values as parameter |
       Author: Dev Devsson, {18:Tue Aug 31 10:13:37 2021}     |
-      ^if (h->n_buckets < new_n_buckets) { // expand     |
+      if (h->n_buckets < new_n_buckets) { // expand     |
         khkey_t *new_keys = (khkey_t *)krealloc((void *)|
       h->keys, new_n_buckets * sizeof(khkey_t));        |
         h->keys = new_keys;                             |
@@ -4276,7 +4236,7 @@ if (h->n_buckets < new_n_buckets) { // expand
           char *new_vals = krealloc( h->vals_buf, new_n_|
       buckets * val_size);                              |
           h->vals_buf = new_vals;                       |
-        }                                               |
+        ^}                                               |
                                                         |
     ]]}
   end)
@@ -4949,8 +4909,8 @@ if (h->n_buckets < new_n_buckets) { // expand
       VIRT2               |
       11                  |
       12                  |
-      ^13                  |
-      14                  |
+      13                  |
+      ^14                  |
                           |
     ]])
     feed('<C-B>')
@@ -5102,7 +5062,7 @@ l5
       {7:    }^l1                                            |
       S2{7:  }l2                                            |
       S2{7:  }l3                                            |
-      S1S2l4                                            |
+      S2S1l4                                            |
       {7:    }l5                                            |
       {7:    }                                              |
       {1:~                                                 }|*3
@@ -5121,7 +5081,7 @@ l5
     screen:expect{grid=[[
       {7:    }^l1                                            |
       S1{7:  }l2                                            |
-      S1S2l3                                            |
+      S2S1l3                                            |
       S2{7:  }l4                                            |
       {7:    }l5                                            |
       {7:    }                                              |
@@ -5153,8 +5113,8 @@ l5
     insert(example_test3)
     feed 'gg'
 
-    t.command('sign define Oldsign text=x')
-    t.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
+    n.command('sign define Oldsign text=x')
+    n.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
 
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1'})
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S2'})
@@ -5162,8 +5122,8 @@ l5
     api.nvim_buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
 
     screen:expect{grid=[[
-      S1S4^l1                                            |
-      x S2l2                                            |
+      S4S1^l1                                            |
+      S2x l2                                            |
       S5{7:  }l3                                            |
       {7:    }l4                                            |
       {7:    }l5                                            |
@@ -5177,8 +5137,8 @@ l5
     insert(example_test3)
     feed 'gg'
 
-    t.command('sign define Oldsign text=x')
-    t.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
+    n.command('sign define Oldsign text=x')
+    n.command([[exe 'sign place 42 line=2 name=Oldsign buffer=' . bufnr('')]])
 
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1'})
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S2'})
@@ -5187,9 +5147,9 @@ l5
     api.nvim_buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
 
     screen:expect{grid=[[
-      S1S3S4^l1                                          |
-      x S2S3l2                                          |
-      S3S5{7:  }l3                                          |
+      S4S3S1^l1                                          |
+      S3S2x l2                                          |
+      S5S3{7:  }l3                                          |
       S3{7:    }l4                                          |
       S3{7:    }l5                                          |
       {7:      }                                            |
@@ -5236,8 +5196,8 @@ l5
     end
 
     screen:expect{grid=[[
-      W X Y Z {100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:h}                 |*8
-      W X Y Z {100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:^h}                 |
+      Z Y X W {100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:h}                 |*8
+      Z Y X W {100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:^h}                 |
                                               |
     ]]}
   end)
@@ -5256,7 +5216,7 @@ l5
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1', priority=1})
 
     screen:expect{grid=[[
-      S1S2O3S4S5^l1        |
+      S5S4O3S2S1^l1        |
       {7:          }l2        |
                           |
     ]]}
@@ -5296,7 +5256,7 @@ l5
 
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S5', priority=200})
     screen:expect{grid=[[
-      O3O3O3O3O3O3O3O3S5^  |
+      S5O3O3O3O3O3O3O3O3^  |
       {1:~                   }|
                           |
     ]]}
@@ -5342,9 +5302,9 @@ l5
     feed('gg')
 
     local s1 = [[
-      S1S2^l1              |
-      S2S3l2              |
-      S2S3l3              |
+      S2S1^l1              |
+      S3S2l2              |
+      S3S2l3              |
                           |
     ]]
     screen:expect{grid=s1}
@@ -5352,7 +5312,7 @@ l5
     command('move2')
     screen:expect{grid=[[
       S3{7:    }l2            |
-      S1S2S3^l1            |
+      S3S2S1^l1            |
       {7:      }l3            |
                           |
     ]]}
@@ -5360,14 +5320,14 @@ l5
     screen:expect{grid=s1}
     command('d')
     screen:expect{grid=[[
-      S1S2S3^l2            |
-      S2S3{7:  }l3            |
+      S3S2S1^l2            |
+      S3S2{7:  }l3            |
       {7:      }l4            |
                           |
     ]]}
     command('d')
     screen:expect{grid=[[
-      S1S2S3^l3            |
+      S3S2S1^l3            |
       {7:      }l4            |
       {7:      }l5            |
                           |
@@ -5416,7 +5376,7 @@ l5
     ]])
     screen:expect{grid=[[
       {7:    }l3              |
-      S1S2l5              |
+      S2S1l5              |
       {7:    }^                |
                           |
     ]]}
@@ -5508,7 +5468,7 @@ l5
     api.nvim_buf_set_extmark(0, ns2, 0, 0, {sign_text = 'S2', id = 1})
 
     screen:expect{grid=[[
-      S1S2^                                              |
+      S2S1^                                              |
       {1:~                                                 }|*8
                                                         |
     ]]}
@@ -5529,7 +5489,7 @@ l5
     command('0d29')
 
     screen:expect{grid=[[
-      S1S2S3S4{9:^foo}                                       |
+      S4S3S2S1{9:^foo}                                       |
       S5{7:      }{9:foo}                                       |
       {1:~                                                 }|*7
       29 fewer lines                                    |
@@ -5650,7 +5610,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5685,7 +5645,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5707,7 +5667,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5731,7 +5691,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5741,7 +5701,7 @@ describe('decorations: window scoped', function()
                           |
     ]]}
 
-    api.nvim_win_remove_ns(0, ns)
+    api.nvim__win_del_ns(0, ns)
 
     screen:expect(noextmarks)
   end)
@@ -5756,7 +5716,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5788,7 +5748,7 @@ describe('decorations: window scoped', function()
                           |
     ]]}
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5827,7 +5787,7 @@ describe('decorations: window scoped', function()
                           |
     ]]}
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5855,7 +5815,7 @@ describe('decorations: window scoped', function()
 
     screen:expect(noextmarks)
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5876,7 +5836,7 @@ describe('decorations: window scoped', function()
       end_col = 3,
     })
 
-    api.nvim_win_add_ns(0, ns)
+    api.nvim__win_add_ns(0, ns)
 
     screen:expect {
       grid = [[
@@ -5920,8 +5880,8 @@ describe('decorations: window scoped', function()
       end_col = 3,
     })
 
-    eq(true, api.nvim_win_add_ns(0, ns))
-    eq({ ns }, api.nvim_win_get_ns(0))
+    eq(true, api.nvim__win_add_ns(0, ns))
+    eq({ ns }, api.nvim__win_get_ns(0))
 
     screen:expect {
       grid = [[
@@ -5932,12 +5892,12 @@ describe('decorations: window scoped', function()
 
     command 'split'
     command 'only'
-    eq({}, api.nvim_win_get_ns(0))
+    eq({}, api.nvim__win_get_ns(0))
 
     screen:expect(noextmarks)
 
-    eq(true, api.nvim_win_add_ns(0, ns))
-    eq({ ns }, api.nvim_win_get_ns(0))
+    eq(true, api.nvim__win_add_ns(0, ns))
+    eq({ ns }, api.nvim__win_get_ns(0))
 
     screen:expect {
       grid = [[
@@ -5946,8 +5906,8 @@ describe('decorations: window scoped', function()
                           |
     ]]}
 
-    eq(true, api.nvim_win_remove_ns(0, ns))
-    eq({}, api.nvim_win_get_ns(0))
+    eq(true, api.nvim__win_del_ns(0, ns))
+    eq({}, api.nvim__win_get_ns(0))
 
     screen:expect(noextmarks)
   end)

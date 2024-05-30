@@ -1,14 +1,16 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
-local command = t.command
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local eval = t.eval
-local feed = t.feed
-local fn = t.fn
-local insert = t.insert
+local eval = n.eval
+local feed = n.feed
+local fn = n.fn
+local insert = n.insert
 local is_os = t.is_os
 local mkdir = t.mkdir
-local rmdir = t.rmdir
+local rmdir = n.rmdir
 local write_file = t.write_file
 
 local function join_path(...)

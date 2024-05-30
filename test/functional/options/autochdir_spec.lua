@@ -1,8 +1,10 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
 local eq = t.eq
-local fn = t.fn
-local command = t.command
+local fn = n.fn
+local command = n.command
 local mkdir = t.mkdir
 
 describe("'autochdir'", function()
@@ -38,7 +40,7 @@ describe("'autochdir'", function()
     eq(dir_a, fn.getcwd())
     fn.getwinvar(2, 'foo')
     eq(dir_a, fn.getcwd())
-    t.rmdir(dir_a)
-    t.rmdir(dir_b)
+    n.rmdir(dir_a)
+    n.rmdir(dir_b)
   end)
 end)

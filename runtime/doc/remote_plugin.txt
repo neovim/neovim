@@ -30,9 +30,9 @@ check whether a plugin host is available for their chosen programming language.
 
 Plugin hosts are programs that provide a high-level environment for plugins,
 taking care of most boilerplate involved in defining commands, autocmds, and
-functions that are implemented over |RPC| connections. Hosts are loaded only
-when one of their registered plugins require it, keeping Nvim's startup as
-fast as possible, even if many plugins/hosts are installed.
+functions implemented over |RPC| connections. Hosts are loaded only when one
+of their registered plugins require it, keeping Nvim's startup as fast as
+possible, even if many plugins/hosts are installed.
 
 ==============================================================================
 3. Example					    *remote-plugin-example*

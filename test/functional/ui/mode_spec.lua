@@ -1,8 +1,9 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local clear, feed, insert = t.clear, t.feed, t.insert
-local command = t.command
+local clear, feed, insert = n.clear, n.feed, n.insert
+local command = n.command
 local retry = t.retry
 
 describe('ui mode_change event', function()

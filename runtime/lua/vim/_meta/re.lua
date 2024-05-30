@@ -8,11 +8,11 @@ error('Cannot require a meta file')
 -- See 'lpeg.html' for license
 
 --- @brief
---- The `vim.re` module provides a conventional regex-like syntax for pattern usage
---- within LPeg |vim.lpeg|.
+--- The `vim.re` module provides a conventional regex-like syntax for pattern usage within LPeg
+--- |vim.lpeg|. (Unrelated to |vim.regex| which provides Vim |regexp| from Lua.)
 ---
---- See https://www.inf.puc-rio.br/~roberto/lpeg/re.html for the original
---- documentation including regex syntax and more concrete examples.
+--- See https://www.inf.puc-rio.br/~roberto/lpeg/re.html for the original documentation including
+--- regex syntax and examples.
 
 --- Compiles the given {string} and returns an equivalent LPeg pattern. The given string may define
 --- either an expression or a grammar. The optional {defs} table provides extra Lua values to be used
@@ -30,8 +30,8 @@ function vim.re.compile(string, defs) end
 --- @param subject string
 --- @param pattern vim.lpeg.Pattern|string
 --- @param init? integer
---- @return integer|nil the index where the occurrence starts, nil if no match
---- @return integer|nil the index where the occurrence ends, nil if no match
+--- @return integer|nil : the index where the occurrence starts, nil if no match
+--- @return integer|nil : the index where the occurrence ends, nil if no match
 function vim.re.find(subject, pattern, init) end
 
 --- Does a global substitution, replacing all occurrences of {pattern} in the given {subject} by

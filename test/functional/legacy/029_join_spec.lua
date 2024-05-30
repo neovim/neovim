@@ -1,12 +1,12 @@
 -- Test for joining lines with marks in them (and with 'joinspaces' set/reset)
 
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 
-local feed = t.feed
-local clear = t.clear
-local insert = t.insert
-local expect = t.expect
-local feed_command = t.feed_command
+local feed = n.feed
+local clear = n.clear
+local insert = n.insert
+local expect = n.expect
+local feed_command = n.feed_command
 
 describe('joining lines', function()
   before_each(clear)

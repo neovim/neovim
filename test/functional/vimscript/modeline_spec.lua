@@ -1,6 +1,8 @@
-local t = require('test.functional.testutil')()
-local assert_alive = t.assert_alive
-local clear, command, write_file = t.clear, t.command, t.write_file
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local assert_alive = n.assert_alive
+local clear, command, write_file = n.clear, n.command, t.write_file
 
 describe('modeline', function()
   local tempfile = t.tmpname()

@@ -1,24 +1,25 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local assert_visible = t.assert_visible
-local assert_alive = t.assert_alive
+local assert_visible = n.assert_visible
+local assert_alive = n.assert_alive
 local dedent = t.dedent
 local eq = t.eq
 local neq = t.neq
-local eval = t.eval
-local feed = t.feed
-local clear = t.clear
+local eval = n.eval
+local feed = n.feed
+local clear = n.clear
 local matches = t.matches
-local api = t.api
+local api = n.api
 local pcall_err = t.pcall_err
-local fn = t.fn
-local expect = t.expect
-local command = t.command
-local exc_exec = t.exc_exec
-local exec_lua = t.exec_lua
+local fn = n.fn
+local expect = n.expect
+local command = n.command
+local exc_exec = n.exc_exec
+local exec_lua = n.exec_lua
 local retry = t.retry
-local source = t.source
+local source = n.source
 
 describe('autocmd', function()
   before_each(clear)

@@ -16,6 +16,7 @@
   (preproc_function_def)
   (initializer_list)
   (gnu_asm_expression)
+  (preproc_include)+
 ] @fold
 
 (compound_statement

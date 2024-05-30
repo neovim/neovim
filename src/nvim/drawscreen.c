@@ -65,6 +65,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cursor.h"
@@ -715,13 +716,16 @@ void end_search_hl(void)
   screen_search_hl.rm.regprog = NULL;
 }
 
-static void win_redr_bordertext(win_T *wp, VirtText vt, int col)
+static void win_redr_bordertext(win_T *wp, VirtText vt, int col, BorderTextType bt)
 {
   for (size_t i = 0; i < kv_size(vt);) {
-    int attr = 0;
+    int attr = -1;
     char *text = next_virt_text_chunk(vt, &i, &attr);
     if (text == NULL) {
       break;
+    }
+    if (attr == -1) {  // No highlight specified.
+      attr = wp->w_ns_hl_attr[bt == kBorderTextTitle ? HLF_BTITLE : HLF_BFOOTER];
     }
     attr = hl_apply_winblend(wp, attr);
     col += grid_line_puts(col, text, -1, attr);
@@ -773,7 +777,7 @@ static void win_redr_border(win_T *wp)
     if (wp->w_config.title) {
       int title_col = win_get_bordertext_col(icol, wp->w_config.title_width,
                                              wp->w_config.title_pos);
-      win_redr_bordertext(wp, wp->w_config.title_chunks, title_col);
+      win_redr_bordertext(wp, wp->w_config.title_chunks, title_col, kBorderTextTitle);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
@@ -809,7 +813,7 @@ static void win_redr_border(win_T *wp)
     if (wp->w_config.footer) {
       int footer_col = win_get_bordertext_col(icol, wp->w_config.footer_width,
                                               wp->w_config.footer_pos);
-      win_redr_bordertext(wp, wp->w_config.footer_chunks, footer_col);
+      win_redr_bordertext(wp, wp->w_config.footer_chunks, footer_col, kBorderTextFooter);
     }
     if (adj[1]) {
       grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
@@ -821,25 +825,25 @@ static void win_redr_border(win_T *wp)
 /// Set cursor to its position in the current window.
 void setcursor(void)
 {
-  setcursor_mayforce(false);
+  setcursor_mayforce(curwin, false);
 }
 
 /// Set cursor to its position in the current window.
 /// @param force  when true, also when not redrawing.
-void setcursor_mayforce(bool force)
+void setcursor_mayforce(win_T *wp, bool force)
 {
   if (force || redrawing()) {
-    validate_cursor(curwin);
+    validate_cursor(wp);
 
-    ScreenGrid *grid = &curwin->w_grid;
-    int row = curwin->w_wrow;
-    int col = curwin->w_wcol;
-    if (curwin->w_p_rl) {
+    ScreenGrid *grid = &wp->w_grid;
+    int row = wp->w_wrow;
+    int col = wp->w_wcol;
+    if (wp->w_p_rl) {
       // With 'rightleft' set and the cursor on a double-wide character,
       // position it on the leftmost column.
-      col = curwin->w_width_inner - curwin->w_wcol
-            - ((utf_ptr2cells(get_cursor_pos_ptr()) == 2
-                && vim_isprintc(gchar_cursor())) ? 2 : 1);
+      char *cursor = ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) + wp->w_cursor.col;
+      col = wp->w_width_inner - wp->w_wcol - ((utf_ptr2cells(cursor) == 2
+                                               && vim_isprintc(utf_ptr2char(cursor))) ? 2 : 1);
     }
 
     grid_adjust(&grid, &row, &col);
@@ -927,7 +931,13 @@ int showmode(void)
     msg_ext_clear(true);
   }
 
-  // don't make non-flushed message part of the showmode
+  // Don't make non-flushed message part of the showmode and reset global
+  // variables before flushing to to avoid recursiveness.
+  bool draw_mode = redraw_mode;
+  bool clear_cmd = clear_cmdline;
+  redraw_cmdline = false;
+  redraw_mode = false;
+  clear_cmdline = false;
   msg_ext_ui_flush();
 
   msg_grid_validate();
@@ -950,8 +960,8 @@ int showmode(void)
     msg_check_for_delay(false);
 
     // if the cmdline is more than one line high, erase top lines
-    bool need_clear = clear_cmdline;
-    if (clear_cmdline && cmdline_row < Rows - 1) {
+    bool need_clear = clear_cmd;
+    if (clear_cmd && cmdline_row < Rows - 1) {
       msg_clr_cmdline();  // will reset clear_cmdline
     }
 
@@ -1073,7 +1083,7 @@ int showmode(void)
     }
 
     mode_displayed = true;
-    if (need_clear || clear_cmdline || redraw_mode) {
+    if (need_clear || clear_cmd || draw_mode) {
       msg_clr_eos();
     }
     msg_didout = false;                 // overwrite this message
@@ -1082,10 +1092,10 @@ int showmode(void)
     msg_no_more = false;
     lines_left = save_lines_left;
     need_wait_return = nwr_save;        // never ask for hit-return for this
-  } else if (clear_cmdline && msg_silent == 0) {
+  } else if (clear_cmd && msg_silent == 0) {
     // Clear the whole command line.  Will reset "clear_cmdline".
     msg_clr_cmdline();
-  } else if (redraw_mode) {
+  } else if (draw_mode) {
     msg_pos_mode();
     msg_clr_eos();
   }
@@ -1107,10 +1117,6 @@ int showmode(void)
     win_redr_ruler(ruler_win);
     grid_line_flush();
   }
-
-  redraw_cmdline = false;
-  redraw_mode = false;
-  clear_cmdline = false;
 
   return length;
 }
@@ -1703,7 +1709,7 @@ static void win_update(win_T *wp)
         j = wp->w_lines[0].wl_lnum - wp->w_topline;
       }
       if (j < wp->w_grid.rows - 2) {               // not too far off
-        int i = plines_m_win(wp, wp->w_topline, wp->w_lines[0].wl_lnum - 1, true);
+        int i = plines_m_win(wp, wp->w_topline, wp->w_lines[0].wl_lnum - 1, wp->w_height_inner);
         // insert extra lines for previously invisible filler lines
         if (wp->w_lines[0].wl_lnum != wp->w_topline) {
           i += win_get_fill(wp, wp->w_lines[0].wl_lnum) - wp->w_old_topfill;
@@ -2711,7 +2717,7 @@ void redraw_buf_line_later(buf_T *buf, linenr_T line, bool force)
   }
 }
 
-void redraw_buf_range_later(buf_T *buf,  linenr_T firstline, linenr_T lastline)
+void redraw_buf_range_later(buf_T *buf, linenr_T firstline, linenr_T lastline)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf

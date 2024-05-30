@@ -29,6 +29,23 @@ RBuffer *rbuffer_new(size_t capacity)
   return rv;
 }
 
+/// Creates a new `RBuffer` instance for reading from a buffer.
+///
+/// Must not be used with any write function like rbuffer_write_ptr or rbuffer_produced!
+RBuffer *rbuffer_new_wrap_buf(char *data, size_t len)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+{
+  RBuffer *rv = xcalloc(1, sizeof(RBuffer));
+  rv->full_cb = rv->nonfull_cb = NULL;
+  rv->data = NULL;
+  rv->size = len;
+  rv->read_ptr = data;
+  rv->write_ptr = data + len;
+  rv->end_ptr = NULL;
+  rv->temp = NULL;
+  return rv;
+}
+
 void rbuffer_free(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
 {
   xfree(buf->temp);
@@ -129,7 +146,7 @@ void rbuffer_consumed(RBuffer *buf, size_t count)
   assert(count <= buf->size);
 
   buf->read_ptr += count;
-  if (buf->read_ptr >= buf->end_ptr) {
+  if (buf->end_ptr && buf->read_ptr >= buf->end_ptr) {
     buf->read_ptr -= rbuffer_capacity(buf);
   }
 

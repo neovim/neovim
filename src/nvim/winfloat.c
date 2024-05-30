@@ -6,7 +6,9 @@
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/globals.h"
@@ -17,6 +19,7 @@
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/optionstr.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
@@ -41,7 +44,24 @@
 win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
 {
   if (wp == NULL) {
-    wp = win_alloc(last ? lastwin : lastwin_nofloating(), false);
+    tabpage_T *tp = NULL;
+    win_T *tp_last = last ? lastwin : lastwin_nofloating();
+    if (fconfig.window != 0) {
+      assert(!last);
+      win_T *parent_wp = find_window_by_handle(fconfig.window, err);
+      if (!parent_wp) {
+        return NULL;
+      }
+      tp = win_find_tabpage(parent_wp);
+      if (!tp) {
+        return NULL;
+      }
+      tp_last = tp->tp_lastwin;
+      while (tp_last->w_floating && tp_last->w_prev) {
+        tp_last = tp_last->w_prev;
+      }
+    }
+    wp = win_alloc(tp_last, false);
     win_init(wp, curwin, 0);
   } else {
     assert(!last);
@@ -221,7 +241,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
       row += row_off;
       col += col_off;
       if (wp->w_config.bufpos.lnum >= 0) {
-        pos_T pos = { wp->w_config.bufpos.lnum + 1,
+        pos_T pos = { MIN(wp->w_config.bufpos.lnum + 1, parent->w_buffer->b_ml.ml_line_count),
                       wp->w_config.bufpos.col, 0 };
         int trow, tcol, tcolc, tcole;
         textpos2screenpos(parent, &pos, &trow, &tcol, &tcolc, &tcole, true);
@@ -336,4 +356,53 @@ win_T *win_float_find_altwin(const win_T *win, const tabpage_T *tp)
   assert(tp != curtab);
   return (tabpage_win_valid(tp, tp->tp_prevwin) && tp->tp_prevwin != win) ? tp->tp_prevwin
                                                                           : tp->tp_firstwin;
+}
+
+/// create a floating preview window.
+///
+/// @param[in] bool enter floating window.
+/// @param[in] bool create a new buffer for window.
+///
+/// @return win_T
+win_T *win_float_create(bool enter, bool new_buf)
+{
+  WinConfig config = WIN_CONFIG_INIT;
+  config.col = curwin->w_wcol;
+  config.row = curwin->w_wrow;
+  config.relative = kFloatRelativeEditor;
+  config.focusable = false;
+  config.anchor = 0;  // NW
+  config.noautocmd = true;
+  config.hide = true;
+  config.style = kWinStyleMinimal;
+  Error err = ERROR_INIT;
+
+  block_autocmds();
+  win_T *wp = win_new_float(NULL, false, config, &err);
+  if (!wp) {
+    unblock_autocmds();
+    return NULL;
+  }
+
+  if (new_buf) {
+    Buffer b = nvim_create_buf(false, true, &err);
+    if (!b) {
+      win_remove(wp, NULL);
+      win_free(wp, NULL);
+      unblock_autocmds();
+      return NULL;
+    }
+    buf_T *buf = find_buffer_by_handle(b, &err);
+    buf->b_p_bl = false;  // unlist
+    set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL, 0, kOptReqBuf,
+                          buf);
+    win_set_buf(wp, buf, &err);
+  }
+  unblock_autocmds();
+  wp->w_p_diff = false;
+  wp->w_float_is_info = true;
+  if (enter) {
+    win_enter(wp, false);
+  }
+  return wp;
 }

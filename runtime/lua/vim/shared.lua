@@ -214,7 +214,7 @@ end
 ---@param t table<T, any> (table) Table
 ---@return T[] : List of keys
 function vim.tbl_keys(t)
-  vim.validate({ t = { t, 't' } })
+  vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   local keys = {}
@@ -231,7 +231,7 @@ end
 ---@param t table<any, T> (table) Table
 ---@return T[] : List of values
 function vim.tbl_values(t)
-  vim.validate({ t = { t, 't' } })
+  vim.validate('t', t, 'table')
 
   local values = {}
   for _, v in
@@ -332,7 +332,7 @@ end
 ---@param value any Value to compare
 ---@return boolean `true` if `t` contains `value`
 function vim.list_contains(t, value)
-  vim.validate({ t = { t, 't' } })
+  vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   for _, v in ipairs(t) do
@@ -350,13 +350,13 @@ end
 ---@param t table Table to check
 ---@return boolean `true` if `t` is empty
 function vim.tbl_isempty(t)
-  vim.validate({ t = { t, 't' } })
+  vim.validate('t', t, 'table')
   return next(t) == nil
 end
 
 --- We only merge empty tables or tables that are not an array (indexed by integers)
 local function can_merge(v)
-  return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.tbl_isarray(v))
+  return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.isarray(v))
 end
 
 local function tbl_extend(behavior, deep_extend, ...)
@@ -379,7 +379,7 @@ local function tbl_extend(behavior, deep_extend, ...)
 
   for i = 1, select('#', ...) do
     local tbl = select(i, ...)
-    vim.validate({ ['after the second argument'] = { tbl, 't' } })
+    vim.validate('after the second argument', tbl, 'table')
     --- @cast tbl table<any,any>
     if tbl then
       for k, v in pairs(tbl) do
@@ -502,7 +502,7 @@ end
 ---
 ---@param o table Table to index
 ---@param ... any Optional keys (0 or more, variadic) via which to index the table
----@return any : Nested value indexed by key (if it exists), else nil
+---@return any # Nested value indexed by key (if it exists), else nil
 function vim.tbl_get(o, ...)
   local keys = { ... }
   if #keys == 0 then
@@ -544,6 +544,7 @@ function vim.list_extend(dst, src, start, finish)
   return dst
 end
 
+--- @deprecated
 --- Creates a copy of a list-like table such that any nested tables are
 --- "unrolled" and appended to the result.
 ---
@@ -552,6 +553,7 @@ end
 ---@param t table List-like table
 ---@return table Flattened copy of the given list-like table
 function vim.tbl_flatten(t)
+  vim.deprecate('vim.tbl_flatten', 'vim.iter(…):flatten():totable()', '0.13')
   local result = {}
   --- @param _t table<any,any>
   local function _tbl_flatten(_t)
@@ -578,7 +580,7 @@ end
 ---@return fun(table: table<K, V>, index?: K):K, V # |for-in| iterator over sorted keys and their values
 ---@return T
 function vim.spairs(t)
-  assert(type(t) == 'table', ('expected table, got %s'):format(type(t)))
+  vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   -- collect the keys
@@ -601,16 +603,16 @@ end
 
 --- Tests if `t` is an "array": a table indexed _only_ by integers (potentially non-contiguous).
 ---
---- If the indexes start from 1 and are contiguous then the array is also a list. |vim.tbl_islist()|
+--- If the indexes start from 1 and are contiguous then the array is also a list. |vim.islist()|
 ---
 --- Empty table `{}` is an array, unless it was created by |vim.empty_dict()| or returned as
 --- a dict-like |API| or Vimscript result, for example from |rpcrequest()| or |vim.fn|.
 ---
 ---@see https://github.com/openresty/luajit2#tableisarray
 ---
----@param t table
+---@param t? table
 ---@return boolean `true` if array-like table, else `false`.
-function vim.tbl_isarray(t)
+function vim.isarray(t)
   if type(t) ~= 'table' then
     return false
   end
@@ -640,17 +642,23 @@ function vim.tbl_isarray(t)
   end
 end
 
+--- @deprecated
+function vim.tbl_islist(t)
+  vim.deprecate('vim.tbl_islist', 'vim.islist', '0.12')
+  return vim.islist(t)
+end
+
 --- Tests if `t` is a "list": a table indexed _only_ by contiguous integers starting from 1 (what
 --- |lua-length| calls a "regular array").
 ---
 --- Empty table `{}` is a list, unless it was created by |vim.empty_dict()| or returned as
 --- a dict-like |API| or Vimscript result, for example from |rpcrequest()| or |vim.fn|.
 ---
----@see |vim.tbl_isarray()|
+---@see |vim.isarray()|
 ---
----@param t table
+---@param t? table
 ---@return boolean `true` if list-like table, else `false`.
-function vim.tbl_islist(t)
+function vim.islist(t)
   if type(t) ~= 'table' then
     return false
   end
@@ -683,7 +691,7 @@ end
 ---@param t table Table
 ---@return integer : Number of non-nil values in table
 function vim.tbl_count(t)
-  vim.validate({ t = { t, 't' } })
+  vim.validate('t', t, 'table')
   --- @cast t table<any,any>
 
   local count = 0
@@ -715,7 +723,7 @@ end
 ---@param s string String to trim
 ---@return string String with whitespace removed from its beginning and end
 function vim.trim(s)
-  vim.validate({ s = { s, 's' } })
+  vim.validate('s', s, 'string')
   return s:match('^%s*(.*%S)') or ''
 end
 
@@ -725,7 +733,7 @@ end
 ---@param s string String to escape
 ---@return string %-escaped pattern string
 function vim.pesc(s)
-  vim.validate({ s = { s, 's' } })
+  vim.validate('s', s, 'string')
   return (s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1'))
 end
 
@@ -735,7 +743,8 @@ end
 ---@param prefix string Prefix to match
 ---@return boolean `true` if `prefix` is a prefix of `s`
 function vim.startswith(s, prefix)
-  vim.validate({ s = { s, 's' }, prefix = { prefix, 's' } })
+  vim.validate('s', s, 'string')
+  vim.validate('prefix', prefix, 'string')
   return s:sub(1, #prefix) == prefix
 end
 
@@ -745,7 +754,8 @@ end
 ---@param suffix string Suffix to match
 ---@return boolean `true` if `suffix` is a suffix of `s`
 function vim.endswith(s, suffix)
-  vim.validate({ s = { s, 's' }, suffix = { suffix, 's' } })
+  vim.validate('s', s, 'string')
+  vim.validate('suffix', suffix, 'string')
   return #suffix == 0 or s:sub(-#suffix) == suffix
 end
 
@@ -788,6 +798,61 @@ do
     return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
 
+  --- @param param_name string
+  --- @param spec vim.validate.Spec
+  --- @return string?
+  local function is_param_valid(param_name, spec)
+    if type(spec) ~= 'table' then
+      return string.format('opt[%s]: expected table, got %s', param_name, type(spec))
+    end
+
+    local val = spec[1] -- Argument value
+    local types = spec[2] -- Type name, or callable
+    local optional = (true == spec[3])
+
+    if type(types) == 'string' then
+      types = { types }
+    end
+
+    if vim.is_callable(types) then
+      -- Check user-provided validation function
+      local valid, optional_message = types(val)
+      if not valid then
+        local error_message =
+          string.format('%s: expected %s, got %s', param_name, (spec[3] or '?'), tostring(val))
+        if optional_message ~= nil then
+          error_message = string.format('%s. Info: %s', error_message, optional_message)
+        end
+
+        return error_message
+      end
+    elseif type(types) == 'table' then
+      local success = false
+      for i, t in ipairs(types) do
+        local t_name = type_names[t]
+        if not t_name then
+          return string.format('invalid type name: %s', t)
+        end
+        types[i] = t_name
+
+        if (optional and val == nil) or _is_type(val, t_name) then
+          success = true
+          break
+        end
+      end
+      if not success then
+        return string.format(
+          '%s: expected %s, got %s',
+          param_name,
+          table.concat(types, '|'),
+          type(val)
+        )
+      end
+    else
+      return string.format('invalid type name: %s', tostring(types))
+    end
+  end
+
   --- @param opt table<vim.validate.Type,vim.validate.Spec>
   --- @return boolean, string?
   local function is_valid(opt)
@@ -795,64 +860,49 @@ do
       return false, string.format('opt: expected table, got %s', type(opt))
     end
 
-    for param_name, spec in vim.spairs(opt) do
-      if type(spec) ~= 'table' then
-        return false, string.format('opt[%s]: expected table, got %s', param_name, type(spec))
+    local report --- @type table<string,string>?
+
+    for param_name, spec in pairs(opt) do
+      local msg = is_param_valid(param_name, spec)
+      if msg then
+        report = report or {}
+        report[param_name] = msg
       end
+    end
 
-      local val = spec[1] -- Argument value
-      local types = spec[2] -- Type name, or callable
-      local optional = (true == spec[3])
-
-      if type(types) == 'string' then
-        types = { types }
-      end
-
-      if vim.is_callable(types) then
-        -- Check user-provided validation function
-        local valid, optional_message = types(val)
-        if not valid then
-          local error_message =
-            string.format('%s: expected %s, got %s', param_name, (spec[3] or '?'), tostring(val))
-          if optional_message ~= nil then
-            error_message = error_message .. string.format('. Info: %s', optional_message)
-          end
-
-          return false, error_message
-        end
-      elseif type(types) == 'table' then
-        local success = false
-        for i, t in ipairs(types) do
-          local t_name = type_names[t]
-          if not t_name then
-            return false, string.format('invalid type name: %s', t)
-          end
-          types[i] = t_name
-
-          if (optional and val == nil) or _is_type(val, t_name) then
-            success = true
-            break
-          end
-        end
-        if not success then
-          return false,
-            string.format(
-              '%s: expected %s, got %s',
-              param_name,
-              table.concat(types, '|'),
-              type(val)
-            )
-        end
-      else
-        return false, string.format('invalid type name: %s', tostring(types))
+    if report then
+      for _, msg in vim.spairs(report) do -- luacheck: ignore
+        return false, msg
       end
     end
 
     return true
   end
 
-  --- Validates a parameter specification (types and values). Specs are evaluated in alphanumeric
-  --- order, until the first failure.
+  --- Validate function arguments.
+  ---
+  --- This function has two valid forms:
+  ---
+  --- 1. vim.validate(name: str, value: any, type: string, optional?: bool)
+  --- 2. vim.validate(spec: table)
+  ---
+  --- Form 1 validates that argument {name} with value {value} has the type
+  --- {type}. {type} must be a value returned by |lua-type()|. If {optional} is
+  --- true, then {value} may be null. This form is significantly faster and
+  --- should be preferred for simple cases.
+  ---
+  --- Example:
+  ---
+  --- ```lua
+  --- function vim.startswith(s, prefix)
+  ---   vim.validate('s', s, 'string')
+  ---   vim.validate('prefix', prefix, 'string')
+  ---   ...
+  --- end
+  --- ```
+  ---
+  --- Form 2 validates a parameter specification (types and values). Specs are
+  --- evaluated in alphanumeric order, until the first failure.
   ---
   --- Usage example:
   ---
@@ -904,8 +954,32 @@ do
   ---               only if the argument is valid. Can optionally return an additional
   ---               informative error message as the second returned value.
   ---             - msg: (optional) error string if validation fails
-  function vim.validate(opt)
-    local ok, err_msg = is_valid(opt)
+  --- @overload fun(name: string, val: any, expected: string, optional?: boolean)
+  function vim.validate(opt, ...)
+    local ok = false
+    local err_msg ---@type string?
+    local narg = select('#', ...)
+    if narg == 0 then
+      ok, err_msg = is_valid(opt)
+    elseif narg >= 2 then
+      -- Overloaded signature for fast/simple cases
+      local name = opt --[[@as string]]
+      local v, expected, optional = ... ---@type string, string, boolean?
+      local actual = type(v)
+
+      ok = (actual == expected) or (v == nil and optional == true)
+      if not ok then
+        err_msg = ('%s: expected %s, got %s%s'):format(
+          name,
+          expected,
+          actual,
+          v and (' (%s)'):format(v) or ''
+        )
+      end
+    else
+      error('invalid arguments')
+    end
+
     if not ok then
       error(err_msg, 2)
     end

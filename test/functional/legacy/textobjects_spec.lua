@@ -1,9 +1,10 @@
-local t = require('test.functional.testutil')()
-local call = t.call
-local clear = t.clear
-local command = t.command
-local expect = t.expect
-local source = t.source
+local n = require('test.functional.testnvim')()
+
+local call = n.call
+local clear = n.clear
+local command = n.command
+local expect = n.expect
+local source = n.source
 
 describe('Text object', function()
   before_each(function()

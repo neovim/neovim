@@ -1,17 +1,18 @@
 -- Test suite for testing luaeval() function
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local pcall_err = t.pcall_err
-local exc_exec = t.exc_exec
+local exc_exec = n.exc_exec
 local remove_trace = t.remove_trace
-local exec_lua = t.exec_lua
-local command = t.command
-local api = t.api
-local fn = t.fn
-local clear = t.clear
-local eval = t.eval
-local feed = t.feed
+local exec_lua = n.exec_lua
+local command = n.command
+local api = n.api
+local fn = n.fn
+local clear = n.clear
+local eval = n.eval
+local feed = n.feed
 local NIL = vim.NIL
 local eq = t.eq
 

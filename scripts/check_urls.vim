@@ -6,20 +6,40 @@
 " Written by Christian Brabandt.
 
 func Test_check_URLs()
+"20.10.23, added by Restorer
   if has("win32")
-    echoerr "Doesn't work on MS-Windows"
-    return
+    let s:outdev = 'nul'
+  else
+    let s:outdev = '/dev/null'
   endif
+" Restorer: For Windows users. If "curl" or "wget" is installed on the system
+" but not in %PATH%, add the full path to them to %PATH% environment variable.
   if executable('curl')
     " Note: does not follow redirects!
-    let s:command = 'curl --silent --fail --output /dev/null --head '
+    let s:command1 = 'curl --silent --max-time 5 --fail --output ' ..s:outdev.. ' --head '
+    let s:command2 = ""
   elseif executable('wget')
     " Note: only allow a couple of redirects
-    let s:command = 'wget --quiet -S --spider --max-redirect=2 --timeout=5 --tries=2 -O /dev/null '
+    let s:command1 = 'wget --quiet -S --spider --max-redirect=2 --timeout=5 --tries=2 -O ' ..s:outdev.. ' '
+    let s:command2 = ""
+  elseif has("win32") "20.10.23, added by Restorer
+    if executable('powershell')
+      if 2 == system('powershell -nologo -noprofile "$psversiontable.psversion.major"')
+        echoerr 'To work in OS Windows requires the program "PowerShell" version 3.0 or higher'
+        return
+      endif
+      let s:command1 = 
+            \ "powershell -nologo -noprofile \"{[Net.ServicePointManager]::SecurityProtocol = 'Tls12, Tls11, Tls, Ssl3'};try{(Invoke-WebRequest -MaximumRedirection 2 -TimeoutSec 5 -Uri "
+      let s:command2 = ').StatusCode}catch{exit [int]$Error[0].Exception.Status}"'
+    endif
   else
-    echoerr 'Only works when "curl" or "wget" is available'
+    echoerr 'Only works when "curl" or "wget", or "powershell" is available'
     return
   endif
+
+  " Do the testing.
+  set report =999
+  set nomore shm +=s
 
   let pat='\(https\?\|ftp\)://[^\t* ]\+'
   exe 'helpgrep' pat
@@ -36,22 +56,21 @@ func Test_check_URLs()
   put =urls
   " remove some more invalid items
   " empty lines
-  v/./d
+  "20.10.23, Restorer: '_' is a little faster, see `:h global`
+  v/./d _
   " remove # anchors
   %s/#.*$//e
   " remove trailing stuff (parenthesis, dot, comma, quotes), but only for HTTP
   " links
-  g/^h/s#[.,)'"/>][:.]\?$##
-  g#^[hf]t\?tp:/\(/\?\.*\)$#d
-  silent! g/ftp://,$/d
-  silent! g/=$/d
+  g/^h/s#[.),'"`/>][:.,]\?$##
+  g#^[hf]t\?tp:/\(/\?\.*\)$#d _
+  silent! g/ftp://,$/d _
+  silent! g/=$/d _
   let a = getline(1,'$')
   let a = uniq(sort(a))
-  %d
+  %d _
   call setline(1, a)
 
-  " Do the testing.
-  set nomore
   %s/.*/\=TestURL(submatch(0))/
 
   " highlight the failures
@@ -61,8 +80,10 @@ endfunc
 func TestURL(url)
   " Relies on the return code to determine whether a page is valid
   echom printf("Testing URL: %d/%d %s", line('.'), line('$'), a:url)
-  call system(s:command . shellescape(a:url))
+  call system(s:command1 .. shellescape(a:url) .. s:command2)
   return printf("%s %d", a:url, v:shell_error)
 endfunc
 
 call Test_check_URLs()
+
+" vim: sw=2 sts=2 et

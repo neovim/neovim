@@ -3,7 +3,6 @@ local validate = vim.validate
 
 local lsp = vim._defer_require('vim.lsp', {
   _changetracking = ..., --- @module 'vim.lsp._changetracking'
-  _completion = ..., --- @module 'vim.lsp._completion'
   _dynamic = ..., --- @module 'vim.lsp._dynamic'
   _snippet_grammar = ..., --- @module 'vim.lsp._snippet_grammar'
   _tagfunc = ..., --- @module 'vim.lsp._tagfunc'
@@ -11,6 +10,7 @@ local lsp = vim._defer_require('vim.lsp', {
   buf = ..., --- @module 'vim.lsp.buf'
   client = ..., --- @module 'vim.lsp.client'
   codelens = ..., --- @module 'vim.lsp.codelens'
+  completion = ..., --- @module 'vim.lsp.completion'
   diagnostic = ..., --- @module 'vim.lsp.diagnostic'
   handlers = ..., --- @module 'vim.lsp.handlers'
   inlay_hint = ..., --- @module 'vim.lsp.inlay_hint'
@@ -43,6 +43,9 @@ lsp._request_name_to_capability = {
   [ms.textDocument_prepareCallHierarchy] = { 'callHierarchyProvider' },
   [ms.callHierarchy_incomingCalls] = { 'callHierarchyProvider' },
   [ms.callHierarchy_outgoingCalls] = { 'callHierarchyProvider' },
+  [ms.textDocument_prepareTypeHierarchy] = { 'typeHierarchyProvider' },
+  [ms.typeHierarchy_subtypes] = { 'typeHierarchyProvider' },
+  [ms.typeHierarchy_supertypes] = { 'typeHierarchyProvider' },
   [ms.textDocument_rename] = { 'renameProvider' },
   [ms.textDocument_prepareRename] = { 'renameProvider', 'prepareProvider' },
   [ms.textDocument_codeAction] = { 'codeActionProvider' },
@@ -61,6 +64,12 @@ lsp._request_name_to_capability = {
   [ms.textDocument_inlayHint] = { 'inlayHintProvider' },
   [ms.textDocument_diagnostic] = { 'diagnosticProvider' },
   [ms.inlayHint_resolve] = { 'inlayHintProvider', 'resolveProvider' },
+  [ms.textDocument_documentLink] = { 'documentLinkProvider' },
+  [ms.documentLink_resolve] = { 'documentLinkProvider', 'resolveProvider' },
+  [ms.textDocument_didClose] = { 'textDocumentSync', 'openClose' },
+  [ms.textDocument_didOpen] = { 'textDocumentSync', 'openClose' },
+  [ms.textDocument_willSave] = { 'textDocumentSync', 'willSave' },
+  [ms.textDocument_willSaveWaitUntil] = { 'textDocumentSync', 'willSaveWaitUntil' },
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
@@ -192,10 +201,13 @@ end
 --- Predicate used to decide if a client should be re-used. Used on all
 --- running clients. The default implementation re-uses a client if name and
 --- root_dir matches.
---- @field reuse_client fun(client: vim.lsp.Client, config: table): boolean
+--- @field reuse_client fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
 ---
 --- Buffer handle to attach to if starting or re-using a client (0 for current).
 --- @field bufnr integer
+---
+--- Suppress error reporting if the LSP server fails to start (default false).
+--- @field silent? boolean
 
 --- Create a new LSP client and start a language server or reuses an already
 --- running client if one is found matching `name` and `root_dir`.
@@ -207,7 +219,7 @@ end
 --- vim.lsp.start({
 ---    name = 'my-server-name',
 ---    cmd = {'name-of-language-server-executable'},
----    root_dir = vim.fs.dirname(vim.fs.find({'pyproject.toml', 'setup.py'}, { upward = true })[1]),
+---    root_dir = vim.fs.root(0, {'pyproject.toml', 'setup.py'}),
 --- })
 --- ```
 ---
@@ -216,9 +228,9 @@ end
 --- - `name` arbitrary name for the LSP client. Should be unique per language server.
 --- - `cmd` command string[] or function, described at |vim.lsp.start_client()|.
 --- - `root_dir` path to the project root. By default this is used to decide if an existing client
----   should be re-used. The example above uses |vim.fs.find()| and |vim.fs.dirname()| to detect the
----   root by traversing the file system upwards starting from the current directory until either
----   a `pyproject.toml` or `setup.py` file is found.
+---   should be re-used. The example above uses |vim.fs.root()| and |vim.fs.dirname()| to detect
+---   the root by traversing the file system upwards starting from the current directory until
+---   either a `pyproject.toml` or `setup.py` file is found.
 --- - `workspace_folders` list of `{ uri:string, name: string }` tables specifying the project root
 ---   folders used by the language server. If `nil` the property is derived from `root_dir` for
 ---   convenience.
@@ -243,19 +255,27 @@ function lsp.start(config, opts)
 
   for _, client in pairs(all_clients) do
     if reuse_client(client, config) then
-      lsp.buf_attach_client(bufnr, client.id)
-      return client.id
+      if lsp.buf_attach_client(bufnr, client.id) then
+        return client.id
+      else
+        return nil
+      end
     end
   end
 
-  local client_id = lsp.start_client(config)
-
-  if not client_id then
-    return -- lsp.start_client will have printed an error
+  local client_id, err = lsp.start_client(config)
+  if err then
+    if not opts.silent then
+      vim.notify(err, vim.log.levels.WARN)
+    end
+    return nil
   end
 
-  lsp.buf_attach_client(bufnr, client_id)
-  return client_id
+  if client_id and lsp.buf_attach_client(bufnr, client_id) then
+    return client_id
+  end
+
+  return nil
 end
 
 --- Consumes the latest progress messages from all clients and formats them as a string.
@@ -298,6 +318,7 @@ local function is_empty_or_default(bufnr, option)
   end
 
   local info = api.nvim_get_option_info2(option, { buf = bufnr })
+  ---@param e vim.fn.getscriptinfo.ret
   local scriptinfo = vim.tbl_filter(function(e)
     return e.sid == info.last_set_sid
   end, vim.fn.getscriptinfo())
@@ -336,7 +357,7 @@ function lsp._set_defaults(client, bufnr)
       and is_empty_or_default(bufnr, 'keywordprg')
       and vim.fn.maparg('K', 'n', false, false) == ''
     then
-      vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = bufnr })
+      vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = bufnr, desc = 'vim.lsp.buf.hover()' })
     end
   end)
   if client.supports_method(ms.textDocument_diagnostic) then
@@ -417,15 +438,17 @@ end
 
 --- Starts and initializes a client with the given configuration.
 --- @param config vim.lsp.ClientConfig Configuration for the server.
---- @return integer|nil client_id |vim.lsp.get_client_by_id()| Note: client may not be
---- fully initialized. Use `on_init` to do any actions once
---- the client has been initialized.
+--- @return integer? client_id |vim.lsp.get_client_by_id()| Note: client may not be
+---         fully initialized. Use `on_init` to do any actions once
+---         the client has been initialized.
+--- @return string? # Error message, if any
 function lsp.start_client(config)
-  local client = require('vim.lsp.client').create(config)
-
-  if not client then
-    return
+  local ok, res = pcall(require('vim.lsp.client').create, config)
+  if not ok then
+    return nil, res --[[@as string]]
   end
+
+  local client = assert(res)
 
   --- @diagnostic disable-next-line: invisible
   table.insert(client._on_exit_cbs, on_client_exit)
@@ -434,31 +457,7 @@ function lsp.start_client(config)
 
   client:initialize()
 
-  return client.id
-end
-
---- Notify all attached clients that a buffer has changed.
----@param _ integer
----@param bufnr integer
----@param changedtick integer
----@param firstline integer
----@param lastline integer
----@param new_lastline integer
----@return true?
-local function text_document_did_change_handler(
-  _,
-  bufnr,
-  changedtick,
-  firstline,
-  lastline,
-  new_lastline
-)
-  -- Detach (nvim_buf_attach) via returning True to on_lines if no clients are attached
-  if #lsp.get_clients({ bufnr = bufnr }) == 0 then
-    return true
-  end
-  util.buf_versions[bufnr] = changedtick
-  changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
+  return client.id, nil
 end
 
 ---Buffer lifecycle handler for textDocument/didSave
@@ -502,11 +501,42 @@ local function text_document_did_save_handler(bufnr)
   end
 end
 
+---@param bufnr integer resolved buffer
+---@param client vim.lsp.Client
+local function buf_detach_client(bufnr, client)
+  api.nvim_exec_autocmds('LspDetach', {
+    buffer = bufnr,
+    modeline = false,
+    data = { client_id = client.id },
+  })
+
+  changetracking.reset_buf(client, bufnr)
+
+  if client.supports_method(ms.textDocument_didClose) then
+    local uri = vim.uri_from_bufnr(bufnr)
+    local params = { textDocument = { uri = uri } }
+    client.notify(ms.textDocument_didClose, params)
+  end
+
+  client.attached_buffers[bufnr] = nil
+  util.buf_versions[bufnr] = nil
+
+  local namespace = lsp.diagnostic.get_namespace(client.id)
+  vim.diagnostic.reset(namespace, bufnr)
+end
+
+--- @type table<integer,true>
+local attached_buffers = {}
+
 --- @param bufnr integer
---- @param client_id integer
-local function buf_attach(bufnr, client_id)
+local function buf_attach(bufnr)
+  if attached_buffers[bufnr] then
+    return
+  end
+  attached_buffers[bufnr] = true
+
   local uri = vim.uri_from_bufnr(bufnr)
-  local augroup = ('lsp_c_%d_b_%d_save'):format(client_id, bufnr)
+  local augroup = ('lsp_b_%d_save'):format(bufnr)
   local group = api.nvim_create_augroup(augroup, { clear = true })
   api.nvim_create_autocmd('BufWritePre', {
     group = group,
@@ -518,12 +548,12 @@ local function buf_attach(bufnr, client_id)
           textDocument = {
             uri = uri,
           },
-          reason = protocol.TextDocumentSaveReason.Manual,
+          reason = protocol.TextDocumentSaveReason.Manual, ---@type integer
         }
-        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSave') then
+        if client.supports_method(ms.textDocument_willSave) then
           client.notify(ms.textDocument_willSave, params)
         end
-        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'willSaveWaitUntil') then
+        if client.supports_method(ms.textDocument_willSaveWaitUntil) then
           local result, err =
             client.request_sync(ms.textDocument_willSaveWaitUntil, params, 1000, ctx.buf)
           if result and result.result then
@@ -545,30 +575,37 @@ local function buf_attach(bufnr, client_id)
   })
   -- First time, so attach and set up stuff.
   api.nvim_buf_attach(bufnr, false, {
-    on_lines = text_document_did_change_handler,
+    on_lines = function(_, _, changedtick, firstline, lastline, new_lastline)
+      if #lsp.get_clients({ bufnr = bufnr }) == 0 then
+        -- detach if there are no clients
+        return #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0
+      end
+      util.buf_versions[bufnr] = changedtick
+      changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
+    end,
+
     on_reload = function()
+      local clients = lsp.get_clients({ bufnr = bufnr })
       local params = { textDocument = { uri = uri } }
-      for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
+      for _, client in ipairs(clients) do
         changetracking.reset_buf(client, bufnr)
-        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
+        if client.supports_method(ms.textDocument_didClose) then
           client.notify(ms.textDocument_didClose, params)
         end
+      end
+      for _, client in ipairs(clients) do
         client:_text_document_did_open_handler(bufnr)
       end
     end,
+
     on_detach = function()
-      local params = { textDocument = { uri = uri } }
-      for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
-        changetracking.reset_buf(client, bufnr)
-        if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
-          client.notify(ms.textDocument_didClose, params)
-        end
+      local clients = lsp.get_clients({ bufnr = bufnr, _uninitialized = true })
+      for _, client in ipairs(clients) do
+        buf_detach_client(bufnr, client)
       end
-      for _, client in ipairs(all_clients) do
-        client.attached_buffers[bufnr] = nil
-      end
-      util.buf_versions[bufnr] = nil
+      attached_buffers[bufnr] = nil
     end,
+
     -- TODO if we know all of the potential clients ahead of time, then we
     -- could conditionally set this.
     --      utf_sizes = size_index > 1;
@@ -594,15 +631,13 @@ function lsp.buf_attach_client(bufnr, client_id)
     log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
     return false
   end
-  -- This is our first time attaching to this buffer.
-  if #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0 then
-    buf_attach(bufnr, client_id)
-  end
 
   local client = lsp.get_client_by_id(client_id)
   if not client then
     return false
   end
+
+  buf_attach(bufnr)
 
   if client.attached_buffers[bufnr] then
     return true
@@ -642,27 +677,9 @@ function lsp.buf_detach_client(bufnr, client_id)
       )
     )
     return
+  else
+    buf_detach_client(bufnr, client)
   end
-
-  api.nvim_exec_autocmds('LspDetach', {
-    buffer = bufnr,
-    modeline = false,
-    data = { client_id = client_id },
-  })
-
-  changetracking.reset_buf(client, bufnr)
-
-  if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
-    local uri = vim.uri_from_bufnr(bufnr)
-    local params = { textDocument = { uri = uri } }
-    client.notify(ms.textDocument_didClose, params)
-  end
-
-  client.attached_buffers[bufnr] = nil
-  util.buf_versions[bufnr] = nil
-
-  local namespace = lsp.diagnostic.get_namespace(client_id)
-  vim.diagnostic.reset(namespace, bufnr)
 end
 
 --- Checks if a buffer is attached for a particular client.
@@ -889,12 +906,12 @@ end
 ---@param bufnr (integer) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
 ---@param params (table|nil) Parameters to send to the server
----@param handler fun(results: table<integer, {error: lsp.ResponseError, result: any}>) (function)
+---@param handler fun(results: table<integer, {error: lsp.ResponseError?, result: any}>) (function)
 --- Handler called after all requests are completed. Server results are passed as
 --- a `client_id:result` map.
 ---@return function cancel Function that cancels all requests.
 function lsp.buf_request_all(bufnr, method, params, handler)
-  local results = {} --- @type table<integer,{error:string, result:any}>
+  local results = {} --- @type table<integer,{error: lsp.ResponseError?, result: any}>
   local result_count = 0
   local expected_result_count = 0
 
@@ -932,10 +949,10 @@ end
 ---@param params table? Parameters to send to the server
 ---@param timeout_ms integer? Maximum time in milliseconds to wait for a result.
 ---                           (default: `1000`)
----@return table<integer, {err: lsp.ResponseError, result: any}>? result Map of client_id:request_result.
+---@return table<integer, {error: lsp.ResponseError?, result: any}>? result Map of client_id:request_result.
 ---@return string? err On timeout, cancel, or error, `err` is a string describing the failure reason, and `result` is nil.
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
-  local request_results
+  local request_results ---@type table
 
   local cancel = lsp.buf_request_all(bufnr, method, params, function(it)
     request_results = it
@@ -986,8 +1003,7 @@ end
 --- - findstart=0: column where the completion starts, or -2 or -3
 --- - findstart=1: list of matches (actually just calls |complete()|)
 function lsp.omnifunc(findstart, base)
-  log.debug('omnifunc.findstart', { findstart = findstart, base = base })
-  return vim.lsp._completion.omnifunc(findstart, base)
+  return vim.lsp.completion._omnifunc(findstart, base)
 end
 
 --- @class vim.lsp.formatexpr.Opts

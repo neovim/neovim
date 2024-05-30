@@ -1,9 +1,10 @@
 -- ShaDa variables saving/reading support
-local t = require('test.functional.testutil')()
-local api, fn, nvim_command, eq, eval = t.api, t.fn, t.command, t.eq, t.eval
-local expect_exit = t.expect_exit
-
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
+
+local api, fn, nvim_command, eq, eval = n.api, n.fn, n.command, t.eq, n.eval
+local expect_exit = n.expect_exit
 local reset, clear = t_shada.reset, t_shada.clear
 
 describe('ShaDa support code', function()

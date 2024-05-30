@@ -1,14 +1,16 @@
-local t = require('test.functional.testutil')()
-local call = t.call
-local clear = t.clear
-local command = t.command
-local eval = t.eval
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local call = n.call
+local clear = n.clear
+local command = n.command
+local eval = n.eval
 local eq = t.eq
-local feed = t.feed
-local feed_command = t.feed_command
-local next_msg = t.next_msg
-local api = t.api
-local source = t.source
+local feed = n.feed
+local feed_command = n.feed_command
+local next_msg = n.next_msg
+local api = n.api
+local source = n.source
 local pcall_err = t.pcall_err
 
 before_each(function()

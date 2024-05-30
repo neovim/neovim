@@ -246,7 +246,7 @@ code block the cursor is in: >
 
 	=a{
 
-I you have really badly indented code, you can re-indent the whole file with:
+If you have really badly indented code, you can re-indent the whole file with:
 >
 	gg=G
 

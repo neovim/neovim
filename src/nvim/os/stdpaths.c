@@ -198,7 +198,7 @@ char *get_xdg_home(const XDGVarType idx)
   assert(appname_len < (IOSIZE - sizeof("-data")));
 
   if (dir) {
-    xstrlcpy(IObuff, appname, appname_len + 1);
+    xmemcpyz(IObuff, appname, appname_len);
 #if defined(MSWIN)
     if (idx == kXDGDataHome || idx == kXDGStateHome) {
       xstrlcat(IObuff, "-data", IOSIZE);

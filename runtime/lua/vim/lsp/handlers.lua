@@ -3,6 +3,7 @@ local protocol = require('vim.lsp.protocol')
 local ms = protocol.Methods
 local util = require('vim.lsp.util')
 local api = vim.api
+local completion = require('vim.lsp.completion')
 
 --- @type table<string,lsp.Handler>
 local M = {}
@@ -12,7 +13,7 @@ local M = {}
 --- Writes to error buffer.
 ---@param ... string Will be concatenated before being written
 local function err_message(...)
-  vim.notify(table.concat(vim.tbl_flatten({ ... })), vim.log.levels.ERROR)
+  vim.notify(table.concat(vim.iter({ ... }):flatten():totable()), vim.log.levels.ERROR)
   api.nvim_command('redraw')
 end
 
@@ -22,16 +23,16 @@ M[ms.workspace_executeCommand] = function(_, _, _, _)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
----@param result lsp.ProgressParams
+---@param params lsp.ProgressParams
 ---@param ctx lsp.HandlerContext
-M[ms.dollar_progress] = function(_, result, ctx)
+M[ms.dollar_progress] = function(_, params, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
     err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
     return vim.NIL
   end
   local kind = nil
-  local value = result.value
+  local value = params.value
 
   if type(value) == 'table' then
     kind = value.kind
@@ -39,21 +40,21 @@ M[ms.dollar_progress] = function(_, result, ctx)
     -- So that consumers always have it available, even if they consume a
     -- subset of the full sequence
     if kind == 'begin' then
-      client.progress.pending[result.token] = value.title
+      client.progress.pending[params.token] = value.title
     else
-      value.title = client.progress.pending[result.token]
+      value.title = client.progress.pending[params.token]
       if kind == 'end' then
-        client.progress.pending[result.token] = nil
+        client.progress.pending[params.token] = nil
       end
     end
   end
 
-  client.progress:push(result)
+  client.progress:push(params)
 
   api.nvim_exec_autocmds('LspProgress', {
     pattern = kind,
     modeline = false,
-    data = { client_id = ctx.client_id, result = result },
+    data = { client_id = ctx.client_id, params = params },
   })
 end
 
@@ -253,26 +254,24 @@ M[ms.textDocument_references] = function(_, result, ctx, config)
   local title = 'References'
   local items = util.locations_to_items(result, client.offset_encoding)
 
+  local list = { title = title, items = items, context = ctx }
   if config.loclist then
-    vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
-    api.nvim_command('lopen')
+    vim.fn.setloclist(0, {}, ' ', list)
+    vim.cmd.lopen()
   elseif config.on_list then
-    assert(type(config.on_list) == 'function', 'on_list is not a function')
-    config.on_list({ title = title, items = items, context = ctx })
+    assert(vim.is_callable(config.on_list), 'on_list is not a function')
+    config.on_list(list)
   else
-    vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
-    api.nvim_command('botright copen')
+    vim.fn.setqflist({}, ' ', list)
+    vim.cmd('botright copen')
   end
 end
 
 --- Return a function that converts LSP responses to list items and opens the list
 ---
---- The returned function has an optional {config} parameter that accepts a table
---- with the following keys:
+--- The returned function has an optional {config} parameter that accepts |vim.lsp.ListOpts|
 ---
----   loclist: (boolean) use the location list (default is to use the quickfix list)
----
----@param map_result function `((resp, bufnr) -> list)` to convert the response
+---@param map_result fun(resp, bufnr: integer): table to convert the response
 ---@param entity string name of the resource used in a `not found` error message
 ---@param title_fn fun(ctx: lsp.HandlerContext): string Function to call to generate list title
 ---@return lsp.Handler
@@ -286,15 +285,16 @@ local function response_to_list(map_result, entity, title_fn)
     local title = title_fn(ctx)
     local items = map_result(result, ctx.bufnr)
 
+    local list = { title = title, items = items, context = ctx }
     if config.loclist then
-      vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
-      api.nvim_command('lopen')
+      vim.fn.setloclist(0, {}, ' ', list)
+      vim.cmd.lopen()
     elseif config.on_list then
-      assert(type(config.on_list) == 'function', 'on_list is not a function')
-      config.on_list({ title = title, items = items, context = ctx })
+      assert(vim.is_callable(config.on_list), 'on_list is not a function')
+      config.on_list(list)
     else
-      vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
-      api.nvim_command('botright copen')
+      vim.fn.setqflist({}, ' ', list)
+      vim.cmd('botright copen')
     end
   end
 end
@@ -354,7 +354,7 @@ M[ms.textDocument_completion] = function(_, result, _, _)
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
   local prefix = line_to_cursor:sub(textMatch + 1)
 
-  local matches = util.text_document_completion_list_to_complete_items(result, prefix)
+  local matches = completion._lsp_to_complete_items(result, prefix)
   vim.fn.complete(textMatch + 1, matches)
 end
 
@@ -428,7 +428,7 @@ local function location_handler(_, result, ctx, config)
 
   -- textDocument/definition can return Location or Location[]
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
-  if not vim.tbl_islist(result) then
+  if not vim.islist(result) then
     result = { result }
   end
 
@@ -436,7 +436,7 @@ local function location_handler(_, result, ctx, config)
   local items = util.locations_to_items(result, client.offset_encoding)
 
   if config.on_list then
-    assert(type(config.on_list) == 'function', 'on_list is not a function')
+    assert(vim.is_callable(config.on_list), 'on_list is not a function')
     config.on_list({ title = title, items = items })
     return
   end
@@ -444,8 +444,13 @@ local function location_handler(_, result, ctx, config)
     util.jump_to_location(result[1], client.offset_encoding, config.reuse_win)
     return
   end
-  vim.fn.setqflist({}, ' ', { title = title, items = items })
-  api.nvim_command('botright copen')
+  if config.loclist then
+    vim.fn.setloclist(0, {}, ' ', { title = title, items = items })
+    vim.cmd.lopen()
+  else
+    vim.fn.setqflist({}, ' ', { title = title, items = items })
+    vim.cmd('botright copen')
+  end
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration
@@ -555,7 +560,7 @@ local function make_call_hierarchy_handler(direction)
       end
     end
     vim.fn.setqflist({}, ' ', { title = 'LSP call hierarchy', items = items })
-    api.nvim_command('botright copen')
+    vim.cmd('botright copen')
   end
 end
 
@@ -564,6 +569,45 @@ M[ms.callHierarchy_incomingCalls] = make_call_hierarchy_handler('from')
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_outgoingCalls
 M[ms.callHierarchy_outgoingCalls] = make_call_hierarchy_handler('to')
+
+--- Displays type hierarchy in the quickfix window.
+local function make_type_hierarchy_handler()
+  --- @param result lsp.TypeHierarchyItem[]
+  return function(_, result, ctx, _)
+    if not result then
+      return
+    end
+    local function format_item(item)
+      if not item.detail or #item.detail == 0 then
+        return item.name
+      end
+      return string.format('%s %s', item.name, item.detail)
+    end
+    local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+    local items = {}
+    for _, type_hierarchy_item in pairs(result) do
+      local col = util._get_line_byte_from_position(
+        ctx.bufnr,
+        type_hierarchy_item.range.start,
+        client.offset_encoding
+      )
+      table.insert(items, {
+        filename = assert(vim.uri_to_fname(type_hierarchy_item.uri)),
+        text = format_item(type_hierarchy_item),
+        lnum = type_hierarchy_item.range.start.line + 1,
+        col = col + 1,
+      })
+    end
+    vim.fn.setqflist({}, ' ', { title = 'LSP type hierarchy', items = items })
+    vim.cmd('botright copen')
+  end
+end
+
+--- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#typeHierarchy_incomingCalls
+M[ms.typeHierarchy_subtypes] = make_type_hierarchy_handler()
+
+--- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#typeHierarchy_outgoingCalls
+M[ms.typeHierarchy_supertypes] = make_type_hierarchy_handler()
 
 --- @see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_logMessage
 --- @param result lsp.LogMessageParams

@@ -260,7 +260,11 @@ fixdict(1 + #version)
 for _, item in ipairs(version) do
   -- NB: all items are mandatory. But any error will be less confusing
   -- with placeholder vim.NIL (than invalid mpack data)
-  put(item[1], item[2] or vim.NIL)
+  local val = item[2]
+  if val == nil then
+    val = vim.NIL
+  end
+  put(item[1], val)
 end
 put('build', version_build)
 
@@ -716,23 +720,6 @@ end
 -- start building lua output
 output = assert(io.open(lua_c_bindings_outputf, 'wb'))
 
-output:write([[
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
-#include "nvim/ex_docmd.h"
-#include "nvim/ex_getln.h"
-#include "nvim/func_attr.h"
-#include "nvim/globals.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/api/private/dispatch.h"
-#include "nvim/lua/converter.h"
-#include "nvim/lua/executor.h"
-#include "nvim/memory.h"
-
-]])
 include_headers(output, headers)
 output:write('\n')
 
@@ -974,8 +961,6 @@ end
 
 output:write(string.format(
   [[
-void nlua_add_api_functions(lua_State *lstate)
-  REAL_FATTR_NONNULL_ALL;
 void nlua_add_api_functions(lua_State *lstate)
 {
   lua_createtable(lstate, 0, %u);

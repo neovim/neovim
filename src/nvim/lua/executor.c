@@ -1487,7 +1487,7 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name
   }
 }
 
-int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
+void nlua_source_str(const char *code, char *name)
 {
   const sctx_T save_current_sctx = current_sctx;
   current_sctx.sc_sid = SID_STR;
@@ -1495,22 +1495,11 @@ int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
   current_sctx.sc_lnum = 0;
   estack_push(ETYPE_SCRIPT, name, 0);
 
-  garray_T ga;
-  char *line = NULL;
-
-  ga_init(&ga, (int)sizeof(char *), 10);
-  while ((line = fgetline(0, cookie, 0, false)) != NULL) {
-    GA_APPEND(char *, &ga, line);
-  }
-  char *code = ga_concat_strings_sep(&ga, "\n");
   size_t len = strlen(code);
   nlua_typval_exec(code, len, name, NULL, 0, false, NULL);
 
   estack_pop();
   current_sctx = save_current_sctx;
-  ga_clear_strings(&ga);
-  xfree(code);
-  return OK;
 }
 
 /// Call a LuaCallable given some typvals

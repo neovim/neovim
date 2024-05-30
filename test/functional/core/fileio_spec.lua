@@ -1,37 +1,38 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 local uv = vim.uv
-local t = require('test.functional.testutil')()
 
 local assert_log = t.assert_log
 local assert_nolog = t.assert_nolog
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local eq = t.eq
 local neq = t.neq
 local ok = t.ok
-local feed = t.feed
-local fn = t.fn
-local nvim_prog = t.nvim_prog
-local request = t.request
+local feed = n.feed
+local fn = n.fn
+local nvim_prog = n.nvim_prog
+local request = n.request
 local retry = t.retry
-local rmdir = t.rmdir
+local rmdir = n.rmdir
 local matches = t.matches
-local api = t.api
+local api = n.api
 local mkdir = t.mkdir
 local sleep = vim.uv.sleep
 local read_file = t.read_file
 local trim = vim.trim
-local currentdir = t.fn.getcwd
-local assert_alive = t.assert_alive
-local check_close = t.check_close
-local expect_exit = t.expect_exit
+local currentdir = n.fn.getcwd
+local assert_alive = n.assert_alive
+local check_close = n.check_close
+local expect_exit = n.expect_exit
 local write_file = t.write_file
-local Screen = require('test.functional.ui.screen')
-local feed_command = t.feed_command
+local feed_command = n.feed_command
 local skip = t.skip
 local is_os = t.is_os
 local is_ci = t.is_ci
-local spawn = t.spawn
-local set_session = t.set_session
+local spawn = n.spawn
+local set_session = n.set_session
 
 describe('fileio', function()
   before_each(function() end)
@@ -54,7 +55,7 @@ describe('fileio', function()
   --- Starts a new nvim session and returns an attached screen.
   local function startup(extra_args)
     extra_args = extra_args or {}
-    local argv = vim.tbl_flatten({ args, '--embed', extra_args })
+    local argv = vim.iter({ args, '--embed', extra_args }):flatten():totable()
     local screen_nvim = spawn(argv)
     set_session(screen_nvim)
     local screen = Screen.new(70, 10)
@@ -100,7 +101,7 @@ describe('fileio', function()
     eq('foozubbaz', trim(read_file('Xtest_startup_file1')))
 
     -- 4. Exit caused by deadly signal (+ 'swapfile').
-    local j = fn.jobstart(vim.tbl_flatten({ args, '--embed' }), { rpc = true })
+    local j = fn.jobstart(vim.iter({ args, '--embed' }):flatten():totable(), { rpc = true })
     fn.rpcrequest(
       j,
       'nvim_exec2',
@@ -228,7 +229,7 @@ describe('fileio', function()
 
     local initial_content = 'foo'
     local backup_dir = 'Xtest_backupdir'
-    local sep = t.get_pathsep()
+    local sep = n.get_pathsep()
     local link_file_name = 'Xtest_startup_file2'
     local backup_file_name = backup_dir .. sep .. link_file_name .. '~'
 
@@ -275,11 +276,6 @@ describe('fileio', function()
     write_file('Xtest-overwrite-forced', 'foobar')
     command('set nofixendofline')
     local screen = Screen.new(40, 4)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-    })
     screen:attach()
     command('set shortmess-=F')
 
@@ -299,9 +295,9 @@ describe('fileio', function()
     -- use async feed_command because nvim basically hangs on the prompt
     feed_command('w')
     screen:expect([[
-      {2:WARNING: The file has been changed since}|
-      {2: reading it!!!}                          |
-      {3:Do you really want to write to it (y/n)?}|
+      {9:WARNING: The file has been changed since}|
+      {9: reading it!!!}                          |
+      {6:Do you really want to write to it (y/n)?}|
       ^                                        |
     ]])
 

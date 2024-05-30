@@ -1,9 +1,11 @@
 -- Test for jumping to a tag with 'hidden' set, with symbolic link in path of tag.
 -- This only works for Unix, because of the symbolic link.
 
-local t = require('test.functional.testutil')()
-local clear, feed, insert = t.clear, t.feed, t.insert
-local feed_command, expect = t.feed_command, t.expect
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear, feed, insert = n.clear, n.feed, n.insert
+local feed_command, expect = n.feed_command, n.expect
 
 describe('jump to a tag with hidden set', function()
   setup(clear)

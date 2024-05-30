@@ -1,23 +1,25 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.terminal.testutil')
-local assert_alive = t.assert_alive
-local feed, clear = t.feed, t.clear
-local poke_eventloop = t.poke_eventloop
-local nvim_prog = t.nvim_prog
-local eval, feed_command, source = t.eval, t.feed_command, t.source
+
+local assert_alive = n.assert_alive
+local feed, clear = n.feed, n.clear
+local poke_eventloop = n.poke_eventloop
+local nvim_prog = n.nvim_prog
+local eval, feed_command, source = n.eval, n.feed_command, n.source
 local pcall_err = t.pcall_err
 local eq, neq = t.eq, t.neq
-local api = t.api
+local api = n.api
 local retry = t.retry
-local testprg = t.testprg
+local testprg = n.testprg
 local write_file = t.write_file
-local command = t.command
-local exc_exec = t.exc_exec
+local command = n.command
+local exc_exec = n.exc_exec
 local matches = t.matches
-local exec_lua = t.exec_lua
+local exec_lua = n.exec_lua
 local sleep = vim.uv.sleep
-local fn = t.fn
+local fn = n.fn
 local is_os = t.is_os
 local skip = t.skip
 
@@ -266,7 +268,7 @@ describe(':terminal buffer', function()
   it('does not segfault when pasting empty register #13955', function()
     feed('<c-\\><c-n>')
     feed_command('put a') -- register a is empty
-    t.assert_alive()
+    n.assert_alive()
   end)
 
   it([[can use temporary normal mode <c-\><c-o>]], function()

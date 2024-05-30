@@ -1,8 +1,10 @@
 -- Tests for the exists() and has() functions.
 
-local t = require('test.functional.testutil')()
-local source = t.source
-local clear, expect = t.clear, t.expect
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local source = n.source
+local clear, expect = n.clear, n.expect
 local write_file = t.write_file
 
 describe('exists() and has() functions', function()

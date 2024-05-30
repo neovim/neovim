@@ -1,17 +1,18 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local eq = t.eq
 local neq = t.neq
-local feed = t.feed
-local eval = t.eval
-local exec = t.exec
-local fn = t.fn
-local api = t.api
-local curwin = t.api.nvim_get_current_win
-local assert_alive = t.assert_alive
+local feed = n.feed
+local eval = n.eval
+local exec = n.exec
+local fn = n.fn
+local api = n.api
+local curwin = n.api.nvim_get_current_win
+local assert_alive = n.assert_alive
 
 describe('tabpage', function()
   before_each(clear)
@@ -101,14 +102,9 @@ describe('tabpage', function()
 
   it('switching tabpage after setting laststatus=3 #19591', function()
     local screen = Screen.new(40, 8)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { bold = true, reverse = true }, -- StatusLine
-      [2] = { reverse = true }, -- TabLineFill
-      [3] = { bold = true }, -- TabLineSel
-      [4] = { background = Screen.colors.LightGrey, underline = true }, -- TabLine
-      [5] = { bold = true, foreground = Screen.colors.Magenta },
-    })
+    screen:add_extra_attr_ids {
+      [100] = { bold = true, foreground = Screen.colors.Fuchsia },
+    }
     screen:attach()
 
     command('tabnew')
@@ -117,18 +113,18 @@ describe('tabpage', function()
     command('tabnext')
     feed('<C-G>')
     screen:expect([[
-      {4: [No Name] }{3: [No Name] }{2:                 }{4:X}|
+      {24: [No Name] }{5: [No Name] }{2:                 }{24:X}|
       ^                                        |
-      {0:~                                       }|*4
-      {1:[No Name]                               }|
+      {1:~                                       }|*4
+      {3:[No Name]                               }|
       "[No Name]" --No lines in buffer--      |
     ]])
     command('vnew')
     screen:expect([[
-      {4: [No Name] }{3: }{5:2}{3: [No Name] }{2:               }{4:X}|
+      {24: [No Name] }{5: }{100:2}{5: [No Name] }{2:               }{24:X}|
       ^                    │                   |
-      {0:~                   }│{0:~                  }|*4
-      {1:[No Name]                               }|
+      {1:~                   }│{1:~                  }|*4
+      {3:[No Name]                               }|
       "[No Name]" --No lines in buffer--      |
     ]])
   end)

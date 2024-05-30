@@ -415,6 +415,18 @@ To disable folding everything under the title use this: >
 	let asciidoc_fold_under_title = 0
 
 
+ARDUINO							*ft-arduino-plugin*
+
+By default the following options are set, in accordance with the default
+settings of Arduino IDE: >
+
+	setlocal expandtab tabstop=2 softtabstop=2 shiftwidth=2
+
+To disable this behavior, set the following variable in your vimrc: >
+
+	let g:arduino_recommended_style = 0
+
+
 AWK							*ft-awk-plugin*
 
 Support for features specific to GNU Awk, like @include, can be enabled by
@@ -589,6 +601,43 @@ to the details of that function in the call graph.
 The mapping can be disabled with: >
 	let g:no_gprof_maps = 1
 
+
+HARE							*ft-hare*
+
+Since the text for this plugin is rather long it has been put in a separate
+file: |ft_hare.txt|.
+
+
+JAVA							*ft-java-plugin*
+
+Whenever the variable "g:ftplugin_java_source_path" is defined and its value
+is a filename whose extension is either ".jar" or ".zip", e.g.: >
+	let g:ftplugin_java_source_path = '/path/to/src.jar'
+	let g:ftplugin_java_source_path = '/path/to/src.zip'
+<
+and the |zip| plugin has already been sourced, the |gf| command can be used to
+open the archive and the |n| command can be used to look for the selected type
+and the <Return> key can be used to load a listed file.
+
+Note that the effect of using the "gf" command WITHIN a buffer loaded with the
+Zip plugin depends on the version of the Zip plugin.  For the Zip plugin
+versions that do not support Jar type archives, consider creating symbolic
+links with the ".zip" extension for each Jar archive of interest and assigning
+any such file to the variable from now on.
+
+Otherwise, for the defined variable "g:ftplugin_java_source_path", the local
+value of the 'path' option will be further modified by prefixing the value of
+the variable, e.g.: >
+	let g:ftplugin_java_source_path = $JDK_SRC_PATH
+	let &l:path = g:ftplugin_java_source_path . ',' . &l:path
+<
+and the "gf" command can be used on a fully-qualified type to look for a file
+in the "path" and to try to load it.
+
+Remember to manually trigger the |FileType| event from a buffer with a Java
+file loaded in it each time after assigning a new value to the variable: >
+	doautocmd FileType
+<
 
 MAIL							*ft-mail-plugin*
 
@@ -949,6 +998,31 @@ functions with [[ and ]].  Move around comments with ]" and [".
 
 The mappings can be disabled with: >
 	let g:no_vim_maps = 1
+
+
+ZIG							*ft-zig-plugin*
+
+						*g:zig_recommended_style*
+By default the following indentation options are set, in accordance with Zig's
+recommended style (https://ziglang.org/documentation/master/): >
+
+	setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
+<
+To disable this behavior, set |g:zig_recommended_style| to 0: >
+
+	let g:zig_recommended_style = 0
+<
+							*g:zig_std_dir*
+The path to the Zig standard library. The Zig |ftplugin| reads |g:zig_std_dir|
+and appends it to the 'path' for Zig files. Where the Zig standard library
+is located is system and installation method dependent.
+
+One can automatically set |g:zig_std_dir| using `zig env`: >
+
+	let g:zig_std_dir = json_decode(system('zig env'))['std_dir']
+<
+This can, for example, be put in a FileType |:autocmd| or user |ftplugin| to
+only load when a Zig file is opened.
 
 
 ZIMBU							*ft-zimbu-plugin*

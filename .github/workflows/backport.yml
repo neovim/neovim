@@ -12,11 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Create backport PRs
-        uses: korthout/backport-action@v2
+      - name: Create backport PR
+        id: backport
+        uses: korthout/backport-action@v3
         with:
-          # https://github.com/korthout/backport-action/pull/399
-          experimental: >
-            {
-              "detect_merge_method": true
-            }
+          pull_title: "${pull_title}"
+          label_pattern: "^ci:backport ([^ ]+)$"
+
+      - if: ${{steps.backport.outputs.was_successful == 'true'}}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: ${{steps.backport.outputs.created_pull_numbers}},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['target:release']
+            })

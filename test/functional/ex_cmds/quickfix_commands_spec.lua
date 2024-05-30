@@ -1,15 +1,16 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local feed = t.feed
+local feed = n.feed
 local eq = t.eq
-local clear = t.clear
-local fn = t.fn
-local command = t.command
-local exc_exec = t.exc_exec
+local clear = n.clear
+local fn = n.fn
+local command = n.command
+local exc_exec = n.exc_exec
 local write_file = t.write_file
-local api = t.api
-local source = t.source
+local api = n.api
+local source = n.source
 
 local file_base = 'Xtest-functional-ex_cmds-quickfix_commands'
 

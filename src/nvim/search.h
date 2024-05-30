@@ -84,6 +84,7 @@ typedef struct {
 /// Structure containing last search pattern and its attributes.
 typedef struct {
   char *pat;            ///< The pattern (in allocated memory) or NULL.
+  size_t patlen;        ///< The length of the patten (0 is pat is NULL).
   bool magic;           ///< Magicness of the pattern.
   bool no_scs;          ///< No smartcase for this pattern.
   Timestamp timestamp;  ///< Time of the last change.

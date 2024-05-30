@@ -114,6 +114,7 @@ API (EXTENSIBILITY/SCRIPTING/PLUGINS)
 |vimscript-functions|	Vimscript functions
 |testing.txt|		Vimscript testing functions
 |remote-plugin|		Nvim remote plugins
+|health|		Health checking
 
 ------------------------------------------------------------------------------
 PROGRAMMING LANGUAGE SUPPORT
@@ -175,7 +176,6 @@ DEVELOPING NVIM
 Standard plugins ~
 						*standard-plugin-list*
 |pi_gzip.txt|		Reading and writing compressed files
-|pi_health.txt|		Healthcheck framework
 |pi_msgpack.txt|	msgpack utilities
 |pi_netrw.txt|		Reading and writing files over a network
 |pi_paren.txt|		Highlight matching parens

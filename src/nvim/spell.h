@@ -21,6 +21,13 @@ extern char *e_format;
 extern char *repl_from;
 extern char *repl_to;
 
+/// Values for behaviour in spell_move_to
+typedef enum {
+  SMT_ALL = 0,  ///< Move to "all" words
+  SMT_BAD,      ///< Move to "bad" words only
+  SMT_RARE,     ///< Move to "rare" words only
+} smt_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "spell.h.generated.h"
 #endif

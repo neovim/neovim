@@ -1,9 +1,10 @@
 -- Test for linebreak and list option (non-utf8)
 
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local feed, insert, source = t.feed, t.insert, t.source
-local clear, feed_command, expect = t.clear, t.feed_command, t.expect
+
+local feed, insert, source = n.feed, n.insert, n.source
+local clear, feed_command, expect = n.clear, n.feed_command, n.expect
 
 describe('listlbr', function()
   before_each(clear)

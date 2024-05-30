@@ -457,17 +457,8 @@ local predicate_handlers = {
     end
 
     for _, node in ipairs(nodes) do
-      local ancestor_types = {} --- @type table<string, boolean>
-      for _, type in ipairs({ unpack(predicate, 3) }) do
-        ancestor_types[type] = true
-      end
-
-      local cur = node:parent()
-      while cur do
-        if ancestor_types[cur:type()] then
-          return true
-        end
-        cur = cur:parent()
+      if node:__has_ancestor(predicate) then
+        return true
       end
     end
     return false
@@ -529,6 +520,9 @@ local directive_handlers = {
   ['offset!'] = function(match, _, _, pred, metadata)
     local capture_id = pred[2] --[[@as integer]]
     local nodes = match[capture_id]
+    if not nodes or #nodes == 0 then
+      return
+    end
     assert(#nodes == 1, '#offset! does not support captures on multiple nodes')
 
     local node = nodes[1]
@@ -562,6 +556,9 @@ local directive_handlers = {
     assert(type(id) == 'number')
 
     local nodes = match[id]
+    if not nodes or #nodes == 0 then
+      return
+    end
     assert(#nodes == 1, '#gsub! does not support captures on multiple nodes')
     local node = nodes[1]
     local text = vim.treesitter.get_node_text(node, bufnr, { metadata = metadata[id] }) or ''
@@ -584,6 +581,9 @@ local directive_handlers = {
     assert(type(capture_id) == 'number')
 
     local nodes = match[capture_id]
+    if not nodes or #nodes == 0 then
+      return
+    end
     assert(#nodes == 1, '#trim! does not support captures on multiple nodes')
     local node = nodes[1]
 

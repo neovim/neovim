@@ -1,9 +1,10 @@
 -- Tests for backtrace debug commands.
 
-local t = require('test.functional.testutil')()
-local command = t.command
-local feed, clear = t.feed, t.clear
-local feed_command, expect = t.feed_command, t.expect
+local n = require('test.functional.testnvim')()
+
+local command = n.command
+local feed, clear = n.feed, n.clear
+local feed_command, expect = n.feed_command, n.expect
 
 describe('108', function()
   before_each(clear)

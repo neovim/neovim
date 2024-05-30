@@ -1,7 +1,9 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local tt = require('test.functional.terminal.testutil')
-local clear, eq, api = t.clear, t.eq, t.api
-local feed = t.feed
+local clear, eq, api = n.clear, t.eq, n.api
+local feed = n.feed
 local feed_data = tt.feed_data
 local enter_altscreen = tt.enter_altscreen
 local exit_altscreen = tt.exit_altscreen

@@ -1,20 +1,21 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local request = t.request
+local request = n.request
 local eq = t.eq
 local ok = t.ok
 local pcall_err = t.pcall_err
-local insert = t.insert
-local feed = t.feed
-local clear = t.clear
-local command = t.command
-local exec = t.exec
-local api = t.api
-local assert_alive = t.assert_alive
+local insert = n.insert
+local feed = n.feed
+local clear = n.clear
+local command = n.command
+local exec = n.exec
+local api = n.api
+local assert_alive = n.assert_alive
 
 local function expect(contents)
-  return eq(contents, t.curbuf_contents())
+  return eq(contents, n.curbuf_contents())
 end
 
 local function set_extmark(ns_id, id, line, col, opts)
@@ -1568,7 +1569,7 @@ describe('API/extmarks', function()
       sign_text = '>>',
       spell = true,
       virt_lines = {
-        { { 'lines', 'Macro' }, { '???' } },
+        { { 'lines', 'Macro' }, { '???' }, { ';;;', '' } },
         { { 'stack', { 'Type', 'Search' } }, { '!!!' } },
       },
       virt_lines_above = true,
@@ -1603,7 +1604,7 @@ describe('API/extmarks', function()
         sign_text = '>>',
         spell = true,
         virt_lines = {
-          { { 'lines', 'Macro' }, { '???' } },
+          { { 'lines', 'Macro' }, { '???' }, { ';;;', '' } },
           { { 'stack', { 'Type', 'Search' } }, { '!!!' } },
         },
         virt_lines_above = true,
@@ -1742,7 +1743,7 @@ describe('API/extmarks', function()
     command('silent undo')
     screen:expect([[
       S1{7:  }^aaa bbb ccc                         |
-      S1S2aaa bbb ccc                         |
+      S2S1aaa bbb ccc                         |
       S2{7:  }aaa bbb ccc                         |
       {7:    }aaa bbb ccc                         |*2
                                               |
@@ -1890,6 +1891,24 @@ describe('Extmarks buffer api with many marks', function()
     api.nvim_buf_clear_namespace(0, ns1, 10, 20)
     for id, mark in pairs(ns_marks[ns1]) do
       if 10 <= mark[1] and mark[1] < 20 then
+        ns_marks[ns1][id] = nil
+      end
+    end
+    eq(ns_marks[ns1], get_marks(ns1))
+    eq(ns_marks[ns2], get_marks(ns2))
+
+    api.nvim_buf_clear_namespace(0, ns1, 0, 10)
+    for id, mark in pairs(ns_marks[ns1]) do
+      if mark[1] < 10 then
+        ns_marks[ns1][id] = nil
+      end
+    end
+    eq(ns_marks[ns1], get_marks(ns1))
+    eq(ns_marks[ns2], get_marks(ns2))
+
+    api.nvim_buf_clear_namespace(0, ns1, 20, -1)
+    for id, mark in pairs(ns_marks[ns1]) do
+      if mark[1] >= 20 then
         ns_marks[ns1][id] = nil
       end
     end

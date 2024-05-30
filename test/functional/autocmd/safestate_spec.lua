@@ -1,9 +1,11 @@
-local t = require('test.functional.testutil')()
-local clear = t.clear
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
+local clear = n.clear
 local eq = t.eq
-local exec = t.exec
-local feed = t.feed
-local api = t.api
+local exec = n.exec
+local feed = n.feed
+local api = n.api
 
 before_each(clear)
 

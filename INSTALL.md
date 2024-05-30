@@ -15,7 +15,8 @@ Install from download
 Downloads are available on the [Releases](https://github.com/neovim/neovim/releases) page.
 
 * Latest [stable release](https://github.com/neovim/neovim/releases/latest)
-    * [macOS](https://github.com/neovim/neovim/releases/latest/download/nvim-macos.tar.gz)
+    * [macOS x86](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-x86_64.tar.gz)
+    * [macOS arm](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-arm64.tar.gz)
     * [Linux](https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz)
     * [Windows](https://github.com/neovim/neovim/releases/latest/download/nvim-win64.msi)
 * Latest [development prerelease](https://github.com/neovim/neovim/releases/nightly)
@@ -36,7 +37,7 @@ Windows 8+ is required. Windows 7 or older is not supported.
 
 ### [Chocolatey](https://chocolatey.org)
 
-- **Release (v0.7):** `choco install neovim` (use -y for automatically skipping confirmation messages)
+- **Latest Release:** `choco install neovim` (use -y for automatically skipping confirmation messages)
 - **Development (pre-release):** `choco install neovim --pre`
 
 ### [Scoop](https://scoop.sh/)

@@ -1,8 +1,9 @@
 -- Tests for nested function.
 
-local t = require('test.functional.testutil')()
-local clear, insert = t.clear, t.insert
-local command, expect, source = t.command, t.expect, t.source
+local n = require('test.functional.testnvim')()
+
+local clear, insert = n.clear, n.insert
+local command, expect, source = n.command, n.expect, n.source
 
 describe('test_nested_function', function()
   setup(clear)

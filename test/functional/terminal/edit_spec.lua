@@ -1,11 +1,13 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
+
 local screen = require('test.functional.ui.screen')
 
-local testprg = t.testprg
-local command = t.command
-local fn = t.fn
-local api = t.api
-local clear = t.clear
+local testprg = n.testprg
+local command = n.command
+local fn = n.fn
+local api = n.api
+local clear = n.clear
 local eq = t.eq
 local matches = t.matches
 local pesc = vim.pesc

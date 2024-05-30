@@ -1,13 +1,14 @@
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local t = require('test.functional.testutil')()
 
-local clear = t.clear
-local command = t.command
-local expect_exit = t.expect_exit
-local api, eq, feed_command = t.api, t.eq, t.feed_command
-local feed, poke_eventloop = t.feed, t.poke_eventloop
+local clear = n.clear
+local command = n.command
+local expect_exit = n.expect_exit
+local api, eq, feed_command = n.api, t.eq, n.feed_command
+local feed, poke_eventloop = n.feed, n.poke_eventloop
 local ok = t.ok
-local eval = t.eval
+local eval = n.eval
 
 local shada_file = 'Xtest.shada'
 
@@ -109,7 +110,7 @@ describe(':browse oldfiles', function()
     -- Ensure v:oldfiles isn't busted.  Since things happen so fast,
     -- the ordering of v:oldfiles is unstable (it uses qsort() under-the-hood).
     -- Let's verify the contents and the length of v:oldfiles before moving on.
-    oldfiles = t.api.nvim_get_vvar('oldfiles')
+    oldfiles = n.api.nvim_get_vvar('oldfiles')
     eq(2, #oldfiles)
     ok(filename == oldfiles[1] or filename == oldfiles[2])
     ok(filename2 == oldfiles[1] or filename2 == oldfiles[2])

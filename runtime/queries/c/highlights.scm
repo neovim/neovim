@@ -7,14 +7,17 @@
 
 [
   "default"
-  "enum"
-  "struct"
-  "typedef"
-  "union"
   "goto"
   "asm"
   "__asm__"
 ] @keyword
+
+[
+  "enum"
+  "struct"
+  "union"
+  "typedef"
+] @keyword.type
 
 [
   "sizeof"

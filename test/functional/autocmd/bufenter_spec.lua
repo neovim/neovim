@@ -1,11 +1,12 @@
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
-local clear = t.clear
-local command = t.command
+local clear = n.clear
+local command = n.command
 local eq = t.eq
-local eval = t.eval
-local request = t.request
-local source = t.source
+local eval = n.eval
+local request = n.request
+local source = n.source
 
 describe('autocmd BufEnter', function()
   before_each(clear)
@@ -33,7 +34,7 @@ describe('autocmd BufEnter', function()
   end)
 
   it('triggered by ":split normal|:help|:bw"', function()
-    t.add_builddir_to_rtp()
+    n.add_builddir_to_rtp()
     command('split normal')
     command('wincmd j')
     command('help')

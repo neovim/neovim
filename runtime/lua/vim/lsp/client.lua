@@ -37,7 +37,7 @@ local validate = vim.validate
 --- `is_closing` and `terminate`.
 --- See |vim.lsp.rpc.request()|, |vim.lsp.rpc.notify()|.
 ---  For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
---- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient?
+--- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient
 ---
 --- Directory to launch the `cmd` process. Not related to `root_dir`.
 --- (default: cwd)
@@ -182,7 +182,7 @@ local validate = vim.validate
 --- It can be `null` if the client supports workspace folders but none are
 --- configured.
 --- @field workspace_folders lsp.WorkspaceFolder[]?
---- @field root_dir string
+--- @field root_dir string?
 ---
 --- @field attached_buffers table<integer,true>
 ---
@@ -470,7 +470,6 @@ function Client.create(config)
     _on_exit_cbs = ensure_list(config.on_exit),
     _on_attach_cbs = ensure_list(config.on_attach),
     _on_error_cb = config.on_error,
-    _root_dir = config.root_dir,
     _trace = get_trace(config.trace),
 
     --- Contains $/progress report messages.
@@ -506,24 +505,16 @@ function Client.create(config)
   }
 
   -- Start the RPC client.
-  local rpc --- @type vim.lsp.rpc.PublicClient?
   local config_cmd = config.cmd
   if type(config_cmd) == 'function' then
-    rpc = config_cmd(dispatchers)
+    self.rpc = config_cmd(dispatchers)
   else
-    rpc = lsp.rpc.start(config_cmd, dispatchers, {
+    self.rpc = lsp.rpc.start(config_cmd, dispatchers, {
       cwd = config.cmd_cwd,
       env = config.cmd_env,
       detached = config.detached,
     })
   end
-
-  -- Return nil if the rpc client fails to start
-  if not rpc then
-    return
-  end
-
-  self.rpc = rpc
 
   setmetatable(self, Client)
 
@@ -620,7 +611,10 @@ function Client:initialize()
     self:_run_callbacks(self._on_init_cbs, lsp.client_errors.ON_INIT_CALLBACK_ERROR, self, result)
 
     for buf in pairs(reattach_bufs) do
-      self:_on_attach(buf)
+      -- The buffer may have been detached in the on_init callback.
+      if self.attached_buffers[buf] then
+        self:_on_attach(buf)
+      end
     end
 
     log.info(
@@ -722,7 +716,7 @@ local wait_result_reason = { [-1] = 'timeout', [-2] = 'interrupted', [-3] = 'err
 ---
 --- @param ... string List to write to the buffer
 local function err_message(...)
-  local message = table.concat(vim.tbl_flatten({ ... }))
+  local message = table.concat(vim.iter({ ... }):flatten():totable())
   if vim.in_fast_event() then
     vim.schedule(function()
       api.nvim_err_writeln(message)
@@ -874,7 +868,8 @@ end
 --- @param command lsp.Command
 --- @param context? {bufnr: integer}
 --- @param handler? lsp.Handler only called if a server command
-function Client:_exec_cmd(command, context, handler)
+--- @param on_unsupported? function handler invoked when the command is not supported by the client.
+function Client:_exec_cmd(command, context, handler, on_unsupported)
   context = vim.deepcopy(context or {}, true) --[[@as lsp.HandlerContext]]
   context.bufnr = context.bufnr or api.nvim_get_current_buf()
   context.client_id = self.id
@@ -888,14 +883,18 @@ function Client:_exec_cmd(command, context, handler)
   local command_provider = self.server_capabilities.executeCommandProvider
   local commands = type(command_provider) == 'table' and command_provider.commands or {}
   if not vim.list_contains(commands, cmdname) then
-    vim.notify_once(
-      string.format(
-        'Language server `%s` does not support command `%s`. This command may require a client extension.',
-        self.name,
-        cmdname
-      ),
-      vim.log.levels.WARN
-    )
+    if on_unsupported then
+      on_unsupported()
+    else
+      vim.notify_once(
+        string.format(
+          'Language server `%s` does not support command `%s`. This command may require a client extension.',
+          self.name,
+          cmdname
+        ),
+        vim.log.levels.WARN
+      )
+    end
     return
   end
   -- Not using command directly to exclude extra properties,
@@ -913,7 +912,7 @@ end
 --- @param bufnr integer Number of the buffer, or 0 for current
 function Client:_text_document_did_open_handler(bufnr)
   changetracking.init(self, bufnr)
-  if not vim.tbl_get(self.server_capabilities, 'textDocumentSync', 'openClose') then
+  if not self.supports_method(ms.textDocument_didOpen) then
     return
   end
   if not api.nvim_buf_is_loaded(bufnr) then

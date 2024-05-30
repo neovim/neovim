@@ -128,6 +128,29 @@ func Test_shellescape()
   call assert_equal("'te\\\nxt'", shellescape("te\nxt"))
   call assert_equal("'te\\\\\nxt'", shellescape("te\nxt", 1))
 
+  set shell=fish
+  call assert_equal("'text'", shellescape('text'))
+  call assert_equal("'te\"xt'", shellescape('te"xt'))
+  call assert_equal("'te'\\''xt'", shellescape("te'xt"))
+
+  call assert_equal("'te%xt'", shellescape("te%xt"))
+  call assert_equal("'te\\%xt'", shellescape("te%xt", 1))
+  call assert_equal("'te#xt'", shellescape("te#xt"))
+  call assert_equal("'te\\#xt'", shellescape("te#xt", 1))
+  call assert_equal("'te!xt'", shellescape("te!xt"))
+  call assert_equal("'te\\!xt'", shellescape("te!xt", 1))
+
+  call assert_equal("'te\\\\xt'", shellescape("te\\xt"))
+  call assert_equal("'te\\\\xt'", shellescape("te\\xt", 1))
+  call assert_equal("'te\\\\'\\''xt'", shellescape("te\\'xt"))
+  call assert_equal("'te\\\\'\\''xt'", shellescape("te\\'xt", 1))
+  call assert_equal("'te\\\\!xt'", shellescape("te\\!xt"))
+  call assert_equal("'te\\\\\\!xt'", shellescape("te\\!xt", 1))
+  call assert_equal("'te\\\\%xt'", shellescape("te\\%xt"))
+  call assert_equal("'te\\\\\\%xt'", shellescape("te\\%xt", 1))
+  call assert_equal("'te\\\\#xt'", shellescape("te\\#xt"))
+  call assert_equal("'te\\\\\\#xt'", shellescape("te\\#xt", 1))
+
   let &shell = save_shell
 endfunc
 

@@ -1,8 +1,9 @@
 -- Test for t movement command and 'cpo-;' setting
 
-local t = require('test.functional.testutil')()
-local clear, feed, insert = t.clear, t.feed, t.insert
-local feed_command, expect = t.feed_command, t.expect
+local n = require('test.functional.testnvim')()
+
+local clear, feed, insert = n.clear, n.feed, n.insert
+local feed_command, expect = n.feed_command, n.expect
 
 describe('coptions', function()
   setup(clear)

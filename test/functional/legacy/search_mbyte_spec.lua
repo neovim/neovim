@@ -1,10 +1,10 @@
-local t = require('test.functional.testutil')()
+local n = require('test.functional.testnvim')()
 
-local poke_eventloop = t.poke_eventloop
-local clear = t.clear
-local insert = t.insert
-local expect = t.expect
-local command = t.command
+local poke_eventloop = n.poke_eventloop
+local clear = n.clear
+local insert = n.insert
+local expect = n.expect
+local command = n.command
 
 describe('search_mbyte', function()
   before_each(clear)

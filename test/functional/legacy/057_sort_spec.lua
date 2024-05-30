@@ -1,10 +1,11 @@
 -- Tests for :sort command.
 
-local t = require('test.functional.testutil')()
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 
 local insert, command, clear, expect, eq, poke_eventloop =
-  t.insert, t.command, t.clear, t.expect, t.eq, t.poke_eventloop
-local exc_exec = t.exc_exec
+  n.insert, n.command, n.clear, n.expect, t.eq, n.poke_eventloop
+local exc_exec = n.exc_exec
 
 describe(':sort', function()
   local text = [[
