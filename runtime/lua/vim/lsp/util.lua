@@ -764,7 +764,7 @@ end
 ---@param ft string|nil filetype that will be use as the `lang` for the label markdown code block
 ---@param triggers table|nil list of trigger characters from the lsp server. used to better determine parameter offsets
 ---@return string[]|nil table list of lines of converted markdown.
----@return [number, number]|nil table of active hl
+---@return number[]|nil table of active hl
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers)
   if not signature_help.signatures then

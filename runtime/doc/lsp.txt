@@ -1930,9 +1930,9 @@ convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
       • {triggers}        (`table?`) list of trigger characters from the lsp
                           server. used to better determine parameter offsets
 
-    Return: ~
-        (`string[]?`) table list of lines of converted markdown. @return
-        |number, number||nil table of active hl
+    Return (multiple): ~
+        (`string[]?`) table list of lines of converted markdown.
+        (`number[]?`) table of active hl
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
