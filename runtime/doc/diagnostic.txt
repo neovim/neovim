@@ -516,10 +516,11 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 *vim.diagnostic.Opts.Jump*
 
     Fields: ~
-      • {float}?     (`boolean|vim.diagnostic.Opts.Float`) Default value of
-                     the {float} parameter of |vim.diagnostic.jump()|.
-      • {wrap}?      (`boolean`) Default value of the {wrap} parameter of
+      • {float}?     (`boolean|vim.diagnostic.Opts.Float`, default: false)
+                     Default value of the {float} parameter of
                      |vim.diagnostic.jump()|.
+      • {wrap}?      (`boolean`, default: true) Default value of the {wrap}
+                     parameter of |vim.diagnostic.jump()|.
       • {severity}?  (`vim.diagnostic.SeverityFilter`) Default value of the
                      {severity} parameter of |vim.diagnostic.jump()|.
 

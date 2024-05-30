@@ -247,9 +247,11 @@ local M = {}
 --- @class vim.diagnostic.Opts.Jump
 ---
 --- Default value of the {float} parameter of |vim.diagnostic.jump()|.
+--- (default: false)
 --- @field float? boolean|vim.diagnostic.Opts.Float
 ---
 --- Default value of the {wrap} parameter of |vim.diagnostic.jump()|.
+--- (default: true)
 --- @field wrap? boolean
 ---
 --- Default value of the {severity} parameter of |vim.diagnostic.jump()|.
