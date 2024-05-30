@@ -268,9 +268,9 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
     }
     if (do_special && find_cmdline_var(p, &l) >= 0) {
       *d++ = '\\';                    // insert backslash
-      while (--l != SIZE_MAX) {  // copy the var
-        *d++ = *p++;
-      }
+      memcpy(d, p, l);                // copy the var
+      d += l;
+      p += l;
       continue;
     }
     if (*p == '\\' && fish_like) {
