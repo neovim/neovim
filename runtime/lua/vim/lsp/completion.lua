@@ -201,6 +201,24 @@ local function get_items(result)
   end
 end
 
+---@param item lsp.CompletionItem
+---@return string
+local function get_doc(item)
+  local doc = item.documentation
+  if not doc then
+    return ''
+  end
+  if type(doc) == 'string' then
+    return doc
+  end
+  if type(doc) == 'table' and type(doc.value) == 'string' then
+    return doc.value
+  end
+
+  vim.notify('invalid documentation value: ' .. vim.inspect(doc), vim.log.levels.WARN)
+  return ''
+end
+
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
@@ -216,58 +234,48 @@ function M._lsp_to_complete_items(result, prefix, client_id)
     return {}
   end
 
-  if prefix ~= '' then
-    ---@param item lsp.CompletionItem
-    local function match_prefix(item)
-      if item.filterText then
-        return next(vim.fn.matchfuzzy({ item.filterText }, prefix))
-      end
-      return true
+  local matches = prefix == '' and function()
+    return true
+  end or function(item)
+    if item.filterText then
+      return next(vim.fn.matchfuzzy({ item.filterText }, prefix))
     end
-
-    items = vim.tbl_filter(match_prefix, items) --[[@as lsp.CompletionItem[]|]]
+    return true
   end
-  table.sort(items, function(a, b)
-    return (a.sortText or a.label) < (b.sortText or b.label)
-  end)
-
-  local matches = {}
+  local candidates = {}
   for _, item in ipairs(items) do
-    local info = ''
-    local documentation = item.documentation
-    if documentation then
-      if type(documentation) == 'string' and documentation ~= '' then
-        info = documentation
-      elseif type(documentation) == 'table' and type(documentation.value) == 'string' then
-        info = documentation.value
-      else
-        vim.notify(
-          ('invalid documentation value %s'):format(vim.inspect(documentation)),
-          vim.log.levels.WARN
-        )
-      end
-    end
-    local word = get_completion_word(item)
-    table.insert(matches, {
-      word = word,
-      abbr = item.label,
-      kind = protocol.CompletionItemKind[item.kind] or 'Unknown',
-      menu = item.detail or '',
-      info = #info > 0 and info or '',
-      icase = 1,
-      dup = 1,
-      empty = 1,
-      user_data = {
-        nvim = {
-          lsp = {
-            completion_item = item,
-            client_id = client_id,
+    if matches(item) then
+      local word = get_completion_word(item)
+      table.insert(candidates, {
+        word = word,
+        abbr = item.label,
+        kind = protocol.CompletionItemKind[item.kind] or 'Unknown',
+        menu = item.detail or '',
+        info = get_doc(item),
+        icase = 1,
+        dup = 1,
+        empty = 1,
+        user_data = {
+          nvim = {
+            lsp = {
+              completion_item = item,
+              client_id = client_id,
+            },
           },
         },
-      },
-    })
+      })
+    end
   end
-  return matches
+  ---@diagnostic disable-next-line: no-unknown
+  table.sort(candidates, function(a, b)
+    ---@type lsp.CompletionItem
+    local itema = a.user_data.nvim.lsp.completion_item
+    ---@type lsp.CompletionItem
+    local itemb = b.user_data.nvim.lsp.completion_item
+    return (itema.sortText or itema.label) < (itemb.sortText or itemb.label)
+  end)
+
+  return candidates
 end
 
 --- @param lnum integer 0-indexed
