@@ -284,6 +284,7 @@ static int compl_cont_status = 0;
                                 ///< expansion, (eg use complete=.)
 
 static bool compl_opt_refresh_always = false;
+static bool compl_opt_suppress_empty = false;
 
 static size_t spell_bad_len = 0;   // length of located bad word
 
@@ -2449,6 +2450,9 @@ static void expand_by_function(int type, char *base)
       matchdict = rettv.vval.v_dict;
       break;
     case VAR_SPECIAL:
+      if (rettv.vval.v_special == kSpecialVarNull) {
+        compl_opt_suppress_empty = true;
+      }
       FALLTHROUGH;
     default:
       // TODO(brammool): Give error message?
@@ -4117,6 +4121,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
   // Reset extended parameters of completion, when starting new
   // completion.
   compl_opt_refresh_always = false;
+  compl_opt_suppress_empty = false;
 
   if (col < 0) {
     col = curs_col;
@@ -4423,17 +4428,19 @@ static void ins_compl_show_statusmsg(void)
   }
 
   // Show a message about what (completion) mode we're in.
-  showmode();
-  if (!shortmess(SHM_COMPLETIONMENU)) {
-    if (edit_submode_extra != NULL) {
-      if (!p_smd) {
-        msg_hist_off = true;
-        msg(edit_submode_extra, (edit_submode_highl < HLF_COUNT
-                                 ? HL_ATTR(edit_submode_highl) : 0));
-        msg_hist_off = false;
+  if (!compl_opt_suppress_empty) {
+    showmode();
+    if (!shortmess(SHM_COMPLETIONMENU)) {
+      if (edit_submode_extra != NULL) {
+        if (!p_smd) {
+          msg_hist_off = true;
+          msg(edit_submode_extra, (edit_submode_highl < HLF_COUNT
+                                   ? HL_ATTR(edit_submode_highl) : 0));
+          msg_hist_off = false;
+        }
+      } else {
+        msg_clr_cmdline();  // necessary for "noshowmode"
       }
-    } else {
-      msg_clr_cmdline();  // necessary for "noshowmode"
     }
   }
 }
