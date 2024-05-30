@@ -575,8 +575,10 @@ end
 ---@param bufnr integer
 ---@param opts vim.lsp.completion.BufferOpts
 local function enable_completions(client_id, bufnr, opts)
-  if not buf_handles[bufnr] then
-    buf_handles[bufnr] = { clients = {}, triggers = {} }
+  local buf_handle = buf_handles[bufnr]
+  if not buf_handle then
+    buf_handle = { clients = {}, triggers = {} }
+    buf_handles[bufnr] = buf_handle
 
     -- Attach to buffer events.
     api.nvim_buf_attach(bufnr, false, {
@@ -617,12 +619,12 @@ local function enable_completions(client_id, bufnr, opts)
     end
   end
 
-  if not buf_handles[bufnr].clients[client_id] then
+  if not buf_handle.clients[client_id] then
     local client = lsp.get_client_by_id(client_id)
     assert(client, 'invalid client ID')
 
     -- Add the new client to the buffer's clients.
-    buf_handles[bufnr].clients[client_id] = client
+    buf_handle.clients[client_id] = client
 
     -- Add the new client to the clients that should be triggered by its trigger characters.
     --- @type string[]
@@ -632,10 +634,10 @@ local function enable_completions(client_id, bufnr, opts)
       'triggerCharacters'
     ) or {}
     for _, char in ipairs(triggers) do
-      local clients_for_trigger = buf_handles[bufnr].triggers[char]
+      local clients_for_trigger = buf_handle.triggers[char]
       if not clients_for_trigger then
         clients_for_trigger = {}
-        buf_handles[bufnr].triggers[char] = clients_for_trigger
+        buf_handle.triggers[char] = clients_for_trigger
       end
       local client_exists = vim.iter(clients_for_trigger):any(function(c)
         return c.id == client_id
