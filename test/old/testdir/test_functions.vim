@@ -2143,54 +2143,6 @@ func Test_balloon_show()
   endif
 endfunc
 
-func Test_shellescape()
-  let save_shell = &shell
-  set shell=bash
-  call assert_equal("'text'", shellescape('text'))
-  call assert_equal("'te\"xt'", 'te"xt'->shellescape())
-  call assert_equal("'te'\\''xt'", shellescape("te'xt"))
-
-  call assert_equal("'te%xt'", shellescape("te%xt"))
-  call assert_equal("'te\\%xt'", shellescape("te%xt", 1))
-  call assert_equal("'te#xt'", shellescape("te#xt"))
-  call assert_equal("'te\\#xt'", shellescape("te#xt", 1))
-  call assert_equal("'te!xt'", shellescape("te!xt"))
-  call assert_equal("'te\\!xt'", shellescape("te!xt", 1))
-
-  call assert_equal("'te\nxt'", shellescape("te\nxt"))
-  call assert_equal("'te\\\nxt'", shellescape("te\nxt", 1))
-  set shell=tcsh
-  call assert_equal("'te\\!xt'", shellescape("te!xt"))
-  call assert_equal("'te\\\\!xt'", shellescape("te!xt", 1))
-  call assert_equal("'te\\\nxt'", shellescape("te\nxt"))
-  call assert_equal("'te\\\\\nxt'", shellescape("te\nxt", 1))
-
-  set shell=fish
-  call assert_equal("'text'", shellescape('text'))
-  call assert_equal("'te\"xt'", shellescape('te"xt'))
-  call assert_equal("'te'\\''xt'", shellescape("te'xt"))
-
-  call assert_equal("'te%xt'", shellescape("te%xt"))
-  call assert_equal("'te\\%xt'", shellescape("te%xt", 1))
-  call assert_equal("'te#xt'", shellescape("te#xt"))
-  call assert_equal("'te\\#xt'", shellescape("te#xt", 1))
-  call assert_equal("'te!xt'", shellescape("te!xt"))
-  call assert_equal("'te\\!xt'", shellescape("te!xt", 1))
-
-  call assert_equal("'te\\\\xt'", shellescape("te\\xt"))
-  call assert_equal("'te\\\\xt'", shellescape("te\\xt", 1))
-  call assert_equal("'te\\\\'\\''xt'", shellescape("te\\'xt"))
-  call assert_equal("'te\\\\'\\''xt'", shellescape("te\\'xt", 1))
-  call assert_equal("'te\\\\!xt'", shellescape("te\\!xt"))
-  call assert_equal("'te\\\\\\!xt'", shellescape("te\\!xt", 1))
-  call assert_equal("'te\\\\%xt'", shellescape("te\\%xt"))
-  call assert_equal("'te\\\\\\%xt'", shellescape("te\\%xt", 1))
-  call assert_equal("'te\\\\#xt'", shellescape("te\\#xt"))
-  call assert_equal("'te\\\\\\#xt'", shellescape("te\\#xt", 1))
-
-  let &shell = save_shell
-endfunc
-
 func Test_setbufvar_options()
   " This tests that aucmd_prepbuf() and aucmd_restbuf() properly restore the
   " window layout and cursor position.

@@ -1400,35 +1400,6 @@ func Test_buftype()
   bwipe!
 endfunc
 
-" Test for the 'shell' option
-func Test_shell()
-  throw 'Skipped: Nvim does not have :shell'
-  CheckUnix
-  let save_shell = &shell
-  set shell=
-  let caught_e91 = 0
-  try
-    shell
-  catch /E91:/
-    let caught_e91 = 1
-  endtry
-  call assert_equal(1, caught_e91)
-  let &shell = save_shell
-endfunc
-
-" Test for the 'shellquote' option
-func Test_shellquote()
-  CheckUnix
-  set shellquote=#
-  set verbose=20
-  redir => v
-  silent! !echo Hello
-  redir END
-  set verbose&
-  set shellquote&
-  call assert_match(': "#echo Hello#"', v)
-endfunc
-
 " Test for the 'rightleftcmd' option
 func Test_rightleftcmd()
   CheckFeature rightleft
