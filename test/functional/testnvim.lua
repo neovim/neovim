@@ -22,7 +22,7 @@ local runtime_set = 'set runtimepath^=./build/lib/nvim/'
 M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 M.nvim_set = (
-  'set shortmess+=IS background=light termguicolors noswapfile noautoindent startofline'
+  'set shortmess+=IS background=light noswapfile noautoindent startofline'
   .. ' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
   .. ' belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid'
 )
