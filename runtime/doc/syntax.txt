@@ -2575,6 +2575,13 @@ To highlight R code in knitr chunk headers, add to your |vimrc|: >
 	let rrst_syn_hl_chunk = 1
 
 
+RASI					*rasi.vim* *ft-rasi-syntax*
+
+Rasi stands for Rofi Advanced Style Information. It is used by the program
+`rofi` to style the rendering of the search window. The language is heavily
+inspired by CSS stylesheet. Files with the following extensions are recognized
+as rasi files: .rasi.
+
 READLINE				*readline.vim* *ft-readline-syntax*
 
 The readline library is primarily used by the BASH shell, which adds quite a

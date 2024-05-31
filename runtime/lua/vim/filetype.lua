@@ -873,6 +873,7 @@ local extension = {
   t6 = 'raku',
   p6 = 'raku',
   raml = 'raml',
+  rasi = 'rasi',
   rbs = 'rbs',
   rego = 'rego',
   rem = 'remind',

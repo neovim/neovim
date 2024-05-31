@@ -181,6 +181,7 @@ func s:GetFilenameChecks() abort
     \ 'csdl': ['file.csdl'],
     \ 'csp': ['file.csp', 'file.fdr'],
     \ 'css': ['file.css'],
+    \ 'rasi': ['file.rasi'],
     \ 'cterm': ['file.con'],
     \ 'csv': ['file.csv'],
     \ 'cucumber': ['file.feature'],
