@@ -380,7 +380,7 @@ end
 ---@param opts vim.net.fetch.Opts|nil Optional keyword arguments:
 ---
 --- Example:
---- <pre>lua
+--- ```lua
 --- -- GET a url
 --- vim.net.fetch("https://example.com/api/data", {
 ---   on_complete = function (response)
@@ -414,7 +414,7 @@ end
 ---     vim.print(response.status)
 ---   end
 --- })
---- </pre>
+--- ```
 function M.fetch(url, opts)
   vim.validate({
     opts = { opts, 'table', true },
@@ -518,13 +518,13 @@ end
 ---@param path string A download path, can be relative.
 ---@param opts vim.net.download.Opts|nil
 --- Example:
---- <pre>lua
+--- ```lua
 --- vim.net.download("https://.../path/file", "~/.cache/download/location", {
 ---   on_complete = function ()
 ---     vim.notify("File Downloaded", vim.log.levels.INFO)
 ---   end
 --- })
---- </pre>
+--- ```
 function M.download(url, path, opts)
   vim.validate({
     opts = { opts, 'table', true },
