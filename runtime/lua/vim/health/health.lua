@@ -400,7 +400,7 @@ end
 local function check_network()
   vim.health.start('Network (vim.net)')
 
-  if executable('curl') then
+  if vim.fn.executable('curl') == 1 then
     vim.health.ok('curl found')
 
     local version = vim.split(vim.fn.systemlist({ 'curl', '--version' })[1], ' ')[2]
