@@ -160,10 +160,10 @@ describe('luacats grammar', function()
     type = '`T`',
   })
 
-  test('@param type [number,string] this is a tuple type', {
+  test('@param type [number,string,"good"|"bad"] this is a tuple type', {
     desc = 'this is a tuple type',
     kind = 'param',
     name = 'type',
-    type = '[number,string]',
+    type = '[number,string,"good"|"bad"]',
   })
 end)
