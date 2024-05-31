@@ -243,9 +243,10 @@ local function createCurlArgs(url, opts)
 end
 
 --- @private Processes a list of data received from buffered stdout and returns a table with response data.
---- @param data string[] Data recieved from stdout.
+--- @param data string Data recieved from stdout.
 --- @return vim.net.Response Response A table containing processed response data.
 local function process_stdout(data)
+  data = vim.split(data, '\n')
   local cache = {}
 
   local extra = vim.json.decode(data[#data])
@@ -356,12 +357,12 @@ end
 ---does not currently support form encoding.
 ---@field data string|table<string, any>|nil
 ---Callback when request is completed successfully.
----@field on_complete fun(response: table)|nil
+---@field on_complete fun(response: vim.net.Response)|nil
 ---Callback recieving a `stderr_buffered` string[] of error. err is either curl
 ---stderr or internal fetch() error. Without providing this function, |vim.net.fetch()|
 ---will automatically raise the error to the user. See |on_stderr| and `stderr_buffered`.
 ---@field on_err fun(err: string[]|nil, exit_code: number|nil)|nil
----@field _dry boolean
+---@field _dry boolean|nil
 
 --- Asynchronously make network requests.
 ---
@@ -388,7 +389,7 @@ end
 ---     if response.ok then
 ---       -- Read response text
 ---       local body = response.text()
----     else
+---     end
 ---   end
 --- })
 ---
@@ -421,7 +422,7 @@ function M.fetch(url, opts)
 
   opts = opts or {}
 
-  -- TODO(TheLeoP): show a different validation be used?
+  -- TODO(TheLeoP): should a different validation be used?
   -- Ensure that we dont download to a file in fetch()
   if opts.download_location then
     opts.download_location = nil
@@ -429,17 +430,35 @@ function M.fetch(url, opts)
 
   local args = createCurlArgs(url, opts)
 
-  local out = {}
-
   if opts._dry then
     return args
   end
 
-  local job = vim.fn.jobstart(args, {
-    on_stdout = function(_, data)
-      out = data
-    end,
-    on_stderr = function(_, data)
+  vim.system(args, { text = true }, function(result)
+    if result.stdout then
+      local code = result.code
+      local res = process_stdout(result.stdout)
+
+      if opts.redirect == 'error' and res.status >= 300 and res.status <= 399 then
+        ---@cast res +{_raw_write_out: {redirect_url: string}}
+        local str = 'Fetch redirected to ' .. res._raw_write_out.redirect_url
+
+        if opts.on_err ~= nil then
+          return vim.notify(str, vim.log.levels.ERROR)
+        end
+
+        return opts.on_err({ str }, code)
+      end
+
+      if code ~= 0 then
+        return opts.on_err(nil, code)
+      end
+
+      if opts.on_complete and code == 0 then
+        opts.on_complete(res)
+      end
+    elseif result.stderr then
+      local data = vim.split(result.stderr, '\n')
       if data[#data] == '' then
         -- strip EOL
         table.remove(data, #data)
@@ -455,40 +474,8 @@ function M.fetch(url, opts)
       end
 
       vim.notify('Failed to fetch: ' .. table.concat(data, '\n'), vim.log.levels.ERROR)
-    end,
-    on_exit = function(_, code)
-      local res ---@type vim.net.Response
-
-      if opts.redirect == 'error' then
-        res = process_stdout(out)
-
-        if res.status >= 300 and res.status <= 399 then
-          ---@cast res +{_raw_write_out: {redirect_url: string}}
-          local str = 'Fetch redirected to ' .. res._raw_write_out.redirect_url
-
-          if opts.on_err ~= nil then
-            return vim.notify(str, vim.log.levels.ERROR)
-          end
-
-          return opts.on_err({ str }, code)
-        end
-      end
-
-      if code ~= 0 then
-        return opts.on_err(nil, code)
-      end
-
-      if opts.on_complete and code == 0 then
-        res = res == nil and process_stdout(out) or res
-
-        opts.on_complete(res)
-      end
-    end,
-    stdout_buffered = true,
-    stderr_buffered = true,
-  })
-
-  return job
+    end
+  end)
 end
 
 ---@class vim.net.download.Opts
@@ -514,7 +501,7 @@ end
 ---@field on_err fun(err: string[]|nil, exit_code: number|nil)|nil
 ---Path to where the file will be downloaded
 ---@field download_location string|nil
----@field _dry boolean
+---@field _dry boolean|nil
 
 --- Asynchronously download a file.
 --- To read the response metadata, such as headers and body, use |vim.net.fetch()|.
@@ -555,17 +542,18 @@ function M.download(url, path, opts)
     return args
   end
 
-  local job = vim.fn.jobstart(args, {
-    on_exit = function(_, code)
-      if code ~= 0 then
-        return opts.on_err(nil, code)
-      end
+  vim.system(args, { text = true }, function(result)
+    local code = result.code
+    if code ~= 0 then
+      return opts.on_err(nil, code)
+    end
 
-      if opts.on_complete and code == 0 then
-        opts.on_complete()
-      end
-    end,
-    on_stderr = function(_, data)
+    if opts.on_complete and code == 0 then
+      opts.on_complete()
+    end
+
+    if result.stderr then
+      local data = vim.split(result.stderr, '\n')
       if data[#data] == '' then
         -- strip EOL
         table.remove(data, #data)
@@ -581,11 +569,8 @@ function M.download(url, path, opts)
       end
 
       vim.notify('Failed to download file: ' .. table.concat(data, '\n'), vim.log.levels.ERROR)
-    end,
-    stderr_buffered = true,
-  })
-
-  return job
+    end
+  end)
 end
 
 return M
