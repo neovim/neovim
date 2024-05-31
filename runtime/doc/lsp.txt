@@ -1832,8 +1832,8 @@ apply_text_document_edit({text_document_edit}, {index}, {offset_encoding})
     document.
 
     Parameters: ~
-      • {text_document_edit}  (`table`) a `TextDocumentEdit` object
-      • {index}               (`integer`) Optional index of the edit, if from
+      • {text_document_edit}  (`lsp.TextDocumentEdit`)
+      • {index}               (`integer?`) Optional index of the edit, if from
                               a list of edits (or nil, if not from a list)
       • {offset_encoding}     (`string?`)
 
@@ -1845,7 +1845,7 @@ apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
     Applies a list of text edits to a buffer.
 
     Parameters: ~
-      • {text_edits}       (`table`) list of `TextEdit` objects
+      • {text_edits}       (`lsp.TextEdit[]`)
       • {bufnr}            (`integer`) Buffer id
       • {offset_encoding}  (`string`) utf-8|utf-16|utf-32
 
@@ -1857,7 +1857,7 @@ apply_workspace_edit({workspace_edit}, {offset_encoding})
     Applies a `WorkspaceEdit`.
 
     Parameters: ~
-      • {workspace_edit}   (`table`) `WorkspaceEdit`
+      • {workspace_edit}   (`lsp.WorkspaceEdit`)
       • {offset_encoding}  (`string`) utf-8|utf-16|utf-32 (required)
 
     See also: ~
@@ -1875,8 +1875,7 @@ buf_highlight_references({bufnr}, {references}, {offset_encoding})
 
     Parameters: ~
       • {bufnr}            (`integer`) Buffer id
-      • {references}       (`table`) List of `DocumentHighlight` objects to
-                           highlight
+      • {references}       (`lsp.DocumentHighlight[]`) objects to highlight
       • {offset_encoding}  (`string`) One of "utf-8", "utf-16", "utf-32".
 
     See also: ~
@@ -1910,8 +1909,8 @@ convert_input_to_markdown_lines({input}, {contents})
 
     Parameters: ~
       • {input}     (`lsp.MarkedString|lsp.MarkedString[]|lsp.MarkupContent`)
-      • {contents}  (`table?`) List of strings to extend with converted lines.
-                    Defaults to {}.
+      • {contents}  (`string[]?`) List of strings to extend with converted
+                    lines. Defaults to {}.
 
     Return: ~
         (`string[]`) extended with lines of converted markdown.
@@ -1924,15 +1923,16 @@ convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
     Converts `textDocument/signatureHelp` response to markdown lines.
 
     Parameters: ~
-      • {signature_help}  (`table`) Response of `textDocument/SignatureHelp`
+      • {signature_help}  (`lsp.SignatureHelp`) Response of
+                          `textDocument/SignatureHelp`
       • {ft}              (`string?`) filetype that will be use as the `lang`
                           for the label markdown code block
       • {triggers}        (`table?`) list of trigger characters from the lsp
                           server. used to better determine parameter offsets
 
     Return (multiple): ~
-        (`table?`) table list of lines of converted markdown.
-        (`table?`) table of active hl
+        (`string[]?`) table list of lines of converted markdown.
+        (`number[]?`) table of active hl
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
@@ -1954,7 +1954,7 @@ jump_to_location({location}, {offset_encoding}, {reuse_win})
     Jumps to a location.
 
     Parameters: ~
-      • {location}         (`table`) (`Location`|`LocationLink`)
+      • {location}         (`lsp.Location|lsp.LocationLink`)
       • {offset_encoding}  (`string?`) utf-8|utf-16|utf-32
       • {reuse_win}        (`boolean?`) Jump to existing window if buffer is
                            already open.
@@ -2019,7 +2019,8 @@ make_formatting_params({options})
     cursor position.
 
     Parameters: ~
-      • {options}  (`table?`) with valid `FormattingOptions` entries
+      • {options}  (`lsp.FormattingOptions?`) with valid `FormattingOptions`
+                   entries
 
     Return: ~
         (`lsp.DocumentFormattingParams`) object
@@ -2059,7 +2060,7 @@ make_position_params({window}, {offset_encoding})
                            `window`
 
     Return: ~
-        (`table`) `TextDocumentPositionParams` object
+        (`lsp.TextDocumentPositionParams`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
@@ -2090,7 +2091,7 @@ make_text_document_params({bufnr})
       • {bufnr}  (`integer?`) Buffer handle, defaults to current
 
     Return: ~
-        (`table`) `TextDocumentIdentifier`
+        (`lsp.TextDocumentIdentifier`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
@@ -2100,8 +2101,11 @@ make_workspace_params({added}, {removed})
     Create the workspace params
 
     Parameters: ~
-      • {added}    (`table`)
-      • {removed}  (`table`)
+      • {added}    (`lsp.WorkspaceFolder[]`)
+      • {removed}  (`lsp.WorkspaceFolder[]`)
+
+    Return: ~
+        (`lsp.WorkspaceFoldersChangeEvent`)
 
                                         *vim.lsp.util.open_floating_preview()*
 open_floating_preview({contents}, {syntax}, {opts})
@@ -2145,7 +2149,7 @@ preview_location({location}, {opts})         *vim.lsp.util.preview_location()*
       definition)
 
     Parameters: ~
-      • {location}  (`table`) a single `Location` or `LocationLink`
+      • {location}  (`lsp.Location|lsp.LocationLink`)
       • {opts}      (`table`)
 
     Return (multiple): ~
@@ -2175,7 +2179,7 @@ show_document({location}, {offset_encoding}, {opts})
     Shows document and optionally jumps to the location.
 
     Parameters: ~
-      • {location}         (`table`) (`Location`|`LocationLink`)
+      • {location}         (`lsp.Location|lsp.LocationLink`)
       • {offset_encoding}  (`string?`) utf-8|utf-16|utf-32
       • {opts}             (`table?`) options
                            • reuse_win (boolean) Jump to existing window if
@@ -2200,7 +2204,7 @@ stylize_markdown({bufnr}, {contents}, {opts})
 
     Parameters: ~
       • {bufnr}     (`integer`)
-      • {contents}  (`table`) of lines to show in window
+      • {contents}  (`string[]`) of lines to show in window
       • {opts}      (`table`) with optional fields
                     • height of floating window
                     • width of floating window
