@@ -180,7 +180,7 @@ local grammar = P {
   fun_param = lname * opt(colon * v.ltype),
   ty_fun = Pf('fun') * paren(comma(lname * opt(colon * v.ltype))) * opt(colon * comma1(v.ltype)),
   ty_generic = P('`') * letter * P('`'),
-  ty_tuple = Pf('[') * comma(v.ty_opt) * fill * P(']'),
+  ty_tuple = Pf('[') * comma(v.ltype) * fill * P(']'),
 }
 
 return grammar --[[@as nvim.luacats.grammar]]
