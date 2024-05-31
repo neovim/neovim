@@ -4,7 +4,7 @@ local fn = vim.fn
 local M = {}
 
 --- @alias vim.filetype.mapfn fun(path:string,bufnr:integer, ...):string?, fun(b:integer)?
---- @alias vim.filetype.maptbl {[1]:string|vim.filetype.mapfn, [2]:{priority:integer}}
+--- @alias vim.filetype.maptbl [string|vim.filetype.mapfn, {priority:integer}]
 --- @alias vim.filetype.mapping.value string|vim.filetype.mapfn|vim.filetype.maptbl
 --- @alias vim.filetype.mapping table<string,vim.filetype.mapping.value>
 

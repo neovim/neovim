@@ -6,7 +6,7 @@ local DEP_API_METADATA = 'build/funcs_metadata.mpack'
 
 --- @class vim.api.metadata
 --- @field name string
---- @field parameters {[1]:string,[2]:string}[]
+--- @field parameters [string,string][]
 --- @field return_type string
 --- @field deprecated_since integer
 --- @field eval boolean
@@ -149,7 +149,7 @@ local function api_type(t)
 end
 
 --- @param f string
---- @param params {[1]:string,[2]:string}[]|true
+--- @param params [string,string][]|true
 --- @return string
 local function render_fun_sig(f, params)
   local param_str --- @type string
@@ -158,7 +158,7 @@ local function render_fun_sig(f, params)
   else
     param_str = table.concat(
       vim.tbl_map(
-        --- @param v {[1]:string,[2]:string}
+        --- @param v [string,string]
         --- @return string
         function(v)
           return v[1]
@@ -178,8 +178,8 @@ end
 
 --- Uniquify names
 --- Fix any names that are lua keywords
---- @param params {[1]:string,[2]:string,[3]:string}[]
---- @return {[1]:string,[2]:string,[3]:string}[]
+--- @param params [string,string,string][]
+--- @return [string,string,string][]
 local function process_params(params)
   local seen = {} --- @type table<string,true>
   local sfx = 1
@@ -245,7 +245,7 @@ local function get_api_meta()
   for _, fun in pairs(functions) do
     local deprecated = fun.deprecated_since ~= nil
 
-    local params = {} --- @type {[1]:string,[2]:string}[]
+    local params = {} --- @type [string,string][]
     for _, p in ipairs(fun.params) do
       params[#params + 1] = {
         p.name,

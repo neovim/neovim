@@ -764,9 +764,9 @@ get_node({opts})                                   *vim.treesitter.get_node()*
       • {opts}  (`table?`) Optional keyword arguments:
                 • {bufnr} (`integer?`) Buffer number (nil or 0 for current
                   buffer)
-                • {pos} (`{ [1]: integer, [2]: integer }?`) 0-indexed (row,
-                  col) tuple. Defaults to cursor position in the current
-                  window. Required if {bufnr} is not the current buffer
+                • {pos} (`[integer, integer]?`) 0-indexed (row, col) tuple.
+                  Defaults to cursor position in the current window. Required
+                  if {bufnr} is not the current buffer
                 • {lang} (`string?`) Parser language. (default: from buffer
                   filetype)
                 • {ignore_injections} (`boolean?`) Ignore injected languages

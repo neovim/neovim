@@ -108,7 +108,7 @@ local M = {}
 --- If {scope} is "line" or "cursor", use this position rather than the cursor
 --- position. If a number, interpreted as a line number; otherwise, a
 --- (row, col) tuple.
---- @field pos? integer|{[1]:integer,[2]:integer}
+--- @field pos? integer|[integer,integer]
 ---
 --- Sort diagnostics by severity.
 --- Overrides the setting from |vim.diagnostic.config()|.
@@ -122,7 +122,7 @@ local M = {}
 --- String to use as the header for the floating window. If a table, it is
 --- interpreted as a `[text, hl_group]` tuple.
 --- Overrides the setting from |vim.diagnostic.config()|.
---- @field header? string|{[1]:string,[2]:any}
+--- @field header? string|[string,any]
 ---
 --- Include the diagnostic source in the message.
 --- Use "if_many" to only show sources if there is more than one source of
@@ -203,7 +203,7 @@ local M = {}
 --- @field hl_mode? 'replace'|'combine'|'blend'
 ---
 --- See |nvim_buf_set_extmark()|.
---- @field virt_text? {[1]:string,[2]:any}[]
+--- @field virt_text? [string,any][]
 ---
 --- See |nvim_buf_set_extmark()|.
 --- @field virt_text_pos? 'eol'|'overlay'|'right_align'|'inline'
@@ -1252,7 +1252,7 @@ end
 --- Cursor position as a `(row, col)` tuple. See |nvim_win_get_cursor()|. Used
 --- to find the nearest diagnostic when {count} is used. Only used when {count}
 --- is non-nil. Default is the current cursor position.
---- @field pos? {[1]:integer,[2]:integer}
+--- @field pos? [integer,integer]
 ---
 --- Whether to loop around file or not. Similar to 'wrapscan'.
 --- (default: `true`)

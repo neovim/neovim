@@ -935,7 +935,7 @@ local function gen_target(cfg)
 
   expand_files(cfg.files)
 
-  --- @type table<string,{[1]:table<string,nvim.luacats.parser.class>, [2]: nvim.luacats.parser.fun[], [3]: string[]}>
+  --- @type table<string,[table<string,nvim.luacats.parser.class>, nvim.luacats.parser.fun[], string[]]>
   local file_results = {}
 
   --- @type table<string,nvim.luacats.parser.class>

@@ -408,7 +408,7 @@ describe('vim.lsp.completion: protocol', function()
     end)
   end
 
-  --- @param pos { [1]: integer, [2]: integer }
+  --- @param pos [integer, integer]
   local function trigger_at_pos(pos)
     exec_lua(
       [[

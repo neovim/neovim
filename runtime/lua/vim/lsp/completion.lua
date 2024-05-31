@@ -30,7 +30,7 @@ local buf_handles = {}
 --- @nodoc
 --- @class vim.lsp.completion.Context
 local Context = {
-  cursor = nil, --- @type { [1]: integer, [2]: integer }?
+  cursor = nil, --- @type [integer, integer]?
   last_request_time = nil, --- @type integer?
   pending_requests = {}, --- @type function[]
   isIncomplete = false,

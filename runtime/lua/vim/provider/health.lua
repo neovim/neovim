@@ -353,7 +353,7 @@ end
 --- their respective paths. If either of those is invalid, return two empty
 --- strings, effectively ignoring pyenv.
 ---
---- @return {[1]: string, [2]: string}
+--- @return [string, string]
 local function check_for_pyenv()
   local pyenv_path = vim.fn.resolve(vim.fn.exepath('pyenv'))
 

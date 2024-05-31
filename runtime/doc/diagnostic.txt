@@ -393,11 +393,11 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                        by {count} diagnostics, while a negative integer moves
                        backward by {count} diagnostics. Mutually exclusive
                        with {diagnostic}.
-      • {pos}?         (`{[1]:integer,[2]:integer}`) Cursor position as a
-                       `(row, col)` tuple. See |nvim_win_get_cursor()|. Used
-                       to find the nearest diagnostic when {count} is used.
-                       Only used when {count} is non-nil. Default is the
-                       current cursor position.
+      • {pos}?         (`[integer,integer]`) Cursor position as a `(row, col)`
+                       tuple. See |nvim_win_get_cursor()|. Used to find the
+                       nearest diagnostic when {count} is used. Only used when
+                       {count} is non-nil. Default is the current cursor
+                       position.
       • {wrap}?        (`boolean`, default: `true`) Whether to loop around
                        file or not. Similar to 'wrapscan'.
       • {severity}?    (`vim.diagnostic.SeverityFilter`) See
@@ -467,18 +467,18 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                           current cursor position (`cursor`). Shorthand
                           versions are also accepted (`c` for `cursor`, `l`
                           for `line`, `b` for `buffer`).
-      • {pos}?            (`integer|{[1]:integer,[2]:integer}`) If {scope} is
-                          "line" or "cursor", use this position rather than
-                          the cursor position. If a number, interpreted as a
-                          line number; otherwise, a (row, col) tuple.
+      • {pos}?            (`integer|[integer,integer]`) If {scope} is "line"
+                          or "cursor", use this position rather than the
+                          cursor position. If a number, interpreted as a line
+                          number; otherwise, a (row, col) tuple.
       • {severity_sort}?  (`boolean|{reverse?:boolean}`, default: `false`)
                           Sort diagnostics by severity. Overrides the setting
                           from |vim.diagnostic.config()|.
       • {severity}?       (`vim.diagnostic.SeverityFilter`) See
                           |diagnostic-severity|. Overrides the setting from
                           |vim.diagnostic.config()|.
-      • {header}?         (`string|{[1]:string,[2]:any}`) String to use as the
-                          header for the floating window. If a table, it is
+      • {header}?         (`string|[string,any]`) String to use as the header
+                          for the floating window. If a table, it is
                           interpreted as a `[text, hl_group]` tuple. Overrides
                           the setting from |vim.diagnostic.config()|.
       • {source}?         (`boolean|'if_many'`) Include the diagnostic source
@@ -591,8 +591,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 <
       • {hl_mode}?            (`'replace'|'combine'|'blend'`) See
                               |nvim_buf_set_extmark()|.
-      • {virt_text}?          (`{[1]:string,[2]:any}[]`) See
-                              |nvim_buf_set_extmark()|.
+      • {virt_text}?          (`[string,any][]`) See |nvim_buf_set_extmark()|.
       • {virt_text_pos}?      (`'eol'|'overlay'|'right_align'|'inline'`) See
                               |nvim_buf_set_extmark()|.
       • {virt_text_win_col}?  (`integer`) See |nvim_buf_set_extmark()|.

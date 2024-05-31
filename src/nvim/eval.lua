@@ -19,7 +19,7 @@
 --- @field returns_desc? string
 --- @field signature? string
 --- @field desc? string
---- @field params {[1]:string, [2]:string, [3]:string}[]
+--- @field params [string, string, string][]
 --- @field lua? false Do not render type information
 --- @field tags? string[] Extra tags
 --- @field data? string Used by gen_eval.lua
@@ -11672,7 +11672,7 @@ M.funcs = {
     ]=],
     name = 'synconcealed',
     params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
-    returns = '{[1]: integer, [2]: string, [3]: integer}',
+    returns = '[integer, string, integer]',
     signature = 'synconcealed({lnum}, {col})',
   },
   synstack = {
