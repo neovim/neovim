@@ -8,9 +8,10 @@
 
 /// Structure used to read from/write to file
 typedef struct {
-  int fd;             ///< File descriptor.
-  int _error;         ///< Error code for use with RBuffer callbacks or zero.
-  RBuffer *rv;        ///< Read or write buffer.
+  int fd;             ///< File descriptor. Can be -1 if no backing file (file_open_buffer)
+  char *buffer;       ///< Read or write buffer. always ARENA_BLOCK_SIZE if allocated
+  char *read_pos;     ///< read position in buffer
+  char *write_pos;    ///< write position in buffer
   bool wr;            ///< True if file is in write mode.
   bool eof;           ///< True if end of file was encountered.
   bool non_blocking;  ///< True if EAGAIN should not restart syscalls.
@@ -28,7 +29,7 @@ static inline bool file_eof(const FileDescriptor *fp)
 ///         performed.
 static inline bool file_eof(const FileDescriptor *const fp)
 {
-  return fp->eof && rbuffer_size(fp->rv) == 0;
+  return fp->eof && fp->read_pos == fp->write_pos;
 }
 
 static inline int file_fd(const FileDescriptor *fp)

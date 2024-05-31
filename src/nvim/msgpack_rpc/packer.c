@@ -113,7 +113,6 @@ void mpack_handle(ObjectType type, handle_T handle, PackerBuffer *packer)
     mpack_w(&packer->ptr, 0xc7);
     mpack_w(&packer->ptr, packsize);
     mpack_w(&packer->ptr, exttype);
-    // check_buffer(packer);
     memcpy(packer->ptr, buf, (size_t)packsize);
     packer->ptr += packsize;
   }
