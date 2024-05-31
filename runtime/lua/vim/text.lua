@@ -18,15 +18,19 @@ end
 --- Hex decode a string.
 ---
 --- @param enc string String to decode
---- @return string : Decoded string
+--- @return string? : Decoded string
+--- @return string? : Error message, if any
 function M.hexdecode(enc)
-  assert(#enc % 2 == 0, 'string must have an even number of hex characters')
+  if #enc % 2 ~= 0 then
+    return nil, 'string must have an even number of hex characters'
+  end
+
   local str = {} ---@type string[]
   for i = 1, #enc, 2 do
     local n = assert(tonumber(enc:sub(i, i + 1), 16))
     str[#str + 1] = string.char(n)
   end
-  return table.concat(str)
+  return table.concat(str), nil
 end
 
 return M
