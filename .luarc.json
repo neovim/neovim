@@ -5,9 +5,7 @@
   },
   "workspace": {
     "library": [
-      "runtime/lua",
-      "${3rd}/busted/library",
-      "${3rd}/luv/library"
+      "runtime/lua"
     ],
     "ignoreDir": [
       "test"
