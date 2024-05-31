@@ -153,7 +153,8 @@ local function get_completion_word(item)
       return item.label
     end
   elseif item.textEdit then
-    return item.textEdit.newText
+    local word = item.textEdit.newText
+    return word:match('^(%S*)') or word
   elseif item.insertText and item.insertText ~= '' then
     return item.insertText
   end

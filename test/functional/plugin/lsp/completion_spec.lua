@@ -126,6 +126,41 @@ describe('vim.lsp.completion: item conversion', function()
     eq(expected, result)
   end)
 
+  it('trims trailing newline or tab from textEdit', function()
+    local range0 = {
+      start = { line = 0, character = 0 },
+      ['end'] = { line = 0, character = 0 },
+    }
+    local items = {
+      {
+        detail = 'ansible.builtin',
+        filterText = 'lineinfile ansible.builtin.lineinfile builtin ansible',
+        kind = 7,
+        label = 'ansible.builtin.lineinfile',
+        sortText = '2_ansible.builtin.lineinfile',
+        textEdit = {
+          newText = 'ansible.builtin.lineinfile:\n	',
+          range = range0,
+        },
+      },
+    }
+    local result = complete('|', items)
+    result = vim.tbl_map(function(x)
+      return {
+        abbr = x.abbr,
+        word = x.word,
+      }
+    end, result.items)
+
+    local expected = {
+      {
+        abbr = 'ansible.builtin.lineinfile',
+        word = 'ansible.builtin.lineinfile:',
+      },
+    }
+    eq(expected, result)
+  end)
+
   it('prefers wordlike components for snippets', function()
     -- There are two goals here:
     --
