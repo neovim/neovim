@@ -28,7 +28,6 @@
 #include "nvim/msgpack_rpc/channel.h"
 
 #define READ_STREAM_SIZE 0xfff
-#define KEY_BUFFER_SIZE 0xfff
 
 /// Size of libtermkey's internal input buffer. The buffer may grow larger than
 /// this when processing very long escape sequences, but will shrink back to
@@ -132,7 +131,6 @@ void tinput_init(TermInput *input, Loop *loop)
   input->key_encoding = kKeyEncodingLegacy;
   input->ttimeout = (bool)p_ttimeout;
   input->ttimeoutlen = p_ttm;
-  input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
 
   for (size_t i = 0; i < ARRAY_SIZE(kitty_key_map_entry); i++) {
     pmap_put(int)(&kitty_key_map, kitty_key_map_entry[i].key, (ptr_t)kitty_key_map_entry[i].name);
@@ -165,7 +163,6 @@ void tinput_init(TermInput *input, Loop *loop)
 void tinput_destroy(TermInput *input)
 {
   map_destroy(int, &kitty_key_map);
-  rbuffer_free(input->key_buffer);
   uv_close((uv_handle_t *)&input->timer_handle, NULL);
   rstream_may_close(&input->read_stream);
   termkey_destroy(input->tk);
@@ -191,44 +188,38 @@ static void tinput_done_event(void **argv)
 /// Send all pending input in key buffer to Nvim server.
 static void tinput_flush(TermInput *input)
 {
+  String keys = { .data = input->key_buffer, .size = input->key_buffer_len };
   if (input->paste) {  // produce exactly one paste event
-    const size_t len = rbuffer_size(input->key_buffer);
-    String keys = { .data = xmallocz(len), .size = len };
-    rbuffer_read(input->key_buffer, keys.data, len);
     MAXSIZE_TEMP_ARRAY(args, 3);
     ADD_C(args, STRING_OBJ(keys));  // 'data'
     ADD_C(args, BOOLEAN_OBJ(true));  // 'crlf'
     ADD_C(args, INTEGER_OBJ(input->paste));  // 'phase'
     rpc_send_event(ui_client_channel_id, "nvim_paste", args);
-    api_free_string(keys);
     if (input->paste == 1) {
       // Paste phase: "continue"
       input->paste = 2;
     }
-    rbuffer_reset(input->key_buffer);
   } else {  // enqueue input
-    RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-      const String keys = { .data = buf, .size = len };
+    if (input->key_buffer_len > 0) {
       MAXSIZE_TEMP_ARRAY(args, 1);
       ADD_C(args, STRING_OBJ(keys));
       // NOTE: This is non-blocking and won't check partially processed input,
       // but should be fine as all big sends are handled with nvim_paste, not nvim_input
       rpc_send_event(ui_client_channel_id, "nvim_input", args);
-      rbuffer_consumed(input->key_buffer, len);
-      rbuffer_reset(input->key_buffer);
     }
   }
+  input->key_buffer_len = 0;
 }
 
 static void tinput_enqueue(TermInput *input, char *buf, size_t size)
 {
-  if (rbuffer_size(input->key_buffer) >
-      rbuffer_capacity(input->key_buffer) - 0xff) {
-    // don't ever let the buffer get too full or we risk putting incomplete keys
-    // into it
+  if (input->key_buffer_len > KEY_BUFFER_SIZE - 0xff) {
+    // don't ever let the buffer get too full or we risk putting incomplete keys into it
     tinput_flush(input);
   }
-  rbuffer_write(input->key_buffer, buf, size);
+  size_t to_copy = MIN(size, KEY_BUFFER_SIZE - input->key_buffer_len);
+  memcpy(input->key_buffer + input->key_buffer_len, buf, to_copy);
+  input->key_buffer_len += to_copy;
 }
 
 /// Handle TERMKEY_KEYMOD_* modifiers, i.e. Shift, Alt and Ctrl.
