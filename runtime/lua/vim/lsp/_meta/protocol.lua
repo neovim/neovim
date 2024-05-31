@@ -3235,7 +3235,7 @@ error('Cannot require a meta file')
 ---
 ---*Note*: a label of type string should be a substring of its containing signature label.
 ---Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
----@field label string|{ [1]: uinteger, [2]: uinteger }
+---@field label string|[uinteger, uinteger]
 ---
 ---The human-readable doc-comment of this parameter. Will be shown
 ---in the UI but can be omitted.
