@@ -1,18 +1,19 @@
-local helpers = require('test.functional.helpers')(after_each)
+local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
-local clear = helpers.clear
-local exec_lua = helpers.exec_lua
-local next_msg = helpers.next_msg
-local file_exists = helpers.file_exists
-local read_file = helpers.read_file
-local meths = helpers.meths
-local eq = helpers.eq
+local clear = n.clear
+local exec_lua = n.exec_lua
+local next_msg = n.next_msg
+local file_exists = n.file_exists
+local read_file = t.read_file
+local api = n.api
+local eq = t.eq
 
 describe('vim.net', function()
   before_each(function()
     clear()
-    local channel = meths.get_api_info()[1]
-    meths.set_var('channel', channel)
+    local channel = api.nvim_get_api_info()[1]
+    api.nvim_set_var('channel', channel)
   end)
 
   describe('create args', function()

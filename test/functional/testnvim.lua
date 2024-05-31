@@ -757,6 +757,15 @@ function M.assert_visible(bufnr, visible)
   end
 end
 
+function M.file_exists(path)
+  local stat, err = uv.fs_stat(path)
+  if stat then
+    return true
+  else
+    return false, err
+  end
+end
+
 --- @param path string
 local function do_rmdir(path)
   local stat = uv.fs_stat(path)
