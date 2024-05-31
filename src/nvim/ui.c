@@ -144,7 +144,7 @@ void ui_free_all_mem(void)
 /// Returns true if any `rgb=true` UI is attached.
 bool ui_rgb_attached(void)
 {
-  if (!headless_mode && p_tgc) {
+  if (p_tgc) {
     return true;
   }
   for (size_t i = 0; i < ui_count; i++) {
