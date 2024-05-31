@@ -112,6 +112,9 @@ typedef struct {
 // libvterm. Improves performance when receiving large bursts of data.
 #define REFRESH_DELAY 10
 
+#define TEXTBUF_SIZE      0x1fff
+#define SELECTIONBUF_SIZE 0x0400
+
 static TimeWatcher refresh_timer;
 static bool refresh_pending = false;
 
@@ -127,7 +130,7 @@ struct terminal {
   // buffer used to:
   //  - convert VTermScreen cell arrays into utf8 strings
   //  - receive data from libvterm as a result of key presses.
-  char textbuf[0x1fff];
+  char textbuf[TEXTBUF_SIZE];
 
   ScrollbackLine **sb_buffer;       // Scrollback storage.
   size_t sb_current;                // Lines stored in sb_buffer.
@@ -166,6 +169,9 @@ struct terminal {
   // When there is a pending TermRequest autocommand, block and store input.
   StringBuilder *pending_send;
 
+  char *selection_buffer;  /// libvterm selection buffer
+  StringBuilder selection;  /// Growable array containing full selection data
+
   size_t refcount;                  // reference count
 };
 
@@ -177,6 +183,12 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .bell = term_bell,
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
   .sb_popline = term_sb_pop,
+};
+
+static VTermSelectionCallbacks vterm_selection_callbacks = {
+  .set = term_selection_set,
+  // For security reasons we don't support querying the system clipboard from the embedded terminal
+  .query = NULL,
 };
 
 static Set(ptr_t) invalidated_terminals = SET_INIT;
@@ -315,6 +327,11 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(term->vts, 1);
   vterm_output_set_callback(term->vt, term_output_callback, term);
+
+  term->selection_buffer = xcalloc(SELECTIONBUF_SIZE, 1);
+  vterm_state_set_selection_callbacks(state, &vterm_selection_callbacks, term,
+                                      term->selection_buffer, SELECTIONBUF_SIZE);
+
   // force a initial refresh of the screen to ensure the buffer will always
   // have as many lines as screen rows when refresh_scrollback is called
   term->invalid_start = 0;
@@ -769,6 +786,8 @@ void terminal_destroy(Terminal **termpp)
     }
     xfree(term->sb_buffer);
     xfree(term->title);
+    xfree(term->selection_buffer);
+    kv_destroy(term->selection);
     vterm_free(term->vt);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
@@ -1194,6 +1213,54 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
 
   xfree(sbrow);
   set_put(ptr_t, &invalidated_terminals, term);
+
+  return 1;
+}
+
+static void term_clipboard_set(void **argv)
+{
+  VTermSelectionMask mask = (VTermSelectionMask)(long)argv[0];
+  char *data = argv[1];
+
+  char regname;
+  switch (mask) {
+  case VTERM_SELECTION_CLIPBOARD:
+    regname = '+';
+    break;
+  case VTERM_SELECTION_PRIMARY:
+    regname = '*';
+    break;
+  default:
+    regname = '+';
+    break;
+  }
+
+  list_T *lines = tv_list_alloc(1);
+  tv_list_append_allocated_string(lines, data);
+
+  list_T *args = tv_list_alloc(3);
+  tv_list_append_list(args, lines);
+
+  const char regtype = 'v';
+  tv_list_append_string(args, &regtype, 1);
+
+  tv_list_append_string(args, &regname, 1);
+  eval_call_provider("clipboard", "set", args, true);
+}
+
+static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag, void *user)
+{
+  Terminal *term = user;
+  if (frag.initial) {
+    kv_size(term->selection) = 0;
+  }
+
+  kv_concat_len(term->selection, frag.str, frag.len);
+
+  if (frag.final) {
+    char *data = xmemdupz(term->selection.items, kv_size(term->selection));
+    multiqueue_put(main_loop.events, term_clipboard_set, (void *)mask, data);
+  }
 
   return 1;
 }

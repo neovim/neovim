@@ -164,7 +164,22 @@ directory indicated in the request. >lua
 To try it out, select the above code and source it with `:'<,'>lua`, then run
 this command in a :terminal buffer: >
 
-   printf "\033]7;file://./foo/bar\033\\"
+    printf "\033]7;file://./foo/bar\033\\"
+
+OSC 52: write to system clipboard		*terminal-osc52*
+
+Applications in the :terminal buffer can write to the system clipboard by
+emitting an OSC 52 sequence. Example: >
+
+    printf '\033]52;;%s\033\\' "$(echo -n 'Hello world' | base64)"
+
+Nvim uses the configured |clipboard| provider to write to the system
+clipboard. Reading from the system clipboard with OSC 52 is not supported, as
+this would allow any arbitrary program in the :terminal to read the user's
+clipboard.
+
+OSC 52 sequences sent from the :terminal buffer do not emit a |TermRequest|
+event. The event is handled directly by Nvim and is not forwarded to plugins.
 
 ==============================================================================
 Status Variables				*terminal-status*
