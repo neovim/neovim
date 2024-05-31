@@ -8,7 +8,6 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/log.h"
-#include "nvim/rbuffer.h"
 #include "nvim/types_defs.h"
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
@@ -149,7 +148,7 @@ static void rstream_close_cb(uv_handle_t *handle)
 {
   RStream *stream = handle->data;
   if (stream->buffer) {
-    rbuffer_free(stream->buffer);
+    free_block(stream->buffer);
   }
   close_cb(handle);
 }

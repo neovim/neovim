@@ -39,8 +39,6 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
-#include "nvim/rbuffer.h"
-#include "nvim/rbuffer_defs.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 
@@ -432,7 +430,7 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
     wstream_init(&proc->in, 0);
   }
   if (has_out) {
-    rstream_init(&proc->out, 0);
+    rstream_init(&proc->out);
   }
 
   if (rpc) {
@@ -447,7 +445,7 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
 
   if (has_err) {
     callback_reader_start(&chan->on_stderr, "stderr");
-    rstream_init(&proc->err, 0);
+    rstream_init(&proc->err);
     rstream_start(&proc->err, on_job_stderr, chan);
   }
 
@@ -484,7 +482,7 @@ uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader
   channel->stream.socket.s.internal_close_cb = close_cb;
   channel->stream.socket.s.internal_data = channel;
   wstream_init(&channel->stream.socket.s, 0);
-  rstream_init(&channel->stream.socket, 0);
+  rstream_init(&channel->stream.socket);
 
   if (rpc) {
     rpc_start(channel);
@@ -509,7 +507,7 @@ void channel_from_connection(SocketWatcher *watcher)
   channel->stream.socket.s.internal_close_cb = close_cb;
   channel->stream.socket.s.internal_data = channel;
   wstream_init(&channel->stream.socket.s, 0);
-  rstream_init(&channel->stream.socket, 0);
+  rstream_init(&channel->stream.socket);
   rpc_start(channel);
   channel_create_event(channel, watcher->addr);
 }
@@ -554,7 +552,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
     dup2(STDERR_FILENO, STDIN_FILENO);
   }
 #endif
-  rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd, 0);
+  rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd);
   wstream_init_fd(&main_loop, &channel->stream.stdio.out, stdout_dup_fd, 0);
 
   if (rpc) {
@@ -648,51 +646,38 @@ static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
   return l;
 }
 
-void on_channel_data(RStream *stream, RBuffer *buf, size_t count, void *data, bool eof)
+size_t on_channel_data(RStream *stream, const char *buf, size_t count, void *data, bool eof)
 {
   Channel *chan = data;
-  on_channel_output(stream, chan, buf, eof, &chan->on_data);
+  return on_channel_output(stream, chan, buf, count, eof, &chan->on_data);
 }
 
-void on_job_stderr(RStream *stream, RBuffer *buf, size_t count, void *data, bool eof)
+size_t on_job_stderr(RStream *stream, const char *buf, size_t count, void *data, bool eof)
 {
   Channel *chan = data;
-  on_channel_output(stream, chan, buf, eof, &chan->on_stderr);
+  return on_channel_output(stream, chan, buf, count, eof, &chan->on_stderr);
 }
 
-static void on_channel_output(RStream *stream, Channel *chan, RBuffer *buf, bool eof,
-                              CallbackReader *reader)
+static size_t on_channel_output(RStream *stream, Channel *chan, const char *buf, size_t count,
+                                bool eof, CallbackReader *reader)
 {
-  size_t count;
-  char *output = rbuffer_read_ptr(buf, &count);
-
   if (chan->term) {
-    if (!eof) {
-      char *p = output;
-      char *end = output + count;
+    if (count) {
+      const char *p = buf;
+      const char *end = buf + count;
       while (p < end) {
         // Don't pass incomplete UTF-8 sequences to libvterm. #16245
         // Composing chars can be passed separately, so utf_ptr2len_len() is enough.
         int clen = utf_ptr2len_len(p, (int)(end - p));
         if (clen > end - p) {
-          count = (size_t)(p - output);
+          count = (size_t)(p - buf);
           break;
         }
         p += clen;
       }
     }
 
-    terminal_receive(chan->term, output, count);
-  }
-
-  if (count) {
-    rbuffer_consumed(buf, count);
-  }
-  // Move remaining data to start of buffer, so the buffer can never wrap around.
-  rbuffer_reset(buf);
-
-  if (callback_reader_set(*reader)) {
-    ga_concat_len(&reader->buffer, output, count);
+    terminal_receive(chan->term, buf, count);
   }
 
   if (eof) {
@@ -700,8 +685,11 @@ static void on_channel_output(RStream *stream, Channel *chan, RBuffer *buf, bool
   }
 
   if (callback_reader_set(*reader)) {
+    ga_concat_len(&reader->buffer, buf, count);
     schedule_channel_event(chan);
   }
+
+  return count;
 }
 
 /// schedule the necessary callbacks to be invoked as a deferred event

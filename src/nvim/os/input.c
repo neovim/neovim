@@ -27,8 +27,6 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/profile.h"
-#include "nvim/rbuffer.h"
-#include "nvim/rbuffer_defs.h"
 #include "nvim/state.h"
 #include "nvim/state_defs.h"
 
@@ -62,7 +60,7 @@ void input_start(void)
   }
 
   used_stdin = true;
-  rstream_init_fd(&main_loop, &read_stream, STDIN_FILENO, READ_BUFFER_SIZE);
+  rstream_init_fd(&main_loop, &read_stream, STDIN_FILENO);
   rstream_start(&read_stream, input_read_cb, NULL);
 }
 
@@ -157,7 +155,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
 
   if (maxlen && input_available()) {
     restart_cursorhold_wait(tb_change_cnt);
-    // Safe to convert rbuffer_read to int, it will never overflow since
+    // Safe to convert `to_read` to int, it will never overflow since
     // INPUT_BUFFER_SIZE fits in an int
     size_t to_read = MIN((size_t)maxlen, input_available());
     memcpy(buf, input_read_pos, to_read);
@@ -497,17 +495,15 @@ static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
   return input_eof ? kInputEof : kInputNone;
 }
 
-static void input_read_cb(RStream *stream, RBuffer *buf, size_t c, void *data, bool at_eof)
+static size_t input_read_cb(RStream *stream, const char *buf, size_t c, void *data, bool at_eof)
 {
   if (at_eof) {
     input_eof = true;
   }
 
-  assert(input_space() >= rbuffer_size(buf));
-  RBUFFER_UNTIL_EMPTY(buf, ptr, len) {
-    input_enqueue_raw(ptr, len);
-    rbuffer_consumed(buf, len);
-  }
+  assert(input_space() >= c);
+  input_enqueue_raw(buf, c);
+  return c;
 }
 
 static void process_ctrl_c(void)

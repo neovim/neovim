@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include "nvim/func_attr.h"
-#include "nvim/rbuffer_defs.h"
 
 /// Structure used to read from/write to file
 typedef struct {

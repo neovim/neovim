@@ -18,7 +18,6 @@
 #include "nvim/os/pty_process.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/time.h"
-#include "nvim/rbuffer_defs.h"
 #include "nvim/ui_client.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -355,7 +354,7 @@ static void flush_stream(Process *proc, RStream *stream)
   int err = uv_recv_buffer_size((uv_handle_t *)&stream->s.uv.pipe,
                                 &system_buffer_size);
   if (err) {
-    system_buffer_size = (int)rbuffer_capacity(stream->buffer);
+    system_buffer_size = ARENA_BLOCK_SIZE;
   }
 
   size_t max_bytes = stream->num_bytes + (size_t)system_buffer_size;
