@@ -473,7 +473,7 @@ function M.fetch(url, opts)
         return opts.on_err(data)
       end
 
-      vim.notify('Failed to fetch: ' .. table.concat(data, '\n'), vim.log.levels.ERROR)
+      vim.notify('Failed to fetch: ' .. result.stderr, vim.log.levels.ERROR)
     end
   end)
 end
@@ -568,7 +568,7 @@ function M.download(url, path, opts)
         return opts.on_err(data)
       end
 
-      vim.notify('Failed to download file: ' .. table.concat(data, '\n'), vim.log.levels.ERROR)
+      vim.notify('Failed to download file: ' .. result.stderr, vim.log.levels.ERROR)
     end
   end)
 end
