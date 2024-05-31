@@ -297,13 +297,13 @@ function M.gen(opt)
 
     -- TupleType
     elseif type.kind == 'tuple' then
-      local tuple = '{ '
-      for i, value in ipairs(type.items) do
-        tuple = tuple .. '[' .. i .. ']: ' .. parse_type(value, prefix) .. ', '
+      local tuple = '['
+      for _, value in ipairs(type.items) do
+        tuple = tuple .. parse_type(value, prefix) .. ', '
       end
       -- remove , at the end
       tuple = tuple:sub(0, -3)
-      return tuple .. ' }'
+      return tuple .. ']'
     end
 
     vim.print('WARNING: Unknown type ', type)
