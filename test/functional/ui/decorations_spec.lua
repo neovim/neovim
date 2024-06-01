@@ -5497,6 +5497,26 @@ l5
 
     api.nvim_buf_clear_namespace(0, ns, 0, -1)
   end)
+
+  it([[correct numberwidth with 'signcolumn' set to "number" #28984]], function()
+    command('set number numberwidth=1 signcolumn=number')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { sign_text = 'S1' })
+    screen:expect({
+      grid = [[
+        S1 ^                                               |
+        {1:~                                                 }|*8
+                                                          |
+      ]]
+    })
+    api.nvim_buf_del_extmark(0, ns, 1)
+    screen:expect({
+      grid = [[
+        {8:1 }^                                                |
+        {1:~                                                 }|*8
+                                                          |
+      ]]
+    })
+  end)
 end)
 
 describe('decorations: virt_text', function()
