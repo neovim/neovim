@@ -282,7 +282,7 @@ void op_shift(oparg_T *oap, bool curs_top, int amount)
 /// @param call_changed_bytes  call changed_bytes()
 void shift_line(bool left, bool round, int amount, int call_changed_bytes)
 {
-  const int sw_val = get_sw_value_indent(curbuf);
+  const int sw_val = get_sw_value_indent(curbuf, left);
 
   int count = get_indent();  // get current indent
 
@@ -328,7 +328,7 @@ static void shift_block(oparg_T *oap, int amount)
   const int oldstate = State;
   char *newp;
   const int oldcol = curwin->w_cursor.col;
-  const int sw_val = get_sw_value_indent(curbuf);
+  const int sw_val = get_sw_value_indent(curbuf, left);
   const int ts_val = (int)curbuf->b_p_ts;
   struct block_def bd;
   int incr;

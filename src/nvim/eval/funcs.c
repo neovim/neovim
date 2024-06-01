@@ -8302,7 +8302,7 @@ static void f_shiftwidth(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (col < 0) {
       return;  // type error; errmsg already given
     }
-    rettv->vval.v_number = get_sw_value_col(curbuf, col);
+    rettv->vval.v_number = get_sw_value_col(curbuf, col, false);
     return;
   }
   rettv->vval.v_number = get_sw_value(curbuf);
