@@ -375,6 +375,7 @@ win_T *win_float_create(bool enter, bool new_buf)
   config.noautocmd = true;
   config.hide = true;
   config.style = kWinStyleMinimal;
+  config.zindex = 9999;  // make sure preview is the highest one
   Error err = ERROR_INIT;
 
   block_autocmds();
