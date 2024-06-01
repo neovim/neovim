@@ -847,19 +847,26 @@ end
 ---@param source (integer|string) Source buffer or string to extract text from
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
+---@param opts? table Optional keyword arguments:
+---   - max_start_depth (integer) if non-zero, sets the maximum start depth
+---     for each match. This is used to prevent traversing too deep into a tree.
+---   - match_limit (integer) Set the maximum number of in-progress matches (Default: 256).
 ---
 ---@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch):
 ---        capture id, capture node, metadata, match
 ---
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
-function Query:iter_captures(node, source, start, stop)
+function Query:iter_captures(node, source, start, stop, opts)
+  opts = opts or {}
+  opts.match_limit = opts.match_limit or 256
+
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
 
   start, stop = value_or_node_range(start, stop, node)
 
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, { match_limit = 256 })
+  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
 
   local apply_directives = memoize(match_id_hash, self.apply_directives, true)
   local match_preds = memoize(match_id_hash, self.match_preds, true)
