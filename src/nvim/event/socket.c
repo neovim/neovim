@@ -135,17 +135,17 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
   return 0;
 }
 
-int socket_watcher_accept(SocketWatcher *watcher, Stream *stream)
+int socket_watcher_accept(SocketWatcher *watcher, RStream *stream)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
   uv_stream_t *client;
 
   if (watcher->stream->type == UV_TCP) {
-    client = (uv_stream_t *)(&stream->uv.tcp);
+    client = (uv_stream_t *)(&stream->s.uv.tcp);
     uv_tcp_init(watcher->uv.tcp.handle.loop, (uv_tcp_t *)client);
     uv_tcp_nodelay((uv_tcp_t *)client, true);
   } else {
-    client = (uv_stream_t *)&stream->uv.pipe;
+    client = (uv_stream_t *)&stream->s.uv.pipe;
     uv_pipe_init(watcher->uv.pipe.handle.loop, (uv_pipe_t *)client, 0);
   }
 
@@ -156,7 +156,7 @@ int socket_watcher_accept(SocketWatcher *watcher, Stream *stream)
     return result;
   }
 
-  stream_init(NULL, stream, -1, client);
+  stream_init(NULL, &stream->s, -1, client);
   return 0;
 }
 
@@ -197,7 +197,7 @@ static void connect_cb(uv_connect_t *req, int status)
   }
 }
 
-bool socket_connect(Loop *loop, Stream *stream, bool is_tcp, const char *address, int timeout,
+bool socket_connect(Loop *loop, RStream *stream, bool is_tcp, const char *address, int timeout,
                     const char **error)
 {
   bool success = false;
@@ -206,7 +206,7 @@ bool socket_connect(Loop *loop, Stream *stream, bool is_tcp, const char *address
   req.data = &status;
   uv_stream_t *uv_stream;
 
-  uv_tcp_t *tcp = &stream->uv.tcp;
+  uv_tcp_t *tcp = &stream->s.uv.tcp;
   uv_getaddrinfo_t addr_req;
   addr_req.addrinfo = NULL;
   const struct addrinfo *addrinfo = NULL;
@@ -237,7 +237,7 @@ tcp_retry:
     uv_tcp_connect(&req,  tcp, addrinfo->ai_addr, connect_cb);
     uv_stream = (uv_stream_t *)tcp;
   } else {
-    uv_pipe_t *pipe = &stream->uv.pipe;
+    uv_pipe_t *pipe = &stream->s.uv.pipe;
     uv_pipe_init(&loop->uv, pipe, 0);
     uv_pipe_connect(&req,  pipe, address, connect_cb);
     uv_stream = (uv_stream_t *)pipe;
@@ -245,7 +245,7 @@ tcp_retry:
   status = 1;
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, timeout, status != 1);
   if (status == 0) {
-    stream_init(NULL, stream, -1, uv_stream);
+    stream_init(NULL, &stream->s, -1, uv_stream);
     success = true;
   } else if (is_tcp && addrinfo->ai_next) {
     addrinfo = addrinfo->ai_next;

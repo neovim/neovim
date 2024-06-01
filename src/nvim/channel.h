@@ -30,7 +30,7 @@ struct Channel {
     Process proc;
     LibuvProcess uv;
     PtyProcess pty;
-    Stream socket;
+    RStream socket;
     StdioPair stdio;
     StderrState err;
     InternalState internal;
@@ -73,7 +73,7 @@ static inline Stream *channel_instream(Channel *chan)
     return &chan->stream.proc.in;
 
   case kChannelStreamSocket:
-    return &chan->stream.socket;
+    return &chan->stream.socket.s;
 
   case kChannelStreamStdio:
     return &chan->stream.stdio.out;
@@ -85,10 +85,10 @@ static inline Stream *channel_instream(Channel *chan)
   abort();
 }
 
-static inline Stream *channel_outstream(Channel *chan)
+static inline RStream *channel_outstream(Channel *chan)
   REAL_FATTR_NONNULL_ALL;
 
-static inline Stream *channel_outstream(Channel *chan)
+static inline RStream *channel_outstream(Channel *chan)
 {
   switch (chan->streamtype) {
   case kChannelStreamProc:

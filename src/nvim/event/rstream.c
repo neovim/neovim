@@ -19,23 +19,26 @@
 # include "event/rstream.c.generated.h"
 #endif
 
-void rstream_init_fd(Loop *loop, Stream *stream, int fd, size_t bufsize)
+void rstream_init_fd(Loop *loop, RStream *stream, int fd, size_t bufsize)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  stream_init(loop, stream, fd, NULL);
+  stream_init(loop, &stream->s, fd, NULL);
   rstream_init(stream, bufsize);
 }
 
-void rstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t bufsize)
+void rstream_init_stream(RStream *stream, uv_stream_t *uvstream, size_t bufsize)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  stream_init(NULL, stream, -1, uvstream);
+  stream_init(NULL, &stream->s, -1, uvstream);
   rstream_init(stream, bufsize);
 }
 
-void rstream_init(Stream *stream, size_t bufsize)
+void rstream_init(RStream *stream, size_t bufsize)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  stream->fpos = 0;
+  stream->read_cb = NULL;
+  stream->num_bytes = 0;
   stream->buffer = rbuffer_new(bufsize);
   stream->buffer->data = stream;
   stream->buffer->full_cb = on_rbuffer_full;
@@ -45,28 +48,28 @@ void rstream_init(Stream *stream, size_t bufsize)
 /// Starts watching for events from a `Stream` instance.
 ///
 /// @param stream The `Stream` instance
-void rstream_start(Stream *stream, stream_read_cb cb, void *data)
+void rstream_start(RStream *stream, stream_read_cb cb, void *data)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   stream->read_cb = cb;
-  stream->cb_data = data;
-  if (stream->uvstream) {
-    uv_read_start(stream->uvstream, alloc_cb, read_cb);
+  stream->s.cb_data = data;
+  if (stream->s.uvstream) {
+    uv_read_start(stream->s.uvstream, alloc_cb, read_cb);
   } else {
-    uv_idle_start(&stream->uv.idle, fread_idle_cb);
+    uv_idle_start(&stream->s.uv.idle, fread_idle_cb);
   }
 }
 
 /// Stops watching for events from a `Stream` instance.
 ///
 /// @param stream The `Stream` instance
-void rstream_stop(Stream *stream)
+void rstream_stop(RStream *stream)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (stream->uvstream) {
-    uv_read_stop(stream->uvstream);
+  if (stream->s.uvstream) {
+    uv_read_stop(stream->s.uvstream);
   } else {
-    uv_idle_stop(&stream->uv.idle);
+    uv_idle_stop(&stream->s.uv.idle);
   }
 }
 
@@ -77,9 +80,9 @@ static void on_rbuffer_full(RBuffer *buf, void *data)
 
 static void on_rbuffer_nonfull(RBuffer *buf, void *data)
 {
-  Stream *stream = data;
+  RStream *stream = data;
   assert(stream->read_cb);
-  rstream_start(stream, stream->read_cb, stream->cb_data);
+  rstream_start(stream, stream->read_cb, stream->s.cb_data);
 }
 
 // Callbacks used by libuv
@@ -87,7 +90,7 @@ static void on_rbuffer_nonfull(RBuffer *buf, void *data)
 /// Called by libuv to allocate memory for reading.
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
-  Stream *stream = handle->data;
+  RStream *stream = handle->data;
   // `uv_buf_t.len` happens to have different size on Windows.
   size_t write_count;
   buf->base = rbuffer_write_ptr(stream->buffer, &write_count);
@@ -99,7 +102,7 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 /// 0-length buffer.
 static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 {
-  Stream *stream = uvstream->data;
+  RStream *stream = uvstream->data;
 
   if (cnt <= 0) {
     // cnt == 0 means libuv asked for a buffer and decided it wasn't needed:
@@ -141,7 +144,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 static void fread_idle_cb(uv_idle_t *handle)
 {
   uv_fs_t req;
-  Stream *stream = handle->data;
+  RStream *stream = handle->data;
 
   // `uv_buf_t.len` happens to have different size on Windows.
   size_t write_count;
@@ -160,7 +163,7 @@ static void fread_idle_cb(uv_idle_t *handle)
   // Synchronous read
   uv_fs_read(handle->loop,
              &req,
-             stream->fd,
+             stream->s.fd,
              &stream->uvbuf,
              1,
              (int64_t)stream->fpos,
@@ -169,7 +172,7 @@ static void fread_idle_cb(uv_idle_t *handle)
   uv_fs_req_cleanup(&req);
 
   if (req.result <= 0) {
-    uv_idle_stop(&stream->uv.idle);
+    uv_idle_stop(&stream->s.uv.idle);
     invoke_read_cb(stream, 0, true);
     return;
   }
@@ -183,24 +186,29 @@ static void fread_idle_cb(uv_idle_t *handle)
 
 static void read_event(void **argv)
 {
-  Stream *stream = argv[0];
+  RStream *stream = argv[0];
   if (stream->read_cb) {
     size_t count = (uintptr_t)argv[1];
     bool eof = (uintptr_t)argv[2];
     stream->did_eof = eof;
-    stream->read_cb(stream, stream->buffer, count, stream->cb_data, eof);
+    stream->read_cb(stream, stream->buffer, count, stream->s.cb_data, eof);
   }
-  stream->pending_reqs--;
-  if (stream->closed && !stream->pending_reqs) {
-    stream_close_handle(stream);
+  stream->s.pending_reqs--;
+  if (stream->s.closed && !stream->s.pending_reqs) {
+    stream_close_handle(&stream->s, true);
   }
 }
 
-static void invoke_read_cb(Stream *stream, size_t count, bool eof)
+static void invoke_read_cb(RStream *stream, size_t count, bool eof)
 {
   // Don't let the stream be closed before the event is processed.
-  stream->pending_reqs++;
+  stream->s.pending_reqs++;
 
-  CREATE_EVENT(stream->events, read_event,
+  CREATE_EVENT(stream->s.events, read_event,
                stream, (void *)(uintptr_t *)count, (void *)(uintptr_t)eof);
+}
+
+void rstream_may_close(RStream *stream)
+{
+  stream_may_close(&stream->s, true);
 }
