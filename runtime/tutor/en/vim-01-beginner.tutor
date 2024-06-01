@@ -652,11 +652,11 @@ NOTE: If you were to exit Neovim and start it again with `nvim TEST`, the file
 ~~~
 # Lesson 5.3: SELECTING TEXT TO WRITE
 
-** To save part of the file, type `v`{normal} motion `:w FILENAME`{vim}. **
+** To save part of the file, type `V`{normal} motion `:w FILENAME`{vim}. **
 
  1. Move the cursor to this line.
 
- 2. Press [v](v) and move the cursor to the fifth item below. Notice that the
+ 2. Press [V](V) and move the cursor to the fifth item below. Notice that the
     text is highlighted.
 
  3. Press the `:`{normal} character. At the bottom of the screen
@@ -678,7 +678,7 @@ NOTE: If you were to exit Neovim and start it again with `nvim TEST`, the file
  5. Neovim will write the selected lines to the file TEST. Use `:!{unix:(ls),win:(dir)}`{vim} to see it.
     Do not remove it yet! We will use it in the next lesson.
 
-NOTE: Pressing [v](v) starts [Visual selection](visual-mode). You can move the cursor around to
+NOTE: Pressing [V](V) starts [Visual selection](visual-mode). You can move the cursor around to
       make the selection bigger or smaller. Then you can use an operator to
       do something with the text. For example, `d`{normal} deletes the text.
 
@@ -718,7 +718,7 @@ NOTE: You can also read the output of an external command. For example,
  2. [:w](:w) FILENAME              writes the current Neovim file to disk with
                              name FILENAME.
 
- 3. [v](v)  motion  :w FILENAME   saves the Visually selected lines in file
+ 3. [V](V)  motion  :w FILENAME   saves the Visually selected lines in file
                              FILENAME.
 
  4. [:r](:r) FILENAME              retrieves disk file FILENAME and puts it
