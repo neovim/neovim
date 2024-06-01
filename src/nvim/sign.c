@@ -246,12 +246,6 @@ static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
     return FAIL;
   }
 
-  // When deleting the last sign need to redraw the windows to remove the
-  // sign column. Not when curwin is NULL (this means we're exiting).
-  if (!buf_meta_total(buf, kMTMetaSignText) && curwin != NULL) {
-    changed_line_abv_curs();
-  }
-
   return OK;
 }
 
@@ -499,17 +493,6 @@ static void sign_list_by_name(char *name)
   }
 }
 
-static void may_force_numberwidth_recompute(buf_T *buf, int unplace)
-{
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  if (wp->w_buffer == buf
-      && (wp->w_p_nu || wp->w_p_rnu)
-      && (unplace || wp->w_nrwidth_width < 2)
-      && (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u')) {
-    wp->w_nrwidth_line_count = 0;
-  }
-}
-
 /// Place a sign at the specified file location or update a sign.
 static int sign_place(uint32_t *id, char *group, char *name, buf_T *buf, linenr_T lnum, int prio)
 {
@@ -531,11 +514,7 @@ static int sign_place(uint32_t *id, char *group, char *name, buf_T *buf, linenr_
     // ":sign place {id} file={fname}": change sign type and/or priority
     lnum = buf_mod_sign(buf, id, group, prio, sp);
   }
-  if (lnum > 0) {
-    // When displaying signs in the 'number' column, if the width of the
-    // number column is less than 2, then force recomputing the width.
-    may_force_numberwidth_recompute(buf, false);
-  } else {
+  if (lnum <= 0) {
     semsg(_("E885: Not possible to change sign %s"), name);
     return FAIL;
   }
@@ -560,13 +539,6 @@ static int sign_unplace_inner(buf_T *buf, int id, char *group, linenr_T atlnum)
     if (ns < 0 || !extmark_del_id(buf, (uint32_t)ns, (uint32_t)id)) {
       return FAIL;
     }
-  }
-
-  // When all the signs in a buffer are removed, force recomputing the
-  // number column width (if enabled) in all the windows displaying the
-  // buffer if 'signcolumn' is set to 'number' in that window.
-  if (!buf_meta_total(buf, kMTMetaSignText)) {
-    may_force_numberwidth_recompute(buf, true);
   }
 
   return OK;

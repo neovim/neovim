@@ -465,6 +465,7 @@ static void draw_sign(bool nrcol, win_T *wp, winlinevars_T *wlv, int sign_idx, i
     int fill = nrcol ? number_width(wp) + 1 : SIGN_WIDTH;
     draw_col_fill(wlv, schar_from_ascii(' '), fill, attr);
     int sign_pos = wlv->off - SIGN_WIDTH - (int)nrcol;
+    assert(sign_pos >= 0);
     linebuf_char[sign_pos] = sattr.text[0];
     linebuf_char[sign_pos + 1] = sattr.text[1];
   } else {
