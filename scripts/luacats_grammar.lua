@@ -178,7 +178,8 @@ local grammar = P {
   table_elem = v.table_key * colon * v.ltype,
   ty_table = Pf('{') * comma1(v.table_elem) * fill * P('}'),
   fun_param = lname * opt(colon * v.ltype),
-  ty_fun = Pf('fun') * paren(comma(lname * opt(colon * v.ltype))) * opt(colon * comma1(v.ltype)),
+  fun_ret = v.ltype + (ident * colon * v.ltype) + (P('...') * opt(colon * v.ltype)),
+  ty_fun = Pf('fun') * paren(comma(lname * opt(colon * v.ltype))) * opt(colon * comma1(v.fun_ret)),
   ty_generic = P('`') * letter * P('`'),
   ty_tuple = Pf('[') * comma(v.ltype) * fill * P(']'),
 }

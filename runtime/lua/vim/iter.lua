@@ -276,7 +276,7 @@ end
 --- -- { 6, 12 }
 --- ```
 ---
----@param f fun(...):any Mapping function. Takes all values returned from
+---@param f fun(...):...:any Mapping function. Takes all values returned from
 ---                      the previous stage in the pipeline as arguments
 ---                      and returns one or more new values, which are used
 ---                      in the next pipeline stage. Nil return values
