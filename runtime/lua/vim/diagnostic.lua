@@ -1857,16 +1857,19 @@ function M.open_float(opts, ...)
   if scope == 'line' then
     --- @param d vim.Diagnostic
     diagnostics = vim.tbl_filter(function(d)
-      return lnum >= d.lnum and lnum <= d.end_lnum
+      return lnum >= d.lnum
+        and lnum <= d.end_lnum
+        and (d.lnum == d.end_lnum or lnum ~= d.end_lnum or d.end_col ~= 0)
     end, diagnostics)
   elseif scope == 'cursor' then
-    -- LSP servers can send diagnostics with `end_col` past the length of the line
+    -- If `col` is past the end of the line, show if the cursor is on the last char in the line
     local line_length = #api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
     --- @param d vim.Diagnostic
     diagnostics = vim.tbl_filter(function(d)
-      return d.lnum == lnum
-        and math.min(d.col, line_length - 1) <= col
-        and (d.end_col >= col or d.end_lnum > lnum)
+      return lnum >= d.lnum
+        and lnum <= d.end_lnum
+        and (lnum ~= d.lnum or col >= math.min(d.col, line_length - 1))
+        and ((d.lnum == d.end_lnum and d.col == d.end_col) or lnum ~= d.end_lnum or col < d.end_col)
     end, diagnostics)
   end
 

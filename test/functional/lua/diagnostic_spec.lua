@@ -2291,6 +2291,38 @@ describe('vim.diagnostic', function()
         return lines
       ]]
       )
+
+      -- End position is exclusive
+      eq(
+        vim.NIL,
+        exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 1, 1, 2, 0),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        vim.api.nvim_win_set_cursor(0, {1, 1})
+        local _, winnr = vim.diagnostic.open_float(0, {header=false, pos={2,0}})
+        return winnr
+      ]]
+      )
+
+      -- Works when width == 0
+      eq(
+        { '1. Syntax error' },
+        exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 2, 0, 2, 0),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        vim.api.nvim_win_set_cursor(0, {1, 1})
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, {header=false, pos={2,1}})
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]]
+      )
     end)
 
     it('can show diagnostics from a specific position', function()
@@ -2299,7 +2331,7 @@ describe('vim.diagnostic', function()
         { 'Syntax error' },
         exec_lua [[
         local diagnostics = {
-          make_error("Syntax error", 1, 1, 1, 2),
+          make_error("Syntax error", 1, 1, 1, 3),
           make_warning("Some warning", 1, 3, 1, 4),
         }
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
@@ -2317,7 +2349,7 @@ describe('vim.diagnostic', function()
         { 'Some warning' },
         exec_lua [[
         local diagnostics = {
-          make_error("Syntax error", 1, 1, 1, 2),
+          make_error("Syntax error", 1, 1, 1, 3),
           make_warning("Some warning", 1, 3, 1, 4),
         }
         vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
@@ -2342,6 +2374,38 @@ describe('vim.diagnostic', function()
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
         vim.api.nvim_win_set_cursor(0, {1, 1})
         local float_bufnr, winnr = vim.diagnostic.open_float({header=false, scope="cursor", pos={0,first_line_len}})
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]]
+      )
+
+      -- End position is exclusive
+      eq(
+        vim.NIL,
+        exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 1, 1, 1, 3),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        vim.api.nvim_win_set_cursor(0, {1, 1})
+        local _, winnr = vim.diagnostic.open_float(0, {header=false, scope="cursor", pos={1,3}})
+        return winnr
+      ]]
+      )
+
+      -- Works when width == 0
+      eq(
+        { 'Syntax error' },
+        exec_lua [[
+        local diagnostics = {
+          make_error("Syntax error", 2, 0, 2, 0),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        vim.api.nvim_win_set_cursor(0, {1, 1})
+        local float_bufnr, winnr = vim.diagnostic.open_float({header=false, scope="cursor", pos={2,1}})
         local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
         vim.api.nvim_win_close(winnr, true)
         return lines
@@ -2755,17 +2819,29 @@ describe('vim.diagnostic', function()
     end)
 
     it('works for multi-line diagnostics #21949', function()
+      -- create diagnostic
+      exec_lua [[
+        local diagnostics = {
+          make_error("Error in two lines lnum is 1 and end_lnum is 2", 1, 1, 2, 3),
+        }
+        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+      ]]
+
       -- open float failed non diagnostic lnum
       eq(
         vim.NIL,
         exec_lua [[
-        local diagnostics = {
-          make_error("Error in two lines lnum is 1 and end_lnum is 2", 1, 1, 2, 3),
-        }
-        local winids = {}
-        vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
-        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+        vim.api.nvim_win_set_cursor(0, {1, 0})
         local _, winnr = vim.diagnostic.open_float(0, { header = false })
+        return winnr
+      ]]
+      )
+      eq(
+        vim.NIL,
+        exec_lua [[
+        vim.api.nvim_win_set_cursor(0, {1, 0})
+        local _, winnr = vim.diagnostic.open_float(0, { header = false, scope = "cursor" })
         return winnr
       ]]
       )
@@ -2782,12 +2858,36 @@ describe('vim.diagnostic', function()
       ]]
       )
 
+      -- can open a cursor-scoped float window on lnum 1
+      eq(
+        { 'Error in two lines lnum is 1 and end_lnum is 2' },
+        exec_lua [[
+        vim.api.nvim_win_set_cursor(0, {2, 1})
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, { header = false, scope = "cursor" })
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]]
+      )
+
       -- can open a float window on end_lnum 2
       eq(
         { '1. Error in two lines lnum is 1 and end_lnum is 2' },
         exec_lua [[
         vim.api.nvim_win_set_cursor(0, {3, 0})
         local float_bufnr, winnr = vim.diagnostic.open_float(0, { header = false })
+        local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
+        vim.api.nvim_win_close(winnr, true)
+        return lines
+      ]]
+      )
+
+      -- can open a cursor-scoped float window on end_lnum 2
+      eq(
+        { 'Error in two lines lnum is 1 and end_lnum is 2' },
+        exec_lua [[
+        vim.api.nvim_win_set_cursor(0, {3, 2})
+        local float_bufnr, winnr = vim.diagnostic.open_float(0, { header = false, scope = "cursor" })
         local lines = vim.api.nvim_buf_get_lines(float_bufnr, 0, -1, false)
         vim.api.nvim_win_close(winnr, true)
         return lines
