@@ -306,6 +306,7 @@ local keysets_defs = assert(io.open(keysets_outputf, 'wb'))
 --  so that the dispatcher can find the C functions that you are creating!
 -- ===========================================================================
 output:write([[
+#include "nvim/errors.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/globals.h"

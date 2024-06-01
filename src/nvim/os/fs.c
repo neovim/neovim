@@ -17,6 +17,7 @@
 #endif
 
 #include "auto/config.h"
+#include "nvim/errors.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 

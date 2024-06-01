@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"

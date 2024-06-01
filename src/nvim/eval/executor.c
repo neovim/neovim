@@ -1,6 +1,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/executor.h"
 #include "nvim/eval/typval.h"

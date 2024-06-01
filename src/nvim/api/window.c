@@ -13,6 +13,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/gettext_defs.h"

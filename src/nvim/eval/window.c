@@ -10,6 +10,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
+#include "nvim/errors.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"

@@ -27,6 +27,7 @@
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval.h"

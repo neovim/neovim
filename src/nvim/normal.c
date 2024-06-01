@@ -28,6 +28,7 @@
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"

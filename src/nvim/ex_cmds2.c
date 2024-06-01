@@ -17,6 +17,7 @@
 #include "nvim/bufwrite.h"
 #include "nvim/change.h"
 #include "nvim/channel.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"

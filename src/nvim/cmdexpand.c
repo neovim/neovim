@@ -19,6 +19,7 @@
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdhist.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
