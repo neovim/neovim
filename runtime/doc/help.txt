@@ -127,6 +127,7 @@ PROGRAMMING LANGUAGE SUPPORT
 |filetype|		Settings for specific types of files
 |quickfix|		Commands for a quick edit-compile-fix cycle
 |ft_ada.txt|		Ada filetype plugin
+|ft_hare.txt|		Filetype plugin for Hare
 |ft_ps1.txt|		PowerShell filetype plugin
 |ft_raku.txt|		Raku filetype plugin
 |ft_rust.txt|		Rust filetype plugin
