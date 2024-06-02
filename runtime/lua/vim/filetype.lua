@@ -1451,6 +1451,7 @@ local filename = {
   ['.firebaserc'] = 'json',
   ['.prettierrc'] = 'json',
   ['.stylelintrc'] = 'json',
+  ['.lintstagedrc'] = 'json',
   ['flake.lock'] = 'json',
   ['.babelrc'] = 'jsonc',
   ['.eslintrc'] = 'jsonc',
