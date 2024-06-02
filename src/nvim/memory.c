@@ -883,7 +883,6 @@ void free_all_mem(void)
 
   decor_free_all_mem();
   drawline_free_all_mem();
-  input_free_all_mem();
 
   if (ui_client_channel_id) {
     ui_client_free_all_mem();

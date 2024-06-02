@@ -314,7 +314,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
     keys_esc = keys.data;
   }
   if (lowlevel) {
-    input_enqueue_raw(cstr_as_string(keys_esc));
+    input_enqueue_raw(keys_esc, strlen(keys_esc));
   } else {
     ins_typebuf(keys_esc, (remap ? REMAP_YES : REMAP_NONE),
                 insert ? 0 : typebuf.tb_len, !typed, false);
