@@ -127,11 +127,11 @@ local function header_table_to_curl_arg_list(header_table)
   return arg_list
 end
 
----@alias vim.net.httpMethod "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE" | "PATCH"
+---@alias vim.net.HttpMethod "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE" | "PATCH"
 
----@private Function to create method arguments. Method defaults to GET.
----@param method? vim.net.httpMethod
----@return {[1]: "--request", [2]: vim.net.httpMethod}
+---@private Method defaults to GET.
+---@param method? vim.net.HttpMethod
+---@return {[1]: "--request", [2]: vim.net.HttpMethod}
 local function createMethodArgs(method)
   method = method and method:upper() or 'GET'
 
@@ -148,7 +148,7 @@ local function createMethodArgs(method)
 end
 
 ---@class vim.net.createCurlArgs.Opts
----@field method vim.net.httpMethod|nil
+---@field method vim.net.HttpMethod|nil
 ---@field redirect "follow"|"error"|nil
 ---@field data string|table<string, any>|nil
 ---@field headers HeaderTable | table<string, string | string[]> | nil
@@ -306,7 +306,7 @@ local function process_stdout(data)
     text = read_text,
     json = function(opts)
       local text = read_text()
-      return text and vim.json.decode(text, opts and opts or {}) or nil
+      return text and vim.json.decode(text, opts or {}) or nil
     end,
     method = extra.method,
     status = status,
@@ -342,7 +342,7 @@ end
 ---@class vim.net.fetch.Opts
 ---@inlinedoc
 ---HTTP method to use. Defaults to GET.
----@field method vim.net.httpMethod|nil
+---@field method vim.net.HttpMethod|nil
 ---Headers to set on the request
 ---@field headers HeaderTable | table<string, string | string[]> | nil
 ---Redirect mode. Defaults to "follow". Possible values are:
@@ -481,7 +481,7 @@ end
 ---@class vim.net.download.Opts
 ---@inlinedoc
 ---HTTP method to use. Defaults to GET.
----@field method vim.net.httpMethod|nil
+---@field method vim.net.HttpMethod|nil
 ---Headers to set on the request
 ---@field headers HeaderTable | table<string, string | string[]> | nil
 ---Redirect mode. Defaults to "follow". Possible values are:
@@ -571,6 +571,58 @@ function M.download(url, path, opts)
       vim.notify('Failed to download file: ' .. result.stderr, vim.log.levels.ERROR)
     end
   end)
+end
+
+---@param url string
+---@return string
+---@return string
+function M._get_filename_and_credentials(url)
+  if vim.b.lua_net_credentials ~= nil then
+    return url, vim.b.lua_net_credentials
+  end
+
+  local scheme, credentials, path = url:match('^([^:]+://)([^/@]*)@?(.*)') --[[@as string, string, string]]
+
+  if credentials then
+    local non_credentials_url = scheme .. path
+
+    if not credentials:find(':') then
+      local password = vim.fn.inputsecret({
+        prompt = 'password (return for none): ',
+        cancelreturn = nil,
+      }) --[[@as string]]
+
+      if password ~= '' then
+        credentials = credentials .. ':' .. password
+      end
+    end
+
+    vim.b.lua_net_credentials = credentials
+
+    return non_credentials_url, vim.b.lua_net_credentials
+  elseif scheme ~= 'http' and scheme ~= 'https' then
+    local username = vim.fn.input({
+      prompt = 'username (return for none): ',
+    })
+
+    if username == '' then
+      vim.b.lua_net_credentials = username
+      return path, vim.b.lua_net_credentials
+    end
+
+    local password = vim.fn.inputsecret({
+      prompt = 'password (return for none): ',
+    })
+
+    if password ~= '' then
+      vim.b.lua_net_credentials = username .. ':' .. password
+    else
+      vim.b.lua_net_credentials = username
+    end
+
+    return url, vim.b.lua_net_credentials
+  end
+  return url, ''
 end
 
 return M
