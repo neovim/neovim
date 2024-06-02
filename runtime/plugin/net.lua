@@ -1,4 +1,4 @@
-if not vim.g.lua_net_enable then
+if vim.g.lua_net_disable then
   return
 end
 
