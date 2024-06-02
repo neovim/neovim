@@ -379,6 +379,25 @@ describe('lua buffer event callbacks: on_lines', function()
       ]],
     })
   end)
+
+  it('line lengths are correct when pressing TAB with folding #29119', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'a', 'b' })
+
+    exec_lua([[
+      _G.res = {}
+      vim.o.foldmethod = 'indent'
+      vim.o.softtabstop = -1
+      vim.api.nvim_buf_attach(0, false, {
+        on_lines = function(_, bufnr, _, row, _, end_row)
+          local lines = vim.api.nvim_buf_get_lines(bufnr, row, end_row, true)
+          table.insert(_G.res, lines)
+        end
+      })
+    ]])
+
+    feed('i<Tab>')
+    eq({ '\ta' }, exec_lua('return _G.res[#_G.res]'))
+  end)
 end)
 
 describe('lua: nvim_buf_attach on_bytes', function()
