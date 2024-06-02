@@ -77,8 +77,7 @@ describe('vim.net', function()
 
     describe('download()', function()
       it('valid', function()
-        local path =
-          exec_lua([[return vim.fn.fnameescape(vim.fn.fnamemodify("./download_file", ":p"))]])
+        local path = exec_lua([[return vim.fn.fnamemodify("./downloaded_file", ":p")]])
 
         eq(
           {
@@ -92,7 +91,8 @@ describe('vim.net', function()
             'https://httpbin.org/get',
           },
           exec_lua([[
-            return vim.net.download("https://httpbin.org/get", "./download_file", {
+            return vim.net.fetch("https://httpbin.org/get", {
+              download_location = vim.fn.fnamemodify("./downloaded_file", ":p"),
               redirect = "error",
               data = "hi",
               _dry = true
@@ -201,11 +201,12 @@ describe('vim.net', function()
       exec_lua([[
         local done
 
-        vim.net.download("https://httpbingo.org/anything", "./download_file", {
+        vim.net.fetch("https://httpbingo.org/anything", {
+          download_location = "./downloaded_file"
           headers = {
             test_header = "value",
           },
-          on_complete = function()
+          on_exit = function()
             done = true
           end
         })
@@ -216,7 +217,7 @@ describe('vim.net', function()
         end)
 
         vim.rpcnotify(vim.g.channel, 'done', done)
-        vim.rpcnotify(vim.g.channel, 'path', "./download_file")
+        vim.rpcnotify(vim.g.channel, 'path', "./downloaded_file")
       ]])
 
       eq({ 'notification', 'done', { true } }, next_msg(500))
