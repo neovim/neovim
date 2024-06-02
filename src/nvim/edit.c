@@ -4419,17 +4419,29 @@ static bool ins_tab(void)
       // Delete following spaces.
       int i = cursor->col - fpos.col;
       if (i > 0) {
-        STRMOVE(ptr, ptr + i);
+        if (!(State & VREPLACE_FLAG)) {
+          char *newp = xmalloc((size_t)(curbuf->b_ml.ml_line_len - i));
+          ptrdiff_t col = ptr - curbuf->b_ml.ml_line_ptr;
+          if (col > 0) {
+            memmove(newp, ptr - col, (size_t)col);
+          }
+          memmove(newp + col, ptr + i, (size_t)(curbuf->b_ml.ml_line_len - col - i));
+          if (curbuf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) {
+            xfree(curbuf->b_ml.ml_line_ptr);
+          }
+          curbuf->b_ml.ml_line_ptr = newp;
+          curbuf->b_ml.ml_line_len -= i;
+          curbuf->b_ml.ml_flags = (curbuf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
+          inserted_bytes(fpos.lnum, change_col,
+                         cursor->col - change_col, fpos.col - change_col);
+        } else {
+          STRMOVE(ptr, ptr + i);
+        }
         // correct replace stack.
         if ((State & REPLACE_FLAG) && !(State & VREPLACE_FLAG)) {
           for (temp = i; --temp >= 0;) {
             replace_join(repl_off);
           }
-        }
-        if (!(State & VREPLACE_FLAG)) {
-          curbuf->b_ml.ml_line_len -= i;
-          inserted_bytes(fpos.lnum, change_col,
-                         cursor->col - change_col, fpos.col - change_col);
         }
       }
       cursor->col -= i;
