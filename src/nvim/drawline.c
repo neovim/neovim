@@ -1422,7 +1422,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       line = ml_get_buf(wp->w_buffer, lnum);
       ptr = line + linecol;
 
-      if (len == 0 || (int)wp->w_cursor.col > ptr - line) {
+      if (len == 0 || wp->w_cursor.col > linecol) {
         // no bad word found at line start, don't check until end of a
         // word
         spell_hlf = HLF_COUNT;
