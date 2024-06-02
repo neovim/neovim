@@ -464,7 +464,7 @@ end
 ---@param url string
 ---@return string
 ---@return string
-function M._get_filename_and_credentials(url)
+function M._get_url_and_credentials(url)
   if vim.b.lua_net_credentials ~= nil then
     return url, vim.b.lua_net_credentials
   end

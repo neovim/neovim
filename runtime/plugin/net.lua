@@ -1,7 +1,3 @@
-if vim.g.lua_net_disable then
-  return
-end
-
 ---@class _autocmd.Event
 ---@field id number
 ---@field event string
@@ -16,18 +12,7 @@ local id = vim.api.nvim_create_augroup('LuaNetwork', {
 })
 
 vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
-  -- pattern = { 'https://*', 'http://*', 'ftp://*', 'scp://*' },
-  pattern = {
-    'https://*',
-    'http://*',
-    'ftp://*',
-    'scp://*',
-    'rcp://*',
-    'dav://*',
-    'davs://*',
-    'rsync://*',
-    'sftp://*',
-  },
+  pattern = '*',
   group = id,
   desc = 'Lua Network Buffer Read Handler',
   ---@param ev _autocmd.Event
@@ -36,46 +21,42 @@ vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
     local buf = ev.buf
     local url = ev.file
 
-    local file, credentials = vim.net._get_filename_and_credentials(url)
+    local url, credentials = vim.net._get_url_and_credentials(url)
 
-    vim.net.fetch(file, {
-      user = credentials,
-      on_exit = vim.schedule_wrap(function(err, result)
-        if err then
-          return vim.notify(err, vim.logl.levels.ERROR)
-        end
+    if
+      ev.file:find('^http://')
+      or ev.file:find('^https://')
+      or ev.file:find('^ftp://')
+      or ev.file:find('^scp://')
+    then
+      vim.net.fetch(url, {
+        user = credentials,
+        on_exit = vim.schedule_wrap(function(err, result)
+          if err then
+            return vim.notify(err, vim.logl.levels.ERROR)
+          end
 
-        local text = vim.split(result.text(), '\n')
+          local text = vim.split(result.text(), '\n')
 
-        vim.api.nvim_buf_set_lines(buf, 0, -1, true, text)
+          vim.api.nvim_buf_set_lines(buf, 0, -1, true, text)
 
-        local ft = vim.filetype.match({
-          filename = file,
-          contents = text,
-        })
-        if ft then
-          vim.cmd.set(('filetype=%s'):format(ft))
-        end
+          local ft = vim.filetype.match({
+            filename = url,
+            contents = text,
+          })
+          if ft then
+            vim.cmd.set(('filetype=%s'):format(ft))
+          end
 
-        vim.fn.winrestview(view)
-      end),
-    })
+          vim.fn.winrestview(view)
+        end),
+      })
+    end
   end,
 })
 
 vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
-  -- pattern = { 'scp://*', 'ftp://*' },
-  pattern = {
-    'https://*',
-    'http://*',
-    'ftp://*',
-    'scp://*',
-    'rcp://*',
-    'dav://*',
-    'davs://*',
-    'rsync://*',
-    'sftp://*',
-  },
+  pattern = '*',
   group = id,
   desc = 'Lua Network Write Handler',
   ---@param ev _autocmd.Event
@@ -83,100 +64,86 @@ vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
     local buf = ev.buf
 
     local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-
     local path = os.tmpname()
-
     vim.fn.writefile(lines, path)
 
-    local file, user_pass = vim.net._get_filename_and_credentials(ev.file)
+    local url, user_pass = vim.net._get_url_and_credentials(ev.file)
 
-    vim.net.fetch(file, {
-      user = user_pass,
-      upload_file = path,
-      on_exit = vim.schedule_wrap(function()
-        if not vim.o.cpo:find('+') then
-          vim.cmd(':set modified&vim')
-        end
-      end),
-    })
+    if ev.file:find('^ftp://') or ev.file:find('^scp://') then
+      vim.net.fetch(url, {
+        user = user_pass,
+        upload_file = path,
+        on_exit = vim.schedule_wrap(function()
+          if not vim.o.cpo:find('+') then
+            vim.cmd(':set modified&vim')
+          end
+        end),
+      })
+    end
   end,
 })
 
 vim.api.nvim_create_autocmd({ 'FileReadCmd' }, {
-  -- pattern = { 'https://*', 'http://*', 'ftp://*', 'scp://*' },
-  pattern = {
-    'https://*',
-    'http://*',
-    'ftp://*',
-    'scp://*',
-    'rcp://*',
-    'dav://*',
-    'davs://*',
-    'rsync://*',
-    'sftp://*',
-  },
+  pattern = '*',
   group = id,
   desc = 'Lua Network File Read Handler',
   ---@param ev _autocmd.Event
   callback = function(ev)
     local view = vim.fn.winsaveview()
     local buf = ev.buf
+    local url, user_pass = vim.net._get_url_and_credentials(ev.file)
 
-    local file, user_pass = vim.net._get_filename_and_credentials(ev.file)
+    if
+      ev.file:find('^http://')
+      or ev.file:find('^https://')
+      or ev.file:find('^ftp://')
+      or ev.file:find('^scp://')
+    then
+      vim.net.fetch(url, {
+        user = user_pass,
+        on_complete = function(err, result)
+          if err then
+            return vim.notify(err, vim.log.levels.ERROR)
+          end
 
-    vim.net.fetch(file, {
-      user = user_pass,
-      on_complete = function(err, result)
-        if err then
-          return vim.notify(err, vim.log.levels.ERROR)
-        end
+          local text = vim.split(result.text(), '\n')
 
-        local text = vim.split(result.text(), '\n')
+          local cursor_row = vim.api.nvim_win_get_cursor(0)[1]
 
-        local cursor_row = vim.api.nvim_win_get_cursor(0)[1]
+          vim.api.nvim_buf_set_lines(buf, cursor_row, cursor_row, true, text)
 
-        vim.api.nvim_buf_set_lines(buf, cursor_row, cursor_row, true, text)
-
-        vim.fn.winrestview(view)
-      end,
-    })
+          vim.fn.winrestview(view)
+        end,
+      })
+    end
   end,
 })
 
 vim.api.nvim_create_autocmd({ 'FileWriteCmd' }, {
-  -- pattern = { 'scp://*' },
-  pattern = {
-    'https://*',
-    'http://*',
-    'ftp://*',
-    'scp://*',
-    'rcp://*',
-    'dav://*',
-    'davs://*',
-    'rsync://*',
-    'sftp://*',
-  },
+  pattern = '*',
   group = id,
   desc = 'Lua Network Partial Write Handler',
   ---@param ev _autocmd.Event
   callback = function(ev)
     local buf = ev.buf
 
-    local mark_start = vim.api.nvim_buf_get_mark(buf, '[')
-    local mark_end = vim.api.nvim_buf_get_mark(buf, ']')
+    local start_row = vim.api.nvim_buf_get_mark(buf, '[')[1]
+    local end_row = vim.api.nvim_buf_get_mark(buf, ']')[1]
 
-    local lines = vim.api.nvim_buf_get_lines(buf, mark_start[1] - 1, mark_end[1], true)
-
+    local lines = vim.api.nvim_buf_get_lines(buf, start_row - 1, end_row, true)
     local path = os.tmpname()
-
     vim.fn.writefile(lines, path)
 
-    local file, user_pass = vim.net._get_filename_and_credentials(ev.file)
-
-    vim.net.fetch(file, {
-      user = user_pass,
-      upload_file = path,
-      on_exit = function() end,
-    })
+    local url, user_pass = vim.net._get_url_and_credentials(ev.file)
+    if
+      ev.file:find('^scp://')
+      -- or ev.file:find('^ftp://')
+    then
+      vim.net.fetch(url, {
+        user = user_pass,
+        upload_file = path,
+        on_exit = function() end,
+      })
+    end
   end,
 })
