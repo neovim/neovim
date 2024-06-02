@@ -337,6 +337,28 @@ describe('TUI', function()
     ]])
   end)
 
+  it("'nottimeout' disables timeout for escape sequences #29047", function()
+    child_session:request('nvim_set_option_value', 'ttimeout', false, {})
+    feed_data('i')
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|*3
+      {5:[No Name]                                         }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027')
+    screen:expect_unchanged()
+    feed_data('[120;5u')
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|*3
+      {5:[No Name]                                         }|
+      {3:-- ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)}          |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('accepts ASCII control sequences', function()
     feed_data('i')
     feed_data('\022\007') -- ctrl+g
