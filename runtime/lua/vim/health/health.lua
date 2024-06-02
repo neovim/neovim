@@ -398,16 +398,16 @@ local function check_external_tools()
 end
 
 local function check_network()
-  vim.health.start('Network (vim.net)')
+  health.start('External Tools (vim.net)')
 
   if vim.fn.executable('curl') == 1 then
-    vim.health.ok('curl found')
+    local curl = vim.fn.exepath('curl')
+    local cmd = 'curl --version'
+    local out = vim.fn.system(cmd)
 
-    local version = vim.split(vim.fn.systemlist({ 'curl', '--version' })[1], ' ')[2]
-
-    vim.health.info('curl version ' .. version .. ' was found.')
+    health.ok(('%s\n(%s)'):format(vim.trim(out), curl))
   else
-    vim.health.error(
+    health.error(
       'curl could not be found. Cannot use |vim.net|.',
       'Follow this guide to install curl https://everything.curl.dev/get.'
     )
