@@ -47,16 +47,10 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-#define DYNAMIC_BUFFER_INIT { NULL, 0, 0 }
 #define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
 #define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
 
 #define SHELL_SPECIAL "\t \"&'$;<>()\\|"
-
-typedef struct {
-  char *data;
-  size_t cap, len;
-} DynamicBuffer;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/shell.c.generated.h"
@@ -667,7 +661,7 @@ char *shell_argv_to_str(char **const argv)
 /// @return shell command exit code
 int os_call_shell(char *cmd, ShellOpts opts, char *extra_args)
 {
-  DynamicBuffer input = DYNAMIC_BUFFER_INIT;
+  StringBuilder input = KV_INITIAL_VALUE;
   char *output = NULL;
   char **output_ptr = NULL;
   int current_state = State;
@@ -696,9 +690,9 @@ int os_call_shell(char *cmd, ShellOpts opts, char *extra_args)
 
   size_t nread;
   int exitcode = do_os_system(shell_build_argv(cmd, extra_args),
-                              input.data, input.len, output_ptr, &nread,
+                              input.items, input.size, output_ptr, &nread,
                               emsg_silent, forward_output);
-  xfree(input.data);
+  kv_destroy(input);
 
   if (output) {
     write_output(output, nread, true);
@@ -862,7 +856,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   bool has_input = (input != NULL && input[0] != NUL);
 
   // the output buffer
-  DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
+  StringBuilder buf = KV_INITIAL_VALUE;
   stream_read_cb data_cb = system_data_cb;
   if (nread) {
     *nread = 0;
@@ -950,18 +944,17 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
 
   // prepare the out parameters if requested
   if (output) {
-    if (buf.len == 0) {
+    assert(nread);
+    if (buf.size == 0) {
       // no data received from the process, return NULL
       *output = NULL;
-      xfree(buf.data);
+      *nread = 0;
+      kv_destroy(buf);
     } else {
+      *nread = buf.size;
       // NUL-terminate to make the output directly usable as a C string
-      buf.data[buf.len] = NUL;
-      *output = buf.data;
-    }
-
-    if (nread) {
-      *nread = buf.len;
+      kv_push(buf, NUL);
+      *output = buf.items;
     }
   }
 
@@ -971,28 +964,10 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   return exitcode;
 }
 
-///  - ensures at least `desired` bytes in buffer
-///
-/// TODO(aktau): fold with kvec/garray
-static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
-{
-  if (buf->cap >= desired) {
-    assert(buf->data);
-    return;
-  }
-
-  buf->cap = desired;
-  kv_roundup32(buf->cap);
-  buf->data = xrealloc(buf->data, buf->cap);
-}
-
 static size_t system_data_cb(RStream *stream, const char *buf, size_t count, void *data, bool eof)
 {
-  DynamicBuffer *dbuf = data;
-
-  dynamic_buffer_ensure(dbuf, dbuf->len + count + 1);
-  memcpy(dbuf->data + dbuf->len, buf, count);
-  dbuf->len += count;
+  StringBuilder *dbuf = data;
+  kv_concat_len(*dbuf, buf, count);
   return count;
 }
 
@@ -1223,7 +1198,7 @@ static size_t word_length(const char *str)
 /// event loop starts. If we don't (by writing in chunks returned by `ml_get`)
 /// the buffer being modified might get modified by reading from the process
 /// before we finish writing.
-static void read_input(DynamicBuffer *buf)
+static void read_input(StringBuilder *buf)
 {
   size_t written = 0;
   size_t len = 0;
@@ -1237,14 +1212,11 @@ static void read_input(DynamicBuffer *buf)
     } else if (lp[written] == NL) {
       // NL -> NUL translation
       len = 1;
-      dynamic_buffer_ensure(buf, buf->len + len);
-      buf->data[buf->len++] = NUL;
+      kv_push(*buf, NUL);
     } else {
       char *s = vim_strchr(lp + written, NL);
       len = s == NULL ? l : (size_t)(s - (lp + written));
-      dynamic_buffer_ensure(buf, buf->len + len);
-      memcpy(buf->data + buf->len, lp + written, len);
-      buf->len += len;
+      kv_concat_len(*buf, lp + written, len);
     }
 
     if (len == l) {
@@ -1253,8 +1225,7 @@ static void read_input(DynamicBuffer *buf)
           || (!curbuf->b_p_bin && curbuf->b_p_fixeol)
           || (lnum != curbuf->b_no_eol_lnum
               && (lnum != curbuf->b_ml.ml_line_count || curbuf->b_p_eol))) {
-        dynamic_buffer_ensure(buf, buf->len + 1);
-        buf->data[buf->len++] = NL;
+        kv_push(*buf, NL);
       }
       lnum++;
       if (lnum > curbuf->b_op_end.lnum) {
