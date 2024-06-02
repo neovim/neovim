@@ -454,7 +454,7 @@ static void tk_getkeys(TermInput *input, bool force)
     uv_timer_stop(&input->timer_handle);
     uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint64_t)input->ttimeoutlen, 0);
   } else {
-    tk_getkeys(input, true);
+    tk_getkeys(input, false);
   }
 }
 
