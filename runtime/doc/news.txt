@@ -171,9 +171,8 @@ These existing features changed their behavior.
 • N/A
 
 • `:e, :w, :[range]w!, and :r https://*,http://*,ftp://*,scp://*` now
-  uses |vim.net.fetch()|. Opt-out via >lua
-      vim.g.lua_net_disable = true
-<
+  uses |vim.net.fetch()|.
+
 • `:e https://*,http://*,ftp://*,scp://*` now automatically matches
   filetype using the url. 
 
