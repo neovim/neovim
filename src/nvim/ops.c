@@ -282,8 +282,10 @@ void op_shift(oparg_T *oap, bool curs_top, int amount)
 /// @param call_changed_bytes  call changed_bytes()
 void shift_line(bool left, bool round, int amount, int call_changed_bytes)
 {
-  const int sw_val = get_sw_value_indent(curbuf, left);
-
+  int sw_val = get_sw_value_indent(curbuf, left);
+  if (sw_val == 0) {
+    sw_val = 1;              // shouldn't happen, just in case
+  }
   int count = get_indent();  // get current indent
 
   if (round) {  // round off indent
