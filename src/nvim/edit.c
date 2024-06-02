@@ -4419,17 +4419,20 @@ static bool ins_tab(void)
       // Delete following spaces.
       int i = cursor->col - fpos.col;
       if (i > 0) {
-        STRMOVE(ptr, ptr + i);
+        if (!(State & VREPLACE_FLAG)) {
+          memmove(ptr, ptr + i, (size_t)(curbuf->b_ml.ml_line_len - i
+                                         - (ptr - curbuf->b_ml.ml_line_ptr)));
+          curbuf->b_ml.ml_line_len -= i;
+          inserted_bytes(fpos.lnum, change_col,
+                         cursor->col - change_col, fpos.col - change_col);
+        } else {
+          STRMOVE(ptr, ptr + i);
+        }
         // correct replace stack.
         if ((State & REPLACE_FLAG) && !(State & VREPLACE_FLAG)) {
           for (temp = i; --temp >= 0;) {
             replace_join(repl_off);
           }
-        }
-        if (!(State & VREPLACE_FLAG)) {
-          curbuf->b_ml.ml_line_len -= i;
-          inserted_bytes(fpos.lnum, change_col,
-                         cursor->col - change_col, fpos.col - change_col);
         }
       }
       cursor->col -= i;
