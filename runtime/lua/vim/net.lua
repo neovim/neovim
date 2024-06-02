@@ -160,7 +160,7 @@ end
 ---@param url string The request URL.
 ---@param opts vim.net.createCurlArgs.Opts
 ---@return string[] args Curl command.
-local function createCurlArgs(url, opts)
+local function create_curl_args(url, opts)
   vim.validate({
     opts = { opts, 'table', true },
   })
@@ -317,6 +317,13 @@ local function process_stdout(data)
   }
 end
 
+---@param err string
+local default_on_exit = function(err, response)
+  if err then
+    return vim.notify(err, vim.log.levels.ERROR)
+  end
+end
+
 ---@class vim.net.Response
 ---@inlinedoc
 ---Whether the request was successful (status within 2XX range).
@@ -356,12 +363,8 @@ end
 ---Data to send with the request. If a table, it will be JSON-encoded. vim.net
 ---does not currently support form encoding.
 ---@field data string|table<string, any>|nil
----Callback when request is completed successfully.
----@field on_complete fun(response: vim.net.Response)|nil
----Callback recieving a `stderr_buffered` string[] of error. err is either curl
----stderr or internal fetch() error. Without providing this function, |vim.net.fetch()|
----will automatically raise the error to the user. See |on_stderr| and `stderr_buffered`.
----@field on_err fun(err: string[]|nil, exit_code: number|nil)|nil
+---Callback when request is completed. May contain an error.
+---@field on_exit fun(err: string|nil, response: vim.net.Response|nil)|nil
 ---@field _dry boolean|nil
 
 --- Asynchronously make network requests.
@@ -428,53 +431,30 @@ function M.fetch(url, opts)
     opts.download_location = nil
   end
 
-  local args = createCurlArgs(url, opts)
+  local args = create_curl_args(url, opts)
 
   if opts._dry then
     return args
   end
 
+  local on_exit = opts.on_exit or default_on_exit
   vim.system(args, { text = true }, function(result)
-    if result.stdout then
-      local code = result.code
-      local res = process_stdout(result.stdout)
-
-      if opts.redirect == 'error' and res.status >= 300 and res.status <= 399 then
-        ---@cast res +{_raw_write_out: {redirect_url: string}}
-        local str = 'Fetch redirected to ' .. res._raw_write_out.redirect_url
-
-        if opts.on_err ~= nil then
-          return vim.notify(str, vim.log.levels.ERROR)
-        end
-
-        return opts.on_err({ str }, code)
-      end
-
-      if code ~= 0 then
-        return opts.on_err(nil, code)
-      end
-
-      if opts.on_complete and code == 0 then
-        opts.on_complete(res)
-      end
-    elseif result.stderr then
-      local data = vim.split(result.stderr, '\n')
-      if data[#data] == '' then
-        -- strip EOL
-        table.remove(data, #data)
-      end
-
-      if vim.tbl_isempty(data) then
-        -- Data was nothing but a EOL
-        return
-      end
-
-      if opts.on_err ~= nil then
-        return opts.on_err(data)
-      end
-
-      vim.notify('Failed to fetch: ' .. result.stderr, vim.log.levels.ERROR)
+    if result.code ~= 0 or result.stderr ~= '' then
+      return on_exit(('Failed to fetch. Err: %s'):format(result.stderr))
     end
+
+    if result.stdout == '' then
+      return on_exit('The fetch had no response')
+    end
+
+    local res = process_stdout(result.stdout)
+
+    if opts.redirect == 'error' and res.status >= 300 and res.status <= 399 then
+      ---@cast res +{_raw_write_out: {redirect_url: string}}
+      return on_exit(('Fetch redirected to %s'):format(res._raw_write_out.redirect_url))
+    end
+
+    opts.on_exit(nil, res)
   end)
 end
 
@@ -493,12 +473,8 @@ end
 ---Data to send with the request. If a table, it will be JSON-encoded. vim.net
 ---does not currently support form encoding.
 ---@field data string|table<string, any>|nil
----Callback when request is completed successfully.
----@field on_complete fun()|nil
----Callback recieving a `stderr_buffered` string[] of error. err is either curl
----stderr or internal fetch() error. Without providing this function, |vim.net.fetch()|
----will automatically raise the error to the user. See |on_stderr| and `stderr_buffered`.
----@field on_err fun(err: string[]|nil, exit_code: number|nil)|nil
+---Callback, may contain an error.
+---@field on_exit fun(err: string|nil)|nil
 ---Path to where the file will be downloaded
 ---@field download_location string|nil
 ---@field _dry boolean|nil
@@ -531,45 +507,21 @@ function M.download(url, path, opts)
   })
 
   opts = opts or {}
-
   path = vim.fn.fnameescape(vim.fn.fnamemodify(path, ':p'))
-
   opts.download_location = path
 
-  local args = createCurlArgs(url, opts)
+  local args = create_curl_args(url, opts)
 
   if opts._dry then
     return args
   end
 
+  local on_exit = opts.on_exit or default_on_exit
   vim.system(args, { text = true }, function(result)
-    local code = result.code
-    if code ~= 0 then
-      return opts.on_err(nil, code)
-    end
-
-    if opts.on_complete and code == 0 then
-      opts.on_complete()
-    end
-
-    if result.stderr then
-      local data = vim.split(result.stderr, '\n')
-      if data[#data] == '' then
-        -- strip EOL
-        table.remove(data, #data)
-      end
-
-      if vim.tbl_isempty(data) then
-        -- Data was nothing but a EOL
-        return
-      end
-
-      if opts.on_err ~= nil then
-        return opts.on_err(data)
-      end
-
-      vim.notify('Failed to download file: ' .. result.stderr, vim.log.levels.ERROR)
-    end
+    local err = result.stderr ~= ''
+        and ('Failed to download file: %s. Error: %s'):format(url, result.stderr)
+      or nil
+    on_exit(err)
   end)
 end
 
