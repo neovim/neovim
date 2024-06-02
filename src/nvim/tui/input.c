@@ -436,6 +436,16 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
   return force ? termkey_getkey_force(tk, key) : termkey_getkey(tk, key);
 }
 
+static void tinput_may_start_timeout(TermInput *input)
+{
+  uv_timer_stop(&input->timer_handle);  // Stop the current timer if already running.
+  if (!input->ttimeout || input->ttimeoutlen < 0) {
+    return;  // No timeout. Wait indefinitely by never calling termkey_getkey_force().
+  }
+  int64_t ms = input->ttimeoutlen;
+  uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint64_t)ms, 0);
+}
+
 static void tk_getkeys(TermInput *input, bool force)
 {
   TermKeyKey key;
@@ -476,13 +486,7 @@ static void tk_getkeys(TermInput *input, bool force)
   // yet contain all the bytes required. `key` structure indicates what
   // termkey_getkey_force() would return.
 
-  if (input->ttimeout && input->ttimeoutlen >= 0) {
-    // Stop the current timer if already running
-    uv_timer_stop(&input->timer_handle);
-    uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint64_t)input->ttimeoutlen, 0);
-  } else {
-    tk_getkeys(input, true);
-  }
+  tinput_may_start_timeout(input);
 }
 
 static void tinput_timer_cb(uv_timer_t *handle)
@@ -860,13 +864,7 @@ static size_t tinput_read_cb(RStream *stream, const char *buf, size_t count_, vo
   // An incomplete sequence was found. Leave it in the raw buffer and wait for
   // the next input.
   if (consumed < count_) {
-    // If 'ttimeout' is not set, start the timer with a timeout of 0 to process
-    // the next input.
-    int64_t ms = input->ttimeout
-                 ? (input->ttimeoutlen >= 0 ? input->ttimeoutlen : 0) : 0;
-    // Stop the current timer if already running
-    uv_timer_stop(&input->timer_handle);
-    uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
+    tinput_may_start_timeout(input);
   }
 
   return consumed;

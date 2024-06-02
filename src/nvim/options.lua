@@ -9740,7 +9740,7 @@ local options = {
         a single <Esc> is assumed. Many TUI cursor key codes start with <Esc>.
 
         On very slow systems this may fail, causing cursor keys not to work
-        sometimes.  If you discover this problem you can ":set ttimeoutlen=9999".
+        sometimes.  If you discover this problem you can ":set nottimeout".
         Nvim will wait for the next character to arrive after an <Esc>.
       ]=],
       full_name = 'ttimeout',

@@ -834,6 +834,49 @@ describe('TUI', function()
     ]])
   end)
 
+  it("'nottimeout' disables timeout for split sequences #29047", function()
+    poke_both_eventloop() -- Make sure startup requests have finished.
+    child_session:request('nvim_set_option_value', 'ttimeout', false, {})
+    -- A very small 'ttimeoutlen' should have no effect with 'nottimeout'.
+    child_session:request('nvim_set_option_value', 'ttimeoutlen', 1, {})
+    feed_data('i')
+    screen:expect([[
+      ^                                                  |
+      {100:~                                                 }|*3
+      {3:[No Name]                                         }|
+      {5:-- INSERT --}                                      |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    -- Split UTF-8 '⌂' character
+    feed_data('\226')
+    screen:expect_unchanged()
+    feed_data('\140')
+    screen:expect_unchanged()
+    feed_data('\130')
+    screen:expect([[
+      ⌂^                                                 |
+      {100:~                                                 }|*3
+      {3:[No Name] [+]                                     }|
+      {5:-- INSERT --}                                      |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    -- Split CSI u escape sequence for Ctrl-X
+    feed_data('\027')
+    screen:expect_unchanged()
+    feed_data('[')
+    screen:expect_unchanged()
+    feed_data('120;')
+    screen:expect_unchanged()
+    feed_data('5u')
+    screen:expect([[
+      ⌂^                                                 |
+      {100:~                                                 }|*3
+      {3:[No Name] [+]                                     }|
+      {5:-- ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)}        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('accepts ASCII control sequences', function()
     feed_data('i')
     feed_data('\022\007') -- ctrl+g
@@ -1901,7 +1944,7 @@ describe('TUI', function()
     expect_child_buf_lines({ expected })
   end)
 
-  it('paste: less-than sign in cmdline  #11088', function()
+  it('paste: less-than sign in cmdline #11088', function()
     local expected = '<'
     feed_data(':')
     wait_for_mode('c')

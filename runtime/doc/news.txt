@@ -115,6 +115,8 @@ LUA
 OPTIONS
 
 • 'shelltemp' defaults to "false".
+• 'nottimeout' now consistently makes Nvim wait indefinitely for a complete
+  sequence instead of sometimes behaving as if 'ttimeoutlen' is 0.
 
 PLUGINS
 
