@@ -386,10 +386,10 @@ end
 --- ```lua
 --- -- GET a url
 --- vim.net.fetch("https://example.com/api/data", {
----   on_complete = function (response)
+---   on_exit = function (err, response)
 ---     -- Lets read the response!
 ---
----     if response.ok then
+---     if not err and response.ok then
 ---       -- Read response text
 ---       local body = response.text()
 ---     end
@@ -405,10 +405,10 @@ end
 ---   headers = {
 ---     Authorization = "Bearer " .. token
 ---   },
----   on_complete = function (response)
+---   on_exit = function (err, response)
 ---     -- Lets read the response!
 ---
----     if response.ok then
+---     if not err and response.ok then
 ---       -- Read JSON response
 ---       local table = response.json()
 ---     else
@@ -496,8 +496,10 @@ end
 --- Example:
 --- ```lua
 --- vim.net.download("https://.../path/file", "~/.cache/download/location", {
----   on_complete = function ()
----     vim.notify("File Downloaded", vim.log.levels.INFO)
+---   on_exit = function (err)
+---     if not err then
+---       vim.notify("File Downloaded", vim.log.levels.INFO)
+---     end
 ---   end
 --- })
 --- ```
