@@ -16,6 +16,7 @@ local id = vim.api.nvim_create_augroup('LuaNetwork', {
 })
 
 vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
+  -- pattern = { 'https://*', 'http://*', 'ftp://*', 'scp://*' },
   pattern = {
     'https://*',
     'http://*',
@@ -39,7 +40,7 @@ vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
 
     vim.net.fetch(file, {
       user = credentials,
-      on_exit = function(err, result)
+      on_exit = vim.schedule_wrap(function(err, result)
         if err then
           return vim.notify(err, vim.logl.levels.ERROR)
         end
@@ -57,12 +58,52 @@ vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
         end
 
         vim.fn.winrestview(view)
-      end,
+      end),
+    })
+  end,
+})
+
+vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
+  -- pattern = { 'scp://*', 'ftp://*' },
+  pattern = {
+    'https://*',
+    'http://*',
+    'ftp://*',
+    'scp://*',
+    'rcp://*',
+    'dav://*',
+    'davs://*',
+    'rsync://*',
+    'sftp://*',
+  },
+  group = id,
+  desc = 'Lua Network Write Handler',
+  ---@param ev _autocmd.Event
+  callback = function(ev)
+    local buf = ev.buf
+
+    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+
+    local path = os.tmpname()
+
+    vim.fn.writefile(lines, path)
+
+    local file, user_pass = vim.net._get_filename_and_credentials(ev.file)
+
+    vim.net.fetch(file, {
+      user = user_pass,
+      upload_file = path,
+      on_exit = vim.schedule_wrap(function()
+        if not vim.o.cpo:find('+') then
+          vim.cmd(':set modified&vim')
+        end
+      end),
     })
   end,
 })
 
 vim.api.nvim_create_autocmd({ 'FileReadCmd' }, {
+  -- pattern = { 'https://*', 'http://*', 'ftp://*', 'scp://*' },
   pattern = {
     'https://*',
     'http://*',
@@ -102,45 +143,8 @@ vim.api.nvim_create_autocmd({ 'FileReadCmd' }, {
   end,
 })
 
-vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
-  pattern = {
-    'https://*',
-    'http://*',
-    'ftp://*',
-    'scp://*',
-    'rcp://*',
-    'dav://*',
-    'davs://*',
-    'rsync://*',
-    'sftp://*',
-  },
-  group = id,
-  desc = 'Lua Network Write Handler',
-  ---@param ev _autocmd.Event
-  callback = function(ev)
-    local buf = ev.buf
-
-    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-
-    local path = os.tmpname()
-
-    vim.fn.writefile(lines, path)
-
-    local file, user_pass = vim.net._get_filename_and_credentials(ev.file)
-
-    vim.net.fetch(file, {
-      user = user_pass,
-      upload_file = path,
-      on_exit = function()
-        if not vim.o.cpo:find('+') then
-          vim.cmd(':set modified&vim')
-        end
-      end,
-    })
-  end,
-})
-
 vim.api.nvim_create_autocmd({ 'FileWriteCmd' }, {
+  -- pattern = { 'scp://*' },
   pattern = {
     'https://*',
     'http://*',

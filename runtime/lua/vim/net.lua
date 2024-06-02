@@ -355,7 +355,8 @@ end
 ---Redirect mode. Defaults to "follow". Possible values are:
 ---  - "follow": Follow all redirects incurred when fetching a resource.
 ---  - "error": Throw an error using on_err or vim.notify when status is 3XX.
----@field redirect "follow"|"error"|nil
+---  - "none": Ignores redirect status.
+---@field redirect "follow"|"error"|"none"|nil
 ---Path to an upload_file. Can be relative.
 ---@field upload_file string|nil
 ---String in "username:password" format. Prefer over passing in url.
@@ -365,18 +366,16 @@ end
 ---@field data string|table<string, any>|nil
 ---Callback when request is completed. May contain an error.
 ---@field on_exit fun(err: string|nil, response: vim.net.Response|nil)|nil
+---Optional path to where the file will be downloaded. If omitted, the response will contain
+---additional metadata
+---@field download_location string|nil
 ---@field _dry boolean|nil
 
 --- Asynchronously make network requests.
 ---
 --- See man://curl for supported protocols. Not all protocols are fully tested.
 ---
---- Please carefully note the option differences with |vim.net.download()|, notably
---- `redirect`.
----
----@see |vim.net.download()|
 ---@see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
----@see |job-control|
 ---@see man://curl
 ---
 ---@param url string The request URL.
@@ -417,6 +416,16 @@ end
 ---     vim.print(response.status)
 ---   end
 --- })
+---
+--- -- Download a file
+--- vim.net.download("https://.../path/file", , {
+---   on_exit = function (err)
+---     download_location = vim.fn.expand("~/.cache/download/location"),
+---     if not err then
+---       vim.notify("File Downloaded", vim.log.levels.INFO)
+---     end
+---   end
+--- })
 --- ```
 function M.fetch(url, opts)
   vim.validate({
@@ -424,12 +433,6 @@ function M.fetch(url, opts)
   })
 
   opts = opts or {}
-
-  -- TODO(TheLeoP): should a different validation be used?
-  -- Ensure that we dont download to a file in fetch()
-  if opts.download_location then
-    opts.download_location = nil
-  end
 
   local args = create_curl_args(url, opts)
 
@@ -455,75 +458,6 @@ function M.fetch(url, opts)
     end
 
     opts.on_exit(nil, res)
-  end)
-end
-
----@class vim.net.download.Opts
----@inlinedoc
----HTTP method to use. Defaults to GET.
----@field method vim.net.HttpMethod|nil
----Headers to set on the request
----@field headers HeaderTable | table<string, string | string[]> | nil
----Redirect mode. Defaults to "follow". Possible values are:
----  - "follow": Follow all redirects incurred when fetching a resource.
----  - "none": Ignores redirect status.
----@field redirect "follow"|"none"|nil
----String in "username:password" format. Prefer over passing in url.
----@field user string|nil
----Data to send with the request. If a table, it will be JSON-encoded. vim.net
----does not currently support form encoding.
----@field data string|table<string, any>|nil
----Callback, may contain an error.
----@field on_exit fun(err: string|nil)|nil
----Path to where the file will be downloaded
----@field download_location string|nil
----@field _dry boolean|nil
-
---- Asynchronously download a file.
---- To read the response metadata, such as headers and body, use |vim.net.fetch()|.
----
---- See man://curl for supported protocols. Not all protocols are fully tested.
----
---- Please carefully note the option differences with |vim.net.fetch()|, notably
---- `redirect`.
----
----@see |vim.net.fetch()|
----@see man://curl
----
----@param url string url
----@param path string A download path, can be relative.
----@param opts vim.net.download.Opts|nil
---- Example:
---- ```lua
---- vim.net.download("https://.../path/file", "~/.cache/download/location", {
----   on_exit = function (err)
----     if not err then
----       vim.notify("File Downloaded", vim.log.levels.INFO)
----     end
----   end
---- })
---- ```
-function M.download(url, path, opts)
-  vim.validate({
-    opts = { opts, 'table', true },
-  })
-
-  opts = opts or {}
-  path = vim.fn.fnameescape(vim.fn.fnamemodify(path, ':p'))
-  opts.download_location = path
-
-  local args = create_curl_args(url, opts)
-
-  if opts._dry then
-    return args
-  end
-
-  local on_exit = opts.on_exit or default_on_exit
-  vim.system(args, { text = true }, function(result)
-    local err = result.stderr ~= ''
-        and ('Failed to download file: %s. Error: %s'):format(url, result.stderr)
-      or nil
-    on_exit(err)
   end)
 end
 
