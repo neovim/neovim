@@ -318,7 +318,7 @@ local function process_stdout(data)
 end
 
 ---@param err string
-local default_on_exit = function(err, response)
+local default_on_exit = function(err)
   if err then
     return vim.notify(err, vim.log.levels.ERROR)
   end
@@ -457,7 +457,7 @@ function M.fetch(url, opts)
       return on_exit(('Fetch redirected to %s'):format(res._raw_write_out.redirect_url))
     end
 
-    opts.on_exit(nil, res)
+    on_exit(nil, res)
   end)
 end
 
