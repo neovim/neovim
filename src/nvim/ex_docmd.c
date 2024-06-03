@@ -1729,12 +1729,6 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   }
 
   const char *errormsg = NULL;
-#undef ERROR
-#define ERROR(msg) \
-  do { \
-    errormsg = msg; \
-    goto end; \
-  } while (0)
 
   cmdmod_T save_cmdmod = cmdmod;
   cmdmod = cmdinfo->cmdmod;
@@ -1745,16 +1739,19 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   if (!MODIFIABLE(curbuf) && (eap->argt & EX_MODIFY)
       // allow :put in terminals
       && !(curbuf->terminal && eap->cmdidx == CMD_put)) {
-    ERROR(_(e_modifiable));
+    errormsg = _(e_modifiable);
+    goto end;
   }
   if (!IS_USER_CMDIDX(eap->cmdidx)) {
     if (cmdwin_type != 0 && !(eap->argt & EX_CMDWIN)) {
       // Command not allowed in the command line window
-      ERROR(_(e_cmdwin));
+      errormsg = _(e_cmdwin);
+      goto end;
     }
     if (text_locked() && !(eap->argt & EX_LOCK_OK)) {
       // Command not allowed when text is locked
-      ERROR(_(get_text_locked_msg()));
+      errormsg = _(get_text_locked_msg());
+      goto end;
     }
   }
   // Disallow editing another buffer when "curbuf->b_ro_locked" is set.
@@ -1802,7 +1799,6 @@ end:
 
   do_cmdline_end();
   return retv;
-#undef ERROR
 }
 
 static void profile_cmd(const exarg_T *eap, cstack_T *cstack, LineGetter fgetline, void *cookie)
@@ -2696,7 +2692,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
 
 /// Apply the command modifiers.  Saves current state in "cmdmod", call
 /// undo_cmdmod() later.
-static void apply_cmdmod(cmdmod_T *cmod)
+void apply_cmdmod(cmdmod_T *cmod)
 {
   if ((cmod->cmod_flags & CMOD_SANDBOX) && !cmod->cmod_did_sandbox) {
     sandbox++;

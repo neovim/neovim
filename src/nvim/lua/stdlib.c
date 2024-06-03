@@ -17,10 +17,13 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
+#include "nvim/eval/window.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
@@ -40,6 +43,7 @@
 #include "nvim/runtime.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
+#include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/stdlib.c.generated.h"
@@ -568,6 +572,99 @@ static int nlua_foldupdate(lua_State *lstate)
   return 0;
 }
 
+static int nlua_with(lua_State *L)
+{
+  int flags = 0;
+  buf_T *buf = NULL;
+  win_T *win = NULL;
+
+#define APPLY_FLAG(key, flag) \
+  if (strequal((key), k) && (v)) { \
+    flags |= (flag); \
+  }
+
+  luaL_argcheck(L, lua_istable(L, 1), 1, "table expected");
+  lua_pushnil(L);  // [dict, ..., nil]
+  while (lua_next(L, 1)) {
+    // [dict, ..., key, value]
+    if (lua_type(L, -2) == LUA_TSTRING) {
+      const char *k = lua_tostring(L, -2);
+      bool v = lua_toboolean(L, -1);
+      if (strequal("buf", k)) { \
+        buf = handle_get_buffer((int)luaL_checkinteger(L, -1));
+      } else if (strequal("win", k)) { \
+        win = handle_get_window((int)luaL_checkinteger(L, -1));
+      } else {
+        APPLY_FLAG("sandbox", CMOD_SANDBOX);
+        APPLY_FLAG("silent", CMOD_SILENT);
+        APPLY_FLAG("emsg_silent", CMOD_ERRSILENT);
+        APPLY_FLAG("unsilent", CMOD_UNSILENT);
+        APPLY_FLAG("noautocmd", CMOD_NOAUTOCMD);
+        APPLY_FLAG("hide", CMOD_HIDE);
+        APPLY_FLAG("keepalt", CMOD_KEEPALT);
+        APPLY_FLAG("keepmarks", CMOD_KEEPMARKS);
+        APPLY_FLAG("keepjumps", CMOD_KEEPJUMPS);
+        APPLY_FLAG("lockmarks", CMOD_LOCKMARKS);
+        APPLY_FLAG("keeppatterns", CMOD_KEEPPATTERNS);
+      }
+    }
+    // pop the value; lua_next will pop the key.
+    lua_pop(L, 1);  // [dict, ..., key]
+  }
+  int status = 0;
+  int rets = 0;
+
+  cmdmod_T save_cmdmod = cmdmod;
+  cmdmod.cmod_flags = flags;
+  apply_cmdmod(&cmdmod);
+
+  if (buf || win) {
+    try_start();
+  }
+
+  aco_save_T aco;
+  win_execute_T win_execute_args;
+  Error err = ERROR_INIT;
+
+  if (win) {
+    tabpage_T *tabpage = win_find_tabpage(win);
+    if (!win_execute_before(&win_execute_args, win, tabpage)) {
+      goto end;
+    }
+  } else if (buf) {
+    aucmd_prepbuf(&aco, buf);
+  }
+
+  int s = lua_gettop(L);
+  lua_pushvalue(L, 2);
+  status = lua_pcall(L, 0, LUA_MULTRET, 0);
+  rets = lua_gettop(L) - s;
+
+  if (win) {
+    win_execute_after(&win_execute_args);
+  } else if (buf) {
+    aucmd_restbuf(&aco);
+  }
+
+end:
+  if (buf || win) {
+    try_end(&err);
+  }
+
+  undo_cmdmod(&cmdmod);
+  cmdmod = save_cmdmod;
+
+  if (status) {
+    return lua_error(L);
+  } else if (ERROR_SET(&err)) {
+    nlua_push_errstr(L, "%s", err.msg);
+    api_clear_error(&err);
+    return lua_error(L);
+  }
+
+  return rets;
+}
+
 // Access to internal functions. For use in runtime/
 static void nlua_state_add_internal(lua_State *const lstate)
 {
@@ -582,6 +679,9 @@ static void nlua_state_add_internal(lua_State *const lstate)
   // _updatefolds
   lua_pushcfunction(lstate, &nlua_foldupdate);
   lua_setfield(lstate, -2, "_foldupdate");
+
+  lua_pushcfunction(lstate, &nlua_with);
+  lua_setfield(lstate, -2, "_with_c");
 }
 
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)

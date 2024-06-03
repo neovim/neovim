@@ -194,14 +194,9 @@ local function toggle_lines(line_start, line_end, ref_position)
   -- - Debatable for highlighting in text area (like LSP semantic tokens).
   --   Mostly because it causes flicker as highlighting is preserved during
   --   comment toggling.
-  package.loaded['vim._comment']._lines = vim.tbl_map(f, lines)
-  local lua_cmd = string.format(
-    'vim.api.nvim_buf_set_lines(0, %d, %d, false, package.loaded["vim._comment"]._lines)',
-    line_start - 1,
-    line_end
-  )
-  vim.cmd.lua({ lua_cmd, mods = { lockmarks = true } })
-  package.loaded['vim._comment']._lines = nil
+  vim._with({ lockmarks = true }, function()
+    vim.api.nvim_buf_set_lines(0, line_start - 1, line_end, false, vim.tbl_map(f, lines))
+  end)
 end
 
 --- Operator which toggles user-supplied range of lines
