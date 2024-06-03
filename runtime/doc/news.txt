@@ -113,6 +113,7 @@ LSP
 
 • Completion side effects (including snippet expansion, execution of commands
   and application of additional text edits) is now built-in.
+• |vim.lsp.util.locations_to_items()| sets `end_col` and `end_lnum` fields.
 
 LUA
 

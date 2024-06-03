@@ -1721,7 +1721,9 @@ end)
 ---@inlinedoc
 ---@field filename string
 ---@field lnum integer 1-indexed line number
+---@field end_lnum integer 1-indexed end line number
 ---@field col integer 1-indexed column
+---@field end_col integer 1-indexed end column
 ---@field text string
 ---@field user_data lsp.Location|lsp.LocationLink
 
@@ -1748,7 +1750,7 @@ function M.locations_to_items(locations, offset_encoding)
   end
 
   local items = {}
-  ---@type table<string, {start: lsp.Position, location: lsp.Location|lsp.LocationLink}[]>
+  ---@type table<string, {start: lsp.Position, end: lsp.Position, location: lsp.Location|lsp.LocationLink}[]>
   local grouped = setmetatable({}, {
     __index = function(t, k)
       local v = {}
@@ -1760,7 +1762,7 @@ function M.locations_to_items(locations, offset_encoding)
     -- locations may be Location or LocationLink
     local uri = d.uri or d.targetUri
     local range = d.range or d.targetSelectionRange
-    table.insert(grouped[uri], { start = range.start, location = d })
+    table.insert(grouped[uri], { start = range.start, ['end'] = range['end'], location = d })
   end
 
   ---@type string[]
@@ -1775,6 +1777,9 @@ function M.locations_to_items(locations, offset_encoding)
     local line_numbers = {}
     for _, temp in ipairs(rows) do
       table.insert(line_numbers, temp.start.line)
+      if temp.start.line ~= temp['end'].line then
+        table.insert(line_numbers, temp['end'].line)
+      end
     end
 
     -- get all the lines for this uri
@@ -1782,13 +1787,18 @@ function M.locations_to_items(locations, offset_encoding)
 
     for _, temp in ipairs(rows) do
       local pos = temp.start
+      local end_pos = temp['end']
       local row = pos.line
+      local end_row = end_pos.line
       local line = lines[row] or ''
       local col = M._str_byteindex_enc(line, pos.character, offset_encoding)
+      local end_col = M._str_byteindex_enc(lines[end_row] or '', end_pos.character, offset_encoding)
       table.insert(items, {
         filename = filename,
         lnum = row + 1,
+        end_lnum = end_row + 1,
         col = col + 1,
+        end_col = end_col + 1,
         text = line,
         user_data = temp.location,
       })
