@@ -656,7 +656,7 @@ func Test_aff_file_format_error()
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Different combining flag in continued affix block in Xtest.aff line 3', output)
 
-  " Try to reuse a affix used for BAD flag
+  " Try to reuse an affix used for BAD flag
   call writefile(['BAD x', 'PFX x Y 1', 'PFX x 0 re x'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST in Xtest.aff line 2: x', output)

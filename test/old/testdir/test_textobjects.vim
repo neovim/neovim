@@ -232,7 +232,7 @@ func Test_empty_html_tag()
   normal 0f<vitsaaa
   call assert_equal('aaa', getline(1))
 
-  " selecting a tag block in an non-empty blank line should fail
+  " selecting a tag block in a non-empty blank line should fail
   call setline(1, '    ')
   call assert_beeps('normal $vaty')
 

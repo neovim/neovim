@@ -524,7 +524,7 @@ func Test_Backtrace_Through_Source()
 
   call RunDbgCmd( buf, 'down', [ 'frame is zero' ] )
 
-  " step until we have another meaninfgul trace
+  " step until we have another meaningful trace
   call RunDbgCmd(buf, 'step', ['line 5: func File2Function()'])
   call RunDbgCmd(buf, 'step', ['line 9: call File2Function()'])
   call RunDbgCmd(buf, 'backtrace', [
@@ -611,7 +611,7 @@ func Test_Backtrace_Autocmd()
                 \ ['cmd: doautocmd User TestGlobalFunction'])
   call RunDbgCmd(buf, 'step', ['cmd: call GlobalFunction() | echo "Done"'])
 
-  " At this point the ontly thing in the stack is the autocommand
+  " At this point the only thing in the stack is the autocommand
   call RunDbgCmd(buf, 'backtrace', [
         \ '>backtrace',
         \ '->0 User Autocommands for "TestGlobalFunction"',
@@ -741,7 +741,7 @@ func Test_Backtrace_Autocmd()
 
   call RunDbgCmd( buf, 'down', [ 'frame is zero' ] )
 
-  " step until we have another meaninfgul trace
+  " step until we have another meaningful trace
   call RunDbgCmd(buf, 'step', ['line 5: func File2Function()'])
   call RunDbgCmd(buf, 'step', ['line 9: call File2Function()'])
   call RunDbgCmd(buf, 'backtrace', [
@@ -867,7 +867,7 @@ func Test_Backtrace_CmdLine()
   call CheckDbgOutput(buf, ['command line',
                             \ 'cmd: call GlobalFunction()'], #{msec: 5000})
 
-  " At this point the ontly thing in the stack is the cmdline
+  " At this point the only thing in the stack is the cmdline
   call RunDbgCmd(buf, 'backtrace', [
         \ '>backtrace',
         \ '->0 command line',
@@ -1285,7 +1285,7 @@ func Test_debug_backtrace_level()
         \ #{ match: 'pattern' } )
 
   " Expression evaluation in the script frame (not the function frame)
-  " FIXME: Unexpected in this scope (a: should not be visibnle)
+  " FIXME: Unexpected in this scope (a: should not be visible)
   call RunDbgCmd(buf, 'echo a:arg', [ 'arg1' ] )
   call RunDbgCmd(buf, 'echo s:file1_var', [ 'file1' ] )
   call RunDbgCmd(buf, 'echo g:global_var', [ 'global' ] )

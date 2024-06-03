@@ -1732,7 +1732,7 @@ func Test_cmdheight()
   set cmdheight&
 endfunc
 
-" To specify a control character as a option value, '^' can be used
+" To specify a control character as an option value, '^' can be used
 func Test_opt_control_char()
   set wildchar=^v
   call assert_equal("\<C-V>", nr2char(&wildchar))
