@@ -2690,7 +2690,7 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
         *p++ = '\r';
       }
       memcpy(p, s, (size_t)len);
-      *(p + len) = '\0';
+      *(p + len) = NUL;
       if (info_message) {
         printf("%s", buf);
       } else {

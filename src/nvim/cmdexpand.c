@@ -3075,7 +3075,7 @@ static void *call_user_expand_func(user_expand_func_T user_expand_func, expand_T
   typval_T args[4];
   const sctx_T save_current_sctx = current_sctx;
 
-  if (xp->xp_arg == NULL || xp->xp_arg[0] == '\0' || xp->xp_line == NULL) {
+  if (xp->xp_arg == NULL || xp->xp_arg[0] == NUL || xp->xp_line == NULL) {
     return NULL;
   }
 

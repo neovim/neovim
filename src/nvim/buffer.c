@@ -4208,7 +4208,7 @@ int buf_open_scratch(handle_T bufnr, char *bufname)
 
 bool buf_is_empty(buf_T *buf)
 {
-  return buf->b_ml.ml_line_count == 1 && *ml_get_buf(buf, 1) == '\0';
+  return buf->b_ml.ml_line_count == 1 && *ml_get_buf(buf, 1) == NUL;
 }
 
 /// Increment b:changedtick value

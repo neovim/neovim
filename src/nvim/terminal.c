@@ -845,7 +845,7 @@ void terminal_paste(int count, char **y_array, size_t y_size)
       }
       char *dst = buff;
       char *src = y_array[j];
-      while (*src != '\0') {
+      while (*src != NUL) {
         len = (size_t)utf_ptr2len(src);
         int c = utf_ptr2char(src);
         if (!is_filter_char(c)) {

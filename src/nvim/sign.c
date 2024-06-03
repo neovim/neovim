@@ -292,8 +292,8 @@ static void sign_list_placed(buf_T *rbuf, char *group)
         qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_row_cmp);
 
         for (size_t i = 0; i < kv_size(signs); i++) {
-          namebuf[0] = '\0';
-          groupbuf[0] = '\0';
+          namebuf[0] = NUL;
+          groupbuf[0] = NUL;
           MTKey mark = kv_A(signs, i);
 
           DecorSignHighlight *sh = decor_find_sign(mt_decor(mark));
@@ -498,7 +498,7 @@ static void sign_list_by_name(char *name)
 static int sign_place(uint32_t *id, char *group, char *name, buf_T *buf, linenr_T lnum, int prio)
 {
   // Check for reserved character '*' in group name
-  if (group != NULL && (*group == '*' || *group == '\0')) {
+  if (group != NULL && (*group == '*' || *group == NUL)) {
     return FAIL;
   }
 
@@ -649,14 +649,14 @@ static void sign_place_cmd(buf_T *buf, linenr_T lnum, char *name, int id, char *
     //   :sign place
     //   :sign place group={group}
     //   :sign place group=*
-    if (lnum >= 0 || name != NULL || (group != NULL && *group == '\0')) {
+    if (lnum >= 0 || name != NULL || (group != NULL && *group == NUL)) {
       emsg(_(e_invarg));
     } else {
       sign_list_placed(buf, group);
     }
   } else {
     // Place a new sign
-    if (name == NULL || buf == NULL || (group != NULL && *group == '\0')) {
+    if (name == NULL || buf == NULL || (group != NULL && *group == NUL)) {
       emsg(_(e_invarg));
       return;
     }
@@ -668,7 +668,7 @@ static void sign_place_cmd(buf_T *buf, linenr_T lnum, char *name, int id, char *
 /// ":sign unplace" command
 static void sign_unplace_cmd(buf_T *buf, linenr_T lnum, const char *name, int id, char *group)
 {
-  if (lnum >= 0 || name != NULL || (group != NULL && *group == '\0')) {
+  if (lnum >= 0 || name != NULL || (group != NULL && *group == NUL)) {
     emsg(_(e_invarg));
     return;
   }
@@ -695,7 +695,7 @@ static void sign_jump_cmd(buf_T *buf, linenr_T lnum, const char *name, int id, c
     return;
   }
 
-  if (buf == NULL || (group != NULL && *group == '\0') || lnum >= 0 || name != NULL) {
+  if (buf == NULL || (group != NULL && *group == NUL) || lnum >= 0 || name != NULL) {
     // File or buffer is not specified or an empty group is used
     // or a line number or a sign name is specified.
     emsg(_(e_invarg));
@@ -1316,7 +1316,7 @@ void f_sign_getplaced(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         if (group == NULL) {
           return;
         }
-        if (*group == '\0') {  // empty string means global group
+        if (*group == NUL) {  // empty string means global group
           group = NULL;
         }
       }

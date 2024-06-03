@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "nvim/ascii_defs.h"
 #include "nvim/memory.h"
 #include "nvim/sha256.h"
 
@@ -279,7 +280,7 @@ const char *sha256_bytes(const uint8_t *restrict buf,  size_t buf_len, const uin
   for (size_t j = 0; j < SHA256_SUM_SIZE; j++) {
     snprintf(hexit + j * SHA_STEP, SHA_STEP + 1, "%02x", sha256sum[j]);
   }
-  hexit[sizeof(hexit) - 1] = '\0';
+  hexit[sizeof(hexit) - 1] = NUL;
   return hexit;
 }
 
@@ -340,7 +341,7 @@ bool sha256_self_test(void)
 
     if (memcmp(output, sha_self_test_vector[i], SHA256_BUFFER_SIZE) != 0) {
       failures = true;
-      output[sizeof(output) - 1] = '\0';
+      output[sizeof(output) - 1] = NUL;
 
       // printf("sha256_self_test %d failed %s\n", i, output);
     }

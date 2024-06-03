@@ -580,7 +580,7 @@ static void uc_list(char *name, size_t name_len)
         IObuff[len++] = ' ';
       } while ((int64_t)len < 25 - over);
 
-      IObuff[len] = '\0';
+      IObuff[len] = NUL;
       msg_outtrans(IObuff, 0);
 
       if (cmd->uc_luaref != LUA_NOREF) {
@@ -831,7 +831,7 @@ invalid_count:
       }
     } else {
       char ch = attr[len];
-      attr[len] = '\0';
+      attr[len] = NUL;
       semsg(_("E181: Invalid attribute: %s"), attr);
       attr[len] = ch;
       return FAIL;
@@ -1364,7 +1364,7 @@ size_t uc_mods(char *buf, const cmdmod_T *cmod, bool quote)
     if (quote) {
       *buf++ = '"';
     }
-    *buf = '\0';
+    *buf = NUL;
   }
 
   // the modifiers that are simple flags

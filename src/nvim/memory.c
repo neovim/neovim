@@ -203,7 +203,7 @@ void *xmallocz(size_t size)
   }
 
   void *ret = xmalloc(total_size);
-  ((char *)ret)[size] = '\0';
+  ((char *)ret)[size] = NUL;
 
   return ret;
 }
@@ -233,7 +233,7 @@ void *xmemcpyz(void *dst, const void *src, size_t len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   memcpy(dst, src, len);
-  ((char *)dst)[len] = '\0';
+  ((char *)dst)[len] = NUL;
   return dst;
 }
 
@@ -241,7 +241,7 @@ void *xmemcpyz(void *dst, const void *src, size_t len)
 size_t xstrnlen(const char *s, size_t n)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  const char *end = memchr(s, '\0', n);
+  const char *end = memchr(s, NUL, n);
   if (end == NULL) {
     return n;
   }
@@ -288,7 +288,7 @@ void *xmemscan(const void *addr, char c, size_t size)
 void strchrsub(char *str, char c, char x)
   FUNC_ATTR_NONNULL_ALL
 {
-  assert(c != '\0');
+  assert(c != NUL);
   while ((str = strchr(str, c))) {
     *str++ = x;
   }
@@ -388,7 +388,7 @@ char *xstpcpy(char *restrict dst, const char *restrict src)
 char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  const char *p = memchr(src, '\0', maxlen);
+  const char *p = memchr(src, NUL, maxlen);
   if (p) {
     size_t srclen = (size_t)(p - src);
     memcpy(dst, src, srclen);
@@ -420,7 +420,7 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t dsize)
   if (dsize) {
     size_t len = MIN(slen, dsize - 1);
     memcpy(dst, src, len);
-    dst[len] = '\0';
+    dst[len] = NUL;
   }
 
   return slen;  // Does not include NUL.
@@ -450,7 +450,7 @@ size_t xstrlcat(char *const dst, const char *const src, const size_t dsize)
 
   if (slen > dsize - dlen - 1) {
     memmove(dst + dlen, src, dsize - dlen - 1);
-    dst[dsize - 1] = '\0';
+    dst[dsize - 1] = NUL;
   } else {
     memmove(dst + dlen, src, slen + 1);
   }
@@ -510,7 +510,7 @@ char *xstrndup(const char *str, size_t len)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
   FUNC_ATTR_NONNULL_ALL
 {
-  char *p = memchr(str, '\0', len);
+  char *p = memchr(str, NUL, len);
   return xmemdupz(str, p ? (size_t)(p - str) : len);
 }
 

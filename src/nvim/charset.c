@@ -1470,7 +1470,7 @@ start:
         *dst++ = *p++;
       }
     }
-    *dst = '\0';
+    *dst = NUL;
   }
 }
 
@@ -1492,6 +1492,6 @@ char *backslash_halve_save(const char *p)
       *dst++ = *p++;
     }
   }
-  *dst = '\0';
+  *dst = NUL;
   return res;
 }
