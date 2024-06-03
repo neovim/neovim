@@ -502,6 +502,11 @@ function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
     should_check_version = false
   end
 
+  -- changedtick increases on save but server only receives version updates
+  -- on line changes (via didChange)
+  -- This allows a gap of 1 to account for the servers outdated view
+  local version_offset = vim.b[bufnr].modified and 0 or 1
+
   -- `VersionedTextDocumentIdentifier`s version may be null
   --  https://microsoft.github.io/language-server-protocol/specification#versionedTextDocumentIdentifier
   if
@@ -509,7 +514,7 @@ function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
     and (
       text_document.version
       and text_document.version > 0
-      and vim.b[bufnr].changedtick > text_document.version
+      and vim.b[bufnr].changedtick > (text_document.version + version_offset)
     )
   then
     print('Buffer ', text_document.uri, ' newer than edits.')
