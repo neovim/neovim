@@ -112,7 +112,7 @@ sudo rm -rf /opt/nvim
 sudo tar -C /opt -xzf nvim-linux64.tar.gz
 ```
 
-After this step add this to `~/.bashrc` (or the rc of your shell):
+Then add this to your shell config (`~/.bashrc`, `~/. zshrc`, ...):
 
     export PATH="$PATH:/opt/nvim-linux64/bin"
 
