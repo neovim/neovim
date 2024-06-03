@@ -181,7 +181,7 @@ function M._get_url()
   end
 
   local old_isfname = vim.o.isfname
-  vim.cmd [[set isfname+=@-@]]
+  vim.opt.isfname:append('@')
   local url = vim.fn.expand('<cfile>')
   vim.o.isfname = old_isfname
 
