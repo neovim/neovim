@@ -1139,4 +1139,82 @@ function vim._defer_require(root, mod)
   })
 end
 
+--- @nodoc
+--- @class vim.context.mods
+--- @field buf? integer
+--- @field emsg_silent? boolean
+--- @field hide? boolean
+--- @field horizontal? boolean
+--- @field keepalt? boolean
+--- @field keepjumps? boolean
+--- @field keepmarks? boolean
+--- @field keeppatterns? boolean
+--- @field lockmarks? boolean
+--- @field noautocmd? boolean
+--- @field options? table<string, any>
+--- @field sandbox? boolean
+--- @field silent? boolean
+--- @field unsilent? boolean
+--- @field win? integer
+
+--- Executes function `f` with the given context specification.
+---
+--- @param context vim.context.mods
+function vim._with(context, f)
+  vim.validate('context', context, 'table')
+  vim.validate('f', f, 'function')
+
+  vim.validate('context.buf', context.buf, 'number', true)
+  vim.validate('context.emsg_silent', context.emsg_silent, 'boolean', true)
+  vim.validate('context.hide', context.hide, 'boolean', true)
+  vim.validate('context.horizontal', context.horizontal, 'boolean', true)
+  vim.validate('context.keepalt', context.keepalt, 'boolean', true)
+  vim.validate('context.keepjumps', context.keepjumps, 'boolean', true)
+  vim.validate('context.keepmarks', context.keepmarks, 'boolean', true)
+  vim.validate('context.keeppatterns', context.keeppatterns, 'boolean', true)
+  vim.validate('context.lockmarks', context.lockmarks, 'boolean', true)
+  vim.validate('context.noautocmd', context.noautocmd, 'boolean', true)
+  vim.validate('context.options', context.options, 'table', true)
+  vim.validate('context.sandbox', context.sandbox, 'boolean', true)
+  vim.validate('context.silent', context.silent, 'boolean', true)
+  vim.validate('context.unsilent', context.unsilent, 'boolean', true)
+  vim.validate('context.win', context.win, 'number', true)
+
+  -- Check buffer exists
+  if context.buf then
+    if not vim.api.nvim_buf_is_valid(context.buf) then
+      error('Invalid buffer id: ' .. context.buf)
+    end
+  end
+
+  -- Check window exists
+  if context.win then
+    if not vim.api.nvim_win_is_valid(context.win) then
+      error('Invalid window id: ' .. context.win)
+    end
+  end
+
+  -- Store original options
+  local previous_options ---@type table<string, any>
+  if context.options then
+    previous_options = {}
+    for k, v in pairs(context.options) do
+      previous_options[k] =
+        vim.api.nvim_get_option_value(k, { win = context.win, buf = context.buf })
+      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf })
+    end
+  end
+
+  local retval = { vim._with_c(context, f) }
+
+  -- Restore original options
+  if previous_options then
+    for k, v in pairs(previous_options) do
+      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf })
+    end
+  end
+
+  return unpack(retval)
+end
+
 return vim
