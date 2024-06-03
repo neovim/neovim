@@ -4,6 +4,7 @@
 #include <string.h>
 #include <uv.h>
 
+#include "nvim/ascii_defs.h"
 #include "nvim/channel.h"
 #include "nvim/eval.h"
 #include "nvim/event/defs.h"
