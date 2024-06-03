@@ -549,8 +549,7 @@ endfunc
 func Test_bg_detection()
   CheckNotGui
 
-  " auto-detection of &bg, make sure sure it isn't set anywhere before
-  " this test
+  " auto-detection of &bg, make sure it isn't set anywhere before this test
   hi Normal ctermbg=0
   call assert_equal('dark', &bg)
   hi Normal ctermbg=4

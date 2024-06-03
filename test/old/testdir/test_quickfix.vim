@@ -4353,11 +4353,9 @@ endfunc
 " Test for shortening/simplifying the file name when opening the
 " quickfix window or when displaying the quickfix list
 func Test_shorten_fname()
-  if !has('unix')
-    return
-  endif
+  CheckUnix
   %bwipe
-  " Create a quickfix list with a absolute path filename
+  " Create a quickfix list with an absolute path filename
   let fname = getcwd() . '/test_quickfix.vim'
   call setqflist([], ' ', {'lines':[fname . ":20:Line20"], 'efm':'%f:%l:%m'})
   call assert_equal(fname, bufname('test_quickfix.vim'))
@@ -4366,7 +4364,7 @@ func Test_shorten_fname()
   call assert_equal('test_quickfix.vim', bufname('test_quickfix.vim'))
   cclose
   %bwipe
-  " Create a quickfix list with a absolute path filename
+  " Create a quickfix list with an absolute path filename
   call setqflist([], ' ', {'lines':[fname . ":20:Line20"], 'efm':'%f:%l:%m'})
   call assert_equal(fname, bufname('test_quickfix.vim'))
   " Displaying the quickfix list should simplify the file path

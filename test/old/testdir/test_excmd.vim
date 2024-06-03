@@ -665,7 +665,7 @@ func Sandbox_tests()
   if has('clientserver')
     call assert_fails('let s=remote_expr("gvim", "2+2")', 'E48:')
     if !has('win32')
-      " remote_foreground() doesn't thrown an error message on MS-Windows
+      " remote_foreground() doesn't throw an error message on MS-Windows
       call assert_fails('call remote_foreground("gvim")', 'E48:')
     endif
     call assert_fails('let s=remote_peek("gvim")', 'E48:')

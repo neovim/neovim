@@ -276,7 +276,7 @@ func Test_diffget_diffput_empty_buffer()
 endfunc
 
 " :diffput and :diffget completes names of buffers which
-" are in diff mode and which are different then current buffer.
+" are in diff mode and which are different than current buffer.
 " No completion when the current window is not in diff mode.
 func Test_diffget_diffput_completion()
   e            Xdiff1 | diffthis
@@ -679,7 +679,7 @@ func Test_diffexpr()
   call assert_notequal(normattr, screenattr(3, 1))
   diffoff!
 
-  " Try using an non-existing function for 'diffexpr'.
+  " Try using a non-existing function for 'diffexpr'.
   set diffexpr=NewDiffFunc()
   call assert_fails('windo diffthis', ['E117:', 'E97:'])
   diffoff!

@@ -53,7 +53,7 @@ func Test_flatten()
   call test_garbagecollect_now()
   call assert_equal([1, 2, 3], l:list)
 
-  " Tests for checking circular reference list can be flatten.
+  " Tests for checking circular reference list can be flattened.
   let l:x = [1]
   let l:y = [x]
   let l:z = flatten(l:y)
