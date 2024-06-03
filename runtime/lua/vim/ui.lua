@@ -179,7 +179,13 @@ function M._get_url()
       current_node = current_node:parent()
     end
   end
-  return vim.fn.expand('<cfile>')
+
+  local old_isfname = vim.o.isfname
+  vim.cmd [[set isfname+=@-@]]
+  local url = vim.fn.expand('<cfile>')
+  vim.o.isfname = old_isfname
+
+  return url
 end
 
 return M
