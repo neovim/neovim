@@ -349,7 +349,7 @@ function M._convert_results(
   return matches, server_start_boundary
 end
 
---- @param clients table<integer, vim.lsp.Client>
+--- @param clients table<integer, vim.lsp.Client> # keys != client_id
 --- @param bufnr integer
 --- @param win integer
 --- @param callback fun(responses: table<integer, { err: lsp.ResponseError, result: vim.lsp.CompletionResult }>)
@@ -359,7 +359,8 @@ local function request(clients, bufnr, win, callback)
   local request_ids = {} --- @type table<integer, integer>
   local remaining_requests = vim.tbl_count(clients)
 
-  for client_id, client in pairs(clients) do
+  for _, client in pairs(clients) do
+    local client_id = client.id
     local params = lsp.util.make_position_params(win, client.offset_encoding)
     local ok, request_id = client.request(ms.textDocument_completion, params, function(err, result)
       responses[client_id] = { err = err, result = result }
