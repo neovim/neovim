@@ -35,7 +35,7 @@ bool terminfo_is_term_family(const char *term, const char *family)
          // The screen terminfo may have a terminal name like screen.xterm. By making
          // the dot(.) a valid separator, such terminal names will also be the
          // terminal family of the screen.
-         && ('\0' == term[flen] || '-' == term[flen] || '.' == term[flen]);
+         && (NUL == term[flen] || '-' == term[flen] || '.' == term[flen]);
 }
 
 bool terminfo_is_bsd_console(const char *term)

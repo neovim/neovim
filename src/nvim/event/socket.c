@@ -35,7 +35,7 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
   if (host_end && addr != host_end) {
     // Split user specified address into two strings, addr(hostname) and port.
     // The port part in watcher->addr will be updated later.
-    *host_end = '\0';
+    *host_end = NUL;
     char *port = host_end + 1;
     intmax_t iport;
 

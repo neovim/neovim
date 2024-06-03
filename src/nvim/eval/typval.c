@@ -1824,7 +1824,7 @@ char *callback_to_string(Callback *cb, Arena *arena)
     snprintf(msg, msglen, "<vim partial: %s>", cb->data.partial->pt_name);
     break;
   default:
-    *msg = '\0';
+    *msg = NUL;
     break;
   }
   return msg;

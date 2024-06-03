@@ -104,12 +104,12 @@ void ex_trust(exarg_T *eap)
     action = "deny";
   } else if (strcmp(arg1, "++remove") == 0) {
     action = "remove";
-  } else if (*arg1 != '\0') {
+  } else if (*arg1 != NUL) {
     semsg(e_invarg2, arg1);
     goto theend;
   }
 
-  if (path[0] == '\0') {
+  if (path[0] == NUL) {
     path = NULL;
   }
 

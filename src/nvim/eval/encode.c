@@ -855,7 +855,7 @@ char *encode_tv2string(typval_T *tv, size_t *len)
   if (len != NULL) {
     *len = (size_t)ga.ga_len;
   }
-  ga_append(&ga, '\0');
+  ga_append(&ga, NUL);
   return (char *)ga.ga_data;
 }
 
@@ -883,7 +883,7 @@ char *encode_tv2echo(typval_T *tv, size_t *len)
   if (len != NULL) {
     *len = (size_t)ga.ga_len;
   }
-  ga_append(&ga, '\0');
+  ga_append(&ga, NUL);
   return (char *)ga.ga_data;
 }
 
@@ -908,7 +908,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
   if (len != NULL) {
     *len = (size_t)ga.ga_len;
   }
-  ga_append(&ga, '\0');
+  ga_append(&ga, NUL);
   return (char *)ga.ga_data;
 }
 

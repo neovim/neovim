@@ -109,7 +109,7 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
     // redir usually (except :echon) prepends a newline.
     if (s.data[0] == '\n') {
       memmove(s.data, s.data + 1, s.size - 1);
-      s.data[s.size - 1] = '\0';
+      s.data[s.size - 1] = NUL;
       s.size = s.size - 1;
     }
     return s;  // Caller will free the memory.

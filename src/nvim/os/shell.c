@@ -648,13 +648,13 @@ char *shell_argv_to_str(char **const argv)
     p++;
   }
   if (n < maxsize) {
-    rv[n - 1] = '\0';
+    rv[n - 1] = NUL;
   } else {
     // Command too long, show ellipsis: "/bin/bash 'foo' 'bar'..."
     rv[maxsize - 4] = '.';
     rv[maxsize - 3] = '.';
     rv[maxsize - 2] = '.';
-    rv[maxsize - 1] = '\0';
+    rv[maxsize - 1] = NUL;
   }
   return rv;
 }
@@ -861,7 +861,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
 {
   out_data_decide_throttle(0);  // Initialize throttle decider.
   out_data_ring(NULL, 0);       // Initialize output ring-buffer.
-  bool has_input = (input != NULL && input[0] != '\0');
+  bool has_input = (input != NULL && input[0] != NUL);
 
   // the output buffer
   DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
@@ -1024,7 +1024,7 @@ static bool out_data_decide_throttle(size_t size)
   static uint64_t started = 0;  // Start time of the current throttle.
   static size_t received = 0;  // Bytes observed since last throttle.
   static size_t visit = 0;  // "Pulse" count of the current throttle.
-  static char pulse_msg[] = { ' ', ' ', ' ', '\0' };
+  static char pulse_msg[] = { ' ', ' ', ' ', NUL };
 
   if (!size) {
     bool previous_decision = (visit > 0);

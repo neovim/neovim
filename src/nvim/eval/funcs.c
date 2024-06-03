@@ -4318,7 +4318,7 @@ static dict_T *create_environment(const dictitem_T *job_env, const bool clear_en
 
   // Set $NVIM (in the child process) to v:servername. #3118
   char *nvim_addr = get_vim_var_str(VV_SEND_SERVER);
-  if (nvim_addr[0] != '\0') {
+  if (nvim_addr[0] != NUL) {
     dictitem_T *dv = tv_dict_find(env, S_LEN("NVIM"));
     if (dv) {
       tv_dict_item_remove(env, dv);
@@ -9174,13 +9174,13 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   size_t len = home_replace(NULL, NameBuff, IObuff, sizeof(IObuff), true);
   // Trim slash.
   if (len != 1 && (IObuff[len - 1] == '\\' || IObuff[len - 1] == '/')) {
-    IObuff[len - 1] = '\0';
+    IObuff[len - 1] = NUL;
   }
 
   if (len == 1 && IObuff[0] == '/') {
     // Avoid ambiguity in the URI when CWD is root directory.
     IObuff[1] = '.';
-    IObuff[2] = '\0';
+    IObuff[2] = NUL;
   }
 
   // Terminal URI: "term://$CWD//$PID:$CMD"

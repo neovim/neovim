@@ -279,7 +279,7 @@ static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position
 
   memcpy(buf, line + position.column, tocopy);
   // Translate embedded \n to NUL
-  memchrsub(buf, '\n', '\0', tocopy);
+  memchrsub(buf, '\n', NUL, tocopy);
   *bytes_read = (uint32_t)tocopy;
   if (tocopy < BUFSIZE) {
     // now add the final \n. If it didn't fit, input_cb will be called again
