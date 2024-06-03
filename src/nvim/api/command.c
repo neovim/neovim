@@ -193,7 +193,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   } else {
     nargs[0] = '0';
   }
-  nargs[1] = '\0';
+  nargs[1] = NUL;
   PUT_KEY(result, cmd, nargs, CSTR_TO_ARENA_OBJ(arena, nargs));
 
   char *addr;
@@ -391,7 +391,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
       case kObjectTypeBoolean:
         data_str = arena_alloc(arena, 2, false);
         data_str[0] = elem.data.boolean ? '1' : '0';
-        data_str[1] = '\0';
+        data_str[1] = NUL;
         ADD_C(args, CSTR_AS_OBJ(data_str));
         break;
       case kObjectTypeBuffer:

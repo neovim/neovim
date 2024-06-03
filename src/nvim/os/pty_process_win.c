@@ -399,7 +399,7 @@ static int build_env_block(dict_T *denv, wchar_t **env_block)
     QUEUE_INSERT_TAIL(&env_q, &env_node->node);
   }
 
-  // Additional '\0' after the final entry
+  // Additional NUL after the final entry
   env_block_len++;
 
   *env_block = xmalloc(sizeof(**env_block) * env_block_len);

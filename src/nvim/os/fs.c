@@ -302,7 +302,7 @@ static bool is_executable_ext(const char *name, char **abspath)
   char *nameext = strrchr(name, '.');
   size_t nameext_len = nameext ? strlen(nameext) : 0;
   xstrlcpy(os_buf, name, sizeof(os_buf));
-  char *buf_end = xstrchrnul(os_buf, '\0');
+  char *buf_end = xstrchrnul(os_buf, NUL);
   const char *pathext = os_getenv("PATHEXT");
   if (!pathext) {
     pathext = ".com;.exe;.bat;.cmd";
@@ -310,7 +310,7 @@ static bool is_executable_ext(const char *name, char **abspath)
   const char *ext = pathext;
   while (*ext) {
     // If $PATHEXT itself contains dot:
-    if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ENV_SEPCHAR)) {
+    if (ext[0] == '.' && (ext[1] == NUL || ext[1] == ENV_SEPCHAR)) {
       if (is_executable(name, abspath)) {
         return true;
       }
@@ -436,7 +436,7 @@ FILE *os_fopen(const char *path, const char *flags)
   assert(flags != NULL && strlen(flags) > 0 && strlen(flags) <= 2);
   int iflags = 0;
   // Per table in fopen(3) manpage.
-  if (flags[1] == '\0' || flags[1] == 'b') {
+  if (flags[1] == NUL || flags[1] == 'b') {
     switch (flags[0]) {
     case 'r':
       iflags = O_RDONLY;

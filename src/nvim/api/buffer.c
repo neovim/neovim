@@ -1375,7 +1375,7 @@ static inline void init_line_array(lua_State *lstate, Array *a, size_t size, Are
 /// @param s           String to push
 /// @param len         Size of string
 /// @param idx         0-based index to place s (only used for Lua)
-/// @param replace_nl  Replace newlines ('\n') with null ('\0')
+/// @param replace_nl  Replace newlines ('\n') with null (NUL)
 static void push_linestr(lua_State *lstate, Array *a, const char *s, size_t len, int idx,
                          bool replace_nl, Arena *arena)
 {
@@ -1384,7 +1384,7 @@ static void push_linestr(lua_State *lstate, Array *a, const char *s, size_t len,
     if (s && replace_nl && strchr(s, '\n')) {
       // TODO(bfredl): could manage scratch space in the arena, for the NUL case
       char *tmp = xmemdupz(s, len);
-      strchrsub(tmp, '\n', '\0');
+      strchrsub(tmp, '\n', NUL);
       lua_pushlstring(lstate, tmp, len);
       xfree(tmp);
     } else {
@@ -1397,7 +1397,7 @@ static void push_linestr(lua_State *lstate, Array *a, const char *s, size_t len,
       str = CBUF_TO_ARENA_STR(arena, s, len);
       if (replace_nl) {
         // Vim represents NULs as NLs, but this may confuse clients.
-        strchrsub(str.data, '\n', '\0');
+        strchrsub(str.data, '\n', NUL);
       }
     }
 

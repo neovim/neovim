@@ -2508,7 +2508,7 @@ static const char *tui_get_stty_erase(int fd)
   struct termios t;
   if (tcgetattr(fd, &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];
-    stty_erase[1] = '\0';
+    stty_erase[1] = NUL;
     DLOG("stty/termios:erase=%s", stty_erase);
   }
 #endif
