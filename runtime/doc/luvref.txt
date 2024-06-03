@@ -2743,7 +2743,7 @@ uv.fs_open({path}, {flags}, {mode} [, {callback}])                *uv.fs_open()*
                 Parameters:
                 - `path`: `string`
                 - `flags`: `string` or `integer`
-                - `mode`: `integer`
+                - `mode`: `integer` (octal representation of `chmod(1)` mode)
                 - `callback`: `callable` (async version) or `nil` (sync
                   version)
                   - `err`: `nil` or `string`
@@ -2829,7 +2829,7 @@ uv.fs_mkdir({path}, {mode} [, {callback}])                       *uv.fs_mkdir()*
 
                 Parameters:
                 - `path`: `string`
-                - `mode`: `integer`
+                - `mode`: `integer` (octal representation of `chmod(1)` mode)
                 - `callback`: `callable` (async version) or `nil` (sync
                   version)
                   - `err`: `nil` or `string`
@@ -3078,7 +3078,8 @@ uv.fs_access({path}, {mode} [, {callback}])                     *uv.fs_access()*
 
                 Parameters:
                 - `path`: `string`
-                - `mode`: `integer`
+                - `mode`: `string` (a combination of the `'r'`, `'w'` and `'x'`
+		  characters denoting the symbolic mode as per `chmod(1)`)
                 - `callback`: `callable` (async version) or `nil` (sync
                   version)
                   - `err`: `nil` or `string`
@@ -3097,29 +3098,13 @@ uv.fs_chmod({path}, {mode} [, {callback}])                       *uv.fs_chmod()*
 
                 Parameters:
                 - `path`: `string`
-                - `mode`: `integer`
+                - `mode`: `integer` (octal representation of `chmod(1)` mode)
                 - `callback`: `callable` (async version) or `nil` (sync
                   version)
                   - `err`: `nil` or `string`
                   - `success`: `boolean` or `nil`
 
                 Equivalent to `chmod(2)`.
-
-                Returns (sync version): `boolean` or `fail`
-
-                Returns (async version): `uv_fs_t userdata`
-
-uv.fs_fchmod({fd}, {mode} [, {callback}])                       *uv.fs_fchmod()*
-
-                Parameters:
-                - `fd`: `integer`
-                - `mode`: `integer`
-                - `callback`: `callable` (async version) or `nil` (sync
-                  version)
-                  - `err`: `nil` or `string`
-                  - `success`: `boolean` or `nil`
-
-                Equivalent to `fchmod(2)`.
 
                 Returns (sync version): `boolean` or `fail`
 
