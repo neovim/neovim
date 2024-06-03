@@ -8910,7 +8910,7 @@ bool eval_has_provider(const char *feat, bool throw_if_fast)
 
   char name[32];  // Normalized: "python3_compiled" => "python3".
   snprintf(name, sizeof(name), "%s", feat);
-  strchrsub(name, '_', '\0');  // Chop any "_xx" suffix.
+  strchrsub(name, '_', NUL);  // Chop any "_xx" suffix.
 
   char buf[256];
   typval_T tv;

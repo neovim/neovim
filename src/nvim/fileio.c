@@ -2419,7 +2419,7 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
 
   // the file name has at most BASENAMELEN characters.
   if (strlen(ptr) > BASENAMELEN) {
-    ptr[BASENAMELEN] = '\0';
+    ptr[BASENAMELEN] = NUL;
   }
 
   char *s = ptr + strlen(ptr);
@@ -3330,7 +3330,7 @@ static void vim_mktempdir(void)
 #endif
       // If our "root" tempdir is invalid or fails, proceed without "<user>/".
       // Else user1 could break user2 by creating "/tmp/nvim.user2/".
-      tmp[strlen(tmp) - strlen(user)] = '\0';
+      tmp[strlen(tmp) - strlen(user)] = NUL;
     }
 
     // Now try to create "/tmp/nvim.<user>/XXXXXX".

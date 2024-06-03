@@ -11495,7 +11495,7 @@ static void nfa_print_state(FILE *debugf, nfa_state_T *state)
   garray_T indent;
 
   ga_init(&indent, 1, 64);
-  ga_append(&indent, '\0');
+  ga_append(&indent, NUL);
   nfa_print_state2(debugf, state, &indent);
   ga_clear(&indent);
 }
@@ -14801,7 +14801,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       }
 
       case NFA_ANY:
-        // Any char except '\0', (end of input) does not match.
+        // Any char except NUL, (end of input) does not match.
         if (curc > 0) {
           add_state = t->state->out;
           add_off = clen;

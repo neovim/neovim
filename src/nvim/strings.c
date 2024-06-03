@@ -333,7 +333,7 @@ void vim_strcpy_up(char *restrict dst, const char *restrict src)
   while ((c = (uint8_t)(*src++)) != NUL) {
     *dst++ = (char)(uint8_t)(c < 'a' || c > 'z' ? c : c - 0x20);
   }
-  *dst = '\0';
+  *dst = NUL;
 }
 
 // strncpy (NUL-terminated) plus vim_strup.
@@ -344,7 +344,7 @@ void vim_strncpy_up(char *restrict dst, const char *restrict src, size_t n)
   while (n-- && (c = (uint8_t)(*src++)) != NUL) {
     *dst++ = (char)(uint8_t)(c < 'a' || c > 'z' ? c : c - 0x20);
   }
-  *dst = '\0';
+  *dst = NUL;
 }
 
 // memcpy (does not NUL-terminate) plus vim_strup.
@@ -794,10 +794,10 @@ static int format_typeof(const char *type)
   FUNC_ATTR_NONNULL_ALL
 {
   // allowed values: \0, h, l, L
-  char length_modifier = '\0';
+  char length_modifier = NUL;
 
   // current conversion specifier character
-  char fmt_spec = '\0';
+  char fmt_spec = NUL;
 
   // parse 'h', 'l', 'll' and 'z' length modifiers
   if (*type == 'h' || *type == 'l' || *type == 'z') {
@@ -865,7 +865,7 @@ static int format_typeof(const char *type)
     } else if (fmt_spec == 'd') {
       // signed
       switch (length_modifier) {
-      case '\0':
+      case NUL:
       case 'h':
         // char and short arguments are passed as int.
         return TYPE_INT;
@@ -879,7 +879,7 @@ static int format_typeof(const char *type)
     } else {
       // unsigned
       switch (length_modifier) {
-      case '\0':
+      case NUL:
       case 'h':
         return TYPE_UNSIGNEDINT;
       case 'l':
@@ -1050,7 +1050,7 @@ static int parse_fmt_types(const char ***ap_types, int *num_posarg, const char *
       p += n;
     } else {
       // allowed values: \0, h, l, L
-      char length_modifier = '\0';
+      char length_modifier = NUL;
 
       // variable for positional arg
       int pos_arg = -1;
@@ -1441,7 +1441,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
       int space_for_positive = 1;
 
       // allowed values: \0, h, l, 2 (for ll), z, L
-      char length_modifier = '\0';
+      char length_modifier = NUL;
 
       // temporary buffer for simple numeric->string conversion
 #define TMP_LEN 350    // 1e308 seems reasonable as the maximum printable
@@ -1466,7 +1466,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
       size_t zero_padding_insertion_ind = 0;
 
       // current conversion specifier character
-      char fmt_spec = '\0';
+      char fmt_spec = NUL;
 
       // buffer for 's' and 'S' specs
       char *tofree = NULL;
@@ -1669,7 +1669,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
       case 'o':
       case 'x':
       case 'X':
-        if (tvs && length_modifier == '\0') {
+        if (tvs && length_modifier == NUL) {
           length_modifier = 'L';
         }
       }
@@ -1790,7 +1790,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
         } else if (fmt_spec == 'd') {
           // signed
           switch (length_modifier) {
-          case '\0':
+          case NUL:
             arg = (tvs
                    ? (int)tv_nr(tvs, &arg_idx)
                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
@@ -1836,7 +1836,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
         } else {
           // unsigned
           switch (length_modifier) {
-          case '\0':
+          case NUL:
             uarg = (tvs
                     ? (unsigned)tv_nr(tvs, &arg_idx)
                     : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
@@ -2223,7 +2223,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
   if (str_m > 0) {
     // make sure the string is nul-terminated even at the expense of
     // overwriting the last character (shouldn't happen, but just in case)
-    str[str_l <= str_m - 1 ? str_l : str_m - 1] = '\0';
+    str[str_l <= str_m - 1 ? str_l : str_m - 1] = NUL;
   }
 
   if (tvs != NULL

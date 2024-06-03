@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "nvim/ascii_defs.h"
 #include "nvim/linematch.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
@@ -61,7 +62,7 @@ static int matching_chars_iwhite(const char *s1, const char *s2)
         d++;
       }
     }
-    strsproc[k][i] = '\0';
+    strsproc[k][i] = NUL;
   }
   int matching = matching_chars(strsproc[0], strsproc[1]);
   xfree(strsproc[0]);

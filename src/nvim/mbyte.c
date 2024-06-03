@@ -1500,7 +1500,7 @@ int utf8_to_utf16(const char *utf8, int utf8len, wchar_t **utf16)
     return uv_translate_sys_error(GetLastError());
   }
 
-  (*utf16)[bufsize] = L'\0';
+  (*utf16)[bufsize] = LNUL;
   return 0;
 }
 
@@ -1546,7 +1546,7 @@ int utf16_to_utf8(const wchar_t *utf16, int utf16len, char **utf8)
     return uv_translate_sys_error(GetLastError());
   }
 
-  (*utf8)[bufsize] = '\0';
+  (*utf8)[bufsize] = NUL;
   return 0;
 }
 

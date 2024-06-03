@@ -4118,7 +4118,7 @@ static char *getargcmd(char **argp)
 
   if (*arg == '+') {        // +[command]
     arg++;
-    if (ascii_isspace(*arg) || *arg == '\0') {
+    if (ascii_isspace(*arg) || *arg == NUL) {
       command = dollar_command;
     } else {
       command = arg;

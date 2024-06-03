@@ -1174,7 +1174,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         break;
       }
       vim_memcpy_up(key, key_start, key_len);
-      key[key_len] = '\0';
+      key[key_len] = NUL;
       linep = skipwhite(linep);
 
       if (strcmp(key, "NONE") == 0) {
@@ -1967,7 +1967,7 @@ int syn_name2id_len(const char *name, size_t len)
   // Avoid using stricmp() too much, it's slow on some systems
   // Avoid alloc()/free(), these are slow too.
   vim_memcpy_up(name_u, name, len);
-  name_u[len] = '\0';
+  name_u[len] = NUL;
 
   // map_get(..., int) returns 0 when no key is present, which is
   // the expected value for missing highlight group.

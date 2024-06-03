@@ -46,7 +46,7 @@ static uv_mutex_t mutex;
 
 static bool log_try_create(char *fname)
 {
-  if (fname == NULL || fname[0] == '\0') {
+  if (fname == NULL || fname[0] == NUL) {
     return false;
   }
   FILE *log_file = fopen(fname, "a");
@@ -67,7 +67,7 @@ static void log_path_init(void)
   size_t size = sizeof(log_file_path);
   expand_env("$" ENV_LOGFILE, log_file_path, (int)size - 1);
   if (strequal("$" ENV_LOGFILE, log_file_path)
-      || log_file_path[0] == '\0'
+      || log_file_path[0] == NUL
       || os_isdir(log_file_path)
       || !log_try_create(log_file_path)) {
     // Make $XDG_STATE_HOME if it does not exist.
@@ -88,7 +88,7 @@ static void log_path_init(void)
     }
     // Fall back to stderr
     if (len >= size || !log_try_create(log_file_path)) {
-      log_file_path[0] = '\0';
+      log_file_path[0] = NUL;
       return;
     }
     os_setenv(ENV_LOGFILE, log_file_path, true);
@@ -324,7 +324,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
 
   // Get a name for this Nvim instance.
   // TODO(justinmk): expose this as v:name ?
-  if (name[0] == '\0') {
+  if (name[0] == NUL) {
     // Parent servername.
     const char *parent = path_tail(os_getenv(ENV_NVIM));
     // Servername. Empty until starting=false.
@@ -350,7 +350,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
                      func_name, line_num);
   if (name[0] == '?') {
     // No v:servername yet. Clear `name` so that the next log can try again.
-    name[0] = '\0';
+    name[0] = NUL;
   }
 
   if (rv < 0) {

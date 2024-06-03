@@ -724,7 +724,7 @@ static int qf_get_next_str_line(qfstate_T *state)
     state->linelen = len;
   }
   memcpy(state->linebuf, p_str, state->linelen);
-  state->linebuf[state->linelen] = '\0';
+  state->linebuf[state->linelen] = NUL;
 
   // Increment using len in order to discard the rest of the line if it
   // exceeds LINE_MAXLEN.
