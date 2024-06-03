@@ -117,6 +117,29 @@ describe(':Man', function()
       ]])
     end)
 
+    it('clears OSC 8 hyperlink markup from text', function()
+      feed(
+        [[
+        ithis <C-v><ESC>]8;;http://example.com<C-v><ESC>\Link Title<C-v><ESC>]8;;<C-v><ESC>\<ESC>]]
+      )
+
+      screen:expect {
+        grid = [=[
+        this {c:^[}]8;;http://example.com{c:^[}\Link Title{c:^[}]8;;{c:^[}^\ |
+        {eob:~                                                   }|*3
+                                                            |
+      ]=],
+      }
+
+      exec_lua [[require'man'.init_pager()]]
+
+      screen:expect([[
+      ^this Link Title                                     |
+      {eob:~                                                   }|*3
+                                                          |
+      ]])
+    end)
+
     it('highlights multibyte text', function()
       feed(
         [[
