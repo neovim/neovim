@@ -19,9 +19,8 @@ vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
   callback = function(ev)
     local view = vim.fn.winsaveview()
     local buf = ev.buf
-    local url = ev.file
 
-    local url, credentials = vim.net._get_url_and_credentials(url)
+    local url, credentials = vim.net._get_url_and_credentials(ev.file)
 
     if
       ev.file:find('^http://')
