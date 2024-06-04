@@ -128,8 +128,16 @@ for i = 1, #events do
     write_signature(call_output, ev, '')
     call_output:write('\n{\n')
     if ev.remote_only then
+      -- Lua callbacks may emit other events or the same event again. Avoid the latter
+      -- by adding a recursion guard to each generated function that may call a Lua callback.
+      call_output:write('  static bool entered = false;\n')
+      call_output:write('  if (entered) {\n')
+      call_output:write('    return;\n')
+      call_output:write('  }\n')
+      call_output:write('  entered = true;\n')
       write_arglist(call_output, ev)
       call_output:write('  ui_call_event("' .. ev.name .. '", ' .. args .. ');\n')
+      call_output:write('  entered = false;\n')
     elseif ev.compositor_impl then
       call_output:write('  ui_comp_' .. ev.name)
       write_signature(call_output, ev, '', true)
