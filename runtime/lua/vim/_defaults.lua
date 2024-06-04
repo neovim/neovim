@@ -470,10 +470,14 @@ do
     --- response indicates that it does support truecolor enable 'termguicolors',
     --- but only if the user has not already disabled it.
     do
-      if tty.rgb then
-        -- The TUI was able to determine truecolor support
+      local colorterm = os.getenv('COLORTERM')
+      if tty.rgb or colorterm == 'truecolor' or colorterm == '24bit' then
+        -- The TUI was able to determine truecolor support or $COLORTERM explicitly indicates
+        -- truecolor support
         setoption('termguicolors', true)
-      else
+      elseif colorterm == nil or colorterm == '' then
+        -- Neither the TUI nor $COLORTERM indicate that truecolor is supported, so query the
+        -- terminal
         local caps = {} ---@type table<string, boolean>
         require('vim.termcap').query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
           if not found then
