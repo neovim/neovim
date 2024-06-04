@@ -438,7 +438,7 @@ end
 --- @field mouse_enabled? boolean
 ---
 --- @field win_viewport? table<integer,table<string,integer>>
---- @field float_pos? {[1]:integer,[2]:integer}
+--- @field float_pos? [integer,integer]
 --- @field hl_groups? table<string,integer>
 ---
 --- The following keys should be used to expect the state of various ext_

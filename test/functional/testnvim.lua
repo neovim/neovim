@@ -256,7 +256,7 @@ end
 --- @param notification_cb function?
 --- @param setup_cb function?
 --- @param timeout integer
---- @return {[1]: integer, [2]: string}
+--- @return [integer, string]
 function M.run_session(lsession, request_cb, notification_cb, setup_cb, timeout)
   local on_request --- @type function?
   local on_notification --- @type function?

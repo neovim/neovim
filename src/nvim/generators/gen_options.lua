@@ -148,7 +148,7 @@ local get_defaults = function(d, n)
   return value_dumpers[type(d)](d)
 end
 
---- @type {[1]:string,[2]:string}[]
+--- @type [string,string][]
 local defines = {}
 
 --- @param i integer

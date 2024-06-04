@@ -834,8 +834,8 @@ vim.spell.check({str})                                     *vim.spell.check()*
       • {str}  (`string`)
 
     Return: ~
-        (`{[1]: string, [2]: 'bad'|'rare'|'local'|'caps', [3]: integer}[]`)
-        List of tuples with three items:
+        (`[string, 'bad'|'rare'|'local'|'caps', integer][]`) List of tuples
+        with three items:
         • The badly spelled word.
         • The type of the spelling error: "bad" spelling mistake "rare" rare
           word "local" word only valid in another region "caps" word should

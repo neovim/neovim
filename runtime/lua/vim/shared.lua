@@ -789,7 +789,7 @@ do
   }
 
   --- @nodoc
-  --- @class vim.validate.Spec {[1]: any, [2]: string|string[], [3]: boolean }
+  --- @class vim.validate.Spec [any, string|string[], boolean]
   --- @field [1] any Argument value
   --- @field [2] string|string[]|fun(v:any):boolean, string? Type name, or callable
   --- @field [3]? boolean

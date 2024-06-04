@@ -174,7 +174,7 @@ end
 --- @param source_buf integer
 --- @param inspect_buf integer
 --- @param inspect_win integer
---- @param pos? { [1]: integer, [2]: integer }
+--- @param pos? [integer, integer]
 local function set_inspector_cursor(treeview, lang, source_buf, inspect_buf, inspect_win, pos)
   api.nvim_buf_clear_namespace(inspect_buf, treeview.ns, 0, -1)
 

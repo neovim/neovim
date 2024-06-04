@@ -46,7 +46,7 @@
 --- @field [integer] vim.tohtml.line (integer: (1-index, exclusive))
 
 --- @class (private) vim.tohtml.line
---- @field virt_lines {[integer]:{[1]:string,[2]:integer}[]}
+--- @field virt_lines {[integer]:[string,integer][]}
 --- @field pre_text string[][]
 --- @field hide? boolean
 --- @field [integer] vim.tohtml.cell? (integer: (1-index, exclusive))
@@ -481,7 +481,7 @@ local function styletable_treesitter(state)
 end
 
 --- @param state vim.tohtml.state
---- @param extmark {[1]:integer,[2]:integer,[3]:integer,[4]:vim.api.keyset.set_extmark|any}
+--- @param extmark [integer, integer, integer, vim.api.keyset.set_extmark|any]
 --- @param namespaces table<integer,string>
 local function _styletable_extmarks_highlight(state, extmark, namespaces)
   if not extmark[4].hl_group then
@@ -503,7 +503,7 @@ local function _styletable_extmarks_highlight(state, extmark, namespaces)
 end
 
 --- @param state vim.tohtml.state
---- @param extmark {[1]:integer,[2]:integer,[3]:integer,[4]:vim.api.keyset.set_extmark|any}
+--- @param extmark [integer, integer, integer, vim.api.keyset.set_extmark|any]
 --- @param namespaces table<integer,string>
 local function _styletable_extmarks_virt_text(state, extmark, namespaces)
   if not extmark[4].virt_text then
@@ -559,7 +559,7 @@ local function _styletable_extmarks_virt_text(state, extmark, namespaces)
 end
 
 --- @param state vim.tohtml.state
---- @param extmark {[1]:integer,[2]:integer,[3]:integer,[4]:vim.api.keyset.set_extmark|any}
+--- @param extmark [integer, integer, integer, vim.api.keyset.set_extmark|any]
 local function _styletable_extmarks_virt_lines(state, extmark)
   ---TODO(altermo) if the fold start is equal to virt_line start then the fold hides the virt_line
   if not extmark[4].virt_lines then
@@ -580,7 +580,7 @@ local function _styletable_extmarks_virt_lines(state, extmark)
 end
 
 --- @param state vim.tohtml.state
---- @param extmark {[1]:integer,[2]:integer,[3]:integer,[4]:vim.api.keyset.set_extmark|any}
+--- @param extmark [integer, integer, integer, vim.api.keyset.set_extmark|any]
 local function _styletable_extmarks_conceal(state, extmark)
   if not extmark[4].conceal or state.opt.conceallevel == 0 then
     return
@@ -648,7 +648,7 @@ local function styletable_conceal(state)
   local bufnr = state.bufnr
   vim.api.nvim_buf_call(bufnr, function()
     for row = 1, state.buflen do
-      --- @type table<integer,{[1]:integer,[2]:integer,[3]:string}>
+      --- @type table<integer,[integer,integer,string]>
       local conceals = {}
       local line_len_exclusive = #vim.fn.getline(row) + 1
       for col = 1, line_len_exclusive do
