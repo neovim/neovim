@@ -594,7 +594,7 @@ function M.frm(_, bufnr)
 end
 
 --- @type vim.filetype.mapfn
-function M.fvwm_1(_, _)
+function M.fvwm_v1(_, _)
   return 'fvwm', function(bufnr)
     vim.b[bufnr].fvwm_version = 1
   end
@@ -1355,7 +1355,7 @@ end
 function M.sgml(_, bufnr)
   local lines = table.concat(getlines(bufnr, 1, 5))
   if lines:find('linuxdoc') then
-    return 'smgllnx'
+    return 'sgmllnx'
   elseif lines:find('<!DOCTYPE.*DocBook') then
     return 'docbk',
       function(b)
