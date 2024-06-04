@@ -197,12 +197,6 @@ function STHighlighter.new(bufnr)
         highlighter:send_request()
       end
     end,
-    on_detach = function(_, buf)
-      local highlighter = STHighlighter.active[buf]
-      if highlighter then
-        highlighter:destroy()
-      end
-    end,
   })
 
   api.nvim_create_autocmd({ 'BufWinEnter', 'InsertLeave' }, {
