@@ -39,6 +39,10 @@ if(WIN32)
   set(CPACK_WIX_PROGRAM_MENU_FOLDER "${CPACK_PACKAGE_NAME}")
   set(CPACK_PACKAGE_EXECUTABLES "nvim" "Neovim")
 
+  set(CPACK_WIX_UI_REF "WixUI_CustomInstallDir")
+  list(APPEND CPACK_WIX_EXTRA_SOURCES ${CMAKE_CURRENT_LIST_DIR}/WixUI_CustomInstallDir.wxs)
+  list(APPEND CPACK_WIX_EXTRA_SOURCES ${CMAKE_CURRENT_LIST_DIR}/CustomInstallDirDlg.wxs)
+
   # We use a wix patch to add further options to the installer.
   # See: https://cmake.org/cmake/help/v3.7/module/CPackWIX.html#variable:CPACK_WIX_PATCH_FILE
   list(APPEND CPACK_WIX_EXTENSIONS WixUtilExtension)
