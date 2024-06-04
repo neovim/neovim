@@ -2133,15 +2133,13 @@ describe('LSP', function()
       }, buf_lines(target_bufnr))
     end)
     it('skips the edit if the version of the edit is behind the local buffer ', function()
-      local apply_edit_mocking_current_version = function(edit, versionedBuf)
+      local apply_edit_mocking_current_version = function(edit)
         exec_lua(
           [[
           local args = {...}
-          local versionedBuf = args[2]
           vim.lsp.util.apply_text_document_edit(args[1], nil, 'utf-16')
         ]],
-          edit,
-          versionedBuf
+          edit
         )
       end
 
@@ -2153,17 +2151,17 @@ describe('LSP', function()
       eq(baseText, buf_lines(target_bufnr))
 
       -- Apply an edit for an old version, should skip
-      apply_edit_mocking_current_version(
-        text_document_edit(2),
-        { currentVersion = 7, bufnr = target_bufnr }
-      )
+      apply_edit_mocking_current_version(text_document_edit(1))
       eq(baseText, buf_lines(target_bufnr)) -- no change
 
       -- Sanity check that next version to current does apply change
-      apply_edit_mocking_current_version(
-        text_document_edit(8),
-        { currentVersion = 7, bufnr = target_bufnr }
-      )
+      apply_edit_mocking_current_version(text_document_edit(exec_lua(
+        [[
+          local bufnr = ...
+          return vim.b[bufnr].changedtick
+        ]],
+        target_bufnr
+      )))
       eq({
         'First ↥ 🤦 🦄 line of text',
         '2nd line of 语text',
