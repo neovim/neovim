@@ -365,13 +365,7 @@ and replacing `neovim-unwrapped` with `neovim-dev`:
 nix-shell '<nixpkgs>' -A neovim-dev
 ```
 
-Neovim contains a Nix flake in the `contrib` folder, with 3 packages:
-- `neovim` to run the nightly
-- `neovim-debug` to run the package with debug symbols
-- `neovim-developer` to get all the tools to develop on `neovim`
-
-Thus you can run Neovim nightly with `nix run github:neovim/neovim?dir=contrib`.
-Similarly to develop on Neovim: `nix develop github:neovim/neovim?dir=contrib#neovim-developer`.
+For flakes of Neovim nightly, please check `github:nix-community/neovim-nightly-overlay`.
 
 ### FreeBSD
 
