@@ -3,6 +3,7 @@
 " Maintainer:   Carl Osterwisch <costerwi@gmail.com>
 " Last Change:  2022 Oct 08
 "               2024 Jan 14 by Vim Project (browsefilter)
+"               2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin") | finish | endif
@@ -27,7 +28,7 @@ setlocal isfname-=,
 
 " Define format of comment lines (see 'formatoptions' for uses)
 setlocal comments=:**
-setlocal commentstring=**%s
+setlocal commentstring=**\ %s
 
 " Definitions start with a * and assign a NAME, NSET, or ELSET
 " Used in [d ^wd and other commands

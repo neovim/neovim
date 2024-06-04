@@ -1,7 +1,8 @@
-" Language:     Rust
-" Description:  Vim ftplugin for Rust
-" Maintainer:   Chris Morgan <me@chrismorgan.info>
-" Last Change:  2024-03-17
+" Language:	Rust
+" Description:	Vim ftplugin for Rust
+" Maintainer:	Chris Morgan <me@chrismorgan.info>
+" Last Change:	2024 Mar 17
+"		2024 May 23 by Riley Bruins <ribru17@gmail.com ('commentstring')
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 if exists("b:did_ftplugin")
@@ -36,7 +37,7 @@ if get(g:, 'rust_bang_comment_leader', 0)
 else
     setlocal comments=s0:/*!,ex:*/,s1:/*,mb:*,ex:*/,:///,://!,://
 endif
-setlocal commentstring=//%s
+setlocal commentstring=//\ %s
 setlocal formatoptions-=t formatoptions+=croqnl
 " j was only added in 7.3.541, so stop complaints about its nonexistence
 silent! setlocal formatoptions+=j

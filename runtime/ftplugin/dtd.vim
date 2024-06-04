@@ -6,6 +6,7 @@
 " Former maintainer:	Dan Sharp
 " Last Change:		2009 Jan 20
 "			2024 Jan 14 by Vim Project (browsefilter)
+"			2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
@@ -15,7 +16,7 @@ let b:did_ftplugin = 1
 let s:save_cpo = &cpo
 set cpo-=C
 
-setlocal commentstring=<!--%s-->
+setlocal commentstring=<!--\ %s\ -->
 setlocal comments=s:<!--,m:\ \ \ \ \ ,e:-->
 
 setlocal formatoptions-=t

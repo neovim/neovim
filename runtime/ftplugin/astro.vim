@@ -2,6 +2,7 @@
 " Language:     Astro
 " Maintainer:   Romain Lafourcade <romainlafourcade@gmail.com>
 " Last Change:  2024 Apr 21
+"               2024 May 24 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 if exists("b:did_ftplugin")
     finish
@@ -25,17 +26,17 @@ function! s:AstroComments() abort
                 \ || s:IdentifyScope('^\s*<script', '^\s*<\/script>')
         " ECMAScript comments
         setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
-        setlocal commentstring=//%s
+        setlocal commentstring=//\ %s
 
     elseif s:IdentifyScope('^\s*<style', '^\s*<\/style>')
         " CSS comments
         setlocal comments=s1:/*,mb:*,ex:*/
-        setlocal commentstring=/*%s*/
+        setlocal commentstring=/*\ %s\ */
 
     else
         " HTML comments
         setlocal comments=s:<!--,m:\ \ \ \ ,e:-->
-        setlocal commentstring=<!--%s-->
+        setlocal commentstring=<!--\ %s\ -->
     endif
 endfunction
 

@@ -2,6 +2,7 @@
 " Language:     Elsa
 " Maintainer:   Miles Glapa-Grossklag <miles@glapa-grossklag.com>
 " Last Change:  2023-01-29
+"               2024 May 25 by Riley Bruins <ribru17@gmail.com> (move 'commentstring' to ftplugin)
 
 if exists('b:current_syntax')
   finish
@@ -13,7 +14,6 @@ syntax match elsaKeyword "\v:"
 highlight link elsaKeyword Keyword
 
 " Comments
-setlocal commentstring=--%s
 syntax match elsaComment "\v--.*$"
 highlight link elsaComment Comment
 

@@ -2,6 +2,7 @@
 " Language:     Liquid
 " Maintainer:   Tim Pope <vimNOSPAM@tpope.org>
 " Last Change:	2022 Mar 15
+"             	2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 if exists('b:did_ftplugin')
   finish
@@ -56,6 +57,6 @@ if exists('loaded_matchit')
   let b:match_words .= '\<\%(if\w*\|unless\|case\)\>:\<\%(elsif\|else\|when\)\>:\<end\%(if\w*\|unless\|case\)\>,\<\%(for\|tablerow\)\>:\%({%\s*\)\@<=empty\>:\<end\%(for\|tablerow\)\>,\<\(capture\|comment\|highlight\)\>:\<end\1\>'
 endif
 
-setlocal commentstring={%\ comment\ %}%s{%\ endcomment\ %}
+setlocal commentstring={%\ comment\ %}\ %s\ {%\ endcomment\ %}
 
 let b:undo_ftplugin .= 'setl cms< | unlet! b:browsefilter b:match_words'

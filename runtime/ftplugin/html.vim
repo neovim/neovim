@@ -3,6 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Dan Sharp
 " Last Change:		2024 Jan 14
+" 			2024 May 24 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 if exists("b:did_ftplugin")
   finish
@@ -13,7 +14,7 @@ let s:save_cpo = &cpo
 set cpo-=C
 
 setlocal matchpairs+=<:>
-setlocal commentstring=<!--%s-->
+setlocal commentstring=<!--\ %s\ -->
 setlocal comments=s:<!--,m:\ \ \ \ ,e:-->
 
 let b:undo_ftplugin = "setlocal comments< commentstring< matchpairs<"

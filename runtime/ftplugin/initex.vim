@@ -3,6 +3,7 @@
 " Maintainer:   Benji Fisher, Ph.D. <benji@member.AMS.org>
 " Version:	1.0
 " Last Change:	Wed 19 Apr 2006
+" Last Change:	Thu 23 May 2024 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 " Only do this when not done yet for this buffer.
 if exists("b:did_ftplugin")
@@ -23,7 +24,7 @@ setlocal com=sO:%\ -,mO:%\ \ ,eO:%%,:%
 
 " Set 'commentstring' to recognize the % comment character:
 " (Thanks to Ajit Thakkar.)
-setlocal cms=%%s
+setlocal cms=%\ %s
 
 " Allow "[d" to be used to find a macro definition:
 let &l:define='\\\([egx]\|char\|mathchar\|count\|dimen\|muskip\|skip\|toks\)\='

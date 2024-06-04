@@ -3,6 +3,7 @@
 " Maintainer: Chase Knowlden <haroldknowlden@gmail.com>
 " Last Change: 2023 Aug 16
 " 	       2023 Aug 23 by Vim Project (browsefilter)
+" 	       2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 if exists( 'b:did_ftplugin' )
    finish
@@ -28,7 +29,7 @@ endif
 
 " Set 'comments' to format dashed lists in comments.
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
-setlocal commentstring=//%s
+setlocal commentstring=//\ %s
 
 setlocal formatoptions-=t
 setlocal formatoptions+=croql

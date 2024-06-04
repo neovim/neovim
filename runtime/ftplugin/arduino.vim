@@ -3,6 +3,7 @@
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
 "		Ken Takata <https://github.com/k-takata>
 " Last Change:	2024 Apr 12
+"		2024 Jun 02 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 "
 " Most of the part was copied from c.vim.
 
@@ -32,7 +33,7 @@ setlocal fo-=t fo+=croql
 
 " These options have the right value as default, but the user may have
 " overruled that.
-setlocal commentstring& define& include&
+setlocal commentstring=/*\ %s\ */ define& include&
 
 " Set completion with CTRL-X CTRL-O to autoloaded function.
 if exists('&ofu')

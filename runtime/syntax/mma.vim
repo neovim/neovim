@@ -2,6 +2,7 @@
 " Language:     Mathematica
 " Maintainer:   steve layland <layland@wolfram.com>
 " Last Change:  2012 Feb 03 by Thilo Six
+"               2024 May 24 by Riley Bruins <ribru17@gmail.com> (remove 'commentstring')
 " Source:       http://members.wri.com/layland/vim/syntax/mma.vim
 "               http://vim.sourceforge.net/scripts/script.php?script_id=1273
 " Id:           $Id: mma.vim,v 1.4 2006/04/14 20:40:38 vimboss Exp $
@@ -248,7 +249,6 @@ syntax match mmaBoring "[(){}]" contained
 "syntax region mmaRegion start="(\*\+[^<]*<!--[^>]*\*\+)" end="--> \*)" containedin=ALLBUT,@mmaStrings transparent fold keepend
 
 " show fold text
-set commentstring='(*%s*)'
 "set foldtext=MmaFoldText()
 
 "function MmaFoldText()
