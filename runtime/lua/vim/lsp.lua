@@ -393,7 +393,7 @@ local function on_client_exit(code, signal, client_id)
 
   vim.schedule(function()
     for bufnr in pairs(client.attached_buffers) do
-      if client and client.attached_buffers[bufnr] then
+      if client and client.attached_buffers[bufnr] and api.nvim_buf_is_valid(bufnr) then
         api.nvim_exec_autocmds('LspDetach', {
           buffer = bufnr,
           modeline = false,
