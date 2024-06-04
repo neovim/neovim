@@ -3455,11 +3455,9 @@ void cmdline_screen_cleared(void)
 /// called by ui_flush, do what redraws necessary to keep cmdline updated.
 void cmdline_ui_flush(void)
 {
-  static bool flushing = false;
-  if (!ui_has(kUICmdline) || flushing) {
+  if (!ui_has(kUICmdline)) {
     return;
   }
-  flushing = true;
   int level = ccline.level;
   CmdlineInfo *line = &ccline;
   while (level > 0 && line) {
@@ -3474,7 +3472,6 @@ void cmdline_ui_flush(void)
     }
     line = line->prev_ccline;
   }
-  flushing = false;
 }
 
 // Put a character on the command line.  Shifts the following text to the
