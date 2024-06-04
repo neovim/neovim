@@ -2,6 +2,7 @@
 " Language:             dts/dtsi (device tree files)
 " Maintainer:           Wu, Zhenyu <wuzhenyu@ustc.edu>
 " Latest Revision:      2024 Apr 12
+"                       2024 Jun 02 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 if exists('b:did_ftplugin')
   finish
@@ -12,5 +13,5 @@ let b:undo_ftplugin = 'setl inc< cms< com<'
 
 setlocal include=^\\%(#include\\\|/include/\\)
 " same as C
-setlocal commentstring&
+setlocal commentstring=/*\ %s\ */
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,:///,://

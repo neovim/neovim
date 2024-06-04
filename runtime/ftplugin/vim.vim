@@ -2,6 +2,7 @@
 " Language:		Vim
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Last Change:		2024 Apr 13
+" 			2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Only do this when not done yet for this buffer
@@ -51,7 +52,7 @@ setlocal keywordprg=:help
 
 " Comments starts with # in Vim9 script.  We have to guess which one to use.
 if "\n" .. getline(1, 32)->join("\n") =~# '\n\s*vim9\%[script]\>'
-  setlocal commentstring=#%s
+  setlocal commentstring=#\ %s
 else
   setlocal commentstring=\"%s
 endif

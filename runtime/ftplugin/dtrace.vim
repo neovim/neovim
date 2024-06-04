@@ -1,6 +1,7 @@
 " Language: D script as described in "Solaris Dynamic Tracing Guide",
 "           http://docs.sun.com/app/docs/doc/817-6223
 " Last Change: 2008/03/20
+"              2024/05/23 by Riley Bruins <ribru17@gmail.com ('commentstring')
 " Version: 1.2
 " Maintainer: Nicolas Weber <nicolasweber@gmx.de>
 
@@ -26,8 +27,8 @@ setlocal fo-=t fo+=croql
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/
 
 " dtrace uses /* */ comments. Set this explicitly, just in case the user
-" changed this (/*%s*/ is the default)
-setlocal commentstring=/*%s*/
+" changed this (/*\ %s\ */ is the default)
+setlocal commentstring=/*\ %s\ */
 
 setlocal iskeyword+=@,$
 

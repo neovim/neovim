@@ -3,6 +3,7 @@
 " URL:         https://github.com/PProvost/vim-ps1
 " Last Change: 2021 Apr 02
 "              2024 Jan 14 by Vim Project (browsefilter)
+"              2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin") | finish | endif
@@ -14,7 +15,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 setlocal tw=0
-setlocal commentstring=#%s
+setlocal commentstring=#\ %s
 setlocal formatoptions=tcqro
 " Enable autocompletion of hyphenated PowerShell commands,
 " e.g. Get-Content or Get-ADUser

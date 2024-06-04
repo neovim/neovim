@@ -8,7 +8,73 @@ func PrepIndent(arg)
   return [a:arg] + repeat(["\t".a:arg], 5)
 endfu
 
-func Test_address_fold()
+func Test_address_fold_new_default_commentstring()
+  " Test with the new commentstring defaults, that includes padding after v9.1.464
+  new
+  call setline(1, ['int FuncName() {/* {{{ */', 1, 2, 3, 4, 5, '}/* }}} */',
+	      \ 'after fold 1', 'after fold 2', 'after fold 3'])
+  setl fen fdm=marker
+  " The next commands should all copy the same part of the buffer,
+  " regardless of the addressing type, since the part to be copied
+  " is folded away
+  :1y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3', '4', '5', '}/* }}} */'], getreg(0,1,1))
+  :.y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3', '4', '5', '}/* }}} */'], getreg(0,1,1))
+  :.+y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3', '4', '5', '}/* }}} */'], getreg(0,1,1))
+  :.,.y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3', '4', '5', '}/* }}} */'], getreg(0,1,1))
+  :sil .1,.y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3', '4', '5', '}/* }}} */'], getreg(0,1,1))
+  " use silent to make E493 go away
+  :sil .+,.y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3', '4', '5', '}/* }}} */'], getreg(0,1,1))
+  :,y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3', '4', '5', '}/* }}} */'], getreg(0,1,1))
+  :,+y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3', '4', '5', '}/* }}} */','after fold 1'], getreg(0,1,1))
+  " using .+3 as second address should c opy  the whole folded line + the next  3
+  " lines
+  :.,+3y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3', '4', '5', '}/* }}} */',
+	      \ 'after fold 1', 'after fold 2' , 'after fold 3'], getreg(0,1,1))
+  :sil .,-2y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3', '4', '5', '}/* }}} */'], getreg(0,1,1))
+
+  " now test again with folding disabled
+  set nofoldenable
+  :1y
+  call assert_equal(['int FuncName() {/* {{{ */'], getreg(0,1,1))
+  :.y
+  call assert_equal(['int FuncName() {/* {{{ */'], getreg(0,1,1))
+  :.+y
+  call assert_equal(['1'], getreg(0,1,1) )
+  :.,.y
+  call assert_equal(['int FuncName() {/* {{{ */'], getreg(0,1,1))
+  " use silent to make E493 go away
+  :sil .1,.y
+  call assert_equal(['int FuncName() {/* {{{ */', '1'], getreg(0,1,1))
+  " use silent to make E493 go away
+  :sil .+,.y
+  call assert_equal(['int FuncName() {/* {{{ */', '1'], getreg(0,1,1))
+  :,y
+  call assert_equal(['int FuncName() {/* {{{ */'], getreg(0,1,1))
+  :,+y
+  call assert_equal(['int FuncName() {/* {{{ */', '1'], getreg(0,1,1))
+  " using .+3 as second address should c opy  the whole folded line + the next 3
+  " lines
+  :.,+3y
+  call assert_equal(['int FuncName() {/* {{{ */', '1', '2', '3'], getreg(0,1,1))
+  :7
+  :sil .,-2y
+  call assert_equal(['4', '5', '}/* }}} */'], getreg(0,1,1))
+
+  quit!
+endfunc
+
+func Test_address_fold_old_default_commentstring()
+  " Test with the old commentstring defaults, before v9.1.464
   new
   call setline(1, ['int FuncName() {/*{{{*/', 1, 2, 3, 4, 5, '}/*}}}*/',
 	      \ 'after fold 1', 'after fold 2', 'after fold 3'])
@@ -696,7 +762,7 @@ func Test_fold_create_marker_in_C()
     call append(0, content)
     call cursor(c + 1, 1)
     norm! zfG
-    call assert_equal(content[c] . (c < 4 ? '{{{' : '/*{{{*/'), getline(c + 1))
+    call assert_equal(content[c] . (c < 4 ? '{{{' : '/* {{{ */'), getline(c + 1))
   endfor
 
   set fdm& fdl&

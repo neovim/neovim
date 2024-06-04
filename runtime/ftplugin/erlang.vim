@@ -6,7 +6,8 @@
 "               Eduardo Lopez (http://github.com/tapichu)
 "               Arvid Bjurklint (http://github.com/slarwise)
 "               Paweł Zacharek (http://github.com/subc2)
-" Last Update:  2023-Dec-20
+"               Riley Bruins (http://github.com/ribru17) ('commentstring')
+" Last Update:  2024 May 23
 " License:      Vim license
 " URL:          https://github.com/vim-erlang/vim-erlang-runtime
 
@@ -27,7 +28,7 @@ if get(g:, 'erlang_folding', 0)
 endif
 
 setlocal comments=:%%%,:%%,:%
-setlocal commentstring=%%s
+setlocal commentstring=%\ %s
 
 setlocal formatoptions+=ro
 

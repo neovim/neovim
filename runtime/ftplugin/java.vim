@@ -5,6 +5,7 @@
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
 " Last Change:		2024 Apr 18
 "			2024 Jan 14 by Vim Project (browsefilter)
+"			2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
@@ -61,7 +62,7 @@ setlocal formatoptions-=t formatoptions+=croql
 " Set 'comments' to format dashed lists in comments. Behaves just like C.
 setlocal comments& comments^=sO:*\ -,mO:*\ \ ,exO:*/
 
-setlocal commentstring=//%s
+setlocal commentstring=//\ %s
 
 " Change the :browse e filter to primarily show Java-related files.
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")

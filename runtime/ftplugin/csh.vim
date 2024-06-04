@@ -4,6 +4,7 @@
 " Previous Maintainer:	Dan Sharp
 " Contributor:		Johannes Zellner <johannes@zellner.org>
 " Last Change:		2024 Jan 14
+" 			2024 May 23 by Riley Bruins ('commentstring')
 
 if exists("b:did_ftplugin")
   finish
@@ -14,7 +15,7 @@ let s:save_cpo = &cpo
 set cpo-=C
 
 setlocal comments=:#
-setlocal commentstring=#%s
+setlocal commentstring=#\ %s
 setlocal formatoptions-=t
 setlocal formatoptions+=crql
 
