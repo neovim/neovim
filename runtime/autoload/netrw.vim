@@ -12,6 +12,8 @@
 "   2024 May 08 by Vim Project: cleanup legacy Win9X checks
 "   2024 May 09 by Vim Project: remove hard-coded private.ppk
 "   2024 May 10 by Vim Project: recursively delete directories by default
+"   2024 May 13 by Vim Project: prefer scp over pscp
+"   2024 Jun 04 by Vim Project: set bufhidden if buffer changed, nohidden is set and buffer shall be switched (#14915)
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
@@ -5681,6 +5683,9 @@ fun! s:NetrwEditFile(cmd,opt,fname)
    exe "NetrwKeepj keepalt ".a:opt." ".a:cmd." ".fnameescape(a:fname)
   else
 "   call Decho("exe NetrwKeepj ".a:opt." ".a:cmd." ".fnameescape(a:fname))
+    if a:cmd =~# 'e\%[new]!' && !&hidden && getbufvar(bufname('%'), '&modified', 0)
+      call setbufvar(bufname('%'), '&bufhidden', 'hide')
+    endif
    exe "NetrwKeepj ".a:opt." ".a:cmd." ".fnameescape(a:fname)
   endif
 "  call Dret("s:NetrwEditFile")
