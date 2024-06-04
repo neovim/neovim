@@ -7,7 +7,7 @@ call tutor#SetupVim()
 setlocal noreadonly
 if !exists('g:tutor_debug') || g:tutor_debug == 0
     setlocal buftype=nofile
-    setlocal concealcursor+=inv
+    setlocal concealcursor&
     setlocal conceallevel=2
 else
     setlocal buftype=
