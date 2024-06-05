@@ -3988,6 +3988,49 @@ describe('API', function()
         },
       }, api.nvim_parse_cmd('4,6s/math.random/math.max/', {}))
     end)
+    it('works with visual ranges', function()
+      api.nvim_buf_set_mark(0, "<", 1, 0, {})
+      api.nvim_buf_set_mark(0, ">", 1, 0, {})
+      eq({
+        cmd = 'substitute',
+        args = { '/math.random/math.max/' },
+        bang = false,
+        range = { 1, 1 },
+        visualrange = true,
+        addr = 'line',
+        magic = {
+          file = false,
+          bar = false,
+        },
+        nargs = '*',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            pattern = '',
+            force = false,
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+      }, api.nvim_parse_cmd("'<,'>s/math.random/math.max/", {}))
+    end)
     it('works with count', function()
       eq({
         cmd = 'buffer',

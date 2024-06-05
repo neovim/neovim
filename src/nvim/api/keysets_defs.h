@@ -271,6 +271,7 @@ typedef struct {
   OptionalKeys is_set__cmd_;
   String cmd;
   Array range;
+  Boolean visualrange;
   Integer count;
   String reg;
   Boolean bang;

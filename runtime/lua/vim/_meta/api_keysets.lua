@@ -25,6 +25,7 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.cmd
 --- @field cmd? string
 --- @field range? any[]
+--- @field visualrange? boolean
 --- @field count? integer
 --- @field reg? string
 --- @field bang? boolean

@@ -53,6 +53,7 @@
 ///                          Otherwise, has no elements if no range was specified, one element if
 ///                          only a single range item was specified, or two elements if both range
 ///                          items were specified.
+///         - visualrange: (boolean) (optional) Whether the range is the visual selection ("'<,'>").
 ///         - count: (number) (optional) Command [<count>].
 ///                           Omitted if command cannot take a count.
 ///         - reg: (string) (optional) Command [<register>].
@@ -162,6 +163,9 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
       ADD_C(range, INTEGER_OBJ(ea.line2));
     }
     PUT_KEY(result, cmd, range, range);
+    if (STRNICMP(*ea.cmdlinep, "'<,'>", 5) == 0) {
+      PUT_KEY(result, cmd, visualrange, true);
+    }
   }
 
   if (ea.argt & EX_COUNT) {

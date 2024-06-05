@@ -2221,6 +2221,9 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   lua_pushinteger(lstate, eap->addr_count);
   lua_setfield(lstate, -2, "range");
 
+  lua_pushboolean(lstate, STRNICMP(*eap->cmdlinep, "'<,'>", 5) == 0);
+  lua_setfield(lstate, -2, "visualrange");
+
   if (eap->addr_count > 0) {
     lua_pushinteger(lstate, eap->line2);
   } else {

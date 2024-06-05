@@ -1902,6 +1902,8 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
           if command doesn't accept a range. Otherwise, has no elements if no
           range was specified, one element if only a single range item was
           specified, or two elements if both range items were specified.
+        • visualrange: (boolean) (optional) Whether the range is the visual
+          selection ("'<,'>").
         • count: (number) (optional) Command <count>. Omitted if command
           cannot take a count.
         • reg: (string) (optional) Command <register>. Omitted if command
