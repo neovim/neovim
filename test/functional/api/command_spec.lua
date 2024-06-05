@@ -562,8 +562,8 @@ describe('nvim_create_user_command', function()
         reg = '',
       },
       exec_lua [=[
-      vim.api.nvim_buf_set_mark(0, "<", 1, 0, {})
-      vim.api.nvim_buf_set_mark(0, ">", 1, 0, {})
+      vim.api.nvim_buf_set_mark(0, '<', 1, 0, {})
+      vim.api.nvim_buf_set_mark(0, '>', 1, 0, {})
       vim.api.nvim_command("'<,'>CommandWithRange")
       return result
     ]=]

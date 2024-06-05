@@ -3989,8 +3989,8 @@ describe('API', function()
       }, api.nvim_parse_cmd('4,6s/math.random/math.max/', {}))
     end)
     it('works with visual ranges', function()
-      api.nvim_buf_set_mark(0, "<", 1, 0, {})
-      api.nvim_buf_set_mark(0, ">", 1, 0, {})
+      api.nvim_buf_set_mark(0, '<', 1, 0, {})
+      api.nvim_buf_set_mark(0, '>', 1, 0, {})
       eq({
         cmd = 'substitute',
         args = { '/math.random/math.max/' },
