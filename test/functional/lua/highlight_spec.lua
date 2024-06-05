@@ -90,6 +90,23 @@ describe('vim.highlight.range', function()
                                                                   |
     ]])
   end)
+
+  it('highlights one-char inclusive region but not empty region', function()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('')
+      vim.highlight.range(0, ns, 'Search', { 0, 0 }, { 0, 0 }, {})
+      vim.highlight.range(0, ns, 'Search', { 2, 0 }, { 2, 0 }, { inclusive = true })
+      vim.highlight.range(0, ns, 'Search', { 4, 0 }, { 4, 0 }, { inclusive = false })
+    ]])
+    screen:expect([[
+      ^asdfghjkl{1:$}                                                  |
+      «口=口»{1:$}                                                    |
+      {10:q}wertyuiop{1:$}                                                 |
+      口口=口口{1:$}                                                  |
+      zxcvbnm{1:$}                                                    |
+                                                                  |
+    ]])
+  end)
 end)
 
 describe('vim.highlight.on_yank', function()

@@ -1706,14 +1706,13 @@ do --[[ References ]]
         [protocol.DocumentHighlightKind.Write] = 'LspReferenceWrite',
       }
       local kind = reference['kind'] or protocol.DocumentHighlightKind.Text
-      highlight.range(
-        bufnr,
-        reference_ns,
-        document_highlight_kind[kind],
-        { start_line, start_idx },
-        { end_line, end_idx },
-        { priority = vim.highlight.priorities.user }
-      )
+      vim.api.nvim_buf_set_extmark(bufnr, reference_ns, start_line, start_idx, {
+        end_row = end_line,
+        end_col = end_idx,
+        hl_group = document_highlight_kind[kind],
+        priority = vim.highlight.priorities.user,
+        strict = false,
+      })
     end
   end
 end

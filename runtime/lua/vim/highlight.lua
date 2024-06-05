@@ -69,6 +69,10 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
     pos2[3] = math.min(pos2[3], max_col2)
   end)
 
+  if pos1[2] == pos2[2] and pos1[3] == pos2[3] and pos1[4] == pos2[4] and not inclusive then
+    return
+  end
+
   local region = vim.fn.getregionpos(pos1, pos2, {
     type = regtype,
     exclusive = not inclusive,
