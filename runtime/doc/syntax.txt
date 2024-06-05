@@ -3332,7 +3332,7 @@ embedded script highlighting they wish to have. >
 This option is disabled by default.
 						*g:vimsyn_folding*
 
-Some folding is now supported with syntax/vim.vim: >
+Some folding is now supported with when 'foldmethod' is set to "syntax": >
 
    g:vimsyn_folding == 0 or doesn't exist: no syntax-based folding
    g:vimsyn_folding =~ 'a' : augroups
@@ -3343,6 +3343,11 @@ Some folding is now supported with syntax/vim.vim: >
    g:vimsyn_folding =~ 'P' : fold python   script
    g:vimsyn_folding =~ 'r' : fold ruby     script
 <
+
+By default, g:vimsyn_folding is unset.  Concatenate the indicated characters
+to support folding of multiple syntax constructs; i.e.
+g:vimsyn_folding = "fh" will enable folding of both functions and heredocs.
+
 							*g:vimsyn_noerror*
 Not all error highlighting that syntax/vim.vim does may be correct; Vim script
 is a difficult language to highlight correctly.  A way to suppress error
