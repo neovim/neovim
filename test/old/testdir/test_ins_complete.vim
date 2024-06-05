@@ -2512,4 +2512,60 @@ func Test_completefunc_first_call_complete_add()
   bwipe!
 endfunc
 
+func Test_complete_fuzzy_match()
+  func OnPumChange()
+    let g:item = get(v:event, 'completed_item', {})
+    let g:word = get(g:item, 'word', v:null)
+  endfunction
+
+  augroup AAAAA_Group
+    au!
+    autocmd CompleteChanged * :call OnPumChange()
+  augroup END
+
+  func Omni_test(findstart, base)
+    if a:findstart
+      return col(".")
+    endif
+    return [#{word: "foo"}, #{word: "foobar"}, #{word: "fooBaz"}, #{word: "foobala"}]
+  endfunc
+  new
+  set omnifunc=Omni_test
+  set completeopt+=noinsert,fuzzy
+  call feedkeys("Gi\<C-x>\<C-o>", 'tx')
+  call assert_equal('foo', g:word)
+  call feedkeys("S\<C-x>\<C-o>fb", 'tx')
+  call assert_equal('fooBaz', g:word)
+  call feedkeys("S\<C-x>\<C-o>fa", 'tx')
+  call assert_equal('foobar', g:word)
+  " select next
+  call feedkeys("S\<C-x>\<C-o>fb\<C-n>", 'tx')
+  call assert_equal('foobar', g:word)
+  " can circly select next
+  call feedkeys("S\<C-x>\<C-o>fb\<C-n>\<C-n>\<C-n>", 'tx')
+  call assert_equal(v:null, g:word)
+  " select prev
+  call feedkeys("S\<C-x>\<C-o>fb\<C-p>", 'tx')
+  call assert_equal(v:null, g:word)
+  " can circly select prev
+  call feedkeys("S\<C-x>\<C-o>fb\<C-p>\<C-p>\<C-p>\<C-p>", 'tx')
+  call assert_equal('fooBaz', g:word)
+
+  " respect noselect
+  set completeopt+=noselect
+  call feedkeys("S\<C-x>\<C-o>fb", 'tx')
+  call assert_equal(v:null, g:word)
+  call feedkeys("S\<C-x>\<C-o>fb\<C-n>", 'tx')
+  call assert_equal('fooBaz', g:word)
+
+  " clean up
+  set omnifunc=
+  bw!
+  set complete& completeopt&
+  autocmd! AAAAA_Group
+  augroup! AAAAA_Group
+  delfunc OnPumChange
+  delfunc Omni_test
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

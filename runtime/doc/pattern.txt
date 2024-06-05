@@ -1494,5 +1494,7 @@ the matching positions and the fuzzy match scores.
 
 The "f" flag of `:vimgrep` enables fuzzy matching.
 
+To enable fuzzy matching for |ins-completion|, add the "fuzzy" value to the
+'completeopt' option.
 
  vim:tw=78:ts=8:noet:ft=help:norl:

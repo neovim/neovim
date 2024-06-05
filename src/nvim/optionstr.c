@@ -122,8 +122,8 @@ static char *(p_bs_values[]) = { "indent", "eol", "start", "nostop", NULL };
 static char *(p_fdm_values[]) = { "manual", "expr", "marker", "indent",
                                   "syntax",  "diff", NULL };
 static char *(p_fcl_values[]) = { "all", NULL };
-static char *(p_cot_values[]) = { "menu", "menuone", "longest", "preview", "noinsert", "noselect",
-                                  "popup", NULL };
+static char *(p_cot_values[]) = { "menu", "menuone", "longest", "preview", "popup",
+                                  "noinsert", "noselect", "fuzzy", NULL };
 #ifdef BACKSLASH_IN_FILENAME
 static char *(p_csl_values[]) = { "slash", "backslash", NULL };
 #endif
