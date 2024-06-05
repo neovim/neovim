@@ -121,6 +121,7 @@ function vim.stricmp(a, b) end
 --- @param str string
 --- @param index integer
 --- @param use_utf16? boolean
+--- @return integer
 function vim.str_byteindex(str, index, use_utf16) end
 
 --- Gets a list of the starting byte positions of each UTF-8 codepoint in the given string.
