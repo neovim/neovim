@@ -90,6 +90,22 @@ describe('vim.highlight.range', function()
                                                                   |
     ]])
   end)
+
+  it('can use -1 or v:maxcol to indicate end of line', function()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('')
+      vim.highlight.range(0, ns, 'Search', { 0, 4 }, { 1, -1 }, {})
+      vim.highlight.range(0, ns, 'Search', { 2, 6 }, { 3, vim.v.maxcol }, {})
+    ]])
+    screen:expect([[
+      ^asdf{10:ghjkl}{100:$}                                                  |
+      {10:«口=口»}{100:$}                                                    |
+      qwerty{10:uiop}{100:$}                                                 |
+      {10:口口=口口}{1:$}                                                  |
+      zxcvbnm{1:$}                                                    |
+                                                                  |
+    ]])
+  end)
 end)
 
 describe('vim.highlight.on_yank', function()
