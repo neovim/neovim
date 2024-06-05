@@ -1249,6 +1249,8 @@ static int ins_compl_build_pum(void)
         }
         cur = i;
       } else if (compl_fuzzy_match) {
+        // Update the maximum fuzzy score and the shown match
+        // if the current item's score is higher
         if (comp->cp_score > max_fuzzy_score) {
           did_find_shown_match = true;
           max_fuzzy_score = comp->cp_score;
@@ -1256,6 +1258,10 @@ static int ins_compl_build_pum(void)
           shown_match_ok = true;
         }
 
+        // If there is no "no select" condition and the max fuzzy
+        // score is positive, or there is no completion leader or the
+        // leader length is zero, mark the shown match as valid and
+        // reset the current index.
         if (!compl_no_select
             && (max_fuzzy_score > 0
                 || (compl_leader == NULL || lead_len == 0))) {
@@ -3633,6 +3639,7 @@ static void ins_compl_show_filename(void)
   redraw_cmdline = false;  // don't overwrite!
 }
 
+/// find a completion item in when completeopt include fuzzy option
 static compl_T *find_comp_when_fuzzy(void)
 {
   int target_idx = -1;
