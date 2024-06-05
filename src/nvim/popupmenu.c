@@ -700,7 +700,7 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
   }
   // delete the empty last line
   ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
-  if (strstr(p_cot, "popup") != NULL) {
+  if (get_cot_flags() & COT_POPUP) {
     extmark_splice(buf, 1, 0, 1, 0, 0, buf->b_ml.ml_line_count, 0, inserted_bytes, kExtmarkNoUndo);
   }
 }
@@ -795,7 +795,8 @@ static bool pum_set_selected(int n, int repeat)
   int prev_selected = pum_selected;
 
   pum_selected = n;
-  bool use_float = strstr(p_cot, "popup") != NULL;
+  unsigned cur_cot_flags = get_cot_flags();
+  bool use_float = (cur_cot_flags & COT_POPUP) != 0;
   // when new leader add and info window is shown and no selected we still
   // need use the first index item to update the info float window position.
   bool force_select = use_float && pum_selected < 0 && win_float_find_preview();
@@ -861,7 +862,7 @@ static bool pum_set_selected(int n, int repeat)
     if ((pum_array[pum_selected].pum_info != NULL)
         && (Rows > 10)
         && (repeat <= 1)
-        && (vim_strchr(p_cot, 'p') != NULL)) {
+        && (cur_cot_flags & COT_ANY_PREVIEW)) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
 
