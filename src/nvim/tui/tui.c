@@ -1855,20 +1855,12 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
   return -1;
 }
 
-/// Determine if the terminal supports truecolor or not:
+/// Determine if the terminal supports truecolor or not.
 ///
-/// 1. If $COLORTERM is "24bit" or "truecolor", return true
-/// 2. Else, check terminfo for Tc, RGB, setrgbf, or setrgbb capabilities. If
-///    found, return true
-/// 3. Else, return false
+/// If terminfo contains Tc, RGB, or both setrgbf and setrgbb capabilities, return true.
 static bool term_has_truecolor(TUIData *tui, const char *colorterm)
 {
-  // Check $COLORTERM
-  if (strequal(colorterm, "truecolor") || strequal(colorterm, "24bit")) {
-    return true;
-  }
-
-  // Check for Tc and RGB
+  // Check for Tc or RGB
   for (size_t i = 0; i < unibi_count_ext_bool(tui->ut); i++) {
     const char *n = unibi_get_ext_bool_name(tui->ut, i);
     if (n && (!strcmp(n, "Tc") || !strcmp(n, "RGB"))) {
