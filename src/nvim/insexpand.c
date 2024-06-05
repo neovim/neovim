@@ -1195,8 +1195,8 @@ static int ins_compl_build_pum(void)
   int max_fuzzy_score = 0;
 
   do {
-    // when completeopt include fuzzy option and leader is not null or empty
-    // set the cp_score for after compare.
+    // When 'completeopt' contains "fuzzy" and leader is not NULL or empty,
+    // set the cp_score for later comparisons.
     if (compl_fuzzy_match && compl_leader != NULL && lead_len > 0) {
       comp->cp_score = fuzzy_match_str(comp->cp_str, compl_leader);
     }
@@ -3639,7 +3639,7 @@ static void ins_compl_show_filename(void)
   redraw_cmdline = false;  // don't overwrite!
 }
 
-/// find a completion item in when completeopt include fuzzy option
+/// Find a completion item when 'completeopt' contains "fuzzy".
 static compl_T *find_comp_when_fuzzy(void)
 {
   int target_idx = -1;
