@@ -1084,6 +1084,8 @@ vim.bo.cfu = vim.bo.completefunc
 --- @type string
 vim.o.completeopt = "menu,preview"
 vim.o.cot = vim.o.completeopt
+vim.bo.completeopt = vim.o.completeopt
+vim.bo.cot = vim.bo.completeopt
 vim.go.completeopt = vim.o.completeopt
 vim.go.cot = vim.go.completeopt
 

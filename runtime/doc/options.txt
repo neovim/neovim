@@ -1495,7 +1495,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'completeopt'* *'cot'*
 'completeopt' 'cot'	string	(default "menu,preview")
-			global
+			global or local to buffer |global-local|
 	A comma-separated list of options for Insert mode completion
 	|ins-completion|.  The supported values are:
 

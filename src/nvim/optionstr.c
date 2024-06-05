@@ -158,6 +158,7 @@ void didset_string_options(void)
   opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true);
   opt_strings_flags(p_bkc, p_bkc_values, &bkc_flags, true);
   opt_strings_flags(p_bo, p_bo_values, &bo_flags, true);
+  opt_strings_flags(p_cot, p_cot_values, &cot_flags, true);
   opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true);
   opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true);
   opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true);
@@ -219,6 +220,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_ft);
   check_string_option(&buf->b_p_cinw);
   check_string_option(&buf->b_p_cinsd);
+  check_string_option(&buf->b_p_cot);
   check_string_option(&buf->b_p_cpt);
   check_string_option(&buf->b_p_cfu);
   check_string_option(&buf->b_p_ofu);
@@ -993,10 +995,23 @@ int expand_set_complete(optexpand_T *args, int *numMatches, char ***matches)
 /// The 'completeopt' option is changed.
 const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
 {
-  if (check_opt_strings(p_cot, p_cot_values, true) != OK) {
+  buf_T *buf = (buf_T *)args->os_buf;
+  char *cot = p_cot;
+  unsigned *flags = &cot_flags;
+
+  if (args->os_flags & OPT_LOCAL) {
+    cot = buf->b_p_cot;
+    flags = &buf->b_cot_flags;
+  }
+
+  if (check_opt_strings(cot, p_cot_values, true) != OK) {
     return e_invarg;
   }
-  completeopt_was_set();
+
+  if (opt_strings_flags(cot, p_cot_values, flags, true) != OK) {
+    return e_invarg;
+  }
+
   return NULL;
 }
 

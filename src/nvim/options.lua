@@ -1466,7 +1466,7 @@ return {
       expand_cb = 'expand_set_completeopt',
       full_name = 'completeopt',
       list = 'onecomma',
-      scope = { 'global' },
+      scope = { 'global', 'buffer' },
       short_desc = N_('options for Insert mode completion'),
       type = 'string',
       varname = 'p_cot',

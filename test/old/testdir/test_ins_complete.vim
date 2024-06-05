@@ -884,6 +884,74 @@ func Test_complete_with_longest()
   bwipe!
 endfunc
 
+" Test for buffer-local value of 'completeopt'
+func Test_completeopt_buffer_local()
+  set completeopt=menu
+  new
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  call assert_equal('', &l:completeopt)
+  call assert_equal('menu', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+
+  setlocal bufhidden=hide
+  enew
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  call assert_equal('', &l:completeopt)
+  call assert_equal('menu', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+
+  setlocal completeopt+=fuzzy,noinsert
+  call assert_equal('menu,fuzzy,noinsert', &l:completeopt)
+  call assert_equal('menu,fuzzy,noinsert', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>bz\<C-Y>", 'tnix')
+  call assert_equal('foobaz', getline('.'))
+
+  setlocal completeopt=
+  call assert_equal('', &l:completeopt)
+  call assert_equal('menu', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-Y>", 'tnix')
+  call assert_equal('foofoo', getline('.'))
+
+  setlocal completeopt+=longest
+  call assert_equal('menu,longest', &l:completeopt)
+  call assert_equal('menu,longest', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-X>\<C-Z>", 'tnix')
+  call assert_equal('foo', getline('.'))
+
+  setlocal bufhidden=hide
+  buffer #
+  call assert_equal('', &l:completeopt)
+  call assert_equal('menu', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-Y>", 'tnix')
+  call assert_equal('foofoo', getline('.'))
+
+  setlocal completeopt+=fuzzy,noinsert
+  call assert_equal('menu,fuzzy,noinsert', &l:completeopt)
+  call assert_equal('menu,fuzzy,noinsert', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>bz\<C-Y>", 'tnix')
+  call assert_equal('foobaz', getline('.'))
+
+  buffer #
+  call assert_equal('menu,longest', &l:completeopt)
+  call assert_equal('menu,longest', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-X>\<C-Z>", 'tnix')
+  call assert_equal('foo', getline('.'))
+
+  setlocal bufhidden=wipe
+  buffer! #
+  bwipe!
+  call assert_equal('', &l:completeopt)
+  call assert_equal('menu', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+
+  set completeopt&
+endfunc
 
 " Test for completing words following a completed word in a line
 func Test_complete_wrapscan()
