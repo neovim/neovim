@@ -428,12 +428,10 @@ syn match	vimStringInterpolationBrace contained "}}"
 syn cluster	vimSubstList	contains=vimPatSep,vimPatRegion,vimPatSepErr,vimSubstTwoBS,vimSubstRange,vimNotation
 syn cluster	vimSubstRepList	contains=vimSubstSubstr,vimSubstTwoBS,vimNotation
 syn cluster	vimSubstList	add=vimCollection
-syn match	vimSubst	"^\s*\%(s\%[ubstitute]\|sm\%[agic]\|sno\%[magic]\)\>[\"#|]\@!"	nextgroup=vimSubstPat
-syn match	vimSubst	"^\s*\%(s\%[ubstitute]\|sm\%[agic]\|sno\%[magic]\)_\@="	nextgroup=vimSubstPat
-syn match	vimSubst	"^\s*\%(s\%[ubstitute]\|sm\%[agic]\>\|sno\%[magic]\)\ze#.\{-}#.\{-}#"	nextgroup=vimSubstPat
-syn match	vimSubst1	contained	"\%(s\%[ubstitute]\|sm\%[agic]\>\|sno\%[magic]\)\>[\"#|]\@!"		nextgroup=vimSubstPat
-syn match	vimSubst1	contained	"\%(s\%[ubstitute]\|sm\%[agic]\>\|sno\%[magic]\)_\@="			nextgroup=vimSubstPat
-syn match	vimSubst1	contained	"\%(s\%[ubstitute]\|sm\%[agic]\>\|sno\%[magic]\)\ze#.\{-}#.\{-}#"		nextgroup=vimSubstPat
+syn match	vimSubst	"^\s*\%(s\%[ubstitute]\|sm\%[agic]\|sno\%[magic]\)\>"			skipwhite nextgroup=vimSubstPat
+syn match	vimSubst	"^\s*\%(s\%[ubstitute]\|sm\%[agic]\|sno\%[magic]\)[_#]\@="		skipwhite nextgroup=vimSubstPat
+syn match	vimSubst1	contained	"\%(s\%[ubstitute]\|sm\%[agic]\>\|sno\%[magic]\)\>"		skipwhite nextgroup=vimSubstPat
+syn match	vimSubst1	contained	"\%(s\%[ubstitute]\|sm\%[agic]\>\|sno\%[magic]\)[_#]\@="	skipwhite nextgroup=vimSubstPat
 " TODO: Vim9 illegal separators for abbreviated :s form are [-.:], :su\%[...] required
 "     : # is allowed but "not recommended" (see :h pattern-delimiter)
 syn region	vimSubstPat	contained	matchgroup=vimSubstDelim start="\z([!#$%&'()*+,-./:;<=>?@[\]^_`{}~]\)"rs=s+1 skip="\\\\\|\\\z1" end="\z1"re=e-1,me=e-1	contains=@vimSubstList	nextgroup=vimSubstRep4	oneline
@@ -445,6 +443,10 @@ syn match	vimSubstSubstr	contained	"\\z\=\d"
 syn match	vimSubstTwoBS	contained	"\\\\"
 syn match	vimSubstFlagErr	contained	"[^< \t\r|]\+" contains=vimSubstFlags
 syn match	vimSubstFlags	contained	"[&cegiIlnpr#]\+"
+
+" Vi compatibility
+syn match	vimSubstDelim	contained	"\\"
+syn match	vimSubstPat	contained	"\\\ze[/?&]" contains=vimSubstDelim nextgroup=vimSubstRep4
 
 " 'String': {{{2
 syn match	vimString	"[^(,]'[^']\{-}\zs'"
