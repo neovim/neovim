@@ -223,61 +223,6 @@ void *xmemdupz(const void *data, size_t len)
   return memcpy(xmallocz(len), data, len);
 }
 
-/// Copies `len` bytes of `src` to `dst` and zero terminates it.
-///
-/// @see {xstrlcpy}
-/// @param[out]  dst  Buffer to store the result.
-/// @param[in]  src  Buffer to be copied.
-/// @param[in]  len  Number of bytes to be copied.
-void *xmemcpyz(void *dst, const void *src, size_t len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
-{
-  memcpy(dst, src, len);
-  ((char *)dst)[len] = NUL;
-  return dst;
-}
-
-#ifndef HAVE_STRNLEN
-size_t xstrnlen(const char *s, size_t n)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  const char *end = memchr(s, NUL, n);
-  if (end == NULL) {
-    return n;
-  }
-  return (size_t)(end - s);
-}
-#endif
-
-/// A version of strchr() that returns a pointer to the terminating NUL if it
-/// doesn't find `c`.
-///
-/// @param str The string to search.
-/// @param c   The char to look for.
-/// @returns a pointer to the first instance of `c`, or to the NUL terminator
-///          if not found.
-char *xstrchrnul(const char *str, char c)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  char *p = strchr(str, c);
-  return p ? p : (char *)(str + strlen(str));
-}
-
-/// A version of memchr() that returns a pointer one past the end
-/// if it doesn't find `c`.
-///
-/// @param addr The address of the memory object.
-/// @param c    The char to look for.
-/// @param size The size of the memory object.
-/// @returns a pointer to the first instance of `c`, or one past the end if not
-///          found.
-void *xmemscan(const void *addr, char c, size_t size)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  char *p = memchr(addr, c, size);
-  return p ? p : (char *)addr + size;
-}
-
 /// Replaces every instance of `c` with `x`.
 ///
 /// @warning Will read past `str + strlen(str)` if `c == NUL`.
