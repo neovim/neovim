@@ -80,8 +80,7 @@ root                                                       *editorconfig.root*
 
 spelling_language                             *editorconfig.spelling_language*
     A code of the format ss or ss-TT, where ss is an ISO 639 language code and
-    TT is an ISO 3166 territory identifier. Sets the 'spell' and 'spelllang'
-    options.
+    TT is an ISO 3166 territory identifier. Sets the 'spelllang' option.
 
 tab_width                                             *editorconfig.tab_width*
     The display size of a single tab character. Sets the 'tabstop' option.
