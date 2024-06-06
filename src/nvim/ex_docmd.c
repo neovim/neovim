@@ -1499,8 +1499,9 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
   }
   after_modifier = eap->cmd;
 
-  // Save location after command modifiers
+  // Save location after command modifiers, which is also the start of the range
   char *cmd = eap->cmd;
+  char *range_start = eap->cmd;
   // Skip ranges to find command name since we need the command to know what kind of range it uses
   eap->cmd = skip_range(eap->cmd, NULL);
   if (*eap->cmd == '*') {
@@ -1519,6 +1520,9 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
     goto end;
   }
 
+  // Store the found range
+  // FIXME: this must be freed somewhere
+  eap->rangestr = xmemdupz(range_start, eap->cmd - range_start);
   // Skip colon and whitespace
   eap->cmd = skip_colon_white(eap->cmd, true);
   // Fail if command is a comment or if command doesn't exist
@@ -2795,6 +2799,9 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
   bool need_check_cursor = false;
   int ret = FAIL;
 
+  // Save the location of the start of the range
+  char *range_start = eap->cmd;
+
   // Repeat for all ',' or ';' separated addresses.
   while (true) {
     eap->line1 = eap->line2;
@@ -2919,6 +2926,10 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
     }
     eap->cmd++;
   }
+
+  // Store the found range as string
+  // FIXME: this must be freed somewhere
+  eap->rangestr = xmemdupz(range_start, eap->cmd - range_start);
 
   // One address given: set start and end lines.
   if (eap->addr_count == 1) {

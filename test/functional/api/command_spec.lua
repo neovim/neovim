@@ -249,6 +249,7 @@ describe('nvim_create_user_command', function()
           vertical = false,
         },
         range = 0,
+        rangestr = '',
         count = 2,
         reg = '',
       },
@@ -289,6 +290,7 @@ describe('nvim_create_user_command', function()
           vertical = false,
         },
         range = 0,
+        rangestr = '',
         count = 2,
         reg = '',
       },
@@ -329,6 +331,7 @@ describe('nvim_create_user_command', function()
           vertical = false,
         },
         range = 0,
+        rangestr = '',
         count = 2,
         reg = '',
       },
@@ -369,6 +372,7 @@ describe('nvim_create_user_command', function()
           vertical = false,
         },
         range = 1,
+        rangestr = '10',
         count = 10,
         reg = '',
       },
@@ -409,6 +413,7 @@ describe('nvim_create_user_command', function()
           vertical = false,
         },
         range = 1,
+        rangestr = '',
         count = 42,
         reg = '',
       },
@@ -449,6 +454,7 @@ describe('nvim_create_user_command', function()
           vertical = false,
         },
         range = 0,
+        rangestr = '',
         count = 2,
         reg = '',
       },
@@ -501,6 +507,7 @@ describe('nvim_create_user_command', function()
           vertical = false,
         },
         range = 0,
+        rangestr = '',
         count = 2,
         reg = '',
       },
@@ -508,6 +515,58 @@ describe('nvim_create_user_command', function()
       vim.api.nvim_command('CommandWithOneOrNoArg hello I\'m one argument')
       return result
     ]]
+    )
+
+    -- Test visual range
+    exec_lua [[
+      result = {}
+      vim.api.nvim_create_user_command('CommandWithRange', function(opts)
+        result = opts
+      end, {
+        range = true,
+      })
+    ]]
+    eq(
+      {
+        name = 'CommandWithRange',
+        args = '',
+        fargs = {},
+        bang = false,
+        line1 = 1,
+        line2 = 1,
+        mods = '',
+        smods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+        range = 2,
+        rangestr = "'<,'>",
+        count = 1,
+        reg = '',
+      },
+      exec_lua [=[
+      vim.api.nvim_buf_set_mark(0, '<', 1, 0, {})
+      vim.api.nvim_buf_set_mark(0, '>', 1, 0, {})
+      vim.api.nvim_command("'<,'>CommandWithRange")
+      return result
+    ]=]
     )
 
     -- f-args is an empty table if no args were passed
@@ -542,6 +601,7 @@ describe('nvim_create_user_command', function()
           vertical = false,
         },
         range = 0,
+        rangestr = '',
         count = 2,
         reg = '',
       },
@@ -594,6 +654,7 @@ describe('nvim_create_user_command', function()
           vertical = false,
         },
         range = 0,
+        rangestr = '',
         count = 2,
         reg = '',
       },
@@ -634,6 +695,7 @@ describe('nvim_create_user_command', function()
           vertical = false,
         },
         range = 0,
+        rangestr = '',
         count = 2,
         reg = '+',
       },

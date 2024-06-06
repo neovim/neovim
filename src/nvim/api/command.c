@@ -53,6 +53,7 @@
 ///                          Otherwise, has no elements if no range was specified, one element if
 ///                          only a single range item was specified, or two elements if both range
 ///                          items were specified.
+///         - rangestr: (string) (optional) The parsed range extracted from the command line.
 ///         - count: (number) (optional) Command [<count>].
 ///                           Omitted if command cannot take a count.
 ///         - reg: (string) (optional) Command [<register>].
@@ -162,6 +163,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
       ADD_C(range, INTEGER_OBJ(ea.line2));
     }
     PUT_KEY(result, cmd, range, range);
+    PUT_KEY(result, cmd, rangestr, cstr_as_string(ea.rangestr));
   }
 
   if (ea.argt & EX_COUNT) {

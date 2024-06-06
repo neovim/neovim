@@ -144,6 +144,7 @@ struct exarg {
   char *cmd;                    ///< the name of the command (except for :make)
   char **cmdlinep;              ///< pointer to pointer of allocated cmdline
   char *cmdline_tofree;         ///< free later
+  char *rangestr;               ///< extracted range from cmdline
   cmdidx_T cmdidx;              ///< the index for the command
   uint32_t argt;                ///< flags for the command
   int skip;                     ///< don't execute the command, only parse it

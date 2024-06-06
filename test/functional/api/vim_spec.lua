@@ -3954,6 +3954,7 @@ describe('API', function()
         args = { '/math.random/math.max/' },
         bang = false,
         range = { 4, 6 },
+        rangestr = '4,6',
         addr = 'line',
         magic = {
           file = false,
@@ -3988,12 +3989,56 @@ describe('API', function()
         },
       }, api.nvim_parse_cmd('4,6s/math.random/math.max/', {}))
     end)
+    it('works with visual ranges', function()
+      api.nvim_buf_set_mark(0, '<', 1, 0, {})
+      api.nvim_buf_set_mark(0, '>', 1, 0, {})
+      eq({
+        cmd = 'substitute',
+        args = { '/math.random/math.max/' },
+        bang = false,
+        range = { 1, 1 },
+        rangestr = "'<,'>",
+        addr = 'line',
+        magic = {
+          file = false,
+          bar = false,
+        },
+        nargs = '*',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            pattern = '',
+            force = false,
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+      }, api.nvim_parse_cmd("'<,'>s/math.random/math.max/", {}))
+    end)
     it('works with count', function()
       eq({
         cmd = 'buffer',
         args = {},
         bang = false,
         range = { 1 },
+        rangestr = '',
         count = 1,
         addr = 'buf',
         magic = {
@@ -4035,6 +4080,7 @@ describe('API', function()
         args = {},
         bang = false,
         range = {},
+        rangestr = '',
         reg = '+',
         addr = 'line',
         magic = {
@@ -4074,6 +4120,7 @@ describe('API', function()
         args = {},
         bang = false,
         range = {},
+        rangestr = '',
         reg = '',
         addr = 'line',
         magic = {
@@ -4115,6 +4162,7 @@ describe('API', function()
         args = {},
         bang = false,
         range = { 3, 7 },
+        rangestr = '1,3',
         count = 7,
         reg = '*',
         addr = 'line',
@@ -4157,6 +4205,7 @@ describe('API', function()
         args = {},
         bang = true,
         range = {},
+        rangestr = '',
         addr = 'line',
         magic = {
           file = true,
@@ -4198,6 +4247,7 @@ describe('API', function()
           args = { 'foo.txt' },
           bang = false,
           range = {},
+          rangestr = '',
           addr = '?',
           magic = {
             file = true,
@@ -4242,6 +4292,7 @@ describe('API', function()
           args = { 'foo.txt' },
           bang = false,
           range = {},
+          rangestr = '',
           addr = '?',
           magic = {
             file = true,
@@ -4288,6 +4339,7 @@ describe('API', function()
         args = { 'test', 'it' },
         bang = true,
         range = { 4, 6 },
+        rangestr = '4,6',
         addr = 'line',
         magic = {
           file = false,
@@ -4328,6 +4380,7 @@ describe('API', function()
         args = { 'a.txt' },
         bang = false,
         range = {},
+        rangestr = '',
         addr = 'arg',
         magic = {
           file = true,
@@ -4462,6 +4515,7 @@ describe('API', function()
         args = { 'x' },
         bang = true,
         range = { 3, 4 },
+        rangestr = '+2;/bar/',
         addr = 'line',
         magic = {
           file = false,
