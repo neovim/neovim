@@ -3186,7 +3186,7 @@ static void syn_cmd_onoff(exarg_T *eap, char *name)
   if (!eap->skip) {
     did_syntax_onoff = true;
     char buf[100];
-    xmemcpyz(buf, S_LEN("so "));
+    memcpy(buf, S_LEN("so ") + 1);
     vim_snprintf(buf + 3, sizeof(buf) - 3, SYNTAX_FNAME, name);
     do_cmdline_cmd(buf);
   }
