@@ -1522,7 +1522,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const cha
 
   // Store the found range
   // FIXME: this must be freed somewhere
-  eap->rangestr = xmemdupz(range_start, eap->cmd - range_start);
+  eap->rangestr = xmemdupz(range_start, (size_t)(eap->cmd - range_start));
   // Skip colon and whitespace
   eap->cmd = skip_colon_white(eap->cmd, true);
   // Fail if command is a comment or if command doesn't exist
@@ -2929,7 +2929,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
 
   // Store the found range as string
   // FIXME: this must be freed somewhere
-  eap->rangestr = xmemdupz(range_start, eap->cmd - range_start);
+  eap->rangestr = xmemdupz(range_start, (size_t)(eap->cmd - range_start));
 
   // One address given: set start and end lines.
   if (eap->addr_count == 1) {
