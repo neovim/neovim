@@ -155,6 +155,10 @@ UI
 • |CompleteDone| now sets the `reason` key in `v:event` which specifies the reason
   for completion being done.
 
+• Added |nvim_tabpage_get_layout()| to retrieve the window layout for a tabpage.
+
+• Added |nvim_tabpage_set_layout()| to set the window layout of a tabpage.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
