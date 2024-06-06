@@ -1,10 +1,14 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/validate.h"
 #include "nvim/api/tabpage.h"
 #include "nvim/api/vim.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
@@ -13,6 +17,47 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/tabpage.c.generated.h"
 #endif
+
+/// Opens a new tabpage with a single window
+///
+/// @param buffer   Buffer handle, or 0 for current buffer
+/// @param enter    Boolean, whether to enter the new tabpage
+/// @param opts     Optional parameters
+///  - after: Tabpage handle, open new tabpage after this tabpage.
+///           Defaults to opening after the current tabpage.
+/// @param[out] err Error details, if any
+/// @return Handle to newly created tabpage
+Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(open_tabpage_opts) *opts, Error *err)
+  FUNC_API_SINCE(12)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return 0;
+  }
+
+  int after = 0;
+  if (HAS_KEY(opts, open_tabpage_opts, after)) {
+    tabpage_T *tp = find_tab_by_handle((Tabpage)opts->after, err);
+    if (!tp) {
+      return 0;
+    }
+    // Add 1 to the tabpage index because of tabpage numbering.
+    // Neglecting to do this will result in the new tabpage being opened
+    // *before* the specified tabpage.
+    after = tabpage_index(tp) + 1;
+  }
+
+  tabpage_T *tp = win_new_tabpage(after, buf->b_ffname, enter);
+
+  if (!tp) {
+    api_set_error(err, kErrorTypeException, "Failed to create tabpage");
+    return 0;
+  }
+
+  win_set_buf(tp->tp_firstwin, buf, false, err);
+
+  return tp->handle;
+}
 
 /// Gets the windows in a tabpage
 ///
