@@ -237,8 +237,8 @@ But not this one
     eq(true, ok, err)
   end)
 
-  it('sets spell, spelllang options', function()
-    test_case('short_spelling_language.txt', { spell = true, spelllang = 'de' })
-    test_case('long_spelling_language.txt', { spell = true, spelllang = 'en_nz' })
+  it('sets spelllang', function()
+    test_case('short_spelling_language.txt', { spelllang = 'de' })
+    test_case('long_spelling_language.txt', { spelllang = 'en_nz' })
   end)
 end)
