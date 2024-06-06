@@ -254,7 +254,7 @@ bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
       if (plist == msg_list || severe) {
         // Skip the extra "Vim " prefix for message "E458".
         char *tmsg = elem->msg;
-        if (strncmp(tmsg, "Vim E", 5) == 0
+        if (strncmp(tmsg, S_LEN("Vim E")) == 0
             && ascii_isdigit(tmsg[5])
             && ascii_isdigit(tmsg[6])
             && ascii_isdigit(tmsg[7])
@@ -443,7 +443,7 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
   // would be treated differently from real interrupt or error exceptions
   // when no active try block is found, see do_cmdline().
   if (type == ET_USER) {
-    if (strncmp(value, "Vim", 3) == 0
+    if (strncmp(value, S_LEN("Vim")) == 0
         && (((char *)value)[3] == NUL || ((char *)value)[3] == ':'
             || ((char *)value)[3] == '(')) {
       emsg(_("E608: Cannot :throw exceptions with 'Vim' prefix"));

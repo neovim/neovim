@@ -1896,7 +1896,7 @@ theend:
 bool is_dev_fd_file(char *fname)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return strncmp(fname, "/dev/fd/", 8) == 0
+  return strncmp(fname, S_LEN("/dev/fd/")) == 0
          && ascii_isdigit((uint8_t)fname[8])
          && *skipdigits(fname + 9) == NUL
          && (fname[9] != NUL

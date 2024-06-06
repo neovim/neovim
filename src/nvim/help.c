@@ -655,7 +655,7 @@ void get_local_additions(void)
   // files.  This uses the very first line in the help file.
   char *const fname = path_tail(curbuf->b_fname);
   if (path_fnamecmp(fname, "help.txt") == 0
-      || (path_fnamencmp(fname, "help.", 5) == 0
+      || (path_fnamencmp(fname, S_LEN("help.")) == 0
           && ASCII_ISALPHA(fname[5])
           && ASCII_ISALPHA(fname[6])
           && TOLOWER_ASC(fname[7]) == 'x'
@@ -1015,7 +1015,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
     // Write the tags into the file.
     for (int i = 0; i < ga.ga_len; i++) {
       s = ((char **)ga.ga_data)[i];
-      if (strncmp(s, "help-tags\t", 10) == 0) {
+      if (strncmp(s, S_LEN("help-tags\t")) == 0) {
         // help-tags entry was added in formatted form
         fputs(s, fd_tags);
       } else {
@@ -1149,7 +1149,7 @@ void ex_helptags(exarg_T *eap)
   bool add_help_tags = false;
 
   // Check for ":helptags ++t {dir}".
-  if (strncmp(eap->arg, "++t", 3) == 0 && ascii_iswhite(eap->arg[3])) {
+  if (strncmp(eap->arg, S_LEN("++t")) == 0 && ascii_iswhite(eap->arg[3])) {
     add_help_tags = true;
     eap->arg = skipwhite(eap->arg + 3);
   }

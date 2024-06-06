@@ -833,9 +833,9 @@ void terminal_paste(int count, char **y_array, size_t y_size)
       if (j) {
         // terminate the previous line
 #ifdef MSWIN
-        terminal_send(curbuf->terminal, "\r\n", 2);
+        terminal_send(curbuf->terminal, S_LEN("\r\n"));
 #else
-        terminal_send(curbuf->terminal, "\n", 1);
+        terminal_send(curbuf->terminal, S_LEN("\n"));
 #endif
       }
       size_t len = strlen(y_array[j]);

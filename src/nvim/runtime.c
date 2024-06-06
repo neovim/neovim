@@ -1321,16 +1321,16 @@ expand:
     }
 
     if (flags & DIP_START) {
-      memcpy(tail - 15, "pack/*/start/*/", 15);  // NOLINT
+      memcpy(tail - 15, S_LEN("pack/*/start/*/"));  // NOLINT
       globpath(p_pp, tail - 15, gap, glob_flags, expand_dirs);
-      memcpy(tail - 8, "start/*/", 8);  // NOLINT
+      memcpy(tail - 8, S_LEN("start/*/"));  // NOLINT
       globpath(p_pp, tail - 8, gap, glob_flags, expand_dirs);
     }
 
     if (flags & DIP_OPT) {
-      memcpy(tail - 13, "pack/*/opt/*/", 13);  // NOLINT
+      memcpy(tail - 13, S_LEN("pack/*/opt/*/"));  // NOLINT
       globpath(p_pp, tail - 13, gap, glob_flags, expand_dirs);
-      memcpy(tail - 6, "opt/*/", 6);  // NOLINT
+      memcpy(tail - 6, S_LEN("opt/*/"));  // NOLINT
       globpath(p_pp, tail - 6, gap, glob_flags, expand_dirs);
     }
 
@@ -1877,7 +1877,7 @@ static bool concat_continued_line(garray_T *const ga, const int init_growsize, c
   const char *const line = skipwhite_len(p, len);
   len -= (size_t)(line - p);
   // Skip lines starting with '\" ', concat lines starting with '\'
-  if (len >= 3 && strncmp(line, "\"\\ ", 3) == 0) {
+  if (len >= 3 && strncmp(line, S_LEN("\"\\ ")) == 0) {
     return true;
   } else if (len == 0 || line[0] != '\\') {
     return false;

@@ -521,18 +521,18 @@ static int dbg_parsearg(char *arg, garray_T *gap)
   struct debuggy *bp = &DEBUGGY(gap, gap->ga_len);
 
   // Find "func" or "file".
-  if (strncmp(p, "func", 4) == 0) {
+  if (strncmp(p, S_LEN("func")) == 0) {
     bp->dbg_type = DBG_FUNC;
-  } else if (strncmp(p, "file", 4) == 0) {
+  } else if (strncmp(p, S_LEN("file")) == 0) {
     bp->dbg_type = DBG_FILE;
-  } else if (gap != &prof_ga && strncmp(p, "here", 4) == 0) {
+  } else if (gap != &prof_ga && strncmp(p, S_LEN("here")) == 0) {
     if (curbuf->b_ffname == NULL) {
       emsg(_(e_noname));
       return FAIL;
     }
     bp->dbg_type = DBG_FILE;
     here = true;
-  } else if (gap != &prof_ga && strncmp(p, "expr", 4) == 0) {
+  } else if (gap != &prof_ga && strncmp(p, S_LEN("expr")) == 0) {
     bp->dbg_type = DBG_EXPR;
   } else {
     semsg(_(e_invarg2), p);
@@ -559,7 +559,7 @@ static int dbg_parsearg(char *arg, garray_T *gap)
   }
 
   if (bp->dbg_type == DBG_FUNC) {
-    bp->dbg_name = xstrdup(strncmp(p, "g:", 2) == 0 ? p + 2 : p);
+    bp->dbg_name = xstrdup(strncmp(p, S_LEN("g:")) == 0 ? p + 2 : p);
   } else if (here) {
     bp->dbg_name = xstrdup(curbuf->b_ffname);
   } else if (bp->dbg_type == DBG_EXPR) {

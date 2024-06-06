@@ -1219,7 +1219,7 @@ int call_vim_function(const char *func, int argc, typval_T *argv, typval_T *rett
   int len = (int)strlen(func);
   partial_T *pt = NULL;
 
-  if (len >= 6 && !memcmp(func, "v:lua.", 6)) {
+  if (len >= 6 && !memcmp(func, S_LEN("v:lua."))) {
     func += 6;
     len = check_luafunc_name(func, false);
     if (len == 0) {
@@ -2161,7 +2161,7 @@ void del_menutrans_vars(void)
 {
   hash_lock(&globvarht);
   HASHTAB_ITER(&globvarht, hi, {
-    if (strncmp(hi->hi_key, "menutrans_", 10) == 0) {
+    if (strncmp(hi->hi_key, S_LEN("menutrans_")) == 0) {
       delete_var(&globvarht, hi);
     }
   });
@@ -3274,7 +3274,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
         check_vars(s, (size_t)len);
         // If evaluate is false rettv->v_type was not set, but it's needed
         // in handle_subscript() to parse v:lua, so set it here.
-        if (rettv->v_type == VAR_UNKNOWN && !evaluate && strnequal(s, "v:lua.", 6)) {
+        if (rettv->v_type == VAR_UNKNOWN && !evaluate && strnequal(s, S_LEN("v:lua."))) {
           rettv->v_type = VAR_PARTIAL;
           rettv->vval.v_partial = vvlua_partial;
           rettv->vval.v_partial->pt_refcount++;
@@ -3483,7 +3483,7 @@ static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const
   int len;
   char *name = *arg;
   char *lua_funcname = NULL;
-  if (strnequal(name, "v:lua.", 6)) {
+  if (strnequal(name, S_LEN("v:lua."))) {
     lua_funcname = name + 6;
     *arg = (char *)skip_luafunc_name(lua_funcname);
     *arg = skipwhite(*arg);  // to detect trailing whitespace later
@@ -5618,7 +5618,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
     int dict_idx = 0;
     int arg_idx = 0;
     list_T *list = NULL;
-    if (strncmp(s, "s:", 2) == 0 || strncmp(s, "<SID>", 5) == 0) {
+    if (strncmp(s, S_LEN("s:")) == 0 || strncmp(s, S_LEN("<SID>")) == 0) {
       // Expand s: and <SID> into <SNR>nr_, so that the function can
       // also be called from another script. Using trans_function_name()
       // would also work, but some plugins depend on the name being
@@ -6192,7 +6192,7 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   case kCallbackFuncref:
     name = callback->data.funcref;
     int len = (int)strlen(name);
-    if (len >= 6 && !memcmp(name, "v:lua.", 6)) {
+    if (len >= 6 && !memcmp(name, S_LEN("v:lua."))) {
       name += 6;
       len = check_luafunc_name(name, false);
       if (len == 0) {
@@ -6460,7 +6460,7 @@ bool write_list(FileDescriptor *const fp, const list_T *const list, const bool b
       }
     }
     if (!binary || TV_LIST_ITEM_NEXT(list, li) != NULL) {
-      const ptrdiff_t written = file_write(fp, "\n", 1);
+      const ptrdiff_t written = file_write(fp, S_LEN("\n"));
       if (written < 0) {
         error = (int)written;
         goto write_list_error;

@@ -1057,7 +1057,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     }
 
     int from_id = syn_check_group(from_start, (size_t)(from_end - from_start));
-    if (strncmp(to_start, "NONE", 4) == 0) {
+    if (strncmp(to_start, S_LEN("NONE")) == 0) {
       to_id = 0;
     } else {
       to_id = syn_check_group(to_start, (size_t)(to_end - to_start));

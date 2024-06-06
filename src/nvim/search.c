@@ -543,7 +543,7 @@ void last_pat_prog(regmmatch_T *regmatch)
     return;
   }
   emsg_off++;           // So it doesn't beep if bad expr
-  search_regcomp("", 0, NULL, 0, last_idx, SEARCH_KEEP, regmatch);
+  search_regcomp(S_LEN(""), NULL, 0, last_idx, SEARCH_KEEP, regmatch);
   emsg_off--;
 }
 
@@ -1821,9 +1821,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         ptr = skipwhite(linep);
         if (*ptr == '#' && pos.col <= (colnr_T)(ptr - linep)) {
           ptr = skipwhite(ptr + 1);
-          if (strncmp(ptr, "if", 2) == 0
-              || strncmp(ptr, "endif", 5) == 0
-              || strncmp(ptr, "el", 2) == 0) {
+          if (strncmp(ptr, S_LEN("if")) == 0
+              || strncmp(ptr, S_LEN("endif")) == 0
+              || strncmp(ptr, S_LEN("el")) == 0) {
             hash_dir = 1;
           }
         } else if (linep[pos.col] == '/') {  // Are we on a comment?
@@ -1894,9 +1894,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
       }
       if (initc != '#') {
         ptr = skipwhite(skipwhite(linep) + 1);
-        if (strncmp(ptr, "if", 2) == 0 || strncmp(ptr, "el", 2) == 0) {
+        if (strncmp(ptr, S_LEN("if")) == 0 || strncmp(ptr, S_LEN("el")) == 0) {
           hash_dir = 1;
-        } else if (strncmp(ptr, "endif", 5) == 0) {
+        } else if (strncmp(ptr, S_LEN("endif")) == 0) {
           hash_dir = -1;
         } else {
           return NULL;
@@ -1921,29 +1921,29 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         pos.col = (colnr_T)(ptr - linep);
         ptr = skipwhite(ptr + 1);
         if (hash_dir > 0) {
-          if (strncmp(ptr, "if", 2) == 0) {
+          if (strncmp(ptr, S_LEN("if")) == 0) {
             count++;
-          } else if (strncmp(ptr, "el", 2) == 0) {
+          } else if (strncmp(ptr, S_LEN("el")) == 0) {
             if (count == 0) {
               return &pos;
             }
-          } else if (strncmp(ptr, "endif", 5) == 0) {
+          } else if (strncmp(ptr, S_LEN("endif")) == 0) {
             if (count == 0) {
               return &pos;
             }
             count--;
           }
         } else {
-          if (strncmp(ptr, "if", 2) == 0) {
+          if (strncmp(ptr, S_LEN("if")) == 0) {
             if (count == 0) {
               return &pos;
             }
             count--;
-          } else if (initc == '#' && strncmp(ptr, "el", 2) == 0) {
+          } else if (initc == '#' && strncmp(ptr, S_LEN("el")) == 0) {
             if (count == 0) {
               return &pos;
             }
-          } else if (strncmp(ptr, "endif", 5) == 0) {
+          } else if (strncmp(ptr, S_LEN("endif")) == 0) {
             count++;
           }
         }
@@ -3891,7 +3891,7 @@ search_line:
           // is not considered to be a comment line.
           if (skip_comments) {
             if ((*line != '#'
-                 || strncmp(skipwhite(line + 1), "define", 6) != 0)
+                 || strncmp(skipwhite(line + 1), S_LEN("define")) != 0)
                 && get_leader_len(line, NULL, false, true)) {
               matched = false;
             }

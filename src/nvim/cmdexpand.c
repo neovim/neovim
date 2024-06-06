@@ -2247,7 +2247,7 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
 
   // Does command allow "++argopt" argument?
   if (ea.argt & EX_ARGOPT) {
-    while (*arg != NUL && strncmp(arg, "++", 2) == 0) {
+    while (*arg != NUL && strncmp(arg, S_LEN("++")) == 0) {
       p = arg + 2;
       while (*p && !ascii_isspace(*p)) {
         MB_PTR_ADV(p);
@@ -2774,7 +2774,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   // When expanding a function name starting with s:, match the <SNR>nr_
   // prefix.
   char *tofree = NULL;
-  if (xp->xp_context == EXPAND_USER_FUNC && strncmp(pat, "^s:", 3) == 0) {
+  if (xp->xp_context == EXPAND_USER_FUNC && strncmp(pat, S_LEN("^s:")) == 0) {
     const size_t len = strlen(pat) + 20;
 
     tofree = xmalloc(len);
@@ -3564,7 +3564,7 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (xpc.xp_context == EXPAND_USER_DEFINED) {
     // Must be "custom,funcname" pattern
-    if (strncmp(type, "custom,", 7) != 0) {
+    if (strncmp(type, S_LEN("custom,")) != 0) {
       semsg(_(e_invarg2), type);
       return;
     }
@@ -3574,7 +3574,7 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (xpc.xp_context == EXPAND_USER_LIST) {
     // Must be "customlist,funcname" pattern
-    if (strncmp(type, "customlist,", 11) != 0) {
+    if (strncmp(type, S_LEN("customlist,")) != 0) {
       semsg(_(e_invarg2), type);
       return;
     }

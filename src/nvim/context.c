@@ -261,7 +261,7 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
 
   HASHTAB_ITER(func_tbl_get(), hi, {
     const char *const name = hi->hi_key;
-    bool islambda = (strncmp(name, "<lambda>", 8) == 0);
+    bool islambda = (strncmp(name, S_LEN("<lambda>")) == 0);
     bool isscript = ((uint8_t)name[0] == K_SPECIAL);
 
     if (!islambda && (!scriptonly || isscript)) {
@@ -299,7 +299,7 @@ static inline void ctx_restore_funcs(Context *ctx)
 static inline Array sbuf_to_array(msgpack_sbuffer sbuf, Arena *arena)
 {
   list_T *const list = tv_list_alloc(kListLenMayKnow);
-  tv_list_append_string(list, "", 0);
+  tv_list_append_string(list, S_LEN(""));
   if (sbuf.size > 0) {
     encode_list_write(list, sbuf.data, sbuf.size);
   }
