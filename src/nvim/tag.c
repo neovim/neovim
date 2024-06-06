@@ -3174,7 +3174,7 @@ static int find_extra(char **pp)
     first_char = *str;
   }
 
-  if (str != NULL && strncmp(str, ";\S_LEN("")) == 0) {
+  if (str != NULL && strncmp(str, S_LEN(";\"")) == 0) {
     *pp = str;
     return OK;
   }
