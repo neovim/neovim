@@ -300,7 +300,7 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf, const size_t 
     } else {
       fp->write_pos += r_ret;
       size_t to_copy = MIN((size_t)r_ret, read_remaining);
-      memcpy(ret_buf, fp->read_pos, to_copy);
+      memcpy(buf, fp->read_pos, to_copy);
       fp->read_pos += to_copy;
       read_remaining -= to_copy;
     }
