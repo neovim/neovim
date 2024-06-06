@@ -191,7 +191,7 @@ function properties.insert_final_newline(bufnr, val)
 end
 
 --- A code of the format ss or ss-TT, where ss is an ISO 639 language code and TT is an ISO 3166 territory identifier.
---- Sets the 'spell' and 'spelllang' options.
+--- Sets the 'spelllang' option.
 function properties.spelling_language(bufnr, val)
   local error_msg =
     'spelling_language must be of the format ss or ss-TT, where ss is an ISO 639 language code and TT is an ISO 3166 territory identifier.'
@@ -209,8 +209,6 @@ function properties.spelling_language(bufnr, val)
     assert(territory_code:match('%l%l'), error_msg)
     vim.bo[bufnr].spelllang = language_code .. '_' .. territory_code
   end
-
-  vim.o.spell = true
 end
 
 --- @private
