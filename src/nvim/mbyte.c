@@ -2253,7 +2253,7 @@ char *enc_canonize(char *enc)
   if (enc_canon_search(p) >= 0) {
     // canonical name can be used unmodified
     if (p != r) {
-      memmove(r, p, (size_t)(p_e - p));
+      memmove(r, p, (size_t)(p_e - p) + 1);
     }
   } else if ((i = enc_alias_search(p)) >= 0) {
     // alias recognized, get canonical name
