@@ -128,7 +128,8 @@ PERFORMANCE
 
 PLUGINS
 
-• TODO
+• EditorConfig
+  • spelling_language property is now supported.
 
 STARTUP
 

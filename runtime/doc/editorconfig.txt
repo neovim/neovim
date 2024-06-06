@@ -78,6 +78,10 @@ root                                                       *editorconfig.root*
     directories. This property must be at the top-level of the `.editorconfig`
     file (i.e. it must not be within a glob section).
 
+spelling_language                             *editorconfig.spelling_language*
+    A code of the format ss or ss-TT, where ss is an ISO 639 language code and
+    TT is an ISO 3166 territory identifier. Sets the 'spelllang' option.
+
 tab_width                                             *editorconfig.tab_width*
     The display size of a single tab character. Sets the 'tabstop' option.
 
