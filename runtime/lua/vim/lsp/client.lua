@@ -673,8 +673,8 @@ function Client:_request(method, params, handler, bufnr)
   end
   -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
   changetracking.flush(self, bufnr)
+  local version = lsp.util.buf_versions[bufnr]
   bufnr = resolve_bufnr(bufnr)
-  local version = vim.b[bufnr].changedtick
   log.debug(self._log_prefix, 'client.request', self.id, method, params, handler, bufnr)
   local success, request_id = self.rpc.request(method, params, function(err, result)
     local context = {
@@ -922,13 +922,14 @@ function Client:_text_document_did_open_handler(bufnr)
 
   local params = {
     textDocument = {
-      version = vim.b[bufnr].changedtick,
+      version = 0,
       uri = vim.uri_from_bufnr(bufnr),
       languageId = self.get_language_id(bufnr, filetype),
       text = lsp._buf_get_full_text(bufnr),
     },
   }
   self.notify(ms.textDocument_didOpen, params)
+  lsp.util.buf_versions[bufnr] = params.textDocument.version
 
   -- Next chance we get, we should re-do the diagnostics
   vim.schedule(function()

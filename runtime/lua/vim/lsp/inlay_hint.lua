@@ -43,7 +43,7 @@ function M.on_inlayhint(err, result, ctx, _)
     return
   end
   local bufnr = assert(ctx.bufnr)
-  if vim.b[bufnr].changedtick ~= ctx.version then
+  if util.buf_versions[bufnr] ~= ctx.version then
     return
   end
   local client_id = ctx.client_id
@@ -324,7 +324,7 @@ api.nvim_set_decoration_provider(namespace, {
       return
     end
 
-    if bufstate.version ~= vim.b[bufnr].changedtick then
+    if bufstate.version ~= util.buf_versions[bufnr] then
       return
     end
 

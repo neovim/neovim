@@ -116,7 +116,7 @@ local function tokens_to_ranges(data, bufnr, client, request)
 
       if elapsed_ns > yield_interval_ns then
         vim.schedule(function()
-          coroutine.resume(co, vim.b[bufnr].changedtick)
+          coroutine.resume(co, util.buf_versions[bufnr])
         end)
         if request.version ~= coroutine.yield() then
           -- request became stale since the last time the coroutine ran.
@@ -269,7 +269,7 @@ end
 ---
 ---@package
 function STHighlighter:send_request()
-  local version = vim.b[self.bufnr].changedtick
+  local version = util.buf_versions[self.bufnr]
 
   self:reset_timer()
 
@@ -412,7 +412,7 @@ end
 function STHighlighter:on_win(topline, botline)
   for client_id, state in pairs(self.client_state) do
     local current_result = state.current_result
-    if current_result.version and current_result.version == vim.b[self.bufnr].changedtick then
+    if current_result.version and current_result.version == util.buf_versions[self.bufnr] then
       if not current_result.namespace_cleared then
         api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
         current_result.namespace_cleared = true
