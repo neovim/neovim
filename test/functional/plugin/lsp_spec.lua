@@ -1789,9 +1789,9 @@ describe('LSP', function()
       }
       exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
       eq({
-        '',
-        '123',
-        'fooFbar',
+        '3',
+        'foo',
+        '12Fbar',
         '123irst guy',
         'baz line of text',
         'The next line of text',
@@ -1813,9 +1813,9 @@ describe('LSP', function()
       }
       exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
       eq({
-        '',
-        '123',
-        'fooFbar',
+        '3',
+        'foo',
+        '12Fbar',
         '123irst guy',
         'baz line of text',
         'The next line of text',
