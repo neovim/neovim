@@ -527,6 +527,7 @@ start:
   *dst = NUL;
   if (*buf == ';') {
 is_semicolon:
+    *buf = NUL;
     buf++;
   } else {  // if (*buf == NUL)
 is_nul:
