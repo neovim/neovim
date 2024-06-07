@@ -484,6 +484,7 @@ local function text_document_did_save_handler(bufnr)
           text = lsp._buf_get_full_text(bufnr),
         },
       })
+      util.buf_versions[bufnr] = 0
     end
     local save_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'save')
     if save_capability then
@@ -519,6 +520,7 @@ local function buf_detach_client(bufnr, client)
   end
 
   client.attached_buffers[bufnr] = nil
+  util.buf_versions[bufnr] = nil
 
   local namespace = lsp.diagnostic.get_namespace(client.id)
   vim.diagnostic.reset(namespace, bufnr)
@@ -574,11 +576,12 @@ local function buf_attach(bufnr)
   })
   -- First time, so attach and set up stuff.
   api.nvim_buf_attach(bufnr, false, {
-    on_lines = function(_, _, _, firstline, lastline, new_lastline)
+    on_lines = function(_, _, changedtick, firstline, lastline, new_lastline)
       if #lsp.get_clients({ bufnr = bufnr }) == 0 then
         -- detach if there are no clients
         return #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0
       end
+      util.buf_versions[bufnr] = changedtick
       changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
     end,
 
