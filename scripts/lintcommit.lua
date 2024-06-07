@@ -41,12 +41,6 @@ end
 -- Returns nil if the given commit message is valid, or returns a string
 -- message explaining why it is invalid.
 local function validate_commit(commit_message)
-  -- Return nil if the commit message starts with "fixup" as it signifies it's
-  -- a work in progress and shouldn't be linted yet.
-  if vim.startswith(commit_message, 'fixup') then
-    return nil
-  end
-
   local commit_split = vim.split(commit_message, ':', { plain = true })
   -- Return nil if the type is vim-patch since most of the normal rules don't
   -- apply.
@@ -229,9 +223,9 @@ function M._test()
     ['vim-patch:8.2.3374: Pyret files are not recognized (#15642)'] = true,
     ['vim-patch:8.1.1195,8.2.{3417,3419}'] = true,
     ['revert: "ci: use continue-on-error instead of "|| true""'] = true,
-    ['fixup'] = true,
-    ['fixup: commit message'] = true,
-    ['fixup! commit message'] = true,
+    ['fixup'] = false,
+    ['fixup: commit message'] = false,
+    ['fixup! commit message'] = false,
     [':no type before colon 1'] = false,
     [' :no type before colon 2'] = false,
     ['  :no type before colon 3'] = false,
