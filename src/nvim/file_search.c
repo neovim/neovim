@@ -517,6 +517,7 @@ char *vim_findfile_stopdir(char *buf)
   while (*buf != NUL && *buf != ';') {
     if (buf[0] == '\\' && buf[1] == ';') {
 start:
+      // Overwrite the escape char.
       *dst++ = ';';
       buf += 2;
     } else {
