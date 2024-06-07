@@ -514,10 +514,10 @@ LspAttach                                                          *LspAttach*
       callback = function(args)
         local bufnr = args.buf
         local client = vim.lsp.get_client_by_id(args.data.client_id)
-        if client.server_capabilities.completionProvider then
+        if client.supports_method("textDocument/completion") then
           vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
         end
-        if client.server_capabilities.definitionProvider then
+        if client.supports_method("textDocument/definition") then
           vim.bo[bufnr].tagfunc = "v:lua.vim.lsp.tagfunc"
         end
       end,
@@ -874,13 +874,13 @@ start({config}, {opts})                                      *vim.lsp.start()*
       • {config}  (`vim.lsp.ClientConfig`) Configuration for the server. See
                   |vim.lsp.ClientConfig|.
       • {opts}    (`table?`) Optional keyword arguments
-                  • {reuse_client}
+                  • {reuse_client}?
                     (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
                     Predicate used to decide if a client should be re-used.
                     Used on all running clients. The default implementation
                     re-uses a client if name and root_dir matches.
-                  • {bufnr} (`integer`) Buffer handle to attach to if starting
-                    or re-using a client (0 for current).
+                  • {bufnr}? (`integer`) Buffer handle to attach to if
+                    starting or re-using a client (0 for current).
                   • {silent}? (`boolean`) Suppress error reporting if the LSP
                     server fails to start (default false).
 

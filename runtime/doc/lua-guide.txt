@@ -225,7 +225,6 @@ Vimscript are automatically converted:
     end
 
     vim.fn.jobstart('ls', { on_stdout = print_stdout })
-    print(vim.fn.printf('Hello from %s', 'Lua'))
 <
 This works for both |builtin-functions| and |user-function|s.
 

@@ -201,10 +201,10 @@ end
 --- Predicate used to decide if a client should be re-used. Used on all
 --- running clients. The default implementation re-uses a client if name and
 --- root_dir matches.
---- @field reuse_client fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
+--- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
 ---
 --- Buffer handle to attach to if starting or re-using a client (0 for current).
---- @field bufnr integer
+--- @field bufnr? integer
 ---
 --- Suppress error reporting if the LSP server fails to start (default false).
 --- @field silent? boolean

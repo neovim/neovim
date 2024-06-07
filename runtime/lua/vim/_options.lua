@@ -95,7 +95,6 @@
 local api = vim.api
 
 -- TODO(tjdevries): Improve option metadata so that this doesn't have to be hardcoded.
---                  Can be done in a separate PR.
 local key_value_options = {
   fillchars = true,
   fcs = true,

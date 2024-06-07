@@ -84,7 +84,7 @@ make deps
       - Right-click _CMakeLists.txt → Delete Cache_.
       - Right-click _CMakeLists.txt → Generate Cache_.
     - If you see an "access violation" from `ntdll`, you can ignore it and continue.
-4. If you set an error like `msgpackc.dll not found`, try the `nvim.exe (Install)` target. Then switch back to `nvim.exe (bin\nvim.exe)`.
+4. If you see an error like `msgpackc.dll not found`, try the `nvim.exe (Install)` target. Then switch back to `nvim.exe (bin\nvim.exe)`.
 
 ### Windows / MSVC PowerShell
 
@@ -365,13 +365,16 @@ and replacing `neovim-unwrapped` with `neovim-dev`:
 nix-shell '<nixpkgs>' -A neovim-dev
 ```
 
-Neovim contains a Nix flake in the `contrib` folder, with 3 packages:
+A flake for Neovim is hosted at [nix-community/neovim-nightly-overlay](https://github.com/nix-community/neovim-nightly-overlay/), with 3 packages:
 - `neovim` to run the nightly
 - `neovim-debug` to run the package with debug symbols
 - `neovim-developer` to get all the tools to develop on `neovim`
 
-Thus you can run Neovim nightly with `nix run github:neovim/neovim?dir=contrib`.
-Similarly to develop on Neovim: `nix develop github:neovim/neovim?dir=contrib#neovim-developer`.
+Thus you can run Neovim nightly with `nix run github:nix-community/neovim-nightly-overlay`.
+Similarly to develop on Neovim: `nix run github:nix-community/neovim-nightly-overlay#neovim-developer`.
+
+To use a specific version of Neovim, you can pass `--override-input neovim-src .` to use your current directory,
+or a specific SHA1 like `--override-input neovim-src github:neovim/neovim/89dc8f8f4e754e70cbe1624f030fb61bded41bc2`.
 
 ### FreeBSD
 

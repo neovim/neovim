@@ -1183,12 +1183,12 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Arena *arena, 
   return rv;
 }
 
-/// call a function with buffer as temporary current buffer
+/// Call a function with buffer as temporary current buffer.
 ///
 /// This temporarily switches current buffer to "buffer".
-/// If the current window already shows "buffer", the window is not switched
+/// If the current window already shows "buffer", the window is not switched.
 /// If a window inside the current tabpage (including a float) already shows the
-/// buffer One of these windows will be set as current window temporarily.
+/// buffer, then one of these windows will be set as current window temporarily.
 /// Otherwise a temporary scratch window (called the "autocmd window" for
 /// historical reasons) will be used.
 ///
