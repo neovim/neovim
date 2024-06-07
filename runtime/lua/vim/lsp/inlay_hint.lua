@@ -350,11 +350,11 @@ api.nvim_set_decoration_provider(namespace, {
             end
             local vt = {} --- @type [string, string?][]
             if hint.paddingLeft then
-              vt[#vt + 1] = { ' ' }
+              vt[#vt + 1] = { ' ', 'LspInlayHint' }
             end
             vt[#vt + 1] = { text, 'LspInlayHint' }
             if hint.paddingRight then
-              vt[#vt + 1] = { ' ' }
+              vt[#vt + 1] = { ' ', 'LspInlayHint' }
             end
             api.nvim_buf_set_extmark(bufnr, namespace, lnum, hint.position.character, {
               virt_text_pos = 'inline',

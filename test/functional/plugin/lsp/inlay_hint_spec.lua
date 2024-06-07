@@ -48,7 +48,7 @@ local grid_with_inlay_hints = [[
   int main() {                                      |
       int x = 1;                                    |
       int y = 2;                                    |
-      return add({1:a:} x,{1:b:} y);                        |
+      return add({1:a: }x,{1:b: }y);                        |
   }                                                 |
   ^}                                                 |
                                                     |
