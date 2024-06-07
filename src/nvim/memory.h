@@ -105,7 +105,7 @@ static inline void *xmemcpyz(void *dst, const void *src, size_t len)
 }
 
 static inline void *xmemscan(const void *addr, char c, size_t size)
-  REAL_FATTR_NONNULL_RET REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE;
+REAL_FATTR_NONNULL_RET REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE;
 
 /// A version of memchr() that returns a pointer one past the end
 /// if it doesn't find `c`.
@@ -122,7 +122,7 @@ static inline void *xmemscan(const void *addr, char c, size_t size)
 }
 
 static inline char *xstrchrnul(const char *str, char c)
-  REAL_FATTR_NONNULL_RET REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE;
+REAL_FATTR_NONNULL_RET REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE;
 
 /// A version of strchr() that returns a pointer to the terminating NUL if it
 /// doesn't find `c`.
