@@ -35,8 +35,6 @@
 #define MT_FLAG_DECOR_VIRT_LINES (((uint16_t)1) << 11)
 #define MT_FLAG_DECOR_VIRT_TEXT_INLINE (((uint16_t)1) << 12)
 
-#define MT_FLAG_SCOPED (((uint16_t)1) << 13)
-
 // These _must_ be last to preserve ordering of marks
 #define MT_FLAG_RIGHT_GRAVITY (((uint16_t)1) << 14)
 #define MT_FLAG_LAST (((uint16_t)1) << 15)
@@ -46,7 +44,7 @@
                              | MT_FLAG_DECOR_VIRT_TEXT_INLINE)
 
 #define MT_FLAG_EXTERNAL_MASK (MT_FLAG_DECOR_MASK | MT_FLAG_NO_UNDO \
-                               | MT_FLAG_INVALIDATE | MT_FLAG_INVALID | MT_FLAG_SCOPED)
+                               | MT_FLAG_INVALIDATE | MT_FLAG_INVALID)
 
 // this is defined so that start and end of the same range have adjacent ids
 #define MARKTREE_END_FLAG ((uint64_t)1)
@@ -110,24 +108,12 @@ static inline bool mt_decor_sign(MTKey key)
   return key.flags & (MT_FLAG_DECOR_SIGNTEXT | MT_FLAG_DECOR_SIGNHL);
 }
 
-static inline bool mt_scoped(MTKey key)
-{
-  return key.flags & MT_FLAG_SCOPED;
-}
-
-static inline bool mt_scoped_in_win(MTKey key, win_T *wp)
-{
-  return !mt_scoped(key) || set_has(uint32_t, &wp->w_ns_set, key.ns);
-}
-
-static inline uint16_t mt_flags(bool right_gravity, bool no_undo, bool invalidate, bool decor_ext,
-                                bool scoped)
+static inline uint16_t mt_flags(bool right_gravity, bool no_undo, bool invalidate, bool decor_ext)
 {
   return (uint16_t)((right_gravity ? MT_FLAG_RIGHT_GRAVITY : 0)
                     | (no_undo ? MT_FLAG_NO_UNDO : 0)
                     | (invalidate ? MT_FLAG_INVALIDATE : 0)
-                    | (decor_ext ? MT_FLAG_DECOR_EXT : 0)
-                    | (scoped ? MT_FLAG_SCOPED : 0));
+                    | (decor_ext ? MT_FLAG_DECOR_EXT : 0));
 }
 
 static inline MTPair mtpair_from(MTKey start, MTKey end)

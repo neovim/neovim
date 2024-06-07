@@ -31,8 +31,6 @@ M.priorities = {
 --- Indicates priority of highlight
 --- (default: `vim.highlight.priorities.user`)
 --- @field priority? integer
----
---- @field package _scoped? boolean
 
 --- Apply highlight group to range of text.
 ---
@@ -47,7 +45,6 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   local regtype = opts.regtype or 'v'
   local inclusive = opts.inclusive or false
   local priority = opts.priority or M.priorities.user
-  local scoped = opts._scoped or false
 
   local v_maxcol = vim.v.maxcol
 
@@ -114,7 +111,6 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
       end_col = end_col,
       priority = priority,
       strict = false,
-      scoped = scoped,
     })
   end
 end
@@ -178,19 +174,18 @@ function M.on_yank(opts)
     yank_cancel()
   end
 
-  vim.api.nvim__win_add_ns(winid, yank_ns)
+  vim.api.nvim__ns_set(yank_ns, { wins = { winid } })
   M.range(bufnr, yank_ns, higroup, "'[", "']", {
     regtype = event.regtype,
     inclusive = event.inclusive,
     priority = opts.priority or M.priorities.user,
-    _scoped = true,
   })
 
   yank_cancel = function()
     yank_timer = nil
     yank_cancel = nil
     pcall(vim.api.nvim_buf_clear_namespace, bufnr, yank_ns, 0, -1)
-    pcall(vim.api.nvim__win_del_ns, winid, yank_ns)
+    pcall(vim.api.nvim__ns_set, { wins = {} })
   end
 
   yank_timer = vim.defer_fn(yank_cancel, timeout)

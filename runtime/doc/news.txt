@@ -83,7 +83,7 @@ The following new features were added.
 
 API
 
-• TODO
+• |nvim__ns_set()| can set properties for a namespace
 
 DEFAULTS
 

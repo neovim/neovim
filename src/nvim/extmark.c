@@ -54,12 +54,12 @@
 /// must not be used during iteration!
 void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col, int end_row,
                  colnr_T end_col, DecorInline decor, uint16_t decor_flags, bool right_gravity,
-                 bool end_right_gravity, bool no_undo, bool invalidate, bool scoped, Error *err)
+                 bool end_right_gravity, bool no_undo, bool invalidate, Error *err)
 {
   uint32_t *ns = map_put_ref(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, NULL, NULL);
   uint32_t id = idp ? *idp : 0;
 
-  uint16_t flags = mt_flags(right_gravity, no_undo, invalidate, decor.ext, scoped) | decor_flags;
+  uint16_t flags = mt_flags(right_gravity, no_undo, invalidate, decor.ext) | decor_flags;
   if (id == 0) {
     id = ++*ns;
   } else {
