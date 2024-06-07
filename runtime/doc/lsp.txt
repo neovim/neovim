@@ -1679,7 +1679,7 @@ is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
     Query whether inlay hint is enabled in the {filter}ed scope
 
     Parameters: ~
-      • {filter}  (`table`) Optional filters |kwargs|, or `nil` for all.
+      • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
                   • {bufnr} (`integer?`) Buffer number, or 0 for current
                     buffer, or nil for all.
 

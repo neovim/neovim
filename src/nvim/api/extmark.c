@@ -1002,7 +1002,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// Note: this function should not be called often. Rather, the callbacks
 /// themselves can be used to throttle unneeded callbacks. the `on_start`
 /// callback can return `false` to disable the provider until the next redraw.
-/// Similarly, return `false` in `on_win` will skip the `on_lines` calls
+/// Similarly, return `false` in `on_win` will skip the `on_line` calls
 /// for that window (but any extmarks set in `on_win` will still be used).
 /// A plugin managing multiple sources of decoration should ideally only set
 /// one provider, and merge the sources internally. You can use multiple `ns_id`
@@ -1011,10 +1011,10 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// Note: doing anything other than setting extmarks is considered experimental.
 /// Doing things like changing options are not explicitly forbidden, but is
 /// likely to have unexpected consequences (such as 100% CPU consumption).
-/// doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
+/// Doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
 /// for the moment.
 ///
-/// Note: It is not allowed to remove or update extmarks in 'on_line' callbacks.
+/// Note: It is not allowed to remove or update extmarks in `on_line` callbacks.
 ///
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param opts  Table of callbacks:
