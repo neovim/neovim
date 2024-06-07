@@ -2229,24 +2229,28 @@ char *enc_canonize(char *enc)
 
   // Change "microsoft-cp" to "cp".  Used in some spell files.
   if (strncmp(p, S_LEN("microsoft-cp")) == 0) {
-    memmove(p, p + STRLEN_LITERAL("microsoft-"), (size_t)(p_e - (p + STRLEN_LITERAL("microsoft-"))) + 1);
+    memmove(p, p + STRLEN_LITERAL("microsoft-"),
+            (size_t)(p_e - (p + STRLEN_LITERAL("microsoft-"))) + 1);
   }
 
   // "iso8859" -> "iso-8859"
   if (strncmp(p, S_LEN("iso8859")) == 0) {
-    memmove(p + STRLEN_LITERAL("iso-"), p + STRLEN_LITERAL("iso"), (size_t)(p_e - (p + STRLEN_LITERAL("iso"))) + 1);
+    memmove(p + STRLEN_LITERAL("iso-"), p + STRLEN_LITERAL("iso"),
+            (size_t)(p_e - (p + STRLEN_LITERAL("iso"))) + 1);
     p[STRLEN_LITERAL("iso")] = '-';
   }
 
   // "iso-8859n" -> "iso-8859-n"
   if (strncmp(p, S_LEN("iso-8859")) == 0 && p[8] != '-') {
-    memmove(p + STRLEN_LITERAL("iso-8859-"), p + STRLEN_LITERAL("iso-8859"), (size_t)(p_e - (p + STRLEN_LITERAL("iso-8859"))) + 1);
+    memmove(p + STRLEN_LITERAL("iso-8859-"), p + STRLEN_LITERAL("iso-8859"),
+            (size_t)(p_e - (p + STRLEN_LITERAL("iso-8859"))) + 1);
     p[STRLEN_LITERAL("iso-8859")] = '-';
   }
 
   // "latin-N" -> "latinN"
   if (strncmp(p, S_LEN("latin-")) == 0) {
-    memmove(p + STRLEN_LITERAL("latin"), p + STRLEN_LITERAL("latin-"), (size_t)(p_e - (p + STRLEN_LITERAL("latin-"))) + 1);
+    memmove(p + STRLEN_LITERAL("latin"), p + STRLEN_LITERAL("latin-"),
+            (size_t)(p_e - (p + STRLEN_LITERAL("latin-"))) + 1);
   }
 
   int i;
