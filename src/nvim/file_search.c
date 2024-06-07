@@ -505,24 +505,33 @@ error_return:
 /// @return  the stopdir string.  Check that ';' is not escaped.
 char *vim_findfile_stopdir(char *buf)
 {
-  char *r_ptr = buf;
-
-  while (*r_ptr != NUL && *r_ptr != ';') {
-    if (r_ptr[0] == '\\' && r_ptr[1] == ';') {
-      // Overwrite the escape char,
-      // use strlen(r_ptr) to move the trailing NUL.
-      STRMOVE(r_ptr, r_ptr + 1);
-      r_ptr++;
+  for (; *buf != NUL && *buf != ';' && (buf[0] != '\\' || buf[1] != ';'); buf++) {}
+  char *dst = buf;
+  if (*buf == ';') {
+    goto is_semicolon;
+  }
+  if (*buf == NUL) {
+    goto is_nul;
+  }
+  goto start;
+  while (*buf != NUL && *buf != ';') {
+    if (buf[0] == '\\' && buf[1] == ';') {
+start:
+      *dst++ = ';';
+      buf += 2;
+    } else {
+      *dst++ = *buf++;
     }
-    r_ptr++;
   }
-  if (*r_ptr == ';') {
-    *r_ptr = 0;
-    r_ptr++;
-  } else if (*r_ptr == NUL) {
-    r_ptr = NULL;
+  *dst = NUL;
+  if (*buf == ';') {
+is_semicolon:
+    buf++;
+  } else {  // if (*buf == NUL)
+is_nul:
+    buf = NULL;
   }
-  return r_ptr;
+  return buf;
 }
 
 /// Clean up the given search context. Can handle a NULL pointer.
