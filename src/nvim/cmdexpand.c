@@ -2994,10 +2994,12 @@ static void expand_shellcmd(char *filepat, char ***matches, int *numMatches, int
   bool did_curdir = false;
 
   // for ":set path=" and ":set tags=" halve backslashes for escaped space
-  char *pat = xstrdup(filepat);
+  size_t filepat_len = strlen(filepat);
+  char *pat = xmemdupz(filepat, filepat_len);
+  char *pat_e = pat + filepat_len;
   for (int i = 0; pat[i]; i++) {
     if (pat[i] == '\\' && pat[i + 1] == ' ') {
-      STRMOVE(pat + i, pat + i + 1);
+      memmove(pat + i, pat + i + 1, (size_t)(pat_e - (pat + i + 1) + 1));
     }
   }
 
