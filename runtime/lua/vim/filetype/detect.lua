@@ -450,7 +450,7 @@ local function modula2(bufnr)
 
   return 'modula2',
     function(b)
-      vim.api.nvim_buf_call(b, function()
+      vim._with({ buf = b }, function()
         fn['modula2#SetDialect'](dialect, extension)
       end)
     end

@@ -180,10 +180,9 @@ function M._get_url()
     end
   end
 
-  local old_isfname = vim.o.isfname
-  vim.cmd [[set isfname+=@-@]]
-  local url = vim.fn.expand('<cfile>')
-  vim.o.isfname = old_isfname
+  local url = vim._with({ go = { isfname = vim.o.isfname .. ',@-@' } }, function()
+    return vim.fn.expand('<cfile>')
+  end)
 
   return url
 end

@@ -1218,6 +1218,8 @@ end
 ---   only moving context save and restore to lower level might resolve this.
 ---
 --- @param context vim.context.mods
+--- @param f function
+--- @return any
 function vim._with(context, f)
   vim.validate('context', context, 'table')
   vim.validate('f', f, 'function')

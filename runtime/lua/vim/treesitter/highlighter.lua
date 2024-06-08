@@ -143,7 +143,7 @@ function TSHighlighter.new(tree, opts)
     vim.cmd.runtime({ 'syntax/synload.vim', bang = true })
   end
 
-  api.nvim_buf_call(self.bufnr, function()
+  vim._with({ buf = self.bufnr }, function()
     vim.opt_local.spelloptions:append('noplainbuffer')
   end)
 
