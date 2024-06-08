@@ -371,7 +371,7 @@ describe('LSP', function()
               true,
               exec_lua [[
               local keymap
-              vim.api.nvim_buf_call(BUFFER, function()
+              vim._with({buf = BUFFER}, function()
                 keymap = vim.fn.maparg("K", "n", false, true)
               end)
               return keymap.callback == vim.lsp.buf.hover
@@ -388,7 +388,7 @@ describe('LSP', function()
             '',
             exec_lua [[
             local keymap
-            vim.api.nvim_buf_call(BUFFER, function()
+            vim._with({buf = BUFFER}, function()
               keymap = vim.fn.maparg("K", "n", false, false)
             end)
             return keymap
@@ -782,7 +782,7 @@ describe('LSP', function()
               vim.api.nvim_buf_set_name(BUFFER, oldname)
               vim.api.nvim_buf_set_lines(BUFFER, 0, -1, true, {"help me"})
               lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
-              vim.api.nvim_buf_call(BUFFER, function() vim.cmd('saveas ' .. newname) end)
+              vim._with({buf = BUFFER}, function() vim.cmd('saveas ' .. newname) end)
             ]=],
               tmpfile_old,
               tmpfile_new

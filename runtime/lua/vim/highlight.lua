@@ -71,7 +71,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
     return
   end
 
-  vim.api.nvim_buf_call(bufnr, function()
+  vim._with({ buf = bufnr }, function()
     if pos1[3] ~= v_maxcol then
       local max_col1 = vim.fn.col({ pos1[2], '$' })
       pos1[3] = math.min(pos1[3], max_col1)

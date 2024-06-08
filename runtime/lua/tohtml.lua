@@ -646,7 +646,7 @@ end
 --- @param state vim.tohtml.state
 local function styletable_conceal(state)
   local bufnr = state.bufnr
-  vim.api.nvim_buf_call(bufnr, function()
+  vim._with({ buf = bufnr }, function()
     for row = 1, state.buflen do
       --- @type table<integer,[integer,integer,string]>
       local conceals = {}
@@ -764,7 +764,7 @@ local function styletable_statuscolumn(state)
     if foldcolumn:match('^auto') then
       local max = tonumber(foldcolumn:match('^%w-:(%d)')) or 1
       local maxfold = 0
-      vim.api.nvim_buf_call(state.bufnr, function()
+      vim._with({ buf = state.bufnr }, function()
         for row = 1, vim.api.nvim_buf_line_count(state.bufnr) do
           local foldlevel = vim.fn.foldlevel(row)
           if foldlevel > maxfold then
@@ -1291,7 +1291,7 @@ local styletable_funcs = {
 
 --- @param state vim.tohtml.state
 local function state_generate_style(state)
-  vim.api.nvim_win_call(state.winid, function()
+  vim._with({ win = state.winid }, function()
     for _, fn in ipairs(styletable_funcs) do
       --- @type string?
       local cond

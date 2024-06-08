@@ -85,7 +85,7 @@ describe('API/win', function()
           [[
            local cmdwin_buf = vim.api.nvim_get_current_buf()
            local new_win, new_buf = ...
-           vim.api.nvim_buf_call(new_buf, function()
+           vim._with({buf = new_buf}, function()
              vim.api.nvim_win_set_buf(new_win, cmdwin_buf)
            end)
          ]],
@@ -100,7 +100,7 @@ describe('API/win', function()
           [[
            local cmdwin_win = vim.api.nvim_get_current_win()
            local new_win, new_buf = ...
-           vim.api.nvim_win_call(new_win, function()
+           vim._with({win = new_win}, function()
              vim.api.nvim_win_set_buf(cmdwin_win, new_buf)
            end)
          ]],
@@ -638,7 +638,7 @@ describe('API/win', function()
       feed('q:')
       exec_lua(
         [[
-        vim.api.nvim_win_call(..., function()
+        vim._with({win = ...}, function()
           vim.api.nvim_win_close(0, true)
         end)
       ]],
@@ -657,7 +657,7 @@ describe('API/win', function()
       exec_lua(
         [[
         local otherwin, cmdwin = ...
-        vim.api.nvim_win_call(otherwin, function()
+        vim._with({win = otherwin}, function()
           vim.api.nvim_win_close(cmdwin, true)
         end)
       ]],
@@ -771,7 +771,7 @@ describe('API/win', function()
       })
       exec_lua(
         [[
-        vim.api.nvim_win_call(..., function()
+        vim._with({win = ...}, function()
           vim.api.nvim_win_hide(0)
         end)
       ]],
@@ -790,7 +790,7 @@ describe('API/win', function()
       exec_lua(
         [[
         local otherwin, cmdwin = ...
-        vim.api.nvim_win_call(otherwin, function()
+        vim._with({win = otherwin}, function()
           vim.api.nvim_win_hide(cmdwin)
         end)
       ]],
@@ -1178,7 +1178,7 @@ describe('API/win', function()
           exec_lua,
           [[
            local cmdwin_buf = vim.api.nvim_get_current_buf()
-           vim.api.nvim_buf_call(vim.api.nvim_create_buf(false, true), function()
+           vim._with({buf = vim.api.nvim_create_buf(false, true)}, function()
              vim.api.nvim_open_win(cmdwin_buf, false, {
                relative='editor', row=5, col=5, width=5, height=5,
              })

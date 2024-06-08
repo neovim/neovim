@@ -257,7 +257,7 @@ end
 function Session:restore_keymaps()
   local function restore(keymap, lhs, mode)
     if keymap then
-      vim.api.nvim_buf_call(self.bufnr, function()
+      vim._with({ buf = self.bufnr }, function()
         vim.fn.mapset(keymap)
       end)
     else

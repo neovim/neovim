@@ -115,7 +115,7 @@ describe('eval-API', function()
         exec_lua,
         [[
          local cmdwin_buf = vim.api.nvim_get_current_buf()
-         vim.api.nvim_buf_call(vim.api.nvim_create_buf(false, true), function()
+         vim._with({buf = vim.api.nvim_create_buf(false, true)}, function()
            vim.api.nvim_open_term(cmdwin_buf, {})
          end)
        ]]

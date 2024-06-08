@@ -964,7 +964,7 @@ local function goto_diagnostic(diagnostic, opts)
 
   local winid = opts.winid or api.nvim_get_current_win()
 
-  api.nvim_win_call(winid, function()
+  vim._with({ win = winid }, function()
     -- Save position in the window's jumplist
     vim.cmd("normal! m'")
     api.nvim_win_set_cursor(winid, { diagnostic.lnum + 1, diagnostic.col })

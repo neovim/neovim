@@ -21,7 +21,7 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
       -- Generic configuration file used as fallback
       ft = require('vim.filetype.detect').conf(args.file, args.buf)
       if ft then
-        vim.api.nvim_buf_call(args.buf, function()
+        vim._with({ buf = args.buf }, function()
           vim.api.nvim_cmd({ cmd = 'setf', args = { 'FALLBACK', ft } }, {})
         end)
       end
@@ -32,7 +32,7 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
         on_detect(args.buf)
       end
 
-      vim.api.nvim_buf_call(args.buf, function()
+      vim._with({ buf = args.buf }, function()
         vim.api.nvim_cmd({ cmd = 'setf', args = { ft } }, {})
       end)
     end
