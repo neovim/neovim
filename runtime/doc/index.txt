@@ -366,7 +366,7 @@ tag		char	      note action in Normal mode	~
 				   or start of putted text
 |`]|		`]		1  cursor to the end of last operated text or
 				   end of putted text
-|``|		``		1  cursor to the position before latest jump
+|``|		"``"		1  cursor to the position before latest jump
 |`{|		`{		1  cursor to the start of the current paragraph
 |`}|		`}		1  cursor to the end of the current paragraph
 |a|		a		2  append text after the cursor N times
@@ -1136,7 +1136,7 @@ tag		command		action ~
 |:!!|		:!!		repeat last ":!" command
 |:#|		:#		same as ":number"
 |:&|		:&		repeat last ":substitute"
-|:star|		:*		use the last Visual area, like :'<,'>
+|:star|		:*		use the last Visual area, like ":'<,'>"
 |:<|		:<		shift lines one 'shiftwidth' left
 |:=|		:=		print the last line number
 |:>|		:>		shift lines one 'shiftwidth' right
