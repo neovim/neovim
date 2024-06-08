@@ -524,6 +524,7 @@ start:
       *dst++ = *buf++;
     }
   }
+  assert(dst < buf);
   *dst = NUL;
   if (*buf == ';') {
 is_semicolon:
