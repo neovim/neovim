@@ -1,13 +1,19 @@
-(h1) @markup.heading.1
+(h1
+  (delimiter) @markup.heading.1
+  (heading) @markup.heading.1)
 
-(h2) @markup.heading.2
+(h2
+  (delimiter) @markup.heading.2
+  (heading) @markup.heading.2)
 
-(h3) @markup.heading.3
-
-(column_heading) @markup.heading.4
+(h3
+  (heading) @markup.heading.3)
 
 (column_heading
-  "~" @markup.heading.4
+  (heading) @markup.heading.4)
+
+(column_heading
+  (delimiter) @markup.heading.4
   (#set! conceal ""))
 
 (tag
