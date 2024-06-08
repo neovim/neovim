@@ -7990,7 +7990,7 @@ return {
     },
     {
       abbreviation = 'spr',
-      defaults = { if_true = false },
+      defaults = { if_true = true },
       desc = [=[
         When on, splitting a window will put the new window right of the
         current one. |:vsplit|
