@@ -30,4 +30,42 @@ function M.highlight_groups(patterns)
   vim.fn.setpos('.', save_cursor)
 end
 
+--- Show a table of contents for the help buffer in a loclist
+function M.show_toc()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local parser = vim.treesitter.get_parser(bufnr, 'vimdoc')
+  local query = vim.treesitter.query.parse(
+    parser:lang(),
+    [[
+    (h1 (heading) @h1)
+    (h2 (heading) @h2)
+    (h3 (heading) @h3)
+    (column_heading (heading) @h4)
+  ]]
+  )
+  local root = parser:parse()[1]:root()
+  local headings = {}
+  for id, node, _, _ in query:iter_captures(root, bufnr) do
+    local text = vim.treesitter.get_node_text(node, bufnr)
+    local capture = query.captures[id]
+    local row, col = node:start()
+    -- only column_headings at col 1 are headings, otherwise it's code examples
+    local is_code = (capture == 'h4' and col > 0)
+    -- ignore tabular material
+    local is_table = (capture == 'h4' and (text:find('\t') or text:find('  ')))
+    -- ignore tag-only headings
+    local is_tag = node:child_count() == 1 and node:child(0):type() == 'tag'
+    if not (is_code or is_table or is_tag) then
+      table.insert(headings, {
+        bufnr = bufnr,
+        lnum = row + 1,
+        text = (capture == 'h3' or capture == 'h4') and '  ' .. text or text,
+      })
+    end
+  end
+  vim.fn.setloclist(0, headings, ' ')
+  vim.fn.setloclist(0, {}, 'a', { title = 'Help TOC' })
+  vim.cmd.lopen()
+end
+
 return M

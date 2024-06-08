@@ -188,7 +188,7 @@ Local additions ~
 							*local-additions*
 
 ------------------------------------------------------------------------------
-*bars*		Bars example
+Bars example								*bars*
 
 Now that you've jumped here with CTRL-] or a double mouse click, you can use
 CTRL-T, CTRL-O, g<RightMouse>, or <C-RightMouse> to go back to where you were.
@@ -200,5 +200,5 @@ You can use CTRL-] on any word (even if it is not within "|") and Nvim will
 try to find help for it.  Especially for options in single quotes, e.g.
 'hlsearch'.
 
-------------------------------------------------------------------------------
+
  vim:tw=78:isk=!-~,^*,^\|,^\":ts=8:noet:ft=help:norl:
