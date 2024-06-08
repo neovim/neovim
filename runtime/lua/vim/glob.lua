@@ -29,8 +29,10 @@ function M.to_lpeg(pattern)
     return patt
   end
 
-  local function add(acc, a)
-    return acc + a
+  local function condlist(conds, after)
+    return vim.iter(conds):fold(P(false), function(acc, cond)
+      return acc + cond * after
+    end)
   end
 
   local function mul(acc, m)
@@ -63,15 +65,14 @@ function M.to_lpeg(pattern)
       * C(P('!') ^ -1)
       * Ct(Ct(C(P(1)) * P('-') * C(P(1) - P(']'))) ^ 1 * P(']'))
       / class,
-    CondList = P('{') * Cf(V('Cond') * (P(',') * V('Cond')) ^ 0, add) * P('}'),
+    CondList = P('{') * Ct(V('Cond') * (P(',') * V('Cond')) ^ 0) * P('}') * V('Pattern') / condlist,
     -- TODO: '*' inside a {} condition is interpreted literally but should probably have the same
     -- wildcard semantics it usually has.
     -- Fixing this is non-trivial because '*' should match non-greedily up to "the rest of the
     -- pattern" which in all other cases is the entire succeeding part of the pattern, but at the end of a {}
     -- condition means "everything after the {}" where several other options separated by ',' may
     -- exist in between that should not be matched by '*'.
-    Cond = Cf((V('Ques') + V('Class') + V('CondList') + (V('Literal') - S(',}'))) ^ 1, mul)
-      + Cc(P(0)),
+    Cond = Cf((V('Ques') + V('Class') + V('Literal') - S(',}')) ^ 1, mul) + Cc(P(0)),
     Literal = P(1) / P,
     End = P(-1) * Cc(P(-1)),
   })

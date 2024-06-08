@@ -161,7 +161,7 @@ describe('glob', function()
       eq(false, match('{ab,cd}', 'a'))
       eq(true, match('{ab,cd}', 'cd'))
       eq(true, match('{a,b,c}', 'c'))
-      eq(true, match('{a,{b,c}}', 'c'))
+      eq(false, match('{a,{b,c}}', 'c')) -- {} cannot nest
     end)
 
     it('should match [] groups', function()
@@ -223,6 +223,17 @@ describe('glob', function()
       eq(true, match('{[0-9],[a-z]}', '0'))
       eq(true, match('{[0-9],[a-z]}', 'a'))
       eq(false, match('{[0-9],[a-z]}', 'A'))
+
+      -- glob is from willRename filter in typescript-language-server
+      -- https://github.com/typescript-language-server/typescript-language-server/blob/b224b878652438bcdd639137a6b1d1a6630129e4/src/lsp-server.ts#L266
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.js'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.ts'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.mts'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.mjs'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.cjs'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.cts'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.jsx'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.tsx'))
     end)
   end)
 end)
