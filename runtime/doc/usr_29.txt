@@ -87,7 +87,7 @@ The ":tags" command shows the list of tags that you traversed through:
 	  1  1 write_line	   8  write_block.c ~
 	  2  1 write_char	   7  write_line.c ~
 	> ~
->
+<
 Now to go back.  The CTRL-T command goes to the preceding tag.  In the example
 above you get back to the "write_line" function, in the call to "write_char".
    This command takes a count argument that indicates how many tags to jump
