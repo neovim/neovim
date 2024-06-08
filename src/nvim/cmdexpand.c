@@ -2462,9 +2462,10 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
 
   // for ":set path=" and ":set tags=" halve backslashes for escaped space
   if (xp->xp_backslash != XP_BS_NONE) {
-    char *pat_e = pat + strlen(pat);
+    size_t pat_len = strlen(pat);
     free_pat = true;
-    pat = xmemdupz(pat, (size_t)(pat_e - pat));
+    pat = xmemdupz(pat, pat_len);
+    char *pat_e = pat + pat_len;
     for (int i = 0; pat[i]; i++) {
       if (pat[i] == '\\') {
         if (xp->xp_backslash & XP_BS_THREE
