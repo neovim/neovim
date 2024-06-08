@@ -590,16 +590,16 @@ static void packer_buffer_init_channels(Channel **chans, size_t nchans, PackerBu
   packer->endptr = packer->startptr + ARENA_BLOCK_SIZE;
   packer->packer_flush = channel_flush_callback;
   packer->anydata = chans;
-  packer->anylen = nchans;
+  packer->anyint = (int64_t)nchans;
 }
 
 static void packer_buffer_finish_channels(PackerBuffer *packer)
 {
   size_t len = (size_t)(packer->ptr - packer->startptr);
   if (len > 0) {
-    WBuffer *buf = wstream_new_buffer(packer->startptr, len, packer->anylen, free_block);
+    WBuffer *buf = wstream_new_buffer(packer->startptr, len, (size_t)packer->anyint, free_block);
     Channel **chans = packer->anydata;
-    for (size_t i = 0; i < packer->anylen; i++) {
+    for (int64_t i = 0; i < packer->anyint; i++) {
       channel_write(chans[i], buf);
     }
   } else {
@@ -610,7 +610,7 @@ static void packer_buffer_finish_channels(PackerBuffer *packer)
 static void channel_flush_callback(PackerBuffer *packer)
 {
   packer_buffer_finish_channels(packer);
-  packer_buffer_init_channels(packer->anydata, packer->anylen, packer);
+  packer_buffer_init_channels(packer->anydata, (size_t)packer->anyint, packer);
 }
 
 void rpc_set_client_info(uint64_t id, Dictionary info)

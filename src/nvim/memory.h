@@ -45,8 +45,6 @@ EXTERN size_t arena_alloc_count INIT( = 0);
   ((v).capacity = (s), \
    (v).items = (void *)arena_alloc(a, sizeof((v).items[0]) * (v).capacity, true))
 
-#define ARENA_BLOCK_SIZE 4096
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memory.h.generated.h"
 #endif

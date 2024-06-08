@@ -42,6 +42,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/msgpack_rpc/packer.h"
 #include "nvim/normal_defs.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -600,20 +601,6 @@ static void close_file(FileDescriptor *cookie)
     semsg(_(SERR "System error while closing ShaDa file: %s"),
           os_strerror(error));
   }
-}
-
-/// Msgpack callback for writing to FileDescriptor*
-static int msgpack_sd_writer_write(void *data, const char *buf, size_t len)
-{
-  FileDescriptor *const sd_writer = (FileDescriptor *)data;
-  const ptrdiff_t ret = file_write(sd_writer, buf, len);
-  if (ret < 0) {
-    semsg(_(SERR "System error while writing ShaDa file: %s"),
-          os_strerror((int)ret));
-    return -1;
-  }
-
-  return 0;
 }
 
 /// Check whether writing to shada file was disabled ("-i NONE" or "--clean").
@@ -1365,6 +1352,8 @@ static char *shada_filename(const char *file)
     } \
   } while (0)
 
+#define SHADA_MPACK_FREE_SPACE (4 * MPACK_ITEM_SIZE)
+
 /// Write single ShaDa entry
 ///
 /// @param[in]  packer     Packer used to write entry.
@@ -1373,7 +1362,7 @@ static char *shada_filename(const char *file)
 ///                        restrictions.
 ///
 /// @return kSDWriteSuccessful, kSDWriteFailed or kSDWriteIgnError.
-static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntry entry,
+static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry entry,
                                          const size_t max_kbyte)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1657,29 +1646,26 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
 #undef CHECK_DEFAULT
 #undef ONE_IF_NOT_DEFAULT
   if (!max_kbyte || sbuf.size <= max_kbyte * 1024) {
-    if (entry.type == kSDItemUnknown) {
-      if (msgpack_pack_uint64(packer, entry.data.unknown_item.type) == -1) {
-        goto shada_pack_entry_error;
-      }
-    } else {
-      if (msgpack_pack_uint64(packer, (uint64_t)entry.type) == -1) {
-        goto shada_pack_entry_error;
-      }
+    if (mpack_remaining(packer) < SHADA_MPACK_FREE_SPACE) {
+      packer->packer_flush(packer);
     }
-    if (msgpack_pack_uint64(packer, (uint64_t)entry.timestamp) == -1) {
+
+    if (entry.type == kSDItemUnknown) {
+      mpack_uint64(&packer->ptr, entry.data.unknown_item.type);
+    } else {
+      mpack_uint64(&packer->ptr, (uint64_t)entry.type);
+    }
+    mpack_uint64(&packer->ptr, (uint64_t)entry.timestamp);
+    if (sbuf.size > 0) {
+      mpack_uint64(&packer->ptr, (uint64_t)sbuf.size);
+      mpack_raw(sbuf.data, sbuf.size, packer);
+    }
+
+    if (packer->anyint != 0) {  // error code
       goto shada_pack_entry_error;
     }
-    if (sbuf.size > 0) {
-      if ((msgpack_pack_uint64(packer, (uint64_t)sbuf.size) == -1)
-          || (packer->callback(packer->data, sbuf.data,
-                               (unsigned)sbuf.size) == -1)) {
-        goto shada_pack_entry_error;
-      }
-    }
   }
-  msgpack_packer_free(spacker);
-  msgpack_sbuffer_destroy(&sbuf);
-  return kSDWriteSuccessful;
+  ret = kSDWriteSuccessful;
 shada_pack_entry_error:
   msgpack_packer_free(spacker);
   msgpack_sbuffer_destroy(&sbuf);
@@ -1694,7 +1680,7 @@ shada_pack_entry_error:
 /// @param[in]  entry      Entry written.
 /// @param[in]  max_kbyte  Maximum size of an item in KiB. Zero means no
 ///                        restrictions.
-static inline ShaDaWriteResult shada_pack_pfreed_entry(msgpack_packer *const packer,
+static inline ShaDaWriteResult shada_pack_pfreed_entry(PackerBuffer *const packer,
                                                        PossiblyFreedShadaEntry entry,
                                                        const size_t max_kbyte)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
@@ -1908,7 +1894,7 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
                                                        const unsigned srni_flags,
                                                        const size_t max_kbyte,
                                                        WriteMergerState *const wms,
-                                                       msgpack_packer *const packer)
+                                                       PackerBuffer *const packer)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   ShaDaWriteResult ret = kSDWriteSuccessful;
@@ -2360,6 +2346,29 @@ static int hist_type2char(const int type)
   return NUL;
 }
 
+static PackerBuffer packer_buffer_for_file(FileDescriptor *file)
+{
+  if (file_space(file) < SHADA_MPACK_FREE_SPACE) {
+    file_flush(file);
+  }
+  return (PackerBuffer) {
+    .startptr = file->buffer,
+    .ptr = file->write_pos,
+    .endptr = file->buffer + ARENA_BLOCK_SIZE,
+    .anydata = file,
+    .anyint = 0,  // set to nonzero if error
+    .packer_flush = flush_file_buffer,
+  };
+}
+
+static void flush_file_buffer(PackerBuffer *buffer)
+{
+  FileDescriptor *fd = buffer->anydata;
+  fd->write_pos = buffer->ptr;
+  buffer->anyint = file_flush(fd);
+  buffer->ptr = fd->write_pos;
+}
+
 /// Write ShaDa file
 ///
 /// @param[in]  sd_writer  Structure containing file writer definition.
@@ -2408,8 +2417,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
     }
   }
 
-  const unsigned srni_flags = (unsigned)(
-                                         kSDReadUndisableableData
+  const unsigned srni_flags = (unsigned)(kSDReadUndisableableData
                                          | kSDReadUnknown
                                          | (dump_history ? kSDReadHistory : 0)
                                          | (dump_registers ? kSDReadRegisters : 0)
@@ -2418,8 +2426,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
                                          | (num_marked_files ? kSDReadLocalMarks |
                                             kSDReadChanges : 0));
 
-  msgpack_packer *const packer = msgpack_packer_new(sd_writer,
-                                                    &msgpack_sd_writer_write);
+  PackerBuffer packer = packer_buffer_for_file(sd_writer);
 
   // Set b_last_cursor for all the buffers that have a window.
   //
@@ -2433,7 +2440,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
   find_removable_bufs(&removable_bufs);
 
   // Write header
-  if (shada_pack_entry(packer, (ShadaEntry) {
+  if (shada_pack_entry(&packer, (ShadaEntry) {
     .type = kSDItemHeader,
     .timestamp = os_time(),
     .data = {
@@ -2462,7 +2469,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
   // Write buffer list
   if (find_shada_parameter('%') != NULL) {
     ShadaEntry buflist_entry = shada_get_buflist(&removable_bufs);
-    if (shada_pack_entry(packer, buflist_entry, 0) == kSDWriteFailed) {
+    if (shada_pack_entry(&packer, buflist_entry, 0) == kSDWriteFailed) {
       xfree(buflist_entry.data.buffer_list.buffers);
       ret = kSDWriteFailed;
       goto shada_write_exit;
@@ -2512,7 +2519,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
       typval_T tgttv;
       tv_copy(&vartv, &tgttv);
       ShaDaWriteResult spe_ret;
-      if ((spe_ret = shada_pack_entry(packer, (ShadaEntry) {
+      if ((spe_ret = shada_pack_entry(&packer, (ShadaEntry) {
         .type = kSDItemVariable,
         .timestamp = cur_timestamp,
         .data = {
@@ -2689,7 +2696,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
 
   if (sd_reader != NULL) {
     const ShaDaWriteResult srww_ret = shada_read_when_writing(sd_reader, srni_flags, max_kbyte, wms,
-                                                              packer);
+                                                              &packer);
     if (srww_ret != kSDWriteSuccessful) {
       ret = srww_ret;
     }
@@ -2720,7 +2727,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
   do { \
     for (size_t i_ = 0; i_ < ARRAY_SIZE(wms_array); i_++) { \
       if ((wms_array)[i_].data.type != kSDItemMissing) { \
-        if (shada_pack_pfreed_entry(packer, (wms_array)[i_], max_kbyte) \
+        if (shada_pack_pfreed_entry(&packer, (wms_array)[i_], max_kbyte) \
             == kSDWriteFailed) { \
           ret = kSDWriteFailed; \
           goto shada_write_exit; \
@@ -2732,7 +2739,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
   PACK_WMS_ARRAY(wms->numbered_marks);
   PACK_WMS_ARRAY(wms->registers);
   for (size_t i = 0; i < wms->jumps_size; i++) {
-    if (shada_pack_pfreed_entry(packer, wms->jumps[i], max_kbyte)
+    if (shada_pack_pfreed_entry(&packer, wms->jumps[i], max_kbyte)
         == kSDWriteFailed) {
       ret = kSDWriteFailed;
       goto shada_write_exit;
@@ -2741,7 +2748,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
 #define PACK_WMS_ENTRY(wms_entry) \
   do { \
     if ((wms_entry).data.type != kSDItemMissing) { \
-      if (shada_pack_pfreed_entry(packer, wms_entry, max_kbyte) \
+      if (shada_pack_pfreed_entry(&packer, wms_entry, max_kbyte) \
           == kSDWriteFailed) { \
         ret = kSDWriteFailed; \
         goto shada_write_exit; \
@@ -2767,14 +2774,14 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
   for (size_t i = 0; i < file_markss_to_dump; i++) {
     PACK_WMS_ARRAY(all_file_markss[i]->marks);
     for (size_t j = 0; j < all_file_markss[i]->changes_size; j++) {
-      if (shada_pack_pfreed_entry(packer, all_file_markss[i]->changes[j],
+      if (shada_pack_pfreed_entry(&packer, all_file_markss[i]->changes[j],
                                   max_kbyte) == kSDWriteFailed) {
         ret = kSDWriteFailed;
         goto shada_write_exit;
       }
     }
     for (size_t j = 0; j < all_file_markss[i]->additional_marks_size; j++) {
-      if (shada_pack_entry(packer, all_file_markss[i]->additional_marks[j],
+      if (shada_pack_entry(&packer, all_file_markss[i]->additional_marks[j],
                            0) == kSDWriteFailed) {
         shada_free_shada_entry(&all_file_markss[i]->additional_marks[j]);
         ret = kSDWriteFailed;
@@ -2792,7 +2799,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
       if (dump_one_history[i]) {
         hms_insert_whole_neovim_history(&wms->hms[i]);
         HMS_ITER(&wms->hms[i], cur_entry, {
-          if (shada_pack_pfreed_entry(packer, (PossiblyFreedShadaEntry) {
+          if (shada_pack_pfreed_entry(&packer, (PossiblyFreedShadaEntry) {
             .data = cur_entry->data,
             .can_free_entry = cur_entry->can_free_entry,
           }, max_kbyte) == kSDWriteFailed) {
@@ -2818,7 +2825,7 @@ shada_write_exit:
   })
   map_destroy(cstr_t, &wms->file_marks);
   set_destroy(ptr_t, &removable_bufs);
-  msgpack_packer_free(packer);
+  packer.packer_flush(&packer);
   set_destroy(cstr_t, &wms->dumped_variables);
   xfree(wms);
   return ret;
@@ -3953,16 +3960,43 @@ static inline size_t shada_init_jumps(PossiblyFreedShadaEntry *jumps,
   return jumps_size;
 }
 
+static PackerBuffer packer_string_buffer(void)
+{
+  const size_t initial_size = 64;  // must be larger than SHADA_MPACK_FREE_SPACE
+  char *alloc = xmalloc(initial_size);
+  return (PackerBuffer) {
+    .startptr = alloc,
+    .ptr = alloc,
+    .endptr = alloc + initial_size,
+    .packer_flush = flush_string_buffer,
+  };
+}
+
+static void flush_string_buffer(PackerBuffer *buffer)
+{
+  size_t current_capacity = (size_t)(buffer->endptr - buffer->startptr);
+  size_t new_capacity = 2 * current_capacity;
+  size_t len = (size_t)(buffer->ptr - buffer->startptr);
+
+  buffer->startptr = xrealloc(buffer->startptr, new_capacity);
+  buffer->ptr = buffer->startptr + len;
+  buffer->endptr = buffer->startptr + new_capacity;
+}
+
+static String packer_take_string(PackerBuffer *buffer)
+{
+  return (String){ .data = buffer->startptr, .size = (size_t)(buffer->ptr - buffer->startptr) };
+}
+
 /// Write registers ShaDa entries in given msgpack_sbuffer.
 ///
 /// @param[in]  sbuf  target msgpack_sbuffer to write to.
-void shada_encode_regs(msgpack_sbuffer *const sbuf)
+String shada_encode_regs(void)
   FUNC_ATTR_NONNULL_ALL
 {
   WriteMergerState *const wms = xcalloc(1, sizeof(*wms));
   shada_initialize_registers(wms, -1);
-  msgpack_packer packer;
-  msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
+  PackerBuffer packer = packer_string_buffer();
   for (size_t i = 0; i < ARRAY_SIZE(wms->registers); i++) {
     if (wms->registers[i].data.type == kSDItemRegister) {
       if (kSDWriteFailed
@@ -3972,52 +4006,53 @@ void shada_encode_regs(msgpack_sbuffer *const sbuf)
     }
   }
   xfree(wms);
+  return packer_take_string(&packer);
 }
 
 /// Write jumplist ShaDa entries in given msgpack_sbuffer.
 ///
 /// @param[in]  sbuf            target msgpack_sbuffer to write to.
-void shada_encode_jumps(msgpack_sbuffer *const sbuf)
+String shada_encode_jumps(void)
   FUNC_ATTR_NONNULL_ALL
 {
   Set(ptr_t) removable_bufs = SET_INIT;
   find_removable_bufs(&removable_bufs);
   PossiblyFreedShadaEntry jumps[JUMPLISTSIZE];
   size_t jumps_size = shada_init_jumps(jumps, &removable_bufs);
-  msgpack_packer packer;
-  msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
+  PackerBuffer packer = packer_string_buffer();
   for (size_t i = 0; i < jumps_size; i++) {
     if (kSDWriteFailed == shada_pack_pfreed_entry(&packer, jumps[i], 0)) {
       abort();
     }
   }
+  return packer_take_string(&packer);
 }
 
 /// Write buffer list ShaDa entry in given msgpack_sbuffer.
 ///
 /// @param[in]  sbuf            target msgpack_sbuffer to write to.
-void shada_encode_buflist(msgpack_sbuffer *const sbuf)
+String shada_encode_buflist(void)
   FUNC_ATTR_NONNULL_ALL
 {
   Set(ptr_t) removable_bufs = SET_INIT;
   find_removable_bufs(&removable_bufs);
   ShadaEntry buflist_entry = shada_get_buflist(&removable_bufs);
-  msgpack_packer packer;
-  msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
+
+  PackerBuffer packer = packer_string_buffer();
   if (kSDWriteFailed == shada_pack_entry(&packer, buflist_entry, 0)) {
     abort();
   }
   xfree(buflist_entry.data.buffer_list.buffers);
+  return packer_take_string(&packer);
 }
 
 /// Write global variables ShaDa entries in given msgpack_sbuffer.
 ///
 /// @param[in]  sbuf            target msgpack_sbuffer to write to.
-void shada_encode_gvars(msgpack_sbuffer *const sbuf)
+String shada_encode_gvars(void)
   FUNC_ATTR_NONNULL_ALL
 {
-  msgpack_packer packer;
-  msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
+  PackerBuffer packer = packer_string_buffer();
   const void *var_iter = NULL;
   const Timestamp cur_timestamp = os_time();
   do {
@@ -4049,21 +4084,21 @@ void shada_encode_gvars(msgpack_sbuffer *const sbuf)
     }
     tv_clear(&vartv);
   } while (var_iter != NULL);
+  return packer_take_string(&packer);
 }
 
-/// Read ShaDa from msgpack_sbuffer.
+/// Read ShaDa from String.
 ///
-/// @param[in]  file   msgpack_sbuffer to read from.
+/// @param[in]  string   string to read from.
 /// @param[in]  flags  Flags, see ShaDaReadFileFlags enum.
-void shada_read_sbuf(msgpack_sbuffer *const sbuf, const int flags)
+void shada_read_string(String string, const int flags)
   FUNC_ATTR_NONNULL_ALL
 {
-  assert(sbuf != NULL);
-  if (sbuf->data == NULL) {
+  if (string.size == 0) {
     return;
   }
   FileDescriptor sd_reader;
-  file_open_buffer(&sd_reader, sbuf->data, sbuf->size);
+  file_open_buffer(&sd_reader, string.data, string.size);
   shada_read(&sd_reader, flags);
   close_file(&sd_reader);
 }

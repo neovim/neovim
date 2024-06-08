@@ -2,6 +2,7 @@
 
 #include <stddef.h>  // IWYU pragma: keep
 
+#include "nvim/memory_defs.h"
 #include "nvim/os/fileio_defs.h"  // IWYU pragma: keep
 
 /// file_open() flags
@@ -31,6 +32,11 @@ enum {
   /// Currently equal to (IOSIZE - 1), but they do not need to be connected.
   kRWBufferSize = 1024,
 };
+
+static inline size_t file_space(FileDescriptor *fp)
+{
+  return (size_t)((fp->buffer + ARENA_BLOCK_SIZE) - fp->write_pos);
+}
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fileio.h.generated.h"
