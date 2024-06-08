@@ -340,6 +340,28 @@ describe(':terminal buffer', function()
     eq(termbuf, eval('g:termbuf'))
   end)
 
+  it('deletes the current buffer when bufhidden=delete #27508', function()
+    local screen = Screen.new(50, 4)
+    screen:attach()
+    -- open a terminal buffer
+    command('terminal ls')
+    -- set bufhidden = delete
+    command('set bufhidden=delete')
+    -- open a new buffer
+    command('enew')
+    -- get the buffer list
+    command('ls')
+    -- verify the termnal buffer does not appear in the buffer list
+    screen:expect({
+      grid = [[
+                                                          |*2
+          0 %h   "[No Name]"                    line 1    |
+        Press ENTER or type command to continue^           |
+      ]],
+      attr_ids = {},
+    })
+  end)
+
   it('TermReqeust synchronization #27572', function()
     command('autocmd! nvim_terminal TermRequest')
     local term = exec_lua([[
