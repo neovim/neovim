@@ -6,7 +6,6 @@
 #include <uv.h>
 
 #include "nvim/eval/typval_defs.h"
-#include "nvim/rbuffer_defs.h"
 #include "nvim/types_defs.h"
 
 enum { EVENT_HANDLER_MAX_ARGC = 10, };
@@ -59,11 +58,13 @@ typedef struct rstream RStream;
 /// Type of function called when the RStream buffer is filled with data
 ///
 /// @param stream The Stream instance
-/// @param buf The associated RBuffer instance
+/// @param read_data data that was read
 /// @param count Number of bytes that was read.
 /// @param data User-defined data
 /// @param eof If the stream reached EOF.
-typedef void (*stream_read_cb)(RStream *stream, RBuffer *buf, size_t count, void *data, bool eof);
+/// @return number of bytes which were consumed
+typedef size_t (*stream_read_cb)(RStream *stream, const char *read_data, size_t count, void *data,
+                                 bool eof);
 
 /// Type of function called when the Stream has information about a write
 /// request.
@@ -102,11 +103,16 @@ struct stream {
 struct rstream {
   Stream s;
   bool did_eof;
-  RBuffer *buffer;
+  bool want_read;
+  bool pending_read;
+  bool paused_full;
+  char *buffer;  // ARENA_BLOCK_SIZE
+  char *read_pos;
+  char *write_pos;
   uv_buf_t uvbuf;
   stream_read_cb read_cb;
   size_t num_bytes;
-  size_t fpos;
+  int64_t fpos;
 };
 
 #define ADDRESS_MAX_SIZE 256

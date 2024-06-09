@@ -5,7 +5,6 @@
 #include <uv.h>
 
 #include "nvim/event/defs.h"
-#include "nvim/rbuffer_defs.h"
 #include "nvim/tui/input_defs.h"  // IWYU pragma: keep
 #include "nvim/tui/tui_defs.h"
 #include "nvim/types_defs.h"
@@ -17,7 +16,7 @@ typedef enum {
   kKeyEncodingXterm,   ///< Xterm's modifyOtherKeys encoding (XTMODKEYS)
 } KeyEncoding;
 
-#define KEY_BUFFER_SIZE 0xfff
+#define KEY_BUFFER_SIZE 0x1000
 typedef struct {
   int in_fd;
   // Phases: -1=all 0=disabled 1=first-chunk 2=continue 3=last-chunk
@@ -39,12 +38,6 @@ typedef struct {
   char key_buffer[KEY_BUFFER_SIZE];
   size_t key_buffer_len;
 } TermInput;
-
-typedef enum {
-  kIncomplete = -1,
-  kNotApplicable = 0,
-  kComplete = 1,
-} HandleState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/input.h.generated.h"

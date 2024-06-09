@@ -21,8 +21,6 @@
 #include "nvim/os/fileio.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
-#include "nvim/rbuffer.h"
-#include "nvim/rbuffer_defs.h"
 #include "nvim/types_defs.h"
 
 #ifdef HAVE_SYS_UIO_H

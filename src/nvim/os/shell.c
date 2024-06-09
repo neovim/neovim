@@ -40,8 +40,6 @@
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
-#include "nvim/rbuffer.h"
-#include "nvim/rbuffer_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
@@ -907,9 +905,9 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
   if (has_input) {
     wstream_init(&proc->in, 0);
   }
-  rstream_init(&proc->out, 0);
+  rstream_init(&proc->out);
   rstream_start(&proc->out, data_cb, &buf);
-  rstream_init(&proc->err, 0);
+  rstream_init(&proc->err);
   rstream_start(&proc->err, data_cb, &buf);
 
   // write the input, if any
@@ -988,14 +986,14 @@ static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
   buf->data = xrealloc(buf->data, buf->cap);
 }
 
-static void system_data_cb(RStream *stream, RBuffer *buf, size_t count, void *data, bool eof)
+static size_t system_data_cb(RStream *stream, const char *buf, size_t count, void *data, bool eof)
 {
   DynamicBuffer *dbuf = data;
 
-  size_t nread = buf->size;
-  dynamic_buffer_ensure(dbuf, dbuf->len + nread + 1);
-  rbuffer_read(buf, dbuf->data + dbuf->len, nread);
-  dbuf->len += nread;
+  dynamic_buffer_ensure(dbuf, dbuf->len + count + 1);
+  memcpy(dbuf->data + dbuf->len, buf, count);
+  dbuf->len += count;
+  return count;
 }
 
 /// Tracks output received for the current executing shell command, and displays
@@ -1078,7 +1076,7 @@ static bool out_data_decide_throttle(size_t size)
 ///
 /// @param  output  Data to save, or NULL to invoke a special mode.
 /// @param  size    Length of `output`.
-static void out_data_ring(char *output, size_t size)
+static void out_data_ring(const char *output, size_t size)
 {
 #define MAX_CHUNK_SIZE (OUT_DATA_THRESHOLD / 2)
   static char last_skipped[MAX_CHUNK_SIZE];  // Saved output.
@@ -1120,11 +1118,11 @@ static void out_data_ring(char *output, size_t size)
 /// @param output       Data to append to screen lines.
 /// @param count        Size of data.
 /// @param eof          If true, there will be no more data output.
-static void out_data_append_to_screen(char *output, size_t *count, bool eof)
+static void out_data_append_to_screen(const char *output, size_t *count, bool eof)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *p = output;
-  char *end = output + *count;
+  const char *p = output;
+  const char *end = output + *count;
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
       msg_putchar_attr((uint8_t)(*p), 0);
@@ -1152,25 +1150,16 @@ end:
   ui_flush();
 }
 
-static void out_data_cb(RStream *stream, RBuffer *buf, size_t count, void *data, bool eof)
+static size_t out_data_cb(RStream *stream, const char *ptr, size_t count, void *data, bool eof)
 {
-  size_t cnt;
-  char *ptr = rbuffer_read_ptr(buf, &cnt);
-
-  if (ptr != NULL && cnt > 0
-      && out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
+  if (count > 0 && out_data_decide_throttle(count)) {  // Skip output above a threshold.
     // Save the skipped output. If it is the final chunk, we display it later.
-    out_data_ring(ptr, cnt);
-  } else if (ptr != NULL) {
-    out_data_append_to_screen(ptr, &cnt, eof);
+    out_data_ring(ptr, count);
+  } else if (count > 0) {
+    out_data_append_to_screen(ptr, &count, eof);
   }
 
-  if (cnt) {
-    rbuffer_consumed(buf, cnt);
-  }
-
-  // Move remaining data to start of buffer, so the buffer can never wrap around.
-  rbuffer_reset(buf);
+  return count;
 }
 
 /// Parses a command string into a sequence of words, taking quotes into
