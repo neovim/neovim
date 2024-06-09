@@ -6192,10 +6192,10 @@ bool can_bs(int what)
   return vim_strchr(p_bs, what) != NULL;
 }
 
-/// Get the local or global value of 'backupcopy'.
+/// Get the local or global value of 'backupcopy' flags.
 ///
 /// @param buf The buffer.
-unsigned get_bkc_value(buf_T *buf)
+unsigned get_bkc_flags(buf_T *buf)
 {
   return buf->b_bkc_flags ? buf->b_bkc_flags : bkc_flags;
 }
@@ -6211,7 +6211,7 @@ char *get_flp_value(buf_T *buf)
   return buf->b_p_flp;
 }
 
-/// Get the local or global value of the 'virtualedit' flags.
+/// Get the local or global value of 'virtualedit' flags.
 unsigned get_ve_flags(win_T *wp)
 {
   return (wp->w_ve_flags ? wp->w_ve_flags : ve_flags) & ~(VE_NONE | VE_NONEU);

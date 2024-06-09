@@ -1066,7 +1066,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   bool whole = (start == 1 && end == buf->b_ml.ml_line_count);
   bool write_undo_file = false;
   context_sha256_T sha_ctx;
-  unsigned bkc = get_bkc_value(buf);
+  unsigned bkc = get_bkc_flags(buf);
 
   if (fname == NULL || *fname == NUL) {  // safety check
     return FAIL;
