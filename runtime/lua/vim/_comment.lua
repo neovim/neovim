@@ -132,45 +132,45 @@ end
 --- Make a function which comments a line
 ---@param parts vim._comment.Parts
 ---@param indent string
----@return fun(line: string): string
+---@return fun(line: string): [number,number,string][]
 local function make_comment_function(parts, indent)
-  local prefix, nonindent_start, suffix = indent .. parts.left, indent:len() + 1, parts.right
   local blank_comment = indent .. vim.trim(parts.left) .. vim.trim(parts.right)
 
   return function(line)
     if is_blank(line) then
-      return blank_comment
+      return { { 0, #line, blank_comment } }
     end
-    return prefix .. line:sub(nonindent_start) .. suffix
+    return { { #indent, #indent, parts.left }, { #line, #line, parts.right } }
   end
 end
 
 --- Make a function which uncomments a line
 ---@param parts vim._comment.Parts
----@return fun(line: string): string
+---@return fun(line: string): [number,number,string][]
 local function make_uncomment_function(parts)
   local l_esc, r_esc = vim.pesc(parts.left), vim.pesc(parts.right)
-  local regex = '^(%s*)' .. l_esc .. '(.*)' .. r_esc .. '(%s-)$'
-  local regex_trimmed = '^(%s*)' .. vim.trim(l_esc) .. '(.*)' .. vim.trim(r_esc) .. '(%s-)$'
+  local regex = '^%s*()' .. l_esc .. '()(.*)()' .. r_esc .. '()%s-$'
+  local regex_trimmed = '^%s*()' .. vim.trim(l_esc) .. '()(.*)()' .. vim.trim(r_esc) .. '()%s-$'
 
   return function(line)
     -- Try regex with exact comment parts first, fall back to trimmed parts
-    local indent, new_line, trail = line:match(regex)
+    local l_esc_start, l_esc_end, new_line, r_esc_start, r_esc_end = line:match(regex)
     if new_line == nil then
-      indent, new_line, trail = line:match(regex_trimmed)
+      l_esc_start, l_esc_end, new_line, r_esc_start, r_esc_end = line:match(regex_trimmed)
     end
 
     -- Return original if line is not commented
     if new_line == nil then
-      return line
+      return {}
     end
 
     -- Prevent trailing whitespace
     if is_blank(new_line) then
-      indent, trail = '', ''
+      l_esc_start = 1
+      r_esc_end = #line + 1
     end
 
-    return indent .. new_line .. trail
+    return { { l_esc_start - 1, l_esc_end - 1, '' }, { r_esc_start - 1, r_esc_end - 1, '' } }
   end
 end
 
@@ -186,17 +186,17 @@ local function toggle_lines(line_start, line_end, ref_position)
 
   local f = is_comment and make_uncomment_function(parts) or make_comment_function(parts, indent)
 
-  -- Direct `nvim_buf_set_lines()` essentially removes both regular and
-  -- extended marks  (squashes to empty range at either side of the region)
-  -- inside region. Use 'lockmarks' to preserve regular marks.
-  -- Preserving extmarks is not a universally good thing to do:
-  -- - Good for non-highlighting in text area extmarks (like showing signs).
-  -- - Debatable for highlighting in text area (like LSP semantic tokens).
-  --   Mostly because it causes flicker as highlighting is preserved during
-  --   comment toggling.
-  vim._with({ lockmarks = true }, function()
-    vim.api.nvim_buf_set_lines(0, line_start - 1, line_end, false, vim.tbl_map(f, lines))
-  end)
+  ---@type [number,number,string][]
+  local actions = vim.tbl_map(f, lines)
+  for offset, acts in ipairs(actions) do
+    local row = offset - 1 + line_start - 1
+    local col_offset = 0
+    for _, v in ipairs(acts) do
+      vim.api.nvim_buf_set_text(0, row, v[1] + col_offset, row, v[2] + col_offset, { v[3] })
+      ---@type number
+      col_offset = col_offset - v[2] + v[1] + #v[3]
+    end
+  end
 end
 
 --- Operator which toggles user-supplied range of lines
@@ -226,6 +226,7 @@ local function operator(mode)
   -- tree-sitter-based 'commentstring'. Recompute every time for a proper
   -- dot-repeat. In Visual and sometimes Normal mode it uses start position.
   toggle_lines(lnum_from, lnum_to, vim.api.nvim_win_get_cursor(0))
+  vim.api.nvim_win_set_cursor(0, { vim.api.nvim_win_get_cursor(0)[1], 0 })
   return ''
 end
 
