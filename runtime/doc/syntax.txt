@@ -466,14 +466,14 @@ ASTRO						*astro.vim* *ft-astro-syntax*
 Configuration
 
 The following variables control certain syntax highlighting features.
-You can add them to your .vimrc: >
+You can add them to your .vimrc.
+
+To enables TypeScript and TSX for ".astro" files (default "disable"): >
 	let g:astro_typescript = "enable"
 <
-Enables TypeScript and TSX for ".astro" files. Default Value: "disable" >
+To enables Stylus for ".astro" files (default "disable"): >
 	let g:astro_stylus = "enable"
 <
-Enables Stylus for ".astro" files. Default Value: "disable"
-
 NOTE: You need to install an external plugin to support stylus in astro files.
 
 
@@ -1437,7 +1437,7 @@ Note: Syntax folding might slow down syntax highlighting significantly,
 especially for large files.
 
 
-HTML/OS (by Aestiva)				*htmlos.vim* *ft-htmlos-syntax*
+HTML/OS (BY AESTIVA)				*htmlos.vim* *ft-htmlos-syntax*
 
 The coloring scheme for HTML/OS works as follows:
 
