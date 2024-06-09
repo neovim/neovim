@@ -1200,8 +1200,8 @@ function vim._with(context, f)
     previous_options = {}
     for k, v in pairs(context.options) do
       previous_options[k] =
-        vim.api.nvim_get_option_value(k, { win = context.win, buf = context.buf })
-      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf })
+        vim.api.nvim_get_option_value(k, { win = context.win, buf = context.buf, scope = 'local' })
+      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf, scope = 'local' })
     end
   end
 
@@ -1210,7 +1210,7 @@ function vim._with(context, f)
   -- Restore original options
   if previous_options then
     for k, v in pairs(previous_options) do
-      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf })
+      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf, scope = 'local' })
     end
   end
 
