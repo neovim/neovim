@@ -54,6 +54,10 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
   }
 
   if (HAS_KEY_X(opts, buf)) {
+    VALIDATE(!(HAS_KEY_X(opts, scope) && *scope == OPT_GLOBAL), "%s",
+             "cannot use both global 'scope' and 'buf'", {
+      return FAIL;
+    });
     *scope = OPT_LOCAL;
     *req_scope = kOptReqBuf;
     *from = find_buffer_by_handle(opts->buf, err);
@@ -65,11 +69,6 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
   VALIDATE((!HAS_KEY_X(opts, filetype)
             || !(HAS_KEY_X(opts, buf) || HAS_KEY_X(opts, scope) || HAS_KEY_X(opts, win))),
            "%s", "cannot use 'filetype' with 'scope', 'buf' or 'win'", {
-    return FAIL;
-  });
-
-  VALIDATE((!HAS_KEY_X(opts, scope) || !HAS_KEY_X(opts, buf)), "%s",
-           "cannot use both 'scope' and 'buf'", {
     return FAIL;
   });
 
