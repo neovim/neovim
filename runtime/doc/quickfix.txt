@@ -1296,7 +1296,7 @@ passed to make, say :make html or :make pdf.
 Additional arguments can be passed to pandoc:
 
 - either by appending them to make, say `:make html --self-contained` .
-- or setting them in `b:pandoc_compiler_args` or `g:pandoc_compiler_args`
+- or setting them in `b:pandoc_compiler_args` or `g:pandoc_compiler_args`.
 
 PERL					*quickfix-perl* *compiler-perl*
 
