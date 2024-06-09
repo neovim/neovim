@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 May 30
+" Last Change:		2024 Jun 08
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -215,7 +215,7 @@ syn keyword javaLabelVarType	contained var
 syn keyword javaLabelCastType	contained char byte short int
 " Allow for the contingency of the enclosing region not being able to
 " _keep_ its _end_, e.g. case ':':.
-syn region  javaLabelWhenClause	contained transparent matchgroup=javaLabel start="\<when\>" matchgroup=NONE end=":"me=e-1 end="->"me=e-2 contains=TOP,javaExternal
+syn region  javaLabelWhenClause	contained transparent matchgroup=javaLabel start="\<when\>" matchgroup=NONE end=":"me=e-1 end="->"me=e-2 contains=TOP,javaExternal,javaLambdaDef
 syn match   javaLabelNumber	contained "\<0\>[lL]\@!"
 syn match   javaLabelNumber	contained "\<\%(0\%([xX]\x\%(_*\x\)*\|_*\o\%(_*\o\)*\|[bB][01]\%(_*[01]\)*\)\|[1-9]\%(_*\d\)*\)\>[lL]\@!"
 hi def link javaLabelDefault	javaLabel
