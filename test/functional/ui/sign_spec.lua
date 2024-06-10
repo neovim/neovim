@@ -577,4 +577,34 @@ describe('Signs', function()
     ]])
     eq({}, eval('sign_getdefined()'))
   end)
+
+  it('no crash when unplacing signs beyond end of buffer', function()
+    exec([[
+      sign define S1 text=S1
+      sign define S2 text=S2
+      sign place 1 line=8 name=S1
+      sign place 2 line=9 name=S2
+    ]])
+    -- Now placed at end of buffer
+    local s1 = {
+      grid = [[
+        S2^                                                   |
+        {0:~                                                    }|*12
+                                                             |
+      ]],
+    }
+    screen:expect(s1)
+    -- Signcolumn tracking used to not count signs placed beyond end of buffer here
+    exec('set signcolumn=auto:9')
+    screen:expect({
+      grid = [[
+        S2S1^                                                 |
+        {0:~                                                    }|*12
+                                                             |
+      ]],
+    })
+    -- Unplacing the sign does not crash by decrementing tracked signs below zero
+    exec('sign unplace 1')
+    screen:expect(s1)
+  end)
 end)
