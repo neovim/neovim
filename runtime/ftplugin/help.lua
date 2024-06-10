@@ -26,3 +26,7 @@ elseif vim.endswith(bufname, '/doc/lsp.txt') then
     { start = [[\*lsp-semantic-highlight\*]], stop = '^======', match = '^@[%w%p]+' },
   })
 end
+
+vim.keymap.set('n', 'gO', function()
+  require('vim.vimhelp').show_toc()
+end, { buffer = 0, silent = true })
