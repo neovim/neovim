@@ -3301,9 +3301,10 @@ void do_nv_ident(int c1, int c2)
 static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, char **ptr_arg,
                           size_t n, char *buf, size_t bufsize, size_t *buflen)
 {
+  char *buf_e = buf;
   if (kp_help) {
     // in the help buffer
-    STRCPY(buf, "he! ");
+    buf_e = xstpcpy(buf, "he! ");
     *buflen = STRLEN_LITERAL("he! ");
     return n;
   }
@@ -3314,7 +3315,9 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
     if (cap->count0 != 0) {  // Send the count to the ex command.
       *buflen = (size_t)snprintf(buf, bufsize, "%" PRId64, (int64_t)(cap->count0));
     }
-    *buflen += (size_t)snprintf(buf + *buflen, bufsize - *buflen, "%s ", kp);
+    buf_e = xstpcpy(buf + *buflen, kp);
+    buf_e = xstpcpy(buf_e, " ");
+    *buflen = (size_t)(buf_e - buf);
     return n;
   }
 

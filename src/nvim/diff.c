@@ -1272,11 +1272,11 @@ void ex_diffpatch(exarg_T *eap)
 #endif
 
   // Delete any .orig or .rej file created.
-  STRCPY(buf, tmp_new);
-  STRCAT(buf, ".orig");
+  char *buf_e = xstpcpy(buf, tmp_new);
+  buf_e = xstpcpy(buf_e, ".orig");
   os_remove(buf);
-  STRCPY(buf, tmp_new);
-  STRCAT(buf, ".rej");
+  buf_e = xstpcpy(buf, tmp_new);
+  buf_e = xstpcpy(buf_e, ".rej");
   os_remove(buf);
 
   // Only continue if the output file was created.
@@ -1287,8 +1287,9 @@ void ex_diffpatch(exarg_T *eap)
     emsg(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {
-      newname = xstrnsave(curbuf->b_fname, strlen(curbuf->b_fname) + 4);
-      STRCAT(newname, ".new");
+      const size_t b_fname_len = strlen(curbuf->b_fname);
+      newname = xstrnsave(curbuf->b_fname, b_fname_len + 4);
+      STRCPY(newname + b_fname_len, ".new");
     }
 
     // don't use a new tab page, each tab page has its own diffs

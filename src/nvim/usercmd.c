@@ -1273,10 +1273,11 @@ static size_t add_cmd_modifier(char *buf, char *mod_str, bool *multi_mods)
   }
 
   if (buf != NULL) {
+    char *buf_e = buf + strlen(buf);
     if (*multi_mods) {
-      STRCAT(buf, " ");
+      buf_e = xstpcpy(buf_e, " ");
     }
-    STRCAT(buf, mod_str);
+    buf_e = xstpcpy(buf_e, mod_str);
   }
 
   *multi_mods = true;
