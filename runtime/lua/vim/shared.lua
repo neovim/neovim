@@ -1141,8 +1141,11 @@ end
 
 --- @nodoc
 --- @class vim.context.mods
+--- @field bo? table<string, any>
 --- @field buf? integer
 --- @field emsg_silent? boolean
+--- @field env? table<string, any>
+--- @field go? table<string, any>
 --- @field hide? boolean
 --- @field horizontal? boolean
 --- @field keepalt? boolean
@@ -1151,11 +1154,12 @@ end
 --- @field keeppatterns? boolean
 --- @field lockmarks? boolean
 --- @field noautocmd? boolean
---- @field options? table<string, any>
+--- @field o? table<string, any>
 --- @field sandbox? boolean
 --- @field silent? boolean
 --- @field unsilent? boolean
 --- @field win? integer
+--- @field wo? table<string, any>
 
 --- Executes function `f` with the given context specification.
 ---
@@ -1164,8 +1168,11 @@ function vim._with(context, f)
   vim.validate('context', context, 'table')
   vim.validate('f', f, 'function')
 
+  vim.validate('context.bo', context.bo, 'table', true)
   vim.validate('context.buf', context.buf, 'number', true)
   vim.validate('context.emsg_silent', context.emsg_silent, 'boolean', true)
+  vim.validate('context.env', context.wo, 'table', true)
+  vim.validate('context.go', context.go, 'table', true)
   vim.validate('context.hide', context.hide, 'boolean', true)
   vim.validate('context.horizontal', context.horizontal, 'boolean', true)
   vim.validate('context.keepalt', context.keepalt, 'boolean', true)
@@ -1174,11 +1181,12 @@ function vim._with(context, f)
   vim.validate('context.keeppatterns', context.keeppatterns, 'boolean', true)
   vim.validate('context.lockmarks', context.lockmarks, 'boolean', true)
   vim.validate('context.noautocmd', context.noautocmd, 'boolean', true)
-  vim.validate('context.options', context.options, 'table', true)
+  vim.validate('context.o', context.wo, 'table', true)
   vim.validate('context.sandbox', context.sandbox, 'boolean', true)
   vim.validate('context.silent', context.silent, 'boolean', true)
   vim.validate('context.unsilent', context.unsilent, 'boolean', true)
   vim.validate('context.win', context.win, 'number', true)
+  vim.validate('context.wo', context.wo, 'table', true)
 
   -- Check buffer exists
   if context.buf then
@@ -1194,23 +1202,80 @@ function vim._with(context, f)
     end
   end
 
-  -- Store original options
-  local previous_options ---@type table<string, any>
-  if context.options then
-    previous_options = {}
-    for k, v in pairs(context.options) do
-      previous_options[k] =
-        vim.api.nvim_get_option_value(k, { win = context.win, buf = context.buf })
-      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf })
+  -- Store and change options
+  local local_prev ---@type table<string, any>
+  local global_prev ---@type table<string, any>
+  if context.o then
+    local_prev = {}
+    global_prev = {}
+    for k, v in pairs(context.o) do
+      local_prev[k] =
+        vim.api.nvim_get_option_value(k, { win = context.win, buf = context.buf, scope = 'local' })
+      global_prev[k] = vim.api.nvim_get_option_value(k, { win = context.win, scope = 'global' })
+      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf, scope = 'local' })
+      vim.api.nvim_set_option_value(k, v, { win = context.win, scope = 'global' })
+    end
+  end
+
+  -- Store and change buffer options
+  if context.bo then
+    local_prev = local_prev or {}
+    for k, v in pairs(context.bo) do
+      local_prev[k] =
+        vim.api.nvim_get_option_value(k, { win = context.win, buf = context.buf, scope = 'local' })
+      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf, scope = 'local' })
+    end
+  end
+
+  -- Store and change window options
+  if context.wo then
+    local_prev = local_prev or {}
+    for k, v in pairs(context.wo) do
+      local_prev[k] =
+        vim.api.nvim_get_option_value(k, { win = context.win, buf = context.buf, scope = 'local' })
+      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf, scope = 'local' })
+    end
+  end
+
+  -- Store and change global options
+  if context.go then
+    global_prev = global_prev or {}
+    for k, v in pairs(context.go) do
+      global_prev[k] = vim.api.nvim_get_option_value(k, { win = context.win, scope = 'global' })
+      vim.api.nvim_set_option_value(k, v, { win = context.win, scope = 'global' })
+    end
+  end
+
+  -- Store and change global options
+  local env_prev ---@type table<string, any>
+  if context.env then
+    env_prev = {}
+    for k, v in pairs(context.env) do
+      env_prev[k] = vim.env[k]
+      vim.env[k] = v ---@type any
     end
   end
 
   local retval = { vim._with_c(context, f) }
 
-  -- Restore original options
-  if previous_options then
-    for k, v in pairs(previous_options) do
-      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf })
+  -- Restore local options
+  if local_prev then
+    for k, v in pairs(local_prev) do
+      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf, scope = 'local' })
+    end
+  end
+
+  -- Restore global options
+  if global_prev then
+    for k, v in pairs(global_prev) do
+      vim.api.nvim_set_option_value(k, v, { win = context.win, scope = 'global' })
+    end
+  end
+
+  -- Restore environment
+  if env_prev then
+    for k, v in pairs(env_prev) do
+      vim.env[k] = v ---@type any
     end
   end
 
