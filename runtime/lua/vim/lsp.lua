@@ -516,7 +516,6 @@ local function buf_detach_client(bufnr, client)
   end
 
   client.attached_buffers[bufnr] = nil
-  util.buf_versions[bufnr] = nil
 
   local namespace = lsp.diagnostic.get_namespace(client.id)
   vim.diagnostic.reset(namespace, bufnr)
@@ -601,6 +600,7 @@ local function buf_attach(bufnr)
         buf_detach_client(bufnr, client)
       end
       attached_buffers[bufnr] = nil
+      util.buf_versions[bufnr] = nil
     end,
 
     -- TODO if we know all of the potential clients ahead of time, then we
