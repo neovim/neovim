@@ -2690,13 +2690,15 @@ describe('LSP', function()
         {
           filename = '/fake/uri',
           lnum = 1,
+          end_lnum = 2,
           col = 3,
+          end_col = 4,
           text = 'testing',
           user_data = {
             uri = 'file:///fake/uri',
             range = {
               start = { line = 0, character = 2 },
-              ['end'] = { line = 0, character = 3 },
+              ['end'] = { line = 1, character = 3 },
             },
           },
         },
@@ -2710,7 +2712,7 @@ describe('LSP', function()
             uri = 'file:///fake/uri',
             range = {
               start = { line = 0, character = 2 },
-              ['end'] = { line = 0, character = 3 },
+              ['end'] = { line = 1, character = 3 },
             }
           },
         }
@@ -2723,7 +2725,9 @@ describe('LSP', function()
         {
           filename = '/fake/uri',
           lnum = 1,
+          end_lnum = 1,
           col = 3,
+          end_col = 4,
           text = 'testing',
           user_data = {
             targetUri = 'file:///fake/uri',

@@ -1983,7 +1983,9 @@ locations_to_items({locations}, {offset_encoding})
         (`table[]`) A list of objects with the following fields:
         • {filename} (`string`)
         • {lnum} (`integer`) 1-indexed line number
+        • {end_lnum} (`integer`) 1-indexed end line number
         • {col} (`integer`) 1-indexed column
+        • {end_col} (`integer`) 1-indexed end column
         • {text} (`string`)
         • {user_data} (`lsp.Location|lsp.LocationLink`)
 
