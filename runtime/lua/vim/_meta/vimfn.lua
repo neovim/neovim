@@ -2766,8 +2766,9 @@ function vim.fn.getchangelist(buf) end
 ---   endfunction
 --- <
 ---
+--- @param expr? 0|1
 --- @return integer
-function vim.fn.getchar() end
+function vim.fn.getchar(expr) end
 
 --- The result is a Number which is the state of the modifiers for
 --- the last obtained character with getchar() or in another way.
@@ -2837,8 +2838,9 @@ function vim.fn.getcharsearch() end
 --- Otherwise this works like |getchar()|, except that a number
 --- result is converted to a string.
 ---
+--- @param expr? 0|1
 --- @return string
-function vim.fn.getcharstr() end
+function vim.fn.getcharstr(expr) end
 
 --- Return the type of the current command-line completion.
 --- Only works when the command line is being edited, thus
@@ -5297,8 +5299,9 @@ function vim.fn.mapcheck(name, mode, abbr) end
 ---   ounmap xyzzy
 ---   echo printf("Operator-pending mode bit: 0x%x", op_bit)
 ---
---- @return any
-function vim.fn.maplist() end
+--- @param abbr? 0|1
+--- @return table[]
+function vim.fn.maplist(abbr) end
 
 --- Like |map()| but instead of replacing items in {expr1} a new
 --- List or Dictionary is created and returned.  {expr1} remains
@@ -7634,8 +7637,15 @@ function vim.fn.searchdecl(name, global, thisblock) end
 ---        \ 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string"')
 --- <
 ---
---- @return any
-function vim.fn.searchpair() end
+--- @param start any
+--- @param middle any
+--- @param end_ any
+--- @param flags? string
+--- @param skip? any
+--- @param stopline? any
+--- @param timeout? integer
+--- @return integer
+function vim.fn.searchpair(start, middle, end_, flags, skip, stopline, timeout) end
 
 --- Same as |searchpair()|, but returns a |List| with the line and
 --- column position of the match. The first element of the |List|
@@ -7647,8 +7657,15 @@ function vim.fn.searchpair() end
 --- <
 --- See |match-parens| for a bigger and more useful example.
 ---
---- @return any
-function vim.fn.searchpairpos() end
+--- @param start any
+--- @param middle any
+--- @param end_ any
+--- @param flags? string
+--- @param skip? any
+--- @param stopline? any
+--- @param timeout? integer
+--- @return [integer, integer]
+function vim.fn.searchpairpos(start, middle, end_, flags, skip, stopline, timeout) end
 
 --- Same as |search()|, but returns a |List| with the line and
 --- column position of the match. The first element of the |List|
