@@ -238,6 +238,7 @@ end
 ---@param rows integer[] zero-indexed line numbers
 ---@return table<integer, string>|string a table mapping rows to lines
 local function get_lines(bufnr, rows)
+  --- @type integer[]
   rows = type(rows) == 'table' and rows or { rows }
 
   -- This is needed for bufload and bufloaded
@@ -246,7 +247,7 @@ local function get_lines(bufnr, rows)
   end
 
   local function buf_lines()
-    local lines = {}
+    local lines = {} --- @type table<integer,string>
     for _, row in ipairs(rows) do
       lines[row] = (api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { '' })[1]
     end
@@ -274,11 +275,11 @@ local function get_lines(bufnr, rows)
   if not fd then
     return ''
   end
-  local stat = uv.fs_fstat(fd)
-  local data = uv.fs_read(fd, stat.size, 0)
+  local stat = assert(uv.fs_fstat(fd))
+  local data = assert(uv.fs_read(fd, stat.size, 0))
   uv.fs_close(fd)
 
-  local lines = {} -- rows we need to retrieve
+  local lines = {} --- @type table<integer,true|string> rows we need to retrieve
   local need = 0 -- keep track of how many unique rows we need
   for _, row in pairs(rows) do
     if not lines[row] then
@@ -307,7 +308,7 @@ local function get_lines(bufnr, rows)
       lines[i] = ''
     end
   end
-  return lines
+  return lines --[[@as table<integer,string>]]
 end
 
 --- Gets the zero-indexed line from the given buffer.
@@ -322,7 +323,8 @@ local function get_line(bufnr, row)
 end
 
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
----@param offset_encoding string|nil utf-8|utf-16|utf-32
+---@param position lsp.Position
+---@param offset_encoding? string utf-8|utf-16|utf-32
 ---@return integer
 local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- LSP's line and characters are 0-indexed
@@ -366,6 +368,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- Fix reversed range and indexing each text_edits
   local index = 0
+  --- @param text_edit lsp.TextEdit
   text_edits = vim.tbl_map(function(text_edit)
     index = index + 1
     text_edit._index = index
@@ -383,6 +386,9 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   end, text_edits)
 
   -- Sort text_edits
+  ---@param a lsp.TextEdit | { _index: integer }
+  ---@param b lsp.TextEdit | { _index: integer }
+  ---@return boolean
   table.sort(text_edits, function(a, b)
     if a.range.start.line ~= b.range.start.line then
       return a.range.start.line > b.range.start.line
@@ -393,10 +399,11 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     if a._index ~= b._index then
       return a._index < b._index
     end
+    return false
   end)
 
   -- save and restore local marks since they get deleted by nvim_buf_set_lines
-  local marks = {}
+  local marks = {} --- @type table<string,[integer,integer]>
   for _, m in pairs(vim.fn.getmarklist(bufnr)) do
     if m.mark:match("^'[a-z]$") then
       marks[m.mark:sub(2, 2)] = { m.pos[2], m.pos[3] - 1 } -- api-indexed

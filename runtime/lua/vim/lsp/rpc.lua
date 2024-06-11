@@ -140,7 +140,7 @@ local client_errors = {
   SERVER_RESULT_CALLBACK_ERROR = 7,
 }
 
---- @type table<string|integer, string|integer>
+--- @type table<string,integer> | table<integer,string>
 --- @nodoc
 M.client_errors = vim.deepcopy(client_errors)
 for k, v in pairs(client_errors) do
@@ -502,7 +502,7 @@ function Client:handle_body(body)
       if decoded.error then
         decoded.error = setmetatable(decoded.error, {
           __tostring = M.format_rpc_error,
-        }) --- @type table
+        })
       end
       self:try_call(
         M.client_errors.SERVER_RESULT_CALLBACK_ERROR,

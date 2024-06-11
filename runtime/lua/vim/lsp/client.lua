@@ -436,7 +436,7 @@ local function ensure_list(x)
   return { x }
 end
 
---- @package
+--- @nodoc
 --- @param config vim.lsp.ClientConfig
 --- @return vim.lsp.Client?
 function Client.create(config)
@@ -535,7 +535,7 @@ function Client:_run_callbacks(cbs, error_id, ...)
   end
 end
 
---- @package
+--- @nodoc
 function Client:initialize()
   local config = self.config
 
@@ -656,7 +656,7 @@ end
 --- @param method string LSP method name.
 --- @param params? table LSP request params.
 --- @param handler? lsp.Handler Response |lsp-handler| for this method.
---- @param bufnr? integer Buffer handle (0 for current).
+--- @param bufnr integer Buffer handle (0 for current).
 --- @return boolean status, integer? request_id {status} is a bool indicating
 --- whether the request was successful. If it is `false`, then it will
 --- always be `false` (the client has shutdown). If it was
@@ -861,7 +861,6 @@ function Client:_is_stopped()
   return self.rpc.is_closing()
 end
 
---- @package
 --- Execute a lsp command, either via client command function (if available)
 --- or via workspace/executeCommand (if supported by the server)
 ---
@@ -906,7 +905,6 @@ function Client:_exec_cmd(command, context, handler, on_unsupported)
   self.request(ms.workspace_executeCommand, params, handler, context.bufnr)
 end
 
---- @package
 --- Default handler for the 'textDocument/didOpen' LSP notification.
 ---
 --- @param bufnr integer Number of the buffer, or 0 for current
@@ -942,7 +940,6 @@ function Client:_text_document_did_open_handler(bufnr)
   end)
 end
 
---- @package
 --- Runs the on_attach function from the client's config if it was defined.
 --- @param bufnr integer Buffer number
 function Client:_on_attach(bufnr)
@@ -1065,7 +1062,6 @@ function Client:_on_exit(code, signal)
   )
 end
 
---- @package
 --- Add a directory to the workspace folders.
 --- @param dir string?
 function Client:_add_workspace_folder(dir)
@@ -1088,7 +1084,6 @@ function Client:_add_workspace_folder(dir)
   vim.list_extend(self.workspace_folders, wf)
 end
 
---- @package
 --- Remove a directory to the workspace folders.
 --- @param dir string?
 function Client:_remove_workspace_folder(dir)

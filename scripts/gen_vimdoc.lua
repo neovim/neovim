@@ -421,8 +421,11 @@ local function render_type(ty, generics, default)
 end
 
 --- @param p nvim.luacats.parser.param|nvim.luacats.parser.field
-local function should_render_param(p)
-  return not p.access and not contains(p.name, { '_', 'self' })
+local function should_render_field_or_param(p)
+  return not p.nodoc
+    and not p.access
+    and not contains(p.name, { '_', 'self' })
+    and not vim.startswith(p.name, '_')
 end
 
 --- @param desc? string
@@ -524,7 +527,7 @@ end
 local function render_fields_or_params(xs, generics, classes, exclude_types)
   local ret = {} --- @type string[]
 
-  xs = vim.tbl_filter(should_render_param, xs)
+  xs = vim.tbl_filter(should_render_field_or_param, xs)
 
   local indent = 0
   for _, p in ipairs(xs) do

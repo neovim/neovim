@@ -34,6 +34,11 @@
 --- @field filename? string
 --- @field lnum integer
 
+--- @class vim.fn.getmarklist.ret.item
+--- @field mark string
+--- @field pos [integer, integer, integer, integer]
+--- @field file string
+
 --- @class vim.fn.getmousepos.ret
 --- @field screenrow integer
 --- @field screencol integer

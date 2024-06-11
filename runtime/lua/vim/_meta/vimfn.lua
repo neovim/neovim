@@ -3249,8 +3249,8 @@ function vim.fn.getloclist(nr, what) end
 --- Refer to |getpos()| for getting information about a specific
 --- mark.
 ---
---- @param buf? any
---- @return any
+--- @param buf? integer?
+--- @return vim.fn.getmarklist.ret.item[]
 function vim.fn.getmarklist(buf) end
 
 --- Returns a |List| with all matches previously defined for the

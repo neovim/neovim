@@ -33,6 +33,7 @@ error('Cannot require a meta file')
 ---@field iter_children fun(self: TSNode): fun(): TSNode, string
 ---@field field fun(self: TSNode, name: string): TSNode[]
 ---@field byte_length fun(self: TSNode): integer
+---@field __has_ancestor fun(self: TSNode, node_types: string[]): boolean
 local TSNode = {}
 
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
@@ -62,6 +63,7 @@ local TSNode = {}
 ---@field patterns table<integer, (integer|string)[][]>
 
 --- @param lang string
+--- @return table
 vim._ts_inspect_language = function(lang) end
 
 ---@return integer

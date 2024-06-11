@@ -773,7 +773,6 @@ function M.highlight_token(token, bufnr, client_id, hl_group, opts)
   })
 end
 
---- @package
 --- |lsp-handler| for the method `workspace/semanticTokens/refresh`
 ---
 --- Refresh requests are sent by the server to indicate a project-wide change

@@ -47,7 +47,7 @@ function TSHighlighterQuery:get_hl_from_capture(capture)
   return self.hl_cache[capture]
 end
 
----@package
+---@nodoc
 function TSHighlighterQuery:query()
   return self._query
 end
@@ -75,7 +75,7 @@ local TSHighlighter = {
 
 TSHighlighter.__index = TSHighlighter
 
----@package
+---@nodoc
 ---
 --- Creates a highlighter for `tree`.
 ---
@@ -232,7 +232,7 @@ function TSHighlighter:on_changedtree(changes)
 end
 
 --- Gets the query used for @param lang
----@package
+---@nodoc
 ---@param lang string Language used by the highlighter.
 ---@return vim.treesitter.highlighter.Query
 function TSHighlighter:get_query(lang)
