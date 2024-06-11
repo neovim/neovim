@@ -3448,7 +3448,7 @@ M.funcs = {
       <
     ]=],
     name = 'getchar',
-    params = {},
+    params = { { 'expr', '0|1' } },
     returns = 'integer',
     signature = 'getchar([{expr}])',
   },
@@ -3537,7 +3537,7 @@ M.funcs = {
       result is converted to a string.
     ]=],
     name = 'getcharstr',
-    params = {},
+    params = { { 'expr', '0|1' } },
     returns = 'string',
     signature = 'getcharstr([{expr}])',
   },
@@ -6482,7 +6482,8 @@ M.funcs = {
       	echo printf("Operator-pending mode bit: 0x%x", op_bit)
     ]],
     name = 'maplist',
-    params = {},
+    params = { { 'abbr', '0|1' } },
+    returns = 'table[]',
     signature = 'maplist([{abbr}])',
   },
   mapnew = {
@@ -9143,7 +9144,16 @@ M.funcs = {
       <
     ]=],
     name = 'searchpair',
-    params = {},
+    params = {
+      { 'start', 'any' },
+      { 'middle', 'any' },
+      { 'end', 'any' },
+      { 'flags', 'string' },
+      { 'skip', 'any' },
+      { 'stopline', 'any' },
+      { 'timeout', 'integer' },
+    },
+    returns = 'integer',
     signature = 'searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])',
   },
   searchpairpos = {
@@ -9160,7 +9170,16 @@ M.funcs = {
       See |match-parens| for a bigger and more useful example.
     ]=],
     name = 'searchpairpos',
-    params = {},
+    params = {
+      { 'start', 'any' },
+      { 'middle', 'any' },
+      { 'end', 'any' },
+      { 'flags', 'string' },
+      { 'skip', 'any' },
+      { 'stopline', 'any' },
+      { 'timeout', 'integer' },
+    },
+    returns = '[integer, integer]',
     signature = 'searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])',
   },
   searchpos = {
