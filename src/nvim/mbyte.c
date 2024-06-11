@@ -371,9 +371,9 @@ int enc_canon_props(const char *name)
   int i = enc_canon_search(name);
   if (i >= 0) {
     return enc_canon_table[i].prop;
-  } else if (strncmp(name, "2byte-", 6) == 0) {
+  } else if (strncmp(name, S_LEN("2byte-")) == 0) {
     return ENC_DBCS;
-  } else if (strncmp(name, "8bit-", 5) == 0 || strncmp(name, "iso-8859-", 9) == 0) {
+  } else if (strncmp(name, S_LEN("8bit-")) == 0 || strncmp(name, S_LEN("iso-8859-")) == 0) {
     return ENC_8BIT;
   }
   return 0;
@@ -393,10 +393,10 @@ int bomb_size(void)
     if (*curbuf->b_p_fenc == NUL
         || strcmp(curbuf->b_p_fenc, "utf-8") == 0) {
       n = 3;
-    } else if (strncmp(curbuf->b_p_fenc, "ucs-2", 5) == 0
-               || strncmp(curbuf->b_p_fenc, "utf-16", 6) == 0) {
+    } else if (strncmp(curbuf->b_p_fenc, S_LEN("ucs-2")) == 0
+               || strncmp(curbuf->b_p_fenc, S_LEN("utf-16")) == 0) {
       n = 2;
-    } else if (strncmp(curbuf->b_p_fenc, "ucs-4", 5) == 0) {
+    } else if (strncmp(curbuf->b_p_fenc, S_LEN("ucs-4")) == 0) {
       n = 4;
     }
   }
@@ -2188,10 +2188,10 @@ const char *mb_unescape(const char **const pp)
 /// Skip the Vim specific head of a 'encoding' name.
 char *enc_skip(char *p)
 {
-  if (strncmp(p, "2byte-", 6) == 0) {
+  if (strncmp(p, S_LEN("2byte-")) == 0) {
     return p + 6;
   }
-  if (strncmp(p, "8bit-", 5) == 0) {
+  if (strncmp(p, S_LEN("8bit-")) == 0) {
     return p + 5;
   }
   return p;
@@ -2222,37 +2222,42 @@ char *enc_canonize(char *enc)
     }
   }
   *p = NUL;
+  char *p_e = p;
 
   // Skip "2byte-" and "8bit-".
   p = enc_skip(r);
 
   // Change "microsoft-cp" to "cp".  Used in some spell files.
-  if (strncmp(p, "microsoft-cp", 12) == 0) {
-    STRMOVE(p, p + 10);
+  if (strncmp(p, S_LEN("microsoft-cp")) == 0) {
+    memmove(p, p + STRLEN_LITERAL("microsoft-"),
+            (size_t)(p_e - (p + STRLEN_LITERAL("microsoft-"))) + 1);
   }
 
   // "iso8859" -> "iso-8859"
-  if (strncmp(p, "iso8859", 7) == 0) {
-    STRMOVE(p + 4, p + 3);
-    p[3] = '-';
+  if (strncmp(p, S_LEN("iso8859")) == 0) {
+    memmove(p + STRLEN_LITERAL("iso-"), p + STRLEN_LITERAL("iso"),
+            (size_t)(p_e - (p + STRLEN_LITERAL("iso"))) + 1);
+    p[STRLEN_LITERAL("iso")] = '-';
   }
 
   // "iso-8859n" -> "iso-8859-n"
-  if (strncmp(p, "iso-8859", 8) == 0 && p[8] != '-') {
-    STRMOVE(p + 9, p + 8);
-    p[8] = '-';
+  if (strncmp(p, S_LEN("iso-8859")) == 0 && p[8] != '-') {
+    memmove(p + STRLEN_LITERAL("iso-8859-"), p + STRLEN_LITERAL("iso-8859"),
+            (size_t)(p_e - (p + STRLEN_LITERAL("iso-8859"))) + 1);
+    p[STRLEN_LITERAL("iso-8859")] = '-';
   }
 
   // "latin-N" -> "latinN"
-  if (strncmp(p, "latin-", 6) == 0) {
-    STRMOVE(p + 5, p + 6);
+  if (strncmp(p, S_LEN("latin-")) == 0) {
+    memmove(p + STRLEN_LITERAL("latin"), p + STRLEN_LITERAL("latin-"),
+            (size_t)(p_e - (p + STRLEN_LITERAL("latin-"))) + 1);
   }
 
   int i;
   if (enc_canon_search(p) >= 0) {
     // canonical name can be used unmodified
     if (p != r) {
-      STRMOVE(r, p);
+      memmove(r, p, (size_t)(p_e - p) + 1);
     }
   } else if ((i = enc_alias_search(p)) >= 0) {
     // alias recognized, get canonical name
@@ -2315,7 +2320,7 @@ char *enc_locale(void)
     if (p > s + 2 && !STRNICMP(p + 1, "EUC", 3)
         && !isalnum((uint8_t)p[4]) && p[4] != '-' && p[-3] == '_') {
       // Copy "XY.EUC" to "euc-XY" to buf[10].
-      memmove(buf, "euc-", 4);
+      memmove(buf, S_LEN("euc-"));
       buf[4] = (char)(ASCII_ISALNUM(p[-2]) ? TOLOWER_ASC(p[-2]) : 0);
       buf[5] = (char)(ASCII_ISALNUM(p[-1]) ? TOLOWER_ASC(p[-1]) : 0);
       buf[6] = NUL;

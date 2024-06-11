@@ -2799,13 +2799,13 @@ int check_opt_wim(void)
     if (p[i] != NUL && p[i] != ',' && p[i] != ':') {
       return FAIL;
     }
-    if (i == 7 && strncmp(p, "longest", 7) == 0) {
+    if (i == 7 && strncmp(p, S_LEN("longest")) == 0) {
       new_wim_flags[idx] |= WIM_LONGEST;
-    } else if (i == 4 && strncmp(p, "full", 4) == 0) {
+    } else if (i == 4 && strncmp(p, S_LEN("full")) == 0) {
       new_wim_flags[idx] |= WIM_FULL;
-    } else if (i == 4 && strncmp(p, "list", 4) == 0) {
+    } else if (i == 4 && strncmp(p, S_LEN("list")) == 0) {
       new_wim_flags[idx] |= WIM_LIST;
-    } else if (i == 8 && strncmp(p, "lastused", 8) == 0) {
+    } else if (i == 8 && strncmp(p, S_LEN("lastused")) == 0) {
       new_wim_flags[idx] |= WIM_BUFLASTUSED;
     } else {
       return FAIL;

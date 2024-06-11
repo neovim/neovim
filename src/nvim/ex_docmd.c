@@ -4191,7 +4191,7 @@ static int getargopt(exarg_T *eap)
   // Note: Keep this in sync with get_argopt_name.
 
   // ":edit ++[no]bin[ary] file"
-  if (strncmp(arg, "bin", 3) == 0 || strncmp(arg, "nobin", 5) == 0) {
+  if (strncmp(arg, S_LEN("bin")) == 0 || strncmp(arg, S_LEN("nobin")) == 0) {
     if (*arg == 'n') {
       arg += 2;
       eap->force_bin = FORCE_NOBIN;
@@ -4206,33 +4206,33 @@ static int getargopt(exarg_T *eap)
   }
 
   // ":read ++edit file"
-  if (strncmp(arg, "edit", 4) == 0) {
+  if (strncmp(arg, S_LEN("edit")) == 0) {
     eap->read_edit = true;
     eap->arg = skipwhite(arg + 4);
     return OK;
   }
 
   // ":write ++p foo/bar/file
-  if (strncmp(arg, "p", 1) == 0) {
+  if (strncmp(arg, S_LEN("p")) == 0) {
     eap->mkdir_p = true;
     eap->arg = skipwhite(arg + 1);
     return OK;
   }
 
-  if (strncmp(arg, "ff", 2) == 0) {
+  if (strncmp(arg, S_LEN("ff")) == 0) {
     arg += 2;
     pp = &eap->force_ff;
-  } else if (strncmp(arg, "fileformat", 10) == 0) {
+  } else if (strncmp(arg, S_LEN("fileformat")) == 0) {
     arg += 10;
     pp = &eap->force_ff;
-  } else if (strncmp(arg, "enc", 3) == 0) {
-    if (strncmp(arg, "encoding", 8) == 0) {
+  } else if (strncmp(arg, S_LEN("enc")) == 0) {
+    if (strncmp(arg, S_LEN("encoding")) == 0) {
       arg += 8;
     } else {
       arg += 3;
     }
     pp = &eap->force_enc;
-  } else if (strncmp(arg, "bad", 3) == 0) {
+  } else if (strncmp(arg, S_LEN("bad")) == 0) {
     arg += 3;
     pp = &bad_char_idx;
   }
@@ -4296,19 +4296,19 @@ int expand_argopt(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches, int
 
     char *name_end = xp->xp_pattern - 1;
     if (name_end - xp->xp_line >= 2
-        && strncmp(name_end - 2, "ff", 2) == 0) {
+        && strncmp(name_end - 2, S_LEN("ff")) == 0) {
       cb = get_fileformat_name;
     } else if (name_end - xp->xp_line >= 10
-               && strncmp(name_end - 10, "fileformat", 10) == 0) {
+               && strncmp(name_end - 10, S_LEN("fileformat")) == 0) {
       cb = get_fileformat_name;
     } else if (name_end - xp->xp_line >= 3
-               && strncmp(name_end - 3, "enc", 3) == 0) {
+               && strncmp(name_end - 3, S_LEN("enc")) == 0) {
       cb = get_encoding_name;
     } else if (name_end - xp->xp_line >= 8
-               && strncmp(name_end - 8, "encoding", 8) == 0) {
+               && strncmp(name_end - 8, S_LEN("encoding")) == 0) {
       cb = get_encoding_name;
     } else if (name_end - xp->xp_line >= 3
-               && strncmp(name_end - 3, "bad", 3) == 0) {
+               && strncmp(name_end - 3, S_LEN("bad")) == 0) {
       cb = get_bad_name;
     }
 
@@ -7213,7 +7213,7 @@ char *expand_sfile(char *arg)
   char *result = xstrdup(arg);
 
   for (char *p = result; *p;) {
-    if (strncmp(p, "<sfile>", 7) != 0) {
+    if (strncmp(p, S_LEN("<sfile>")) != 0) {
       p++;
     } else {
       // replace "<sfile>" with the sourced file name, and do ":" stuff
@@ -7300,12 +7300,12 @@ static void ex_filetype(exarg_T *eap)
 
   // Accept "plugin" and "indent" in any order.
   while (true) {
-    if (strncmp(arg, "plugin", 6) == 0) {
+    if (strncmp(arg, S_LEN("plugin")) == 0) {
       plugin = true;
       arg = skipwhite(arg + 6);
       continue;
     }
-    if (strncmp(arg, "indent", 6) == 0) {
+    if (strncmp(arg, S_LEN("indent")) == 0) {
       indent = true;
       arg = skipwhite(arg + 6);
       continue;
@@ -7384,7 +7384,7 @@ static void ex_setfiletype(exarg_T *eap)
   }
 
   char *arg = eap->arg;
-  if (strncmp(arg, "FALLBACK ", 9) == 0) {
+  if (strncmp(arg, S_LEN("FALLBACK ")) == 0) {
     arg += 9;
   }
 

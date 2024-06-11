@@ -639,7 +639,7 @@ static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
   list_T *const l = tv_list_alloc(kListLenMayKnow);
   // Empty buffer should be represented by [''], encode_list_write() thinks
   // empty list is fine for the case.
-  tv_list_append_string(l, "", 0);
+  tv_list_append_string(l, S_LEN(""));
   if (len > 0) {
     encode_list_write(l, buf, len);
   }
