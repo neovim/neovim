@@ -125,6 +125,8 @@ typedef enum {
   HLF_CU,         ///< Cursor
   HLF_BTITLE,     ///< Float Border Title
   HLF_BFOOTER,    ///< Float Border Footer
+  HLF_TS,         ///< status line for terminal window
+  HLF_TSNC,       ///< status line for non-current terminal window
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 
