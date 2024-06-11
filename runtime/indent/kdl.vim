@@ -2,7 +2,7 @@
 " Language:         KDL
 " Author:           Aram Drevekenin <aram@poor.dev>
 " Maintainer:       Yinzuo Jiang <jiangyinzuo@foxmail.com>
-" Last Change:      2024-06-10
+" Last Change:      2024-06-11
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -19,7 +19,7 @@ function! KdlIndent(...)
   let previous = getline(previousNum)
 
   if previous =~ "{" && previous !~ "}" && line !~ "}" && line !~ ":$"
-    return indent(previousNum) + &tabstop
+    return indent(previousNum) + shiftwidth()
   else
     return indent(previousNum)
   endif
