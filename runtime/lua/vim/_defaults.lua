@@ -282,6 +282,26 @@ do
     end,
   })
 
+  vim.api.nvim_create_autocmd('TermOpen', {
+    group = nvim_terminal_augroup,
+    desc = 'Default settings for :terminal buffers',
+    callback = function()
+      vim.bo.modifiable = false
+      vim.bo.undolevels = -1
+      vim.bo.scrollback = vim.o.scrollback < 0 and 10000 or math.max(1, vim.o.scrollback)
+      vim.bo.textwidth = 0
+      vim.wo.wrap = false
+      vim.wo.list = false
+
+      -- This is gross. Proper list options support when?
+      local winhl = vim.o.winhighlight
+      if winhl ~= '' then
+        winhl = winhl .. ','
+      end
+      vim.wo.winhighlight = winhl .. 'StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC'
+    end,
+  })
+
   vim.api.nvim_create_autocmd('CmdwinEnter', {
     pattern = '[:>]',
     desc = 'Limit syntax sync to maxlines=1 in the command window',

@@ -5111,7 +5111,7 @@ StatusLineNC	Status lines of not-current windows.
 StatusLineTerm	Status line of |terminal| window.
 							*hl-StatusLineTermNC*
 StatusLineTermNC
-		Status line of non-current |terminal| window.
+		Status line of non-current |terminal| windows.
 							*hl-TabLine*
 TabLine		Tab pages line, not active tab page label.
 							*hl-TabLineFill*

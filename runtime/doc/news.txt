@@ -140,6 +140,8 @@ TERMINAL
 
 • The |terminal| now understands the OSC 52 escape sequence to write to the
   system clipboard (copy). Querying with OSC 52 (paste) is not supported.
+• |hl-StatusLineTerm| and |hl-StatusLineTermNC| define highlights for the
+  status line in |terminal| windows.
 
 TREESITTER
 

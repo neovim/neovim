@@ -196,10 +196,10 @@ describe(':terminal buffer', function()
     screen:expect([[
       ab^c                                               |
       {4:~                                                 }|
-      {5:==========                                        }|
+      {17:==========                                        }|
       rows: 2, cols: 50                                 |
       {2: }                                                 |
-      {1:==========                                        }|
+      {18:==========                                        }|
                                                         |
     ]])
 
@@ -340,7 +340,7 @@ describe(':terminal buffer', function()
     eq(termbuf, eval('g:termbuf'))
   end)
 
-  it('TermReqeust synchronization #27572', function()
+  it('TermRequest synchronization #27572', function()
     command('autocmd! nvim_terminal TermRequest')
     local term = exec_lua([[
       _G.input = {}
