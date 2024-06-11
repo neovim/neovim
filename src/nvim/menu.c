@@ -1057,7 +1057,7 @@ char *get_menu_names(expand_T *xp, int idx)
       }
       // hack on menu separators:  use a 'magic' char for the separator
       // so that '.' in names gets escaped properly
-      STRCAT(tbuffer, "\001");
+      strcat(tbuffer, "\001");
       str = tbuffer;
     } else {
       if (should_advance) {

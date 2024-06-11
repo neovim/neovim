@@ -2666,7 +2666,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       char *pnew = xmalloc(strlen(curr->y_array[curr->y_size - 1])
                            + strlen(reg->y_array[0]) + 1);
       STRCPY(pnew, curr->y_array[--j]);
-      STRCAT(pnew, reg->y_array[0]);
+      strcat(pnew, reg->y_array[0]);
       xfree(curr->y_array[j]);
       xfree(reg->y_array[0]);
       curr->y_array[j++] = pnew;
@@ -3431,7 +3431,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
           totlen = strlen(y_array[y_size - 1]);
           char *newp = xmalloc((size_t)ml_get_len(lnum) - (size_t)col + totlen + 1);
           STRCPY(newp, y_array[y_size - 1]);
-          STRCAT(newp, ptr);
+          strcat(newp, ptr);
           // insert second line
           ml_append(lnum, newp, 0, false);
           new_lnum++;
@@ -4747,7 +4747,7 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
       }
     }
     *ptr = NUL;
-    STRCAT(buf1, buf2);
+    strcat(buf1, buf2);
     ins_str(buf1);              // insert the new number
     endpos = curwin->w_cursor;
     if (curwin->w_cursor.col) {

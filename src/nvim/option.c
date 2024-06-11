@@ -236,11 +236,11 @@ static void set_init_default_backupskip(void)
           == NULL) {
         ga_grow(&ga, (int)len);
         if (!GA_EMPTY(&ga)) {
-          STRCAT(ga.ga_data, ",");
+          strcat(ga.ga_data, ",");
         }
-        STRCAT(ga.ga_data, p);
+        strcat(ga.ga_data, p);
         add_pathsep(ga.ga_data);
-        STRCAT(ga.ga_data, "*");
+        strcat(ga.ga_data, "*");
         ga.ga_len += (int)len;
       }
       xfree(item);

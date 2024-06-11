@@ -72,5 +72,3 @@ EXTERN size_t arena_alloc_count INIT( = 0);
 
 // Like strcpy() but allows overlapped source and destination.
 #define STRMOVE(d, s)       memmove((d), (s), strlen(s) + 1)
-
-#define STRCAT(d, s)        strcat((char *)(d), (char *)(s))  // NOLINT(runtime/printf)

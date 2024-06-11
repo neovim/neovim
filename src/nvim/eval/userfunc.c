@@ -265,7 +265,7 @@ static void set_ufunc_name(ufunc_T *fp, char *name)
   if ((uint8_t)name[0] == K_SPECIAL) {
     fp->uf_name_exp = xmalloc(strlen(name) + 3);
     STRCPY(fp->uf_name_exp, "<SNR>");
-    STRCAT(fp->uf_name_exp, fp->uf_name + 3);
+    strcat(fp->uf_name_exp, fp->uf_name + 3);
   }
 }
 
@@ -2062,7 +2062,7 @@ char *get_scriptlocal_funcname(char *funcname)
   const int off = *funcname == 's' ? 2 : 5;
   char *newname = xmalloc(strlen(sid_buf) + strlen(funcname + off) + 1);
   STRCPY(newname, sid_buf);
-  STRCAT(newname, funcname + off);
+  strcat(newname, funcname + off);
 
   return newname;
 }

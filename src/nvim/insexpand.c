@@ -4059,7 +4059,7 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
       compl_pattern = xmalloc(7);
       STRCPY(compl_pattern, "\\<");
       quote_meta(compl_pattern + 2, line + compl_col, 1);
-      STRCAT(compl_pattern, "\\k");
+      strcat(compl_pattern, "\\k");
     } else {
       compl_pattern = xmalloc(quote_meta(NULL, line + compl_col, compl_length) + 2);
       STRCPY(compl_pattern, "\\<");
