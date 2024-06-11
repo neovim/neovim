@@ -89,8 +89,9 @@ func Test_sign()
   " Place a sign without specifying the filename or buffer
   sign place 77 line=9 name=Sign2
   let a=execute('sign place')
+  " Nvim: sign line clamped to buffer length
   call assert_equal("\n--- Signs ---\nSigns for [NULL]:\n" .
-		\ "    line=9  id=77  name=Sign2  priority=10\n", a)
+		\ "    line=4  id=77  name=Sign2  priority=10\n", a)
   sign unplace *
 
   " Check :jump with file=...
@@ -799,10 +800,11 @@ func Test_sign_group()
   set buftype=nofile
   sign place 25 line=76 name=sign1 priority=99 file=foo
   let a = execute('sign place')
+  " Nvim: sign line clamped to buffer length
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1  priority=10\n" .
 	      \ "Signs for foo:\n" .
-	      \ "    line=76  id=25  name=sign1  priority=99\n", a)
+	      \ "    line=1  id=25  name=sign1  priority=99\n", a)
   close
   bwipe foo
 
