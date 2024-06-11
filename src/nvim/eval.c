@@ -7154,8 +7154,8 @@ static char *make_expanded_name(const char *in_start, char *expr_start, char *ex
     retval = xmalloc(strlen(temp_result) + (size_t)(expr_start - in_start)
                      + (size_t)(in_end - expr_end) + 1);
     STRCPY(retval, in_start);
-    STRCAT(retval, temp_result);
-    STRCAT(retval, expr_end + 1);
+    strcat(retval, temp_result);
+    strcat(retval, expr_end + 1);
   }
   xfree(temp_result);
 

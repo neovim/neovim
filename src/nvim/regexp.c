@@ -11451,7 +11451,7 @@ static void nfa_set_code(int c)
   }
 
   if (addnl == true) {
-    STRCAT(code, " + NEWLINE ");
+    strcat(code, " + NEWLINE ");
   }
 }
 

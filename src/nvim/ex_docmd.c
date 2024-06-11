@@ -3826,8 +3826,8 @@ char *replace_makeprg(exarg_T *eap, char *arg, char **cmdlinep)
       // No $* in arg, build "<makeprg> <arg>" instead
       new_cmdline = xmalloc(strlen(program) + strlen(arg) + 2);
       STRCPY(new_cmdline, program);
-      STRCAT(new_cmdline, " ");
-      STRCAT(new_cmdline, arg);
+      strcat(new_cmdline, " ");
+      strcat(new_cmdline, arg);
     }
 
     msg_make(arg);
@@ -7236,7 +7236,7 @@ char *expand_sfile(char *arg)
       memmove(newres, result, (size_t)(p - result));
       STRCPY(newres + (p - result), repl);
       len = strlen(newres);
-      STRCAT(newres, p + srclen);
+      strcat(newres, p + srclen);
       xfree(repl);
       xfree(result);
       result = newres;

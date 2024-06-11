@@ -1274,9 +1274,9 @@ static size_t add_cmd_modifier(char *buf, char *mod_str, bool *multi_mods)
 
   if (buf != NULL) {
     if (*multi_mods) {
-      STRCAT(buf, " ");
+      strcat(buf, " ");
     }
-    STRCAT(buf, mod_str);
+    strcat(buf, mod_str);
   }
 
   *multi_mods = true;

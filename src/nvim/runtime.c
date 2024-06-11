@@ -409,7 +409,7 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
         did_one = true;
       } else if (buflen + 2 + strlen(prefix) + strlen(name) < MAXPATHL) {
         add_pathsep(buf);
-        STRCAT(buf, prefix);
+        strcat(buf, prefix);
         tail = buf + strlen(buf);
 
         // Loop over all patterns in "name"

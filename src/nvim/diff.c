@@ -1273,10 +1273,10 @@ void ex_diffpatch(exarg_T *eap)
 
   // Delete any .orig or .rej file created.
   STRCPY(buf, tmp_new);
-  STRCAT(buf, ".orig");
+  strcat(buf, ".orig");
   os_remove(buf);
   STRCPY(buf, tmp_new);
-  STRCAT(buf, ".rej");
+  strcat(buf, ".rej");
   os_remove(buf);
 
   // Only continue if the output file was created.
@@ -1288,7 +1288,7 @@ void ex_diffpatch(exarg_T *eap)
   } else {
     if (curbuf->b_fname != NULL) {
       newname = xstrnsave(curbuf->b_fname, strlen(curbuf->b_fname) + 4);
-      STRCAT(newname, ".new");
+      strcat(newname, ".new");
     }
 
     // don't use a new tab page, each tab page has its own diffs

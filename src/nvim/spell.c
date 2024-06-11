@@ -2092,7 +2092,7 @@ char *parse_spelllang(win_T *wp)
     } else {
       // One entry in 'spellfile'.
       copy_option_part(&spf, spf_name, MAXPATHL - 5, ",");
-      STRCAT(spf_name, ".spl");
+      strcat(spf_name, ".spl");
       int c;
 
       // If it was already found above then skip it.
@@ -2677,7 +2677,7 @@ void ex_spellrepall(exarg_T *eap)
       char *p = xmalloc((size_t)get_cursor_line_len() + (size_t)addlen + 1);
       memmove(p, line, (size_t)curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
-      STRCAT(p, line + curwin->w_cursor.col + repl_from_len);
+      strcat(p, line + curwin->w_cursor.col + repl_from_len);
       ml_replace(curwin->w_cursor.lnum, p, false);
       inserted_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col,
                      (int)repl_from_len, (int)repl_to_len);
@@ -3444,14 +3444,14 @@ static void dump_word(slang_T *slang, char *word, char *pat, Direction *dir, int
     // Add flags and regions after a slash.
     if ((flags & (WF_BANNED | WF_RARE | WF_REGION)) || keepcap) {
       STRCPY(badword, p);
-      STRCAT(badword, "/");
+      strcat(badword, "/");
       if (keepcap) {
-        STRCAT(badword, "=");
+        strcat(badword, "=");
       }
       if (flags & WF_BANNED) {
-        STRCAT(badword, "!");
+        strcat(badword, "!");
       } else if (flags & WF_RARE) {
-        STRCAT(badword, "?");
+        strcat(badword, "?");
       }
       if (flags & WF_REGION) {
         for (int i = 0; i < 7; i++) {

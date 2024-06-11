@@ -1060,7 +1060,7 @@ static int add_llist_tags(char *tag, int num_matches, char **matches)
 
       // Precede the tag pattern with \V to make it very
       // nomagic.
-      STRCAT(cmd, "\\V");
+      strcat(cmd, "\\V");
       len += 2;
 
       int cmd_len = (int)(cmd_end - cmd_start + 1);
