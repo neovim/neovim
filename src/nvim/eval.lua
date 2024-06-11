@@ -4047,8 +4047,9 @@ M.funcs = {
 
     ]=],
     name = 'getmarklist',
-    params = { { 'buf', 'any' } },
+    params = { { 'buf', 'integer?' } },
     signature = 'getmarklist([{buf}])',
+    returns = 'vim.fn.getmarklist.ret.item[]',
   },
   getmatches = {
     args = { 0, 1 },

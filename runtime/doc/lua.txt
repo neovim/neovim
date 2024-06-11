@@ -981,6 +981,9 @@ vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
       • {index}      (`integer`)
       • {use_utf16}  (`boolean?`)
 
+    Return: ~
+        (`integer`)
+
 vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
     Gets the distance (in bytes) from the last byte of the codepoint
     (character) that {index} points to.

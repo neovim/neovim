@@ -9,7 +9,7 @@ local log_levels = vim.log.levels
 --- Can be used to lookup the number from the name or the name from the number.
 --- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
 --- Level numbers begin with "TRACE" at 0
---- @type table<string|integer, string|integer>
+--- @type table<string,integer> | table<integer, string>
 --- @nodoc
 log.levels = vim.deepcopy(log_levels)
 

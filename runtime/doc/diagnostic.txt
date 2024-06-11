@@ -363,7 +363,6 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {message}     (`string`) The diagnostic text
       • {source}?     (`string`) The source of the diagnostic
       • {code}?       (`string|integer`) The diagnostic code
-      • {_tags}?      (`{ deprecated: boolean, unnecessary: boolean}`)
       • {user_data}?  (`any`) arbitrary data plugins can add
       • {namespace}?  (`integer`)
 

@@ -24,7 +24,6 @@ function M:supports_registration(method)
 end
 
 --- @param registrations lsp.Registration[]
---- @package
 function M:register(registrations)
   -- remove duplicates
   self:unregister(registrations)
@@ -38,7 +37,6 @@ function M:register(registrations)
 end
 
 --- @param unregisterations lsp.Unregistration[]
---- @package
 function M:unregister(unregisterations)
   for _, unreg in ipairs(unregisterations) do
     local method = unreg.method
@@ -58,7 +56,6 @@ end
 --- @param method string
 --- @param opts? {bufnr: integer?}
 --- @return lsp.Registration? (table|nil) the registration if found
---- @package
 function M:get(method, opts)
   opts = opts or {}
   opts.bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
@@ -78,7 +75,6 @@ end
 
 --- @param method string
 --- @param opts? {bufnr: integer?}
---- @package
 function M:supports(method, opts)
   return self:get(method, opts) ~= nil
 end

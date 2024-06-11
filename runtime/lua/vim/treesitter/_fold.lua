@@ -383,7 +383,6 @@ local function on_bytes(bufnr, foldinfo, start_row, start_col, old_row, old_col,
   end
 end
 
----@package
 ---@param lnum integer|nil
 ---@return string
 function M.foldexpr(lnum)
