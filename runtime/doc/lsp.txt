@@ -220,26 +220,26 @@ Each response handler has this signature: >
     function(err, result, ctx, config)
 <
     Parameters: ~
-        - {err}     (table|nil) Error info dict, or `nil` if the request
-                    completed.
-        - {result}  (Result | Params | nil) `result` key of the |lsp-response| or
-                    `nil` if the request failed.
-        - {ctx}     (table) Table of calling state associated with the
-                    handler, with these keys:
-                    - {method}  (string) |lsp-method| name.
-                    - {client_id} (number) |vim.lsp.Client| identifier.
-                    - {bufnr}   (Buffer) Buffer handle.
-                    - {params}  (table|nil) Request parameters table.
-                    - {version} (number) Document version at time of
-                                request. Handlers can compare this to the
-                                current document version to check if the
-                                response is "stale". See also |b:changedtick|.
-        - {config}  (table) Handler-defined configuration table, which allows
-                    users to customize handler behavior.
-                    For an example, see:
-                        |vim.lsp.diagnostic.on_publish_diagnostics()|
-                    To configure a particular |lsp-handler|, see:
-                        |lsp-handler-configuration|
+      • {err}     (`table|nil`) Error info dict, or `nil` if the request
+                  completed.
+      • {result}  (`Result|Params|nil`) `result` key of the |lsp-response| or
+                  `nil` if the request failed.
+      • {ctx}     (`table`) Table of calling state associated with the
+                  handler, with these keys:
+                  • {method}     (`string`) |lsp-method| name.
+                  • {client_id}  (`number`) |vim.lsp.Client| identifier.
+                  • {bufnr}      (`Buffer`) Buffer handle.
+                  • {params}     (`table|nil`) Request parameters table.
+                  • {version}    (`number`) Document version at time of
+                                 request. Handlers can compare this to the
+                                 current document version to check if the
+                                 response is "stale". See also |b:changedtick|.
+      • {config}  (`table`) Handler-defined configuration table, which allows
+                  users to customize handler behavior.
+                  For an example, see:
+                      |vim.lsp.diagnostic.on_publish_diagnostics()|
+                  To configure a particular |lsp-handler|, see:
+                      |lsp-handler-configuration|
 
     Returns: ~
         Two values `result, err` where `err` is shaped like an RPC error: >
