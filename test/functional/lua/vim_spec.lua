@@ -2023,6 +2023,16 @@ describe('lua stdlib', function()
     vim.cmd "enew"
     ]]
     eq(100, fn.luaeval 'vim.wo.scrolloff')
+
+    matches(
+      'only bufnr=0 is supported',
+      pcall_err(exec_lua, 'vim.wo[0][10].signcolumn = "no"')
+    )
+
+    matches(
+      'only bufnr=0 is supported',
+      pcall_err(exec_lua, 'local a = vim.wo[0][10].signcolumn')
+    )
   end)
 
   describe('vim.opt', function()

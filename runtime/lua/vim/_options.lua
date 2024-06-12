@@ -174,6 +174,11 @@ local function new_buf_opt_accessor(bufnr)
 end
 
 local function new_win_opt_accessor(winid, bufnr)
+  -- TODO(lewis6991): allow passing both buf and win to nvim_get_option_value
+  if bufnr ~= nil and bufnr ~= 0 then
+    error('only bufnr=0 is supported')
+  end
+
   return setmetatable({}, {
     __index = function(_, k)
       if bufnr == nil and type(k) == 'number' then
@@ -184,11 +189,6 @@ local function new_win_opt_accessor(winid, bufnr)
         end
       end
 
-      if bufnr ~= nil and bufnr ~= 0 then
-        error('only bufnr=0 is supported')
-      end
-
-      -- TODO(lewis6991): allow passing both buf and win to nvim_get_option_value
       return api.nvim_get_option_value(k, {
         scope = bufnr and 'local' or nil,
         win = winid or 0,
@@ -196,7 +196,6 @@ local function new_win_opt_accessor(winid, bufnr)
     end,
 
     __newindex = function(_, k, v)
-      -- TODO(lewis6991): allow passing both buf and win to nvim_set_option_value
       return api.nvim_set_option_value(k, v, {
         scope = bufnr and 'local' or nil,
         win = winid or 0,
