@@ -41,6 +41,9 @@ GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47f5c
 LIBICONV_URL https://github.com/neovim/deps/raw/b9bf36eb31f27e8136d907da38fa23518927737e/opt/libiconv-1.17.tar.gz
 LIBICONV_SHA256 8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313
 
+UTF8PROC_URL https://github.com/JuliaStrings/utf8proc/archive/v2.9.0.tar.gz
+UTF8PROC_SHA256 18c1626e9fc5a2e192311e36b3010bfc698078f692888940f1fa150547abb0c1
+
 TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.21.3.tar.gz
 TREESITTER_C_SHA256 75a3780df6114cd37496761c4a7c9fd900c78bee3a2707f590d78c0ca3a24368
 TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.1.0.tar.gz
