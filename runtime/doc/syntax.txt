@@ -5107,6 +5107,11 @@ SpellRare	Word that is recognized by the spellchecker as one that is
 StatusLine	Status line of current window.
 							*hl-StatusLineNC*
 StatusLineNC	Status lines of not-current windows.
+							*hl-StatusLineTerm*
+StatusLineTerm	Status line of |terminal| window.
+							*hl-StatusLineTermNC*
+StatusLineTermNC
+		Status line of non-current |terminal| windows.
 							*hl-TabLine*
 TabLine		Tab pages line, not active tab page label.
 							*hl-TabLineFill*
