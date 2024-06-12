@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utf8proc.h>
 #include <uv.h>
 #include <wctype.h>
 
@@ -1346,8 +1347,7 @@ int mb_toupper(int a)
     return TOUPPER_LOC(a);
   }
 
-  // For any other characters use the above mapping table.
-  return utf_convert(a, toUpper, ARRAY_SIZE(toUpper));
+  return utf8proc_toupper(a);
 }
 
 bool mb_islower(int a)
@@ -1374,8 +1374,7 @@ int mb_tolower(int a)
     return TOLOWER_LOC(a);
   }
 
-  // For any other characters use the above mapping table.
-  return utf_convert(a, toLower, ARRAY_SIZE(toLower));
+  return utf8proc_tolower(a);
 }
 
 bool mb_isupper(int a)

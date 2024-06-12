@@ -5,13 +5,13 @@
 --    (A) east asian width respectively.
 -- 2. combining table: same as the above, but characters inside are combining
 --    characters (i.e. have general categories equal to Mn, Mc or Me).
--- 3. foldCase, toLower and toUpper tables used to convert characters to
---    folded/lower/upper variants. In these tables first two values are
+-- 3. foldCase table used to convert characters to
+--    folded variants. In this table first two values are
 --    character ranges: like in previous tables they are sorted and must be
 --    non-overlapping. Third value means step inside the range: e.g. if it is
 --    2 then interval applies only to first, third, fifth, … character in range.
 --    Fourth value is number that should be added to the codepoint to yield
---    folded/lower/upper codepoint.
+--    folded codepoint.
 -- 4. emoji_wide and emoji_all tables: sorted lists of non-overlapping closed
 --    intervals of Emoji characters.  emoji_wide contains all the characters
 --    which don't have ambiguous or double width, and emoji_all has all Emojis.
@@ -127,13 +127,6 @@ local build_convert_table = function(ut_fp, props, cond_func, nl_index, table_na
     ut_fp:write(make_range(start, end_, step, add))
   end
   ut_fp:write('};\n')
-end
-
-local build_case_table = function(ut_fp, dataprops, table_name, index)
-  local cond_func = function(p)
-    return p[index] ~= ''
-  end
-  return build_convert_table(ut_fp, dataprops, cond_func, index, 'to' .. table_name)
 end
 
 local build_fold_table = function(ut_fp, foldprops)
@@ -296,8 +289,6 @@ ud_fp:close()
 
 local ut_fp = io.open(utf_tables_fname, 'w')
 
-build_case_table(ut_fp, dataprops, 'Lower', 14)
-build_case_table(ut_fp, dataprops, 'Upper', 13)
 build_combining_table(ut_fp, dataprops)
 
 local cf_fp = io.open(casefolding_fname, 'r')
