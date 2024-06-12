@@ -359,7 +359,9 @@ syn region	vimUserCmdBlock	contained	matchgroup=vimSep start="{" end="}" contain
 
 " Lower Priority Comments: after some vim commands... {{{2
 " =======================
-syn region	vimCommentString	contained oneline start='\S\s\+"'ms=e end='"'
+if get(g:, "vimsyn_comment_strings", 1)
+  syn region	vimCommentString	contained oneline start='\S\s\+"'ms=e end='"'
+endif
 
 if s:vim9script
   syn match	vimComment	excludenl +\s"[^\-:.%#=*].*$+lc=1	contains=@vimCommentGroup,vimCommentString contained

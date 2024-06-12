@@ -3327,28 +3327,31 @@ The g:vimsyn_embed option allows users to select what, if any, types of
 embedded script highlighting they wish to have. >
 
    g:vimsyn_embed == 0      : disable (don't embed any scripts)
-   g:vimsyn_embed == 'lpPr' : support embedded lua, perl, python and ruby
+   g:vimsyn_embed == 'lpPr' : support embedded Lua, Perl, Python and Ruby
 <
 This option is disabled by default.
 						*g:vimsyn_folding*
-
 Some folding is now supported with when 'foldmethod' is set to "syntax": >
 
    g:vimsyn_folding == 0 or doesn't exist: no syntax-based folding
    g:vimsyn_folding =~ 'a' : augroups
    g:vimsyn_folding =~ 'f' : fold functions
    g:vimsyn_folding =~ 'h' : fold heredocs
-   g:vimsyn_folding =~ 'l' : fold lua      script
-   g:vimsyn_folding =~ 'p' : fold perl     script
-   g:vimsyn_folding =~ 'P' : fold python   script
-   g:vimsyn_folding =~ 'r' : fold ruby     script
+   g:vimsyn_folding =~ 'l' : fold Lua      script
+   g:vimsyn_folding =~ 'p' : fold Perl     script
+   g:vimsyn_folding =~ 'P' : fold Python   script
+   g:vimsyn_folding =~ 'r' : fold Ruby     script
 <
 
 By default, g:vimsyn_folding is unset.  Concatenate the indicated characters
-to support folding of multiple syntax constructs; i.e.
-g:vimsyn_folding = "fh" will enable folding of both functions and heredocs.
+to support folding of multiple syntax constructs (e.g.,
+g:vimsyn_folding = "fh" will enable folding of both functions and heredocs).
 
-							*g:vimsyn_noerror*
+						*g:vimsyn_comment_strings*
+By default, strings are highlighted inside comments.  This may be disabled by
+setting g:vimsyn_comment_strings to false.
+
+						*g:vimsyn_noerror*
 Not all error highlighting that syntax/vim.vim does may be correct; Vim script
 is a difficult language to highlight correctly.  A way to suppress error
 highlighting is to put the following line in your |vimrc|: >
