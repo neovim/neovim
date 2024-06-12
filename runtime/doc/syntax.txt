@@ -468,10 +468,10 @@ Configuration
 The following variables control certain syntax highlighting features.
 You can add them to your .vimrc.
 
-To enables TypeScript and TSX for ".astro" files (default "disable"): >
+To enable TypeScript and TSX for ".astro" files (default "disable"): >
 	let g:astro_typescript = "enable"
 <
-To enables Stylus for ".astro" files (default "disable"): >
+To enable Stylus for ".astro" files (default "disable"): >
 	let g:astro_stylus = "enable"
 <
 NOTE: You need to install an external plugin to support stylus in astro files.
