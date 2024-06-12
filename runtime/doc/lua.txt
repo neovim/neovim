@@ -4438,17 +4438,16 @@ Lua module: vim.net                                                  *vim.net*
 *HeaderTable*
 
     Fields: ~
-      • {_storage}  (`table<string, string[]>`)
-      • {set}       (`fun(self: HeaderTableself: HeaderTablevalue: string[]|stringkey: string)`)
-                    Set value of header.
-      • {append}    (`fun(self: HeaderTableself: HeaderTablekey: string)`)
-                    Append value to header.
-      • {get}       (`fun(self: HeaderTableself: HeaderTablekey: string): string?`)
-                    Get header value. For headers like cookies, use
-                    |HeaderTable:get_all|.
-      • {get_all}   (`fun(self: HeaderTableself: HeaderTablekey: string): string[]?`)
-                    Get all header values.
-      • {has}       (`fun(self: HeaderTableself: HeaderTablekey: string): boolean`)
+      • {set}      (`fun(self: HeaderTableself: HeaderTablevalue: string[]|stringkey: string)`)
+                   Set value of header.
+      • {append}   (`fun(self: HeaderTableself: HeaderTablekey: string)`)
+                   Append value to header.
+      • {get}      (`fun(self: HeaderTableself: HeaderTablekey: string): string?`)
+                   Get header value. For headers like cookies, use
+                   |HeaderTable:get_all|.
+      • {get_all}  (`fun(self: HeaderTableself: HeaderTablekey: string): string[]?`)
+                   Get all header values.
+      • {has}      (`fun(self: HeaderTableself: HeaderTablekey: string): boolean`)
 
 *vim.net.createCurlArgs.Opts*
 
@@ -4500,8 +4499,6 @@ HeaderTable:set({value}, {key})                            *HeaderTable:set()*
     Parameters: ~
       • {value}  (`string[]|string`) Header value.
       • {key}    (`string`) Non case-sensitive header name.
-
-nil.M.supported_protocols()                      *nil.M.supported_protocols()*
 
 vim.net.fetch({url}, {opts})                                 *vim.net.fetch()*
     Asynchronously make network requests.
@@ -4598,6 +4595,12 @@ vim.net.new_headers({input_table})                     *vim.net.new_headers()*
 
     Return: ~
         (`HeaderTable`)
+
+vim.net.supported_protocols()                  *vim.net.supported_protocols()*
+    The list of protocols supported by vim.net
+
+    Return: ~
+        (`string[]`) protocols
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

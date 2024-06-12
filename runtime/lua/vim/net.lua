@@ -463,6 +463,9 @@ end
 
 local tested_protocols = { 'http', 'https', 'scp', 'ftp' }
 local supported_protocols ---@type string[]
+
+--- The list of protocols supported by vim.net
+---@return string[] protocols
 function M.supported_protocols()
   if supported_protocols then
     return supported_protocols
