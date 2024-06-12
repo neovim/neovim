@@ -172,7 +172,7 @@ These existing features changed their behavior.
   uses |vim.net.fetch()|.
 
 • `:e https://*,http://*,ftp://*,scp://*` now automatically matches
-  filetype using the url. 
+  filetype using the url.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
