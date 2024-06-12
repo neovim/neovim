@@ -8,11 +8,11 @@ HeaderTable.__index = HeaderTable
 ---@private
 ---@param input_table table<string, string|string[]>|nil
 function HeaderTable.new(input_table)
-  local instance = setmetatable({ _storage = {} }, HeaderTable)
+  local self = setmetatable({ _storage = {} }, HeaderTable)
   if input_table then
-    instance:_from_table(input_table)
+    self:_from_table(input_table)
   end
-  return instance
+  return self
 end
 
 ---@private
@@ -132,7 +132,7 @@ end
 ---@private Method defaults to GET.
 ---@param method? vim.net.HttpMethod
 ---@return {[1]: "--request", [2]: vim.net.HttpMethod}
-local function createMethodArgs(method)
+local function create_method_args(method)
   method = method and method:upper() or 'GET'
 
   if method == 'HEAD' then
@@ -173,7 +173,7 @@ local function create_curl_args(url, opts)
   }
 
   -- Set http method.
-  vim.list_extend(args, createMethodArgs(opts.method))
+  vim.list_extend(args, create_method_args(opts.method))
 
   -- redirect mode
   if opts.redirect == 'follow' or opts.redirect == nil then
