@@ -75,7 +75,7 @@ describe('vim.net', function()
       end)
     end)
 
-    describe('download()', function()
+    describe('fetch({download_location})', function()
       it('valid', function()
         local path = exec_lua([[return vim.fn.fnamemodify("./downloaded_file", ":p")]])
 
@@ -190,7 +190,7 @@ describe('vim.net', function()
     end)
   end)
 
-  describe('download()', function()
+  describe('fetch({download_location})', function()
     before_each(function()
       os.remove('./downloaded_file')
     end)
