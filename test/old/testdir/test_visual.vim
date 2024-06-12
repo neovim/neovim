@@ -2709,4 +2709,13 @@ func Test_visual_block_cursor_delete()
   bwipe!
 endfunc
 
+func Test_visual_block_cursor_insert_enter()
+  new
+  call setline(1, ['asdf asdf', 'asdf asdf', 'asdf asdf', 'asdf asdf'])
+  call cursor(1, 5)
+  exe ":norm! \<c-v>3jcw\<cr>"
+  call assert_equal(['asdfw', 'asdf', 'asdfasdf', 'asdfasdf', 'asdfasdf'], getline(1, '$'))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
