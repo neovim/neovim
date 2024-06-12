@@ -4453,13 +4453,13 @@ Lua module: vim.net                                                  *vim.net*
 *vim.net.createCurlArgs.Opts*
 
     Fields: ~
-      • {method}             (`vim.net.httpMethod?`)
-      • {redirect}           (`"follow"|"error"?`)
+      • {method}             (`vim.net.HttpMethod?`)
+      • {redirect}           (`"follow"|"error"|"none"?`)
       • {data}               (`string|table<string, any>?`)
       • {headers}            (`HeaderTable|table<string, string|string[]>?`)
       • {download_location}  (`string?`)
       • {upload_file}        (`string?`)
-      • {user}               (`string?`)
+      • {credentials}        (`string?`)
 
 
 HeaderTable:append({key})                               *HeaderTable:append()*
@@ -4501,64 +4501,13 @@ HeaderTable:set({value}, {key})                            *HeaderTable:set()*
       • {value}  (`string[]|string`) Header value.
       • {key}    (`string`) Non case-sensitive header name.
 
-vim.net.download({url}, {path}, {opts})                   *vim.net.download()*
-    Asynchronously download a file. To read the response metadata, such as
-    headers and body, use |vim.net.fetch()|.
-
-    See man://curl for supported protocols. Not all protocols are fully
-    tested.
-
-    Please carefully note the option differences with |vim.net.fetch()|,
-    notably `redirect`.
-
-    Parameters: ~
-      • {url}   (`string`) url
-      • {path}  (`string`) A download path, can be relative.
-      • {opts}  (`table?`) Example: >lua
-                    vim.net.download("https://.../path/file", "~/.cache/download/location", {
-                      on_complete = function ()
-                        vim.notify("File Downloaded", vim.log.levels.INFO)
-                      end
-                    })
-<
-                • {method} (`vim.net.httpMethod?`) HTTP method to use.
-                  Defaults to GET.
-                • {headers} (`HeaderTable|table<string, string|string[]>?`)
-                  Headers to set on the request
-                • {redirect} (`"follow"|"none"?`) Redirect mode. Defaults to
-                  "follow". Possible values are:
-                • "follow": Follow all redirects incurred when fetching a
-                  resource.
-                • "none": Ignores redirect status.
-                • {user} (`string?`) String in "username:password" format.
-                  Prefer over passing in url.
-                • {data} (`string|table<string, any>?`) Data to send with the
-                  request. If a table, it will be JSON-encoded. vim.net does
-                  not currently support form encoding.
-                • {on_complete} (`fun()?`) Callback when request is completed
-                  successfully.
-                • {on_err} (`fun(err: string[]?, exit_code: number?)?`)
-                  Callback recieving a `stderr_buffered` string[] of error.
-                  err is either curl stderr or internal fetch() error. Without
-                  providing this function, |vim.net.fetch()| will
-                  automatically raise the error to the user. See |on_stderr|
-                  and `stderr_buffered`.
-                • {download_location} (`string?`) Path to where the file will
-                  be downloaded
-                • {_dry} (`boolean?`)
-
-    See also: ~
-      • |vim.net.fetch()|
-      • man://curl
+nil.M.supported_protocols()                      *nil.M.supported_protocols()*
 
 vim.net.fetch({url}, {opts})                                 *vim.net.fetch()*
     Asynchronously make network requests.
 
     See man://curl for supported protocols. Not all protocols are fully
     tested.
-
-    Please carefully note the option differences with |vim.net.download()|,
-    notably `redirect`.
 
     Parameters: ~
       • {url}   (`string`) The request URL.
@@ -4567,10 +4516,10 @@ vim.net.fetch({url}, {opts})                                 *vim.net.fetch()*
                 Example: >lua
                     -- GET a url
                     vim.net.fetch("https://example.com/api/data", {
-                      on_complete = function (response)
+                      on_exit = function (err, response)
                         -- Lets read the response!
 
-                        if response.ok then
+                        if not err and response.ok then
                           -- Read response text
                           local body = response.text()
                         end
@@ -4586,10 +4535,10 @@ vim.net.fetch({url}, {opts})                                 *vim.net.fetch()*
                       headers = {
                         Authorization = "Bearer " .. token
                       },
-                      on_complete = function (response)
+                      on_exit = function (err, response)
                         -- Lets read the response!
 
-                        if response.ok then
+                        if not err and response.ok then
                           -- Read JSON response
                           local table = response.json()
                         else
@@ -4598,38 +4547,45 @@ vim.net.fetch({url}, {opts})                                 *vim.net.fetch()*
                         vim.print(response.status)
                       end
                     })
+
+                    -- Download a file
+                    vim.net.download("https://.../path/file", , {
+                      on_exit = function (err)
+                        download_location = vim.fn.expand("~/.cache/download/location"),
+                        if not err then
+                          vim.notify("File Downloaded", vim.log.levels.INFO)
+                        end
+                      end
+                    })
 <
-                • {method} (`vim.net.httpMethod?`) HTTP method to use.
+                • {method} (`vim.net.HttpMethod?`) HTTP method to use.
                   Defaults to GET.
                 • {headers} (`HeaderTable|table<string, string|string[]>?`)
                   Headers to set on the request
-                • {redirect} (`"follow"|"error"?`) Redirect mode. Defaults to
-                  "follow". Possible values are:
+                • {redirect} (`"follow"|"error"|"none"?`) Redirect mode.
+                  Defaults to "follow". Possible values are:
                 • "follow": Follow all redirects incurred when fetching a
                   resource.
                 • "error": Throw an error using on_err or vim.notify when
                   status is 3XX.
+                • "none": Ignores redirect status.
                 • {upload_file} (`string?`) Path to an upload_file. Can be
                   relative.
-                • {user} (`string?`) String in "username:password" format.
-                  Prefer over passing in url.
+                • {credentials} (`string?`) String in "username:password"
+                  format. Prefer over passing in url.
                 • {data} (`string|table<string, any>?`) Data to send with the
                   request. If a table, it will be JSON-encoded. vim.net does
                   not currently support form encoding.
-                • {on_complete} (`fun(response: vim.net.Response)?`) Callback
-                  when request is completed successfully.
-                • {on_err} (`fun(err: string[]?, exit_code: number?)?`)
-                  Callback recieving a `stderr_buffered` string[] of error.
-                  err is either curl stderr or internal fetch() error. Without
-                  providing this function, |vim.net.fetch()| will
-                  automatically raise the error to the user. See |on_stderr|
-                  and `stderr_buffered`.
+                • {on_exit}
+                  (`fun(err: string?, response: vim.net.Response?)?`) Callback
+                  when request is completed. May contain an error.
+                • {download_location} (`string?`) Optional path to where the
+                  file will be downloaded. If omitted, the response will
+                  contain additional metadata
                 • {_dry} (`boolean?`)
 
     See also: ~
-      • |vim.net.download()|
       • https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-      • |job-control|
       • man://curl
 
 vim.net.new_headers({input_table})                     *vim.net.new_headers()*
