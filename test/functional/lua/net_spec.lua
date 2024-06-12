@@ -109,7 +109,7 @@ describe('vim.net', function()
         local result
 
         vim.net.fetch("https://httpbingo.org/status/999", {
-          on_complete = function (res)
+          on_exit = function (res)
             result = res
           end
         })
@@ -138,7 +138,7 @@ describe('vim.net', function()
           data = {
             A = "b"
           },
-          on_complete = function(res)
+          on_exit = function(res)
             result = res
           end
         })
@@ -167,7 +167,7 @@ describe('vim.net', function()
             test_header = "value",
             NIL_HEADER = nil
           },
-          on_complete = function(res)
+          on_exit = function(res)
             result = res
           end
         })
