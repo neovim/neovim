@@ -28,7 +28,7 @@ local function fold_cond(...)
       if not vim.tbl_isempty(strings_acumulator) then
         local string_pat = P(table.concat(strings_acumulator))
         strings_acumulator = {}
-        pat = path and pat * string_pat or string_pat
+        pat = pat and pat * string_pat or string_pat
       end
       pat = pat and pat * capture or capture
     end
