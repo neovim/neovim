@@ -149,7 +149,7 @@ end
 
 ---@class vim.net.createCurlArgs.Opts
 ---@field method vim.net.HttpMethod|nil
----@field redirect "follow"|"error"|nil
+---@field redirect "follow"|"error"|"none"|nil
 ---@field data string|table<string, any>|nil
 ---@field headers HeaderTable | table<string, string | string[]> | nil
 ---@field download_location string|nil
