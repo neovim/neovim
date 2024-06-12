@@ -35,6 +35,7 @@ find_package(Lpeg REQUIRED)
 find_package(Msgpack 1.0.0 REQUIRED)
 find_package(Treesitter 0.22.6 REQUIRED)
 find_package(Unibilium 2.0 REQUIRED)
+find_package(UTF8proc REQUIRED)
 
 target_link_libraries(main_lib INTERFACE
   iconv
@@ -42,7 +43,8 @@ target_link_libraries(main_lib INTERFACE
   lpeg
   msgpack
   treesitter
-  unibilium)
+  unibilium
+  utf8proc)
 target_link_libraries(nlua0 PUBLIC lpeg)
 
 if(ENABLE_LIBINTL)
