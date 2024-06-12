@@ -21,6 +21,9 @@ vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
     local buf = ev.buf
 
     local protocol, url, credentials = vim.net._parse_filename(ev.file)
+    if not protocol then
+      return
+    end
     if not vim.list_contains(vim.net.supported_protocols(), protocol) then
       return vim.notify(
         ("The protocol %s isn't supported by vim.net or your curl version. Run `:checkhealth vim.net` for more info"):format(
@@ -69,6 +72,9 @@ vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
     vim.fn.writefile(lines, path)
 
     local protocol, url, credentials = vim.net._parse_filename(ev.file)
+    if not protocol then
+      return
+    end
     if not vim.list_contains(vim.net.supported_protocols(), protocol) then
       return vim.notify(
         ("The protocol %s isn't supported by your curl version. Run `:checkhealth vim.net` for more info"):format(
@@ -100,6 +106,9 @@ vim.api.nvim_create_autocmd({ 'FileReadCmd' }, {
     local view = vim.fn.winsaveview()
     local buf = ev.buf
     local protocol, url, credentials = vim.net._parse_filename(ev.file)
+    if not protocol then
+      return
+    end
     if not vim.list_contains(vim.net.supported_protocols(), protocol) then
       return vim.notify(
         ("The protocol %s isn't supported by your curl version. Run `:checkhealth vim.net` for more info"):format(
@@ -145,6 +154,9 @@ vim.api.nvim_create_autocmd({ 'FileWriteCmd' }, {
     vim.fn.writefile(lines, path)
 
     local protocol, url, credentials = vim.net._parse_filename(ev.file)
+    if not protocol then
+      return
+    end
     if not vim.list_contains(vim.net.supported_protocols(), protocol) then
       return vim.notify(
         ("The protocol %s isn't supported by your curl version. Run `:checkhealth vim.net` for more info"):format(

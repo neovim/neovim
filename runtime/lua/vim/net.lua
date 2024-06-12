@@ -491,11 +491,14 @@ function M.supported_protocols()
 end
 
 ---@param file string
----@return string protocol
----@return string url
----@return string credentials
+---@return string|nil protocol
+---@return string|nil url
+---@return string|nil credentials
 function M._parse_filename(file)
   local protocol, credentials, path = file:match('^([^:]+://)([^/@]*)@?(.*)') --[[@as string, string, string]]
+  if not protocol then
+    return
+  end
   local non_credentials_url = protocol .. path
 
   if vim.b.lua_net_credentials ~= nil then
