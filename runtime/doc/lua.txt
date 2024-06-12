@@ -4444,7 +4444,7 @@ Lua module: vim.net                                                  *vim.net*
                    Append value to header.
       • {get}      (`fun(self: HeaderTableself: HeaderTablekey: string): string?`)
                    Get header value. For headers like cookies, use
-                   |HeaderTable:get_all|.
+                   |HeaderTable:get_all()|.
       • {get_all}  (`fun(self: HeaderTableself: HeaderTablekey: string): string[]?`)
                    Get all header values.
       • {has}      (`fun(self: HeaderTableself: HeaderTablekey: string): boolean`)
@@ -4468,7 +4468,7 @@ HeaderTable:append({key})                               *HeaderTable:append()*
       • {key}  (`string`) Non case-sensitive header name.
 
 HeaderTable:get({key})                                     *HeaderTable:get()*
-    Get header value. For headers like cookies, use |HeaderTable:get_all|.
+    Get header value. For headers like cookies, use |HeaderTable:get_all()|.
 
     Parameters: ~
       • {key}  (`string`) Non case-sensitive header name.
