@@ -4102,10 +4102,21 @@ line({expr} [, {winid}])                                                *line()*
 			    display isn't updated, e.g. in silent Ex mode)
 		    w$	    last line visible in current window (this is one
 			    less than "w0" if no lines are visible)
-		    v	    In Visual mode: the start of the Visual area (the
-			    cursor is the end).  When not in Visual mode
-			    returns the cursor position.  Differs from |'<| in
-			    that it's updated right away.
+		    v	    When not in Visual mode, returns the cursor
+			    position.  In Visual mode, returns the other end
+			    of the Visual area.  A good way to think about
+			    this is that in Visual mode "v" and "." complement
+			    each other.  While "." refers to the cursor
+			    position, "v" refers to where |v_o| would move the
+			    cursor.  As a result, you can use "v" and "."
+			    together to work on all of a selection in
+			    characterwise visual mode.  If the cursor is at
+			    the end of a characterwise visual area, "v" refers
+			    to the start of the same visual area.  And if the
+			    cursor is at the start of a characterwise visual
+			    area, "v" refers to the end of the same visual
+			    area.  "v" differs from |'<| and |'>| in that it's
+			    updated right away.
 		Note that a mark in another file can be used.  The line number
 		then applies to another buffer.
 		To get the column number use |col()|.  To get both use
