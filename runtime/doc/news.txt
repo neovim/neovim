@@ -159,9 +159,7 @@ UI
 • |CompleteDone| now sets the `reason` key in `v:event` which specifies the reason
   for completion being done.
 
-• Added |vim.net.fetch()| for requests.
-
-• Added |vim.net.download()| for file downloads.
+• Added |vim.net.fetch()| for requests and file downloads.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

@@ -65,7 +65,7 @@ function HeaderTable:append(key, value)
 end
 
 ---Get header value.
----For headers like cookies, use |HeaderTable:get_all|.
+---For headers like cookies, use |HeaderTable:get_all()|.
 ---@param self HeaderTable HeaderTable Instance.
 ---@param key string Non case-sensitive header name.
 ---@return string | nil
