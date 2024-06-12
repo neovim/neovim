@@ -20,16 +20,18 @@ vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
     local view = vim.fn.winsaveview()
     local buf = ev.buf
 
-    local url, credentials = vim.net._get_url_and_credentials(ev.file)
+    local protocol, url, credentials = vim.net._parse_filename(ev.file)
+    if not vim.list_contains(vim.net.supported_protocols(), protocol) then
+      return vim.notify(
+        ("The protocol %s isn't supported by vim.net or your curl version. Run `:checkhealth vim.net` for more info"):format(
+          protocol
+        )
+      )
+    end
 
-    if
-      ev.file:find('^http://')
-      or ev.file:find('^https://')
-      or ev.file:find('^ftp://')
-      or ev.file:find('^scp://')
-    then
+    if protocol == 'http' or protocol == 'https' or protocol == 'ftp' or protocol == 'scp' then
       vim.net.fetch(url, {
-        user = credentials,
+        credentials = credentials,
         on_exit = vim.schedule_wrap(function(err, result)
           if err then
             return vim.notify(err, vim.logl.levels.ERROR)
@@ -66,11 +68,18 @@ vim.api.nvim_create_autocmd({ 'BufWriteCmd' }, {
     local path = os.tmpname()
     vim.fn.writefile(lines, path)
 
-    local url, user_pass = vim.net._get_url_and_credentials(ev.file)
+    local protocol, url, credentials = vim.net._parse_filename(ev.file)
+    if not vim.list_contains(vim.net.supported_protocols(), protocol) then
+      return vim.notify(
+        ("The protocol %s isn't supported by your curl version. Run `:checkhealth vim.net` for more info"):format(
+          protocol
+        )
+      )
+    end
 
-    if ev.file:find('^ftp://') or ev.file:find('^scp://') then
+    if protocol == 'ftp' or protocol == 'scp' then
       vim.net.fetch(url, {
-        user = user_pass,
+        credentials = credentials,
         upload_file = path,
         on_exit = vim.schedule_wrap(function()
           if not vim.o.cpo:find('+') then
@@ -90,16 +99,18 @@ vim.api.nvim_create_autocmd({ 'FileReadCmd' }, {
   callback = function(ev)
     local view = vim.fn.winsaveview()
     local buf = ev.buf
-    local url, user_pass = vim.net._get_url_and_credentials(ev.file)
+    local protocol, url, credentials = vim.net._parse_filename(ev.file)
+    if not vim.list_contains(vim.net.supported_protocols(), protocol) then
+      return vim.notify(
+        ("The protocol %s isn't supported by your curl version. Run `:checkhealth vim.net` for more info"):format(
+          protocol
+        )
+      )
+    end
 
-    if
-      ev.file:find('^http://')
-      or ev.file:find('^https://')
-      or ev.file:find('^ftp://')
-      or ev.file:find('^scp://')
-    then
+    if protocol == 'http' or protocol == 'https' or protocol == 'ftp' or protocol == 'scp' then
       vim.net.fetch(url, {
-        user = user_pass,
+        credentials = credentials,
         on_complete = function(err, result)
           if err then
             return vim.notify(err, vim.log.levels.ERROR)
@@ -133,13 +144,17 @@ vim.api.nvim_create_autocmd({ 'FileWriteCmd' }, {
     local path = os.tmpname()
     vim.fn.writefile(lines, path)
 
-    local url, user_pass = vim.net._get_url_and_credentials(ev.file)
-    if
-      ev.file:find('^scp://')
-      -- or ev.file:find('^ftp://')
-    then
+    local protocol, url, credentials = vim.net._parse_filename(ev.file)
+    if not vim.list_contains(vim.net.supported_protocols(), protocol) then
+      return vim.notify(
+        ("The protocol %s isn't supported by your curl version. Run `:checkhealth vim.net` for more info"):format(
+          protocol
+        )
+      )
+    end
+    if protocol == 'scp' or protocol == 'ftp' then
       vim.net.fetch(url, {
-        user = user_pass,
+        credentials = credentials,
         upload_file = path,
         on_exit = function() end,
       })

@@ -402,10 +402,10 @@ local function check_network()
 
   if vim.fn.executable('curl') == 1 then
     local curl = vim.fn.exepath('curl')
-    local cmd = 'curl --version'
-    local out = vim.fn.system(cmd)
+    local cmd = { 'curl', ' --version' }
+    local result = vim.system(cmd, { text = true }):wait()
 
-    health.ok(('%s\n(%s)'):format(vim.trim(out), curl))
+    health.ok(('%s\n(%s)'):format(vim.trim(result.stdout), curl))
   else
     health.error(
       'curl could not be found. Cannot use |vim.net|.',

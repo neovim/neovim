@@ -154,7 +154,7 @@ end
 ---@field headers HeaderTable | table<string, string | string[]> | nil
 ---@field download_location string|nil
 ---@field upload_file string|nil
----@field user string|nil
+---@field credentials string|nil
 
 ---@private --- Creates a table of curl command arguments based on the provided URL and options.
 ---@param url string The request URL.
@@ -229,10 +229,10 @@ local function create_curl_args(url, opts)
     })
   end
 
-  if opts.user ~= nil then
+  if opts.credentials ~= nil then
     vim.list_extend(args, {
       '--user',
-      opts.user,
+      opts.credentials,
     })
   end
 
@@ -360,7 +360,7 @@ end
 ---Path to an upload_file. Can be relative.
 ---@field upload_file string|nil
 ---String in "username:password" format. Prefer over passing in url.
----@field user string|nil
+---@field credentials string|nil
 ---Data to send with the request. If a table, it will be JSON-encoded. vim.net
 ---does not currently support form encoding.
 ---@field data string|table<string, any>|nil
@@ -461,19 +461,43 @@ function M.fetch(url, opts)
   end)
 end
 
----@param url string
----@return string
----@return string
-function M._get_url_and_credentials(url)
-  if vim.b.lua_net_credentials ~= nil then
-    return url, vim.b.lua_net_credentials
+local tested_protocols = { 'http', 'https', 'scp', 'ftp' }
+local supported_protocols ---@type string[]
+function M.supported_protocols()
+  if supported_protocols then
+    return supported_protocols
   end
 
-  local scheme, credentials, path = url:match('^([^:]+://)([^/@]*)@?(.*)') --[[@as string, string, string]]
+  local curl_version = vim.system({ 'curl', ' --version' }, { text = true }):wait().stdout
+  assert(curl_version, 'curl --version returned nothing')
+  local lines = vim.split(curl_version, '\n')
+  supported_protocols = vim
+    .iter(lines)
+    :filter(function(line)
+      return line:find('^Protocols')
+    end)
+    :map(function(protocols_line)
+      return vim.split(protocols_line, ' ')
+    end)
+    :flatten(1)
+    :filter(function(protocol)
+      return vim.list_contains(tested_protocols, protocol)
+    end)
+    :totable()
+  return supported_protocols
+end
 
-  if credentials then
-    local non_credentials_url = scheme .. path
+---@param file string
+---@return string protocol
+---@return string url
+---@return string credentials
+function M._parse_filename(file)
+  local protocol, credentials, path = file:match('^([^:]+://)([^/@]*)@?(.*)') --[[@as string, string, string]]
+  local non_credentials_url = protocol .. path
 
+  if vim.b.lua_net_credentials ~= nil then
+    return protocol, non_credentials_url, vim.b.lua_net_credentials
+  elseif credentials then
     if not credentials:find(':') then
       local password = vim.fn.inputsecret({
         prompt = 'password (return for none): ',
@@ -487,30 +511,29 @@ function M._get_url_and_credentials(url)
 
     vim.b.lua_net_credentials = credentials
 
-    return non_credentials_url, vim.b.lua_net_credentials
-  elseif scheme ~= 'http' and scheme ~= 'https' then
+    return protocol, non_credentials_url, vim.b.lua_net_credentials
+  else
     local username = vim.fn.input({
       prompt = 'username (return for none): ',
     })
 
     if username == '' then
       vim.b.lua_net_credentials = username
-      return path, vim.b.lua_net_credentials
+      return protocol, non_credentials_url, vim.b.lua_net_credentials
     end
 
     local password = vim.fn.inputsecret({
       prompt = 'password (return for none): ',
     })
 
-    if password ~= '' then
-      vim.b.lua_net_credentials = username .. ':' .. password
-    else
+    if password == '' then
       vim.b.lua_net_credentials = username
+    else
+      vim.b.lua_net_credentials = username .. ':' .. password
     end
 
-    return url, vim.b.lua_net_credentials
+    return protocol, non_credentials_url, vim.b.lua_net_credentials
   end
-  return url, ''
 end
 
 return M
