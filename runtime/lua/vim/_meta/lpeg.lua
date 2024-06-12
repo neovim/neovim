@@ -32,7 +32,7 @@ vim.lpeg = {}
 --- @operator div(table): vim.lpeg.Capture
 --- @operator div(function): vim.lpeg.Capture
 --- @operator pow(number): vim.lpeg.Pattern
---- @operator mod(function): nil
+--- @operator mod(function): vim.lpeg.Capture
 local Pattern = {}
 
 --- @alias vim.lpeg.Capture vim.lpeg.Pattern
