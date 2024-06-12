@@ -255,7 +255,7 @@ describe('LSP', function()
         return
       end
       local expected_handlers = {
-        { NIL, {}, { method = 'shutdown', bufnr = 1, client_id = 1 } },
+        { NIL, {}, { method = 'shutdown', bufnr = 1, client_id = 1, version = 0 } },
         { NIL, {}, { method = 'test', client_id = 1 } },
       }
       test_rpc_server {
@@ -948,7 +948,11 @@ describe('LSP', function()
     it('should forward ContentModified to callback', function()
       local expected_handlers = {
         { NIL, {}, { method = 'finish', client_id = 1 } },
-        { { code = -32801 }, NIL, { method = 'error_code_test', bufnr = 1, client_id = 1 } },
+        {
+          { code = -32801 },
+          NIL,
+          { method = 'error_code_test', bufnr = 1, client_id = 1, version = 0 },
+        },
       }
       local client --- @type vim.lsp.Client
       test_rpc_server {
@@ -978,7 +982,7 @@ describe('LSP', function()
     it('should track pending requests to the language server', function()
       local expected_handlers = {
         { NIL, {}, { method = 'finish', client_id = 1 } },
-        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1 } },
+        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1, version = 0 } },
       }
       local client --- @type vim.lsp.Client
       test_rpc_server {
@@ -1045,7 +1049,7 @@ describe('LSP', function()
     it('should clear pending and cancel requests on reply', function()
       local expected_handlers = {
         { NIL, {}, { method = 'finish', client_id = 1 } },
-        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1 } },
+        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1, version = 0 } },
       }
       local client --- @type vim.lsp.Client
       test_rpc_server {
@@ -1084,7 +1088,7 @@ describe('LSP', function()
     it('should trigger LspRequest autocmd when requests table changes', function()
       local expected_handlers = {
         { NIL, {}, { method = 'finish', client_id = 1 } },
-        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1 } },
+        { NIL, {}, { method = 'slow_request', bufnr = 1, client_id = 1, version = 0 } },
       }
       local client --- @type vim.lsp.Client
       test_rpc_server {
@@ -1364,6 +1368,7 @@ describe('LSP', function()
             },
             bufnr = 2,
             client_id = 1,
+            version = 0,
           },
         },
         { NIL, {}, { method = 'start', client_id = 1 } },

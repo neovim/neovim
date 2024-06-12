@@ -916,18 +916,16 @@ function Client:_text_document_did_open_handler(bufnr)
   if not api.nvim_buf_is_loaded(bufnr) then
     return
   end
-  local filetype = vim.bo[bufnr].filetype
 
-  local params = {
+  local filetype = vim.bo[bufnr].filetype
+  self.notify(ms.textDocument_didOpen, {
     textDocument = {
-      version = 0,
+      version = lsp.util.buf_versions[bufnr],
       uri = vim.uri_from_bufnr(bufnr),
       languageId = self.get_language_id(bufnr, filetype),
       text = lsp._buf_get_full_text(bufnr),
     },
-  }
-  self.notify(ms.textDocument_didOpen, params)
-  lsp.util.buf_versions[bufnr] = params.textDocument.version
+  })
 
   -- Next chance we get, we should re-do the diagnostics
   vim.schedule(function()

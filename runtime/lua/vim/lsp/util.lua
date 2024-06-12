@@ -516,7 +516,6 @@ function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
     and (
       text_document.version
       and text_document.version > 0
-      and M.buf_versions[bufnr]
       and M.buf_versions[bufnr] > text_document.version
     )
   then
@@ -2222,6 +2221,11 @@ end
 M._get_line_byte_from_position = get_line_byte_from_position
 
 ---@nodoc
-M.buf_versions = {} ---@type table<integer,integer>
+---@type table<integer,integer>
+M.buf_versions = setmetatable({}, {
+  __index = function(t, bufnr)
+    return rawget(t, bufnr) or 0
+  end,
+})
 
 return M
