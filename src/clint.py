@@ -895,6 +895,7 @@ def CheckIncludes(filename, lines, error):
             if (not name.endswith('.h.generated.h') and
                     not name.endswith('/defs.h') and
                     not name.endswith('_defs.h') and
+                    not name.endswith('h.inline.generated.h') and
                     not name.endswith('_defs.generated.h') and
                     not name.endswith('_enum.generated.h')):
                 error(filename, i, 'build/include_defs', 5,

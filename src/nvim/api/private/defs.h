@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "klib/kvec.h"
-#include "nvim/func_attr.h"
 #include "nvim/types_defs.h"
 
 #define ARRAY_DICT_INIT KV_INITIAL_VALUE
@@ -20,6 +19,7 @@
 # define ArrayOf(...) Array
 # define DictionaryOf(...) Dictionary
 # define Dict(name) KeyDict_##name
+# include "api/private/defs.h.inline.generated.h"
 #endif
 
 // Basic types
@@ -47,15 +47,13 @@ typedef enum {
 /// Internal call from Lua code
 #define LUA_INTERNAL_CALL (VIML_INTERNAL_CALL + 1)
 
-static inline bool is_internal_call(uint64_t channel_id)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
-
 /// Check whether call is internal
 ///
 /// @param[in]  channel_id  Channel id.
 ///
 /// @return true if channel_id refers to internal channel.
 static inline bool is_internal_call(const uint64_t channel_id)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST
 {
   return !!(channel_id & INTERNAL_CALL_MASK);
 }
