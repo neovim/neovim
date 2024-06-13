@@ -144,11 +144,15 @@ void ui_free_all_mem(void)
 /// Returns true if any `rgb=true` UI is attached.
 bool ui_rgb_attached(void)
 {
-  if (!headless_mode && p_tgc) {
+  if (p_tgc) {
     return true;
   }
   for (size_t i = 0; i < ui_count; i++) {
-    if (uis[i]->rgb) {
+    // We do not consider the TUI in this loop because we already checked for 'termguicolors' at the
+    // beginning of this function. In this loop, we are checking to see if any _other_ UIs which
+    // support RGB are attached.
+    bool tui = uis[i]->stdin_tty || uis[i]->stdout_tty;
+    if (!tui && uis[i]->rgb) {
       return true;
     }
   }
