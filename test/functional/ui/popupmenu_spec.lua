@@ -1129,7 +1129,7 @@ describe("builtin popupmenu 'pumblend'", function()
       [10] = { foreground = tonumber('0x000002') },
     })
     screen:attach({ rgb = false })
-    command('set notermguicolors pumblend=10')
+    command('set pumblend=10')
     insert([[
       Lorem ipsum dolor sit amet, consectetur
       adipisicing elit, sed do eiusmod tempor
