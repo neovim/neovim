@@ -3186,7 +3186,7 @@ static void syn_cmd_onoff(exarg_T *eap, char *name)
   if (!eap->skip) {
     did_syntax_onoff = true;
     char buf[100];
-    memcpy(buf, S_LEN("so ") + 1);
+    memcpy(buf, "so ", 4);
     vim_snprintf(buf + 3, sizeof(buf) - 3, SYNTAX_FNAME, name);
     do_cmdline_cmd(buf);
   }
@@ -4296,7 +4296,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
 
     if (item == ITEM_MATCHGROUP) {
       char *p = skiptowhite(rest);
-      if ((p - rest == 4 && strncmp(rest, S_LEN("NONE")) == 0) || eap->skip) {
+      if ((p - rest == 4 && strncmp(rest, "NONE", 4) == 0) || eap->skip) {
         matchgroup_id = 0;
       } else {
         matchgroup_id = syn_check_group(rest, (size_t)(p - rest));
@@ -4815,10 +4815,10 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
       } else if (!eap->skip) {
         curwin->w_s->b_syn_sync_id = (int16_t)syn_name2id("Comment");
       }
-    } else if (strncmp(key, S_LEN("LINES")) == 0
-               || strncmp(key, S_LEN("MINLINES")) == 0
-               || strncmp(key, S_LEN("MAXLINES")) == 0
-               || strncmp(key, S_LEN("LINEBREAKS")) == 0) {
+    } else if (strncmp(key, "LINES", 5) == 0
+               || strncmp(key, "MINLINES", 8) == 0
+               || strncmp(key, "MAXLINES", 8) == 0
+               || strncmp(key, "LINEBREAKS", 10) == 0) {
       if (key[4] == 'S') {
         arg_end = key + 6;
       } else if (key[0] == 'L') {

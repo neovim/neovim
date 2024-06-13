@@ -1360,11 +1360,11 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 {
   bool is_fish_shell =
 #if defined(UNIX)
-    strncmp(invocation_path_tail(p_sh, NULL), S_LEN("fish")) == 0;
+    strncmp(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
 #else
     false;
 #endif
-  bool is_pwsh = strncmp(invocation_path_tail(p_sh, NULL), S_LEN("pwsh")) == 0
+  bool is_pwsh = strncmp(invocation_path_tail(p_sh, NULL), "pwsh", 4) == 0
                  || strncmp(invocation_path_tail(p_sh, NULL), "powershell",
                             10) == 0;
 

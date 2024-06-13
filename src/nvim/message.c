@@ -473,7 +473,7 @@ void trunc_string(const char *s, char *buf, int room_in, int buflen)
     }
   } else if (e + 3 < buflen) {
     // set the middle and copy the last part
-    memmove(buf + e, S_LEN("..."));
+    memmove(buf + e, "...", 3);
     len = (int)strlen(s + i) + 1;
     if (len >= buflen - e - 3) {
       len = buflen - e - 3 - 1;
@@ -3182,7 +3182,7 @@ static void redir_write(const char *const str, const ptrdiff_t maxlen)
     if (*s != '\n' && *s != '\r') {
       while (cur_col < msg_col) {
         if (capture_ga) {
-          ga_concat_len(capture_ga, S_LEN(" "));
+          ga_concat_len(capture_ga, " ", 1);
         }
         if (redir_reg) {
           write_reg_contents(redir_reg, " ", 1, true);

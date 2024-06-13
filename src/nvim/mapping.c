@@ -403,43 +403,43 @@ static int str_to_mapargs(const char *strargs, bool is_unmap, MapArguments *mapa
   // Accept <buffer>, <nowait>, <silent>, <expr>, <script>, and <unique> in
   // any order.
   while (true) {
-    if (strncmp(to_parse, S_LEN("<buffer>")) == 0) {
+    if (strncmp(to_parse, "<buffer>", 8) == 0) {
       to_parse = skipwhite(to_parse + 8);
       mapargs->buffer = true;
       continue;
     }
 
-    if (strncmp(to_parse, S_LEN("<nowait>")) == 0) {
+    if (strncmp(to_parse, "<nowait>", 8) == 0) {
       to_parse = skipwhite(to_parse + 8);
       mapargs->nowait = true;
       continue;
     }
 
-    if (strncmp(to_parse, S_LEN("<silent>")) == 0) {
+    if (strncmp(to_parse, "<silent>", 8) == 0) {
       to_parse = skipwhite(to_parse + 8);
       mapargs->silent = true;
       continue;
     }
 
     // Ignore obsolete "<special>" modifier.
-    if (strncmp(to_parse, S_LEN("<special>")) == 0) {
+    if (strncmp(to_parse, "<special>", 9) == 0) {
       to_parse = skipwhite(to_parse + 9);
       continue;
     }
 
-    if (strncmp(to_parse, S_LEN("<script>")) == 0) {
+    if (strncmp(to_parse, "<script>", 8) == 0) {
       to_parse = skipwhite(to_parse + 8);
       mapargs->script = true;
       continue;
     }
 
-    if (strncmp(to_parse, S_LEN("<expr>")) == 0) {
+    if (strncmp(to_parse, "<expr>", 6) == 0) {
       to_parse = skipwhite(to_parse + 6);
       mapargs->expr = true;
       continue;
     }
 
-    if (strncmp(to_parse, S_LEN("<unique>")) == 0) {
+    if (strncmp(to_parse, "<unique>", 8) == 0) {
       to_parse = skipwhite(to_parse + 8);
       mapargs->unique = true;
       continue;
@@ -1252,32 +1252,32 @@ char *set_context_in_map_cmd(expand_T *xp, char *cmd, char *arg, bool forceit, b
     xp->xp_context = EXPAND_MAPPINGS;
     expand_buffer = false;
     while (true) {
-      if (strncmp(arg, S_LEN("<buffer>")) == 0) {
+      if (strncmp(arg, "<buffer>", 8) == 0) {
         expand_buffer = true;
         arg = skipwhite(arg + 8);
         continue;
       }
-      if (strncmp(arg, S_LEN("<unique>")) == 0) {
+      if (strncmp(arg, "<unique>", 8) == 0) {
         arg = skipwhite(arg + 8);
         continue;
       }
-      if (strncmp(arg, S_LEN("<nowait>")) == 0) {
+      if (strncmp(arg, "<nowait>", 8) == 0) {
         arg = skipwhite(arg + 8);
         continue;
       }
-      if (strncmp(arg, S_LEN("<silent>")) == 0) {
+      if (strncmp(arg, "<silent>", 8) == 0) {
         arg = skipwhite(arg + 8);
         continue;
       }
-      if (strncmp(arg, S_LEN("<special>")) == 0) {
+      if (strncmp(arg, "<special>", 9) == 0) {
         arg = skipwhite(arg + 9);
         continue;
       }
-      if (strncmp(arg, S_LEN("<script>")) == 0) {
+      if (strncmp(arg, "<script>", 8) == 0) {
         arg = skipwhite(arg + 8);
         continue;
       }
-      if (strncmp(arg, S_LEN("<expr>")) == 0) {
+      if (strncmp(arg, "<expr>", 6) == 0) {
         arg = skipwhite(arg + 6);
         continue;
       }

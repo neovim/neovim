@@ -347,7 +347,7 @@ void set_init_1(bool clean_arg)
   const size_t backupdir_len = strlen(backupdir);
   backupdir = xrealloc(backupdir, backupdir_len + 3);
   memmove(backupdir + 2, backupdir, backupdir_len + 1);
-  memmove(backupdir, S_LEN(".,"));
+  memmove(backupdir, ".,", 2);
   set_string_default(kOptBackupdir, backupdir, true);
   set_string_default(kOptViewdir, stdpaths_user_state_subpath("view", 2, true),
                      true);
@@ -1004,10 +1004,10 @@ static set_op_T get_op(const char *arg)
 
 static set_prefix_T get_option_prefix(char **argp)
 {
-  if (strncmp(*argp, S_LEN("no")) == 0) {
+  if (strncmp(*argp, "no", 2) == 0) {
     *argp += 2;
     return PREFIX_NO;
-  } else if (strncmp(*argp, S_LEN("inv")) == 0) {
+  } else if (strncmp(*argp, "inv", 3) == 0) {
     *argp += 3;
     return PREFIX_INV;
   }
@@ -1426,7 +1426,7 @@ int do_set(char *arg, int opt_flags)
     did_show = true;
   } else {
     while (*arg != NUL) {         // loop to process all options
-      if (strncmp(arg, S_LEN("all")) == 0 && !ASCII_ISALPHA(arg[3])
+      if (strncmp(arg, "all", 3) == 0 && !ASCII_ISALPHA(arg[3])
           && !(opt_flags & OPT_MODELINE)) {
         // ":set all"  show all options.
         // ":set all&" set all options to their default value.
@@ -2771,7 +2771,7 @@ static void do_spelllang_source(win_T *win)
   char *q = win->w_s->b_p_spl;
 
   // Skip the first name if it is "cjk".
-  if (strncmp(q, S_LEN("cjk,")) == 0) {
+  if (strncmp(q, "cjk,", 4) == 0) {
     q += 4;
   }
 
@@ -5450,11 +5450,11 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
     }
     p--;
   }
-  if (strncmp(p, S_LEN("no")) == 0) {
+  if (strncmp(p, "no", 2) == 0) {
     xp->xp_context = EXPAND_BOOL_SETTINGS;
     xp->xp_prefix = XP_PREFIX_NO;
     p += 2;
-  } else if (strncmp(p, S_LEN("inv")) == 0) {
+  } else if (strncmp(p, "inv", 3) == 0) {
     xp->xp_context = EXPAND_BOOL_SETTINGS;
     xp->xp_prefix = XP_PREFIX_INV;
     p += 3;
@@ -5649,7 +5649,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
   // manually handle it here to make sure we have the correct xp_context set.
   // for 'spellsuggest' start at "file:"
   if (options[opt_idx].var == &p_sps) {
-    if (strncmp(xp->xp_pattern, S_LEN("file:")) == 0) {
+    if (strncmp(xp->xp_pattern, "file:", 5) == 0) {
       xp->xp_pattern += 5;
       return;
     } else if (options[expand_option_idx].opt_expand_cb != NULL) {
@@ -6081,16 +6081,16 @@ int fill_culopt_flags(char *val, win_T *wp)
   }
   while (*p != NUL) {
     // Note: Keep this in sync with p_culopt_values.
-    if (strncmp(p, S_LEN("line")) == 0) {
+    if (strncmp(p, "line", 4) == 0) {
       p += 4;
       culopt_flags_new |= CULOPT_LINE;
-    } else if (strncmp(p, S_LEN("both")) == 0) {
+    } else if (strncmp(p, "both", 4) == 0) {
       p += 4;
       culopt_flags_new |= CULOPT_LINE | CULOPT_NBR;
-    } else if (strncmp(p, S_LEN("number")) == 0) {
+    } else if (strncmp(p, "number", 6) == 0) {
       p += 6;
       culopt_flags_new |= CULOPT_NBR;
-    } else if (strncmp(p, S_LEN("screenline")) == 0) {
+    } else if (strncmp(p, "screenline", 10) == 0) {
       p += 10;
       culopt_flags_new |= CULOPT_SCRLINE;
     }
@@ -6138,8 +6138,8 @@ int option_set_callback_func(char *optval, Callback *optcb)
 
   typval_T *tv;
   if (*optval == '{'
-      || (strncmp(optval, S_LEN("function(")) == 0)
-      || (strncmp(optval, S_LEN("funcref(")) == 0)) {
+      || (strncmp(optval, "function(", 9) == 0)
+      || (strncmp(optval, "funcref(", 8) == 0)) {
     // Lambda expression or a funcref
     tv = eval_expr(optval, NULL);
     if (tv == NULL) {

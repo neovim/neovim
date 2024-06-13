@@ -1017,7 +1017,7 @@ void format_lines(linenr_T line_count, bool avoid_fex)
         // and this line has a line comment after some text, the
         // paragraph doesn't really end.
         if (next_leader_flags == NULL
-            || strncmp(next_leader_flags, S_LEN("://")) != 0
+            || strncmp(next_leader_flags, "://", 3) != 0
             || check_linecomment(get_cursor_line_ptr()) == MAXCOL) {
           is_end_par = true;
         }

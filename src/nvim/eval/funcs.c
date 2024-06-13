@@ -5095,7 +5095,7 @@ static void get_matches_in_str(const char *str, regmatch_T *rmp, list_T *mlist, 
       // return a list with the submatches
       for (int i = 1; i < NSUBEXP; i++) {
         if (rmp->endp[i] == NULL) {
-          tv_list_append_string(sml, S_LEN(""));
+          tv_list_append_string(sml, "", 0);
         } else {
           tv_list_append_string(sml, rmp->startp[i], rmp->endp[i] - rmp->startp[i]);
         }

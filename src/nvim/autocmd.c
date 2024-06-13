@@ -824,11 +824,11 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
         continue;
       }
 
-      invalid_flags |= arg_autocmd_flag_get(&once, &cmd, S_LEN("++once"));
-      invalid_flags |= arg_autocmd_flag_get(&nested, &cmd, S_LEN("++nested"));
+      invalid_flags |= arg_autocmd_flag_get(&once, &cmd, "++once", 6);
+      invalid_flags |= arg_autocmd_flag_get(&nested, &cmd, "++nested", 8);
 
       // Check the deprecated "nested" flag.
-      invalid_flags |= arg_autocmd_flag_get(&nested, &cmd, S_LEN("nested"));
+      invalid_flags |= arg_autocmd_flag_get(&nested, &cmd, "nested", 6);
     }
 
     if (invalid_flags) {
@@ -1245,7 +1245,7 @@ void ex_doautoall(exarg_T *eap)
 bool check_nomodeline(char **argp)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (strncmp(*argp, S_LEN("<nomodeline>")) == 0) {
+  if (strncmp(*argp, "<nomodeline>", 12) == 0) {
     *argp = skipwhite(*argp + 12);
     return false;
   }
@@ -2359,7 +2359,7 @@ theend:
 bool aupat_is_buflocal(const char *pat, int patlen)
   FUNC_ATTR_PURE
 {
-  return patlen >= 8 && strncmp(pat, S_LEN("<buffer")) == 0 && (pat)[patlen - 1] == '>';
+  return patlen >= 8 && strncmp(pat, "<buffer", 7) == 0 && (pat)[patlen - 1] == '>';
 }
 
 int aupat_get_buflocal_nr(const char *pat, int patlen)

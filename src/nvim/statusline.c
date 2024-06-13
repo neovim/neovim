@@ -1487,7 +1487,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
         new_fmt_p = (char *)memcpy(new_fmt_p, usefmt, parsed_usefmt) + parsed_usefmt;
         new_fmt_p = (char *)memcpy(new_fmt_p, str, str_length) + str_length;
-        new_fmt_p = (char *)memcpy(new_fmt_p, S_LEN("%}")) + 2;
+        new_fmt_p = (char *)memcpy(new_fmt_p, "%}", 2) + 2;
         new_fmt_p = (char *)memcpy(new_fmt_p, fmt_p, fmt_length) + fmt_length;
         *new_fmt_p = 0;
         new_fmt_p = NULL;

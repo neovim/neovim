@@ -789,7 +789,7 @@ int win_fdccol_count(win_T *wp)
   const char *fdc = wp->w_p_fdc;
 
   // auto:<NUM>
-  if (strncmp(fdc, S_LEN("auto")) == 0) {
+  if (strncmp(fdc, "auto", 4) == 0) {
     const int fdccol = fdc[4] == ':' ? fdc[5] - '0' : 1;
     int needed_fdccols = getDeepestNesting(wp);
     return MIN(fdccol, needed_fdccols);
