@@ -1240,6 +1240,8 @@ M.funcs = {
       The result is a Number, which is the byte index of the column
       position given with {expr}.
       For accepted positions see |getpos()|.
+      When {expr} is "$", it means the end of the cursor line, so
+      the result is the number of bytes in the cursor line plus one.
       Additionally {expr} can be [lnum, col]: a |List| with the line
       and column number. Most useful when the column is "$", to get
       the last column of a specific line.  When "lnum" or "col" is
@@ -4144,7 +4146,7 @@ M.funcs = {
           .	    The cursor position.
           $	    The last line in the current buffer.
           'x	    Position of mark x (if the mark is not set, 0 is
-      	    returned).
+      	    returned for all values).
           w0	    First line visible in current window (one if the
       	    display isn't updated, e.g. in silent Ex mode).
           w$	    Last line visible in current window (this is one
@@ -4194,8 +4196,8 @@ M.funcs = {
       	let save_a_mark = getpos("'a")
       	" ...
       	call setpos("'a", save_a_mark)
-
-      <Also see |getcharpos()|, |getcurpos()| and |setpos()|.
+      <
+      Also see |getcharpos()|, |getcurpos()| and |setpos()|.
 
     ]=],
     name = 'getpos',
@@ -12465,6 +12467,8 @@ M.funcs = {
       For the byte position use |col()|.
 
       For the use of {expr} see |getpos()| and |col()|.
+      When {expr} is "$", it means the end of the cursor line, so
+      the result is the number of cells in the cursor line plus one.
 
       When 'virtualedit' is used {expr} can be [lnum, col, off],
       where "off" is the offset in screen columns from the start of
