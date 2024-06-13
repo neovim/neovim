@@ -25,6 +25,7 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
+#include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -48,6 +49,7 @@
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
+#include "nvim/search.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -435,6 +437,74 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
   pum_redraw();
 }
 
+/// Displays text on the popup menu with specific attributes.
+static void pum_puts_with_attr(int col, const char *text, int attr)
+{
+  char *leader = ins_compl_leader();
+
+  if ((win_hl_attr(curwin, HLF_PMSI) == win_hl_attr(curwin, HLF_PSI)
+       && win_hl_attr(curwin, HLF_PMNI) == win_hl_attr(curwin, HLF_PNI))) {
+    grid_line_puts(col, text, -1, attr);
+    return;
+  }
+
+  char *rt_leader = NULL;
+  if (leader != NULL && curwin->w_p_rl) {
+    rt_leader = reverse_text(leader);
+  }
+  char *match_leader = rt_leader != NULL ? rt_leader : leader;
+  size_t leader_len = match_leader ? strlen(match_leader) : 0;
+
+  const bool in_fuzzy = (get_cot_flags() & COT_FUZZY) != 0;
+
+  garray_T *ga = NULL;
+  if (match_leader != NULL && leader_len > 0 && in_fuzzy) {
+    ga = fuzzy_match_str_with_pos(text, match_leader);
+  }
+
+  // Render text with proper attributes
+  const char *ptr = text;
+  while (*ptr != NUL) {
+    int char_len = utfc_ptr2len(ptr);
+    int cells = utf_ptr2cells(ptr);
+    int new_attr = attr;
+
+    if (ga != NULL) {
+      // Handle fuzzy matching
+      for (int i = 0; i < ga->ga_len; i++) {
+        int *match_pos = ((int *)ga->ga_data) + i;
+        int actual_char_pos = 0;
+        const char *temp_ptr = text;
+        while (temp_ptr < ptr) {
+          temp_ptr += utfc_ptr2len(temp_ptr);
+          actual_char_pos++;
+        }
+        if (actual_char_pos == match_pos[0]) {
+          new_attr = win_hl_attr(curwin, (attr == win_hl_attr(curwin, HLF_PSI)
+                                          ? HLF_PMSI : HLF_PMNI));
+          break;
+        }
+      }
+    } else if (!in_fuzzy && ptr < text + leader_len
+               && strncmp(text, match_leader, leader_len) == 0) {
+      new_attr = win_hl_attr(curwin, (attr == win_hl_attr(curwin, HLF_PSI)
+                                      ? HLF_PMSI : HLF_PMNI));
+    }
+
+    grid_line_puts(col, ptr, char_len, new_attr);
+    col += cells;
+    ptr += char_len;
+  }
+
+  if (ga != NULL) {
+    ga_clear(ga);
+    xfree(ga);
+  }
+  if (rt_leader) {
+    xfree(rt_leader);
+  }
+}
+
 /// Redraw the popup menu, using "pum_first" and "pum_selected".
 void pum_redraw(void)
 {
@@ -593,13 +663,12 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              grid_line_puts(grid_col - size + 1, rt, -1, attr);
+              pum_puts_with_attr(grid_col - size + 1, rt, attr);
               xfree(rt_start);
               xfree(st);
               grid_col -= width;
             } else {
-              // use grid_line_puts() to truncate the text
-              grid_line_puts(grid_col, st, -1, attr);
+              pum_puts_with_attr(grid_col, st, attr);
               xfree(st);
               grid_col += width;
             }

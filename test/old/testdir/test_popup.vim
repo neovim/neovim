@@ -1348,4 +1348,71 @@ func Test_pum_highlights_custom()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test match relate highlight group in pmenu
+func Test_pum_highlights_match()
+  CheckScreendump
+  let lines =<< trim END
+    func Omni_test(findstart, base)
+      if a:findstart
+        return col(".")
+      endif
+      return {
+            \ 'words': [
+            \ { 'word': 'foo',},
+            \ { 'word': 'foobar',},
+            \ { 'word': 'fooBaz',},
+            \ { 'word': 'foobala',},
+            \ { 'word': '你好',},
+            \ { 'word': '你好吗',},
+            \ { 'word': '你不好吗',},
+            \ { 'word': '你可好吗',},
+            \]}
+    endfunc
+    set omnifunc=Omni_test
+    set completeopt=menu,noinsert,fuzzy
+    hi PmenuMatchSel  ctermfg=6 ctermbg=225
+    hi PmenuMatch     ctermfg=4 ctermbg=225
+  END
+  call writefile(lines, 'Xscript', 'D')
+  let  buf = RunVimInTerminal('-S Xscript', {})
+  call TermWait(buf)
+  call term_sendkeys(buf, "i\<C-X>\<C-O>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "fo")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_highlights_03', {})
+  call term_sendkeys(buf, "\<ESC>S\<C-x>\<C-O>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "你")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_highlights_04', {})
+  call term_sendkeys(buf, "吗")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_highlights_05', {})
+
+  if has('rightleft')
+    call term_sendkeys(buf, "\<C-E>\<ESC>u:set rightleft\<CR>")
+    call TermWait(buf, 50)
+    call term_sendkeys(buf, "i\<C-X>\<C-O>")
+    call TermWait(buf, 50)
+    call term_sendkeys(buf, "fo")
+    call TermWait(buf, 50)
+    call VerifyScreenDump(buf, 'Test_pum_highlights_06', {})
+    call term_sendkeys(buf, "\<C-E>\<ESC>u:set norightleft\<CR>")
+    call TermWait(buf)
+  endif
+
+  call term_sendkeys(buf, ":set completeopt-=fuzzy\<CR>")
+  call TermWait(buf)
+  call term_sendkeys(buf, "\<ESC>S\<C-x>\<C-O>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "fo")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_highlights_07', {})
+
+  call term_sendkeys(buf, "\<C-E>\<Esc>u")
+  call TermWait(buf)
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

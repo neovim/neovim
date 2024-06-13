@@ -1177,6 +1177,8 @@ describe('builtin popupmenu', function()
         ks = { foreground = Screen.colors.Red, background = Screen.colors.Grey },
         xn = { foreground = Screen.colors.White, background = Screen.colors.Magenta },
         xs = { foreground = Screen.colors.Black, background = Screen.colors.Grey },
+        mn = { foreground = Screen.colors.Blue, background = Screen.colors.White },
+        ms = { foreground = Screen.colors.Green, background = Screen.colors.White },
       })
       screen:attach({ ext_multigrid = multigrid })
     end)
@@ -4584,6 +4586,121 @@ describe('builtin popupmenu', function()
             {2:-- }{5:match 1 of 3}               |
           ]])
         end)
+      end)
+
+      -- oldtest: Test_pum_highlights_match()
+      it('can highlight matched text', function()
+        exec([[
+          func Omni_test(findstart, base)
+            if a:findstart
+              return col(".")
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'foo',},
+                  \ { 'word': 'foobar',},
+                  \ { 'word': 'fooBaz',},
+                  \ { 'word': 'foobala',},
+                  \ { 'word': '你好',},
+                  \ { 'word': '你好吗',},
+                  \ { 'word': '你不好吗',},
+                  \ { 'word': '你可好吗',},
+                  \]}
+          endfunc
+          set omnifunc=Omni_test
+          set completeopt=menu,noinsert,fuzzy
+          hi PmenuMatchSel  guifg=Green guibg=White
+          hi PmenuMatch     guifg=Blue guibg=White
+        ]])
+        feed('i<C-X><C-O>')
+        local pum_start = [[
+          ^                                |
+          {s:foo            }{1:                 }|
+          {n:foobar         }{1:                 }|
+          {n:fooBaz         }{1:                 }|
+          {n:foobala        }{1:                 }|
+          {n:你好           }{1:                 }|
+          {n:你好吗         }{1:                 }|
+          {n:你不好吗       }{1:                 }|
+          {n:你可好吗       }{1:                 }|
+          {1:~                               }|*10
+          {2:-- }{5:match 1 of 8}                 |
+        ]]
+        screen:expect(pum_start)
+        feed('fo')
+        screen:expect([[
+          fo^                              |
+          {ms:fo}{s:o            }{1:                 }|
+          {mn:fo}{n:obar         }{1:                 }|
+          {mn:fo}{n:oBaz         }{1:                 }|
+          {mn:fo}{n:obala        }{1:                 }|
+          {1:~                               }|*14
+          {2:-- }{5:match 1 of 8}                 |
+        ]])
+        feed('<Esc>S<C-X><C-O>')
+        screen:expect(pum_start)
+        feed('你')
+        screen:expect([[
+          你^                              |
+          {ms:你}{s:好           }{1:                 }|
+          {mn:你}{n:好吗         }{1:                 }|
+          {mn:你}{n:不好吗       }{1:                 }|
+          {mn:你}{n:可好吗       }{1:                 }|
+          {1:~                               }|*14
+          {2:-- }{5:match 1 of 8}                 |
+        ]])
+        feed('吗')
+        screen:expect([[
+          你吗^                            |
+          {ms:你}{s:好}{ms:吗}{s:         }{1:                 }|
+          {mn:你}{n:不好}{mn:吗}{n:       }{1:                 }|
+          {mn:你}{n:可好}{mn:吗}{n:       }{1:                 }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 8}                 |
+        ]])
+
+        feed('<C-E><Esc>')
+        command('set rightleft')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+                                         ^ |
+          {1:                 }{s:            oof}|
+          {1:                 }{n:         raboof}|
+          {1:                 }{n:         zaBoof}|
+          {1:                 }{n:        alaboof}|
+          {1:                 }{n:           好你}|
+          {1:                 }{n:         吗好你}|
+          {1:                 }{n:       吗好不你}|
+          {1:                 }{n:       吗好可你}|
+          {1:                               ~}|*10
+          {2:-- }{5:match 1 of 8}                 |
+        ]])
+        feed('fo')
+        screen:expect([[
+                                       ^ of|
+          {1:                 }{s:            o}{ms:of}|
+          {1:                 }{n:         rabo}{mn:of}|
+          {1:                 }{n:         zaBo}{mn:of}|
+          {1:                 }{n:        alabo}{mn:of}|
+          {1:                               ~}|*14
+          {2:-- }{5:match 1 of 8}                 |
+        ]])
+        feed('<C-E><Esc>')
+        command('set norightleft')
+
+        command('set completeopt-=fuzzy')
+        feed('S<C-X><C-O>')
+        screen:expect(pum_start)
+        feed('fo')
+        screen:expect([[
+          fo^                              |
+          {ms:fo}{s:o            }{1:                 }|
+          {mn:fo}{n:obar         }{1:                 }|
+          {mn:fo}{n:oBaz         }{1:                 }|
+          {mn:fo}{n:obala        }{1:                 }|
+          {1:~                               }|*14
+          {2:-- }{5:match 1 of 8}                 |
+        ]])
       end)
     end
   end
