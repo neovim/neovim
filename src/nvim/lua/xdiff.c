@@ -40,6 +40,7 @@ typedef struct {
 # include "lua/xdiff.c.generated.h"
 #endif
 
+// TODO:
 static void lua_pushhunk(lua_State *lstate, long start_a, long count_a, long start_b, long count_b)
 {
   // Mimic extra offsets done by xdiff, see:
