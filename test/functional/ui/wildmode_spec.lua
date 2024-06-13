@@ -199,9 +199,13 @@ describe("'wildmenu'", function()
     feed((':terminal "%s" REP 5000 !terminal_output!<cr>'):format(testprg('shell-test')))
     feed('G') -- Follow :terminal output.
     feed([[:sign <Tab>]]) -- Invoke wildmenu.
+    screen:set_default_attr_ids {
+      [31] = { foreground = Screen.colors.Black, background = Screen.colors.Yellow },
+      [32] = { bold = true, foreground = Screen.colors.White, background = Screen.colors.DarkGreen },
+    }
     -- NB: in earlier versions terminal output was redrawn during cmdline mode.
     -- For now just assert that the screen remains unchanged.
-    screen:expect { any = '{31:define}{3:  jump  list  >    }|\n:sign define^             |' }
+    screen:expect { any = '{31:define}{32:  jump  list  >    }|\n:sign define^             |' }
     screen:expect_unchanged()
 
     -- cmdline CTRL-D display should also be preserved.
@@ -259,9 +263,13 @@ describe("'wildmenu'", function()
 
     feed([[<C-\><C-N>]])
     feed([[:<Tab>]]) -- Invoke wildmenu.
+    screen:set_default_attr_ids {
+      [31] = { foreground = Screen.colors.Black, background = Screen.colors.Yellow },
+      [32] = { bold = true, foreground = Screen.colors.White, background = Screen.colors.DarkGreen },
+    }
     -- Check only the last 2 lines, because the shell output is
     -- system-dependent.
-    screen:expect { any = '{31:!}{3:  #  &  <  =  >  @  >   }|\n:!^' }
+    screen:expect { any = '{31:!}{32:  #  &  <  =  >  @  >   }|\n:!^' }
     -- Because this test verifies a _lack_ of activity, we must wait the full timeout.
     -- So make it reasonable.
     screen:expect_unchanged(false, 1000)
