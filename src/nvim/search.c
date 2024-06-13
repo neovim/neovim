@@ -3256,7 +3256,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
                                 const char *const key, Callback *const item_cb,
                                 const bool retmatchpos, list_T *const fmatchlist,
                                 const int max_matches)
-  FUNC_ATTR_NONNULL_ARG(2, 7)
+  FUNC_ATTR_NONNULL_ARG(2, 5, 7)
 {
   int len = tv_list_len(l);
   if (len == 0) {
@@ -3546,80 +3546,33 @@ int fuzzy_match_str(char *const str, const char *const pat)
 
 /// Fuzzy match the position of string "pat" in string "str".
 /// @returns a dynamic array of matching positions. If there is no match, returns NULL.
-garray_T *fuzzy_match_str_with_pos(const char *const str, char *const pat)
+garray_T *fuzzy_match_str_with_pos(char *const str, const char *const pat)
 {
-  garray_T *match_positions = xmalloc(sizeof(garray_T));
-
-  ga_init(match_positions, sizeof(int), 10);
   if (str == NULL || pat == NULL) {
-    ga_clear(match_positions);
     return NULL;
   }
-  list_T *l = tv_list_alloc(1);
 
-  typval_T tv_str = {
-    .v_type = VAR_STRING,
-    .vval.v_string = xstrdup(str),
-  };
-  tv_list_append_tv(l, &tv_str);
+  garray_T *match_positions = xmalloc(sizeof(garray_T));
+  ga_init(match_positions, sizeof(uint32_t), 10);
 
-  list_T *retlist = tv_list_alloc(3);
-  list_T *match_str_list = tv_list_alloc(1);
-  list_T *match_pos_list = tv_list_alloc(1);
-  list_T *match_score_list = tv_list_alloc(1);
-
-  tv_list_append_list(retlist, match_str_list);
-  tv_list_append_list(retlist, match_pos_list);
-  tv_list_append_list(retlist, match_score_list);
-
-  fuzzy_match_in_list(l, pat, false, NULL, NULL, true, retlist, 1);
-
-  varnumber_T score = 0;
-  listitem_T *score_item = tv_list_find(retlist, 2);
-  if (score_item != NULL && TV_LIST_ITEM_TV(score_item)->v_type == VAR_LIST) {
-    list_T *score_list = TV_LIST_ITEM_TV(score_item)->vval.v_list;
-    if (tv_list_len(score_list) > 0) {
-      listitem_T *first_score_item = tv_list_first(score_list);
-      if (first_score_item != NULL && TV_LIST_ITEM_TV(first_score_item)->v_type == VAR_NUMBER) {
-        score = TV_LIST_ITEM_TV(first_score_item)->vval.v_number;
-      }
-    }
-  }
-  if (score == 0) {
-    goto cleanup;
+  unsigned matches[MAX_FUZZY_MATCHES];
+  int score = 0;
+  if (!fuzzy_match(str, pat, false, &score, matches, MAX_FUZZY_MATCHES)
+      || score == 0) {
+    ga_clear(match_positions);
+    xfree(match_positions);
+    return NULL;
   }
 
-  listitem_T *positions_item = tv_list_find(retlist, 1);
-  if (positions_item != NULL && TV_LIST_ITEM_TV(positions_item)->v_type == VAR_LIST) {
-    list_T *positions_outer_list = TV_LIST_ITEM_TV(positions_item)->vval.v_list;
-    if (tv_list_len(positions_outer_list) > 0) {
-      listitem_T *outer_li = tv_list_first(positions_outer_list);
-      if (outer_li != NULL && TV_LIST_ITEM_TV(outer_li)->v_type == VAR_LIST) {
-        list_T *positions_inner_list = TV_LIST_ITEM_TV(outer_li)->vval.v_list;
-        TV_LIST_ITER_CONST(positions_inner_list, li, {
-          if (TV_LIST_ITEM_TV(li)->v_type == VAR_NUMBER) {
-            varnumber_T pos = TV_LIST_ITEM_TV(li)->vval.v_number;
-            GA_APPEND(int, match_positions, (int)pos);
-          }
-        });
-      }
+  int j = 0;
+  for (const char *p = pat; *p != NUL; MB_PTR_ADV(p)) {
+    if (!ascii_iswhite(utf_ptr2char(p))) {
+      GA_APPEND(uint32_t, match_positions, matches[j]);
+      j++;
     }
   }
 
-  xfree(tv_str.vval.v_string);
-  tv_list_free(retlist);
-  tv_list_free(l);
   return match_positions;
-
-cleanup:
-  xfree(tv_str.vval.v_string);
-  tv_list_free(match_str_list);
-  tv_list_free(match_pos_list);
-  tv_list_free(match_score_list);
-  tv_list_free(retlist);
-  tv_list_free(l);
-  ga_clear(match_positions);
-  return NULL;
 }
 
 /// Copy a list of fuzzy matches into a string list after sorting the matches by

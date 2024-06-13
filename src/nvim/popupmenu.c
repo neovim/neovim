@@ -438,7 +438,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 }
 
 /// Displays text on the popup menu with specific attributes.
-static void pum_puts_with_attr(int col, const char *text, int attr)
+static void pum_puts_with_attr(int col, char *text, int attr)
 {
   char *leader = ins_compl_leader();
 
@@ -472,8 +472,8 @@ static void pum_puts_with_attr(int col, const char *text, int attr)
     if (ga != NULL) {
       // Handle fuzzy matching
       for (int i = 0; i < ga->ga_len; i++) {
-        int *match_pos = ((int *)ga->ga_data) + i;
-        int actual_char_pos = 0;
+        uint32_t *match_pos = ((uint32_t *)ga->ga_data) + i;
+        uint32_t actual_char_pos = 0;
         const char *temp_ptr = text;
         while (temp_ptr < ptr) {
           temp_ptr += utfc_ptr2len(temp_ptr);
