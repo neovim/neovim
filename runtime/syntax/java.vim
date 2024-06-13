@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Jun 08
+" Last Change:		2024 Jun 10
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -99,6 +99,7 @@ syn match   javaClassDecl	"\<record\>\%(\s*(\)\@!"
 syn match   javaClassDecl	"^class\>"
 syn match   javaClassDecl	"[^.]\s*\<class\>"ms=s+1
 syn match   javaAnnotation	"@\%(\K\k*\.\)*\K\k*\>"
+syn region  javaAnnotation	transparent matchgroup=javaAnnotationStart start=/@\%(\K\k*\.\)*\K\k*(/ end=/)/ skip=/\/\*.\{-}\*\/\|\/\/.*$/ contains=javaAnnotation,javaParenT,javaBraces,javaString,javaBoolean,javaNumber,javaTypedef,javaComment,javaLineComment
 syn match   javaClassDecl	"@interface\>"
 syn keyword javaBranch		break continue nextgroup=javaUserLabelRef skipwhite
 syn match   javaUserLabelRef	"\k\+" contained
@@ -497,6 +498,7 @@ hi def link javaConstant		Constant
 hi def link javaTypedef		Typedef
 hi def link javaTodo			Todo
 hi def link javaAnnotation		PreProc
+hi def link javaAnnotationStart		javaAnnotation
 
 hi def link javaCommentTitle		SpecialComment
 hi def link javaDocTags		Special
