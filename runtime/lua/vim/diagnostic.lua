@@ -1359,6 +1359,10 @@ M.handlers.signs = {
     bufnr = get_bufnr(bufnr)
     opts = opts or {}
 
+    if not api.nvim_buf_is_loaded(bufnr) then
+      return
+    end
+
     if opts.signs and opts.signs.severity then
       diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
     end
@@ -1441,8 +1445,10 @@ M.handlers.signs = {
     local numhl = opts.signs.numhl or {}
     local linehl = opts.signs.linehl or {}
 
+    local line_count = api.nvim_buf_line_count(bufnr)
+
     for _, diagnostic in ipairs(diagnostics) do
-      if api.nvim_buf_is_loaded(diagnostic.bufnr) then
+      if diagnostic.lnum <= line_count then
         api.nvim_buf_set_extmark(bufnr, ns.user_data.sign_ns, diagnostic.lnum, 0, {
           sign_text = text[diagnostic.severity] or text[M.severity[diagnostic.severity]] or 'U',
           sign_hl_group = sign_highlight_map[diagnostic.severity],
