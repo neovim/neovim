@@ -62,11 +62,13 @@ describe('vim.net', function()
       local response_code = exec_lua(
         [[
         local path = ...
-        local done
+        local done, metadata, err
         vim.net.download("https://httpbingo.org/redirect/1", {
           download_location = path,
           on_exit = function(err, metadata)
             done = true
+            metadata = metadata
+            err = err
           end
         })
 
@@ -89,12 +91,14 @@ describe('vim.net', function()
       local response_code = exec_lua(
         [[
         local path = ...
-        local done
+        local done, metadata, err
         vim.net.download("https://httpbingo.org/redirect/1", {
           download_location = path,
           follow_redirects = true,
           on_exit = function(err, metadata)
             done = true
+            metadata = metadata
+            err = err
           end
         })
 
@@ -119,7 +123,7 @@ describe('vim.net', function()
         [[
         local path = ...
         local done
-        vim.net.download("https://httpbingo.org/basic-auth/user/password", {
+        vim.net.download("https://httpbingo.org/bearer", {
           download_location = path,
           headers = {
             Authorization = { "Bearer foo" },
