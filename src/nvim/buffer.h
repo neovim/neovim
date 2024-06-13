@@ -5,7 +5,6 @@
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/func_attr.h"
 #include "nvim/gettext_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/marktree_defs.h"
@@ -76,11 +75,8 @@ EXTERN char *msg_qflist INIT( = N_("[Quickfix List]"));
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.h.generated.h"
+# include "buffer.h.inline.generated.h"
 #endif
-
-static inline varnumber_T buf_get_changedtick(const buf_T *buf)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE
-  REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get b:changedtick value
 ///
@@ -88,6 +84,8 @@ static inline varnumber_T buf_get_changedtick(const buf_T *buf)
 ///
 /// @param[in]  buf  Buffer to get b:changedtick from.
 static inline varnumber_T buf_get_changedtick(const buf_T *const buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf->changedtick_di.di_tv.vval.v_number;
 }

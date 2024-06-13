@@ -2,6 +2,7 @@ local fname = arg[1]
 local static_fname = arg[2]
 local non_static_fname = arg[3]
 local preproc_fname = arg[4]
+local static_basename = arg[5]
 
 local lpeg = vim.lpeg
 
@@ -235,6 +236,7 @@ local declendpos = 0
 local curdir = nil
 local is_needed_file = false
 local init_is_nl = true
+local any_static = false
 while init ~= nil do
   if init_is_nl and text:sub(init, init) == '#' then
     local line, dir, file = text:match(filepattern, init)
@@ -276,6 +278,9 @@ while init ~= nil do
       end
       declaration = declaration .. '\n'
       if declaration:sub(1, 6) == 'static' then
+        if declaration:find('FUNC_ATTR_') then
+          any_static = true
+        end
         static = static .. declaration
       else
         declaration = 'DLLEXPORT ' .. declaration
@@ -302,6 +307,18 @@ local F
 F = io.open(static_fname, 'w')
 F:write(static)
 F:close()
+
+if non_static_fname == 'SKIP' then
+  F = io.open(fname, 'r')
+  if any_static then
+    local orig_text = F:read('*a')
+    local pat = '\n#%s?include%s+"' .. static_basename .. '"\n'
+    if not string.find(orig_text, pat) then
+      error('fail: missing include for ' .. static_basename .. ' in ' .. fname)
+    end
+  end
+  return -- only want static declarations
+end
 
 -- Before generating the non-static headers, check if the current file (if
 -- exists) is different from the new one. If they are the same, we won't touch

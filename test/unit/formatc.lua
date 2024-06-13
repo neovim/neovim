@@ -264,6 +264,7 @@ local function formatc(str)
         -- and ';' indicates we're at the end of a statement, so we put end
         -- it with a newline.
         token[1] = ';\n'
+        end_at_brace = false
       end
     elseif typ == 'whitespace' then
       -- replace all whitespace by one space

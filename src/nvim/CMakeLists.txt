@@ -391,6 +391,7 @@ foreach(subdir
         event
         eval
         lua
+        lib
         viml
         viml/parser
        )
@@ -427,6 +428,21 @@ foreach(sfile ${NVIM_SOURCES})
 endforeach()
 
 list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
+
+foreach(hfile ${NVIM_HEADERS})
+  get_filename_component(f ${hfile} NAME)
+  if(WIN32 AND ${f} MATCHES "^(unix_defs.h)$")
+    list(APPEND to_remove_h ${hfile})
+  endif()
+  if(WIN32 AND ${f} MATCHES "^(pty_process_unix.h)$")
+    list(APPEND to_remove_h ${hfile})
+  endif()
+  if(NOT WIN32 AND ${f} MATCHES "^(win_defs.h)$")
+    list(APPEND to_remove_h ${hfile})
+  endif()
+endforeach()
+
+list(REMOVE_ITEM NVIM_HEADERS ${to_remove_h})
 
 # xdiff, mpack, lua-cjson, termkey: inlined external project, we don't maintain it. #9306
 if(MSVC)
@@ -511,6 +527,7 @@ set(LUA_GEN_DEPS ${GENERATOR_PRELOAD} $<TARGET_FILE:nlua0>)
 # NVIM_GENERATED_FOR_SOURCES: generated headers to be included in sources
 # These lists must be mutually exclusive.
 foreach(sfile ${NVIM_SOURCES}
+              ${NVIM_HEADERS}
               ${GENERATED_API_DISPATCH}
               "${GENERATED_UI_EVENTS_CALL}"
               "${GENERATED_UI_EVENTS_REMOTE}"
@@ -523,13 +540,25 @@ foreach(sfile ${NVIM_SOURCES}
   endif()
   get_filename_component(f ${sfile} NAME)
   get_filename_component(r ${sfile} NAME_WE)
+  get_filename_component(ext ${sfile} EXT)
   if(NOT ${d} EQUAL ".")
     set(f "${d}/${f}")
     set(r "${d}/${r}")
   endif()
-  set(gf_c_h "${GENERATED_DIR}/${r}.c.generated.h")
-  set(gf_h_h "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
-  set(gf_i "${GENERATED_DIR}/${r}.i")
+  set (gf_basename "")
+  if ("${ext}" STREQUAL ".c.h")
+    continue() # .c.h files are sussy baka, skip
+  elseif(${sfile} IN_LIST NVIM_HEADERS)
+    set(gf_basename "${r}.h.inline.generated.h")
+    set(gf_c_h "${GENERATED_INCLUDES_DIR}/${r}.h.inline.generated.h")
+    set(gf_h_h "SKIP")
+    set(gf_h_h_out "")
+  else()
+    set(gf_c_h "${GENERATED_DIR}/${r}.c.generated.h")
+    set(gf_h_h "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
+    set(gf_h_h_out "${gf_h_h}")
+  endif()
+  set(gf_i "${GENERATED_DIR}/${f}.i")
 
   if(MSVC)
     set(PREPROC_OUTPUT /P /Fi${gf_i} /nologo)
@@ -543,14 +572,16 @@ foreach(sfile ${NVIM_SOURCES}
     list(APPEND depends update_version_stamp "${NVIM_VERSION_GIT_H}" "${NVIM_VERSION_DEF_H}")
   endif()
   add_custom_command(
-    OUTPUT "${gf_c_h}" "${gf_h_h}"
+    OUTPUT "${gf_c_h}" ${gf_h_h_out}
     COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags}
-    COMMAND ${LUA_GEN} "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}"
+    COMMAND ${LUA_GEN} "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}" "${gf_basename}"
     DEPENDS ${depends})
   list(APPEND NVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
-  list(APPEND NVIM_GENERATED_FOR_HEADERS "${gf_h_h}")
-  if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")
-    list(APPEND API_HEADERS ${gf_h_h})
+  if (NOT ${sfile} IN_LIST NVIM_HEADERS)
+    list(APPEND NVIM_GENERATED_FOR_HEADERS "${gf_h_h}")
+    if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")
+      list(APPEND API_HEADERS ${gf_h_h})
+    endif()
   endif()
 endforeach()
 
