@@ -196,7 +196,7 @@ describe(':terminal buffer', function()
     screen:expect([[
       ab^c                                               |
       {4:~                                                 }|
-      {17:==========                                        }|
+      {5:==========                                        }|
       rows: 2, cols: 50                                 |
       {2: }                                                 |
       {18:==========                                        }|

@@ -290,15 +290,15 @@ do
       vim.bo.undolevels = -1
       vim.bo.scrollback = vim.o.scrollback < 0 and 10000 or math.max(1, vim.o.scrollback)
       vim.bo.textwidth = 0
-      vim.wo.wrap = false
-      vim.wo.list = false
+      vim.wo[0][0].wrap = false
+      vim.wo[0][0].list = false
 
       -- This is gross. Proper list options support when?
       local winhl = vim.o.winhighlight
       if winhl ~= '' then
         winhl = winhl .. ','
       end
-      vim.wo.winhighlight = winhl .. 'StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC'
+      vim.wo[0][0].winhighlight = winhl .. 'StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC'
     end,
   })
 

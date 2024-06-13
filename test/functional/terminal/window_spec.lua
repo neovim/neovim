@@ -13,6 +13,26 @@ local skip = t.skip
 local is_os = t.is_os
 
 describe(':terminal window', function()
+  before_each(clear)
+
+  it('sets local values of window options #29325', function()
+    command('setglobal wrap list')
+    command('terminal')
+    eq({ 0, 0, 1 }, eval('[&l:wrap, &wrap, &g:wrap]'))
+    eq({ 0, 0, 1 }, eval('[&l:list, &list, &g:list]'))
+    command('enew')
+    eq({ 1, 1, 1 }, eval('[&l:wrap, &wrap, &g:wrap]'))
+    eq({ 1, 1, 1 }, eval('[&l:list, &list, &g:list]'))
+    command('buffer #')
+    eq({ 0, 0, 1 }, eval('[&l:wrap, &wrap, &g:wrap]'))
+    eq({ 0, 0, 1 }, eval('[&l:list, &list, &g:list]'))
+    command('new')
+    eq({ 1, 1, 1 }, eval('[&l:wrap, &wrap, &g:wrap]'))
+    eq({ 1, 1, 1 }, eval('[&l:list, &list, &g:list]'))
+  end)
+end)
+
+describe(':terminal window', function()
   local screen
 
   before_each(function()
