@@ -397,6 +397,23 @@ local function check_external_tools()
   end
 end
 
+local function check_net()
+  health.start('External Tools (vim.net)')
+
+  if vim.fn.executable('curl') == 1 then
+    local curl = vim.fn.exepath('curl')
+    local cmd = { 'curl', ' --version' }
+    local result = vim.system(cmd, { text = true }):wait()
+
+    health.ok(('%s\n(%s)'):format(vim.trim(result.stdout), curl))
+  else
+    health.error(
+      'curl could not be found. Cannot use |vim.net|.',
+      'Follow this guide to install curl https://everything.curl.dev/install/index.html'
+    )
+  end
+end
+
 function M.check()
   check_config()
   check_runtime()
@@ -405,6 +422,7 @@ function M.check()
   check_terminal()
   check_tmux()
   check_external_tools()
+  check_net()
 end
 
 return M
