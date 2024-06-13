@@ -566,7 +566,7 @@ void AppendToRedobuffLit(const char *str, int len)
 
     // CTRL-V '0' must be inserted as CTRL-V 048.
     if (*s == NUL && c == '0') {
-      add_buff(&redobuff, S_LEN("048"));
+      add_buff(&redobuff, "048", 3);
     } else {
       add_char_buff(&redobuff, c);
     }
@@ -777,7 +777,7 @@ int start_redo(int count, bool old_redo)
 
   // copy the buffer name, if present
   if (c == '"') {
-    add_buff(&readbuf2, S_LEN("\""));
+    add_buff(&readbuf2, "\"", 1);
     c = read_redo(false, old_redo);
 
     // if a numbered buffer is used, increment the number

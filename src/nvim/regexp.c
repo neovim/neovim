@@ -11517,7 +11517,7 @@ static void nfa_print_state2(FILE *debugf, nfa_state_T *state, garray_T *indent)
     uint8_t save[2];
 
     strncpy(save, &p[last], 2);  // NOLINT(runtime/printf)
-    memcpy(&p[last], S_LEN("+-"));
+    memcpy(&p[last], "+-", 2);
     fprintf(debugf, " %s", p);
     strncpy(&p[last], save, 2);  // NOLINT(runtime/printf)
   } else {
@@ -15932,7 +15932,7 @@ regprog_T *vim_regcomp(const char *expr_arg, int re_flags)
   regexp_engine = (int)p_re;
 
   // Check for prefix "\%#=", that sets the regexp engine
-  if (strncmp(expr, S_LEN("\\%#=")) == 0) {
+  if (strncmp(expr, "\\%#=", 4) == 0) {
     int newengine = expr[4] - '0';
 
     if (newengine == AUTOMATIC_ENGINE

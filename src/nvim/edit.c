@@ -3095,7 +3095,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       if (try_match && keytyped == 'e' && curwin->w_cursor.col >= 4) {
         p = get_cursor_line_ptr();
         if (skipwhite(p) == p + curwin->w_cursor.col - 4
-            && strncmp(p + curwin->w_cursor.col - 4, S_LEN("else")) == 0) {
+            && strncmp(p + curwin->w_cursor.col - 4, "else", 4) == 0) {
           return true;
         }
       }

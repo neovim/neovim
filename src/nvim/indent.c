@@ -782,20 +782,20 @@ bool briopt_check(win_T *wp)
   char *p = wp->w_p_briopt;
   while (*p != NUL) {
     // Note: Keep this in sync with p_briopt_values
-    if (strncmp(p, S_LEN("shift:")) == 0
+    if (strncmp(p, "shift:", 6) == 0
         && ((p[6] == '-' && ascii_isdigit(p[7])) || ascii_isdigit(p[6]))) {
       p += 6;
       bri_shift = getdigits_int(&p, true, 0);
-    } else if (strncmp(p, S_LEN("min:")) == 0 && ascii_isdigit(p[4])) {
+    } else if (strncmp(p, "min:", 4) == 0 && ascii_isdigit(p[4])) {
       p += 4;
       bri_min = getdigits_int(&p, true, 0);
-    } else if (strncmp(p, S_LEN("sbr")) == 0) {
+    } else if (strncmp(p, "sbr", 3) == 0) {
       p += 3;
       bri_sbr = true;
-    } else if (strncmp(p, S_LEN("list:")) == 0) {
+    } else if (strncmp(p, "list:", 5) == 0) {
       p += 5;
       bri_list = (int)getdigits(&p, false, 0);
-    } else if (strncmp(p, S_LEN("column:")) == 0) {
+    } else if (strncmp(p, "column:", 7) == 0) {
       p += 7;
       bri_vcol = (int)getdigits(&p, false, 0);
     }
