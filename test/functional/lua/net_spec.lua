@@ -122,7 +122,7 @@ describe('vim.net', function()
         vim.net.download("https://httpbingo.org/basic-auth/user/password", {
           download_location = path,
           headers = {
-          	Authorization = { "Bearer foo" },
+            Authorization = { "Bearer foo" },
           },
           on_exit = function(err, metadata)
             done = true
