@@ -701,33 +701,33 @@ clearmatches([{win}])                                           *clearmatches()*
 
 col({expr} [, {winid}])                                                  *col()*
 		The result is a Number, which is the byte index of the column
-		position given with {expr}.  The accepted positions are:
-		    .	    the cursor position
-		    $	    the end of the cursor line (the result is the
-			    number of bytes in the cursor line plus one)
-		    'x	    position of mark x (if the mark is not set, 0 is
-			    returned)
-		    v       In Visual mode: the start of the Visual area (the
-			    cursor is the end).  When not in Visual mode
-			    returns the cursor position.  Differs from |'<| in
-			    that it's updated right away.
+		position given with {expr}.
+		For accepted positions see |getpos()|.
+		When {expr} is "$", it means the end of the cursor line, so
+		the result is the number of bytes in the cursor line plus one.
 		Additionally {expr} can be [lnum, col]: a |List| with the line
 		and column number. Most useful when the column is "$", to get
 		the last column of a specific line.  When "lnum" or "col" is
 		out of range then col() returns zero.
+
 		With the optional {winid} argument the values are obtained for
 		that window instead of the current window.
+
 		To get the line number use |line()|.  To get both use
 		|getpos()|.
+
 		For the screen column position use |virtcol()|.  For the
 		character position use |charcol()|.
+
 		Note that only marks in the current file can be used.
+
 		Examples: >vim
 			echo col(".")			" column of cursor
 			echo col("$")			" length of cursor line plus one
 			echo col("'t")			" column of mark t
 			echo col("'" .. markname)	" column of mark markname
-<		The first column is 1.  Returns 0 if {expr} is invalid or when
+<
+		The first column is 1.  Returns 0 if {expr} is invalid or when
 		the window with ID {winid} is not found.
 		For an uppercase mark the column may actually be in another
 		buffer.
@@ -2739,9 +2739,34 @@ getpid()                                                              *getpid()*
 		This is a unique number, until Vim exits.
 
 getpos({expr})                                                        *getpos()*
-		Get the position for String {expr}.  For possible values of
-		{expr} see |line()|.  For getting the cursor position see
-		|getcurpos()|.
+		Get the position for String {expr}.
+		The accepted values for {expr} are:
+		    .	    The cursor position.
+		    $	    The last line in the current buffer.
+		    'x	    Position of mark x (if the mark is not set, 0 is
+			    returned for all values).
+		    w0	    First line visible in current window (one if the
+			    display isn't updated, e.g. in silent Ex mode).
+		    w$	    Last line visible in current window (this is one
+			    less than "w0" if no lines are visible).
+		    v	    When not in Visual mode, returns the cursor
+			    position.  In Visual mode, returns the other end
+			    of the Visual area.  A good way to think about
+			    this is that in Visual mode "v" and "." complement
+			    each other.  While "." refers to the cursor
+			    position, "v" refers to where |v_o| would move the
+			    cursor.  As a result, you can use "v" and "."
+			    together to work on all of a selection in
+			    characterwise Visual mode.  If the cursor is at
+			    the end of a characterwise Visual area, "v" refers
+			    to the start of the same Visual area.  And if the
+			    cursor is at the start of a characterwise Visual
+			    area, "v" refers to the end of the same Visual
+			    area.  "v" differs from |'<| and |'>| in that it's
+			    updated right away.
+		Note that a mark in another file can be used.  The line number
+		then applies to another buffer.
+
 		The result is a |List| with four numbers:
 		    [bufnum, lnum, col, off]
 		"bufnum" is zero, unless a mark like '0 or 'A is used, then it
@@ -2752,20 +2777,25 @@ getpos({expr})                                                        *getpos()*
 		it is the offset in screen columns from the start of the
 		character.  E.g., a position within a <Tab> or after the last
 		character.
-		Note that for '< and '> Visual mode matters: when it is "V"
-		(visual line mode) the column of '< is zero and the column of
-		'> is a large number equal to |v:maxcol|.
+
+		For getting the cursor position see |getcurpos()|.
 		The column number in the returned List is the byte position
 		within the line. To get the character position in the line,
 		use |getcharpos()|.
+
+		Note that for '< and '> Visual mode matters: when it is "V"
+		(visual line mode) the column of '< is zero and the column of
+		'> is a large number equal to |v:maxcol|.
 		A very large column number equal to |v:maxcol| can be returned,
 		in which case it means "after the end of the line".
 		If {expr} is invalid, returns a list with all zeros.
+
 		This can be used to save and restore the position of a mark: >vim
 			let save_a_mark = getpos("'a")
 			" ...
 			call setpos("'a", save_a_mark)
-<		Also see |getcharpos()|, |getcurpos()| and |setpos()|.
+<
+		Also see |getcharpos()|, |getcurpos()| and |setpos()|.
 
 getqflist([{what}])                                                *getqflist()*
 		Returns a |List| with all the current quickfix errors.  Each
@@ -4091,39 +4121,16 @@ libcallnr({libname}, {funcname}, {argument})                       *libcallnr()*
 <
 
 line({expr} [, {winid}])                                                *line()*
-		The result is a Number, which is the line number of the file
-		position given with {expr}.  The {expr} argument is a string.
-		The accepted positions are:
-		    .	    the cursor position
-		    $	    the last line in the current buffer
-		    'x	    position of mark x (if the mark is not set, 0 is
-			    returned)
-		    w0	    first line visible in current window (one if the
-			    display isn't updated, e.g. in silent Ex mode)
-		    w$	    last line visible in current window (this is one
-			    less than "w0" if no lines are visible)
-		    v	    When not in Visual mode, returns the cursor
-			    position.  In Visual mode, returns the other end
-			    of the Visual area.  A good way to think about
-			    this is that in Visual mode "v" and "." complement
-			    each other.  While "." refers to the cursor
-			    position, "v" refers to where |v_o| would move the
-			    cursor.  As a result, you can use "v" and "."
-			    together to work on all of a selection in
-			    characterwise visual mode.  If the cursor is at
-			    the end of a characterwise visual area, "v" refers
-			    to the start of the same visual area.  And if the
-			    cursor is at the start of a characterwise visual
-			    area, "v" refers to the end of the same visual
-			    area.  "v" differs from |'<| and |'>| in that it's
-			    updated right away.
-		Note that a mark in another file can be used.  The line number
-		then applies to another buffer.
+		See |getpos()| for accepted positions.
+
 		To get the column number use |col()|.  To get both use
 		|getpos()|.
+
 		With the optional {winid} argument the values are obtained for
 		that window instead of the current window.
+
 		Returns 0 for invalid values of {expr} and {winid}.
+
 		Examples: >vim
 			echo line(".")			" line number of the cursor
 			echo line(".", winid)		" idem, in window "winid"
@@ -8746,7 +8753,9 @@ virtcol({expr} [, {list} [, {winid}]])                               *virtcol()*
 		set to 8, it returns 8. |conceal| is ignored.
 		For the byte position use |col()|.
 
-		For the use of {expr} see |col()|.
+		For the use of {expr} see |getpos()| and |col()|.
+		When {expr} is "$", it means the end of the cursor line, so
+		the result is the number of cells in the cursor line plus one.
 
 		When 'virtualedit' is used {expr} can be [lnum, col, off],
 		where "off" is the offset in screen columns from the start of
@@ -8755,18 +8764,6 @@ virtcol({expr} [, {list} [, {winid}]])                               *virtcol()*
 		Virtual editing is active in the current mode, a position
 		beyond the end of the line can be returned.  Also see
 		|'virtualedit'|
-
-		The accepted positions are:
-		    .	    the cursor position
-		    $	    the end of the cursor line (the result is the
-			    number of displayed characters in the cursor line
-			    plus one)
-		    'x	    position of mark x (if the mark is not set, 0 is
-			    returned)
-		    v       In Visual mode: the start of the Visual area (the
-			    cursor is the end).  When not in Visual mode
-			    returns the cursor position.  Differs from |'<| in
-			    that it's updated right away.
 
 		If {list} is present and non-zero then virtcol() returns a
 		List with the first and last screen position occupied by the
@@ -8786,7 +8783,9 @@ virtcol({expr} [, {list} [, {winid}]])                               *virtcol()*
 			" With text "	  there", with 't at 'h':
 
 			echo virtcol("'t")	" returns 6
-<		The first column is 1.  0 or [0, 0] is returned for an error.
+<
+		The first column is 1.  0 or [0, 0] is returned for an error.
+
 		A more advanced example that echoes the maximum length of
 		all lines: >vim
 		    echo max(map(range(1, line('$')), "virtcol([v:val, '$'])"))
