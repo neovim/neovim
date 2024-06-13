@@ -442,23 +442,24 @@ static void pum_puts_with_attr(int col, char *text, int attr)
 {
   char *leader = ins_compl_leader();
 
-  if ((win_hl_attr(curwin, HLF_PMSI) == win_hl_attr(curwin, HLF_PSI)
-       && win_hl_attr(curwin, HLF_PMNI) == win_hl_attr(curwin, HLF_PNI))) {
+  if (leader == NULL || *leader == NUL
+      || (win_hl_attr(curwin, HLF_PMSI) == win_hl_attr(curwin, HLF_PSI)
+          && win_hl_attr(curwin, HLF_PMNI) == win_hl_attr(curwin, HLF_PNI))) {
     grid_line_puts(col, text, -1, attr);
     return;
   }
 
   char *rt_leader = NULL;
-  if (leader != NULL && curwin->w_p_rl) {
+  if (curwin->w_p_rl) {
     rt_leader = reverse_text(leader);
   }
   char *match_leader = rt_leader != NULL ? rt_leader : leader;
-  size_t leader_len = match_leader ? strlen(match_leader) : 0;
+  size_t leader_len = strlen(match_leader);
 
   const bool in_fuzzy = (get_cot_flags() & COT_FUZZY) != 0;
 
   garray_T *ga = NULL;
-  if (match_leader != NULL && leader_len > 0 && in_fuzzy) {
+  if (in_fuzzy) {
     ga = fuzzy_match_str_with_pos(text, match_leader);
   }
 
