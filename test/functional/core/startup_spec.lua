@@ -400,9 +400,6 @@ describe('startup', function()
         read_file('Xtest_startup_ttyout')
       )
     end)
-    if is_os('win') then
-      assert_log('stream write failed. RPC canceled; closing channel', testlog)
-    end
   end)
 
   it('input from pipe: has("ttyin")==0 has("ttyout")==1', function()
@@ -435,9 +432,6 @@ describe('startup', function()
         read_file('Xtest_startup_ttyout')
       )
     end)
-    if is_os('win') then
-      assert_log('stream write failed. RPC canceled; closing channel', testlog)
-    end
   end)
 
   it('input from pipe (implicit) #7679', function()

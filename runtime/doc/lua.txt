@@ -4388,8 +4388,9 @@ vim.text.hexdecode({enc})                               *vim.text.hexdecode()*
     Parameters: ~
       • {enc}  (`string`) String to decode
 
-    Return: ~
-        (`string`) Decoded string
+    Return (multiple): ~
+        (`string?`) Decoded string
+        (`string?`) Error message, if any
 
 vim.text.hexencode({str})                               *vim.text.hexencode()*
     Hex encode a string.
