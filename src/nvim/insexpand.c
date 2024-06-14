@@ -1144,11 +1144,13 @@ static void trigger_complete_changed_event(int cur)
 }
 
 /// pumitem qsort compare func
-static int ins_compl_fuzzy_sort(const void *a, const void *b)
+static int ins_compl_fuzzy_cmp(const void *a, const void *b)
 {
   const int sa = (*(pumitem_T *)a).pum_score;
   const int sb = (*(pumitem_T *)b).pum_score;
-  return sa == sb ? 0 : sa < sb ? 1 : -1;
+  const int ia = (*(pumitem_T *)a).pum_idx;
+  const int ib = (*(pumitem_T *)b).pum_idx;
+  return sa == sb ? (ia == ib ? 0 : (ia < ib ? -1 : 1)) : (sa < sb ? 1 : -1);
 }
 
 /// Build a popup menu to show the completion matches.
@@ -1284,9 +1286,12 @@ static int ins_compl_build_pum(void)
   } while (comp != NULL && !is_first_match(comp));
 
   if (compl_fuzzy_match && compl_leader != NULL && lead_len > 0) {
+    for (i = 0; i < compl_match_arraysize; i++) {
+      compl_match_array[i].pum_idx = i;
+    }
     // sort by the largest score of fuzzy match
     qsort(compl_match_array, (size_t)compl_match_arraysize, sizeof(pumitem_T),
-          ins_compl_fuzzy_sort);
+          ins_compl_fuzzy_cmp);
   }
 
   if (!shown_match_ok) {  // no displayed match at all
