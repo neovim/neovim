@@ -2,7 +2,7 @@
 error('Cannot require a meta file')
 
 -- These types were taken from https://github.com/LuaCATS/lpeg
--- (based on revision e6789e28e5b91a4a277a2a03081d708c403a3e34)
+-- (based on revision 82c6a8fc676bbc20722026afd952668f3919b11d)
 -- with types being renamed to include the vim namespace and with some descriptions made less verbose.
 
 --- @brief <pre>help
@@ -32,7 +32,7 @@ vim.lpeg = {}
 --- @operator div(table): vim.lpeg.Capture
 --- @operator div(function): vim.lpeg.Capture
 --- @operator pow(number): vim.lpeg.Pattern
---- @operator mod(function): nil
+--- @operator mod(function): vim.lpeg.Capture
 local Pattern = {}
 
 --- @alias vim.lpeg.Capture vim.lpeg.Pattern

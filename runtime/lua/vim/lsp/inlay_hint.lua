@@ -370,7 +370,7 @@ api.nvim_set_decoration_provider(namespace, {
 })
 
 --- Query whether inlay hint is enabled in the {filter}ed scope
---- @param filter vim.lsp.inlay_hint.enable.Filter
+--- @param filter? vim.lsp.inlay_hint.enable.Filter
 --- @return boolean
 --- @since 12
 function M.is_enabled(filter)
