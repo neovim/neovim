@@ -6007,17 +6007,14 @@ function vim.fn.min(expr) end
 --- When {flags} is present it must be a string.  An empty string
 --- has no effect.
 ---
---- If {flags} contains "p" then intermediate directories are
---- created as necessary.
+--- {flags} can contain these character flags:
+---  "p"  intermediate directories will be created as necessary
+---  "D"  {name} will be deleted at the end of the current
+---   function, but not recursively |defer|
+---  "R"  {name} will be deleted recursively at the end of the
+---   current function |defer|
 ---
---- If {flags} contains "D" then {name} is deleted at the end of
---- the current function, as with: >vim
----   defer delete({name}, 'd')
---- <
---- If {flags} contains "R" then {name} is deleted recursively at
---- the end of the current function, as with: >vim
----   defer delete({name}, 'rf')
---- <Note that when {name} has more than one part and "p" is used
+--- Note that when {name} has more than one part and "p" is used
 --- some directories may already exist.  Only the first one that
 --- is created and what it contains is scheduled to be deleted.
 --- E.g. when using: >vim
