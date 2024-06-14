@@ -407,7 +407,9 @@ function Client:handle_body(body)
   end
   log.debug('rpc.receive', decoded)
 
-  if type(decoded.method) == 'string' and decoded.id then
+  if type(decoded) ~= 'table' then
+    self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
+  elseif type(decoded.method) == 'string' and decoded.id then
     local err --- @type lsp.ResponseError|nil
     -- Schedule here so that the users functions don't trigger an error and
     -- we can still use the result.
