@@ -111,14 +111,13 @@ describe('semantic token highlighting', function()
     end)
 
     it('buffer is highlighted when attached', function()
+      insert(text)
       exec_lua([[
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         vim.bo[bufnr].filetype = 'some-filetype'
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
       ]])
-
-      insert(text)
 
       screen:expect {
         grid = [[
@@ -141,6 +140,7 @@ describe('semantic token highlighting', function()
     end)
 
     it('use LspTokenUpdate and highlight_token', function()
+      insert(text)
       exec_lua([[
         vim.api.nvim_create_autocmd("LspTokenUpdate", {
           callback = function(args)
@@ -156,8 +156,6 @@ describe('semantic token highlighting', function()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
       ]])
-
-      insert(text)
 
       screen:expect {
         grid = [[
@@ -180,13 +178,16 @@ describe('semantic token highlighting', function()
     end)
 
     it('buffer is unhighlighted when client is detached', function()
+      insert(text)
+
       exec_lua([[
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        vim.wait(1000, function()
+          return #server.messages > 1
+        end)
       ]])
-
-      insert(text)
 
       exec_lua([[
         vim.notify = function() end
@@ -331,13 +332,12 @@ describe('semantic token highlighting', function()
     end)
 
     it('buffer is re-highlighted when force refreshed', function()
+      insert(text)
       exec_lua([[
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
       ]])
-
-      insert(text)
 
       screen:expect {
         grid = [[
@@ -412,13 +412,14 @@ describe('semantic token highlighting', function()
     end)
 
     it('updates highlights with delta request on buffer change', function()
+      insert(text)
+
       exec_lua([[
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
       ]])
 
-      insert(text)
       screen:expect {
         grid = [[
         #include <iostream>                     |
@@ -597,6 +598,7 @@ describe('semantic token highlighting', function()
     end)
 
     it('does not send delta requests if not supported by server', function()
+      insert(text)
       exec_lua(
         [[
         local legend, response, edit_response = ...
@@ -625,7 +627,6 @@ describe('semantic token highlighting', function()
         edit_response
       )
 
-      insert(text)
       screen:expect {
         grid = [[
         #include <iostream>                     |
@@ -1449,6 +1450,7 @@ int main()
       },
     }) do
       it(test.it, function()
+        insert(test.text1)
         exec_lua(create_server_definition)
         exec_lua(
           [[
@@ -1484,8 +1486,6 @@ int main()
           test.response1,
           test.response2
         )
-
-        insert(test.text1)
 
         test.expected_screen1()
 

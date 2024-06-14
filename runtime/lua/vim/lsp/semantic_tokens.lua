@@ -412,7 +412,7 @@ end
 function STHighlighter:on_win(topline, botline)
   for client_id, state in pairs(self.client_state) do
     local current_result = state.current_result
-    if current_result.version and current_result.version == util.buf_versions[self.bufnr] then
+    if current_result.version == util.buf_versions[self.bufnr] then
       if not current_result.namespace_cleared then
         api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
         current_result.namespace_cleared = true
