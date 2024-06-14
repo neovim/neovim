@@ -1635,18 +1635,16 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       if (stcp == NULL) {
         break;
       }
-      bool fold = opt == STL_FOLDCOL;
-      int fdc = fold ? compute_foldcolumn(wp, 0) : 0;
-      int width = fold ? fdc > 0 : wp->w_scwidth;
+      int fdc = opt == STL_FOLDCOL ? compute_foldcolumn(wp, 0) : 0;
+      int width = opt == STL_FOLDCOL ? fdc > 0 : wp->w_scwidth;
 
       if (width <= 0) {
         break;
       }
       foldsignitem = curitem;
 
-      char *p = NULL;
-      if (fold) {
-        schar_T fold_buf[10];
+      if (fdc > 0) {
+        schar_T fold_buf[9];
         fill_foldcolumn(wp, stcp->foldinfo, (linenr_T)get_vim_var_nr(VV_LNUM),
                         0, fdc, NULL, fold_buf);
         stl_items[curitem].minwid = -((stcp->use_cul ? HLF_CLF : HLF_FC) + 1);
@@ -1654,31 +1652,26 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         // TODO(bfredl): this is very backwards. we must support schar_T
         // being used directly in 'statuscolumn'
         for (int i = 0; i < fdc; i++) {
-          buflen += schar_get(out_p + buflen, fold_buf[i]);
+          buflen += schar_get(buf_tmp + buflen, fold_buf[i]);
         }
-        p = out_p;
       }
 
-      char buf[SIGN_WIDTH * MAX_SCHAR_SIZE];
-      size_t buflen = 0;
-      varnumber_T virtnum = get_vim_var_nr(VV_VIRTNUM);
+      size_t signlen = 0;
       for (int i = 0; i < width; i++) {
-        if (!fold) {
-          SignTextAttrs *sattr = virtnum ? NULL : &stcp->sattrs[i];
-          p = "  ";
-          if (sattr && sattr->text[0]) {
-            describe_sign_text(buf, sattr->text);
-            p = buf;
+        stl_items[curitem].start = out_p + signlen;
+        if (fdc == 0) {
+          if (stcp->sattrs[i].text[0] && get_vim_var_nr(VV_VIRTNUM) == 0) {
+            SignTextAttrs sattrs = stcp->sattrs[i];
+            signlen += describe_sign_text(buf_tmp + signlen, sattrs.text);
+            stl_items[curitem].minwid = -(stcp->sign_cul_id ? stcp->sign_cul_id : sattrs.hl_id);
+          } else {
+            buf_tmp[signlen++] = ' ';
+            buf_tmp[signlen++] = ' ';
+            buf_tmp[signlen] = NUL;
+            stl_items[curitem].minwid = -((stcp->use_cul ? HLF_CLS : HLF_SC) + 1);
           }
-          stl_items[curitem].minwid = -(sattr && sattr->text[0]
-                                        ? (stcp->sign_cul_id ? stcp->sign_cul_id : sattr->hl_id)
-                                        : (stcp->use_cul ? HLF_CLS : HLF_SC) + 1);
         }
-        stl_items[curitem].type = Highlight;
-        stl_items[curitem].start = out_p + buflen;
-        xstrlcpy(buf_tmp + buflen, p, TMPLEN - buflen);
-        buflen += strlen(p);
-        curitem++;
+        stl_items[curitem++].type = Highlight;
       }
       str = buf_tmp;
       break;
