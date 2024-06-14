@@ -345,12 +345,19 @@ describe('search highlighting', function()
       bar baz foo
       bar foo baz]])
     feed('/foo')
+    screen:set_default_attr_ids({
+      [1] = { bold = true, foreground = Screen.colors.Blue },
+      [2] = { background = Screen.colors.Yellow }, -- Search
+      [3] = { reverse = true },
+      [4] = { bold = true, reverse = true },
+      [5] = { foreground = Screen.colors.White, background = Screen.colors.DarkGreen },
+    })
     screen:expect([[
       {3:foo} bar baz         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
       bar baz {2:foo}         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
       bar {2:foo} baz         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
       {1:~                   }│{MATCH:.*}|*2
-      {5:[No Name] [+]        }{3:term               }|
+      {4:[No Name] [+]        }{5:term               }|
       /foo^                                    |
     ]])
   end)

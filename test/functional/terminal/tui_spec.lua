@@ -1056,6 +1056,11 @@ describe('TUI', function()
     if is_ci('github') then
       pending('tty-test complains about not owning the terminal -- actions/runner#241')
     end
+    screen:set_default_attr_ids({
+      [1] = { reverse = true }, -- focused cursor
+      [3] = { bold = true },
+      [19] = { bold = true, background = 121, foreground = 0 }, -- StatusLineTerm
+    })
     child_exec_lua('vim.o.statusline="^^^^^^^"')
     child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
     feed_data('i')
@@ -1063,7 +1068,7 @@ describe('TUI', function()
       tty ready                                         |
       {1: }                                                 |
                                                         |*2
-      {5:^^^^^^^                                           }|
+      {19:^^^^^^^                                           }|
       {3:-- TERMINAL --}                                    |*2
     ]])
     feed_data('\027[200~')
@@ -1073,7 +1078,7 @@ describe('TUI', function()
       tty ready                                         |
       hallo{1: }                                            |
                                                         |*2
-      {5:^^^^^^^                                           }|
+      {19:^^^^^^^                                           }|
       {3:-- TERMINAL --}                                    |*2
     ]])
   end)
@@ -1548,10 +1553,32 @@ describe('TUI', function()
     screen:set_rgb_cterm(true)
     screen:set_default_attr_ids({
       [1] = { { reverse = true }, { reverse = true } },
-      [2] = { { bold = true, reverse = true }, { bold = true, reverse = true } },
+      [2] = {
+        { bold = true, background = Screen.colors.LightGreen, foreground = Screen.colors.Black },
+        { bold = true },
+      },
       [3] = { { bold = true }, { bold = true } },
       [4] = { { fg_indexed = true, foreground = tonumber('0xe0e000') }, { foreground = 3 } },
       [5] = { { foreground = tonumber('0xff8000') }, {} },
+      [6] = {
+        {
+          fg_indexed = true,
+          bg_indexed = true,
+          bold = true,
+          background = tonumber('0x66ff99'),
+          foreground = Screen.colors.Black,
+        },
+        { bold = true, background = 121, foreground = 0 },
+      },
+      [7] = {
+        {
+          fg_indexed = true,
+          bg_indexed = true,
+          background = tonumber('0x66ff99'),
+          foreground = Screen.colors.Black,
+        },
+        { background = 121, foreground = 0 },
+      },
     })
 
     child_exec_lua('vim.o.statusline="^^^^^^^"')
@@ -1586,7 +1613,7 @@ describe('TUI', function()
       {1:t}ty ready                                         |
       {4:text}colortext                                     |
                                                         |*2
-      {2:^^^^^^^                                           }|
+      {6:^^^^^^^}{7:                                           }|
       :set notermguicolors                              |
       {3:-- TERMINAL --}                                    |
     ]],
@@ -1973,6 +2000,7 @@ describe('TUI', function()
       [3] = { bold = true },
       [4] = { foreground = tonumber('0x4040ff'), fg_indexed = true },
       [5] = { bold = true, reverse = true },
+      [6] = { foreground = Screen.colors.White, background = Screen.colors.DarkGreen },
     })
     screen:attach()
     fn.termopen({
@@ -1998,7 +2026,7 @@ describe('TUI', function()
       {2:~                        }│{4:~                       }|*5
       {2:~                        }│{5:[No Name]   0,0-1    All}|
       {2:~                        }│                        |
-      {5:new                       }{1:{MATCH:<.*[/\]nvim }}|
+      {5:new                       }{6:{MATCH:<.*[/\]nvim }}|
                                                         |
     ]])
   end)
