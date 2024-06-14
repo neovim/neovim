@@ -2620,6 +2620,13 @@ func Test_complete_fuzzy_match()
   call feedkeys("S\<C-x>\<C-o>fb\<C-p>\<C-p>\<C-p>\<C-p>", 'tx')
   call assert_equal('fooBaz', g:word)
 
+  func Comp()
+    call complete(col('.'), ["fooBaz", "foobar", "foobala"])
+    return ''
+  endfunc
+  call feedkeys("i\<C-R>=Comp()\<CR>", 'tx')
+  call assert_equal('fooBaz', g:word)
+
   " respect noselect
   set completeopt+=noselect
   call feedkeys("S\<C-x>\<C-o>fb", 'tx')
@@ -2635,6 +2642,7 @@ func Test_complete_fuzzy_match()
   augroup! AAAAA_Group
   delfunc OnPumChange
   delfunc Omni_test
+  delfunc Comp
   unlet g:item
   unlet g:word
 endfunc

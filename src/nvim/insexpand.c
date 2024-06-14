@@ -1162,6 +1162,7 @@ static int ins_compl_build_pum(void)
   // Need to build the popup menu list.
   compl_match_arraysize = 0;
   compl_T *comp = compl_first_match;
+  compl_T *after_first_compl = NULL;
 
   // If it's user complete function and refresh_always,
   // do not use "compl_leader" as prefix filter.
@@ -1230,6 +1231,9 @@ static int ins_compl_build_pum(void)
         }
         cur = i;
       } else if (compl_fuzzy_match) {
+        if (i == 0) {
+          after_first_compl = comp;
+        }
         // Update the maximum fuzzy score and the shown match
         // if the current item's score is higher
         if (comp->cp_score > max_fuzzy_score) {
@@ -1248,6 +1252,9 @@ static int ins_compl_build_pum(void)
                 || (compl_leader == NULL || lead_len == 0))) {
           shown_match_ok = true;
           cur = 0;
+          if (match_at_original_text(compl_shown_match)) {
+            compl_shown_match = after_first_compl;
+          }
         }
       }
 
