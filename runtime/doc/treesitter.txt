@@ -22,9 +22,11 @@ search for in the `parser` runtime directory.
 
 Nvim includes these parsers:
 
+- Bash
 - C
 - Lua
 - Markdown
+- Python
 - Vimscript
 - Vimdoc
 - Treesitter query files |ft-query-plugin|

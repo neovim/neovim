@@ -4986,7 +4986,6 @@ IncSearch	'incsearch' highlighting; also used for the text replaced with
 		":s///c".
 							*hl-Substitute*
 Substitute	|:substitute| replacement text highlighting.
-
 							*hl-LineNr*
 LineNr		Line number for ":number" and ":#" commands, and when 'number'
 		or 'relativenumber' option is set.
@@ -5006,7 +5005,6 @@ CursorLineSign	Like SignColumn when 'cursorline' is set for the cursor line.
 							*hl-MatchParen*
 MatchParen	Character under the cursor or just before it, if it
 		is a paired bracket, and its match. |pi_paren.txt|
-
 							*hl-ModeMsg*
 ModeMsg		'showmode' message (e.g., "-- INSERT --").
 							*hl-MsgArea*
@@ -5052,7 +5050,7 @@ PmenuThumb	Popup menu: Thumb of the scrollbar.
 Question	|hit-enter| prompt and yes/no questions.
 							*hl-QuickFixLine*
 QuickFixLine	Current |quickfix| item in the quickfix window. Combined with
-                |hl-CursorLine| when the cursor is there.
+		|hl-CursorLine| when the cursor is there.
 							*hl-Search*
 Search		Last search pattern highlighting (see 'hlsearch').
 		Also used for similar items that need to stand out.
