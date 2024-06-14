@@ -320,9 +320,8 @@ ptrdiff_t file_write(FileDescriptor *const fp, const char *const buf, const size
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
   assert(fp->wr);
-  ptrdiff_t space = (fp->buffer + ARENA_BLOCK_SIZE) - fp->write_pos;
   // includes the trivial case of size==0
-  if (size < (size_t)space) {
+  if (size < file_space(fp)) {
     memcpy(fp->write_pos, buf, size);
     fp->write_pos += size;
     return (ptrdiff_t)size;

@@ -548,10 +548,6 @@ String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col
 
 void api_free_string(String value)
 {
-  if (!value.data) {
-    return;
-  }
-
   xfree(value.data);
 }
 

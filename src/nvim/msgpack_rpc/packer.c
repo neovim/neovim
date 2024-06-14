@@ -10,8 +10,7 @@
 
 static void check_buffer(PackerBuffer *packer)
 {
-  ptrdiff_t remaining = packer->endptr - packer->ptr;
-  if (remaining < MPACK_ITEM_SIZE) {
+  if (mpack_remaining(packer) < MPACK_ITEM_SIZE) {
     packer->packer_flush(packer);
   }
 }
@@ -28,15 +27,20 @@ static void mpack_w8(char **b, const char *data)
 #endif
 }
 
+void mpack_uint64(char **ptr, uint64_t i)
+{
+  if (i > 0xfffffff) {
+    mpack_w(ptr, 0xcf);
+    mpack_w8(ptr, (char *)&i);
+  } else {
+    mpack_uint(ptr, (uint32_t)i);
+  }
+}
+
 void mpack_integer(char **ptr, Integer i)
 {
   if (i >= 0) {
-    if (i > 0xfffffff) {
-      mpack_w(ptr, 0xcf);
-      mpack_w8(ptr, (char *)&i);
-    } else {
-      mpack_uint(ptr, (uint32_t)i);
-    }
+    mpack_uint64(ptr, (uint64_t)i);
   } else {
     if (i < -0x80000000LL) {
       mpack_w(ptr, 0xd3);
@@ -80,11 +84,16 @@ void mpack_str(String str, PackerBuffer *packer)
     abort();
   }
 
+  mpack_raw(str.data, len, packer);
+}
+
+void mpack_raw(char *data, size_t len, PackerBuffer *packer)
+{
   size_t pos = 0;
   while (pos < len) {
     ptrdiff_t remaining = packer->endptr - packer->ptr;
     size_t to_copy = MIN(len - pos, (size_t)remaining);
-    memcpy(packer->ptr, str.data + pos, to_copy);
+    memcpy(packer->ptr, data + pos, to_copy);
     packer->ptr += to_copy;
     pos += to_copy;
 
