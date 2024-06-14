@@ -44,8 +44,13 @@
 " - job_info && term_getjob -> nvim_get_chan_info
 " - balloon -> vim.lsp.util.open_floating_preview
 
+func s:Echoerr(msg)
+  echohl ErrorMsg | echom '[termdebug] ' .. a:msg | echohl None
+endfunc
+
 " In case this gets sourced twice.
 if exists(':Termdebug')
+  call s:Echoerr('Termdebug already loaded.')
   finish
 endif
 
@@ -67,8 +72,8 @@ command -nargs=+ -complete=file -bang TermdebugCommand call s:StartDebugCommand(
 let s:pc_id = 12
 let s:asm_id = 13
 let s:break_id = 14  " breakpoint number is added to this
-let s:stopped = 1
-let s:running = 0
+let s:stopped = v:true
+let s:running = v:false
 
 let s:parsing_disasm_msg = 0
 let s:asm_lines = []
@@ -121,10 +126,6 @@ func s:GetCommand()
   return type(cmd) == v:t_list ? copy(cmd) : [cmd]
 endfunc
 
-func s:Echoerr(msg)
-  echohl ErrorMsg | echom '[termdebug] ' .. a:msg | echohl None
-endfunc
-
 func s:StartDebug(bang, ...)
   " First argument is the command to debug, second core file or process ID.
   call s:StartDebug_internal({'gdb_args': a:000, 'bang': a:bang})
@@ -149,9 +150,9 @@ func s:StartDebug_internal(dict)
   let s:ptywin = 0
   let s:pid = 0
   let s:asmwin = 0
-  let s:asmbuf = 0
+  let s:asmbufnr = 0
   let s:varwin = 0
-  let s:varbuf = 0
+  let s:varbufnr = 0
 
   if exists('#User#TermdebugStartPre')
     doauto <nomodeline> User TermdebugStartPre
@@ -168,7 +169,7 @@ func s:StartDebug_internal(dict)
   let s:signcolumn_buflist = [bufnr()]
 
   let s:save_columns = 0
-  let s:allleft = 0
+  let s:allleft = v:false
   let wide = 0
   if exists('g:termdebug_config')
     let wide = get(g:termdebug_config, 'wide', 0)
@@ -181,11 +182,11 @@ func s:StartDebug_internal(dict)
       let &columns = wide
       " If we make the Vim window wider, use the whole left half for the debug
       " windows.
-      let s:allleft = 1
+      let s:allleft = v:true
     endif
-    let s:vertical = 1
+    let s:vertical = v:true
   else
-    let s:vertical = 0
+    let s:vertical = v:false
   endif
 
   " Override using a terminal window by setting g:termdebug_use_prompt to 1.
@@ -226,24 +227,24 @@ endfunc
 
 " Use when debugger didn't start or ended.
 func s:CloseBuffers()
-  exe 'bwipe! ' . s:ptybuf
-  if s:asmbuf > 0 && bufexists(s:asmbuf)
-    exe 'bwipe! ' . s:asmbuf
+  exe 'bwipe! ' . s:ptybufnr
+  if s:asmbufnr > 0 && bufexists(s:asmbufnr)
+    exe 'bwipe! ' . s:asmbufnr
   endif
-  if s:varbuf > 0 && bufexists(s:varbuf)
-    exe 'bwipe! ' . s:varbuf
+  if s:varbufnr > 0 && bufexists(s:varbufnr)
+    exe 'bwipe! ' . s:varbufnr
   endif
-  let s:running = 0
+  let s:running = v:false
   unlet! s:gdbwin
 endfunc
 
-func s:CheckGdbRunning()
+func s:IsGdbStarted()
   if !s:gdb_running
     call s:Echoerr(string(s:GetCommand()[0]) . ' exited unexpectedly')
     call s:CloseBuffers()
-    return ''
+    return v:false
   endif
-  return 'ok'
+  return v:true
 endfunc
 
 " Open a terminal window without a job, to run the debugged program in.
@@ -258,7 +259,7 @@ func s:StartDebug_term(dict)
     return
   endif
   let pty_job_info = nvim_get_chan_info(s:pty_job_id)
-  let s:ptybuf = pty_job_info['buffer']
+  let s:ptybufnr = pty_job_info['buffer']
   let pty = pty_job_info['pty']
   let s:ptywin = win_getid()
   if s:vertical
@@ -279,11 +280,11 @@ func s:StartDebug_term(dict)
   " hide terminal buffer
   if s:comm_job_id == 0
     call s:Echoerr('Invalid argument (or job table is full) while opening communication terminal window')
-    exe 'bwipe! ' . s:ptybuf
+    exe 'bwipe! ' . s:ptybufnr
     return
   elseif s:comm_job_id == -1
     call s:Echoerr('Failed to open the communication terminal window')
-    exe 'bwipe! ' . s:ptybuf
+    exe 'bwipe! ' . s:ptybufnr
     return
   endif
   let comm_job_info = nvim_get_chan_info(s:comm_job_id)
@@ -324,7 +325,7 @@ func s:StartDebug_term(dict)
   let s:gdb_job_id = termopen(gdb_cmd, {'on_exit': function('s:EndTermDebug')})
   if s:gdb_job_id == 0
     call s:Echoerr('Invalid argument (or job table is full) while opening gdb terminal window')
-    exe 'bwipe! ' . s:ptybuf
+    exe 'bwipe! ' . s:ptybufnr
     return
   elseif s:gdb_job_id == -1
     call s:Echoerr('Failed to open the gdb terminal window')
@@ -334,18 +335,18 @@ func s:StartDebug_term(dict)
   let s:gdb_running = v:true
   let s:starting = v:true
   let gdb_job_info = nvim_get_chan_info(s:gdb_job_id)
-  let s:gdbbuf = gdb_job_info['buffer']
+  let s:gdbbufnr = gdb_job_info['buffer']
   let s:gdbwin = win_getid()
 
   " Wait for the "startupdone" message before sending any commands.
   let try_count = 0
   while 1
-    if s:CheckGdbRunning() != 'ok'
+    if !s:IsGdbStarted()
       return
     endif
 
     for lnum in range(1, 200)
-      if get(getbufline(s:gdbbuf, lnum), 0, '') =~ 'startupdone'
+      if get(getbufline(s:gdbbufnr, lnum), 0, '') =~ 'startupdone'
         let try_count = 9999
         break
       endif
@@ -371,14 +372,14 @@ func s:StartDebug_term(dict)
   " why the debugger doesn't work.
   let try_count = 0
   while 1
-    if s:CheckGdbRunning() != 'ok'
+    if !s:IsGdbStarted()
       return
     endif
 
     let response = ''
     for lnum in range(1, 200)
-      let line1 = get(getbufline(s:gdbbuf, lnum), 0, '')
-      let line2 = get(getbufline(s:gdbbuf, lnum + 1), 0, '')
+      let line1 = get(getbufline(s:gdbbufnr, lnum), 0, '')
+      let line2 = get(getbufline(s:gdbbufnr, lnum + 1), 0, '')
       if line1 =~ 'new-ui mi '
         " response can be in the same line or the next line
         let response = line1 . line2
@@ -472,7 +473,7 @@ func s:StartDebug_prompt(dict)
         \ })
   if s:gdbjob == 0
     call s:Echoerr('Invalid argument (or job table is full) while starting gdb job')
-    exe 'bwipe! ' . s:ptybuf
+    exe 'bwipe! ' . s:ptybufnr
     return
   elseif s:gdbjob == -1
     call s:Echoerr('Failed to start the gdb job')
@@ -481,7 +482,7 @@ func s:StartDebug_prompt(dict)
   endif
   exe $'au BufUnload <buffer={s:promptbuf}> ++once call jobstop(s:gdbjob)'
 
-  let s:ptybuf = 0
+  let s:ptybufnr = 0
   if has('win32')
     " MS-Windows: run in a new console window for maximum compatibility
     call s:SendCommand('set new-console on')
@@ -498,7 +499,7 @@ func s:StartDebug_prompt(dict)
       return
     endif
     let pty_job_info = nvim_get_chan_info(s:pty_job_id)
-    let s:ptybuf = pty_job_info['buffer']
+    let s:ptybufnr = pty_job_info['buffer']
     let pty = pty_job_info['pty']
     let s:ptywin = win_getid()
     call s:SendCommand('tty ' . pty)
@@ -602,7 +603,7 @@ endfunc
 func s:SendResumingCommand(cmd)
   if s:stopped
     " reset s:stopped here, it may take a bit of time before we get a response
-    let s:stopped = 0
+    let s:stopped = v:false
     " call ch_log('assume that program is running after this command')
     call s:SendCommand(a:cmd)
   " else
@@ -776,16 +777,16 @@ endfunc
 func s:EndDebugCommon()
   let curwinid = win_getid()
 
-  if exists('s:ptybuf') && s:ptybuf
-    exe 'bwipe! ' . s:ptybuf
+  if exists('s:ptybufnr') && s:ptybufnr
+    exe 'bwipe! ' . s:ptybufnr
   endif
-  if s:asmbuf > 0 && bufexists(s:asmbuf)
-    exe 'bwipe! ' . s:asmbuf
+  if s:asmbufnr > 0 && bufexists(s:asmbufnr)
+    exe 'bwipe! ' . s:asmbufnr
   endif
-  if s:varbuf > 0 && bufexists(s:varbuf)
-    exe 'bwipe! ' . s:varbuf
+  if s:varbufnr > 0 && bufexists(s:varbufnr)
+    exe 'bwipe! ' . s:varbufnr
   endif
-  let s:running = 0
+  let s:running = v:false
 
   " Restore 'signcolumn' in all buffers for which it was set.
   call win_gotoid(s:sourcewin)
@@ -1186,7 +1187,7 @@ endfunc
 func s:Until(at)
   if s:stopped
     " reset s:stopped here, it may take a bit of time before we get a response
-    let s:stopped = 0
+    let s:stopped = v:false
     " call ch_log('assume that program is running after this command')
     " Use the fname:lnum format
     let at = empty(a:at) ?
@@ -1322,9 +1323,9 @@ func s:Evaluate(range, arg)
     return
   endif
   let expr = s:GetEvaluationExpression(a:range, a:arg)
-  let s:evalFromBalloonExpr = 1
+  let s:evalFromBalloonExpr = v:true
   let s:evalFromBalloonExprResult = ''
-  let s:ignoreEvalError = 0
+  let s:ignoreEvalError = v:false
   call s:SendEval(expr)
 endfunc
 
@@ -1343,12 +1344,12 @@ func s:GetEvaluationExpression(range, arg)
     let expr = s:CleanupExpr(@v)
     call setpos('.', pos)
     call setreg('v', reg, regt)
-    let s:evalFromBalloonExpr = 1
+    let s:evalFromBalloonExpr = v:true
   else
     " no evaluation provided: get from C-expression under cursor
     " TODO: allow filetype specific lookup #9057
     let expr = expand('<cexpr>')
-    let s:evalFromBalloonExpr = 1
+    let s:evalFromBalloonExpr = v:true
   endif
   return expr
 endfunc
@@ -1376,8 +1377,8 @@ func s:CleanupExpr(expr)
   return expr
 endfunc
 
-let s:ignoreEvalError = 0
-let s:evalFromBalloonExpr = 0
+let s:ignoreEvalError = v:false
+let s:evalFromBalloonExpr = v:false
 let s:evalFromBalloonExprResult = ''
 
 let s:eval_float_win_id = -1
@@ -1419,7 +1420,7 @@ func s:HandleEvaluate(msg)
 
   if s:evalexpr[0] != '*' && value =~ '^0x' && value != '0x0' && value !~ '"$'
     " Looks like a pointer, also display what it points to.
-    let s:ignoreEvalError = 1
+    let s:ignoreEvalError = v:true
     call s:SendEval('*' . s:evalexpr)
   endif
 endfunc
@@ -1428,8 +1429,8 @@ endfunc
 func s:HandleError(msg)
   if s:ignoreEvalError
     " Result of s:SendEval() failed, ignore.
-    let s:ignoreEvalError = 0
-    let s:evalFromBalloonExpr = 0
+    let s:ignoreEvalError = v:false
+    let s:evalFromBalloonExpr = v:false
     return
   endif
   let msgVal = substitute(a:msg, '.*msg="\(.*\)"', '\1', '')
@@ -1489,11 +1490,11 @@ func s:GotoAsmwinOrCreateIt()
     setlocal signcolumn=no
     setlocal modifiable
 
-    if s:asmbuf > 0 && bufexists(s:asmbuf)
-      exe 'buffer' . s:asmbuf
+    if s:asmbufnr > 0 && bufexists(s:asmbufnr)
+      exe 'buffer' . s:asmbufnr
     elseif empty(glob('Termdebug-asm-listing'))
       silent file Termdebug-asm-listing
-      let s:asmbuf = bufnr('Termdebug-asm-listing')
+      let s:asmbufnr = bufnr('Termdebug-asm-listing')
     else
       call s:Echoerr("You have a file/folder named 'Termdebug-asm-listing'.
           \ Please exit and rename it because Termdebug may not work as expected.")
@@ -1561,11 +1562,11 @@ func s:GotoVariableswinOrCreateIt()
     setlocal signcolumn=no
     setlocal modifiable
 
-    if s:varbuf > 0 && bufexists(s:varbuf)
-      exe 'buffer' . s:varbuf
+    if s:varbufnr > 0 && bufexists(s:varbufnr)
+      exe 'buffer' . s:varbufnr
     elseif empty(glob('Termdebug-variables-listing'))
       silent file Termdebug-variables-listing
-      let s:varbuf = bufnr('Termdebug-variables-listing')
+      let s:varbufnr = bufnr('Termdebug-variables-listing')
     else
       call s:Echoerr("You have a file/folder named 'Termdebug-variables-listing'.
           \ Please exit and rename it because Termdebug may not work as expected.")
@@ -1588,14 +1589,14 @@ func s:HandleCursor(msg)
 
   if a:msg =~ '^\*stopped'
     "call ch_log('program stopped')
-    let s:stopped = 1
+    let s:stopped = v:true
     if a:msg =~ '^\*stopped,reason="exited-normally"'
-      let s:running = 0
+      let s:running = v:false
     endif
   elseif a:msg =~ '^\*running'
     "call ch_log('program running')
-    let s:stopped = 0
-    let s:running = 1
+    let s:stopped = v:false
+    let s:running = v:true
   endif
 
   if a:msg =~ 'fullname='

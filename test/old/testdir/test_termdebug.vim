@@ -340,5 +340,16 @@ func Test_termdebug_bufnames()
   unlet g:termdebug_config
 endfunc
 
+function Test_termdebug_save_restore_variables()
+  let &mousemodel=''
+  Termdebug
+  call WaitForAssert({-> assert_equal(3, winnr('$'))})
+  call WaitForAssert({-> assert_match(&mousemodel, 'popup_setpos')})
+  wincmd t
+  quit!
+  call WaitForAssert({-> assert_equal(1, winnr('$'))})
+  call WaitForAssert({-> assert_true(empty(&mousemodel))})
+endfunction
+
 
 " vim: shiftwidth=2 sts=2 expandtab
