@@ -4597,14 +4597,14 @@ describe('builtin popupmenu', function()
             endif
             return {
                   \ 'words': [
-                  \ { 'word': 'foo',},
-                  \ { 'word': 'foobar',},
-                  \ { 'word': 'fooBaz',},
-                  \ { 'word': 'foobala',},
-                  \ { 'word': '你好',},
-                  \ { 'word': '你好吗',},
-                  \ { 'word': '你不好吗',},
-                  \ { 'word': '你可好吗',},
+                  \ { 'word': 'foo', 'kind': 'fookind' },
+                  \ { 'word': 'foobar', 'kind': 'fookind' },
+                  \ { 'word': 'fooBaz', 'kind': 'fookind' },
+                  \ { 'word': 'foobala', 'kind': 'fookind' },
+                  \ { 'word': '你好' },
+                  \ { 'word': '你好吗' },
+                  \ { 'word': '你不好吗' },
+                  \ { 'word': '你可好吗' },
                   \]}
           endfunc
           set omnifunc=Omni_test
@@ -4615,14 +4615,14 @@ describe('builtin popupmenu', function()
         feed('i<C-X><C-O>')
         local pum_start = [[
           ^                                |
-          {s:foo            }{1:                 }|
-          {n:foobar         }{1:                 }|
-          {n:fooBaz         }{1:                 }|
-          {n:foobala        }{1:                 }|
-          {n:你好           }{1:                 }|
-          {n:你好吗         }{1:                 }|
-          {n:你不好吗       }{1:                 }|
-          {n:你可好吗       }{1:                 }|
+          {s:foo      fookind }{1:               }|
+          {n:foobar   fookind }{1:               }|
+          {n:fooBaz   fookind }{1:               }|
+          {n:foobala  fookind }{1:               }|
+          {n:你好             }{1:               }|
+          {n:你好吗           }{1:               }|
+          {n:你不好吗         }{1:               }|
+          {n:你可好吗         }{1:               }|
           {1:~                               }|*10
           {2:-- }{5:match 1 of 8}                 |
         ]]
@@ -4630,10 +4630,10 @@ describe('builtin popupmenu', function()
         feed('fo')
         screen:expect([[
           fo^                              |
-          {ms:fo}{s:o            }{1:                 }|
-          {mn:fo}{n:obar         }{1:                 }|
-          {mn:fo}{n:oBaz         }{1:                 }|
-          {mn:fo}{n:obala        }{1:                 }|
+          {ms:fo}{s:o     fookind }{1:                }|
+          {mn:fo}{n:obar  fookind }{1:                }|
+          {mn:fo}{n:oBaz  fookind }{1:                }|
+          {mn:fo}{n:obala fookind }{1:                }|
           {1:~                               }|*14
           {2:-- }{5:match 1 of 8}                 |
         ]])
@@ -4664,24 +4664,24 @@ describe('builtin popupmenu', function()
         feed('S<C-X><C-O>')
         screen:expect([[
                                          ^ |
-          {1:                 }{s:            oof}|
-          {1:                 }{n:         raboof}|
-          {1:                 }{n:         zaBoof}|
-          {1:                 }{n:        alaboof}|
-          {1:                 }{n:           好你}|
-          {1:                 }{n:         吗好你}|
-          {1:                 }{n:       吗好不你}|
-          {1:                 }{n:       吗好可你}|
+          {1:               }{s:  dnikoof     oof}|
+          {1:               }{n:  dnikoof  raboof}|
+          {1:               }{n:  dnikoof  zaBoof}|
+          {1:               }{n:  dnikoof alaboof}|
+          {1:               }{n:             好你}|
+          {1:               }{n:           吗好你}|
+          {1:               }{n:         吗好不你}|
+          {1:               }{n:         吗好可你}|
           {1:                               ~}|*10
           {2:-- }{5:match 1 of 8}                 |
         ]])
         feed('fo')
         screen:expect([[
                                        ^ of|
-          {1:                 }{s:            o}{ms:of}|
-          {1:                 }{n:         rabo}{mn:of}|
-          {1:                 }{n:         zaBo}{mn:of}|
-          {1:                 }{n:        alabo}{mn:of}|
+          {1:                }{s:  dnikoof    o}{ms:of}|
+          {1:                }{n:  dnikoof rabo}{mn:of}|
+          {1:                }{n:  dnikoof zaBo}{mn:of}|
+          {1:                }{n:  dnikoofalabo}{mn:of}|
           {1:                               ~}|*14
           {2:-- }{5:match 1 of 8}                 |
         ]])
@@ -4694,10 +4694,10 @@ describe('builtin popupmenu', function()
         feed('fo')
         screen:expect([[
           fo^                              |
-          {ms:fo}{s:o            }{1:                 }|
-          {mn:fo}{n:obar         }{1:                 }|
-          {mn:fo}{n:oBaz         }{1:                 }|
-          {mn:fo}{n:obala        }{1:                 }|
+          {ms:fo}{s:o     fookind }{1:                }|
+          {mn:fo}{n:obar  fookind }{1:                }|
+          {mn:fo}{n:oBaz  fookind }{1:                }|
+          {mn:fo}{n:obala fookind }{1:                }|
           {1:~                               }|*14
           {2:-- }{5:match 1 of 8}                 |
         ]])

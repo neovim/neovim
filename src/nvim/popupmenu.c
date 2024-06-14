@@ -438,14 +438,14 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 }
 
 /// Displays text on the popup menu with specific attributes.
-static void pum_puts_with_attr(int col, char *text, int attr)
+static void pum_puts_with_attr(int col, char *text, hlf_T hlf)
 {
   char *leader = ins_compl_leader();
 
-  if (leader == NULL || *leader == NUL
+  if (leader == NULL || *leader == NUL || (hlf != HLF_PSI && hlf != HLF_PNI)
       || (win_hl_attr(curwin, HLF_PMSI) == win_hl_attr(curwin, HLF_PSI)
           && win_hl_attr(curwin, HLF_PMNI) == win_hl_attr(curwin, HLF_PNI))) {
-    grid_line_puts(col, text, -1, attr);
+    grid_line_puts(col, text, -1, win_hl_attr(curwin, (int)hlf));
     return;
   }
 
@@ -468,7 +468,7 @@ static void pum_puts_with_attr(int col, char *text, int attr)
   while (*ptr != NUL) {
     int char_len = utfc_ptr2len(ptr);
     int cells = utf_ptr2cells(ptr);
-    int new_attr = attr;
+    int new_attr = win_hl_attr(curwin, (int)hlf);
 
     if (ga != NULL) {
       // Handle fuzzy matching
@@ -481,15 +481,13 @@ static void pum_puts_with_attr(int col, char *text, int attr)
           actual_char_pos++;
         }
         if (actual_char_pos == match_pos[0]) {
-          new_attr = win_hl_attr(curwin, (attr == win_hl_attr(curwin, HLF_PSI)
-                                          ? HLF_PMSI : HLF_PMNI));
+          new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
           break;
         }
       }
     } else if (!in_fuzzy && ptr < text + leader_len
                && strncmp(text, match_leader, leader_len) == 0) {
-      new_attr = win_hl_attr(curwin, (attr == win_hl_attr(curwin, HLF_PSI)
-                                      ? HLF_PMSI : HLF_PMNI));
+      new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
     }
 
     grid_line_puts(col, ptr, char_len, new_attr);
@@ -517,11 +515,9 @@ void pum_redraw(void)
   int thumb_height = 1;
   int n;
 
-#define HA(hlf) (win_hl_attr(curwin, (hlf)))
-  //                         "word"       "kind"       "extra text"
-  const int attrsNorm[3] = { HA(HLF_PNI), HA(HLF_PNK), HA(HLF_PNX) };
-  const int attrsSel[3] = { HA(HLF_PSI), HA(HLF_PSK), HA(HLF_PSX) };
-#undef HA
+  //                         "word"   "kind"   "extra text"
+  const hlf_T hlfsNorm[3] = { HLF_PNI, HLF_PNK, HLF_PNX };
+  const hlf_T hlfsSel[3] = { HLF_PSI, HLF_PSK, HLF_PSX };
 
   int grid_width = pum_width;
   int col_off = 0;
@@ -588,8 +584,9 @@ void pum_redraw(void)
 
   for (int i = 0; i < pum_height; i++) {
     int idx = i + pum_first;
-    const int *const attrs = (idx == pum_selected) ? attrsSel : attrsNorm;
-    int attr = attrs[0];  // start with "word" highlight
+    const hlf_T *const hlfs = (idx == pum_selected) ? hlfsSel : hlfsNorm;
+    hlf_T hlf = hlfs[0];  // start with "word" highlight
+    int attr = win_hl_attr(curwin, (int)hlf);
 
     grid_line_start(&pum_grid, row);
 
@@ -611,7 +608,8 @@ void pum_redraw(void)
     int totwidth = 0;
 
     for (int round = 0; round < 3; round++) {
-      attr = attrs[round];
+      hlf = hlfs[round];
+      attr = win_hl_attr(curwin, (int)hlf);
       int width = 0;
       char *s = NULL;
 
@@ -664,12 +662,12 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              pum_puts_with_attr(grid_col - size + 1, rt, attr);
+              pum_puts_with_attr(grid_col - size + 1, rt, hlf);
               xfree(rt_start);
               xfree(st);
               grid_col -= width;
             } else {
-              pum_puts_with_attr(grid_col, st, attr);
+              pum_puts_with_attr(grid_col, st, hlf);
               xfree(st);
               grid_col += width;
             }

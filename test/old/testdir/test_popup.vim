@@ -1358,14 +1358,14 @@ func Test_pum_highlights_match()
       endif
       return {
             \ 'words': [
-            \ { 'word': 'foo',},
-            \ { 'word': 'foobar',},
-            \ { 'word': 'fooBaz',},
-            \ { 'word': 'foobala',},
-            \ { 'word': '你好',},
-            \ { 'word': '你好吗',},
-            \ { 'word': '你不好吗',},
-            \ { 'word': '你可好吗',},
+            \ { 'word': 'foo', 'kind': 'fookind' },
+            \ { 'word': 'foobar', 'kind': 'fookind' },
+            \ { 'word': 'fooBaz', 'kind': 'fookind' },
+            \ { 'word': 'foobala', 'kind': 'fookind' },
+            \ { 'word': '你好' },
+            \ { 'word': '你好吗' },
+            \ { 'word': '你不好吗' },
+            \ { 'word': '你可好吗' },
             \]}
     endfunc
     set omnifunc=Omni_test
