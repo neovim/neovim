@@ -1388,6 +1388,12 @@ bool compl_match_curr_select(int selected)
 #define DICT_FIRST      (1)     ///< use just first element in "dict"
 #define DICT_EXACT      (2)     ///< "dict" is the exact name of a file
 
+/// Get current completion leader
+char *ins_compl_leader(void)
+{
+  return compl_leader;
+}
+
 /// Add any identifiers that match the given pattern "pat" in the list of
 /// dictionary files "dict_start" to the list of completions.
 ///

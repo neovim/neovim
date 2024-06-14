@@ -25,6 +25,7 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
+#include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -48,6 +49,7 @@
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
+#include "nvim/search.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -435,6 +437,73 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
   pum_redraw();
 }
 
+/// Displays text on the popup menu with specific attributes.
+static void pum_puts_with_attr(int col, char *text, hlf_T hlf)
+{
+  char *leader = ins_compl_leader();
+
+  if (leader == NULL || *leader == NUL || (hlf != HLF_PSI && hlf != HLF_PNI)
+      || (win_hl_attr(curwin, HLF_PMSI) == win_hl_attr(curwin, HLF_PSI)
+          && win_hl_attr(curwin, HLF_PMNI) == win_hl_attr(curwin, HLF_PNI))) {
+    grid_line_puts(col, text, -1, win_hl_attr(curwin, (int)hlf));
+    return;
+  }
+
+  char *rt_leader = NULL;
+  if (curwin->w_p_rl) {
+    rt_leader = reverse_text(leader);
+  }
+  char *match_leader = rt_leader != NULL ? rt_leader : leader;
+  size_t leader_len = strlen(match_leader);
+
+  const bool in_fuzzy = (get_cot_flags() & COT_FUZZY) != 0;
+
+  garray_T *ga = NULL;
+  if (in_fuzzy) {
+    ga = fuzzy_match_str_with_pos(text, match_leader);
+  }
+
+  // Render text with proper attributes
+  const char *ptr = text;
+  while (*ptr != NUL) {
+    int char_len = utfc_ptr2len(ptr);
+    int cells = utf_ptr2cells(ptr);
+    int new_attr = win_hl_attr(curwin, (int)hlf);
+
+    if (ga != NULL) {
+      // Handle fuzzy matching
+      for (int i = 0; i < ga->ga_len; i++) {
+        uint32_t *match_pos = ((uint32_t *)ga->ga_data) + i;
+        uint32_t actual_char_pos = 0;
+        const char *temp_ptr = text;
+        while (temp_ptr < ptr) {
+          temp_ptr += utfc_ptr2len(temp_ptr);
+          actual_char_pos++;
+        }
+        if (actual_char_pos == match_pos[0]) {
+          new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
+          break;
+        }
+      }
+    } else if (!in_fuzzy && ptr < text + leader_len
+               && strncmp(text, match_leader, leader_len) == 0) {
+      new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
+    }
+
+    grid_line_puts(col, ptr, char_len, new_attr);
+    col += cells;
+    ptr += char_len;
+  }
+
+  if (ga != NULL) {
+    ga_clear(ga);
+    xfree(ga);
+  }
+  if (rt_leader) {
+    xfree(rt_leader);
+  }
+}
+
 /// Redraw the popup menu, using "pum_first" and "pum_selected".
 void pum_redraw(void)
 {
@@ -446,11 +515,9 @@ void pum_redraw(void)
   int thumb_height = 1;
   int n;
 
-#define HA(hlf) (win_hl_attr(curwin, (hlf)))
-  //                         "word"       "kind"       "extra text"
-  const int attrsNorm[3] = { HA(HLF_PNI), HA(HLF_PNK), HA(HLF_PNX) };
-  const int attrsSel[3] = { HA(HLF_PSI), HA(HLF_PSK), HA(HLF_PSX) };
-#undef HA
+  //                         "word"   "kind"   "extra text"
+  const hlf_T hlfsNorm[3] = { HLF_PNI, HLF_PNK, HLF_PNX };
+  const hlf_T hlfsSel[3] = { HLF_PSI, HLF_PSK, HLF_PSX };
 
   int grid_width = pum_width;
   int col_off = 0;
@@ -517,8 +584,9 @@ void pum_redraw(void)
 
   for (int i = 0; i < pum_height; i++) {
     int idx = i + pum_first;
-    const int *const attrs = (idx == pum_selected) ? attrsSel : attrsNorm;
-    int attr = attrs[0];  // start with "word" highlight
+    const hlf_T *const hlfs = (idx == pum_selected) ? hlfsSel : hlfsNorm;
+    hlf_T hlf = hlfs[0];  // start with "word" highlight
+    int attr = win_hl_attr(curwin, (int)hlf);
 
     grid_line_start(&pum_grid, row);
 
@@ -540,7 +608,8 @@ void pum_redraw(void)
     int totwidth = 0;
 
     for (int round = 0; round < 3; round++) {
-      attr = attrs[round];
+      hlf = hlfs[round];
+      attr = win_hl_attr(curwin, (int)hlf);
       int width = 0;
       char *s = NULL;
 
@@ -593,13 +662,12 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              grid_line_puts(grid_col - size + 1, rt, -1, attr);
+              pum_puts_with_attr(grid_col - size + 1, rt, hlf);
               xfree(rt_start);
               xfree(st);
               grid_col -= width;
             } else {
-              // use grid_line_puts() to truncate the text
-              grid_line_puts(grid_col, st, -1, attr);
+              pum_puts_with_attr(grid_col, st, hlf);
               xfree(st);
               grid_col += width;
             }

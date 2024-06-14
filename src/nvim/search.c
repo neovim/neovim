@@ -21,12 +21,14 @@
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -3540,6 +3542,37 @@ int fuzzy_match_str(char *const str, const char *const pat)
   fuzzy_match(str, pat, true, &score, matchpos, sizeof(matchpos) / sizeof(matchpos[0]));
 
   return score;
+}
+
+/// Fuzzy match the position of string "pat" in string "str".
+/// @returns a dynamic array of matching positions. If there is no match, returns NULL.
+garray_T *fuzzy_match_str_with_pos(char *const str, const char *const pat)
+{
+  if (str == NULL || pat == NULL) {
+    return NULL;
+  }
+
+  garray_T *match_positions = xmalloc(sizeof(garray_T));
+  ga_init(match_positions, sizeof(uint32_t), 10);
+
+  unsigned matches[MAX_FUZZY_MATCHES];
+  int score = 0;
+  if (!fuzzy_match(str, pat, false, &score, matches, MAX_FUZZY_MATCHES)
+      || score == 0) {
+    ga_clear(match_positions);
+    xfree(match_positions);
+    return NULL;
+  }
+
+  int j = 0;
+  for (const char *p = pat; *p != NUL; MB_PTR_ADV(p)) {
+    if (!ascii_iswhite(utf_ptr2char(p))) {
+      GA_APPEND(uint32_t, match_positions, matches[j]);
+      j++;
+    }
+  }
+
+  return match_positions;
 }
 
 /// Copy a list of fuzzy matches into a string list after sorting the matches by

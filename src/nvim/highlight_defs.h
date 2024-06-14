@@ -101,6 +101,8 @@ typedef enum {
   HLF_SPL,        ///< SpellLocal
   HLF_PNI,        ///< popup menu normal item
   HLF_PSI,        ///< popup menu selected item
+  HLF_PMNI,       ///< popup menu matched text in normal item
+  HLF_PMSI,       ///< popup menu matched text in selected item
   HLF_PNK,        ///< popup menu normal item "kind"
   HLF_PSK,        ///< popup menu selected item "kind"
   HLF_PNX,        ///< popup menu normal item "menu" (extra text)
