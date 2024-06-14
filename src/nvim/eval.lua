@@ -7267,9 +7267,9 @@ M.funcs = {
       {flags} can contain these character flags:
        "p"	intermediate directories will be created as necessary
        "D"	{name} will be deleted at the end of the current
-      	function, but not recursively |defer|
+      	function, but not recursively |:defer|
        "R"	{name} will be deleted recursively at the end of the
-      	current function |defer|
+      	current function |:defer|
 
       Note that when {name} has more than one part and "p" is used
       some directories may already exist.  Only the first one that
