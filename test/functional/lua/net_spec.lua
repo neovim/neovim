@@ -65,10 +65,10 @@ describe('vim.net', function()
         local done, metadata, err
         vim.net.download("https://httpbingo.org/redirect/1", {
           download_location = path,
-          on_exit = function(err, metadata)
+          on_exit = function(err_, metadata_)
             done = true
-            metadata = metadata
-            err = err
+            metadata = metadata_
+            err = err_
           end
         })
 
@@ -95,10 +95,10 @@ describe('vim.net', function()
         vim.net.download("https://httpbingo.org/redirect/1", {
           download_location = path,
           follow_redirects = true,
-          on_exit = function(err, metadata)
+          on_exit = function(err_, metadata_)
             done = true
-            metadata = metadata
-            err = err
+            metadata = metadata_
+            err = err_
           end
         })
 
