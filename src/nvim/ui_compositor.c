@@ -101,6 +101,35 @@ bool ui_comp_should_draw(void)
   return composed_uis != 0 && valid_screen;
 }
 
+size_t ui_put_grid(ScreenGrid *grid, bool on_top)
+{
+  for (size_t i = 0; i < kv_size(layers); i++) {
+    if (kv_A(layers, i) == grid) {
+      return i;
+    }
+  }
+
+  size_t insert_at = kv_size(layers);
+  while (insert_at > 0 && kv_A(layers, insert_at - 1)->zindex > grid->zindex) {
+    insert_at--;
+  }
+
+  if (curwin && kv_A(layers, insert_at - 1) == &curwin->w_grid_alloc
+      && kv_A(layers, insert_at - 1)->zindex == grid->zindex
+      && !on_top) {
+    insert_at--;
+  }
+  // not found: new grid
+  kv_pushp(layers);
+  for (size_t i = kv_size(layers) - 1; i > insert_at; i--) {
+    kv_A(layers, i) = kv_A(layers, i - 1);
+    kv_A(layers, i)->comp_index = i;
+  }
+  kv_A(layers, insert_at) = grid;
+  grid->comp_index = insert_at;
+  return insert_at;
+}
+
 /// Places `grid` at (col,row) position with (width * height) size.
 /// Adds `grid` as the top layer if it is a new layer.
 ///
@@ -141,35 +170,9 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     grid->comp_col = col;
   } else {
     moved = true;
-#ifndef NDEBUG
-    for (size_t i = 0; i < kv_size(layers); i++) {
-      if (kv_A(layers, i) == grid) {
-        abort();
-      }
-    }
-#endif
-
-    size_t insert_at = kv_size(layers);
-    while (insert_at > 0 && kv_A(layers, insert_at - 1)->zindex > grid->zindex) {
-      insert_at--;
-    }
-
-    if (curwin && kv_A(layers, insert_at - 1) == &curwin->w_grid_alloc
-        && kv_A(layers, insert_at - 1)->zindex == grid->zindex
-        && !on_top) {
-      insert_at--;
-    }
-    // not found: new grid
-    kv_pushp(layers);
-    for (size_t i = kv_size(layers) - 1; i > insert_at; i--) {
-      kv_A(layers, i) = kv_A(layers, i - 1);
-      kv_A(layers, i)->comp_index = i;
-    }
-    kv_A(layers, insert_at) = grid;
-
+    ui_put_grid(grid, on_top);
     grid->comp_row = row;
     grid->comp_col = col;
-    grid->comp_index = insert_at;
   }
   if (moved && valid && ui_comp_should_draw()) {
     compose_area(grid->comp_row, grid->comp_row + grid->rows,

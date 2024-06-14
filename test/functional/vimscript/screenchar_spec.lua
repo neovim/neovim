@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
 local clear, eq, neq = n.clear, t.eq, t.neq
 local command, api, fn = n.command, n.api, n.fn
@@ -32,6 +33,51 @@ end
 describe('screenchar() and family respect floating windows', function()
   before_each(function()
     clear()
+    -- These commands result into visible text `aabc`.
+    -- `aab` - from floating windows, `c` - from text in regular window.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'cccc' })
+    setup_floating_windows()
+  end)
+
+  it('screenattr()', function()
+    local attr_1 = fn.screenattr(1, 1)
+    local attr_2 = fn.screenattr(1, 2)
+    local attr_3 = fn.screenattr(1, 3)
+    local attr_4 = fn.screenattr(1, 4)
+    eq(attr_1, attr_2)
+    eq(attr_1, attr_3)
+    neq(attr_1, attr_4)
+  end)
+
+  it('screenchar()', function()
+    eq(97, fn.screenchar(1, 1))
+    eq(97, fn.screenchar(1, 2))
+    eq(98, fn.screenchar(1, 3))
+    eq(99, fn.screenchar(1, 4))
+  end)
+
+  it('screenchars()', function()
+    eq({ 97 }, fn.screenchars(1, 1))
+    eq({ 97 }, fn.screenchars(1, 2))
+    eq({ 98 }, fn.screenchars(1, 3))
+    eq({ 99 }, fn.screenchars(1, 4))
+  end)
+
+  it('screenstring()', function()
+    eq('a', fn.screenstring(1, 1))
+    eq('a', fn.screenstring(1, 2))
+    eq('b', fn.screenstring(1, 3))
+    eq('c', fn.screenstring(1, 4))
+  end)
+end)
+
+describe('screenchar() and family respect floating windows when multigrid', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(7, 7)
+    -- screen:attach()
+    screen:attach { ext_multigrid = true }
     -- These commands result into visible text `aabc`.
     -- `aab` - from floating windows, `c` - from text in regular window.
     api.nvim_buf_set_lines(0, 0, -1, true, { 'cccc' })
