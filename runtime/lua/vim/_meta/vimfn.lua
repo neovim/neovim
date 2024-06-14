@@ -3569,8 +3569,8 @@ function vim.fn.getreginfo(regname) end
 ---   difference if the buffer is displayed in a window with
 ---   different 'virtualedit' or 'list' values.
 ---
---- Examples: >
----   :xnoremap <CR>
+--- Examples: >vim
+---   xnoremap <CR>
 ---   \ <Cmd>echom getregion(
 ---   \ getpos('v'), getpos('.'), #{ type: mode() })<CR>
 --- <
@@ -5538,19 +5538,19 @@ function vim.fn.matcharg(nr) end
 ---
 --- Examples: >vim
 ---     " Assuming line 3 in buffer 5 contains "a"
----     :echo matchbufline(5, '\<\k\+\>', 3, 3)
----     [{'lnum': 3, 'byteidx': 0, 'text': 'a'}]
+---     echo matchbufline(5, '\<\k\+\>', 3, 3)
+--- <    `[{'lnum': 3, 'byteidx': 0, 'text': 'a'}]` >vim
 ---     " Assuming line 4 in buffer 10 contains "tik tok"
----     :echo matchbufline(10, '\<\k\+\>', 1, 4)
----     [{'lnum': 4, 'byteidx': 0, 'text': 'tik'}, {'lnum': 4, 'byteidx': 4, 'text': 'tok'}]
---- <
+---     echo matchbufline(10, '\<\k\+\>', 1, 4)
+--- <    `[{'lnum': 4, 'byteidx': 0, 'text': 'tik'}, {'lnum': 4, 'byteidx': 4, 'text': 'tok'}]`
+---
 --- If {submatch} is present and is v:true, then submatches like
 --- "\1", "\2", etc. are also returned.  Example: >vim
 ---     " Assuming line 2 in buffer 2 contains "acd"
----     :echo matchbufline(2, '\(a\)\?\(b\)\?\(c\)\?\(.*\)', 2, 2
+---     echo matchbufline(2, '\(a\)\?\(b\)\?\(c\)\?\(.*\)', 2, 2
 ---         \ {'submatches': v:true})
----     [{'lnum': 2, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]
---- <The "submatches" List always contains 9 items.  If a submatch
+--- <    `[{'lnum': 2, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]`
+--- The "submatches" List always contains 9 items.  If a submatch
 --- is not found, then an empty string is returned for that
 --- submatch.
 ---
@@ -5749,17 +5749,17 @@ function vim.fn.matchstr(expr, pat, start, count) end
 --- option settings on the pattern.
 ---
 --- Example: >vim
----     :echo matchstrlist(['tik tok'], '\<\k\+\>')
----     [{'idx': 0, 'byteidx': 0, 'text': 'tik'}, {'idx': 0, 'byteidx': 4, 'text': 'tok'}]
----     :echo matchstrlist(['a', 'b'], '\<\k\+\>')
----     [{'idx': 0, 'byteidx': 0, 'text': 'a'}, {'idx': 1, 'byteidx': 0, 'text': 'b'}]
---- <
+---     echo matchstrlist(['tik tok'], '\<\k\+\>')
+--- <    `[{'idx': 0, 'byteidx': 0, 'text': 'tik'}, {'idx': 0, 'byteidx': 4, 'text': 'tok'}]` >vim
+---     echo matchstrlist(['a', 'b'], '\<\k\+\>')
+--- <    `[{'idx': 0, 'byteidx': 0, 'text': 'a'}, {'idx': 1, 'byteidx': 0, 'text': 'b'}]`
+---
 --- If "submatches" is present and is v:true, then submatches like
 --- "\1", "\2", etc. are also returned.  Example: >vim
----     :echo matchstrlist(['acd'], '\(a\)\?\(b\)\?\(c\)\?\(.*\)',
+---     echo matchstrlist(['acd'], '\(a\)\?\(b\)\?\(c\)\?\(.*\)',
 ---         \ #{submatches: v:true})
----     [{'idx': 0, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]
---- <The "submatches" List always contains 9 items.  If a submatch
+--- <    `[{'idx': 0, 'byteidx': 0, 'text': 'acd', 'submatches': ['a', '', 'c', 'd', '', '', '', '', '']}]`
+--- The "submatches" List always contains 9 items.  If a submatch
 --- is not found, then an empty string is returned for that
 --- submatch.
 ---
@@ -7199,7 +7199,7 @@ function vim.fn.screenchars(row, col) end
 --- the following mappings: >vim
 ---   nnoremap <expr> GG ":echom " .. screencol() .. "\n"
 ---   nnoremap <silent> GG :echom screencol()<CR>
----   noremap GG <Cmd>echom screencol()<Cr>
+---   noremap GG <Cmd>echom screencol()<CR>
 --- <
 ---
 --- @return any
