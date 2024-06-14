@@ -145,8 +145,8 @@ local function get_completion_word(item)
       --    label: insert
       --
       -- Typing `i` would remove the candidate because newText starts with `t`.
-      local text = item.insertText or item.textEdit.newText
-      return #text < #item.label and text or item.label
+      local text = parse_snippet(item.insertText or item.textEdit.newText)
+      return #text < #item.label and vim.fn.matchstr(text, '\\k*') or item.label
     elseif item.insertText and item.insertText ~= '' then
       return parse_snippet(item.insertText)
     else

@@ -81,9 +81,20 @@ describe('vim.lsp.completion: item conversion', function()
       -- plain text
       {
         label = 'foocar',
-        sortText = 'k',
+        sortText = 'g',
         insertText = 'foodar(${1:var1})',
         insertTextFormat = 1,
+      },
+      {
+        label = '•INT16_C(c)',
+        insertText = 'INT16_C(${1:c})',
+        insertTextFormat = 2,
+        filterText = 'INT16_C',
+        sortText = 'h',
+        textEdit = {
+          newText = 'INT16_C(${1:c})',
+          range = range0,
+        },
       },
     }
     local expected = {
@@ -114,6 +125,10 @@ describe('vim.lsp.completion: item conversion', function()
       {
         abbr = 'foocar',
         word = 'foodar(${1:var1})', -- marked as PlainText, text is used as is
+      },
+      {
+        abbr = '•INT16_C(c)',
+        word = 'INT16_C',
       },
     }
     local result = complete('|', completion_list)
