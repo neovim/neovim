@@ -6,8 +6,6 @@ local M = {}
 -- --head HEAD
 -- --upload-file PUT (there is also --method PUT while using --data)
 
-local separator = '__SEPARATOR__'
-
 ---@class vim.net.download.Opts
 ---@inlinedoc
 ---Path to write the downloaded file to. If not provided, the one inferred form the URL will be used. Defaults to `nil`
@@ -26,8 +24,8 @@ local separator = '__SEPARATOR__'
 ---@field max_filesize? integer
 ---Disables all internal HTTP decoding of content or transfer encodings. Unaltered, raw, data is passed. Defaults to `false`
 ---@field raw? boolean
----string[]> Request headers. Defaults to `nil`
----@field headers? table<string,
+---Request headers. Defaults to `nil`
+---@field headers? table<string, string[]>
 ---Proxy URL in the format `scheme ":" ["//" authority] path ["?" query]` where authority follows the format `[userinfo "@"] host [":" port]`. Defaults to `nil`
 ---@field proxy? string
 ---Proxy credentials with the format `username:password`. Defaults to `nil`
@@ -48,7 +46,6 @@ local separator = '__SEPARATOR__'
 ---@field exitcode? number (Added in 7.75.0)
 ---@field filename_effective? string (Added in 7.26.0)
 ---@field ftp_entry_path? string
----@field headers? table<string, string[]> (Added in 7.83.0) parsed result of ${header_json}
 ---@field http_code? number
 ---@field http_connect? number
 ---@field http_version? string (Added in 7.50.0)
@@ -246,25 +243,16 @@ function M.download(url, opts)
     table.insert(cmd, '--location-trusted')
   end
 
-  -- stdout will contain the following separated by `separator` (local variable):
+  -- stdout will contain the following:
   -- (json) A JSON object with all available keys. (Added in 7.70.0)
-  -- (header_json) A JSON object with all HTTP response headers from the recent transfer. (Added in 7.83.0)
-  -- (`%` is duplicated in order to escape it from `format`)
-  vim.list_extend(cmd, { '--write-out', ('%%{json}%s%%{header_json}'):format(separator) })
+  vim.list_extend(cmd, { '--write-out', '%{json}' })
 
   vim.system(cmd, { text = true }, function(out)
     local err = out.stderr ~= '' and out.stderr or nil
 
-    local lines = vim.split(out.stdout, separator)
-    local json_string = lines[1]
-    local header_json_string = lines[2]
+    local json_string = out.stdout
     local ok, metadata = pcall(vim.json.decode, json_string)
     if ok then
-      ---@cast metadata vim.net.curl.Metadata
-      local ok2, headers = pcall(vim.json.decode, header_json_string)
-      if ok2 then
-        metadata.headers = headers
-      end
       opts.on_exit(err, metadata)
     else
       opts.on_exit(err)
