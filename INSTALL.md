@@ -363,6 +363,14 @@ Neovim can be installed using the apk package manager
 
     sudo apk add neovim
 
+### ALT
+
+Neovim can be installed using the apt-get/rpm package manager
+
+    su -
+    apt-get update
+    apt-get install neovim
+
 ## BSD
 
 ### FreeBSD
