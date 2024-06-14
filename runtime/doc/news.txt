@@ -89,12 +89,7 @@ HIGHLIGHTS
 
 LSP
 
-• LSP capabilities:
-  • `textDocument/foo` …
-    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocument_codeLens
-  • `textDocument/bar` …
-    https://microsoft.github.io/language-server-protocol/specification/#textDocument_colorPresentation
-• todo
+• Support for nested snippets.
 
 LUA
 

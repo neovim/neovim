@@ -305,7 +305,7 @@ function Session:set_gravity()
   end
 end
 
-local M = { session = nil }
+local M = { _sessions = {} }
 
 --- Displays the choices for the given tabstop as completion items.
 ---
@@ -595,6 +595,7 @@ function M.expand(input)
     end_right_gravity = true,
   })
   M._session = Session.new(bufnr, snippet_extmark, tabstop_data)
+  table.insert(M._sessions, M._session)
 
   -- Jump to the first tabstop.
   M.jump(1)
@@ -678,10 +679,13 @@ function M.stop()
     return
   end
 
-  vim.api.nvim_clear_autocmds({ group = snippet_group, buf = M._session.bufnr })
-  vim.api.nvim_buf_clear_namespace(M._session.bufnr, snippet_ns, 0, -1)
+  if #M._sessions == 1 then
+    vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
+    vim.api.nvim_buf_clear_namespace(M._session.bufnr, snippet_ns, 0, -1)
+  end
 
-  M._session = nil
+  table.remove(M._sessions)
+  M._session = #M._sessions > 0 and M._sessions[#M._sessions] or nil
 end
 
 return M
