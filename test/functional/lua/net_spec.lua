@@ -82,7 +82,7 @@ describe('vim.net', function()
       ]],
         path
       )
-      eq(response_code, 302)
+      eq(302, response_code)
       eq('', read_file(path))
     end)
 
@@ -112,7 +112,7 @@ describe('vim.net', function()
       ]],
         path
       )
-      eq(response_code, 202)
+      eq(200, response_code)
       local data = read_file(path)
       eq('https://httpbingo.org/get', vim.json.decode(data).url)
     end)
