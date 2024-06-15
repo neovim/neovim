@@ -40,7 +40,7 @@ describe('vim.net', function()
         local path = ...
         local done
         vim.net.download("https://httpbingo.org/anything", {
-          download_location = path,
+          as = path,
           on_exit = function()
             done = true
           end
@@ -64,7 +64,7 @@ describe('vim.net', function()
         local path = ...
         local done, metadata, err
         vim.net.download("https://httpbingo.org/redirect/1", {
-          download_location = path,
+          as = path,
           on_exit = function(err_, metadata_)
             done = true
             metadata = metadata_
@@ -93,7 +93,7 @@ describe('vim.net', function()
         local path = ...
         local done, metadata, err
         vim.net.download("https://httpbingo.org/redirect/1", {
-          download_location = path,
+          as = path,
           follow_redirects = true,
           on_exit = function(err_, metadata_)
             done = true
@@ -124,7 +124,7 @@ describe('vim.net', function()
         local path = ...
         local done
         vim.net.download("https://httpbingo.org/bearer", {
-          download_location = path,
+          as = path,
           headers = {
             Authorization = { "Bearer foo" },
           },
@@ -151,7 +151,7 @@ describe('vim.net', function()
         local path = ...
         local done
         vim.net.download("https://httpbingo.org/basic-auth/user/password", {
-          download_location = path,
+          as = path,
           credentials = "user:password",
           on_exit = function(err, metadata)
             done = true
@@ -177,7 +177,7 @@ describe('vim.net', function()
         local path = ...
         local done
         vim.net.download("https://httpbingo.org/anything", {
-          download_location = path,
+          as = path,
           override = false,
           on_exit = function(err, metadata)
             done = true

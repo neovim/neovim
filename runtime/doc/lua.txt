@@ -4523,7 +4523,7 @@ vim.net.download({url}, {opts})                           *vim.net.download()*
                     -- Download a file to a path
                     -- The file will be saved in `/tmp/somefile`
                     vim.net.download("https://httpbingo.org/anything", {
-                      download_location = "tmp/somefile",
+                      as = "tmp/somefile",
                     })
 
                     -- Download a file while following redirects
@@ -4548,13 +4548,13 @@ vim.net.download({url}, {opts})                           *vim.net.download()*
                       override = false,
                     })
 <
-                • {download_location}? (`string`) Path to write the downloaded
+                • {as}? (`string`) Path to write the downloaded
                   file to. If not provided, the one inferred form the URL will
                   be used. Defaults to `nil`
                 • {try_suggested_remote_name}? (`boolean`) Whether the
                   `Content-Disposition` response header should be taken into
                   account to decide the name of the downloaded file. Fallbacks
-                  to `download_location`. Defaults to `false`
+                  to `as`. Defaults to `false`
                 • {credentials}? (`string`) Credentials with the format
                   `username:password`. Defaults to `nil`
                 • {override}? (`boolean`) Whether the file should be

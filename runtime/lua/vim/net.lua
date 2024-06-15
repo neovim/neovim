@@ -9,8 +9,8 @@ local M = {}
 ---@class vim.net.download.Opts
 ---@inlinedoc
 ---Path to write the downloaded file to. If not provided, the one inferred form the URL will be used. Defaults to `nil`
----@field download_location? string
----Whether the `Content-Disposition` response header should be taken into account to decide the name of the downloaded file. Fallbacks to `download_location`. Defaults to `false`
+---@field as? string
+---Whether the `Content-Disposition` response header should be taken into account to decide the name of the downloaded file. Fallbacks to `as`. Defaults to `false`
 ---@field try_suggested_remote_name? boolean
 ---Credentials with the format `username:password`. Defaults to `nil`
 ---@field credentials? string
@@ -106,7 +106,7 @@ local M = {}
 
 ---@type vim.net.download.Opts
 local download_defaults = {
-  download_location = nil,
+  as = nil,
   try_suggested_remote_name = false,
   credentials = nil,
   override = true,
@@ -147,7 +147,7 @@ local download_defaults = {
 --- -- Download a file to a path
 --- -- The file will be saved in `/tmp/somefile`
 --- vim.net.download("https://httpbingo.org/anything", {
----   download_location = "tmp/somefile",
+---   as = "tmp/somefile",
 --- })
 ---
 --- -- Download a file while following redirects
@@ -182,8 +182,8 @@ function M.download(url, opts)
   local cmd = { 'curl' } ---@type string[]
   -- (Added in 7.67.0)
   table.insert(cmd, '--no-progress-meter')
-  if opts.download_location then
-    vim.list_extend(cmd, { '--output', opts.download_location, url })
+  if opts.as then
+    vim.list_extend(cmd, { '--output', opts.as, url })
   else
     vim.list_extend(cmd, { '--remote-name', url })
   end
