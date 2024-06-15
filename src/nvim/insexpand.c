@@ -3698,16 +3698,16 @@ static int find_next_completion_match(bool allow_get_expansion, int todo, bool a
 
   while (--todo >= 0) {
     if (compl_shows_dir_forward() && compl_shown_match->cp_next != NULL) {
-      compl_shown_match = !compl_fuzzy_match ? compl_shown_match->cp_next
-                                             : find_comp_when_fuzzy();
+      compl_shown_match = compl_fuzzy_match && compl_match_array != NULL
+                          ? find_comp_when_fuzzy() : compl_shown_match->cp_next;
       found_end = (compl_first_match != NULL
                    && (is_first_match(compl_shown_match->cp_next)
                        || is_first_match(compl_shown_match)));
     } else if (compl_shows_dir_backward()
                && compl_shown_match->cp_prev != NULL) {
       found_end = is_first_match(compl_shown_match);
-      compl_shown_match = !compl_fuzzy_match ? compl_shown_match->cp_prev
-                                             : find_comp_when_fuzzy();
+      compl_shown_match = compl_fuzzy_match && compl_match_array != NULL
+                          ? find_comp_when_fuzzy() : compl_shown_match->cp_prev;
       found_end |= is_first_match(compl_shown_match);
     } else {
       if (!allow_get_expansion) {
