@@ -670,6 +670,7 @@ func s:GetFilenameChecks() abort
     \ 'smith': ['file.smt', 'file.smith'],
     \ 'smithy': ['file.smithy'],
     \ 'sml': ['file.sml'],
+    \ 'snakemake': ['file.smk', 'Snakefile'],
     \ 'snobol4': ['file.sno', 'file.spt'],
     \ 'solidity': ['file.sol'],
     \ 'solution': ['file.sln'],
