@@ -2530,6 +2530,7 @@ describe('builtin popupmenu', function()
         ]],
         }
 
+        -- oldtest: Test_wildmenu_pum_rightleft()
         feed('<tab>')
         screen:expect {
           grid = [[
@@ -4479,6 +4480,27 @@ describe('builtin popupmenu', function()
 
         feed('<Esc>')
 
+        command('set rightleft')
+        feed('/X<CR>:popup PopUp<CR>')
+        screen:expect([[
+                   evif ruof eerht owt eno|
+              evif ruof eerht{7:^X} owt eno dna|
+             {n:             odnU }wt erom eno|
+          {1:   }{n:                  }{1:          ~}|
+          {1:   }{n:            etsaP }{1:          ~}|
+          {1:   }{n:                  }{1:          ~}|
+          {1:   }{n:      droW tceleS }{1:          ~}|
+          {1:   }{n:  ecnetneS tceleS }{1:          ~}|
+          {1:   }{n: hpargaraP tceleS }{1:          ~}|
+          {1:   }{n:      eniL tceleS }{1:          ~}|
+          {1:   }{n:     kcolB tceleS }{1:          ~}|
+          {1:   }{n:       llA tceleS }{1:          ~}|
+          {1:                               ~}|*7
+          :popup PopUp                    |
+        ]])
+        feed('<Esc>')
+        command('set norightleft')
+
         -- Set an <expr> mapping to change a menu entry while it's displayed.
         -- The text should not change but the command does.
         -- Also verify that "changed" shows up, which means the mapping triggered.
@@ -4533,6 +4555,55 @@ describe('builtin popupmenu', function()
         ]])
 
         feed('<Esc>')
+      end)
+
+      -- oldtest: Test_mouse_popup_position()
+      it('position of right-click menu when clicking near edge', function()
+        screen:try_resize(50, 20)
+        exec([[
+          set mousemodel=popup_setpos
+          aunmenu *
+          source $VIMRUNTIME/menu.vim
+          call setline(1, join(range(20)))
+        ]])
+
+        api.nvim_input_mouse('right', 'press', '', 0, 0, 45 - 1)
+        screen:expect([[
+          0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 ^18 19 |
+          {1:~                                }{n: Undo            }|
+          {1:~                                }{n:                 }|
+          {1:~                                }{n: Paste           }|
+          {1:~                                }{n:                 }|
+          {1:~                                }{n: Select Word     }|
+          {1:~                                }{n: Select Sentence }|
+          {1:~                                }{n: Select Paragraph}|
+          {1:~                                }{n: Select Line     }|
+          {1:~                                }{n: Select Block    }|
+          {1:~                                }{n: Select All      }|
+          {1:~                                                 }|*8
+                                                            |
+        ]])
+        feed('<Esc>')
+
+        command('set rightleft')
+        api.nvim_input_mouse('right', 'press', '', 0, 0, 50 - 45)
+        screen:expect([[
+           91 8^1 71 61 51 41 31 21 11 01 9 8 7 6 5 4 3 2 1 0|
+          {n:            odnU }{1:                                ~}|
+          {n:                 }{1:                                ~}|
+          {n:           etsaP }{1:                                ~}|
+          {n:                 }{1:                                ~}|
+          {n:     droW tceleS }{1:                                ~}|
+          {n: ecnetneS tceleS }{1:                                ~}|
+          {n:hpargaraP tceleS }{1:                                ~}|
+          {n:     eniL tceleS }{1:                                ~}|
+          {n:    kcolB tceleS }{1:                                ~}|
+          {n:      llA tceleS }{1:                                ~}|
+          {1:                                                 ~}|*8
+                                                            |
+        ]])
+        feed('<Esc>')
+        command('set norightleft')
       end)
 
       describe('"kind" and "menu"', function()
