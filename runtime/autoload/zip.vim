@@ -307,7 +307,6 @@ fun! zip#Write(fname)
   if has("unix")
    let zipfile = substitute(a:fname,'zipfile://\(.\{-}\)::[^\\].*$','\1','')
    let fname   = substitute(a:fname,'zipfile://.\{-}::\([^\\].*\)$','\1','')
-   let fname   = fnameescape(fname)
   else
    let zipfile = substitute(a:fname,'^.\{-}zipfile://\(.\{-}\)::[^\\].*$','\1','')
    let fname   = substitute(a:fname,'^.\{-}zipfile://.\{-}::\([^\\].*\)$','\1','')
