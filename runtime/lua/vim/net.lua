@@ -34,7 +34,7 @@ local M = {}
 ---@field headers? table<string, string[]>
 ---Proxy information. Defaults to `nil`
 ---@field proxy? vim.net.Proxy
----Whether redirects should be followed. Defaults to `false`
+---Whether redirects should be followed. Defaults to `true`
 ---@field follow_redirects? boolean
 ---Whether `credentials` should be send to host after a redirect. Defaults to `false`
 ---@field redirect_credentials? boolean
@@ -121,7 +121,7 @@ local download_defaults = {
   headers = nil,
   proxy = nil,
   proxy_credentials = nil,
-  follow_redirects = false,
+  follow_redirects = true,
   redirect_credentials = false,
   on_exit = function(err, metadata)
     if err then
