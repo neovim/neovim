@@ -4,17 +4,18 @@
 " Version:	33
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer:	Charles E Campbell
+" Last Change:
+"		2024 Jun 16 by Vim Project: handle whitespace on Windows properly (#14998)
 " License:	Vim License  (see vim's :help license)
-" Copyright:    Copyright (C) 2005-2019 Charles E. Campbell {{{1
-"               Permission is hereby granted to use and distribute this code,
-"               with or without modifications, provided that this copyright
-"               notice is copied with it. Like anything else that's free,
-"               zip.vim and zipPlugin.vim are provided *as is* and comes with
-"               no warranty of any kind, either expressed or implied. By using
-"               this plugin, you agree that in no event will the copyright
-"               holder be liable for any damages resulting from the use
-"               of this software.
-"redraw!|call DechoSep()|call inputsave()|call input("Press <cr> to continue")|call inputrestore()
+" Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
+"		Permission is hereby granted to use and distribute this code,
+"		with or without modifications, provided that this copyright
+"		notice is copied with it. Like anything else that's free,
+"		zip.vim and zipPlugin.vim are provided *as is* and comes with
+"		no warranty of any kind, either expressed or implied. By using
+"		this plugin, you agree that in no event will the copyright
+"		holder be liable for any damages resulting from the use
+"		of this software.
 
 " ---------------------------------------------------------------------
 " Load Once: {{{1
@@ -214,7 +215,6 @@ endfun
 " ---------------------------------------------------------------------
 " zip#Read: {{{2
 fun! zip#Read(fname,mode)
-"  call Dfunc("zip#Read(fname<".a:fname.">,mode=".a:mode.")")
   let repkeep= &report
   set report=10
 
@@ -226,15 +226,12 @@ fun! zip#Read(fname,mode)
    let fname   = substitute(a:fname,'^.\{-}zipfile://.\{-}::\([^\\].*\)$','\1','')
    let fname   = substitute(fname, '[', '[[]', 'g')
   endif
-"  call Decho("zipfile<".zipfile.">")
-"  call Decho("fname  <".fname.">")
   " sanity check
   if !executable(substitute(g:zip_unzipcmd,'\s\+.*$','',''))
    redraw!
    echohl Error | echo "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program" | echohl None
 "   call inputsave()|call input("Press <cr> to continue")|call inputrestore()
    let &report= repkeep
-"   call Dret("zip#Write")
    return
   endif
 
@@ -242,10 +239,8 @@ fun! zip#Read(fname,mode)
   "   exe "keepj sil! r! ".g:zip_unzipcmd." -p -- ".s:Escape(zipfile,1)." ".s:Escape(fnameescape(fname),1)
   " but allows zipfile://... entries in quickfix lists
   let temp = tempname()
-"  call Decho("using temp file<".temp.">")
   let fn   = expand('%:p')
-  exe "sil! !".g:zip_unzipcmd." -p -- ".s:Escape(zipfile,1)." ".s:Escape(fnameescape(fname),1).' > '.temp
-"  call Decho("exe sil! !".g:zip_unzipcmd." -p -- ".s:Escape(zipfile,1)." ".s:Escape(fnameescape(fname),1).' > '.temp)
+  exe "sil! !".g:zip_unzipcmd." -p -- ".s:Escape(zipfile,1)." ".s:Escape(fname,1).' > '.temp
   sil exe 'keepalt file '.temp
   sil keepj e!
   sil exe 'keepalt file '.fnameescape(fn)
@@ -254,11 +249,9 @@ fun! zip#Read(fname,mode)
   filetype detect
 
   " cleanup
-  "  keepj 0d   " used to be needed for the ...r! ... method
   set nomod
 
   let &report= repkeep
-"  call Dret("zip#Read")
 endfun
 
 " ---------------------------------------------------------------------
@@ -422,7 +415,6 @@ endfun
 " ---------------------------------------------------------------------
 " s:Escape: {{{2
 fun! s:Escape(fname,isfilt)
-"  call Dfunc("QuoteFileDir(fname<".a:fname."> isfilt=".a:isfilt.")")
   if exists("*shellescape")
    if a:isfilt
     let qnameq= shellescape(a:fname,1)
@@ -432,7 +424,10 @@ fun! s:Escape(fname,isfilt)
   else
    let qnameq= g:zip_shq.escape(a:fname,g:zip_shq).g:zip_shq
   endif
-"  call Dret("QuoteFileDir <".qnameq.">")
+  if exists("+shellslash") && &shellslash && &shell =~ "cmd.exe"
+   " renormalize directory separator on Windows
+   let qnameq=substitute(qnameq, '/', '\\', 'g')
+  endif
   return qnameq
 endfun
 
