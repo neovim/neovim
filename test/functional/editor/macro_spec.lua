@@ -148,6 +148,23 @@ helloFOO]]
     eq({ 0, 1, 1, 0 }, fn.getpos('v'))
   end)
 
+  it('can be recorded and replayed in Visual mode when ignorecase', function()
+    command('set ignorecase')
+    insert('foo BAR BAR foo BAR foo BAR BAR BAR foo BAR BAR')
+    feed('0vqifofRq')
+    eq({ 0, 1, 7, 0 }, fn.getpos('.'))
+    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
+    feed('Q')
+    eq({ 0, 1, 19, 0 }, fn.getpos('.'))
+    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
+    feed('Q')
+    eq({ 0, 1, 27, 0 }, fn.getpos('.'))
+    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
+    feed('@i')
+    eq({ 0, 1, 43, 0 }, fn.getpos('.'))
+    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
+  end)
+
   it('can be replayed with @ in blockwise Visual mode', function()
     insert [[
 hello

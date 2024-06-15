@@ -85,13 +85,13 @@ do
   vim.keymap.set(
     'x',
     'Q',
-    "mode() == 'V' ? ':normal! @<C-R>=reg_recorded()<CR><CR>' : 'Q'",
+    "mode() ==# 'V' ? ':normal! @<C-R>=reg_recorded()<CR><CR>' : 'Q'",
     { silent = true, expr = true, desc = ':help v_Q-default' }
   )
   vim.keymap.set(
     'x',
     '@',
-    "mode() == 'V' ? ':normal! @'.getcharstr().'<CR>' : '@'",
+    "mode() ==# 'V' ? ':normal! @'.getcharstr().'<CR>' : '@'",
     { silent = true, expr = true, desc = ':help v_@-default' }
   )
 
