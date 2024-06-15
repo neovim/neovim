@@ -249,6 +249,61 @@ void ui_refresh(void)
     }, res)
   end)
 
+  it('returns quantified matches in order of range #29344', function()
+    insert([[
+    int main() {
+      int a, b, c, d, e, f, g, h, i;
+      a = MIN(0, 1);
+      b = MIN(0, 1);
+      c = MIN(0, 1);
+      d = MIN(0, 1);
+      e = MIN(0, 1);
+      f = MIN(0, 1);
+      g = MIN(0, 1);
+      h = MIN(0, 1);
+      i = MIN(0, 1);
+    }
+    ]])
+
+    local res = exec_lua(
+      [[
+        cquery = vim.treesitter.query.parse("c", ...)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        res = {}
+        for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = true }) do
+          -- can't transmit node over RPC. just check the name and range
+          local mrepr = {}
+          for cid, nodes in pairs(match) do
+            for _, node in ipairs(nodes) do
+              table.insert(mrepr, { '@' .. cquery.captures[cid], node:type(), node:range() })
+            end
+          end
+          table.insert(res, {pattern, mrepr})
+        end
+        return res
+      ]],
+      '(expression_statement (assignment_expression (call_expression)))+ @funccall'
+    )
+
+    eq({
+      {
+        1,
+        {
+          { '@funccall', 'expression_statement', 2, 2, 2, 16 },
+          { '@funccall', 'expression_statement', 3, 2, 3, 16 },
+          { '@funccall', 'expression_statement', 4, 2, 4, 16 },
+          { '@funccall', 'expression_statement', 5, 2, 5, 16 },
+          { '@funccall', 'expression_statement', 6, 2, 6, 16 },
+          { '@funccall', 'expression_statement', 7, 2, 7, 16 },
+          { '@funccall', 'expression_statement', 8, 2, 8, 16 },
+          { '@funccall', 'expression_statement', 9, 2, 9, 16 },
+          { '@funccall', 'expression_statement', 10, 2, 10, 16 },
+        },
+      },
+    }, res)
+  end)
+
   it('can match special regex characters like \\ * + ( with `vim-match?`', function()
     insert('char* astring = "\\n"; (1 + 1) * 2 != 2;')
 
