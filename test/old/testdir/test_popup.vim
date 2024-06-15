@@ -910,6 +910,13 @@ func Test_popup_command_dump()
 
   call term_sendkeys(buf, "\<Esc>")
 
+  if has('rightleft')
+    call term_sendkeys(buf, ":set rightleft\<CR>")
+    call term_sendkeys(buf, "/X\<CR>:popup PopUp\<CR>")
+    call VerifyScreenDump(buf, 'Test_popup_command_rl', {})
+    call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
+  endif
+
   " Set a timer to change a menu entry while it's displayed.  The text should
   " not change but the command does.  Making the screendump also verifies that
   " "changed" shows up, which means the timer triggered.
@@ -928,6 +935,37 @@ func Test_popup_command_dump()
   call VerifyScreenDump(buf, 'Test_popup_command_06', {})
 
   call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test position of right-click menu when clicking near window edge.
+func Test_mouse_popup_position()
+  CheckFeature menu
+  CheckScreendump
+
+  let script =<< trim END
+    set mousemodel=popup_setpos
+    source $VIMRUNTIME/menu.vim
+    call setline(1, join(range(20)))
+    func Trigger(col)
+      call test_setmouse(1, a:col)
+      call feedkeys("\<RightMouse>", 't')
+    endfunc
+  END
+  call writefile(script, 'XmousePopupPosition', 'D')
+  let buf = RunVimInTerminal('-S XmousePopupPosition', #{rows: 20, cols: 50})
+
+  call term_sendkeys(buf, ":call Trigger(45)\<CR>")
+  call VerifyScreenDump(buf, 'Test_mouse_popup_position_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  if has('rightleft')
+    call term_sendkeys(buf, ":set rightleft\<CR>")
+    call term_sendkeys(buf, ":call Trigger(50 + 1 - 45)\<CR>")
+    call VerifyScreenDump(buf, 'Test_mouse_popup_position_02', {})
+    call term_sendkeys(buf, "\<Esc>:set norightleft\<CR>")
+  endif
 
   call StopVimInTerminal(buf)
 endfunc

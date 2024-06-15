@@ -143,7 +143,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
                    || (State == MODE_CMDLINE && ui_has(kUIWildmenu));
   }
 
-  pum_rl = (curwin->w_p_rl && State != MODE_CMDLINE);
+  pum_rl = State != MODE_CMDLINE && curwin->w_p_rl;
 
   do {
     // Mark the pum as visible already here,
@@ -450,7 +450,7 @@ static void pum_puts_with_attr(int col, char *text, hlf_T hlf)
   }
 
   char *rt_leader = NULL;
-  if (curwin->w_p_rl) {
+  if (pum_rl) {
     rt_leader = reverse_text(leader);
   }
   char *match_leader = rt_leader != NULL ? rt_leader : leader;
@@ -1212,12 +1212,14 @@ void pum_set_event_info(dict_T *dict)
 static void pum_position_at_mouse(int min_width)
 {
   int min_row = 0;
+  int min_col = 0;
   int max_row = Rows;
   int max_col = Columns;
   if (mouse_grid > 1) {
     win_T *wp = get_win_by_grid_handle(mouse_grid);
     if (wp != NULL) {
       min_row = -wp->w_winrow;
+      min_col = -wp->w_wincol;
       max_row = MAX(Rows - wp->w_winrow, wp->w_grid.rows);
       max_col = MAX(Columns - wp->w_wincol, wp->w_grid.cols);
     }
@@ -1230,6 +1232,7 @@ static void pum_position_at_mouse(int min_width)
   } else {
     pum_anchor_grid = mouse_grid;
   }
+
   if (max_row - mouse_row > pum_size) {
     // Enough space below the mouse row.
     pum_above = false;
@@ -1246,16 +1249,29 @@ static void pum_position_at_mouse(int min_width)
       pum_row = min_row;
     }
   }
-  if (max_col - mouse_col >= pum_base_width
-      || max_col - mouse_col > min_width) {
-    // Enough space to show at mouse column.
-    pum_col = mouse_col;
+
+  if (pum_rl) {
+    if (mouse_col - min_col + 1 >= pum_base_width
+        || mouse_col - min_col + 1 > min_width) {
+      // Enough space to show at mouse column.
+      pum_col = mouse_col;
+    } else {
+      // Not enough space, left align with window.
+      pum_col = min_col + MIN(pum_base_width, min_width) - 1;
+    }
+    pum_width = pum_col - min_col + 1;
   } else {
-    // Not enough space, right align with window.
-    pum_col = max_col - (pum_base_width > min_width ? min_width : pum_base_width);
+    if (max_col - mouse_col >= pum_base_width
+        || max_col - mouse_col > min_width) {
+      // Enough space to show at mouse column.
+      pum_col = mouse_col;
+    } else {
+      // Not enough space, right align with window.
+      pum_col = max_col - MIN(pum_base_width, min_width);
+    }
+    pum_width = max_col - pum_col;
   }
 
-  pum_width = max_col - pum_col;
   if (pum_width > pum_base_width + 1) {
     pum_width = pum_base_width + 1;
   }
@@ -1337,6 +1353,7 @@ void pum_show_popupmenu(vimmenu_T *menu)
   pum_compute_size();
   pum_scrollbar = 0;
   pum_height = pum_size;
+  pum_rl = curwin->w_p_rl;
   pum_position_at_mouse(20);
 
   pum_selected = -1;
@@ -1416,7 +1433,9 @@ void pum_make_popup(const char *path_name, int use_mouse_pos)
     // Hack: set mouse position at the cursor so that the menu pops up
     // around there.
     mouse_row = curwin->w_grid.row_offset + curwin->w_wrow;
-    mouse_col = curwin->w_grid.col_offset + curwin->w_wcol;
+    mouse_col = curwin->w_grid.col_offset
+                + (curwin->w_p_rl ? curwin->w_width_inner - curwin->w_wcol - 1
+                                  : curwin->w_wcol);
     if (ui_has(kUIMultigrid)) {
       mouse_grid = curwin->w_grid.target->handle;
     } else if (curwin->w_grid.target != &default_grid) {

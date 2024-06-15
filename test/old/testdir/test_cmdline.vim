@@ -2905,6 +2905,24 @@ func Test_wildmenu_pum_odd_wildchar()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test that 'rightleft' should not affect cmdline completion popup menu.
+func Test_wildmenu_pum_rightleft()
+  CheckFeature rightleft
+  CheckScreendump
+
+  let lines =<< trim END
+    set wildoptions=pum
+    set rightleft
+  END
+  call writefile(lines, 'Xwildmenu_pum_rl', 'D')
+  let buf = RunVimInTerminal('-S Xwildmenu_pum_rl', #{rows: 10, cols: 50})
+
+  call term_sendkeys(buf, ":sign \<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_rl', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test for completion after a :substitute command followed by a pipe (|)
 " character
 func Test_cmdline_complete_substitute()
