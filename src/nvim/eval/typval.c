@@ -3064,8 +3064,7 @@ void f_blob2list(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// list2blob() function
 void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  tv_blob_alloc_ret(rettv);
-  blob_T *const blob = rettv->vval.v_blob;
+  blob_T *blob = tv_blob_alloc_ret(rettv);
 
   if (tv_check_for_list_arg(argvars, 0) == FAIL) {
     return;
@@ -3252,11 +3251,12 @@ void tv_dict_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
 /// Also sets reference count.
 ///
 /// @param[out]  ret_tv  Structure where blob is saved.
-void tv_blob_alloc_ret(typval_T *const ret_tv)
+blob_T *tv_blob_alloc_ret(typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
   blob_T *const b = tv_blob_alloc();
   tv_blob_set_ret(ret_tv, b);
+  return b;
 }
 
 /// Copy a blob typval to a different typval.
@@ -3284,6 +3284,7 @@ void tv_blob_copy(blob_T *const from, typval_T *const to)
 
 //{{{3 Clear
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
+#define TYPVAL_ENCODE_CHECK_BEFORE
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
   do { \
@@ -3500,6 +3501,7 @@ static inline void _nothing_conv_dict_end(typval_T *const tv, dict_T **const dic
 #undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_ALLOW_SPECIALS
+#undef TYPVAL_ENCODE_CHECK_BEFORE
 #undef TYPVAL_ENCODE_CONV_NIL
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_NUMBER
