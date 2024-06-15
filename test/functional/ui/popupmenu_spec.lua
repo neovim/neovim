@@ -4664,10 +4664,10 @@ describe('builtin popupmenu', function()
         feed('S<C-X><C-O>')
         screen:expect([[
                                          ^ |
-          {1:               }{s:  dnikoof     oof}|
-          {1:               }{n:  dnikoof  raboof}|
-          {1:               }{n:  dnikoof  zaBoof}|
-          {1:               }{n:  dnikoof alaboof}|
+          {1:               }{s: dnikoof      oof}|
+          {1:               }{n: dnikoof   raboof}|
+          {1:               }{n: dnikoof   zaBoof}|
+          {1:               }{n: dnikoof  alaboof}|
           {1:               }{n:             好你}|
           {1:               }{n:           吗好你}|
           {1:               }{n:         吗好不你}|
@@ -4678,10 +4678,10 @@ describe('builtin popupmenu', function()
         feed('fo')
         screen:expect([[
                                        ^ of|
-          {1:                }{s:  dnikoof    o}{ms:of}|
-          {1:                }{n:  dnikoof rabo}{mn:of}|
-          {1:                }{n:  dnikoof zaBo}{mn:of}|
-          {1:                }{n:  dnikoofalabo}{mn:of}|
+          {1:                }{s: dnikoof     o}{ms:of}|
+          {1:                }{n: dnikoof  rabo}{mn:of}|
+          {1:                }{n: dnikoof  zaBo}{mn:of}|
+          {1:                }{n: dnikoof alabo}{mn:of}|
           {1:                               ~}|*14
           {2:-- }{5:match 1 of 8}                 |
         ]])
