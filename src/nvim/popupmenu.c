@@ -713,7 +713,7 @@ void pum_redraw(void)
 
       if (pum_rl) {
         grid_line_fill(col_off - pum_base_width - n + 1, grid_col + 1, schar_from_ascii(' '), attr);
-        grid_col = col_off - pum_base_width - n + 1;
+        grid_col = col_off - pum_base_width - n;
       } else {
         grid_line_fill(grid_col, col_off + pum_base_width + n, schar_from_ascii(' '), attr);
         grid_col = col_off + pum_base_width + n;
