@@ -139,16 +139,12 @@ local function compute_folds_levels(bufnr, info, srow, erow, parse_injections)
           local range = ts.get_range(nodes[1], bufnr, metadata[id])
           local start, _, stop, stop_col = Range.unpack4(range)
 
-          for i = 2, #nodes, 1 do
-            local node_range = ts.get_range(nodes[i], bufnr, metadata[id])
-            local node_start, _, node_stop, node_stop_col = Range.unpack4(node_range)
-            if node_start < start then
-              start = node_start
-            end
-            if node_stop > stop then
-              stop = node_stop
-              stop_col = node_stop_col
-            end
+          if #nodes > 1 then
+            -- assumes nodes are ordered by range
+            local end_range = ts.get_range(nodes[#nodes], bufnr, metadata[id])
+            local _, _, end_stop, end_stop_col = Range.unpack4(end_range)
+            stop = end_stop
+            stop_col = end_stop_col
           end
 
           if stop_col == 0 then
