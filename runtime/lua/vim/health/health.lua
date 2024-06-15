@@ -402,7 +402,7 @@ local function check_net()
 
   if vim.fn.executable('curl') == 1 then
     local curl = vim.fn.exepath('curl')
-    local cmd = { 'curl', ' --version' }
+    local cmd = { 'curl', '--version' }
     local result = vim.system(cmd, { text = true }):wait()
 
     health.ok(('%s\n(%s)'):format(vim.trim(result.stdout), curl))
