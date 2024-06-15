@@ -140,7 +140,7 @@ gx			Opens the current filepath or URL (decided by
 :[range]# [count] [flags]
 			synonym for :number.
 
-							*:#!*
+							*:#!* *vim-shebang*
 :#!{anything}		Ignored, so that you can start a Vim script with: >
 				#!vim -S
 				echo "this is a Vim script"
