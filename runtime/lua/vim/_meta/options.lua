@@ -3830,6 +3830,9 @@ vim.go.lw = vim.go.lispwords
 --- between tabs and spaces and for trailing blanks. Further changed by
 --- the 'listchars' option.
 ---
+--- When 'listchars' does not contain "tab" field, tabs are shown as "^I"
+--- or "<09>", like how unprintable characters are displayed.
+---
 --- The cursor is displayed at the start of the space a Tab character
 --- occupies, not at the end as usual in Normal mode.  To get this cursor
 --- position while displaying Tabs with spaces, use:
