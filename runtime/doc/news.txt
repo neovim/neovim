@@ -62,7 +62,10 @@ LUA
 
 OPTIONS
 
-• TODO
+• The 'statuscolumn' `%l` item can now be used as a number column segment that
+  changes according to related options. It takes care of alignment, 'number',
+  'relativenumber' and 'signcolumn' set to "number". The now redundant `%r` item
+  is no longer treated specially for 'statuscolumn'.
 
 PLUGINS
 

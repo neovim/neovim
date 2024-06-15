@@ -6373,8 +6373,7 @@ vim.go.sol = vim.go.startofline
 --- Some of the items from the 'statusline' format are different for
 --- 'statuscolumn':
 ---
---- %l	line number of currently drawn line
---- %r	relative line number of currently drawn line
+--- %l	line number column for currently drawn line
 --- %s	sign column for currently drawn line
 --- %C	fold column for currently drawn line
 ---
@@ -6403,11 +6402,8 @@ vim.go.sol = vim.go.startofline
 --- Examples:
 ---
 --- ```vim
---- 	" Relative number with bar separator and click handlers:
---- 	set statuscolumn=%@SignCb@%s%=%T%@NumCb@%r│%T
----
---- 	" Right aligned relative cursor line number:
---- 	let &stc='%=%{v:relnum?v:relnum:v:lnum} '
+--- 	" Line number with bar separator and click handlers:
+--- 	set statuscolumn=%@SignCb@%s%=%T%@NumCb@%l│%T
 ---
 --- 	" Line numbers in hexadecimal for non wrapped part of lines:
 --- 	let &stc='%=%{v:virtnum>0?"":printf("%x",v:lnum)} '

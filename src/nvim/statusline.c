@@ -1017,7 +1017,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   int evaldepth = 0;
 
   int curitem = 0;
-  int foldsignitem = -1;
   bool prevchar_isflag = true;
   bool prevchar_isitem = false;
 
@@ -1234,6 +1233,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     }
     int minwid = 0;
     int maxwid = 9999;
+    int foldsignitem = -1;        // Start of fold or sign item
+    bool left_align_num = false;  // Number item for should be left-aligned
     bool left_align = false;
 
     // Denotes that numbers should be left-padded with zeros
@@ -1505,12 +1506,20 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     }
 
     case STL_LINE:
-      // Overload %l with v:lnum for 'statuscolumn'
-      if (stcp != NULL) {
-        if (wp->w_p_nu && !get_vim_var_nr(VV_VIRTNUM)) {
-          num = (int)get_vim_var_nr(VV_LNUM);
+      // Overload %l with v:(re)lnum for 'statuscolumn'. Place a sign when 'signcolumn'
+      // is set to "number". Take care of alignment for 'number' + 'relativenumber'.
+      if (stcp != NULL && (wp->w_p_nu || wp->w_p_rnu) && get_vim_var_nr(VV_VIRTNUM) == 0) {
+        if (wp->w_maxscwidth == SCL_NUM && stcp->sattrs[0].text[0]) {
+          goto stcsign;
         }
-      } else {
+        int relnum = (int)get_vim_var_nr(VV_RELNUM);
+        num = (!wp->w_p_rnu || (wp->w_p_nu && relnum == 0)) ? (int)get_vim_var_nr(VV_LNUM) : relnum;
+        left_align_num = wp->w_p_rnu && wp->w_p_nu && relnum == 0;
+        if (!left_align_num) {
+          stl_items[curitem].type = Separate;
+          stl_items[curitem++].start = out_p;
+        }
+      } else if (stcp == NULL) {
         num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? 0 : wp->w_cursor.lnum;
       }
       break;
@@ -1609,16 +1618,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
     case STL_ROFLAG:
     case STL_ROFLAG_ALT:
-      // Overload %r with v:relnum for 'statuscolumn'
-      if (stcp != NULL) {
-        if (wp->w_p_rnu && !get_vim_var_nr(VV_VIRTNUM)) {
-          num = (int)get_vim_var_nr(VV_RELNUM);
-        }
-      } else {
-        itemisflag = true;
-        if (wp->w_buffer->b_p_ro) {
-          str = (opt == STL_ROFLAG_ALT) ? ",RO" : _("[RO]");
-        }
+      itemisflag = true;
+      if (wp->w_buffer->b_p_ro) {
+        str = (opt == STL_ROFLAG_ALT) ? ",RO" : _("[RO]");
       }
       break;
 
@@ -1632,11 +1634,12 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
     case STL_FOLDCOL:    // 'C' for 'statuscolumn'
     case STL_SIGNCOL: {  // 's' for 'statuscolumn'
+stcsign:
       if (stcp == NULL) {
         break;
       }
       int fdc = opt == STL_FOLDCOL ? compute_foldcolumn(wp, 0) : 0;
-      int width = opt == STL_FOLDCOL ? fdc > 0 : wp->w_scwidth;
+      int width = opt == STL_FOLDCOL ? fdc > 0 : opt == STL_SIGNCOL ? wp->w_scwidth : 1;
 
       if (width <= 0) {
         break;
@@ -1844,7 +1847,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
       // For a 'statuscolumn' sign or fold item, add an item to reset the highlight group
       if (foldsignitem >= 0) {
-        foldsignitem = -1;
         stl_items[curitem].type = Highlight;
         stl_items[curitem].start = out_p;
         stl_items[curitem].minwid = 0;
@@ -1949,6 +1951,11 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
     // Item processed, move to the next
     curitem++;
+    // For a 'statuscolumn' number item that is left aligned, add a separator item.
+    if (left_align_num) {
+      stl_items[curitem].type = Separate;
+      stl_items[curitem++].start = out_p;
+    }
   }
 
   *out_p = NUL;

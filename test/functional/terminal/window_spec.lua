@@ -130,9 +130,9 @@ describe(':terminal window', function()
       ]])
       feed_data('\nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
       screen:expect([[
-        {7:++7   }                                            |
-        {7:++8   }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {7:++9   }TUVWXYZ                                     |
+        {7:++ 7  }                                            |
+        {7:++ 8  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
+        {7:++ 9  }TUVWXYZ                                     |
         {7:++10  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
         {7:++11  }TUVWXYZrows: 6, cols: 44                    |
         {7:++12  }{1: }                                           |
