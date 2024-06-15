@@ -6,6 +6,12 @@ local M = {}
 -- --head HEAD
 -- --upload-file PUT (there is also --method PUT while using --data)
 
+---@class vim.net.Proxy
+---Proxy URL in the format `scheme ":" ["//" authority] path ["?" query]` where authority follows the format `[userinfo "@"] host [":" port]`
+---@field url? string
+---Proxy credentials with the format `username:password`
+---@field credentials? string
+
 ---@class vim.net.download.Opts
 ---@inlinedoc
 ---Path to write the downloaded file to. If not provided, the one inferred form the URL will be used. Defaults to `nil`
@@ -26,10 +32,8 @@ local M = {}
 ---@field raw? boolean
 ---Request headers. Defaults to `nil`
 ---@field headers? table<string, string[]>
----Proxy URL in the format `scheme ":" ["//" authority] path ["?" query]` where authority follows the format `[userinfo "@"] host [":" port]`. Defaults to `nil`
----@field proxy? string
----Proxy credentials with the format `username:password`. Defaults to `nil`
----@field proxy_credentials? string
+---Proxy information. Defaults to `nil`
+---@field proxy? vim.net.Proxy
 ---Whether redirects should be followed. Defaults to `false`
 ---@field follow_redirects? boolean
 ---Whether `credentials` should be send to host after a redirect. Defaults to `false`
