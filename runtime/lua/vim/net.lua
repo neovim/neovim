@@ -1,5 +1,24 @@
 local M = {}
 
+local curl_v ---@type vim.Version
+---@return vim.Version
+local function _curl_v()
+  local out = vim.system({ 'curl', '--version' }, { text = true }):wait().stdout
+  local lines = vim.split(out, '\n')
+  local version = vim
+    .iter(lines)
+    :filter(function(line)
+      return line:find '^curl'
+    end)
+    :map(function(version_line)
+      return vim.version.parse(version_line)
+    end)
+    :next()
+  return version
+end
+
+local separator = '__SEPARATOR__'
+
 --HTTP methods in curl
 -- default GET (there is also --get for transforming --data into URL query params)
 -- --data (and its variants) or --form POST
@@ -50,6 +69,7 @@ local M = {}
 ---@field exitcode? number (Added in 7.75.0)
 ---@field filename_effective? string (Added in 7.26.0)
 ---@field ftp_entry_path? string
+---@field headers? table<string, string[]> (Added in 7.83.0) parsed result of ${header_json}
 ---@field http_code? number
 ---@field http_connect? number
 ---@field http_version? string (Added in 7.50.0)
@@ -183,9 +203,16 @@ function M.download(url, opts)
   }
   opts = vim.tbl_extend('force', download_defaults, opts or {}) --[[@as vim.net.download.Opts]]
 
+  curl_v = curl_v or _curl_v()
+
   local cmd = { 'curl' } ---@type string[]
-  -- (Added in 7.67.0)
-  table.insert(cmd, '--no-progress-meter')
+
+  if vim.version.ge(curl_v, { 7, 67, 0 }) then
+    table.insert(cmd, '--no-progress-meter')
+  else
+    vim.list_extend(cmd, { '--silent', '--show-error' })
+  end
+
   if opts.as then
     vim.list_extend(cmd, { '--output', opts.as, url })
   else
@@ -200,14 +227,26 @@ function M.download(url, opts)
     vim.list_extend(cmd, { '--user', opts.credentials })
   end
 
-  -- (Added in 7.83.0)
-  if not opts.override then
+  if not opts.override and vim.version.ge(curl_v, { 7, 83, 0 }) then
     table.insert(cmd, '--no-clober')
+  elseif not opts.override then
+    return vim.notify(
+      ('Your current curl version is %s and you need at least version 7.83.0 to avoid overriding files'):format(
+        tostring(curl_v)
+      ),
+      vim.log.levels.WARN
+    )
   end
 
-  -- (Added in 7.83.0)
-  if opts.remove_leftover_on_error then
+  if opts.remove_leftover_on_error and vim.version.ge(curl_v, { 7, 83, 0 }) then
     table.insert(cmd, '--remove-on-error')
+  elseif opts.remove_leftover_on_error then
+    return vim.notify(
+      ('Your current curl version is %s and you need at least version 7.83.0 to remove download leftovers on error'):format(
+        tostring(curl_v)
+      ),
+      vim.log.levels.WARN
+    )
   end
 
   if opts.compressed then
@@ -248,15 +287,29 @@ function M.download(url, opts)
   end
 
   -- stdout will contain the following:
-  -- (json) A JSON object with all available keys. (Added in 7.70.0)
-  vim.list_extend(cmd, { '--write-out', '%{json}' })
+  if vim.version.ge(curl_v, { 7, 83, 0 }) then
+    -- (json) A JSON object with all available keys.
+    -- (header_json) A JSON object with all HTTP response headers from the recent transfer.
+    -- (`%` is duplicated in order to escape it from `format`)
+    vim.list_extend(cmd, { '--write-out', ('%%{json}%s%%{header_json}'):format(separator) })
+  elseif vim.version.ge(curl_v, { 7, 70, 0 }) then
+    -- (json) A JSON object with all available keys.
+    vim.list_extend(cmd, { '--write-out', '%{json}' })
+  end
 
   vim.system(cmd, { text = true }, function(out)
     local err = out.stderr ~= '' and out.stderr or nil
 
-    local json_string = out.stdout
+    local lines = vim.split(out.stdout, separator)
+    local json_string = lines[1]
+    local header_json_string = lines[2]
+
     local ok, metadata = pcall(vim.json.decode, json_string)
+    local ok2, headers = pcall(vim.json.decode, header_json_string)
     if ok then
+      if ok2 then
+        metadata.headers = headers
+      end
       opts.on_exit(err, metadata)
     else
       opts.on_exit(err)
