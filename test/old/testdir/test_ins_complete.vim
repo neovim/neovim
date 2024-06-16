@@ -2634,14 +2634,17 @@ func Test_complete_fuzzy_match()
   call feedkeys("S\<C-x>\<C-o>fb\<C-n>", 'tx')
   call assert_equal('fooBaz', g:word)
 
-  " avoid break default completion behavior
+  " avoid breaking default completion behavior
   set completeopt=fuzzy,menu
   call setline(1, ['hello help hero h'])
-  exe "norm! A\<C-X>\<C-N>"
+  " Use "!" flag of feedkeys() so that ex_normal_busy is not set and
+  " ins_compl_check_keys() is not skipped.
+  " Add a "0" after the <Esc> to avoid waiting for an escape sequence.
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
   call assert_equal('hello help hero hello', getline('.'))
   set completeopt+=noinsert
   call setline(1, ['hello help hero h'])
-  exe "norm! A\<C-X>\<C-N>"
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
   call assert_equal('hello help hero h', getline('.'))
 
   " clean up
