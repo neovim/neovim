@@ -194,4 +194,42 @@ describe('vim.net', function()
       eq('', read_file(path))
     end)
   end)
+
+  describe('download()', function()
+    it('works with global options', function()
+      local different_path = './different_path'
+      eq(nil, read_file(path))
+      eq(nil, read_file(different_path))
+      local filename = exec_lua(
+        [[
+        local path,different_path = ...
+        local done, metadata, err
+        vim.net.config({as = path})
+
+        vim.net.download("https://httpbingo.org/anything", {
+          as = different_path,
+          on_exit = function(err_, metadata_)
+            done = true
+            metadata = metadata_
+            err = err_
+          end
+        })
+
+        local _, interrupted = vim.wait(10000, function()
+          return done
+        end)
+        assert(done, 'file was not downloaded')
+        assert(not err, err)
+        assert(metadata, 'no metadata was received')
+        return metadata.filename_effective
+      ]],
+        path,
+        different_path
+      )
+      eq(different_path, filename)
+      eq(nil, read_file(path))
+      local data = read_file(different_path)
+      eq('https://httpbingo.org/anything', vim.json.decode(data).url)
+    end)
+  end)
 end)

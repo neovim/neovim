@@ -31,7 +31,7 @@ local separator = '__SEPARATOR__'
 ---Proxy credentials with the format `username:password`
 ---@field credentials? string
 
----@class vim.net.download.Opts
+---@class vim.net.Opts
 ---@inlinedoc
 ---Path to write the downloaded file to. If not provided, the one inferred form the URL will be used. Defaults to `nil`
 ---@field as? string
@@ -128,8 +128,8 @@ local separator = '__SEPARATOR__'
 ---@field url_effective? string
 ---@field xfer_id? number (Added in 8.2.0)
 
----@type vim.net.download.Opts
-local download_defaults = {
+---@type vim.net.Opts
+local global_net_opts = {
   as = nil,
   try_suggested_remote_name = false,
   credentials = nil,
@@ -158,9 +158,36 @@ local download_defaults = {
   end,
 }
 
+---Configure net options globally
+---
+---Configuration can be specified globally, or ephemerally (i.e. only for
+---a single call to |vim.net.download()|). Ephemeral configuration has highest
+---priority, followed by  global configuration.
+---
+---When omitted or `nil`, retrieve the current configuration. Otherwise,
+---a configuration table (see |vim.net.Opts|).
+---@param opts vim.net.Opts
+---: Current net config if {opts} is omitted.
+---@return vim.net.Opts?
+function M.config(opts)
+  vim.validate({
+    opts = { opts, 'table', true },
+  })
+
+  if not opts then
+    return vim.deepcopy(global_net_opts, true)
+  end
+
+  for k, v in
+    pairs(opts --[[@as table<any,any>]])
+  do
+    global_net_opts[k] = v
+  end
+end
+
 ---Asynchronously download a file
 ---@param url string Request URL
----@param opts? vim.net.download.Opts Additional options
+---@param opts? vim.net.Opts Additional options
 ---
 ---Example:
 --- ```lua
@@ -201,7 +228,7 @@ function M.download(url, opts)
     url = { url, 'string' },
     opts = { opts, 'table', true },
   }
-  opts = vim.tbl_extend('force', download_defaults, opts or {}) --[[@as vim.net.download.Opts]]
+  opts = vim.tbl_extend('force', global_net_opts, opts or {}) --[[@as vim.net.Opts]]
 
   curl_v = curl_v or _curl_v()
 
