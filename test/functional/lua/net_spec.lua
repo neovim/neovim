@@ -65,6 +65,7 @@ describe('vim.net', function()
         local done, metadata, err
         vim.net.download("https://httpbingo.org/redirect/1", {
           as = path,
+          follow_redirects = false,
           on_exit = function(err_, metadata_)
             done = true
             metadata = metadata_
@@ -94,7 +95,6 @@ describe('vim.net', function()
         local done, metadata, err
         vim.net.download("https://httpbingo.org/redirect/1", {
           as = path,
-          follow_redirects = true,
           on_exit = function(err_, metadata_)
             done = true
             metadata = metadata_
