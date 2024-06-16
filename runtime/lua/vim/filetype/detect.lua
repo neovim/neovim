@@ -1783,6 +1783,7 @@ local patterns_hashbang = {
   ['^janet\\>'] = { 'janet', { vim_regex = true } },
   ['^dart\\>'] = { 'dart', { vim_regex = true } },
   ['^execlineb\\>'] = { 'execline', { vim_regex = true } },
+  ['^vim\\>'] = { 'vim', { vim_regex = true } },
 }
 
 ---@private
