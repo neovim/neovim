@@ -1,7 +1,7 @@
 " Vim compiler file
 " Compiler:	Java Development Kit Compiler
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2024 Apr 03
+" Last Change:	2024 Jun 14
 
 if exists("current_compiler")
   finish
@@ -11,7 +11,12 @@ let current_compiler = "javac"
 let s:cpo_save = &cpo
 set cpo&vim
 
-CompilerSet makeprg=javac
+if exists("g:javac_makeprg_params")
+  execute $'CompilerSet makeprg=javac\ {escape(g:javac_makeprg_params, ' \|"')}'
+else
+  CompilerSet makeprg=javac
+endif
+
 CompilerSet errorformat=%E%f:%l:\ error:\ %m,
 		       \%W%f:%l:\ warning:\ %m,
 		       \%-Z%p^,

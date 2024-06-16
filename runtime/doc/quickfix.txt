@@ -1288,6 +1288,13 @@ g:compiler_gcc_ignore_unmatched_lines
 				commands run from make are generating false
 				positives.
 
+JAVAC							*compiler-javac*
+
+Commonly used compiler options can be added to 'makeprg' by setting the
+g:javac_makeprg_params variable.  For example: >
+	let g:javac_makeprg_params = "-Xlint:all -encoding utf-8"
+<
+
 PANDOC					*quickfix-pandoc* *compiler-pandoc*
 
 The Pandoc compiler plugin expects that an output file type extension is
