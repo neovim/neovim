@@ -1177,8 +1177,8 @@ describe('builtin popupmenu', function()
         ks = { foreground = Screen.colors.Red, background = Screen.colors.Grey },
         xn = { foreground = Screen.colors.White, background = Screen.colors.Magenta },
         xs = { foreground = Screen.colors.Black, background = Screen.colors.Grey },
-        mn = { foreground = Screen.colors.Blue, background = Screen.colors.White },
-        ms = { foreground = Screen.colors.Green, background = Screen.colors.White },
+        mn = { foreground = Screen.colors.Blue, background = Screen.colors.Magenta },
+        ms = { foreground = Screen.colors.Blue, background = Screen.colors.Grey },
       })
       screen:attach({ ext_multigrid = multigrid })
     end)
@@ -4669,6 +4669,7 @@ describe('builtin popupmenu', function()
             return {
                   \ 'words': [
                   \ { 'word': 'foo', 'kind': 'fookind' },
+                  \ { 'word': 'foofoo', 'kind': 'fookind' },
                   \ { 'word': 'foobar', 'kind': 'fookind' },
                   \ { 'word': 'fooBaz', 'kind': 'fookind' },
                   \ { 'word': 'foobala', 'kind': 'fookind' },
@@ -4680,13 +4681,14 @@ describe('builtin popupmenu', function()
           endfunc
           set omnifunc=Omni_test
           set completeopt=menu,noinsert,fuzzy
-          hi PmenuMatchSel  guifg=Green guibg=White
-          hi PmenuMatch     guifg=Blue guibg=White
+          hi PmenuMatchSel  guifg=Blue guibg=Grey
+          hi PmenuMatch     guifg=Blue guibg=Magenta
         ]])
         feed('i<C-X><C-O>')
         local pum_start = [[
           ^                                |
           {s:foo      fookind }{1:               }|
+          {n:foofoo   fookind }{1:               }|
           {n:foobar   fookind }{1:               }|
           {n:fooBaz   fookind }{1:               }|
           {n:foobala  fookind }{1:               }|
@@ -4694,19 +4696,20 @@ describe('builtin popupmenu', function()
           {n:你好吗           }{1:               }|
           {n:你不好吗         }{1:               }|
           {n:你可好吗         }{1:               }|
-          {1:~                               }|*10
-          {2:-- }{5:match 1 of 8}                 |
+          {1:~                               }|*9
+          {2:-- }{5:match 1 of 9}                 |
         ]]
         screen:expect(pum_start)
         feed('fo')
         screen:expect([[
           fo^                              |
           {ms:fo}{s:o     fookind }{1:                }|
+          {mn:fo}{n:ofoo  fookind }{1:                }|
           {mn:fo}{n:obar  fookind }{1:                }|
           {mn:fo}{n:oBaz  fookind }{1:                }|
           {mn:fo}{n:obala fookind }{1:                }|
-          {1:~                               }|*14
-          {2:-- }{5:match 1 of 8}                 |
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 9}                 |
         ]])
         feed('<Esc>S<C-X><C-O>')
         screen:expect(pum_start)
@@ -4718,7 +4721,7 @@ describe('builtin popupmenu', function()
           {mn:你}{n:不好吗       }{1:                 }|
           {mn:你}{n:可好吗       }{1:                 }|
           {1:~                               }|*14
-          {2:-- }{5:match 1 of 8}                 |
+          {2:-- }{5:match 1 of 9}                 |
         ]])
         feed('吗')
         screen:expect([[
@@ -4727,15 +4730,16 @@ describe('builtin popupmenu', function()
           {mn:你}{n:不好}{mn:吗}{n:       }{1:                 }|
           {mn:你}{n:可好}{mn:吗}{n:       }{1:                 }|
           {1:~                               }|*15
-          {2:-- }{5:match 1 of 8}                 |
+          {2:-- }{5:match 1 of 9}                 |
         ]])
-
         feed('<C-E><Esc>')
+
         command('set rightleft')
         feed('S<C-X><C-O>')
-        screen:expect([[
+        local pum_start_rl = [[
                                          ^ |
           {1:               }{s: dnikoof      oof}|
+          {1:               }{n: dnikoof   oofoof}|
           {1:               }{n: dnikoof   raboof}|
           {1:               }{n: dnikoof   zaBoof}|
           {1:               }{n: dnikoof  alaboof}|
@@ -4743,18 +4747,41 @@ describe('builtin popupmenu', function()
           {1:               }{n:           吗好你}|
           {1:               }{n:         吗好不你}|
           {1:               }{n:         吗好可你}|
-          {1:                               ~}|*10
-          {2:-- }{5:match 1 of 8}                 |
-        ]])
+          {1:                               ~}|*9
+          {2:-- }{5:match 1 of 9}                 |
+        ]]
+        screen:expect(pum_start_rl)
         feed('fo')
         screen:expect([[
                                        ^ of|
           {1:                }{s: dnikoof     o}{ms:of}|
+          {1:                }{n: dnikoof  oofo}{mn:of}|
           {1:                }{n: dnikoof  rabo}{mn:of}|
           {1:                }{n: dnikoof  zaBo}{mn:of}|
           {1:                }{n: dnikoof alabo}{mn:of}|
+          {1:                               ~}|*13
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('<Esc>S<C-X><C-O>')
+        screen:expect(pum_start_rl)
+        feed('你')
+        screen:expect([[
+                                       ^ 你|
+          {1:                 }{s:           好}{ms:你}|
+          {1:                 }{n:         吗好}{mn:你}|
+          {1:                 }{n:       吗好不}{mn:你}|
+          {1:                 }{n:       吗好可}{mn:你}|
           {1:                               ~}|*14
-          {2:-- }{5:match 1 of 8}                 |
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('吗')
+        screen:expect([[
+                                     ^ 吗你|
+          {1:                 }{s:         }{ms:吗}{s:好}{ms:你}|
+          {1:                 }{n:       }{mn:吗}{n:好不}{mn:你}|
+          {1:                 }{n:       }{mn:吗}{n:好可}{mn:你}|
+          {1:                               ~}|*15
+          {2:-- }{5:match 1 of 9}                 |
         ]])
         feed('<C-E><Esc>')
         command('set norightleft')
@@ -4766,12 +4793,31 @@ describe('builtin popupmenu', function()
         screen:expect([[
           fo^                              |
           {ms:fo}{s:o     fookind }{1:                }|
+          {mn:fo}{n:ofoo  fookind }{1:                }|
           {mn:fo}{n:obar  fookind }{1:                }|
           {mn:fo}{n:oBaz  fookind }{1:                }|
           {mn:fo}{n:obala fookind }{1:                }|
-          {1:~                               }|*14
-          {2:-- }{5:match 1 of 8}                 |
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 9}                 |
         ]])
+        feed('<C-E><Esc>')
+
+        command('set rightleft')
+        feed('S<C-X><C-O>')
+        screen:expect(pum_start_rl)
+        feed('fo')
+        screen:expect([[
+                                       ^ of|
+          {1:                }{s: dnikoof     o}{ms:of}|
+          {1:                }{n: dnikoof  oofo}{mn:of}|
+          {1:                }{n: dnikoof  rabo}{mn:of}|
+          {1:                }{n: dnikoof  zaBo}{mn:of}|
+          {1:                }{n: dnikoof alabo}{mn:of}|
+          {1:                               ~}|*13
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('<C-E><Esc>')
+        command('set norightleft')
       end)
     end
   end

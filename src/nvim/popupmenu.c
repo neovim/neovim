@@ -437,70 +437,81 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
   pum_redraw();
 }
 
-/// Displays text on the popup menu with specific attributes.
-static void pum_puts_with_attr(int col, char *text, hlf_T hlf)
+/// Computes attributes of text on the popup menu.
+/// Returns attributes for every cell, or NULL if all attributes are the same.
+static int *pum_compute_text_attrs(char *text, hlf_T hlf)
 {
   char *leader = ins_compl_leader();
 
   if (leader == NULL || *leader == NUL || (hlf != HLF_PSI && hlf != HLF_PNI)
       || (win_hl_attr(curwin, HLF_PMSI) == win_hl_attr(curwin, HLF_PSI)
           && win_hl_attr(curwin, HLF_PMNI) == win_hl_attr(curwin, HLF_PNI))) {
-    grid_line_puts(col, text, -1, win_hl_attr(curwin, (int)hlf));
-    return;
+    return NULL;
   }
 
-  char *rt_leader = NULL;
-  if (pum_rl) {
-    rt_leader = reverse_text(leader);
-  }
-  char *match_leader = rt_leader != NULL ? rt_leader : leader;
-  size_t leader_len = strlen(match_leader);
-
+  int *attrs = xmalloc(sizeof(int) * (size_t)vim_strsize(text));
+  size_t leader_len = strlen(leader);
   const bool in_fuzzy = (get_cot_flags() & COT_FUZZY) != 0;
 
   garray_T *ga = NULL;
+  bool matched_start = false;
+
   if (in_fuzzy) {
-    ga = fuzzy_match_str_with_pos(text, match_leader);
+    ga = fuzzy_match_str_with_pos(text, leader);
+  } else {
+    matched_start = strncmp(text, leader, leader_len) == 0;
   }
 
-  // Render text with proper attributes
   const char *ptr = text;
+  int cell_idx = 0;
+  uint32_t char_pos = 0;
+
   while (*ptr != NUL) {
-    int char_len = utfc_ptr2len(ptr);
-    int cells = utf_ptr2cells(ptr);
     int new_attr = win_hl_attr(curwin, (int)hlf);
 
     if (ga != NULL) {
       // Handle fuzzy matching
       for (int i = 0; i < ga->ga_len; i++) {
-        uint32_t *match_pos = ((uint32_t *)ga->ga_data) + i;
-        uint32_t actual_char_pos = 0;
-        const char *temp_ptr = text;
-        while (temp_ptr < ptr) {
-          temp_ptr += utfc_ptr2len(temp_ptr);
-          actual_char_pos++;
-        }
-        if (actual_char_pos == match_pos[0]) {
+        if (char_pos == ((uint32_t *)ga->ga_data)[i]) {
           new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
           break;
         }
       }
-    } else if (!in_fuzzy && ptr < text + leader_len
-               && strncmp(text, match_leader, leader_len) == 0) {
+    } else if (matched_start && ptr < text + leader_len) {
       new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
     }
 
-    grid_line_puts(col, ptr, char_len, new_attr);
-    col += cells;
-    ptr += char_len;
+    int char_cells = utf_ptr2cells(ptr);
+    for (int i = 0; i < char_cells; i++) {
+      attrs[cell_idx + i] = new_attr;
+    }
+    cell_idx += char_cells;
+
+    MB_PTR_ADV(ptr);
+    char_pos++;
   }
 
   if (ga != NULL) {
     ga_clear(ga);
     xfree(ga);
   }
-  if (rt_leader) {
-    xfree(rt_leader);
+  return attrs;
+}
+
+/// Displays text on the popup menu with specific attributes.
+static void pum_grid_puts_with_attrs(int col, int cells, const char *text, int textlen,
+                                     const int *attrs)
+{
+  const int col_start = col;
+  const char *ptr = text;
+
+  // Render text with proper attributes
+  while (*ptr != NUL && (textlen < 0 || ptr < text + textlen)) {
+    int char_len = utfc_ptr2len(ptr);
+    int attr = attrs[pum_rl ? (col_start + cells - col - 1) : (col - col_start)];
+    grid_line_puts(col, ptr, char_len, attr);
+    col += utf_ptr2cells(ptr);
+    ptr += char_len;
   }
 }
 
@@ -643,34 +654,49 @@ void pum_redraw(void)
               *p = saved;
             }
 
+            int *attrs = pum_compute_text_attrs(st, hlf);
+
             if (pum_rl) {
               char *rt = reverse_text(st);
               char *rt_start = rt;
-              int size = vim_strsize(rt);
+              int cells = vim_strsize(rt);
 
-              if (size > pum_width) {
+              if (cells > pum_width) {
                 do {
-                  size -= utf_ptr2cells(rt);
+                  cells -= utf_ptr2cells(rt);
                   MB_PTR_ADV(rt);
-                } while (size > pum_width);
+                } while (cells > pum_width);
 
-                if (size < pum_width) {
+                if (cells < pum_width) {
                   // Most left character requires 2-cells but only 1 cell
                   // is available on screen.  Put a '<' on the left of the
                   // pum item
                   *(--rt) = '<';
-                  size++;
+                  cells++;
                 }
               }
-              pum_puts_with_attr(grid_col - size + 1, rt, hlf);
+
+              if (attrs == NULL) {
+                grid_line_puts(grid_col - cells + 1, rt, -1, attr);
+              } else {
+                pum_grid_puts_with_attrs(grid_col - cells + 1, cells, rt, -1, attrs);
+              }
+
               xfree(rt_start);
               xfree(st);
               grid_col -= width;
             } else {
-              pum_puts_with_attr(grid_col, st, hlf);
+              if (attrs == NULL) {
+                grid_line_puts(grid_col, st, -1, attr);
+              } else {
+                pum_grid_puts_with_attrs(grid_col, vim_strsize(st), st, -1, attrs);
+              }
+
               xfree(st);
               grid_col += width;
             }
+
+            xfree(attrs);
 
             if (*p != TAB) {
               break;
