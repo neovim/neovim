@@ -191,7 +191,7 @@ syn keyword htmlArg contained step title translate typemustmatch
 syn match   htmlArg contained "\<data-\h\%(\w\|[-.]\)*\%(\_s*=\)\@="
 
 " special characters
-syn match htmlSpecialChar "&#\=[0-9A-Za-z]\{1,8};"
+syn match htmlSpecialChar "&#\=[0-9A-Za-z]\{1,32};"
 
 " Comments (the real ones or the old netscape ones)
 if exists("html_wrong_comments")
