@@ -94,46 +94,80 @@ describe('statuscolumn', function()
   end)
 
   it("works with 'number' and 'relativenumber'", function()
-    command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
     screen:expect([[
-      {8:4 │}aaaaa                                             |
-      {8:5 │}aaaaa                                             |
-      {8:6 │}aaaaa                                             |
-      {8:7 │}aaaaa                                             |
-      {8:8 │}^aaaaa                                             |
-      {8:9 │}aaaaa                                             |
-      {8:10│}aaaaa                                             |
-      {8:11│}aaaaa                                             |
-      {8:12│}aaaaa                                             |
-      {8:13│}aaaaa                                             |
-      {8:14│}aaaaa                                             |
-      {8:15│}aaaaa                                             |
-      {8:16│}aaaaa                                             |
+      {8: 4 }aaaaa                                             |
+      {8: 5 }aaaaa                                             |
+      {8: 6 }aaaaa                                             |
+      {8: 7 }aaaaa                                             |
+      {8: 8 }^aaaaa                                             |
+      {8: 9 }aaaaa                                             |
+      {8:10 }aaaaa                                             |
+      {8:11 }aaaaa                                             |
+      {8:12 }aaaaa                                             |
+      {8:13 }aaaaa                                             |
+      {8:14 }aaaaa                                             |
+      {8:15 }aaaaa                                             |
+      {8:16 }aaaaa                                             |
                                                            |
     ]])
-    command([[set stc=%l%=%{&rnu?'\ ':''}%r│]])
+    command([[set stc=%l\ ]])
     screen:expect_unchanged()
-    command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
     command('set relativenumber')
     screen:expect([[
-      {8:4  4│}aaaaa                                           |
-      {8:5  3│}aaaaa                                           |
-      {8:6  2│}aaaaa                                           |
-      {8:7  1│}aaaaa                                           |
-      {8:8  0│}^aaaaa                                           |
-      {8:9  1│}aaaaa                                           |
-      {8:10 2│}aaaaa                                           |
-      {8:11 3│}aaaaa                                           |
-      {8:12 4│}aaaaa                                           |
-      {8:13 5│}aaaaa                                           |
-      {8:14 6│}aaaaa                                           |
-      {8:15 7│}aaaaa                                           |
-      {8:16 8│}aaaaa                                           |
+      {8: 4 }aaaaa                                             |
+      {8: 3 }aaaaa                                             |
+      {8: 2 }aaaaa                                             |
+      {8: 1 }aaaaa                                             |
+      {8:8  }^aaaaa                                             |
+      {8: 1 }aaaaa                                             |
+      {8: 2 }aaaaa                                             |
+      {8: 3 }aaaaa                                             |
+      {8: 4 }aaaaa                                             |
+      {8: 5 }aaaaa                                             |
+      {8: 6 }aaaaa                                             |
+      {8: 7 }aaaaa                                             |
+      {8: 8 }aaaaa                                             |
                                                            |
     ]])
-    command([[set stc=%l%=%{&rnu?'\ ':''}%r│]])
+    command('set stc=')
     screen:expect_unchanged()
-    command([[set stc=%{&nu?v:lnum:''}%=%{&rnu?'\ '.v:relnum:''}│]])
+    command([[set nonu stc=%l\ ]])
+    screen:expect([[
+      {8: 4 }aaaaa                                             |
+      {8: 3 }aaaaa                                             |
+      {8: 2 }aaaaa                                             |
+      {8: 1 }aaaaa                                             |
+      {8: 0 }^aaaaa                                             |
+      {8: 1 }aaaaa                                             |
+      {8: 2 }aaaaa                                             |
+      {8: 3 }aaaaa                                             |
+      {8: 4 }aaaaa                                             |
+      {8: 5 }aaaaa                                             |
+      {8: 6 }aaaaa                                             |
+      {8: 7 }aaaaa                                             |
+      {8: 8 }aaaaa                                             |
+                                                           |
+    ]])
+    command('set nuw=1 stc=')
+    screen:expect_unchanged()
+    -- Correct alignment with items before and after number column
+    command([[set nu stc=foo\ %l\ bar]])
+    screen:expect([[
+      {8:foo  4 bar}aaaaa                                      |
+      {8:foo  3 bar}aaaaa                                      |
+      {8:foo  2 bar}aaaaa                                      |
+      {8:foo  1 bar}aaaaa                                      |
+      {8:foo 8  bar}^aaaaa                                      |
+      {8:foo  1 bar}aaaaa                                      |
+      {8:foo  2 bar}aaaaa                                      |
+      {8:foo  3 bar}aaaaa                                      |
+      {8:foo  4 bar}aaaaa                                      |
+      {8:foo  5 bar}aaaaa                                      |
+      {8:foo  6 bar}aaaaa                                      |
+      {8:foo  7 bar}aaaaa                                      |
+      {8:foo  8 bar}aaaaa                                      |
+                                                           |
+    ]])
   end)
 
   it("works with highlighted 'statuscolumn'", function()
@@ -160,36 +194,36 @@ describe('statuscolumn', function()
     ]])
     command('set relativenumber')
     screen:expect([[
-      {1:4 }{8: 4│}aaaaa                                           |
-      {1:5  3}{8:│}aaaaa                                           |
-      {1:6 }{8: 2│}aaaaa                                           |
-      {1:7  1}{8:│}aaaaa                                           |
-      {1:8 }{8: 0│}^aaaaa                                           |
-      {1:9  1}{8:│}aaaaa                                           |
-      {1:10}{8: 2│}aaaaa                                           |
-      {1:11 3}{8:│}aaaaa                                           |
-      {1:12}{8: 4│}aaaaa                                           |
-      {1:13 5}{8:│}aaaaa                                           |
-      {1:14}{8: 6│}aaaaa                                           |
-      {1:15 7}{8:│}aaaaa                                           |
-      {1:16}{8: 8│}aaaaa                                           |
+      {1:4  }{8: 4│}aaaaa                                          |
+      {1:5   3}{8:│}aaaaa                                          |
+      {1:6  }{8: 2│}aaaaa                                          |
+      {1:7   1}{8:│}aaaaa                                          |
+      {1:8  }{8: 0│}^aaaaa                                          |
+      {1:9   1}{8:│}aaaaa                                          |
+      {1:10 }{8: 2│}aaaaa                                          |
+      {1:11  3}{8:│}aaaaa                                          |
+      {1:12 }{8: 4│}aaaaa                                          |
+      {1:13  5}{8:│}aaaaa                                          |
+      {1:14 }{8: 6│}aaaaa                                          |
+      {1:15  7}{8:│}aaaaa                                          |
+      {1:16 }{8: 8│}aaaaa                                          |
                                                            |
     ]])
     command('set nonumber')
     screen:expect([[
-      {8:4│}aaaaa                                              |
-      {1:3}{8:│}aaaaa                                              |
-      {8:2│}aaaaa                                              |
-      {1:1}{8:│}aaaaa                                              |
-      {8:0│}^aaaaa                                              |
-      {1:1}{8:│}aaaaa                                              |
-      {8:2│}aaaaa                                              |
-      {1:3}{8:│}aaaaa                                              |
-      {8:4│}aaaaa                                              |
-      {1:5}{8:│}aaaaa                                              |
-      {8:6│}aaaaa                                              |
-      {1:7}{8:│}aaaaa                                              |
-      {8:8│}aaaaa                                              |
+      {1: }{8:4│}aaaaa                                             |
+      {1: 3}{8:│}aaaaa                                             |
+      {1: }{8:2│}aaaaa                                             |
+      {1: 1}{8:│}aaaaa                                             |
+      {1: }{8:0│}^aaaaa                                             |
+      {1: 1}{8:│}aaaaa                                             |
+      {1: }{8:2│}aaaaa                                             |
+      {1: 3}{8:│}aaaaa                                             |
+      {1: }{8:4│}aaaaa                                             |
+      {1: 5}{8:│}aaaaa                                             |
+      {1: }{8:6│}aaaaa                                             |
+      {1: 7}{8:│}aaaaa                                             |
+      {1: }{8:8│}aaaaa                                             |
                                                            |
     ]])
   end)
@@ -305,36 +339,36 @@ describe('statuscolumn', function()
     -- v:relnum is the same value on wrapped lines
     command([[set stc=%C%=\ %{v:relnum}│%s\ ]])
     screen:expect([[
-      {2: }{1: 4│>>}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1: 4│}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 3│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1: 3│}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 2│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1: 2│}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1: 1│}{2:    }{1: }aaaaaa                                      |
-      {2:+}{4: 0│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
-      {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1: 1│}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 2│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1: 2│}{2:    }{1: }aaaaaa                                      |
+      {2: }{1:  4│>>}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  4│}{2:    }{1: }aaaaaaa                                    |
+      {2: }{1:  3│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  3│}{2:    }{1: }aaaaaaa                                    |
+      {2: }{1:  2│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  2│}{2:    }{1: }aaaaaaa                                    |
+      {2: }{1:  1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  1│}{2:    }{1: }aaaaaaa                                    |
+      {2:+}{4:  0│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2: }{1:  1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  1│}{2:    }{1: }aaaaaaa                                    |
+      {2: }{1:  2│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:  2│}{2:    }{1: }aaaaaaa                                    |
                                                            |
     ]])
     command([[set stc=%C%=\ %{v:virtnum?'':v:relnum}│%s\ ]])
     screen:expect([[
-      {2: }{1: 4│>>}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 3│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 2│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2:+}{4: 0│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
-      {2: }{1: 1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
-      {2: }{1: 2│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:    }{1: }aaaaaa                                      |
+      {2: }{1:  4│>>}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:    }{1: }aaaaaaa                                    |
+      {2: }{1:  3│}{0:>!}{2:  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:    }{1: }aaaaaaa                                    |
+      {2: }{1:  2│}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:    }{1: }aaaaaaa                                    |
+      {2: }{1:  1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:    }{1: }aaaaaaa                                    |
+      {2:+}{4:  0│}{2:    }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2: }{1:  1│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:    }{1: }aaaaaaa                                    |
+      {2: }{1:  2│}{2:    }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:    }{1: }aaaaaaa                                    |
                                                            |
     ]])
     -- Up to 9 signs in a line
@@ -347,75 +381,75 @@ describe('statuscolumn', function()
     command('sign place 10 line=6 name=piet2 buffer=1')
     command('sign place 11 line=6 name=piet1 buffer=1')
     screen:expect([[
-      {2: }{1: 4│>>}{2:                }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
-      {2: }{1: 3│}{0:>!}{2:                }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
-      {2: }{1: 2│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
-      {2: }{1: 1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
-      {2:+}{4: 0│}{2:                  }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaaa}|
-      {2: }{1: 1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
-      {2: }{1: 2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2: }{1:  │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaa          |
+      {2: }{1:  4│>>}{2:                }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaa        |
+      {2: }{1:  3│}{0:>!}{2:                }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaa        |
+      {2: }{1:  2│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaa        |
+      {2: }{1:  1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaa        |
+      {2:+}{4:  0│}{2:                  }{4: }{6:^+--  1 line: aaaaaaaaaaaaaaaa}|
+      {2: }{1:  1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaa        |
+      {2: }{1:  2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2: }{1:   │}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaa        |
                                                            |
     ]])
     -- Also test fold and sign column when 'cpoptions' includes "n"
     command('set cpoptions+=n')
     feed('Hgjg0')
     screen:expect([[
-      {2: }{4: 0│}{1:>>}{2:                }{4: }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
-      {2:                   }{5:^aaaaaaaaaaaaaaaaaaaa              }|
-      {2: }{1: 3│}{0:>!}{2:                }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
-      {2: }{1: 2│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
-      {2: }{1: 1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
-      {2:+}{1: 4│}{2:                  }{1: }{3:+--  1 line: aaaaaaaaaaaaaaaaa}|
-      {2: }{1: 1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
-      {2: }{1: 2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+      {2: }{4:  0│}{1:>>}{2:                }{4: }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:                   }{5:^aaaaaaaaaaaaaaaaaaaaa             }|
+      {2: }{1:  3│}{0:>!}{2:                }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaaa             |
+      {2: }{1:  2│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaaa             |
+      {2: }{1:  1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaaa             |
+      {2:+}{1:  4│}{2:                  }{1: }{3:+--  1 line: aaaaaaaaaaaaaaaa}|
+      {2: }{1:  1│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaaa             |
+      {2: }{1:  2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaaa             |
                                                            |
     ]])
     command('set breakindent')
     command('sign unplace 2')
     feed('J2gjg0')
     screen:expect([[
-      {2: }{4: 0│}{1:>>}{2:                }{4: }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
-      {2:                   }    {5:aaaaaaaaaaaaaaaaaaaa aaaaaaaaa}|
-      {2:                   }    {5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
-      {2:                   }    {5:^aaaaaaaaaaa                   }|
-      {2: }{1: 1│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }    aaaaaaaaaaaaaaaaaaaa          |
-      {2: }{1: 2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }    aaaaaaaaaaaaaaaaaaaa          |
-      {2:+}{1: 3│}{2:                  }{1: }{3:+--  1 line: aaaaaaaaaaaaaaaaa}|
-      {2: }{1: 4│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }    aaaaaaaaaaaaaaaaaaaa          |
-      {2: }{1: 5│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }    aaaaaaaaaaaaaaaaaaaa          |
+      {2: }{4:  0│}{1:>>}{2:                }{4: }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:                   }     {5:aaaaaaaaaaaaaaaaaaaaa aaaaaaa}|
+      {2:                   }     {5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:                   }     {5:^aaaaaaaaaaaaaa               }|
+      {2: }{1:  1│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }     aaaaaaaaaaaaaaaaaaaaa        |
+      {2: }{1:  2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }     aaaaaaaaaaaaaaaaaaaaa        |
+      {2:+}{1:  3│}{2:                  }{1: }{3:+--  1 line: aaaaaaaaaaaaaaaa}|
+      {2: }{1:  4│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }     aaaaaaaaaaaaaaaaaaaaa        |
+      {2: }{1:  5│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }     aaaaaaaaaaaaaaaaaaaaa        |
                                                            |
     ]])
     command('set nobreakindent')
     feed('$g0')
     screen:expect([[
-      {2: }{4: 0│}{1:>>}{2:                }{4: }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
-      {2:                   }{5:aaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaa}|
+      {2: }{4:  0│}{1:>>}{2:                }{4: }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {2:                   }{5:aaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaa}|
       {2:                   }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
-      {2:                   }{5:^aaa                               }|
-      {2: }{1: 1│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
-      {2: }{1: 2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
-      {2:+}{1: 3│}{2:                  }{1: }{3:+--  1 line: aaaaaaaaaaaaaaaaa}|
-      {2: }{1: 4│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
-      {2: }{1: 5│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {2:                   }aaaaaaaaaaaaaaaaaaaa              |
+      {2:                   }{5:^aaaa                              }|
+      {2: }{1:  1│>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>>}{0:>!}{1:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaaa             |
+      {2: }{1:  2│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaaa             |
+      {2:+}{1:  3│}{2:                  }{1: }{3:+--  1 line: aaaaaaaaaaaaaaaa}|
+      {2: }{1:  4│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaaa             |
+      {2: }{1:  5│}{2:                  }{1: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {2:                   }aaaaaaaaaaaaaaaaaaaaa             |
                                                            |
     ]])
     command('silent undo')
@@ -427,7 +461,23 @@ describe('statuscolumn', function()
         virt_lines_above = true, virt_lines = {{{"virt_line above", ""}}} })
       vim.api.nvim_buf_set_extmark(0, ns, 4, 0, { virt_lines = {{{"virt_line", ""}}} })
     ]])
-    command('set foldcolumn=0 signcolumn=no')
+    command('set foldcolumn=0 signcolumn=number stc=%l')
+    screen:expect([[
+      {1:>>}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {1: 5}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {1:  }virt_line                                          |
+      {1:  }virt_line above                                    |
+      {1:>>}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {1: 7}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {4: 8}{6:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {1: 9}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {1:10}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {1:11}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {1:12}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {1:13}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {1:14}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+                                                           |
+    ]])
     command(
       [[set stc=%{v:virtnum<0?'virtual':(!v:virtnum?'buffer':'wrapped')}%=%{'\ '.v:virtnum.'\ '.v:lnum}]]
     )
@@ -533,8 +583,8 @@ describe('statuscolumn', function()
     command([[set stc=%6s\ %l]])
     exec_lua('vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {sign_text = "𒀀"})')
     screen:expect([[
-      {8:    𒀀  8 }^aaaaa                                       |
-      {8:    }{7:  }{8: 9 }aaaaa                                       |
+      {8:    𒀀   8}^aaaaa                                       |
+      {8:    }{7:  }{8:  9}aaaaa                                       |
                                                            |
     ]])
   end)
@@ -644,26 +694,26 @@ describe('statuscolumn', function()
         -- clicking an item does not drag mouse
         api.nvim_input_mouse('left', 'press', '', 0, 0, 0)
         screen:expect([[
-          {0:8 }^aaaaa                                              |
+          {0: 8}^aaaaa                                              |
            {1: Echo }                                              |
         ]])
         api.nvim_input_mouse('left', 'press', '', 0, 1, 5)
         api.nvim_input_mouse('left', 'release', '', 0, 1, 5)
         screen:expect([[
-          {0:8 }^aaaaa                                              |
+          {0: 8}^aaaaa                                              |
           0 1 l 8                                              |
         ]])
         command('echo')
         -- clicking outside to close the menu does not drag mouse
         api.nvim_input_mouse('left', 'press', '', 0, 0, 0)
         screen:expect([[
-          {0:8 }^aaaaa                                              |
+          {0: 8}^aaaaa                                              |
            {1: Echo }                                              |
         ]])
         api.nvim_input_mouse('left', 'press', '', 0, 0, 10)
         api.nvim_input_mouse('left', 'release', '', 0, 0, 10)
         screen:expect([[
-          {0:8 }^aaaaa                                              |
+          {0: 8}^aaaaa                                              |
                                                                |
         ]])
       end)
@@ -749,9 +799,9 @@ describe('statuscolumn', function()
   it('works with cmdwin', function()
     feed(':set stc=%l<CR>q:k$')
     screen:expect([[
-      {8:7 }aaaaa                                              |
-      {8:8 }aaaaa                                              |
-      {8:9 }aaaaa                                              |
+      {8: 7}aaaaa                                              |
+      {8: 8}aaaaa                                              |
+      {8: 9}aaaaa                                              |
       {8:10}aaaaa                                              |
       {2:[No Name] [+]                                        }|
       {1::}{8:1}set stc=%^l                                         |
@@ -899,16 +949,16 @@ describe('statuscolumn', function()
     command([[set spell stc=%l\ ]])
     command('call setline(8, "This is a line that contains ᶏ multibyte character.")')
     screen:expect([[
-      {8:8  }^This is a line that contains {31:ᶏ}|
+      {8: 8 }^This is a line that contains {31:ᶏ}|
       {8:   } {31:multibyte} character.         |
-      {8:9  }{31:aaaaa}                         |
+      {8: 9 }{31:aaaaa}                         |
                                        |
     ]])
   end)
 
   it('line increase properly redraws buffer text with relativenumber #27709', function()
     screen:try_resize(33, 4)
-    command([[set rnu nuw=3 stc=%l\ ]])
+    command([[set rnu nuw=3 stc=%{v:lnum}\  ]])
     command('call setline(1, range(1, 99))')
     feed('Gyyp')
     screen:expect([[

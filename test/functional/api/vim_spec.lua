@@ -3887,11 +3887,11 @@ describe('API', function()
         ))
         eq(
           {
-            str = '3 ',
-            width = 2,
+            str = '       3 ',
+            width = 9,
             highlights = {
               { group = 'LineNr', start = 0 },
-              { group = 'ErrorMsg', start = 1 },
+              { group = 'ErrorMsg', start = 8 },
             },
           },
           api.nvim_eval_statusline('%l%#ErrorMsg# ', { use_statuscol_lnum = 3, highlights = true })
