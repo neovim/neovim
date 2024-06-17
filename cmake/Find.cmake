@@ -17,6 +17,7 @@ endfunction()
 # 2. Only search in .deps directory. Search all libraries
 # 3. Search everywhere, all libraries
 function(find_library2)
+  set(CMAKE_FIND_LIBRARY_PREFIXES "" "lib")
   find_library_nvim(STATIC ${ARGV})
   find_library_nvim(${ARGV})
   find_library(${ARGV})

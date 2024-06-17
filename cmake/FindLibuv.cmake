@@ -1,5 +1,5 @@
 find_path2(LIBUV_INCLUDE_DIR uv.h)
-find_library2(LIBUV_LIBRARY NAMES uv_a uv libuv)
+find_library2(LIBUV_LIBRARY NAMES uv_a uv)
 
 set(LIBUV_LIBRARIES ${LIBUV_LIBRARY})
 
