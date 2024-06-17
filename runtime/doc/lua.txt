@@ -4330,7 +4330,7 @@ vim.snippet.active({filter})                            *vim.snippet.active()*
     You can use this function to navigate a snippet as follows: >lua
         vim.keymap.set({ 'i', 's' }, '<Tab>', function()
            if vim.snippet.active({ direction = 1 }) then
-             return '<cmd>lua vim.snippet.jump(1)<cr>'
+             return '<Cmd>lua vim.snippet.jump(1)<CR>'
            else
              return '<Tab>'
            end
@@ -4364,7 +4364,7 @@ vim.snippet.jump({direction})                             *vim.snippet.jump()*
     For example, map `<Tab>` to jump while a snippet is active: >lua
         vim.keymap.set({ 'i', 's' }, '<Tab>', function()
            if vim.snippet.active({ direction = 1 }) then
-             return '<cmd>lua vim.snippet.jump(1)<cr>'
+             return '<Cmd>lua vim.snippet.jump(1)<CR>'
            else
              return '<Tab>'
            end

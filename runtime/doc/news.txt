@@ -90,27 +90,28 @@ API
 
 DEFAULTS
 
-• Keymaps:
-  - |grn| in Normal mode maps to |vim.lsp.buf.rename()|
-  - |grr| in Normal mode maps to |vim.lsp.buf.references()|
-  - |gra| in Normal and Visual mode maps to |vim.lsp.buf.code_action()|
-  - CTRL-S in Insert mode maps to |vim.lsp.buf.signature_help()|
+• Mappings:
+  • |grn| in Normal mode maps to |vim.lsp.buf.rename()|
+  • |grr| in Normal mode maps to |vim.lsp.buf.references()|
+  • |gra| in Normal and Visual mode maps to |vim.lsp.buf.code_action()|
+  • CTRL-S in Insert mode maps to |vim.lsp.buf.signature_help()|
 
 • Snippet:
-  - `<Tab>` in Insert and Select mode maps to |vim.snippet.jump({ direction = 1 })|
+  • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`
     when a snippet is active and jumpable forwards.
-  - `<S-Tab>` in Insert and Select mode maps to |vim.snippet.jump({ direction = -1 })|
+  • `<S-Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = -1 })`
     when a snippet is active and jumpable backwards.
 
 EDITOR
 
-* On Windows, filename arguments on the command-line prefixed with "~\" or
+• On Windows, filename arguments on the command-line prefixed with "~\" or
   "~/" are now expanded to the user's profile directory, not a relative path
   to a literal "~" directory.
 
 EVENTS
 
-• TODO
+• |CompleteDone| now sets the `reason` key in `v:event` which specifies the reason
+  for completion being done.
 
 LSP
 
@@ -157,10 +158,6 @@ TUI
 UI
 
 • TODO
-
-
-• |CompleteDone| now sets the `reason` key in `v:event` which specifies the reason
-  for completion being done.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

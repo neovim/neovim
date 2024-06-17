@@ -609,7 +609,7 @@ end
 --- ```lua
 --- vim.keymap.set({ 'i', 's' }, '<Tab>', function()
 ---    if vim.snippet.active({ direction = 1 }) then
----      return '<cmd>lua vim.snippet.jump(1)<cr>'
+---      return '<Cmd>lua vim.snippet.jump(1)<CR>'
 ---    else
 ---      return '<Tab>'
 ---    end
@@ -661,7 +661,7 @@ end
 --- ```lua
 --- vim.keymap.set({ 'i', 's' }, '<Tab>', function()
 ---    if vim.snippet.active({ direction = 1 }) then
----      return '<cmd>lua vim.snippet.jump(1)<cr>'
+---      return '<Cmd>lua vim.snippet.jump(1)<CR>'
 ---    else
 ---      return '<Tab>'
 ---    end
