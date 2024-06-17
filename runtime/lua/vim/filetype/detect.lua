@@ -679,7 +679,7 @@ function M.html(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 10)) do
     if matchregex(line, [[\<DTD\s\+XHTML\s]]) then
       return 'xhtml'
-    elseif matchregex(line, [[\c{%\s*\(extends\|block\|load\)\>\|{#\s\+]]) then
+    elseif matchregex(line, [[\c{%\s*\(autoescape\|block\|comment\|csrf_token\|cycle\|debug\|extends\|filter\|firstof\|for\|if\|ifchanged\|include\|load\|lorem\|now\|query_string\|regroup\|resetcycle\|spaceless\|templatetag\|url\|verbatim\|widthratio\|with\)\>\|{#\s\+]]) then
       return 'htmldjango'
     end
   end
