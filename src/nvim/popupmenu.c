@@ -448,7 +448,8 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf)
     return NULL;
   }
 
-  char *leader = State == MODE_CMDLINE ? cmdline_compl_pattern() : ins_compl_leader();
+  char *leader = State == MODE_CMDLINE ? cmdline_compl_pattern()
+                                       : ins_compl_leader();
   if (leader == NULL || *leader == NUL) {
     return NULL;
   }
@@ -464,7 +465,7 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf)
   if (in_fuzzy) {
     ga = fuzzy_match_str_with_pos(text, leader);
   } else {
-    matched_start = strncmp(text, leader, leader_len) == 0;
+    matched_start = mb_strnicmp(text, leader, leader_len) == 0;
   }
 
   const char *ptr = text;

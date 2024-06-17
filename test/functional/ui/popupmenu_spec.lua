@@ -4739,6 +4739,20 @@ describe('builtin popupmenu', function()
                   \ { 'word': '你可好吗' },
                   \]}
           endfunc
+
+          func Comp()
+            let col = col('.')
+            if getline('.') == 'f'
+              let col -= 1
+            endif
+            call complete(col, [
+                  \ #{word: "foo", icase: 1},
+                  \ #{word: "Foobar", icase: 1},
+                  \ #{word: "fooBaz", icase: 1},
+                  \])
+            return ''
+          endfunc
+
           set omnifunc=Omni_test
           set completeopt=menu,noinsert,fuzzy
           hi PmenuMatchSel  guifg=Blue guibg=Grey
@@ -4878,6 +4892,20 @@ describe('builtin popupmenu', function()
         ]])
         feed('<C-E><Esc>')
         command('set norightleft')
+
+        feed('S<C-R>=Comp()<CR>f')
+        screen:expect([[
+          f^                               |
+          {ms:f}{s:oo            }{1:                 }|
+          {mn:F}{n:oobar         }{1:                 }|
+          {mn:f}{n:ooBaz         }{1:                 }|
+          {1:~                               }|*15
+          {2:-- INSERT --}                    |
+        ]])
+        feed('o<BS><C-R>=Comp()<CR>')
+        screen:expect_unchanged(true)
+
+        feed('<C-E><Esc>')
       end)
     end
   end
