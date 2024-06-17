@@ -143,9 +143,15 @@ gx			Opens the current filepath or URL (decided by
 							*:#!* *vim-shebang*
 :#!{anything}		Ignored, so that you can start a Vim script with: >
 				#!vim -S
-				echo "this is a Vim script"
-				quit
+				let mylogbook='$HOME/logbook.md'
+				exe $':e {mylogbook}'
+				$
+				put ='## ' .. strftime('%d. %b %Y')
+				norm! o
 <
+			Make that script executable and run it to create a
+			new diary entry.
+
 							*:z* *E144*
 :[range]z[+-^.=][count]	Display several lines of text surrounding the line
 			specified with [range], or around the current line
