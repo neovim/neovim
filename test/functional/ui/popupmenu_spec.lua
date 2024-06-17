@@ -3550,6 +3550,66 @@ describe('builtin popupmenu', function()
                                         |
         ]])
       end)
+
+      -- oldtest: Test_wildmenu_pum_hl_match()
+      it('highlighting matched text in cmdline pum', function()
+        exec([[
+          set wildoptions=pum,fuzzy
+          hi PmenuMatchSel  guifg=Blue guibg=Grey
+          hi PmenuMatch     guifg=Blue guibg=Magenta
+        ]])
+
+        feed(':sign plc<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{s: }{ms:pl}{s:a}{ms:c}{s:e          }{1:           }|
+          {1:~    }{n: un}{mn:pl}{n:a}{mn:c}{n:e        }{1:           }|
+          :sign place^                     |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:pl}{n:a}{mn:c}{n:e          }{1:           }|
+          {1:~    }{s: un}{ms:pl}{s:a}{ms:c}{s:e        }{1:           }|
+          :sign unplace^                   |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:pl}{n:a}{mn:c}{n:e          }{1:           }|
+          {1:~    }{n: un}{mn:pl}{n:a}{mn:c}{n:e        }{1:           }|
+          :sign plc^                       |
+        ]])
+        feed('<Esc>')
+        command('set wildoptions-=fuzzy')
+        feed(':sign un<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{s: }{ms:un}{s:define       }{1:           }|
+          {1:~    }{n: }{mn:un}{n:place        }{1:           }|
+          :sign undefine^                  |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:un}{n:define       }{1:           }|
+          {1:~    }{s: }{ms:un}{s:place        }{1:           }|
+          :sign unplace^                   |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:un}{n:define       }{1:           }|
+          {1:~    }{n: }{mn:un}{n:place        }{1:           }|
+          :sign un^                        |
+        ]])
+      end)
     end
 
     it("'pumheight'", function()
