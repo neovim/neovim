@@ -17,6 +17,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/errors.h"
@@ -441,17 +442,22 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 /// Returns attributes for every cell, or NULL if all attributes are the same.
 static int *pum_compute_text_attrs(char *text, hlf_T hlf)
 {
-  char *leader = ins_compl_leader();
-
-  if (leader == NULL || *leader == NUL || (hlf != HLF_PSI && hlf != HLF_PNI)
+  if ((hlf != HLF_PSI && hlf != HLF_PNI)
       || (win_hl_attr(curwin, HLF_PMSI) == win_hl_attr(curwin, HLF_PSI)
           && win_hl_attr(curwin, HLF_PMNI) == win_hl_attr(curwin, HLF_PNI))) {
     return NULL;
   }
 
+  char *leader = State == MODE_CMDLINE ? cmdline_compl_pattern()
+                                       : ins_compl_leader();
+  if (leader == NULL || *leader == NUL) {
+    return NULL;
+  }
+
   int *attrs = xmalloc(sizeof(int) * (size_t)vim_strsize(text));
+  bool in_fuzzy = State == MODE_CMDLINE ? cmdline_compl_is_fuzzy()
+                                        : (get_cot_flags() & COT_FUZZY) != 0;
   size_t leader_len = strlen(leader);
-  const bool in_fuzzy = (get_cot_flags() & COT_FUZZY) != 0;
 
   garray_T *ga = NULL;
   bool matched_start = false;
@@ -459,7 +465,7 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf)
   if (in_fuzzy) {
     ga = fuzzy_match_str_with_pos(text, leader);
   } else {
-    matched_start = strncmp(text, leader, leader_len) == 0;
+    matched_start = mb_strnicmp(text, leader, leader_len) == 0;
   }
 
   const char *ptr = text;

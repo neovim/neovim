@@ -3550,6 +3550,66 @@ describe('builtin popupmenu', function()
                                         |
         ]])
       end)
+
+      -- oldtest: Test_wildmenu_pum_hl_match()
+      it('highlighting matched text in cmdline pum', function()
+        exec([[
+          set wildoptions=pum,fuzzy
+          hi PmenuMatchSel  guifg=Blue guibg=Grey
+          hi PmenuMatch     guifg=Blue guibg=Magenta
+        ]])
+
+        feed(':sign plc<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{s: }{ms:pl}{s:a}{ms:c}{s:e          }{1:           }|
+          {1:~    }{n: un}{mn:pl}{n:a}{mn:c}{n:e        }{1:           }|
+          :sign place^                     |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:pl}{n:a}{mn:c}{n:e          }{1:           }|
+          {1:~    }{s: un}{ms:pl}{s:a}{ms:c}{s:e        }{1:           }|
+          :sign unplace^                   |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:pl}{n:a}{mn:c}{n:e          }{1:           }|
+          {1:~    }{n: un}{mn:pl}{n:a}{mn:c}{n:e        }{1:           }|
+          :sign plc^                       |
+        ]])
+        feed('<Esc>')
+        command('set wildoptions-=fuzzy')
+        feed(':sign un<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{s: }{ms:un}{s:define       }{1:           }|
+          {1:~    }{n: }{mn:un}{n:place        }{1:           }|
+          :sign undefine^                  |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:un}{n:define       }{1:           }|
+          {1:~    }{s: }{ms:un}{s:place        }{1:           }|
+          :sign unplace^                   |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:un}{n:define       }{1:           }|
+          {1:~    }{n: }{mn:un}{n:place        }{1:           }|
+          :sign un^                        |
+        ]])
+      end)
     end
 
     it("'pumheight'", function()
@@ -4679,6 +4739,20 @@ describe('builtin popupmenu', function()
                   \ { 'word': '你可好吗' },
                   \]}
           endfunc
+
+          func Comp()
+            let col = col('.')
+            if getline('.') == 'f'
+              let col -= 1
+            endif
+            call complete(col, [
+                  \ #{word: "foo", icase: 1},
+                  \ #{word: "Foobar", icase: 1},
+                  \ #{word: "fooBaz", icase: 1},
+                  \])
+            return ''
+          endfunc
+
           set omnifunc=Omni_test
           set completeopt=menu,noinsert,fuzzy
           hi PmenuMatchSel  guifg=Blue guibg=Grey
@@ -4818,6 +4892,20 @@ describe('builtin popupmenu', function()
         ]])
         feed('<C-E><Esc>')
         command('set norightleft')
+
+        feed('S<C-R>=Comp()<CR>f')
+        screen:expect([[
+          f^                               |
+          {ms:f}{s:oo            }{1:                 }|
+          {mn:F}{n:oobar         }{1:                 }|
+          {mn:f}{n:ooBaz         }{1:                 }|
+          {1:~                               }|*15
+          {2:-- INSERT --}                    |
+        ]])
+        feed('o<BS><C-R>=Comp()<CR>')
+        screen:expect_unchanged(true)
+
+        feed('<C-E><Esc>')
       end)
     end
   end

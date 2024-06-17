@@ -402,6 +402,20 @@ void cmdline_pum_cleanup(CmdlineInfo *cclp)
   wildmenu_cleanup(cclp);
 }
 
+/// Returns the current cmdline completion pattern.
+char *cmdline_compl_pattern(void)
+{
+  expand_T *xp = get_cmdline_info()->xpc;
+  return xp == NULL ? NULL : xp->xp_orig;
+}
+
+/// Returns true if fuzzy cmdline completion is active, false otherwise.
+bool cmdline_compl_is_fuzzy(void)
+{
+  expand_T *xp = get_cmdline_info()->xpc;
+  return xp != NULL && cmdline_fuzzy_completion_supported(xp);
+}
+
 /// Return the number of characters that should be skipped in the wildmenu
 /// These are backslashes used for escaping.  Do show backslashes in help tags.
 static int skip_wildmenu_char(expand_T *xp, char *s)

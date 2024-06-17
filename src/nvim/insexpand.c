@@ -1397,7 +1397,7 @@ bool compl_match_curr_select(int selected)
 /// Get current completion leader
 char *ins_compl_leader(void)
 {
-  return compl_leader;
+  return compl_leader != NULL ? compl_leader : compl_orig_text;
 }
 
 /// Add any identifiers that match the given pattern "pat" in the list of
