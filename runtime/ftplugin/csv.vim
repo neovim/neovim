@@ -7,11 +7,11 @@ if !exists("b:csv_delimiter")
     let s:delimiters = ",;\t|"
 
     let s:max = 0
-    for d in s:delimiters
+    for s:d in s:delimiters
         let s:count = getline(1)->split(d)->len() + getline(2)->split(d)->len()
         if s:count > s:max
             let s:max = s:count
-            let b:csv_delimiter = d
+            let b:csv_delimiter = s:d
         endif
     endfor
 endif
