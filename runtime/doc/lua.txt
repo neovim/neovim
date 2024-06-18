@@ -4436,6 +4436,16 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
 ==============================================================================
 Lua module: vim.net                                                  *vim.net*
 
+*vim.net.Proxy*
+
+    Fields: ~
+      • {url}?          (`string`) Proxy URL in the format
+                        `scheme ":" ["//" authority] path ["?" query]` where
+                        authority follows the format
+                        `[userinfo "@"] host [":" port]`
+      • {credentials}?  (`string`) Proxy credentials with the format
+                        `username:password`
+
 *vim.net.curl.Metadata*
     See the `--write-out` section in `man curl`
 
@@ -4508,6 +4518,90 @@ Lua module: vim.net                                                  *vim.net*
       • {xfer_id}?                  (`number`) (Added in 8.2.0)
 
 
+vim.net.config({opts})                                      *vim.net.config()*
+    Configure net options globally
+
+    Configuration can be specified globally, or ephemerally (i.e. only for a
+    single call to |vim.net.download()|). Ephemeral configuration has highest
+    priority, followed by global configuration.
+
+    When omitted or `nil`, retrieve the current configuration. Otherwise, a
+    configuration table (see |vim.net.Opts|).
+
+    Parameters: ~
+      • {opts}  (`table`) : Current net config if {opts} is omitted.
+                • {as}? (`string`) Path to write the downloaded file to. If
+                  not provided, the one inferred form the URL will be used.
+                  Defaults to `nil`
+                • {try_suggested_remote_name}? (`boolean`) Whether the
+                  `Content-Disposition` response header should be taken into
+                  account to decide the name of the downloaded file. Fallbacks
+                  to `as`. Defaults to `false`
+                • {credentials}? (`string`) Credentials with the format
+                  `username:password`. Defaults to `nil`
+                • {override}? (`boolean`) Whether the file should be
+                  overridden if it already exists. Defaults to `true`
+                • {remove_leftover_on_error}? (`boolean`) Whether the file
+                  should be removed if an error happens while downloading it.
+                  Defaults to `false`
+                • {compressed}? (`boolean`) Whether the file should be
+                  requested in a compressed format (and decompressed
+                  automatically). Defaults to `false`
+                • {max_filesize}? (`integer`) Maximum size in bytes of the
+                  file to downlaod. The download will fail if the file
+                  requested is larger. Defaults to `nil`
+                • {raw}? (`boolean`) Disables all internal HTTP decoding of
+                  content or transfer encodings. Unaltered, raw, data is
+                  passed. Defaults to `false`
+                • {headers}? (`table<string, string[]>`) Request headers.
+                  Defaults to `nil`
+                • {proxy}? (`vim.net.Proxy`) Proxy information. Defaults to
+                  `nil`
+                • {follow_redirects}? (`boolean`) Whether redirects should be
+                  followed. Defaults to `true`
+                • {redirect_credentials}? (`boolean`) Whether `credentials`
+                  should be send to host after a redirect. Defaults to `false`
+                • {on_exit}?
+                  (`fun(err: string?, metadata: vim.net.curl.Metadata?)`)
+                  Optional callback. Defaults to showing a notification when
+                  the file has been downloaded.
+
+    Return: ~
+        (`table?`) A table with the following fields:
+        • {as}? (`string`) Path to write the downloaded file to. If not
+          provided, the one inferred form the URL will be used. Defaults to
+          `nil`
+        • {try_suggested_remote_name}? (`boolean`) Whether the
+          `Content-Disposition` response header should be taken into account
+          to decide the name of the downloaded file. Fallbacks to `as`.
+          Defaults to `false`
+        • {credentials}? (`string`) Credentials with the format
+          `username:password`. Defaults to `nil`
+        • {override}? (`boolean`) Whether the file should be overridden if it
+          already exists. Defaults to `true`
+        • {remove_leftover_on_error}? (`boolean`) Whether the file should be
+          removed if an error happens while downloading it. Defaults to
+          `false`
+        • {compressed}? (`boolean`) Whether the file should be requested in a
+          compressed format (and decompressed automatically). Defaults to
+          `false`
+        • {max_filesize}? (`integer`) Maximum size in bytes of the file to
+          downlaod. The download will fail if the file requested is larger.
+          Defaults to `nil`
+        • {raw}? (`boolean`) Disables all internal HTTP decoding of content or
+          transfer encodings. Unaltered, raw, data is passed. Defaults to
+          `false`
+        • {headers}? (`table<string, string[]>`) Request headers. Defaults to
+          `nil`
+        • {proxy}? (`vim.net.Proxy`) Proxy information. Defaults to `nil`
+        • {follow_redirects}? (`boolean`) Whether redirects should be
+          followed. Defaults to `true`
+        • {redirect_credentials}? (`boolean`) Whether `credentials` should be
+          send to host after a redirect. Defaults to `false`
+        • {on_exit}? (`fun(err: string?, metadata: vim.net.curl.Metadata?)`)
+          Optional callback. Defaults to showing a notification when the file
+          has been downloaded.
+
 vim.net.download({url}, {opts})                           *vim.net.download()*
     Asynchronously download a file
 
@@ -4548,9 +4642,9 @@ vim.net.download({url}, {opts})                           *vim.net.download()*
                       override = false,
                     })
 <
-                • {as}? (`string`) Path to write the downloaded
-                  file to. If not provided, the one inferred form the URL will
-                  be used. Defaults to `nil`
+                • {as}? (`string`) Path to write the downloaded file to. If
+                  not provided, the one inferred form the URL will be used.
+                  Defaults to `nil`
                 • {try_suggested_remote_name}? (`boolean`) Whether the
                   `Content-Disposition` response header should be taken into
                   account to decide the name of the downloaded file. Fallbacks
@@ -4571,16 +4665,12 @@ vim.net.download({url}, {opts})                           *vim.net.download()*
                 • {raw}? (`boolean`) Disables all internal HTTP decoding of
                   content or transfer encodings. Unaltered, raw, data is
                   passed. Defaults to `false`
-                • {headers}? (`table`) string[]> Request headers. Defaults to
+                • {headers}? (`table<string, string[]>`) Request headers.
+                  Defaults to `nil`
+                • {proxy}? (`vim.net.Proxy`) Proxy information. Defaults to
                   `nil`
-                • {proxy}? (`string`) Proxy URL in the format
-                  `scheme ":" ["//" authority] path ["?" query]` where
-                  authority follows the format
-                  `[userinfo "@"] host [":" port]`. Defaults to `nil`
-                • {proxy_credentials}? (`string`) Proxy credentials with the
-                  format `username:password`. Defaults to `nil`
                 • {follow_redirects}? (`boolean`) Whether redirects should be
-                  followed. Defaults to `false`
+                  followed. Defaults to `true`
                 • {redirect_credentials}? (`boolean`) Whether `credentials`
                   should be send to host after a redirect. Defaults to `false`
                 • {on_exit}?
