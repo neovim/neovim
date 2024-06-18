@@ -234,6 +234,21 @@ an archive or as a repository.  For an archive you can follow these steps:
 	   Here "fancytext" is the name of the package, it can be anything
 	   else.
 
+
+Adding nohlsearch package				*nohlsearch-install*
+
+Load the plugin with this command: >
+	packadd nohlsearch
+<
+Automatically execute |:nohlsearch| after 'updatetime' or getting into |Insert| mode.
+Thus assuming default updatetime, hlsearch would be suspended/turned off after
+4 seconds of idle time.
+
+To disable the effect of the plugin after is has been loaded: >
+	au! nohlsearch
+<
+
+
 More information about packages can be found here: |packages|.
 
 ==============================================================================

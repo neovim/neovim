@@ -141,13 +141,17 @@ CTRL-C			Interrupt current (search) command.
 			executing autocommands |autocmd-searchpat|.
 			Same thing for when invoking a user function.
 
+
 While typing the search pattern the current match will be shown if the
 'incsearch' option is on.  Remember that you still have to finish the search
 command with <CR> to actually position the cursor at the displayed match.  Or
 use <Esc> to abandon the search.
 
+							*nohlsearch-auto*
 All matches for the last used search pattern will be highlighted if you set
-the 'hlsearch' option.  This can be suspended with the |:nohlsearch| command.
+the 'hlsearch' option.  This can be suspended with the |:nohlsearch| command
+or auto suspended with nohlsearch plugin.  See |nohlsearch-install|.
+
 
 When 'shortmess' does not include the "S" flag, Vim will automatically show an
 index, on which the cursor is. This can look like this: >
