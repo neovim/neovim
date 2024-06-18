@@ -169,7 +169,8 @@ describe('vim.net', function()
       eq(true, vim.json.decode(data).authorized)
     end)
 
-    it('does not override file', function()
+    -- requirest `curl` 7.83.0 and Ubuntu 22 has 7.81.0
+    pending('does not override file', function()
       write_file(path, '')
       eq('', read_file(path))
       exec_lua(
