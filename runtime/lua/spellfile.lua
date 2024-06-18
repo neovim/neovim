@@ -59,9 +59,17 @@ end
 ---@type table<string, true>
 local done = {}
 
+-- TODO: SpellFileMissing expects a sync download. Using an async one needs `:set spell` again once the download has finished (and gives an error)
+-- TODO: rewrite \runtime\doc\spell.txt *spell-SpellFileMissing* *spellfile.vim* (?)
+-- TODO: rewrite src\nvim\spell.c:1615 (#3027) to use this function instead
 ---@param lang string
 function M.download_spell(lang)
-  -- TODO: try in sandbox/modeline and how to fix #11359 for lua
+  -- Check for sandbox/modeline. #11359
+  local ok = pcall(vim.cmd('!'))
+  if not ok then
+    error('Cannot download spellfile in sandbox/modeline. Try ":set spell" from the cmdline.')
+  end
+
   lang = lang:lower()
 
   if spellfile_URL ~= vim.g.spellfile_URL then
