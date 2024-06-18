@@ -599,5 +599,5 @@ do
   end
 
   -- Default statusline as described in :h 'statusline'
-  vim.o.statusline = [[%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P]]
+  vim.o.statusline = [[%<%f %h%m%r%=%-14.(%l,%c%V%) %P]]
 end
