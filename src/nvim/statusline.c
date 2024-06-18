@@ -62,6 +62,19 @@ typedef enum {
   kNumBaseHexadecimal = 16,
 } NumberBase;
 
+/// Get default statusline as 'statusline' format string.
+char *stl_default_format(void)
+{
+  char *fmt;
+  // include line/col and file location information if 'ruler' is set
+  if (p_ru) {
+    fmt = xstrdup("%<%f %h%m%r%=%-14.(%l,%c%V%) %P");
+  } else {
+    fmt = xstrdup("%<%f %h%m%r");
+  }
+  return fmt;
+}
+
 /// Redraw the status line of window `wp`.
 ///
 /// If inversion is possible we use it. Else '=' characters are used.
@@ -90,7 +103,11 @@ void win_redr_status(win_T *wp)
     wp->w_redr_status = true;
   } else if (*p_stl != NUL || *wp->w_p_stl != NUL) {
     // redraw custom status line
-    redraw_custom_statusline(wp);
+    redraw_custom_statusline(wp, NULL);
+  } else {
+    // redraw default status line
+    char *default_stl = stl_default_format();
+    redraw_custom_statusline(wp, default_stl);
   }
 
   // May need to draw the character below the vertical separator.
@@ -211,7 +228,9 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
 
 /// Redraw the status line, window bar or ruler of window "wp".
 /// When "wp" is NULL redraw the tab pages line from 'tabline'.
-static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
+/// "fmt_string" can be used to directly define the status line, however,
+/// when"fmt_string" is NULL use "wp->p_stl" option.
+static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, char *fmt_string)
 {
   static bool entered = false;
   int attr;
@@ -306,7 +325,11 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       }
     } else {
       opt_idx = kOptStatusline;
-      stl = ((*wp->w_p_stl != NUL) ? wp->w_p_stl : p_stl);
+      if (fmt_string != NULL) {
+        stl = fmt_string;
+      } else {
+        stl = ((*wp->w_p_stl != NUL) ? wp->w_p_stl : p_stl);
+      }
       opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
     }
 
@@ -399,7 +422,7 @@ void win_redr_winbar(win_T *wp)
   if (wp->w_winbar_height == 0 || !redrawing()) {
     // Do nothing.
   } else if (*p_wbr != NUL || *wp->w_p_wbr != NUL) {
-    win_redr_custom(wp, true, false);
+    win_redr_custom(wp, true, false, NULL);
   }
   entered = false;
 }
@@ -431,7 +454,7 @@ void win_redr_ruler(win_T *wp)
   }
 
   if (*p_ruf && p_ch > 0 && !ui_has(kUIMessages)) {
-    win_redr_custom(wp, false, true);
+    win_redr_custom(wp, false, true, NULL);
     return;
   }
 
@@ -552,7 +575,7 @@ schar_T fillchar_status(int *attr, win_T *wp)
 
 /// Redraw the status line according to 'statusline' and take care of any
 /// errors encountered.
-void redraw_custom_statusline(win_T *wp)
+void redraw_custom_statusline(win_T *wp, char *fmt_string)
 {
   static bool entered = false;
 
@@ -563,7 +586,7 @@ void redraw_custom_statusline(win_T *wp)
   }
   entered = true;
 
-  win_redr_custom(wp, false, false);
+  win_redr_custom(wp, false, false, fmt_string);
   entered = false;
 }
 
@@ -641,7 +664,7 @@ void draw_tabline(void)
 
   // Use the 'tabline' option if it's set.
   if (*p_tal != NUL) {
-    win_redr_custom(NULL, false, false);
+    win_redr_custom(NULL, false, false, NULL);
   } else {
     int tabcount = 0;
     int tabwidth = 0;
