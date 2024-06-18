@@ -78,19 +78,19 @@ function M.download_spell(lang)
   done[lang] = true
 
   local dirs = available_dirs()
-  local dir_to_create ---@type string
   if #dirs == 0 then
-    dir_to_create = vim.fn.stdpath('data') .. '/site/spell'
+    local dir_to_create = vim.fn.stdpath('data') .. '/site/spell'
     if vim.o.verbose ~= 0 or dir_to_create ~= '' then
       vim.notify('No (writable) spell directory found.', vim.log.levels.INFO)
     end
     vim.fn.mkdir(dir_to_create, 'p')
     dirs = available_dirs()
-  end
-  if #dirs == 0 then
-    vim.notify(('Failed to create: %s'):format(dir_to_create), vim.log.levels.INFO)
-  else
-    vim.notify(('Created %s'):format(dir_to_create), vim.log.levels.INFO)
+
+    if #dirs == 0 then
+      vim.notify(('Failed to create: %s'):format(dir_to_create), vim.log.levels.INFO)
+    else
+      vim.notify(('Created %s'):format(dir_to_create), vim.log.levels.INFO)
+    end
   end
 
   if
@@ -98,104 +98,103 @@ function M.download_spell(lang)
       ('No spell file for "%s" in %s\nDownload it?'):format(lang, vim.o.encoding),
       '&Yes\n&No',
       2
-    ) == 1
+    ) ~= 1
   then
-    local choice ---@type integer
-    if #dirs == 1 then
-      choice = 1
-    else
-      local msg = 'In which directory do you want to write the file:'
-        .. vim
-          .iter(ipairs(dirs))
-          :map(function(i, dir)
-            return ('\n%d. %s'):format(i, dir)
-          end)
-          :join('')
-      local choices = '&Cancel'
-        .. vim
-          .iter(ipairs(dirs))
-          :map(function(i, _dir)
-            return ('\n&%d'):format(i)
-          end)
-          :join('')
-      choice = vim.fn.confirm(msg, choices) - 1
-    end
-
-    if choice < 1 then
-      return
-    end
-
-    -- TODO: normalize `as`?
-    local dir = dirs[choice]
-
-    local encoding = vim.o.encoding == 'iso-8859-15' and 'latin1' or vim.o.encoding
-    local spell_filename = ('%s.%s.spl'):format(lang, encoding)
-    local spell_url = ('%s/%s'):format(spellfile_URL, spell_filename)
-    vim.notify(('Downloading %s ...'):format(spell_filename), vim.log.levels.INFO)
-    vim.net.download(spell_url, {
-      as = ('%s/%s'):format(dir, spell_filename),
-      on_exit = vim.schedule_wrap(function(err, metadata)
-        if err then
-          return vim.notify(err, vim.log.levels.ERROR)
-        end
-        if not metadata then
-          return vim.notify(
-            'There was an error getting the metadata of the downloaded file',
-            vim.log.levels.ERROR
-          )
-        end
-        local spell = io.open(metadata.filename_effective)
-        if not spell then
-          return vim.notify(
-            ("Couldn't open file %s"):format(metadata.filename_effective),
-            vim.log.levels.ERROR
-          )
-        end
-        local spell_first_line = spell:read()
-        spell:close()
-        if spell_first_line:find('VIMspell') then
-          vim.notify(('%s downloaded'):format(metadata.filename_effective), vim.log.levels.INFO)
-          return download_sug(dir, lang, encoding)
-        end
-
-        encoding = 'ascii'
-        spell_filename = ('%s.%s.spl'):format(lang, encoding)
-        vim.notify(('Could not find it, trying %s ...'):format(spell_filename), vim.log.levels.WARN)
-        spell_url = ('%s/%s'):format(spellfile_URL, spell_filename)
-        vim.net.download(spell_url, {
-          as = ('%s/%s'):format(dir, spell_filename),
-          on_exit = vim.schedule_wrap(function(err2, metadata2)
-            if err2 then
-              return vim.notify(err2, vim.log.levels.ERROR)
-            end
-            if not metadata2 then
-              return vim.notify(
-                'There was an error getting the metadata of the downloaded file',
-                vim.log.levels.ERROR
-              )
-            end
-            spell = io.open(metadata2.filename_effective)
-            if not spell then
-              return vim.notify(
-                ("Couldn't open file %s"):format(metadata2.filename_effective),
-                vim.log.levels.ERROR
-              )
-            end
-            spell_first_line = spell:read()
-            spell:close()
-            if spell_first_line:find('VIMspell') then
-              vim.notify(
-                ('%s downloaded'):format(metadata2.filename_effective),
-                vim.log.levels.INFO
-              )
-              return download_sug(dir, lang, encoding)
-            end
-            vim.notify('Download failed', vim.log.levels.ERROR)
-          end),
-        })
-      end),
-    })
+    return
   end
+
+  local choice ---@type integer
+  if #dirs == 1 then
+    choice = 1
+  else
+    local msg = 'In which directory do you want to write the file:'
+      .. vim
+        .iter(ipairs(dirs))
+        :map(function(i, dir)
+          return ('\n%d. %s'):format(i, dir)
+        end)
+        :join('')
+    local choices = '&Cancel'
+      .. vim
+        .iter(ipairs(dirs))
+        :map(function(i, _dir)
+          return ('\n&%d'):format(i)
+        end)
+        :join('')
+    choice = vim.fn.confirm(msg, choices) - 1
+  end
+
+  if choice < 1 then
+    return
+  end
+
+  -- TODO: normalize `as`?
+  local dir = dirs[choice]
+
+  local encoding = vim.o.encoding == 'iso-8859-15' and 'latin1' or vim.o.encoding
+  local spell_filename = ('%s.%s.spl'):format(lang, encoding)
+  local spell_url = ('%s/%s'):format(spellfile_URL, spell_filename)
+  vim.notify(('Downloading %s ...'):format(spell_filename), vim.log.levels.INFO)
+  vim.net.download(spell_url, {
+    as = ('%s/%s'):format(dir, spell_filename),
+    on_exit = vim.schedule_wrap(function(err, metadata)
+      if err then
+        return vim.notify(err, vim.log.levels.ERROR)
+      end
+      if not metadata then
+        return vim.notify(
+          'There was an error getting the metadata of the downloaded file',
+          vim.log.levels.ERROR
+        )
+      end
+      local spell = io.open(metadata.filename_effective)
+      if not spell then
+        return vim.notify(
+          ("Couldn't open file %s"):format(metadata.filename_effective),
+          vim.log.levels.ERROR
+        )
+      end
+      local spell_first_line = spell:read()
+      spell:close()
+      if spell_first_line:find('VIMspell') then
+        vim.notify(('%s downloaded'):format(metadata.filename_effective), vim.log.levels.INFO)
+        return download_sug(dir, lang, encoding)
+      end
+
+      encoding = 'ascii'
+      spell_filename = ('%s.%s.spl'):format(lang, encoding)
+      vim.notify(('Could not find it, trying %s ...'):format(spell_filename), vim.log.levels.WARN)
+      spell_url = ('%s/%s'):format(spellfile_URL, spell_filename)
+      vim.net.download(spell_url, {
+        as = ('%s/%s'):format(dir, spell_filename),
+        on_exit = vim.schedule_wrap(function(err2, metadata2)
+          if err2 then
+            return vim.notify(err2, vim.log.levels.ERROR)
+          end
+          if not metadata2 then
+            return vim.notify(
+              'There was an error getting the metadata of the downloaded file',
+              vim.log.levels.ERROR
+            )
+          end
+          spell = io.open(metadata2.filename_effective)
+          if not spell then
+            return vim.notify(
+              ("Couldn't open file %s"):format(metadata2.filename_effective),
+              vim.log.levels.ERROR
+            )
+          end
+          spell_first_line = spell:read()
+          spell:close()
+          if spell_first_line:find('VIMspell') then
+            vim.notify(('%s downloaded'):format(metadata2.filename_effective), vim.log.levels.INFO)
+            return download_sug(dir, lang, encoding)
+          end
+          vim.notify('Download failed', vim.log.levels.ERROR)
+        end),
+      })
+    end),
+  })
 end
 
 return M
