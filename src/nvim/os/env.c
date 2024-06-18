@@ -412,6 +412,17 @@ void os_get_hostname(char *hostname, size_t size)
 static char *homedir = NULL;
 static char *os_uv_homedir(void);
 
+/// Public accessor for the cached "real", resolved user home directory. See
+/// comment on `homedir`.
+const char *os_get_homedir(void)
+{
+  if (!homedir) {
+    emsg("os_get_homedir failed: homedir not initialized");
+    return NULL;
+  }
+  return homedir;
+}
+
 void init_homedir(void)
 {
   // In case we are called a second time.
