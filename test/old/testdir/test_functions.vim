@@ -3475,6 +3475,29 @@ func Test_glob2()
   endif
 endfunc
 
+func Test_glob_symlinks()
+  call writefile([], 'Xglob1')
+
+  if has("win32")
+    silent !mklink XglobBad DoesNotExist
+    if v:shell_error
+      throw 'Skipped: cannot create symlinks'
+    endif
+    silent !mklink XglobOk Xglob1
+  else
+    silent !ln -s DoesNotExist XglobBad
+    silent !ln -s Xglob1 XglobOk
+  endif
+
+  " The broken symlink is excluded when alllinks is false.
+  call assert_equal(['Xglob1', 'XglobBad', 'XglobOk'], sort(glob('Xglob*', 0, 1, 1)))
+  call assert_equal(['Xglob1', 'XglobOk'], sort(glob('Xglob*', 0, 1, 0)))
+
+  call delete('Xglob1')
+  call delete('XglobBad')
+  call delete('XglobOk')
+endfunc
+
 " Test for browse()
 func Test_browse()
   CheckFeature browse
