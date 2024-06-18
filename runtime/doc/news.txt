@@ -47,6 +47,8 @@ EDITOR
 
 • The order in which signs are placed was changed. Higher priority signs will
   now appear left of lower priority signs.
+• |hl-CurSearch| now behaves the same as Vim and no longer updates on every
+  cursor movement.
 
 EVENTS
 

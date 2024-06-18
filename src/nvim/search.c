@@ -4322,9 +4322,3 @@ bool search_was_last_used(void)
 {
   return last_idx == 0;
 }
-
-/// @return  true if 'hlsearch' highlight is currently in use.
-bool using_hlsearch(void)
-{
-  return spats[last_idx].pat != NULL && p_hls && !no_hlsearch;
-}
