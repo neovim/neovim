@@ -28,7 +28,6 @@ local get_path = function(fname)
 end
 
 local unicodedata_fname = get_path('UnicodeData.txt')
-local casefolding_fname = get_path('CaseFolding.txt')
 local eastasianwidth_fname = get_path('EastAsianWidth.txt')
 local emoji_fname = get_path('emoji-data.txt')
 
@@ -77,10 +76,6 @@ local parse_data_to_props = function(ud_fp)
   return fp_lines_to_lists(ud_fp, 15, false)
 end
 
-local parse_fold_props = function(cf_fp)
-  return fp_lines_to_lists(cf_fp, 4, true)
-end
-
 local parse_width_props = function(eaw_fp)
   return fp_lines_to_lists(eaw_fp, 2, true)
 end
@@ -95,45 +90,6 @@ local make_range = function(start, end_, step, add)
   else
     return ('  {0x%04x, 0x%04x},\n'):format(start, end_)
   end
-end
-
-local build_convert_table = function(ut_fp, props, cond_func, nl_index, table_name)
-  ut_fp:write('static const convertStruct ' .. table_name .. '[] = {\n')
-  local start = -1
-  local end_ = -1
-  local step = 0
-  local add = -1
-  for _, p in ipairs(props) do
-    if cond_func(p) then
-      local n = tonumber(p[1], 16)
-      local nl = tonumber(p[nl_index], 16)
-      if start >= 0 and add == (nl - n) and (step == 0 or n - end_ == step) then
-        -- Continue with the same range.
-        step = n - end_
-        end_ = n
-      else
-        if start >= 0 then
-          -- Produce previous range.
-          ut_fp:write(make_range(start, end_, step, add))
-        end
-        start = n
-        end_ = n
-        step = 0
-        add = nl - n
-      end
-    end
-  end
-  if start >= 0 then
-    ut_fp:write(make_range(start, end_, step, add))
-  end
-  ut_fp:write('};\n')
-end
-
-local build_fold_table = function(ut_fp, foldprops)
-  local cond_func = function(p)
-    return (p[2] == 'C' or p[2] == 'S')
-  end
-  return build_convert_table(ut_fp, foldprops, cond_func, 3, 'foldCase')
 end
 
 local build_combining_table = function(ut_fp, dataprops)
@@ -290,12 +246,6 @@ ud_fp:close()
 local ut_fp = io.open(utf_tables_fname, 'w')
 
 build_combining_table(ut_fp, dataprops)
-
-local cf_fp = io.open(casefolding_fname, 'r')
-local foldprops = parse_fold_props(cf_fp)
-cf_fp:close()
-
-build_fold_table(ut_fp, foldprops)
 
 local eaw_fp = io.open(eastasianwidth_fname, 'r')
 local widthprops = parse_width_props(eaw_fp)
