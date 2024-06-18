@@ -706,6 +706,9 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T
         // group.
         if (shl == search_hl && shl->has_cursor) {
           shl->attr_cur = win_hl_attr(wp, HLF_LC);
+          if (shl->attr_cur != shl->attr) {
+            search_hl_has_cursor_lnum = lnum;
+          }
         } else {
           shl->attr_cur = shl->attr;
         }
