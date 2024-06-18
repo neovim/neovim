@@ -688,6 +688,9 @@ popupexit:
     if (in_statuscol && wp->w_p_rl) {
       click_col = wp->w_width_inner - click_col - 1;
     }
+    if (in_statuscol && click_col >= (int)wp->w_statuscol_click_defs_size) {
+      return false;
+    }
 
     if (click_defs != NULL) {
       switch (click_defs[click_col].type) {
