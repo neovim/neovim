@@ -816,22 +816,14 @@ describe('completion', function()
       feed(':lua math.a<Tab>')
       screen:expect([[
                                                                     |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         {100:abs}{3:  acos  asin  atan  atan2                                }|
         :lua math.abs^                                               |
       ]])
       feed('<Tab>')
       screen:expect([[
                                                                     |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         {3:abs  }{100:acos}{3:  asin  atan  atan2                                }|
         :lua math.acos^                                              |
       ]])

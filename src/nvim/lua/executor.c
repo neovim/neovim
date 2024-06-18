@@ -1931,7 +1931,7 @@ static garray_T expand_result_array = GA_EMPTY_INIT_VALUE;
 void nlua_expand_pat(expand_T *xp, const char *pat)
 {
   lua_State *const lstate = global_lstate;
-  int status = OK;
+  int status = FAIL;
 
   // [ vim ]
   lua_getglobal(lstate, "vim");
@@ -1940,12 +1940,11 @@ void nlua_expand_pat(expand_T *xp, const char *pat)
   lua_getfield(lstate, -1, "_expand_pat");
   luaL_checktype(lstate, -1, LUA_TFUNCTION);
 
-  // [ vim, vim._expand_pat, buf ]
-  lua_pushlstring(lstate, pat, strlen(pat));
+  // [ vim, vim._expand_pat, pat ]
+  lua_pushstring(lstate, pat);
 
   if (nlua_pcall(lstate, 1, 2) != 0) {
-    nlua_error(lstate,
-               _("Error executing vim._expand_pat: %.*s"));
+    nlua_error(lstate, _("Error executing vim._expand_pat: %.*s"));
     return;
   }
 
@@ -1954,30 +1953,27 @@ void nlua_expand_pat(expand_T *xp, const char *pat)
   Arena arena = ARENA_EMPTY;
   int prefix_len = (int)nlua_pop_Integer(lstate, &arena, &err);
   if (ERROR_SET(&err)) {
-    status = FAIL;
     goto cleanup;
   }
 
   Array completions = nlua_pop_Array(lstate, &arena, &err);
   if (ERROR_SET(&err)) {
-    status = FAIL;
     goto cleanup_array;
   }
 
   ga_clear(&expand_result_array);
   ga_init(&expand_result_array, (int)sizeof(char *), 80);
+
   for (size_t i = 0; i < completions.size; i++) {
     Object v = completions.items[i];
-
     if (v.type != kObjectTypeString) {
-      status = FAIL;
       goto cleanup_array;
     }
-
     GA_APPEND(char *, &expand_result_array, string_to_cstr(v.data.string));
   }
 
   xp->xp_pattern += prefix_len;
+  status = OK;
 
 cleanup_array:
   arena_mem_free(arena_finish(&arena));
