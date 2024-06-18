@@ -4072,18 +4072,22 @@ static char *get_cmdline_completion(void)
     return NULL;
   }
 
-  set_expand_context(p->xpc);
-  if (p->xpc->xp_context == EXPAND_UNSUCCESSFUL) {
+  int xp_context = p->xpc->xp_context;
+  if (xp_context == EXPAND_NOTHING) {
+    set_expand_context(p->xpc);
+    xp_context = p->xpc->xp_context;
+    p->xpc->xp_context = EXPAND_NOTHING;
+  }
+  if (xp_context == EXPAND_UNSUCCESSFUL) {
     return NULL;
   }
 
-  char *cmd_compl = get_user_cmd_complete(p->xpc, p->xpc->xp_context);
+  char *cmd_compl = get_user_cmd_complete(NULL, xp_context);
   if (cmd_compl == NULL) {
     return NULL;
   }
 
-  if (p->xpc->xp_context == EXPAND_USER_LIST
-      || p->xpc->xp_context == EXPAND_USER_DEFINED) {
+  if (xp_context == EXPAND_USER_LIST || xp_context == EXPAND_USER_DEFINED) {
     size_t buflen = strlen(cmd_compl) + strlen(p->xpc->xp_arg) + 2;
     char *buffer = xmalloc(buflen);
     snprintf(buffer, buflen, "%s,%s", cmd_compl, p->xpc->xp_arg);
