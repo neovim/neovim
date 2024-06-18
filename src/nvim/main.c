@@ -1442,6 +1442,17 @@ scripterror:
       ga_grow(&global_alist.al_ga, 1);
       char *p = xstrdup(argv[0]);
 
+      // On Windows expand "~\" or "~/" prefix in file names to profile directory.
+#ifdef MSWIN
+      if (*p == '~' && (p[1] == '\\' || p[1] == '/')) {
+        size_t size = strlen(os_get_homedir()) + strlen(p);
+        char *tilde_expanded = xmalloc(size);
+        snprintf(tilde_expanded, size, "%s%s", os_get_homedir(), p + 1);
+        xfree(p);
+        p = tilde_expanded;
+      }
+#endif
+
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
           && !os_isdir(alist_name(&GARGLIST[0]))) {
         char *r = concat_fnames(p, path_tail(alist_name(&GARGLIST[0])), true);
