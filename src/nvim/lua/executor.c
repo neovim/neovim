@@ -1924,10 +1924,14 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "_ts_get_minimum_language_version");
 }
 
-int nlua_expand_pat(expand_T *xp, char *pat, int *num_results, char ***results)
+static garray_T expand_result_array = GA_EMPTY_INIT_VALUE;
+
+/// Finds matches for Lua cmdline completion and advances xp->xp_pattern after prefix.
+/// This should be called before xp->xp_pattern is first used.
+void nlua_expand_pat(expand_T *xp, const char *pat)
 {
   lua_State *const lstate = global_lstate;
-  int ret = OK;
+  int status = OK;
 
   // [ vim ]
   lua_getglobal(lstate, "vim");
@@ -1942,54 +1946,54 @@ int nlua_expand_pat(expand_T *xp, char *pat, int *num_results, char ***results)
   if (nlua_pcall(lstate, 1, 2) != 0) {
     nlua_error(lstate,
                _("Error executing vim._expand_pat: %.*s"));
-    return FAIL;
+    return;
   }
 
   Error err = ERROR_INIT;
 
-  *num_results = 0;
-  *results = NULL;
-
   Arena arena = ARENA_EMPTY;
   int prefix_len = (int)nlua_pop_Integer(lstate, &arena, &err);
   if (ERROR_SET(&err)) {
-    ret = FAIL;
+    status = FAIL;
     goto cleanup;
   }
 
   Array completions = nlua_pop_Array(lstate, &arena, &err);
   if (ERROR_SET(&err)) {
-    ret = FAIL;
+    status = FAIL;
     goto cleanup_array;
   }
 
-  garray_T result_array;
-  ga_init(&result_array, (int)sizeof(char *), 80);
+  ga_clear(&expand_result_array);
+  ga_init(&expand_result_array, (int)sizeof(char *), 80);
   for (size_t i = 0; i < completions.size; i++) {
     Object v = completions.items[i];
 
     if (v.type != kObjectTypeString) {
-      ret = FAIL;
+      status = FAIL;
       goto cleanup_array;
     }
 
-    GA_APPEND(char *, &result_array, string_to_cstr(v.data.string));
+    GA_APPEND(char *, &expand_result_array, string_to_cstr(v.data.string));
   }
 
   xp->xp_pattern += prefix_len;
-  *results = result_array.ga_data;
-  *num_results = result_array.ga_len;
 
 cleanup_array:
   arena_mem_free(arena_finish(&arena));
 
 cleanup:
-
-  if (ret == FAIL) {
-    ga_clear(&result_array);
+  if (status == FAIL) {
+    ga_clear(&expand_result_array);
   }
+}
 
-  return ret;
+int nlua_expand_get_matches(int *num_results, char ***results)
+{
+  *results = expand_result_array.ga_data;
+  *num_results = expand_result_array.ga_len;
+  expand_result_array = (garray_T)GA_EMPTY_INIT_VALUE;
+  return *num_results > 0;
 }
 
 static int nlua_is_thread(lua_State *lstate)

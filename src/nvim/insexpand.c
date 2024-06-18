@@ -43,6 +43,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
@@ -4144,6 +4145,9 @@ static int get_cmdline_compl_info(char *line, colnr_T curs_col)
   compl_pattern = xstrnsave(line, (size_t)curs_col);
   compl_patternlen = (size_t)curs_col;
   set_cmd_context(&compl_xp, compl_pattern, (int)compl_patternlen, curs_col, false);
+  if (compl_xp.xp_context == EXPAND_LUA) {
+    nlua_expand_pat(&compl_xp, compl_xp.xp_pattern);
+  }
   if (compl_xp.xp_context == EXPAND_UNSUCCESSFUL
       || compl_xp.xp_context == EXPAND_NOTHING) {
     // No completion possible, use an empty pattern to get a
