@@ -8,7 +8,7 @@ if !exists("b:csv_delimiter")
 
     let s:max = 0
     for s:d in s:delimiters
-        let s:count = getline(1)->split(d)->len() + getline(2)->split(d)->len()
+        let s:count = getline(1)->split(s:d)->len() + getline(2)->split(s:d)->len()
         if s:count > s:max
             let s:max = s:count
             let b:csv_delimiter = s:d
