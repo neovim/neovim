@@ -11,10 +11,10 @@ let s:delimiter = get(b:, "csv_delimiter", ",")
 " generate bunch of following syntaxes:
 " syntax match csvCol8 /.\{-}\(,\|$\)/ nextgroup=escCsvCol0,csvCol0
 " syntax region escCsvCol8 start=/ *"\([^"]*""\)*[^"]*/ end=/" *\(,\|$\)/ nextgroup=escCsvCol0,csvCol0
-for col in range(8, 0, -1)
-    let s:ncol = (col == 8 ? 0 : col + 1)
-    exe $'syntax match csvCol{col}' .. ' /.\{-}\(' .. s:delimiter .. '\|$\)/ nextgroup=escCsvCol' .. s:ncol .. ',csvCol' .. s:ncol
-    exe $'syntax region escCsvCol{col}' .. ' start=/ *"\([^"]*""\)*[^"]*/ end=/" *\(' .. s:delimiter .. '\|$\)/ nextgroup=escCsvCol' .. s:ncol .. ',csvCol' .. s:ncol
+for s:col in range(8, 0, -1)
+    let s:ncol = (s:col == 8 ? 0 : s:col + 1)
+    exe $'syntax match csvCol{s:col}' .. ' /.\{-}\(' .. s:delimiter .. '\|$\)/ nextgroup=escCsvCol' .. s:ncol .. ',csvCol' .. s:ncol
+    exe $'syntax region escCsvCol{s:col}' .. ' start=/ *"\([^"]*""\)*[^"]*/ end=/" *\(' .. s:delimiter .. '\|$\)/ nextgroup=escCsvCol' .. s:ncol .. ',csvCol' .. s:ncol
 endfor
 
 hi def link csvCol1 Statement
