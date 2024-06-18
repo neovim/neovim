@@ -812,11 +812,63 @@ describe('completion', function()
       }
     end)
 
+    it('prefix is not included in completion for cmdline mode', function()
+      feed(':lua math.a<Tab>')
+      screen:expect([[
+                                                                    |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {100:abs}{3:  acos  asin  atan  atan2                                }|
+        :lua math.abs^                                               |
+      ]])
+      feed('<Tab>')
+      screen:expect([[
+                                                                    |
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {1:~                                                           }|
+        {3:abs  }{100:acos}{3:  asin  atan  atan2                                }|
+        :lua math.acos^                                              |
+      ]])
+    end)
+
+    it('prefix is not included in completion for i_CTRL-X_CTRL-V #19623', function()
+      feed('ilua math.a<C-X><C-V>')
+      screen:expect([[
+        lua math.abs^                                                |
+        {1:~       }{12: abs            }{1:                                    }|
+        {1:~       }{4: acos           }{1:                                    }|
+        {1:~       }{4: asin           }{1:                                    }|
+        {1:~       }{4: atan           }{1:                                    }|
+        {1:~       }{4: atan2          }{1:                                    }|
+        {1:~                                                           }|
+        {5:-- Command-line completion (^V^N^P) }{6:match 1 of 5}            |
+      ]])
+      feed('<C-V>')
+      screen:expect([[
+        lua math.acos^                                               |
+        {1:~       }{4: abs            }{1:                                    }|
+        {1:~       }{12: acos           }{1:                                    }|
+        {1:~       }{4: asin           }{1:                                    }|
+        {1:~       }{4: atan           }{1:                                    }|
+        {1:~       }{4: atan2          }{1:                                    }|
+        {1:~                                                           }|
+        {5:-- Command-line completion (^V^N^P) }{6:match 2 of 5}            |
+      ]])
+    end)
+
     it('provides completion from `getcompletion()`', function()
       eq({ 'vim' }, fn.getcompletion('vi', 'lua'))
       eq({ 'api' }, fn.getcompletion('vim.ap', 'lua'))
       eq({ 'tbl_filter' }, fn.getcompletion('vim.tbl_fil', 'lua'))
       eq({ 'vim' }, fn.getcompletion('print(vi', 'lua'))
+      eq({ 'abs', 'acos', 'asin', 'atan', 'atan2' }, fn.getcompletion('math.a', 'lua'))
+      eq({ 'abs', 'acos', 'asin', 'atan', 'atan2' }, fn.getcompletion('lua math.a', 'cmdline'))
       -- fuzzy completion is not supported, so the result should be the same
       command('set wildoptions+=fuzzy')
       eq({ 'vim' }, fn.getcompletion('vi', 'lua'))

@@ -240,6 +240,9 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
+    if (xp->xp_context == EXPAND_LUA) {
+      nlua_expand_pat(xp, xp->xp_pattern);
+    }
     cmd_showtail = expand_showtail(xp);
   }
 
@@ -286,11 +289,6 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     p2 = ExpandOne(xp, p1, xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
                    use_options, type);
     xfree(p1);
-
-    // xp->xp_pattern might have been modified by ExpandOne (for example,
-    // in lua completion), so recompute the pattern index and length
-    i = (int)(xp->xp_pattern - ccline->cmdbuff);
-    xp->xp_pattern_len = (size_t)ccline->cmdpos - (size_t)i;
 
     // Longest match: make sure it is not shorter, happens with :help.
     if (p2 != NULL && type == WILD_LONGEST) {
@@ -1061,6 +1059,9 @@ int showmatches(expand_T *xp, bool wildmenu)
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
+    if (xp->xp_context == EXPAND_LUA) {
+      nlua_expand_pat(xp, xp->xp_pattern);
+    }
     int i = expand_cmdline(xp, ccline->cmdbuff, ccline->cmdpos,
                            &numMatches, &matches);
     showtail = expand_showtail(xp);
@@ -2797,8 +2798,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   }
 
   if (xp->xp_context == EXPAND_LUA) {
-    ILOG("PAT %s", pat);
-    return nlua_expand_pat(xp, pat, numMatches, matches);
+    return nlua_expand_get_matches(numMatches, matches);
   }
 
   if (!fuzzy) {
@@ -3610,7 +3610,10 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
 theend:
-  ;
+  if (xpc.xp_context == EXPAND_LUA) {
+    nlua_expand_pat(&xpc, xpc.xp_pattern);
+    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+  }
   char *pat;
   if (cmdline_fuzzy_completion_supported(&xpc)) {
     // when fuzzy matching, don't modify the search string
