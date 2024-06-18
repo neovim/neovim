@@ -170,11 +170,6 @@ describe('API/win', function()
 
     it('updates the screen, and also when the window is unfocused', function()
       local screen = Screen.new(30, 9)
-      screen:set_default_attr_ids({
-        [1] = { bold = true, foreground = Screen.colors.Blue },
-        [2] = { bold = true, reverse = true },
-        [3] = { reverse = true },
-      })
       screen:attach()
 
       insert('prologue')
@@ -221,10 +216,10 @@ describe('API/win', function()
         grid = [[
         ^                              |
         {1:~                             }|*2
-        {2:[No Name]                     }|
+        {3:[No Name]                     }|
         prologue                      |
                                       |*2
-        {3:[No Name] [+]                 }|
+        {2:[No Name] [+]                 }|
                                       |
       ]],
       }
@@ -235,10 +230,10 @@ describe('API/win', function()
         grid = [[
         ^                              |
         {1:~                             }|*2
-        {2:[No Name]                     }|
+        {3:[No Name]                     }|
                                       |*2
         epilogue                      |
-        {3:[No Name] [+]                 }|
+        {2:[No Name] [+]                 }|
                                       |
       ]],
       }
@@ -249,10 +244,10 @@ describe('API/win', function()
         grid = [[
         ^                              |
         {1:~                             }|*2
-        {2:[No Name]                     }|
+        {3:[No Name]                     }|
         prologue                      |
                                       |*2
-        {3:[No Name] [+]                 }|
+        {2:[No Name] [+]                 }|
                                       |
       ]],
       }
@@ -286,12 +281,6 @@ describe('API/win', function()
 
     it('updates cursorline and statusline ruler in non-current window', function()
       local screen = Screen.new(60, 8)
-      screen:set_default_attr_ids({
-        [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-        [2] = { background = Screen.colors.Grey90 }, -- CursorLine
-        [3] = { bold = true, reverse = true }, -- StatusLine
-        [4] = { reverse = true }, -- StatusLineNC
-      })
       screen:attach()
       command('set ruler')
       command('set cursorline')
@@ -306,31 +295,25 @@ describe('API/win', function()
         aaa                           │aaa                          |
         bbb                           │bbb                          |
         ccc                           │ccc                          |
-        {2:dd^d                           }│{2:ddd                          }|
+        {21:dd^d                           }│{21:ddd                          }|
         {1:~                             }│{1:~                            }|*2
-        {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  4,3        All}|
+        {3:[No Name] [+]  4,3         All }{2:[No Name] [+]  4,3        All}|
                                                                     |
       ]])
       api.nvim_win_set_cursor(oldwin, { 1, 0 })
       screen:expect([[
-        aaa                           │{2:aaa                          }|
+        aaa                           │{21:aaa                          }|
         bbb                           │bbb                          |
         ccc                           │ccc                          |
-        {2:dd^d                           }│ddd                          |
+        {21:dd^d                           }│ddd                          |
         {1:~                             }│{1:~                            }|*2
-        {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  1,1        All}|
+        {3:[No Name] [+]  4,3         All }{2:[No Name] [+]  1,1        All}|
                                                                     |
       ]])
     end)
 
     it('updates cursorcolumn in non-current window', function()
       local screen = Screen.new(60, 8)
-      screen:set_default_attr_ids({
-        [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-        [2] = { background = Screen.colors.Grey90 }, -- CursorColumn
-        [3] = { bold = true, reverse = true }, -- StatusLine
-        [4] = { reverse = true }, -- StatusLineNC
-      })
       screen:attach()
       command('set cursorcolumn')
       insert([[
@@ -341,22 +324,22 @@ describe('API/win', function()
       local oldwin = curwin()
       command('vsplit')
       screen:expect([[
-        aa{2:a}                           │aa{2:a}                          |
-        bb{2:b}                           │bb{2:b}                          |
-        cc{2:c}                           │cc{2:c}                          |
+        aa{21:a}                           │aa{21:a}                          |
+        bb{21:b}                           │bb{21:b}                          |
+        cc{21:c}                           │cc{21:c}                          |
         dd^d                           │ddd                          |
         {1:~                             }│{1:~                            }|*2
-        {3:[No Name] [+]                  }{4:[No Name] [+]                }|
+        {3:[No Name] [+]                  }{2:[No Name] [+]                }|
                                                                     |
       ]])
       api.nvim_win_set_cursor(oldwin, { 2, 0 })
       screen:expect([[
-        aa{2:a}                           │{2:a}aa                          |
-        bb{2:b}                           │bbb                          |
-        cc{2:c}                           │{2:c}cc                          |
-        dd^d                           │{2:d}dd                          |
+        aa{21:a}                           │{21:a}aa                          |
+        bb{21:b}                           │bbb                          |
+        cc{21:c}                           │{21:c}cc                          |
+        dd^d                           │{21:d}dd                          |
         {1:~                             }│{1:~                            }|*2
-        {3:[No Name] [+]                  }{4:[No Name] [+]                }|
+        {3:[No Name] [+]                  }{2:[No Name] [+]                }|
                                                                     |
       ]])
     end)
@@ -874,22 +857,6 @@ describe('API/win', function()
     it('with two diff windows', function()
       local X = api.nvim_get_vvar('maxcol')
       local screen = Screen.new(45, 22)
-      screen:set_default_attr_ids({
-        [0] = { foreground = Screen.colors.Blue1, bold = true },
-        [1] = { foreground = Screen.colors.Blue4, background = Screen.colors.Grey },
-        [2] = { foreground = Screen.colors.Brown },
-        [3] = {
-          foreground = Screen.colors.Blue1,
-          background = Screen.colors.LightCyan1,
-          bold = true,
-        },
-        [4] = { background = Screen.colors.LightBlue },
-        [5] = { foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey },
-        [6] = { background = Screen.colors.Plum1 },
-        [7] = { background = Screen.colors.Red, bold = true },
-        [8] = { reverse = true },
-        [9] = { bold = true, reverse = true },
-      })
       screen:attach()
       exec([[
         set diffopt+=context:2 number
@@ -902,35 +869,35 @@ describe('API/win', function()
       feed('24gg')
       screen:expect {
         grid = [[
-        {1:  }{2:    }{3:----------------}│{1:  }{2:  1 }{4:00000001!       }|
-        {1:  }{2:    }{3:----------------}│{1:  }{2:  2 }{4:00000002!!      }|
-        {1:  }{2:  1 }00000003!!!     │{1:  }{2:  3 }00000003!!!     |
-        {1:  }{2:  2 }00000004!!!!    │{1:  }{2:  4 }00000004!!!!    |
-        {1:+ }{2:  3 }{5:+-- 14 lines: 00}│{1:+ }{2:  5 }{5:+-- 14 lines: 00}|
-        {1:  }{2: 17 }00000019!!!!!!!!│{1:  }{2: 19 }00000019!!!!!!!!|
-        {1:  }{2: 18 }00000020!!!!!!!!│{1:  }{2: 20 }00000020!!!!!!!!|
-        {1:  }{2:    }{3:----------------}│{1:  }{2: 21 }{4:00000025!!!!!!!!}|
-        {1:  }{2:    }{3:----------------}│{1:  }{2: 22 }{4:00000026!!!!!!!!}|
-        {1:  }{2:    }{3:----------------}│{1:  }{2: 23 }{4:00000027!!!!!!!!}|
-        {1:  }{2: 19 }00000028!!!!!!!!│{1:  }{2: 24 }^00000028!!!!!!!!|
-        {1:  }{2: 20 }00000029!!!!!!!!│{1:  }{2: 25 }00000029!!!!!!!!|
-        {1:+ }{2: 21 }{5:+-- 14 lines: 00}│{1:+ }{2: 26 }{5:+-- 14 lines: 00}|
-        {1:  }{2: 35 }00000044!!!!!!!!│{1:  }{2: 40 }00000044!!!!!!!!|
-        {1:  }{2: 36 }00000045!!!!!!!!│{1:  }{2: 41 }00000045!!!!!!!!|
-        {1:  }{2: 37 }{4:00000046!!!!!!!!}│{1:  }{2:    }{3:----------------}|
-        {1:  }{2: 38 }{4:00000047!!!!!!!!}│{1:  }{2:    }{3:----------------}|
-        {1:  }{2: 39 }{4:00000048!!!!!!!!}│{1:  }{2:    }{3:----------------}|
-        {1:  }{2: 40 }{4:00000049!!!!!!!!}│{1:  }{2:    }{3:----------------}|
-        {1:  }{2: 41 }{4:00000050!!!!!!!!}│{1:  }{2:    }{3:----------------}|
-        {8:[No Name] [+]          }{9:[No Name] [+]         }|
+        {7:  }{8:    }{23:----------------}│{7:  }{8:  1 }{22:00000001!       }|
+        {7:  }{8:    }{23:----------------}│{7:  }{8:  2 }{22:00000002!!      }|
+        {7:  }{8:  1 }00000003!!!     │{7:  }{8:  3 }00000003!!!     |
+        {7:  }{8:  2 }00000004!!!!    │{7:  }{8:  4 }00000004!!!!    |
+        {7:+ }{8:  3 }{13:+-- 14 lines: 00}│{7:+ }{8:  5 }{13:+-- 14 lines: 00}|
+        {7:  }{8: 17 }00000019!!!!!!!!│{7:  }{8: 19 }00000019!!!!!!!!|
+        {7:  }{8: 18 }00000020!!!!!!!!│{7:  }{8: 20 }00000020!!!!!!!!|
+        {7:  }{8:    }{23:----------------}│{7:  }{8: 21 }{22:00000025!!!!!!!!}|
+        {7:  }{8:    }{23:----------------}│{7:  }{8: 22 }{22:00000026!!!!!!!!}|
+        {7:  }{8:    }{23:----------------}│{7:  }{8: 23 }{22:00000027!!!!!!!!}|
+        {7:  }{8: 19 }00000028!!!!!!!!│{7:  }{8: 24 }^00000028!!!!!!!!|
+        {7:  }{8: 20 }00000029!!!!!!!!│{7:  }{8: 25 }00000029!!!!!!!!|
+        {7:+ }{8: 21 }{13:+-- 14 lines: 00}│{7:+ }{8: 26 }{13:+-- 14 lines: 00}|
+        {7:  }{8: 35 }00000044!!!!!!!!│{7:  }{8: 40 }00000044!!!!!!!!|
+        {7:  }{8: 36 }00000045!!!!!!!!│{7:  }{8: 41 }00000045!!!!!!!!|
+        {7:  }{8: 37 }{22:00000046!!!!!!!!}│{7:  }{8:    }{23:----------------}|
+        {7:  }{8: 38 }{22:00000047!!!!!!!!}│{7:  }{8:    }{23:----------------}|
+        {7:  }{8: 39 }{22:00000048!!!!!!!!}│{7:  }{8:    }{23:----------------}|
+        {7:  }{8: 40 }{22:00000049!!!!!!!!}│{7:  }{8:    }{23:----------------}|
+        {7:  }{8: 41 }{22:00000050!!!!!!!!}│{7:  }{8:    }{23:----------------}|
+        {2:[No Name] [+]          }{3:[No Name] [+]         }|
                                                      |
       ]],
       }
       screen:try_resize(45, 3)
       screen:expect {
         grid = [[
-        {1:  }{2: 19 }00000028!!!!!!!!│{1:  }{2: 24 }^00000028!!!!!!!!|
-        {8:[No Name] [+]          }{9:[No Name] [+]         }|
+        {7:  }{8: 19 }00000028!!!!!!!!│{7:  }{8: 24 }^00000028!!!!!!!!|
+        {2:[No Name] [+]          }{3:[No Name] [+]         }|
                                                      |
       ]],
       }
@@ -1008,11 +975,6 @@ describe('API/win', function()
     it('with wrapped lines', function()
       local X = api.nvim_get_vvar('maxcol')
       local screen = Screen.new(45, 22)
-      screen:set_default_attr_ids({
-        [0] = { foreground = Screen.colors.Blue1, bold = true },
-        [1] = { foreground = Screen.colors.Brown },
-        [2] = { background = Screen.colors.Yellow },
-      })
       screen:attach()
       exec([[
         set number cpoptions+=n
@@ -1035,26 +997,26 @@ describe('API/win', function()
       )
       screen:expect {
         grid = [[
-        {1:  1 }^foobar-foobar-foobar-foobar-foobar-foobar|
+        {8:  1 }^foobar-foobar-foobar-foobar-foobar-foobar|
         -foobar-foobar-foobar-foobar-foobar-foobar-fo|
         obar-foobar-foobar-foobar-foobar-foobar-fooba|
         r-foobar-foobar-foobar-foobar-foobar-foobar-f|
         oobar-foobar-foobar-foobar-foobar-foobar-foob|
         ar-foobar-foobar-foobar-foobar-              |
-        {1:  2 }foobar-foobar-foobar-foobar-foobar-foobar|
+        {8:  2 }foobar-foobar-foobar-foobar-foobar-foobar|
         -foobar-foobar-foobar-foobar-foobar-foobar-fo|
-        obar-foobar-fo{2:???????????????}obar-foobar-foob|
+        obar-foobar-fo{10:???????????????}obar-foobar-foob|
         ar-foobar-foobar-foobar-foobar-foobar-foobar-|
         foobar-foobar-foobar-foobar-foobar-foobar-foo|
         bar-foobar-foobar-foobar-foobar-foobar-foobar|
         -                                            |
-        {1:  3 }foobar-foobar-foobar-foobar-foobar-foobar|
+        {8:  3 }foobar-foobar-foobar-foobar-foobar-foobar|
         -foobar-foobar-foobar-foobar-foobar-foobar-fo|
         obar-foobar-foobar-foobar-foobar-foobar-fooba|
         r-foobar-foobar-foobar-foobar-foobar-foobar-f|
-        oobar-foobar-foobar-foob{2:!!!!!!!!!!!!!!!!!!!!!}|
-        {2:!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!}|
-        {2:!!!!!!!!!}ar-foobar-foobar-foobar-foobar-fooba|
+        oobar-foobar-foobar-foob{10:!!!!!!!!!!!!!!!!!!!!!}|
+        {10:!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!}|
+        {10:!!!!!!!!!}ar-foobar-foobar-foobar-foobar-fooba|
         r-foobar-foobar-                             |
                                                      |
       ]],
@@ -1062,7 +1024,7 @@ describe('API/win', function()
       screen:try_resize(45, 2)
       screen:expect {
         grid = [[
-        {1:  1 }^foobar-foobar-foobar-foobar-foobar-foobar|
+        {8:  1 }^foobar-foobar-foobar-foobar-foobar-foobar|
                                                      |
       ]],
       }
@@ -2563,10 +2525,6 @@ describe('API/win', function()
 
     it('updates statusline when moving bottom split', function()
       local screen = Screen.new(10, 10)
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-        [1] = { bold = true, reverse = true }, -- StatusLine
-      })
       screen:attach()
       exec([[
         set laststatus=0
@@ -2575,10 +2533,10 @@ describe('API/win', function()
       ]])
       screen:expect([[
         ^            |
-        {0:~           }|*3
-        {1:[No Name]   }|
+        {1:~           }|*3
+        {3:[No Name]   }|
                     |
-        {0:~           }|*3
+        {1:~           }|*3
                     |
       ]])
     end)
