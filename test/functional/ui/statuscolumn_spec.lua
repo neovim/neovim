@@ -91,6 +91,10 @@ describe('statuscolumn', function()
       {8:2    }aaaaa                                           |
                                                            |
     ]])
+    -- Doesn't crash when clicking inside padded area without click_defs
+    command('set numberwidth=10')
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 5)
+    assert_alive()
   end)
 
   it("works with 'number' and 'relativenumber'", function()
