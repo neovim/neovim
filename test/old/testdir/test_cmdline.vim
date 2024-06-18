@@ -3785,7 +3785,7 @@ func Test_cmdline_complete_bang_cmd_argument()
 endfunc
 
 func Call_cmd_funcs()
-  return string([getcmdpos(), getcmdscreenpos(), getcmdcompltype()])
+  return [getcmdpos(), getcmdscreenpos(), getcmdcompltype()]
 endfunc
 
 func Test_screenpos_and_completion()
@@ -3793,13 +3793,24 @@ func Test_screenpos_and_completion()
   call assert_equal(0, getcmdscreenpos())
   call assert_equal('', getcmdcompltype())
 
-  cnoremap <expr> <F2> string([getcmdpos(), getcmdscreenpos(), getcmdcompltype()])
+  cnoremap <expr> <F2> string(Call_cmd_funcs())
   call feedkeys(":let a\<F2>\<C-B>\"\<CR>", "xt")
   call assert_equal("\"let a[6, 7, 'var']", @:)
   call feedkeys(":quit \<F2>\<C-B>\"\<CR>", "xt")
   call assert_equal("\"quit [6, 7, '']", @:)
   call feedkeys(":nosuchcommand \<F2>\<C-B>\"\<CR>", "xt")
   call assert_equal("\"nosuchcommand [15, 16, '']", @:)
+
+  " Check that getcmdcompltype() doesn't interfere with cmdline completion.
+  let g:results = []
+  cnoremap <F2> <Cmd>let g:results += [[getcmdline()] + Call_cmd_funcs()]<CR>
+  call feedkeys(":sign un\<Tab>\<F2>\<Tab>\<F2>\<Tab>\<F2>\<C-C>", "xt")
+  call assert_equal([
+        \ ['sign undefine', 14, 15, 'sign'],
+        \ ['sign unplace', 13, 14, 'sign'],
+        \ ['sign un', 8, 9, 'sign']], g:results)
+
+  unlet g:results
   cunmap <F2>
 endfunc
 
