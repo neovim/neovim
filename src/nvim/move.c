@@ -153,7 +153,6 @@ static void redraw_for_cursorline(win_T *wp)
 /// Redraw when w_virtcol changes and
 /// - 'cursorcolumn' is set, or
 /// - 'cursorlineopt' contains "screenline", or
-/// - "CurSearch" highlight is in use, or
 /// - 'concealcursor' is active, or
 /// - Visual mode is active.
 static void redraw_for_cursorcolumn(win_T *wp)
@@ -173,10 +172,8 @@ static void redraw_for_cursorcolumn(win_T *wp)
     return;
   }
 
-  if (wp->w_p_cuc
-      || (win_hl_attr(wp, HLF_LC) != win_hl_attr(wp, HLF_L) && using_hlsearch())) {
-    // When 'cursorcolumn' is set or "CurSearch" is in use
-    // need to redraw with UPD_SOME_VALID.
+  if (wp->w_p_cuc) {
+    // When 'cursorcolumn' is set need to redraw with UPD_SOME_VALID.
     redraw_later(wp, UPD_SOME_VALID);
   } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
     // When 'cursorlineopt' contains "screenline" need to redraw with UPD_VALID.

@@ -1094,6 +1094,11 @@ func Test_hlsearch_cursearch()
   call term_sendkeys(buf, "h\<C-L>")
   call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_multiple_line_5', {})
 
+  " check clearing CurSearch when using it for another match
+  call term_sendkeys(buf, "G?^abcd\<CR>Y")
+  call term_sendkeys(buf, "kkP")
+  call VerifyScreenDump(buf, 'Test_hlsearch_cursearch_changed_1', {})
+
   call StopVimInTerminal(buf)
   call delete('Xhlsearch_cursearch')
 endfunc

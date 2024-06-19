@@ -197,7 +197,8 @@ describe('search highlighting', function()
       }
     end)
 
-    it('works for multiline match', function()
+    -- oldtest: Test_hlsearch_cursearch()
+    it('works for multiline match, no duplicate highlight', function()
       command([[call setline(1, ['one', 'foo', 'bar', 'baz', 'foo the foo and foo', 'bar'])]])
       feed('gg/foo<CR>')
       screen:expect([[
@@ -280,6 +281,28 @@ describe('search highlighting', function()
         abcd{2:^efg }                                |
         {2:hij}kl                                   |
         /efg\nhij                               |
+      ]])
+
+      -- check clearing CurSearch when using it for another match
+      feed('G?^abcd<CR>Y')
+      screen:expect([[
+        ---                                     |
+        {1:abcd}efg                                 |
+        hijkl                                   |
+        ---                                     |
+        {2:^abcd}efg                                 |
+        hijkl                                   |
+        ?^abcd                                  |
+      ]])
+      feed('kkP')
+      screen:expect([[
+        ---                                     |
+        {1:abcd}efg                                 |
+        {2:^abcd}efg                                 |
+        hijkl                                   |
+        ---                                     |
+        {1:abcd}efg                                 |
+        ?^abcd                                  |
       ]])
     end)
   end)

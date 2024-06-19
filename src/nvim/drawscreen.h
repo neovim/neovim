@@ -25,7 +25,11 @@ EXTERN bool updating_screen INIT( = false);
 /// must_redraw to be set.
 EXTERN bool redraw_not_allowed INIT( = false);
 
-EXTERN match_T screen_search_hl INIT( = { 0 });  ///< used for 'hlsearch' highlight matching
+/// used for 'hlsearch' highlight matching
+EXTERN match_T screen_search_hl INIT( = { 0 });
+
+/// last lnum where CurSearch was displayed
+EXTERN linenr_T search_hl_has_cursor_lnum INIT( = 0);
 
 #define W_ENDCOL(wp)   ((wp)->w_wincol + (wp)->w_width)
 #define W_ENDROW(wp)   ((wp)->w_winrow + (wp)->w_height)

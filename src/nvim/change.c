@@ -392,6 +392,10 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
         }
       }
     }
+
+    if (wp == curwin && xtra != 0 && search_hl_has_cursor_lnum >= lnum) {
+      search_hl_has_cursor_lnum += xtra;
+    }
   }
 
   // Call update_screen() later, which checks out what needs to be redrawn,

@@ -4969,8 +4969,9 @@ ColorColumn	Used for the columns set with 'colorcolumn'.
 Conceal		Placeholder characters substituted for concealed
 		text (see 'conceallevel').
 							*hl-CurSearch*
-CurSearch	Used for highlighting a search pattern under the cursor
-		(see 'hlsearch').
+CurSearch	Current match for the last search pattern (see 'hlsearch').
+		Note: This is correct after a search, but may get outdated if
+		changes are made or the screen is redrawn.
 						*hl-Cursor* *hl-lCursor*
 Cursor		Character under the cursor.
 lCursor		Character under the cursor when |language-mapping|

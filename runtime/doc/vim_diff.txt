@@ -539,8 +539,6 @@ Functions:
 Highlight groups:
 - |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
   groups
-- |hl-CurSearch| highlights match under cursor instead of last match found
-  using |n| or |N|
 - |hl-CursorLine| is low-priority unless foreground color is set
 - |hl-VertSplit| superseded by |hl-WinSeparator|
 - Highlight groups names are allowed to contain `@` characters.
