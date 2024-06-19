@@ -289,7 +289,6 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     p2 = ExpandOne(xp, p1, xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
                    use_options, type);
     xfree(p1);
-
     // Longest match: make sure it is not shorter, happens with :help.
     if (p2 != NULL && type == WILD_LONGEST) {
       int j;
