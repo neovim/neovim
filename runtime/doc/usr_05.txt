@@ -244,7 +244,7 @@ Automatically execute |:nohlsearch| after 'updatetime' or getting into |Insert| 
 Thus assuming default updatetime, hlsearch would be suspended/turned off after
 4 seconds of idle time.
 
-To disable the effect of the plugin after is has been loaded: >
+To disable the effect of the plugin after it has been loaded: >
 	au! nohlsearch
 <
 
