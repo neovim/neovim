@@ -1,5 +1,5 @@
 " nohlsearch.vim: Auto turn off hlsearch
-" Last Change: 2024-06-18
+" Last Change: 2024-06-19
 " Maintainer: Maxim Kim <habamax@gmail.com>
 "
 " turn off hlsearch after:
@@ -8,7 +8,7 @@
 augroup nohlsearch
     au!
     noremap <Plug>(nohlsearch) <cmd>nohlsearch<cr>
-    noremap! <expr> <Plug>(nohlsearch) execute('nohlsearch')[-1]
+    noremap! <Plug>(nohlsearch) <cmd>nohlsearch<cr>
     au CursorHold * call feedkeys("\<Plug>(nohlsearch)", 'm')
     au InsertEnter * call feedkeys("\<Plug>(nohlsearch)", 'm')
 augroup END
