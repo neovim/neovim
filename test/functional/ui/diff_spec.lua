@@ -1346,6 +1346,46 @@ it("diff mode doesn't restore invalid 'foldcolumn' value #21647", function()
   eq('0', api.nvim_get_option_value('foldcolumn', {}))
 end)
 
+it("'relativenumber' doesn't draw beyond end of window in diff mode #29403", function()
+  local screen = Screen.new(60, 12)
+  screen:attach()
+  command('set relativenumber')
+  feed('10aa<CR><Esc>gg')
+  command('vnew')
+  feed('ab<CR><Esc>gg')
+  command('windo diffthis')
+  command('wincmd |')
+  screen:expect([[
+    {8: }│{7:  }{8:  0 }{27:^a}{4:                                                   }|
+    {8: }│{7:  }{8:  1 }{22:a                                                   }|
+    {8: }│{7:  }{8:  2 }{22:a                                                   }|
+    {8: }│{7:  }{8:  3 }{22:a                                                   }|
+    {8: }│{7:  }{8:  4 }{22:a                                                   }|
+    {8: }│{7:  }{8:  5 }{22:a                                                   }|
+    {8: }│{7:  }{8:  6 }{22:a                                                   }|
+    {8: }│{7:  }{8:  7 }{22:a                                                   }|
+    {8: }│{7:  }{8:  8 }{22:a                                                   }|
+    {8: }│{7:  }{8:  9 }{22:a                                                   }|
+    {2:< }{3:[No Name] [+]                                             }|
+                                                                |
+  ]])
+  feed('j')
+  screen:expect([[
+    {8: }│{7:  }{8:  1 }{27:a}{4:                                                   }|
+    {8: }│{7:  }{8:  0 }{22:^a                                                   }|
+    {8: }│{7:  }{8:  1 }{22:a                                                   }|
+    {8: }│{7:  }{8:  2 }{22:a                                                   }|
+    {8: }│{7:  }{8:  3 }{22:a                                                   }|
+    {8: }│{7:  }{8:  4 }{22:a                                                   }|
+    {8: }│{7:  }{8:  5 }{22:a                                                   }|
+    {8: }│{7:  }{8:  6 }{22:a                                                   }|
+    {8: }│{7:  }{8:  7 }{22:a                                                   }|
+    {8: }│{7:  }{8:  8 }{22:a                                                   }|
+    {2:< }{3:[No Name] [+]                                             }|
+                                                                |
+  ]])
+end)
+
 -- oldtest: Test_diff_binary()
 it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', function()
   local screen = Screen.new(40, 20)
