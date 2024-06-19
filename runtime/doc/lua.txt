@@ -4436,172 +4436,6 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
 ==============================================================================
 Lua module: vim.net                                                  *vim.net*
 
-*vim.net.Proxy*
-
-    Fields: ~
-      • {url}?          (`string`) Proxy URL in the format
-                        `scheme ":" ["//" authority] path ["?" query]` where
-                        authority follows the format
-                        `[userinfo "@"] host [":" port]`
-      • {credentials}?  (`string`) Proxy credentials with the format
-                        `username:password`
-
-*vim.net.curl.Metadata*
-    See the `--write-out` section in `man curl`
-
-    Fields: ~
-      • {certs}?                    (`string`) (Added in 7.88.0)
-      • {conn_id}?                  (`number`) (Added in 8.2.0)
-      • {content_type}?             (`string`)
-      • {errormsg}?                 (`string`) (Added in 7.75.0)
-      • {exitcode}?                 (`number`) (Added in 7.75.0)
-      • {filename_effective}?       (`string`) (Added in 7.26.0)
-      • {ftp_entry_path}?           (`string`)
-      • {headers}?                  (`table<string, string[]>`) (Added in
-                                    7.83.0) parsed result of ${header_json}
-      • {http_code}?                (`number`)
-      • {http_connect}?             (`number`)
-      • {http_version}?             (`string`) (Added in 7.50.0)
-      • {local_ip}?                 (`string`)
-      • {local_port}?               (`number`)
-      • {method}?                   (`string`) (Added in 7.72.0)
-      • {num_certs}?                (`number`) (Added in 7.88.0)
-      • {num_connects}?             (`number`)
-      • {num_headers}?              (`number`) (Added in 7.73.0)
-      • {num_redirects}?            (`number`)
-      • {num_retries}?              (`number`) (Added in 8.9.0)
-      • {proxy_ssl_verify_result}?  (`number`) (Added in 7.52.0)
-      • {proxy_used}?               (`number`) (Added in 8.7.0)
-      • {redirect_url}?             (`string`)
-      • {referer}?                  (`string`) (Added in 7.76.0)
-      • {remote_ip}?                (`string`)
-      • {remote_port}?              (`number`)
-      • {response_code}?            (`number`)
-      • {scheme}?                   (`string`) (Added in 7.52.0)
-      • {size_download}?            (`number`)
-      • {size_header}?              (`number`)
-      • {size_request}?             (`number`)
-      • {size_upload}?              (`number`)
-      • {speed_download}?           (`number`)
-      • {speed_upload}?             (`number`)
-      • {ssl_verify_result}?        (`number`)
-      • {time_appconnect}?          (`number`)
-      • {time_connect}?             (`number`)
-      • {time_namelookup}?          (`number`)
-      • {time_pretransfer}?         (`number`)
-      • {time_redirect}?            (`number`)
-      • {time_starttransfer}?       (`number`)
-      • {time_total}?               (`number`)
-      • {url}?                      (`string`) (Added in 7.75.0)
-      • {url.scheme}?               (`string`) (Added in 8.1.0)
-      • {url.user}?                 (`string`) (Added in 8.1.0)
-      • {url.password}?             (`string`) (Added in 8.1.0)
-      • {url.options}?              (`string`) (Added in 8.1.0)
-      • {url.host}?                 (`string`) (Added in 8.1.0)
-      • {url.port}?                 (`string`) (Added in 8.1.0)
-      • {url.path}?                 (`string`) (Added in 8.1.0)
-      • {url.query}?                (`string`) (Added in 8.1.0)
-      • {url.fragment}?             (`string`) (Added in 8.1.0)
-      • {url.zoneid}?               (`string`) (Added in 8.1.0)
-      • {urle.scheme}?              (`string`) (Added in 8.1.0)
-      • {urle.user}?                (`string`) (Added in 8.1.0)
-      • {urle.password}?            (`string`) (Added in 8.1.0)
-      • {urle.options}?             (`string`) (Added in 8.1.0)
-      • {urle.host}?                (`string`) (Added in 8.1.0)
-      • {urle.port}?                (`string`) (Added in 8.1.0)
-      • {urle.path}?                (`string`) (Added in 8.1.0)
-      • {urle.query}?               (`string`) (Added in 8.1.0)
-      • {urle.fragment}?            (`string`) (Added in 8.1.0)
-      • {urle.zoneid}?              (`string`) (Added in 8.1.0)
-      • {urlnum}?                   (`number`) (Added in 7.75.0)
-      • {url_effective}?            (`string`)
-      • {xfer_id}?                  (`number`) (Added in 8.2.0)
-
-
-vim.net.config({opts})                                      *vim.net.config()*
-    Configure net options globally
-
-    Configuration can be specified globally, or ephemerally (i.e. only for a
-    single call to |vim.net.download()|). Ephemeral configuration has highest
-    priority, followed by global configuration.
-
-    When omitted or `nil`, retrieve the current configuration. Otherwise, a
-    configuration table (see |vim.net.Opts|).
-
-    Parameters: ~
-      • {opts}  (`table`) : Current net config if {opts} is omitted.
-                • {as}? (`string`) Path to write the downloaded file to. If
-                  not provided, the one inferred form the URL will be used.
-                  Defaults to `nil`
-                • {try_suggested_remote_name}? (`boolean`) Whether the
-                  `Content-Disposition` response header should be taken into
-                  account to decide the name of the downloaded file. Fallbacks
-                  to `as`. Defaults to `false`
-                • {credentials}? (`string`) Credentials with the format
-                  `username:password`. Defaults to `nil`
-                • {override}? (`boolean`) Whether the file should be
-                  overridden if it already exists. Defaults to `true`
-                • {remove_leftover_on_error}? (`boolean`) Whether the file
-                  should be removed if an error happens while downloading it.
-                  Defaults to `false`
-                • {compressed}? (`boolean`) Whether the file should be
-                  requested in a compressed format (and decompressed
-                  automatically). Defaults to `false`
-                • {max_filesize}? (`integer`) Maximum size in bytes of the
-                  file to downlaod. The download will fail if the file
-                  requested is larger. Defaults to `nil`
-                • {raw}? (`boolean`) Disables all internal HTTP decoding of
-                  content or transfer encodings. Unaltered, raw, data is
-                  passed. Defaults to `false`
-                • {headers}? (`table<string, string[]>`) Request headers.
-                  Defaults to `nil`
-                • {proxy}? (`vim.net.Proxy`) Proxy information. Defaults to
-                  `nil`
-                • {follow_redirects}? (`boolean`) Whether redirects should be
-                  followed. Defaults to `true`
-                • {redirect_credentials}? (`boolean`) Whether `credentials`
-                  should be send to host after a redirect. Defaults to `false`
-                • {on_exit}?
-                  (`fun(err: string?, metadata: vim.net.curl.Metadata?)`)
-                  Optional callback. Defaults to showing a notification when
-                  the file has been downloaded.
-
-    Return: ~
-        (`table?`) A table with the following fields:
-        • {as}? (`string`) Path to write the downloaded file to. If not
-          provided, the one inferred form the URL will be used. Defaults to
-          `nil`
-        • {try_suggested_remote_name}? (`boolean`) Whether the
-          `Content-Disposition` response header should be taken into account
-          to decide the name of the downloaded file. Fallbacks to `as`.
-          Defaults to `false`
-        • {credentials}? (`string`) Credentials with the format
-          `username:password`. Defaults to `nil`
-        • {override}? (`boolean`) Whether the file should be overridden if it
-          already exists. Defaults to `true`
-        • {remove_leftover_on_error}? (`boolean`) Whether the file should be
-          removed if an error happens while downloading it. Defaults to
-          `false`
-        • {compressed}? (`boolean`) Whether the file should be requested in a
-          compressed format (and decompressed automatically). Defaults to
-          `false`
-        • {max_filesize}? (`integer`) Maximum size in bytes of the file to
-          downlaod. The download will fail if the file requested is larger.
-          Defaults to `nil`
-        • {raw}? (`boolean`) Disables all internal HTTP decoding of content or
-          transfer encodings. Unaltered, raw, data is passed. Defaults to
-          `false`
-        • {headers}? (`table<string, string[]>`) Request headers. Defaults to
-          `nil`
-        • {proxy}? (`vim.net.Proxy`) Proxy information. Defaults to `nil`
-        • {follow_redirects}? (`boolean`) Whether redirects should be
-          followed. Defaults to `true`
-        • {redirect_credentials}? (`boolean`) Whether `credentials` should be
-          send to host after a redirect. Defaults to `false`
-        • {on_exit}? (`fun(err: string?, metadata: vim.net.curl.Metadata?)`)
-          Optional callback. Defaults to showing a notification when the file
-          has been downloaded.
-
 vim.net.download({url}, {opts})                           *vim.net.download()*
     Asynchronously download a file
 
@@ -4620,11 +4454,6 @@ vim.net.download({url}, {opts})                           *vim.net.download()*
                       as = "tmp/somefile",
                     })
 
-                    -- Download a file while following redirects
-                    vim.net.download("https://httpbingo.org/anything", {
-                      follow_redirects = true,
-                    })
-
                     -- Download a file while sending headers
                     vim.net.download("https://httpbingo.org/anything", {
                       headers = {
@@ -4636,47 +4465,21 @@ vim.net.download({url}, {opts})                           *vim.net.download()*
                     vim.net.download("https://httpbingo.org/basic-auth/user/password", {
                       credentials = "user:password",
                     })
-
-                    -- Download a file without overriding a previous file with the same name
-                    vim.net.download("https://httpbingo.org/anything", {
-                      override = false,
-                    })
 <
                 • {as}? (`string`) Path to write the downloaded file to. If
-                  not provided, the one inferred form the URL will be used.
+                  not provided, the one inferred from the URL will be used.
                   Defaults to `nil`
-                • {try_suggested_remote_name}? (`boolean`) Whether the
-                  `Content-Disposition` response header should be taken into
-                  account to decide the name of the downloaded file. Fallbacks
-                  to `as`. Defaults to `false`
                 • {credentials}? (`string`) Credentials with the format
                   `username:password`. Defaults to `nil`
-                • {override}? (`boolean`) Whether the file should be
-                  overridden if it already exists. Defaults to `true`
-                • {remove_leftover_on_error}? (`boolean`) Whether the file
-                  should be removed if an error happens while downloading it.
-                  Defaults to `false`
-                • {compressed}? (`boolean`) Whether the file should be
-                  requested in a compressed format (and decompressed
-                  automatically). Defaults to `false`
-                • {max_filesize}? (`integer`) Maximum size in bytes of the
-                  file to downlaod. The download will fail if the file
-                  requested is larger. Defaults to `nil`
                 • {raw}? (`boolean`) Disables all internal HTTP decoding of
                   content or transfer encodings. Unaltered, raw, data is
                   passed. Defaults to `false`
                 • {headers}? (`table<string, string[]>`) Request headers.
                   Defaults to `nil`
-                • {proxy}? (`vim.net.Proxy`) Proxy information. Defaults to
-                  `nil`
-                • {follow_redirects}? (`boolean`) Whether redirects should be
-                  followed. Defaults to `true`
                 • {redirect_credentials}? (`boolean`) Whether `credentials`
                   should be send to host after a redirect. Defaults to `false`
-                • {on_exit}?
-                  (`fun(err: string?, metadata: vim.net.curl.Metadata?)`)
-                  Optional callback. Defaults to showing a notification when
-                  the file has been downloaded.
+                • {on_exit}? (`fun(err: string?)`) Optional callback. Defaults
+                  to showing a notification when the file has been downloaded.
 
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
