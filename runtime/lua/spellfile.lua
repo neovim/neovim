@@ -26,31 +26,23 @@ local function download_sug(dir, lang, encoding)
   local sug_filename = ('%s.%s.sug'):format(lang, encoding)
   local sug_url = ('%s/%s'):format(spellfile_URL, sug_filename)
   vim.notify(('Downloading %s ...'):format(sug_filename), vim.log.levels.INFO)
+  local as = ('%s/%s'):format(dir, sug_filename)
   vim.net.download(sug_url, {
-    as = ('%s/%s'):format(dir, sug_filename),
-    on_exit = vim.schedule_wrap(function(err, metadata)
+    as = as,
+    on_exit = vim.schedule_wrap(function(err)
       if err then
         return vim.notify(err, vim.log.levels.ERROR)
       end
-      if not metadata then
-        return vim.notify(
-          'There was an error getting the metadata of the downloaded file',
-          vim.log.levels.ERROR
-        )
-      end
-      local sug = io.open(metadata.filename_effective)
+      local sug = io.open(as)
       if not sug then
-        return vim.notify(
-          ("Couldn't open file %s"):format(metadata.filename_effective),
-          vim.log.levels.ERROR
-        )
+        return vim.notify(("Couldn't open file %s"):format(as), vim.log.levels.ERROR)
       end
       local sug_first_line = sug:read()
       sug:close()
       if not sug_first_line:find('VIMsug') then
         return vim.notify('Download failed', vim.log.levels.ERROR)
       end
-      vim.notify(('%s downloaded'):format(metadata.filename_effective), vim.log.levels.INFO)
+      vim.notify(('%s downloaded'):format(as), vim.log.levels.INFO)
     end),
   })
 end
@@ -143,59 +135,43 @@ function M.download_spell(lang)
   local spell_filename = ('%s.%s.spl'):format(lang, encoding)
   local spell_url = ('%s/%s'):format(spellfile_URL, spell_filename)
   vim.notify(('Downloading %s ...'):format(spell_filename), vim.log.levels.INFO)
+  local as = ('%s/%s'):format(dir, spell_filename)
   vim.net.download(spell_url, {
-    as = ('%s/%s'):format(dir, spell_filename),
-    on_exit = vim.schedule_wrap(function(err, metadata)
+    as = as,
+    on_exit = vim.schedule_wrap(function(err)
       if err then
         return vim.notify(err, vim.log.levels.ERROR)
       end
-      if not metadata then
-        return vim.notify(
-          'There was an error getting the metadata of the downloaded file',
-          vim.log.levels.ERROR
-        )
-      end
-      local spell = io.open(metadata.filename_effective)
+      local spell = io.open(as)
       if not spell then
-        return vim.notify(
-          ("Couldn't open file %s"):format(metadata.filename_effective),
-          vim.log.levels.ERROR
-        )
+        return vim.notify(("Couldn't open file %s"):format(as), vim.log.levels.ERROR)
       end
       local spell_first_line = spell:read()
       spell:close()
       if spell_first_line:find('VIMspell') then
-        vim.notify(('%s downloaded'):format(metadata.filename_effective), vim.log.levels.INFO)
+        vim.notify(('%s downloaded'):format(as), vim.log.levels.INFO)
         return download_sug(dir, lang, encoding)
       end
 
       encoding = 'ascii'
       spell_filename = ('%s.%s.spl'):format(lang, encoding)
+      as = ('%s/%s'):format(dir, spell_filename)
       vim.notify(('Could not find it, trying %s ...'):format(spell_filename), vim.log.levels.WARN)
       spell_url = ('%s/%s'):format(spellfile_URL, spell_filename)
       vim.net.download(spell_url, {
-        as = ('%s/%s'):format(dir, spell_filename),
-        on_exit = vim.schedule_wrap(function(err2, metadata2)
+        as = as,
+        on_exit = vim.schedule_wrap(function(err2)
           if err2 then
             return vim.notify(err2, vim.log.levels.ERROR)
           end
-          if not metadata2 then
-            return vim.notify(
-              'There was an error getting the metadata of the downloaded file',
-              vim.log.levels.ERROR
-            )
-          end
-          spell = io.open(metadata2.filename_effective)
+          spell = io.open(as)
           if not spell then
-            return vim.notify(
-              ("Couldn't open file %s"):format(metadata2.filename_effective),
-              vim.log.levels.ERROR
-            )
+            return vim.notify(("Couldn't open file %s"):format(as), vim.log.levels.ERROR)
           end
           spell_first_line = spell:read()
           spell:close()
           if spell_first_line:find('VIMspell') then
-            vim.notify(('%s downloaded'):format(metadata2.filename_effective), vim.log.levels.INFO)
+            vim.notify(('%s downloaded'):format(as), vim.log.levels.INFO)
             return download_sug(dir, lang, encoding)
           end
           vim.notify('Download failed', vim.log.levels.ERROR)

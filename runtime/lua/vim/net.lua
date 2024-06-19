@@ -17,8 +17,6 @@ local function _curl_v()
   return version
 end
 
-local separator = '__SEPARATOR__'
-
 --HTTP methods in curl
 -- default GET (there is also --get for transforming --data into URL query params)
 -- --data (and its variants) or --form POST
@@ -58,75 +56,7 @@ local separator = '__SEPARATOR__'
 ---Whether `credentials` should be send to host after a redirect. Defaults to `false`
 ---@field redirect_credentials? boolean
 ---Optional callback. Defaults to showing a notification when the file has been downloaded.
----@field on_exit? fun(err: string?, metadata: vim.net.curl.Metadata?)
-
----See the `--write-out` section in  `man curl`
----@class vim.net.curl.Metadata
----@field certs? string (Added in 7.88.0)
----@field conn_id? number (Added in 8.2.0)
----@field content_type? string
----@field errormsg? string (Added in 7.75.0)
----@field exitcode? number (Added in 7.75.0)
----@field filename_effective? string (Added in 7.26.0)
----@field ftp_entry_path? string
----@field headers? table<string, string[]> (Added in 7.83.0) parsed result of ${header_json}
----@field http_code? number
----@field http_connect? number
----@field http_version? string (Added in 7.50.0)
----@field local_ip? string
----@field local_port? number
----@field method? string (Added in 7.72.0)
----@field num_certs? number (Added in 7.88.0)
----@field num_connects? number
----@field num_headers? number (Added in 7.73.0)
----@field num_redirects? number
----@field num_retries? number (Added in 8.9.0)
----@field proxy_ssl_verify_result? number (Added in 7.52.0)
----@field proxy_used? number (Added in 8.7.0)
----@field redirect_url? string
----@field referer? string (Added in 7.76.0)
----@field remote_ip? string
----@field remote_port? number
----@field response_code? number
----@field scheme? string (Added in 7.52.0)
----@field size_download? number
----@field size_header? number
----@field size_request? number
----@field size_upload? number
----@field speed_download? number
----@field speed_upload? number
----@field ssl_verify_result? number
----@field time_appconnect? number
----@field time_connect? number
----@field time_namelookup? number
----@field time_pretransfer? number
----@field time_redirect? number
----@field time_starttransfer? number
----@field time_total? number
----@field url? string (Added in 7.75.0)
----@field url.scheme? string (Added in 8.1.0)
----@field url.user? string (Added in 8.1.0)
----@field url.password? string (Added in 8.1.0)
----@field url.options? string (Added in 8.1.0)
----@field url.host? string (Added in 8.1.0)
----@field url.port? string (Added in 8.1.0)
----@field url.path? string (Added in 8.1.0)
----@field url.query? string (Added in 8.1.0)
----@field url.fragment? string (Added in 8.1.0)
----@field url.zoneid? string (Added in 8.1.0)
----@field urle.scheme? string (Added in 8.1.0)
----@field urle.user? string (Added in 8.1.0)
----@field urle.password? string (Added in 8.1.0)
----@field urle.options? string (Added in 8.1.0)
----@field urle.host? string (Added in 8.1.0)
----@field urle.port? string (Added in 8.1.0)
----@field urle.path? string (Added in 8.1.0)
----@field urle.query? string (Added in 8.1.0)
----@field urle.fragment? string (Added in 8.1.0)
----@field urle.zoneid? string (Added in 8.1.0)
----@field urlnum? number (Added in 7.75.0)
----@field url_effective? string
----@field xfer_id? number (Added in 8.2.0)
+---@field on_exit? fun(err: string?)
 
 ---@type vim.net.Opts
 local global_net_opts = {
@@ -143,18 +73,12 @@ local global_net_opts = {
   proxy_credentials = nil,
   follow_redirects = true,
   redirect_credentials = false,
-  on_exit = function(err, metadata)
+  on_exit = function(err)
     if err then
       return vim.notify(err, vim.log.levels.ERROR)
     end
 
-    if not metadata or not metadata.filename_effective then
-      return vim.notify('The file has been downloaded', vim.log.levels.INFO)
-    end
-    vim.notify(
-      ('The file `%s` has been downloaded'):format(metadata.filename_effective),
-      vim.log.levels.INFO
-    )
+    vim.notify('The file has been downloaded', vim.log.levels.INFO)
   end,
 }
 
@@ -313,34 +237,10 @@ function M.download(url, opts)
     table.insert(cmd, '--location-trusted')
   end
 
-  -- stdout will contain the following:
-  if vim.version.ge(curl_v, { 7, 83, 0 }) then
-    -- (json) A JSON object with all available keys.
-    -- (header_json) A JSON object with all HTTP response headers from the recent transfer.
-    -- (`%` is duplicated in order to escape it from `format`)
-    vim.list_extend(cmd, { '--write-out', ('%%{json}%s%%{header_json}'):format(separator) })
-  elseif vim.version.ge(curl_v, { 7, 70, 0 }) then
-    -- (json) A JSON object with all available keys.
-    vim.list_extend(cmd, { '--write-out', '%{json}' })
-  end
-
   vim.system(cmd, { text = true }, function(out)
     local err = out.stderr ~= '' and out.stderr or nil
 
-    local lines = vim.split(out.stdout, separator)
-    local json_string = lines[1]
-    local header_json_string = lines[2]
-
-    local ok, metadata = pcall(vim.json.decode, json_string)
-    local ok2, headers = pcall(vim.json.decode, header_json_string)
-    if ok then
-      if ok2 then
-        metadata.headers = headers
-      end
-      opts.on_exit(err, metadata)
-    else
-      opts.on_exit(err)
-    end
+    opts.on_exit(err)
   end)
 end
 
