@@ -423,7 +423,7 @@ static size_t test_charmatch_paths(diffcmppath_T *node, int lastdecision)
 
 }
 // return true if these two strings are equal
-static bool compare(const char *s1, size_t l1, const char* s2, size_t l2)
+static bool compare(const char *s1, size_t l1, const char *s2, size_t l2)
 {
   if (l1 != l2) {
     return false;

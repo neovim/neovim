@@ -2166,7 +2166,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   // of integers (*decisions) and the length of that array (decisions_length)
   if (diff_allignment == LINEMATCH) {
     int *decisions = NULL;
-    size_t decisions_length = linematch_nbuffers((const char**)diffbufs, diff_length, ndiffs, &decisions, 0, NULL, NULL);
+    size_t decisions_length = linematch_nbuffers((const char **)diffbufs, diff_length, ndiffs, &decisions, 0, NULL, NULL);
     apply_linematch_results(dp, decisions_length, decisions);
     xfree(decisions);
   } else if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
@@ -2211,7 +2211,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           dp->charmatchp[i] = 2;
         }
       } else {
-        size_t decisions_length = linematch_nbuffers((const char**)diffbufs, diff_length, ndiffs, &decisions, 1, word_offset, word_offset_size);
+        size_t decisions_length = linematch_nbuffers((const char **)diffbufs, diff_length, ndiffs, &decisions, 1, word_offset, word_offset_size);
         for (size_t i = 0; i < decisions_length; i++) {
           // write to result
           // is it a comparison
@@ -2783,8 +2783,8 @@ bool diffopt_filler(void)
 /// @param  endp    last char of the change
 ///
 /// @return true if the line was added, no other buffer has it.
-bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hlresult,
-    bool* diffchars_lim_exceeded, size_t *diffchars_line_len)
+bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int **hlresult,
+    bool *diffchars_lim_exceeded, size_t *diffchars_line_len)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // Make a copy of the line, the next ml_get() will invalidate it.
