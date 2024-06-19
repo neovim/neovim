@@ -4,6 +4,7 @@ local curl_v ---@type vim.Version
 ---@return vim.Version
 local function _curl_v()
   local out = vim.system({ 'curl', '--version' }, { text = true }):wait().stdout
+  assert(out)
   local lines = vim.split(out, '\n')
   local version = vim
     .iter(lines)
@@ -22,12 +23,6 @@ end
 -- --data (and its variants) or --form POST
 -- --head HEAD
 -- --upload-file PUT (there is also --method PUT while using --data)
-
----@class vim.net.Proxy
----Proxy URL in the format `scheme ":" ["//" authority] path ["?" query]` where authority follows the format `[userinfo "@"] host [":" port]`
----@field url? string
----Proxy credentials with the format `username:password`
----@field credentials? string
 
 ---@class vim.net.Opts
 ---@inlinedoc
@@ -49,8 +44,6 @@ end
 ---@field raw? boolean
 ---Request headers. Defaults to `nil`
 ---@field headers? table<string, string[]>
----Proxy information. Defaults to `nil`
----@field proxy? vim.net.Proxy
 ---Whether redirects should be followed. Defaults to `true`
 ---@field follow_redirects? boolean
 ---Whether `credentials` should be send to host after a redirect. Defaults to `false`
@@ -69,8 +62,6 @@ local global_net_opts = {
   max_filesize = nil,
   raw = false,
   headers = nil,
-  proxy = nil,
-  proxy_credentials = nil,
   follow_redirects = true,
   redirect_credentials = false,
   on_exit = function(err)
@@ -219,14 +210,6 @@ function M.download(url, opts)
         table.insert(cmd, ('%s:%s'):format(header, value))
       end
     end
-  end
-
-  if opts.proxy then
-    vim.list_extend(cmd, { '--proxy', opts.proxy })
-  end
-
-  if opts.proxy_credentials then
-    vim.list_extend(cmd, { '--proxy-user', opts.proxy_credentials })
   end
 
   if opts.follow_redirects then
