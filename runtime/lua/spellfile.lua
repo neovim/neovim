@@ -53,7 +53,6 @@ end
 ---@type table<string, true>
 local done = {}
 
--- TODO: SpellFileMissing expects a sync download. Using an async one needs `:set spell` again once the download has finished (and gives an error)
 -- TODO: rewrite \runtime\doc\spell.txt *spell-SpellFileMissing* *spellfile.vim* (?)
 -- TODO: rewrite src\nvim\spell.c:1615 (#3027) to use this function instead
 ---@param lang string
@@ -152,7 +151,9 @@ function M.download_spell(lang)
       spell:close()
       if spell_first_line:find('VIMspell') then
         vim.notify(('%s downloaded'):format(as), vim.log.levels.INFO)
-        return download_sug(dir, lang, encoding)
+        download_sug(dir, lang, encoding)
+        vim.cmd.spell()
+        return
       end
 
       encoding = 'ascii'
@@ -175,7 +176,9 @@ function M.download_spell(lang)
           spell:close()
           if spell_first_line:find('VIMspell') then
             vim.notify(('%s downloaded'):format(as), vim.log.levels.INFO)
-            return download_sug(dir, lang, encoding)
+            download_sug(dir, lang, encoding)
+            vim.cmd.spell()
+            return
           end
           vim.notify('Download failed', vim.log.levels.ERROR)
         end),
