@@ -341,14 +341,41 @@ func Test_termdebug_bufnames()
 endfunc
 
 function Test_termdebug_save_restore_variables()
+  " saved mousemodel
   let &mousemodel=''
+
+  " saved keys
+  nnoremap K :echo "hello world!"<cr>
+  let expected_map_K = maparg('K', 'n', 0 , 1)
+  nnoremap + :echo "hello plus!"<cr>
+  let expected_map_plus = maparg('+', 'n', 0 , 1)
+  let expected_map_minus = {}
+
+  " saved &columns
+  let expected_columns = &columns
+
+  " We want termdebug to overwrite 'K' map but not '+' map.
+  let g:termdebug_config = {}
+  let g:termdebug_config['map_K'] = 1
+
   Termdebug
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   call WaitForAssert({-> assert_match(&mousemodel, 'popup_setpos')})
   wincmd t
   quit!
   call WaitForAssert({-> assert_equal(1, winnr('$'))})
-  call WaitForAssert({-> assert_true(empty(&mousemodel))})
+
+  call assert_true(empty(&mousemodel))
+
+  call assert_true(empty(expected_map_minus))
+  call assert_equal(expected_map_K.rhs, maparg('K', 'n', 0, 1).rhs)
+  call assert_equal(expected_map_plus.rhs, maparg('+', 'n', 0, 1).rhs)
+
+  call assert_equal(expected_columns, &columns)
+
+  nunmap K
+  nunmap +
+  unlet g:termdebug_config
 endfunction
 
 

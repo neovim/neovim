@@ -462,6 +462,9 @@ If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_use_prompt = 1
 <
 Mappings ~
+The termdebug plugin enables a few default mappings.  All those mappings
+are reset to their original values once the termdebug session concludes.
+
 					*termdebug_map_K* *termdebug-mappings*
 The K key is normally mapped to |:Evaluate| unless a buffer local (|:map-local|)
 mapping to K already exists.  If you do not want this use: >vim
