@@ -793,8 +793,8 @@ struct diffblock_S {
   diff_T *df_next;
   linenr_T df_lnum[DB_COUNT];           // line number in buffer
   linenr_T df_count[DB_COUNT];          // nr of inserted/changed lines
-  bool is_linematched;  // has the linematch algorithm ran on this diff hunk to divide it into
-                        // smaller diff hunks?
+  int is_linematched;  // has the linematch algorithm ran on this diff hunk to divide it into
+                       // smaller diff hunks? 0: not run yet / 1: success / -1: canceled
 
   bool has_changes;     ///< has cached list of inline changes
   garray_T df_changes;  ///< list of inline changes (diffline_change_T)
