@@ -490,7 +490,6 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     or nil
   -- Parent kind (string).
   local parent = root:parent() and root:parent():type() or nil
-  local text = ''
   -- Gets leading whitespace of `node`.
   local function ws(node)
     node = node or root
@@ -508,6 +507,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return string.format('%s%s', ws_, vim.treesitter.get_node_text(node, opt.buf))
   end
 
+  local text = ''
   local trimmed ---@type string
   if root:named_child_count() == 0 or node_name == 'ERROR' then
     text = node_text()
@@ -537,12 +537,17 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     if is_noise(text, stats.noise_lines) then
       return '' -- Discard common "noise" lines.
     end
-    -- Remove "===" and tags from ToC text.
-    local hname = (node_text():gsub('%-%-%-%-+', ''):gsub('%=%=%=%=+', ''):gsub('%*.*%*', ''))
+    -- Remove tags from ToC text.
+    local heading_node = first(root, 'heading')
+    local hname = trim(node_text(heading_node):gsub('%*.*%*', ''))
+    if not heading_node or hname == '' then
+      return '' -- Spurious "===" or "---" in the help doc.
+    end
+
     -- Use the first *tag* node as the heading anchor, if any.
-    local tagnode = first(root, 'tag')
+    local tagnode = first(heading_node, 'tag')
     -- Use the *tag* as the heading anchor id, if possible.
-    local tagname = tagnode and url_encode(node_text(tagnode:child(1), false))
+    local tagname = tagnode and url_encode(trim(node_text(tagnode:child(1), false)))
       or to_heading_tag(hname)
     if node_name == 'h1' or #headings == 0 then
       ---@type nvim.gen_help_html.heading
@@ -555,7 +560,9 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       )
     end
     local el = node_name == 'h1' and 'h2' or 'h3'
-    return ('<%s id="%s" class="help-heading">%s</%s>\n'):format(el, tagname, text, el)
+    return ('<%s id="%s" class="help-heading">%s</%s>\n'):format(el, tagname, trimmed, el)
+  elseif node_name == 'heading' then
+    return trimmed
   elseif node_name == 'column_heading' or node_name == 'column_name' then
     if root:has_error() then
       return text
@@ -695,7 +702,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return string.format('%s</span>', s)
     end
     return s
-  elseif node_name == 'modeline' then
+  elseif node_name == 'delimiter' or node_name == 'modeline' then
     return ''
   elseif node_name == 'ERROR' then
     if ignore_parse_error(opt.fname, trimmed) then
