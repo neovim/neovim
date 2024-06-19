@@ -27,6 +27,8 @@ local function download_sug(dir, lang, encoding)
   local sug_url = ('%s/%s'):format(spellfile_URL, sug_filename)
   vim.notify(('Downloading %s ...'):format(sug_filename), vim.log.levels.INFO)
   local as = ('%s/%s'):format(dir, sug_filename)
+  as = vim.fs.normalize(as)
+  as = vim.fs.normalize(as)
   vim.net.download(sug_url, {
     as = as,
     on_exit = vim.schedule_wrap(function(err)
@@ -128,7 +130,6 @@ function M.download_spell(lang)
     return
   end
 
-  -- TODO: normalize `as`?
   local dir = dirs[choice]
 
   local encoding = vim.o.encoding == 'iso-8859-15' and 'latin1' or vim.o.encoding
@@ -136,6 +137,7 @@ function M.download_spell(lang)
   local spell_url = ('%s/%s'):format(spellfile_URL, spell_filename)
   vim.notify(('Downloading %s ...'):format(spell_filename), vim.log.levels.INFO)
   local as = ('%s/%s'):format(dir, spell_filename)
+  as = vim.fs.normalize(as)
   vim.net.download(spell_url, {
     as = as,
     on_exit = vim.schedule_wrap(function(err)
@@ -156,6 +158,7 @@ function M.download_spell(lang)
       encoding = 'ascii'
       spell_filename = ('%s.%s.spl'):format(lang, encoding)
       as = ('%s/%s'):format(dir, spell_filename)
+      as = vim.fs.normalize(as)
       vim.notify(('Could not find it, trying %s ...'):format(spell_filename), vim.log.levels.WARN)
       spell_url = ('%s/%s'):format(spellfile_URL, spell_filename)
       vim.net.download(spell_url, {
