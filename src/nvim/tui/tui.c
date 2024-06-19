@@ -1704,7 +1704,7 @@ void tui_guess_size(TUIData *tui)
   int width = 0;
   int height = 0;
 
-  // 1 - try from a system call(ioctl/TIOCGWINSZ on unix)
+  // 1 - try from a system call (ioctl/TIOCGWINSZ on unix)
   if (tui->out_isatty
       && !uv_tty_get_winsize(&tui->output_handle.tty, &width, &height)) {
     goto end;

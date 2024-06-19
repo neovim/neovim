@@ -341,8 +341,9 @@ string options work.
 - 'guicursor'   works in the terminal (TUI)
 - 'inccommand'  shows interactive results for |:substitute|-like commands
                 and |:command-preview| commands
-- 'jumpoptions' "view" tries to restore the |mark-view| when moving through
-                "unload" removes unloaded buffer from the jumplist
+- 'jumpoptions'
+    - "view" tries to restore |mark-view| when moving through the jumplist.
+    - "unload" removes unloaded buffers from the jumplist.
 - the |jumplist|, |changelist|, |alternate-file| or using |mark-motions|.
 - 'laststatus'  global statusline support
 - 'mousescroll' amount to scroll by when scrolling with a mouse

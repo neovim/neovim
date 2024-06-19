@@ -7,7 +7,7 @@
 ==============================================================================
 Overview
 
-Getting Started
+Getting Started ~
 |usr_01.txt|  About the manuals
 |usr_02.txt|  The first steps in Vim
 |usr_03.txt|  Moving around
@@ -21,7 +21,7 @@ Getting Started
 |usr_11.txt|  Recovering from a crash
 |usr_12.txt|  Clever tricks
 
-Editing Effectively
+Editing Effectively ~
 |usr_20.txt|  Typing command-line commands quickly
 |usr_21.txt|  Go away and come back
 |usr_22.txt|  Finding the file to edit
@@ -36,7 +36,7 @@ Editing Effectively
 |usr_31.txt|  Exploiting the GUI
 |usr_32.txt|  The undo tree
 
-Tuning Vim
+Tuning Vim ~
 |usr_40.txt|  Make new commands
 |usr_41.txt|  Write a Vim script
 |usr_42.txt|  Add new menus
@@ -45,7 +45,7 @@ Tuning Vim
 |usr_45.txt|  Select your language (locale)
 
 
-Reference manual
+Reference manual ~
 |reference_toc|     More detailed information for all commands
 
 The user manual is online:
