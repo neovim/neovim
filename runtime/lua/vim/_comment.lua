@@ -270,18 +270,7 @@ local function textobject(inner)
   end
 
   -- Select range from line:col to line:col for operator to act upon
-  vim.cmd(
-    'normal! '
-      .. lnum_from
-      .. 'G'
-      .. lcol_from
-      .. '|'
-      .. visual_cmd
-      .. lnum_to
-      .. 'G'
-      .. lcol_to
-      .. '|'
-  )
+  vim.cmd(('normal! %sG%s|%s%sG%s|'):format(lnum_from, lcol_from, visual_cmd, lnum_to, lcol_to))
 end
 
 return { operator = operator, textobject = textobject, toggle_lines = toggle_lines }
