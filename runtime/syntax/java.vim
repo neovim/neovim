@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Jun 15
+" Last Change:		2024 Jun 19
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -412,14 +412,14 @@ if exists("java_highlight_debug")
   hi def link DebugType		 Type
 endif
 
+" Try not to fold top-level-type bodies under assumption that there is
+" but one such body.
+exec 'syn region javaBlock transparent start="\%(^\|^\S[^:]\+\)\@' . s:ff.Peek('120', '') . '<!{" end="}" fold'
+
 if exists("java_mark_braces_in_parens_as_errors")
   syn match javaInParen contained "[{}]"
   hi def link javaInParen javaError
 endif
-
-" Try not to fold top-level-type bodies under assumption that there is
-" but one such body.
-exec 'syn region javaBlock transparent start="\%(^\|^\S[^:]\+\)\@' . s:ff.Peek('120', '') . '<!{" end="}" fold'
 
 " catch errors caused by wrong parenthesis
 syn region  javaParenT	transparent matchgroup=javaParen  start="(" end=")" contains=@javaTop,javaInParen,javaParenT1
@@ -458,7 +458,7 @@ endif
 
 " The @javaTop cluster comprises non-contained Java syntax groups.
 " Note that the syntax file "aidl.vim" relies on its availability.
-syn cluster javaTop contains=TOP,javaDocComment,javaBlock,javaParenError,javaParenT
+syn cluster javaTop contains=TOP
 
 if !exists("java_minlines")
   let java_minlines = 10
