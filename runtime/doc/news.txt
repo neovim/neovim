@@ -97,6 +97,8 @@ DEFAULTS
   • |grr| in Normal mode maps to |vim.lsp.buf.references()|
   • |gra| in Normal and Visual mode maps to |vim.lsp.buf.code_action()|
   • CTRL-S in Insert mode maps to |vim.lsp.buf.signature_help()|
+  • |igc| is a text object for 'inner comment' (comment without comment
+    markers)
 
 • Snippet:
   • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`

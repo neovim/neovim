@@ -136,7 +136,7 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - @ |v_@-default|
 - # |v_#-default|
 - * |v_star-default|
-- gc |gc-default| |v_gc-default| |o_gc-default|
+- gc |gc-default| |v_gc-default| |o_gc-default| |o_igc-default|
 - gcc |gcc-default|
 - gr prefix |gr-default|
   - |grn|

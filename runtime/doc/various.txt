@@ -611,4 +611,12 @@ gc			Text object for the largest contiguous block of
 			`gcgc` uncomments a comment block; `dgc` deletes it).
 			Works only in Operator-pending mode.
 
+							*o_igc* *o_igc-default*
+igc			Text object for the largest contiguous block of
+			non-blank commented lines around the cursor, but
+			without the comment markers (e.g. `cigc` removes
+			everything in the comment block but the markers,
+			and start insert). Works only in Operator-pending
+			mode.
+
  vim:noet:tw=78:ts=8:ft=help:norl:
