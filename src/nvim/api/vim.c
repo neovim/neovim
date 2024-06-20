@@ -594,10 +594,12 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Arena *arena, Er
   kvi_init(cookie.rv);
 
   int flags = DIP_DIRFILE | (all ? DIP_ALL : 0);
+  TryState tstate;
 
-  TRY_WRAP(err, {
-    do_in_runtimepath((name.size ? name.data : ""), flags, find_runtime_cb, &cookie);
-  });
+  try_enter(&tstate);
+  do_in_runtimepath((name.size ? name.data : ""), flags, find_runtime_cb, &cookie);
+  vim_ignored = try_leave(&tstate, err);
+
   return arena_take_arraybuilder(arena, &cookie.rv);
 }
 

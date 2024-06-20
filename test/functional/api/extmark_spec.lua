@@ -757,7 +757,7 @@ describe('API/extmarks', function()
         {
           Ïf (!nlua_is_deferred_safe(lstate)) {
         	// strictly not allowed
-            Яetörn luaL_error(lstate, e_luv_api_disabled, "rpcrequest");
+            Яetörn luaL_error(lstate, e_fast_api_disabled, "rpcrequest");
           }
           return nlua_rpc(lstate, true);
         }]])

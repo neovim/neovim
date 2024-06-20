@@ -136,8 +136,8 @@ for i = 1, #events do
       call_output:write('  }\n')
       call_output:write('  entered = true;\n')
       write_arglist(call_output, ev)
-      call_output:write('  ui_call_event("' .. ev.name .. '", ' .. args .. ');\n')
-      call_output:write('  entered = false;\n')
+      call_output:write(('  ui_call_event("%s", %s, %s)'):format(ev.name, tostring(ev.fast), args))
+      call_output:write(';\n  entered = false;\n')
     elseif ev.compositor_impl then
       call_output:write('  ui_comp_' .. ev.name)
       write_signature(call_output, ev, '', true)

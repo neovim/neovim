@@ -750,7 +750,7 @@ local function process_function(fn)
     write_shifted_output(
       [[
     if (!nlua_is_deferred_safe()) {
-      return luaL_error(lstate, e_luv_api_disabled, "%s");
+      return luaL_error(lstate, e_fast_api_disabled, "%s");
     }
     ]],
       fn.name

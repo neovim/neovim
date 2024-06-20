@@ -1414,7 +1414,7 @@ describe('lua stdlib', function()
     screen:expect {
       grid = [[
       {9:[string "<nvim>"]:6: E5560: rpcrequest must not be}|
-      {9: called in a lua loop callback}                    |
+      {9: called in a fast event context}                   |
       {9:stack traceback:}                                  |
       {9:        [C]: in function 'rpcrequest'}             |
       {9:        [string "<nvim>"]:6: in function <[string }|
@@ -3783,7 +3783,7 @@ stack traceback:
         end)
       ]])
       screen:expect({
-        any = pesc('E5560: vim.wait must not be called in a lua loop callback'),
+        any = pesc('E5560: vim.wait must not be called in a fast event context'),
       })
       feed('<CR>')
       assert_alive()
