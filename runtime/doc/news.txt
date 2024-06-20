@@ -109,6 +109,7 @@ EDITOR
 • On Windows, filename arguments on the command-line prefixed with "~\" or
   "~/" are now expanded to the user's profile directory, not a relative path
   to a literal "~" directory.
+• |hl-PmenuMatch| and |hl-PmenuMatchSel| show matched text in completion popup.
 
 EVENTS
 
@@ -127,7 +128,7 @@ LUA
 
 OPTIONS
 
-• TODO
+• 'completeopt' flag "fuzzy" enables |fuzzy-matching| during |ins-completion|.
 
 PERFORMANCE
 

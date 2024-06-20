@@ -92,7 +92,7 @@ The following new APIs or features were added.
   showing a text representation of the nodes in a language tree for the current
   buffer.
 
-• |'statuscolumn'| option to customize the area to the side of a window,
+• 'statuscolumn' option to customize the area to the side of a window,
   normally containing the fold, sign and number columns. This new option follows
   the 'statusline' syntax and can be used to transform the line numbers, create
   mouse click callbacks for |signs|, introduce a custom margin or separator etc.
@@ -129,15 +129,17 @@ The following new APIs or features were added.
 • When using Nvim inside tmux 3.2 or later, the default clipboard provider
   will now copy to the system clipboard. |provider-clipboard|
 
-• |'showcmdloc'| option to display the 'showcmd' information in the
-  status line or tab line. A new %S statusline item is available to place
-  the 'showcmd' text in a custom 'statusline'. Useful for when |'cmdheight'|
-  is set to 0.
+• 'showcmdloc' option to display the 'showcmd' information in the status
+  line or tab line. A new %S statusline item is available to place the
+  'showcmd' text in a custom 'statusline'. Useful for when 'cmdheight' is set
+  to 0.
 
-• |'splitkeep'| option to control the scroll behavior of horizontal splits.
+• 'splitkeep' option to control the scroll behavior of horizontal splits.
 
-• |'diffopt'| now includes a `linematch` option to enable a second-stage diff
-  on individual hunks to provide much more accurate diffs. This option is also
+• 'wildoptions' flag "fuzzy" enables |fuzzy-matching| during |cmdline-completion|.
+
+• 'diffopt' now includes a `linematch` option to enable a second-stage diff on
+  individual hunks to provide much more accurate diffs. This option is also
   available to |vim.diff()|
 
   See https://github.com/neovim/neovim/pull/14537.
@@ -235,7 +237,7 @@ The following changes to existing APIs or features add new behavior.
   relative to the mouse. Note that the mouse doesn't update frequently without
   setting `vim.o.mousemoveevent = true`
 
-• |nvim_eval_statusline()| supports evaluating the |'statuscolumn'| through a
+• |nvim_eval_statusline()| supports evaluating the 'statuscolumn' through a
   new `opts` field: `use_statuscol_lnum`.
 
 • |nvim_buf_get_extmarks()| now accepts a -1 `ns_id` to request extmarks from
