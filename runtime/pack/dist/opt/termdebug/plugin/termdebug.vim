@@ -168,7 +168,7 @@ func s:StartDebug_internal(dict)
   let b:save_signcolumn = &signcolumn
   let s:signcolumn_buflist = [bufnr()]
 
-  let s:save_columns = 0
+  let s:saved_columns = 0
   let s:allleft = v:false
   let wide = 0
   if exists('g:termdebug_config')
@@ -178,7 +178,7 @@ func s:StartDebug_internal(dict)
   endif
   if wide > 0
     if &columns < wide
-      let s:save_columns = &columns
+      let s:saved_columns = &columns
       let &columns = wide
       " If we make the Vim window wider, use the whole left half for the debug
       " windows.
@@ -808,8 +808,8 @@ func s:EndDebugCommon()
 
   call win_gotoid(curwinid)
 
-  if s:save_columns > 0
-    let &columns = s:save_columns
+  if s:saved_columns > 0
+    let &columns = s:saved_columns
   endif
 
   if exists('#User#TermdebugStopPost')
@@ -1028,8 +1028,8 @@ func s:InstallCommands()
     let map = g:termdebug_map_K
   endif
   if map
-    let s:k_map_saved = maparg('K', 'n', 0, 1)
-    if !empty(s:k_map_saved) && !s:k_map_saved.buffer || empty(s:k_map_saved)
+    let s:saved_K_map = maparg('K', 'n', 0, 1)
+    if !empty(s:saved_K_map) && !s:saved_K_map.buffer || empty(s:saved_K_map)
       nnoremap K :Evaluate<CR>
     endif
   endif
@@ -1039,8 +1039,8 @@ func s:InstallCommands()
     let map = get(g:termdebug_config, 'map_plus', 1)
   endif
   if map
-    let s:plus_map_saved = maparg('+', 'n', 0, 1)
-    if !empty(s:plus_map_saved) && !s:plus_map_saved.buffer || empty(s:plus_map_saved)
+    let s:saved_plus_map = maparg('+', 'n', 0, 1)
+    if !empty(s:saved_plus_map) && !s:saved_plus_map.buffer || empty(s:saved_plus_map)
       nnoremap <expr> + $'<Cmd>{v:count1}Up<CR>'
     endif
   endif
@@ -1050,8 +1050,8 @@ func s:InstallCommands()
     let map = get(g:termdebug_config, 'map_minus', 1)
   endif
   if map
-    let s:minus_map_saved = maparg('-', 'n', 0, 1)
-    if !empty(s:minus_map_saved) && !s:minus_map_saved.buffer || empty(s:minus_map_saved)
+    let s:saved_minus_map = maparg('-', 'n', 0, 1)
+    if !empty(s:saved_minus_map) && !s:saved_minus_map.buffer || empty(s:saved_minus_map)
       nnoremap <expr> - $'<Cmd>{v:count1}Down<CR>'
     endif
   endif
@@ -1119,32 +1119,32 @@ func s:DeleteCommands()
   delcommand Var
   delcommand Winbar
 
-  if exists('s:k_map_saved')
-    if !empty(s:k_map_saved) && !s:k_map_saved.buffer
+  if exists('s:saved_K_map')
+    if !empty(s:saved_K_map) && !s:saved_K_map.buffer
       nunmap K
-      call mapset(s:k_map_saved)
-    elseif empty(s:k_map_saved)
+      call mapset(s:saved_K_map)
+    elseif empty(s:saved_K_map)
       nunmap K
     endif
-    unlet s:k_map_saved
+    unlet s:saved_K_map
   endif
-  if exists('s:plus_map_saved')
-    if !empty(s:plus_map_saved) && !s:plus_map_saved.buffer
+  if exists('s:saved_plus_map')
+    if !empty(s:saved_plus_map) && !s:saved_plus_map.buffer
       nunmap +
-      call mapset(s:plus_map_saved)
-    elseif empty(s:plus_map_saved)
+      call mapset(s:saved_plus_map)
+    elseif empty(s:saved_plus_map)
       nunmap +
     endif
-    unlet s:plus_map_saved
+    unlet s:saved_plus_map
   endif
-  if exists('s:minus_map_saved')
-    if !empty(s:minus_map_saved) && !s:minus_map_saved.buffer
+  if exists('s:saved_minus_map')
+    if !empty(s:saved_minus_map) && !s:saved_minus_map.buffer
       nunmap -
-      call mapset(s:minus_map_saved)
-    elseif empty(s:minus_map_saved)
+      call mapset(s:saved_minus_map)
+    elseif empty(s:saved_minus_map)
       nunmap -
     endif
-    unlet s:minus_map_saved
+    unlet s:saved_minus_map
   endif
 
   if has('menu')
