@@ -649,7 +649,7 @@ describe('commenting', function()
     end)
   end)
 
-  describe('Inner textobject', function()
+  describe('inner textobject', function()
     it('works', function()
       set_lines({ 'aa', '# aa', '# aa', 'aa' })
       set_cursor(2, 0)
