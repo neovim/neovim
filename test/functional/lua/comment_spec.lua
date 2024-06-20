@@ -706,7 +706,7 @@ describe('commenting', function()
     end)
 
     it('leaves both comment markers in text', function()
-      set_commentstring("<!-- %s -->")
+      set_commentstring('<!-- %s -->')
       set_lines({ 'aa', '<!-- this is a comment -->', 'aa' })
       set_cursor(2, 0)
       feed('d', 'igc')
