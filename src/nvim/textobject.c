@@ -1193,13 +1193,18 @@ again:
   pos_T end_pos = curwin->w_cursor;
 
   if (!do_include) {
-    // Exclude the start tag.
+    // Exclude the start tag,
+    // but skip over '>' if it appears in quotes
+    bool in_quotes = false;
     curwin->w_cursor = start_pos;
     while (inc_cursor() >= 0) {
-      if (*get_cursor_pos_ptr() == '>') {
+      p = get_cursor_pos_ptr();
+      if (*p == '>' && !in_quotes) {
         inc_cursor();
         start_pos = curwin->w_cursor;
         break;
+      } else if (*p == '"' || *p == '\'') {
+        in_quotes = !in_quotes;
       }
     }
     curwin->w_cursor = end_pos;
