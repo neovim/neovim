@@ -230,7 +230,8 @@ local function operator(mode)
 end
 
 --- Select contiguous commented lines at cursor
-local function textobject()
+---@param inner boolean?
+local function textobject(inner)
   local lnum_cur = vim.fn.line('.')
   local parts = get_comment_parts({ lnum_cur, vim.fn.col('.') })
   local comment_check = make_comment_check(parts)
@@ -251,8 +252,36 @@ local function textobject()
     lnum_to = lnum_to + 1
   end
 
-  -- Select range linewise for operator to act upon
-  vim.cmd('normal! ' .. lnum_from .. 'GV' .. lnum_to .. 'G')
+  -- Column does not matter if not inner, because of linewise selection
+  local lcol_from = 0
+  local lcol_to = 0
+  local visual_cmd = 'V'
+
+  -- Find the columns where the comment markers end
+  if inner then
+    local line_from = vim.api.nvim_buf_get_lines(0, lnum_from - 1, lnum_from, true)
+    local indent, _ = get_lines_info(line_from, parts)
+    lcol_from = indent:len() + parts.left:len() + 1
+
+    local line_to = vim.fn.getline(lnum_to)
+    lcol_to = line_to:len() - parts.right:len()
+
+    visual_cmd = 'v'
+  end
+
+  -- Select range from line:col to line:col for operator to act upon
+  vim.cmd(
+    'normal! '
+      .. lnum_from
+      .. 'G'
+      .. lcol_from
+      .. '|'
+      .. visual_cmd
+      .. lnum_to
+      .. 'G'
+      .. lcol_to
+      .. '|'
+  )
 end
 
 return { operator = operator, textobject = textobject, toggle_lines = toggle_lines }

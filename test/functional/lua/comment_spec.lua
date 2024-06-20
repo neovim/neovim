@@ -648,4 +648,69 @@ describe('commenting', function()
       eq(get_lines(), { 'lua << EOF', 'EOF' })
     end)
   end)
+
+  describe('Inner textobject', function()
+    it('works', function()
+      set_lines({ 'aa', '# aa', '# aa', 'aa' })
+      set_cursor(2, 0)
+      feed('d', 'igc')
+      eq(get_lines(), { 'aa', '# ', 'aa' })
+    end)
+
+    it('allows dot-repeat', function()
+      set_lines({ 'aa', '# aa', '# aa', 'aa', '# aa' })
+      set_cursor(2, 0)
+      feed('d', 'igc')
+      set_cursor(4, 0)
+      feed('.')
+      eq(get_lines(), { 'aa', '# ', 'aa', '# ' })
+    end)
+
+    it('does nothing when not inside textobject', function()
+      -- Builtin operators
+      feed('d', 'igc')
+      eq(get_lines(), example_lines)
+
+      -- Comment operator
+      local validate_no_action = function(line, col)
+        set_lines(example_lines)
+        set_cursor(line, col)
+        feed('gc', 'gc')
+        eq(get_lines(), example_lines)
+      end
+
+      validate_no_action(1, 1)
+      validate_no_action(2, 2)
+    end)
+
+    it('respects tree-sitter injections', function()
+      setup_treesitter()
+      local lines = {
+        '"set background=dark',
+        '"set termguicolors',
+        'lua << EOF',
+        '-- print(1)',
+        '-- print(2)',
+        'EOF',
+      }
+      set_lines(lines)
+
+      set_cursor(1, 0)
+      feed('digc')
+      eq(get_lines(), { '"', 'lua << EOF', '-- print(1)', '-- print(2)', 'EOF' })
+
+      -- Should work with dot-repeat
+      set_cursor(4, 0)
+      feed('.')
+      eq(get_lines(), { '"', 'lua << EOF', '-- ', 'EOF' })
+    end)
+
+    it('leaves both comment markers in text', function()
+      set_commentstring("<!-- %s -->")
+      set_lines({ 'aa', '<!-- this is a comment -->', 'aa' })
+      set_cursor(2, 0)
+      feed('d', 'igc')
+      eq(get_lines(), { 'aa', '<!--  -->', 'aa' })
+    end)
+  end)
 end)
