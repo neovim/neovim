@@ -161,7 +161,7 @@ func s:GetFilenameChecks() abort
     \ 'cmakecache': ['CMakeCache.txt'],
     \ 'cmod': ['file.cmod'],
     \ 'cmusrc': ['any/.cmus/autosave', 'any/.cmus/rc', 'any/.cmus/command-history', 'any/.cmus/file.theme', 'any/cmus/rc', 'any/cmus/file.theme', '/.cmus/autosave', '/.cmus/command-history', '/.cmus/file.theme', '/.cmus/rc', '/cmus/file.theme', '/cmus/rc'],
-    \ 'cobol': ['file.cbl', 'file.cob', 'file.lib'],
+    \ 'cobol': ['file.cbl', 'file.cob'],
     \ 'coco': ['file.atg'],
     \ 'conaryrecipe': ['file.recipe'],
     \ 'conf': ['auto.master', 'file.conf', 'texdoc.cnf', '.x11vncrc', '.chktexrc', '.ripgreprc', 'ripgreprc', 'file.ctags', '.mbsyncrc'],
@@ -257,6 +257,7 @@ func s:GetFilenameChecks() abort
     \ 'factor': ['file.factor'],
     \ 'falcon': ['file.fal'],
     \ 'fan': ['file.fan', 'file.fwt'],
+    \ 'faust': ['file.dsp', 'file.lib'],
     \ 'fennel': ['file.fnl'],
     \ 'fetchmail': ['.fetchmailrc'],
     \ 'fgl': ['file.4gl', 'file.4gh', 'file.m4gl'],
@@ -421,7 +422,7 @@ func s:GetFilenameChecks() abort
     \ 'mail': ['snd.123', '.letter', '.letter.123', '.followup', '.article', '.article.123', 'pico.123', 'mutt-xx-xxx', 'muttng-xx-xxx', 'ae123.txt', 'file.eml', 'reportbug-file'],
     \ 'mailaliases': ['/etc/mail/aliases', '/etc/aliases', 'any/etc/aliases', 'any/etc/mail/aliases'],
     \ 'mailcap': ['.mailcap', 'mailcap'],
-    \ 'make': ['file.mk', 'file.mak', 'file.dsp', 'makefile', 'Makefile', 'makefile-file', 'Makefile-file', 'some-makefile', 'some-Makefile', 'Kbuild'],
+    \ 'make': ['file.mk', 'file.mak', 'makefile', 'Makefile', 'makefile-file', 'Makefile-file', 'some-makefile', 'some-Makefile', 'Kbuild'],
     \ 'mallard': ['file.page'],
     "\ 'man': ['file.man'],
     \ 'manconf': ['/etc/man.conf', 'man.config', 'any/etc/man.conf'],
@@ -2395,6 +2396,32 @@ func Test_typ_file()
   call assert_equal('typst', &filetype)
   bwipe!
   unlet g:filetype_typ
+
+  filetype off
+endfunc
+
+func Test_dsp_file()
+  filetype on
+
+  " Microsoft Developer Studio Project file
+
+  call writefile(['# Microsoft Developer Studio Project File'], 'Xfile.dsp', 'D')
+  split Xfile.dsp
+  call assert_equal('make', &filetype)
+  bwipe!
+
+  let g:filetype_dsp = 'make'
+  split test.dsp
+  call assert_equal('make', &filetype)
+  bwipe!
+  unlet g:filetype_dsp
+
+  " Faust
+
+  call writefile(['this is a fallback'], 'Xfile.dsp')
+  split Xfile.dsp
+  call assert_equal('faust', &filetype)
+  bwipe!
 
   filetype off
 endfunc
