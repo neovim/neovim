@@ -207,7 +207,7 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/\<\%('"${na_rt}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove unwanted Vim doc files.
-  local na_doc='channel\.txt\|if_cscop\.txt\|netbeans\.txt\|os_\w\+\.txt\|print\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|vim9\.txt\|sponsor\.txt\|intro\.txt\|tags'
+  local na_doc='channel\.txt\|if_cscop\.txt\|netbeans\.txt\|os_\w\+\.txt\|print\.txt\|term\.txt\|todo\.txt\|vim9\.txt\|tags'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('"${na_doc}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
@@ -291,6 +291,14 @@ preprocess_patch() {
 
   # Rename option.h to option_vars.h
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/option\.h/\1\/option_vars.h/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename version*.txt to news.txt
+  LC_ALL=C sed -Ee 's/( [ab]\/runtime\/doc)\/version[0-9]+\.txt/\1\/news.txt/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename sponsor.txt to intro.txt
+  LC_ALL=C sed -Ee 's/( [ab]\/runtime\/doc)\/sponsor\.txt/\1\/intro.txt/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename terminal.txt to nvim_terminal_emulator.txt
