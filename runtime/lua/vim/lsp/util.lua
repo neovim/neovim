@@ -1013,7 +1013,14 @@ function M.show_document(location, offset_encoding, opts)
     -- Jump to new location (adjusting for encoding of characters)
     local row = range.start.line
     local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
-    api.nvim_win_set_cursor(win, { row + 1, col })
+    local ok, err = pcall(api.nvim_win_set_cursor, win, { row + 1, col })
+    if not ok then
+      vim.notify(
+        string.format('[LSP] failed to jump (dialog pending?): %s', err),
+        vim.log.levels.WARN
+      )
+      return false
+    end
     api.nvim_win_call(win, function()
       -- Open folds under the cursor
       vim.cmd('normal! zv')
