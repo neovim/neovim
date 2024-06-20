@@ -280,9 +280,20 @@ func Test_termdebug_mapping()
   call assert_equal(':echom "K"<cr>', maparg('K', 'n', 0, 1).rhs)
 
   %bw!
+
+  " -- Test that local-buffer mappings are restored in the correct buffers --
+  " local mappings for foo
+  file foo
   nnoremap <buffer> K :echom "bK"<cr>
   nnoremap <buffer> - :echom "b-"<cr>
   nnoremap <buffer> + :echom "b+"<cr>
+
+  " no mappings for 'bar'
+  enew
+  file bar
+
+  " Start termdebug from foo
+  buffer foo
   Termdebug
   call WaitForAssert({-> assert_equal(3, winnr('$'))})
   wincmd b
@@ -290,15 +301,41 @@ func Test_termdebug_mapping()
   call assert_true(maparg('-', 'n', 0, 1).buffer)
   call assert_true(maparg('+', 'n', 0, 1).buffer)
   call assert_equal(maparg('K', 'n', 0, 1).rhs, ':echom "bK"<cr>')
+
+  Source
+  buffer bar
+  call assert_false(maparg('K', 'n', 0, 1)->empty())
+  call assert_false(maparg('-', 'n', 0, 1)->empty())
+  call assert_false(maparg('+', 'n', 0, 1)->empty())
+  call assert_true(maparg('K', 'n', 0, 1).buffer->empty())
+  call assert_true(maparg('-', 'n', 0, 1).buffer->empty())
+  call assert_true(maparg('+', 'n', 0, 1).buffer->empty())
   wincmd t
   quit!
   redraw!
   call WaitForAssert({-> assert_equal(1, winnr('$'))})
+
+  " Termdebug session ended. Buffer 'bar' shall have no mappings
+  call assert_true(bufname() ==# 'bar')
+  call assert_false(maparg('K', 'n', 0, 1)->empty())
+  call assert_false(maparg('-', 'n', 0, 1)->empty())
+  call assert_false(maparg('+', 'n', 0, 1)->empty())
+  call assert_true(maparg('K', 'n', 0, 1).buffer->empty())
+  call assert_true(maparg('-', 'n', 0, 1).buffer->empty())
+  call assert_true(maparg('+', 'n', 0, 1).buffer->empty())
+
+  " Buffer 'foo' shall have the same mapping as before running the termdebug
+  " session
+  buffer foo
+  call assert_true(bufname() ==# 'foo')
   call assert_true(maparg('K', 'n', 0, 1).buffer)
   call assert_true(maparg('-', 'n', 0, 1).buffer)
   call assert_true(maparg('+', 'n', 0, 1).buffer)
   call assert_equal(':echom "bK"<cr>', maparg('K', 'n', 0, 1).rhs)
 
+  nunmap K
+  nunmap +
+  nunmap -
   %bw!
 endfunc
 
