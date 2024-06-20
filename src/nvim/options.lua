@@ -1462,6 +1462,10 @@ return {
         	    difference how completion candidates are reduced from the
         	    list of alternatives, but not how the candidates are
         	    collected (using different completion types).
+           fuzzycollect  Enable fuzzy collection for default keyword completion.
+                        This allows the collection of matches using fuzzy matching
+                        criteria, providing more comprehensive and flexible
+                        results. Works in combination with other fuzzy options.
       ]=],
       expand_cb = 'expand_set_completeopt',
       full_name = 'completeopt',

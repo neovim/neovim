@@ -437,12 +437,13 @@ EXTERN unsigned cot_flags;      ///< flags from 'completeopt'
 #define COT_ANY_MENU    0x003  // combination of menu flags
 #define COT_LONGEST     0x004  // false: insert full match,
                                // true: insert longest prefix
-#define COT_PREVIEW     0x008
-#define COT_POPUP       0x010
-#define COT_ANY_PREVIEW 0x018  // combination of preview flags
-#define COT_NOINSERT    0x020  // false: select & insert, true: noinsert
-#define COT_NOSELECT    0x040  // false: select & insert, true: noselect
-#define COT_FUZZY       0x080  // true: fuzzy match enabled
+#define COT_PREVIEW         0x008
+#define COT_POPUP           0x010
+#define COT_ANY_PREVIEW     0x018  // combination of preview flags
+#define COT_NOINSERT        0x020  // false: select & insert, true: noinsert
+#define COT_NOSELECT        0x040  // false: select & insert, true: noselect
+#define COT_FUZZY           0x080  // true: fuzzy match enabled
+#define COT_FUZZYCOLLECT    0x100  // true: fuzzycollect match enabled
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char *p_csl;             ///< 'completeslash'
 #endif
