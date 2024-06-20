@@ -87,7 +87,7 @@ end
 ---@param srow integer
 ---@param erow integer 0-indexed, exclusive
 function FoldInfo:add_range(srow, erow)
-  list_insert(self.levels, srow + 1, erow, '=')
+  list_insert(self.levels, srow + 1, erow, -1)
   list_insert(self.levels0, srow + 1, erow, -1)
 end
 
