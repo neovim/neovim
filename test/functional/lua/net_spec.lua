@@ -40,7 +40,7 @@ describe('vim.net', function()
         local path = ...
         local done
         vim.net.download("https://httpbingo.org/anything", {
-          as = path,
+          file = path,
           on_exit = function()
             done = true
           end
@@ -64,7 +64,7 @@ describe('vim.net', function()
         local path = ...
         local done
         vim.net.download("https://httpbingo.org/bearer", {
-          as = path,
+          file = path,
           headers = {
             Authorization = { "Bearer foo" },
           },
@@ -91,7 +91,7 @@ describe('vim.net', function()
         local path = ...
         local done
         vim.net.download("https://httpbingo.org/basic-auth/user/password", {
-          as = path,
+          file = path,
           credentials = "user:password",
           on_exit = function(err)
             done = true
@@ -118,7 +118,7 @@ describe('vim.net', function()
         local path = ...
         local done
         vim.net.download("https://httpbingo.org/anything", {
-          as = path,
+          file = path,
           override = false,
           on_exit = function(err)
             done = true

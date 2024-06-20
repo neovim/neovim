@@ -9,7 +9,7 @@ local M = {}
 ---@class vim.net.Opts
 ---@inlinedoc
 ---Path to write the downloaded file to. If not provided, the one inferred from the URL will be used. Defaults to `nil`
----@field as? string
+---@field file? string
 ---Credentials with the format `username:password`. Defaults to `nil`
 ---@field credentials? string
 ---Disables all internal HTTP decoding of content or transfer encodings. Unaltered, raw, data is passed. Defaults to `false`
@@ -23,7 +23,7 @@ local M = {}
 
 ---@type vim.net.Opts
 local global_net_opts = {
-  as = nil,
+  file = nil,
   credentials = nil,
   raw = false,
   headers = nil,
@@ -50,7 +50,7 @@ local global_net_opts = {
 --- -- Download a file to a path
 --- -- The file will be saved in `/tmp/somefile`
 --- vim.net.download("https://httpbingo.org/anything", {
----   as = "/tmp/somefile",
+---   file = "/tmp/somefile",
 --- })
 ---
 --- -- Download a file while sending headers
@@ -78,8 +78,8 @@ function M.download(url, opts)
   -- Don't output progress. Do output errors
   vim.list_extend(cmd, { '--silent', '--show-error' })
 
-  if opts.as then
-    vim.list_extend(cmd, { '--output', opts.as, url })
+  if opts.file then
+    vim.list_extend(cmd, { '--output', opts.file, url })
   else
     vim.list_extend(cmd, { '--remote-name', url })
   end
