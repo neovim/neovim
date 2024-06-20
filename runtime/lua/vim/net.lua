@@ -50,7 +50,7 @@ local global_net_opts = {
 --- -- Download a file to a path
 --- -- The file will be saved in `/tmp/somefile`
 --- vim.net.download("https://httpbingo.org/anything", {
----   as = "tmp/somefile",
+---   as = "/tmp/somefile",
 --- })
 ---
 --- -- Download a file while sending headers
