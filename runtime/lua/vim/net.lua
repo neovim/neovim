@@ -18,7 +18,7 @@ local M = {}
 ---@field headers? table<string, string[]>
 ---Whether `credentials` should be send to host after a redirect. Defaults to `false`
 ---@field redirect_credentials? boolean
----Optional callback. Defaults to showing a notification when the file has been downloaded.
+---Optional callback. Defaults to showing a notification when the file has been downloaded. To disable the notification, pass an empty function.
 ---@field on_exit? fun(err: string?)
 
 ---@type vim.net.Opts
