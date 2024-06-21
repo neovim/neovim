@@ -146,6 +146,30 @@ if s:module_info_cur_buf
   syn keyword javaModuleExternal	to with
 endif
 
+" Fancy parameterised types (JLS-17, §4.5).
+"
+" Note that false positives may elsewhere occur whenever an identifier
+" is butted against a less-than operator.  Cf. (X<Y) and (X < Y).
+if exists("java_highlight_generics")
+  syn keyword javaWildcardBound contained extends super
+
+  " Parameterised types are delegated to javaGenerics (s:ctx.gsg) and
+  " are not matched with javaTypeArgument.
+  exec 'syn match javaTypeArgument contained "' . s:ff.Engine('\%#=2', '') . '?\|\%(\<\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\)\[\]\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\)\%(\[\]\)*"'
+
+  for s:ctx in [{'dsg': 'javaDimExpr', 'gsg': 'javaGenerics', 'ghg': 'javaGenericsC1', 'csg': 'javaGenericsX', 'c': ''},
+      \ {'dsg': 'javaDimExprX', 'gsg': 'javaGenericsX', 'ghg': 'javaGenericsC2', 'csg': 'javaGenerics', 'c': ' contained'}]
+    " Consider array creation expressions of reifiable types.
+    exec 'syn region ' . s:ctx.dsg . ' contained transparent matchgroup=' . s:ctx.ghg . ' start="\[" end="\]" nextgroup=' . s:ctx.dsg . ' skipwhite skipnl'
+    exec 'syn region ' . s:ctx.gsg . s:ctx.c . ' transparent matchgroup=' . s:ctx.ghg . ' start=/' . s:ff.Engine('\%#=2', '') . '\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\><\%([[:space:]\n]*\%([?@]\|\<\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\)\[\]\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\)\)\@=/ end=/>/ contains=' . s:ctx.csg . ',javaAnnotation,javaTypeArgument,javaWildcardBound,javaType,@javaClasses nextgroup=' . s:ctx.dsg . ' skipwhite skipnl'
+  endfor
+
+  unlet s:ctx
+  hi def link javaWildcardBound Question
+  hi def link javaGenericsC1 javaFuncDef
+  hi def link javaGenericsC2 javaType
+endif
+
 if exists("java_highlight_java_lang_ids")
   let java_highlight_all=1
 endif
@@ -175,9 +199,15 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   exec 'syn match javaC_JavaLang "\%(\<ModuleLayer\.\)\@' . s:ff.Peek('12', '') . '<=\<Controller\>"'
   exec 'syn match javaC_JavaLang "\%(\<Runtime\.\)\@' . s:ff.Peek('8', '') . '<=\<Version\>"'
   exec 'syn match javaC_JavaLang "\%(\<System\.\)\@' . s:ff.Peek('7', '') . '<=\<LoggerFinder\>"'
-  exec 'syn match javaC_JavaLang "\%(\<Enum\.\)\@' . s:ff.Peek('5', '') . '<=\<EnumDesc\>"'
-  syn keyword javaC_JavaLang Boolean Character Class ClassLoader Compiler Double Float Integer Long Math Number Object Process Runtime SecurityManager String StringBuffer Thread ThreadGroup Byte Short Void InheritableThreadLocal Package RuntimePermission ThreadLocal StrictMath StackTraceElement Enum ProcessBuilder StringBuilder ClassValue Module ModuleLayer StackWalker Record
+  syn keyword javaC_JavaLang Boolean Character ClassLoader Compiler Double Float Integer Long Math Number Object Process Runtime SecurityManager String StringBuffer Thread ThreadGroup Byte Short Void Package RuntimePermission StrictMath StackTraceElement ProcessBuilder StringBuilder Module ModuleLayer StackWalker Record
   syn match   javaC_JavaLang "\<System\>"	" See javaDebug.
+
+  if !exists("java_highlight_generics")
+    " The non-interface parameterised names of java.lang members.
+    exec 'syn match javaC_JavaLang "\%(\<Enum\.\)\@' . s:ff.Peek('5', '') . '<=\<EnumDesc\>"'
+    syn keyword javaC_JavaLang Class InheritableThreadLocal ThreadLocal Enum ClassValue
+  endif
+
   " As of JDK 21, java.lang.Compiler is no more (deprecated in JDK 9).
   syn keyword javaLangDeprecated Compiler
   syn cluster javaClasses add=javaC_JavaLang
@@ -217,7 +247,7 @@ if exists("java_space_errors")
 endif
 
 exec 'syn match javaUserLabel "^\s*\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!\s*:"he=e-1'
-syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaLabelCastType,javaLabelNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
+syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaLabelCastType,javaLabelNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaGenerics,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
 syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<default\>\%(\s*\%(:\|->\)\)\@=" matchgroup=NONE end=":\|->" oneline
 " Consider grouped _default_ _case_ labels, i.e.
 " case null, default ->
@@ -332,7 +362,7 @@ syn match   javaSpecial "\\u\x\x\x\x"
 
 " Method declarations (JLS-17, §8.4.3, §8.4.4, §9.4).
 if exists("java_highlight_functions")
-  syn cluster javaFuncParams contains=javaAnnotation,@javaClasses,javaType,javaVarArg,javaComment,javaLineComment
+  syn cluster javaFuncParams contains=javaAnnotation,@javaClasses,javaGenerics,javaType,javaVarArg,javaComment,javaLineComment
 
   if java_highlight_functions =~# '^indent[1-8]\=$'
     let s:last = java_highlight_functions[-1 :]
@@ -443,7 +473,7 @@ if exists("java_highlight_functions")
   " There is no recognition of expressions interspersed with comments
   " or of expressions whose parameterised parameter types are written
   " across multiple lines.
-  exec 'syn match javaLambdaDef "\k\@' . s:ff.Peek('4', '') . '<!([[:space:]\n]*\%(\%(@\%(\K\k*\.\)*\K\k*\>\%((\_.\{-1,})\)\{-,1}[[:space:]\n]\+\)*\%(final[[:space:]\n]\+\)\=\%(\<\K\k*\>\.\)*\<\K\k*\>\%(<[^(){}]*[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\)\=\%(\%(\%(\[\]\)\+\|\.\.\.\)\)\=[[:space:]\n]\+\<\K\k*\>\%(\[\]\)*\%(,[[:space:]\n]*\)\=\)\+)[[:space:]\n]*->" contains=javaAnnotation,javaParamModifier,javaLambdaVarType,javaType,@javaClasses,javaVarArg'
+  exec 'syn match javaLambdaDef "\k\@' . s:ff.Peek('4', '') . '<!([[:space:]\n]*\%(\%(@\%(\K\k*\.\)*\K\k*\>\%((\_.\{-1,})\)\{-,1}[[:space:]\n]\+\)*\%(final[[:space:]\n]\+\)\=\%(\<\K\k*\>\.\)*\<\K\k*\>\%(<[^(){}]*[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\)\=\%(\%(\%(\[\]\)\+\|\.\.\.\)\)\=[[:space:]\n]\+\<\K\k*\>\%(\[\]\)*\%(,[[:space:]\n]*\)\=\)\+)[[:space:]\n]*->" contains=javaAnnotation,javaParamModifier,javaLambdaVarType,javaType,@javaClasses,javaGenerics,javaVarArg'
   " Match: () ->
   "	| (a[, b, ...]) ->
   exec 'syn match javaLambdaDef "\k\@' . s:ff.Peek('4', '') . '<!([[:space:]\n]*\%(\<\K\k*\>\%(,[[:space:]\n]*\)\=\)*)[[:space:]\n]*->"'
