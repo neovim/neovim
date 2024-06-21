@@ -1,13 +1,13 @@
 " Vim syntax file
-" Language: Scheme (CHICKEN)
-" Last Change: 2021 Oct 01
-" Author: Evan Hanson <evhan@foldling.org>
-" Maintainer: Evan Hanson <evhan@foldling.org>
-" Repository: https://git.foldling.org/vim-scheme.git
-" URL: https://foldling.org/vim/syntax/chicken.vim
-" Notes: This is supplemental syntax, to be loaded after the core Scheme
-" syntax file (syntax/scheme.vim). Enable it by setting b:is_chicken=1
-" and filetype=scheme.
+" Language:    Scheme (CHICKEN)
+" Last Change: 2024 Jun 21
+" Author:      Evan Hanson <evhan@foldling.org>
+" Maintainer:  Evan Hanson <evhan@foldling.org>
+" Repository:  https://git.foldling.org/vim-scheme.git
+" URL:         https://foldling.org/vim/syntax/chicken.vim
+" Notes:       This is supplemental syntax, to be loaded after the core
+"              Scheme syntax file (syntax/scheme.vim). Enable it by
+"              setting b:is_chicken=1 and filetype=scheme.
 
 " Only to be used on top of the Scheme syntax.
 if !exists('b:did_scheme_syntax')
