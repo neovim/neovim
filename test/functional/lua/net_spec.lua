@@ -92,7 +92,7 @@ describe('vim.net', function()
         local done
         vim.net.request("https://httpbingo.org/basic-auth/user/password", {
           file = path,
-          credentials = "user:password",
+          user = "user:password",
           on_exit = function(err)
             done = true
           end

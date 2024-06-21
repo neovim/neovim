@@ -11,23 +11,23 @@ local M = {}
 ---Path to write the downloaded file to. If not provided, the one inferred from the URL will be used. Defaults to `nil`
 ---@field file? string
 ---Credentials with the format `username:password`. Defaults to `nil`
----@field credentials? string
+---@field user? string
 ---Disables all internal HTTP decoding of content or transfer encodings. Unaltered, raw, data is passed. Defaults to `false`
 ---@field raw? boolean
 ---Request headers. Defaults to `nil`
 ---@field headers? table<string, string[]>
----Whether `credentials` should be send to host after a redirect. Defaults to `false`
----@field redirect_credentials? boolean
+---Whether `user` should be send to host after a redirect. Defaults to `false`
+---@field location_trusted? boolean
 ---Optional callback. Defaults to showing a notification when the file has been downloaded. To disable the notification, pass an empty function.
 ---@field on_exit? fun(err: string?)
 
 ---@type vim.net.Opts
 local global_net_opts = {
   file = nil,
-  credentials = nil,
+  user = nil,
   raw = false,
   headers = nil,
-  redirect_credentials = false,
+  location_trusted = false,
   on_exit = function(err)
     if err then
       return vim.notify(err, vim.log.levels.ERROR)
@@ -62,7 +62,7 @@ local global_net_opts = {
 ---
 --- -- Download a file while handling basic auth
 --- vim.net.request("https://httpbingo.org/basic-auth/user/password", {
----   credentials = "user:password",
+---   user = "user:password",
 --- })
 ---
 --- ```
@@ -84,8 +84,8 @@ function M.request(url, opts)
     vim.list_extend(cmd, { '--remote-name', url })
   end
 
-  if opts.credentials then
-    vim.list_extend(cmd, { '--user', opts.credentials })
+  if opts.user then
+    vim.list_extend(cmd, { '--user', opts.user })
   end
 
   if opts.raw then
@@ -104,7 +104,7 @@ function M.request(url, opts)
   -- always follow redirects
   table.insert(cmd, '--location')
 
-  if opts.redirect_credentials then
+  if opts.location_trusted then
     table.insert(cmd, '--location-trusted')
   end
 
