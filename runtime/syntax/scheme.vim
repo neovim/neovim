@@ -1,12 +1,12 @@
 " Vim syntax file
-" Language: Scheme (R7RS)
-" Last Change: 2021-01-03
-" Author: Evan Hanson <evhan@foldling.org>
-" Maintainer: Evan Hanson <evhan@foldling.org>
-" Previous Author: Dirk van Deun <dirk@igwe.vub.ac.be>
+" Language:            Scheme (R7RS)
+" Last Change:         2024 Jun 21
+" Author:              Evan Hanson <evhan@foldling.org>
+" Maintainer:          Evan Hanson <evhan@foldling.org>
+" Previous Author:     Dirk van Deun <dirk@igwe.vub.ac.be>
 " Previous Maintainer: Sergey Khorev <sergey.khorev@gmail.com>
-" Repository: https://git.foldling.org/vim-scheme.git
-" URL: https://foldling.org/vim/syntax/scheme.vim
+" Repository:          https://git.foldling.org/vim-scheme.git
+" URL:                 https://foldling.org/vim/syntax/scheme.vim
 
 if exists('b:current_syntax')
   finish
@@ -50,9 +50,11 @@ syn match schemeBoolean /#f\(alse\)\?/
 syn match schemeCharacter /#\\.[^ `'\t\n\[\]()]*/
 syn match schemeCharacter /#\\x[0-9a-fA-F]\+/
 
-syn match schemeComment /;.*$/ contains=@Spell
+syn match schemeComment /;.*$/ contains=schemeTodo,@Spell
 
-syn region schemeMultilineComment start=/#|/ end=/|#/ contains=schemeMultilineComment,@Spell
+syn region schemeMultilineComment start=/#|/ end=/|#/ contains=schemeTodo,schemeMultilineComment,@Spell
+
+syn match schemeTodo /\c\<\(todo\|xxx\|fixme\|note\):\?\>/ contained
 
 syn region schemeForm matchgroup=schemeParentheses start="(" end=")" contains=ALLBUT,schemeUnquote,schemeDatumCommentForm,@schemeImportCluster
 syn region schemeForm matchgroup=schemeParentheses start="\[" end="\]" contains=ALLBUT,schemeUnquote,schemeDatumCommentForm,@schemeImportCluster
@@ -427,6 +429,7 @@ syn keyword schemeFunction write-string
 syn keyword schemeFunction write-u8
 syn keyword schemeFunction zero?
 
+hi def link schemeTodo Todo
 hi def link schemeBoolean Boolean
 hi def link schemeCharacter Character
 hi def link schemeComment Comment

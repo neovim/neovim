@@ -1,12 +1,12 @@
 " Vim filetype plugin file
-" Language:	Scheme (R7RS)
-" Last Change:	2019 Nov 19
-"		2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
-" Author:	Evan Hanson <evhan@foldling.org>
-" Maintainer:	Evan Hanson <evhan@foldling.org>
+" Language:            Scheme (R7RS)
+" Last Change:         2024 Jun 21
+"                      2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
+" Author:              Evan Hanson <evhan@foldling.org>
+" Maintainer:          Evan Hanson <evhan@foldling.org>
 " Previous Maintainer: Sergey Khorev <sergey.khorev@gmail.com>
-" Repository:	https://git.foldling.org/vim-scheme.git
-" URL:		https://foldling.org/vim/ftplugin/scheme.vim
+" Repository:          https://git.foldling.org/vim-scheme.git
+" URL:                 https://foldling.org/vim/ftplugin/scheme.vim
 
 if exists('b:did_ftplugin')
   finish
@@ -20,11 +20,13 @@ setl comments=:;;;;,:;;;,:;;,:;,sr:#\|,mb:\|,ex:\|#
 setl commentstring=;\ %s
 setl define=^\\s*(def\\k*
 setl iskeyword=33,35-39,42-43,45-58,60-90,94,95,97-122,126
+setl formatoptions-=t
 
-let b:undo_ftplugin = 'setl lisp< comments< commentstring< define< iskeyword<'
+let b:undo_ftplugin = 'setl lisp< comments< commentstring< define< iskeyword< formatoptions<'
 
 setl lispwords+=case
 setl lispwords+=define
+setl lispwords+=define-library
 setl lispwords+=define-record-type
 setl lispwords+=define-syntax
 setl lispwords+=define-values
