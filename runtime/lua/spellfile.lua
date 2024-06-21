@@ -29,7 +29,7 @@ local function download_sug(dir, lang, encoding)
   local file = ('%s/%s'):format(dir, sug_filename)
   file = vim.fs.normalize(file)
   file = vim.fs.normalize(file)
-  vim.net.download(sug_url, {
+  vim.net.request(sug_url, {
     file = file,
     on_exit = vim.schedule_wrap(function(err)
       if err then
@@ -137,7 +137,7 @@ function M.download_spell(lang)
   vim.notify(('Downloading %s ...'):format(spell_filename), vim.log.levels.INFO)
   local file = ('%s/%s'):format(dir, spell_filename)
   file = vim.fs.normalize(file)
-  vim.net.download(spell_url, {
+  vim.net.request(spell_url, {
     file = file,
     on_exit = vim.schedule_wrap(function(err)
       if err then
@@ -162,7 +162,7 @@ function M.download_spell(lang)
       file = vim.fs.normalize(file)
       vim.notify(('Could not find it, trying %s ...'):format(spell_filename), vim.log.levels.WARN)
       spell_url = ('%s/%s'):format(spellfile_URL, spell_filename)
-      vim.net.download(spell_url, {
+      vim.net.request(spell_url, {
         file = file,
         on_exit = vim.schedule_wrap(function(err2)
           if err2 then

@@ -12,13 +12,13 @@ describe('vim.net', function()
     os.remove(path)
   end)
 
-  describe('download()', function()
+  describe('request()', function()
     it('can download a file without a path', function()
       local destination_path = './anything'
       eq(nil, read_file(destination_path))
       exec_lua([[
         local done
-        vim.net.download("https://httpbingo.org/anything", {
+        vim.net.request("https://httpbingo.org/anything", {
           on_exit = function()
             done = true
           end
@@ -39,7 +39,7 @@ describe('vim.net', function()
         [[
         local path = ...
         local done
-        vim.net.download("https://httpbingo.org/anything", {
+        vim.net.request("https://httpbingo.org/anything", {
           file = path,
           on_exit = function()
             done = true
@@ -63,7 +63,7 @@ describe('vim.net', function()
         [[
         local path = ...
         local done
-        vim.net.download("https://httpbingo.org/bearer", {
+        vim.net.request("https://httpbingo.org/bearer", {
           file = path,
           headers = {
             Authorization = { "Bearer foo" },
@@ -90,7 +90,7 @@ describe('vim.net', function()
         [[
         local path = ...
         local done
-        vim.net.download("https://httpbingo.org/basic-auth/user/password", {
+        vim.net.request("https://httpbingo.org/basic-auth/user/password", {
           file = path,
           credentials = "user:password",
           on_exit = function(err)
@@ -117,7 +117,7 @@ describe('vim.net', function()
         [[
         local path = ...
         local done
-        vim.net.download("https://httpbingo.org/anything", {
+        vim.net.request("https://httpbingo.org/anything", {
           file = path,
           override = false,
           on_exit = function(err)

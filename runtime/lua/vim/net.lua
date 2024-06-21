@@ -45,28 +45,28 @@ local global_net_opts = {
 --- ```lua
 --- -- Download a file
 --- -- The file will be saved in the `cwd` with the name `anything`
---- vim.net.download("https://httpbingo.org/anything")
+--- vim.net.request("https://httpbingo.org/anything")
 ---
 --- -- Download a file to a path
 --- -- The file will be saved in `/tmp/somefile`
---- vim.net.download("https://httpbingo.org/anything", {
+--- vim.net.request("https://httpbingo.org/anything", {
 ---   file = "/tmp/somefile",
 --- })
 ---
 --- -- Download a file while sending headers
---- vim.net.download("https://httpbingo.org/anything", {
+--- vim.net.request("https://httpbingo.org/anything", {
 ---   headers = {
 ---     Authorization = { "Bearer foo" },
 ---   },
 --- })
 ---
 --- -- Download a file while handling basic auth
---- vim.net.download("https://httpbingo.org/basic-auth/user/password", {
+--- vim.net.request("https://httpbingo.org/basic-auth/user/password", {
 ---   credentials = "user:password",
 --- })
 ---
 --- ```
-function M.download(url, opts)
+function M.request(url, opts)
   vim.validate {
     url = { url, 'string' },
     opts = { opts, 'table', true },
