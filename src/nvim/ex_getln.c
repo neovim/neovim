@@ -134,7 +134,7 @@ typedef struct {
   int wim_index;                        // index in wim_flags[]
   int save_msg_scroll;
   int save_State;                       // remember State when called
-  int save_cmdspos;
+  int prev_cmdpos;
   char *save_p_icm;
   int some_key_typed;                   // one of the keys was typed
   // mouse drag and release events are ignored, unless they are
@@ -691,7 +691,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     .indent = indent,
     .save_msg_scroll = msg_scroll,
     .save_State = State,
-    .save_cmdspos = ccline.cmdspos,
+    .prev_cmdpos = -1,
     .ignore_drag_release = true,
   };
   CommandLineState *s = &state;
@@ -2184,10 +2184,10 @@ static int command_line_handle_key(CommandLineState *s)
 static int command_line_not_changed(CommandLineState *s)
 {
   // Trigger CursorMovedC autocommands.
-  if (ccline.cmdspos != s->save_cmdspos) {
+  if (ccline.cmdpos != s->prev_cmdpos) {
     trigger_cmd_autocmd(get_cmdline_type(), EVENT_CURSORMOVEDC);
+    s->prev_cmdpos = ccline.cmdpos;
   }
-
   // Incremental searches for "/" and "?":
   // Enter command_line_not_changed() when a character has been read but the
   // command line did not change. Then we only search and redraw if something
@@ -2662,6 +2662,7 @@ static void do_autocmd_cmdlinechanged(int firstc)
 
 static int command_line_changed(CommandLineState *s)
 {
+  s->prev_cmdpos = ccline.cmdpos;
   // Trigger CmdlineChanged autocommands.
   do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
 
@@ -4190,9 +4191,6 @@ static int set_cmdline_pos(int pos)
   } else {
     new_cmdpos = pos;
   }
-
-  // Trigger CursorMovedC autocommands.
-  trigger_cmd_autocmd(get_cmdline_type(), EVENT_CURSORMOVEDC);
 
   return 0;
 }
