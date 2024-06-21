@@ -109,30 +109,14 @@ describe('vim.net', function()
       eq(true, vim.json.decode(data).authorized)
     end)
 
-    -- requirest `curl` 7.83.0 and Ubuntu 22 has 7.81.0
-    pending('does not override file', function()
-      write_file(path, '')
-      eq('', read_file(path))
-      exec_lua(
-        [[
-        local path = ...
-        local done
-        vim.net.request("https://httpbingo.org/anything", {
-          file = path,
-          override = false,
-          on_exit = function(err)
-            done = true
-          end
-        })
-
-        local _, interrupted = vim.wait(10000, function()
-          return done
-        end)
-        assert(done, 'file was not downloaded')
-      ]],
-        path
-      )
-      eq('', read_file(path))
+    it('can download a file without a path (sync)', function()
+      local destination_path = './anything'
+      eq(nil, read_file(destination_path))
+      exec_lua([[
+        vim.net.request("https://httpbingo.org/anything"):wait(10000)
+      ]])
+      local data = read_file(destination_path)
+      eq('https://httpbingo.org/anything', vim.json.decode(data).url)
     end)
   end)
 end)

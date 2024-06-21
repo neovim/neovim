@@ -1,5 +1,29 @@
 local M = {}
 
+---@class vim.net.Request
+---@field private _system vim.SystemObj
+---@field wait fun(self: vim.net.Request, timeout?: integer): string?
+---@field kill fun(self: vim.net.Request, signal: integer|string)
+local Request = {}
+
+--- @param system vim.SystemObj
+--- @return vim.net.Request
+local function new_request(system)
+  return setmetatable({
+    _system = system,
+  }, { __index = Request })
+end
+
+--- @param timeout? integer
+function Request:wait(timeout)
+  self._system:wait(timeout)
+end
+
+--- @param signal integer|string
+function Request:kill(signal)
+  self._system:kill(signal)
+end
+
 --HTTP methods in curl
 -- default GET (there is also --get for transforming --data into URL query params)
 -- --data (and its variants) or --form POST
@@ -18,7 +42,7 @@ local M = {}
 ---@field headers? table<string, string[]>
 ---Whether `user` should be send to host after a redirect. Defaults to `false`
 ---@field location_trusted? boolean
----Optional callback. Defaults to showing a notification when the file has been downloaded. To disable the notification, pass an empty function.
+---Optional callback. Defaults to `nil`
 ---@field on_exit? fun(err: string?)
 
 ---@type vim.net.Opts
@@ -28,39 +52,37 @@ local global_net_opts = {
   raw = false,
   headers = nil,
   location_trusted = false,
-  on_exit = function(err)
-    if err then
-      return vim.notify(err, vim.log.levels.ERROR)
-    end
-
-    vim.notify('The file has been downloaded', vim.log.levels.INFO)
-  end,
 }
 
----Asynchronously download a file
+---Download a file
 ---@param url string Request URL
 ---@param opts? vim.net.Opts Additional options
+---@return vim.net.Request request
 ---
 ---Example:
 --- ```lua
---- -- Download a file
+--- -- Download a file (async)
 --- -- The file will be saved in the `cwd` with the name `anything`
 --- vim.net.request("https://httpbingo.org/anything")
 ---
---- -- Download a file to a path
+--- -- Download a file (sync)
+--- -- The file will be saved in the `cwd` with the name `anything`
+--- vim.net.request("https://httpbingo.org/anything"):wait(500)
+---
+--- -- Download a file to a path (async)
 --- -- The file will be saved in `/tmp/somefile`
 --- vim.net.request("https://httpbingo.org/anything", {
 ---   file = "/tmp/somefile",
 --- })
 ---
---- -- Download a file while sending headers
+--- -- Download a file while sending headers (async)
 --- vim.net.request("https://httpbingo.org/anything", {
 ---   headers = {
 ---     Authorization = { "Bearer foo" },
 ---   },
 --- })
 ---
---- -- Download a file while handling basic auth
+--- -- Download a file while handling basic auth (async)
 --- vim.net.request("https://httpbingo.org/basic-auth/user/password", {
 ---   user = "user:password",
 --- })
@@ -108,11 +130,13 @@ function M.request(url, opts)
     table.insert(cmd, '--location-trusted')
   end
 
-  vim.system(cmd, { text = true }, function(out)
-    local err = out.stderr ~= '' and out.stderr or nil
-
-    opts.on_exit(err)
-  end)
+  local request = new_request(vim.system(cmd, { text = true }, function(out)
+    if opts.on_exit then
+      local err = out.stderr ~= '' and out.stderr or nil
+      opts.on_exit(err)
+    end
+  end))
+  return request
 end
 
 return M
