@@ -30,7 +30,7 @@ describe('vim._with', function()
     ]])
   end)
 
-  local validate_events_trigger = function()
+  local assert_events_trigger = function()
     local out = exec_lua [[
       -- Needs three global values defined:
       -- - `test_events` - array of events which are tested.
@@ -56,6 +56,132 @@ describe('vim._with', function()
     eq({ true, true }, out)
   end
 
+  describe('`bo` context', function()
+    before_each(function()
+      exec_lua [[
+        _G.other_buf, _G.cur_buf = setup_buffers()
+
+        -- 'commentstring' is local to buffer and string
+        vim.bo[other_buf].commentstring = '## %s'
+        vim.bo[cur_buf].commentstring = '// %s'
+        vim.go.commentstring = '$$ %s'
+
+        -- 'undolevels' is global or local to buffer (global-local) and number
+        vim.bo[other_buf].undolevels = 100
+        vim.bo[cur_buf].undolevels = 250
+        vim.go.undolevels = 500
+
+        _G.get_state = function()
+          return {
+            bo = {
+              cms_cur = vim.bo[cur_buf].commentstring,
+              cms_other = vim.bo[other_buf].commentstring,
+              ul_cur = vim.bo[cur_buf].undolevels,
+              ul_other = vim.bo[other_buf].undolevels,
+            },
+            go = {
+              cms = vim.go.commentstring,
+              ul = vim.go.undolevels,
+            },
+          }
+        end
+      ]]
+    end)
+
+    it('works', function()
+      local out = exec_lua [[
+        local context = { bo = { commentstring = '-- %s', undolevels = 0 } }
+
+        local before = get_state()
+        local inner = vim._with(context, function()
+          assert(api.nvim_get_current_buf() == cur_buf)
+          return get_state()
+        end)
+
+        return { before = before, inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        bo = { cms_cur = '-- %s', cms_other = '## %s', ul_cur = 0, ul_other = 100 },
+        go = { cms = '$$ %s', ul = 500 },
+      }, out.inner)
+      eq(out.before, out.after)
+    end)
+
+    it('sets options in `buf` context', function()
+      local out = exec_lua [[
+        local context = { buf = other_buf, bo = { commentstring = '-- %s', undolevels = 0 } }
+
+        local before = get_state()
+        local inner = vim._with(context, function()
+          assert(api.nvim_get_current_buf() == other_buf)
+          return get_state()
+        end)
+
+        return { before = before, inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        bo = { cms_cur = '// %s', cms_other = '-- %s', ul_cur = 250, ul_other = 0 },
+        go = { cms = '$$ %s', ul = 500 },
+      }, out.inner)
+      eq(out.before, out.after)
+    end)
+
+    it('restores only options from context', function()
+      local out = exec_lua [[
+        local context = { bo = { commentstring = '-- %s' } }
+
+        local inner = vim._with(context, function()
+          assert(api.nvim_get_current_buf() == cur_buf)
+          vim.bo[cur_buf].undolevels = 750
+          vim.bo[cur_buf].commentstring = '!! %s'
+          return get_state()
+        end)
+
+        return { inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        bo = { cms_cur = '!! %s', cms_other = '## %s', ul_cur = 750, ul_other = 100 },
+        go = { cms = '$$ %s', ul = 500 },
+      }, out.inner)
+      eq({
+        bo = { cms_cur = '// %s', cms_other = '## %s', ul_cur = 750, ul_other = 100 },
+        go = { cms = '$$ %s', ul = 500 },
+      }, out.after)
+    end)
+
+    it('does not trigger events', function()
+      exec_lua [[
+        _G.test_events = { 'BufEnter', 'BufLeave', 'BufWinEnter', 'BufWinLeave' }
+        _G.test_context = { bo = { commentstring = '-- %s' } }
+        _G.test_trig_event = function() vim.cmd.new() end
+      ]]
+      assert_events_trigger()
+    end)
+
+    it('can be nested', function()
+      local out = exec_lua [[
+        local before, before_inner, after_inner = get_state(), nil, nil
+        vim._with({ bo = { commentstring = '-- %s', undolevels = 0 } }, function()
+          before_inner = get_state()
+          inner = vim._with({ bo = { commentstring = '!! %s' } }, get_state)
+          after_inner = get_state()
+        end)
+        return {
+          before = before, before_inner = before_inner,
+          inner = inner,
+          after_inner = after_inner, after = get_state(),
+        }
+      ]]
+      eq('!! %s', out.inner.bo.cms_cur)
+      eq(0, out.inner.bo.ul_cur)
+      eq(out.before_inner, out.after_inner)
+      eq(out.before, out.after)
+    end)
+  end)
+
   describe('`buf` context', function()
     it('works', function()
       local out = exec_lua [[
@@ -74,7 +200,7 @@ describe('vim._with', function()
         _G.test_context = { buf = other_buf }
         _G.test_trig_event = function() vim.cmd.new() end
       ]]
-      validate_events_trigger()
+      assert_events_trigger()
     end)
 
     it('can access buffer options', function()
@@ -95,37 +221,37 @@ describe('vim._with', function()
 
     it('works with different kinds of buffers', function()
       exec_lua [[
-        local validate = function(buf)
+        local assert_buf = function(buf)
           vim._with({ buf = buf }, function()
             assert(api.nvim_get_current_buf() == buf)
           end)
         end
 
         -- Current
-        validate(api.nvim_get_current_buf())
+        assert_buf(api.nvim_get_current_buf())
 
         -- Hidden listed
         local listed = api.nvim_create_buf(true, true)
-        validate(listed)
+        assert_buf(listed)
 
         -- Visible
         local other_win, cur_win = setup_windows()
         api.nvim_win_set_buf(other_win, listed)
-        validate(listed)
+        assert_buf(listed)
 
         -- Shown but not visible
         vim.cmd.tabnew()
-        validate(listed)
+        assert_buf(listed)
 
         -- Shown in several windows
         api.nvim_win_set_buf(0, listed)
-        validate(listed)
+        assert_buf(listed)
 
         -- Shown in floating window
         local float_buf = api.nvim_create_buf(false, true)
         local config = { relative = 'editor', row = 1, col = 1, width = 5, height = 5 }
         api.nvim_open_win(float_buf, false, config)
-        validate(float_buf)
+        assert_buf(float_buf)
       ]]
     end)
 
@@ -209,6 +335,118 @@ describe('vim._with', function()
         ]]
       )
       eq(false, ok)
+    end)
+  end)
+
+  describe('`go` context', function()
+    before_each(function()
+      exec_lua [[
+        vim.bo.commentstring = '## %s'
+        vim.go.commentstring = '$$ %s'
+        vim.wo.winblend = 25
+        vim.go.winblend = 50
+        vim.go.langmap = 'xy,yx'
+
+        _G.get_state = function()
+          return {
+            bo = { cms = vim.bo.commentstring },
+            wo = { winbl = vim.wo.winblend },
+            go = {
+              cms = vim.go.commentstring,
+              winbl = vim.go.winblend,
+              lmap = vim.go.langmap,
+            },
+          }
+        end
+      ]]
+    end)
+
+    it('works', function()
+      local out = exec_lua [[
+        local context = {
+          go = { commentstring = '-- %s', winblend = 75, langmap = 'ab,ba' },
+        }
+        local before = get_state()
+        local inner = vim._with(context, get_state)
+        return { before = before, inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        bo = { cms = '## %s' },
+        wo = { winbl = 25 },
+        go = { cms = '-- %s', winbl = 75, lmap = 'ab,ba' },
+      }, out.inner)
+      eq(out.before, out.after)
+    end)
+
+    it('works with `eventignore`', function()
+      -- This might be an issue if saving and restoring option context is done
+      -- to account for triggering `OptionSet`, but in not a good way
+      local out = exec_lua [[
+        vim.go.eventignore = 'ModeChanged'
+        local inner = vim._with({ go = { eventignore = 'CursorMoved' } }, function()
+          return vim.go.eventignore
+        end)
+        return { inner = inner, after = vim.go.eventignore }
+      ]]
+      eq({ inner = 'CursorMoved', after = 'ModeChanged' }, out)
+    end)
+
+    it('restores only options from context', function()
+      local out = exec_lua [[
+        local context = { go = { langmap = 'ab,ba' } }
+
+        local inner = vim._with(context, function()
+          vim.go.commentstring = '!! %s'
+          vim.go.winblend = 75
+          vim.go.langmap = 'uv,vu'
+          return get_state()
+        end)
+
+        return { inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        bo = { cms = '## %s' },
+        wo = { winbl = 25 },
+        go = { cms = '!! %s', winbl = 75, lmap = 'uv,vu' },
+      }, out.inner)
+      eq({
+        bo = { cms = '## %s' },
+        wo = { winbl = 25 },
+        go = { cms = '!! %s', winbl = 75, lmap = 'xy,yx' },
+      }, out.after)
+    end)
+
+    it('does not trigger events', function()
+      exec_lua [[
+        _G.test_events = {
+          'BufEnter', 'BufLeave', 'BufWinEnter', 'BufWinLeave', 'WinEnter', 'WinLeave'
+        }
+        _G.test_context = { go = { commentstring = '-- %s', winblend = 75, langmap = 'ab,ba' } }
+        _G.test_trig_event = function() vim.cmd.new() end
+      ]]
+      assert_events_trigger()
+    end)
+
+    it('can be nested', function()
+      local out = exec_lua [[
+        local before, before_inner, after_inner = get_state(), nil, nil
+        vim._with({ go = { langmap = 'ab,ba', commentstring = '-- %s' } }, function()
+          before_inner = get_state()
+          inner = vim._with({ go = { langmap = 'uv,vu' } }, get_state)
+          after_inner = get_state()
+        end)
+        return {
+          before = before, before_inner = before_inner,
+          inner = inner,
+          after_inner = after_inner, after = get_state(),
+        }
+      ]]
+      eq('uv,vu', out.inner.go.lmap)
+      eq('-- %s', out.inner.go.cms)
+      eq(out.before_inner, out.after_inner)
+      eq(out.before, out.after)
     end)
   end)
 
@@ -487,6 +725,202 @@ describe('vim._with', function()
     end)
   end)
 
+  describe('`o` context', function()
+    before_each(function()
+      exec_lua [[
+        _G.other_win, _G.cur_win = setup_windows()
+        _G.other_buf, _G.cur_buf = setup_buffers()
+
+        vim.bo[other_buf].commentstring = '## %s'
+        vim.bo[cur_buf].commentstring = '// %s'
+        vim.go.commentstring = '$$ %s'
+
+        vim.bo[other_buf].undolevels = 100
+        vim.bo[cur_buf].undolevels = 250
+        vim.go.undolevels = 500
+
+        vim.wo[other_win].virtualedit = 'block'
+        vim.wo[cur_win].virtualedit = 'insert'
+        vim.go.virtualedit = 'none'
+
+        vim.wo[other_win].winblend = 10
+        vim.wo[cur_win].winblend = 25
+        vim.go.winblend = 50
+
+        vim.go.langmap = 'xy,yx'
+
+        _G.get_state = function()
+          return {
+            bo = {
+              cms_cur = vim.bo[cur_buf].commentstring,
+              cms_other = vim.bo[other_buf].commentstring,
+              ul_cur = vim.bo[cur_buf].undolevels,
+              ul_other = vim.bo[other_buf].undolevels,
+            },
+            wo = {
+              ve_cur = vim.wo[cur_win].virtualedit,
+              ve_other = vim.wo[other_win].virtualedit,
+              winbl_cur = vim.wo[cur_win].winblend,
+              winbl_other = vim.wo[other_win].winblend,
+            },
+            go = {
+              cms = vim.go.commentstring,
+              ul = vim.go.undolevels,
+              ve = vim.go.virtualedit,
+              winbl = vim.go.winblend,
+              lmap = vim.go.langmap,
+            },
+          }
+        end
+      ]]
+    end)
+
+    it('works', function()
+      local out = exec_lua [[
+        local context = {
+          o = {
+            commentstring = '-- %s',
+            undolevels = 0,
+            virtualedit = 'all',
+            winblend = 75,
+            langmap = 'ab,ba',
+          },
+        }
+
+        local before = get_state()
+        local inner = vim._with(context, function()
+          assert(api.nvim_get_current_buf() == cur_buf)
+          assert(api.nvim_get_current_win() == cur_win)
+          return get_state()
+        end)
+
+        return { before = before, inner = inner, after = get_state() }
+      ]]
+
+      -- Options in context are set with `vim.o`, so usually both local
+      -- and global values are affected. Yet all of them should be later
+      -- restored to pre-context values.
+      eq({
+        bo = { cms_cur = '-- %s', cms_other = '## %s', ul_cur = -123456, ul_other = 100 },
+        wo = { ve_cur = 'all', ve_other = 'block', winbl_cur = 75, winbl_other = 10 },
+        go = { cms = '-- %s', ul = 0, ve = 'all', winbl = 75, lmap = 'ab,ba' },
+      }, out.inner)
+      eq(out.before, out.after)
+    end)
+
+    it('sets options in `buf` context', function()
+      local out = exec_lua [[
+        local context = { buf = other_buf, o = { commentstring = '-- %s', undolevels = 0 } }
+
+        local before = get_state()
+        local inner = vim._with(context, function()
+          assert(api.nvim_get_current_buf() == other_buf)
+          return get_state()
+        end)
+
+        return { before = before, inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        bo = { cms_cur = '// %s', cms_other = '-- %s', ul_cur = 250, ul_other = -123456 },
+        wo = { ve_cur = 'insert', ve_other = 'block', winbl_cur = 25, winbl_other = 10 },
+        -- Global `winbl` inside context ideally should be untouched and equal
+        -- to 50. It seems to be equal to 0 because `context.buf` uses
+        -- `aucmd_prepbuf` C approach which has no guarantees about window or
+        -- window option values inside context.
+        go = { cms = '-- %s', ul = 0, ve = 'none', winbl = 0, lmap = 'xy,yx' },
+      }, out.inner)
+      eq(out.before, out.after)
+    end)
+
+    it('sets options in `win` context', function()
+      local out = exec_lua [[
+        local context = { win = other_win, o = { winblend = 75, virtualedit = 'all' } }
+
+        local before = get_state()
+        local inner = vim._with(context, function()
+          assert(api.nvim_get_current_win() == other_win)
+          return get_state()
+        end)
+
+        return { before = before, inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        bo = { cms_cur = '// %s', cms_other = '## %s', ul_cur = 250, ul_other = 100 },
+        wo = { winbl_cur = 25, winbl_other = 75, ve_cur = 'insert', ve_other = 'all' },
+        go = { cms = '$$ %s', ul = 500, winbl = 75, ve = 'all', lmap = 'xy,yx' },
+      }, out.inner)
+      eq(out.before, out.after)
+    end)
+
+    it('restores only options from context', function()
+      local out = exec_lua [[
+        local context = { o = { undolevels = 0, winblend = 75, langmap = 'ab,ba' } }
+
+        local inner = vim._with(context, function()
+          assert(api.nvim_get_current_buf() == cur_buf)
+          assert(api.nvim_get_current_win() == cur_win)
+
+          vim.o.commentstring = '!! %s'
+          vim.o.undolevels = 750
+          vim.o.virtualedit = 'onemore'
+          vim.o.winblend = 99
+          vim.o.langmap = 'uv,vu'
+          return get_state()
+        end)
+
+        return { inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        bo = { cms_cur = '!! %s', cms_other = '## %s', ul_cur = -123456, ul_other = 100 },
+        wo = { ve_cur = 'onemore', ve_other = 'block', winbl_cur = 99, winbl_other = 10 },
+        go = { cms = '!! %s', ul = 750, ve = 'onemore', winbl = 99, lmap = 'uv,vu' },
+      }, out.inner)
+      eq({
+        bo = { cms_cur = '!! %s', cms_other = '## %s', ul_cur = 250, ul_other = 100 },
+        wo = { ve_cur = 'onemore', ve_other = 'block', winbl_cur = 25, winbl_other = 10 },
+        go = { cms = '!! %s', ul = 500, ve = 'onemore', winbl = 50, lmap = 'xy,yx' },
+      }, out.after)
+    end)
+
+    it('does not trigger events', function()
+      exec_lua [[
+        _G.test_events = {
+          'BufEnter', 'BufLeave', 'WinEnter', 'WinLeave', 'BufWinEnter', 'BufWinLeave'
+        }
+        _G.test_context = { o = { undolevels = 0, winblend = 75, langmap = 'ab,ba' } }
+        _G.test_trig_event = function() vim.cmd.new() end
+      ]]
+      assert_events_trigger()
+    end)
+
+    it('can be nested', function()
+      local out = exec_lua [[
+        local before, before_inner, after_inner = get_state(), nil, nil
+        local cxt_o = { commentstring = '-- %s', winblend = 75, langmap = 'ab,ba', undolevels = 0 }
+        vim._with({ o = cxt_o }, function()
+          before_inner = get_state()
+          local inner_cxt_o = { commentstring = '!! %s', winblend = 99, langmap = 'uv,vu' }
+          inner = vim._with({ o = inner_cxt_o }, get_state)
+          after_inner = get_state()
+        end)
+        return {
+          before = before, before_inner = before_inner,
+          inner = inner,
+          after_inner = after_inner, after = get_state(),
+        }
+      ]]
+      eq('!! %s', out.inner.bo.cms_cur)
+      eq(99, out.inner.wo.winbl_cur)
+      eq('uv,vu', out.inner.go.lmap)
+      eq(0, out.inner.go.ul)
+      eq(out.before_inner, out.after_inner)
+      eq(out.before, out.after)
+    end)
+  end)
+
   describe('`sandbox` context', function()
     it('works', function()
       local ok, err = pcall(
@@ -599,7 +1033,7 @@ describe('vim._with', function()
         _G.test_context = { win = other_win }
         _G.test_trig_event = function() vim.cmd.new() end
       ]]
-      validate_events_trigger()
+      assert_events_trigger()
     end)
 
     it('can access window options', function()
@@ -619,19 +1053,19 @@ describe('vim._with', function()
 
     it('works with different kinds of windows', function()
       exec_lua [[
-        local validate = function(win)
+        local assert_win = function(win)
           vim._with({ win = win }, function()
             assert(api.nvim_get_current_win() == win)
           end)
         end
 
         -- Current
-        validate(api.nvim_get_current_win())
+        assert_win(api.nvim_get_current_win())
 
         -- Not visible
         local other_win, cur_win = setup_windows()
         vim.cmd.tabnew()
-        validate(other_win)
+        assert_win(other_win)
 
         -- Floating
         local float_win = api.nvim_open_win(
@@ -639,7 +1073,7 @@ describe('vim._with', function()
           false,
           { relative = 'editor', row = 1, col = 1, height = 5, width = 5}
         )
-        validate(float_win)
+        assert_win(float_win)
       ]]
     end)
 
@@ -731,6 +1165,132 @@ describe('vim._with', function()
     end)
   end)
 
+  describe('`wo` context', function()
+    before_each(function()
+      exec_lua [[
+        _G.other_win, _G.cur_win = setup_windows()
+
+        -- 'virtualedit' is global or local to window (global-local) and string
+        vim.wo[other_win].virtualedit = 'block'
+        vim.wo[cur_win].virtualedit = 'insert'
+        vim.go.virtualedit = 'none'
+
+        -- 'winblend' is local to window and number
+        vim.wo[other_win].winblend = 10
+        vim.wo[cur_win].winblend = 25
+        vim.go.winblend = 50
+
+        _G.get_state = function()
+          return {
+            wo = {
+              ve_cur = vim.wo[cur_win].virtualedit,
+              ve_other = vim.wo[other_win].virtualedit,
+              winbl_cur = vim.wo[cur_win].winblend,
+              winbl_other = vim.wo[other_win].winblend,
+            },
+            go = {
+              ve = vim.go.virtualedit,
+              winbl = vim.go.winblend,
+            },
+          }
+        end
+      ]]
+    end)
+
+    it('works', function()
+      local out = exec_lua [[
+        local context = { wo = { virtualedit = 'all', winblend = 75 } }
+
+        local before = get_state()
+        local inner = vim._with(context, function()
+          assert(api.nvim_get_current_win() == cur_win)
+          return get_state()
+        end)
+
+        return { before = before, inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        wo = { ve_cur = 'all', ve_other = 'block', winbl_cur = 75, winbl_other = 10 },
+        go = { ve = 'none', winbl = 75 },
+      }, out.inner)
+      eq(out.before, out.after)
+    end)
+
+    it('sets options in `win` context', function()
+      local out = exec_lua [[
+        local context = { win = other_win, wo = { virtualedit = 'all', winblend = 75 } }
+
+        local before = get_state()
+        local inner = vim._with(context, function()
+          assert(api.nvim_get_current_win() == other_win)
+          return get_state()
+        end)
+
+        return { before = before, inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        wo = { ve_cur = 'insert', ve_other = 'all', winbl_cur = 25, winbl_other = 75 },
+        go = { ve = 'none', winbl = 75 },
+      }, out.inner)
+      eq(out.before, out.after)
+    end)
+
+    it('restores only options from context', function()
+      local out = exec_lua [[
+        local context = { wo = { winblend = 75 } }
+
+        local inner = vim._with(context, function()
+          assert(api.nvim_get_current_win() == cur_win)
+          vim.wo[cur_win].virtualedit = 'onemore'
+          vim.wo[cur_win].winblend = 99
+          return get_state()
+        end)
+
+        return { inner = inner, after = get_state() }
+      ]]
+
+      eq({
+        wo = { ve_cur = 'onemore', ve_other = 'block', winbl_cur = 99, winbl_other = 10 },
+        go = { ve = 'none', winbl = 99 },
+      }, out.inner)
+      eq({
+        wo = { ve_cur = 'onemore', ve_other = 'block', winbl_cur = 25, winbl_other = 10 },
+        go = { ve = 'none', winbl = 50 },
+      }, out.after)
+    end)
+
+    it('does not trigger events', function()
+      exec_lua [[
+        _G.test_events = { 'WinEnter', 'WinLeave', 'BufWinEnter', 'BufWinLeave' }
+        _G.test_context = { wo = { winblend = 75 } }
+        _G.test_trig_event = function() vim.cmd.new() end
+      ]]
+      assert_events_trigger()
+    end)
+
+    it('can be nested', function()
+      local out = exec_lua [[
+        local before, before_inner, after_inner = get_state(), nil, nil
+        vim._with({ wo = { winblend = 75, virtualedit = 'all' } }, function()
+          before_inner = get_state()
+          inner = vim._with({ wo = { winblend = 99 } }, get_state)
+          after_inner = get_state()
+        end)
+        return {
+          before = before, before_inner = before_inner,
+          inner = inner,
+          after_inner = after_inner, after = get_state(),
+        }
+      ]]
+      eq(99, out.inner.wo.winbl_cur)
+      eq('all', out.inner.wo.ve_cur)
+      eq(out.before_inner, out.after_inner)
+      eq(out.before, out.after)
+    end)
+  end)
+
   it('returns what callback returns', function()
     local out_verify = exec_lua [[
       out = { vim._with({}, function()
@@ -765,6 +1325,116 @@ describe('vim._with', function()
       return err
     ]]
     matches('Can not set both `buf` and `win`', out)
+  end)
+
+  it('works with several contexts at once', function()
+    local out = exec_lua [[
+      local other_buf, cur_buf = setup_buffers()
+      vim.bo[other_buf].commentstring = '## %s'
+      api.nvim_buf_set_lines(other_buf, 0, -1, false, { 'aaa', 'bbb', 'ccc' })
+      api.nvim_buf_set_mark(other_buf, 'm', 2, 2, {})
+
+      vim.go.commentstring = '// %s'
+      vim.go.langmap = 'xy,yx'
+
+      local context = {
+        buf = other_buf,
+        bo = { commentstring = '-- %s' },
+        go = { langmap = 'ab,ba' },
+        lockmarks = true,
+      }
+
+      local inner = vim._with(context, function()
+        api.nvim_buf_set_lines(0, 0, -1, false, { 'uuu', 'vvv', 'www' })
+        return {
+          buf = api.nvim_get_current_buf(),
+          bo = { cms = vim.bo.commentstring },
+          go = { cms = vim.go.commentstring, lmap = vim.go.langmap },
+          mark = api.nvim_buf_get_mark(0, 'm')
+        }
+      end)
+
+      local after = {
+        buf = api.nvim_get_current_buf(),
+        bo = { cms = vim.bo[other_buf].commentstring },
+        go = { cms = vim.go.commentstring, lmap = vim.go.langmap },
+        mark = api.nvim_buf_get_mark(other_buf, 'm')
+      }
+
+      return {
+        context_buf = other_buf, cur_buf = cur_buf,
+        inner = inner, after = after
+      }
+    ]]
+
+    eq({
+      buf = out.context_buf,
+      bo = { cms = '-- %s' },
+      go = { cms = '// %s', lmap = 'ab,ba' },
+      mark = { 2, 2 },
+    }, out.inner)
+    eq({
+      buf = out.cur_buf,
+      bo = { cms = '## %s' },
+      go = { cms = '// %s', lmap = 'xy,yx' },
+      mark = { 2, 2 },
+    }, out.after)
+  end)
+
+  it('works with same option set in different contexts', function()
+    local out = exec_lua [[
+      local get_state = function()
+        return {
+          bo = { cms = vim.bo.commentstring },
+          wo = { ve = vim.wo.virtualedit },
+          go = { cms = vim.go.commentstring, ve = vim.go.virtualedit },
+        }
+      end
+
+      vim.bo.commentstring = '// %s'
+      vim.go.commentstring = '$$ %s'
+      vim.wo.virtualedit = 'insert'
+      vim.go.virtualedit = 'none'
+
+      local before = get_state()
+      local context_no_go = {
+        o = { commentstring = '-- %s', virtualedit = 'all' },
+        bo = { commentstring = '!! %s' },
+        wo = { virtualedit = 'onemore' },
+      }
+      local inner_no_go = vim._with(context_no_go, get_state)
+      local middle = get_state()
+      local context_with_go = {
+        o = { commentstring = '-- %s', virtualedit = 'all' },
+        bo = { commentstring = '!! %s' },
+        wo = { virtualedit = 'onemore' },
+        go = { commentstring = '@@ %s', virtualedit = 'block' },
+      }
+      local inner_with_go = vim._with(context_with_go, get_state)
+      return {
+        before = before,
+        inner_no_go = inner_no_go,
+        middle = middle,
+        inner_with_go = inner_with_go,
+        after = get_state(),
+      }
+    ]]
+
+    -- Should prefer explicit local scopes instead of `o`
+    eq({
+      bo = { cms = '!! %s' },
+      wo = { ve = 'onemore' },
+      go = { cms = '-- %s', ve = 'all' },
+    }, out.inner_no_go)
+    eq(out.before, out.middle)
+
+    -- Should prefer explicit global scopes instead of `o`
+    eq({
+      bo = { cms = '!! %s' },
+      wo = { ve = 'onemore' },
+      go = { cms = '@@ %s', ve = 'block' },
+    }, out.inner_with_go)
+    eq(out.middle, out.after)
   end)
 
   pending('can forward command modifiers to user command', function()
@@ -805,17 +1475,19 @@ describe('vim._with', function()
     -- Should still restore initial context
     local out_buf = exec_lua [[
       local other_buf, cur_buf = setup_buffers()
+      vim.bo[other_buf].commentstring = '## %s'
 
-      local context = { buf = other_buf }
+      local context = { buf = other_buf, bo = { commentstring = '-- %s' } }
       local ok, err = pcall(vim._with, context, function() error('Oops buf', 0) end)
 
       return {
         ok,
         err,
         api.nvim_get_current_buf() == cur_buf,
+        vim.bo[other_buf].commentstring,
       }
     ]]
-    eq({ false, 'Oops buf', true }, out_buf)
+    eq({ false, 'Oops buf', true, '## %s' }, out_buf)
 
     local out_win = exec_lua [[
       local other_win, cur_win = setup_windows()
@@ -834,6 +1506,21 @@ describe('vim._with', function()
     eq({ false, 'Oops win', true, 25 }, out_win)
   end)
 
+  it('handles not supported option', function()
+    local out = exec_lua [[
+      -- Should still restore initial state
+      vim.bo.commentstring = '## %s'
+
+      local context = { o = { commentstring = '-- %s' }, bo = { winblend = 10 } }
+      local ok, err = pcall(vim._with, context, function() end)
+
+      return { ok = ok, err = err, cms = vim.bo.commentstring }
+    ]]
+    eq(false, out.ok)
+    matches('window.*option.*winblend', out.err)
+    eq('## %s', out.cms)
+  end)
+
   it('validates arguments', function()
     exec_lua [[
       _G.get_error = function(...)
@@ -848,7 +1535,7 @@ describe('vim._with', function()
     matches('context.*table', get_error("'a', function() end"))
     matches('f.*function', get_error('{}, 1'))
 
-    local validate_context = function(bad_context, expected_type)
+    local assert_context = function(bad_context, expected_type)
       local bad_field = vim.tbl_keys(bad_context)[1]
       matches(
         'context%.' .. bad_field .. '.*' .. expected_type,
@@ -856,19 +1543,23 @@ describe('vim._with', function()
       )
     end
 
-    validate_context({ buf = 'a' }, 'number')
-    validate_context({ emsg_silent = 1 }, 'boolean')
-    validate_context({ hide = 1 }, 'boolean')
-    validate_context({ keepalt = 1 }, 'boolean')
-    validate_context({ keepjumps = 1 }, 'boolean')
-    validate_context({ keepmarks = 1 }, 'boolean')
-    validate_context({ keeppatterns = 1 }, 'boolean')
-    validate_context({ lockmarks = 1 }, 'boolean')
-    validate_context({ noautocmd = 1 }, 'boolean')
-    validate_context({ sandbox = 1 }, 'boolean')
-    validate_context({ silent = 1 }, 'boolean')
-    validate_context({ unsilent = 1 }, 'boolean')
-    validate_context({ win = 'a' }, 'number')
+    assert_context({ bo = 1 }, 'table')
+    assert_context({ buf = 'a' }, 'number')
+    assert_context({ emsg_silent = 1 }, 'boolean')
+    assert_context({ go = 1 }, 'table')
+    assert_context({ hide = 1 }, 'boolean')
+    assert_context({ keepalt = 1 }, 'boolean')
+    assert_context({ keepjumps = 1 }, 'boolean')
+    assert_context({ keepmarks = 1 }, 'boolean')
+    assert_context({ keeppatterns = 1 }, 'boolean')
+    assert_context({ lockmarks = 1 }, 'boolean')
+    assert_context({ noautocmd = 1 }, 'boolean')
+    assert_context({ o = 1 }, 'table')
+    assert_context({ sandbox = 1 }, 'boolean')
+    assert_context({ silent = 1 }, 'boolean')
+    assert_context({ unsilent = 1 }, 'boolean')
+    assert_context({ win = 'a' }, 'number')
+    assert_context({ wo = 1 }, 'table')
 
     matches('Invalid buffer', get_error('{ buf = -1 }, function() end'))
     matches('Invalid window', get_error('{ win = -1 }, function() end'))
