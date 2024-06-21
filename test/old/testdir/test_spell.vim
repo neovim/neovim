@@ -5,6 +5,7 @@ source check.vim
 CheckFeature spell
 
 source screendump.vim
+source view_util.vim
 
 func TearDown()
   set nospell
@@ -298,6 +299,20 @@ func Test_compl_with_CTRL_X_CTRL_K_using_spell()
 
   bwipe!
   set spell& spelllang& dictionary& ignorecase&
+endfunc
+
+func Test_compl_with_CTRL_X_s()
+  new
+  set spell spelllang=en_us showmode
+  inoremap <buffer><F2> <Cmd>let g:msg = Screenline(&lines)<CR>
+
+  call feedkeys("STheatre\<C-X>s\<F2>\<C-Y>\<Esc>", 'tx')
+  call assert_equal(['Theater'], getline(1, '$'))
+  call assert_match('(^S^N^P)', g:msg)
+
+  bwipe!
+  set spell& spelllang& showmode&
+  unlet g:msg
 endfunc
 
 func Test_spellrepall()
