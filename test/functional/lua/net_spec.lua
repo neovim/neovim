@@ -7,15 +7,16 @@ local read_file = t.read_file
 local write_file = t.write_file
 
 local path = './downloaded_file'
+local anything_path = './anything'
 describe('vim.net', function()
   before_each(function()
     os.remove(path)
+    os.remove(anything_path)
   end)
 
   describe('request()', function()
     it('can download a file without a path', function()
-      local destination_path = './anything'
-      eq(nil, read_file(destination_path))
+      eq(nil, read_file(anything_path))
       exec_lua([[
         local done
         vim.net.request("https://httpbingo.org/anything", {
@@ -29,7 +30,7 @@ describe('vim.net', function()
         end)
         assert(done, 'file was not downloaded')
       ]])
-      local data = read_file(destination_path)
+      local data = read_file(anything_path)
       eq('https://httpbingo.org/anything', vim.json.decode(data).url)
     end)
 
@@ -110,12 +111,11 @@ describe('vim.net', function()
     end)
 
     it('can download a file without a path (sync)', function()
-      local destination_path = './anything'
-      eq(nil, read_file(destination_path))
+      eq(nil, read_file(anything_path))
       exec_lua([[
         vim.net.request("https://httpbingo.org/anything"):wait(10000)
       ]])
-      local data = read_file(destination_path)
+      local data = read_file(anything_path)
       eq('https://httpbingo.org/anything', vim.json.decode(data).url)
     end)
   end)
