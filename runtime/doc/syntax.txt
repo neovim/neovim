@@ -1542,7 +1542,7 @@ Check the javaid.vim file for a list of all the packages that are supported.
 
 Function names are not highlighted, as the way to find functions depends on
 how you write Java code.  The syntax file knows two possible ways to highlight
-functions:
+headers of function declarations:
 
 If you write function declarations that are consistently indented by either
 a tab, or a space . . . or eight space character(s), you may want to set >
@@ -1560,10 +1560,14 @@ However, if you follow the Java guidelines about how functions and classes are
 supposed to be named (with respect to upper- and lowercase) and there is any
 amount of indentation, you may want to set >
 	:let java_highlight_functions="style"
-If neither setting does work for you, but you would still want function
-declarations to be highlighted, create your own definitions by changing the
-definitions in java.vim or by creating your own java.vim that includes the
-original one and then adds the code to highlight functions.
+If neither setting does work for you, but you would still want headers of
+function declarations to be highlighted, modify the current syntax definitions
+or compose new ones.
+
+Higher-order function types can be hard to parse by eye, so uniformly toning
+down some of their components may be of value.  Provided that such type names
+conform to the Java naming guidelines, you may arrange it with >
+	:let java_highlight_generics=1
 
 In Java 1.1 the functions System.out.println() and System.err.println() should
 only be used for debugging.  Therefore it is possible to highlight debugging
