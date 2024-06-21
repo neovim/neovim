@@ -2,8 +2,6 @@ local M = {}
 
 ---@class vim.net.Request
 ---@field private _system vim.SystemObj
----@field wait fun(self: vim.net.Request, timeout?: integer): string?
----@field kill fun(self: vim.net.Request, signal: integer|string)
 local Request = {}
 
 --- @param system vim.SystemObj
