@@ -1144,7 +1144,6 @@ end
 --- @field buf? integer
 --- @field emsg_silent? boolean
 --- @field hide? boolean
---- @field horizontal? boolean
 --- @field keepalt? boolean
 --- @field keepjumps? boolean
 --- @field keepmarks? boolean
@@ -1159,6 +1158,15 @@ end
 
 --- Executes function `f` with the given context specification.
 ---
+--- Notes:
+--- - Context `{ buf = buf }` has no guarantees about current window when
+---   inside context.
+--- - Context `{ buf = buf, win = win }` is yet not allowed, but this seems
+---   to be an implementation detail.
+--- - There should be no way to revert currently set `context.sandbox = true`
+---   (like with nested `vim._with()` calls). Otherwise it kind of breaks the
+---   whole purpose of sandbox execution.
+---
 --- @param context vim.context.mods
 function vim._with(context, f)
   vim.validate('context', context, 'table')
@@ -1167,7 +1175,6 @@ function vim._with(context, f)
   vim.validate('context.buf', context.buf, 'number', true)
   vim.validate('context.emsg_silent', context.emsg_silent, 'boolean', true)
   vim.validate('context.hide', context.hide, 'boolean', true)
-  vim.validate('context.horizontal', context.horizontal, 'boolean', true)
   vim.validate('context.keepalt', context.keepalt, 'boolean', true)
   vim.validate('context.keepjumps', context.keepjumps, 'boolean', true)
   vim.validate('context.keepmarks', context.keepmarks, 'boolean', true)
@@ -1192,6 +1199,10 @@ function vim._with(context, f)
     if not vim.api.nvim_win_is_valid(context.win) then
       error('Invalid window id: ' .. context.win)
     end
+    -- TODO: Maybe allow it?
+    if context.buf and vim.api.nvim_win_get_buf(context.win) ~= context.buf then
+      error('Can not set both `buf` and `win` context.')
+    end
   end
 
   -- Store original options
@@ -1214,7 +1225,7 @@ function vim._with(context, f)
     end
   end
 
-  return unpack(retval)
+  return unpack(retval, 1, table.maxn(retval))
 end
 
 return vim
