@@ -1325,31 +1325,59 @@ describe('runtime:', function()
   end)
 
   it("loads ftdetect/*.{vim,lua} respecting 'rtp' order", function()
-    local ftdetect_folder = table.concat({ xconfig, 'nvim', 'ftdetect' }, pathsep)
-    local after_ftdetect_folder = table.concat({ xconfig, 'nvim', 'after', 'ftdetect' }, pathsep)
+    local rtp_folder = table.concat({ xconfig, 'nvim' }, pathsep)
+    local after_rtp_folder = table.concat({ rtp_folder, 'after' }, pathsep)
+    local ftdetect_folder = table.concat({ rtp_folder, 'ftdetect' }, pathsep)
+    local after_ftdetect_folder = table.concat({ after_rtp_folder, 'ftdetect' }, pathsep)
     mkdir_p(ftdetect_folder)
     mkdir_p(after_ftdetect_folder)
     finally(function()
       rmdir(ftdetect_folder)
       rmdir(after_ftdetect_folder)
     end)
+    write_file(table.concat({ rtp_folder, 'scripts.vim' }, pathsep), [[let g:aseq ..= 'S']])
+    write_file(table.concat({ after_rtp_folder, 'scripts.vim' }, pathsep), [[let g:aseq ..= 's']])
     -- A .lua file is loaded after a .vim file if they only differ in extension.
     -- All files in after/ftdetect/ are loaded after all files in ftdetect/.
-    write_file(table.concat({ ftdetect_folder, 'new-ft.vim' }, pathsep), [[let g:seq ..= 'A']])
+    write_file(
+      table.concat({ ftdetect_folder, 'new-ft.vim' }, pathsep),
+      [[
+        let g:seq ..= 'A'
+        autocmd BufRead,BufNewFile FTDETECT let g:aseq ..= 'A'
+      ]]
+    )
     write_file(
       table.concat({ ftdetect_folder, 'new-ft.lua' }, pathsep),
-      [[vim.g.seq = vim.g.seq .. 'B']]
+      [[
+        vim.g.seq = vim.g.seq .. 'B'
+        vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
+          pattern = 'FTDETECT',
+          command = "let g:aseq ..= 'B'",
+        })
+      ]]
     )
     write_file(
       table.concat({ after_ftdetect_folder, 'new-ft.vim' }, pathsep),
-      [[let g:seq ..= 'a']]
+      [[
+        let g:seq ..= 'a'
+        autocmd BufRead,BufNewFile FTDETECT let g:aseq ..= 'a'
+      ]]
     )
     write_file(
       table.concat({ after_ftdetect_folder, 'new-ft.lua' }, pathsep),
-      [[vim.g.seq = vim.g.seq .. 'b']]
+      [[
+        vim.g.seq = vim.g.seq .. 'b'
+        vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
+          pattern = 'FTDETECT',
+          command = "let g:aseq ..= 'b'",
+        })
+      ]]
     )
     clear { args_rm = { '-u' }, args = { '--cmd', 'let g:seq = ""' }, env = xenv }
     eq('ABab', eval('g:seq'))
+    command('let g:aseq = ""')
+    command('edit FTDETECT')
+    eq('SsABab', eval('g:aseq'))
   end)
 end)
 
