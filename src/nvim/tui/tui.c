@@ -2634,12 +2634,17 @@ static void flush_buf(TUIData *tui, FlushBufFinish finish)
       fwrite(bufs[i].base, bufs[i].len, 1, tui->screenshot);
     }
   } else {
-    int ret
-      = uv_write(&req, (uv_stream_t *)&tui->output_handle, bufs, ARRAY_SIZE(bufs), NULL);
-    if (ret) {
-      ELOG("uv_write failed: %s", uv_strerror(ret));
+    unsigned nbufs = ARRAY_SIZE(bufs);
+    while (nbufs > 0 && bufs[nbufs - 1].len == 0) {
+      nbufs--;  // Trim trailing zero-length buffers. https://github.com/libuv/libuv/issues/5182
     }
-    uv_run(&tui->write_loop, UV_RUN_DEFAULT);
+    if (nbufs > 0) {
+      int ret = uv_write(&req, (uv_stream_t *)&tui->output_handle, bufs, nbufs, NULL);
+      if (ret) {
+        ELOG("uv_write failed: %s", uv_strerror(ret));
+      }
+      uv_run(&tui->write_loop, UV_RUN_DEFAULT);
+    }
   }
   tui->buf_to_flush = NULL;
   tui->bufpos = 0;
