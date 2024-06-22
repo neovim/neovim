@@ -39,15 +39,6 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
   end,
 })
 
--- These *must* be sourced after the autocommand above is created
-if not vim.g.did_load_ftdetect then
-  vim.cmd([[
-  augroup filetypedetect
-  runtime! ftdetect/*.{vim,lua}
-  augroup END
-  ]])
-end
-
 -- Set up the autocmd for user scripts.vim
 vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
   group = 'filetypedetect',
@@ -62,3 +53,10 @@ vim.api.nvim_create_autocmd('StdinReadPost', {
 if not vim.g.ft_ignore_pat then
   vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
 end
+
+-- These *must* be sourced after the autocommands above are created
+vim.cmd([[
+  augroup filetypedetect
+  runtime! ftdetect/*.{vim,lua}
+  augroup END
+]])
