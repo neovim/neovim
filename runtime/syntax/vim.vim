@@ -266,19 +266,19 @@ syn match	vimFuncSID	contained	"\<[sg]:"
 syn keyword	vimFuncKey	contained	fu[nction]
 syn keyword	vimDefKey	contained	def
 
-syn region	vimFuncParams	contained	matchgroup=Delimiter start="(" skip=+\n\s*\\\|\n\s*"\\ + end=")" skipwhite skipnl nextgroup=vimFuncBody,vimFuncComment,vimEndfunction,vimFuncMod contains=vimFuncParam,@vimContinue
-syn region	vimDefParams	contained	matchgroup=Delimiter start="("		   end=")" skipwhite skipnl nextgroup=vimDefBody,vimDefComment,vimEnddef,vimReturnType	 contains=vimDefParam,vim9Comment
+syn region	vimFuncParams	contained	matchgroup=Delimiter start="(" skip=+\n\s*\\\|\n\s*"\\ + end=")" skipwhite skipnl nextgroup=vimFuncBody,vimFuncComment,vimEndfunction,vimFuncMod,vim9CommentError	contains=vimFuncParam,@vimContinue
+syn region	vimDefParams	contained	matchgroup=Delimiter start="("		   end=")" skipwhite skipnl nextgroup=vimDefBody,vimDefComment,vimEnddef,vimReturnType,vimCommentError	contains=vimDefParam,vim9Comment
 syn match	vimFuncParam	contained	"\<\h\w*\>\|\.\.\."	skipwhite nextgroup=vimFuncParamEquals
 syn match	vimDefParam	contained	"\<\h\w*\>"		skipwhite nextgroup=vimParamType,vimFuncParamEquals
 
 syn match	vimFuncParamEquals contained	"="			skipwhite        nextgroup=@vimExprList
-syn match	vimFuncMod	 contained	"\<\%(abort\|closure\|dict\|range\)\>"	skipwhite skipnl nextgroup=vimFuncBody,vimFuncComment,vimEndfunction,vimFuncMod
+syn match	vimFuncMod	 contained	"\<\%(abort\|closure\|dict\|range\)\>"	skipwhite skipnl nextgroup=vimFuncBody,vimFuncComment,vimEndfunction,vimFuncMod,vim9CommentError
 
-syn region	vimFuncBody	contained	start="^"	matchgroup=vimCommand end="\<endfu\%[nction]\>"	contains=@vimFuncBodyList
-syn region	vimDefBody	contained	start="^"	matchgroup=vimCommand end="\<enddef\>"	contains=@vimDefBodyList
+syn region	vimFuncBody	contained	start="^.\="	matchgroup=vimCommand end="\<endfu\%[nction]\>"	contains=@vimFuncBodyList skipwhite nextgroup=vimCmdSep,vimComment,vim9CommentError
+syn region	vimDefBody	contained	start="^.\="	matchgroup=vimCommand end="\<enddef\>"	contains=@vimDefBodyList  skipwhite nextgroup=vimCmdSep,vim9Comment,vimCommentError
 
-syn match	vimEndfunction	"\<endf\%[unction]\>"
-syn match	vimEnddef	"\<enddef\>"
+syn match	vimEndfunction	"\<endf\%[unction]\>" skipwhite nextgroup=vimCmdSep,vimComment,vim9CommentError
+syn match	vimEnddef	"\<enddef\>"	    skipwhite nextgroup=vimCmdSep,vim9Comment,vimCommentError
 
 if exists("g:vimsyn_folding") && g:vimsyn_folding =~# 'f'
  syn region	vimFuncFold	start="^\s*:\=\s*fu\%[nction]\>!\=\s*\%(<[sS][iI][dD]>\|[sg]:\)\=\%(\i\|[#.]\|{.\{-1,}}\)\+\s*("	end="^\s*:\=\s*endf\%[unction]\>" contains=vimFunction fold keepend extend transparent
@@ -292,7 +292,7 @@ syn match	vimFuncBlank contained	"\s\+"
 " Types: {{{2
 " =====
 " vimTypes : new for vim9
-syn region	vimReturnType	contained	start=":\s" end="$" matchgroup=vim9Comment end="\ze#" skipwhite skipnl nextgroup=vimDefBody,vimDefComment,vimEnddef contains=vimTypeSep transparent
+syn region	vimReturnType	contained	start=":\s" end="$" matchgroup=vim9Comment end="\ze[#"]" skipwhite skipnl nextgroup=vimDefBody,vimDefComment,vimEnddef,vimCommentError contains=vimTypeSep transparent
 syn match	vimParamType	contained	":\s\+\a"			skipwhite skipnl nextgroup=vimFuncParamEquals   	        contains=vimTypeSep,@vimType
 
 syn match	vimTypeSep	contained	":\s\@=" skipwhite nextgroup=@vimType
@@ -397,6 +397,9 @@ else
 
   syn cluster vimComment contains=vimComment
 endif
+
+syn match	vim9CommentError	contained	"#.*"
+syn match	vimCommentError	contained	+".*+
 
 " Environment Variables: {{{2
 " =====================
@@ -868,12 +871,12 @@ endif
 " Allows users to specify the type of embedded script highlighting
 " they want:  (perl/python/ruby/tcl support)
 "   g:vimsyn_embed == 0   : don't embed any scripts
-"   g:vimsyn_embed =~# 'l' : embed lua
-"   g:vimsyn_embed =~# 'm' : embed mzscheme
-"   g:vimsyn_embed =~# 'p' : embed perl
-"   g:vimsyn_embed =~# 'P' : embed python
-"   g:vimsyn_embed =~# 'r' : embed ruby
-"   g:vimsyn_embed =~# 't' : embed tcl
+"   g:vimsyn_embed =~# 'l' : embed Lua
+"   g:vimsyn_embed =~# 'm' : embed MzScheme
+"   g:vimsyn_embed =~# 'p' : embed Perl
+"   g:vimsyn_embed =~# 'P' : embed Python
+"   g:vimsyn_embed =~# 'r' : embed Ruby
+"   g:vimsyn_embed =~# 't' : embed Tcl
 if !exists("g:vimsyn_embed")
  let g:vimsyn_embed = 'l'
 endif
@@ -1089,7 +1092,9 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimCmplxRepeat	SpecialChar
  hi def link vimCommand	Statement
  hi def link vimComment	Comment
+ hi def link vimCommentError	vimError
  hi def link vim9Comment	Comment
+ hi def link vim9CommentError	vimError
  hi def link vimCommentString	vimString
  hi def link vimCommentTitle	PreProc
  hi def link vim9CommentTitle	PreProc
@@ -1098,7 +1103,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimContinue	Special
  hi def link vimContinueComment	vimComment
  hi def link vimCtrlChar	SpecialChar
- hi def link vimDefComment	vimComment
+ hi def link vimDefComment	vim9Comment
  hi def link vimDefKey	vimCommand
  hi def link vimDefParam vimVar
  hi def link vimEcho	vimCommand
