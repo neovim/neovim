@@ -4,7 +4,6 @@ local n = require('test.functional.testnvim')()
 local eq = t.eq
 local exec_lua = n.exec_lua
 local read_file = t.read_file
-local write_file = t.write_file
 
 local path = './downloaded_file'
 local anything_path = './anything'
