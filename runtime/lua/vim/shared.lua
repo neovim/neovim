@@ -1144,6 +1144,7 @@ end
 --- @field bo? table<string, any>
 --- @field buf? integer
 --- @field emsg_silent? boolean
+--- @field env? table<string, any>
 --- @field go? table<string, any>
 --- @field hide? boolean
 --- @field keepalt? boolean
@@ -1162,18 +1163,19 @@ end
 --- @nodoc
 --- @class vim.context.state
 --- @field bo? table<string, any>
+--- @field env? table<string, any>
 --- @field go? table<string, any>
 --- @field wo? table<string, any>
 
 local scope_map = { buf = 'bo', global = 'go', win = 'wo' }
-local scope_order = { 'o', 'wo', 'bo', 'go' }
-local state_restore_order = { 'bo', 'wo', 'go' }
+local scope_order = { 'o', 'wo', 'bo', 'go', 'env' }
+local state_restore_order = { 'bo', 'wo', 'go', 'env' }
 
 --- Gets data about current state, enough to properly restore specified options/env/etc.
 --- @param context vim.context.mods
 --- @return vim.context.state
 local get_context_state = function(context)
-  local res = { bo = {}, go = {}, wo = {} }
+  local res = { bo = {}, env = {}, go = {}, wo = {} }
 
   -- Use specific order from possibly most to least intrusive
   for _, scope in ipairs(scope_order) do
@@ -1187,7 +1189,9 @@ local get_context_state = function(context)
       -- Always track global option value to properly restore later.
       -- This matters for at least `o` and `wo` (which might set either/both
       -- local and global option values).
-      res.go[name] = res.go[name] or vim.go[name]
+      if sc ~= 'env' then
+        res.go[name] = res.go[name] or vim.go[name]
+      end
     end
   end
 
@@ -1221,6 +1225,7 @@ function vim._with(context, f)
   vim.validate('context.bo', context.bo, 'table', true)
   vim.validate('context.buf', context.buf, 'number', true)
   vim.validate('context.emsg_silent', context.emsg_silent, 'boolean', true)
+  vim.validate('context.env', context.env, 'table', true)
   vim.validate('context.go', context.go, 'table', true)
   vim.validate('context.hide', context.hide, 'boolean', true)
   vim.validate('context.keepalt', context.keepalt, 'boolean', true)

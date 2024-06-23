@@ -338,6 +338,64 @@ describe('vim._with', function()
     end)
   end)
 
+  describe('`env` context', function()
+    before_each(function()
+      exec_lua [[
+        vim.fn.setenv('aaa', 'hello')
+        _G.get_state = function()
+          return { aaa = vim.fn.getenv('aaa'), bbb = vim.fn.getenv('bbb') }
+        end
+      ]]
+    end)
+
+    it('works', function()
+      local out = exec_lua [[
+        local context = { env = { aaa = 'inside', bbb = 'wow' } }
+        local before = get_state()
+        local inner = vim._with(context, get_state)
+        return { before = before, inner = inner, after = get_state() }
+      ]]
+
+      eq({ aaa = 'inside', bbb = 'wow' }, out.inner)
+      eq(out.before, out.after)
+    end)
+
+    it('restores only variables from context', function()
+      local out = exec_lua [[
+        local context = { env = { bbb = 'wow' } }
+        local before = get_state()
+        local inner = vim._with(context, function()
+          vim.env.aaa = 'inside'
+          return get_state()
+        end)
+        return { before = before, inner = inner, after = get_state() }
+      ]]
+
+      eq({ aaa = 'inside', bbb = 'wow' }, out.inner)
+      eq({ aaa = 'inside', bbb = vim.NIL }, out.after)
+    end)
+
+    it('can be nested', function()
+      local out = exec_lua [[
+        local before, before_inner, after_inner = get_state(), nil, nil
+        vim._with({ env = { aaa = 'inside', bbb = 'wow' } }, function()
+          before_inner = get_state()
+          inner = vim._with({ env = { aaa = 'more inside' } }, get_state)
+          after_inner = get_state()
+        end)
+        return {
+          before = before, before_inner = before_inner,
+          inner = inner,
+          after_inner = after_inner, after = get_state(),
+        }
+      ]]
+      eq('more inside', out.inner.aaa)
+      eq('wow', out.inner.bbb)
+      eq(out.before_inner, out.after_inner)
+      eq(out.before, out.after)
+    end)
+  end)
+
   describe('`go` context', function()
     before_each(function()
       exec_lua [[
@@ -1546,6 +1604,7 @@ describe('vim._with', function()
     assert_context({ bo = 1 }, 'table')
     assert_context({ buf = 'a' }, 'number')
     assert_context({ emsg_silent = 1 }, 'boolean')
+    assert_context({ env = 1 }, 'table')
     assert_context({ go = 1 }, 'table')
     assert_context({ hide = 1 }, 'boolean')
     assert_context({ keepalt = 1 }, 'boolean')
