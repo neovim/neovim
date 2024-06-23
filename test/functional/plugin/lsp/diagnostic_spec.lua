@@ -50,6 +50,16 @@ describe('vim.lsp.diagnostic', function()
         }
       end
 
+      make_related_information = function(msg, uri, x1, y1, x2, y2)
+        return {
+          location = {
+            uri = uri,
+            range = make_range(x1, y1, x2, y2),
+          },
+          message = msg,
+        }
+      end
+
       function get_extmarks(bufnr, client_id)
         local namespace = vim.lsp.diagnostic.get_namespace(client_id)
         local ns = vim.diagnostic.get_namespace(namespace)
@@ -108,6 +118,10 @@ describe('vim.lsp.diagnostic', function()
         diagnostics[1].code = 42
         diagnostics[1].data = "Hello world"
 
+        diagnostics[1].relatedInformation = {
+          make_related_information("Related info", fake_uri, 1, 2, 3, 4),
+        }
+
         vim.lsp.diagnostic.on_publish_diagnostics(nil, {
           uri = fake_uri,
           diagnostics = diagnostics,
@@ -118,8 +132,36 @@ describe('vim.lsp.diagnostic', function()
           vim.lsp.diagnostic.get_line_diagnostics(diagnostic_bufnr, 1)[1],
         }
       ]]
-      eq({ code = 42, data = 'Hello world' }, result[1].user_data.lsp)
+      eq({
+        code = 42,
+        data = 'Hello world',
+        message = 'Error 1',
+        range = {
+          start = {
+            line = 1,
+            character = 1,
+          },
+          ['end'] = {
+            line = 1,
+            character = 5,
+          },
+        },
+        relatedInformation = {
+          {
+            location = {
+              uri = fake_uri,
+              range = {
+                start = { line = 1, character = 2 },
+                ['end'] = { line = 3, character = 4 },
+              },
+            },
+            message = 'Related info',
+          },
+        },
+        severity = 1,
+      }, result[1].user_data.lsp)
       eq(42, result[1].code)
+      eq('Related info', result[1].related_information[1].message)
       eq(42, result[2].code)
       eq('Hello world', result[2].data)
     end)
@@ -321,11 +363,15 @@ describe('vim.lsp.diagnostic', function()
 
     it('adds diagnostics to vim.diagnostics', function()
       local diags = exec_lua([[
+        local error = make_error('Pull Diagnostic', 4, 4, 4, 4)
+        error.relatedInformation = {
+          make_related_information('Related info', fake_uri, 4, 4, 4, 4),
+        }
         vim.lsp.diagnostic.on_diagnostic(nil,
           {
             kind = 'full',
             items = {
-              make_error('Pull Diagnostic', 4, 4, 4, 4),
+              error
             }
           },
           {
@@ -342,6 +388,8 @@ describe('vim.lsp.diagnostic', function()
       ]])
       eq(1, #diags)
       eq('Pull Diagnostic', diags[1].message)
+      eq(1, #diags[1].related_information)
+      eq('Related info', diags[1].related_information[1].message)
     end)
 
     it('allows configuring the virtual text via vim.lsp.with', function()

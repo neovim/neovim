@@ -97,6 +97,38 @@ local function tags_lsp_to_vim(diagnostic, client_id)
   return tags
 end
 
+---@param related_informations lsp.DiagnosticRelatedInformation[]
+---@param offset_encoding string
+---@return vim.diagnostic.RelatedInformation[]
+local function related_information_lsp_to_vim(related_informations, offset_encoding)
+  return vim
+    .iter(related_informations or {})
+    :map(
+      --- @param related_information lsp.DiagnosticRelatedInformation
+      --- @return vim.diagnostic.RelatedInformation?
+      function(related_information)
+        local fname = vim.uri_to_fname(related_information.location.uri)
+        local bufnr = vim.fn.bufadd(fname)
+        if not bufnr then
+          return nil
+        end
+        local buf_lines = get_buf_lines(bufnr)
+        local start = related_information.location.range.start
+        local _end = related_information.location.range['end']
+        --- @type vim.diagnostic.RelatedInformation
+        return {
+          bufnr = bufnr,
+          lnum = start.line,
+          col = line_byte_from_position(buf_lines, start.line, start.character, offset_encoding),
+          end_lnum = _end.line,
+          end_col = line_byte_from_position(buf_lines, _end.line, _end.character, offset_encoding),
+          message = related_information.message,
+        }
+      end
+    )
+    :totable()
+end
+
 ---@param diagnostics lsp.Diagnostic[]
 ---@param bufnr integer
 ---@param client_id integer
@@ -118,17 +150,15 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       end_col = line_byte_from_position(buf_lines, _end.line, _end.character, offset_encoding),
       severity = severity_lsp_to_vim(diagnostic.severity),
       message = diagnostic.message,
+      related_information = related_information_lsp_to_vim(
+        diagnostic.relatedInformation,
+        offset_encoding
+      ),
       source = diagnostic.source,
       code = diagnostic.code,
       _tags = tags_lsp_to_vim(diagnostic, client_id),
       user_data = {
-        lsp = {
-          -- usage of user_data.lsp.code is deprecated in favor of the top-level code field
-          code = diagnostic.code,
-          codeDescription = diagnostic.codeDescription,
-          relatedInformation = diagnostic.relatedInformation,
-          data = diagnostic.data,
-        },
+        lsp = diagnostic,
       },
     }
   end, diagnostics)
