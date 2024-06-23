@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Jun 19
+" Last Change:		2024 Jun 22
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -139,6 +139,12 @@ else
   let [s:ff.Engine, s:ff.UpperCase, s:ff.LowerCase] = repeat([s:ff.RightConstant], 3)
 endif
 
+if exists("java_highlight_signature")
+  let [s:ff.PeekTo, s:ff.PeekFrom, s:ff.GroupArgs] = repeat([s:ff.LeftConstant], 3)
+else
+  let [s:ff.PeekTo, s:ff.PeekFrom, s:ff.GroupArgs] = repeat([s:ff.RightConstant], 3)
+endif
+
 " Java modules (since Java 9, for "module-info.java" file).
 if s:module_info_cur_buf
   syn keyword javaModuleStorageClass	module transitive
@@ -228,9 +234,17 @@ if exists("java_highlight_all")  || exists("java_highlight_java")  || exists("ja
   hi def link javaE_		     javaExceptions
   hi def link javaC_		     javaConstant
 
-  syn keyword javaLangObject clone equals finalize getClass hashCode
-  syn keyword javaLangObject notify notifyAll toString wait
-  hi def link javaLangObject		     javaConstant
+  syn keyword javaLangObject getClass notify notifyAll wait
+
+  " Lower the syntax priority of overridable java.lang.Object method
+  " names for zero-width matching (define g:java_highlight_signature
+  " and see their base declarations for java.lang.Object):
+  syn match javaLangObject "\<clone\>"
+  syn match javaLangObject "\<equals\>"
+  syn match javaLangObject "\<finalize\>"
+  syn match javaLangObject "\<hashCode\>"
+  syn match javaLangObject "\<toString\>"
+  hi def link javaLangObject javaConstant
 endif
 
 if filereadable(expand("<sfile>:p:h") . "/javaid.vim")
@@ -364,30 +378,49 @@ syn match   javaSpecial "\\u\x\x\x\x"
 if exists("java_highlight_functions")
   syn cluster javaFuncParams contains=javaAnnotation,@javaClasses,javaGenerics,javaType,javaVarArg,javaComment,javaLineComment
 
+  if exists("java_highlight_signature")
+    syn keyword javaParamModifier contained final
+    syn cluster javaFuncParams add=javaParamModifier
+    hi def link javaParamModifier javaConceptKind
+    hi def link javaFuncDefStart javaFuncDef
+  else
+    syn cluster javaFuncParams add=javaScopeDecl,javaConceptKind,javaStorageClass,javaExternal
+  endif
+
   if java_highlight_functions =~# '^indent[1-8]\=$'
     let s:last = java_highlight_functions[-1 :]
     let s:indent = s:last != 't' ? repeat("\x20", s:last) : "\t"
-    syn cluster javaFuncParams add=javaScopeDecl,javaConceptKind,javaStorageClass,javaExternal
     " Try to not match other type members, initialiser blocks, enum
     " constants (JLS-17, §8.9.1), and constructors (JLS-17, §8.1.7):
     " at any _conventional_ indentation, skip over all fields with
     " "[^=]*", all records with "\<record\s", and let the "*Skip*"
     " definitions take care of constructor declarations and enum
-    " constants (with no support for @Foo(value = "bar")).
-    exec 'syn region javaFuncDef start=+^' . s:indent . '\%(<[^>]\+>\+\s\+\|\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)\+\)\=\%(\<\K\k*\>\.\)*\K\k*\>[^=]*\%(\<record\)\@' . s:ff.Peek('6', '') . '<!\s\K\k*\s*(+ end=+)+ contains=@javaFuncParams'
+    " constants (with no support for @Foo(value = "bar")).  Also,
+    " reject inlined declarations with "[^{]" for signature.
+    exec 'syn region javaFuncDef ' . s:ff.GroupArgs('transparent matchgroup=javaFuncDefStart', '') . ' start=/' . s:ff.PeekTo('\%(', '') . '^' . s:indent . '\%(<[^>]\+>\+\s\+\|\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)\+\)\=\%(\<\K\k*\>\.\)*\K\k*\>[^={]*\%(\<record\)\@' . s:ff.Peek('6', '') . '<!\s' . s:ff.PeekFrom('\)\@' . s:ff.Peek('80', '') . '<=', '') . '\K\k*\s*(/ end=/)/ contains=@javaFuncParams'
     " As long as package-private constructors cannot be matched with
     " javaFuncDef, do not look with javaConstructorSkipDeclarator for
     " them.
-    exec 'syn match javaConstructorSkipDeclarator transparent +^' . s:indent . '\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*p\%(ublic\|rotected\|rivate\)\s\+\%(<[^>]\+>\+\s\+\)\=\K\k*\s*\ze(+ contains=javaAnnotation,javaScopeDecl'
-    exec 'syn match javaEnumSkipArgumentativeConstant transparent +^' . s:indent . '\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\K\k*\s*\ze(+ contains=javaAnnotation'
+    exec 'syn match javaConstructorSkipDeclarator transparent /^' . s:indent . '\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*p\%(ublic\|rotected\|rivate\)\s\+\%(<[^>]\+>\+\s\+\)\=\K\k*\s*\ze(/ contains=javaAnnotation,javaScopeDecl,javaClassDecl,javaTypedef,javaGenerics'
+    " With a zero-width span for signature applicable on demand to
+    " javaFuncDef, make related adjustments:
+    " (1) Claim all enum constants of a line as a unit.
+    exec 'syn match javaEnumSkipConstant contained transparent /^' . s:indent . '\%(\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\K\k*\s*\%((.*)\)\=\s*[,;({]\s*\)\+/ contains=@javaEnumConstants'
+    " (2) Define a syntax group for top level enumerations and tell
+    " apart their constants from method declarations.
+    exec 'syn region javaTopEnumDeclaration transparent start=/\%(^\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\%(p\%(ublic\|rotected\|rivate\)\s\+\)\=\%(strictfp\s\+\)\=\<enum\_s\+\)\@' . s:ff.Peek('80', '') . '<=\K\k*\%(\_s\+implements\_s.\+\)\=\_s*{/ end=/}/ contains=@javaTop,javaEnumSkipConstant'
+    " (3) Define a base variant of javaParenT without using @javaTop
+    " in order to not include javaFuncDef.
+    syn region javaParenE transparent matchgroup=javaParen start="(" end=")" contains=@javaEnumConstants,javaInParen
+    syn region javaParenE transparent matchgroup=javaParen start="\[" end="\]" contains=@javaEnumConstants
+    syn cluster javaEnumConstants contains=TOP,javaTopEnumDeclaration,javaFuncDef,javaParenT
     unlet s:indent s:last
   else
     " This is the "style" variant (:help ft-java-syntax).
-    syn cluster javaFuncParams add=javaScopeDecl,javaConceptKind,javaStorageClass,javaExternal
 
     " Match arbitrarily indented camelCasedName method declarations.
     " Match: [@ɐ] [abstract] [<α, β>] Τʬ[<γ>][[][]] μʭʭ(/* ... */);
-    exec 'syn region javaFuncDef start=/' . s:ff.Engine('\%#=2', '') . '^\s\+\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\%(p\%(ublic\|rotected\|rivate\)\s\+\)\=\%(\%(abstract\|default\)\s\+\|\%(\%(final\|\%(native\|strictfp\)\|s\%(tatic\|ynchronized\)\)\s\+\)*\)\=\%(<.*[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\s\+\)\=\%(void\|\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\%(<[^(){}]*[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\)\=\)\%(\[\]\)*\)\s\+\<' . s:ff.LowerCase('[$_[:lower:]]', '[^A-Z0-9]') . '\k*\>\s*(/ end=/)/ skip=/\/\*.\{-}\*\/\|\/\/.*$/ contains=@javaFuncParams'
+    exec 'syn region javaFuncDef ' . s:ff.GroupArgs('transparent matchgroup=javaFuncDefStart', '') . ' start=/' . s:ff.Engine('\%#=2', '') . s:ff.PeekTo('\%(', '') . '^\s\+\%(\%(@\%(\K\k*\.\)*\K\k*\>\)\s\+\)*\%(p\%(ublic\|rotected\|rivate\)\s\+\)\=\%(\%(abstract\|default\)\s\+\|\%(\%(final\|\%(native\|strictfp\)\|s\%(tatic\|ynchronized\)\)\s\+\)*\)\=\%(<.*[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\s\+\)\=\%(void\|\%(b\%(oolean\|yte\)\|char\|short\|int\|long\|float\|double\|\%(\<\K\k*\>\.\)*\<' . s:ff.UpperCase('[$_[:upper:]]', '[^a-z0-9]') . '\k*\>\%(<[^(){}]*[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\)\=\)\%(\[\]\)*\)\s\+' . s:ff.PeekFrom('\)\@' . s:ff.Peek('80', '') . '<=', '') . '\<' . s:ff.LowerCase('[$_[:lower:]]', '[^A-Z0-9]') . '\k*\>\s*(/ end=/)/ skip=/\/\*.\{-}\*\/\|\/\/.*$/ contains=@javaFuncParams'
   endif
 endif
 
@@ -466,19 +499,29 @@ hi def link javaParenError	javaError
 
 " Lambda expressions (JLS-17, §15.27).
 if exists("java_highlight_functions")
+  if exists("java_highlight_signature")
+    let s:ff.LambdaDef = s:ff.LeftConstant
+  else
+    let s:ff.LambdaDef = s:ff.RightConstant
+  endif
+
   " Make ()-matching definitions after the parenthesis error catcher.
+  "
+  " Note that here and elsewhere a single-line token is used for \z,
+  " with other tokens repeated as necessary, to overcome the lack of
+  " support for multi-line matching with \z.
   "
   " Match: ([@A [@B ...] final] var a[, var b, ...]) ->
   "	| ([@A [@B ...] final] T[<α>][[][]] a[, T b, ...]) ->
   " There is no recognition of expressions interspersed with comments
   " or of expressions whose parameterised parameter types are written
   " across multiple lines.
-  exec 'syn match javaLambdaDef "\k\@' . s:ff.Peek('4', '') . '<!([[:space:]\n]*\%(\%(@\%(\K\k*\.\)*\K\k*\>\%((\_.\{-1,})\)\{-,1}[[:space:]\n]\+\)*\%(final[[:space:]\n]\+\)\=\%(\<\K\k*\>\.\)*\<\K\k*\>\%(<[^(){}]*[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\)\=\%(\%(\%(\[\]\)\+\|\.\.\.\)\)\=[[:space:]\n]\+\<\K\k*\>\%(\[\]\)*\%(,[[:space:]\n]*\)\=\)\+)[[:space:]\n]*->" contains=javaAnnotation,javaParamModifier,javaLambdaVarType,javaType,@javaClasses,javaGenerics,javaVarArg'
+  exec 'syn ' . s:ff.LambdaDef('region javaLambdaDef transparent matchgroup=javaLambdaDefStart start=/', 'match javaLambdaDef "') . '\k\@' . s:ff.Peek('4', '') . '<!(' . s:ff.LambdaDef('\%(', '') . '[[:space:]\n]*\%(\%(@\%(\K\k*\.\)*\K\k*\>\%((\_.\{-1,})\)\{-,1}[[:space:]\n]\+\)*\%(final[[:space:]\n]\+\)\=\%(\<\K\k*\>\.\)*\<\K\k*\>\%(<[^(){}]*[[:space:]-]\@' . s:ff.Peek('1', '') . '<!>\)\=\%(\%(\%(\[\]\)\+\|\.\.\.\)\)\=[[:space:]\n]\+\<\K\k*\>\%(\[\]\)*\%(,[[:space:]\n]*\)\=\)\+)[[:space:]\n]*' . s:ff.LambdaDef('\z(->\)\)\@=/ end=/)[[:space:]\n]*\z1/', '->"') . ' contains=javaAnnotation,javaParamModifier,javaLambdaVarType,javaType,@javaClasses,javaGenerics,javaVarArg'
   " Match: () ->
   "	| (a[, b, ...]) ->
-  exec 'syn match javaLambdaDef "\k\@' . s:ff.Peek('4', '') . '<!([[:space:]\n]*\%(\<\K\k*\>\%(,[[:space:]\n]*\)\=\)*)[[:space:]\n]*->"'
+  exec 'syn ' . s:ff.LambdaDef('region javaLambdaDef transparent matchgroup=javaLambdaDefStart start=/', 'match javaLambdaDef "') . '\k\@' . s:ff.Peek('4', '') . '<!(' . s:ff.LambdaDef('\%(', '') . '[[:space:]\n]*\%(\<\K\k*\>\%(,[[:space:]\n]*\)\=\)*)[[:space:]\n]*' . s:ff.LambdaDef('\z(->\)\)\@=/ end=/)[[:space:]\n]*\z1/', '->"')
   " Match: a ->
-  exec 'syn match javaLambdaDef "\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<![[:space:]\n]*->"'
+  exec 'syn ' . s:ff.LambdaDef('region javaLambdaDef transparent start=/', 'match javaLambdaDef "') . '\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!' . s:ff.LambdaDef('\%([[:space:]\n]*\z(->\)\)\@=/ matchgroup=javaLambdaDefStart end=/\z1/', '[[:space:]\n]*->"')
 
   syn keyword javaParamModifier contained final
   hi def link javaParamModifier javaConceptKind
@@ -488,7 +531,7 @@ endif
 
 " The @javaTop cluster comprises non-contained Java syntax groups.
 " Note that the syntax file "aidl.vim" relies on its availability.
-syn cluster javaTop contains=TOP
+syn cluster javaTop contains=TOP,javaTopEnumDeclaration
 
 if !exists("java_minlines")
   let java_minlines = 10
@@ -504,7 +547,8 @@ exec "syn sync ccomment javaComment minlines=" . java_minlines
 
 " The default highlighting.
 hi def link javaLambdaDef		Function
-hi def link javaFuncDef		Function
+hi def link javaLambdaDefStart		Function
+hi def link javaFuncDef			Function
 hi def link javaVarArg			Function
 hi def link javaBranch			Conditional
 hi def link javaUserLabelRef		javaUserLabel
