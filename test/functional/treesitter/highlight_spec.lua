@@ -1008,39 +1008,48 @@ describe('treesitter highlighting (markdown)', function()
   before_each(function()
     screen = Screen.new(40, 6)
     screen:attach()
-    screen:set_default_attr_ids {
-      [1] = { foreground = Screen.colors.Blue1 },
-      [2] = { bold = true, foreground = Screen.colors.Blue1 },
-      [3] = { bold = true, foreground = Screen.colors.Brown },
-      [4] = { foreground = Screen.colors.Cyan4 },
-      [5] = { foreground = Screen.colors.Magenta1 },
-    }
+    exec_lua([[
+      vim.bo.filetype = 'markdown'
+      vim.treesitter.start()
+    ]])
   end)
 
   it('supports hyperlinks', function()
     local url = 'https://example.com'
     insert(string.format('[This link text](%s) is a hyperlink.', url))
-    exec_lua([[
-      vim.bo.filetype = 'markdown'
-      vim.treesitter.start()
-    ]])
-
-    screen:expect {
+    screen:add_extra_attr_ids({
+      [100] = { foreground = Screen.colors.DarkCyan, url = 'https://example.com' },
+    })
+    screen:expect({
       grid = [[
-      {4:[}{6:This link text}{4:](}{7:https://example.com}{4:)} is|
-       a hyperlink^.                           |
-      {2:~                                       }|*3
-                                              |
-    ]],
-      attr_ids = {
-        [1] = { foreground = Screen.colors.Blue1 },
-        [2] = { bold = true, foreground = Screen.colors.Blue1 },
-        [3] = { bold = true, foreground = Screen.colors.Brown },
-        [4] = { foreground = Screen.colors.Cyan4 },
-        [5] = { foreground = Screen.colors.Magenta },
-        [6] = { foreground = Screen.colors.Cyan4, url = url },
-        [7] = { underline = true, foreground = Screen.colors.SlateBlue },
-      },
-    }
+        {25:[}{100:This link text}{25:](}{28:https://example.com}{25:)} is|
+         a hyperlink^.                           |
+        {1:~                                       }|*3
+                                                |
+      ]],
+    })
+  end)
+
+  it('works with spellchecked and smoothscrolled topline', function()
+    insert([[
+- $f(0)=\sum_{k=1}^{\infty}\frac{2}{\pi^{2}k^{2}}+\lim_{w \to 0}x$.
+
+```c
+printf('Hello World!');
+```
+    ]])
+    command('set spell smoothscroll')
+    feed('gg<C-E>')
+    screen:add_extra_attr_ids({ [100] = { undercurl = true, special = Screen.colors.Red } })
+    screen:expect({
+      grid = [[
+        {1:<<<}k^{2}}+\{100:lim}_{w \to 0}x$^.             |
+                                                |
+        {18:```}{15:c}                                    |
+        {25:printf}{16:(}{26:'Hello World!'}{16:);}                 |
+        {18:```}                                     |
+                                                |
+      ]],
+    })
   end)
 end)
