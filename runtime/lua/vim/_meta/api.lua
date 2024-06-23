@@ -922,7 +922,7 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- ```
 ---
 ---
---- @param event any (string|array) Event(s) that will trigger the handler
+--- @param event string|string[] (string|array) Event(s) that will trigger the handler
 ---              (`callback` or `command`).
 --- @param opts vim.api.keyset.create_autocmd Options dict:
 ---             • group (string|integer) optional: autocommand group name or
@@ -994,7 +994,7 @@ function vim.api.nvim_create_namespace(name) end
 ---
 --- @param name string Name of the new user command. Must begin with an uppercase
 ---             letter.
---- @param command any Replacement command to execute when this user command is
+--- @param command string|fun(tbl: vim.api.keyset.user_command_arg) Replacement command to execute when this user command is
 ---                executed. When called from Lua, the command can also be a
 ---                Lua function. The function is called with a single table
 ---                argument that contains the following keys:

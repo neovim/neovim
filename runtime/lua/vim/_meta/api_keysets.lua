@@ -283,6 +283,20 @@ error('Cannot require a meta file')
 --- @field range? any
 --- @field register? boolean
 
+---@class vim.api.keyset.user_command_arg
+---@field name string # Command name
+---@field args? string The args passed to the command, if any (`<args>`)
+---@field fargs table The args split by unescaped whitespace (when more than one argument is allowed), if any (`<f-args>`)
+---@field nargs string Number of arguments (see `:command-nargs`)
+---@field bang boolean True if the command was executed with `!` modifier (`<bang>`)
+---@field line1? integer # The starting line of the command range (`<line1>`)
+---@field line2? integer # The final line of the command range (`<line2>`)
+---@field range? integer # The number of items in the command range (0, 1, or 2) (`<range>`)
+---@field count? number # Any count supplied (`<count>`)
+---@field reg? string # The optional register, if specified (`<reg>`)
+---@field mods? string # Command modifiers, if any (`<mods>`)
+---@field smods table # Command modifiers in a structured format. Has the same structure as the 'mods' key of `nvim_parse_cmd()`.
+
 --- @class vim.api.keyset.win_config
 --- @field row? number
 --- @field col? number
