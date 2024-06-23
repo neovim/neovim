@@ -9168,6 +9168,25 @@ return {
       varname = 'p_udf',
     },
     {
+      abbreviation = 'ukc',
+      defaults = { if_true = false },
+      deny_duplicates = true,
+      desc = [=[
+        Controls whether the cursor should be returned to its position prior
+        to the cancel action. This can be useful, for example, if you are
+        using autocommands to format your import declarations. By default,
+        when you perform the undo operation, your cursor will be moved to the
+        top of your file, in the import instructions section, which is annoying
+        if you want to focus on the code itself.
+      ]=],
+      full_name = 'undokeepcurs',
+      list = false,
+      scope = { 'global' },
+      short_desc = N_('controls cursor placement after undo operation'),
+      type = 'boolean',
+      varname = 'p_ukc',
+    },
+    {
       abbreviation = 'ul',
       cb = 'did_set_undolevels',
       defaults = { if_true = 1000 },

@@ -678,6 +678,7 @@ call <SID>OptionG("km", &km)
 
 
 call <SID>Header(gettext("editing text"))
+call <SID>AddOption("undokeepcurs", gettext("controls cursor placement after undo operation"))
 call <SID>AddOption("undolevels", gettext("maximum number of changes that can be undone"))
 call append("$", "\t" .. s:global_or_local)
 call append("$", " \tset ul=" . s:old_ul)

@@ -7326,6 +7326,19 @@ vim.o.udf = vim.o.undofile
 vim.bo.undofile = vim.o.undofile
 vim.bo.udf = vim.bo.undofile
 
+--- Controls whether the cursor should be returned to its position prior
+--- to the cancel action. This can be useful, for example, if you are
+--- using autocommands to format your import declarations. By default,
+--- when you perform the undo operation, your cursor will be moved to the
+--- top of your file, in the import instructions section, which is annoying
+--- if you want to focus on the code itself.
+---
+--- @type boolean
+vim.o.undokeepcurs = false
+vim.o.ukc = vim.o.undokeepcurs
+vim.go.undokeepcurs = vim.o.undokeepcurs
+vim.go.ukc = vim.go.undokeepcurs
+
 --- Maximum number of changes that can be undone.  Since undo information
 --- is kept in memory, higher numbers will cause more memory to be used.
 --- Nevertheless, a single change can already use a large amount of memory.

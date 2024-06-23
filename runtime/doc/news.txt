@@ -129,6 +129,8 @@ LUA
 OPTIONS
 
 • 'completeopt' flag "fuzzy" enables |fuzzy-matching| during |ins-completion|.
+• 'undokeepcurs' flag allow control over the cursor position after undo
+  operation
 
 PERFORMANCE
 

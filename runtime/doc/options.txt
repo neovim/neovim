@@ -6744,6 +6744,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	before a reload to be saved for undo.
 	When 'undofile' is turned off the undo file is NOT deleted.
 
+			*'undokeepcurs'* *'ukc'* *'noundokeepcurs'* *'noukc'*
+'undokeepcurs' 'ukc'	boolean	(default off)
+			global
+	Controls whether the cursor should be returned to its position prior
+	to the cancel action. This can be useful, for example, if you are
+	using autocommands to format your import declarations. By default,
+	when you perform the undo operation, your cursor will be moved to the
+	top of your file, in the import instructions section, which is annoying
+	if you want to focus on the code itself.
+
 						*'undolevels'* *'ul'*
 'undolevels' 'ul'	number	(default 1000)
 			global or local to buffer |global-local|
