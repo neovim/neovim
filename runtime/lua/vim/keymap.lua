@@ -41,7 +41,20 @@ local keymap = {}
 ---@see |maparg()|
 ---@see |mapcheck()|
 ---@see |mapset()|
+---@overload fun(opts: vim.keymap.get.Return)
 function keymap.set(mode, lhs, rhs, opts)
+  if type(mode) == 'table' and not lhs then
+    ---@type vim.keymap.get.Return
+    local keymap_get_opts = mode
+    mode = keymap_get_opts.mode
+    lhs = keymap_get_opts.lhs
+    rhs = keymap_get_opts.rhs
+    opts = {
+      expr = keymap_get_opts.opts.expr,
+      buffer = keymap_get_opts.opts.buffer,
+      desc = keymap_get_opts.opts.desc,
+    }
+  end
   vim.validate('mode', mode, { 'string', 'table' })
   vim.validate('lhs', lhs, 'string')
   vim.validate('rhs', rhs, { 'string', 'function' })
@@ -127,6 +140,113 @@ function keymap.del(modes, lhs, opts)
       vim.api.nvim_buf_del_keymap(buffer, mode, lhs)
     end
   end
+end
+
+--- @class vim.keymap.get.Filter
+--- @inlinedoc
+---
+--- Lhs of mapping
+--- @field lhs? string
+---
+--- Patter to match against rhs of mapping
+--- @field rhs? string
+---
+--- Get a mapping for a certain buffer
+--- @field buffer? integer|boolean
+
+--- @class vim.keymap.get.Return.Opts
+--- @inlinedoc
+---
+--- If they mapping is an expr mapping
+--- @field expr boolean
+---
+--- If they mapping is a buffer-local mapping
+--- @field buffer boolean
+---
+--- Description of the mapping
+--- @field desc? string
+
+--- @class vim.keymap.get.Return
+--- @inlinedoc
+---
+--- Lhs of mapping
+--- @field lhs string
+---
+--- Rhs of mapping (can be callback)
+--- @field rhs string|function
+--- Mode of the mapping
+--- @field mode string
+---
+--- Get a mapping for a certain buffer
+--- @field opts? vim.keymap.get.Return.Opts
+
+--- Gets mappings in a format easily usable for vim.keymap.set
+--- Examples:
+---
+--- ```lua
+--- -- Gets all normal mode mappings
+--- vim.keymap.get('n')
+---
+--- -- Gets a mapping which maps to a certain rhs
+--- vim.keymap.get('n', { rhs = "<Plug>(MyAmazingFunction)" })
+--- ```
+---
+---@param modes string|string[]
+---@param filter? vim.keymap.get.Filter
+---@return vim.keymap.get.Return[]
+function keymap.get(modes, filter)
+  filter = filter or {}
+
+  vim.validate('modes', modes, { 'string', 'table' })
+  vim.validate('filter', filter, { 'table' })
+
+  modes = type(modes) == 'string' and { modes } or modes
+  --- @cast modes string[]
+
+  local mappings = {}
+  for _, mode in ipairs(modes) do
+    if filter.buffer then
+      table.insert(
+        mappings,
+        ---@diagnostic disable-next-line: param-type-mismatch
+        vim.api.nvim_buf_get_keymap(filter.buffer == true and 0 or filter.buffer, mode)
+      )
+    else
+      table.insert(mappings, vim.api.nvim_get_keymap(mode))
+    end
+  end
+
+  local function matches(mapping)
+    local match = true
+    if filter.lhs then
+      match = match and vim.keycode(filter.lhs) == vim.keycode(mapping.lhs)
+    end
+    if filter.rhs then
+      match = match and vim.keycode(filter.rhs) == vim.keycode(mapping.rhs)
+    end
+    return match
+  end
+  return vim
+    .iter(mappings)
+    :flatten()
+    :filter(function(mapping)
+      return matches(mapping)
+    end)
+    :map(function(mapping)
+      ---@type vim.keymap.get.Return
+      return {
+        lhs = mapping.lhs,
+        -- For roundtripping: keymap.set() only accepts "rhs".
+        rhs = mapping.callback or mapping.rhs,
+        mode = mapping.mode,
+        opts = {
+          desc = mapping.desc,
+          buffer = mapping.buffer == 1,
+          expr = mapping.buffer == 1,
+        },
+      }
+    end)
+    :totable()
 end
 
 return keymap
