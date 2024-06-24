@@ -191,6 +191,7 @@ won't run if your server doesn't support them.
 - textDocument/prepareTypeHierarchy
 - textDocument/publishDiagnostics
 - textDocument/rangeFormatting
+- textDocument/rangesFormatting
 - textDocument/references
 - textDocument/rename
 - textDocument/semanticTokens/full
@@ -1371,11 +1372,14 @@ format({opts})                                          *vim.lsp.buf.format()*
                   (client.id) matching this field.
                 • {name}? (`string`) Restrict formatting to the client with
                   name (client.name) matching this field.
-                • {range}? (`{start:integer[],end:integer[]}`, default:
-                  current selection in visual mode, `nil` in other modes,
-                  formatting the full buffer) Range to format. Table must
-                  contain `start` and `end` keys with {row,col} tuples using
-                  (1,0) indexing.
+                • {range}?
+                  (`{start:[integer,integer],end:[integer, integer]}|{start:[integer,integer],end:[integer,integer]}[]`,
+                  default: current selection in visual mode, `nil` in other
+                  modes, formatting the full buffer) Range to format. Table
+                  must contain `start` and `end` keys with {row,col} tuples
+                  using (1,0) indexing. Can also be a list of tables that
+                  contain `start` and `end` keys as described above, in which
+                  case `textDocument/rangesFormatting` support is required.
 
 hover()                                                  *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating

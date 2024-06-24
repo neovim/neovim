@@ -4537,6 +4537,86 @@ describe('LSP', function()
         end,
       }
     end)
+    it('Sends textDocument/rangeFormatting request to format a range', function()
+      local expected_handlers = {
+        { NIL, {}, { method = 'shutdown', client_id = 1 } },
+        { NIL, {}, { method = 'start', client_id = 1 } },
+      }
+      local client
+      test_rpc_server {
+        test_name = 'range_formatting',
+        on_init = function(c)
+          client = c
+        end,
+        on_handler = function(_, _, ctx)
+          table.remove(expected_handlers)
+          if ctx.method == 'start' then
+            local notify_msg = exec_lua([[
+              local bufnr = vim.api.nvim_get_current_buf()
+              vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, {'foo', 'bar'})
+              vim.lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
+              local notify_msg
+              local notify = vim.notify
+              vim.notify = function(msg, log_level)
+                notify_msg = msg
+              end
+              vim.lsp.buf.format({ bufnr = bufnr, range = {
+                start = {1, 1},
+                ['end'] = {1, 1},
+              }})
+              vim.notify = notify
+              return notify_msg
+            ]])
+            eq(NIL, notify_msg)
+          elseif ctx.method == 'shutdown' then
+            client.stop()
+          end
+        end,
+      }
+    end)
+    it('Sends textDocument/rangesFormatting request to format multiple ranges', function()
+      local expected_handlers = {
+        { NIL, {}, { method = 'shutdown', client_id = 1 } },
+        { NIL, {}, { method = 'start', client_id = 1 } },
+      }
+      local client
+      test_rpc_server {
+        test_name = 'ranges_formatting',
+        on_init = function(c)
+          client = c
+        end,
+        on_handler = function(_, _, ctx)
+          table.remove(expected_handlers)
+          if ctx.method == 'start' then
+            local notify_msg = exec_lua([[
+              local bufnr = vim.api.nvim_get_current_buf()
+              vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, {'foo', 'bar', 'baz'})
+              vim.lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
+              local notify_msg
+              local notify = vim.notify
+              vim.notify = function(msg, log_level)
+                notify_msg = msg
+              end
+              vim.lsp.buf.format({ bufnr = bufnr, range = {
+                {
+                  start = {1, 1},
+                  ['end'] = {1, 1},
+                },
+                {
+                  start = {2, 2},
+                  ['end'] = {2, 2},
+                }
+              }})
+              vim.notify = notify
+              return notify_msg
+            ]])
+            eq(NIL, notify_msg)
+          elseif ctx.method == 'shutdown' then
+            client.stop()
+          end
+        end,
+      }
+    end)
     it('Can format async', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },

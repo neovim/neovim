@@ -205,9 +205,11 @@ end
 --- Range to format.
 --- Table must contain `start` and `end` keys with {row,col} tuples using
 --- (1,0) indexing.
+--- Can also be a list of tables that contain `start` and `end` keys as described above,
+--- in which case `textDocument/rangesFormatting` support is required.
 --- (Default: current selection in visual mode, `nil` in other modes,
 --- formatting the full buffer)
---- @field range? {start:integer[],end:integer[]}
+--- @field range? {start:[integer,integer],end:[integer, integer]}|{start:[integer,integer],end:[integer,integer]}[]
 
 --- Formats a buffer using the attached (and optionally filtered) language
 --- server clients.
@@ -218,10 +220,20 @@ function M.format(opts)
   local bufnr = opts.bufnr or api.nvim_get_current_buf()
   local mode = api.nvim_get_mode().mode
   local range = opts.range
+  -- Try to use visual selection if no range is given
   if not range and mode == 'v' or mode == 'V' then
     range = range_from_selection(bufnr, mode)
   end
-  local method = range and ms.textDocument_rangeFormatting or ms.textDocument_formatting
+
+  local passed_multiple_ranges = (range and #range ~= 0 and type(range[1]) == 'table')
+  local method ---@type string
+  if passed_multiple_ranges then
+    method = ms.textDocument_rangesFormatting
+  elseif range then
+    method = ms.textDocument_rangeFormatting
+  else
+    method = ms.textDocument_formatting
+  end
 
   local clients = vim.lsp.get_clients({
     id = opts.id,
@@ -241,10 +253,14 @@ function M.format(opts)
   --- @param params lsp.DocumentFormattingParams
   --- @return lsp.DocumentFormattingParams
   local function set_range(client, params)
-    if range then
-      local range_params =
-        util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
-      params.range = range_params.range
+    local to_lsp_range = function(r) ---@return lsp.DocumentRangeFormattingParams|lsp.DocumentRangesFormattingParams
+      return util.make_given_range_params(r.start, r['end'], bufnr, client.offset_encoding).range
+    end
+
+    if passed_multiple_ranges then
+      params.ranges = vim.tbl_map(to_lsp_range, range)
+    elseif range then
+      params.range = to_lsp_range(range)
     end
     return params
   end

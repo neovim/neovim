@@ -56,6 +56,7 @@ lsp._request_name_to_capability = {
   [ms.workspace_symbol] = { 'workspaceSymbolProvider' },
   [ms.textDocument_references] = { 'referencesProvider' },
   [ms.textDocument_rangeFormatting] = { 'documentRangeFormattingProvider' },
+  [ms.textDocument_rangesFormatting] = { 'documentRangeFormattingProvider', 'rangesSupport' },
   [ms.textDocument_formatting] = { 'documentFormattingProvider' },
   [ms.textDocument_completion] = { 'completionProvider' },
   [ms.textDocument_documentHighlight] = { 'documentHighlightProvider' },
