@@ -425,6 +425,8 @@ static bool typval_conv_special = false;
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS true
 
+#define TYPVAL_ENCODE_CHECK_BEFORE
+
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
   do { \
     if (typval_conv_special) { \
@@ -574,6 +576,7 @@ static bool typval_conv_special = false;
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
+#undef TYPVAL_ENCODE_CHECK_BEFORE
 #undef TYPVAL_ENCODE_CONV_NIL
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER

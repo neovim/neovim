@@ -28,6 +28,7 @@ typedef struct {
 #endif
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
+#define TYPVAL_ENCODE_CHECK_BEFORE
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
   kvi_push(edata->stack, NIL)
@@ -217,6 +218,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #undef TYPVAL_ENCODE_CONV_LIST_START
 #undef TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START
 #undef TYPVAL_ENCODE_CONV_EMPTY_DICT
+#undef TYPVAL_ENCODE_CHECK_BEFORE
 #undef TYPVAL_ENCODE_CONV_NIL
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER

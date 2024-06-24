@@ -94,6 +94,7 @@
 #include "nvim/move.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
+#include "nvim/msgpack_rpc/packer.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/normal_defs.h"
@@ -5501,15 +5502,7 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
   list_T *const list = argvars[0].vval.v_list;
-  msgpack_packer *packer;
-  if (argvars[1].v_type != VAR_UNKNOWN
-      && strequal(tv_get_string(&argvars[1]), "B")) {
-    tv_blob_alloc_ret(rettv);
-    packer = msgpack_packer_new(rettv->vval.v_blob, &encode_blob_write);
-  } else {
-    packer = msgpack_packer_new(tv_list_alloc_ret(rettv, kListLenMayKnow),
-                                &encode_list_write);
-  }
+  PackerBuffer packer = packer_string_buffer();
   const char *const msg = _("msgpackdump() argument, index %i");
   // Assume that translation will not take more then 4 times more space
   char msgbuf[sizeof("msgpackdump() argument, index ") * 4 + NUMBUFLEN];
@@ -5517,11 +5510,20 @@ static void f_msgpackdump(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   TV_LIST_ITER(list, li, {
     vim_snprintf(msgbuf, sizeof(msgbuf), msg, idx);
     idx++;
-    if (encode_vim_to_msgpack(packer, TV_LIST_ITEM_TV(li), msgbuf) == FAIL) {
+    if (encode_vim_to_msgpack(&packer, TV_LIST_ITEM_TV(li), msgbuf) == FAIL) {
       break;
     }
   });
-  msgpack_packer_free(packer);
+  String data = packer_take_string(&packer);
+  if (argvars[1].v_type != VAR_UNKNOWN && strequal(tv_get_string(&argvars[1]), "B")) {
+    blob_T *b = tv_blob_alloc_ret(rettv);
+    b->bv_ga.ga_data = data.data;
+    b->bv_ga.ga_len = (int)data.size;
+    b->bv_ga.ga_maxlen = (int)(packer.endptr - packer.startptr);
+  } else {
+    encode_list_write(tv_list_alloc_ret(rettv, kListLenMayKnow), data.data, data.size);
+    api_free_string(data);
+  }
 }
 
 static int msgpackparse_convert_item(const msgpack_object data, const msgpack_unpack_return result,

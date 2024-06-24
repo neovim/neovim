@@ -1354,6 +1354,12 @@ static char *shada_filename(const char *file)
 
 #define SHADA_MPACK_FREE_SPACE (4 * MPACK_ITEM_SIZE)
 
+static int mpack_raw_wrapper(void *cookie, const char *data, size_t len)
+{
+  mpack_raw(data, len, (PackerBuffer *)cookie);
+  return 0;
+}
+
 /// Write single ShaDa entry
 ///
 /// @param[in]  packer     Packer used to write entry.
@@ -1367,14 +1373,13 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
   FUNC_ATTR_NONNULL_ALL
 {
   ShaDaWriteResult ret = kSDWriteFailed;
-  msgpack_sbuffer sbuf;
-  msgpack_sbuffer_init(&sbuf);
-  msgpack_packer *spacker = msgpack_packer_new(&sbuf, &msgpack_sbuffer_write);
+  PackerBuffer sbuf = packer_string_buffer();
+  msgpack_packer *spacker = msgpack_packer_new(&sbuf, &mpack_raw_wrapper);
 #define DUMP_ADDITIONAL_ELEMENTS(src, what) \
   do { \
     if ((src) != NULL) { \
       TV_LIST_ITER((src), li, { \
-        if (encode_vim_to_msgpack(spacker, TV_LIST_ITEM_TV(li), \
+        if (encode_vim_to_msgpack(&sbuf, TV_LIST_ITEM_TV(li), \
                                   _("additional elements of ShaDa " what)) \
             == FAIL) { \
           goto shada_pack_entry_error; \
@@ -1394,7 +1399,7 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
           const size_t key_len = strlen(hi->hi_key); \
           msgpack_pack_str(spacker, key_len); \
           msgpack_pack_str_body(spacker, hi->hi_key, key_len); \
-          if (encode_vim_to_msgpack(spacker, &di->di_tv, \
+          if (encode_vim_to_msgpack(&sbuf, &di->di_tv, \
                                     _("additional data of ShaDa " what)) \
               == FAIL) { \
             goto shada_pack_entry_error; \
@@ -1460,7 +1465,7 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
     char vardesc[256] = "variable g:";
     memcpy(&vardesc[sizeof("variable g:") - 1], varname.data,
            varname.size + 1);
-    if (encode_vim_to_msgpack(spacker, &entry.data.global_var.value, vardesc)
+    if (encode_vim_to_msgpack(&sbuf, &entry.data.global_var.value, vardesc)
         == FAIL) {
       ret = kSDWriteIgnError;
       semsg(_(WERR "Failed to write variable %s"),
@@ -1645,7 +1650,8 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
   }
 #undef CHECK_DEFAULT
 #undef ONE_IF_NOT_DEFAULT
-  if (!max_kbyte || sbuf.size <= max_kbyte * 1024) {
+  String packed = packer_take_string(&sbuf);
+  if (!max_kbyte || packed.size <= max_kbyte * 1024) {
     if (mpack_remaining(packer) < SHADA_MPACK_FREE_SPACE) {
       packer->packer_flush(packer);
     }
@@ -1656,9 +1662,9 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
       mpack_uint64(&packer->ptr, (uint64_t)entry.type);
     }
     mpack_uint64(&packer->ptr, (uint64_t)entry.timestamp);
-    if (sbuf.size > 0) {
-      mpack_uint64(&packer->ptr, (uint64_t)sbuf.size);
-      mpack_raw(sbuf.data, sbuf.size, packer);
+    if (packed.size > 0) {
+      mpack_uint64(&packer->ptr, (uint64_t)packed.size);
+      mpack_raw(packed.data, packed.size, packer);
     }
 
     if (packer->anyint != 0) {  // error code
@@ -1668,7 +1674,7 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
   ret = kSDWriteSuccessful;
 shada_pack_entry_error:
   msgpack_packer_free(spacker);
-  msgpack_sbuffer_destroy(&sbuf);
+  xfree(sbuf.startptr);
   return ret;
 }
 
@@ -3958,34 +3964,6 @@ static inline size_t shada_init_jumps(PossiblyFreedShadaEntry *jumps,
     };
   } while (jump_iter != NULL);
   return jumps_size;
-}
-
-static PackerBuffer packer_string_buffer(void)
-{
-  const size_t initial_size = 64;  // must be larger than SHADA_MPACK_FREE_SPACE
-  char *alloc = xmalloc(initial_size);
-  return (PackerBuffer) {
-    .startptr = alloc,
-    .ptr = alloc,
-    .endptr = alloc + initial_size,
-    .packer_flush = flush_string_buffer,
-  };
-}
-
-static void flush_string_buffer(PackerBuffer *buffer)
-{
-  size_t current_capacity = (size_t)(buffer->endptr - buffer->startptr);
-  size_t new_capacity = 2 * current_capacity;
-  size_t len = (size_t)(buffer->ptr - buffer->startptr);
-
-  buffer->startptr = xrealloc(buffer->startptr, new_capacity);
-  buffer->ptr = buffer->startptr + len;
-  buffer->endptr = buffer->startptr + new_capacity;
-}
-
-static String packer_take_string(PackerBuffer *buffer)
-{
-  return (String){ .data = buffer->startptr, .size = (size_t)(buffer->ptr - buffer->startptr) };
 }
 
 /// Write registers ShaDa entries in given msgpack_sbuffer.
