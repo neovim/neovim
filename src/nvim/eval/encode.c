@@ -918,7 +918,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 }
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
-  mpack_bin(buf, (len), packer); \
+  mpack_bin(cbuf_as_string(buf, (len)), packer); \
 
 #define TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len) \
   mpack_str(cbuf_as_string(buf, (len)), packer); \
@@ -927,7 +927,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
   mpack_ext(buf, (len), (int8_t)(type), packer); \
 
 #define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
-  mpack_bin((blob) ? (blob)->bv_ga.ga_data : NULL, (size_t)(len), packer); \
+  mpack_bin(cbuf_as_string((blob) ? (blob)->bv_ga.ga_data : NULL, (size_t)(len)), packer);
 
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
   mpack_integer(&packer->ptr, (Integer)(num))

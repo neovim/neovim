@@ -10,7 +10,7 @@
 
 void mpack_check_buffer(PackerBuffer *packer)
 {
-  if (mpack_remaining(packer) < MPACK_ITEM_SIZE) {
+  if (mpack_remaining(packer) < 2 * MPACK_ITEM_SIZE) {
     packer->packer_flush(packer);
   }
 }
@@ -87,8 +87,9 @@ void mpack_str(String str, PackerBuffer *packer)
   mpack_raw(str.data, len, packer);
 }
 
-void mpack_bin(const char *data, size_t len, PackerBuffer *packer)
+void mpack_bin(String str, PackerBuffer *packer)
 {
+  const size_t len = str.size;
   if (len < 0xff) {
     mpack_w(&packer->ptr, 0xc4);
     mpack_w(&packer->ptr, len);
@@ -102,7 +103,7 @@ void mpack_bin(const char *data, size_t len, PackerBuffer *packer)
     abort();
   }
 
-  mpack_raw(data, len, packer);
+  mpack_raw(str.data, len, packer);
 }
 
 void mpack_raw(const char *data, size_t len, PackerBuffer *packer)
@@ -119,6 +120,7 @@ void mpack_raw(const char *data, size_t len, PackerBuffer *packer)
       packer->packer_flush(packer);
     }
   }
+  mpack_check_buffer(packer);
 }
 
 void mpack_ext(char *buf, size_t len, int8_t type, PackerBuffer *packer)
