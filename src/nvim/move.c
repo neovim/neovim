@@ -242,6 +242,37 @@ static void reset_skipcol(win_T *wp)
   redraw_later(wp, UPD_SOME_VALID);
 }
 
+static bool check_topline(win_T *wp)
+{
+  // If the cursor is above or near the top of the window, scroll the window
+  // to show the line the cursor is in, with 'scrolloff' context.
+  if (wp->w_topline > 1 || wp->w_skipcol > 0) {
+    // If the cursor is above topline, scrolling is always needed.
+    // If the cursor is far below topline and there is no folding,
+    // scrolling down is never needed.
+    if (wp->w_cursor.lnum < wp->w_topline) {
+      return true;
+    } else if (check_top_offset(wp)) {
+      return true;
+    } else if (wp->w_skipcol > 0 && wp->w_cursor.lnum == wp->w_topline) {
+      colnr_T vcol;
+
+      // Check that the cursor position is visible.  Add columns for
+      // the marker displayed in the top-left if needed.
+      getvvcol(wp, &wp->w_cursor, &vcol, NULL, NULL);
+      int overlap = sms_marker_overlap(wp, -1);
+      if (wp->w_skipcol + overlap > vcol) {
+        return true;
+      }
+    }
+  }
+  // Check if there are more filler lines than allowed.
+  if (wp->w_topfill > win_get_fill(wp, wp->w_topline)) {
+    return true;
+  }
+  return false;
+}
+
 // Update wp->w_topline to move the cursor onto the screen.
 void update_topline(win_T *wp)
 {
@@ -288,74 +319,44 @@ void update_topline(win_T *wp)
     wp->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
     wp->w_viewport_invalid = true;
     wp->w_scbind_pos = 1;
-  } else {
-    bool check_topline = false;
-    // If the cursor is above or near the top of the window, scroll the window
-    // to show the line the cursor is in, with 'scrolloff' context.
-    if (wp->w_topline > 1 || wp->w_skipcol > 0) {
-      // If the cursor is above topline, scrolling is always needed.
-      // If the cursor is far below topline and there is no folding,
-      // scrolling down is never needed.
-      if (wp->w_cursor.lnum < wp->w_topline) {
-        check_topline = true;
-      } else if (check_top_offset(wp)) {
-        check_topline = true;
-      } else if (wp->w_skipcol > 0 && wp->w_cursor.lnum == wp->w_topline) {
-        colnr_T vcol;
-
-        // Check that the cursor position is visible.  Add columns for
-        // the marker displayed in the top-left if needed.
-        getvvcol(wp, &wp->w_cursor, &vcol, NULL, NULL);
-        int overlap = sms_marker_overlap(wp, -1);
-        if (wp->w_skipcol + overlap > vcol) {
-          check_topline = true;
-        }
-      }
+  } else if (check_topline(wp)) {
+    int halfheight = wp->w_height_inner / 2 - 1;
+    if (halfheight < 2) {
+      halfheight = 2;
     }
-    // Check if there are more filler lines than allowed.
-    if (!check_topline && wp->w_topfill > win_get_fill(wp, wp->w_topline)) {
-      check_topline = true;
-    }
-
-    if (check_topline) {
-      int halfheight = wp->w_height_inner / 2 - 1;
-      if (halfheight < 2) {
-        halfheight = 2;
-      }
-      int64_t n;
-      if (hasAnyFolding(wp)) {
-        // Count the number of logical lines between the cursor and
-        // topline + p_so (approximation of how much will be
-        // scrolled).
-        n = 0;
-        for (linenr_T lnum = wp->w_cursor.lnum;
-             lnum < wp->w_topline + *so_ptr; lnum++) {
-          n++;
-          // stop at end of file or when we know we are far off
-          assert(wp->w_buffer != 0);
-          if (lnum >= wp->w_buffer->b_ml.ml_line_count || n >= halfheight) {
-            break;
-          }
-          hasFolding(wp, lnum, NULL, &lnum);
+    int64_t n;
+    if (hasAnyFolding(wp)) {
+      // Count the number of logical lines between the cursor and
+      // topline + p_so (approximation of how much will be
+      // scrolled).
+      n = 0;
+      for (linenr_T lnum = wp->w_cursor.lnum;
+           lnum < wp->w_topline + *so_ptr; lnum++) {
+        n++;
+        // stop at end of file or when we know we are far off
+        assert(wp->w_buffer != 0);
+        if (lnum >= wp->w_buffer->b_ml.ml_line_count || n >= halfheight) {
+          break;
         }
-      } else {
-        n = wp->w_topline + *so_ptr - wp->w_cursor.lnum;
-      }
-
-      // If we weren't very close to begin with, we scroll to put the
-      // cursor in the middle of the window.  Otherwise put the cursor
-      // near the top of the window.
-      if (n >= halfheight) {
-        scroll_cursor_halfway(wp, false, false);
-      } else {
-        scroll_cursor_top(wp, scrolljump_value(wp), false);
-        check_botline = true;
+        hasFolding(wp, lnum, NULL, &lnum);
       }
     } else {
-      // Make sure topline is the first line of a fold.
-      hasFolding(wp, wp->w_topline, &wp->w_topline, NULL);
+      n = wp->w_topline + *so_ptr - wp->w_cursor.lnum;
+    }
+
+    // If we weren't very close to begin with, we scroll to put the
+    // cursor in the middle of the window.  Otherwise put the cursor
+    // near the top of the window.
+    if (n >= halfheight) {
+      scroll_cursor_halfway(wp, false, false);
+    } else {
+      scroll_cursor_top(wp, scrolljump_value(wp), false);
       check_botline = true;
     }
+  } else {
+    // Make sure topline is the first line of a fold.
+    hasFolding(wp, wp->w_topline, &wp->w_topline, NULL);
+    check_botline = true;
   }
 
   // If the cursor is below the bottom of the window, scroll the window
