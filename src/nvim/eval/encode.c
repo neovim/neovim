@@ -776,8 +776,7 @@ bool encode_check_json_key(const typval_T *const tv)
   const dictitem_T *val_di;
   if ((type_di = tv_dict_find(spdict, S_LEN("_TYPE"))) == NULL
       || type_di->di_tv.v_type != VAR_LIST
-      || (type_di->di_tv.vval.v_list != eval_msgpack_type_lists[kMPString]
-          && type_di->di_tv.vval.v_list != eval_msgpack_type_lists[kMPBinary])
+      || type_di->di_tv.vval.v_list != eval_msgpack_type_lists[kMPString]
       || (val_di = tv_dict_find(spdict, S_LEN("_VAL"))) == NULL
       || val_di->di_tv.v_type != VAR_LIST) {
     return false;

@@ -371,13 +371,14 @@ describe('msgpack*() functions', function()
     eq(1, eval('dumped ==# dumped2'))
   end)
 
-  it('can restore and dump STR string with zero byte', function()
+  it('can restore and dump STR string contents with zero byte', function()
     command('let dumped = ["\\xA1\\n"]')
     command('let parsed = msgpackparse(dumped)')
     command('let dumped2 = msgpackdump(parsed)')
-    eq({ { _TYPE = {}, _VAL = { '\n' } } }, eval('parsed'))
-    eq(1, eval('parsed[0]._TYPE is v:msgpack_types.string'))
-    eq(1, eval('dumped ==# dumped2'))
+    eq({ '\000' }, eval('parsed'))
+    eq(eval('v:t_blob'), eval('type(parsed[0])'))
+    -- type is not preserved: prefer BIN for binary contents
+    eq(0, eval('dumped ==# dumped2'))
   end)
 
   it('can restore and dump BIN string with NL', function()
@@ -428,9 +429,8 @@ describe('msgpackparse() function', function()
     parse_eq({ true }, { '\195' })
   end)
 
-  it('restores FIXSTR as special dict', function()
-    parse_eq({ { _TYPE = {}, _VAL = { 'ab' } } }, { '\162ab' })
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.string'))
+  it('restores FIXSTR as string', function()
+    parse_eq({ 'ab' }, { '\162ab' })
   end)
 
   it('restores BIN 8 as string', function()
@@ -442,9 +442,8 @@ describe('msgpackparse() function', function()
     eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.ext'))
   end)
 
-  it('restores MAP with BIN key as special dictionary', function()
-    parse_eq({ { _TYPE = {}, _VAL = { { 'a', '' } } } }, { '\129\196\001a\196\n' })
-    eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
+  it('restores MAP with BIN key as ordinary dictionary', function()
+    parse_eq({ { a = '' } }, { '\129\196\001a\196\n' })
   end)
 
   it('restores MAP with duplicate STR keys as special dictionary', function()
@@ -455,14 +454,14 @@ describe('msgpackparse() function', function()
       {
         _TYPE = {},
         _VAL = {
-          { { _TYPE = {}, _VAL = { 'a' } }, '' },
-          { { _TYPE = {}, _VAL = { 'a' } }, '' },
+          { 'a', '' },
+          { 'a', '' },
         },
       },
     }, eval('parsed'))
     eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
-    eq(1, eval('g:parsed[0]._VAL[0][0]._TYPE is v:msgpack_types.string'))
-    eq(1, eval('g:parsed[0]._VAL[1][0]._TYPE is v:msgpack_types.string'))
+    eq(eval('v:t_string'), eval('type(g:parsed[0]._VAL[0][0])'))
+    eq(eval('v:t_string'), eval('type(g:parsed[0]._VAL[1][0])'))
   end)
 
   it('restores MAP with MAP key as special dictionary', function()
@@ -802,7 +801,7 @@ describe('msgpackdump() function', function()
 
   it('can dump NULL string', function()
     dump_eq({ '\196\n' }, '[$XXX_UNEXISTENT_VAR_XXX]')
-    dump_eq({ '\196\n' }, '[{"_TYPE": v:msgpack_types.binary, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}]')
+    dump_eq({ '\196\n' }, '[v:_null_blob]')
     dump_eq({ '\160' }, '[{"_TYPE": v:msgpack_types.string, "_VAL": [$XXX_UNEXISTENT_VAR_XXX]}]')
   end)
 

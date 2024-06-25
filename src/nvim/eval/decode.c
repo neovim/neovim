@@ -247,45 +247,29 @@ list_T *decode_create_map_special_dict(typval_T *const ret_tv, const ptrdiff_t l
 ///
 /// @param[in]  s  String to decode.
 /// @param[in]  len  String length.
-/// @param[in]  hasnul  Whether string has NUL byte, not or it was not yet
-///                     determined.
-/// @param[in]  binary  Determines decode type if string has NUL bytes.
-///                     If true convert string to VAR_BLOB, otherwise to the
-///                     kMPString special type.
+/// @param[in]  force_blob  whether string always should be decoded as a blob,
+///                         or only when embedded NUL bytes were present
 /// @param[in]  s_allocated  If true, then `s` was allocated and can be saved in
 ///                          a returned structure. If it is not saved there, it
 ///                          will be freed.
 ///
 /// @return Decoded string.
-typval_T decode_string(const char *const s, const size_t len, const TriState hasnul,
-                       const bool binary, const bool s_allocated)
+typval_T decode_string(const char *const s, const size_t len, bool force_blob,
+                       const bool s_allocated)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(s != NULL || len == 0);
-  const bool really_hasnul = (hasnul == kNone
-                              ? ((s != NULL) && (memchr(s, NUL, len) != NULL))
-                              : (bool)hasnul);
-  if (really_hasnul) {
+  const bool use_blob = force_blob || ((s != NULL) && (memchr(s, NUL, len) != NULL));
+  if (use_blob) {
     typval_T tv;
     tv.v_lock = VAR_UNLOCKED;
-    if (binary) {
-      tv_blob_alloc_ret(&tv);
-      ga_concat_len(&tv.vval.v_blob->bv_ga, s, len);
+    blob_T *b = tv_blob_alloc_ret(&tv);
+    if (s_allocated) {
+      b->bv_ga.ga_data = (void *)s;
+      b->bv_ga.ga_len = (int)len;
+      b->bv_ga.ga_maxlen = (int)len;
     } else {
-      list_T *const list = tv_list_alloc(kListLenMayKnow);
-      tv_list_ref(list);
-      create_special_dict(&tv, kMPString,
-                          (typval_T){ .v_type = VAR_LIST,
-                                      .v_lock = VAR_UNLOCKED,
-                                      .vval = { .v_list = list } });
-      const int elw_ret = encode_list_write((void *)list, s, len);
-      if (s_allocated) {
-        xfree((void *)s);
-      }
-      if (elw_ret == -1) {
-        tv_clear(&tv);
-        return (typval_T) { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
-      }
+      ga_concat_len(&b->bv_ga, s, len);
     }
     return tv;
   }
@@ -405,7 +389,6 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
   char *str = xmalloc(len + 1);
   int fst_in_pair = 0;
   char *str_end = str;
-  bool hasnul = false;
 #define PUT_FST_IN_PAIR(fst_in_pair, str_end) \
   do { \
     if ((fst_in_pair) != 0) { \
@@ -426,9 +409,6 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
         uvarnumber_T ch;
         vim_str2nr(ubuf, NULL, NULL,
                    STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4, true, NULL);
-        if (ch == 0) {
-          hasnul = true;
-        }
         if (SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END) {
           PUT_FST_IN_PAIR(fst_in_pair, str_end);
           fst_in_pair = (int)ch;
@@ -476,10 +456,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
   PUT_FST_IN_PAIR(fst_in_pair, str_end);
 #undef PUT_FST_IN_PAIR
   *str_end = NUL;
-  typval_T obj = decode_string(str, (size_t)(str_end - str), hasnul ? kTrue : kFalse, false, true);
-  if (obj.v_type == VAR_UNKNOWN) {
-    goto parse_json_string_fail;
-  }
+  typval_T obj = decode_string(str, (size_t)(str_end - str), false, true);
   POP(obj, obj.v_type != VAR_STRING);
   goto parse_json_string_ret;
 parse_json_string_fail:
@@ -982,18 +959,8 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
     };
     break;
   case MSGPACK_OBJECT_STR:
-    *rettv = decode_string(mobj.via.bin.ptr, mobj.via.bin.size, kTrue, false,
-                           false);
-    if (rettv->v_type == VAR_UNKNOWN) {
-      return FAIL;
-    }
-    break;
   case MSGPACK_OBJECT_BIN:
-    *rettv = decode_string(mobj.via.bin.ptr, mobj.via.bin.size, kNone, true,
-                           false);
-    if (rettv->v_type == VAR_UNKNOWN) {
-      return FAIL;
-    }
+    *rettv = decode_string(mobj.via.bin.ptr, mobj.via.bin.size, false, false);
     break;
   case MSGPACK_OBJECT_ARRAY: {
     list_T *const list = tv_list_alloc((ptrdiff_t)mobj.via.array.size);
@@ -1016,7 +983,8 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
   }
   case MSGPACK_OBJECT_MAP: {
     for (size_t i = 0; i < mobj.via.map.size; i++) {
-      if (mobj.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR
+      if ((mobj.via.map.ptr[i].key.type != MSGPACK_OBJECT_STR
+           && mobj.via.map.ptr[i].key.type != MSGPACK_OBJECT_BIN)
           || mobj.via.map.ptr[i].key.via.str.size == 0
           || memchr(mobj.via.map.ptr[i].key.via.str.ptr, NUL,
                     mobj.via.map.ptr[i].key.via.str.size) != NULL) {

@@ -9,7 +9,6 @@ typedef enum {
   kMPInteger,
   kMPFloat,
   kMPString,
-  kMPBinary,
   kMPArray,
   kMPMap,
   kMPExt,

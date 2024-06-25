@@ -501,9 +501,7 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
         }
         TYPVAL_ENCODE_CONV_FLOAT(tv, val_di->di_tv.vval.v_float);
         break;
-      case kMPString:
-      case kMPBinary: {
-        const bool is_string = ((MessagePackType)i == kMPString);
+      case kMPString: {
         if (val_di->di_tv.v_type != VAR_LIST) {
           goto _convert_one_value_regular_dict;
         }
@@ -513,11 +511,7 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                                     &buf)) {
           goto _convert_one_value_regular_dict;
         }
-        if (is_string) {
-          TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len);
-        } else {
-          TYPVAL_ENCODE_CONV_STRING(tv, buf, len);
-        }
+        TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len);
         xfree(buf);
         break;
       }
