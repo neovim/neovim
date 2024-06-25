@@ -41,13 +41,16 @@ local function test_embed(ext_linegrid)
 
   it('can display errors', function()
     startup('--cmd', 'echoerr invalid+')
-    screen:expect([[
-                                                                  |*4
-      {6:                                                            }|
-      {7:Error detected while processing pre-vimrc command line:}     |
-      {7:E121: Undefined variable: invalid}                           |
-      {8:Press ENTER or type command to continue}^                     |
-    ]])
+
+    screen:expect({
+      grid = [[
+                                                                    |*4
+        {5:                                                            }|
+        {7:Error detected while processing pre-vimrc command line:}     |
+        {7:E121: Undefined variable: invalid}                           |
+        {2:Press ENTER or type command to continue}^                     |
+      ]],
+    })
 
     feed('<cr>')
     screen:expect([[
@@ -62,14 +65,16 @@ local function test_embed(ext_linegrid)
       pending('FIXME #10804')
     end
     startup('--cmd', 'echoerr "foo"', '--cmd', 'color default', '--cmd', 'echoerr "bar"')
-    screen:expect([[
-                                                                  |*3
-      {6:                                                            }|
-      {7:Error detected while processing pre-vimrc command line:}     |
-      {7:foo}                                                         |
-      {7:bar}                                                         |
-      {8:Press ENTER or type command to continue}^                     |
-    ]])
+    screen:expect({
+      grid = [[
+                                                                    |*3
+        {6:                                                            }|
+        {7:Error detected while processing pre-vimrc command line:}     |
+        {7:foo}                                                         |
+        {7:bar}                                                         |
+        {8:Press ENTER or type command to continue}^                     |
+      ]],
+    })
   end)
 
   it("doesn't erase output when setting Normal colors", function()
@@ -77,11 +82,11 @@ local function test_embed(ext_linegrid)
     screen:expect {
       grid = [[
                                                                   |*3
-      {6:                                                            }|
+      {5:                                                            }|
       {7:Error detected while processing pre-vimrc command line:}     |
       {7:foo}                                                         |
-      {7:bar}                                                         |
-      {8:Press ENTER or type command to continue}^                     |
+      {1:bar}                                                         |
+      {2:Press ENTER or type command to continue}^                     |
     ]],
       condition = function()
         eq(Screen.colors.Green, screen.default_colors.rgb_bg)

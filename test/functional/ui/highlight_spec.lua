@@ -2529,4 +2529,18 @@ describe('fg/bg special colors', function()
     eq(new_guifg, eval('synIDattr(hlID("Visual"), "bg#")'))
     eq(new_guibg, eval('synIDattr(hlID("Visual"), "sp#")'))
   end)
+
+  it('refresh cmdline after MsgArea set #17832', function()
+    screen:attach({ rgb = true })
+    command('set termguicolors')
+    command('call nvim_set_hl(0, "MsgArea", {"fg": "Red"})')
+    command('echomsg "foo"')
+    screen:expect({
+      grid = [[
+        ^                                                  |
+        {1:~                                                 }|*5
+        {19:foo                                               }|
+      ]],
+    })
+  end)
 end)
