@@ -163,7 +163,10 @@ TUI
 
 UI
 
-• TODO
+• Behaviour of the function |vim.ui.open| (by default bound to
+  'gx' key shortcut) can now be configured by setting the
+  variable 'vim.g.netrw_browsex_viewer' to the value of executable which
+  should be run with the selected string as the only parameter.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
