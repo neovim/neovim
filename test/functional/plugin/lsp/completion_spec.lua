@@ -141,6 +141,27 @@ describe('vim.lsp.completion: item conversion', function()
     eq(expected, result)
   end)
 
+  it('filters on label if filterText is missing', function()
+    local completion_list = {
+      { label = 'foo' },
+      { label = 'bar' },
+    }
+    local result = complete('fo|', completion_list)
+    local expected = {
+      {
+        abbr = 'foo',
+        word = 'foo',
+      },
+    }
+    result = vim.tbl_map(function(x)
+      return {
+        abbr = x.abbr,
+        word = x.word,
+      }
+    end, result.items)
+    eq(expected, result)
+  end)
+
   it('trims trailing newline or tab from textEdit', function()
     local range0 = {
       start = { line = 0, character = 0 },
