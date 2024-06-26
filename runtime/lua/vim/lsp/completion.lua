@@ -9,6 +9,7 @@ local rtt_ms = 50
 local ns_to_ms = 0.000001
 
 --- @alias vim.lsp.CompletionResult lsp.CompletionList | lsp.CompletionItem[]
+--- @alias vim.lsp.completion.FilterFn fun(item: lsp.CompletionItem, prefix: string): boolean
 
 -- TODO(mariasolos): Remove this declaration once we figure out a better way to handle
 -- literal/anonymous types (see https://github.com/neovim/neovim/pull/27542/files#r1495259331).
@@ -23,6 +24,7 @@ local ns_to_ms = 0.000001
 --- @class vim.lsp.completion.BufHandle
 --- @field clients table<integer, vim.lsp.Client>
 --- @field triggers table<string, vim.lsp.Client[]>
+--- @field filter? vim.lsp.completion.FilterFn
 
 --- @type table<integer, vim.lsp.completion.BufHandle>
 local buf_handles = {}
@@ -227,9 +229,10 @@ end
 --- @param result vim.lsp.CompletionResult Result of `textDocument/completion`
 --- @param prefix string prefix to filter the completion items
 --- @param client_id integer? Client ID
+--- @param filter? vim.lsp.completion.FilterFn
 --- @return table[]
 --- @see complete-items
-function M._lsp_to_complete_items(result, prefix, client_id)
+function M._lsp_to_complete_items(result, prefix, client_id, filter)
   local items = get_items(result)
   if vim.tbl_isempty(items) then
     return {}
@@ -240,6 +243,9 @@ function M._lsp_to_complete_items(result, prefix, client_id)
   end or function(item)
     if item.filterText then
       return next(vim.fn.matchfuzzy({ item.filterText }, prefix))
+    end
+    if filter then
+      return filter(item, prefix)
     end
     return true
   end
@@ -310,6 +316,7 @@ end
 --- @param server_start_boundary? integer 0-indexed word boundary, based on textEdit.range.start.character
 --- @param result vim.lsp.CompletionResult
 --- @param encoding string
+--- @param filter? vim.lsp.completion.FilterFn
 --- @return table[] matches
 --- @return integer? server_start_boundary
 function M._convert_results(
@@ -320,7 +327,8 @@ function M._convert_results(
   client_start_boundary,
   server_start_boundary,
   result,
-  encoding
+  encoding,
+  filter
 )
   -- Completion response items may be relative to a position different than `client_start_boundary`.
   -- Concrete example, with lua-language-server:
@@ -345,7 +353,7 @@ function M._convert_results(
     server_start_boundary = client_start_boundary
   end
   local prefix = line:sub((server_start_boundary or client_start_boundary) + 1, cursor_col)
-  local matches = M._lsp_to_complete_items(result, prefix, client_id)
+  local matches = M._lsp_to_complete_items(result, prefix, client_id, filter)
   return matches, server_start_boundary
 end
 
@@ -385,7 +393,7 @@ local function request(clients, bufnr, win, callback)
   end
 end
 
-local function trigger(bufnr, clients)
+local function trigger(bufnr, clients, filter)
   reset_timer()
   Context:cancel_pending()
 
@@ -431,7 +439,8 @@ local function trigger(bufnr, clients)
           word_boundary,
           nil,
           result,
-          encoding
+          encoding,
+          filter
         )
         vim.list_extend(matches, client_matches)
       end
@@ -572,6 +581,7 @@ end
 
 --- @class vim.lsp.completion.BufferOpts
 --- @field autotrigger? boolean Whether to trigger completion automatically. Default: false
+--- @field filter? vim.lsp.completion.FilterFn Function used to filter completion items. Default: nil
 
 --- @param client_id integer
 ---@param bufnr integer
@@ -579,7 +589,7 @@ end
 local function enable_completions(client_id, bufnr, opts)
   local buf_handle = buf_handles[bufnr]
   if not buf_handle then
-    buf_handle = { clients = {}, triggers = {} }
+    buf_handle = { clients = {}, triggers = {}, filter = opts.filter }
     buf_handles[bufnr] = buf_handle
 
     -- Attach to buffer events.
@@ -692,8 +702,10 @@ end
 --- Trigger LSP completion in the current buffer.
 function M.trigger()
   local bufnr = api.nvim_get_current_buf()
-  local clients = (buf_handles[bufnr] or {}).clients or {}
-  trigger(bufnr, clients)
+  local buf_handle = buf_handles[bufnr] or {}
+  local clients = buf_handle.clients or {}
+  local filter = buf_handle.filter
+  trigger(bufnr, clients, filter)
 end
 
 --- Implements 'omnifunc' compatible LSP completion.

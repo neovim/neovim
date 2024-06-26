@@ -1616,6 +1616,8 @@ Lua module: vim.lsp.completion                                *lsp-completion*
     Fields: ~
       • {autotrigger}?  (`boolean`) Whether to trigger completion
                         automatically. Default: false
+      • {filter}?       (`vim.lsp.completion.FilterFn`) Function used to
+                        filter completion items. Default: nil
 
 
                                                  *vim.lsp.completion.enable()*
