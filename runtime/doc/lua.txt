@@ -2559,7 +2559,7 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
                       typed (it might be an empty string if nothing was
                       entered), or `nil` if the user aborted the dialog.
 
-vim.ui.open({path})                                            *vim.ui.open()*
+vim.ui.open({path}, {opt})                                     *vim.ui.open()*
     Opens `path` with the system default handler (macOS `open`, Windows
     `explorer.exe`, Linux `xdg-open`, …), or returns (but does not show) an
     error message on failure.
@@ -2570,6 +2570,8 @@ vim.ui.open({path})                                            *vim.ui.open()*
         -- Asynchronous.
         vim.ui.open("https://neovim.io/")
         vim.ui.open("~/path/to/file")
+        -- Use the "osurl" command to handle the path or URL.
+        vim.ui.open("gh#neovim/neovim!29490", { cmd = { 'osurl' } })
         -- Synchronous (wait until the process exits).
         local cmd, err = vim.ui.open("$VIMRUNTIME")
         if cmd then
@@ -2579,6 +2581,8 @@ vim.ui.open({path})                                            *vim.ui.open()*
 
     Parameters: ~
       • {path}  (`string`) Path or URL to open
+      • {opt}   (`{ cmd?: string[] }?`) Options
+                • cmd string[]|nil Command used to open the path or URL.
 
     Return (multiple): ~
         (`vim.SystemObj?`) Command object, or nil if not found.

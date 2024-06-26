@@ -117,6 +117,8 @@ end
 --- -- Asynchronous.
 --- vim.ui.open("https://neovim.io/")
 --- vim.ui.open("~/path/to/file")
+--- -- Use the "osurl" command to handle the path or URL.
+--- vim.ui.open("gh#neovim/neovim!29490", { cmd = { 'osurl' } })
 --- -- Synchronous (wait until the process exits).
 --- local cmd, err = vim.ui.open("$VIMRUNTIME")
 --- if cmd then
@@ -125,12 +127,14 @@ end
 --- ```
 ---
 ---@param path string Path or URL to open
+---@param opt? { cmd?: string[] } Options
+---     - cmd string[]|nil Command used to open the path or URL.
 ---
 ---@return vim.SystemObj|nil # Command object, or nil if not found.
 ---@return nil|string # Error message on failure, or nil on success.
 ---
 ---@see |vim.system()|
-function M.open(path)
+function M.open(path, opt)
   vim.validate({
     path = { path, 'string' },
   })
@@ -139,12 +143,13 @@ function M.open(path)
     path = vim.fs.normalize(path)
   end
 
-  local cmd --- @type string[]
-  local opts --- @type vim.SystemOpts
+  opt = opt or {}
+  local cmd ---@type string[]
+  local job_opt = { text = true, detach = true } --- @type vim.SystemOpts
 
-  opts = { text = true, detach = true }
-
-  if vim.fn.has('mac') == 1 then
+  if opt.cmd then
+    cmd = vim.list_extend(opt.cmd --[[@as string[] ]], { path })
+  elseif vim.fn.has('mac') == 1 then
     cmd = { 'open', path }
   elseif vim.fn.has('win32') == 1 then
     if vim.fn.executable('rundll32') == 1 then
@@ -154,8 +159,8 @@ function M.open(path)
     end
   elseif vim.fn.executable('xdg-open') == 1 then
     cmd = { 'xdg-open', path }
-    opts.stdout = false
-    opts.stderr = false
+    job_opt.stdout = false
+    job_opt.stderr = false
   elseif vim.fn.executable('wslview') == 1 then
     cmd = { 'wslview', path }
   elseif vim.fn.executable('explorer.exe') == 1 then
@@ -164,7 +169,7 @@ function M.open(path)
     return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open)'
   end
 
-  return vim.system(cmd, opts), nil
+  return vim.system(cmd, job_opt), nil
 end
 
 --- Returns all URLs at cursor, if any.
