@@ -1141,44 +1141,105 @@ end
 
 --- @nodoc
 --- @class vim.context.mods
+--- @field bo? table<string, any>
 --- @field buf? integer
 --- @field emsg_silent? boolean
+--- @field env? table<string, any>
+--- @field go? table<string, any>
 --- @field hide? boolean
---- @field horizontal? boolean
 --- @field keepalt? boolean
 --- @field keepjumps? boolean
 --- @field keepmarks? boolean
 --- @field keeppatterns? boolean
 --- @field lockmarks? boolean
 --- @field noautocmd? boolean
---- @field options? table<string, any>
+--- @field o? table<string, any>
 --- @field sandbox? boolean
 --- @field silent? boolean
 --- @field unsilent? boolean
 --- @field win? integer
+--- @field wo? table<string, any>
+
+--- @nodoc
+--- @class vim.context.state
+--- @field bo? table<string, any>
+--- @field env? table<string, any>
+--- @field go? table<string, any>
+--- @field wo? table<string, any>
+
+local scope_map = { buf = 'bo', global = 'go', win = 'wo' }
+local scope_order = { 'o', 'wo', 'bo', 'go', 'env' }
+local state_restore_order = { 'bo', 'wo', 'go', 'env' }
+
+--- Gets data about current state, enough to properly restore specified options/env/etc.
+--- @param context vim.context.mods
+--- @return vim.context.state
+local get_context_state = function(context)
+  local res = { bo = {}, env = {}, go = {}, wo = {} }
+
+  -- Use specific order from possibly most to least intrusive
+  for _, scope in ipairs(scope_order) do
+    for name, _ in pairs(context[scope] or {}) do
+      local sc = scope == 'o' and scope_map[vim.api.nvim_get_option_info2(name, {}).scope] or scope
+
+      -- Do not override already set state and fall back to `vim.NIL` for
+      -- state `nil` values (which still needs restoring later)
+      res[sc][name] = res[sc][name] or vim[sc][name] or vim.NIL
+
+      -- Always track global option value to properly restore later.
+      -- This matters for at least `o` and `wo` (which might set either/both
+      -- local and global option values).
+      if sc ~= 'env' then
+        res.go[name] = res.go[name] or vim.go[name]
+      end
+    end
+  end
+
+  return res
+end
 
 --- Executes function `f` with the given context specification.
+---
+--- Notes:
+--- - Context `{ buf = buf }` has no guarantees about current window when
+---   inside context.
+--- - Context `{ buf = buf, win = win }` is yet not allowed, but this seems
+---   to be an implementation detail.
+--- - There should be no way to revert currently set `context.sandbox = true`
+---   (like with nested `vim._with()` calls). Otherwise it kind of breaks the
+---   whole purpose of sandbox execution.
+--- - Saving and restoring option contexts (`bo`, `go`, `o`, `wo`) trigger
+---   `OptionSet` events. This is an implementation issue because not doing it
+---   seems to mean using either 'eventignore' option or extra nesting with
+---   `{ noautocmd = true }` (which itself is a wrapper for 'eventignore').
+---   As `{ go = { eventignore = '...' } }` is a valid context which should be
+---   properly set and restored, this is not a good approach.
+---   Not triggering `OptionSet` seems to be a good idea, though. So probably
+---   only moving context save and restore to lower level might resolve this.
 ---
 --- @param context vim.context.mods
 function vim._with(context, f)
   vim.validate('context', context, 'table')
   vim.validate('f', f, 'function')
 
+  vim.validate('context.bo', context.bo, 'table', true)
   vim.validate('context.buf', context.buf, 'number', true)
   vim.validate('context.emsg_silent', context.emsg_silent, 'boolean', true)
+  vim.validate('context.env', context.env, 'table', true)
+  vim.validate('context.go', context.go, 'table', true)
   vim.validate('context.hide', context.hide, 'boolean', true)
-  vim.validate('context.horizontal', context.horizontal, 'boolean', true)
   vim.validate('context.keepalt', context.keepalt, 'boolean', true)
   vim.validate('context.keepjumps', context.keepjumps, 'boolean', true)
   vim.validate('context.keepmarks', context.keepmarks, 'boolean', true)
   vim.validate('context.keeppatterns', context.keeppatterns, 'boolean', true)
   vim.validate('context.lockmarks', context.lockmarks, 'boolean', true)
   vim.validate('context.noautocmd', context.noautocmd, 'boolean', true)
-  vim.validate('context.options', context.options, 'table', true)
+  vim.validate('context.o', context.o, 'table', true)
   vim.validate('context.sandbox', context.sandbox, 'boolean', true)
   vim.validate('context.silent', context.silent, 'boolean', true)
   vim.validate('context.unsilent', context.unsilent, 'boolean', true)
   vim.validate('context.win', context.win, 'number', true)
+  vim.validate('context.wo', context.wo, 'table', true)
 
   -- Check buffer exists
   if context.buf then
@@ -1192,29 +1253,49 @@ function vim._with(context, f)
     if not vim.api.nvim_win_is_valid(context.win) then
       error('Invalid window id: ' .. context.win)
     end
-  end
-
-  -- Store original options
-  local previous_options ---@type table<string, any>
-  if context.options then
-    previous_options = {}
-    for k, v in pairs(context.options) do
-      previous_options[k] =
-        vim.api.nvim_get_option_value(k, { win = context.win, buf = context.buf })
-      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf })
+    -- TODO: Maybe allow it?
+    if context.buf and vim.api.nvim_win_get_buf(context.win) ~= context.buf then
+      error('Can not set both `buf` and `win` context.')
     end
   end
 
-  local retval = { vim._with_c(context, f) }
-
-  -- Restore original options
-  if previous_options then
-    for k, v in pairs(previous_options) do
-      vim.api.nvim_set_option_value(k, v, { win = context.win, buf = context.buf })
+  -- Decorate so that save-set-restore options is done in correct window-buffer
+  local callback = function()
+    -- Cache current values to be changed by context
+    -- Abort early in case of bad context value
+    local ok, state = pcall(get_context_state, context)
+    if not ok then
+      error(state, 0)
     end
+
+    -- Apply some parts of the context in specific order
+    -- NOTE: triggers `OptionSet` event
+    for _, scope in ipairs(scope_order) do
+      for name, context_value in pairs(context[scope] or {}) do
+        vim[scope][name] = context_value
+      end
+    end
+
+    -- Execute
+    local res = { pcall(f) }
+
+    -- Restore relevant cached values in specific order, global scope last
+    -- NOTE: triggers `OptionSet` event
+    for _, scope in ipairs(state_restore_order) do
+      for name, cached_value in pairs(state[scope]) do
+        vim[scope][name] = cached_value
+      end
+    end
+
+    -- Return
+    if not res[1] then
+      error(res[2], 0)
+    end
+    table.remove(res, 1)
+    return unpack(res, 1, table.maxn(res))
   end
 
-  return unpack(retval)
+  return vim._with_c(context, callback)
 end
 
 return vim
