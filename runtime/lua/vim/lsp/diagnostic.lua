@@ -122,13 +122,7 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       code = diagnostic.code,
       _tags = tags_lsp_to_vim(diagnostic, client_id),
       user_data = {
-        lsp = {
-          -- usage of user_data.lsp.code is deprecated in favor of the top-level code field
-          code = diagnostic.code,
-          codeDescription = diagnostic.codeDescription,
-          relatedInformation = diagnostic.relatedInformation,
-          data = diagnostic.data,
-        },
+        lsp = diagnostic,
       },
     }
   end, diagnostics)
@@ -157,8 +151,11 @@ local function diagnostic_vim_to_lsp(diagnostics)
   ---@param diagnostic vim.Diagnostic
   ---@return lsp.Diagnostic
   return vim.tbl_map(function(diagnostic)
-    return vim.tbl_extend('keep', {
-      -- "keep" the below fields over any duplicate fields in diagnostic.user_data.lsp
+    local user_data = diagnostic.user_data or {}
+    if user_data.lsp then
+      return user_data.lsp
+    end
+    return {
       range = {
         start = {
           line = diagnostic.lnum,
@@ -174,7 +171,7 @@ local function diagnostic_vim_to_lsp(diagnostics)
       source = diagnostic.source,
       code = diagnostic.code,
       tags = tags_vim_to_lsp(diagnostic),
-    }, diagnostic.user_data and (diagnostic.user_data.lsp or {}) or {})
+    }
   end, diagnostics)
 end
 
@@ -366,6 +363,7 @@ end
 ---              Structured: { [1] = {...}, [5] = {.... } }
 ---@private
 function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
+  vim.deprecate('vim.lsp.diagnostic.get_line_diagnostics', 'vim.diagnostic.get', '0.12')
   convert_severity(opts)
   local diag_opts = {} --- @type vim.diagnostic.GetOpts
 

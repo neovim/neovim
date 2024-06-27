@@ -852,13 +852,9 @@ function M.code_action(opts)
   if opts.diagnostics or opts.only then
     opts = { options = opts }
   end
-  local context = opts.context or {}
+  local context = opts.context and vim.deepcopy(opts.context) or {}
   if not context.triggerKind then
     context.triggerKind = vim.lsp.protocol.CodeActionTriggerKind.Invoked
-  end
-  if not context.diagnostics then
-    local bufnr = api.nvim_get_current_buf()
-    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
   end
   local mode = api.nvim_get_mode().mode
   local bufnr = api.nvim_get_current_buf()
@@ -900,6 +896,18 @@ function M.code_action(opts)
         util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
     else
       params = util.make_range_params(win, client.offset_encoding)
+    end
+    if not context.diagnostics then
+      local ns_push = vim.lsp.diagnostic.get_namespace(client.id, false)
+      local ns_pull = vim.lsp.diagnostic.get_namespace(client.id, true)
+      local diagnostics = {}
+      local lnum = api.nvim_win_get_cursor(0)[1] - 1
+      vim.list_extend(diagnostics, vim.diagnostic.get(bufnr, { namespace = ns_pull, lnum = lnum }))
+      vim.list_extend(diagnostics, vim.diagnostic.get(bufnr, { namespace = ns_push, lnum = lnum }))
+      ---@diagnostic disable-next-line: no-unknown
+      context.diagnostics = vim.tbl_map(function(d)
+        return d.user_data.lsp
+      end, diagnostics)
     end
     params.context = context
     client.request(ms.textDocument_codeAction, params, on_result, bufnr)
