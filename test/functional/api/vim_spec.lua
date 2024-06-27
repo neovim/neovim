@@ -1571,9 +1571,9 @@ describe('API', function()
       eq(val2, request('vim_del_var', 'lua'))
     end)
 
-    it('truncates values with NULs in them', function()
+    it('preserves values with NULs in them', function()
       api.nvim_set_var('xxx', 'ab\0cd')
-      eq('ab', api.nvim_get_var('xxx'))
+      eq('ab\000cd', api.nvim_get_var('xxx'))
     end)
   end)
 
