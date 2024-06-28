@@ -72,7 +72,11 @@ vim._ts_get_language_version = function() end
 --- @param path string
 --- @param lang string
 --- @param symbol_name? string
-vim._ts_add_language = function(path, lang, symbol_name) end
+vim._ts_add_language_from_object = function(path, lang, symbol_name) end
+
+--- @param path string
+--- @param lang string
+vim._ts_add_language_from_wasm = function(path, lang) end
 
 ---@return integer
 vim._ts_get_minimum_language_version = function() end

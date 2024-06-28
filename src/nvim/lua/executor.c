@@ -924,6 +924,7 @@ void nlua_free_all_mem(void)
   lua_State *lstate = global_lstate;
   nlua_unref_global(lstate, require_ref);
   nlua_common_free_all_mem(lstate);
+  tslua_free();
 }
 
 static void nlua_common_free_all_mem(lua_State *lstate)
@@ -1902,8 +1903,13 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, tslua_push_querycursor);
   lua_setfield(lstate, -2, "_create_ts_querycursor");
 
-  lua_pushcfunction(lstate, tslua_add_language);
-  lua_setfield(lstate, -2, "_ts_add_language");
+  lua_pushcfunction(lstate, tslua_add_language_from_object);
+  lua_setfield(lstate, -2, "_ts_add_language_from_object");
+
+#ifdef HAVE_WASMTIME
+  lua_pushcfunction(lstate, tslua_add_language_from_wasm);
+  lua_setfield(lstate, -2, "_ts_add_language_from_wasm");
+#endif
 
   lua_pushcfunction(lstate, tslua_has_language);
   lua_setfield(lstate, -2, "_ts_has_language");
