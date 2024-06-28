@@ -1352,8 +1352,7 @@ int mb_toupper(int a)
 
 bool mb_islower(int a)
 {
-  // German sharp s is lower case but has no upper case equivalent.
-  return (mb_toupper(a) != a) || a == 0xdf;
+  return mb_toupper(a) != a;
 }
 
 /// Return the lower-case equivalent of "a", which is a UCS-4 character.  Use
