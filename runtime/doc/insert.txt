@@ -1143,6 +1143,10 @@ that contains the List.  The Dict can have these items:
 			The only value currently recognized is "always", the
 			effect is that the function is called whenever the
 			leading text is changed.
+
+If you want to suppress the warning message for an empty result, return
+v:null.  This is useful to implement asynchronous completion with complete().
+
 Other items are ignored.
 
 For acting upon end of completion, see the |CompleteDonePre| and
