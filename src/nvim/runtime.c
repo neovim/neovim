@@ -74,7 +74,11 @@ typedef struct {
   FILE *fp;                     ///< opened file for sourcing
   char *nextline;               ///< if not NULL: line that was read ahead
   linenr_T sourcing_lnum;       ///< line number of the source file
-  int finished;                 ///< ":finish" used
+  bool source_str_from_lua;     ///< true if sourcing a string from Lua
+  bool finished;                ///< ":finish" used
+  bool source_from_buf;         ///< true if sourcing from a buffer or string
+  int buf_lnum;                 ///< line number in the buffer or string
+  garray_T buflines;            ///< lines in the buffer or string
 #ifdef USE_CRNL
   int fileformat;               ///< EOL_UNKNOWN, EOL_UNIX or EOL_DOS
   bool error;                   ///< true if LF found after CR-LF
@@ -1889,42 +1893,6 @@ static bool concat_continued_line(garray_T *const ga, const int init_growsize, c
   return true;
 }
 
-typedef struct {
-  char *buf;
-  size_t offset;
-} GetStrLineCookie;
-
-/// Get one full line from a sourced string (in-memory, no file).
-/// Called by do_cmdline() when it's called from do_source_str().
-///
-/// @return pointer to allocated line, or NULL for end-of-file or
-///         some error.
-static char *get_str_line(int c, void *cookie, int indent, bool do_concat)
-{
-  GetStrLineCookie *p = cookie;
-  if (strlen(p->buf) <= p->offset) {
-    return NULL;
-  }
-  const char *line = p->buf + p->offset;
-  const char *eol = skip_to_newline(line);
-  garray_T ga;
-  ga_init(&ga, sizeof(char), 400);
-  ga_concat_len(&ga, line, (size_t)(eol - line));
-  if (do_concat && vim_strchr(p_cpo, CPO_CONCAT) == NULL) {
-    while (eol[0] != NUL) {
-      line = eol + 1;
-      const char *const next_eol = skip_to_newline(line);
-      if (!concat_continued_line(&ga, 400, line, (size_t)(next_eol - line))) {
-        break;
-      }
-      eol = next_eol;
-    }
-  }
-  ga_append(&ga, NUL);
-  p->offset = (size_t)(eol - p->buf) + 1;
-  return ga.ga_data;
-}
-
 /// Create a new script item and allocate script-local vars. @see new_script_vars
 ///
 /// @param  name  File name of the script. NULL for anonymous :source.
@@ -1954,84 +1922,70 @@ scriptitem_T *new_script_item(char *const name, scid_T *const sid_out)
   return SCRIPT_ITEM(sid);
 }
 
-static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name)
-{
-  char *save_sourcing_name = SOURCING_NAME;
-  linenr_T save_sourcing_lnum = SOURCING_LNUM;
-  char sourcing_name_buf[256];
-  char *sname;
-  if (save_sourcing_name == NULL) {
-    sname = (char *)traceback_name;
-  } else {
-    snprintf(sourcing_name_buf, sizeof(sourcing_name_buf),
-             "%s called at %s:%" PRIdLINENR, traceback_name, save_sourcing_name,
-             save_sourcing_lnum);
-    sname = sourcing_name_buf;
-  }
-  estack_push(ETYPE_SCRIPT, sname, 0);
-
-  const sctx_T save_current_sctx = current_sctx;
-  if (current_sctx.sc_sid != SID_LUA) {
-    current_sctx.sc_sid = SID_STR;
-  }
-  current_sctx.sc_seq = 0;
-  current_sctx.sc_lnum = save_sourcing_lnum;
-  funccal_entry_T entry;
-  save_funccal(&entry);
-  int retval = do_cmdline(NULL, fgetline, cookie,
-                          DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
-  estack_pop();
-  current_sctx = save_current_sctx;
-  restore_funccal();
-  return retval;
-}
-
 void cmd_source_buffer(const exarg_T *const eap, bool ex_lua)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (curbuf == NULL) {
-    return;
-  }
-  garray_T ga;
-  ga_init(&ga, sizeof(char), 400);
-  const linenr_T final_lnum = eap->line2;
-  // Copy the contents to be executed.
-  for (linenr_T curr_lnum = eap->line1; curr_lnum <= final_lnum; curr_lnum++) {
-    // Adjust growsize to current length to speed up concatenating many lines.
-    if (ga.ga_len > 400) {
-      ga_set_growsize(&ga, MIN(ga.ga_len, 8000));
-    }
-    ga_concat(&ga, ml_get(curr_lnum));
-    ga_append(&ga, NL);
-  }
-  ((char *)ga.ga_data)[ga.ga_len - 1] = NUL;
-  if (ex_lua || strequal(curbuf->b_p_ft, "lua")
-      || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua"))) {
-    char *name = ex_lua ? ":{range}lua" : ":source (no file)";
-    nlua_source_str(ga.ga_data, name);
-  } else {
-    const GetStrLineCookie cookie = {
-      .buf = ga.ga_data,
-      .offset = 0,
-    };
-    source_using_linegetter((void *)&cookie, get_str_line, ":source (no file)");
-  }
-  ga_clear(&ga);
+  do_source_ext(NULL, false, DOSO_NONE, NULL, eap, ex_lua, NULL);
 }
 
-/// Executes lines in `src` as Ex commands.
-///
-/// @see do_source()
-int do_source_str(const char *cmd, const char *traceback_name)
+/// Initialization for sourcing lines from the current buffer. Reads all the
+/// lines from the buffer and stores it in the cookie grow array.
+/// Returns a pointer to the name ":source buffer=<n>" on success and NULL on failure.
+static char *do_source_buffer_init(source_cookie_T *sp, const exarg_T *eap, bool ex_lua)
+  FUNC_ATTR_NONNULL_ALL
 {
-  GetStrLineCookie cookie = {
-    .buf = (char *)cmd,
-    .offset = 0,
-  };
-  return source_using_linegetter((void *)&cookie, get_str_line, traceback_name);
+  if (curbuf == NULL) {
+    return NULL;
+  }
+
+  if (ex_lua) {
+    // Use ":{range}lua buffer=<num>" as the script name
+    snprintf(IObuff, IOSIZE, ":{range}lua buffer=%d", curbuf->b_fnum);
+  } else {
+    // Use ":source buffer=<num>" as the script name
+    snprintf(IObuff, IOSIZE, ":source buffer=%d", curbuf->b_fnum);
+  }
+  char *fname = xstrdup(IObuff);
+
+  ga_init(&sp->buflines, sizeof(char *), 100);
+  // Copy the lines from the buffer into a grow array
+  for (linenr_T curr_lnum = eap->line1; curr_lnum <= eap->line2; curr_lnum++) {
+    GA_APPEND(char *, &sp->buflines, xstrdup(ml_get(curr_lnum)));
+  }
+  sp->buf_lnum = 0;
+  sp->source_from_buf = true;
+  // When sourcing a range of lines from a buffer, use buffer line number.
+  sp->sourcing_lnum = eap->line1 - 1;
+
+  return fname;
 }
 
-/// When fname is a 'lua' file nlua_exec_file() is invoked to source it.
+/// Initialization for sourcing lines from a string. Reads all the
+/// lines from the string and stores it in the cookie grow array.
+static void do_source_str_init(source_cookie_T *sp, const char *cmd)
+  FUNC_ATTR_NONNULL_ALL
+{
+  ga_init(&sp->buflines, sizeof(char *), 100);
+  // Copy the lines from the string into a grow array
+  while (*cmd != NUL) {
+    const char *eol = skip_to_newline(cmd);
+    GA_APPEND(char *, &sp->buflines, xmemdupz(cmd, (size_t)(eol - cmd)));
+    cmd = eol + (*eol != NUL);
+  }
+  sp->source_str_from_lua = current_sctx.sc_sid == SID_LUA;
+  sp->buf_lnum = 0;
+  sp->source_from_buf = true;
+}
+
+/// Executes lines in `cmd` as Ex commands.
+///
+/// @see do_source_ext()
+int do_source_str(const char *cmd, char *traceback_name)
+{
+  return do_source_ext(traceback_name, false, DOSO_NONE, NULL, NULL, false, cmd);
+}
+
+/// When fname is a .lua file nlua_exec_file() is invoked to source it.
 /// Otherwise reads the file `fname` and executes its lines as Ex commands.
 ///
 /// This function may be called recursively!
@@ -2042,11 +1996,14 @@ int do_source_str(const char *cmd, const char *traceback_name)
 /// @param check_other  check for .vimrc and _vimrc
 /// @param is_vimrc     DOSO_ value
 /// @param ret_sid      if not NULL and we loaded the script before, don't load it again
+/// @param eap          used when sourcing lines from a buffer instead of a file
+/// @param cmd          if not NULL, source from the given string
 ///
 /// @return  FAIL if file could not be opened, OK otherwise
 ///
 /// If a scriptitem_T was found or created "*ret_sid" is set to the SID.
-int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
+static int do_source_ext(char *fname, bool check_other, int is_vimrc, int *ret_sid,
+                         const exarg_T *eap, bool ex_lua, const char *cmd)
 {
   source_cookie_T cookie;
   uint8_t *firstline = NULL;
@@ -2056,22 +2013,35 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
   proftime_T wait_start;
   bool trigger_source_post = false;
 
-  char *p = expand_env_save(fname);
-  if (p == NULL) {
-    return retval;
-  }
-  char *fname_exp = fix_fname(p);
-  xfree(p);
-  if (fname_exp == NULL) {
-    return retval;
-  }
-  if (os_isdir(fname_exp)) {
-    smsg(0, _("Cannot source a directory: \"%s\""), fname);
-    goto theend;
+  CLEAR_FIELD(cookie);
+  char *fname_exp = NULL;
+  if (fname == NULL) {
+    // sourcing lines from a buffer
+    fname_exp = do_source_buffer_init(&cookie, eap, ex_lua);
+    if (fname_exp == NULL) {
+      return FAIL;
+    }
+  } else if (cmd != NULL) {
+    do_source_str_init(&cookie, cmd);
+    fname_exp = xstrdup(fname);
+  } else {
+    char *p = expand_env_save(fname);
+    if (p == NULL) {
+      return retval;
+    }
+    fname_exp = fix_fname(p);
+    xfree(p);
+    if (fname_exp == NULL) {
+      return retval;
+    }
+    if (os_isdir(fname_exp)) {
+      smsg(0, _("Cannot source a directory: \"%s\""), fname);
+      goto theend;
+    }
   }
 
   // See if we loaded this script before.
-  int sid = find_script_by_name(fname_exp);
+  int sid = cmd != NULL ? SID_STR : find_script_by_name(fname_exp);
   if (sid > 0 && ret_sid != NULL) {
     // Already loaded and no need to load again, return here.
     *ret_sid = sid;
@@ -2094,11 +2064,13 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
   // Apply SourcePre autocommands, they may get the file.
   apply_autocmds(EVENT_SOURCEPRE, fname_exp, fname_exp, false, curbuf);
 
-  cookie.fp = fopen_noinh_readbin(fname_exp);
+  if (!cookie.source_from_buf) {
+    cookie.fp = fopen_noinh_readbin(fname_exp);
+  }
   if (cookie.fp == NULL && check_other) {
     // Try again, replacing file name ".nvimrc" by "_nvimrc" or vice versa,
     // and ".exrc" by "_exrc" or vice versa.
-    p = path_tail(fname_exp);
+    char *p = path_tail(fname_exp);
     if ((*p == '.' || *p == '_')
         && (STRICMP(p + 1, "nvimrc") == 0 || STRICMP(p + 1, "exrc") == 0)) {
       *p = (*p == '_') ? '.' : '_';
@@ -2106,7 +2078,7 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
     }
   }
 
-  if (cookie.fp == NULL) {
+  if (cookie.fp == NULL && !cookie.source_from_buf) {
     if (p_verbose > 1) {
       verbose_enter();
       if (SOURCING_NAME == NULL) {
@@ -2143,12 +2115,7 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
   } else {
     cookie.fileformat = EOL_UNKNOWN;
   }
-  cookie.error = false;
 #endif
-
-  cookie.nextline = NULL;
-  cookie.sourcing_lnum = 0;
-  cookie.finished = false;
 
   // Check if this script has a breakpoint.
   cookie.breakpoint = dbg_find_breakpoint(true, fname_exp, 0);
@@ -2178,7 +2145,9 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
 
   const sctx_T save_current_sctx = current_sctx;
 
-  current_sctx.sc_lnum = 0;
+  if (!cookie.source_str_from_lua) {
+    current_sctx.sc_lnum = 0;
+  }
 
   // Always use a new sequence number.
   current_sctx.sc_seq = ++last_current_SID_seq;
@@ -2186,7 +2155,7 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
   if (sid > 0) {
     // loading the same script again
     si = SCRIPT_ITEM(sid);
-  } else {
+  } else if (cmd == NULL) {
     // It's new, generate a new SID.
     si = new_script_item(fname_exp, &sid);
     fname_exp = xstrdup(si->sn_name);  // used for autocmd
@@ -2194,12 +2163,14 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
       *ret_sid = sid;
     }
   }
-  current_sctx.sc_sid = sid;
+  if (!cookie.source_str_from_lua) {
+    current_sctx.sc_sid = sid;
+  }
 
   // Keep the sourcing name/lnum, for recursive calls.
-  estack_push(ETYPE_SCRIPT, si->sn_name, 0);
+  estack_push(ETYPE_SCRIPT, si != NULL ? si->sn_name : fname_exp, 0);
 
-  if (l_do_profiling == PROF_YES) {
+  if (l_do_profiling == PROF_YES && si != NULL) {
     bool forceit = false;
 
     // Check if we do profiling for this script.
@@ -2216,7 +2187,11 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
 
   cookie.conv.vc_type = CONV_NONE;              // no conversion
 
-  if (path_with_extension(fname_exp, "lua")) {
+  if (fname == NULL
+      && (ex_lua || strequal(curbuf->b_p_ft, "lua")
+          || (curbuf->b_fname && path_with_extension(curbuf->b_fname, "lua")))) {
+    nlua_exec_ga(&cookie.buflines, fname_exp);
+  } else if (path_with_extension(fname_exp, "lua")) {
     const sctx_T current_sctx_backup = current_sctx;
     current_sctx.sc_sid = SID_LUA;
     current_sctx.sc_lnum = 0;
@@ -2230,7 +2205,7 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
         && firstline[1] == 0xbb && firstline[2] == 0xbf) {
       // Found BOM; setup conversion, skip over BOM and recode the line.
       convert_setup(&cookie.conv, "utf-8", p_enc);
-      p = string_convert(&cookie.conv, (char *)firstline + 3, NULL);
+      char *p = string_convert(&cookie.conv, (char *)firstline + 3, NULL);
       if (p == NULL) {
         p = xstrdup((char *)firstline + 3);
       }
@@ -2243,7 +2218,7 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
   }
   retval = OK;
 
-  if (l_do_profiling == PROF_YES) {
+  if (l_do_profiling == PROF_YES && si != NULL) {
     // Get "si" again, "script_items" may have been reallocated.
     si = SCRIPT_ITEM(current_sctx.sc_sid);
     if (si->sn_prof_on) {
@@ -2290,7 +2265,12 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
   if (l_do_profiling == PROF_YES) {
     prof_child_exit(&wait_start);    // leaving a child now
   }
-  fclose(cookie.fp);
+  if (cookie.fp != NULL) {
+    fclose(cookie.fp);
+  }
+  if (cookie.source_from_buf) {
+    ga_clear_strings(&cookie.buflines);
+  }
   xfree(cookie.nextline);
   xfree(firstline);
   convert_setup(&cookie.conv, NULL, NULL);
@@ -2302,6 +2282,13 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
 theend:
   xfree(fname_exp);
   return retval;
+}
+
+/// @param check_other  check for .vimrc and _vimrc
+/// @param is_vimrc     DOSO_ value
+int do_source(char *fname, bool check_other, int is_vimrc, int *ret_sid)
+{
+  return do_source_ext(fname, check_other, is_vimrc, ret_sid, NULL, false, NULL);
 }
 
 /// Find an already loaded script "name".
@@ -2546,7 +2533,7 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
   char *line;
 
   // If breakpoints have been added/deleted need to check for it.
-  if (sp->dbg_tick < debug_tick) {
+  if ((sp->dbg_tick < debug_tick) && !sp->source_from_buf) {
     sp->breakpoint = dbg_find_breakpoint(true, sp->fname, SOURCING_LNUM);
     sp->dbg_tick = debug_tick;
   }
@@ -2557,7 +2544,7 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
   SOURCING_LNUM = sp->sourcing_lnum + 1;
   // Get current line.  If there is a read-ahead line, use it, otherwise get
   // one now.  "fp" is NULL if actually using a string.
-  if (sp->finished || sp->fp == NULL) {
+  if (sp->finished || (!sp->source_from_buf && sp->fp == NULL)) {
     line = NULL;
   } else if (sp->nextline == NULL) {
     line = get_one_sourceline(sp);
@@ -2610,7 +2597,7 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
   }
 
   // Did we encounter a breakpoint?
-  if (sp->breakpoint != 0 && sp->breakpoint <= SOURCING_LNUM) {
+  if (!sp->source_from_buf && sp->breakpoint != 0 && sp->breakpoint <= SOURCING_LNUM) {
     dbg_breakpoint(sp->fname, SOURCING_LNUM);
     // Find next breakpoint.
     sp->breakpoint = dbg_find_breakpoint(true, sp->fname, SOURCING_LNUM);
@@ -2639,19 +2626,28 @@ static char *get_one_sourceline(source_cookie_T *sp)
   while (true) {
     // make room to read at least 120 (more) characters
     ga_grow(&ga, 120);
-    buf = ga.ga_data;
-
-retry:
-    errno = 0;
-    if (fgets(buf + ga.ga_len, ga.ga_maxlen - ga.ga_len,
-              sp->fp) == NULL) {
-      if (errno == EINTR) {
-        goto retry;
+    if (sp->source_from_buf) {
+      if (sp->buf_lnum >= sp->buflines.ga_len) {
+        break;              // all the lines are processed
       }
-
-      break;
+      ga_concat(&ga, ((char **)sp->buflines.ga_data)[sp->buf_lnum]);
+      sp->buf_lnum++;
+      ga_grow(&ga, 1);
+      buf = (char *)ga.ga_data;
+      buf[ga.ga_len++] = NUL;
+      len = ga.ga_len;
+    } else {
+      buf = ga.ga_data;
+retry:
+      errno = 0;
+      if (fgets(buf + ga.ga_len, ga.ga_maxlen - ga.ga_len, sp->fp) == NULL) {
+        if (errno == EINTR) {
+          goto retry;
+        }
+        break;
+      }
+      len = ga.ga_len + (int)strlen(buf + ga.ga_len);
     }
-    len = ga.ga_len + (int)strlen(buf + ga.ga_len);
 #ifdef USE_CRNL
     // Ignore a trailing CTRL-Z, when in Dos mode. Only recognize the
     // CTRL-Z by its own, or after a NL.
