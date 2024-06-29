@@ -8,17 +8,11 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/libuv_process.h"
-#include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/types_defs.h"
-
-static inline bool callback_reader_set(CallbackReader reader)
-{
-  return reader.cb.type != kCallbackNone || reader.self;
-}
 
 struct Channel {
   uint64_t id;
@@ -49,13 +43,19 @@ struct Channel {
   bool callback_scheduled;
 };
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "channel.h.generated.h"
+# include "channel.h.inline.generated.h"
+#endif
+
+static inline bool callback_reader_set(CallbackReader reader)
+{
+  return reader.cb.type != kCallbackNone || reader.self;
+}
+
 EXTERN PMap(uint64_t) channels INIT( = MAP_INIT);
 
 EXTERN Callback on_print INIT( = CALLBACK_INIT);
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "channel.h.generated.h"
-#endif
 
 /// @returns Channel with the id or NULL if not found
 static inline Channel *find_channel(uint64_t id)
@@ -64,9 +64,7 @@ static inline Channel *find_channel(uint64_t id)
 }
 
 static inline Stream *channel_instream(Channel *chan)
-  REAL_FATTR_NONNULL_ALL;
-
-static inline Stream *channel_instream(Channel *chan)
+  FUNC_ATTR_NONNULL_ALL
 {
   switch (chan->streamtype) {
   case kChannelStreamProc:
@@ -86,9 +84,7 @@ static inline Stream *channel_instream(Channel *chan)
 }
 
 static inline RStream *channel_outstream(Channel *chan)
-  REAL_FATTR_NONNULL_ALL;
-
-static inline RStream *channel_outstream(Channel *chan)
+  FUNC_ATTR_NONNULL_ALL
 {
   switch (chan->streamtype) {
   case kChannelStreamProc:

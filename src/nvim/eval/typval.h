@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
-#include "nvim/func_attr.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/hashtab.h"
 #include "nvim/lib/queue_defs.h"
@@ -16,6 +15,10 @@
 #include "nvim/message.h"
 #include "nvim/types_defs.h"
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "eval/typval.h.inline.generated.h"
+#endif
+
 // In a hashtab item "hi_key" points to "di_key" in a dictitem.
 // This avoids adding a pointer to the hashtab item.
 
@@ -23,15 +26,13 @@
 #define TV_DICT_HI2DI(hi) \
   ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
 
-static inline void tv_list_ref(list_T *l)
-  REAL_FATTR_ALWAYS_INLINE;
-
 /// Increase reference count for a given list
 ///
 /// Does nothing for NULL lists.
 ///
 /// @param[in,out]  l  List to modify.
 static inline void tv_list_ref(list_T *const l)
+  FUNC_ATTR_ALWAYS_INLINE
 {
   if (l == NULL) {
     return;
@@ -39,22 +40,17 @@ static inline void tv_list_ref(list_T *const l)
   l->lv_refcount++;
 }
 
-static inline void tv_list_set_ret(typval_T *tv, list_T *l)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
-
 /// Set a list as the return value.  Increments the reference count.
 ///
 /// @param[out]  tv  Object to receive the list
 /// @param[in,out]  l  List to pass to the object
 static inline void tv_list_set_ret(typval_T *const tv, list_T *const l)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(1)
 {
   tv->v_type = VAR_LIST;
   tv->vval.v_list = l;
   tv_list_ref(l);
 }
-
-static inline VarLockStatus tv_list_locked(const list_T *l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get list lock status
 ///
@@ -62,6 +58,7 @@ static inline VarLockStatus tv_list_locked(const list_T *l)
 ///
 /// @param[in]  l  List to check.
 static inline VarLockStatus tv_list_locked(const list_T *const l)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (l == NULL) {
     return VAR_FIXED;
@@ -84,9 +81,6 @@ static inline void tv_list_set_lock(list_T *const l, const VarLockStatus lock)
   l->lv_lock = lock;
 }
 
-static inline void tv_list_set_copyid(list_T *l, int copyid)
-  REAL_FATTR_NONNULL_ALL;
-
 /// Set list copyID
 ///
 /// Does not expect NULL list, be careful.
@@ -94,17 +88,16 @@ static inline void tv_list_set_copyid(list_T *l, int copyid)
 /// @param[out]  l  List to modify.
 /// @param[in]  copyid  New copyID.
 static inline void tv_list_set_copyid(list_T *const l, const int copyid)
+  FUNC_ATTR_NONNULL_ALL
 {
   l->lv_copyID = copyid;
 }
-
-static inline int tv_list_len(const list_T *l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get the number of items in a list
 ///
 /// @param[in]  l  List to check.
 static inline int tv_list_len(const list_T *const l)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (l == NULL) {
     return 0;
@@ -112,21 +105,16 @@ static inline int tv_list_len(const list_T *const l)
   return l->lv_len;
 }
 
-static inline int tv_list_copyid(const list_T *l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
-
 /// Get list copyID
 ///
 /// Does not expect NULL list, be careful.
 ///
 /// @param[in]  l  List to check.
 static inline int tv_list_copyid(const list_T *const l)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return l->lv_copyID;
 }
-
-static inline list_T *tv_list_latest_copy(const list_T *l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
 
 /// Get latest list copy
 ///
@@ -136,12 +124,10 @@ static inline list_T *tv_list_latest_copy(const list_T *l)
 ///
 /// @param[in]  l  List to check.
 static inline list_T *tv_list_latest_copy(const list_T *const l)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return l->lv_copylist;
 }
-
-static inline int tv_list_uidx(const list_T *l, int n)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Normalize index: that is, return either -1 or non-negative index
 ///
@@ -150,6 +136,7 @@ static inline int tv_list_uidx(const list_T *l, int n)
 ///
 /// @return -1 or list index in range [0, tv_list_len(l)).
 static inline int tv_list_uidx(const list_T *const l, int n)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // Negative index is relative to the end.
   if (n < 0) {
@@ -163,9 +150,6 @@ static inline int tv_list_uidx(const list_T *const l, int n)
   return n;
 }
 
-static inline bool tv_list_has_watchers(const list_T *l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
-
 /// Check whether list has watchers
 ///
 /// E.g. is referenced by a :for loop.
@@ -174,12 +158,10 @@ static inline bool tv_list_has_watchers(const list_T *l)
 ///
 /// @return true if there are watchers, false otherwise.
 static inline bool tv_list_has_watchers(const list_T *const l)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return l && l->lv_watch;
 }
-
-static inline listitem_T *tv_list_first(const list_T *l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get first list item
 ///
@@ -187,6 +169,7 @@ static inline listitem_T *tv_list_first(const list_T *l)
 ///
 /// @return List item or NULL in case of an empty list.
 static inline listitem_T *tv_list_first(const list_T *const l)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (l == NULL) {
     return NULL;
@@ -194,15 +177,13 @@ static inline listitem_T *tv_list_first(const list_T *const l)
   return l->lv_first;
 }
 
-static inline listitem_T *tv_list_last(const list_T *l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
-
 /// Get last list item
 ///
 /// @param[in]  l  List to get item from.
 ///
 /// @return List item or NULL in case of an empty list.
 static inline listitem_T *tv_list_last(const list_T *const l)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (l == NULL) {
     return NULL;
@@ -210,14 +191,12 @@ static inline listitem_T *tv_list_last(const list_T *const l)
   return l->lv_last;
 }
 
-static inline void tv_dict_set_ret(typval_T *tv, dict_T *d)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
-
 /// Set a dictionary as the return value
 ///
 /// @param[out]  tv  Object to receive the dictionary
 /// @param[in,out]  d  Dictionary to pass to the object
 static inline void tv_dict_set_ret(typval_T *const tv, dict_T *const d)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(1)
 {
   tv->v_type = VAR_DICT;
   tv->vval.v_dict = d;
@@ -226,13 +205,11 @@ static inline void tv_dict_set_ret(typval_T *const tv, dict_T *const d)
   }
 }
 
-static inline long tv_dict_len(const dict_T *d)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
-
 /// Get the number of items in a Dictionary
 ///
 /// @param[in]  d  Dictionary to check.
 static inline long tv_dict_len(const dict_T *const d)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (d == NULL) {
     return 0;
@@ -240,21 +217,16 @@ static inline long tv_dict_len(const dict_T *const d)
   return (long)d->dv_hashtab.ht_used;
 }
 
-static inline bool tv_dict_is_watched(const dict_T *d)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
-
 /// Check if dictionary is watched
 ///
 /// @param[in]  d  Dictionary to check.
 ///
 /// @return true if there is at least one watcher.
 static inline bool tv_dict_is_watched(const dict_T *const d)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return d && !QUEUE_EMPTY(&d->watchers);
 }
-
-static inline void tv_blob_set_ret(typval_T *tv, blob_T *b)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1);
 
 /// Set a blob as the return value.
 ///
@@ -263,6 +235,7 @@ static inline void tv_blob_set_ret(typval_T *tv, blob_T *b)
 /// @param[out]  tv  Object to receive the blob.
 /// @param[in,out]  b  Blob to pass to the object.
 static inline void tv_blob_set_ret(typval_T *const tv, blob_T *const b)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(1)
 {
   tv->v_type = VAR_BLOB;
   tv->vval.v_blob = b;
@@ -271,22 +244,17 @@ static inline void tv_blob_set_ret(typval_T *const tv, blob_T *const b)
   }
 }
 
-static inline int tv_blob_len(const blob_T *b)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
-
 /// Get the length of the data in the blob, in bytes.
 ///
 /// @param[in]  b  Blob to check.
 static inline int tv_blob_len(const blob_T *const b)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (b == NULL) {
     return 0;
   }
   return b->bv_ga.ga_len;
 }
-
-static inline uint8_t tv_blob_get(const blob_T *b, int idx)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get the byte at index `idx` in the blob.
 ///
@@ -295,12 +263,10 @@ static inline uint8_t tv_blob_get(const blob_T *b, int idx)
 ///
 /// @return Byte value at the given index.
 static inline uint8_t tv_blob_get(const blob_T *const b, int idx)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return ((uint8_t *)b->bv_ga.ga_data)[idx];
 }
-
-static inline void tv_blob_set(blob_T *blob, int idx, uint8_t c)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
 
 /// Store the byte `c` at index `idx` in the blob.
 ///
@@ -308,6 +274,7 @@ static inline void tv_blob_set(blob_T *blob, int idx, uint8_t c)
 /// @param[in]  idx  Index in a blob. Must be valid.
 /// @param[in]  c  Value to store.
 static inline void tv_blob_set(blob_T *const blob, int idx, uint8_t c)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   ((uint8_t *)blob->bv_ga.ga_data)[idx] = c;
 }
@@ -417,9 +384,6 @@ extern bool tv_in_free_unref_items;
     } \
   })
 
-static inline bool tv_get_float_chk(const typval_T *tv, float_T *ret_f)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
-
 /// Get the float value
 ///
 /// Raises an error if object is not number or floating-point.
@@ -429,6 +393,7 @@ static inline bool tv_get_float_chk(const typval_T *tv, float_T *ret_f)
 ///
 /// @return true in case of success, false if tv is not a number or float.
 static inline bool tv_get_float_chk(const typval_T *const tv, float_T *const ret_f)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (tv->v_type == VAR_FLOAT) {
     *ret_f = tv->vval.v_float;
@@ -442,21 +407,16 @@ static inline bool tv_get_float_chk(const typval_T *const tv, float_T *const ret
   return false;
 }
 
-static inline DictWatcher *tv_dict_watcher_node_data(QUEUE *q)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL REAL_FATTR_NONNULL_RET
-    REAL_FATTR_NO_SANITIZE_ADDRESS REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
-
 /// Compute the `DictWatcher` address from a QUEUE node.
 ///
 /// This only exists for .asan-blacklist (ASAN doesn't handle QUEUE_DATA pointer
 /// arithmetic).
 static inline DictWatcher *tv_dict_watcher_node_data(QUEUE *q)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+    FUNC_ATTR_NO_SANITIZE_ADDRESS FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return QUEUE_DATA(q, DictWatcher, node);
 }
-
-static inline bool tv_is_func(typval_T tv)
-  REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
 
 /// Check whether given typval_T contains a function
 ///
@@ -466,6 +426,7 @@ static inline bool tv_is_func(typval_T tv)
 ///
 /// @return True if it is a function or a partial, false otherwise.
 static inline bool tv_is_func(const typval_T tv)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST
 {
   return tv.v_type == VAR_FUNC || tv.v_type == VAR_PARTIAL;
 }
