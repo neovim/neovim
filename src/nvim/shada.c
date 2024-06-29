@@ -1338,26 +1338,15 @@ static char *shada_filename(const char *file)
   return xstrdup(file);
 }
 
-#define PACK_STATIC_STR(s) \
-  do { \
-    msgpack_pack_str(spacker, sizeof(s) - 1); \
-    msgpack_pack_str_body(spacker, s, sizeof(s) - 1); \
-  } while (0)
-#define PACK_BIN(s) \
-  do { \
-    const String s_ = (s); \
-    msgpack_pack_bin(spacker, s_.size); \
-    if (s_.size > 0) { \
-      msgpack_pack_bin_body(spacker, s_.data, s_.size); \
-    } \
-  } while (0)
+#define PACK_STATIC_STR(s) mpack_str(STATIC_CSTR_AS_STRING(s), &sbuf);
 
 #define SHADA_MPACK_FREE_SPACE (4 * MPACK_ITEM_SIZE)
 
-static int mpack_raw_wrapper(void *cookie, const char *data, size_t len)
+static void shada_check_buffer(PackerBuffer *packer)
 {
-  mpack_raw(data, len, (PackerBuffer *)cookie);
-  return 0;
+  if (mpack_remaining(packer) < SHADA_MPACK_FREE_SPACE) {
+    packer->packer_flush(packer);
+  }
 }
 
 /// Write single ShaDa entry
@@ -1374,7 +1363,6 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
 {
   ShaDaWriteResult ret = kSDWriteFailed;
   PackerBuffer sbuf = packer_string_buffer();
-  msgpack_packer *spacker = msgpack_packer_new(&sbuf, &mpack_raw_wrapper);
 #define DUMP_ADDITIONAL_ELEMENTS(src, what) \
   do { \
     if ((src) != NULL) { \
@@ -1396,9 +1384,7 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
         if (!HASHITEM_EMPTY(hi)) { \
           todo--; \
           dictitem_T *const di = TV_DICT_HI2DI(hi); \
-          const size_t key_len = strlen(hi->hi_key); \
-          msgpack_pack_str(spacker, key_len); \
-          msgpack_pack_str_body(spacker, hi->hi_key, key_len); \
+          mpack_str(cstr_as_string(hi->hi_key), &sbuf); \
           if (encode_vim_to_msgpack(&sbuf, &di->di_tv, \
                                     _("additional data of ShaDa " what)) \
               == FAIL) { \
@@ -1411,40 +1397,33 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
 #define CHECK_DEFAULT(entry, attr) \
   (sd_default_values[(entry).type].data.attr == (entry).data.attr)
 #define ONE_IF_NOT_DEFAULT(entry, attr) \
-  ((size_t)(!CHECK_DEFAULT(entry, attr)))
+  ((uint32_t)(!CHECK_DEFAULT(entry, attr)))
 
 #define PACK_BOOL(entry, name, attr) \
   do { \
     if (!CHECK_DEFAULT(entry, search_pattern.attr)) { \
       PACK_STATIC_STR(name); \
-      if (sd_default_values[(entry).type].data.search_pattern.attr) { \
-        msgpack_pack_false(spacker); \
-      } else { \
-        msgpack_pack_true(spacker); \
-      } \
+      mpack_bool(&sbuf.ptr, !sd_default_values[(entry).type].data.search_pattern.attr); \
     } \
   } while (0)
+
+  shada_check_buffer(&sbuf);
   switch (entry.type) {
   case kSDItemMissing:
     abort();
   case kSDItemUnknown:
-    if (spacker->callback(spacker->data, entry.data.unknown_item.contents,
-                          (unsigned)entry.data.unknown_item.size) == -1) {
-      goto shada_pack_entry_error;
-    }
+    mpack_raw(entry.data.unknown_item.contents, entry.data.unknown_item.size, &sbuf);
     break;
   case kSDItemHistoryEntry: {
     const bool is_hist_search =
       entry.data.history_item.histtype == HIST_SEARCH;
-    const size_t arr_size = 2 + (size_t)is_hist_search + (size_t)(
-                                                                  tv_list_len(entry.data.
-                                                                              history_item.
-                                                                              additional_elements));
-    msgpack_pack_array(spacker, arr_size);
-    msgpack_pack_uint8(spacker, entry.data.history_item.histtype);
-    PACK_BIN(cstr_as_string(entry.data.history_item.string));
+    uint32_t arr_size = (2 + (uint32_t)is_hist_search
+                         + (uint32_t)(tv_list_len(entry.data.history_item.additional_elements)));
+    mpack_array(&sbuf.ptr, arr_size);
+    mpack_uint(&sbuf.ptr, entry.data.history_item.histtype);
+    mpack_bin(cstr_as_string(entry.data.history_item.string), &sbuf);
     if (is_hist_search) {
-      msgpack_pack_uint8(spacker, (uint8_t)entry.data.history_item.sep);
+      mpack_uint(&sbuf.ptr, (uint8_t)entry.data.history_item.sep);
     }
     DUMP_ADDITIONAL_ELEMENTS(entry.data.history_item.additional_elements,
                              "history entry item");
@@ -1458,10 +1437,10 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
       tv_list_append_number(list, VAR_TYPE_BLOB);
       entry.data.global_var.additional_elements = list;
     }
-    const size_t arr_size = 2 + (size_t)(tv_list_len(entry.data.global_var.additional_elements));
-    msgpack_pack_array(spacker, arr_size);
+    uint32_t arr_size = 2 + (uint32_t)(tv_list_len(entry.data.global_var.additional_elements));
+    mpack_array(&sbuf.ptr, arr_size);
     const String varname = cstr_as_string(entry.data.global_var.name);
-    PACK_BIN(varname);
+    mpack_bin(varname, &sbuf);
     char vardesc[256] = "variable g:";
     memcpy(&vardesc[sizeof("variable g:") - 1], varname.data,
            varname.size + 1);
@@ -1477,35 +1456,33 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
     break;
   }
   case kSDItemSubString: {
-    const size_t arr_size = 1 + (size_t)(
-                                         tv_list_len(entry.data.sub_string.additional_elements));
-    msgpack_pack_array(spacker, arr_size);
-    PACK_BIN(cstr_as_string(entry.data.sub_string.sub));
+    uint32_t arr_size = 1 + (uint32_t)(tv_list_len(entry.data.sub_string.additional_elements));
+    mpack_array(&sbuf.ptr, arr_size);
+    mpack_bin(cstr_as_string(entry.data.sub_string.sub), &sbuf);
     DUMP_ADDITIONAL_ELEMENTS(entry.data.sub_string.additional_elements,
                              "sub string item");
     break;
   }
   case kSDItemSearchPattern: {
-    size_t entry_map_size = (
-                             1  // Search pattern is always present
-                             + ONE_IF_NOT_DEFAULT(entry, search_pattern.magic)
-                             + ONE_IF_NOT_DEFAULT(entry, search_pattern.is_last_used)
-                             + ONE_IF_NOT_DEFAULT(entry, search_pattern.smartcase)
-                             + ONE_IF_NOT_DEFAULT(entry, search_pattern.has_line_offset)
-                             + ONE_IF_NOT_DEFAULT(entry, search_pattern.place_cursor_at_end)
-                             + ONE_IF_NOT_DEFAULT(entry,
-                                                  search_pattern.is_substitute_pattern)
-                             + ONE_IF_NOT_DEFAULT(entry, search_pattern.highlighted)
-                             + ONE_IF_NOT_DEFAULT(entry, search_pattern.offset)
-                             + ONE_IF_NOT_DEFAULT(entry, search_pattern.search_backward)
-                             // finally, additional data:
-                             + (
-                                entry.data.search_pattern.additional_data
-                                ? entry.data.search_pattern.additional_data->dv_hashtab.ht_used
-                                : 0));
-    msgpack_pack_map(spacker, entry_map_size);
+    uint32_t entry_map_size = (1  // Search pattern is always present
+                               + ONE_IF_NOT_DEFAULT(entry, search_pattern.magic)
+                               + ONE_IF_NOT_DEFAULT(entry, search_pattern.is_last_used)
+                               + ONE_IF_NOT_DEFAULT(entry, search_pattern.smartcase)
+                               + ONE_IF_NOT_DEFAULT(entry, search_pattern.has_line_offset)
+                               + ONE_IF_NOT_DEFAULT(entry, search_pattern.place_cursor_at_end)
+                               + ONE_IF_NOT_DEFAULT(entry,
+                                                    search_pattern.is_substitute_pattern)
+                               + ONE_IF_NOT_DEFAULT(entry, search_pattern.highlighted)
+                               + ONE_IF_NOT_DEFAULT(entry, search_pattern.offset)
+                               + ONE_IF_NOT_DEFAULT(entry, search_pattern.search_backward)
+                               // finally, additional data:
+                               + (entry.data.search_pattern.additional_data
+                                  ? (uint32_t)entry.data.search_pattern.additional_data->dv_hashtab.
+                                  ht_used
+                                  : 0));
+    mpack_map(&sbuf.ptr, entry_map_size);
     PACK_STATIC_STR(SEARCH_KEY_PAT);
-    PACK_BIN(cstr_as_string(entry.data.search_pattern.pat));
+    mpack_bin(cstr_as_string(entry.data.search_pattern.pat), &sbuf);
     PACK_BOOL(entry, SEARCH_KEY_MAGIC, magic);
     PACK_BOOL(entry, SEARCH_KEY_IS_LAST_USED, is_last_used);
     PACK_BOOL(entry, SEARCH_KEY_SMARTCASE, smartcase);
@@ -1516,7 +1493,7 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
     PACK_BOOL(entry, SEARCH_KEY_BACKWARD, search_backward);
     if (!CHECK_DEFAULT(entry, search_pattern.offset)) {
       PACK_STATIC_STR(SEARCH_KEY_OFFSET);
-      msgpack_pack_int64(spacker, entry.data.search_pattern.offset);
+      mpack_integer(&sbuf.ptr, entry.data.search_pattern.offset);
     }
 #undef PACK_BOOL
     DUMP_ADDITIONAL_DATA(entry.data.search_pattern.additional_data,
@@ -1527,8 +1504,7 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
   case kSDItemGlobalMark:
   case kSDItemLocalMark:
   case kSDItemJump: {
-    size_t entry_map_size = (
-                             1  // File name
+    size_t entry_map_size = (1  // File name
                              + ONE_IF_NOT_DEFAULT(entry, filemark.mark.lnum)
                              + ONE_IF_NOT_DEFAULT(entry, filemark.mark.col)
                              + ONE_IF_NOT_DEFAULT(entry, filemark.name)
@@ -1537,110 +1513,99 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
                                 entry.data.filemark.additional_data == NULL
                                 ? 0
                                 : entry.data.filemark.additional_data->dv_hashtab.ht_used));
-    msgpack_pack_map(spacker, entry_map_size);
+    mpack_map(&sbuf.ptr, (uint32_t)entry_map_size);
     PACK_STATIC_STR(KEY_FILE);
-    PACK_BIN(cstr_as_string(entry.data.filemark.fname));
+    mpack_bin(cstr_as_string(entry.data.filemark.fname), &sbuf);
     if (!CHECK_DEFAULT(entry, filemark.mark.lnum)) {
       PACK_STATIC_STR(KEY_LNUM);
-      msgpack_pack_long(spacker, entry.data.filemark.mark.lnum);
+      mpack_integer(&sbuf.ptr, entry.data.filemark.mark.lnum);
     }
     if (!CHECK_DEFAULT(entry, filemark.mark.col)) {
       PACK_STATIC_STR(KEY_COL);
-      msgpack_pack_long(spacker, entry.data.filemark.mark.col);
+      mpack_integer(&sbuf.ptr, entry.data.filemark.mark.col);
     }
     assert(entry.type == kSDItemJump || entry.type == kSDItemChange
            ? CHECK_DEFAULT(entry, filemark.name)
            : true);
     if (!CHECK_DEFAULT(entry, filemark.name)) {
       PACK_STATIC_STR(KEY_NAME_CHAR);
-      msgpack_pack_uint8(spacker, (uint8_t)entry.data.filemark.name);
+      mpack_uint(&sbuf.ptr, (uint8_t)entry.data.filemark.name);
     }
     DUMP_ADDITIONAL_DATA(entry.data.filemark.additional_data,
                          "mark (change, jump, global or local) item");
     break;
   }
   case kSDItemRegister: {
-    size_t entry_map_size = (2  // Register contents and name
-                             + ONE_IF_NOT_DEFAULT(entry, reg.type)
-                             + ONE_IF_NOT_DEFAULT(entry, reg.width)
-                             + ONE_IF_NOT_DEFAULT(entry, reg.is_unnamed)
-                             // Additional entries, if any:
-                             + (entry.data.reg.additional_data == NULL
-                                ? 0
-                                : entry.data.reg.additional_data->dv_hashtab.ht_used));
-    msgpack_pack_map(spacker, entry_map_size);
+    uint32_t entry_map_size = (2  // Register contents and name
+                               + ONE_IF_NOT_DEFAULT(entry, reg.type)
+                               + ONE_IF_NOT_DEFAULT(entry, reg.width)
+                               + ONE_IF_NOT_DEFAULT(entry, reg.is_unnamed)
+                               // Additional entries, if any:
+                               + (entry.data.reg.additional_data == NULL
+                                  ? 0
+                                  : (uint32_t)entry.data.reg.additional_data->dv_hashtab.ht_used));
+    mpack_map(&sbuf.ptr, entry_map_size);
     PACK_STATIC_STR(REG_KEY_CONTENTS);
-    msgpack_pack_array(spacker, entry.data.reg.contents_size);
+    mpack_array(&sbuf.ptr, (uint32_t)entry.data.reg.contents_size);
     for (size_t i = 0; i < entry.data.reg.contents_size; i++) {
-      PACK_BIN(cstr_as_string(entry.data.reg.contents[i]));
+      mpack_bin(cstr_as_string(entry.data.reg.contents[i]), &sbuf);
     }
     PACK_STATIC_STR(KEY_NAME_CHAR);
-    msgpack_pack_char(spacker, entry.data.reg.name);
+    mpack_uint(&sbuf.ptr, (uint8_t)entry.data.reg.name);
     if (!CHECK_DEFAULT(entry, reg.type)) {
       PACK_STATIC_STR(REG_KEY_TYPE);
-      msgpack_pack_uint8(spacker, (uint8_t)entry.data.reg.type);
+      mpack_uint(&sbuf.ptr, (uint8_t)entry.data.reg.type);
     }
     if (!CHECK_DEFAULT(entry, reg.width)) {
       PACK_STATIC_STR(REG_KEY_WIDTH);
-      msgpack_pack_uint64(spacker, (uint64_t)entry.data.reg.width);
+      mpack_uint64(&sbuf.ptr, (uint64_t)entry.data.reg.width);
     }
     if (!CHECK_DEFAULT(entry, reg.is_unnamed)) {
       PACK_STATIC_STR(REG_KEY_UNNAMED);
-      if (entry.data.reg.is_unnamed) {
-        msgpack_pack_true(spacker);
-      } else {
-        msgpack_pack_false(spacker);
-      }
+      mpack_bool(&sbuf.ptr, entry.data.reg.is_unnamed);
     }
     DUMP_ADDITIONAL_DATA(entry.data.reg.additional_data, "register item");
     break;
   }
   case kSDItemBufferList:
-    msgpack_pack_array(spacker, entry.data.buffer_list.size);
+    mpack_array(&sbuf.ptr, (uint32_t)entry.data.buffer_list.size);
     for (size_t i = 0; i < entry.data.buffer_list.size; i++) {
-      size_t entry_map_size = (
-                               1  // Buffer name
+      size_t entry_map_size = (1  // Buffer name
                                + (size_t)(entry.data.buffer_list.buffers[i].pos.lnum
                                           != default_pos.lnum)
                                + (size_t)(entry.data.buffer_list.buffers[i].pos.col
                                           != default_pos.col)
                                // Additional entries, if any:
-                               + (
-                                  entry.data.buffer_list.buffers[i].additional_data
-                                  == NULL
+                               + (entry.data.buffer_list.buffers[i].additional_data == NULL
                                   ? 0
                                   : (entry.data.buffer_list.buffers[i].additional_data
                                      ->dv_hashtab.ht_used)));
-      msgpack_pack_map(spacker, entry_map_size);
+      mpack_map(&sbuf.ptr, (uint32_t)entry_map_size);
       PACK_STATIC_STR(KEY_FILE);
-      PACK_BIN(cstr_as_string(entry.data.buffer_list.buffers[i].fname));
+      mpack_bin(cstr_as_string(entry.data.buffer_list.buffers[i].fname), &sbuf);
       if (entry.data.buffer_list.buffers[i].pos.lnum != 1) {
         PACK_STATIC_STR(KEY_LNUM);
-        msgpack_pack_uint64(spacker, (uint64_t)entry.data.buffer_list.buffers[i].pos.lnum);
+        mpack_uint64(&sbuf.ptr, (uint64_t)entry.data.buffer_list.buffers[i].pos.lnum);
       }
       if (entry.data.buffer_list.buffers[i].pos.col != 0) {
         PACK_STATIC_STR(KEY_COL);
-        msgpack_pack_uint64(spacker, (uint64_t)entry.data.buffer_list.buffers[i].pos.col);
+        mpack_uint64(&sbuf.ptr, (uint64_t)entry.data.buffer_list.buffers[i].pos.col);
       }
       DUMP_ADDITIONAL_DATA(entry.data.buffer_list.buffers[i].additional_data,
                            "buffer list subitem");
     }
     break;
   case kSDItemHeader:
-    msgpack_pack_map(spacker, entry.data.header.size);
+    mpack_map(&sbuf.ptr, (uint32_t)entry.data.header.size);
     for (size_t i = 0; i < entry.data.header.size; i++) {
-      const String s = entry.data.header.items[i].key;
-      msgpack_pack_str(spacker, s.size);
-      if (s.size) {
-        msgpack_pack_str_body(spacker, s.data, s.size);
-      }
+      mpack_str(entry.data.header.items[i].key, &sbuf);
       const Object obj = entry.data.header.items[i].value;
       switch (obj.type) {
       case kObjectTypeString:
-        PACK_BIN(obj.data.string);
+        mpack_bin(obj.data.string, &sbuf);
         break;
       case kObjectTypeInteger:
-        msgpack_pack_int64(spacker, (int64_t)obj.data.integer);
+        mpack_integer(&sbuf.ptr, obj.data.integer);
         break;
       default:
         abort();
@@ -1652,9 +1617,7 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
 #undef ONE_IF_NOT_DEFAULT
   String packed = packer_take_string(&sbuf);
   if (!max_kbyte || packed.size <= max_kbyte * 1024) {
-    if (mpack_remaining(packer) < SHADA_MPACK_FREE_SPACE) {
-      packer->packer_flush(packer);
-    }
+    shada_check_buffer(packer);
 
     if (entry.type == kSDItemUnknown) {
       mpack_uint64(&packer->ptr, entry.data.unknown_item.type);
@@ -1673,7 +1636,6 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
   }
   ret = kSDWriteSuccessful;
 shada_pack_entry_error:
-  msgpack_packer_free(spacker);
   xfree(sbuf.startptr);
   return ret;
 }
