@@ -708,6 +708,12 @@ target_sources(main_lib INTERFACE
   ${EXTERNAL_SOURCES}
   ${EXTERNAL_HEADERS})
 
+if(WIN32)
+  # add windows resource file pointing to the neovim icon
+  # this makes the icon appear for the neovim exe and associated filetypes
+  target_sources(nvim_bin PRIVATE ${NVIM_RUNTIME_DIR}/windows_icon.rc)
+endif()
+
 target_sources(nlua0 PUBLIC ${NLUA0_SOURCES})
 
 target_link_libraries(nvim_bin PRIVATE main_lib PUBLIC libuv)
