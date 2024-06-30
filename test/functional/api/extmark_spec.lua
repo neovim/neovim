@@ -1758,13 +1758,13 @@ describe('API/extmarks', function()
     command('1d 2')
     eq(0, #get_extmarks(-1, 0, -1, {}))
     -- mark is not removed when deleting bytes before the range
-    set_extmark(
-      ns,
-      3,
-      0,
-      4,
-      { invalidate = true, undo_restore = false, hl_group = 'Error', end_col = 7 }
-    )
+    set_extmark(ns, 3, 0, 4, {
+      invalidate = true,
+      undo_restore = true,
+      hl_group = 'Error',
+      end_col = 7,
+      right_gravity = false,
+    })
     feed('dw')
     eq(3, get_extmark_by_id(ns, 3, { details = true })[3].end_col)
     -- mark is not removed when deleting bytes at the start of the range
@@ -1778,15 +1778,18 @@ describe('API/extmarks', function()
     eq(1, get_extmark_by_id(ns, 3, { details = true })[3].end_col)
     -- mark is removed when all bytes in the range are deleted
     feed('hx')
-    eq({}, get_extmark_by_id(ns, 3, {}))
+    eq(true, get_extmark_by_id(ns, 3, { details = true })[3].invalid)
+    -- mark is restored with undo_restore == true if pos did not change
+    command('undo')
+    eq(nil, get_extmark_by_id(ns, 3, { details = true })[3].invalid)
     -- multiline mark is not removed when start of its range is deleted
-    set_extmark(
-      ns,
-      4,
-      1,
-      4,
-      { undo_restore = false, invalidate = true, hl_group = 'Error', end_col = 7, end_row = 3 }
-    )
+    set_extmark(ns, 4, 1, 4, {
+      undo_restore = false,
+      invalidate = true,
+      hl_group = 'Error',
+      end_col = 7,
+      end_row = 3,
+    })
     feed('ddDdd')
     eq({ 0, 0 }, get_extmark_by_id(ns, 4, {}))
     -- multiline mark is removed when entirety of its range is deleted
