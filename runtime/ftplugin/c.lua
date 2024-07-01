@@ -11,4 +11,4 @@ if vim.fn.isdirectory('/usr/include') == 1 then
   ]])
 end
 
-vim.b.undo_ftplugin = vim.b.undo_ftplugin .. '|setl path<'
+vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | setl path<'
