@@ -41,17 +41,25 @@ function M._create_parser(bufnr, lang, opts)
   local self = LanguageTree.new(bufnr, lang, opts)
 
   local function bytes_cb(_, ...)
+    if parsers[bufnr] ~= self then
+      return true
+    end
     self:_on_bytes(...)
   end
 
   local function detach_cb(_, ...)
     if parsers[bufnr] == self then
       parsers[bufnr] = nil
+    else
+      return true
     end
     self:_on_detach(...)
   end
 
   local function reload_cb(_)
+    if parsers[bufnr] ~= self then
+      return true
+    end
     self:_on_reload()
   end
 
