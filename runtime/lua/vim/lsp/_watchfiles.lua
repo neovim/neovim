@@ -9,8 +9,8 @@ local M = {}
 
 if vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1 then
   M._watchfunc = watch.watch
-elseif vim.fn.executable('fswatch') == 1 then
-  M._watchfunc = watch.fswatch
+elseif vim.fn.executable('inotifywait') == 1 then
+  M._watchfunc = watch.inotify
 else
   M._watchfunc = watch.watchdirs
 end
