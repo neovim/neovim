@@ -33,3 +33,5 @@ end
 
 -- it's a lisp!
 vim.cmd([[ runtime! ftplugin/lisp.vim ]])
+
+vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | setl omnifunc< iskeyword<'
