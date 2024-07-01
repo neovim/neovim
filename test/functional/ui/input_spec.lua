@@ -344,11 +344,12 @@ describe('input non-printable chars', function()
     feed_command('w')
     screen:expect([[
       foobar                                                      |
-      {1:~                                                           }|*3
+      {1:~                                                           }|*2
       {3:                                                            }|
       "Xtest-overwrite"                                           |
-      {9:WARNING: The file has been changed since reading it!!!}      |
-      {6:Do you really want to write to it (y/n)?}^                    |
+      {6:WARNING: The file has been changed since reading it. Do you }|
+      {6:really want to write to it?}                                 |
+      {6:(Y)es, [N]o: }^                                               |
     ]])
 
     feed('u')
@@ -357,36 +358,23 @@ describe('input non-printable chars', function()
       {1:~                                                           }|*2
       {3:                                                            }|
       "Xtest-overwrite"                                           |
-      {9:WARNING: The file has been changed since reading it!!!}      |
-      {6:Do you really want to write to it (y/n)?}u                   |
-      {6:Do you really want to write to it (y/n)?}^                    |
+      {6:WARNING: The file has been changed since reading it. Do you }|
+      {6:really want to write to it?}                                 |
+      {6:(Y)es, [N]o: }^                                               |
     ]])
 
     feed('\005')
     screen:expect([[
       foobar                                                      |
-      {1:~                                                           }|
+      {1:~                                                           }|*2
       {3:                                                            }|
       "Xtest-overwrite"                                           |
-      {9:WARNING: The file has been changed since reading it!!!}      |
-      {6:Do you really want to write to it (y/n)?}u                   |
-      {6:Do you really want to write to it (y/n)?}                    |
-      {6:Do you really want to write to it (y/n)?}^                    |
+      {6:WARNING: The file has been changed since reading it. Do you }|
+      {6:really want to write to it?}                                 |
+      {6:(Y)es, [N]o: }^                                               |
     ]])
 
     feed('n')
-    screen:expect([[
-      foobar                                                      |
-      {3:                                                            }|
-      "Xtest-overwrite"                                           |
-      {9:WARNING: The file has been changed since reading it!!!}      |
-      {6:Do you really want to write to it (y/n)?}u                   |
-      {6:Do you really want to write to it (y/n)?}                    |
-      {6:Do you really want to write to it (y/n)?}n                   |
-      {6:Press ENTER or type command to continue}^                     |
-    ]])
-
-    feed('<cr>')
     screen:expect([[
       ^foobar                                                      |
       {1:~                                                           }|*6

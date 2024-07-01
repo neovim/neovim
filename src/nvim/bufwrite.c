@@ -355,9 +355,11 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
       && time_differs(file_info, buf->b_mtime_read, buf->b_mtime_read_ns)) {
     msg_scroll = true;  // Don't overwrite messages here.
     msg_silent = 0;     // Must give this prompt.
-    // Don't use emsg() here, don't want to flush the buffers.
-    msg(_("WARNING: The file has been changed since reading it!!!"), HL_ATTR(HLF_E));
-    if (ask_yesno(_("Do you really want to write to it"), true) == 'n') {
+    if (vim_dialog_yesno(VIM_WARNING,
+                         NULL,
+                         _(
+                          "WARNING: The file has been changed since reading it. Do you really want to write to it?"),
+                         2) == VIM_NO) {
       return FAIL;
     }
     msg_scroll = false;  // Always overwrite the file message now.

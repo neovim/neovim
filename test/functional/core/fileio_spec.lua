@@ -295,10 +295,10 @@ describe('fileio', function()
     -- use async feed_command because nvim basically hangs on the prompt
     feed_command('w')
     screen:expect([[
-      {9:WARNING: The file has been changed since}|
-      {9: reading it!!!}                          |
-      {6:Do you really want to write to it (y/n)?}|
-      ^                                        |
+      {6:WARNING: The file has been changed since}|
+      {6: reading it. Do you really want to write}|
+      {6: to it?}                                 |
+      {6:(Y)es, [N]o: }^                           |
     ]])
 
     feed('n')
