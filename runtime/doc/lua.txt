@@ -2800,6 +2800,23 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
     See also: ~
       • |vim.keymap.set()|
 
+vim.keymap.get({modes}, {opts})                             *vim.keymap.get()*
+    Gets an existing mapping. Examples: >lua
+        -- Gets all normal mode keymaps
+        vim.keymap.get('n')
+
+        -- Gets a mapping which maps to a certain rhs
+        vim.keymap.get('n', { rhs = "<Plug>(MyAmazingFunction)" })
+<
+
+    Parameters: ~
+      • {modes}  (`string|string[]`)
+      • {opts}   (`table?`) A table with the following fields:
+                 • {lhs}? (`string`) Get a mapping with a certain lhs
+                 • {rhs}? (`string`) Get a mapping with a certain rhs
+                 • {buffer}? (`integer|boolean`) Get a mapping for a certain
+                   buffer
+
 vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
     Adds a new |mapping|. Examples: >lua
         -- Map to a Lua function:

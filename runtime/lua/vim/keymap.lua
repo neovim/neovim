@@ -135,4 +135,71 @@ function keymap.del(modes, lhs, opts)
   end
 end
 
+--- @class vim.keymap.get.Opts
+--- @inlinedoc
+---
+--- Get a mapping with a certain lhs
+--- @field lhs? string
+---
+--- Get a mapping with a certain rhs
+--- @field rhs? string
+---
+--- Get a mapping for a certain buffer
+--- @field buffer? integer|boolean
+
+--- Gets an existing mapping.
+--- Examples:
+---
+--- ```lua
+--- -- Gets all normal mode keymaps
+--- vim.keymap.get('n')
+---
+--- -- Gets a mapping which maps to a certain rhs
+--- vim.keymap.get('n', { rhs = "<Plug>(MyAmazingFunction)" })
+--- ```
+---
+---@param modes string|string[]
+---@param opts? vim.keymap.get.Opts
+function keymap.get(modes, opts)
+  vim.validate({
+    mode = { modes, { 's', 't' } },
+    opts = { opts, 't', true },
+  })
+
+  opts = opts or {}
+  modes = type(modes) == 'string' and { modes } or modes
+  --- @cast modes string[]
+
+  local keymaps = {}
+  for _, mode in ipairs(modes) do
+    if opts.buffer then
+      table.insert(
+        keymaps,
+        ---@diagnostic disable-next-line: param-type-mismatch
+        vim.api.nvim_buf_get_keymap(opts.buffer == true and 0 or opts.buffer, mode)
+      )
+    else
+      table.insert(keymaps, vim.api.nvim_get_keymap(mode))
+    end
+  end
+
+  local function matches(mapping)
+    local match = true
+    if opts.lhs then
+      match = match and opts.lhs == mapping.lhs
+    end
+    if opts.rhs then
+      match = match and (type(mapping.rhs) == 'string' and opts.lhs == mapping.lhs)
+    end
+    return match
+  end
+  return vim
+    .iter(keymaps)
+    :flatten()
+    :filter(function(mapping)
+      return matches(mapping)
+    end)
+    :totable()
+end
+
 return keymap
