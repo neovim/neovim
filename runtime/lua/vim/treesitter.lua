@@ -41,10 +41,16 @@ function M._create_parser(bufnr, lang, opts)
   local self = LanguageTree.new(bufnr, lang, opts)
 
   local function bytes_cb(_, ...)
+    if self:_is_destroyed() then
+      return true
+    end
     self:_on_bytes(...)
   end
 
   local function detach_cb(_, ...)
+    if self:_is_destroyed() then
+      return true
+    end
     if parsers[bufnr] == self then
       parsers[bufnr] = nil
     end
@@ -52,6 +58,9 @@ function M._create_parser(bufnr, lang, opts)
   end
 
   local function reload_cb(_)
+    if self:_is_destroyed() then
+      return true
+    end
     self:_on_reload()
   end
 
@@ -425,6 +434,11 @@ function M.stop(bufnr)
 
   if M.highlighter.active[bufnr] then
     M.highlighter.active[bufnr]:destroy()
+  end
+
+  if parsers[bufnr] then
+    parsers[bufnr]:destroy()
+    parsers[bufnr] = nil
   end
 end
 
