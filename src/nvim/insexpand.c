@@ -4087,6 +4087,34 @@ static int get_normal_compl_info(char *line, int startcol, colnr_T curs_col)
 
   compl_patternlen = strlen(compl_pattern);
 
+  if ((get_cot_flags() & COT_FUZZYCOLLECT) != 0) {
+    // Adjust size to avoid buffer overflow
+    size_t fuzzy_len = (size_t)compl_length * 5 + 10;
+    // Allocate enough space
+    char *fuzzy_pattern = xmalloc(fuzzy_len);
+    if (fuzzy_pattern == NULL) {
+      compl_patternlen = 0;
+      return FAIL;
+    }
+    // Use 'very magic' mode for simpler syntax
+    STRCPY(fuzzy_pattern, "\\v");
+    int i = 2;  // Start from 2 to skip "\\v"
+    while (i < compl_length + 2) {
+      // Append "\\k*" before each character
+      xstrlcat(fuzzy_pattern, "\\k*", fuzzy_len - strlen(fuzzy_pattern) - 1);
+      // Get length of current multi-byte character
+      int char_len = utf_ptr2len(compl_pattern + i);
+      // Concatenate the character safely
+      xstrlcat(fuzzy_pattern, compl_pattern + i, (size_t)char_len);
+      // Move to the next character
+      i += char_len;
+    }
+    // Append "\\k*" at the end to match any characters after the pattern
+    xstrlcat(fuzzy_pattern, "\\k*", fuzzy_len - strlen(fuzzy_pattern) - 1);
+    xfree(compl_pattern);
+    compl_pattern = fuzzy_pattern;
+    compl_patternlen = strlen(compl_pattern);
+  }
   return OK;
 }
 
