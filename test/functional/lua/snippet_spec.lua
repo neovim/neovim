@@ -303,4 +303,18 @@ describe('vim.snippet', function()
     feed('<Esc>O<cr><Tab>')
     eq({ '' }, buf_lines(0))
   end)
+
+  it('supports multiple snippet sessions', function()
+    test_expand_success({ 'func $1($3) {', '  $2', '}' }, { 'func () {', '  ', '}' })
+
+    feed('foo<Tab>')
+
+    test_expand_success({ 'var x = $1 + $2' }, { 'func foo() {', '  var x =  + ', '}' })
+
+    feed('a<Tab>b')
+
+    feed('<Tab><Tab>a, b')
+
+    eq({ 'func foo(a, b) {', '  var x = a + b', '}' }, buf_lines(0))
+  end)
 end)
