@@ -2393,10 +2393,6 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
     redraw_buf_range_later(rbuf, first, last);
   }
 
-  if (opts->cursor) {
-    setcursor_mayforce(win ? win : curwin, true);
-  }
-
   bool flush = opts->flush;
   if (opts->tabline) {
     // Flush later in case tabline was just hidden or shown for the first time.
@@ -2423,11 +2419,22 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
     }
   }
 
-  // Flush pending screen updates if "flush" or "clear" is true, or when
-  // redrawing a status component may have changed the grid dimensions.
+  win_T *cwin = win ? win : curwin;
+  // Allow moving cursor to recently opened window and make sure it is drawn #28868.
+  if (opts->cursor && (!cwin->w_grid.target || !cwin->w_grid.target->valid)) {
+    flush = true;
+  }
+
+  // Redraw pending screen updates when explicitly requested or when determined
+  // that it is necessary to properly draw other requested components.
   if (flush && !cmdpreview) {
     update_screen();
   }
+
+  if (opts->cursor) {
+    setcursor_mayforce(cwin, true);
+  }
+
   ui_flush();
 
   RedrawingDisabled = save_rd;

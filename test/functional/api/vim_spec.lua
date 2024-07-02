@@ -4967,12 +4967,29 @@ describe('API', function()
   it('nvim__redraw', function()
     local screen = Screen.new(60, 5)
     screen:attach()
-    local win = api.nvim_get_current_win()
     eq('at least one action required', pcall_err(api.nvim__redraw, {}))
     eq('at least one action required', pcall_err(api.nvim__redraw, { buf = 0 }))
     eq('at least one action required', pcall_err(api.nvim__redraw, { win = 0 }))
     eq("cannot use both 'buf' and 'win'", pcall_err(api.nvim__redraw, { buf = 0, win = 0 }))
+    local win = api.nvim_get_current_win()
+    -- Can move cursor to recently opened window and window is flushed #28868
     feed(':echo getchar()<CR>')
+    local newwin = api.nvim_open_win(0, false, {
+      relative = 'editor',
+      width = 1,
+      height = 1,
+      row = 1,
+      col = 10,
+    })
+    api.nvim__redraw({ win = newwin, cursor = true })
+    screen:expect({
+      grid = [[
+                                                                    |
+        {1:~         }{4:^ }{1:                                                 }|
+        {1:~                                                           }|*2
+        :echo getchar()                                             |
+      ]],
+    })
     fn.setline(1, 'foobar')
     command('vnew')
     fn.setline(1, 'foobaz')
@@ -4981,11 +4998,13 @@ describe('API', function()
     screen:expect({
       grid = [[
         foobaz                        │foobar                       |
-        {1:~                             }│{1:~                            }|*2
+        {1:~         }{4:^f}{1:                   }│{1:~                            }|
+        {1:~                             }│{1:~                            }|
         {3:[No Name] [+]                  }{2:[No Name] [+]                }|
-        ^:echo getchar()                                             |
+        :echo getchar()                                             |
       ]],
     })
+    api.nvim_win_close(newwin, true)
     -- Can update the grid cursor position #20793
     api.nvim__redraw({ cursor = true })
     screen:expect({
