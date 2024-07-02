@@ -34,16 +34,16 @@ Follow these steps to get LSP features:
     vim.api.nvim_create_autocmd('FileType', {
       -- This handler will fire when the buffer's 'filetype' is "python"
       pattern = 'python',
-      callback = function(ev)
+      callback = function(args)
         vim.lsp.start({
           name = 'my-server-name',
           cmd = {'name-of-language-server-executable', '--option', 'arg1', 'arg2'},
 
           -- Set the "root directory" to the parent directory of the file in the
-          -- current buffer (`ev.buf`) that contains either a "setup.py" or a
+          -- current buffer (`args.buf`) that contains either a "setup.py" or a
           -- "pyproject.toml" file. Files that share a root directory will reuse
           -- the connection to the same LSP server.
-          root_dir = vim.fs.root(ev.buf, {'setup.py', 'pyproject.toml'}),
+          root_dir = vim.fs.root(args.buf, {'setup.py', 'pyproject.toml'}),
         })
       end,
     })
@@ -86,18 +86,18 @@ To override or delete any of the above defaults, set or unset the options on
 |LspAttach|: >lua
 
     vim.api.nvim_create_autocmd('LspAttach', {
-      callback = function(ev)
-        vim.bo[ev.buf].formatexpr = nil
-        vim.bo[ev.buf].omnifunc = nil
-        vim.keymap.del('n', 'K', { buffer = ev.buf })
+      callback = function(args)
+        vim.bo[args.buf].formatexpr = nil
+        vim.bo[args.buf].omnifunc = nil
+        vim.keymap.del('n', 'K', { buffer = args.buf })
       end,
     })
 <
                                                         *lsp-config*
-To use other LSP features, set keymaps on |LspAttach|. Not all language
-servers provide the same capabilities. To ensure you only set keymaps if the
-language server supports a feature, guard keymaps behind capability checks.
-Example: >lua
+To use other LSP features, set keymaps and other buffer options on
+|LspAttach|. Not all language servers provide the same capabilities. Use
+capability checks to ensure you only use features supported by the language
+server. Example: >lua
 
     vim.api.nvim_create_autocmd('LspAttach', {
       callback = function(args)
@@ -105,6 +105,20 @@ Example: >lua
         if client.supports_method('textDocument/implementation') then
           -- Create a keymap for vim.lsp.buf.implementation
         end
+
+        if client.supports_method('textDocument/completion') then
+          -- Enable auto-completion
+          vim.lsp.completion.enable(true, client.id, args.buf, {autotrigger = true})
+        end
+
+        if client.supports_method('textDocument/formatting') then
+          -- Format the current buffer on save
+          vim.api.nvim_create_autocmd('BufWritePre', {
+            buffer = args.buf,
+            callback = function()
+              vim.lsp.buf.format({bufnr = args.buf, id = client.id})
+            end,
+          })
       end,
     })
 <
