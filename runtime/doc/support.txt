@@ -14,7 +14,7 @@ Supported platforms					 *supported-platforms*
 `System`          `Tier`      `Versions`                  `Tested versions`
 Linux            1      >= 2.6.32, glibc >= 2.12     Ubuntu 22.04
 macOS (Intel)    1      >= 11                        macOS 12
-macOS (M1)       2      >= 11                        macOS 14
+macOS (M1)       1      >= 11                        macOS 14
 Windows 64-bit   1      >= Windows 10 Version 1809   Windows Server 2022
 FreeBSD          1      >= 10                        FreeBSD 13
 OpenBSD          2      >= 7
@@ -28,10 +28,10 @@ your Windows version, run the "winver" command and look for "Version xxxx"
 Support types ~
 
 * Tier 1: Officially supported and tested with CI. Any contributed patch
-  MUST NOT break such systems.
+  MUST NOT break support for such platforms.
 
-* Tier 2: Officially supported, but not necessarily tested with CI. These
-  systems are maintained to the best of our ability, without being a top
+* Tier 2: Officially supported, but not necessarily tested with CI. Support
+  for these platforms are maintained by best effort, without being a top
   priority.
 
 * Tier 3: Not tested and no guarantees, and not all features may work.
@@ -47,7 +47,8 @@ Common
 
 Some common notes when adding support for new platforms:
 
-Cmake is the only supported build system. The platform must be buildable with cmake.
+CMake is the only supported build system. Nvim must be buildable on the
+platform with CMake.
 
 All functionality related to the new platform must be implemented in its own
 file inside `src/nvim/os` unless it's already done in a common file, in which
