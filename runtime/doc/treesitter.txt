@@ -753,6 +753,28 @@ get_captures_at_pos({bufnr}, {row}, {col})
     Return: ~
         (`{capture: string, lang: string, metadata: table}[]`)
 
+get_highlight({parser})                       *vim.treesitter.get_highlight()*
+    Get highlight information from parser.
+
+    Parameters: ~
+      • {parser}  (`vim.treesitter.LanguageTree`)
+
+    Return: ~
+        (`table[]`) A list of objects with the following fields:
+        • {range} (`Range6`) The range of the highlight
+        • {hl_group} (`string`) Highlight |group-name|
+        • {priority} (`integer`) Highlight priority
+          |treesitter-highlight-priority|
+        • {conceal} (`string?`) Highlight conceal
+          |treesitter-highlight-conceal|
+        • {spell} (`boolean?`) Highlight spell/nospell
+          |treesitter-highlight-spell|
+          • If `true` then `@spell` is set
+          • If `false` then `@nospell` is set
+          • If `nil` then neither `@spell` nor `@nospell` is set
+        • {url} (`string?`) Extmark URL, see "url" option at
+          |nvim_buf_set_extmark()|
+
 get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position
 
