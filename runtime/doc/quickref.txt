@@ -914,6 +914,7 @@ Short explanation of each option:		*option-list*
 'ttytype'	  'tty'     alias for 'term'
 'undodir'	  'udir'    where to store undo files
 'undofile'	  'udf'	    save undo information in a file
+'undokeepcurs'	  'ukc'	    controls cursor placement after undo operation
 'undolevels'	  'ul'	    maximum number of changes that can be undone
 'undoreload'	  'ur'	    max nr of lines to save for undo on a buffer reload
 'updatecount'	  'uc'	    after this many characters flush swap file

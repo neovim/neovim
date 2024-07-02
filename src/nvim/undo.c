@@ -2487,6 +2487,10 @@ static void u_undoredo(bool undo, bool do_buf_event)
     curwin->w_cursor.lnum--;
   }
   if (curwin->w_cursor.lnum <= curbuf->b_ml.ml_line_count) {
+    if (p_ukc) {
+      // Moves the cursor to the position prior the undo/redo
+      curwin->w_cursor.lnum = curhead->uh_cursor.lnum;
+    }
     if (curhead->uh_cursor.lnum == curwin->w_cursor.lnum) {
       curwin->w_cursor.col = curhead->uh_cursor.col;
       if (virtual_active(curwin) && curhead->uh_cursor_vcol >= 0) {
