@@ -525,12 +525,12 @@ bool unpacker_parse_redraw(Unpacker *p)
   }
 }
 
-/// require complete string. safe to use e.g. in shada as we have loaded a complete shada item into
-/// a linear buffer.
+/// Requires a complete string. safe to use e.g. in shada as we have loaded a
+/// complete shada item into a linear buffer.
 ///
-/// data and size are preserved in cause of failure
+/// Data and size are preserved in cause of failure.
 ///
-/// @return "data" is NULL exact when failure (non-null data and size=0 for
+/// @return "data" is NULL only when failure (non-null data and size=0 for
 /// valid empty string)
 String unpack_string(const char **data, size_t *size)
 {

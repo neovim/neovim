@@ -1010,7 +1010,7 @@ static void typval_parse_enter(mpack_parser_t *parser, mpack_node_t *node)
   }
 }
 
-/// free node which was entered but never exited, due to a nested error
+/// Free node which was entered but never exited, due to a nested error
 ///
 /// Don't bother with typvals as these will be GC:d eventually
 void typval_parser_error_free(mpack_parser_t *parser)
@@ -1109,7 +1109,7 @@ msgpack_to_vim_generic_map: {}
   }
 
   default:
-    // other kinds are handled completely in typval_parse_enter,
+    // other kinds are handled completely in typval_parse_enter
     break;
   }
 }

@@ -1313,9 +1313,9 @@ static char *shada_filename(const char *file)
   return xstrdup(file);
 }
 
-#define PACK_KEY(s) mpack_str(STATIC_CSTR_AS_STRING(KEY_NAME(s)), &sbuf);
-#define KEY_NAME(s) #s
-#define KEY_NAME2(s) KEY_NAME(s)
+#define KEY_NAME_(s) #s
+#define PACK_KEY(s) mpack_str(STATIC_CSTR_AS_STRING(KEY_NAME_(s)), &sbuf);
+#define KEY_NAME(s) KEY_NAME_(s)
 
 #define SHADA_MPACK_FREE_SPACE (4 * MPACK_ITEM_SIZE)
 
@@ -3301,7 +3301,7 @@ shada_read_next_item_start:
     }
     if (it.rc.size == 0) {
       semsg(_(READERR("register",
-                      "has " KEY_NAME2(REG_KEY_CONTENTS) " key with missing or empty array")),
+                      "has " KEY_NAME(REG_KEY_CONTENTS) " key with missing or empty array")),
             initial_fpos);
       goto shada_read_next_item_error;
     }
