@@ -10,8 +10,6 @@ local command = n.command
 local api = n.api
 local eq = t.eq
 
-before_each(clear)
-
 local hl_query_c = [[
   (ERROR) @error
 
@@ -120,6 +118,7 @@ describe('treesitter highlighting (C)', function()
   local screen
 
   before_each(function()
+    clear()
     screen = Screen.new(65, 18)
     screen:attach()
     screen:set_default_attr_ids {
@@ -800,6 +799,7 @@ describe('treesitter highlighting (lua)', function()
   local screen
 
   before_each(function()
+    clear()
     screen = Screen.new(65, 18)
     screen:attach()
     screen:set_default_attr_ids {
@@ -838,6 +838,7 @@ describe('treesitter highlighting (help)', function()
   local screen
 
   before_each(function()
+    clear()
     screen = Screen.new(40, 6)
     screen:attach()
     screen:set_default_attr_ids {
@@ -939,6 +940,7 @@ describe('treesitter highlighting (nested injections)', function()
   local screen
 
   before_each(function()
+    clear()
     screen = Screen.new(80, 7)
     screen:attach()
     screen:set_default_attr_ids {
@@ -1006,6 +1008,7 @@ describe('treesitter highlighting (markdown)', function()
   local screen
 
   before_each(function()
+    clear()
     screen = Screen.new(40, 6)
     screen:attach()
     exec_lua([[
@@ -1052,4 +1055,20 @@ printf('Hello World!');
       ]],
     })
   end)
+end)
+
+it('starting and stopping treesitter highlight in init.lua works #29541', function()
+  t.write_file(
+    'Xinit.lua',
+    [[
+      vim.bo.ft = 'c'
+      vim.treesitter.start()
+      vim.treesitter.stop()
+    ]]
+  )
+  finally(function()
+    os.remove('Xinit.lua')
+  end)
+  clear({ args = { '-u', 'Xinit.lua' } })
+  eq('', api.nvim_get_vvar('errmsg'))
 end)
