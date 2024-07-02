@@ -427,6 +427,33 @@ describe('vim.lsp.completion: item conversion', function()
       eq('the-insertText', text)
     end
   )
+
+  it(
+    'defaults to label as textEdit.newText if insertText or textEditText are not present',
+    function()
+      local completion_list = {
+        isIncomplete = false,
+        itemDefaults = {
+          editRange = {
+            start = { line = 1, character = 1 },
+            ['end'] = { line = 1, character = 4 },
+          },
+          insertTextFormat = 2,
+          data = 'foobar',
+        },
+        items = {
+          {
+            label = 'hello',
+            data = 'item-property-has-priority',
+          },
+        },
+      }
+      local result = complete('|', completion_list)
+      eq(1, #result.items)
+      local text = result.items[1].user_data.nvim.lsp.completion_item.textEdit.newText
+      eq('hello', text)
+    end
+  )
 end)
 
 describe('vim.lsp.completion: protocol', function()

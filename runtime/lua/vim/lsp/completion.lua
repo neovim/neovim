@@ -176,7 +176,7 @@ local function apply_defaults(item, defaults)
   if defaults.editRange then
     local textEdit = item.textEdit or {}
     item.textEdit = textEdit
-    textEdit.newText = textEdit.newText or item.textEditText or item.insertText
+    textEdit.newText = textEdit.newText or item.textEditText or item.insertText or item.label
     if defaults.editRange.start then
       textEdit.range = textEdit.range or defaults.editRange
     elseif defaults.editRange.insert then
