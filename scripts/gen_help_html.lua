@@ -802,7 +802,7 @@ local function validate_one(fname, parser_path)
     parse_errors = {},
   }
   local lang_tree, buf = parse_buf(fname, parser_path)
-  for _, tree in ipairs(lang_tree:trees()) do
+  for _, tree in pairs(lang_tree:trees()) do
     visit_validate(tree:root(), 0, tree, { buf = buf, fname = fname }, stats)
   end
   lang_tree:destroy()
@@ -909,7 +909,7 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
   ]]
 
   local main = ''
-  for _, tree in ipairs(lang_tree:trees()) do
+  for _, tree in pairs(lang_tree:trees()) do
     main = main
       .. (
         visit_node(
