@@ -4,6 +4,8 @@
 
 local options_enum_file = arg[1]
 local options_map_file = arg[2]
+local options_input_file = arg[3]
+
 local options_enum_fd = assert(io.open(options_enum_file, 'w'))
 local options_map_fd = assert(io.open(options_map_file, 'w'))
 
@@ -27,7 +29,7 @@ local lowercase_to_titlecase = function(s)
 end
 
 --- @type vim.option_meta[]
-local options = require('options').options
+local options = loadfile(options_input_file)().options
 
 -- Generate BV_ enum constants.
 enum_w('/// "indir" values for buffer-local options.')

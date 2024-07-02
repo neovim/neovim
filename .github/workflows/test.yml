@@ -48,7 +48,10 @@ jobs:
           cmake -S cmake.deps -B .deps -G Ninja
           cmake --build .deps
 
-      - run: cmake -B build -G Ninja -D CI_LINT=ON
+      - run: |
+          cmake -B build -G Ninja -D CI_LINT=ON
+          echo "======= CONFIGZEIT"
+          cat build/cmake.config/auto/config.h
 
       - if: "!cancelled()"
         name: Determine if run should be aborted

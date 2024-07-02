@@ -1,0 +1,12 @@
+.{
+    .name = "msgpack_c",
+    .version = "6.0.1",
+    .paths = .{""},
+
+    .dependencies = .{
+        .msgpack_c = .{
+            .url = "https://github.com/msgpack/msgpack-c/archive/c-6.0.1.tar.gz",
+            .hash = "1220781494e79f4d4351608b6442f9f7814df38dea9e96858dadbb54a65e564134c3",
+        },
+    },
+}
