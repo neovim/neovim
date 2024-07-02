@@ -703,14 +703,14 @@ describe('Buffer highlighting', function()
       local s1 = { { 'Köttbullar', 'Comment' }, { 'Kräuterbutter' } }
       local s2 = { { 'こんにちは', 'Comment' } }
 
-      set_virtual_text(0, id1, 0, s1, {})
+      local ns = set_virtual_text(0, id1, 0, s1, {})
       eq({
         {
           1,
           0,
           0,
           {
-            ns_id = 1,
+            ns_id = ns,
             priority = 0,
             virt_text = s1,
             -- other details
@@ -730,7 +730,7 @@ describe('Buffer highlighting', function()
           lastline,
           0,
           {
-            ns_id = 1,
+            ns_id = ns,
             priority = 0,
             virt_text = s2,
             -- other details
@@ -899,11 +899,12 @@ describe('Buffer highlighting', function()
   end)
 
   it('and virtual text use the same namespace counter', function()
-    eq(1, add_highlight(0, 0, 'String', 0, 0, -1))
-    eq(2, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
-    eq(3, api.nvim_create_namespace('my-ns'))
-    eq(4, add_highlight(0, 0, 'String', 0, 0, -1))
-    eq(5, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
-    eq(6, api.nvim_create_namespace('other-ns'))
+    local ns = api.nvim_create_namespace('')
+    eq(1 + ns, add_highlight(0, 0, 'String', 0, 0, -1))
+    eq(2 + ns, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
+    eq(3 + ns, api.nvim_create_namespace('my-ns'))
+    eq(4 + ns, add_highlight(0, 0, 'String', 0, 0, -1))
+    eq(5 + ns, set_virtual_text(0, 0, 0, { { '= text', 'Comment' } }, {}))
+    eq(6 + ns, api.nvim_create_namespace('other-ns'))
   end)
 end)
