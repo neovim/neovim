@@ -1018,6 +1018,8 @@ function vim.fn.complete_check() end
 ---     dictionary containing the entries "word",
 ---     "abbr", "menu", "kind", "info" and "user_data".
 ---     See |complete-items|.
+---    pum_matches  Indices of completion matches that are put
+---     in the |ins-completion-menu|.  First index is zero.
 ---    selected  Selected item index.  First index is zero.
 ---     Index is -1 if no item is selected (showing
 ---     typed text only, or the last completion after
