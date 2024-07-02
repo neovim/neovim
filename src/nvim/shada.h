@@ -1,7 +1,5 @@
 #pragma once
 
-#include <msgpack.h>  // IWYU pragma: keep
-
 #include "nvim/api/private/defs.h"
 
 /// Flags for shada_read_file and children

@@ -3068,8 +3068,8 @@ void sub_get_replacement(SubReplacementString *const ret_sub)
 void sub_set_replacement(SubReplacementString sub)
 {
   xfree(old_sub.sub);
-  if (sub.additional_elements != old_sub.additional_elements) {
-    tv_list_unref(old_sub.additional_elements);
+  if (sub.additional_data != old_sub.additional_data) {
+    xfree(old_sub.additional_data);
   }
   old_sub = sub;
 }
@@ -3395,7 +3395,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
       sub_set_replacement((SubReplacementString) {
         .sub = xstrdup(sub),
         .timestamp = os_time(),
-        .additional_elements = NULL,
+        .additional_data = NULL,
       });
     }
   } else if (!eap->skip) {    // use previous pattern and substitution

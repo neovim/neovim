@@ -55,11 +55,11 @@ int encode_blob_write(void *const data, const char *const buf, const size_t len)
 }
 
 /// Msgpack callback for writing to readfile()-style list
-int encode_list_write(void *const data, const char *const buf, const size_t len)
+void encode_list_write(void *const data, const char *const buf, const size_t len)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (len == 0) {
-    return 0;
+    return;
   }
   list_T *const list = (list_T *)data;
   const char *const end = buf + len;
@@ -97,7 +97,6 @@ int encode_list_write(void *const data, const char *const buf, const size_t len)
   if (line_end == end) {
     tv_list_append_allocated_string(list, NULL);
   }
-  return 0;
 }
 
 /// Abort conversion to string after a recursion error.

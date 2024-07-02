@@ -1,6 +1,5 @@
 #pragma once
 
-#include <msgpack/pack.h>
 #include <string.h>
 
 #include "nvim/eval/typval_defs.h"

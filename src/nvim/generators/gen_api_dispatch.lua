@@ -72,14 +72,19 @@ local keysets = {}
 local function add_keyset(val)
   local keys = {}
   local types = {}
+  local c_names = {}
   local is_set_name = 'is_set__' .. val.keyset_name .. '_'
   local has_optional = false
   for i, field in ipairs(val.fields) do
+    local dict_key = field.dict_key or field.name
     if field.type ~= 'Object' then
-      types[field.name] = field.type
+      types[dict_key] = field.type
     end
     if field.name ~= is_set_name and field.type ~= 'OptionalKeys' then
-      table.insert(keys, field.name)
+      table.insert(keys, dict_key)
+      if dict_key ~= field.name then
+        c_names[dict_key] = field.name
+      end
     else
       if i > 1 then
         error("'is_set__{type}_' must be first if present")
@@ -94,6 +99,7 @@ local function add_keyset(val)
   table.insert(keysets, {
     name = val.keyset_name,
     keys = keys,
+    c_names = c_names,
     types = types,
     has_optional = has_optional,
   })
@@ -332,19 +338,6 @@ output:write([[
 keysets_defs:write('// IWYU pragma: private, include "nvim/api/private/dispatch.h"\n\n')
 
 for _, k in ipairs(keysets) do
-  local c_name = {}
-
-  for i = 1, #k.keys do
-    -- some keys, like "register" are c keywords and get
-    -- escaped with a trailing _ in the struct.
-    if vim.endswith(k.keys[i], '_') then
-      local orig = k.keys[i]
-      k.keys[i] = string.sub(k.keys[i], 1, #k.keys[i] - 1)
-      c_name[k.keys[i]] = orig
-      k.types[k.keys[i]] = k.types[orig]
-    end
-  end
-
   local neworder, hashfun = hashy.hashy_hash(k.name, k.keys, function(idx)
     return k.name .. '_table[' .. idx .. '].str'
   end)
@@ -354,6 +347,8 @@ for _, k in ipairs(keysets) do
   local function typename(type)
     if type == 'HLGroupID' then
       return 'kObjectTypeInteger'
+    elseif type == 'StringArray' then
+      return 'kUnpackTypeStringArray'
     elseif type ~= nil then
       return 'kObjectType' .. type
     else
@@ -374,7 +369,7 @@ for _, k in ipairs(keysets) do
         .. '", offsetof(KeyDict_'
         .. k.name
         .. ', '
-        .. (c_name[key] or key)
+        .. (k.c_names[key] or key)
         .. '), '
         .. typename(k.types[key])
         .. ', '

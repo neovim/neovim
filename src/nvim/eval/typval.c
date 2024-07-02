@@ -485,13 +485,14 @@ void tv_list_append_tv(list_T *const l, typval_T *const tv)
 /// Like tv_list_append_tv(), but tv is moved to a list
 ///
 /// This means that it is no longer valid to use contents of the typval_T after
-/// function exits.
-void tv_list_append_owned_tv(list_T *const l, typval_T tv)
+/// function exits. A pointer is returned to the allocated typval which can be used
+typval_T *tv_list_append_owned_tv(list_T *const l, typval_T tv)
   FUNC_ATTR_NONNULL_ALL
 {
   listitem_T *const li = tv_list_item_alloc();
   *TV_LIST_ITEM_TV(li) = tv;
   tv_list_append(l, li);
+  return TV_LIST_ITEM_TV(li);
 }
 
 /// Append a list to a list as one item

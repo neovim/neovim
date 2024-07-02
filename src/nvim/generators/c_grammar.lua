@@ -91,7 +91,9 @@ local c_proto = Ct(
     * (P(';') + (P('{') * nl + (impl_line ^ 0) * P('}')))
 )
 
-local c_field = Ct(Cg(c_id, 'type') * ws * Cg(c_id, 'name') * fill * P(';') * fill)
+local dict_key = P('DictKey(') * Cg(rep1(any - P(')')), 'dict_key') * P(')')
+local keyset_field =
+  Ct(Cg(c_id, 'type') * ws * Cg(c_id, 'name') * fill * (dict_key ^ -1) * fill * P(';') * fill)
 local c_keyset = Ct(
   P('typedef')
     * ws
@@ -99,7 +101,7 @@ local c_keyset = Ct(
     * fill
     * P('{')
     * fill
-    * Cg(Ct(c_field ^ 1), 'fields')
+    * Cg(Ct(keyset_field ^ 1), 'fields')
     * P('}')
     * fill
     * P('Dict')

@@ -190,7 +190,7 @@ static inline void hist_free_entry(histentry_T *hisptr)
   FUNC_ATTR_NONNULL_ALL
 {
   xfree(hisptr->hisstr);
-  tv_list_unref(hisptr->additional_elements);
+  xfree(hisptr->additional_data);
   clear_hist_entry(hisptr);
 }
 
@@ -237,7 +237,7 @@ static int in_history(int type, const char *str, int move_to_front, int sep)
     return false;
   }
 
-  list_T *const list = history[type][i].additional_elements;
+  AdditionalData *ad = history[type][i].additional_data;
   char *const save_hisstr = history[type][i].hisstr;
   while (i != hisidx[type]) {
     if (++i >= hislen) {
@@ -246,11 +246,11 @@ static int in_history(int type, const char *str, int move_to_front, int sep)
     history[type][last_i] = history[type][i];
     last_i = i;
   }
-  tv_list_unref(list);
+  xfree(ad);
   history[type][i].hisnum = ++hisnum[type];
   history[type][i].hisstr = save_hisstr;
   history[type][i].timestamp = os_time();
-  history[type][i].additional_elements = NULL;
+  history[type][i].additional_data = NULL;
   return true;
 }
 
@@ -337,7 +337,7 @@ void add_to_history(int histype, const char *new_entry, size_t new_entrylen, boo
   // Store the separator after the NUL of the string.
   hisptr->hisstr = xstrnsave(new_entry, new_entrylen + 2);
   hisptr->timestamp = os_time();
-  hisptr->additional_elements = NULL;
+  hisptr->additional_data = NULL;
   hisptr->hisstr[new_entrylen + 1] = (char)sep;
 
   hisptr->hisnum = ++hisnum[histype];

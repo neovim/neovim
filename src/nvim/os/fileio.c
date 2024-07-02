@@ -309,6 +309,22 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf, const size_t 
   return (ptrdiff_t)(size - read_remaining);
 }
 
+/// try to read already buffered data in place
+///
+/// @return NULL if enough data is not available
+///         valid pointer to chunk of "size". pointer becomes invalid in the next "file_read" call!
+char *file_try_read_buffered(FileDescriptor *const fp, const size_t size)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if ((size_t)(fp->write_pos - fp->read_pos) >= size) {
+    char *ret = fp->read_pos;
+    fp->read_pos += size;
+    fp->bytes_read += size;
+    return ret;
+  }
+  return NULL;
+}
+
 /// Write to a file
 ///
 /// @param[in]  fd  File descriptor to write to.

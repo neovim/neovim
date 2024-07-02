@@ -89,7 +89,7 @@ typedef struct {
   bool no_scs;          ///< No smartcase for this pattern.
   Timestamp timestamp;  ///< Time of the last change.
   SearchOffset off;     ///< Pattern offset.
-  dict_T *additional_data;  ///< Additional data from ShaDa file.
+  AdditionalData *additional_data;  ///< Additional data from ShaDa file.
 } SearchPattern;
 
 /// Optional extra arguments for searchit().

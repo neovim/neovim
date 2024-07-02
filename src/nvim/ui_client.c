@@ -174,7 +174,7 @@ static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
 {
   Error err = ERROR_INIT;
   Dict(highlight) dict = KEYDICT_INIT;
-  if (!api_dict_to_keydict(&dict, KeyDict_highlight_get_field, d, &err)) {
+  if (!api_dict_to_keydict(&dict, DictHash(highlight), d, &err)) {
     // TODO(bfredl): log "err"
     return HLATTRS_INIT;
   }

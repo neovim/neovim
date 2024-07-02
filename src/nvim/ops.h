@@ -110,7 +110,7 @@ typedef struct {
   MotionType y_type;        ///< Register type
   colnr_T y_width;          ///< Register width (only valid for y_type == kBlockWise).
   Timestamp timestamp;      ///< Time when register was last modified.
-  dict_T *additional_data;  ///< Additional data from ShaDa file.
+  AdditionalData *additional_data;  ///< Additional data from ShaDa file.
 } yankreg_T;
 
 /// Modes for get_yank_register()

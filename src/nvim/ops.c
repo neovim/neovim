@@ -930,16 +930,6 @@ int do_record(int c)
   return retval;
 }
 
-static void set_yreg_additional_data(yankreg_T *reg, dict_T *additional_data)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  if (reg->additional_data == additional_data) {
-    return;
-  }
-  tv_dict_unref(reg->additional_data);
-  reg->additional_data = additional_data;
-}
-
 /// Stuff string "p" into yank register "regname" as a single line (append if
 /// uppercase). "p" must have been allocated.
 ///
@@ -969,7 +959,7 @@ static int stuff_yank(int regname, char *p)
     *pp = lp;
   } else {
     free_register(reg);
-    set_yreg_additional_data(reg, NULL);
+    reg->additional_data = NULL;
     reg->y_array = xmalloc(sizeof(char *));
     reg->y_array[0] = p;
     reg->y_size = 1;
@@ -2507,7 +2497,7 @@ void clear_registers(void)
 void free_register(yankreg_T *reg)
   FUNC_ATTR_NONNULL_ALL
 {
-  set_yreg_additional_data(reg, NULL);
+  XFREE_CLEAR(reg->additional_data);
   if (reg->y_array == NULL) {
     return;
   }
@@ -5144,7 +5134,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
   }
   y_ptr->y_type = yank_type;
   y_ptr->y_size = lnum;
-  set_yreg_additional_data(y_ptr, NULL);
+  XFREE_CLEAR(y_ptr->additional_data);
   y_ptr->timestamp = os_time();
   if (yank_type == kMTBlockWise) {
     y_ptr->y_width = (blocklen == -1 ? (colnr_T)maxlen - 1 : blocklen);
