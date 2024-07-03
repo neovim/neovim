@@ -997,7 +997,7 @@ function vim.is_callable(f)
   if m == nil then
     return false
   end
-  return type(m.__call) == 'function'
+  return type(rawget(m, '__call')) == 'function'
 end
 
 --- Creates a table whose missing keys are provided by {createfn} (like Python's "defaultdict").
