@@ -2120,7 +2120,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       iwhite_index_offset[i] = 99;
     }
   }
-  if (diff_allignment == WORDMATCH) {
+  if (diff_allignment == WORDMATCH || diff_allignment == CHARMATCH) {
     for (size_t i = 0; i < ndiffs; i++) {
       word_offset[i] = xmalloc(total_chars_length * sizeof(size_t));
       word_offset_size[i] = xmalloc(total_chars_length * sizeof(size_t));
@@ -2130,36 +2130,75 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       }
     }
   }
+  // calculate the token lengths and white space offset
+  if (diff_allignment == WORDMATCH || diff_allignment == CHARMATCH) {
+
   for (size_t i = 0; i < ndiffs; i++) {
-    int cls = INT_MIN;
-    size_t j = 0, k = 0, lines = (size_t)diff_lines[i], w = result_diff_start_pos[i];
+    int cls = INT_MIN; // keep track of what type of character this is, to determine when we are
+                       // moving to a different word
+
+    size_t j = 0; // j will iterate over each character in each of the diffs
+
+    size_t k = 0; // k represents the index of the current character if there were no white spaces,
+                  // so we will use k and j to calculate the white space offset and use it later to
+                  // populate the final results for drawing to the screen
+                  // if 'iwhite' is not used, k will always be the same as j
+
+    size_t lines = (size_t)diff_lines[i]; // we iterate over each line of this part of the diff
+
+    size_t w = result_diff_start_pos[i];  // keep track of the offset of all the characters without
+                                          // any whitespace, so that we can ignore the white space
+                                          // while calculating the diff, and then use this to
+                                          // populate the results
+    size_t cur_char_length = 0;
+
+    // TODO only run for chardiff / worddiff
     while (lines > 0) {
-      if (iwhite ? (diffbufs[i][j] != ' ' && diffbufs[i][j] != '\t') : 1) {
-        if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
-          // a character which is not a blank
-          if (diff_allignment == WORDMATCH) {
-            if (utf_class(diffbufs[i][j]) != cls || diffbufs[i][j] == '\n') {
-              word_offset[i][diff_length[i]] = k;
-              diff_length[i]++;
-              total_word_count++;
-            }
-            word_offset_size[i][diff_length[i] - 1]++;
-            cls = utf_class(diffbufs[i][j]);
-          } else {
-            // we are matching characters, not words
-            diff_length[i]++;
-          }
-          if (iwhite) {
-            iwhite_index_offset[w++] = j - k;
-          }
-        }
-        diffbufs[i][k++] = diffbufs[i][j];
-      } else if (diff_allignment == WORDMATCH) {
+
+      if (iwhite && (diffbufs[i][j] == ' ' || diffbufs[i][j] == '\t')) {
+        // we are using 'iwhite' and this is a whitespace, so it will not be included as a token in
+        // the diff algorithm
         // we are ignoring whitespace and this is a whitespace ' ' or '\t' reset the class definition
         cls = INT_MIN;
+      } else {
+        // we have a character which is not a blank (or we are not using iwhite)
+
+        // how we determine when there is a new token depends on if this is chardiff or worddiff
+        if (diff_allignment == WORDMATCH) {
+          // WORDMATCH
+          if (utf_class(diffbufs[i][j]) != cls || diffbufs[i][j] == '\n') {
+            // this is a new token
+            word_offset[i][diff_length[i]] = k; // mark the offset of this without whitespace
+            diff_length[i]++; // this diff length has another token, so it gets longer
+            total_word_count++;
+          }
+          cls = utf_class(diffbufs[i][j]);
+          word_offset_size[i][diff_length[i] - 1]++; // still the same class (iterating over the
+                                                     // same type of word), so the current word
+                                                     // length is getting longer
+        } else if (diff_allignment == CHARMATCH) {
+          // CHARMATCH
+          if (cur_char_length == 0) {
+            // get the length of current character
+            cur_char_length = utfc_ptr2len((const char *const)&diffbufs[i][j]);
+            word_offset[i][diff_length[i]] = k;
+            diff_length[i]++;
+            total_word_count++;
+            // the token size is the length of this utf character
+            word_offset_size[i][diff_length[i] - 1] = cur_char_length;
+          }
+          cur_char_length--;
+        }
+        // if ignoring whitespace, keep track of the white space index
+        if (iwhite) {
+          // keep track of the index offset with ignoring whitespace to use when populating the results
+          iwhite_index_offset[w++] = j - k;
+        }
+        diffbufs[i][k++] = diffbufs[i][j];
       }
       if (diffbufs[i][j++] == '\n') { lines--; }
     }
+  }
   }
 
   // we will get the output of the linematch algorithm in the format of an array
