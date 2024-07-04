@@ -37,7 +37,7 @@ M.choose_directory = function()
   for idx, dir in pairs(options) do
     table.insert(prompt, string.format('%d: %s', idx, dir))
   end
-  local choice = vim.fn.inputlist(prompt)
+  local choice = vim.ui.inputlist(prompt)
   if choice <= 0 or choice > #options then
     return
   end
@@ -47,7 +47,7 @@ end
 
 M.exists = function(file_name)
   local is_file = function(pth)
-    local stat = vim.loop.fs_stat(pth)
+    local stat = vim.uv.fs_stat(pth)
     return stat ~= nil and stat.type ~= nil and stat.type == 'file'
   end
 
@@ -114,7 +114,7 @@ M.download = function(data)
     end
 
     vim.notify(string.format('\nDownloading %s...', name))
-    vim.fn.system(cmd)
+    vim.system(cmd)
   end
 end
 
