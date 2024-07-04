@@ -4267,6 +4267,9 @@ func Test_page_cursor_topbot()
   call assert_equal(18, line('.'))
   exe "norm! \<C-B>\<C-F>"
   call assert_equal(9, line('.'))
+  " Not when already at the start of the buffer.
+  exe "norm! ggj\<C-B>"
+  call assert_equal(2, line('.'))
   bwipe!
 endfunc
 
