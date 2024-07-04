@@ -37,7 +37,7 @@ describe('vim.treesitter.inspect_tree', function()
 
   it('can toggle to show anonymous nodes', function()
     insert([[
-      print()
+      print('hello')
       ]])
 
     exec_lua([[
@@ -48,11 +48,15 @@ describe('vim.treesitter.inspect_tree', function()
 
     expect_tree [[
       (chunk ; [0, 0] - [2, 0]
-        (function_call ; [0, 0] - [0, 7]
+        (function_call ; [0, 0] - [0, 14]
           name: (identifier) ; [0, 0] - [0, 5]
-          arguments: (arguments ; [0, 5] - [0, 7]
+          arguments: (arguments ; [0, 5] - [0, 14]
             "(" ; [0, 5] - [0, 6]
-            ")"))) ; [0, 6] - [0, 7]
+            (string ; [0, 6] - [0, 13]
+              start: "'" ; [0, 6] - [0, 7]
+              content: (string_content) ; [0, 7] - [0, 12]
+              end: "'") ; [0, 12] - [0, 13]
+            ")"))) ; [0, 13] - [0, 14]
       ]]
   end)
 
