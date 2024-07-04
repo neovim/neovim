@@ -1,6 +1,6 @@
 " dockerfile.vim - Syntax highlighting for Dockerfiles
 " Maintainer:   Honza Pokorny <https://honza.ca>
-" Last Change:  2020 Feb 11
+" Last Change:  2024 Jul 03
 " License:      BSD
 
 " https://docs.docker.com/engine/reference/builder/
@@ -34,7 +34,7 @@ syntax region dockerfileJSON   contained keepend start=/\v\[/ skip=/\v\\\_./ end
 syntax region dockerfileShell  contained keepend start=/\v/ skip=/\v\\\_./ end=/\v$/ contains=@Shell
 syntax region dockerfileValue  contained keepend start=/\v/ skip=/\v\\\_./ end=/\v$/ contains=dockerfileString
 
-syntax region dockerfileComment start=/\v^\s*#/ end=/\v$/
+syntax region dockerfileComment start=/\v^\s*#/ end=/\v$/ contains=@Spell
 set commentstring=#\ %s
 
 hi def link dockerfileString String
