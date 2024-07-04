@@ -410,8 +410,8 @@ msgstr " Kompletigo difinita de uzanto (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " Kompletigo Omni (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Sugesto de literumo (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Sugesto de literumo (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Kompletigo loka de ŝlosilvorto (^N/^P)"

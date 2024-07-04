@@ -383,8 +383,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Completamento globale (^O^N^P)"
 
 #: ../edit.c:96
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Suggerimento ortografico (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Suggerimento ortografico (^S^N^P)"
 
 #: ../edit.c:97
 msgid " Keyword Local completion (^N^P)"

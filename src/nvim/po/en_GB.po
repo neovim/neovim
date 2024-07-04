@@ -386,7 +386,7 @@ msgid " Omni completion (^O^N^P)"
 msgstr ""
 
 #: ../edit.c:96
-msgid " Spelling suggestion (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
 msgstr ""
 
 #: ../edit.c:97

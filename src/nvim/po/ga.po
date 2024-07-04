@@ -389,8 +389,8 @@ msgstr " Comhlánú saincheaptha (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " Comhlánú Omni (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Moladh litrithe (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Moladh litrithe (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Comhlánú logánta lorgfhocal (^N^P)"

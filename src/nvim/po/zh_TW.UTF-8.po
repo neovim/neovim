@@ -421,7 +421,7 @@ msgstr " 標籤自動完成 (^]^N^P)"
 
 #: ../edit.c:96
 #, fuzzy
-msgid " Spelling suggestion (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
 msgstr " 整行自動完成 (^L^N^P)"
 
 #: ../edit.c:97

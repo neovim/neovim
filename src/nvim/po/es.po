@@ -387,8 +387,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Completar con método Omni (^O^N^P)"
 
 #: ../edit.c:96
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Sugerencia de ortografía (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Sugerencia de ortografía (^S^N^P)"
 
 # Scroll has it's own msgs, in it's place there is the msg for local
 # * ctrl_x_mode = 0 (eg continue_status & CONT_LOCAL)  -- Acevedo

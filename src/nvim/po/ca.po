@@ -393,8 +393,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Omni-compleció (^O^N^P)"
 
 #: ../edit.c:96
-msgid " Spelling suggestion (s^N^P)"
-msgstr "Suggeriment ortogràfic (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr "Suggeriment ortogràfic (^S^N^P)"
 
 # buscar un nom, en lloc del verb «completar».  eac
 #: ../edit.c:97

@@ -403,8 +403,8 @@ msgstr " Fuldførelse af brugerdefineret (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " Fuldførelse af omni (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Staveforslag (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Staveforslag (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Fuldførelse af nøgleord local (^N^P)"

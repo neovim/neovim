@@ -315,7 +315,7 @@ msgstr " Bevelreëlvoltooiing (^V^N^P)"
 #~ msgstr " Etiketvoltooiing (^]^N^P)"
 
 #, fuzzy
-#~ msgid " Spelling suggestion (s^N^P)"
+#~ msgid " Spelling suggestion (^S^N^P)"
 #~ msgstr " Hele-reël voltooiing (^L^N^P)"
 
 msgid " Keyword Local completion (^N^P)"

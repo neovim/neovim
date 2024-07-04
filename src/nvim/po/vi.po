@@ -388,7 +388,7 @@ msgstr " Tự động kết thúc thẻ đánh dấu (^]^N^P)"
 
 #: ../edit.c:96
 #, fuzzy
-msgid " Spelling suggestion (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
 msgstr " Tự động kết thúc cho cả dòng (^L^N^P)"
 
 #: ../edit.c:97

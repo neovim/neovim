@@ -4247,8 +4247,8 @@ msgstr " ユーザー定義補完 (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " オムニ補完 (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " 綴り修正候補 (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " 綴り修正候補 (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " 局所キーワード補完 (^N^P)"

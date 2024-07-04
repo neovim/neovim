@@ -3716,8 +3716,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " 全能补全 (^O^N^P)"
 
 #: ../insexpand.c:113
-msgid " Spelling suggestion (s^N^P)"
-msgstr " 拼写建议 (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " 拼写建议 (^S^N^P)"
 
 #: ../insexpand.c:114
 msgid " Keyword Local completion (^N^P)"

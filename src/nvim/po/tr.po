@@ -3109,8 +3109,8 @@ msgstr " Kullanıcı tanımlı tamamlamalar (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " Omni tamamlaması (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Yazım önerisi (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Yazım önerisi (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Dahili anahtar sözcük tamamlaması (^N^P)"
