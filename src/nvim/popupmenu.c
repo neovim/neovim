@@ -1265,8 +1265,9 @@ static void pum_position_at_mouse(int min_width)
     pum_anchor_grid = mouse_grid;
   }
 
-  if (max_row - mouse_row > pum_size) {
-    // Enough space below the mouse row.
+  if (max_row - mouse_row > pum_size || max_row - mouse_row > mouse_row - min_row) {
+    // Enough space below the mouse row,
+    // or there is more space below the mouse row than above.
     pum_above = false;
     pum_row = mouse_row + 1;
     if (pum_height > max_row - pum_row) {
@@ -1322,7 +1323,7 @@ static void pum_select_mouse_pos(void)
 
   int idx = mouse_row - pum_row;
 
-  if (idx < 0 || idx >= pum_size) {
+  if (idx < 0 || idx >= pum_height) {
     pum_selected = -1;
   } else if (*pum_array[idx].pum_text != NUL) {
     pum_selected = idx;

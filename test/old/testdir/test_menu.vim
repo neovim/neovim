@@ -482,13 +482,48 @@ func Test_popup_menu()
   unmenu PopUp
 endfunc
 
+func Test_popup_menu_truncated()
+  CheckNotGui
+
+  set mouse=a mousemodel=popup
+  aunmenu PopUp
+  for i in range(2 * &lines)
+    exe $'menu PopUp.{i} <Cmd>let g:res = {i}<CR>'
+  endfor
+
+  func LeftClickExpr(row, col)
+    call Ntest_setmouse(a:row, a:col)
+    return "\<LeftMouse>"
+  endfunc
+
+  " Clicking at the bottom should place popup menu above click position.
+  " <RightRelease> should not select an item immediately.
+  let g:res = -1
+  call Ntest_setmouse(&lines, 1)
+  nnoremap <expr><F2> LeftClickExpr(4, 1)
+  call feedkeys("\<RightMouse>\<RightRelease>\<F2>", 'tx')
+  call assert_equal(3, g:res)
+
+  " Clicking at the top should place popup menu below click position.
+  let g:res = -1
+  call Ntest_setmouse(1, 1)
+  nnoremap <expr><F2> LeftClickExpr(5, 1)
+  call feedkeys("\<RightMouse>\<RightRelease>\<F2>", 'tx')
+  call assert_equal(3, g:res)
+
+  nunmap <F2>
+  delfunc LeftClickExpr
+  unlet g:res
+  aunmenu PopUp
+  set mouse& mousemodel&
+endfunc
+
 " Test for MenuPopup autocommand
 func Test_autocmd_MenuPopup()
   CheckNotGui
 
-  set mouse=a
-  set mousemodel=popup
-  aunmenu *
+  set mouse=a mousemodel=popup
+  aunmenu PopUp
   autocmd MenuPopup * exe printf(
     \ 'anoremenu PopUp.Foo <Cmd>let g:res = ["%s", "%s"]<CR>',
     \ expand('<afile>'), expand('<amatch>'))
