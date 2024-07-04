@@ -5610,8 +5610,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Completação inteligente (^O^N^P)"
 
 #: ../edit.c:97
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Sugestão de ortografia (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Sugestão de ortografia (^S^N^P)"
 
 #: ../edit.c:98
 msgid " Keyword Local completion (^N^P)"

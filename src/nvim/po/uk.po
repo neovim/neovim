@@ -4254,8 +4254,8 @@ msgstr " Користувацьке доповнення (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " Кмітливе доповнення (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Орфографічна підказка (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Орфографічна підказка (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Доповнення місцевих ключових слів (^N^P)"

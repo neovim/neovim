@@ -382,8 +382,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Omni-дополнение (^O^N^P)"
 
 #: ../edit.c:96
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Предложение исправления правописания (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Предложение исправления правописания (^S^N^P)"
 
 #: ../edit.c:97
 msgid " Keyword Local completion (^N^P)"

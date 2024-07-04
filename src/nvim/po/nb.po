@@ -401,8 +401,7 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Omni-fullføring (^O^N^P)"
 
 #: ../edit.c:96
-#, fuzzy
-msgid " Spelling suggestion (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
 msgstr " Staveforslag (^S^N^P)"
 
 #: ../edit.c:97
