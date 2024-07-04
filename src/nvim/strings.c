@@ -629,12 +629,14 @@ static const void *tv_ptr(const typval_T *const tvs, int *const idxp)
 #define OFF(attr) offsetof(union typval_vval_union, attr)
   STATIC_ASSERT(OFF(v_string) == OFF(v_list)
                 && OFF(v_string) == OFF(v_dict)
+                && OFF(v_string) == OFF(v_blob)
                 && OFF(v_string) == OFF(v_partial)
                 && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_list)
                 && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_dict)
+                && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_blob)
                 && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_partial),
-                "Strings, dictionaries, lists and partials are expected to be pointers, "
-                "so that all three of them can be accessed via v_string");
+                "Strings, Dictionaries, Lists, Blobs and Partials are expected to be pointers, "
+                "so that all of them can be accessed via v_string");
 #undef OFF
   const int idx = *idxp - 1;
   if (tvs[idx].v_type == VAR_UNKNOWN) {
