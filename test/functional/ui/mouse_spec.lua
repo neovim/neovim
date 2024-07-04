@@ -2002,5 +2002,24 @@ describe('ui/mouse/input', function()
     feed('<Down><CR>')
     eq({ 4, 20 }, api.nvim_win_get_cursor(0))
     eq('the moon', fn.getreg('"'))
+
+    -- Try clicking in the cmdline
+    api.nvim_input_mouse('right', 'press', '', 0, 23, 0)
+    api.nvim_input_mouse('right', 'release', '', 0, 23, 0)
+    feed('<Down><Down><Down><CR>')
+    eq('baz', api.nvim_get_var('menustr'))
+
+    -- Try clicking in horizontal separator with global statusline
+    command('set laststatus=3')
+    api.nvim_input_mouse('right', 'press', '', 0, 5, 0)
+    api.nvim_input_mouse('right', 'release', '', 0, 5, 0)
+    feed('<Down><CR>')
+    eq('foo', api.nvim_get_var('menustr'))
+
+    -- Try clicking in the cmdline with global statusline
+    api.nvim_input_mouse('right', 'press', '', 0, 23, 0)
+    api.nvim_input_mouse('right', 'release', '', 0, 23, 0)
+    feed('<Down><Down><CR>')
+    eq('bar', api.nvim_get_var('menustr'))
   end)
 end)
