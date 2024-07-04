@@ -84,10 +84,13 @@ describe('printf()', function()
       end
       api.nvim_del_var('__result')
     end
+    check_printf('v:_null_string', true)
     check_printf('v:_null_list', true)
     check_printf('v:_null_dict', true)
+    check_printf('v:_null_blob', true)
     check_printf('[]')
     check_printf('{}')
+    check_printf('0z')
     check_printf('function("tr", ["a"])')
   end)
 end)

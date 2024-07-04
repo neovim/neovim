@@ -2045,9 +2045,9 @@ PANDOC						*ft-pandoc-syntax*
 
 By default, markdown files will be detected as filetype "markdown".
 Alternatively, you may want them to be detected as filetype "pandoc" instead.
-To do so, set the following: >
+To do so, set the *g:filetype_md* var: >
 
-	:let g:markdown_md = 'pandoc'
+	:let g:filetype_md = 'pandoc'
 
 The pandoc syntax plugin uses |conceal| for pretty highlighting. Default is 1 >
 
