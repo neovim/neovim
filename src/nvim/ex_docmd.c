@@ -972,8 +972,13 @@ void handle_did_throw(void)
   current_exception->throw_name = NULL;
 
   discard_current_exception();              // uses IObuff if 'verbose'
-  suppress_errthrow = true;
-  force_abort = true;
+
+  // If "silent!" is active the uncaught exception is not fatal.
+  if (emsg_silent == 0) {
+    suppress_errthrow = true;
+    force_abort = true;
+  }
+
   msg_ext_set_kind("emsg");  // kind=emsg for :throw, exceptions. #9993
 
   if (messages != NULL) {

@@ -7437,6 +7437,49 @@ func Test_for_over_string()
   call assert_equal('', res)
 endfunc
 
+" Test for deeply nested :source command  {{{1
+func Test_deeply_nested_source()
+  throw 'Skipped: Vim9 script is N/A'
+  let lines =<< trim END
+
+      so
+      sil 0scr
+      delete
+      so
+      0
+  END
+  call writefile(["vim9 silent! @0 \n/"] + lines, 'Xnested.vim', 'D')
+
+  " this must not crash
+  let cmd = GetVimCommand() .. " -e -s -S Xnested.vim -c qa!"
+  call system(cmd)
+endfunc
+
+func Test_exception_silent()
+  XpathINIT
+  let lines =<< trim END
+  func Throw()
+    Xpath 'a'
+    throw "Uncaught"
+    " This line is not executed.
+    Xpath 'b'
+  endfunc
+  " The exception is suppressed due to the presence of silent!.
+  silent! call Throw()
+  try
+    call DoesNotExist()
+  catch /E117:/
+    Xpath 'c'
+  endtry
+  Xpath 'd'
+  END
+  let verify =<< trim END
+    call assert_equal('acd', g:Xpath)
+  END
+
+  call RunInNewVim(lines, verify)
+endfunc
+
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=2 sts=2 expandtab tw=80 fdm=marker
