@@ -120,7 +120,7 @@ This switches on three very clever mechanisms:
 				*restore-cursor* *last-position-jump*  >
     augroup RestoreCursor
       autocmd!
-      autocmd BufRead * autocmd FileType <buffer> ++once
+      autocmd BufReadPre * autocmd FileType <buffer> ++once
         \ let s:line = line("'\"")
         \ | if s:line >= 1 && s:line <= line("$") && &filetype !~# 'commit'
         \      && index(['xxd', 'gitrebase'], &filetype) == -1
