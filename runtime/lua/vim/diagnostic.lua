@@ -972,9 +972,8 @@ local function goto_diagnostic(diagnostic, opts)
     vim.cmd('normal! zv')
   end)
 
-  local float = if_nil(opts.float, true)
-  if float then
-    local float_opts = type(float) == 'table' and float or {}
+  if opts.float then
+    local float_opts = type(opts.float) == 'table' and opts.float or {}
     vim.schedule(function()
       M.open_float(vim.tbl_extend('keep', float_opts, {
         bufnr = api.nvim_win_get_buf(winid),
