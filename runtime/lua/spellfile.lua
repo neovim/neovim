@@ -106,10 +106,8 @@ M.download = function(data)
     local cmd = ''
     if vim.fn.executable('curl') == 1 then
       cmd = string.format('curl -fLo %s %s', pth, url)
-    elseif vim.fn.executable('wget') == 1 then
-      cmd = string.format('wget -O %s %s', pth, url)
     else
-      vim.notify('No curl or wget found. Please install one of them.')
+      vim.notify('No curl found. You need curl installed to dowloand spell files.')
       return
     end
 
