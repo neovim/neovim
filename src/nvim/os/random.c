@@ -55,6 +55,7 @@ int os_get_random(uint8_t *buf, size_t len)
     dev_urandom_state = FAIL;
   } else if (read(fd, buf, len) == (ssize_t)len) {
     dev_urandom_state = OK;
+    os_close(fd);
   } else {
     dev_urandom_state = FAIL;
     os_close(fd);
