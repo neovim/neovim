@@ -5883,42 +5883,20 @@ static void f_py3eval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void init_srand(uint32_t *const x)
   FUNC_ATTR_NONNULL_ALL
 {
-#ifndef MSWIN
-  static int dev_urandom_state = NOTDONE;  // FAIL or OK once tried
+  union {
+    uint32_t number;
+    uint8_t bytes[sizeof(uint32_t)];
+  } buf;
 
-  if (dev_urandom_state != FAIL) {
-    const int fd = os_open("/dev/urandom", O_RDONLY, 0);
-    struct {
-      union {
-        uint32_t number;
-        char bytes[sizeof(uint32_t)];
-      } contents;
-    } buf;
+  if (uv_random(NULL, NULL, buf.bytes, sizeof(buf.bytes), 0, NULL) == 0) {
+    *x = buf.number;
+    return;
+  }
 
-    // Attempt reading /dev/urandom.
-    if (fd == -1) {
-      dev_urandom_state = FAIL;
-    } else {
-      buf.contents.number = 0;
-      if (read(fd, buf.contents.bytes, sizeof(uint32_t)) != sizeof(uint32_t)) {
-        dev_urandom_state = FAIL;
-      } else {
-        dev_urandom_state = OK;
-        *x = buf.contents.number;
-      }
-      os_close(fd);
-    }
-  }
-  if (dev_urandom_state != OK) {
-    // Reading /dev/urandom doesn't work, fall back to os_hrtime() XOR with process ID
-#endif
-  // uncrustify:off
-    *x = (uint32_t)os_hrtime();
-    *x ^= (uint32_t)os_get_pid();
-#ifndef MSWIN
-  }
-#endif
-  // uncrustify:on
+  // The system's random number generator doesn't work,
+  // fall back to os_hrtime() XOR with process ID
+  *x = (uint32_t)os_hrtime();
+  *x ^= (uint32_t)os_get_pid();
 }
 
 static inline uint32_t splitmix32(uint32_t *const x)
