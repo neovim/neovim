@@ -5883,15 +5883,13 @@ static void f_py3eval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void init_srand(uint32_t *const x)
   FUNC_ATTR_NONNULL_ALL
 {
-  struct {
-    union {
-      uint32_t number;
-      uint8_t bytes[sizeof(uint32_t)];
-    } contents;
+  union {
+    uint32_t number;
+    uint8_t bytes[sizeof(uint32_t)];
   } buf;
 
-  if (uv_random(NULL, NULL, buf.contents.bytes, sizeof(buf.contents.bytes), 0, NULL) == 0) {
-    *x = buf.contents.number;
+  if (uv_random(NULL, NULL, buf.bytes, sizeof(buf.bytes), 0, NULL) == 0) {
+    *x = buf.number;
     return;
   }
 
