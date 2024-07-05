@@ -198,7 +198,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, const char *e
         if (!HASHITEM_EMPTY(hi)) {
           dictitem_T *item2 = tv_dict_find(got_d, hi->hi_key, -1);
           if (item2 == NULL
-              || !tv_equal(&TV_DICT_HI2DI(hi)->di_tv, &item2->di_tv, false, false)) {
+              || !tv_equal(&TV_DICT_HI2DI(hi)->di_tv, &item2->di_tv, false)) {
             // item of exp_d not present in got_d or values differ.
             const size_t key_len = strlen(hi->hi_key);
             tv_dict_add_tv(exp_tv->vval.v_dict, hi->hi_key, key_len, &TV_DICT_HI2DI(hi)->di_tv);
@@ -271,8 +271,7 @@ static int assert_equal_common(typval_T *argvars, assert_type_T atype)
 {
   garray_T ga;
 
-  if (tv_equal(&argvars[0], &argvars[1], false, false)
-      != (atype == ASSERT_EQUAL)) {
+  if (tv_equal(&argvars[0], &argvars[1], false) != (atype == ASSERT_EQUAL)) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[2], NULL,
                       &argvars[0], &argvars[1], atype);

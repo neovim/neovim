@@ -4387,7 +4387,7 @@ bool func_equal(typval_T *tv1, typval_T *tv2, bool ic)
     if (d1 != d2) {
       return false;
     }
-  } else if (!tv_dict_equal(d1, d2, ic, true)) {
+  } else if (!tv_dict_equal(d1, d2, ic)) {
     return false;
   }
 
@@ -4399,7 +4399,7 @@ bool func_equal(typval_T *tv1, typval_T *tv2, bool ic)
   }
   for (int i = 0; i < a1; i++) {
     if (!tv_equal(tv1->vval.v_partial->pt_argv + i,
-                  tv2->vval.v_partial->pt_argv + i, ic, true)) {
+                  tv2->vval.v_partial->pt_argv + i, ic)) {
       return false;
     }
   }
@@ -9063,7 +9063,7 @@ int typval_compare(typval_T *typ1, typval_T *typ2, exprtype_T type, bool ic)
       return FAIL;
     } else {
       // Compare two Lists for being equal or unequal.
-      n1 = tv_list_equal(typ1->vval.v_list, typ2->vval.v_list, ic, false);
+      n1 = tv_list_equal(typ1->vval.v_list, typ2->vval.v_list, ic);
       if (type == EXPR_NEQUAL) {
         n1 = !n1;
       }
@@ -9086,7 +9086,7 @@ int typval_compare(typval_T *typ1, typval_T *typ2, exprtype_T type, bool ic)
       return FAIL;
     } else {
       // Compare two Dictionaries for being equal or unequal.
-      n1 = tv_dict_equal(typ1->vval.v_dict, typ2->vval.v_dict, ic, false);
+      n1 = tv_dict_equal(typ1->vval.v_dict, typ2->vval.v_dict, ic);
       if (type == EXPR_NEQUAL) {
         n1 = !n1;
       }
@@ -9107,14 +9107,14 @@ int typval_compare(typval_T *typ1, typval_T *typ2, exprtype_T type, bool ic)
       if (typ1->v_type == VAR_FUNC && typ2->v_type == VAR_FUNC) {
         // strings are considered the same if their value is
         // the same
-        n1 = tv_equal(typ1, typ2, ic, false);
+        n1 = tv_equal(typ1, typ2, ic);
       } else if (typ1->v_type == VAR_PARTIAL && typ2->v_type == VAR_PARTIAL) {
         n1 = typ1->vval.v_partial == typ2->vval.v_partial;
       } else {
         n1 = false;
       }
     } else {
-      n1 = tv_equal(typ1, typ2, ic, false);
+      n1 = tv_equal(typ1, typ2, ic);
     }
     if (type == EXPR_NEQUAL || type == EXPR_ISNOT) {
       n1 = !n1;

@@ -953,7 +953,7 @@ static varnumber_T count_list(list_T *l, typval_T *needle, int64_t idx, bool ic)
   varnumber_T n = 0;
 
   for (; li != NULL; li = TV_LIST_ITEM_NEXT(l, li)) {
-    if (tv_equal(TV_LIST_ITEM_TV(li), needle, ic, false)) {
+    if (tv_equal(TV_LIST_ITEM_TV(li), needle, ic)) {
       n++;
     }
   }
@@ -973,7 +973,7 @@ static varnumber_T count_dict(dict_T *d, typval_T *needle, bool ic)
   varnumber_T n = 0;
 
   TV_DICT_ITER(d, di, {
-    if (tv_equal(&di->di_tv, needle, ic, false)) {
+    if (tv_equal(&di->di_tv, needle, ic)) {
       n++;
     }
   });
@@ -3770,7 +3770,7 @@ static void f_index(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       typval_T tv;
       tv.v_type = VAR_NUMBER;
       tv.vval.v_number = tv_blob_get(b, idx);
-      if (tv_equal(&tv, &argvars[1], ic, false)) {
+      if (tv_equal(&tv, &argvars[1], ic)) {
         rettv->vval.v_number = idx;
         return;
       }
@@ -3807,7 +3807,7 @@ static void f_index(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   for (; item != NULL; item = TV_LIST_ITEM_NEXT(l, item), idx++) {
-    if (tv_equal(TV_LIST_ITEM_TV(item), &argvars[1], ic, false)) {
+    if (tv_equal(TV_LIST_ITEM_TV(item), &argvars[1], ic)) {
       rettv->vval.v_number = idx;
       break;
     }
