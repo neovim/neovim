@@ -1460,10 +1460,9 @@ void f_uniq(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// @param[in]  l1  First list to compare.
 /// @param[in]  l2  Second list to compare.
 /// @param[in]  ic  True if case is to be ignored.
-/// @param[in]  recursive  True when used recursively.
 ///
 /// @return True if lists are equal, false otherwise.
-bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic, const bool recursive)
+bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (l1 == l2) {
@@ -1485,8 +1484,7 @@ bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic, const bool
   for (; item1 != NULL && item2 != NULL
        ; (item1 = TV_LIST_ITEM_NEXT(l1, item1),
           item2 = TV_LIST_ITEM_NEXT(l2, item2))) {
-    if (!tv_equal(TV_LIST_ITEM_TV(item1), TV_LIST_ITEM_TV(item2), ic,
-                  recursive)) {
+    if (!tv_equal(TV_LIST_ITEM_TV(item1), TV_LIST_ITEM_TV(item2), ic)) {
       return false;
     }
   }
@@ -2679,8 +2677,9 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
 /// @param[in]  d1  First dictionary.
 /// @param[in]  d2  Second dictionary.
 /// @param[in]  ic  True if case is to be ignored.
-/// @param[in]  recursive  True when used recursively.
-bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic, const bool recursive)
+///
+/// @return True if dictionaries are equal, false otherwise.
+bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (d1 == d2) {
@@ -2702,7 +2701,7 @@ bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic, const bool
     if (di2 == NULL) {
       return false;
     }
-    if (!tv_equal(&di1->di_tv, &di2->di_tv, ic, recursive)) {
+    if (!tv_equal(&di1->di_tv, &di2->di_tv, ic)) {
       return false;
     }
   });
@@ -3838,10 +3837,9 @@ static int tv_equal_recurse_limit;
 /// @param[in]  tv1  First value to compare.
 /// @param[in]  tv2  Second value to compare.
 /// @param[in]  ic  True if case is to be ignored.
-/// @param[in]  recursive  True when used recursively.
 ///
 /// @return true if values are equal.
-bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic, const bool recursive)
+bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // TODO(ZyX-I): Make this not recursive
@@ -3857,7 +3855,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic, const boo
   // Reduce the limit every time running into it. That should work fine for
   // deeply linked structures that are not recursively linked and catch
   // recursiveness quickly.
-  if (!recursive) {
+  if (recursive_cnt == 0) {
     tv_equal_recurse_limit = 1000;
   }
   if (recursive_cnt >= tv_equal_recurse_limit) {
@@ -3868,15 +3866,13 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic, const boo
   switch (tv1->v_type) {
   case VAR_LIST: {
     recursive_cnt++;
-    const bool r = tv_list_equal(tv1->vval.v_list, tv2->vval.v_list, ic,
-                                 true);
+    const bool r = tv_list_equal(tv1->vval.v_list, tv2->vval.v_list, ic);
     recursive_cnt--;
     return r;
   }
   case VAR_DICT: {
     recursive_cnt++;
-    const bool r = tv_dict_equal(tv1->vval.v_dict, tv2->vval.v_dict, ic,
-                                 true);
+    const bool r = tv_dict_equal(tv1->vval.v_dict, tv2->vval.v_dict, ic);
     recursive_cnt--;
     return r;
   }
