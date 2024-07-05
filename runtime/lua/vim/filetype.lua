@@ -261,6 +261,7 @@ local extension = {
   cdc = 'cdc',
   cdl = 'cdl',
   toc = detect_line1('\\contentsline', 'tex', 'cdrtoc'),
+  cedar = 'cedar',
   cfc = 'cf',
   cfm = 'cf',
   cfi = 'cf',
