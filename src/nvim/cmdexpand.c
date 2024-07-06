@@ -241,7 +241,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
     if (xp->xp_context == EXPAND_LUA) {
-      nlua_expand_pat(xp, xp->xp_pattern);
+      nlua_expand_pat(xp);
     }
     cmd_showtail = expand_showtail(xp);
   }
@@ -1059,7 +1059,7 @@ int showmatches(expand_T *xp, bool wildmenu)
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
     if (xp->xp_context == EXPAND_LUA) {
-      nlua_expand_pat(xp, xp->xp_pattern);
+      nlua_expand_pat(xp);
     }
     int i = expand_cmdline(xp, ccline->cmdbuff, ccline->cmdpos,
                            &numMatches, &matches);
@@ -3610,7 +3610,8 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 theend:
   if (xpc.xp_context == EXPAND_LUA) {
-    nlua_expand_pat(&xpc, xpc.xp_pattern);
+    xpc.xp_col = (int)strlen(xpc.xp_line);
+    nlua_expand_pat(&xpc);
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
   char *pat;

@@ -854,6 +854,16 @@ describe('completion', function()
       ]])
     end)
 
+    it('works when cursor is in the middle of cmdline #29586', function()
+      feed(':lua math.a(); 1<Left><Left><Left><Left><Left><Tab>')
+      screen:expect([[
+                                                                    |
+        {1:~                                                           }|*5
+        {100:abs}{3:  acos  asin  atan  atan2                                }|
+        :lua math.abs^(); 1                                          |
+      ]])
+    end)
+
     it('provides completion from `getcompletion()`', function()
       eq({ 'vim' }, fn.getcompletion('vi', 'lua'))
       eq({ 'api' }, fn.getcompletion('vim.ap', 'lua'))
