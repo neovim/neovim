@@ -1194,6 +1194,8 @@ end
 ---@deprecated
 function M.goto_prev(opts)
   vim.deprecate('vim.diagnostic.goto_prev()', 'vim.diagnostic.jump()', '0.13')
+  opts = opts or {}
+  opts.float = if_nil(opts.float, true)
   goto_diagnostic(M.get_prev(opts), opts)
 end
 
@@ -1339,6 +1341,8 @@ end
 ---@deprecated
 function M.goto_next(opts)
   vim.deprecate('vim.diagnostic.goto_next()', 'vim.diagnostic.jump()', '0.13')
+  opts = opts or {}
+  opts.float = if_nil(opts.float, true)
   goto_diagnostic(M.get_next(opts), opts)
 end
 
