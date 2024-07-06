@@ -236,6 +236,7 @@ local extension = {
   db = detect.bindzone,
   bicep = 'bicep',
   bicepparam = 'bicep',
+  zone = 'bindzone',
   bb = 'bitbake',
   bbappend = 'bitbake',
   bbclass = 'bitbake',
