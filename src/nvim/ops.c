@@ -4420,6 +4420,7 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   int pre;  // 'X' or 'x': hex; '0': octal; 'B' or 'b': bin
   static bool hexupper = false;  // 0xABC
   uvarnumber_T n;
+  bool blank_unsigned = false;  // blank: treat as unsigned?
   bool negative = false;
   bool was_positive = true;
   bool visual = VIsual_active;
@@ -4430,12 +4431,12 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   pos_T endpos;
   colnr_T save_coladd = 0;
 
-  const bool do_hex = vim_strchr(curbuf->b_p_nf, 'x') != NULL;    // "heX"
-  const bool do_oct = vim_strchr(curbuf->b_p_nf, 'o') != NULL;    // "Octal"
-  const bool do_bin = vim_strchr(curbuf->b_p_nf, 'b') != NULL;    // "Bin"
-  const bool do_alpha = vim_strchr(curbuf->b_p_nf, 'p') != NULL;  // "alPha"
-  // "Unsigned"
-  const bool do_unsigned = vim_strchr(curbuf->b_p_nf, 'u') != NULL;
+  const bool do_hex = vim_strchr(curbuf->b_p_nf, 'x') != NULL;       // "heX"
+  const bool do_oct = vim_strchr(curbuf->b_p_nf, 'o') != NULL;       // "Octal"
+  const bool do_bin = vim_strchr(curbuf->b_p_nf, 'b') != NULL;       // "Bin"
+  const bool do_alpha = vim_strchr(curbuf->b_p_nf, 'p') != NULL;     // "alPha"
+  const bool do_unsigned = vim_strchr(curbuf->b_p_nf, 'u') != NULL;  // "Unsigned"
+  const bool do_blank = vim_strchr(curbuf->b_p_nf, 'k') != NULL;     // "blanK"
 
   if (virtual_active(curwin)) {
     save_coladd = pos->coladd;
@@ -4532,8 +4533,12 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     if (col > pos->col && ptr[col - 1] == '-'
         && !utf_head_off(ptr, ptr + col - 1)
         && !do_unsigned) {
-      negative = true;
-      was_positive = false;
+      if (do_blank && col >= 2 && !ascii_iswhite(ptr[col - 2])) {
+        blank_unsigned = true;
+      } else {
+        negative = true;
+        was_positive = false;
+      }
     }
   }
 
@@ -4579,9 +4584,13 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
         && !utf_head_off(ptr, ptr + col - 1)
         && !visual
         && !do_unsigned) {
-      // negative number
-      col--;
-      negative = true;
+      if (do_blank && col >= 2 && !ascii_iswhite(ptr[col - 2])) {
+        blank_unsigned = true;
+      } else {
+        // negative number
+        col--;
+        negative = true;
+      }
     }
 
     // get the number value (unsigned)
@@ -4638,7 +4647,7 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
       }
     }
 
-    if (do_unsigned && negative) {
+    if ((do_unsigned || blank_unsigned) && negative) {
       if (subtract) {
         // sticking at zero.
         n = 0;

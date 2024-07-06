@@ -841,6 +841,44 @@ func Test_increment_unsigned()
   set nrformats-=unsigned
 endfunc
 
+" Try incrementing/decrementing a number when nrformats contains blank
+func Test_increment_blank()
+  set nrformats+=blank
+
+  " Signed
+  call setline(1, '0')
+  exec "norm! gg0\<C-X>"
+  call assert_equal('-1', getline(1))
+
+  call setline(1, '3')
+  exec "norm! gg010\<C-X>"
+  call assert_equal('-7', getline(1))
+
+  call setline(1, '-0')
+  exec "norm! gg0\<C-X>"
+  call assert_equal("-1", getline(1))
+
+  " Unsigned
+  " NOTE: 18446744073709551615 == 2^64 - 1
+  call setline(1, 'a-18446744073709551615')
+  exec "norm! gg0\<C-A>"
+  call assert_equal('a-18446744073709551615', getline(1))
+
+  call setline(1, 'a-18446744073709551615')
+  exec "norm! gg0\<C-A>"
+  call assert_equal('a-18446744073709551615', getline(1))
+
+  call setline(1, 'a-18446744073709551614')
+  exec "norm! gg08\<C-A>"
+  call assert_equal('a-18446744073709551615', getline(1))
+
+  call setline(1, 'a-1')
+  exec "norm! gg0\<C-A>"
+  call assert_equal('a-2', getline(1))
+
+  set nrformats-=blank
+endfunc
+
 func Test_in_decrement_large_number()
   " NOTE: 18446744073709551616 == 2^64
   call setline(1, '18446744073709551616')

@@ -82,7 +82,7 @@ static char *(p_dip_values[]) = { "filler", "context:", "iblank", "icase",
                                   "closeoff", "hiddenoff", "foldcolumn:", "followwrap", "internal",
                                   "indent-heuristic", "linematch:", "algorithm:", NULL };
 static char *(p_dip_algorithm_values[]) = { "myers", "minimal", "patience", "histogram", NULL };
-static char *(p_nf_values[]) = { "bin", "octal", "hex", "alpha", "unsigned", NULL };
+static char *(p_nf_values[]) = { "bin", "octal", "hex", "alpha", "unsigned", "blank", NULL };
 static char *(p_ff_values[]) = { FF_UNIX, FF_DOS, FF_MAC, NULL };
 static char *(p_cb_values[]) = { "unnamed", "unnamedplus", NULL };
 static char *(p_cmp_values[]) = { "internal", "keepascii", NULL };
