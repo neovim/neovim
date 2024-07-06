@@ -205,6 +205,19 @@ describe('glob', function()
       eq(true, match('[!a-zA-Z0-9]', '!'))
     end)
 
+    it('should handle long patterns', function()
+      -- lpeg has a recursion limit of 200 by default, make sure the grammar does trigger it on
+      -- strings longer than that
+      local fill_200 =
+        'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      eq(200, fill_200:len())
+      local long_lit = fill_200 .. 'a'
+      eq(false, match(long_lit, 'b'))
+      eq(true, match(long_lit, long_lit))
+      local long_pat = fill_200 .. 'a/**/*.c'
+      eq(true, match(long_pat, fill_200 .. 'a/b/c/d.c'))
+    end)
+
     it('should match complex patterns', function()
       eq(false, match('**/*.{c,h}', ''))
       eq(false, match('**/*.{c,h}', 'c'))
