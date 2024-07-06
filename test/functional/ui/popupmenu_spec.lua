@@ -2920,11 +2920,12 @@ describe('builtin popupmenu', function()
         feed('<C-U>sign define <Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|*2
+          {1:~                               }|
           {1:~           }{s: culhl=         }{1:    }|
           {1:~           }{n: icon=          }{1:    }|
           {1:~           }{n: linehl=        }{1:    }|
           {1:~           }{n: numhl=         }{1:    }|
+          {1:~           }{n: priority=      }{1:    }|
           {1:~           }{n: text=          }{1:    }|
           {1:~           }{n: texthl=        }{1:    }|
           :sign define culhl=^             |
@@ -2933,11 +2934,12 @@ describe('builtin popupmenu', function()
         feed('<Space><Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|*2
+          {1:~                               }|
           {1:~                  }{s: culhl=     }{1: }|
           {1:~                  }{n: icon=      }{1: }|
           {1:~                  }{n: linehl=    }{1: }|
           {1:~                  }{n: numhl=     }{1: }|
+          {1:~                  }{n: priority=  }{1: }|
           {1:~                  }{n: text=      }{1: }|
           {1:~                  }{n: texthl=    }{1: }|
           :sign define culhl= culhl=^      |

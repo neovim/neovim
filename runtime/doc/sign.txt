@@ -68,11 +68,12 @@ other plugins using signs.
 
 							*sign-priority*
 Each placed sign is assigned a priority value independently of the sign group.
-The default priority for a sign is 10. When multiple signs that each have an
-icon or text are placed on the same line, signs are ordered with decreasing
-priority from left to right, up until the maximum width set in 'signcolumn'.
-Lower priority signs that do not fit are hidden. Highest priority signs with
-highlight attributes are always shown.
+The default priority for a sign is 10, this value can be changed for different
+signs by specifying a different value at definition time. When multiple signs
+that each have an icon or text are placed on the same line, signs are ordered
+with decreasing priority from left to right, up until the maximum width set in
+'signcolumn'. Low priority signs that do not fit are hidden. Highest priority
+signs with highlight attributes are always shown.
 
 When the line on which the sign is placed is deleted, the sign is removed along
 with it.
@@ -112,6 +113,9 @@ See |sign_define()| for the equivalent Vim script function.
 		will cause redraw problems.
 			toolkit		supports ~
 			Win32		.bmp, .ico, .cur
+
+	priority={prio}
+		Default priority for the sign, see |sign-priority|.
 
 	linehl={group}
 		Highlighting group used for the whole line the sign is placed
@@ -183,11 +187,11 @@ See |sign_place()| for the equivalent Vim script function.
 
 		By default, the sign is placed in the global sign group.
 
-		By default, the sign is assigned a default priority of 10. To
-		assign a different priority value, use "priority={prio}" to
-		specify a value.  The priority is used to determine the sign
-		that is displayed when multiple signs are placed on the same
-		line.
+		By default, the sign is assigned a default priority of 10,
+		unless specified otherwise by the sign definition.  To assign a
+		different priority value, use "priority={prio}" to specify a
+		value.  The priority is used to determine the sign that is
+		displayed when multiple signs are placed on the same line.
 
 		Examples: >
 			:sign place 5 line=3 name=sign1 file=a.py

@@ -18,6 +18,7 @@ typedef struct {
   int sn_text_hl;  // highlight ID for text
   int sn_cul_hl;   // highlight ID for text on current line when 'cursorline' is set
   int sn_num_hl;   // highlight ID for line number
+  int sn_priority;  // default priority of this sign, -1 means SIGN_DEF_PRIO
 } sign_T;
 
 typedef struct {
