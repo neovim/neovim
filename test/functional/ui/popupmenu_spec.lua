@@ -4905,6 +4905,28 @@ describe('builtin popupmenu', function()
         feed('o<BS><C-R>=Comp()<CR>')
         screen:expect_unchanged(true)
 
+        feed('<Esc>')
+        command('set completeopt+=fuzzy,menu')
+        feed('S hello helio hero h<C-X><C-P>')
+        screen:expect([[
+           hello helio hero h^             |
+          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
+          {1:~                }{n: }{mn:h}{n:elio        }{1: }|
+          {1:~                }{s: }{ms:h}{s:ero         }{1: }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+
+        feed('<Esc>S hello helio hero h<C-X><C-P><C-P>')
+        screen:expect([[
+           hello helio hero h^             |
+          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
+          {1:~                }{s: }{ms:h}{s:elio        }{1: }|
+          {1:~                }{n: }{mn:h}{n:ero         }{1: }|
+          {1:~                               }|*15
+          {2:-- }{5:match 2 of 3}                 |
+        ]])
+
         feed('<C-E><Esc>')
       end)
     end

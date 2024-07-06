@@ -1489,6 +1489,17 @@ func Test_pum_highlights_match()
   call term_sendkeys(buf, "o\<BS>\<C-R>=Comp()\<CR>")
   call VerifyScreenDump(buf, 'Test_pum_highlights_09', {})
 
+  " issue #15095 wrong select
+  call term_sendkeys(buf, "\<ESC>:set completeopt=fuzzy,menu\<CR>")
+  call TermWait(buf)
+  call term_sendkeys(buf, "S hello helio hero h\<C-X>\<C-P>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_highlights_10', {})
+
+  call term_sendkeys(buf, "\<ESC>S hello helio hero h\<C-X>\<C-P>\<C-P>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_highlights_11', {})
+
   call term_sendkeys(buf, "\<C-E>\<Esc>")
   call TermWait(buf)
 
