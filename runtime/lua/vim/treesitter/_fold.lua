@@ -264,6 +264,15 @@ end
 
 ---@package
 function FoldInfo:do_foldupdate(bufnr)
+  -- InsertLeave is not executed when <C-C> is used for exiting the insert mode, leaving
+  -- do_foldupdate untouched. If another execution of foldupdate consumes foldupdate_range, the
+  -- InsertLeave do_foldupdate gets nil foldupdate_range. In that case, skip the update. This is
+  -- correct because the update that consumed the range must have incorporated the range that
+  -- InsertLeave meant to update.
+  if not self.foldupdate_range then
+    return
+  end
+
   local srow, erow = self.foldupdate_range[1], self.foldupdate_range[2]
   self.foldupdate_range = nil
   for _, win in ipairs(vim.fn.win_findbuf(bufnr)) do
