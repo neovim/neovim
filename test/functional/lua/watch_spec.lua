@@ -23,10 +23,13 @@ describe('vim._watch', function()
 
   local function run(watchfunc)
     it('detects file changes (watchfunc=' .. watchfunc .. '())', function()
-      if watchfunc == 'fswatch' then
+      if watchfunc == 'inotify' then
         skip(is_os('win'), 'not supported on windows')
         skip(is_os('mac'), 'flaky test on mac')
-        skip(not is_ci() and n.fn.executable('fswatch') == 0, 'fswatch not installed and not on CI')
+        skip(
+          not is_ci() and n.fn.executable('inotifywait') == 0,
+          'inotify-tools not installed and not on CI'
+        )
       end
 
       if watchfunc == 'watch' then
@@ -123,5 +126,5 @@ describe('vim._watch', function()
 
   run('watch')
   run('watchdirs')
-  run('fswatch')
+  run('inotify')
 end)

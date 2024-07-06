@@ -5128,12 +5128,12 @@ describe('LSP', function()
       it(
         string.format('sends notifications when files change (watchfunc=%s)', watchfunc),
         function()
-          if watchfunc == 'fswatch' then
+          if watchfunc == 'inotify' then
             skip(is_os('win'), 'not supported on windows')
             skip(is_os('mac'), 'flaky test on mac')
             skip(
-              not is_ci() and fn.executable('fswatch') == 0,
-              'fswatch not installed and not on CI'
+              not is_ci() and fn.executable('inotifywait') == 0,
+              'inotify-tools not installed and not on CI'
             )
           end
 
@@ -5265,7 +5265,7 @@ describe('LSP', function()
 
     test_filechanges('watch')
     test_filechanges('watchdirs')
-    test_filechanges('fswatch')
+    test_filechanges('inotify')
 
     it('correctly registers and unregisters', function()
       local root_dir = '/some_dir'
