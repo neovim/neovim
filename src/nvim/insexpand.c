@@ -4146,7 +4146,7 @@ static int get_cmdline_compl_info(char *line, colnr_T curs_col)
   compl_patternlen = (size_t)curs_col;
   set_cmd_context(&compl_xp, compl_pattern, (int)compl_patternlen, curs_col, false);
   if (compl_xp.xp_context == EXPAND_LUA) {
-    nlua_expand_pat(&compl_xp, compl_xp.xp_pattern);
+    nlua_expand_pat(&compl_xp);
   }
   if (compl_xp.xp_context == EXPAND_UNSUCCESSFUL
       || compl_xp.xp_context == EXPAND_NOTHING) {
