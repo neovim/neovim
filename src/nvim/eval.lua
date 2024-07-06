@@ -10112,6 +10112,7 @@ M.funcs = {
          linehl	highlight group used for the whole line the
       		sign is placed in; not present if not set.
          name		name of the sign
+         priority	default priority value of the sign
          numhl	highlight group used for the line number where
       		the sign is placed; not present if not set.
          text		text that is displayed when there is no icon
@@ -10322,7 +10323,8 @@ M.funcs = {
           priority	Priority of the sign. When multiple signs are
       		placed on a line, the sign with the highest
       		priority is used. If not specified, the
-      		default value of 10 is used. See
+      		default value of 10 is used, unless specified
+      		otherwise by the sign definition. See
       		|sign-priority| for more information.
 
       If {id} refers to an existing sign, then the existing sign is
