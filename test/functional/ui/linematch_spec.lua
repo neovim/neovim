@@ -803,6 +803,71 @@ void testFunction () {
       ]])
     end)
   end)
+  describe('setup a diff with 2 files and set linematch:30', function()
+    before_each(function()
+      feed(':set diffopt+=linematch:30<cr>')
+      local f1 = [[
+?a   
+      ]]
+      local f2 = [[
+!b
+!a
+!c   
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    it('display results', function()
+      screen:expect([[
+      {7:  }{8:  1 }{22:^!b                                         }│{7:  }{8:    }{23:--------------------------------------------}|
+      {7:  }{8:  2 }{22:!a                                         }│{7:  }{8:    }{23:--------------------------------------------}|
+      {7:  }{8:  3 }{27:!c}{4:                                         }│{7:  }{8:  1 }{27:?a}{4:                                          }|
+      {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+      :e                                                                                                  |
+      ]])
+    end)
+    it('display results with ignore white', function()
+      feed(':set diffopt+=iwhiteall<cr>')
+      screen:expect([[
+      {7:  }{8:  1 }{22:^!b                                         }│{7:  }{8:    }{23:--------------------------------------------}|
+      {7:  }{8:  2 }{27:!}{4:a                                         }│{7:  }{8:  1 }{27:?}{4:a                                          }|
+      {7:  }{8:  3 }{22:!c                                         }│{7:  }{8:    }{23:--------------------------------------------}|
+      {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+      :set diffopt+=iwhiteall                                                                             |
+      ]])
+    end)
+  end)
   describe('a diff that would result in multiple groups before grouping optimization', function()
     before_each(function()
       feed(':set diffopt+=linematch:30<cr>')

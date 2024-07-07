@@ -2131,7 +2131,6 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
     }
   }
   // calculate the token lengths and white space offset
-  if (diff_allignment == WORDMATCH || diff_allignment == CHARMATCH) {
 
   for (size_t i = 0; i < ndiffs; i++) {
     int cls = INT_MIN; // keep track of what type of character this is, to determine when we are
@@ -2152,7 +2151,6 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
                                           // populate the results
     size_t cur_char_length = 0;
 
-    // TODO only run for chardiff / worddiff
     while (lines > 0) {
 
       if (iwhite && (diffbufs[i][j] == ' ' || diffbufs[i][j] == '\t')) {
@@ -2190,7 +2188,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           cur_char_length--;
         }
         // if ignoring whitespace, keep track of the white space index
-        if (iwhite) {
+        if (iwhite && (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH)) {
           // keep track of the index offset with ignoring whitespace to use when populating the results
           iwhite_index_offset[w++] = j - k;
         }
@@ -2199,7 +2197,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       if (diffbufs[i][j++] == '\n') { lines--; }
     }
   }
-  }
+  
 
   // we will get the output of the linematch algorithm in the format of an array
   // of integers (*decisions) and the length of that array (decisions_length)
