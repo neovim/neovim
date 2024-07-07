@@ -196,10 +196,12 @@ tag		char	      note action in Normal mode	~
 |<Tab>|		<Tab>		1  go to N newer entry in jump list
 |CTRL-I|	CTRL-I		1  same as <Tab>
 |<NL>|		<NL>		1  same as "j"
+|<S-NL>|	<S-NL>		1  same as CTRL-F
 |CTRL-J|	CTRL-J		1  same as "j"
 		CTRL-K		   not used
 |CTRL-L|	CTRL-L		   redraw screen
 |<CR>|		<CR>		1  cursor to the first CHAR N lines lower
+|<S-CR>|	<S-CR>		1  same as CTRL-F
 |CTRL-M|	CTRL-M		1  same as <CR>
 |CTRL-N|	CTRL-N		1  same as "j"
 |CTRL-O|	CTRL-O		1  go to N older entry in jump list
@@ -272,9 +274,11 @@ tag		char	      note action in Normal mode	~
 |star|		*		1  search forward for the Nth occurrence of
 				   the ident under the cursor
 |+|		+		1  same as <CR>
+|<S-Plus>|	<S-+>		1  same as CTRL-F
 |,|		,		1  repeat latest f, t, F or T in opposite
 				   direction N times
 |-|		-		1  cursor to the first CHAR N lines higher
+|<S-Minus>|	<S-->		1  same as CTRL-B
 |.|		.		2  repeat last change with count replaced with
 				   N
 |/|		/{pattern}<CR>	1  search forward for the Nth occurrence of
