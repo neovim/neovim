@@ -482,7 +482,6 @@ endif()
 if(MSVC)
   list(APPEND gen_cflags -wd4003)
 endif()
-list(APPEND gen_cflags -O2)
 
 set(NVIM_VERSION_GIT_H ${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef_git.h)
 add_custom_target(update_version_stamp
