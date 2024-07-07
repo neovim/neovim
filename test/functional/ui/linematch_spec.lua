@@ -1430,6 +1430,90 @@ abc abcd abcde abcdef
       end)
     end)
   end)
+  describe('show a diff with charmatch enabled, with different UTF-8 character', function()
+    before_each(function()
+      local f1 = [[
+aaaहaaa
+      ]]
+      local f2 = [[
+aaaसaaa
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    describe('normal comparison, including whitespace', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:100<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {7:  }{8:  1 }{4:^aaa}{27:स}{4:a}{27:a}{4:a                                    }│{7:  }{8:  1 }{4:aaa}{27:ह}{4:a}{27:a}{4:a                                     }|
+       {7:  }{8:  2 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:100                                                                          |
+        ]])
+      end)
+    end)
+  end)
+  describe('show a diff with charmatch enabled, with same UTF-8 character', function()
+    before_each(function()
+      local f1 = [[
+aaaहaaa
+      ]]
+      local f2 = [[
+aaaहaaa
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    describe('normal comparison, including whitespace', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:100<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {7:+ }{8:  1 }{13:^+--  2 lines: aaaहaaa······················}│{7:+ }{8:  1 }{13:+--  2 lines: aaaहaaa·······················}|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:100                                                                          |
+        ]])
+      end)
+    end)
+  end)
 end)
 
 describe('regressions', function()
