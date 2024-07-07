@@ -658,16 +658,19 @@ function LanguageTree:included_regions()
   return regions
 end
 
----@param node TSNode
+---@param nodes TSNode[]
 ---@param source string|integer
 ---@param metadata vim.treesitter.query.TSMetadata
 ---@param include_children boolean
 ---@return Range6[]
-local function get_node_ranges(node, source, metadata, include_children)
-  local range = vim.treesitter.get_range(node, source, metadata)
-  local child_count = node:named_child_count()
+local function get_node_ranges(nodes, source, metadata, include_children)
+  local range = vim.treesitter.get_range(nodes[1], source, metadata)
+  local end_range = vim.treesitter.get_range(nodes[#nodes], source, metadata)
+  range[4] = end_range[4]
+  range[5] = end_range[5]
+  range[6] = end_range[6]
 
-  if include_children or child_count == 0 then
+  if include_children then
     return { range }
   end
 
@@ -676,15 +679,18 @@ local function get_node_ranges(node, source, metadata, include_children)
   local srow, scol, sbyte, erow, ecol, ebyte = Range.unpack6(range)
 
   -- We are excluding children so we need to mask out their ranges
-  for i = 0, child_count - 1 do
-    local child = assert(node:named_child(i))
-    local c_srow, c_scol, c_sbyte, c_erow, c_ecol, c_ebyte = child:range(true)
-    if c_srow > srow or c_scol > scol then
-      ranges[#ranges + 1] = { srow, scol, sbyte, c_srow, c_scol, c_sbyte }
+  for _, node in ipairs(nodes) do
+    local child_count = node:named_child_count()
+    for i = 0, child_count - 1 do
+      local child = assert(nodes[1]:named_child(i))
+      local c_srow, c_scol, c_sbyte, c_erow, c_ecol, c_ebyte = child:range(true)
+      if c_srow > srow or c_scol > scol then
+        ranges[#ranges + 1] = { srow, scol, sbyte, c_srow, c_scol, c_sbyte }
+      end
+      srow = c_erow
+      scol = c_ecol
+      sbyte = c_ebyte
     end
-    srow = c_erow
-    scol = c_ecol
-    sbyte = c_ebyte
   end
 
   if erow > srow or ecol > scol then
@@ -778,19 +784,19 @@ function LanguageTree:_get_injection(match, metadata)
   local include_children = metadata['injection.include-children'] ~= nil
 
   for id, nodes in pairs(match) do
-    for _, node in ipairs(nodes) do
-      local name = self._injection_query.captures[id]
-      -- Lang should override any other language tag
-      if name == 'injection.language' then
-        local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
-        lang = resolve_lang(text:lower()) -- language names are always lower case
-      elseif name == 'injection.filename' then
-        local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
-        local ft = vim.filetype.match({ filename = text })
-        lang = ft and resolve_lang(ft)
-      elseif name == 'injection.content' then
-        ranges = get_node_ranges(node, self._source, metadata[id], include_children)
-      end
+    local name = self._injection_query.captures[id]
+    -- Lang should override any other language tag
+    if name == 'injection.language' then
+      assert(#nodes == 1, 'Cannot use multiple nodes as the injection language.')
+      local text = vim.treesitter.get_node_text(nodes[1], self._source, { metadata = metadata[id] })
+      lang = resolve_lang(text:lower()) -- language names are always lower case
+    elseif name == 'injection.filename' then
+      assert(#nodes == 1, 'Cannot set multiple nodes as the injection filename.')
+      local text = vim.treesitter.get_node_text(nodes[1], self._source, { metadata = metadata[id] })
+      local ft = vim.filetype.match({ filename = text })
+      lang = ft and resolve_lang(ft)
+    elseif name == 'injection.content' then
+      ranges = get_node_ranges(nodes, self._source, metadata[id], include_children)
     end
   end
 
