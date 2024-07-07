@@ -11,6 +11,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
+#include "nvim/ex_getln.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
@@ -208,7 +209,7 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
   }
 
   // Don't send b:changedtick during 'inccommand' preview if "buf" is the current buffer.
-  bool send_tick = !(cmdpreview && buf == curbuf);
+  bool send_tick = !(cmdpreview_is_enabled() && buf == curbuf);
 
   // if one the channels doesn't work, put its ID here so we can remove it later
   uint64_t badchannelid = 0;
@@ -268,7 +269,7 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
-    if (cb.on_lines != LUA_NOREF && (cb.preview || !cmdpreview)) {
+    if (cb.on_lines != LUA_NOREF && (cb.preview || !cmdpreview_is_enabled())) {
       MAXSIZE_TEMP_ARRAY(args, 8);  // 6 or 8 used
 
       // the first argument is always the buffer handle
@@ -324,7 +325,7 @@ void buf_updates_send_splice(buf_T *buf, int start_row, colnr_T start_col, bcoun
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
-    if (cb.on_bytes != LUA_NOREF && (cb.preview || !cmdpreview)) {
+    if (cb.on_bytes != LUA_NOREF && (cb.preview || !cmdpreview_is_enabled())) {
       MAXSIZE_TEMP_ARRAY(args, 11);
 
       // the first argument is always the buffer handle
