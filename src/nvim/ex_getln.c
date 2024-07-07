@@ -2188,6 +2188,7 @@ static int command_line_not_changed(CommandLineState *s)
     trigger_cmd_autocmd(get_cmdline_type(), EVENT_CURSORMOVEDC);
     s->prev_cmdpos = ccline.cmdpos;
   }
+
   // Incremental searches for "/" and "?":
   // Enter command_line_not_changed() when a character has been read but the
   // command line did not change. Then we only search and redraw if something
@@ -2662,9 +2663,14 @@ static void do_autocmd_cmdlinechanged(int firstc)
 
 static int command_line_changed(CommandLineState *s)
 {
-  s->prev_cmdpos = ccline.cmdpos;
   // Trigger CmdlineChanged autocommands.
   do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
+
+  // Trigger CursorMovedC autocommands.
+  if (ccline.cmdpos != s->prev_cmdpos) {
+    trigger_cmd_autocmd(get_cmdline_type(), EVENT_CURSORMOVEDC);
+    s->prev_cmdpos = ccline.cmdpos;
+  }
 
   const bool prev_cmdpreview = cmdpreview;
   if (s->firstc == ':'
