@@ -409,12 +409,15 @@ local function download(url)
       return out
     end
   elseif vim.fn.executable('python') == 1 then
-    local script = "try:\n\
-          from urllib.request import urlopen\n\
-          except ImportError:\n\
-          from urllib2 import urlopen\n\
-          response = urlopen('" .. url .. "')\n\
-          print(response.read().decode('utf8'))\n"
+    local script = ([[
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
+
+response = urlopen('%s')
+print(response.read().decode('utf8'))
+]]):format(url)
     local out, rc = system({ 'python', '-c', script })
     if out == '' and rc ~= 0 then
       return 'python urllib.request error: ' .. rc
