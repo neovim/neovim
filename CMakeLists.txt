@@ -131,13 +131,6 @@ else()
 endif()
 option(ENABLE_LIBINTL "enable libintl" ON)
 
-if(APPLE AND ENABLE_LTO)
-  # Preserve debugging information when LTO is enabled
-  # https://gitlab.kitware.com/cmake/cmake/-/issues/25202
-  add_link_options("LINKER:-object_path_lto,$<TARGET_PROPERTY:NAME>_lto.o")
-  add_link_options("LINKER:-cache_path_lto,${CMAKE_BINARY_DIR}/LTOCache")
-endif()
-
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
 set_default_buildtype(Debug)

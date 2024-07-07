@@ -163,6 +163,13 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   # Apple Clang 16's new deduplication pass leads to lock-up on start
   # TODO(clason): verify that problem remains after release or remove
   target_link_options(nvim_bin PRIVATE "-Wl,-no_deduplicate")
+
+  if(ENABLE_LTO)
+    # Preserve debugging information when LTO is enabled
+    # https://gitlab.kitware.com/cmake/cmake/-/issues/25202
+    add_link_options("LINKER:-object_path_lto,$<TARGET_PROPERTY:NAME>_lto.o")
+    add_link_options("LINKER:-cache_path_lto,${CMAKE_BINARY_DIR}/LTOCache")
+  endif()
 elseif(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
   target_link_libraries(main_lib INTERFACE pthread c++abi)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
