@@ -2598,20 +2598,24 @@ function M.match(args)
         contents = M._getlines(bufnr)
       end
     end
-    -- If name is nil, catch any errors from the contents filetype detection function.
-    -- If the function tries to use the filename that is nil then it will fail,
-    -- but this enables checks which do not need a filename to still work.
-    local ok
-    ok, ft, on_detect = pcall(
-      require('vim.filetype.detect').match_contents,
-      contents,
-      name,
-      function(ext)
-        return dispatch(extension[ext], name, bufnr)
+
+    -- Match based solely on content only if there is any content (for performance)
+    if not (#contents == 1 and contents[1] == '') then
+      -- If name is nil, catch any errors from the contents filetype detection function.
+      -- If the function tries to use the filename that is nil then it will fail,
+      -- but this enables checks which do not need a filename to still work.
+      local ok
+      ok, ft, on_detect = pcall(
+        require('vim.filetype.detect').match_contents,
+        contents,
+        name,
+        function(ext)
+          return dispatch(extension[ext], name, bufnr)
+        end
+      )
+      if ok then
+        return ft, on_detect
       end
-    )
-    if ok then
-      return ft, on_detect
     end
   end
 end
