@@ -1597,7 +1597,7 @@ function M.tex(path, bufnr)
   end
 end
 
--- Determine if a *.tf file is TF mud client or terraform
+-- Determine if a *.tf file is TF (TinyFugue) mud client or terraform
 --- @type vim.filetype.mapfn
 function M.tf(_, bufnr)
   for _, line in ipairs(getlines(bufnr)) do
