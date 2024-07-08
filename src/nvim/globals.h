@@ -146,8 +146,7 @@ EXTERN hlf_T edit_submode_highl;                // highl. method for extra info
 EXTERN bool cmdmsg_rl INIT( = false);  // cmdline is drawn right to left
 EXTERN int msg_col;
 EXTERN int msg_row;
-EXTERN int msg_scrolled;        // Number of screen lines that windows have
-                                // scrolled because of printing messages.
+EXTERN int msg_scrolled;  ///< Number of screen lines that messages have scrolled.
 // when true don't set need_wait_return in msg_puts_attr()
 // when msg_scrolled is non-zero
 EXTERN bool msg_scrolled_ign INIT( = false);
