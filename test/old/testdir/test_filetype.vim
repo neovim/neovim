@@ -386,6 +386,7 @@ func s:GetFilenameChecks() abort
     \ 'lace': ['file.ace', 'file.ACE'],
     \ 'latte': ['file.latte', 'file.lte'],
     \ 'ld': ['file.ld', 'any/usr/lib/aarch64-xilinx-linux/ldscripts/aarch64elf32b.x'],
+    \ 'ldapconf': ['ldap.conf', '.ldaprc', 'ldaprc'],
     \ 'ldif': ['file.ldif'],
     \ 'lean': ['file.lean'],
     \ 'ledger': ['file.ldg', 'file.ledger', 'file.journal'],
