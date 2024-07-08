@@ -2915,8 +2915,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
 {
   garray_T *const gap = qfga_get();
 
-  // Update the screen before showing the message, unless the screen
-  // scrolled up.
+  // Update the screen before showing the message, unless messages scrolled.
   if (!msg_scrolled) {
     update_topline(curwin);
     if (must_redraw) {
@@ -2938,7 +2937,8 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
   linenr_T i = msg_scroll;
   if (curbuf == old_curbuf && curwin->w_cursor.lnum == old_lnum) {
     msg_scroll = true;
-  } else if (!msg_scrolled && shortmess(SHM_OVERALL)) {
+  } else if ((msg_scrolled == 0 || (p_ch == 0 && msg_scrolled == 1))
+             && shortmess(SHM_OVERALL)) {
     msg_scroll = false;
   }
   msg_ext_set_kind("quickfix");
