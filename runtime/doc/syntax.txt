@@ -754,9 +754,9 @@ variable.
 
 CSV							*ft-csv-syntax*
 
-If you change the delimiter of the CSV file, the syntax highlighting will be
-now longer match the changed file content. You will need to unlet the
-following variable: >
+If you change the delimiter of a CSV file, its syntax highlighting will no
+longer match the changed file content. You will need to unlet the following
+variable: >
 
 	:unlet b:csv_delimiter
 
@@ -765,7 +765,7 @@ And afterwards save and reload the file: >
 	:w
 	:e
 
-Now the syntax engine should determine the newly changed csv delimiter.
+Now the syntax engine should determine the newly changed CSV delimiter.
 
 
 CYNLIB						*cynlib.vim* *ft-cynlib-syntax*
