@@ -2225,7 +2225,6 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
         dp->charmatchp[i] = -1; // -1 indicates that algorithm has not yet ran
       }
     } else {
-      int *decisions = NULL;
       for (size_t i = 0; i < total_chars_length; i++) {
         dp->charmatchp[i] = 0; // default to not highlighted
       }
@@ -2248,11 +2247,9 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           dp->charmatchp[i] = 2;
         }
       } else {
+        int *decisions = NULL;
         size_t decisions_length = linematch_nbuffers((const char **)diffbufs, diff_length, ndiffs, &decisions, 1, word_offset, word_offset_size);
         for (size_t i = 0; i < decisions_length; i++) {
-          // write to result
-          // is it a comparison
-          // check for if this is a 'newline'
           if (decisions[i] == (pow(2, (double)ndiffs) - 1)) {
             // it's a comparison of all the buffers (don't highlight)
             for (size_t j = 0; j < ndiffs; j++) {
@@ -2276,6 +2273,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
             }
           }
         }
+        xfree(decisions);
       }
     }
   }
