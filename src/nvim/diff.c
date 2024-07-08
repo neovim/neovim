@@ -2116,9 +2116,6 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   if (iwhite && (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH)) {
     // allocate array for index mapping of result array
     iwhite_index_offset = xmalloc(total_chars_length * sizeof(size_t));
-    for (size_t i = 0; i < total_chars_length; i++) {
-      iwhite_index_offset[i] = 99;
-    }
   }
   if (diff_allignment == WORDMATCH || diff_allignment == CHARMATCH) {
     for (size_t i = 0; i < ndiffs; i++) {
@@ -2283,6 +2280,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
     xfree(word_offset_size[i]);
     XFREE_CLEAR(diffbufs_mm[i].ptr);
   }
+  xfree(iwhite_index_offset);
 
 }
 
