@@ -99,6 +99,9 @@ local function tokens_to_ranges(data, bufnr, client, request)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return {}
+  end
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local ranges = {} ---@type STTokenRange[]
 
@@ -388,6 +391,9 @@ function STHighlighter:process_response(response, client, version)
   current_result.namespace_cleared = false
 
   -- redraw all windows displaying buffer
+  if not vim.api.nvim_buf_is_valid(self.bufnr) then
+    return
+  end
   api.nvim__redraw({ buf = self.bufnr, valid = true })
 end
 
