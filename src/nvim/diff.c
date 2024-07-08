@@ -2113,11 +2113,15 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
     }
   }
 
-  if (iwhite && (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH)) {
-    // allocate array for index mapping of result array
-    iwhite_index_offset = xmalloc(total_chars_length * sizeof(size_t));
-  }
+  // allocate all the memory we will need to keep track of tokens positions and their respective
+  // lengths. For word matching, this is the 'word' as vim defines it, for character matching, the
+  // token is the one or more 8 bit 'chars' that make up a utf character
   if (diff_allignment == WORDMATCH || diff_allignment == CHARMATCH) {
+    // are we ignoring whitespace in the comparison?
+    if (iwhite) {
+    // allocate array for index mapping of result array
+      iwhite_index_offset = xmalloc(total_chars_length * sizeof(size_t));
+    }
     for (size_t i = 0; i < ndiffs; i++) {
       word_offset[i] = xmalloc(total_chars_length * sizeof(size_t));
       word_offset_size[i] = xmalloc(total_chars_length * sizeof(size_t));
@@ -2127,8 +2131,8 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       }
     }
   }
-  // calculate the token lengths and white space offset
-
+  // calculate the token lengths and white space offset and pre process the contents of the diffs to
+  // remove white space if necessary
   for (size_t i = 0; i < ndiffs; i++) {
     int cls = INT_MIN; // keep track of what type of character this is, to determine when we are
                        // moving to a different word
