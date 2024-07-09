@@ -408,15 +408,15 @@ t3]])
 
   it('handles quantified patterns', function()
     insert([[
-import hello
-import hello
-import hello
-import hello
-import hello
-import hello]])
+-- hello
+-- hello
+-- hello
+-- hello
+-- hello
+-- hello]])
 
-    exec_lua([[vim.treesitter.query.set('python', 'folds', '(import_statement)+ @fold')]])
-    parse('python')
+    exec_lua([[vim.treesitter.query.set('lua', 'folds', '(comment)+ @fold')]])
+    parse('lua')
 
     eq({
       [1] = '>1',
