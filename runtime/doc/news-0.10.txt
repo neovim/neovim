@@ -347,8 +347,8 @@ The following new features were added.
     |default-autocmds|
 
 • Treesitter:
-  • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
-    Bash.
+  • Bundled parser and queries (highlight, folds) for Markdown (used for LSP
+    hover).
   • |:InspectTree| shows root nodes.
   • |:InspectTree| now supports |folding|.
   • |:InspectTree| shows node ranges in 0-based instead of 1-based indexing.
