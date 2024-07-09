@@ -23,8 +23,8 @@ LUA
 - vim.region()		Use |getregionpos()| instead.
 
 DIAGNOSTICS
-- *vim.diagnostic.goto_next()*	Use |vim.diagnostic.jump()| with `{count = 1}` instead.
-- *vim.diagnostic.goto_prev()*	Use |vim.diagnostic.jump()| with `{count = -1}` instead.
+- *vim.diagnostic.goto_next()*	Use |vim.diagnostic.jump()| with `{count=1, float=true}` instead.
+- *vim.diagnostic.goto_prev()*	Use |vim.diagnostic.jump()| with `{count=-1, float=true}` instead.
 - *vim.diagnostic.get_next_pos()*
 	Use the "lnum" and "col" fields from the return value of
 	|vim.diagnostic.get_next()| instead.
