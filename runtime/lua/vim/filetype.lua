@@ -2218,6 +2218,11 @@ local pattern = {
 -- luacheck: pop
 -- luacheck: pop
 
+--- Lookup table/cache for patterns
+--- @alias vim.filetype.pattern_cache { fullpat: string, has_env: boolean, has_slash: boolean }
+--- @type table<string,vim.filetype.pattern_cache>
+local pattern_lookup = {}
+
 local function compare_by_priority(a, b)
   return a[next(a)][2].priority > b[next(b)][2].priority
 end
@@ -2230,19 +2235,24 @@ local function sort_by_priority(t)
   -- will be processed separately
   local pos = {} --- @type vim.filetype.mapping[]
   local neg = {} --- @type vim.filetype.mapping[]
-  for k, v in pairs(t) do
-    local ft = type(v) == 'table' and v[1] or v
+  for pat, maptbl in pairs(t) do
+    local ft = type(maptbl) == 'table' and maptbl[1] or maptbl
     assert(
       type(ft) == 'string' or type(ft) == 'function',
       'Expected string or function for filetype'
     )
 
-    local opts = (type(v) == 'table' and type(v[2]) == 'table') and v[2] or {}
-    if not opts.priority then
-      opts.priority = 0
-    end
+    -- Parse pattern for common data and cache it once
+    pattern_lookup[pat] = pattern_lookup[pat] or {
+      fullpat = '^' .. pat .. '$',
+      has_env = pat:find('%$%b{}') ~= nil,
+      has_slash = pat:find('/') ~= nil,
+    }
 
-    table.insert(opts.priority >= 0 and pos or neg, { [k] = { ft, opts } })
+    local opts = (type(maptbl) == 'table' and type(maptbl[2]) == 'table') and maptbl[2] or {}
+    opts.priority = opts.priority or 0
+
+    table.insert(opts.priority >= 0 and pos or neg, { [pat] = { ft, opts } })
   end
 
   table.sort(pos, compare_by_priority)
@@ -2420,23 +2430,19 @@ local function dispatch(ft, path, bufnr, ...)
   return ft0, on_detect
 end
 
---- Lookup table/cache for patterns that contain an environment variable pattern, e.g. ${SOME_VAR}.
---- @type table<string,boolean>
-local expand_env_lookup = {}
-
 --- @param name string
 --- @param path string
 --- @param tail string
 --- @param pat string
---- @return string|false?
+--- @return string|boolean?
 local function match_pattern(name, path, tail, pat)
-  if expand_env_lookup[pat] == nil then
-    expand_env_lookup[pat] = pat:find('%${') ~= nil
-  end
-  if expand_env_lookup[pat] then
+  local pat_cache = pattern_lookup[pat]
+  local fullpat, has_slash = pat_cache.fullpat, pat_cache.has_slash
+
+  if pat_cache.has_env then
     local return_early --- @type true?
     --- @type string
-    pat = pat:gsub('%${(%S-)}', function(env)
+    fullpat = fullpat:gsub('%${(%S-)}', function(env)
       -- If an environment variable is present in the pattern but not set, there is no match
       if not vim.env[env] then
         return_early = true
@@ -2447,12 +2453,11 @@ local function match_pattern(name, path, tail, pat)
     if return_early then
       return false
     end
+    has_slash = fullpat:find('/') ~= nil
   end
 
   -- If the pattern contains a / match against the full path, otherwise just the tail
-  local fullpat = '^' .. pat .. '$'
-
-  if pat:find('/') then
+  if has_slash then
     -- Similar to |autocmd-pattern|, if the pattern contains a '/' then check for a match against
     -- both the short file name (as typed) and the full file name (after expanding to full path
     -- and resolving symlinks)
