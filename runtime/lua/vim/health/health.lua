@@ -50,11 +50,11 @@ local function check_config()
 
   local init_lua = vim.fn.stdpath('config') .. '/init.lua'
   local init_vim = vim.fn.stdpath('config') .. '/init.vim'
-  local vimrc = vim.env.MYVIMRC and vim.fn.expand(vim.env.MYVIMRC) or init_lua
+  local vimrc = vim.env.MYVIMRC and vim.fs.normalize(vim.env.MYVIMRC) or init_lua
 
   if vim.fn.filereadable(vimrc) == 0 and vim.fn.filereadable(init_vim) == 0 then
     ok = false
-    local has_vim = vim.fn.filereadable(vim.fn.expand('~/.vimrc')) == 1
+    local has_vim = vim.fn.filereadable(vim.fs.normalize('~/.vimrc')) == 1
     health.warn(
       ('%s user config file: %s'):format(
         -1 == vim.fn.getfsize(vimrc) and 'Missing' or 'Unreadable',
@@ -114,7 +114,7 @@ local function check_config()
   )
   shadafile = (
     vim.o.shadafile == ''
-      and (shadafile == '' and vim.fn.stdpath('state') .. '/shada/main.shada' or vim.fn.expand(
+      and (shadafile == '' and vim.fn.stdpath('state') .. '/shada/main.shada' or vim.fs.normalize(
         shadafile
       ))
     or (vim.o.shadafile == 'NONE' and '' or vim.o.shadafile)

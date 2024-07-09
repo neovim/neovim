@@ -1223,7 +1223,7 @@ end
 
 function M._test()
   tagmap = get_helptags('$VIMRUNTIME/doc')
-  helpfiles = get_helpfiles(vim.fn.expand('$VIMRUNTIME/doc'))
+  helpfiles = get_helpfiles(vim.fs.normalize('$VIMRUNTIME/doc'))
 
   ok(vim.tbl_count(tagmap) > 3000, '>3000', vim.tbl_count(tagmap))
   ok(
@@ -1285,7 +1285,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
     help_dir = {
       help_dir,
       function(d)
-        return vim.fn.isdirectory(vim.fn.expand(d)) == 1
+        return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
       end,
       'valid directory',
     },
@@ -1295,7 +1295,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
     parser_path = {
       parser_path,
       function(f)
-        return f == nil or vim.fn.filereadable(vim.fn.expand(f)) == 1
+        return f == nil or vim.fn.filereadable(vim.fs.normalize(f)) == 1
       end,
       'valid vimdoc.{so,dll} filepath',
     },
@@ -1303,10 +1303,10 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
 
   local err_count = 0
   ensure_runtimepath()
-  tagmap = get_helptags(vim.fn.expand(help_dir))
+  tagmap = get_helptags(vim.fs.normalize(help_dir))
   helpfiles = get_helpfiles(help_dir, include)
-  to_dir = vim.fn.expand(to_dir)
-  parser_path = parser_path and vim.fn.expand(parser_path) or nil
+  to_dir = vim.fs.normalize(to_dir)
+  parser_path = parser_path and vim.fs.normalize(parser_path) or nil
 
   print(('output dir: %s'):format(to_dir))
   vim.fn.mkdir(to_dir, 'p')
@@ -1358,7 +1358,7 @@ function M.validate(help_dir, include, parser_path)
     help_dir = {
       help_dir,
       function(d)
-        return vim.fn.isdirectory(vim.fn.expand(d)) == 1
+        return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
       end,
       'valid directory',
     },
@@ -1366,7 +1366,7 @@ function M.validate(help_dir, include, parser_path)
     parser_path = {
       parser_path,
       function(f)
-        return f == nil or vim.fn.filereadable(vim.fn.expand(f)) == 1
+        return f == nil or vim.fn.filereadable(vim.fs.normalize(f)) == 1
       end,
       'valid vimdoc.{so,dll} filepath',
     },
@@ -1374,9 +1374,9 @@ function M.validate(help_dir, include, parser_path)
   local err_count = 0 ---@type integer
   local files_to_errors = {} ---@type table<string, string[]>
   ensure_runtimepath()
-  tagmap = get_helptags(vim.fn.expand(help_dir))
+  tagmap = get_helptags(vim.fs.normalize(help_dir))
   helpfiles = get_helpfiles(help_dir, include)
-  parser_path = parser_path and vim.fn.expand(parser_path) or nil
+  parser_path = parser_path and vim.fs.normalize(parser_path) or nil
 
   for _, f in ipairs(helpfiles) do
     local helpfile = vim.fs.basename(f)
@@ -1411,7 +1411,7 @@ end
 ---
 --- @param help_dir? string e.g. '$VIMRUNTIME/doc' or './runtime/doc'
 function M.run_validate(help_dir)
-  help_dir = vim.fn.expand(help_dir or '$VIMRUNTIME/doc')
+  help_dir = vim.fs.normalize(help_dir or '$VIMRUNTIME/doc')
   print('doc path = ' .. vim.uv.fs_realpath(help_dir))
 
   local rv = M.validate(help_dir)
@@ -1438,7 +1438,7 @@ end
 --- @param help_dir? string e.g. '$VIMRUNTIME/doc' or './runtime/doc'
 function M.test_gen(help_dir)
   local tmpdir = vim.fs.dirname(vim.fn.tempname())
-  help_dir = vim.fn.expand(help_dir or '$VIMRUNTIME/doc')
+  help_dir = vim.fs.normalize(help_dir or '$VIMRUNTIME/doc')
   print('doc path = ' .. vim.uv.fs_realpath(help_dir))
 
   -- Because gen() is slow (~30s), this test is limited to a few files.
