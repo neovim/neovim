@@ -7,16 +7,6 @@
 #include "nvim/option_vars.h"
 #include "nvim/strings.h"  // IWYU pragma: keep
 
-/// Return the folded-case equivalent of the given character
-///
-/// @param[in]  c  Character to transform.
-///
-/// @return Folded variant.
-#define CH_FOLD(c) \
-  utf_fold((sizeof(c) == sizeof(char)) \
-           ? ((int)(uint8_t)(c)) \
-           : ((int)(c)))
-
 /// Flags for vim_str2nr()
 typedef enum {
   STR2NR_DEC = 0,

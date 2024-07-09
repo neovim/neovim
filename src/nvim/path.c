@@ -390,14 +390,14 @@ int path_fnamencmp(const char *const fname1, const char *const fname2, size_t le
     c2 = utf_ptr2char(p2);
     if ((c1 == NUL || c2 == NUL
          || (!((c1 == '/' || c1 == '\\') && (c2 == '\\' || c2 == '/'))))
-        && (p_fic ? (c1 != c2 && CH_FOLD(c1) != CH_FOLD(c2)) : c1 != c2)) {
+        && (p_fic ? (c1 != c2 && utf_fold(c1) != utf_fold(c2)) : c1 != c2)) {
       break;
     }
     len -= (size_t)utfc_ptr2len(p1);
     p1 += utfc_ptr2len(p1);
     p2 += utfc_ptr2len(p2);
   }
-  return p_fic ? CH_FOLD(c1) - CH_FOLD(c2) : c1 - c2;
+  return p_fic ? utf_fold(c1) - utf_fold(c2) : c1 - c2;
 #else
   if (p_fic) {
     return mb_strnicmp(fname1, fname2, len);
