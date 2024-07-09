@@ -136,7 +136,7 @@ function M.open(path)
   })
   local is_uri = path:match('%w+:')
   if not is_uri then
-    path = vim.fn.expand(path)
+    path = vim.fs.normalize(path)
   end
 
   local cmd --- @type string[]
