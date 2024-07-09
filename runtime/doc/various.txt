@@ -215,7 +215,7 @@ gx			Opens the current filepath or URL (decided by
 			This implies that an insert command must be completed
 			(to start Insert mode, see |:startinsert|).  A ":"
 			command must be completed as well.  And you can't use
-			"Q" or "gQ" to start Ex mode.
+			"gQ" to start Ex mode.
 
 			The display is not updated while ":normal" is busy.
 

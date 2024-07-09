@@ -1660,7 +1660,6 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
     // When starting on a ']' count it, so that we include the '['.
     bn = ptr[col] == ']';
 
-    //
     // 2. Back up to start of identifier/text.
     //
     // Remember class of character under cursor.
