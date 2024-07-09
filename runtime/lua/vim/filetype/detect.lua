@@ -710,9 +710,22 @@ function M.haredoc(path, _)
 end
 
 --- @type vim.filetype.mapfn
-function M.html(_, bufnr)
+function M.html(path, bufnr)
+  -- Test if the filename follows the Angular component template convention
+  local filename = fn.fnamemodify(path, ':t')
+  if filename:find('%.component%.html$') then
+    return 'htmlangular'
+  end
+
   for _, line in ipairs(getlines(bufnr, 1, 40)) do
-    if matchregex(line, [[\<DTD\s\+XHTML\s]]) then
+    if
+      matchregex(
+        line,
+        [[@\(if\|for\|defer\|switch\)\|\*\(ngIf\|ngFor\|ngSwitch\|ngTemplateOutlet\)\|ng-template\|ng-content\|{{.*}}]]
+      )
+    then
+      return 'htmlangular'
+    elseif matchregex(line, [[\<DTD\s\+XHTML\s]]) then
       return 'xhtml'
     elseif
       matchregex(
