@@ -591,6 +591,7 @@ local extension = {
   json = 'json',
   jsonp = 'json',
   geojson = 'json',
+  mcmeta = 'json',
   webmanifest = 'json',
   ipynb = 'json',
   ['jupyterlab-settings'] = 'json',
