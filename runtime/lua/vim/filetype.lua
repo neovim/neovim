@@ -190,6 +190,7 @@ local extension = {
   aidl = 'aidl',
   aml = 'aml',
   run = 'ampl',
+  g4 = 'antlr4',
   scpt = 'applescript',
   ino = 'arduino',
   pde = 'arduino',
