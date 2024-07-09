@@ -432,19 +432,25 @@ local function render_eval_meta(f, fun, write)
 end
 
 --- @param name string
+--- @param name_tag boolean
 --- @param fun vim.EvalFn
 --- @param write fun(line: string)
-local function render_sig_and_tag(name, fun, write)
+local function render_sig_and_tag(name, name_tag, fun, write)
   if not fun.signature then
     return
   end
 
-  local tags = { '*' .. name .. '()*' }
+  local tags = name_tag and { '*' .. name .. '()*' } or {}
 
   if fun.tags then
     for _, t in ipairs(fun.tags) do
       tags[#tags + 1] = '*' .. t .. '*'
     end
+  end
+
+  if #tags == 0 then
+    write(fun.signature)
+    return
   end
 
   local tag = table.concat(tags, ' ')
@@ -472,11 +478,7 @@ local function render_eval_doc(f, fun, write)
     return
   end
 
-  if f:find('__%d+$') then
-    write(fun.signature)
-  else
-    render_sig_and_tag(fun.name or f, fun, write)
-  end
+  render_sig_and_tag(fun.name or f, not f:find('__%d+$'), fun, write)
 
   if not fun.desc then
     return

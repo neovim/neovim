@@ -3141,6 +3141,7 @@ M.funcs = {
     name = 'get',
     params = { { 'list', 'any[]' }, { 'idx', 'integer' }, { 'default', 'any' } },
     signature = 'get({list}, {idx} [, {default}])',
+    tags = { 'get()-list' },
   },
   get__1 = {
     args = { 2, 3 },
@@ -3153,6 +3154,7 @@ M.funcs = {
     name = 'get',
     params = { { 'blob', 'string' }, { 'idx', 'integer' }, { 'default', 'any' } },
     signature = 'get({blob}, {idx} [, {default}])',
+    tags = { 'get()-blob' },
   },
   get__2 = {
     args = { 2, 3 },
@@ -3168,23 +3170,38 @@ M.funcs = {
     name = 'get',
     params = { { 'dict', 'table<string,any>' }, { 'key', 'string' }, { 'default', 'any' } },
     signature = 'get({dict}, {key} [, {default}])',
+    tags = { 'get()-dict' },
   },
   get__3 = {
     args = { 2, 3 },
     base = 1,
     desc = [=[
-      Get item {what} from Funcref {func}.  Possible values for
+      Get item {what} from |Funcref| {func}.  Possible values for
       {what} are:
-      	"name"	The function name
-      	"func"	The function
-      	"dict"	The dictionary
-      	"args"	The list with arguments
+        "name"    The function name
+        "func"    The function
+        "dict"    The dictionary
+        "args"    The list with arguments
+        "arity"   A dictionary with information about the number of
+      	    arguments accepted by the function (minus the
+      	    {arglist}) with the following fields:
+      		required    the number of positional arguments
+      		optional    the number of optional arguments,
+      			    in addition to the required ones
+      		varargs     |TRUE| if the function accepts a
+      			    variable number of arguments |...|
+
+      		Note: There is no error, if the {arglist} of
+      		the Funcref contains more arguments than the
+      		Funcref expects, it's not validated.
+
       Returns zero on error.
     ]=],
     name = 'get',
     params = { { 'func', 'function' }, { 'what', 'string' } },
     returns = 'any',
     signature = 'get({func}, {what})',
+    tags = { 'get()-func' },
   },
   getbufinfo = {
     args = { 0, 1 },

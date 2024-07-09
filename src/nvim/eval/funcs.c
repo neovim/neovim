@@ -2372,6 +2372,33 @@ static void f_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         for (int i = 0; i < pt->pt_argc; i++) {
           tv_list_append_tv(rettv->vval.v_list, &pt->pt_argv[i]);
         }
+      } else if (strcmp(what, "arity") == 0) {
+        int required = 0;
+        int optional = 0;
+        bool varargs = false;
+        const char *name = partial_name(pt);
+
+        get_func_arity(name, &required, &optional, &varargs);
+
+        rettv->v_type = VAR_DICT;
+        tv_dict_alloc_ret(rettv);
+        dict_T *dict = rettv->vval.v_dict;
+
+        // Take into account the arguments of the partial, if any.
+        // Note that it is possible to supply more arguments than the function
+        // accepts.
+        if (pt->pt_argc >= required + optional) {
+          required = optional = 0;
+        } else if (pt->pt_argc > required) {
+          optional -= pt->pt_argc - required;
+          required = 0;
+        } else {
+          required -= pt->pt_argc;
+        }
+
+        tv_dict_add_nr(dict, S_LEN("required"), required);
+        tv_dict_add_nr(dict, S_LEN("optional"), optional);
+        tv_dict_add_bool(dict, S_LEN("varargs"), varargs);
       } else {
         semsg(_(e_invarg2), what);
       }
