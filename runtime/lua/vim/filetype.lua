@@ -2218,10 +2218,18 @@ local pattern = {
 -- luacheck: pop
 -- luacheck: pop
 
+local function compare_by_priority(a, b)
+  return a[next(a)][2].priority > b[next(b)][2].priority
+end
+
 --- @param t vim.filetype.mapping
 --- @return vim.filetype.mapping[]
+--- @return vim.filetype.mapping[]
 local function sort_by_priority(t)
-  local sorted = {} --- @type vim.filetype.mapping[]
+  -- Separate patterns with non-negative and negative priority because they
+  -- will be processed separately
+  local pos = {} --- @type vim.filetype.mapping[]
+  local neg = {} --- @type vim.filetype.mapping[]
   for k, v in pairs(t) do
     local ft = type(v) == 'table' and v[1] or v
     assert(
@@ -2233,15 +2241,16 @@ local function sort_by_priority(t)
     if not opts.priority then
       opts.priority = 0
     end
-    table.insert(sorted, { [k] = { ft, opts } })
+
+    table.insert(opts.priority >= 0 and pos or neg, { [k] = { ft, opts } })
   end
-  table.sort(sorted, function(a, b)
-    return a[next(a)][2].priority > b[next(b)][2].priority
-  end)
-  return sorted
+
+  table.sort(pos, compare_by_priority)
+  table.sort(neg, compare_by_priority)
+  return pos, neg
 end
 
-local pattern_sorted = sort_by_priority(pattern)
+local pattern_sorted_pos, pattern_sorted_neg = sort_by_priority(pattern)
 
 --- @param path string
 --- @param as_pattern? true
@@ -2365,7 +2374,9 @@ function M.add(filetypes)
   end
 
   if filetypes.pattern then
-    pattern_sorted = sort_by_priority(pattern)
+    -- TODO: full resorting might be expensive with a lot of separate `vim.filetype.add()` calls.
+    -- Consider inserting new patterns precisely into already sorted lists of built-in patterns.
+    pattern_sorted_pos, pattern_sorted_neg = sort_by_priority(pattern)
   end
 end
 
@@ -2449,6 +2460,24 @@ local function match_pattern(name, path, tail, pat)
   end
 
   return (tail:match(fullpat))
+end
+
+--- @param name string
+--- @param path string
+--- @param tail string
+--- @param pattern_sorted vim.filetype.mapping[]
+--- @param bufnr integer?
+local function match_pattern_sorted(name, path, tail, pattern_sorted, bufnr)
+  for i = 1, #pattern_sorted do
+    local pat, ft_data = next(pattern_sorted[i])
+    local matches = match_pattern(name, path, tail, pat)
+    if matches then
+      local ft, on_detect = dispatch(ft_data[1], path, bufnr, matches)
+      if ft then
+        return ft, on_detect
+      end
+    end
+  end
 end
 
 --- @class vim.filetype.match.args
@@ -2544,23 +2573,9 @@ function M.match(args)
     end
 
     -- Next, check the file path against available patterns with non-negative priority
-    local j = 1
-    for i, v in ipairs(pattern_sorted) do
-      local k = next(v)
-      local opts = v[k][2]
-      if opts.priority < 0 then
-        j = i
-        break
-      end
-
-      local filetype = v[k][1]
-      local matches = match_pattern(name, path, tail, k)
-      if matches then
-        ft, on_detect = dispatch(filetype, path, bufnr, matches)
-        if ft then
-          return ft, on_detect
-        end
-      end
+    ft, on_detect = match_pattern_sorted(name, path, tail, pattern_sorted_pos, bufnr)
+    if ft then
+      return ft, on_detect
     end
 
     -- Next, check file extension
@@ -2573,18 +2588,9 @@ function M.match(args)
     end
 
     -- Next, check patterns with negative priority
-    for i = j, #pattern_sorted do
-      local v = pattern_sorted[i]
-      local k = next(v)
-
-      local filetype = v[k][1]
-      local matches = match_pattern(name, path, tail, k)
-      if matches then
-        ft, on_detect = dispatch(filetype, path, bufnr, matches)
-        if ft then
-          return ft, on_detect
-        end
-      end
+    ft, on_detect = match_pattern_sorted(name, path, tail, pattern_sorted_neg, bufnr)
+    if ft then
+      return ft, on_detect
     end
   end
 
