@@ -3651,8 +3651,8 @@ static compl_T *find_comp_when_fuzzy(void)
   const bool is_backward = compl_shows_dir_backward();
   compl_T *comp = NULL;
 
-  if (compl_match_array == NULL
-      || (is_forward && compl_selected_item == compl_match_arraysize - 1)
+  assert(compl_match_array != NULL);
+  if ((is_forward && compl_selected_item == compl_match_arraysize - 1)
       || (is_backward && compl_selected_item == 0)) {
     return compl_first_match != compl_shown_match
            ? compl_first_match
