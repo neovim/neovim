@@ -1258,7 +1258,7 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
   }
 
   // emoji
-  if (intable(emoji_all, ARRAY_SIZE(emoji_all), c)) {
+  if (utf8proc_get_property(c)->boundclass == UTF8PROC_BOUNDCLASS_EXTENDED_PICTOGRAPHIC) {
     return 3;
   }
 
@@ -1281,7 +1281,8 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
 bool utf_ambiguous_width(int c)
 {
   return c >= 0x80 && (intable(ambiguous, ARRAY_SIZE(ambiguous), c)
-                       || intable(emoji_all, ARRAY_SIZE(emoji_all), c));
+                       || utf8proc_get_property(c)->boundclass ==
+                       UTF8PROC_BOUNDCLASS_EXTENDED_PICTOGRAPHIC);
 }
 
 // Generic conversion function for case operations.

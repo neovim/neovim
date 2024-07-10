@@ -12,9 +12,9 @@
 --    2 then interval applies only to first, third, fifth, … character in range.
 --    Fourth value is number that should be added to the codepoint to yield
 --    folded codepoint.
--- 4. emoji_wide and emoji_all tables: sorted lists of non-overlapping closed
---    intervals of Emoji characters.  emoji_wide contains all the characters
---    which don't have ambiguous or double width, and emoji_all has all Emojis.
+-- 4. emoji_wide table: sorted list of non-overlapping closed
+--    intervals of Emoji characters. emoji_wide contains all the characters
+--    which don't have ambiguous or double width.
 if arg[1] == '--help' then
   print('Usage:')
   print('  gen_unicode_tables.lua unicode/ unicode_tables.generated.h')
@@ -269,12 +269,6 @@ local build_emoji_table = function(ut_fp, emojiprops, doublewidth, ambiwidth)
       end
     end
   end
-
-  ut_fp:write('static const struct interval emoji_all[] = {\n')
-  for _, p in ipairs(emoji) do
-    ut_fp:write(make_range(p[1], p[2]))
-  end
-  ut_fp:write('};\n')
 
   ut_fp:write('static const struct interval emoji_wide[] = {\n')
   for _, p in ipairs(emojiwidth) do
