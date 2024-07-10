@@ -68,26 +68,16 @@ endfunc
 func Test_jumplist_invalid()
   new
   clearjumps
-  " put some randome text
-  put ='a'
-  let prev = bufnr('%')
+  " Put some random text and fill the jump list.
+  call setline(1, ['foo', 'bar', 'baz'])
+  normal G
+  normal gg
   setl nomodified bufhidden=wipe
   e XXJumpListBuffer
-  let bnr = bufnr('%')
-  " 1) empty jumplist
-  let expected = [[
-   \ {'lnum': 2, 'bufnr': prev, 'col': 0, 'coladd': 0}], 1]
-  call assert_equal(expected, getjumplist())
+  " The jump list is empty as the buffer was wiped out.
+  call assert_equal([[], 0], getjumplist())
   let jumps = execute(':jumps')
   call assert_equal('>', jumps[-1:])
-  " now jump back
-  exe ":norm! \<c-o>"
-  let expected = [[
-    \ {'lnum': 2, 'bufnr': prev, 'col': 0, 'coladd': 0},
-    \ {'lnum': 1, 'bufnr': bnr,  'col': 0, 'coladd': 0}], 0]
-  call assert_equal(expected, getjumplist())
-  let jumps = execute(':jumps')
-  call assert_match('>  0     2    0 -invalid-', jumps)
 endfunc
 
 " Test for '' mark in an empty buffer

@@ -1175,11 +1175,12 @@ list of buffers. |unlisted-buffer|
 :bw[ipeout][!] N1 N2 ...
 		Like |:bdelete|, but really delete the buffer.  Everything
 		related to the buffer is lost.  All marks in this buffer
-		become invalid, option settings are lost, etc.  Don't use this
+		become invalid, option settings are lost, the jumplist and
+		tagstack data will be purged, etc.  Don't use this
 		unless you know what you are doing. Examples: >
-                    :.+,$bwipeout   " wipe out all buffers after the current
-                                    " one
-                    :%bwipeout      " wipe out all buffers
+		    :.+,$bwipeout   " wipe out all buffers after the current
+				    " one
+		    :%bwipeout	    " wipe out all buffers
 <
 :[N]bun[load][!]				*:bun* *:bunload* *E515*
 :bun[load][!] [N]
