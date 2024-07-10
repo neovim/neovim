@@ -39,7 +39,7 @@ enum bln_values {
   BLN_NOCURWIN = 128,  ///< buffer is not associated with curwin
 };
 
-/// Values for action argument for do_buffer()
+/// Values for action argument for do_buffer_ext() and close_buffer()
 enum dobuf_action_values {
   DOBUF_GOTO   = 0,  ///< go to specified buffer
   DOBUF_SPLIT  = 1,  ///< split window and go to specified buffer
@@ -48,12 +48,19 @@ enum dobuf_action_values {
   DOBUF_WIPE   = 4,  ///< delete specified buffer(s) really
 };
 
-/// Values for start argument for do_buffer()
+/// Values for start argument for do_buffer_ext()
 enum dobuf_start_values {
   DOBUF_CURRENT = 0,  ///< "count" buffer from current buffer
   DOBUF_FIRST   = 1,  ///< "count" buffer from first buffer
   DOBUF_LAST    = 2,  ///< "count" buffer from last buffer
   DOBUF_MOD     = 3,  ///< "count" mod. buffer from current buffer
+};
+
+/// Values for flags argument of do_buffer_ext()
+enum dobuf_flags_value {
+  DOBUF_FORCEIT  = 1,  ///< :cmd!
+  DOBUF_SKIPHELP = 4,  ///< skip or keep help buffers depending on b_help of the
+                       ///< starting buffer
 };
 
 /// flags for buf_freeall()
