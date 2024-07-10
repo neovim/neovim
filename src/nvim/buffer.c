@@ -699,7 +699,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     if (buf->b_nwindows > 0) {
       return false;
     }
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
       mark_forget_file(wp, buf->b_fnum);
     }
     if (buf->b_sfname != buf->b_ffname) {
