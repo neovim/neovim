@@ -2936,6 +2936,13 @@ describe('API', function()
         return ('%s(%s)%s'):format(typ, args, rest)
       end
     end
+
+    it('does not crash parsing invalid VimL expression #29648', function()
+      api.nvim_input(':<C-r>=')
+      api.nvim_input('1bork/')
+      assert_alive()
+    end)
+
     require('test.unit.viml.expressions.parser_tests')(it, _check_parsing, hl, fmtn)
   end)
 
