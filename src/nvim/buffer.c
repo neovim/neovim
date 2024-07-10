@@ -699,6 +699,9 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     if (buf->b_nwindows > 0) {
       return false;
     }
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      mark_forget_file(wp, buf->b_fnum);
+    }
     if (buf->b_sfname != buf->b_ffname) {
       XFREE_CLEAR(buf->b_sfname);
     } else {
@@ -1184,32 +1187,6 @@ static int empty_curbuf(bool close_others, int forceit, int action)
   return retval;
 }
 
-/// Remove every jump list entry referring to a given buffer.
-/// This function will also adjust the current jump list index.
-void buf_remove_from_jumplist(buf_T *deleted_buf)
-{
-  // Remove all jump list entries that match the deleted buffer.
-  for (int i = curwin->w_jumplistlen - 1; i >= 0; i--) {
-    buf_T *buf = buflist_findnr(curwin->w_jumplist[i].fmark.fnum);
-
-    if (buf == deleted_buf) {
-      // Found an entry that we want to delete.
-      curwin->w_jumplistlen -= 1;
-
-      // If the current jump list index behind the entry we want to
-      // delete, move it back by one.
-      if (curwin->w_jumplistidx > i && curwin->w_jumplistidx > 0) {
-        curwin->w_jumplistidx -= 1;
-      }
-
-      // Actually remove the entry from the jump list.
-      for (int d = i; d < curwin->w_jumplistlen; d++) {
-        curwin->w_jumplist[d] = curwin->w_jumplist[d + 1];
-      }
-    }
-  }
-}
-
 /// Implementation of the commands for the buffer list.
 ///
 /// action == DOBUF_GOTO     go to specified buffer
@@ -1364,6 +1341,8 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
       }
     }
 
+    int buf_fnum = buf->b_fnum;
+
     // When closing the current buffer stop Visual mode.
     if (buf == curbuf && VIsual_active) {
       end_visual_mode();
@@ -1398,7 +1377,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     if (buf != curbuf) {
       if (jop_flags & JOP_UNLOAD) {
         // Remove the buffer to be deleted from the jump list.
-        buf_remove_from_jumplist(buf);
+        mark_jumplist_forget_file(curwin, buf_fnum);
       }
 
       close_windows(buf, false);
@@ -1423,8 +1402,8 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
       buf = au_new_curbuf.br_buf;
     } else if (curwin->w_jumplistlen > 0) {
       if (jop_flags & JOP_UNLOAD) {
-        // Remove the current buffer from the jump list.
-        buf_remove_from_jumplist(curbuf);
+        // Remove the buffer from the jump list.
+        mark_jumplist_forget_file(curwin, buf_fnum);
       }
 
       // It's possible that we removed all jump list entries, in that case we need to try another

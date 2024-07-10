@@ -1001,6 +1001,23 @@ func Test_tag_stack()
   call settagstack(1, {'items' : []})
   call assert_fails('pop', 'E73:')
 
+  " References to wiped buffer are deleted.
+  for i in range(10, 20)
+    edit Xtest
+    exe "tag var" .. i
+  endfor
+  edit Xtest
+
+  let t = gettagstack()
+  call assert_equal(11, t.length)
+  call assert_equal(12, t.curidx)
+
+  bwipe!
+
+  let t = gettagstack()
+  call assert_equal(0, t.length)
+  call assert_equal(1, t.curidx)
+
   set tags&
   %bwipe
 endfunc
