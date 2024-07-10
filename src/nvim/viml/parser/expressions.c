@@ -1264,21 +1264,12 @@ static bool viml_pexpr_handle_bop(const ParserState *const pstate, ExprASTStack 
                                    || bop_node->type == kExprNodeSubscript)
                                   ? kEOpLvlSubscript
                                   : node_lvl(*bop_node));
-#ifndef NDEBUG
-  const ExprOpAssociativity bop_node_ass = (
-                                            (bop_node->type == kExprNodeCall
-                                             || bop_node->type == kExprNodeSubscript)
-                                            ? kEOpAssLeft
-                                            : node_ass(*bop_node));
-#endif
   do {
     ExprASTNode **new_top_node_p = kv_last(*ast_stack);
     ExprASTNode *new_top_node = *new_top_node_p;
     assert(new_top_node != NULL);
     const ExprOpLvl new_top_node_lvl = node_lvl(*new_top_node);
     const ExprOpAssociativity new_top_node_ass = node_ass(*new_top_node);
-    assert(bop_node_lvl != new_top_node_lvl
-           || bop_node_ass == new_top_node_ass);
     if (top_node_p != NULL
         && ((bop_node_lvl > new_top_node_lvl
              || (bop_node_lvl == new_top_node_lvl
