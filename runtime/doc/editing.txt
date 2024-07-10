@@ -1623,7 +1623,7 @@ There are three different types of searching:
    stop-directories are appended to the path (for the 'path' option) or to
    the filename (for the 'tags' option) with a ';'.  If you want several
    stop-directories separate them with ';'.  If you want no stop-directory
-   ("search upward till the root directory) just use ';'. >
+   ("search upward till the root directory") just use ';'. >
 	/usr/include/sys;/usr
 <   will search in: >
 	   /usr/include/sys
@@ -1636,7 +1636,7 @@ There are three different types of searching:
 
    If Vim's current path is /u/user_x/work/release and you do >
 	:set path=include;/u/user_x
-<  and then search for a file with |gf| the file is searched in: >
+<   and then search for a file with |gf| the file is searched in: >
 	/u/user_x/work/release/include
 	/u/user_x/work/include
 	/u/user_x/include
@@ -1648,7 +1648,7 @@ There are three different types of searching:
 3) Combined up/downward search:
    If Vim's current path is /u/user_x/work/release and you do >
 	set path=**;/u/user_x
-<  and then search for a file with |gf| the file is searched in: >
+<   and then search for a file with |gf| the file is searched in: >
 	/u/user_x/work/release/**
 	/u/user_x/work/**
 	/u/user_x/**
@@ -1660,10 +1660,10 @@ There are three different types of searching:
 
    In the above example you might want to set path to: >
 	:set path=**,/u/user_x/**
-<  This searches:
-	/u/user_x/work/release/** ~
-	/u/user_x/** ~
-   This searches the same directories, but in a different order.
+<   This searches: >
+	/u/user_x/work/release/**
+	/u/user_x/**
+<   This searches the same directories, but in a different order.
 
    Note that completion for ":find", ":sfind", and ":tabfind" commands do not
    currently work with 'path' items that contain a URL or use the double star
