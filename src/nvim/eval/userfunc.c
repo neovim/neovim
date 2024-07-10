@@ -642,6 +642,44 @@ static char *fname_trans_sid(const char *const name, char *const fname_buf, char
   return fname;
 }
 
+int get_func_arity(const char *name, int *required, int *optional, bool *varargs)
+{
+  int argcount = 0;
+  int min_argcount = 0;
+
+  const EvalFuncDef *fdef = find_internal_func(name);
+  if (fdef != NULL) {
+    argcount = fdef->max_argc;
+    min_argcount = fdef->min_argc;
+    *varargs = false;
+  } else {
+    char fname_buf[FLEN_FIXED + 1];
+    char *tofree = NULL;
+    int error = FCERR_NONE;
+
+    // May need to translate <SNR>123_ to K_SNR.
+    char *fname = fname_trans_sid(name, fname_buf, &tofree, &error);
+    ufunc_T *ufunc = NULL;
+    if (error == FCERR_NONE) {
+      ufunc = find_func(fname);
+    }
+    xfree(tofree);
+
+    if (ufunc == NULL) {
+      return FAIL;
+    }
+
+    argcount = ufunc->uf_args.ga_len;
+    min_argcount = ufunc->uf_args.ga_len - ufunc->uf_def_args.ga_len;
+    *varargs = ufunc->uf_varargs;
+  }
+
+  *required = min_argcount;
+  *optional = argcount - min_argcount;
+
+  return OK;
+}
+
 /// Find a function by name, return pointer to it in ufuncs.
 ///
 /// @return  NULL for unknown function.

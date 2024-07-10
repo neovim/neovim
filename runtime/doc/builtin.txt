@@ -2028,17 +2028,17 @@ garbagecollect([{atexit}])                                    *garbagecollect()*
 		it's safe to perform.  This is when waiting for the user to
 		type a character.
 
-get({list}, {idx} [, {default}])                                         *get()*
+get({list}, {idx} [, {default}])                              *get()* *get()-list*
 		Get item {idx} from |List| {list}.  When this item is not
 		available return {default}.  Return zero when {default} is
 		omitted.
 
-get({blob}, {idx} [, {default}])
+get({blob}, {idx} [, {default}])                                    *get()-blob*
 		Get byte {idx} from |Blob| {blob}.  When this byte is not
 		available return {default}.  Return -1 when {default} is
 		omitted.
 
-get({dict}, {key} [, {default}])
+get({dict}, {key} [, {default}])                                    *get()-dict*
 		Get item with key {key} from |Dictionary| {dict}.  When this
 		item is not available return {default}.  Return zero when
 		{default} is omitted.  Useful example: >vim
@@ -2046,13 +2046,26 @@ get({dict}, {key} [, {default}])
 <		This gets the value of g:var_name if it exists, and uses
 		"default" when it does not exist.
 
-get({func}, {what})
-		Get item {what} from Funcref {func}.  Possible values for
+get({func}, {what})                                                 *get()-func*
+		Get item {what} from |Funcref| {func}.  Possible values for
 		{what} are:
-			"name"	The function name
-			"func"	The function
-			"dict"	The dictionary
-			"args"	The list with arguments
+		  "name"    The function name
+		  "func"    The function
+		  "dict"    The dictionary
+		  "args"    The list with arguments
+		  "arity"   A dictionary with information about the number of
+			    arguments accepted by the function (minus the
+			    {arglist}) with the following fields:
+				required    the number of positional arguments
+				optional    the number of optional arguments,
+					    in addition to the required ones
+				varargs     |TRUE| if the function accepts a
+					    variable number of arguments |...|
+
+				Note: There is no error, if the {arglist} of
+				the Funcref contains more arguments than the
+				Funcref expects, it's not validated.
+
 		Returns zero on error.
 
 getbufinfo([{buf}])                                               *getbufinfo()*

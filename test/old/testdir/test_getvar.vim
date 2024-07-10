@@ -142,21 +142,31 @@ func Test_get_func()
   let l:F = function('tr')
   call assert_equal('tr', get(l:F, 'name'))
   call assert_equal(l:F, get(l:F, 'func'))
+  call assert_equal({'required': 3, 'optional': 0, 'varargs': v:false},
+      \ get(l:F, 'arity'))
 
   let Fb_func = function('s:FooBar')
   call assert_match('<SNR>\d\+_FooBar', get(Fb_func, 'name'))
+  call assert_equal({'required': 0, 'optional': 0, 'varargs': v:false},
+      \ get(Fb_func, 'arity'))
   let Fb_ref = funcref('s:FooBar')
   call assert_match('<SNR>\d\+_FooBar', get(Fb_ref, 'name'))
+  call assert_equal({'required': 0, 'optional': 0, 'varargs': v:false},
+      \ get(Fb_ref, 'arity'))
 
   call assert_equal({'func has': 'no dict'}, get(l:F, 'dict', {'func has': 'no dict'}))
   call assert_equal(0, get(l:F, 'dict'))
   call assert_equal([], get(l:F, 'args'))
+
   " Nvim doesn't have null functions
   " let NF = test_null_function()
   " call assert_equal('', get(NF, 'name'))
   " call assert_equal(NF, get(NF, 'func'))
   " call assert_equal(0, get(NF, 'dict'))
   " call assert_equal([], get(NF, 'args'))
+  " call assert_equal({'required': 0, 'optional': 0, 'varargs': v:false}, get(NF, 'arity'))
 endfunc
 
 " get({partial}, {what} [, {default}]) - in test_partial.vim
+
+" vim: shiftwidth=2 sts=2 expandtab

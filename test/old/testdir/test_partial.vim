@@ -284,6 +284,11 @@ func Test_auto_partial_rebind()
 endfunc
 
 func Test_get_partial_items()
+  func s:Qux(x, y, z=3, w=1, ...)
+  endfunc
+  func s:Qux1(x, y)
+  endfunc
+
   let dict = {'name': 'hello'}
   let args = ["foo", "bar"]
   let Func = function('MyDictFunc')
@@ -304,6 +309,23 @@ func Test_get_partial_items()
   let dict = {'partial has': 'no dict'}
   call assert_equal(dict, get(P, 'dict', dict))
   call assert_equal(0, get(l:P, 'dict'))
+
+  call assert_equal({'required': 2, 'optional': 2, 'varargs': v:true},
+      \ get(funcref('s:Qux', []), 'arity'))
+  call assert_equal({'required': 1, 'optional': 2, 'varargs': v:true},
+      \ get(funcref('s:Qux', [1]), 'arity'))
+  call assert_equal({'required': 0, 'optional': 2, 'varargs': v:true},
+      \ get(funcref('s:Qux', [1, 2]), 'arity'))
+  call assert_equal({'required': 0, 'optional': 1, 'varargs': v:true},
+      \ get(funcref('s:Qux', [1, 2, 3]), 'arity'))
+  call assert_equal({'required': 0, 'optional': 0, 'varargs': v:true},
+      \ get(funcref('s:Qux', [1, 2, 3, 4]), 'arity'))
+  " More args than expected is not an error
+  call assert_equal({'required': 0, 'optional': 0, 'varargs': v:false},
+      \ get(funcref('s:Qux1', [1, 2, 3, 4]), 'arity'))
+
+  delfunc s:Qux
+  delfunc s:Qux1
 endfunc
 
 func Test_compare_partials()
