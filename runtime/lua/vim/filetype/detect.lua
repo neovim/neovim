@@ -710,12 +710,13 @@ function M.haredoc(path, _)
 end
 
 --- @type vim.filetype.mapfn
-function M.html(path, bufnr)
-  -- Test if the filename follows the Angular component template convention
-  local filename = fn.fnamemodify(path, ':t')
-  if filename:find('%.component%.html$') then
-    return 'htmlangular'
-  end
+function M.html(_, bufnr)
+  -- Disabled for the reasons mentioned here:
+  -- https://github.com/vim/vim/pull/13594#issuecomment-1834465890
+  -- local filename = fn.fnamemodify(path, ':t')
+  -- if filename:find('%.component%.html$') then
+  --   return 'htmlangular'
+  -- end
 
   for _, line in ipairs(getlines(bufnr, 1, 40)) do
     if
