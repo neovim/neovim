@@ -1913,9 +1913,9 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
 /// "getmousepos()" function
 void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  int row = mouse_row;
-  int col = mouse_col;
-  int grid = mouse_grid;
+  int row = 0;
+  int col = 0;
+  int grid = 0;
   varnumber_T winid = 0;
   varnumber_T winrow = 0;
   varnumber_T wincol = 0;
@@ -1923,11 +1923,22 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   varnumber_T column = 0;
   colnr_T coladd = 0;
 
+  if (argvars[0].v_type != VAR_UNKNOWN && argvars[1].v_type != VAR_UNKNOWN) {
+     // todo: overflow
+     row = (int)tv_get_number(&argvars[0]) - 1;
+     col = (int)tv_get_number(&argvars[1]) - 1;
+     grid = 0;
+  } else {
+    row = mouse_row;
+    col = mouse_col;
+    grid = mouse_grid;
+  }
+
   tv_dict_alloc_ret(rettv);
   dict_T *d = rettv->vval.v_dict;
 
-  tv_dict_add_nr(d, S_LEN("screenrow"), (varnumber_T)mouse_row + 1);
-  tv_dict_add_nr(d, S_LEN("screencol"), (varnumber_T)mouse_col + 1);
+  tv_dict_add_nr(d, S_LEN("screenrow"), (varnumber_T)row + 1);
+  tv_dict_add_nr(d, S_LEN("screencol"), (varnumber_T)col + 1);
 
   win_T *wp = mouse_find_win(&grid, &row, &col);
   if (wp != NULL) {
