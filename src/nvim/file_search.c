@@ -349,23 +349,24 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
     search_ctx->ffsc_stopdirs_v = xmalloc(sizeof(char *));
 
     do {
-      char *helper;
-      void *ptr;
-
-      helper = walker;
-      ptr = xrealloc(search_ctx->ffsc_stopdirs_v,
-                     (dircount + 1) * sizeof(char *));
+      char *helper = walker;
+      void *ptr = xrealloc(search_ctx->ffsc_stopdirs_v,
+                           (dircount + 1) * sizeof(char *));
       search_ctx->ffsc_stopdirs_v = ptr;
       walker = vim_strchr(walker, ';');
-      if (walker) {
-        assert(walker - helper >= 0);
-        search_ctx->ffsc_stopdirs_v[dircount - 1] = xstrnsave(helper, (size_t)(walker - helper));
-        walker++;
+      assert(!walker || walker - helper >= 0);
+      size_t len = walker ? (size_t)(walker - helper) : strlen(helper);
+      // "" means ascent till top of directory tree.
+      if (*helper != NUL && !vim_isAbsName(helper) && len + 1 < MAXPATHL) {
+        // Make the stop dir an absolute path name.
+        xmemcpyz(ff_expand_buffer, helper, len);
+        search_ctx->ffsc_stopdirs_v[dircount - 1] = FullName_save(helper, len);
       } else {
-        // this might be "", which means ascent till top of directory tree.
-        search_ctx->ffsc_stopdirs_v[dircount - 1] = xstrdup(helper);
+        search_ctx->ffsc_stopdirs_v[dircount - 1] = xmemdupz(helper, len);
       }
-
+      if (walker) {
+        walker++;
+      }
       dircount++;
     } while (walker != NULL);
     search_ctx->ffsc_stopdirs_v[dircount - 1] = NULL;
