@@ -58,18 +58,17 @@ func Test_cd_minus()
     call writefile(v:errors, 'Xresult')
     qall!
   [SCRIPT]
-  call writefile(lines, 'Xscript')
+  call writefile(lines, 'Xscript', 'D')
   if RunVim([], [], '--clean -S Xscript')
     call assert_equal([], readfile('Xresult'))
   endif
-  call delete('Xscript')
   call delete('Xresult')
 endfunc
 
 " Test for chdir()
 func Test_chdir_func()
   let topdir = getcwd()
-  call mkdir('Xchdir/y/z', 'p')
+  call mkdir('Xchdir/y/z', 'pR')
 
   " Create a few tabpages and windows with different directories
   new
@@ -110,13 +109,12 @@ func Test_chdir_func()
 
   only | tabonly
   call chdir(topdir)
-  call delete('Xchdir', 'rf')
 endfunc
 
 " Test for changing to the previous directory '-'
 func Test_prev_dir()
   let topdir = getcwd()
-  call mkdir('Xprevdir/a/b/c', 'p')
+  call mkdir('Xprevdir/a/b/c', 'pR')
 
   " Create a few tabpages and windows with different directories
   new | only
@@ -173,7 +171,6 @@ func Test_prev_dir()
 
   only | tabonly
   call chdir(topdir)
-  call delete('Xprevdir', 'rf')
 endfunc
 
 func Test_lcd_split()
@@ -201,22 +198,18 @@ func Test_cd_from_non_existing_dir()
 endfunc
 
 func Test_cd_completion()
-  call mkdir('XComplDir1', 'p')
-  call mkdir('XComplDir2', 'p')
-  call writefile([], 'XComplFile')
+  call mkdir('XComplDir1', 'D')
+  call mkdir('XComplDir2', 'D')
+  call writefile([], 'XComplFile', 'D')
 
   for cmd in ['cd', 'chdir', 'lcd', 'lchdir', 'tcd', 'tchdir']
     call feedkeys(':' .. cmd .. " XCompl\<C-A>\<C-B>\"\<CR>", 'tx')
     call assert_equal('"' .. cmd .. ' XComplDir1/ XComplDir2/', @:)
   endfor
-
-  call delete('XComplDir1', 'd')
-  call delete('XComplDir2', 'd')
-  call delete('XComplFile')
 endfunc
 
 func Test_cd_unknown_dir()
-  call mkdir('Xa')
+  call mkdir('Xa', 'R')
   cd Xa
   call writefile(['text'], 'Xb.txt')
   edit Xa/Xb.txt
@@ -229,7 +222,6 @@ func Test_cd_unknown_dir()
 
   bwipe!
   exe "bwipe! " .. first_buf
-  call delete('Xa', 'rf')
 endfunc
 
 func Test_getcwd_actual_dir()
@@ -237,7 +229,7 @@ func Test_getcwd_actual_dir()
   CheckOption autochdir
 
   let startdir = getcwd()
-  call mkdir('Xactual')
+  call mkdir('Xactual', 'R')
   call test_autochdir()
   set autochdir
   edit Xactual/file.txt
@@ -251,7 +243,6 @@ func Test_getcwd_actual_dir()
   set noautochdir
   bwipe!
   call chdir(startdir)
-  call delete('Xactual', 'rf')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
