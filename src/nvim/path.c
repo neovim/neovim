@@ -2385,10 +2385,14 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
     }
 #endif
     if (p != NULL) {
+      if (strcmp(p + 1, "..") == 0) {
+        // for "/path/dir/.." include the "/.."
+        p += 3;
+      }
       assert(p >= fname);
       memcpy(relative_directory, fname, (size_t)(p - fname + 1));
       relative_directory[p - fname + 1] = NUL;
-      end_of_path = p + 1;
+      end_of_path = (vim_ispathsep_nocolon(*p) ? p + 1 : p);
     } else {
       relative_directory[0] = NUL;
     }
