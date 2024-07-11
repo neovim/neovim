@@ -2942,6 +2942,7 @@ function vim.fn.getcmdwintype() end
 --- customlist,{func} custom completion, defined via {func}
 --- diff_buffer  |:diffget| and |:diffput| completion
 --- dir    directory names
+--- dir_in_path  directory names in |'cdpath'|
 --- environment  environment variable names
 --- event    autocommand events
 --- expression  Vim expression

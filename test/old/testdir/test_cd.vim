@@ -200,12 +200,20 @@ endfunc
 func Test_cd_completion()
   call mkdir('XComplDir1', 'D')
   call mkdir('XComplDir2', 'D')
+  call mkdir('sub/XComplDir3', 'pD')
   call writefile([], 'XComplFile', 'D')
 
   for cmd in ['cd', 'chdir', 'lcd', 'lchdir', 'tcd', 'tchdir']
     call feedkeys(':' .. cmd .. " XCompl\<C-A>\<C-B>\"\<CR>", 'tx')
     call assert_equal('"' .. cmd .. ' XComplDir1/ XComplDir2/', @:)
   endfor
+
+  set cdpath+=sub
+  for cmd in ['cd', 'chdir', 'lcd', 'lchdir', 'tcd', 'tchdir']
+    call feedkeys(':' .. cmd .. " XCompl\<C-A>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"' .. cmd .. ' XComplDir1/ XComplDir2/ XComplDir3/', @:)
+  endfor
+  set cdpath&
 endfunc
 
 func Test_cd_unknown_dir()

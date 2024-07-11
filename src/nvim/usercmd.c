@@ -98,6 +98,7 @@ static const char *command_complete[] = {
   [EXPAND_USER_VARS] = "var",
   [EXPAND_BREAKPOINT] = "breakpoint",
   [EXPAND_SCRIPTNAMES] = "scriptnames",
+  [EXPAND_DIRS_IN_CDPATH] = "dir_in_path",
 };
 
 /// List of names of address types.  Must be alphabetical for completion.

@@ -842,17 +842,18 @@ static bool is_unique(char *maybe_unique, garray_T *gap, int i)
   return true;  // no match found
 }
 
-// Split the 'path' option into an array of strings in garray_T.  Relative
-// paths are expanded to their equivalent fullpath.  This includes the "."
-// (relative to current buffer directory) and empty path (relative to current
-// directory) notations.
-//
-// TODO(vim): handle upward search (;) and path limiter (**N) notations by
-// expanding each into their equivalent path(s).
-static void expand_path_option(char *curdir, garray_T *gap)
+/// Split the 'path' option into an array of strings in garray_T.  Relative
+/// paths are expanded to their equivalent fullpath.  This includes the "."
+/// (relative to current buffer directory) and empty path (relative to current
+/// directory) notations.
+///
+/// @param path_option  p_path or p_cdpath
+///
+/// TODO(vim): handle upward search (;) and path limiter (**N) notations by
+/// expanding each into their equivalent path(s).
+static void expand_path_option(char *curdir, char *path_option, garray_T *gap)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
   char *buf = xmalloc(MAXPATHL);
 
   while (*path_option != NUL) {
@@ -942,7 +943,9 @@ static char *get_path_cutoff(char *fname, garray_T *gap)
 /// Sorts, removes duplicates and modifies all the fullpath names in "gap" so
 /// that they are unique with respect to each other while conserving the part
 /// that matches the pattern. Beware, this is at least O(n^2) wrt "gap->ga_len".
-static void uniquefy_paths(garray_T *gap, char *pattern)
+///
+/// @param path_option  p_path or p_cdpath
+static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
   FUNC_ATTR_NONNULL_ALL
 {
   char **fnames = gap->ga_data;
@@ -978,7 +981,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
 
   char *curdir = xmalloc(MAXPATHL);
   os_dirname(curdir, MAXPATHL);
-  expand_path_option(curdir, &path_ga);
+  expand_path_option(curdir, path_option, &path_ga);
 
   in_curdir = xcalloc((size_t)gap->ga_len, sizeof(char *));
 
@@ -1127,12 +1130,17 @@ static int expand_in_path(garray_T *const gap, char *const pattern, const int fl
   FUNC_ATTR_NONNULL_ALL
 {
   garray_T path_ga;
+  char *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
 
   char *const curdir = xmalloc(MAXPATHL);
   os_dirname(curdir, MAXPATHL);
 
   ga_init(&path_ga, (int)sizeof(char *), 1);
-  expand_path_option(curdir, &path_ga);
+  if (flags & EW_CDPATH) {
+    expand_path_option(curdir, p_cdpath, &path_ga);
+  } else {
+    expand_path_option(curdir, path_option, &path_ga);
+  }
   xfree(curdir);
   if (GA_EMPTY(&path_ga)) {
     return 0;
@@ -1148,7 +1156,7 @@ static int expand_in_path(garray_T *const gap, char *const pattern, const int fl
   if (flags & EW_ADDSLASH) {
     glob_flags |= WILD_ADD_SLASH;
   }
-  globpath(paths, pattern, gap, glob_flags, false);
+  globpath(paths, pattern, gap, glob_flags, !!(flags & EW_CDPATH));
   xfree(paths);
 
   return gap->ga_len;
@@ -1229,6 +1237,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
   static bool recursive = false;
   int add_pat;
   bool did_expand_in_path = false;
+  char *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
 
   // expand_env() is called to expand things like "~user".  If this fails,
   // it calls ExpandOne(), which brings us back here.  In this case, always
@@ -1302,7 +1311,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       // Otherwise: Add the file name if it exists or when EW_NOTFOUND is
       // given.
       if (path_has_exp_wildcard(p) || (flags & EW_ICASE)) {
-        if ((flags & EW_PATH)
+        if ((flags & (EW_PATH | EW_CDPATH))
             && !path_is_absolute(p)
             && !(p[0] == '.'
                  && (vim_ispathsep(p[1])
@@ -1338,8 +1347,8 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       }
     }
 
-    if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & EW_PATH)) {
-      uniquefy_paths(&ga, p);
+    if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & (EW_PATH | EW_CDPATH))) {
+      uniquefy_paths(&ga, p, path_option);
     }
     if (p != pat[i]) {
       xfree(p);
