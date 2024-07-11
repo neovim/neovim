@@ -154,6 +154,15 @@ func Test_tagfiles_stopdir()
   let &tags = './Xtags;' .. fnamemodify('./..', ':p')
   call assert_equal(0, len(tagfiles()))
 
+  let &tags = './Xtags;../'
+  call assert_equal(0, len(tagfiles()))
+
+  cd ..
+  call assert_equal(1, len(tagfiles()))
+
+  cd ..
+  call assert_equal(1, len(tagfiles()))
+
   set tags&
   call chdir(save_cwd)
 endfunc
