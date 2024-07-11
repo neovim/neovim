@@ -69,11 +69,11 @@ endfunc
 " Test for chdir()
 func Test_chdir_func()
   let topdir = getcwd()
-  call mkdir('Xdir/y/z', 'p')
+  call mkdir('Xchdir/y/z', 'p')
 
   " Create a few tabpages and windows with different directories
   new
-  cd Xdir
+  cd Xchdir
   tabnew
   tcd y
   below new
@@ -81,22 +81,22 @@ func Test_chdir_func()
   lcd z
 
   tabfirst
-  call assert_match('^\[global\] .*/Xdir$', trim(execute('verbose pwd')))
+  call assert_match('^\[global\] .*/Xchdir$', trim(execute('verbose pwd')))
   call chdir('..')
   call assert_equal('y', fnamemodify(getcwd(1, 2), ':t'))
   call assert_equal('z', fnamemodify(3->getcwd(2), ':t'))
   tabnext | wincmd t
   call assert_match('^\[tabpage\] .*/y$', trim(execute('verbose pwd')))
   eval '..'->chdir()
-  call assert_equal('Xdir', fnamemodify(getcwd(1, 2), ':t'))
-  call assert_equal('Xdir', fnamemodify(getcwd(2, 2), ':t'))
+  call assert_equal('Xchdir', fnamemodify(getcwd(1, 2), ':t'))
+  call assert_equal('Xchdir', fnamemodify(getcwd(2, 2), ':t'))
   call assert_equal('z', fnamemodify(getcwd(3, 2), ':t'))
   call assert_equal('testdir', fnamemodify(getcwd(1, 1), ':t'))
   3wincmd w
   call assert_match('^\[window\] .*/z$', trim(execute('verbose pwd')))
   call chdir('..')
-  call assert_equal('Xdir', fnamemodify(getcwd(1, 2), ':t'))
-  call assert_equal('Xdir', fnamemodify(getcwd(2, 2), ':t'))
+  call assert_equal('Xchdir', fnamemodify(getcwd(1, 2), ':t'))
+  call assert_equal('Xchdir', fnamemodify(getcwd(2, 2), ':t'))
   call assert_equal('y', fnamemodify(getcwd(3, 2), ':t'))
   call assert_equal('testdir', fnamemodify(getcwd(1, 1), ':t'))
 
@@ -110,20 +110,20 @@ func Test_chdir_func()
 
   only | tabonly
   call chdir(topdir)
-  call delete('Xdir', 'rf')
+  call delete('Xchdir', 'rf')
 endfunc
 
 " Test for changing to the previous directory '-'
 func Test_prev_dir()
   let topdir = getcwd()
-  call mkdir('Xdir/a/b/c', 'p')
+  call mkdir('Xprevdir/a/b/c', 'p')
 
   " Create a few tabpages and windows with different directories
   new | only
   tabnew | new
   tabnew
   tabfirst
-  cd Xdir
+  cd Xprevdir
   tabnext | wincmd t
   tcd a
   wincmd w
@@ -143,7 +143,7 @@ func Test_prev_dir()
 
   " Check the directory of all the windows
   tabfirst
-  call assert_equal('Xdir', fnamemodify(getcwd(), ':t'))
+  call assert_equal('Xprevdir', fnamemodify(getcwd(), ':t'))
   tabnext | wincmd t
   call assert_equal('a', fnamemodify(getcwd(), ':t'))
   wincmd w
@@ -163,7 +163,7 @@ func Test_prev_dir()
 
   " Check the directory of all the windows
   tabfirst
-  call assert_equal('Xdir', fnamemodify(getcwd(), ':t'))
+  call assert_equal('Xprevdir', fnamemodify(getcwd(), ':t'))
   tabnext | wincmd t
   call assert_equal('a', fnamemodify(getcwd(), ':t'))
   wincmd w
@@ -173,7 +173,7 @@ func Test_prev_dir()
 
   only | tabonly
   call chdir(topdir)
-  call delete('Xdir', 'rf')
+  call delete('Xprevdir', 'rf')
 endfunc
 
 func Test_lcd_split()
