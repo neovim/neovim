@@ -126,6 +126,52 @@ func Test_buflist_browse()
   %bwipe!
 endfunc
 
+" Test for :bnext and :bprev when called from help and non-help buffers.
+func Test_bnext_bprev_help()
+  %bwipe!
+
+  e XHelp1 | set bt=help
+  let b1 = bufnr()
+  e Xbuf1
+  let b2 = bufnr()
+
+  " There's only one buffer of each type.
+  b XHelp1
+  bnext | call assert_equal(b1, bufnr())
+  bprev | call assert_equal(b1, bufnr())
+  b Xbuf1
+  bnext | call assert_equal(b2, bufnr())
+  bprev | call assert_equal(b2, bufnr())
+
+  " Add one more buffer of each type.
+  e XHelp2 | set bt=help
+  let b3 = bufnr()
+  e Xbuf2
+  let b4 = bufnr()
+
+  " Help buffer jumps to help buffer.
+  b XHelp1
+  bnext | call assert_equal(b3, bufnr())
+  bnext | call assert_equal(b1, bufnr())
+  bprev | call assert_equal(b3, bufnr())
+  bprev | call assert_equal(b1, bufnr())
+
+  " Regular buffer jumps to regular buffer.
+  b Xbuf1
+  bnext | call assert_equal(b4, bufnr())
+  bnext | call assert_equal(b2, bufnr())
+  bprev | call assert_equal(b4, bufnr())
+  bprev | call assert_equal(b2, bufnr())
+
+  " :brewind and :blast are not affected by the buffer type.
+  b Xbuf2
+  brewind | call assert_equal(b1, bufnr())
+  b XHelp1
+  blast   | call assert_equal(b4, bufnr())
+
+  %bwipe!
+endfunc
+
 " Test for :bdelete
 func Test_bdelete_cmd()
   %bwipe!
