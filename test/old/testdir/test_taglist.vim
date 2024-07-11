@@ -135,6 +135,29 @@ func Test_tagsfile_without_trailing_newline()
   set tags&
 endfunc
 
+" Check that specifying a stop directory in 'tags' works properly.
+func Test_tagfiles_stopdir()
+  let save_cwd = getcwd()
+
+  call mkdir('Xtagsdir1/Xtagsdir2/Xtagsdir3', 'pR')
+  call writefile([], 'Xtagsdir1/Xtags', 'D')
+
+  cd Xtagsdir1/
+  let &tags = './Xtags;' .. fnamemodify('./..', ':p')
+  call assert_equal(1, len(tagfiles()))
+
+  cd Xtagsdir2/
+  let &tags = './Xtags;' .. fnamemodify('./..', ':p')
+  call assert_equal(1, len(tagfiles()))
+
+  cd Xtagsdir3/
+  let &tags = './Xtags;' .. fnamemodify('./..', ':p')
+  call assert_equal(0, len(tagfiles()))
+
+  set tags&
+  call chdir(save_cwd)
+endfunc
+
 " Test for ignoring comments in a tags file
 func Test_tagfile_ignore_comments()
   call writefile([
