@@ -349,23 +349,24 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
     search_ctx->ffsc_stopdirs_v = xmalloc(sizeof(char *));
 
     do {
-      char *helper;
-      void *ptr;
-
-      helper = walker;
-      ptr = xrealloc(search_ctx->ffsc_stopdirs_v,
-                     (dircount + 1) * sizeof(char *));
+      char *helper = walker;
+      void *ptr = xrealloc(search_ctx->ffsc_stopdirs_v,
+                           (dircount + 1) * sizeof(char *));
       search_ctx->ffsc_stopdirs_v = ptr;
       walker = vim_strchr(walker, ';');
-      if (walker) {
-        assert(walker - helper >= 0);
-        search_ctx->ffsc_stopdirs_v[dircount - 1] = xstrnsave(helper, (size_t)(walker - helper));
-        walker++;
+      assert(!walker || walker - helper >= 0);
+      size_t len = walker ? (size_t)(walker - helper) : strlen(helper);
+      // "" means ascent till top of directory tree.
+      if (*helper != NUL && !vim_isAbsName(helper) && len + 1 < MAXPATHL) {
+        // Make the stop dir an absolute path name.
+        xmemcpyz(ff_expand_buffer, helper, len);
+        search_ctx->ffsc_stopdirs_v[dircount - 1] = FullName_save(helper, len);
       } else {
-        // this might be "", which means ascent till top of directory tree.
-        search_ctx->ffsc_stopdirs_v[dircount - 1] = xstrdup(helper);
+        search_ctx->ffsc_stopdirs_v[dircount - 1] = xmemdupz(helper, len);
       }
-
+      if (walker) {
+        walker++;
+      }
       dircount++;
     } while (walker != NULL);
     search_ctx->ffsc_stopdirs_v[dircount - 1] = NULL;
@@ -892,11 +893,12 @@ char *vim_findfile(void *search_ctx_arg)
     if (search_ctx->ffsc_start_dir
         && search_ctx->ffsc_stopdirs_v != NULL && !got_int) {
       ff_stack_T *sptr;
+      // path_end may point to the NUL or the previous path separator
+      ptrdiff_t plen = (path_end - search_ctx->ffsc_start_dir) + (*path_end != NUL);
 
       // is the last starting directory in the stop list?
       if (ff_path_in_stoplist(search_ctx->ffsc_start_dir,
-                              (int)(path_end - search_ctx->ffsc_start_dir),
-                              search_ctx->ffsc_stopdirs_v)) {
+                              (size_t)plen, search_ctx->ffsc_stopdirs_v)) {
         break;
       }
 
@@ -1231,7 +1233,7 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
 /// check if the given path is in the stopdirs
 ///
 /// @return  true if yes else false
-static bool ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
+static bool ff_path_in_stoplist(char *path, size_t path_len, char **stopdirs_v)
 {
   // eat up trailing path separators, except the first
   while (path_len > 1 && vim_ispathsep(path[path_len - 1])) {
@@ -1244,20 +1246,16 @@ static bool ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
   }
 
   for (int i = 0; stopdirs_v[i] != NULL; i++) {
-    if ((int)strlen(stopdirs_v[i]) > path_len) {
-      // match for parent directory. So '/home' also matches
-      // '/home/rks'. Check for PATHSEP in stopdirs_v[i], else
-      // '/home/r' would also match '/home/rks'
-      if (path_fnamencmp(stopdirs_v[i], path, (size_t)path_len) == 0
-          && vim_ispathsep(stopdirs_v[i][path_len])) {
-        return true;
-      }
-    } else {
-      if (path_fnamecmp(stopdirs_v[i], path) == 0) {
-        return true;
-      }
+    // match for parent directory. So '/home' also matches
+    // '/home/rks'. Check for PATHSEP in stopdirs_v[i], else
+    // '/home/r' would also match '/home/rks'
+    if (path_fnamencmp(stopdirs_v[i], path, path_len) == 0
+        && (strlen(stopdirs_v[i]) <= path_len
+            || vim_ispathsep(stopdirs_v[i][path_len]))) {
+      return true;
     }
   }
+
   return false;
 }
 

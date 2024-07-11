@@ -1,14 +1,14 @@
 " Test findfile() and finddir()
 
-let s:files = [ 'Xdir1/foo',
-      \         'Xdir1/bar',
-      \         'Xdir1/Xdir2/foo',
-      \         'Xdir1/Xdir2/foobar',
-      \         'Xdir1/Xdir2/Xdir3/bar',
-      \         'Xdir1/Xdir2/Xdir3/barfoo' ]
+let s:files = [ 'Xfinddir1/foo',
+      \         'Xfinddir1/bar',
+      \         'Xfinddir1/Xdir2/foo',
+      \         'Xfinddir1/Xdir2/foobar',
+      \         'Xfinddir1/Xdir2/Xdir3/bar',
+      \         'Xfinddir1/Xdir2/Xdir3/barfoo' ]
 
 func CreateFiles()
-  call mkdir('Xdir1/Xdir2/Xdir3/Xdir2', 'p')
+  call mkdir('Xfinddir1/Xdir2/Xdir3/Xdir2', 'p')
   for f in s:files
     call writefile([], f)
   endfor
@@ -16,15 +16,15 @@ endfunc
 
 func CleanFiles()
   " Safer to delete each file even if it's more verbose
-  " than doing a recursive delete('Xdir1', 'rf').
+  " than doing a recursive delete('Xfinddir1', 'rf').
   for f in s:files
     call delete(f)
   endfor
 
-  call delete('Xdir1/Xdir2/Xdir3/Xdir2', 'd')
-  call delete('Xdir1/Xdir2/Xdir3', 'd')
-  call delete('Xdir1/Xdir2', 'd')
-  call delete('Xdir1', 'd')
+  call delete('Xfinddir1/Xdir2/Xdir3/Xdir2', 'd')
+  call delete('Xfinddir1/Xdir2/Xdir3', 'd')
+  call delete('Xfinddir1/Xdir2', 'd')
+  call delete('Xfinddir1', 'd')
 endfunc
 
 " Test findfile({name} [, {path} [, {count}]])
@@ -34,7 +34,7 @@ func Test_findfile()
   let save_dir = getcwd()
   set shellslash
   call CreateFiles()
-  cd Xdir1
+  cd Xfinddir1
   e Xdir2/foo
 
   " With ,, in path, findfile() searches in current directory.
@@ -83,34 +83,58 @@ func Test_findfile()
   " Test upwards search.
   cd Xdir2/Xdir3
   call assert_equal('bar',                findfile('bar', ';'))
-  call assert_match('.*/Xdir1/Xdir2/foo', findfile('foo', ';'))
-  call assert_match('.*/Xdir1/Xdir2/foo', findfile('foo', ';', 1))
-  call assert_match('.*/Xdir1/foo',       findfile('foo', ';', 2))
-  call assert_match('.*/Xdir1/foo',       findfile('foo', ';', 2))
-  call assert_match('.*/Xdir1/Xdir2/foo', findfile('foo', 'Xdir2;', 1))
+  call assert_match('.*/Xfinddir1/Xdir2/foo', findfile('foo', ';'))
+  call assert_match('.*/Xfinddir1/Xdir2/foo', findfile('foo', ';', 1))
+  call assert_match('.*/Xfinddir1/foo',       findfile('foo', ';', 2))
+  call assert_match('.*/Xfinddir1/foo',       findfile('foo', ';', 2))
+  call assert_match('.*/Xfinddir1/Xdir2/foo', findfile('foo', 'Xdir2;', 1))
   call assert_equal('',                   findfile('foo', 'Xdir2;', 2))
 
   " List l should have at least 2 values (possibly more if foo file
-  " happens to be found upwards above Xdir1).
+  " happens to be found upwards above Xfinddir1).
   let l = findfile('foo', ';', -1)
-  call assert_match('.*/Xdir1/Xdir2/foo', l[0])
-  call assert_match('.*/Xdir1/foo',       l[1])
+  call assert_match('.*/Xfinddir1/Xdir2/foo', l[0])
+  call assert_match('.*/Xfinddir1/foo',       l[1])
 
   " Test upwards search with stop-directory.
   cd Xdir2
-  let l = findfile('bar', ';' . save_dir . '/Xdir1/Xdir2/', -1)
+  let l = findfile('bar', ';' . save_dir . '/Xfinddir1/Xdir2/Xdir3/', -1)
   call assert_equal(1, len(l))
-  call assert_match('.*/Xdir1/Xdir2/Xdir3/bar', l[0])
+  call assert_match('.*/Xfinddir1/Xdir2/Xdir3/bar', l[0])
+  let l = findfile('bar', ';' . save_dir . '/Xfinddir1/Xdir2/Xdir3', -1)
+  call assert_equal(1, len(l))
+  call assert_match('.*/Xfinddir1/Xdir2/Xdir3/bar', l[0])
+  let l = findfile('bar', ';../', -1)
+  call assert_equal(1, len(l))
+  call assert_match('.*/Xfinddir1/Xdir2/Xdir3/bar', l[0])
 
-  let l = findfile('bar', ';' . save_dir . '/Xdir1/', -1)
+  let l = findfile('bar', ';' . save_dir . '/Xfinddir1/Xdir2/', -1)
+  call assert_equal(1, len(l))
+  call assert_match('.*/Xfinddir1/Xdir2/Xdir3/bar', l[0])
+  let l = findfile('bar', ';' . save_dir . '/Xfinddir1/Xdir2', -1)
+  call assert_equal(1, len(l))
+  call assert_match('.*/Xfinddir1/Xdir2/Xdir3/bar', l[0])
+  let l = findfile('bar', ';../../', -1)
+  call assert_equal(1, len(l))
+  call assert_match('.*/Xfinddir1/Xdir2/Xdir3/bar', l[0])
+
+  let l = findfile('bar', ';' . save_dir . '/Xfinddir1/', -1)
   call assert_equal(2, len(l))
-  call assert_match('.*/Xdir1/Xdir2/Xdir3/bar', l[0])
-  call assert_match('.*/Xdir1/bar',             l[1])
+  call assert_match('.*/Xfinddir1/Xdir2/Xdir3/bar', l[0])
+  call assert_match('.*/Xfinddir1/bar',             l[1])
+  let l = findfile('bar', ';' . save_dir . '/Xfinddir1', -1)
+  call assert_equal(2, len(l))
+  call assert_match('.*/Xfinddir1/Xdir2/Xdir3/bar', l[0])
+  call assert_match('.*/Xfinddir1/bar',             l[1])
+  let l = findfile('bar', ';../../../', -1)
+  call assert_equal(2, len(l))
+  call assert_match('.*/Xfinddir1/Xdir2/Xdir3/bar', l[0])
+  call assert_match('.*/Xfinddir1/bar',             l[1])
 
   " Test combined downwards and upwards search from Xdir2/.
   cd ../..
   call assert_equal('Xdir3/bar',    findfile('bar', '**;', 1))
-  call assert_match('.*/Xdir1/bar', findfile('bar', '**;', 2))
+  call assert_match('.*/Xfinddir1/bar', findfile('bar', '**;', 2))
 
   bwipe!
   call chdir(save_dir)
@@ -135,7 +159,7 @@ func Test_finddir()
   set path=,,
   set shellslash
   call CreateFiles()
-  cd Xdir1
+  cd Xfinddir1
 
   call assert_equal('Xdir2', finddir('Xdir2'))
   call assert_equal('',      'Xdir3'->finddir())
@@ -158,17 +182,17 @@ func Test_finddir()
 
   " Test upwards dir search.
   cd Xdir2/Xdir3
-  call assert_match('.*/Xdir1', finddir('Xdir1', ';'))
+  call assert_match('.*/Xfinddir1', finddir('Xfinddir1', ';'))
 
   " Test upwards search with stop-directory.
-  call assert_match('.*/Xdir1', finddir('Xdir1', ';' . save_dir . '/'))
-  call assert_equal('',         finddir('Xdir1', ';' . save_dir . '/Xdir1/'))
+  call assert_match('.*/Xfinddir1', finddir('Xfinddir1', ';' . save_dir . '/'))
+  call assert_equal('',         finddir('Xfinddir1', ';' . save_dir . '/Xfinddir1/'))
 
   " Test combined downwards and upwards dir search from Xdir2/.
   cd ..
-  call assert_match('.*/Xdir1',       finddir('Xdir1', '**;', 1))
+  call assert_match('.*/Xfinddir1',       finddir('Xfinddir1', '**;', 1))
   call assert_equal('Xdir3/Xdir2',    finddir('Xdir2', '**;', 1))
-  call assert_match('.*/Xdir1/Xdir2', finddir('Xdir2', '**;', 2))
+  call assert_match('.*/Xfinddir1/Xdir2', finddir('Xdir2', '**;', 2))
   call assert_equal('Xdir3',          finddir('Xdir3', '**;', 1))
 
   call chdir(save_dir)
@@ -192,7 +216,7 @@ func Test_find_cmd()
   let save_dir = getcwd()
   set path=.,./**/*
   call CreateFiles()
-  cd Xdir1
+  cd Xfinddir1
 
   " Test for :find
   find foo
