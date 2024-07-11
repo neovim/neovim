@@ -4412,7 +4412,7 @@ vim.text.hexencode({str})                               *vim.text.hexencode()*
 Lua module: tohtml                                                *vim.tohtml*
 
 
-:TOhtml {file}                                                       *:TOhtml*
+:[range]TOhtml {file}                                                *:TOhtml*
 Converts the buffer shown in the current window to HTML, opens the generated
 HTML in a new split window, and saves its contents to {file}. If {file} is not
 given, a temporary file (created by |tempname()|) is used.
@@ -4434,6 +4434,8 @@ tohtml.tohtml({winid}, {opt})                         *tohtml.tohtml.tohtml()*
                  • {width}? (`integer`, default: 'textwidth' if non-zero or
                    window width otherwise) Width used for items which are
                    either right aligned or repeat a character infinitely.
+                 • {range}? (`integer[]`, default: entire buffer) Range of
+                   rows to use.
 
     Return: ~
         (`string[]`)
