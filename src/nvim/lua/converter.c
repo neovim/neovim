@@ -703,14 +703,10 @@ void nlua_push_Boolean(lua_State *lstate, const Boolean b, int flags)
 void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (dict.size == 0 && (flags & kNluaPushSpecial)) {
-    nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary);
-  } else {
-    lua_createtable(lstate, 0, (int)dict.size);
-    if (dict.size == 0 && !(flags & kNluaPushSpecial)) {
-      nlua_pushref(lstate, nlua_global_refs->empty_dict_ref);
-      lua_setmetatable(lstate, -2);
-    }
+  lua_createtable(lstate, 0, (int)dict.size);
+  if (dict.size == 0) {
+    nlua_pushref(lstate, nlua_global_refs->empty_dict_ref);
+    lua_setmetatable(lstate, -2);
   }
   for (size_t i = 0; i < dict.size; i++) {
     nlua_push_String(lstate, dict.items[i].key, flags);

@@ -69,7 +69,8 @@ LSP
 
 LUA
 
-• TODO
+• API functions now consistently return an empty dictionary as
+  |vim.empty_dict()|. Earlier, a |lua-special-tbl| was sometimes used.
 
 OPTIONS
 
