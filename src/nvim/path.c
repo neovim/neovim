@@ -2393,9 +2393,13 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
       p = strrchr(fname, '\\');
     }
 #endif
+    if (p == NULL && strcmp(fname, "..") == 0) {
+      // Handle ".." without path separators.
+      p = fname + 2;
+    }
     if (p != NULL) {
-      if (strcmp(p + 1, "..") == 0) {
-        // for "/path/dir/.." include the "/.."
+      if (vim_ispathsep_nocolon(*p) && strcmp(p + 1, "..") == 0) {
+        // For "/path/dir/.." include the "/..".
         p += 3;
       }
       assert(p >= fname);
