@@ -105,10 +105,10 @@ static buffheader_T readbuf1 = { { NULL, { NUL } }, NULL, 0, 0 };
 static buffheader_T readbuf2 = { { NULL, { NUL } }, NULL, 0, 0 };
 
 /// Buffer used to store typed characters for vim.on_key().
-static kvec_withinit_t(char, MAXMAPLEN) on_key_buf = KVI_INITIAL_VALUE(on_key_buf);
+static kvec_withinit_t(char, MAXMAPLEN + 1) on_key_buf = KVI_INITIAL_VALUE(on_key_buf);
 
 /// Number of following bytes that should not be stored for vim.on_key().
-static size_t no_on_key_len = 0;
+static size_t on_key_ignore_len = 0;
 
 static int typeahead_char = 0;  ///< typeahead char that's not flushed
 
@@ -1010,18 +1010,18 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
 /// Uses cmd_silent, KeyTyped and KeyNoremap to restore the flags belonging to
 /// the char.
 ///
-/// @param no_on_key don't store these bytes for vim.on_key()
+/// @param on_key_ignore don't store these bytes for vim.on_key()
 ///
 /// @return the length of what was inserted
-int ins_char_typebuf(int c, int modifiers, bool no_on_key)
+int ins_char_typebuf(int c, int modifiers, bool on_key_ignore)
 {
   char buf[MB_MAXBYTES * 3 + 4];
   unsigned len = special_to_buf(c, modifiers, true, buf);
   assert(len < sizeof(buf));
   buf[len] = NUL;
   ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
-  if (KeyTyped && no_on_key) {
-    no_on_key_len += len;
+  if (KeyTyped && on_key_ignore) {
+    on_key_ignore_len += len;
   }
   return (int)len;
 }
@@ -1189,20 +1189,19 @@ static void gotchars(const uint8_t *chars, size_t len)
       updatescript(state.buf[i]);
     }
 
-    state.buf[state.buflen] = NUL;
+    if (state.buflen > on_key_ignore_len) {
+      kvi_concat_len(on_key_buf, (char *)state.buf + on_key_ignore_len,
+                     state.buflen - on_key_ignore_len);
+      on_key_ignore_len = 0;
+    } else {
+      on_key_ignore_len -= state.buflen;
+    }
 
     if (reg_recording != 0) {
+      state.buf[state.buflen] = NUL;
       add_buff(&recordbuff, (char *)state.buf, (ptrdiff_t)state.buflen);
       // remember how many chars were last recorded
       last_recorded_len += state.buflen;
-    }
-
-    if (state.buflen > no_on_key_len) {
-      vim_unescape_ks((char *)state.buf + no_on_key_len);
-      kvi_concat(on_key_buf, (char *)state.buf + no_on_key_len);
-      no_on_key_len = 0;
-    } else {
-      no_on_key_len -= state.buflen;
     }
 
     state.buflen = 0;
@@ -1222,7 +1221,7 @@ static void gotchars(const uint8_t *chars, size_t len)
 void gotchars_ignore(void)
 {
   uint8_t nop_buf[3] = { K_SPECIAL, KS_EXTRA, KE_IGNORE };
-  no_on_key_len += 3;
+  on_key_ignore_len += 3;
   gotchars(nop_buf, 3);
 }
 
@@ -1770,7 +1769,8 @@ int vgetc(void)
   may_garbage_collect = false;
 
   // Execute Lua on_key callbacks.
-  nlua_execute_on_key(c, on_key_buf.items, on_key_buf.size);
+  kvi_push(on_key_buf, NUL);
+  nlua_execute_on_key(c, on_key_buf.items);
   kvi_destroy(on_key_buf);
   kvi_init(on_key_buf);
 
