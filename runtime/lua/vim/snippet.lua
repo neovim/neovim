@@ -514,7 +514,7 @@ function M.expand(input)
     local snippet_lines = text_to_lines(snippet_text)
     -- Get the base indentation based on the current line and the last line of the snippet.
     if #snippet_lines > 0 then
-      base_indent = base_indent .. (snippet_lines[#snippet_lines]:match('(^%s*)%S') or '') --- @type string
+      base_indent = base_indent .. (snippet_lines[#snippet_lines]:match('(^%s+)%S') or '') --- @type string
     end
 
     local shiftwidth = vim.fn.shiftwidth()
