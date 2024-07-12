@@ -2057,10 +2057,11 @@ char *nlua_register_table_as_callable(const typval_T *const arg)
   return name;
 }
 
-void nlua_execute_on_key(int c, char *typed_buf, size_t typed_len)
+void nlua_execute_on_key(int c, char *typed_buf)
 {
   char buf[MB_MAXBYTES * 3 + 4];
   size_t buf_len = special_to_buf(c, mod_mask, false, buf);
+  vim_unescape_ks(typed_buf);
 
   lua_State *const lstate = global_lstate;
 
@@ -2079,7 +2080,7 @@ void nlua_execute_on_key(int c, char *typed_buf, size_t typed_len)
   lua_pushlstring(lstate, buf, buf_len);
 
   // [ vim, vim._on_key, buf, typed_buf ]
-  lua_pushlstring(lstate, typed_buf, typed_len);
+  lua_pushstring(lstate, typed_buf);
 
   int save_got_int = got_int;
   got_int = false;  // avoid interrupts when the key typed is Ctrl-C
