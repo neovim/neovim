@@ -3373,7 +3373,7 @@ M.funcs = {
     signature = 'getcellwidths()',
   },
   getchangelist = {
-    args = { 0, 1 },
+    args = { 0, 2 },
     base = 1,
     desc = [=[
       Returns the |changelist| for the buffer {buf}. For the use
@@ -3393,9 +3393,9 @@ M.funcs = {
 
     ]=],
     name = 'getchangelist',
-    params = { { 'buf', 'integer|string' } },
+    params = { { 'buf', 'integer|string' }, {'count', 'integer'} },
     returns = 'table[]',
-    signature = 'getchangelist([{buf}])',
+    signature = 'getchangelist([{buf} [, {count}]])',
   },
   getchar = {
     args = { 0, 1 },

@@ -2440,8 +2440,14 @@ static void f_getchangelist(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
     return;
   }
 
-  list_T *const l = tv_list_alloc(buf->b_changelistlen);
-  tv_list_append_list(rettv->vval.v_list, l);
+  bool has_count = false;
+  int count = 0;
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    has_count = true;
+    // todo: overflow, +-100?
+    count = (int)tv_get_number(&argvars[1]);
+  }
+
   // The current window change list index tracks only the position for the
   // current buffer. For other buffers use the stored index for the current
   // window, or, if that's not available, the change list length.
@@ -2458,18 +2464,55 @@ static void f_getchangelist(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
     }
     changelistindex = wip != NULL ? wip->wi_changelistidx : buf->b_changelistlen;
   }
-  tv_list_append_number(rettv->vval.v_list, (varnumber_T)changelistindex);
 
-  for (int i = 0; i < buf->b_changelistlen; i++) {
-    if (buf->b_changelist[i].mark.lnum == 0) {
+  if (!has_count) {
+    list_T *const l = tv_list_alloc(buf->b_changelistlen);
+    tv_list_append_list(rettv->vval.v_list, l);
+    for (int i = 0; i < buf->b_changelistlen; i++) {
+      if (buf->b_changelist[i].mark.lnum == 0) {
       continue;
+      }
+      dict_T *const d = tv_dict_alloc();
+      tv_list_append_dict(l, d);
+      tv_dict_add_nr(d, S_LEN("lnum"), buf->b_changelist[i].mark.lnum);
+      tv_dict_add_nr(d, S_LEN("col"), buf->b_changelist[i].mark.col);
+      tv_dict_add_nr(d, S_LEN("coladd"), buf->b_changelist[i].mark.coladd);
     }
-    dict_T *const d = tv_dict_alloc();
-    tv_list_append_dict(l, d);
-    tv_dict_add_nr(d, S_LEN("lnum"), buf->b_changelist[i].mark.lnum);
-    tv_dict_add_nr(d, S_LEN("col"), buf->b_changelist[i].mark.col);
-    tv_dict_add_nr(d, S_LEN("coladd"), buf->b_changelist[i].mark.coladd);
+  } else {
+    if (count >= 0) {
+      int stop = changelistindex + count;
+      stop = stop < buf->b_changelistlen ? stop : buf->b_changelistlen;
+      list_T *const l = tv_list_alloc(stop - changelistindex + 1);
+      tv_list_append_list(rettv->vval.v_list, l);
+      for (int i = changelistindex; i <= stop; i++) {
+        if (buf->b_changelist[i].mark.lnum == 0) {
+          continue;
+        }
+        dict_T *const d = tv_dict_alloc();
+        tv_list_append_dict(l, d);
+        tv_dict_add_nr(d, S_LEN("lnum"), buf->b_changelist[i].mark.lnum);
+        tv_dict_add_nr(d, S_LEN("col"), buf->b_changelist[i].mark.col);
+        tv_dict_add_nr(d, S_LEN("coladd"), buf->b_changelist[i].mark.coladd);
+      }
+    } else {
+      int stop = changelistindex + count;
+      stop = stop > 0 ? stop : 0;
+      list_T *const l = tv_list_alloc(changelistindex - stop + 1);
+      tv_list_append_list(rettv->vval.v_list, l);
+      for (int i = changelistindex; i >= stop; i--) {
+        if (buf->b_changelist[i].mark.lnum == 0) {
+          continue;
+        }
+        dict_T *const d = tv_dict_alloc();
+        tv_list_append_dict(l, d);
+        tv_dict_add_nr(d, S_LEN("lnum"), buf->b_changelist[i].mark.lnum);
+        tv_dict_add_nr(d, S_LEN("col"), buf->b_changelist[i].mark.col);
+        tv_dict_add_nr(d, S_LEN("coladd"), buf->b_changelist[i].mark.coladd);
+      }
+    }
   }
+
+  tv_list_append_number(rettv->vval.v_list, (varnumber_T)changelistindex);
 }
 
 static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos, bool charcol)
