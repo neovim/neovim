@@ -2430,6 +2430,19 @@ local function dispatch(ft, path, bufnr, ...)
   return ft0, on_detect
 end
 
+--- @param pat string
+--- @return boolean
+--- @return string
+local function expand_envvar_pattern(pat)
+  local some_env_missing = false
+  local expanded = pat:gsub('%${(%S-)}', function(env)
+    local val = vim.env[env] --- @type string?
+    some_env_missing = some_env_missing or val == nil
+    return vim.pesc(val or '')
+  end)
+  return some_env_missing, expanded
+end
+
 --- @param name string
 --- @param path string
 --- @param tail string
@@ -2440,20 +2453,12 @@ local function match_pattern(name, path, tail, pat)
   local fullpat, has_slash = pat_cache.fullpat, pat_cache.has_slash
 
   if pat_cache.has_env then
-    local return_early --- @type true?
-    --- @type string
-    fullpat = fullpat:gsub('%${(%S-)}', function(env)
-      -- If an environment variable is present in the pattern but not set, there is no match
-      if not vim.env[env] then
-        return_early = true
-        return nil
-      end
-      return vim.pesc(vim.env[env])
-    end)
-    if return_early then
+    local some_env_missing, expanded = expand_envvar_pattern(fullpat)
+    -- If any environment variable is present in the pattern but not set, there is no match
+    if some_env_missing then
       return false
     end
-    has_slash = fullpat:find('/') ~= nil
+    fullpat, has_slash = expanded, expanded:find('/') ~= nil
   end
 
   -- If the pattern contains a / match against the full path, otherwise just the tail
