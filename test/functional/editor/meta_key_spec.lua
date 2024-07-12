@@ -145,7 +145,8 @@ describe('meta-keys #8226 #13042', function()
   end)
 
   it('ALT/META with vim.on_key()', function()
-    feed('ifoo<CR>bar<CR>baz<Esc>gg0')
+    feed('ifoo<CR>bar<CR>baz<Esc>gg0viw"ay')
+    command('nnoremap … "')
 
     exec_lua [[
       keys = {}
@@ -157,15 +158,15 @@ describe('meta-keys #8226 #13042', function()
       end)
     ]]
 
-    -- <M-"> is reinterpreted as <Esc>"
-    feed('qrviw"ayc$FOO.<M-">apq')
+    -- <M-"> and <M-…> are reinterpreted as <Esc>" and <Esc>…
+    feed('c$FOO.<M-">apA.<M-…>ap')
     expect([[
-      FOO.foo
+      FOO.foo.foo
       bar
       baz]])
 
-    -- vim.on_key() callback should only receive <Esc>"
-    eq('qrviw"ayc$FOO.<Esc>"apq', exec_lua [[return table.concat(keys, '')]])
-    eq('qrviw"ayc$FOO.<Esc>"apq', exec_lua [[return table.concat(typed, '')]])
+    -- vim.on_key() callback should only receive <Esc>" and <Esc>…
+    eq('c$FOO.<Esc>"apA.<Esc>"ap', exec_lua [[return table.concat(keys, '')]])
+    eq('c$FOO.<Esc>"apA.<Esc>…ap', exec_lua [[return table.concat(typed, '')]])
   end)
 end)
