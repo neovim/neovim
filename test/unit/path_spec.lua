@@ -468,8 +468,11 @@ describe('path.c', function()
       eq(OK, result)
     end)
 
-    itp('concatenates directory name if it does not contain a slash', function()
-      local expected = uv.cwd() .. '/..'
+    itp('produces absolute path for .. without a slash', function()
+      local old_dir = uv.cwd()
+      uv.chdir('..')
+      local expected = uv.cwd()
+      uv.chdir(old_dir)
       local filename = '..'
       local buflen = get_buf_len(expected, filename)
       local do_expand = 1
@@ -478,21 +481,18 @@ describe('path.c', function()
       eq(OK, result)
     end)
 
-    itp(
-      'enters given directory (instead of just concatenating the strings) if possible and if path contains a slash',
-      function()
-        local old_dir = uv.cwd()
-        uv.chdir('..')
-        local expected = uv.cwd() .. '/test.file'
-        uv.chdir(old_dir)
-        local filename = '../test.file'
-        local buflen = get_buf_len(expected, filename)
-        local do_expand = 1
-        local buf, result = vim_FullName(filename, buflen, do_expand)
-        eq(expected, ffi.string(buf))
-        eq(OK, result)
-      end
-    )
+    itp('produces absolute path if possible and if path contains a slash', function()
+      local old_dir = uv.cwd()
+      uv.chdir('..')
+      local expected = uv.cwd() .. '/test.file'
+      uv.chdir(old_dir)
+      local filename = '../test.file'
+      local buflen = get_buf_len(expected, filename)
+      local do_expand = 1
+      local buf, result = vim_FullName(filename, buflen, do_expand)
+      eq(expected, ffi.string(buf))
+      eq(OK, result)
+    end)
 
     itp('just copies the path if it is already absolute and force=0', function()
       local absolute_path = '/absolute/path'
