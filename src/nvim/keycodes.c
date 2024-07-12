@@ -624,7 +624,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   const char *bp;
-  const char *const end = *srcp + src_len - 1;
+  const char *const end = *srcp + src_len;
   const bool in_string = flags & FSK_IN_STRING;
   uvarnumber_T n;
   int l;
@@ -643,26 +643,27 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
 
   // Find end of modifier list
   const char *last_dash = src;
-  for (bp = src + 1; bp <= end && (*bp == '-' || ascii_isident(*bp)); bp++) {
+  for (bp = src + 1; bp < end && (*bp == '-' || ascii_isident(*bp)); bp++) {
     if (*bp == '-') {
       last_dash = bp;
-      if (bp + 1 <= end) {
-        l = utfc_ptr2len_len(bp + 1, (int)(end - bp) + 1);
+      if (bp + 1 < end) {
+        l = utfc_ptr2len_len(bp + 1, (int)(end - (bp + 1)));
         // Anything accepted, like <C-?>.
         // <C-"> or <M-"> are not special in strings as " is
         // the string delimiter. With a backslash it works: <M-\">
-        if (end - bp > l && !(in_string && bp[1] == '"') && bp[l + 1] == '>') {
+        if (bp + l + 1 < end && !(in_string && bp[1] == '"') && bp[l + 1] == '>') {
           bp += l;
-        } else if (end - bp > 2 && in_string && bp[1] == '\\'
+        } else if (bp + 3 < end && in_string && bp[1] == '\\'
                    && bp[2] == '"' && bp[3] == '>') {
           bp += 2;
         }
       }
     }
-    if (end - bp > 3 && bp[0] == 't' && bp[1] == '_') {
+    if (bp + 3 < end && bp[0] == 't' && bp[1] == '_') {
       bp += 3;  // skip t_xx, xx may be '-' or '>'
-    } else if (end - bp > 4 && STRNICMP(bp, "char-", 5) == 0) {
-      vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true, NULL);
+    } else if (bp + 5 < end && STRNICMP(bp, "char-", 5) == 0) {
+      int maxlen = (int)(end - (bp + 5));
+      vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, maxlen, true, NULL);
       if (l == 0) {
         emsg(_(e_invarg));
         return 0;
@@ -672,7 +673,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
     }
   }
 
-  if (bp <= end && *bp == '>') {  // found matching '>'
+  if (bp < end && *bp == '>') {  // found matching '>'
     int key;
     const char *end_of_name = bp + 1;
 
@@ -690,8 +691,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
 
     // Legal modifier name.
     if (bp >= last_dash) {
-      if (STRNICMP(last_dash + 1, "char-", 5) == 0
-          && ascii_isdigit(last_dash[6])) {
+      if (STRNICMP(last_dash + 1, "char-", 5) == 0 && ascii_isdigit(last_dash[6])) {
         // <Char-123> or <Char-033> or <Char-0x33>
         vim_str2nr(last_dash + 6, NULL, &l, STR2NR_ALL, NULL, &n, 0, true, NULL);
         if (l == 0) {
