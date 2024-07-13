@@ -2075,29 +2075,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     if (ea.skip) {  // skip this if inside :if
       goto doend;
     }
-    if (*ea.cmd == '|' || (exmode_active && ea.line1 != ea.line2)) {
-      ea.cmdidx = CMD_print;
-      ea.argt = EX_RANGE | EX_COUNT | EX_TRLBAR;
-      if ((errormsg = invalid_range(&ea)) == NULL) {
-        correct_range(&ea);
-        ex_print(&ea);
-      }
-    } else if (ea.addr_count != 0) {
-      if (ea.line2 > curbuf->b_ml.ml_line_count) {
-        ea.line2 = curbuf->b_ml.ml_line_count;
-      }
-
-      if (ea.line2 < 0) {
-        errormsg = _(e_invrange);
-      } else {
-        if (ea.line2 == 0) {
-          curwin->w_cursor.lnum = 1;
-        } else {
-          curwin->w_cursor.lnum = ea.line2;
-        }
-        beginline(BL_SOL | BL_FIX);
-      }
-    }
+    errormsg = ex_range_without_command(&ea);
     goto doend;
   }
 
@@ -2441,6 +2419,38 @@ char *ex_errmsg(const char *const msg, const char *const arg)
 {
   vim_snprintf(ex_error_buf, MSG_BUF_LEN, _(msg), arg);
   return ex_error_buf;
+}
+
+/// Handle a range without a command.
+/// Returns an error message on failure.
+static char *ex_range_without_command(exarg_T *eap)
+{
+  char *errormsg = NULL;
+
+  if (*eap->cmd == '|' || (exmode_active && eap->line1 != eap->line2)) {
+    eap->cmdidx = CMD_print;
+    eap->argt = EX_RANGE | EX_COUNT | EX_TRLBAR;
+    if ((errormsg = invalid_range(eap)) == NULL) {
+      correct_range(eap);
+      ex_print(eap);
+    }
+  } else if (eap->addr_count != 0) {
+    if (eap->line2 > curbuf->b_ml.ml_line_count) {
+      eap->line2 = curbuf->b_ml.ml_line_count;
+    }
+
+    if (eap->line2 < 0) {
+      errormsg = _(e_invrange);
+    } else {
+      if (eap->line2 == 0) {
+        curwin->w_cursor.lnum = 1;
+      } else {
+        curwin->w_cursor.lnum = eap->line2;
+      }
+      beginline(BL_SOL | BL_FIX);
+    }
+  }
+  return errormsg;
 }
 
 /// Parse and skip over command modifiers:
