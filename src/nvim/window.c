@@ -3456,14 +3456,22 @@ static frame_T *win_altframe(win_T *win, tabpage_T *tp)
 // Return the tabpage that will be used if the current one is closed.
 static tabpage_T *alt_tabpage(void)
 {
-  // Use the next tab page if possible.
-  if (curtab->tp_next != NULL) {
-    return curtab->tp_next;
+  // Use the last accessed tab page, if possible.
+  if ((tcl_flags & TCL_USELAST) && valid_tabpage(lastused_tabpage)) {
+    return lastused_tabpage;
   }
 
-  // Find the last but one tab page.
+  // Use the previous tab page, if possible.
+  bool forward = curtab->tp_next != NULL
+                 && ((tcl_flags & TCL_LEFT) == 0 || curtab == first_tabpage);
+
   tabpage_T *tp;
-  for (tp = first_tabpage; tp->tp_next != curtab; tp = tp->tp_next) {}
+  if (forward) {
+    tp = curtab->tp_next;
+  } else {
+    for (tp = first_tabpage; tp->tp_next != curtab; tp = tp->tp_next) {}
+  }
+
   return tp;
 }
 

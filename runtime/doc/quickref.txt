@@ -886,6 +886,7 @@ Short explanation of each option:		*option-list*
 'switchbuf'	  'swb'     sets behavior when switching to another buffer
 'synmaxcol'	  'smc'     maximum column to find syntax items
 'syntax'	  'syn'     syntax to be loaded for current buffer
+'tabclose'	  'tcl'     which tab page to focus when closing a tab
 'tabline'	  'tal'     custom format for the console tab pages line
 'tabpagemax'	  'tpm'     maximum number of tab pages for |-p| and "tab all"
 'tabstop'	  'ts'	    number of spaces that <Tab> in file uses

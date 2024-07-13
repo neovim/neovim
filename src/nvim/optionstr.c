@@ -98,11 +98,13 @@ static char *(p_ssop_values[]) = { "buffers", "winpos", "resize", "winsize", "lo
                                    "options", "help", "blank", "globals", "slash", "unix", "sesdir",
                                    "curdir", "folds", "cursor", "tabpages", "terminal", "skiprtp",
                                    NULL };
-// Keep in sync with SWB_ flags in option_defs.h
+// Keep in sync with SWB_ flags in option_vars.h
 static char *(p_swb_values[]) = { "useopen", "usetab", "split", "newtab", "vsplit", "uselast",
                                   NULL };
 static char *(p_spk_values[]) = { "cursor", "screen", "topline", NULL };
 static char *(p_tc_values[]) = { "followic", "ignore", "match", "followscs", "smart", NULL };
+// Keep in sync with TCL_ flags in option_vars.h
+static char *(p_tcl_values[]) = { "left", "uselast", NULL };
 static char *(p_ve_values[]) = { "block", "insert", "all", "onemore", "none", "NONE", NULL };
 // Note: Keep this in sync with check_opt_wim()
 static char *(p_wim_values[]) = { "full", "longest", "list", "lastused", NULL };
@@ -169,6 +171,7 @@ void didset_string_options(void)
   opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true);
   opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
   opt_strings_flags(p_swb, p_swb_values, &swb_flags, true);
+  opt_strings_flags(p_tcl, p_tcl_values, &tcl_flags, true);
   opt_strings_flags(p_wop, p_wop_values, &wop_flags, true);
   opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
 }
@@ -2203,6 +2206,21 @@ int expand_set_switchbuf(optexpand_T *args, int *numMatches, char ***matches)
   return expand_set_opt_string(args,
                                p_swb_values,
                                ARRAY_SIZE(p_swb_values) - 1,
+                               numMatches,
+                               matches);
+}
+
+/// The 'tabclose' option is changed.
+const char *did_set_tabclose(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_tcl, p_tcl_values, &tcl_flags, true);
+}
+
+int expand_set_tabclose(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_tcl_values,
+                               ARRAY_SIZE(p_tcl_values) - 1,
                                numMatches,
                                matches);
 }

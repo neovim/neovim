@@ -135,7 +135,8 @@ something else.
 		    :tabclose $	    " close the last tab page
 		    :tabclose #     " close the last accessed tab page
 
-When a tab is closed the next tab page will become the current one.
+When a tab is closed the next tab page will become the current one. This
+behaviour can be customized using the 'tabclose' option.
 
 							*:tabo* *:tabonly*
 :tabo[nly][!]	Close all other tab pages.

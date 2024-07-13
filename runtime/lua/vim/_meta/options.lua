@@ -6837,6 +6837,22 @@ vim.o.syn = vim.o.syntax
 vim.bo.syntax = vim.o.syntax
 vim.bo.syn = vim.bo.syntax
 
+--- This option controls the behavior when closing tab pages (e.g., using
+--- `:tabclose`).  When empty Vim goes to the next (right) tab page.
+---
+--- Possible values (comma-separated list):
+---    left		If included, go to the previous tab page instead of
+--- 		the next one.
+---    uselast	If included, go to the previously used tab page if
+--- 		possible.  This option takes precedence over the
+--- 		others.
+---
+--- @type string
+vim.o.tabclose = ""
+vim.o.tcl = vim.o.tabclose
+vim.go.tabclose = vim.o.tabclose
+vim.go.tcl = vim.go.tabclose
+
 --- When non-empty, this option determines the content of the tab pages
 --- line at the top of the Vim window.  When empty Vim will use a default
 --- tab pages line.  See `setting-tabline` for more info.

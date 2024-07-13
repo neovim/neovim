@@ -8507,6 +8507,30 @@ return {
       varname = 'p_syn',
     },
     {
+      abbreviation = 'tcl',
+      cb = 'did_set_tabclose',
+      defaults = { if_true = '' },
+      deny_duplicates = true,
+      desc = [=[
+        This option controls the behavior when closing tab pages (e.g., using
+        |:tabclose|).  When empty Vim goes to the next (right) tab page.
+
+        Possible values (comma-separated list):
+           left		If included, go to the previous tab page instead of
+        		the next one.
+           uselast	If included, go to the previously used tab page if
+        		possible.  This option takes precedence over the
+        		others.
+      ]=],
+      expand_cb = 'expand_set_tabclose',
+      full_name = 'tabclose',
+      list = 'onecomma',
+      scope = { 'global' },
+      short_desc = N_('which tab page to focus when closing a tab'),
+      type = 'string',
+      varname = 'p_tcl',
+    },
+    {
       abbreviation = 'tal',
       cb = 'did_set_tabline',
       defaults = { if_true = '' },
