@@ -1127,7 +1127,7 @@ function M.pl(_, bufnr)
   if
     line and line:find(':%-')
     or matchregex(line, [[\c\<prolog\>]])
-    or findany(line, { '^%s*%%+%s', '^%s*%%+$', '^%s*/%*' })
+    or findany(line, { '^:-', '^%%', '^/%*', '%.$' })
   then
     return 'prolog'
   else
@@ -1232,11 +1232,7 @@ function M.proto(_, bufnr)
   -- Recognize Prolog by specific text in the first non-empty line;
   -- require a blank after the '%' because Perl uses "%list" and "%translate"
   local line = nextnonblank(bufnr, 1)
-  if
-    line and line:find(':%-')
-    or matchregex(line, [[\c\<prolog\>]])
-    or findany(line, { '^%s*%%+%s', '^%s*%%+$', '^%s*/%*' })
-  then
+  if matchregex(line, [[\c\<prolog\>]]) or findany(line, { '^:%-', '^%%', '^/%*', '%.$' }) then
     return 'prolog'
   end
 end
