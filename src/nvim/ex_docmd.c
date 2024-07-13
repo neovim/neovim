@@ -1411,7 +1411,11 @@ void set_cmd_count(exarg_T *eap, linenr_T count, bool validate)
     }
   } else {
     eap->line1 = eap->line2;
-    eap->line2 += count - 1;
+    if (eap->line2 >= INT32_MAX - (count - 1)) {
+      eap->line2 = INT32_MAX;
+    } else {
+      eap->line2 += count - 1;
+    }
     eap->addr_count++;
     // Be vi compatible: no error message for out of range.
     if (validate && eap->line2 > curbuf->b_ml.ml_line_count) {
@@ -1429,7 +1433,7 @@ static int parse_count(exarg_T *eap, const char **errormsg, bool validate)
   if ((eap->argt & EX_COUNT) && ascii_isdigit(*eap->arg)
       && (!(eap->argt & EX_BUFNAME) || *(p = skipdigits(eap->arg + 1)) == NUL
           || ascii_iswhite(*p))) {
-    linenr_T n = getdigits_int32(&eap->arg, false, -1);
+    linenr_T n = getdigits_int32(&eap->arg, false, INT32_MAX);
     eap->arg = skipwhite(eap->arg);
 
     if (eap->args != NULL) {

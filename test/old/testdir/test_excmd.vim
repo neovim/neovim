@@ -722,9 +722,14 @@ func Test_address_line_overflow()
     throw 'Skipped: only works with 64 bit long ints'
   endif
   new
-  call setline(1, 'text')
+  call setline(1, range(100))
   call assert_fails('|.44444444444444444444444', 'E1247:')
   call assert_fails('|.9223372036854775806', 'E1247:')
+
+  $
+  yank 77777777777777777777
+  call assert_equal("99\n", @")
+
   bwipe!
 endfunc
 
