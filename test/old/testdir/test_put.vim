@@ -168,9 +168,7 @@ func Test_very_large_count()
 endfunc
 
 func Test_very_large_count_64bit()
-  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/put_spec.lua instead
-
-  if v:sizeoflong < 8
+  if !has('nvim') && v:sizeoflong < 8
     throw 'Skipped: only works with 64 bit long ints'
   endif
 
@@ -190,9 +188,7 @@ func Test_very_large_count_block()
 endfunc
 
 func Test_very_large_count_block_64bit()
-  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/put_spec.lua instead
-
-  if v:sizeoflong < 8
+  if !has('nvim') && v:sizeoflong < 8
     throw 'Skipped: only works with 64 bit long ints'
   endif
 
