@@ -718,9 +718,7 @@ func Test_not_break_expression_register()
 endfunc
 
 func Test_address_line_overflow()
-  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/excmd_spec.lua instead
-
-  if v:sizeoflong < 8
+  if !has('nvim') && v:sizeoflong < 8
     throw 'Skipped: only works with 64 bit long ints'
   endif
   new
