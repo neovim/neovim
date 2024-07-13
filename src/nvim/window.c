@@ -3461,7 +3461,7 @@ static tabpage_T *alt_tabpage(void)
     return lastused_tabpage;
   }
 
-  // Use the previous tab page, if possible.
+  // Use the next tab page, if possible.
   bool forward = curtab->tp_next != NULL
                  && ((tcl_flags & TCL_LEFT) == 0 || curtab == first_tabpage);
 
@@ -3469,6 +3469,7 @@ static tabpage_T *alt_tabpage(void)
   if (forward) {
     tp = curtab->tp_next;
   } else {
+    // Use the previous tab page.
     for (tp = first_tabpage; tp->tp_next != curtab; tp = tp->tp_next) {}
   }
 
