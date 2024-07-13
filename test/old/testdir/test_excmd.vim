@@ -725,6 +725,8 @@ func Test_address_line_overflow()
   call setline(1, range(100))
   call assert_fails('|.44444444444444444444444', 'E1247:')
   call assert_fails('|.9223372036854775806', 'E1247:')
+  call assert_fails('.44444444444444444444444d', 'E1247:')
+  call assert_equal(range(100)->map('string(v:val)'), getline(1, '$'))
 
   $
   yank 77777777777777777777

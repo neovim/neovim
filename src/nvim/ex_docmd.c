@@ -3619,6 +3619,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
         n = getdigits_int32(&cmd, false, MAXLNUM);
         if (n == MAXLNUM) {
           *errormsg = _(e_line_number_out_of_range);
+          cmd = NULL;
           goto error;
         }
       }
@@ -3641,6 +3642,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool
         } else {
           if (lnum >= 0 && n >= INT32_MAX - lnum) {
             *errormsg = _(e_line_number_out_of_range);
+            cmd = NULL;
             goto error;
           }
           lnum += n;
