@@ -6343,6 +6343,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'S' flag in 'cpoptions'.
 	Only normal file name characters can be used, `/\*?[|<>` are illegal.
 
+						*'tabclose'* *'tcl'*
+'tabclose' 'tcl'	string	(default "")
+			global
+	This option controls the behavior when closing tab pages (e.g., using
+	|:tabclose|).  When empty Vim goes to the next (right) tab page.
+
+	Possible values (comma-separated list):
+	   left		If included, go to the previous tab page instead of
+			the next one.
+	   uselast	If included, go to the previously used tab page if
+			possible.  This option takes precedence over the
+			others.
+
 						*'tabline'* *'tal'*
 'tabline' 'tal'		string	(default "")
 			global

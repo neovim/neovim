@@ -694,7 +694,6 @@ EXTERN unsigned tpf_flags;      ///< flags from 'termpastefilter'
 EXTERN char *p_tfu;             ///< 'tagfunc'
 EXTERN char *p_spc;             ///< 'spellcapcheck'
 EXTERN char *p_spf;             ///< 'spellfile'
-EXTERN char *p_spk;             ///< 'splitkeep'
 EXTERN char *p_spl;             ///< 'spelllang'
 EXTERN char *p_spo;             ///< 'spelloptions'
 EXTERN unsigned spo_flags;
@@ -711,7 +710,12 @@ EXTERN unsigned swb_flags;
 #define SWB_NEWTAB              0x008
 #define SWB_VSPLIT              0x010
 #define SWB_USELAST             0x020
+EXTERN char *p_spk;             ///< 'splitkeep'
 EXTERN char *p_syn;             ///< 'syntax'
+EXTERN char *p_tcl;             ///< 'tabclose'
+EXTERN unsigned tcl_flags;      ///< flags from 'tabclose'
+#define TCL_LEFT                0x001
+#define TCL_USELAST             0x002
 EXTERN OptInt p_ts;             ///< 'tabstop'
 EXTERN int p_tbs;               ///< 'tagbsearch'
 EXTERN char *p_tc;              ///< 'tagcase'
