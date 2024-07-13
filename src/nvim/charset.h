@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nvim/func_attr.h"
 #include "nvim/option_vars.h"
 #include "nvim/strings.h"  // IWYU pragma: keep
 
@@ -31,15 +30,13 @@ typedef enum {
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "charset.h.generated.h"
+# include "charset.h.inline.generated.h"
 #endif
-
-static inline bool vim_isbreak(int c)
-  REAL_FATTR_CONST
-  REAL_FATTR_ALWAYS_INLINE;
 
 /// Check if `c` is one of the characters in 'breakat'.
 /// Used very often if 'linebreak' is set
 static inline bool vim_isbreak(int c)
+  FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE
 {
   return breakat_flags[(uint8_t)c];
 }

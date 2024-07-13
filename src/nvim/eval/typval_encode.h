@@ -11,7 +11,10 @@
 
 #include "klib/kvec.h"
 #include "nvim/eval/typval_defs.h"
-#include "nvim/func_attr.h"
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "eval/typval_encode.h.inline.generated.h"
+#endif
 
 /// Type of the stack entry
 typedef enum {
@@ -62,10 +65,6 @@ typedef struct {
 /// Stack used to convert Vimscript values to messagepack.
 typedef kvec_withinit_t(MPConvStackVal, 8) MPConvStack;
 
-static inline size_t tv_strlen(const typval_T *tv)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT
-  REAL_FATTR_NONNULL_ALL;
-
 /// Length of the string stored in typval_T
 ///
 /// @param[in]  tv  String for which to compute length for. Must be typval_T
@@ -74,6 +73,8 @@ static inline size_t tv_strlen(const typval_T *tv)
 /// @return Length of the string stored in typval_T, including 0 for NULL
 ///         string.
 static inline size_t tv_strlen(const typval_T *const tv)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(tv->v_type == VAR_STRING);
   return (tv->vval.v_string == NULL ? 0 : strlen(tv->vval.v_string));

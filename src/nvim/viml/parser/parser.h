@@ -5,13 +5,13 @@
 #include <stddef.h>
 
 #include "klib/kvec.h"
-#include "nvim/func_attr.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/viml/parser/parser_defs.h"  // IWYU pragma: keep
 
-static inline void viml_parser_init(ParserState *ret_pstate, ParserLineGetter get_line,
-                                    void *cookie, ParserHighlight *colors)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1, 2);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "viml/parser/parser.h.generated.h"
+# include "viml/parser/parser.h.inline.generated.h"
+#endif
 
 /// Initialize a new parser state instance
 ///
@@ -22,6 +22,7 @@ static inline void viml_parser_init(ParserState *ret_pstate, ParserLineGetter ge
 ///                     needed.
 static inline void viml_parser_init(ParserState *const ret_pstate, const ParserLineGetter get_line,
                                     void *const cookie, ParserHighlight *const colors)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   *ret_pstate = (ParserState) {
     .reader = {
@@ -37,9 +38,6 @@ static inline void viml_parser_init(ParserState *const ret_pstate, const ParserL
   kvi_init(ret_pstate->stack);
 }
 
-static inline void viml_parser_advance(ParserState *pstate, size_t len)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
-
 /// Advance position by a given number of bytes
 ///
 /// At maximum advances to the next line.
@@ -47,6 +45,7 @@ static inline void viml_parser_advance(ParserState *pstate, size_t len)
 /// @param  pstate  Parser state to advance.
 /// @param[in]  len  Number of bytes to advance.
 static inline void viml_parser_advance(ParserState *const pstate, const size_t len)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   assert(pstate->pos.line == kv_size(pstate->reader.lines) - 1);
   const ParserLine pline = kv_last(pstate->reader.lines);
@@ -58,10 +57,6 @@ static inline void viml_parser_advance(ParserState *const pstate, const size_t l
   }
 }
 
-static inline void viml_parser_highlight(ParserState *pstate, ParserPosition start, size_t len,
-                                         const char *group)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
-
 /// Record highlighting of some region of text
 ///
 /// @param  pstate  Parser state to work with.
@@ -70,6 +65,7 @@ static inline void viml_parser_highlight(ParserState *pstate, ParserPosition sta
 /// @param[in]  group  Highlight group.
 static inline void viml_parser_highlight(ParserState *const pstate, const ParserPosition start,
                                          const size_t len, const char *const group)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   if (pstate->colors == NULL || len == 0) {
     return;
@@ -83,7 +79,3 @@ static inline void viml_parser_highlight(ParserState *const pstate, const Parser
     .group = group,
   }));
 }
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "viml/parser/parser.h.generated.h"
-#endif
