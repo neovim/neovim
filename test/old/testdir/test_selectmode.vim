@@ -323,4 +323,20 @@ func Test_ins_ctrl_o_in_insert_mode_resets_selectmode()
   bwipe!
 endfunc
 
+" Test that an :lmap mapping for a printable keypad key is applied when typing
+" it in Select mode.
+func Test_selectmode_keypad_lmap()
+  new
+  lnoremap <buffer> <kPoint> ???
+  lnoremap <buffer> <kEnter> !!!
+  setlocal iminsert=1
+  call setline(1, 'abcdef')
+  call feedkeys("gH\<kPoint>\<Esc>", 'tx')
+  call assert_equal(['???'], getline(1, '$'))
+  call feedkeys("gH\<kEnter>\<Esc>", 'tx')
+  call assert_equal(['!!!'], getline(1, '$'))
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
