@@ -2079,6 +2079,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     if (ea.skip) {  // skip this if inside :if
       goto doend;
     }
+    assert(errormsg == NULL);
     errormsg = ex_range_without_command(&ea);
     goto doend;
   }
@@ -2431,7 +2432,7 @@ static char *ex_range_without_command(exarg_T *eap)
 {
   char *errormsg = NULL;
 
-  if (*eap->cmd == '|' || (exmode_active && eap->line1 != eap->line2)) {
+  if (*eap->cmd == '|' || exmode_active) {
     eap->cmdidx = CMD_print;
     eap->argt = EX_RANGE | EX_COUNT | EX_TRLBAR;
     if ((errormsg = invalid_range(eap)) == NULL) {

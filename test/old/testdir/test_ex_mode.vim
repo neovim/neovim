@@ -282,4 +282,15 @@ func Test_ex_mode_large_indent()
 endfunc
 
 
+" Testing implicit print command
+func Test_implicit_print()
+  new
+  call setline(1, ['one', 'two', 'three'])
+  call feedkeys('Q:let a=execute(":1,2")', 'xt')
+  call feedkeys('Q:let b=execute(":3")', 'xt')
+  call assert_equal('one two', a->split('\n')->join(' '))
+  call assert_equal('three', b->split('\n')->join(' '))
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

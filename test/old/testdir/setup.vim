@@ -32,8 +32,8 @@ if exists('s:did_load')
   endif
   if g:testname !~ 'test_mapping.vim$'
     " Make "Q" switch to Ex mode.
-    " This does not work for all tests.
-    nnoremap Q gQ
+    " This does not work for all tests as Nvim only supports Vim Ex mode.
+    nnoremap Q gQ<Cmd>call<SID>ExStart()<CR>
   endif
 endif
 
@@ -44,6 +44,21 @@ if exists('s:did_load')
   finish
 endif
 let s:did_load = 1
+
+func s:ExStart()
+  call feedkeys($"\<Cmd>call{expand('<SID>')}ExMayEnd()\<CR>")
+endfunc
+
+func s:ExMayEnd()
+  " When :normal runs out of characters in Vim, the behavior is different in
+  " normal Ex mode vs. Vim Ex mode.
+  " - In normal Ex mode, "\n" is used.
+  " - In Vim Ex mode, Ctrl-C is used.
+  " Nvim only supports Vim Ex mode, so emulate the normal Ex mode behavior.
+  if state('m') == '' && mode(1) == 'cv' && getcharstr(1) == "\<C-C>"
+    call feedkeys("\n")
+  endif
+endfunc
 
 " Clear Nvim default user commands, mappings and menus.
 comclear

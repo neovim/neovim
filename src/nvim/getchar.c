@@ -2729,7 +2729,7 @@ static int vgetorpeek(bool advance)
             timedout = true;
             continue;
           }
-          // In Ex-mode \n is compatible with original Vim behaviour.
+
           // For the command line only CTRL-C always breaks it.
           // For the cmdline window: Alternate between ESC and
           // CTRL-C: ESC for most situations and CTRL-C to close the

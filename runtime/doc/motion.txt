@@ -342,6 +342,7 @@ gg			Goto line [count], default first line, on the first
 
 							*:[range]*
 :[range]		Set the cursor on the last line number in [range].
+			In Ex mode, print the lines in [range].
 			[range] can also be just one line number, e.g., ":1"
 			or ":'m".
 			In contrast with |G| this command does not modify the
