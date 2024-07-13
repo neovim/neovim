@@ -1634,6 +1634,50 @@ int vgetc(void)
         c = TO_SPECIAL(c2, c);
       }
 
+      // For a multi-byte character get all the bytes and return the
+      // converted character.
+      // Note: This will loop until enough bytes are received!
+      int n;
+      if ((n = MB_BYTE2LEN_CHECK(c)) > 1) {
+        no_mapping++;
+        buf[0] = (uint8_t)c;
+        for (int i = 1; i < n; i++) {
+          buf[i] = (uint8_t)vgetorpeek(true);
+          if (buf[i] == K_SPECIAL) {
+            // Must be a K_SPECIAL - KS_SPECIAL - KE_FILLER sequence,
+            // which represents a K_SPECIAL (0x80).
+            vgetorpeek(true);  // skip KS_SPECIAL
+            vgetorpeek(true);  // skip KE_FILLER
+          }
+        }
+        no_mapping--;
+        c = utf_ptr2char((char *)buf);
+      }
+
+      // If mappings are enabled (i.e., not i_CTRL-V) and the user directly typed
+      // something with MOD_MASK_ALT (<M-/<A- modifier) that was not mapped, interpret
+      // <M-x> as <Esc>x rather than as an unbound <M-x> keypress. #8213
+      // In Terminal mode, however, this is not desirable. #16202 #16220
+      // Also do not do this for mouse keys, as terminals encode mouse events as
+      // CSI sequences, and MOD_MASK_ALT has a meaning even for unmapped mouse keys.
+      if (!no_mapping && KeyTyped && mod_mask == MOD_MASK_ALT
+          && !(State & MODE_TERMINAL) && !is_mouse_key(c)) {
+        mod_mask = 0;
+        int len = ins_char_typebuf(c, 0, false);
+        ins_char_typebuf(ESC, 0, false);
+        int old_len = len + 3;  // K_SPECIAL KS_MODIFIER MOD_MASK_ALT takes 3 more bytes
+        ungetchars(old_len);
+        if (on_key_buf.size >= (size_t)old_len) {
+          on_key_buf.size -= (size_t)old_len;
+        }
+        continue;
+      }
+
+      if (vgetc_char == 0) {
+        vgetc_mod_mask = mod_mask;
+        vgetc_char = c;
+      }
+
       // a keypad or special function key was not mapped, use it like
       // its ASCII equivalent
       switch (c) {
@@ -1711,50 +1755,6 @@ int vgetc(void)
       case K_KRIGHT:
       case K_XRIGHT:
         c = K_RIGHT; break;
-      }
-
-      // For a multi-byte character get all the bytes and return the
-      // converted character.
-      // Note: This will loop until enough bytes are received!
-      int n;
-      if ((n = MB_BYTE2LEN_CHECK(c)) > 1) {
-        no_mapping++;
-        buf[0] = (uint8_t)c;
-        for (int i = 1; i < n; i++) {
-          buf[i] = (uint8_t)vgetorpeek(true);
-          if (buf[i] == K_SPECIAL) {
-            // Must be a K_SPECIAL - KS_SPECIAL - KE_FILLER sequence,
-            // which represents a K_SPECIAL (0x80).
-            vgetorpeek(true);  // skip KS_SPECIAL
-            vgetorpeek(true);  // skip KE_FILLER
-          }
-        }
-        no_mapping--;
-        c = utf_ptr2char((char *)buf);
-      }
-
-      if (vgetc_char == 0) {
-        vgetc_mod_mask = mod_mask;
-        vgetc_char = c;
-      }
-
-      // If mappings are enabled (i.e., not i_CTRL-V) and the user directly typed something with
-      // MOD_MASK_ALT (<M-/<A- modifier) that was not mapped, interpret <M-x> as <Esc>x rather
-      // than as an unbound <M-x> keypress. #8213
-      // In Terminal mode, however, this is not desirable. #16202 #16220
-      // Also do not do this for mouse keys, as terminals encode mouse events as CSI sequences, and
-      // MOD_MASK_ALT has a meaning even for unmapped mouse keys.
-      if (!no_mapping && KeyTyped && mod_mask == MOD_MASK_ALT && !(State & MODE_TERMINAL)
-          && !is_mouse_key(c)) {
-        mod_mask = 0;
-        int len = ins_char_typebuf(c, 0, false);
-        ins_char_typebuf(ESC, 0, false);
-        int old_len = len + 3;  // K_SPECIAL KS_MODIFIER MOD_MASK_ALT takes 3 more bytes
-        ungetchars(old_len);
-        if (on_key_buf.size >= (size_t)old_len) {
-          on_key_buf.size -= (size_t)old_len;
-        }
-        continue;
       }
 
       break;
