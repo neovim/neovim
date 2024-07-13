@@ -1205,8 +1205,7 @@ describe('lua stdlib', function()
     ]])
     eq(true, exec_lua([[return next(vim.fn.FooFunc(3)) == nil ]]))
     eq(3, eval('g:test'))
-    -- compat: nvim_call_function uses "special" value for empty dict
-    eq(true, exec_lua([[return next(vim.api.nvim_call_function("FooFunc", {5})) == true ]]))
+    eq(true, exec_lua([[return vim.tbl_isempty(vim.api.nvim_call_function("FooFunc", {5}))]]))
     eq(5, eval('g:test'))
 
     eq({ 2, 'foo', true }, exec_lua([[return vim.fn.VarArg(2, "foo", true)]]))
