@@ -1730,484 +1730,487 @@ local detect_apache = starsetf('apache')
 local detect_muttrc = starsetf('muttrc')
 local detect_neomuttrc = starsetf('neomuttrc')
 
+--- Vim regexes are converted into explicit Lua patterns (without implicit anchoring):
+--- '*/debian/changelog' -> '/debian/changelog$'
+--- '*/bind/db.*' -> '/bind/db%.'
 --- @type vim.filetype.mapping
 local pattern = {
   -- BEGIN PATTERN
-  ['.*/etc/a2ps/.*%.cfg'] = 'a2ps',
-  ['.*/etc/a2ps%.cfg'] = 'a2ps',
-  ['.*/usr/share/alsa/alsa%.conf'] = 'alsaconf',
-  ['.*/etc/asound%.conf'] = 'alsaconf',
-  ['.*/etc/apache2/sites%-.*/.*%.com'] = 'apache',
-  ['.*/etc/httpd/.*%.conf'] = 'apache',
-  ['.*/etc/apache2/.*%.conf.*'] = detect_apache,
-  ['.*/etc/apache2/conf%..*/.*'] = detect_apache,
-  ['.*/etc/apache2/mods%-.*/.*'] = detect_apache,
-  ['.*/etc/apache2/sites%-.*/.*'] = detect_apache,
-  ['access%.conf.*'] = detect_apache,
-  ['apache%.conf.*'] = detect_apache,
-  ['apache2%.conf.*'] = detect_apache,
-  ['httpd%.conf.*'] = detect_apache,
-  ['srm%.conf.*'] = detect_apache,
-  ['.*/etc/httpd/conf%..*/.*'] = detect_apache,
-  ['.*/etc/httpd/conf%.d/.*%.conf.*'] = detect_apache,
-  ['.*/etc/httpd/mods%-.*/.*'] = detect_apache,
-  ['.*/etc/httpd/sites%-.*/.*'] = detect_apache,
-  ['.*/etc/proftpd/.*%.conf.*'] = starsetf('apachestyle'),
-  ['.*/etc/proftpd/conf%..*/.*'] = starsetf('apachestyle'),
-  ['proftpd%.conf.*'] = starsetf('apachestyle'),
-  ['.*asterisk/.*%.conf.*'] = starsetf('asterisk'),
-  ['.*asterisk.*/.*voicemail%.conf.*'] = starsetf('asteriskvm'),
-  ['.*/%.aptitude/config'] = 'aptconf',
-  ['[mM]akefile%.am'] = 'automake',
-  ['.*/bind/db%..*'] = starsetf('bindzone'),
-  ['.*/named/db%..*'] = starsetf('bindzone'),
-  ['.*/build/conf/.*%.conf'] = 'bitbake',
-  ['.*/meta/conf/.*%.conf'] = 'bitbake',
-  ['.*/meta%-.*/conf/.*%.conf'] = 'bitbake',
-  ['.*%.blade%.php'] = 'blade',
-  ['bzr_log%..*'] = 'bzr',
-  ['.*enlightenment/.*%.cfg'] = 'c',
-  ['.*/%.cabal/config'] = 'cabalconfig',
-  ['.*/cabal/config'] = 'cabalconfig',
-  ['cabal%.project%..*'] = starsetf('cabalproject'),
-  ['.*/%.calendar/.*'] = starsetf('calendar'),
-  ['.*/share/calendar/.*/calendar%..*'] = starsetf('calendar'),
-  ['.*/share/calendar/calendar%..*'] = starsetf('calendar'),
-  ['sgml%.catalog.*'] = starsetf('catalog'),
-  ['.*/etc/defaults/cdrdao'] = 'cdrdaoconf',
-  ['.*/etc/cdrdao%.conf'] = 'cdrdaoconf',
-  ['.*/etc/default/cdrdao'] = 'cdrdaoconf',
-  ['.*hgrc'] = 'cfg',
-  ['.*%.[Cc][Ff][Gg]'] = {
+  ['/etc/a2ps/.*%.cfg$'] = 'a2ps',
+  ['/etc/a2ps%.cfg$'] = 'a2ps',
+  ['/usr/share/alsa/alsa%.conf$'] = 'alsaconf',
+  ['/etc/asound%.conf$'] = 'alsaconf',
+  ['/etc/apache2/sites%-.*/.*%.com$'] = 'apache',
+  ['/etc/httpd/.*%.conf$'] = 'apache',
+  ['/etc/apache2/.*%.conf'] = detect_apache,
+  ['/etc/apache2/conf%..*/'] = detect_apache,
+  ['/etc/apache2/mods%-.*/'] = detect_apache,
+  ['/etc/apache2/sites%-.*/'] = detect_apache,
+  ['^access%.conf'] = detect_apache,
+  ['^apache%.conf'] = detect_apache,
+  ['^apache2%.conf'] = detect_apache,
+  ['^httpd%.conf'] = detect_apache,
+  ['^srm%.conf'] = detect_apache,
+  ['/etc/httpd/conf%..*/'] = detect_apache,
+  ['/etc/httpd/conf%.d/.*%.conf'] = detect_apache,
+  ['/etc/httpd/mods%-.*/'] = detect_apache,
+  ['/etc/httpd/sites%-.*/'] = detect_apache,
+  ['/etc/proftpd/.*%.conf'] = starsetf('apachestyle'),
+  ['/etc/proftpd/conf%..*/'] = starsetf('apachestyle'),
+  ['^proftpd%.conf'] = starsetf('apachestyle'),
+  ['asterisk/.*%.conf'] = starsetf('asterisk'),
+  ['asterisk.*/.*voicemail%.conf'] = starsetf('asteriskvm'),
+  ['/%.aptitude/config$'] = 'aptconf',
+  ['^[mM]akefile%.am$'] = 'automake',
+  ['/bind/db%.'] = starsetf('bindzone'),
+  ['/named/db%.'] = starsetf('bindzone'),
+  ['/build/conf/.*%.conf$'] = 'bitbake',
+  ['/meta/conf/.*%.conf$'] = 'bitbake',
+  ['/meta%-.*/conf/.*%.conf$'] = 'bitbake',
+  ['%.blade%.php$'] = 'blade',
+  ['^bzr_log%.'] = 'bzr',
+  ['enlightenment/.*%.cfg$'] = 'c',
+  ['/%.cabal/config$'] = 'cabalconfig',
+  ['/cabal/config$'] = 'cabalconfig',
+  ['^cabal%.project%.'] = starsetf('cabalproject'),
+  ['/%.calendar/'] = starsetf('calendar'),
+  ['/share/calendar/.*/calendar%.'] = starsetf('calendar'),
+  ['/share/calendar/calendar%.'] = starsetf('calendar'),
+  ['^sgml%.catalog'] = starsetf('catalog'),
+  ['/etc/defaults/cdrdao$'] = 'cdrdaoconf',
+  ['/etc/cdrdao%.conf$'] = 'cdrdaoconf',
+  ['/etc/default/cdrdao$'] = 'cdrdaoconf',
+  ['hgrc$'] = 'cfg',
+  ['%.[Cc][Ff][Gg]$'] = {
     detect.cfg,
     -- Decrease priority to avoid conflicts with more specific patterns
     -- such as '.*/etc/a2ps/.*%.cfg', '.*enlightenment/.*%.cfg', etc.
     { priority = -1 },
   },
-  ['[cC]hange[lL]og.*'] = starsetf(detect.changelog),
-  ['.*%.%.ch'] = 'chill',
-  ['.*/etc/translate%-shell'] = 'clojure',
-  ['.*%.cmake%.in'] = 'cmake',
+  ['^[cC]hange[lL]og'] = starsetf(detect.changelog),
+  ['%.%.ch$'] = 'chill',
+  ['/etc/translate%-shell$'] = 'clojure',
+  ['%.cmake%.in$'] = 'cmake',
   -- */cmus/rc and */.cmus/rc
-  ['.*/%.?cmus/rc'] = 'cmusrc',
+  ['/%.?cmus/rc$'] = 'cmusrc',
   -- */cmus/*.theme and */.cmus/*.theme
-  ['.*/%.?cmus/.*%.theme'] = 'cmusrc',
-  ['.*/%.cmus/autosave'] = 'cmusrc',
-  ['.*/%.cmus/command%-history'] = 'cmusrc',
-  ['.*/etc/hostname%..*'] = starsetf('config'),
-  ['crontab%..*'] = starsetf('crontab'),
-  ['.*/etc/cron%.d/.*'] = starsetf('crontab'),
-  ['%.cshrc.*'] = detect.csh,
-  ['%.login.*'] = detect.csh,
-  ['cvs%d+'] = 'cvs',
-  ['.*%.[Dd][Aa][Tt]'] = detect.dat,
-  ['.*/debian/patches/.*'] = detect.dep3patch,
-  ['.*/etc/dnsmasq%.d/.*'] = starsetf('dnsmasq'),
-  ['Containerfile%..*'] = starsetf('dockerfile'),
-  ['Dockerfile%..*'] = starsetf('dockerfile'),
-  ['.*/etc/yum%.repos%.d/.*'] = starsetf('dosini'),
-  ['drac%..*'] = starsetf('dracula'),
-  ['.*/debian/changelog'] = 'debchangelog',
-  ['.*/debian/control'] = 'debcontrol',
-  ['.*/debian/copyright'] = 'debcopyright',
-  ['.*/etc/apt/sources%.list%.d/.*%.list'] = 'debsources',
-  ['.*/etc/apt/sources%.list'] = 'debsources',
-  ['.*/etc/apt/sources%.list%.d/.*%.sources'] = 'deb822sources',
-  ['dictd.*%.conf'] = 'dictdconf',
-  ['.*/etc/DIR_COLORS'] = 'dircolors',
-  ['.*/etc/dnsmasq%.conf'] = 'dnsmasq',
-  ['php%.ini%-.*'] = 'dosini',
-  ['.*/%.aws/config'] = 'confini',
-  ['.*/%.aws/credentials'] = 'confini',
-  ['.*/etc/yum%.conf'] = 'dosini',
-  ['.*/lxqt/.*%.conf'] = 'dosini',
-  ['.*/screengrab/.*%.conf'] = 'dosini',
-  ['.*/bpython/config'] = 'dosini',
-  ['.*/mypy/config'] = 'dosini',
-  ['.*/flatpak/repo/config'] = 'dosini',
-  ['.*lvs'] = 'dracula',
-  ['.*lpe'] = 'dracula',
-  ['.*/dtrace/.*%.d'] = 'dtrace',
-  ['.*esmtprc'] = 'esmtprc',
-  ['.*Eterm/.*%.cfg'] = 'eterm',
-  ['.*s6.*/up'] = 'execline',
-  ['.*s6.*/down'] = 'execline',
-  ['.*s6.*/run'] = 'execline',
-  ['.*s6.*/finish'] = 'execline',
-  ['s6%-.*'] = 'execline',
-  ['[a-zA-Z0-9].*Dict'] = detect.foam,
-  ['[a-zA-Z0-9].*Dict%..*'] = detect.foam,
-  ['[a-zA-Z].*Properties'] = detect.foam,
-  ['[a-zA-Z].*Properties%..*'] = detect.foam,
-  ['.*Transport%..*'] = detect.foam,
-  ['.*/constant/g'] = detect.foam,
-  ['.*/0/.*'] = detect.foam,
-  ['.*/0%.orig/.*'] = detect.foam,
-  ['.*/%.fvwm/.*'] = starsetf('fvwm'),
-  ['.*fvwmrc.*'] = starsetf(detect.fvwm_v1),
-  ['.*fvwm95.*%.hook'] = starsetf(detect.fvwm_v1),
-  ['.*fvwm2rc.*'] = starsetf(detect.fvwm_v2),
-  ['.*/tmp/lltmp.*'] = starsetf('gedcom'),
-  ['.*/etc/gitconfig%.d/.*'] = starsetf('gitconfig'),
-  ['.*/gitolite%-admin/conf/.*'] = starsetf('gitolite'),
-  ['tmac%..*'] = starsetf('nroff'),
-  ['.*/%.gitconfig%.d/.*'] = starsetf('gitconfig'),
-  ['.*%.git/.*'] = {
+  ['/%.?cmus/.*%.theme$'] = 'cmusrc',
+  ['/%.cmus/autosave$'] = 'cmusrc',
+  ['/%.cmus/command%-history$'] = 'cmusrc',
+  ['/etc/hostname%.'] = starsetf('config'),
+  ['^crontab%.'] = starsetf('crontab'),
+  ['/etc/cron%.d/'] = starsetf('crontab'),
+  ['^%.cshrc'] = detect.csh,
+  ['^%.login'] = detect.csh,
+  ['^cvs%d+$'] = 'cvs',
+  ['%.[Dd][Aa][Tt]$'] = detect.dat,
+  ['/debian/patches/'] = detect.dep3patch,
+  ['/etc/dnsmasq%.d/'] = starsetf('dnsmasq'),
+  ['^Containerfile%.'] = starsetf('dockerfile'),
+  ['^Dockerfile%.'] = starsetf('dockerfile'),
+  ['/etc/yum%.repos%.d/'] = starsetf('dosini'),
+  ['^drac%.'] = starsetf('dracula'),
+  ['/debian/changelog$'] = 'debchangelog',
+  ['/debian/control$'] = 'debcontrol',
+  ['/debian/copyright$'] = 'debcopyright',
+  ['/etc/apt/sources%.list%.d/.*%.list$'] = 'debsources',
+  ['/etc/apt/sources%.list$'] = 'debsources',
+  ['/etc/apt/sources%.list%.d/.*%.sources$'] = 'deb822sources',
+  ['^dictd.*%.conf$'] = 'dictdconf',
+  ['/etc/DIR_COLORS$'] = 'dircolors',
+  ['/etc/dnsmasq%.conf$'] = 'dnsmasq',
+  ['^php%.ini%-'] = 'dosini',
+  ['/%.aws/config$'] = 'confini',
+  ['/%.aws/credentials$'] = 'confini',
+  ['/etc/yum%.conf$'] = 'dosini',
+  ['/lxqt/.*%.conf$'] = 'dosini',
+  ['/screengrab/.*%.conf$'] = 'dosini',
+  ['/bpython/config$'] = 'dosini',
+  ['/mypy/config$'] = 'dosini',
+  ['/flatpak/repo/config$'] = 'dosini',
+  ['lvs$'] = 'dracula',
+  ['lpe$'] = 'dracula',
+  ['/dtrace/.*%.d$'] = 'dtrace',
+  ['esmtprc$'] = 'esmtprc',
+  ['Eterm/.*%.cfg$'] = 'eterm',
+  ['s6.*/up$'] = 'execline',
+  ['s6.*/down$'] = 'execline',
+  ['s6.*/run$'] = 'execline',
+  ['s6.*/finish$'] = 'execline',
+  ['^s6%-'] = 'execline',
+  ['^[a-zA-Z0-9].*Dict$'] = detect.foam,
+  ['^[a-zA-Z0-9].*Dict%.'] = detect.foam,
+  ['^[a-zA-Z].*Properties$'] = detect.foam,
+  ['^[a-zA-Z].*Properties%.'] = detect.foam,
+  ['Transport%.'] = detect.foam,
+  ['/constant/g$'] = detect.foam,
+  ['/0/'] = detect.foam,
+  ['/0%.orig/'] = detect.foam,
+  ['/%.fvwm/'] = starsetf('fvwm'),
+  ['fvwmrc'] = starsetf(detect.fvwm_v1),
+  ['fvwm95.*%.hook$'] = starsetf(detect.fvwm_v1),
+  ['fvwm2rc'] = starsetf(detect.fvwm_v2),
+  ['/tmp/lltmp'] = starsetf('gedcom'),
+  ['/etc/gitconfig%.d/'] = starsetf('gitconfig'),
+  ['/gitolite%-admin/conf/'] = starsetf('gitolite'),
+  ['^tmac%.'] = starsetf('nroff'),
+  ['/%.gitconfig%.d/'] = starsetf('gitconfig'),
+  ['%.git/'] = {
     detect.git,
     -- Decrease priority to run after simple pattern checks
     { priority = -1 },
   },
-  ['.*%.git/modules/.*/config'] = 'gitconfig',
-  ['.*%.git/modules/config'] = 'gitconfig',
-  ['.*%.git/config'] = 'gitconfig',
-  ['.*/etc/gitconfig'] = 'gitconfig',
-  ['.*/%.config/git/config'] = 'gitconfig',
-  ['.*%.git/config%.worktree'] = 'gitconfig',
-  ['.*%.git/worktrees/.*/config%.worktree'] = 'gitconfig',
-  ['${XDG_CONFIG_HOME}/git/config'] = 'gitconfig',
-  ['.*%.git/info/attributes'] = 'gitattributes',
-  ['.*/etc/gitattributes'] = 'gitattributes',
-  ['.*/%.config/git/attributes'] = 'gitattributes',
-  ['${XDG_CONFIG_HOME}/git/attributes'] = 'gitattributes',
-  ['.*%.git/info/exclude'] = 'gitignore',
-  ['.*/%.config/git/ignore'] = 'gitignore',
-  ['${XDG_CONFIG_HOME}/git/ignore'] = 'gitignore',
-  ['%.gitsendemail%.msg%.......'] = 'gitsendemail',
-  ['gkrellmrc_.'] = 'gkrellmrc',
-  ['.*/usr/.*/gnupg/options%.skel'] = 'gpg',
-  ['.*/%.gnupg/options'] = 'gpg',
-  ['.*/%.gnupg/gpg%.conf'] = 'gpg',
-  ['${GNUPGHOME}/options'] = 'gpg',
-  ['${GNUPGHOME}/gpg%.conf'] = 'gpg',
-  ['.*/etc/group'] = 'group',
-  ['.*/etc/gshadow'] = 'group',
-  ['.*/etc/group%.edit'] = 'group',
-  ['.*/var/backups/gshadow%.bak'] = 'group',
-  ['.*/etc/group%-'] = 'group',
-  ['.*/etc/gshadow%-'] = 'group',
-  ['.*/var/backups/group%.bak'] = 'group',
-  ['.*/etc/gshadow%.edit'] = 'group',
-  ['.*/boot/grub/grub%.conf'] = 'grub',
-  ['.*/boot/grub/menu%.lst'] = 'grub',
-  ['.*/etc/grub%.conf'] = 'grub',
+  ['%.git/modules/.*/config$'] = 'gitconfig',
+  ['%.git/modules/config$'] = 'gitconfig',
+  ['%.git/config$'] = 'gitconfig',
+  ['/etc/gitconfig$'] = 'gitconfig',
+  ['/%.config/git/config$'] = 'gitconfig',
+  ['%.git/config%.worktree$'] = 'gitconfig',
+  ['%.git/worktrees/.*/config%.worktree$'] = 'gitconfig',
+  ['^${XDG_CONFIG_HOME}/git/config$'] = 'gitconfig',
+  ['%.git/info/attributes$'] = 'gitattributes',
+  ['/etc/gitattributes$'] = 'gitattributes',
+  ['/%.config/git/attributes$'] = 'gitattributes',
+  ['^${XDG_CONFIG_HOME}/git/attributes$'] = 'gitattributes',
+  ['%.git/info/exclude$'] = 'gitignore',
+  ['/%.config/git/ignore$'] = 'gitignore',
+  ['^${XDG_CONFIG_HOME}/git/ignore$'] = 'gitignore',
+  ['^%.gitsendemail%.msg%.......$'] = 'gitsendemail',
+  ['^gkrellmrc_.$'] = 'gkrellmrc',
+  ['/usr/.*/gnupg/options%.skel$'] = 'gpg',
+  ['/%.gnupg/options$'] = 'gpg',
+  ['/%.gnupg/gpg%.conf$'] = 'gpg',
+  ['^${GNUPGHOME}/options$'] = 'gpg',
+  ['^${GNUPGHOME}/gpg%.conf$'] = 'gpg',
+  ['/etc/group$'] = 'group',
+  ['/etc/gshadow$'] = 'group',
+  ['/etc/group%.edit$'] = 'group',
+  ['/var/backups/gshadow%.bak$'] = 'group',
+  ['/etc/group%-$'] = 'group',
+  ['/etc/gshadow%-$'] = 'group',
+  ['/var/backups/group%.bak$'] = 'group',
+  ['/etc/gshadow%.edit$'] = 'group',
+  ['/boot/grub/grub%.conf$'] = 'grub',
+  ['/boot/grub/menu%.lst$'] = 'grub',
+  ['/etc/grub%.conf$'] = 'grub',
   -- gtkrc* and .gtkrc*
-  ['%.?gtkrc.*'] = starsetf('gtkrc'),
-  ['${VIMRUNTIME}/doc/.*%.txt'] = 'help',
-  ['hg%-editor%-.*%.txt'] = 'hgcommit',
-  ['.*/etc/host%.conf'] = 'hostconf',
-  ['.*/etc/hosts%.deny'] = 'hostsaccess',
-  ['.*/etc/hosts%.allow'] = 'hostsaccess',
-  ['.*%.html%.m4'] = 'htmlm4',
-  ['.*/%.i3/config'] = 'i3config',
-  ['.*/i3/config'] = 'i3config',
-  ['.*/%.icewm/menu'] = 'icemenu',
-  ['.*/etc/initng/.*/.*%.i'] = 'initng',
-  ['JAM.*%..*'] = starsetf('jam'),
-  ['Prl.*%..*'] = starsetf('jam'),
-  ['.*%.properties_..'] = 'jproperties',
-  ['.*%.properties_.._..'] = 'jproperties',
-  ['org%.eclipse%..*%.prefs'] = 'jproperties',
-  ['.*%.properties_.._.._.*'] = starsetf('jproperties'),
-  ['[jt]sconfig.*%.json'] = 'jsonc',
-  ['[jJ]ustfile'] = 'just',
-  ['Kconfig%..*'] = starsetf('kconfig'),
-  ['Config%.in%..*'] = starsetf('kconfig'),
-  ['.*%.[Ss][Uu][Bb]'] = 'krl',
-  ['lilo%.conf.*'] = starsetf('lilo'),
-  ['.*/etc/logcheck/.*%.d.*/.*'] = starsetf('logcheck'),
-  ['.*/ldscripts/.*'] = 'ld',
-  ['.*lftp/rc'] = 'lftp',
-  ['.*/%.libao'] = 'libao',
-  ['.*/etc/libao%.conf'] = 'libao',
-  ['.*/etc/.*limits%.conf'] = 'limits',
-  ['.*/etc/limits'] = 'limits',
-  ['.*/etc/.*limits%.d/.*%.conf'] = 'limits',
-  ['.*/supertux2/config'] = 'lisp',
-  ['.*/LiteStep/.*/.*%.rc'] = 'litestep',
-  ['.*/etc/login%.access'] = 'loginaccess',
-  ['.*/etc/login%.defs'] = 'logindefs',
-  ['%.letter%.%d+'] = 'mail',
-  ['%.article%.%d+'] = 'mail',
-  ['/tmp/SLRN[0-9A-Z.]+'] = 'mail',
-  ['ae%d+%.txt'] = 'mail',
-  ['pico%.%d+'] = 'mail',
-  ['mutt%-.*%-%w+'] = 'mail',
-  ['muttng%-.*%-%w+'] = 'mail',
-  ['neomutt%-.*%-%w+'] = 'mail',
-  ['mutt' .. string.rep('[%w_-]', 6)] = 'mail',
-  ['neomutt' .. string.rep('[%w_-]', 6)] = 'mail',
-  ['snd%.%d+'] = 'mail',
-  ['reportbug%-.*'] = starsetf('mail'),
-  ['.*/etc/mail/aliases'] = 'mailaliases',
-  ['.*/etc/aliases'] = 'mailaliases',
-  ['.*[mM]akefile'] = 'make',
-  ['[mM]akefile.*'] = starsetf('make'),
-  ['.*/etc/man%.conf'] = 'manconf',
-  ['.*/log/auth'] = 'messages',
-  ['.*/log/cron'] = 'messages',
-  ['.*/log/daemon'] = 'messages',
-  ['.*/log/debug'] = 'messages',
-  ['.*/log/kern'] = 'messages',
-  ['.*/log/lpr'] = 'messages',
-  ['.*/log/mail'] = 'messages',
-  ['.*/log/messages'] = 'messages',
-  ['.*/log/news/news'] = 'messages',
-  ['.*/log/syslog'] = 'messages',
-  ['.*/log/user'] = 'messages',
-  ['.*/log/auth%.log'] = 'messages',
-  ['.*/log/cron%.log'] = 'messages',
-  ['.*/log/daemon%.log'] = 'messages',
-  ['.*/log/debug%.log'] = 'messages',
-  ['.*/log/kern%.log'] = 'messages',
-  ['.*/log/lpr%.log'] = 'messages',
-  ['.*/log/mail%.log'] = 'messages',
-  ['.*/log/messages%.log'] = 'messages',
-  ['.*/log/news/news%.log'] = 'messages',
-  ['.*/log/syslog%.log'] = 'messages',
-  ['.*/log/user%.log'] = 'messages',
-  ['.*/log/auth%.err'] = 'messages',
-  ['.*/log/cron%.err'] = 'messages',
-  ['.*/log/daemon%.err'] = 'messages',
-  ['.*/log/debug%.err'] = 'messages',
-  ['.*/log/kern%.err'] = 'messages',
-  ['.*/log/lpr%.err'] = 'messages',
-  ['.*/log/mail%.err'] = 'messages',
-  ['.*/log/messages%.err'] = 'messages',
-  ['.*/log/news/news%.err'] = 'messages',
-  ['.*/log/syslog%.err'] = 'messages',
-  ['.*/log/user%.err'] = 'messages',
-  ['.*/log/auth%.info'] = 'messages',
-  ['.*/log/cron%.info'] = 'messages',
-  ['.*/log/daemon%.info'] = 'messages',
-  ['.*/log/debug%.info'] = 'messages',
-  ['.*/log/kern%.info'] = 'messages',
-  ['.*/log/lpr%.info'] = 'messages',
-  ['.*/log/mail%.info'] = 'messages',
-  ['.*/log/messages%.info'] = 'messages',
-  ['.*/log/news/news%.info'] = 'messages',
-  ['.*/log/syslog%.info'] = 'messages',
-  ['.*/log/user%.info'] = 'messages',
-  ['.*/log/auth%.warn'] = 'messages',
-  ['.*/log/cron%.warn'] = 'messages',
-  ['.*/log/daemon%.warn'] = 'messages',
-  ['.*/log/debug%.warn'] = 'messages',
-  ['.*/log/kern%.warn'] = 'messages',
-  ['.*/log/lpr%.warn'] = 'messages',
-  ['.*/log/mail%.warn'] = 'messages',
-  ['.*/log/messages%.warn'] = 'messages',
-  ['.*/log/news/news%.warn'] = 'messages',
-  ['.*/log/syslog%.warn'] = 'messages',
-  ['.*/log/user%.warn'] = 'messages',
-  ['.*/log/auth%.crit'] = 'messages',
-  ['.*/log/cron%.crit'] = 'messages',
-  ['.*/log/daemon%.crit'] = 'messages',
-  ['.*/log/debug%.crit'] = 'messages',
-  ['.*/log/kern%.crit'] = 'messages',
-  ['.*/log/lpr%.crit'] = 'messages',
-  ['.*/log/mail%.crit'] = 'messages',
-  ['.*/log/messages%.crit'] = 'messages',
-  ['.*/log/news/news%.crit'] = 'messages',
-  ['.*/log/syslog%.crit'] = 'messages',
-  ['.*/log/user%.crit'] = 'messages',
-  ['.*/log/auth%.notice'] = 'messages',
-  ['.*/log/cron%.notice'] = 'messages',
-  ['.*/log/daemon%.notice'] = 'messages',
-  ['.*/log/debug%.notice'] = 'messages',
-  ['.*/log/kern%.notice'] = 'messages',
-  ['.*/log/lpr%.notice'] = 'messages',
-  ['.*/log/mail%.notice'] = 'messages',
-  ['.*/log/messages%.notice'] = 'messages',
-  ['.*/log/news/news%.notice'] = 'messages',
-  ['.*/log/syslog%.notice'] = 'messages',
-  ['.*/log/user%.notice'] = 'messages',
-  ['.*%.[Mm][Oo][Dd]'] = detect.mod,
-  ['.*/etc/modules%.conf'] = 'modconf',
-  ['.*/etc/conf%.modules'] = 'modconf',
-  ['.*/etc/modules'] = 'modconf',
-  ['.*/etc/modprobe%..*'] = starsetf('modconf'),
-  ['.*/etc/modutils/.*'] = starsetf(function(path, bufnr)
+  ['^%.?gtkrc'] = starsetf('gtkrc'),
+  ['^${VIMRUNTIME}/doc/.*%.txt$'] = 'help',
+  ['^hg%-editor%-.*%.txt$'] = 'hgcommit',
+  ['/etc/host%.conf$'] = 'hostconf',
+  ['/etc/hosts%.deny$'] = 'hostsaccess',
+  ['/etc/hosts%.allow$'] = 'hostsaccess',
+  ['%.html%.m4$'] = 'htmlm4',
+  ['/%.i3/config$'] = 'i3config',
+  ['/i3/config$'] = 'i3config',
+  ['/%.icewm/menu$'] = 'icemenu',
+  ['/etc/initng/.*/.*%.i$'] = 'initng',
+  ['^JAM.*%.'] = starsetf('jam'),
+  ['^Prl.*%.'] = starsetf('jam'),
+  ['%.properties_..$'] = 'jproperties',
+  ['%.properties_.._..$'] = 'jproperties',
+  ['^org%.eclipse%..*%.prefs$'] = 'jproperties',
+  ['%.properties_.._.._'] = starsetf('jproperties'),
+  ['^[jt]sconfig.*%.json$'] = 'jsonc',
+  ['^[jJ]ustfile$'] = 'just',
+  ['^Kconfig%.'] = starsetf('kconfig'),
+  ['^Config%.in%.'] = starsetf('kconfig'),
+  ['%.[Ss][Uu][Bb]$'] = 'krl',
+  ['^lilo%.conf'] = starsetf('lilo'),
+  ['/etc/logcheck/.*%.d.*/'] = starsetf('logcheck'),
+  ['/ldscripts/'] = 'ld',
+  ['lftp/rc$'] = 'lftp',
+  ['/%.libao$'] = 'libao',
+  ['/etc/libao%.conf$'] = 'libao',
+  ['/etc/.*limits%.conf$'] = 'limits',
+  ['/etc/limits$'] = 'limits',
+  ['/etc/.*limits%.d/.*%.conf$'] = 'limits',
+  ['/supertux2/config$'] = 'lisp',
+  ['/LiteStep/.*/.*%.rc$'] = 'litestep',
+  ['/etc/login%.access$'] = 'loginaccess',
+  ['/etc/login%.defs$'] = 'logindefs',
+  ['^%.letter%.%d+$'] = 'mail',
+  ['^%.article%.%d+$'] = 'mail',
+  ['^/tmp/SLRN[0-9A-Z.]+$'] = 'mail',
+  ['^ae%d+%.txt$'] = 'mail',
+  ['^pico%.%d+$'] = 'mail',
+  ['^mutt%-.*%-%w+$'] = 'mail',
+  ['^muttng%-.*%-%w+$'] = 'mail',
+  ['^neomutt%-.*%-%w+$'] = 'mail',
+  ['^mutt' .. string.rep('[%w_-]', 6) .. '$'] = 'mail',
+  ['^neomutt' .. string.rep('[%w_-]', 6) .. '$'] = 'mail',
+  ['^snd%.%d+$'] = 'mail',
+  ['^reportbug%-'] = starsetf('mail'),
+  ['/etc/mail/aliases$'] = 'mailaliases',
+  ['/etc/aliases$'] = 'mailaliases',
+  ['[mM]akefile$'] = 'make',
+  ['^[mM]akefile'] = starsetf('make'),
+  ['/etc/man%.conf$'] = 'manconf',
+  ['/log/auth$'] = 'messages',
+  ['/log/cron$'] = 'messages',
+  ['/log/daemon$'] = 'messages',
+  ['/log/debug$'] = 'messages',
+  ['/log/kern$'] = 'messages',
+  ['/log/lpr$'] = 'messages',
+  ['/log/mail$'] = 'messages',
+  ['/log/messages$'] = 'messages',
+  ['/log/news/news$'] = 'messages',
+  ['/log/syslog$'] = 'messages',
+  ['/log/user$'] = 'messages',
+  ['/log/auth%.log$'] = 'messages',
+  ['/log/cron%.log$'] = 'messages',
+  ['/log/daemon%.log$'] = 'messages',
+  ['/log/debug%.log$'] = 'messages',
+  ['/log/kern%.log$'] = 'messages',
+  ['/log/lpr%.log$'] = 'messages',
+  ['/log/mail%.log$'] = 'messages',
+  ['/log/messages%.log$'] = 'messages',
+  ['/log/news/news%.log$'] = 'messages',
+  ['/log/syslog%.log$'] = 'messages',
+  ['/log/user%.log$'] = 'messages',
+  ['/log/auth%.err$'] = 'messages',
+  ['/log/cron%.err$'] = 'messages',
+  ['/log/daemon%.err$'] = 'messages',
+  ['/log/debug%.err$'] = 'messages',
+  ['/log/kern%.err$'] = 'messages',
+  ['/log/lpr%.err$'] = 'messages',
+  ['/log/mail%.err$'] = 'messages',
+  ['/log/messages%.err$'] = 'messages',
+  ['/log/news/news%.err$'] = 'messages',
+  ['/log/syslog%.err$'] = 'messages',
+  ['/log/user%.err$'] = 'messages',
+  ['/log/auth%.info$'] = 'messages',
+  ['/log/cron%.info$'] = 'messages',
+  ['/log/daemon%.info$'] = 'messages',
+  ['/log/debug%.info$'] = 'messages',
+  ['/log/kern%.info$'] = 'messages',
+  ['/log/lpr%.info$'] = 'messages',
+  ['/log/mail%.info$'] = 'messages',
+  ['/log/messages%.info$'] = 'messages',
+  ['/log/news/news%.info$'] = 'messages',
+  ['/log/syslog%.info$'] = 'messages',
+  ['/log/user%.info$'] = 'messages',
+  ['/log/auth%.warn$'] = 'messages',
+  ['/log/cron%.warn$'] = 'messages',
+  ['/log/daemon%.warn$'] = 'messages',
+  ['/log/debug%.warn$'] = 'messages',
+  ['/log/kern%.warn$'] = 'messages',
+  ['/log/lpr%.warn$'] = 'messages',
+  ['/log/mail%.warn$'] = 'messages',
+  ['/log/messages%.warn$'] = 'messages',
+  ['/log/news/news%.warn$'] = 'messages',
+  ['/log/syslog%.warn$'] = 'messages',
+  ['/log/user%.warn$'] = 'messages',
+  ['/log/auth%.crit$'] = 'messages',
+  ['/log/cron%.crit$'] = 'messages',
+  ['/log/daemon%.crit$'] = 'messages',
+  ['/log/debug%.crit$'] = 'messages',
+  ['/log/kern%.crit$'] = 'messages',
+  ['/log/lpr%.crit$'] = 'messages',
+  ['/log/mail%.crit$'] = 'messages',
+  ['/log/messages%.crit$'] = 'messages',
+  ['/log/news/news%.crit$'] = 'messages',
+  ['/log/syslog%.crit$'] = 'messages',
+  ['/log/user%.crit$'] = 'messages',
+  ['/log/auth%.notice$'] = 'messages',
+  ['/log/cron%.notice$'] = 'messages',
+  ['/log/daemon%.notice$'] = 'messages',
+  ['/log/debug%.notice$'] = 'messages',
+  ['/log/kern%.notice$'] = 'messages',
+  ['/log/lpr%.notice$'] = 'messages',
+  ['/log/mail%.notice$'] = 'messages',
+  ['/log/messages%.notice$'] = 'messages',
+  ['/log/news/news%.notice$'] = 'messages',
+  ['/log/syslog%.notice$'] = 'messages',
+  ['/log/user%.notice$'] = 'messages',
+  ['%.[Mm][Oo][Dd]$'] = detect.mod,
+  ['/etc/modules%.conf$'] = 'modconf',
+  ['/etc/conf%.modules$'] = 'modconf',
+  ['/etc/modules$'] = 'modconf',
+  ['/etc/modprobe%.'] = starsetf('modconf'),
+  ['/etc/modutils/'] = starsetf(function(path, bufnr)
     if fn.executable(fn.expand(path)) ~= 1 then
       return 'modconf'
     end
   end),
-  ['Muttrc'] = 'muttrc',
-  ['Muttngrc'] = 'muttrc',
-  ['.*/etc/Muttrc%.d/.*'] = starsetf('muttrc'),
-  ['.*/%.mplayer/config'] = 'mplayerconf',
-  ['Muttrc.*'] = detect_muttrc,
-  ['Muttngrc.*'] = detect_muttrc,
+  ['^Muttrc$'] = 'muttrc',
+  ['^Muttngrc$'] = 'muttrc',
+  ['/etc/Muttrc%.d/'] = starsetf('muttrc'),
+  ['/%.mplayer/config$'] = 'mplayerconf',
+  ['^Muttrc'] = detect_muttrc,
+  ['^Muttngrc'] = detect_muttrc,
   -- muttrc* and .muttrc*
-  ['%.?muttrc.*'] = detect_muttrc,
+  ['^%.?muttrc'] = detect_muttrc,
   -- muttngrc* and .muttngrc*
-  ['%.?muttngrc.*'] = detect_muttrc,
-  ['.*/%.mutt/muttrc.*'] = detect_muttrc,
-  ['.*/%.muttng/muttrc.*'] = detect_muttrc,
-  ['.*/%.muttng/muttngrc.*'] = detect_muttrc,
-  ['rndc.*%.conf'] = 'named',
-  ['rndc.*%.key'] = 'named',
-  ['named.*%.conf'] = 'named',
-  ['.*/etc/nanorc'] = 'nanorc',
-  ['.*%.NS[ACGLMNPS]'] = 'natural',
-  ['Neomuttrc.*'] = detect_neomuttrc,
+  ['^%.?muttngrc'] = detect_muttrc,
+  ['/%.mutt/muttrc'] = detect_muttrc,
+  ['/%.muttng/muttrc'] = detect_muttrc,
+  ['/%.muttng/muttngrc'] = detect_muttrc,
+  ['^rndc.*%.conf$'] = 'named',
+  ['^rndc.*%.key$'] = 'named',
+  ['^named.*%.conf$'] = 'named',
+  ['/etc/nanorc$'] = 'nanorc',
+  ['%.NS[ACGLMNPS]$'] = 'natural',
+  ['^Neomuttrc'] = detect_neomuttrc,
   -- neomuttrc* and .neomuttrc*
-  ['%.?neomuttrc.*'] = detect_neomuttrc,
-  ['.*/%.neomutt/neomuttrc.*'] = detect_neomuttrc,
-  ['nginx.*%.conf'] = 'nginx',
-  ['.*/etc/nginx/.*'] = 'nginx',
-  ['.*nginx%.conf'] = 'nginx',
-  ['.*/nginx/.*%.conf'] = 'nginx',
-  ['.*/usr/local/nginx/conf/.*'] = 'nginx',
-  ['.*%.[1-9]'] = detect.nroff,
-  ['.*%.ml%.cppo'] = 'ocaml',
-  ['.*%.mli%.cppo'] = 'ocaml',
-  ['.*/octave/history'] = 'octave',
-  ['.*%.opam%.template'] = 'opam',
-  ['.*/openvpn/.*/.*%.conf'] = 'openvpn',
-  ['.*%.[Oo][Pp][Ll]'] = 'opl',
-  ['.*/etc/pam%.conf'] = 'pamconf',
-  ['.*/etc/pam%.d/.*'] = starsetf('pamconf'),
-  ['.*/etc/passwd%-'] = 'passwd',
-  ['.*/etc/shadow'] = 'passwd',
-  ['.*/etc/shadow%.edit'] = 'passwd',
-  ['.*/var/backups/shadow%.bak'] = 'passwd',
-  ['.*/var/backups/passwd%.bak'] = 'passwd',
-  ['.*/etc/passwd'] = 'passwd',
-  ['.*/etc/passwd%.edit'] = 'passwd',
-  ['.*/etc/shadow%-'] = 'passwd',
-  ['%.?gitolite%.rc'] = 'perl',
-  ['example%.gitolite%.rc'] = 'perl',
-  ['.*%.php%d'] = 'php',
-  ['.*/%.pinforc'] = 'pinfo',
-  ['.*/etc/pinforc'] = 'pinfo',
-  ['.*%.[Pp][Rr][Gg]'] = detect.prg,
-  ['.*/etc/protocols'] = 'protocols',
-  ['.*printcap.*'] = starsetf(function(path, bufnr)
+  ['^%.?neomuttrc'] = detect_neomuttrc,
+  ['/%.neomutt/neomuttrc'] = detect_neomuttrc,
+  ['^nginx.*%.conf$'] = 'nginx',
+  ['/etc/nginx/'] = 'nginx',
+  ['nginx%.conf$'] = 'nginx',
+  ['/nginx/.*%.conf$'] = 'nginx',
+  ['/usr/local/nginx/conf/'] = 'nginx',
+  ['%.[1-9]$'] = detect.nroff,
+  ['%.ml%.cppo$'] = 'ocaml',
+  ['%.mli%.cppo$'] = 'ocaml',
+  ['/octave/history$'] = 'octave',
+  ['%.opam%.template$'] = 'opam',
+  ['/openvpn/.*/.*%.conf$'] = 'openvpn',
+  ['%.[Oo][Pp][Ll]$'] = 'opl',
+  ['/etc/pam%.conf$'] = 'pamconf',
+  ['/etc/pam%.d/'] = starsetf('pamconf'),
+  ['/etc/passwd%-$'] = 'passwd',
+  ['/etc/shadow$'] = 'passwd',
+  ['/etc/shadow%.edit$'] = 'passwd',
+  ['/var/backups/shadow%.bak$'] = 'passwd',
+  ['/var/backups/passwd%.bak$'] = 'passwd',
+  ['/etc/passwd$'] = 'passwd',
+  ['/etc/passwd%.edit$'] = 'passwd',
+  ['/etc/shadow%-$'] = 'passwd',
+  ['^%.?gitolite%.rc$'] = 'perl',
+  ['^example%.gitolite%.rc$'] = 'perl',
+  ['%.php%d$'] = 'php',
+  ['/%.pinforc$'] = 'pinfo',
+  ['/etc/pinforc$'] = 'pinfo',
+  ['%.[Pp][Rr][Gg]$'] = detect.prg,
+  ['/etc/protocols$'] = 'protocols',
+  ['printcap'] = starsetf(function(path, bufnr)
     return require('vim.filetype.detect').printcap('print')
   end),
-  ['.*baseq[2-3]/.*%.cfg'] = 'quake',
-  ['.*quake[1-3]/.*%.cfg'] = 'quake',
-  ['.*id1/.*%.cfg'] = 'quake',
-  ['.*/queries/.*%.scm'] = 'query', -- treesitter queries (Neovim only)
-  ['.*,v'] = 'rcs',
-  ['%.reminders.*'] = starsetf('remind'),
-  ['.*%-requirements%.txt'] = 'requirements',
-  ['requirements/.*%.txt'] = 'requirements',
-  ['requires/.*%.txt'] = 'requirements',
-  ['[rR]akefile.*'] = starsetf('ruby'),
-  ['[rR]antfile'] = 'ruby',
-  ['[rR]akefile'] = 'ruby',
-  ['.*/etc/sensors%.d/[^.].*'] = starsetf('sensors'),
-  ['.*/etc/sensors%.conf'] = 'sensors',
-  ['.*/etc/sensors3%.conf'] = 'sensors',
-  ['.*/etc/services'] = 'services',
-  ['.*/etc/serial%.conf'] = 'setserial',
-  ['.*/etc/udev/cdsymlinks%.conf'] = 'sh',
-  ['.*/neofetch/config%.conf'] = 'sh',
-  ['%.bash[_%-]aliases'] = detect.bash,
-  ['%.bash[_%-]history'] = detect.bash,
-  ['%.bash[_%-]logout'] = detect.bash,
-  ['%.bash[_%-]profile'] = detect.bash,
-  ['%.kshrc.*'] = detect.ksh,
-  ['%.profile.*'] = detect.sh,
-  ['.*/etc/profile'] = detect.sh,
-  ['bash%-fc[%-%.].*'] = detect.bash,
-  ['%.tcshrc.*'] = detect.tcsh,
-  ['.*/etc/sudoers%.d/.*'] = starsetf('sudoers'),
-  ['.*%._sst%.meta'] = 'sisu',
-  ['.*%.%-sst%.meta'] = 'sisu',
-  ['.*%.sst%.meta'] = 'sisu',
-  ['.*/etc/slp%.conf'] = 'slpconf',
-  ['.*/etc/slp%.reg'] = 'slpreg',
-  ['.*/etc/slp%.spi'] = 'slpspi',
-  ['.*/etc/ssh/ssh_config%.d/.*%.conf'] = 'sshconfig',
-  ['.*/%.ssh/config'] = 'sshconfig',
-  ['.*/%.ssh/.*%.conf'] = 'sshconfig',
-  ['.*/etc/ssh/sshd_config%.d/.*%.conf'] = 'sshdconfig',
-  ['.*%.[Ss][Rr][Cc]'] = detect.src,
-  ['.*/etc/sudoers'] = 'sudoers',
-  ['svn%-commit.*%.tmp'] = 'svn',
-  ['.*/sway/config'] = 'swayconfig',
-  ['.*/%.sway/config'] = 'swayconfig',
-  ['.*%.swift%.gyb'] = 'swiftgyb',
-  ['.*%.[Ss][Yy][Ss]'] = detect.sys,
-  ['.*/etc/sysctl%.conf'] = 'sysctl',
-  ['.*/etc/sysctl%.d/.*%.conf'] = 'sysctl',
-  ['.*/systemd/.*%.automount'] = 'systemd',
-  ['.*/systemd/.*%.dnssd'] = 'systemd',
-  ['.*/systemd/.*%.link'] = 'systemd',
-  ['.*/systemd/.*%.mount'] = 'systemd',
-  ['.*/systemd/.*%.netdev'] = 'systemd',
-  ['.*/systemd/.*%.network'] = 'systemd',
-  ['.*/systemd/.*%.nspawn'] = 'systemd',
-  ['.*/systemd/.*%.path'] = 'systemd',
-  ['.*/systemd/.*%.service'] = 'systemd',
-  ['.*/systemd/.*%.slice'] = 'systemd',
-  ['.*/systemd/.*%.socket'] = 'systemd',
-  ['.*/systemd/.*%.swap'] = 'systemd',
-  ['.*/systemd/.*%.target'] = 'systemd',
-  ['.*/systemd/.*%.timer'] = 'systemd',
-  ['.*/etc/systemd/.*%.conf%.d/.*%.conf'] = 'systemd',
-  ['.*/%.config/systemd/user/.*%.d/.*%.conf'] = 'systemd',
-  ['.*/etc/systemd/system/.*%.d/.*%.conf'] = 'systemd',
-  ['.*/etc/systemd/system/.*%.d/%.#.*'] = 'systemd',
-  ['.*/etc/systemd/system/%.#.*'] = 'systemd',
-  ['.*/%.config/systemd/user/.*%.d/%.#.*'] = 'systemd',
-  ['.*/%.config/systemd/user/%.#.*'] = 'systemd',
-  ['.*termcap.*'] = starsetf(function(path, bufnr)
+  ['baseq[2-3]/.*%.cfg$'] = 'quake',
+  ['quake[1-3]/.*%.cfg$'] = 'quake',
+  ['id1/.*%.cfg$'] = 'quake',
+  ['/queries/.*%.scm$'] = 'query', -- treesitter queries (Neovim only)
+  [',v$'] = 'rcs',
+  ['^%.reminders'] = starsetf('remind'),
+  ['%-requirements%.txt$'] = 'requirements',
+  ['^requirements/.*%.txt$'] = 'requirements',
+  ['^requires/.*%.txt$'] = 'requirements',
+  ['^[rR]akefile'] = starsetf('ruby'),
+  ['^[rR]antfile$'] = 'ruby',
+  ['^[rR]akefile$'] = 'ruby',
+  ['/etc/sensors%.d/[^.]'] = starsetf('sensors'),
+  ['/etc/sensors%.conf$'] = 'sensors',
+  ['/etc/sensors3%.conf$'] = 'sensors',
+  ['/etc/services$'] = 'services',
+  ['/etc/serial%.conf$'] = 'setserial',
+  ['/etc/udev/cdsymlinks%.conf$'] = 'sh',
+  ['/neofetch/config%.conf$'] = 'sh',
+  ['^%.bash[_%-]aliases$'] = detect.bash,
+  ['^%.bash[_%-]history$'] = detect.bash,
+  ['^%.bash[_%-]logout$'] = detect.bash,
+  ['^%.bash[_%-]profile$'] = detect.bash,
+  ['^%.kshrc'] = detect.ksh,
+  ['^%.profile'] = detect.sh,
+  ['/etc/profile$'] = detect.sh,
+  ['^bash%-fc[%-%.]'] = detect.bash,
+  ['^%.tcshrc'] = detect.tcsh,
+  ['/etc/sudoers%.d/'] = starsetf('sudoers'),
+  ['%._sst%.meta$'] = 'sisu',
+  ['%.%-sst%.meta$'] = 'sisu',
+  ['%.sst%.meta$'] = 'sisu',
+  ['/etc/slp%.conf$'] = 'slpconf',
+  ['/etc/slp%.reg$'] = 'slpreg',
+  ['/etc/slp%.spi$'] = 'slpspi',
+  ['/etc/ssh/ssh_config%.d/.*%.conf$'] = 'sshconfig',
+  ['/%.ssh/config$'] = 'sshconfig',
+  ['/%.ssh/.*%.conf$'] = 'sshconfig',
+  ['/etc/ssh/sshd_config%.d/.*%.conf$'] = 'sshdconfig',
+  ['%.[Ss][Rr][Cc]$'] = detect.src,
+  ['/etc/sudoers$'] = 'sudoers',
+  ['^svn%-commit.*%.tmp$'] = 'svn',
+  ['/sway/config$'] = 'swayconfig',
+  ['/%.sway/config$'] = 'swayconfig',
+  ['%.swift%.gyb$'] = 'swiftgyb',
+  ['%.[Ss][Yy][Ss]$'] = detect.sys,
+  ['/etc/sysctl%.conf$'] = 'sysctl',
+  ['/etc/sysctl%.d/.*%.conf$'] = 'sysctl',
+  ['/systemd/.*%.automount$'] = 'systemd',
+  ['/systemd/.*%.dnssd$'] = 'systemd',
+  ['/systemd/.*%.link$'] = 'systemd',
+  ['/systemd/.*%.mount$'] = 'systemd',
+  ['/systemd/.*%.netdev$'] = 'systemd',
+  ['/systemd/.*%.network$'] = 'systemd',
+  ['/systemd/.*%.nspawn$'] = 'systemd',
+  ['/systemd/.*%.path$'] = 'systemd',
+  ['/systemd/.*%.service$'] = 'systemd',
+  ['/systemd/.*%.slice$'] = 'systemd',
+  ['/systemd/.*%.socket$'] = 'systemd',
+  ['/systemd/.*%.swap$'] = 'systemd',
+  ['/systemd/.*%.target$'] = 'systemd',
+  ['/systemd/.*%.timer$'] = 'systemd',
+  ['/etc/systemd/.*%.conf%.d/.*%.conf$'] = 'systemd',
+  ['/%.config/systemd/user/.*%.d/.*%.conf$'] = 'systemd',
+  ['/etc/systemd/system/.*%.d/.*%.conf$'] = 'systemd',
+  ['/etc/systemd/system/.*%.d/%.#'] = 'systemd',
+  ['/etc/systemd/system/%.#'] = 'systemd',
+  ['/%.config/systemd/user/.*%.d/%.#'] = 'systemd',
+  ['/%.config/systemd/user/%.#'] = 'systemd',
+  ['termcap'] = starsetf(function(path, bufnr)
     return require('vim.filetype.detect').printcap('term')
   end),
-  ['.*/tex/latex/.*%.cfg'] = 'tex',
-  ['.*%.t%.html'] = 'tilde',
-  ['%.?tmux.*%.conf'] = 'tmux',
-  ['%.?tmux.*%.conf.*'] = { 'tmux', { priority = -1 } },
-  ['.*/%.cargo/config'] = 'toml',
-  ['.*/%.cargo/credentials'] = 'toml',
-  ['.*/etc/udev/udev%.conf'] = 'udevconf',
-  ['.*/etc/udev/permissions%.d/.*%.permissions'] = 'udevperm',
-  ['.*/etc/updatedb%.conf'] = 'updatedb',
-  ['.*/%.init/.*%.override'] = 'upstart',
-  ['.*/usr/share/upstart/.*%.conf'] = 'upstart',
-  ['.*/%.config/upstart/.*%.override'] = 'upstart',
-  ['.*/etc/init/.*%.conf'] = 'upstart',
-  ['.*/etc/init/.*%.override'] = 'upstart',
-  ['.*/%.config/upstart/.*%.conf'] = 'upstart',
-  ['.*/%.init/.*%.conf'] = 'upstart',
-  ['.*/usr/share/upstart/.*%.override'] = 'upstart',
-  ['.*%.[Ll][Oo][Gg]'] = detect.log,
-  ['.*/etc/config/.*'] = starsetf(detect.uci),
-  ['.*%.vhdl_[0-9].*'] = starsetf('vhdl'),
-  ['.*/Xresources/.*'] = starsetf('xdefaults'),
-  ['.*/app%-defaults/.*'] = starsetf('xdefaults'),
-  ['.*/etc/xinetd%.conf'] = 'xinetd',
-  ['.*/usr/share/X11/xkb/compat/.*'] = starsetf('xkb'),
-  ['.*/usr/share/X11/xkb/geometry/.*'] = starsetf('xkb'),
-  ['.*/usr/share/X11/xkb/keycodes/.*'] = starsetf('xkb'),
-  ['.*/usr/share/X11/xkb/symbols/.*'] = starsetf('xkb'),
-  ['.*/usr/share/X11/xkb/types/.*'] = starsetf('xkb'),
-  ['.*/etc/blkid%.tab'] = 'xml',
-  ['.*/etc/blkid%.tab%.old'] = 'xml',
-  ['.*%.vbproj%.user'] = 'xml',
-  ['.*%.fsproj%.user'] = 'xml',
-  ['.*%.csproj%.user'] = 'xml',
-  ['.*/etc/xdg/menus/.*%.menu'] = 'xml',
-  ['.*Xmodmap'] = 'xmodmap',
-  ['.*/etc/zprofile'] = 'zsh',
-  ['.*vimrc.*'] = starsetf('vim'),
-  ['Xresources.*'] = starsetf('xdefaults'),
-  ['.*/etc/xinetd%.d/.*'] = starsetf('xinetd'),
-  ['.*xmodmap.*'] = starsetf('xmodmap'),
-  ['.*/xorg%.conf%.d/.*%.conf'] = detect.xfree86_v4,
+  ['/tex/latex/.*%.cfg$'] = 'tex',
+  ['%.t%.html$'] = 'tilde',
+  ['^%.?tmux.*%.conf$'] = 'tmux',
+  ['^%.?tmux.*%.conf'] = { 'tmux', { priority = -1 } },
+  ['/%.cargo/config$'] = 'toml',
+  ['/%.cargo/credentials$'] = 'toml',
+  ['/etc/udev/udev%.conf$'] = 'udevconf',
+  ['/etc/udev/permissions%.d/.*%.permissions$'] = 'udevperm',
+  ['/etc/updatedb%.conf$'] = 'updatedb',
+  ['/%.init/.*%.override$'] = 'upstart',
+  ['/usr/share/upstart/.*%.conf$'] = 'upstart',
+  ['/%.config/upstart/.*%.override$'] = 'upstart',
+  ['/etc/init/.*%.conf$'] = 'upstart',
+  ['/etc/init/.*%.override$'] = 'upstart',
+  ['/%.config/upstart/.*%.conf$'] = 'upstart',
+  ['/%.init/.*%.conf$'] = 'upstart',
+  ['/usr/share/upstart/.*%.override$'] = 'upstart',
+  ['%.[Ll][Oo][Gg]$'] = detect.log,
+  ['/etc/config/'] = starsetf(detect.uci),
+  ['%.vhdl_[0-9]'] = starsetf('vhdl'),
+  ['/Xresources/'] = starsetf('xdefaults'),
+  ['/app%-defaults/'] = starsetf('xdefaults'),
+  ['/etc/xinetd%.conf$'] = 'xinetd',
+  ['/usr/share/X11/xkb/compat/'] = starsetf('xkb'),
+  ['/usr/share/X11/xkb/geometry/'] = starsetf('xkb'),
+  ['/usr/share/X11/xkb/keycodes/'] = starsetf('xkb'),
+  ['/usr/share/X11/xkb/symbols/'] = starsetf('xkb'),
+  ['/usr/share/X11/xkb/types/'] = starsetf('xkb'),
+  ['/etc/blkid%.tab$'] = 'xml',
+  ['/etc/blkid%.tab%.old$'] = 'xml',
+  ['%.vbproj%.user$'] = 'xml',
+  ['%.fsproj%.user$'] = 'xml',
+  ['%.csproj%.user$'] = 'xml',
+  ['/etc/xdg/menus/.*%.menu$'] = 'xml',
+  ['Xmodmap$'] = 'xmodmap',
+  ['/etc/zprofile$'] = 'zsh',
+  ['vimrc'] = starsetf('vim'),
+  ['^Xresources'] = starsetf('xdefaults'),
+  ['/etc/xinetd%.d/'] = starsetf('xinetd'),
+  ['xmodmap'] = starsetf('xmodmap'),
+  ['/xorg%.conf%.d/.*%.conf$'] = detect.xfree86_v4,
   -- Increase priority to run before the pattern below
-  ['XF86Config%-4.*'] = starsetf(detect.xfree86_v4, { priority = -math.huge + 1 }),
-  ['XF86Config.*'] = starsetf(detect.xfree86_v3),
-  ['.*/%.bundle/config'] = 'yaml',
-  ['%.zcompdump.*'] = starsetf('zsh'),
+  ['^XF86Config%-4'] = starsetf(detect.xfree86_v4, { priority = -math.huge + 1 }),
+  ['^XF86Config'] = starsetf(detect.xfree86_v3),
+  ['/%.bundle/config$'] = 'yaml',
+  ['^%.zcompdump'] = starsetf('zsh'),
   -- .zlog* and zlog*
-  ['%.?zlog.*'] = starsetf('zsh'),
+  ['^%.?zlog'] = starsetf('zsh'),
   -- .zsh* and zsh*
-  ['%.?zsh.*'] = starsetf('zsh'),
+  ['^%.?zsh'] = starsetf('zsh'),
   -- Ignored extension
-  ['.*~'] = function(path, bufnr)
+  ['~$'] = function(path, bufnr)
     local short = path:gsub('~+$', '', 1)
     if path ~= short and short ~= '' then
       return M.match({ buf = bufnr, filename = fn.fnameescape(short) })
@@ -2218,30 +2221,46 @@ local pattern = {
 -- luacheck: pop
 -- luacheck: pop
 
+--- Lookup table/cache for patterns
+--- @alias vim.filetype.pattern_cache { has_env: boolean, has_slash: boolean }
+--- @type table<string,vim.filetype.pattern_cache>
+local pattern_lookup = {}
+
+local function compare_by_priority(a, b)
+  return a[next(a)][2].priority > b[next(b)][2].priority
+end
+
 --- @param t vim.filetype.mapping
 --- @return vim.filetype.mapping[]
+--- @return vim.filetype.mapping[]
 local function sort_by_priority(t)
-  local sorted = {} --- @type vim.filetype.mapping[]
-  for k, v in pairs(t) do
-    local ft = type(v) == 'table' and v[1] or v
+  -- Separate patterns with non-negative and negative priority because they
+  -- will be processed separately
+  local pos = {} --- @type vim.filetype.mapping[]
+  local neg = {} --- @type vim.filetype.mapping[]
+  for pat, maptbl in pairs(t) do
+    local ft = type(maptbl) == 'table' and maptbl[1] or maptbl
     assert(
       type(ft) == 'string' or type(ft) == 'function',
       'Expected string or function for filetype'
     )
 
-    local opts = (type(v) == 'table' and type(v[2]) == 'table') and v[2] or {}
-    if not opts.priority then
-      opts.priority = 0
-    end
-    table.insert(sorted, { [k] = { ft, opts } })
+    -- Parse pattern for common data and cache it once
+    pattern_lookup[pat] = pattern_lookup[pat]
+      or { has_env = pat:find('%$%b{}') ~= nil, has_slash = pat:find('/') ~= nil }
+
+    local opts = (type(maptbl) == 'table' and type(maptbl[2]) == 'table') and maptbl[2] or {}
+    opts.priority = opts.priority or 0
+
+    table.insert(opts.priority >= 0 and pos or neg, { [pat] = { ft, opts } })
   end
-  table.sort(sorted, function(a, b)
-    return a[next(a)][2].priority > b[next(b)][2].priority
-  end)
-  return sorted
+
+  table.sort(pos, compare_by_priority)
+  table.sort(neg, compare_by_priority)
+  return pos, neg
 end
 
-local pattern_sorted = sort_by_priority(pattern)
+local pattern_sorted_pos, pattern_sorted_neg = sort_by_priority(pattern)
 
 --- @param path string
 --- @param as_pattern? true
@@ -2361,11 +2380,14 @@ function M.add(filetypes)
   end
 
   for k, v in pairs(filetypes.pattern or {}) do
-    pattern[normalize_path(k, true)] = v
+    -- User patterns are assumed to be implicitly anchored (as in Vim)
+    pattern['^' .. normalize_path(k, true) .. '$'] = v
   end
 
   if filetypes.pattern then
-    pattern_sorted = sort_by_priority(pattern)
+    -- TODO: full resorting might be expensive with a lot of separate `vim.filetype.add()` calls.
+    -- Consider inserting new patterns precisely into already sorted lists of built-in patterns.
+    pattern_sorted_pos, pattern_sorted_neg = sort_by_priority(pattern)
   end
 end
 
@@ -2409,46 +2431,64 @@ local function dispatch(ft, path, bufnr, ...)
   return ft0, on_detect
 end
 
---- Lookup table/cache for patterns that contain an environment variable pattern, e.g. ${SOME_VAR}.
---- @type table<string,boolean>
-local expand_env_lookup = {}
+--- @param pat string
+--- @return boolean
+--- @return string
+local function expand_envvar_pattern(pat)
+  local some_env_missing = false
+  local expanded = pat:gsub('%${(%S-)}', function(env)
+    local val = vim.env[env] --- @type string?
+    some_env_missing = some_env_missing or val == nil
+    return vim.pesc(val or '')
+  end)
+  return some_env_missing, expanded
+end
 
 --- @param name string
 --- @param path string
 --- @param tail string
 --- @param pat string
---- @return string|false?
+--- @return string|boolean?
 local function match_pattern(name, path, tail, pat)
-  if expand_env_lookup[pat] == nil then
-    expand_env_lookup[pat] = pat:find('%${') ~= nil
-  end
-  if expand_env_lookup[pat] then
-    local return_early --- @type true?
-    --- @type string
-    pat = pat:gsub('%${(%S-)}', function(env)
-      -- If an environment variable is present in the pattern but not set, there is no match
-      if not vim.env[env] then
-        return_early = true
-        return nil
-      end
-      return vim.pesc(vim.env[env])
-    end)
-    if return_early then
+  local pat_cache = pattern_lookup[pat]
+  local has_slash = pat_cache.has_slash
+
+  if pat_cache.has_env then
+    local some_env_missing, expanded = expand_envvar_pattern(pat)
+    -- If any environment variable is present in the pattern but not set, there is no match
+    if some_env_missing then
       return false
     end
+    pat, has_slash = expanded, expanded:find('/') ~= nil
   end
 
   -- If the pattern contains a / match against the full path, otherwise just the tail
-  local fullpat = '^' .. pat .. '$'
-
-  if pat:find('/') then
+  if has_slash then
     -- Similar to |autocmd-pattern|, if the pattern contains a '/' then check for a match against
     -- both the short file name (as typed) and the full file name (after expanding to full path
     -- and resolving symlinks)
-    return (name:match(fullpat) or path:match(fullpat))
+    return (name:match(pat) or path:match(pat))
   end
 
-  return (tail:match(fullpat))
+  return (tail:match(pat))
+end
+
+--- @param name string
+--- @param path string
+--- @param tail string
+--- @param pattern_sorted vim.filetype.mapping[]
+--- @param bufnr integer?
+local function match_pattern_sorted(name, path, tail, pattern_sorted, bufnr)
+  for i = 1, #pattern_sorted do
+    local pat, ft_data = next(pattern_sorted[i])
+    local matches = match_pattern(name, path, tail, pat)
+    if matches then
+      local ft, on_detect = dispatch(ft_data[1], path, bufnr, matches)
+      if ft then
+        return ft, on_detect
+      end
+    end
+  end
 end
 
 --- @class vim.filetype.match.args
@@ -2544,23 +2584,9 @@ function M.match(args)
     end
 
     -- Next, check the file path against available patterns with non-negative priority
-    local j = 1
-    for i, v in ipairs(pattern_sorted) do
-      local k = next(v)
-      local opts = v[k][2]
-      if opts.priority < 0 then
-        j = i
-        break
-      end
-
-      local filetype = v[k][1]
-      local matches = match_pattern(name, path, tail, k)
-      if matches then
-        ft, on_detect = dispatch(filetype, path, bufnr, matches)
-        if ft then
-          return ft, on_detect
-        end
-      end
+    ft, on_detect = match_pattern_sorted(name, path, tail, pattern_sorted_pos, bufnr)
+    if ft then
+      return ft, on_detect
     end
 
     -- Next, check file extension
@@ -2573,18 +2599,9 @@ function M.match(args)
     end
 
     -- Next, check patterns with negative priority
-    for i = j, #pattern_sorted do
-      local v = pattern_sorted[i]
-      local k = next(v)
-
-      local filetype = v[k][1]
-      local matches = match_pattern(name, path, tail, k)
-      if matches then
-        ft, on_detect = dispatch(filetype, path, bufnr, matches)
-        if ft then
-          return ft, on_detect
-        end
-      end
+    ft, on_detect = match_pattern_sorted(name, path, tail, pattern_sorted_neg, bufnr)
+    if ft then
+      return ft, on_detect
     end
   end
 
