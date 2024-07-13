@@ -168,12 +168,6 @@ func Test_very_large_count()
 endfunc
 
 func Test_very_large_count_64bit()
-  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/put_spec.lua instead
-
-  if v:sizeoflong < 8
-    throw 'Skipped: only works with 64 bit long ints'
-  endif
-
   new
   let @" = repeat('x', 100)
   call assert_fails('norm 999999999p', 'E1240:')
@@ -190,12 +184,6 @@ func Test_very_large_count_block()
 endfunc
 
 func Test_very_large_count_block_64bit()
-  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/put_spec.lua instead
-
-  if v:sizeoflong < 8
-    throw 'Skipped: only works with 64 bit long ints'
-  endif
-
   new
   call setline(1, repeat('x', 100))
   exe "norm \<C-V>$y"

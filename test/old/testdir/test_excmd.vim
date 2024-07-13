@@ -718,15 +718,20 @@ func Test_not_break_expression_register()
 endfunc
 
 func Test_address_line_overflow()
-  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/excmd_spec.lua instead
-
-  if v:sizeoflong < 8
+  if !has('nvim') && v:sizeoflong < 8
     throw 'Skipped: only works with 64 bit long ints'
   endif
   new
-  call setline(1, 'text')
+  call setline(1, range(100))
   call assert_fails('|.44444444444444444444444', 'E1247:')
   call assert_fails('|.9223372036854775806', 'E1247:')
+  call assert_fails('.44444444444444444444444d', 'E1247:')
+  call assert_equal(range(100)->map('string(v:val)'), getline(1, '$'))
+
+  $
+  yank 77777777777777777777
+  call assert_equal("99\n", @")
+
   bwipe!
 endfunc
 

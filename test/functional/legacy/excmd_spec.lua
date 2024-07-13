@@ -5,44 +5,13 @@ local Screen = require('test.functional.ui.screen')
 local clear = n.clear
 local command = n.command
 local exec = n.exec
-local exec_lua = n.exec_lua
 local expect_exit = n.expect_exit
 local feed = n.feed
 local fn = n.fn
-local api = n.api
 local read_file = t.read_file
-local source = n.source
 local eq = t.eq
 local write_file = t.write_file
 local is_os = t.is_os
-
-local function sizeoflong()
-  if not exec_lua('return pcall(require, "ffi")') then
-    pending('missing LuaJIT FFI')
-  end
-  return exec_lua('return require("ffi").sizeof(require("ffi").typeof("long"))')
-end
-
-describe('Ex command', function()
-  before_each(clear)
-  after_each(function()
-    eq({}, api.nvim_get_vvar('errors'))
-  end)
-
-  it('checks for address line overflow', function()
-    if sizeoflong() < 8 then
-      pending('Skipped: only works with 64 bit long ints')
-    end
-
-    source [[
-      new
-      call setline(1, 'text')
-      call assert_fails('|.44444444444444444444444', 'E1247:')
-      call assert_fails('|.9223372036854775806', 'E1247:')
-      bwipe!
-    ]]
-  end)
-end)
 
 describe(':confirm command dialog', function()
   local screen
