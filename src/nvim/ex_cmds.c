@@ -2784,7 +2784,11 @@ void ex_append(exarg_T *eap)
         indent = get_indent_lnum(lnum);
       }
     }
-    if (eap->ea_getline == NULL) {
+    if (*eap->arg == '|') {
+      // Get the text after the trailing bar.
+      theline = xstrdup(eap->arg + 1);
+      *eap->arg = NUL;
+    } else if (eap->ea_getline == NULL) {
       // No getline() function, use the lines that follow. This ends
       // when there is no more.
       if (eap->nextcmd == NULL || *eap->nextcmd == NUL) {

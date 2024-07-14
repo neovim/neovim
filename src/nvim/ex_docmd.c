@@ -2079,6 +2079,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     if (ea.skip) {  // skip this if inside :if
       goto doend;
     }
+    assert(errormsg == NULL);
     errormsg = ex_range_without_command(&ea);
     goto doend;
   }
@@ -2425,13 +2426,17 @@ char *ex_errmsg(const char *const msg, const char *const arg)
   return ex_error_buf;
 }
 
+/// The "+" string used in place of an empty command in Ex mode.
+/// This string is used in pointer comparison.
+static char exmode_plus[] = "+";
+
 /// Handle a range without a command.
 /// Returns an error message on failure.
 static char *ex_range_without_command(exarg_T *eap)
 {
   char *errormsg = NULL;
 
-  if (*eap->cmd == '|' || (exmode_active && eap->line1 != eap->line2)) {
+  if (*eap->cmd == '|' || (exmode_active && eap->cmd != exmode_plus + 1)) {
     eap->cmdidx = CMD_print;
     eap->argt = EX_RANGE | EX_COUNT | EX_TRLBAR;
     if ((errormsg = invalid_range(eap)) == NULL) {
@@ -2490,7 +2495,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
     if (*eap->cmd == NUL && exmode_active
         && getline_equal(eap->ea_getline, eap->cookie, getexline)
         && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-      eap->cmd = "+";
+      eap->cmd = exmode_plus;
       if (!skip_only) {
         ex_pressedreturn = true;
       }
@@ -4107,7 +4112,12 @@ void separate_nextcmd(exarg_T *eap)
                 && !(eap->argt & EX_NOTRLCOM)
                 && (eap->cmdidx != CMD_at || p != eap->arg)
                 && (eap->cmdidx != CMD_redir
-                    || p != eap->arg + 1 || p[-1] != '@')) || *p == '|' || *p == '\n') {
+                    || p != eap->arg + 1 || p[-1] != '@'))
+               || (*p == '|'
+                   && eap->cmdidx != CMD_append
+                   && eap->cmdidx != CMD_change
+                   && eap->cmdidx != CMD_insert)
+               || *p == '\n') {
       // We remove the '\' before the '|', unless EX_CTRLV is used
       // AND 'b' is present in 'cpoptions'.
       if ((vim_strchr(p_cpo, CPO_BAR) == NULL

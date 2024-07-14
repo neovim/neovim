@@ -69,7 +69,7 @@ func Test_Ex_substitute()
   CheckRunVimInTerminal
   let buf = RunVimInTerminal('', {'rows': 6})
 
-  call term_sendkeys(buf, ":call setline(1, ['foo foo', 'foo foo', 'foo foo'])\<CR>")
+  call term_sendkeys(buf, ":call setline(1, repeat(['foo foo'], 4))\<CR>")
   call term_sendkeys(buf, ":set number\<CR>")
   call term_sendkeys(buf, "gQ")
   call WaitForAssert({-> assert_match(':', term_getline(buf, 6))}, 1000)
@@ -91,8 +91,14 @@ func Test_Ex_substitute()
 
   " Pressing enter in ex mode should print the current line
   call term_sendkeys(buf, "\<CR>")
-  call WaitForAssert({-> assert_match('  3 foo foo',
-        \ term_getline(buf, 5))}, 1000)
+  call WaitForAssert({-> assert_match('  3 foo foo', term_getline(buf, 5))}, 1000)
+  call WaitForAssert({-> assert_match(':', term_getline(buf, 6))}, 1000)
+
+  " The printed line should overwrite the colon
+  call term_sendkeys(buf, "\<CR>")
+  call WaitForAssert({-> assert_match('  3 foo foo', term_getline(buf, 4))}, 1000)
+  call WaitForAssert({-> assert_match('  4 foo foo', term_getline(buf, 5))}, 1000)
+  call WaitForAssert({-> assert_match(':', term_getline(buf, 6))}, 1000)
 
   call term_sendkeys(buf, ":vi\<CR>")
   call WaitForAssert({-> assert_match('foo bar', term_getline(buf, 1))}, 1000)
@@ -281,5 +287,24 @@ func Test_ex_mode_large_indent()
   bwipe!
 endfunc
 
+
+" Testing implicit print command
+func Test_implicit_print()
+  new
+  call setline(1, ['one', 'two', 'three'])
+  call feedkeys('Q:let a=execute(":1,2")', 'xt')
+  call feedkeys('Q:let b=execute(":3")', 'xt')
+  call assert_equal('one two', a->split('\n')->join(' '))
+  call assert_equal('three', b->split('\n')->join(' '))
+  bw!
+endfunc
+
+" Test inserting text after the trailing bar
+func Test_insert_after_trailing_bar()
+  new
+  call feedkeys("Qi|\nfoo\n.\na|bar\nbar\n.\nc|baz\n.", "xt")
+  call assert_equal(['', 'foo', 'bar', 'baz'], getline(1, '$'))
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
