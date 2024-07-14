@@ -213,6 +213,8 @@ Starting ~
 							*termdebug-starting*
 Load the plugin with this command: >vim
 	packadd termdebug
+When loading the plugin from the |vimrc| file, add the "!" attribute: >vim
+	packadd! termdebug
 <							*:Termdebug*
 To start debugging use `:Termdebug` or `:TermdebugCommand` followed by the
 command name, for example: >vim
