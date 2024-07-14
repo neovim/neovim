@@ -2027,7 +2027,6 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
 // '0' and '^' are special, because they can be followed by CTRL-D.
 #define ISSPECIAL(c)   ((c) < ' ' || (c) >= DEL || (c) == '0' || (c) == '^')
 
-///
 /// "flags": INSCHAR_FORMAT - force formatting
 ///          INSCHAR_CTRLV  - char typed just after CTRL-V
 ///          INSCHAR_NO_FEX - don't use 'formatexpr'

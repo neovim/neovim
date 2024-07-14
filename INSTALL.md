@@ -55,12 +55,12 @@ Several Neovim GUIs are available from scoop (extras): [scoop.sh/#/apps?q=neovim
 1. Choose a package (**nvim-winXX.zip**) from the [releases page](https://github.com/neovim/neovim/releases).
 2. Unzip the package. Any location is fine, administrator privileges are _not_ required.
     - `$VIMRUNTIME` will be set to that location automatically.
-3. Double-click `nvim-qt.exe`.
+3. Run `nvim.exe` from a terminal.
 
 **Optional** steps:
 
 - Add the `bin` folder (e.g. `C:\Program Files\nvim\bin`) to your PATH.
-    - This makes it easy to run `nvim` and `nvim-qt` from anywhere.
+    - This makes it easy to run `nvim` from anywhere.
 - If `:set spell` does not work, create the `C:/Users/foo/AppData/Local/nvim/site/spell` folder.
   You can then copy your spell files over (for English, located
   [here](https://github.com/vim/vim/blob/master/runtime/spell/en.utf-8.spl) and
