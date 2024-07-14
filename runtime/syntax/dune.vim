@@ -4,6 +4,7 @@
 "              Anton Kochkov       <anton.kochkov@gmail.com>
 " URL:         https://github.com/ocaml/vim-ocaml
 " Last Change:
+"              2023 Nov 24 - Add end-of-line strings (Samuel Hym)
 "              2019 Feb 27 - Add newer keywords to the syntax (Simon Cruanes)
 "              2018 May 8 - Check current_syntax (Kawahara Satoru)
 "              2018 Mar 29 - Extend jbuild syntax with more keywords (Petter A. Urkedal)
@@ -37,6 +38,8 @@ syn keyword lispFunc cat chdir copy# diff? echo run setenv
 syn keyword lispFunc ignore-stdout ignore-stderr ignore-outputs
 syn keyword lispFunc with-stdout-to with-stderr-to with-outputs-to
 syn keyword lispFunc write-file system bash
+
+syn region lispString start=+"\\[>|]+ end=+$+ contains=@Spell
 
 syn cluster lispBaseListCluster add=duneVar
 syn match duneVar '\${[@<^]}' containedin=lispSymbol
