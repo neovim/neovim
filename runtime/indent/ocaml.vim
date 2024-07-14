@@ -4,8 +4,7 @@
 "               Mike Leary           <leary@nwlink.com>
 "               Markus Mottl         <markus.mottl@gmail.com>
 " URL:          https://github.com/ocaml/vim-ocaml
-" Last Change:  2023 Aug 28 - Add undo_indent (Vim Project)
-"               2017 Jun 13
+" Last Change:  2017 Jun 13
 "               2005 Jun 25 - Fixed multiple bugs due to 'else\nreturn ind' working
 "               2005 May 09 - Added an option to not indent OCaml-indents specially (MM)
 "               2013 June   - commented textwidth (Marc Weber)
@@ -36,6 +35,7 @@ if !exists("no_ocaml_comments")
    setlocal comments=sr:(*\ ,mb:\ ,ex:*)
    setlocal comments^=sr:(**,mb:\ \ ,ex:*)
    setlocal fo=cqort
+  let b:undo_indent .= " | setl com< fo<"
  endif
 endif
 
