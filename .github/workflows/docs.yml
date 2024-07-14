@@ -2,13 +2,6 @@ name: docs
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - 'src/nvim/api/*.[ch]'
-      - 'src/nvim/eval.lua'
-      - 'runtime/lua/**.lua'
-      - 'runtime/doc/**'
-      - 'scripts/gen_vimdoc.py'
-      - 'scripts/gen_help_html.lua'
 jobs:
   docs:
     runs-on: ubuntu-latest
