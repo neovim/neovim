@@ -8,8 +8,6 @@ on:
     branches:
       - 'master'
       - 'release-[0-9]+.[0-9]+'
-    paths-ignore:
-      - 'contrib/**'
   workflow_dispatch:
 
 concurrency:
@@ -95,18 +93,23 @@ jobs:
       - run: cmake --build build --target clang-analyzer
 
   posix:
-    name: ${{ matrix.build.runner }} ${{ matrix.build.flavor }} ${{ matrix.build.cc }} ${{ matrix.test }}
+    name: ${{ matrix.build.os }} ${{ matrix.build.flavor }} ${{ matrix.build.cc }} ${{ matrix.test }}
     strategy:
       fail-fast: false
       matrix:
+        # The `os` field is not needed to differentiate between the different
+        # matrix builds. It is needed to not change the required checks (which
+        # uses jobs names) each time we bump the runner version. It may be
+        # possible to remove if we e.g. start using `-latest` runner versions
+        # or if github introduces a wildcard for required checks in the future.
         build:
           [
-            { runner: ubuntu-22.04, flavor: asan, cc: clang, flags: -D ENABLE_ASAN_UBSAN=ON },
-            { runner: ubuntu-22.04, flavor: tsan, cc: clang, flags: -D ENABLE_TSAN=ON },
-            { runner: ubuntu-22.04, cc: gcc },
-            { runner: macos-12, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
-            { runner: macos-14, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
-            { runner: ubuntu-22.04, flavor: puc-lua, cc: gcc, deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON, flags: -D PREFER_LUA=ON },
+            { runner: ubuntu-22.04, os: ubuntu, flavor: asan, cc: clang, flags: -D ENABLE_ASAN_UBSAN=ON },
+            { runner: ubuntu-22.04, os: ubuntu, flavor: tsan, cc: clang, flags: -D ENABLE_TSAN=ON },
+            { runner: ubuntu-22.04, os: ubuntu, cc: gcc },
+            { runner: macos-12, os: macos, flavor: 12, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
+            { runner: macos-14, os: macos, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
+            { runner: ubuntu-22.04, os: ubuntu, flavor: puc-lua, cc: gcc, deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON, flags: -D PREFER_LUA=ON },
           ]
         test: [unittest, functionaltest, oldtest]
         exclude:
