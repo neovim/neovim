@@ -2426,13 +2426,17 @@ char *ex_errmsg(const char *const msg, const char *const arg)
   return ex_error_buf;
 }
 
+/// The "+" string used in place of an empty command in Ex mode.
+/// This string is used in pointer comparison.
+static char exmode_plus[] = "+";
+
 /// Handle a range without a command.
 /// Returns an error message on failure.
 static char *ex_range_without_command(exarg_T *eap)
 {
   char *errormsg = NULL;
 
-  if (*eap->cmd == '|' || exmode_active) {
+  if (*eap->cmd == '|' || (exmode_active && eap->cmd != exmode_plus + 1)) {
     eap->cmdidx = CMD_print;
     eap->argt = EX_RANGE | EX_COUNT | EX_TRLBAR;
     if ((errormsg = invalid_range(eap)) == NULL) {
@@ -2491,7 +2495,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
     if (*eap->cmd == NUL && exmode_active
         && getline_equal(eap->ea_getline, eap->cookie, getexline)
         && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-      eap->cmd = "+";
+      eap->cmd = exmode_plus;
       if (!skip_only) {
         ex_pressedreturn = true;
       }

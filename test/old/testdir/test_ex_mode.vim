@@ -69,7 +69,7 @@ func Test_Ex_substitute()
   CheckRunVimInTerminal
   let buf = RunVimInTerminal('', {'rows': 6})
 
-  call term_sendkeys(buf, ":call setline(1, ['foo foo', 'foo foo', 'foo foo'])\<CR>")
+  call term_sendkeys(buf, ":call setline(1, repeat(['foo foo'], 4))\<CR>")
   call term_sendkeys(buf, ":set number\<CR>")
   call term_sendkeys(buf, "gQ")
   call WaitForAssert({-> assert_match(':', term_getline(buf, 6))}, 1000)
@@ -91,8 +91,14 @@ func Test_Ex_substitute()
 
   " Pressing enter in ex mode should print the current line
   call term_sendkeys(buf, "\<CR>")
-  call WaitForAssert({-> assert_match('  3 foo foo',
-        \ term_getline(buf, 5))}, 1000)
+  call WaitForAssert({-> assert_match('  3 foo foo', term_getline(buf, 5))}, 1000)
+  call WaitForAssert({-> assert_match(':', term_getline(buf, 6))}, 1000)
+
+  " The printed line should overwrite the colon
+  call term_sendkeys(buf, "\<CR>")
+  call WaitForAssert({-> assert_match('  3 foo foo', term_getline(buf, 4))}, 1000)
+  call WaitForAssert({-> assert_match('  4 foo foo', term_getline(buf, 5))}, 1000)
+  call WaitForAssert({-> assert_match(':', term_getline(buf, 6))}, 1000)
 
   call term_sendkeys(buf, ":vi\<CR>")
   call WaitForAssert({-> assert_match('foo bar', term_getline(buf, 1))}, 1000)
