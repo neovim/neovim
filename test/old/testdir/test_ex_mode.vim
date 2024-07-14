@@ -293,4 +293,12 @@ func Test_implicit_print()
   bw!
 endfunc
 
+" Test inserting text after the trailing bar
+func Test_insert_after_trailing_bar()
+  new
+  call feedkeys("Qi|\nfoo\n.\na|bar\nbar\n.\nc|baz\n.", "xt")
+  call assert_equal(['', 'foo', 'bar', 'baz'], getline(1, '$'))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

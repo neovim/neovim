@@ -4108,7 +4108,12 @@ void separate_nextcmd(exarg_T *eap)
                 && !(eap->argt & EX_NOTRLCOM)
                 && (eap->cmdidx != CMD_at || p != eap->arg)
                 && (eap->cmdidx != CMD_redir
-                    || p != eap->arg + 1 || p[-1] != '@')) || *p == '|' || *p == '\n') {
+                    || p != eap->arg + 1 || p[-1] != '@'))
+               || (*p == '|'
+                   && eap->cmdidx != CMD_append
+                   && eap->cmdidx != CMD_change
+                   && eap->cmdidx != CMD_insert)
+               || *p == '\n') {
       // We remove the '\' before the '|', unless EX_CTRLV is used
       // AND 'b' is present in 'cpoptions'.
       if ((vim_strchr(p_cpo, CPO_BAR) == NULL

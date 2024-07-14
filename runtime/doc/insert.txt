@@ -1927,6 +1927,16 @@ These two commands will keep on asking for lines, until you type a line
 containing only a ".".  Watch out for lines starting with a backslash, see
 |line-continuation|.
 
+Text typed after a "|" command separator is used first. So the following
+command in ex mode: >
+	:a|one
+	two
+	.
+	:visual
+<appends the following text, after the cursor line: >
+	one
+	two
+<
 NOTE: These commands cannot be used with |:global| or |:vglobal|.
 ":append" and ":insert" don't work properly in between ":if" and
 ":endif", ":for" and ":endfor", ":while" and ":endwhile".
