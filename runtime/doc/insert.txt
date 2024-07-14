@@ -1927,11 +1927,6 @@ These two commands will keep on asking for lines, until you type a line
 containing only a ".".  Watch out for lines starting with a backslash, see
 |line-continuation|.
 
-When in Ex mode (see |-e|) a backslash at the end of the line can be used to
-insert a NUL character.  To be able to have a line ending in a backslash use
-two backslashes.  This means that the number of backslashes is halved, but
-only at the end of the line.
-
 NOTE: These commands cannot be used with |:global| or |:vglobal|.
 ":append" and ":insert" don't work properly in between ":if" and
 ":endif", ":for" and ":endfor", ":while" and ":endwhile".
