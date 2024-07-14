@@ -106,7 +106,8 @@ EXTERN int Columns INIT( = DFLT_COLS);  // nr of columns in the screen
 // held down based on the MOD_MASK_* symbols that are read first.
 EXTERN int mod_mask INIT( = 0);  // current key modifiers
 
-// The value of "mod_mask" and the unmodified character before calling merge_modifiers().
+// The value of "mod_mask" and the unmodified character in vgetc() after it has
+// called vgetorpeek() enough times.
 EXTERN int vgetc_mod_mask INIT( = 0);
 EXTERN int vgetc_char INIT( = 0);
 
