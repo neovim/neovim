@@ -401,7 +401,7 @@ tag		char	      note action in Normal mode	~
 |q|		q{0-9a-zA-Z"}	   record typed characters into named register
 				   {0-9a-zA-Z"} (uppercase to append)
 |q|		q		   (while recording) stops recording
-|Q|		Q		   replay last recorded macro
+|Q|		Q		2  replay last recorded register
 |q:|		q:		   edit : command-line in command-line window
 |q/|		q/		   edit / command-line in command-line window
 |q?|		q?		   edit ? command-line in command-line window
@@ -740,7 +740,7 @@ tag		char	      note action in Normal mode	~
 				   search pattern and Visually select it
 |gP|		["x]gP		2  put the text [from register x] before the
 				   cursor N times, leave the cursor after it
-|gQ|		gQ		    switch to "Ex" mode with Vim editing
+|gQ|		gQ		   switch to "Ex" mode with Vim editing
 |gR|		gR		2  enter Virtual Replace mode
 |gT|		gT		   go to the previous tab page
 |gU|		gU{motion}	2  make Nmove text uppercase
@@ -927,7 +927,6 @@ tag		command	      note action in Visual mode	~
 |v_O|		O		   move horizontally to other corner of area
 |v_P|		P		   replace highlighted area with register
 				   contents; registers are unchanged
-		Q		   does not start Ex mode
 |v_R|		R		2  delete the highlighted lines and start
 				   insert
 |v_S|		S		2  delete the highlighted lines and start

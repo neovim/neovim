@@ -213,9 +213,7 @@ void diff_buf_add(buf_T *buf)
   semsg(_("E96: Cannot diff more than %" PRId64 " buffers"), (int64_t)DB_COUNT);
 }
 
-///
 /// Remove all buffers to make diffs for.
-///
 static void diff_buf_clear(void)
 {
   for (int i = 0; i < DB_COUNT; i++) {
@@ -367,7 +365,6 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
       break;
     }
 
-    //
     // Check for these situations:
     //    1  2  3
     //    1  2  3
@@ -835,7 +832,6 @@ static int diff_write(buf_T *buf, diffin_T *din)
   return r;
 }
 
-///
 /// Update the diffs for all buffers involved.
 ///
 /// @param dio
@@ -909,20 +905,16 @@ theend:
   xfree(dio->dio_diff.dout_fname);
 }
 
-///
 /// Return true if the options are set to use the internal diff library.
 /// Note that if the internal diff failed for one of the buffers, the external
 /// diff will be used anyway.
-///
 int diff_internal(void)
   FUNC_ATTR_PURE
 {
   return (diff_flags & DIFF_INTERNAL) != 0 && *p_dex == NUL;
 }
 
-///
 /// Return true if the internal diff failed for one of the diff buffers.
-///
 static int diff_internal_failed(void)
 {
   // Only need to do something when there is another buffer.
@@ -1003,11 +995,9 @@ theend:
   }
 }
 
-///
 /// Do a quick test if "diff" really works.  Otherwise it looks like there
 /// are no differences.  Can't use the return value, it's non-zero when
 /// there are differences.
-///
 static int check_external_diff(diffio_T *diffio)
 {
   // May try twice, first with "-a" and then without.
@@ -1091,9 +1081,7 @@ static int check_external_diff(diffio_T *diffio)
   return OK;
 }
 
-///
 /// Invoke the xdiff function.
-///
 static int diff_file_internal(diffio_T *diffio)
 {
   xpparam_t param;
@@ -1813,9 +1801,7 @@ void diff_clear(tabpage_T *tp)
   tp->tp_first_diff = NULL;
 }
 
-///
-/// return true if the options are set to use diff linematch
-///
+/// Return true if the options are set to use diff linematch.
 bool diff_linematch(diff_T *dp)
 {
   if (!(diff_flags & DIFF_LINEMATCH)) {

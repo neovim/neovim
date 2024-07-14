@@ -3419,9 +3419,7 @@ term_again:
       break;
     }
 
-    //
     // Skip preprocessor directives and blank lines.
-    //
     if (cin_ispreproc_cont(&l, &curwin->w_cursor.lnum, &amount)) {
       continue;
     }
