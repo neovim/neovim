@@ -1076,6 +1076,7 @@ local extension = {
   nls = 'tex',
   thm = 'tex',
   eps_tex = 'tex',
+  pdf_tex = 'tex',
   pygtex = 'tex',
   pygstyle = 'tex',
   clo = 'tex',
