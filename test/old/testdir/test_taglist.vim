@@ -143,15 +143,15 @@ func Test_tagfiles_stopdir()
   call writefile([], 'Xtagsdir1/Xtags', 'D')
 
   cd Xtagsdir1/
-  let &tags = './Xtags;' .. fnamemodify('./..', ':p')
+  let &tags = './Xtags;' .. fnamemodify('..', ':p')
   call assert_equal(1, len(tagfiles()))
 
   cd Xtagsdir2/
-  let &tags = './Xtags;' .. fnamemodify('./..', ':p')
+  let &tags = './Xtags;' .. fnamemodify('..', ':p')
   call assert_equal(1, len(tagfiles()))
 
   cd Xtagsdir3/
-  let &tags = './Xtags;' .. fnamemodify('./..', ':p')
+  let &tags = './Xtags;' .. fnamemodify('..', ':p')
   call assert_equal(0, len(tagfiles()))
 
   let &tags = './Xtags;../'
@@ -162,6 +162,15 @@ func Test_tagfiles_stopdir()
 
   cd ..
   call assert_equal(1, len(tagfiles()))
+
+  let &tags = './Xtags;..'
+  call assert_equal(1, len(tagfiles()))
+
+  cd Xtagsdir2/
+  call assert_equal(1, len(tagfiles()))
+
+  cd Xtagsdir3/
+  call assert_equal(0, len(tagfiles()))
 
   set tags&
   call chdir(save_cwd)
