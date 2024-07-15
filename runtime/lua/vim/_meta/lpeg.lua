@@ -2,7 +2,7 @@
 error('Cannot require a meta file')
 
 -- These types were taken from https://github.com/LuaCATS/lpeg
--- (based on revision 82c6a8fc676bbc20722026afd952668f3919b11d)
+-- (based on revision 33f4ff5343a64cf613a0634d70092fbc2b64291b)
 -- with types being renamed to include the vim namespace and with some descriptions made less verbose.
 
 --- @brief <pre>help
@@ -22,16 +22,17 @@ vim.lpeg = {}
 
 --- @nodoc
 --- @class vim.lpeg.Pattern
+--- @operator len: vim.lpeg.Pattern
 --- @operator unm: vim.lpeg.Pattern
 --- @operator add(vim.lpeg.Pattern): vim.lpeg.Pattern
 --- @operator sub(vim.lpeg.Pattern): vim.lpeg.Pattern
 --- @operator mul(vim.lpeg.Pattern): vim.lpeg.Pattern
 --- @operator mul(vim.lpeg.Capture): vim.lpeg.Pattern
 --- @operator div(string): vim.lpeg.Capture
---- @operator div(number): vim.lpeg.Capture
+--- @operator div(integer): vim.lpeg.Capture
 --- @operator div(table): vim.lpeg.Capture
 --- @operator div(function): vim.lpeg.Capture
---- @operator pow(number): vim.lpeg.Pattern
+--- @operator pow(integer): vim.lpeg.Pattern
 --- @operator mod(function): vim.lpeg.Capture
 local Pattern = {}
 
@@ -55,11 +56,12 @@ local Pattern = {}
 --- assert(pattern:match('1 hello') == nil)
 --- ```
 ---
---- @param pattern vim.lpeg.Pattern
+--- @param pattern vim.lpeg.Pattern|string|integer|boolean|table|function
 --- @param subject string
 --- @param init? integer
---- @return integer|vim.lpeg.Capture|nil
-function vim.lpeg.match(pattern, subject, init) end
+--- @param ... any
+--- @return any ...
+function vim.lpeg.match(pattern, subject, init, ...) end
 
 --- Matches the given `pattern` against the `subject` string. If the match succeeds, returns the
 --- index in the subject of the first character after the match, or the captured values (if the
@@ -81,8 +83,9 @@ function vim.lpeg.match(pattern, subject, init) end
 ---
 --- @param subject string
 --- @param init? integer
---- @return integer|vim.lpeg.Capture|nil
-function Pattern:match(subject, init) end
+--- @param ... any
+--- @return any ...
+function Pattern:match(subject, init, ...) end
 
 --- Returns the string `"pattern"` if the given value is a pattern, otherwise `nil`.
 ---
@@ -123,7 +126,7 @@ function vim.lpeg.P(value) end
 --- Pattern `patt` must match only strings with some fixed length, and it cannot contain captures.
 --- Like the `and` predicate, this pattern never consumes any input, independently of success or failure.
 ---
---- @param pattern vim.lpeg.Pattern
+--- @param pattern vim.lpeg.Pattern|string|integer|boolean|table
 --- @return vim.lpeg.Pattern
 function vim.lpeg.B(pattern) end
 
@@ -163,7 +166,7 @@ function vim.lpeg.S(string) end
 --- assert(b:match('(') == nil)
 --- ```
 ---
---- @param v string|integer
+--- @param v boolean|string|number|function|table|thread|userdata|lightuserdata 
 --- @return vim.lpeg.Pattern
 function vim.lpeg.V(v) end
 
@@ -227,7 +230,7 @@ function vim.lpeg.locale(tab) end
 --- assert(c == 'c')
 --- ```
 ---
---- @param patt vim.lpeg.Pattern
+--- @param patt vim.lpeg.Pattern|string|integer|boolean|table|function
 --- @return vim.lpeg.Capture
 function vim.lpeg.C(patt) end
 
@@ -258,7 +261,7 @@ function vim.lpeg.Cc(...) end
 --- `func(...func(func(C1, C2), C3)...,Cn)`, that is, it will fold (or accumulate, or reduce) the captures from
 --- `patt` using function `func`. This capture assumes that `patt` should produce at least one capture with at
 --- least one value (of any type), which becomes the initial value of an accumulator. (If you need a specific
---- initial value, you may prefix a constant captureto `patt`.) For each subsequent capture, LPeg calls `func`
+--- initial value, you may prefix a constant capture to `patt`.) For each subsequent capture, LPeg calls `func`
 --- with this accumulator as the first argument and all values produced by the capture as extra arguments;
 --- the first result from this call becomes the new value for the accumulator. The final value of the accumulator
 --- becomes the captured value.
@@ -273,7 +276,7 @@ function vim.lpeg.Cc(...) end
 --- assert(sum:match('10,30,43') == 83)
 --- ```
 ---
---- @param patt vim.lpeg.Pattern
+--- @param patt vim.lpeg.Pattern|string|integer|boolean|table|function
 --- @param func fun(acc, newvalue)
 --- @return vim.lpeg.Capture
 function vim.lpeg.Cf(patt, func) end
@@ -282,7 +285,7 @@ function vim.lpeg.Cf(patt, func) end
 --- The group may be anonymous (if no name is given) or named with the given name (which
 --- can be any non-nil Lua value).
 ---
---- @param patt vim.lpeg.Pattern
+--- @param patt vim.lpeg.Pattern|string|integer|boolean|table|function
 --- @param name? string
 --- @return vim.lpeg.Capture
 function vim.lpeg.Cg(patt, name) end
@@ -320,7 +323,7 @@ function vim.lpeg.Cp() end
 --- assert(gsub('Hello, xxx!', 'xxx', 'World') == 'Hello, World!')
 --- ```
 ---
---- @param patt vim.lpeg.Pattern
+--- @param patt vim.lpeg.Pattern|string|integer|boolean|table|function
 --- @return vim.lpeg.Capture
 function vim.lpeg.Cs(patt) end
 
@@ -329,7 +332,7 @@ function vim.lpeg.Cs(patt) end
 --- Moreover, for each named capture group created by `patt`, the first value of the group is put into
 --- the table with the group name as its key. The captured value is only the table.
 ---
---- @param patt vim.lpeg.Pattern|''
+--- @param patt vim.lpeg.Pattern|string|integer|boolean|table|function
 --- @return vim.lpeg.Capture
 function vim.lpeg.Ct(patt) end
 
@@ -343,7 +346,7 @@ function vim.lpeg.Ct(patt) end
 --- (so, to return true is equivalent to return `i`). If the call returns `false`, `nil`, or no value, the match fails.
 --- Any extra values returned by the function become the values produced by the capture.
 ---
---- @param patt vim.lpeg.Pattern
---- @param fn function
+--- @param patt vim.lpeg.Pattern|string|integer|boolean|table|function
+--- @param fn fun(s: string, i: integer, ...: any): (position: boolean|integer, ...: any)
 --- @return vim.lpeg.Capture
 function vim.lpeg.Cmt(patt, fn) end
