@@ -778,16 +778,26 @@ void remote_ui_raw_line(RemoteUI *ui, Integer grid, Integer row, Integer startco
     for (size_t i = 0; i < ncells; i++) {
       repeat++;
       if (i == ncells - 1 || attrs[i] != attrs[i + 1] || chunk[i] != chunk[i + 1]) {
-        if (UI_BUF_SIZE - BUF_POS(ui) < 2 * (1 + 2 + MAX_SCHAR_SIZE + 5 + 5) + 1
+        if (
+            // Close to overflowing the redraw buffer. Finish this event, flush,
+            // and start a new "grid_line" event at the current position.
+            // For simplicity leave place for the final "clear" element as well,
+            // hence the factor of 2 in the check.
+            UI_BUF_SIZE - BUF_POS(ui) < 2 * (1 + 2 + MAX_SCHAR_SIZE + 5 + 5) + 1
+            // Also if there is a lot of packed cells, pass them off to the UI to
+            // let it start processing them.
             || ui->ncells_pending >= 500) {
-          // close to overflowing the redraw buffer. finish this event,
-          // flush, and start a new "grid_line" event at the current position.
-          // For simplicity leave place for the final "clear" element
-          // as well, hence the factor of 2 in the check.
-          // Also if there is a lot of packed cells, pass them of to the UI to
-          // let it start processing them
+          // If the last chunk was all spaces, add an empty clearing chunk,
+          // so it's clear that the last chunk wasn't a clearing chunk.
+          if (was_space) {
+            nelem++;
+            ui->ncells_pending += 1;
+            mpack_array(buf, 3);
+            mpack_str_small(buf, S_LEN(" "));
+            mpack_uint(buf, (uint32_t)clearattr);
+            mpack_uint(buf, 0);
+          }
           mpack_w2(&lenpos, nelem);
-
           // We only ever set the wrap field on the final "grid_line" event for the line.
           mpack_bool(buf, false);
           ui_flush_buf(ui);
