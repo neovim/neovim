@@ -1372,6 +1372,17 @@ shells and OSes and also does not allow to use other available TeX options,
 if any.  If your TeX doesn't support "-interaction=nonstopmode", please
 report it with different means to express \nonstopmode from the command line.
 
+TYPST COMPILER						*compiler-typst*
+
+Vim includes a compiler plugin for Typst files. This compiler is enabled
+automatically in Typst buffers by the Typst filetype plugin |ft-typst-plugin|.
+Run |:make| to compile the current Typst file.
+
+							*g:typst_cmd*
+By default Vim will use "typst" as the command to run the Typst compiler. This
+can be changed by setting the |g:typst_cmd| variable: >
+	let g:typst_cmd = "/path/to/other/command"
+
 =============================================================================
 7. The error format					*error-file-format*
 
