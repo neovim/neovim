@@ -3090,7 +3090,7 @@ In addition, its regex-like interface is available as |vim.re|
 
 
 
-Pattern:match({subject}, {init})                             *Pattern:match()*
+Pattern:match({subject}, {init}, {...})                      *Pattern:match()*
     Matches the given `pattern` against the `subject` string. If the match
     succeeds, returns the index in the subject of the first character after
     the match, or the captured values (if the pattern captured any value). An
@@ -3113,9 +3113,10 @@ Pattern:match({subject}, {init})                             *Pattern:match()*
     Parameters: ~
       • {subject}  (`string`)
       • {init}     (`integer?`)
+      • {...}      (`any`)
 
     Return: ~
-        (`integer|vim.lpeg.Capture?`)
+        (`any`) ...
 
 vim.lpeg.B({pattern})                                           *vim.lpeg.B()*
     Returns a pattern that matches only if the input string at the current
@@ -3125,7 +3126,7 @@ vim.lpeg.B({pattern})                                           *vim.lpeg.B()*
     or failure.
 
     Parameters: ~
-      • {pattern}  (`vim.lpeg.Pattern`)
+      • {pattern}  (`vim.lpeg.Pattern|string|integer|boolean|table`)
 
     Return: ~
         (`vim.lpeg.Pattern`)
@@ -3149,7 +3150,7 @@ vim.lpeg.C({patt})                                              *vim.lpeg.C()*
 <
 
     Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern`)
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
 
     Return: ~
         (`vim.lpeg.Capture`)
@@ -3200,11 +3201,11 @@ vim.lpeg.Cf({patt}, {func})                                    *vim.lpeg.Cf()*
     This capture assumes that `patt` should produce at least one capture with
     at least one value (of any type), which becomes the initial value of an
     accumulator. (If you need a specific initial value, you may prefix a
-    constant captureto `patt`.) For each subsequent capture, LPeg calls `func`
-    with this accumulator as the first argument and all values produced by the
-    capture as extra arguments; the first result from this call becomes the
-    new value for the accumulator. The final value of the accumulator becomes
-    the captured value.
+    constant capture to `patt`.) For each subsequent capture, LPeg calls
+    `func` with this accumulator as the first argument and all values produced
+    by the capture as extra arguments; the first result from this call becomes
+    the new value for the accumulator. The final value of the accumulator
+    becomes the captured value.
 
     Example: >lua
         local number = lpeg.R('09') ^ 1 / tonumber
@@ -3215,7 +3216,7 @@ vim.lpeg.Cf({patt}, {func})                                    *vim.lpeg.Cf()*
 <
 
     Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern`)
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
       • {func}  (`fun(acc, newvalue)`)
 
     Return: ~
@@ -3227,7 +3228,7 @@ vim.lpeg.Cg({patt}, {name})                                    *vim.lpeg.Cg()*
     with the given name (which can be any non-nil Lua value).
 
     Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern`)
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
       • {name}  (`string?`)
 
     Return: ~
@@ -3250,8 +3251,9 @@ vim.lpeg.Cmt({patt}, {fn})                                    *vim.lpeg.Cmt()*
     function become the values produced by the capture.
 
     Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern`)
-      • {fn}    (`function`)
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+      • {fn}    (`fun(s: string, i: integer, ...: any)`) (position:
+                boolean|integer, ...: any)
 
     Return: ~
         (`vim.lpeg.Capture`)
@@ -3290,7 +3292,7 @@ vim.lpeg.Cs({patt})                                            *vim.lpeg.Cs()*
 <
 
     Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern`)
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
 
     Return: ~
         (`vim.lpeg.Capture`)
@@ -3303,7 +3305,7 @@ vim.lpeg.Ct({patt})                                            *vim.lpeg.Ct()*
     the group name as its key. The captured value is only the table.
 
     Parameters: ~
-      • {patt}  (`vim.lpeg.Pattern|''`)
+      • {patt}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
 
     Return: ~
         (`vim.lpeg.Capture`)
@@ -3338,7 +3340,7 @@ vim.lpeg.locale({tab})                                     *vim.lpeg.locale()*
     Return: ~
         (`vim.lpeg.Locale`)
 
-vim.lpeg.match({pattern}, {subject}, {init})                *vim.lpeg.match()*
+vim.lpeg.match({pattern}, {subject}, {init}, {...})         *vim.lpeg.match()*
     Matches the given `pattern` against the `subject` string. If the match
     succeeds, returns the index in the subject of the first character after
     the match, or the captured values (if the pattern captured any value). An
@@ -3359,12 +3361,13 @@ vim.lpeg.match({pattern}, {subject}, {init})                *vim.lpeg.match()*
 <
 
     Parameters: ~
-      • {pattern}  (`vim.lpeg.Pattern`)
+      • {pattern}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
       • {subject}  (`string`)
       • {init}     (`integer?`)
+      • {...}      (`any`)
 
     Return: ~
-        (`integer|vim.lpeg.Capture?`)
+        (`any`) ...
 
 vim.lpeg.P({value})                                             *vim.lpeg.P()*
     Converts the given value into a proper pattern. The following rules are
@@ -3458,7 +3461,7 @@ vim.lpeg.V({v})                                                 *vim.lpeg.V()*
 <
 
     Parameters: ~
-      • {v}  (`string|integer`)
+      • {v}  (`boolean|string|number|function|table|thread|userdata|lightuserdata`)
 
     Return: ~
         (`vim.lpeg.Pattern`)
