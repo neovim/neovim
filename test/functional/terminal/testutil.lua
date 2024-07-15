@@ -169,7 +169,7 @@ local function setup_child_nvim(args, opts)
     env.VIMRUNTIME = os.getenv('VIMRUNTIME')
   end
 
-  return screen_setup(0, argv, opts.cols, env)
+  return screen_setup(opts.extra_rows, argv, opts.cols, env)
 end
 
 return {
