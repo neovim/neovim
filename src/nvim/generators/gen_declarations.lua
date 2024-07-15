@@ -208,6 +208,10 @@ if fname:find('.*/src/nvim/.*%.c$') then
 // IWYU pragma: private, include "%s"
 ]]):format(header_fname:gsub('.*/src/nvim/', 'nvim/')) .. non_static
   end
+elseif fname:find('.*/src/nvim/.*%.h$') then
+  static = ([[
+// IWYU pragma: private, include "%s"
+]]):format(fname:gsub('.*/src/nvim/', 'nvim/')) .. static
 elseif non_static_fname:find('/include/api/private/dispatch_wrappers%.h%.generated%.h$') then
   non_static = [[
 // IWYU pragma: private, include "nvim/api/private/dispatch.h"
@@ -308,15 +312,18 @@ F = io.open(static_fname, 'w')
 F:write(static)
 F:close()
 
-if non_static_fname == 'SKIP' then
+if any_static then
   F = io.open(fname, 'r')
-  if any_static then
-    local orig_text = F:read('*a')
-    local pat = '\n#%s?include%s+"' .. static_basename .. '"\n'
-    if not string.find(orig_text, pat) then
-      error('fail: missing include for ' .. static_basename .. ' in ' .. fname)
-    end
+  local orig_text = F:read('*a')
+  local pat = '\n#%s?include%s+"' .. static_basename .. '"\n'
+  local pat_comment = '\n#%s?include%s+"' .. static_basename .. '"%s*//'
+  if not string.find(orig_text, pat) and not string.find(orig_text, pat_comment) then
+    error('fail: missing include for ' .. static_basename .. ' in ' .. fname)
   end
+  F:close()
+end
+
+if non_static_fname == 'SKIP' then
   return -- only want static declarations
 end
 
@@ -329,7 +336,7 @@ if F ~= nil then
   if F:read('*a') == non_static then
     os.exit(0)
   end
-  io.close(F)
+  F:close()
 end
 
 F = io.open(non_static_fname, 'w')

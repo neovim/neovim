@@ -545,7 +545,6 @@ foreach(sfile ${NVIM_SOURCES}
     set(f "${d}/${f}")
     set(r "${d}/${r}")
   endif()
-  set (gf_basename "")
   if ("${ext}" STREQUAL ".c.h")
     continue() # .c.h files are sussy baka, skip
   elseif(${sfile} IN_LIST NVIM_HEADERS)
@@ -554,6 +553,7 @@ foreach(sfile ${NVIM_SOURCES}
     set(gf_h_h "SKIP")
     set(gf_h_h_out "")
   else()
+    set(gf_basename "${r}.c.generated.h")
     set(gf_c_h "${GENERATED_DIR}/${r}.c.generated.h")
     set(gf_h_h "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
     set(gf_h_h_out "${gf_h_h}")
