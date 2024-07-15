@@ -2199,6 +2199,47 @@ describe('TUI', function()
     }
   end)
 
+  it('draws screen lines with leading spaces correctly #29711', function()
+    local screen = tt.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'set foldcolumn=6 | call setline(1, ["", repeat("aabb", 1000)]) | echo 42',
+    }, { extra_rows = 10, cols = 66 })
+    screen:expect {
+      grid = [[
+                                                                        |
+            aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabb|*12
+            aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabba@@@|
+      [No Name] [+]                                   1,0-1          Top|
+      42                                                                |
+      -- TERMINAL --                                                    |
+    ]],
+      attr_ids = {},
+    }
+    feed_data('\12') -- Ctrl-L
+    -- The first line counts as 3 cells.
+    -- For the second line, 6 repeated spaces at the start counts as 2 cells,
+    -- so each screen line of the second line counts as 62 cells.
+    -- After drawing the first line and 8 screen lines of the second line,
+    -- 3 + 8 * 62 = 499 cells have been counted.
+    -- The 6 repeated spaces at the start of the next screen line exceeds the
+    -- 500-cell limit, so the buffer is flushed after these spaces.
+    screen:expect {
+      grid = [[
+                                                                        |
+            aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabb|*12
+            aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabba@@@|
+      [No Name] [+]                                   1,0-1          Top|
+                                                                        |
+      -- TERMINAL --                                                    |
+    ]],
+      attr_ids = {},
+    }
+  end)
+
   it('no heap-buffer-overflow when changing &columns', function()
     -- Set a different bg colour and change $TERM to something dumber so the `print_spaces()`
     -- codepath in `clear_region()` is hit.
