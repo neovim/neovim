@@ -166,7 +166,7 @@ TERMINAL
 
 TREESITTER
 
-• TODO
+• |vim.treesitter.get_highlight()| get highlight information from parser.
 
 TUI
 
