@@ -170,6 +170,9 @@ Other dependencies
     * https://github.com/nvim-winget
 * Org secrets/tokens:
     * `CODECOV_TOKEN`
+    * `BACKPORT_KEY`
+* Org/repo variables:
+    * `BACKPORT_APP`
 * Domain names (held in https://namecheap.com):
     * neovim.org
     * neovim.io
@@ -185,10 +188,10 @@ Refactoring
 
 Refactoring Vim structurally and aesthetically is an important goal of Neovim.
 But there are some modules that should not be changed significantly, because
-they are maintained Vim, at present. Until someone takes "ownership" of these
-modules, the cost of any significant changes (including style or structural
-changes that re-arrange the code) to these modules outweighs the benefit. The
-modules are:
+they are maintained by Vim, at present. Until someone takes "ownership" of
+these modules, the cost of any significant changes (including style or
+structural changes that re-arrange the code) to these modules outweighs the
+benefit. The modules are:
 
 - `regexp.c`
 - `indent_c.c`

@@ -112,7 +112,7 @@ sudo rm -rf /opt/nvim
 sudo tar -C /opt -xzf nvim-linux64.tar.gz
 ```
 
-Then add this to your shell config (`~/.bashrc`, `~/. zshrc`, ...):
+Then add this to your shell config (`~/.bashrc`, `~/.zshrc`, ...):
 
     export PATH="$PATH:/opt/nvim-linux64/bin"
 
@@ -129,7 +129,7 @@ To expose nvim globally:
     mkdir -p /opt/nvim
     mv nvim.appimage /opt/nvim/nvim
 
-And the following line to your shell config (`~/.bashrc`, `~/. zshrc`, ...):
+And the following line to your shell config (`~/.bashrc`, `~/.zshrc`, ...):
 
     export PATH="$PATH:/opt/nvim/"
 
