@@ -991,6 +991,10 @@ You can change the default by defining the variable g:tex_flavor to the format
 	let g:tex_flavor = "latex"
 Currently no other formats are recognized.
 
+TYPST							*ft-typst-plugin*
+
+							*g:typst_conceal*
+When |TRUE| the Typst filetype plugin will set the 'conceallevel' option to 2.
 
 VIM							*ft-vim-plugin*
 
