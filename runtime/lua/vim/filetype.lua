@@ -711,6 +711,7 @@ local extension = {
   mixal = 'mix',
   mm = detect.mm,
   nb = 'mma',
+  wl = 'mma',
   mmp = 'mmp',
   mms = detect.mms,
   DEF = 'modula2',
