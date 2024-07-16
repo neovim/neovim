@@ -112,10 +112,11 @@ func Test_signal_TSTP()
   " the test would then fail again if they are not deleted first.
   call delete('.Xsig_TERM.swp')
   call delete('XsetupAucmd')
-  call delete('XautoOut')
+  call delete('XautoOut1')
+  call delete('XautoOut2')
   let lines =<< trim END
-    au VimSuspend * call writefile(["VimSuspend triggered"], "XautoOut", "as")
-    au VimResume * call writefile(["VimResume triggered"], "XautoOut", "as")
+    au VimSuspend * call writefile(["VimSuspend triggered"], "XautoOut1", "as")
+    au VimResume * call writefile(["VimResume triggered"], "XautoOut2", "as")
   END
   call writefile(lines, 'XsetupAucmd')
 
@@ -130,21 +131,26 @@ func Test_signal_TSTP()
   " After TSTP the file is not saved (same function as ^Z)
   exe 'silent !kill -s TSTP ' .. pid_vim
   call WaitForAssert({-> assert_true(filereadable('.Xsig_TERM.swp'))})
+  sleep 100m
 
   " We resume after the suspend.  Sleep a bit for the signal to take effect,
   " also when running under valgrind. 
   exe 'silent !kill -s CONT ' .. pid_vim
-  sleep 100m
+  call WaitForAssert({-> assert_true(filereadable('XautoOut2'))})
+  sleep 10m
 
   call StopVimInTerminal(buf)
 
-  let result = readfile('XautoOut')
-  call assert_equal(["VimSuspend triggered", "VimResume triggered"], result)
+  let result = readfile('XautoOut1')
+  call assert_equal(["VimSuspend triggered"], result)
+  let result = readfile('XautoOut2')
+  call assert_equal(["VimResume triggered"], result)
 
   %bwipe!
   call delete('.Xsig_TERM.swp')
   call delete('XsetupAucmd')
-  call delete('XautoOut')
+  call delete('XautoOut1')
+  call delete('XautoOut2')
 endfunc
 
 " Test a deadly signal.
