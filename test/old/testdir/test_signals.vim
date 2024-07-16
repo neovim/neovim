@@ -86,8 +86,8 @@ func Test_signal_INT()
     throw 'Skipped: INT signal not supported'
   endif
 
-  " Skip the rest of the test when running with valgrind as signal INT is not
-  " received somehow by Vim when running with valgrind.
+  " Skip the test when running with valgrind as signal INT is not received
+  " somehow by Vim when running with valgrind.
   let cmd = GetVimCommand()
   if cmd =~ 'valgrind'
     throw 'Skipped: cannot test signal INT with valgrind'
@@ -120,10 +120,6 @@ func Test_deadly_signal_TERM()
     throw 'Skipped: TERM signal not supported'
   endif
   CheckRunVimInTerminal
-  let cmd = GetVimCommand()
-  if cmd =~ 'valgrind'
-    throw 'Skipped: cannot test signal TERM with valgrind'
-  endif
 
   " If test fails once, it can leave temporary files and trying to rerun
   " the test would then fail again if they are not deleted first.
