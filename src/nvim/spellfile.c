@@ -4105,8 +4105,8 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root, const char *n
       perc = (tot - n) * 100 / tot;
     }
     vim_snprintf(IObuff, IOSIZE,
-                 _("Compressed %s of %d nodes; %d (%ld%%) remaining"),
-                 name, tot, tot - n, perc);
+                 _("Compressed %s: %d of %d nodes; %d (%ld%%) remaining"),
+                 name, n, tot, tot - n, perc);
     spell_message(spin, IObuff);
   }
 #ifdef SPELL_PRINTTREE
