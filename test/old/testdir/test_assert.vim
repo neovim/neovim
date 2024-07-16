@@ -189,6 +189,22 @@ func Test_wrong_error_type()
   call assert_equal(type([]), type(verrors))
 endfunc
 
+func Test_compare_fail()
+  let s:v = {}
+  let s:x = {"a": s:v}
+  let s:v["b"] = s:x
+  let s:w = {"c": s:x, "d": ''}
+  try
+    call assert_equal(s:w, '')
+  catch
+    call assert_equal(0, assert_exception('E724:'))
+    " Nvim: expected value isn't shown as NULL
+    " call assert_match("Expected NULL but got ''", v:errors[0])
+    call assert_match("Expected .* but got ''", v:errors[0])
+    call remove(v:errors, 0)
+  endtry
+endfunc
+
 func Test_match()
   call assert_equal(0, assert_match('^f.*b.*r$', 'foobar'))
 
