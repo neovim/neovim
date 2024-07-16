@@ -337,6 +337,14 @@ func Test_ruby_Vim_evaluate()
   call assert_equal('FalseClass',rubyeval('Vim::evaluate("v:false").class'))
 endfunc
 
+func Test_ruby_Vim_blob()
+  throw 'skipped: TODO: '
+  call assert_equal('0z',         rubyeval('Vim::blob("")'))
+  call assert_equal('0z31326162', rubyeval('Vim::blob("12ab")'))
+  call assert_equal('0z00010203', rubyeval('Vim::blob("\x00\x01\x02\x03")'))
+  call assert_equal('0z8081FEFF', rubyeval('Vim::blob("\x80\x81\xfe\xff")'))
+endfunc
+
 func Test_ruby_Vim_evaluate_list()
   call setline(line('$'), ['2 line 2'])
   ruby Vim.command("normal /^2\n")
