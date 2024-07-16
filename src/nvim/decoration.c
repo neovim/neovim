@@ -292,6 +292,9 @@ static void decor_free_inner(DecorVirtText *vt, uint32_t first_idx)
   while (idx != DECOR_ID_INVALID) {
     DecorSignHighlight *sh = &kv_A(decor_items, idx);
     if (sh->flags & kSHIsSign) {
+      if (sh->sign_name) {
+        sign_after_delete(sh->sign_name, idx);
+      }
       xfree(sh->sign_name);
     }
     sh->flags = 0;

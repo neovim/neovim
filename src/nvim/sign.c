@@ -125,7 +125,9 @@ static void buf_set_sign(buf_T *buf, uint32_t *id, char *group, int prio, linenr
   uint16_t decor_flags = (sp->sn_text[0] ? MT_FLAG_DECOR_SIGNTEXT : 0)
                          | (has_hl ? MT_FLAG_DECOR_SIGNHL : 0);
 
-  DecorInline decor = { .ext = true, .data.ext = { .vt = NULL, .sh_idx = decor_put_sh(sign) } };
+  uint32_t sh_idx = decor_put_sh(sign);
+  set_put(uint32_t, &sp->sn_sh_idxs, sh_idx);
+  DecorInline decor = { .ext = true, .data.ext = { .vt = NULL, .sh_idx = sh_idx } };
   extmark_set(buf, ns, id, MIN(buf->b_ml.ml_line_count, lnum) - 1, 0, -1, -1,
               decor, decor_flags, true, false, true, true, NULL);
 }
@@ -248,6 +250,17 @@ static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
   }
 
   return OK;
+}
+
+/// Removes an sh_idx from the sign's sn_sh_idxs.
+void sign_after_delete(const char *name, uint32_t sh_idx)
+{
+  sign_T *sp = pmap_get(cstr_t)(&sign_map, name);
+  if (sp == NULL) {
+    return;
+  }
+
+  set_del(uint32_t, &sp->sn_sh_idxs, sh_idx);
 }
 
 bool buf_has_signs(const buf_T *buf)
@@ -405,12 +418,15 @@ static int sign_define_by_name(char *name, char *icon, char *text, char *linehl,
 {
   cstr_t *key;
   sign_T **sp = (sign_T **)pmap_put_ref(cstr_t)(&sign_map, name, &key, NULL);
+  bool update_existing = false;
 
   if (*sp == NULL) {
     *key = xstrdup(name);
     *sp = xcalloc(1, sizeof(sign_T));
     (*sp)->sn_name = (char *)(*key);
+    (*sp)->sn_sh_idxs = (Set(uint32_t)) SET_INIT;
   } else {
+    update_existing = true;
     // Signs may already exist, a redraw is needed in windows with a non-empty sign list.
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (buf_has_signs(wp->w_buffer)) {
@@ -441,6 +457,23 @@ static int sign_define_by_name(char *name, char *icon, char *text, char *linehl,
     }
   }
 
+  if (update_existing) {
+    uint32_t sh_idx;
+    set_foreach(&(*sp)->sn_sh_idxs, sh_idx, {
+      DecorSignHighlight *sh = decor_find_sign((DecorInline){
+        .ext = true,
+        .data.ext.sh_idx = sh_idx
+      });
+      if (sh != NULL) {
+        memcpy(sh->text, (*sp)->sn_text, SIGN_WIDTH * sizeof(schar_T));
+        sh->hl_id = (*sp)->sn_text_hl;
+        sh->line_hl_id = (*sp)->sn_line_hl;
+        sh->number_hl_id = (*sp)->sn_num_hl;
+        sh->cursorline_hl_id = (*sp)->sn_cul_hl;
+      }
+    });
+  }
+
   return OK;
 }
 
@@ -453,6 +486,7 @@ static int sign_undefine_by_name(const char *name)
     return FAIL;
   }
 
+  set_destroy(uint32_t, &sp->sn_sh_idxs);
   xfree(sp->sn_name);
   xfree(sp->sn_icon);
   xfree(sp);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nvim/decoration_defs.h"
+#include "nvim/map_defs.h"
 #include "nvim/types_defs.h"
 
 /// Sign attributes. Used by the screen refresh routines.
@@ -19,6 +20,7 @@ typedef struct {
   int sn_cul_hl;   // highlight ID for text on current line when 'cursorline' is set
   int sn_num_hl;   // highlight ID for line number
   int sn_priority;  // default priority of this sign, -1 means SIGN_DEF_PRIO
+  Set(uint32_t) sn_sh_idxs;  ///< All sh_idx indexes of this sign
 } sign_T;
 
 typedef struct {
