@@ -214,6 +214,7 @@ local extension = {
   asn = 'asn',
   asp = detect.asp,
   astro = 'astro',
+  asy = 'asy',
   atl = 'atlas',
   as = 'atlas',
   zed = 'authzed',
