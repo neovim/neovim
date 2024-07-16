@@ -519,9 +519,12 @@ local function _styletable_extmarks_virt_text(state, extmark, namespaces)
   --- @type integer,integer
   local row, col = extmark[2], extmark[3]
   if
-    extmark[4].virt_text_pos == 'inline'
-    or extmark[4].virt_text_pos == 'eol'
-    or extmark[4].virt_text_pos == 'overlay'
+    row < state.buflen
+    and (
+      extmark[4].virt_text_pos == 'inline'
+      or extmark[4].virt_text_pos == 'eol'
+      or extmark[4].virt_text_pos == 'overlay'
+    )
   then
     if extmark[4].virt_text_pos == 'eol' then
       style_line_insert_virt_text(styletable[row + 1], #vim.fn.getline(row + 1) + 1, { ' ' })
@@ -1144,7 +1147,13 @@ local function extend_pre(out, state)
     local line = vim.api.nvim_buf_get_lines(state.bufnr, row - 1, row, false)[1] or ''
     local s = ''
     s = s .. _pre_text_to_html(state, row)
-    for col = 1, #line + 1 do
+    local true_line_len = #line + 1
+    for k in pairs(style_line) do
+      if type(k) == 'number' and k > true_line_len then
+        true_line_len = k
+      end
+    end
+    for col = 1, true_line_len do
       local cell = style_line[col]
       --- @type table?
       local char
@@ -1191,7 +1200,7 @@ local function extend_pre(out, state)
         char = cell[4][#cell[4]]
       end
 
-      if col == #line + 1 and not char then
+      if col == true_line_len and not char then
         break
       end
 
