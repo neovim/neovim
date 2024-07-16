@@ -437,6 +437,7 @@ func s:GetFilenameChecks() abort
     \ 'matlab': ['file.m'],
     \ 'maxima': ['file.demo', 'file.dmt', 'file.dm1', 'file.dm2', 'file.dm3',
     \            'file.wxm', 'maxima-init.mac'],
+    \ 'mediawiki': ['file.mw', 'file.wiki'],
     \ 'mel': ['file.mel'],
     \ 'mermaid': ['file.mmd', 'file.mmdc', 'file.mermaid'],
     \ 'meson': ['meson.build', 'meson.options', 'meson_options.txt'],
