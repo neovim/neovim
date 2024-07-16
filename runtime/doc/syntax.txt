@@ -489,6 +489,25 @@ For Visual Basic use: >
 	:let g:filetype_asa = "aspvbs"
 	:let g:filetype_asp = "aspvbs"
 
+ASYMPTOTE					*asy.vim* *ft-asy-syntax*
+
+By default, only basic Asymptote keywords are highlighted. To highlight
+extended geometry keywords: >
+
+	:let g:asy_syn_plain = 1
+
+and for highlighting keywords related to 3D constructions: >
+
+	:let g:asy_syn_three = 1
+
+By default, Asymptote-defined colors (e.g: lightblue) are highlighted. To
+highlight TeX-defined colors (e.g: BlueViolet) use: >
+
+	:let g:asy_syn_texcolors = 1
+
+or for Xorg colors (e.g: AliceBlue): >
+
+	:let g:asy_syn_x11colors = 1
 
 BAAN						    *baan.vim* *baan-syntax*
 
