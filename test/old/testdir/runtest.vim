@@ -13,6 +13,9 @@
 " For csh:
 "     setenv TEST_FILTER Test_channel
 "
+" If the environment variable $TEST_SKIP_PAT is set then test functions
+" matching this pattern will be skipped.  It's the opposite of $TEST_FILTER.
+"
 " While working on a test you can make $TEST_NO_RETRY non-empty to not retry:
 "     export TEST_NO_RETRY=yes
 "
@@ -92,7 +95,12 @@ set encoding=utf-8
 " REDIR_TEST_TO_NULL has a very permissive SwapExists autocommand which is for
 " the test_name.vim file itself. Replace it here with a more restrictive one,
 " so we still catch mistakes.
-let s:test_script_fname = expand('%')
+if has("win32")
+  " replace any '/' directory separators by '\\'
+  let s:test_script_fname = substitute(expand('%'), '/', '\\', 'g')
+else
+  let s:test_script_fname = expand('%')
+endif
 au! SwapExists * call HandleSwapExists()
 func HandleSwapExists()
   if exists('g:ignoreSwapExists')
@@ -431,13 +439,17 @@ func FinishTesting()
 
   if s:done == 0
     if s:filtered > 0
-      let message = "NO tests match $TEST_FILTER: '" .. $TEST_FILTER .. "'"
+      if $TEST_FILTER != ''
+        let message = "NO tests match $TEST_FILTER: '" .. $TEST_FILTER .. "'"
+      else
+        let message = "ALL tests match $TEST_SKIP_PAT: '" .. $TEST_SKIP_PAT .. "'"
+      endif
     else
       let message = 'NO tests executed'
     endif
   else
     if s:filtered > 0
-      call add(s:messages, "Filtered " .. s:filtered .. " tests with $TEST_FILTER")
+      call add(s:messages, "Filtered " .. s:filtered .. " tests with $TEST_FILTER and $TEST_SKIP_PAT")
     endif
     let message = 'Executed ' . s:done . (s:done > 1 ? ' tests' : ' test')
   endif
@@ -530,6 +542,12 @@ endif
 
 " Execute the tests in alphabetical order.
 for g:testfunc in sort(s:tests)
+  if $TEST_SKIP_PAT != '' && g:testfunc =~ $TEST_SKIP_PAT
+    call add(s:messages, g:testfunc .. ' matches $TEST_SKIP_PAT')
+    let s:filtered += 1
+    continue
+  endif
+
   " Silence, please!
   set belloff=all
   let prev_error = ''
