@@ -586,6 +586,17 @@ any #lang directive overrides, use the following command: >
 	let g:freebasic_lang = "fblite"
 
 
+GDSCRIPT						*ft-gdscript-plugin*
+
+By default the following options are set, based on Godot official docs: >
+
+	setlocal noexpandtab softtabstop=0 shiftwidth=0
+
+To disable this behavior, set the following variable in your vimrc: >
+
+	let g:gdscript_recommended_style = 0
+
+
 GIT COMMIT                                              *ft-gitcommit-plugin*
 
 One command, :DiffGitCached, is provided to show a diff of the current commit

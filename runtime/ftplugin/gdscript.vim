@@ -25,6 +25,11 @@ setlocal commentstring=#\ %s
 setlocal foldignore=
 setlocal foldexpr=s:GDScriptFoldLevel()
 
+if get(g:, 'gdscript_recommended_style', 1)
+    setlocal noexpandtab tabstop=4 softtabstop=0 shiftwidth=0
+    let b:undo_ftplugin ..= ' | setlocal expandtab< tabstop< softtabstop< shiftwidth<'
+endif
+
 
 function s:GDScriptFoldLevel() abort
     let line = getline(v:lnum)
