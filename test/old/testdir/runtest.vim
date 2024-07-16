@@ -95,7 +95,12 @@ set encoding=utf-8
 " REDIR_TEST_TO_NULL has a very permissive SwapExists autocommand which is for
 " the test_name.vim file itself. Replace it here with a more restrictive one,
 " so we still catch mistakes.
-let s:test_script_fname = expand('%')
+if has("win32")
+  " replace any '/' directory separators by '\\'
+  let s:test_script_fname = substitute(expand('%'), '/', '\\', 'g')
+else
+  let s:test_script_fname = expand('%')
+endif
 au! SwapExists * call HandleSwapExists()
 func HandleSwapExists()
   if exists('g:ignoreSwapExists')
