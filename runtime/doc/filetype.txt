@@ -604,6 +604,17 @@ in the preview window.  It is equivalent to calling "git diff --cached" plus
 any arguments given to the command.
 
 
+GO							*ft-go-plugin*
+
+By default the following options are set, based on Golang official docs: >
+
+	setlocal noexpandtab softtabstop=0 shiftwidth=0
+
+To disable this behavior, set the following variable in your vimrc: >
+
+	let g:go_recommended_style = 0
+
+
 GPROF							*ft-gprof-plugin*
 
 The gprof filetype plugin defines a mapping <C-]> to jump from a function
