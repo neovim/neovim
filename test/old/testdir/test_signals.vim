@@ -86,24 +86,65 @@ func Test_signal_INT()
     throw 'Skipped: INT signal not supported'
   endif
 
-  " Skip the test when running with valgrind as signal INT is not received
-  " somehow by Vim when running with valgrind.
-  let cmd = GetVimCommand()
-  if cmd =~ 'valgrind'
-    throw 'Skipped: cannot test signal INT with valgrind'
-  endif
-
   let buf = RunVimInTerminal('', {'rows': 6})
   let pid_vim = term_getjob(buf)->job_info().process
 
   " Check that an endless loop in Vim is interrupted by signal INT.
+  call term_sendkeys(buf, ":call setline(1, 'running')\n")
   call term_sendkeys(buf, ":while 1 | endwhile\n")
   call WaitForAssert({-> assert_equal(':while 1 | endwhile', term_getline(buf, 6))})
   exe 'silent !kill -s INT ' .. pid_vim
+  sleep 50m
   call term_sendkeys(buf, ":call setline(1, 'INTERRUPTED')\n")
   call WaitForAssert({-> assert_equal('INTERRUPTED', term_getline(buf, 1))})
 
   call StopVimInTerminal(buf)
+endfunc
+
+" Test signal TSTP. Handler sets got_tstp.
+func Test_signal_TSTP()
+  CheckRunVimInTerminal
+  if !HasSignal('TSTP')
+    throw 'Skipped: TSTP signal not supported'
+  endif
+
+  " If test fails once, it can leave temporary files and trying to rerun
+  " the test would then fail again if they are not deleted first.
+  call delete('.Xsig_TERM.swp')
+  call delete('XsetupAucmd')
+  call delete('XautoOut')
+  let lines =<< trim END
+    au VimSuspend * call writefile(["VimSuspend triggered"], "XautoOut", "as")
+    au VimResume * call writefile(["VimResume triggered"], "XautoOut", "as")
+  END
+  call writefile(lines, 'XsetupAucmd')
+
+  let buf = RunVimInTerminal('-S XsetupAucmd Xsig_TERM', {'rows': 6})
+  let pid_vim = term_getjob(buf)->job_info().process
+
+  call term_sendkeys(buf, ":call setline(1, 'foo')\n")
+  call WaitForAssert({-> assert_equal('foo', term_getline(buf, 1))})
+
+  call assert_false(filereadable('Xsig_TERM'))
+
+  " After TSTP the file is not saved (same function as ^Z)
+  exe 'silent !kill -s TSTP ' .. pid_vim
+  call WaitForAssert({-> assert_true(filereadable('.Xsig_TERM.swp'))})
+
+  " We resume after the suspend.  Sleep a bit for the signal to take effect,
+  " also when running under valgrind. 
+  exe 'silent !kill -s CONT ' .. pid_vim
+  sleep 100m
+
+  call StopVimInTerminal(buf)
+
+  let result = readfile('XautoOut')
+  call assert_equal(["VimSuspend triggered", "VimResume triggered"], result)
+
+  %bwipe!
+  call delete('.Xsig_TERM.swp')
+  call delete('XsetupAucmd')
+  call delete('XautoOut')
 endfunc
 
 " Test a deadly signal.
