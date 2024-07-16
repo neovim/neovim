@@ -2069,3 +2069,12 @@ func Test_sign_funcs_multi()
   enew!
   call delete("Xsign")
 endfunc
+
+func Test_sign_null_list()
+  eval v:_null_list->sign_define()
+  eval v:_null_list->sign_placelist()
+  eval v:_null_list->sign_undefine()
+  eval v:_null_list->sign_unplacelist()
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
