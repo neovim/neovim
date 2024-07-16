@@ -855,17 +855,20 @@ api.nvim_create_autocmd('VimLeavePre', {
 ---@param params table|nil Parameters to send to the server
 ---@param handler? lsp.Handler See |lsp-handler|
 ---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
----
+---@param on_unsupported? fun()
+---       The function to call when the buffer has no clients that support the given method.
+---       Defaults to an `ERROR` level notification.
 ---@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
 ---for all successful requests.
 ---@return function _cancel_all_requests Function which can be used to
 ---cancel all the requests. You could instead
 ---iterate all clients and call their `cancel_request()` methods.
-function lsp.buf_request(bufnr, method, params, handler)
+function lsp.buf_request(bufnr, method, params, handler, on_unsupported)
   validate({
     bufnr = { bufnr, 'n', true },
     method = { method, 's' },
     handler = { handler, 'f', true },
+    on_unsupported = { on_unsupported, 'f', true },
   })
 
   bufnr = resolve_bufnr(bufnr)
@@ -887,7 +890,11 @@ function lsp.buf_request(bufnr, method, params, handler)
 
   -- if has client but no clients support the given method, notify the user
   if next(clients) and not method_supported then
-    vim.notify(lsp._unsupported_method(method), vim.log.levels.ERROR)
+    if on_unsupported == nil then
+      vim.notify(lsp._unsupported_method(method), vim.log.levels.ERROR)
+    else
+      on_unsupported()
+    end
     vim.cmd.redraw()
     return {}, function() end
   end
