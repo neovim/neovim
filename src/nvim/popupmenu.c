@@ -941,11 +941,14 @@ static bool pum_set_selected(int n, int repeat)
   pum_selected = n;
   unsigned cur_cot_flags = get_cot_flags();
   bool use_float = (cur_cot_flags & kOptCotFlagPopup) != 0;
-  // when new leader add and info window is shown and no selected we still
-  // need use the first index item to update the info float window position.
-  bool force_select = use_float && pum_selected < 0 && win_float_find_preview();
-  if (force_select) {
-    pum_selected = 0;
+
+  // Close the floating preview window if 'selected' is -1, indicating a return to the original
+  // state. It is also closed when the selected item has no corresponding info item.
+  if (use_float && (pum_selected < 0 || pum_array[pum_selected].pum_info == NULL)) {
+    win_T *wp = win_float_find_preview();
+    if (wp) {
+      win_close(wp, true, true);
+    }
   }
 
   if ((pum_selected >= 0) && (pum_selected < pum_size)) {
@@ -1162,11 +1165,6 @@ static bool pum_set_selected(int n, int repeat)
         unblock_autocmds();
       }
     }
-  }
-
-  // restore before selected value
-  if (force_select) {
-    pum_selected = n;
   }
 
   return resized;
