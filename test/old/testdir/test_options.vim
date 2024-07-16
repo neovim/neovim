@@ -1367,6 +1367,31 @@ func Test_local_scrolloff()
   set siso&
 endfunc
 
+func Test_writedelay()
+  CheckFunction reltimefloat
+
+  new
+  call setline(1, 'empty')
+  " Nvim: 'writedelay' is applied per screen line.
+  " Create 7 vertical splits first.
+  vs | vs | vs | vs | vs | vs
+  redraw
+  set writedelay=10
+  let start = reltime()
+  " call setline(1, repeat('x', 70))
+  " Nvim: enable 'writedelay' per screen line.
+  " In each of the 7 vertical splits, 10 screen lines need to be drawn.
+  set redrawdebug+=line
+  call setline(1, repeat(['x'], 10))
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  set writedelay=0
+  " With 'writedelay' set should take at least 30 * 10 msec
+  call assert_inrange(30 * 0.01, 999.0, elapsed)
+
+  bwipe!
+endfunc
+
 func Test_visualbell()
   set belloff=
   set visualbell
