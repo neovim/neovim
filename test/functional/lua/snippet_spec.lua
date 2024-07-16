@@ -58,7 +58,13 @@ describe('vim.snippet', function()
   end)
 
   it('adds indentation based on the start of snippet lines', function()
+    local curbuf = api.nvim_get_current_buf()
+
     test_expand_success({ 'if $1 then', '  $0', 'end' }, { 'if  then', '  ', 'end' })
+
+    -- Regression test: #29658
+    api.nvim_buf_set_lines(curbuf, 0, -1, false, {})
+    test_expand_success({ '${1:foo^bar}\n' }, { 'foo^bar', '' })
   end)
 
   it('replaces tabs with spaces when expandtab is set', function()
