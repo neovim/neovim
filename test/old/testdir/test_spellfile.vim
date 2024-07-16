@@ -191,6 +191,11 @@ func Spellfile_Test(content, emsg)
   " Add the spell file header and version (VIMspell2)
   let v = 0z56494D7370656C6C32 + a:content
   call writefile(v, splfile, 'b')
+
+  " 'encoding' is set before each test to clear the previously loaded suggest
+  " file from memory.
+  set encoding=utf-8
+
   set runtimepath=./Xtest
   set spelllang=Xtest
   if a:emsg != ''
@@ -311,6 +316,9 @@ func Test_spellfile_format_error()
   " SN_SOFO: missing sofoto
   call Spellfile_Test(0z0600000000050001610000, 'E759:')
 
+  " SN_SOFO: empty sofofrom and sofoto
+  call Spellfile_Test(0z06000000000400000000FF000000000000000000000000, '')
+
   " SN_COMPOUND: compmax is less than 2
   call Spellfile_Test(0z08000000000101, 'E759:')
 
@@ -320,6 +328,12 @@ func Test_spellfile_format_error()
   " SN_COMPOUND: missing compoptions
   call Spellfile_Test(0z080000000005040101, 'E758:')
 
+  " SN_COMPOUND: missing comppattern
+  call Spellfile_Test(0z08000000000704010100000001, 'E758:')
+
+  " SN_COMPOUND: incorrect comppatlen
+  call Spellfile_Test(0z080000000007040101000000020165, 'E758:')
+
   " SN_INFO: missing info
   call Spellfile_Test(0z0F0000000005040101, '')
 
@@ -328,6 +342,12 @@ func Test_spellfile_format_error()
 
   " SN_MAP: missing midword
   call Spellfile_Test(0z0700000000040102, '')
+
+  " SN_MAP: empty map string
+  call Spellfile_Test(0z070000000000FF000000000000000000000000, '')
+
+  " SN_MAP: duplicate multibyte character
+  call Spellfile_Test(0z070000000004DC81DC81, 'E783:')
 
   " SN_SYLLABLE: missing SYLLABLE item
   call Spellfile_Test(0z0900000000040102, '')
@@ -345,11 +365,20 @@ func Test_spellfile_format_error()
   " LWORDTREE: missing tree node value
   call Spellfile_Test(0zFF0000000402, 'E758:')
 
+  " LWORDTREE: incorrect sibling node count
+  call Spellfile_Test(0zFF00000001040000000000000000, 'E759:')
+
   " KWORDTREE: missing tree node
   call Spellfile_Test(0zFF0000000000000004, 'E758:')
 
   " PREFIXTREE: missing tree node
   call Spellfile_Test(0zFF000000000000000000000004, 'E758:')
+
+  " PREFIXTREE: incorrect prefcondnr
+  call Spellfile_Test(0zFF000000000000000000000002010200000020, 'E759:')
+
+  " PREFIXTREE: invalid nodeidx
+  call Spellfile_Test(0zFF00000000000000000000000201010000, 'E759:')
 
   let &rtp = save_rtp
   call delete('Xtest', 'rf')
@@ -517,6 +546,14 @@ func Test_wordlist_dic()
   call writefile(["ʀʀ"], 'Xwordlist.dic')
   let output = execute('mkspell! -ascii Xwordlist.spl Xwordlist.dic')
   call assert_match('Ignored 1 words with non-ASCII characters', output)
+
+  " keep case of a word
+  let lines =<< trim [END]
+    example/=
+  [END]
+  call writefile(lines, 'Xwordlist.dic')
+  let output = execute('mkspell! Xwordlist.spl Xwordlist.dic')
+  call assert_match('Compressed keep-case:', output)
 
   call delete('Xwordlist.spl')
   call delete('Xwordlist.dic')
@@ -729,6 +766,36 @@ func Test_aff_file_format_error()
   call writefile(['FLAG long', 'SFX L Y 1', 'SFX L 0 re [^x]'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Illegal flag in Xtest.aff line 2: L', output)
+
+  " Nvim: non-utf8 encoding not supported
+  " " missing character in UPP entry. The character table is used only in a
+  " " non-utf8 encoding
+  " call writefile(['FOL abc', 'LOW abc', 'UPP A'], 'Xtest.aff')
+  " let save_encoding = &encoding
+  " set encoding=cp949
+  " call assert_fails('mkspell! Xtest.spl Xtest', 'E761:')
+  " let &encoding = save_encoding
+  "
+  " " character range doesn't match between FOL and LOW entries
+  " call writefile(["FOL \u0102bc", 'LOW abc', 'UPP ABC'], 'Xtest.aff')
+  " let save_encoding = &encoding
+  " set encoding=cp949
+  " call assert_fails('mkspell! Xtest.spl Xtest', 'E762:')
+  " let &encoding = save_encoding
+  "
+  " " character range doesn't match between FOL and UPP entries
+  " call writefile(["FOL \u0102bc", "LOW \u0102bc", 'UPP ABC'], 'Xtest.aff')
+  " let save_encoding = &encoding
+  " set encoding=cp949
+  " call assert_fails('mkspell! Xtest.spl Xtest', 'E762:')
+  " let &encoding = save_encoding
+  "
+  " " additional characters in LOW and UPP entries
+  " call writefile(["FOL ab", "LOW abc", 'UPP ABC'], 'Xtest.aff')
+  " let save_encoding = &encoding
+  " set encoding=cp949
+  " call assert_fails('mkspell! Xtest.spl Xtest', 'E761:')
+  " let &encoding = save_encoding
 
   " duplicate word in the .dic file
   call writefile(['2', 'good', 'good', 'good'], 'Xtest.dic')
