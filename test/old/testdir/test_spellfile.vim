@@ -319,6 +319,9 @@ func Test_spellfile_format_error()
   " SN_SOFO: empty sofofrom and sofoto
   call Spellfile_Test(0z06000000000400000000FF000000000000000000000000, '')
 
+  " SN_SOFO: multi-byte characters in sofofrom and sofoto
+  call Spellfile_Test(0z0600000000080002CF810002CF82FF000000000000000000000000, '')
+
   " SN_COMPOUND: compmax is less than 2
   call Spellfile_Test(0z08000000000101, 'E759:')
 
@@ -562,7 +565,13 @@ endfunc
 " Test for the :mkspell command
 func Test_mkspell()
   call assert_fails('mkspell Xtest_us.spl', 'E751:')
+  call assert_fails('mkspell Xtest.spl abc', 'E484:')
   call assert_fails('mkspell a b c d e f g h i j k', 'E754:')
+
+  " create a .aff file but not the .dic file
+  call writefile([], 'Xtest.aff')
+  call assert_fails('mkspell Xtest.spl Xtest', 'E484:')
+  call delete('Xtest.aff')
 
   call writefile([], 'Xtest.spl')
   call writefile([], 'Xtest.dic')
@@ -796,6 +805,14 @@ func Test_aff_file_format_error()
   " set encoding=cp949
   " call assert_fails('mkspell! Xtest.spl Xtest', 'E761:')
   " let &encoding = save_encoding
+  "
+  " " missing UPP entry
+  " call writefile(["FOL abc", "LOW abc"], 'Xtest.aff')
+  " let save_encoding = &encoding
+  " set encoding=cp949
+  " let output = execute('mkspell! Xtest.spl Xtest')
+  " call assert_match('Missing FOL/LOW/UPP line in Xtest.aff', output)
+  " let &encoding = save_encoding
 
   " duplicate word in the .dic file
   call writefile(['2', 'good', 'good', 'good'], 'Xtest.dic')
@@ -803,6 +820,20 @@ func Test_aff_file_format_error()
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('First duplicate word in Xtest.dic line 3: good', output)
   call assert_match('2 duplicate word(s) in Xtest.dic', output)
+
+  " use multiple .aff files with different values for COMPOUNDWORDMAX and
+  " MIDWORD (number and string)
+  call writefile(['1', 'world'], 'Xtest_US.dic')
+  call writefile(['1', 'world'], 'Xtest_CA.dic')
+  call writefile(["COMPOUNDWORDMAX 3", "MIDWORD '-"], 'Xtest_US.aff')
+  call writefile(["COMPOUNDWORDMAX 4", "MIDWORD '="], 'Xtest_CA.aff')
+  let output = execute('mkspell! Xtest.spl Xtest_US Xtest_CA')
+  call assert_match('COMPOUNDWORDMAX value differs from what is used in another .aff file', output)
+  call assert_match('MIDWORD value differs from what is used in another .aff file', output)
+  call delete('Xtest_US.dic')
+  call delete('Xtest_CA.dic')
+  call delete('Xtest_US.aff')
+  call delete('Xtest_CA.aff')
 
   call delete('Xtest.dic')
   call delete('Xtest.aff')
