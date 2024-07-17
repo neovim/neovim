@@ -77,6 +77,9 @@ typedef struct {
 } DecorState;
 
 EXTERN DecorState decor_state INIT( = { 0 });
+// TODO(bfredl): These should maybe be per-buffer, so that all resources
+// associated with a buffer can be freed when the buffer is unloaded.
+EXTERN kvec_t(DecorSignHighlight) decor_items INIT( = KV_INITIAL_VALUE);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.h.generated.h"
