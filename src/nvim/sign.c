@@ -404,19 +404,13 @@ static int sign_define_by_name(char *name, char *icon, char *text, char *linehl,
                                char *culhl, char *numhl, int prio)
 {
   cstr_t *key;
-  sign_T **sp = (sign_T **)pmap_put_ref(cstr_t)(&sign_map, name, &key, NULL);
+  bool new_sign = false;
+  sign_T **sp = (sign_T **)pmap_put_ref(cstr_t)(&sign_map, name, &key, &new_sign);
 
-  if (*sp == NULL) {
+  if (new_sign) {
     *key = xstrdup(name);
     *sp = xcalloc(1, sizeof(sign_T));
     (*sp)->sn_name = (char *)(*key);
-  } else {
-    // Signs may already exist, a redraw is needed in windows with a non-empty sign list.
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (buf_has_signs(wp->w_buffer)) {
-        redraw_buf_later(wp->w_buffer, UPD_NOT_VALID);
-      }
-    }
   }
 
   // Set values for a defined sign.
@@ -441,6 +435,28 @@ static int sign_define_by_name(char *name, char *icon, char *text, char *linehl,
     }
   }
 
+  // Update already placed signs and redraw if necessary when modifying a sign.
+  if (!new_sign) {
+    bool did_redraw = false;
+    for (size_t i = 0; i < kv_size(decor_items); i++) {
+      DecorSignHighlight *sh = &kv_A(decor_items, i);
+      if (sh->sign_name && strcmp(sh->sign_name, name) == 0) {
+        memcpy(sh->text, (*sp)->sn_text, SIGN_WIDTH * sizeof(schar_T));
+        sh->hl_id = (*sp)->sn_text_hl;
+        sh->line_hl_id = (*sp)->sn_line_hl;
+        sh->number_hl_id = (*sp)->sn_num_hl;
+        sh->cursorline_hl_id = (*sp)->sn_cul_hl;
+        if (!did_redraw) {
+          FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+            if (buf_has_signs(wp->w_buffer)) {
+              redraw_buf_later(wp->w_buffer, UPD_NOT_VALID);
+            }
+          }
+          did_redraw = true;
+        }
+      }
+    }
+  }
   return OK;
 }
 
