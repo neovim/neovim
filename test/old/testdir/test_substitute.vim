@@ -743,7 +743,7 @@ func Test_sub_highlight_zero_match()
 endfunc
 
 func Test_nocatch_sub_failure_handling()
-  " normal error results in all replacements 
+  " normal error results in all replacements
   func Foo()
     foobar
   endfunc

@@ -1164,7 +1164,7 @@ func Test_compare_column_matchstr()
   " matchstr().
   enew
   call setline(1, ['one', 'two', 'three'])
-  :3 
+  :3
   :/ee
   bwipe!
   set re=1

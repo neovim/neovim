@@ -348,8 +348,15 @@ endfunc
 " Test that the garbage collector isn't triggered if a timer callback invokes
 " vgetc().
 func Test_nocatch_timer_garbage_collect()
-  " skipped: Nvim does not support test_garbagecollect_soon(), test_override()
-  return
+  " FIXME: why does this fail only on MacOS M1?
+  try
+    CheckNotMacM1
+    throw 'Skipped: Nvim does not support test_garbagecollect_soon(), test_override()'
+  catch /Skipped/
+    let g:skipped_reason = v:exception
+    return
+  endtry
+
   " 'uptimetime. must be bigger than the timer timeout
   set ut=200
   call test_garbagecollect_soon()

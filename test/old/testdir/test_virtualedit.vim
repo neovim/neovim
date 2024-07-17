@@ -696,14 +696,14 @@ func Test_virtualedit_mouse()
   set virtualedit&
 endfunc
 
-" this was replacing the NUL at the end of the line 
+" this was replacing the NUL at the end of the line
 func Test_virtualedit_replace_after_tab()
   new
   s/\v/	0
   set ve=all
   let @" = ''
   sil! norm vPvr0
-  
+
   call assert_equal("\t0", getline(1))
   set ve&
   bwipe!

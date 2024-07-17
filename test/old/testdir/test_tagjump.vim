@@ -777,7 +777,7 @@ func Test_tag_guess()
   let code =<< trim [CODE]
 
     int FUNC1  (int x) { }
-    int 
+    int
     func2   (int y) { }
     int * func3 () { }
 

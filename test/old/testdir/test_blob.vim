@@ -850,7 +850,7 @@ func Test_indexof()
   call assert_equal(-1, indexof(v:_null_blob, "v:val == 0xde"))
   call assert_equal(-1, indexof(b, v:_null_string))
   " Nvim doesn't have null functions
-  " call assert_equal(-1, indexof(b, test_null_function())) 
+  " call assert_equal(-1, indexof(b, test_null_function()))
 
   let b = 0z01020102
   call assert_equal(1, indexof(b, "v:val == 0x02", #{startidx: 0}))
