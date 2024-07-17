@@ -1020,52 +1020,50 @@ endfunc
 
 " More tests for 'errorformat'
 func Test_efm1()
-    if !has('unix')
-	" The 'errorformat' setting is different on non-Unix systems.
-	" This test works only on Unix-like systems.
-	return
-    endif
+  " The 'errorformat' setting is different on non-Unix systems.
+  " This test works only on Unix-like systems.
+  CheckUnix
 
-    let l =<< trim [DATA]
-      "Xtestfile", line 4.12: 1506-045 (S) Undeclared identifier fd_set.
-      ﻿"Xtestfile", line 6 col 19; this is an error
-      gcc -c -DHAVE_CONFIsing-prototypes -I/usr/X11R6/include  version.c
-      Xtestfile:9: parse error before `asd'
-      make: *** [src/vim/testdir/Makefile:100: test_quickfix] Error 1
-      in file "Xtestfile" linenr 10: there is an error
+  let l =<< trim [DATA]
+    "Xtestfile", line 4.12: 1506-045 (S) Undeclared identifier fd_set.
+    ﻿"Xtestfile", line 6 col 19; this is an error
+    gcc -c -DHAVE_CONFIsing-prototypes -I/usr/X11R6/include  version.c
+    Xtestfile:9: parse error before `asd'
+    make: *** [src/vim/testdir/Makefile:100: test_quickfix] Error 1
+    in file "Xtestfile" linenr 10: there is an error
 
-      2 returned
-      "Xtestfile", line 11 col 1; this is an error
-      "Xtestfile", line 12 col 2; this is another error
-      "Xtestfile", line 14:10; this is an error in column 10
-      =Xtestfile=, line 15:10; this is another error, but in vcol 10 this time
-      "Xtestfile", linenr 16: yet another problem
-      Error in "Xtestfile" at line 17:
-      x should be a dot
-      	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 17
-                  ^
-      Error in "Xtestfile" at line 18:
-      x should be a dot
-      	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 18
-      .............^
-      Error in "Xtestfile" at line 19:
-      x should be a dot
-      	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 19
-      --------------^
-      Error in "Xtestfile" at line 20:
-      x should be a dot
-      	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20
-      	       ^
+    2 returned
+    "Xtestfile", line 11 col 1; this is an error
+    "Xtestfile", line 12 col 2; this is another error
+    "Xtestfile", line 14:10; this is an error in column 10
+    =Xtestfile=, line 15:10; this is another error, but in vcol 10 this time
+    "Xtestfile", linenr 16: yet another problem
+    Error in "Xtestfile" at line 17:
+    x should be a dot
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 17
+                ^
+    Error in "Xtestfile" at line 18:
+    x should be a dot
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 18
+    .............^
+    Error in "Xtestfile" at line 19:
+    x should be a dot
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 19
+    --------------^
+    Error in "Xtestfile" at line 20:
+    x should be a dot
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20
+	       ^
 
-      Does anyone know what is the problem and how to correction it?
-      "Xtestfile", line 21 col 9: What is the title of the quickfix window?
-      "Xtestfile", line 22 col 9: What is the title of the quickfix window?
-    [DATA]
+    Does anyone know what is the problem and how to correction it?
+    "Xtestfile", line 21 col 9: What is the title of the quickfix window?
+    "Xtestfile", line 22 col 9: What is the title of the quickfix window?
+  [DATA]
 
-    call writefile(l, 'Xerrorfile1')
-    call writefile(l[:-2], 'Xerrorfile2')
+  call writefile(l, 'Xerrorfile1')
+  call writefile(l[:-2], 'Xerrorfile2')
 
-    let m =<< [DATA]
+  let m =<< [DATA]
 	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  2
 	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  3
 	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  4
@@ -1088,55 +1086,55 @@ func Test_efm1()
 	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 21
 	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 22
 [DATA]
-    call writefile(m, 'Xtestfile')
+  call writefile(m, 'Xtestfile')
 
-    let save_efm = &efm
-    set efm+==%f=\\,\ line\ %l%*\\D%v%*[^\ ]\ %m
-    set efm^=%AError\ in\ \"%f\"\ at\ line\ %l:,%Z%p^,%C%m
+  let save_efm = &efm
+  set efm+==%f=\\,\ line\ %l%*\\D%v%*[^\ ]\ %m
+  set efm^=%AError\ in\ \"%f\"\ at\ line\ %l:,%Z%p^,%C%m
 
-    exe 'cf Xerrorfile2'
-    clast
-    copen
-    call assert_equal(':cf Xerrorfile2', w:quickfix_title)
-    wincmd p
+  exe 'cf Xerrorfile2'
+  clast
+  copen
+  call assert_equal(':cf Xerrorfile2', w:quickfix_title)
+  wincmd p
 
-    exe 'cf Xerrorfile1'
-    call assert_equal([4, 12], [line('.'), col('.')])
-    cn
-    call assert_equal([6, 19], [line('.'), col('.')])
-    cn
-    call assert_equal([9, 2], [line('.'), col('.')])
-    cn
-    call assert_equal([10, 2], [line('.'), col('.')])
-    cn
-    call assert_equal([11, 1], [line('.'), col('.')])
-    cn
-    call assert_equal([12, 2], [line('.'), col('.')])
-    cn
-    call assert_equal([14, 10], [line('.'), col('.')])
-    cn
-    call assert_equal([15, 3, 10], [line('.'), col('.'), virtcol('.')])
-    cn
-    call assert_equal([16, 2], [line('.'), col('.')])
-    cn
-    call assert_equal([17, 6], [line('.'), col('.')])
-    cn
-    call assert_equal([18, 7], [line('.'), col('.')])
-    cn
-    call assert_equal([19, 8], [line('.'), col('.')])
-    cn
-    call assert_equal([20, 9], [line('.'), col('.')])
-    clast
-    cprev
-    cprev
-    wincmd w
-    call assert_equal(':cf Xerrorfile1', w:quickfix_title)
-    wincmd p
+  exe 'cf Xerrorfile1'
+  call assert_equal([4, 12], [line('.'), col('.')])
+  cn
+  call assert_equal([6, 19], [line('.'), col('.')])
+  cn
+  call assert_equal([9, 2], [line('.'), col('.')])
+  cn
+  call assert_equal([10, 2], [line('.'), col('.')])
+  cn
+  call assert_equal([11, 1], [line('.'), col('.')])
+  cn
+  call assert_equal([12, 2], [line('.'), col('.')])
+  cn
+  call assert_equal([14, 10], [line('.'), col('.')])
+  cn
+  call assert_equal([15, 3, 10], [line('.'), col('.'), virtcol('.')])
+  cn
+  call assert_equal([16, 2], [line('.'), col('.')])
+  cn
+  call assert_equal([17, 6], [line('.'), col('.')])
+  cn
+  call assert_equal([18, 7], [line('.'), col('.')])
+  cn
+  call assert_equal([19, 8], [line('.'), col('.')])
+  cn
+  call assert_equal([20, 9], [line('.'), col('.')])
+  clast
+  cprev
+  cprev
+  wincmd w
+  call assert_equal(':cf Xerrorfile1', w:quickfix_title)
+  wincmd p
 
-    let &efm = save_efm
-    call delete('Xerrorfile1')
-    call delete('Xerrorfile2')
-    call delete('Xtestfile')
+  let &efm = save_efm
+  call delete('Xerrorfile1')
+  call delete('Xerrorfile2')
+  call delete('Xtestfile')
 endfunc
 
 " Test for quickfix directory stack support
@@ -1410,7 +1408,7 @@ func Test_efm2()
      failUnlessEqual
         raise self.failureException, \\
     W:AssertionError: 34 != 33
-  
+
     --------------------------------------------------------------
     Ran 27 tests in 0.063s
   [DATA]

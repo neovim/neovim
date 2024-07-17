@@ -7,15 +7,15 @@ let s:slnum = str2nr(expand('<slnum>'))
 let s:sflnum = str2nr(expand('<sflnum>'))
 
 func s:expand_sfile()
-  return expand('<sfile>')  
+  return expand('<sfile>')
 endfunc
 
 func s:expand_slnum()
-  return str2nr(expand('<slnum>'))  
+  return str2nr(expand('<slnum>'))
 endfunc
 
 func s:expand_sflnum()
-  return str2nr(expand('<sflnum>'))  
+  return str2nr(expand('<sflnum>'))
 endfunc
 
 " This test depends on the location in the test file, put it first.

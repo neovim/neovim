@@ -128,7 +128,7 @@ endfunc
 
 func Test_method_syntax()
   eval [1, 2, 3]  ->sort( )
-  eval [1, 2, 3]  
+  eval [1, 2, 3]
 	\ ->sort(
 	\ )
   call assert_fails('eval [1, 2, 3]-> sort()', 'E15:')

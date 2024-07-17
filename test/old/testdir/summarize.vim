@@ -33,7 +33,7 @@ if 1
     silent %s/^SKIPPED \zs.*/\=Count(submatch(0), 'skipped')/egn
     silent %s/^\(\d\+\)\s\+FAILED:/\=Count(submatch(1), 'failed')/egn
 
-    call extend(output, ["Skipped:"]) 
+    call extend(output, ["Skipped:"])
     call extend(output, skipped_output)
 
     call extend(output, [

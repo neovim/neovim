@@ -1,5 +1,5 @@
 " Tests for Unicode manipulations
- 
+
 source check.vim
 source view_util.vim
 source screendump.vim
@@ -112,7 +112,7 @@ func Test_list2str_str2list_latin1()
 
   let save_encoding = &encoding
   " set encoding=latin1
-  
+
   let lres = str2list(s, 1)
   let sres = list2str(l, 1)
   call assert_equal([65, 66, 67], str2list("ABC"))

@@ -1332,12 +1332,12 @@ endfunc
 func Test_diff_and_scroll()
   " this was causing an ml_get error
   set ls=2
-  for i in range(winheight(0) * 2) 
-    call setline(i, i < winheight(0) - 10 ? i : i + 10) 
+  for i in range(winheight(0) * 2)
+    call setline(i, i < winheight(0) - 10 ? i : i + 10)
   endfor
   vnew
-  for i in range(winheight(0)*2 + 10) 
-    call setline(i, i < winheight(0) - 10 ? 0 : i) 
+  for i in range(winheight(0)*2 + 10)
+    call setline(i, i < winheight(0) - 10 ? 0 : i)
   endfor
   diffthis
   wincmd p

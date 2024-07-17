@@ -1,7 +1,7 @@
 
 " Test for the :scriptnames command
 func Test_scriptnames()
-  call writefile(['let did_load_script = 123'], 'Xscripting')
+  call writefile(['let did_load_script = 123'], 'Xscripting', 'D')
   source Xscripting
   call assert_equal(123, g:did_load_script)
 
@@ -22,7 +22,6 @@ func Test_scriptnames()
   call assert_equal('Xscripting', expand('%:t'))
 
   bwipe
-  call delete('Xscripting')
 
   let msgs = execute('messages')
   scriptnames
@@ -47,7 +46,7 @@ func Test_getscriptinfo()
     " def Xscript_def_func2()
     " enddef
   END
-  call writefile(lines, 'X22script91')
+  call writefile(lines, 'X22script91', 'D')
   source X22script91
   let l = getscriptinfo()
   call assert_match('X22script91$', l[-1].name)
@@ -103,8 +102,6 @@ func Test_getscriptinfo()
 
   let max_sid = max(map(getscriptinfo(), { k, v -> v.sid }))
   call assert_equal([], getscriptinfo({'sid': max_sid + 1}))
-
-  call delete('X22script91')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

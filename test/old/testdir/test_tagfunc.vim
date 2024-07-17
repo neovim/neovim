@@ -89,11 +89,11 @@ func Test_tagfunc()
     return v:null
   endfunc
   set tags= tfu=NullTagFunc
-  call assert_fails('tag nothing', 'E433')
+  call assert_fails('tag nothing', 'E433:')
   delf NullTagFunc
 
   bwipe!
-  set tags& tfu& cpt& 
+  set tags& tfu& cpt&
   call delete('Xfile1')
 endfunc
 

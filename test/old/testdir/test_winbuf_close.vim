@@ -223,7 +223,7 @@ func Test_window_close_splitright_noequalalways()
   execute "normal \<c-w>b"
   let h = winheight(0)
   let w = win_getid()
-  new 
+  new
   q
   call assert_equal(h, winheight(0), "Window height does not match eight before opening and closing another window")
   call assert_equal(w, win_getid(), "Did not return to original window after opening and closing a window")

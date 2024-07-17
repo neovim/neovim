@@ -49,11 +49,11 @@ func Test_if()
 endfunc
 
 function Try_arg_true_false(expr, false_val, true_val)
-  for v in ['v:false', '0', '"0"', '"foo"', '" "'] 
+  for v in ['v:false', '0', '"0"', '"foo"', '" "']
     let r = eval(substitute(a:expr, '%v%', v, ''))
     call assert_equal(a:false_val, r, 'result for ' . v . ' is not ' . string(a:false_val) . ' but ' . string(r))
   endfor
-  for v in ['v:true', '1', '"1"', '"1foo"'] 
+  for v in ['v:true', '1', '"1"', '"1foo"']
     let r = eval(substitute(a:expr, '%v%', v, ''))
     call assert_equal(a:true_val, r, 'result for ' . v . ' is not ' . string(a:true_val) . ' but ' . string(r))
   endfor
@@ -117,12 +117,11 @@ func Test_true_false_arg()
 endfunc
 
 function Try_arg_non_zero(expr, false_val, true_val)
-  CheckFeature float
-  for v in ['v:false', '0', '[1]', '{2:3}', '3.4'] 
+  for v in ['v:false', '0', '[1]', '{2:3}', '3.4']
     let r = eval(substitute(a:expr, '%v%', v, ''))
     call assert_equal(a:false_val, r, 'result for ' . v . ' is not ' . a:false_val . ' but ' . r)
   endfor
-  for v in ['v:true', '1', '" "', '"0"'] 
+  for v in ['v:true', '1', '" "', '"0"']
     let r = eval(substitute(a:expr, '%v%', v, ''))
     call assert_equal(a:true_val, r, 'result for ' . v . ' is not ' . a:true_val . ' but ' . r)
   endfor
@@ -138,14 +137,14 @@ func Test_non_zero_arg()
   call Try_arg_non_zero("shellescape('foo%', %v%)", "'foo%'", "'foo\\%'")
 
   " visualmode() needs to be called twice to check
-  for v in [v:false, 0, [1], {2:3}, 3.4] 
+  for v in [v:false, 0, [1], {2:3}, 3.4]
     normal vv
     let r = visualmode(v)
     call assert_equal('v', r, 'result for ' . string(v) . ' is not "v" but ' . r)
     let r = visualmode(v)
     call assert_equal('v', r, 'result for ' . string(v) . ' is not "v" but ' . r)
   endfor
-  for v in [v:true, 1, " ", "0"] 
+  for v in [v:true, 1, " ", "0"]
     normal vv
     let r = visualmode(v)
     call assert_equal('v', r, 'result for ' . v . ' is not "v" but ' . r)
