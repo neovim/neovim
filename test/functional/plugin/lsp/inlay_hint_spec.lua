@@ -12,7 +12,8 @@ local api = n.api
 local clear_notrace = t_lsp.clear_notrace
 local create_server_definition = t_lsp.create_server_definition
 
-local text = dedent([[
+describe('vim.lsp.inlay_hint', function()
+  local text = dedent([[
 auto add(int a, int b) { return a + b; }
 
 int main() {
@@ -22,7 +23,7 @@ int main() {
 }
 }]])
 
-local response = [==[
+  local response = [==[
 [
 {"kind":1,"paddingLeft":false,"label":"-> int","position":{"character":22,"line":0},"paddingRight":false},
 {"kind":2,"paddingLeft":false,"label":"a:","position":{"character":15,"line":5},"paddingRight":true},
@@ -30,7 +31,7 @@ local response = [==[
 ]
 ]==]
 
-local grid_without_inlay_hints = [[
+  local grid_without_inlay_hints = [[
   auto add(int a, int b) { return a + b; }          |
                                                     |
   int main() {                                      |
@@ -42,7 +43,7 @@ local grid_without_inlay_hints = [[
                                                     |
 ]]
 
-local grid_with_inlay_hints = [[
+  local grid_with_inlay_hints = [[
   auto add(int a, int b){1:-> int} { return a + b; }    |
                                                     |
   int main() {                                      |
@@ -54,16 +55,16 @@ local grid_with_inlay_hints = [[
                                                     |
 ]]
 
---- @type test.functional.ui.screen
-local screen
-before_each(function()
-  clear_notrace()
-  screen = Screen.new(50, 9)
-  screen:attach()
+  --- @type test.functional.ui.screen
+  local screen
+  before_each(function()
+    clear_notrace()
+    screen = Screen.new(50, 9)
+    screen:attach()
 
-  exec_lua(create_server_definition)
-  exec_lua(
-    [[
+    exec_lua(create_server_definition)
+    exec_lua(
+      [[
     local response = ...
     server = _create_server({
       capabilities = {
@@ -81,19 +82,18 @@ before_each(function()
 
     client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
   ]],
-    response
-  )
+      response
+    )
 
-  insert(text)
-  exec_lua([[vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })]])
-  screen:expect({ grid = grid_with_inlay_hints })
-end)
+    insert(text)
+    exec_lua([[vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })]])
+    screen:expect({ grid = grid_with_inlay_hints })
+  end)
 
-after_each(function()
-  api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
-end)
+  after_each(function()
+    api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
+  end)
 
-describe('vim.lsp.inlay_hint', function()
   it('clears inlay hints when sole client detaches', function()
     exec_lua([[vim.lsp.stop_client(client_id)]])
     screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
@@ -256,5 +256,76 @@ describe('vim.lsp.inlay_hint', function()
       })]])
       eq({}, res)
     end)
+  end)
+end)
+
+describe('Inlay hints handler', function()
+  local text = dedent([[
+test text
+  ]])
+
+  local response = [==[
+  [
+      { "position": { "line": 0, "character": 0 }, "label": "0" },
+      { "position": { "line": 0, "character": 0 }, "label": "1" },
+      { "position": { "line": 0, "character": 0 }, "label": "2" },
+      { "position": { "line": 0, "character": 0 }, "label": "3" },
+      { "position": { "line": 0, "character": 0 }, "label": "4" }
+  ]
+  ]==]
+
+  local grid_without_inlay_hints = [[
+  test text                                         |
+   ^                                                 |
+                                                    |
+]]
+
+  local grid_with_inlay_hints = [[
+  {1:01234}test text                                    |
+   ^                                                 |
+                                                    |
+]]
+
+  --- @type test.functional.ui.screen
+  local screen
+  before_each(function()
+    clear_notrace()
+    screen = Screen.new(50, 3)
+    screen:attach()
+
+    exec_lua(create_server_definition)
+    exec_lua(
+      [[
+    local response = ...
+    server = _create_server({
+      capabilities = {
+        inlayHintProvider = true,
+      },
+      handlers = {
+        ['textDocument/inlayHint'] = function(_, _, callback)
+          callback(nil, vim.json.decode(response))
+        end,
+      }
+    })
+
+    bufnr = vim.api.nvim_get_current_buf()
+    vim.api.nvim_win_set_buf(0, bufnr)
+
+    client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+  ]],
+      response
+    )
+    insert(text)
+  end)
+
+  it('renders hints with same position in received order', function()
+    exec_lua([[vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })]])
+    screen:expect({ grid = grid_with_inlay_hints })
+    exec_lua([[vim.lsp.stop_client(client_id)]])
+    screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+  end)
+
+  after_each(function()
+    api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
   end)
 end)
