@@ -17,6 +17,7 @@
 #include "nvim/grid_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
@@ -359,6 +360,21 @@ win_T *win_float_find_altwin(const win_T *win, const tabpage_T *tp)
                                                                           : tp->tp_firstwin;
 }
 
+/// Inline helper function for handling errors and cleanup in win_float_create.
+static inline win_T *handle_error_and_cleanup(win_T *wp, Error *err)
+{
+  if (ERROR_SET(err)) {
+    emsg(err->msg);
+    api_clear_error(err);
+  }
+  if (wp) {
+    win_remove(wp, NULL);
+    win_free(wp, NULL);
+  }
+  unblock_autocmds();
+  return NULL;
+}
+
 /// create a floating preview window.
 ///
 /// @param[in] bool enter floating window.
@@ -381,23 +397,25 @@ win_T *win_float_create(bool enter, bool new_buf)
   block_autocmds();
   win_T *wp = win_new_float(NULL, false, config, &err);
   if (!wp) {
-    unblock_autocmds();
-    return NULL;
+    return handle_error_and_cleanup(wp, &err);
   }
 
   if (new_buf) {
     Buffer b = nvim_create_buf(false, true, &err);
     if (!b) {
-      win_remove(wp, NULL);
-      win_free(wp, NULL);
-      unblock_autocmds();
-      return NULL;
+      return handle_error_and_cleanup(wp, &err);
     }
     buf_T *buf = find_buffer_by_handle(b, &err);
+    if (!buf) {
+      return handle_error_and_cleanup(wp, &err);
+    }
     buf->b_p_bl = false;  // unlist
     set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL, 0, kOptReqBuf,
                           buf);
     win_set_buf(wp, buf, &err);
+    if (ERROR_SET(&err)) {
+      return handle_error_and_cleanup(wp, &err);
+    }
   }
   unblock_autocmds();
   wp->w_p_diff = false;
