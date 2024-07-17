@@ -6256,13 +6256,12 @@ static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
 
         case RE_VCOL: {
           win_T *wp = rex.reg_win == NULL ? curwin : rex.reg_win;
-          linenr_T lnum = rex.reg_firstlnum + rex.lnum;
-          int vcol = 0;
-
-          if (lnum >= 0 && lnum <= wp->w_buffer->b_ml.ml_line_count) {
-            vcol = win_linetabsize(wp, lnum, (char *)rex.line,
-                                   (colnr_T)(rex.input - rex.line));
+          linenr_T lnum = REG_MULTI ? rex.reg_firstlnum + rex.lnum : 1;
+          if (REG_MULTI && (lnum <= 0 || lnum > wp->w_buffer->b_ml.ml_line_count)) {
+            lnum = 1;
           }
+          int vcol = win_linetabsize(wp, lnum, (char *)rex.line,
+                                     (colnr_T)(rex.input - rex.line));
           if (!re_num_cmp((uint32_t)vcol + 1, scan)) {
             status = RA_NOMATCH;
           }
@@ -15105,12 +15104,11 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           result = col > t->state->val * ts;
         }
         if (!result) {
-          linenr_T lnum = rex.reg_firstlnum + rex.lnum;
-          int vcol = 0;
-
-          if (lnum >= 0 && lnum <= wp->w_buffer->b_ml.ml_line_count) {
-            vcol = win_linetabsize(wp, lnum, (char *)rex.line, col);
+          linenr_T lnum = REG_MULTI ? rex.reg_firstlnum + rex.lnum : 1;
+          if (REG_MULTI && (lnum <= 0 || lnum > wp->w_buffer->b_ml.ml_line_count)) {
+            lnum = 1;
           }
+          int vcol = win_linetabsize(wp, lnum, (char *)rex.line, col);
           assert(t->state->val >= 0);
           result = nfa_re_num_cmp((uintmax_t)t->state->val, op, (uintmax_t)vcol + 1);
         }

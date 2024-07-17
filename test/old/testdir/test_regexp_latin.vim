@@ -1151,7 +1151,13 @@ endfunc
 " enddef
 
 func Test_compare_column_matchstr()
+  " do some search in text to set the line number, it should be ignored in
+  " matchstr().
   enew
+  call setline(1, ['one', 'two', 'three'])
+  :3 
+  :/ee
+  bwipe!
   set re=1
   call assert_equal('aaa', matchstr('aaaaaaaaaaaaaaaaaaaa', '.*\%<5v'))
   set re=2
