@@ -28,8 +28,8 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 :redr[aw][!]		Redraws pending screen updates now, or the entire
 			screen if "!" is included.  To CLEAR the screen use
 			|:mode| or |CTRL-L|.
-			Useful to update the screen during a script or
-			function (or a mapping if 'lazyredraw' set).
+			It can be used to redraw the screen in a script
+			or function (or a mapping if |'lazyredraw'| is set).
 			See also |nvim__redraw()|.
 
 						*:redraws* *:redrawstatus*

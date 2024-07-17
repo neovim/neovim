@@ -301,16 +301,17 @@ M.funcs = {
       added to |v:errors| and 1 is returned.  Otherwise zero is
       returned. |assert-return|
       The error is in the form "Expected {expected} but got
-      {actual}".  When {msg} is present it is prefixed to that.
+      {actual}".  When {msg} is present it is prefixed to that, along
+      with the location of the assert when run from a script.
 
       There is no automatic conversion, the String "4" is different
       from the Number 4.  And the number 4 is different from the
       Float 4.0.  The value of 'ignorecase' is not used here, case
       always matters.
       Example: >vim
-      	assert_equal('foo', 'bar')
-      <Will result in a string to be added to |v:errors|:
-      	test.vim line 12: Expected 'foo' but got 'bar' ~
+      	call assert_equal('foo', 'bar', 'baz')
+      <Will add the following to |v:errors|:
+      	test.vim line 12: baz: Expected 'foo' but got 'bar' ~
 
     ]=],
     name = 'assert_equal',
@@ -411,7 +412,8 @@ M.funcs = {
       When {actual} is not false an error message is added to
       |v:errors|, like with |assert_equal()|.
       The error is in the form "Expected False but got {actual}".
-      When {msg} is present it is prepended to that.
+      When {msg} is present it is prepended to that, along
+      with the location of the assert when run from a script.
       Also see |assert-return|.
 
       A value is false when it is zero. When {actual} is not a
@@ -446,7 +448,8 @@ M.funcs = {
       When {pattern} does not match {actual} an error message is
       added to |v:errors|.  Also see |assert-return|.
       The error is in the form "Pattern {pattern} does not match
-      {actual}".  When {msg} is present it is prefixed to that.
+      {actual}".  When {msg} is present it is prefixed to that,
+      along with the location of the assert when run from a script.
 
       {pattern} is used as with |expr-=~|: The matching is always done
       like 'magic' was set and 'cpoptions' is empty, no matter what
@@ -531,7 +534,8 @@ M.funcs = {
       Also see |assert-return|.
       A value is |TRUE| when it is a non-zero number or |v:true|.
       When {actual} is not a number or |v:true| the assert fails.
-      When {msg} is given it precedes the default message.
+      When {msg} is given it precedes the default message, along
+      with the location of the assert when run from a script.
 
     ]=],
     name = 'assert_true',
@@ -6735,10 +6739,10 @@ M.funcs = {
     desc = [=[
       Same as |matchadd()|, but requires a list of positions {pos}
       instead of a pattern. This command is faster than |matchadd()|
-      because it does not require to handle regular expressions and
-      sets buffer line boundaries to redraw screen. It is supposed
-      to be used when fast match additions and deletions are
-      required, for example to highlight matching parentheses.
+      because it does not handle regular expressions and it sets
+      buffer line boundaries to redraw screen. It is supposed to be
+      used when fast match additions and deletions are required, for
+      example to highlight matching parentheses.
       					*E5030* *E5031*
       {pos} is a list of positions.  Each position can be one of
       these:
@@ -10786,8 +10790,8 @@ M.funcs = {
     base = 1,
     desc = [=[
       Make a |List| out of {string}.  When {pattern} is omitted or
-      empty each white-separated sequence of characters becomes an
-      item.
+      empty each white space separated sequence of characters
+      becomes an item.
       Otherwise the string is split where {pattern} matches,
       removing the matched characters. 'ignorecase' is not used
       here, add \c to ignore case. |/\c|
