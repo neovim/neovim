@@ -9889,7 +9889,6 @@ return {
       ]=],
       full_name = 'winfixbuf',
       pv_name = 'p_wfb',
-      redraw = { 'current_window' },
       scope = { 'window' },
       short_desc = N_('pin a window to a specific buffer'),
       type = 'boolean',
