@@ -1135,4 +1135,16 @@ func Test_recursive_substitute_expr()
   delfunc Repl
 endfunc
 
+" def Test_compare_columns()
+"   # this was using a line below the last line
+"   enew
+"   setline(1, ['', ''])
+"   prop_type_add('name', {highlight: 'ErrorMsg'})
+"   prop_add(1, 1, {length: 1, type: 'name'})
+"   search('\%#=1\%>.l\n.*\%<2v', 'nW')
+"   search('\%#=2\%>.l\n.*\%<2v', 'nW')
+"   bwipe!
+"   prop_type_delete('name')
+" enddef
+
 " vim: shiftwidth=2 sts=2 expandtab
