@@ -336,6 +336,8 @@ api.nvim_set_decoration_provider(namespace, {
     for lnum = topline, botline do
       if bufstate.applied[lnum] ~= bufstate.version then
         api.nvim_buf_clear_namespace(bufnr, namespace, lnum, lnum + 1)
+
+        local hint_virtual_texts = {} --- @type table<integer, [string, string?][]>
         for _, lnum_hints in pairs(client_hints) do
           local hints = lnum_hints[lnum] or {}
           for _, hint in pairs(hints) do
@@ -348,7 +350,7 @@ api.nvim_set_decoration_provider(namespace, {
                 text = text .. part.value
               end
             end
-            local vt = {} --- @type [string, string?][]
+            local vt = hint_virtual_texts[hint.position.character] or {}
             if hint.paddingLeft then
               vt[#vt + 1] = { ' ' }
             end
@@ -356,13 +358,18 @@ api.nvim_set_decoration_provider(namespace, {
             if hint.paddingRight then
               vt[#vt + 1] = { ' ' }
             end
-            api.nvim_buf_set_extmark(bufnr, namespace, lnum, hint.position.character, {
-              virt_text_pos = 'inline',
-              ephemeral = false,
-              virt_text = vt,
-            })
+            hint_virtual_texts[hint.position.character] = vt
           end
         end
+
+        for pos, vt in pairs(hint_virtual_texts) do
+          api.nvim_buf_set_extmark(bufnr, namespace, lnum, pos, {
+            virt_text_pos = 'inline',
+            ephemeral = false,
+            virt_text = vt,
+          })
+        end
+
         bufstate.applied[lnum] = bufstate.version
       end
     end
