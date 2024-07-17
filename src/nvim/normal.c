@@ -2092,16 +2092,22 @@ static void display_showcmd(void)
   grid_line_flush();
 }
 
+int get_vtopline(win_T *wp)
+{
+  return plines_m_win_fill(wp, 1, wp->w_topline) - wp->w_topfill;
+}
+
 /// When "check" is false, prepare for commands that scroll the window.
 /// When "check" is true, take care of scroll-binding after the window has
 /// scrolled.  Called from normal_cmd() and edit().
 void do_check_scrollbind(bool check)
 {
   static win_T *old_curwin = NULL;
-  static linenr_T old_topline = 0;
-  static int old_topfill = 0;
+  static linenr_T old_vtopline = 0;
   static buf_T *old_buf = NULL;
   static colnr_T old_leftcol = 0;
+
+  int vtopline = get_vtopline(curwin);
 
   if (check && curwin->w_p_scb) {
     // If a ":syncbind" command was just used, don't scroll, only reset
@@ -2115,10 +2121,9 @@ void do_check_scrollbind(bool check)
       if ((curwin->w_buffer == old_buf
            || curwin->w_p_diff
            )
-          && (curwin->w_topline != old_topline
-              || curwin->w_topfill != old_topfill
+          && (vtopline != old_vtopline
               || curwin->w_leftcol != old_leftcol)) {
-        check_scrollbind(curwin->w_topline - old_topline, curwin->w_leftcol - old_leftcol);
+        check_scrollbind(vtopline - old_vtopline, curwin->w_leftcol - old_leftcol);
       }
     } else if (vim_strchr(p_sbo, 'j')) {  // jump flag set in 'scrollopt'
       // When switching between windows, make sure that the relative
@@ -2129,14 +2134,13 @@ void do_check_scrollbind(bool check)
       // resync is performed, some of the other 'scrollbind' windows may
       // need to jump so that the current window's relative position is
       // visible on-screen.
-      check_scrollbind(curwin->w_topline - (linenr_T)curwin->w_scbind_pos, 0);
+      check_scrollbind(vtopline - curwin->w_scbind_pos, 0);
     }
-    curwin->w_scbind_pos = curwin->w_topline;
+    curwin->w_scbind_pos = vtopline;
   }
 
   old_curwin = curwin;
-  old_topline = curwin->w_topline;
-  old_topfill = curwin->w_topfill;
+  old_vtopline = vtopline;
   old_buf = curwin->w_buffer;
   old_leftcol = curwin->w_leftcol;
 }
@@ -2144,20 +2148,18 @@ void do_check_scrollbind(bool check)
 /// Synchronize any windows that have "scrollbind" set, based on the
 /// number of rows by which the current window has changed
 /// (1998-11-02 16:21:01  R. Edward Ralston <eralston@computer.org>)
-void check_scrollbind(linenr_T topline_diff, int leftcol_diff)
+void check_scrollbind(linenr_T vtopline_diff, int leftcol_diff)
 {
   win_T *old_curwin = curwin;
   buf_T *old_curbuf = curbuf;
   int old_VIsual_select = VIsual_select;
   int old_VIsual_active = VIsual_active;
   colnr_T tgt_leftcol = curwin->w_leftcol;
-  linenr_T topline;
-  linenr_T y;
 
   // check 'scrollopt' string for vertical and horizontal scroll options
-  bool want_ver = (vim_strchr(p_sbo, 'v') && topline_diff != 0);
-  want_ver |= old_curwin->w_p_diff;
-  bool want_hor = (vim_strchr(p_sbo, 'h') && (leftcol_diff || topline_diff != 0));
+  bool want_ver = old_curwin->w_p_diff
+                  || (vim_strchr(p_sbo, 'v') && vtopline_diff != 0);
+  bool want_hor = (vim_strchr(p_sbo, 'h') && (leftcol_diff || vtopline_diff != 0));
 
   // loop through the scrollbound windows and scroll accordingly
   VIsual_select = VIsual_active = 0;
@@ -2174,16 +2176,19 @@ void check_scrollbind(linenr_T topline_diff, int leftcol_diff)
       if (old_curwin->w_p_diff && curwin->w_p_diff) {
         diff_set_topline(old_curwin, curwin);
       } else {
-        curwin->w_scbind_pos += topline_diff;
-        topline = (linenr_T)curwin->w_scbind_pos;
-        if (topline > curbuf->b_ml.ml_line_count) {
-          topline = curbuf->b_ml.ml_line_count;
-        }
-        if (topline < 1) {
-          topline = 1;
-        }
+        curwin->w_scbind_pos += vtopline_diff;
+        int curr_vtopline = get_vtopline(curwin);
 
-        y = topline - curwin->w_topline;
+        // Perf: reuse curr_vtopline to reduce the time in plines_m_win_fill().
+        // Equivalent to:
+        //   int max_vtopline = plines_m_win_fill(curwin, 1, curbuf->b_ml.ml_line_count);
+        int max_vtopline = curr_vtopline + curwin->w_topfill
+                           + plines_m_win_fill(curwin, curwin->w_topline + 1,
+                                               curbuf->b_ml.ml_line_count);
+
+        int new_vtopline = MAX(MIN((linenr_T)curwin->w_scbind_pos, max_vtopline), 1);
+
+        int y = new_vtopline - curr_vtopline;
         if (y > 0) {
           scrollup(curwin, y, false);
         } else {

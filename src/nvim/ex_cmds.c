@@ -2695,7 +2695,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       *so_ptr = 999;    // force cursor to be vertically centered in the window
     }
     update_topline(curwin);
-    curwin->w_scbind_pos = curwin->w_topline;
+    curwin->w_scbind_pos = plines_m_win_fill(curwin, 1, curwin->w_topline);
     *so_ptr = n;
     redraw_curbuf_later(UPD_NOT_VALID);  // redraw this buffer later
   }

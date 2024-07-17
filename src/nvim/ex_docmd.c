@@ -81,6 +81,7 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
+#include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
@@ -5580,39 +5581,43 @@ static void ex_swapname(exarg_T *eap)
 /// (1998-11-02 16:21:01  R. Edward Ralston <eralston@computer.org>)
 static void ex_syncbind(exarg_T *eap)
 {
-  linenr_T topline;
+  linenr_T vtopline;  // Target topline (including fill)
+
   linenr_T old_linenr = curwin->w_cursor.lnum;
 
   setpcmark();
 
-  // determine max topline
+  // determine max (virtual) topline
   if (curwin->w_p_scb) {
-    topline = curwin->w_topline;
+    vtopline = get_vtopline(curwin);
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_scb && wp->w_buffer) {
-        topline = MIN(topline, wp->w_buffer->b_ml.ml_line_count - get_scrolloff_value(curwin));
+        linenr_T y = plines_m_win_fill(wp, 1, wp->w_buffer->b_ml.ml_line_count)
+                     - get_scrolloff_value(curwin);
+        vtopline = MIN(vtopline, y);
       }
     }
-    topline = MAX(topline, 1);
+    vtopline = MAX(vtopline, 1);
   } else {
-    topline = 1;
+    vtopline = 1;
   }
 
   // Set all scrollbind windows to the same topline.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_p_scb) {
-      int y = topline - wp->w_topline;
+      int y = vtopline - get_vtopline(wp);
       if (y > 0) {
         scrollup(wp, y, true);
       } else {
         scrolldown(wp, -y, true);
       }
-      wp->w_scbind_pos = topline;
+      wp->w_scbind_pos = vtopline;
       redraw_later(wp, UPD_VALID);
       cursor_correct(wp);
       wp->w_redr_status = true;
     }
   }
+
   if (curwin->w_p_scb) {
     did_syncbind = true;
     checkpcmark();
