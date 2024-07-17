@@ -163,6 +163,7 @@ endfunc
 " horizontally or vertically.
 func Test_o_arg()
   let after =<< trim [CODE]
+    set cpo&vim
     call writefile([winnr("$"),
 		\ winheight(1), winheight(2), &lines,
 		\ winwidth(1), winwidth(2), &columns,
