@@ -853,7 +853,7 @@ static int color_numbers_8[28] = { 0, 4, 2, 6,
 // color_names[].
 // "boldp" will be set to kTrue or kFalse for a foreground color when using 8
 // colors, otherwise it will be unchanged.
-int lookup_color(const int idx, const bool foreground, TriState *const boldp)
+static int lookup_color(const int idx, const bool foreground, TriState *const boldp)
 {
   int color = color_numbers_16[idx];
 

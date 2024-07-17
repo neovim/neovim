@@ -3208,8 +3208,11 @@ func Test_bufoverflow()
   cgetexpr ['Compiler: ' . repeat('a', 1015), 'File1:10:Hello World']
 
   set efm=%DEntering\ directory\ %f,%f:%l:%m
-  cgetexpr ['Entering directory ' . repeat('a', 1006),
-	      \ 'File1:10:Hello World']
+  let lines =<< trim eval END
+    Entering directory $"{repeat('a', 1006)}"
+    File1:10:Hello World
+  END
+  cgetexpr lines
   set efm&vim
 endfunc
 
