@@ -183,7 +183,13 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
-• N/A
+• 'scrollbind' now works properly with buffers that contain virutal lines.
+
+  Scrollbind works by aligning to a target top line of each window in a tab
+  page. Previously this was done by calculating the difference between the old
+  top line and the target top line, and scrolling by that amount. Now the
+  top lines are calculated using screen line numbers which take virtual lines
+  into account.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

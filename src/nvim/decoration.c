@@ -887,7 +887,8 @@ bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
 
 static const uint32_t lines_filter[4] = {[kMTMetaLines] = kMTFilterSelect };
 
-int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
+/// @param apply_folds Only count virtual lines that are not in folds.
+int decor_virt_lines(win_T *wp, int start_row, int end_row, VirtLines *lines, bool apply_folds)
 {
   buf_T *buf = wp->w_buffer;
   if (!buf_meta_total(buf, kMTMetaLines)) {
@@ -896,14 +897,13 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
     return 0;
   }
 
-  assert(lnum > 0);
-  int row = lnum - 1;
-
   MarkTreeIter itr[1] = { 0 };
-  if (!marktree_itr_get_filter(buf->b_marktree, MAX(row - 1, 0), 0, row + 1, 0,
+  if (!marktree_itr_get_filter(buf->b_marktree, MAX(start_row - 1, 0), 0, end_row, 0,
                                lines_filter, itr)) {
     return 0;
   }
+
+  assert(start_row >= 0);
 
   int virt_lines = 0;
   while (true) {
@@ -915,7 +915,8 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
           bool above = vt->flags & kVTLinesAbove;
           int mrow = mark.pos.row;
           int draw_row = mrow + (above ? 0 : 1);
-          if (draw_row == row && !hasFolding(wp, mrow + 1, NULL, NULL)) {
+          if (draw_row >= start_row && draw_row < end_row
+              && (!apply_folds || !hasFolding(wp, mrow + 1, NULL, NULL))) {
             virt_lines += (int)kv_size(vt->data.virt_lines);
             if (lines) {
               kv_splice(*lines, vt->data.virt_lines);
@@ -926,7 +927,7 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
       }
     }
 
-    if (!marktree_itr_next_filter(buf->b_marktree, itr, row + 1, 0, lines_filter)) {
+    if (!marktree_itr_next_filter(buf->b_marktree, itr, end_row, 0, lines_filter)) {
       break;
     }
   }

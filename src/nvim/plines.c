@@ -712,7 +712,7 @@ bool win_may_fill(win_T *wp)
 /// @return Number of filler lines above lnum
 int win_get_fill(win_T *wp, linenr_T lnum)
 {
-  int virt_lines = decor_virt_lines(wp, lnum, NULL);
+  int virt_lines = decor_virt_lines(wp, lnum - 1, lnum, NULL, true);
 
   // be quick when there are no filler lines
   if (diffopt_filler()) {
@@ -904,6 +904,25 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last, int max)
     count += win_get_fill(wp, first);
   }
   return MIN(max, count);
+}
+
+/// Return number of window lines a physical line range will occupy.
+/// Only considers real and filler lines.
+///
+/// Mainly used for calculating scrolling offsets.
+int plines_m_win_fill(win_T *wp, linenr_T first, linenr_T last)
+{
+  int count = last - first + 1 + decor_virt_lines(wp, first - 1, last, NULL, false);
+
+  if (diffopt_filler()) {
+    for (int lnum = first; lnum <= last; lnum++) {
+      // Note: this also considers folds.
+      int n = diff_check(wp, lnum);
+      count += MAX(n, 0);
+    }
+  }
+
+  return MAX(count, 0);
 }
 
 /// Get the number of screen lines a range of text will take in window "wp".

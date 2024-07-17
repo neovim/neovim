@@ -835,9 +835,18 @@ function M.exec_capture(code)
   return M.api.nvim_exec2(code, { output = true }).output
 end
 
---- @param code string
+--- @param code string|function
 --- @return any
 function M.exec_lua(code, ...)
+  if type(code) == 'function' then
+    return M.api.nvim_exec_lua(
+      [[
+      local code = ...
+      return loadstring(code)(select(2, ...))
+    ]],
+      { string.dump(code), ... }
+    )
+  end
   return M.api.nvim_exec_lua(code, { ... })
 end
 

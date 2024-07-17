@@ -88,6 +88,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/path.h"
+#include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
@@ -2474,7 +2475,7 @@ static const char *did_set_scrollbind(optset_T *args)
     return NULL;
   }
   do_check_scrollbind(false);
-  win->w_scbind_pos = win->w_topline;
+  win->w_scbind_pos = get_vtopline(win);
   return NULL;
 }
 
