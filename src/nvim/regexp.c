@@ -6259,7 +6259,7 @@ static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
           linenr_T lnum = rex.reg_firstlnum + rex.lnum;
           int vcol = 0;
 
-          if (lnum > 0 && lnum <= wp->w_buffer->b_ml.ml_line_count) {
+          if (lnum >= 0 && lnum <= wp->w_buffer->b_ml.ml_line_count) {
             vcol = win_linetabsize(wp, lnum, (char *)rex.line,
                                    (colnr_T)(rex.input - rex.line));
           }
@@ -15108,7 +15108,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           linenr_T lnum = rex.reg_firstlnum + rex.lnum;
           int vcol = 0;
 
-          if (lnum > 0 && lnum <= wp->w_buffer->b_ml.ml_line_count) {
+          if (lnum >= 0 && lnum <= wp->w_buffer->b_ml.ml_line_count) {
             vcol = win_linetabsize(wp, lnum, (char *)rex.line, col);
           }
           assert(t->state->val >= 0);

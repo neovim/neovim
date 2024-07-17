@@ -30,11 +30,13 @@ endfunc
 func Test_equivalence_re1()
   set re=1
   call s:equivalence_test()
+  set re=0
 endfunc
 
 func Test_equivalence_re2()
   set re=2
   call s:equivalence_test()
+  set re=0
 endfunc
 
 func Test_recursive_substitute()
@@ -67,6 +69,7 @@ func Test_eow_with_optional()
     let actual = matchlist('abc def', '\(abc\>\)\?\s*\(def\)')
     call assert_equal(expected, actual)
   endfor
+  set re=0
 endfunc
 
 func Test_backref()
@@ -1146,5 +1149,15 @@ endfunc
 "   bwipe!
 "   prop_type_delete('name')
 " enddef
+
+func Test_compare_column_matchstr()
+  enew
+  set re=1
+  call assert_equal('aaa', matchstr('aaaaaaaaaaaaaaaaaaaa', '.*\%<5v'))
+  set re=2
+  call assert_equal('aaa', matchstr('aaaaaaaaaaaaaaaaaaaa', '.*\%<5v'))
+  set re=0
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
