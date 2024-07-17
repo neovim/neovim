@@ -1440,7 +1440,10 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
 
 /// Append the full path to name with path separators made into percent
 /// signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
-char *make_percent_swname(const char *dir, const char *name)
+/// signs, to "dir". An unnamed buffer is handled as "" (<currentdir>/"")
+/// The last character in "dir" must be an extra slash or backslash, it is
+/// removed.
+char *make_percent_swname(char *dir, const char *name)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char *d = NULL;
@@ -1455,6 +1458,8 @@ char *make_percent_swname(const char *dir, const char *name)
       *d = '%';
     }
   }
+
+  dir[strlen(dir) - 1] = NUL;  // remove one trailing slash
   d = concat_fnames(dir, s, true);
   xfree(s);
   xfree(f);
