@@ -50,6 +50,6 @@ jobs:
         if: ${{ steps.update-version.outputs.NEW_PATCHES != 0 }}
         run: |
           git add -u
-          git commit -m 'docs: update version.c [skip ci]'
+          git commit -m 'docs: update version.c'
           git push --force https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY} ${VERSION_BRANCH}
           gh pr create --draft --fill --label vim-patch --base ${GITHUB_REF#refs/heads/} --head ${VERSION_BRANCH} || true
