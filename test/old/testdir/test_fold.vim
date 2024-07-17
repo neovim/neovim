@@ -1486,6 +1486,8 @@ func Test_fold_split()
   call assert_equal([0, 1, 1, 2, 2], range(1, 5)->map('foldlevel(v:val)'))
   call append(2, 'line 2.5')
   call assert_equal([0, 1, 0, 1, 2, 2], range(1, 6)->map('foldlevel(v:val)'))
+  3d
+  call assert_equal([0, 1, 1, 2, 2], range(1, 5)->map('foldlevel(v:val)'))
   bw!
 endfunc
 
