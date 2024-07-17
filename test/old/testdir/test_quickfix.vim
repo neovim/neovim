@@ -2208,10 +2208,8 @@ func s:test_xgrep(cchar)
 endfunc
 
 func Test_grep()
-  if !has('unix')
-    " The grepprg may not be set on non-Unix systems
-    return
-  endif
+  " The grepprg may not be set on non-Unix systems
+  CheckUnix
 
   call s:test_xgrep('c')
   call s:test_xgrep('l')
@@ -2349,254 +2347,254 @@ endfunc
 
 " Quickfix/Location list set/get properties tests
 func Xproperty_tests(cchar)
-    call s:setup_commands(a:cchar)
+  call s:setup_commands(a:cchar)
 
-    " Error cases
-    call assert_fails('call g:Xgetlist(99)', 'E715:')
-    call assert_fails('call g:Xsetlist(99)', 'E714:')
-    call assert_fails('call g:Xsetlist([], "a", [])', 'E715:')
+  " Error cases
+  call assert_fails('call g:Xgetlist(99)', 'E715:')
+  call assert_fails('call g:Xsetlist(99)', 'E714:')
+  call assert_fails('call g:Xsetlist([], "a", [])', 'E715:')
 
-    " Set and get the title
-    call g:Xsetlist([])
+  " Set and get the title
+  call g:Xsetlist([])
+  Xopen
+  wincmd p
+  call g:Xsetlist([{'filename':'foo', 'lnum':27}])
+  let s = g:Xsetlist([], 'a', {'title' : 'Sample'})
+  call assert_equal(0, s)
+  let d = g:Xgetlist({"title":1})
+  call assert_equal('Sample', d.title)
+  " Try setting title to a non-string value
+  call assert_equal(-1, g:Xsetlist([], 'a', {'title' : ['Test']}))
+  call assert_equal('Sample', g:Xgetlist({"title":1}).title)
+
+  Xopen
+  call assert_equal('Sample', w:quickfix_title)
+  Xclose
+
+  " Tests for action argument
+  silent! Xolder 999
+  let qfnr = g:Xgetlist({'all':1}).nr
+  call g:Xsetlist([], 'r', {'title' : 'N1'})
+  call assert_equal('N1', g:Xgetlist({'all':1}).title)
+  call g:Xsetlist([], ' ', {'title' : 'N2'})
+  call assert_equal(qfnr + 1, g:Xgetlist({'all':1}).nr)
+
+  let res = g:Xgetlist({'nr': 0})
+  call assert_equal(qfnr + 1, res.nr)
+  call assert_equal(['nr'], keys(res))
+
+  call g:Xsetlist([], ' ', {'title' : 'N3'})
+  call assert_equal('N2', g:Xgetlist({'nr':2, 'title':1}).title)
+
+  " Changing the title of an earlier quickfix list
+  call g:Xsetlist([], 'r', {'title' : 'NewTitle', 'nr' : 2})
+  call assert_equal('NewTitle', g:Xgetlist({'nr':2, 'title':1}).title)
+
+  " Changing the title of an invalid quickfix list
+  call assert_equal(-1, g:Xsetlist([], ' ',
+        \ {'title' : 'SomeTitle', 'nr' : 99}))
+  call assert_equal(-1, g:Xsetlist([], ' ',
+        \ {'title' : 'SomeTitle', 'nr' : 'abc'}))
+
+  if a:cchar == 'c'
+    copen
+    call assert_equal({'winid':win_getid()}, getqflist({'winid':1}))
+    cclose
+  endif
+
+  " Invalid arguments
+  call assert_fails('call g:Xgetlist([])', 'E715')
+  call assert_fails('call g:Xsetlist([], "a", [])', 'E715')
+  let s = g:Xsetlist([], 'a', {'abc':1})
+  call assert_equal(-1, s)
+
+  call assert_equal({}, g:Xgetlist({'abc':1}))
+  call assert_equal('', g:Xgetlist({'nr':99, 'title':1}).title)
+  call assert_equal('', g:Xgetlist({'nr':[], 'title':1}).title)
+
+  if a:cchar == 'l'
+    call assert_equal({}, getloclist(99, {'title': 1}))
+  endif
+
+  " Context related tests
+  let s = g:Xsetlist([], 'a', {'context':[1,2,3]})
+  call assert_equal(0, s)
+  call test_garbagecollect_now()
+  let d = g:Xgetlist({'context':1})
+  call assert_equal([1,2,3], d.context)
+  call g:Xsetlist([], 'a', {'context':{'color':'green'}})
+  let d = g:Xgetlist({'context':1})
+  call assert_equal({'color':'green'}, d.context)
+  call g:Xsetlist([], 'a', {'context':"Context info"})
+  let d = g:Xgetlist({'context':1})
+  call assert_equal("Context info", d.context)
+  call g:Xsetlist([], 'a', {'context':246})
+  let d = g:Xgetlist({'context':1})
+  call assert_equal(246, d.context)
+  " set other Vim data types as context
+  call g:Xsetlist([], 'a', {'context' : v:_null_blob})
+  if has('channel')
+    call g:Xsetlist([], 'a', {'context' : test_null_channel()})
+  endif
+  if has('job')
+    call g:Xsetlist([], 'a', {'context' : test_null_job()})
+  endif
+  " Nvim doesn't have null functions
+  " call g:Xsetlist([], 'a', {'context' : test_null_function()})
+  " Nvim doesn't have null partials
+  " call g:Xsetlist([], 'a', {'context' : test_null_partial()})
+  call g:Xsetlist([], 'a', {'context' : ''})
+  call test_garbagecollect_now()
+  if a:cchar == 'l'
+    " Test for copying context across two different location lists
+    new | only
+    let w1_id = win_getid()
+    let l = [1]
+    call setloclist(0, [], 'a', {'context':l})
+    new
+    let w2_id = win_getid()
+    call add(l, 2)
+    call assert_equal([1, 2], getloclist(w1_id, {'context':1}).context)
+    call assert_equal([1, 2], getloclist(w2_id, {'context':1}).context)
+    unlet! l
+    call assert_equal([1, 2], getloclist(w2_id, {'context':1}).context)
+    only
+    call setloclist(0, [], 'f')
+    call assert_equal('', getloclist(0, {'context':1}).context)
+  endif
+
+  " Test for changing the context of previous quickfix lists
+  call g:Xsetlist([], 'f')
+  Xexpr "One"
+  Xexpr "Two"
+  Xexpr "Three"
+  call g:Xsetlist([], 'r', {'context' : [1], 'nr' : 1})
+  call g:Xsetlist([], 'a', {'context' : [2], 'nr' : 2})
+  " Also, check for setting the context using quickfix list number zero.
+  call g:Xsetlist([], 'r', {'context' : [3], 'nr' : 0})
+  call test_garbagecollect_now()
+  let l = g:Xgetlist({'nr' : 1, 'context' : 1})
+  call assert_equal([1], l.context)
+  let l = g:Xgetlist({'nr' : 2, 'context' : 1})
+  call assert_equal([2], l.context)
+  let l = g:Xgetlist({'nr' : 3, 'context' : 1})
+  call assert_equal([3], l.context)
+
+  " Test for changing the context through reference and for garbage
+  " collection of quickfix context
+  let l = ["red"]
+  call g:Xsetlist([], ' ', {'context' : l})
+  call add(l, "blue")
+  let x = g:Xgetlist({'context' : 1})
+  call add(x.context, "green")
+  call assert_equal(["red", "blue", "green"], l)
+  call assert_equal(["red", "blue", "green"], x.context)
+  unlet l
+  call test_garbagecollect_now()
+  let m = g:Xgetlist({'context' : 1})
+  call assert_equal(["red", "blue", "green"], m.context)
+
+  " Test for setting/getting items
+  Xexpr ""
+  let qfprev = g:Xgetlist({'nr':0})
+  let s = g:Xsetlist([], ' ', {'title':'Green',
+        \ 'items' : [{'filename':'F1', 'lnum':10}]})
+  call assert_equal(0, s)
+  let qfcur = g:Xgetlist({'nr':0})
+  call assert_true(qfcur.nr == qfprev.nr + 1)
+  let l = g:Xgetlist({'items':1})
+  call assert_equal('F1', bufname(l.items[0].bufnr))
+  call assert_equal(10, l.items[0].lnum)
+  call g:Xsetlist([], 'a', {'items' : [{'filename':'F2', 'lnum':20},
+        \  {'filename':'F2', 'lnum':30}]})
+  let l = g:Xgetlist({'items':1})
+  call assert_equal('F2', bufname(l.items[2].bufnr))
+  call assert_equal(30, l.items[2].lnum)
+  call g:Xsetlist([], 'r', {'items' : [{'filename':'F3', 'lnum':40}]})
+  let l = g:Xgetlist({'items':1})
+  call assert_equal('F3', bufname(l.items[0].bufnr))
+  call assert_equal(40, l.items[0].lnum)
+  call g:Xsetlist([], 'r', {'items' : []})
+  let l = g:Xgetlist({'items':1})
+  call assert_equal(0, len(l.items))
+
+  call g:Xsetlist([], 'r', {'title' : 'TestTitle'})
+  call g:Xsetlist([], 'r', {'items' : [{'filename' : 'F1', 'lnum' : 10, 'text' : 'L10'}]})
+  call g:Xsetlist([], 'r', {'items' : [{'filename' : 'F1', 'lnum' : 10, 'text' : 'L10'}]})
+  call assert_equal('TestTitle', g:Xgetlist({'title' : 1}).title)
+
+  " Test for getting id of window associated with a location list window
+  if a:cchar == 'l'
+    only
+    call assert_equal(0, g:Xgetlist({'all' : 1}).filewinid)
+    let wid = win_getid()
     Xopen
-    wincmd p
-    call g:Xsetlist([{'filename':'foo', 'lnum':27}])
-    let s = g:Xsetlist([], 'a', {'title' : 'Sample'})
-    call assert_equal(0, s)
-    let d = g:Xgetlist({"title":1})
-    call assert_equal('Sample', d.title)
-    " Try setting title to a non-string value
-    call assert_equal(-1, g:Xsetlist([], 'a', {'title' : ['Test']}))
-    call assert_equal('Sample', g:Xgetlist({"title":1}).title)
+    call assert_equal(wid, g:Xgetlist({'filewinid' : 1}).filewinid)
+    wincmd w
+    call assert_equal(0, g:Xgetlist({'filewinid' : 1}).filewinid)
+    only
+  endif
 
-    Xopen
-    call assert_equal('Sample', w:quickfix_title)
-    Xclose
+  " The following used to crash Vim with address sanitizer
+  call g:Xsetlist([], 'f')
+  call g:Xsetlist([], 'a', {'items' : [{'filename':'F1', 'lnum':10}]})
+  call assert_equal(10, g:Xgetlist({'items':1}).items[0].lnum)
 
-    " Tests for action argument
-    silent! Xolder 999
-    let qfnr = g:Xgetlist({'all':1}).nr
-    call g:Xsetlist([], 'r', {'title' : 'N1'})
-    call assert_equal('N1', g:Xgetlist({'all':1}).title)
-    call g:Xsetlist([], ' ', {'title' : 'N2'})
-    call assert_equal(qfnr + 1, g:Xgetlist({'all':1}).nr)
+  " Try setting the items using a string
+  call assert_equal(-1, g:Xsetlist([], ' ', {'items' : 'Test'}))
 
-    let res = g:Xgetlist({'nr': 0})
-    call assert_equal(qfnr + 1, res.nr)
-    call assert_equal(['nr'], keys(res))
+  " Save and restore the quickfix stack
+  call g:Xsetlist([], 'f')
+  call assert_equal(0, g:Xgetlist({'nr':'$'}).nr)
+  Xexpr "File1:10:Line1"
+  Xexpr "File2:20:Line2"
+  Xexpr "File3:30:Line3"
+  let last_qf = g:Xgetlist({'nr':'$'}).nr
+  call assert_equal(3, last_qf)
+  let qstack = []
+  for i in range(1, last_qf)
+    let qstack = add(qstack, g:Xgetlist({'nr':i, 'all':1}))
+  endfor
+  call g:Xsetlist([], 'f')
+  for i in range(len(qstack))
+    call g:Xsetlist([], ' ', qstack[i])
+  endfor
+  call assert_equal(3, g:Xgetlist({'nr':'$'}).nr)
+  call assert_equal(10, g:Xgetlist({'nr':1, 'items':1}).items[0].lnum)
+  call assert_equal(20, g:Xgetlist({'nr':2, 'items':1}).items[0].lnum)
+  call assert_equal(30, g:Xgetlist({'nr':3, 'items':1}).items[0].lnum)
+  call g:Xsetlist([], 'f')
 
-    call g:Xsetlist([], ' ', {'title' : 'N3'})
-    call assert_equal('N2', g:Xgetlist({'nr':2, 'title':1}).title)
+  " Swap two quickfix lists
+  Xexpr "File1:10:Line10"
+  Xexpr "File2:20:Line20"
+  Xexpr "File3:30:Line30"
+  call g:Xsetlist([], 'r', {'nr':1,'title':'Colors','context':['Colors']})
+  call g:Xsetlist([], 'r', {'nr':2,'title':'Fruits','context':['Fruits']})
+  let l1=g:Xgetlist({'nr':1,'all':1})
+  let l2=g:Xgetlist({'nr':2,'all':1})
+  let save_id = l1.id
+  let l1.id=l2.id
+  let l2.id=save_id
+  call g:Xsetlist([], 'r', l1)
+  call g:Xsetlist([], 'r', l2)
+  let newl1=g:Xgetlist({'nr':1,'all':1})
+  let newl2=g:Xgetlist({'nr':2,'all':1})
+  call assert_equal('Fruits', newl1.title)
+  call assert_equal(['Fruits'], newl1.context)
+  call assert_equal('Line20', newl1.items[0].text)
+  call assert_equal('Colors', newl2.title)
+  call assert_equal(['Colors'], newl2.context)
+  call assert_equal('Line10', newl2.items[0].text)
+  call g:Xsetlist([], 'f')
 
-    " Changing the title of an earlier quickfix list
-    call g:Xsetlist([], 'r', {'title' : 'NewTitle', 'nr' : 2})
-    call assert_equal('NewTitle', g:Xgetlist({'nr':2, 'title':1}).title)
-
-    " Changing the title of an invalid quickfix list
-    call assert_equal(-1, g:Xsetlist([], ' ',
-		\ {'title' : 'SomeTitle', 'nr' : 99}))
-    call assert_equal(-1, g:Xsetlist([], ' ',
-		\ {'title' : 'SomeTitle', 'nr' : 'abc'}))
-
-    if a:cchar == 'c'
-	copen
-	call assert_equal({'winid':win_getid()}, getqflist({'winid':1}))
-	cclose
-    endif
-
-    " Invalid arguments
-    call assert_fails('call g:Xgetlist([])', 'E715')
-    call assert_fails('call g:Xsetlist([], "a", [])', 'E715')
-    let s = g:Xsetlist([], 'a', {'abc':1})
-    call assert_equal(-1, s)
-
-    call assert_equal({}, g:Xgetlist({'abc':1}))
-    call assert_equal('', g:Xgetlist({'nr':99, 'title':1}).title)
-    call assert_equal('', g:Xgetlist({'nr':[], 'title':1}).title)
-
-    if a:cchar == 'l'
-	call assert_equal({}, getloclist(99, {'title': 1}))
-    endif
-
-    " Context related tests
-    let s = g:Xsetlist([], 'a', {'context':[1,2,3]})
-    call assert_equal(0, s)
-    call test_garbagecollect_now()
-    let d = g:Xgetlist({'context':1})
-    call assert_equal([1,2,3], d.context)
-    call g:Xsetlist([], 'a', {'context':{'color':'green'}})
-    let d = g:Xgetlist({'context':1})
-    call assert_equal({'color':'green'}, d.context)
-    call g:Xsetlist([], 'a', {'context':"Context info"})
-    let d = g:Xgetlist({'context':1})
-    call assert_equal("Context info", d.context)
-    call g:Xsetlist([], 'a', {'context':246})
-    let d = g:Xgetlist({'context':1})
-    call assert_equal(246, d.context)
-    " set other Vim data types as context
-    call g:Xsetlist([], 'a', {'context' : v:_null_blob})
-    if has('channel')
-      call g:Xsetlist([], 'a', {'context' : test_null_channel()})
-    endif
-    if has('job')
-      call g:Xsetlist([], 'a', {'context' : test_null_job()})
-    endif
-    " Nvim doesn't have null functions
-    " call g:Xsetlist([], 'a', {'context' : test_null_function()})
-    " Nvim doesn't have null partials
-    " call g:Xsetlist([], 'a', {'context' : test_null_partial()})
-    call g:Xsetlist([], 'a', {'context' : ''})
-    call test_garbagecollect_now()
-    if a:cchar == 'l'
-	" Test for copying context across two different location lists
-	new | only
-	let w1_id = win_getid()
-	let l = [1]
-	call setloclist(0, [], 'a', {'context':l})
-	new
-	let w2_id = win_getid()
-	call add(l, 2)
-	call assert_equal([1, 2], getloclist(w1_id, {'context':1}).context)
-	call assert_equal([1, 2], getloclist(w2_id, {'context':1}).context)
-	unlet! l
-	call assert_equal([1, 2], getloclist(w2_id, {'context':1}).context)
-	only
-	call setloclist(0, [], 'f')
-	call assert_equal('', getloclist(0, {'context':1}).context)
-    endif
-
-    " Test for changing the context of previous quickfix lists
-    call g:Xsetlist([], 'f')
-    Xexpr "One"
-    Xexpr "Two"
-    Xexpr "Three"
-    call g:Xsetlist([], 'r', {'context' : [1], 'nr' : 1})
-    call g:Xsetlist([], 'a', {'context' : [2], 'nr' : 2})
-    " Also, check for setting the context using quickfix list number zero.
-    call g:Xsetlist([], 'r', {'context' : [3], 'nr' : 0})
-    call test_garbagecollect_now()
-    let l = g:Xgetlist({'nr' : 1, 'context' : 1})
-    call assert_equal([1], l.context)
-    let l = g:Xgetlist({'nr' : 2, 'context' : 1})
-    call assert_equal([2], l.context)
-    let l = g:Xgetlist({'nr' : 3, 'context' : 1})
-    call assert_equal([3], l.context)
-
-    " Test for changing the context through reference and for garbage
-    " collection of quickfix context
-    let l = ["red"]
-    call g:Xsetlist([], ' ', {'context' : l})
-    call add(l, "blue")
-    let x = g:Xgetlist({'context' : 1})
-    call add(x.context, "green")
-    call assert_equal(["red", "blue", "green"], l)
-    call assert_equal(["red", "blue", "green"], x.context)
-    unlet l
-    call test_garbagecollect_now()
-    let m = g:Xgetlist({'context' : 1})
-    call assert_equal(["red", "blue", "green"], m.context)
-
-    " Test for setting/getting items
-    Xexpr ""
-    let qfprev = g:Xgetlist({'nr':0})
-    let s = g:Xsetlist([], ' ', {'title':'Green',
-		\ 'items' : [{'filename':'F1', 'lnum':10}]})
-    call assert_equal(0, s)
-    let qfcur = g:Xgetlist({'nr':0})
-    call assert_true(qfcur.nr == qfprev.nr + 1)
-    let l = g:Xgetlist({'items':1})
-    call assert_equal('F1', bufname(l.items[0].bufnr))
-    call assert_equal(10, l.items[0].lnum)
-    call g:Xsetlist([], 'a', {'items' : [{'filename':'F2', 'lnum':20},
-		\  {'filename':'F2', 'lnum':30}]})
-    let l = g:Xgetlist({'items':1})
-    call assert_equal('F2', bufname(l.items[2].bufnr))
-    call assert_equal(30, l.items[2].lnum)
-    call g:Xsetlist([], 'r', {'items' : [{'filename':'F3', 'lnum':40}]})
-    let l = g:Xgetlist({'items':1})
-    call assert_equal('F3', bufname(l.items[0].bufnr))
-    call assert_equal(40, l.items[0].lnum)
-    call g:Xsetlist([], 'r', {'items' : []})
-    let l = g:Xgetlist({'items':1})
-    call assert_equal(0, len(l.items))
-
-    call g:Xsetlist([], 'r', {'title' : 'TestTitle'})
-    call g:Xsetlist([], 'r', {'items' : [{'filename' : 'F1', 'lnum' : 10, 'text' : 'L10'}]})
-    call g:Xsetlist([], 'r', {'items' : [{'filename' : 'F1', 'lnum' : 10, 'text' : 'L10'}]})
-    call assert_equal('TestTitle', g:Xgetlist({'title' : 1}).title)
-
-    " Test for getting id of window associated with a location list window
-    if a:cchar == 'l'
-      only
-      call assert_equal(0, g:Xgetlist({'all' : 1}).filewinid)
-      let wid = win_getid()
-      Xopen
-      call assert_equal(wid, g:Xgetlist({'filewinid' : 1}).filewinid)
-      wincmd w
-      call assert_equal(0, g:Xgetlist({'filewinid' : 1}).filewinid)
-      only
-    endif
-
-    " The following used to crash Vim with address sanitizer
-    call g:Xsetlist([], 'f')
-    call g:Xsetlist([], 'a', {'items' : [{'filename':'F1', 'lnum':10}]})
-    call assert_equal(10, g:Xgetlist({'items':1}).items[0].lnum)
-
-    " Try setting the items using a string
-    call assert_equal(-1, g:Xsetlist([], ' ', {'items' : 'Test'}))
-
-    " Save and restore the quickfix stack
-    call g:Xsetlist([], 'f')
-    call assert_equal(0, g:Xgetlist({'nr':'$'}).nr)
-    Xexpr "File1:10:Line1"
-    Xexpr "File2:20:Line2"
-    Xexpr "File3:30:Line3"
-    let last_qf = g:Xgetlist({'nr':'$'}).nr
-    call assert_equal(3, last_qf)
-    let qstack = []
-    for i in range(1, last_qf)
-	let qstack = add(qstack, g:Xgetlist({'nr':i, 'all':1}))
-    endfor
-    call g:Xsetlist([], 'f')
-    for i in range(len(qstack))
-	call g:Xsetlist([], ' ', qstack[i])
-    endfor
-    call assert_equal(3, g:Xgetlist({'nr':'$'}).nr)
-    call assert_equal(10, g:Xgetlist({'nr':1, 'items':1}).items[0].lnum)
-    call assert_equal(20, g:Xgetlist({'nr':2, 'items':1}).items[0].lnum)
-    call assert_equal(30, g:Xgetlist({'nr':3, 'items':1}).items[0].lnum)
-    call g:Xsetlist([], 'f')
-
-    " Swap two quickfix lists
-    Xexpr "File1:10:Line10"
-    Xexpr "File2:20:Line20"
-    Xexpr "File3:30:Line30"
-    call g:Xsetlist([], 'r', {'nr':1,'title':'Colors','context':['Colors']})
-    call g:Xsetlist([], 'r', {'nr':2,'title':'Fruits','context':['Fruits']})
-    let l1=g:Xgetlist({'nr':1,'all':1})
-    let l2=g:Xgetlist({'nr':2,'all':1})
-    let save_id = l1.id
-    let l1.id=l2.id
-    let l2.id=save_id
-    call g:Xsetlist([], 'r', l1)
-    call g:Xsetlist([], 'r', l2)
-    let newl1=g:Xgetlist({'nr':1,'all':1})
-    let newl2=g:Xgetlist({'nr':2,'all':1})
-    call assert_equal('Fruits', newl1.title)
-    call assert_equal(['Fruits'], newl1.context)
-    call assert_equal('Line20', newl1.items[0].text)
-    call assert_equal('Colors', newl2.title)
-    call assert_equal(['Colors'], newl2.context)
-    call assert_equal('Line10', newl2.items[0].text)
-    call g:Xsetlist([], 'f')
-
-    " Cannot specify both a non-empty list argument and a dict argument
-    call assert_fails("call g:Xsetlist([{}], ' ', {})", 'E475:')
+  " Cannot specify both a non-empty list argument and a dict argument
+  call assert_fails("call g:Xsetlist([{}], ' ', {})", 'E475:')
 endfunc
 
 func Test_qf_property()
-    call Xproperty_tests('c')
-    call Xproperty_tests('l')
+  call Xproperty_tests('c')
+  call Xproperty_tests('l')
 endfunc
 
 " Test for setting the current index in the location/quickfix list
@@ -3130,7 +3128,7 @@ func Test_vimgrep_existing_swapfile()
   call assert_match('.Xapple.swo', swapname(''))
 
   call delete('Xapple')
-  call delete('Xapple.swp')
+  call delete('.Xapple.swp')
   augroup grep
     au! SwapExists
   augroup END
@@ -3583,15 +3581,15 @@ endfunc
 " Open multiple help windows using ":lhelpgrep
 " This test used to crash Vim
 func Test_Multi_LL_Help()
-    new | only
-    lhelpgrep window
-    lopen
-    e#
-    lhelpgrep buffer
-    call assert_equal(3, winnr('$'))
-    call assert_true(len(getloclist(1)) != 0)
-    call assert_true(len(getloclist(2)) != 0)
-    new | only
+  new | only
+  lhelpgrep window
+  lopen
+  e#
+  lhelpgrep buffer
+  call assert_equal(3, winnr('$'))
+  call assert_true(len(getloclist(1)) != 0)
+  call assert_true(len(getloclist(2)) != 0)
+  new | only
 endfunc
 
 " Tests for adding new quickfix lists using setqflist()
@@ -5920,6 +5918,16 @@ endfunc
 func Test_qfbuf_update()
   call Xqfbuf_update('c')
   call Xqfbuf_update('l')
+endfunc
+
+func Test_vimgrep_noswapfile()
+  set noswapfile
+  call writefile(['one', 'two', 'three'], 'Xgreppie')
+  vimgrep two Xgreppie
+  call assert_equal('two', getline('.'))
+
+  call delete('Xgreppie')
+  set swapfile
 endfunc
 
 " Test for the :vimgrep 'f' flag (fuzzy match)
