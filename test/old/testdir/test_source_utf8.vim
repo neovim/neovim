@@ -42,7 +42,7 @@ func Test_source_ctrl_v()
         \ "map __3 asd\<C-V>\<C-V>",
         \ "map __4 asd\<C-V>\<C-V>\<C-V>",
         \ "map __5 asd\<C-V>\<C-V>\<C-V>",
-        \ ], 'Xtestfile')
+        \ ], 'Xtestfile', 'D')
   source Xtestfile
   enew!
   exe "normal __1\<Esc>\<Esc>__2\<Esc>__3\<Esc>\<Esc>__4\<Esc>__5\<Esc>"
@@ -52,7 +52,6 @@ func Test_source_ctrl_v()
         \ getline(1, 2))
 
   enew!
-  call delete('Xtestfile')
   unmap __1
   unmap __2
   unmap __3

@@ -1525,11 +1525,10 @@ func Test_sort_with_no_last_search_pat()
     call writefile(v:errors, 'Xresult')
     qall!
   [SCRIPT]
-  call writefile(lines, 'Xscript')
+  call writefile(lines, 'Xscript', 'D')
   if RunVim([], [], '--clean -S Xscript')
     call assert_equal([], readfile('Xresult'))
   endif
-  call delete('Xscript')
   call delete('Xresult')
 endfunc
 

@@ -10,14 +10,13 @@ endfunc
 
 " Tests for 'directory' option.
 func Test_swap_directory()
-  if !has("unix")
-    return
-  endif
+  CheckUnix
+
   let content = ['start of testfile',
 	      \ 'line 2 Abcdefghij',
 	      \ 'line 3 Abcdefghij',
 	      \ 'end of testfile']
-  call writefile(content, 'Xtest1')
+  call writefile(content, 'Xtest1', 'D')
 
   "  '.', swap file in the same directory as file
   set dir=.,~
@@ -31,7 +30,7 @@ func Test_swap_directory()
   " './dir', swap file in a directory relative to the file
   set dir=./Xtest2,.,~
 
-  call mkdir("Xtest2")
+  call mkdir("Xtest2", 'R')
   edit Xtest1
   call assert_equal([], glob(swfname, 1, 1, 1))
   let swfname = "Xtest2/Xtest1.swp"
@@ -41,7 +40,7 @@ func Test_swap_directory()
   " 'dir', swap file in directory relative to the current dir
   set dir=Xtest.je,~
 
-  call mkdir("Xtest.je")
+  call mkdir("Xtest.je", 'R')
   call writefile(content, 'Xtest2/Xtest3')
   edit Xtest2/Xtest3
   call assert_equal(["Xtest2/Xtest3"], glob("Xtest2/*", 1, 1, 1))
@@ -50,15 +49,11 @@ func Test_swap_directory()
   call assert_equal([swfname], glob("Xtest.je/*", 1, 1, 1))
 
   set dir&
-  call delete("Xtest1")
-  call delete("Xtest2", "rf")
-  call delete("Xtest.je", "rf")
 endfunc
 
 func Test_swap_group()
-  if !has("unix")
-    return
-  endif
+  CheckUnix
+
   let groups = split(system('groups'))
   if len(groups) <= 1
     throw 'Skipped: need at least two groups, got ' . string(groups)
@@ -148,7 +143,7 @@ func Test_swapinfo()
   let info = swapinfo('doesnotexist')
   call assert_equal('Cannot open file', info.error)
 
-  call writefile(['burp'], 'Xnotaswapfile')
+  call writefile(['burp'], 'Xnotaswapfile', 'D')
   let info = swapinfo('Xnotaswapfile')
   call assert_equal('Cannot read file', info.error)
   call delete('Xnotaswapfile')
@@ -156,7 +151,6 @@ func Test_swapinfo()
   call writefile([repeat('x', 10000)], 'Xnotaswapfile')
   let info = swapinfo('Xnotaswapfile')
   call assert_equal('Not a swap file', info.error)
-  call delete('Xnotaswapfile')
 endfunc
 
 func Test_swapname()
@@ -204,7 +198,7 @@ func Test_swapfile_delete()
   " Close the file and recreate the swap file.
   " Now editing the file will run into the process still existing
   quit
-  call writefile(swapfile_bytes, swapfile_name)
+  call writefile(swapfile_bytes, swapfile_name, 'D')
   let s:swap_choice = 'e'
   let s:swapname = ''
   split XswapfileText
@@ -232,7 +226,6 @@ func Test_swapfile_delete()
   call assert_equal(fnamemodify(swapfile_name, ':t'), fnamemodify(s:swapname, ':t'))
 
   call delete('XswapfileText')
-  call delete(swapfile_name)
   augroup test_swapfile_delete
     autocmd!
   augroup END
@@ -246,7 +239,7 @@ func Test_swap_recover()
     autocmd SwapExists * let v:swapchoice = 'r'
   augroup END
 
-  call mkdir('Xswap')
+  call mkdir('Xswap', 'R')
   let $Xswap = 'foo'  " Check for issue #4369.
   set dir=Xswap//
   " Create a valid swapfile by editing a file.
@@ -259,7 +252,7 @@ func Test_swap_recover()
 
   " Close the file and recreate the swap file.
   quit
-  call writefile(swapfile_bytes, swapfile_name)
+  call writefile(swapfile_bytes, swapfile_name, 'D')
   " Edit the file again. This triggers recovery.
   try
     split Xswap/text
@@ -271,9 +264,6 @@ func Test_swap_recover()
   call assert_equal(['one', 'two', 'three'], getline(1, 3))
   quit!
 
-  call delete('Xswap/text')
-  call delete(swapfile_name)
-  call delete('Xswap', 'd')
   unlet $Xswap
   set dir&
   augroup test_swap_recover
@@ -301,7 +291,7 @@ func Test_swap_recover_ext()
   " Close and delete the file and recreate the swap file.
   quit
   call delete('Xtest.scr')
-  call writefile(swapfile_bytes, swapfile_name)
+  call writefile(swapfile_bytes, swapfile_name, 'D')
   " Edit the file again. This triggers recovery.
   try
     split Xtest.scr
@@ -314,7 +304,6 @@ func Test_swap_recover_ext()
   quit!
 
   call delete('Xtest.scr')
-  call delete(swapfile_name)
   augroup test_swap_recover_ext
     autocmd!
   augroup END
@@ -342,7 +331,7 @@ func Test_swap_split_win()
   " Close and delete the file and recreate the swap file.
   quit
   call delete('Xtest.scr')
-  call writefile(swapfile_bytes, swapfile_name)
+  call writefile(swapfile_bytes, swapfile_name, 'D')
   " Split edit the file again. This should fail to open the window
   try
     split Xtest.scr
@@ -353,7 +342,6 @@ func Test_swap_split_win()
   call assert_equal(1, winnr('$'))
 
   call delete('Xtest.scr')
-  call delete(swapfile_name)
 
   augroup test_swap_splitwin
       autocmd!
@@ -365,7 +353,7 @@ endfunc
 func Test_swap_prompt_splitwin()
   CheckRunVimInTerminal
 
-  call writefile(['foo bar'], 'Xfile1')
+  call writefile(['foo bar'], 'Xfile1', 'D')
   edit Xfile1
   preserve  " should help to make sure the swap file exists
 
@@ -400,13 +388,12 @@ func Test_swap_prompt_splitwin()
   call StopVimInTerminal(buf)
 
   %bwipe!
-  call delete('Xfile1')
 endfunc
 
 func Test_swap_symlink()
   CheckUnix
 
-  call writefile(['text'], 'Xtestfile')
+  call writefile(['text'], 'Xtestfile', 'D')
   silent !ln -s -f Xtestfile Xtestlink
 
   set dir=.
@@ -417,7 +404,7 @@ func Test_swap_symlink()
   call assert_match('Xtestfile\.swp$', s:swapname())
   bwipe!
 
-  call mkdir('Xswapdir')
+  call mkdir('Xswapdir', 'R')
   exe 'set dir=' . getcwd() . '/Xswapdir//'
 
   " Check that this also works when 'directory' ends with '//'
@@ -426,9 +413,7 @@ func Test_swap_symlink()
   bwipe!
 
   set dir&
-  call delete('Xtestfile')
   call delete('Xtestlink')
-  call delete('Xswapdir', 'rf')
 endfunc
 
 func s:get_unused_pid(base)
@@ -486,7 +471,7 @@ func Test_swap_auto_delete()
   " Change the process ID to avoid the "still running" warning.
   let swapfile_bytes[24:27] = s:pid_to_blob(s:get_unused_pid(
         \ s:blob_to_pid(swapfile_bytes[24:27])))
-  call writefile(swapfile_bytes, swapfile_name)
+  call writefile(swapfile_bytes, swapfile_name, 'D')
   edit Xtest.scr
   " will end up using the same swap file after deleting the existing one
   call assert_equal(swapfile_name, swapname('%'))
@@ -510,7 +495,6 @@ func Test_swap_auto_delete()
   bwipe!
 
   call delete('Xtest.scr')
-  call delete(swapfile_name)
   augroup test_swap_recover_ext
     autocmd!
   augroup END
@@ -539,13 +523,13 @@ endfunc
 
 " Test for the v:swapchoice variable
 func Test_swapchoice()
-  call writefile(['aaa', 'bbb'], 'Xfile5')
+  call writefile(['aaa', 'bbb'], 'Xfile5', 'D')
   edit Xfile5
   preserve
   let swapfname = swapname('')
   let b = readblob(swapfname)
   bw!
-  call writefile(b, swapfname)
+  call writefile(b, swapfname, 'D')
 
   autocmd! SwapExists
 
@@ -584,7 +568,6 @@ func Test_swapchoice()
   %bw!
   call assert_false(filereadable(swapfname))
 
-  call delete('Xfile5')
   call delete(swapfname)
   augroup test_swapchoice
     autocmd!

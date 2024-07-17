@@ -812,8 +812,8 @@ func Test_zz_sal_and_addition()
   throw 'skipped: Nvim does not support enc=latin1'
   set enc=latin1
   set spellfile=
-  call writefile(g:test_data_dic1, "Xtest.dic")
-  call writefile(g:test_data_aff_sal, "Xtest.aff")
+  call writefile(g:test_data_dic1, "Xtest.dic", 'D')
+  call writefile(g:test_data_aff_sal, "Xtest.aff", 'D')
   mkspell! Xtest Xtest
   set spl=Xtest.latin1.spl spell
   call assert_equal('kbltykk', soundfold('goobledygoook'))
@@ -821,7 +821,7 @@ func Test_zz_sal_and_addition()
   call assert_equal('*fls kswts tl', soundfold('oeverloos gezwets edale'))
 
   "also use an addition file
-  call writefile(["/regions=usgbnz", "elequint/2", "elekwint/3"], "Xtest.latin1.add")
+  call writefile(["/regions=usgbnz", "elequint/2", "elekwint/3"], "Xtest.latin1.add", 'D')
   mkspell! Xtest.latin1.add.spl Xtest.latin1.add
 
   bwipe!
@@ -858,10 +858,9 @@ endfunc
 
 func Test_region_error()
   messages clear
-  call writefile(["/regions=usgbnz", "elequint/0"], "Xtest.latin1.add")
+  call writefile(["/regions=usgbnz", "elequint/0"], "Xtest.latin1.add", 'D')
   mkspell! Xtest.latin1.add.spl Xtest.latin1.add
   call assert_match('Invalid region nr in Xtest.latin1.add line 2: 0', execute('messages'))
-  call delete('Xtest.latin1.add')
   call delete('Xtest.latin1.add.spl')
 endfunc
 
