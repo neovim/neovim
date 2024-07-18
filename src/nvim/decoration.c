@@ -31,9 +31,6 @@
 # include "decoration.c.generated.h"
 #endif
 
-// TODO(bfredl): These should maybe be per-buffer, so that all resources
-// associated with a buffer can be freed when the buffer is unloaded.
-kvec_t(DecorSignHighlight) decor_items = KV_INITIAL_VALUE;
 uint32_t decor_freelist = UINT32_MAX;
 
 // Decorations might be requested to be deleted in a callback in the middle of redrawing.
@@ -292,7 +289,7 @@ static void decor_free_inner(DecorVirtText *vt, uint32_t first_idx)
   while (idx != DECOR_ID_INVALID) {
     DecorSignHighlight *sh = &kv_A(decor_items, idx);
     if (sh->flags & kSHIsSign) {
-      xfree(sh->sign_name);
+      XFREE_CLEAR(sh->sign_name);
     }
     sh->flags = 0;
     if (sh->url != NULL) {
