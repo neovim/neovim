@@ -124,13 +124,13 @@ func Test_termdebug_basic()
   " 60 is approx spaceBuffer * 3
   if winwidth(0) <= 78 + 60
     Var
-    call assert_equal(winnr(), winnr('$'))
-    call assert_equal(winlayout(), ['col', [['leaf', 1002], ['leaf', 1001], ['leaf', 1000], ['leaf', 1003 + cn]]])
+    call assert_equal(winnr('$'), winnr())
+    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['leaf', 1000], ['leaf', 1003 + cn]]], winlayout())
     let cn += 1
     bw!
     Asm
-    call assert_equal(winnr(), winnr('$'))
-    call assert_equal(winlayout(), ['col', [['leaf', 1002], ['leaf', 1001], ['leaf', 1000], ['leaf', 1003 + cn]]])
+    call assert_equal(winnr('$'), winnr())
+    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['leaf', 1000], ['leaf', 1003 + cn]]], winlayout())
     let cn += 1
     bw!
   endif
@@ -139,16 +139,16 @@ func Test_termdebug_basic()
   let winw = winwidth(0)
   Var
   if winwidth(0) < winw
-    call assert_equal(winnr(), winnr('$') - 1)
-    call assert_equal(winlayout(), ['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]])
+    call assert_equal(winnr('$') - 1, winnr())
+    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]], winlayout())
     let cn += 1
     bw!
   endif
   let winw = winwidth(0)
   Asm
   if winwidth(0) < winw
-    call assert_equal(winnr(), winnr('$') - 1)
-    call assert_equal(winlayout(), ['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]])
+    call assert_equal(winnr('$') - 1, winnr())
+    call assert_equal(['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]], winlayout())
     let cn += 1
     bw!
   endif
@@ -160,6 +160,18 @@ func Test_termdebug_basic()
   redraw!
   call WaitForAssert({-> assert_equal(1, winnr('$'))})
   call assert_equal([], sign_getplaced('', #{group: 'TermDebug'})[0].signs)
+
+  for use_prompt in [0, 1]
+    let g:termdebug_config = {}
+    let g:termdebug_config['use_prompt'] = use_prompt
+    TermdebugCommand ./XTD_basic arg args
+    call WaitForAssert({-> assert_equal(3, winnr('$'))})
+    wincmd t
+    quit!
+    redraw!
+    call WaitForAssert({-> assert_equal(1, winnr('$'))})
+    unlet g:termdebug_config
+  endfor
 
   call s:cleanup_files(bin_name)
   %bw!
