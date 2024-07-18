@@ -268,7 +268,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
           head += (max_head_vcol - (vcol + head_prev + prev_rem)
                    + width2 - 1) / width2 * head_mid;
         } else if (max_head_vcol < 0) {
-          int off = virt_text_cursor_off(csarg, *cur == NUL);
+          int off = mb_added + virt_text_cursor_off(csarg, *cur == NUL);
           if (off >= prev_rem) {
             if (size > off) {
               head += (1 + (off - prev_rem) / width) * head_mid;
