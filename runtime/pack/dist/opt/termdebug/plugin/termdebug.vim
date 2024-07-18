@@ -361,7 +361,7 @@ func s:StartDebug_term(dict)
   endwhile
 
   " Set arguments to be run.
-  if len(proc_args)
+  if !empty(proc_args)
     call chansend(s:gdb_job_id, $"server set args {join(proc_args)}\r")
   endif
 
@@ -1188,7 +1188,7 @@ func s:Until(at)
     let s:stopped = v:false
     " call ch_log('assume that program is running after this command')
     " Use the fname:lnum format
-    let at = empty(a:at) ? $"{fnameescape(expand('%:p'))}:{line('.')}" : a:at
+    let at = empty(a:at) ? $"\"{expand('%:p')}:{line('.')}\"" : a:at
     call s:SendCommand($'-exec-until {at}')
   " else
     " call ch_log('dropping command, program is running: exec-until')
@@ -1207,7 +1207,7 @@ func s:SetBreakpoint(at, tbreak=v:false)
   endif
 
   " Use the fname:lnum format, older gdb can't handle --source.
-  let at = empty(a:at) ? $"{fnameescape(expand('%:p'))}:{line('.')}" : a:at
+  let at = empty(a:at) ? $"\"{expand('%:p')}:{line('.')}\"" : a:at
   if a:tbreak
     let cmd = $'-break-insert -t {at}'
   else
