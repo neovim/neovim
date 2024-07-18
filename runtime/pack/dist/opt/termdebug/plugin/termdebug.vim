@@ -1181,6 +1181,12 @@ func s:DeleteCommands()
   let s:BreakpointSigns = []
 endfunc
 
+func s:QuoteArg(x)
+  " Find all the occurrences of " and \ and escape them and double quote
+  " the resulting string.
+  return printf('"%s"', a:x->substitute('[\\"]', '\\&', 'g'))
+endfunc
+
 " :Until - Execute until past a specified position or current line
 func s:Until(at)
   if s:stopped
@@ -1188,7 +1194,7 @@ func s:Until(at)
     let s:stopped = v:false
     " call ch_log('assume that program is running after this command')
     " Use the fname:lnum format
-    let at = empty(a:at) ? $"\"{expand('%:p')}:{line('.')}\"" : a:at
+    let at = empty(a:at) ? s:QuoteArg($"{expand('%:p')}:{line('.')}") : a:at
     call s:SendCommand($'-exec-until {at}')
   " else
     " call ch_log('dropping command, program is running: exec-until')
@@ -1207,7 +1213,7 @@ func s:SetBreakpoint(at, tbreak=v:false)
   endif
 
   " Use the fname:lnum format, older gdb can't handle --source.
-  let at = empty(a:at) ? $"\"{expand('%:p')}:{line('.')}\"" : a:at
+  let at = empty(a:at) ? s:QuoteArg($"{expand('%:p')}:{line('.')}") : a:at
   if a:tbreak
     let cmd = $'-break-insert -t {at}'
   else
