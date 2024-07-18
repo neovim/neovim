@@ -2166,9 +2166,10 @@ text...
 				let lconst[0] = 2  " Error!
 				let lconst[1][0] = 'b'  " OK
 <							*E995*
-			|:const| does not allow to for changing a variable. >
+			It is an error to specify an existing variable with
+			:const. >
 				:let x = 1
-				:const x = 2  " Error!
+				:const x = 1  " Error!
 <							*E996*
 			Note that environment variables, option values and
 			register values cannot be used here, since they cannot

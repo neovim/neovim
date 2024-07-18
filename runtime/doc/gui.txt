@@ -548,7 +548,7 @@ name and all existing submenus below it are affected.
 
 Examples for Menus					*menu-examples*
 
-Here is an example on how to add menu items with menu's!  You can add a menu
+Here is an example on how to add menu items with menus!  You can add a menu
 item for the keyword under the cursor.  The register "z" is used. >
 
   :nmenu Words.Add\ Var		wb"zye:menu! Words.<C-R>z <C-R>z<CR>

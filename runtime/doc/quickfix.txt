@@ -1080,8 +1080,8 @@ commands can be combined to create a NewGrep command: >
 
 :vim[grep][!] {pattern} {file} ...
 			Like above, but instead of enclosing the pattern in a
-			non-ID character use a white-separated pattern.  The
-			pattern must start with an ID character.
+			non-ID character use a white space separated pattern.
+			The pattern must start with an ID character.
 			Example: >
 				:vimgrep Error *.c
 <
