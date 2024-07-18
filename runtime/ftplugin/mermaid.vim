@@ -2,6 +2,7 @@
 " Language:     Mermaid
 " Maintainer:   Craig MacEachern <https://github.com/craigmac/vim-mermaid>
 " Last Change:  2022 Oct 13
+" 2024 Jul 18 by Vim Project (adjust comments)
 
 if exists("b:did_ftplugin")
   finish
@@ -16,9 +17,9 @@ setlocal shiftwidth=2
 setlocal softtabstop=-1
 setlocal tabstop=4
 
+setlocal comments=:%%
+setlocal commentstring=%%\ %s
 " TODO: comments, formatlist stuff, based on what?
-setlocal comments=b:#,fb:-
-setlocal commentstring=#\ %s
 setlocal formatoptions+=tcqln formatoptions-=r formatoptions-=o
 setlocal formatlistpat=^\\s*\\d\\+\\.\\s\\+\\\|^\\s*[-*+]\\s\\+\\\|^\\[^\\ze[^\\]]\\+\\]:\\&^.\\{4\\}
 
