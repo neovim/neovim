@@ -302,4 +302,40 @@ used in new documentation:
 - `{Only when compiled with ...}`: the vast majority of features have been
   made non-optional (see https://github.com/neovim/neovim/wiki/Introduction)
 
+==============================================================================
+FILETYPE DETECTION                 *dev-vimpatch-filetype*
+
+Nvim's filetype detection behavior matches Vim, but is implemented as part of
+|vim.filetype| (see $VIMRUNTIME/lua/vim/filetype.lua).
+
+Pattern matching has several differences:
+- It is done using explicit Lua patterns (without implicit anchoring) instead
+  of Vim regexes: >
+    "*/debian/changelog" -> "/debian/changelog$"
+    "*/bind/db.*" -> "/bind/db%."
+<
+- Filetype patterns are grouped by their parent pattern to improve matching
+  performance. For this to work properly, parent pattern should:
+    - Match at least the same set of strings as filetype patterns inside it.
+      But not too much more.
+    - Be fast to match.
+
+  When adding a new filetype with pattern matching, consider the following:
+  - If there is already a group with appropriate parent pattern, use it.
+  - If there can be a fast and specific enough pattern to group at least
+    3 filetype patterns, add it as a separate grouped entry.
+
+    Good new parent pattern should be:
+      - Fast. Good rule of thumb is that it should be a short explicit string
+        (i.e. no quantifiers or character sets).
+      - Specific. Good rules of thumb (from best to worst):
+          - Full directory name (like "/etc/", "/log/").
+          - Part of a rare enough directory name (like "/conf", "git/").
+          - String reasonably rarely used in real full paths (like "nginx").
+
+  Example:
+  - Filetype pattern: ".*/etc/a2ps/.*%.cfg"
+  - Good parent: "/etc/"; "%.cfg$"
+  - Bad parent: "%." - fast, not specific; "/a2ps/.*%." - slow, specific
+
 vim:tw=78:ts=8:noet:ft=help:norl:
