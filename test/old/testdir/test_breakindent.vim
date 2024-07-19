@@ -1205,4 +1205,15 @@ func Test_breakindent_min_with_signcol()
   call s:close_windows()
 endfunc
 
+func Test_breakindent_with_double_width_wrap()
+  50vnew
+  setlocal tabstop=8 breakindent nolist
+  call setline(1, "\t" .. repeat('a', winwidth(0) - 9) .. '口口口')
+  normal! $g0
+  call assert_equal(2, winline())
+  call assert_equal(9, wincol())
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

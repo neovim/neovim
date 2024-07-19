@@ -4027,11 +4027,23 @@ describe('decorations: inline virtual text', function()
       normal! $
     ]])
     api.nvim_buf_set_extmark(0, ns, 0, 40, { virt_text = { { ('b'):rep(9) } }, virt_text_pos = 'inline' })
-    screen:expect{grid=[[
+    screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbb{1:>}|
       口1234^5                                           |
                                                         |
-    ]]}
+    ]])
+    feed('g0')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbb{1:>}|
+      ^口12345                                           |
+                                                        |
+    ]])
+    command('set showbreak=+++')
+    screen:expect([[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbb{1:>}|
+      {1:+++}^口12345                                        |
+                                                        |
+    ]])
   end)
 end)
 
