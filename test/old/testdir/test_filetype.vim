@@ -2576,4 +2576,31 @@ func Test_uci_file()
   filetype off
 endfunc
 
+func Test_pro_file()
+  filetype on
+
+  "Prolog
+  call writefile([':-module(test/1,'], 'Xfile.pro', 'D')
+  split Xfile.pro
+  call assert_equal('prolog', &filetype)
+  bwipe!
+
+  call writefile(['% comment'], 'Xfile.pro', 'D')
+  split Xfile.pro
+  call assert_equal('prolog', &filetype)
+  bwipe!
+
+  call writefile(['/* multiline comment'], 'Xfile.pro', 'D')
+  split Xfile.pro
+  call assert_equal('prolog', &filetype)
+  bwipe!
+
+  call writefile(['rule(test, 1.7).'], 'Xfile.pro', 'D')
+  split Xfile.pro
+  call assert_equal('prolog', &filetype)
+  bwipe!
+
+  filetype off
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
