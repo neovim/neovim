@@ -2126,7 +2126,6 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       word_offset[i] = xmalloc(total_chars_length * sizeof(size_t));
       word_offset_size[i] = xmalloc(total_chars_length * sizeof(size_t));
       for (size_t j = 0; j < total_chars_length; j++) {
-        word_offset[i][j] = 99;
         word_offset_size[i][j] = 0;
       }
     }
@@ -3787,7 +3786,7 @@ static int xdiff_out(int start_a, int count_a, int start_b, int count_b, void *p
 }
 
 // get the position in the character diff buffer of this line
-static size_t get_buffer_position(const int idx, diff_T *dp, linenr_T offset) {
+static size_t get_buffer_position(const int idx, const diff_T *dp, linenr_T offset) {
   size_t comparison_mem_offset = 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if ((curtab->tp_diffbuf[i] != NULL)) {
