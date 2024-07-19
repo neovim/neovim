@@ -1427,7 +1427,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
           hlID = HLF_CHD;
         } else if (hlresult[0] == 2) {
           hlID = HLF_ADD;
-        } else if (col < diffchars_line_len && (hlresult[col] == 1 || hlresult[col] == -2)) {
+        } else if ((size_t)col < diffchars_line_len && (hlresult[col] == 1 || hlresult[col] == -2)) {
           hlID = HLF_TXD;
         } else {
           hlID = HLF_CHD;
