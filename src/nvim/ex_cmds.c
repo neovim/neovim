@@ -311,9 +311,7 @@ void ex_align(exarg_T *eap)
         }
       }
     }
-    if (new_indent < 0) {
-      new_indent = 0;
-    }
+    new_indent = MAX(new_indent, 0);
     set_indent(new_indent, 0);                    // set indent
   }
   changed_lines(curbuf, eap->line1, 0, eap->line2 + 1, 0, true);
@@ -543,9 +541,7 @@ void ex_sort(exarg_T *eap)
   for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
     char *s = ml_get(lnum);
     int len = ml_get_len(lnum);
-    if (maxlen < len) {
-      maxlen = len;
-    }
+    maxlen = MAX(maxlen, len);
 
     colnr_T start_col = 0;
     colnr_T end_col = len;
@@ -705,11 +701,6 @@ sortend:
 /// @return  FAIL for failure, OK otherwise
 int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
 {
-  linenr_T l;
-  linenr_T extra;      // Num lines added before line1
-  linenr_T num_lines;  // Num lines moved
-  linenr_T last_line;  // Last line in file after adding new text
-
   if (dest >= line1 && dest < line2) {
     emsg(_("E134: Cannot move a range of lines into itself"));
     return FAIL;
@@ -720,11 +711,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   if (dest == line1 - 1 || dest == line2) {
     // Move the cursor as if lines were moved (see below) to be backwards
     // compatible.
-    if (dest >= line1) {
-      curwin->w_cursor.lnum = dest;
-    } else {
-      curwin->w_cursor.lnum = dest + (line2 - line1) + 1;
-    }
+    curwin->w_cursor.lnum = dest >= line1
+                            ? dest
+                            : dest + (line2 - line1) + 1;
     return OK;
   }
 
@@ -733,13 +722,16 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   bcount_t extent_byte = end_byte - start_byte;
   bcount_t dest_byte = ml_find_line_or_offset(curbuf, dest + 1, NULL, true);
 
-  num_lines = line2 - line1 + 1;
+  linenr_T num_lines = line2 - line1 + 1;  // Num lines moved
 
   // First we copy the old text to its new location -- webb
   // Also copy the flag that ":global" command uses.
   if (u_save(dest, dest + 1) == FAIL) {
     return FAIL;
   }
+
+  linenr_T l;
+  linenr_T extra;      // Num lines added before line1
   for (extra = 0, l = line1; l <= line2; l++) {
     char *str = xstrnsave(ml_get(l + extra), (size_t)ml_get_len(l + extra));
     ml_append(dest + l - line1, str, 0, false);
@@ -762,7 +754,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   //
   // And Finally we adjust the marks we put at the end of the file back to
   // their final destination at the new text position -- webb
-  last_line = curbuf->b_ml.ml_line_count;
+  linenr_T last_line = curbuf->b_ml.ml_line_count;  // Last line in file after adding new text
   mark_adjust_nofold(line1, line2, last_line - line2, 0, kExtmarkNOOP);
 
   disable_fold_update++;
@@ -838,9 +830,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   if (line1 < dest) {
     dest += num_lines + 1;
     last_line = curbuf->b_ml.ml_line_count;
-    if (dest > last_line + 1) {
-      dest = last_line + 1;
-    }
+    dest = MIN(dest, last_line + 1);
     changed_lines(curbuf, line1, 0, dest, 0, false);
   } else {
     changed_lines(curbuf, dest + 1, 0, line1 + num_lines, 0, false);
@@ -2931,9 +2921,7 @@ void ex_z(exarg_T *eap)
   } else {
     bigness = curwin->w_height_inner - 3;
   }
-  if (bigness < 1) {
-    bigness = 1;
-  }
+  bigness = MAX(bigness, 1);
 
   char *x = eap->arg;
   char *kind = x;
@@ -3006,19 +2994,9 @@ void ex_z(exarg_T *eap)
     break;
   }
 
-  if (start < 1) {
-    start = 1;
-  }
-
-  if (end > curbuf->b_ml.ml_line_count) {
-    end = curbuf->b_ml.ml_line_count;
-  }
-
-  if (curs > curbuf->b_ml.ml_line_count) {
-    curs = curbuf->b_ml.ml_line_count;
-  } else if (curs < 1) {
-    curs = 1;
-  }
+  start = MAX(start, 1);
+  end = MIN(end, curbuf->b_ml.ml_line_count);
+  curs = MIN(MAX(curs, 1), curbuf->b_ml.ml_line_count);
 
   for (linenr_T i = start; i <= end; i++) {
     if (minus && i == lnum) {
@@ -3459,9 +3437,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     }
     eap->line1 = eap->line2;
     eap->line2 += (linenr_T)i - 1;
-    if (eap->line2 > curbuf->b_ml.ml_line_count) {
-      eap->line2 = curbuf->b_ml.ml_line_count;
-    }
+    eap->line2 = MIN(eap->line2, curbuf->b_ml.ml_line_count);
   }
 
   // check for trailing command or garbage
@@ -3725,10 +3701,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               print_line_no_prefix(lnum, subflags.do_number, subflags.do_list);
 
               getvcol(curwin, &curwin->w_cursor, &sc, NULL, NULL);
-              curwin->w_cursor.col = regmatch.endpos[0].col - 1;
-              if (curwin->w_cursor.col < 0) {
-                curwin->w_cursor.col = 0;
-              }
+              curwin->w_cursor.col = MAX(regmatch.endpos[0].col - 1, 0);
+
               getvcol(curwin, &curwin->w_cursor, NULL, NULL, &ec);
               curwin->w_cursor.col = regmatch.startpos[0].col;
               if (subflags.do_number || curwin->w_p_nu) {

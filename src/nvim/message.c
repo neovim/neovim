@@ -1384,11 +1384,7 @@ void msgmore(int n)
     return;
   }
 
-  if (n > 0) {
-    pn = n;
-  } else {
-    pn = -n;
-  }
+  pn = abs(n);
 
   if (pn > p_report) {
     if (n > 0) {
@@ -1426,9 +1422,7 @@ void msg_start(void)
 {
   bool did_return = false;
 
-  if (msg_row < cmdline_row) {
-    msg_row = cmdline_row;
-  }
+  msg_row = MAX(msg_row, cmdline_row);
 
   if (!msg_silent) {
     XFREE_CLEAR(keep_msg);              // don't display old message now
@@ -3382,9 +3376,7 @@ void msg_advance(int col)
     }
     return;
   }
-  if (col >= Columns) {         // not enough room
-    col = Columns - 1;
-  }
+  col = MIN(col, Columns - 1);  // not enough room
   while (msg_col < col) {
     msg_putchar(' ');
   }

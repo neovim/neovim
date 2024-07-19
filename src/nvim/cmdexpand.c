@@ -670,10 +670,7 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
         ht -= 2;
       }
       findex -= ht;
-      if (findex < 0) {
-        // few entries left, select the first entry
-        findex = 0;
-      }
+      findex = MAX(findex, 0);  // few entries left, select the first entry
     }
   } else if (mode == WILD_PAGEDOWN) {
     if (findex == xp->xp_numfiles - 1) {
@@ -701,18 +698,10 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
 
   // When wrapping around, return the original string, set findex to -1.
   if (findex < 0) {
-    if (xp->xp_orig == NULL) {
-      findex = xp->xp_numfiles - 1;
-    } else {
-      findex = -1;
-    }
+    findex = xp->xp_orig == NULL ? xp->xp_numfiles - 1 : -1;
   }
   if (findex >= xp->xp_numfiles) {
-    if (xp->xp_orig == NULL) {
-      findex = 0;
-    } else {
-      findex = -1;
-    }
+    findex = xp->xp_orig == NULL ? 0 : -1;
   }
   if (compl_match_array) {
     compl_selected = findex;
@@ -1112,9 +1101,7 @@ int showmatches(expand_T *xp, bool wildmenu)
       } else {
         j = vim_strsize(SHOW_MATCH(i));
       }
-      if (j > maxlen) {
-        maxlen = j;
-      }
+      maxlen = MAX(maxlen, j);
     }
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {

@@ -886,9 +886,7 @@ static int get_rightmost_vcol(win_T *wp, const int *color_cols)
   if (color_cols) {
     // determine rightmost colorcolumn to possibly draw
     for (int i = 0; color_cols[i] >= 0; i++) {
-      if (ret < color_cols[i]) {
-        ret = color_cols[i];
-      }
+      ret = MAX(ret, color_cols[i]);
     }
   }
 
@@ -2560,9 +2558,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
 
       // check if line ends before left margin
-      if (wlv.vcol < start_col + wlv.col - win_col_off(wp)) {
-        wlv.vcol = start_col + wlv.col - win_col_off(wp);
-      }
+      wlv.vcol = MAX(wlv.vcol, start_col + wlv.col - win_col_off(wp));
       // Get rid of the boguscols now, we want to draw until the right
       // edge for 'cursorcolumn'.
       wlv.col -= wlv.boguscols;

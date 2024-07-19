@@ -216,12 +216,7 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
     }
   }
 
-  if (idx < 0) {
-    pos->col = 0;
-  } else {
-    pos->col = idx;
-  }
-
+  pos->col = MAX(idx, 0);
   pos->coladd = 0;
 
   if (finetune) {
@@ -310,15 +305,9 @@ linenr_T get_cursor_rel_lnum(win_T *wp, linenr_T lnum)
 /// This allows for the col to be on the NUL byte.
 void check_pos(buf_T *buf, pos_T *pos)
 {
-  if (pos->lnum > buf->b_ml.ml_line_count) {
-    pos->lnum = buf->b_ml.ml_line_count;
-  }
-
+  pos->lnum = MIN(pos->lnum, buf->b_ml.ml_line_count);
   if (pos->col > 0) {
-    colnr_T len = ml_get_buf_len(buf, pos->lnum);
-    if (pos->col > len) {
-      pos->col = len;
-    }
+    pos->col = MIN(pos->col, ml_get_buf_len(buf, pos->lnum));
   }
 }
 
@@ -385,9 +374,7 @@ void check_cursor_col(win_T *win)
         int cs, ce;
 
         getvcol(win, &win->w_cursor, &cs, NULL, &ce);
-        if (win->w_cursor.coladd > ce - cs) {
-          win->w_cursor.coladd = ce - cs;
-        }
+        win->w_cursor.coladd = MIN(win->w_cursor.coladd, ce - cs);
       }
     } else {
       // avoid weird number when there is a miscalculation or overflow

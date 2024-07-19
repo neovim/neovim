@@ -947,11 +947,9 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
       // This message is also remembered in keep_msg for when the screen
       // is redrawn. The keep_msg is cleared whenever another message is
       // written.
-      if (dir == BACKWARD) {        // start second loop at the other end
-        lnum = buf->b_ml.ml_line_count;
-      } else {
-        lnum = 1;
-      }
+      lnum = dir == BACKWARD  // start second loop at the other end
+             ? buf->b_ml.ml_line_count
+             : 1;
       if (!shortmess(SHM_SEARCH)
           && shortmess(SHM_SEARCHCOUNT)
           && (options & SEARCH_MSG)) {
@@ -1053,7 +1051,6 @@ static int first_submatch(regmmatch_T *rp)
 int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen, int count,
               int options, searchit_arg_T *sia)
 {
-  pos_T pos;                    // position of the last match
   char *searchstr;
   size_t searchstrlen;
   int retval;                   // Return value
@@ -1078,7 +1075,8 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
   // (there is no "if ()" around this because gcc wants them initialized)
   SearchOffset old_off = spats[0].off;
 
-  pos = curwin->w_cursor;       // start searching at the cursor position
+  pos_T pos = curwin->w_cursor;  // Position of the last match.
+                                 // Start searching at the cursor position.
 
   // Find out the direction of the search.
   if (dirc == 0) {
@@ -1088,11 +1086,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
     set_vv_searchforward();
   }
   if (options & SEARCH_REV) {
-    if (dirc == '/') {
-      dirc = '?';
-    } else {
-      dirc = '/';
-    }
+    dirc = dirc == '/' ? '?' : '/';
   }
 
   // If the cursor is in a closed fold, don't find another match in the same
@@ -1564,11 +1558,9 @@ int searchc(cmdarg_T *cap, bool t_cmd)
     if (*lastc == NUL && lastc_bytelen <= 1) {
       return FAIL;
     }
-    if (dir) {        // repeat in opposite direction
-      dir = -lastcdir;
-    } else {
-      dir = lastcdir;
-    }
+    dir = dir  // repeat in opposite direction
+          ? -lastcdir
+          : lastcdir;
     t_cmd = last_t_cmd;
     c = *lastc;
     // For multi-byte re-use last lastc_bytes[] and lastc_bytelen.
@@ -1581,11 +1573,7 @@ int searchc(cmdarg_T *cap, bool t_cmd)
     }
   }
 
-  if (dir == BACKWARD) {
-    cap->oap->inclusive = false;
-  } else {
-    cap->oap->inclusive = true;
-  }
+  cap->oap->inclusive = dir != BACKWARD;
 
   char *p = get_cursor_line_ptr();
   int col = curwin->w_cursor.col;
@@ -2432,17 +2420,13 @@ int current_search(int count, bool forward)
     dec_cursor();
   }
 
-  pos_T end_pos;                // end position of the pattern match
-  pos_T orig_pos;               // position of the cursor at beginning
-  pos_T pos;                    // position after the pattern
-  int result;                   // result of various function calls
-
   // When searching forward and the cursor is at the start of the Visual
   // area, skip the first search backward, otherwise it doesn't move.
   const bool skip_first_backward = forward && VIsual_active
                                    && lt(curwin->w_cursor, VIsual);
 
-  orig_pos = pos = curwin->w_cursor;
+  pos_T pos = curwin->w_cursor;       // position after the pattern
+  pos_T orig_pos = curwin->w_cursor;  // position of the cursor at beginning
   if (VIsual_active) {
     // Searching further will extend the match.
     if (forward) {
@@ -2458,6 +2442,9 @@ int current_search(int count, bool forward)
   if (zero_width == -1) {
     return FAIL;  // pattern not found
   }
+
+  pos_T end_pos;  // end position of the pattern match
+  int result;     // result of various function calls
 
   // The trick is to first search backwards and then search forward again,
   // so that a match at the current cursor position will be correctly
@@ -3238,9 +3225,8 @@ static int fuzzy_match_item_compare(const void *const s1, const void *const s2)
 
   if (v1 == v2) {
     return idx1 == idx2 ? 0 : idx1 > idx2 ? 1 : -1;
-  } else {
-    return v1 > v2 ? -1 : 1;
   }
+  return v1 > v2 ? -1 : 1;
 }
 
 /// Fuzzy search the string "str" in a list of "items" and return the matching
@@ -3514,9 +3500,8 @@ static int fuzzy_match_func_compare(const void *const s1, const void *const s2)
   }
   if (v1 == v2) {
     return idx1 == idx2 ? 0 : idx1 > idx2 ? 1 : -1;
-  } else {
-    return v1 > v2 ? -1 : 1;
   }
+  return v1 > v2 ? -1 : 1;
 }
 
 /// Sort fuzzy matches of function names by score.
@@ -3704,13 +3689,8 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
   int old_files = max_path_depth;
   int depth = depth_displayed = -1;
 
-  linenr_T lnum = start_lnum;
-  if (end_lnum > curbuf->b_ml.ml_line_count) {
-    end_lnum = curbuf->b_ml.ml_line_count;
-  }
-  if (lnum > end_lnum) {                // do at least one line
-    lnum = end_lnum;
-  }
+  end_lnum = MIN(end_lnum, curbuf->b_ml.ml_line_count);
+  linenr_T lnum = MIN(start_lnum, end_lnum);  // do at least one line
   char *line = get_line_and_copy(lnum, file_line);
 
   while (true) {
@@ -4159,9 +4139,7 @@ exit_matched:
       depth--;
       curr_fname = (depth == -1) ? curbuf->b_fname
                                  : files[depth].name;
-      if (depth < depth_displayed) {
-        depth_displayed = depth;
-      }
+      depth_displayed = MIN(depth_displayed, depth);
     }
     if (depth >= 0) {           // we could read the line
       files[depth].lnum++;

@@ -905,12 +905,9 @@ void ml_recover(bool checkext)
       msg_end();
       goto theend;
     }
-    off_T size;
-    if ((size = vim_lseek(mfp->mf_fd, 0, SEEK_END)) <= 0) {
-      mfp->mf_blocknr_max = 0;              // no file or empty file
-    } else {
-      mfp->mf_blocknr_max = size / mfp->mf_page_size;
-    }
+    off_T size = vim_lseek(mfp->mf_fd, 0, SEEK_END);
+    // 0 means no file or empty file
+    mfp->mf_blocknr_max = size <= 0 ? 0 : size / mfp->mf_page_size;
     mfp->mf_infile_count = mfp->mf_blocknr_max;
 
     // need to reallocate the memory used to store the data
@@ -1898,9 +1895,7 @@ errorret:
     buf->b_ml.ml_line_lnum = lnum;
     return questions;
   }
-  if (lnum <= 0) {                      // pretend line 0 is line 1
-    lnum = 1;
-  }
+  lnum = MAX(lnum, 1);  // pretend line 0 is line 1
 
   if (buf->b_ml.ml_mfp == NULL) {       // there are no lines
     buf->b_ml.ml_line_len = 1;
@@ -2111,12 +2106,8 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     if (line_count > db_idx + 1) {          // if there are following lines
       // Offset is the start of the previous line.
       // This will become the character just after the new line.
-      int offset;
-      if (db_idx < 0) {
-        offset = (int)dp->db_txt_end;
-      } else {
-        offset = ((dp->db_index[db_idx]) & DB_INDEX_MASK);
-      }
+      int offset = db_idx < 0 ? (int)dp->db_txt_end
+                              : (int)((dp->db_index[db_idx]) & DB_INDEX_MASK);
       memmove((char *)dp + dp->db_txt_start,
               (char *)dp + dp->db_txt_start + len,
               (size_t)offset - (dp->db_txt_start + (size_t)len));

@@ -348,9 +348,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       inc_cursor();
     }
     startcol -= curwin->w_cursor.col;
-    if (startcol < 0) {
-      startcol = 0;
-    }
+    startcol = MAX(startcol, 0);
 
     if (State & VREPLACE_FLAG) {
       // In MODE_VREPLACE state, we will backspace over the text to be
@@ -433,9 +431,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       // may have added or removed indent.
       curwin->w_cursor.col += startcol;
       colnr_T len = get_cursor_line_len();
-      if (curwin->w_cursor.col > len) {
-        curwin->w_cursor.col = len;
-      }
+      curwin->w_cursor.col = MIN(curwin->w_cursor.col, len);
     }
 
     haveto_redraw = true;
@@ -758,14 +754,9 @@ int comp_textwidth(bool ff)
       textwidth -= 8;
     }
   }
-  if (textwidth < 0) {
-    textwidth = 0;
-  }
+  textwidth = MAX(textwidth, 0);
   if (ff && textwidth == 0) {
-    textwidth = curwin->w_width_inner - 1;
-    if (textwidth > 79) {
-      textwidth = 79;
-    }
+    textwidth = MIN(curwin->w_width_inner - 1, 79);
   }
   return textwidth;
 }
@@ -1105,11 +1096,7 @@ void format_lines(linenr_T line_count, bool avoid_fex)
         }
         first_par_line = false;
         // If the line is getting long, format it next time
-        if (get_cursor_line_len() > max_len) {
-          force_format = true;
-        } else {
-          force_format = false;
-        }
+        force_format = get_cursor_line_len() > max_len;
       }
     }
     line_breakcheck();

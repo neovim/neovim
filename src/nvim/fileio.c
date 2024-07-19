@@ -888,10 +888,7 @@ retry:
         // Use buffer >= 64K.  Add linerest to double the size if the
         // line gets very long, to avoid a lot of copying. But don't
         // read more than 1 Mbyte at a time, so we can be interrupted.
-        size = 0x10000 + linerest;
-        if (size > 0x100000) {
-          size = 0x100000;
-        }
+        size = MIN(0x10000 + linerest, 0x100000);
       }
 
       // Protect against the argument of lalloc() going negative.
@@ -2800,9 +2797,7 @@ int check_timestamps(int focus)
         bufref_T bufref;
         set_bufref(&bufref, buf);
         const int n = buf_check_timestamp(buf);
-        if (didit < n) {
-          didit = n;
-        }
+        didit = MAX(didit, n);
         if (n > 0 && !bufref_valid(&bufref)) {
           // Autocommands have removed the buffer, start at the first one again.
           buf = firstbuf;
@@ -3192,11 +3187,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
 
   // Restore the topline and cursor position and check it (lines may
   // have been removed).
-  if (old_topline > curbuf->b_ml.ml_line_count) {
-    curwin->w_topline = curbuf->b_ml.ml_line_count;
-  } else {
-    curwin->w_topline = old_topline;
-  }
+  curwin->w_topline = MIN(old_topline, curbuf->b_ml.ml_line_count);
   curwin->w_cursor = old_cursor;
   check_cursor(curwin);
   update_topline(curwin);

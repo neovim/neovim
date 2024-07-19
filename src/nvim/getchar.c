@@ -268,17 +268,12 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
   }
   buf->bh_index = 0;
 
-  size_t len;
   if (buf->bh_space >= (size_t)slen) {
-    len = strlen(buf->bh_curr->b_str);
+    size_t len = strlen(buf->bh_curr->b_str);
     xmemcpyz(buf->bh_curr->b_str + len, s, (size_t)slen);
     buf->bh_space -= (size_t)slen;
   } else {
-    if (slen < MINIMAL_SIZE) {
-      len = MINIMAL_SIZE;
-    } else {
-      len = (size_t)slen;
-    }
+    size_t len = MAX(MINIMAL_SIZE, (size_t)slen);
     buffblock_T *p = xmalloc(offsetof(buffblock_T, b_str) + len + 1);
     buf->bh_space = len - (size_t)slen;
     xmemcpyz(p->b_str, s, (size_t)slen);
@@ -2238,9 +2233,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
           }
         } else {
           // No match; may have to check for termcode at next character.
-          if (max_mlen < mlen) {
-            max_mlen = mlen;
-          }
+          max_mlen = MAX(max_mlen, mlen);
         }
       }
     }
@@ -2372,9 +2365,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
           if (State & MODE_CMDLINE) {
             // redraw the command below the error
             msg_didout = true;
-            if (msg_row < cmdline_row) {
-              msg_row = cmdline_row;
-            }
+            msg_row = MAX(msg_row, cmdline_row);
             redrawcmd();
           }
         } else if (State & (MODE_NORMAL | MODE_INSERT)) {
@@ -2738,11 +2729,7 @@ static int vgetorpeek(bool advance)
           // For the cmdline window: Alternate between ESC and
           // CTRL-C: ESC for most situations and CTRL-C to close the
           // cmdline window.
-          if ((State & MODE_CMDLINE) || (cmdwin_type > 0 && tc == ESC)) {
-            c = Ctrl_C;
-          } else {
-            c = ESC;
-          }
+          c = ((State & MODE_CMDLINE) || (cmdwin_type > 0 && tc == ESC)) ? Ctrl_C : ESC;
           tc = c;
 
           // set a flag to indicate this wasn't a normal char

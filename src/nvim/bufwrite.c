@@ -261,11 +261,8 @@ static int buf_write_convert(struct bw_info *ip, char **bufp, int *lenp)
           ip->bw_restlen += *lenp;
           break;
         }
-        if (n > 1) {
-          c = (unsigned)utf_ptr2char((char *)ip->bw_rest);
-        } else {
-          c = ip->bw_rest[0];
-        }
+        c = (n > 1) ? (unsigned)utf_ptr2char((char *)ip->bw_rest)
+                    : ip->bw_rest[0];
         if (n >= ip->bw_restlen) {
           n -= ip->bw_restlen;
           ip->bw_restlen = 0;
@@ -289,11 +286,8 @@ static int buf_write_convert(struct bw_info *ip, char **bufp, int *lenp)
                   (size_t)ip->bw_restlen);
           break;
         }
-        if (n > 1) {
-          c = (unsigned)utf_ptr2char(*bufp + wlen);
-        } else {
-          c = (uint8_t)(*bufp)[wlen];
-        }
+        c = n > 1 ? (unsigned)utf_ptr2char(*bufp + wlen)
+                  : (uint8_t)(*bufp)[wlen];
       }
 
       if (ucs2bytes(c, &p, flags) && !ip->bw_conv_error) {
@@ -876,9 +870,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
             // Change one character, just before the extension.
             //
             char *wp = *backupp + strlen(*backupp) - 1 - strlen(backup_ext);
-            if (wp < *backupp) {                // empty file name ???
-              wp = *backupp;
-            }
+            wp = MAX(wp, *backupp);  // empty file name ???
             *wp = 'z';
             while (*wp > 'a' && os_fileinfo(*backupp, &file_info_new)) {
               (*wp)--;
@@ -993,9 +985,7 @@ nobackup:
         // Change one character, just before the extension.
         if (!p_bk && os_path_exists(*backupp)) {
           p = *backupp + strlen(*backupp) - 1 - strlen(backup_ext);
-          if (p < *backupp) {           // empty file name ???
-            p = *backupp;
-          }
+          p = MAX(p, *backupp);  // empty file name ???
           *p = 'z';
           while (*p > 'a' && os_path_exists(*backupp)) {
             (*p)--;
@@ -1255,9 +1245,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     status_redraw_all();            // redraw status lines later
   }
 
-  if (end > buf->b_ml.ml_line_count) {
-    end = buf->b_ml.ml_line_count;
-  }
+  end = MIN(end, buf->b_ml.ml_line_count);
   if (buf->b_ml.ml_flags & ML_EMPTY) {
     start = end + 1;
   }
