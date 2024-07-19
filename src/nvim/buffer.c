@@ -1262,17 +1262,8 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
       if (bp == NULL) {
         bp = buf;
       }
-      if (dir == FORWARD) {
-        buf = buf->b_next;
-        if (buf == NULL) {
-          buf = firstbuf;
-        }
-      } else {
-        buf = buf->b_prev;
-        if (buf == NULL) {
-          buf = lastbuf;
-        }
-      }
+      buf = dir == FORWARD ? (buf->b_next != NULL ? buf->b_next : firstbuf)
+                           : (buf->b_prev != NULL ? buf->b_prev : lastbuf);
       // Don't count unlisted buffers.
       // Avoid non-help buffers if the starting point was a non-help buffer and
       // vice-versa.
@@ -1505,11 +1496,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
             bp = buf;
           }
         }
-        if (forward) {
-          buf = buf->b_next;
-        } else {
-          buf = buf->b_prev;
-        }
+        buf = forward ? buf->b_next : buf->b_prev;
       }
     }
     if (buf == NULL) {          // No loaded buffer, use unloaded one
@@ -1524,11 +1511,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
       }
     }
     if (buf == NULL) {          // Still no buffer, just take one
-      if (curbuf->b_next != NULL) {
-        buf = curbuf->b_next;
-      } else {
-        buf = curbuf->b_prev;
-      }
+      buf = curbuf->b_next != NULL ? curbuf->b_next : curbuf->b_prev;
       if (bt_quickfix(buf)) {
         buf = NULL;
       }
@@ -1679,11 +1662,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
     }
     // If the buffer is not valid but curwin->w_buffer is NULL we must
     // enter some buffer.  Using the last one is hopefully OK.
-    if (!valid) {
-      enter_buffer(lastbuf);
-    } else {
-      enter_buffer(buf);
-    }
+    enter_buffer(valid ? buf : lastbuf);
     if (old_tw != curbuf->b_p_tw) {
       check_colorcolumn(curwin);
     }
@@ -2135,7 +2114,6 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 {
   win_T *wp = NULL;
   fmark_T *fm = NULL;
-  colnr_T col;
 
   buf_T *buf = buflist_findnr(n);
   if (buf == NULL) {
@@ -2156,6 +2134,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     return FAIL;
   }
 
+  colnr_T col;
   bool restore_view = false;
   // altfpos may be changed by getfile(), get it now
   if (lnum == 0) {
@@ -2291,11 +2270,7 @@ int buflist_findpat(const char *pattern, const char *pattern_end, bool unlisted,
   int match = -1;
 
   if (pattern_end == pattern + 1 && (*pattern == '%' || *pattern == '#')) {
-    if (*pattern == '%') {
-      match = curbuf->b_fnum;
-    } else {
-      match = curwin->w_alt_fnum;
-    }
+    match = *pattern == '%' ? curbuf->b_fnum : curwin->w_alt_fnum;
     buf_T *found_buf = buflist_findnr(match);
     if (diffmode && !(found_buf && diff_mode_buf(found_buf))) {
       match = -1;
@@ -2906,9 +2881,7 @@ void buflist_list(exarg_T *eap)
                            changed_char,
                            NameBuff);
 
-    if (len > IOSIZE - 20) {
-      len = IOSIZE - 20;
-    }
+    len = MIN(len, IOSIZE - 20);
 
     // put "line 999" in column 40 or after the file name
     int i = 40 - vim_strsize(IObuff);
@@ -3212,8 +3185,6 @@ static bool buf_same_file_id(buf_T *buf, FileID *file_id)
 /// @param fullname  when non-zero print full path
 void fileinfo(int fullname, int shorthelp, bool dont_truncate)
 {
-  char *name;
-  int n;
   char *p;
 
   char *buffer = xmalloc(IOSIZE);
@@ -3229,11 +3200,9 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
   if (buf_spname(curbuf) != NULL) {
     xstrlcpy(p, buf_spname(curbuf), (size_t)(IOSIZE - (p - buffer)));
   } else {
-    if (!fullname && curbuf->b_fname != NULL) {
-      name = curbuf->b_fname;
-    } else {
-      name = curbuf->b_ffname;
-    }
+    char *name = (!fullname && curbuf->b_fname != NULL)
+                 ? curbuf->b_fname
+                 : curbuf->b_ffname;
     home_replace(shorthelp ? curbuf : NULL, name, p,
                  (size_t)(IOSIZE - (p - buffer)), true);
   }
@@ -3254,6 +3223,7 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
                     || (curbuf->b_flags & BF_WRITE_MASK)
                     || curbuf->b_p_ro)
                    ? " " : "");
+  int n;
   // With 32 bit longs and more than 21,474,836 lines multiplying by 100
   // causes an overflow, thus for large numbers divide instead.
   if (curwin->w_cursor.lnum > 1000000) {
@@ -3342,10 +3312,7 @@ void maketitle(void)
 
   if (p_title) {
     if (p_titlelen > 0) {
-      maxlen = (int)(p_titlelen * Columns / 100);
-      if (maxlen < 10) {
-        maxlen = 10;
-      }
+      maxlen = MAX((int)(p_titlelen * Columns / 100), 10);
     }
 
     if (*p_titlestring != NUL) {
@@ -3461,12 +3428,9 @@ void maketitle(void)
         icon_str = p_iconstring;
       }
     } else {
-      char *buf_p;
-      if (buf_spname(curbuf) != NULL) {
-        buf_p = buf_spname(curbuf);
-      } else {                        // use file name only in icon
-        buf_p = path_tail(curbuf->b_ffname);
-      }
+      char *buf_p = buf_spname(curbuf) != NULL
+                    ? buf_spname(curbuf)
+                    : path_tail(curbuf->b_ffname);  // use file name only in icon
       *icon_str = NUL;
       // Truncate name at 100 bytes.
       int len = (int)strlen(buf_p);
@@ -3631,23 +3595,18 @@ bool bt_prompt(buf_T *buf)
 /// Open a window for a number of buffers.
 void ex_buffer_all(exarg_T *eap)
 {
-  win_T *wp, *wpnext;
+  win_T *wpnext;
   int split_ret = OK;
   int open_wins = 0;
-  linenr_T count;               // Maximum number of windows to open.
-  int all;                      // When true also load inactive buffers.
   int had_tab = cmdmod.cmod_tab;
 
-  if (eap->addr_count == 0) {   // make as many windows as possible
-    count = 9999;
-  } else {
-    count = eap->line2;         // make as many windows as specified
-  }
-  if (eap->cmdidx == CMD_unhide || eap->cmdidx == CMD_sunhide) {
-    all = false;
-  } else {
-    all = true;
-  }
+  // Maximum number of windows to open.
+  linenr_T count = eap->addr_count == 0
+                   ? 9999         // make as many windows as possible
+                   : eap->line2;  // make as many windows as specified
+
+  // When true also load inactive buffers.
+  int all = eap->cmdidx != CMD_unhide && eap->cmdidx != CMD_sunhide;
 
   // Stop Visual mode, the cursor and "VIsual" may very well be invalid after
   // switching to another buffer.
@@ -3663,7 +3622,7 @@ void ex_buffer_all(exarg_T *eap)
   while (true) {
     tabpage_T *tpnext = curtab->tp_next;
     // Try to close floating windows first
-    for (wp = lastwin->w_floating ? lastwin : firstwin; wp != NULL; wp = wpnext) {
+    for (win_T *wp = lastwin->w_floating ? lastwin : firstwin; wp != NULL; wp = wpnext) {
       wpnext = wp->w_floating
                ? wp->w_prev->w_floating ? wp->w_prev : firstwin
                : (wp->w_next == NULL || wp->w_next->w_floating) ? NULL : wp->w_next;
@@ -3712,13 +3671,12 @@ void ex_buffer_all(exarg_T *eap)
       continue;
     }
 
+    win_T *wp;
     if (had_tab != 0) {
       // With the ":tab" modifier don't move the window.
-      if (buf->b_nwindows > 0) {
-        wp = lastwin;               // buffer has a window, skip it
-      } else {
-        wp = NULL;
-      }
+      wp = buf->b_nwindows > 0
+           ? lastwin  // buffer has a window, skip it
+           : NULL;
     } else {
       // Check if this buffer already has a window
       for (wp = firstwin; wp != NULL; wp = wp->w_next) {
@@ -3794,7 +3752,7 @@ void ex_buffer_all(exarg_T *eap)
   autocmd_no_leave--;
 
   // Close superfluous windows.
-  for (wp = lastwin; open_wins > count;) {
+  for (win_T *wp = lastwin; open_wins > count;) {
     bool r = (buf_hide(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
               || autowrite(wp->w_buffer, false) == OK) && !is_aucmd_win(wp);
     if (!win_valid(wp)) {
@@ -3862,7 +3820,6 @@ static int chk_modeline(linenr_T lnum, int flags)
 {
   char *s;
   char *e;
-  char *linecopy;                // local copy of any modeline found
   intmax_t vers;
   int retval = OK;
 
@@ -3907,6 +3864,7 @@ static int chk_modeline(linenr_T lnum, int flags)
     s++;
   } while (s[-1] != ':');
 
+  char *linecopy;                 // local copy of any modeline found
   s = linecopy = xstrdup(s);      // copy the line, it will change
 
   // prepare for emsg()

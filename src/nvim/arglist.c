@@ -346,12 +346,7 @@ static void alist_add_list(int count, char **files, int after, bool will_edit)
   int old_argcount = ARGCOUNT;
   ga_grow(&ALIST(curwin)->al_ga, count);
   if (check_arglist_locked() != FAIL) {
-    if (after < 0) {
-      after = 0;
-    }
-    if (after > ARGCOUNT) {
-      after = ARGCOUNT;
-    }
+    after = MIN(MAX(after, 0), ARGCOUNT);
     if (after < ARGCOUNT) {
       memmove(&(ARGLIST[after + count]), &(ARGLIST[after]),
               (size_t)(ARGCOUNT - after) * sizeof(aentry_T));

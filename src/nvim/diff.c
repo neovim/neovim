@@ -694,7 +694,7 @@ void diff_redraw(bool dofold)
 
     if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
       if (wp->w_topfill > n) {
-        wp->w_topfill = (n < 0 ? 0 : n);
+        wp->w_topfill = MAX(n, 0);
       } else if ((n > 0) && (n > wp->w_topfill)) {
         wp->w_topfill = n;
         if (wp == curwin) {
@@ -2679,9 +2679,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       si_org -= utf_head_off(line_org, line_org + si_org);
       si_new -= utf_head_off(line_new, line_new + si_new);
 
-      if (*startp > si_org) {
-        *startp = si_org;
-      }
+      *startp = MIN(*startp, si_org);
 
       // Search for end of difference, if any.
       if ((line_org[si_org] != NUL) || (line_new[si_new] != NUL)) {
@@ -2721,9 +2719,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
           }
         }
 
-        if (*endp < ei_org) {
-          *endp = ei_org;
-        }
+        *endp = MAX(*endp, ei_org);
       }
     }
   }
@@ -3051,19 +3047,11 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
           // range ends above end of current/from diff block
           if (idx_cur == idx_from) {
             // :diffput
-            int i = dp->df_count[idx_cur] - start_skip - end_skip;
-
-            if (count > i) {
-              count = i;
-            }
+            count = MIN(count, dp->df_count[idx_cur] - start_skip - end_skip);
           } else {
             // :diffget
             count -= end_skip;
-            end_skip = dp->df_count[idx_from] - start_skip - count;
-
-            if (end_skip < 0) {
-              end_skip = 0;
-            }
+            end_skip = MAX(dp->df_count[idx_from] - start_skip - count, 0);
           }
         } else {
           end_skip = 0;
@@ -3249,9 +3237,7 @@ int diff_move_to(int dir, int count)
   }
 
   // don't end up past the end of the file
-  if (lnum > curbuf->b_ml.ml_line_count) {
-    lnum = curbuf->b_ml.ml_line_count;
-  }
+  lnum = MIN(lnum, curbuf->b_ml.ml_line_count);
 
   // When the cursor didn't move at all we fail.
   if (lnum == curwin->w_cursor.lnum) {
@@ -3297,10 +3283,7 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1, linenr_T lnum1)
     if ((dp->df_lnum[idx1] + dp->df_count[idx1]) > lnum1) {
       // Inside the diffblock
       baseline = lnum1 - dp->df_lnum[idx1];
-
-      if (baseline > dp->df_count[idx2]) {
-        baseline = dp->df_count[idx2];
-      }
+      baseline = MIN(baseline, dp->df_count[idx2]);
 
       return dp->df_lnum[idx2] + baseline;
     }
@@ -3335,10 +3318,7 @@ linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1)
   linenr_T lnum = diff_get_corresponding_line_int(buf1, lnum1);
 
   // don't end up past the end of the file
-  if (lnum > curbuf->b_ml.ml_line_count) {
-    return curbuf->b_ml.ml_line_count;
-  }
-  return lnum;
+  return MIN(lnum, curbuf->b_ml.ml_line_count);
 }
 
 /// For line "lnum" in the current window find the equivalent lnum in window
@@ -3381,10 +3361,7 @@ linenr_T diff_lnum_win(linenr_T lnum, win_T *wp)
   }
 
   linenr_T n = lnum + (dp->df_lnum[i] - dp->df_lnum[idx]);
-  if (n > dp->df_lnum[i] + dp->df_count[i]) {
-    n = dp->df_lnum[i] + dp->df_count[i];
-  }
-  return n;
+  return MIN(n, dp->df_lnum[i] + dp->df_count[i]);
 }
 
 /// Handle an ED style diff line.

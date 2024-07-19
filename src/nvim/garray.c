@@ -78,16 +78,12 @@ void ga_grow(garray_T *gap, int n)
   }
 
   // the garray grows by at least growsize
-  if (n < gap->ga_growsize) {
-    n = gap->ga_growsize;
-  }
+  n = MAX(n, gap->ga_growsize);
 
   // A linear growth is very inefficient when the array grows big.  This
   // is a compromise between allocating memory that won't be used and too
   // many copy operations. A factor of 1.5 seems reasonable.
-  if (n < gap->ga_len / 2) {
-    n = gap->ga_len / 2;
-  }
+  n = MAX(n, gap->ga_len / 2);
 
   int new_maxlen = gap->ga_len + n;
 

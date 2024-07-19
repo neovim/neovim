@@ -1269,11 +1269,7 @@ int current_par(oparg_T *oap, int count, bool include, int type)
   // When visual area is more than one line: extend it.
   if (VIsual_active && start_lnum != VIsual.lnum) {
 extend:
-    if (start_lnum < VIsual.lnum) {
-      dir = BACKWARD;
-    } else {
-      dir = FORWARD;
-    }
+    dir = start_lnum < VIsual.lnum ? BACKWARD : FORWARD;
     for (int i = count; --i >= 0;) {
       if (start_lnum ==
           (dir == BACKWARD ? 1 : curbuf->b_ml.ml_line_count)) {

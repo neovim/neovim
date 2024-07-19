@@ -1050,9 +1050,7 @@ void do_mousescroll(cmdarg_T *cap)
     // Horizontal scrolling
     int step = shift_or_ctrl ? curwin->w_width_inner : (int)p_mousescroll_hor;
     colnr_T leftcol = curwin->w_leftcol + (cap->arg == MSCR_RIGHT ? -step : +step);
-    if (leftcol < 0) {
-      leftcol = 0;
-    }
+    leftcol = MAX(leftcol, 0);
     do_mousescroll_horiz(leftcol);
   }
 }
@@ -1619,11 +1617,8 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   while (row > 0) {
     // Don't include filler lines in "count"
     if (win_may_fill(win)) {
-      if (lnum == win->w_topline) {
-        row -= win->w_topfill;
-      } else {
-        row -= win_get_fill(win, lnum);
-      }
+      row -= lnum == win->w_topline ? win->w_topfill
+                                    : win_get_fill(win, lnum);
       count = plines_win_nofill(win, lnum, false);
     } else {
       count = plines_win(win, lnum, false);
@@ -1664,9 +1659,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   if (!retval) {
     // Compute the column without wrapping.
     int off = win_col_off(win) - win_col_off2(win);
-    if (col < off) {
-      col = off;
-    }
+    col = MAX(col, off);
     col += row * (win->w_width_inner - off);
 
     // Add skip column for the topline.
@@ -1681,9 +1674,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
   // skip line number and fold column in front of the line
   col -= win_col_off(win);
-  if (col <= 0) {
-    col = 0;
-  }
+  col = MAX(col, 0);
 
   *colp = col;
   *rowp = row;

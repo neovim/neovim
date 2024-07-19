@@ -382,11 +382,7 @@ static int qf_init_process_nextline(qf_list_T *qfl, efm_T *fmt_first, qfstate_T 
 int qf_init(win_T *wp, const char *restrict efile, char *restrict errorformat, int newlist,
             const char *restrict qf_title, char *restrict enc)
 {
-  qf_info_T *qi = &ql_info;
-
-  if (wp != NULL) {
-    qi = ll_get_or_alloc_list(wp);
-  }
+  qf_info_T *qi = wp == NULL ? &ql_info : ll_get_or_alloc_list(wp);
 
   return qf_init_ext(qi, qi->qf_curlist, efile, curbuf, NULL, errorformat,
                      newlist, 0, 0, qf_title, enc);
@@ -834,8 +830,7 @@ retry:
         break;
       }
 
-      state->growbufsiz = (2 * state->growbufsiz < LINE_MAXLEN)
-                          ? 2 * state->growbufsiz : LINE_MAXLEN;
+      state->growbufsiz = MIN(2 * state->growbufsiz, LINE_MAXLEN);
       state->growbuf = xrealloc(state->growbuf, state->growbufsiz);
     }
 
@@ -871,8 +866,7 @@ retry:
         xfree(state->growbuf);
         state->linebuf = line;
         state->growbuf = line;
-        state->growbufsiz = state->linelen < LINE_MAXLEN
-                            ? state->linelen : LINE_MAXLEN;
+        state->growbufsiz = MIN(state->linelen, LINE_MAXLEN);
       }
     }
   }
@@ -1152,14 +1146,10 @@ static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, bu
     }
   }
 
-  char *efm;
-
   // Use the local value of 'errorformat' if it's set.
-  if (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL) {
-    efm = buf->b_p_efm;
-  } else {
-    efm = errorformat;
-  }
+  char *efm = (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL)
+              ? buf->b_p_efm
+              : errorformat;
 
   // If the errorformat didn't change between calls, then reuse the previously
   // parsed values.
@@ -1491,9 +1481,7 @@ static int qf_parse_fmt_s(regmatch_T *rmp, int midx, qffields_T *fields)
     return QF_FAIL;
   }
   size_t len = (size_t)(rmp->endp[midx] - rmp->startp[midx]);
-  if (len > CMDBUFFSIZE - 5) {
-    len = CMDBUFFSIZE - 5;
-  }
+  len = MIN(len, CMDBUFFSIZE - 5);
   STRCPY(fields->pattern, "^\\V");
   xstrlcat(fields->pattern, rmp->startp[midx], len + 4);
   fields->pattern[len + 3] = '\\';
@@ -1511,9 +1499,7 @@ static int qf_parse_fmt_o(regmatch_T *rmp, int midx, qffields_T *fields)
   }
   size_t len = (size_t)(rmp->endp[midx] - rmp->startp[midx]);
   size_t dsize = strlen(fields->module) + len + 1;
-  if (dsize > CMDBUFFSIZE) {
-    dsize = CMDBUFFSIZE;
-  }
+  dsize = MIN(dsize, CMDBUFFSIZE);
   xstrlcat(fields->module, rmp->startp[midx], dsize);
   return QF_OK;
 }
@@ -2527,13 +2513,7 @@ static void win_set_loclist(win_T *wp, qf_info_T *qi)
 /// window.
 static int jump_to_help_window(qf_info_T *qi, bool newwin, bool *opened_window)
 {
-  win_T *wp = NULL;
-
-  if (cmdmod.cmod_tab != 0 || newwin) {
-    wp = NULL;
-  } else {
-    wp = qf_find_help_win();
-  }
+  win_T *wp = (cmdmod.cmod_tab != 0 || newwin) ? NULL : qf_find_help_win();
 
   if (wp != NULL && wp->w_buffer->b_nwindows > 0) {
     win_enter(wp, true);
@@ -2882,9 +2862,7 @@ static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char qf_viscol, char
     // Go to line with error, unless qf_lnum is 0.
     linenr_T i = qf_lnum;
     if (i > 0) {
-      if (i > curbuf->b_ml.ml_line_count) {
-        i = curbuf->b_ml.ml_line_count;
-      }
+      i = MIN(i, curbuf->b_ml.ml_line_count);
       curwin->w_cursor.lnum = i;
     }
     if (qf_col > 0) {
@@ -3898,13 +3876,8 @@ static bool qf_win_pos_update(qf_info_T *qi, int old_qf_index)
   if (win != NULL
       && qf_index <= win->w_buffer->b_ml.ml_line_count
       && old_qf_index != qf_index) {
-    if (qf_index > old_qf_index) {
-      win->w_redraw_top = old_qf_index;
-      win->w_redraw_bot = qf_index;
-    } else {
-      win->w_redraw_top = qf_index;
-      win->w_redraw_bot = old_qf_index;
-    }
+    win->w_redraw_top = MIN(old_qf_index, qf_index);
+    win->w_redraw_bot = MAX(old_qf_index, qf_index);
     qf_win_goto(win, qf_index);
   }
   return win != NULL;
@@ -4220,11 +4193,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
       qfp = qfl->qf_start;
       lnum = 0;
     } else {
-      if (old_last->qf_next != NULL) {
-        qfp = old_last->qf_next;
-      } else {
-        qfp = old_last;
-      }
+      qfp = old_last->qf_next != NULL ? old_last->qf_next : old_last;
       lnum = buf->b_ml.ml_line_count;
     }
 
@@ -4451,15 +4420,11 @@ void ex_make(exarg_T *eap)
 
   incr_quickfix_busy();
 
-  char *errorformat = p_efm;
-  bool newlist = true;
+  char *errorformat = (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake)
+                      ? p_gefm
+                      : p_efm;
 
-  if (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake) {
-    errorformat = p_gefm;
-  }
-  if (eap->cmdidx == CMD_grepadd || eap->cmdidx == CMD_lgrepadd) {
-    newlist = false;
-  }
+  bool newlist = eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd;
 
   int res = qf_init(wp, fname, errorformat, newlist, qf_cmdtitle(*eap->cmdlinep), enc);
 
@@ -5323,9 +5288,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
 {
   bool found_match = false;
   size_t pat_len = strlen(spat);
-  if (pat_len > MAX_FUZZY_MATCHES) {
-    pat_len = MAX_FUZZY_MATCHES;
-  }
+  pat_len = MIN(pat_len, MAX_FUZZY_MATCHES);
 
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count && *tomatch > 0; lnum++) {
     colnr_T col = 0;
@@ -5467,12 +5430,7 @@ static int vgr_process_args(exarg_T *eap, vgr_args_T *args)
 
   args->regmatch.regprog = NULL;
   args->qf_title = xstrdup(qf_cmdtitle(*eap->cmdlinep));
-
-  if (eap->addr_count > 0) {
-    args->tomatch = eap->line2;
-  } else {
-    args->tomatch = MAXLNUM;
-  }
+  args->tomatch = eap->addr_count > 0 ? eap->line2 : MAXLNUM;
 
   // Get the search pattern: either white-separated or enclosed in //
   char *p = skip_vimgrep_pat(eap->arg, &args->spat, &args->flags);
@@ -6702,9 +6660,7 @@ static int qf_setprop_curidx(qf_info_T *qi, qf_list_T *qfl, const dictitem_T *di
   if (newidx < 1) {  // sanity check
     return FAIL;
   }
-  if (newidx > qfl->qf_count) {
-    newidx = qfl->qf_count;
-  }
+  newidx = MIN(newidx, qfl->qf_count);
   const int old_qfidx = qfl->qf_index;
   qfline_T *const qf_ptr = get_nth_entry(qfl, newidx, &newidx);
   if (qf_ptr == NULL) {
@@ -6901,31 +6857,17 @@ static bool mark_quickfix_ctx(qf_info_T *qi, int copyID)
 /// "in use". So that garbage collection doesn't free the context.
 bool set_ref_in_quickfix(int copyID)
 {
-  bool abort = mark_quickfix_ctx(&ql_info, copyID);
-  if (abort) {
-    return abort;
-  }
-
-  abort = mark_quickfix_user_data(&ql_info, copyID);
-  if (abort) {
-    return abort;
-  }
-
-  abort = set_ref_in_callback(&qftf_cb, copyID, NULL, NULL);
-  if (abort) {
-    return abort;
+  if (mark_quickfix_ctx(&ql_info, copyID)
+      || mark_quickfix_user_data(&ql_info, copyID)
+      || set_ref_in_callback(&qftf_cb, copyID, NULL, NULL)) {
+    return true;
   }
 
   FOR_ALL_TAB_WINDOWS(tp, win) {
     if (win->w_llist != NULL) {
-      abort = mark_quickfix_ctx(win->w_llist, copyID);
-      if (abort) {
-        return abort;
-      }
-
-      abort = mark_quickfix_user_data(win->w_llist, copyID);
-      if (abort) {
-        return abort;
+      if (mark_quickfix_ctx(win->w_llist, copyID)
+          || mark_quickfix_user_data(win->w_llist, copyID)) {
+        return true;
       }
     }
 
@@ -6933,14 +6875,13 @@ bool set_ref_in_quickfix(int copyID)
       // In a location list window and none of the other windows is
       // referring to this location list. Mark the location list
       // context as still in use.
-      abort = mark_quickfix_ctx(win->w_llist_ref, copyID);
-      if (abort) {
-        return abort;
+      if (mark_quickfix_ctx(win->w_llist_ref, copyID)) {
+        return true;
       }
     }
   }
 
-  return abort;
+  return false;
 }
 
 /// Return the autocmd name for the :cbuffer Ex commands

@@ -1191,10 +1191,7 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
   memmove(term->sb_buffer, term->sb_buffer + 1,
           sizeof(term->sb_buffer[0]) * (term->sb_current));
 
-  size_t cols_to_copy = (size_t)cols;
-  if (cols_to_copy > sbrow->cols) {
-    cols_to_copy = sbrow->cols;
-  }
+  size_t cols_to_copy = MIN((size_t)cols, sbrow->cols);
 
   // copy to vterm state
   memcpy(cells, sbrow->cells, sizeof(cells[0]) * cols_to_copy);

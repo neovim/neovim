@@ -123,10 +123,7 @@ void win_redr_status(win_T *wp)
       // len += (int)strlen(p + len);  // dead assignment
     }
 
-    int this_ru_col = ru_col - (Columns - stl_width);
-    if (this_ru_col < (stl_width + 1) / 2) {
-      this_ru_col = (stl_width + 1) / 2;
-    }
+    int this_ru_col = MAX(ru_col - (Columns - stl_width), (stl_width + 1) / 2);
     if (this_ru_col <= 1) {
       p = "<";                // No room for file name!
       len = 1;
@@ -374,10 +371,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
           stl = p_ruf;
         }
       }
-      col = ru_col - (Columns - maxwidth);
-      if (col < (maxwidth + 1) / 2) {
-        col = (maxwidth + 1) / 2;
-      }
+      col = MAX(ru_col - (Columns - maxwidth), (maxwidth + 1) / 2);
       maxwidth -= col;
       if (!in_status_line) {
         grid = &msg_grid_adj;
@@ -574,15 +568,9 @@ void win_redr_ruler(win_T *wp)
   if (wp->w_status_height == 0 && !is_stl_global) {  // can't use last char of screen
     o++;
   }
-  int this_ru_col = ru_col - (Columns - width);
-  if (this_ru_col < 0) {
-    this_ru_col = 0;
-  }
   // Never use more than half the window/screen width, leave the other half
   // for the filename.
-  if (this_ru_col < (width + 1) / 2) {
-    this_ru_col = (width + 1) / 2;
-  }
+  int this_ru_col = MAX(ru_col - (Columns - width), (width + 1) / 2);
   if (this_ru_col + o < width) {
     // Need at least 3 chars left for get_rel_pos() + NUL.
     while (this_ru_col + o < width && RULER_BUF_LEN > i + 4) {
@@ -726,7 +714,6 @@ void draw_tabline(void)
     win_redr_custom(NULL, false, false);
   } else {
     int tabcount = 0;
-    int tabwidth = 0;
     int col = 0;
     win_T *cwp;
     int wincount;
@@ -735,13 +722,7 @@ void draw_tabline(void)
       tabcount++;
     }
 
-    if (tabcount > 0) {
-      tabwidth = (Columns - 1 + tabcount / 2) / tabcount;
-    }
-
-    if (tabwidth < 6) {
-      tabwidth = 6;
-    }
+    int tabwidth = MAX(tabcount > 0 ? (Columns - 1 + tabcount / 2) / tabcount : 0, 6);
 
     int attr = attr_nosel;
     tabcount = 0;
@@ -810,9 +791,7 @@ void draw_tabline(void)
           len -= ptr2cells(p);
           MB_PTR_ADV(p);
         }
-        if (len > Columns - col - 1) {
-          len = Columns - col - 1;
-        }
+        len = MIN(len, Columns - col - 1);
 
         grid_line_puts(col, p, -1, attr);
         col += len;
@@ -1193,9 +1172,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
           // If the item was partially or completely truncated, set its
           // start to the start of the group
-          if (stl_items[idx].start < t) {
-            stl_items[idx].start = t;
-          }
+          stl_items[idx].start = MAX(stl_items[idx].start, t);
         }
         // If the group is shorter than the minimum width, add padding characters.
       } else if (abs(stl_items[stl_groupitems[groupdepth]].minwid) > group_len) {

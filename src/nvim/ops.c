@@ -246,12 +246,7 @@ void op_shift(oparg_T *oap, bool curs_top, int amount)
   foldOpenCursor();
 
   if (oap->line_count > p_report) {
-    char *op;
-    if (oap->op_type == OP_RSHIFT) {
-      op = ">";
-    } else {
-      op = "<";
-    }
+    char *op = oap->op_type == OP_RSHIFT ? ">" : "<";
 
     char *msg_line_single = NGETTEXT("%" PRId64 " line %sed %d time",
                                      "%" PRId64 " line %sed %d times", amount);
@@ -295,20 +290,14 @@ void shift_line(bool left, bool round, int amount, int call_changed_bytes)
       amount--;
     }
     if (left) {
-      i -= amount;
-      if (i < 0) {
-        i = 0;
-      }
+      i = MAX(i - amount, 0);
     } else {
       i += amount;
     }
     count = i * sw_val;
   } else {  // original vi indent
     if (left) {
-      count -= sw_val * amount;
-      if (count < 0) {
-        count = 0;
-      }
+      count = MAX(count - sw_val * amount, 0);
     } else {
       count += sw_val * amount;
     }
@@ -445,9 +434,7 @@ static void shift_block(oparg_T *oap, int amount)
 
     const colnr_T block_space_width = non_white_col - oap->start_vcol;
     // We will shift by "total" or "block_space_width", whichever is less.
-    const colnr_T shift_amount = block_space_width < total
-                                 ? block_space_width
-                                 : total;
+    const colnr_T shift_amount = MIN(block_space_width, total);
     // The column to which we will shift the text.
     const colnr_T destination_col = non_white_col - shift_amount;
 
@@ -561,9 +548,7 @@ static void block_insert(oparg_T *oap, const char *s, size_t slen, bool b_insert
       // avoid copying part of a multi-byte character
       offset -= utf_head_off(oldp, oldp + offset);
     }
-    if (spaces < 0) {  // can happen when the cursor was moved
-      spaces = 0;
-    }
+    spaces = MAX(spaces, 0);  // can happen when the cursor was moved
 
     assert(count >= 0);
     // Make sure the allocated size matches what is actually copied below.
@@ -2369,9 +2354,7 @@ void op_insert(oparg_T *oap, int count1)
         }
       }
     }
-    if (add > len) {
-      add = len;  // short line, point to the NUL
-    }
+    add = MIN(add, len);  // short line, point to the NUL
     firstline += add;
     len -= add;
     int ins_len = len - pre_textlen - offset;
@@ -3041,9 +3024,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
 
   if (y_type == kMTBlockWise) {
     lnum = curwin->w_cursor.lnum + (linenr_T)y_size + 1;
-    if (lnum > curbuf->b_ml.ml_line_count) {
-      lnum = curbuf->b_ml.ml_line_count + 1;
-    }
+    lnum = MIN(lnum, curbuf->b_ml.ml_line_count + 1);
     if (u_save(curwin->w_cursor.lnum - 1, lnum) == FAIL) {
       goto end;
     }
@@ -3204,9 +3185,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
           spaces -= win_charsize(cstype, 0, ci.ptr, ci.chr.value, &csarg).width;
           ci = utfc_next(ci);
         }
-        if (spaces < 0) {
-          spaces = 0;
-        }
+        spaces = MAX(spaces, 0);
       }
 
       // Insert the new text.
@@ -3271,10 +3250,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
 
     // adjust '] mark
     curbuf->b_op_end.lnum = curwin->w_cursor.lnum - 1;
-    curbuf->b_op_end.col = bd.textcol + (colnr_T)totlen - 1;
-    if (curbuf->b_op_end.col < 0) {
-      curbuf->b_op_end.col = 0;
-    }
+    curbuf->b_op_end.col = MAX(bd.textcol + (colnr_T)totlen - 1, 0);
     curbuf->b_op_end.coladd = 0;
     if (flags & PUT_CURSEND) {
       curwin->w_cursor = curbuf->b_op_end;
@@ -3282,9 +3258,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
 
       // in Insert mode we might be after the NUL, correct for that
       colnr_T len = get_cursor_line_len();
-      if (curwin->w_cursor.col > len) {
-        curwin->w_cursor.col = len;
-      }
+      curwin->w_cursor.col = MIN(curwin->w_cursor.col, len);
     } else {
       curwin->w_cursor.lnum = lnum;
     }
@@ -3317,10 +3291,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       int first_byte_off = 0;
 
       if (VIsual_active) {
-        end_lnum = curbuf->b_visual.vi_end.lnum;
-        if (end_lnum < curbuf->b_visual.vi_start.lnum) {
-          end_lnum = curbuf->b_visual.vi_start.lnum;
-        }
+        end_lnum = MAX(curbuf->b_visual.vi_end.lnum, curbuf->b_visual.vi_start.lnum);
         if (end_lnum > start_lnum) {
           // "col" is valid for the first line, in following lines
           // the virtual column needs to be used.  Matters for
@@ -4259,10 +4230,7 @@ void charwise_block_prep(pos_T start, pos_T end, struct block_def *bdp, linenr_T
       if (ce != cs && start.coladd > 0) {
         // Part of a tab selected -- but don't double-count it.
         bdp->start_char_vcols = ce - cs + 1;
-        bdp->startspaces = bdp->start_char_vcols - start.coladd;
-        if (bdp->startspaces < 0) {
-          bdp->startspaces = 0;
-        }
+        bdp->startspaces = MAX(bdp->start_char_vcols - start.coladd, 0);
         startcol++;
       }
     }
@@ -4362,9 +4330,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
         }
         if (pos.lnum == oap->end.lnum) {
           length = ml_get_len(oap->end.lnum);
-          if (oap->end.col >= length) {
-            oap->end.col = length - 1;
-          }
+          oap->end.col = MIN(oap->end.col, length - 1);
           length = oap->end.col - pos.col + 1;
         }
       }
@@ -4553,21 +4519,13 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     // decrement or increment alphabetic character
     if (op_type == OP_NR_SUB) {
       if (CHAR_ORD(firstdigit) < Prenum1) {
-        if (isupper(firstdigit)) {
-          firstdigit = 'A';
-        } else {
-          firstdigit = 'a';
-        }
+        firstdigit = isupper(firstdigit) ? 'A' : 'a';
       } else {
         firstdigit -= (int)Prenum1;
       }
     } else {
       if (26 - CHAR_ORD(firstdigit) - 1 < Prenum1) {
-        if (isupper(firstdigit)) {
-          firstdigit = 'Z';
-        } else {
-          firstdigit = 'z';
-        }
+        firstdigit = isupper(firstdigit) ? 'Z' : 'z';
       } else {
         firstdigit += (int)Prenum1;
       }
@@ -4678,11 +4636,7 @@ bool do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     }
     while (todel-- > 0) {
       if (c < 0x100 && isalpha(c)) {
-        if (isupper(c)) {
-          hexupper = true;
-        } else {
-          hexupper = false;
-        }
+        hexupper = isupper(c);
       }
       // del_char() will mark line needing displaying
       del_char(false);
@@ -5158,9 +5112,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
     for (char **ss = (char **)str; *ss != NULL; ss++, lnum++) {
       size_t ss_len = strlen(*ss);
       pp[lnum] = xmemdupz(*ss, ss_len);
-      if (ss_len > maxlen) {
-        maxlen = ss_len;
-      }
+      maxlen = MAX(maxlen, ss_len);
     }
   } else {
     size_t line_len;
@@ -5169,9 +5121,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
          start += line_len + 1, lnum++) {
       assert(end - start >= 0);
       line_len = (size_t)((char *)xmemscan(start, '\n', (size_t)(end - start)) - start);
-      if (line_len > maxlen) {
-        maxlen = line_len;
-      }
+      maxlen = MAX(maxlen, line_len);
 
       // When appending, copy the previous line and free it after.
       size_t extra = append ? strlen(pp[--lnum]) : 0;
@@ -5661,9 +5611,7 @@ static void get_op_vcol(oparg_T *oap, colnr_T redo_VIsual_vcol, bool initial)
   if (!redo_VIsual_busy) {
     getvvcol(curwin, &(oap->end), &start, NULL, &end);
 
-    if (start < oap->start_vcol) {
-      oap->start_vcol = start;
-    }
+    oap->start_vcol = MIN(oap->start_vcol, start);
     if (end > oap->end_vcol) {
       if (initial && *p_sel == 'e'
           && start >= 1
@@ -5682,9 +5630,7 @@ static void get_op_vcol(oparg_T *oap, colnr_T redo_VIsual_vcol, bool initial)
     for (curwin->w_cursor.lnum = oap->start.lnum;
          curwin->w_cursor.lnum <= oap->end.lnum; curwin->w_cursor.lnum++) {
       getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &end);
-      if (end > oap->end_vcol) {
-        oap->end_vcol = end;
-      }
+      oap->end_vcol = MAX(oap->end_vcol, end);
     }
   } else if (redo_VIsual_busy) {
     oap->end_vcol = oap->start_vcol + redo_VIsual_vcol - 1;
@@ -5818,9 +5764,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       // redo_VIsual.rv_line_count and redo_VIsual.rv_vcol.
       oap->start = curwin->w_cursor;
       curwin->w_cursor.lnum += redo_VIsual.rv_line_count - 1;
-      if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-        curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-      }
+      curwin->w_cursor.lnum = MIN(curwin->w_cursor.lnum, curbuf->b_ml.ml_line_count);
       VIsual_mode = redo_VIsual.rv_mode;
       if (redo_VIsual.rv_vcol == MAXCOL || VIsual_mode == 'v') {
         if (VIsual_mode == 'v') {
@@ -6108,9 +6052,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     case OP_JOIN_NS:
     case OP_JOIN:
-      if (oap->line_count < 2) {
-        oap->line_count = 2;
-      }
+      oap->line_count = MAX(oap->line_count, 2);
       if (curwin->w_cursor.lnum + oap->line_count - 1 >
           curbuf->b_ml.ml_line_count) {
         beep_flush();
@@ -6509,9 +6451,7 @@ void finish_yankreg_from_object(yankreg_T *reg, bool clipboard_adjust)
     size_t maxlen = 0;
     for (size_t i = 0; i < reg->y_size; i++) {
       size_t rowlen = strlen(reg->y_array[i]);
-      if (rowlen > maxlen) {
-        maxlen = rowlen;
-      }
+      maxlen = MAX(maxlen, rowlen);
     }
     assert(maxlen <= INT_MAX);
     reg->y_width = MAX(reg->y_width, (int)maxlen - 1);
@@ -6615,9 +6555,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     size_t maxlen = 0;
     for (size_t i = 0; i < reg->y_size; i++) {
       size_t rowlen = strlen(reg->y_array[i]);
-      if (rowlen > maxlen) {
-        maxlen = rowlen;
-      }
+      maxlen = MAX(maxlen, rowlen);
     }
     assert(maxlen <= INT_MAX);
     reg->y_width = (int)maxlen - 1;

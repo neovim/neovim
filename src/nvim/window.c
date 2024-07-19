@@ -1112,12 +1112,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     if (new_size == 0) {
       new_size = oldwin->w_width / 2;
     }
-    if (new_size > available - minwidth - 1) {
-      new_size = available - minwidth - 1;
-    }
-    if (new_size < wmw1) {
-      new_size = wmw1;
-    }
+    new_size = MAX(MIN(new_size, available - minwidth - 1), wmw1);
 
     // if it doesn't fit in the current window, need win_equal()
     if (oldwin->w_width - new_size - 1 < p_wmw) {
@@ -1198,12 +1193,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
       new_size = oldwin_height / 2;
     }
 
-    if (new_size > available - minheight - STATUS_HEIGHT) {
-      new_size = available - minheight - STATUS_HEIGHT;
-    }
-    if (new_size < wmh1) {
-      new_size = wmh1;
-    }
+    new_size = MAX(MIN(new_size, available - minheight - STATUS_HEIGHT), wmh1);
 
     // if it doesn't fit in the current window, need win_equal()
     if (oldwin_height - new_size - STATUS_HEIGHT < p_wmh) {
@@ -1730,12 +1720,8 @@ int make_windows(int count, bool vertical)
                      - (p_wh - p_wmh)) / ((int)p_wmh + STATUS_HEIGHT + global_winbar_height());
   }
 
-  if (maxcount < 2) {
-    maxcount = 2;
-  }
-  if (count > maxcount) {
-    count = maxcount;
-  }
+  maxcount = MAX(maxcount, 2);
+  count = MIN(count, maxcount);
 
   // add status line now, otherwise first window will be too big
   if (count > 1) {
@@ -2189,9 +2175,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
           if (frame_has_win(fr, next_curwin)) {
             room += (int)p_wiw - (int)p_wmw;
             next_curwin_size = 0;
-            if (new_size < p_wiw) {
-              new_size = (int)p_wiw;
-            }
+            new_size = MAX(new_size, (int)p_wiw);
           } else {
             // These windows don't use up room.
             totwincount -= (n + (fr->fr_next == NULL ? extra_sep : 0)) / ((int)p_wmw + 1);
@@ -2254,9 +2238,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
         }
         if (hnc) {                  // add next_curwin size
           next_curwin_size -= (int)p_wiw - (m - n);
-          if (next_curwin_size < 0) {
-            next_curwin_size = 0;
-          }
+          next_curwin_size = MAX(next_curwin_size, 0);
           new_size += next_curwin_size;
           room -= new_size - next_curwin_size;
         } else {
@@ -2319,9 +2301,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
           if (frame_has_win(fr, next_curwin)) {
             room += (int)p_wh - (int)p_wmh;
             next_curwin_size = 0;
-            if (new_size < p_wh) {
-              new_size = (int)p_wh;
-            }
+            new_size = MAX(new_size, (int)p_wh);
           } else {
             // These windows don't use up room.
             totwincount -= get_maximum_wincount(fr, (n + (fr->fr_next == NULL ? extra_sep : 0)));
@@ -3931,9 +3911,7 @@ static int frame_minwidth(frame_T *topfrp, win_T *next_curwin)
     frame_T *frp;
     FOR_ALL_FRAMES(frp, topfrp->fr_child) {
       int n = frame_minwidth(frp, next_curwin);
-      if (n > m) {
-        m = n;
-      }
+      m = MAX(m, n);
     }
   } else {
     // Add up the minimal widths for all frames in this row.
@@ -4266,9 +4244,7 @@ int make_tabpages(int maxcount)
   int count = maxcount;
 
   // Limit to 'tabpagemax' tabs.
-  if (count > p_tpm) {
-    count = (int)p_tpm;
-  }
+  count = MIN(count, (int)p_tpm);
 
   // Don't execute autocommands while creating the tab pages.  Must do that
   // when putting the buffers in the windows.
@@ -5428,14 +5404,10 @@ void win_new_screensize(void)
 /// This only does the current tab page, others must be done when made active.
 void win_new_screen_rows(void)
 {
-  int h = (int)ROWS_AVAIL;
-
   if (firstwin == NULL) {       // not initialized yet
     return;
   }
-  if (h < frame_minheight(topframe, NULL)) {
-    h = frame_minheight(topframe, NULL);
-  }
+  int h = MAX((int)ROWS_AVAIL, frame_minheight(topframe, NULL));
 
   // First try setting the heights of windows with 'winfixheight'.  If
   // that doesn't result in the right height, forget about that option.
@@ -5932,9 +5904,7 @@ static void frame_setheight(frame_T *curfrp, int height)
     // Row of frames: Also need to resize frames left and right of this
     // one.  First check for the minimal height of these.
     int h = frame_minheight(curfrp->fr_parent, NULL);
-    if (height < h) {
-      height = h;
-    }
+    height = MAX(height, h);
     frame_setheight(curfrp->fr_parent, height);
   } else {
     // Column of frames: try to change only frames in this column.
@@ -5969,9 +5939,7 @@ static void frame_setheight(frame_T *curfrp, int height)
         win_T *wp = lastwin_nofloating();
         room_cmdline = Rows - (int)p_ch - global_stl_height()
                        - (wp->w_winrow + wp->w_height + wp->w_hsep_height + wp->w_status_height);
-        if (room_cmdline < 0) {
-          room_cmdline = 0;
-        }
+        room_cmdline = MAX(room_cmdline, 0);
       }
 
       if (height <= room + room_cmdline) {
@@ -6003,9 +5971,7 @@ static void frame_setheight(frame_T *curfrp, int height)
 
     if (take > 0 && room_cmdline > 0) {
       // use lines from cmdline first
-      if (take < room_cmdline) {
-        room_cmdline = take;
-      }
+      room_cmdline = MIN(room_cmdline, take),
       take -= room_cmdline;
       topframe->fr_height += room_cmdline;
     }
@@ -6067,12 +6033,7 @@ void win_setwidth_win(int width, win_T *wp)
   // Always keep current window at least one column wide, even when
   // 'winminwidth' is zero.
   if (wp == curwin) {
-    if (width < p_wmw) {
-      width = (int)p_wmw;
-    }
-    if (width == 0) {
-      width = 1;
-    }
+    width = MAX(MAX(width, (int)p_wmw), 1);
   } else if (width < 0) {
     width = 0;
   }
@@ -6110,9 +6071,7 @@ static void frame_setwidth(frame_T *curfrp, int width)
     // Column of frames: Also need to resize frames above and below of
     // this one.  First check for the minimal width of these.
     int w = frame_minwidth(curfrp->fr_parent, NULL);
-    if (width < w) {
-      width = w;
-    }
+    width = MAX(width, w);
     frame_setwidth(curfrp->fr_parent, width);
   } else {
     // Row of frames: try to change only frames in this row.
@@ -6309,9 +6268,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
     } else if (!p_ch_was_zero) {
       room--;
     }
-    if (room < 0) {
-      room = 0;
-    }
+    room = MAX(room, 0);
     // sum up the room of frames below of the current one
     FOR_ALL_FRAMES(fr, curfr->fr_next) {
       room += fr->fr_height - frame_minheight(fr, NULL);
@@ -6319,9 +6276,8 @@ void win_drag_status_line(win_T *dragwin, int offset)
     fr = curfr;  // put fr at window that grows
   }
 
-  if (room < offset) {          // Not enough room
-    offset = room;              // Move as far as we can
-  }
+  // If not enough room then move as far as we can
+  offset = MIN(offset, room);
   if (offset <= 0) {
     return;
   }
@@ -6423,10 +6379,8 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
     fr = curfr;  // put fr at window that grows
   }
 
-  // Not enough room
-  if (room < offset) {
-    offset = room;  // Move as far as we can
-  }
+  // If not enough room thn move as far as we can
+  offset = MIN(offset, room);
 
   // No room at all, quit.
   if (offset <= 0) {
@@ -6597,9 +6551,7 @@ void win_new_height(win_T *wp, int height)
 {
   // Don't want a negative height.  Happens when splitting a tiny window.
   // Will equalize heights soon to fix it.
-  if (height < 0) {
-    height = 0;
-  }
+  height = MAX(height, 0);
   if (wp->w_height == height) {
     return;  // nothing to do
   }
@@ -6625,9 +6577,8 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     // Find a value for w_topline that shows the cursor at the same
     // relative position in the window as before (more or less).
     linenr_T lnum = wp->w_cursor.lnum;
-    if (lnum < 1) {             // can happen when starting up
-      lnum = 1;
-    }
+    // can happen when starting up
+    lnum = MAX(lnum, 1);
     wp->w_wrow = (wp->w_fraction * height - 1) / FRACTION_MULT;
     int line_size = plines_win_col(wp, lnum, wp->w_cursor.col) - 1;
     int sline = wp->w_wrow - line_size;
@@ -6843,9 +6794,7 @@ void command_height(void)
           break;
         }
         int h = frp->fr_height - frame_minheight(frp, NULL);
-        if (h > p_ch - old_p_ch) {
-          h = (int)p_ch - old_p_ch;
-        }
+        h = MIN(h, (int)p_ch - old_p_ch);
         old_p_ch += h;
         frame_add_height(frp, -h);
         frp = frp->fr_prev;
@@ -6863,9 +6812,7 @@ void command_height(void)
       return;
     }
 
-    if (msg_row < cmdline_row) {
-      msg_row = cmdline_row;
-    }
+    msg_row = MAX(msg_row, cmdline_row);
     redraw_cmdline = true;
   }
   frame_add_height(frp, (int)(old_p_ch - p_ch));
@@ -7251,9 +7198,7 @@ int min_rows(void)
   int total = 0;
   FOR_ALL_TABS(tp) {
     int n = frame_minheight(tp->tp_topframe, NULL);
-    if (total < n) {
-      total = n;
-    }
+    total = MAX(total, n);
   }
   total += tabline_height() + global_stl_height();
   if (p_ch > 0) {
@@ -7548,13 +7493,7 @@ static int int_cmp(const void *pa, const void *pb)
 {
   const int a = *(const int *)pa;
   const int b = *(const int *)pb;
-  if (a > b) {
-    return 1;
-  }
-  if (a < b) {
-    return -1;
-  }
-  return 0;
+  return a == b ? 0 : a < b ? -1 : 1;
 }
 
 /// Handle setting 'colorcolumn' or 'textwidth' in window "wp".

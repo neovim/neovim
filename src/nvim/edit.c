@@ -271,11 +271,7 @@ static void insert_enter(InsertState *s)
   if (restart_edit != 0 && stuff_empty()) {
     // After a paste we consider text typed to be part of the insert for
     // the pasted text. You can backspace over the pasted text too.
-    if (where_paste_started.lnum) {
-      arrow_used = false;
-    } else {
-      arrow_used = true;
-    }
+    arrow_used = where_paste_started.lnum == 0;
     restart_edit = 0;
 
     // If the cursor was after the end-of-line before the CTRL-O and it is
@@ -1541,9 +1537,7 @@ static void init_prompt(int cmdchar_todo)
   if (cmdchar_todo == 'A') {
     coladvance(curwin, MAXCOL);
   }
-  if (curwin->w_cursor.col < (colnr_T)strlen(prompt)) {
-    curwin->w_cursor.col = (colnr_T)strlen(prompt);
-  }
+  curwin->w_cursor.col = MAX(curwin->w_cursor.col, (colnr_T)strlen(prompt));
   // Make sure the cursor is in a valid position.
   check_cursor(curwin);
 }
@@ -1578,7 +1572,7 @@ void edit_unputchar(void)
 /// text.  Only works when cursor is in the line that changes.
 void display_dollar(colnr_T col_arg)
 {
-  colnr_T col = col_arg < 0 ? 0 : col_arg;
+  colnr_T col = MAX(col_arg, 0);
 
   if (!redrawing()) {
     return;
@@ -1736,12 +1730,7 @@ void change_indent(int type, int amount, int round, int replaced, bool call_chan
   }
 
   curwin->w_p_list = save_p_list;
-
-  if (new_cursor_col <= 0) {
-    curwin->w_cursor.col = 0;
-  } else {
-    curwin->w_cursor.col = (colnr_T)new_cursor_col;
-  }
+  curwin->w_cursor.col = MAX(0, (colnr_T)new_cursor_col);
   curwin->w_set_curswant = true;
   changed_cline_bef_curs(curwin);
 
@@ -2607,9 +2596,7 @@ void cursor_up_inner(win_T *wp, linenr_T n)
         hasFolding(wp, lnum, &lnum, NULL);
       }
     }
-    if (lnum < 1) {
-      lnum = 1;
-    }
+    lnum = MAX(lnum, 1);
   } else {
     lnum -= n;
   }
@@ -2659,9 +2646,7 @@ void cursor_down_inner(win_T *wp, int n)
         break;
       }
     }
-    if (lnum > line_count) {
-      lnum = line_count;
-    }
+    lnum = MIN(lnum, line_count);
   } else {
     lnum += (linenr_T)n;
   }
@@ -4726,9 +4711,7 @@ static void ins_try_si(int c)
   }
 
   // Adjust ai_col, the char at this position can be deleted.
-  if (ai_col > curwin->w_cursor.col) {
-    ai_col = curwin->w_cursor.col;
-  }
+  ai_col = MIN(ai_col, curwin->w_cursor.col);
 }
 
 // Get the value that w_virtcol would have when 'list' is off.

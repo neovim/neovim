@@ -805,9 +805,7 @@ invalid_count:
         }
       }
 
-      if (*def < 0) {
-        *def = 0;
-      }
+      *def = MAX(*def, 0);
     } else if (STRNICMP(attr, "complete", attrlen) == 0) {
       if (val == NULL) {
         semsg(_(e_argument_required_for_str), "-complete");

@@ -523,19 +523,13 @@ void changed_lines_redraw_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, linenr_
 {
   if (buf->b_mod_set) {
     // find the maximum area that must be redisplayed
-    if (lnum < buf->b_mod_top) {
-      buf->b_mod_top = lnum;
-    }
+    buf->b_mod_top = MIN(buf->b_mod_top, lnum);
     if (lnum < buf->b_mod_bot) {
       // adjust old bot position for xtra lines
       buf->b_mod_bot += xtra;
-      if (buf->b_mod_bot < lnum) {
-        buf->b_mod_bot = lnum;
-      }
+      buf->b_mod_bot = MAX(buf->b_mod_bot, lnum);
     }
-    if (lnume + xtra > buf->b_mod_bot) {
-      buf->b_mod_bot = lnume + xtra;
-    }
+    buf->b_mod_bot = MAX(buf->b_mod_bot, lnume + xtra);
     buf->b_mod_xlines += xtra;
   } else {
     // set the area that must be redisplayed
@@ -2262,9 +2256,7 @@ int get_last_leader_offset(char *line, char **flags)
         for (int off = (len2 > i ? i : len2); off > 0 && off + len1 > len2;) {
           off--;
           if (!strncmp(string + off, com_leader, (size_t)(len2 - off))) {
-            if (i - off < lower_check_bound) {
-              lower_check_bound = i - off;
-            }
+            lower_check_bound = MIN(lower_check_bound, i - off);
           }
         }
       }

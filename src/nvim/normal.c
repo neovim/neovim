@@ -1685,9 +1685,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
 
     // If we don't want just any old text, or we've found an
     // identifier, stop searching.
-    if (this_class > 2) {
-      this_class = 2;
-    }
+    this_class = MIN(this_class, 2);
     if (!(find_type & FIND_STRING) || this_class == 2) {
       break;
     }
@@ -2011,9 +2009,7 @@ static void del_from_showcmd(int len)
   }
 
   int old_len = (int)strlen(showcmd_buf);
-  if (len > old_len) {
-    len = old_len;
-  }
+  len = MIN(len, old_len);
   showcmd_buf[old_len - len] = NUL;
 
   if (!char_avail()) {
@@ -2515,9 +2511,7 @@ bool nv_screengo(oparg_T *oap, int dir, int dist)
       } else {
         n = width1;
       }
-      if (curwin->w_curswant >= n) {
-        curwin->w_curswant = n - 1;
-      }
+      curwin->w_curswant = MIN(curwin->w_curswant, n - 1);
     }
 
     while (dist--) {
@@ -2776,11 +2770,7 @@ static void nv_zet(cmdarg_T *cap)
     if (cap->count0 == 0) {
       // No count given: put cursor at the line below screen
       validate_botline(curwin);               // make sure w_botline is valid
-      if (curwin->w_botline > curbuf->b_ml.ml_line_count) {
-        curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-      } else {
-        curwin->w_cursor.lnum = curwin->w_botline;
-      }
+      curwin->w_cursor.lnum = MIN(curwin->w_botline, curbuf->b_ml.ml_line_count);
     }
     FALLTHROUGH;
   case NL:
@@ -3049,9 +3039,7 @@ static void nv_zet(cmdarg_T *cap)
   case 'm':
     if (curwin->w_p_fdl > 0) {
       curwin->w_p_fdl -= cap->count1;
-      if (curwin->w_p_fdl < 0) {
-        curwin->w_p_fdl = 0;
-      }
+      curwin->w_p_fdl = MAX(curwin->w_p_fdl, 0);
     }
     old_fdl = -1;                       // force an update
     curwin->w_p_fen = true;
@@ -3069,9 +3057,7 @@ static void nv_zet(cmdarg_T *cap)
     curwin->w_p_fdl += cap->count1;
     {
       int d = getDeepestNesting(curwin);
-      if (curwin->w_p_fdl >= d) {
-        curwin->w_p_fdl = d;
-      }
+      curwin->w_p_fdl = MIN(curwin->w_p_fdl, d);
     }
     break;
 
@@ -3662,10 +3648,7 @@ static void nv_scroll(cmdarg_T *cap)
         n = lnum - curwin->w_topline;
       }
     }
-    curwin->w_cursor.lnum = curwin->w_topline + n;
-    if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-      curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-    }
+    curwin->w_cursor.lnum = MIN(curwin->w_topline + n, curbuf->b_ml.ml_line_count);
   }
 
   // Correct for 'so', except when an operator is pending.
@@ -4344,12 +4327,8 @@ static void nv_percent(cmdarg_T *cap)
         curwin->w_cursor.lnum = (curbuf->b_ml.ml_line_count *
                                  cap->count0 + 99) / 100;
       }
-      if (curwin->w_cursor.lnum < 1) {
-        curwin->w_cursor.lnum = 1;
-      }
-      if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-        curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-      }
+      curwin->w_cursor.lnum = MIN(MAX(curwin->w_cursor.lnum, 1), curbuf->b_ml.ml_line_count);
+
       beginline(BL_SOL | BL_FIX);
     }
   } else {  // "%" : go to matching paren
@@ -6088,11 +6067,7 @@ static void nv_goto(cmdarg_T *cap)
   if (cap->count0 != 0) {
     lnum = cap->count0;
   }
-  if (lnum < 1) {
-    lnum = 1;
-  } else if (lnum > curbuf->b_ml.ml_line_count) {
-    lnum = curbuf->b_ml.ml_line_count;
-  }
+  lnum = MIN(MAX(lnum, 1), curbuf->b_ml.ml_line_count);
   curwin->w_cursor.lnum = lnum;
   beginline(BL_SOL | BL_FIX);
   if ((fdo_flags & FDO_JUMP) && KeyTyped && cap->oap->op_type == OP_NOP) {
@@ -6422,9 +6397,8 @@ static void nv_join(cmdarg_T *cap)
     return;
   }
 
-  if (cap->count0 <= 1) {
-    cap->count0 = 2;  // default for join is two lines!
-  }
+  cap->count0 = MAX(cap->count0, 2);  // default for join is two lines!
+
   if (curwin->w_cursor.lnum + cap->count0 - 1 >
       curbuf->b_ml.ml_line_count) {
     // can't join when on the last line
