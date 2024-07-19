@@ -596,10 +596,10 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
 {
   // There is no specified limit on the number of parameters a CSI sequence can
   // contain, so just allocate enough space for a large upper bound
-  long args[16];
-  size_t nargs = 16;
+  TermKeyCsiParam params[16];
+  size_t nparams = 16;
   unsigned long cmd;
-  if (termkey_interpret_csi(input->tk, key, args, &nargs, &cmd) != TERMKEY_RES_KEY) {
+  if (termkey_interpret_csi(input->tk, key, params, &nparams, &cmd) != TERMKEY_RES_KEY) {
     return;
   }
 
@@ -639,12 +639,22 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
     }
     break;
   case 't':
-    if (nargs == 5 && args[0] == 48) {
-      // In-band resize event (DEC private mode 2048)
-      int height_chars = (int)args[1];
-      int width_chars = (int)args[2];
-      tui_set_size(input->tui_data, width_chars, height_chars);
-      ui_client_set_size(width_chars, height_chars);
+    if (nparams == 5) {
+      // We only care about the first 3 parameters, and we ignore subparameters
+      long args[3];
+      for (size_t i = 0; i < ARRAY_SIZE(args); i++) {
+        if (termkey_interpret_csi_param(params[i], &args[i], NULL, NULL) != TERMKEY_RES_KEY) {
+          return;
+        }
+      }
+
+      if (args[0] == 48) {
+        // In-band resize event (DEC private mode 2048)
+        int height_chars = (int)args[1];
+        int width_chars = (int)args[2];
+        tui_set_size(input->tui_data, width_chars, height_chars);
+        ui_client_set_size(width_chars, height_chars);
+      }
     }
     break;
   default:

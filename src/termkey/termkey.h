@@ -143,6 +143,11 @@ typedef struct {
   char utf8[7];
 } TermKeyKey;
 
+typedef struct {
+  const unsigned char *param;
+  size_t length;
+} TermKeyCsiParam;
+
 typedef struct TermKey TermKey;
 
 enum {
@@ -215,7 +220,9 @@ TermKeyResult termkey_interpret_position(TermKey *tk, const TermKeyKey *key, int
 
 TermKeyResult termkey_interpret_modereport(TermKey *tk, const TermKeyKey *key, int *initial, int *mode, int *value);
 
-TermKeyResult termkey_interpret_csi(TermKey *tk, const TermKeyKey *key, long args[], size_t *nargs, unsigned long *cmd);
+TermKeyResult termkey_interpret_csi(TermKey *tk, const TermKeyKey *key, TermKeyCsiParam params[], size_t *nparams, unsigned long *cmd);
+
+TermKeyResult termkey_interpret_csi_param(TermKeyCsiParam param, long *paramp, long subparams[], size_t *nsubparams);
 
 TermKeyResult termkey_interpret_string(TermKey *tk, const TermKeyKey *key, const char **strp);
 
