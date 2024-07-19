@@ -518,7 +518,7 @@ func s:StartDebug_prompt(dict)
   call s:SendCommand('set breakpoint pending on')
 
   " Set arguments to be run
-  if len(proc_args)
+  if !empty(proc_args)
     call s:SendCommand($'set args {join(proc_args)}')
   endif
 
