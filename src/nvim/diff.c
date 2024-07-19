@@ -2178,7 +2178,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           // CHARMATCH
           if (cur_char_length == 0) {
             // get the length of current character
-            cur_char_length = utfc_ptr2len((const char *const)&diffbufs[i][j]);
+            cur_char_length = (size_t)utfc_ptr2len((const char *const)&diffbufs[i][j]);
             word_offset[i][diff_length[i]] = k;
             diff_length[i]++;
             total_word_count++;
