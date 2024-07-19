@@ -638,6 +638,15 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
       break;
     }
     break;
+  case 't':
+    if (nargs == 5 && args[0] == 48) {
+      // In-band resize event (DEC private mode 2048)
+      int height_chars = (int)args[1];
+      int width_chars = (int)args[2];
+      tui_set_size(input->tui_data, width_chars, height_chars);
+      ui_client_set_size(width_chars, height_chars);
+    }
+    break;
   default:
     break;
   }

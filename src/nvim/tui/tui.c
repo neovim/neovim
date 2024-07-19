@@ -171,6 +171,7 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
   kv_init(tui->invalid_regions);
   kv_init(tui->urlbuf);
   signal_watcher_init(tui->loop, &tui->winch_handle, tui);
+  signal_watcher_start(&tui->winch_handle, sigwinch_cb, SIGWINCH);
 
   // TODO(bfredl): zero hl is empty, send this explicitly?
   kv_push(tui->attrs, HLATTRS_INIT);
@@ -205,6 +206,16 @@ static void tui_request_term_mode(TUIData *tui, TermMode mode)
   out(tui, buf, (size_t)len);
 }
 
+/// Set (DECSET) or reset (DECRST) a terminal mode.
+static void tui_set_term_mode(TUIData *tui, TermMode mode, bool set)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char buf[12];
+  int len = snprintf(buf, sizeof(buf), "\x1b[?%d%c", (int)mode, set ? 'h' : 'l');
+  assert((len > 0) && (len < (int)sizeof(buf)));
+  out(tui, buf, (size_t)len);
+}
+
 /// Handle a mode report (DECRPM) from the terminal.
 void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
   FUNC_ATTR_NONNULL_ALL
@@ -224,6 +235,11 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
       // Ref: https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
       tui->unibi_ext.sync = (int)unibi_add_ext_str(tui->ut, "Sync",
                                                    "\x1b[?2026%?%p1%{1}%-%tl%eh%;");
+      break;
+    case kTermModeResizeEvents:
+      signal_watcher_stop(&tui->winch_handle);
+      tui_set_term_mode(tui, mode, true);
+      break;
     }
   }
 }
@@ -417,6 +433,7 @@ static void terminfo_start(TUIData *tui)
   // Some terminals (such as Terminal.app) do not support DECRQM, so skip the query.
   if (!nsterm) {
     tui_request_term_mode(tui, kTermModeSynchronizedOutput);
+    tui_request_term_mode(tui, kTermModeResizeEvents);
   }
 
   // Don't use DECRQSS in screen or tmux, as they behave strangely when receiving it.
@@ -475,6 +492,9 @@ static void terminfo_stop(TUIData *tui)
   // Reset the key encoding
   tui_reset_key_encoding(tui);
 
+  // Disable resize events
+  tui_set_term_mode(tui, kTermModeResizeEvents, false);
+
   // May restore old title before exiting alternate screen.
   tui_set_title(tui, NULL_STRING);
   if (ui_client_exit_status == 0) {
@@ -510,7 +530,6 @@ static void tui_terminal_start(TUIData *tui)
   tui->print_attr_id = -1;
   terminfo_start(tui);
   tui_guess_size(tui);
-  signal_watcher_start(&tui->winch_handle, sigwinch_cb, SIGWINCH);
   tinput_start(&tui->input);
 }
 
@@ -539,7 +558,6 @@ static void tui_terminal_stop(TUIData *tui)
     return;
   }
   tinput_stop(&tui->input);
-  signal_watcher_stop(&tui->winch_handle);
   // Position the cursor on the last screen line, below all the text
   cursor_goto(tui, tui->height - 1, 0);
   terminfo_stop(tui);
@@ -556,6 +574,7 @@ void tui_stop(TUIData *tui)
   stream_set_blocking(tui->input.in_fd, true);   // normalize stream (#2598)
   tinput_destroy(&tui->input);
   tui->stopped = true;
+  signal_watcher_stop(&tui->winch_handle);
   signal_watcher_close(&tui->winch_handle, NULL);
   uv_close((uv_handle_t *)&tui->startup_delay_timer, NULL);
 }
@@ -1697,6 +1716,14 @@ static void ensure_space_buf_size(TUIData *tui, size_t len)
   }
 }
 
+void tui_set_size(TUIData *tui, int width, int height)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tui->width = width;
+  tui->height = height;
+  ensure_space_buf_size(tui, (size_t)tui->width);
+}
+
 /// Tries to get the user's wanted dimensions (columns and rows) for the entire
 /// application (i.e., the host terminal).
 void tui_guess_size(TUIData *tui)
@@ -1731,9 +1758,7 @@ void tui_guess_size(TUIData *tui)
     height = DFLT_ROWS;
   }
 
-  tui->width = width;
-  tui->height = height;
-  ensure_space_buf_size(tui, (size_t)tui->width);
+  tui_set_size(tui, width, height);
 
   // Redraw on SIGWINCH event if size didn't change. #23411
   ui_client_set_size(width, height);
