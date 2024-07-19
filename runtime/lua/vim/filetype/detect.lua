@@ -1116,6 +1116,8 @@ function M.perl(path, bufnr)
   end
 end
 
+local prolog_patterns = { '^%s*:%-', '^%s*%%+%s', '^%s*%%+$', '^%s*/%*', '%.%s*$' }
+
 --- @type vim.filetype.mapfn
 function M.pl(_, bufnr)
   if vim.g.filetype_pl then
@@ -1124,11 +1126,7 @@ function M.pl(_, bufnr)
   -- Recognize Prolog by specific text in the first non-empty line;
   -- require a blank after the '%' because Perl uses "%list" and "%translate"
   local line = nextnonblank(bufnr, 1)
-  if
-    line and line:find(':%-')
-    or matchregex(line, [[\c\<prolog\>]])
-    or findany(line, { '^%s*%%+%s', '^%s*%%+$', '^%s*/%*' })
-  then
+  if line and matchregex(line, [[\c\<prolog\>]]) or findany(line, prolog_patterns) then
     return 'prolog'
   else
     return 'perl'
@@ -1232,11 +1230,7 @@ function M.proto(_, bufnr)
   -- Recognize Prolog by specific text in the first non-empty line;
   -- require a blank after the '%' because Perl uses "%list" and "%translate"
   local line = nextnonblank(bufnr, 1)
-  if
-    line and line:find(':%-')
-    or matchregex(line, [[\c\<prolog\>]])
-    or findany(line, { '^%s*%%+%s', '^%s*%%+$', '^%s*/%*' })
-  then
+  if line and matchregex(line, [[\c\<prolog\>]]) or findany(line, prolog_patterns) then
     return 'prolog'
   end
 end
