@@ -200,7 +200,7 @@ function Loader.loader(modname)
     return chunk or error(err)
   end
   Loader._hashes = nil
-  return '\ncache_loader: module ' .. modname .. ' not found'
+  return ("\n\tcache_loader: module '%s' not found"):format(modname)
 end
 
 --- The `package.loaders` loader for libs
@@ -222,7 +222,7 @@ function Loader.loader_lib(modname)
     local chunk, err = package.loadlib(ret.modpath, 'luaopen_' .. funcname:gsub('%.', '_'))
     return chunk or error(err)
   end
-  return '\ncache_loader_lib: module ' .. modname .. ' not found'
+  return ("\n\tcache_loader_lib: module '%s' not found"):format(modname)
 end
 
 --- `loadfile` using the cache
