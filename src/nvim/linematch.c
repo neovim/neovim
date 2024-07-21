@@ -428,7 +428,7 @@ static bool compare(const char *s1, size_t l1, const char *s2, size_t l2)
   if (l1 != l2) {
     return false;
   }
-  for (int i = 0; i < l1; i++) {
+  for (size_t i = 0; i < l1; i++) {
     if (s1[i] != s2[i]) {
       return false;
     }
