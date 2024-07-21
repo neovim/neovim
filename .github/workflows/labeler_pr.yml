@@ -33,8 +33,25 @@ jobs:
     - name: "Extract if the PR is a breaking change and add it as label"
       run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')" || true
 
-  request-reviewer:
+  target-release:
     needs: ["changed-files", "type-scope"]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+    - if: startsWith(github.base_ref, 'release')
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.addLabels({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['target:release']
+          })
+
+  request-reviewer:
+    needs: ["changed-files", "type-scope", "target-release"]
     permissions:
       pull-requests: write
     uses: ./.github/workflows/reviewers_add.yml
