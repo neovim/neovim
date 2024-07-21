@@ -28,17 +28,18 @@ You can also run Lua scripts from your shell using the |-l| argument: >
     nvim -l foo.lua [args...]
 <
                                                                   *lua-compat*
-Lua 5.1 is the permanent interface for Nvim Lua.  Plugins need only consider
-Lua 5.1, not worry about forward-compatibility with future Lua versions.  If
-Nvim ever ships with Lua 5.4+, a Lua 5.1 compatibility shim will be provided
-so that old plugins continue to work transparently.
+Lua 5.1 is the permanent interface for Nvim Lua. Plugins should target Lua 5.1
+as specified in |luaref|; later versions (which are essentially different,
+incompatible, dialects) are not supported. This includes extensions such as
+`goto` that some Lua 5.1 interpreters like LuaJIT may support.
 
                                                                   *lua-luajit*
-On supported platforms, Nvim is built with LuaJIT, which provides extra
-functionality (compared to PUC Lua) such as "bit" and various utilities (see
-|lua-profile|). Lua code in |init.lua| and plugins can assume its presence on
-many platforms, but for maximum compatibility should check the `jit` global
-variable: >lua
+While Nvim officially only requires Lua 5.1 support, it should be built with
+LuaJIT or a compatible fork on supported platforms for performance reasons.
+LuaJIT also comes with useful extensions such as `ffi`, |lua-profile|, and
+enhanced standard library functions; these cannot be assumed to be available,
+and Lua code in |init.lua| or plugins should check the `jit` global variable
+before using them: >lua
   if jit then
     -- code for luajit
   else
@@ -46,11 +47,12 @@ variable: >lua
   end
 <
                                                                   *lua-bit*
-The LuaJIT "bit" extension module is _always_ available: when built with PUC
-Lua, Nvim includes a fallback implementation which provides `require("bit")`.
+One exception is the LuaJIT `bit` extension, which is always available: when
+built with PUC Lua, Nvim includes a fallback implementation which provides
+`require("bit")`.
 
                                                                   *lua-profile*
-To profile Lua code (with LuaJIT-enabled Nvim), the basic steps are: >lua
+If Nvim is built with LuaJIT, Lua code can be profiled via >lua
     -- Start a profiling session:
     require('jit.p').start('ri1', '/tmp/profile')
 
@@ -59,7 +61,7 @@ To profile Lua code (with LuaJIT-enabled Nvim), the basic steps are: >lua
     -- Stop the session. Profile is written to /tmp/profile.
     require('jit.p').stop()
 
-See https://luajit.org/ext_profiler.html or the "p.lua" source for details: >
+See https://luajit.org/ext_profiler.html or the `p.lua` source for details: >
     :lua vim.cmd.edit(package.searchpath('jit.p', package.path))
 
 ==============================================================================
