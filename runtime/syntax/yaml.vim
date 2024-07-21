@@ -129,7 +129,7 @@ syn region yamlFlowCollection matchgroup=yamlFlowIndicator start='\[' end='\]' c
 execute 'syn match yamlPlainScalar /'.s:ns_plain_out.'/'
 execute 'syn match yamlPlainScalar contained /'.s:ns_plain_in.'/'
 
-execute 'syn match yamlFlowMappingKey /'.s:ns_plain_in.'\%(\s\+'.s:ns_plain_in.'\)*\ze\s*:/ contained '.
+execute 'syn match yamlFlowMappingKey /'.s:ns_plain_in.'\%(\s\+'.s:ns_plain_in.'\)*\ze\s*:\%(\s\|$\)/ contained '.
             \'nextgroup=yamlFlowMappingDelimiter skipwhite'
 syn match yamlFlowMappingKeyStart      /?/ contained nextgroup=@yamlFlowNode skipwhite
 syn match yamlFlowMappingMerge /<<\ze\s*:/ contained nextgroup=yamlFlowMappingDelimiter skipwhite
