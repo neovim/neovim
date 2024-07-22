@@ -793,7 +793,12 @@ static void update_attrs(TUIData *tui, int attr_id)
     if (attrs.url >= 0) {
       const char *url = urls.keys[attrs.url];
       kv_size(tui->urlbuf) = 0;
-      kv_printf(tui->urlbuf, "\x1b]8;;%s\x1b\\", url);
+
+      // Add some fixed offset to the URL ID to deconflict with other
+      // applications which may set their own IDs
+      const uint64_t id = 0xE1EA0000U + (uint32_t)attrs.url;
+
+      kv_printf(tui->urlbuf, "\x1b]8;id=%" PRIu64 ";%s\x1b\\", id, url);
       out(tui, tui->urlbuf.items, kv_size(tui->urlbuf));
     } else {
       out(tui, S_LEN("\x1b]8;;\x1b\\"));
