@@ -16,6 +16,7 @@
 "   2024 Jun 04 by Vim Project: set bufhidden if buffer changed, nohidden is set and buffer shall be switched (#14915)
 "   2024 Jun 13 by Vim Project: glob() on Windows fails when a directory name contains [] (#14952)
 "   2024 Jun 23 by Vim Project: save ad restore registers when liststyle = WIDELIST (#15077, #15114)
+"   2024 Jul 22 by Vim Project: avoid endless recursion (#15318)
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
@@ -692,12 +693,11 @@ fun! netrw#Explore(indx,dosplit,style,...)
      \ ((isdirectory(s:NetrwFile(a:1))))?  'is a directory'           : 'is not a directory',
      \ '~'.expand("<slnum>"))
    if a:1 =~ "\\\s" && !filereadable(s:NetrwFile(a:1)) && !isdirectory(s:NetrwFile(a:1))
-"    call Decho("re-trying Explore with <".substitute(a:1,'\\\(\s\)','\1','g').">",'~'.expand("<slnum>"))
-    call netrw#Explore(a:indx,a:dosplit,a:style,substitute(a:1,'\\\(\s\)','\1','g'))
-"    call Dret("netrw#Explore : returning from retry")
-    return
-"   else " Decho
-"    call Decho("retry not needed",'~'.expand("<slnum>"))
+    let a1 = substitute(a:1, '\\\(\s\)', '\1', 'g')
+    if a1 != a:1
+      call netrw#Explore(a:indx, a:dosplit, a:style, a1)
+      return
+    endif
    endif
   endif
 
