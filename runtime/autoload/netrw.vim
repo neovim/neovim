@@ -17,6 +17,7 @@
 "   2024 Jun 13 by Vim Project: glob() on Windows fails when a directory name contains [] (#14952)
 "   2024 Jun 23 by Vim Project: save ad restore registers when liststyle = WIDELIST (#15077, #15114)
 "   2024 Jul 22 by Vim Project: avoid endless recursion (#15318)
+"   2024 Jul 23 by Vim Project: escape filename before trying to delete it (#15330)
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
@@ -11342,7 +11343,7 @@ fun! s:NetrwLocalRmFile(path,fname,all)
   let all= a:all
   let ok = ""
   NetrwKeepj norm! 0
-  let rmfile= s:NetrwFile(s:ComposePath(a:path,a:fname))
+  let rmfile= s:NetrwFile(s:ComposePath(a:path,escape(a:fname, '\\')))
 "  call Decho("rmfile<".rmfile.">",'~'.expand("<slnum>"))
 
   if rmfile !~ '^"' && (rmfile =~ '@$' || rmfile !~ '[\/]$')
@@ -11351,7 +11352,7 @@ fun! s:NetrwLocalRmFile(path,fname,all)
    if !all
     echohl Statement
     call inputsave()
-    let ok= input("Confirm deletion of file<".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
+    let ok= input("Confirm deletion of file <".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
     call inputrestore()
     echohl NONE
     if ok == ""
@@ -11375,7 +11376,7 @@ fun! s:NetrwLocalRmFile(path,fname,all)
    if !all
     echohl Statement
     call inputsave()
-    let ok= input("Confirm *recursive* deletion of directory<".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
+    let ok= input("Confirm *recursive* deletion of directory <".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
     call inputrestore()
     let ok= substitute(ok,'\[{y(es)},n(o),a(ll),q(uit)]\s*','','e')
     if ok == ""
