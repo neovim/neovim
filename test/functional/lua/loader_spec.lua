@@ -88,4 +88,18 @@ describe('vim.loader', function()
     eq(1, exec_lua('return loadfile(...)()', tmp1))
     eq(2, exec_lua('return loadfile(...)()', tmp2))
   end)
+
+  it('correct indent on error message (#29809)', function()
+    exec_lua [[
+      vim.loader.enable()
+
+      local success, errmsg = pcall(require, 'non_existent_module')
+      assert(not success)
+
+      errmsg = errmsg:gsub("^module 'non_existent_module' not found:\n", '')
+      for line in vim.gsplit(errmsg, '\n') do
+        assert(line:find('^\t'), ('not indented: %q'):format(line))
+      end
+    ]]
+  end)
 end)
