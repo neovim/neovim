@@ -11342,7 +11342,7 @@ fun! s:NetrwLocalRmFile(path,fname,all)
   let all= a:all
   let ok = ""
   NetrwKeepj norm! 0
-  let rmfile= s:NetrwFile(s:ComposePath(a:path,a:fname))
+  let rmfile= s:NetrwFile(s:ComposePath(a:path,escape(a:fname, '\\')))
 "  call Decho("rmfile<".rmfile.">",'~'.expand("<slnum>"))
 
   if rmfile !~ '^"' && (rmfile =~ '@$' || rmfile !~ '[\/]$')
@@ -11351,7 +11351,7 @@ fun! s:NetrwLocalRmFile(path,fname,all)
    if !all
     echohl Statement
     call inputsave()
-    let ok= input("Confirm deletion of file<".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
+    let ok= input("Confirm deletion of file <".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
     call inputrestore()
     echohl NONE
     if ok == ""
@@ -11375,7 +11375,7 @@ fun! s:NetrwLocalRmFile(path,fname,all)
    if !all
     echohl Statement
     call inputsave()
-    let ok= input("Confirm *recursive* deletion of directory<".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
+    let ok= input("Confirm *recursive* deletion of directory <".rmfile."> ","[{y(es)},n(o),a(ll),q(uit)] ")
     call inputrestore()
     let ok= substitute(ok,'\[{y(es)},n(o),a(ll),q(uit)]\s*','','e')
     if ok == ""
