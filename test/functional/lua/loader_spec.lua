@@ -90,16 +90,13 @@ describe('vim.loader', function()
   end)
 
   it('correct indent on error message (#29809)', function()
-    exec_lua [[
+    local errmsg = exec_lua [[
       vim.loader.enable()
-
-      local success, errmsg = pcall(require, 'non_existent_module')
-      assert(not success)
-
-      errmsg = errmsg:gsub("^module 'non_existent_module' not found:\n", '')
-      for line in vim.gsplit(errmsg, '\n') do
-        assert(line:find('^\t'), ('not indented: %q'):format(line))
-      end
+      local _, errmsg = pcall(require, 'non_existent_module')
+      return errmsg
     ]]
+    local errors = vim.split(errmsg, '\n')
+    eq("\tcache_loader: module 'non_existent_module' not found", errors[3])
+    eq("\tcache_loader_lib: module 'non_existent_module' not found", errors[4])
   end)
 end)
