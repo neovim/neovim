@@ -1896,6 +1896,8 @@ local detect_xkb = starsetf('xkb', { parent = '/usr/' })
 --- Vim regexes are converted into explicit Lua patterns (without implicit anchoring):
 --- '*/debian/changelog' -> '/debian/changelog$'
 --- '*/bind/db.*' -> '/bind/db%.'
+---
+--- See more info in `:h dev-vimpatch-filetype`.
 --- @type table<string,vim.filetype.mapping>
 local pattern = {
   -- BEGIN PATTERN

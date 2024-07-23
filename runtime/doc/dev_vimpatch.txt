@@ -310,11 +310,16 @@ FILETYPE DETECTION                 *dev-vimpatch-filetype*
 Nvim's filetype detection behavior matches Vim, but is implemented as part of
 |vim.filetype| (see $VIMRUNTIME/lua/vim/filetype.lua).
 
+Prefer explicit filenames/extensions over patterns, especially for case
+insensitive matches (see https://github.com/neovim/neovim/pull/29800): >
+    "*[mM]akefile" regex -> "makefile", "Makefile" filenames
+    "*.js\c"       regex -> "js", "jS", "Js", "jS" extensions
+
 Pattern matching has several differences:
 - It is done using explicit Lua patterns (without implicit anchoring) instead
   of Vim regexes: >
     "*/debian/changelog" -> "/debian/changelog$"
-    "*/bind/db.*" -> "/bind/db%."
+    "*/bind/db.*"        -> "/bind/db%."
 <
 - Filetype patterns are grouped by their parent pattern to improve matching
   performance. For this to work properly, parent pattern should:
