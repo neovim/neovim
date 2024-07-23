@@ -1,11 +1,12 @@
 " zip.vim: Handles browsing zipfiles
 "            AUTOLOAD PORTION
-" Date:		Mar 12, 2023
+" Date:		Jul 23, 2024
 " Version:	33
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer:	Charles E Campbell
 " Last Change:
 "		2024 Jun 16 by Vim Project: handle whitespace on Windows properly (#14998)
+"		2024 Jul 23 by Vim Project: fix 'x' command
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -395,8 +396,7 @@ fun! zip#Extract()
   endif
 
   " extract the file mentioned under the cursor
-"  call Decho("system(".g:zip_extractcmd." ".shellescape(b:zipfile)." ".shellescape(shell).")")
-  call system(g:zip_extractcmd." ".shellescape(b:zipfile)." ".shellescape(shell))
+  call system($"{g:zip_extractcmd} {shellescape(b:zipfile)} {shellescape(fname)}")
 "  call Decho("zipfile<".b:zipfile.">")
   if v:shell_error != 0
    echohl Error | echo "***error*** ".g:zip_extractcmd." ".b:zipfile." ".fname.": failed!" | echohl NONE
