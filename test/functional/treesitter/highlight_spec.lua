@@ -1052,10 +1052,15 @@ describe('treesitter highlighting (markdown)', function()
     insert(string.format('[This link text](%s) is a hyperlink.', url))
     screen:add_extra_attr_ids({
       [100] = { foreground = Screen.colors.DarkCyan, url = 'https://example.com' },
+      [101] = {
+        foreground = Screen.colors.SlateBlue,
+        url = 'https://example.com',
+        underline = true,
+      },
     })
     screen:expect({
       grid = [[
-        {25:[}{100:This link text}{25:](}{28:https://example.com}{25:)} is|
+        {25:[}{100:This link text}{25:](}{101:https://example.com}{25:)} is|
          a hyperlink^.                           |
         {1:~                                       }|*3
                                                 |

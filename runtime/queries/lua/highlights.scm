@@ -162,7 +162,7 @@
 
 ; Tables
 (field
-  name: (identifier) @variable.member)
+  name: (identifier) @property)
 
 (dot_index_expression
   field: (identifier) @variable.member)
