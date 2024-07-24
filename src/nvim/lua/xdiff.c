@@ -75,7 +75,7 @@ static void get_linematch_results(lua_State *lstate, mmfile_t *ma, mmfile_t *mb,
 
   if (iwhite) {
     for (int i = 0; i < 2; i++) {
-      size_t j = 0, k = 0, lines = diff_length[i];
+      size_t j = 0, k = 0, lines = (size_t)diff_length[i];
       while (lines > 0) {
         if (diff_begin[i][j] != ' ' && diff_begin[i][j] != '\t') {
           diff_begin[i][k++] = diff_begin[i][j];
