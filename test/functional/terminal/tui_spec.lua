@@ -1968,9 +1968,9 @@ describe('TUI', function()
           if not req then
             return
           end
-          local url = req:match('\027]8;;(.*)$')
-          if url ~= nil then
-            table.insert(_G.urls, url)
+          local id, url = req:match('\027]8;id=(%d+);(.*)$')
+          if id ~= nil and url ~= nil then
+            table.insert(_G.urls, { id = tonumber(id), url = url })
           end
         end,
       })
@@ -1984,7 +1984,7 @@ describe('TUI', function()
       })
     ]])
     retry(nil, 1000, function()
-      eq({ 'https://example.com', '' }, exec_lua([[return _G.urls]]))
+      eq({ { id = 0xE1EA0000, url = 'https://example.com' } }, exec_lua([[return _G.urls]]))
     end)
   end)
 end)
