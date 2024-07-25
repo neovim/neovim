@@ -58,7 +58,8 @@ achieve special effects.  These options come in three forms:
 :se[t] {option}:{value}
 			Set string or number option to {value}.
 			For numeric options the value can be given in decimal,
-			hex (preceded with 0x) or octal (preceded with '0').
+			hex (preceded with 0x) or octal (preceded with '0' or
+			'0o').
 			The old value can be inserted by typing 'wildchar' (by
 			default this is a <Tab>).  Many string options with
 			fixed syntax also support completing known values.
