@@ -924,7 +924,7 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
   while (true) {
     MTKey mark = marktree_itr_current(itr);
     DecorVirtText *vt = mt_decor_virt(mark);
-    if (ns_in_win(mark.ns, wp)) {
+    if (!mt_invalid(mark) && ns_in_win(mark.ns, wp)) {
       while (vt) {
         if (vt->flags & kVTIsLines) {
           bool above = vt->flags & kVTLinesAbove;

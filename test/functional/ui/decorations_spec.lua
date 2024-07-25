@@ -4948,6 +4948,28 @@ if (h->n_buckets < new_n_buckets) { // expand
                           |
     ]])
   end)
+
+  it('not drawn when invalid', function()
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'foo', 'bar' })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_lines = {{{'VIRT1'}}}, invalidate = true })
+    screen:expect({
+      grid = [[
+        ^foo                                               |
+        VIRT1                                             |
+        bar                                               |
+        {1:~                                                 }|*8
+                                                          |
+      ]]
+    })
+    feed('dd')
+    screen:expect({
+      grid = [[
+        ^bar                                               |
+        {1:~                                                 }|*10
+                                                          |
+      ]]
+    })
+  end)
 end)
 
 describe('decorations: signs', function()
