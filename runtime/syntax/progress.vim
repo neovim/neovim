@@ -9,8 +9,7 @@
 " 			Chris Ruprecht		<chrisSPAXY@ruprecht.org>
 "			Mikhail Kuperblum	<mikhailSPAXY@whasup.com>
 "			John Florian		<jflorianSPAXY@voyager.net>
-" Version:              13
-" Last Change:		Nov 11 2012
+" Last Change:		Jul 23 2024
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -117,8 +116,10 @@ syn match ProgressShowTab "\t"
 " If you don't like white space on the end of lines, uncomment this:
 " syn match   ProgressSpaceError "\s\+$"
 
-syn region ProgressComment		start="/\*"  end="\*/" contains=ProgressComment,ProgressTodo,ProgressDebug,@Spell
-syn region ProgressInclude		start="^[ 	]*[{]" end="[}]" contains=ProgressPreProc,ProgressOperator,ProgressString,ProgressComment
+syn region ProgressBlockComment	start="/\*"  end="\*/" contains=ProgressBlockComment,ProgressTodo,ProgressDebug,@Spell
+syn match  ProgressLineComment		"//.*$" contains=ProgressTodo,ProgressDebug,@Spell
+syn cluster ProgressComment		contains=ProgressBlockComment,ProgressLineComment
+syn region ProgressInclude		start="^[ 	]*[{]" end="[}]" contains=ProgressPreProc,ProgressOperator,ProgressString,@ProgressComment
 syn region ProgressPreProc		start="&" end="\>" contained
 
 " This next line works reasonably well.
@@ -282,6 +283,8 @@ syn sync lines=800
 hi def link ProgressByte		Number
 hi def link ProgressCase		Repeat
 hi def link ProgressComment		Comment
+hi def link ProgressBlockComment	ProgressComment
+hi def link ProgressLineComment	ProgressComment
 hi def link ProgressConditional	Conditional
 hi def link ProgressDebug		Debug
 hi def link ProgressDo		Repeat
