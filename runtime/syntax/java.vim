@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Jun 22
+" Last Change:		2024 Jul 23
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -260,7 +260,7 @@ if exists("java_space_errors")
   endif
 endif
 
-exec 'syn match javaUserLabel "^\s*\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!\s*:"he=e-1'
+exec 'syn match javaUserLabel "^\s*\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!\s*::\@!"he=e-1'
 syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaLabelCastType,javaLabelNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaGenerics,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
 syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<default\>\%(\s*\%(:\|->\)\)\@=" matchgroup=NONE end=":\|->" oneline
 " Consider grouped _default_ _case_ labels, i.e.
@@ -497,8 +497,12 @@ syn match   javaParenError	 "\]"
 
 hi def link javaParenError	javaError
 
-" Lambda expressions (JLS-17, §15.27).
+" Lambda expressions (JLS-17, §15.27) and method references (JLS-17,
+" §15.13).
 if exists("java_highlight_functions")
+  syn match javaMethodRef ":::\@!"
+  hi def link javaMethodRef javaFuncDef
+
   if exists("java_highlight_signature")
     let s:ff.LambdaDef = s:ff.LeftConstant
   else
