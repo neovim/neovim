@@ -47,9 +47,6 @@ setlocal fo-=t fo+=croql
 " keyword character.  E.g., for netrw#Nread().
 setlocal isk+=#
 
-" Prefer Vim help instead of manpages.
-" Use :help to lookup the keyword under the cursor with K.
-setlocal keywordprg=:help
 
 " Comments starts with # in Vim9 script.  We have to guess which one to use.
 if "\n" .. getline(1, 32)->join("\n") =~# '\n\s*vim9\%[script]\>'
