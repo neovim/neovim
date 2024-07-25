@@ -1574,11 +1574,11 @@ use the following: >
 	:let java_highlight_java_io=1
 Check the javaid.vim file for a list of all the packages that are supported.
 
-Function names are not highlighted, as the way to find functions depends on
-how you write Java code.  The syntax file knows two possible ways to highlight
-headers of function declarations:
+Headers of indented function declarations can be highlighted (along with parts
+of lambda expressions and method reference expressions), but it depends on how
+you write Java code.  Two formats are recognized:
 
-If you write function declarations that are consistently indented by either
+1) If you write function declarations that are consistently indented by either
 a tab, or a space . . . or eight space character(s), you may want to set >
 	:let java_highlight_functions="indent"
 	:let java_highlight_functions="indent1"
@@ -1590,10 +1590,12 @@ a tab, or a space . . . or eight space character(s), you may want to set >
 	:let java_highlight_functions="indent7"
 	:let java_highlight_functions="indent8"
 Note that in terms of 'shiftwidth', this is the leftmost step of indentation.
-However, if you follow the Java guidelines about how functions and classes are
-supposed to be named (with respect to upper- and lowercase) and there is any
-amount of indentation, you may want to set >
+
+2) However, if you follow the Java guidelines about how functions and types
+are supposed to be named (with respect to upper- and lowercase) and there is
+any amount of indentation, you may want to set >
 	:let java_highlight_functions="style"
+
 In addition, you can combine any value of "java_highlight_functions" with >
 	:let java_highlight_signature=1
 to have the name of a function with its parameter list parens distinctly
