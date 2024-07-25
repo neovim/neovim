@@ -36,8 +36,8 @@ syn keyword vimOnlyOption contained	nobiosk nobioskey noconsk noconskey nocp noc
 " Invertible setting variants
 syn keyword vimOnlyOption contained	invbiosk invbioskey invconsk invconskey invcp invcompatible invguipty invmacatsui invsn invshortname invta invtextauto invtx invtextmode invtf invttyfast invtbi invttybuiltin invwiv invweirdinvert
 " termcap codes (which can also be set) {{{2
-" GEN_SYN_VIM: vimOption term output code, START_STR='syn keyword vimOption contained', END_STR=''
-syn keyword vimOption contained t_AB t_AF t_AU t_AL t_al t_bc t_BE t_BD t_cd t_ce t_Ce t_CF t_cl t_cm t_Co t_CS t_Cs t_cs t_CV t_da t_db t_DL t_dl t_ds t_Ds t_EC t_EI t_fs t_fd t_fe t_GP t_IE t_IS t_ke t_ks t_le t_mb t_md t_me t_mr t_ms t_nd t_op t_RF t_RB t_RC t_RI t_Ri t_RK t_RS t_RT t_RV t_Sb t_SC t_se t_Sf t_SH t_SI t_Si t_so t_SR t_sr t_ST t_Te t_te t_TE t_ti t_TI t_Ts t_ts t_u7 t_ue t_us t_Us t_ut t_vb t_ve t_vi t_VS t_vs t_WP t_WS t_XM t_xn t_xs t_ZH t_ZR t_8f t_8b t_8u
+" GEN_SYN_VIM: vimOption term output code, START_STR='syn keyword vimOption contained', END_STR='skipwhite nextgroup=vimSetEqual,vimSetMod'
+syn keyword vimOption contained t_AB t_AF t_AU t_AL t_al t_bc t_BE t_BD t_cd t_ce t_Ce t_CF t_cl t_cm t_Co t_CS t_Cs t_cs t_CV t_da t_db t_DL t_dl t_ds t_Ds t_EC t_EI t_fs t_fd t_fe t_GP t_IE t_IS t_ke t_ks t_le t_mb t_md t_me t_mr t_ms t_nd t_op t_RF t_RB t_RC t_RI t_Ri t_RK t_RS t_RT t_RV t_Sb t_SC t_se t_Sf t_SH t_SI t_Si t_so t_SR t_sr t_ST t_Te t_te t_TE t_ti t_TI t_Ts t_ts t_u7 t_ue t_us t_Us t_ut t_vb t_ve t_vi t_VS t_vs t_WP t_WS t_XM t_xn t_xs t_ZH t_ZR t_8f t_8b t_8u t_xo skipwhite nextgroup=vimSetEqual,vimSetMod
 " term key codes
 syn keyword vimOption contained	t_F1 t_F2 t_F3 t_F4 t_F5 t_F6 t_F7 t_F8 t_F9 t_k1 t_K1 t_k2 t_k3 t_K3 t_k4 t_K4 t_k5 t_K5 t_k6 t_K6 t_k7 t_K7 t_k8 t_K8 t_k9 t_K9 t_KA t_kb t_kB t_KB t_KC t_kd t_kD t_KD t_KE t_KF t_KG t_kh t_KH t_kI t_KI t_KJ t_KK t_kl t_KL t_kN t_kP t_kr t_ku
 syn match   vimTermOption contained	"t_%1"
@@ -497,11 +497,15 @@ syn match	vimCmplxRepeat	'[^a-zA-Z_/\\()]q[0-9a-zA-Z"]\>'lc=1
 syn match	vimCmplxRepeat	'@[0-9a-z".=@:]\ze\($\|[^a-zA-Z]\>\)'
 
 " Set command and associated set-options (vimOptions) with comment {{{2
-syn region	vimSet		matchgroup=vimCommand start="\<\%(setl\%[ocal]\|setg\%[lobal]\|se\%[t]\)\>" skip="\%(\\\\\)*\\.\n\@!" end="$" end="|" matchgroup=vimNotation end="<[cC][rR]>" keepend contains=vimSetEqual,vimOption,vimErrSetting,@vimComment,vimSetString,vimSetMod
-syn region	vimSetEqual	contained	start="[=:]\|[-+^]=" skip="\\\\\|\\\s" end="[| \t]"me=e-1 end="$"	contains=vimCtrlChar,vimSetSep,vimNotation,vimEnvvar
-syn region	vimSetString	contained	start=+="+hs=s+1	skip=+\\\\\|\\"+  end=+"+		contains=vimCtrlChar
+syn match	vimSet		"\<\%(setl\%[ocal]\|setg\%[lobal]\|se\%[t]\)\>" skipwhite nextgroup=vimSetBang,vimSetRegion
+syn region	vimSetRegion	contained	start="\S" skip=+\\\\\|\\|\|\n\s*\\\|\n\s*["#]\\ + matchgroup=vimCmdSep end="|" end="$" matchgroup=vimNotation end="<[cC][rR]>" keepend contains=@vimComment,@vimContinue,vimErrSetting,vimOption,vimSetAll,vimSetTermcap
+syn region	vimSetEqual	contained	matchgroup=vimOper start="[=:]\|[-+^]=" skip=+\\\\\|\\|\|\\\s\|\n\s*\\\|\n\s*["#]\\ \|^\s*\\\|^\s*["#]\\ + matchgroup=vimCmdSep end="|" end="\ze\s" end="$" contains=@vimContinue,vimCtrlChar,vimEnvvar,vimNotation,vimSetSep
+syn match	vimSetBang	contained	"\a\@1<=!" skipwhite nextgroup=vimSetAll,vimSetTermcap
+syn keyword	vimSetAll	contained	all nextgroup=vimSetMod
+syn keyword	vimSetTermcap	contained	termcap
+syn region	vimSetString	contained	start=+="+hs=s+1	skip=+\\\\\|\\"+  end=+"+	contains=vimCtrlChar
 syn match	vimSetSep	contained	"[,:]"
-syn match	vimSetMod	contained	"&vim\=\|[!&?<]\|all&"
+syn match	vimSetMod	contained	"\a\@1<=\%(&vim\=\|[!&?<]\)"
 
 " Variable Declarations: {{{2
 " =====================
@@ -1228,9 +1232,13 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimSearchDelim	Statement
  hi def link vimSearch	vimString
  hi def link vimSep	Delimiter
+ hi def link vimSet	vimCommand
+ hi def link vimSetAll	vimOption
+ hi def link vimSetBang	vimBang
  hi def link vimSetMod	vimOption
- hi def link vimSetSep	Statement
+ hi def link vimSetSep	vimSep
  hi def link vimSetString	vimString
+ hi def link vimSetTermcap	vimOption
  hi def link vimShebang	PreProc
  hi def link vimSleep	vimCommand
  hi def link vimSleepArg	Constant
