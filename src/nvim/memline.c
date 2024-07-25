@@ -1325,11 +1325,9 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
       } else {
         int len = (int)strlen(dir_name);
         p = dir_name + len;
-        if (after_pathsep(dir_name, p)
-            && len > 1
-            && p[-1] == p[-2]) {
+        if (after_pathsep(dir_name, p) && len > 1 && p[-1] == p[-2]) {
           // Ends with '//', Use Full path for swap name
-          tail = make_percent_swname(dir_name, fname_res);
+          tail = make_percent_swname(dir_name, p, fname_res);
         } else {
           tail = path_tail(fname_res);
           tail = concat_fnames(dir_name, tail, true);
@@ -1443,8 +1441,8 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
 /// signs, to "dir". An unnamed buffer is handled as "" (<currentdir>/"")
 /// The last character in "dir" must be an extra slash or backslash, it is
 /// removed.
-char *make_percent_swname(char *dir, const char *name)
-  FUNC_ATTR_NONNULL_ARG(1)
+char *make_percent_swname(char *dir, char *dir_end, const char *name)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   char *d = NULL;
   char *f = fix_fname(name != NULL ? name : "");
@@ -1459,7 +1457,7 @@ char *make_percent_swname(char *dir, const char *name)
     }
   }
 
-  dir[strlen(dir) - 1] = NUL;  // remove one trailing slash
+  dir_end[-1] = NUL;  // remove one trailing slash
   d = concat_fnames(dir, s, true);
   xfree(s);
   xfree(f);
@@ -3197,11 +3195,10 @@ char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
   int len = (int)strlen(dir_name);
 
   char *s = dir_name + len;
-  if (after_pathsep(dir_name, s)
-      && len > 1
-      && s[-1] == s[-2]) {  // Ends with '//', Use Full path
+  if (after_pathsep(dir_name, s) && len > 1 && s[-1] == s[-2]) {
+    // Ends with '//', Use Full path
     char *r = NULL;
-    s = make_percent_swname(dir_name, fname_res);
+    s = make_percent_swname(dir_name, s, fname_res);
     if (s != NULL) {
       r = modname(s, ".swp", false);
       xfree(s);

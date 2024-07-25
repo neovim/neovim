@@ -821,7 +821,6 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
       // Isolate one directory name, using an entry in 'bdir'.
       size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
       char *p = IObuff + dir_len;
-      bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
       if (*dirp == NUL && !os_isdir(IObuff)) {
         int ret;
         char *failed_dir;
@@ -831,9 +830,9 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
           xfree(failed_dir);
         }
       }
-      if (trailing_pathseps) {
+      if (after_pathsep(IObuff, p) && p[-1] == p[-2]) {
         // Ends with '//', Use Full path
-        if ((p = make_percent_swname(IObuff, fname))
+        if ((p = make_percent_swname(IObuff, p, fname))
             != NULL) {
           *backupp = modname(p, backup_ext, no_prepend_dot);
           xfree(p);
@@ -960,7 +959,6 @@ nobackup:
       // Isolate one directory name and make the backup file name.
       size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
       char *p = IObuff + dir_len;
-      bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
       if (*dirp == NUL && !os_isdir(IObuff)) {
         int ret;
         char *failed_dir;
@@ -970,9 +968,9 @@ nobackup:
           xfree(failed_dir);
         }
       }
-      if (trailing_pathseps) {
+      if (after_pathsep(IObuff, p) && p[-1] == p[-2]) {
         // path ends with '//', use full path
-        if ((p = make_percent_swname(IObuff, fname))
+        if ((p = make_percent_swname(IObuff, p, fname))
             != NULL) {
           *backupp = modname(p, backup_ext, no_prepend_dot);
           xfree(p);
