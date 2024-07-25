@@ -1,12 +1,13 @@
 " zip.vim: Handles browsing zipfiles
-"            AUTOLOAD PORTION
-" Date:		Jul 23, 2024
+" AUTOLOAD PORTION
+" Date:		Jul 24, 2024
 " Version:	33
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer:	Charles E Campbell
 " Last Change:
-"		2024 Jun 16 by Vim Project: handle whitespace on Windows properly (#14998)
-"		2024 Jul 23 by Vim Project: fix 'x' command
+" 2024 Jun 16 by Vim Project: handle whitespace on Windows properly (#14998)
+" 2024 Jul 23 by Vim Project: fix 'x' command
+" 2024 Jul 24 by Vim Project: use delete() function
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -299,7 +300,7 @@ fun! zip#Write(fname)
 
   " place temporary files under .../_ZIPVIM_/
   if isdirectory("_ZIPVIM_")
-   call s:Rmdir("_ZIPVIM_")
+   call delete("_ZIPVIM_", "rf")
   endif
   call mkdir("_ZIPVIM_")
   cd _ZIPVIM_
@@ -359,12 +360,12 @@ fun! zip#Write(fname)
    q!
    unlet s:zipfile_{winnr()}
   endif
-  
+
   " cleanup and restore current directory
   cd ..
-  call s:Rmdir("_ZIPVIM_")
+  call delete("_ZIPVIM_", "rf")
   call s:ChgDir(curdir,s:WARNING,"(zip#Write) unable to return to ".curdir."!")
-  call s:Rmdir(tmpdir)
+  call delete(tmpdir, "rf")
   setlocal nomod
 
   let &report= repkeep
@@ -454,18 +455,6 @@ fun! s:ChgDir(newdir,errlvl,errmsg)
 
 "  call Dret("ChgDir 0")
   return 0
-endfun
-
-" ---------------------------------------------------------------------
-" s:Rmdir: {{{2
-fun! s:Rmdir(fname)
-"  call Dfunc("Rmdir(fname<".a:fname.">)")
-  if (has("win32") || has("win95") || has("win64") || has("win16")) && &shell !~? 'sh$'
-   call system("rmdir /S/Q ".s:Escape(a:fname,0))
-  else
-   call system("/bin/rm -rf ".s:Escape(a:fname,0))
-  endif
-"  call Dret("Rmdir")
 endfun
 
 " ------------------------------------------------------------------------
