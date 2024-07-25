@@ -1659,4 +1659,18 @@ func Test_foldexpr_end_fold()
   bwipe!
 endfunc
 
+" Test moving cursor down to or beyond start of folded end of buffer.
+func Test_cursor_down_fold_eob()
+  call setline(1, range(1, 4))
+  norm Gzf2kj
+  call assert_equal(2, line('.'))
+  norm zojzc
+  call assert_equal(3, line('.'))
+  norm j
+  call assert_equal(3, line('.'))
+  norm k2j
+  call assert_equal(4, line('.'))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
