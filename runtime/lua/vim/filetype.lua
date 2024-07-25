@@ -1492,6 +1492,7 @@ local filename = {
   ['.prettierrc'] = 'json',
   ['.stylelintrc'] = 'json',
   ['.lintstagedrc'] = 'json',
+  ['deno.lock'] = 'json',
   ['flake.lock'] = 'json',
   ['.babelrc'] = 'jsonc',
   ['.eslintrc'] = 'jsonc',
