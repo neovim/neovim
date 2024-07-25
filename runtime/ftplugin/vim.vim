@@ -47,7 +47,6 @@ setlocal fo-=t fo+=croql
 " keyword character.  E.g., for netrw#Nread().
 setlocal isk+=#
 
-
 " Comments starts with # in Vim9 script.  We have to guess which one to use.
 if "\n" .. getline(1, 32)->join("\n") =~# '\n\s*vim9\%[script]\>'
   setlocal commentstring=#\ %s
@@ -64,6 +63,9 @@ setlocal com=sO:#\ -,mO:#\ \ ,eO:##,:#\\\ ,:#,sO:\"\ -,mO:\"\ \ ,eO:\"\",:\"\\\ 
 if &tw == 0
   setlocal tw=78
 endif
+
+" Prefer Vim help instead of manpages.
+setlocal keywordprg=:help
 
 if !exists("no_plugin_maps") && !exists("no_vim_maps")
   let b:did_add_maps = 1
