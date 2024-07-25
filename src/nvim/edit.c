@@ -2650,7 +2650,6 @@ void cursor_down_inner(win_T *wp, int n)
 
     // count each sequence of folded lines as one logical line
     while (n--) {
-      // Move to last line of fold, will fail if it's the end-of-file.
       if (hasFoldingWin(wp, lnum, NULL, &last, true, NULL)) {
         lnum = last + 1;
       } else {
@@ -2673,8 +2672,10 @@ void cursor_down_inner(win_T *wp, int n)
 /// @param upd_topline  When true: update topline
 int cursor_down(int n, bool upd_topline)
 {
-  // This fails if the cursor is already in the last line.
-  if (n > 0 && curwin->w_cursor.lnum >= curwin->w_buffer->b_ml.ml_line_count) {
+  linenr_T lnum = curwin->w_cursor.lnum;
+  // This fails if the cursor is already in the last (folded) line.
+  hasFoldingWin(curwin, lnum, NULL, &lnum, true, NULL);
+  if (n > 0 && lnum >= curwin->w_buffer->b_ml.ml_line_count) {
     return FAIL;
   }
   cursor_down_inner(curwin, n);
