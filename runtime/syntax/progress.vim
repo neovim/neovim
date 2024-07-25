@@ -3,7 +3,8 @@
 " Filename extensions:	*.p (collides with Pascal),
 "			*.i (collides with assembler)
 "			*.w (collides with cweb)
-" Maintainer:		Philip Uren		<philuSPAXY@ieee.org> Remove SPAXY spam block
+" Maintainer:           Daniel Smith <daniel@rdnlsmith.com>
+" Previous Maintainer:  Philip Uren <philuSPAXY@ieee.org> Remove SPAXY spam block
 " Contributors:         Matthew Stickney	<mtstickneySPAXY@gmail.com>
 " 			Chris Ruprecht		<chrisSPAXY@ruprecht.org>
 "			Mikhail Kuperblum	<mikhailSPAXY@whasup.com>
