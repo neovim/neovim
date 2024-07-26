@@ -4045,6 +4045,68 @@ describe('decorations: inline virtual text', function()
                                                         |
     ]])
   end)
+
+  it('cursor position is correct if end_row or end_col is specified', function()
+    screen:try_resize(50, 8)
+    api.nvim_buf_set_lines(0, 0, -1, false, { ('a'):rep(48), ('b'):rep(48), ('c'):rep(48), ('d'):rep(48) })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {end_row = 2, virt_text_pos = 'inline', virt_text = {{'I1', 'NonText'}}})
+    api.nvim_buf_set_extmark(0, ns, 3, 0, {end_col = 2, virt_text_pos = 'inline', virt_text = {{'I2', 'NonText'}}})
+    feed('$')
+    screen:expect([[
+      {1:I1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^a|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  |
+      cccccccccccccccccccccccccccccccccccccccccccccccc  |
+      {1:I2}dddddddddddddddddddddddddddddddddddddddddddddddd|
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('j')
+    screen:expect([[
+      {1:I1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb^b  |
+      cccccccccccccccccccccccccccccccccccccccccccccccc  |
+      {1:I2}dddddddddddddddddddddddddddddddddddddddddddddddd|
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('j')
+    screen:expect([[
+      {1:I1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  |
+      ccccccccccccccccccccccccccccccccccccccccccccccc^c  |
+      {1:I2}dddddddddddddddddddddddddddddddddddddddddddddddd|
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    feed('j')
+    screen:expect([[
+      {1:I1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  |
+      cccccccccccccccccccccccccccccccccccccccccccccccc  |
+      {1:I2}ddddddddddddddddddddddddddddddddddddddddddddddd^d|
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+  end)
+
+  it('cursor position is correct with invalidated inline virt text', function()
+    screen:try_resize(50, 8)
+    api.nvim_buf_set_lines(0, 0, -1, false, { ('a'):rep(48), ('b'):rep(48) })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { virt_text_pos = 'inline', virt_text = {{'INLINE', 'NonText'}}, invalidate = true })
+    screen:expect([[
+      {1:INLINE}^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaa                                              |
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb  |
+      {1:~                                                 }|*4
+                                                        |
+    ]])
+    feed('dd$')
+    screen:expect([[
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb^b  |
+      {1:~                                                 }|*6
+                                                        |
+    ]])
+  end)
 end)
 
 describe('decorations: virtual lines', function()
