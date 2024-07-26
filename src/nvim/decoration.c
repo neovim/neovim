@@ -887,8 +887,7 @@ bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
 
 static const uint32_t lines_filter[4] = {[kMTMetaLines] = kMTFilterSelect };
 
-/// @param has_fold  whether line "lnum" has a fold, or kNone when not calculated yet
-int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fold)
+int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
 {
   buf_T *buf = wp->w_buffer;
   if (!buf_meta_total(buf, kMTMetaLines)) {
@@ -898,20 +897,11 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
   }
 
   assert(lnum > 0);
-  bool below_fold = lnum > 1 && hasFolding(wp, lnum - 1, NULL, NULL);
-  if (has_fold == kNone) {
-    has_fold = hasFolding(wp, lnum, NULL, NULL);
-  }
-
-  const int row = lnum - 1;
-  const int start_row = below_fold ? row : MAX(row - 1, 0);
-  const int end_row = has_fold ? row : row + 1;
-  if (start_row >= end_row) {
-    return 0;
-  }
+  int row = lnum - 1;
 
   MarkTreeIter itr[1] = { 0 };
-  if (!marktree_itr_get_filter(buf->b_marktree, start_row, 0, end_row, 0, lines_filter, itr)) {
+  if (!marktree_itr_get_filter(buf->b_marktree, MAX(row - 1, 0), 0, row + 1, 0,
+                               lines_filter, itr)) {
     return 0;
   }
 
@@ -923,8 +913,9 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
       while (vt) {
         if (vt->flags & kVTIsLines) {
           bool above = vt->flags & kVTLinesAbove;
-          int draw_row = mark.pos.row + (above ? 0 : 1);
-          if (draw_row == row) {
+          int mrow = mark.pos.row;
+          int draw_row = mrow + (above ? 0 : 1);
+          if (draw_row == row && !hasFolding(wp, mrow + 1, NULL, NULL)) {
             virt_lines += (int)kv_size(vt->data.virt_lines);
             if (lines) {
               kv_splice(*lines, vt->data.virt_lines);
@@ -935,7 +926,7 @@ int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines, TriState has_fo
       }
     }
 
-    if (!marktree_itr_next_filter(buf->b_marktree, itr, end_row, 0, lines_filter)) {
+    if (!marktree_itr_next_filter(buf->b_marktree, itr, row + 1, 0, lines_filter)) {
       break;
     }
   }
