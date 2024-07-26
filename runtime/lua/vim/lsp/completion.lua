@@ -246,6 +246,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
     matches = function(item)
       local text = item.filterText or item.label
       return next(vim.fn.matchfuzzy({ text }, prefix)) ~= nil
+        or (vim.tbl_get(item, 'score') or 0) > 0
     end
   end
 
