@@ -67,9 +67,6 @@ if &tw == 0
   setlocal tw=78
 endif
 
-" Prefer Vim help instead of manpages.
-setlocal keywordprg=:help
-
 if !exists("no_plugin_maps") && !exists("no_vim_maps")
   let b:did_add_maps = 1
 
