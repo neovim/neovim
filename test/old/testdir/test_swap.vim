@@ -409,7 +409,7 @@ func Test_swap_symlink()
 
   " Check that this also works when 'directory' ends with '//'
   edit Xtestlink
-  call assert_match('Xtestfile\.swp$', s:swapname())
+  call assert_match('Xswapdir[/\\]%.*testdir%Xtestfile\.swp$', s:swapname())
   bwipe!
 
   set dir&
