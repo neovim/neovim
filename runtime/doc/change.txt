@@ -183,8 +183,9 @@ gR			Enter Virtual Replace mode: Each character you type
 
 							*s*
 ["x]s			Delete [count] characters [into register x] and start
-			insert (s stands for Substitute).  Synonym for "cl"
-			(not |linewise|).
+			insert (s stands for Substitute).  Synonym for
+			"c<Space>", as well as "cl" when 'rightleft' is not
+			set and "ch" when it is (not |linewise|).
 
 							*S*
 ["x]S			Delete [count] lines [into register x] and start
