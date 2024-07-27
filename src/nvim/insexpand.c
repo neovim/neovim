@@ -2568,9 +2568,9 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     cptext[CPT_KIND] = tv_dict_get_string(tv->vval.v_dict, "kind", true);
     cptext[CPT_INFO] = tv_dict_get_string(tv->vval.v_dict, "info", true);
     tv_dict_get_tv(tv->vval.v_dict, "user_data", &user_data);
-    extra_hlname = tv_dict_get_string(tv->vval.v_dict, "hl_group", FALSE);
+    extra_hlname = tv_dict_get_string(tv->vval.v_dict, "hl_group", false);
     if (extra_hlname != NULL && *extra_hlname != NUL) {
-        extra_hlattr = syn_name2attr(extra_hlname);
+      extra_hlattr = syn_name2attr(extra_hlname);
     }
 
     if (tv_dict_get_number(tv->vval.v_dict, "icase")) {

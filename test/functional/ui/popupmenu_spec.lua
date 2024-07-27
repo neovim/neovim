@@ -4931,6 +4931,35 @@ describe('builtin popupmenu', function()
 
         feed('<C-E><Esc>')
       end)
+
+      -- oldtest: Test_pum_extrahl()
+      it('custom hl_group override', function()
+        exec([[
+          hi StrikeFake ctermfg=9
+          func CompleteFunc( findstart, base )
+            if a:findstart
+              return 0
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'hl_group': 'StrikeFake' },
+                  \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
+                  \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'hl_group': 'StrikeFake' },
+                  \]}
+          endfunc
+          set completeopt=menu
+          set completefunc=CompleteFunc
+        ]])
+        feed('<ESC>iaw<C-X><C-U>')
+        screen:expect([[
+          aword1^                          |
+          {s:aword1 W extra text 1 }{1:          }|
+          {n:aword2 W extra text 2 }{1:          }|
+          {n:你好   W extra text 3 }{1:          }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+      end)
     end
   end
 
