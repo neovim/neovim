@@ -1181,6 +1181,26 @@ describe('builtin popupmenu', function()
         mn = { foreground = Screen.colors.Blue, background = Screen.colors.Plum1 },
         ds = { foreground = Screen.colors.DarkRed, background = Screen.colors.Grey },
         dn = { foreground = Screen.colors.DarkRed, background = Screen.colors.Plum1 },
+        ums = {
+          foreground = Screen.colors.Blue,
+          background = Screen.colors.Grey,
+          underline = true,
+        },
+        umn = {
+          foreground = Screen.colors.Blue,
+          background = Screen.colors.Plum1,
+          underline = true,
+        },
+        uds = {
+          foreground = Screen.colors.DarkRed,
+          background = Screen.colors.Grey,
+          underline = true,
+        },
+        udn = {
+          foreground = Screen.colors.DarkRed,
+          background = Screen.colors.Plum1,
+          underline = true,
+        },
       })
       screen:attach({ ext_multigrid = multigrid })
     end)
@@ -4934,10 +4954,9 @@ describe('builtin popupmenu', function()
         feed('<C-E><Esc>')
       end)
 
-      -- oldtest: Test_pum_extrahl()
+      -- oldtest: Test_pum_user_hl_group()
       it('custom hl_group override', function()
         exec([[
-          hi StrikeFake guifg=DarkRed
           func CompleteFunc( findstart, base )
             if a:findstart
               return 0
@@ -4951,8 +4970,15 @@ describe('builtin popupmenu', function()
           endfunc
           set completeopt=menu
           set completefunc=CompleteFunc
+
+          hi StrikeFake guifg=DarkRed
+          func HlMatch()
+            hi PmenuMatchSel  guifg=Blue guibg=Grey gui=underline
+            hi PmenuMatch     guifg=Blue guibg=Plum1 gui=underline
+          endfunc
         ]])
-        feed('<ESC>iaw<C-X><C-U>')
+
+        feed('Saw<C-X><C-U>')
         screen:expect([[
           aword1^                          |
           {ds:aword1 W extra text 1 }{1:          }|
@@ -4961,6 +4987,29 @@ describe('builtin popupmenu', function()
           {1:~                               }|*15
           {2:-- }{5:match 1 of 3}                 |
         ]])
+        feed('<C-E><Esc>')
+
+        command('call HlMatch()')
+
+        feed('Saw<C-X><C-U>')
+        screen:expect([[
+          aword1^                          |
+          {uds:aw}{ds:ord1 W extra text 1 }{1:          }|
+          {umn:aw}{n:ord2 W extra text 2 }{1:          }|
+          {dn:你好   W extra text 3 }{1:          }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-N>')
+        screen:expect([[
+          aword2^                          |
+          {udn:aw}{dn:ord1 W extra text 1 }{1:          }|
+          {ums:aw}{s:ord2 W extra text 2 }{1:          }|
+          {dn:你好   W extra text 3 }{1:          }|
+          {1:~                               }|*15
+          {2:-- }{5:match 2 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
       end)
     end
   end

@@ -440,7 +440,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
 /// Computes attributes of text on the popup menu.
 /// Returns attributes for every cell, or NULL if all attributes are the same.
-static int *pum_compute_text_attrs(char *text, hlf_T hlf, int extra_hlattr)
+static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
 {
   if ((hlf != HLF_PSI && hlf != HLF_PNI)
       || (win_hl_attr(curwin, HLF_PMSI) == win_hl_attr(curwin, HLF_PSI)
@@ -486,8 +486,9 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int extra_hlattr)
     } else if (matched_start && ptr < text + leader_len) {
       new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
     }
-    if (extra_hlattr > 0) {
-      new_attr = hl_combine_attr(new_attr, extra_hlattr);
+
+    if (user_hlattr > 0) {
+      new_attr = hl_combine_attr(new_attr, user_hlattr);
     }
 
     int char_cells = utf_ptr2cells(ptr);
@@ -630,8 +631,8 @@ void pum_redraw(void)
     for (int round = 0; round < 3; round++) {
       hlf = hlfs[round];
       attr = win_hl_attr(curwin, (int)hlf);
-      if (pum_array[idx].pum_extrahlattr > 0) {
-        attr = hl_combine_attr(attr, pum_array[idx].pum_extrahlattr);
+      if (pum_array[idx].pum_user_hlattr > 0) {
+        attr = hl_combine_attr(attr, pum_array[idx].pum_user_hlattr);
       }
       int width = 0;
       char *s = NULL;
@@ -666,7 +667,8 @@ void pum_redraw(void)
               *p = saved;
             }
 
-            int *attrs = pum_compute_text_attrs(st, hlf, pum_array[idx].pum_extrahlattr);
+            int user_hlattr = pum_array[idx].pum_user_hlattr;
+            int *attrs = pum_compute_text_attrs(st, hlf, user_hlattr);
 
             if (pum_rl) {
               char *rt = reverse_text(st);
