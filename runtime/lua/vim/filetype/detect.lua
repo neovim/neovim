@@ -972,6 +972,24 @@ local function m4(contents)
   end
 end
 
+--- Check if it is a Microsoft Makefile
+--- @type vim.filetype.mapfn
+function M.make(_, bufnr)
+  vim.b.make_microsoft = nil
+  for _, line in ipairs(getlines(bufnr, 1, 1000)) do
+    if matchregex(line, [[\c^\s*!\s*\(ifn\=\(def\)\=\|include\|message\|error\)\>]]) then
+      vim.b.make_microsoft = 1
+      break
+    elseif
+      matchregex(line, [[^ *ifn\=\(eq\|def\)\>]])
+      or findany(line, { '^ *[-s]?%s', '^ *%w+%s*[!?:+]=' })
+    then
+      break
+    end
+  end
+  return 'make'
+end
+
 --- @type vim.filetype.mapfn
 function M.markdown(_, _)
   return vim.g.filetype_md or 'markdown'

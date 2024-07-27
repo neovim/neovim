@@ -28,8 +28,13 @@ syn match makePreCondit "^!\s*\(cmdswitches\|error\|message\|include\|if\|ifdef\
 syn case match
 
 " identifiers
-syn region makeIdent	start="\$(" skip="\\)\|\\\\" end=")" contains=makeStatement,makeIdent
-syn region makeIdent	start="\${" skip="\\}\|\\\\" end="}" contains=makeStatement,makeIdent
+if exists("b:make_microsoft") || exists("make_microsoft")
+  syn region makeIdent	start="\$(" end=")" contains=makeStatement,makeIdent
+  syn region makeIdent	start="\${" end="}" contains=makeStatement,makeIdent
+else
+  syn region makeIdent	start="\$(" skip="\\)\|\\\\" end=")" contains=makeStatement,makeIdent
+  syn region makeIdent	start="\${" skip="\\}\|\\\\" end="}" contains=makeStatement,makeIdent
+endif
 syn match makeIdent	"\$\$\w*"
 syn match makeIdent	"\$[^({]"
 syn match makeIdent	"^ *[^:#= \t]*\s*[:+?!*]="me=e-2
@@ -78,11 +83,13 @@ syn match makeOverride	"^ *override\>"
 syn match makeStatement contained "(\(abspath\|addprefix\|addsuffix\|and\|basename\|call\|dir\|error\|eval\|file\|filter-out\|filter\|findstring\|firstword\|flavor\|foreach\|guile\|if\|info\|join\|lastword\|notdir\|or\|origin\|patsubst\|realpath\|shell\|sort\|strip\|subst\|suffix\|value\|warning\|wildcard\|word\|wordlist\|words\)\>"ms=s+1
 
 " Comment
-if exists("make_microsoft")
-   syn match  makeComment "#.*" contains=@Spell,makeTodo
-elseif !exists("make_no_comments")
-   syn region  makeComment	start="#" end="^$" end="[^\\]$" keepend contains=@Spell,makeTodo
-   syn match   makeComment	"#$" contains=@Spell
+if !exists("make_no_comments")
+  if exists("b:make_microsoft") || exists("make_microsoft")
+    syn match   makeComment	"#.*" contains=@Spell,makeTodo
+  else
+    syn region  makeComment	start="#" end="^$" end="[^\\]$" keepend contains=@Spell,makeTodo
+    syn match   makeComment	"#$" contains=@Spell
+  endif
 endif
 syn keyword makeTodo TODO FIXME XXX contained
 

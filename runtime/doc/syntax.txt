@@ -1806,7 +1806,7 @@ By default mail.vim synchronises syntax to 100 lines before the first
 displayed line.  If you have a slow machine, and generally deal with emails
 with short headers, you can change this to a smaller value: >
 
-    :let mail_minlines = 30
+	:let mail_minlines = 30
 
 
 MAKE						*make.vim* *ft-make-syntax*
@@ -1816,6 +1816,16 @@ errors.  However, this may be too much coloring for you.  You can turn this
 feature off by using: >
 
 	:let make_no_commands = 1
+
+Comments are also highlighted by default.  You can turn this off by using: >
+
+	:let make_no_comments = 1
+
+Microsoft Makefile handles variable expansion and comments differently
+(backslashes are not used for escape).  If you see any wrong highlights
+because of this, you can try this: >
+
+	:let make_microsoft = 1
 
 
 MAPLE						*maple.vim* *ft-maple-syntax*
