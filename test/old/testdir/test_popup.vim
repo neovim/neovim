@@ -1516,9 +1516,9 @@ func Test_pum_extrahl()
       endif
       return {
             \ 'words': [
-            \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'extrahl': 'StrikeFake' },
+            \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'hl_group': 'StrikeFake' },
             \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
-            \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'extrahl': 'StrikeFake' },
+            \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'hl_group': 'StrikeFake' },
             \]}
     endfunc
     set completeopt=menu
