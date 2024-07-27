@@ -174,6 +174,10 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
     version = version:match('%d[^ ]*')
   end
 
+  if version == nil then
+    return nil
+  end
+
   local prerel = version:match('%-([^+]*)')
   local prerel_strict = version:match('%-([0-9A-Za-z-]*)')
   if
