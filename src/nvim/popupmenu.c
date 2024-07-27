@@ -506,7 +506,7 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf)
 
 /// Displays text on the popup menu with specific attributes.
 static void pum_grid_puts_with_attrs(int col, int cells, const char *text, int textlen,
-                                     const int *attrs)
+                                     const int *attrs, int extra_attr)
 {
   const int col_start = col;
   const char *ptr = text;
@@ -515,6 +515,9 @@ static void pum_grid_puts_with_attrs(int col, int cells, const char *text, int t
   while (*ptr != NUL && (textlen < 0 || ptr < text + textlen)) {
     int char_len = utfc_ptr2len(ptr);
     int attr = attrs[pum_rl ? (col_start + cells - col - 1) : (col - col_start)];
+    if (extra_attr > 0) {
+      attr = hl_combine_attr(extra_attr, attr);
+    }
     grid_line_puts(col, ptr, char_len, attr);
     col += utf_ptr2cells(ptr);
     ptr += char_len;
@@ -604,7 +607,6 @@ void pum_redraw(void)
     const hlf_T *const hlfs = (idx == pum_selected) ? hlfsSel : hlfsNorm;
     hlf_T hlf = hlfs[0];  // start with "word" highlight
     int attr = win_hl_attr(curwin, (int)hlf);
-
     grid_line_start(&pum_grid, row);
 
     // prepend a space if there is room
@@ -627,6 +629,9 @@ void pum_redraw(void)
     for (int round = 0; round < 3; round++) {
       hlf = hlfs[round];
       attr = win_hl_attr(curwin, (int)hlf);
+      if (pum_array[idx].pum_extrahlattr > 0) {
+        attr = hl_combine_attr(attr, pum_array[idx].pum_extrahlattr);
+      }
       int width = 0;
       char *s = NULL;
 
@@ -685,7 +690,7 @@ void pum_redraw(void)
               if (attrs == NULL) {
                 grid_line_puts(grid_col - cells + 1, rt, -1, attr);
               } else {
-                pum_grid_puts_with_attrs(grid_col - cells + 1, cells, rt, -1, attrs);
+                pum_grid_puts_with_attrs(grid_col - cells + 1, cells, rt, -1, attrs, pum_array[idx].pum_extrahlattr);
               }
 
               xfree(rt_start);
@@ -695,7 +700,7 @@ void pum_redraw(void)
               if (attrs == NULL) {
                 grid_line_puts(grid_col, st, -1, attr);
               } else {
-                pum_grid_puts_with_attrs(grid_col, vim_strsize(st), st, -1, attrs);
+                pum_grid_puts_with_attrs(grid_col, vim_strsize(st), st, -1, attrs, pum_array[idx].pum_extrahlattr);
               }
 
               xfree(st);
