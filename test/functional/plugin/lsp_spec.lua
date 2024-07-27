@@ -1756,6 +1756,58 @@ describe('LSP', function()
     }
   end
 
+  describe('apply vscode text_edits', function()
+    it('single replace', function()
+      insert('012345678901234567890123456789')
+      local edits = {
+        make_edit(0, 3, 0, 6, { 'Hello' }),
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
+      eq({ '012Hello678901234567890123456789' }, buf_lines(1))
+    end)
+    it('two replaces', function()
+      insert('012345678901234567890123456789')
+      local edits = {
+        make_edit(0, 3, 0, 6, { 'Hello' }),
+        make_edit(0, 6, 0, 9, { 'World' }),
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
+      eq({ '012HelloWorld901234567890123456789' }, buf_lines(1))
+    end)
+    it('same start pos insert are kept in order', function()
+      insert('012345678901234567890123456789')
+      local edits1 = {
+        make_edit(0, 3, 0, 3, { 'World' }),
+        make_edit(0, 3, 0, 3, { 'Hello' }),
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits1, 1, 'utf-16')
+      eq({ '012WorldHello345678901234567890123456789' }, buf_lines(1))
+    end)
+    it('same start pos insert and replace are kept in order', function()
+      insert('012345678901234567890123456789')
+      local edits1 = {
+        make_edit(0, 3, 0, 3, { 'World' }),
+        make_edit(0, 3, 0, 3, { 'Hello' }),
+        make_edit(0, 3, 0, 8, { 'No' }),
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits1, 1, 'utf-16')
+      eq({ '012WorldHelloNo8901234567890123456789' }, buf_lines(1))
+    end)
+    it('multiline', function()
+      exec_lua([[
+        vim.api.nvim_buf_set_lines(1, 0, 0, true, {'  {', '    "foo": "bar"', '  }'})
+      ]])
+      eq({ '  {', '    "foo": "bar"', '  }', '' }, buf_lines(1))
+      local edits = {
+        make_edit(0, 0, 3, 0, { '' }),
+        make_edit(3, 0, 3, 0, { '{\n' }),
+        make_edit(3, 0, 3, 0, { '  "foo": "bar"\n' }),
+        make_edit(3, 0, 3, 0, { '}\n' }),
+      }
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
+      eq({ '{', '  "foo": "bar"', '}', '' }, buf_lines(1))
+    end)
+  end)
   describe('apply_text_edits', function()
     before_each(function()
       insert(dedent([[
@@ -1794,9 +1846,9 @@ describe('LSP', function()
       }
       exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
       eq({
-        '3',
-        'foo',
-        '12Fbar',
+        '',
+        '123',
+        'fooFbar',
         '123irst guy',
         'baz line of text',
         'The next line of text',
@@ -1818,9 +1870,9 @@ describe('LSP', function()
       }
       exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, 'utf-16')
       eq({
-        '3',
-        'foo',
-        '12Fbar',
+        '',
+        '123',
+        'fooFbar',
         '123irst guy',
         'baz line of text',
         'The next line of text',

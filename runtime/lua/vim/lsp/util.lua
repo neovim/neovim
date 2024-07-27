@@ -396,10 +396,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     if a.range.start.character ~= b.range.start.character then
       return a.range.start.character > b.range.start.character
     end
-    if a._index ~= b._index then
-      return a._index < b._index
-    end
-    return false
+    return a._index > b._index
   end)
 
   -- save and restore local marks since they get deleted by nvim_buf_set_lines
