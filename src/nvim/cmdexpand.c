@@ -356,6 +356,7 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
       .pum_info = NULL,
       .pum_extra = NULL,
       .pum_kind = NULL,
+      .pum_user_hlattr = -1,
     };
   }
 

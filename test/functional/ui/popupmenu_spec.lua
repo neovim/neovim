@@ -1160,25 +1160,47 @@ describe('builtin popupmenu', function()
       screen = Screen.new(32, 20)
       screen:set_default_attr_ids({
         -- popup selected item / scrollbar track
-        ['s'] = { background = Screen.colors.WebGray },
+        s = { background = Screen.colors.Grey },
         -- popup non-selected item
-        ['n'] = { background = Screen.colors.LightMagenta },
+        n = { background = Screen.colors.Plum1 },
         -- popup scrollbar knob
-        ['c'] = { background = Screen.colors.Grey0 },
+        c = { background = Screen.colors.Black },
         [1] = { bold = true, foreground = Screen.colors.Blue },
         [2] = { bold = true },
         [3] = { reverse = true },
         [4] = { bold = true, reverse = true },
         [5] = { bold = true, foreground = Screen.colors.SeaGreen },
-        [6] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+        [6] = { foreground = Screen.colors.White, background = Screen.colors.Red },
         [7] = { background = Screen.colors.Yellow }, -- Search
         [8] = { foreground = Screen.colors.Red },
-        kn = { foreground = Screen.colors.Red, background = Screen.colors.Magenta },
         ks = { foreground = Screen.colors.Red, background = Screen.colors.Grey },
-        xn = { foreground = Screen.colors.White, background = Screen.colors.Magenta },
+        kn = { foreground = Screen.colors.Red, background = Screen.colors.Plum1 },
         xs = { foreground = Screen.colors.Black, background = Screen.colors.Grey },
-        mn = { foreground = Screen.colors.Blue, background = Screen.colors.Magenta },
+        xn = { foreground = Screen.colors.White, background = Screen.colors.Plum1 },
         ms = { foreground = Screen.colors.Blue, background = Screen.colors.Grey },
+        mn = { foreground = Screen.colors.Blue, background = Screen.colors.Plum1 },
+        ds = { foreground = Screen.colors.DarkRed, background = Screen.colors.Grey },
+        dn = { foreground = Screen.colors.DarkRed, background = Screen.colors.Plum1 },
+        ums = {
+          foreground = Screen.colors.Blue,
+          background = Screen.colors.Grey,
+          underline = true,
+        },
+        umn = {
+          foreground = Screen.colors.Blue,
+          background = Screen.colors.Plum1,
+          underline = true,
+        },
+        uds = {
+          foreground = Screen.colors.DarkRed,
+          background = Screen.colors.Grey,
+          underline = true,
+        },
+        udn = {
+          foreground = Screen.colors.DarkRed,
+          background = Screen.colors.Plum1,
+          underline = true,
+        },
       })
       screen:attach({ ext_multigrid = multigrid })
     end)
@@ -3558,7 +3580,7 @@ describe('builtin popupmenu', function()
         exec([[
           set wildoptions=pum,fuzzy
           hi PmenuMatchSel  guifg=Blue guibg=Grey
-          hi PmenuMatch     guifg=Blue guibg=Magenta
+          hi PmenuMatch     guifg=Blue guibg=Plum1
         ]])
 
         feed(':sign plc<Tab>')
@@ -4704,9 +4726,9 @@ describe('builtin popupmenu', function()
         -- oldtest: Test_pum_highlights_custom()
         it('custom highlight groups', function()
           exec([[
-            hi PmenuKind      guifg=Red guibg=Magenta
+            hi PmenuKind      guifg=Red guibg=Plum1
             hi PmenuKindSel   guifg=Red guibg=Grey
-            hi PmenuExtra     guifg=White guibg=Magenta
+            hi PmenuExtra     guifg=White guibg=Plum1
             hi PmenuExtraSel  guifg=Black guibg=Grey
           ]])
           feed('iaw<C-X><C-u>')
@@ -4758,7 +4780,7 @@ describe('builtin popupmenu', function()
           set omnifunc=Omni_test
           set completeopt=menu,noinsert,fuzzy
           hi PmenuMatchSel  guifg=Blue guibg=Grey
-          hi PmenuMatch     guifg=Blue guibg=Magenta
+          hi PmenuMatch     guifg=Blue guibg=Plum1
         ]])
         feed('i<C-X><C-O>')
         local pum_start = [[
@@ -4929,6 +4951,64 @@ describe('builtin popupmenu', function()
           {2:-- }{5:match 2 of 3}                 |
         ]])
 
+        feed('<C-E><Esc>')
+      end)
+
+      -- oldtest: Test_pum_user_hl_group()
+      it('custom hl_group override', function()
+        exec([[
+          func CompleteFunc( findstart, base )
+            if a:findstart
+              return 0
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'hl_group': 'StrikeFake' },
+                  \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
+                  \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'hl_group': 'StrikeFake' },
+                  \]}
+          endfunc
+          set completeopt=menu
+          set completefunc=CompleteFunc
+
+          hi StrikeFake guifg=DarkRed
+          func HlMatch()
+            hi PmenuMatchSel  guifg=Blue guibg=Grey gui=underline
+            hi PmenuMatch     guifg=Blue guibg=Plum1 gui=underline
+          endfunc
+        ]])
+
+        feed('Saw<C-X><C-U>')
+        screen:expect([[
+          aword1^                          |
+          {ds:aword1 W extra text 1 }{1:          }|
+          {n:aword2 W extra text 2 }{1:          }|
+          {dn:你好   W extra text 3 }{1:          }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
+
+        command('call HlMatch()')
+
+        feed('Saw<C-X><C-U>')
+        screen:expect([[
+          aword1^                          |
+          {uds:aw}{ds:ord1 W extra text 1 }{1:          }|
+          {umn:aw}{n:ord2 W extra text 2 }{1:          }|
+          {dn:你好   W extra text 3 }{1:          }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-N>')
+        screen:expect([[
+          aword2^                          |
+          {udn:aw}{dn:ord1 W extra text 1 }{1:          }|
+          {ums:aw}{s:ord2 W extra text 2 }{1:          }|
+          {dn:你好   W extra text 3 }{1:          }|
+          {1:~                               }|*15
+          {2:-- }{5:match 2 of 3}                 |
+        ]])
         feed('<C-E><Esc>')
       end)
     end

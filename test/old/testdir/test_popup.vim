@@ -1506,4 +1506,48 @@ func Test_pum_highlights_match()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_user_hl_group()
+  CheckScreendump
+  let lines =<< trim END
+    func CompleteFunc( findstart, base )
+      if a:findstart
+        return 0
+      endif
+      return {
+            \ 'words': [
+            \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'hl_group': 'StrikeFake' },
+            \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
+            \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'hl_group': 'StrikeFake' },
+            \]}
+    endfunc
+    set completeopt=menu
+    set completefunc=CompleteFunc
+
+    hi StrikeFake ctermfg=9
+    func HlMatch()
+      hi PmenuMatchSel  ctermfg=6 ctermbg=7 cterm=underline
+      hi PmenuMatch     ctermfg=4 ctermbg=225 cterm=underline
+    endfunc
+  END
+  call writefile(lines, 'Xscript', 'D')
+  let buf = RunVimInTerminal('-S Xscript', {})
+
+  call TermWait(buf)
+  call term_sendkeys(buf, "Saw\<C-X>\<C-U>")
+  call VerifyScreenDump(buf, 'Test_pum_highlights_12', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call TermWait(buf)
+  call term_sendkeys(buf, ":call HlMatch()\<CR>")
+
+  call TermWait(buf)
+  call term_sendkeys(buf, "Saw\<C-X>\<C-U>")
+  call VerifyScreenDump(buf, 'Test_pum_highlights_13', {})
+  call term_sendkeys(buf, "\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_highlights_14', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
