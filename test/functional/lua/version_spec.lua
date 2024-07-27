@@ -112,6 +112,10 @@ describe('version', function()
       assert(vim.version.range('1.2.3-alpha'):has('1.2.3-alpha'))
       assert(not vim.version.range('1.2.3-alpha'):has('1.2.3-beta'))
     end)
+
+    it('returns nil with empty version', function()
+      eq(vim.version.parse(''), nil)
+    end)
   end)
 
   describe('cmp()', function()
