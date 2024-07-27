@@ -1506,4 +1506,33 @@ func Test_pum_highlights_match()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_extrahl()
+  CheckScreendump
+  let lines =<< trim END
+    hi StrikeFake ctermfg=9
+    func CompleteFunc( findstart, base )
+      if a:findstart
+        return 0
+      endif
+      return {
+            \ 'words': [
+            \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'extrahl': 'StrikeFake' },
+            \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
+            \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'extrahl': 'StrikeFake' },
+            \]}
+    endfunc
+    set completeopt=menu
+    set completefunc=CompleteFunc
+  END
+  call writefile(lines, 'Xscript', 'D')
+  let buf = RunVimInTerminal('-S Xscript', {})
+  call TermWait(buf)
+  call term_sendkeys(buf, "iaw\<C-X>\<C-u>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_highlights_12', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>u")
+  call TermWait(buf)
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

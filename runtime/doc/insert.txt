@@ -1177,6 +1177,12 @@ items:
 	user_data	custom data which is associated with the item and
 			available in |v:completed_item|; it can be any type;
 			defaults to an empty string
+	hl_group	allows specifying an additional highlight group to
+			apply extra attributes to completion items in the
+			popupmenu. Is combined with |hl-PmenuSel| and
+			|hl-Pmenu| highlighting attributes to apply cterm and
+			gui properties, such as strikethrough to the
+			completion items.
 
 All of these except "icase", "equal", "dup" and "empty" must be a string.  If
 an item does not meet these requirements then an error message is given and
