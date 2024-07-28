@@ -735,6 +735,8 @@ function M.html(_, bufnr)
       )
     then
       return 'htmldjango'
+    elseif findany(line, { '<extend', '<super>' }) then
+      return 'superhtml'
     end
   end
   return 'html'
