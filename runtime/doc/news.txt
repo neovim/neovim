@@ -166,7 +166,7 @@ TERMINAL
 
 TREESITTER
 
-• TODO
+• |LanguageTree:node_for_range()| gets anonymous and named nodes for a range
 
 TUI
 

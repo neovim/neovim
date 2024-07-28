@@ -1375,6 +1375,19 @@ LanguageTree:named_node_for_range({range}, {opts})
     Return: ~
         (`TSNode?`)
 
+                                               *LanguageTree:node_for_range()*
+LanguageTree:node_for_range({range}, {opts})
+    Gets the smallest node that contains {range}.
+
+    Parameters: ~
+      • {range}  (`Range4`) `{ start_line, start_col, end_line, end_col }`
+      • {opts}   (`table?`) A table with the following fields:
+                 • {ignore_injections}? (`boolean`, default: `true`) Ignore
+                   injected languages
+
+    Return: ~
+        (`TSNode?`)
+
 LanguageTree:parse({range})                             *LanguageTree:parse()*
     Recursively parse all regions in the language tree using
     |treesitter-parsers| for the corresponding languages and run injection
