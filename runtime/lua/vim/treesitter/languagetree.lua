@@ -1133,6 +1133,18 @@ function LanguageTree:tree_for_range(range, opts)
   return nil
 end
 
+--- Gets the smallest node that contains {range}.
+---
+---@param range Range4 `{ start_line, start_col, end_line, end_col }`
+---@param opts? vim.treesitter.LanguageTree.tree_for_range.Opts
+---@return TSNode?
+function LanguageTree:node_for_range(range, opts)
+  local tree = self:tree_for_range(range, opts)
+  if tree then
+    return tree:root():descendant_for_range(unpack(range))
+  end
+end
+
 --- Gets the smallest named node that contains {range}.
 ---
 ---@param range Range4 `{ start_line, start_col, end_line, end_col }`

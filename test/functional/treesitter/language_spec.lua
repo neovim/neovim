@@ -148,4 +148,15 @@ describe('treesitter language API', function()
 
     eq('<node primitive_type>', exec_lua('return tostring(node)'))
   end)
+
+  it('retrieve an anonymous node given a range', function()
+    insert([[vim.fn.input()]])
+
+    exec_lua([[
+      langtree = vim.treesitter.get_parser(0, "lua")
+      node = langtree:node_for_range({0, 3, 0, 3})
+    ]])
+
+    eq('.', exec_lua('return node:type()'))
+  end)
 end)
