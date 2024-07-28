@@ -773,6 +773,8 @@ get_node({opts})                                   *vim.treesitter.get_node()*
                   filetype)
                 • {ignore_injections} (`boolean?`) Ignore injected languages
                   (default true)
+                • {include_anonymous} (`boolean?`) Include anonymous nodes
+                  (default false)
 
     Return: ~
         (`TSNode?`) Node at the given position
