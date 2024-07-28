@@ -183,6 +183,7 @@ local function set_inspector_cursor(treeview, lang, source_buf, inspect_buf, ins
     lang = lang,
     pos = pos,
     ignore_injections = false,
+    include_anonymous = treeview.opts.anon,
   })
   if not cursor_node then
     return
