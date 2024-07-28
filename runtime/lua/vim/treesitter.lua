@@ -342,6 +342,9 @@ end
 ---
 --- Ignore injected languages (default true)
 --- @field ignore_injections boolean?
+---
+--- Include anonymous nodes (default false)
+--- @field include_anonymous boolean?
 
 --- Returns the smallest named node at the given position
 ---
@@ -388,6 +391,9 @@ function M.get_node(opts)
     return
   end
 
+  if opts.include_anonymous then
+    return root_lang_tree:node_for_range(ts_range, opts)
+  end
   return root_lang_tree:named_node_for_range(ts_range, opts)
 end
 

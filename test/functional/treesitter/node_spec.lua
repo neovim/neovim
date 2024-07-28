@@ -55,6 +55,23 @@ describe('treesitter node API', function()
     eq('identifier', lua_eval('node:type()'))
   end)
 
+  it('get_node() with anonymous nodes included', function()
+    insert([[print('test')]])
+
+    exec_lua([[
+      parser = vim.treesitter.get_parser(0, 'lua')
+      tree = parser:parse()[1]
+      node = vim.treesitter.get_node({
+        bufnr = 0,
+        pos = { 0, 6 }, -- on the first apostrophe
+        include_anonymous = true,
+      })
+    ]])
+
+    eq("'", lua_eval('node:type()'))
+    eq(false, lua_eval('node:named()'))
+  end)
+
   it('can move between siblings', function()
     insert([[
       int main(int x, int y, int z) {
