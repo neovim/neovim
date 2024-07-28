@@ -240,7 +240,8 @@ Adding nohlsearch package				*nohlsearch-install*
 Load the plugin with this command: >
 	packadd nohlsearch
 <
-Automatically execute |:nohlsearch| after 'updatetime' or getting into |Insert| mode.
+Automatically execute |:nohlsearch| after 'updatetime' or getting into
+|Insert| mode.
 Thus assuming default updatetime, hlsearch would be suspended/turned off after
 4 seconds of idle time.
 

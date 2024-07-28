@@ -1939,7 +1939,7 @@ command in ex mode: >
 	two
 	.
 	:visual
-<appends the following text, after the cursor line: >
+appends the following text, after the cursor line: >
 	one
 	two
 <
