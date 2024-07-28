@@ -337,7 +337,7 @@ TREESITTER QUERY DIRECTIVES                            *treesitter-directives*
 Treesitter directives store metadata for a node or match and perform side
 effects. For example, the `set!` directive sets metadata on the match or node: >query
 
-        ((identifier) @foo (#set! "type" "parameter"))
+        ((identifier) @foo (#set! type "parameter"))
 <
 The following directives are built in:
 
@@ -352,9 +352,9 @@ The following directives are built in:
             {value}
 
         Examples: >query
-            ((identifier) @foo (#set! @foo "kind" "parameter"))
-            ((node1) @left (node2) @right (#set! "type" "pair"))
-            ((codeblock) @markup.raw.block (#set! "priority" 90))
+            ((identifier) @foo (#set! @foo kind "parameter"))
+            ((node1) @left (node2) @right (#set! type "pair"))
+            ((codeblock) @markup.raw.block (#set! priority 90))
 <
     `offset!`                                      *treesitter-directive-offset!*
         Takes the range of the captured node and applies an offset. This will
@@ -638,7 +638,7 @@ higher than treesitter. It is also possible to change the priority of an
 individual query pattern manually by setting its `"priority"` metadata
 attribute: >query
 
-    ((super_important_node) @superimportant (#set! "priority" 105))
+    ((super_important_node) @superimportant (#set! priority 105))
 <
 
 ==============================================================================
