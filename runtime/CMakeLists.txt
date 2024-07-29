@@ -16,6 +16,7 @@ add_custom_command(OUTPUT ${GENERATED_SYN_VIM}
     ${LUA_GEN_DEPS}
     ${SYN_VIM_GENERATOR}
     ${PROJECT_SOURCE_DIR}/src/nvim/ex_cmds.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/normal_cmds.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/auevents.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.c
