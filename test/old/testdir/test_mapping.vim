@@ -1672,6 +1672,49 @@ func Test_unmap_simplifiable()
   unmap <C-I>
 endfunc
 
+" Test that the first byte of rhs is not remapped if rhs starts with lhs.
+func Test_map_rhs_starts_with_lhs()
+  new
+  func MapExpr()
+    return "\<C-R>\<C-P>"
+  endfunc
+
+  for expr in [v:false, v:true]
+    if expr
+      imap <buffer><expr> <C-R> MapExpr()
+    else
+      imap <buffer> <C-R> <C-R><C-P>
+    endif
+
+    for restore in [v:false, v:true]
+      if restore
+        let saved = maparg('<C-R>', 'i', v:false, v:true)
+        iunmap <buffer> <C-R>
+        call mapset(saved)
+      endif
+
+      let @a = 'foo'
+      call feedkeys("S\<C-R>a", 'tx')
+      call assert_equal('foo', getline('.'))
+
+      let @a = 'bar'
+      call feedkeys("S\<*C-R>a", 'tx')
+      call assert_equal('bar', getline('.'))
+    endfor
+  endfor
+
+  " When two mappings are used for <C-I> and <Tab>, remapping should work.
+  imap <buffer> <C-I> <Tab>bar
+  imap <buffer> <Tab> foo
+  call feedkeys("S\<Tab>", 'xt')
+  call assert_equal('foo', getline('.'))
+  call feedkeys("S\<*C-I>", 'xt')
+  call assert_equal('foobar', getline('.'))
+
+  delfunc MapExpr
+  bwipe!
+endfunc
+
 func Test_expr_map_escape_special()
   nnoremap … <Cmd>let g:got_ellipsis += 1<CR>
   func Func()

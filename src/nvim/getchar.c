@@ -2341,8 +2341,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     const int save_m_noremap = mp->m_noremap;
     const bool save_m_silent = mp->m_silent;
     char *save_m_keys = NULL;  // only saved when needed
-    char *save_m_str = NULL;  // only saved when needed
-    const LuaRef save_m_luaref = mp->m_luaref;
+    char *save_alt_m_keys = NULL;  // only saved when needed
 
     // Handle ":map <expr>": evaluate the {rhs} as an
     // expression.  Also save and restore the command line
@@ -2356,9 +2355,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       may_garbage_collect = false;
 
       save_m_keys = xstrdup(mp->m_keys);
-      if (save_m_luaref == LUA_NOREF) {
-        save_m_str = xstrdup(mp->m_str);
-      }
+      save_alt_m_keys = mp->m_alt != NULL ? xstrdup(mp->m_alt->m_keys) : NULL;
       map_str = eval_map_expr(mp, NUL);
 
       if ((map_str == NULL || *map_str == NUL)) {
@@ -2409,11 +2406,18 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
 
       if (save_m_noremap != REMAP_YES) {
         noremap = save_m_noremap;
-      } else if (strncmp(map_str, save_m_keys != NULL ? save_m_keys : mp->m_keys,
-                         (size_t)keylen) != 0) {
-        noremap = REMAP_YES;
-      } else {
+      } else if (save_m_expr
+                 ? strncmp(map_str, save_m_keys, (size_t)keylen) == 0
+                 || (save_alt_m_keys != NULL
+                     && strncmp(map_str, save_alt_m_keys,
+                                strlen(save_alt_m_keys)) == 0)
+                 : strncmp(map_str, mp->m_keys, (size_t)keylen) == 0
+                 || (mp->m_alt != NULL
+                     && strncmp(map_str, mp->m_alt->m_keys,
+                                strlen(mp->m_alt->m_keys)) == 0)) {
         noremap = REMAP_SKIP;
+      } else {
+        noremap = REMAP_YES;
       }
       i = ins_typebuf(map_str, noremap, 0, true, cmd_silent || save_m_silent);
       if (save_m_expr) {
@@ -2421,7 +2425,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       }
     }
     xfree(save_m_keys);
-    xfree(save_m_str);
+    xfree(save_alt_m_keys);
     *keylenp = keylen;
     if (i == FAIL) {
       return map_result_fail;
