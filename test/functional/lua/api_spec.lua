@@ -145,10 +145,10 @@ describe('luaeval(vim.api.…)', function()
     eq(true, fn.luaeval('vim.api.nvim__id(vim.api.nvim__id)(true)'))
     eq(
       42,
-      exec_lua [[
-      local f = vim.api.nvim__id({42, vim.api.nvim__id})
-      return f[2](f[1])
-    ]]
+      exec_lua(function()
+        local f = vim.api.nvim__id({ 42, vim.api.nvim__id })
+        return f[2](f[1])
+      end)
     )
   end)
 

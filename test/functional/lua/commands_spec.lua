@@ -178,13 +178,15 @@ describe(':lua', function()
     eq('hello', exec_capture(':lua = x()'))
     exec_lua('x = {a = 1, b = 2}')
     eq('{\n  a = 1,\n  b = 2\n}', exec_capture(':lua  =x'))
-    exec_lua([[function x(success)
-      if success then
-        return true, "Return value"
-      else
-        return false, nil, "Error message"
+    exec_lua(function()
+      function _G.x(success)
+        if success then
+          return true, 'Return value'
+        else
+          return false, nil, 'Error message'
+        end
       end
-    end]])
+    end)
     eq(
       dedent [[
       true
