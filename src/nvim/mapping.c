@@ -151,7 +151,9 @@ static void mapblock_free(mapblock_T **mpp)
 {
   mapblock_T *mp = *mpp;
   xfree(mp->m_keys);
-  if (!mp->m_simplified) {
+  if (mp->m_alt != NULL) {
+    mp->m_alt->m_alt = NULL;
+  } else {
     NLUA_CLEAR_REF(mp->m_luaref);
     xfree(mp->m_str);
     xfree(mp->m_orig_str);
@@ -493,13 +495,13 @@ static int str_to_mapargs(const char *strargs, bool is_unmap, MapArguments *mapa
   return 0;
 }
 
-/// @param args  "rhs", "rhs_lua", "orig_rhs", "expr", "silent", "nowait", "replace_keycodes" and
-///              and "desc" fields are used.
-///              "rhs", "rhs_lua", "orig_rhs" fields are cleared if "simplified" is false.
+/// @param args  "rhs", "rhs_lua", "orig_rhs", "expr", "silent", "nowait",
+///              "replace_keycodes" and "desc" fields are used.
 /// @param sid  0 to use current_sctx
-static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table, const char *keys,
-                    MapArguments *args, int noremap, int mode, bool is_abbr, scid_T sid,
-                    linenr_T lnum, bool simplified)
+static mapblock_T *map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table,
+                           const char *keys, MapArguments *args, int noremap, int mode,
+                           bool is_abbr, scid_T sid, linenr_T lnum, bool simplified)
+  FUNC_ATTR_NONNULL_RET
 {
   mapblock_T *mp = xcalloc(1, sizeof(mapblock_T));
 
@@ -516,11 +518,6 @@ static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table,
   mp->m_str = args->rhs;
   mp->m_orig_str = args->orig_rhs;
   mp->m_luaref = args->rhs_lua;
-  if (!simplified) {
-    args->rhs = NULL;
-    args->orig_rhs = NULL;
-    args->rhs_lua = LUA_NOREF;
-  }
   mp->m_keylen = (int)strlen(mp->m_keys);
   mp->m_noremap = noremap;
   mp->m_nowait = args->nowait;
@@ -551,6 +548,7 @@ static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table,
     mp->m_next = map_table[n];
     map_table[n] = mp;
   }
+  return mp;
 }
 
 /// Sets or removes a mapping or abbreviation in buffer `buf`.
@@ -571,6 +569,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   // mappings/abbreviations, not the globals.
   mapblock_T **map_table = args->buffer ? buf->b_maphash : maphash;
   mapblock_T **abbr_table = args->buffer ? &buf->b_first_abbr : &first_abbr;
+  mapblock_T *mp_result[2] = { NULL, NULL };
 
   // For ":noremap" don't remap, otherwise do remap.
   int noremap = args->script ? REMAP_SCRIPT
@@ -805,19 +804,16 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                 mp->m_mode &= ~mode;  // remove mode bits
                 if (mp->m_mode == 0 && !did_it) {  // reuse entry
                   XFREE_CLEAR(mp->m_desc);
-                  if (!mp->m_simplified) {
+                  if (mp->m_alt != NULL) {
+                    mp->m_alt = mp->m_alt->m_alt = NULL;
+                  } else {
                     NLUA_CLEAR_REF(mp->m_luaref);
-                    XFREE_CLEAR(mp->m_str);
-                    XFREE_CLEAR(mp->m_orig_str);
+                    xfree(mp->m_str);
+                    xfree(mp->m_orig_str);
                   }
                   mp->m_str = args->rhs;
                   mp->m_orig_str = args->orig_rhs;
                   mp->m_luaref = args->rhs_lua;
-                  if (!keyround1_simplified) {
-                    args->rhs = NULL;
-                    args->orig_rhs = NULL;
-                    args->rhs_lua = LUA_NOREF;
-                  }
                   mp->m_noremap = noremap;
                   mp->m_nowait = args->nowait;
                   mp->m_silent = args->silent;
@@ -831,6 +827,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                   if (args->desc != NULL) {
                     mp->m_desc = xstrdup(args->desc);
                   }
+                  mp_result[keyround - 1] = mp;
                   did_it = true;
                 }
               }
@@ -889,13 +886,24 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     }
 
     // Get here when adding a new entry to the maphash[] list or abbrlist.
-    map_add(buf, map_table, abbr_table, lhs, args, noremap, mode, is_abbrev,
-            0,  // sid
-            0,  // lnum
-            keyround1_simplified);
+    mp_result[keyround - 1] = map_add(buf, map_table, abbr_table, lhs,
+                                      args, noremap, mode, is_abbrev,
+                                      0,  // sid
+                                      0,  // lnum
+                                      keyround1_simplified);
+  }
+
+  if (mp_result[0] != NULL && mp_result[1] != NULL) {
+    mp_result[0]->m_alt = mp_result[1];
+    mp_result[1]->m_alt = mp_result[0];
   }
 
 theend:
+  if (mp_result[0] != NULL || mp_result[1] != NULL) {
+    args->rhs = NULL;
+    args->orig_rhs = NULL;
+    args->rhs_lua = LUA_NOREF;
+  }
   return retval;
 }
 
@@ -2348,12 +2356,19 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   xfree(unmap_args.rhs);
   xfree(unmap_args.orig_rhs);
 
+  mapblock_T *mp_result[2] = { NULL, NULL };
+
+  mp_result[0] = map_add(curbuf, map_table, abbr_table, lhsraw, &args,
+                         noremap, mode, is_abbr, sid, lnum, false);
   if (lhsrawalt != NULL) {
-    map_add(curbuf, map_table, abbr_table, lhsrawalt, &args, noremap, mode, is_abbr,
-            sid, lnum, true);
+    mp_result[1] = map_add(curbuf, map_table, abbr_table, lhsrawalt, &args,
+                           noremap, mode, is_abbr, sid, lnum, true);
   }
-  map_add(curbuf, map_table, abbr_table, lhsraw, &args, noremap, mode, is_abbr,
-          sid, lnum, false);
+
+  if (mp_result[0] != NULL && mp_result[1] != NULL) {
+    mp_result[0]->m_alt = mp_result[1];
+    mp_result[1]->m_alt = mp_result[0];
+  }
 }
 
 /// "maplist()" function

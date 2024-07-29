@@ -10,6 +10,9 @@ enum { MAXMAPLEN = 50, };  ///< Maximum length of key sequence to be mapped.
 typedef struct mapblock mapblock_T;
 struct mapblock {
   mapblock_T *m_next;       ///< next mapblock in list
+  mapblock_T *m_alt;        ///< pointer to mapblock of the same mapping
+                            ///< with an alternative form of m_keys, or NULL
+                            ///< if there is no such mapblock
   char *m_keys;             ///< mapped from, lhs
   char *m_str;              ///< mapped to, rhs
   char *m_orig_str;         ///< rhs as entered by the user
