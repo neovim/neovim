@@ -9,14 +9,9 @@ describe('glob', function()
   after_each(n.clear)
 
   local match = function(...)
-    return exec_lua(
-      [[
-      local pattern = select(1, ...)
-      local str = select(2, ...)
-      return require("vim.glob").to_lpeg(pattern):match(str) ~= nil
-    ]],
-      ...
-    )
+    return exec_lua(function(pattern, str)
+      return require('vim.glob').to_lpeg(pattern):match(str) ~= nil
+    end, ...)
   end
 
   describe('glob matching', function()

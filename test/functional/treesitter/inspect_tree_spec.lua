@@ -22,10 +22,10 @@ describe('vim.treesitter.inspect_tree', function()
       print()
       ]])
 
-    exec_lua([[
+    exec_lua(function()
       vim.treesitter.start(0, 'lua')
       vim.treesitter.inspect_tree()
-    ]])
+    end)
 
     expect_tree [[
       (chunk ; [0, 0] - [2, 0]
@@ -40,10 +40,10 @@ describe('vim.treesitter.inspect_tree', function()
       print('hello')
       ]])
 
-    exec_lua([[
+    exec_lua(function()
       vim.treesitter.start(0, 'lua')
       vim.treesitter.inspect_tree()
-    ]])
+    end)
     feed('a')
 
     expect_tree [[
@@ -67,11 +67,11 @@ describe('vim.treesitter.inspect_tree', function()
       ```
       ]])
 
-    exec_lua([[
+    exec_lua(function()
       vim.treesitter.start(0, 'markdown')
       vim.treesitter.get_parser():parse()
       vim.treesitter.inspect_tree()
-    ]])
+    end)
 
     expect_tree [[
       (document ; [0, 0] - [4, 0]
@@ -96,11 +96,11 @@ describe('vim.treesitter.inspect_tree', function()
       ```
       ]])
 
-    exec_lua([[
+    exec_lua(function()
       vim.treesitter.start(0, 'markdown')
       vim.treesitter.get_parser():parse()
       vim.treesitter.inspect_tree()
-    ]])
+    end)
     feed('I')
 
     expect_tree [[
@@ -125,28 +125,28 @@ describe('vim.treesitter.inspect_tree', function()
       ]])
 
     -- setup two windows for the source buffer
-    exec_lua([[
-      source_win = vim.api.nvim_get_current_win()
+    exec_lua(function()
+      _G.source_win = vim.api.nvim_get_current_win()
       vim.api.nvim_open_win(0, false, {
         win = 0,
-        split = 'left'
+        split = 'left',
       })
-    ]])
+    end)
 
     -- setup three windows for the tree buffer
-    exec_lua([[
+    exec_lua(function()
       vim.treesitter.start(0, 'lua')
       vim.treesitter.inspect_tree()
-      tree_win = vim.api.nvim_get_current_win()
-      tree_win_copy_1 = vim.api.nvim_open_win(0, false, {
+      _G.tree_win = vim.api.nvim_get_current_win()
+      _G.tree_win_copy_1 = vim.api.nvim_open_win(0, false, {
         win = 0,
-        split = 'left'
+        split = 'left',
       })
-      tree_win_copy_2 = vim.api.nvim_open_win(0, false, {
+      _G.tree_win_copy_2 = vim.api.nvim_open_win(0, false, {
         win = 0,
-        split = 'left'
+        split = 'left',
       })
-    ]])
+    end)
 
     -- close original source window
     exec_lua('vim.api.nvim_win_close(source_win, false)')

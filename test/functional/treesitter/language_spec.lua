@@ -54,10 +54,10 @@ describe('treesitter language API', function()
   end)
 
   it('inspects language', function()
-    local keys, fields, symbols = unpack(exec_lua([[
+    local keys, fields, symbols = unpack(exec_lua(function()
       local lang = vim.treesitter.language.inspect('c')
       local keys, symbols = {}, {}
-      for k,_ in pairs(lang) do
+      for k, _ in pairs(lang) do
         keys[k] = true
       end
 
@@ -66,8 +66,8 @@ describe('treesitter language API', function()
       for _, v in pairs(lang.symbols) do
         table.insert(symbols, v)
       end
-      return {keys, lang.fields, symbols}
-    ]]))
+      return { keys, lang.fields, symbols }
+    end))
 
     eq({ fields = true, symbols = true, _abi_version = true }, keys)
 
@@ -113,12 +113,14 @@ describe('treesitter language API', function()
         int x = 3;
       }]])
 
-    exec_lua([[
-      langtree = vim.treesitter.get_parser(0, "c")
-      tree = langtree:tree_for_range({1, 3, 1, 3})
-    ]])
-
-    eq('<node translation_unit>', exec_lua('return tostring(tree:root())'))
+    eq(
+      '<node translation_unit>',
+      exec_lua(function()
+        local langtree = vim.treesitter.get_parser(0, 'c')
+        local tree = langtree:tree_for_range({ 1, 3, 1, 3 })
+        return tostring(tree:root())
+      end)
+    )
   end)
 
   it('retrieve the tree given a range when range is out of bounds relative to buffer', function()
@@ -127,12 +129,14 @@ describe('treesitter language API', function()
         int x = 3;
       }]])
 
-    exec_lua([[
-      langtree = vim.treesitter.get_parser(0, "c")
-      tree = langtree:tree_for_range({10, 10, 10, 10})
-    ]])
-
-    eq('<node translation_unit>', exec_lua('return tostring(tree:root())'))
+    eq(
+      '<node translation_unit>',
+      exec_lua(function()
+        local langtree = vim.treesitter.get_parser(0, 'c')
+        local tree = langtree:tree_for_range({ 10, 10, 10, 10 })
+        return tostring(tree:root())
+      end)
+    )
   end)
 
   it('retrieve the node given a range', function()
@@ -141,12 +145,14 @@ describe('treesitter language API', function()
         int x = 3;
       }]])
 
-    exec_lua([[
-      langtree = vim.treesitter.get_parser(0, "c")
-      node = langtree:named_node_for_range({1, 3, 1, 3})
-    ]])
-
-    eq('<node primitive_type>', exec_lua('return tostring(node)'))
+    eq(
+      '<node primitive_type>',
+      exec_lua(function()
+        local langtree = vim.treesitter.get_parser(0, 'c')
+        local node = langtree:named_node_for_range({ 1, 3, 1, 3 })
+        return tostring(node)
+      end)
+    )
   end)
 
   it('retrieve an anonymous node given a range', function()

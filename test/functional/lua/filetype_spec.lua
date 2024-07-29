@@ -18,90 +18,82 @@ describe('vim.filetype', function()
   before_each(function()
     clear()
 
-    exec_lua [[
+    exec_lua(function()
       local bufnr = vim.api.nvim_create_buf(true, false)
       vim.api.nvim_set_current_buf(bufnr)
-    ]]
+    end)
   end)
 
   it('works with extensions', function()
     eq(
       'radicalscript',
-      exec_lua [[
-      vim.filetype.add({
-        extension = {
-          rs = 'radicalscript',
-        },
-      })
-      return vim.filetype.match({ filename = 'main.rs' })
-    ]]
+      exec_lua(function()
+        vim.filetype.add({
+          extension = {
+            rs = 'radicalscript',
+          },
+        })
+        return vim.filetype.match({ filename = 'main.rs' })
+      end)
     )
   end)
 
   it('prioritizes filenames over extensions', function()
     eq(
       'somethingelse',
-      exec_lua [[
-      vim.filetype.add({
-        extension = {
-          rs = 'radicalscript',
-        },
-        filename = {
-          ['main.rs'] = 'somethingelse',
-        },
-      })
-      return vim.filetype.match({ filename = 'main.rs' })
-    ]]
+      exec_lua(function()
+        vim.filetype.add({
+          extension = {
+            rs = 'radicalscript',
+          },
+          filename = {
+            ['main.rs'] = 'somethingelse',
+          },
+        })
+        return vim.filetype.match({ filename = 'main.rs' })
+      end)
     )
   end)
 
   it('works with filenames', function()
     eq(
       'nim',
-      exec_lua [[
-      vim.filetype.add({
-        filename = {
-          ['s_O_m_e_F_i_l_e'] = 'nim',
-        },
-      })
-      return vim.filetype.match({ filename = 's_O_m_e_F_i_l_e' })
-    ]]
+      exec_lua(function()
+        vim.filetype.add({
+          filename = {
+            ['s_O_m_e_F_i_l_e'] = 'nim',
+          },
+        })
+        return vim.filetype.match({ filename = 's_O_m_e_F_i_l_e' })
+      end)
     )
 
     eq(
       'dosini',
-      exec_lua(
-        [[
-      local root = ...
-      vim.filetype.add({
-        filename = {
-          ['config'] = 'toml',
-          [root .. '/.config/fun/config'] = 'dosini',
-        },
-      })
-      return vim.filetype.match({ filename = root .. '/.config/fun/config' })
-    ]],
-        root
-      )
+      exec_lua(function(root0)
+        vim.filetype.add({
+          filename = {
+            ['config'] = 'toml',
+            [root0 .. '/.config/fun/config'] = 'dosini',
+          },
+        })
+        return vim.filetype.match({ filename = root0 .. '/.config/fun/config' })
+      end, root)
     )
   end)
 
   it('works with patterns', function()
     eq(
       'markdown',
-      exec_lua(
-        [[
-      local root = ...
-      vim.env.HOME = '/a-funky+home%dir'
-      vim.filetype.add({
-        pattern = {
-          ['~/blog/.*%.txt'] = 'markdown',
-        }
-      })
-      return vim.filetype.match({ filename = '~/blog/why_neovim_is_awesome.txt' })
-    ]],
-        root
-      )
+      exec_lua(function()
+        vim.env.HOME = '/a-funky+home%dir'
+        vim.filetype.add({
+          pattern = {
+            ['~/blog/.*%.txt'] = 'markdown',
+          },
+        })
+        return vim.filetype.match({ filename = '~/blog/why_neovim_is_awesome.txt' })
+      end)
     )
   end)
 
@@ -110,43 +102,43 @@ describe('vim.filetype', function()
     command('file relevant_to_me')
     eq(
       'foss',
-      exec_lua [[
-      vim.filetype.add({
-        pattern = {
-          ["relevant_to_(%a+)"] = function(path, bufnr, capture)
-            if capture == "me" then
-              return "foss"
-            end
-          end,
-        }
-      })
-      return vim.filetype.match({ buf = 0 })
-    ]]
+      exec_lua(function()
+        vim.filetype.add({
+          pattern = {
+            ['relevant_to_(%a+)'] = function(_, _, capture)
+              if capture == 'me' then
+                return 'foss'
+              end
+            end,
+          },
+        })
+        return vim.filetype.match({ buf = 0 })
+      end)
     )
   end)
 
   it('works with contents #22180', function()
     eq(
       'sh',
-      exec_lua [[
-      -- Needs to be set so detect#sh doesn't fail
-      vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
-      return vim.filetype.match({ contents = { '#!/usr/bin/env bash' } })
-    ]]
+      exec_lua(function()
+        -- Needs to be set so detect#sh doesn't fail
+        vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
+        return vim.filetype.match({ contents = { '#!/usr/bin/env bash' } })
+      end)
     )
   end)
 
   it('considers extension mappings when matching from hashbang', function()
     eq(
       'fooscript',
-      exec_lua [[
-      vim.filetype.add({
-        extension = {
-          foo = 'fooscript',
-        }
-      })
-      return vim.filetype.match({ contents = { '#!/usr/bin/env foo' } })
-    ]]
+      exec_lua(function()
+        vim.filetype.add({
+          extension = {
+            foo = 'fooscript',
+          },
+        })
+        return vim.filetype.match({ contents = { '#!/usr/bin/env foo' } })
+      end)
     )
   end)
 
