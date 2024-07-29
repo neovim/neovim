@@ -3329,6 +3329,10 @@ void maketitle(void)
   int maxlen = 0;
   char buf[IOSIZE];
 
+  if (curwin->w_floating) {
+    return;
+  }
+
   if (!redrawing()) {
     // Postpone updating the title when 'lazyredraw' is set.
     need_maketitle = true;
