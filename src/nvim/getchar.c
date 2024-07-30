@@ -2335,6 +2335,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     const bool save_m_silent = mp->m_silent;
     char *save_m_keys = NULL;  // only saved when needed
     char *save_alt_m_keys = NULL;  // only saved when needed
+    const int save_alt_m_keylen = mp->m_alt != NULL ? mp->m_alt->m_keylen : 0;
 
     // Handle ":map <expr>": evaluate the {rhs} as an
     // expression.  Also save and restore the command line
@@ -2347,8 +2348,10 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       vgetc_busy = 0;
       may_garbage_collect = false;
 
-      save_m_keys = xstrdup(mp->m_keys);
-      save_alt_m_keys = mp->m_alt != NULL ? xstrdup(mp->m_alt->m_keys) : NULL;
+      save_m_keys = xmemdupz(mp->m_keys, (size_t)mp->m_keylen);
+      save_alt_m_keys = mp->m_alt != NULL
+                        ? xmemdupz(mp->m_alt->m_keys, (size_t)save_alt_m_keylen)
+                        : NULL;
       map_str = eval_map_expr(mp, NUL);
 
       if ((map_str == NULL || *map_str == NUL)) {
@@ -2401,11 +2404,11 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
                  ? strncmp(map_str, save_m_keys, (size_t)keylen) == 0
                  || (save_alt_m_keys != NULL
                      && strncmp(map_str, save_alt_m_keys,
-                                strlen(save_alt_m_keys)) == 0)
+                                (size_t)save_alt_m_keylen) == 0)
                  : strncmp(map_str, mp->m_keys, (size_t)keylen) == 0
                  || (mp->m_alt != NULL
                      && strncmp(map_str, mp->m_alt->m_keys,
-                                strlen(mp->m_alt->m_keys)) == 0)) {
+                                (size_t)mp->m_alt->m_keylen) == 0)) {
         noremap = REMAP_SKIP;
       } else {
         noremap = REMAP_YES;
