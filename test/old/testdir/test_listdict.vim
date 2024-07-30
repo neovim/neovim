@@ -195,6 +195,26 @@ func Test_list_range_assign()
   call CheckDefAndScriptFailure(lines, 'E1012:', 2)
 endfunc
 
+func Test_list_items()
+  let r = []
+  let l = ['a', 'b', 'c']
+  for [idx, val] in items(l)
+    call extend(r, [[idx, val]])
+  endfor
+  call assert_equal([[0, 'a'], [1, 'b'], [2, 'c']], r)
+
+  call assert_fails('call items(3)', 'E1225:')
+endfunc
+
+func Test_string_items()
+  let r = []
+  let s = 'ábツ'
+  for [idx, val] in items(s)
+    call extend(r, [[idx, val]])
+  endfor
+  call assert_equal([[0, 'á'], [1, 'b'], [2, 'ツ']], r)
+endfunc
+
 " Test removing items in list
 func Test_list_func_remove()
   let lines =<< trim END

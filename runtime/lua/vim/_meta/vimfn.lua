@@ -4699,6 +4699,10 @@ function vim.fn.isnan(expr) end
 ---   for [key, value] in items(mydict)
 ---      echo key .. ': ' .. value
 ---   endfor
+--- <
+--- A List or a String argument is also supported.  In these
+--- cases, items() returns a List with the index and the value at
+--- the index.
 ---
 --- @param dict any
 --- @return any

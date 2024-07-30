@@ -237,13 +237,6 @@ typedef enum {
   EXPR_ISNOT,         ///< isnot
 } exprtype_T;
 
-/// Type for dict_list function
-typedef enum {
-  kDictListKeys,  ///< List dictionary keys.
-  kDictListValues,  ///< List dictionary values.
-  kDictListItems,  ///< List dictionary contents: [keys, values].
-} DictListType;
-
 // Used for checking if local variables or arguments used in a lambda.
 extern bool *eval_lavars_used;
 
