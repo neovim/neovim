@@ -1436,6 +1436,10 @@ You can also disable this rendering by adding the following line to your
 vimrc file: >
 	:let html_no_rendering=1
 
+By default Vim synchronises the syntax to 250 lines before the first displayed
+line.  This can be configured using: >
+	:let html_minlines = 500
+<
 HTML comments are rather special (see an HTML reference document for the
 details), and the syntax coloring scheme will highlight all errors.
 However, if you prefer to use the wrong style (starts with <!-- and
