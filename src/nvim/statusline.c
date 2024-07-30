@@ -62,6 +62,19 @@ typedef enum {
   kNumBaseHexadecimal = 16,
 } NumberBase;
 
+/// Get default statusline as 'statusline' format string.
+char *stl_default_format(void)
+{
+  char *fmt;
+  // include line/col and file location information if 'ruler' is set
+  if (p_ru) {
+    fmt = xstrdup("%<%f %h%m%r%=%-14.(%l,%c%V%) %P");
+  } else {
+    fmt = xstrdup("%<%f %h%m%r");
+  }
+  return fmt;
+}
+
 /// Redraw the status line of window `wp`.
 ///
 /// If inversion is possible we use it. Else '=' characters are used.
@@ -90,89 +103,11 @@ void win_redr_status(win_T *wp)
     wp->w_redr_status = true;
   } else if (*p_stl != NUL || *wp->w_p_stl != NUL) {
     // redraw custom status line
-    redraw_custom_statusline(wp);
+    redraw_custom_statusline(wp, NULL);
   } else {
-    schar_T fillchar = fillchar_status(&attr, wp);
-    const int stl_width = is_stl_global ? Columns : wp->w_width;
-
-    get_trans_bufname(wp->w_buffer);
-    char *p = NameBuff;
-    int len = (int)strlen(p);
-
-    if ((bt_help(wp->w_buffer)
-         || wp->w_p_pvw
-         || bufIsChanged(wp->w_buffer)
-         || wp->w_buffer->b_p_ro)
-        && len < MAXPATHL - 1) {
-      *(p + len++) = ' ';
-    }
-    if (bt_help(wp->w_buffer)) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[Help]"));
-      len += (int)strlen(p + len);
-    }
-    if (wp->w_p_pvw) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[Preview]"));
-      len += (int)strlen(p + len);
-    }
-    if (bufIsChanged(wp->w_buffer)) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", "[+]");
-      len += (int)strlen(p + len);
-    }
-    if (wp->w_buffer->b_p_ro) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[RO]"));
-      // len += (int)strlen(p + len);  // dead assignment
-    }
-
-    int this_ru_col = ru_col - (Columns - stl_width);
-    if (this_ru_col < (stl_width + 1) / 2) {
-      this_ru_col = (stl_width + 1) / 2;
-    }
-    if (this_ru_col <= 1) {
-      p = "<";                // No room for file name!
-      len = 1;
-    } else {
-      int i;
-
-      // Count total number of display cells.
-      int clen = (int)mb_string2cells(p);
-
-      // Find first character that will fit.
-      // Going from start to end is much faster for DBCS.
-      for (i = 0; p[i] != NUL && clen >= this_ru_col - 1;
-           i += utfc_ptr2len(p + i)) {
-        clen -= utf_ptr2cells(p + i);
-      }
-      len = clen;
-      if (i > 0) {
-        p = p + i - 1;
-        *p = '<';
-        len++;
-      }
-    }
-
-    grid_line_start(&default_grid, is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp));
-    const int off = is_stl_global ? 0 : wp->w_wincol;
-
-    int width = grid_line_puts(off, p, -1, attr);
-    grid_line_fill(off + width, off + this_ru_col, fillchar, attr);
-
-    if (get_keymap_str(wp, "<%s>", NameBuff, MAXPATHL)
-        && this_ru_col - len > (int)strlen(NameBuff) + 1) {
-      grid_line_puts(off + this_ru_col - (int)strlen(NameBuff) - 1, NameBuff, -1, attr);
-    }
-
-    win_redr_ruler(wp);
-
-    // Draw the 'showcmd' information if 'showcmdloc' == "statusline".
-    if (p_sc && *p_sloc == 's') {
-      const int sc_width = MIN(10, this_ru_col - len - 2);
-
-      if (sc_width > 0) {
-        grid_line_puts(off + this_ru_col - sc_width - 1, showcmd_buf, sc_width, attr);
-      }
-    }
-
-    grid_line_flush();
+    // redraw default status line
+    char *default_stl = stl_default_format();
+    redraw_custom_statusline(wp, default_stl);
   }
 
   // May need to draw the character below the vertical separator.
@@ -293,7 +228,9 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
 
 /// Redraw the status line, window bar or ruler of window "wp".
 /// When "wp" is NULL redraw the tab pages line from 'tabline'.
-static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
+/// "fmt_string" can be used to directly define the status line, however,
+/// when"fmt_string" is NULL use "wp->p_stl" option.
+static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, char *fmt_string)
 {
   static bool entered = false;
   int attr;
@@ -388,7 +325,11 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       }
     } else {
       opt_idx = kOptStatusline;
-      stl = ((*wp->w_p_stl != NUL) ? wp->w_p_stl : p_stl);
+      if (fmt_string != NULL) {
+        stl = fmt_string;
+      } else {
+        stl = ((*wp->w_p_stl != NUL) ? wp->w_p_stl : p_stl);
+      }
       opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
     }
 
@@ -481,7 +422,7 @@ void win_redr_winbar(win_T *wp)
   if (wp->w_winbar_height == 0 || !redrawing()) {
     // Do nothing.
   } else if (*p_wbr != NUL || *wp->w_p_wbr != NUL) {
-    win_redr_custom(wp, true, false);
+    win_redr_custom(wp, true, false, NULL);
   }
   entered = false;
 }
@@ -513,7 +454,7 @@ void win_redr_ruler(win_T *wp)
   }
 
   if (*p_ruf && p_ch > 0 && !ui_has(kUIMessages)) {
-    win_redr_custom(wp, false, true);
+    win_redr_custom(wp, false, true, NULL);
     return;
   }
 
@@ -634,7 +575,7 @@ schar_T fillchar_status(int *attr, win_T *wp)
 
 /// Redraw the status line according to 'statusline' and take care of any
 /// errors encountered.
-void redraw_custom_statusline(win_T *wp)
+void redraw_custom_statusline(win_T *wp, char *fmt_string)
 {
   static bool entered = false;
 
@@ -645,7 +586,7 @@ void redraw_custom_statusline(win_T *wp)
   }
   entered = true;
 
-  win_redr_custom(wp, false, false);
+  win_redr_custom(wp, false, false, fmt_string);
   entered = false;
 }
 
@@ -723,7 +664,7 @@ void draw_tabline(void)
 
   // Use the 'tabline' option if it's set.
   if (*p_tal != NUL) {
-    win_redr_custom(NULL, false, false);
+    win_redr_custom(NULL, false, false, NULL);
   } else {
     int tabcount = 0;
     int tabwidth = 0;
