@@ -1384,7 +1384,7 @@ bool mb_isalpha(int a)
   return mb_islower(a) || mb_isupper(a);
 }
 
-static int utf_strnicmp(const char *s1, const char *s2, size_t n1, size_t n2)
+int utf_strnicmp(const char *s1, const char *s2, size_t n1, size_t n2)
 {
   int c1, c2;
   char buffer[6];
