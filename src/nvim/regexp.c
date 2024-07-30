@@ -1804,7 +1804,9 @@ static inline char *cstrchr(const char *const s, const int c)
   if (c > 0x80) {
     const int folded_c = utf_fold(c);
     for (const char *p = s; *p != NUL; p += utfc_ptr2len(p)) {
-      if (utf_fold(utf_ptr2char(p)) == folded_c) {
+      const int uc = utf_ptr2char(p);
+      // Do not match an illegal byte.  E.g. 0xff matches 0xc3 0xbf, not 0xff.
+      if ((uc < 0x80 || uc != (uint8_t)(*p)) && utf_fold(uc) == folded_c) {
         return (char *)p;
       }
     }
