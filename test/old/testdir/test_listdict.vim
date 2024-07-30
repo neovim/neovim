@@ -203,7 +203,16 @@ func Test_list_items()
   endfor
   call assert_equal([[0, 'a'], [1, 'b'], [2, 'c']], r)
 
-  call assert_fails('call items(3)', 'E1227:')
+  call assert_fails('call items(3)', 'E1225:')
+endfunc
+
+func Test_string_items()
+  let r = []
+  let s = 'ábツ'
+  for [idx, val] in items(s)
+    call extend(r, [[idx, val]])
+  endfor
+  call assert_equal([[0, 'á'], [1, 'b'], [2, 'ツ']], r)
 endfunc
 
 " Test removing items in list
