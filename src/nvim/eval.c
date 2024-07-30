@@ -3678,6 +3678,10 @@ static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const
   }
   xfree(tofree);
 
+  if (alias != NULL) {
+    xfree(alias);
+  }
+
   return ret;
 }
 
@@ -3815,7 +3819,7 @@ static int check_can_index(typval_T *rettv, bool evaluate, bool verbose)
 /// slice() function
 void f_slice(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (check_can_index(argvars, true, false) != OK) {
+  if (check_can_index(&argvars[0], true, false) != OK) {
     return;
   }
 

@@ -3880,12 +3880,17 @@ static varnumber_T indexof_blob(blob_T *b, varnumber_T startidx, typval_T *expr)
     }
   }
 
+  const int called_emsg_start = called_emsg;
   for (varnumber_T idx = startidx; idx < tv_blob_len(b); idx++) {
     set_vim_var_nr(VV_KEY, idx);
     set_vim_var_nr(VV_VAL, tv_blob_get(b, (int)idx));
 
     if (indexof_eval_expr(expr)) {
       return idx;
+    }
+
+    if (called_emsg != called_emsg_start) {
+      return -1;
     }
   }
 
@@ -3916,6 +3921,7 @@ static varnumber_T indexof_list(list_T *l, varnumber_T startidx, typval_T *expr)
     }
   }
 
+  const int called_emsg_start = called_emsg;
   for (; item != NULL; item = TV_LIST_ITEM_NEXT(l, item), idx++) {
     set_vim_var_nr(VV_KEY, idx);
     tv_copy(TV_LIST_ITEM_TV(item), get_vim_var_tv(VV_VAL));
@@ -3925,6 +3931,10 @@ static varnumber_T indexof_list(list_T *l, varnumber_T startidx, typval_T *expr)
 
     if (found) {
       return idx;
+    }
+
+    if (called_emsg != called_emsg_start) {
+      return -1;
     }
   }
 
@@ -3942,7 +3952,8 @@ static void f_indexof(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  if ((argvars[1].v_type == VAR_STRING && argvars[1].vval.v_string == NULL)
+  if ((argvars[1].v_type == VAR_STRING
+       && (argvars[1].vval.v_string == NULL || *argvars[1].vval.v_string == NUL))
       || (argvars[1].v_type == VAR_FUNC && argvars[1].vval.v_partial == NULL)) {
     return;
   }

@@ -134,6 +134,13 @@ func Test_method_syntax()
   call assert_fails('eval [1, 2, 3]-> sort()', 'E15:')
   call assert_fails('eval [1, 2, 3]->sort ()', 'E274:')
   call assert_fails('eval [1, 2, 3]-> sort ()', 'E15:')
+
+  " Test for using a method name containing a curly brace name
+  let s = 'len'
+  call assert_equal(4, "xxxx"->str{s}())
+
+  " Test for using a method in an interpolated string
+  call assert_equal('4', $'{"xxxx"->strlen()}')
 endfunc
 
 func Test_method_lambda()

@@ -3731,6 +3731,8 @@ func Test_slice()
     call assert_equal('', 'ὰ̳β̳́γ̳̂δ̳̃ε̳̄ζ̳̅'->slice(1, -6))
   END
   call CheckLegacyAndVim9Success(lines)
+
+  call assert_equal(0, slice(v:true, 1))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

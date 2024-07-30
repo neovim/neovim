@@ -57,6 +57,9 @@ func Test_list_slice()
       assert_equal([1, 2], l[-3 : -1])
   END
   call CheckDefAndScriptSuccess(lines)
+
+  call assert_fails('let l[[]] = 1', 'E730: Using a List as a String')
+  call assert_fails('let l[1 : []] = [1]', 'E730: Using a List as a String')
 endfunc
 
 " List identity
@@ -175,6 +178,19 @@ func Test_list_assign()
   END
   call CheckScriptFailure(['vim9script'] + lines, 'E688:')
   call CheckDefExecFailure(lines, 'E1093: Expected 2 items but got 1')
+
+  let lines =<< trim END
+    VAR l = [2]
+    LET l += v:_null_list
+    call assert_equal([2], l)
+    LET l = v:_null_list
+    LET l += [1]
+    call assert_equal([1], l)
+  END
+  call CheckLegacyAndVim9Success(lines)
+
+  let d = {'abc': [1, 2, 3]}
+  call assert_fails('let d.abc[0:0z10] = [10, 20]', 'E976: Using a Blob as a String')
 endfunc
 
 " test for range assign
@@ -440,6 +456,9 @@ func Test_dict_assign()
     n.key = 3
   END
   call CheckDefFailure(lines, 'E1141:')
+
+  let d = {'abc': {}}
+  call assert_fails("let d.abc[0z10] = 10", 'E976: Using a Blob as a String')
 endfunc
 
 " Function in script-local List or Dict
@@ -1449,6 +1468,8 @@ func Test_indexof()
   call assert_equal(-1, indexof(l, v:_null_string))
   " Nvim doesn't have null functions
   " call assert_equal(-1, indexof(l, test_null_function()))
+  call assert_equal(-1, indexof(l, ""))
+  call assert_fails('let i = indexof(l, " ")', 'E15:')
 
   " failure cases
   call assert_fails('let i = indexof(l, "v:val == ''cyan''")', 'E735:')

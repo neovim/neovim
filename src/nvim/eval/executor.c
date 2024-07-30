@@ -31,7 +31,13 @@ static int tv_op_blob(typval_T *tv1, const typval_T *tv2, const char *op)
   }
 
   // Blob += Blob
-  if (tv1->vval.v_blob == NULL || tv2->vval.v_blob == NULL) {
+  if (tv2->vval.v_blob == NULL) {
+    return OK;
+  }
+
+  if (tv1->vval.v_blob == NULL) {
+    tv1->vval.v_blob = tv2->vval.v_blob;
+    tv1->vval.v_blob->bv_refcount++;
     return OK;
   }
 
