@@ -31,9 +31,10 @@ char *e_list_index_out_of_range_nr
 int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *const op)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
-  // Can't do anything with a Funcref, a Dict or special value on the right.
+  // Can't do anything with a Funcref or Dict on the right.
+  // v:true and friends only work with "..=".
   if (tv2->v_type != VAR_FUNC && tv2->v_type != VAR_DICT
-      && tv2->v_type != VAR_BOOL && tv2->v_type != VAR_SPECIAL) {
+      && ((tv2->v_type != VAR_BOOL && tv2->v_type != VAR_SPECIAL) || *op == '.')) {
     switch (tv1->v_type) {
     case VAR_DICT:
     case VAR_FUNC:
