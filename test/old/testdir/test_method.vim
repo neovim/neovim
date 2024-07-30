@@ -78,7 +78,7 @@ func Test_string_method()
   eval "a\rb\ec"->strtrans()->assert_equal('a^Mb^[c')
   eval "aあb"->strwidth()->assert_equal(4)
   eval 'abc'->substitute('b', 'x', '')->assert_equal('axc')
-  call assert_fails('eval "x"->items()', 'E1227:')
+  call assert_fails('eval 123->items()', 'E1225:')
 
   eval 'abc'->printf('the %s arg')->assert_equal('the abc arg')
 endfunc
