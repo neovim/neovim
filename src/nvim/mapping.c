@@ -157,8 +157,8 @@ static void mapblock_free(mapblock_T **mpp)
     NLUA_CLEAR_REF(mp->m_luaref);
     xfree(mp->m_str);
     xfree(mp->m_orig_str);
+    xfree(mp->m_desc);
   }
-  xfree(mp->m_desc);
   *mpp = mp->m_next;
   xfree(mp);
 }
@@ -534,10 +534,7 @@ static mapblock_T *map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr
     mp->m_script_ctx.sc_lnum += SOURCING_LNUM;
     nlua_set_sctx(&mp->m_script_ctx);
   }
-  mp->m_desc = NULL;
-  if (args->desc != NULL) {
-    mp->m_desc = xstrdup(args->desc);
-  }
+  mp->m_desc = args->desc;
 
   // add the new entry in front of the abbrlist or maphash[] list
   if (is_abbr) {
@@ -803,13 +800,13 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                 // new rhs for existing entry
                 mp->m_mode &= ~mode;  // remove mode bits
                 if (mp->m_mode == 0 && !did_it) {  // reuse entry
-                  XFREE_CLEAR(mp->m_desc);
                   if (mp->m_alt != NULL) {
                     mp->m_alt = mp->m_alt->m_alt = NULL;
                   } else {
                     NLUA_CLEAR_REF(mp->m_luaref);
                     xfree(mp->m_str);
                     xfree(mp->m_orig_str);
+                    xfree(mp->m_desc);
                   }
                   mp->m_str = args->rhs;
                   mp->m_orig_str = args->orig_rhs;
@@ -824,9 +821,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                   mp->m_script_ctx = current_sctx;
                   mp->m_script_ctx.sc_lnum += SOURCING_LNUM;
                   nlua_set_sctx(&mp->m_script_ctx);
-                  if (args->desc != NULL) {
-                    mp->m_desc = xstrdup(args->desc);
-                  }
+                  mp->m_desc = args->desc;
                   mp_result[keyround - 1] = mp;
                   did_it = true;
                 }
@@ -903,6 +898,7 @@ theend:
     args->rhs = NULL;
     args->orig_rhs = NULL;
     args->rhs_lua = LUA_NOREF;
+    args->desc = NULL;
   }
   return retval;
 }
@@ -2336,7 +2332,7 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     .silent = tv_dict_get_number(d, "silent") != 0,
     .nowait = tv_dict_get_number(d, "nowait") != 0,
     .replace_keycodes = tv_dict_get_number(d, "replace_keycodes") != 0,
-    .desc = tv_dict_get_string(d, "desc", false),
+    .desc = tv_dict_get_string(d, "desc", true),
   };
   scid_T sid = (scid_T)tv_dict_get_number(d, "sid");
   linenr_T lnum = (linenr_T)tv_dict_get_number(d, "lnum");
