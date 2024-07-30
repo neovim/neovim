@@ -1694,11 +1694,11 @@ func Test_map_rhs_starts_with_lhs()
       endif
 
       let @a = 'foo'
-      call feedkeys("S\<C-R>a", 'tx')
+      call assert_nobeep('call feedkeys("S\<C-R>a", "tx")')
       call assert_equal('foo', getline('.'))
 
       let @a = 'bar'
-      call feedkeys("S\<*C-R>a", 'tx')
+      call assert_nobeep('call feedkeys("S\<*C-R>a", "tx")')
       call assert_equal('bar', getline('.'))
     endfor
   endfor
