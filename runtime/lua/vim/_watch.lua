@@ -277,7 +277,7 @@ function M.inotify(path, opts, callback)
     'modify',
     '--event',
     'move',
-    '@.git', -- ignore git directory
+    string.format('@%s/.git', path), -- ignore git directory
     path,
   }, {
     stderr = function(err, data)
