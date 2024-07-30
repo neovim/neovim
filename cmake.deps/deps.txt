@@ -1,5 +1,5 @@
-LIBUV_URL https://github.com/libuv/libuv/archive/v1.48.0.tar.gz
-LIBUV_SHA256 8c253adb0f800926a6cbd1c6576abae0bc8eb86a4f891049b72f9e5b7dc58f33
+LIBUV_URL https://github.com/libuv/libuv/archive/4e310d0f90af29e699e2dedad5fa0dcee181a7cc.tar.gz
+LIBUV_SHA256 11953b36e0a4a535d00071cbe842b87b890936d95bea5a1b9acfa9e54ed7041a
 
 MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/c-6.0.1.tar.gz
 MSGPACK_SHA256 58d5fe49d0ee2b374d60a61aabf8028b2c92004e6f11bff04e74b639fc8ad541
