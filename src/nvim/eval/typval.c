@@ -16,6 +16,7 @@
 #include "nvim/eval/executor.h"
 #include "nvim/eval/gc.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
@@ -59,6 +60,13 @@ typedef struct {
 
 typedef int (*ListSorter)(const void *, const void *);
 
+/// Type for tv_dict2list() function
+typedef enum {
+  kDict2ListKeys,    ///< List dictionary keys.
+  kDict2ListValues,  ///< List dictionary values.
+  kDict2ListItems,   ///< List dictionary contents: [keys, values].
+} DictListType;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.c.generated.h"
 #endif
@@ -87,6 +95,8 @@ static const char e_string_or_list_required_for_argument_nr[]
   = N_("E1222: String or List required for argument %d");
 static const char e_list_or_blob_required_for_argument_nr[]
   = N_("E1226: List or Blob required for argument %d");
+static const char e_list_or_dict_required_for_argument_nr[]
+  = N_("E1227: List or Dictionary required for argument %d");
 static const char e_blob_required_for_argument_nr[]
   = N_("E1238: Blob required for argument %d");
 static const char e_invalid_value_for_blob_nr[]
@@ -780,6 +790,27 @@ void tv_list_flatten(list_T *list, listitem_T *first, int64_t maxitems, int64_t 
     done++;
     item = next;
   }
+}
+
+/// "items(list)" function
+/// Caller must have already checked that argvars[0] is a List.
+static void tv_list2items(typval_T *argvars, typval_T *rettv)
+{
+  list_T *l = argvars[0].vval.v_list;
+
+  tv_list_alloc_ret(rettv, tv_list_len(l));
+  if (l == NULL) {
+    return;  // null list behaves like an empty list
+  }
+
+  varnumber_T idx = 0;
+  TV_LIST_ITER(l, li, {
+    list_T *l2 = tv_list_alloc(2);
+    tv_list_append_list(rettv->vval.v_list, l2);
+    tv_list_append_number(l2, idx);
+    tv_list_append_tv(l2, TV_LIST_ITEM_TV(li));
+    idx++;
+  });
 }
 
 /// Extend first list with the second
@@ -3134,35 +3165,38 @@ void tv_dict_alloc_ret(typval_T *const ret_tv)
 
 /// Turn a dictionary into a list
 ///
-/// @param[in] tv      Dictionary to convert. Is checked for actually being
+/// @param[in] argvars Arguments to items(). The first argument is check for being
 ///                    a dictionary, will give an error if not.
 /// @param[out] rettv  Location where result will be saved.
 /// @param[in] what    What to save in rettv.
-static void tv_dict_list(typval_T *const tv, typval_T *const rettv, const DictListType what)
+static void tv_dict2list(typval_T *const argvars, typval_T *const rettv, const DictListType what)
 {
-  if (tv->v_type != VAR_DICT) {
-    emsg(_(e_dictreq));
+  if ((what == kDict2ListItems
+       ? tv_check_for_list_or_dict_arg(argvars, 0)
+       : tv_check_for_dict_arg(argvars, 0)) == FAIL) {
+    tv_list_alloc_ret(rettv, 0);
     return;
   }
 
-  tv_list_alloc_ret(rettv, tv_dict_len(tv->vval.v_dict));
-  if (tv->vval.v_dict == NULL) {
+  dict_T *d = argvars[0].vval.v_dict;
+  tv_list_alloc_ret(rettv, tv_dict_len(d));
+  if (d == NULL) {
     // NULL dict behaves like an empty dict
     return;
   }
 
-  TV_DICT_ITER(tv->vval.v_dict, di, {
+  TV_DICT_ITER(d, di, {
     typval_T tv_item = { .v_lock = VAR_UNLOCKED };
 
     switch (what) {
-      case kDictListKeys:
+      case kDict2ListKeys:
         tv_item.v_type = VAR_STRING;
         tv_item.vval.v_string = xstrdup(di->di_key);
         break;
-      case kDictListValues:
+      case kDict2ListValues:
         tv_copy(&di->di_tv, &tv_item);
         break;
-      case kDictListItems: {
+      case kDict2ListItems: {
         // items()
         list_T *const sub_l = tv_list_alloc(2);
         tv_item.v_type = VAR_LIST;
@@ -3188,19 +3222,23 @@ static void tv_dict_list(typval_T *const tv, typval_T *const rettv, const DictLi
 /// "items(dict)" function
 void f_items(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  tv_dict_list(argvars, rettv, 2);
+  if (argvars[0].v_type == VAR_LIST) {
+    tv_list2items(argvars, rettv);
+  } else {
+    tv_dict2list(argvars, rettv, kDict2ListItems);
+  }
 }
 
 /// "keys()" function
 void f_keys(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  tv_dict_list(argvars, rettv, 0);
+  tv_dict2list(argvars, rettv, kDict2ListKeys);
 }
 
 /// "values(dict)" function
 void f_values(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  tv_dict_list(argvars, rettv, 1);
+  tv_dict2list(argvars, rettv, kDict2ListValues);
 }
 
 /// "has_key()" function
@@ -4396,6 +4434,17 @@ int tv_check_for_opt_string_or_list_arg(const typval_T *const args, const int id
 {
   return (args[idx].v_type == VAR_UNKNOWN
           || tv_check_for_string_or_list_arg(args, idx) != FAIL) ? OK : FAIL;
+}
+
+/// Give an error and return FAIL unless "args[idx]" is a list or dict
+int tv_check_for_list_or_dict_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_LIST && args[idx].v_type != VAR_DICT) {
+    semsg(_(e_list_or_dict_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
 }
 
 /// Give an error and return FAIL unless "args[idx]" is a string
