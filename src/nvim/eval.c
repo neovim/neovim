@@ -122,6 +122,8 @@ static const char e_empty_function_name[]
   = N_("E1192: Empty function name");
 static const char e_argument_of_str_must_be_list_string_dictionary_or_blob[]
   = N_("E1250: Argument of %s must be a List, String, Dictionary or Blob");
+static const char e_cannot_use_partial_here[]
+  = N_("E1265: Cannot use a partial here");
 
 static char * const namespace_char = "abglstvw";
 
@@ -3488,20 +3490,22 @@ static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const
   int len;
   char *name = *arg;
   char *lua_funcname = NULL;
+  char *alias = NULL;
   if (strnequal(name, "v:lua.", 6)) {
     lua_funcname = name + 6;
     *arg = (char *)skip_luafunc_name(lua_funcname);
     *arg = skipwhite(*arg);  // to detect trailing whitespace later
     len = (int)(*arg - lua_funcname);
   } else {
-    char *alias;
     len = get_name_len((const char **)arg, &alias, evaluate, true);
     if (alias != NULL) {
       name = alias;
     }
   }
 
-  int ret;
+  char *tofree = NULL;
+  int ret = OK;
+
   if (len <= 0) {
     if (verbose) {
       if (lua_funcname == NULL) {
@@ -3512,25 +3516,79 @@ static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const
     }
     ret = FAIL;
   } else {
-    if (**arg != '(') {
-      if (verbose) {
-        semsg(_(e_missingparen), name);
+    *arg = skipwhite(*arg);
+
+    // If there is no "(" immediately following, but there is further on,
+    // it can be "dict.Func()", "list[nr]", etc.
+    // Does not handle anything where "(" is part of the expression.
+    char *paren;
+    if (**arg != '(' && lua_funcname == NULL && alias == NULL
+        && (paren = vim_strchr(*arg, '(')) != NULL) {
+      *arg = name;
+      *paren = NUL;
+      typval_T ref;
+      ref.v_type = VAR_UNKNOWN;
+      if (eval7(arg, &ref, evalarg, false) == FAIL) {
+        *arg = name + len;
+        ret = FAIL;
+      } else if (*skipwhite(*arg) != NUL) {
+        if (verbose) {
+          semsg(_(e_trailing_arg), *arg);
+        }
+        ret = FAIL;
+      } else if (ref.v_type == VAR_FUNC && ref.vval.v_string != NULL) {
+        name = ref.vval.v_string;
+        ref.vval.v_string = NULL;
+        tofree = name;
+        len = (int)strlen(name);
+      } else if (ref.v_type == VAR_PARTIAL && ref.vval.v_partial != NULL) {
+        if (ref.vval.v_partial->pt_argc > 0 || ref.vval.v_partial->pt_dict != NULL) {
+          if (verbose) {
+            emsg(_(e_cannot_use_partial_here));
+          }
+          ret = FAIL;
+        } else {
+          name = xstrdup(partial_name(ref.vval.v_partial));
+          tofree = name;
+          if (name == NULL) {
+            ret = FAIL;
+            name = *arg;
+          } else {
+            len = (int)strlen(name);
+          }
+        }
+      } else {
+        if (verbose) {
+          semsg(_(e_not_callable_type_str), name);
+        }
+        ret = FAIL;
       }
-      ret = FAIL;
-    } else if (ascii_iswhite((*arg)[-1])) {
-      if (verbose) {
-        emsg(_(e_nowhitespace));
+      tv_clear(&ref);
+      *paren = '(';
+    }
+
+    if (ret == OK) {
+      if (**arg != '(') {
+        if (verbose) {
+          semsg(_(e_missingparen), name);
+        }
+        ret = FAIL;
+      } else if (ascii_iswhite((*arg)[-1])) {
+        if (verbose) {
+          emsg(_(e_nowhitespace));
+        }
+        ret = FAIL;
+      } else if (lua_funcname != NULL) {
+        if (evaluate) {
+          rettv->v_type = VAR_PARTIAL;
+          rettv->vval.v_partial = vvlua_partial;
+          rettv->vval.v_partial->pt_refcount++;
+        }
+        ret = call_func_rettv(arg, evalarg, rettv, evaluate, NULL, &base, lua_funcname);
+      } else {
+        ret = eval_func(arg, evalarg, name, len, rettv,
+                        evaluate ? EVAL_EVALUATE : 0, &base);
       }
-      ret = FAIL;
-    } else if (lua_funcname != NULL) {
-      if (evaluate) {
-        rettv->v_type = VAR_PARTIAL;
-        rettv->vval.v_partial = vvlua_partial;
-        rettv->vval.v_partial->pt_refcount++;
-      }
-      ret = call_func_rettv(arg, evalarg, rettv, evaluate, NULL, &base, lua_funcname);
-    } else {
-      ret = eval_func(arg, evalarg, name, len, rettv, evaluate ? EVAL_EVALUATE : 0, &base);
     }
   }
 
@@ -3539,6 +3597,7 @@ static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const
   if (evaluate) {
     tv_clear(&base);
   }
+  xfree(tofree);
 
   return ret;
 }
