@@ -59,8 +59,13 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
         break;
       }
       // List += List
-      if (tv1->vval.v_list != NULL && tv2->vval.v_list != NULL) {
-        tv_list_extend(tv1->vval.v_list, tv2->vval.v_list, NULL);
+      if (tv2->vval.v_list != NULL) {
+        if (tv1->vval.v_list == NULL) {
+          tv1->vval.v_list = tv2->vval.v_list;
+          tv_list_ref(tv1->vval.v_list);
+        } else {
+          tv_list_extend(tv1->vval.v_list, tv2->vval.v_list, NULL);
+        }
       }
       return OK;
     case VAR_NUMBER:

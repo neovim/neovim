@@ -1519,7 +1519,14 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
         key = (char *)tv_get_string(&var1);  // is number or string
       }
       lp->ll_list = NULL;
+
+      // a NULL dict is equivalent with an empty dict
+      if (lp->ll_tv->vval.v_dict == NULL) {
+        lp->ll_tv->vval.v_dict = tv_dict_alloc();
+        lp->ll_tv->vval.v_dict->dv_refcount++;
+      }
       lp->ll_dict = lp->ll_tv->vval.v_dict;
+
       lp->ll_di = tv_dict_find(lp->ll_dict, key, len);
 
       // When assigning to a scope dictionary check that a function and
