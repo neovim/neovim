@@ -1444,14 +1444,12 @@ static glv_status_T get_lval_dict_item(char *name, lval_T *lp, char *key, int le
       key[len] = prevval;
     }
     if (wrong) {
-      tv_clear(var1);
       return GLV_FAIL;
     }
   }
 
   if (lp->ll_di != NULL && tv_is_luafunc(&lp->ll_di->di_tv)
       && len == -1 && rettv == NULL) {
-    tv_clear(var1);
     semsg(e_illvar, "v:['lua']");
     return GLV_FAIL;
   }
@@ -1461,7 +1459,6 @@ static glv_status_T get_lval_dict_item(char *name, lval_T *lp, char *key, int le
     if (lp->ll_dict == &vimvardict
         || &lp->ll_dict->dv_hashtab == get_funccal_args_ht()) {
       semsg(_(e_illvar), name);
-      tv_clear(var1);
       return GLV_FAIL;
     }
 
@@ -1470,7 +1467,6 @@ static glv_status_T get_lval_dict_item(char *name, lval_T *lp, char *key, int le
       if (!quiet) {
         semsg(_(e_dictkey), key);
       }
-      tv_clear(var1);
       return GLV_FAIL;
     }
     if (len == -1) {
@@ -1478,18 +1474,15 @@ static glv_status_T get_lval_dict_item(char *name, lval_T *lp, char *key, int le
     } else {
       lp->ll_newkey = xmemdupz(key, (size_t)len);
     }
-    tv_clear(var1);
     *key_end = p;
     return GLV_STOP;
     // existing variable, need to check if it can be changed
   } else if (!(flags & GLV_READ_ONLY)
              && (var_check_ro(lp->ll_di->di_flags, name, (size_t)(p - name))
                  || var_check_lock(lp->ll_di->di_flags, name, (size_t)(p - name)))) {
-    tv_clear(var1);
     return GLV_FAIL;
   }
 
-  tv_clear(var1);
   lp->ll_tv = &lp->ll_di->di_tv;
 
   return GLV_OK;
@@ -1515,15 +1508,12 @@ static int get_lval_blob(lval_T *lp, typval_T *var1, typval_T *var2, bool empty1
     // Is number or string.
     lp->ll_n1 = (int)tv_get_number(var1);
   }
-  tv_clear(var1);
 
   if (tv_blob_check_index(bloblen, lp->ll_n1, quiet) == FAIL) {
-    tv_clear(var2);
     return FAIL;
   }
   if (lp->ll_range && !lp->ll_empty2) {
     lp->ll_n2 = (int)tv_get_number(var2);
-    tv_clear(var2);
     if (tv_blob_check_range(bloblen, lp->ll_n1, lp->ll_n2, quiet) == FAIL) {
       return FAIL;
     }
@@ -1554,13 +1544,11 @@ static int get_lval_list(lval_T *lp, typval_T *var1, typval_T *var2, bool empty1
     // Is number or string.
     lp->ll_n1 = (int)tv_get_number(var1);
   }
-  tv_clear(var1);
 
   lp->ll_dict = NULL;
   lp->ll_list = lp->ll_tv->vval.v_list;
   lp->ll_li = tv_list_check_range_index_one(lp->ll_list, &lp->ll_n1, quiet);
   if (lp->ll_li == NULL) {
-    tv_clear(var2);
     return FAIL;
   }
 
@@ -1570,7 +1558,6 @@ static int get_lval_list(lval_T *lp, typval_T *var1, typval_T *var2, bool empty1
   // Otherwise "lp->ll_n2" is set to the second index.
   if (lp->ll_range && !lp->ll_empty2) {
     lp->ll_n2 = (int)tv_get_number(var2);  // Is number or string.
-    tv_clear(var2);
     if (tv_list_check_range_index_two(lp->ll_list,
                                       &lp->ll_n1, lp->ll_li,
                                       &lp->ll_n2, quiet) == FAIL) {
@@ -1586,6 +1573,9 @@ static int get_lval_list(lval_T *lp, typval_T *var1, typval_T *var2, bool empty1
 /// Get the lval of a list/dict/blob subitem starting at "p". Loop
 /// until no more [idx] or .key is following.
 ///
+/// If "rettv" is not NULL it points to the value to be assigned.
+/// "unlet" is true for ":unlet".
+///
 /// @param[in]  flags  @see GetLvalFlags.
 ///
 /// @return A pointer to the character after the subscript on success or NULL on
@@ -1599,6 +1589,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
   typval_T var2;
   var2.v_type = VAR_UNKNOWN;
   bool empty1 = false;
+  int rc = FAIL;
 
   // Loop until no more [idx] or .key is following.
   while (*p == '[' || (*p == '.' && p[1] != '=' && p[1] != '.')) {
@@ -1628,7 +1619,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
       if (!quiet) {
         emsg(_("E708: [:] must come last"));
       }
-      return NULL;
+      goto done;
     }
 
     int len = -1;
@@ -1652,12 +1643,11 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
       } else {
         empty1 = false;
         if (eval1(&p, &var1, &EVALARG_EVALUATE) == FAIL) {  // Recursive!
-          return NULL;
+          goto done;
         }
         if (!tv_check_str(&var1)) {
           // Not a number or string.
-          tv_clear(&var1);
-          return NULL;
+          goto done;
         }
         p = skipwhite(p);
       }
@@ -1668,8 +1658,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
           if (!quiet) {
             emsg(_(e_cannot_slice_dictionary));
           }
-          tv_clear(&var1);
-          return NULL;
+          goto done;
         }
         if (rettv != NULL
             && !(rettv->v_type == VAR_LIST && rettv->vval.v_list != NULL)
@@ -1677,8 +1666,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
           if (!quiet) {
             emsg(_("E709: [:] requires a List or Blob value"));
           }
-          tv_clear(&var1);
-          return NULL;
+          goto done;
         }
         p = skipwhite(p + 1);
         if (*p == ']') {
@@ -1687,14 +1675,11 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
           lp->ll_empty2 = false;
           // Recursive!
           if (eval1(&p, &var2, &EVALARG_EVALUATE) == FAIL) {
-            tv_clear(&var1);
-            return NULL;
+            goto done;
           }
           if (!tv_check_str(&var2)) {
             // Not a number or string.
-            tv_clear(&var1);
-            tv_clear(&var2);
-            return NULL;
+            goto done;
           }
         }
         lp->ll_range = true;
@@ -1706,9 +1691,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
         if (!quiet) {
           emsg(_(e_missbrac));
         }
-        tv_clear(&var1);
-        tv_clear(&var2);
-        return NULL;
+        goto done;
       }
 
       // Skip to past ']'.
@@ -1719,25 +1702,34 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
       glv_status_T glv_status = get_lval_dict_item(name, lp, key, len, &p, &var1,
                                                    flags, unlet, rettv);
       if (glv_status == GLV_FAIL) {
-        return NULL;
+        goto done;
       }
       if (glv_status == GLV_STOP) {
         break;
       }
     } else if (lp->ll_tv->v_type == VAR_BLOB) {
       if (get_lval_blob(lp, &var1, &var2, empty1, quiet) == FAIL) {
-        return NULL;
+        goto done;
       }
       break;
     } else {
       if (get_lval_list(lp, &var1, &var2, empty1, flags, quiet) == FAIL) {
-        return NULL;
+        goto done;
       }
     }
+
+    tv_clear(&var1);
+    tv_clear(&var2);
+    var1.v_type = VAR_UNKNOWN;
+    var2.v_type = VAR_UNKNOWN;
   }
 
+  rc = OK;
+
+done:
   tv_clear(&var1);
-  return p;
+  tv_clear(&var2);
+  return rc == OK ? p : NULL;
 }
 
 /// Get an lvalue
