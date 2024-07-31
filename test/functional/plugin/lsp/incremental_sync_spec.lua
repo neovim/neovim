@@ -170,7 +170,7 @@ describe('incremental synchronization', function()
       }
       test_edit({ 'a' }, { 'rb' }, expected_text_changes, 'utf-16', '\n')
     end)
-    it('deleting a line', function()
+    it('deleting the first line', function()
       local expected_text_changes = {
         {
           range = {
@@ -183,11 +183,49 @@ describe('incremental synchronization', function()
               line = 1,
             },
           },
-          rangeLength = 12,
+          rangeLength = 6,
           text = '',
         },
       }
-      test_edit({ 'hello world' }, { 'dd' }, expected_text_changes, 'utf-16', '\n')
+      test_edit({ 'hello', 'world' }, { 'ggdd' }, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('deleting the last line', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 1,
+            },
+            ['end'] = {
+              character = 0,
+              line = 2,
+            },
+          },
+          rangeLength = 6,
+          text = '',
+        },
+      }
+      test_edit({ 'hello', 'world' }, { '2ggdd' }, expected_text_changes, 'utf-16', '\n')
+    end)
+    it('deleting all lines', function()
+      local expected_text_changes = {
+        {
+          range = {
+            ['start'] = {
+              character = 0,
+              line = 0,
+            },
+            ['end'] = {
+              character = 5,
+              line = 1,
+            },
+          },
+          rangeLength = 11,
+          text = '',
+        },
+      }
+      test_edit({ 'hello', 'world' }, { 'ggdG' }, expected_text_changes, 'utf-16', '\n')
     end)
     it('deleting an empty line', function()
       local expected_text_changes = {
