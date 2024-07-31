@@ -307,6 +307,7 @@ describe('vim.lsp.completion: item conversion', function()
       info = '',
       kind = 'Module',
       menu = '',
+      hl_group = '',
       word = 'this_thread',
     }
     local result = complete('  std::this|', completion_list)
@@ -362,6 +363,7 @@ describe('vim.lsp.completion: item conversion', function()
       info = '',
       kind = 'Module',
       menu = '',
+      hl_group = '',
       word = 'this_thread',
     }
     local result = complete('  std::this|is', completion_list)
@@ -529,6 +531,14 @@ describe('vim.lsp.completion: protocol', function()
         {
           label = 'hello',
         },
+        {
+          label = 'hercules',
+          tags = { 1 }, -- 1 represents Deprecated tag
+        },
+        {
+          label = 'hero',
+          deprecated = true,
+        },
       },
     })
 
@@ -545,6 +555,7 @@ describe('vim.lsp.completion: protocol', function()
           info = '',
           kind = 'Unknown',
           menu = '',
+          hl_group = '',
           user_data = {
             nvim = {
               lsp = {
@@ -556,6 +567,50 @@ describe('vim.lsp.completion: protocol', function()
             },
           },
           word = 'hello',
+        },
+        {
+          abbr = 'hercules',
+          dup = 1,
+          empty = 1,
+          icase = 1,
+          info = '',
+          kind = 'Unknown',
+          menu = '',
+          hl_group = 'DiagnosticDeprecated',
+          user_data = {
+            nvim = {
+              lsp = {
+                client_id = 1,
+                completion_item = {
+                  label = 'hercules',
+                  tags = { 1 },
+                },
+              },
+            },
+          },
+          word = 'hercules',
+        },
+        {
+          abbr = 'hero',
+          dup = 1,
+          empty = 1,
+          icase = 1,
+          info = '',
+          kind = 'Unknown',
+          menu = '',
+          hl_group = 'DiagnosticDeprecated',
+          user_data = {
+            nvim = {
+              lsp = {
+                client_id = 1,
+                completion_item = {
+                  label = 'hero',
+                  deprecated = true,
+                },
+              },
+            },
+          },
+          word = 'hero',
         },
       }, matches)
     end)

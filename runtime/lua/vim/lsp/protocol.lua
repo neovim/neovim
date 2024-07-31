@@ -99,6 +99,13 @@ local constants = {
     TriggerForIncompleteCompletions = 3,
   },
 
+  -- Completion item tags are extra annotations that tweak the rendering of a
+  -- completion item
+  CompletionTag = {
+    -- Render a completion as obsolete, usually using a strike-out.
+    Deprecated = 1,
+  },
+
   -- A document highlight kind.
   DocumentHighlightKind = {
     -- A textual occurrence.
@@ -433,12 +440,15 @@ function protocol.make_client_capabilities()
           snippetSupport = true,
           commitCharactersSupport = false,
           preselectSupport = false,
-          deprecatedSupport = false,
+          deprecatedSupport = true,
           documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
           resolveSupport = {
             properties = {
               'additionalTextEdits',
             },
+          },
+          tagSupport = {
+            valueSet = get_value_set(constants.CompletionTag),
           },
         },
         completionItemKind = {
