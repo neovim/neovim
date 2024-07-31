@@ -1660,6 +1660,16 @@ actually appear in Javadoc comments.  The variables to use are >
 	:let g:java_vb = 1
 Note that these three variables are maintained in the HTML syntax file.
 
+Numbers and strings can be recognized in non-Javadoc comments with >
+	:let g:java_comment_strings = 1
+
+Trailing whitespace characters or a run of space characters before a tab
+character can be marked as an error with >
+	:let g:java_space_errors = 1
+but either kind of an error can be suppressed by also defining one of >
+	:let g:java_no_trail_space_error = 1
+	:let g:java_no_tab_space_error = 1
+
 In order to highlight nested parens with different colors, define colors for
 `javaParen`, `javaParen1`, and `javaParen2`.  For example, >
 	:hi link javaParen Comment
