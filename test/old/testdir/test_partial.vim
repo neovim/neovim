@@ -403,4 +403,18 @@ func Test_compare_partials()
   call assert_false(F1 is N1)
 endfunc
 
+func Test_partial_method()
+  func Foo(x, y, z)
+    return x + y + z
+  endfunc
+  let d = {"Fn": function('Foo', [10, 20])}
+  call assert_fails('echo 30->d.Fn()', 'E1265: Cannot use a partial here')
+  delfunc Foo
+endfunc
+
+func Test_non_callable_type_as_method()
+  let d = {"Fn": 10}
+  call assert_fails('echo 30->d.Fn()', 'E1085: Not a callable type: d.Fn')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

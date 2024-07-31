@@ -21,5 +21,4 @@ func Test_source_autoload()
   call assert_equal(1, g:loaded_sourced_vim)
 endfunc
 
-
 " vim: shiftwidth=2 sts=2 expandtab

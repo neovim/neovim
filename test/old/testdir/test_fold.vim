@@ -1469,6 +1469,63 @@ func Test_foldtext_scriptlocal_func()
   delfunc s:FoldText
 endfunc
 
+" Test for setting 'foldtext' from the modeline and executing the expression
+" in a sandbox
+func Test_foldtext_in_modeline()
+  func ModelineFoldText()
+    call feedkeys('aFoo', 'xt')
+    return "folded text"
+  endfunc
+  let lines =<< trim END
+    func T()
+      let i = 1
+    endfunc
+    " vim: foldenable foldtext=ModelineFoldText()
+  END
+  call writefile(lines, 'Xmodelinefoldtext', 'D')
+
+  set modeline modelineexpr
+  split Xmodelinefoldtext
+
+  call cursor(1, 1)
+  normal! zf3j
+  call assert_equal('folded text', foldtextresult(1))
+  call assert_equal(lines, getbufline('', 1, '$'))
+
+  bw!
+  set modeline& modelineexpr&
+  delfunc ModelineFoldText
+endfunc
+
+" Test for setting 'foldexpr' from the modeline and executing the expression
+" in a sandbox
+func Test_foldexpr_in_modeline()
+  func ModelineFoldExpr()
+    call feedkeys('aFoo', 'xt')
+    return strlen(matchstr(getline(v:lnum),'^\s*'))
+  endfunc
+  let lines =<< trim END
+    aaa
+     bbb
+      ccc
+      ccc
+     bbb
+    aaa
+    " vim: foldenable foldmethod=expr foldexpr=ModelineFoldExpr()
+  END
+  call writefile(lines, 'Xmodelinefoldexpr', 'D')
+
+  set modeline modelineexpr
+  split Xmodelinefoldexpr
+
+  call assert_equal(2, foldlevel(3))
+  call assert_equal(lines, getbufline('', 1, '$'))
+
+  bw!
+  set modeline& modelineexpr&
+  delfunc ModelineFoldExpr
+endfunc
+
 " Make sure a fold containing a nested fold is split correctly when using
 " foldmethod=indent
 func Test_fold_split()

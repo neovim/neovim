@@ -1973,6 +1973,11 @@ func Test_edit_insert_reg()
   let @r = 'sample'
   call feedkeys("a\<C-R>=SaveFirstLine()\<CR>", "xt")
   call assert_equal('"', g:Line)
+
+  " Test for inserting an null and an empty list
+  call feedkeys("a\<C-R>=test_null_list()\<CR>", "xt")
+  call feedkeys("a\<C-R>=[]\<CR>", "xt")
+  call assert_equal(['r'], getbufline('', 1, '$'))
   call test_override('ALL', 0)
   close!
 endfunc

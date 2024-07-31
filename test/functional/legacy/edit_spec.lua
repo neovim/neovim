@@ -44,6 +44,12 @@ describe('edit', function()
       {1:~           }|*4
       =^           |
     ]])
+    feed([['r'<CR><Esc>]])
+    expect('r')
+    -- Test for inserting null and empty list
+    feed('a<C-R>=v:_null_list<CR><Esc>')
+    feed('a<C-R>=[]<CR><Esc>')
+    expect('r')
   end)
 
   -- oldtest: Test_edit_ctrl_r_failed()

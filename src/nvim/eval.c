@@ -122,6 +122,8 @@ static const char e_empty_function_name[]
   = N_("E1192: Empty function name");
 static const char e_argument_of_str_must_be_list_string_dictionary_or_blob[]
   = N_("E1250: Argument of %s must be a List, String, Dictionary or Blob");
+static const char e_cannot_use_partial_here[]
+  = N_("E1265: Cannot use a partial here");
 
 static char * const namespace_char = "abglstvw";
 
@@ -151,6 +153,12 @@ typedef struct {
   char *fi_string;            // copy of string being used
   int fi_byte_idx;              // byte index in fi_string
 } forinfo_T;
+
+typedef enum {
+  GLV_FAIL,
+  GLV_OK,
+  GLV_STOP,
+} glv_status_T;
 
 // values for vv_flags:
 #define VV_COMPAT       1       // compatible, also used without "v:"
@@ -1381,22 +1389,207 @@ Object eval_foldtext(win_T *wp)
   return retval;
 }
 
+/// Get an Dict lval variable that can be assigned a value to: "name",
+/// "name[expr]", "name[expr][expr]", "name.key", "name.key[expr]" etc.
+/// "name" points to the start of the name.
+/// If "rettv" is not NULL it points to the value to be assigned.
+/// "unlet" is true for ":unlet": slightly different behavior when something is
+/// wrong; must end in space or cmd separator.
+///
+/// flags:
+///  GLV_QUIET:       do not give error messages
+///  GLV_READ_ONLY:   will not change the variable
+///  GLV_NO_AUTOLOAD: do not use script autoloading
+///
+/// The Dict is returned in 'lp'.  Returns GLV_OK on success and GLV_FAIL on
+/// failure.  Returns GLV_STOP to stop processing the characters following
+/// 'key_end'.
+static glv_status_T get_lval_dict_item(char *name, lval_T *lp, char *key, int len, char **key_end,
+                                       typval_T *var1, int flags, bool unlet, typval_T *rettv)
+{
+  bool quiet = flags & GLV_QUIET;
+  char *p = *key_end;
+
+  if (len == -1) {
+    // "[key]": get key from "var1"
+    key = (char *)tv_get_string(var1);  // is number or string
+  }
+  lp->ll_list = NULL;
+
+  // a NULL dict is equivalent with an empty dict
+  if (lp->ll_tv->vval.v_dict == NULL) {
+    lp->ll_tv->vval.v_dict = tv_dict_alloc();
+    lp->ll_tv->vval.v_dict->dv_refcount++;
+  }
+  lp->ll_dict = lp->ll_tv->vval.v_dict;
+
+  lp->ll_di = tv_dict_find(lp->ll_dict, key, len);
+
+  // When assigning to a scope dictionary check that a function and
+  // variable name is valid (only variable name unless it is l: or
+  // g: dictionary). Disallow overwriting a builtin function.
+  if (rettv != NULL && lp->ll_dict->dv_scope != 0) {
+    char prevval;
+    if (len != -1) {
+      prevval = key[len];
+      key[len] = NUL;
+    } else {
+      prevval = 0;  // Avoid compiler warning.
+    }
+    bool wrong = ((lp->ll_dict->dv_scope == VAR_DEF_SCOPE
+                   && tv_is_func(*rettv)
+                   && var_wrong_func_name(key, lp->ll_di == NULL))
+                  || !valid_varname(key));
+    if (len != -1) {
+      key[len] = prevval;
+    }
+    if (wrong) {
+      return GLV_FAIL;
+    }
+  }
+
+  if (lp->ll_di != NULL && tv_is_luafunc(&lp->ll_di->di_tv)
+      && len == -1 && rettv == NULL) {
+    semsg(e_illvar, "v:['lua']");
+    return GLV_FAIL;
+  }
+
+  if (lp->ll_di == NULL) {
+    // Can't add "v:" or "a:" variable.
+    if (lp->ll_dict == &vimvardict
+        || &lp->ll_dict->dv_hashtab == get_funccal_args_ht()) {
+      semsg(_(e_illvar), name);
+      return GLV_FAIL;
+    }
+
+    // Key does not exist in dict: may need to add it.
+    if (*p == '[' || *p == '.' || unlet) {
+      if (!quiet) {
+        semsg(_(e_dictkey), key);
+      }
+      return GLV_FAIL;
+    }
+    if (len == -1) {
+      lp->ll_newkey = xstrdup(key);
+    } else {
+      lp->ll_newkey = xmemdupz(key, (size_t)len);
+    }
+    *key_end = p;
+    return GLV_STOP;
+    // existing variable, need to check if it can be changed
+  } else if (!(flags & GLV_READ_ONLY)
+             && (var_check_ro(lp->ll_di->di_flags, name, (size_t)(p - name))
+                 || var_check_lock(lp->ll_di->di_flags, name, (size_t)(p - name)))) {
+    return GLV_FAIL;
+  }
+
+  lp->ll_tv = &lp->ll_di->di_tv;
+
+  return GLV_OK;
+}
+
+/// Get an blob lval variable that can be assigned a value to: "name",
+/// "na{me}", "name[expr]", "name[expr:expr]", "name[expr][expr]", etc.
+///
+/// 'var1' specifies the starting blob index and 'var2' specifies the ending
+/// blob index.  If the first index is not specified in a range, then 'empty1'
+/// is true.  If 'quiet' is true, then error messages are not displayed for
+/// invalid indexes.
+///
+/// The blob is returned in 'lp'.  Returns OK on success and FAIL on failure.
+static int get_lval_blob(lval_T *lp, typval_T *var1, typval_T *var2, bool empty1, bool quiet)
+{
+  const int bloblen = tv_blob_len(lp->ll_tv->vval.v_blob);
+
+  // Get the number and item for the only or first index of the List.
+  if (empty1) {
+    lp->ll_n1 = 0;
+  } else {
+    // Is number or string.
+    lp->ll_n1 = (int)tv_get_number(var1);
+  }
+
+  if (tv_blob_check_index(bloblen, lp->ll_n1, quiet) == FAIL) {
+    return FAIL;
+  }
+  if (lp->ll_range && !lp->ll_empty2) {
+    lp->ll_n2 = (int)tv_get_number(var2);
+    if (tv_blob_check_range(bloblen, lp->ll_n1, lp->ll_n2, quiet) == FAIL) {
+      return FAIL;
+    }
+  }
+
+  lp->ll_blob = lp->ll_tv->vval.v_blob;
+  lp->ll_tv = NULL;
+
+  return OK;
+}
+
+/// Get a List lval variable that can be assigned a value to: "name",
+/// "na{me}", "name[expr]", "name[expr:expr]", "name[expr][expr]", etc.
+///
+/// 'var1' specifies the starting List index and 'var2' specifies the ending
+/// List index.  If the first index is not specified in a range, then 'empty1'
+/// is true.  If 'quiet' is true, then error messages are not displayed for
+/// invalid indexes.
+///
+/// The List is returned in 'lp'.  Returns OK on success and FAIL on failure.
+static int get_lval_list(lval_T *lp, typval_T *var1, typval_T *var2, bool empty1, int flags,
+                         bool quiet)
+{
+  // Get the number and item for the only or first index of the List.
+  if (empty1) {
+    lp->ll_n1 = 0;
+  } else {
+    // Is number or string.
+    lp->ll_n1 = (int)tv_get_number(var1);
+  }
+
+  lp->ll_dict = NULL;
+  lp->ll_list = lp->ll_tv->vval.v_list;
+  lp->ll_li = tv_list_check_range_index_one(lp->ll_list, &lp->ll_n1, quiet);
+  if (lp->ll_li == NULL) {
+    return FAIL;
+  }
+
+  // May need to find the item or absolute index for the second
+  // index of a range.
+  // When no index given: "lp->ll_empty2" is true.
+  // Otherwise "lp->ll_n2" is set to the second index.
+  if (lp->ll_range && !lp->ll_empty2) {
+    lp->ll_n2 = (int)tv_get_number(var2);  // Is number or string.
+    if (tv_list_check_range_index_two(lp->ll_list,
+                                      &lp->ll_n1, lp->ll_li,
+                                      &lp->ll_n2, quiet) == FAIL) {
+      return FAIL;
+    }
+  }
+
+  lp->ll_tv = TV_LIST_ITEM_TV(lp->ll_li);
+
+  return OK;
+}
+
 /// Get the lval of a list/dict/blob subitem starting at "p". Loop
 /// until no more [idx] or .key is following.
+///
+/// If "rettv" is not NULL it points to the value to be assigned.
+/// "unlet" is true for ":unlet".
 ///
 /// @param[in]  flags  @see GetLvalFlags.
 ///
 /// @return A pointer to the character after the subscript on success or NULL on
 ///         failure.
 static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv, hashtab_T *ht,
-                                dictitem_T *v, int unlet, int flags)
+                                dictitem_T *v, bool unlet, int flags)
 {
-  int quiet = flags & GLV_QUIET;
+  bool quiet = flags & GLV_QUIET;
   typval_T var1;
   var1.v_type = VAR_UNKNOWN;
   typval_T var2;
   var2.v_type = VAR_UNKNOWN;
   bool empty1 = false;
+  int rc = FAIL;
 
   // Loop until no more [idx] or .key is following.
   while (*p == '[' || (*p == '.' && p[1] != '=' && p[1] != '.')) {
@@ -1426,7 +1619,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
       if (!quiet) {
         emsg(_("E708: [:] must come last"));
       }
-      return NULL;
+      goto done;
     }
 
     int len = -1;
@@ -1450,12 +1643,11 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
       } else {
         empty1 = false;
         if (eval1(&p, &var1, &EVALARG_EVALUATE) == FAIL) {  // Recursive!
-          return NULL;
+          goto done;
         }
         if (!tv_check_str(&var1)) {
           // Not a number or string.
-          tv_clear(&var1);
-          return NULL;
+          goto done;
         }
         p = skipwhite(p);
       }
@@ -1466,8 +1658,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
           if (!quiet) {
             emsg(_(e_cannot_slice_dictionary));
           }
-          tv_clear(&var1);
-          return NULL;
+          goto done;
         }
         if (rettv != NULL
             && !(rettv->v_type == VAR_LIST && rettv->vval.v_list != NULL)
@@ -1475,8 +1666,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
           if (!quiet) {
             emsg(_("E709: [:] requires a List or Blob value"));
           }
-          tv_clear(&var1);
-          return NULL;
+          goto done;
         }
         p = skipwhite(p + 1);
         if (*p == ']') {
@@ -1485,14 +1675,11 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
           lp->ll_empty2 = false;
           // Recursive!
           if (eval1(&p, &var2, &EVALARG_EVALUATE) == FAIL) {
-            tv_clear(&var1);
-            return NULL;
+            goto done;
           }
           if (!tv_check_str(&var2)) {
             // Not a number or string.
-            tv_clear(&var1);
-            tv_clear(&var2);
-            return NULL;
+            goto done;
           }
         }
         lp->ll_range = true;
@@ -1504,9 +1691,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
         if (!quiet) {
           emsg(_(e_missbrac));
         }
-        tv_clear(&var1);
-        tv_clear(&var2);
-        return NULL;
+        goto done;
       }
 
       // Skip to past ']'.
@@ -1514,142 +1699,37 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
     }
 
     if (lp->ll_tv->v_type == VAR_DICT) {
-      if (len == -1) {
-        // "[key]": get key from "var1"
-        key = (char *)tv_get_string(&var1);  // is number or string
+      glv_status_T glv_status = get_lval_dict_item(name, lp, key, len, &p, &var1,
+                                                   flags, unlet, rettv);
+      if (glv_status == GLV_FAIL) {
+        goto done;
       }
-      lp->ll_list = NULL;
-      lp->ll_dict = lp->ll_tv->vval.v_dict;
-      lp->ll_di = tv_dict_find(lp->ll_dict, key, len);
-
-      // When assigning to a scope dictionary check that a function and
-      // variable name is valid (only variable name unless it is l: or
-      // g: dictionary). Disallow overwriting a builtin function.
-      if (rettv != NULL && lp->ll_dict->dv_scope != 0) {
-        char prevval;
-        if (len != -1) {
-          prevval = key[len];
-          key[len] = NUL;
-        } else {
-          prevval = 0;  // Avoid compiler warning.
-        }
-        bool wrong = ((lp->ll_dict->dv_scope == VAR_DEF_SCOPE
-                       && tv_is_func(*rettv)
-                       && var_wrong_func_name(key, lp->ll_di == NULL))
-                      || !valid_varname(key));
-        if (len != -1) {
-          key[len] = prevval;
-        }
-        if (wrong) {
-          tv_clear(&var1);
-          return NULL;
-        }
-      }
-
-      if (lp->ll_di != NULL && tv_is_luafunc(&lp->ll_di->di_tv)
-          && len == -1 && rettv == NULL) {
-        tv_clear(&var1);
-        semsg(e_illvar, "v:['lua']");
-        return NULL;
-      }
-
-      if (lp->ll_di == NULL) {
-        // Can't add "v:" or "a:" variable.
-        if (lp->ll_dict == &vimvardict
-            || &lp->ll_dict->dv_hashtab == get_funccal_args_ht()) {
-          semsg(_(e_illvar), name);
-          tv_clear(&var1);
-          return NULL;
-        }
-
-        // Key does not exist in dict: may need to add it.
-        if (*p == '[' || *p == '.' || unlet) {
-          if (!quiet) {
-            semsg(_(e_dictkey), key);
-          }
-          tv_clear(&var1);
-          return NULL;
-        }
-        if (len == -1) {
-          lp->ll_newkey = xstrdup(key);
-        } else {
-          lp->ll_newkey = xmemdupz(key, (size_t)len);
-        }
-        tv_clear(&var1);
+      if (glv_status == GLV_STOP) {
         break;
-        // existing variable, need to check if it can be changed
-      } else if (!(flags & GLV_READ_ONLY)
-                 && (var_check_ro(lp->ll_di->di_flags, name, (size_t)(p - name))
-                     || var_check_lock(lp->ll_di->di_flags, name, (size_t)(p - name)))) {
-        tv_clear(&var1);
-        return NULL;
       }
-
-      tv_clear(&var1);
-      lp->ll_tv = &lp->ll_di->di_tv;
     } else if (lp->ll_tv->v_type == VAR_BLOB) {
-      // Get the number and item for the only or first index of the List.
-      if (empty1) {
-        lp->ll_n1 = 0;
-      } else {
-        // Is number or string.
-        lp->ll_n1 = (int)tv_get_number(&var1);
+      if (get_lval_blob(lp, &var1, &var2, empty1, quiet) == FAIL) {
+        goto done;
       }
-      tv_clear(&var1);
-
-      const int bloblen = tv_blob_len(lp->ll_tv->vval.v_blob);
-      if (tv_blob_check_index(bloblen, lp->ll_n1, quiet) == FAIL) {
-        tv_clear(&var2);
-        return NULL;
-      }
-      if (lp->ll_range && !lp->ll_empty2) {
-        lp->ll_n2 = (int)tv_get_number(&var2);
-        tv_clear(&var2);
-        if (tv_blob_check_range(bloblen, lp->ll_n1, lp->ll_n2, quiet) == FAIL) {
-          return NULL;
-        }
-      }
-      lp->ll_blob = lp->ll_tv->vval.v_blob;
-      lp->ll_tv = NULL;
       break;
     } else {
-      // Get the number and item for the only or first index of the List.
-      if (empty1) {
-        lp->ll_n1 = 0;
-      } else {
-        // Is number or string.
-        lp->ll_n1 = (int)tv_get_number(&var1);
+      if (get_lval_list(lp, &var1, &var2, empty1, flags, quiet) == FAIL) {
+        goto done;
       }
-      tv_clear(&var1);
-
-      lp->ll_dict = NULL;
-      lp->ll_list = lp->ll_tv->vval.v_list;
-      lp->ll_li = tv_list_check_range_index_one(lp->ll_list, &lp->ll_n1, quiet);
-      if (lp->ll_li == NULL) {
-        tv_clear(&var2);
-        return NULL;
-      }
-
-      // May need to find the item or absolute index for the second
-      // index of a range.
-      // When no index given: "lp->ll_empty2" is true.
-      // Otherwise "lp->ll_n2" is set to the second index.
-      if (lp->ll_range && !lp->ll_empty2) {
-        lp->ll_n2 = (int)tv_get_number(&var2);  // Is number or string.
-        tv_clear(&var2);
-        if (tv_list_check_range_index_two(lp->ll_list,
-                                          &lp->ll_n1, lp->ll_li,
-                                          &lp->ll_n2, quiet) == FAIL) {
-          return NULL;
-        }
-      }
-
-      lp->ll_tv = TV_LIST_ITEM_TV(lp->ll_li);
     }
+
+    tv_clear(&var1);
+    tv_clear(&var2);
+    var1.v_type = VAR_UNKNOWN;
+    var2.v_type = VAR_UNKNOWN;
   }
 
+  rc = OK;
+
+done:
   tv_clear(&var1);
-  return p;
+  tv_clear(&var2);
+  return rc == OK ? p : NULL;
 }
 
 /// Get an lvalue
@@ -3481,20 +3561,22 @@ static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const
   int len;
   char *name = *arg;
   char *lua_funcname = NULL;
+  char *alias = NULL;
   if (strnequal(name, "v:lua.", 6)) {
     lua_funcname = name + 6;
     *arg = (char *)skip_luafunc_name(lua_funcname);
     *arg = skipwhite(*arg);  // to detect trailing whitespace later
     len = (int)(*arg - lua_funcname);
   } else {
-    char *alias;
     len = get_name_len((const char **)arg, &alias, evaluate, true);
     if (alias != NULL) {
       name = alias;
     }
   }
 
-  int ret;
+  char *tofree = NULL;
+  int ret = OK;
+
   if (len <= 0) {
     if (verbose) {
       if (lua_funcname == NULL) {
@@ -3505,25 +3587,79 @@ static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const
     }
     ret = FAIL;
   } else {
-    if (**arg != '(') {
-      if (verbose) {
-        semsg(_(e_missingparen), name);
+    *arg = skipwhite(*arg);
+
+    // If there is no "(" immediately following, but there is further on,
+    // it can be "dict.Func()", "list[nr]", etc.
+    // Does not handle anything where "(" is part of the expression.
+    char *paren;
+    if (**arg != '(' && lua_funcname == NULL && alias == NULL
+        && (paren = vim_strchr(*arg, '(')) != NULL) {
+      *arg = name;
+      *paren = NUL;
+      typval_T ref;
+      ref.v_type = VAR_UNKNOWN;
+      if (eval7(arg, &ref, evalarg, false) == FAIL) {
+        *arg = name + len;
+        ret = FAIL;
+      } else if (*skipwhite(*arg) != NUL) {
+        if (verbose) {
+          semsg(_(e_trailing_arg), *arg);
+        }
+        ret = FAIL;
+      } else if (ref.v_type == VAR_FUNC && ref.vval.v_string != NULL) {
+        name = ref.vval.v_string;
+        ref.vval.v_string = NULL;
+        tofree = name;
+        len = (int)strlen(name);
+      } else if (ref.v_type == VAR_PARTIAL && ref.vval.v_partial != NULL) {
+        if (ref.vval.v_partial->pt_argc > 0 || ref.vval.v_partial->pt_dict != NULL) {
+          if (verbose) {
+            emsg(_(e_cannot_use_partial_here));
+          }
+          ret = FAIL;
+        } else {
+          name = xstrdup(partial_name(ref.vval.v_partial));
+          tofree = name;
+          if (name == NULL) {
+            ret = FAIL;
+            name = *arg;
+          } else {
+            len = (int)strlen(name);
+          }
+        }
+      } else {
+        if (verbose) {
+          semsg(_(e_not_callable_type_str), name);
+        }
+        ret = FAIL;
       }
-      ret = FAIL;
-    } else if (ascii_iswhite((*arg)[-1])) {
-      if (verbose) {
-        emsg(_(e_nowhitespace));
+      tv_clear(&ref);
+      *paren = '(';
+    }
+
+    if (ret == OK) {
+      if (**arg != '(') {
+        if (verbose) {
+          semsg(_(e_missingparen), name);
+        }
+        ret = FAIL;
+      } else if (ascii_iswhite((*arg)[-1])) {
+        if (verbose) {
+          emsg(_(e_nowhitespace));
+        }
+        ret = FAIL;
+      } else if (lua_funcname != NULL) {
+        if (evaluate) {
+          rettv->v_type = VAR_PARTIAL;
+          rettv->vval.v_partial = vvlua_partial;
+          rettv->vval.v_partial->pt_refcount++;
+        }
+        ret = call_func_rettv(arg, evalarg, rettv, evaluate, NULL, &base, lua_funcname);
+      } else {
+        ret = eval_func(arg, evalarg, name, len, rettv,
+                        evaluate ? EVAL_EVALUATE : 0, &base);
       }
-      ret = FAIL;
-    } else if (lua_funcname != NULL) {
-      if (evaluate) {
-        rettv->v_type = VAR_PARTIAL;
-        rettv->vval.v_partial = vvlua_partial;
-        rettv->vval.v_partial->pt_refcount++;
-      }
-      ret = call_func_rettv(arg, evalarg, rettv, evaluate, NULL, &base, lua_funcname);
-    } else {
-      ret = eval_func(arg, evalarg, name, len, rettv, evaluate ? EVAL_EVALUATE : 0, &base);
     }
   }
 
@@ -3531,6 +3667,11 @@ static int eval_method(char **const arg, typval_T *const rettv, evalarg_T *const
   // evaluating the arguments is possible (see test55).
   if (evaluate) {
     tv_clear(&base);
+  }
+  xfree(tofree);
+
+  if (alias != NULL) {
+    xfree(alias);
   }
 
   return ret;
@@ -3670,7 +3811,7 @@ static int check_can_index(typval_T *rettv, bool evaluate, bool verbose)
 /// slice() function
 void f_slice(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (check_can_index(argvars, true, false) != OK) {
+  if (check_can_index(&argvars[0], true, false) != OK) {
     return;
   }
 
