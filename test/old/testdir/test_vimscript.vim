@@ -7450,12 +7450,13 @@ func Test_for_over_string()
   endfor
   call assert_equal('', res)
 
-  " Test for ignoring loop var assignment
-  let c = 0
-  for _ in 'abc'
-    let c += 1
+  " Test for using "_" as the loop variable
+  let i = 0
+  let s = 'abc'
+  for _ in s
+    call assert_equal(s[i], _)
+    let i += 1
   endfor
-  call assert_equal(3, c)
 endfunc
 
 " Test for deeply nested :source command  {{{1
