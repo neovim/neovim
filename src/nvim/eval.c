@@ -847,6 +847,80 @@ bool eval_expr_valid_arg(const typval_T *const tv)
          && (tv->v_type != VAR_STRING || (tv->vval.v_string != NULL && *tv->vval.v_string != NUL));
 }
 
+/// Evaluate a partial.
+/// Pass arguments "argv[argc]".
+/// Return the result in "rettv" and OK or FAIL.
+static int eval_expr_partial(const typval_T *expr, typval_T *argv, int argc, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  partial_T *const partial = expr->vval.v_partial;
+  if (partial == NULL) {
+    return FAIL;
+  }
+
+  const char *const s = partial_name(partial);
+  if (s == NULL || *s == NUL) {
+    return FAIL;
+  }
+
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.fe_evaluate = true;
+  funcexe.fe_partial = partial;
+  if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
+    return FAIL;
+  }
+
+  return OK;
+}
+
+/// Evaluate an expression which is a function.
+/// Pass arguments "argv[argc]".
+/// Return the result in "rettv" and OK or FAIL.
+static int eval_expr_func(const typval_T *expr, typval_T *argv, int argc, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char buf[NUMBUFLEN];
+  const char *const s = (expr->v_type == VAR_FUNC
+                         ? expr->vval.v_string
+                         : tv_get_string_buf_chk(expr, buf));
+  if (s == NULL || *s == NUL) {
+    return FAIL;
+  }
+
+  funcexe_T funcexe = FUNCEXE_INIT;
+  funcexe.fe_evaluate = true;
+  if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
+    return FAIL;
+  }
+
+  return OK;
+}
+
+/// Evaluate an expression, which is a string.
+/// Return the result in "rettv" and OK or FAIL.
+static int eval_expr_string(const typval_T *expr, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char buf[NUMBUFLEN];
+  char *s = (char *)tv_get_string_buf_chk(expr, buf);
+  if (s == NULL) {
+    return FAIL;
+  }
+
+  s = skipwhite(s);
+  if (eval1_emsg(&s, rettv, NULL) == FAIL) {
+    return FAIL;
+  }
+
+  if (*skipwhite(s) != NUL) {  // check for trailing chars after expr
+    tv_clear(rettv);
+    semsg(_(e_invexpr2), s);
+    return FAIL;
+  }
+
+  return OK;
+}
+
 /// Evaluate an expression, which can be a function, partial or string.
 /// Pass arguments "argv[argc]".
 /// Return the result in "rettv" and OK or FAIL.
@@ -856,49 +930,14 @@ int eval_expr_typval(const typval_T *expr, bool want_func, typval_T *argv, int a
                      typval_T *rettv)
   FUNC_ATTR_NONNULL_ALL
 {
-  char buf[NUMBUFLEN];
-  funcexe_T funcexe = FUNCEXE_INIT;
-
   if (expr->v_type == VAR_PARTIAL) {
-    partial_T *const partial = expr->vval.v_partial;
-    if (partial == NULL) {
-      return FAIL;
-    }
-    const char *const s = partial_name(partial);
-    if (s == NULL || *s == NUL) {
-      return FAIL;
-    }
-    funcexe.fe_evaluate = true;
-    funcexe.fe_partial = partial;
-    if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
-      return FAIL;
-    }
+    return eval_expr_partial(expr, argv, argc, rettv);
   } else if (expr->v_type == VAR_FUNC || want_func) {
-    const char *const s = (expr->v_type == VAR_FUNC
-                           ? expr->vval.v_string
-                           : tv_get_string_buf_chk(expr, buf));
-    if (s == NULL || *s == NUL) {
-      return FAIL;
-    }
-    funcexe.fe_evaluate = true;
-    if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
-      return FAIL;
-    }
+    return eval_expr_func(expr, argv, argc, rettv);
   } else {
-    char *s = (char *)tv_get_string_buf_chk(expr, buf);
-    if (s == NULL) {
-      return FAIL;
-    }
-    s = skipwhite(s);
-    if (eval1_emsg(&s, rettv, NULL) == FAIL) {
-      return FAIL;
-    }
-    if (*skipwhite(s) != NUL) {  // check for trailing chars after expr
-      tv_clear(rettv);
-      semsg(_(e_invexpr2), s);
-      return FAIL;
-    }
+    return eval_expr_string(expr, rettv);
   }
+
   return OK;
 }
 
