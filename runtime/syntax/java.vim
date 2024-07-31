@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Jul 23
+" Last Change:		2024 Jul 30
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -309,6 +309,12 @@ hi def link javaCommentError javaError
 hi def link javaCommentStart javaComment
 
 if !exists("java_ignore_javadoc") && main_syntax != 'jsp'
+  " The overridable "html*" default links must be defined _before_ the
+  " inclusion of the same default links from "html.vim".
+  hi def link htmlComment	Special
+  hi def link htmlCommentPart	Special
+  hi def link htmlArg		Type
+  hi def link htmlString	String
   syntax case ignore
 
   " Include HTML syntax coloring for Javadoc comments.
@@ -601,10 +607,6 @@ hi def link javaCommentStar		javaComment
 hi def link javaType			Type
 hi def link javaExternal		Include
 
-hi def link htmlComment		Special
-hi def link htmlCommentPart		Special
-hi def link htmlArg			Type
-hi def link htmlString			String
 hi def link javaSpaceError		Error
 
 if s:module_info_cur_buf

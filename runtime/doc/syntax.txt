@@ -1559,23 +1559,23 @@ idlsyntax_showerror_soft	Use softer colours by default for errors
 
 JAVA						*java.vim* *ft-java-syntax*
 
-The java.vim syntax highlighting file offers several options:
+The java.vim syntax highlighting file offers several options.
 
-In Java 1.0.2 it was never possible to have braces inside parens, so this was
-flagged as an error.  Since Java 1.1 this is possible (with anonymous
-classes), and therefore is no longer marked as an error.  If you prefer the
-old way, put the following line into your vim startup file: >
-	:let java_mark_braces_in_parens_as_errors=1
+In Java 1.0.2, it was never possible to have braces inside parens, so this was
+flagged as an error.  Since Java 1.1, this is possible (with anonymous
+classes); and, therefore, is no longer marked as an error.  If you prefer the
+old way, put the following line into your Vim startup file: >
+	:let g:java_mark_braces_in_parens_as_errors = 1
 
-All identifiers in java.lang.* are always visible in all classes.  To
-highlight them use: >
-	:let java_highlight_java_lang_ids=1
+All (exported) public types declared in `java.lang` are always automatically
+imported and available as simple names.  To highlight them, use: >
+	:let g:java_highlight_java_lang_ids = 1
 
-You can also highlight identifiers of most standard Java packages if you
-download the javaid.vim script at https://www.fleiner.com/vim/download.html.
-If you prefer to only highlight identifiers of a certain package, say java.io
-use the following: >
-	:let java_highlight_java_io=1
+You can also highlight types of most standard Java packages if you download
+the javaid.vim script at https://www.fleiner.com/vim/download.html.  If you
+prefer to only highlight types of a certain package, say `java.io`, use the
+following: >
+	:let g:java_highlight_java_io = 1
 Check the javaid.vim file for a list of all the packages that are supported.
 
 Headers of indented function declarations can be highlighted (along with parts
@@ -1583,25 +1583,26 @@ of lambda expressions and method reference expressions), but it depends on how
 you write Java code.  Two formats are recognized:
 
 1) If you write function declarations that are consistently indented by either
-a tab, or a space . . . or eight space character(s), you may want to set >
-	:let java_highlight_functions="indent"
-	:let java_highlight_functions="indent1"
-	:let java_highlight_functions="indent2"
-	:let java_highlight_functions="indent3"
-	:let java_highlight_functions="indent4"
-	:let java_highlight_functions="indent5"
-	:let java_highlight_functions="indent6"
-	:let java_highlight_functions="indent7"
-	:let java_highlight_functions="indent8"
+a tab, or a space . . . or eight space character(s), you may want to set one
+of >
+	:let g:java_highlight_functions = "indent"
+	:let g:java_highlight_functions = "indent1"
+	:let g:java_highlight_functions = "indent2"
+	:let g:java_highlight_functions = "indent3"
+	:let g:java_highlight_functions = "indent4"
+	:let g:java_highlight_functions = "indent5"
+	:let g:java_highlight_functions = "indent6"
+	:let g:java_highlight_functions = "indent7"
+	:let g:java_highlight_functions = "indent8"
 Note that in terms of 'shiftwidth', this is the leftmost step of indentation.
 
 2) However, if you follow the Java guidelines about how functions and types
 are supposed to be named (with respect to upper- and lowercase) and there is
 any amount of indentation, you may want to set >
-	:let java_highlight_functions="style"
+	:let g:java_highlight_functions = "style"
 
-In addition, you can combine any value of "java_highlight_functions" with >
-	:let java_highlight_signature=1
+In addition, you can combine any value of "g:java_highlight_functions" with >
+	:let g:java_highlight_signature = 1
 to have the name of a function with its parameter list parens distinctly
 highlighted from its type parameters, return type, and formal parameters; and
 to have the parameter list parens of a lambda expression with its arrow
@@ -1614,54 +1615,61 @@ or compose new ones.
 Higher-order function types can be hard to parse by eye, so uniformly toning
 down some of their components may be of value.  Provided that such type names
 conform to the Java naming guidelines, you may arrange it with >
-	:let java_highlight_generics=1
+	:let g:java_highlight_generics = 1
 
-In Java 1.1 the functions System.out.println() and System.err.println() should
-only be used for debugging.  Therefore it is possible to highlight debugging
-statements differently.  To do this you must add the following definition in
-your startup file: >
-	:let java_highlight_debug=1
-The result will be that those statements are highlighted as 'Special'
-characters.  If you prefer to have them highlighted differently you must define
-new highlightings for the following groups.:
-    Debug, DebugSpecial, DebugString, DebugBoolean, DebugType
-which are used for the statement itself, special characters used in debug
-strings, strings, boolean constants and types (this, super) respectively.  I
-have opted to choose another background for those statements.
+In Java 1.1, the functions `System.out.println()` and `System.err.println()`
+should only be used for debugging.  Consider adding the following definition
+in your startup file: >
+	:let g:java_highlight_debug = 1
+to have the bulk of those statements colored as
+	`*Debug`	debugging statements,
+and to make some of their own items further grouped and linked:
+	`*Special`	as DebugSpecial,
+	`*String`	as DebugString,
+	`*Boolean`	as DebugBoolean,
+	`*Type`		as DebugType,
+which are used for special characters appearing in strings, strings proper,
+boolean literals, and special instance references (`super`, `this`, `null`),
+respectively.
 
 Javadoc is a program that takes special comments out of Java program files and
 creates HTML pages.  The standard configuration will highlight this HTML code
-similarly to HTML files (see |html.vim|).  You can even add Javascript
-and CSS inside this code (see below).  There are four differences however:
-  1. The title (all characters up to the first '.' which is followed by
-     some white space or up to the first '@') is colored differently (to change
-     the color change the group CommentTitle).
-  2. The text is colored as 'Comment'.
-  3. HTML comments are colored as 'Special'
-  4. The special Javadoc tags (@see, @param, ...) are highlighted as specials
-     and the argument (for @see, @param, @exception) as Function.
-To turn this feature off add the following line to your startup file: >
-	:let java_ignore_javadoc=1
+similarly to HTML files (see |html.vim|).  You can even add JavaScript and CSS
+inside this code (see below).  The HTML rendering diverges as follows:
+  1. The first sentence (all characters up to the first period `.`, which is
+     followed by a whitespace character or a line terminator, or up to the
+     first block tag, e.g. `@param`, `@return`) is colored as
+	*SpecialComment	special comments.
+  2. The text is colored as
+	`*Comment`	comments.
+  3. HTML comments are colored as
+	`*Special`	special symbols.
+  4. The standard Javadoc tags (`@code`, `@see`, etc.) are colored as
+	`*Special`	special symbols
+     and some of their arguments are colored as
+	`*Function`	function names.
+To turn this feature off, add the following line to your startup file: >
+	:let g:java_ignore_javadoc = 1
 
-If you use the special Javadoc comment highlighting described above you
-can also turn on special highlighting for Javascript, visual basic
-scripts and embedded CSS (stylesheets).  This makes only sense if you
-actually have Javadoc comments that include either Javascript or embedded
-CSS.  The options to use are >
-	:let java_javascript=1
-	:let java_css=1
-	:let java_vb=1
+If you use the special Javadoc comment highlighting described above, you can
+also turn on special highlighting for JavaScript, Visual Basic scripts, and
+embedded CSS (stylesheets).  This only makes sense if any of these languages
+actually appear in Javadoc comments.  The variables to use are >
+	:let g:java_javascript = 1
+	:let g:java_css = 1
+	:let g:java_vb = 1
+Note that these three variables are maintained in the HTML syntax file.
 
-In order to highlight nested parens with different colors define colors
-for javaParen, javaParen1 and javaParen2, for example with >
+In order to highlight nested parens with different colors, define colors for
+`javaParen`, `javaParen1`, and `javaParen2`.  For example, >
 	:hi link javaParen Comment
 or >
 	:hi javaParen ctermfg=blue guifg=#0000ff
 
 If you notice highlighting errors while scrolling backwards, which are fixed
-when redrawing with CTRL-L, try setting the "java_minlines" internal variable
-to a larger number: >
-	:let java_minlines = 50
+when redrawing with CTRL-L, try setting the "g:java_minlines" variable to
+a larger number: >
+	:let g:java_minlines = 50
 This will make the syntax synchronization start 50 lines before the first
 displayed line.  The default value is 10.  The disadvantage of using a larger
 number is that redrawing can become slow.
