@@ -65,7 +65,6 @@ syn match javaError "<<<\|\.\.\|=>\|||=\|&&=\|\*\/"
 
 " use separate name so that it can be deleted in javacc.vim
 syn match   javaError2 "#\|=<"
-hi def link javaError2 javaError
 
 " Keywords (JLS-17, §3.9):
 syn keyword javaExternal	native package
@@ -121,15 +120,6 @@ syn match   javaConceptKind	"\<non-sealed\>"
 syn match   javaConceptKind	"\<sealed\>\%(\s*(\)\@!"
 syn match   javaConceptKind	"\<default\>\%(\s*\%(:\|->\)\)\@!"
 
-" Note that a "module-info" file will be recognised with an arbitrary
-" file extension (or no extension at all) so that more than one such
-" declaration for the same Java module can be maintained for modular
-" testing in a project without attendant confusion for IDEs, with the
-" ".java\=" extension used for a production version and an arbitrary
-" extension used for a testing version.
-let s:module_info_cur_buf = fnamemodify(bufname("%"), ":t") =~ '^module-info\%(\.class\>\)\@!'
-lockvar s:module_info_cur_buf
-
 if !(v:version < 704)
   " Request the new regexp engine for [:upper:] and [:lower:].
   let [s:ff.Engine, s:ff.UpperCase, s:ff.LowerCase] = repeat([s:ff.LeftConstant], 3)
@@ -145,11 +135,21 @@ else
   let [s:ff.PeekTo, s:ff.PeekFrom, s:ff.GroupArgs] = repeat([s:ff.RightConstant], 3)
 endif
 
-" Java modules (since Java 9, for "module-info.java" file).
-if s:module_info_cur_buf
+" Java module declarations (JLS-17, §7.7).
+"
+" Note that a "module-info" file will be recognised with an arbitrary
+" file extension (or no extension at all) so that more than one such
+" declaration for the same Java module can be maintained for modular
+" testing in a project without attendant confusion for IDEs, with the
+" ".java\=" extension used for a production version and an arbitrary
+" extension used for a testing version.
+if fnamemodify(bufname("%"), ":t") =~ '^module-info\%(\.class\>\)\@!'
   syn keyword javaModuleStorageClass	module transitive
   syn keyword javaModuleStmt		open requires exports opens uses provides
   syn keyword javaModuleExternal	to with
+  hi def link javaModuleStorageClass	StorageClass
+  hi def link javaModuleStmt		Statement
+  hi def link javaModuleExternal	Include
 endif
 
 " Fancy parameterised types (JLS-17, §4.5).
@@ -172,8 +172,8 @@ if exists("g:java_highlight_generics")
 
   unlet s:ctx
   hi def link javaWildcardBound	Question
-  hi def link javaGenericsC1	javaFuncDef
-  hi def link javaGenericsC2	javaType
+  hi def link javaGenericsC1	Function
+  hi def link javaGenericsC2	Type
 endif
 
 if exists("g:java_highlight_java_lang_ids")
@@ -258,6 +258,7 @@ if exists("g:java_space_errors")
   if !exists("g:java_no_tab_space_error")
     syn match javaSpaceError " \+\t"me=e-1
   endif
+  hi def link javaSpaceError Error
 endif
 
 exec 'syn match javaUserLabel "^\s*\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!\s*::\@!"he=e-1'
@@ -274,10 +275,6 @@ syn keyword javaLabelCastType	contained char byte short int
 syn region  javaLabelWhenClause	contained transparent matchgroup=javaLabel start="\<when\>" matchgroup=NONE end=":"me=e-1 end="->"me=e-2 contains=TOP,javaExternal,javaLambdaDef
 syn match   javaLabelNumber	contained "\<0\>[lL]\@!"
 syn match   javaLabelNumber	contained "\<\%(0\%([xX]\x\%(_*\x\)*\|_*\o\%(_*\o\)*\|[bB][01]\%(_*[01]\)*\)\|[1-9]\%(_*\d\)*\)\>[lL]\@!"
-hi def link javaLabelDefault	javaLabel
-hi def link javaLabelVarType	javaOperator
-hi def link javaLabelNumber	javaNumber
-hi def link javaLabelCastType	javaType
 
 " Comments
 syn keyword javaTodo		contained TODO FIXME XXX
@@ -299,14 +296,8 @@ syn match   javaCommentStar	contained "^\s*\*$"
 syn match   javaLineComment	"//.*" contains=@javaCommentSpecial2,javaTodo,javaCommentMarkupTag,javaSpaceError,@Spell
 syn match   javaCommentMarkupTag contained "@\%(end\|highlight\|link\|replace\|start\)\>" nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite
 syn match   javaCommentMarkupTagAttr contained "\<region\>" nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite
-exec 'syn region javaCommentMarkupTagAttr contained transparent matchgroup=htmlArg start=/\<\%(re\%(gex\|gion\|placement\)\|substring\|t\%(arget\|ype\)\)\%(\s*=\)\@=/ matchgroup=htmlString end=/\%(=\s*\)\@' . s:ff.Peek('80', '') . '<=\%("[^"]\+"\|' . "\x27[^\x27]\\+\x27" . '\|\%([.-]\|\k\)\+\)/ nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite oneline'
-hi def link javaCommentMarkupTagAttr htmlArg
-hi def link javaCommentString javaString
-hi def link javaComment2String javaString
-hi def link javaCommentCharacter javaCharacter
+exec 'syn region javaCommentMarkupTagAttr contained transparent matchgroup=javaHtmlArg start=/\<\%(re\%(gex\|gion\|placement\)\|substring\|t\%(arget\|ype\)\)\%(\s*=\)\@=/ matchgroup=javaHtmlString end=/\%(=\s*\)\@' . s:ff.Peek('80', '') . '<=\%("[^"]\+"\|' . "\x27[^\x27]\\+\x27" . '\|\%([.-]\|\k\)\+\)/ nextgroup=javaCommentMarkupTagAttr,javaSpaceError skipwhite oneline'
 syn match   javaCommentError contained "/\*"me=e-1 display
-hi def link javaCommentError javaError
-hi def link javaCommentStart javaComment
 
 if !exists("g:java_ignore_javadoc") && g:main_syntax != 'jsp'
   " The overridable "html*" default links must be defined _before_ the
@@ -341,11 +332,18 @@ if !exists("g:java_ignore_javadoc") && g:main_syntax != 'jsp'
   syn match  javaDocSeeTagParam	contained @"\_[^"]\+"\|<a\s\+\_.\{-}</a>\|\%(\k\|\.\)*\%(#\k\+\%((\_[^)]*)\)\=\)\=@ contains=@javaHtml extend
   syn region javaCodeSkipBlock	contained transparent start="{\%(@code\>\)\@!" end="}" contains=javaCodeSkipBlock,javaDocCodeTag
   syn region javaDocCodeTag	contained start="{@code\>" end="}" contains=javaDocCodeTag,javaCodeSkipBlock
-  exec 'syn region javaDocSnippetTagAttr contained transparent matchgroup=htmlArg start=/\<\%(class\|file\|id\|lang\|region\)\%(\s*=\)\@=/ matchgroup=htmlString end=/:$/ end=/\%(=\s*\)\@' . s:ff.Peek('80', '') . '<=\%("[^"]\+"\|' . "\x27[^\x27]\\+\x27" . '\|\%([.\\/-]\|\k\)\+\)/ nextgroup=javaDocSnippetTagAttr skipwhite skipnl'
+  exec 'syn region javaDocSnippetTagAttr contained transparent matchgroup=javaHtmlArg start=/\<\%(class\|file\|id\|lang\|region\)\%(\s*=\)\@=/ matchgroup=javaHtmlString end=/:$/ end=/\%(=\s*\)\@' . s:ff.Peek('80', '') . '<=\%("[^"]\+"\|' . "\x27[^\x27]\\+\x27" . '\|\%([.\\/-]\|\k\)\+\)/ nextgroup=javaDocSnippetTagAttr skipwhite skipnl'
   syn region javaSnippetSkipBlock contained transparent start="{\%(@snippet\>\)\@!" end="}" contains=javaSnippetSkipBlock,javaDocSnippetTag,javaCommentMarkupTag
   syn region javaDocSnippetTag	contained start="{@snippet\>" end="}" contains=javaDocSnippetTag,javaSnippetSkipBlock,javaDocSnippetTagAttr,javaCommentMarkupTag
 
   syntax case match
+  hi def link javaDocComment		Comment
+  hi def link javaCommentTitle		SpecialComment
+  hi def link javaDocTags		Special
+  hi def link javaDocCodeTag		Special
+  hi def link javaDocSnippetTag		Special
+  hi def link javaDocSeeTagParam	Function
+  hi def link javaDocParam		Function
 endif
 
 " match the special comment /**/
@@ -385,9 +383,7 @@ if exists("g:java_highlight_functions")
   syn cluster javaFuncParams contains=javaAnnotation,@javaClasses,javaGenerics,javaType,javaVarArg,javaComment,javaLineComment
 
   if exists("g:java_highlight_signature")
-    syn keyword javaParamModifier contained final
     syn cluster javaFuncParams add=javaParamModifier
-    hi def link javaParamModifier javaConceptKind
     hi def link javaFuncDefStart javaFuncDef
   else
     syn cluster javaFuncParams add=javaScopeDecl,javaConceptKind,javaStorageClass,javaExternal
@@ -501,13 +497,10 @@ syn region  javaParenT1 contained transparent matchgroup=javaParen1 start="\[" e
 syn region  javaParenT2 contained transparent matchgroup=javaParen2 start="\[" end="\]" contains=@javaTop,javaParenT
 syn match   javaParenError "\]"
 
-hi def link javaParenError javaError
-
 " Lambda expressions (JLS-17, §15.27) and method reference expressions
 " (JLS-17, §15.13).
 if exists("g:java_highlight_functions")
   syn match javaMethodRef ":::\@!"
-  hi def link javaMethodRef javaFuncDef
 
   if exists("g:java_highlight_signature")
     let s:ff.LambdaDef = s:ff.LeftConstant
@@ -534,9 +527,13 @@ if exists("g:java_highlight_functions")
   exec 'syn ' . s:ff.LambdaDef('region javaLambdaDef transparent start=/', 'match javaLambdaDef "') . '\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!' . s:ff.LambdaDef('\%([[:space:]\n]*\z(->\)\)\@=/ matchgroup=javaLambdaDefStart end=/\z1/', '[[:space:]\n]*->"')
 
   syn keyword javaParamModifier contained final
-  hi def link javaParamModifier javaConceptKind
   syn keyword javaLambdaVarType contained var
-  hi def link javaLambdaVarType javaOperator
+  hi def link javaParamModifier		javaConceptKind
+  hi def link javaLambdaVarType		javaOperator
+  hi def link javaLambdaDef		javaFuncDef
+  hi def link javaLambdaDefStart	javaFuncDef
+  hi def link javaMethodRef		javaFuncDef
+  hi def link javaFuncDef		Function
 endif
 
 " The @javaTop cluster comprises non-contained Java syntax groups.
@@ -556,14 +553,8 @@ endif
 exec "syn sync ccomment javaComment minlines=" . g:java_minlines
 
 " The default highlighting.
-hi def link javaLambdaDef		Function
-hi def link javaLambdaDefStart		Function
-hi def link javaFuncDef			Function
 hi def link javaVarArg			Function
 hi def link javaBranch			Conditional
-hi def link javaUserLabelRef		javaUserLabel
-hi def link javaLabel			Label
-hi def link javaUserLabel		Label
 hi def link javaConditional		Conditional
 hi def link javaRepeat			Repeat
 hi def link javaExceptions		Exception
@@ -584,36 +575,39 @@ hi def link javaCharacter		Character
 hi def link javaSpecialChar		SpecialChar
 hi def link javaNumber			Number
 hi def link javaError			Error
+hi def link javaError2			javaError
 hi def link javaTextBlockError		Error
+hi def link javaParenError		javaError
 hi def link javaStatement		Statement
 hi def link javaOperator		Operator
-hi def link javaComment			Comment
-hi def link javaDocComment		Comment
-hi def link javaLineComment		Comment
 hi def link javaConstant		Constant
 hi def link javaTypedef			Typedef
 hi def link javaTodo			Todo
 hi def link javaAnnotation		PreProc
 hi def link javaAnnotationStart		javaAnnotation
-
-hi def link javaCommentTitle		SpecialComment
-hi def link javaDocTags			Special
-hi def link javaDocCodeTag		Special
-hi def link javaDocSnippetTag		Special
-hi def link javaDocParam		Function
-hi def link javaDocSeeTagParam		Function
-hi def link javaCommentStar		javaComment
-
 hi def link javaType			Type
 hi def link javaExternal		Include
 
-hi def link javaSpaceError		Error
+hi def link javaUserLabel		Label
+hi def link javaUserLabelRef		javaUserLabel
+hi def link javaLabel			Label
+hi def link javaLabelDefault		javaLabel
+hi def link javaLabelVarType		javaOperator
+hi def link javaLabelNumber		javaNumber
+hi def link javaLabelCastType		javaType
 
-if s:module_info_cur_buf
-  hi def link javaModuleStorageClass	StorageClass
-  hi def link javaModuleStmt		Statement
-  hi def link javaModuleExternal	Include
-endif
+hi def link javaComment			Comment
+hi def link javaCommentStar		javaComment
+hi def link javaLineComment		Comment
+hi def link javaCommentMarkupTagAttr	javaHtmlArg
+hi def link javaCommentString		javaString
+hi def link javaComment2String		javaString
+hi def link javaCommentCharacter	javaCharacter
+hi def link javaCommentError		javaError
+hi def link javaCommentStart		javaComment
+
+hi def link javaHtmlArg			Type
+hi def link javaHtmlString		String
 
 let b:current_syntax = "java"
 
@@ -623,7 +617,7 @@ endif
 
 let b:spell_options = "contained"
 let &cpo = s:cpo_save
-unlet s:module_info_cur_buf s:ff s:cpo_save
+unlet s:ff s:cpo_save
 
 " See ":help vim9-mix".
 if !has("vim9script")
