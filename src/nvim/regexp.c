@@ -1743,7 +1743,7 @@ static int cstrncmp(char *s1, char *s2, int *n)
     result = strncmp(s1, s2, (size_t)(*n));
   } else {
     char *p = s1;
-    size_t n2 = 0;
+    int n2 = 0;
     int n1 = *n;
     // count the number of characters for byte-length of s1
     while (n1 > 0 && *p != NUL) {
@@ -1757,11 +1757,11 @@ static int cstrncmp(char *s1, char *s2, int *n)
       MB_PTR_ADV(p);
     }
 
-    n2 = (size_t)(p - s2);
+    n2 = (int)(p - s2);
 
-    result = utf_strnicmp(s1, s2, (size_t)(*n), n2);
-    if (result == 0 && (int)n2 < *n) {
-      *n = (int)n2;
+    result = utf_strnicmp(s1, s2, (size_t)(*n), (size_t)n2);
+    if (result == 0 && n2 < *n) {
+      *n = n2;
     }
   }
 
