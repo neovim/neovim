@@ -70,6 +70,9 @@ function M.on_inlayhint(err, result, ctx, _)
     return
   end
 
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
   ---@param position lsp.Position
   ---@return integer
