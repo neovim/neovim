@@ -849,7 +849,7 @@ void ex_if(exarg_T *eap)
     bool skip = CHECK_SKIP;
 
     bool error;
-    bool result = eval_to_bool(eap->arg, &error, eap, skip);
+    bool result = eval_to_bool(eap->arg, &error, eap, skip, false);
 
     if (!skip && !error) {
       if (result) {
@@ -944,7 +944,7 @@ void ex_else(exarg_T *eap)
     if (skip && *eap->arg != '"' && ends_excmd(*eap->arg)) {
       semsg(_(e_invexpr2), eap->arg);
     } else {
-      result = eval_to_bool(eap->arg, &error, eap, skip);
+      result = eval_to_bool(eap->arg, &error, eap, skip, false);
     }
 
     // When throwing error exceptions, we want to throw always the first
@@ -990,7 +990,7 @@ void ex_while(exarg_T *eap)
 
     int skip = CHECK_SKIP;
     if (eap->cmdidx == CMD_while) {  // ":while bool-expr"
-      result = eval_to_bool(eap->arg, &error, eap, skip);
+      result = eval_to_bool(eap->arg, &error, eap, skip, false);
     } else {  // ":for var in list-expr"
       evalarg_T evalarg;
       fill_evalarg_from_eap(&evalarg, eap, skip);

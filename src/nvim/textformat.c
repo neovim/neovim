@@ -869,7 +869,7 @@ int fex_format(linenr_T lnum, long count, int c)
   if (use_sandbox) {
     sandbox++;
   }
-  int r = (int)eval_to_number(fex);
+  int r = (int)eval_to_number(fex, true);
   if (use_sandbox) {
     sandbox--;
   }

@@ -954,7 +954,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     };
     set_var(S_LEN("g:statusline_winid"), &tv, false);
 
-    usefmt = eval_to_string_safe(fmt + 2, use_sandbox);
+    usefmt = eval_to_string_safe(fmt + 2, use_sandbox, false);
     if (usefmt == NULL) {
       usefmt = fmt;
     }
@@ -1429,7 +1429,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       }
 
       // Note: The result stored in `t` is unused.
-      str = eval_to_string_safe(out_p, use_sandbox);
+      str = eval_to_string_safe(out_p, use_sandbox, false);
 
       curwin = save_curwin;
       curbuf = save_curbuf;

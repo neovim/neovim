@@ -1161,7 +1161,7 @@ int get_expr_indent(void)
   // Need to make a copy, the 'indentexpr' option could be changed while
   // evaluating it.
   char *inde_copy = xstrdup(curbuf->b_p_inde);
-  int indent = (int)eval_to_number(inde_copy);
+  int indent = (int)eval_to_number(inde_copy, true);
   xfree(inde_copy);
 
   if (use_sandbox) {

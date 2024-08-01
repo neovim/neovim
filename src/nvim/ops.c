@@ -734,7 +734,7 @@ char *get_expr_line(void)
   }
 
   nested++;
-  char *rv = eval_to_string(expr_copy, true);
+  char *rv = eval_to_string(expr_copy, true, false);
   nested--;
   xfree(expr_copy);
   return rv;

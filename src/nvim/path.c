@@ -1398,7 +1398,7 @@ static int expand_backtick(garray_T *gap, char *pat, int flags)
   char *cmd = xmemdupz(pat + 1, strlen(pat) - 2);
 
   if (*cmd == '=') {          // `={expr}`: Expand expression
-    buffer = eval_to_string(cmd + 1, true);
+    buffer = eval_to_string(cmd + 1, true, false);
   } else {
     buffer = get_cmd_output(cmd, NULL, (flags & EW_SILENT) ? kShellOptSilent : 0, NULL);
   }
@@ -1694,7 +1694,8 @@ static char *eval_includeexpr(const char *const ptr, const size_t len)
   current_sctx = curbuf->b_p_script_ctx[BV_INEX].script_ctx;
 
   char *res = eval_to_string_safe(curbuf->b_p_inex,
-                                  was_set_insecurely(curwin, kOptIncludeexpr, OPT_LOCAL));
+                                  was_set_insecurely(curwin, kOptIncludeexpr, OPT_LOCAL),
+                                  true);
 
   set_vim_var_string(VV_FNAME, NULL, 0);
   current_sctx = save_sctx;
