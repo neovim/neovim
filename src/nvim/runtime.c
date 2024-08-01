@@ -2857,7 +2857,7 @@ bool script_autoload(const char *const name, const size_t name_len, const bool r
     // Try loading the package from $VIMRUNTIME/autoload/<name>.vim
     // Use "ret_sid" to avoid loading the same script again.
     int ret_sid;
-    if (do_in_runtimepath(scriptname, 0, source_callback, &ret_sid) == OK) {
+    if (do_in_runtimepath(scriptname, DIP_START, source_callback, &ret_sid) == OK) {
       ret = true;
     }
   }
