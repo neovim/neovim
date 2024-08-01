@@ -1443,7 +1443,7 @@ Object eval_foldtext(win_T *wp)
 /// The Dict is returned in 'lp'.  Returns GLV_OK on success and GLV_FAIL on
 /// failure.  Returns GLV_STOP to stop processing the characters following
 /// 'key_end'.
-static glv_status_T get_lval_dict_item(char *name, lval_T *lp, char *key, int len, char **key_end,
+static glv_status_T get_lval_dict_item(lval_T *lp, char *name, char *key, int len, char **key_end,
                                        typval_T *var1, int flags, bool unlet, typval_T *rettv)
 {
   bool quiet = flags & GLV_QUIET;
@@ -1738,7 +1738,7 @@ static char *get_lval_subscript(lval_T *lp, char *p, char *name, typval_T *rettv
     }
 
     if (lp->ll_tv->v_type == VAR_DICT) {
-      glv_status_T glv_status = get_lval_dict_item(name, lp, key, len, &p, &var1,
+      glv_status_T glv_status = get_lval_dict_item(lp, name, key, len, &p, &var1,
                                                    flags, unlet, rettv);
       if (glv_status == GLV_FAIL) {
         goto done;
@@ -2950,6 +2950,93 @@ static int eval_addlist(typval_T *tv1, typval_T *tv2)
   return OK;
 }
 
+/// Concatenate strings "tv1" and "tv2" and store the result in "tv1".
+static int eval_concat_str(typval_T *tv1, typval_T *tv2)
+{
+  char buf1[NUMBUFLEN];
+  char buf2[NUMBUFLEN];
+  // s1 already checked
+  const char *const s1 = tv_get_string_buf(tv1, buf1);
+  const char *const s2 = tv_get_string_buf_chk(tv2, buf2);
+  if (s2 == NULL) {  // Type error?
+    tv_clear(tv1);
+    tv_clear(tv2);
+    return FAIL;
+  }
+
+  char *p = concat_str(s1, s2);
+  tv_clear(tv1);
+  tv1->v_type = VAR_STRING;
+  tv1->vval.v_string = p;
+
+  return OK;
+}
+
+/// Add or subtract numbers "tv1" and "tv2" and store the result in "tv1".
+/// The numbers can be whole numbers or floats.
+static int eval_addsub_number(typval_T *tv1, typval_T *tv2, int op)
+{
+  bool error = false;
+  varnumber_T n1, n2;
+  float_T f1 = 0;
+  float_T f2 = 0;
+
+  if (tv1->v_type == VAR_FLOAT) {
+    f1 = tv1->vval.v_float;
+    n1 = 0;
+  } else {
+    n1 = tv_get_number_chk(tv1, &error);
+    if (error) {
+      // This can only happen for "list + non-list" or
+      // "blob + non-blob".  For "non-list + ..." or
+      // "something - ...", we returned before evaluating the
+      // 2nd operand.
+      tv_clear(tv1);
+      tv_clear(tv2);
+      return FAIL;
+    }
+    if (tv2->v_type == VAR_FLOAT) {
+      f1 = (float_T)n1;
+    }
+  }
+  if (tv2->v_type == VAR_FLOAT) {
+    f2 = tv2->vval.v_float;
+    n2 = 0;
+  } else {
+    n2 = tv_get_number_chk(tv2, &error);
+    if (error) {
+      tv_clear(tv1);
+      tv_clear(tv2);
+      return FAIL;
+    }
+    if (tv1->v_type == VAR_FLOAT) {
+      f2 = (float_T)n2;
+    }
+  }
+  tv_clear(tv1);
+
+  // If there is a float on either side the result is a float.
+  if (tv1->v_type == VAR_FLOAT || tv2->v_type == VAR_FLOAT) {
+    if (op == '+') {
+      f1 = f1 + f2;
+    } else {
+      f1 = f1 - f2;
+    }
+    tv1->v_type = VAR_FLOAT;
+    tv1->vval.v_float = f1;
+  } else {
+    if (op == '+') {
+      n1 = n1 + n2;
+    } else {
+      n1 = n1 - n2;
+    }
+    tv1->v_type = VAR_NUMBER;
+    tv1->vval.v_number = n1;
+  }
+
+  return OK;
+}
+
 /// Handle fourth level expression:
 ///      +       number addition, concatenation of list or blob
 ///      -       number subtraction
@@ -3005,20 +3092,9 @@ static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     if (evaluate) {
       // Compute the result.
       if (op == '.') {
-        char buf1[NUMBUFLEN];
-        char buf2[NUMBUFLEN];
-        // s1 already checked
-        const char *const s1 = tv_get_string_buf(rettv, buf1);
-        const char *const s2 = tv_get_string_buf_chk(&var2, buf2);
-        if (s2 == NULL) {  // Type error?
-          tv_clear(rettv);
-          tv_clear(&var2);
+        if (eval_concat_str(rettv, &var2) == FAIL) {
           return FAIL;
         }
-        char *p = concat_str(s1, s2);
-        tv_clear(rettv);
-        rettv->v_type = VAR_STRING;
-        rettv->vval.v_string = p;
       } else if (op == '+' && rettv->v_type == VAR_BLOB && var2.v_type == VAR_BLOB) {
         eval_addblob(rettv, &var2);
       } else if (op == '+' && rettv->v_type == VAR_LIST && var2.v_type == VAR_LIST) {
@@ -3026,67 +3102,92 @@ static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
           return FAIL;
         }
       } else {
-        bool error = false;
-        varnumber_T n1, n2;
-        float_T f1 = 0;
-        float_T f2 = 0;
-
-        if (rettv->v_type == VAR_FLOAT) {
-          f1 = rettv->vval.v_float;
-          n1 = 0;
-        } else {
-          n1 = tv_get_number_chk(rettv, &error);
-          if (error) {
-            // This can only happen for "list + non-list" or
-            // "blob + non-blob".  For "non-list + ..." or
-            // "something - ...", we returned before evaluating the
-            // 2nd operand.
-            tv_clear(rettv);
-            tv_clear(&var2);
-            return FAIL;
-          }
-          if (var2.v_type == VAR_FLOAT) {
-            f1 = (float_T)n1;
-          }
-        }
-        if (var2.v_type == VAR_FLOAT) {
-          f2 = var2.vval.v_float;
-          n2 = 0;
-        } else {
-          n2 = tv_get_number_chk(&var2, &error);
-          if (error) {
-            tv_clear(rettv);
-            tv_clear(&var2);
-            return FAIL;
-          }
-          if (rettv->v_type == VAR_FLOAT) {
-            f2 = (float_T)n2;
-          }
-        }
-        tv_clear(rettv);
-
-        // If there is a float on either side the result is a float.
-        if (rettv->v_type == VAR_FLOAT || var2.v_type == VAR_FLOAT) {
-          if (op == '+') {
-            f1 = f1 + f2;
-          } else {
-            f1 = f1 - f2;
-          }
-          rettv->v_type = VAR_FLOAT;
-          rettv->vval.v_float = f1;
-        } else {
-          if (op == '+') {
-            n1 = n1 + n2;
-          } else {
-            n1 = n1 - n2;
-          }
-          rettv->v_type = VAR_NUMBER;
-          rettv->vval.v_number = n1;
+        if (eval_addsub_number(rettv, &var2, op) == FAIL) {
+          return FAIL;
         }
       }
       tv_clear(&var2);
     }
   }
+  return OK;
+}
+
+/// Multiply or divide or compute the modulo of numbers "tv1" and "tv2" and
+/// store the result in "tv1".  The numbers can be whole numbers or floats.
+static int eval_multdiv_number(typval_T *tv1, typval_T *tv2, int op)
+  FUNC_ATTR_NO_SANITIZE_UNDEFINED
+{
+  varnumber_T n1, n2;
+  bool use_float = false;
+
+  float_T f1 = 0;
+  float_T f2 = 0;
+  bool error = false;
+  if (tv1->v_type == VAR_FLOAT) {
+    f1 = tv1->vval.v_float;
+    use_float = true;
+    n1 = 0;
+  } else {
+    n1 = tv_get_number_chk(tv1, &error);
+  }
+  tv_clear(tv1);
+  if (error) {
+    tv_clear(tv2);
+    return FAIL;
+  }
+
+  if (tv2->v_type == VAR_FLOAT) {
+    if (!use_float) {
+      f1 = (float_T)n1;
+      use_float = true;
+    }
+    f2 = tv2->vval.v_float;
+    n2 = 0;
+  } else {
+    n2 = tv_get_number_chk(tv2, &error);
+    tv_clear(tv2);
+    if (error) {
+      return FAIL;
+    }
+    if (use_float) {
+      f2 = (float_T)n2;
+    }
+  }
+
+  // Compute the result.
+  // When either side is a float the result is a float.
+  if (use_float) {
+    if (op == '*') {
+      f1 = f1 * f2;
+    } else if (op == '/') {
+      // uncrustify:off
+
+      // Division by zero triggers error from AddressSanitizer
+      f1 = (f2 == 0 ? (
+#ifdef NAN
+          f1 == 0 ? (float_T)NAN :
+#endif
+          (f1 > 0 ? (float_T)INFINITY : (float_T)-INFINITY)) : f1 / f2);
+
+      // uncrustify:on
+    } else {
+      emsg(_("E804: Cannot use '%' with Float"));
+      return FAIL;
+    }
+    tv1->v_type = VAR_FLOAT;
+    tv1->vval.v_float = f1;
+  } else {
+    if (op == '*') {
+      n1 = n1 * n2;
+    } else if (op == '/') {
+      n1 = num_divide(n1, n2);
+    } else {
+      n1 = num_modulus(n1, n2);
+    }
+    tv1->v_type = VAR_NUMBER;
+    tv1->vval.v_number = n1;
+  }
+
   return OK;
 }
 
@@ -3103,10 +3204,7 @@ static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
 ///                          float
 /// @return  OK or FAIL.
 static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool want_string)
-  FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
-  bool use_float = false;
-
   // Get the first variable.
   if (eval7(arg, rettv, evalarg, want_string) == FAIL) {
     return FAIL;
@@ -3119,26 +3217,7 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
       break;
     }
 
-    varnumber_T n1, n2;
-    float_T f1 = 0;
-    float_T f2 = 0;
-    bool error = false;
     const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
-    if (evaluate) {
-      if (rettv->v_type == VAR_FLOAT) {
-        f1 = rettv->vval.v_float;
-        use_float = true;
-        n1 = 0;
-      } else {
-        n1 = tv_get_number_chk(rettv, &error);
-      }
-      tv_clear(rettv);
-      if (error) {
-        return FAIL;
-      }
-    } else {
-      n1 = 0;
-    }
 
     // Get the second variable.
     *arg = skipwhite(*arg + 1);
@@ -3148,56 +3227,9 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
     }
 
     if (evaluate) {
-      if (var2.v_type == VAR_FLOAT) {
-        if (!use_float) {
-          f1 = (float_T)n1;
-          use_float = true;
-        }
-        f2 = var2.vval.v_float;
-        n2 = 0;
-      } else {
-        n2 = tv_get_number_chk(&var2, &error);
-        tv_clear(&var2);
-        if (error) {
-          return FAIL;
-        }
-        if (use_float) {
-          f2 = (float_T)n2;
-        }
-      }
-
       // Compute the result.
-      // When either side is a float the result is a float.
-      if (use_float) {
-        if (op == '*') {
-          f1 = f1 * f2;
-        } else if (op == '/') {
-          // uncrustify:off
-
-          // Division by zero triggers error from AddressSanitizer
-          f1 = (f2 == 0 ? (
-#ifdef NAN
-              f1 == 0 ? (float_T)NAN :
-#endif
-              (f1 > 0 ? (float_T)INFINITY : (float_T)-INFINITY)) : f1 / f2);
-
-          // uncrustify:on
-        } else {
-          emsg(_("E804: Cannot use '%' with Float"));
-          return FAIL;
-        }
-        rettv->v_type = VAR_FLOAT;
-        rettv->vval.v_float = f1;
-      } else {
-        if (op == '*') {
-          n1 = n1 * n2;
-        } else if (op == '/') {
-          n1 = num_divide(n1, n2);
-        } else {
-          n1 = num_modulus(n1, n2);
-        }
-        rettv->v_type = VAR_NUMBER;
-        rettv->vval.v_number = n1;
+      if (eval_multdiv_number(rettv, &var2, op) == FAIL) {
+        return FAIL;
       }
     }
   }
@@ -3301,14 +3333,9 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
     ret = eval_list(arg, rettv, evalarg);
     break;
 
-  // Dictionary: #{key: val, key: val}
+  // Literal Dictionary: #{key: val, key: val}
   case '#':
-    if ((*arg)[1] == '{') {
-      (*arg)++;
-      ret = eval_dict(arg, rettv, evalarg, true);
-    } else {
-      ret = NOTDONE;
-    }
+    ret = eval_lit_dict(arg, rettv, evalarg);
     break;
 
   // Lambda: {arg, arg -> expr}
@@ -5272,6 +5299,24 @@ failret:
   }
 
   return OK;
+}
+
+/// Evaluate a literal dictionary: #{key: val, key: val}
+/// "*arg" points to the "#".
+/// On return, "*arg" points to the character after the Dict.
+/// Return OK or FAIL.  Returns NOTDONE for {expr}.
+static int eval_lit_dict(char **arg, typval_T *rettv, evalarg_T *const evalarg)
+{
+  int ret = OK;
+
+  if ((*arg)[1] == '{') {
+    (*arg)++;
+    ret = eval_dict(arg, rettv, evalarg, true);
+  } else {
+    ret = NOTDONE;
+  }
+
+  return ret;
 }
 
 /// Convert the string to a floating point number
