@@ -550,6 +550,9 @@ function protocol.make_client_capabilities()
       inlayHint = {
         refreshSupport = true,
       },
+      diagnostic = {
+        markupMessageSupport = true,
+      }
     },
     experimental = nil,
     window = {
