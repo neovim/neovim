@@ -380,12 +380,12 @@ M.funcs = {
       <
       If {msg} is empty then it is not used.  Do this to get the
       default message when passing the {lnum} argument.
-
+      					*E1115*
       When {lnum} is present and not negative, and the {error}
       argument is present and matches, then this is compared with
       the line number at which the error was reported. That can be
       the line number in a function or in a script.
-
+      					*E1116*
       When {context} is present it is used as a pattern and matched
       against the context (script name or function name) where
       {lnum} is located in.
@@ -12058,7 +12058,7 @@ M.funcs = {
       Like |garbagecollect()|, but executed right away.  This must
       only be called directly to avoid any structure to exist
       internally, and |v:testing| must have been set before calling
-      any function.
+      any function.   *E1142*
     ]=],
     params = {},
     signature = 'test_garbagecollect_now()',
