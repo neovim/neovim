@@ -2781,7 +2781,7 @@ void ex_append(exarg_T *eap)
     } else if (eap->ea_getline == NULL) {
       // No getline() function, use the lines that follow. This ends
       // when there is no more.
-      if (eap->nextcmd == NULL || *eap->nextcmd == NUL) {
+      if (eap->nextcmd == NULL) {
         break;
       }
       p = vim_strchr(eap->nextcmd, NL);
@@ -2791,6 +2791,8 @@ void ex_append(exarg_T *eap)
       theline = xmemdupz(eap->nextcmd, (size_t)(p - eap->nextcmd));
       if (*p != NUL) {
         p++;
+      } else {
+        p = NULL;
       }
       eap->nextcmd = p;
     } else {
