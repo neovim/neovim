@@ -156,7 +156,7 @@ assign_commit_details() {
     local munge_commit_line=true
   else
     # Interpret parameter as commit hash.
-    vim_version="${1:0:12}"
+    vim_version="${1:0:7}"
     vim_tag=
     vim_commit_ref="$vim_version"
     local munge_commit_line=false
