@@ -894,6 +894,9 @@ Example: >
 
 All expressions within one level are parsed from left to right.
 
+Expression nesting is limited to 1000 levels deep (300 when build with MSVC)
+to avoid running out of stack and crashing. *E1169*
+
 
 ------------------------------------------------------------------------------
 expr1				*expr1* *ternary* *falsy-operator* *??* *E109*
@@ -2187,7 +2190,7 @@ text...
 				:lockvar v
 				:let v = 'asdf'	  " fails!
 				:unlet v	  " works
-<							*E741* *E940*
+<							*E741* *E940* *E1122*
 			If you try to change a locked variable you get an
 			error message: "E741: Value is locked: {name}".
 			If you try to lock or unlock a built-in variable you

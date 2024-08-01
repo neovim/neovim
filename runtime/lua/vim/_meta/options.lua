@@ -785,6 +785,17 @@ vim.bo.channel = vim.o.channel
 --- 	v:fname_in		name of the input file
 --- 	v:fname_out		name of the output file
 --- Note that v:fname_in and v:fname_out will never be the same.
+---
+--- If the 'charconvert' expression starts with s: or `<SID>`, then it is
+--- replaced with the script ID (`local-function`). Example:
+---
+--- ```vim
+--- 	set charconvert=s:MyConvert()
+--- 	set charconvert=<SID>SomeConvert()
+--- ```
+--- Otherwise the expression is evaluated in the context of the script
+--- where the option was set, thus script-local items are available.
+---
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
