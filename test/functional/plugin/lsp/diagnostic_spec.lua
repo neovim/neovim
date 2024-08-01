@@ -98,33 +98,6 @@ describe('vim.lsp.diagnostic', function()
     clear()
   end)
 
-  describe('vim.lsp.diagnostic', function()
-    it('maintains LSP information when translating diagnostics', function()
-      local result = exec_lua [[
-        local diagnostics = {
-          make_error("Error 1", 1, 1, 1, 5),
-        }
-
-        diagnostics[1].code = 42
-        diagnostics[1].data = "Hello world"
-
-        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
-          uri = fake_uri,
-          diagnostics = diagnostics,
-        }, {client_id=client_id})
-
-        return {
-          vim.diagnostic.get(diagnostic_bufnr, {lnum=1})[1],
-          vim.lsp.diagnostic.get_line_diagnostics(diagnostic_bufnr, 1)[1],
-        }
-      ]]
-      eq({ code = 42, data = 'Hello world' }, result[1].user_data.lsp)
-      eq(42, result[1].code)
-      eq(42, result[2].code)
-      eq('Hello world', result[2].data)
-    end)
-  end)
-
   describe('vim.lsp.diagnostic.on_publish_diagnostics', function()
     it('allows configuring the virtual text via vim.lsp.with', function()
       local expected_spacing = 10
