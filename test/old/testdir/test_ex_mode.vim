@@ -307,4 +307,13 @@ func Test_insert_after_trailing_bar()
   bwipe!
 endfunc
 
+" Test global insert of a newline without terminating period
+func Test_global_insert_newline()
+  new
+  call setline(1, ['foo'])
+  call feedkeys("Qg/foo/i\\\n", "xt")
+  call assert_equal(['', 'foo'], getline(1, '$'))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

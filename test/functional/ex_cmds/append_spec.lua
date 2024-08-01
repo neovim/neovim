@@ -23,7 +23,7 @@ local cmdtest = function(cmd, prep, ret1)
     end
 
     it(cmd .. 's' .. prep .. ' the current line by default', function()
-      command(cmd .. '\nabc\ndef\n')
+      command(cmd .. '\nabc\ndef')
       eq(ret1, buffer_contents())
     end)
     -- Used to crash because this invokes history processing which uses
