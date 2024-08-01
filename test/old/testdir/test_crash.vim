@@ -184,6 +184,12 @@ func Test_crash1_3()
   call term_sendkeys(buf, args)
   call TermWait(buf, 150)
 
+  let file = 'crash/poc_uaf_check_argument_types'
+  let cmn_args = "%s -u NONE -i NONE -n -e -s -S %s -c ':qa!'\<cr>"
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args)
+  call TermWait(buf, 150)
+
   " clean up
   exe buf .. "bw!"
   bw!
