@@ -386,6 +386,32 @@ func Test_foldexpr_no_interrupt_addsub()
   set foldmethod& foldexpr&
 endfunc
 
+" Fold function defined in another script
+func Test_foldexpr_compiled()
+  throw 'Skipped: Vim9 script is N/A'
+  new
+  let lines =<< trim END
+      vim9script
+      def FoldFunc(): number
+        return v:lnum
+      enddef
+
+      set foldmethod=expr
+      set foldexpr=s:FoldFunc()
+  END
+  call writefile(lines, 'XfoldExpr', 'D')
+  source XfoldExpr
+
+  call setline(1, ['one', 'two', 'three'])
+  redraw
+  call assert_equal(1, foldlevel(1))
+  call assert_equal(2, foldlevel(2))
+  call assert_equal(3, foldlevel(3))
+
+  bwipe!
+  set foldmethod& foldexpr&
+endfunc
+
 func Check_foldlevels(expected)
   call assert_equal(a:expected, map(range(1, line('$')), 'foldlevel(v:val)'))
 endfunc

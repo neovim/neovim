@@ -400,6 +400,14 @@ Set using a variable with lambda expression: >
 	let L = {a, b, c -> MyTagFunc(a, b , c)}
 	let &tagfunc = L
 
+Calling a function in an expr option			*expr-option-function*
+
+The value of a few options, such as 'foldexpr', is an expression that is
+evaluated to get a value.  The evaluation can have quite a bit of overhead.
+One way to minimize the overhead, and also to keep the option value very
+simple, is to define a function and set the option to call it without
+arguments.
+
 
 Setting the filetype
 

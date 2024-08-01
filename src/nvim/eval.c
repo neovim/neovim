@@ -1349,7 +1349,7 @@ int eval_foldexpr(win_T *wp, int *cp)
   const sctx_T saved_sctx = current_sctx;
   const bool use_sandbox = was_set_insecurely(wp, kOptFoldexpr, OPT_LOCAL);
 
-  char *arg = wp->w_p_fde;
+  char *arg = skipwhite(wp->w_p_fde);
   current_sctx = wp->w_p_script_ctx[WV_FDE].script_ctx;
 
   emsg_off++;
@@ -1360,8 +1360,23 @@ int eval_foldexpr(win_T *wp, int *cp)
   *cp = NUL;
 
   typval_T tv;
+  int r = NOTDONE;
+
+  // If the expression is "FuncName()" then we can skip a lot of overhead.
+  char *parens = strstr(arg, "()");
+  if (parens != NULL && *skipwhite(parens + 2) == NUL) {
+    char *p = strncmp(arg, "<SNR>", 5) == 0 ? skipdigits(arg + 5) : arg;
+    if (to_name_end(p, true) == parens) {
+      r = call_simple_func(arg, (int)(parens - arg), &tv);
+    }
+  }
+
+  if (r == NOTDONE) {
+    r = eval0(arg, &tv, NULL, &EVALARG_EVALUATE);
+  }
+
   varnumber_T retval;
-  if (eval0(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
+  if (r == FAIL) {
     retval = 0;
   } else {
     // If the result is a number, just return the number.
@@ -1426,6 +1441,31 @@ Object eval_foldtext(win_T *wp)
   restore_funccal();
 
   return retval;
+}
+
+/// Find the end of a variable or function name.  Unlike find_name_end() this
+/// does not recognize magic braces.
+/// When "use_namespace" is true recognize "b:", "s:", etc.
+/// Return a pointer to just after the name.  Equal to "arg" if there is no
+/// valid name.
+static char *to_name_end(char *arg, bool use_namespace)
+{
+  // Quick check for valid starting character.
+  if (!eval_isnamec1(*arg)) {
+    return arg;
+  }
+
+  char *p;
+  for (p = arg + 1; *p != NUL && eval_isnamec(*p); MB_PTR_ADV(p)) {
+    // Include a namespace such as "s:var" and "v:var".  But "n:" is not
+    // and can be used in slice "[n:]".
+    if (*p == ':' && (p != arg + 1
+                      || !use_namespace
+                      || vim_strchr("bgstvw", *arg) == NULL)) {
+      break;
+    }
+  }
+  return p;
 }
 
 /// Get an Dict lval variable that can be assigned a value to: "name",

@@ -1561,12 +1561,12 @@ varnumber_T callback_call_retnr(Callback *callback, int argcount, typval_T *argv
 
 /// Give an error message for the result of a function.
 /// Nothing if "error" is FCERR_NONE.
-static void user_func_error(int error, const char *name, funcexe_T *funcexe)
+static void user_func_error(int error, const char *name, bool found_var)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   switch (error) {
   case FCERR_UNKNOWN:
-    if (funcexe->fe_found_var) {
+    if (found_var) {
       semsg(_(e_not_callable_type_str), name);
     } else {
       emsg_funcname(e_unknown_function_str, name);
@@ -1686,12 +1686,9 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
   }
 
   if (error == FCERR_NONE && funcexe->fe_evaluate) {
-    char *rfname = fname;
-
-    // Ignore "g:" before a function name.
-    if (fp == NULL && fname[0] == 'g' && fname[1] == ':') {
-      rfname = fname + 2;
-    }
+    // Skip "g:" before a function name.
+    bool is_global = fp == NULL && fname[0] == 'g' && fname[1] == ':';
+    char *rfname = is_global ? fname + 2 : fname;
 
     rettv->v_type = VAR_NUMBER;         // default rettv is number zero
     rettv->vval.v_number = 0;
@@ -1765,7 +1762,7 @@ theend:
   // Report an error unless the argument evaluation or function call has been
   // cancelled due to an aborting error, an interrupt, or an exception.
   if (!aborting()) {
-    user_func_error(error, (name != NULL) ? name : funcname, funcexe);
+    user_func_error(error, (name != NULL) ? name : funcname, funcexe->fe_found_var);
   }
 
   // clear the copies made from the partial
@@ -1773,6 +1770,58 @@ theend:
     tv_clear(&argv[--argv_clear + argv_base]);
   }
 
+  xfree(tofree);
+  xfree(name);
+
+  return ret;
+}
+
+/// Call a function without arguments, partial or dict.
+/// This is like call_func() when the call is only "FuncName()".
+/// To be used by "expr" options.
+/// Returns NOTDONE when the function could not be found.
+///
+/// @param funcname  name of the function
+/// @param len       length of "name" or -1 to use strlen()
+/// @param rettv     return value goes here
+int call_simple_func(const char *funcname, int len, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int ret = FAIL;
+
+  rettv->v_type = VAR_NUMBER;  // default rettv is number zero
+  rettv->vval.v_number = 0;
+
+  // Make a copy of the name, an option can be changed in the function.
+  char *name = xstrnsave(funcname, (size_t)len);
+
+  int error = FCERR_NONE;
+  char *tofree = NULL;
+  char fname_buf[FLEN_FIXED + 1];
+  char *fname = fname_trans_sid(name, fname_buf, &tofree, &error);
+
+  // Skip "g:" before a function name.
+  bool is_global = fname[0] == 'g' && fname[1] == ':';
+  char *rfname = is_global ? fname + 2 : fname;
+
+  ufunc_T *fp = find_func(rfname);
+  if (fp == NULL) {
+    ret = NOTDONE;
+  } else if (fp != NULL && (fp->uf_flags & FC_DELETED)) {
+    error = FCERR_DELETED;
+  } else if (fp != NULL) {
+    typval_T argvars[1];
+    argvars[0].v_type = VAR_UNKNOWN;
+    funcexe_T funcexe = FUNCEXE_INIT;
+    funcexe.fe_evaluate = true;
+
+    error = call_user_func_check(fp, 0, argvars, rettv, &funcexe, NULL);
+    if (error == FCERR_NONE) {
+      ret = OK;
+    }
+  }
+
+  user_func_error(error, name, false);
   xfree(tofree);
   xfree(name);
 
@@ -3248,7 +3297,7 @@ static int ex_defer_inner(char *name, char **arg, const partial_T *const partial
       if (ufunc != NULL) {
         int error = check_user_func_argcount(ufunc, argcount);
         if (error != FCERR_UNKNOWN) {
-          user_func_error(error, name, NULL);
+          user_func_error(error, name, false);
           r = FAIL;
         }
       }
