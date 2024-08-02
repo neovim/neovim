@@ -317,6 +317,34 @@ describe('vim.lsp.diagnostic', function()
       eq('Pull Diagnostic', diags[1].message)
     end)
 
+    it('severity defaults to error if missing', function()
+      ---@type vim.Diagnostic[]
+      local diagnostics = exec_lua([[
+        vim.lsp.diagnostic.on_diagnostic(nil,
+          {
+            kind = 'full',
+            items = {
+              {
+                range = make_range(4, 4, 4, 4),
+                message = "bad!",
+              }
+            }
+          },
+          {
+            params = {
+              textDocument = { uri = fake_uri },
+            },
+            uri = fake_uri,
+            client_id = client_id,
+          },
+          {}
+        )
+        return vim.diagnostic.get(diagnostic_bufnr)
+      ]])
+      eq(1, #diagnostics)
+      eq(1, diagnostics[1].severity)
+    end)
+
     it('allows configuring the virtual text via vim.lsp.with', function()
       local expected_spacing = 10
       local extmarks = exec_lua(
