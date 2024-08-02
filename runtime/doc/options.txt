@@ -384,15 +384,22 @@ the name, e.g. "<lambda>123".  Examples:
 	set opfunc=function('MyOpFunc')
 	set opfunc=funcref('MyOpFunc')
 	set opfunc={a\ ->\ MyOpFunc(a)}
-	" set using a funcref variable
+
+Set to a script-local function: >
+	set opfunc=s:MyLocalFunc
+	set opfunc=<SID>MyLocalFunc
+
+Set using a funcref variable: >
 	let Fn = function('MyTagFunc')
 	let &tagfunc = Fn
-	" set using a lambda expression
+
+Set using a lambda expression: >
 	let &tagfunc = {t -> MyTagFunc(t)}
-	" set using a variable with lambda expression
+
+Set using a variable with lambda expression: >
 	let L = {a, b, c -> MyTagFunc(a, b , c)}
 	let &tagfunc = L
-<
+
 
 Setting the filetype
 
