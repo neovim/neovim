@@ -2630,7 +2630,7 @@ static int may_call_simple_func(char *arg, typval_T *rettv)
   if (parens != NULL && *skipwhite(parens + 2) == NUL) {
     char *p = strncmp(arg, "<SNR>", 5) == 0 ? skipdigits(arg + 5) : arg;
     if (to_name_end(p, true) == parens) {
-      r = call_simple_func(arg, (int)(parens - arg), rettv);
+      r = call_simple_func(arg, (size_t)(parens - arg), rettv);
     }
   }
   return r;

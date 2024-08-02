@@ -1782,9 +1782,9 @@ theend:
 /// Returns NOTDONE when the function could not be found.
 ///
 /// @param funcname  name of the function
-/// @param len       length of "name" or -1 to use strlen()
+/// @param len       length of "name"
 /// @param rettv     return value goes here
-int call_simple_func(const char *funcname, int len, typval_T *rettv)
+int call_simple_func(const char *funcname, size_t len, typval_T *rettv)
   FUNC_ATTR_NONNULL_ALL
 {
   int ret = FAIL;
@@ -1793,7 +1793,7 @@ int call_simple_func(const char *funcname, int len, typval_T *rettv)
   rettv->vval.v_number = 0;
 
   // Make a copy of the name, an option can be changed in the function.
-  char *name = xstrnsave(funcname, (size_t)len);
+  char *name = xstrnsave(funcname, len);
 
   int error = FCERR_NONE;
   char *tofree = NULL;
