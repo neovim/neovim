@@ -276,6 +276,32 @@ static int get_fpos_of_mouse(pos_T *mpos)
   return IN_BUFFER;
 }
 
+/// Check that mouse support is enabled for visual mode
+static bool mouse_supports_visual(void)
+{
+  if (!*p_mouse) {
+    return true;
+  }
+  for (char *p = p_mouse; *p; p++) {
+    switch (*p) {
+    case 'a':
+      return true;
+      break;
+    case MOUSE_HELP:
+      if (curbuf->b_help) {
+        return true;
+      }
+      break;
+    default:
+      if (MOUSE_VISUAL == *p) {
+        return true;
+      }
+      break;
+    }
+  }
+  return false;
+}
+
 /// Do the appropriate action for the current mouse click in the current mode.
 /// Not used for Command-line mode.
 ///
@@ -629,7 +655,7 @@ popupexit:
         if (VIsual_active) {
           jump_flags |= MOUSE_MAY_STOP_VIS;
         }
-      } else {
+      } else if (mouse_supports_visual()) {
         jump_flags |= MOUSE_MAY_VIS;
       }
     } else if (which_button == MOUSE_RIGHT) {
@@ -644,7 +670,9 @@ popupexit:
         }
       }
       jump_flags |= MOUSE_FOCUS;
-      jump_flags |= MOUSE_MAY_VIS;
+      if (mouse_supports_visual()) {
+        jump_flags |= MOUSE_MAY_VIS;
+      }
     }
   }
 
