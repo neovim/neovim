@@ -134,6 +134,7 @@
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -2270,6 +2271,164 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "foreground()" function
 static void f_foreground(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+}
+
+/// "function()" function
+/// "funcref()" function
+static void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
+{
+  char *s;
+  char *name;
+  bool use_string = false;
+  partial_T *arg_pt = NULL;
+  char *trans_name = NULL;
+
+  if (argvars[0].v_type == VAR_FUNC) {
+    // function(MyFunc, [arg], dict)
+    s = argvars[0].vval.v_string;
+  } else if (argvars[0].v_type == VAR_PARTIAL
+             && argvars[0].vval.v_partial != NULL) {
+    // function(dict.MyFunc, [arg])
+    arg_pt = argvars[0].vval.v_partial;
+    s = partial_name(arg_pt);
+    // TODO(bfredl): do the entire nlua_is_table_from_lua dance
+  } else {
+    // function('MyFunc', [arg], dict)
+    s = (char *)tv_get_string(&argvars[0]);
+    use_string = true;
+  }
+
+  if ((use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL) || is_funcref) {
+    name = s;
+    trans_name = save_function_name(&name, false,
+                                    TFN_INT | TFN_QUIET | TFN_NO_AUTOLOAD | TFN_NO_DEREF, NULL);
+    if (*name != NUL) {
+      s = NULL;
+    }
+  }
+  if (s == NULL || *s == NUL || (use_string && ascii_isdigit(*s))
+      || (is_funcref && trans_name == NULL)) {
+    semsg(_(e_invarg2), (use_string ? tv_get_string(&argvars[0]) : s));
+    // Don't check an autoload name for existence here.
+  } else if (trans_name != NULL
+             && (is_funcref
+                 ? find_func(trans_name) == NULL
+                 : !translated_function_exists(trans_name))) {
+    semsg(_("E700: Unknown function: %s"), s);
+  } else {
+    int dict_idx = 0;
+    int arg_idx = 0;
+    list_T *list = NULL;
+    if (strncmp(s, "s:", 2) == 0 || strncmp(s, "<SID>", 5) == 0) {
+      // Expand s: and <SID> into <SNR>nr_, so that the function can
+      // also be called from another script. Using trans_function_name()
+      // would also work, but some plugins depend on the name being
+      // printable text.
+      name = get_scriptlocal_funcname(s);
+    } else {
+      name = xstrdup(s);
+    }
+
+    if (argvars[1].v_type != VAR_UNKNOWN) {
+      if (argvars[2].v_type != VAR_UNKNOWN) {
+        // function(name, [args], dict)
+        arg_idx = 1;
+        dict_idx = 2;
+      } else if (argvars[1].v_type == VAR_DICT) {
+        // function(name, dict)
+        dict_idx = 1;
+      } else {
+        // function(name, [args])
+        arg_idx = 1;
+      }
+      if (dict_idx > 0) {
+        if (tv_check_for_dict_arg(argvars, dict_idx) == FAIL) {
+          xfree(name);
+          goto theend;
+        }
+        if (argvars[dict_idx].vval.v_dict == NULL) {
+          dict_idx = 0;
+        }
+      }
+      if (arg_idx > 0) {
+        if (argvars[arg_idx].v_type != VAR_LIST) {
+          emsg(_("E923: Second argument of function() must be "
+                 "a list or a dict"));
+          xfree(name);
+          goto theend;
+        }
+        list = argvars[arg_idx].vval.v_list;
+        if (tv_list_len(list) == 0) {
+          arg_idx = 0;
+        } else if (tv_list_len(list) > MAX_FUNC_ARGS) {
+          emsg_funcname(e_toomanyarg, s);
+          xfree(name);
+          goto theend;
+        }
+      }
+    }
+    if (dict_idx > 0 || arg_idx > 0 || arg_pt != NULL || is_funcref) {
+      partial_T *const pt = xcalloc(1, sizeof(*pt));
+
+      // result is a VAR_PARTIAL
+      if (arg_idx > 0 || (arg_pt != NULL && arg_pt->pt_argc > 0)) {
+        const int arg_len = (arg_pt == NULL ? 0 : arg_pt->pt_argc);
+        const int lv_len = tv_list_len(list);
+
+        pt->pt_argc = arg_len + lv_len;
+        pt->pt_argv = xmalloc(sizeof(pt->pt_argv[0]) * (size_t)pt->pt_argc);
+        int i = 0;
+        for (; i < arg_len; i++) {
+          tv_copy(&arg_pt->pt_argv[i], &pt->pt_argv[i]);
+        }
+        if (lv_len > 0) {
+          TV_LIST_ITER(list, li, {
+            tv_copy(TV_LIST_ITEM_TV(li), &pt->pt_argv[i++]);
+          });
+        }
+      }
+
+      // For "function(dict.func, [], dict)" and "func" is a partial
+      // use "dict". That is backwards compatible.
+      if (dict_idx > 0) {
+        // The dict is bound explicitly, pt_auto is false
+        pt->pt_dict = argvars[dict_idx].vval.v_dict;
+        (pt->pt_dict->dv_refcount)++;
+      } else if (arg_pt != NULL) {
+        // If the dict was bound automatically the result is also
+        // bound automatically.
+        pt->pt_dict = arg_pt->pt_dict;
+        pt->pt_auto = arg_pt->pt_auto;
+        if (pt->pt_dict != NULL) {
+          (pt->pt_dict->dv_refcount)++;
+        }
+      }
+
+      pt->pt_refcount = 1;
+      if (arg_pt != NULL && arg_pt->pt_func != NULL) {
+        pt->pt_func = arg_pt->pt_func;
+        func_ptr_ref(pt->pt_func);
+        xfree(name);
+      } else if (is_funcref) {
+        pt->pt_func = find_func(trans_name);
+        func_ptr_ref(pt->pt_func);
+        xfree(name);
+      } else {
+        pt->pt_name = name;
+        func_ref(name);
+      }
+
+      rettv->v_type = VAR_PARTIAL;
+      rettv->vval.v_partial = pt;
+    } else {
+      // result is a VAR_FUNC
+      rettv->v_type = VAR_FUNC;
+      rettv->vval.v_string = name;
+      func_ref(name);
+    }
+  }
+theend:
+  xfree(trans_name);
 }
 
 static void f_funcref(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
@@ -6414,6 +6573,14 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
+static void return_register(int regname, typval_T *rettv)
+{
+  char buf[2] = { (char)regname, 0 };
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = xstrdup(buf);
+}
+
 /// "reg_executing()" function
 static void f_reg_executing(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -7437,6 +7604,21 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       emsg(error);
     }
   }
+}
+
+static void screenchar_adjust(ScreenGrid **grid, int *row, int *col)
+{
+  // TODO(bfredl): this is a hack for legacy tests which use screenchar()
+  // to check printed messages on the screen (but not floats etc
+  // as these are not legacy features). If the compositor is refactored to
+  // have its own buffer, this should just read from it instead.
+  msg_scroll_flush();
+
+  *grid = ui_comp_get_grid_at_coord(*row, *col);
+
+  // Make `row` and `col` relative to the grid
+  *row -= (*grid)->comp_row;
+  *col -= (*grid)->comp_col;
 }
 
 /// "screenattr()" function
@@ -8623,6 +8805,33 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 theend:
   p_cpo = save_cpo;
+}
+
+/// "stdpath()" helper for list results
+static void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  list_T *const list = tv_list_alloc(kListLenShouldKnow);
+  rettv->v_type = VAR_LIST;
+  rettv->vval.v_list = list;
+  tv_list_ref(list);
+  char *const dirs = stdpaths_get_xdg_var(xdg);
+  if (dirs == NULL) {
+    return;
+  }
+  const void *iter = NULL;
+  const char *appname = get_appname();
+  do {
+    size_t dir_len;
+    const char *dir;
+    iter = vim_env_iter(ENV_SEPCHAR, dirs, iter, &dir, &dir_len);
+    if (dir != NULL && dir_len > 0) {
+      char *dir_with_nvim = xmemdupz(dir, dir_len);
+      dir_with_nvim = concat_fnames_realloc(dir_with_nvim, appname, true);
+      tv_list_append_allocated_string(list, dir_with_nvim);
+    }
+  } while (iter != NULL);
+  xfree(dirs);
 }
 
 /// "stdpath(type)" function

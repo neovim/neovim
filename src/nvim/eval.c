@@ -39,13 +39,10 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
-#include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
-#include "nvim/grid_defs.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
@@ -74,7 +71,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
-#include "nvim/os/stdpaths_defs.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
@@ -87,10 +83,6 @@
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
-#include "nvim/ui.h"
-#include "nvim/ui_compositor.h"
-#include "nvim/ui_defs.h"
-#include "nvim/usercmd.h"
 #include "nvim/version.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -5890,317 +5882,6 @@ void f_foreach(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   filter_map(argvars, rettv, FILTERMAP_FOREACH);
 }
 
-/// "function()" function
-/// "funcref()" function
-void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
-{
-  char *s;
-  char *name;
-  bool use_string = false;
-  partial_T *arg_pt = NULL;
-  char *trans_name = NULL;
-
-  if (argvars[0].v_type == VAR_FUNC) {
-    // function(MyFunc, [arg], dict)
-    s = argvars[0].vval.v_string;
-  } else if (argvars[0].v_type == VAR_PARTIAL
-             && argvars[0].vval.v_partial != NULL) {
-    // function(dict.MyFunc, [arg])
-    arg_pt = argvars[0].vval.v_partial;
-    s = partial_name(arg_pt);
-    // TODO(bfredl): do the entire nlua_is_table_from_lua dance
-  } else {
-    // function('MyFunc', [arg], dict)
-    s = (char *)tv_get_string(&argvars[0]);
-    use_string = true;
-  }
-
-  if ((use_string && vim_strchr(s, AUTOLOAD_CHAR) == NULL) || is_funcref) {
-    name = s;
-    trans_name = save_function_name(&name, false,
-                                    TFN_INT | TFN_QUIET | TFN_NO_AUTOLOAD | TFN_NO_DEREF, NULL);
-    if (*name != NUL) {
-      s = NULL;
-    }
-  }
-  if (s == NULL || *s == NUL || (use_string && ascii_isdigit(*s))
-      || (is_funcref && trans_name == NULL)) {
-    semsg(_(e_invarg2), (use_string ? tv_get_string(&argvars[0]) : s));
-    // Don't check an autoload name for existence here.
-  } else if (trans_name != NULL
-             && (is_funcref
-                 ? find_func(trans_name) == NULL
-                 : !translated_function_exists(trans_name))) {
-    semsg(_("E700: Unknown function: %s"), s);
-  } else {
-    int dict_idx = 0;
-    int arg_idx = 0;
-    list_T *list = NULL;
-    if (strncmp(s, "s:", 2) == 0 || strncmp(s, "<SID>", 5) == 0) {
-      // Expand s: and <SID> into <SNR>nr_, so that the function can
-      // also be called from another script. Using trans_function_name()
-      // would also work, but some plugins depend on the name being
-      // printable text.
-      name = get_scriptlocal_funcname(s);
-    } else {
-      name = xstrdup(s);
-    }
-
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        // function(name, [args], dict)
-        arg_idx = 1;
-        dict_idx = 2;
-      } else if (argvars[1].v_type == VAR_DICT) {
-        // function(name, dict)
-        dict_idx = 1;
-      } else {
-        // function(name, [args])
-        arg_idx = 1;
-      }
-      if (dict_idx > 0) {
-        if (tv_check_for_dict_arg(argvars, dict_idx) == FAIL) {
-          xfree(name);
-          goto theend;
-        }
-        if (argvars[dict_idx].vval.v_dict == NULL) {
-          dict_idx = 0;
-        }
-      }
-      if (arg_idx > 0) {
-        if (argvars[arg_idx].v_type != VAR_LIST) {
-          emsg(_("E923: Second argument of function() must be "
-                 "a list or a dict"));
-          xfree(name);
-          goto theend;
-        }
-        list = argvars[arg_idx].vval.v_list;
-        if (tv_list_len(list) == 0) {
-          arg_idx = 0;
-        } else if (tv_list_len(list) > MAX_FUNC_ARGS) {
-          emsg_funcname(e_toomanyarg, s);
-          xfree(name);
-          goto theend;
-        }
-      }
-    }
-    if (dict_idx > 0 || arg_idx > 0 || arg_pt != NULL || is_funcref) {
-      partial_T *const pt = xcalloc(1, sizeof(*pt));
-
-      // result is a VAR_PARTIAL
-      if (arg_idx > 0 || (arg_pt != NULL && arg_pt->pt_argc > 0)) {
-        const int arg_len = (arg_pt == NULL ? 0 : arg_pt->pt_argc);
-        const int lv_len = tv_list_len(list);
-
-        pt->pt_argc = arg_len + lv_len;
-        pt->pt_argv = xmalloc(sizeof(pt->pt_argv[0]) * (size_t)pt->pt_argc);
-        int i = 0;
-        for (; i < arg_len; i++) {
-          tv_copy(&arg_pt->pt_argv[i], &pt->pt_argv[i]);
-        }
-        if (lv_len > 0) {
-          TV_LIST_ITER(list, li, {
-            tv_copy(TV_LIST_ITEM_TV(li), &pt->pt_argv[i++]);
-          });
-        }
-      }
-
-      // For "function(dict.func, [], dict)" and "func" is a partial
-      // use "dict". That is backwards compatible.
-      if (dict_idx > 0) {
-        // The dict is bound explicitly, pt_auto is false
-        pt->pt_dict = argvars[dict_idx].vval.v_dict;
-        (pt->pt_dict->dv_refcount)++;
-      } else if (arg_pt != NULL) {
-        // If the dict was bound automatically the result is also
-        // bound automatically.
-        pt->pt_dict = arg_pt->pt_dict;
-        pt->pt_auto = arg_pt->pt_auto;
-        if (pt->pt_dict != NULL) {
-          (pt->pt_dict->dv_refcount)++;
-        }
-      }
-
-      pt->pt_refcount = 1;
-      if (arg_pt != NULL && arg_pt->pt_func != NULL) {
-        pt->pt_func = arg_pt->pt_func;
-        func_ptr_ref(pt->pt_func);
-        xfree(name);
-      } else if (is_funcref) {
-        pt->pt_func = find_func(trans_name);
-        func_ptr_ref(pt->pt_func);
-        xfree(name);
-      } else {
-        pt->pt_name = name;
-        func_ref(name);
-      }
-
-      rettv->v_type = VAR_PARTIAL;
-      rettv->vval.v_partial = pt;
-    } else {
-      // result is a VAR_FUNC
-      rettv->v_type = VAR_FUNC;
-      rettv->vval.v_string = name;
-      func_ref(name);
-    }
-  }
-theend:
-  xfree(trans_name);
-}
-
-/// Get the line number from Vimscript object
-///
-/// @note Unlike tv_get_lnum(), this one supports only "$" special string.
-///
-/// @param[in] tv   Object to get value from. Is expected to be a number or
-///                 a special string "$".
-/// @param[in] buf  Buffer to take last line number from in case tv is "$". May
-///                 be NULL, in this case "$" results in zero return.
-///
-/// @return  Line number or 0 in case of error.
-linenr_T tv_get_lnum_buf(const typval_T *const tv, const buf_T *const buf)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (tv->v_type == VAR_STRING
-      && tv->vval.v_string != NULL
-      && tv->vval.v_string[0] == '$'
-      && tv->vval.v_string[1] == NUL
-      && buf != NULL) {
-    return buf->b_ml.ml_line_count;
-  }
-  return (linenr_T)tv_get_number_chk(tv, NULL);
-}
-
-/// This function is used by f_input() and f_inputdialog() functions. The third
-/// argument to f_input() specifies the type of completion to use at the
-/// prompt. The third argument to f_inputdialog() specifies the value to return
-/// when the user cancels the prompt.
-void get_user_input(const typval_T *const argvars, typval_T *const rettv, const bool inputdialog,
-                    const bool secret)
-  FUNC_ATTR_NONNULL_ALL
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  const char *prompt;
-  const char *defstr = "";
-  typval_T *cancelreturn = NULL;
-  typval_T cancelreturn_strarg2 = TV_INITIAL_VALUE;
-  const char *xp_name = NULL;
-  Callback input_callback = { .type = kCallbackNone };
-  char prompt_buf[NUMBUFLEN];
-  char defstr_buf[NUMBUFLEN];
-  char cancelreturn_buf[NUMBUFLEN];
-  char xp_name_buf[NUMBUFLEN];
-  char def[1] = { 0 };
-  if (argvars[0].v_type == VAR_DICT) {
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      emsg(_("E5050: {opts} must be the only argument"));
-      return;
-    }
-    dict_T *const dict = argvars[0].vval.v_dict;
-    prompt = tv_dict_get_string_buf_chk(dict, S_LEN("prompt"), prompt_buf, "");
-    if (prompt == NULL) {
-      return;
-    }
-    defstr = tv_dict_get_string_buf_chk(dict, S_LEN("default"), defstr_buf, "");
-    if (defstr == NULL) {
-      return;
-    }
-    dictitem_T *cancelreturn_di = tv_dict_find(dict, S_LEN("cancelreturn"));
-    if (cancelreturn_di != NULL) {
-      cancelreturn = &cancelreturn_di->di_tv;
-    }
-    xp_name = tv_dict_get_string_buf_chk(dict, S_LEN("completion"),
-                                         xp_name_buf, def);
-    if (xp_name == NULL) {  // error
-      return;
-    }
-    if (xp_name == def) {  // default to NULL
-      xp_name = NULL;
-    }
-    if (!tv_dict_get_callback(dict, S_LEN("highlight"), &input_callback)) {
-      return;
-    }
-  } else {
-    prompt = tv_get_string_buf_chk(&argvars[0], prompt_buf);
-    if (prompt == NULL) {
-      return;
-    }
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      defstr = tv_get_string_buf_chk(&argvars[1], defstr_buf);
-      if (defstr == NULL) {
-        return;
-      }
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        const char *const strarg2 = tv_get_string_buf_chk(&argvars[2], cancelreturn_buf);
-        if (strarg2 == NULL) {
-          return;
-        }
-        if (inputdialog) {
-          cancelreturn_strarg2.v_type = VAR_STRING;
-          cancelreturn_strarg2.vval.v_string = (char *)strarg2;
-          cancelreturn = &cancelreturn_strarg2;
-        } else {
-          xp_name = strarg2;
-        }
-      }
-    }
-  }
-
-  int xp_type = EXPAND_NOTHING;
-  char *xp_arg = NULL;
-  if (xp_name != NULL) {
-    // input() with a third argument: completion
-    const int xp_namelen = (int)strlen(xp_name);
-
-    uint32_t argt = 0;
-    if (parse_compl_arg(xp_name, xp_namelen, &xp_type,
-                        &argt, &xp_arg) == FAIL) {
-      return;
-    }
-  }
-
-  const bool cmd_silent_save = cmd_silent;
-
-  cmd_silent = false;  // Want to see the prompt.
-  // Only the part of the message after the last NL is considered as
-  // prompt for the command line, unlsess cmdline is externalized
-  const char *p = prompt;
-  if (!ui_has(kUICmdline)) {
-    const char *lastnl = strrchr(prompt, '\n');
-    if (lastnl != NULL) {
-      p = lastnl + 1;
-      msg_start();
-      msg_clr_eos();
-      msg_puts_len(prompt, p - prompt, echo_attr);
-      msg_didout = false;
-      msg_starthere();
-    }
-  }
-  cmdline_row = msg_row;
-
-  stuffReadbuffSpec(defstr);
-
-  const int save_ex_normal_busy = ex_normal_busy;
-  ex_normal_busy = 0;
-  rettv->vval.v_string = getcmdline_prompt(secret ? NUL : '@', p, echo_attr, xp_type, xp_arg,
-                                           input_callback);
-  ex_normal_busy = save_ex_normal_busy;
-  callback_free(&input_callback);
-
-  if (rettv->vval.v_string == NULL && cancelreturn != NULL) {
-    tv_copy(cancelreturn, rettv);
-  }
-
-  xfree(xp_arg);
-
-  // Since the user typed this, no need to wait for return.
-  need_wait_return = false;
-  msg_didout = false;
-  cmd_silent = cmd_silent_save;
-}
-
 /// Builds a process argument vector from a Vimscript object (typval_T).
 ///
 /// @param[in]  cmd_tv      Vimscript object
@@ -6267,56 +5948,6 @@ char **tv_to_argv(typval_T *cmd_tv, const char **cmd, bool *executable)
   argv[0] = exe_resolved;
 
   return argv;
-}
-
-void return_register(int regname, typval_T *rettv)
-{
-  char buf[2] = { (char)regname, 0 };
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xstrdup(buf);
-}
-
-void screenchar_adjust(ScreenGrid **grid, int *row, int *col)
-{
-  // TODO(bfredl): this is a hack for legacy tests which use screenchar()
-  // to check printed messages on the screen (but not floats etc
-  // as these are not legacy features). If the compositor is refactored to
-  // have its own buffer, this should just read from it instead.
-  msg_scroll_flush();
-
-  *grid = ui_comp_get_grid_at_coord(*row, *col);
-
-  // Make `row` and `col` relative to the grid
-  *row -= (*grid)->comp_row;
-  *col -= (*grid)->comp_col;
-}
-
-/// "stdpath()" helper for list results
-void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
-  FUNC_ATTR_NONNULL_ALL
-{
-  list_T *const list = tv_list_alloc(kListLenShouldKnow);
-  rettv->v_type = VAR_LIST;
-  rettv->vval.v_list = list;
-  tv_list_ref(list);
-  char *const dirs = stdpaths_get_xdg_var(xdg);
-  if (dirs == NULL) {
-    return;
-  }
-  const void *iter = NULL;
-  const char *appname = get_appname();
-  do {
-    size_t dir_len;
-    const char *dir;
-    iter = vim_env_iter(ENV_SEPCHAR, dirs, iter, &dir, &dir_len);
-    if (dir != NULL && dir_len > 0) {
-      char *dir_with_nvim = xmemdupz(dir, dir_len);
-      dir_with_nvim = concat_fnames_realloc(dir_with_nvim, appname, true);
-      tv_list_append_allocated_string(list, dir_with_nvim);
-    }
-  } while (iter != NULL);
-  xfree(dirs);
 }
 
 static list_T *string_to_list(const char *str, size_t len, const bool keepempty)
@@ -8520,6 +8151,12 @@ void ex_echo(exarg_T *eap)
 void ex_echohl(exarg_T *eap)
 {
   echo_attr = syn_name2attr(eap->arg);
+}
+
+/// Returns the :echo attribute
+int get_echo_attr(void)
+{
+  return echo_attr;
 }
 
 /// ":execute expr1 ..." execute the result of an expression.

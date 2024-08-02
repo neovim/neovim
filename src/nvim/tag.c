@@ -3152,9 +3152,7 @@ static int find_extra(char **pp)
   return FAIL;
 }
 
-//
-// Free a single entry in a tag stack
-//
+/// Free a single entry in a tag stack
 void tagstack_clear_entry(taggy_T *item)
 {
   XFREE_CLEAR(item->tagname);
