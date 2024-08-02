@@ -2630,7 +2630,7 @@ static int may_call_simple_func(const char *arg, typval_T *rettv)
   if (parens != NULL && *skipwhite(parens + 2) == NUL) {
     if (strnequal(arg, "v:lua.", 6)) {
       const char *p = arg + 6;
-      if (skip_luafunc_name(p) == parens) {
+      if (p != parens && skip_luafunc_name(p) == parens) {
         r = call_simple_luafunc(p, (size_t)(parens - p), rettv);
       }
     } else {

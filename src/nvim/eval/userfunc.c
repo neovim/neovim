@@ -1779,6 +1779,9 @@ theend:
 int call_simple_luafunc(const char *funcname, size_t len, typval_T *rettv)
   FUNC_ATTR_NONNULL_ALL
 {
+  rettv->v_type = VAR_NUMBER;  // default rettv is number zero
+  rettv->vval.v_number = 0;
+
   typval_T argvars[1];
   argvars[0].v_type = VAR_UNKNOWN;
   nlua_typval_call(funcname, len, argvars, 0, rettv);
