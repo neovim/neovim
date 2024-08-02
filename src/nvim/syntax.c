@@ -158,11 +158,6 @@ typedef struct {
   char *pattern;
 } time_entry_T;
 
-struct name_list {
-  int flag;
-  char *name;
-};
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "syntax.c.generated.h"
 #endif
@@ -2287,7 +2282,7 @@ static void update_si_end(stateitem_T *sip, int startcol, bool force)
       // a "oneline" never continues in the next line
       sip->si_ends = true;
       sip->si_m_endpos.lnum = current_lnum;
-      sip->si_m_endpos.col = (colnr_T)strlen(syn_getcurline());
+      sip->si_m_endpos.col = syn_getcurline_len();
     } else {
       // continues in the next line
       sip->si_ends = false;
@@ -2657,6 +2652,12 @@ static void syn_add_start_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *s
 static char *syn_getcurline(void)
 {
   return ml_get_buf(syn_buf, current_lnum);
+}
+
+/// Get length of current line in syntax buffer.
+static colnr_T syn_getcurline_len(void)
+{
+  return ml_get_buf_len(syn_buf, current_lnum);
 }
 
 // Call vim_regexec() to find a match with "rmp" in "syn_buf".
@@ -3327,24 +3328,22 @@ static int last_matchgroup;
 static void syn_list_one(const int id, const bool syncing, const bool link_only)
 {
   bool did_header = false;
-  static struct name_list namelist1[] = {
-    { HL_DISPLAY, "display" },
-    { HL_CONTAINED, "contained" },
-    { HL_ONELINE, "oneline" },
-    { HL_KEEPEND, "keepend" },
-    { HL_EXTEND, "extend" },
-    { HL_EXCLUDENL, "excludenl" },
-    { HL_TRANSP, "transparent" },
-    { HL_FOLD, "fold" },
-    { HL_CONCEAL, "conceal" },
-    { HL_CONCEALENDS, "concealends" },
-    { 0, NULL }
+  static keyvalue_T namelist1[] = {
+    KEYVALUE_ENTRY(HL_DISPLAY, "display"),
+    KEYVALUE_ENTRY(HL_CONTAINED, "contained"),
+    KEYVALUE_ENTRY(HL_ONELINE, "oneline"),
+    KEYVALUE_ENTRY(HL_KEEPEND, "keepend"),
+    KEYVALUE_ENTRY(HL_EXTEND, "extend"),
+    KEYVALUE_ENTRY(HL_EXCLUDENL, "excludenl"),
+    KEYVALUE_ENTRY(HL_TRANSP, "transparent"),
+    KEYVALUE_ENTRY(HL_FOLD, "fold"),
+    KEYVALUE_ENTRY(HL_CONCEAL, "conceal"),
+    KEYVALUE_ENTRY(HL_CONCEALENDS, "concealends"),
   };
-  static struct name_list namelist2[] = {
-    { HL_SKIPWHITE, "skipwhite" },
-    { HL_SKIPNL, "skipnl" },
-    { HL_SKIPEMPTY, "skipempty" },
-    { 0, NULL }
+  static keyvalue_T namelist2[] = {
+    KEYVALUE_ENTRY(HL_SKIPWHITE, "skipwhite"),
+    KEYVALUE_ENTRY(HL_SKIPNL, "skipnl"),
+    KEYVALUE_ENTRY(HL_SKIPEMPTY, "skipempty"),
   };
 
   const int attr = HL_ATTR(HLF_D);      // highlight like directories
@@ -3385,7 +3384,7 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
       idx--;
       msg_putchar(' ');
     }
-    syn_list_flags(namelist1, spp->sp_flags, attr);
+    syn_list_flags(namelist1, ARRAY_SIZE(namelist1), spp->sp_flags, attr);
 
     if (spp->sp_cont_list != NULL) {
       put_id_list("contains", spp->sp_cont_list, attr);
@@ -3397,7 +3396,7 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
 
     if (spp->sp_next_list != NULL) {
       put_id_list("nextgroup", spp->sp_next_list, attr);
-      syn_list_flags(namelist2, spp->sp_flags, attr);
+      syn_list_flags(namelist2, ARRAY_SIZE(namelist2), spp->sp_flags, attr);
     }
     if (spp->sp_flags & (HL_SYNC_HERE|HL_SYNC_THERE)) {
       if (spp->sp_flags & HL_SYNC_HERE) {
@@ -3425,11 +3424,11 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
   }
 }
 
-static void syn_list_flags(struct name_list *nlist, int flags, int attr)
+static void syn_list_flags(keyvalue_T *nlist, size_t nr_entries, int flags, int attr)
 {
-  for (int i = 0; nlist[i].flag != 0; i++) {
-    if (flags & nlist[i].flag) {
-      msg_puts_attr(nlist[i].name, attr);
+  for (size_t i = 0; i < nr_entries; i++) {
+    if (flags & nlist[i].key) {
+      msg_puts_attr(nlist[i].value, attr);
       msg_putchar(' ');
     }
   }
@@ -3701,17 +3700,22 @@ static void clear_keywtab(hashtab_T *ht)
 /// @param flags flags for this keyword
 /// @param cont_in_list containedin for this keyword
 /// @param next_list nextgroup for this keyword
-static void add_keyword(char *const name, const int id, const int flags,
+static void add_keyword(char *const name, size_t namelen, const int id, const int flags,
                         int16_t *const cont_in_list, int16_t *const next_list,
                         const int conceal_char)
 {
   char name_folded[MAXKEYWLEN + 1];
-  const char *const name_ic = (curwin->w_s->b_syn_ic)
-                              ? str_foldcase(name, (int)strlen(name), name_folded,
-                                             sizeof(name_folded))
-                              : name;
+  const char *name_ic;
+  size_t name_iclen;
+  if (curwin->w_s->b_syn_ic) {
+    name_ic = str_foldcase(name, (int)namelen, name_folded, MAXKEYWLEN + 1);
+    name_iclen = strlen(name_ic);
+  } else {
+    name_ic = name;
+    name_iclen = namelen;
+  }
 
-  keyentry_T *const kp = xmalloc(offsetof(keyentry_T, keyword) + strlen(name_ic) + 1);
+  keyentry_T *const kp = xmalloc(offsetof(keyentry_T, keyword) + name_iclen + 1);
   STRCPY(kp->keyword, name_ic);
   kp->k_syn.id = (int16_t)id;
   kp->k_syn.inc_tag = current_syn_inc_tag;
@@ -4062,12 +4066,16 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
         syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
 
         // 2: Add an entry for each keyword.
-        for (char *kw = keyword_copy; --cnt >= 0; kw += strlen(kw) + 1) {
+        size_t kwlen = 0;
+        for (char *kw = keyword_copy; --cnt >= 0; kw += kwlen + 1) {
           for (p = vim_strchr(kw, '[');;) {
-            if (p != NULL) {
+            if (p == NULL) {
+              kwlen = strlen(kw);
+            } else {
               *p = NUL;
+              kwlen = (size_t)(p - kw);
             }
-            add_keyword(kw, syn_id, syn_opt_arg.flags,
+            add_keyword(kw, kwlen, syn_id, syn_opt_arg.flags,
                         syn_opt_arg.cont_in_list,
                         syn_opt_arg.next_list, conceal_char);
             if (p == NULL) {
@@ -4083,6 +4091,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
                 goto error;
               }
               kw = p + 1;
+              kwlen = 1;
               break;   // skip over the "]"
             }
             const int l = utfc_ptr2len(p + 1);
@@ -5206,7 +5215,6 @@ static struct subcommand subcommands[] = {
   { "spell",     syn_cmd_spell },
   { "sync",      syn_cmd_sync },
   { "",          syn_cmd_list },
-  { NULL, NULL }
 };
 
 /// ":syntax".
@@ -5225,17 +5233,19 @@ void ex_syntax(exarg_T *eap)
   if (eap->skip) {  // skip error messages for all subcommands
     emsg_skip++;
   }
-  for (int i = 0;; i++) {
-    if (subcommands[i].name == NULL) {
-      semsg(_("E410: Invalid :syntax subcommand: %s"), subcmd_name);
-      break;
-    }
+  size_t i;
+  for (i = 0; i < ARRAY_SIZE(subcommands); i++) {
     if (strcmp(subcmd_name, subcommands[i].name) == 0) {
       eap->arg = skipwhite(subcmd_end);
       (subcommands[i].func)(eap, false);
       break;
     }
   }
+
+  if (i == ARRAY_SIZE(subcommands)) {
+    semsg(_("E410: Invalid :syntax subcommand: %s"), subcmd_name);
+  }
+
   xfree(subcmd_name);
   if (eap->skip) {
     emsg_skip--;
@@ -5366,6 +5376,9 @@ char *get_syntax_name(expand_T *xp, int idx)
 {
   switch (expand_what) {
   case EXP_SUBCMD:
+    if (idx < 0 || idx >= (int)ARRAY_SIZE(subcommands)) {
+      return NULL;
+    }
     return subcommands[idx].name;
   case EXP_CASE: {
     static char *case_args[] = { "match", "ignore", NULL };
@@ -5646,9 +5659,8 @@ static void syntime_report(void)
     } else {
       len = Columns - 70;
     }
-    if (len > (int)strlen(p->pattern)) {
-      len = (int)strlen(p->pattern);
-    }
+    int patlen = (int)strlen(p->pattern);
+    len = MIN(len, patlen);
     msg_outtrans_len(p->pattern, len, 0);
     msg_puts("\n");
   }
