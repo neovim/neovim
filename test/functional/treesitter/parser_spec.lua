@@ -488,7 +488,7 @@ int x = INT_MAX;
           parser = vim.treesitter.get_parser(0, "c", {
             injections = {
               c = (
-                '(preproc_def ((preproc_arg) @injection.content (#set! injection.language "c") (#offset! @injection.content 0 2 0 -1))) ' ..
+                '(preproc_def ((preproc_arg) @injection.content (#set! injection.language "c") (#offset! @injection.content 0 1 0 -1))) ' ..
                 '(preproc_function_def value: (preproc_arg) @injection.content (#set! injection.language "c"))'
               )
             }})
@@ -498,9 +498,9 @@ int x = INT_MAX;
         eq('table', exec_lua('return type(parser:children().c)'))
         eq({
           { 0, 0, 7, 0 }, -- root tree
-          { 3, 16, 3, 16 }, -- VALUE 123
-          { 4, 17, 4, 17 }, -- VALUE1 123
-          { 5, 17, 5, 17 }, -- VALUE2 123
+          { 3, 15, 3, 16 }, -- VALUE 123
+          { 4, 16, 4, 17 }, -- VALUE1 123
+          { 5, 16, 5, 17 }, -- VALUE2 123
           { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
           { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
