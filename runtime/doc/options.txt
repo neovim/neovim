@@ -406,7 +406,14 @@ The value of a few options, such as 'foldexpr', is an expression that is
 evaluated to get a value.  The evaluation can have quite a bit of overhead.
 One way to minimize the overhead, and also to keep the option value very
 simple, is to define a function and set the option to call it without
-arguments.
+arguments.  A |v:lua-call| can also be used.  Example: >vim
+	lua << EOF
+	  function _G.MyFoldFunc()
+	    -- ... compute fold level for line v:lnum
+	    return level
+	  end
+	EOF
+	set foldexpr=v:lua.MyFoldFunc()
 
 
 Setting the filetype

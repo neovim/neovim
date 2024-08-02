@@ -1466,14 +1466,14 @@ Object eval_foldtext(win_T *wp)
 /// When "use_namespace" is true recognize "b:", "s:", etc.
 /// Return a pointer to just after the name.  Equal to "arg" if there is no
 /// valid name.
-static char *to_name_end(char *arg, bool use_namespace)
+static const char *to_name_end(const char *arg, bool use_namespace)
 {
   // Quick check for valid starting character.
   if (!eval_isnamec1(*arg)) {
     return arg;
   }
 
-  char *p;
+  const char *p;
   for (p = arg + 1; *p != NUL && eval_isnamec(*p); MB_PTR_ADV(p)) {
     // Include a namespace such as "s:var" and "v:var".  But "n:" is not
     // and can be used in slice "[n:]".
@@ -2621,16 +2621,23 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
 
 /// If "arg" is a simple function call without arguments then call it and return
 /// the result.  Otherwise return NOTDONE.
-static int may_call_simple_func(char *arg, typval_T *rettv)
+static int may_call_simple_func(const char *arg, typval_T *rettv)
 {
-  char *parens = strstr(arg, "()");
+  const char *parens = strstr(arg, "()");
   int r = NOTDONE;
 
   // If the expression is "FuncName()" then we can skip a lot of overhead.
   if (parens != NULL && *skipwhite(parens + 2) == NUL) {
-    char *p = strncmp(arg, "<SNR>", 5) == 0 ? skipdigits(arg + 5) : arg;
-    if (to_name_end(p, true) == parens) {
-      r = call_simple_func(arg, (size_t)(parens - arg), rettv);
+    if (strnequal(arg, "v:lua.", 6)) {
+      const char *p = arg + 6;
+      if (skip_luafunc_name(p) == parens) {
+        r = call_simple_luafunc(p, (size_t)(parens - p), rettv);
+      }
+    } else {
+      const char *p = strncmp(arg, "<SNR>", 5) == 0 ? skipdigits(arg + 5) : arg;
+      if (to_name_end(p, true) == parens) {
+        r = call_simple_func(arg, (size_t)(parens - arg), rettv);
+      }
     }
   }
   return r;

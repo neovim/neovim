@@ -1776,6 +1776,15 @@ theend:
   return ret;
 }
 
+int call_simple_luafunc(const char *funcname, size_t len, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  typval_T argvars[1];
+  argvars[0].v_type = VAR_UNKNOWN;
+  nlua_typval_call(funcname, len, argvars, 0, rettv);
+  return OK;
+}
+
 /// Call a function without arguments, partial or dict.
 /// This is like call_func() when the call is only "FuncName()".
 /// To be used by "expr" options.
