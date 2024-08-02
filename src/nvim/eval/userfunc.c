@@ -2084,7 +2084,7 @@ char *get_scriptlocal_funcname(char *funcname)
 
   if (strncmp(funcname, "s:", 2) != 0
       && strncmp(funcname, "<SID>", 5) != 0) {
-    // The function name is not a script-local function name
+    // The function name does not have a script-local prefix.
     return NULL;
   }
 

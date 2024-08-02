@@ -1691,6 +1691,23 @@ func Test_completefunc_callback()
   bw!
   delfunc s:CompleteFunc3
 
+  " In Vim9 script s: can be omitted
+  let lines =<< trim END
+      vim9script
+      var CompleteFunc4Args = []
+      def CompleteFunc4(findstart: bool, base: string): any
+        add(CompleteFunc4Args, [findstart, base])
+        return findstart ? 0 : []
+      enddef
+      set completefunc=CompleteFunc4
+      new
+      setline(1, 'script1')
+      feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+      assert_equal([[1, ''], [0, 'script1']], CompleteFunc4Args)
+      bw!
+  END
+  call CheckScriptSuccess(lines)
+
   " invalid return value
   let &completefunc = {a -> 'abc'}
   call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
