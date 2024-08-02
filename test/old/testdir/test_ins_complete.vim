@@ -190,12 +190,11 @@ func Test_completefunc_args()
 endfunc
 
 func s:CompleteDone_CompleteFuncNone( findstart, base )
-  throw 'skipped: Nvim does not support v:none'
   if a:findstart
     return 0
   endif
 
-  return v:none
+  return v:null
 endfunc
 
 func s:CompleteDone_CompleteFuncDict( findstart, base )
@@ -237,7 +236,6 @@ func s:CompleteDone_CheckCompletedItemDict(pre)
 endfunc
 
 func Test_CompleteDoneNone()
-  throw 'skipped: Nvim does not support v:none'
   au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemNone()
   let oldline = join(map(range(&columns), 'nr2char(screenchar(&lines-1, v:val+1))'), '')
 
