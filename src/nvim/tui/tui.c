@@ -888,6 +888,7 @@ static void cursor_goto(TUIData *tui, int row, int col)
   if (tui->url >= 0) {
     out(tui, S_LEN("\x1b]8;;\x1b\\"));
     tui->url = -1;
+    tui->print_attr_id = -1;
   }
 
   if (0 == row && 0 == col) {
