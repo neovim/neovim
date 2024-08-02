@@ -427,6 +427,12 @@ function protocol.make_client_capabilities()
           properties = { 'edit' },
         },
       },
+      codeLens = {
+        dynamicRegistration = false,
+        resolveSupport = {
+          properties = { 'command' },
+        },
+      },
       formatting = {
         dynamicRegistration = true,
       },
