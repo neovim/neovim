@@ -109,26 +109,8 @@ local function gen_methods(protocol)
     end
   end
   output[#output + 1] = '}'
-  output = vim.list_extend(
-    output,
-    vim.split(
-      [[
-local function freeze(t)
-  return setmetatable({}, {
-    __index = t,
-    __newindex = function()
-      error('cannot modify immutable table')
-    end,
-  })
-end
-protocol.Methods = freeze(protocol.Methods)
-
-return protocol
-]],
-      '\n',
-      { trimempty = true }
-    )
-  )
+  output[#output + 1] = ''
+  output[#output + 1] = 'return protocol'
 
   local fname = './runtime/lua/vim/lsp/protocol.lua'
   local bufnr = vim.fn.bufadd(fname)
