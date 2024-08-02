@@ -178,6 +178,8 @@ UI
 
 • TODO
 
+• |vim.fs.abspath()| converts paths to absolute paths.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
