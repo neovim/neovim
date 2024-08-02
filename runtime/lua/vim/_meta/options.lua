@@ -786,6 +786,9 @@ vim.bo.channel = vim.o.channel
 --- 	v:fname_out		name of the output file
 --- Note that v:fname_in and v:fname_out will never be the same.
 ---
+--- The advantage of using a function call without arguments is that it is
+--- faster, see `expr-option-function`.
+---
 --- If the 'charconvert' expression starts with s: or `<SID>`, then it is
 --- replaced with the script ID (`local-function`). Example:
 ---
@@ -2521,6 +2524,9 @@ vim.wo.fdt = vim.wo.foldtext
 --- This will invoke the mylang#Format() function in the
 --- autoload/mylang.vim file in 'runtimepath'. `autoload`
 ---
+--- The advantage of using a function call without arguments is that it is
+--- faster, see `expr-option-function`.
+---
 --- The expression is also evaluated when 'textwidth' is set and adding
 --- text beyond that limit.  This happens under the same conditions as
 --- when internal formatting is used.  Make sure the cursor is kept in the
@@ -3286,11 +3292,14 @@ vim.go.inc = vim.go.include
 --- the script ID (`local-function`). Example:
 ---
 --- ```vim
---- 	setlocal includeexpr=s:MyIncludeExpr(v:fname)
---- 	setlocal includeexpr=<SID>SomeIncludeExpr(v:fname)
+--- 	setlocal includeexpr=s:MyIncludeExpr()
+--- 	setlocal includeexpr=<SID>SomeIncludeExpr()
 --- ```
 --- Otherwise, the expression is evaluated in the context of the script
 --- where the option was set, thus script-local items are available.
+---
+--- It is more efficient if the value is just a function call without
+--- arguments, see `expr-option-function`.
 ---
 --- The expression will be evaluated in the `sandbox` when set from a
 --- modeline, see `sandbox-option`.
@@ -3365,6 +3374,9 @@ vim.go.is = vim.go.incsearch
 --- ```
 --- Otherwise, the expression is evaluated in the context of the script
 --- where the option was set, thus script-local items are available.
+---
+--- The advantage of using a function call without arguments is that it is
+--- faster, see `expr-option-function`.
 ---
 --- The expression must return the number of spaces worth of indent.  It
 --- can return "-1" to keep the current indent (this means 'autoindent' is
@@ -6314,9 +6326,11 @@ vim.bo.spo = vim.bo.spelloptions
 --- 		The file is used for all languages.
 ---
 --- expr:{expr}	Evaluate expression {expr}.  Use a function to avoid
---- 		trouble with spaces.  `v:val` holds the badly spelled
---- 		word.  The expression must evaluate to a List of
---- 		Lists, each with a suggestion and a score.
+--- 		trouble with spaces.  Best is to call a function
+--- 		without arguments, see `expr-option-function|.
+--- 		|v:val` holds the badly spelled word.  The expression
+--- 		must evaluate to a List of Lists, each with a
+--- 		suggestion and a score.
 --- 		Example:
 --- 			[['the', 33], ['that', 44]] ~
 --- 		Set 'verbose' and use `z=` to see the scores that the

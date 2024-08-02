@@ -69,8 +69,6 @@ method.  The value of the 'foldexpr' option is evaluated to get the foldlevel
 of a line.  Examples:
 This will create a fold for all consecutive lines that start with a tab: >
 	:set foldexpr=getline(v:lnum)[0]==\"\\t\"
-This will call a function to compute the fold level: >
-	:set foldexpr=MyFoldLevel(v:lnum)
 This will make a fold out of paragraphs separated by blank lines: >
 	:set foldexpr=getline(v:lnum)=~'^\\s*$'&&getline(v:lnum+1)=~'\\S'?'<1':1
 This does the same: >
@@ -78,6 +76,10 @@ This does the same: >
 
 Note that backslashes must be used to escape characters that ":set" handles
 differently (space, backslash, double quote, etc., see |option-backslash|).
+
+The most efficient is to call a function without arguments: >
+	:set foldexpr=MyFoldLevel()
+The function must use v:lnum.  See |expr-option-function|.
 
 These are the conditions with which the expression is evaluated:
 - The current buffer and window are set for the line.

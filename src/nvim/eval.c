@@ -703,7 +703,7 @@ int eval_charconvert(const char *const enc_from, const char *const enc_to,
   }
 
   bool err = false;
-  if (eval_to_bool(p_ccv, &err, NULL, false)) {
+  if (eval_to_bool(p_ccv, &err, NULL, false, true)) {
     err = true;
   }
 
@@ -732,7 +732,7 @@ void eval_diff(const char *const origfile, const char *const newfile, const char
   }
 
   // errors are ignored
-  typval_T *tv = eval_expr(p_dex, NULL);
+  typval_T *tv = eval_expr_ext(p_dex, NULL, true);
   tv_free(tv);
 
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
@@ -754,7 +754,7 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
   }
 
   // errors are ignored
-  typval_T *tv = eval_expr(p_pex, NULL);
+  typval_T *tv = eval_expr_ext(p_pex, NULL, true);
   tv_free(tv);
 
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
@@ -783,7 +783,8 @@ void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
 /// @param skip  only parse, don't execute
 ///
 /// @return  true or false.
-bool eval_to_bool(char *arg, bool *error, exarg_T *eap, bool skip)
+bool eval_to_bool(char *arg, bool *error, exarg_T *eap, const bool skip,
+                  const bool use_simple_function)
 {
   typval_T tv;
   bool retval = false;
@@ -794,7 +795,9 @@ bool eval_to_bool(char *arg, bool *error, exarg_T *eap, bool skip)
   if (skip) {
     emsg_skip++;
   }
-  if (eval0(arg, &tv, eap, &evalarg) == FAIL) {
+  int r = use_simple_function ? eval0_simple_funccal(arg, &tv, eap, &evalarg)
+                              : eval0(arg, &tv, eap, &evalarg);
+  if (r == FAIL) {
     *error = true;
   } else {
     *error = false;
@@ -1042,14 +1045,17 @@ static char *typval2string(typval_T *tv, bool join_list)
 /// @param join_list  when true convert a List into a sequence of lines.
 ///
 /// @return  pointer to allocated memory, or NULL for failure.
-char *eval_to_string_eap(char *arg, bool join_list, exarg_T *eap)
+char *eval_to_string_eap(char *arg, const bool join_list, exarg_T *eap,
+                         const bool use_simple_function)
 {
   typval_T tv;
   char *retval;
 
   evalarg_T evalarg;
   fill_evalarg_from_eap(&evalarg, eap, eap != NULL && eap->skip);
-  if (eval0(arg, &tv, NULL, &evalarg) == FAIL) {
+  int r = use_simple_function ? eval0_simple_funccal(arg, &tv, NULL, &evalarg)
+                              : eval0(arg, &tv, NULL, &evalarg);
+  if (r == FAIL) {
     retval = NULL;
   } else {
     retval = typval2string(&tv, join_list);
@@ -1060,16 +1066,16 @@ char *eval_to_string_eap(char *arg, bool join_list, exarg_T *eap)
   return retval;
 }
 
-char *eval_to_string(char *arg, bool join_list)
+char *eval_to_string(char *arg, const bool join_list, const bool use_simple_function)
 {
-  return eval_to_string_eap(arg, join_list, NULL);
+  return eval_to_string_eap(arg, join_list, NULL, use_simple_function);
 }
 
 /// Call eval_to_string() without using current local variables and using
 /// textlock.
 ///
 /// @param use_sandbox  when true, use the sandbox.
-char *eval_to_string_safe(char *arg, const bool use_sandbox)
+char *eval_to_string_safe(char *arg, const bool use_sandbox, const bool use_simple_function)
 {
   char *retval;
   funccal_entry_T funccal_entry;
@@ -1079,7 +1085,7 @@ char *eval_to_string_safe(char *arg, const bool use_sandbox)
     sandbox++;
   }
   textlock++;
-  retval = eval_to_string(arg, false);
+  retval = eval_to_string(arg, false, use_simple_function);
   if (use_sandbox) {
     sandbox--;
   }
@@ -1092,15 +1098,22 @@ char *eval_to_string_safe(char *arg, const bool use_sandbox)
 /// Evaluates "expr" silently.
 ///
 /// @return  -1 for an error.
-varnumber_T eval_to_number(char *expr)
+varnumber_T eval_to_number(char *expr, const bool use_simple_function)
 {
   typval_T rettv;
   varnumber_T retval;
   char *p = skipwhite(expr);
+  int r = NOTDONE;
 
   emsg_off++;
 
-  if (eval1(&p, &rettv, &EVALARG_EVALUATE) == FAIL) {
+  if (use_simple_function) {
+    r = may_call_simple_func(expr, &rettv);
+  }
+  if (r == NOTDONE) {
+    r = eval1(&p, &rettv, &EVALARG_EVALUATE);
+  }
+  if (r == FAIL) {
     retval = -1;
   } else {
     retval = tv_get_number_chk(&rettv, NULL);
@@ -1117,12 +1130,26 @@ varnumber_T eval_to_number(char *expr)
 ///          NULL when there is an error.
 typval_T *eval_expr(char *arg, exarg_T *eap)
 {
+  return eval_expr_ext(arg, eap, false);
+}
+
+static typval_T *eval_expr_ext(char *arg, exarg_T *eap, const bool use_simple_function)
+{
   typval_T *tv = xmalloc(sizeof(*tv));
   evalarg_T evalarg;
 
   fill_evalarg_from_eap(&evalarg, eap, eap != NULL && eap->skip);
 
-  if (eval0(arg, tv, eap, &evalarg) == FAIL) {
+  int r = NOTDONE;
+
+  if (use_simple_function) {
+    r = eval0_simple_funccal(arg, tv, eap, &evalarg);
+  }
+  if (r == NOTDONE) {
+    r = eval0(arg, tv, eap, &evalarg);
+  }
+
+  if (r == FAIL) {
     XFREE_CLEAR(tv);
   }
 
@@ -1208,7 +1235,11 @@ list_T *eval_spell_expr(char *badword, char *expr)
     current_sctx = *ctx;
   }
 
-  if (eval1(&p, &rettv, &EVALARG_EVALUATE) == OK) {
+  int r = may_call_simple_func(p, &rettv);
+  if (r == NOTDONE) {
+    r = eval1(&p, &rettv, &EVALARG_EVALUATE);
+  }
+  if (r == OK) {
     if (rettv.v_type != VAR_LIST) {
       tv_clear(&rettv);
     } else {
@@ -1349,7 +1380,7 @@ int eval_foldexpr(win_T *wp, int *cp)
   const sctx_T saved_sctx = current_sctx;
   const bool use_sandbox = was_set_insecurely(wp, kOptFoldexpr, OPT_LOCAL);
 
-  char *arg = wp->w_p_fde;
+  char *arg = skipwhite(wp->w_p_fde);
   current_sctx = wp->w_p_script_ctx[WV_FDE].script_ctx;
 
   emsg_off++;
@@ -1361,7 +1392,9 @@ int eval_foldexpr(win_T *wp, int *cp)
 
   typval_T tv;
   varnumber_T retval;
-  if (eval0(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
+  // Evaluate the expression.  If the expression is "FuncName()" call the
+  // function directly.
+  if (eval0_simple_funccal(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
     retval = 0;
   } else {
     // If the result is a number, just return the number.
@@ -1407,7 +1440,7 @@ Object eval_foldtext(win_T *wp)
 
   typval_T tv;
   Object retval;
-  if (eval0(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
+  if (eval0_simple_funccal(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
     retval = STRING_OBJ(NULL_STRING);
   } else {
     if (tv.v_type == VAR_LIST) {
@@ -1426,6 +1459,31 @@ Object eval_foldtext(win_T *wp)
   restore_funccal();
 
   return retval;
+}
+
+/// Find the end of a variable or function name.  Unlike find_name_end() this
+/// does not recognize magic braces.
+/// When "use_namespace" is true recognize "b:", "s:", etc.
+/// Return a pointer to just after the name.  Equal to "arg" if there is no
+/// valid name.
+static const char *to_name_end(const char *arg, bool use_namespace)
+{
+  // Quick check for valid starting character.
+  if (!eval_isnamec1(*arg)) {
+    return arg;
+  }
+
+  const char *p;
+  for (p = arg + 1; *p != NUL && eval_isnamec(*p); MB_PTR_ADV(p)) {
+    // Include a namespace such as "s:var" and "v:var".  But "n:" is not
+    // and can be used in slice "[n:]".
+    if (*p == ':' && (p != arg + 1
+                      || !use_namespace
+                      || vim_strchr("bgstvw", *arg) == NULL)) {
+      break;
+    }
+  }
+  return p;
 }
 
 /// Get an Dict lval variable that can be assigned a value to: "name",
@@ -2499,9 +2557,10 @@ void clear_evalarg(evalarg_T *evalarg, exarg_T *eap)
   }
 }
 
-/// The "evaluate" argument: When false, the argument is only parsed but not
-/// executed.  The function may return OK, but the rettv will be of type
-/// VAR_UNKNOWN.  The function still returns FAIL for a syntax error.
+/// The "eval" functions have an "evalarg" argument: When NULL or
+/// "evalarg->eval_flags" does not have EVAL_EVALUATE, then the argument is only
+/// parsed but not executed.  The functions may return OK, but the rettv will be
+/// of type VAR_UNKNOWN.  The functions still returns FAIL for a syntax error.
 
 /// Handle zero level expression.
 /// This calls eval1() and handles error message and nextcmd.
@@ -2558,6 +2617,42 @@ int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
   }
 
   return ret;
+}
+
+/// If "arg" is a simple function call without arguments then call it and return
+/// the result.  Otherwise return NOTDONE.
+static int may_call_simple_func(const char *arg, typval_T *rettv)
+{
+  const char *parens = strstr(arg, "()");
+  int r = NOTDONE;
+
+  // If the expression is "FuncName()" then we can skip a lot of overhead.
+  if (parens != NULL && *skipwhite(parens + 2) == NUL) {
+    if (strnequal(arg, "v:lua.", 6)) {
+      const char *p = arg + 6;
+      if (skip_luafunc_name(p) == parens) {
+        r = call_simple_luafunc(p, (size_t)(parens - p), rettv);
+      }
+    } else {
+      const char *p = strncmp(arg, "<SNR>", 5) == 0 ? skipdigits(arg + 5) : arg;
+      if (to_name_end(p, true) == parens) {
+        r = call_simple_func(arg, (size_t)(parens - arg), rettv);
+      }
+    }
+  }
+  return r;
+}
+
+/// Handle zero level expression with optimization for a simple function call.
+/// Same arguments and return value as eval0().
+static int eval0_simple_funccal(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
+{
+  int r = may_call_simple_func(arg, rettv);
+
+  if (r == NOTDONE) {
+    r = eval0(arg, rettv, eap, evalarg);
+  }
+  return r;
 }
 
 /// Handle top level expression:
@@ -7372,7 +7467,7 @@ static char *make_expanded_name(const char *in_start, char *expr_start, char *ex
   char c1 = *in_end;
   *in_end = NUL;
 
-  char *temp_result = eval_to_string(expr_start + 1, false);
+  char *temp_result = eval_to_string(expr_start + 1, false, false);
   if (temp_result != NULL) {
     retval = xmalloc(strlen(temp_result) + (size_t)(expr_start - in_start)
                      + (size_t)(in_end - expr_end) + 1);

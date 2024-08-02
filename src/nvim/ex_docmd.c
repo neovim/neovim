@@ -4644,7 +4644,7 @@ static void ex_colorscheme(exarg_T *eap)
     char *expr = xstrdup("g:colors_name");
 
     emsg_off++;
-    char *p = eval_to_string(expr, false);
+    char *p = eval_to_string(expr, false, false);
     emsg_off--;
     xfree(expr);
 
