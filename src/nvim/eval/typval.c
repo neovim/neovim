@@ -4208,6 +4208,29 @@ linenr_T tv_get_lnum(const typval_T *const tv)
   return lnum;
 }
 
+/// Get the line number from Vimscript object
+///
+/// @note Unlike tv_get_lnum(), this one supports only "$" special string.
+///
+/// @param[in] tv   Object to get value from. Is expected to be a number or
+///                 a special string "$".
+/// @param[in] buf  Buffer to take last line number from in case tv is "$". May
+///                 be NULL, in this case "$" results in zero return.
+///
+/// @return  Line number or 0 in case of error.
+linenr_T tv_get_lnum_buf(const typval_T *const tv, const buf_T *const buf)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (tv->v_type == VAR_STRING
+      && tv->vval.v_string != NULL
+      && tv->vval.v_string[0] == '$'
+      && tv->vval.v_string[1] == NUL
+      && buf != NULL) {
+    return buf->b_ml.ml_line_count;
+  }
+  return (linenr_T)tv_get_number_chk(tv, NULL);
+}
+
 /// Get the floating-point value of a Vimscript object
 ///
 /// Raises an error if object is not number or floating-point.
