@@ -1,8 +1,12 @@
+local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local assert_alive = n.assert_alive
 local clear = n.clear
 local command = n.command
+local eq = t.eq
+local eval = n.eval
+local exec = n.exec
 local feed = n.feed
 
 before_each(clear)
@@ -30,5 +34,20 @@ end)
 
 it('no crash with very long option error message', function()
   pcall(command, 'source test/old/testdir/crash/poc_did_set_langmap')
+  assert_alive()
+end)
+
+it('no crash when closing window with tag in loclist', function()
+  exec([[
+    new
+    lexpr ['foo']
+    lopen
+    let g:qf_bufnr = bufnr()
+    lclose
+    call settagstack(1, #{items: [#{tagname: 'foo', from: [g:qf_bufnr, 1, 1, 0]}]})
+  ]])
+  eq(1, eval('bufexists(g:qf_bufnr)'))
+  command('1close')
+  eq(0, eval('bufexists(g:qf_bufnr)'))
   assert_alive()
 end)
