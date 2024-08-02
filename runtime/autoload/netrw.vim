@@ -19,6 +19,7 @@
 "   2024 Jul 22 by Vim Project: avoid endless recursion (#15318)
 "   2024 Jul 23 by Vim Project: escape filename before trying to delete it (#15330)
 "   2024 Jul 30 by Vim Project: handle mark-copy to same target directory (#12112)
+"   2024 Aug 02 by Vim Project: honor g:netrw_alt{o,v} for :{S,H,V}explore (#15417)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -711,7 +712,6 @@ fun! netrw#Explore(indx,dosplit,style,...)
   " -or- file has been modified AND file not hidden when abandoned
   " -or- Texplore used
   if a:dosplit || (&modified && &hidden == 0 && &bufhidden != "hide") || a:style == 6
-"   call Decho("case dosplit=".a:dosplit." modified=".&modified." a:style=".a:style.": dosplit or file has been modified",'~'.expand("<slnum>"))
    call s:SaveWinVars()
    let winsz= g:netrw_winsize
    if a:indx > 0
@@ -719,57 +719,41 @@ fun! netrw#Explore(indx,dosplit,style,...)
    endif
 
    if a:style == 0      " Explore, Sexplore
-"    call Decho("style=0: Explore or Sexplore",'~'.expand("<slnum>"))
     let winsz= (winsz > 0)? (winsz*winheight(0))/100 : -winsz
     if winsz == 0|let winsz= ""|endif
-    exe "noswapfile ".winsz."wincmd s"
-"    call Decho("exe noswapfile ".winsz."wincmd s",'~'.expand("<slnum>"))
+    exe "noswapfile ".(g:netrw_alto ? "below " : "above ").winsz."wincmd s"
 
-   elseif a:style == 1  "Explore!, Sexplore!
-"    call Decho("style=1: Explore! or Sexplore!",'~'.expand("<slnum>"))
+   elseif a:style == 1  " Explore!, Sexplore!
     let winsz= (winsz > 0)? (winsz*winwidth(0))/100 : -winsz
     if winsz == 0|let winsz= ""|endif
-    exe "keepalt noswapfile ".winsz."wincmd v"
-"    call Decho("exe keepalt noswapfile ".winsz."wincmd v",'~'.expand("<slnum>"))
+    exe "keepalt noswapfile ".(g:netrw_altv ? "rightbelow " : "leftabove ").winsz."wincmd v"
 
    elseif a:style == 2  " Hexplore
-"    call Decho("style=2: Hexplore",'~'.expand("<slnum>"))
     let winsz= (winsz > 0)? (winsz*winheight(0))/100 : -winsz
     if winsz == 0|let winsz= ""|endif
-    exe "keepalt noswapfile bel ".winsz."wincmd s"
-"    call Decho("exe keepalt noswapfile bel ".winsz."wincmd s",'~'.expand("<slnum>"))
+    exe "keepalt noswapfile ".(g:netrw_alto ? "below " : "above ").winsz."wincmd s"
 
    elseif a:style == 3  " Hexplore!
-"    call Decho("style=3: Hexplore!",'~'.expand("<slnum>"))
     let winsz= (winsz > 0)? (winsz*winheight(0))/100 : -winsz
     if winsz == 0|let winsz= ""|endif
-    exe "keepalt noswapfile abo ".winsz."wincmd s"
-"    call Decho("exe keepalt noswapfile abo ".winsz."wincmd s",'~'.expand("<slnum>"))
+    exe "keepalt noswapfile ".(!g:netrw_alto ? "below " : "above ").winsz."wincmd s"
 
    elseif a:style == 4  " Vexplore
-"    call Decho("style=4: Vexplore",'~'.expand("<slnum>"))
     let winsz= (winsz > 0)? (winsz*winwidth(0))/100 : -winsz
     if winsz == 0|let winsz= ""|endif
-    exe "keepalt noswapfile lefta ".winsz."wincmd v"
-"    call Decho("exe keepalt noswapfile lefta ".winsz."wincmd v",'~'.expand("<slnum>"))
+    exe "keepalt noswapfile ".(g:netrw_altv ? "rightbelow " : "leftabove ").winsz."wincmd v"
 
    elseif a:style == 5  " Vexplore!
-"    call Decho("style=5: Vexplore!",'~'.expand("<slnum>"))
     let winsz= (winsz > 0)? (winsz*winwidth(0))/100 : -winsz
     if winsz == 0|let winsz= ""|endif
-    exe "keepalt noswapfile rightb ".winsz."wincmd v"
-"    call Decho("exe keepalt noswapfile rightb ".winsz."wincmd v",'~'.expand("<slnum>"))
+    exe "keepalt noswapfile ".(!g:netrw_altv ? "rightbelow " : "leftabove ").winsz."wincmd v"
 
    elseif a:style == 6  " Texplore
     call s:SaveBufVars()
-"    call Decho("style  = 6: Texplore",'~'.expand("<slnum>"))
     exe "keepalt tabnew ".fnameescape(curdir)
-"    call Decho("exe keepalt tabnew ".fnameescape(curdir),'~'.expand("<slnum>"))
     call s:RestoreBufVars()
    endif
    call s:RestoreWinVars()
-"  else " Decho
-"   call Decho("case a:dosplit=".a:dosplit." AND modified=".&modified." AND a:style=".a:style." is not 6",'~'.expand("<slnum>"))
   endif
   NetrwKeepj norm! 0
 
@@ -11543,7 +11527,6 @@ fun! s:StripTrailingSlash(path)
    " remove trailing slash
    return substitute(a:path, '[/\\]$', '', 'g')
 endfun
-
 
 " ---------------------------------------------------------------------
 " s:NetrwBadd: adds marked files to buffer list or vice versa {{{2
