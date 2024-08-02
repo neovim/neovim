@@ -13,6 +13,7 @@ local fn = n.fn
 local clear = n.clear
 local eval = n.eval
 local feed = n.feed
+local assert_alive = n.assert_alive
 local NIL = vim.NIL
 local eq = t.eq
 
@@ -558,5 +559,41 @@ describe('v:lua', function()
     eq("Vim:E107: Missing parentheses: v:lua", pcall_err(eval, "'bad'->v:lua"))
     eq("Vim:E1085: Not a callable type: v:lua", pcall_err(eval, "'bad'->v:lua()"))
     eq([[Vim:E15: Invalid expression: "v:lua.()"]], pcall_err(eval, "'bad'->v:lua.()"))
+
+    eq("Vim:E1085: Not a callable type: v:lua", pcall_err(eval, "v:lua()"))
+    eq([[Vim:E15: Invalid expression: "v:lua.()"]], pcall_err(eval, "v:lua.()"))
+  end)
+
+  describe('invalid use in fold text', function()
+    before_each(function()
+      feed('ifoo<CR>bar<Esc>')
+      command('1,2fold')
+    end)
+
+    it('with missing function name when used as simple function', function()
+      api.nvim_set_option_value('debug', 'throw', {})
+      eq(
+        [[Vim(eval):E15: Invalid expression: "v:lua.()"]],
+        pcall_err(command, 'set foldtext=v:lua.() | eval foldtextresult(1)')
+      )
+    end)
+
+    it('with missing function name when used in expression', function()
+      api.nvim_set_option_value('debug', 'throw', {})
+      eq(
+        [[Vim(eval):E15: Invalid expression: "+v:lua.()"]],
+        pcall_err(command, 'set foldtext=+v:lua.() | eval foldtextresult(1)')
+      )
+    end)
+
+    it('with non-existent function when used as simple function', function()
+      command('set foldtext=v:lua.NoSuchFunc() | eval foldtextresult(1)')
+      assert_alive()
+    end)
+
+    it('with non-existent function when used in expression', function()
+      command('set foldtext=+v:lua.NoSuchFunc() | eval foldtextresult(1)')
+      assert_alive()
+    end)
   end)
 end)
