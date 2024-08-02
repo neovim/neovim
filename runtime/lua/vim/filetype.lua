@@ -1452,6 +1452,7 @@ local filename = {
   gnashpluginrc = 'gnash',
   gnashrc = 'gnash',
   ['.gnuplot_history'] = 'gnuplot',
+  ['goaccess.conf'] = 'goaccess',
   ['go.sum'] = 'gosum',
   ['go.work.sum'] = 'gosum',
   ['go.work'] = 'gowork',
