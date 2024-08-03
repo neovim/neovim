@@ -52,7 +52,15 @@ return function(hash, fn, strong)
 
   hash = resolve_hash(hash)
 
-  return function(...)
+  local reset_cache = function(...)
+    if #{ ... } == 0 then
+      cache = {}
+    else
+      cache[hash(...)] = nil
+    end
+  end
+
+  local wrapped = function(_self, ...)
     local key = hash(...)
     if cache[key] == nil then
       cache[key] = vim.F.pack_len(fn(...))
@@ -60,4 +68,6 @@ return function(hash, fn, strong)
 
     return vim.F.unpack_len(cache[key])
   end
+
+  return setmetatable({ _reset_cache = reset_cache }, { __call = wrapped })
 end
