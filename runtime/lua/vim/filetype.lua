@@ -174,9 +174,15 @@ end
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
 
--- Filetypes based on file extension
+-- Filetype detection logic is encoded in three tables:
+-- 1. `extension` for literal extension lookup
+-- 2. `filename` for literal full path or basename lookup;
+-- 3. `pattern` for matching filenames or paths against Lua patterns,
+--     optimized for fast lookup.
+-- See `:h dev-vimpatch-filetype` for guidance when porting Vim filetype patches.
+
 ---@diagnostic disable: unused-local
---- @type vim.filetype.mapping
+---@type vim.filetype.mapping
 local extension = {
   -- BEGIN EXTENSION
   ['8th'] = '8th',
@@ -273,8 +279,6 @@ local extension = {
   cfm = 'cf',
   cfi = 'cf',
   hgrc = 'cfg',
-  -- Extension match does not conflict with specific patterns such as '.*/etc/a2ps/.*%.cfg', etc.,
-  -- as it is done after those are tried to match
   cfg = detect.cfg,
   cfG = detect.cfg,
   cFg = detect.cfg,
@@ -1418,7 +1422,7 @@ local extension = {
   -- END EXTENSION
 }
 
---- @type vim.filetype.mapping
+---@type vim.filetype.mapping
 local filename = {
   -- BEGIN FILENAME
   ['a2psrc'] = 'a2ps',
@@ -1883,21 +1887,7 @@ local detect_muttrc = starsetf('muttrc', { parent = 'utt' })
 local detect_neomuttrc = starsetf('neomuttrc', { parent = 'utt' })
 local detect_xkb = starsetf('xkb', { parent = '/usr/' })
 
---- Table of filetype pattern matching rules grouped by their parent pattern.
----
---- Every filetype pattern match is prefaced with a matching of its parent pattern.
---- If there is no match, skip all matching inside group.
---- Note that unlike leaf patterns, parent patterns do not have special matching behaviour if they
---- contain a `/`.
----
---- When modifying an existing regular pattern, make sure that it still fits its group.
----
---- Vim regexes are converted into explicit Lua patterns (without implicit anchoring):
---- '*/debian/changelog' -> '/debian/changelog$'
---- '*/bind/db.*' -> '/bind/db%.'
----
---- See more info in `:h dev-vimpatch-filetype`.
---- @type table<string,vim.filetype.mapping>
+---@type table<string,vim.filetype.mapping>
 local pattern = {
   -- BEGIN PATTERN
   ['/debian/'] = {
