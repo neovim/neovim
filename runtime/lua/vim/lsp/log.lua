@@ -19,7 +19,7 @@ local current_log_level = log_levels.WARN
 local log_date_format = '%F %H:%M:%S'
 
 local function format_func(arg)
-  return vim.inspect(arg, { newline = '' })
+  return vim.inspect(arg, { newline = ' ', indent = '' })
 end
 
 local function notify(msg, level)
