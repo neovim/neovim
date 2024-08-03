@@ -4654,7 +4654,7 @@ matches, nextgroup, etc.  But there are a few differences:
   line (or group of continued lines).
 - When a match with a sync pattern is found, the rest of the line (or group of
   continued lines) is searched for another match.  The last match is used.
-  This is used when a line can contain both the start end the end of a region
+  This is used when a line can contain both the start and the end of a region
   (e.g., in a C-comment like `/* this */`, the last "*/" is used).
 
 There are two ways how a match with a sync pattern can be used:
