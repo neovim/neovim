@@ -226,9 +226,12 @@ void dialog_changed(buf_T *buf, bool checkall)
 
     // restore to empty when write failed
     if (empty_bufname) {
-      XFREE_CLEAR(buf->b_fname);
+      // prevent double free
+      if (buf->b_sfname != buf->b_ffname) {
+        XFREE_CLEAR(buf->b_sfname);
+      }
+      buf->b_fname = NULL;
       XFREE_CLEAR(buf->b_ffname);
-      XFREE_CLEAR(buf->b_sfname);
       unchanged(buf, true, false);
     }
   } else if (ret == VIM_NO) {

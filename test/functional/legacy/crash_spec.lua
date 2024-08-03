@@ -8,6 +8,7 @@ local eq = t.eq
 local eval = n.eval
 local exec = n.exec
 local feed = n.feed
+local pcall_err = t.pcall_err
 
 before_each(clear)
 
@@ -49,5 +50,16 @@ it('no crash when closing window with tag in loclist', function()
   eq(1, eval('bufexists(g:qf_bufnr)'))
   command('1close')
   eq(0, eval('bufexists(g:qf_bufnr)'))
+  assert_alive()
+end)
+
+it('no crash when writing "Untitled" file fails', function()
+  t.mkdir('Untitled')
+  finally(function()
+    vim.uv.fs_rmdir('Untitled')
+  end)
+  feed('ifoobar')
+  command('set bufhidden=unload')
+  eq('Vim(enew):E502: "Untitled" is a directory', pcall_err(command, 'confirm enew'))
   assert_alive()
 end)
