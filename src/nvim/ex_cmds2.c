@@ -227,7 +227,7 @@ void dialog_changed(buf_T *buf, bool checkall)
 
     // restore to empty when write failed
     if (empty_bufname) {
-      XFREE_CLEAR(buf->b_fname);
+      buf->b_fname = NULL;
       XFREE_CLEAR(buf->b_ffname);
       XFREE_CLEAR(buf->b_sfname);
       unchanged(buf, true, false);
