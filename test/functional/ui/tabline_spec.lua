@@ -125,6 +125,26 @@ describe('tabline', function()
     }
   end)
 
+  it('combines highlight attributes', function()
+    screen:set_default_attr_ids({
+      [1] = { foreground = Screen.colors.Blue1, bold = true }, -- StatusLine
+      [2] = { bold = true, italic = true }, -- StatusLine
+      [3] = { bold = true, italic = true, foreground = Screen.colors.Red }, -- NonText combined with StatusLine
+    })
+    command('hi TabLineFill gui=bold,italic')
+    command('hi Identifier guifg=red')
+    command('set tabline=Test%#Identifier#here')
+    command('set showtabline=2')
+    screen:expect {
+      grid = [[
+      {2:Test}{3:here                                  }|
+      ^                                          |
+      {1:~                                         }|*2
+                                                |
+    ]],
+    }
+  end)
+
   it('click definitions do not leak memory #21765', function()
     command('set tabline=%@MyClickFunc@MyClickText%T')
     command('set showtabline=2')

@@ -382,6 +382,14 @@ describe('multibyte rendering: statusline', function()
   end)
 
   it('unprintable chars in filename with custom stl', function()
+    screen:add_extra_attr_ids {
+      [100] = {
+        bold = true,
+        reverse = true,
+        foreground = Screen.colors.Gray100,
+        background = Screen.colors.Red,
+      },
+    }
     command('set statusline=xx%#ErrorMsg#%f%##yy')
     command('file 🧑‍💻')
     -- TODO: this is also wrong but also avoids a crash
@@ -389,7 +397,7 @@ describe('multibyte rendering: statusline', function()
       grid = [[
       ^                                        |
       {1:~                                       }|
-      {3:xx}{9:🧑<200d>💻}{3:yy                          }|
+      {3:xx}{100:🧑<200d>💻}{3:yy                          }|
                                               |
     ]],
     }
