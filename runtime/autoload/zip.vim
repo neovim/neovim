@@ -9,6 +9,7 @@
 " 2024 Jul 23 by Vim Project: fix 'x' command
 " 2024 Jul 24 by Vim Project: use delete() function
 " 2024 Jul 20 by Vim Project: fix opening remote zipfile
+" 2024 Aug 04 by Vim Project: escape '[' in name of file to be extracted
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -218,8 +219,8 @@ fun! zip#Read(fname,mode)
   else
    let zipfile = substitute(a:fname,'^.\{-}zipfile://\(.\{-}\)::[^\\].*$','\1','')
    let fname   = substitute(a:fname,'^.\{-}zipfile://.\{-}::\([^\\].*\)$','\1','')
-   let fname   = substitute(fname, '[', '[[]', 'g')
   endif
+  let fname    = substitute(fname, '[', '[[]', 'g')
   " sanity check
   if !executable(substitute(g:zip_unzipcmd,'\s\+.*$','',''))
    redraw!
@@ -230,7 +231,7 @@ fun! zip#Read(fname,mode)
   endif
 
   " the following code does much the same thing as
-  "   exe "keepj sil! r! ".g:zip_unzipcmd." -p -- ".s:Escape(zipfile,1)." ".s:Escape(fnameescape(fname),1)
+  "   exe "keepj sil! r! ".g:zip_unzipcmd." -p -- ".s:Escape(zipfile,1)." ".s:Escape(fname,1)
   " but allows zipfile://... entries in quickfix lists
   let temp = tempname()
   let fn   = expand('%:p')
