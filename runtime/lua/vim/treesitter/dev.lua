@@ -154,7 +154,8 @@ end
 
 ---@param w integer
 ---@param b integer
-local function set_dev_properties(w, b)
+---@param opts nil|{ indent: integer? }
+local function set_dev_properties(w, b, opts)
   vim.wo[w].scrolloff = 5
   vim.wo[w].wrap = false
   vim.wo[w].foldmethod = 'expr'
@@ -165,6 +166,11 @@ local function set_dev_properties(w, b)
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
   vim.bo[b].filetype = 'query'
+
+  opts = opts or {}
+  if opts.indent then
+    vim.bo[b].shiftwidth = opts.indent
+  end
 end
 
 --- Updates the cursor position in the inspector to match the node under the cursor.
@@ -355,7 +361,7 @@ function M.inspect_tree(opts)
   vim.b[buf].dev_inspect = w
   vim.b[b].dev_base = win -- base window handle
   vim.b[b].disable_query_linter = true
-  set_dev_properties(w, b)
+  set_dev_properties(w, b, { indent = treeview.opts.indent })
 
   local title --- @type string?
   local opts_title = opts.title
