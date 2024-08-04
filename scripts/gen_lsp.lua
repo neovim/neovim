@@ -1,4 +1,4 @@
--- Generates lua-ls annotations for lsp.
+ -- Generates lua-ls annotations for lsp.
 
 local USAGE = [[
 Generates lua-ls annotations for lsp.
