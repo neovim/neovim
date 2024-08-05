@@ -563,7 +563,7 @@ foreach(sfile ${NVIM_SOURCES}
   if(MSVC)
     set(PREPROC_OUTPUT /P /Fi${gf_i} /nologo)
   else()
-    set(PREPROC_OUTPUT -E -o ${gf_i})
+    set(PREPROC_OUTPUT -w -E -o ${gf_i})
   endif()
 
   set(depends "${HEADER_GENERATOR}" "${sfile}" "${LUA_GEN_DEPS}")
