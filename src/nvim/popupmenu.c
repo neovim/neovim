@@ -480,12 +480,18 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
       for (int i = 0; i < ga->ga_len; i++) {
         if (char_pos == ((uint32_t *)ga->ga_data)[i]) {
           new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
+          new_attr = hl_combine_attr(win_hl_attr(curwin, HLF_PMNI), new_attr);
+          new_attr = hl_combine_attr(win_hl_attr(curwin, (int)hlf), new_attr);
           break;
         }
       }
     } else if (matched_start && ptr < text + leader_len) {
       new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
+      new_attr = hl_combine_attr(win_hl_attr(curwin, HLF_PMNI), new_attr);
+      new_attr = hl_combine_attr(win_hl_attr(curwin, (int)hlf), new_attr);
     }
+
+    new_attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), new_attr);
 
     if (user_hlattr > 0) {
       new_attr = hl_combine_attr(new_attr, user_hlattr);
@@ -608,6 +614,7 @@ void pum_redraw(void)
     const hlf_T *const hlfs = (idx == pum_selected) ? hlfsSel : hlfsNorm;
     hlf_T hlf = hlfs[0];  // start with "word" highlight
     int attr = win_hl_attr(curwin, (int)hlf);
+    attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), attr);
 
     grid_line_start(&pum_grid, row);
 
@@ -634,6 +641,7 @@ void pum_redraw(void)
       if (pum_array[idx].pum_user_hlattr > 0) {
         attr = hl_combine_attr(attr, pum_array[idx].pum_user_hlattr);
       }
+      attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), attr);
       int width = 0;
       char *s = NULL;
 
