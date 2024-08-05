@@ -241,7 +241,6 @@ jobs:
           sudo add-apt-repository ppa:neovim-ppa/stable
           sudo apt-get install -y \
             libluajit-5.1-dev \
-            libtermkey-dev \
             libunibilium-dev \
             libuv1-dev \
             lua-filesystem \
