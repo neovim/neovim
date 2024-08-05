@@ -1,6 +1,6 @@
 " zip.vim: Handles browsing zipfiles
 " AUTOLOAD PORTION
-" Date:		Jul 30, 2024
+" Date:		Aug 05, 2024
 " Version:	33
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer:	Charles E Campbell
@@ -8,8 +8,9 @@
 " 2024 Jun 16 by Vim Project: handle whitespace on Windows properly (#14998)
 " 2024 Jul 23 by Vim Project: fix 'x' command
 " 2024 Jul 24 by Vim Project: use delete() function
-" 2024 Jul 20 by Vim Project: fix opening remote zipfile
+" 2024 Jul 30 by Vim Project: fix opening remote zipfile
 " 2024 Aug 04 by Vim Project: escape '[' in name of file to be extracted
+" 2024 Aug 05 by Vim Project: workaround for the FreeBSD's unzip
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -131,8 +132,7 @@ fun! zip#Browse(zipfile)
  \                '" Select a file with cursor and press ENTER'])
   keepj $
 
-"  call Decho("exe silent r! ".g:zip_unzipcmd." -l -- ".s:Escape(a:zipfile,1))
-  exe "keepj sil! r! ".g:zip_unzipcmd." -Z -1 -- ".s:Escape(a:zipfile,1)
+  exe $"keepj sil r! {g:zip_unzipcmd} -Z1 -- {s:Escape(a:zipfile, 1)}"
   if v:shell_error != 0
    redraw!
    echohl WarningMsg | echo "***warning*** (zip#Browse) ".fnameescape(a:zipfile)." is not a zip file" | echohl None
@@ -235,7 +235,7 @@ fun! zip#Read(fname,mode)
   " but allows zipfile://... entries in quickfix lists
   let temp = tempname()
   let fn   = expand('%:p')
-  exe "sil! !".g:zip_unzipcmd." -p -- ".s:Escape(zipfile,1)." ".s:Escape(fname,1).' > '.temp
+  exe "sil !".g:zip_unzipcmd." -p -- ".s:Escape(zipfile,1)." ".s:Escape(fname,1).' > '.temp
   sil exe 'keepalt file '.temp
   sil keepj e!
   sil exe 'keepalt file '.fnameescape(fn)

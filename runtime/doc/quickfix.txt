@@ -994,7 +994,7 @@ Another option is using 'makeencoding'.
 ==============================================================================
 5. Using :vimgrep and :grep				*grep* *lid*
 
-Vim has two ways to find matches for a pattern: Internal and external.  The
+Vim has two ways to find matches for a pattern: internal and external.  The
 advantage of the internal grep is that it works on all systems and uses the
 powerful Vim search patterns.  An external grep program can be used when the
 Vim grep does not do what you want.
@@ -1023,7 +1023,7 @@ commands can be combined to create a NewGrep command: >
         command! -nargs=+ NewGrep execute 'silent grep! <args>' | copen 42
 
 
-5.1 using Vim's internal grep
+5.1 Using Vim's internal grep
 
 					*:vim* *:vimgrep* *E682* *E683*
 :vim[grep][!] /{pattern}/[g][j][f] {file} ...
