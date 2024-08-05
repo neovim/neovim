@@ -343,8 +343,7 @@ static OptInt get_undolevel(buf_T *buf)
 static inline void zero_fmark_additional_data(fmark_T *fmarks)
 {
   for (size_t i = 0; i < NMARKS; i++) {
-    tv_dict_unref(fmarks[i].additional_data);
-    fmarks[i].additional_data = NULL;
+    XFREE_CLEAR(fmarks[i].additional_data);
   }
 }
 

@@ -290,7 +290,7 @@ void restore_search_patterns(void)
 static inline void free_spat(SearchPattern *const spat)
 {
   xfree(spat->pat);
-  tv_dict_unref(spat->additional_data);
+  xfree(spat->additional_data);
 }
 
 #if defined(EXITFREE)

@@ -515,7 +515,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
   if (HAS_KEY(cmd, cmd, magic)) {
     Dict(cmd_magic) magic[1] = KEYDICT_INIT;
-    if (!api_dict_to_keydict(magic, KeyDict_cmd_magic_get_field, cmd->magic, err)) {
+    if (!api_dict_to_keydict(magic, DictHash(cmd_magic), cmd->magic, err)) {
       goto end;
     }
 
@@ -533,14 +533,14 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
   if (HAS_KEY(cmd, cmd, mods)) {
     Dict(cmd_mods) mods[1] = KEYDICT_INIT;
-    if (!api_dict_to_keydict(mods, KeyDict_cmd_mods_get_field, cmd->mods, err)) {
+    if (!api_dict_to_keydict(mods, DictHash(cmd_mods), cmd->mods, err)) {
       goto end;
     }
 
     if (HAS_KEY(mods, cmd_mods, filter)) {
       Dict(cmd_mods_filter) filter[1] = KEYDICT_INIT;
 
-      if (!api_dict_to_keydict(&filter, KeyDict_cmd_mods_filter_get_field,
+      if (!api_dict_to_keydict(&filter, DictHash(cmd_mods_filter),
                                mods->filter, err)) {
         goto end;
       }

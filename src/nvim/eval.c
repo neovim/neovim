@@ -4788,19 +4788,6 @@ bool garbage_collect(bool testing)
   FOR_ALL_BUFFERS(buf) {
     // buffer-local variables
     ABORTING(set_ref_in_item)(&buf->b_bufvar.di_tv, copyID, NULL, NULL);
-    // buffer marks (ShaDa additional data)
-    ABORTING(set_ref_in_fmark)(buf->b_last_cursor, copyID);
-    ABORTING(set_ref_in_fmark)(buf->b_last_insert, copyID);
-    ABORTING(set_ref_in_fmark)(buf->b_last_change, copyID);
-    for (size_t i = 0; i < NMARKS; i++) {
-      ABORTING(set_ref_in_fmark)(buf->b_namedm[i], copyID);
-    }
-    // buffer change list (ShaDa additional data)
-    for (int i = 0; i < buf->b_changelistlen; i++) {
-      ABORTING(set_ref_in_fmark)(buf->b_changelist[i], copyID);
-    }
-    // buffer ShaDa additional data
-    ABORTING(set_ref_dict)(buf->additional_data, copyID);
 
     // buffer callback functions
     ABORTING(set_ref_in_callback)(&buf->b_prompt_callback, copyID, NULL, NULL);
@@ -4823,10 +4810,6 @@ bool garbage_collect(bool testing)
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     // window-local variables
     ABORTING(set_ref_in_item)(&wp->w_winvar.di_tv, copyID, NULL, NULL);
-    // window jump list (ShaDa additional data)
-    for (int i = 0; i < wp->w_jumplistlen; i++) {
-      ABORTING(set_ref_in_fmark)(wp->w_jumplist[i].fmark, copyID);
-    }
   }
   // window-local variables in autocmd windows
   for (int i = 0; i < AUCMD_WIN_COUNT; i++) {
@@ -4843,9 +4826,6 @@ bool garbage_collect(bool testing)
       char name = NUL;
       bool is_unnamed = false;
       reg_iter = op_global_reg_iter(reg_iter, &name, &reg, &is_unnamed);
-      if (name != NUL) {
-        ABORTING(set_ref_dict)(reg.additional_data, copyID);
-      }
     } while (reg_iter != NULL);
   }
 
@@ -4856,9 +4836,6 @@ bool garbage_collect(bool testing)
       xfmark_T fm;
       char name = NUL;
       mark_iter = mark_global_iter(mark_iter, &name, &fm);
-      if (name != NUL) {
-        ABORTING(set_ref_dict)(fm.fmark.additional_data, copyID);
-      }
     } while (mark_iter != NULL);
   }
 
@@ -4899,36 +4876,6 @@ bool garbage_collect(bool testing)
 
   // v: vars
   ABORTING(set_ref_in_ht)(&vimvarht, copyID, NULL);
-
-  // history items (ShaDa additional elements)
-  if (p_hi) {
-    for (int i = 0; i < HIST_COUNT; i++) {
-      const void *iter = NULL;
-      do {
-        histentry_T hist;
-        iter = hist_iter(iter, (uint8_t)i, false, &hist);
-        if (hist.hisstr != NULL) {
-          ABORTING(set_ref_list)(hist.additional_elements, copyID);
-        }
-      } while (iter != NULL);
-    }
-  }
-
-  // previously used search/substitute patterns (ShaDa additional data)
-  {
-    SearchPattern pat;
-    get_search_pattern(&pat);
-    ABORTING(set_ref_dict)(pat.additional_data, copyID);
-    get_substitute_pattern(&pat);
-    ABORTING(set_ref_dict)(pat.additional_data, copyID);
-  }
-
-  // previously used replacement string
-  {
-    SubReplacementString sub;
-    sub_get_replacement(&sub);
-    ABORTING(set_ref_list)(sub.additional_elements, copyID);
-  }
 
   ABORTING(set_ref_in_quickfix)(copyID);
 
@@ -5209,52 +5156,6 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack
     break;
   }
   return abort;
-}
-
-/// Mark all lists and dicts referenced in given mark
-///
-/// @return  true if setting references failed somehow.
-static inline bool set_ref_in_fmark(fmark_T fm, int copyID)
-  FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (fm.additional_data != NULL
-      && fm.additional_data->dv_copyID != copyID) {
-    fm.additional_data->dv_copyID = copyID;
-    return set_ref_in_ht(&fm.additional_data->dv_hashtab, copyID, NULL);
-  }
-  return false;
-}
-
-/// Mark all lists and dicts referenced in given list and the list itself
-///
-/// @return  true if setting references failed somehow.
-static inline bool set_ref_list(list_T *list, int copyID)
-  FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (list != NULL) {
-    typval_T tv = (typval_T) {
-      .v_type = VAR_LIST,
-      .vval = { .v_list = list }
-    };
-    return set_ref_in_item(&tv, copyID, NULL, NULL);
-  }
-  return false;
-}
-
-/// Mark all lists and dicts referenced in given dict and the dict itself
-///
-/// @return  true if setting references failed somehow.
-static inline bool set_ref_dict(dict_T *dict, int copyID)
-  FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (dict != NULL) {
-    typval_T tv = (typval_T) {
-      .v_type = VAR_DICT,
-      .vval = { .v_dict = dict }
-    };
-    return set_ref_in_item(&tv, copyID, NULL, NULL);
-  }
-  return false;
 }
 
 /// Get the key for #{key: val} into "tv" and advance "arg".

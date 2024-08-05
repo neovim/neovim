@@ -1,6 +1,5 @@
 #pragma once
 
-#include <msgpack.h>
 #include <stdbool.h>
 #include <uv.h>
 

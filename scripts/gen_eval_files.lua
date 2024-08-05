@@ -376,6 +376,9 @@ end
 --- @param fun vim.EvalFn
 --- @param write fun(line: string)
 local function render_api_keyset_meta(_f, fun, write)
+  if string.sub(fun.name, 1, 1) == '_' then
+    return -- not exported
+  end
   write('')
   write('--- @class vim.api.keyset.' .. fun.name)
   for _, p in ipairs(fun.params) do

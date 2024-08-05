@@ -868,7 +868,7 @@ static void free_buffer(buf_T *buf)
   }
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
-  tv_dict_unref(buf->additional_data);
+  xfree(buf->additional_data);
   xfree(buf->b_prompt_text);
   callback_free(&buf->b_prompt_callback);
   callback_free(&buf->b_prompt_interrupt);

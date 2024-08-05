@@ -1,8 +1,5 @@
 #include <assert.h>
 #include <inttypes.h>
-#include <msgpack/object.h>
-#include <msgpack/sbuffer.h>
-#include <msgpack/unpack.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>

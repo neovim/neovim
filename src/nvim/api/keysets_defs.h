@@ -103,7 +103,7 @@ typedef struct {
   Object nargs;
   Object preview;
   Object range;
-  Boolean register_;
+  Boolean register_ DictKey(register);
 } Dict(user_command);
 
 typedef struct {
@@ -170,7 +170,7 @@ typedef struct {
   Boolean reverse;
   Boolean altfont;
   Boolean nocombine;
-  Boolean default_;
+  Boolean default_ DictKey(default);
   Object cterm;
   Object foreground;
   Object fg;
@@ -392,3 +392,41 @@ typedef struct {
   OptionalKeys is_set__ns_opts_;
   Array wins;
 } Dict(ns_opts);
+
+typedef struct {
+  OptionalKeys is_set___shada_search_pat_;
+  Boolean magic DictKey(sm);
+  Boolean smartcase DictKey(sc);
+  Boolean has_line_offset DictKey(sl);
+  Boolean place_cursor_at_end DictKey(se);
+  Boolean is_last_used DictKey(su);
+  Boolean is_substitute_pattern DictKey(ss);
+  Boolean highlighted DictKey(sh);
+  Boolean search_backward DictKey(sb);
+  Integer offset DictKey(so);
+  String pat DictKey(sp);
+} Dict(_shada_search_pat);
+
+typedef struct {
+  OptionalKeys is_set___shada_mark_;
+  Integer n;
+  Integer l;
+  Integer c;
+  String f;
+} Dict(_shada_mark);
+
+typedef struct {
+  OptionalKeys is_set___shada_register_;
+  StringArray rc;
+  Boolean ru;
+  Integer rt;
+  Integer n;
+  Integer rw;
+} Dict(_shada_register);
+
+typedef struct {
+  OptionalKeys is_set___shada_buflist_item_;
+  Integer l;
+  Integer c;
+  String f;
+} Dict(_shada_buflist_item);

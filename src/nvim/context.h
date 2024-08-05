@@ -1,6 +1,5 @@
 #pragma once
 
-#include <msgpack/sbuffer.h>
 #include <stddef.h>
 
 #include "klib/kvec.h"

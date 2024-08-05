@@ -1,9 +1,6 @@
 LIBUV_URL https://github.com/libuv/libuv/archive/v1.48.0.tar.gz
 LIBUV_SHA256 8c253adb0f800926a6cbd1c6576abae0bc8eb86a4f891049b72f9e5b7dc58f33
 
-MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/c-6.0.1.tar.gz
-MSGPACK_SHA256 58d5fe49d0ee2b374d60a61aabf8028b2c92004e6f11bff04e74b639fc8ad541
-
 LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/04dca7911ea255f37be799c18d74c305b921c1a6.tar.gz
 LUAJIT_SHA256 346b028d9ba85e04b7e23a43cc51ec076574d2efc0d271d4355141b0145cd6e0
 

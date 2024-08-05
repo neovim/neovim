@@ -19,6 +19,8 @@
 # define ArrayOf(...) Array
 # define DictionaryOf(...) Dictionary
 # define Dict(name) KeyDict_##name
+# define DictHash(name) KeyDict_##name##_get_field
+# define DictKey(name)
 # include "api/private/defs.h.inline.generated.h"
 #endif
 
@@ -88,6 +90,8 @@ typedef kvec_t(Object) Array;
 typedef struct key_value_pair KeyValuePair;
 typedef kvec_t(KeyValuePair) Dictionary;
 
+typedef kvec_t(String) StringArray;
+
 typedef enum {
   kObjectTypeNil = 0,
   kObjectTypeBoolean,
@@ -102,6 +106,10 @@ typedef enum {
   kObjectTypeWindow,
   kObjectTypeTabpage,
 } ObjectType;
+
+typedef enum {
+  kUnpackTypeStringArray = -1,
+} UnpackType;
 
 /// Value by which objects represented as EXT type are shifted
 ///
@@ -140,7 +148,7 @@ typedef struct {
 typedef struct {
   char *str;
   size_t ptr_off;
-  ObjectType type;  // kObjectTypeNil == untyped
+  int type;  // ObjectType or UnpackType. kObjectTypeNil == untyped
   int opt_index;
   bool is_hlgroup;
 } KeySetLink;

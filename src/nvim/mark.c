@@ -71,7 +71,7 @@ int setmark(int c)
 /// Free fmark_T item
 void free_fmark(fmark_T fm)
 {
-  tv_dict_unref(fm.additional_data);
+  xfree(fm.additional_data);
 }
 
 /// Free xfmark_T item

@@ -11,6 +11,7 @@
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/unpacker.h"
+#include "nvim/strings.h"
 #include "nvim/ui_client.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -206,6 +207,7 @@ bool unpacker_parse_header(Unpacker *p)
 
   assert(!ERROR_SET(&p->unpack_error));
 
+  // TODO(bfredl): eliminate p->reader, we can use mpack_rtoken directly
 #define NEXT(tok) \
   result = mpack_read(&p->reader, &data, &size, &tok); \
   if (result) { goto error; }
@@ -521,4 +523,198 @@ bool unpacker_parse_redraw(Unpacker *p)
   default:
     abort();
   }
+}
+
+/// Requires a complete string. safe to use e.g. in shada as we have loaded a
+/// complete shada item into a linear buffer.
+///
+/// Data and size are preserved in cause of failure.
+///
+/// @return "data" is NULL only when failure (non-null data and size=0 for
+/// valid empty string)
+String unpack_string(const char **data, size_t *size)
+{
+  const char *data2 = *data;
+  size_t size2 = *size;
+  mpack_token_t tok;
+
+  // TODO(bfredl): this code is hot a f, specialize!
+  int result = mpack_rtoken(&data2, &size2, &tok);
+  if (result || (tok.type != MPACK_TOKEN_STR && tok.type != MPACK_TOKEN_BIN)) {
+    return (String)STRING_INIT;
+  }
+  if (*size < tok.length) {
+    // result = MPACK_EOF;
+    return (String)STRING_INIT;
+  }
+  (*data) = data2 + tok.length;
+  (*size) = size2 - tok.length;
+  return cbuf_as_string((char *)data2, tok.length);
+}
+
+/// @return -1 if not an array or EOF. otherwise size of valid array
+ssize_t unpack_array(const char **data, size_t *size)
+{
+  // TODO(bfredl): this code is hot, specialize!
+  mpack_token_t tok;
+  int result = mpack_rtoken(data, size, &tok);
+  if (result || tok.type != MPACK_TOKEN_ARRAY) {
+    return -1;
+  }
+  return tok.length;
+}
+
+/// does not keep "data" untouched on failure
+bool unpack_integer(const char **data, size_t *size, Integer *res)
+{
+  mpack_token_t tok;
+  int result = mpack_rtoken(data, size, &tok);
+  if (result) {
+    return false;
+  }
+  return unpack_uint_or_sint(tok, res);
+}
+
+bool unpack_uint_or_sint(mpack_token_t tok, Integer *res)
+{
+  if (tok.type == MPACK_TOKEN_UINT) {
+    *res = (Integer)mpack_unpack_uint(tok);
+    return true;
+  } else if (tok.type == MPACK_TOKEN_SINT) {
+    *res = (Integer)mpack_unpack_sint(tok);
+    return true;
+  }
+  return false;
+}
+
+static void parse_nop(mpack_parser_t *parser, mpack_node_t *node)
+{
+}
+
+int unpack_skip(const char **data, size_t *size)
+{
+  mpack_parser_t parser;
+  mpack_parser_init(&parser, 0);
+
+  return mpack_parse(&parser, data, size, parse_nop, parse_nop);
+}
+
+void push_additional_data(AdditionalDataBuilder *ad, const char *data, size_t size)
+{
+  if (kv_size(*ad) == 0) {
+    AdditionalData init = { 0 };
+    kv_concat_len(*ad, &init, sizeof(init));
+  }
+  AdditionalData *a = (AdditionalData *)ad->items;
+  a->nitems++;
+  a->nbytes += (uint32_t)size;
+  kv_concat_len(*ad, data, size);
+}
+
+// currently only used for shada, so not re-entrant like unpacker_parse_redraw
+bool unpack_keydict(void *retval, FieldHashfn hashy, AdditionalDataBuilder *ad, const char **data,
+                    size_t *restrict size, char **error)
+{
+  OptKeySet *ks = (OptKeySet *)retval;
+  mpack_token_t tok;
+
+  int result = mpack_rtoken(data, size, &tok);
+  if (result || tok.type != MPACK_TOKEN_MAP) {
+    *error = xstrdup("is not a dictionary");
+    return false;
+  }
+
+  size_t map_size = tok.length;
+
+  for (size_t i = 0; i < map_size; i++) {
+    const char *item_start = *data;
+    // TODO(bfredl): we could specialize a hot path for FIXSTR here
+    String key = unpack_string(data, size);
+    if (!key.data) {
+      *error = arena_printf(NULL, "has key value which is not a string").data;
+      return false;
+    } else if (key.size == 0) {
+      *error = arena_printf(NULL, "has empty key").data;
+      return false;
+    }
+    KeySetLink *field = hashy(key.data, key.size);
+
+    if (!field) {
+      int status = unpack_skip(data, size);
+      if (status) {
+        return false;
+      }
+
+      if (ad) {
+        push_additional_data(ad, item_start, (size_t)(*data - item_start));
+      }
+      continue;
+    }
+
+    assert(field->opt_index >= 0);
+    uint64_t flag = (1ULL << field->opt_index);
+    if (ks->is_set_ & flag) {
+      *error = xstrdup("duplicate key");
+      return false;
+    }
+    ks->is_set_ |= flag;
+
+    char *mem = ((char *)retval + field->ptr_off);
+    switch (field->type) {
+    case kObjectTypeBoolean:
+      if (*size == 0 || (**data & 0xfe) != 0xc2) {
+        *error = arena_printf(NULL, "has %.*s key value which is not a boolean", (int)key.size,
+                              key.data).data;
+        return false;
+      }
+      *(Boolean *)mem = **data & 0x01;
+      (*data)++; (*size)--;
+      break;
+
+    case kObjectTypeInteger:
+      if (!unpack_integer(data, size, (Integer *)mem)) {
+        *error = arena_printf(NULL, "has %.*s key value which is not an integer", (int)key.size,
+                              key.data).data;
+        return false;
+      }
+      break;
+
+    case kObjectTypeString: {
+      String val = unpack_string(data, size);
+      if (!val.data) {
+        *error = arena_printf(NULL, "has %.*s key value which is not a binary", (int)key.size,
+                              key.data).data;
+        return false;
+      }
+      *(String *)mem = val;
+      break;
+    }
+
+    case kUnpackTypeStringArray: {
+      ssize_t len = unpack_array(data, size);
+      if (len < 0) {
+        *error = arena_printf(NULL, "has %.*s key with non-array value", (int)key.size,
+                              key.data).data;
+        return false;
+      }
+      StringArray *a = (StringArray *)mem;
+      kv_ensure_space(*a, (size_t)len);
+      for (size_t j = 0; j < (size_t)len; j++) {
+        String item = unpack_string(data, size);
+        if (!item.data) {
+          *error = arena_printf(NULL, "has %.*s array with non-binary value", (int)key.size,
+                                key.data).data;
+          return false;
+        }
+        kv_push(*a, item);
+      }
+      break;
+    }
+
+    default:
+      abort();  // not supported
+    }
+  }
+
+  return true;
 }

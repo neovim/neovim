@@ -1,7 +1,11 @@
 #pragma once
 
-#include "nvim/eval/typval_defs.h"
+#include <stdbool.h>
+
+#include "nvim/func_attr.h"
 #include "nvim/os/time_defs.h"
+#include "nvim/pos_defs.h"
+#include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mark_defs.h.inline.generated.h"
@@ -75,7 +79,7 @@ typedef struct {
   int fnum;             ///< File number.
   Timestamp timestamp;  ///< Time when this mark was last set.
   fmarkv_T view;  ///< View the mark was created on
-  dict_T *additional_data;  ///< Additional data from ShaDa file.
+  AdditionalData *additional_data;  ///< Additional data from ShaDa file.
 } fmark_T;
 
 #define INIT_FMARK { { 0, 0, 0 }, 0, 0, INIT_FMARKV, NULL }

@@ -56,3 +56,9 @@ typedef struct regprog regprog_T;
 typedef struct syn_state synstate_T;
 typedef struct terminal Terminal;
 typedef struct window_S win_T;
+
+typedef struct {
+  uint32_t nitems;
+  uint32_t nbytes;
+  char data[];
+} AdditionalData;
