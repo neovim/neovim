@@ -60,6 +60,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
+          install: unzip
           pacboy: >-
             make:p gcc:p diffutils:p
           release: false
