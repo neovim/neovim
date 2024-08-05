@@ -855,6 +855,7 @@ System functions and manipulation of files:
 	readblob()		read a file into a Blob
 	readdir()		get a List of file names in a directory
 	writefile()		write a List of lines or Blob into a file
+	filecopy()		copy a file {from} to {to}
 
 Date and Time:				*date-functions* *time-functions*
 	getftime()		get last modification time of a file

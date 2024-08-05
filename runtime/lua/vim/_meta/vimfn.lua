@@ -1993,6 +1993,19 @@ function vim.fn.feedkeys(string, mode) end
 --- @return any
 function vim.fn.file_readable(file) end
 
+--- Copy the file pointed to by the name {from} to {to}. The
+--- result is a Number, which is |TRUE| if the file was copied
+--- successfully, and |FALSE| when it failed.
+--- If a file with name {to} already exists, it will fail.
+--- Note that it does not handle directories (yet).
+---
+--- This function is not available in the |sandbox|.
+---
+--- @param from string
+--- @param to string
+--- @return 0|1
+function vim.fn.filecopy(from, to) end
+
 --- The result is a Number, which is |TRUE| when a file with the
 --- name {file} exists, and can be read.  If {file} doesn't exist,
 --- or is a directory, the result is |FALSE|.  {file} is any
