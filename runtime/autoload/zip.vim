@@ -11,6 +11,7 @@
 " 2024 Jul 30 by Vim Project: fix opening remote zipfile
 " 2024 Aug 04 by Vim Project: escape '[' in name of file to be extracted
 " 2024 Aug 05 by Vim Project: workaround for the FreeBSD's unzip
+" 2024 Aug 05 by Vim Project: clean-up and make it work with shellslash on Windows
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -36,7 +37,6 @@ if v:version < 702
 endif
 let s:keepcpo= &cpo
 set cpo&vim
-"DechoTabOn
 
 let s:zipfile_escape = ' ?&;\'
 let s:ERROR          = 2
@@ -136,14 +136,12 @@ fun! zip#Browse(zipfile)
   if v:shell_error != 0
    redraw!
    echohl WarningMsg | echo "***warning*** (zip#Browse) ".fnameescape(a:zipfile)." is not a zip file" | echohl None
-"   call inputsave()|call input("Press <cr> to continue")|call inputrestore()
    keepj sil! %d
    let eikeep= &ei
    set ei=BufReadCmd,FileReadCmd
    exe "keepj r ".fnameescape(a:zipfile)
    let &ei= eikeep
    keepj 1d
-"   call Dret("zip#Browse")
    return
   endif
 
@@ -156,55 +154,43 @@ fun! zip#Browse(zipfile)
   endif
 
   let &report= repkeep
-"  call Dret("zip#Browse")
 endfun
 
 " ---------------------------------------------------------------------
 " ZipBrowseSelect: {{{2
 fun! s:ZipBrowseSelect()
-  "  call Dfunc("ZipBrowseSelect() zipfile<".((exists("b:zipfile"))? b:zipfile : "n/a")."> curfile<".expand("%").">")
   let repkeep= &report
   set report=10
   let fname= getline(".")
   if !exists("b:zipfile")
-"   call Dret("ZipBrowseSelect : b:zipfile doesn't exist!")
    return
   endif
 
   " sanity check
   if fname =~ '^"'
    let &report= repkeep
-"   call Dret("ZipBrowseSelect")
    return
   endif
   if fname =~ '/$'
    redraw!
    echohl Error | echo "***error*** (zip#Browse) Please specify a file, not a directory" | echohl None
-"   call inputsave()|call input("Press <cr> to continue")|call inputrestore()
    let &report= repkeep
-"   call Dret("ZipBrowseSelect")
    return
   endif
-
-"  call Decho("fname<".fname.">")
 
   " get zipfile to the new-window
   let zipfile = b:zipfile
   let curfile = expand("%")
-"  call Decho("zipfile<".zipfile.">")
-"  call Decho("curfile<".curfile.">")
 
   noswapfile new
   if !exists("g:zip_nomax") || g:zip_nomax == 0
    wincmd _
   endif
   let s:zipfile_{winnr()}= curfile
-"  call Decho("exe e ".fnameescape("zipfile://".zipfile.'::'.fname))
   exe "noswapfile e ".fnameescape("zipfile://".zipfile.'::'.fname)
   filetype detect
 
   let &report= repkeep
-"  call Dret("ZipBrowseSelect : s:zipfile_".winnr()."<".s:zipfile_{winnr()}.">")
 endfun
 
 " ---------------------------------------------------------------------
@@ -225,7 +211,6 @@ fun! zip#Read(fname,mode)
   if !executable(substitute(g:zip_unzipcmd,'\s\+.*$','',''))
    redraw!
    echohl Error | echo "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program" | echohl None
-"   call inputsave()|call input("Press <cr> to continue")|call inputrestore()
    let &report= repkeep
    return
   endif
@@ -252,7 +237,6 @@ endfun
 " ---------------------------------------------------------------------
 " zip#Write: {{{2
 fun! zip#Write(fname)
-"  call Dfunc("zip#Write(fname<".a:fname.">) zipfile_".winnr()."<".s:zipfile_{winnr()}.">")
   let repkeep= &report
   set report=10
 
@@ -260,36 +244,28 @@ fun! zip#Write(fname)
   if !executable(substitute(g:zip_zipcmd,'\s\+.*$','',''))
    redraw!
    echohl Error | echo "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program" | echohl None
-"   call inputsave()|call input("Press <cr> to continue")|call inputrestore()
    let &report= repkeep
-"   call Dret("zip#Write")
    return
   endif
   if !exists("*mkdir")
    redraw!
    echohl Error | echo "***error*** (zip#Write) sorry, mkdir() doesn't work on your system" | echohl None
-"   call inputsave()|call input("Press <cr> to continue")|call inputrestore()
    let &report= repkeep
-"   call Dret("zip#Write")
    return
   endif
 
   let curdir= getcwd()
   let tmpdir= tempname()
-"  call Decho("orig tempname<".tmpdir.">")
   if tmpdir =~ '\.'
    let tmpdir= substitute(tmpdir,'\.[^.]*$','','e')
   endif
-"  call Decho("tmpdir<".tmpdir.">")
   call mkdir(tmpdir,"p")
 
   " attempt to change to the indicated directory
   if s:ChgDir(tmpdir,s:ERROR,"(zip#Write) cannot cd to temporary directory")
    let &report= repkeep
-"   call Dret("zip#Write")
    return
   endif
-"  call Decho("current directory now: ".getcwd())
 
   " place temporary files under .../_ZIPVIM_/
   if isdirectory("_ZIPVIM_")
@@ -297,7 +273,6 @@ fun! zip#Write(fname)
   endif
   call mkdir("_ZIPVIM_")
   cd _ZIPVIM_
-"  call Decho("current directory now: ".getcwd())
 
   if has("unix")
    let zipfile = substitute(a:fname,'zipfile://\(.\{-}\)::[^\\].*$','\1','')
@@ -306,21 +281,17 @@ fun! zip#Write(fname)
    let zipfile = substitute(a:fname,'^.\{-}zipfile://\(.\{-}\)::[^\\].*$','\1','')
    let fname   = substitute(a:fname,'^.\{-}zipfile://.\{-}::\([^\\].*\)$','\1','')
   endif
-"  call Decho("zipfile<".zipfile.">")
-"  call Decho("fname  <".fname.">")
 
   if fname =~ '/'
    let dirpath = substitute(fname,'/[^/]\+$','','e')
    if has("win32unix") && executable("cygpath")
     let dirpath = substitute(system("cygpath ".s:Escape(dirpath,0)),'\n','','e')
    endif
-"   call Decho("mkdir(dirpath<".dirpath.">,p)")
    call mkdir(dirpath,"p")
   endif
   if zipfile !~ '/'
    let zipfile= curdir.'/'.zipfile
   endif
-"  call Decho("zipfile<".zipfile."> fname<".fname.">")
 
   exe "w! ".fnameescape(fname)
   if has("win32unix") && executable("cygpath")
@@ -331,17 +302,14 @@ fun! zip#Write(fname)
     let fname = substitute(fname, '[', '[[]', 'g')
   endif
 
-"  call Decho(g:zip_zipcmd." -u ".s:Escape(fnamemodify(zipfile,":p"),0)." ".s:Escape(fname,0))
   call system(g:zip_zipcmd." -u ".s:Escape(fnamemodify(zipfile,":p"),0)." ".s:Escape(fname,0))
   if v:shell_error != 0
    redraw!
    echohl Error | echo "***error*** (zip#Write) sorry, unable to update ".zipfile." with ".fname | echohl None
-"   call inputsave()|call input("Press <cr> to continue")|call inputrestore()
 
   elseif s:zipfile_{winnr()} =~ '^\a\+://'
    " support writing zipfiles across a network
    let netzipfile= s:zipfile_{winnr()}
-"   call Decho("handle writing <".zipfile."> across network as <".netzipfile.">")
    1split|enew
    let binkeep= &binary
    let eikeep = &ei
@@ -362,36 +330,30 @@ fun! zip#Write(fname)
   setlocal nomod
 
   let &report= repkeep
-"  call Dret("zip#Write")
 endfun
 
 " ---------------------------------------------------------------------
 " zip#Extract: extract a file from a zip archive {{{2
 fun! zip#Extract()
-"  call Dfunc("zip#Extract()")
 
   let repkeep= &report
   set report=10
   let fname= getline(".")
-"  call Decho("fname<".fname.">")
 
   " sanity check
   if fname =~ '^"'
    let &report= repkeep
-"   call Dret("zip#Extract")
    return
   endif
   if fname =~ '/$'
    redraw!
    echohl Error | echo "***error*** (zip#Extract) Please specify a file, not a directory" | echohl None
    let &report= repkeep
-"   call Dret("zip#Extract")
    return
   endif
 
   " extract the file mentioned under the cursor
   call system($"{g:zip_extractcmd} {shellescape(b:zipfile)} {shellescape(fname)}")
-"  call Decho("zipfile<".b:zipfile.">")
   if v:shell_error != 0
    echohl Error | echo "***error*** ".g:zip_extractcmd." ".b:zipfile." ".fname.": failed!" | echohl NONE
   elseif !filereadable(fname)
@@ -403,7 +365,6 @@ fun! zip#Extract()
   " restore option
   let &report= repkeep
 
-"  call Dret("zip#Extract")
 endfun
 
 " ---------------------------------------------------------------------
@@ -428,8 +389,6 @@ endfun
 " ---------------------------------------------------------------------
 " ChgDir: {{{2
 fun! s:ChgDir(newdir,errlvl,errmsg)
-"  call Dfunc("ChgDir(newdir<".a:newdir."> errlvl=".a:errlvl."  errmsg<".a:errmsg.">)")
-
   try
    exe "cd ".fnameescape(a:newdir)
   catch /^Vim\%((\a\+)\)\=:E344/
@@ -441,12 +400,9 @@ fun! s:ChgDir(newdir,errlvl,errmsg)
    elseif a:errlvl == s:ERROR
     echohl Error | echo "***error*** ".a:errmsg | echohl NONE
    endif
-"   call inputsave()|call input("Press <cr> to continue")|call inputrestore()
-"   call Dret("ChgDir 1")
    return 1
   endtry
 
-"  call Dret("ChgDir 0")
   return 0
 endfun
 
