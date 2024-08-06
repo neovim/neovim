@@ -667,6 +667,12 @@ void f_haslocaldir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
+/// "isabsolutepath()" function
+void f_isabsolutepath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->vval.v_number = path_is_absolute(tv_get_string(&argvars[0]));
+}
+
 /// "isdirectory()" function
 void f_isdirectory(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

@@ -5669,6 +5669,30 @@ M.funcs = {
     params = { { 'expr', 'any' } },
     signature = 'invert({expr})',
   },
+  isabsolutepath = {
+    args = 1,
+    base = 1,
+    desc = [=[
+      The result is a Number, which is |TRUE| when {path} is an
+      absolute path.
+      On Unix, a path is considered absolute when it starts with '/'.
+      On MS-Windows, it is considered absolute when it starts with an
+      optional drive prefix and is followed by a '\' or '/'. UNC paths
+      are always absolute.
+      Example: >vim
+      	echo isabsolutepath('/usr/share/')	" 1
+      	echo isabsolutepath('./foobar')		" 0
+      	echo isabsolutepath('C:\Windows')	" 1
+      	echo isabsolutepath('foobar')		" 0
+      	echo isabsolutepath('\\remote\file')	" 1
+      <
+    ]=],
+    fast = true,
+    name = 'isabsolutepath',
+    params = { { 'path', 'any' } },
+    returns = '0|1',
+    signature = 'isabsolutepath({path})',
+  },
   isdirectory = {
     args = 1,
     base = 1,

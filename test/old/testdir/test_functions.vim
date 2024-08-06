@@ -3559,6 +3559,24 @@ func Test_builtin_check()
   unlet bar
 endfunc
 
+" Test for isabsolutepath()
+func Test_isabsolutepath()
+  call assert_false(isabsolutepath(''))
+  call assert_false(isabsolutepath('.'))
+  call assert_false(isabsolutepath('../Foo'))
+  call assert_false(isabsolutepath('Foo/'))
+  if has('win32')
+    call assert_true(isabsolutepath('A:\'))
+    call assert_true(isabsolutepath('A:\Foo'))
+    call assert_true(isabsolutepath('A:/Foo'))
+    call assert_false(isabsolutepath('A:Foo'))
+    call assert_false(isabsolutepath('\Windows'))
+    call assert_true(isabsolutepath('\\Server2\Share\Test\Foo.txt'))
+  else
+    call assert_true(isabsolutepath('/'))
+    call assert_true(isabsolutepath('/usr/share/'))
+  endif
+endfunc
 
 " Test for virtcol()
 func Test_virtcol()

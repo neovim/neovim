@@ -836,6 +836,7 @@ System functions and manipulation of files:
 	getfperm()		get the permissions of a file
 	setfperm()		set the permissions of a file
 	getftype()		get the kind of a file
+	isabsolutepath()	check if a path is absolute
 	isdirectory()		check if a directory exists
 	getfsize()		get the size of a file
 	getcwd()		get the current working directory
