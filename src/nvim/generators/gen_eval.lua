@@ -19,6 +19,7 @@ hashpipe:write([[
 #include "nvim/digraph.h"
 #include "nvim/eval.h"
 #include "nvim/eval/buffer.h"
+#include "nvim/eval/fs.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
