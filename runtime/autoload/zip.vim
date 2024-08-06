@@ -29,12 +29,6 @@ if &cp || exists("g:loaded_zip")
  finish
 endif
 let g:loaded_zip= "v34"
-if v:version < 702
- echohl WarningMsg
- echomsg "***warning*** this version of zip needs vim 7.2 or later"
- echohl Normal
- finish
-endif
 let s:keepcpo= &cpo
 set cpo&vim
 
@@ -64,8 +58,22 @@ if !exists("g:zip_extractcmd")
  let g:zip_extractcmd= g:zip_unzipcmd
 endif
 
+" ---------------------------------------------------------------------
+"  required early
+" s:Mess: {{{2
+fun! s:Mess(group, msg)
+  redraw!
+  exe "echohl " . a:group
+  echomsg a:msg
+  echohl Normal
+endfun
+
+if v:version < 702
+ call s:Mess('WarningMsg', "***warning*** this version of zip needs vim 7.2 or later")
+ finish
+endif
 if !dist#vim#IsSafeExecutable('zip', g:zip_unzipcmd)
- echoerr "Warning: NOT executing " .. g:zip_unzipcmd .. " from current directory!"
+ call s:Mess('Error', "Warning: NOT executing " .. g:zip_unzipcmd .. " from current directory!")
  finish
 endif
 
@@ -87,16 +95,14 @@ fun! zip#Browse(zipfile)
 
   " sanity checks
   if !executable(g:zip_unzipcmd)
-   redraw!
-   echohl Error | echomsg "***error*** (zip#Browse) unzip not available on your system"
+   call s:Mess('Error', "***error*** (zip#Browse) unzip not available on your system")
    call s:RestoreOpts(dict)
    return
   endif
   if !filereadable(a:zipfile)
    if a:zipfile !~# '^\a\+://'
     " if it's an url, don't complain, let url-handlers such as vim do its thing
-    redraw!
-    echohl Error | echomsg "***error*** (zip#Browse) File not readable<".a:zipfile.">" | echohl None
+    call s:Mess('Error', "***error*** (zip#Browse) File not readable <".a:zipfile.">")
    endif
    call s:RestoreOpts(dict)
    return
@@ -127,8 +133,7 @@ fun! zip#Browse(zipfile)
 
   exe $"keepj sil r! {g:zip_unzipcmd} -Z1 -- {s:Escape(a:zipfile, 1)}"
   if v:shell_error != 0
-   redraw!
-   echohl WarningMsg | echomsg "***warning*** (zip#Browse) ".fnameescape(a:zipfile)." is not a zip file" | echohl None
+   call s:Mess('WarningMsg', "***warning*** (zip#Browse) ".fnameescape(a:zipfile)." is not a zip file")
    keepj sil! %d
    let eikeep= &ei
    set ei=BufReadCmd,FileReadCmd
@@ -166,8 +171,7 @@ fun! s:ZipBrowseSelect()
    return
   endif
   if fname =~ '/$'
-   redraw!
-   echohl Error | echomsg "***error*** (zip#Browse) Please specify a file, not a directory" | echohl None
+   call s:Mess('Error', "***error*** (zip#Browse) Please specify a file, not a directory")
    call s:RestoreOpts(dict)
    return
   endif
@@ -202,8 +206,7 @@ fun! zip#Read(fname,mode)
   let fname    = substitute(fname, '[', '[[]', 'g')
   " sanity check
   if !executable(substitute(g:zip_unzipcmd,'\s\+.*$','',''))
-   redraw!
-   echohl Error | echomsg "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program" | echohl None
+   call s:Mess('Error', "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program")
    call s:RestoreOpts(dict)
    return
   endif
@@ -234,14 +237,12 @@ fun! zip#Write(fname)
 
   " sanity checks
   if !executable(substitute(g:zip_zipcmd,'\s\+.*$','',''))
-   redraw!
-   echohl Error | echomsg "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program" | echohl None
+   call s:Mess('Error', "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program")
    call s:RestoreOpts(dict)
    return
   endif
   if !exists("*mkdir")
-   redraw!
-   echohl Error | echomsg "***error*** (zip#Write) sorry, mkdir() doesn't work on your system" | echohl None
+   call s:Mess('Error', "***error*** (zip#Write) sorry, mkdir() doesn't work on your system")
    call s:RestoreOpts(dict)
    return
   endif
@@ -296,8 +297,7 @@ fun! zip#Write(fname)
 
   call system(g:zip_zipcmd." -u ".s:Escape(fnamemodify(zipfile,":p"),0)." ".s:Escape(fname,0))
   if v:shell_error != 0
-   redraw!
-   echohl Error | echomsg "***error*** (zip#Write) sorry, unable to update ".zipfile." with ".fname | echohl None
+   call s:Mess('Error', "***error*** (zip#Write) sorry, unable to update ".zipfile." with ".fname)
 
   elseif s:zipfile_{winnr()} =~ '^\a\+://'
    " support writing zipfiles across a network
@@ -337,8 +337,7 @@ fun! zip#Extract()
    return
   endif
   if fname =~ '/$'
-   redraw!
-   echohl Error | echomsg "***error*** (zip#Extract) Please specify a file, not a directory" | echohl None
+   call s:Mess('Error', "***error*** (zip#Extract) Please specify a file, not a directory")
    call s:RestoreOpts(dict)
    return
   endif
@@ -346,9 +345,9 @@ fun! zip#Extract()
   " extract the file mentioned under the cursor
   call system($"{g:zip_extractcmd} {shellescape(b:zipfile)} {shellescape(fname)}")
   if v:shell_error != 0
-   echohl Error | echomsg "***error*** ".g:zip_extractcmd." ".b:zipfile." ".fname.": failed!" | echohl NONE
+   call s:Mess('Error', "***error*** ".g:zip_extractcmd." ".b:zipfile." ".fname.": failed!")
   elseif !filereadable(fname)
-   echohl Error | echomsg "***error*** attempted to extract ".fname." but it doesn't appear to be present!"
+   call s:Mess('Error', "***error*** attempted to extract ".fname." but it doesn't appear to be present!")
   else
    echomsg "***note*** successfully extracted ".fname
   endif
@@ -383,9 +382,9 @@ fun! s:ChgDir(newdir,errlvl,errmsg)
    if a:errlvl == s:NOTE
     echomsg "***note*** ".a:errmsg
    elseif a:errlvl == s:WARNING
-    echohl WarningMsg | echomsg "***warning*** ".a:errmsg | echohl NONE
+    call s:Mess("WarningMsg", "***warning*** ".a:errmsg)
    elseif a:errlvl == s:ERROR
-    echohl Error | echomsg "***error*** ".a:errmsg | echohl NONE
+    call s:Mess("Error", "***error*** ".a:errmsg)
    endif
    return 1
   endtry
