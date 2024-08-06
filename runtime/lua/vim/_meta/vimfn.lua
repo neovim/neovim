@@ -4659,6 +4659,24 @@ function vim.fn.interrupt() end
 --- @return any
 function vim.fn.invert(expr) end
 
+--- The result is a Number, which is |TRUE| when {path} is an
+--- absolute path.
+--- On Unix, a path is considered absolute when it starts with '/'.
+--- On MS-Windows, it is considered absolute when it starts with an
+--- optional drive prefix and is followed by a '\' or '/'. UNC paths
+--- are always absolute.
+--- Example: >vim
+---   echo isabsolutepath('/usr/share/')  " 1
+---   echo isabsolutepath('./foobar')    " 0
+---   echo isabsolutepath('C:\Windows')  " 1
+---   echo isabsolutepath('foobar')    " 0
+---   echo isabsolutepath('\\remote\file')  " 1
+--- <
+---
+--- @param path any
+--- @return 0|1
+function vim.fn.isabsolutepath(path) end
+
 --- The result is a Number, which is |TRUE| when a directory
 --- with the name {directory} exists.  If {directory} doesn't
 --- exist, or isn't a directory, the result is |FALSE|.  {directory}
