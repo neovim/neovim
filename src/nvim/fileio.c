@@ -2710,7 +2710,7 @@ int vim_rename(const char *from, const char *to)
 }
 
 /// Create the new file with same permissions as the original.
-/// Return -1 for failure, 0 for success.
+/// Return FAIL for failure, OK for success.
 int vim_copyfile(const char *from, const char *to)
 {
   char *errmsg = NULL;
@@ -2718,7 +2718,7 @@ int vim_copyfile(const char *from, const char *to)
 #ifdef HAVE_READLINK
   FileInfo from_info;
   if (os_fileinfo_link(from, &from_info) && S_ISLNK(from_info.stat.st_mode)) {
-    int ret = FAIL;
+    int ret = -1;
 
     char linkbuf[MAXPATHL + 1];
     ssize_t len = readlink(from, linkbuf, MAXPATHL);
