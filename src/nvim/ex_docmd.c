@@ -7330,7 +7330,7 @@ static void ex_filetype(exarg_T *eap)
     break;
   }
   if (strcmp(arg, "on") == 0 || strcmp(arg, "detect") == 0) {
-    if (*arg == 'o' || !filetype_detect) {
+    if (*arg == 'o' || filetype_detect != kTrue) {
       source_runtime(FILETYPE_FILE, DIP_ALL);
       filetype_detect = kTrue;
       if (plugin) {
