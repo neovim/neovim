@@ -83,14 +83,13 @@ fun! zip#Browse(zipfile)
    return
   endif
 
-  let repkeep= &report
-  set report=10
+  let dict = s:SetSaneOpts()
 
   " sanity checks
   if !executable(g:zip_unzipcmd)
    redraw!
    echohl Error | echomsg "***error*** (zip#Browse) unzip not available on your system"
-   let &report= repkeep
+   call s:RestoreOpts(dict)
    return
   endif
   if !filereadable(a:zipfile)
@@ -99,7 +98,7 @@ fun! zip#Browse(zipfile)
     redraw!
     echohl Error | echomsg "***error*** (zip#Browse) File not readable<".a:zipfile.">" | echohl None
    endif
-   let &report= repkeep
+   call s:RestoreOpts(dict)
    return
   endif
   if &ma != 1
@@ -136,6 +135,7 @@ fun! zip#Browse(zipfile)
    exe "keepj r ".fnameescape(a:zipfile)
    let &ei= eikeep
    keepj 1d
+   call s:RestoreOpts(dict)
    return
   endif
 
@@ -147,28 +147,28 @@ fun! zip#Browse(zipfile)
    noremap <silent> <buffer>	<leftmouse>	<leftmouse>:call <SID>ZipBrowseSelect()<cr>
   endif
 
-  let &report= repkeep
+  call s:RestoreOpts(dict)
 endfun
 
 " ---------------------------------------------------------------------
 " ZipBrowseSelect: {{{2
 fun! s:ZipBrowseSelect()
-  let repkeep= &report
-  set report=10
+  let dict = s:SetSaneOpts()
   let fname= getline(".")
   if !exists("b:zipfile")
+   call s:RestoreOpts(dict)
    return
   endif
 
   " sanity check
   if fname =~ '^"'
-   let &report= repkeep
+   call s:RestoreOpts(dict)
    return
   endif
   if fname =~ '/$'
    redraw!
    echohl Error | echomsg "***error*** (zip#Browse) Please specify a file, not a directory" | echohl None
-   let &report= repkeep
+   call s:RestoreOpts(dict)
    return
   endif
 
@@ -184,14 +184,13 @@ fun! s:ZipBrowseSelect()
   exe "noswapfile e ".fnameescape("zipfile://".zipfile.'::'.fname)
   filetype detect
 
-  let &report= repkeep
+  call s:RestoreOpts(dict)
 endfun
 
 " ---------------------------------------------------------------------
 " zip#Read: {{{2
 fun! zip#Read(fname,mode)
-  let repkeep= &report
-  set report=10
+  let dict = s:SetSaneOpts()
 
   if has("unix")
    let zipfile = substitute(a:fname,'zipfile://\(.\{-}\)::[^\\].*$','\1','')
@@ -205,7 +204,7 @@ fun! zip#Read(fname,mode)
   if !executable(substitute(g:zip_unzipcmd,'\s\+.*$','',''))
    redraw!
    echohl Error | echomsg "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program" | echohl None
-   let &report= repkeep
+   call s:RestoreOpts(dict)
    return
   endif
 
@@ -225,26 +224,25 @@ fun! zip#Read(fname,mode)
   " cleanup
   set nomod
 
-  let &report= repkeep
+  call s:RestoreOpts(dict)
 endfun
 
 " ---------------------------------------------------------------------
 " zip#Write: {{{2
 fun! zip#Write(fname)
-  let repkeep= &report
-  set report=10
+  let dict = s:SetSaneOpts()
 
   " sanity checks
   if !executable(substitute(g:zip_zipcmd,'\s\+.*$','',''))
    redraw!
    echohl Error | echomsg "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program" | echohl None
-   let &report= repkeep
+   call s:RestoreOpts(dict)
    return
   endif
   if !exists("*mkdir")
    redraw!
    echohl Error | echomsg "***error*** (zip#Write) sorry, mkdir() doesn't work on your system" | echohl None
-   let &report= repkeep
+   call s:RestoreOpts(dict)
    return
   endif
 
@@ -257,7 +255,7 @@ fun! zip#Write(fname)
 
   " attempt to change to the indicated directory
   if s:ChgDir(tmpdir,s:ERROR,"(zip#Write) cannot cd to temporary directory")
-   let &report= repkeep
+   call s:RestoreOpts(dict)
    return
   endif
 
@@ -323,26 +321,25 @@ fun! zip#Write(fname)
   call delete(tmpdir, "rf")
   setlocal nomod
 
-  let &report= repkeep
+  call s:RestoreOpts(dict)
 endfun
 
 " ---------------------------------------------------------------------
 " zip#Extract: extract a file from a zip archive {{{2
 fun! zip#Extract()
 
-  let repkeep= &report
-  set report=10
+  let dict = s:SetSaneOpts()
   let fname= getline(".")
 
   " sanity check
   if fname =~ '^"'
-   let &report= repkeep
+   call s:RestoreOpts(dict)
    return
   endif
   if fname =~ '/$'
    redraw!
    echohl Error | echomsg "***error*** (zip#Extract) Please specify a file, not a directory" | echohl None
-   let &report= repkeep
+   call s:RestoreOpts(dict)
    return
   endif
 
@@ -357,7 +354,7 @@ fun! zip#Extract()
   endif
 
   " restore option
-  let &report= repkeep
+  call s:RestoreOpts(dict)
 
 endfun
 
@@ -373,15 +370,11 @@ fun! s:Escape(fname,isfilt)
   else
    let qnameq= g:zip_shq.escape(a:fname,g:zip_shq).g:zip_shq
   endif
-  if exists("+shellslash") && &shellslash && &shell =~ "cmd.exe"
-   " renormalize directory separator on Windows
-   let qnameq=substitute(qnameq, '/', '\\', 'g')
-  endif
   return qnameq
 endfun
 
 " ---------------------------------------------------------------------
-" ChgDir: {{{2
+" s:ChgDir: {{{2
 fun! s:ChgDir(newdir,errlvl,errmsg)
   try
    exe "cd ".fnameescape(a:newdir)
@@ -398,6 +391,27 @@ fun! s:ChgDir(newdir,errlvl,errmsg)
   endtry
 
   return 0
+endfun
+
+" ---------------------------------------------------------------------
+" s:SetSaneOpts: {{{2
+fun! s:SetSaneOpts()
+  let dict = {}
+  let dict.report = &report
+  let dict.shellslash = &shellslash
+
+  let &report = 10
+  let &shellslash = 0
+
+  return dict
+endfun
+
+" ---------------------------------------------------------------------
+" s:RestoreOpts: {{{2
+fun! s:RestoreOpts(dict)
+  for [key, val] in items(a:dict)
+    exe $"let &{key} = {val}"
+  endfor
 endfun
 
 " ------------------------------------------------------------------------
