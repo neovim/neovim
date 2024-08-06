@@ -638,6 +638,8 @@ end
 ---Gets the set of included regions managed by this LanguageTree. This can be different from the
 ---regions set by injection query, because a partial |LanguageTree:parse()| drops the regions
 ---outside the requested range.
+---Each list represents a range in the form of
+---{ {start_row}, {start_col}, {start_bytes}, {end_row}, {end_col}, {end_bytes} }.
 ---@return table<integer, Range6[]>
 function LanguageTree:included_regions()
   if self._regions then
@@ -1087,7 +1089,7 @@ end
 
 --- Determines whether {range} is contained in the |LanguageTree|.
 ---
----@param range Range4 `{ start_line, start_col, end_line, end_col }`
+---@param range Range4
 ---@return boolean
 function LanguageTree:contains(range)
   for _, tree in pairs(self._trees) do
@@ -1108,7 +1110,7 @@ end
 
 --- Gets the tree that contains {range}.
 ---
----@param range Range4 `{ start_line, start_col, end_line, end_col }`
+---@param range Range4
 ---@param opts? vim.treesitter.LanguageTree.tree_for_range.Opts
 ---@return TSTree?
 function LanguageTree:tree_for_range(range, opts)
@@ -1135,7 +1137,7 @@ end
 
 --- Gets the smallest node that contains {range}.
 ---
----@param range Range4 `{ start_line, start_col, end_line, end_col }`
+---@param range Range4
 ---@param opts? vim.treesitter.LanguageTree.tree_for_range.Opts
 ---@return TSNode?
 function LanguageTree:node_for_range(range, opts)
@@ -1147,7 +1149,7 @@ end
 
 --- Gets the smallest named node that contains {range}.
 ---
----@param range Range4 `{ start_line, start_col, end_line, end_col }`
+---@param range Range4
 ---@param opts? vim.treesitter.LanguageTree.tree_for_range.Opts
 ---@return TSNode?
 function LanguageTree:named_node_for_range(range, opts)
@@ -1159,7 +1161,7 @@ end
 
 --- Gets the appropriate language that contains {range}.
 ---
----@param range Range4 `{ start_line, start_col, end_line, end_col }`
+---@param range Range4
 ---@return vim.treesitter.LanguageTree tree Managing {range}
 function LanguageTree:language_for_range(range)
   for _, child in pairs(self._children) do
