@@ -207,6 +207,8 @@ local function render_md(node, start_indent, indent, text_width, level, is_list)
   elseif ntype == 'shortcut_link' then
     if node[1].text:find('^<.*>$') then
       parts[#parts + 1] = node[1].text
+    elseif node[1].text:find('^%d+$') then
+      vim.list_extend(parts, { '[', node[1].text, ']' })
     else
       vim.list_extend(parts, { '|', node[1].text, '|' })
     end
