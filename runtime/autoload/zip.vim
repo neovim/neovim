@@ -87,12 +87,6 @@ fun! zip#Browse(zipfile)
   set report=10
 
   " sanity checks
-  if !exists("*fnameescape")
-   if &verbose > 1
-    echoerr "the zip plugin is not available (your vim doesn't support fnameescape())"
-   endif
-   return
-  endif
   if !executable(g:zip_unzipcmd)
    redraw!
    echohl Error | echomsg "***error*** (zip#Browse) unzip not available on your system"
