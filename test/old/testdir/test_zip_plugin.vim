@@ -10,8 +10,6 @@ endif
 runtime plugin/zipPlugin.vim
 
 func Test_zip_basic()
-  let _sl = &shellslash
-  set noshellslash
 
   "## get our zip file
   if !filecopy("samples/test.zip", "X.zip")
@@ -133,7 +131,5 @@ func Test_zip_basic()
   call assert_match('File not readable', execute("e Xnot_exists.zip"))
 
   bw
-
-  let &shellslash = _sl
 
 endfunc
