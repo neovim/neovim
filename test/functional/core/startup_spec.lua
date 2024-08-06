@@ -112,6 +112,13 @@ describe('startup', function()
                                                                   |*2
     ]])
   end)
+
+  it(':filetype detect enables filetype detection with -u NONE', function()
+    clear()
+    eq('filetype detection:OFF  plugin:OFF  indent:OFF', exec_capture('filetype'))
+    command('filetype detect')
+    eq('filetype detection:ON  plugin:OFF  indent:OFF', exec_capture('filetype'))
+  end)
 end)
 
 describe('startup', function()
