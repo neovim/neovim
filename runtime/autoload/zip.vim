@@ -31,7 +31,7 @@ endif
 let g:loaded_zip= "v33"
 if v:version < 702
  echohl WarningMsg
- echo "***warning*** this version of zip needs vim 7.2 or later"
+ echomsg "***warning*** this version of zip needs vim 7.2 or later"
  echohl Normal
  finish
 endif
@@ -95,7 +95,7 @@ fun! zip#Browse(zipfile)
   endif
   if !executable(g:zip_unzipcmd)
    redraw!
-   echohl Error | echo "***error*** (zip#Browse) unzip not available on your system"
+   echohl Error | echomsg "***error*** (zip#Browse) unzip not available on your system"
    let &report= repkeep
    return
   endif
@@ -103,7 +103,7 @@ fun! zip#Browse(zipfile)
    if a:zipfile !~# '^\a\+://'
     " if it's an url, don't complain, let url-handlers such as vim do its thing
     redraw!
-    echohl Error | echo "***error*** (zip#Browse) File not readable<".a:zipfile.">" | echohl None
+    echohl Error | echomsg "***error*** (zip#Browse) File not readable<".a:zipfile.">" | echohl None
    endif
    let &report= repkeep
    return
@@ -135,7 +135,7 @@ fun! zip#Browse(zipfile)
   exe $"keepj sil r! {g:zip_unzipcmd} -Z1 -- {s:Escape(a:zipfile, 1)}"
   if v:shell_error != 0
    redraw!
-   echohl WarningMsg | echo "***warning*** (zip#Browse) ".fnameescape(a:zipfile)." is not a zip file" | echohl None
+   echohl WarningMsg | echomsg "***warning*** (zip#Browse) ".fnameescape(a:zipfile)." is not a zip file" | echohl None
    keepj sil! %d
    let eikeep= &ei
    set ei=BufReadCmd,FileReadCmd
@@ -173,7 +173,7 @@ fun! s:ZipBrowseSelect()
   endif
   if fname =~ '/$'
    redraw!
-   echohl Error | echo "***error*** (zip#Browse) Please specify a file, not a directory" | echohl None
+   echohl Error | echomsg "***error*** (zip#Browse) Please specify a file, not a directory" | echohl None
    let &report= repkeep
    return
   endif
@@ -210,7 +210,7 @@ fun! zip#Read(fname,mode)
   " sanity check
   if !executable(substitute(g:zip_unzipcmd,'\s\+.*$','',''))
    redraw!
-   echohl Error | echo "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program" | echohl None
+   echohl Error | echomsg "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program" | echohl None
    let &report= repkeep
    return
   endif
@@ -243,13 +243,13 @@ fun! zip#Write(fname)
   " sanity checks
   if !executable(substitute(g:zip_zipcmd,'\s\+.*$','',''))
    redraw!
-   echohl Error | echo "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program" | echohl None
+   echohl Error | echomsg "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program" | echohl None
    let &report= repkeep
    return
   endif
   if !exists("*mkdir")
    redraw!
-   echohl Error | echo "***error*** (zip#Write) sorry, mkdir() doesn't work on your system" | echohl None
+   echohl Error | echomsg "***error*** (zip#Write) sorry, mkdir() doesn't work on your system" | echohl None
    let &report= repkeep
    return
   endif
@@ -305,7 +305,7 @@ fun! zip#Write(fname)
   call system(g:zip_zipcmd." -u ".s:Escape(fnamemodify(zipfile,":p"),0)." ".s:Escape(fname,0))
   if v:shell_error != 0
    redraw!
-   echohl Error | echo "***error*** (zip#Write) sorry, unable to update ".zipfile." with ".fname | echohl None
+   echohl Error | echomsg "***error*** (zip#Write) sorry, unable to update ".zipfile." with ".fname | echohl None
 
   elseif s:zipfile_{winnr()} =~ '^\a\+://'
    " support writing zipfiles across a network
@@ -347,7 +347,7 @@ fun! zip#Extract()
   endif
   if fname =~ '/$'
    redraw!
-   echohl Error | echo "***error*** (zip#Extract) Please specify a file, not a directory" | echohl None
+   echohl Error | echomsg "***error*** (zip#Extract) Please specify a file, not a directory" | echohl None
    let &report= repkeep
    return
   endif
@@ -355,11 +355,11 @@ fun! zip#Extract()
   " extract the file mentioned under the cursor
   call system($"{g:zip_extractcmd} {shellescape(b:zipfile)} {shellescape(fname)}")
   if v:shell_error != 0
-   echohl Error | echo "***error*** ".g:zip_extractcmd." ".b:zipfile." ".fname.": failed!" | echohl NONE
+   echohl Error | echomsg "***error*** ".g:zip_extractcmd." ".b:zipfile." ".fname.": failed!" | echohl NONE
   elseif !filereadable(fname)
-   echohl Error | echo "***error*** attempted to extract ".fname." but it doesn't appear to be present!"
+   echohl Error | echomsg "***error*** attempted to extract ".fname." but it doesn't appear to be present!"
   else
-   echo "***note*** successfully extracted ".fname
+   echomsg "***note*** successfully extracted ".fname
   endif
 
   " restore option
@@ -394,11 +394,11 @@ fun! s:ChgDir(newdir,errlvl,errmsg)
   catch /^Vim\%((\a\+)\)\=:E344/
    redraw!
    if a:errlvl == s:NOTE
-    echo "***note*** ".a:errmsg
+    echomsg "***note*** ".a:errmsg
    elseif a:errlvl == s:WARNING
-    echohl WarningMsg | echo "***warning*** ".a:errmsg | echohl NONE
+    echohl WarningMsg | echomsg "***warning*** ".a:errmsg | echohl NONE
    elseif a:errlvl == s:ERROR
-    echohl Error | echo "***error*** ".a:errmsg | echohl NONE
+    echohl Error | echomsg "***error*** ".a:errmsg | echohl NONE
    endif
    return 1
   endtry
