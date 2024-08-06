@@ -154,6 +154,27 @@ void f_exepath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_string = path;
 }
 
+/// "filecopy()" function
+void f_filecopy(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->vval.v_number = false;
+
+  if (check_secure()
+      || tv_check_for_string_arg(argvars, 0) == FAIL
+      || tv_check_for_string_arg(argvars, 1) == FAIL) {
+    return;
+  }
+
+  const char *from = tv_get_string(&argvars[0]);
+
+  FileInfo from_info;
+  if (os_fileinfo_link(from, &from_info)
+      && (S_ISREG(from_info.stat.st_mode) || S_ISLNK(from_info.stat.st_mode))) {
+    rettv->vval.v_number
+      = vim_copyfile(tv_get_string(&argvars[0]), tv_get_string(&argvars[1])) == OK;
+  }
+}
+
 /// "filereadable()" function
 void f_filereadable(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

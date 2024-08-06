@@ -2521,6 +2521,23 @@ M.funcs = {
     params = { { 'file', 'string' } },
     signature = 'file_readable({file})',
   },
+  filecopy = {
+    args = 2,
+    base = 1,
+    desc = [[
+      Copy the file pointed to by the name {from} to {to}. The
+      result is a Number, which is |TRUE| if the file was copied
+      successfully, and |FALSE| when it failed.
+      If a file with name {to} already exists, it will fail.
+      Note that it does not handle directories (yet).
+
+      This function is not available in the |sandbox|.
+    ]],
+    name = 'filecopy',
+    params = { { 'from', 'string' }, { 'to', 'string' } },
+    returns = '0|1',
+    signature = 'filecopy({from}, {to})',
+  },
   filereadable = {
     args = 1,
     base = 1,

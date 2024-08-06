@@ -2654,7 +2654,6 @@ static int rename_with_tmp(const char *const from, const char *const to)
 int vim_rename(const char *from, const char *to)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *errmsg = NULL;
   bool use_tmp_file = false;
 
   // When the names are identical, there is nothing to do.  When they refer
@@ -2698,13 +2697,49 @@ int vim_rename(const char *from, const char *to)
   }
 
   // Rename() failed, try copying the file.
+  int ret = vim_copyfile(from, to);
+  if (ret != OK) {
+    return -1;
+  }
+
+  if (os_fileinfo(from, &from_info)) {
+    os_remove(from);
+  }
+
+  return 0;
+}
+
+/// Create the new file with same permissions as the original.
+/// Return -1 for failure, 0 for success.
+int vim_copyfile(const char *from, const char *to)
+{
+  char *errmsg = NULL;
+
+#ifdef HAVE_READLINK
+  FileInfo from_info;
+  if (os_fileinfo_link(from, &from_info) && S_ISLNK(from_info.stat.st_mode)) {
+    int ret = FAIL;
+
+    char linkbuf[MAXPATHL + 1];
+    ssize_t len = readlink(from, linkbuf, MAXPATHL);
+    if (len > 0) {
+      linkbuf[len] = NUL;
+
+      // Create link
+      ret = symlink(linkbuf, to);
+    }
+
+    return ret == 0 ? OK : FAIL;
+  }
+#endif
+
   int perm = os_getperm(from);
   // For systems that support ACL: get the ACL from the original file.
   vim_acl_T acl = os_get_acl(from);
   int fd_in = os_open(from, O_RDONLY, 0);
   if (fd_in < 0) {
     os_free_acl(acl);
-    return -1;
+    return FAIL;
   }
 
   // Create the new file with same permissions as the original.
@@ -2712,7 +2747,7 @@ int vim_rename(const char *from, const char *to)
   if (fd_out < 0) {
     close(fd_in);
     os_free_acl(acl);
-    return -1;
+    return FAIL;
   }
 
   // Avoid xmalloc() here as vim_rename() is called by buf_write() when nvim
@@ -2722,7 +2757,7 @@ int vim_rename(const char *from, const char *to)
     close(fd_out);
     close(fd_in);
     os_free_acl(acl);
-    return -1;
+    return FAIL;
   }
 
   int n;
@@ -2749,10 +2784,9 @@ int vim_rename(const char *from, const char *to)
   os_free_acl(acl);
   if (errmsg != NULL) {
     semsg(errmsg, to);
-    return -1;
+    return FAIL;
   }
-  os_remove(from);
-  return 0;
+  return OK;
 }
 
 static bool already_warned = false;

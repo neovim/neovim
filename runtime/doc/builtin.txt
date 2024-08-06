@@ -1610,6 +1610,15 @@ feedkeys({string} [, {mode}])                                       *feedkeys()*
 
 		Return value is always 0.
 
+filecopy({from}, {to})                                              *filecopy()*
+		Copy the file pointed to by the name {from} to {to}. The
+		result is a Number, which is |TRUE| if the file was copied
+		successfully, and |FALSE| when it failed.
+		If a file with name {to} already exists, it will fail.
+		Note that it does not handle directories (yet).
+
+		This function is not available in the |sandbox|.
+
 filereadable({file})                                            *filereadable()*
 		The result is a Number, which is |TRUE| when a file with the
 		name {file} exists, and can be read.  If {file} doesn't exist,
