@@ -1,7 +1,7 @@
 " zip.vim: Handles browsing zipfiles
 " AUTOLOAD PORTION
 " Date:		Aug 05, 2024
-" Version:	33
+" Version:	34
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer:	Charles E Campbell
 " Last Change:
@@ -28,7 +28,7 @@
 if &cp || exists("g:loaded_zip")
  finish
 endif
-let g:loaded_zip= "v33"
+let g:loaded_zip= "v34"
 if v:version < 702
  echohl WarningMsg
  echomsg "***warning*** this version of zip needs vim 7.2 or later"
