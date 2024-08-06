@@ -3,16 +3,19 @@ local api = vim.api
 local M = {}
 
 ---@class Range2
+---@inlinedoc
 ---@field [1] integer start row
 ---@field [2] integer end row
 
 ---@class Range4
+---@inlinedoc
 ---@field [1] integer start row
 ---@field [2] integer start column
 ---@field [3] integer end row
 ---@field [4] integer end column
 
 ---@class Range6
+---@inlinedoc
 ---@field [1] integer start row
 ---@field [2] integer start column
 ---@field [3] integer start bytes
@@ -150,6 +153,7 @@ function M.contains(r1, r2)
   return true
 end
 
+--- @private
 --- @param source integer|string
 --- @param index integer
 --- @return integer
