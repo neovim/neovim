@@ -92,11 +92,11 @@ fun! zip#Browse(zipfile)
   endif
 
   let dict = s:SetSaneOpts()
+  defer s:RestoreOpts(dict)
 
   " sanity checks
   if !executable(g:zip_unzipcmd)
    call s:Mess('Error', "***error*** (zip#Browse) unzip not available on your system")
-   call s:RestoreOpts(dict)
    return
   endif
   if !filereadable(a:zipfile)
@@ -104,7 +104,6 @@ fun! zip#Browse(zipfile)
     " if it's an url, don't complain, let url-handlers such as vim do its thing
     call s:Mess('Error', "***error*** (zip#Browse) File not readable <".a:zipfile.">")
    endif
-   call s:RestoreOpts(dict)
    return
   endif
   if &ma != 1
@@ -140,7 +139,6 @@ fun! zip#Browse(zipfile)
    exe "keepj r ".fnameescape(a:zipfile)
    let &ei= eikeep
    keepj 1d
-   call s:RestoreOpts(dict)
    return
   endif
 
@@ -152,27 +150,24 @@ fun! zip#Browse(zipfile)
    noremap <silent> <buffer>	<leftmouse>	<leftmouse>:call <SID>ZipBrowseSelect()<cr>
   endif
 
-  call s:RestoreOpts(dict)
 endfun
 
 " ---------------------------------------------------------------------
 " ZipBrowseSelect: {{{2
 fun! s:ZipBrowseSelect()
   let dict = s:SetSaneOpts()
+  defer s:RestoreOpts(dict)
   let fname= getline(".")
   if !exists("b:zipfile")
-   call s:RestoreOpts(dict)
    return
   endif
 
   " sanity check
   if fname =~ '^"'
-   call s:RestoreOpts(dict)
    return
   endif
   if fname =~ '/$'
    call s:Mess('Error', "***error*** (zip#Browse) Please specify a file, not a directory")
-   call s:RestoreOpts(dict)
    return
   endif
 
@@ -188,13 +183,13 @@ fun! s:ZipBrowseSelect()
   exe "noswapfile e ".fnameescape("zipfile://".zipfile.'::'.fname)
   filetype detect
 
-  call s:RestoreOpts(dict)
 endfun
 
 " ---------------------------------------------------------------------
 " zip#Read: {{{2
 fun! zip#Read(fname,mode)
   let dict = s:SetSaneOpts()
+  defer s:RestoreOpts(dict)
 
   if has("unix")
    let zipfile = substitute(a:fname,'zipfile://\(.\{-}\)::[^\\].*$','\1','')
@@ -207,7 +202,6 @@ fun! zip#Read(fname,mode)
   " sanity check
   if !executable(substitute(g:zip_unzipcmd,'\s\+.*$','',''))
    call s:Mess('Error', "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program")
-   call s:RestoreOpts(dict)
    return
   endif
 
@@ -227,23 +221,21 @@ fun! zip#Read(fname,mode)
   " cleanup
   set nomod
 
-  call s:RestoreOpts(dict)
 endfun
 
 " ---------------------------------------------------------------------
 " zip#Write: {{{2
 fun! zip#Write(fname)
   let dict = s:SetSaneOpts()
+  defer s:RestoreOpts(dict)
 
   " sanity checks
   if !executable(substitute(g:zip_zipcmd,'\s\+.*$','',''))
    call s:Mess('Error', "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program")
-   call s:RestoreOpts(dict)
    return
   endif
   if !exists("*mkdir")
    call s:Mess('Error', "***error*** (zip#Write) sorry, mkdir() doesn't work on your system")
-   call s:RestoreOpts(dict)
    return
   endif
 
@@ -256,7 +248,6 @@ fun! zip#Write(fname)
 
   " attempt to change to the indicated directory
   if s:ChgDir(tmpdir,s:ERROR,"(zip#Write) cannot cd to temporary directory")
-   call s:RestoreOpts(dict)
    return
   endif
 
@@ -321,7 +312,6 @@ fun! zip#Write(fname)
   call delete(tmpdir, "rf")
   setlocal nomod
 
-  call s:RestoreOpts(dict)
 endfun
 
 " ---------------------------------------------------------------------
@@ -329,16 +319,15 @@ endfun
 fun! zip#Extract()
 
   let dict = s:SetSaneOpts()
+  defer s:RestoreOpts(dict)
   let fname= getline(".")
 
   " sanity check
   if fname =~ '^"'
-   call s:RestoreOpts(dict)
    return
   endif
   if fname =~ '/$'
    call s:Mess('Error', "***error*** (zip#Extract) Please specify a file, not a directory")
-   call s:RestoreOpts(dict)
    return
   endif
 
@@ -351,9 +340,6 @@ fun! zip#Extract()
   else
    echomsg "***note*** successfully extracted ".fname
   endif
-
-  " restore option
-  call s:RestoreOpts(dict)
 
 endfun
 
