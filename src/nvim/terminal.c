@@ -227,11 +227,66 @@ static void schedule_termrequest(Terminal *term, char *payload, size_t payload_l
                  term->pending_send);
 }
 
+static int parse_osc8(VTermStringFragment frag, int *attr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Parse the URI from the OSC 8 sequence and add the URL to our URL set.
+  // Skip the ID, we don't use it (for now)
+  size_t i = 0;
+  for (; i < frag.len; i++) {
+    if (frag.str[i] == ';') {
+      break;
+    }
+  }
+
+  // Move past the semicolon
+  i++;
+
+  if (i >= frag.len) {
+    // Invalid OSC sequence
+    return 0;
+  }
+
+  // Find the terminator
+  const size_t start = i;
+  for (; i < frag.len; i++) {
+    if (frag.str[i] == '\a' || frag.str[i] == '\x1b') {
+      break;
+    }
+  }
+
+  const size_t len = i - start;
+  if (len == 0) {
+    // Empty OSC 8, no URL
+    *attr = 0;
+    return 1;
+  }
+
+  char *url = xmemdupz(&frag.str[start], len + 1);
+  url[len] = 0;
+  *attr = hl_add_url(0, url);
+  xfree(url);
+
+  return 1;
+}
+
 static int on_osc(int command, VTermStringFragment frag, void *user)
 {
+  Terminal *term = user;
+
   if (frag.str == NULL) {
     return 0;
   }
+
+  if (command == 8) {
+    int attr = 0;
+    if (parse_osc8(frag, &attr)) {
+      VTermState *state = vterm_obtain_state(term->vt);
+      VTermValue value = { .number = attr };
+      vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
+    }
+  }
+
   if (!has_event(EVENT_TERMREQUEST)) {
     return 1;
   }
@@ -239,7 +294,7 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   StringBuilder request = KV_INITIAL_VALUE;
   kv_printf(request, "\x1b]%d;", command);
   kv_concat_len(request, frag.str, frag.len);
-  schedule_termrequest(user, request.items, request.size);
+  schedule_termrequest(term, request.items, request.size);
   return 1;
 }
 
@@ -990,6 +1045,10 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
         .hl_blend = -1,
         .url = -1,
       });
+    }
+
+    if (cell.uri > 0) {
+      attr_id = hl_combine_attr(attr_id, cell.uri);
     }
 
     if (term->cursor.visible && term->cursor.row == row

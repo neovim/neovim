@@ -380,3 +380,23 @@ describe(':terminal highlight with custom palette', function()
     ]])
   end)
 end)
+
+describe(':terminal', function()
+  before_each(clear)
+
+  it('can display URLs', function()
+    local screen = Screen.new(50, 7)
+    screen:add_extra_attr_ids {
+      [100] = { url = 'https://example.com' },
+    }
+    screen:attach()
+    local chan = api.nvim_open_term(0, {})
+    api.nvim_chan_send(chan, '\027]8;;https://example.com\027\\Example\027]8;;\027\\')
+    screen:expect({
+      grid = [[
+        {100:^Example}                                           |
+                                                          |*6
+      ]],
+    })
+  end)
+end)

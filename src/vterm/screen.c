@@ -17,6 +17,9 @@ typedef struct
   /* After the bitfield */
   VTermColor   fg, bg;
 
+  /* Opaque ID that maps to a URI in a set */
+  int uri;
+
   unsigned int bold      : 1;
   unsigned int underline : 2;
   unsigned int italic    : 1;
@@ -444,6 +447,9 @@ static int setpenattr(VTermAttr attr, VTermValue *val, void *user)
   case VTERM_ATTR_BASELINE:
     screen->pen.baseline = val->number;
     return 1;
+  case VTERM_ATTR_URI:
+    screen->pen.uri = val->number;
+    return 1;
 
   case VTERM_N_ATTRS:
     return 0;
@@ -704,6 +710,8 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
 
         dst->pen.fg = src->fg;
         dst->pen.bg = src->bg;
+
+        dst->pen.uri = src->uri;
 
         if(src->width == 2 && pos.col < (new_cols-1))
           (dst + 1)->chars[0] = (uint32_t) -1;
@@ -997,6 +1005,8 @@ int vterm_screen_get_cell(const VTermScreen *screen, VTermPos pos, VTermScreenCe
   cell->fg = intcell->pen.fg;
   cell->bg = intcell->pen.bg;
 
+  cell->uri = intcell->pen.uri;
+
   if(pos.col < (screen->cols - 1) &&
      getcell(screen, pos.row, pos.col + 1)->chars[0] == (uint32_t)-1)
     cell->width = 2;
@@ -1116,9 +1126,11 @@ static int attrs_differ(VTermAttrMask attrs, ScreenCell *a, ScreenCell *b)
     return 1;
   if((attrs & VTERM_ATTR_BACKGROUND_MASK) && !vterm_color_is_equal(&a->pen.bg, &b->pen.bg))
     return 1;
-  if((attrs & VTERM_ATTR_SMALL_MASK)    && (a->pen.small != b->pen.small))
+  if((attrs & VTERM_ATTR_SMALL_MASK)      && (a->pen.small != b->pen.small))
     return 1;
-  if((attrs & VTERM_ATTR_BASELINE_MASK)    && (a->pen.baseline != b->pen.baseline))
+  if((attrs & VTERM_ATTR_BASELINE_MASK)   && (a->pen.baseline != b->pen.baseline))
+    return 1;
+  if((attrs & VTERM_ATTR_URI_MASK)        && (a->pen.uri != b->pen.uri))
     return 1;
 
   return 0;
