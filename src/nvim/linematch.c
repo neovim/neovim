@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "nvim/globals.h"
+#include "nvim/getchar.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/linematch.h"
 #include "nvim/macros_defs.h"
@@ -245,8 +247,18 @@ static size_t unwrap_indexes(const int *values, const int *diff_len, const size_
 /// @param diff_blk
 static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *diffcmppath,
                             const int *diff_len, const size_t ndiffs, const char **diff_blk,
-                            bool iwhite)
+                            bool iwhite, bool *canceled)
 {
+  if (*canceled == true) {
+    return;
+  }
+  if (vpeekc() != NUL || typebuf.tb_len > 0) {
+      int key = safe_vgetc();
+      if (key == 3) {
+        // <c-c> was pressed, stop running alignment algorithm
+        *canceled = true;
+      }
+  }
   if (ch_dim == ndiffs) {
     int npaths = 0;
     size_t paths[LN_MAX_BUFS];
@@ -268,7 +280,7 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
   for (int i = 0; i <= diff_len[ch_dim]; i++) {
     df_iters[ch_dim] = i;
     populate_tensor(df_iters, ch_dim + 1, diffcmppath, diff_len,
-                    ndiffs, diff_blk, iwhite);
+                    ndiffs, diff_blk, iwhite, canceled);
   }
 }
 
@@ -353,24 +365,49 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
 
   // memory for avoiding repetitive calculations of score
   int df_iters[LN_MAX_BUFS];
-  populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite);
+  bool canceled = 0;
+  populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite, &canceled);
 
   const size_t u = unwrap_indexes(diff_len, diff_len, ndiffs);
   diffcmppath_T *startNode = &diffcmppath[u];
 
   *decisions = xmalloc(sizeof(int) * memsize_decisions);
   size_t n_optimal = 0;
-  test_charmatch_paths(startNode, 0);
-  while (startNode->df_path_n > 0) {
-    size_t j = startNode->df_optimal_choice;
-    (*decisions)[n_optimal++] = startNode->df_choice[j];
-    startNode = startNode->df_decision[j];
-  }
-  // reverse array
-  for (size_t i = 0; i < (n_optimal / 2); i++) {
-    int tmp = (*decisions)[i];
-    (*decisions)[i] = (*decisions)[n_optimal - 1 - i];
-    (*decisions)[n_optimal - 1 - i] = tmp;
+  if (canceled == true) { // if canceled, we will populate the results with a result as it would be without running
+           // the alignment algorithm
+    size_t max_diff_len = 0;
+    size_t remaining_lines_in_diff_buffer[LN_MAX_BUFS];
+    for (size_t i = 0; i < ndiffs; i++) {
+      remaining_lines_in_diff_buffer[i] = diff_len[i];
+      max_diff_len = (size_t)diff_len[i] > max_diff_len ? (size_t)diff_len[i] : max_diff_len;
+    }
+    n_optimal = max_diff_len;
+    for (size_t i = 0; i < max_diff_len; i++) {
+      (*decisions)[i] = 0;
+      for (size_t j = 0; j < ndiffs; j++) {
+        if (remaining_lines_in_diff_buffer[j] > 0) {
+          (*decisions)[i] |= (1 << j);
+          remaining_lines_in_diff_buffer[j]--;
+        }
+      }
+    }
+
+  } else {
+    const size_t u = unwrap_indexes(diff_len, diff_len, ndiffs);
+    diffcmppath_T *startNode = &diffcmppath[u];
+
+    test_charmatch_paths(startNode, 0);
+    while (startNode->df_path_n > 0) {
+      size_t j = startNode->df_optimal_choice;
+      (*decisions)[n_optimal++] = startNode->df_choice[j];
+      startNode = startNode->df_decision[j];
+    }
+    // reverse array
+    for (size_t i = 0; i < (n_optimal / 2); i++) {
+      int tmp = (*decisions)[i];
+      (*decisions)[i] = (*decisions)[n_optimal - 1 - i];
+      (*decisions)[n_optimal - 1 - i] = tmp;
+    }
   }
 
   xfree(diffcmppath);
