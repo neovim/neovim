@@ -147,6 +147,11 @@ do
       require('vim._comment').textobject()
     end
     vim.keymap.set({ 'o' }, 'gc', textobject_rhs, { desc = 'Comment textobject' })
+
+    local inner_textobject_rhs = function()
+      require('vim._comment').textobject(true)
+    end
+    vim.keymap.set({ 'o' }, 'igc', inner_textobject_rhs, { desc = 'Inner comment textobject' })
   end
 
   --- Default maps for LSP functions.
