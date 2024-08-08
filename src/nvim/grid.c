@@ -186,6 +186,24 @@ size_t schar_len(schar_T sc)
   }
 }
 
+int schar_cells(schar_T sc) {
+  // hot path 
+#ifdef ORDER_BIG_ENDIAN
+  if (!(sc & 0x80FFFFFF)) {
+    return 1;
+  }
+#else
+  if (sc < 0x80) {
+    return 1;
+  }
+#endif
+  // TODO: maybe hot path for not schar_high??
+
+  char sc_buf[MAX_SCHAR_SIZE];
+  schar_get(sc_buf, sc);
+  return utf_ptr2cells(sc_buf);
+}
+
 /// gets first raw UTF-8 byte of an schar
 static char schar_get_first_byte(schar_T sc)
 {

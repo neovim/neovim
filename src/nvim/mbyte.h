@@ -3,13 +3,18 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>  // IWYU pragma: keep
+#include <utf8proc.h>
 #include <uv.h>  // IWYU pragma: keep
 
+#include "nvim/arabic.h"
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
+
+typedef utf8proc_int32_t GraphemeState;
+#define GRAPHEME_STATE_INIT 0
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"
@@ -85,6 +90,18 @@ static inline CharInfo utf_ptr2CharInfo(char const *const p_in)
   }
 }
 
+/// Check if the next character is a composing character when it
+/// comes after the first. For Arabic sometimes "ab" is replaced with "c", which
+/// behaves like a composing character.
+/// returns false for negative values
+static inline bool utf_char_composinglike(int32_t const first, int32_t const next, GraphemeState *state)
+  FUNC_ATTR_PURE
+{
+  // TODO: correct hot af path
+  if (next < 128) return false;
+  return utf8proc_grapheme_break_stateful(first, next, state) || arabic_combine(first, next);
+}
+
 /// Return information about the next character.
 /// Composing and combining characters are considered a part of the current character.
 ///
@@ -94,6 +111,7 @@ static inline StrCharInfo utfc_next(StrCharInfo cur)
 {
   int32_t prev_code = cur.chr.value;
   uint8_t *next = (uint8_t *)(cur.ptr + cur.chr.len);
+  GraphemeState state = GRAPHEME_STATE_INIT;
 
   while (true) {
     if (EXPECT(*next < 0x80U, true)) {
@@ -104,7 +122,7 @@ static inline StrCharInfo utfc_next(StrCharInfo cur)
     }
     uint8_t const next_len = utf8len_tab[*next];
     int32_t const next_code = utf_ptr2CharInfo_impl(next, (uintptr_t)next_len);
-    if (!utf_char_composinglike(prev_code, next_code)) {
+    if (!utf_char_composinglike(prev_code, next_code, &state)) {
       return (StrCharInfo){
         .ptr = (char *)next,
         .chr = (CharInfo){ .value = next_code, .len = (next_code < 0 ? 1 : next_len) },

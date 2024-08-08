@@ -11,6 +11,7 @@ local fn = n.fn
 local api = n.api
 local split = vim.split
 local dedent = t.dedent
+local eq = t.eq
 
 describe('multibyte rendering', function()
   local screen
@@ -393,5 +394,23 @@ describe('multibyte rendering: statusline', function()
                                               |
     ]],
     }
+  end)
+
+  it('emoji with variant selectors and ZWJ', function()
+    command 'set emoji'
+    local selector = '❤️'
+    eq(2, fn.strchars(selector))
+    eq(1, fn.strcharlen(selector))
+    eq(2, api.nvim_strwidth(selector))
+
+    local selector_zwj_selector = '🏳️‍⚧️'
+    eq(5, fn.strchars(selector_zwj_selector))
+    eq(1, fn.strcharlen(selector_zwj_selector))
+    eq(2, api.nvim_strwidth(selector_zwj_selector))
+
+    local emoji_zwj_emoji = '🧑‍🌾'
+    eq(3, fn.strchars(emoji_zwj_emoji))
+    eq(1, fn.strcharlen(emoji_zwj_emoji))
+    eq(2, api.nvim_strwidth(emoji_zwj_emoji))
   end)
 end)
