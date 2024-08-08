@@ -17,7 +17,6 @@
 #endif
 
 #include "auto/config.h"
-#include "nvim/errors.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 
@@ -36,6 +35,7 @@
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/errors.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
@@ -356,10 +356,16 @@ static bool is_executable_in_path(const char *name, char **abspath)
   }
 
 #ifdef MSWIN
-  // Prepend ".;" to $PATH.
-  size_t pathlen = strlen(path_env);
-  char *path = memcpy(xmallocz(pathlen + 2), "." ENV_SEPSTR, 2);
-  memcpy(path + 2, path_env, pathlen);
+  char *path = NULL;
+  if (!os_env_exists("NoDefaultCurrentDirectoryInExePath")) {
+    // Prepend ".;" to $PATH.
+    size_t pathlen = strlen(path_env);
+    path = xmallocz(pathlen + 2);
+    memcpy(path, "." ENV_SEPSTR, 2);
+    memcpy(path + 2, path_env, pathlen);
+  } else {
+    path = xstrdup(path_env);
+  }
 #else
   char *path = xstrdup(path_env);
 #endif
