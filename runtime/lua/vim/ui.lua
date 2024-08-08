@@ -141,7 +141,10 @@ function M.open(path)
 
   local cmd --- @type string[]
 
-  if vim.fn.has('mac') == 1 then
+  if vim.g.netrw_browsex_viewer and
+    vim.fn.executable(vim.g.netrw_browsex_viewer) == 1 then
+    cmd = { vim.g.netrw_browsex_viewer, path }
+  elseif vim.fn.has('mac') == 1 then
     cmd = { 'open', path }
   elseif vim.fn.has('win32') == 1 then
     if vim.fn.executable('rundll32') == 1 then

@@ -2560,6 +2560,9 @@ vim.ui.open({path})                                            *vim.ui.open()*
     `explorer.exe`, Linux `xdg-open`, …), or returns (but does not show) an
     error message on failure.
 
+    Instead of the system default handler the function calls a command set in
+    the 'vim.g.netrw_browsex_viewer', if it is present.
+
     Expands "~/" and environment variables in filesystem paths.
 
     Examples: >lua
