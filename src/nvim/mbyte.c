@@ -511,20 +511,30 @@ int utf_char2cells(int c)
 
 /// Return the number of display cells character at "*p" occupies.
 /// This doesn't take care of unprintable characters, use ptr2cells() for that.
-int utf_ptr2cells(const char *p)
+int utf_ptr2cells(const char *p_in)
 {
+  const uint8_t *p = (const uint8_t *)p_in;
   // Need to convert to a character number.
-  if ((uint8_t)(*p) >= 0x80) {
-    int c = utf_ptr2char(p);
+  if ((*p) >= 0x80) {
+    int len = utf8len_tab[*p];
+    int32_t c = utf_ptr2CharInfo_impl(p, (uintptr_t)len);
     // An illegal byte is displayed as <xx>.
-    if (utf_ptr2len(p) == 1 || c == NUL) {
+    if (c <= 0) {
       return 4;
     }
     // If the char is ASCII it must be an overlong sequence.
     if (c < 0x80) {
       return char2cells(c);
     }
-    return utf_char2cells(c);
+    int cells = utf_char2cells(c);
+    if (cells == 1 && p_emoji
+        && intable(emoji_all, ARRAY_SIZE(emoji_all), c)) {
+      int c2 = utf_ptr2char(p_in + len);
+      if (c2 == 0xFE0F) {
+        return 2;  // emoji presentation
+      }
+    }
+    return cells;
   }
   return 1;
 }
@@ -603,7 +613,8 @@ int utf_ptr2cells_len(const char *p, int size)
 {
   // Need to convert to a wide character.
   if (size > 0 && (uint8_t)(*p) >= 0x80) {
-    if (utf_ptr2len_len(p, size) < utf8len_tab[(uint8_t)(*p)]) {
+    int len = utf_ptr2len_len(p, size);
+    if (len < utf8len_tab[(uint8_t)(*p)]) {
       return 1;        // truncated
     }
     int c = utf_ptr2char(p);
@@ -615,7 +626,16 @@ int utf_ptr2cells_len(const char *p, int size)
     if (c < 0x80) {
       return char2cells(c);
     }
-    return utf_char2cells(c);
+    int cells = utf_char2cells(c);
+    if (cells == 1 && p_emoji && size > len
+        && intable(emoji_all, ARRAY_SIZE(emoji_all), c)
+        && utf_ptr2len_len(p + len, size - len) == utf8len_tab[(uint8_t)p[len]]) {
+      int c2 = utf_ptr2char(p + len);
+      if (c2 == 0xFE0F) {
+        return 2;  // emoji presentation
+      }
+    }
+    return cells;
   }
   return 1;
 }
@@ -648,8 +668,8 @@ size_t mb_string2cells_len(const char *str, size_t size)
   size_t clen = 0;
 
   for (const char *p = str; *p != NUL && p < str + size;
-       p += utfc_ptr2len_len(p, (int)size + (int)(p - str))) {
-    clen += (size_t)utf_ptr2cells(p);
+       p += utfc_ptr2len_len(p, (int)size - (int)(p - str))) {
+    clen += (size_t)utf_ptr2cells_len(p, (int)size - (int)(p - str));
   }
 
   return clen;
@@ -793,29 +813,48 @@ int mb_cptr2char_adv(const char **pp)
   return c;
 }
 
-/// Check if the character pointed to by "p2" is a composing character when it
-/// comes after "p1".  For Arabic sometimes "ab" is replaced with "c", which
-/// behaves like a composing character.
-bool utf_composinglike(const char *p1, const char *p2)
+/// When "c" is the first char of a string, determine if it needs to be prefixed
+/// by a space byte to be drawn correctly, and not merge with the space left of
+/// the string.
+bool utf_iscomposing_first(int c)
 {
-  int c2 = utf_ptr2char(p2);
-  if (utf_iscomposing(c2)) {
-    return true;
-  }
-  if (!arabic_maycombine(c2)) {
-    return false;
-  }
-  return arabic_combine(utf_ptr2char(p1), c2);
+  return c >= 128 && !utf8proc_grapheme_break(' ', c);
 }
 
-/// Check if the next character is a composing character when it
-/// comes after the first. For Arabic sometimes "ab" is replaced with "c", which
-/// behaves like a composing character.
-/// returns false for negative values
-bool utf_char_composinglike(int32_t const first, int32_t const next)
-  FUNC_ATTR_PURE
+/// Check if the character pointed to by "p2" is a composing character when it
+/// comes after "p1".
+///
+/// We use the definition in UAX#29 as implemented by utf8proc with the following
+/// exceptions:
+///
+/// - ASCII chars always begin a new cluster. This is a long assumed invariant
+///   in the code base and very useful for performance (we can exit early for ASCII
+///   all over the place, branch predictor go brrr in ASCII-only text).
+///   As of Unicode 15.1 this will only break BOUNDCLASS_UREPEND followed by ASCII,
+///   which should be exceedingly rare (these PREPEND chars are expected to be
+///   followed by multibyte chars within the same script family)
+///
+/// - When 'arabicshape' is active, some pairs of arabic letters "ab" is replaced with
+///   "c" taking one single cell, which behaves like a cluster.
+///
+/// @param "state" should be set to GRAPHEME_STATE_INIT before first call
+///        it is allowed to be null, but will then not handle some longer
+///        sequences, like ZWJ based emoji
+bool utf_composinglike(const char *p1, const char *p2, GraphemeState *state)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  return utf_iscomposing(next) || arabic_combine(first, next);
+  if ((uint8_t)(*p2) < 128) {
+    return false;
+  }
+
+  int first = utf_ptr2char(p1);
+  int second = utf_ptr2char(p2);
+
+  if (!utf8proc_grapheme_break_stateful(first, second, state)) {
+    return true;
+  }
+
+  return arabic_combine(first, second);
 }
 
 /// Get the screen char at the beginning of a string
@@ -834,7 +873,7 @@ schar_T utfc_ptr2schar(const char *p, int *firstc)
 {
   int c = utf_ptr2char(p);
   *firstc = c;  // NOT optional, you are gonna need it
-  bool first_compose = utf_iscomposing(c);
+  bool first_compose = utf_iscomposing_first(c);
   size_t maxlen = MAX_SCHAR_SIZE - 1 - first_compose;
   size_t len = (size_t)utfc_ptr2len_len(p, (int)maxlen);
 
@@ -845,16 +884,13 @@ schar_T utfc_ptr2schar(const char *p, int *firstc)
   return schar_from_buf_first(p, len, first_compose);
 }
 
-/// Get the screen char at the beginning of a string with length
+/// Get the screen char from a char with a known length
 ///
 /// Like utfc_ptr2schar but use no more than p[maxlen].
-schar_T utfc_ptr2schar_len(const char *p, int maxlen, int *firstc)
+schar_T utfc_ptrlen2schar(const char *p, int len, int *firstc)
   FUNC_ATTR_NONNULL_ALL
 {
-  assert(maxlen > 0);
-
-  size_t len = (size_t)utf_ptr2len_len(p, maxlen);
-  if (len > (size_t)maxlen || (len == 1 && (uint8_t)(*p) >= 0x80) || len == 0) {
+  if ((len == 1 && (uint8_t)(*p) >= 0x80) || len == 0) {
     // invalid or truncated sequence
     *firstc = (uint8_t)(*p);
     return 0;
@@ -862,11 +898,13 @@ schar_T utfc_ptr2schar_len(const char *p, int maxlen, int *firstc)
 
   int c = utf_ptr2char(p);
   *firstc = c;
-  bool first_compose = utf_iscomposing(c);
-  maxlen = MIN(maxlen, MAX_SCHAR_SIZE - 1 - first_compose);
-  len = (size_t)utfc_ptr2len_len(p, maxlen);
+  bool first_compose = utf_iscomposing_first(c);
+  int maxlen = MAX_SCHAR_SIZE - 1 - first_compose;
+  if (len > maxlen) {
+    len = utfc_ptr2len_len(p, maxlen);
+  }
 
-  return schar_from_buf_first(p, len, first_compose);
+  return schar_from_buf_first(p, (size_t)len, first_compose);
 }
 
 /// Caller must ensure there is space for `first_compose`
@@ -964,8 +1002,9 @@ int utfc_ptr2len(const char *const p)
 
   // Check for composing characters.
   int prevlen = 0;
+  GraphemeState state = GRAPHEME_STATE_INIT;
   while (true) {
-    if ((uint8_t)p[len] < 0x80 || !utf_composinglike(p + prevlen, p + len)) {
+    if ((uint8_t)p[len] < 0x80 || !utf_composinglike(p + prevlen, p + len, &state)) {
       return len;
     }
 
@@ -996,9 +1035,10 @@ int utfc_ptr2len_len(const char *p, int size)
     return 1;
   }
 
-  // Check for composing characters.  We can handle only the first six, but
+  // Check for composing characters.  We can only display a limited amount, but
   // skip all of them (otherwise the cursor would get stuck).
   int prevlen = 0;
+  GraphemeState state = GRAPHEME_STATE_INIT;
   while (len < size) {
     if ((uint8_t)p[len] < 0x80) {
       break;
@@ -1011,7 +1051,7 @@ int utfc_ptr2len_len(const char *p, int size)
       break;
     }
 
-    if (!utf_composinglike(p + prevlen, p + len)) {
+    if (!utf_composinglike(p + prevlen, p + len, &state)) {
       break;
     }
 
@@ -1084,11 +1124,18 @@ int utf_char2bytes(const int c, char *const buf)
   }
 }
 
-/// Return true if "c" is a composing UTF-8 character.
-/// This means it will be drawn on top of the preceding character.
+/// Return true if "c" is a legacy composing UTF-8 character.
+///
+/// This is deprecated in favour of utf_composinglike() which uses the modern
+/// stateful algorithm to determine grapheme clusters. Still available
+/// to support some legacy code which hasn't been refactored yet.
+///
+/// To check if a char would combine with a preceeding space, use
+/// utf_iscomposing_first() instead.
+///
 /// Based on code from Markus Kuhn.
 /// Returns false for negative values.
-bool utf_iscomposing(int c)
+bool utf_iscomposing_legacy(int c)
 {
   return intable(combining, ARRAY_SIZE(combining), c);
 }
@@ -1278,8 +1325,9 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
   return 2;
 }
 
-bool utf_ambiguous_width(int c)
+bool utf_ambiguous_width(const char *p)
 {
+  int c = utf_ptr2char(p);
   return c >= 0x80 && (intable(ambiguous, ARRAY_SIZE(ambiguous), c)
                        || intable(emoji_all, ARRAY_SIZE(emoji_all), c));
 }
@@ -1666,6 +1714,26 @@ void show_utf8(void)
   msg(IObuff, 0);
 }
 
+/// @return true if boundclass bc always starts a new cluster regardless of what's before
+/// false negatives are allowed (perf cost, not correctness)
+static bool always_break(int bc)
+{
+  return (bc == UTF8PROC_BOUNDCLASS_CONTROL);
+}
+
+/// @return true if bc2 always starts a cluster after bc1
+/// false negatives are allowed (perf cost, not correctness)
+static bool always_break_two(int bc1, int bc2)
+{
+  // don't check for UTF8PROC_BOUNDCLASS_CONTROL for bc2 as it either has been checked by
+  // "always_break" on first iteration or when it was bc1 in the previous iteration
+  return ((bc1 != UTF8PROC_BOUNDCLASS_PREPEND && bc2 == UTF8PROC_BOUNDCLASS_OTHER)
+          || (bc1 >= UTF8PROC_BOUNDCLASS_CR && bc1 <= UTF8PROC_BOUNDCLASS_CONTROL)
+          || (bc2 == UTF8PROC_BOUNDCLASS_EXTENDED_PICTOGRAPHIC
+              && (bc1 == UTF8PROC_BOUNDCLASS_OTHER
+                  || bc1 == UTF8PROC_BOUNDCLASS_EXTENDED_PICTOGRAPHIC)));
+}
+
 /// Return offset from "p" to the start of a character, including composing characters.
 /// "base" must be the start of the string, which must be NUL terminated.
 /// If "p" points to the NUL at the end of the string return 0.
@@ -1679,50 +1747,108 @@ int utf_head_off(const char *base_in, const char *p_in)
   const uint8_t *base = (uint8_t *)base_in;
   const uint8_t *p = (uint8_t *)p_in;
 
-  // Skip backwards over trailing bytes: 10xx.xxxx
-  // Skip backwards again if on a composing char.
-  const uint8_t *q;
-  for (q = p;; q--) {
-    // Move s to the last byte of this char.
-    const uint8_t *s;
-    for (s = q; (s[1] & 0xc0) == 0x80; s++) {}
+  const uint8_t *start = p;
 
-    // Move q to the first byte of this char.
-    while (q > base && (*q & 0xc0) == 0x80) {
-      q--;
-    }
-    // Check for illegal sequence. Do allow an illegal byte after where we
-    // started.
-    int len = utf8len_tab[*q];
-    if (len != (int)(s - q + 1) && len != (int)(p - q + 1)) {
-      return 0;
+  // move start to the first byte of this codepoint
+  // might stop on a continuation byte if overlong, handled by utf_ptr2CharInfo_impl
+  while (start > base && (*start & 0xc0) == 0x80 && (p - start) < 6) {
+    start--;
+  }
+
+  uint8_t cur_len = utf8len_tab[*start];
+  int32_t cur_code = utf_ptr2CharInfo_impl(start, (uintptr_t)cur_len);
+  if (cur_code < 0) {
+    return 0;  // p must be part of an illegal sequence
+  }
+  const uint8_t * const safe_end = start + cur_len;
+
+  int cur_bc = utf8proc_get_property(cur_code)->boundclass;
+  if (always_break(cur_bc)) {
+    return (int)(p - start);
+  }
+
+  // backtrack to find the start of a cluster. we might go too far, checked in the next loop
+  const uint8_t *cur_pos = start;
+  const uint8_t *const p_start = start;
+
+  if (start == base) {
+    return (int)(p - start);
+  }
+
+  start--;
+  while (*start >= 0x80) {  // stop on ascii, we are done
+    while (start > base && (*start & 0xc0) == 0x80 && (cur_pos - start) < 6) {
+      start--;
     }
 
-    if (q <= base) {
+    int32_t prev_code = utf_ptr2CharInfo_impl(start, (uintptr_t)utf8len_tab[*start]);
+    if (prev_code < 0) {
+      start = cur_pos;  // start at valid sequence after invalid bytes
       break;
     }
 
-    int c = utf_ptr2char((char *)q);
-    if (utf_iscomposing(c)) {
-      continue;
+    int prev_bc = utf8proc_get_property(prev_code)->boundclass;
+    if (always_break_two(prev_bc, cur_bc) && !arabic_combine(prev_code, cur_code)) {
+      start = cur_pos;  // prev_code cannot be a part of this cluster
+      break;
+    } else if (start == base) {
+      break;
     }
+    cur_pos = start;
+    cur_bc = prev_bc;
+    cur_code = prev_code;
 
-    if (arabic_maycombine(c)) {
-      // Advance to get a sneak-peak at the next char
-      const uint8_t *j = q;
-      j--;
-      // Move j to the first byte of this char.
-      while (j > base && (*j & 0xc0) == 0x80) {
-        j--;
-      }
-      if (arabic_combine(utf_ptr2char((char *)j), c)) {
-        continue;
-      }
-    }
-    break;
+    start--;
   }
 
-  return (int)(p - q);
+  // hot path: we are already on the first codepoint of a sequence
+  if (start == p_start) {
+    return (int)(p - start);
+  }
+
+  const uint8_t *q = start;
+  while (q < p) {
+    // don't need to find end of cluster. once we reached the codepoint of p, we are done
+    int len = utfc_ptr2len_len((const char *)q, (int)(safe_end - q));
+
+    if (q + len > p) {
+      return (int)(p - q);
+    }
+
+    q += len;
+  }
+
+  return 0;
+}
+
+/// Assumes caller already handles ascii. see `utfc_next`
+StrCharInfo utfc_next_impl(StrCharInfo cur)
+{
+  int32_t prev_code = cur.chr.value;
+  uint8_t *next = (uint8_t *)(cur.ptr + cur.chr.len);
+  GraphemeState state = GRAPHEME_STATE_INIT;
+  assert(*next >= 0x80);
+
+  while (true) {
+    uint8_t const next_len = utf8len_tab[*next];
+    int32_t const next_code = utf_ptr2CharInfo_impl(next, (uintptr_t)next_len);
+    if (utf8proc_grapheme_break_stateful(prev_code, next_code, &state)
+        && !arabic_combine(prev_code, next_code)) {
+      return (StrCharInfo){
+        .ptr = (char *)next,
+        .chr = (CharInfo){ .value = next_code, .len = (next_code < 0 ? 1 : next_len) },
+      };
+    }
+
+    prev_code = next_code;
+    next += next_len;
+    if (EXPECT(*next < 0x80U, true)) {
+      return (StrCharInfo){
+        .ptr = (char *)next,
+        .chr = (CharInfo){ .value = *next, .len = 1 },
+      };
+    }
+  }
 }
 
 // Whether space is NOT allowed before/after 'c'.
@@ -2681,7 +2807,7 @@ char *string_convert_ext(const vimconv_T *const vcp, char *ptr, size_t *lenp, si
             c = 0x100; break;                   // not in latin9
           }
         }
-        if (!utf_iscomposing(c)) {              // skip composing chars
+        if (!utf_iscomposing_legacy(c)) {  // skip composing chars
           if (c < 0x100) {
             *d++ = (uint8_t)c;
           } else if (vcp->vc_fail) {

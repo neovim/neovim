@@ -646,6 +646,12 @@ widespread as file format.
 A composing or combining character is used to change the meaning of the
 character before it.  The combining characters are drawn on top of the
 preceding character.
+
+Nvim largely follows the definition of extended grapheme clusters in UAX#29
+in the Unicode standard, with some modifications: An ascii char will always
+start a new cluster. In addition 'arabicshape' enables the combining of some
+arabic letters, when they are shaped to be displayed together in a single cell.
+
 Too big combined characters cannot be displayed, but they can still be
 inspected using the |g8| and |ga| commands described below.
 When editing text a composing character is mostly considered part of the

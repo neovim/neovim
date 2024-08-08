@@ -1436,6 +1436,41 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     }
   end)
 
+  it('supports nvim_echo messages with emoji', function()
+    -- stylua: ignore
+    async_meths.nvim_echo(
+      { { 'wow, 🏳️‍⚧️🧑‍🌾❤️😂🏴‍☠️\nvariant ❤️ one\nvariant ❤ two' } }, true, {}
+    )
+
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {3:                                                            }|
+      wow, 🏳️‍⚧️🧑‍🌾❤️😂🏴‍☠️                                             |
+      variant ❤️ one                                              |
+      variant ❤ two                                               |
+      {6:Press ENTER or type command to continue}^                     |
+    ]])
+
+    feed '<cr>'
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*5
+                                                                  |
+    ]])
+
+    feed ':messages<cr>'
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {3:                                                            }|
+      wow, 🏳️‍⚧️🧑‍🌾❤️😂🏴‍☠️                                             |
+      variant ❤️ one                                              |
+      variant ❤ two                                               |
+      {6:Press ENTER or type command to continue}^                     |
+    ]])
+  end)
+
   it('prints lines in Ex mode correctly with a burst of carriage returns #19341', function()
     command('set number')
     api.nvim_buf_set_lines(0, 0, 0, true, { 'aaa', 'bbb', 'ccc' })

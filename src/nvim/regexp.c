@@ -3031,7 +3031,7 @@ static bool use_multibytecode(int c)
 {
   return utf_char2len(c) > 1
          && (re_multi_type(peekchr()) != NOT_MULTI
-             || utf_iscomposing(c));
+             || utf_iscomposing_legacy(c));
 }
 
 // Emit (if appropriate) a byte of code
@@ -4326,7 +4326,7 @@ static uint8_t *regatom(int *flagp)
     }
     // When '.' is followed by a composing char ignore the dot, so that
     // the composing char is matched here.
-    if (c == Magic('.') && utf_iscomposing(peekchr())) {
+    if (c == Magic('.') && utf_iscomposing_legacy(peekchr())) {
       c = getchr();
       goto do_multibyte;
     }
@@ -5001,9 +5001,10 @@ do_multibyte:
           int l;
 
           // Need to get composing character too.
+          GraphemeState state = GRAPHEME_STATE_INIT;
           while (true) {
             l = utf_ptr2len(regparse);
-            if (!utf_composinglike(regparse, regparse + l)) {
+            if (!utf_composinglike(regparse, regparse + l, &state)) {
               break;
             }
             regmbc(utf_ptr2char(regparse));
@@ -6569,7 +6570,7 @@ static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
             // Check for following composing character, unless %C
             // follows (skips over all composing chars).
             if (status != RA_NOMATCH
-                && utf_composinglike((char *)rex.input, (char *)rex.input + len)
+                && utf_composinglike((char *)rex.input, (char *)rex.input + len, NULL)
                 && !rex.reg_icombine
                 && OP(next) != RE_COMPOSING) {
               // raaron: This code makes a composing character get
@@ -6624,14 +6625,14 @@ static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
             break;
           }
           const int opndc = utf_ptr2char((char *)opnd);
-          if (utf_iscomposing(opndc)) {
+          if (utf_iscomposing_legacy(opndc)) {
             // When only a composing char is given match at any
             // position where that composing char appears.
             status = RA_NOMATCH;
             for (i = 0; rex.input[i] != NUL;
                  i += utf_ptr2len((char *)rex.input + i)) {
               const int inpc = utf_ptr2char((char *)rex.input + i);
-              if (!utf_iscomposing(inpc)) {
+              if (!utf_iscomposing_legacy(inpc)) {
                 if (i > 0) {
                   break;
                 }
@@ -6654,7 +6655,7 @@ static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
 
         case RE_COMPOSING:
           // Skip composing characters.
-          while (utf_iscomposing(utf_ptr2char((char *)rex.input))) {
+          while (utf_iscomposing_legacy(utf_ptr2char((char *)rex.input))) {
             rex.input += utf_ptr2len((char *)rex.input);
           }
           break;
@@ -10070,7 +10071,7 @@ static int nfa_regatom(void)
     }
     // When '.' is followed by a composing char ignore the dot, so that
     // the composing char is matched here.
-    if (c == Magic('.') && utf_iscomposing(peekchr())) {
+    if (c == Magic('.') && utf_iscomposing_legacy(peekchr())) {
       old_regparse = (uint8_t *)regparse;
       c = getchr();
       goto nfa_do_multibyte;
@@ -10705,7 +10706,7 @@ collection:
 nfa_do_multibyte:
     // plen is length of current char with composing chars
     if (utf_char2len(c) != (plen = utfc_ptr2len((char *)old_regparse))
-        || utf_iscomposing(c)) {
+        || utf_iscomposing_legacy(c)) {
       int i = 0;
 
       // A base character plus composing characters, or just one
@@ -14033,7 +14034,7 @@ static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
     }
     if (match
         // check that no composing char follows
-        && !utf_iscomposing(utf_ptr2char((char *)s2))) {
+        && !utf_iscomposing_legacy(utf_ptr2char((char *)s2))) {
       cleanup_subexpr();
       if (REG_MULTI) {
         rex.reg_startpos[0].lnum = rex.lnum;
@@ -14278,7 +14279,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         // is not really a match.
         if (!rex.reg_icombine
             && rex.input != rex.line
-            && utf_iscomposing(curc)) {
+            && utf_iscomposing_legacy(curc)) {
           break;
         }
         nfa_match = true;
@@ -14622,7 +14623,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
         sta = t->state->out;
         len = 0;
-        if (utf_iscomposing(sta->c)) {
+        if (utf_iscomposing_legacy(sta->c)) {
           // Only match composing character(s), ignore base
           // character.  Used for ".{composing}" and "{composing}"
           // (no preceding character).
@@ -14724,7 +14725,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
             int j;
 
             sta = t->state->out->out;
-            if (utf_iscomposing(sta->c)) {
+            if (utf_iscomposing_legacy(sta->c)) {
               // Only match composing character(s), ignore base
               // character.  Used for ".{composing}" and "{composing}"
               // (no preceding character).
@@ -14846,7 +14847,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_ANY_COMPOSING:
         // On a composing character skip over it.  Otherwise do
         // nothing.  Always matches.
-        if (utf_iscomposing(curc)) {
+        if (utf_iscomposing_legacy(curc)) {
           add_off = clen;
         } else {
           add_here = true;

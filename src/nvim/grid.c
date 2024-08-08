@@ -186,6 +186,24 @@ size_t schar_len(schar_T sc)
   }
 }
 
+int schar_cells(schar_T sc)
+{
+  // hot path
+#ifdef ORDER_BIG_ENDIAN
+  if (!(sc & 0x80FFFFFF)) {
+    return 1;
+  }
+#else
+  if (sc < 0x80) {
+    return 1;
+  }
+#endif
+
+  char sc_buf[MAX_SCHAR_SIZE];
+  schar_get(sc_buf, sc);
+  return utf_ptr2cells(sc_buf);
+}
+
 /// gets first raw UTF-8 byte of an schar
 static char schar_get_first_byte(schar_T sc)
 {
@@ -428,14 +446,19 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
   const int max_col = grid_line_maxcol;
   while (col < max_col && (len < 0 || (int)(ptr - text) < len) && *ptr != NUL) {
     // check if this is the first byte of a multibyte
-    int mbyte_blen = len > 0
-                     ? utfc_ptr2len_len(ptr, (int)((text + len) - ptr))
-                     : utfc_ptr2len(ptr);
+    int mbyte_blen;
+    if (len >= 0) {
+      int maxlen = (int)((text + len) - ptr);
+      mbyte_blen = utfc_ptr2len_len(ptr, maxlen);
+      if (mbyte_blen > maxlen) {
+        mbyte_blen = 1;
+      }
+    } else {
+      mbyte_blen = utfc_ptr2len(ptr);
+    }
     int firstc;
-    schar_T schar = len >= 0
-                    ? utfc_ptr2schar_len(ptr, (int)((text + len) - ptr), &firstc)
-                    : utfc_ptr2schar(ptr, &firstc);
-    int mbyte_cells = utf_char2cells(firstc);
+    schar_T schar = utfc_ptrlen2schar(ptr, mbyte_blen, &firstc);
+    int mbyte_cells = utf_ptr2cells_len(ptr, mbyte_blen);
     if (mbyte_cells > 2 || schar == 0) {
       mbyte_cells = 1;
       schar = schar_from_char(0xFFFD);

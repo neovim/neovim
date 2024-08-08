@@ -296,6 +296,86 @@ describe('multibyte rendering', function()
     ]],
     }
   end)
+
+  it('supports emoji with variant selectors and ZWJ', function()
+    command('set ruler')
+    insert('🏳️‍⚧️')
+    screen:expect([[
+      ^🏳️‍⚧️                                                          |
+      {1:~                                                           }|*4
+                                                1,1           All |
+    ]])
+
+    feed('a word<esc>')
+    screen:expect([[
+      🏳️‍⚧️ wor^d                                                     |
+      {1:~                                                           }|*4
+                                                1,21-7        All |
+    ]])
+
+    feed('0')
+    screen:expect([[
+      ^🏳️‍⚧️ word                                                     |
+      {1:~                                                           }|*4
+                                                1,1           All |
+    ]])
+
+    feed('l')
+    screen:expect([[
+        🏳️‍⚧️^ word                                                     |
+        {1:~                                                           }|*4
+                                                  1,17-3        All |
+    ]])
+
+    feed('h')
+    screen:expect([[
+      ^🏳️‍⚧️ word                                                     |
+      {1:~                                                           }|*4
+                                                1,1           All |
+    ]])
+
+    feed('o❤️ variant selected<esc>')
+    screen:expect([[
+      🏳️‍⚧️ word                                                     |
+      ❤️ variant selecte^d                                         |
+      {1:~                                                           }|*3
+                                                2,23-19       All |
+    ]])
+
+    feed('0')
+    screen:expect([[
+      🏳️‍⚧️ word                                                     |
+      ^❤️ variant selected                                         |
+      {1:~                                                           }|*3
+                                                2,1           All |
+    ]])
+
+    feed('l')
+    screen:expect([[
+      🏳️‍⚧️ word                                                     |
+      ❤️^ variant selected                                         |
+      {1:~                                                           }|*3
+                                                2,7-3         All |
+    ]])
+
+    feed('h')
+    screen:expect([[
+      🏳️‍⚧️ word                                                     |
+      ^❤️ variant selected                                         |
+      {1:~                                                           }|*3
+                                                2,1           All |
+    ]])
+
+    -- without selector: single width (note column 18 and not 19)
+    feed('o❤ variant selected<esc>')
+    screen:expect([[
+      🏳️‍⚧️ word                                                     |
+      ❤️ variant selected                                         |
+      ❤ variant selecte^d                                          |
+      {1:~                                                           }|*2
+                                                3,20-18       All |
+    ]])
+  end)
 end)
 
 describe('multibyte rendering: statusline', function()
@@ -348,11 +428,12 @@ describe('multibyte rendering: statusline', function()
   it('non-printable followed by MAX_MCO unicode combination points', function()
     command('set statusline=̸⃯ᷰ⃐⃧⃝')
     -- U+9F + U+1DF0 + U+20EF + U+0338 + U+20D0 + U+20E7 + U+20DD
+    -- TODO: not ideal, better with plain ">" and then space+combining
     screen:expect([[
-    ^                                        |
-    {1:~                                       }|
-    {3:<9f><1df0><20ef><0338><20d0><20e7><20dd>}|
-                                            |
+      ^                                        |
+      {1:~                                       }|
+      {3:<9f≯⃯ᷰ⃐⃧⃝                                    }|
+                                              |
     ]])
   end)
 
@@ -368,9 +449,20 @@ describe('multibyte rendering: statusline', function()
     }
   end)
 
-  it('unprintable chars in filename with default stl', function()
+  it('emoji with ZWJ in filename with default stl', function()
     command('file 🧑‍💻')
-    -- TODO: this is wrong but avoids a crash
+    screen:expect {
+      grid = [[
+      ^                                        |
+      {1:~                                       }|
+      {3:🧑‍💻                                      }|
+                                              |
+    ]],
+    }
+  end)
+
+  it('unprintable chars in filename with default stl', function()
+    command('file 🧑​💻')
     screen:expect {
       grid = [[
       ^                                        |
@@ -381,15 +473,27 @@ describe('multibyte rendering: statusline', function()
     }
   end)
 
-  it('unprintable chars in filename with custom stl', function()
+  it('emoji with ZWJ in filename with custom stl', function()
     command('set statusline=xx%#ErrorMsg#%f%##yy')
     command('file 🧑‍💻')
-    -- TODO: this is also wrong but also avoids a crash
     screen:expect {
       grid = [[
       ^                                        |
       {1:~                                       }|
-      {3:xx}{9:🧑<200d>💻}{3:yy                          }|
+      {3:xx}{9:🧑‍💻}{3:yy                                  }|
+                                              |
+    ]],
+    }
+  end)
+
+  it('unprintable chars in filename with custom stl', function()
+    command('set statusline=xx%#ErrorMsg#%f%##yy')
+    command('file 🧑​💻')
+    screen:expect {
+      grid = [[
+      ^                                        |
+      {1:~                                       }|
+      {3:xx}{9:🧑<200b>💻}{3:yy                          }|
                                               |
     ]],
     }

@@ -5620,6 +5620,27 @@ l5
       ]]
     })
   end)
+
+  it('supports emoji as signs', function()
+    insert(example_test3)
+    feed 'gg'
+    api.nvim_buf_set_extmark(0, ns, 1, 0, {sign_text='🧑‍🌾'})
+    -- VS16 can change width of character
+    api.nvim_buf_set_extmark(0, ns, 2, 0, {sign_text='❤️'})
+    api.nvim_buf_set_extmark(0, ns, 3, 0, {sign_text='❤'})
+    api.nvim_buf_set_extmark(0, ns, 4, 0, {sign_text='❤x'})
+    screen:expect([[
+      {7:  }^l1                                              |
+      🧑‍🌾l2                                              |
+      ❤️l3                                              |
+      ❤ l4                                              |
+      ❤xl5                                              |
+      {7:  }                                                |
+      {1:~                                                 }|*3
+                                                        |
+    ]])
+    eq("Invalid 'sign_text'", pcall_err(api.nvim_buf_set_extmark, 0, ns, 5, 0, {sign_text='❤️x'}))
+  end)
 end)
 
 describe('decorations: virt_text', function()

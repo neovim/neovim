@@ -54,7 +54,7 @@ static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t 
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   if (cstype == kCharsizeFast) {
-    return charsize_fast(csarg, vcol, chr);
+    return charsize_fast(csarg, ptr, vcol, chr);
   } else {
     return charsize_regular(csarg, ptr, vcol, chr);
   }

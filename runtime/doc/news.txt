@@ -200,6 +200,12 @@ These existing features changed their behavior.
   top lines are calculated using screen line numbers which take virtual lines
   into account.
 
+• The implementation of grapheme clusters (or combining chars |mbyte-combining|)
+  was upgraded to closely follow extended grapheme clusters as defined by UAX#29
+  in the unicode standard. Noteworthily, this enables proper display of many
+  more emoji characters than before, including those encoded with multiple
+  emoji codepoints combined with ZWJ (zero width joiner) codepoints.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

@@ -446,9 +446,7 @@ void trunc_string(const char *s, char *buf, int room_in, int buflen)
   // Last part: End of the string.
   half = i = (int)strlen(s);
   while (true) {
-    do {
-      half = half - utf_head_off(s, s + half - 1) - 1;
-    } while (half > 0 && utf_iscomposing(utf_ptr2char(s + half)));
+    half = half - utf_head_off(s, s + half - 1) - 1;
     n = ptr2cells(s + half);
     if (len + n > room || half == 0) {
       break;
