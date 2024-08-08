@@ -40,8 +40,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vterm.h>
-#include <vterm_keycodes.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
@@ -94,6 +92,8 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "vterm/vterm.h"
+#include "vterm/vterm_keycodes.h"
 
 typedef struct {
   VimState state;

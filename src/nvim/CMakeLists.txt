@@ -30,7 +30,6 @@ target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
 
 find_package(Iconv REQUIRED)
 find_package(Libuv 1.28.0 REQUIRED)
-find_package(Libvterm 0.3.3 REQUIRED)
 find_package(Lpeg REQUIRED)
 find_package(Treesitter 0.22.6 REQUIRED)
 find_package(Unibilium 2.0 REQUIRED)
@@ -38,7 +37,6 @@ find_package(UTF8proc REQUIRED)
 
 target_link_libraries(main_lib INTERFACE
   iconv
-  libvterm
   lpeg
   treesitter
   unibilium
@@ -366,8 +364,8 @@ file(MAKE_DIRECTORY ${TOUCHES_DIR} ${GENERATED_DIR} ${GENERATED_INCLUDES_DIR})
 
 file(GLOB NVIM_SOURCES CONFIGURE_DEPENDS *.c)
 file(GLOB NVIM_HEADERS CONFIGURE_DEPENDS *.h)
-file(GLOB EXTERNAL_SOURCES CONFIGURE_DEPENDS ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../termkey/*.c)
-file(GLOB EXTERNAL_HEADERS CONFIGURE_DEPENDS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../termkey/*.h)
+file(GLOB EXTERNAL_SOURCES CONFIGURE_DEPENDS ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../termkey/*.c ../vterm/*.c)
+file(GLOB EXTERNAL_HEADERS CONFIGURE_DEPENDS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../termkey/*.h ../vterm/*.h)
 
 file(GLOB NLUA0_SOURCES CONFIGURE_DEPENDS ../mpack/*.c)
 

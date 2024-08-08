@@ -248,7 +248,6 @@ jobs:
             luajit \
             lua-luv-dev
             # libtree-sitter-dev \
-            # libvterm-dev
 
             # Remove comments from packages once we start using these external
             # dependencies.

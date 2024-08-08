@@ -880,6 +880,7 @@ def CheckIncludes(filename, lines, error):
             "mpack/object.h",
             "nvim/func_attr.h",
             "termkey/termkey.h",
+            "vterm/vterm.h",
             ]
 
     for i in check_includes_ignore:
