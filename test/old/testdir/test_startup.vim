@@ -1293,6 +1293,8 @@ func Test_echo_true_in_cmd()
 endfunc
 
 func Test_rename_buffer_on_startup()
+  CheckUnix
+
   let lines =<< trim END
       call writefile(['done'], 'Xresult')
       qa!
