@@ -46,6 +46,8 @@ typedef struct {
   char *mf_fname;                    ///< name of the file
   char *mf_ffname;                   ///< idem, full path
   int mf_fd;                         ///< file descriptor
+  int mf_flags;                      ///< flags used when opening this memfile
+  bool mf_reopen;                    ///< mf_fd was closed, retry opening
   bhdr_T *mf_free_first;             ///< first block header in free list
 
   /// The used blocks are kept in mf_hash.
