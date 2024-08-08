@@ -2959,7 +2959,17 @@ int setfname(buf_T *buf, char *ffname_arg, char *sfname_arg, bool message)
       obuf = buflist_findname_file_id(ffname, &file_id, file_id_valid);
     }
     if (obuf != NULL && obuf != buf) {
-      if (obuf->b_ml.ml_mfp != NULL) {          // it's loaded, fail
+      bool in_use = false;
+
+      // during startup a window may use a buffer that is not loaded yet
+      FOR_ALL_TAB_WINDOWS(tab, win) {
+        if (win->w_buffer == obuf) {
+          in_use = true;
+        }
+      }
+
+      // it's loaded or used in a window, fail
+      if (obuf->b_ml.ml_mfp != NULL || in_use) {
         if (message) {
           emsg(_("E95: Buffer with this name already exists"));
         }
