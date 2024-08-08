@@ -1402,7 +1402,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         change_start = MAXCOL;
         change_end = -1;
         if (diff_find_change(curwin, lnum, &change_start, &change_end, &hlresult,
-            &diffchars_lim_exceeded, &diffchars_line_len)) {
+                             &diffchars_lim_exceeded, &diffchars_line_len)) {
           hlID = HLF_ADD;               // added line
         } else {
           hlID = HLF_CHD;               // changed line
@@ -1427,7 +1427,8 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
           hlID = HLF_CHD;
         } else if (hlresult[0] == 2) {
           hlID = HLF_ADD;
-        } else if ((size_t)col < diffchars_line_len && (hlresult[col] == 1 || hlresult[col] == -2)) {
+        } else if ((size_t)col < diffchars_line_len
+                   && (hlresult[col] == 1 || hlresult[col] == -2)) {
           hlID = HLF_TXD;
         } else {
           hlID = HLF_CHD;
@@ -1440,7 +1441,6 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         hlID = HLF_CHD;  // Changed line.
       }
     }
-
   }
   rettv->vval.v_number = hlID == (hlf_T)0 ? 0 : (hlID + 1);
 }

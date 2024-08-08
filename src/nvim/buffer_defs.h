@@ -766,7 +766,7 @@ struct diffblock_S {
   bool is_linematched;  // has the linematch algorithm ran on this diff hunk to divide it into
                         // smaller diff hunks?
   size_t n_charmatch;
-  int* charmatchp; // values for charmatch
+  int *charmatchp;  // values for charmatch
 };
 
 #define SNAP_HELP_IDX   0

@@ -155,9 +155,8 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
               word_len[k] = word_offset_size[k][df_iters[k] - 1];
               // index of the word for comparison
             } else {
-              p += df_iters[k] - 1; // advance by the character count
+              p += df_iters[k] - 1;  // advance by the character count
             }
-
           } else {
             fastforward_buf_to_lnum(&p, df_iters[k] - 1);
           }
@@ -181,25 +180,25 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
         for (size_t i = 0; i < ndiffs; i++) {
           if (current_lines[i] != NULL) {
             compared++;
-            if ((t[0] != '\0' && !compare(current_lines[i], (word_offset[i] != NULL ? word_len[i] : 1), t, t_l)) // if theres more than one to compare, and
-                                                                                  // they're not matching
-                || (t[0] != '\0' && current_lines[i][0] == '\n'))                 // if there's more than one to compare, and
+            if ((t[0] != '\0' && !compare(current_lines[i],
+                                          (word_offset[i] != NULL ? word_len[i] : 1), t, t_l))  // if theres more than one to compare, and
+                // they're not matching
+                || (t[0] != '\0' && current_lines[i][0] == '\n')) {               // if there's more than one to compare, and
                                                                                   // at least one is a '\n'
-            {
-              return; // not a possible path
+              return;  // not a possible path
             } else if (t[0] != '\0') {
-              matched_chars = 1; // comparison of all buffers
+              matched_chars = 1;  // comparison of all buffers
             }
             size_t this_word_length = word_offset[i] != NULL ? word_len[i] : 1;
             t_l = this_word_length;
-            for (size_t l = 0; l < this_word_length; l++) { t[l] = current_lines[i][l]; }
-
+            for (size_t l = 0; l < this_word_length; l++) {
+              t[l] = current_lines[i][l];
+            }
           }
         }
         if (!(compared == ndiffs || compared == 1)) {
           return;
         }
-
       } else {
         matched_chars = count_n_matched_chars(current_lines, ndiffs);
       }
@@ -221,10 +220,12 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
   size_t bit_place = paths[path_idx];
   *(choice) |= (1 << bit_place);  // set it to 1
   try_possible_paths(df_iters, paths, npaths, path_idx + 1, choice,
-                     diffcmppath, diff_len, ndiffs, diff_blk, charmatch, word_offset, word_offset_size);
+                     diffcmppath, diff_len, ndiffs, diff_blk, charmatch, word_offset,
+                     word_offset_size);
   *(choice) &= ~(1 << bit_place);  // set it to 0
   try_possible_paths(df_iters, paths, npaths, path_idx + 1, choice,
-                     diffcmppath, diff_len, ndiffs, diff_blk, charmatch, word_offset, word_offset_size);
+                     diffcmppath, diff_len, ndiffs, diff_blk, charmatch, word_offset,
+                     word_offset_size);
 }
 
 /// unwrap indexes to access n dimensional tensor
@@ -420,7 +421,6 @@ static size_t test_charmatch_paths(diffcmppath_T *node, int lastdecision)
     }
   }
   return (size_t)node->df_choice_mem[lastdecision];
-
 }
 // return true if these two strings are equal
 static bool compare(const char *s1, size_t l1, const char *s2, size_t l2)

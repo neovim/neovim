@@ -1144,7 +1144,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   if (wlv.filler_lines < 0 || linestatus < 0) {
     if (wlv.filler_lines == -1 || linestatus == -1) {
       if (diff_find_change(wp, lnum, &change_start, &change_end, &hlresult,
-          &diffchars_lim_exceeded, &diffchars_line_len)) {
+                           &diffchars_lim_exceeded, &diffchars_line_len)) {
         wlv.diff_hlf = HLF_ADD;             // added line
       } else if (change_start == 0) {
         wlv.diff_hlf = HLF_TXD;             // changed text
@@ -1729,9 +1729,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           if (wlv.diff_hlf != HLF_ADD) {
             if (hlresult == NULL) {
               wlv.diff_hlf = HLF_CHD;
-            }  else if (hlresult[0] == 2) {
+            } else if (hlresult[0] == 2) {
               wlv.diff_hlf = HLF_ADD;
-            } else if ((size_t)(ptr - line) < diffchars_line_len && (hlresult[ptr - line] == 1 || hlresult[ptr - line] == -2)) {
+            } else if ((size_t)(ptr - line) < diffchars_line_len
+                       && (hlresult[ptr - line] == 1 || hlresult[ptr - line] == -2)) {
               wlv.diff_hlf = HLF_TXD;
             } else {
               wlv.diff_hlf = HLF_CHD;
@@ -1749,7 +1750,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             wlv.diff_hlf = HLF_CHD;                   // changed line
           }
         }
-
 
         wlv.line_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
         // Overlay CursorLine onto diff-mode highlight.
