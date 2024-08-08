@@ -129,8 +129,6 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 * [gettext](https://ftp.gnu.org/pub/gnu/gettext/)
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
 * [libuv](https://github.com/libuv/libuv)
-* [libvterm](https://www.leonerd.org.uk/code/libvterm/)
-    * Downloading from the original source is unreliable, so we use our [mirror](https://github.com/neovim/libvterm) instead.
 * [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
 * [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 * [unibilium](https://github.com/neovim/unibilium)
@@ -146,6 +144,8 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 * `src/xdiff/`: [xdiff](https://github.com/git/git/tree/master/xdiff)
 * `src/cjson/`: [lua-cjson](https://github.com/openresty/lua-cjson)
 * `src/klib/`: [Klib](https://github.com/attractivechaos/klib)
+* `src/vterm/`: [libvterm](https://www.leonerd.org.uk/code/libvterm/),
+    [mirror](https://github.com/neovim/libvterm)
 * `runtime/lua/vim/inspect.lua`: [inspect.lua](https://github.com/kikito/inspect.lua)
 * `src/nvim/tui/terminfo_defs.h`: terminfo definitions
     * Run `scripts/update_terminfo.sh` to update these definitions.
