@@ -135,4 +135,112 @@ function keymap.del(modes, lhs, opts)
   end
 end
 
+--- @class vim.keymap.get.Opts
+--- @inlinedoc
+---
+--- Lhs of mapping
+--- @field lhs? string
+---
+--- Patter to match against rhs of mapping
+--- @field rhs? string
+---
+--- Get a mapping for a certain buffer
+--- @field buffer? integer|boolean
+
+--- @class vim.keymap.get.Return.Opts
+--- @inlinedoc
+---
+--- If they mapping is an expr mapping
+--- @field expr boolean
+---
+--- If they mapping is a buffer-local mapping
+--- @field buffer boolean
+---
+--- Description of the mapping
+--- @field desc? string
+
+--- @class vim.keymap.get.Return
+--- @inlinedoc
+---
+--- Lhs of mapping
+--- @field lhs string
+---
+--- Rhs of mapping (can be callback)
+--- @field rhs string|function
+---
+--- Get a mapping for a certain buffer
+--- @field opts? integer|boolean
+
+--- Gets mappings in a format easily usable for vim.keymap.set
+--- Examples:
+---
+--- ```lua
+--- -- Gets all normal mode keymaps
+--- vim.keymap.get('n')
+---
+--- -- Gets a mapping which maps to a certain rhs
+--- vim.keymap.get('n', { rhs = "<Plug>(MyAmazingFunction)" })
+--- ```
+---
+---@param modes string|string[]
+---@param opts? vim.keymap.get.Opts
+---@return vim.keymap.get.Return[]
+function keymap.get(modes, opts)
+  vim.validate({
+    mode = { modes, { 's', 't' } },
+    opts = { opts, 't', true },
+  })
+
+  opts = opts or {}
+  modes = type(modes) == 'string' and { modes } or modes
+  --- @cast modes string[]
+
+  local keymaps = {}
+  for _, mode in ipairs(modes) do
+    if opts.buffer then
+      table.insert(
+        keymaps,
+        ---@diagnostic disable-next-line: param-type-mismatch
+        vim.api.nvim_buf_get_keymap(opts.buffer == true and 0 or opts.buffer, mode)
+      )
+    else
+      table.insert(keymaps, vim.api.nvim_get_keymap(mode))
+    end
+  end
+
+  local function matches(mapping)
+    local match = true
+    if opts.lhs then
+      opts.lhs = opts.lhs:gsub('<leader>', vim.g.mapleader or '')
+      opts.lhs = opts.lhs:gsub('<localleader>', vim.g.maplocaleader or '')
+      match = match and opts.lhs == mapping.lhs
+    end
+    if opts.rhs then
+      opts.rhs = opts.rhs:gsub('<leader>', vim.g.mapleader or '')
+      opts.rhs = opts.rhs:gsub('<localleader>', vim.g.maplocaleader or '')
+      match = match and string.match(mapping.rhs, opts.rhs)
+    end
+    return match
+  end
+  return vim
+    .iter(keymaps)
+    :flatten()
+    :filter(function(mapping)
+      return matches(mapping)
+    end)
+    :map(function(mapping)
+      return {
+        lhs = mapping.lhs,
+        rhs = mapping.callback or mapping.rhs,
+        mode = mapping.mode,
+        opts = {
+          desc = mapping.desc,
+          buffer = mapping.buffer == 1,
+          expr = mapping.buffer == 1,
+        },
+      }
+    end)
+    :totable()
+end
+
 return keymap
