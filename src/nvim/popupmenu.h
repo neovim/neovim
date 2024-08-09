@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 
+#include "nvim/buffer_defs.h"
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/grid_defs.h"
 #include "nvim/macros_defs.h"
@@ -28,6 +29,11 @@ EXTERN struct {
   bool insert;
   bool finish;
 } pum_want;
+
+typedef enum {
+  kInfoAlignMenu = 0,
+  kInfoAlignItem,
+} PumInfoAlign;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmenu.h.generated.h"
