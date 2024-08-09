@@ -1,0 +1,12 @@
+.{
+    .name = "vterm",
+    .version = "0.3.3",
+    .paths = .{""},
+
+    .dependencies = .{
+        .vterm = .{
+            .url = "https://github.com/neovim/libvterm/archive/v0.3.3.tar.gz",
+            .hash = "1220184ae54d2331deb1be5d905978205c2731714e4b0ae8587e72c4ce02da317195",
+        },
+    },
+}
