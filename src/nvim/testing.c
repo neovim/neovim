@@ -130,7 +130,7 @@ static void ga_concat_shorten_esc(garray_T *gap, const char *str)
     return;
   }
 
-  for (const char *p = str; *p != NUL; p++) {
+  for (const char *p = str; *p != NUL;) {
     int same_len = 1;
     const char *s = p;
     const int c = mb_cptr2char_adv(&s);
@@ -146,9 +146,10 @@ static void ga_concat_shorten_esc(garray_T *gap, const char *str)
       vim_snprintf(buf, NUMBUFLEN, "%d", same_len);
       ga_concat(gap, buf);
       ga_concat(gap, " times]");
-      p = s - 1;
+      p = s;
     } else {
       ga_concat_esc(gap, p, clen);
+      p += clen;
     }
   }
 }

@@ -48,8 +48,17 @@ func Test_assert_equal()
   call assert_match("Expected 'bar' but got 'foo'", v:errors[0])
   call remove(v:errors, 0)
 
+  let s = 'αβγ'
+  call assert_equal(1, assert_equal('δεζ', s))
+  call assert_match("Expected 'δεζ' but got 'αβγ'", v:errors[0])
+  call remove(v:errors, 0)
+
   call assert_equal('XxxxxxxxxxxxxxxxxxxxxxX', 'XyyyyyyyyyyyyyyyyyyyyyyyyyX')
   call assert_match("Expected 'X\\\\\\[x occurs 21 times]X' but got 'X\\\\\\[y occurs 25 times]X'", v:errors[0])
+  call remove(v:errors, 0)
+
+  call assert_equal('ΩωωωωωωωωωωωωωωωωωωωωωΩ', 'ΩψψψψψψψψψψψψψψψψψψψψψψψψψΩ')
+  call assert_match("Expected 'Ω\\\\\\[ω occurs 21 times]Ω' but got 'Ω\\\\\\[ψ occurs 25 times]Ω'", v:errors[0])
   call remove(v:errors, 0)
 
   " special characters are escaped
