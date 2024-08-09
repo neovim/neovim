@@ -187,6 +187,7 @@ end
 ---@returns string
 local function buf_range_get_text(buf, range)
   local start_row, start_col, end_row, end_col = M._range.unpack4(range)
+  local insert_nl = false
   if end_col == 0 then
     if start_row == end_row then
       start_col = -1
@@ -194,8 +195,12 @@ local function buf_range_get_text(buf, range)
     end
     end_col = -1
     end_row = end_row - 1
+    insert_nl = true
   end
   local lines = api.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col, {})
+  if insert_nl then
+    table.insert(lines, "")
+  end
   return table.concat(lines, '\n')
 end
 
