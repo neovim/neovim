@@ -3930,7 +3930,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           bool has_composing = false;
           if (p_deco) {
             char *p0 = get_cursor_pos_ptr();
-            has_composing = utf_composinglike(p0, p0 + utf_ptr2len(p0));
+            has_composing = utf_composinglike(p0, p0 + utf_ptr2len(p0), NULL);
           }
           del_char(false);
           // If there are combining characters and 'delcombine' is set

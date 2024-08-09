@@ -516,15 +516,24 @@ int utf_ptr2cells(const char *p)
   // Need to convert to a character number.
   if ((uint8_t)(*p) >= 0x80) {
     int c = utf_ptr2char(p);
+    int len = utf_ptr2len(p);
     // An illegal byte is displayed as <xx>.
-    if (utf_ptr2len(p) == 1 || c == NUL) {
+    if (len == 1 || c == NUL) {
       return 4;
     }
     // If the char is ASCII it must be an overlong sequence.
     if (c < 0x80) {
       return char2cells(c);
     }
-    return utf_char2cells(c);
+    int cells = utf_char2cells(c);
+    if (cells == 1 && p_emoji
+        && intable(emoji_all, ARRAY_SIZE(emoji_all), c)) {
+      int c2 = utf_ptr2char(p+len);
+      if (c2 == 0xFE0F) {
+        return 2; // emoji presentation
+      }
+    }
+    return cells;
   }
   return 1;
 }
@@ -603,7 +612,8 @@ int utf_ptr2cells_len(const char *p, int size)
 {
   // Need to convert to a wide character.
   if (size > 0 && (uint8_t)(*p) >= 0x80) {
-    if (utf_ptr2len_len(p, size) < utf8len_tab[(uint8_t)(*p)]) {
+    int len = utf_ptr2len_len(p, size);
+    if (len < utf8len_tab[(uint8_t)(*p)]) {
       return 1;        // truncated
     }
     int c = utf_ptr2char(p);
@@ -615,7 +625,16 @@ int utf_ptr2cells_len(const char *p, int size)
     if (c < 0x80) {
       return char2cells(c);
     }
-    return utf_char2cells(c);
+    int cells = utf_char2cells(c);
+    if (cells == 1 && p_emoji && size > len
+        && intable(emoji_all, ARRAY_SIZE(emoji_all), c)
+        && utf_ptr2len_len(p+len, size-len) == utf8len_tab[(uint8_t)p[len]]) {
+      int c2 = utf_ptr2char(p+len);
+      if (c2 == 0xFE0F) {
+        return 2; // emoji presentation
+      }
+    }
+    return cells;
   }
   return 1;
 }
@@ -648,8 +667,8 @@ size_t mb_string2cells_len(const char *str, size_t size)
   size_t clen = 0;
 
   for (const char *p = str; *p != NUL && p < str + size;
-       p += utfc_ptr2len_len(p, (int)size + (int)(p - str))) {
-    clen += (size_t)utf_ptr2cells(p);
+       p += utfc_ptr2len_len(p, (int)size - (int)(p - str))) {
+    clen += (size_t)utf_ptr2cells_len(p, (int)size-(int)(p-str));
   }
 
   return clen;
@@ -793,29 +812,29 @@ int mb_cptr2char_adv(const char **pp)
   return c;
 }
 
+static bool utf_iscomposing_first(int c)
+{
+  return c >= 128 && !utf8proc_grapheme_break(' ', c);
+}
+
 /// Check if the character pointed to by "p2" is a composing character when it
 /// comes after "p1".  For Arabic sometimes "ab" is replaced with "c", which
 /// behaves like a composing character.
-bool utf_composinglike(const char *p1, const char *p2)
+bool utf_composinglike(const char *p1, const char *p2, GraphemeState *state)
 {
-  int c2 = utf_ptr2char(p2);
-  if (utf_iscomposing(c2)) {
-    return true;
-  }
-  if (!arabic_maycombine(c2)) {
+  // TODO: check correct hot path
+  if ((uint8_t)(*p2) < 128) {
     return false;
   }
-  return arabic_combine(utf_ptr2char(p1), c2);
-}
 
-/// Check if the next character is a composing character when it
-/// comes after the first. For Arabic sometimes "ab" is replaced with "c", which
-/// behaves like a composing character.
-/// returns false for negative values
-bool utf_char_composinglike(int32_t const first, int32_t const next)
-  FUNC_ATTR_PURE
-{
-  return utf_iscomposing(next) || arabic_combine(first, next);
+  int first = utf_ptr2char(p1);
+  int second = utf_ptr2char(p2);
+
+  if (!utf8proc_grapheme_break_stateful(first, second, state)) {
+    return true;
+  }
+
+  return arabic_combine(first, second);
 }
 
 /// Get the screen char at the beginning of a string
@@ -834,7 +853,7 @@ schar_T utfc_ptr2schar(const char *p, int *firstc)
 {
   int c = utf_ptr2char(p);
   *firstc = c;  // NOT optional, you are gonna need it
-  bool first_compose = utf_iscomposing(c);
+  bool first_compose = utf_iscomposing_first(c);
   size_t maxlen = MAX_SCHAR_SIZE - 1 - first_compose;
   size_t len = (size_t)utfc_ptr2len_len(p, (int)maxlen);
 
@@ -862,7 +881,7 @@ schar_T utfc_ptr2schar_len(const char *p, int maxlen, int *firstc)
 
   int c = utf_ptr2char(p);
   *firstc = c;
-  bool first_compose = utf_iscomposing(c);
+  bool first_compose = utf_iscomposing_first(c);
   maxlen = MIN(maxlen, MAX_SCHAR_SIZE - 1 - first_compose);
   len = (size_t)utfc_ptr2len_len(p, maxlen);
 
@@ -964,8 +983,9 @@ int utfc_ptr2len(const char *const p)
 
   // Check for composing characters.
   int prevlen = 0;
+  GraphemeState state = GRAPHEME_STATE_INIT;
   while (true) {
-    if ((uint8_t)p[len] < 0x80 || !utf_composinglike(p + prevlen, p + len)) {
+    if ((uint8_t)p[len] < 0x80 || !utf_composinglike(p + prevlen, p + len, &state)) {
       return len;
     }
 
@@ -996,9 +1016,10 @@ int utfc_ptr2len_len(const char *p, int size)
     return 1;
   }
 
-  // Check for composing characters.  We can handle only the first six, but
+  // Check for composing characters.  we can only display a limited amount, but
   // skip all of them (otherwise the cursor would get stuck).
   int prevlen = 0;
+  GraphemeState state = GRAPHEME_STATE_INIT;
   while (len < size) {
     if ((uint8_t)p[len] < 0x80) {
       break;
@@ -1011,7 +1032,7 @@ int utfc_ptr2len_len(const char *p, int size)
       break;
     }
 
-    if (!utf_composinglike(p + prevlen, p + len)) {
+    if (!utf_composinglike(p + prevlen, p + len, &state)) {
       break;
     }
 
@@ -1671,6 +1692,38 @@ void show_utf8(void)
 /// If "p" points to the NUL at the end of the string return 0.
 /// Returns 0 when already at the first byte of a character.
 int utf_head_off(const char *base_in, const char *p_in)
+{
+  //return utf_head_off_old(base_in, p_in);
+
+  if ((uint8_t)(*p_in) < 0x80) {              // be quick for ASCII
+    return 0;
+  }
+
+  const uint8_t *base = (uint8_t *)base_in;
+  const uint8_t *p = (uint8_t *)p_in;
+
+  const uint8_t *start = p;
+  // TODO: obviously less conservative backtracking..
+  while (start > base && *start >= 0x80) {
+    start--;
+  }
+
+  const uint8_t *q = start;
+  while (q < p) {
+    // TODO: can use utfc_ptr2len_len(start, p-start+ADJUST_COMPLETE_SEQUENCE) to halt early
+    int len = utfc_ptr2len((const char *)q);
+
+    if (q+len > p) {
+      return (int)(p-q);
+    }
+
+    q += len;
+  }
+
+  return 0;
+}
+
+int utf_head_off_old(const char *base_in, const char *p_in)
 {
   if ((uint8_t)(*p_in) < 0x80) {              // be quick for ASCII
     return 0;

@@ -5001,9 +5001,10 @@ do_multibyte:
           int l;
 
           // Need to get composing character too.
+          GraphemeState state = GRAPHEME_STATE_INIT;
           while (true) {
             l = utf_ptr2len(regparse);
-            if (!utf_composinglike(regparse, regparse + l)) {
+            if (!utf_composinglike(regparse, regparse + l, &state)) {
               break;
             }
             regmbc(utf_ptr2char(regparse));
@@ -6569,7 +6570,7 @@ static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
             // Check for following composing character, unless %C
             // follows (skips over all composing chars).
             if (status != RA_NOMATCH
-                && utf_composinglike((char *)rex.input, (char *)rex.input + len)
+                && utf_composinglike((char *)rex.input, (char *)rex.input + len, NULL)
                 && !rex.reg_icombine
                 && OP(next) != RE_COMPOSING) {
               // raaron: This code makes a composing character get

@@ -894,16 +894,19 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 
   // If 'delcombine' is set and deleting (less than) one character, only
   // delete the last combining character.
+  // TODO: sussy baka, if FOO ZWJ BAR and delcombining, we should delete
+  // both ZWJ and BAR?
   if (p_deco && use_delcombine && utfc_ptr2len(oldp + col) >= count) {
     char *p0 = oldp + col;
-    if (utf_composinglike(p0, p0 + utf_ptr2len(p0))) {
+    GraphemeState state = GRAPHEME_STATE_INIT;
+    if (utf_composinglike(p0, p0 + utf_ptr2len(p0), &state)) {
       // Find the last composing char, there can be several.
       int n = col;
       do {
         col = n;
         count = utf_ptr2len(oldp + n);
         n += count;
-      } while (utf_composinglike(oldp + col, oldp + n));
+      } while (utf_composinglike(oldp + col, oldp + n, &state));
       fixpos = false;
     }
   }
