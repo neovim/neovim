@@ -176,7 +176,9 @@ TUI
 
 UI
 
-• TODO
+• The |ui-popupmenu| now supports cascading highlight styles. |hl-PmenuSel|
+  and |hl-PmenuMatch| both inherit from |hl-Pmenu|, and |hl-PmenuMatchSel|
+  inherits highlights from both |hl-PmenuSel| and |hl-PmenuMatch|.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
