@@ -1146,10 +1146,11 @@ local function gen_css(fname)
       font-size: smaller;
     }
     .help-heading {
-      overflow: hidden;
-      white-space: nowrap;
+      white-space: normal;
       display: flex;
+      flex-flow: row wrap;
       justify-content: space-between;
+      gap: 0 15px;
     }
     /* The (right-aligned) "tags" part of a section heading. */
     .help-heading-tags {
@@ -1184,8 +1185,7 @@ local function gen_css(fname)
     pre:last-child {
       margin-bottom: 0;
     }
-    pre:hover,
-    .help-heading:hover {
+    pre:hover {
       overflow: visible;
     }
     .generator-stats {
