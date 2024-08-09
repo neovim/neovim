@@ -27,7 +27,6 @@ set(DEPS_IGNORE_SHA FALSE)
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
-option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
 option(USE_BUNDLED_LPEG "Use the bundled lpeg." ${USE_BUNDLED})
 # PUC Lua is only used for tests, unless explicitly requested.
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
@@ -94,10 +93,6 @@ endif()
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
-endif()
-
-if(USE_BUNDLED_LIBVTERM)
-  include(BuildLibvterm)
 endif()
 
 if(USE_BUNDLED_LIBUV)

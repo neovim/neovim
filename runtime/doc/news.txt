@@ -163,6 +163,9 @@ TERMINAL
   system clipboard (copy). Querying with OSC 52 (paste) is not supported.
 • |hl-StatusLineTerm| and |hl-StatusLineTermNC| define highlights for the
   status line in |terminal| windows.
+• The terminal buffer now supports reflow (wrapped lines adapt when the buffer
+  is resized horizontally). Note: Lines that are not visible and kept in
+  'scrollback' are not reflown.
 
 TREESITTER
 

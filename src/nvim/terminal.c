@@ -40,8 +40,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vterm.h>
-#include <vterm_keycodes.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
@@ -94,6 +92,8 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "vterm/vterm.h"
+#include "vterm/vterm_keycodes.h"
 
 typedef struct {
   VimState state;
@@ -319,8 +319,7 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   // Set up screen
   term->vts = vterm_obtain_screen(term->vt);
   vterm_screen_enable_altscreen(term->vts, true);
-  // TODO(clason): reenable when https://github.com/neovim/neovim/issues/23762 is fixed
-  // vterm_screen_enable_reflow(term->vts, true);
+  vterm_screen_enable_reflow(term->vts, true);
   // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
   vterm_screen_set_unrecognised_fallbacks(term->vts, &vterm_fallbacks, term);

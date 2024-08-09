@@ -5031,6 +5031,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Minimum is 1, maximum is 100000.
 	Only in |terminal| buffers.
 
+	Note: Lines that are not visible and kept in scrollback are not
+	reflown when the terminal buffer is resized horizontally.
+
 			*'scrollbind'* *'scb'* *'noscrollbind'* *'noscb'*
 'scrollbind' 'scb'	boolean	(default off)
 			local to window

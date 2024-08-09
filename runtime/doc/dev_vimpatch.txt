@@ -139,7 +139,6 @@ TYPES OF "NOT APPLICABLE" VIM PATCHES ~
     - NA files: `src/gui_*`, `src/gvim_*`, `src/GvimExt/*`, `src/testdir/test_gui*`
 - `balloon` changes: Nvim does not support balloon feature
     - NA files: `src/beval_*`, `src/testdir/test_balloon_*`
-- libvterm changes: Nvim does not vendor libvterm in `src/`.
 - Screendump tests from `test_popupwin.vim`, `test_popupwin_textprop.vim`:
   https://github.com/neovim/neovim/pull/12741#issuecomment-704677141
 - json changes: incompatible API https://github.com/neovim/neovim/pull/4131
