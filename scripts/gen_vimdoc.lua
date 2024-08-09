@@ -162,6 +162,7 @@ local config = {
       'snippet.lua',
       'text.lua',
       'tohtml.lua',
+      'net.lua',
     },
     files = {
       'runtime/lua/vim/iter.lua',
@@ -171,6 +172,7 @@ local config = {
       'runtime/lua/vim/loader.lua',
       'runtime/lua/vim/uri.lua',
       'runtime/lua/vim/ui.lua',
+      'runtime/lua/vim/net.lua',
       'runtime/lua/vim/filetype.lua',
       'runtime/lua/vim/keymap.lua',
       'runtime/lua/vim/fs.lua',
