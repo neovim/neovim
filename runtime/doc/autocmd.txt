@@ -1116,6 +1116,21 @@ VimResized			After the Vim window was resized, thus 'lines'
 VimResume			After Nvim resumes from |suspend| state.
 							*VimSuspend*
 VimSuspend			Before Nvim enters |suspend| state.
+							*VisualChanged*
+VisualChanged			When Visual selection changes.
+				For `linewise-visual` and `blockwise-visual`
+				the start is the top-left corner and the end
+				is the bot-right corner of the selection.
+				Boundaries are byte-index based.
+				Sets these |v:event| keys:
+				    start_row
+				    start_col
+				    end_row
+				    end_col
+				Note: since the range represents the corners of
+				the selection, getpos("v") and getpos(".")
+				will have a different range for line and block mode
+				than the range found in v:event
 							*WinClosed*
 WinClosed			When closing a window, just before it is
 				removed from the window layout.  The pattern
