@@ -739,8 +739,6 @@ struct file_buffer {
 
   // The number for times the current line has been flushed in the memline.
   int flush_count;
-
-  int b_diff_failed;    // internal diff failed for this buffer
 };
 
 // Stuff for diff mode.
