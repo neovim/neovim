@@ -11,6 +11,7 @@ local M = {}
 ---@field lang string name of the language for this parser
 ---@field captures string[] list of (unique) capture names defined in query
 ---@field info vim.treesitter.QueryInfo contains information used in the query (e.g. captures, predicates, directives)
+---@field has_combined_injection true? whether this query has a combined injection pattern
 ---@field query TSQuery userdata query object
 local Query = {}
 Query.__index = Query
@@ -30,6 +31,18 @@ function Query.new(lang, ts_query)
     patterns = query_info.patterns,
   }
   self.captures = self.info.captures
+
+  for _, preds in pairs(self.info.patterns) do
+    if
+      vim.tbl_contains(preds, function(pred)
+        return vim.deep_equal(pred, { 'set!', 'injection.combined' })
+      end, { predicate = true })
+    then
+      self.has_combined_injection = true
+      break
+    end
+  end
+
   return self
 end
 
