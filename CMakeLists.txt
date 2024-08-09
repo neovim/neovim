@@ -130,6 +130,7 @@ else()
   option(ENABLE_LTO "enable link time optimization" ON)
 endif()
 option(ENABLE_LIBINTL "enable libintl" ON)
+option(ENABLE_WASMTIME "enable wasmtime" OFF)
 
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
