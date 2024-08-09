@@ -40,6 +40,16 @@ describe('winbar', function()
         bold = true,
         foreground = Screen.colors.Magenta,
       },
+      [12] = {
+        underline = true,
+        background = Screen.colors.Red,
+      },
+      [13] = {
+        underline = true,
+        bold = true,
+        foreground = Screen.colors.Blue,
+        background = Screen.colors.Red,
+      },
     })
     api.nvim_set_option_value('winbar', 'Set Up The Bars', {})
   end)
@@ -178,6 +188,18 @@ describe('winbar', function()
       {3:~                            }│                              |
       {3:~                            }│{3:~                             }|
       {2:[No Name]                     [No Name]                     }|
+                                                                  |
+    ]])
+  end)
+
+  it('works with combined highlight attributes', function()
+    command('hi Winbar guibg=red gui=underline')
+    command('hi Identifier guifg=blue gui=bold')
+    command('set winbar=Lookatmy%#Identifier#highlights')
+    screen:expect([[
+      {12:Lookatmy}{13:highlights                                          }|
+      ^                                                            |
+      {3:~                                                           }|*10
                                                                   |
     ]])
   end)

@@ -430,7 +430,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     if (hltab[n].userhl == 0) {
       curattr = attr;
     } else if (hltab[n].userhl < 0) {
-      curattr = syn_id2attr(-hltab[n].userhl);
+      curattr = hl_combine_attr(attr, syn_id2attr(-hltab[n].userhl));
     } else if (wp != NULL && wp != curwin && wp->w_status_height != 0) {
       curattr = highlight_stlnc[hltab[n].userhl - 1];
     } else {
