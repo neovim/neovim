@@ -322,6 +322,7 @@ func Test_set_options_keep_col()
   normal j
   set invhlsearch spell spelllang=en,cjk spelloptions=camel textwidth=80
   set cursorline cursorcolumn cursorlineopt=line colorcolumn=+1 winfixbuf
+  set comments=:# commentstring=#%s define=function
   set background=dark
   set background=light
   normal k
@@ -329,6 +330,7 @@ func Test_set_options_keep_col()
   bwipe!
   set hlsearch& spell& spelllang& spelloptions& textwidth&
   set cursorline& cursorcolumn& cursorlineopt& colorcolumn& winfixbuf&
+  set comments& commentstring& define&
   set background&
 endfunc
 
