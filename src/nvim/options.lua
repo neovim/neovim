@@ -1321,7 +1321,6 @@ return {
       ]=],
       full_name = 'comments',
       list = 'onecomma',
-      redraw = { 'curswant' },
       scope = { 'buffer' },
       short_desc = N_('patterns that can start a comment line'),
       tags = { 'E524', 'E525' },
@@ -1339,7 +1338,6 @@ return {
         Used for |commenting| and to add markers for folding, see |fold-marker|.
       ]=],
       full_name = 'commentstring',
-      redraw = { 'curswant' },
       scope = { 'buffer' },
       short_desc = N_('template for comments; used for fold marker'),
       tags = { 'E537' },
@@ -1975,7 +1973,6 @@ return {
         <
       ]=],
       full_name = 'define',
-      redraw = { 'curswant' },
       scope = { 'global', 'buffer' },
       short_desc = N_('pattern to be used to find a macro definition'),
       type = 'string',
