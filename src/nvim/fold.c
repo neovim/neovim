@@ -1336,6 +1336,9 @@ void deleteFoldRecurse(buf_T *bp, garray_T *gap)
 
 // foldMarkAdjust() {{{2
 /// Update line numbers of folds for inserted/deleted lines.
+///
+/// We are adjusting the folds in the range from line1 til line2,
+/// make sure that line2 does not get smaller than line1
 void foldMarkAdjust(win_T *wp, linenr_T line1, linenr_T line2, linenr_T amount,
                     linenr_T amount_after)
 {
@@ -1343,6 +1346,9 @@ void foldMarkAdjust(win_T *wp, linenr_T line1, linenr_T line2, linenr_T amount,
   // lines, set line2 so that only deleted lines have their folds removed.
   if (amount == MAXLNUM && line2 >= line1 && line2 - line1 >= -amount_after) {
     line2 = line1 - amount_after - 1;
+  }
+  if (line2 < line1) {
+    line2 = line1;
   }
   // If appending a line in Insert mode, it should be included in the fold
   // just above the line.
