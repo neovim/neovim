@@ -1442,7 +1442,7 @@ end
 --- Computes size of float needed to show contents (with optional wrapping)
 ---
 ---@param contents table of lines to show in window
----@param opts table with optional fields
+---@param opts? table with optional fields
 ---            - height  of floating window
 ---            - width   of floating window
 ---            - wrap_at character to wrap at for computing height
@@ -1821,7 +1821,7 @@ end
 --- Converts symbols to quickfix list items.
 ---
 ---@param symbols table DocumentSymbol[] or SymbolInformation[]
----@param bufnr integer
+---@param bufnr? integer
 function M.symbols_to_items(symbols, bufnr)
   local function _symbols_to_items(_symbols, _items, _bufnr)
     for _, symbol in ipairs(_symbols) do

@@ -2241,7 +2241,7 @@ symbols_to_items({symbols}, {bufnr})         *vim.lsp.util.symbols_to_items()*
 
     Parameters: ~
       • {symbols}  (`table`) DocumentSymbol[] or SymbolInformation[]
-      • {bufnr}    (`integer`)
+      • {bufnr}    (`integer?`)
 
 
 ==============================================================================
