@@ -141,14 +141,14 @@ describe('vim.fs', function()
     it('works', function()
       eq(
         true,
-        exec_lua(function(dir, nvim)
-          for name, type in vim.fs.dir(dir) do
-            if name == nvim and type == 'file' then
+        exec_lua(function()
+          for name, type in vim.fs.dir(nvim_dir) do
+            if name == nvim_prog_basename and type == 'file' then
               return true
             end
           end
           return false
-        end, nvim_dir, nvim_prog_basename)
+        end)
       )
     end)
 
@@ -167,22 +167,21 @@ describe('vim.fs', function()
       io.open('testd/a/b/c/c4', 'w'):close()
 
       local function run(dir, depth, skip)
-        local r = exec_lua(function(dir0, depth0, skip0)
+        return exec_lua(function()
           local r = {}
           local skip_f
-          if skip0 then
+          if skip then
             skip_f = function(n0)
-              if vim.tbl_contains(skip0 or {}, n0) then
+              if vim.tbl_contains(skip or {}, n0) then
                 return false
               end
             end
           end
-          for name, type_ in vim.fs.dir(dir0, { depth = depth0, skip = skip_f }) do
+          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f }) do
             r[name] = type_
           end
           return r
-        end, dir, depth, skip)
-        return r
+        end)
       end
 
       local exp = {}
@@ -252,9 +251,12 @@ describe('vim.fs', function()
 
       opts = { path = test_source_path .. '/contrib', limit = math.huge }
       eq(
-        exec_lua(function(dir)
-          return vim.tbl_map(vim.fs.basename, vim.fn.glob(dir .. '/contrib/*', false, true))
-        end, test_source_path),
+        exec_lua(function()
+          return vim.tbl_map(
+            vim.fs.basename,
+            vim.fn.glob(test_source_path .. '/contrib/*', false, true)
+          )
+        end),
         vim.tbl_map(
           vim.fs.basename,
           vim.fs.find(function(_, d)
@@ -337,10 +339,10 @@ describe('vim.fs', function()
       local xdg_config_home = test_build_dir .. '/.config'
       eq(
         xdg_config_home .. '/nvim',
-        exec_lua(function(...)
-          vim.env.XDG_CONFIG_HOME = ...
+        exec_lua(function()
+          vim.env.XDG_CONFIG_HOME = xdg_config_home
           return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
-        end, xdg_config_home)
+        end)
       )
     end)
 

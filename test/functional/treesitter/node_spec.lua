@@ -58,15 +58,15 @@ describe('treesitter node API', function()
   it('get_node() with anonymous nodes included', function()
     insert([[print('test')]])
 
-    exec_lua([[
-      parser = vim.treesitter.get_parser(0, 'lua')
-      tree = parser:parse()[1]
-      node = vim.treesitter.get_node({
+    exec_lua(function()
+      _G.parser = vim.treesitter.get_parser(0, 'lua')
+      _G.tree = _G.parser:parse()[1]
+      _G.node = vim.treesitter.get_node({
         bufnr = 0,
         pos = { 0, 6 }, -- on the first apostrophe
         include_anonymous = true,
       })
-    ]])
+    end)
 
     eq("'", lua_eval('node:type()'))
     eq(false, lua_eval('node:named()'))
@@ -120,7 +120,7 @@ describe('treesitter node API', function()
 
     local len = exec_lua(function()
       local tree = vim.treesitter.get_parser(0, 'c'):parse()[1]
-      local node = tree:root():child(0)
+      local node = assert(tree:root():child(0))
       _G.children = node:named_children()
 
       return #_G.children

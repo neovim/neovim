@@ -156,10 +156,10 @@ describe('vim.treesitter.inspect_tree', function()
     eq('', n.api.nvim_get_vvar('errmsg'))
 
     -- close original tree window
-    exec_lua([[
-       vim.api.nvim_set_current_win(tree_win_copy_1)
-       vim.api.nvim_win_close(tree_win, false)
-    ]])
+    exec_lua(function()
+      vim.api.nvim_set_current_win(_G.tree_win_copy_1)
+      vim.api.nvim_win_close(_G.tree_win, false)
+    end)
 
     -- navigates correctly to the remaining source buffer window
     feed('<CR>')
