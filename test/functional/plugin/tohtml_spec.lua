@@ -210,9 +210,7 @@ describe(':TOhtml', function()
     exec('set termguicolors')
     local bg = fn.synIDattr(fn.hlID('Normal'), 'bg#', 'gui')
     local fg = fn.synIDattr(fn.hlID('Normal'), 'fg#', 'gui')
-    exec_lua [[
-    local html = vim.cmd'2,2TOhtml'
-    ]]
+    n.command('2,2TOhtml')
     local out_file = api.nvim_buf_get_name(api.nvim_get_current_buf())
     eq({
       '<!DOCTYPE html>',
@@ -408,12 +406,12 @@ describe(':TOhtml', function()
     local function run()
       local buf = api.nvim_get_current_buf()
       run_tohtml_and_assert(screen, function()
-        exec_lua [[
-        local outfile = vim.fn.tempname() .. '.html'
-        local html = require('tohtml').tohtml(0,{number_lines=true})
-        vim.fn.writefile(html, outfile)
-        vim.cmd.split(outfile)
-        ]]
+        exec_lua(function()
+          local outfile = vim.fn.tempname() .. '.html'
+          local html = require('tohtml').tohtml(0, { number_lines = true })
+          vim.fn.writefile(html, outfile)
+          vim.cmd.split(outfile)
+        end)
       end)
       api.nvim_set_current_buf(buf)
     end

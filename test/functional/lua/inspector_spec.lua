@@ -12,22 +12,21 @@ describe('vim.inspect_pos', function()
   end)
 
   it('it returns items', function()
-    local ret = exec_lua([[
+    local buf, items, other_buf_syntax = exec_lua(function()
       local buf = vim.api.nvim_create_buf(true, false)
       local buf1 = vim.api.nvim_create_buf(true, false)
-      local ns1 = vim.api.nvim_create_namespace("ns1")
-      local ns2 = vim.api.nvim_create_namespace("")
+      local ns1 = vim.api.nvim_create_namespace('ns1')
+      local ns2 = vim.api.nvim_create_namespace('')
       vim.api.nvim_set_current_buf(buf)
-      vim.api.nvim_buf_set_lines(0, 0, -1, false, {"local a = 123"})
-      vim.api.nvim_buf_set_lines(buf1, 0, -1, false, {"--commentline"})
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'local a = 123' })
+      vim.api.nvim_buf_set_lines(buf1, 0, -1, false, { '--commentline' })
       vim.bo[buf].filetype = 'lua'
       vim.bo[buf1].filetype = 'lua'
-      vim.api.nvim_buf_set_extmark(buf, ns1, 0, 10, { hl_group = "Normal" })
-      vim.api.nvim_buf_set_extmark(buf, ns2, 0, 10, { hl_group = "Normal" })
-      vim.cmd("syntax on")
-      return {buf, vim.inspect_pos(0, 0, 10), vim.inspect_pos(buf1, 0, 10).syntax }
-    ]])
-    local buf, items, other_buf_syntax = unpack(ret)
+      vim.api.nvim_buf_set_extmark(buf, ns1, 0, 10, { hl_group = 'Normal' })
+      vim.api.nvim_buf_set_extmark(buf, ns2, 0, 10, { hl_group = 'Normal' })
+      vim.cmd('syntax on')
+      return buf, vim.inspect_pos(0, 0, 10), vim.inspect_pos(buf1, 0, 10).syntax
+    end)
 
     eq('', eval('v:errmsg'))
     eq({
@@ -95,14 +94,14 @@ describe('vim.show_pos', function()
   end)
 
   it('it does not error', function()
-    exec_lua([[
+    exec_lua(function()
       local buf = vim.api.nvim_create_buf(true, false)
       vim.api.nvim_set_current_buf(buf)
-      vim.api.nvim_buf_set_lines(0, 0, -1, false, {"local a = 123"})
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'local a = 123' })
       vim.bo[buf].filetype = 'lua'
-      vim.cmd("syntax on")
-      return {buf, vim.show_pos(0, 0, 10)}
-    ]])
+      vim.cmd('syntax on')
+      return { buf, vim.show_pos(0, 0, 10) }
+    end)
     eq('', eval('v:errmsg'))
   end)
 end)

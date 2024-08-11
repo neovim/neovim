@@ -10,11 +10,9 @@ local feed = n.feed
 
 before_each(function()
   clear()
-  exec_lua [[
-    local evname = ...
+  exec_lua(function()
     local sync = require('vim.lsp.sync')
     local events = {}
-    local buffer_cache = {}
 
     -- local format_line_ending = {
     --   ["unix"] = '\n',
@@ -24,35 +22,43 @@ before_each(function()
 
     -- local line_ending = format_line_ending[vim.api.nvim_get_option_value('fileformat', {})]
 
-
-    function test_register(bufnr, id, offset_encoding, line_ending)
-      local curr_lines
+    --- @diagnostic disable-next-line:duplicate-set-field
+    function _G.test_register(bufnr, id, offset_encoding, line_ending)
       local prev_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
 
-      local function callback(_, bufnr, changedtick, firstline, lastline, new_lastline)
-        if test_unreg == id then
+      local function callback(_, bufnr0, _changedtick, firstline, lastline, new_lastline)
+        if _G.test_unreg == id then
           return true
         end
 
-        local curr_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true)
+        local curr_lines = vim.api.nvim_buf_get_lines(bufnr0, 0, -1, true)
         local incremental_change = sync.compute_diff(
-          prev_lines, curr_lines, firstline, lastline, new_lastline, offset_encoding, line_ending)
+          prev_lines,
+          curr_lines,
+          firstline,
+          lastline,
+          new_lastline,
+          offset_encoding,
+          line_ending
+        )
 
         table.insert(events, incremental_change)
         prev_lines = curr_lines
       end
-      local opts = {on_lines=callback, on_detach=callback, on_reload=callback}
+      local opts = { on_lines = callback, on_detach = callback, on_reload = callback }
       vim.api.nvim_buf_attach(bufnr, false, opts)
     end
 
-    function get_events()
+    --- @diagnostic disable-next-line:duplicate-set-field
+    function _G.get_events()
       local ret_events = events
       events = {}
       return ret_events
     end
-  ]]
+  end)
 end)
 
+--- @param edit_operations string[]
 local function test_edit(
   prev_buffer,
   edit_operations,
@@ -64,13 +70,22 @@ local function test_edit(
   line_ending = line_ending or '\n'
 
   api.nvim_buf_set_lines(0, 0, -1, true, prev_buffer)
-  exec_lua('return test_register(...)', 0, 'test1', offset_encoding, line_ending)
+  exec_lua(function()
+    return _G.test_register(0, 'test1', offset_encoding, line_ending)
+  end)
 
   for _, edit in ipairs(edit_operations) do
     feed(edit)
   end
-  eq(expected_text_changes, exec_lua('return get_events(...)'))
-  exec_lua("test_unreg = 'test1'")
+  eq(
+    expected_text_changes,
+    exec_lua(function()
+      return _G.get_events()
+    end)
+  )
+  exec_lua(function()
+    _G.test_unreg = 'test1'
+  end)
 end
 
 describe('incremental synchronization', function()

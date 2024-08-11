@@ -7,7 +7,6 @@ local eq = t.eq
 local pathsep = n.get_pathsep()
 local fn = n.fn
 local api = n.api
-local exec_lua = n.exec_lua
 
 local testdir = 'Xtest-editorconfig'
 
@@ -227,12 +226,12 @@ But not this one
   end)
 
   it('does not operate on invalid buffers', function()
-    local ok, err = unpack(exec_lua([[
+    local ok, err = unpack(n.exec_lua(function()
       vim.cmd.edit('test.txt')
       local bufnr = vim.api.nvim_get_current_buf()
       vim.cmd.bwipeout(bufnr)
-      return {pcall(require('editorconfig').config, bufnr)}
-    ]]))
+      return { pcall(require('editorconfig').config, bufnr) }
+    end))
 
     eq(true, ok, err)
   end)

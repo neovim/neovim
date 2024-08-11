@@ -70,15 +70,15 @@ describe('vim.filetype', function()
 
     eq(
       'dosini',
-      exec_lua(function(root0)
+      exec_lua(function()
         vim.filetype.add({
           filename = {
             ['config'] = 'toml',
-            [root0 .. '/.config/fun/config'] = 'dosini',
+            [root .. '/.config/fun/config'] = 'dosini',
           },
         })
-        return vim.filetype.match({ filename = root0 .. '/.config/fun/config' })
-      end, root)
+        return vim.filetype.match({ filename = root .. '/.config/fun/config' })
+      end)
     )
   end)
 
@@ -123,7 +123,7 @@ describe('vim.filetype', function()
       exec_lua(function()
         -- Needs to be set so detect#sh doesn't fail
         vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
-        return vim.filetype.match({ contents = { '#!/usr/bin/env bash' } })
+        return (vim.filetype.match({ contents = { '#!/usr/bin/env bash' } }))
       end)
     )
   end)
@@ -152,7 +152,12 @@ describe('vim.filetype', function()
       xml = { formatexpr = 'xmlformat#Format()' },
     } do
       for option, value in pairs(opts) do
-        eq(value, exec_lua([[ return vim.filetype.get_option(...) ]], ft, option))
+        eq(
+          value,
+          exec_lua(function()
+            return vim.filetype.get_option(ft, option)
+          end)
+        )
       end
     end
   end)
