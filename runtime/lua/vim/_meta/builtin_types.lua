@@ -140,3 +140,69 @@
 --- @field sid string
 --- @field variables? table<string, any>
 --- @field version 1
+
+--- @class vim.fn.undotree.entry
+---
+--- Undo sequence number.  Same as what appears in
+--- \|:undolist|.
+--- @field seq integer
+---
+--- Timestamp when the change happened.  Use
+--- \|strftime()| to convert to something readable.
+--- @field time integer
+---
+--- Only appears in the item that is the last one
+--- that was added.  This marks the last change
+--- and where further changes will be added.
+--- @field newhead? integer
+---
+--- Only appears in the item that is the last one
+--- that was undone.  This marks the current
+--- position in the undo tree, the block that will
+--- be used by a redo command.  When nothing was
+--- undone after the last change this item will
+--- not appear anywhere.
+--- @field curhead? integer
+---
+--- Only appears on the last block before a file
+--- write.  The number is the write count.  The
+--- first write has number 1, the last one the
+--- "save_last" mentioned above.
+--- @field save integer
+---
+--- Alternate entry.  This is again a List of undo
+--- blocks.  Each item may again have an "alt"
+--- item.
+--- @field alt vim.fn.undotree.entry[]
+
+--- @class vim.fn.undotree.ret
+---
+--- The highest undo sequence number used.
+--- @field seq_last integer
+---
+--- The sequence number of the current position in
+--- the undo tree.  This differs from "seq_last"
+--- when some changes were undone.
+--- @field seq_cur integer
+---
+--- Time last used for |:earlier| and related
+--- commands.  Use |strftime()| to convert to
+--- something readable.
+--- @field time_cur integer
+---
+--- Number of the last file write.  Zero when no
+--- write yet.
+--- @field save_last integer
+---
+--- Number of the current position in the undo
+--- tree.
+--- @field save_cur integer
+---
+--- Non-zero when the last undo block was synced.
+--- This happens when waiting from input from the
+--- user.  See |undo-blocks|.
+--- @field synced integer
+---
+--- A list of dictionaries with information about
+--- undo blocks.
+--- @field entries vim.fn.undotree.entry[]

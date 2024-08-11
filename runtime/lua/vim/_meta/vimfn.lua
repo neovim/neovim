@@ -10403,7 +10403,7 @@ function vim.fn.undofile(name) end
 ---     item.
 ---
 --- @param buf? integer|string
---- @return any
+--- @return vim.fn.undotree.ret
 function vim.fn.undotree(buf) end
 
 --- Remove second and succeeding copies of repeated adjacent

@@ -21,8 +21,8 @@ function M.clear_notrace()
   }
 end
 
-M.create_server_definition = [[
-  function _create_server(opts)
+M.create_server_definition = function()
+  function _G._create_server(opts)
     opts = opts or {}
     local server = {}
     server.messages = {}
@@ -42,7 +42,7 @@ M.create_server_definition = [[
           handler(method, params, callback)
         elseif method == 'initialize' then
           callback(nil, {
-            capabilities = opts.capabilities or {}
+            capabilities = opts.capabilities or {},
           })
         elseif method == 'shutdown' then
           callback(nil, nil)
@@ -54,7 +54,7 @@ M.create_server_definition = [[
       function srv.notify(method, params)
         table.insert(server.messages, {
           method = method,
-          params = params
+          params = params,
         })
         if method == 'exit' then
           dispatchers.on_exit(0, 15)
@@ -74,7 +74,7 @@ M.create_server_definition = [[
 
     return server
   end
-]]
+end
 
 -- Fake LSP server.
 M.fake_lsp_code = 'test/functional/fixtures/fake-lsp-server.lua'
@@ -82,48 +82,53 @@ M.fake_lsp_logfile = 'Xtest-fake-lsp.log'
 
 local function fake_lsp_server_setup(test_name, timeout_ms, options, settings)
   exec_lua(
-    [=[
-    lsp = require('vim.lsp')
-    local test_name, fake_lsp_code, fake_lsp_logfile, timeout, options, settings = ...
-    TEST_RPC_CLIENT_ID = lsp.start_client {
-      cmd_env = {
-        NVIM_LOG_FILE = fake_lsp_logfile;
-        NVIM_LUA_NOTRACK = "1";
-        NVIM_APPNAME = "nvim_lsp_test";
-      };
-      cmd = {
-        vim.v.progpath, '-l', fake_lsp_code, test_name, tostring(timeout),
-      };
-      handlers = setmetatable({}, {
-        __index = function(t, method)
-          return function(...)
-            return vim.rpcrequest(1, 'handler', ...)
-          end
-        end;
-      });
-      workspace_folders = {{
-          uri = 'file://' .. vim.uv.cwd(),
-          name = 'test_folder',
-      }};
-      before_init = function(params, config)
-        vim.schedule(function()
-          vim.rpcrequest(1, "setup")
-        end)
-      end,
-      on_init = function(client, result)
-        TEST_RPC_CLIENT = client
-        vim.rpcrequest(1, "init", result)
-      end;
-      flags = {
-        allow_incremental_sync = options.allow_incremental_sync or false;
-        debounce_text_changes = options.debounce_text_changes or 0;
-      };
-      settings = settings;
-      on_exit = function(...)
-        vim.rpcnotify(1, "exit", ...)
-      end;
-    }
-  ]=],
+    function(test_name0, fake_lsp_code0, fake_lsp_logfile0, timeout, options0, settings0)
+      _G.lsp = require('vim.lsp')
+      _G.TEST_RPC_CLIENT_ID = _G.lsp.start_client {
+        cmd_env = {
+          NVIM_LOG_FILE = fake_lsp_logfile0,
+          NVIM_LUA_NOTRACK = '1',
+          NVIM_APPNAME = 'nvim_lsp_test',
+        },
+        cmd = {
+          vim.v.progpath,
+          '-l',
+          fake_lsp_code0,
+          test_name0,
+          tostring(timeout),
+        },
+        handlers = setmetatable({}, {
+          __index = function(_t, _method)
+            return function(...)
+              return vim.rpcrequest(1, 'handler', ...)
+            end
+          end,
+        }),
+        workspace_folders = {
+          {
+            uri = 'file://' .. vim.uv.cwd(),
+            name = 'test_folder',
+          },
+        },
+        before_init = function(_params, _config)
+          vim.schedule(function()
+            vim.rpcrequest(1, 'setup')
+          end)
+        end,
+        on_init = function(client, result)
+          _G.TEST_RPC_CLIENT = client
+          vim.rpcrequest(1, 'init', result)
+        end,
+        flags = {
+          allow_incremental_sync = options0.allow_incremental_sync or false,
+          debounce_text_changes = options0.debounce_text_changes or 0,
+        },
+        settings = settings0,
+        on_exit = function(...)
+          vim.rpcnotify(1, 'exit', ...)
+        end,
+      }
+    end,
     test_name,
     M.fake_lsp_code,
     M.fake_lsp_logfile,
@@ -160,18 +165,14 @@ function M.test_rpc_server(config)
       -- Workaround for not being able to yield() inside __index for Lua 5.1 :(
       -- Otherwise I would just return the value here.
       return function(...)
-        return exec_lua(
-          [=[
-        local name = ...
-        if type(TEST_RPC_CLIENT[name]) == 'function' then
-          return TEST_RPC_CLIENT[name](select(2, ...))
-        else
-          return TEST_RPC_CLIENT[name]
-        end
-        ]=],
-          name,
-          ...
-        )
+        return exec_lua(function(...)
+          local name0 = ...
+          if type(_G.TEST_RPC_CLIENT[name0]) == 'function' then
+            return _G.TEST_RPC_CLIENT[name0](select(2, ...))
+          else
+            return _G.TEST_RPC_CLIENT[name0]
+          end
+        end, name, ...)
       end
     end,
   })
