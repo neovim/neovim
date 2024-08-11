@@ -16,21 +16,20 @@ local is_ci = t.is_ci
 
 -- Collects all names passed to find_path() after attempting ":Man foo".
 local function get_search_history(name)
-  local args = vim.split(name, ' ')
-  local code = [[
-    local args = ...
+  return exec_lua(function()
+    local args = vim.split(name, ' ')
     local man = require('man')
     local res = {}
-    man.find_path = function(sect, name)
-      table.insert(res, {sect, name})
+    --- @diagnostic disable-next-line:duplicate-set-field
+    man.find_path = function(sect, name0)
+      table.insert(res, { sect, name0 })
       return nil
     end
-    local ok, rv = pcall(man.open_page, -1, {tab = 0}, args)
+    local ok, rv = pcall(man.open_page, -1, { tab = 0 }, args)
     assert(not ok)
     assert(rv and rv:match('no manual entry'))
     return res
-  ]]
-  return exec_lua(code, args)
+  end)
 end
 
 clear()

@@ -166,10 +166,10 @@ describe('treesitter language API', function()
   it('retrieve an anonymous node given a range', function()
     insert([[vim.fn.input()]])
 
-    exec_lua([[
-      langtree = vim.treesitter.get_parser(0, "lua")
-      node = langtree:node_for_range({0, 3, 0, 3})
-    ]])
+    exec_lua(function()
+      _G.langtree = vim.treesitter.get_parser(0, 'lua')
+      _G.node = _G.langtree:node_for_range({ 0, 3, 0, 3 })
+    end)
 
     eq('.', exec_lua('return node:type()'))
   end)

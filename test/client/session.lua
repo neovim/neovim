@@ -7,6 +7,7 @@ local MsgpackRpcStream = require('test.client.msgpack_rpc_stream')
 --- @field private _prepare uv.uv_prepare_t
 --- @field private _timer uv.uv_timer_t
 --- @field private _is_running boolean
+--- @field exec_lua_setup boolean
 local Session = {}
 Session.__index = Session
 if package.loaded['jit'] then

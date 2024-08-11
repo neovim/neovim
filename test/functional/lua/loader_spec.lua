@@ -12,14 +12,14 @@ describe('vim.loader', function()
 
   it('can work in compatibility with --luamod-dev #27413', function()
     clear({ args = { '--luamod-dev' } })
-    exec_lua [[
+    exec_lua(function()
       vim.loader.enable()
 
-      require("vim.fs")
+      require('vim.fs')
 
       -- try to load other vim submodules as well (Nvim Lua stdlib)
       for key, _ in pairs(vim._submodules) do
-        local modname = 'vim.' .. key   -- e.g. "vim.fs"
+        local modname = 'vim.' .. key -- e.g. "vim.fs"
 
         local lhs = vim[key]
         local rhs = require(modname)
@@ -28,28 +28,25 @@ describe('vim.loader', function()
           ('%s != require("%s"), %s != %s'):format(modname, modname, tostring(lhs), tostring(rhs))
         )
       end
-    ]]
+    end)
   end)
 
   it('handles changing files (#23027)', function()
-    exec_lua [[
+    exec_lua(function()
       vim.loader.enable()
-    ]]
+    end)
 
     local tmp = t.tmpname()
     command('edit ' .. tmp)
 
     eq(
       1,
-      exec_lua(
-        [[
-      vim.api.nvim_buf_set_lines(0, 0, -1, true, {'_G.TEST=1'})
-      vim.cmd.write()
-      loadfile(...)()
-      return _G.TEST
-    ]],
-        tmp
-      )
+      exec_lua(function()
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, { '_G.TEST=1' })
+        vim.cmd.write()
+        loadfile(tmp)()
+        return _G.TEST
+      end)
     )
 
     -- fs latency
@@ -57,15 +54,12 @@ describe('vim.loader', function()
 
     eq(
       2,
-      exec_lua(
-        [[
-      vim.api.nvim_buf_set_lines(0, 0, -1, true, {'_G.TEST=2'})
-      vim.cmd.write()
-      loadfile(...)()
-      return _G.TEST
-    ]],
-        tmp
-      )
+      exec_lua(function()
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, { '_G.TEST=2' })
+        vim.cmd.write()
+        loadfile(tmp)()
+        return _G.TEST
+      end)
     )
   end)
 
