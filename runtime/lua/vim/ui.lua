@@ -140,7 +140,7 @@ function M.open(path)
   end
 
   local cmd --- @type string[]
-  local opts --- @type { [string]: boolean }
+  local opts --- @type vim.SystemOpts
 
   opts = { text = true, detach = true }
 
