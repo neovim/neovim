@@ -2733,53 +2733,14 @@ int vim_copyfile(const char *from, const char *to)
   }
 #endif
 
-  int perm = os_getperm(from);
   // For systems that support ACL: get the ACL from the original file.
   vim_acl_T acl = os_get_acl(from);
-  int fd_in = os_open(from, O_RDONLY, 0);
-  if (fd_in < 0) {
+
+  if (os_copy(from, to, UV_FS_COPYFILE_EXCL) != 0) {
     os_free_acl(acl);
     return FAIL;
   }
 
-  // Create the new file with same permissions as the original.
-  int fd_out = os_open(to, O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, perm);
-  if (fd_out < 0) {
-    close(fd_in);
-    os_free_acl(acl);
-    return FAIL;
-  }
-
-  // Avoid xmalloc() here as vim_rename() is called by buf_write() when nvim
-  // is `preserve_exit()`ing.
-  char *buffer = try_malloc(WRITEBUFSIZE);
-  if (buffer == NULL) {
-    close(fd_out);
-    close(fd_in);
-    os_free_acl(acl);
-    return FAIL;
-  }
-
-  int n;
-  while ((n = read_eintr(fd_in, buffer, WRITEBUFSIZE)) > 0) {
-    if (write_eintr(fd_out, buffer, (size_t)n) != n) {
-      errmsg = _("E208: Error writing to \"%s\"");
-      break;
-    }
-  }
-
-  xfree(buffer);
-  close(fd_in);
-  if (close(fd_out) < 0) {
-    errmsg = _("E209: Error closing \"%s\"");
-  }
-  if (n < 0) {
-    errmsg = _("E210: Error reading \"%s\"");
-    to = from;
-  }
-#ifndef UNIX  // For Unix os_open() already set the permission.
-  os_setperm(to, perm);
-#endif
   os_set_acl(to, acl);
   os_free_acl(acl);
   if (errmsg != NULL) {
