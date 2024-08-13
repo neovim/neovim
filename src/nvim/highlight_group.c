@@ -1648,6 +1648,7 @@ static bool hlgroup2dict(Dictionary *hl, NS ns_id, int hl_id, Arena *arena)
     PUT_C(*hl, "default", BOOLEAN_OBJ(true));
   }
   if (link > 0) {
+    assert(1 <= link && link <= highlight_ga.ga_len);
     PUT_C(*hl, "link", CSTR_AS_OBJ(hl_table[link - 1].sg_name));
   }
   Dictionary hl_cterm = arena_dict(arena, HLATTRS_DICT_SIZE);
