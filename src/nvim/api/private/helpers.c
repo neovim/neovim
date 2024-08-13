@@ -774,7 +774,8 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
     String str = obj.data.string;
     return str.size ? syn_check_group(str.data, str.size) : 0;
   } else if (obj.type == kObjectTypeInteger) {
-    return MAX((int)obj.data.integer, 0);
+    int id = (int)obj.data.integer;
+    return (1 <= id && id <= highlight_num_groups()) ? id : 0;
   } else {
     api_set_error(err, kErrorTypeValidation, "Invalid highlight: %s", what);
     return 0;
