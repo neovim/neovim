@@ -96,20 +96,29 @@ error('Cannot require a meta file')
 --- @field strikethrough? true
 --- @field altfont? true
 --- @field nocombine? true
-
---- @class vim.api.keyset.hl_info.cterm : vim.api.keyset.hl_info.base
 --- @field ctermfg? integer
 --- @field ctermbg? integer
+
+--- @class vim.api.keyset.hl_info.cterm : vim.api.keyset.hl_info.base
 --- @field foreground? integer
 --- @field background? integer
 
---- @class vim.api.keyset.hl_info : vim.api.keyset.hl_info.base
+--- @class vim.api.keyset.get_hl_info : vim.api.keyset.hl_info.base
 --- @field fg? integer
 --- @field bg? integer
 --- @field sp? integer
 --- @field default? true
+--- @field blend? integer
+--- @field cterm? vim.api.keyset.hl_info.cterm
+
+--- @class vim.api.keyset.set_hl_info : vim.api.keyset.hl_info.base
+--- @field fg? integer|string
+--- @field bg? integer|string
+--- @field sp? integer|string
+--- @field default? true
 --- @field link? string
 --- @field blend? integer
+--- @field force? true
 --- @field cterm? vim.api.keyset.hl_info.cterm
 
 --- @class vim.api.keyset.get_mode

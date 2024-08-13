@@ -1321,7 +1321,7 @@ function vim.api.nvim_get_current_win() end
 ---               of effective definition `:hi-link`.
 ---             • create: (boolean, default true) When highlight group doesn't
 ---               exist create it.
---- @return vim.api.keyset.hl_info
+--- @return vim.api.keyset.get_hl_info
 function vim.api.nvim_get_hl(ns_id, opts) end
 
 --- @deprecated
