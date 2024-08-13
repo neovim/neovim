@@ -1685,7 +1685,8 @@ displayed line.  The default value is 10.  The disadvantage of using a larger
 number is that redrawing can become slow.
 
 
-JSON						*json.vim* *ft-json-syntax*
+JSON			*json.vim* *ft-json-syntax* *g:vim_json_conceal*
+					       *g:vim_json_warnings*
 
 The json syntax file provides syntax highlighting with conceal support by
 default. To disable concealment: >
@@ -1875,7 +1876,8 @@ $VIMRUNTIME/syntax/syntax.vim).
   mv_finance	 mv_logic	mv_powseries
 
 
-MARKDOWN						*ft-markdown-syntax*
+MARKDOWN			*ft-markdown-syntax* *g:markdown_minlines*
+		 *g:markdown_fenced_languages* *g:markdown_syntax_conceal*
 
 If you have long regions there might be wrong highlighting.  At the cost of
 slowing down displaying, you can have the engine look further back to sync on
