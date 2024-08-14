@@ -125,6 +125,7 @@ EVENTS
 
 • |CompleteDone| now sets the `reason` key in `v:event` which specifies the reason
   for completion being done.
+• Added |VisualChanged| autocommand that fires when the visual selection changes
 
 LSP
 

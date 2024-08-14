@@ -1297,6 +1297,27 @@ static void normal_check_cursor_moved(NormalState *s)
   }
 }
 
+static int last_visualchanged_mode;
+static pos_T last_visualchanged_cursor;
+static pos_T last_visualchanged_anchor;
+
+/// Trigger VisualChanged if visual selection has changed
+static void normal_check_visual_changed(NormalState *s)
+{
+  if (!finish_op && VIsual_active && (has_event(EVENT_VISUALCHANGED))
+      && (VIsual_mode != last_visualchanged_mode
+          || !equalpos(curwin->w_cursor, last_visualchanged_cursor)
+          || !equalpos(VIsual, last_visualchanged_anchor))) {
+    apply_autocmds(EVENT_VISUALCHANGED, NULL, NULL, false, curbuf);
+    last_visualchanged_cursor = curwin->w_cursor;
+    last_visualchanged_anchor = VIsual;
+    last_visualchanged_mode = VIsual_mode;
+  } else {
+    // isn't visual mode; reset
+    last_visualchanged_mode = -1;
+  }
+}
+
 static void normal_check_text_changed(NormalState *s)
 {
   // Trigger TextChanged if changedtick differs.
@@ -1437,6 +1458,7 @@ static int normal_check(VimState *state)
     normal_check_window_scrolled(s);
     normal_check_buffer_modified(s);
     normal_check_safe_state(s);
+    normal_check_visual_changed(s);
 
     // Updating diffs from changed() does not always work properly,
     // esp. updating folds.  Do an update just before redrawing if
