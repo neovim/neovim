@@ -540,12 +540,6 @@ describe('lua stdlib', function()
     matches('big failure\nvery async', remove_trace(eval('v:errmsg')))
 
     local screen = Screen.new(60, 5)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { bold = true, reverse = true },
-      [3] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [4] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-    })
     screen:attach()
     screen:expect {
       grid = [[
@@ -564,11 +558,11 @@ describe('lua stdlib', function()
     ]])
     screen:expect {
       grid = [[
-      {3:stack traceback:}                                            |
-      {3:        [C]: in function 'nvim_command'}                     |
-      {3:        [string "<nvim>"]:2: in function <[string "<nvim>"]:}|
-      {3:1>}                                                          |
-      {4:Press ENTER or type command to continue}^                     |
+      {9:stack traceback:}                                            |
+      {9:        [C]: in function 'nvim_command'}                     |
+      {9:        [string "<nvim>"]:2: in function <[string "<nvim>"]:}|
+      {9:1>}                                                          |
+      {6:Press ENTER or type command to continue}^                     |
     ]],
     }
   end)
@@ -1318,12 +1312,6 @@ describe('lua stdlib', function()
     end)
 
     local screen = Screen.new(50, 7)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { bold = true, reverse = true },
-      [3] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [4] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-    })
     screen:attach()
     exec_lua([[
       timer = vim.uv.new_timer()
@@ -1336,13 +1324,13 @@ describe('lua stdlib', function()
     ]])
     screen:expect {
       grid = [[
-      {3:[string "<nvim>"]:6: E5560: rpcrequest must not be}|
-      {3: called in a lua loop callback}                    |
-      {3:stack traceback:}                                  |
-      {3:        [C]: in function 'rpcrequest'}             |
-      {3:        [string "<nvim>"]:6: in function <[string }|
-      {3:"<nvim>"]:2>}                                      |
-      {4:Press ENTER or type command to continue}^           |
+      {9:[string "<nvim>"]:6: E5560: rpcrequest must not be}|
+      {9: called in a lua loop callback}                    |
+      {9:stack traceback:}                                  |
+      {9:        [C]: in function 'rpcrequest'}             |
+      {9:        [string "<nvim>"]:6: in function <[string }|
+      {9:"<nvim>"]:2>}                                      |
+      {6:Press ENTER or type command to continue}^           |
     ]],
     }
     feed('<cr>')
@@ -1995,16 +1983,12 @@ describe('lua stdlib', function()
     eq({ 1, 5 }, api.nvim_win_get_cursor(0))
 
     local screen = Screen.new(60, 3)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { background = Screen.colors.Yellow },
-    })
     screen:attach()
     eq(1, eval('v:hlsearch'))
     screen:expect {
       grid = [[
-       {1:foo} {1:^foo} {1:foo}                                                |
-      {0:~                                                           }|
+       {10:foo} {10:^foo} {10:foo}                                                |
+      {1:~                                                           }|
                                                                   |
     ]],
     }
@@ -2013,7 +1997,7 @@ describe('lua stdlib', function()
     screen:expect {
       grid = [[
        foo ^foo foo                                                |
-      {0:~                                                           }|
+      {1:~                                                           }|
                                                                   |
     ]],
     }
@@ -2021,8 +2005,8 @@ describe('lua stdlib', function()
     eq(1, eval('v:hlsearch'))
     screen:expect {
       grid = [[
-       {1:foo} {1:^foo} {1:foo}                                                |
-      {0:~                                                           }|
+       {10:foo} {10:^foo} {10:foo}                                                |
+      {1:~                                                           }|
                                                                   |
     ]],
     }
@@ -3542,15 +3526,11 @@ describe('lua stdlib', function()
 
   it('vim.notify_once', function()
     local screen = Screen.new(60, 5)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { foreground = Screen.colors.Red },
-    })
     screen:attach()
     screen:expect {
       grid = [[
       ^                                                            |
-      {0:~                                                           }|*3
+      {1:~                                                           }|*3
                                                                   |
     ]],
     }
@@ -3558,15 +3538,15 @@ describe('lua stdlib', function()
     screen:expect {
       grid = [[
       ^                                                            |
-      {0:~                                                           }|*3
-      {1:I'll only tell you this once...}                             |
+      {1:~                                                           }|*3
+      {19:I'll only tell you this once...}                             |
     ]],
     }
     feed('<C-l>')
     screen:expect {
       grid = [[
       ^                                                            |
-      {0:~                                                           }|*3
+      {1:~                                                           }|*3
                                                                   |
     ]],
     }
@@ -3743,10 +3723,6 @@ describe('lua stdlib', function()
     it('updates ruler if cursor moved', function()
       -- Fixed for win_execute in vim-patch:8.1.2124, but should've applied to nvim_win_call too!
       local screen = Screen.new(30, 5)
-      screen:set_default_attr_ids {
-        [1] = { reverse = true },
-        [2] = { bold = true, reverse = true },
-      }
       screen:attach()
       exec_lua [[
         _G.api = vim.api
@@ -3761,9 +3737,9 @@ describe('lua stdlib', function()
       ]]
       screen:expect [[
         19                            |
-        {1:[No Name] [+]  20,1         3%}|
-        ^19                            |
         {2:[No Name] [+]  20,1         3%}|
+        ^19                            |
+        {3:[No Name] [+]  20,1         3%}|
                                       |
       ]]
       exec_lua [[
@@ -3772,9 +3748,9 @@ describe('lua stdlib', function()
       ]]
       screen:expect [[
         99                            |
-        {1:[No Name] [+]  100,1       19%}|
+        {2:[No Name] [+]  100,1       19%}|
         ^19                            |
-        {2:[No Name] [+]  20,1         3%}|
+        {3:[No Name] [+]  20,1         3%}|
                                       |
       ]]
     end)
@@ -3890,13 +3866,6 @@ describe('lua stdlib', function()
 
   it('vim.lua_omnifunc', function()
     local screen = Screen.new(60, 5)
-    screen:set_default_attr_ids {
-      [1] = { foreground = Screen.colors.Blue1, bold = true },
-      [2] = { background = Screen.colors.WebGray },
-      [3] = { background = Screen.colors.LightMagenta },
-      [4] = { bold = true },
-      [5] = { foreground = Screen.colors.SeaGreen, bold = true },
-    }
     screen:attach()
     command [[ set omnifunc=v:lua.vim.lua_omnifunc ]]
 
@@ -3906,10 +3875,10 @@ describe('lua stdlib', function()
     screen:expect {
       grid = [[
       vim.inspect^                                                 |
-      {1:~  }{2: inspect        }{1:                                         }|
-      {1:~  }{3: inspect_pos    }{1:                                         }|
+      {1:~  }{12: inspect        }{1:                                         }|
+      {1:~  }{4: inspect_pos    }{1:                                         }|
       {1:~                                                           }|
-      {4:-- Omni completion (^O^N^P) }{5:match 1 of 2}                    |
+      {5:-- Omni completion (^O^N^P) }{6:match 1 of 2}                    |
     ]],
     }
   end)

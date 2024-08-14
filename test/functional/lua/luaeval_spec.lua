@@ -510,23 +510,16 @@ describe('v:lua', function()
 
   it('works in func options', function()
     local screen = Screen.new(60, 8)
-    screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {background = Screen.colors.WebGray},
-      [3] = {background = Screen.colors.LightMagenta},
-      [4] = {bold = true},
-      [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    })
     screen:attach()
     api.nvim_set_option_value('omnifunc', 'v:lua.mymod.omni', {})
     feed('isome st<c-x><c-o>')
     screen:expect{grid=[[
       some stuff^                                                  |
-      {1:~   }{2: stuff          }{1:                                        }|
-      {1:~   }{3: steam          }{1:                                        }|
-      {1:~   }{3: strange things }{1:                                        }|
+      {1:~   }{12: stuff          }{1:                                        }|
+      {1:~   }{4: steam          }{1:                                        }|
+      {1:~   }{4: strange things }{1:                                        }|
       {1:~                                                           }|*3
-      {4:-- Omni completion (^O^N^P) }{5:match 1 of 3}                    |
+      {5:-- Omni completion (^O^N^P) }{6:match 1 of 3}                    |
     ]]}
     api.nvim_set_option_value('operatorfunc', 'v:lua.mymod.noisy', {})
     feed('<Esc>g@g@')

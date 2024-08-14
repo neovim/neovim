@@ -259,15 +259,6 @@ describe('autocmd', function()
 
     local screen = Screen.new(50, 10)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { background = Screen.colors.LightMagenta },
-      [3] = {
-        background = Screen.colors.LightMagenta,
-        bold = true,
-        foreground = Screen.colors.Blue1,
-      },
-    })
 
     source([[
       function! Doit()
@@ -292,8 +283,8 @@ describe('autocmd', function()
 
     feed(':enew | doautoall User<cr>')
     screen:expect([[
-      {2:bb                                                }|
-      {3:~                                                 }|*4
+      {4:bb                                                }|
+      {11:~                                                 }|*4
       {1:~                                                 }|*4
       ^:enew | doautoall User                            |
     ]])
@@ -318,8 +309,8 @@ describe('autocmd', function()
     command('let g:had_value = v:null')
     feed(':doautoall User<cr>')
     screen:expect([[
-      {2:bb                                                }|
-      {3:~                                                 }|*4
+      {4:bb                                                }|
+      {11:~                                                 }|*4
       {1:~                                                 }|*4
       ^:doautoall User                                   |
     ]])
@@ -343,11 +334,6 @@ describe('autocmd', function()
   it('`aucmd_win` cannot be changed into a normal window #13699', function()
     local screen = Screen.new(50, 10)
     screen:attach()
-    screen:set_default_attr_ids {
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { reverse = true },
-      [3] = { bold = true, reverse = true },
-    }
 
     -- Create specific layout and ensure it's left unchanged.
     -- Use vim._with on a hidden buffer so aucmd_win is used.
@@ -513,9 +499,6 @@ describe('autocmd', function()
   it(':doautocmd does not warn "No matching autocommands" #10689', function()
     local screen = Screen.new(32, 3)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-    })
 
     feed(':doautocmd User Foo<cr>')
     screen:expect {
