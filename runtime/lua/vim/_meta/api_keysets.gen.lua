@@ -228,6 +228,7 @@ error('Cannot require a meta file')
 --- |'VimResized'
 --- |'VimResume'
 --- |'VimSuspend'
+--- |'VisualChanged'
 --- |'WinClosed'
 --- |'WinEnter'
 --- |'WinLeave'

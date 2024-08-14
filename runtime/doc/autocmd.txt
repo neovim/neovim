@@ -1520,6 +1520,12 @@ VimResume						*VimResume*
 VimSuspend						*VimSuspend*
 				Before Nvim enters |suspend| state.
 
+VisualChanged						*VisualChanged*
+				When entering Visual mode, changing from one
+				Visual mode to another, changing the Visual
+				selection, or moving the cursor while in
+				Visual mode.
+
 WinClosed						*WinClosed*
 				When closing a window, just before it is
 				removed from the window layout.  The pattern
