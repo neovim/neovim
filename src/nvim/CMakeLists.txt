@@ -54,8 +54,6 @@ if(ENABLE_WASMTIME)
   target_compile_definitions(nvim_bin PRIVATE HAVE_WASMTIME)
 endif()
 
-target_compile_definitions(main_lib INTERFACE HAVE_UNIBILIUM)
-
 # The unit test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
 if(PREFER_LUA)
@@ -153,7 +151,7 @@ if(UNIX)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  target_compile_definitions(main_lib INTERFACE _WIN32_WINNT=0x0602 MSWIN)
+  target_compile_definitions(main_lib INTERFACE _WIN32_WINNT=0x0602 MSWIN WIN32_LEAN_AND_MEAN)
   target_link_libraries(main_lib INTERFACE netapi32)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   target_link_libraries(nvim_bin PRIVATE "-framework CoreServices")
@@ -366,8 +364,8 @@ file(MAKE_DIRECTORY ${TOUCHES_DIR} ${GENERATED_DIR} ${GENERATED_INCLUDES_DIR})
 
 file(GLOB NVIM_SOURCES CONFIGURE_DEPENDS *.c)
 file(GLOB NVIM_HEADERS CONFIGURE_DEPENDS *.h)
-file(GLOB EXTERNAL_SOURCES CONFIGURE_DEPENDS ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../termkey/*.c ../vterm/*.c)
-file(GLOB EXTERNAL_HEADERS CONFIGURE_DEPENDS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../termkey/*.h ../vterm/*.h)
+file(GLOB EXTERNAL_SOURCES CONFIGURE_DEPENDS ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../vterm/*.c)
+file(GLOB EXTERNAL_HEADERS CONFIGURE_DEPENDS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../vterm/*.h)
 
 file(GLOB NLUA0_SOURCES CONFIGURE_DEPENDS ../mpack/*.c)
 
@@ -378,6 +376,15 @@ if(PREFER_LUA)
   target_compile_definitions(main_lib INTERFACE NVIM_VENDOR_BIT)
 endif()
 
+# Inlined external projects, we don't maintain it. #9306
+if(MSVC)
+  set_source_files_properties(
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_OPTIONS "-wd4090;-wd4244;-wd4267")
+else()
+  set_source_files_properties(
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_OPTIONS "-Wno-conversion;-Wno-missing-noreturn;-Wno-missing-format-attribute;-Wno-double-promotion;-Wno-strict-prototypes;-Wno-misleading-indentation;-Wno-sign-compare;-Wno-implicit-fallthrough;-Wno-missing-prototypes;-Wno-missing-field-initializers")
+endif()
+
 list(APPEND NLUA0_SOURCES ${PROJECT_SOURCE_DIR}/src/nlua0.c)
 
 foreach(subdir
@@ -386,6 +393,7 @@ foreach(subdir
         api/private
         msgpack_rpc
         tui
+        tui/termkey
         event
         eval
         lua
@@ -407,49 +415,36 @@ endforeach()
 list(SORT NVIM_SOURCES)
 list(SORT NVIM_HEADERS)
 
-list(APPEND LINT_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
-
 foreach(sfile ${NVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
   if(WIN32 AND ${f} MATCHES "^(pty_process_unix.c)$")
-    list(APPEND to_remove ${sfile})
+    list(REMOVE_ITEM NVIM_SOURCES ${sfile})
   endif()
   if(NOT WIN32 AND ${f} MATCHES "^(pty_process_win.c)$")
-    list(APPEND to_remove ${sfile})
+    list(REMOVE_ITEM NVIM_SOURCES ${sfile})
   endif()
   if(NOT WIN32 AND ${f} MATCHES "^(pty_conpty_win.c)$")
-    list(APPEND to_remove ${sfile})
+    list(REMOVE_ITEM NVIM_SOURCES ${sfile})
   endif()
   if(NOT WIN32 AND ${f} MATCHES "^(os_win_console.c)$")
-    list(APPEND to_remove ${sfile})
+    list(REMOVE_ITEM NVIM_SOURCES ${sfile})
   endif()
 endforeach()
-
-list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 
 foreach(hfile ${NVIM_HEADERS})
   get_filename_component(f ${hfile} NAME)
   if(WIN32 AND ${f} MATCHES "^(unix_defs.h)$")
-    list(APPEND to_remove_h ${hfile})
+    list(REMOVE_ITEM NVIM_HEADERS ${hfile})
   endif()
   if(WIN32 AND ${f} MATCHES "^(pty_process_unix.h)$")
-    list(APPEND to_remove_h ${hfile})
+    list(REMOVE_ITEM NVIM_HEADERS ${hfile})
   endif()
   if(NOT WIN32 AND ${f} MATCHES "^(win_defs.h)$")
-    list(APPEND to_remove_h ${hfile})
+    list(REMOVE_ITEM NVIM_HEADERS ${hfile})
   endif()
 endforeach()
 
-list(REMOVE_ITEM NVIM_HEADERS ${to_remove_h})
-
-# xdiff, mpack, lua-cjson, termkey: inlined external project, we don't maintain it. #9306
-if(MSVC)
-  set_source_files_properties(
-    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_OPTIONS "-wd4090;-wd4244;-wd4267")
-else()
-  set_source_files_properties(
-    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_OPTIONS "-Wno-conversion;-Wno-missing-noreturn;-Wno-missing-format-attribute;-Wno-double-promotion;-Wno-strict-prototypes;-Wno-misleading-indentation;-Wno-sign-compare;-Wno-implicit-fallthrough;-Wno-missing-prototypes;-Wno-missing-field-initializers")
-endif()
+list(APPEND LINT_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
 
 # Log level (NVIM_LOG_DEBUG in log.h)
 if(CI_BUILD)
@@ -849,7 +844,7 @@ endif()
 add_glob_target(
   TARGET lintc-clang-tidy
   COMMAND ${CLANG_TIDY_PRG}
-  FILES ${NVIM_SOURCES} ${NVIM_HEADERS}
+  FILES ${LINT_NVIM_SOURCES}
   FLAGS --quiet
   EXCLUDE ${EXCLUDE_CLANG_TIDY})
 
@@ -862,7 +857,7 @@ endif()
 add_glob_target(
   TARGET clang-analyzer
   COMMAND ${CLANG_TIDY_PRG}
-  FILES ${NVIM_SOURCES} ${NVIM_HEADERS}
+  FILES ${LINT_NVIM_SOURCES}
   FLAGS --quiet
   --checks='
   -*,
@@ -905,13 +900,13 @@ add_glob_target(
   TARGET lintc-uncrustify
   COMMAND ${UNCRUSTIFY_PRG}
   FLAGS -c ${UNCRUSTIFY_CONFIG} -q --check
-  FILES ${LINT_NVIM_SOURCES})
+  FILES ${NVIM_SOURCES} ${NVIM_HEADERS})
 
 add_glob_target(
   TARGET formatc
   COMMAND ${UNCRUSTIFY_PRG}
   FLAGS -c ${UNCRUSTIFY_CONFIG} --replace --no-backup
-  FILES ${LINT_NVIM_SOURCES})
+  FILES ${NVIM_SOURCES} ${NVIM_HEADERS})
 
 add_dependencies(lintc-uncrustify uncrustify_update_config)
 add_dependencies(formatc uncrustify_update_config)

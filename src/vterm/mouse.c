@@ -1,6 +1,6 @@
 #include "vterm_internal.h"
 
-#include "utf8.h"
+#include "nvim/tui/termkey/termkey.h"
 
 static void output_mouse(VTermState *state, int code, int pressed, int modifiers, int col, int row)
 {

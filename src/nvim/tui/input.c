@@ -7,24 +7,27 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/rstream.h"
 #include "nvim/event/stream.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
 #include "nvim/memory.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/strings.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/input_defs.h"
+#include "nvim/tui/termkey/driver-csi.h"
+#include "nvim/tui/termkey/termkey.h"
 #include "nvim/tui/tui.h"
 #include "nvim/ui_client.h"
+
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
-#include "nvim/event/rstream.h"
-#include "nvim/msgpack_rpc/channel.h"
 
 #define READ_STREAM_SIZE 0xfff
 
@@ -261,7 +264,7 @@ static size_t handle_more_modifiers(TermKeyKey *key, char *buf, size_t buflen)
 
 static void handle_kitty_key_protocol(TermInput *input, TermKeyKey *key)
 {
-  const char *name = pmap_get(int)(&kitty_key_map, (int)key->code.codepoint);
+  const char *name = pmap_get(int)(&kitty_key_map, key->code.codepoint);
   if (name) {
     char buf[64];
     size_t len = 0;
@@ -598,7 +601,7 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
   // contain, so just allocate enough space for a large upper bound
   TermKeyCsiParam params[16];
   size_t nparams = 16;
-  unsigned long cmd;
+  unsigned cmd;
   if (termkey_interpret_csi(input->tk, key, params, &nparams, &cmd) != TERMKEY_RES_KEY) {
     return;
   }
@@ -641,7 +644,7 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
   case 't':
     if (nparams == 5) {
       // We only care about the first 3 parameters, and we ignore subparameters
-      long args[3];
+      int args[3];
       for (size_t i = 0; i < ARRAY_SIZE(args); i++) {
         if (termkey_interpret_csi_param(params[i], &args[i], NULL, NULL) != TERMKEY_RES_KEY) {
           return;
@@ -650,8 +653,8 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
 
       if (args[0] == 48) {
         // In-band resize event (DEC private mode 2048)
-        int height_chars = (int)args[1];
-        int width_chars = (int)args[2];
+        int height_chars = args[1];
+        int width_chars = args[2];
         tui_set_size(input->tui_data, width_chars, height_chars);
         ui_client_set_size(width_chars, height_chars);
       }
