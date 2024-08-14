@@ -94,12 +94,6 @@ describe('clipboard', function()
   before_each(function()
     clear()
     screen = Screen.new(72, 4)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [2] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-      [3] = { bold = true, reverse = true },
-    })
     screen:attach()
   end)
 
@@ -114,13 +108,13 @@ describe('clipboard', function()
     feed('"+yl')
     screen:expect([[
       ^a                                                                       |
-      {0:~                                                                       }|*2
+      {1:~                                                                       }|*2
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]])
     feed('"+p')
     screen:expect([[
       a^a                                                                      |
-      {0:~                                                                       }|*2
+      {1:~                                                                       }|*2
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]])
   end)
@@ -132,19 +126,19 @@ describe('clipboard', function()
     feed('yl')
     screen:expect([[
       ^a                                                                       |
-      {0:~                                                                       }|*2
+      {1:~                                                                       }|*2
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]])
     feed(':<CR>')
     screen:expect([[
       ^a                                                                       |
-      {0:~                                                                       }|*2
+      {1:~                                                                       }|*2
       :                                                                       |
     ]])
     feed('p')
     screen:expect([[
       a^a                                                                      |
-      {0:~                                                                       }|*2
+      {1:~                                                                       }|*2
       :                                                                       |
     ]])
   end)
@@ -154,7 +148,7 @@ describe('clipboard', function()
     feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
     screen:expect([[
       ^                                                                        |
-      {0:~                                                                       }|*2
+      {1:~                                                                       }|*2
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]])
   end)
@@ -166,8 +160,8 @@ describe('clipboard', function()
       grid = [[
     {3:                                                                        }|
     clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
-    {1:E492: Not an editor command: bogus_cmd | redir END}                      |
-    {2:Press ENTER or type command to continue}^                                 |
+    {9:E492: Not an editor command: bogus_cmd | redir END}                      |
+    {6:Press ENTER or type command to continue}^                                 |
     ]],
     }
   end)
@@ -182,7 +176,7 @@ describe('clipboard', function()
     feed_command('let @+="foo"')
     screen:expect([[
       ^                                                                        |
-      {0:~                                                                       }|*2
+      {1:~                                                                       }|*2
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]])
   end)
@@ -325,15 +319,11 @@ describe('clipboard (with fake clipboard.vim)', function()
   it('`:redir @+>|bogus_cmd|redir END` must not recurse #7184', function()
     local screen = Screen.new(72, 4)
     screen:attach()
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-    })
     feed_command('redir @+> | bogus_cmd | redir END')
     screen:expect([[
       ^                                                                        |
-      {0:~                                                                       }|*2
-      {1:E492: Not an editor command: bogus_cmd | redir END}                      |
+      {1:~                                                                       }|*2
+      {9:E492: Not an editor command: bogus_cmd | redir END}                      |
     ]])
   end)
 
@@ -719,9 +709,6 @@ describe('clipboard (with fake clipboard.vim)', function()
     feed_command('set mouse=a')
 
     local screen = Screen.new(30, 5)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-    })
     screen:attach()
     insert([[
       the source
@@ -731,7 +718,7 @@ describe('clipboard (with fake clipboard.vim)', function()
     screen:expect([[
       the ^source                    |
       a target                      |
-      {0:~                             }|*2
+      {1:~                             }|*2
                                     |
     ]])
 
