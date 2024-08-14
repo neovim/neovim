@@ -20,7 +20,7 @@ local function get_search_history(name)
   local args = vim.split(name, ' ')
   local code = [[
     local args = ...
-    local man = require('runtime.lua.man')
+    local man = require('man')
     local res = {}
     man.find_path = function(sect, name)
       table.insert(res, {sect, name})
