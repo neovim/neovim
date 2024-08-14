@@ -6,9 +6,9 @@
 
 #include "nvim/event/defs.h"
 #include "nvim/tui/input_defs.h"  // IWYU pragma: keep
+#include "nvim/tui/termkey/termkey_defs.h"
 #include "nvim/tui/tui_defs.h"
 #include "nvim/types_defs.h"
-#include "termkey/termkey.h"
 
 typedef enum {
   kKeyEncodingLegacy,  ///< Legacy key encoding

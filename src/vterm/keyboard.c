@@ -1,8 +1,7 @@
 #include "vterm_internal.h"
-
 #include <stdio.h>
 
-#include "utf8.h"
+#include "nvim/tui/termkey/termkey.h"
 
 void vterm_keyboard_unichar(VTerm *vt, uint32_t c, VTermModifier mod)
 {
