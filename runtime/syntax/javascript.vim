@@ -10,6 +10,7 @@
 " Last Change:	2022 Jun 09
 " 		2013 Jun 12: adjusted javaScriptRegexpString (Kevin Locke)
 " 		2018 Apr 14: adjusted javaScriptRegexpString (LongJohnCoder)
+" 		2024 Aug 14: fix a few stylistic issues (#15480)
 
 " tuning parameters:
 " unlet javaScript_fold
@@ -59,14 +60,15 @@ syn keyword javaScriptType		Array Boolean Date Function Number Object String Reg
 syn keyword javaScriptStatement		return with await yield
 syn keyword javaScriptBoolean		true false
 syn keyword javaScriptNull		null undefined
-syn keyword javaScriptIdentifier	arguments this var let
+syn keyword javaScriptIdentifier	arguments this
 syn keyword javaScriptLabel		case default
 syn keyword javaScriptException		try catch finally throw
 syn keyword javaScriptMessage		alert confirm prompt status
 syn keyword javaScriptGlobal		self window top parent
 syn keyword javaScriptMember		document event location 
 syn keyword javaScriptDeprecated	escape unescape
-syn keyword javaScriptReserved		abstract boolean byte char class const debugger double enum export extends final float goto implements import int interface long native package private protected public short static super synchronized throws transient volatile async
+syn keyword javaScriptReserved		abstract boolean byte char class const debugger double enum export extends final float from goto implements import int interface let long native package private protected public short super synchronized throws transient var volatile async
+syn keyword javaScriptModifier  static
 
 syn cluster  javaScriptEmbededExpr	contains=javaScriptBoolean,javaScriptNull,javaScriptIdentifier,javaScriptStringD,javaScriptStringS,javaScriptStringT
 
@@ -110,7 +112,7 @@ hi def link javaScriptBranch		Conditional
 hi def link javaScriptOperator		Operator
 hi def link javaScriptType			Type
 hi def link javaScriptStatement		Statement
-hi def link javaScriptFunction		Function
+hi def link javaScriptFunction		Keyword
 hi def link javaScriptBraces		Function
 hi def link javaScriptError		Error
 hi def link javaScrParenError		javaScriptError
@@ -126,6 +128,7 @@ hi def link javaScriptGlobal		Keyword
 hi def link javaScriptMember		Keyword
 hi def link javaScriptDeprecated		Exception 
 hi def link javaScriptReserved		Keyword
+hi def link javaScriptModifier		StorageClass
 hi def link javaScriptDebug		Debug
 hi def link javaScriptConstant		Label
 hi def link javaScriptEmbed		Special
