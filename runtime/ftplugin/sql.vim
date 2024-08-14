@@ -3,8 +3,9 @@
 " Version:     12.0
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
 " Last Change: 2017 Mar 07
-"              2024 Jan 14 by Vim Project (browsefilter)
-"              2024 May 18 by Vim Project (set comment options)
+"              2024 Jan 14 by Vim Project: browsefilter
+"              2024 May 18 by Vim Project: set comment options
+"              2024 Aug 14 by Vim Project: remove redundant code
 " Download:    http://vim.sourceforge.net/script.php?script_id=454
 
 " For more details please use:
@@ -92,12 +93,18 @@
 " Only do this when not done yet for this buffer
 " This ftplugin can be used with other ftplugins.  So ensure loading
 " happens if all elements of this plugin have not yet loaded.
-if exists("b:did_ftplugin") && exists("b:current_ftplugin") && b:current_ftplugin == 'sql'
+if exists("b:did_ftplugin")
     finish
 endif
 
+" Don't load another plugin for this buffer
+let b:did_ftplugin = 1
+
 let s:save_cpo = &cpo
 set cpo&vim
+
+let b:undo_ftplugin = "setl comments< commentstring< formatoptions< define< omnifunc<" .
+            \ " | unlet! b:browsefilter b:match_words"
 
 " Disable autowrapping for code, but enable for comments
 " t     Auto-wrap text using textwidth
@@ -262,19 +269,6 @@ elseif exists("g:sql_type_default")
         "     echomsg 'ftplugin/'.g:sql_type_default.'.vim not exist, using default'
     endif
 endif
-
-" If the above runtime command succeeded, do not load the default settings
-" as they should have already been loaded from a previous run.
-if exists("b:did_ftplugin") && exists("b:current_ftplugin") && b:current_ftplugin == 'sql'
-    finish
-endif
-
-let b:undo_ftplugin = "setl comments< commentstring< formatoptions< define< omnifunc<" .
-            \ " | unlet! b:browsefilter b:match_words"
-
-" Don't load another plugin for this buffer
-let b:did_ftplugin     = 1
-let b:current_ftplugin = 'sql'
 
 " Win32 and GTK can filter files in the browse dialog
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
