@@ -2,9 +2,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "nvim/mbyte.h"
+#include "nvim/tui/termkey.h"
 
 #include "rect.h"
-#include "utf8.h"
 
 #define UNICODE_SPACE 0x20
 #define UNICODE_LINEFEED 0x0a
@@ -922,7 +923,7 @@ static size_t _get_chars(const VTermScreen *screen, const int utf8, void *buffer
 
 #define PUT(c)                                             \
   if(utf8) {                                               \
-    size_t thislen = utf8_seqlen(c);                       \
+    size_t thislen = utf_char2len(c);                      \
     if(buffer && outpos + thislen <= len)                  \
       outpos += fill_utf8((c), (char *)buffer + outpos);   \
     else                                                   \

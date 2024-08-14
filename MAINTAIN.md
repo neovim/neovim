@@ -160,7 +160,6 @@ These dependencies are "vendored" (inlined), we must update the sources manually
     * Needs to be updated when LPeg is updated.
 * `src/bit.c`: only for PUC lua: port of `require'bit'` from luajit https://bitop.luajit.org/
 * `runtime/lua/coxpcall.lua`: coxpcall (only needed for PUC lua, builtin to luajit)
-* `src/termkey`: [libtermkey](https://github.com/neovim/libtermkey)
 
 Other dependencies
 --------------------------
