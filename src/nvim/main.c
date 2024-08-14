@@ -739,7 +739,7 @@ void getout(int exitval)
           bufref_T bufref;
 
           set_bufref(&bufref, buf);
-          apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false, buf);
+          apply_autocmds_win(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false, buf, wp);
           if (bufref_valid(&bufref)) {
             buf_set_changedtick(buf, -1);  // note that we did it already
           }

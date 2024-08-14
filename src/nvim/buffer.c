@@ -180,7 +180,7 @@ static int read_buffer(bool read_stdin, exarg_T *eap, int flags)
     }
 
     apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, false,
-                          curbuf, &retval);
+                          curbuf, NULL, &retval);
   }
   return retval;
 }
@@ -379,7 +379,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     curwin->w_topline = 1;
     curwin->w_topfill = 0;
   }
-  apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, false, curbuf, &retval);
+  apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, false, curbuf, NULL, &retval);
 
   // if (retval != OK) {
   if (retval == FAIL) {
@@ -397,8 +397,9 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
 
     if ((flags & READ_NOWINENTER) == 0) {
+      // TODO(tudor): save the above curwin in case BUFENTER changes it?
       apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf,
-                            &retval);
+                            curwin, &retval);
     }
 
     // restore curwin/curbuf and a few other things
@@ -561,8 +562,8 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   if (buf->b_nwindows == 1) {
     buf->b_locked++;
     buf->b_locked_split++;
-    if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
-                       buf) && !bufref_valid(&bufref)) {
+    if (apply_autocmds_win(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
+                           buf, the_curwin) && !bufref_valid(&bufref)) {
       // Autocommands deleted the buffer.
       emsg(_(e_auabort));
       return false;
@@ -1738,7 +1739,8 @@ void enter_buffer(buf_T *buf)
     curwin->w_topline = 1;
     curwin->w_topfill = 0;
     apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
-    apply_autocmds(EVENT_BUFWINENTER, NULL, NULL, false, curbuf);
+    // TODO(tudor): save the above curwin in case BUFENTER changes it?
+    apply_autocmds_win(EVENT_BUFWINENTER, NULL, NULL, false, curbuf, curwin);
   }
 
   // If autocommands did not change the cursor position, restore cursor lnum

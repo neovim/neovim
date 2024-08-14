@@ -3465,6 +3465,7 @@ nvim_create_autocmd({event}, {opts})                   *nvim_create_autocmd()*
                    • group: (number|nil) autocommand group id, if any
                    • match: (string) expanded value of <amatch>
                    • buf: (number) expanded value of <abuf>
+                   • win: (number) target window or current window at trigger time |callback-win|
                    • file: (string) expanded value of <afile>
                    • data: (any) arbitrary data passed from
                      |nvim_exec_autocmds()|                       *event-data*

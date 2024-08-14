@@ -38,6 +38,7 @@ EXTERN win_T *au_pending_free_win INIT( = NULL);
 EXTERN char *autocmd_fname INIT( = NULL);       ///< fname for <afile> on cmdline
 EXTERN bool autocmd_fname_full INIT( = false);  ///< autocmd_fname is full path
 EXTERN int autocmd_bufnr INIT( = 0);            ///< fnum for <abuf> on cmdline
+EXTERN int autocmd_winid INIT( = 0);            ///< id for
 EXTERN char *autocmd_match INIT( = NULL);       ///< name for <amatch> on cmdline
 EXTERN bool did_cursorhold INIT( = false);      ///< set when CursorHold t'gerd
 

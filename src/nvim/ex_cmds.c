@@ -2579,11 +2579,12 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       // changed by the user.
       do_modelines(OPT_WINONLY);
 
+      win_T *this_win = curwin;
       apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, false, curbuf,
-                            &retval);
+                            NULL, &retval);
       if ((flags & ECMD_NOWINENTER) == 0) {
         apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf,
-                              &retval);
+                              this_win, &retval);
       }
     }
     check_arg_idx(curwin);

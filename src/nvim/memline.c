@@ -1242,7 +1242,8 @@ theend:
     ml_close(curbuf, true);
   } else {
     apply_autocmds(EVENT_BUFREADPOST, NULL, curbuf->b_fname, false, curbuf);
-    apply_autocmds(EVENT_BUFWINENTER, NULL, curbuf->b_fname, false, curbuf);
+    // TODO(tudor): save the above curwin in case BUFENTER changes it?
+    apply_autocmds_win(EVENT_BUFWINENTER, NULL, curbuf->b_fname, false, curbuf, curwin);
   }
 }
 

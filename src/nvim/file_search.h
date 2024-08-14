@@ -2,6 +2,7 @@
 
 #include <stddef.h>  // IWYU pragma: keep
 
+#include "nvim/buffer_defs.h"
 #include "nvim/pos_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 #include "nvim/vim_defs.h"  // IWYU pragma: keep

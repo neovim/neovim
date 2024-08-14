@@ -3804,7 +3804,7 @@ void ex_copen(exarg_T *eap)
   int lnum = qfl->qf_index;
 
   // Fill the buffer with the quickfix list.
-  qf_fill_buffer(qfl, curbuf, NULL, curwin->handle);
+  qf_fill_buffer(qfl, curbuf, NULL, curwin);
 
   decr_quickfix_busy();
 
@@ -3975,7 +3975,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
   }
 
   linenr_T old_line_count = buf->b_ml.ml_line_count;
-  int qf_winid = 0;
+  win_T *qf_win = curwin;
 
   win_T *win;
   if (IS_LL_STACK(qi)) {
@@ -3992,7 +3992,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
         return;
       }
     }
-    qf_winid = (int)win->handle;
+    qf_win = win;
   }
 
   // autocommands may cause trouble
@@ -4007,7 +4007,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 
   qf_update_win_titlevar(qi);
 
-  qf_fill_buffer(qf_get_curlist(qi), buf, old_last, qf_winid);
+  qf_fill_buffer(qf_get_curlist(qi), buf, old_last, qf_win);
   buf_inc_changedtick(buf);
 
   if (old_last == NULL) {
@@ -4142,7 +4142,7 @@ static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, int start_idx, int e
 /// If "old_last" is not NULL append the items after this one.
 /// When "old_last" is NULL then "buf" must equal "curbuf"!  Because ml_delete()
 /// is used and autocommands will be triggered.
-static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int qf_winid)
+static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, win_T *qf_win)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   const bool old_KeyTyped = KeyTyped;
@@ -4197,7 +4197,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
       lnum = buf->b_ml.ml_line_count;
     }
 
-    list_T *qftf_list = call_qftf_func(qfl, qf_winid, lnum + 1, qfl->qf_count);
+    list_T *qftf_list = call_qftf_func(qfl, qf_win->handle, lnum + 1, qfl->qf_count);
     listitem_T *qftf_li = tv_list_first(qftf_list);
 
     int prev_bufnr = -1;
@@ -4251,8 +4251,8 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     curbuf->b_p_ma = false;
 
     curbuf->b_keep_filetype = true;  // don't detect 'filetype'
-    apply_autocmds(EVENT_BUFREADPOST, "quickfix", NULL, false, curbuf);
-    apply_autocmds(EVENT_BUFWINENTER, "quickfix", NULL, false, curbuf);
+    apply_autocmds_win(EVENT_BUFREADPOST, "quickfix", NULL, false, curbuf, qf_win);
+    apply_autocmds_win(EVENT_BUFWINENTER, "quickfix", NULL, false, curbuf, qf_win);
     curbuf->b_keep_filetype = false;
     curbuf->b_ro_locked--;
 
