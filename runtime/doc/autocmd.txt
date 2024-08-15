@@ -752,7 +752,6 @@ KeyInputPre			Just before a key is processed after mappings
 				   typedchar	The (actual) typed key.
 				It is not allowed to change the text
 				|textlock| or the current mode.
-				{only with the +eval feature}
 							*MenuPopup*
 MenuPopup			Just before showing the popup menu (under the
 				right mouse button).  Useful for adjusting the
