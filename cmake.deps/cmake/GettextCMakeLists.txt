@@ -15,15 +15,20 @@ string(REPLACE "#undef HAVE_LONG_LONG_INT" "#define HAVE_LONG_LONG_INT 1" CONFIG
 string(REPLACE "#undef HAVE_ICONV_H" "#define HAVE_ICONV_H 1" CONFIG_CONTENT ${CONFIG_CONTENT})
 string(REPLACE "#undef HAVE_ICONV" "#define HAVE_ICONV 1" CONFIG_CONTENT ${CONFIG_CONTENT})
 string(REPLACE "#undef ICONV_CONST" "#define ICONV_CONST const" CONFIG_CONTENT ${CONFIG_CONTENT})
-string(REPLACE "#undef uintmax_t" "
-  #if _WIN64
-  # define intmax_t long long
-  # define uintmax_t unsigned long long
-  #elif _WIN32
-  # define intmax_t long
-  # define uintmax_t unsigned long
-  #endif"
-  CONFIG_CONTENT ${CONFIG_CONTENT})
+if(MSVC)
+  string(REPLACE "#undef HAVE_STDINT_H_WITH_UINTMAX" "#define HAVE_STDINT_H_WITH_UINTMAX 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+  string(REPLACE "#undef HAVE_STDINT_H" "#define HAVE_STDINT_H 1" CONFIG_CONTENT ${CONFIG_CONTENT})
+else()
+  string(REPLACE "#undef uintmax_t" "
+    #if _WIN64
+    # define intmax_t long long
+    # define uintmax_t unsigned long long
+    #elif _WIN32
+    # define intmax_t long
+    # define uintmax_t unsigned long
+    #endif"
+    CONFIG_CONTENT ${CONFIG_CONTENT})
+  endif()
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/gettext-runtime/config.h ${CONFIG_CONTENT})
 
 set(HAVE_NEWLOCALE 0)
