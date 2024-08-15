@@ -15,6 +15,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/autocmd.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
@@ -1561,6 +1562,71 @@ static void add_byte_to_showcmd(uint8_t byte)
   }
 }
 
+// Handle the InsertCharPre autocommand.
+// "c" is the character that was typed.
+// Return new input character.
+static int
+do_key_input_pre(int c)
+{
+  // Return quickly when there is nothing to do.
+  if (!has_event(EVENT_KEYINPUTPRE)) {
+    return c;
+  }
+
+  uint8_t buf[MB_MAXBYTES + 1];
+  char curr_mode[MODE_MAX_LENGTH];
+  int save_State = State;
+  save_v_event_T save_v_event;
+
+  if (IS_SPECIAL(c)) {
+    buf[0] = K_SPECIAL;
+    buf[1] = KEY2TERMCAP0(c);
+    buf[2] = KEY2TERMCAP1(c);
+    buf[3] = NUL;
+  } else {
+    buf[(*utf_char2bytes)(c, (char *)buf)] = NUL;
+  }
+
+  get_mode(curr_mode);
+
+  // Lock the text to avoid weird things from happening.
+  ++textlock;
+  set_vim_var_string(VV_CHAR, (char *)buf, -1);  // set v:char
+
+  dict_T *v_event;
+  v_event = get_v_event(&save_v_event);
+  (void)tv_dict_add_bool(v_event, S_LEN("typed"), KeyTyped);
+
+  int res = c;
+
+  if (apply_autocmds(EVENT_KEYINPUTPRE, curr_mode, curr_mode, false, curbuf)
+    && strcmp((char *)buf, get_vim_var_str(VV_CHAR)) != 0) {
+    // Get the value of v:char.  It may be empty or more than one
+    // character.  Only use it when changed, otherwise continue with the
+    // original character.
+    char *v_char;
+
+    v_char = get_vim_var_str(VV_CHAR);
+
+    // Convert special bytes when it is special string.
+    if (strlen(v_char) >= 3 && IS_SPECIAL(v_char[0])) {
+      res = TERMCAP2KEY(v_char[1], v_char[2]);
+    } else if (strlen(v_char) > 0) {
+      res = utf_ptr2char(v_char);
+    }
+  }
+
+  restore_v_event(v_event, &save_v_event);
+
+  set_vim_var_string(VV_CHAR, NULL, -1);  // clear v:char
+  --textlock;
+
+  // Restore the State, it may have been changed.
+  State = save_State;
+
+  return res;
+}
+
 /// Get the next input character.
 /// Can return a special key or a multi-byte character.
 /// Can return NUL when called recursively, use safe_vgetc() if that's not
@@ -1768,6 +1834,9 @@ int vgetc(void)
   nlua_execute_on_key(c, on_key_buf.items);
   kvi_destroy(on_key_buf);
   kvi_init(on_key_buf);
+
+  // Execute KeyInputPre callbacks.
+  c = do_key_input_pre(c);
 
   // Need to process the character before we know it's safe to do something
   // else.

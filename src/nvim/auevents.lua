@@ -71,6 +71,7 @@ return {
     'InsertEnter', -- when entering Insert mode
     'InsertLeave', -- just after leaving Insert mode
     'InsertLeavePre', -- just before leaving Insert mode
+    'KeyInputPre', -- just before a key is processed
     'LspAttach', -- after an LSP client attaches to a buffer
     'LspDetach', -- after an LSP client detaches from a buffer
     'LspRequest', -- after an LSP request is started, canceled, or completed
