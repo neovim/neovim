@@ -14,8 +14,8 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
@@ -1591,7 +1591,7 @@ do_key_input_pre(int c)
     buf[2] = KEY2TERMCAP1(c);
     buf[3] = NUL;
   } else {
-    buf[(*utf_char2bytes)(c, (char *)buf)] = NUL;
+    buf[utf_char2bytes(c, (char *)buf)] = NUL;
   }
 
   typedchars[typedchars_pos] = NUL;
@@ -1600,7 +1600,7 @@ do_key_input_pre(int c)
   get_mode(curr_mode);
 
   // Lock the text to avoid weird things from happening.
-  ++textlock;
+  textlock++;
   set_vim_var_string(VV_CHAR, (char *)buf, -1);  // set v:char
 
   dict_T *v_event;
@@ -1630,7 +1630,7 @@ do_key_input_pre(int c)
   restore_v_event(v_event, &save_v_event);
 
   set_vim_var_string(VV_CHAR, NULL, -1);  // clear v:char
-  --textlock;
+  textlock--;
 
   // Restore the State, it may have been changed.
   State = save_State;
