@@ -113,7 +113,7 @@ static size_t on_key_ignore_len = 0;
 
 static int typeahead_char = 0;  ///< typeahead char that's not flushed
 
-static char typedchars[MAXMAPLEN + 1] = { NUL };  // typed chars before map
+static uint8_t typedchars[MAXMAPLEN + 1] = { NUL };  // typed chars before map
 static int typedchars_pos = 0;
 
 /// When block_redo is true the redo buffer will not be changed.
@@ -1487,7 +1487,7 @@ static void updatescript(int c)
     count = 0;
   }
   if (typedchars_pos < MAXMAPLEN) {
-    typedchars[typedchars_pos] = c;
+    typedchars[typedchars_pos] = (uint8_t)c;
     typedchars_pos++;
   }
 }
@@ -1595,7 +1595,7 @@ do_key_input_pre(int c)
   }
 
   typedchars[typedchars_pos] = NUL;
-  vim_unescape_ks(typedchars);
+  vim_unescape_ks((char *)typedchars);
 
   get_mode(curr_mode);
 
@@ -1606,7 +1606,7 @@ do_key_input_pre(int c)
   dict_T *v_event;
   v_event = get_v_event(&save_v_event);
   (void)tv_dict_add_bool(v_event, S_LEN("typed"), KeyTyped);
-  (void)tv_dict_add_str(v_event, S_LEN("typedchar"), typedchars);
+  (void)tv_dict_add_str(v_event, S_LEN("typedchar"), (char *)typedchars);
 
   int res = c;
 
