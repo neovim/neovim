@@ -267,14 +267,6 @@ local function get_path(sect, name, silent)
     return
   end
 
-  -- `man -w /some/path` will return `/some/path` for any existent file, which
-  -- stops us from actually determining if a path has a corresponding man file.
-  -- Since `:Man /some/path/to/man/file` isn't supported anyway, we should just
-  -- error out here if we detect this is the case.
-  if sect == '' and #results == 1 and results[1] == name then
-    return
-  end
-
   -- find any that match the specified name
   ---@param v string
   local namematches = vim.tbl_filter(function(v)
