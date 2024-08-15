@@ -495,7 +495,9 @@ describe('vim.lsp.completion: protocol', function()
       bufnr = vim.api.nvim_get_current_buf()
       vim.api.nvim_win_set_buf(0, bufnr)
       return vim.lsp.start({ name = 'dummy', cmd = server.cmd, on_attach = function(client, bufnr)
-        vim.lsp.completion.enable(true, client.id, bufnr)
+        vim.lsp.completion.enable(true, client.id, bufnr, { convert = function(item)
+          return { abbr = item.label:gsub('%b()', '')}
+        end})
       end})
     ]],
       completion_result
@@ -698,6 +700,23 @@ describe('vim.lsp.completion: protocol', function()
       eq(1, #matches)
       eq('hello', matches[1].word)
       eq(true, exec_lua('return _G.called'))
+    end)
+  end)
+
+  it('custom word/abbar format', function()
+    create_server({
+      isIncomplete = false,
+      items = {
+        {
+          label = 'foo(bar)',
+        },
+      },
+    })
+
+    feed('ifo')
+    trigger_at_pos({ 1, 1 })
+    assert_matches(function(matches)
+      eq('foo', matches[1].abbr)
     end)
   end)
 end)

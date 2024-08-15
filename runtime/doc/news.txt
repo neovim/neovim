@@ -65,7 +65,9 @@ EVENTS
 
 LSP
 
-• TODO
+• Add convert field in |vim.lsp.completion.BufferOpts| of
+  |vim.lsp.completion.enable()| an optional function used to customize the
+  transformation of an Lsp CompletionItem to |complete-items|.
 
 LUA
 

@@ -1630,6 +1630,9 @@ Lua module: vim.lsp.completion                                *lsp-completion*
     Fields: ~
       • {autotrigger}?  (`boolean`) Whether to trigger completion
                         automatically. Default: false
+      • {convert}?      (`fun(item: lsp.CompletionItem): table`) An optional
+                        function used to customize the transformation of an
+                        LSP CompletionItem to |complete-items|.
 
 
                                                  *vim.lsp.completion.enable()*
