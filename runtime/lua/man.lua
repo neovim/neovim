@@ -479,7 +479,13 @@ local function put_page(page)
   -- XXX: nroff justifies text by filling it with whitespace.  That interacts
   -- badly with our use of $MANWIDTH=999.  Hack around this by using a fixed
   -- size for those whitespace regions.
-  vim.cmd([[silent! keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g]])
+  -- Use try/catch to avoid setting v:errmsg.
+  vim.cmd([[
+    try
+      keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g
+    catch
+    endtry
+  ]])
   vim.cmd('1') -- Move cursor to first line
   highlight_man_page()
   set_options()
