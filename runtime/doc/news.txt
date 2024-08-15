@@ -130,6 +130,8 @@ LSP
 
 • Completion side effects (including snippet expansion, execution of commands
   and application of additional text edits) is now built-in.
+• |vim.lsp.Client| flag `pull_diagnostic_on_save` sends diagnostic requests on
+  save instead of change
 • |vim.lsp.util.locations_to_items()| sets `end_col` and `end_lnum` fields.
 • |vim.lsp.buf.format()| now supports passing a list of ranges
   via the `range` parameter (this requires support for the

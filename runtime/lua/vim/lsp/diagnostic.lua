@@ -429,14 +429,43 @@ function M._enable(bufnr)
       buffer = bufnr,
       callback = function(opts)
         if
-          opts.data.method ~= ms.textDocument_didChange
-          and opts.data.method ~= ms.textDocument_didOpen
+          not (bufstates[bufnr] and bufstates[bufnr].enabled)
+          or (
+            opts.data.method ~= ms.textDocument_didChange
+            and opts.data.method ~= ms.textDocument_didSave
+            and opts.data.method ~= ms.textDocument_didOpen
+          )
         then
           return
         end
-        if bufstates[bufnr] and bufstates[bufnr].enabled then
-          local client_id = opts.data.client_id --- @type integer?
-          _refresh(bufnr, { only_visible = true, client_id = client_id })
+        local opts_client_id = opts.data.client_id --- @type integer?
+        if opts.data.method == ms.textDocument_didOpen then
+          _refresh(bufnr, { only_visible = true, client_id = opts_client_id })
+          return
+        end
+        local clients = vim.lsp.get_clients({
+          bufnr = bufnr,
+          method = ms.textDocument_diagnostic,
+          client_id = opts_client_id,
+        })
+        local on_save_client_ids = {} --- @type integer[]
+        local on_change_client_ids = {} --- @type integer[]
+        for _, client in pairs(clients) do
+          if client.flags.pull_diagnostics_on_save then
+            on_save_client_ids[#on_save_client_ids + 1] = client.id
+          else
+            on_change_client_ids[#on_change_client_ids + 1] = client.id
+          end
+        end
+
+        if opts.data.method == ms.textDocument_didSave then
+          for _, client_id in pairs(on_save_client_ids) do
+            _refresh(bufnr, { only_visible = true, client_id = client_id })
+          end
+        else
+          for _, client_id in pairs(on_change_client_ids) do
+            _refresh(bufnr, { only_visible = true, client_id = client_id })
+          end
         end
       end,
       group = augroup,

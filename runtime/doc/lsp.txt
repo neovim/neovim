@@ -1033,6 +1033,11 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                   `150`) Debounce `didChange` notifications to
                                   the server by the given number in
                                   milliseconds. No debounce occurs if `nil`.
+                                • {pull_diagnostics_on_save} (`boolean`,
+                                  default: `false`) Request diagnostics from
+                                  the server on `didSave` events instead of
+                                  `didChange` events. Has no effect if the
+                                  server does not support pull diagnostics.
                                 • {exit_timeout} (`integer|false`, default:
                                   `false`) Milliseconds to wait for server to
                                   exit cleanly after sending the "shutdown"
@@ -1204,6 +1209,11 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 `150`) Debounce `didChange` notifications to
                                 the server by the given number in
                                 milliseconds. No debounce occurs if `nil`.
+                              • {pull_diagnostics_on_save} (`boolean`,
+                                default: `false`) Request diagnostics from the
+                                server on `didSave` events instead of
+                                `didChange` events. Has no effect if the
+                                server does not support pull diagnostics.
                               • {exit_timeout} (`integer|false`, default:
                                 `false`) Milliseconds to wait for server to
                                 exit cleanly after sending the "shutdown"
