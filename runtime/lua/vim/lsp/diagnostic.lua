@@ -153,9 +153,10 @@ local function tags_vim_to_lsp(diagnostic)
   return tags
 end
 
+--- Converts the input `vim.Diagnostic`s to LSP diagnostics.
 --- @param diagnostics vim.Diagnostic[]
 --- @return lsp.Diagnostic[]
-local function diagnostic_vim_to_lsp(diagnostics)
+function M.from(diagnostics)
   ---@param diagnostic vim.Diagnostic
   ---@return lsp.Diagnostic
   return vim.tbl_map(function(diagnostic)
@@ -385,7 +386,7 @@ function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
 
   diag_opts.lnum = line_nr or (api.nvim_win_get_cursor(0)[1] - 1)
 
-  return diagnostic_vim_to_lsp(vim.diagnostic.get(bufnr, diag_opts))
+  return M.from(vim.diagnostic.get(bufnr, diag_opts))
 end
 
 --- Clear diagnostics from pull based clients
