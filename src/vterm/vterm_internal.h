@@ -40,6 +40,7 @@ struct VTermPen
 {
   VTermColor fg;
   VTermColor bg;
+  int uri;
   unsigned int bold:1;
   unsigned int underline:2;
   unsigned int italic:1;

@@ -278,6 +278,7 @@ VTermValueType vterm_get_attr_type(VTermAttr attr)
     case VTERM_ATTR_BACKGROUND: return VTERM_VALUETYPE_COLOR;
     case VTERM_ATTR_SMALL:      return VTERM_VALUETYPE_BOOL;
     case VTERM_ATTR_BASELINE:   return VTERM_VALUETYPE_INT;
+    case VTERM_ATTR_URI:        return VTERM_VALUETYPE_INT;
 
     case VTERM_N_ATTRS: return 0;
   }

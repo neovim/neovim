@@ -166,6 +166,8 @@ TERMINAL
 • The terminal buffer now supports reflow (wrapped lines adapt when the buffer
   is resized horizontally). Note: Lines that are not visible and kept in
   'scrollback' are not reflown.
+• The |terminal| now supports OSC 8 escape sequences and will display
+  hyperlinks in supporting host terminals.
 
 TREESITTER
 
