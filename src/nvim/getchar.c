@@ -113,6 +113,9 @@ static size_t on_key_ignore_len = 0;
 
 static int typeahead_char = 0;  ///< typeahead char that's not flushed
 
+static char typedchars[MAXMAPLEN + 1] = { NUL };  // typed chars before map
+static int typedchars_pos = 0;
+
 /// When block_redo is true the redo buffer will not be changed.
 /// Used by edit() to repeat insertions.
 static bool block_redo = false;
@@ -1483,6 +1486,10 @@ static void updatescript(int c)
                 (!!p_fs || idle));  // Always fsync at idle (CursorHold).
     count = 0;
   }
+  if (typedchars_pos < MAXMAPLEN) {
+    typedchars[typedchars_pos] = c;
+    typedchars_pos++;
+  }
 }
 
 /// Merge "modifiers" into "c_arg".
@@ -1587,6 +1594,9 @@ do_key_input_pre(int c)
     buf[(*utf_char2bytes)(c, (char *)buf)] = NUL;
   }
 
+  typedchars[typedchars_pos] = NUL;
+  vim_unescape_ks(typedchars);
+
   get_mode(curr_mode);
 
   // Lock the text to avoid weird things from happening.
@@ -1596,6 +1606,7 @@ do_key_input_pre(int c)
   dict_T *v_event;
   v_event = get_v_event(&save_v_event);
   (void)tv_dict_add_bool(v_event, S_LEN("typed"), KeyTyped);
+  (void)tv_dict_add_str(v_event, S_LEN("typedchar"), typedchars);
 
   int res = c;
 
@@ -1837,6 +1848,8 @@ int vgetc(void)
 
   // Execute KeyInputPre callbacks.
   c = do_key_input_pre(c);
+  // Clear the next typedchars_pos
+  typedchars_pos = 0;
 
   // Need to process the character before we know it's safe to do something
   // else.

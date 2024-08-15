@@ -4220,6 +4220,15 @@ func Test_KeyInputPre()
   call feedkeys('j', 'nx')
 
   au! KeyInputPre
+
+  " Test for v:event.typedchar
+  nnoremap j   k
+  au KeyInputPre n
+        \   call assert_equal(v:event.typedchar, 'j')
+        \ | call assert_equal(v:char, 'k')
+  call feedkeys('j', 'tx')
+
+  au! KeyInputPre
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
