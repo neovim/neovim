@@ -2347,7 +2347,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         win_T *the_curwin = curwin;
         buf_T *was_curbuf = curbuf;
 
-        // Set w_closing to avoid that autocommands close the window.
+        // Set w_locked to avoid that autocommands close the window.
         // Set b_locked for the same reason.
         the_curwin->w_locked = true;
         buf->b_locked++;
