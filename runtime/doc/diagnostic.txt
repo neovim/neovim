@@ -93,6 +93,10 @@ The {opts} table passed to a handler is the full set of configuration options
 values in the table are already resolved (i.e. if a user specifies a
 function for a config option, the function has already been evaluated).
 
+If a diagnostic handler is configured with a "severity" key then the list of
+diagnostics passed to that handler will be filtered using the value of that
+key (see example below).
+
 Nvim provides these handlers by default: "virtual_text", "signs", and
 "underline".
 
@@ -119,6 +123,9 @@ with |vim.notify()|: >lua
     vim.diagnostic.config({
       ["my/notify"] = {
         log_level = vim.log.levels.INFO
+
+        -- This handler will only receive "error" diagnostics.
+        severity = vim.diagnostic.severity.ERROR,
       }
     })
 <
