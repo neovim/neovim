@@ -806,7 +806,7 @@ func Test_replace_keeppatterns()
   a
 foobar
 
-substitute foo asdf
+substitute foo asdf foo
 
 one two
 .
@@ -815,21 +815,26 @@ one two
   /^substitute
   s/foo/bar/
   call assert_equal('foo', @/)
-  call assert_equal('substitute bar asdf', getline('.'))
+  call assert_equal('substitute bar asdf foo', getline('.'))
 
   /^substitute
   keeppatterns s/asdf/xyz/
   call assert_equal('^substitute', @/)
-  call assert_equal('substitute bar xyz', getline('.'))
+  call assert_equal('substitute bar xyz foo', getline('.'))
+
+  /^substitute
+  &
+  call assert_equal('^substitute', @/)
+  call assert_equal('substitute bar xyz bar', getline('.'))
 
   exe "normal /bar /e\<CR>"
   call assert_equal(15, col('.'))
   normal -
   keeppatterns /xyz
   call assert_equal('bar ', @/)
-  call assert_equal('substitute bar xyz', getline('.'))
+  call assert_equal('substitute bar xyz bar', getline('.'))
   exe "normal 0dn"
-  call assert_equal('xyz', getline('.'))
+  call assert_equal('xyz bar', getline('.'))
 
   close!
 endfunc
