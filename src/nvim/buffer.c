@@ -1379,7 +1379,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
     // When the autocommand window is involved win_close() may need to print an error message.
     // Repeat this so long as we end up in a window with this buffer.
     while (buf == curbuf
-           && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
+           && !(win_locked(curwin) || curwin->w_buffer->b_locked > 0)
            && (is_aucmd_win(lastwin) || !last_window(curwin))) {
       if (win_close(curwin, false, false) == FAIL) {
         break;
@@ -3644,7 +3644,7 @@ void ex_buffer_all(exarg_T *eap)
                : wp->w_width != Columns)
            || (had_tab > 0 && wp != firstwin))
           && !ONE_WINDOW
-          && !(wp->w_closing || wp->w_buffer->b_locked > 0)
+          && !(win_locked(curwin) || wp->w_buffer->b_locked > 0)
           && !is_aucmd_win(wp)) {
         if (win_close(wp, false, false) == FAIL) {
           break;

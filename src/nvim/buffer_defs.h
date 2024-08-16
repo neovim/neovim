@@ -1045,8 +1045,7 @@ struct window_S {
 
   win_T *w_prev;              ///< link to previous window
   win_T *w_next;              ///< link to next window
-  bool w_closing;                   ///< window is being closed, don't let
-                                    ///< autocommands close it too.
+  bool w_locked;                    ///< don't let autocommands close the window
 
   frame_T *w_frame;             ///< frame containing this window
 
