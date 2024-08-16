@@ -555,6 +555,22 @@ describe('terminal input', function()
   end)
 end)
 
+describe('terminal', function()
+  it('external interrupt (got_int) does not hang #20726', function()
+    clear()
+    command('au ModeChanged * let g:event = copy(v:event)')
+    command('au TermEnter * call timer_start(500, {-> interrupt()})')
+
+    command('term')
+    feed('i')
+    sleep(510)
+    eq({ old_mode = 'nt', new_mode = 't' }, eval('g:event'))
+    feed('<c-\\><c-n>')
+    eq({ old_mode = 't', new_mode = 'nt' }, eval('g:event'))
+    command('bd!')
+  end)
+end)
+
 if is_os('win') then
   describe(':terminal in Windows', function()
     local screen
