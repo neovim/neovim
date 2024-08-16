@@ -42,6 +42,9 @@ DIAGNOSTICS
 
 • |vim.diagnostic.config()| accepts a "jump" table to specify defaults for
   |vim.diagnostic.jump()|.
+• Diagnostics are filtered by severity before being passed to a diagnostic
+  handler |diagnostic-handlers|.
+
 
 EDITOR
 
