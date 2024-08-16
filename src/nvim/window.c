@@ -2471,7 +2471,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
   // When the autocommand window is involved win_close() may need to print an error message.
   for (win_T *wp = lastwin; wp != NULL && (is_aucmd_win(lastwin) || !one_window(wp));) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
-        && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
+        && !(win_locked(wp) || wp->w_buffer->b_locked > 0)) {
       if (win_close(wp, false, false) == FAIL) {
         // If closing the window fails give up, to avoid looping forever.
         break;
@@ -2493,7 +2493,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
       // Start from tp_lastwin to close floating windows with the same buffer first.
       for (win_T *wp = tp->tp_lastwin; wp != NULL; wp = wp->w_prev) {
         if (wp->w_buffer == buf
-            && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
+            && !(win_locked(wp) || wp->w_buffer->b_locked > 0)) {
           win_close_othertab(wp, false, tp);
 
           // Start all over, the tab page may be closed and
@@ -2630,10 +2630,10 @@ static void win_close_buffer(win_T *win, int action, bool abort_if_last)
   if (win->w_buffer != NULL) {
     bufref_T bufref;
     set_bufref(&bufref, curbuf);
-    win->w_closing = true;
+    win->w_locked = true;
     close_buffer(win, win->w_buffer, action, abort_if_last, true);
     if (win_valid_any_tab(win)) {
-      win->w_closing = false;
+      win->w_locked = false;
     }
 
     // Make sure curbuf is valid. It can become invalid if 'bufhidden' is
@@ -2661,7 +2661,7 @@ int win_close(win_T *win, bool free_buf, bool force)
     return FAIL;
   }
 
-  if (win->w_closing
+  if (win_locked(win)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return FAIL;     // window is already being closed
   }
@@ -2736,22 +2736,22 @@ int win_close(win_T *win, bool free_buf, bool force)
       if (!win_valid(win)) {
         return FAIL;
       }
-      win->w_closing = true;
+      win->w_locked = true;
       apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
       if (!win_valid(win)) {
         return FAIL;
       }
-      win->w_closing = false;
+      win->w_locked = false;
       if (last_window(win)) {
         return FAIL;
       }
     }
-    win->w_closing = true;
+    win->w_locked = true;
     apply_autocmds(EVENT_WINLEAVE, NULL, NULL, false, curbuf);
     if (!win_valid(win)) {
       return FAIL;
     }
-    win->w_closing = false;
+    win->w_locked = false;
     if (last_window(win)) {
       return FAIL;
     }
@@ -2797,9 +2797,6 @@ int win_close(win_T *win, bool free_buf, bool force)
   // Now we are really going to close the window.  Disallow any autocommand
   // to split a window to avoid trouble.
   split_disallowed++;
-
-  // let terminal buffers know that this window dimensions may be ignored
-  win->w_closing = true;
 
   bool was_floating = win->w_floating;
   if (ui_has(kUIMultigrid)) {
@@ -2949,7 +2946,7 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 {
   // Get here with win->w_buffer == NULL when win_close() detects the tab page
   // changed.
-  if (win->w_closing
+  if (win_locked(win)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return;  // window is already being closed
   }
@@ -7437,6 +7434,12 @@ skip:
 int get_last_winid(void)
 {
   return last_win_id;
+}
+
+/// Don't let autocommands close the given window
+int win_locked(win_T *wp)
+{
+  return wp->w_locked;
 }
 
 void win_get_tabwin(handle_T id, int *tabnr, int *winnr)

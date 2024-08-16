@@ -360,6 +360,7 @@ func Test_argv()
   call assert_equal('', argv(1, 100))
   call assert_equal([], argv(-1, 100))
   call assert_equal('', argv(10, -1))
+  %argdelete
 endfunc
 
 " Test for the :argedit command
@@ -742,6 +743,28 @@ func Test_all_command()
 
   %argdelete
   %bw!
+endfunc
+
+" Test for deleting buffer when creating an arglist. This was accessing freed
+" memory
+func Test_crash_arglist_uaf()
+  "%argdelete
+  new one
+  au BufAdd XUAFlocal :bw
+  "call assert_fails(':arglocal XUAFlocal', 'E163:')
+  arglocal XUAFlocal
+  au! BufAdd
+  bw! XUAFlocal
+
+  au BufAdd XUAFlocal2 :bw
+  new two
+  new three
+  arglocal
+  argadd XUAFlocal2 Xfoobar
+  bw! XUAFlocal2
+  bw! two
+
+  au! BufAdd
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
