@@ -1538,6 +1538,14 @@ If you want the buffer to be unmodified after changing it, reset the
 'modified' option.  This makes it possible to exit the buffer with ":q"
 instead of ":q!".
 
+							*callback-win*
+For Win*, BufWin* and Tab* events the "win" field given to the callback in
+|nvim_create_autocmd()| represents the target window on which the autocmd acts.
+For the other events, the "win" field is the current window for when the autocmd
+was triggered. TODO: reword this phrase?
+For example, you can use 'WinNew' to get the handle for windows created
+with |nvim_open_win()|.
+
 							*autocmd-nested* *E218*
 By default, autocommands do not nest.  For example, if you use ":e" or ":w" in
 an autocommand, Vim does not execute the BufRead and BufWrite autocommands for

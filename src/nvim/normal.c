@@ -1291,7 +1291,7 @@ static void normal_check_cursor_moved(NormalState *s)
   if (!finish_op && has_event(EVENT_CURSORMOVED)
       && (last_cursormoved_win != curwin
           || !equalpos(last_cursormoved, curwin->w_cursor))) {
-    apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
+    apply_autocmds_win(EVENT_CURSORMOVED, NULL, NULL, false, curbuf, curwin);
     last_cursormoved_win = curwin;
     last_cursormoved = curwin->w_cursor;
   }

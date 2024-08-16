@@ -201,10 +201,11 @@ static void emit_termrequest(void **argv)
   StringBuilder *pending_send = argv[3];
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
+  win_T *win = handle_get_window(term->buf_handle);
   String termrequest = { .data = payload, .size = payload_length };
   Object data = STRING_OBJ(termrequest);
   set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
-  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, buf, NULL, &data);
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, buf, win, NULL, &data);
   xfree(payload);
 
   StringBuilder *term_pending_send = term->pending_send;

@@ -6273,6 +6273,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char *save_autocmd_fname, *save_autocmd_match;
   bool save_autocmd_fname_full;
   int save_autocmd_bufnr;
+  int save_autocmd_winid;
   funccal_entry_T funccal_entry;
 
   if (l_provider_call_nesting) {
@@ -6283,6 +6284,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     save_autocmd_match = autocmd_match;
     save_autocmd_fname_full = autocmd_fname_full;
     save_autocmd_bufnr = autocmd_bufnr;
+    save_autocmd_winid = autocmd_winid;
     save_funccal(&funccal_entry);
 
     current_sctx = provider_caller_scope.script_ctx;
@@ -6292,6 +6294,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     autocmd_match = provider_caller_scope.autocmd_match;
     autocmd_fname_full = provider_caller_scope.autocmd_fname_full;
     autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
+    autocmd_winid = provider_caller_scope.autocmd_winid;
     set_current_funccal((funccall_T *)(provider_caller_scope.funccalp));
   }
 
@@ -6311,6 +6314,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     autocmd_match = save_autocmd_match;
     autocmd_fname_full = save_autocmd_fname_full;
     autocmd_bufnr = save_autocmd_bufnr;
+    autocmd_winid = save_autocmd_winid;
     restore_funccal();
   }
 

@@ -8561,6 +8561,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
     .autocmd_match = autocmd_match,
     .autocmd_fname_full = autocmd_fname_full,
     .autocmd_bufnr = autocmd_bufnr,
+    .autocmd_winid = autocmd_winid,
     .funccalp = (void *)get_current_funccal()
   };
   funccal_entry_T funccal_entry;

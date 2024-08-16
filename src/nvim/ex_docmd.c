@@ -5755,7 +5755,7 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
   shorten_fnames(true);
 
   if (trigger_dirchanged) {
-    do_autocmd_dirchanged(cwd, scope, kCdCauseManual, false);
+    do_autocmd_dirchanged(cwd, scope, kCdCauseManual, false, NULL);
   }
 }
 
@@ -5800,7 +5800,7 @@ bool changedir_func(char *new_dir, CdScope scope)
 
   bool dir_differs = pdir == NULL || pathcmp(pdir, new_dir, -1) != 0;
   if (dir_differs) {
-    do_autocmd_dirchanged(new_dir, scope, kCdCauseManual, true);
+    do_autocmd_dirchanged(new_dir, scope, kCdCauseManual, true, NULL);
     if (vim_chdir(new_dir) != 0) {
       emsg(_(e_failed));
       xfree(pdir);
