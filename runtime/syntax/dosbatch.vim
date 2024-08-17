@@ -75,7 +75,7 @@ syn match dosbatchSet		"\s\h\w*[+-]\==\{-1}" contains=dosbatchIdentifier,dosbatc
 
 " Args to bat files and for loops, etc
 syn match dosbatchArgument	"%\(\d\|\*\)"
-syn match dosbatchArgument	"%[a-z]\>"
+syn match dosbatchArgument	"%%[a-z]\>"
 if dosbatch_cmdextversion == 1
   syn match dosbatchArgument	"%\~[fdpnxs]\+\(\($PATH:\)\=[a-z]\|\d\)\>"
 else
