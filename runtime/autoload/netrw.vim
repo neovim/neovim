@@ -101,7 +101,7 @@ fun! netrw#ErrorMsg(level,msg,errnum)
   endif
 "  call Decho("level=".level,'~'.expand("<slnum>"))
 
-  if g:netrw_use_errorwindow == 2 && (v:version > 802 || (v:version == 802 && has("patch486")))
+  if g:netrw_use_errorwindow == 2 && exists("*popup_atcursor")
    " use popup window
    if type(a:msg) == 3
     let msg = [level]+a:msg
