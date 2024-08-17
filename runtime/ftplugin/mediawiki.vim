@@ -8,7 +8,7 @@
 if exists("b:did_ftplugin")
   finish
 endif
-let g:did_ftplugin = 1
+let b:did_ftplugin = 1
 
 " Many MediaWiki wikis prefer line breaks only at the end of paragraphs
 " (like in a text processor), which results in long, wrapping lines.

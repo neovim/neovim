@@ -1904,7 +1904,7 @@ have the following in your vimrc: >
 
 MEDIAWIKI					*ft-mediawiki-syntax*
 
-Be default, syntax highlighting includes basic HTML tags like style and
+By default, syntax highlighting includes basic HTML tags like style and
 headers |html.vim|. For strict Mediawiki syntax highlighting: >
 
 	let g:html_no_rendering = 1
