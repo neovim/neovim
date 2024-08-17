@@ -20,5 +20,11 @@ describe('vim.text', function()
         eq(input, vim.text.hexdecode(output))
       end
     end)
+
+    it('works with very large strings', function()
+      local input, output = string.rep('😂', 2 ^ 16), string.rep('F09F9882', 2 ^ 16)
+      eq(output, vim.text.hexencode(input))
+      eq(input, vim.text.hexdecode(output))
+    end)
   end)
 end)

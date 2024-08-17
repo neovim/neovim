@@ -7,10 +7,9 @@ local M = {}
 --- @param str string String to encode
 --- @return string : Hex encoded string
 function M.hexencode(str)
-  local bytes = { str:byte(1, #str) }
   local enc = {} ---@type string[]
-  for i = 1, #bytes do
-    enc[i] = string.format('%02X', bytes[i])
+  for i = 1, #str do
+    enc[i] = string.format('%02X', str:byte(i, i + 1))
   end
   return table.concat(enc)
 end
