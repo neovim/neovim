@@ -3,7 +3,8 @@
 " Maintainer:	Nikolai Pavlov <zyx.vim@gmail.com>
 " Last Updates:	Lukas Reineke, "lacygoill"
 " Last Change:	2022 Jun 17
-"      2024 Feb 29 disable mulitline indent by default (The Vim project)
+" 2024 Feb 29 by Vim project: disable mulitline indent by default
+" 2024 Aug 14 by Vim project: fix re-indenting when commenting out lines
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')
@@ -13,7 +14,7 @@ endif
 let b:did_indent = 1
 
 setlocal indentexpr=GetYAMLIndent(v:lnum)
-setlocal indentkeys=!^F,o,O,0#,0},0],<:>,0-
+setlocal indentkeys=!^F,o,O,0},0],<:>,0-
 setlocal nosmartindent
 
 let b:undo_indent = 'setlocal indentexpr< indentkeys< smartindent<'
