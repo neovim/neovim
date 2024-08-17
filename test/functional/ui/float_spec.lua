@@ -327,6 +327,35 @@ describe('float window', function()
     eq(12, pos[2])
   end)
 
+  it('error message when invalid field specified for split', function()
+    local bufnr = api.nvim_create_buf(false, true)
+    eq(
+      "non-float cannot have 'row'",
+      pcall_err(api.nvim_open_win, bufnr, true, { split = 'right', row = 10 })
+    )
+    eq(
+      "non-float cannot have 'col'",
+      pcall_err(api.nvim_open_win, bufnr, true, { split = 'right', col = 10 })
+    )
+    eq(
+      "non-float cannot have 'bufpos'",
+      pcall_err(api.nvim_open_win, bufnr, true, { split = 'right', bufpos = { 0, 0 } })
+    )
+    local winid = api.nvim_open_win(bufnr, true, { split = 'right' })
+    eq(
+      "non-float cannot have 'row'",
+      pcall_err(api.nvim_win_set_config, winid, { split = 'right', row = 10 })
+    )
+    eq(
+      "non-float cannot have 'col'",
+      pcall_err(api.nvim_win_set_config, winid, { split = 'right', col = 10 })
+    )
+    eq(
+      "non-float cannot have 'bufpos'",
+      pcall_err(api.nvim_win_set_config, winid, { split = 'right', bufpos = { 0, 0 } })
+    )
+  end)
+
   it('error message when reconfig missing relative field', function()
     local bufnr = api.nvim_create_buf(false, true)
     local opts = {
@@ -337,15 +366,16 @@ describe('float window', function()
       relative = 'editor',
       style = 'minimal',
     }
-    local win_id = api.nvim_open_win(bufnr, true, opts)
+    local winid = api.nvim_open_win(bufnr, true, opts)
     eq(
-    "Missing 'relative' field when reconfiguring floating window 1001",
-    pcall_err(api.nvim_win_set_config, win_id, {
-      width = 3,
-      height = 3,
-      row = 10,
-      col = 10,
-    }))
+      "Missing 'relative' field when reconfiguring floating window 1001",
+      pcall_err(api.nvim_win_set_config, winid, {
+        width = 3,
+        height = 3,
+        row = 10,
+        col = 10,
+      })
+    )
   end)
 
   it('is not operated on by windo when non-focusable #15374', function()
