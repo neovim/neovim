@@ -20,6 +20,7 @@
 "   2024 Jul 23 by Vim Project: escape filename before trying to delete it (#15330)
 "   2024 Jul 30 by Vim Project: handle mark-copy to same target directory (#12112)
 "   2024 Aug 02 by Vim Project: honor g:netrw_alt{o,v} for :{S,H,V}explore (#15417)
+"   2024 Aug 15 by Vim Project: style changes, prevent E121 (#15501)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -63,11 +64,6 @@ if exists("s:needspatches")
 endif
 
 let g:loaded_netrw = "v173"
-if !exists("s:NOTE")
- let s:NOTE    = 0
- let s:WARNING = 1
- let s:ERROR   = 2
-endif
 
 let s:keepcpo= &cpo
 setl cpo&vim
@@ -221,6 +217,11 @@ if !exists("s:LONGLIST")
  call s:NetrwInit("s:MAXLIST" ,4)
 endif
 
+let s:NOTE    = 0
+let s:WARNING = 1
+let s:ERROR   = 2
+call s:NetrwInit("g:netrw_errorlvl", s:NOTE)
+
 " ---------------------------------------------------------------------
 " Default option values: {{{2
 let g:netrw_localcopycmdopt    = ""
@@ -346,7 +347,6 @@ call s:NetrwInit("s:didstarstar",0)
 call s:NetrwInit("g:netrw_dirhistcnt"      , 0)
 call s:NetrwInit("g:netrw_decompress"       , '{ ".gz" : "gunzip", ".bz2" : "bunzip2", ".zip" : "unzip", ".tar" : "tar -xf", ".xz" : "unxz" }')
 call s:NetrwInit("g:netrw_dirhistmax"       , 10)
-call s:NetrwInit("g:netrw_errorlvl"  , s:NOTE)
 call s:NetrwInit("g:netrw_fastbrowse"       , 1)
 call s:NetrwInit("g:netrw_ftp_browse_reject", '^total\s\+\d\+$\|^Trying\s\+\d\+.*$\|^KERBEROS_V\d rejected\|^Security extensions not\|No such file\|: connect to address [0-9a-fA-F:]*: No route to host$')
 if !exists("g:netrw_ftp_list_cmd")
