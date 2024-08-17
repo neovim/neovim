@@ -3,6 +3,7 @@
 " Maintainer:	Mike Williams <mrmrdubya@gmail.com>
 " Filenames:    *.bat
 " Last Change:	3rd February 2024
+" 2024 Aug 14 by Vim Project: improve syntax (#15453)
 "
 " Options Flags:
 " dosbatch_cmdextversion	- 1 = Windows NT, 2 = Windows 2000 [default]
@@ -45,7 +46,7 @@ syn match dosbatchString	"\<echo\([^)>|]\|\^\@<=[)>|]\)*"lc=4 contains=dosbatchV
 syn match dosbatchEchoOperator  "\<echo\s\+\(on\|off\)\s*$"lc=4
 
 " For embedded commands
-syn match dosbatchCmd		"(\s*'[^']*'"lc=1 contains=dosbatchString,dosbatchVariable,dosBatchArgument,@dosbatchNumber,dosbatchImplicit,dosbatchStatement,dosbatchConditional,dosbatchRepeat,dosbatchOperator
+syn match dosbatchCmd		"(\s*'[^']*'"lc=1 contains=dosbatchString,dosbatchVariable,dosBatchArgument,@dosbatchNumber,dosbatchImplicit,dosbatchStatement,dosbatchConditional,dosbatchRepeat,dosbatchOperator,dosbatchIfOperator
 
 " Numbers - surround with ws to not include in dir and filenames
 syn match dosbatchInteger       "[[:space:]=(/:,!~-]\d\+"lc=1
@@ -102,8 +103,10 @@ else
   syn match dosbatchColonCommentErr contained "\s*:\s*:.*$"
 endif
 syn match dosbatchColonCommentErr contained "\s*:\s*:[^)]*\(\(\n\s*\)\?)\)\@="
-syn region dosbatchCodeBlock	transparent start=+(+ end=+)+ contains=dosbatchString,dosbatchVariable,dosBatchArgument,@dosbatchNumber,dosbatchImplicit,dosbatchStatement,dosbatchConditional,dosbatchRepeat,dosbatchOperator,@dosbatchCodeBlockComment,dosbatchColonCommentErr,dosbatchCodeBlock
+syn region dosbatchCodeBlock	transparent start=+(+ end=+)+ contains=dosbatchString,dosbatchVariable,dosBatchArgument,@dosbatchNumber,dosbatchImplicit,dosbatchStatement,dosbatchConditional,dosbatchRepeat,dosbatchOperator,dosbatchIfOperator,@dosbatchCodeBlockComment,dosbatchColonCommentErr,dosbatchCodeBlock
 syn match dosbatchCodeBlockErr	")"
+
+syn sync match dosbatchSyncCodeBlock grouphere NONE "^)\s*$"
 
 syn keyword dosbatchImplicit    append assoc at attrib break cacls cd chcp chdir
 syn keyword dosbatchImplicit    chkdsk chkntfs cls cmd color comp compact convert copy
