@@ -77,11 +77,6 @@ typedef struct {
   int offset;
 } convertStruct;
 
-struct interval {
-  int first;
-  int last;
-};
-
 // uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.c.generated.h"
