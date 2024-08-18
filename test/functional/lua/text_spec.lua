@@ -26,5 +26,21 @@ describe('vim.text', function()
       eq(output, vim.text.hexencode(input))
       eq(input, vim.text.hexdecode(output))
     end)
+
+    it('errors on invalid input', function()
+      -- Odd number of hex characters
+      do
+        local res, err = vim.text.hexdecode('ABC')
+        eq(nil, res)
+        eq('string must have an even number of hex characters', err)
+      end
+
+      -- Non-hexadecimal input
+      do
+        local res, err = vim.text.hexdecode('nothex')
+        eq(nil, res)
+        eq('string must contain only hex characters', err)
+      end
+    end)
   end)
 end)
