@@ -390,13 +390,3 @@ void vterm_parser_set_callbacks(VTerm *vt, const VTermParserCallbacks *callbacks
   vt->parser.callbacks = callbacks;
   vt->parser.cbdata = user;
 }
-
-void *vterm_parser_get_cbdata(VTerm *vt)
-{
-  return vt->parser.cbdata;
-}
-
-void vterm_parser_set_emit_nul(VTerm *vt, bool emit)
-{
-  vt->parser.emit_nul = emit;
-}

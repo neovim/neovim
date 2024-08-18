@@ -15,9 +15,6 @@ extern "C" {
 #define VTERM_VERSION_MINOR 3
 #define VTERM_VERSION_PATCH 3
 
-#define VTERM_CHECK_VERSION \
-        vterm_check_version(VTERM_VERSION_MAJOR, VTERM_VERSION_MINOR)
-
 /* Any cell can contain at most one basic printing character and 5 combining
  * characters. This number could be changed but will be ABI-incompatible if
  * you do */
@@ -34,25 +31,12 @@ typedef struct {
 
 /* some small utility functions; we can just keep these static here */
 
-/* order points by on-screen flow order */
-static inline int vterm_pos_cmp(VTermPos a, VTermPos b)
-{
-  return (a.row == b.row) ? a.col - b.col : a.row - b.row;
-}
-
 typedef struct {
   int start_row;
   int end_row;
   int start_col;
   int end_col;
 } VTermRect;
-
-/* true if the rect contains the point */
-static inline int vterm_rect_contains(VTermRect r, VTermPos p)
-{
-  return p.row >= r.start_row && p.row < r.end_row &&
-         p.col >= r.start_col && p.col < r.end_col;
-}
 
 /* move a rect */
 static inline void vterm_rect_move(VTermRect *rect, int row_delta, int col_delta)
@@ -202,11 +186,6 @@ static inline void vterm_color_indexed(VTermColor *col, uint8_t idx)
   col->indexed.idx = idx;
 }
 
-/**
- * Compares two colours. Returns true if the colors are equal, false otherwise.
- */
-int vterm_color_is_equal(const VTermColor *a, const VTermColor *b);
-
 typedef enum {
   /* VTERM_VALUETYPE_NONE = 0 */
   VTERM_VALUETYPE_BOOL = 1,
@@ -321,8 +300,6 @@ typedef struct {
   void  (*free)(void *ptr, void *allocdata);
 } VTermAllocatorFunctions;
 
-void vterm_check_version(int major, int minor);
-
 struct VTermBuilder {
   int ver; /* currently unused but reserved for some sort of ABI version flag */
 
@@ -340,15 +317,12 @@ VTerm *vterm_build(const struct VTermBuilder *builder);
 
 /* A convenient shortcut for default cases */
 VTerm *vterm_new(int rows, int cols);
-/* This shortcuts are generally discouraged in favour of just using vterm_build() */
-VTerm *vterm_new_with_allocator(int rows, int cols, VTermAllocatorFunctions *funcs, void *allocdata);
 
 void   vterm_free(VTerm* vt);
 
 void vterm_get_size(const VTerm *vt, int *rowsp, int *colsp);
 void vterm_set_size(VTerm *vt, int rows, int cols);
 
-int  vterm_get_utf8(const VTerm *vt);
 void vterm_set_utf8(VTerm *vt, int is_utf8);
 
 size_t vterm_input_write(VTerm *vt, const char *bytes, size_t len);
@@ -356,15 +330,6 @@ size_t vterm_input_write(VTerm *vt, const char *bytes, size_t len);
 /* Setting output callback will override the buffer logic */
 typedef void VTermOutputCallback(const char *s, size_t len, void *user);
 void vterm_output_set_callback(VTerm *vt, VTermOutputCallback *func, void *user);
-
-/* These buffer functions only work if output callback is NOT set
- * These are deprecated and will be removed in a later version */
-size_t vterm_output_get_buffer_size(const VTerm *vt);
-size_t vterm_output_get_buffer_current(const VTerm *vt);
-size_t vterm_output_get_buffer_remaining(const VTerm *vt);
-
-/* This too */
-size_t vterm_output_read(VTerm *vt, char *buffer, size_t len);
 
 void vterm_keyboard_unichar(VTerm *vt, uint32_t c, VTermModifier mod);
 void vterm_keyboard_key(VTerm *vt, VTermKey key, VTermModifier mod);
@@ -414,12 +379,6 @@ typedef struct {
 } VTermParserCallbacks;
 
 void  vterm_parser_set_callbacks(VTerm *vt, const VTermParserCallbacks *callbacks, void *user);
-void *vterm_parser_get_cbdata(VTerm *vt);
-
-/* Normally NUL, CAN, SUB and DEL are ignored. Setting this true causes them
- * to be emitted by the 'control' callback
- */
-void vterm_parser_set_emit_nul(VTerm *vt, bool emit);
 
 // -----------
 // State layer
@@ -458,23 +417,14 @@ typedef struct {
 VTermState *vterm_obtain_state(VTerm *vt);
 
 void  vterm_state_set_callbacks(VTermState *state, const VTermStateCallbacks *callbacks, void *user);
-void *vterm_state_get_cbdata(VTermState *state);
 
 void  vterm_state_set_unrecognised_fallbacks(VTermState *state, const VTermStateFallbacks *fallbacks, void *user);
-void *vterm_state_get_unrecognised_fbdata(VTermState *state);
 
 void vterm_state_reset(VTermState *state, int hard);
-void vterm_state_get_cursorpos(const VTermState *state, VTermPos *cursorpos);
-void vterm_state_get_default_colors(const VTermState *state, VTermColor *default_fg, VTermColor *default_bg);
-void vterm_state_get_palette_color(const VTermState *state, int index, VTermColor *col);
 void vterm_state_set_default_colors(VTermState *state, const VTermColor *default_fg, const VTermColor *default_bg);
 void vterm_state_set_palette_color(VTermState *state, int index, const VTermColor *col);
-void vterm_state_set_bold_highbright(VTermState *state, int bold_is_highbright);
-int  vterm_state_get_penattr(const VTermState *state, VTermAttr attr, VTermValue *val);
 int  vterm_state_set_penattr(VTermState *state, VTermAttr attr, VTermValueType type, VTermValue *val);
 int  vterm_state_set_termprop(VTermState *state, VTermProp prop, VTermValue *val);
-void vterm_state_focus_in(VTermState *state);
-void vterm_state_focus_out(VTermState *state);
 const VTermLineInfo *vterm_state_get_lineinfo(const VTermState *state, int row);
 
 /**
@@ -491,8 +441,6 @@ void vterm_state_convert_color_to_rgb(const VTermState *state, VTermColor *col);
 
 void vterm_state_set_selection_callbacks(VTermState *state, const VTermSelectionCallbacks *callbacks, void *user,
     char *buffer, size_t buflen);
-
-void vterm_state_send_selection(VTermState *state, VTermSelectionMask mask, VTermStringFragment frag);
 
 // ------------
 // Screen layer
@@ -549,15 +497,10 @@ typedef struct {
 VTermScreen *vterm_obtain_screen(VTerm *vt);
 
 void  vterm_screen_set_callbacks(VTermScreen *screen, const VTermScreenCallbacks *callbacks, void *user);
-void *vterm_screen_get_cbdata(VTermScreen *screen);
 
 void  vterm_screen_set_unrecognised_fallbacks(VTermScreen *screen, const VTermStateFallbacks *fallbacks, void *user);
-void *vterm_screen_get_unrecognised_fbdata(VTermScreen *screen);
 
 void vterm_screen_enable_reflow(VTermScreen *screen, bool reflow);
-
-// Back-compat alias for the brief time it was in 0.3-RC1
-#define vterm_screen_set_reflow  vterm_screen_enable_reflow
 
 void vterm_screen_enable_altscreen(VTermScreen *screen, int altscreen);
 
@@ -574,10 +517,6 @@ void vterm_screen_flush_damage(VTermScreen *screen);
 void vterm_screen_set_damage_merge(VTermScreen *screen, VTermDamageSize size);
 
 void   vterm_screen_reset(VTermScreen *screen, int hard);
-
-/* Neither of these functions NUL-terminate the buffer */
-size_t vterm_screen_get_chars(const VTermScreen *screen, uint32_t *chars, size_t len, const VTermRect rect);
-size_t vterm_screen_get_text(const VTermScreen *screen, char *str, size_t len, const VTermRect rect);
 
 typedef enum {
   VTERM_ATTR_BOLD_MASK       = 1 << 0,
@@ -597,30 +536,13 @@ typedef enum {
   VTERM_ALL_ATTRS_MASK = (1 << 13) - 1
 } VTermAttrMask;
 
-int vterm_screen_get_attrs_extent(const VTermScreen *screen, VTermRect *extent, VTermPos pos, VTermAttrMask attrs);
-
 int vterm_screen_get_cell(const VTermScreen *screen, VTermPos pos, VTermScreenCell *cell);
-
-int vterm_screen_is_eol(const VTermScreen *screen, VTermPos pos);
-
-/**
- * Same as vterm_state_convert_color_to_rgb(), but takes a `screen` instead of a `state`
- * instance.
- */
-void vterm_screen_convert_color_to_rgb(const VTermScreen *screen, VTermColor *col);
-
-/**
- * Similar to vterm_state_set_default_colors(), but also resets colours in the
- * screen buffer(s)
- */
-void vterm_screen_set_default_colors(VTermScreen *screen, const VTermColor *default_fg, const VTermColor *default_bg);
 
 // ---------
 // Utilities
 // ---------
 
 VTermValueType vterm_get_attr_type(VTermAttr attr);
-VTermValueType vterm_get_prop_type(VTermProp prop);
 
 void vterm_scroll_rect(VTermRect rect,
                        int downward,
@@ -628,11 +550,6 @@ void vterm_scroll_rect(VTermRect rect,
                        int (*moverect)(VTermRect src, VTermRect dest, void *user),
                        int (*eraserect)(VTermRect rect, int selective, void *user),
                        void *user);
-
-void vterm_copy_cells(VTermRect dest,
-                      VTermRect src,
-                      void (*copycell)(VTermPos dest, VTermPos src, void *user),
-                      void *user);
 
 #ifdef __cplusplus
 }

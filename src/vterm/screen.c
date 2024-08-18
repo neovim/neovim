@@ -916,66 +916,6 @@ void vterm_screen_reset(VTermScreen *screen, int hard)
   vterm_screen_flush_damage(screen);
 }
 
-static size_t _get_chars(const VTermScreen *screen, const int utf8, void *buffer, size_t len, const VTermRect rect)
-{
-  size_t outpos = 0;
-  int padding = 0;
-
-#define PUT(c)                                             \
-  if(utf8) {                                               \
-    size_t thislen = utf_char2len(c);                      \
-    if(buffer && outpos + thislen <= len)                  \
-      outpos += fill_utf8((c), (char *)buffer + outpos);   \
-    else                                                   \
-      outpos += thislen;                                   \
-  }                                                        \
-  else {                                                   \
-    if(buffer && outpos + 1 <= len)                        \
-      ((uint32_t*)buffer)[outpos++] = (c);                 \
-    else                                                   \
-      outpos++;                                            \
-  }
-
-  for(int row = rect.start_row; row < rect.end_row; row++) {
-    for(int col = rect.start_col; col < rect.end_col; col++) {
-      ScreenCell *cell = getcell(screen, row, col);
-
-      if(cell->chars[0] == 0)
-        // Erased cell, might need a space
-        padding++;
-      else if(cell->chars[0] == (uint32_t)-1)
-        // Gap behind a double-width char, do nothing
-        ;
-      else {
-        while(padding) {
-          PUT(UNICODE_SPACE);
-          padding--;
-        }
-        for(int i = 0; i < VTERM_MAX_CHARS_PER_CELL && cell->chars[i]; i++) {
-          PUT(cell->chars[i]);
-        }
-      }
-    }
-
-    if(row < rect.end_row - 1) {
-      PUT(UNICODE_LINEFEED);
-      padding = 0;
-    }
-  }
-
-  return outpos;
-}
-
-size_t vterm_screen_get_chars(const VTermScreen *screen, uint32_t *chars, size_t len, const VTermRect rect)
-{
-  return _get_chars(screen, 0, chars, len, rect);
-}
-
-size_t vterm_screen_get_text(const VTermScreen *screen, char *str, size_t len, const VTermRect rect)
-{
-  return _get_chars(screen, 1, str, len, rect);
-}
-
 /* Copy internal to external representation of a screen cell */
 int vterm_screen_get_cell(const VTermScreen *screen, VTermPos pos, VTermScreenCell *cell)
 {
@@ -1017,18 +957,6 @@ int vterm_screen_get_cell(const VTermScreen *screen, VTermPos pos, VTermScreenCe
   return 1;
 }
 
-int vterm_screen_is_eol(const VTermScreen *screen, VTermPos pos)
-{
-  /* This cell is EOL if this and every cell to the right is black */
-  for(; pos.col < screen->cols; pos.col++) {
-    ScreenCell *cell = getcell(screen, pos.row, pos.col);
-    if(cell->chars[0] != 0)
-      return 0;
-  }
-
-  return 1;
-}
-
 VTermScreen *vterm_obtain_screen(VTerm *vt)
 {
   if(vt->screen)
@@ -1043,12 +971,6 @@ VTermScreen *vterm_obtain_screen(VTerm *vt)
 void vterm_screen_enable_reflow(VTermScreen *screen, bool reflow)
 {
   screen->reflow = reflow;
-}
-
-#undef vterm_screen_set_reflow
-void vterm_screen_set_reflow(VTermScreen *screen, bool reflow)
-{
-  vterm_screen_enable_reflow(screen, reflow);
 }
 
 void vterm_screen_enable_altscreen(VTermScreen *screen, int altscreen)
@@ -1067,19 +989,9 @@ void vterm_screen_set_callbacks(VTermScreen *screen, const VTermScreenCallbacks 
   screen->cbdata = user;
 }
 
-void *vterm_screen_get_cbdata(VTermScreen *screen)
-{
-  return screen->cbdata;
-}
-
 void vterm_screen_set_unrecognised_fallbacks(VTermScreen *screen, const VTermStateFallbacks *fallbacks, void *user)
 {
   vterm_state_set_unrecognised_fallbacks(screen->state, fallbacks, user);
-}
-
-void *vterm_screen_get_unrecognised_fbdata(VTermScreen *screen)
-{
-  return vterm_state_get_unrecognised_fbdata(screen->state);
 }
 
 void vterm_screen_flush_damage(VTermScreen *screen)
@@ -1103,102 +1015,4 @@ void vterm_screen_set_damage_merge(VTermScreen *screen, VTermDamageSize size)
 {
   vterm_screen_flush_damage(screen);
   screen->damage_merge = size;
-}
-
-static int attrs_differ(VTermAttrMask attrs, ScreenCell *a, ScreenCell *b)
-{
-  if((attrs & VTERM_ATTR_BOLD_MASK)       && (a->pen.bold != b->pen.bold))
-    return 1;
-  if((attrs & VTERM_ATTR_UNDERLINE_MASK)  && (a->pen.underline != b->pen.underline))
-    return 1;
-  if((attrs & VTERM_ATTR_ITALIC_MASK)     && (a->pen.italic != b->pen.italic))
-    return 1;
-  if((attrs & VTERM_ATTR_BLINK_MASK)      && (a->pen.blink != b->pen.blink))
-    return 1;
-  if((attrs & VTERM_ATTR_REVERSE_MASK)    && (a->pen.reverse != b->pen.reverse))
-    return 1;
-  if((attrs & VTERM_ATTR_CONCEAL_MASK)    && (a->pen.conceal != b->pen.conceal))
-    return 1;
-  if((attrs & VTERM_ATTR_STRIKE_MASK)     && (a->pen.strike != b->pen.strike))
-    return 1;
-  if((attrs & VTERM_ATTR_FONT_MASK)       && (a->pen.font != b->pen.font))
-    return 1;
-  if((attrs & VTERM_ATTR_FOREGROUND_MASK) && !vterm_color_is_equal(&a->pen.fg, &b->pen.fg))
-    return 1;
-  if((attrs & VTERM_ATTR_BACKGROUND_MASK) && !vterm_color_is_equal(&a->pen.bg, &b->pen.bg))
-    return 1;
-  if((attrs & VTERM_ATTR_SMALL_MASK)      && (a->pen.small != b->pen.small))
-    return 1;
-  if((attrs & VTERM_ATTR_BASELINE_MASK)   && (a->pen.baseline != b->pen.baseline))
-    return 1;
-  if((attrs & VTERM_ATTR_URI_MASK)        && (a->pen.uri != b->pen.uri))
-    return 1;
-
-  return 0;
-}
-
-int vterm_screen_get_attrs_extent(const VTermScreen *screen, VTermRect *extent, VTermPos pos, VTermAttrMask attrs)
-{
-  ScreenCell *target = getcell(screen, pos.row, pos.col);
-
-  // TODO: bounds check
-  extent->start_row = pos.row;
-  extent->end_row   = pos.row + 1;
-
-  if(extent->start_col < 0)
-    extent->start_col = 0;
-  if(extent->end_col < 0)
-    extent->end_col = screen->cols;
-
-  int col;
-
-  for(col = pos.col - 1; col >= extent->start_col; col--)
-    if(attrs_differ(attrs, target, getcell(screen, pos.row, col)))
-      break;
-  extent->start_col = col + 1;
-
-  for(col = pos.col + 1; col < extent->end_col; col++)
-    if(attrs_differ(attrs, target, getcell(screen, pos.row, col)))
-      break;
-  extent->end_col = col - 1;
-
-  return 1;
-}
-
-void vterm_screen_convert_color_to_rgb(const VTermScreen *screen, VTermColor *col)
-{
-  vterm_state_convert_color_to_rgb(screen->state, col);
-}
-
-static void reset_default_colours(VTermScreen *screen, ScreenCell *buffer)
-{
-  for(int row = 0; row <= screen->rows - 1; row++)
-    for(int col = 0; col <= screen->cols - 1; col++) {
-      ScreenCell *cell = &buffer[row * screen->cols + col];
-      if(VTERM_COLOR_IS_DEFAULT_FG(&cell->pen.fg))
-        cell->pen.fg = screen->pen.fg;
-      if(VTERM_COLOR_IS_DEFAULT_BG(&cell->pen.bg))
-        cell->pen.bg = screen->pen.bg;
-    }
-}
-
-void vterm_screen_set_default_colors(VTermScreen *screen, const VTermColor *default_fg, const VTermColor *default_bg)
-{
-  vterm_state_set_default_colors(screen->state, default_fg, default_bg);
-
-  if(default_fg && VTERM_COLOR_IS_DEFAULT_FG(&screen->pen.fg)) {
-    screen->pen.fg = *default_fg;
-    screen->pen.fg.type = (screen->pen.fg.type & ~VTERM_COLOR_DEFAULT_MASK)
-                        | VTERM_COLOR_DEFAULT_FG;
-  }
-
-  if(default_bg && VTERM_COLOR_IS_DEFAULT_BG(&screen->pen.bg)) {
-    screen->pen.bg = *default_bg;
-    screen->pen.bg.type = (screen->pen.bg.type & ~VTERM_COLOR_DEFAULT_MASK)
-                        | VTERM_COLOR_DEFAULT_BG;
-  }
-
-  reset_default_colours(screen, screen->buffers[0]);
-  if(screen->buffers[1])
-    reset_default_colours(screen, screen->buffers[1]);
 }
