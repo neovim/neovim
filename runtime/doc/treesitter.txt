@@ -245,15 +245,32 @@ The following directives are built in:
             (#gsub! @_node ".*%.(.*)" "%1")
 <
     `trim!`                                          *treesitter-directive-trim!*
-        Trim blank lines from the end of the node. This will set a new
-        `metadata[capture_id].range`.
+        Trims whitespace from the node. Sets a new
+        `metadata[capture_id].range`. Takes a capture ID and, optionally, four
+        integers to customize trimming behavior (`1` meaning trim, `0` meaning
+        don't trim). When only given a capture ID, trims blank lines (lines
+        that contain only whitespace, or are empty) from the end of the node
+        (for backwards compatibility). Can trim all whitespace from both sides
+        of the node if parameters are given.
 
+        Examples: >query
+            ; only trim blank lines from the end of the node
+            ; (equivalent to (#trim! @fold 0 0 1 0))
+            (#trim! @fold)
+
+            ; trim blank lines from both sides of the node
+            (#trim! @fold 1 0 1 0)
+
+            ; trim all whitespace around the node
+            (#trim! @fold 1 1 1 1)
+<
         Parameters: ~
             {capture_id}
+            {trim_start_linewise}
+            {trim_start_charwise}
+            {trim_end_linewise} (default `1` if only given {capture_id})
+            {trim_end_charwise}
 
-        Example: >query
-            (#trim! @fold)
-<
 Further directives can be added via |vim.treesitter.query.add_directive()|.
 Use |vim.treesitter.query.list_directives()| to list all available directives.
 
