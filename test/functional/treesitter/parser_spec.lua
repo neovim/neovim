@@ -644,6 +644,108 @@ print()
     end)
   end)
 
+  describe('trim! directive', function()
+    it('can trim all whitespace', function()
+      -- luacheck: push ignore 611 613
+      insert([=[
+        print([[
+
+                  f
+           helllo
+        there
+        asdf
+        asdfassd   
+
+
+
+        ]])
+        print([[
+              
+              
+              
+        ]])
+
+        print([[]])
+
+        print([[
+        ]])
+
+        print([[     hello 😃    ]])
+      ]=])
+      -- luacheck: pop
+
+      local query_text = [[
+        ; query
+        ((string_content) @str
+          (#trim! @str 1 1 1 1))
+      ]]
+
+      exec_lua(function()
+        vim.treesitter.start(0, 'lua')
+      end)
+
+      local function run_query()
+        return exec_lua(function(query_str)
+          local query = vim.treesitter.query.parse('lua', query_str)
+          local parser = vim.treesitter.get_parser()
+          local tree = parser:parse()[1]
+          local res = {}
+          for id, _, metadata in query:iter_captures(tree:root(), 0) do
+            table.insert(res, { query.captures[id], metadata[id].range })
+          end
+          return res
+        end, query_text)
+      end
+
+      eq({
+        { 'str', { 2, 12, 6, 10 } },
+        { 'str', { 11, 10, 11, 10 } },
+        { 'str', { 17, 10, 17, 10 } },
+        { 'str', { 19, 10, 19, 10 } },
+        { 'str', { 22, 15, 22, 25 } },
+      }, run_query())
+    end)
+
+    it('trims only empty lines by default (backwards compatible)', function()
+      insert [[
+      ## Heading
+
+      With some text
+
+      ## And another
+
+      With some more]]
+
+      local query_text = [[
+        ; query
+        ((section) @fold
+          (#trim! @fold))
+      ]]
+
+      exec_lua(function()
+        vim.treesitter.start(0, 'markdown')
+      end)
+
+      local function run_query()
+        return exec_lua(function(query_str)
+          local query = vim.treesitter.query.parse('markdown', query_str)
+          local parser = vim.treesitter.get_parser()
+          local tree = parser:parse()[1]
+          local res = {}
+          for id, _, metadata in query:iter_captures(tree:root(), 0) do
+            table.insert(res, { query.captures[id], metadata[id].range })
+          end
+          return res
+        end, query_text)
+      end
+
+      eq({
+        { 'fold', { 0, 0, 3, 0 } },
+        { 'fold', { 4, 0, 7, 0 } },
+      }, run_query())
+    end)
+  end)
+
   it('tracks the root range properly (#22911)', function()
     insert([[
       int main() {
