@@ -1,4 +1,5 @@
 #include "vterm_internal.h"
+#include "nvim/mbyte.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -304,7 +305,7 @@ static int on_text(const char bytes[], size_t len, void *user)
 
   /* This is a combining char. that needs to be merged with the previous
    * glyph output */
-  if(vterm_unicode_is_combining(codepoints[i])) {
+  if(utf_iscomposing(codepoints[i])) {
     /* See if the cursor has moved since */
     if(state->pos.row == state->combine_pos.row && state->pos.col == state->combine_pos.col + state->combine_width) {
 #ifdef DEBUG_GLYPH_COMBINE
@@ -321,7 +322,7 @@ static int on_text(const char bytes[], size_t len, void *user)
         saved_i++;
 
       /* Add extra ones */
-      while(i < npoints && vterm_unicode_is_combining(codepoints[i])) {
+      while(i < npoints && utf_iscomposing(codepoints[i])) {
         if(saved_i >= state->combine_chars_size)
           grow_combine_buffer(state);
         state->combine_chars[saved_i++] = codepoints[i++];
@@ -351,7 +352,7 @@ static int on_text(const char bytes[], size_t len, void *user)
     for(glyph_ends = i + 1;
         (glyph_ends < npoints) && (glyph_ends < glyph_starts + VTERM_MAX_CHARS_PER_CELL);
         glyph_ends++)
-      if(!vterm_unicode_is_combining(codepoints[glyph_ends]))
+      if(!utf_iscomposing(codepoints[glyph_ends]))
         break;
 
     int width = 0;
@@ -370,7 +371,7 @@ static int on_text(const char bytes[], size_t len, void *user)
       width += this_width;
     }
 
-    while(i < npoints && vterm_unicode_is_combining(codepoints[i]))
+    while(i < npoints && utf_iscomposing(codepoints[i]))
       i++;
 
     chars[glyph_ends - glyph_starts] = 0;

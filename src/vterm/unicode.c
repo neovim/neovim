@@ -221,8 +221,3 @@ INTERNAL int vterm_unicode_width(uint32_t codepoint)
 
   return mk_wcwidth(codepoint);
 }
-
-INTERNAL int vterm_unicode_is_combining(uint32_t codepoint)
-{
-  return bisearch(codepoint, combining, sizeof(combining) / sizeof(struct interval) - 1);
-}
