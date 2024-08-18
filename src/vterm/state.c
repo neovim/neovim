@@ -361,7 +361,7 @@ static int on_text(const char bytes[], size_t len, void *user)
 
     for( ; i < glyph_ends; i++) {
       chars[i - glyph_starts] = codepoints[i];
-      int this_width = vterm_unicode_width(codepoints[i]);
+      int this_width = utf_char2cells(codepoints[i]);
 #ifdef DEBUG
       if(this_width < 0) {
         fprintf(stderr, "Text with negative-width codepoint U+%04x\n", codepoints[i]);

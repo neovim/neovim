@@ -290,6 +290,4 @@ void vterm_screen_free(VTermScreen *screen);
 
 VTermEncoding *vterm_lookup_encoding(VTermEncodingType type, char designation);
 
-int vterm_unicode_width(uint32_t codepoint);
-
 #endif
