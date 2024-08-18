@@ -41,6 +41,9 @@ function M.hexdecode(enc)
   for i = 1, #enc, 2 do
     local u = lookup[enc:sub(i, i)] --[[@as integer]]
     local l = lookup[enc:sub(i + 1, i + 1)] --[[@as integer]]
+    if not u or not l then
+      return nil, 'string must contain only hex characters'
+    end
     str[#str + 1] = string.char(u * 16 + l)
   end
   return table.concat(str), nil
