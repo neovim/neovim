@@ -1,5 +1,6 @@
 #include "vterm_internal.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -190,8 +191,10 @@ size_t vterm_input_write(VTerm *vt, const char *bytes, size_t len)
           ((!IS_STRING_STATE() || c == 0x5c))) {
         c += 0x40;
         c1_allowed = true;
-        if(string_len)
+        if(string_len) {
+          assert(string_len > 0);
           string_len -= 1;
+        }
         vt->parser.in_esc = false;
       }
       else {
@@ -377,9 +380,12 @@ string_state:
 
   if(string_start) {
     size_t string_len = bytes + pos - string_start;
-    if(vt->parser.in_esc)
-      string_len -= 1;
-    string_fragment(vt, string_start, string_len, false);
+    if (string_len > 0) {
+      if(vt->parser.in_esc) {
+        string_len -= 1;
+      }
+      string_fragment(vt, string_start, string_len, false);
+    }
   }
 
   return len;
