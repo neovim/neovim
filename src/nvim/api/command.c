@@ -634,6 +634,22 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   build_cmdline_str(&cmdline, &ea, &cmdinfo, args);
   ea.cmdlinep = &cmdline;
 
+  // Check for "++opt=val" argument.
+  if (ea.argt & EX_ARGOPT) {
+    while (ea.arg[0] == '+' && ea.arg[1] == '+') {
+      char *orig_arg = ea.arg;
+      int result = getargopt(&ea);
+      VALIDATE_S(result != FAIL || is_cmd_ni(ea.cmdidx), "argument ", orig_arg, {
+        goto end;
+      });
+    }
+  }
+
+  // Check for "+command" argument.
+  if ((ea.argt & EX_CMDARG) && !ea.usefilter) {
+    ea.do_ecmd_cmd = getargcmd(&ea.arg);
+  }
+
   garray_T capture_local;
   const int save_msg_silent = msg_silent;
   garray_T * const save_capture_ga = capture_ga;
