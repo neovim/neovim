@@ -749,7 +749,10 @@ KeyInputPre			Just before a key is processed after mappings
 				character is used.
 				The following values of |v:event| are set:
 				   typed	The key is typed or not.
-				   typedchar	The (actual) typed key.
+				   typedchar	The (actual) typed key since
+						the last |KeyInputPre| call.
+				Note: "typedchar" may be empty if successive
+				|KeyInputPre| autocmds are processed.
 				It is not allowed to change the text
 				|textlock| or the current mode.
 							*MenuPopup*
