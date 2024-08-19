@@ -312,6 +312,16 @@ describe(':terminal buffer', function()
       pcall_err(command, 'write test/functional/fixtures/tty-test.c')
     )
   end)
+
+  it('external interrupt (got_int) does not hang #20726', function()
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    command('call timer_start(0, {-> interrupt()})')
+    feed('<Ignore>') -- Add input to separate two RPC requests
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    feed([[<C-\><C-N>]])
+    eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
+    command('bd!')
+  end)
 end)
 
 describe(':terminal buffer', function()
