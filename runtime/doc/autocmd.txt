@@ -736,6 +736,7 @@ InsertLeavePre			Just before leaving Insert mode.  Also when
 							*InsertLeave*
 InsertLeave			Just after leaving Insert mode.  Also when
 				using CTRL-O |i_CTRL-O|.  But not for |i_CTRL-C|.
+							*KeyInputPre*
 KeyInputPre			Just before a key is processed after mappings
 				matched against a string that indicates the
 				have been applied. The pattern is matched
