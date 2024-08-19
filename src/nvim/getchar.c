@@ -1610,7 +1610,7 @@ static int do_key_input_pre(int c)
   int res = c;
 
   if (apply_autocmds(EVENT_KEYINPUTPRE, curr_mode, curr_mode, false, curbuf)
-    && strcmp((char *)buf, get_vim_var_str(VV_CHAR)) != 0) {
+      && strcmp((char *)buf, get_vim_var_str(VV_CHAR)) != 0) {
     // Get the value of v:char.  It may be empty or more than one
     // character.  Only use it when changed, otherwise continue with the
     // original character.
