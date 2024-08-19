@@ -1572,8 +1572,7 @@ static void add_byte_to_showcmd(uint8_t byte)
 // Handle the InsertCharPre autocommand.
 // "c" is the character that was typed.
 // Return new input character.
-static int
-do_key_input_pre(int c)
+static int do_key_input_pre(int c)
 {
   // Return quickly when there is nothing to do.
   if (!has_event(EVENT_KEYINPUTPRE)) {
