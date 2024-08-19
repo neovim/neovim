@@ -271,10 +271,11 @@ static int parse_osc8(VTermStringFragment frag, int *attr)
 }
 
 static int on_osc(int command, VTermStringFragment frag, void *user)
+  FUNC_ATTR_NONNULL_ALL
 {
   Terminal *term = user;
 
-  if (frag.str == NULL) {
+  if (frag.str == NULL || frag.len == 0) {
     return 0;
   }
 
