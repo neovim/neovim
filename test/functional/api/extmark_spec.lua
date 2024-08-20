@@ -1798,10 +1798,15 @@ describe('API/extmarks', function()
   end)
 
   it('can set a URL', function()
-    set_extmark(ns, 1, 0, 0, { url = 'https://example.com', end_col = 3 })
+    local url1 = 'https://example.com'
+    local url2 = 'http://127.0.0.1'
+    set_extmark(ns, 1, 0, 0, { url = url1, end_col = 3 })
+    set_extmark(ns, 2, 0, 3, { url = url2, hl_group = 'Search', end_col = 5 })
     local extmarks = get_extmarks(ns, 0, -1, { details = true })
-    eq(1, #extmarks)
-    eq('https://example.com', extmarks[1][4].url)
+    eq(2, #extmarks)
+    eq(url1, extmarks[1][4].url)
+    eq(url2, extmarks[2][4].url)
+    eq('Search', extmarks[2][4].hl_group)
   end)
 
   it('respects priority', function()
