@@ -52,8 +52,7 @@ execute 'CompilerSet makeprg=pandoc'..escape(
       \ ' --from='..b:pandoc_compiler_from .
       \ ' '..get(b:, 'pandoc_compiler_args', get(g:, 'pandoc_compiler_args', '')) .
       \ ' --output %:r:S.$* -- %:S', ' ')
-
-CompilerSet errorformat=%f,\ line\ %l:\ %m
+CompilerSet errorformat=\"%f\",\ line\ %l:\ %m
 
 let &cpo = s:keepcpo
 unlet s:keepcpo
