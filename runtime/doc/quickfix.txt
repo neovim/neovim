@@ -1305,6 +1305,13 @@ Additional arguments can be passed to pandoc:
 - either by appending them to make, say `:make html --self-contained` .
 - or setting them in `b:pandoc_compiler_args` or `g:pandoc_compiler_args`.
 
+The `--from` argument is an educated guess using the buffer file type;
+it can be overridden by setting `b:pandoc_compiler_from`.
+Likewise the `--metadata lang` argument is set using `&spelllang`;
+it can be overridden by setting `b:pandoc_compiler_lang`.
+If `--from=markdown` is assumed and no title set in a title header or
+YAML block, then the filename (without extension) is used as the title.
+
 PERL					*quickfix-perl* *compiler-perl*
 
 The Perl compiler plugin doesn't actually compile, but invokes Perl's internal
