@@ -1,6 +1,6 @@
 " zip.vim: Handles browsing zipfiles
 " AUTOLOAD PORTION
-" Date:		Aug 05, 2024
+" Date:		Aug 18, 2024
 " Version:	34
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer:	Charles E Campbell
@@ -12,6 +12,7 @@
 " 2024 Aug 04 by Vim Project: escape '[' in name of file to be extracted
 " 2024 Aug 05 by Vim Project: workaround for the FreeBSD's unzip
 " 2024 Aug 05 by Vim Project: clean-up and make it work with shellslash on Windows
+" 2024 Aug 18 by Vim Project: correctly handle special globbing chars
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -70,6 +71,11 @@ endfun
 
 if v:version < 702
  call s:Mess('WarningMsg', "***warning*** this version of zip needs vim 7.2 or later")
+ finish
+endif
+" sanity checks
+if !executable(g:zip_unzipcmd)
+ call s:Mess('Error', "***error*** (zip#Browse) unzip not available on your system")
  finish
 endif
 if !dist#vim#IsSafeExecutable('zip', g:zip_unzipcmd)
@@ -198,7 +204,7 @@ fun! zip#Read(fname,mode)
    let zipfile = substitute(a:fname,'^.\{-}zipfile://\(.\{-}\)::[^\\].*$','\1','')
    let fname   = substitute(a:fname,'^.\{-}zipfile://.\{-}::\([^\\].*\)$','\1','')
   endif
-  let fname    = substitute(fname, '[', '[[]', 'g')
+  let fname    = fname->substitute('[', '[[]', 'g')->escape('?*\\')
   " sanity check
   if !executable(substitute(g:zip_unzipcmd,'\s\+.*$','',''))
    call s:Mess('Error', "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program")
@@ -330,9 +336,24 @@ fun! zip#Extract()
    call s:Mess('Error', "***error*** (zip#Extract) Please specify a file, not a directory")
    return
   endif
+  if filereadable(fname)
+   call s:Mess('Error', "***error*** (zip#Extract) <" .. fname .."> already exists in directory, not overwriting!")
+   return
+  endif
+  let target = fname->substitute('\[', '[[]', 'g')
+  if &shell =~ 'cmd' && (has("win32") || has("win64"))
+    let target = target
+		\ ->substitute('[?*]', '[&]', 'g')
+		\ ->substitute('[\\]', '?', 'g')
+		\ ->shellescape()
+    " there cannot be a file name with '\' in its name, unzip replaces it by _
+    let fname = fname->substitute('[\\?*]', '_', 'g')
+  else
+    let target = target->escape('*?\\')->shellescape()
+  endif
 
   " extract the file mentioned under the cursor
-  call system($"{g:zip_extractcmd} {shellescape(b:zipfile)} {shellescape(fname)}")
+  call system($"{g:zip_extractcmd} -o {shellescape(b:zipfile)} {target}")
   if v:shell_error != 0
    call s:Mess('Error', "***error*** ".g:zip_extractcmd." ".b:zipfile." ".fname.": failed!")
   elseif !filereadable(fname)
