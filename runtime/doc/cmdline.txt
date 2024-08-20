@@ -348,7 +348,8 @@ terminals)
 
 :keepp[atterns] {command}			*:keepp* *:keeppatterns*
 		Execute {command}, without adding anything to the search
-		history or modifying the last substitute string for |:&|.
+		history and, in case of |:s| or |:&|, without modifying the
+		last substitute pattern or substitute string.
 
 ==============================================================================
 2. Command-line completion				*cmdline-completion*
