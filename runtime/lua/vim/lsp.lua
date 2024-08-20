@@ -71,6 +71,12 @@ lsp._request_name_to_capability = {
   [ms.textDocument_didOpen] = { 'textDocumentSync', 'openClose' },
   [ms.textDocument_willSave] = { 'textDocumentSync', 'willSave' },
   [ms.textDocument_willSaveWaitUntil] = { 'textDocumentSync', 'willSaveWaitUntil' },
+  [ms.textDocument_documentColor] = { 'colorProvider' },
+  [ms.textDocument_inlineValue] = { 'inlineValueProvider' },
+  [ms.textDocument_linkedEditingRange] = { 'linkedEditingRangeProvider' },
+  [ms.textDocument_moniker] = { 'monikerProvider' },
+  [ms.textDocument_onTypeFormatting] = { 'documentOnTypeFormattingProvider' },
+  [ms.textDocument_selectionRange] = { 'selectionRangeProvider' },
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
