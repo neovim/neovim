@@ -177,17 +177,8 @@ void get_mode(char *buf)
 {
   int i = 0;
 
-  if (VIsual_active) {
-    if (VIsual_select) {
-      buf[i++] = (char)(VIsual_mode + 's' - 'v');
-    } else {
-      buf[i++] = (char)VIsual_mode;
-      if (restart_VIsual_select) {
-        buf[i++] = 's';
-      }
-    }
-  } else if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE
-             || State == MODE_CONFIRM) {
+  if (State == MODE_HITRETURN || State == MODE_ASKMORE
+      || State == MODE_SETWSIZE || State == MODE_CONFIRM) {
     buf[i++] = 'r';
     if (State == MODE_ASKMORE) {
       buf[i++] = 'm';
@@ -222,6 +213,15 @@ void get_mode(char *buf)
     }
   } else if (State & MODE_TERMINAL) {
     buf[i++] = 't';
+  } else if (VIsual_active) {
+    if (VIsual_select) {
+      buf[i++] = (char)(VIsual_mode + 's' - 'v');
+    } else {
+      buf[i++] = (char)VIsual_mode;
+      if (restart_VIsual_select) {
+        buf[i++] = 's';
+      }
+    }
   } else {
     buf[i++] = 'n';
     if (finish_op) {
@@ -233,8 +233,7 @@ void get_mode(char *buf)
       if (restart_edit == 'I') {
         buf[i++] = 'T';
       }
-    } else if (restart_edit == 'I' || restart_edit == 'R'
-               || restart_edit == 'V') {
+    } else if (restart_edit == 'I' || restart_edit == 'R' || restart_edit == 'V') {
       buf[i++] = 'i';
       buf[i++] = (char)restart_edit;
     }
