@@ -1244,7 +1244,9 @@ static int ins_compl_build_pum(void)
         if (comp->cp_score > max_fuzzy_score) {
           did_find_shown_match = true;
           max_fuzzy_score = comp->cp_score;
-          compl_shown_match = comp;
+          if (!compl_no_select) {
+            compl_shown_match = comp;
+          }
         }
 
         if (!shown_match_ok && comp == compl_shown_match && !compl_no_select) {
