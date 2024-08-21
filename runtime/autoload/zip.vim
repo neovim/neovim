@@ -1,6 +1,6 @@
 " zip.vim: Handles browsing zipfiles
 " AUTOLOAD PORTION
-" Date:		Aug 18, 2024
+" Date:		2024 Aug 21
 " Version:	34
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer:	Charles E Campbell
@@ -13,6 +13,7 @@
 " 2024 Aug 05 by Vim Project: workaround for the FreeBSD's unzip
 " 2024 Aug 05 by Vim Project: clean-up and make it work with shellslash on Windows
 " 2024 Aug 18 by Vim Project: correctly handle special globbing chars
+" 2024 Aug 21 by Vim Project: simplify condition to detect MS-Windows
 " License:	Vim License  (see vim's :help license)
 " Copyright:	Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "		Permission is hereby granted to use and distribute this code,
@@ -341,7 +342,7 @@ fun! zip#Extract()
    return
   endif
   let target = fname->substitute('\[', '[[]', 'g')
-  if &shell =~ 'cmd' && (has("win32") || has("win64"))
+  if &shell =~ 'cmd' && has("win32")
     let target = target
 		\ ->substitute('[?*]', '[&]', 'g')
 		\ ->substitute('[\\]', '?', 'g')
