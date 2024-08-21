@@ -810,6 +810,10 @@ func Test_mode()
   call feedkeys("gQ\<Insert>\<F2>vi\<CR>", 'xt')
   call assert_equal("c-cvr", g:current_modes)
 
+  " Commandline mode in Visual mode should return "c-c", never "v-v".
+  call feedkeys("v\<Cmd>call input('')\<CR>\<F2>\<CR>\<Esc>", 'xt')
+  call assert_equal("c-c", g:current_modes)
+
   " Executing commands in Vim Ex mode should return "cv", never "cvr",
   " as Cmdline editing has already ended.
   call feedkeys("gQcall Save_mode()\<CR>vi\<CR>", 'xt')
