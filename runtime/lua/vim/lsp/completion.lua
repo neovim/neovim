@@ -403,6 +403,10 @@ local function trigger(bufnr, clients)
   reset_timer()
   Context:cancel_pending()
 
+  if tonumber(vim.fn.pumvisible()) == 1 and Context.isIncomplete then
+    return
+  end
+
   local win = api.nvim_get_current_win()
   local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(win)) --- @type integer, integer
   local line = api.nvim_get_current_line()
