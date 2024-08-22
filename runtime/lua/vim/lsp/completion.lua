@@ -23,6 +23,7 @@ local ns_to_ms = 0.000001
 --- @class vim.lsp.completion.BufHandle
 --- @field clients table<integer, vim.lsp.Client>
 --- @field triggers table<string, vim.lsp.Client[]>
+--- @field convert? fun(item: lsp.CompletionItem): table
 
 --- @type table<integer, vim.lsp.completion.BufHandle>
 local buf_handles = {}
@@ -250,6 +251,8 @@ function M._lsp_to_complete_items(result, prefix, client_id)
   end
 
   local candidates = {}
+  local bufnr = api.nvim_get_current_buf()
+  local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
   for _, item in ipairs(items) do
     if matches(item) then
       local word = get_completion_word(item)
@@ -260,7 +263,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
       then
         hl_group = 'DiagnosticDeprecated'
       end
-      table.insert(candidates, {
+      local completion_item = {
         word = word,
         abbr = item.label,
         kind = protocol.CompletionItemKind[item.kind] or 'Unknown',
@@ -278,7 +281,11 @@ function M._lsp_to_complete_items(result, prefix, client_id)
             },
           },
         },
-      })
+      }
+      if user_convert then
+        completion_item = vim.tbl_extend('keep', user_convert(item), completion_item)
+      end
+      table.insert(candidates, completion_item)
     end
   end
   ---@diagnostic disable-next-line: no-unknown
@@ -590,14 +597,15 @@ end
 
 --- @class vim.lsp.completion.BufferOpts
 --- @field autotrigger? boolean Whether to trigger completion automatically. Default: false
+--- @field convert? fun(item: lsp.CompletionItem): table An optional function used to customize the transformation of an LSP CompletionItem to |complete-items|.
 
---- @param client_id integer
+---@param client_id integer
 ---@param bufnr integer
 ---@param opts vim.lsp.completion.BufferOpts
 local function enable_completions(client_id, bufnr, opts)
   local buf_handle = buf_handles[bufnr]
   if not buf_handle then
-    buf_handle = { clients = {}, triggers = {} }
+    buf_handle = { clients = {}, triggers = {}, convert = opts.convert }
     buf_handles[bufnr] = buf_handle
 
     -- Attach to buffer events.
