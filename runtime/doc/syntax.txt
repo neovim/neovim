@@ -1663,6 +1663,14 @@ Note that these three variables are maintained in the HTML syntax file.
 Numbers and strings can be recognized in non-Javadoc comments with >
 	:let g:java_comment_strings = 1
 
+When 'foldmethod' is set to "syntax", blocks of code and multi-line comments
+will be folded.  No text is usually written in the first line of a multi-line
+comment, making folded contents of Javadoc comments less informative with the
+default 'foldtext' value; you may opt for showing the contents of a second
+line for any comments written in this way, and showing the contents of a first
+line otherwise, with >
+	:let g:java_foldtext_show_first_or_second_line = 1
+
 Trailing whitespace characters or a run of space characters before a tab
 character can be marked as an error with >
 	:let g:java_space_errors = 1

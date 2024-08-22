@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Jul 30
+" Last Change:		2024 Aug 22
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -39,17 +39,27 @@ else
   endfunction
 endif
 
-function! JavaSyntaxFoldTextExpr() abort
-  return getline(v:foldstart) !~ '/\*\+\s*$'
-    \ ? foldtext()
-    \ : printf('+-%s%3d lines: ',
-	  \ v:folddashes,
-	  \ (v:foldend - v:foldstart + 1)) .
-	\ getline(v:foldstart + 1)
-endfunction
+if exists("g:java_foldtext_show_first_or_second_line")
+  function! s:LazyPrefix(prefix, dashes, count) abort
+    return empty(a:prefix)
+      \ ? printf('+-%s%3d lines: ', a:dashes, a:count)
+      \ : a:prefix
+  endfunction
 
-" E120 for "fdt=s:JavaSyntaxFoldTextExpr()" before v8.2.3900.
-setlocal foldtext=JavaSyntaxFoldTextExpr()
+  function! JavaSyntaxFoldTextExpr() abort
+    " Piggyback on NGETTEXT.
+    let summary = foldtext()
+    return getline(v:foldstart) !~ '/\*\+\s*$'
+      \ ? summary
+      \ : s:LazyPrefix(matchstr(summary, '^+-\+\s*\d\+\s.\{-1,}:\s'),
+			\ v:folddashes,
+			\ (v:foldend - v:foldstart + 1)) .
+	  \ getline(v:foldstart + 1)
+  endfunction
+
+  " E120 for "fdt=s:JavaSyntaxFoldTextExpr()" before v8.2.3900.
+  setlocal foldtext=JavaSyntaxFoldTextExpr()
+endif
 
 " Admit the ASCII dollar sign to keyword characters (JLS-17, §3.8):
 try
@@ -624,15 +634,25 @@ if !has("vim9script")
   finish
 endif
 
-def! s:JavaSyntaxFoldTextExpr(): string
-  return getline(v:foldstart) !~ '/\*\+\s*$'
-    ? foldtext()
-    : printf('+-%s%3d lines: ',
-	  v:folddashes,
-	  (v:foldend - v:foldstart + 1)) ..
-	getline(v:foldstart + 1)
-enddef
+if exists("g:java_foldtext_show_first_or_second_line")
+  def! s:LazyPrefix(prefix: string, dashes: string, count: number): string
+    return empty(prefix)
+      ? printf('+-%s%3d lines: ', dashes, count)
+      : prefix
+  enddef
 
-setlocal foldtext=s:JavaSyntaxFoldTextExpr()
-delfunction! g:JavaSyntaxFoldTextExpr
+  def! s:JavaSyntaxFoldTextExpr(): string
+    # Piggyback on NGETTEXT.
+    const summary: string = foldtext()
+    return getline(v:foldstart) !~ '/\*\+\s*$'
+      ? summary
+      : LazyPrefix(matchstr(summary, '^+-\+\s*\d\+\s.\{-1,}:\s'),
+			v:folddashes,
+			(v:foldend - v:foldstart + 1)) ..
+	  getline(v:foldstart + 1)
+  enddef
+
+  setlocal foldtext=s:JavaSyntaxFoldTextExpr()
+  delfunction! g:JavaSyntaxFoldTextExpr
+endif
 " vim: sw=2 ts=8 noet sta
