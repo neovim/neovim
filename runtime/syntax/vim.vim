@@ -371,7 +371,7 @@ endif
 syn case ignore
 syn keyword	vimUserAttrbKey   contained	bar	ban[g]	cou[nt]	ra[nge] com[plete]	n[args]	re[gister]
 " GEN_SYN_VIM: vimUserAttrbCmplt, START_STR='syn keyword vimUserAttrbCmplt contained', END_STR=''
-syn keyword vimUserAttrbCmplt contained arglist augroup behave buffer color command compiler cscope diff_buffer dir environment event expression file file_in_path filetype function help highlight history keymap locale mapclear mapping menu messages syntax syntime option packadd runtime shellcmd sign tag tag_listfiles user var breakpoint scriptnames dir_in_path
+syn keyword vimUserAttrbCmplt contained arglist augroup behave breakpoint buffer color command compiler cscope diff_buffer dir dir_in_path environment event expression file file_in_path filetype function help highlight history keymap locale mapclear mapping menu messages option packadd runtime scriptnames shellcmd sign syntax syntime tag tag_listfiles user var
 syn keyword	vimUserAttrbCmplt contained	custom customlist nextgroup=vimUserAttrbCmpltFunc,vimUserCmdError
 syn match	vimUserAttrbCmpltFunc contained	",\%([sS]:\|<[sS][iI][dD]>\)\=\%(\h\w*\%([.#]\h\w*\)\+\|\h\w*\)"hs=s+1 nextgroup=vimUserCmdError
 
@@ -518,13 +518,10 @@ VimL syn keyword	vimUnlet	unl[et]		skipwhite nextgroup=vimUnletBang,vimUnletVars
 syn match	vimUnletBang	contained	"!"	skipwhite nextgroup=vimUnletVars
 syn region	vimUnletVars	contained	start="$\I\|\h" skip="\n\s*\\" end="$" end="|" contains=vimVar,vimEnvvar,vimContinue,vimString,vimNumber
 
-" Note: This incorrectly matches end markers with leading whitespace even if
-"       "trim" was not specified.  Matching :let indent for "trim" indented
-"       end markers would require a contained :let that cannot be restricted
-"       to the start pattern.  A common internal testing use of heredocs is to
-"       specify code blocks where :let commonly appears in the heredoc text.
-VimFoldh syn region vimLetHereDoc	matchgroup=vimLetHereDocStart start='=<<\s*\%(trim\s\+\)\=\z(\L\S*\)'			matchgroup=vimLetHereDocStop end='^\s*\z1$' extend
-VimFoldh syn region vimLetHereDoc	matchgroup=vimLetHereDocStart start='=<<\s*\%(\%(trim\s\+\)\=eval\s\+\|eval\s\+\%(trim\s\+\)\=\)\z(\L\S*\)' matchgroup=vimLetHereDocStop end='^\s*\z1$' contains=@vimStringInterpolation extend
+VimFoldh syn region vimLetHereDoc	matchgroup=vimLetHereDocStart start='\%(^\z(\s*\)\S.*\)\@<==<<\s*trim\%(\s\+\)\@>\z(\L\S*\)'	matchgroup=vimLetHereDocStop end='^\z1\z2$' extend
+VimFoldh syn region vimLetHereDoc	matchgroup=vimLetHereDocStart start='=<<\%(\s*\)\@>\z(\L\S*\)'			matchgroup=vimLetHereDocStop end='^\z1$' extend
+VimFoldh syn region vimLetHereDoc	matchgroup=vimLetHereDocStart start='\%(^\z(\s*\)\S.*\)\@<==<<\s*\%(trim\s\+eval\|eval\s\+trim\)\%(\s\+\)\@>\z(\L\S*\)'	matchgroup=vimLetHereDocStop end='^\z1\z2$' contains=@vimStringInterpolation extend
+VimFoldh syn region vimLetHereDoc	matchgroup=vimLetHereDocStart start='=<<\s*eval\%(\s\+\)\@>\z(\L\S*\)'			matchgroup=vimLetHereDocStop end='^\z1$' contains=@vimStringInterpolation extend
 
 Vim9 syn keyword	vim9Const	const	skipwhite nextgroup=vim9Variable,vim9VariableList
 Vim9 syn keyword	vim9Final	final	skipwhite nextgroup=vim9Variable,vim9VariableList
@@ -931,12 +928,16 @@ if g:vimsyn_embed =~# 'l' && filereadable(s:luapath)
  unlet! b:current_syntax
  syn cluster vimFuncBodyList	add=vimLuaRegion
  exe "syn include @vimLuaScript ".s:luapath
- VimFoldl syn region vimLuaRegion matchgroup=vimScriptDelim start=+lua\s*<<\s*\z(.*\)$+ end=+^\z1$+	contains=@vimLuaScript
- VimFoldl syn region vimLuaRegion matchgroup=vimScriptDelim start=+lua\s*<<\s*$+ end=+\.$+	contains=@vimLuaScript
+ VimFoldl syn region vimLuaRegion matchgroup=vimScriptDelim start=+^\z(\s*\)lua\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+	contains=@vimLuaScript
+ VimFoldl syn region vimLuaRegion matchgroup=vimScriptDelim start=+lua\s*<<\s*\z(\S*\)+ end=+^\z1$+		contains=@vimLuaScript
+ VimFoldl syn region vimLuaRegion matchgroup=vimScriptDelim start=+^\z(\s*\)lua\s*<<\s*trim\s*$+ end=+^\z1\.$+	contains=@vimLuaScript
+ VimFoldl syn region vimLuaRegion matchgroup=vimScriptDelim start=+lua\s*<<\s*$+ end=+^\.$+		contains=@vimLuaScript
  syn cluster vimFuncBodyList	add=vimLuaRegion
 else
- syn region vimEmbedError start=+lua\s*<<\s*\z(.*\)$+ end=+^\z1$+
- syn region vimEmbedError start=+lua\s*<<\s*$+ end=+\.$+
+ syn region vimEmbedError start=+^\z(\s*\)lua\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+
+ syn region vimEmbedError start=+lua\s*<<\s*\z(\S*\)+ end=+^\z1$+
+ syn region vimEmbedError start=+^\z(\s*\)lua\s*<<\s*trim\s\*$+ end=+^\z1\.$+
+ syn region vimEmbedError start=+lua\s*<<\s*$+ end=+^\.$+
 endif
 unlet s:luapath
 
@@ -956,12 +957,16 @@ if g:vimsyn_embed =~# 'p' && filereadable(s:perlpath)
  let s:foldmethod = &l:foldmethod
  exe "syn include @vimPerlScript ".s:perlpath
  let &l:foldmethod = s:foldmethod
- VimFoldp syn region vimPerlRegion  matchgroup=vimScriptDelim start=+pe\%[rl]\s*<<\s*\z(\S*\)\ze\(\s*["#].*\)\=$+ end=+^\z1\ze\(\s*[#"].*\)\=$+	contains=@vimPerlScript
- VimFoldp syn region vimPerlRegion	matchgroup=vimScriptDelim start=+pe\%[rl]\s*<<\s*$+ end=+\.$+			contains=@vimPerlScript
+ VimFoldp syn region vimPerlRegion	matchgroup=vimScriptDelim start=+^\z(\s*\)pe\%[rl]\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+	contains=@vimPerlScript
+ VimFoldp syn region vimPerlRegion	matchgroup=vimScriptDelim start=+pe\%[rl]\s*<<\s*\z(\S*\)+ end=+^\z1$+		contains=@vimPerlScript
+ VimFoldp syn region vimPerlRegion	matchgroup=vimScriptDelim start=+^\z(\s*\)pe\%[rl]\s*<<\s*trim\s*$+ end=+^\z1\.$+	contains=@vimPerlScript
+ VimFoldp syn region vimPerlRegion	matchgroup=vimScriptDelim start=+pe\%[rl]\s*<<\s*$+ end=+\.$+		contains=@vimPerlScript
  syn cluster vimFuncBodyList	add=vimPerlRegion
 else
- syn region vimEmbedError start=+pe\%[rl]\s*<<\s*\z(.*\)$+ end=+^\z1$+
- syn region vimEmbedError start=+pe\%[rl]\s*<<\s*$+ end=+\.$+
+ syn region vimEmbedError start=+^\z(\s*\)pe\%[rl]\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+
+ syn region vimEmbedError start=+pe\%[rl]\s*<<\s*\z(\S*\)+ end=+^\z1$+
+ syn region vimEmbedError start=+^\z(\s*\)pe\%[rl]\s*<<\s*trim\s\*$+ end=+^\z1\.$+
+ syn region vimEmbedError start=+pe\%[rl]\s*<<\s*$+ end=+^\.$+
 endif
 unlet s:perlpath
 
@@ -981,12 +986,16 @@ if g:vimsyn_embed =~# 'r' && filereadable(s:rubypath)
  let s:foldmethod = &l:foldmethod
  exe "syn include @vimRubyScript ".s:rubypath
  let &l:foldmethod = s:foldmethod
- VimFoldr syn region vimRubyRegion	matchgroup=vimScriptDelim start=+rub[y]\s*<<\s*\z(\S*\)\ze\(\s*#.*\)\=$+ end=+^\z1\ze\(\s*".*\)\=$+	contains=@vimRubyScript
- syn region vimRubyRegion	matchgroup=vimScriptDelim start=+rub[y]\s*<<\s*$+ end=+\.$+			contains=@vimRubyScript
+ VimFoldr syn region vimRubyRegion	matchgroup=vimScriptDelim start=+^\z(\s*\)rub\%[y]\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+	contains=@vimRubyScript
+ VimFoldr syn region vimRubyRegion	matchgroup=vimScriptDelim start=+rub\%[y]\s*<<\s*\z(\S*\)+ end=+^\z1$+		contains=@vimRubyScript
+ VimFoldr syn region vimRubyRegion	matchgroup=vimScriptDelim start=+^\z(\s*\)rub\%[y]\s*<<\s*trim\s*$+ end=+^\z1\.$+	contains=@vimRubyScript
+ VimFoldr syn region vimRubyRegion	matchgroup=vimScriptDelim start=+rub\%[y]\s*<<\s*$+ end=+\.$+		contains=@vimRubyScript
  syn cluster vimFuncBodyList	add=vimRubyRegion
 else
- syn region vimEmbedError start=+rub[y]\s*<<\s*\z(.*\)$+ end=+^\z1$+
- syn region vimEmbedError start=+rub[y]\s*<<\s*$+ end=+\.$+
+ syn region vimEmbedError start=+^\z(\s*\)rub\%[y]\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+
+ syn region vimEmbedError start=+rub\%[y]\s*<<\s*\z(\S.*\)+ end=+^\z1$+
+ syn region vimEmbedError start=+^\z(\s*\)rub\%[y]\s*<<\s*trim\s\*$+ end=+^\z1\.$+
+ syn region vimEmbedError start=+rub\%[y]\s*<<\s*$+ end=+^\.$+
 endif
 unlet s:rubypath
 
@@ -1004,14 +1013,18 @@ if g:vimsyn_embed =~# 'P' && filereadable(s:pythonpath)
  unlet! b:current_syntax
  syn cluster vimFuncBodyList	add=vimPythonRegion
  exe "syn include @vimPythonScript ".s:pythonpath
- VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+py\%[thon][3x]\=\s*<<\s*\%(trim\s*\)\=\z(\S*\)\ze\(\s*#.*\)\=$+ end=+^\z1\ze\(\s*".*\)\=$+	contains=@vimPythonScript
- VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+py\%[thon][3x]\=\s*<<\s*\%(trim\s*\)\=$+ end=+\.$+				contains=@vimPythonScript
- VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+Py\%[thon]2or3\s*<<\s*\%(trim\s*\)\=\z(\S*\)\ze\(\s*#.*\)\=$+ end=+^\z1\ze\(\s*".*\)\=$+	contains=@vimPythonScript
- VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+Py\%[thon]2or3\=\s*<<\s*\%(trim\s*\)\=$+ end=+\.$+				contains=@vimPythonScript
+ VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+^\z(\s*\)py\%[thon][3x]\=\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+	contains=@vimPythonScript
+ VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+py\%[thon][3x]\=\s*<<\s*\z(\S\+\)+ end=+^\z1$+		contains=@vimPythonScript
+ VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+^\z(\s*\)py\%[thon][3x]\=\s*<<\s*trim\s*$+ end=+^\z1\.$+	contains=@vimPythonScript
+ VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+py\%[thon][3x]\=\s*<<\s*$+ end=+^\.$+			contains=@vimPythonScript
+ VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+Py\%[thon]2or3\s*<<\s*\%(trim\s*\)\=\z(\S\+\)+ end=+^\z1$+	contains=@vimPythonScript
+ VimFoldP syn region vimPythonRegion matchgroup=vimScriptDelim start=+Py\%[thon]2or3\s*<<\s*\%(trim\s*\)\=$+ end=+^\.$+		contains=@vimPythonScript
  syn cluster vimFuncBodyList	add=vimPythonRegion
 else
- syn region vimEmbedError start=+py\%[thon]3\=\s*<<\s*\z(.*\)$+ end=+^\z1$+
- syn region vimEmbedError start=+py\%[thon]3\=\s*<<\s*$+ end=+\.$+
+ syn region vimEmbedError start=+^\z(\s*\)py\%[thon][3x]\=\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+
+ syn region vimEmbedError start=+py\%[thon][3x]\=\s*<<\s*\z(\S\+\)+ end=+^\z1$+
+ syn region vimEmbedError start=+^\z(\s*\)py\%[thon][3x]\=\s*<<\s*trim\s*$+ end=+^\z1\.$+
+ syn region vimEmbedError start=+py\%[thon][3x]\=\s*<<\s*$+ end=+^\.$+
 endif
 unlet s:pythonpath
 
@@ -1036,17 +1049,23 @@ if s:trytcl
   unlet! b:current_syntax
   syn cluster vimFuncBodyList	add=vimTclRegion
   exe "syn include @vimTclScript ".s:tclpath
-  VimFoldt syn region vimTclRegion matchgroup=vimScriptDelim start=+tc[l]\=\s*<<\s*\z(.*\)$+ end=+^\z1$+	contains=@vimTclScript
-  VimFoldt syn region vimTclRegion matchgroup=vimScriptDelim start=+tc[l]\=\s*<<\s*$+ end=+\.$+	contains=@vimTclScript
+  VimFoldt syn region vimTclRegion matchgroup=vimScriptDelim start=+^\z(\s*\)tc\%[l]\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+	contains=@vimTclScript
+  VimFoldt syn region vimTclRegion matchgroup=vimScriptDelim start=+tc\%[l]\=\s*<<\s*\z(\S*\)+ end=+^\z1$+		contains=@vimTclScript
+  VimFoldt syn region vimTclRegion matchgroup=vimScriptDelim start=+^\z(\s*\)tc\%[l]\s*<<\s*trim\s*$+ end=+^\z1\.$+	contains=@vimTclScript
+  VimFoldt syn region vimTclRegion matchgroup=vimScriptDelim start=+tc\%[l]\=\s*<<\s*$+ end=+^\.$+		contains=@vimTclScript
   syn cluster vimFuncBodyList	add=vimTclScript
  else
-  syn region vimEmbedError start=+tc[l]\=\s*<<\s*\z(.*\)$+ end=+^\z1$+
-  syn region vimEmbedError start=+tc[l]\=\s*<<\s*$+ end=+\.$+
+  syn region vimEmbedError start=+^\z(\s*\)tc\%[l]\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+
+  syn region vimEmbedError start=+tc\%[l]\=\s*<<\s*\z(\S*\)+ end=+^\z1$+
+  syn region vimEmbedError start=+^\z(\s*\)tc\%[l]\s*<<\s*trim\s\*$+ end=+^\z1\.$+
+  syn region vimEmbedError start=+tc\%[l]\=\s*<<\s*$+ end=+^\.$+
  endif
  unlet s:tclpath
 else
- syn region vimEmbedError start=+tc[l]\=\s*<<\s*\z(.*\)$+ end=+^\z1$+
- syn region vimEmbedError start=+tc[l]\=\s*<<\s*$+ end=+\.$+
+ syn region vimEmbedError start=+^\z(\s*\)tc\%[l]\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+
+ syn region vimEmbedError start=+tc\%[l]\=\s*<<\s*\z(\S*\)+ end=+^\z1$+
+ syn region vimEmbedError start=+^\z(\s*\)tc\%[l]\s*<<\s*trim\s\*$+ end=+^\z1\.$+
+ syn region vimEmbedError start=+tc\%[l]\=\s*<<\s*$+ end=+^\.$+
 endif
 unlet s:trytcl
 
@@ -1067,12 +1086,16 @@ if g:vimsyn_embed =~# 'm' && filereadable(s:mzschemepath)
  exe "syn include @vimMzSchemeScript ".s:mzschemepath
  let &isk= s:iskKeep
  unlet s:iskKeep
- VimFoldm syn region vimMzSchemeRegion matchgroup=vimScriptDelim start=+mz\%[scheme]\s*<<\s*\z(.*\)$+ end=+^\z1$+	contains=@vimMzSchemeScript
- VimFoldm syn region vimMzSchemeRegion matchgroup=vimScriptDelim start=+mz\%[scheme]\s*<<\s*$+ end=+\.$+		contains=@vimMzSchemeScript
+ VimFoldm syn region vimMzSchemeRegion matchgroup=vimScriptDelim start=+^\z(\s*\)mz\%[scheme]\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+	contains=@vimMzSchemeScript
+ VimFoldm syn region vimMzSchemeRegion matchgroup=vimScriptDelim start=+mz\%[scheme]\s*<<\s*\z(\S*\)+ end=+^\z1$+	contains=@vimMzSchemeScript
+ VimFoldm syn region vimMzSchemeRegion matchgroup=vimScriptDelim start=+^\z(\s*\)mz\%[scheme]\s*<<\s*trim\s*$+ end=+^\z1\.$+	contains=@vimMzSchemeScript
+ VimFoldm syn region vimMzSchemeRegion matchgroup=vimScriptDelim start=+mz\%[scheme]\s*<<\s*$+ end=+^\.$+		contains=@vimMzSchemeScript
  syn cluster vimFuncBodyList	add=vimMzSchemeRegion
 else
- syn region vimEmbedError start=+mz\%[scheme]\s*<<\s*\z(.*\)$+ end=+^\z1$+
- syn region vimEmbedError start=+mz\%[scheme]\s*<<\s*$+ end=+\.$+
+ syn region vimEmbedError start=+^\z(\s*\)mz\%[scheme]\s*<<\s*trim\s\+\z(\S\+\)+ end=+^\z1\z2$+
+ syn region vimEmbedError start=+mz\%[scheme]\s*<<\s*\z(\S*\)+ end=+^\z1$+
+ syn region vimEmbedError start=+^\z(\s*\)mz\%[scheme]\s*<<\s*trim\s\*$+ end=+^\z1\.$+
+ syn region vimEmbedError start=+mz\%[scheme]\s*<<\s*$+ end=+^\.$+
 endif
 unlet s:mzschemepath
 
