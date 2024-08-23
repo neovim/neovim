@@ -1550,4 +1550,37 @@ func Test_pum_user_hl_group()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_user_kind_hlgroup()
+  CheckScreendump
+  let lines =<< trim END
+    func CompleteFunc( findstart, base )
+      if a:findstart
+        return 0
+      endif
+      return {
+            \ 'words': [
+            \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'variable', 'kind_hlgroup': 'KindVar', 'hl_group': 'StrikeFake' },
+            \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'function', 'kind_hlgroup': 'KindFunc' },
+            \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'class', 'kind_hlgroup': 'KindClass'  },
+            \]}
+    endfunc
+    set completeopt=menu
+    set completefunc=CompleteFunc
+
+    hi StrikeFake ctermfg=9
+    hi KindVar ctermfg=yellow
+    hi KindFunc ctermfg=blue
+    hi KindClass ctermfg=green
+  END
+  call writefile(lines, 'Xscript', 'D')
+  let buf = RunVimInTerminal('-S Xscript', {})
+
+  call TermWait(buf)
+  call term_sendkeys(buf, "S\<C-X>\<C-U>")
+  call VerifyScreenDump(buf, 'Test_pum_highlights_16', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
