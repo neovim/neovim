@@ -60,12 +60,8 @@ func s:Highlight_Matching_Pair()
   let before = 0
 
   let text = getline(c_lnum)
-  let matches = matchlist(text, '\(.\)\=\%'.c_col.'c\(.\=\)')
-  if empty(matches)
-    let [c_before, c] = ['', '']
-  else
-    let [c_before, c] = matches[1:2]
-  endif
+  let c_before = text->strpart(0, c_col - 1)->slice(-1)
+  let c = text->strpart(c_col - 1)->slice(0, 1)
   let plist = split(&matchpairs, '.\zs[:,]')
   let i = index(plist, c)
   if i < 0
