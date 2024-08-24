@@ -1668,6 +1668,37 @@ func Test_search_with_no_last_pat()
   call delete('Xresult')
 endfunc
 
+" Test for using the last substitute pattern without last search pattern.
+func Test_search_with_last_substitute_pat()
+  let lines =<< trim [SCRIPT]
+    new
+    set shortmess+=S
+    call setline(1, repeat(['foofoo'], 3))
+    %s/foo/bar/
+    call assert_equal(repeat(['barfoo'], 3), getline(1, '$'))
+
+    call cursor(1, 1)
+    call assert_equal("/foo", execute('call feedkeys("/\r", "tx")', '')->trim())
+    call assert_equal([0, 1, 4, 0], getpos('.'))
+
+    if has('rightleft')
+      set rightleft rightleftcmd=search
+      call cursor(1, 1)
+      call assert_equal("oof/", execute('call feedkeys("/\r", "tx")', '')->trim())
+      call assert_equal([0, 1, 4, 0], getpos('.'))
+    endif
+
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript', 'D')
+
+  if RunVim([], [], '--clean -S Xscript')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xresult')
+endfunc
+
 " Test for using tilde (~) atom in search. This should use the last used
 " substitute pattern
 func Test_search_tilde_pat()
