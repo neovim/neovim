@@ -5011,6 +5011,47 @@ describe('builtin popupmenu', function()
         ]])
         feed('<C-E><Esc>')
       end)
+
+      -- oldtest: Test_pum_user_kind_hlgroup()
+      it('custom kind_hlgroup override', function()
+        exec([[
+          func CompleteFunc( findstart, base )
+            if a:findstart
+              return 0
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'variable', 'kind_hlgroup': 'KindVar', 'hl_group': 'StrikeFake' },
+                  \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'function', 'kind_hlgroup': 'KindFunc' },
+                  \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'class', 'kind_hlgroup': 'KindClass'  },
+                  \]}
+          endfunc
+          set completeopt=menu
+          set completefunc=CompleteFunc
+
+          hi StrikeFake guifg=DarkRed
+          hi KindVar guifg=DarkYellow
+          hi KindFunc guifg=DarkBlue
+          hi KindClass guifg=DarkGreen
+        ]])
+
+        local attr_ids = screen:get_default_attr_ids()
+        attr_ids.kvs = { foreground = Screen.colors.DarkYellow, background = Screen.colors.Grey }
+        attr_ids.kfn = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Plum1 }
+        attr_ids.kcn = { foreground = Screen.colors.DarkGreen, background = Screen.colors.Plum1 }
+        screen:set_default_attr_ids(attr_ids)
+
+        feed('S<C-X><C-U>')
+        screen:expect([[
+          aword1^                          |
+          {ds:aword1 }{kvs:variable }{ds:extra text 1 }{1:   }|
+          {n:aword2 }{kfn:function }{n:extra text 2 }{1:   }|
+          {n:你好   }{kcn:class    }{n:extra text 3 }{1:   }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
+      end)
     end
   end
 
