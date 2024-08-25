@@ -378,7 +378,7 @@ function vim.api.nvim_buf_get_commands(buffer, opts) end
 ---             • details: Whether to include the details dict
 ---             • hl_name: Whether to include highlight group name instead of
 ---               id, true if omitted
---- @return vim.api.keyset.get_extmark_item
+--- @return vim.api.keyset.get_extmark_item_by_id
 function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 
 --- Gets `extmarks` in "traversal order" from a `charwise` region defined by
