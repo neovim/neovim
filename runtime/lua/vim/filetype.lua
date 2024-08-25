@@ -3099,6 +3099,10 @@ end
 ---@return function|nil # A function that modifies buffer state when called (for example, to set some
 ---                     filetype specific buffer variables). The function accepts a buffer number as
 ---                     its only argument.
+---@return boolean|nil # Return true if a match was found by falling back to a generic configuration
+---                    file (i.e., ".conf"). If true, the filetype should be set with
+---                    `:setf FALLBACK conf`, which enables a later |:setf| command to override the
+---                    filetype. See `:help setf` for more information.
 function M.match(args)
   vim.validate('arg', args, 'table')
 
@@ -3191,9 +3195,17 @@ function M.match(args)
           return dispatch(extension[ext], name, bufnr)
         end
       )
-      if ok then
+      if ok and ft then
         return ft, on_detect
       end
+    end
+  end
+
+  -- Generic configuration file used as fallback
+  if name and bufnr then
+    local ft = detect.conf(name, bufnr)
+    if ft then
+      return ft, nil, true
     end
   end
 end
