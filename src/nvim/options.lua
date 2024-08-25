@@ -10187,6 +10187,26 @@ local options = {
       type = 'number',
     },
     {
+      defaults = { if_true = '' },
+      cb = 'did_set_winborder',
+      values = { 'double', 'single', 'shadow', 'rounded', 'solid', 'none' },
+      desc = [=[
+        Defines the default border style of floating windows. The default value
+        is empty, which is equivalent to "none". Valid values include:
+        - "none": No border.
+        - "single": A single line box.
+        - "double": A double line box.
+        - "rounded": Like "single", but with rounded corners ("╭" etc.).
+        - "solid": Adds padding by a single whitespace cell.
+        - "shadow": A drop shadow effect by blending with the background.
+      ]=],
+      full_name = 'winborder',
+      scope = { 'global' },
+      short_desc = N_('border of floating window'),
+      type = 'string',
+      varname = 'p_winbd',
+    },
+    {
       abbreviation = 'wi',
       cb = 'did_set_window',
       defaults = {
