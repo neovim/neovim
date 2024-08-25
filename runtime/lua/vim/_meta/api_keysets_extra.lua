@@ -43,10 +43,16 @@ error('Cannot require a meta file')
 --- @field line_hl_group? string
 --- @field cursorline_hl_group? string
 
---- @class vim.api.keyset.get_extmark_item
+--- @class vim.api.keyset.get_extmark_item_by_id
 --- @field [1] integer row
 --- @field [2] integer col
 --- @field [3] vim.api.keyset.extmark_details?
+
+--- @class vim.api.keyset.get_extmark_item
+--- @field [1] integer extmark_id
+--- @field [2] integer row
+--- @field [3] integer col
+--- @field [4] vim.api.keyset.extmark_details?
 
 --- @class vim.api.keyset.get_mark
 --- @field [1] integer row
