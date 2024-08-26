@@ -410,7 +410,7 @@ local function trigger(bufnr, clients)
   reset_timer()
   Context:cancel_pending()
 
-  if tonumber(vim.fn.pumvisible()) == 1 and Context.isIncomplete then
+  if tonumber(vim.fn.pumvisible()) == 1 and not Context.isIncomplete then
     return
   end
 
