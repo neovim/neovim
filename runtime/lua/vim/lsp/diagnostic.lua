@@ -110,6 +110,14 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   return vim.tbl_map(function(diagnostic)
     local start = diagnostic.range.start
     local _end = diagnostic.range['end']
+    local message = diagnostic.message
+    if type(message) ~= 'string' then
+      vim.notify_once(
+        string.format('Unsupported Markup message from LSP client %d', client_id),
+        vim.lsp.log_levels.ERROR
+      )
+      message = diagnostic.message.value
+    end
     --- @type vim.Diagnostic
     return {
       lnum = start.line,
@@ -117,7 +125,7 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       end_lnum = _end.line,
       end_col = line_byte_from_position(buf_lines, _end.line, _end.character, offset_encoding),
       severity = severity_lsp_to_vim(diagnostic.severity),
-      message = diagnostic.message,
+      message = message,
       source = diagnostic.source,
       code = diagnostic.code,
       _tags = tags_lsp_to_vim(diagnostic, client_id),
