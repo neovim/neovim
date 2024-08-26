@@ -464,7 +464,7 @@ local function pick_call_hierarchy_item(call_hierarchy_items)
   if choice < 1 or choice > #items then
     return
   end
-  return choice
+  return call_hierarchy_items[choice]
 end
 
 --- @param method string
