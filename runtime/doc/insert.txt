@@ -1185,9 +1185,10 @@ items:
 			to the completion items
 	kind_hlgroup	an additional highlight group specifically for setting
 			the highlight attributes of the completion kind. When
-			this field is present, it will override the |hl-PmenuKind|
-			highlight group, allowing for the customization of
-			ctermfd and guifg properties for the completion kind
+			this field is present, it will override the
+			|hl-PmenuKind| highlight group, allowing for the
+			customization of ctermfg and guifg properties for the
+			completion kind
 
 All of these except "icase", "equal", "dup" and "empty" must be a string.  If
 an item does not meet these requirements then an error message is given and
