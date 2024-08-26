@@ -212,37 +212,6 @@ INTERNAL void vterm_state_savepen(VTermState *state, int save)
   }
 }
 
-int vterm_color_is_equal(const VTermColor *a, const VTermColor *b)
-{
-  /* First make sure that the two colours are of the same type (RGB/Indexed) */
-  if (a->type != b->type) {
-    return false;
-  }
-
-  /* Depending on the type inspect the corresponding members */
-  if (VTERM_COLOR_IS_INDEXED(a)) {
-    return a->indexed.idx == b->indexed.idx;
-  }
-  else if (VTERM_COLOR_IS_RGB(a)) {
-    return    (a->rgb.red   == b->rgb.red)
-           && (a->rgb.green == b->rgb.green)
-           && (a->rgb.blue  == b->rgb.blue);
-  }
-
-  return 0;
-}
-
-void vterm_state_get_default_colors(const VTermState *state, VTermColor *default_fg, VTermColor *default_bg)
-{
-  *default_fg = state->default_fg;
-  *default_bg = state->default_bg;
-}
-
-void vterm_state_get_palette_color(const VTermState *state, int index, VTermColor *col)
-{
-  lookup_colour_palette(state, index, col);
-}
-
 void vterm_state_set_default_colors(VTermState *state, const VTermColor *default_fg, const VTermColor *default_bg)
 {
   if(default_fg) {
@@ -270,11 +239,6 @@ void vterm_state_convert_color_to_rgb(const VTermState *state, VTermColor *col)
     lookup_colour_palette(state, col->indexed.idx, col);
   }
   col->type &= VTERM_COLOR_TYPE_MASK; /* Reset any metadata but the type */
-}
-
-void vterm_state_set_bold_highbright(VTermState *state, int bold_is_highbright)
-{
-  state->bold_is_highbright = bold_is_highbright;
 }
 
 INTERNAL void vterm_state_setpen(VTermState *state, const long args[], int argcount)
@@ -551,68 +515,6 @@ INTERNAL int vterm_state_getpen(VTermState *state, long args[], int argcount)
   }
 
   return argi;
-}
-
-int vterm_state_get_penattr(const VTermState *state, VTermAttr attr, VTermValue *val)
-{
-  switch(attr) {
-  case VTERM_ATTR_BOLD:
-    val->boolean = state->pen.bold;
-    return 1;
-
-  case VTERM_ATTR_UNDERLINE:
-    val->number = state->pen.underline;
-    return 1;
-
-  case VTERM_ATTR_ITALIC:
-    val->boolean = state->pen.italic;
-    return 1;
-
-  case VTERM_ATTR_BLINK:
-    val->boolean = state->pen.blink;
-    return 1;
-
-  case VTERM_ATTR_REVERSE:
-    val->boolean = state->pen.reverse;
-    return 1;
-
-  case VTERM_ATTR_CONCEAL:
-    val->boolean = state->pen.conceal;
-    return 1;
-
-  case VTERM_ATTR_STRIKE:
-    val->boolean = state->pen.strike;
-    return 1;
-
-  case VTERM_ATTR_FONT:
-    val->number = state->pen.font;
-    return 1;
-
-  case VTERM_ATTR_FOREGROUND:
-    val->color = state->pen.fg;
-    return 1;
-
-  case VTERM_ATTR_BACKGROUND:
-    val->color = state->pen.bg;
-    return 1;
-
-  case VTERM_ATTR_SMALL:
-    val->boolean = state->pen.small;
-    return 1;
-
-  case VTERM_ATTR_BASELINE:
-    val->number = state->pen.baseline;
-    return 1;
-
-  case VTERM_ATTR_URI:
-    val->number = state->pen.uri;
-    return 1;
-
-  case VTERM_N_ATTRS:
-    return 0;
-  }
-
-  return 0;
 }
 
 int vterm_state_set_penattr(VTermState *state, VTermAttr attr, VTermValueType type, VTermValue *val)
