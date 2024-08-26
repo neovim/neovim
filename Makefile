@@ -9,7 +9,7 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
 all: nvim
 
-CMAKE ?= $(shell (command -v cmake3 || echo cmake))
+CMAKE ?= $(shell (command -v cmake3 || command -v cmake || echo cmake))
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS ?=
