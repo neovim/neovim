@@ -155,14 +155,4 @@ appimage:
 appimage-%:
 	bash scripts/genappimage.sh $*
 
-# Generic pattern rules, allowing for `make build/bin/nvim` etc.
-# Does not work with "Unix Makefiles".
-ifeq ($(CMAKE_GENERATOR),Ninja)
-build/%: phony_force
-	$(BUILD_TOOL) -C build $(patsubst build/%,%,$@)
-
-$(DEPS_BUILD_DIR)/%: phony_force
-	$(BUILD_TOOL) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
-endif
-
 .PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
