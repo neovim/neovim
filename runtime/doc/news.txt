@@ -68,6 +68,8 @@ LSP
 • Add convert field in |vim.lsp.completion.BufferOpts| of
   |vim.lsp.completion.enable()| an optional function used to customize the
   transformation of an Lsp CompletionItem to |complete-items|.
+• |vim.lsp.diagnostic.from()| can be used to convert a list of
+  |vim.Diagnostic| objects into their LSP diagnostic representation.
 
 LUA
 
