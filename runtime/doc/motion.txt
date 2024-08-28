@@ -355,11 +355,11 @@ gg			Goto line [count], default first line, on the first
 			See also 'startofline' option.
 
 :[range]go[to] [count]					*:go* *:goto* *go*
-[count]go		Go to [count] byte in the buffer.  Default [count] is
-			one, start of the file.  When giving [range], the
-			last number in it used as the byte count.  End-of-line
-			characters are counted depending on the current
-			'fileformat' setting.
+[count]go		Go to [count] byte in the buffer.  |exclusive| motion.
+			Default [count] is one, start of the file.  When
+			giving [range], the last number in it used as the byte
+			count.  End-of-line characters are counted depending
+			on the current 'fileformat' setting.
 			Also see the |line2byte()| function, and the 'o'
 			option in 'statusline'.
 

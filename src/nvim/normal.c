@@ -5631,6 +5631,7 @@ static void nv_g_cmd(cmdarg_T *cap)
 
   // "go": goto byte count from start of buffer
   case 'o':
+    oap->inclusive = false;
     goto_byte(cap->count0);
     break;
 
