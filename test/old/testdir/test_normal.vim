@@ -4291,4 +4291,17 @@ func Test_scroll_longline_no_loop()
   exe "normal! \<C-E>"
   bwipe!
 endfunc
+
+" Test for go command
+func Test_normal_go()
+  new
+  call setline(1, ['one two three four'])
+  call cursor(1, 5)
+  norm! dvgo
+  call assert_equal('wo three four', getline(1))
+  norm! ...
+  call assert_equal('three four', getline(1))
+
+  bwipe!
+endfunc
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
