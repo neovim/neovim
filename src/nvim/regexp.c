@@ -10006,7 +10006,7 @@ static int nfa_regatom(void)
     case 'e':
       EMIT(NFA_ZEND);
       rex.nfa_has_zend = true;
-      if (!re_mult_next("\\zs")) {
+      if (!re_mult_next("\\ze")) {
         return false;
       }
       break;
