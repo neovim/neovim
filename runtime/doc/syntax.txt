@@ -1692,6 +1692,22 @@ This will make the syntax synchronization start 50 lines before the first
 displayed line.  The default value is 10.  The disadvantage of using a larger
 number is that redrawing can become slow.
 
+Significant changes to the Java platform are gradually introduced in the form
+of JDK Enhancement Proposals (JEPs) that can be implemented for a release and
+offered as its preview features.  It may take several JEPs and a few release
+cycles for such a feature to become either integrated into the platform or
+withdrawn from this effort.  To cater for early adopters, there is optional
+support in Vim for syntax related preview features that are implemented.  You
+can request it by specifying a list of preview feature numbers as follows: >
+	:let g:java_syntax_previews = [430]
+
+The supported JEP numbers are to be drawn from this table:
+	`430`: String Templates [JDK 21]
+
+Note that as soon as the particular preview feature will have been integrated
+into the Java platform, its entry will be removed from the table and related
+optionality will be discontinued.
+
 
 JSON			*json.vim* *ft-json-syntax* *g:vim_json_conceal*
 					       *g:vim_json_warnings*

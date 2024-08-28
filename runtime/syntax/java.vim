@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Aug 22
+" Last Change:		2024 Aug 26
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -28,6 +28,10 @@ endfunction
 
 function! s:ff.RightConstant(x, y) abort
   return a:y
+endfunction
+
+function! s:ff.IsRequestedPreviewFeature(n) abort
+  return exists("g:java_syntax_previews") && index(g:java_syntax_previews, a:n) + 1
 endfunction
 
 if !exists("*s:ReportOnce")
@@ -367,9 +371,14 @@ syn match   javaSpecialChar	contained "\\\%(u\x\x\x\x\|[0-3]\o\o\|\o\o\=\|[bstnf
 syn region  javaString		start=+"+ end=+"+ end=+$+ contains=javaSpecialChar,javaSpecialError,@Spell
 syn region  javaString		start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell
 syn match   javaTextBlockError	+"""\s*"""+
-syn region  javaStrTemplEmbExp	contained matchgroup=javaStrTempl start="\\{" end="}" contains=TOP
-exec 'syn region javaStrTempl start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="+ end=+"+ contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,@Spell'
-exec 'syn region javaStrTempl start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell'
+
+if s:ff.IsRequestedPreviewFeature(430)
+  syn region javaStrTemplEmbExp	contained matchgroup=javaStrTempl start="\\{" end="}" contains=TOP
+  exec 'syn region javaStrTempl start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="+ end=+"+ contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,@Spell'
+  exec 'syn region javaStrTempl start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaStrTemplEmbExp,javaSpecialChar,javaSpecialError,javaTextBlockError,@Spell'
+  hi def link javaStrTempl	Macro
+endif
+
 syn match   javaCharacter	"'[^']*'" contains=javaSpecialChar,javaSpecialCharError
 syn match   javaCharacter	"'\\''" contains=javaSpecialChar
 syn match   javaCharacter	"'[^\\]'"
@@ -441,11 +450,16 @@ if exists("g:java_highlight_debug")
   syn match   javaDebugSpecial		contained "\\\%(u\x\x\x\x\|[0-3]\o\o\|\o\o\=\|[bstnfr"'\\]\)"
   syn region  javaDebugString		contained start=+"+ end=+"+ contains=javaDebugSpecial
   syn region  javaDebugString		contained start=+"""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugSpecial,javaDebugTextBlockError
-  " The highlight groups of java{StrTempl,Debug{,Paren,StrTempl}}\,
-  " share one colour by default. Do not conflate unrelated parens.
-  syn region  javaDebugStrTemplEmbExp	contained matchgroup=javaDebugStrTempl start="\\{" end="}" contains=javaComment,javaLineComment,javaDebug\%(Paren\)\@!.*
-  exec 'syn region javaDebugStrTempl contained start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="+ end=+"+ contains=javaDebugStrTemplEmbExp,javaDebugSpecial'
-  exec 'syn region javaDebugStrTempl contained start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugStrTemplEmbExp,javaDebugSpecial,javaDebugTextBlockError'
+
+  if s:ff.IsRequestedPreviewFeature(430)
+    " The highlight groups of java{StrTempl,Debug{,Paren,StrTempl}}\,
+    " share one colour by default. Do not conflate unrelated parens.
+    syn region javaDebugStrTemplEmbExp	contained matchgroup=javaDebugStrTempl start="\\{" end="}" contains=javaComment,javaLineComment,javaDebug\%(Paren\)\@!.*
+    exec 'syn region javaDebugStrTempl contained start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="+ end=+"+ contains=javaDebugStrTemplEmbExp,javaDebugSpecial'
+    exec 'syn region javaDebugStrTempl contained start=+\%(\.[[:space:]\n]*\)\@' . s:ff.Peek('80', '') . '<="""[ \t\x0c\r]*$+hs=e+1 end=+"""+he=s-1 contains=javaDebugStrTemplEmbExp,javaDebugSpecial,javaDebugTextBlockError'
+    hi def link javaDebugStrTempl	Macro
+  endif
+
   syn match   javaDebugTextBlockError	contained +"""\s*"""+
   syn match   javaDebugCharacter	contained "'[^\\]'"
   syn match   javaDebugSpecialCharacter contained "'\\.'"
@@ -471,7 +485,6 @@ if exists("g:java_highlight_debug")
 
   hi def link javaDebug			Debug
   hi def link javaDebugString		DebugString
-  hi def link javaDebugStrTempl		Macro
   hi def link javaDebugTextBlockError	Error
   hi def link javaDebugType		DebugType
   hi def link javaDebugBoolean		DebugBoolean
@@ -580,7 +593,6 @@ hi def link javaSpecial			Special
 hi def link javaSpecialError		Error
 hi def link javaSpecialCharError	Error
 hi def link javaString			String
-hi def link javaStrTempl		Macro
 hi def link javaCharacter		Character
 hi def link javaSpecialChar		SpecialChar
 hi def link javaNumber			Number
