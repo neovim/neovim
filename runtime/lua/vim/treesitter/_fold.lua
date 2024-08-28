@@ -103,6 +103,10 @@ local function edit_range(range, srow, erow_old, erow_new)
   range[2] = math.max(range[2], erow_new)
 end
 
+local get_parser = vim.func._memoize(tostring, function(bufnr)
+  return vim.F.npcall(ts.get_parser, bufnr)
+end)
+
 -- TODO(lewis6991): Setup a decor provider so injections folds can be parsed
 -- as the window is redrawn
 ---@param bufnr integer
@@ -114,7 +118,11 @@ local function compute_folds_levels(bufnr, info, srow, erow, parse_injections)
   srow = srow or 0
   erow = erow or api.nvim_buf_line_count(bufnr)
 
-  local parser = ts.get_parser(bufnr)
+  local parser = get_parser(bufnr)
+
+  if not parser then
+    return
+  end
 
   parser:parse(parse_injections and { srow, erow } or nil)
 
@@ -394,7 +402,7 @@ function M.foldexpr(lnum)
   lnum = lnum or vim.v.lnum
   local bufnr = api.nvim_get_current_buf()
 
-  local parser = vim.F.npcall(ts.get_parser, bufnr)
+  local parser = get_parser(bufnr)
   if not parser then
     return '0'
   end
