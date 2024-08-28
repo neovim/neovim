@@ -564,7 +564,7 @@ static void read_error_exit(void)
   if (silent_mode) {  // Normal way to exit for "nvim -es".
     getout(0);
   }
-  preserve_exit(_("Vim: Error reading input, exiting...\n"));
+  preserve_exit(_("Nvim: Error reading input, exiting...\n"));
 }
 
 static bool pending_events(MultiQueue *events)

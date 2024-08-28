@@ -1038,7 +1038,7 @@ static void clear_region(TUIData *tui, int top, int bot, int left, int right, in
   // with the default colorscheme background. Consequently, any flush that happens
   // during startup would result in clearing invalidated regions with zeroed
   // clear_attrs, perceived as a black flicker. Reset attributes to clear with
-  // current terminal background instead(#28667, #28668).
+  // current terminal background instead (#28667, #28668).
   if (tui->set_default_colors) {
     update_attrs(tui, attr_id);
   } else {

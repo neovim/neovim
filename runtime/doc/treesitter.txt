@@ -22,11 +22,9 @@ search for in the `parser` runtime directory.
 
 Nvim includes these parsers:
 
-- Bash
 - C
 - Lua
 - Markdown
-- Python
 - Vimscript
 - Vimdoc
 - Treesitter query files |ft-query-plugin|
@@ -550,9 +548,9 @@ the exact definition):
 @keyword.coroutine      keywords related to coroutines (e.g. `go` in Go, `async/await` in Python)
 @keyword.function       keywords that define a function (e.g. `func` in Go, `def` in Python)
 @keyword.operator       operators that are English words (e.g. `and`, `or`)
-@keyword.import         keywords for including modules (e.g. `import`, `from` in Python)
-@keyword.type           keywords defining composite types (e.g. `struct`, `enum`)
-@keyword.modifier       keywords defining type modifiers (e.g. `const`, `static`, `public`)
+@keyword.import         keywords for including or exporting modules (e.g. `import`, `from` in Python)
+@keyword.type           keywords describing namespaces and composite types (e.g. `struct`, `enum`)
+@keyword.modifier       keywords modifying other constructs (e.g. `const`, `static`, `public`)
 @keyword.repeat         keywords related to loops (e.g. `for`, `while`)
 @keyword.return         keywords like `return` and `yield`
 @keyword.debug          keywords related to debugging
@@ -608,7 +606,7 @@ the exact definition):
 @diff.delta             changed text (for diff files)
 
 @tag                    XML-style tag names (e.g. in XML, HTML, etc.)
-@tag.builtin            XML-style tag names (e.g. HTML5 tags)
+@tag.builtin            builtin tag names (e.g. HTML5 tags)
 @tag.attribute          XML-style tag attributes
 @tag.delimiter          XML-style tag delimiters
 
