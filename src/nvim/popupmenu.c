@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "nvim/api/buffer.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
@@ -32,6 +33,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -787,36 +789,41 @@ void pum_redraw(void)
   }
 }
 
-/// set info text to preview buffer.
+/// Set the informational text in the preview buffer when the completion
+/// item does not include a dedicated preview or popup window.
+///
+/// @param[in]  buf        Buffer where the text will be set.
+/// @param[in]  info       Informational text to display in the preview buffer.
+/// @param[in]  lnum       Where to start the text. Incremented for each added line.
+/// @param[out] max_width  Maximum width of the displayed text.
 static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *max_width)
 {
-  bcount_t inserted_bytes = 0;
-  for (char *p = info; *p != NUL;) {
-    int text_width = 0;
-    char *e = vim_strchr(p, '\n');
-    if (e == NULL) {
-      ml_append_buf(buf, (*lnum)++, p, 0, false);
-      text_width = (int)mb_string2cells(p);
-      if (text_width > *max_width) {
-        *max_width = text_width;
-      }
-      break;
-    }
-    *e = NUL;
-    ml_append_buf(buf, (*lnum)++, p, (int)(e - p + 1), false);
-    inserted_bytes += (bcount_t)strlen(p) + 1;
-    text_width = (int)mb_string2cells(p);
-    if (text_width > *max_width) {
-      *max_width = text_width;
-    }
-    *e = '\n';
-    p = e + 1;
+  Error err = ERROR_INIT;
+  Arena arena = ARENA_EMPTY;
+  Array replacement = ARRAY_DICT_INIT;
+  char *token = NULL;
+  char *line = os_strtok(info, "\n", &token);
+  buf->b_p_ma = true;
+  while (line != NULL) {
+    ADD(replacement, STRING_OBJ(cstr_to_string(line)));
+    (*lnum)++;
+    (*max_width) = MAX(*max_width, (int)mb_string2cells(line));
+    line = os_strtok(NULL, "\n", &token);
   }
-  // delete the empty last line
-  ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
-  if (get_cot_flags() & kOptCotFlagPopup) {
-    extmark_splice(buf, 1, 0, 1, 0, 0, buf->b_ml.ml_line_count, 0, inserted_bytes, kExtmarkNoUndo);
+
+  int original_textlock = textlock;
+  if (textlock > 0) {
+    textlock = 0;
   }
+  nvim_buf_set_lines(0, buf->handle, 0, -1, false, replacement, &arena, &err);
+  textlock = original_textlock;
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);
+    api_clear_error(&err);
+  }
+  arena_mem_free(arena_finish(&arena));
+  api_free_array(replacement);
+  buf->b_p_ma = false;
 }
 
 /// adjust floating info preview window position
@@ -866,14 +873,6 @@ win_T *pum_set_info(int selected, char *info)
     if (!wp) {
       return NULL;
     }
-  } else {
-    // clean exist buffer
-    linenr_T count = wp->w_buffer->b_ml.ml_line_count;
-    while (!buf_is_empty(wp->w_buffer)) {
-      ml_delete_buf(wp->w_buffer, 1, false);
-    }
-    bcount_t deleted_bytes = get_region_bytecount(wp->w_buffer, 1, count, 0, 0);
-    extmark_splice(wp->w_buffer, 1, 0, count, 0, deleted_bytes, 1, 0, 0, kExtmarkNoUndo);
   }
   linenr_T lnum = 0;
   int max_info_width = 0;
@@ -1011,7 +1010,8 @@ static bool pum_set_selected(int n, int repeat)
             && (curbuf->b_nwindows == 1)
             && (curbuf->b_fname == NULL)
             && bt_nofile(curbuf)
-            && (curbuf->b_p_bh[0] == 'w')) {
+            && (curbuf->b_p_bh[0] == 'w')
+            && !use_float) {
           // Already a "wipeout" buffer, make it empty.
           while (!buf_is_empty(curbuf)) {
             ml_delete(1, false);
