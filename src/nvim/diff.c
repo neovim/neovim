@@ -1702,6 +1702,7 @@ static void process_hunk(diff_T **dpp, diff_T **dprevp, int idx_orig, int idx_ne
 
     while (dn != dp->df_next) {
       dpl = dn->df_next;
+      xfree(dn->charmatchp);
       xfree(dn);
       dn = dpl;
     }
@@ -1808,6 +1809,7 @@ void diff_clear(tabpage_T *tp)
   diff_T *next_p;
   for (diff_T *p = tp->tp_first_diff; p != NULL; p = next_p) {
     next_p = p->df_next;
+    xfree(p->charmatchp);
     xfree(p);
   }
   tp->tp_first_diff = NULL;
@@ -2180,7 +2182,12 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           // CHARMATCH
           if (cur_char_length == 0) {
             // get the length of current character
-            cur_char_length = (size_t)utfc_ptr2len((const char *const)&diffbufs[i][j]);
+            if (diffbufs[i][j] == '\n') {
+              // this is the last character of the line
+              cur_char_length = 1;
+            } else {
+              cur_char_length = (size_t)utfc_ptr2len((const char *const)&diffbufs[i][j]);
+            }
             word_offset[i][diff_length[i]] = k;
             diff_length[i]++;
             total_word_count++;
@@ -2951,8 +2958,10 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int **hl
       (*hlresult) = dp->charmatchp + hlresult_line_offset;
     }
     if ((*hlresult) == NULL) {
+      xfree(line_org);
       return false;
     } else if ((*hlresult)[0] != -2) {  // -2 indicates that we've attempted a character wise diff with the
+      xfree(line_org);
       return false;                     // entire block, and with this individual line, and still exceeded
     } else {                            // the character limit
                                         //
