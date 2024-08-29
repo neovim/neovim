@@ -144,6 +144,7 @@ static const char e_missing_argument_str[]
 static const char *highlight_init_both[] = {
   "Cursor            guifg=bg      guibg=fg",
   "CursorLineNr      gui=bold      cterm=bold",
+  "PmenuSel          gui=reverse   cterm=reverse,underline blend=0",
   "RedrawDebugNormal gui=reverse   cterm=reverse",
   "TabLineSel        gui=bold      cterm=bold",
   "TermCursor        gui=reverse   cterm=reverse",
@@ -358,7 +359,6 @@ static const char *highlight_init_light[] = {
   "NonText              guifg=NvimLightGrey4",
   "NormalFloat                               guibg=NvimLightGrey1",
   "Pmenu                                     guibg=NvimLightGrey3            cterm=reverse",
-  "PmenuSel             guifg=NvimLightGrey3 guibg=NvimDarkGrey2             cterm=reverse,underline blend=0",
   "PmenuThumb                                guibg=NvimLightGrey4",
   "Question             guifg=NvimDarkCyan                                   ctermfg=6",
   "QuickFixLine         guifg=NvimDarkCyan                                   ctermfg=6",
@@ -443,7 +443,6 @@ static const char *highlight_init_dark[] = {
   "NonText              guifg=NvimDarkGrey4",
   "NormalFloat                                guibg=NvimDarkGrey1",
   "Pmenu                                      guibg=NvimDarkGrey3           cterm=reverse",
-  "PmenuSel             guifg=NvimDarkGrey3   guibg=NvimLightGrey2          cterm=reverse,underline blend=0",
   "PmenuThumb                                 guibg=NvimDarkGrey4",
   "Question             guifg=NvimLightCyan                                 ctermfg=14",
   "QuickFixLine         guifg=NvimLightCyan                                 ctermfg=14",
