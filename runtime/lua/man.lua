@@ -723,7 +723,7 @@ function M.open_page(count, smods, args)
   end
 
   sect, name = extract_sect_and_name_path(path)
-  local buf = fn.bufnr()
+  local buf = api.nvim_get_current_buf()
   local save_tfu = vim.bo[buf].tagfunc
   vim.bo[buf].tagfunc = "v:lua.require'man'.goto_tag"
 
@@ -739,7 +739,9 @@ function M.open_page(count, smods, args)
     end
   end)
 
-  vim.bo[buf].tagfunc = save_tfu
+  if api.nvim_buf_is_valid(buf) then
+    vim.bo[buf].tagfunc = save_tfu
+  end
 
   if not ok then
     error(ret)
