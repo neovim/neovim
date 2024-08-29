@@ -2823,7 +2823,7 @@ function vim.fn.getcharpos(expr) end
 ---   nnoremap <expr> , getcharsearch().forward ? ',' : ';'
 --- <Also see |setcharsearch()|.
 ---
---- @return table[]
+--- @return table
 function vim.fn.getcharsearch() end
 
 --- Get a single character from the user or input stream as a
