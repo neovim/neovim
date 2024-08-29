@@ -33,6 +33,10 @@ local function html_syntax_match()
       attr.underline = nil
       attr.undercurl = true
     end
+    attr.sp = style:match('text%-decoration%-color: #(%x+)')
+    if attr.sp then
+      attr.sp = tonumber(attr.sp, 16)
+    end
     attr.bg = style:match('background%-color: #(%x+)')
     if attr.bg then
       attr.bg = tonumber(attr.bg, 16)
@@ -49,7 +53,7 @@ local function html_syntax_match()
   local whitelist = {
     'fg',
     'bg',
-    --'sp',
+    'sp',
     --'blend',
     'bold',
     --'standout',
@@ -216,7 +220,7 @@ describe(':TOhtml', function()
 
   it('highlight attributes generated', function()
     --Make sure to uncomment the attribute in `html_syntax_match()`
-    exec('hi LINE gui=' .. table.concat({
+    exec('hi LINE guisp=#00ff00 gui=' .. table.concat({
       'bold',
       'underline',
       'italic',
