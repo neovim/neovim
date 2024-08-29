@@ -3858,7 +3858,7 @@ netrw:
 				  netrw-safe guioptions
 		Nov 15, 2021	* removed netrw_localrm and netrw_localrmdir
 				  references
-		Aug 18, 2022	* (Miguel Barro) improving compatability with
+		Aug 18, 2022	* (Miguel Barro) improving compatibility with
 				  powershell
 	v171:	Oct 09, 2020	* included code in s:NetrwOptionsSafe()
 				  to allow |'bh'| to be set to delete when

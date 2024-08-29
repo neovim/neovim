@@ -398,8 +398,8 @@ numerical highlight ids to the actual attributes.
 	`grid` will not be used anymore and the UI can free any data associated
 	with it.
 
-["grid_cursor_goto", grid, row, column] ~
-	Makes `grid` the current grid and `row, column` the cursor position on this
+["grid_cursor_goto", grid, row, col] ~
+	Makes `grid` the current grid and `row, col` the cursor position on this
 	grid.  This event will be sent at most once in a `redraw` batch and
 	indicates the visible cursor position.
 
@@ -610,7 +610,7 @@ tabs.
 	size). If the window was previously hidden, it should now be shown
 	again.
 
-["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, focusable] ~
+["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, focusable, zindex] ~
 	Display or reconfigure floating window `win`. The window should be
 	displayed above another grid `anchor_grid` at the specified position
 	`anchor_row` and `anchor_col`. For the meaning of `anchor` and more
