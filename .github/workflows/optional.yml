@@ -11,7 +11,7 @@ concurrency:
 env:
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
   # Double test timeout since it's running via qemu
-  TEST_TIMEOUT: 2400
+  TEST_TIMEOUT: 3600
   # TEST_FILE: test/functional/shada
   # TEST_FILTER: foo
 
@@ -23,7 +23,7 @@ jobs:
       matrix:
         test: [functionaltest, oldtest]
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
       - uses: docker://multiarch/ubuntu-core:s390x-focal
@@ -34,7 +34,7 @@ jobs:
             bash -c
             "
             apt-get -y update &&
-            DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential cmake curl gettext ninja-build locales-all cpanminus git attr libattr1-dev  &&
+            time DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential cmake curl gettext ninja-build locales-all cpanminus git attr libattr1-dev xdg-utils &&
             useradd --create-home qemuci &&
             chown -R qemuci. . &&
             runuser -u qemuci -- git clone --depth=1 https://github.com/neovim/neovim.git &&
