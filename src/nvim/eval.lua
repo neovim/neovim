@@ -3518,7 +3518,7 @@ M.funcs = {
     ]=],
     name = 'getcharsearch',
     params = {},
-    returns = 'table[]',
+    returns = 'table',
     signature = 'getcharsearch()',
   },
   getcharstr = {
