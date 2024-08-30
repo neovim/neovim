@@ -3339,6 +3339,7 @@ static void get_next_filename_completion(void)
 
       // Move leader to the file part
       leader = last_sep + 1;
+      leader_len -= path_len;
     }
   }
 
@@ -3392,13 +3393,18 @@ static void get_next_filename_completion(void)
       FreeWild(num_matches, matches);
       matches = sorted_matches;
       num_matches = fuzzy_indices.ga_len;
+    } else if (leader_len > 0) {
+      FreeWild(num_matches, matches);
+      num_matches = 0;
     }
 
     xfree(compl_fuzzy_scores);
     ga_clear(&fuzzy_indices);
   }
 
-  ins_compl_add_matches(num_matches, matches, p_fic || p_wic);
+  if (num_matches > 0) {
+    ins_compl_add_matches(num_matches, matches, p_fic || p_wic);
+  }
 }
 
 /// Get the next set of command-line completions matching "compl_pattern".
