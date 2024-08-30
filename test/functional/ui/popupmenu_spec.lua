@@ -5412,6 +5412,13 @@ describe('builtin popupmenu', function()
           {2:-- }{5:match 2 of 3}                 |
         ]])
 
+        feed('<Esc>S/non_exit_folder<C-X><C-F>')
+        screen:expect([[
+          /non_exit_folder^                |
+          {1:~                               }|*18
+          {2:-- }{6:Pattern not found}            |
+        ]])
+
         feed('<C-E><Esc>')
       end)
 
