@@ -1513,6 +1513,11 @@ func Test_pum_highlights_match()
   call TermWait(buf, 50)
   call VerifyScreenDump(buf, 'Test_pum_highlights_11', {})
 
+  " issue #15357
+  call term_sendkeys(buf, "\<ESC>S/non_exit_folder\<C-X>\<C-F>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_highlights_15', {})
+
   call term_sendkeys(buf, "\<C-E>\<Esc>")
   call TermWait(buf)
 
