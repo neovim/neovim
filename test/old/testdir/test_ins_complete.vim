@@ -2939,6 +2939,16 @@ func Test_complete_fuzzy_match_tie()
   set completeopt&
 endfunc
 
+func Test_complete_backwards_default()
+  new
+  call append(1, ['foobar', 'foobaz'])
+  new
+  call feedkeys("i\<c-p>", 'tx')
+  call assert_equal('foobaz', getline('.'))
+  bw!
+  bw!
+endfunc
+
 func Test_complete_info_matches()
   let g:what = ['matches']
   func ShownInfo()
