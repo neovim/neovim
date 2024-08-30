@@ -1,3 +1,25 @@
+ifeq ($(OS),Windows_NT)
+  SHELL := powershell.exe
+  .SHELLFLAGS := -NoProfile -NoLogo
+  MKDIR := @$$null = new-item -itemtype directory -force
+  TOUCH := @$$null = new-item -force
+  RM := remove-item -force
+  CMAKE := cmake
+  CMAKE_GENERATOR := Ninja
+  define rmdir
+    if (Test-Path $1) { remove-item -recurse $1 }
+  endef
+else
+  MKDIR := mkdir -p
+  TOUCH := touch
+  RM := rm -rf
+  CMAKE := $(shell (command -v cmake3 || echo cmake))
+  CMAKE_GENERATOR ?= $(shell (command -v ninja > /dev/null 2>&1 && echo "Ninja") || echo "Unix Makefiles")
+  define rmdir
+    rm -rf $1
+  endef
+endif
+
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR  := $(dir $(MAKEFILE_PATH))
 
@@ -9,7 +31,6 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
 all: nvim
 
-CMAKE ?= $(shell (command -v cmake3 || echo cmake))
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS ?=
@@ -37,19 +58,9 @@ else
 checkprefix: ;
 endif
 
-CMAKE_GENERATOR ?= $(shell (command -v ninja > /dev/null 2>&1 && echo "Ninja") || \
-    echo "Unix Makefiles")
-DEPS_BUILD_DIR ?= .deps
+DEPS_BUILD_DIR ?= ".deps"
 ifneq (1,$(words [$(DEPS_BUILD_DIR)]))
   $(error DEPS_BUILD_DIR must not contain whitespace)
-endif
-
-ifeq (,$(BUILD_TOOL))
-  ifeq (Ninja,$(CMAKE_GENERATOR))
-    BUILD_TOOL = ninja
-  else
-    BUILD_TOOL = $(MAKE)
-  endif
 endif
 
 DEPS_CMAKE_FLAGS ?=
@@ -61,7 +72,7 @@ endif
 
 ifneq (,$(findstring functionaltest-lua,$(MAKECMDGOALS)))
   BUNDLED_LUA_CMAKE_FLAG := -DUSE_BUNDLED_LUA=ON
-  $(shell [ -x $(DEPS_BUILD_DIR)/usr/bin/lua ] || rm build/.ran-*)
+  $(shell [ -x $(DEPS_BUILD_DIR)/usr/bin/lua ] || $(RM) build/.ran-*)
 endif
 
 # For use where we want to make sure only a single job is run.  This does issue 
@@ -69,34 +80,33 @@ endif
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
 nvim: build/.ran-cmake deps
-	$(BUILD_TOOL) -C build
+	$(CMAKE) --build build
 
 libnvim: build/.ran-cmake deps
-	$(BUILD_TOOL) -C build libnvim
+	$(CMAKE) --build build --target libnvim
 
 cmake:
-	touch CMakeLists.txt
+	$(TOUCH) CMakeLists.txt
 	$(MAKE) build/.ran-cmake
 
 build/.ran-cmake: | deps
-	$(CMAKE) -B build -G '$(CMAKE_GENERATOR)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
-	touch $@
+	$(CMAKE) -B build -G $(CMAKE_GENERATOR) $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
+	$(TOUCH) $@
 
 deps: | build/.ran-deps-cmake
 ifeq ($(call filter-true,$(USE_BUNDLED)),)
-	$(BUILD_TOOL) -C $(DEPS_BUILD_DIR)
+	$(CMAKE) --build $(DEPS_BUILD_DIR)
 endif
 
 ifeq ($(call filter-true,$(USE_BUNDLED)),)
 $(DEPS_BUILD_DIR):
-	mkdir -p "$@"
+	$(MKDIR) $@
 build/.ran-deps-cmake:: $(DEPS_BUILD_DIR)
-	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G '$(CMAKE_GENERATOR)' \
-		$(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) $(DEPS_CMAKE_FLAGS)
+	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G $(CMAKE_GENERATOR) $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) $(DEPS_CMAKE_FLAGS)
 endif
 build/.ran-deps-cmake::
-	mkdir -p build
-	touch $@
+	$(MKDIR) build
+	$(TOUCH) "$@"
 
 # TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
 oldtest: | nvim
@@ -113,7 +123,7 @@ test/old/testdir/%.vim: phony_force nvim
 	$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst test/old/testdir/%.vim,%,$@)
 
 functionaltest-lua: | nvim
-	$(BUILD_TOOL) -C build functionaltest
+	$(CMAKE) --build build --target functionaltest
 
 FORMAT=formatc formatlua format
 LINT=lintlua lintsh lintc clang-analyzer lintcommit lintdoc lint
@@ -135,16 +145,19 @@ iwyu: build/.ran-cmake
 	$(CMAKE) --build build
 
 clean:
-	test -d build && $(BUILD_TOOL) -C build clean || true
+ifneq ($(wildcard build),)
+	$(CMAKE) --build build --target clean
+endif
 	$(MAKE) -C test/old/testdir clean
 	$(MAKE) -C runtime/indent clean
 
 distclean:
-	rm -rf $(DEPS_BUILD_DIR) build
+	$(call rmdir, $(DEPS_BUILD_DIR))
+	$(call rmdir, build)
 	$(MAKE) clean
 
 install: checkprefix nvim
-	$(BUILD_TOOL) -C build install
+	$(CMAKE) --install build
 
 appimage:
 	bash scripts/genappimage.sh
