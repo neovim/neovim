@@ -238,7 +238,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
 
   ---@type fun(item: lsp.CompletionItem):boolean
   local matches
-  if prefix == '' then
+  if not prefix:find('%w') then
     matches = function(_)
       return true
     end
