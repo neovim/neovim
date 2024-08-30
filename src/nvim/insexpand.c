@@ -3315,12 +3315,31 @@ static void get_next_filename_completion(void)
   char **matches;
   int num_matches;
   char *leader = ins_compl_leader();
-  size_t leader_len = strlen(leader);
+  size_t leader_len = ins_compl_leader_len();
   bool in_fuzzy = ((get_cot_flags() & kOptCotFlagFuzzy) != 0 && leader_len > 0);
 
   if (in_fuzzy) {
-    API_CLEAR_STRING(compl_pattern);
-    compl_pattern = cbuf_to_string("*", 1);
+    char *last_sep = strrchr(leader, PATHSEP);
+    if (last_sep == NULL) {
+      // No path separator or separator is the last character,
+      // fuzzy match the whole leader
+      API_CLEAR_STRING(compl_pattern);
+      compl_pattern = cbuf_to_string("*", 1);
+    } else if (*(last_sep + 1) == NUL) {
+      in_fuzzy = false;
+    } else {
+      // Split leader into path and file parts
+      size_t path_len = (size_t)(last_sep - leader) + 1;
+      char *path_with_wildcard = xmalloc(path_len + 2);
+      vim_snprintf(path_with_wildcard, path_len + 2, "%*.*s*",
+                   (int)path_len, (int)path_len, leader);
+      API_CLEAR_STRING(compl_pattern);
+      compl_pattern.data = path_with_wildcard;
+      compl_pattern.size = path_len + 1;
+
+      // Move leader to the file part
+      leader = last_sep + 1;
+    }
   }
 
   if (expand_wildcards(1, &compl_pattern.data, &num_matches, &matches,
