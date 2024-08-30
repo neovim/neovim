@@ -1792,6 +1792,13 @@ int ins_compl_bs(void)
   return NUL;
 }
 
+/// Check if the complete function returned "always" in the "refresh" dictionary item.
+static bool ins_compl_refresh_always(void)
+  FUNC_ATTR_PURE
+{
+  return (ctrl_x_mode_function() || ctrl_x_mode_omni()) && compl_opt_refresh_always;
+}
+
 /// Check that we need to find matches again, ins_compl_restart() is to
 /// be called.
 static bool ins_compl_need_restart(void)
@@ -1799,9 +1806,7 @@ static bool ins_compl_need_restart(void)
 {
   // Return true if we didn't complete finding matches or when the
   // "completefunc" returned "always" in the "refresh" dictionary item.
-  return compl_was_interrupted
-         || ((ctrl_x_mode_function() || ctrl_x_mode_omni())
-             && compl_opt_refresh_always);
+  return compl_was_interrupted || ins_compl_refresh_always();
 }
 
 /// Called after changing "compl_leader".
@@ -1834,7 +1839,7 @@ static void ins_compl_new_leader(void)
 
   // Don't let Enter select the original text when there is no popup menu.
   // Don't let Enter select when use user function and refresh_always is set
-  if (compl_match_array == NULL || ins_compl_need_restart()) {
+  if (compl_match_array == NULL || ins_compl_refresh_always()) {
     compl_enter_selects = false;
   }
 }
