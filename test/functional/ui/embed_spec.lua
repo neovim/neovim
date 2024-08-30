@@ -308,7 +308,7 @@ describe('--embed --listen UI', function()
       child_server,
       '--clean',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
     })
     retry(nil, nil, function()
       neq(nil, uv.fs_stat(child_server))

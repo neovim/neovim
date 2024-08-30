@@ -491,7 +491,7 @@ describe('terminal input', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'set notermguicolors',
       '-c',

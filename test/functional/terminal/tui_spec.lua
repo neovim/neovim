@@ -57,7 +57,7 @@ describe('TUI', function()
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
     })
     screen:expect([[
       {1: }                                                 |
@@ -2007,7 +2007,7 @@ describe('TUI', function()
       nvim_prog,
       '--clean',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'set notermguicolors',
       '--cmd',
@@ -2136,7 +2136,7 @@ describe('TUI', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'set noruler notermguicolors',
       '--cmd',
@@ -2171,7 +2171,7 @@ describe('TUI', function()
       '--cmd',
       'set notermguicolors',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'call setline(1, ["1st line" .. repeat(" ", 153), "2nd line"])',
     }, { cols = 80 })
@@ -2292,7 +2292,7 @@ describe('TUI UIEnter/UILeave', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'set noswapfile noshowcmd noruler notermguicolors',
       '--cmd',
@@ -2341,7 +2341,7 @@ describe('TUI FocusGained/FocusLost', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'set noswapfile noshowcmd noruler notermguicolors background=dark',
     })
@@ -2558,7 +2558,7 @@ describe("TUI 't_Co' (terminal colors)", function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       nvim_set .. ' notermguicolors',
     }, {
@@ -2901,7 +2901,7 @@ describe('TUI', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       nvim_set .. ' notermguicolors',
       extra_args,
@@ -3120,7 +3120,7 @@ describe('TUI bg color', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'set noswapfile',
     })
@@ -3143,7 +3143,7 @@ describe('TUI bg color', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'set noswapfile',
     })
@@ -3172,7 +3172,7 @@ describe('TUI bg color', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'set noswapfile',
     })
@@ -3188,7 +3188,7 @@ describe('TUI bg color', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'set noswapfile',
       '-c',
@@ -3225,7 +3225,7 @@ describe('TUI as a client', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
     })
@@ -3367,7 +3367,7 @@ describe('TUI as a client', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
     })

@@ -22,7 +22,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       'set noswapfile noshowcmd noruler notermguicolors',
     })

@@ -21,7 +21,7 @@ describe('screen', function()
     '--cmd',
     'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
     '--cmd',
-    'colorscheme vim',
+    'colorscheme default',
     '--embed',
   }
 
@@ -712,7 +712,7 @@ describe('Screen default colors', function()
       '--cmd',
       'set shortmess+=I noswapfile belloff= noshowcmd noruler' .. extra,
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--embed',
     }
     local screen_nvim = spawn(nvim_argv)

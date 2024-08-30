@@ -29,7 +29,7 @@ describe('shell command :!', function()
       '-i',
       'NONE',
       '--cmd',
-      'colorscheme vim',
+      'colorscheme default',
       '--cmd',
       n.nvim_set .. ' notermguicolors',
     })
