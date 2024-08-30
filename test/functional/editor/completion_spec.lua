@@ -327,7 +327,7 @@ describe('completion', function()
     end
   end)
 
-  describe('refresh:always', function()
+  describe('with refresh:always and noselect', function()
     before_each(function()
       source([[
         function! TestCompletion(findstart, base) abort
@@ -458,6 +458,67 @@ describe('completion', function()
 
         June
         June]])
+    end)
+
+    it('Enter does not select original text', function()
+      feed('iJ<C-x><C-u>')
+      poke_eventloop()
+      feed('u')
+      poke_eventloop()
+      feed('<CR>')
+      expect([[
+        Ju
+        ]])
+      feed('J<C-x><C-u>')
+      poke_eventloop()
+      feed('<CR>')
+      expect([[
+        Ju
+        J
+        ]])
+    end)
+  end)
+
+  describe('with noselect but not refresh:always', function()
+    before_each(function()
+      source([[
+        function! TestCompletion(findstart, base) abort
+          if a:findstart
+            let line = getline('.')
+            let start = col('.') - 1
+            while start > 0 && line[start - 1] =~ '\a'
+              let start -= 1
+            endwhile
+            return start
+          else
+            let ret = []
+            for m in split("January February March April May June July August September October November December")
+              if m =~ a:base  " match by regex
+                call add(ret, m)
+              endif
+            endfor
+            return {'words':ret}
+          endif
+        endfunction
+
+        set completeopt=menuone,noselect
+        set completefunc=TestCompletion
+      ]])
+    end)
+
+    it('Enter selects original text after adding leader', function()
+      feed('iJ<C-x><C-u>')
+      poke_eventloop()
+      feed('u')
+      poke_eventloop()
+      feed('<CR>')
+      expect('Ju')
+      feed('<Esc>')
+      poke_eventloop()
+      -- The behavior should be the same when completion has been interrupted,
+      -- which can happen interactively if the completion function is slow.
+      feed('SJ<C-x><C-u>u<CR>')
+      expect('Ju')
     end)
   end)
 
