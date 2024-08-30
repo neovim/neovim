@@ -3572,6 +3572,141 @@ garray_T *fuzzy_match_str_with_pos(char *const str, const char *const pat)
   return match_positions;
 }
 
+/// This function searches for a fuzzy match of the pattern `pat` within the
+/// line pointed to by `*ptr`. It splits the line into words, performs fuzzy
+/// matching on each word, and returns the length and position of the first
+/// matched word.
+static bool fuzzy_match_str_in_line(char **ptr, char *pat, int *len, pos_T *current_pos)
+{
+  char *str = *ptr;
+  char *strBegin = str;
+  char *end = NULL;
+  char *start = NULL;
+  bool found = false;
+
+  if (str == NULL || pat == NULL) {
+    return found;
+  }
+
+  while (*str != NUL) {
+    // Skip non-word characters
+    start = find_word_start(str);
+    if (*start == NUL) {
+      break;
+    }
+    end = find_word_end(start);
+
+    // Extract the word from start to end
+    char save_end = *end;
+    *end = NUL;
+
+    // Perform fuzzy match
+    int result = fuzzy_match_str(start, pat);
+    *end = save_end;
+
+    if (result > 0) {
+      *len = (int)(end - start);
+      current_pos->col += (int)(end - strBegin);
+      found = true;
+      *ptr = start;
+      break;
+    }
+
+    // Move to the end of the current word for the next iteration
+    str = end;
+    // Ensure we continue searching after the current word
+    while (*str != NUL && !vim_iswordp(str)) {
+      MB_PTR_ADV(str);
+    }
+  }
+
+  return found;
+}
+
+/// Search for the next fuzzy match in the specified buffer.
+/// This function attempts to find the next occurrence of the given pattern
+/// in the buffer, starting from the current position. It handles line wrapping
+/// and direction of search.
+///
+/// Return true if a match is found, otherwise false.
+bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_T *start_pos,
+                            int *len, char **ptr, bool whole_line)
+{
+  pos_T current_pos = *pos;
+  pos_T circly_end;
+  bool found_new_match = false;
+  bool looped_around = false;
+
+  if (whole_line) {
+    current_pos.lnum += dir;
+  }
+
+  while (true) {
+    if (buf == curbuf) {
+      circly_end = *start_pos;
+    } else {
+      circly_end.lnum = buf->b_ml.ml_line_count;
+      circly_end.col = 0;
+      circly_end.coladd = 0;
+    }
+
+    // Check if looped around and back to start position
+    if (looped_around && equalpos(current_pos, circly_end)) {
+      break;
+    }
+
+    // Ensure current_pos is valid
+    if (current_pos.lnum >= 1 && current_pos.lnum <= buf->b_ml.ml_line_count) {
+      // Get the current line buffer
+      *ptr = ml_get_buf(buf, current_pos.lnum);
+      // If ptr is end of line is reached, move to next line
+      // or previous line based on direction
+      if (**ptr != NUL) {
+        if (!whole_line) {
+          *ptr += current_pos.col;
+          // Try to find a fuzzy match in the current line starting from current position
+          found_new_match = fuzzy_match_str_in_line(ptr, pattern, len, &current_pos);
+          if (found_new_match) {
+            *pos = current_pos;
+            break;
+          }
+        } else {
+          if (fuzzy_match_str(*ptr, pattern) > 0) {
+            found_new_match = true;
+            *pos = current_pos;
+            *len = (int)strlen(*ptr);
+            break;
+          }
+        }
+      }
+    }
+
+    // Move to the next line or previous line based on direction
+    if (dir == FORWARD) {
+      if (++current_pos.lnum > buf->b_ml.ml_line_count) {
+        if (p_ws) {
+          current_pos.lnum = 1;
+          looped_around = true;
+        } else {
+          break;
+        }
+      }
+    } else {
+      if (--current_pos.lnum < 1) {
+        if (p_ws) {
+          current_pos.lnum = buf->b_ml.ml_line_count;
+          looped_around = true;
+        } else {
+          break;
+        }
+      }
+    }
+    current_pos.col = 0;
+  }
+
+  return found_new_match;
+}
+
 /// Copy a list of fuzzy matches into a string list after sorting the matches by
 /// the fuzzy score. Frees the memory allocated for "fuzmatch".
 void fuzzymatches_to_strmatches(fuzmatch_str_T *const fuzmatch, char ***const matches,
