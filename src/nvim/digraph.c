@@ -1865,7 +1865,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
   p = buf;
 
   // add a space to draw a composing char on
-  if (utf_iscomposing(dp->result)) {
+  if (utf_iscomposing_first(dp->result)) {
     *p++ = ' ';
   }
   p += utf_char2bytes(dp->result, p);

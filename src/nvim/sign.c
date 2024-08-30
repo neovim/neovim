@@ -376,7 +376,7 @@ int init_sign_text(sign_T *sp, schar_T *sign_text, char *text)
     if (!vim_isprintc(c)) {
       break;
     }
-    int width = utf_char2cells(c);
+    int width = utf_ptr2cells(s);
     if (width == 2) {
       sign_text[cells + 1] = 0;
     }

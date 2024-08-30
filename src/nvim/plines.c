@@ -146,7 +146,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   } else if (cur_char < 0) {
     size = kInvalidByteCells;
   } else {
-    size = char2cells(cur_char);
+    size = ptr2cells(cur);
     is_doublewidth = size == 2 && cur_char > 0x80;
   }
 
@@ -337,8 +337,8 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
 ///
 /// @see charsize_regular
 /// @see charsize_fast
-static inline CharSize charsize_fast_impl(win_T *const wp, bool use_tabstop, colnr_T const vcol,
-                                          int32_t const cur_char)
+static inline CharSize charsize_fast_impl(win_T *const wp, const char *cur, bool use_tabstop,
+                                          colnr_T const vcol, int32_t const cur_char)
   FUNC_ATTR_PURE FUNC_ATTR_ALWAYS_INLINE
 {
   // A tab gets expanded, depending on the current column
@@ -352,7 +352,11 @@ static inline CharSize charsize_fast_impl(win_T *const wp, bool use_tabstop, col
     if (cur_char < 0) {
       width = kInvalidByteCells;
     } else {
-      width = char2cells(cur_char);
+      // TODO(bfredl): perf: often cur_char is enough at this point to determine width.
+      // we likely want a specialized version of utf_ptr2StrCharInfo also determining
+      // the ptr2cells width at the same time without any extra decoding. (also applies
+      // to charsize_regular and charsize_nowrap)
+      width = ptr2cells(cur);
     }
 
     // If a double-width char doesn't fit at the end of a line, it wraps to the next line,
@@ -371,23 +375,23 @@ static inline CharSize charsize_fast_impl(win_T *const wp, bool use_tabstop, col
 /// Can be used if CSType is kCharsizeFast.
 ///
 /// @see charsize_regular
-CharSize charsize_fast(CharsizeArg *csarg, colnr_T const vcol, int32_t const cur_char)
+CharSize charsize_fast(CharsizeArg *csarg, const char *cur, colnr_T vcol, int32_t cur_char)
   FUNC_ATTR_PURE
 {
-  return charsize_fast_impl(csarg->win, csarg->use_tabstop, vcol, cur_char);
+  return charsize_fast_impl(csarg->win, cur, csarg->use_tabstop, vcol, cur_char);
 }
 
 /// Get the number of cells taken up on the screen at given virtual column.
 ///
 /// @see win_chartabsize()
-int charsize_nowrap(buf_T *buf, bool use_tabstop, colnr_T vcol, int32_t cur_char)
+int charsize_nowrap(buf_T *buf, const char *cur, bool use_tabstop, colnr_T vcol, int32_t cur_char)
 {
   if (cur_char == TAB && use_tabstop) {
     return tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array);
   } else if (cur_char < 0) {
     return kInvalidByteCells;
   } else {
-    return char2cells(cur_char);
+    return ptr2cells(cur);
   }
 }
 
@@ -467,7 +471,7 @@ int linesize_fast(CharsizeArg const *const csarg, int vcol_arg, colnr_T const le
 
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   while (ci.ptr - line < len && *ci.ptr != NUL) {
-    vcol += charsize_fast_impl(wp, use_tabstop, vcol_arg, ci.chr.value).width;
+    vcol += charsize_fast_impl(wp, ci.ptr, use_tabstop, vcol_arg, ci.chr.value).width;
     ci = utfc_next(ci);
     if (vcol > MAXCOL) {
       vcol_arg = MAXCOL;
@@ -530,7 +534,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
         char_size = (CharSize){ .width = 1 };
         break;
       }
-      char_size = charsize_fast_impl(wp, use_tabstop, vcol, ci.chr.value);
+      char_size = charsize_fast_impl(wp, ci.ptr, use_tabstop, vcol, ci.chr.value);
       StrCharInfo const next = utfc_next(ci);
       if (next.ptr - line > end_col) {
         break;
@@ -627,7 +631,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
     if (pos->col < ml_get_buf_len(wp->w_buffer, pos->lnum)) {
       int c = utf_ptr2char(ptr + pos->col);
       if ((c != TAB) && vim_isprintc(c)) {
-        endadd = (colnr_T)(char2cells(c) - 1);
+        endadd = (colnr_T)(ptr2cells(ptr + pos->col) - 1);
         if (coladd > endadd) {
           // past end of line
           endadd = 0;
@@ -824,7 +828,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   if (cstype == kCharsizeFast) {
     bool const use_tabstop = csarg.use_tabstop;
     while (*ci.ptr != NUL && --column >= 0) {
-      vcol += charsize_fast_impl(wp, use_tabstop, vcol, ci.chr.value).width;
+      vcol += charsize_fast_impl(wp, ci.ptr, use_tabstop, vcol, ci.chr.value).width;
       ci = utfc_next(ci);
     }
   } else {

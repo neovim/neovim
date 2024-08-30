@@ -1260,7 +1260,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
       // empty for the search_stat feature.
       if (!cmd_silent) {
         msgbuf[0] = (char)dirc;
-        if (utf_iscomposing(utf_ptr2char(p))) {
+        if (utf_iscomposing_first(utf_ptr2char(p))) {
           // Use a space to draw the composing char on.
           msgbuf[1] = ' ';
           memmove(msgbuf + 2, p, plen);

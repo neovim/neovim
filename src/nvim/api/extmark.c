@@ -571,7 +571,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     String c = opts->conceal;
     if (c.size > 0) {
       int ch;
-      hl.conceal_char = utfc_ptr2schar_len(c.data, (int)c.size, &ch);
+      hl.conceal_char = utfc_ptr2schar(c.data, &ch);
       if (!hl.conceal_char || !vim_isprintc(ch)) {
         api_set_error(err, kErrorTypeValidation, "conceal char has to be printable");
         goto error;

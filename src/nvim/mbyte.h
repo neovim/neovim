@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>  // IWYU pragma: keep
+#include <utf8proc.h>
 #include <uv.h>  // IWYU pragma: keep
 
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
@@ -10,6 +11,9 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
+
+typedef utf8proc_int32_t GraphemeState;
+#define GRAPHEME_STATE_INIT 0
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"
@@ -92,28 +96,16 @@ static inline CharInfo utf_ptr2CharInfo(char const *const p_in)
 static inline StrCharInfo utfc_next(StrCharInfo cur)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE
 {
-  int32_t prev_code = cur.chr.value;
+  // handle ASCII case inline
   uint8_t *next = (uint8_t *)(cur.ptr + cur.chr.len);
-
-  while (true) {
-    if (EXPECT(*next < 0x80U, true)) {
-      return (StrCharInfo){
-        .ptr = (char *)next,
-        .chr = (CharInfo){ .value = *next, .len = 1 },
-      };
-    }
-    uint8_t const next_len = utf8len_tab[*next];
-    int32_t const next_code = utf_ptr2CharInfo_impl(next, (uintptr_t)next_len);
-    if (!utf_char_composinglike(prev_code, next_code)) {
-      return (StrCharInfo){
-        .ptr = (char *)next,
-        .chr = (CharInfo){ .value = next_code, .len = (next_code < 0 ? 1 : next_len) },
-      };
-    }
-
-    prev_code = next_code;
-    next += next_len;
+  if (EXPECT(*next < 0x80U, true)) {
+    return (StrCharInfo){
+      .ptr = (char *)next,
+      .chr = (CharInfo){ .value = *next, .len = 1 },
+    };
   }
+
+  return utfc_next_impl(cur);
 }
 
 static inline StrCharInfo utf_ptr2StrCharInfo(char *ptr)

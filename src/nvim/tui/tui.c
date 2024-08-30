@@ -109,6 +109,7 @@ struct TUIData {
   bool set_cursor_color_as_str;
   bool cursor_color_changed;
   bool is_starting;
+  bool did_set_grapheme_cluster_mode;
   FILE *screenshot;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs clear_attrs;
@@ -220,6 +221,7 @@ static void tui_set_term_mode(TUIData *tui, TermMode mode, bool set)
 void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
   FUNC_ATTR_NONNULL_ALL
 {
+  bool is_set = false;
   switch (state) {
   case kTermModeNotRecognized:
   case kTermModePermanentlySet:
@@ -228,6 +230,8 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
     // then there is nothing to do
     break;
   case kTermModeSet:
+    is_set = true;
+    FALLTHROUGH;
   case kTermModeReset:
     // The terminal supports changing the given mode
     switch (mode) {
@@ -239,6 +243,12 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
     case kTermModeResizeEvents:
       signal_watcher_stop(&tui->winch_handle);
       tui_set_term_mode(tui, mode, true);
+      break;
+    case kTermModeGraphemeClusters:
+      if (!is_set) {
+        tui_set_term_mode(tui, mode, true);
+        tui->did_set_grapheme_cluster_mode = true;
+      }
       break;
     }
   }
@@ -434,6 +444,7 @@ static void terminfo_start(TUIData *tui)
   if (!nsterm) {
     tui_request_term_mode(tui, kTermModeSynchronizedOutput);
     tui_request_term_mode(tui, kTermModeResizeEvents);
+    tui_request_term_mode(tui, kTermModeGraphemeClusters);
   }
 
   // Don't use DECRQSS in screen or tmux, as they behave strangely when receiving it.
@@ -494,7 +505,9 @@ static void terminfo_stop(TUIData *tui)
 
   // Disable resize events
   tui_set_term_mode(tui, kTermModeResizeEvents, false);
-
+  if (tui->did_set_grapheme_cluster_mode) {
+    tui_set_term_mode(tui, kTermModeGraphemeClusters, false);
+  }
   // May restore old title before exiting alternate screen.
   tui_set_title(tui, NULL_STRING);
   if (ui_client_exit_status == 0) {
@@ -1010,7 +1023,7 @@ static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool 
   char buf[MAX_SCHAR_SIZE];
   schar_get(buf, cell->data);
   int c = utf_ptr2char(buf);
-  bool is_ambiwidth = utf_ambiguous_width(c);
+  bool is_ambiwidth = utf_ambiguous_width(buf);
   if (is_doublewidth && (is_ambiwidth || utf_char2cells(c) == 1)) {
     // If the server used setcellwidths() to treat a single-width char as double-width,
     // it needs to be treated like an ambiguous-width char.

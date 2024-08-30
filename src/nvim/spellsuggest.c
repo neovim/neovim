@@ -1792,10 +1792,8 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
               // For changing a composing character adjust
               // the score from SCORE_SUBST to
               // SCORE_SUBCOMP.
-              if (utf_iscomposing(utf_ptr2char(tword + sp->ts_twordlen
-                                               - sp->ts_tcharlen))
-                  && utf_iscomposing(utf_ptr2char(fword
-                                                  + sp->ts_fcharstart))) {
+              if (utf_iscomposing_legacy(utf_ptr2char(tword + sp->ts_twordlen - sp->ts_tcharlen))
+                  && utf_iscomposing_legacy(utf_ptr2char(fword + sp->ts_fcharstart))) {
                 sp->ts_score -= SCORE_SUBST - SCORE_SUBCOMP;
               } else if (!soundfold
                          && slang->sl_has_map
@@ -1811,7 +1809,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
                        && sp->ts_twordlen > sp->ts_tcharlen) {
               p = tword + sp->ts_twordlen - sp->ts_tcharlen;
               c = utf_ptr2char(p);
-              if (utf_iscomposing(c)) {
+              if (utf_iscomposing_legacy(c)) {
                 // Inserting a composing char doesn't
                 // count that much.
                 sp->ts_score -= SCORE_INS - SCORE_INSCOMP;
@@ -1876,7 +1874,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
         c = utf_ptr2char(fword + sp->ts_fidx);
         stack[depth].ts_fidx =
           (uint8_t)(stack[depth].ts_fidx + utfc_ptr2len(fword + sp->ts_fidx));
-        if (utf_iscomposing(c)) {
+        if (utf_iscomposing_legacy(c)) {
           stack[depth].ts_score -= SCORE_DEL - SCORE_DELCOMP;
         } else if (c == utf_ptr2char(fword + stack[depth].ts_fidx)) {
           stack[depth].ts_score -= SCORE_DEL - SCORE_DELDUP;

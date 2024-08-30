@@ -2832,6 +2832,8 @@ int replace_push_mb(char *p)
 {
   int l = utfc_ptr2len(p);
 
+  // TODO(bfredl): stop doing this insantity and instead use utf_head_off() when popping.
+  // or just keep a secondary array with char byte lenghts
   for (int j = l - 1; j >= 0; j--) {
     replace_push(p[j]);
   }
@@ -2911,7 +2913,9 @@ static void mb_replace_pop_ins(int cc)
     for (int i = 1; i < n; i++) {
       buf[i] = (uint8_t)replace_pop();
     }
-    if (utf_iscomposing(utf_ptr2char((char *)buf))) {
+    // TODO(bfredl): by fixing replace_push_mb, upgrade to use
+    // the new composing algorithm
+    if (utf_iscomposing_legacy(utf_ptr2char((char *)buf))) {
       ins_bytes_len((char *)buf, (size_t)n);
     } else {
       // Not a composing char, put it back.
@@ -3843,7 +3847,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           space_sci = sci;
           space_vcol = vcol;
         }
-        vcol += charsize_nowrap(curbuf, use_ts, vcol, sci.chr.value);
+        vcol += charsize_nowrap(curbuf, sci.ptr, use_ts, vcol, sci.chr.value);
         sci = utfc_next(sci);
         prev_space = cur_space;
       }
@@ -3859,7 +3863,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       // Find the position to stop backspacing.
       // Use charsize_nowrap() so that virtual text and wrapping are ignored.
       while (true) {
-        int size = charsize_nowrap(curbuf, use_ts, space_vcol, space_sci.chr.value);
+        int size = charsize_nowrap(curbuf, space_sci.ptr, use_ts, space_vcol, space_sci.chr.value);
         if (space_vcol + size > want_vcol) {
           break;
         }
@@ -3930,7 +3934,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           bool has_composing = false;
           if (p_deco) {
             char *p0 = get_cursor_pos_ptr();
-            has_composing = utf_composinglike(p0, p0 + utf_ptr2len(p0));
+            has_composing = utf_composinglike(p0, p0 + utf_ptr2len(p0), NULL);
           }
           del_char(false);
           // If there are combining characters and 'delcombine' is set

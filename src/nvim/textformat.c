@@ -47,7 +47,7 @@ static bool did_add_space = false;  ///< auto_format() added an extra space
                                     ///< under the cursor
 
 #define WHITECHAR(cc) (ascii_iswhite(cc) \
-                       && !utf_iscomposing(utf_ptr2char((char *)get_cursor_pos_ptr() + 1)))
+                       && !utf_iscomposing_first(utf_ptr2char((char *)get_cursor_pos_ptr() + 1)))
 
 /// Return true if format option 'x' is in effect.
 /// Take care of no formatting when 'paste' is set.

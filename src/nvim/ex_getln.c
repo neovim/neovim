@@ -2118,7 +2118,7 @@ static int command_line_handle_key(CommandLineState *s)
     s->do_abbr = false;                   // don't do abbreviation now
     ccline.special_char = NUL;
     // may need to remove ^ when composing char was typed
-    if (utf_iscomposing(s->c) && !cmd_silent) {
+    if (utf_iscomposing_first(s->c) && !cmd_silent) {
       if (ui_has(kUICmdline)) {
         // TODO(bfredl): why not make unputcmdline also work with true?
         unputcmdline();
@@ -3585,7 +3585,9 @@ void put_on_cmdline(const char *str, int len, bool redraw)
     // backup to the character before it.  There could be two of them.
     int i = 0;
     int c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
-    while (ccline.cmdpos > 0 && utf_iscomposing(c)) {
+    // TODO(bfredl): this can be corrected/simplified as utf_head_off implements the
+    // correct grapheme cluster breaks
+    while (ccline.cmdpos > 0 && utf_iscomposing_legacy(c)) {
       i = utf_head_off(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos - 1) + 1;
       ccline.cmdpos -= i;
       len += i;

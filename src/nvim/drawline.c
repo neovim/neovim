@@ -1826,7 +1826,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
         // If a double-width char doesn't fit display a '>' in the last column.
         // Don't advance the pointer but put the character at the start of the next line.
-        if (wlv.col >= grid->cols - 1 && utf_char2cells(mb_c) == 2) {
+        if (wlv.col >= grid->cols - 1 && schar_cells(mb_schar) == 2) {
           mb_c = '>';
           mb_l = 1;
           (void)mb_l;
@@ -1922,7 +1922,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       // If a double-width char doesn't fit display a '>' in the
       // last column; the character is displayed at the start of the
       // next line.
-      if (wlv.col >= grid->cols - 1 && utf_char2cells(mb_c) == 2) {
+      if (wlv.col >= grid->cols - 1 && schar_cells(mb_schar) == 2) {
         mb_schar = schar_from_ascii('>');
         mb_c = '>';
         mb_l = 1;
@@ -2393,6 +2393,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
                 || (decor_conceal && decor_state.conceal_char)
                 || wp->w_p_cole == 1)
             && wp->w_p_cole != 3) {
+          if (schar_cells(mb_schar) > 1) {
+            // When the first char to be concealed is double-width,
+            // need to advance one more virtual column.
+            wlv.n_extra++;
+          }
+
           // First time at this concealed item: display one
           // character.
           if (has_match_conc && match_conc) {
@@ -2408,12 +2414,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             mb_schar = wp->w_p_lcs_chars.conceal;
           } else {
             mb_schar = schar_from_ascii(' ');
-          }
-
-          if (utf_char2cells(mb_c) > 1) {
-            // When the first char to be concealed is double-width,
-            // need to advance one more virtual column.
-            wlv.n_extra++;
           }
 
           mb_c = schar_get_first_codepoint(mb_schar);
@@ -2484,7 +2484,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         && mb_schar != NUL) {
       mb_schar = wp->w_p_lcs_chars.prec;
       lcs_prec_todo = NUL;
-      if (utf_char2cells(mb_c) > 1) {
+      if (schar_cells(mb_schar) > 1) {
         // Double-width character being overwritten by the "precedes"
         // character, need to fill up half the character.
         wlv.sc_extra = schar_from_ascii(MB_FILLER_CHAR);
@@ -2725,7 +2725,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
       linebuf_vcol[wlv.off] = wlv.vcol;
 
-      if (utf_char2cells(mb_c) > 1) {
+      if (schar_cells(mb_schar) > 1) {
         // Need to fill two screen columns.
         wlv.off++;
         wlv.col++;
@@ -2744,7 +2744,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       wlv.off++;
       wlv.col++;
     } else if (wp->w_p_cole > 0 && is_concealing) {
-      bool concealed_wide = utf_char2cells(mb_c) > 1;
+      bool concealed_wide = schar_cells(mb_schar) > 1;
 
       wlv.skip_cells--;
       wlv.vcol_off_co++;
