@@ -89,7 +89,11 @@ PLUGINS
 
 TREESITTER
 
-• TODO
+• |Query:iter_matches()| correctly returns all matching nodes in a match
+  instead of only the last node. This means that the returned table maps
+  capture IDs to a list of nodes that need to be iterated over. For
+  backwards compatibility, an option `all=false` (only return the last
+  matching node) is provided that will be removed in a future release.
 
 TUI
 

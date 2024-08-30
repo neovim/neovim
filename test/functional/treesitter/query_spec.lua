@@ -138,7 +138,7 @@ void ui_refresh(void)
       local parser = vim.treesitter.get_parser(0, 'c')
       local tree = parser:parse()[1]
       local res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = true }) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -211,7 +211,7 @@ void ui_refresh(void)
       local parser = vim.treesitter.get_parser(0, 'c')
       local tree = parser:parse()[1]
       local res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = true }) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -260,7 +260,7 @@ void ui_refresh(void)
       local parser = vim.treesitter.get_parser(0, 'c')
       local tree = parser:parse()[1]
       local res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = true }) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -307,7 +307,7 @@ void ui_refresh(void)
       local parser = vim.treesitter.get_parser(0, 'c')
       local tree = parser:parse()[1]
       local res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, -1, { all = true }) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, -1) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -418,7 +418,7 @@ void ui_refresh(void)
       local parser = vim.treesitter.get_parser(0, 'c')
       local tree = parser:parse()[1]
       local res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, -1, { all = true }) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 0, -1) do
         -- can't transmit node over RPC. just check the name and range
         local mrepr = {}
         for cid, nodes in pairs(match) do
@@ -464,11 +464,7 @@ void ui_refresh(void)
 
         local parser = vim.treesitter.get_parser(0, 'c')
 
-        -- Time bomb: update this in 0.12
-        if vim.fn.has('nvim-0.12') == 1 then
-          return 'Update this test to remove this message and { all = true } from add_predicate'
-        end
-        query.add_predicate('is-main?', is_main, { all = true })
+        query.add_predicate('is-main?', is_main)
 
         local query0 = query.parse('c', custom_query0)
 
@@ -496,7 +492,7 @@ void ui_refresh(void)
 
         local parser = vim.treesitter.get_parser(0, 'c')
 
-        query.add_predicate('is-main?', is_main, true)
+        query.add_predicate('is-main?', is_main, { all = false, force = true })
 
         local query0 = query.parse('c', custom_query0)
 
@@ -650,7 +646,7 @@ void ui_refresh(void)
       local parser = vim.treesitter.get_parser(0, 'c')
       local tree = parser:parse()[1]
       local res = {}
-      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14) do
+      for pattern, match in cquery:iter_matches(tree:root(), 0, 7, 14, { all = false }) do
         local mrepr = {}
         for cid, node in pairs(match) do
           table.insert(mrepr, { '@' .. cquery.captures[cid], node:type(), node:range() })

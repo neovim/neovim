@@ -1036,9 +1036,8 @@ add_directive({name}, {handler}, {opts})
                      the same name
                    • {all}? (`boolean`) Use the correct implementation of the
                      match table where capture IDs map to a list of nodes
-                     instead of a single node. Defaults to false (for backward
-                     compatibility). This option will eventually become the
-                     default and removed.
+                     instead of a single node. Defaults to true. This option
+                     will be removed in a future release.
 
                                         *vim.treesitter.query.add_predicate()*
 add_predicate({name}, {handler}, {opts})
@@ -1049,14 +1048,13 @@ add_predicate({name}, {handler}, {opts})
       • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata)`)
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
-      • {opts}     (`table`) A table with the following fields:
+      • {opts}     (`table?`) A table with the following fields:
                    • {force}? (`boolean`) Override an existing predicate of
                      the same name
                    • {all}? (`boolean`) Use the correct implementation of the
                      match table where capture IDs map to a list of nodes
-                     instead of a single node. Defaults to false (for backward
-                     compatibility). This option will eventually become the
-                     default and removed.
+                     instead of a single node. Defaults to true. This option
+                     will be removed in a future release.
 
 edit({lang})                                     *vim.treesitter.query.edit()*
     Opens a live editor to query the buffer you started from.
@@ -1216,14 +1214,8 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
     indices to a list of nodes, and metadata from any directives processing
     the match.
 
-    WARNING: Set `all=true` to ensure all matching nodes in a match are
-    returned, otherwise only the last node in a match is returned, breaking
-    captures involving quantifiers such as `(comment)+ @comment`. The default
-    option `all=false` is only provided for backward compatibility and will be
-    removed after Nvim 0.10.
-
     Example: >lua
-        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1, { all = true }) do
+        for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, 0, -1) do
           for id, nodes in pairs(match) do
             local name = query.captures[id]
             for _, node in ipairs(nodes) do
@@ -1248,12 +1240,11 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
                     start depth for each match. This is used to prevent
                     traversing too deep into a tree.
                   • match_limit (integer) Set the maximum number of
-                    in-progress matches (Default: 256).
-                  • all (boolean) When set, the returned match table maps
-                    capture IDs to a list of nodes. Older versions of
-                    iter_matches incorrectly mapped capture IDs to a single
-                    node, which is incorrect behavior. This option will
-                    eventually become the default and removed.
+                    in-progress matches (Default: 256). all (boolean) When
+                    `false` (default `true`), the returned table maps capture
+                    IDs to a single (last) node instead of the full list of
+                    matching nodes. This option is only for backward
+                    compatibility and will be removed in a future release.
 
     Return: ~
         (`fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata`)
