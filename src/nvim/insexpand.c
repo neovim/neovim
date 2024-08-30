@@ -3746,11 +3746,7 @@ static int ins_compl_get_exp(pos_T *ini)
   assert(st.ins_buf != NULL);
 
   compl_old_match = compl_curr_match;   // remember the last current match
-  if (in_fuzzy) {
-    st.cur_match_pos = compl_dir_forward() ? &st.last_match_pos : &st.first_match_pos;
-  } else {
-    st.cur_match_pos = &st.last_match_pos;
-  }
+  st.cur_match_pos = compl_dir_forward() ? &st.last_match_pos : &st.first_match_pos;
 
   // For ^N/^P loop over all the flags/windows/buffers in 'complete'
   while (true) {
