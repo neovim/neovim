@@ -3641,15 +3641,15 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
     current_pos.lnum += dir;
   }
 
-  while (true) {
-    if (buf == curbuf) {
-      circly_end = *start_pos;
-    } else {
-      circly_end.lnum = buf->b_ml.ml_line_count;
-      circly_end.col = 0;
-      circly_end.coladd = 0;
-    }
+  if (buf == curbuf) {
+    circly_end = *start_pos;
+  } else {
+    circly_end.lnum = buf->b_ml.ml_line_count;
+    circly_end.col = 0;
+    circly_end.coladd = 0;
+  }
 
+  while (true) {
     // Check if looped around and back to start position
     if (looped_around && equalpos(current_pos, circly_end)) {
       break;
@@ -3668,6 +3668,8 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
           found_new_match = fuzzy_match_str_in_line(ptr, pattern, len, &current_pos);
           if (found_new_match) {
             *pos = current_pos;
+            break;
+          } else if (looped_around && current_pos.lnum == circly_end.lnum) {
             break;
           }
         } else {
