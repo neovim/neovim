@@ -3168,8 +3168,29 @@ static void get_next_filename_completion(void)
   bool in_fuzzy = ((get_cot_flags() & kOptCotFlagFuzzy) != 0 && leader_len > 0);
 
   if (in_fuzzy) {
-    xfree(compl_pattern);
-    compl_pattern = xstrdup("*");
+    char *last_sep = strrchr(leader, PATHSEP);
+    if (last_sep == NULL) {
+      // No path separator or separator is the last character,
+      // fuzzy match the whole leader
+      xfree(compl_pattern);
+      compl_pattern = xstrdup("*");
+      compl_patternlen = strlen(compl_pattern);
+    } else if (*(last_sep + 1) == NUL) {
+      in_fuzzy = false;
+    } else {
+      // Split leader into path and file parts
+      size_t path_len = (size_t)(last_sep - leader) + 1;
+      size_t path_with_wildcard_len = path_len + 2;
+      char *path_with_wildcard = xmalloc(path_with_wildcard_len);
+      xmemcpyz(path_with_wildcard, leader, path_len);
+      xstrlcat(path_with_wildcard, "*", path_with_wildcard_len);
+      xfree(compl_pattern);
+      compl_pattern = path_with_wildcard;
+      compl_patternlen = strlen(compl_pattern);
+
+      // Move leader to the file part
+      leader = last_sep + 1;
+    }
   }
 
   if (expand_wildcards(1, &compl_pattern, &num_matches, &matches,
