@@ -3318,8 +3318,30 @@ static void get_next_filename_completion(void)
   size_t leader_len = ins_compl_leader_len();
   bool in_fuzzy = ((get_cot_flags() & kOptCotFlagFuzzy) != 0 && leader_len > 0);
 
+#ifdef BACKSLASH_IN_FILENAME
+  char pathsep = (curbuf->b_p_csl[0] == 's')
+                 ? '/' : (curbuf->b_p_csl[0] == 'b') ? '\\' : PATHSEP;
+#else
+  char pathsep = PATHSEP;
+#endif
+
   if (in_fuzzy) {
-    char *last_sep = strrchr(leader, PATHSEP);
+#ifdef BACKSLASH_IN_FILENAME
+    if (curbuf->b_p_csl[0] == 's') {
+      for (size_t i = 0; i < leader_len; i++) {
+        if (leader[i] == '\\') {
+          leader[i] = '/';
+        }
+      }
+    } else if (curbuf->b_p_csl[0] == 'b') {
+      for (size_t i = 0; i < leader_len; i++) {
+        if (leader[i] == '/') {
+          leader[i] = '\\';
+        }
+      }
+    }
+#endif
+    char *last_sep = strrchr(leader, pathsep);
     if (last_sep == NULL) {
       // No path separator or separator is the last character,
       // fuzzy match the whole leader
