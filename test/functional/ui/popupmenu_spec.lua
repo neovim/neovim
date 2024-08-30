@@ -5395,9 +5395,9 @@ describe('builtin popupmenu', function()
         feed('S hello helio hero h<C-X><C-P>')
         screen:expect([[
            hello helio hero h^             |
-          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
+          {1:~                }{n: }{mn:h}{n:ero         }{1: }|
           {1:~                }{n: }{mn:h}{n:elio        }{1: }|
-          {1:~                }{s: }{ms:h}{s:ero         }{1: }|
+          {1:~                }{s: }{ms:h}{s:ello        }{1: }|
           {1:~                               }|*15
           {2:-- }{5:match 1 of 3}                 |
         ]])
@@ -5405,9 +5405,9 @@ describe('builtin popupmenu', function()
         feed('<Esc>S hello helio hero h<C-X><C-P><C-P>')
         screen:expect([[
            hello helio hero h^             |
-          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
-          {1:~                }{s: }{ms:h}{s:elio        }{1: }|
           {1:~                }{n: }{mn:h}{n:ero         }{1: }|
+          {1:~                }{s: }{ms:h}{s:elio        }{1: }|
+          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
           {1:~                               }|*15
           {2:-- }{5:match 2 of 3}                 |
         ]])
