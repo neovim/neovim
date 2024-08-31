@@ -3306,7 +3306,8 @@ static int compare_scores(const void *a, const void *b)
   int idx_b = *(const int *)b;
   int score_a = compl_fuzzy_scores[idx_a];
   int score_b = compl_fuzzy_scores[idx_b];
-  return (score_a > score_b) ? -1 : (score_a < score_b) ? 1 : 0;
+  return score_a == score_b ? (idx_a == idx_b ? 0 : (idx_a < idx_b ? -1 : 1))
+                            : (score_a > score_b ? -1 : 1);
 }
 
 /// Get the next set of filename matching "compl_pattern".
