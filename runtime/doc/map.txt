@@ -1381,10 +1381,12 @@ completion can be enabled:
 
 	-complete=arglist	file names in argument list
 	-complete=augroup	autocmd groups
+	-complete=breakpoint	|:breakadd| suboptions
 	-complete=buffer	buffer names
 	-complete=color		color schemes
 	-complete=command	Ex command (and arguments)
 	-complete=compiler	compilers
+	-complete=diff_buffer	diff buffer names
 	-complete=dir		directory names
 	-complete=dir_in_path	directory names in |'cdpath'|
 	-complete=environment	environment variable names
@@ -1396,7 +1398,7 @@ completion can be enabled:
 	-complete=function	function name
 	-complete=help		help subjects
 	-complete=highlight	highlight groups
-	-complete=history	:history suboptions
+	-complete=history	|:history| suboptions
 	-complete=keymap	keyboard mappings
 	-complete=locale	locale names (as output of locale -a)
 	-complete=lua		Lua expression |:lua|
@@ -1406,6 +1408,8 @@ completion can be enabled:
 	-complete=messages	|:messages| suboptions
 	-complete=option	options
 	-complete=packadd	optional package |pack-add| names
+	-complete=runtime	file and directory names in |'runtimepath'|
+	-complete=scriptnames	sourced script names
 	-complete=shellcmd	Shell command
 	-complete=sign		|:sign| suboptions
 	-complete=syntax	syntax file names |'syntax'|
