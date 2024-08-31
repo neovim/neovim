@@ -464,7 +464,8 @@ static int insert_check(VimState *state)
       && !curwin->w_p_sms
       && !s->did_backspace
       && curwin->w_topline == s->old_topline
-      && curwin->w_topfill == s->old_topfill) {
+      && curwin->w_topfill == s->old_topfill
+      && s->count <= 1) {
     s->mincol = curwin->w_wcol;
     validate_cursor_col(curwin);
 
@@ -486,11 +487,15 @@ static int insert_check(VimState *state)
   }
 
   // May need to adjust w_topline to show the cursor.
-  update_topline(curwin);
+  if (s->count <= 1) {
+    update_topline(curwin);
+  }
 
   s->did_backspace = false;
 
-  validate_cursor(curwin);                  // may set must_redraw
+  if (s->count <= 1) {
+    validate_cursor(curwin);  // may set must_redraw
+  }
 
   // Redraw the display when no characters are waiting.
   // Also shows mode, ruler and positions cursor.
@@ -504,7 +509,9 @@ static int insert_check(VimState *state)
     do_check_cursorbind();
   }
 
-  update_curswant();
+  if (s->count <= 1) {
+    update_curswant();
+  }
   s->old_topline = curwin->w_topline;
   s->old_topfill = curwin->w_topfill;
 
