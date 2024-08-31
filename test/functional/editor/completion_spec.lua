@@ -4,7 +4,7 @@ local Screen = require('test.functional.ui.screen')
 
 local assert_alive = n.assert_alive
 local clear, feed = n.clear, n.feed
-local eval, eq, neq = n.eval, t.eq, t.neq
+local eval, eq, neq, ok = n.eval, t.eq, t.neq, t.ok
 local feed_command, source, expect = n.feed_command, n.source, n.expect
 local fn = n.fn
 local command = n.command
@@ -945,6 +945,12 @@ describe('completion', function()
     eq('BS', fn.getcompletion('set termpastefilter=', 'cmdline')[2])
     eq('SpecialKey', fn.getcompletion('set winhighlight=', 'cmdline')[1])
     eq('SpecialKey', fn.getcompletion('set winhighlight=NonText:', 'cmdline')[1])
+  end)
+
+  it('cmdline completion for -complete does not contain spaces', function()
+    for _, str in ipairs(fn.getcompletion('command -complete=', 'cmdline')) do
+      ok(not str:find(' '), 'string without spaces', str)
+    end
   end)
 
   describe('from the commandline window', function()

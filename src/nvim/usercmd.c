@@ -415,7 +415,7 @@ char *get_user_cmd_complete(expand_T *xp, int idx)
     return NULL;
   }
   char *cmd_compl = get_command_complete(idx);
-  if (cmd_compl == NULL) {
+  if (cmd_compl == NULL || idx == EXPAND_USER_LUA) {
     return "";
   }
   return cmd_compl;
