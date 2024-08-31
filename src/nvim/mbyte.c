@@ -85,7 +85,6 @@ struct interval {
 // uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.c.generated.h"
-# include "unicode_tables.generated.h"
 #endif
 // uncrustify:on
 
@@ -444,31 +443,10 @@ int mb_get_class_tab(const char *p, const uint64_t *const chartab)
   return utf_class_tab(utf_ptr2char(p), chartab);
 }
 
-// Return true if "c" is in "table".
-static bool intable(const struct interval *table, size_t n_items, int c)
-  FUNC_ATTR_PURE
+static bool prop_is_emojilike(const utf8proc_property_t *prop)
 {
-  assert(n_items > 0);
-  // first quick check for Latin1 etc. characters
-  if (c < table[0].first) {
-    return false;
-  }
-
-  assert(n_items <= SIZE_MAX / 2);
-  // binary search in table
-  size_t bot = 0;
-  size_t top = n_items;
-  do {
-    size_t mid = (bot + top) >> 1;
-    if (table[mid].last < c) {
-      bot = mid + 1;
-    } else if (table[mid].first > c) {
-      top = mid;
-    } else {
-      return true;
-    }
-  } while (top > bot);
-  return false;
+  return prop->boundclass == UTF8PROC_BOUNDCLASS_EXTENDED_PICTOGRAPHIC
+         || prop->boundclass == UTF8PROC_BOUNDCLASS_REGIONAL_INDICATOR;
 }
 
 /// For UTF-8 character "c" return 2 for a double-width character, 1 for others.
@@ -496,13 +474,18 @@ int utf_char2cells(int c)
     return n;
   }
 
-  if (intable(doublewidth, ARRAY_SIZE(doublewidth), c)) {
+  const utf8proc_property_t *prop = utf8proc_get_property(c);
+
+  if (prop->charwidth == 2) {
     return 2;
   }
-  if (p_emoji && intable(emoji_wide, ARRAY_SIZE(emoji_wide), c)) {
+  if (*p_ambw == 'd' && prop->ambiguous_width) {
     return 2;
   }
-  if (*p_ambw == 'd' && intable(ambiguous, ARRAY_SIZE(ambiguous), c)) {
+
+  // Characters below 1F000 may be considered single width traditionally,
+  // making them double width causes problems.
+  if (p_emoji && c >= 0x1f000 && !prop->ambiguous_width && prop_is_emojilike(prop)) {
     return 2;
   }
 
@@ -528,7 +511,7 @@ int utf_ptr2cells(const char *p_in)
     }
     int cells = utf_char2cells(c);
     if (cells == 1 && p_emoji
-        && intable(emoji_all, ARRAY_SIZE(emoji_all), c)) {
+        && prop_is_emojilike(utf8proc_get_property(c))) {
       int c2 = utf_ptr2char(p_in + len);
       if (c2 == 0xFE0F) {
         return 2;  // emoji presentation
@@ -628,7 +611,7 @@ int utf_ptr2cells_len(const char *p, int size)
     }
     int cells = utf_char2cells(c);
     if (cells == 1 && p_emoji && size > len
-        && intable(emoji_all, ARRAY_SIZE(emoji_all), c)
+        && prop_is_emojilike(utf8proc_get_property(c))
         && utf_ptr2len_len(p + len, size - len) == utf8len_tab[(uint8_t)p[len]]) {
       int c2 = utf_ptr2char(p + len);
       if (c2 == 0xFE0F) {
@@ -1137,7 +1120,8 @@ int utf_char2bytes(const int c, char *const buf)
 /// Returns false for negative values.
 bool utf_iscomposing_legacy(int c)
 {
-  return intable(combining, ARRAY_SIZE(combining), c);
+  const utf8proc_property_t *prop = utf8proc_get_property(c);
+  return prop->category == UTF8PROC_CATEGORY_MN || prop->category == UTF8PROC_CATEGORY_ME;
 }
 
 #ifdef __SSE2__
@@ -1181,6 +1165,33 @@ bool utf_printable(int c)
 }
 
 #else
+
+// Return true if "c" is in "table".
+static bool intable(const struct interval *table, size_t n_items, int c)
+  FUNC_ATTR_PURE
+{
+  assert(n_items > 0);
+  // first quick check for Latin1 etc. characters
+  if (c < table[0].first) {
+    return false;
+  }
+
+  assert(n_items <= SIZE_MAX / 2);
+  // binary search in table
+  size_t bot = 0;
+  size_t top = n_items;
+  do {
+    size_t mid = (bot + top) >> 1;
+    if (table[mid].last < c) {
+      bot = mid + 1;
+    } else if (table[mid].first > c) {
+      top = mid;
+    } else {
+      return true;
+    }
+  } while (top > bot);
+  return false;
+}
 
 // Return true for characters that can be displayed in a normal way.
 // Only for characters of 0x100 and above!
@@ -1304,8 +1315,9 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
     return 1;               // punctuation
   }
 
+  const utf8proc_property_t *prop = utf8proc_get_property(c);
   // emoji
-  if (intable(emoji_all, ARRAY_SIZE(emoji_all), c)) {
+  if (prop_is_emojilike(prop)) {
     return 3;
   }
 
@@ -1328,8 +1340,12 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
 bool utf_ambiguous_width(const char *p)
 {
   int c = utf_ptr2char(p);
-  return c >= 0x80 && (intable(ambiguous, ARRAY_SIZE(ambiguous), c)
-                       || intable(emoji_all, ARRAY_SIZE(emoji_all), c));
+  if (c < 0x80) {
+    return false;
+  }
+
+  const utf8proc_property_t *prop = utf8proc_get_property(c);
+  return prop->ambiguous_width || prop_is_emojilike(prop);
 }
 
 // Return the folded-case equivalent of "a", which is a UCS-4 character.  Uses

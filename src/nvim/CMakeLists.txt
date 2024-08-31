@@ -301,7 +301,6 @@ set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GEN_EVAL_TOUCH ${TOUCHES_DIR}/gen_doc_eval)
 set(LUAJIT_RUNTIME_DIR ${DEPS_PREFIX}/share/luajit-2.1/jit)
 set(NVIM_RUNTIME_DIR ${PROJECT_SOURCE_DIR}/runtime)
-set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/src/unicode)
 
 # GENERATOR_DIR
 set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
@@ -316,7 +315,6 @@ set(GENERATOR_PRELOAD ${GENERATOR_DIR}/preload.lua)
 set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(OPTIONS_ENUM_GENERATOR ${GENERATOR_DIR}/gen_options_enum.lua)
 set(OPTIONS_GENERATOR ${GENERATOR_DIR}/gen_options.lua)
-set(UNICODE_TABLES_GENERATOR ${GENERATOR_DIR}/gen_unicode_tables.lua)
 
 # GENERATED_DIR and GENERATED_INCLUDES_DIR
 set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.h)
@@ -333,7 +331,6 @@ set(GENERATED_OPTIONS_MAP ${GENERATED_DIR}/options_map.generated.h)
 set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
 set(GENERATED_UI_EVENTS_CLIENT ${GENERATED_DIR}/ui_events_client.generated.h)
 set(GENERATED_UI_EVENTS_REMOTE ${GENERATED_DIR}/ui_events_remote.generated.h)
-set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(LUA_API_C_BINDINGS ${GENERATED_DIR}/lua_api_c_bindings.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 
@@ -350,7 +347,6 @@ set(LUA_LOADER_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/loader.lua)
 set(LUA_OPTIONS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_options.lua)
 set(LUA_SHARED_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/shared.lua)
 
-file(GLOB UNICODE_FILES CONFIGURE_DEPENDS ${UNICODE_DIR}/*.txt)
 file(GLOB API_HEADERS CONFIGURE_DEPENDS api/*.h)
 list(REMOVE_ITEM API_HEADERS ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h)
 file(GLOB MSGPACK_RPC_HEADERS CONFIGURE_DEPENDS msgpack_rpc/*.h)
@@ -587,15 +583,6 @@ foreach(sfile ${NVIM_SOURCES}
   endif()
 endforeach()
 
-add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
-  COMMAND ${LUA_PRG} ${UNICODE_TABLES_GENERATOR}
-                     ${UNICODE_DIR}
-                     ${GENERATED_UNICODE_TABLES}
-  DEPENDS
-    ${UNICODE_TABLES_GENERATOR}
-    ${UNICODE_FILES}
-)
-
 set(NVIM_VERSION_LUA ${PROJECT_BINARY_DIR}/nvim_version.lua)
 configure_file(${GENERATOR_DIR}/nvim_version.lua.in ${NVIM_VERSION_LUA})
 
@@ -687,7 +674,6 @@ list(APPEND NVIM_GENERATED_FOR_SOURCES
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
   "${GENERATED_OPTIONS_MAP}"
-  "${GENERATED_UNICODE_TABLES}"
   "${VIM_MODULE_FILE}"
   "${PROJECT_BINARY_DIR}/cmake.config/auto/pathdef.h"
 )
