@@ -2664,6 +2664,13 @@ func Test_complete_fuzzy_match()
   call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
   call assert_equal('hello help hero h', getline('.'))
 
+  " issue #15526
+  set completeopt=fuzzy,menuone,menu,noselect
+  call setline(1, ['Text', 'ToText', ''])
+  call cursor(2, 1)
+  call feedkeys("STe\<C-X>\<C-N>x\<CR>\<Esc>0", 'tx!')
+  call assert_equal('Tex', getline('.'))
+
   " clean up
   set omnifunc=
   bw!
