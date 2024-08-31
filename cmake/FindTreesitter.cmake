@@ -1,4 +1,5 @@
 find_path2(TREESITTER_INCLUDE_DIR tree_sitter/api.h)
+find_path2(TREESITTER_INCLUDE_DIR tree_sitter/parser.h)
 find_library2(TREESITTER_LIBRARY NAMES tree-sitter)
 find_package_handle_standard_args(Treesitter DEFAULT_MSG
   TREESITTER_LIBRARY TREESITTER_INCLUDE_DIR)

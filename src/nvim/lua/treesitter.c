@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tree_sitter/api.h>
+#include <tree_sitter/parser.h>
 #include <uv.h>
 
 #ifdef HAVE_WASMTIME
@@ -268,14 +269,14 @@ int tslua_inspect_lang(lua_State *L)
   lua_createtable(L, (int)(nsymbols - 1), 1);  // [retval, symbols]
   for (uint32_t i = 0; i < nsymbols; i++) {
     TSSymbolType t = ts_language_symbol_type(lang, (TSSymbol)i);
-    if (t == TSSymbolTypeAuxiliary) {
+    if (t == TSSymbolTypeAuxiliary && !lang->symbol_metadata[i].supertype) {
       // not used by the API
       continue;
     }
     lua_createtable(L, 2, 0);  // [retval, symbols, elem]
     lua_pushstring(L, ts_language_symbol_name(lang, (TSSymbol)i));
     lua_rawseti(L, -2, 1);
-    lua_pushboolean(L, t == TSSymbolTypeRegular);
+    lua_pushboolean(L, t != TSSymbolTypeAnonymous);
     lua_rawseti(L, -2, 2);  // [retval, symbols, elem]
     lua_rawseti(L, -2, (int)i);  // [retval, symbols]
   }

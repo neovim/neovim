@@ -182,6 +182,7 @@ TREESITTER
 • |LanguageTree:node_for_range()| gets anonymous and named nodes for a range
 • |vim.treesitter.get_node()| now takes an option `include_anonymous`, default
   false, which allows it to return anonymous nodes as well as named nodes.
+• |vim.treesitter.language.inspect()| now shows node supertypes
 
 TUI
 

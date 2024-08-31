@@ -151,7 +151,9 @@ end
 
 --- Inspects the provided language.
 ---
---- Inspecting provides some useful information on the language like node names, ...
+--- Inspecting provides some useful information on the language like node
+--- names, field names, and |vim.treesitter.language_version|. Each node name
+--- has an associated boolean which is `false` if it is anonymous.
 ---
 ---@param lang string Language
 ---@return table
