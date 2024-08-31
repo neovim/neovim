@@ -985,7 +985,8 @@ inspect({lang})                            *vim.treesitter.language.inspect()*
     Inspects the provided language.
 
     Inspecting provides some useful information on the language like node
-    names, ...
+    names, field names, and |vim.treesitter.language_version|. Each node name
+    has an associated boolean which is `false` if it is anonymous.
 
     Parameters: ~
       • {lang}  (`string`) Language

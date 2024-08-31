@@ -55,7 +55,7 @@ describe('treesitter language API', function()
 
   it('inspects language', function()
     local keys, fields, symbols = unpack(exec_lua(function()
-      local lang = vim.treesitter.language.inspect('c')
+      local lang = vim.treesitter.language.inspect('lua')
       local keys, symbols = {}, {}
       for k, _ in pairs(lang) do
         keys[k] = true
@@ -76,20 +76,22 @@ describe('treesitter language API', function()
       eq('string', type(f))
       fset[f] = true
     end
-    eq(true, fset['directive'])
-    eq(true, fset['initializer'])
+    eq(true, fset['value'])
+    eq(true, fset['body'])
 
-    local has_named, has_anonymous
+    local has_named, has_anonymous, has_supertype
     for _, s in pairs(symbols) do
       eq('string', type(s[1]))
       eq('boolean', type(s[2]))
       if s[1] == 'for_statement' and s[2] == true then
         has_named = true
-      elseif s[1] == '|=' and s[2] == false then
+      elseif s[1] == '..' and s[2] == false then
         has_anonymous = true
+      elseif s[1] == 'statement' and s[2] == true then
+        has_supertype = true
       end
     end
-    eq({ true, true }, { has_named, has_anonymous })
+    eq({ true, true, true }, { has_named, has_anonymous, has_supertype })
   end)
 
   it(
