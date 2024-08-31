@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local ts_t = require('test.functional.treesitter.testutil')
 
 local clear = n.clear
 local dedent = t.dedent
@@ -8,6 +9,7 @@ local insert = n.insert
 local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
 local feed = n.feed
+local run_query = ts_t.run_query
 
 describe('treesitter parser API', function()
   before_each(function()
@@ -684,26 +686,13 @@ print()
         vim.treesitter.start(0, 'lua')
       end)
 
-      local function run_query()
-        return exec_lua(function(query_str)
-          local query = vim.treesitter.query.parse('lua', query_str)
-          local parser = vim.treesitter.get_parser()
-          local tree = parser:parse()[1]
-          local res = {}
-          for id, _, metadata in query:iter_captures(tree:root(), 0) do
-            table.insert(res, { query.captures[id], metadata[id].range })
-          end
-          return res
-        end, query_text)
-      end
-
       eq({
         { 'str', { 2, 12, 6, 10 } },
         { 'str', { 11, 10, 11, 10 } },
         { 'str', { 17, 10, 17, 10 } },
         { 'str', { 19, 10, 19, 10 } },
         { 'str', { 22, 15, 22, 25 } },
-      }, run_query())
+      }, run_query('lua', query_text))
     end)
 
     it('trims only empty lines by default (backwards compatible)', function()
@@ -726,23 +715,10 @@ print()
         vim.treesitter.start(0, 'markdown')
       end)
 
-      local function run_query()
-        return exec_lua(function(query_str)
-          local query = vim.treesitter.query.parse('markdown', query_str)
-          local parser = vim.treesitter.get_parser()
-          local tree = parser:parse()[1]
-          local res = {}
-          for id, _, metadata in query:iter_captures(tree:root(), 0) do
-            table.insert(res, { query.captures[id], metadata[id].range })
-          end
-          return res
-        end, query_text)
-      end
-
       eq({
         { 'fold', { 0, 0, 3, 0 } },
         { 'fold', { 4, 0, 7, 0 } },
-      }, run_query())
+      }, run_query('markdown', query_text))
     end)
   end)
 
@@ -761,32 +737,19 @@ print()
       vim.treesitter.start(0, 'c')
     end)
 
-    local function run_query()
-      return exec_lua(function()
-        local query = vim.treesitter.query.parse('c', query0)
-        local parser = vim.treesitter.get_parser()
-        local tree = parser:parse()[1]
-        local res = {}
-        for id, node in query:iter_captures(tree:root()) do
-          table.insert(res, { query.captures[id], node:range() })
-        end
-        return res
-      end)
-    end
-
     eq({
-      { 'function', 0, 0, 2, 1 },
-      { 'declaration', 1, 2, 1, 12 },
-    }, run_query())
+      { 'function', { 0, 0, 2, 1 } },
+      { 'declaration', { 1, 2, 1, 12 } },
+    }, run_query('c', query0))
 
     n.command 'normal ggO'
     insert('int a;')
 
     eq({
-      { 'declaration', 0, 0, 0, 6 },
-      { 'function', 1, 0, 3, 1 },
-      { 'declaration', 2, 2, 2, 12 },
-    }, run_query())
+      { 'declaration', { 0, 0, 0, 6 } },
+      { 'function', { 1, 0, 3, 1 } },
+      { 'declaration', { 2, 2, 2, 12 } },
+    }, run_query('c', query0))
   end)
 
   it('handles ranges when source is a multiline string (#20419)', function()
