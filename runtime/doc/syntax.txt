@@ -152,8 +152,7 @@ add a few items or change the highlighting, follow these steps:
 1. Create your user directory from 'runtimepath', see above.
 
 2. Create a directory in there called "after/syntax".  For Unix: >
-	mkdir ~/.config/nvim/after
-	mkdir ~/.config/nvim/after/syntax
+	mkdir -p ~/.config/nvim/after/syntax
 
 3. Write a Vim script that contains the commands you want to use.  For
    example, to change the colors for the C syntax: >
