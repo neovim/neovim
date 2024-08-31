@@ -987,7 +987,7 @@ describe('ui/mouse/input', function()
     command('set sidescroll=0')
     feed('<esc>:set nowrap<cr>')
 
-    feed('a <esc>20Ab<esc>')
+    feed('a <esc>17Ab<esc>3Ab<esc>')
     screen:expect([[
                                |*2
       bbbbbbbbbbbbbbb^b         |
@@ -1017,7 +1017,7 @@ describe('ui/mouse/input', function()
     command('set sidescroll=0')
     feed('<esc>:set nowrap<cr>')
 
-    feed('a <esc>20Ab<esc>')
+    feed('a <esc>17Ab<esc>3Ab<esc>')
     screen:expect([[
                                |*2
       bbbbbbbbbbbbbbb^b         |
