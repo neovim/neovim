@@ -147,7 +147,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     size = kInvalidByteCells;
   } else {
     size = ptr2cells(cur);
-    is_doublewidth = size == 2 && cur_char > 0x80;
+    is_doublewidth = size == 2 && cur_char >= 0x80;
   }
 
   if (csarg->virt_row >= 0) {
