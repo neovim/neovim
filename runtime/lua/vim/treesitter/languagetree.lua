@@ -833,13 +833,7 @@ function LanguageTree:_get_injections()
     local start_line, _, end_line, _ = root_node:range()
 
     for pattern, match, metadata in
-      self._injection_query:iter_matches(
-        root_node,
-        self._source,
-        start_line,
-        end_line + 1,
-        { all = true }
-      )
+      self._injection_query:iter_matches(root_node, self._source, start_line, end_line + 1)
     do
       local lang, combined, ranges = self:_get_injection(match, metadata)
       if lang then

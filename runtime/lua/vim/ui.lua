@@ -196,7 +196,7 @@ function M._get_urls()
     local query = vim.treesitter.query.get(lang, 'highlights')
     if query then
       local tree = assert(ltree:tree_for_range(range))
-      for _, match, metadata in query:iter_matches(tree:root(), bufnr, row, row + 1, { all = true }) do
+      for _, match, metadata in query:iter_matches(tree:root(), bufnr, row, row + 1) do
         for id, nodes in pairs(match) do
           for _, node in ipairs(nodes) do
             if vim.treesitter.node_contains(node, range) then

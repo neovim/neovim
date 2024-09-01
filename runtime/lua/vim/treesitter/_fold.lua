@@ -131,9 +131,7 @@ local function compute_folds_levels(bufnr, info, srow, erow, parse_injections)
 
     -- Collect folds starting from srow - 1, because we should first subtract the folds that end at
     -- srow - 1 from the level of srow - 1 to get accurate level of srow.
-    for _, match, metadata in
-      query:iter_matches(tree:root(), bufnr, math.max(srow - 1, 0), erow, { all = true })
-    do
+    for _, match, metadata in query:iter_matches(tree:root(), bufnr, math.max(srow - 1, 0), erow) do
       for id, nodes in pairs(match) do
         if query.captures[id] == 'fold' then
           local range = ts.get_range(nodes[1], bufnr, metadata[id])
