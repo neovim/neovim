@@ -1204,16 +1204,15 @@ describe('smoothscroll', function()
       set smoothscroll scrolloff=3
       call setline(1, ['one', 'two long '->repeat(100), 'three', 'four', 'five', 'six'])
     ]])
-    --FIXME: incorrect screen due to reset_skipcol()/curs_columns() shenanigans
     feed(':norm j721|<CR>')
     screen:expect([[
-      two long two long two long two long two |
+      {1:<<<}two long two long two long two long t|
+      wo long two long two long two long two l|
+      ong two long two long two long two long |
+      ^two long two long two long two long two |
       long two long two long two long two long|
        two long two long two long two long two|
-      ^ long two long two long two long two lon|
-      g two long two long two long two long tw|
-      o long two long two long two long two lo|
-      ng two long two long two long two long t|
+       long two long two long two long two lon|
       :norm j721|                             |
     ]])
     feed('gj')
@@ -1272,15 +1271,14 @@ describe('smoothscroll', function()
       :norm j721|                             |
     ]])
     feed('gk')
-    --FIXME: incorrect screen due to reset_skipcol()/curs_columns() shenanigans
     screen:expect([[
+      {1:<<<}long two long two long two long two l|
+      ong two long two long two long two long |
       two long two long two long two long two |
       long two long two long two long two long|
        two long two long two long two long two|
        long two long two long two long two lon|
-      g two long two long two long two long tw|
-      o long two long two long two long two lo|
-      ^ng two long two long two long two long t|
+      ^g two long two long                     |
       :norm j721|                             |
     ]])
   end)
