@@ -170,7 +170,7 @@ end
 --- Returns all URLs at cursor, if any.
 --- @return string[]
 function M._get_urls()
-  local urls = {}
+  local urls = {} ---@type string[]
 
   local bufnr = vim.api.nvim_get_current_buf()
   local cursor = vim.api.nvim_win_get_cursor(0)
@@ -183,7 +183,7 @@ function M._get_urls()
   })
   for _, v in ipairs(extmarks) do
     local details = v[4]
-    if details.url then
+    if details and details.url then
       urls[#urls + 1] = details.url
     end
   end
@@ -195,7 +195,7 @@ function M._get_urls()
     local lang = ltree:lang()
     local query = vim.treesitter.query.get(lang, 'highlights')
     if query then
-      local tree = ltree:tree_for_range(range)
+      local tree = assert(ltree:tree_for_range(range))
       for _, match, metadata in query:iter_matches(tree:root(), bufnr, row, row + 1, { all = true }) do
         for id, nodes in pairs(match) do
           for _, node in ipairs(nodes) do
