@@ -1023,7 +1023,7 @@ add_directive({name}, {handler}, {opts})
 
     Parameters: ~
       • {name}     (`string`) Name of the directive, without leading #
-      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)`)
+      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata)`)
                    • match: A table mapping capture IDs to a list of captured
                      nodes
                    • pattern: the index of the matching pattern in the query
@@ -1046,7 +1046,7 @@ add_predicate({name}, {handler}, {opts})
 
     Parameters: ~
       • {name}     (`string`) Name of the predicate, without leading #
-      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)`)
+      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata)`)
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
       • {opts}     (`table`) A table with the following fields:
@@ -1256,8 +1256,8 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
                     eventually become the default and removed.
 
     Return: ~
-        (`fun(): integer, table<integer, TSNode[]>, table`) pattern id, match,
-        metadata
+        (`fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata`)
+        pattern id, match, metadata
 
 set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
     Sets the runtime query named {query_name} for {lang}
