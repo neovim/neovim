@@ -203,7 +203,8 @@ function M._get_urls()
               local url = metadata[id] and metadata[id].url
               if url and match[url] then
                 for _, n in ipairs(match[url]) do
-                  urls[#urls + 1] = vim.treesitter.get_node_text(n, bufnr, metadata[url])
+                  urls[#urls + 1] =
+                    vim.treesitter.get_node_text(n, bufnr, { metadata = metadata[url] })
                 end
               end
             end
