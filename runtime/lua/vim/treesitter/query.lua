@@ -487,8 +487,8 @@ predicate_handlers['any-vim-match?'] = predicate_handlers['any-match?']
 ---@class vim.treesitter.query.TSMetadata
 ---@field range? Range
 ---@field conceal? string
----@field [integer] vim.treesitter.query.TSMetadata
----@field [string] integer|string
+---@field [integer]? vim.treesitter.query.TSMetadata
+---@field [string]? integer|string
 
 ---@alias TSDirective fun(match: table<integer,TSNode[]>, _, _, predicate: (string|integer)[], metadata: vim.treesitter.query.TSMetadata)
 
@@ -627,7 +627,7 @@ local directive_handlers = {
 --- Adds a new predicate to be used in queries
 ---
 ---@param name string Name of the predicate, without leading #
----@param handler fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)
+---@param handler fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata)
 ---   - see |vim.treesitter.query.add_directive()| for argument meanings
 ---@param opts vim.treesitter.query.add_predicate.Opts
 function M.add_predicate(name, handler, opts)
@@ -667,7 +667,7 @@ end
 --- metadata table `metadata[capture_id].key = value`
 ---
 ---@param name string Name of the directive, without leading #
----@param handler fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: table)
+---@param handler fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata)
 ---   - match: A table mapping capture IDs to a list of captured nodes
 ---   - pattern: the index of the matching pattern in the query file
 ---   - predicate: list of strings containing the full directive being called, e.g.
@@ -929,7 +929,7 @@ end
 ---     Older versions of iter_matches incorrectly mapped capture IDs to a single node, which is
 ---     incorrect behavior. This option will eventually become the default and removed.
 ---
----@return (fun(): integer, table<integer, TSNode[]>, table): pattern id, match, metadata
+---@return (fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata): pattern id, match, metadata
 function Query:iter_matches(node, source, start, stop, opts)
   opts = opts or {}
   opts.match_limit = opts.match_limit or 256
