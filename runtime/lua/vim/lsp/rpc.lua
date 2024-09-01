@@ -627,12 +627,12 @@ end
 ---
 ---  - a named pipe (windows)
 ---  - a domain socket (unix)
----  - a host and port via TCP
+---  - a host and port via TCP (host must be IP address)
 ---
 --- Return a function that can be passed to the `cmd` field for
 --- |vim.lsp.start_client()| or |vim.lsp.start()|.
 ---
----@param host_or_path string host to connect to or path to a pipe/domain socket
+---@param host_or_path string host (IP address) to connect to or path to a pipe/domain socket
 ---@param port integer? TCP port to connect to. If absent the first argument must be a pipe
 ---@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient
 function M.connect(host_or_path, port)
