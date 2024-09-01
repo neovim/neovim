@@ -23,7 +23,7 @@ error('Cannot require a meta file')
 --- @field conceal? boolean
 --- @field spell? boolean
 --- @field ui_watched? boolean
---- @field url? boolean
+--- @field url? string
 --- @field hl_mode? string
 ---
 --- @field virt_text? [string, string][]
