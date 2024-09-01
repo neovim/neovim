@@ -113,9 +113,11 @@ do
     local gx_desc =
       'Opens filepath or URI under cursor with the system handler (file explorer, web browser, …)'
     vim.keymap.set({ 'n' }, 'gx', function()
-      local err = do_open(require('vim.ui')._get_url())
-      if err then
-        vim.notify(err, vim.log.levels.ERROR)
+      for _, url in ipairs(require('vim.ui')._get_urls()) do
+        local err = do_open(url)
+        if err then
+          vim.notify(err, vim.log.levels.ERROR)
+        end
       end
     end, { desc = gx_desc })
     vim.keymap.set({ 'x' }, 'gx', function()
