@@ -1,5 +1,7 @@
 --- Module for private utility functions
 
+--- @alias vim.func.MemoObj { _hash: (fun(...): any), _weak: boolean?, _cache: table<any> }
+
 --- @param argc integer?
 --- @return fun(...): any
 local function concat_hash(argc)
@@ -33,29 +35,49 @@ local function resolve_hash(hash)
   return hash
 end
 
+--- @param weak boolean?
+--- @return table
+local create_cache = function(weak)
+  return setmetatable({}, {
+    __mode = weak ~= false and 'kv',
+  })
+end
+
 --- @generic F: function
 --- @param hash integer|string|fun(...): any
 --- @param fn F
---- @param strong? boolean
+--- @param weak? boolean
 --- @return F
-return function(hash, fn, strong)
+return function(hash, fn, weak)
   vim.validate('hash', hash, { 'number', 'string', 'function' })
   vim.validate('fn', fn, 'function')
+  vim.validate('weak', weak, 'boolean', true)
 
-  ---@type table<any,table<any,any>>
-  local cache = {}
-  if not strong then
-    setmetatable(cache, { __mode = 'kv' })
-  end
+  --- @type vim.func.MemoObj
+  local obj = {
+    _cache = create_cache(weak),
+    _hash = resolve_hash(hash),
+    _weak = weak,
+    --- @param self vim.func.MemoObj
+    clear = function(self, ...)
+      if select('#', ...) == 0 then
+        self._cache = create_cache(self._weak)
+        return
+      end
+      local key = self._hash(...)
+      self._cache[key] = nil
+    end,
+  }
 
-  hash = resolve_hash(hash)
-
-  return function(...)
-    local key = hash(...)
-    if cache[key] == nil then
-      cache[key] = vim.F.pack_len(fn(...))
-    end
-
-    return vim.F.unpack_len(cache[key])
-  end
+  return setmetatable(obj, {
+    --- @param self vim.func.MemoObj
+    __call = function(self, ...)
+      local key = self._hash(...)
+      local cache = self._cache
+      if cache[key] == nil then
+        cache[key] = vim.F.pack_len(fn(...))
+      end
+      return vim.F.unpack_len(cache[key])
+    end,
+  })
 end
