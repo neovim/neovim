@@ -627,7 +627,7 @@ end
 ---
 ---  - a named pipe (windows)
 ---  - a domain socket (unix)
----  - a host and port via TCP (Host must be IP Address)
+---  - a host and port via TCP (host must be IP address)
 ---
 --- Return a function that can be passed to the `cmd` field for
 --- |vim.lsp.start_client()| or |vim.lsp.start()|.
