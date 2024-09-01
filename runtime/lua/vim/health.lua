@@ -1,6 +1,6 @@
 --- @brief
 ---<pre>help
---- health.vim is a minimal framework to help users troubleshoot configuration and
+--- vim.health is a minimal framework to help users troubleshoot configuration and
 --- any other environment conditions that a plugin might care about. Nvim ships
 --- with healthchecks for configuration, performance, python support, ruby
 --- support, clipboard support, and more.
@@ -39,7 +39,7 @@
 ---                         :checkhealth vim*
 --- <
 ---
---- Create a healthcheck                                    *health-dev* *vim.health*
+--- Create a healthcheck                                    *health-dev*
 ---
 --- Healthchecks are functions that check the user environment, configuration, or
 --- any other prerequisites that a plugin cares about. Nvim ships with

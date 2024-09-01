@@ -352,16 +352,14 @@ Example: >vim
 <
                                                          *lua-table-ambiguous*
 Lua tables are used as both dictionaries and lists, so it is impossible to
-determine whether empty table is meant to be empty list or empty dictionary.
-Additionally Lua does not have integer numbers. To distinguish between these
-cases there is the following agreement:
+decide whether empty table is a list or a dict. Also Lua does not have integer
+numbers. To disambiguate these cases, we define:
                                                                     *lua-list*
-0. Empty table is empty list.
-1. Table with N consecutive integer indices starting from 1 and ending with
-   N is considered a list. See also |list-iterator|.
+0. Empty table is a list. Use |vim.empty_dict()| to represent empty dict.
+1. Table with N consecutive (no `nil` values, aka "holes") integer keys 1…N is
+   a list. See also |list-iterator|.
                                                                     *lua-dict*
-2. Table with string keys, none of which contains NUL byte, is considered to
-   be a dictionary.
+2. Table with string keys, none of which contains NUL byte, is a dict.
 3. Table with string keys, at least one of which contains NUL byte, is also
    considered to be a dictionary, but this time it is converted to
    a |msgpack-special-map|.
@@ -3839,10 +3837,12 @@ argument into an *Iter* object with methods (such as |Iter:filter()| and
 chained to create iterator "pipelines": the output of each pipeline stage is
 input to the next stage. The first stage depends on the type passed to
 `vim.iter()`:
-• List tables (arrays, |lua-list|) yield only the value of each element.
-  • Holes (nil values) are allowed.
+• Lists or arrays (|lua-list|) yield only the value of each element.
+  • Holes (nil values) are allowed (but discarded).
+  • Use pairs() to treat array/list tables as dicts (preserve holes and
+    non-contiguous integer keys): `vim.iter(pairs(…))`.
   • Use |Iter:enumerate()| to also pass the index to the next stage.
-  • Or initialize with ipairs(): `vim.iter(ipairs(…))`.
+    • Or initialize with ipairs(): `vim.iter(ipairs(…))`.
 • Non-list tables (|lua-dict|) yield both the key and value of each element.
 • Function |iterator|s yield all values returned by the underlying function.
 • Tables with a |__call()| metamethod are treated as function iterators.

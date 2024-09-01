@@ -724,7 +724,7 @@ describe('vim.lsp.completion: protocol', function()
     end)
   end)
 
-  it('custom word/abbar format', function()
+  it('enable(…,{convert=fn}) custom word/abbr format', function()
     create_server({
       isIncomplete = false,
       items = {

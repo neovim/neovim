@@ -145,10 +145,9 @@ describe('lua stdlib', function()
         -- "0.10" or "0.10-dev+xxx"
         local curstr = ('%s.%s%s'):format(curver.major, curver.minor, prerel or '')
         eq(
-          dedent(
-            [[
-            foo.bar() is deprecated. Run ":checkhealth vim.deprecated" for more information]]
-          ):format(curstr),
+          ([[foo.bar() is deprecated. Run ":checkhealth vim.deprecated" for more information]]):format(
+            curstr
+          ),
           exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', curstr)
         )
         -- Same message as above; skipped this time.
@@ -178,8 +177,7 @@ describe('lua stdlib', function()
 
       it('plugin=nil, to be deleted in the next major version (1.0)', function()
         eq(
-          dedent [[
-            foo.baz() is deprecated. Run ":checkhealth vim.deprecated" for more information]],
+          [[foo.baz() is deprecated. Run ":checkhealth vim.deprecated" for more information]],
           exec_lua [[ return vim.deprecate('foo.baz()', nil, '1.0') ]]
         )
       end)

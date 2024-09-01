@@ -395,7 +395,21 @@ void os_get_hostname(char *hostname, size_t size)
 #endif
 }
 
-/// To get the "real" home directory:
+/// The "real" home directory as determined by `init_homedir`.
+static char *homedir = NULL;
+static char *os_uv_homedir(void);
+
+/// Gets the "real", resolved user home directory as determined by `init_homedir`.
+const char *os_homedir(void)
+{
+  if (!homedir) {
+    emsg("os_homedir failed: homedir not initialized");
+    return NULL;
+  }
+  return homedir;
+}
+
+/// Sets `homedir` to the "real", resolved user home directory, as follows:
 ///   1. get value of $HOME
 ///   2. if $HOME is not set, try the following
 /// For Windows:
@@ -409,20 +423,6 @@ void os_get_hostname(char *hostname, size_t size)
 ///     This also works with mounts and links.
 ///     Don't do this for Windows, it will change the "current dir" for a drive.
 ///   3. fall back to current working directory as a last resort
-static char *homedir = NULL;
-static char *os_uv_homedir(void);
-
-/// Public accessor for the cached "real", resolved user home directory. See
-/// comment on `homedir`.
-const char *os_get_homedir(void)
-{
-  if (!homedir) {
-    emsg("os_get_homedir failed: homedir not initialized");
-    return NULL;
-  }
-  return homedir;
-}
-
 void init_homedir(void)
 {
   // In case we are called a second time.
