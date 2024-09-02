@@ -33,6 +33,7 @@ local create_server_definition = t_lsp.create_server_definition
 local fake_lsp_code = t_lsp.fake_lsp_code
 local fake_lsp_logfile = t_lsp.fake_lsp_logfile
 local test_rpc_server = t_lsp.test_rpc_server
+local create_tcp_echo_server = t_lsp.create_tcp_echo_server
 
 local function get_buf_option(name, bufnr)
   bufnr = bufnr or 'BUFFER'
@@ -4981,26 +4982,33 @@ describe('LSP', function()
   end)
 
   describe('cmd', function()
-    it('can connect to lsp server via rpc.connect', function()
+    it('connects to lsp server via rpc.connect using ip address', function()
+      exec_lua(create_tcp_echo_server)
       local result = exec_lua(function()
-        local uv = vim.uv
-        local server = assert(uv.new_tcp())
-        local init = nil
-        server:bind('127.0.0.1', 0)
-        server:listen(127, function(err)
-          assert(not err, err)
-          local socket = assert(uv.new_tcp())
-          server:accept(socket)
-          socket:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
-            init = body
-            socket:close()
-          end))
-        end)
-        local port = server:getsockname().port
+        local server, port, last_message = _G._create_tcp_server('127.0.0.1')
         vim.lsp.start({ name = 'dummy', cmd = vim.lsp.rpc.connect('127.0.0.1', port) })
         vim.wait(1000, function()
-          return init ~= nil
+          return last_message() ~= nil
         end)
+        local init = last_message()
+        assert(init, 'server must receive `initialize` request')
+        server:close()
+        server:shutdown()
+        return vim.json.decode(init)
+      end)
+      eq('initialize', result.method)
+    end)
+
+    it('connects to lsp server via rpc.connect using hostname', function()
+      skip(is_os('bsd'), 'issue with host resolution in ci')
+      exec_lua(create_tcp_echo_server)
+      local result = exec_lua(function()
+        local server, port, last_message = _G._create_tcp_server('::1')
+        vim.lsp.start({ name = 'dummy', cmd = vim.lsp.rpc.connect('localhost', port) })
+        vim.wait(1000, function()
+          return last_message() ~= nil
+        end)
+        local init = last_message()
         assert(init, 'server must receive `initialize` request')
         server:close()
         server:shutdown()
