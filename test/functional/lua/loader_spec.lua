@@ -74,8 +74,7 @@ describe('vim.loader', function()
       vim.loader.enable()
     ]]
 
-    local tmp = t.tmpname()
-    assert(os.remove(tmp))
+    local tmp = t.tmpname(false)
     assert(t.mkdir(tmp))
     assert(t.mkdir(tmp .. '/%'))
     local tmp1 = tmp .. '/%/x'

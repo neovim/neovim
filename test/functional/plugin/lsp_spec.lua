@@ -800,8 +800,7 @@ describe('LSP', function()
           eq(table.remove(expected_handlers), { err, result, ctx }, 'expected handler')
           if ctx.method == 'start' then
             local tmpfile_old = tmpname()
-            local tmpfile_new = tmpname()
-            os.remove(tmpfile_new)
+            local tmpfile_new = tmpname(false)
             exec_lua(function(oldname, newname)
               _G.BUFFER = vim.api.nvim_get_current_buf()
               vim.api.nvim_buf_set_name(_G.BUFFER, oldname)
@@ -2370,8 +2369,7 @@ describe('LSP', function()
     end)
 
     it('Supports file creation with CreateFile payload', function()
-      local tmpfile = tmpname()
-      os.remove(tmpfile) -- Should not exist, only interested in a tmpname
+      local tmpfile = tmpname(false)
       local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
       local edit = {
         documentChanges = {
@@ -2388,9 +2386,7 @@ describe('LSP', function()
     it(
       'Supports file creation in folder that needs to be created with CreateFile payload',
       function()
-        local tmpfile = tmpname()
-        os.remove(tmpfile) -- Should not exist, only interested in a tmpname
-        tmpfile = tmpfile .. '/dummy/x/'
+        local tmpfile = tmpname(false) .. '/dummy/x/'
         local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
         local edit = {
           documentChanges = {
@@ -2468,8 +2464,7 @@ describe('LSP', function()
     end)
 
     it('DeleteFile fails if file does not exist and ignoreIfNotExists is false', function()
-      local tmpfile = tmpname()
-      os.remove(tmpfile)
+      local tmpfile = tmpname(false)
       local uri = exec_lua('return vim.uri_from_fname(...)', tmpfile)
       local edit = {
         documentChanges = {
@@ -2493,8 +2488,7 @@ describe('LSP', function()
     it('Can rename an existing file', function()
       local old = tmpname()
       write_file(old, 'Test content')
-      local new = tmpname()
-      os.remove(new) -- only reserve the name, file must not exist for the test scenario
+      local new = tmpname(false)
       local lines = exec_lua(function(old0, new0)
         local old_bufnr = vim.fn.bufadd(old0)
         vim.fn.bufload(old_bufnr)
@@ -2514,10 +2508,8 @@ describe('LSP', function()
 
     it('Can rename a directory', function()
       -- only reserve the name, file must not exist for the test scenario
-      local old_dir = tmpname()
-      local new_dir = tmpname()
-      os.remove(old_dir)
-      os.remove(new_dir)
+      local old_dir = tmpname(false)
+      local new_dir = tmpname(false)
 
       n.mkdir_p(old_dir)
 
@@ -2542,10 +2534,8 @@ describe('LSP', function()
     end)
 
     it('Does not touch buffers that do not match path prefix', function()
-      local old = tmpname()
-      local new = tmpname()
-      os.remove(old)
-      os.remove(new)
+      local old = tmpname(false)
+      local new = tmpname(false)
       n.mkdir_p(old)
 
       eq(
@@ -2604,8 +2594,7 @@ describe('LSP', function()
     it('Maintains undo information for loaded buffer', function()
       local old = tmpname()
       write_file(old, 'line')
-      local new = tmpname()
-      os.remove(new)
+      local new = tmpname(false)
 
       local undo_kept = exec_lua(function(old0, new0)
         vim.opt.undofile = true
@@ -2629,8 +2618,7 @@ describe('LSP', function()
     it('Maintains undo information for unloaded buffer', function()
       local old = tmpname()
       write_file(old, 'line')
-      local new = tmpname()
-      os.remove(new)
+      local new = tmpname(false)
 
       local undo_kept = exec_lua(function(old0, new0)
         vim.opt.undofile = true
@@ -2651,8 +2639,7 @@ describe('LSP', function()
     it('Does not rename file when it conflicts with a buffer without file', function()
       local old = tmpname()
       write_file(old, 'Old File')
-      local new = tmpname()
-      os.remove(new)
+      local new = tmpname(false)
 
       local lines = exec_lua(function(old0, new0)
         local old_buf = vim.fn.bufadd(old0)
@@ -5023,13 +5010,7 @@ describe('LSP', function()
     end)
 
     it('can connect to lsp server via pipe or domain_socket', function()
-      local tmpfile --- @type string
-      if is_os('win') then
-        tmpfile = '\\\\.\\\\pipe\\pipe.test'
-      else
-        tmpfile = tmpname()
-        os.remove(tmpfile)
-      end
+      local tmpfile = is_os('win') and '\\\\.\\\\pipe\\pipe.test' or tmpname(false)
       local result = exec_lua(function(SOCK)
         local uv = vim.uv
         local server = assert(uv.new_pipe(false))
@@ -5135,9 +5116,7 @@ describe('LSP', function()
 
   describe('#dynamic vim.lsp._dynamic', function()
     it('supports dynamic registration', function()
-      ---@type string
-      local root_dir = tmpname()
-      os.remove(root_dir)
+      local root_dir = tmpname(false)
       mkdir(root_dir)
       local tmpfile = root_dir .. '/dynamic.foo'
       local file = io.open(tmpfile, 'w')
@@ -5264,8 +5243,7 @@ describe('LSP', function()
             )
           end
 
-          local root_dir = tmpname()
-          os.remove(root_dir)
+          local root_dir = tmpname(false)
           mkdir(root_dir)
 
           exec_lua(create_server_definition)

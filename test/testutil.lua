@@ -402,14 +402,18 @@ end
 local tmpname_id = 0
 local tmpdir = tmpdir_get()
 
---- Creates a new temporary file for use by tests.
-function M.tmpname()
+--- Generates a unique file path for use by tests, and writes the file unless `create=false`.
+---
+---@param create? boolean (default true) Write the file.
+function M.tmpname(create)
   if tmpdir_is_local(tmpdir) then
     -- Cannot control os.tmpname() dir, so hack our own tmpname() impl.
     tmpname_id = tmpname_id + 1
     -- "…/Xtest_tmpdir/T42.7"
     local fname = ('%s/%s.%d'):format(tmpdir, (_G._nvim_test_id or 'nvim-test'), tmpname_id)
-    io.open(fname, 'w'):close()
+    if create ~= false then
+      io.open(fname, 'w'):close()
+    end
     return fname
   end
 
