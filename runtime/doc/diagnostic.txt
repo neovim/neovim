@@ -526,28 +526,32 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 *vim.diagnostic.Opts.Signs*
 
     Fields: ~
-      • {severity}?  (`vim.diagnostic.SeverityFilter`) Only show virtual text
-                     for diagnostics matching the given severity
-                     |diagnostic-severity|
-      • {priority}?  (`integer`, default: `10`) Base priority to use for
-                     signs. When {severity_sort} is used, the priority of a
-                     sign is adjusted based on its severity. Otherwise, all
-                     signs use the same priority.
-      • {text}?      (`table<vim.diagnostic.Severity,string>`) A table mapping
-                     |diagnostic-severity| to the sign text to display in the
-                     sign column. The default is to use `"E"`, `"W"`, `"I"`,
-                     and `"H"` for errors, warnings, information, and hints,
-                     respectively. Example: >lua
-                         vim.diagnostic.config({
-                           signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
-                         })
+      • {severity}?     (`vim.diagnostic.SeverityFilter`) Only show virtual
+                        text for diagnostics matching the given severity
+                        |diagnostic-severity|
+      • {priority}?     (`integer`, default: `10`) Base priority to use for
+                        signs. When {severity_sort} is used, the priority of a
+                        sign is adjusted based on its severity. Otherwise, all
+                        signs use the same priority.
+      • {text}?         (`table<vim.diagnostic.Severity,string>`) A table
+                        mapping |diagnostic-severity| to the sign text to
+                        display in the sign column. The default is to use
+                        `"E"`, `"W"`, `"I"`, and `"H"` for errors, warnings,
+                        information, and hints, respectively. Example: >lua
+                            vim.diagnostic.config({
+                              signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
+                            })
 <
-      • {numhl}?     (`table<vim.diagnostic.Severity,string>`) A table mapping
-                     |diagnostic-severity| to the highlight group used for the
-                     line number where the sign is placed.
-      • {linehl}?    (`table<vim.diagnostic.Severity,string>`) A table mapping
-                     |diagnostic-severity| to the highlight group used for the
-                     whole line the sign is placed in.
+      • {numhl}?        (`table<vim.diagnostic.Severity,string>`) A table
+                        mapping |diagnostic-severity| to the highlight group
+                        used for the line number where the sign is placed.
+      • {linehl}?       (`table<vim.diagnostic.Severity,string>`) A table
+                        mapping |diagnostic-severity| to the highlight group
+                        used for the whole line the sign is placed in.
+      • {cursorlinehl}  (`table<vim.diagnostic.Severity,string>`) A table
+                        mapping |diagnostic-severity| to the highlight group
+                        used for the highlight the sign column text when
+                        cursor is on target line and 'cursorline' is enabled.
 
 *vim.diagnostic.Opts.Underline*
 
