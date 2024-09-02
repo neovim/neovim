@@ -12,7 +12,6 @@ local skip = t.skip
 -- events which can happen with some backends on some platforms
 local function touch(path)
   local tmp = t.tmpname()
-  io.open(tmp, 'w'):close()
   assert(vim.uv.fs_rename(tmp, path))
 end
 
@@ -42,7 +41,7 @@ describe('vim._watch', function()
         )
       end
 
-      local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname()) .. '/nvim_XXXXXXXXXX')
+      local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/nvim_XXXXXXXXXX')
 
       local expected_events = 0
 

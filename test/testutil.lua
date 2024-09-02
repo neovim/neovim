@@ -402,7 +402,8 @@ end
 local tmpname_id = 0
 local tmpdir = tmpdir_get()
 
---- Generates a unique file path for use by tests, and writes the file unless `create=false`.
+--- Generates a unique filepath for use by tests, in a test-specific "…/Xtest_tmpdir/T42.7"
+--- directory (which is cleaned up by the test runner), and writes the file unless `create=false`.
 ---
 ---@param create? boolean (default true) Write the file.
 function M.tmpname(create)
@@ -418,6 +419,10 @@ function M.tmpname(create)
   end
 
   local fname = os.tmpname()
+  if create == false then
+    os.remove(fname)
+  end
+
   if M.is_os('win') and fname:sub(1, 2) == '\\s' then
     -- In Windows tmpname() returns a filename starting with
     -- special sequence \s, prepend $TEMP path
