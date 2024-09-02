@@ -5536,6 +5536,19 @@ l5
       ]]
     })
   end)
+
+  it('auto signcolumn hides with invalidated sign', function()
+    api.nvim_set_option_value('signcolumn', 'auto', {})
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text='S1', invalidate=true})
+    feed('ia<cr>b<esc>dd')
+    screen:expect({
+      grid = [[
+        ^a                                                 |
+        {1:~                                                 }|*8
+                                                          |
+      ]]
+    })
+  end)
 end)
 
 describe('decorations: virt_text', function()
