@@ -177,10 +177,11 @@ syn match	vimNumber	'\%(^\|\A\)\zs#\x\{6}'		skipwhite nextgroup=vimGlobal,vimSub
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDef,@vimEcho,vimEnddef,vimEndfunction,vimExecute,vimIsCommand,vimExtCmd,vimFor,vimFunction,vimGlobal,vimHighlight,vimLet,vimLoadkeymap,vimMap,vimMark,vimMatch,vimNotFunc,vimNorm,vimSet,vimSleep,vimSyntax,vimThrow,vimUnlet,vimUnmap,vimUserCmd,vimMenu,vimMenutranslate,@vim9CmdList
+syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDef,vimDelcommand,@vimEcho,vimEnddef,vimEndfunction,vimExecute,vimIsCommand,vimExtCmd,vimFor,vimFunction,vimGlobal,vimHighlight,vimLet,vimLoadkeymap,vimMap,vimMark,vimMatch,vimNotFunc,vimNorm,vimSet,vimSleep,vimSyntax,vimThrow,vimUnlet,vimUnmap,vimUserCmd,vimMenu,vimMenutranslate,@vim9CmdList
 syn cluster vim9CmdList	contains=vim9Const,vim9Final,vim9For,vim9Var
 syn match vimCmdSep	"[:|]\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
 syn match vimIsCommand	"\<\%(\h\w*\|[23]mat\%[ch]\)\>"	contains=vimCommand
+syn match vimBang	      contained	"!"
 syn match vimVar	      contained	"\<\h[a-zA-Z0-9#_]*\>"
 syn match vimVar		"\<[bwglstav]:\h[a-zA-Z0-9#_]*\>"
 syn match vimVar	      	"\s\zs&\%([lg]:\)\=\a\+\>"
@@ -353,32 +354,45 @@ syn match	vimSpecFileMod	"\(:[phtre]\)\+"	contained
 " User-Specified Commands: {{{2
 " =======================
 syn cluster	vimUserCmdList	contains=@vimCmdList,vimCmplxRepeat,@vimComment,vimCtrlChar,vimEscapeBrace,vimFunc,vimNotation,vimNumber,vimOper,vimRegister,vimSpecFile,vimString,vimSubst,vimSubstRep,vimSubstRange
-syn keyword	vimUserCommand	contained	com[mand]
-syn match	vimUserCmdName	contained	"\<\u\w*\>" nextgroup=vimUserCmdBlock skipwhite
-syn match	vimUserCmd	"\<com\%[mand]!\=\>.*$"	contains=vimUserAttrb,vimUserAttrbError,vimUserCommand,@vimUserCmdList,vimComFilter,vimCmdBlock,vimUserCmdName
-syn match	vimUserAttrbError	contained	"-\a\+\ze\s"
-syn match	vimUserAttrb	contained	"-nargs=[01*?+]"	contains=vimUserAttrbKey,vimOper
-syn match	vimUserAttrb	contained	"-complete="		contains=vimUserAttrbKey,vimOper nextgroup=vimUserAttrbCmplt,vimUserCmdError
-syn match	vimUserAttrb	contained	"-range\(=%\|=\d\+\)\="	contains=vimNumber,vimOper,vimUserAttrbKey
-syn match	vimUserAttrb	contained	"-count\(=\d\+\)\="	contains=vimNumber,vimOper,vimUserAttrbKey
-syn match	vimUserAttrb	contained	"-bang\>"		contains=vimOper,vimUserAttrbKey
-syn match	vimUserAttrb	contained	"-bar\>"		contains=vimOper,vimUserAttrbKey
-syn match	vimUserAttrb	contained	"-buffer\>"		contains=vimOper,vimUserAttrbKey
-syn match	vimUserAttrb	contained	"-register\>"		contains=vimOper,vimUserAttrbKey
+syn keyword	vimUserCmdKey	contained	com[mand]
+syn match	vimUserCmdName	contained	"\<\u[[:alnum:]]*\>"	skipwhite nextgroup=vimUserCmdBlock
+syn match	vimUserCmd		"\<com\%[mand]\>!\=.*$"	contains=vimUserCmdKey,vimBang,vimUserCmdAttr,vimUserCmdAttrError,vimUserCmdName,@vimUserCmdList,vimComFilter
+syn match	vimUserCmdAttrError	contained	"-\a\+\ze\%(\s\|=\)"
+syn match	vimUserCmdAttr	contained	"-addr="		contains=vimUserCmdAttrKey nextgroup=vimUserCmdAttrAddr
+syn match	vimUserCmdAttr	contained	"-bang\>"		contains=vimUserCmdAttrKey
+syn match	vimUserCmdAttr	contained	"-bar\>"		contains=vimUserCmdAttrKey
+syn match	vimUserCmdAttr	contained	"-buffer\>"		contains=vimUserCmdAttrKey
+syn match	vimUserCmdAttr	contained	"-complete="		contains=vimUserCmdAttrKey nextgroup=vimUserCmdAttrCmplt,vimUserCmdError
+syn match	vimUserCmdAttr	contained	"-count\>"		contains=vimUserCmdAttrKey
+syn match	vimUserCmdAttr	contained	"-count="		contains=vimUserCmdAttrKey nextgroup=vimNumber
+syn match	vimUserCmdAttr	contained	"-keepscript\>"		contains=vimUserCmdAttrKey
+syn match	vimUserCmdAttr	contained	"-nargs="		contains=vimUserCmdAttrKey nextgroup=vimUserCmdAttrNargs
+syn match	vimUserCmdAttr	contained	"-range\>"		contains=vimUserCmdAttrKey
+syn match	vimUserCmdAttr	contained	"-range="		contains=vimUserCmdAttrKey nextgroup=vimNumber,vimUserCmdAttrRange
+syn match	vimUserCmdAttr	contained	"-register\>"		contains=vimUserCmdAttrKey
+
+syn match	vimUserCmdAttrNargs	contained	"[01*?+]"
+syn match	vimUserCmdAttrRange	contained	"%"
+
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_nousercmderror")
  syn match	vimUserCmdError	contained	"\S\+\>"
 endif
-syn case ignore
-syn keyword	vimUserAttrbKey   contained	bar	ban[g]	cou[nt]	ra[nge] com[plete]	n[args]	re[gister]
-" GEN_SYN_VIM: vimUserAttrbCmplt, START_STR='syn keyword vimUserAttrbCmplt contained', END_STR=''
-syn keyword vimUserAttrbCmplt contained arglist augroup behave breakpoint buffer color command compiler cscope diff_buffer dir dir_in_path environment event expression file file_in_path filetype function help highlight history keymap locale mapclear mapping menu messages option packadd runtime scriptnames shellcmd sign syntax syntime tag tag_listfiles user var
-syn keyword	vimUserAttrbCmplt contained	custom customlist nextgroup=vimUserAttrbCmpltFunc,vimUserCmdError
-syn match	vimUserAttrbCmpltFunc contained	",\%([sS]:\|<[sS][iI][dD]>\)\=\%(\h\w*\%([.#]\h\w*\)\+\|\h\w*\)"hs=s+1 nextgroup=vimUserCmdError
 
+syn case ignore
+syn keyword	vimUserCmdAttrKey   contained	a[ddr] ban[g] bar bu[ffer] com[plete] cou[nt] k[eepscript] n[args] ra[nge] re[gister]
+" GEN_SYN_VIM: vimUserCmdAttrCmplt, START_STR='syn keyword vimUserCmdAttrCmplt contained', END_STR=''
+syn keyword vimUserCmdAttrCmplt contained arglist augroup behave breakpoint buffer color command compiler cscope diff_buffer dir dir_in_path environment event expression file file_in_path filetype function help highlight history keymap locale mapclear mapping menu messages option packadd runtime scriptnames shellcmd sign syntax syntime tag tag_listfiles user var
+syn keyword	vimUserCmdAttrCmplt     contained	custom customlist nextgroup=vimUserCmdAttrCmpltFunc,vimUserCmdError
+syn match	vimUserCmdAttrCmpltFunc contained	",\%([sS]:\|<[sS][iI][dD]>\)\=\%(\h\w*\%([.#]\h\w*\)\+\|\h\w*\)"hs=s+1 nextgroup=vimUserCmdError
+" GEN_SYN_VIM: vimUserCmdAttrAddr, START_STR='syn keyword vimUserCmdAttrAddr contained', END_STR=''
+syn keyword vimUserCmdAttrAddr contained arguments arg buffers buf lines line loaded_buffers load other quickfix qf tabs tab windows win
+syn match	vimUserCmdAttrAddr	contained	"?"
 syn case match
-syn match	vimUserAttrbCmplt contained	"custom,\u\w*"
 
 syn region	vimUserCmdBlock	contained	matchgroup=vimSep start="{" end="}" contains=@vimDefBodyList
+
+syn match	vimDelcommand		"\<delc\%[ommand]\>" skipwhite nextgroup=vimDelcommandAttr
+syn match	vimDelcommandAttr	contained	"-buffer\>"
 
 " Lower Priority Comments: after some vim commands... {{{2
 " =======================
@@ -1162,6 +1176,8 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimDefComment	vim9Comment
  hi def link vimDefKey	vimCommand
  hi def link vimDefParam vimVar
+ hi def link vimDelcommand	vimCommand
+ hi def link vimDelcommandAttr	vimUserCmdAttr
  hi def link vimEcho	vimCommand
  hi def link vimEchohlNone	vimGroup
  hi def link vimEchohl	vimCommand
@@ -1319,13 +1335,15 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimUnlet	vimCommand
  hi def link vimUnletBang	vimBang
  hi def link vimUnmap	vimMap
- hi def link vimUserAttrbCmpltFunc	Special
- hi def link vimUserAttrbCmplt	vimSpecial
- hi def link vimUserAttrbKey	vimOption
- hi def link vimUserAttrb	vimSpecial
- hi def link vimUserAttrbError	Error
+ hi def link vimUserCmdAttrAddr	vimSpecial
+ hi def link vimUserCmdAttrCmplt	vimSpecial
+ hi def link vimUserCmdAttrNargs	vimSpecial
+ hi def link vimUserCmdAttrRange	vimSpecial
+ hi def link vimUserCmdAttrKey	vimUserCmdAttr
+ hi def link vimUserCmdAttr	Special
+ hi def link vimUserCmdAttrError	Error
  hi def link vimUserCmdError	Error
- hi def link vimUserCommand	vimCommand
+ hi def link vimUserCmdKey	vimCommand
  hi def link vimUserFunc	Normal
  hi def link vimVar	Identifier
  hi def link vimWarn	WarningMsg
