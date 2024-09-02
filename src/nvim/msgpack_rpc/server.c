@@ -28,27 +28,32 @@ static garray_T watchers = GA_EMPTY_INIT_VALUE;
 #endif
 
 /// Initializes the module
-bool server_init(const char *listen_addr)
+///
+/// @returns 0: success, 1: validation error, 2: already listening, -errno: failed to bind/listen.
+int server_init(const char *listen_addr)
 {
+  bool must_free = false;
   ga_init(&watchers, sizeof(SocketWatcher *), 1);
 
   // $NVIM_LISTEN_ADDRESS (deprecated)
-  if (!listen_addr && os_env_exists(ENV_LISTEN)) {
+  if ((!listen_addr || listen_addr[0] == '\0') && os_env_exists(ENV_LISTEN)) {
     listen_addr = os_getenv(ENV_LISTEN);
   }
 
-  int rv = listen_addr ? server_start(listen_addr) : 1;
-  if (0 != rv) {
+  if (!listen_addr || listen_addr[0] == '\0') {
     listen_addr = server_address_new(NULL);
-    if (!listen_addr) {
-      return false;
-    }
-    rv = server_start(listen_addr);
-    xfree((char *)listen_addr);
+    must_free = true;
   }
 
+  if (!listen_addr) {
+    abort();  // Cannot happen.
+  }
+
+  int rv = server_start(listen_addr);
+
   if (os_env_exists(ENV_LISTEN)) {
-    // Unset $NVIM_LISTEN_ADDRESS, it's a liability hereafter.
+    // Unset $NVIM_LISTEN_ADDRESS, it's a liability hereafter. It is "input only", it must not be
+    // leaked to child jobs or :terminal.
     os_unsetenv(ENV_LISTEN);
   }
 
@@ -57,7 +62,11 @@ bool server_init(const char *listen_addr)
     ELOG("test log message");
   }
 
-  return rv == 0;
+  if (must_free) {
+    xfree((char *)listen_addr);
+  }
+
+  return rv;
 }
 
 /// Teardown a single server

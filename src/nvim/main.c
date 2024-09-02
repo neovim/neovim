@@ -332,12 +332,6 @@ int main(int argc, char **argv)
 #endif
   bool use_builtin_ui = (has_term && !headless_mode && !embedded_mode && !silent_mode);
 
-  // don't bind the server yet, if we are using builtin ui.
-  // This will be done when nvim server has been forked from the ui process
-  if (!use_builtin_ui) {
-    server_init(params.listen_addr);
-  }
-
   if (params.remote) {
     remote_request(&params, params.remote, params.server_addr, argc, argv,
                    use_builtin_ui);
@@ -355,11 +349,19 @@ int main(int argc, char **argv)
     ui_client_channel_id = rv;
   }
 
+  // NORETURN: Start builtin UI client.
   if (ui_client_channel_id) {
     time_finish();
     ui_client_run(remote_ui);  // NORETURN
   }
   assert(!ui_client_channel_id && !use_builtin_ui);
+  // Nvim server...
+
+  int listen_rv = server_init(params.listen_addr);
+  if (listen_rv != 0) {
+    mainerr("Failed to --listen", listen_rv < 0
+            ? os_strerror(listen_rv) : (listen_rv == 1 ? "empty address" : NULL));
+  }
 
   TIME_MSG("expanding arguments");
 
