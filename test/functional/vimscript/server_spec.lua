@@ -4,7 +4,6 @@ local n = require('test.functional.testnvim')()
 local assert_log = t.assert_log
 local eq, neq, eval = t.eq, t.neq, n.eval
 local clear, fn, api = n.clear, n.fn, n.api
-local ok = t.ok
 local matches = t.matches
 local pcall_err = t.pcall_err
 local check_close = n.check_close
@@ -49,15 +48,6 @@ describe('server', function()
     eq('', eval('$NVIM_LISTEN_ADDRESS'))
   end)
 
-  it('sets new v:servername if $NVIM_LISTEN_ADDRESS is invalid', function()
-    clear({ env = { NVIM_LISTEN_ADDRESS = '.' } })
-    -- Cleared on startup.
-    eq('', eval('$NVIM_LISTEN_ADDRESS'))
-    local servers = fn.serverlist()
-    eq(1, #servers)
-    ok(string.len(servers[1]) > 4) -- "~/.local/state/nvim…/…" or "\\.\pipe\…"
-  end)
-
   it('sets v:servername at startup or if all servers were stopped', function()
     clear()
     local initial_server = api.nvim_get_vvar('servername')
@@ -89,20 +79,26 @@ describe('server', function()
   end)
 
   it('serverstop() returns false for invalid input', function()
-    clear { env = {
-      NVIM_LOG_FILE = testlog,
-      NVIM_LISTEN_ADDRESS = '.',
-    } }
+    clear {
+      args_rm = { '--listen' },
+      env = {
+        NVIM_LOG_FILE = testlog,
+        NVIM_LISTEN_ADDRESS = '',
+      },
+    }
     eq(0, eval("serverstop('')"))
     eq(0, eval("serverstop('bogus-socket-name')"))
     assert_log('Not listening on bogus%-socket%-name', testlog, 10)
   end)
 
   it('parses endpoints', function()
-    clear { env = {
-      NVIM_LOG_FILE = testlog,
-      NVIM_LISTEN_ADDRESS = '.',
-    } }
+    clear {
+      args_rm = { '--listen' },
+      env = {
+        NVIM_LOG_FILE = testlog,
+        NVIM_LISTEN_ADDRESS = '',
+      },
+    }
     clear_serverlist()
     eq({}, fn.serverlist())
 
@@ -178,18 +174,41 @@ end)
 describe('startup --listen', function()
   it('validates', function()
     clear()
-    local cmd = { unpack(n.nvim_argv) }
-    table.insert(cmd, '--listen')
-    matches('nvim.*: Argument missing after: "%-%-listen"', fn.system(cmd))
 
-    cmd = { unpack(n.nvim_argv) }
-    table.insert(cmd, '--listen2')
-    matches('nvim.*: Garbage after option argument: "%-%-listen2"', fn.system(cmd))
+    -- Tests args with and without "--headless".
+    local function _test(args, expected)
+      -- XXX: clear v:shell_error, sigh...
+      fn.system({ n.nvim_prog, '-es', '+qall!' })
+      assert(0 == eval('v:shell_error'))
+      local cmd = vim.list_extend({ unpack(n.nvim_argv) }, vim.list_extend({ '--headless' }, args))
+      local output = fn.system(cmd)
+      assert(0 ~= eval('v:shell_error'))
+      -- TODO(justinmk): output not properly captured on Windows?
+      if is_os('win') then
+        return
+      end
+      matches(expected, output)
+      cmd = vim.list_extend({ unpack(n.nvim_argv) }, args)
+      matches(expected, fn.system(cmd))
+    end
+
+    _test({ '--listen' }, 'nvim.*: Argument missing after: "%-%-listen"')
+    _test({ '--listen2' }, 'nvim.*: Garbage after option argument: "%-%-listen2"')
+    _test({ '--listen', n.eval('v:servername') }, 'nvim.*: Failed to %-%-listen: ".* already .*"')
+    _test({ '--listen', '/' }, 'nvim.*: Failed to %-%-listen: ".*"')
+    _test(
+      { '--listen', 'https://example.com' },
+      ('nvim.*: Failed to %%-%%-listen: "%s"'):format(
+        (is_os('mac') or is_os('win')) and 'unknown node or service'
+          or 'service not available for socket type'
+      )
+    )
   end)
 
   it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
     local addr = (is_os('win') and [[\\.\pipe\Xtest-listen-pipe]] or './Xtest-listen-pipe')
     clear({ env = { NVIM_LISTEN_ADDRESS = './Xtest-env-pipe' }, args = { '--listen', addr } })
+    eq('', eval('$NVIM_LISTEN_ADDRESS')) -- Cleared on startup.
     eq(addr, api.nvim_get_vvar('servername'))
 
     -- Address without slashes is a "name" which is appended to a generated path. #8519

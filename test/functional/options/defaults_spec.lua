@@ -247,6 +247,7 @@ describe('startup defaults', function()
       } })
       eq('Xtest-logpath', eval('$NVIM_LOG_FILE'))
     end)
+
     it('defaults to stdpath("log")/log if empty', function()
       eq(true, mkdir(xdgdir) and mkdir(xdgstatedir))
       clear({
@@ -257,6 +258,7 @@ describe('startup defaults', function()
       })
       eq(xdgstatedir .. '/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
     end)
+
     it('defaults to stdpath("log")/log if invalid', function()
       eq(true, mkdir(xdgdir) and mkdir(xdgstatedir))
       clear({
@@ -266,6 +268,8 @@ describe('startup defaults', function()
         },
       })
       eq(xdgstatedir .. '/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+      -- Avoid "failed to open $NVIM_LOG_FILE" noise in test output.
+      expect_exit(command, 'qall!')
     end)
   end)
 end)
@@ -339,9 +343,11 @@ describe('XDG defaults', function()
   local state_dir = is_os('win') and 'nvim-data' or 'nvim'
   local root_path = is_os('win') and 'C:' or ''
 
-  describe('with too long XDG variables', function()
+  describe('with too long XDG vars', function()
     before_each(function()
       clear({
+        -- Ensure valid --listen address despite broken XDG vars (else Nvim won't start).
+        args = { '--listen', is_os('win') and '' or t.tmpname(false) },
         args_rm = { 'runtimepath' },
         env = {
           NVIM_LOG_FILE = testlog,
@@ -361,6 +367,9 @@ describe('XDG defaults', function()
 
     it('are correctly set', function()
       if not is_os('win') then
+        -- Broken XDG vars cause serverstart() to fail (except on Windows, where servernames are not
+        -- informed by $XDG_STATE_HOME).
+        t.matches('Failed to start server: no such file or directory', t.pcall_err(fn.serverstart))
         assert_log('Failed to start server: no such file or directory: /X/X/X', testlog, 10)
       end
 
@@ -522,9 +531,11 @@ describe('XDG defaults', function()
     end)
   end)
 
-  describe('with XDG variables that can be expanded', function()
+  describe('with expandable XDG vars', function()
     before_each(function()
       clear({
+        -- Ensure valid --listen address despite broken XDG vars (else Nvim won't start).
+        args = { '--listen', is_os('win') and '' or t.tmpname(false) },
         args_rm = { 'runtimepath' },
         env = {
           NVIM_LOG_FILE = testlog,
@@ -544,6 +555,9 @@ describe('XDG defaults', function()
 
     it('are not expanded', function()
       if not is_os('win') then
+        -- Broken XDG vars cause serverstart() to fail (except on Windows, where servernames are not
+        -- informed by $XDG_STATE_HOME).
+        t.matches('Failed to start server: no such file or directory', t.pcall_err(fn.serverstart))
         assert_log(
           'Failed to start server: no such file or directory: %$XDG_RUNTIME_DIR%/',
           testlog,
@@ -895,7 +909,7 @@ describe('stdpath()', function()
     assert_alive() -- Check for crash. #8393
   end)
 
-  it('reacts to $NVIM_APPNAME', function()
+  it('supports $NVIM_APPNAME', function()
     local appname = 'NVIM_APPNAME_TEST' .. ('_'):rep(106)
     clear({ env = { NVIM_APPNAME = appname, NVIM_LOG_FILE = testlog } })
     eq(appname, fn.fnamemodify(fn.stdpath('config'), ':t'))
@@ -916,7 +930,7 @@ describe('stdpath()', function()
     local function test_appname(testAppname, expected_exitcode)
       local lua_code = string.format(
         [[
-        local child = vim.fn.jobstart({ vim.v.progpath, '--clean', '--headless', '+qall!' }, { env = { NVIM_APPNAME = %q } })
+        local child = vim.fn.jobstart({ vim.v.progpath, '--clean', '--headless', '--listen', 'x', '+qall!' }, { env = { NVIM_APPNAME = %q } })
         return vim.fn.jobwait({ child }, %d)[1]
       ]],
         alter_slashes(testAppname),
@@ -935,9 +949,6 @@ describe('stdpath()', function()
     -- Valid appnames:
     test_appname('a/b', 0)
     test_appname('a/b\\c', 0)
-    if not is_os('win') then
-      assert_log('Failed to start server: no such file or directory:', testlog)
-    end
   end)
 
   describe('returns a String', function()

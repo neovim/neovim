@@ -53,12 +53,6 @@ EDITOR
   documented and skips help buffers if run from a non-help buffer, otherwise
   it moves to another help buffer.
 
-VIM SCRIPT
-
-• |v:msgpack_types| has the type "binary" removed. |msgpackparse()| no longer
-  treats BIN, STR and FIXSTR as separate types. Any of these is returned as a
-  string if possible, or a |blob| if the value contained embedded NUL:s.
-
 EVENTS
 
 • TODO
@@ -97,6 +91,12 @@ TREESITTER
 TUI
 
 • TODO
+
+VIMSCRIPT
+
+• |v:msgpack_types| has the type "binary" removed. |msgpackparse()| no longer
+  treats BIN, STR and FIXSTR as separate types. Any of these is returned as a
+  string if possible, or a |blob| if the value contained embedded NUL:s.
 
 ==============================================================================
 NEW FEATURES                                                    *news-features*
@@ -162,7 +162,8 @@ PLUGINS
 
 STARTUP
 
-• TODO
+• Nvim will fail if the |--listen| or |$NVIM_LISTEN_ADDRESS| address is
+  invalid, instead of silently skipping an invalid address.
 
 TERMINAL
 
