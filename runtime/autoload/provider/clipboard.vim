@@ -140,6 +140,18 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'win32yank'
+  elseif executable('putclip') && executable('getclip')
+    let s:copy['+'] = ['putclip']
+    let s:paste['+'] = ['getclip']
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'putclip'
+  elseif executable('clip') && executable('powershell')
+    let s:copy['+'] = ['clip']
+    let s:paste['+'] = ['powershell', '-NoProfile', '-NoLogo', '-Command', 'Get-Clipboard']
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'clip'
   elseif executable('termux-clipboard-set')
     let s:copy['+'] = ['termux-clipboard-set']
     let s:paste['+'] = ['termux-clipboard-get']
