@@ -1891,6 +1891,8 @@ describe('api/buf', function()
       eq({ '' }, get_text(0, 0, 18, 0, 20, {}))
       eq({ 'ext' }, get_text(0, -2, 1, -2, 4, {}))
       eq({ 'hello foo!', 'text', 'm' }, get_text(0, 0, 0, 2, 1, {}))
+      eq({ 'hello foo!' }, get_text(0, 0, -987654321, 0, 987654321, {}))
+      eq({ '' }, get_text(0, 0, -15, 0, -20, {}))
     end)
 
     it('errors on out-of-range', function()
@@ -1904,7 +1906,7 @@ describe('api/buf', function()
 
     it('errors when start is greater than end', function()
       eq("'start' is higher than 'end'", pcall_err(get_text, 0, 1, 0, 0, 0, {}))
-      eq('start_col must be less than end_col', pcall_err(get_text, 0, 0, 1, 0, 0, {}))
+      eq('start_col must be less than or equal to end_col', pcall_err(get_text, 0, 0, 1, 0, 0, {}))
     end)
   end)
 
