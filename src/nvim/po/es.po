@@ -4078,8 +4078,8 @@ msgstr ""
 "(2) Falló una sesión de edición de este archivo.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Si es así, use \":recover\" o \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Si es así, use \":recover\" o \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

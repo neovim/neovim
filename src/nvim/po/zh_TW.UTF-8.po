@@ -4017,8 +4017,8 @@ msgstr ""
 "(2) 前次編輯此檔時當機\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    如果是這樣, 請用 \":recover\" 或 \"vim -r"
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    如果是這樣, 請用 \":recover\" 或 \"nvim -r"
 
 #: ../memline.c:3249
 msgid ""

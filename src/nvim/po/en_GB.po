@@ -3847,7 +3847,7 @@ msgid "(2) An edit session for this file crashed.\n"
 msgstr ""
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
 msgstr ""
 
 #: ../memline.c:3249
