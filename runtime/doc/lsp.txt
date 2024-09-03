@@ -2311,14 +2311,14 @@ connect({host_or_path}, {port})                        *vim.lsp.rpc.connect()*
     Create a LSP RPC client factory that connects to either:
     • a named pipe (windows)
     • a domain socket (unix)
-    • a host and port via TCP (host must be IP address)
+    • a host and port via TCP
 
     Return a function that can be passed to the `cmd` field for
     |vim.lsp.start_client()| or |vim.lsp.start()|.
 
     Parameters: ~
-      • {host_or_path}  (`string`) host (IP address) to connect to or path to
-                        a pipe/domain socket
+      • {host_or_path}  (`string`) host to connect to or path to a pipe/domain
+                        socket
       • {port}          (`integer?`) TCP port to connect to. If absent the
                         first argument must be a pipe
 

@@ -21,6 +21,33 @@ function M.clear_notrace()
   }
 end
 
+M.create_tcp_echo_server = function()
+  --- Create a TCP server that echos the first message it receives.
+  --- @param host string
+  ---@return uv.uv_tcp_t
+  ---@return integer
+  ---@return fun():string|nil
+  function _G._create_tcp_server(host)
+    local uv = vim.uv
+    local server = assert(uv.new_tcp())
+    local init = nil
+    server:bind(host, 0)
+    server:listen(127, function(err)
+      assert(not err, err)
+      local socket = assert(uv.new_tcp())
+      server:accept(socket)
+      socket:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
+        init = body
+        socket:close()
+      end))
+    end)
+    local port = server:getsockname().port
+    return server, port, function()
+      return init
+    end
+  end
+end
+
 M.create_server_definition = function()
   function _G._create_server(opts)
     opts = opts or {}
