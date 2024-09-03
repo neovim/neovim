@@ -528,21 +528,15 @@ String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col
   start_col = start_col < 0 ? line_length + start_col + 1 : start_col;
   end_col = end_col < 0 ? line_length + end_col + 1 : end_col;
 
-  if (start_col >= MAXCOL || end_col >= MAXCOL) {
-    api_set_error(err, kErrorTypeValidation, "Column index is too high");
-    return rv;
-  }
+  start_col = MIN(MAX(0, start_col), line_length);
+  end_col = MIN(MAX(0, end_col), line_length);
 
   if (start_col > end_col) {
-    api_set_error(err, kErrorTypeValidation, "start_col must be less than end_col");
+    api_set_error(err, kErrorTypeValidation, "start_col must be less than or equal to end_col");
     return rv;
   }
 
-  if (start_col >= line_length) {
-    return rv;
-  }
-
-  return cstrn_as_string(&bufstr[start_col], (size_t)(end_col - start_col));
+  return cbuf_as_string(bufstr + start_col, (size_t)(end_col - start_col));
 }
 
 void api_free_string(String value)
