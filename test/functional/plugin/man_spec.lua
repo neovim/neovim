@@ -8,7 +8,6 @@ local exec_lua = n.exec_lua
 local fn = n.fn
 local nvim_prog = n.nvim_prog
 local matches = t.matches
-local write_file = t.write_file
 local tmpname = t.tmpname
 local eq = t.eq
 local pesc = vim.pesc
@@ -226,7 +225,6 @@ describe(':Man', function()
     local actual_file = tmpname()
     -- actual_file must be an absolute path to an existent file for us to test against it
     matches('^/.+', actual_file)
-    write_file(actual_file, '')
     local args = { nvim_prog, '--headless', '+:Man ' .. actual_file, '+q' }
     matches(
       ('Error detected while processing command line:\r\n' .. 'man.lua: "no manual entry for %s"'):format(

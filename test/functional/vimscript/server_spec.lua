@@ -188,8 +188,7 @@ describe('startup --listen', function()
         return
       end
       matches(expected, output)
-      cmd = vim.list_extend({ unpack(n.nvim_argv) }, args)
-      matches(expected, fn.system(cmd))
+      matches(expected, fn.system(vim.list_extend({ unpack(n.nvim_argv) }, args)))
     end
 
     _test({ '--listen' }, 'nvim.*: Argument missing after: "%-%-listen"')
