@@ -1339,13 +1339,22 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
 
 bool utf_ambiguous_width(const char *p)
 {
-  int c = utf_ptr2char(p);
-  if (c < 0x80) {
+  // be quick if there is nothing to print or ASCII-only
+  if (p[0] == NUL || p[1] == NUL) {
     return false;
   }
 
-  const utf8proc_property_t *prop = utf8proc_get_property(c);
-  return prop->ambiguous_width || prop_is_emojilike(prop);
+  CharInfo info = utf_ptr2CharInfo(p);
+  if (info.value >= 0x80) {
+    const utf8proc_property_t *prop = utf8proc_get_property(info.value);
+    if (prop->ambiguous_width || prop_is_emojilike(prop)) {
+      return true;
+    }
+  }
+
+  // check if second sequence is 0xFE0F VS-16 which can turn things into emoji,
+  // safe with NUL (no second sequence)
+  return memcmp(p + info.len, "\xef\xb8\x8f", 3) == 0;
 }
 
 // Return the folded-case equivalent of "a", which is a UCS-4 character.  Uses
