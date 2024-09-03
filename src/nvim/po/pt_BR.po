@@ -625,8 +625,8 @@ msgstr ""
 "(2) Ocorreu um travamento numa sessão de edição desse arquivo.\n"
 
 #: ../memline.c:3206
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Se esse for o caso, use \":recover\" ou \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Se esse for o caso, use \":recover\" ou \"nvim -r "
 
 #: ../memline.c:3208
 msgid ""

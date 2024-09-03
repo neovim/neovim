@@ -4009,9 +4009,9 @@ msgstr ""
 "(2) Lần soạn thảo trước của tập tin này gặp sự cố.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
 msgstr ""
-"    Trong trường hợp này, hãy sử dụng câu lệnh \":recover\" hoặc \"vim -r "
+"    Trong trường hợp này, hãy sử dụng câu lệnh \":recover\" hoặc \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

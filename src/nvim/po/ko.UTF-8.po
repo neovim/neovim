@@ -3957,8 +3957,8 @@ msgstr ""
 "(2) 파일을 고치다가 죽었었습니다.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    만약 그렇다면 \":recover\" 혹은 \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    만약 그렇다면 \":recover\" 혹은 \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

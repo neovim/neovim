@@ -3975,8 +3975,8 @@ msgstr ""
 "(2) Úprava tohoto súboru bola prerušená neoèakávaným ukonèením programu.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Ak je tomu tak, potom použite \":recover\" alebo \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Ak je tomu tak, potom použite \":recover\" alebo \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

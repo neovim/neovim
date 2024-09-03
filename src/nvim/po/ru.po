@@ -3985,8 +3985,8 @@ msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) Сеанс редактирования этого файла завершён аварийно.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    В этом случае, используйте команду \":recover\" или \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    В этом случае, используйте команду \":recover\" или \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

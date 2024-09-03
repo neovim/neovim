@@ -5108,8 +5108,8 @@ msgstr ""
 msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) Сеанс редагування цього файлу зазнав краху.\n"
 
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Якщо це справді трапилося, спробуйте «:recover» або «vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Якщо це справді трапилося, спробуйте «:recover» або «nvim -r "
 
 msgid ""
 "\"\n"

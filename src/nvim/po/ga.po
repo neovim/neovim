@@ -3696,8 +3696,8 @@ msgstr ""
 msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) Thuairteáil seisiún eagarthóireachta.\n"
 
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Más amhlaidh, bain úsáid as \":recover\" nó \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Más amhlaidh, bain úsáid as \":recover\" nó \"nvim -r "
 
 msgid ""
 "\"\n"

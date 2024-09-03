@@ -1250,7 +1250,7 @@ theend:
 /// with the 'directory' option.
 ///
 /// Used to:
-/// - list the swapfiles for "vim -r"
+/// - list the swapfiles for "nvim -r"
 /// - count the number of swapfiles when recovering
 /// - list the swapfiles when recovering
 /// - list the swapfiles for swapfilelist()
@@ -3280,7 +3280,7 @@ static void attention_message(buf_T *buf, char *fname)
              " instances of the same\n    file when making changes."
              "  Quit, or continue with caution.\n"));
   msg_puts(_("(2) An edit session for this file crashed.\n"));
-  msg_puts(_("    If this is the case, use \":recover\" or \"vim -r "));
+  msg_puts(_("    If this is the case, use \":recover\" or \"nvim -r "));
   msg_outtrans(buf->b_fname, 0);
   msg_puts(_("\"\n    to recover the changes (see \":help recovery\").\n"));
   msg_puts(_("    If you did this already, delete the swap file \""));

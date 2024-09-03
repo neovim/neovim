@@ -3608,8 +3608,8 @@ msgstr ""
 #~ "\n"
 #~ "(2) 'n Bewerkingsessie van hierdie lêer het ineengestort.\n"
 
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Indien wel, gebruik \":recover\" of \"vim -r"
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Indien wel, gebruik \":recover\" of \"nvim -r"
 
 msgid ""
 "\"\n"

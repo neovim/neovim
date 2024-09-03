@@ -4077,8 +4077,8 @@ msgstr ""
 "(2) Editace tohoto souboru byla pøerušena neèekaným ukonèením programu.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Je-li tomu tak, pak použijte \":recover\" èi \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Je-li tomu tak, pak použijte \":recover\" èi \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

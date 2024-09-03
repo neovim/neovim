@@ -3984,8 +3984,8 @@ msgstr ""
 "(2) Een sessie waarin dit bestand werd bewerkt is onverhoeds gestopt.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Als dit het geval is, gebruikt dan \":recover\" of \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Als dit het geval is, gebruikt dan \":recover\" of \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""
