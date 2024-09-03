@@ -354,37 +354,22 @@ function vim.tbl_isempty(t)
   return next(t) == nil
 end
 
---- We only merge empty tables or tables that are not an array (indexed by integers)
-local function can_merge(v)
-  return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.isarray(v))
-end
-
-local function tbl_extend(behavior, deep_extend, ...)
-  if behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force' then
-    error('invalid "behavior": ' .. tostring(behavior))
-  end
-
-  if select('#', ...) < 2 then
-    error(
-      'wrong number of arguments (given '
-        .. tostring(1 + select('#', ...))
-        .. ', expected at least 3)'
-    )
-  end
-
+--- Recursive worker for tbl_extend
+--- @param behavior 'error'|'keep'|'force'
+--- @param deep_extend boolean
+--- @param ... table<any,any>
+local function tbl_extend_rec(behavior, deep_extend, ...)
   local ret = {} --- @type table<any,any>
   if vim._empty_dict_mt ~= nil and getmetatable(select(1, ...)) == vim._empty_dict_mt then
     ret = vim.empty_dict()
   end
 
   for i = 1, select('#', ...) do
-    local tbl = select(i, ...)
-    vim.validate('after the second argument', tbl, 'table')
-    --- @cast tbl table<any,any>
+    local tbl = select(i, ...) --[[@as table<any,any>]]
     if tbl then
       for k, v in pairs(tbl) do
-        if deep_extend and can_merge(v) and can_merge(ret[k]) then
-          ret[k] = tbl_extend(behavior, true, ret[k], v)
+        if deep_extend and type(v) == 'table' and type(ret[k]) == 'table' then
+          ret[k] = tbl_extend_rec(behavior, true, ret[k], v)
         elseif behavior ~= 'force' and ret[k] ~= nil then
           if behavior == 'error' then
             error('key found in more than one map: ' .. k)
@@ -395,7 +380,29 @@ local function tbl_extend(behavior, deep_extend, ...)
       end
     end
   end
+
   return ret
+end
+
+--- @param behavior 'error'|'keep'|'force'
+--- @param deep_extend boolean
+--- @param ... table<any,any>
+local function tbl_extend(behavior, deep_extend, ...)
+  if behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force' then
+    error('invalid "behavior": ' .. tostring(behavior))
+  end
+
+  local nargs = select('#', ...)
+
+  if nargs < 2 then
+    error(('wrong number of arguments (given %d, expected at least 3)'):format(1 + nargs))
+  end
+
+  for i = 1, nargs do
+    vim.validate('after the second argument', select(i, ...), 'table')
+  end
+
+  return tbl_extend_rec(behavior, deep_extend, ...)
 end
 
 --- Merges two or more tables.

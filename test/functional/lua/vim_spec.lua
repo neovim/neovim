@@ -1059,7 +1059,7 @@ describe('lua stdlib', function()
       local a = { a = {[2] = 3} }
       local b = { a = {[3] = 3} }
       local c = vim.tbl_deep_extend("force", a, b)
-      return vim.deep_equal(c, {a = {[3] = 3}})
+      return vim.deep_equal(c, {a = {[2] = 3, [3] = 3}})
     ]]))
 
     eq(
@@ -1070,6 +1070,14 @@ describe('lua stdlib', function()
       return vim.tbl_deep_extend("force", a, b)
     ]])
     )
+
+    -- Fix github issue #23654
+    ok(exec_lua([[
+      local a = { sub = { [1] = 'a' } }
+      local b = { sub = { b = 'a' } }
+      local c = vim.tbl_deep_extend('force', a, b)
+      return vim.deep_equal(c, { sub = { [1] = 'a', b = 'a' } })
+    ]]))
 
     matches(
       'invalid "behavior": nil',
