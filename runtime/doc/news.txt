@@ -114,6 +114,10 @@ DEFAULTS
   • |grr| in Normal mode maps to |vim.lsp.buf.references()|
   • |gra| in Normal and Visual mode maps to |vim.lsp.buf.code_action()|
   • CTRL-S in Insert mode maps to |vim.lsp.buf.signature_help()|
+  • Mouse |popup-menu| includes an "Open in web browser" item when you right-click
+    on a URL.
+  • Mouse |popup-menu| includes a "Go to definition" item when LSP is active
+    in the buffer.
 
 • Snippet:
   • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`

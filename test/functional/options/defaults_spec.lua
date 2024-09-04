@@ -1,3 +1,9 @@
+--
+-- Tests for default options and environment decisions.
+--
+-- See editor/defaults_spec.lua for default autocmds, mappings, commands, and menus.
+--
+
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
@@ -1252,26 +1258,6 @@ describe('stdpath()', function()
     it('on non-strings', function()
       eq('Vim(call):E731: Using a Dictionary as a String', exc_exec('call stdpath({"eris": 23})'))
       eq('Vim(call):E730: Using a List as a String', exc_exec('call stdpath([23])'))
-    end)
-  end)
-end)
-
-describe('autocommands', function()
-  it('closes terminal with default shell on success', function()
-    clear()
-    api.nvim_set_option_value('shell', n.testprg('shell-test'), {})
-    command('set shellcmdflag=EXIT shellredir= shellpipe= shellquote= shellxquote=')
-
-    -- Should not block other events
-    command('let g:n=0')
-    command('au BufEnter * let g:n = g:n + 1')
-
-    command('terminal')
-    eq(1, eval('get(g:, "n", 0)'))
-
-    t.retry(nil, 1000, function()
-      neq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
-      eq(2, eval('get(g:, "n", 0)'))
     end)
   end)
 end)

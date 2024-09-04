@@ -1095,6 +1095,7 @@ describe('ext_multigrid', function()
   end)
 
   it('supports mouse', function()
+    command('autocmd! nvim_popupmenu') -- Delete the default MenuPopup event handler.
     insert('some text\nto be clicked')
     screen:expect{grid=[[
     ## grid 1

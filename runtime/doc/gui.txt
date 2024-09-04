@@ -444,6 +444,10 @@ when the right mouse button is pressed, if 'mousemodel' is set to popup or
 popup_setpos.
 
 The default "PopUp" menu is: >vim
+    anoremenu PopUp.Go\ to\ definition      <Cmd>lua vim.lsp.buf.definition()<CR>
+    amenu     PopUp.Open\ in\ web\ browser  gx
+    anoremenu PopUp.Inspect                 <Cmd>Inspect<CR>
+    anoremenu PopUp.-1-                     <Nop>
     vnoremenu PopUp.Cut                     "+x
     vnoremenu PopUp.Copy                    "+y
     anoremenu PopUp.Paste                   "+gP
@@ -452,8 +456,7 @@ The default "PopUp" menu is: >vim
     nnoremenu PopUp.Select\ All             ggVG
     vnoremenu PopUp.Select\ All             gg0oG$
     inoremenu PopUp.Select\ All             <C-Home><C-O>VG
-    anoremenu PopUp.Inspect                 <Cmd>Inspect<CR>
-    anoremenu PopUp.-1-                     <Nop>
+    anoremenu PopUp.-2-                     <Nop>
     anoremenu PopUp.How-to\ disable\ mouse  <Cmd>help disable-mouse<CR>
 <
 

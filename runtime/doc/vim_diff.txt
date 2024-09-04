@@ -106,23 +106,28 @@ standard actions ("Cut", "Copy", "Paste", …). Mouse is NOT enabled in
 |command-mode| or the |more-prompt|, so you can temporarily disable it just by
 typing ":".
 
-If you don't like this you can disable the mouse in your |config| using any of
-the following:
+Or you can disable the popup-menu using any of the following:
 - Disable mouse completely by unsetting the 'mouse' option: >vim
   set mouse=
-- Pressing <RightMouse> extends selection instead of showing popup-menu: >vim
+- Change the 'mousemodel', so <RightMouse> extends selection instead of
+  showing the popup-menu: >vim
   set mousemodel=extend
-- Pressing <A-LeftMouse> releases mouse until the cursor moves:  >vim
+- Map <A-LeftMouse> so that it temporarily disables mouse until the cursor
+  moves:  >vim
   nnoremap <A-LeftMouse> <Cmd>
     \ set mouse=<Bar>
     \ echo 'mouse OFF until next cursor-move'<Bar>
     \ autocmd CursorMoved * ++once set mouse&<Bar>
     \ echo 'mouse ON'<CR>
 <
-To remove the "How-to disable mouse" menu item and the separator above it: >vim
+To remove the default popup-menu without disabling mouse: >vim
+  aunmenu PopUp
+  autocmd! nvim_popupmenu
+
+To remove only the "How-to disable mouse" menu item (and its separator): >vim
   aunmenu PopUp.How-to\ disable\ mouse
-  aunmenu PopUp.-1-
-<
+  aunmenu PopUp.-2-
+
 DEFAULT MAPPINGS
                                                         *default-mappings*
 Nvim creates the following default mappings at |startup|. You can disable any
