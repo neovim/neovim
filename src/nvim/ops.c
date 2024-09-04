@@ -306,7 +306,7 @@ void shift_line(bool left, bool round, int amount, int call_changed_bytes)
 
   // Set new indent
   if (State & VREPLACE_FLAG) {
-    change_indent(INDENT_SET, count, false, NUL, call_changed_bytes);
+    change_indent(INDENT_SET, count, false, call_changed_bytes);
   } else {
     set_indent(count, call_changed_bytes ? SIN_CHANGED : 0);
   }

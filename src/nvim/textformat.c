@@ -400,7 +400,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
         }
         if (second_indent >= 0) {
           if (State & VREPLACE_FLAG) {
-            change_indent(INDENT_SET, second_indent, false, NUL, true);
+            change_indent(INDENT_SET, second_indent, false, true);
           } else if (leader_len > 0 && second_indent - leader_len > 0) {
             int padding = second_indent - leader_len;
 
