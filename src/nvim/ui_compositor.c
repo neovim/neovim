@@ -101,6 +101,35 @@ bool ui_comp_should_draw(void)
   return composed_uis != 0 && valid_screen;
 }
 
+/// Raises or lowers the layer, syncing comp_index with zindex.
+///
+/// This function adjusts the position of a layer in the layers array
+/// based on its zindex, either raising or lowering it.
+///
+/// @param[in]  layer_idx  Index of the layer to be raised or lowered.
+/// @param[in]  raise      Raise the layer if true, else lower it.
+void ui_comp_layers_adjust(size_t layer_idx, bool raise)
+{
+  size_t size = layers.size;
+  ScreenGrid *layer = layers.items[layer_idx];
+
+  if (raise) {
+    while (layer_idx < size - 1 && layer->zindex > layers.items[layer_idx + 1]->zindex) {
+      layers.items[layer_idx] = layers.items[layer_idx + 1];
+      layers.items[layer_idx]->comp_index = layer_idx;
+      layer_idx++;
+    }
+  } else {
+    while (layer_idx > 0 && layer->zindex < layers.items[layer_idx - 1]->zindex) {
+      layers.items[layer_idx] = layers.items[layer_idx - 1];
+      layers.items[layer_idx]->comp_index = layer_idx;
+      layer_idx--;
+    }
+  }
+  layers.items[layer_idx] = layer;
+  layer->comp_index = layer_idx;
+}
+
 /// Places `grid` at (col,row) position with (width * height) size.
 /// Adds `grid` as the top layer if it is a new layer.
 ///
