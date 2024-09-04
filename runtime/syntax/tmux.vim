@@ -1,5 +1,5 @@
 " Language: tmux(1) configuration file
-" Version: 3.4 (git-171004df)
+" Version: 3.4 (git-3d8ead8a)
 " URL: https://github.com/ericpruitt/tmux.vim/
 " Maintainer: Eric Pruitt <eric.pruitt@gmail.com>
 " License: 2-Clause BSD (http://opensource.org/licenses/BSD-2-Clause)
@@ -37,7 +37,7 @@ syn match tmuxInvalidVariableExpansion /\${[^}]*$/ display
 syn match tmuxInvalidVariableExpansion /\${[^A-Za-z_][^}]*}/ display
 syn match tmuxInvalidVariableExpansion /\$[^A-Za-z_{ \t]/ display
 " Contains invalid character.
-syn match tmuxInvalidVariableExpansion /\${[^}]*[^A-Za-z0-9_][^}]*}/ display
+syn match tmuxInvalidVariableExpansion /\${[^}]*[^A-Za-z0-9_}][^}]*}/ display
 
 syn region tmuxComment start=/#/ skip=/\\\@<!\\$/ end=/$/ contains=tmuxTodo,@Spell
 
