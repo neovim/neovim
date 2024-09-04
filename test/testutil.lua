@@ -143,7 +143,7 @@ end
 ---
 ---@param pat (string) Lua pattern to match lines in the log file
 ---@param logfile? (string) Full path to log file (default=$NVIM_LOG_FILE)
----@param nrlines? (number) Search up to this many log lines
+---@param nrlines? (number) Search up to this many log lines (default 10)
 ---@param inverse? (boolean) Assert that the pattern does NOT match.
 function M.assert_log(pat, logfile, nrlines, inverse)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'

@@ -1,7 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local assert_log = t.assert_log
 local eq, neq, eval = t.eq, t.neq, n.eval
 local clear, fn, api = n.clear, n.fn, n.api
 local matches = t.matches
@@ -88,7 +87,7 @@ describe('server', function()
     }
     eq(0, eval("serverstop('')"))
     eq(0, eval("serverstop('bogus-socket-name')"))
-    assert_log('Not listening on bogus%-socket%-name', testlog, 10)
+    t.assert_log('Not listening on bogus%-socket%-name', testlog, 10)
   end)
 
   it('parses endpoints', function()
@@ -122,7 +121,7 @@ describe('server', function()
     if status then
       table.insert(expected, v4)
       pcall(fn.serverstart, v4) -- exists already; ignore
-      assert_log('Failed to start server: address already in use: 127%.0%.0%.1', testlog, 10)
+      t.assert_log('Failed to start server: address already in use: 127%.0%.0%.1', testlog, 10)
     end
 
     local v6 = '::1:12345'
@@ -130,7 +129,7 @@ describe('server', function()
     if status then
       table.insert(expected, v6)
       pcall(fn.serverstart, v6) -- exists already; ignore
-      assert_log('Failed to start server: address already in use: ::1', testlog, 10)
+      t.assert_log('Failed to start server: address already in use: ::1', testlog, 10)
     end
     eq(expected, fn.serverlist())
     clear_serverlist()
@@ -173,23 +172,42 @@ end)
 
 describe('startup --listen', function()
   it('validates', function()
-    clear()
+    os.remove(testlog)
+    clear { env = { NVIM_LOG_FILE = testlog } }
 
     -- Tests args with and without "--headless".
     local function _test(args, expected)
-      -- XXX: clear v:shell_error, sigh...
-      fn.system({ n.nvim_prog, '-es', '+qall!' })
-      assert(0 == eval('v:shell_error'))
-      local cmd = vim.list_extend({ unpack(n.nvim_argv) }, vim.list_extend({ '--headless' }, args))
-      local output = fn.system(cmd)
-      assert(0 ~= eval('v:shell_error'))
-      -- TODO(justinmk): output not properly captured on Windows?
-      if is_os('win') then
-        return
+      local function run(cmd)
+        return n.exec_lua(function(cmd_)
+          return vim
+            .system(cmd_, {
+              text = true,
+              env = {
+                -- Avoid noise in the logs; we expect failures for these tests.
+                NVIM_LOG_FILE = testlog,
+              },
+            })
+            :wait()
+        end, cmd) --[[@as vim.SystemCompleted]]
       end
-      matches(expected, output)
-      matches(expected, fn.system(vim.list_extend({ unpack(n.nvim_argv) }, args)))
+
+      local cmd = vim.list_extend({ n.nvim_prog, '+qall!', '--headless' }, args)
+      local r = run(cmd)
+      eq(1, r.code)
+      matches(expected, (r.stderr .. r.stdout):gsub('\\n', ' '))
+
+      if is_os('win') then
+        return -- On Windows, output without --headless is garbage.
+      end
+      table.remove(cmd, 3) -- Remove '--headless'.
+      assert(not vim.tbl_contains(cmd, '--headless'))
+      r = run(cmd)
+      eq(1, r.code)
+      matches(expected, (r.stderr .. r.stdout):gsub('\\n', ' '))
     end
+
+    t.assert_nolog('Failed to start server', testlog, 100)
+    t.assert_nolog('Host lookup failed', testlog, 100)
 
     _test({ '--listen' }, 'nvim.*: Argument missing after: "%-%-listen"')
     _test({ '--listen2' }, 'nvim.*: Garbage after option argument: "%-%-listen2"')
@@ -198,10 +216,12 @@ describe('startup --listen', function()
     _test(
       { '--listen', 'https://example.com' },
       ('nvim.*: Failed to %%-%%-listen: "%s"'):format(
-        (is_os('mac') or is_os('win')) and 'unknown node or service'
-          or 'service not available for socket type'
+        is_os('mac') and 'unknown node or service' or 'service not available for socket type'
       )
     )
+
+    t.assert_log('Failed to start server', testlog, 100)
+    t.assert_log('Host lookup failed', testlog, 100)
   end)
 
   it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
