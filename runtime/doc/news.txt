@@ -156,6 +156,8 @@ TREESITTER
   if no languages are explicitly registered.
 • |vim.treesitter.language.add()| returns `true` if a parser was loaded
   successfully and `nil,errmsg` otherwise instead of throwing an error.
+• |vim.treesitter.query.set()| can now inherit and/or extend runtime file
+  queries in addition to overriding.
 
 TUI
 

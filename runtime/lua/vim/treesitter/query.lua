@@ -198,15 +198,28 @@ local explicit_queries = setmetatable({}, {
   end,
 })
 
+--- @class vim.treesitter.query.set.Opts
+--- @inlinedoc
+---
+--- Buffer this query should apply to (`0` for current buffer, `nil` for all buffers for {lang}).
+--- @field bufnr? integer
+---
+--- Language(s) this query should inherit from (see |treesitter-query-modeline-inherits|).
+--- @field inherits? string|string[]
+---
+--- Whether the query should be an extension query (see |treesitter-query-modeline-extends|).
+--- @field extends? boolean
+
 --- Sets the runtime query named {query_name} for {lang}
 ---
---- This allows users to override any runtime files and/or configuration
+--- This allows users to override or extend any runtime files and/or configuration
 --- set by plugins.
 ---
 ---@param lang string Language to use for the query
 ---@param query_name string Name of the query (e.g., "highlights")
 ---@param text string Query text (unparsed).
-function M.set(lang, query_name, text)
+---@param opts? vim.treesitter.query.set.Opts
+function M.set(lang, query_name, text, opts)
   explicit_queries[lang][query_name] = M.parse(lang, text)
 end
 
