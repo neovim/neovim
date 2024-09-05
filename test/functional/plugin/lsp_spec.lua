@@ -2699,6 +2699,7 @@ describe('LSP', function()
             uri = 'file:///fake/uri',
             range = {
               start = { line = 0, character = 2 },
+              -- LSP spec: if character > line length, default to the line length.
               ['end'] = { line = 1, character = 10000 },
             },
           },
