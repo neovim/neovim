@@ -146,7 +146,7 @@ end
 --- end
 --- ```
 ---
----@param path string Path or URL to open
+---@param path? string Path or URL to open, or `nil` to get path or URL at cursor.
 ---@param opt? vim.ui.open.Opts Options
 ---
 ---@return vim.SystemObj|nil # Command object, or nil if not found.
@@ -154,53 +154,79 @@ end
 ---
 ---@see |vim.system()|
 function M.open(path, opt)
-  vim.validate('path', path, 'string')
-  local is_uri = path:match('%w+:')
-  if not is_uri then
-    path = vim.fs.normalize(path)
-  end
+  vim.validate('path', path, 'string', true)
 
   opt = opt or {}
-  local cmd ---@type string[]
-  local job_opt = { text = true, detach = true } --- @type vim.SystemOpts
+  local function do_open(uri)
+    local cmd ---@type string[]
+    local job_opt = { text = true, detach = true } --- @type vim.SystemOpts
 
-  if opt.cmd then
-    cmd = vim.list_extend(opt.cmd --[[@as string[] ]], { path })
-  else
-    local open_cmd, err = M._get_open_cmd()
-    if err then
-      return nil, err
-    end
-    ---@cast open_cmd string[]
-    if open_cmd[1] == 'xdg-open' then
+    if opt.cmd then
+      cmd = vim.list_extend(opt.cmd --[[@as string[] ]], { uri })
+    elseif vim.fn.has('mac') == 1 then
+      cmd = { 'open', uri }
+    elseif vim.fn.has('win32') == 1 then
+      if vim.fn.executable('rundll32') == 1 then
+        cmd = { 'rundll32', 'url.dll,FileProtocolHandler', uri }
+      else
+        return nil, 'vim.ui.open: rundll32 not found'
+      end
+    elseif vim.fn.executable('xdg-open') == 1 then
+      cmd = { 'xdg-open', uri }
       job_opt.stdout = false
       job_opt.stderr = false
+    elseif vim.fn.executable('wslview') == 1 then
+      cmd = { 'wslview', uri }
+    elseif vim.fn.executable('explorer.exe') == 1 then
+      cmd = { 'explorer.exe', uri }
+    elseif vim.fn.executable('lemonade') == 1 then
+      cmd = { 'lemonade', 'open', path }
+    else
+      return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
     end
-    cmd = vim.list_extend(open_cmd, { path })
+
+    return vim.system(cmd, job_opt), nil
   end
 
-  return vim.system(cmd, job_opt), nil
-end
+  local function do_open2(uri)
+    local cmd, err = do_open(uri)
+    -- wait() terminates the process if necessary (avoids stale processes), and allows us to show an
+    -- error message if needed.
+    local rv = cmd and cmd:wait(1000) or nil
+    if cmd and rv and rv.code ~= 0 then
+      err = ('vim.ui.open: command %s (%d): %s'):format(
+        (rv.code == 124 and 'timeout' or 'failed'),
+        rv.code,
+        vim.inspect(cmd.cmd)
+      )
+    end
+    return err
+  end
 
---- Get an available command used to open the path or URL.
----
---- @return string[]|nil # Command, or nil if not found.
---- @return nil|string # Error message on failure, or nil on success.
-function M._get_open_cmd()
-  if vim.fn.has('mac') == 1 then
-    return { 'open' }, nil
-  elseif vim.fn.has('win32') == 1 then
-    return { 'cmd.exe', '/c', 'start', '' }, nil
-  elseif vim.fn.executable('xdg-open') == 1 then
-    return { 'xdg-open' }, nil
-  elseif vim.fn.executable('wslview') == 1 then
-    return { 'wslview' }, nil
-  elseif vim.fn.executable('explorer.exe') == 1 then
-    return { 'explorer.exe' }, nil
-  elseif vim.fn.executable('lemonade') == 1 then
-    return { 'lemonade', 'open' }, nil
-  else
-    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
+  if path then
+    local is_uri = path:match('%w+:')
+    if not is_uri then
+      path = vim.fs.normalize(path)
+    end
+    return do_open(path)
+  else -- DWIM mode: get the URL or path from the cursor position, and show error.
+    local visual = not not vim.fn.mode():match('[vV\22]')
+    if visual then
+      local lines =
+        vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'), { type = vim.fn.mode() })
+      -- Trim whitespace on each line and concatenate.
+      local err = do_open2(table.concat(vim.iter(lines):map(vim.trim):totable()))
+      if err then
+        vim.notify(err, vim.log.levels.ERROR)
+      end
+    else
+      for _, url in ipairs(M._get_urls()) do
+        local err = do_open2(url)
+        if err then
+          vim.notify(err, vim.log.levels.ERROR)
+        end
+      end
+    end
   end
 end
 
