@@ -509,8 +509,6 @@ static int line_popcount(ScreenCell *buffer, int row, int rows, int cols)
   return col + 1;
 }
 
-#define REFLOW (screen->reflow)
-
 static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new_cols, bool active, VTermStateFields *statefields)
 {
   int old_rows = screen->rows;
@@ -541,13 +539,13 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
   while(old_row >= 0) {
     int old_row_end = old_row;
     /* TODO: Stop if dwl or dhl */
-    while(REFLOW && old_lineinfo && old_row > 0 && old_lineinfo[old_row].continuation)
+    while(screen->reflow && old_lineinfo && old_row > 0 && old_lineinfo[old_row].continuation)
       old_row--;
     int old_row_start = old_row;
 
     int width = 0;
     for(int row = old_row_start; row <= old_row_end; row++) {
-      if(REFLOW && row < (old_rows - 1) && old_lineinfo[row + 1].continuation)
+      if(screen->reflow && row < (old_rows - 1) && old_lineinfo[row + 1].continuation)
         width += old_cols;
       else
         width += line_popcount(old_buffer, row, old_rows, old_cols);
@@ -556,7 +554,7 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
     if(final_blank_row == (new_row + 1) && width == 0)
       final_blank_row = new_row;
 
-    int new_height = REFLOW
+    int new_height = screen->reflow
       ? width ? (width + new_cols - 1) / new_cols : 1
       : 1;
 
@@ -629,7 +627,7 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
         if(old_col == old_cols) {
           old_row++;
 
-          if(!REFLOW) {
+          if(!screen->reflow) {
             new_col++;
             break;
           }
