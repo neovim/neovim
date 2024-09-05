@@ -228,6 +228,9 @@ func Test_setcellwidths()
     call setcellwidths([[0x2103, 0x2103, 2]])
     redraw
     call assert_equal(19, wincol())
+    call setcellwidths([])
+    redraw
+    call assert_equal((aw == 'single') ? 10 : 19, wincol())
   endfor
   set ambiwidth& isprint&
 
