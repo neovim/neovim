@@ -1798,6 +1798,8 @@ function M.locations_to_items(locations, offset_encoding)
       local line_len = vim.fn.strcharlen(line)
       local end_line = lines[end_row] or ''
       local end_line_len = vim.fn.strcharlen(end_line)
+      -- LSP spec: if character > line length, default to the line length.
+      -- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#position
       local col = pos.character <= line_len
           and M._str_byteindex_enc(line, pos.character, offset_encoding)
         or line_len
