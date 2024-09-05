@@ -2673,7 +2673,7 @@ describe('LSP', function()
 
   describe('lsp.util.locations_to_items', function()
     it('Convert Location[] to items', function()
-      local expected = {
+      local expected_template = {
         {
           filename = '/fake/uri',
           lnum = 1,
@@ -2681,20 +2681,11 @@ describe('LSP', function()
           col = 3,
           end_col = 4,
           text = 'testing',
-          user_data = {
-            uri = 'file:///fake/uri',
-            range = {
-              start = { line = 0, character = 2 },
-              ['end'] = { line = 1, character = 3 },
-            },
-          },
+          user_data = {},
         },
       }
-      local actual = exec_lua(function()
-        local bufnr = vim.uri_to_bufnr('file:///fake/uri')
-        local lines = { 'testing', '123' }
-        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
-        local locations = {
+      local test_params = {
+        {
           {
             uri = 'file:///fake/uri',
             range = {
@@ -2702,10 +2693,29 @@ describe('LSP', function()
               ['end'] = { line = 1, character = 3 },
             },
           },
-        }
-        return vim.lsp.util.locations_to_items(locations, 'utf-16')
-      end)
-      eq(expected, actual)
+        },
+        {
+          {
+            uri = 'file:///fake/uri',
+            range = {
+              start = { line = 0, character = 2 },
+              -- LSP spec: if character > line length, default to the line length.
+              ['end'] = { line = 1, character = 10000 },
+            },
+          },
+        },
+      }
+      for _, params in ipairs(test_params) do
+        local actual = exec_lua(function(params0)
+          local bufnr = vim.uri_to_bufnr('file:///fake/uri')
+          local lines = { 'testing', '123' }
+          vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
+          return vim.lsp.util.locations_to_items(params0, 'utf-16')
+        end, params)
+        local expected = vim.deepcopy(expected_template)
+        expected[1].user_data = params[1]
+        eq(expected, actual)
+      end
     end)
 
     it('Convert LocationLink[] to items', function()

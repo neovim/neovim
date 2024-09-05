@@ -1795,8 +1795,18 @@ function M.locations_to_items(locations, offset_encoding)
       local row = pos.line
       local end_row = end_pos.line
       local line = lines[row] or ''
-      local col = M._str_byteindex_enc(line, pos.character, offset_encoding)
-      local end_col = M._str_byteindex_enc(lines[end_row] or '', end_pos.character, offset_encoding)
+      local line_len = vim.fn.strcharlen(line)
+      local end_line = lines[end_row] or ''
+      local end_line_len = vim.fn.strcharlen(end_line)
+      -- LSP spec: if character > line length, default to the line length.
+      -- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#position
+      local col = pos.character <= line_len
+          and M._str_byteindex_enc(line, pos.character, offset_encoding)
+        or line_len
+      local end_col = end_pos.character <= end_line_len
+          and M._str_byteindex_enc(end_line, end_pos.character, offset_encoding)
+        or end_line_len
+
       table.insert(items, {
         filename = filename,
         lnum = row + 1,
