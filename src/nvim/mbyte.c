@@ -2926,7 +2926,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     xfree(cw_table);
     cw_table = NULL;
     cw_table_size = 0;
-    return;
+    goto done;
   }
 
   // Note: use list_T instead of listitem_T so that TV_LIST_ITEM_NEXT can be used properly below.
@@ -3023,6 +3023,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   xfree(cw_table_save);
+done:
   changed_window_setting_all();
   redraw_all_later(UPD_NOT_VALID);
 }
