@@ -2500,15 +2500,13 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
     // ignore comment and empty lines
     if (*eap->cmd == '"') {
       // a comment ends at a NL
-      if (eap->nextcmd == NULL) {
-        eap->nextcmd = vim_strchr(eap->cmd, '\n');
-        if (eap->nextcmd != NULL) {
-          eap->nextcmd++;
-        }
+      eap->nextcmd = vim_strchr(eap->cmd, '\n');
+      if (eap->nextcmd != NULL) {
+        eap->nextcmd++;
       }
       return FAIL;
     }
-    if (eap->nextcmd == NULL && *eap->cmd == '\n') {
+    if (*eap->cmd == '\n') {
       eap->nextcmd = eap->cmd + 1;
       return FAIL;
     }
