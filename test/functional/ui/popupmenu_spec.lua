@@ -851,6 +851,8 @@ describe('ui/ext_popupmenu', function()
       set mouse=a mousemodel=popup
 
       aunmenu PopUp
+      " Delete the default MenuPopup event handler.
+      autocmd! nvim_popupmenu
       menu PopUp.foo :let g:menustr = 'foo'<CR>
       menu PopUp.bar :let g:menustr = 'bar'<CR>
       menu PopUp.baz :let g:menustr = 'baz'<CR>
@@ -3805,6 +3807,8 @@ describe('builtin popupmenu', function()
         call setline(1, 'popup menu test')
         set mouse=a mousemodel=popup
 
+        " Delete the default MenuPopup event handler.
+        autocmd! nvim_popupmenu
         aunmenu PopUp
         menu PopUp.foo :let g:menustr = 'foo'<CR>
         menu PopUp.bar :let g:menustr = 'bar'<CR>
@@ -4489,6 +4493,9 @@ describe('builtin popupmenu', function()
       -- oldtest: Test_popup_command_dump()
       it(':popup command', function()
         exec([[
+          " Delete the default MenuPopup event handler.
+          autocmd! nvim_popupmenu
+
           func ChangeMenu()
             aunmenu PopUp.&Paste
             nnoremenu 1.40 PopUp.&Paste :echomsg "pasted"<CR>
@@ -4646,6 +4653,8 @@ describe('builtin popupmenu', function()
         screen:try_resize(50, 20)
         exec([[
           set mousemodel=popup_setpos
+          " Delete the default MenuPopup event handler.
+          autocmd! nvim_popupmenu
           aunmenu *
           source $VIMRUNTIME/menu.vim
           call setline(1, join(range(20)))

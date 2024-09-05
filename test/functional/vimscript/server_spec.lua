@@ -18,12 +18,16 @@ local function clear_serverlist()
   end
 end
 
-describe('server', function()
-  after_each(function()
-    check_close()
-    os.remove(testlog)
-  end)
+after_each(function()
+  check_close()
+  os.remove(testlog)
+end)
 
+before_each(function()
+  os.remove(testlog)
+end)
+
+describe('server', function()
   it('serverstart() stores sockets in $XDG_RUNTIME_DIR', function()
     local dir = 'Xtest_xdg_run'
     mkdir(dir)
@@ -172,7 +176,6 @@ end)
 
 describe('startup --listen', function()
   it('validates', function()
-    os.remove(testlog)
     clear { env = { NVIM_LOG_FILE = testlog } }
 
     -- Tests args with and without "--headless".

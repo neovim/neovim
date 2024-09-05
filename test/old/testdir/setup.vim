@@ -66,6 +66,7 @@ mapclear
 mapclear!
 aunmenu *
 tlunmenu *
+autocmd! nvim_popupmenu
 
 " Undo the 'grepprg' and 'grepformat' setting in _defaults.lua.
 set grepprg& grepformat&
