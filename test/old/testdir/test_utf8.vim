@@ -255,15 +255,21 @@ func Test_setcellwidths()
 
   call assert_fails('call setcellwidths([[0x33, 0x44, 2]])', 'E1114:')
 
-  set listchars=tab:--\\u2192
+  set listchars=tab:--\\u2192 fillchars=stl:\\u2501
   call assert_fails('call setcellwidths([[0x2192, 0x2192, 2]])', 'E834:')
-
-  set fillchars=stl:\\u2501
   call assert_fails('call setcellwidths([[0x2501, 0x2501, 2]])', 'E835:')
 
+  call setcellwidths([[0x201c, 0x201d, 1]])
+  set listchars& fillchars& ambiwidth=double
+
+  set listchars=nbsp:\\u201c fillchars=vert:\\u201d
+  call assert_fails('call setcellwidths([])', 'E834:')
   set listchars&
+  call assert_fails('call setcellwidths([])', 'E835:')
   set fillchars&
+
   call setcellwidths([])
+  set ambiwidth&
   bwipe!
 endfunc
 

@@ -2925,17 +2925,17 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     emsg(_(e_listreq));
     return;
   }
+
   const list_T *const l = argvars[0].vval.v_list;
-  if (tv_list_len(l) == 0) {
+  cw_interval_T *table = NULL;
+  const size_t table_size = (size_t)tv_list_len(l);
+  if (table_size == 0) {
     // Clearing the table.
-    xfree(cw_table);
-    cw_table = NULL;
-    cw_table_size = 0;
-    goto done;
+    goto update;
   }
 
   // Note: use list_T instead of listitem_T so that TV_LIST_ITEM_NEXT can be used properly below.
-  const list_T **ptrs = xmalloc(sizeof(const list_T *) * (size_t)tv_list_len(l));
+  const list_T **ptrs = xmalloc(sizeof(const list_T *) * table_size);
 
   // Check that all entries are a list with three numbers, the range is
   // valid and the cell width is valid.
@@ -2987,12 +2987,12 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   });
 
   // Sort the list on the first number.
-  qsort((void *)ptrs, (size_t)tv_list_len(l), sizeof(const list_T *), tv_nr_compare);
+  qsort((void *)ptrs, table_size, sizeof(const list_T *), tv_nr_compare);
 
-  cw_interval_T *table = xmalloc(sizeof(cw_interval_T) * (size_t)tv_list_len(l));
+  table = xmalloc(sizeof(cw_interval_T) * table_size);
 
   // Store the items in the new table.
-  for (item = 0; item < tv_list_len(l); item++) {
+  for (item = 0; (size_t)item < table_size; item++) {
     const list_T *const li_l = ptrs[item];
     const listitem_T *lili = tv_list_first(li_l);
     const varnumber_T n1 = TV_LIST_ITEM_TV(lili)->vval.v_number;
@@ -3011,10 +3011,12 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   xfree((void *)ptrs);
 
+update:
+  ;
   cw_interval_T *const cw_table_save = cw_table;
   const size_t cw_table_size_save = cw_table_size;
   cw_table = table;
-  cw_table_size = (size_t)tv_list_len(l);
+  cw_table_size = table_size;
 
   // Check that the new value does not conflict with 'listchars' or
   // 'fillchars'.
@@ -3028,7 +3030,6 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   xfree(cw_table_save);
-done:
   changed_window_setting_all();
   redraw_all_later(UPD_NOT_VALID);
 }
