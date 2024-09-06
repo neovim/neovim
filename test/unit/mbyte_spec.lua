@@ -4,7 +4,6 @@ local itp = t.gen_itp(it)
 local ffi = t.ffi
 local eq = t.eq
 local to_cstr = t.to_cstr
-local ok = t.ok
 
 local lib = t.cimport(
   './src/nvim/mbyte.h',
@@ -302,7 +301,10 @@ describe('mbyte', function()
       local mb_glyphs = {}
       while pos < len do
         local clen = lib.utfc_ptr2len(cstr + pos)
-        ok(clen > 0) -- otherwise we get stuck
+        if clen == 0 then
+          eq(0, string.byte(str, pos + 1)) -- only NUL bytes can has length zery
+          clen = 1 -- but skip it, otherwise we get stuck
+        end
         if clen > 1 then
           table.insert(mb_glyphs, string.sub(str, pos + 1, pos + clen))
         end
@@ -325,12 +327,17 @@ describe('mbyte', function()
     -- stylua doesn't like ZWJ chars..
     -- stylua: ignore start
     check('hej och hå 🧑‍🌾!', { 'å', '🧑‍🌾' })
-    -- emoji only (various kinds of combinations, use g8 to see them)
+
+    -- emoji (various kinds of combinations, use g8 to see them)
     check("🏳️‍⚧️🧑‍🌾❤️😂🏴‍☠️", {"🏳️‍⚧️", "🧑‍🌾", "❤️", "😂", "🏴‍☠️"})
     check('🏳️‍⚧️xy🧑‍🌾\r❤️😂å🏴‍☠️', { '🏳️‍⚧️', '🧑‍🌾', '❤️', '😂', 'å', '🏴‍☠️', '' })
+    check('🏳️‍⚧️\000🧑‍🌾\000❤️\000😂\000å\000🏴‍☠️\000', { '🏳️‍⚧️', '🧑‍🌾', '❤️', '😂', 'å', '🏴‍☠️', '' })
+    check('\195🏳️‍⚧️\198🧑‍🌾\165❤️\168\195😂\255🏴‍☠️\129\165', { '🏳️‍⚧️', '🧑‍🌾', '❤️', '😂', '🏴‍☠️', '' })
 
     check('🇦🅱️ 🇦🇽 🇦🇨🇦 🇲🇽🇹🇱',{'🇦', '🅱️', '🇦🇽', '🇦🇨', '🇦', '🇲🇽', '🇹🇱'})
     check('🏴󠁧󠁢󠁳󠁣󠁴󠁿🏴󠁧󠁢󠁷󠁬󠁳󠁿', {'🏴󠁧󠁢󠁳󠁣󠁴󠁿', '🏴󠁧󠁢󠁷󠁬󠁳󠁿'})
+
+    check('å\165ü\195aëq\168β\000\169本\255', {'å', 'ü', 'ë', 'β', '本'})
 
     lib.p_arshape = true -- default
     check('سلام', { 'س', 'لا', 'م' })

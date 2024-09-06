@@ -351,4 +351,97 @@ describe('insert-mode', function()
       eq(2, api.nvim_win_get_cursor(0)[1])
     end)
   end)
+
+  it('backspace after replacing multibyte chars', function()
+    local screen = Screen.new(30, 3)
+    screen:attach()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'test ȧ̟̜̝̅̚m̆̉̐̐̇̈ å' })
+    feed('^Rabcdefghi')
+    screen:expect([[
+      abcdefghi^                     |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('<bs>')
+    screen:expect([[
+      abcdefgh^å                     |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('<bs>')
+    screen:expect([[
+      abcdefg^ å                     |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('<bs>')
+    screen:expect([[
+      abcdef^m̆̉̐̐̇̈ å                     |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('<bs>')
+    screen:expect([[
+      abcde^ȧ̟̜̝̅̚m̆̉̐̐̇̈ å                     |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('<bs>')
+    screen:expect([[
+      abcd^ ȧ̟̜̝̅̚m̆̉̐̐̇̈ å                     |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('<esc>')
+
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'wow 🧑‍🌾🏳️‍⚧️x' })
+    feed('^Rabcd')
+
+    screen:expect([[
+      abcd^🧑‍🌾🏳️‍⚧️x                     |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('e')
+    screen:expect([[
+      abcde^🏳️‍⚧️x                      |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('f')
+    screen:expect([[
+      abcdef^x                       |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('<bs>')
+    screen:expect([[
+      abcde^🏳️‍⚧️x                      |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('<bs>')
+    screen:expect([[
+      abcd^🧑‍🌾🏳️‍⚧️x                     |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+
+    feed('<bs>')
+    screen:expect([[
+      abc^ 🧑‍🌾🏳️‍⚧️x                     |
+      {1:~                             }|
+      {5:-- REPLACE --}                 |
+    ]])
+  end)
 end)

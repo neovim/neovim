@@ -136,6 +136,8 @@ static TriState dont_sync_undo = kFalse;  // CTRL-G U prevents syncing undo
 
 static linenr_T o_lnum = 0;
 
+static kvec_t(char) replace_stack = KV_INITIAL_VALUE;
+
 static void insert_enter(InsertState *s)
 {
   s->did_backspace = true;
@@ -1618,9 +1620,8 @@ void undisplay_dollar(void)
 /// type == INDENT_SET   set indent to "amount"
 ///
 /// @param round               if true, round the indent to 'shiftwidth' (only with _INC and _Dec).
-/// @param replaced            replaced character, put on replace stack
 /// @param call_changed_bytes  call changed_bytes()
-void change_indent(int type, int amount, int round, int replaced, bool call_changed_bytes)
+void change_indent(int type, int amount, int round, bool call_changed_bytes)
 {
   int insstart_less;                    // reduction for Insstart.col
   colnr_T orig_col = 0;                 // init for GCC
@@ -1767,12 +1768,8 @@ void change_indent(int type, int amount, int round, int replaced, bool call_chan
       replace_join(0);              // remove a NUL from the replace stack
       start_col--;
     }
-    while (start_col < (int)curwin->w_cursor.col || replaced) {
-      replace_push(NUL);
-      if (replaced) {
-        replace_push(replaced);
-        replaced = NUL;
-      }
+    while (start_col < (int)curwin->w_cursor.col) {
+      replace_push_nul();
       start_col++;
     }
   }
@@ -2325,7 +2322,7 @@ int stop_arrow(void)
 static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
 {
   stop_redo_ins();
-  replace_flush();              // abandon replace stack
+  kv_destroy(replace_stack);  // abandon replace stack (reinitializes)
 
   // Save the inserted text for later redo with ^@ and CTRL-A.
   // Don't do it when "restart_edit" was set and nothing was inserted,
@@ -2802,57 +2799,51 @@ static bool echeck_abbr(int c)
 // that the NL replaced.  The extra one stores the characters after the cursor
 // that were deleted (always white space).
 
-static uint8_t *replace_stack = NULL;
-static ssize_t replace_stack_nr = 0;           // next entry in replace stack
-static ssize_t replace_stack_len = 0;          // max. number of entries
-
 /// Push character that is replaced onto the replace stack.
 ///
 /// replace_offset is normally 0, in which case replace_push will add a new
 /// character at the end of the stack.  If replace_offset is not 0, that many
 /// characters will be left on the stack above the newly inserted character.
 ///
-/// @param c character that is replaced (NUL is none)
-void replace_push(int c)
+/// @param str character that is replaced (NUL is none)
+/// @param len length of character in bytes
+void replace_push(char *str, size_t len)
 {
-  if (replace_stack_nr < replace_offset) {  // nothing to do
+  // TODO(bfredl): replace_offset is suss af, if we don't need it, this
+  // function is just kv_concat() :p
+  if (kv_size(replace_stack) < (size_t)replace_offset) {  // nothing to do
     return;
   }
 
-  if (replace_stack_len <= replace_stack_nr) {
-    replace_stack_len += 50;
-    replace_stack = xrealloc(replace_stack, (size_t)replace_stack_len);
-  }
-  uint8_t *p = replace_stack + replace_stack_nr - replace_offset;
+  kv_ensure_space(replace_stack, len);
+
+  char *p = replace_stack.items + kv_size(replace_stack) - replace_offset;
   if (replace_offset) {
-    memmove(p + 1, p, (size_t)replace_offset);
+    memmove(p + len, p, (size_t)replace_offset);
   }
-  *p = (uint8_t)c;
-  replace_stack_nr++;
+  memcpy(p, str, len);
+  kv_size(replace_stack) += len;
 }
 
-/// Push a character onto the replace stack.  Handles a multi-byte character in
-/// reverse byte order, so that the first byte is popped off first.
-///
-/// @return  the number of bytes done (includes composing characters).
-int replace_push_mb(char *p)
+/// push NUL as separator between entries in the stack
+void replace_push_nul(void)
 {
-  int l = utfc_ptr2len(p);
-
-  // TODO(bfredl): stop doing this insantity and instead use utf_head_off() when popping.
-  // or just keep a secondary array with char byte lenghts
-  for (int j = l - 1; j >= 0; j--) {
-    replace_push(p[j]);
-  }
-  return l;
+  replace_push("", 1);
 }
 
-/// Pop one item from the replace stack.
+/// Check top of replace stack, pop it if it was NUL
 ///
-/// @return -1 if stack is empty, replaced character or NUL otherwise
-static int replace_pop(void)
+/// when a non-NUL byte is found, use mb_replace_pop_ins() to
+/// pop one complete multibyte character.
+///
+/// @return -1 if stack is empty, last byte of char or NUL otherwise
+static int replace_pop_if_nul(void)
 {
-  return (replace_stack_nr == 0) ? -1 : (int)replace_stack[--replace_stack_nr];
+  int ch = (kv_size(replace_stack)) ? (uint8_t)kv_A(replace_stack, kv_size(replace_stack) - 1) : -1;
+  if (ch == NUL) {
+    kv_size(replace_stack)--;
+  }
+  return ch;
 }
 
 /// Join the top two items on the replace stack.  This removes to "off"'th NUL
@@ -2861,11 +2852,11 @@ static int replace_pop(void)
 /// @param off  offset for which NUL to remove
 static void replace_join(int off)
 {
-  for (ssize_t i = replace_stack_nr; --i >= 0;) {
-    if (replace_stack[i] == NUL && off-- <= 0) {
-      replace_stack_nr--;
-      memmove(replace_stack + i, replace_stack + i + 1,
-              (size_t)(replace_stack_nr - i));
+  for (ssize_t i = (ssize_t)kv_size(replace_stack); --i >= 0;) {
+    if (kv_A(replace_stack, i) == NUL && off-- <= 0) {
+      kv_size(replace_stack)--;
+      memmove(&kv_A(replace_stack, i), &kv_A(replace_stack, i + 1),
+              (kv_size(replace_stack) - (size_t)i));
       return;
     }
   }
@@ -2875,72 +2866,25 @@ static void replace_join(int off)
 /// before the cursor.  Can only be used in MODE_REPLACE or MODE_VREPLACE state.
 static void replace_pop_ins(void)
 {
-  int cc;
   int oldState = State;
 
   State = MODE_NORMAL;                       // don't want MODE_REPLACE here
-  while ((cc = replace_pop()) > 0) {
-    mb_replace_pop_ins(cc);
+  while ((replace_pop_if_nul()) > 0) {
+    mb_replace_pop_ins();
     dec_cursor();
   }
   State = oldState;
 }
 
-// Insert bytes popped from the replace stack. "cc" is the first byte.  If it
-// indicates a multi-byte char, pop the other bytes too.
-static void mb_replace_pop_ins(int cc)
+/// Insert multibyte char popped from the replace stack.
+///
+/// caller must already have checked the top of the stack is not NUL!!
+static void mb_replace_pop_ins(void)
 {
-  int n;
-  uint8_t buf[MB_MAXBYTES + 1];
-
-  if ((n = MB_BYTE2LEN(cc)) > 1) {
-    buf[0] = (uint8_t)cc;
-    for (int i = 1; i < n; i++) {
-      buf[i] = (uint8_t)replace_pop();
-    }
-    ins_bytes_len((char *)buf, (size_t)n);
-  } else {
-    ins_char(cc);
-  }
-
-  // Handle composing chars.
-  while (true) {
-    int c = replace_pop();
-    if (c == -1) {                // stack empty
-      break;
-    }
-    if ((n = MB_BYTE2LEN(c)) == 1) {
-      // Not a multi-byte char, put it back.
-      replace_push(c);
-      break;
-    }
-
-    buf[0] = (uint8_t)c;
-    assert(n > 1);
-    for (int i = 1; i < n; i++) {
-      buf[i] = (uint8_t)replace_pop();
-    }
-    // TODO(bfredl): by fixing replace_push_mb, upgrade to use
-    // the new composing algorithm
-    if (utf_iscomposing_legacy(utf_ptr2char((char *)buf))) {
-      ins_bytes_len((char *)buf, (size_t)n);
-    } else {
-      // Not a composing char, put it back.
-      for (int i = n - 1; i >= 0; i--) {
-        replace_push(buf[i]);
-      }
-      break;
-    }
-  }
-}
-
-// make the replace stack empty
-// (called when exiting replace mode)
-static void replace_flush(void)
-{
-  XFREE_CLEAR(replace_stack);
-  replace_stack_len = 0;
-  replace_stack_nr = 0;
+  int len = utf_head_off(&kv_A(replace_stack, 0),
+                         &kv_A(replace_stack, kv_size(replace_stack) - 1)) + 1;
+  kv_size(replace_stack) -= (size_t)len;
+  ins_bytes_len(&kv_A(replace_stack, kv_size(replace_stack)), (size_t)len);
 }
 
 // Handle doing a BS for one character.
@@ -2955,7 +2899,7 @@ static void replace_do_bs(int limit_col)
   colnr_T start_vcol;
   const int l_State = State;
 
-  int cc = replace_pop();
+  int cc = replace_pop_if_nul();
   if (cc > 0) {
     int orig_len = 0;
     int orig_vcols = 0;
@@ -2969,7 +2913,6 @@ static void replace_do_bs(int limit_col)
     if (l_State & VREPLACE_FLAG) {
       orig_len = get_cursor_pos_len();
     }
-    replace_push(cc);
     replace_pop_ins();
 
     if (l_State & VREPLACE_FLAG) {
@@ -3628,9 +3571,9 @@ static void ins_shift(int c, int lastc)
     if (lastc == '^') {
       old_indent = get_indent();        // remember curr. indent
     }
-    change_indent(INDENT_SET, 0, true, 0, true);
+    change_indent(INDENT_SET, 0, true, true);
   } else {
-    change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, true, 0, true);
+    change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, true, true);
   }
 
   if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL) {
@@ -3749,7 +3692,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
     // cc >= 0: NL was replaced, put original characters back
     cc = -1;
     if (State & REPLACE_FLAG) {
-      cc = replace_pop();           // returns -1 if NL was inserted
+      cc = replace_pop_if_nul();  // returns -1 if NL was inserted
     }
     // In replace mode, in the line we started replacing, we only move the
     // cursor.
@@ -3795,9 +3738,9 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         // restore characters (blanks) deleted after cursor
         while (cc > 0) {
           colnr_T save_col = curwin->w_cursor.col;
-          mb_replace_pop_ins(cc);
+          mb_replace_pop_ins();
           curwin->w_cursor.col = save_col;
-          cc = replace_pop();
+          cc = replace_pop_if_nul();
         }
         // restore the characters that NL replaced
         replace_pop_ins();
@@ -3906,7 +3849,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         } else {
           ins_str(" ");
           if ((State & REPLACE_FLAG)) {
-            replace_push(NUL);
+            replace_push_nul();
           }
         }
       }
@@ -4316,7 +4259,7 @@ static bool ins_tab(void)
     } else {
       ins_str(" ");
       if (State & REPLACE_FLAG) {            // no char replaced
-        replace_push(NUL);
+        replace_push_nul();
       }
     }
   }
@@ -4483,7 +4426,7 @@ bool ins_eol(int c)
   // character under the cursor.  Only push a NUL on the replace stack,
   // nothing to put back when the NL is deleted.
   if ((State & REPLACE_FLAG) && !(State & VREPLACE_FLAG)) {
-    replace_push(NUL);
+    replace_push_nul();
   }
 
   // In MODE_VREPLACE state, a NL replaces the rest of the line, and starts
@@ -4684,7 +4627,7 @@ static void ins_try_si(int c)
       i = get_indent();
       curwin->w_cursor = old_pos;
       if (State & VREPLACE_FLAG) {
-        change_indent(INDENT_SET, i, false, NUL, true);
+        change_indent(INDENT_SET, i, false, true);
       } else {
         set_indent(i, SIN_CHANGED);
       }
