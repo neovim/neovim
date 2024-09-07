@@ -332,6 +332,7 @@ describe('vim.fs', function()
     end)
     it('works with ~', function()
       eq(vim.fs.normalize(assert(vim.uv.os_homedir())) .. '/src/foo', vim.fs.normalize('~/src/foo'))
+      eq(vim.fs.normalize('~user/src/foo'), vim.fs.normalize('~user/src/foo'))
     end)
     it('works with environment variables', function()
       local xdg_config_home = test_build_dir .. '/.config'

@@ -593,6 +593,24 @@ local function posix_env_expand(path)
   return table.concat(res)
 end
 
+--- expand ~/ in a path
+--- does not handle ~user/ constructs and instead returns the path as-is
+---@param path string
+---@return string
+local function expand_home(path)
+  if not vim.startswith(path, '~') then
+    return path
+  end
+
+  local home = vim.uv.os_homedir():gsub('\\', '/') or '~'
+  home = home:gsub('/$', '')
+  if path:sub(2, 2) == '/' then
+    return home .. path:sub(2)
+  end
+
+  return path
+end
+
 --- @class vim.fs.normalize.Opts
 --- @inlinedoc
 ---
@@ -665,6 +683,8 @@ function M.normalize(path, opts)
     -- Convert path separator to `/`
     path = path:gsub(os_sep_local, '/')
   end
+
+  path = expand_home(path)
 
   -- Expand environment variables if `opts.expand_env` isn't `false`
   if opts.expand_env == nil or opts.expand_env then
