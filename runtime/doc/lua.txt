@@ -2962,17 +2962,17 @@ vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
 
     On Windows, backslash (\) characters are converted to forward slashes (/).
 
-    Examples: >lua
-        [[C:\Users\jdoe]]                         => "C:/Users/jdoe"
-        "~/src/neovim"                            => "/home/jdoe/src/neovim"
-        "$XDG_CONFIG_HOME/nvim/init.vim"          => "/Users/jdoe/.config/nvim/init.vim"
-        "~/src/nvim/api/../tui/./tui.c"           => "/home/jdoe/src/nvim/tui/tui.c"
-        "./foo/bar"                               => "foo/bar"
-        "foo/../../../bar"                        => "../../bar"
-        "/home/jdoe/../../../bar"                 => "/bar"
-        "C:foo/../../baz"                         => "C:../baz"
-        "C:/foo/../../baz"                        => "C:/baz"
-        [[\\?\UNC\server\share\foo\..\..\..\bar]] => "//?/UNC/server/share/bar"
+    Examples: >
+        C:\Users\jdoe                           => C:/Users/jdoe
+        ~/src/neovim                            => /home/jdoe/src/neovim
+        $XDG_CONFIG_HOME/nvim/init.vim          => /Users/jdoe/.config/nvim/init.vim
+        ~/src/nvim/api/../tui/./tui.c           => /home/jdoe/src/nvim/tui/tui.c
+        ./foo/bar                               => foo/bar
+        foo/../../../bar                        => ../../bar
+        /home/jdoe/../../../bar                 => /bar
+        C:foo/../../baz                         => C:../baz
+        C:/foo/../../baz                        => C:/baz
+        \\?\UNC\server\share\foo\..\..\..\bar   => //?/UNC/server/share/bar
 <
 
     Parameters: ~

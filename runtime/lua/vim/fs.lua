@@ -486,10 +486,121 @@ local function path_resolve_dot(path)
   return (is_path_absolute and '/' or '') .. table.concat(new_path_components, '/')
 end
 
+---@param path string
+---@return string
+local function windows_env_expand(path)
+  local res = {}
+  local i = 1
+
+  ---@param var string
+  ---@param end_ number
+  local function add_expand(var, end_)
+    local val = vim.uv.os_getenv(var)
+    if val then
+      table.insert(res, (val:gsub('\\', '/')))
+    else
+      table.insert(res, path:sub(i, end_))
+    end
+  end
+
+  while i <= #path do
+    local ch = path:sub(i, i)
+    if ch == "'" then -- no expansion inside single quotes
+      local end_ = path:find("'", i + 1, true)
+      if end_ then
+        table.insert(res, path:sub(i, end_))
+        i = end_
+      else
+        table.insert(res, ch)
+      end
+    elseif ch == '%' then
+      local end_ = path:find('%', i + 1, true)
+      if end_ then
+        local var = path:sub(i + 1, end_ - 1)
+        add_expand(var, end_)
+        i = end_
+      else
+        table.insert(res, ch)
+      end
+    elseif ch == '$' then
+      local nextch = path:sub(i + 1, i + 1)
+      if nextch == '$' then
+        i = i + 1
+        table.insert(res, ch)
+      elseif nextch == '{' then
+        local end_ = path:find('}', i + 2, true)
+        if end_ then
+          local var = path:sub(i + 2, end_ - 1)
+          add_expand(var, end_)
+          i = end_
+        else
+          table.insert(res, ch)
+        end
+      else
+        local end_ = path:find('[^%w_]', i + 1, false) or #path + 1
+        local var = path:sub(i + 1, end_ - 1)
+        add_expand(var, end_ - 1)
+        i = end_ - 1
+      end
+    else
+      table.insert(res, ch)
+    end
+    i = i + 1
+  end
+
+  return table.concat(res)
+end
+
+---@param path string
+---@return string
+local function posix_env_expand(path)
+  local res = {}
+  local i = 1
+
+  local function add_expand(var, end_)
+    local val = vim.uv.os_getenv(var)
+    if val then
+      table.insert(res, val)
+    else
+      table.insert(res, path:sub(i, end_))
+    end
+  end
+
+  while i <= #path do
+    local ch = path:sub(i, i)
+    if ch == '$' then
+      if path:sub(i + 1, i + 1) == '{' then
+        local end_ = path:find('}', i + 2, true)
+        if end_ then
+          local var = path:sub(i + 2, end_ - 1)
+          add_expand(var, end_)
+          i = end_
+        else
+          table.insert(res, ch)
+        end
+      else
+        local end_ = path:find('[^%w_]', i + 1, false) or #path + 1
+        local var = path:sub(i + 1, end_ - 1)
+        add_expand(var, end_ - 1)
+        i = end_ - 1
+      end
+    else
+      table.insert(res, ch)
+    end
+    i = i + 1
+  end
+
+  return table.concat(res)
+end
+
 --- @class vim.fs.normalize.Opts
 --- @inlinedoc
 ---
---- Expand environment variables.
+--- Expand environment variables. Substrings in the form of `$VAR` or `${VAR}` are replaced with the
+--- value of the environment variable `VAR`. If the environment variable is not set, the substring
+--- is left unchanged.
+--- On Windows, substrings in the form of `%VAR%` are also replaced unless they are inside single
+--- quotes (eg. `'%VAR%'`).
 --- (default: `true`)
 --- @field expand_env? boolean
 ---
@@ -515,17 +626,17 @@ end
 --- On Windows, backslash (\) characters are converted to forward slashes (/).
 ---
 --- Examples:
---- ```lua
---- [[C:\Users\jdoe]]                         => "C:/Users/jdoe"
---- "~/src/neovim"                            => "/home/jdoe/src/neovim"
---- "$XDG_CONFIG_HOME/nvim/init.vim"          => "/Users/jdoe/.config/nvim/init.vim"
---- "~/src/nvim/api/../tui/./tui.c"           => "/home/jdoe/src/nvim/tui/tui.c"
---- "./foo/bar"                               => "foo/bar"
---- "foo/../../../bar"                        => "../../bar"
---- "/home/jdoe/../../../bar"                 => "/bar"
---- "C:foo/../../baz"                         => "C:../baz"
---- "C:/foo/../../baz"                        => "C:/baz"
---- [[\\?\UNC\server\share\foo\..\..\..\bar]] => "//?/UNC/server/share/bar"
+--- ```
+--- C:\Users\jdoe                           => C:/Users/jdoe
+--- ~/src/neovim                            => /home/jdoe/src/neovim
+--- $XDG_CONFIG_HOME/nvim/init.vim          => /Users/jdoe/.config/nvim/init.vim
+--- ~/src/nvim/api/../tui/./tui.c           => /home/jdoe/src/nvim/tui/tui.c
+--- ./foo/bar                               => foo/bar
+--- foo/../../../bar                        => ../../bar
+--- /home/jdoe/../../../bar                 => /bar
+--- C:foo/../../baz                         => C:../baz
+--- C:/foo/../../baz                        => C:/baz
+--- \\?\UNC\server\share\foo\..\..\..\bar   => //?/UNC/server/share/bar
 --- ```
 ---
 ---@param path (string) Path to normalize
@@ -550,23 +661,15 @@ function M.normalize(path, opts)
     return ''
   end
 
-  -- Expand ~ to users home directory
-  if vim.startswith(path, '~') then
-    local home = vim.uv.os_homedir() or '~'
-    if home:sub(-1) == os_sep_local then
-      home = home:sub(1, -2)
-    end
-    path = home .. path:sub(2)
+  if win then
+    -- Convert path separator to `/`
+    path = path:gsub(os_sep_local, '/')
   end
 
   -- Expand environment variables if `opts.expand_env` isn't `false`
   if opts.expand_env == nil or opts.expand_env then
-    path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
-  end
-
-  if win then
-    -- Convert path separator to `/`
-    path = path:gsub(os_sep_local, '/')
+    local expand = win and windows_env_expand or posix_env_expand
+    path = expand(path)
   end
 
   -- Check for double slashes at the start of the path because they have special meaning
