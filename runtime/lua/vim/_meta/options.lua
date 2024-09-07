@@ -558,9 +558,9 @@ vim.wo.bri = vim.wo.breakindent
 --- 	list:{n}    Adds an additional indent for lines that match a
 --- 		    numbered or bulleted list (using the
 --- 		    'formatlistpat' setting).
---- 	list:-1	    Uses the length of a match with 'formatlistpat'
---- 		    for indentation.
 --- 		    (default: 0)
+--- 	list:-1	    Uses the width of a match with 'formatlistpat' for
+--- 		    indentation.
 --- 	column:{n}  Indent at column {n}. Will overrule the other
 --- 		    sub-options. Note: an additional indent may be
 --- 		    added for the 'showbreak' setting.
