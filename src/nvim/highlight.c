@@ -370,12 +370,15 @@ void update_window_hl(win_T *wp, bool invalid)
 
   // determine window specific background set in 'winhighlight'
   bool float_win = wp->w_floating && !wp->w_config.external;
-  if (float_win && hl_def[HLF_NFLOAT] != 0) {
+  if (float_win && hl_def[HLF_NFLOAT] != 0 && ns_id > 0) {
     wp->w_hl_attr_normal = hl_def[HLF_NFLOAT];
   } else if (hl_def[HLF_COUNT] > 0) {
     wp->w_hl_attr_normal = hl_def[HLF_COUNT];
+  } else if (float_win) {
+    wp->w_hl_attr_normal = HL_ATTR(HLF_NFLOAT) > 0
+                           ? HL_ATTR(HLF_NFLOAT) : highlight_attr[HLF_NFLOAT];
   } else {
-    wp->w_hl_attr_normal = float_win ? HL_ATTR(HLF_NFLOAT) : 0;
+    wp->w_hl_attr_normal = 0;
   }
 
   if (wp->w_floating) {
