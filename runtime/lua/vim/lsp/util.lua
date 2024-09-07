@@ -172,7 +172,6 @@ function M._str_byteindex_enc(line, index, encoding)
 end
 
 local _str_utfindex_enc = M._str_utfindex_enc
-local _str_byteindex_enc = M._str_byteindex_enc
 
 --- Replaces text in a range with new text.
 ---
@@ -340,12 +339,7 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- character
   if col > 0 then
     local line = get_line(bufnr, position.line) or ''
-    local ok, result
-    ok, result = pcall(_str_byteindex_enc, line, col, offset_encoding)
-    if ok then
-      return result
-    end
-    return math.min(#line, col)
+    return M._str_byteindex_enc(line, col, offset_encoding or 'utf-16')
   end
   return col
 end
