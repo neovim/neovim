@@ -345,17 +345,17 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
 end
 
 --- Applies a list of text edits to a buffer.
----@param text_edits lsp.TextEdit[]
+---@param edits (lsp.TextEdit|lsp.SnippetTextEdit)[]
 ---@param bufnr integer Buffer id
 ---@param offset_encoding string utf-8|utf-16|utf-32
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
-function M.apply_text_edits(text_edits, bufnr, offset_encoding)
+function M.apply_text_edits(edits, bufnr, offset_encoding)
   validate({
-    text_edits = { text_edits, 't', false },
+    text_edits = { edits, 't', false },
     bufnr = { bufnr, 'number', false },
     offset_encoding = { offset_encoding, 'string', false },
   })
-  if not next(text_edits) then
+  if not next(edits) then
     return
   end
 
@@ -366,30 +366,36 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   end
   vim.bo[bufnr].buflisted = true
 
-  -- Fix reversed range and indexing each text_edits
+  -- Fix reversed range and index each text_edits
   local index = 0
-  --- @param text_edit lsp.TextEdit
-  text_edits = vim.tbl_map(function(text_edit)
+
+  --- @param edit lsp.TextEdit|lsp.SnippetTextEdit
+  local function normalize_range(edit)
     index = index + 1
-    text_edit._index = index
+
+    ---@diagnostic disable-next-line: inject-field
+    edit._index = index
 
     if
-      text_edit.range.start.line > text_edit.range['end'].line
-      or text_edit.range.start.line == text_edit.range['end'].line
-        and text_edit.range.start.character > text_edit.range['end'].character
+      edit.range.start.line > edit.range['end'].line
+      or edit.range.start.line == edit.range['end'].line
+        and edit.range.start.character > edit.range['end'].character
     then
-      local start = text_edit.range.start
-      text_edit.range.start = text_edit.range['end']
-      text_edit.range['end'] = start
+      local start = edit.range.start
+      edit.range.start = edit.range['end']
+      edit.range['end'] = start
     end
-    return text_edit
-  end, text_edits)
+    return edit
+  end
+
+  ---@type (lsp.TextEdit|lsp.SnippetTextEdit)[]
+  edits = vim.tbl_map(normalize_range, edits)
 
   -- Sort text_edits
-  ---@param a lsp.TextEdit | { _index: integer }
-  ---@param b lsp.TextEdit | { _index: integer }
+  ---@param a lsp.TextEdit | lsp.SnippetTextEdit | { _index: integer }
+  ---@param b lsp.TextEdit | lsp.SnippetTextEdit | { _index: integer }
   ---@return boolean
-  table.sort(text_edits, function(a, b)
+  table.sort(edits, function(a, b)
     if a.range.start.line ~= b.range.start.line then
       return a.range.start.line > b.range.start.line
     end
@@ -407,53 +413,64 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     end
   end
 
+  local win = api.nvim_get_current_win()
+
   -- Apply text edits.
   local has_eol_text_edit = false
-  for _, text_edit in ipairs(text_edits) do
-    -- Normalize line ending
-    text_edit.newText, _ = string.gsub(text_edit.newText, '\r\n?', '\n')
-
+  for _, edit in ipairs(edits) do
     -- Convert from LSP style ranges to Neovim style ranges.
-    local e = {
-      start_row = text_edit.range.start.line,
-      start_col = get_line_byte_from_position(bufnr, text_edit.range.start, offset_encoding),
-      end_row = text_edit.range['end'].line,
-      end_col = get_line_byte_from_position(bufnr, text_edit.range['end'], offset_encoding),
-      text = split(text_edit.newText, '\n', { plain = true }),
-    }
+    local start_row = edit.range.start.line
+    local start_col = get_line_byte_from_position(bufnr, edit.range.start, offset_encoding)
+    local end_row = edit.range['end'].line
+    local end_col = get_line_byte_from_position(bufnr, edit.range['end'], offset_encoding)
 
     local max = api.nvim_buf_line_count(bufnr)
-    -- If the whole edit is after the lines in the buffer we can simply add the new text to the end
-    -- of the buffer.
-    if max <= e.start_row then
-      api.nvim_buf_set_lines(bufnr, max, max, false, e.text)
-    else
-      local last_line_len = #(get_line(bufnr, math.min(e.end_row, max - 1)) or '')
-      -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't
-      -- accept it so we should fix it here.
-      if max <= e.end_row then
-        e.end_row = max - 1
-        e.end_col = last_line_len
-        has_eol_text_edit = true
-      else
-        -- If the replacement is over the end of a line (i.e. e.end_col is out of bounds and the
-        -- replacement text ends with a newline We can likely assume that the replacement is assumed
-        -- to be meant to replace the newline with another newline and we need to make sure this
-        -- doesn't add an extra empty line. E.g. when the last line to be replaced contains a '\r'
-        -- in the file some servers (clangd on windows) will include that character in the line
-        -- while nvim_buf_set_text doesn't count it as part of the line.
-        if
-          e.end_col > last_line_len
-          and #text_edit.newText > 0
-          and string.sub(text_edit.newText, -1) == '\n'
-        then
-          table.remove(e.text, #e.text)
-        end
-      end
-      -- Make sure we don't go out of bounds for e.end_col
-      e.end_col = math.min(last_line_len, e.end_col)
 
-      api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
+    if edit.snippet and bufnr == api.nvim_get_current_buf() then
+      api.nvim_buf_set_text(bufnr, start_row, start_col, end_row, end_col, {})
+      api.nvim_win_set_cursor(win, { start_row + 1, start_col })
+      vim.snippet.expand(edit.snippet.value)
+    else
+      -- from spec:
+      --
+      -- in case the snippet text edit corresponds to a file that is not currently open in the
+      -- active editor, the client should downgrade the snippet to a non-interactive normal text
+      -- edit and apply it to the file.
+      if edit.snippet then
+        edit.newText = edit.snippet.value
+      end
+
+      -- Normalize line ending
+      local text, _ = string.gsub(edit.newText, '\r\n?', '\n')
+      local lines = split(text, '\n', { plain = true })
+      -- If the whole edit is after the lines in the buffer we can simply add the new text to the end
+      -- of the buffer.
+      if max <= start_row then
+        api.nvim_buf_set_lines(bufnr, max, max, false, lines)
+      else
+        local last_line_len = #(get_line(bufnr, math.min(end_row, max - 1)) or '')
+        -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't
+        -- accept it so we should fix it here.
+        if max <= end_row then
+          end_row = max - 1
+          end_col = last_line_len
+          has_eol_text_edit = true
+        else
+          -- If the replacement is over the end of a line (i.e. e.end_col is out of bounds and the
+          -- replacement text ends with a newline We can likely assume that the replacement is assumed
+          -- to be meant to replace the newline with another newline and we need to make sure this
+          -- doesn't add an extra empty line. E.g. when the last line to be replaced contains a '\r'
+          -- in the file some servers (clangd on windows) will include that character in the line
+          -- while nvim_buf_set_text doesn't count it as part of the line.
+          if end_col > last_line_len and #text > 0 and string.sub(text, -1) == '\n' then
+            table.remove(lines, #lines)
+          end
+        end
+        -- Make sure we don't go out of bounds for e.end_col
+        end_col = math.min(last_line_len, end_col)
+
+        api.nvim_buf_set_text(bufnr, start_row, start_col, end_row, end_col, lines)
+      end
     end
   end
 

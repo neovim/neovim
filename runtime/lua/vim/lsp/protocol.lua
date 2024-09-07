@@ -541,6 +541,8 @@ function protocol.make_client_capabilities()
       workspaceFolders = true,
       applyEdit = true,
       workspaceEdit = {
+        normalizesLineEndings = true,
+        snippetEditSupport = true,
         resourceOperations = { 'rename', 'create', 'delete' },
       },
       semanticTokens = {
