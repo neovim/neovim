@@ -53,11 +53,17 @@ active		  yes		 yes		  'a'
 hidden		  no		 yes		  'h'
 inactive	  no		 no		  ' '
 
-Note: All CTRL-W commands can also be executed with |:wincmd|, for those
-places where a Normal mode command can't be used or is inconvenient.
+							*buffer-reuse*
+Each buffer has a unique number and the number will not change within a Vim
+session.  The |bufnr()| and |bufname()| functions can be used to convert
+between a buffer name and the buffer number.  There is one exception: if a new
+empty buffer is created and it is not modified, the buffer will be re-used
+when loading another file into that buffer. This also means the buffer number
+will not change.
 
 The main Vim window can hold several split windows.  There are also tab pages
 |tab-page|, each of which can hold multiple windows.
+
 					*window-ID* *winid* *windowid*
 Each window has a unique identifier called the window ID.  This identifier
 will not change within a Vim session. The |win_getid()| and |win_id2tabwin()|
@@ -69,9 +75,6 @@ across tabs.  For most functions that take a window ID or a window number, the
 window number only applies to the current tab, while the window ID can refer
 to a window in any tab.
 
-Each buffer has a unique number and the number will not change within a Vim
-session.  The |bufnr()| and |bufname()| functions can be used to convert
-between a buffer name and the buffer number.
 
 ==============================================================================
 2. Starting Vim						*windows-starting*
@@ -467,6 +470,10 @@ These commands can also be executed with ":wincmd":
 		The count can also be a window number.  Example: >
 			:exe nr .. "wincmd w"
 <		This goes to window "nr".
+
+Note: All CTRL-W commands can also be executed with |:wincmd|, for those
+places where a Normal mode command can't be used or is inconvenient (e.g.
+in a browser-based terminal).
 
 ==============================================================================
 5. Moving windows around				*window-moving*
