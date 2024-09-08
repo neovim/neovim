@@ -342,7 +342,7 @@ describe(':terminal buffer', function()
     command('wincmd p')
 
     -- cwd will be inserted in a file URI, which cannot contain backs
-    local cwd = fn.getcwd():gsub('\\', '/')
+    local cwd = t.fix_slashes(fn.getcwd())
     local parent = cwd:match('^(.+/)')
     local expected = '\027]7;file://host' .. parent
     api.nvim_chan_send(term, string.format('%s\027\\', expected))

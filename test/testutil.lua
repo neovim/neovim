@@ -42,6 +42,29 @@ function M.isdir(path)
   return stat.type == 'directory'
 end
 
+--- (Only on Windows) Replaces yucky "\\" slashes with delicious "/" slashes in a string, or all
+--- string values in a table (recursively).
+---
+--- @param obj string|table
+--- @return any
+function M.fix_slashes(obj)
+  if not M.is_os('win') then
+    return obj
+  end
+  if type(obj) == 'string' then
+    local ret = obj:gsub('\\', '/')
+    return ret
+  elseif type(obj) == 'table' then
+    --- @cast obj table<any,any>
+    local ret = {} --- @type table<any,any>
+    for k, v in pairs(obj) do
+      ret[k] = M.fix_slashes(v)
+    end
+    return ret
+  end
+  assert(false, 'expected string or table of strings, got ' .. type(obj))
+end
+
 --- @param ... string|string[]
 --- @return string
 function M.argss_to_cmd(...)

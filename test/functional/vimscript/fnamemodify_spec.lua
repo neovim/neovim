@@ -7,11 +7,10 @@ local fnamemodify = n.fn.fnamemodify
 local getcwd = n.fn.getcwd
 local command = n.command
 local write_file = t.write_file
-local alter_slashes = n.alter_slashes
 local is_os = t.is_os
 
 local function eq_slashconvert(expected, got)
-  eq(alter_slashes(expected), alter_slashes(got))
+  eq(t.fix_slashes(expected), t.fix_slashes(got))
 end
 
 describe('fnamemodify()', function()

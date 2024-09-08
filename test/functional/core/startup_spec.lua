@@ -27,7 +27,6 @@ local sleep = vim.uv.sleep
 local startswith = vim.startswith
 local write_file = t.write_file
 local api = n.api
-local alter_slashes = n.alter_slashes
 local is_os = t.is_os
 local dedent = t.dedent
 local tbl_map = vim.tbl_map
@@ -40,22 +39,15 @@ local testlog = 'Xtest-startupspec-log'
 describe('startup', function()
   it('--clean', function()
     clear()
-    ok(
-      string.find(
-        alter_slashes(api.nvim_get_option_value('runtimepath', {})),
-        fn.stdpath('config'),
-        1,
-        true
-      ) ~= nil
+    matches(
+      vim.pesc(t.fix_slashes(fn.stdpath('config'))),
+      t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
     )
+
     clear('--clean')
     ok(
-      string.find(
-        alter_slashes(api.nvim_get_option_value('runtimepath', {})),
-        fn.stdpath('config'),
-        1,
-        true
-      ) == nil
+      not t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
+        :match(vim.pesc(t.fix_slashes(fn.stdpath('config'))))
     )
   end)
 
