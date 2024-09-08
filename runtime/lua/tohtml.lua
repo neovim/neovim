@@ -1293,9 +1293,25 @@ local function opt_to_global_state(opt, title)
   local fonts = {}
   if opt.font then
     fonts = type(opt.font) == 'string' and { opt.font } or opt.font --[[@as (string[])]]
+    for i, v in pairs(fonts) do
+      fonts[i] = ('"%s"'):format(v)
+    end
   elseif vim.o.guifont:match('^[^:]+') then
-    table.insert(fonts, vim.o.guifont:match('^[^:]+'))
+    -- Example:
+    -- Input: "Font,Escape\,comma, Ignore space after comma"
+    -- Output: { "Font","Escape,comma","Ignore space after comma" }
+    local prev = ''
+    for name in vim.gsplit(vim.o.guifont:match('^[^:]+'), ',', { trimempty = true }) do
+      if vim.endswith(name, '\\') then
+        prev = prev .. vim.trim(name:sub(1, -2) .. ',')
+      elseif vim.trim(name) ~= '' then
+        table.insert(fonts, ('"%s%s"'):format(prev, vim.trim(name)))
+        prev = ''
+      end
+    end
   end
+  -- Generic family names (monospace here) must not be quoted
+  -- because the browser recognizes them as font families.
   table.insert(fonts, 'monospace')
   --- @type vim.tohtml.state.global
   local state = {
