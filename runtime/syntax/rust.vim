@@ -146,8 +146,10 @@ syn match     rustEscape        display contained /\\\([nrt0\\'"]\|x\x\{2}\)/
 syn match     rustEscapeUnicode display contained /\\u{\%(\x_*\)\{1,6}}/
 syn match     rustStringContinuation display contained /\\\n\s*/
 syn region    rustString      matchgroup=rustStringDelimiter start=+b"+ skip=+\\\\\|\\"+ end=+"+ contains=rustEscape,rustEscapeError,rustStringContinuation
+syn region    rustString      matchgroup=rustStringDelimiter start=+c"+ skip=+\\\\\|\\"+ end=+"+ contains=rustEscape,rustEscapeError,rustStringContinuation
 syn region    rustString      matchgroup=rustStringDelimiter start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=rustEscape,rustEscapeUnicode,rustEscapeError,rustStringContinuation,@Spell
 syn region    rustString      matchgroup=rustStringDelimiter start='b\?r\z(#*\)"' end='"\z1' contains=@Spell
+syn region    rustString      matchgroup=rustStringDelimiter start='c\?r\z(#*\)"' end='"\z1' contains=@Spell
 
 " Match attributes with either arbitrary syntax or special highlighting for
 " derives. We still highlight strings and comments inside of the attribute.
