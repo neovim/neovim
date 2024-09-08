@@ -140,12 +140,7 @@ local function tokens_to_ranges(data, bufnr, client, request)
     local function _get_byte_pos(col)
       if col > 0 then
         local buf_line = lines[line + 1] or ''
-        local ok, result
-        ok, result = pcall(util._str_byteindex_enc, buf_line, col, client.offset_encoding)
-        if ok then
-          return result
-        end
-        return math.min(#buf_line, col)
+        return util._str_byteindex_enc(buf_line, col, client.offset_encoding)
       end
       return col
     end
