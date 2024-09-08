@@ -1132,6 +1132,7 @@ describe('stdpath()', function()
           HOMEDRIVE = 'C:',
           HOMEPATH = '\\Users\\docwhat',
           LOCALAPPDATA = 'C:\\Users\\docwhat\\AppData\\Local',
+          NVIM_LOG_FILE = testlog,
           TEMP = 'C:\\Users\\docwhat\\AppData\\Local\\Temp',
           TMPDIR = 'C:\\Users\\docwhat\\AppData\\Local\\Temp',
           TMP = 'C:\\Users\\docwhat\\AppData\\Local\\Temp',
@@ -1142,6 +1143,7 @@ describe('stdpath()', function()
           HOMEDRIVE = 'HOMEDRIVE-should-be-ignored',
           HOMEPATH = 'HOMEPATH-should-be-ignored',
           LOCALAPPDATA = 'LOCALAPPDATA-should-be-ignored',
+          NVIM_LOG_FILE = testlog,
           TEMP = 'TEMP-should-be-ignored',
           TMPDIR = 'TMPDIR-should-be-ignored',
           TMP = 'TMP-should-be-ignored',
@@ -1166,11 +1168,17 @@ describe('stdpath()', function()
         it('set via system', function()
           set_paths_via_system(env_var_name, paths)
           eq(expected_paths, t.fix_slashes(fn.stdpath(stdpath_arg)))
+          if not is_os('win') then
+            assert_log('$TMPDIR tempdir not a directory.*TMPDIR%-should%-be%-ignored', testlog, 100)
+          end
         end)
 
         it('set at runtime', function()
           set_paths_at_runtime(env_var_name, paths)
           eq(expected_paths, t.fix_slashes(fn.stdpath(stdpath_arg)))
+          if not is_os('win') then
+            assert_log('$TMPDIR tempdir not a directory.*TMPDIR%-should%-be%-ignored', testlog, 100)
+          end
         end)
       end)
     end
