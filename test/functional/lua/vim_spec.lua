@@ -1071,12 +1071,11 @@ describe('lua stdlib', function()
     ]])
     )
 
-    -- Fix github issue #23654
     ok(exec_lua([[
-      local a = { sub = { [1] = 'a' } }
-      local b = { sub = { b = 'a' } }
+      local a = { sub = { 'a', 'b' } }
+      local b = { sub = { 'b', 'c' } }
       local c = vim.tbl_deep_extend('force', a, b)
-      return vim.deep_equal(c, { sub = { [1] = 'a', b = 'a' } })
+      return vim.deep_equal(c, { sub = { 'b', 'c' } })
     ]]))
 
     matches('invalid "behavior": nil', pcall_err(exec_lua, [[return vim.tbl_deep_extend()]]))

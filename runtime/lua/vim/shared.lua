@@ -354,6 +354,12 @@ function vim.tbl_isempty(t)
   return next(t) == nil
 end
 
+--- We only merge empty tables or tables that are not list-like (indexed by consecutive integers
+--- starting from 1)
+local function can_merge(v)
+  return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.islist(v))
+end
+
 --- Recursive worker for tbl_extend
 --- @param behavior 'error'|'keep'|'force'
 --- @param deep_extend boolean
@@ -368,7 +374,7 @@ local function tbl_extend_rec(behavior, deep_extend, ...)
     local tbl = select(i, ...) --[[@as table<any,any>]]
     if tbl then
       for k, v in pairs(tbl) do
-        if deep_extend and type(v) == 'table' and type(ret[k]) == 'table' then
+        if deep_extend and can_merge(v) and can_merge(ret[k]) then
           ret[k] = tbl_extend_rec(behavior, true, ret[k], v)
         elseif behavior ~= 'force' and ret[k] ~= nil then
           if behavior == 'error' then
@@ -420,6 +426,11 @@ function vim.tbl_extend(behavior, ...)
 end
 
 --- Merges recursively two or more tables.
+---
+--- Only values that are empty tables or tables that are not |lua-list|s (indexed by consecutive
+--- integers starting from 1) are merged recursively. This is useful for merging nested tables
+--- like default and user configurations where lists should be treated as literals (i.e., are
+--- overwritten instead of merged).
 ---
 ---@see |vim.tbl_extend()|
 ---

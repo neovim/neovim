@@ -2230,6 +2230,12 @@ vim.tbl_count({t})                                           *vim.tbl_count()*
 vim.tbl_deep_extend({behavior}, {...})                 *vim.tbl_deep_extend()*
     Merges recursively two or more tables.
 
+    Only values that are empty tables or tables that are not |lua-list|s
+    (indexed by consecutive integers starting from 1) are merged recursively.
+    This is useful for merging nested tables like default and user
+    configurations where lists should be treated as literals (i.e., are
+    overwritten instead of merged).
+
     Parameters: ~
       • {behavior}  (`'error'|'keep'|'force'`) Decides what to do if a key is
                     found in more than one map:
