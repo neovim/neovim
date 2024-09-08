@@ -7641,7 +7641,7 @@ static void get_xdg_var_list(const XDGVarType xdg, typval_T *rettv)
     return;
   }
   const void *iter = NULL;
-  const char *appname = get_appname();
+  const char *appname = get_appname(false);
   do {
     size_t dir_len;
     const char *dir;

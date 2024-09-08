@@ -1559,7 +1559,7 @@ static inline char *add_env_sep_dirs(char *dest, const char *const val, const ch
     return dest;
   }
   const void *iter = NULL;
-  const char *appname = get_appname();
+  const char *appname = get_appname(false);
   const size_t appname_len = strlen(appname);
   do {
     size_t dir_len;
@@ -1626,7 +1626,7 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
     if (!after_pathsep(dest - 1, dest)) {
       *dest++ = PATHSEP;
     }
-    const char *appname = get_appname();
+    const char *appname = get_appname(false);
     size_t appname_len = strlen(appname);
     assert(appname_len < (IOSIZE - sizeof("-data")));
     xmemcpyz(IObuff, appname, appname_len);
@@ -1697,7 +1697,7 @@ char *runtimepath_default(bool clean_arg)
   size_t config_len = 0;
   size_t vimruntime_len = 0;
   size_t libdir_len = 0;
-  const char *appname = get_appname();
+  const char *appname = get_appname(false);
   size_t appname_len = strlen(appname);
   if (data_home != NULL) {
     data_len = strlen(data_home);

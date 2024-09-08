@@ -14,8 +14,7 @@ local is_os = t.is_os
 local ok = t.ok
 local sleep = uv.sleep
 
---- This module uses functions from the context of the test session, i.e. in the context of the
---- nvim being tests.
+--- Functions executing in the current nvim session/process being tested.
 local M = {}
 
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'

@@ -915,7 +915,7 @@ describe('stdpath()', function()
     assert_alive() -- Check for crash. #8393
   end)
 
-  it('supports $NVIM_APPNAME', function()
+  it('$NVIM_APPNAME', function()
     local appname = 'NVIM_APPNAME_TEST' .. ('_'):rep(106)
     clear({ env = { NVIM_APPNAME = appname, NVIM_LOG_FILE = testlog } })
     eq(appname, fn.fnamemodify(fn.stdpath('config'), ':t'))
@@ -955,6 +955,25 @@ describe('stdpath()', function()
     -- Valid appnames:
     test_appname('a/b', 0)
     test_appname('a/b\\c', 0)
+  end)
+
+  it('$NVIM_APPNAME relative path', function()
+    local tmpdir = t.tmpname(false)
+    t.mkdir(tmpdir)
+
+    clear({
+      args_rm = { '--listen' },
+      env = {
+        NVIM_APPNAME = 'relative/appname',
+        NVIM_LOG_FILE = testlog,
+        TMPDIR = tmpdir,
+      },
+    })
+
+    t.matches(vim.pesc(tmpdir), fn.tempname():gsub('\\', '/'))
+    t.assert_nolog('tempdir', testlog, 100)
+    t.assert_nolog('TMPDIR', testlog, 100)
+    t.matches([=[[/\\]relative%-appname.[^/\\]+]=], api.nvim_get_vvar('servername'))
   end)
 
   describe('returns a String', function()
