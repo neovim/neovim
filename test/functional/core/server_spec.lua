@@ -154,7 +154,7 @@ describe('server', function()
     clear_serverlist()
 
     -- Address without slashes is a "name" which is appended to a generated path. #8519
-    matches([[.*[/\\]xtest1%.2%.3%.4[^/\\]*]], fn.serverstart('xtest1.2.3.4'))
+    matches([[[/\\]xtest1%.2%.3%.4[^/\\]*]], fn.serverstart('xtest1.2.3.4'))
     clear_serverlist()
 
     eq('Vim:Failed to start server: invalid argument', pcall_err(fn.serverstart, '127.0.0.1:65536')) -- invalid port
@@ -273,6 +273,6 @@ describe('startup --listen', function()
 
     -- Address without slashes is a "name" which is appended to a generated path. #8519
     clear({ args = { '--listen', 'test-name' } })
-    matches([[.*[/\\]test%-name[^/\\]*]], api.nvim_get_vvar('servername'))
+    matches([[[/\\]test%-name[^/\\]*]], api.nvim_get_vvar('servername'))
   end)
 end)

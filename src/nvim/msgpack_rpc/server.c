@@ -121,14 +121,15 @@ char *server_address_new(const char *name)
 {
   static uint32_t count = 0;
   char fmt[ADDRESS_MAX_SIZE];
-  const char *appname = get_appname();
 #ifdef MSWIN
+  (void)get_appname(true);
   int r = snprintf(fmt, sizeof(fmt), "\\\\.\\pipe\\%s.%" PRIu64 ".%" PRIu32,
-                   name ? name : appname, os_get_pid(), count++);
+                   name ? name : NameBuff, os_get_pid(), count++);
 #else
   char *dir = stdpaths_get_xdg_var(kXDGRuntimeDir);
+  (void)get_appname(true);
   int r = snprintf(fmt, sizeof(fmt), "%s/%s.%" PRIu64 ".%" PRIu32,
-                   dir, name ? name : appname, os_get_pid(), count++);
+                   dir, name ? name : NameBuff, os_get_pid(), count++);
   xfree(dir);
 #endif
   if ((size_t)r >= sizeof(fmt)) {

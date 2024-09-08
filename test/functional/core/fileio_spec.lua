@@ -321,11 +321,11 @@ end)
 describe('tmpdir', function()
   local tmproot_pat = [=[.*[/\\]nvim%.[^/\\]+]=]
   local testlog = 'Xtest_tmpdir_log'
-  local os_tmpdir
+  local os_tmpdir ---@type string
 
   before_each(function()
     -- Fake /tmp dir so that we can mess it up.
-    os_tmpdir = vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/nvim_XXXXXXXXXX')
+    os_tmpdir = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/nvim_XXXXXXXXXX'))
   end)
 
   after_each(function()
@@ -413,16 +413,5 @@ describe('tmpdir', function()
     eq('E5431: tempdir disappeared (2 times)', api.nvim_get_vvar('errmsg'))
     rm_tmpdir()
     eq('E5431: tempdir disappeared (3 times)', api.nvim_get_vvar('errmsg'))
-  end)
-
-  it('$NVIM_APPNAME relative path', function()
-    clear({
-      env = {
-        NVIM_APPNAME = 'a/b',
-        NVIM_LOG_FILE = testlog,
-        TMPDIR = os_tmpdir,
-      },
-    })
-    matches([=[.*[/\\]a%%b%.[^/\\]+]=], fn.tempname())
   end)
 end)

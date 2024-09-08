@@ -16,7 +16,7 @@ local function shell_quote(str)
   return str
 end
 
---- This module uses functions from the context of the test runner.
+--- Functions executing in the context of the test runner (not the current nvim test session).
 --- @class test.testutil
 local M = {
   paths = Paths,

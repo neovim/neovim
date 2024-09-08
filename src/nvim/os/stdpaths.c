@@ -63,22 +63,32 @@ static const char *const xdg_defaults[] = {
 #endif
 };
 
-/// Get the value of $NVIM_APPNAME or "nvim" if not set.
+/// Gets the value of $NVIM_APPNAME, or "nvim" if not set.
+///
+/// @param namelike Write "name-like" value (no path separators) in `NameBuff`.
 ///
 /// @return $NVIM_APPNAME value
-const char *get_appname(void)
+const char *get_appname(bool namelike)
 {
   const char *env_val = os_getenv("NVIM_APPNAME");
   if (env_val == NULL || *env_val == NUL) {
     env_val = "nvim";
   }
+
+  if (namelike) {
+    // Appname may be a relative path, replace slashes to make it name-like.
+    xstrlcpy(NameBuff, env_val, sizeof(NameBuff));
+    memchrsub(NameBuff, '/', '-', sizeof(NameBuff));
+    memchrsub(NameBuff, '\\', '-', sizeof(NameBuff));
+  }
+
   return env_val;
 }
 
 /// Ensure that APPNAME is valid. Must be a name or relative path.
 bool appname_is_valid(void)
 {
-  const char *appname = get_appname();
+  const char *appname = get_appname(false);
   if (path_is_absolute(appname)
       // TODO(justinmk): on Windows, path_is_absolute says "/" is NOT absolute. Should it?
       || strequal(appname, "/")
@@ -193,7 +203,7 @@ char *get_xdg_home(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char *dir = stdpaths_get_xdg_var(idx);
-  const char *appname = get_appname();
+  const char *appname = get_appname(false);
   size_t appname_len = strlen(appname);
   assert(appname_len < (IOSIZE - sizeof("-data")));
 
