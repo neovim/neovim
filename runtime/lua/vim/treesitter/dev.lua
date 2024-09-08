@@ -76,10 +76,9 @@ end
 ---
 ---@package
 function TSTreeView:new(bufnr, lang)
-  local ok, parser = pcall(vim.treesitter.get_parser, bufnr or 0, lang)
-  if not ok then
-    local err = parser --[[ @as string ]]
-    return nil, 'No parser available for the given buffer:\n' .. err
+  local parser = vim.treesitter._get_parser(bufnr or 0, lang)
+  if not parser then
+    return nil, 'No parser available for the given buffer.'
   end
 
   -- For each child tree (injected language), find the root of the tree and locate the node within
@@ -539,7 +538,7 @@ local edit_ns = api.nvim_create_namespace('treesitter/dev-edit')
 local function update_editor_highlights(query_win, base_win, lang)
   local base_buf = api.nvim_win_get_buf(base_win)
   local query_buf = api.nvim_win_get_buf(query_win)
-  local parser = vim.treesitter.get_parser(base_buf, lang)
+  local parser = assert(vim.treesitter._get_parser(base_buf, lang))
   api.nvim_buf_clear_namespace(base_buf, edit_ns, 0, -1)
   local query_content = table.concat(api.nvim_buf_get_lines(query_buf, 0, -1, false), '\n')
 
@@ -596,8 +595,8 @@ function M.edit_query(lang)
   end
   vim.cmd(cmd)
 
-  local ok, parser = pcall(vim.treesitter.get_parser, buf, lang)
-  if not ok then
+  local parser = vim.treesitter._get_parser(buf, lang)
+  if not parser then
     return nil, 'No parser available for the given buffer'
   end
   lang = parser:lang()

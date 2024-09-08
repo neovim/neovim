@@ -172,7 +172,7 @@ function M.lint(buf, opts)
     --- @type (table|nil)
     local parser_info = vim.F.npcall(vim.treesitter.language.inspect, lang)
 
-    local parser = vim.treesitter.get_parser(buf)
+    local parser = assert(vim.treesitter._get_parser(buf), 'query parser not found.')
     parser:parse()
     parser:for_each_tree(function(tree, ltree)
       if ltree:lang() == 'query' then

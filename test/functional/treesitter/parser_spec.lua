@@ -135,9 +135,7 @@ void ui_refresh(void)
     insert(test_text)
 
     eq(
-      '.../treesitter.lua:0: There is no parser available for buffer 1 and one'
-        .. ' could not be created because lang could not be determined. Either'
-        .. ' pass lang or set the buffer filetype',
+      '.../treesitter.lua:0: Parser not found.',
       pcall_err(exec_lua, 'vim.treesitter.get_parser(0)')
     )
 
