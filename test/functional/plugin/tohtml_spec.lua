@@ -137,27 +137,26 @@ local function run_tohtml_and_assert(screen, func)
 end
 
 ---@param guifont boolean
-local function test_generates_html(guifont)
+local function test_generates_html(guifont, expect_font)
   insert([[line]])
   exec('set termguicolors')
   local bg = fn.synIDattr(fn.hlID('Normal'), 'bg#', 'gui')
   local fg = fn.synIDattr(fn.hlID('Normal'), 'fg#', 'gui')
-  if guifont then
-    exec_lua [[
-      vim.o.guifont="Font,Escape\\,comma, Ignore space after comma"
-      local outfile = vim.fn.tempname() .. '.html'
-      local html = require('tohtml').tohtml(0,{title="title"})
-      vim.fn.writefile(html, outfile)
-      vim.cmd.split(outfile)
-    ]]
-  else
-    exec_lua [[
-      local outfile = vim.fn.tempname() .. '.html'
-      local html = require('tohtml').tohtml(0,{title="title",font={ "dumyfont","anotherfont" }})
-      vim.fn.writefile(html, outfile)
-      vim.cmd.split(outfile)
-    ]]
-  end
+  local tmpfile = t.tmpname()
+
+  exec_lua(
+    [[
+    local guifont, outfile = ...
+    local html = (guifont
+      and require('tohtml').tohtml(0,{title="title"})
+      or require('tohtml').tohtml(0,{title="title",font={ "dumyfont","anotherfont" }}))
+    vim.fn.writefile(html, outfile)
+    vim.cmd.split(outfile)
+  ]],
+    guifont,
+    tmpfile
+  )
+
   local out_file = api.nvim_buf_get_name(api.nvim_get_current_buf())
   eq({
     '<!DOCTYPE html>',
@@ -167,9 +166,7 @@ local function test_generates_html(guifont)
     '<title>title</title>',
     ('<meta name="colorscheme" content="%s"></meta>'):format(api.nvim_get_var('colors_name')),
     '<style>',
-    ('* {font-family: %s,monospace}'):format(
-      guifont and '"Font","Escape,comma","Ignore space after comma"' or '"dumyfont","anotherfont"'
-    ),
+    ('* {font-family: %s,monospace}'):format(expect_font),
     ('body {background-color: %s; color: %s}'):format(bg, fg),
     '</style>',
     '</head>',
@@ -193,15 +190,16 @@ describe(':TOhtml', function()
     exec('colorscheme default')
   end)
 
-  it('generates html', function()
-    test_generates_html(false)
+  it('generates html with given font', function()
+    test_generates_html(false, '"dumyfont","anotherfont"')
   end)
 
   it("generates html, respects 'guifont'", function()
-    test_generates_html(true)
+    exec_lua [[vim.o.guifont='Font,Escape\\,comma, Ignore space after comma']]
+    test_generates_html(true, '"Font","Escape,comma","Ignore space after comma"')
   end)
 
-  it('expected internal html generated from range', function()
+  it('generates html from range', function()
     insert([[
     line1
     line2
@@ -239,7 +237,7 @@ describe(':TOhtml', function()
     }, fn.readfile(out_file))
   end)
 
-  it('highlight attributes generated', function()
+  it('generates highlight attributes', function()
     --Make sure to uncomment the attribute in `html_syntax_match()`
     exec('hi LINE guisp=#00ff00 gui=' .. table.concat({
       'bold',
