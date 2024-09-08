@@ -41,6 +41,21 @@ describe('server', function()
     end
   end)
 
+  it('broken $XDG_RUNTIME_DIR is not fatal #30282', function()
+    clear {
+      args_rm = { '--listen' },
+      env = { NVIM_LOG_FILE = testlog, XDG_RUNTIME_DIR = '/non-existent-dir/subdir//' },
+    }
+
+    if is_os('win') then
+      -- Windows pipes have a special namespace and thus aren't decided by $XDG_RUNTIME_DIR.
+      matches('nvim', api.nvim_get_vvar('servername'))
+    else
+      eq('', api.nvim_get_vvar('servername'))
+      t.assert_log('Failed to start server%: no such file or directory', testlog, 100)
+    end
+  end)
+
   it('serverstart(), serverstop() does not set $NVIM', function()
     clear()
     local s = eval('serverstart()')
@@ -175,56 +190,79 @@ describe('server', function()
 end)
 
 describe('startup --listen', function()
+  -- Tests Nvim output when failing to start, with and without "--headless".
+  -- TODO(justinmk): clear() should have a way to get stdout if Nvim fails to start.
+  local function _test(args, env, expected)
+    local function run(cmd)
+      return n.exec_lua(function(cmd_, env_)
+        return vim
+          .system(cmd_, {
+            text = true,
+            env = vim.tbl_extend(
+              'force',
+              -- Avoid noise in the logs; we expect failures for these tests.
+              { NVIM_LOG_FILE = testlog },
+              env_ or {}
+            ),
+          })
+          :wait()
+      end, cmd, env) --[[@as vim.SystemCompleted]]
+    end
+
+    local cmd = vim.list_extend({ n.nvim_prog, '+qall!', '--headless' }, args)
+    local r = run(cmd)
+    eq(1, r.code)
+    matches(expected, (r.stderr .. r.stdout):gsub('\\n', ' '))
+
+    if is_os('win') then
+      return -- On Windows, output without --headless is garbage.
+    end
+    table.remove(cmd, 3) -- Remove '--headless'.
+    assert(not vim.tbl_contains(cmd, '--headless'))
+    r = run(cmd)
+    eq(1, r.code)
+    matches(expected, (r.stderr .. r.stdout):gsub('\\n', ' '))
+  end
+
   it('validates', function()
     clear { env = { NVIM_LOG_FILE = testlog } }
-
-    -- Tests args with and without "--headless".
-    local function _test(args, expected)
-      local function run(cmd)
-        return n.exec_lua(function(cmd_)
-          return vim
-            .system(cmd_, {
-              text = true,
-              env = {
-                -- Avoid noise in the logs; we expect failures for these tests.
-                NVIM_LOG_FILE = testlog,
-              },
-            })
-            :wait()
-        end, cmd) --[[@as vim.SystemCompleted]]
-      end
-
-      local cmd = vim.list_extend({ n.nvim_prog, '+qall!', '--headless' }, args)
-      local r = run(cmd)
-      eq(1, r.code)
-      matches(expected, (r.stderr .. r.stdout):gsub('\\n', ' '))
-
-      if is_os('win') then
-        return -- On Windows, output without --headless is garbage.
-      end
-      table.remove(cmd, 3) -- Remove '--headless'.
-      assert(not vim.tbl_contains(cmd, '--headless'))
-      r = run(cmd)
-      eq(1, r.code)
-      matches(expected, (r.stderr .. r.stdout):gsub('\\n', ' '))
-    end
+    local in_use = n.eval('v:servername') ---@type string Address already used by another server.
 
     t.assert_nolog('Failed to start server', testlog, 100)
     t.assert_nolog('Host lookup failed', testlog, 100)
 
-    _test({ '--listen' }, 'nvim.*: Argument missing after: "%-%-listen"')
-    _test({ '--listen2' }, 'nvim.*: Garbage after option argument: "%-%-listen2"')
-    _test({ '--listen', n.eval('v:servername') }, 'nvim.*: Failed to %-%-listen: ".* already .*"')
-    _test({ '--listen', '/' }, 'nvim.*: Failed to %-%-listen: ".*"')
+    _test({ '--listen' }, nil, 'nvim.*: Argument missing after: "%-%-listen"')
+    _test({ '--listen2' }, nil, 'nvim.*: Garbage after option argument: "%-%-listen2"')
+    _test(
+      { '--listen', in_use },
+      nil,
+      ('nvim.*: Failed to %%-%%-listen: [^:]+ already [^:]+: "%s"'):format(vim.pesc(in_use))
+    )
+    _test({ '--listen', '/' }, nil, 'nvim.*: Failed to %-%-listen: [^:]+: "/"')
     _test(
       { '--listen', 'https://example.com' },
-      ('nvim.*: Failed to %%-%%-listen: "%s"'):format(
+      nil,
+      ('nvim.*: Failed to %%-%%-listen: %s: "https://example.com"'):format(
         is_os('mac') and 'unknown node or service' or 'service not available for socket type'
       )
     )
 
     t.assert_log('Failed to start server', testlog, 100)
     t.assert_log('Host lookup failed', testlog, 100)
+
+    _test(
+      {},
+      { NVIM_LISTEN_ADDRESS = in_use },
+      ('nvim.*: Failed $NVIM_LISTEN_ADDRESS: [^:]+ already [^:]+: "%s"'):format(vim.pesc(in_use))
+    )
+    _test({}, { NVIM_LISTEN_ADDRESS = '/' }, 'nvim.*: Failed $NVIM_LISTEN_ADDRESS: [^:]+: "/"')
+    _test(
+      {},
+      { NVIM_LISTEN_ADDRESS = 'https://example.com' },
+      ('nvim.*: Failed $NVIM_LISTEN_ADDRESS: %s: "https://example.com"'):format(
+        is_os('mac') and 'unknown node or service' or 'service not available for socket type'
+      )
+    )
   end)
 
   it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
