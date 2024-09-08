@@ -214,9 +214,6 @@ These existing features changed their behavior.
   more emoji characters than before, including those encoded with multiple
   emoji codepoints combined with ZWJ (zero width joiner) codepoints.
 
-• |vim.tbl_deep_extend()| no longer ignores any values for which |vim.isarray()|
-  returns `true`.
-
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
