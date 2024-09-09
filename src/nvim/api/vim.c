@@ -1586,6 +1586,7 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
 ///
 /// @param attributes Arbitrary string:string map of informal client properties.
 ///     Suggested keys:
+///     - "pid":     Process id.
 ///     - "website": Client homepage URL (e.g. GitHub repository)
 ///     - "license": License description ("Apache 2", "GPLv3", "MIT", …)
 ///     - "logo":    URI or path to image, preferably small logo or icon.
@@ -1627,7 +1628,7 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
 /// Gets information about a channel.
 ///
 /// @param chan channel_id, or 0 for current channel
-/// @returns Dictionary describing a channel, with these keys:
+/// @returns Channel info dict with these keys:
 ///    - "id"       Channel id.
 ///    - "argv"     (optional) Job arguments list.
 ///    - "stream"   Stream underlying the channel.
@@ -1639,14 +1640,12 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
 ///         - "bytes"      Send and receive raw bytes.
 ///         - "terminal"   |terminal| instance interprets ASCII sequences.
 ///         - "rpc"        |RPC| communication on the channel is active.
-///    -  "pty"     (optional) Name of pseudoterminal. On a POSIX system this
-///                 is a device path like "/dev/pts/1". If the name is unknown,
-///                 the key will still be present if a pty is used (e.g. for
-///                 conpty on Windows).
-///    -  "buffer"  (optional) Buffer with connected |terminal| instance.
-///    -  "client"  (optional) Info about the peer (client on the other end of
-///                 the RPC channel), if provided by it via
-///                 |nvim_set_client_info()|.
+///    -  "pty"     (optional) Name of pseudoterminal. On a POSIX system this is a device path like
+///                 "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
+///                 for conpty on Windows).
+///    -  "buffer"  (optional) Buffer connected to |terminal| instance.
+///    -  "client"  (optional) Info about the peer (client on the other end of the RPC channel),
+///                 which it provided via |nvim_set_client_info()|.
 ///
 Dictionary nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *err)
   FUNC_API_SINCE(4)

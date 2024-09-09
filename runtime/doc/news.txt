@@ -189,6 +189,9 @@ TREESITTER
 
 TUI
 
+• The builtin UI declares info |nvim_set_client_info()| on its channel. See
+  |startup-tui|. To see the current UI info, try this: >
+    :lua =vim.api.nvim_get_chan_info(vim.api.nvim_list_uis()[1].chan)
 • |log| messages written by the builtin UI client (TUI, |--remote-ui|) are
   now prefixed with "ui" instead of "?".
 

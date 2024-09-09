@@ -458,7 +458,7 @@ end
 --- @param argv string[]
 --- @param merge boolean?
 --- @param env string[]?
---- @param keep boolean
+--- @param keep boolean?
 --- @param io_extra uv.uv_pipe_t? used for stdin_fd, see :help ui-option
 --- @return test.Session
 function M.spawn(argv, merge, env, keep, io_extra)

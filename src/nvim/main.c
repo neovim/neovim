@@ -351,7 +351,6 @@ int main(int argc, char **argv)
 
   // NORETURN: Start builtin UI client.
   if (ui_client_channel_id) {
-    time_finish();
     ui_client_run(remote_ui);  // NORETURN
   }
   assert(!ui_client_channel_id && !use_builtin_ui);
@@ -1514,7 +1513,7 @@ static void init_startuptime(mparm_T *paramp)
   }
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0) {
-      time_init(paramp->argv[i + 1], is_embed ? "Embedded" : "Primary/TUI");
+      time_init(paramp->argv[i + 1], is_embed ? "Embedded" : "Primary (or UI client)");
       time_start("--- NVIM STARTING ---");
       break;
     }
