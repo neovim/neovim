@@ -218,6 +218,49 @@ describe('vim.lsp.completion: item conversion', function()
     eq(expected, result)
   end)
 
+  it('removes unnecessary symbols in label', function()
+    local items = {
+      {
+        detail = 'colnr_T',
+        filterText = 'w_virtcol',
+        insertText = '->w_virtcol',
+        insertTextFormat = 1,
+        kind = 5,
+        label = ' w_virtcol',
+        score = 0.59581798315048,
+        sortText = '40e77879w_virtcol',
+        textEdit = {
+          newText = '->w_virtcol',
+          range = {
+            ['end'] = {
+              character = 0,
+              line = 0,
+            },
+            start = {
+              character = 0,
+              line = 0,
+            },
+          },
+        },
+      },
+    }
+    local result = complete('|', items)
+    result = vim.tbl_map(function(x)
+      return {
+        abbr = x.abbr,
+        word = x.word,
+      }
+    end, result.items)
+
+    local expected = {
+      {
+        abbr = ' w_virtcol',
+        word = 'w_virtcol',
+      },
+    }
+    eq(expected, result)
+  end)
+
   it('prefers wordlike components for snippets', function()
     -- There are two goals here:
     --

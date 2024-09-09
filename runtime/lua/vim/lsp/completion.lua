@@ -154,8 +154,13 @@ local function get_completion_word(item)
       return item.label
     end
   elseif item.textEdit then
-    local word = item.textEdit.newText
-    return word:match('^(%S*)') or word
+    local word = item.textEdit.newText:gsub('%s+$', '')
+    if word:match('^%W') then
+      -- remove unnecessary symbols in label like "->w_locked" => "w_locked"
+      local matched_word = vim.fn.matchstr(word, '\\k\\+')
+      return matched_word ~= '' and matched_word or word
+    end
+    return word
   elseif item.insertText and item.insertText ~= '' then
     return item.insertText
   end
@@ -365,7 +370,8 @@ function M._convert_results(
   elseif curstartbyte ~= nil and curstartbyte ~= server_start_boundary then
     server_start_boundary = client_start_boundary
   end
-  local prefix = line:sub((server_start_boundary or client_start_boundary) + 1, cursor_col)
+  local prefix =
+    line:sub(math.max(server_start_boundary or 0, client_start_boundary) + 1, cursor_col)
   local matches = M._lsp_to_complete_items(result, prefix, client_id)
   return matches, server_start_boundary
 end
@@ -461,7 +467,7 @@ local function trigger(bufnr, clients)
         vim.list_extend(matches, client_matches)
       end
     end
-    local start_col = (server_start_boundary or word_boundary) + 1
+    local start_col = math.max(server_start_boundary or 0, word_boundary) + 1
     vim.fn.complete(start_col, matches)
   end)
 
