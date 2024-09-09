@@ -119,6 +119,7 @@ end
 ---@param encoding string|nil utf-8|utf-16|utf-32|nil defaults to utf-16
 ---@return integer `encoding` index of `index` in `line`
 function M._str_utfindex_enc(line, index, encoding)
+  local len32, len16 = vim.str_utfindex(line)
   if not encoding then
     encoding = 'utf-16'
   end
@@ -129,9 +130,15 @@ function M._str_utfindex_enc(line, index, encoding)
       return #line
     end
   elseif encoding == 'utf-16' then
+    if not index or index > len16 then
+      return len16
+    end
     local _, col16 = vim.str_utfindex(line, index)
     return col16
   elseif encoding == 'utf-32' then
+    if not index or index > len32 then
+      return len32
+    end
     local col32, _ = vim.str_utfindex(line, index)
     return col32
   else
@@ -170,8 +177,6 @@ function M._str_byteindex_enc(line, index, encoding)
     error('Invalid encoding: ' .. vim.inspect(encoding))
   end
 end
-
-local _str_utfindex_enc = M._str_utfindex_enc
 
 --- Replaces text in a range with new text.
 ---
@@ -1928,7 +1933,7 @@ local function make_position_param(window, offset_encoding)
     return { line = 0, character = 0 }
   end
 
-  col = _str_utfindex_enc(line, col, offset_encoding)
+  col = M._str_utfindex_enc(line, col, offset_encoding)
 
   return { line = row, character = col }
 end
@@ -2110,11 +2115,7 @@ function M.character_offset(buf, row, col, offset_encoding)
     )
     offset_encoding = vim.lsp.get_clients({ bufnr = buf })[1].offset_encoding
   end
-  -- If the col is past the EOL, use the line length.
-  if col > #line then
-    return _str_utfindex_enc(line, nil, offset_encoding)
-  end
-  return _str_utfindex_enc(line, col, offset_encoding)
+  return M._str_utfindex_enc(line, col, offset_encoding)
 end
 
 --- Helper function to return nested values in language server settings
