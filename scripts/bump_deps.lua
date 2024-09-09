@@ -81,6 +81,14 @@ local function get_dependency(dependency_name)
       repo = 'luvit/luv',
       symbol = 'LUV',
     },
+    ['unibilium'] = {
+      repo = 'neovim/unibilium',
+      symbol = 'UNIBILIUM',
+    },
+    ['utf8proc'] = {
+      repo = 'JuliaStrings/utf8proc',
+      symbol = 'UTF8PROC',
+    },
     ['tree-sitter'] = {
       repo = 'tree-sitter/tree-sitter',
       symbol = 'TREESITTER',
@@ -90,11 +98,11 @@ local function get_dependency(dependency_name)
       symbol = 'TREESITTER_C',
     },
     ['tree-sitter-lua'] = {
-      repo = 'MunifTanjim/tree-sitter-lua',
+      repo = 'tree-sitter-grammars/tree-sitter-lua',
       symbol = 'TREESITTER_LUA',
     },
     ['tree-sitter-vim'] = {
-      repo = 'neovim/tree-sitter-vim',
+      repo = 'tree-sitter-grammars/tree-sitter-vim',
       symbol = 'TREESITTER_VIM',
     },
     ['tree-sitter-vimdoc'] = {
@@ -102,8 +110,20 @@ local function get_dependency(dependency_name)
       symbol = 'TREESITTER_VIMDOC',
     },
     ['tree-sitter-query'] = {
-      repo = 'nvim-treesitter/tree-sitter-query',
+      repo = 'tree-sitter-grammars/tree-sitter-query',
       symbol = 'TREESITTER_QUERY',
+    },
+    ['tree-sitter-markdown'] = {
+      repo = 'tree-sitter-grammars/tree-sitter-markdown',
+      symbol = 'TREESITTER_MARKDOWN',
+    },
+    ['wasmtime'] = {
+      repo = 'bytecodealliance/wasmtime',
+      symbol = 'WASMTIME',
+    },
+    ['uncrustify'] = {
+      repo = 'uncrustify/uncrustify',
+      symbol = 'UNCRUSTIFY',
     },
   }
   local dependency = dependency_table[dependency_name]
