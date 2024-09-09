@@ -422,13 +422,19 @@ static void exit_event(void **argv)
       os_exit(status);
     } else {
       assert(status == 0);  // Called from rpc_close(), which passes 0 as status.
-      preserve_exit(NULL);
+      // TODO(justinmk):
+      //  - make this optional ("nvim --nohup")?
+      //    - dynamic: can be set on the channel at any time
+      //  - TUI sets this on SIGUP
+      // preserve_exit(NULL);
     }
   }
 }
 
+/// Performs self-exit when the RPC channel is closed.
 void exit_from_channel(int status)
 {
+  DLOG("self-exit triggered by closed RPC channel...");
   multiqueue_put(main_loop.fast_events, exit_event, (void *)(intptr_t)status);
 }
 
