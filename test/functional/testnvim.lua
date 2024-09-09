@@ -902,26 +902,6 @@ function M.missing_provider(provider)
   assert(false, 'Unknown provider: ' .. provider)
 end
 
---- @param obj string|table
---- @return any
-function M.alter_slashes(obj)
-  if not is_os('win') then
-    return obj
-  end
-  if type(obj) == 'string' then
-    local ret = obj:gsub('/', '\\')
-    return ret
-  elseif type(obj) == 'table' then
-    --- @cast obj table<any,any>
-    local ret = {} --- @type table<any,any>
-    for k, v in pairs(obj) do
-      ret[k] = M.alter_slashes(v)
-    end
-    return ret
-  end
-  assert(false, 'expected string or table of strings, got ' .. type(obj))
-end
-
 local load_factor = 1
 if t.is_ci() then
   -- Compute load factor only once (but outside of any tests).

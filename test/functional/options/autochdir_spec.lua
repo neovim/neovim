@@ -22,7 +22,7 @@ describe("'autochdir'", function()
   end)
 
   it('is not overwritten by getwinvar() call #17609', function()
-    local curdir = vim.uv.cwd():gsub('\\', '/')
+    local curdir = t.fix_slashes(vim.uv.cwd())
     local dir_a = curdir .. '/Xtest-functional-options-autochdir.dir_a'
     local dir_b = curdir .. '/Xtest-functional-options-autochdir.dir_b'
     mkdir(dir_a)

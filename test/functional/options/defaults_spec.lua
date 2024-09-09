@@ -23,7 +23,6 @@ local insert = n.insert
 local neq = t.neq
 local mkdir = t.mkdir
 local rmdir = n.rmdir
-local alter_slashes = n.alter_slashes
 local tbl_contains = vim.tbl_contains
 local expect_exit = n.expect_exit
 local check_close = n.check_close
@@ -262,7 +261,7 @@ describe('startup defaults', function()
           NVIM_LOG_FILE = '', -- Empty is invalid.
         },
       })
-      eq(xdgstatedir .. '/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+      eq(xdgstatedir .. '/log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
     end)
 
     it('defaults to stdpath("log")/log if invalid', function()
@@ -273,7 +272,7 @@ describe('startup defaults', function()
           NVIM_LOG_FILE = '.', -- Any directory is invalid.
         },
       })
-      eq(xdgstatedir .. '/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+      eq(xdgstatedir .. '/log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
       -- Avoid "failed to open $NVIM_LOG_FILE" noise in test output.
       expect_exit(command, 'qall!')
     end)
@@ -383,69 +382,69 @@ describe('XDG defaults', function()
 
       eq(
         (
-          (
+          t.fix_slashes(
             root_path
-            .. ('/x'):rep(4096)
-            .. '/nvim'
-            .. ','
-            .. root_path
-            .. ('/a'):rep(2048)
-            .. '/nvim'
-            .. ','
-            .. root_path
-            .. ('/b'):rep(2048)
-            .. '/nvim'
-            .. (',' .. root_path .. '/c/nvim')
-            .. ','
-            .. root_path
-            .. ('/X'):rep(4096)
-            .. '/'
-            .. data_dir
-            .. '/site'
-            .. ','
-            .. root_path
-            .. ('/A'):rep(2048)
-            .. '/nvim/site'
-            .. ','
-            .. root_path
-            .. ('/B'):rep(2048)
-            .. '/nvim/site'
-            .. (',' .. root_path .. '/C/nvim/site')
-            .. ','
-            .. vimruntime
-            .. ','
-            .. libdir
-            .. (',' .. root_path .. '/C/nvim/site/after')
-            .. ','
-            .. root_path
-            .. ('/B'):rep(2048)
-            .. '/nvim/site/after'
-            .. ','
-            .. root_path
-            .. ('/A'):rep(2048)
-            .. '/nvim/site/after'
-            .. ','
-            .. root_path
-            .. ('/X'):rep(4096)
-            .. '/'
-            .. data_dir
-            .. '/site/after'
-            .. (',' .. root_path .. '/c/nvim/after')
-            .. ','
-            .. root_path
-            .. ('/b'):rep(2048)
-            .. '/nvim/after'
-            .. ','
-            .. root_path
-            .. ('/a'):rep(2048)
-            .. '/nvim/after'
-            .. ','
-            .. root_path
-            .. ('/x'):rep(4096)
-            .. '/nvim/after'
-          ):gsub('\\', '/')
+              .. ('/x'):rep(4096)
+              .. '/nvim'
+              .. ','
+              .. root_path
+              .. ('/a'):rep(2048)
+              .. '/nvim'
+              .. ','
+              .. root_path
+              .. ('/b'):rep(2048)
+              .. '/nvim'
+              .. (',' .. root_path .. '/c/nvim')
+              .. ','
+              .. root_path
+              .. ('/X'):rep(4096)
+              .. '/'
+              .. data_dir
+              .. '/site'
+              .. ','
+              .. root_path
+              .. ('/A'):rep(2048)
+              .. '/nvim/site'
+              .. ','
+              .. root_path
+              .. ('/B'):rep(2048)
+              .. '/nvim/site'
+              .. (',' .. root_path .. '/C/nvim/site')
+              .. ','
+              .. vimruntime
+              .. ','
+              .. libdir
+              .. (',' .. root_path .. '/C/nvim/site/after')
+              .. ','
+              .. root_path
+              .. ('/B'):rep(2048)
+              .. '/nvim/site/after'
+              .. ','
+              .. root_path
+              .. ('/A'):rep(2048)
+              .. '/nvim/site/after'
+              .. ','
+              .. root_path
+              .. ('/X'):rep(4096)
+              .. '/'
+              .. data_dir
+              .. '/site/after'
+              .. (',' .. root_path .. '/c/nvim/after')
+              .. ','
+              .. root_path
+              .. ('/b'):rep(2048)
+              .. '/nvim/after'
+              .. ','
+              .. root_path
+              .. ('/a'):rep(2048)
+              .. '/nvim/after'
+              .. ','
+              .. root_path
+              .. ('/x'):rep(4096)
+              .. '/nvim/after'
+          )
         ),
-        (api.nvim_get_option_value('runtimepath', {})):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
       )
       command('set runtimepath&')
       command('set backupdir&')
@@ -454,85 +453,85 @@ describe('XDG defaults', function()
       command('set viewdir&')
       eq(
         (
-          (
+          t.fix_slashes(
             root_path
-            .. ('/x'):rep(4096)
-            .. '/nvim'
-            .. ','
-            .. root_path
-            .. ('/a'):rep(2048)
-            .. '/nvim'
-            .. ','
-            .. root_path
-            .. ('/b'):rep(2048)
-            .. '/nvim'
-            .. (',' .. root_path .. '/c/nvim')
-            .. ','
-            .. root_path
-            .. ('/X'):rep(4096)
-            .. '/'
-            .. data_dir
-            .. '/site'
-            .. ','
-            .. root_path
-            .. ('/A'):rep(2048)
-            .. '/nvim/site'
-            .. ','
-            .. root_path
-            .. ('/B'):rep(2048)
-            .. '/nvim/site'
-            .. (',' .. root_path .. '/C/nvim/site')
-            .. ','
-            .. vimruntime
-            .. ','
-            .. libdir
-            .. (',' .. root_path .. '/C/nvim/site/after')
-            .. ','
-            .. root_path
-            .. ('/B'):rep(2048)
-            .. '/nvim/site/after'
-            .. ','
-            .. root_path
-            .. ('/A'):rep(2048)
-            .. '/nvim/site/after'
-            .. ','
-            .. root_path
-            .. ('/X'):rep(4096)
-            .. '/'
-            .. data_dir
-            .. '/site/after'
-            .. (',' .. root_path .. '/c/nvim/after')
-            .. ','
-            .. root_path
-            .. ('/b'):rep(2048)
-            .. '/nvim/after'
-            .. ','
-            .. root_path
-            .. ('/a'):rep(2048)
-            .. '/nvim/after'
-            .. ','
-            .. root_path
-            .. ('/x'):rep(4096)
-            .. '/nvim/after'
-          ):gsub('\\', '/')
+              .. ('/x'):rep(4096)
+              .. '/nvim'
+              .. ','
+              .. root_path
+              .. ('/a'):rep(2048)
+              .. '/nvim'
+              .. ','
+              .. root_path
+              .. ('/b'):rep(2048)
+              .. '/nvim'
+              .. (',' .. root_path .. '/c/nvim')
+              .. ','
+              .. root_path
+              .. ('/X'):rep(4096)
+              .. '/'
+              .. data_dir
+              .. '/site'
+              .. ','
+              .. root_path
+              .. ('/A'):rep(2048)
+              .. '/nvim/site'
+              .. ','
+              .. root_path
+              .. ('/B'):rep(2048)
+              .. '/nvim/site'
+              .. (',' .. root_path .. '/C/nvim/site')
+              .. ','
+              .. vimruntime
+              .. ','
+              .. libdir
+              .. (',' .. root_path .. '/C/nvim/site/after')
+              .. ','
+              .. root_path
+              .. ('/B'):rep(2048)
+              .. '/nvim/site/after'
+              .. ','
+              .. root_path
+              .. ('/A'):rep(2048)
+              .. '/nvim/site/after'
+              .. ','
+              .. root_path
+              .. ('/X'):rep(4096)
+              .. '/'
+              .. data_dir
+              .. '/site/after'
+              .. (',' .. root_path .. '/c/nvim/after')
+              .. ','
+              .. root_path
+              .. ('/b'):rep(2048)
+              .. '/nvim/after'
+              .. ','
+              .. root_path
+              .. ('/a'):rep(2048)
+              .. '/nvim/after'
+              .. ','
+              .. root_path
+              .. ('/x'):rep(4096)
+              .. '/nvim/after'
+          )
         ),
-        (api.nvim_get_option_value('runtimepath', {})):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
       )
       eq(
         '.,' .. root_path .. ('/X'):rep(4096) .. '/' .. state_dir .. '/backup//',
-        (api.nvim_get_option_value('backupdir', {}):gsub('\\', '/'))
+        t.fix_slashes(api.nvim_get_option_value('backupdir', {}))
       )
       eq(
         root_path .. ('/X'):rep(4096) .. '/' .. state_dir .. '/swap//',
-        (api.nvim_get_option_value('directory', {})):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('directory', {}))
       )
       eq(
         root_path .. ('/X'):rep(4096) .. '/' .. state_dir .. '/undo//',
-        (api.nvim_get_option_value('undodir', {})):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('undodir', {}))
       )
       eq(
         root_path .. ('/X'):rep(4096) .. '/' .. state_dir .. '/view//',
-        (api.nvim_get_option_value('viewdir', {})):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('viewdir', {}))
       )
     end)
   end)
@@ -574,26 +573,26 @@ describe('XDG defaults', function()
       local vimruntime, libdir = vimruntime_and_libdir()
       eq(
         (
-          (
+          t.fix_slashes(
             '$XDG_DATA_HOME/nvim'
-            .. ',$XDG_DATA_DIRS/nvim'
-            .. ',$XDG_CONFIG_HOME/'
-            .. data_dir
-            .. '/site'
-            .. ',$XDG_CONFIG_DIRS/nvim/site'
-            .. ','
-            .. vimruntime
-            .. ','
-            .. libdir
-            .. ',$XDG_CONFIG_DIRS/nvim/site/after'
-            .. ',$XDG_CONFIG_HOME/'
-            .. data_dir
-            .. '/site/after'
-            .. ',$XDG_DATA_DIRS/nvim/after'
-            .. ',$XDG_DATA_HOME/nvim/after'
-          ):gsub('\\', '/')
+              .. ',$XDG_DATA_DIRS/nvim'
+              .. ',$XDG_CONFIG_HOME/'
+              .. data_dir
+              .. '/site'
+              .. ',$XDG_CONFIG_DIRS/nvim/site'
+              .. ','
+              .. vimruntime
+              .. ','
+              .. libdir
+              .. ',$XDG_CONFIG_DIRS/nvim/site/after'
+              .. ',$XDG_CONFIG_HOME/'
+              .. data_dir
+              .. '/site/after'
+              .. ',$XDG_DATA_DIRS/nvim/after'
+              .. ',$XDG_DATA_HOME/nvim/after'
+          )
         ),
-        (api.nvim_get_option_value('runtimepath', {})):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
       )
       command('set runtimepath&')
       command('set backupdir&')
@@ -602,8 +601,47 @@ describe('XDG defaults', function()
       command('set viewdir&')
       eq(
         (
-          (
+          t.fix_slashes(
             '$XDG_DATA_HOME/nvim'
+              .. ',$XDG_DATA_DIRS/nvim'
+              .. ',$XDG_CONFIG_HOME/'
+              .. data_dir
+              .. '/site'
+              .. ',$XDG_CONFIG_DIRS/nvim/site'
+              .. ','
+              .. vimruntime
+              .. ','
+              .. libdir
+              .. ',$XDG_CONFIG_DIRS/nvim/site/after'
+              .. ',$XDG_CONFIG_HOME/'
+              .. data_dir
+              .. '/site/after'
+              .. ',$XDG_DATA_DIRS/nvim/after'
+              .. ',$XDG_DATA_HOME/nvim/after'
+          )
+        ),
+        t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
+      )
+      eq(
+        ('.,$XDG_CONFIG_HOME/' .. state_dir .. '/backup//'),
+        t.fix_slashes(api.nvim_get_option_value('backupdir', {}))
+      )
+      eq(
+        ('$XDG_CONFIG_HOME/' .. state_dir .. '/swap//'),
+        t.fix_slashes(api.nvim_get_option_value('directory', {}))
+      )
+      eq(
+        ('$XDG_CONFIG_HOME/' .. state_dir .. '/undo//'),
+        t.fix_slashes(api.nvim_get_option_value('undodir', {}))
+      )
+      eq(
+        ('$XDG_CONFIG_HOME/' .. state_dir .. '/view//'),
+        t.fix_slashes(api.nvim_get_option_value('viewdir', {}))
+      )
+      command('set all&')
+      eq(
+        t.fix_slashes(
+          '$XDG_DATA_HOME/nvim'
             .. ',$XDG_DATA_DIRS/nvim'
             .. ',$XDG_CONFIG_HOME/'
             .. data_dir
@@ -619,63 +657,24 @@ describe('XDG defaults', function()
             .. '/site/after'
             .. ',$XDG_DATA_DIRS/nvim/after'
             .. ',$XDG_DATA_HOME/nvim/after'
-          ):gsub('\\', '/')
         ),
-        (api.nvim_get_option_value('runtimepath', {})):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
       )
       eq(
         ('.,$XDG_CONFIG_HOME/' .. state_dir .. '/backup//'),
-        api.nvim_get_option_value('backupdir', {}):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('backupdir', {}))
       )
       eq(
         ('$XDG_CONFIG_HOME/' .. state_dir .. '/swap//'),
-        api.nvim_get_option_value('directory', {}):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('directory', {}))
       )
       eq(
         ('$XDG_CONFIG_HOME/' .. state_dir .. '/undo//'),
-        api.nvim_get_option_value('undodir', {}):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('undodir', {}))
       )
       eq(
         ('$XDG_CONFIG_HOME/' .. state_dir .. '/view//'),
-        api.nvim_get_option_value('viewdir', {}):gsub('\\', '/')
-      )
-      command('set all&')
-      eq(
-        (
-          '$XDG_DATA_HOME/nvim'
-          .. ',$XDG_DATA_DIRS/nvim'
-          .. ',$XDG_CONFIG_HOME/'
-          .. data_dir
-          .. '/site'
-          .. ',$XDG_CONFIG_DIRS/nvim/site'
-          .. ','
-          .. vimruntime
-          .. ','
-          .. libdir
-          .. ',$XDG_CONFIG_DIRS/nvim/site/after'
-          .. ',$XDG_CONFIG_HOME/'
-          .. data_dir
-          .. '/site/after'
-          .. ',$XDG_DATA_DIRS/nvim/after'
-          .. ',$XDG_DATA_HOME/nvim/after'
-        ):gsub('\\', '/'),
-        (api.nvim_get_option_value('runtimepath', {})):gsub('\\', '/')
-      )
-      eq(
-        ('.,$XDG_CONFIG_HOME/' .. state_dir .. '/backup//'),
-        api.nvim_get_option_value('backupdir', {}):gsub('\\', '/')
-      )
-      eq(
-        ('$XDG_CONFIG_HOME/' .. state_dir .. '/swap//'),
-        api.nvim_get_option_value('directory', {}):gsub('\\', '/')
-      )
-      eq(
-        ('$XDG_CONFIG_HOME/' .. state_dir .. '/undo//'),
-        api.nvim_get_option_value('undodir', {}):gsub('\\', '/')
-      )
-      eq(
-        ('$XDG_CONFIG_HOME/' .. state_dir .. '/view//'),
-        api.nvim_get_option_value('viewdir', {}):gsub('\\', '/')
+        t.fix_slashes(api.nvim_get_option_value('viewdir', {}))
       )
       eq(nil, (fn.tempname()):match('XDG_RUNTIME_DIR'))
     end)
@@ -939,7 +938,7 @@ describe('stdpath()', function()
         local child = vim.fn.jobstart({ vim.v.progpath, '--clean', '--headless', '--listen', 'x', '+qall!' }, { env = { NVIM_APPNAME = %q } })
         return vim.fn.jobwait({ child }, %d)[1]
       ]],
-        alter_slashes(testAppname),
+        testAppname,
         3000
       )
       eq(expected_exitcode, exec_lua(lua_code))
@@ -970,7 +969,7 @@ describe('stdpath()', function()
       },
     })
 
-    t.matches(vim.pesc(tmpdir), fn.tempname():gsub('\\', '/'))
+    t.matches(vim.pesc(tmpdir), t.fix_slashes(fn.tempname()))
     t.assert_nolog('tempdir', testlog, 100)
     t.assert_nolog('TMPDIR', testlog, 100)
     t.matches([=[[/\\]relative%-appname.[^/\\]+]=], api.nvim_get_vvar('servername'))
@@ -981,19 +980,19 @@ describe('stdpath()', function()
       it('knows XDG_CONFIG_HOME', function()
         clear({
           env = {
-            XDG_CONFIG_HOME = alter_slashes('/home/docwhat/.config'),
+            XDG_CONFIG_HOME = '/home/docwhat/.config',
           },
         })
-        eq(alter_slashes('/home/docwhat/.config/nvim'), fn.stdpath('config'))
+        eq('/home/docwhat/.config/nvim', t.fix_slashes(fn.stdpath('config')))
       end)
 
       it('handles changes during runtime', function()
         clear({ env = {
-          XDG_CONFIG_HOME = alter_slashes('/home/original'),
+          XDG_CONFIG_HOME = '/home/original',
         } })
-        eq(alter_slashes('/home/original/nvim'), fn.stdpath('config'))
-        command("let $XDG_CONFIG_HOME='" .. alter_slashes('/home/new') .. "'")
-        eq(alter_slashes('/home/new/nvim'), fn.stdpath('config'))
+        eq('/home/original/nvim', t.fix_slashes(fn.stdpath('config')))
+        command("let $XDG_CONFIG_HOME='/home/new'")
+        eq('/home/new/nvim', t.fix_slashes(fn.stdpath('config')))
       end)
 
       it("doesn't expand $VARIABLES", function()
@@ -1003,32 +1002,32 @@ describe('stdpath()', function()
             VARIABLES = 'this-should-not-happen',
           },
         })
-        eq(alter_slashes('$VARIABLES/nvim'), fn.stdpath('config'))
+        eq('$VARIABLES/nvim', t.fix_slashes(fn.stdpath('config')))
       end)
 
       it("doesn't expand ~/", function()
         clear({ env = {
-          XDG_CONFIG_HOME = alter_slashes('~/frobnitz'),
+          XDG_CONFIG_HOME = '~/frobnitz',
         } })
-        eq(alter_slashes('~/frobnitz/nvim'), fn.stdpath('config'))
+        eq('~/frobnitz/nvim', t.fix_slashes(fn.stdpath('config')))
       end)
     end)
 
     describe('with "data"', function()
       it('knows XDG_DATA_HOME', function()
         clear({ env = {
-          XDG_DATA_HOME = alter_slashes('/home/docwhat/.local'),
+          XDG_DATA_HOME = '/home/docwhat/.local',
         } })
-        eq(alter_slashes('/home/docwhat/.local/' .. datadir), fn.stdpath('data'))
+        eq('/home/docwhat/.local/' .. datadir, t.fix_slashes(fn.stdpath('data')))
       end)
 
       it('handles changes during runtime', function()
         clear({ env = {
-          XDG_DATA_HOME = alter_slashes('/home/original'),
+          XDG_DATA_HOME = '/home/original',
         } })
-        eq(alter_slashes('/home/original/' .. datadir), fn.stdpath('data'))
-        command("let $XDG_DATA_HOME='" .. alter_slashes('/home/new') .. "'")
-        eq(alter_slashes('/home/new/' .. datadir), fn.stdpath('data'))
+        eq('/home/original/' .. datadir, t.fix_slashes(fn.stdpath('data')))
+        command("let $XDG_DATA_HOME='/home/new'")
+        eq('/home/new/' .. datadir, t.fix_slashes(fn.stdpath('data')))
       end)
 
       it("doesn't expand $VARIABLES", function()
@@ -1038,14 +1037,14 @@ describe('stdpath()', function()
             VARIABLES = 'this-should-not-happen',
           },
         })
-        eq(alter_slashes('$VARIABLES/' .. datadir), fn.stdpath('data'))
+        eq('$VARIABLES/' .. datadir, t.fix_slashes(fn.stdpath('data')))
       end)
 
       it("doesn't expand ~/", function()
         clear({ env = {
-          XDG_DATA_HOME = alter_slashes('~/frobnitz'),
+          XDG_DATA_HOME = '~/frobnitz',
         } })
-        eq(alter_slashes('~/frobnitz/' .. datadir), fn.stdpath('data'))
+        eq('~/frobnitz/' .. datadir, t.fix_slashes(fn.stdpath('data')))
       end)
     end)
 
@@ -1053,19 +1052,19 @@ describe('stdpath()', function()
       it('knows XDG_STATE_HOME', function()
         clear({
           env = {
-            XDG_STATE_HOME = alter_slashes('/home/docwhat/.local'),
+            XDG_STATE_HOME = '/home/docwhat/.local',
           },
         })
-        eq(alter_slashes('/home/docwhat/.local/' .. statedir), fn.stdpath('state'))
+        eq('/home/docwhat/.local/' .. statedir, t.fix_slashes(fn.stdpath('state')))
       end)
 
       it('handles changes during runtime', function()
         clear({ env = {
-          XDG_STATE_HOME = alter_slashes('/home/original'),
+          XDG_STATE_HOME = '/home/original',
         } })
-        eq(alter_slashes('/home/original/' .. statedir), fn.stdpath('state'))
-        command("let $XDG_STATE_HOME='" .. alter_slashes('/home/new') .. "'")
-        eq(alter_slashes('/home/new/' .. statedir), fn.stdpath('state'))
+        eq('/home/original/' .. statedir, t.fix_slashes(fn.stdpath('state')))
+        command("let $XDG_STATE_HOME='" .. '/home/new' .. "'")
+        eq('/home/new/' .. statedir, t.fix_slashes(fn.stdpath('state')))
       end)
 
       it("doesn't expand $VARIABLES", function()
@@ -1075,14 +1074,14 @@ describe('stdpath()', function()
             VARIABLES = 'this-should-not-happen',
           },
         })
-        eq(alter_slashes('$VARIABLES/' .. statedir), fn.stdpath('state'))
+        eq('$VARIABLES/' .. statedir, t.fix_slashes(fn.stdpath('state')))
       end)
 
       it("doesn't expand ~/", function()
         clear({ env = {
-          XDG_STATE_HOME = alter_slashes('~/frobnitz'),
+          XDG_STATE_HOME = '~/frobnitz',
         } })
-        eq(alter_slashes('~/frobnitz/' .. statedir), fn.stdpath('state'))
+        eq('~/frobnitz/' .. statedir, t.fix_slashes(fn.stdpath('state')))
       end)
     end)
 
@@ -1090,19 +1089,19 @@ describe('stdpath()', function()
       it('knows XDG_CACHE_HOME', function()
         clear({
           env = {
-            XDG_CACHE_HOME = alter_slashes('/home/docwhat/.cache'),
+            XDG_CACHE_HOME = '/home/docwhat/.cache',
           },
         })
-        eq(alter_slashes('/home/docwhat/.cache/nvim'), fn.stdpath('cache'))
+        eq('/home/docwhat/.cache/nvim', t.fix_slashes(fn.stdpath('cache')))
       end)
 
       it('handles changes during runtime', function()
         clear({ env = {
-          XDG_CACHE_HOME = alter_slashes('/home/original'),
+          XDG_CACHE_HOME = '/home/original',
         } })
-        eq(alter_slashes('/home/original/nvim'), fn.stdpath('cache'))
-        command("let $XDG_CACHE_HOME='" .. alter_slashes('/home/new') .. "'")
-        eq(alter_slashes('/home/new/nvim'), fn.stdpath('cache'))
+        eq('/home/original/nvim', t.fix_slashes(fn.stdpath('cache')))
+        command("let $XDG_CACHE_HOME='" .. '/home/new' .. "'")
+        eq('/home/new/nvim', t.fix_slashes(fn.stdpath('cache')))
       end)
 
       it("doesn't expand $VARIABLES", function()
@@ -1112,14 +1111,14 @@ describe('stdpath()', function()
             VARIABLES = 'this-should-not-happen',
           },
         })
-        eq(alter_slashes('$VARIABLES/nvim'), fn.stdpath('cache'))
+        eq('$VARIABLES/nvim', t.fix_slashes(fn.stdpath('cache')))
       end)
 
       it("doesn't expand ~/", function()
         clear({ env = {
-          XDG_CACHE_HOME = alter_slashes('~/frobnitz'),
+          XDG_CACHE_HOME = '~/frobnitz',
         } })
-        eq(alter_slashes('~/frobnitz/nvim'), fn.stdpath('cache'))
+        eq('~/frobnitz/nvim', t.fix_slashes(fn.stdpath('cache')))
       end)
     end)
   end)
@@ -1133,6 +1132,7 @@ describe('stdpath()', function()
           HOMEDRIVE = 'C:',
           HOMEPATH = '\\Users\\docwhat',
           LOCALAPPDATA = 'C:\\Users\\docwhat\\AppData\\Local',
+          NVIM_LOG_FILE = testlog,
           TEMP = 'C:\\Users\\docwhat\\AppData\\Local\\Temp',
           TMPDIR = 'C:\\Users\\docwhat\\AppData\\Local\\Temp',
           TMP = 'C:\\Users\\docwhat\\AppData\\Local\\Temp',
@@ -1143,6 +1143,7 @@ describe('stdpath()', function()
           HOMEDRIVE = 'HOMEDRIVE-should-be-ignored',
           HOMEPATH = 'HOMEPATH-should-be-ignored',
           LOCALAPPDATA = 'LOCALAPPDATA-should-be-ignored',
+          NVIM_LOG_FILE = testlog,
           TEMP = 'TEMP-should-be-ignored',
           TMPDIR = 'TMPDIR-should-be-ignored',
           TMP = 'TMP-should-be-ignored',
@@ -1166,12 +1167,18 @@ describe('stdpath()', function()
       describe(msg, function()
         it('set via system', function()
           set_paths_via_system(env_var_name, paths)
-          eq(expected_paths, fn.stdpath(stdpath_arg))
+          eq(expected_paths, t.fix_slashes(fn.stdpath(stdpath_arg)))
+          if not is_os('win') then
+            assert_log('$TMPDIR tempdir not a directory.*TMPDIR%-should%-be%-ignored', testlog, 100)
+          end
         end)
 
         it('set at runtime', function()
           set_paths_at_runtime(env_var_name, paths)
-          eq(expected_paths, fn.stdpath(stdpath_arg))
+          eq(expected_paths, t.fix_slashes(fn.stdpath(stdpath_arg)))
+          if not is_os('win') then
+            assert_log('$TMPDIR tempdir not a directory.*TMPDIR%-should%-be%-ignored', testlog, 100)
+          end
         end)
       end)
     end
@@ -1182,10 +1189,10 @@ describe('stdpath()', function()
         'config_dirs',
         'XDG_CONFIG_DIRS',
         {
-          alter_slashes('/home/docwhat/.config'),
+          t.fix_slashes('/home/docwhat/.config'),
         },
         {
-          alter_slashes('/home/docwhat/.config/nvim'),
+          t.fix_slashes('/home/docwhat/.config/nvim'),
         }
       )
 
@@ -1194,12 +1201,12 @@ describe('stdpath()', function()
         'config_dirs',
         'XDG_CONFIG_DIRS',
         {
-          alter_slashes('/home/docwhat/.config'),
-          alter_slashes('/etc/config'),
+          t.fix_slashes('/home/docwhat/.config'),
+          t.fix_slashes('/etc/config'),
         },
         {
-          alter_slashes('/home/docwhat/.config/nvim'),
-          alter_slashes('/etc/config/nvim'),
+          t.fix_slashes('/home/docwhat/.config/nvim'),
+          t.fix_slashes('/etc/config/nvim'),
         }
       )
 
@@ -1209,25 +1216,25 @@ describe('stdpath()', function()
         'XDG_CONFIG_DIRS',
         { '$HOME', '$TMP' },
         {
-          alter_slashes('$HOME/nvim'),
-          alter_slashes('$TMP/nvim'),
+          t.fix_slashes('$HOME/nvim'),
+          t.fix_slashes('$TMP/nvim'),
         }
       )
 
       behaves_like_dir_list_env("doesn't expand ~/", 'config_dirs', 'XDG_CONFIG_DIRS', {
-        alter_slashes('~/.oldconfig'),
-        alter_slashes('~/.olderconfig'),
+        t.fix_slashes('~/.oldconfig'),
+        t.fix_slashes('~/.olderconfig'),
       }, {
-        alter_slashes('~/.oldconfig/nvim'),
-        alter_slashes('~/.olderconfig/nvim'),
+        t.fix_slashes('~/.oldconfig/nvim'),
+        t.fix_slashes('~/.olderconfig/nvim'),
       })
     end)
 
     describe('with "data_dirs"', function()
       behaves_like_dir_list_env('knows XDG_DATA_DIRS with one path', 'data_dirs', 'XDG_DATA_DIRS', {
-        alter_slashes('/home/docwhat/.data'),
+        t.fix_slashes('/home/docwhat/.data'),
       }, {
-        alter_slashes('/home/docwhat/.data/nvim'),
+        t.fix_slashes('/home/docwhat/.data/nvim'),
       })
 
       behaves_like_dir_list_env(
@@ -1235,12 +1242,12 @@ describe('stdpath()', function()
         'data_dirs',
         'XDG_DATA_DIRS',
         {
-          alter_slashes('/home/docwhat/.data'),
-          alter_slashes('/etc/local'),
+          t.fix_slashes('/home/docwhat/.data'),
+          t.fix_slashes('/etc/local'),
         },
         {
-          alter_slashes('/home/docwhat/.data/nvim'),
-          alter_slashes('/etc/local/nvim'),
+          t.fix_slashes('/home/docwhat/.data/nvim'),
+          t.fix_slashes('/etc/local/nvim'),
         }
       )
 
@@ -1250,17 +1257,17 @@ describe('stdpath()', function()
         'XDG_DATA_DIRS',
         { '$HOME', '$TMP' },
         {
-          alter_slashes('$HOME/nvim'),
-          alter_slashes('$TMP/nvim'),
+          t.fix_slashes('$HOME/nvim'),
+          t.fix_slashes('$TMP/nvim'),
         }
       )
 
       behaves_like_dir_list_env("doesn't expand ~/", 'data_dirs', 'XDG_DATA_DIRS', {
-        alter_slashes('~/.oldconfig'),
-        alter_slashes('~/.olderconfig'),
+        t.fix_slashes('~/.oldconfig'),
+        t.fix_slashes('~/.olderconfig'),
       }, {
-        alter_slashes('~/.oldconfig/nvim'),
-        alter_slashes('~/.olderconfig/nvim'),
+        t.fix_slashes('~/.oldconfig/nvim'),
+        t.fix_slashes('~/.olderconfig/nvim'),
       })
     end)
   end)

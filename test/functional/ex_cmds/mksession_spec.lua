@@ -170,7 +170,7 @@ describe(':mksession', function()
     skip(is_os('win'), 'causes rmdir() to fail')
 
     local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
-    cwd_dir = cwd_dir:gsub([[\]], '/') -- :mksession always uses unix slashes.
+    cwd_dir = t.fix_slashes(cwd_dir) -- :mksession always uses unix slashes.
     local session_path = cwd_dir .. '/' .. session_file
 
     command('cd ' .. tab_dir)

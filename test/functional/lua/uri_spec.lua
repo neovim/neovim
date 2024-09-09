@@ -217,7 +217,7 @@ describe('URI methods', function()
         ]],
         file
       )
-      local expected_uri = 'file:///' .. file:gsub('\\', '/')
+      local expected_uri = 'file:///' .. t.fix_slashes(file)
       eq(expected_uri, exec_lua(test_case))
       os.remove(file)
     end)

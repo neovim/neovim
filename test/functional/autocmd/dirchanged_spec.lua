@@ -9,7 +9,7 @@ local request = n.request
 local is_os = t.is_os
 
 describe('autocmd DirChanged and DirChangedPre', function()
-  local curdir = vim.uv.cwd():gsub('\\', '/')
+  local curdir = t.fix_slashes(vim.uv.cwd())
   local dirs = {
     curdir .. '/Xtest-functional-autocmd-dirchanged.dir1',
     curdir .. '/Xtest-functional-autocmd-dirchanged.dir2',
