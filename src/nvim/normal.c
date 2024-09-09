@@ -6597,11 +6597,11 @@ static void nv_open(cmdarg_T *cap)
 static void nv_event(cmdarg_T *cap)
 {
   // Garbage collection should have been executed before blocking for events in
-  // the `os_inchar` in `state_enter`, but we also disable it here in case the
-  // `os_inchar` branch was not executed (!multiqueue_empty(loop.events), which
+  // the `input_get` in `state_enter`, but we also disable it here in case the
+  // `input_get` branch was not executed (!multiqueue_empty(loop.events), which
   // could have `may_garbage_collect` set to true in `normal_check`).
   //
-  // That is because here we may run code that calls `os_inchar`
+  // That is because here we may run code that calls `input_get`
   // later(`f_confirm` or `get_keystroke` for example), but in these cases it is
   // not safe to perform garbage collection because there could be unreferenced
   // lists or dicts being used.

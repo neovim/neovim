@@ -33,12 +33,6 @@
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE ((READ_BUFFER_SIZE * 4) + MAX_KEY_CODE_LEN)
 
-typedef enum {
-  kInputNone,
-  kInputAvail,
-  kInputEof,
-} InbufPollResult;
-
 static RStream read_stream = { .s.closed = true };  // Input before UI starts.
 static char input_buffer[INPUT_BUFFER_SIZE];
 static char *input_read_pos = input_buffer;
@@ -84,57 +78,76 @@ static void cursorhold_event(void **argv)
 static void create_cursorhold_event(bool events_enabled)
 {
   // If events are enabled and the queue has any items, this function should not
-  // have been called (inbuf_poll would return kInputAvail).
+  // have been called (`inbuf_poll` would return `kTrue`).
   // TODO(tarruda): Cursorhold should be implemented as a timer set during the
   // `state_check` callback for the states where it can be triggered.
   assert(!events_enabled || multiqueue_empty(main_loop.events));
   multiqueue_put(main_loop.events, cursorhold_event, NULL);
 }
 
-static void restart_cursorhold_wait(int tb_change_cnt)
+static void reset_cursorhold_wait(int tb_change_cnt)
 {
   cursorhold_time = 0;
   cursorhold_tb_change_cnt = tb_change_cnt;
 }
 
-/// Low level input function
+/// Reads OS input into `buf`, and consumes pending events while waiting (if `ms != 0`).
 ///
-/// Wait until either the input buffer is non-empty or, if `events` is not NULL
-/// until `events` is non-empty.
-int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *events)
+/// - Consumes available input received from the OS.
+/// - Consumes pending events.
+/// - Manages CursorHold events.
+/// - Handles EOF conditions.
+///
+/// Originally based on the Vim `mch_inchar` function.
+///
+/// @param buf Buffer to store read input.
+/// @param maxlen Maximum bytes to read into `buf`, or 0 to skip reading.
+/// @param ms Timeout in milliseconds. -1 for indefinite wait, 0 for no wait.
+/// @param tb_change_cnt Used to detect when typeahead changes.
+/// @param events (optional) Events to process.
+/// @return Bytes read into buf, or 0 if no input was read
+int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *events)
 {
   // This check is needed so that feeding typeahead from RPC can prevent CursorHold.
   if (tb_change_cnt != cursorhold_tb_change_cnt) {
-    restart_cursorhold_wait(tb_change_cnt);
+    reset_cursorhold_wait(tb_change_cnt);
   }
 
-  if (maxlen && input_available()) {
-    restart_cursorhold_wait(tb_change_cnt);
-    size_t to_read = MIN((size_t)maxlen, input_available());
-    memcpy(buf, input_read_pos, to_read);
-    input_read_pos += to_read;
-    return (int)to_read;
-  }
+#define TRY_READ() \
+  do { \
+    if (maxlen && input_available()) { \
+      reset_cursorhold_wait(tb_change_cnt); \
+      assert(maxlen >= 0); \
+      size_t to_read = MIN((size_t)maxlen, input_available()); \
+      memcpy(buf, input_read_pos, to_read); \
+      input_read_pos += to_read; \
+      /* This is safe because INPUT_BUFFER_SIZE fits in an int. */ \
+      assert(to_read <= INT_MAX); \
+      return (int)to_read; \
+    } \
+  } while (0)
+
+  TRY_READ();
 
   // No risk of a UI flood, so disable CTRL-C "interrupt" behavior if it's mapped.
   if ((mapped_ctrl_c | curbuf->b_mapped_ctrl_c) & get_real_state()) {
     ctrl_c_interrupts = false;
   }
 
-  InbufPollResult result;
+  TriState result;  ///< inbuf_poll result.
   if (ms >= 0) {
-    if ((result = inbuf_poll(ms, events)) == kInputNone) {
+    if ((result = inbuf_poll(ms, events)) == kFalse) {
       return 0;
     }
   } else {
     uint64_t wait_start = os_hrtime();
     cursorhold_time = MIN(cursorhold_time, (int)p_ut);
-    if ((result = inbuf_poll((int)p_ut - cursorhold_time, events)) == kInputNone) {
+    if ((result = inbuf_poll((int)p_ut - cursorhold_time, events)) == kFalse) {
       if (read_stream.s.closed && silent_mode) {
         // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
         read_error_exit();
       }
-      restart_cursorhold_wait(tb_change_cnt);
+      reset_cursorhold_wait(tb_change_cnt);
       if (trigger_cursorhold() && !typebuf_changed(tb_change_cnt)) {
         create_cursorhold_event(events == main_loop.events);
       } else {
@@ -153,32 +166,26 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
     return 0;
   }
 
-  if (maxlen && input_available()) {
-    restart_cursorhold_wait(tb_change_cnt);
-    // Safe to convert `to_read` to int, it will never overflow since
-    // INPUT_BUFFER_SIZE fits in an int
-    size_t to_read = MIN((size_t)maxlen, input_available());
-    memcpy(buf, input_read_pos, to_read);
-    input_read_pos += to_read;
-    return (int)to_read;
-  }
+  TRY_READ();
 
   // If there are events, return the keys directly
   if (maxlen && pending_events(events)) {
     return push_event_key(buf, maxlen);
   }
 
-  if (result == kInputEof) {
+  if (result == kNone) {
     read_error_exit();
   }
 
   return 0;
+
+#undef TRY_READ
 }
 
 // Check if a character is available for reading
 bool os_char_avail(void)
 {
-  return inbuf_poll(0, NULL) == kInputAvail;
+  return inbuf_poll(0, NULL) == kTrue;
 }
 
 /// Poll for fast events. `got_int` will be set to `true` if CTRL-C was typed.
@@ -463,15 +470,22 @@ bool input_blocking(void)
   return blocking;
 }
 
-// This is a replacement for the old `WaitForChar` function in os_unix.c
-static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
+/// Checks for (but does not read) available input, and consumes `main_loop.events` while waiting.
+///
+/// @param ms Timeout in milliseconds. -1 for indefinite wait, 0 for no wait.
+/// @param events (optional) Queue to check for pending events.
+/// @return TriState:
+///   - kTrue: Input/events available
+///   - kFalse: No input/events
+///   - kNone: EOF reached on the input stream
+static TriState inbuf_poll(int ms, MultiQueue *events)
 {
   if (os_input_ready(events)) {
-    return kInputAvail;
+    return kTrue;
   }
 
   if (do_profiling == PROF_YES && ms) {
-    prof_inchar_enter();
+    prof_input_start();
   }
 
   if ((ms == -1 || ms > 0) && events != main_loop.events && !input_eof) {
@@ -479,20 +493,18 @@ static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
     blocking = true;
     multiqueue_process_events(ch_before_blocking_events);
   }
-  DLOG("blocking... events_enabled=%d events_pending=%d", events != NULL,
-       events && !multiqueue_empty(events));
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms,
-                            os_input_ready(events) || input_eof);
+  DLOG("blocking... events=%d pending=%d", !!events, pending_events(events));
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, os_input_ready(events) || input_eof);
   blocking = false;
 
   if (do_profiling == PROF_YES && ms) {
-    prof_inchar_exit();
+    prof_input_end();
   }
 
   if (os_input_ready(events)) {
-    return kInputAvail;
+    return kTrue;
   }
-  return input_eof ? kInputEof : kInputNone;
+  return input_eof ? kNone : kFalse;
 }
 
 static size_t input_read_cb(RStream *stream, const char *buf, size_t c, void *data, bool at_eof)
@@ -533,8 +545,8 @@ static void process_ctrl_c(void)
   }
 }
 
-// Helper function used to push bytes from the 'event' key sequence partially
-// between calls to os_inchar when maxlen < 3
+/// Pushes bytes from the "event" key sequence (KE_EVENT) partially between calls to input_get when
+/// `maxlen < 3`.
 static int push_event_key(uint8_t *buf, int maxlen)
 {
   static const uint8_t key[3] = { K_SPECIAL, KS_EXTRA, KE_EVENT };

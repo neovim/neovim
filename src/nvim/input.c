@@ -37,7 +37,7 @@
 /// @param[in]  str  Prompt: question to ask user. Is always followed by
 ///                  " (y/n)?".
 /// @param[in]  direct  Determines what function to use to get user input. If
-///                     true then os_inchar() will be used, otherwise vgetc().
+///                     true then input_get() will be used, otherwise vgetc().
 ///                     I.e. when direct is true then characters are obtained
 ///                     directly from the user without buffers involved.
 ///
@@ -111,7 +111,7 @@ int get_keystroke(MultiQueue *events)
 
     // First time: blocking wait.  Second time: wait up to 100ms for a
     // terminal code to complete.
-    n = os_inchar(buf + len, maxlen, len == 0 ? -1 : 100, 0, events);
+    n = input_get(buf + len, maxlen, len == 0 ? -1 : 100, 0, events);
     if (n > 0) {
       // Replace zero and K_SPECIAL by a special key code.
       n = fix_input_buffer(buf + len, n);
