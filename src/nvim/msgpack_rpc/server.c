@@ -51,10 +51,6 @@ bool server_init(const char *listen_addr)
     must_free = true;
   }
 
-  if (!listen_addr) {
-    abort();  // Cannot happen.
-  }
-
   int rv = server_start(listen_addr);
 
   // TODO(justinmk): this is for logging_spec. Can remove this after nvim_log #7062 is merged.
@@ -77,7 +73,7 @@ bool server_init(const char *listen_addr)
                  kTrue ? "Failed to --listen: %s: \"%s\""
                        : "Failed $NVIM_LISTEN_ADDRESS: %s: \"%s\"",
                  rv < 0 ? os_strerror(rv) : (rv == 1 ? "empty address" : "?"),
-                 listen_addr ? listen_addr : "(empty)");
+                 listen_addr);
   ok = false;
 
 end:
@@ -118,6 +114,7 @@ void server_teardown(void)
 /// - Windows: "\\.\pipe\<name>.<pid>.<counter>"
 /// - Other: "/tmp/nvim.user/xxx/<name>.<pid>.<counter>"
 char *server_address_new(const char *name)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   static uint32_t count = 0;
   char fmt[ADDRESS_MAX_SIZE];
