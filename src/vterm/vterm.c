@@ -429,3 +429,212 @@ void vterm_check_version(int major, int minor)
 
   // Happy
 }
+
+#ifndef NDEBUG
+
+#define TEST_PARSER_FILE "test_parser_output"
+
+int parser_text(const char bytes[], size_t len, void *user)
+{
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  fprintf(f, "text ");
+  int i;
+  for(i = 0; i < len; i++) {
+    unsigned char b = bytes[i];
+    if(b < 0x20 || b == 0x7f || (b >= 0x80 && b < 0xa0)) {
+      break;
+    }
+    fprintf(f, i ? ",%x" : "%x", b);
+  }
+  fprintf(f, "\n");
+  fclose(f);
+
+  return i;
+}
+
+int parser_control(unsigned char control, void *user)
+{
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  fprintf(f,"control %02x\n", control);
+  fclose(f);
+
+  return 1;
+}
+
+static void printhex(const char *s, size_t len, FILE *f)
+{
+  while(len--) {
+    fprintf(f, "%02x", (uint8_t)(s++)[0]);
+  }
+}
+
+int parser_escape(const char bytes[], size_t len, void *user)
+{
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  if(bytes[0] >= 0x20 && bytes[0] < 0x30) {
+    if(len < 2) {
+      return -1;
+    }
+    len = 2;
+  }
+  else {
+    len = 1;
+  }
+
+  fprintf(f,"escape ");
+  printhex(bytes, len, f);
+  fprintf(f,"\n");
+
+  fclose(f);
+
+  return len;
+}
+
+int parser_csi(const char *leader, const long args[], int argcount, const char *intermed, char command, void *user)
+{
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  fprintf(f, "csi %02x", command);
+
+  if(leader && leader[0]) {
+    fprintf(f, " L=");
+    for(int i = 0; leader[i]; i++) {
+      fprintf(f, "%02x", leader[i]);
+    }
+  }
+
+  for(int i = 0; i < argcount; i++) {
+    char sep = i ? ',' : ' ';
+
+    if(args[i] == CSI_ARG_MISSING) {
+      fprintf(f, "%c*", sep);
+    } else {
+      fprintf(f, "%c%ld%s", sep, CSI_ARG(args[i]), CSI_ARG_HAS_MORE(args[i]) ? "+" : "");
+    }
+  }
+
+  if(intermed && intermed[0]) {
+    fprintf(f, " I=");
+    for(int i = 0; intermed[i]; i++) {
+      fprintf(f, "%02x", intermed[i]);
+    }
+  }
+
+  fprintf(f, "\n");
+
+  fclose(f);
+
+  return 1;
+}
+
+int parser_osc(int command, VTermStringFragment frag, void *user)
+{
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  fprintf(f, "osc ");
+
+  if(frag.initial) {
+    if(command == -1) {
+      fprintf(f, "[");
+    } else {
+      fprintf(f, "[%d;", command);
+    }
+  }
+
+  printhex(frag.str, frag.len,f);
+
+  if(frag.final) {
+    fprintf(f, "]");
+  }
+
+  fprintf(f, "\n");
+  fclose(f);
+
+  return 1;
+}
+
+int parser_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user)
+{
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  fprintf(f, "dcs ");
+
+  if(frag.initial) {
+    fprintf(f, "[");
+    for(int i = 0; i < commandlen; i++) {
+      fprintf(f, "%02x", command[i]);
+    }
+  }
+
+  printhex(frag.str, frag.len,f);
+
+  if(frag.final) {
+    fprintf(f, "]");
+  }
+
+  fprintf(f, "\n");
+  fclose(f);
+
+  return 1;
+}
+
+int parser_apc(VTermStringFragment frag, void *user)
+{
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  fprintf(f, "apc ");
+
+  if(frag.initial) {
+    fprintf(f, "[");
+  }
+
+  printhex(frag.str, frag.len, f);
+
+  if(frag.final) {
+    fprintf(f, "]");
+  }
+
+  fprintf(f, "\n");
+  fclose(f);
+
+  return 1;
+}
+
+int parser_pm(VTermStringFragment frag, void *user)
+{
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  fprintf(f, "pm ");
+
+  if(frag.initial) {
+    fprintf(f, "[");
+  }
+
+  printhex(frag.str, frag.len,f);
+
+  if(frag.final) {
+    fprintf(f, "]");
+  }
+
+  fprintf(f, "\n");
+  fclose(f);
+
+  return 1;
+}
+
+int parser_sos(VTermStringFragment frag, void *user)
+{
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  fprintf(f, "sos ");
+
+  if(frag.initial) {
+    fprintf(f, "[");
+  }
+
+  printhex(frag.str, frag.len,f);
+
+  if(frag.final) {
+    fprintf(f, "]");
+  }
+
+  fprintf(f, "\n");
+  fclose(f);
+
+  return 1;
+}
+#endif

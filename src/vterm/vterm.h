@@ -634,6 +634,18 @@ void vterm_copy_cells(VTermRect dest,
                       void (*copycell)(VTermPos dest, VTermPos src, void *user),
                       void *user);
 
+#ifndef NDEBUG
+int parser_text(const char bytes[], size_t len, void *user);
+int parser_control(unsigned char control, void *user);
+int parser_escape(const char bytes[], size_t len, void *user);
+int parser_csi(const char *leader, const long args[], int argcount, const char *intermed, char command, void *user);
+int parser_osc(int command, VTermStringFragment frag, void *user);
+int parser_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user);
+int parser_apc(VTermStringFragment frag, void *user);
+int parser_pm(VTermStringFragment frag, void *user);
+int parser_sos(VTermStringFragment frag, void *user);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

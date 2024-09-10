@@ -152,9 +152,15 @@ local function filter_complex_blocks(body)
       )
     then
       -- Remove bitfields from structs as luajit can't seem to handle those well.
-      line = line:gsub('typedef struct {(.-)}', function(s)
+      line = string.gsub(line, 'typedef struct {(.-)}', function(s)
         return string.format('typedef struct {%s}', s:gsub('%s*:%s*%d+%s*;', ';'))
       end)
+
+      -- HACK: hardcode to remove difficult bitfield not handled by the previous gsub
+      if line:find('struct VTermState') then
+        line = string.gsub(line, 'state : 8;', 'state;')
+      end
+
       result[#result + 1] = line
     end
   end
