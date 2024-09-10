@@ -92,16 +92,18 @@ static int lookup_colour(const VTermState *state, int palette, const long args[]
 {
   switch(palette) {
   case 2: // RGB mode - 3 args contain colour values directly
-    if(argcount < 3)
+    if(argcount < 3) {
       return argcount;
+    }
 
     vterm_color_rgb(col, CSI_ARG(args[0]), CSI_ARG(args[1]), CSI_ARG(args[2]));
 
     return 3;
 
   case 5: // XTerm 256-colour mode
-    if (argcount && !CSI_ARG_IS_MISSING(args[0]))
+    if (argcount && !CSI_ARG_IS_MISSING(args[0])) {
       vterm_color_indexed(col, args[0]);
+    }
 
     return argcount ? 1 : 0;
 
@@ -122,8 +124,9 @@ static void setpenattr(VTermState *state, VTermAttr attr, VTermValueType type, V
     return;
   }
 #endif
-  if(state->callbacks && state->callbacks->setpenattr)
+  if(state->callbacks && state->callbacks->setpenattr) {
     (*state->callbacks->setpenattr)(attr, val, state->cbdata);
+  }
 }
 
 static void setpenattr_bool(VTermState *state, VTermAttr attr, int boolean)
@@ -160,8 +163,9 @@ INTERNAL void vterm_state_newpen(VTermState *state)
   vterm_color_rgb(&state->default_bg, 0, 0, 0);
   vterm_state_set_default_colors(state, &state->default_fg, &state->default_bg);
 
-  for(int col = 0; col < 16; col++)
+  for(int col = 0; col < 16; col++) {
     lookup_default_colour_ansi(col, &state->colors[col]);
+  }
 }
 
 INTERNAL void vterm_state_resetpen(VTermState *state)
@@ -257,8 +261,9 @@ void vterm_state_set_default_colors(VTermState *state, const VTermColor *default
 
 void vterm_state_set_palette_color(VTermState *state, int index, const VTermColor *col)
 {
-  if(index >= 0 && index < 16)
+  if(index >= 0 && index < 16) {
     state->colors[index] = *col;
+  }
 }
 
 void vterm_state_convert_color_to_rgb(const VTermState *state, VTermColor *col)
@@ -297,8 +302,9 @@ INTERNAL void vterm_state_setpen(VTermState *state, const long args[], int argco
       const VTermColor *fg = &state->pen.fg;
       state->pen.bold = 1;
       setpenattr_bool(state, VTERM_ATTR_BOLD, 1);
-      if(!VTERM_COLOR_IS_DEFAULT_FG(fg) && VTERM_COLOR_IS_INDEXED(fg) && fg->indexed.idx < 8 && state->bold_is_highbright)
+      if(!VTERM_COLOR_IS_DEFAULT_FG(fg) && VTERM_COLOR_IS_INDEXED(fg) && fg->indexed.idx < 8 && state->bold_is_highbright) {
         set_pen_col_ansi(state, VTERM_ATTR_FOREGROUND, fg->indexed.idx + (state->pen.bold ? 8 : 0));
+      }
       break;
     }
 
@@ -398,14 +404,16 @@ INTERNAL void vterm_state_setpen(VTermState *state, const long args[], int argco
     case 30: case 31: case 32: case 33:
     case 34: case 35: case 36: case 37: // Foreground colour palette
       value = CSI_ARG(args[argi]) - 30;
-      if(state->pen.bold && state->bold_is_highbright)
+      if(state->pen.bold && state->bold_is_highbright) {
         value += 8;
+      }
       set_pen_col_ansi(state, VTERM_ATTR_FOREGROUND, value);
       break;
 
     case 38: // Foreground colour alternative palette
-      if(argcount - argi < 1)
+      if(argcount - argi < 1) {
         return;
+      }
       argi += 1 + lookup_colour(state, CSI_ARG(args[argi+1]), args+argi+2, argcount-argi-2, &state->pen.fg);
       setpenattr_col(state, VTERM_ATTR_FOREGROUND, state->pen.fg);
       break;
@@ -507,44 +515,56 @@ INTERNAL int vterm_state_getpen(VTermState *state, long args[], int argcount)
 {
   int argi = 0;
 
-  if(state->pen.bold)
+  if(state->pen.bold) {
     args[argi++] = 1;
+  }
 
-  if(state->pen.italic)
+  if(state->pen.italic) {
     args[argi++] = 3;
+  }
 
-  if(state->pen.underline == VTERM_UNDERLINE_SINGLE)
+  if(state->pen.underline == VTERM_UNDERLINE_SINGLE) {
     args[argi++] = 4;
-  if(state->pen.underline == VTERM_UNDERLINE_CURLY)
+  }
+  if(state->pen.underline == VTERM_UNDERLINE_CURLY) {
     args[argi++] = 4 | CSI_ARG_FLAG_MORE, args[argi++] = 3;
+  }
 
-  if(state->pen.blink)
+  if(state->pen.blink) {
     args[argi++] = 5;
+  }
 
-  if(state->pen.reverse)
+  if(state->pen.reverse) {
     args[argi++] = 7;
+  }
 
-  if(state->pen.conceal)
+  if(state->pen.conceal) {
     args[argi++] = 8;
+  }
 
-  if(state->pen.strike)
+  if(state->pen.strike) {
     args[argi++] = 9;
+  }
 
-  if(state->pen.font)
+  if(state->pen.font) {
     args[argi++] = 10 + state->pen.font;
+  }
 
-  if(state->pen.underline == VTERM_UNDERLINE_DOUBLE)
+  if(state->pen.underline == VTERM_UNDERLINE_DOUBLE) {
     args[argi++] = 21;
+  }
 
   argi = vterm_state_getpen_color(&state->pen.fg, argi, args, true);
 
   argi = vterm_state_getpen_color(&state->pen.bg, argi, args, false);
 
   if(state->pen.small) {
-    if(state->pen.baseline == VTERM_BASELINE_RAISE)
+    if(state->pen.baseline == VTERM_BASELINE_RAISE) {
       args[argi++] = 73;
-    else if(state->pen.baseline == VTERM_BASELINE_LOWER)
+    }
+    else if(state->pen.baseline == VTERM_BASELINE_LOWER) {
       args[argi++] = 74;
+    }
   }
 
   return argi;
@@ -668,8 +688,9 @@ int vterm_state_set_penattr(VTermState *state, VTermAttr attr, VTermValueType ty
     return 0;
   }
 
-  if(state->callbacks && state->callbacks->setpenattr)
+  if(state->callbacks && state->callbacks->setpenattr) {
     (*state->callbacks->setpenattr)(attr, val, state->cbdata);
+  }
 
   return 1;
 }
