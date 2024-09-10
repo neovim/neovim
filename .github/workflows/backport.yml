@@ -26,3 +26,8 @@ jobs:
           pull_title: "${pull_title}"
           label_pattern: "^ci:backport ([^ ]+)$"
           github_token: ${{ steps.app-token.outputs.token }}
+
+      - name: Enable automerge
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr merge --rebase --auto ${{ steps.backport.outputs.created_pull_numbers }}
