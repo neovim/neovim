@@ -74,10 +74,9 @@ getkey:
       }
       // Flush screen updates before blocking.
       ui_flush();
-      // Call `os_inchar` directly to block for events or user input without
-      // consuming anything from `input_buffer`(os/input.c) or calling the
-      // mapping engine.
-      os_inchar(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
+      // Call `input_get` directly to block for events or user input without consuming anything from
+      // `os/input.c:input_buffer` or calling the mapping engine.
+      input_get(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
       // If an event was put into the queue, we send K_EVENT directly.
       if (!input_available() && !multiqueue_empty(main_loop.events)) {
         key = K_EVENT;

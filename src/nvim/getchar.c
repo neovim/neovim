@@ -1858,7 +1858,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
       if (!char_avail()) {
         // Flush screen updates before blocking.
         ui_flush();
-        os_inchar(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
+        input_get(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
         if (!multiqueue_empty(main_loop.events)) {
           state_handle_k_event();
           continue;
@@ -2981,7 +2981,7 @@ int inchar(uint8_t *buf, int maxlen, long wait_time)
       uint8_t dum[DUM_LEN + 1];
 
       while (true) {
-        len = os_inchar(dum, DUM_LEN, 0, 0, NULL);
+        len = input_get(dum, DUM_LEN, 0, 0, NULL);
         if (len == 0 || (len == 1 && dum[0] == Ctrl_C)) {
           break;
         }
@@ -2997,7 +2997,7 @@ int inchar(uint8_t *buf, int maxlen, long wait_time)
 
     // Fill up to a third of the buffer, because each character may be
     // tripled below.
-    len = os_inchar(buf, maxlen / 3, (int)wait_time, tb_change_cnt, NULL);
+    len = input_get(buf, maxlen / 3, (int)wait_time, tb_change_cnt, NULL);
   }
 
   // If the typebuf was changed further down, it is like nothing was added by
