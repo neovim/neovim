@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local tt = require('test.functional.terminal.testutil')
 
 local assert_log = t.assert_log
 local clear = n.clear
@@ -29,10 +30,54 @@ describe('log', function()
     assert(request('nvim__stats').log_skip <= 13)
   end)
 
-  it('messages are formatted with name or test id', function()
+  it('TUI client name is "ui"', function()
+    local function setup(env)
+      clear()
+      -- Start Nvim with builtin UI.
+      local screen = tt.setup_child_nvim({
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--cmd',
+        n.nvim_set,
+      }, {
+        env = env,
+      })
+      screen:expect([[
+        {1: }                                                 |
+        ~                                                 |*4
+                                                          |
+        {3:-- TERMINAL --}                                    |
+      ]])
+    end
+
+    -- Without $NVIM parent.
+    setup({
+      NVIM = '',
+      NVIM_LISTEN_ADDRESS = '',
+      NVIM_LOG_FILE = testlog,
+      __NVIM_TEST_LOG = '1',
+    })
+    -- Example:
+    --    ERR 2024-09-11T16:40:02.421 ui.47056   ui_client_run:165: test log message
+    assert_log(' ui%.%d+% +ui_client_run:%d+: test log message', testlog, 100)
+
+    -- With $NVIM parent.
+    setup({
+      NVIM_LOG_FILE = testlog,
+      __NVIM_TEST_LOG = '1',
+    })
+    -- Example:
+    --    ERR 2024-09-11T16:41:17.539 ui/c/T2.47826.0 ui_client_run:165: test log message
+    local tid = _G._nvim_test_id
+    assert_log(' ui/c/' .. tid .. '%.%d+%.%d +ui_client_run:%d+: test log message', testlog, 100)
+  end)
+
+  it('formats messages with session name or test id', function()
     -- Examples:
-    --    ERR 2022-05-29T12:30:03.800 T2         log_init:110: test log message
-    --    ERR 2022-05-29T12:30:03.814 T2/child   log_init:110: test log message
+    --    ERR 2024-09-11T16:44:33.794 T3.49429.0 server_init:58: test log message
+    --    ERR 2024-09-11T16:44:33.823 c/T3.49429.0 server_init:58: test log message
 
     clear({
       env = {
@@ -47,10 +92,10 @@ describe('log', function()
 
     exec_lua([[
       local j1 = vim.fn.jobstart({ vim.v.progpath, '-es', '-V1', '+foochild', '+qa!' }, vim.empty_dict())
-      vim.fn.jobwait({ j1 }, 10000)
+      vim.fn.jobwait({ j1 }, 5000)
     ]])
 
-    -- Child Nvim spawned by jobstart() appends "/c" to parent name.
-    assert_log('%.%d+%.%d/c +server_init:%d+: test log message', testlog, 100)
+    -- Child Nvim spawned by jobstart() prepends "c/" to parent name.
+    assert_log('c/' .. tid .. '%.%d+%.%d +server_init:%d+: test log message', testlog, 100)
   end)
 end)

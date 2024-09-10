@@ -100,7 +100,7 @@ static void reset_cursorhold_wait(int tb_change_cnt)
 ///
 /// Originally based on the Vim `mch_inchar` function.
 ///
-/// @param buf Buffer to store read input.
+/// @param buf Buffer to store consumed input.
 /// @param maxlen Maximum bytes to read into `buf`, or 0 to skip reading.
 /// @param ms Timeout in milliseconds. -1 for indefinite wait, 0 for no wait.
 /// @param tb_change_cnt Used to detect when typeahead changes.
@@ -493,7 +493,7 @@ static TriState inbuf_poll(int ms, MultiQueue *events)
     blocking = true;
     multiqueue_process_events(ch_before_blocking_events);
   }
-  DLOG("blocking... events=%d pending=%d", !!events, pending_events(events));
+  DLOG("blocking... events=%s", !!events ? "true" : "false");
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, os_input_ready(events) || input_eof);
   blocking = false;
 
