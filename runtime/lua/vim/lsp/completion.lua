@@ -308,11 +308,22 @@ end
 local function adjust_start_col(lnum, line, items, encoding)
   local min_start_char = nil
   for _, item in pairs(items) do
-    if item.textEdit and item.textEdit.range.start.line == lnum then
-      if min_start_char and min_start_char ~= item.textEdit.range.start.character then
+    local start_line = 0
+    local start_char = 0
+
+    if item.textEdit and item.textEdit.newText then
+      start_line = item.textEdit.insert.start.line
+      start_char = item.textEdit.insert.start.chararacter
+    else
+      start_line = item.textEdit.range.start.line
+      start_char = item.textEdit.range.start.character
+    end
+
+    if item.textEdit and start_line == lnum then
+      if min_start_char and min_start_char ~= start_char then
         return nil
       end
-      min_start_char = item.textEdit.range.start.character
+      min_start_char = start_char
     end
   end
   if min_start_char then
