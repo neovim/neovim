@@ -8927,6 +8927,9 @@ M.funcs = {
       The value must not be negative.  A zero value is like not
       giving the argument.
 
+      Note: the timeout is only considered when searching, not
+      while evaluating the {skip} expression.
+
       If the {skip} expression is given it is evaluated with the
       cursor positioned on the start of a match.  If it evaluates to
       non-zero this match is skipped.  This can be used, for
