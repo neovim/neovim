@@ -100,11 +100,8 @@ static int lookup_colour(const VTermState *state, int palette, const long args[]
     return 3;
 
   case 5: // XTerm 256-colour mode
-    if (!argcount || CSI_ARG_IS_MISSING(args[0])) {
-      return argcount ? 1 : 0;
-    }
-
-    vterm_color_indexed(col, args[0]);
+    if (argcount && !CSI_ARG_IS_MISSING(args[0]))
+      vterm_color_indexed(col, args[0]);
 
     return argcount ? 1 : 0;
 
