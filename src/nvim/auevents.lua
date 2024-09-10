@@ -79,6 +79,8 @@ return {
     'LspProgress', -- after a LSP progress update
     'MenuPopup', -- just before popup menu is displayed
     'ModeChanged', -- after changing the mode
+    'PackAddPre', -- before loading pack form :packpath
+    'PackAddPost', -- just after loading pack form :packpath
     'OptionSet', -- after setting any option
     'QuickFixCmdPost', -- after :make, :grep etc.
     'QuickFixCmdPre', -- before :make, :grep etc.

@@ -1137,10 +1137,12 @@ static void add_pack_plugins(bool opt, int num_fnames, char **fnames, bool all, 
       }
       if (!found) {
         // directory is not yet in 'runtimepath', add it
+        apply_autocmds(EVENT_PACKADDPRE, fnames[i], fnames[i], false, curbuf);
         if (add_pack_dir_to_rtp(fnames[i], false) == FAIL) {
           xfree(buf);
           return;
         }
+        apply_autocmds(EVENT_PACKADDPOST, fnames[i], fnames[i], false, curbuf);
       }
       did_one = true;
       if (!all) {
