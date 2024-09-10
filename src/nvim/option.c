@@ -210,39 +210,53 @@ static void set_init_default_backupskip(void)
   OptIndex opt_idx = kOptBackupskip;
 
   ga_init(&ga, 1, 100);
-  for (size_t n = 0; n < ARRAY_SIZE(names); n++) {
+  for (size_t i = 0; i < ARRAY_SIZE(names); i++) {
     bool mustfree = true;
     char *p;
+    size_t plen;
 #ifdef UNIX
-    if (*names[n] == NUL) {
+    if (*names[i] == NUL) {
 # ifdef __APPLE__
       p = "/private/tmp";
+      plen = STRLEN_LITERAL("/private/tmp");
 # else
       p = "/tmp";
+      plen = STRLEN_LITERAL("/tmp");
 # endif
       mustfree = false;
     } else
 #endif
     {
-      p = vim_getenv(names[n]);
+      p = vim_getenv(names[i]);
+      plen = 0;  // will be calcuated below
     }
     if (p != NULL && *p != NUL) {
-      // First time count the NUL, otherwise count the ','.
-      const size_t len = strlen(p) + 3;
-      char *item = xmalloc(len);
-      xstrlcpy(item, p, len);
-      add_pathsep(item);
-      xstrlcat(item, "*", len);
-      if (find_dup_item(ga.ga_data, item, options[opt_idx].flags)
-          == NULL) {
-        ga_grow(&ga, (int)len);
-        if (!GA_EMPTY(&ga)) {
-          strcat(ga.ga_data, ",");
+      bool has_trailing_path_sep = false;
+
+      if (plen == 0) {
+        // the value was retrieved from the environment
+        plen = strlen(p);
+        // does the value include a trailing path separator?
+        if (after_pathsep(p, p + plen)) {
+          has_trailing_path_sep = true;
         }
-        strcat(ga.ga_data, p);
-        add_pathsep(ga.ga_data);
-        strcat(ga.ga_data, "*");
-        ga.ga_len += (int)len;
+      }
+
+      // item size needs to be large enough to include "/*" and a trailing NUL
+      // note: the value (and therefore plen) may already include a path separator
+      size_t itemsize = plen + (has_trailing_path_sep ? 0 : 1) + 2;
+      char *item = xmalloc(itemsize);
+      // add a preceeding comma as a separator after the first item
+      size_t itemseplen = (ga.ga_len == 0) ? 0 : 1;
+
+      size_t itemlen = (size_t)vim_snprintf(item, itemsize, "%s%s*", p,
+                                            has_trailing_path_sep ? "" : PATHSEPSTR);
+
+      if (find_dup_item(ga.ga_data, item, itemlen, options[opt_idx].flags) == NULL) {
+        ga_grow(&ga, (int)(itemseplen + itemlen + 1));
+        ga.ga_len += vim_snprintf((char *)ga.ga_data + ga.ga_len,
+                                  itemseplen + itemlen + 1,
+                                  "%s%s", (itemseplen > 0) ? "," : "", item);
       }
       xfree(item);
     }
@@ -526,7 +540,8 @@ static void set_string_default(OptIndex opt_idx, char *val, bool allocated)
 
 /// For an option value that contains comma separated items, find "newval" in
 /// "origval".  Return NULL if not found.
-static char *find_dup_item(char *origval, const char *newval, uint32_t flags)
+static char *find_dup_item(char *origval, const char *newval, const size_t newvallen,
+                           uint32_t flags)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   if (origval == NULL) {
@@ -535,11 +550,10 @@ static char *find_dup_item(char *origval, const char *newval, uint32_t flags)
 
   int bs = 0;
 
-  const size_t newlen = strlen(newval);
   for (char *s = origval; *s != NUL; s++) {
     if ((!(flags & P_COMMA) || s == origval || (s[-1] == ',' && !(bs & 1)))
-        && strncmp(s, newval, newlen) == 0
-        && (!(flags & P_COMMA) || s[newlen] == ',' || s[newlen] == NUL)) {
+        && strncmp(s, newval, newvallen) == 0
+        && (!(flags & P_COMMA) || s[newvallen] == ',' || s[newvallen] == NUL)) {
       return s;
     }
     // Count backslashes.  Only a comma with an even number of backslashes
@@ -697,10 +711,10 @@ void set_helplang_default(const char *lang)
   }
   p_hlg = xmemdupz(lang, lang_len);
   // zh_CN becomes "cn", zh_TW becomes "tw".
-  if (STRNICMP(p_hlg, "zh_", 3) == 0 && strlen(p_hlg) >= 5) {
+  if (STRNICMP(p_hlg, "zh_", 3) == 0 && lang_len >= 5) {
     p_hlg[0] = (char)TOLOWER_ASC(p_hlg[3]);
     p_hlg[1] = (char)TOLOWER_ASC(p_hlg[4]);
-  } else if (strlen(p_hlg) >= 1 && *p_hlg == 'C') {
+  } else if (lang_len && *p_hlg == 'C') {
     // any C like setting, such as C.UTF-8, becomes "en"
     p_hlg[0] = 'e';
     p_hlg[1] = 'n';
@@ -950,7 +964,7 @@ static char *stropt_get_newval(int nextchar, OptIndex opt_idx, char **argp, void
     int len = 0;
     if (op == OP_REMOVING || (flags & P_NODUP)) {
       len = (int)strlen(newval);
-      s = find_dup_item(origval, newval, flags);
+      s = find_dup_item(origval, newval, (size_t)len, flags);
 
       // do not add if already there
       if ((op == OP_ADDING || op == OP_PREPENDING) && s != NULL) {
@@ -1464,11 +1478,10 @@ int do_set(char *arg, int opt_flags)
         }
 
         if (errmsg != NULL) {
-          xstrlcpy(IObuff, _(errmsg), IOSIZE);
-          int i = (int)strlen(IObuff) + 2;
+          int i = vim_snprintf((char *)IObuff, IOSIZE, "%s", _(errmsg)) + 2;
           if (i + (arg - startarg) < IOSIZE) {
             // append the argument with the error
-            xstrlcat(IObuff, ": ", IOSIZE);
+            xstrlcpy(IObuff + i - 2, ": ", (size_t)(IOSIZE - i + 2));
             assert(arg >= startarg);
             memmove(IObuff + i, startarg, (size_t)(arg - startarg));
             IObuff[i + (arg - startarg)] = NUL;
@@ -5431,7 +5444,8 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
     xp->xp_pattern = arg;
     return;
   }
-  char *p = arg + strlen(arg) - 1;
+  char *const argend = arg + strlen(arg);
+  char *p = argend - 1;
   if (*p == ' ' && *(p - 1) != '\\') {
     xp->xp_pattern = p + 1;
     return;
@@ -5618,7 +5632,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
   // Triple-backslashed escaped file names (e.g. 'path') can also be
   // delimited by space.
   if ((flags & P_EXPAND) || (flags & P_COMMA) || (flags & P_COLON)) {
-    for (p = arg + strlen(arg) - 1; p > xp->xp_pattern; p--) {
+    for (p = argend - 1; p > xp->xp_pattern; p--) {
       // count number of backslashes before ' ' or ','
       if (*p == ' ' || *p == ',' || (*p == ':' && (flags & P_COLON))) {
         char *s = p;
@@ -5642,7 +5656,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
   // An option that is a list of single-character flags should always start
   // at the end as we don't complete words.
   if (flags & P_FLAGLIST) {
-    xp->xp_pattern = arg + strlen(arg);
+    xp->xp_pattern = argend;
   }
 
   // Some options can either be using file/dir expansions, or custom value
@@ -5952,7 +5966,7 @@ int ExpandSettingSubtract(expand_T *xp, regmatch_T *regmatch, int *numMatches, c
 
     int count = 0;
 
-    (*matches)[count++] = xstrdup(option_val);
+    (*matches)[count++] = xmemdupz(option_val, num_flags);
 
     if (num_flags > 1) {
       // If more than one flags, split the flags up and expose each
