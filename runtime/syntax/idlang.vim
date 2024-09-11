@@ -1,7 +1,8 @@
 " Interactive Data Language syntax file (IDL, too  [:-)]
 " Maintainer: Aleksandar Jelenak <ajelenak AT yahoo.com>
-" Last change: 2011 Apr 11
-" Created by: Hermann Rochholz <Hermann.Rochholz AT gmx.de>
+" Created By: Hermann Rochholz <Hermann.Rochholz AT gmx.de>
+" Last Change: 2011 Apr 11
+"  2024 Sep 10 by Vim Project: update syntax script, #15419
 
 " Remove any old syntax stuff hanging around
 " quit when a syntax file was already loaded
@@ -16,7 +17,7 @@ syn match idlangStatement "^\s*function\s"
 syn keyword idlangStatement return continue mod do break
 syn keyword idlangStatement compile_opt forward_function goto
 syn keyword idlangStatement begin common end of
-syn keyword idlangStatement inherits on_ioerror begin
+syn keyword idlangStatement inherits on_error on_ioerror begin
 
 syn keyword idlangConditional if else then for while case switch
 syn keyword idlangConditional endcase endelse endfor endswitch
@@ -82,7 +83,7 @@ syn keyword idlangRoutine CALL_EXTERNAL CALL_FUNCTION CALL_METHOD
 syn keyword idlangRoutine CALL_PROCEDURE CATCH CD CEIL CHEBYSHEV CHECK_MATH
 syn keyword idlangRoutine CHISQR_CVF CHISQR_PDF CHOLDC CHOLSOL CINDGEN
 syn keyword idlangRoutine CIR_3PNT CLOSE CLUST_WTS CLUSTER COLOR_CONVERT
-syn keyword idlangRoutine COLOR_QUAN COLORMAP_APPLICABLE COMFIT COMMON
+syn keyword idlangRoutine COLOR_QUAN COLORMAP_APPLICABLE COMFIT
 syn keyword idlangRoutine COMPLEX COMPLEXARR COMPLEXROUND
 syn keyword idlangRoutine COMPUTE_MESH_NORMALS COND CONGRID CONJ
 syn keyword idlangRoutine CONSTRAINED_MIN CONTOUR CONVERT_COORD CONVOL
@@ -98,7 +99,7 @@ syn keyword idlangRoutine CW_PALETTE_EDITOR_GET CW_PALETTE_EDITOR_SET
 syn keyword idlangRoutine CW_PDMENU CW_RGBSLIDER CW_TMPL CW_ZOOM DBLARR
 syn keyword idlangRoutine DCINDGEN DCOMPLEX DCOMPLEXARR DEFINE_KEY DEFROI
 syn keyword idlangRoutine DEFSYSV DELETE_SYMBOL DELLOG DELVAR DERIV DERIVSIG
-syn keyword idlangRoutine DETERM DEVICE DFPMIN DIALOG_MESSAGE
+syn keyword idlangRoutine DETERM DEVICE DFPMIN DIAG_MATRIX DIALOG_MESSAGE
 syn keyword idlangRoutine DIALOG_PICKFILE DIALOG_PRINTERSETUP
 syn keyword idlangRoutine DIALOG_PRINTJOB DIALOG_READ_IMAGE
 syn keyword idlangRoutine DIALOG_WRITE_IMAGE DIGITAL_FILTER DILATE DINDGEN
@@ -155,7 +156,7 @@ syn keyword idlangRoutine MPEG_PUT MPEG_SAVE MSG_CAT_CLOSE MSG_CAT_COMPILE
 syn keyword idlangRoutine MSG_CAT_OPEN MULTI N_ELEMENTS N_PARAMS N_TAGS
 syn keyword idlangRoutine NEWTON NORM OBJ_CLASS OBJ_DESTROY OBJ_ISA OBJ_NEW
 syn keyword idlangRoutine OBJ_VALID OBJARR ON_ERROR ON_IOERROR ONLINE_HELP
-syn keyword idlangRoutine OPEN OPENR OPENW OPLOT OPLOTERR P_CORRELATE
+syn keyword idlangRoutine OPEN OPENR OPENW OPENU OPLOT OPLOTERR P_CORRELATE
 syn keyword idlangRoutine PARTICLE_TRACE PCOMP PLOT PLOT_3DBOX PLOT_FIELD
 syn keyword idlangRoutine PLOTERR PLOTS PNT_LINE POINT_LUN POLAR_CONTOUR
 syn keyword idlangRoutine POLAR_SURFACE POLY POLY_2D POLY_AREA POLY_FIT
