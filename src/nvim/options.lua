@@ -9047,7 +9047,7 @@ return {
       desc = [=[
         When on, the title of the window will be set to the value of
         'titlestring' (if it is not empty), or to:
-        	filename [+=-] (path) - NVIM
+        	filename [+=-] (path) - Nvim
         Where:
         	filename	the name of the file being edited
         	-		indicates the file cannot be modified, 'ma' off
@@ -9055,11 +9055,11 @@ return {
         	=		indicates the file is read-only
         	=+		indicates the file is read-only and modified
         	(path)		is the path of the file being edited
-        	- NVIM		the server name |v:servername| or "NVIM"
+        	- Nvim		the server name |v:servername| or "Nvim"
       ]=],
       full_name = 'title',
       scope = { 'global' },
-      short_desc = N_('Vim set the title of the window'),
+      short_desc = N_('set the title of the window'),
       type = 'boolean',
       varname = 'p_title',
     },
