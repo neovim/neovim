@@ -3338,7 +3338,7 @@ void maketitle(void)
 
 #define SPACE_FOR_FNAME (sizeof(buf) - 100)
 #define SPACE_FOR_DIR   (sizeof(buf) - 20)
-#define SPACE_FOR_ARGNR (sizeof(buf) - 10)  // At least room for " - NVIM".
+#define SPACE_FOR_ARGNR (sizeof(buf) - 10)  // At least room for " - Nvim".
       char *buf_p = buf;
       if (curbuf->b_fname == NULL) {
         const size_t size = xstrlcpy(buf_p, _("[No Name]"),
@@ -3412,7 +3412,7 @@ void maketitle(void)
 
       append_arg_number(curwin, buf_p, (int)(SPACE_FOR_ARGNR - (size_t)(buf_p - buf)));
 
-      xstrlcat(buf_p, " - NVIM", (sizeof(buf) - (size_t)(buf_p - buf)));
+      xstrlcat(buf_p, " - Nvim", (sizeof(buf) - (size_t)(buf_p - buf)));
 
       if (maxlen > 0) {
         // Make it shorter by removing a bit in the middle.
