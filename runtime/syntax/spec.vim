@@ -4,6 +4,7 @@
 " Maintainer:  Igor Gnatenko i.gnatenko.brain@gmail.com
 " Former Maintainer:  Donovan Rebbechi elflord@panix.com (until March 2014)
 " Last Change: 2020 May 25
+"  2024 Sep 10 by Vim Project: add file triggers support, #15569
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -111,7 +112,7 @@ syn region specDescriptionArea matchgroup=specSection start='^%description' end=
 syn region specPackageArea matchgroup=specSection start='^%package' end='^%'me=e-1 contains=specPackageOpts,specPreAmble,specComment
 
 "%% Scripts Section %%
-syn region specScriptArea matchgroup=specSection start='^%\(prep\|generate_buildrequires\|conf\|build\|install\|clean\|check\|pre\|postun\|preun\|post\|posttrans\)\>' skip='^%{\|^%\(define\|patch\d*\|configure\|GNUconfigure\|setup\|autosetup\|autopatch\|find_lang\|make_build\|makeinstall\|make_install\)\>' end='^%'me=e-1 contains=specSpecialVariables,specVariables,@specCommands,specVariables,shDo,shFor,shCaseEsac,specNoNumberHilite,specCommandOpts,shComment,shIf,specSpecialChar,specMacroIdentifier,specSectionMacroArea,specSectionMacroBracketArea,shOperator,shQuote1,shQuote2
+syn region specScriptArea matchgroup=specSection start='^%\(prep\|generate_buildrequires\|conf\|build\|install\|clean\|check\|pre\|postun\|preun\|post\|posttrans\|filetriggerin\|filetriggerun\|filetriggerpostun\|transfiletriggerin\|transfiletriggerun\|transfiletriggerpostun\)\>' skip='^%{\|^%\(define\|patch\d*\|configure\|GNUconfigure\|setup\|autosetup\|autopatch\|find_lang\|make_build\|makeinstall\|make_install\)\>' end='^%'me=e-1 contains=specSpecialVariables,specVariables,@specCommands,specVariables,shDo,shFor,shCaseEsac,specNoNumberHilite,specCommandOpts,shComment,shIf,specSpecialChar,specMacroIdentifier,specSectionMacroArea,specSectionMacroBracketArea,shOperator,shQuote1,shQuote2
 
 "%% Changelog Section %%
 syn region specChangelogArea matchgroup=specSection start='^%changelog' end='^%'me=e-1 contains=specEmail,specURL,specWeekday,specMonth,specNumber,specComment,specLicense
