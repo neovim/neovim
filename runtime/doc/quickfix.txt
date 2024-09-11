@@ -1262,6 +1262,7 @@ not "b:current_compiler".  What the command actually does is the following:
 
 For writing a compiler plugin, see |write-compiler-plugin|.
 
+Use the |compiler-make| plugin to undo the effect of a compiler plugin.
 
 DOTNET							*compiler-dotnet*
 
@@ -1277,7 +1278,6 @@ Example: limit output to only display errors, and suppress the project name: >
 	let dotnet_show_project_file = v:false
 	compiler dotnet
 <
-
 GCC					*quickfix-gcc*	*compiler-gcc*
 
 There's one variable you can set for the GCC compiler:
@@ -1294,6 +1294,13 @@ Commonly used compiler options can be added to 'makeprg' by setting the
 g:javac_makeprg_params variable.  For example: >
 	let g:javac_makeprg_params = "-Xlint:all -encoding utf-8"
 <
+GNU MAKE						*compiler-make*
+
+Since the default make program is "make", the compiler plugin for make,
+:compiler make, will reset the 'makeprg' and 'errorformat' option to
+the default values and unlet any variables that may have been set by a
+previous compiler plugin.
+
 GROFF					*quickfix-groff* *compiler-groff*
 
 The GROFF compiler plugin uses the mom macro set (documented in the groff_mom
