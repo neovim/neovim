@@ -4,6 +4,8 @@ They are used with the ":compiler" command.
 These scripts usually set options, for example 'errorformat'.
 See ":help write-compiler-plugin".
 
+To undo the effect of a compiler plugin, use the make compiler plugin.
+
 If you want to write your own compiler plugin, have a look at the other files
 for how to do it, the format is simple.
 
