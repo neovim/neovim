@@ -40,11 +40,22 @@ describe(':checkhealth', function()
     matches('ERROR $VIM .* zub', curbuf_contents())
   end)
 
-  it('completions can be listed via getcompletion()', function()
-    clear()
+  it('getcompletion()', function()
+    clear { args = { '-u', 'NORC', '+set runtimepath+=test/functional/fixtures' } }
+
     eq('vim.deprecated', getcompletion('vim', 'checkhealth')[1])
     eq('vim.provider', getcompletion('vim.prov', 'checkhealth')[1])
     eq('vim.lsp', getcompletion('vim.ls', 'checkhealth')[1])
+
+    -- "test_plug/health/init.lua" should complete as "test_plug", not "test_plug.health". #30342
+    eq({
+      'test_plug',
+      'test_plug.full_render',
+      'test_plug.submodule',
+      'test_plug.submodule_empty',
+      'test_plug.success1',
+      'test_plug.success2',
+    }, getcompletion('test_plug', 'checkhealth'))
   end)
 
   it('completion checks for vim.health._complete() return type #28456', function()
@@ -57,11 +68,9 @@ describe(':checkhealth', function()
   end)
 end)
 
-describe('health.vim', function()
+describe('vim.health', function()
   before_each(function()
-    clear { args = { '-u', 'NORC' } }
-    -- Provides healthcheck functions
-    command('set runtimepath+=test/functional/fixtures')
+    clear { args = { '-u', 'NORC', '+set runtimepath+=test/functional/fixtures' } }
   end)
 
   describe(':checkhealth', function()
@@ -207,9 +216,7 @@ end)
 
 describe(':checkhealth window', function()
   before_each(function()
-    clear { args = { '-u', 'NORC' } }
-    -- Provides healthcheck functions
-    command('set runtimepath+=test/functional/fixtures')
+    clear { args = { '-u', 'NORC', '+set runtimepath+=test/functional/fixtures' } }
     command('set nofoldenable nowrap laststatus=0')
   end)
 

@@ -285,8 +285,8 @@ local path2name = function(path)
     -- Remove everything up to the last /lua/ folder
     path = path:gsub('^.*/lua/', '')
 
-    -- Remove the filename (health.lua)
-    path = vim.fs.dirname(path)
+    -- Remove the filename (health.lua) or (health/init.lua)
+    path = vim.fs.dirname(path:gsub('/init%.lua$', ''))
 
     -- Change slashes to dots
     path = path:gsub('/', '.')
