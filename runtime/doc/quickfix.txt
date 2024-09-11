@@ -1294,6 +1294,17 @@ Commonly used compiler options can be added to 'makeprg' by setting the
 g:javac_makeprg_params variable.  For example: >
 	let g:javac_makeprg_params = "-Xlint:all -encoding utf-8"
 <
+GROFF					*quickfix-groff* *compiler-groff*
+
+The GROFF compiler plugin uses the mom macro set (documented in the groff_mom
+manpage) as input and expects that the output file type extension is passed to
+make, say :make html or :make pdf.
+
+Additional arguments can be passed to groff by setting them in
+`b:groff_compiler_args` or `g:groff_compiler_args`. The `language` argument
+passed to groff is set using 'spelllang'; it can be overridden by setting
+`b:groff_compiler_lang`. The default enconding is `UTF-8` and can be changed
+by setting `b:groff_compiler_encoding` or `g:groff_compiler_encoding`.
 
 PANDOC					*quickfix-pandoc* *compiler-pandoc*
 
