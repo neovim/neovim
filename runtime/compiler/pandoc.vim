@@ -1,10 +1,12 @@
 " Vim compiler file
 " Compiler:     Pandoc
 " Maintainer:   Konfekt
-" Last Change:	2024 Aug 20
+" Last Change:	2024 Sep 8
 "
 " Expects output file extension, say `:make html` or `:make pdf`.
 " Passes additional arguments to pandoc, say `:make html --self-contained`.
+" Adjust command-line flags by buffer-local/global variable
+" b/g:pandoc_compiler_args which defaults to empty.
 
 if exists("current_compiler")
   finish
@@ -40,18 +42,21 @@ silent! function s:PandocFiletype(filetype) abort
   endif
 endfunction
 
-let b:pandoc_compiler_from = get(b:, 'pandoc_compiler_from', s:PandocFiletype(&filetype))
-let b:pandoc_compiler_lang = get(b:, 'pandoc_compiler_lang', &spell ? matchstr(&spelllang, '^\a\a') : '')
+silent! function s:PandocLang()
+  let lang = get(b:, 'pandoc_compiler_lang',
+      \ &spell ? matchstr(&spelllang, '^\a\a') : '')
+  if lang ==# 'en' | let lang = '' | endif
+  return empty(lang) ? '' : '--metadata lang='..lang
+endfunction
 
 execute 'CompilerSet makeprg=pandoc'..escape(
-      \ ' --standalone' .
-      \ (b:pandoc_compiler_from ==# 'markdown' && (getline(1) =~# '^%\s\+\S\+' || (search('^title:\s+\S+', 'cnw') > 0)) ?
-      \ '' : ' --metadata title=%:t:r:S') .
-      \ (empty(b:pandoc_compiler_lang) ?
-      \ '' : ' --metadata lang='..b:pandoc_compiler_lang) .
-      \ ' --from='..b:pandoc_compiler_from .
-      \ ' '..get(b:, 'pandoc_compiler_args', get(g:, 'pandoc_compiler_args', '')) .
-      \ ' --output %:r:S.$* -- %:S', ' ')
+    \ ' --standalone'..
+    \ (s:PandocFiletype(&filetype) ==# 'markdown' && (getline(1) =~# '^%\s\+\S\+' || (search('^title:\s+\S+', 'cnw') > 0)) ?
+    \ '' : ' --metadata title=%:t:r:S')..
+    \ ' '..s:PandocLang()..
+    \ ' --from='..s:PandocFiletype(&filetype)..
+    \ ' '..get(b:, 'pandoc_compiler_args', get(g:, 'pandoc_compiler_args', ''))..
+    \ ' --output %:r:S.$* -- %:S', ' ')
 CompilerSet errorformat=\"%f\",\ line\ %l:\ %m
 
 let &cpo = s:keepcpo

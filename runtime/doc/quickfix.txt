@@ -1318,8 +1318,7 @@ Additional arguments can be passed to pandoc:
 
 The `--from` argument is an educated guess using the buffer file type;
 it can be overridden by setting `b:pandoc_compiler_from`.
-Likewise the `--metadata lang` argument is set using `&spelllang`;
-it can be overridden by setting `b:pandoc_compiler_lang`.
+The `--metadata lang` argument is set using 'spelllang';
 If `--from=markdown` is assumed and no title set in a title header or
 YAML block, then the filename (without extension) is used as the title.
 
