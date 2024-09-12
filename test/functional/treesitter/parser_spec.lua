@@ -972,4 +972,87 @@ print()
       )
     end)
   end)
+
+  it('option reload works', function()
+    eq(
+      true,
+      exec_lua('return vim.treesitter.get_parser(0, "lua") == vim.treesitter.get_parser(0, "lua")')
+    )
+    eq(
+      false,
+      exec_lua(
+        'return vim.treesitter.get_parser(0, "lua") == vim.treesitter.get_parser(0, "lua", {reload=true})'
+      )
+    )
+  end)
+
+  it('reloading parser refreshes queries', function()
+    local plug_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname()) .. '/pluginXXXXXX')
+    local query_dir = plug_dir .. '/queries/lua'
+
+    exec_lua('vim.fn.mkdir(..., "p")', query_dir)
+
+    t.write_file(
+      query_dir .. '/injections.scm',
+      [[;; extends
+        (string
+          content: _ @injection.content
+          (#lua-match? @injection.content "^TEST_INJ")
+          (#set! injection.language "c"))
+      ]]
+    )
+
+    t.write_file(
+      query_dir .. '/highlights.scm',
+      [[;; extends
+        ((identifier) @testcapture
+          (#eq? @testcapture "s"))
+      ]]
+    )
+
+    insert([[local s = "TEST_INJ testtest"]])
+
+    local function get_langs()
+      return exec_lua([[
+        local langs = {}
+        local parser = vim.treesitter.get_parser(0, "lua")
+        parser:for_each_tree(function(tstree, tree)
+          table.insert(langs, tree:lang())
+        end)
+        return langs
+      ]])
+    end
+
+    local function get_captures()
+      return exec_lua([[
+        local captures = {}
+        for cap in vim.iter(vim.treesitter.get_captures_at_pos(0, 0, 6)) do
+          table.insert(captures, cap.capture)
+        end
+        return captures
+      ]])
+    end
+
+    -- load queries and then change rtp
+    exec_lua(
+      [[
+      vim.cmd "syntax on"
+      vim.treesitter.start(0, "lua")
+      vim.treesitter.highlighter.active[vim.api.nvim_get_current_buf()]:get_query("lua")
+      vim.opt.rtp:append(...)
+    ]],
+      plug_dir
+    )
+
+    eq({ 'lua' }, get_langs())
+    eq({ 'variable' }, get_captures())
+
+    -- reload parser, which should load new queries from `plug_dir`
+    exec_lua [[
+      vim.treesitter.get_parser(0, "lua", { reload = true }):parse(true)
+    ]]
+
+    eq({ 'lua', 'c' }, get_langs())
+    eq({ 'variable', 'testcapture' }, get_captures())
+  end)
 end)

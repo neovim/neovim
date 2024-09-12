@@ -228,6 +228,23 @@ M.get = memoize('concat-2', function(lang, query_name)
   return M.parse(lang, query_string)
 end)
 
+---@nodoc
+---Resets query cache
+---if `lang` given - resets only for lang
+---if `query_name` given - resets only specific query
+---
+---@param lang? string
+---@param query_name? string
+function M._reset_cache(lang, query_name)
+  if lang and query_name == nil then
+    for name in vim.iter({ 'injections', 'highlights', 'folds' }) do
+      M.get._reset_cache(lang, name)
+    end
+  else
+    M.get._reset_cache(lang, query_name)
+  end
+end
+
 --- Parse {query} as a string. (If the query is in a file, the caller
 --- should read the contents into a string before calling).
 ---

@@ -816,7 +816,7 @@ get_node_text({node}, {source}, {opts})
 get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
     Returns the parser for a specific buffer and attaches it to the buffer
 
-    If needed, this will create the parser.
+    This will create the parser if needed or if passed `opts.reload = true`
 
     Parameters: ~
       • {bufnr}  (`integer?`) Buffer the parser should be tied to (default:
