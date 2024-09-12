@@ -189,7 +189,8 @@ TREESITTER
 
 TUI
 
-• TODO
+• |log| messages written by the builtin UI client (TUI, |--remote-ui|) are
+  now prefixed with "ui" instead of "?".
 
 UI
 

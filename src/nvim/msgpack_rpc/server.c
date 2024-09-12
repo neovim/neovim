@@ -53,7 +53,7 @@ bool server_init(const char *listen_addr)
 
   int rv = server_start(listen_addr);
 
-  // TODO(justinmk): this is for logging_spec. Can remove this after nvim_log #7062 is merged.
+  // TODO(justinmk): this is for log_spec. Can remove this after nvim_log #7062 is merged.
   if (os_env_exists("__NVIM_TEST_LOG")) {
     ELOG("test log message");
   }
