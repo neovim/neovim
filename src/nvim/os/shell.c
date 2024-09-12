@@ -1292,7 +1292,7 @@ static void shell_write_cb(Stream *stream, void *data, int status)
     msg_schedule_semsg(_("E5677: Error writing input to shell-command: %s"),
                        uv_err_name(status));
   }
-  stream_close(stream, NULL, NULL, false);
+  stream_may_close(stream, false);
 }
 
 /// Applies 'shellxescape' (p_sxe) and 'shellxquote' (p_sxq) to a command.
