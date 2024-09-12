@@ -710,7 +710,7 @@ func s:GetFilenameChecks() abort
     \ 'svg': ['file.svg'],
     \ 'svn': ['svn-commitfile.tmp', 'svn-commit-file.tmp', 'svn-commit.tmp'],
     \ 'swayconfig': ['/home/user/.sway/config', '/home/user/.config/sway/config', '/etc/sway/config', '/etc/xdg/sway/config'],
-    \ 'swift': ['file.swift'],
+    \ 'swift': ['file.swift', 'file.swiftinterface'],
     \ 'swiftgyb': ['file.swift.gyb'],
     \ 'swig': ['file.swg', 'file.swig'],
     \ 'sysctl': ['/etc/sysctl.conf', '/etc/sysctl.d/file.conf', 'any/etc/sysctl.conf', 'any/etc/sysctl.d/file.conf'],
