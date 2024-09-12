@@ -67,6 +67,7 @@ end
 --- This state is kept during rendering across each line update.
 ---@field private _highlight_states vim.treesitter.highlighter.State[]
 ---@field private _queries table<string,vim.treesitter.highlighter.Query>
+---@field private _max_loop_time integer? Maximum loop time in ms to use when parsing
 ---@field tree vim.treesitter.LanguageTree
 ---@field private redraw_count integer
 local TSHighlighter = {
@@ -75,6 +76,18 @@ local TSHighlighter = {
 
 TSHighlighter.__index = TSHighlighter
 
+---@param range boolean|Range?
+function TSHighlighter:_parse(range)
+  range = range and { range = range }
+  self.tree:parse(range, {
+    max_loop_time = self._max_loop_time,
+  })
+end
+
+---@class TSHighlighterOpts
+---@field queries table<string,string>?
+---@field max_loop_time integer?
+
 ---@nodoc
 ---
 --- Creates a highlighter for `tree`.
@@ -82,6 +95,7 @@ TSHighlighter.__index = TSHighlighter
 ---@param tree vim.treesitter.LanguageTree parser object to use for highlighting
 ---@param opts (table|nil) Configuration of the highlighter:
 ---           - queries table overwrite queries used by the highlighter
+---           - max_loop_time integer Maximum loop time to use in ms for parsing.
 ---@return vim.treesitter.highlighter Created highlighter object
 function TSHighlighter.new(tree, opts)
   local self = setmetatable({}, TSHighlighter)
@@ -90,7 +104,9 @@ function TSHighlighter.new(tree, opts)
     error('TSHighlighter can not be used with a string parser source.')
   end
 
-  opts = opts or {} ---@type { queries: table<string,string> }
+  ---@type TSHighlighterOpts
+  opts = opts or {}
+
   self.tree = tree
   tree:register_cbs({
     on_bytes = function(...)
@@ -119,6 +135,7 @@ function TSHighlighter.new(tree, opts)
   self.redraw_count = 0
   self._highlight_states = {}
   self._queries = {}
+  self._max_loop_time = opts.max_loop_time
 
   -- Queries for a specific language can be overridden by a custom
   -- string query... if one is not provided it will be looked up by file.
@@ -150,7 +167,7 @@ function TSHighlighter.new(tree, opts)
     vim.opt_local.spelloptions:append('noplainbuffer')
   end)
 
-  self.tree:parse()
+  self:_parse()
 
   return self
 end
@@ -401,7 +418,7 @@ function TSHighlighter._on_win(_, _win, buf, topline, botline)
   if not self then
     return false
   end
-  self.tree:parse({ topline, botline + 1 })
+  self:_parse({ topline, botline + 1 })
   self:prepare_highlight_states(topline, botline + 1)
   self.redraw_count = self.redraw_count + 1
   return true
