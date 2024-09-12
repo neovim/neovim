@@ -45,6 +45,11 @@
   (link_destination) @_url
   (#set! @_label url @_url))
 
+(image
+  (image_description) @_label
+  (link_destination) @_url
+  (#set! @_label url @_url))
+
 ; Conceal image links
 (image
   [
