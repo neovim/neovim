@@ -154,8 +154,9 @@ describe('startup', function()
 
     it('failure modes', function()
       -- nvim -l <empty>
-      matches('nvim%.?e?x?e?: Argument missing after: "%-l"', fn.system({ nvim_prog, '-l' }))
-      eq(1, eval('v:shell_error'))
+      local proc = n.spawn_wait('-l')
+      matches('nvim%.?e?x?e?: Argument missing after: "%-l"', proc.stderr)
+      eq(1, proc.status)
     end)
 
     it('os.exit() sets Nvim exitcode', function()
@@ -182,12 +183,11 @@ describe('startup', function()
     end)
 
     it('Lua-error sets Nvim exitcode', function()
+      local proc = n.spawn_wait('-l', 'test/functional/fixtures/startup-fail.lua')
+      matches('E5113: .* my pearls!!', proc.output)
+      eq(1, proc.status)
+
       eq(0, eval('v:shell_error'))
-      matches(
-        'E5113: .* my pearls!!',
-        fn.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' })
-      )
-      eq(1, eval('v:shell_error'))
       matches(
         'E5113: .* %[string "error%("whoa"%)"%]:1: whoa',
         fn.system({ nvim_prog, '-l', '-' }, 'error("whoa")')

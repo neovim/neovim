@@ -4,7 +4,7 @@ local t = require('test.testutil')
 local Session = require('test.client.session')
 local uv_stream = require('test.client.uv_stream')
 local SocketStream = uv_stream.SocketStream
-local ChildProcessStream = uv_stream.ChildProcessStream
+local ProcStream = uv_stream.ProcStream
 
 local check_cores = t.check_cores
 local check_logs = t.check_logs
@@ -465,10 +465,12 @@ function M.check_close()
   session = nil
 end
 
+--- Starts `argv` process as a Nvim msgpack-RPC session.
+---
 --- @param argv string[]
 --- @param merge boolean?
 --- @param env string[]?
---- @param keep boolean?
+--- @param keep boolean? Don't close the current global session.
 --- @param io_extra uv.uv_pipe_t? used for stdin_fd, see :help ui-option
 --- @return test.Session
 function M.spawn(argv, merge, env, keep, io_extra)
@@ -476,9 +478,8 @@ function M.spawn(argv, merge, env, keep, io_extra)
     M.check_close()
   end
 
-  local child_stream =
-    ChildProcessStream.spawn(merge and M.merge_args(prepend_argv, argv) or argv, env, io_extra)
-  return Session.new(child_stream)
+  local proc = ProcStream.spawn(merge and M.merge_args(prepend_argv, argv) or argv, env, io_extra)
+  return Session.new(proc)
 end
 
 -- Creates a new Session connected by domain socket (named pipe) or TCP.
@@ -489,29 +490,57 @@ function M.connect(file_or_address)
   return Session.new(stream)
 end
 
--- Starts (and returns) a new global Nvim session.
---
--- Parameters are interpreted as startup args, OR a map with these keys:
---    args:       List: Args appended to the default `nvim_argv` set.
---    args_rm:    List: Args removed from the default set. All cases are
---                removed, e.g. args_rm={'--cmd'} removes all cases of "--cmd"
---                (and its value) from the default set.
---    env:        Map: Defines the environment of the new session.
---
--- Example:
---    clear('-e')
---    clear{args={'-e'}, args_rm={'-i'}, env={TERM=term}}
+--- Starts (and returns) a new global Nvim session.
+---
+--- Use `spawn_argv()` to get a new session without replacing the current global session.
+---
+--- Parameters are interpreted as startup args, OR a map with these keys:
+--- - args:       List: Args appended to the default `nvim_argv` set.
+--- - args_rm:    List: Args removed from the default set. All cases are
+---               removed, e.g. args_rm={'--cmd'} removes all cases of "--cmd"
+---               (and its value) from the default set.
+--- - env:        Map: Defines the environment of the new session.
+---
+--- Example:
+--- ```
+--- clear('-e')
+--- clear{args={'-e'}, args_rm={'-i'}, env={TERM=term}}
+--- ```
+---
+--- @param ... string Nvim CLI args
+--- @return test.Session
+--- @overload fun(opts: test.new_argv.Opts): test.Session
 function M.clear(...)
   M.set_session(M.spawn_argv(false, ...))
   return M.get_session()
 end
 
---- same params as clear, but does returns the session instead
---- of replacing the default session
+--- Same as clear(), but doesn't replace the current global session.
+---
+--- @param keep boolean Don't close the current global session.
+--- @param ... string Nvim CLI args
 --- @return test.Session
+--- @overload fun(opts: test.new_argv.Opts): test.Session
 function M.spawn_argv(keep, ...)
   local argv, env, io_extra = M.new_argv(...)
   return M.spawn(argv, nil, env, keep, io_extra)
+end
+
+--- Starts a (`--headless`, non-RPC) Nvim process, waits for exit, and returns output + info.
+---
+--- @param ... string Nvim CLI args
+--- @return test.ProcStream
+--- @overload fun(opts: test.new_argv.Opts): test.ProcStream
+function M.spawn_wait(...)
+  local opts = type(...) == 'string' and { args = { ... } } or ...
+  opts.args_rm = opts.args_rm and opts.args_rm or {}
+  table.insert(opts.args_rm, '--embed')
+  local argv, env, io_extra = M.new_argv(opts)
+  local proc = ProcStream.spawn(argv, env, io_extra)
+  proc:read_start()
+  proc:wait()
+  proc:close()
+  return proc
 end
 
 --- @class test.new_argv.Opts
@@ -522,11 +551,11 @@ end
 
 --- Builds an argument list for use in clear().
 ---
---- @see clear() for parameters.
---- @param ... string
+--- @param ... string See clear().
 --- @return string[]
 --- @return string[]?
 --- @return uv.uv_pipe_t?
+--- @overload fun(opts: test.new_argv.Opts): string[], string[]?, uv.uv_pipe_t?
 function M.new_argv(...)
   local args = { unpack(M.nvim_argv) }
   table.insert(args, '--headless')
