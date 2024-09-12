@@ -1164,6 +1164,7 @@ local extension = {
   svelte = 'svelte',
   svg = 'svg',
   swift = 'swift',
+  swiftinterface = 'swift',
   swig = 'swig',
   swg = 'swig',
   sys = detect.sys,
