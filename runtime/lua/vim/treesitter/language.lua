@@ -7,7 +7,7 @@ local ft_to_lang = {
   help = 'vimdoc',
 }
 
---- Get the filetypes associated with the parser named {lang}.
+--- Get the filetypes associated with the registered parser named {lang}.
 --- @param lang string Name of parser
 --- @return string[] filetypes
 function M.get_filetypes(lang)
@@ -20,6 +20,7 @@ function M.get_filetypes(lang)
   return r
 end
 
+--- Get the registered parser name associated with the provided filetype.
 --- @param filetype string
 --- @return string|nil
 function M.get_lang(filetype)

@@ -970,7 +970,7 @@ add({lang}, {opts})                            *vim.treesitter.language.add()*
                   language to load
 
 get_filetypes({lang})                *vim.treesitter.language.get_filetypes()*
-    Get the filetypes associated with the parser named {lang}.
+    Get the filetypes associated with the registered parser named {lang}.
 
     Parameters: ~
       • {lang}  (`string`) Name of parser
@@ -979,6 +979,7 @@ get_filetypes({lang})                *vim.treesitter.language.get_filetypes()*
         (`string[]`) filetypes
 
 get_lang({filetype})                      *vim.treesitter.language.get_lang()*
+    Get the registered parser name associated with the provided filetype.
 
     Parameters: ~
       • {filetype}  (`string`)
