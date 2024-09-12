@@ -184,6 +184,14 @@ describe('startup', function()
     end)
 
     it('Lua-error sets Nvim exitcode', function()
+      -- local proc = luaclient2.new_proc({ nvim_prog, '--listen' })
+      local uv_stream = require('test.client.uv_stream')
+      local ProcStream = uv_stream.ProcStream
+      local proc = ProcStream.spawn({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' })
+      proc:read_start()
+      proc:wait()
+      -- proc:close()
+      eq('x', proc.stdout .. proc.stderr)
       eq(0, eval('v:shell_error'))
       matches(
         'E5113: .* my pearls!!',
