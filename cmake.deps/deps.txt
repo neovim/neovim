@@ -7,8 +7,8 @@ LUAJIT_SHA256 2b5514bd6a6573cb6111b43d013e952cbaf46762d14ebe26c872ddb80b5a84e0
 LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz
 LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 
-UNIBILIUM_URL https://github.com/neovim/unibilium/archive/ab28a2ddb86a144194a798bcf1fef1ab4f981ab7.tar.gz
-UNIBILIUM_SHA256 7c0386fc48452632868e0dcb8e7ed140d67a3da79e39ceee54c1ba7a495ad625
+UNIBILIUM_URL https://github.com/neovim/unibilium/archive/v2.1.2.tar.gz
+UNIBILIUM_SHA256 370ecb07fbbc20d91d1b350c55f1c806b06bf86797e164081ccc977fc9b3af7a
 
 LUV_URL https://github.com/luvit/luv/releases/download/1.48.0-2/luv-1.48.0-2.tar.gz
 LUV_SHA256 2c3a1ddfebb4f6550293a40ee789f7122e97647eede51511f57203de48c03b7a
