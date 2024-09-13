@@ -90,6 +90,7 @@ struct qfline_S {
   int qf_col;             ///< column where the error occurred
   int qf_end_col;         ///< column when the error has range or zero
   int qf_nr;              ///< error number
+  char *qf_fname;         ///< filename for the line
   char *qf_module;        ///< module name for this error
   char *qf_pattern;       ///< search pattern for the error
   char *qf_text;          ///< description of the error
@@ -1867,6 +1868,7 @@ static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, in
                         char valid)
 {
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
+  char *p = NULL;
 
   if (bufnum != 0) {
     buf_T *buf = buflist_findnr(bufnum);
@@ -1878,6 +1880,11 @@ static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, in
     }
   } else {
     qfp->qf_fnum = qf_get_fnum(qfl, dir, fname);
+  }
+  p = path_try_shorten_fname(fname);
+  qfp->qf_fname = NULL;
+  if (p != NULL) {
+    qfp->qf_fname = xstrdup(p);
   }
   qfp->qf_text = xstrdup(mesg);
   qfp->qf_lnum = lnum;
@@ -3145,7 +3152,11 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
     buf_T *buf;
     if (qfp->qf_fnum != 0
         && (buf = buflist_findnr(qfp->qf_fnum)) != NULL) {
-      fname = buf->b_fname;
+      if (qfp->qf_fname == NULL) {
+        fname = buf->b_fname;
+      } else {
+        fname = qfp->qf_fname;
+      }
       if (qfp->qf_type == 1) {  // :helpgrep
         fname = path_tail(fname);
       }
@@ -3432,6 +3443,7 @@ static void qf_free_items(qf_list_T *qfl)
     qfline_T *qfpnext = qfp->qf_next;
     if (!stop) {
       xfree(qfp->qf_module);
+      xfree(qfp->qf_fname);
       xfree(qfp->qf_text);
       xfree(qfp->qf_pattern);
       tv_clear(&qfp->qf_user_data);
@@ -4059,7 +4071,11 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
           }
           shorten_buf_fname(errbuf, dirname, false);
         }
-        ga_concat(gap, errbuf->b_fname);
+        if (qfp->qf_fname == NULL) {
+          ga_concat(gap, errbuf->b_fname);
+        } else {
+          ga_concat(gap, qfp->qf_fname);
+        }
       }
     }
 
