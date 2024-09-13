@@ -114,7 +114,7 @@ local function compute_folds_levels(bufnr, info, srow, erow, parse_injections)
   srow = srow or 0
   erow = erow or api.nvim_buf_line_count(bufnr)
 
-  local parser = ts.get_parser(bufnr)
+  local parser = assert(ts._get_parser(bufnr))
 
   parser:parse(parse_injections and { srow, erow } or nil)
 
@@ -392,7 +392,7 @@ function M.foldexpr(lnum)
   lnum = lnum or vim.v.lnum
   local bufnr = api.nvim_get_current_buf()
 
-  local parser = vim.F.npcall(ts.get_parser, bufnr)
+  local parser = ts._get_parser(bufnr)
   if not parser then
     return '0'
   end
