@@ -5,7 +5,7 @@ on:
   workflow_call:
 jobs:
   request-reviewer:
-    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false && !endsWith(github.actor, '[bot]')
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
