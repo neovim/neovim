@@ -684,7 +684,7 @@ function Client:_request(method, params, handler, bufnr)
       params = params,
       version = version,
     }
-    handler(err, result, context)
+    pcall(handler, err, result, context)
   end, function(request_id)
     local request = self.requests[request_id]
     request.type = 'complete'
