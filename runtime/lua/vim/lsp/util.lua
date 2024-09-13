@@ -154,7 +154,7 @@ end
 ---@param encoding string utf-8|utf-16|utf-32| defaults to utf-16
 ---@return integer byte (utf-8) index of `encoding` index `index` in `line`
 function M._str_byteindex_enc(line, index, encoding)
-  local len = vim.fn.strlen(line)
+  local len = #line
   if index > len then
     -- LSP spec: if character > line length, default to the line length.
     -- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#position
@@ -167,7 +167,7 @@ function M._str_byteindex_enc(line, index, encoding)
     if index then
       return index
     else
-      return #line
+      return len
     end
   elseif encoding == 'utf-16' then
     return vim.str_byteindex(line, index, true)
