@@ -1,7 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local tt = require('test.functional.terminal.testutil')
+local tt = require('test.functional.testterm')
 
 local assert_alive = n.assert_alive
 local feed, clear = n.feed, n.clear
@@ -29,7 +29,7 @@ describe(':terminal buffer', function()
   before_each(function()
     clear()
     command('set modifiable swapfile undolevels=20')
-    screen = tt.screen_setup()
+    screen = tt.setup_screen()
   end)
 
   it('terminal-mode forces various options', function()
@@ -574,7 +574,7 @@ if is_os('win') then
       feed_command('set modifiable swapfile undolevels=20')
       poke_eventloop()
       local cmd = { 'cmd.exe', '/K', 'PROMPT=$g$s' }
-      screen = tt.screen_setup(nil, cmd)
+      screen = tt.setup_screen(nil, cmd)
     end)
 
     it('"put" operator sends data normally', function()

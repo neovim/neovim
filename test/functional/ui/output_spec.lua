@@ -1,7 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local tt = require('test.functional.terminal.testutil')
+local tt = require('test.functional.testterm')
 
 local assert_alive = n.assert_alive
 local mkdir, write_file, rmdir = t.mkdir, t.write_file, n.rmdir

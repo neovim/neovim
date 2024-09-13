@@ -1,6 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
-local tt = require('test.functional.terminal.testutil')
+local tt = require('test.functional.testterm')
 
 local assert_log = t.assert_log
 local clear = n.clear
