@@ -40,6 +40,7 @@ jobs:
             })
 
       - name: Enable automerge
+        if: ${{ steps.backport.outputs.was_successful == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh pr merge --rebase --auto ${{ steps.backport.outputs.created_pull_numbers }}
