@@ -818,6 +818,11 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
 
     If needed, this will create the parser.
 
+    If no parser can be created, an error is thrown. Set `opts.error = false`
+    to suppress this and return nil (and an error message) instead. WARNING:
+    This behavior will become default in Nvim 0.12 and the option will be
+    removed.
+
     Parameters: ~
       • {bufnr}  (`integer?`) Buffer the parser should be tied to (default:
                  current buffer)
@@ -825,8 +830,9 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
                  filetype)
       • {opts}   (`table?`) Options to pass to the created language tree
 
-    Return: ~
-        (`vim.treesitter.LanguageTree`) object to use for parsing
+    Return (multiple): ~
+        (`vim.treesitter.LanguageTree?`) object to use for parsing
+        (`string?`) error message, if applicable
 
 get_range({node}, {source}, {metadata})           *vim.treesitter.get_range()*
     Get the range of a |TSNode|. Can also supply {source} and {metadata} to
