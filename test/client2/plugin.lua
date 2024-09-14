@@ -6,34 +6,34 @@ Plugin.__index = Plugin
 
 local metas = {
   ['function'] = {
-    func = {type = "function", required = true},
-    name = {type = "string", required = true},
-    async = {type = "boolean"},
-    eval = {type = "string"},
+    func = { type = 'function', required = true },
+    name = { type = 'string', required = true },
+    async = { type = 'boolean' },
+    eval = { type = 'string' },
   },
   autocmd = {
-    func = {type = "function", required = true},
-    name = {type = "string", required = true},
-    pattern = {type = "string"},
-    async = {type = "boolean"},
-    group = {type = "string"},
-    nested = {type = "boolean"},
-    eval = {type = "string"},
+    func = { type = 'function', required = true },
+    name = { type = 'string', required = true },
+    pattern = { type = 'string' },
+    async = { type = 'boolean' },
+    group = { type = 'string' },
+    nested = { type = 'boolean' },
+    eval = { type = 'string' },
   },
   command = {
-    func = {type = "function", required = true},
-    name = {type = "string", required = true},
-    async = {type = "boolean"},
-    nargs = {type = "string"},
-    range = {type = "string"},
-    count = {type = "string"},
-    addr = {type = "string"},
-    bang = {type = "boolean"},
-    register = {type = "boolean"},
-    eval = {type = "string"},
-    bar = {type = "boolean"},
-    complete = {type = "string"},
-  }
+    func = { type = 'function', required = true },
+    name = { type = 'string', required = true },
+    async = { type = 'boolean' },
+    nargs = { type = 'string' },
+    range = { type = 'string' },
+    count = { type = 'string' },
+    addr = { type = 'string' },
+    bang = { type = 'boolean' },
+    register = { type = 'boolean' },
+    eval = { type = 'string' },
+    bar = { type = 'boolean' },
+    complete = { type = 'string' },
+  },
 }
 
 local not_spec_opt = { func = true, name = true, async = true }
@@ -58,19 +58,18 @@ local function define(specs, handlers, stype, opts)
       error('missing required option: ' .. k)
     end
   end
-  local method = ':' .. stype .. ':' ..  opts.name
+  local method = ':' .. stype .. ':' .. opts.name
   if stype == 'autocmd' then
     method = method .. ':' .. (opts.pattern or '*')
   end
   handlers[method] = opts.func
-  specs[#specs+1] = {
+  specs[#specs + 1] = {
     type = stype,
     opts = sopts,
     name = opts.name,
     sync = not opts.async,
   }
 end
-
 
 local function new_plugin(dir, nvim)
   local plugin = setmetatable({
@@ -79,8 +78,10 @@ local function new_plugin(dir, nvim)
   }, Plugin)
   plugin.env = setmetatable({
     nvim = nvim,
-    require = function(name) return plugin:require(name) end,
-  }, {__index = _G})
+    require = function(name)
+      return plugin:require(name)
+    end,
+  }, { __index = _G })
   return plugin
 end
 
@@ -91,9 +92,15 @@ function Plugin:load_script(path)
   local specs = {}
   local handlers = {}
   self.env.plugin = {
-    func = function(opts) define(specs, handlers, 'function', opts) end,
-    command = function(opts) define(specs, handlers, 'command', opts) end,
-    autocmd = function(opts) define(specs, handlers, 'autocmd', opts) end,
+    func = function(opts)
+      define(specs, handlers, 'function', opts)
+    end,
+    command = function(opts)
+      define(specs, handlers, 'command', opts)
+    end,
+    autocmd = function(opts)
+      define(specs, handlers, 'autocmd', opts)
+    end,
   }
   assert(pcall(setfenv(assert(loadfile(path)), self.env)))
   if not #specs then
@@ -121,11 +128,17 @@ end
 local function new_host(nvim)
   local host = setmetatable({
     nvim = nvim,
-    plugins = {}
+    plugins = {},
   }, Host)
   nvim.handlers = setmetatable({
-    specs = function(scriptfile) return host:get_specs(scriptfile) end,
-  }, {__index = function(_, method) return host:get_handler(method) end})
+    specs = function(scriptfile)
+      return host:get_specs(scriptfile)
+    end,
+  }, {
+    __index = function(_, method)
+      return host:get_handler(method)
+    end,
+  })
   return host
 end
 
@@ -150,7 +163,7 @@ function Host:get_handler(method)
     return nil
   end
   local path = method:sub(1, i + 3)
-  local _, handlers  = self:get_plugin(path):load_script(path)
+  local _, handlers = self:get_plugin(path):load_script(path)
   if handlers == nil then
     return nil
   end
