@@ -262,14 +262,34 @@ func Test_cursorline_callback()
 
       call timer_start(300, 'Func')
   END
-  call writefile(lines, 'Xcul_timer')
+  call writefile(lines, 'Xcul_timer', 'D')
 
   let buf = RunVimInTerminal('-S Xcul_timer', #{rows: 8})
   call TermWait(buf, 310)
   call VerifyScreenDump(buf, 'Test_cursorline_callback_1', {})
 
   call StopVimInTerminal(buf)
-  call delete('Xcul_timer')
+endfunc
+
+func Test_cursorline_screenline_resize()
+  CheckScreendump
+
+  let lines =<< trim END
+      50vnew
+      call setline(1, repeat('xyz ', 30))
+      setlocal number cursorline cursorlineopt=screenline
+      normal! $
+  END
+  call writefile(lines, 'Xcul_screenline_resize', 'D')
+
+  let buf = RunVimInTerminal('-S Xcul_screenline_resize', #{rows: 8})
+  call VerifyScreenDump(buf, 'Test_cursorline_screenline_resize_1', {})
+  call term_sendkeys(buf, ":vertical resize -4\<CR>")
+  call VerifyScreenDump(buf, 'Test_cursorline_screenline_resize_2', {})
+  call term_sendkeys(buf, ":set cpoptions+=n\<CR>")
+  call VerifyScreenDump(buf, 'Test_cursorline_screenline_resize_3', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_cursorline_screenline_update()
