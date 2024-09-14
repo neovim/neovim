@@ -33,7 +33,7 @@ end
 --- Show a table of contents for the help buffer in a loclist
 function M.show_toc()
   local bufnr = vim.api.nvim_get_current_buf()
-  local parser = assert(vim.treesitter._get_parser(bufnr, 'vimdoc'), 'vimdoc parser not found.')
+  local parser = assert(vim.treesitter.get_parser(bufnr, 'vimdoc', { error = false }))
   local query = vim.treesitter.query.parse(
     parser:lang(),
     [[

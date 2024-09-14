@@ -74,15 +74,21 @@ end
 
 --- Returns the parser for a specific buffer and attaches it to the buffer
 ---
---- If needed, this will create the parser. If no parser can be found or created, returns `nil`.
+--- If needed, this will create the parser.
+---
+--- If no parser can be created, an error is thrown. Set `opts.error = false` to suppress this and
+--- return nil (and an error message) instead. WARNING: This behavior will become default in Nvim
+--- 0.12 and the option will be removed.
 ---
 ---@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
 ---@param lang (string|nil) Language of this parser (default: from buffer filetype)
 ---@param opts (table|nil) Options to pass to the created language tree
 ---
----@return vim.treesitter.LanguageTree? object to use for parsing, or `nil` if not found
-function M._get_parser(bufnr, lang, opts)
+---@return vim.treesitter.LanguageTree? object to use for parsing
+---@return string? error message, if applicable
+function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
+  local should_error = opts.error == nil or opts.error
 
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
@@ -94,12 +100,22 @@ function M._get_parser(bufnr, lang, opts)
 
   if not valid_lang(lang) then
     if not parsers[bufnr] then
-      return nil
+      local err_msg =
+        string.format('Parser not found for buffer %s: language could not be determined', bufnr)
+      if should_error then
+        error(err_msg)
+      end
+      return nil, err_msg
     end
   elseif parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
     local parser = vim.F.npcall(M._create_parser, bufnr, lang, opts)
     if not parser then
-      return nil
+      local err_msg =
+        string.format('Parser could not be created for buffer %s and language "%s"', bufnr, lang)
+      if should_error then
+        error(err_msg)
+      end
+      return nil, err_msg
     end
     parsers[bufnr] = parser
   end
@@ -107,29 +123,6 @@ function M._get_parser(bufnr, lang, opts)
   parsers[bufnr]:register_cbs(opts.buf_attach_cbs)
 
   return parsers[bufnr]
-end
-
---- Returns the parser for a specific buffer and attaches it to the buffer
----
---- If needed, this will create the parser.
----
----@param bufnr (integer|nil) Buffer the parser should be tied to (default: current buffer)
----@param lang (string|nil) Language of this parser (default: from buffer filetype)
----@param opts (table|nil) Options to pass to the created language tree
----
----@return vim.treesitter.LanguageTree object to use for parsing
-function M.get_parser(bufnr, lang, opts)
-  -- TODO(ribru17): Remove _get_parser and move that logic back here once the breaking function
-  -- signature change is acceptable.
-  local parser = M._get_parser(bufnr, lang, opts)
-  if not parser then
-    vim.notify_once(
-      'WARNING: vim.treesitter.get_parser will return nil instead of raising an error in Neovim 0.12',
-      vim.log.levels.WARN
-    )
-    error('Parser not found.')
-  end
-  return parser
 end
 
 --- Returns a string parser
@@ -397,7 +390,7 @@ function M.get_node(opts)
 
   local ts_range = { row, col, row, col }
 
-  local root_lang_tree = M._get_parser(bufnr, opts.lang)
+  local root_lang_tree = M.get_parser(bufnr, opts.lang, { error = false })
   if not root_lang_tree then
     return
   end
@@ -430,11 +423,7 @@ end
 ---@param lang (string|nil) Language of the parser (default: from buffer filetype)
 function M.start(bufnr, lang)
   bufnr = bufnr or api.nvim_get_current_buf()
-  local parser = M._get_parser(bufnr, lang)
-  if not parser then
-    vim.notify('No parser for the given buffer.', vim.log.levels.WARN)
-    return
-  end
+  local parser = assert(M.get_parser(bufnr, lang, { error = false }))
   M.highlighter.new(parser)
 end
 
