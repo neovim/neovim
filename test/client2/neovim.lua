@@ -6,16 +6,18 @@ local uvutil = require('test.client2.uvutil')
 local notify = {}
 
 local Nvim = {
-  notify = notify
+  notify = notify,
 }
 
 local Thunk = {}
 Thunk.__index = Thunk
-Thunk.__call = function(self, ...) return self.f(self.a, ...) end
+Thunk.__call = function(self, ...)
+  return self.f(self.a, ...)
+end
 
 local extension_metatables = {}
 
-for name, ext in pairs{buf = 0, win = 1, tabpage = 2} do
+for name, ext in pairs { buf = 0, win = 1, tabpage = 2 } do
   local method_prefix = name .. '_'
   local mt = {
     __index = function(self, k)
@@ -27,25 +29,30 @@ for name, ext in pairs{buf = 0, win = 1, tabpage = 2} do
       if f == nil then
         return nil
       end
-      return setmetatable({f = f, a = self.nvim}, Thunk)
+      return setmetatable({ f = f, a = self.nvim }, Thunk)
     end,
     __eq = function(self, other)
       return self.id == other.id and self.nvim == other.nvim
     end,
     __tostring = function(self)
       return name .. ' ' .. tostring(self.id)
-    end
+    end,
   }
   extension_metatables[ext] = mt
   -- Add constructor method. Example: Nvim:buf(id) --> buf
-  Nvim[name] = function(self, id) return setmetatable({id = id, nvim = self}, mt) end
+  Nvim[name] = function(self, id)
+    return setmetatable({ id = id, nvim = self }, mt)
+  end
 end
-
 
 local Error = {}
 Error.__index = Error
-function Error.new(message) return setmetatable({message=message}, Error) end
-function Error:__tostring() return self.message end
+function Error.new(message)
+  return setmetatable({ message = message }, Error)
+end
+function Error:__tostring()
+  return self.message
+end
 
 -- MsgPack RPC endpoint.
 local Endpoint = {}
@@ -53,26 +60,32 @@ Endpoint.__index = Endpoint
 
 function Endpoint.new(w, r) --> Endpoint
   local nvim = setmetatable({
-    handlers = {}
+    handlers = {},
   }, Nvim)
   local ep = setmetatable({
-      w = w,
-      r = r,
-      closed = false,
-      proc = false,
-    }, Endpoint)
+    w = w,
+    r = r,
+    closed = false,
+    proc = false,
+  }, Endpoint)
 
   ep.nvim = nvim
   nvim._ep = ep
 
   local unpackext, packext = {}, {}
   for ext, mt in pairs(extension_metatables) do
-    unpackext[ext] = function(_, s) return setmetatable({id = mpack.unpack(s), nvim = nvim}, mt) end
-    packext[mt] = function(o) return ext, mpack.pack(o.id) end
+    unpackext[ext] = function(_, s)
+      return setmetatable({ id = mpack.unpack(s), nvim = nvim }, mt)
+    end
+    packext[mt] = function(o)
+      return ext, mpack.pack(o.id)
+    end
   end
-  ep.session = mpack.Session({unpack = mpack.Unpacker({ext = unpackext})})
-  ep.pack = mpack.Packer({ext = packext})
-  uv.read_start(r, function(err, chunk) return ep:on_read(err, chunk) end)
+  ep.session = mpack.Session({ unpack = mpack.Unpacker({ ext = unpackext }) })
+  ep.pack = mpack.Packer({ ext = packext })
+  uv.read_start(r, function(err, chunk)
+    return ep:on_read(err, chunk)
+  end)
 
   return ep
 end
@@ -85,12 +98,12 @@ function Endpoint:close()
   self.r:read_stop()
   local waiters = {}
   local cb
-  cb, waiters[#waiters+1] = uvutil.cb_wait()
+  cb, waiters[#waiters + 1] = uvutil.cb_wait()
   self.w:close(cb)
-  cb, waiters[#waiters+1] = uvutil.cb_wait()
+  cb, waiters[#waiters + 1] = uvutil.cb_wait()
   self.r:close(cb)
   if self.proc then
-    cb, waiters[#waiters+1] = uvutil.cb_wait()
+    cb, waiters[#waiters + 1] = uvutil.cb_wait()
     self.proc:close(cb)
   end
   for _, wait in pairs(waiters) do
@@ -103,7 +116,7 @@ end
 -- last argument is the sentinel value notify, then a notification is sent.
 -- Otherwise, a request is sent and cb is called (ok, reply or error).
 function Endpoint:request_cb(cb, method, ...)
-  local args = {...}
+  local args = { ... }
   if #args > 0 and args[#args] == notify then
     self.w:write(self.session:notify() .. self.pack(method) .. self.pack(table.remove(args)))
     cb()
@@ -158,26 +171,28 @@ end
 function Endpoint:on_request(id, method, args)
   local handler = self.nvim.handlers[method]
   if not handler then
-    self.w:write(self.session:reply(id) .. self.pack("method not found") .. self.pack(mpack.NIL))
+    self.w:write(self.session:reply(id) .. self.pack('method not found') .. self.pack(mpack.NIL))
     return
   end
-  uvutil.add_idle_call(coroutine.resume, {coroutine.create(function()
-    local ok, result = xpcall(handler, errorHandler, unpack(args))
-    local err, resp = mpack.NIL, mpack.NIL
-    if ok then
-      if result ~= nil then
-        resp = result
+  uvutil.add_idle_call(coroutine.resume, {
+    coroutine.create(function()
+      local ok, result = xpcall(handler, errorHandler, unpack(args))
+      local err, resp = mpack.NIL, mpack.NIL
+      if ok then
+        if result ~= nil then
+          resp = result
+        end
+      else
+        err = 'Internal Error'
+        if getmetatable(result) == Error then
+          err = result.message
+        end
+        -- TODO: does nvim expect array in error?
+        --err = {0, err}
       end
-    else
-      err = "Internal Error"
-      if getmetatable(result) == Error then
-        err = result.message
-      end
-      -- TODO: does nvim expect array in error?
-      --err = {0, err}
-    end
-    self.w:write(self.session:reply(id) .. self.pack(err) .. self.pack(resp))
-  end)})
+      self.w:write(self.session:reply(id) .. self.pack(err) .. self.pack(resp))
+    end),
+  })
 end
 
 -- on_notification handles MsgPack notifications.
@@ -187,7 +202,12 @@ function Endpoint:on_notification(_, method, args)
   if not handler then
     return
   end
-  uvutil.add_idle_call(coroutine.resume, {coroutine.create(function() xpcall(handler, errorHandler, unpack(args)) end)})
+  uvutil.add_idle_call(
+    coroutine.resume,
+    { coroutine.create(function()
+      xpcall(handler, errorHandler, unpack(args))
+    end) }
+  )
 end
 
 -- on_response handles MsgPack responses.
@@ -198,9 +218,9 @@ function Endpoint:on_response(cb, err, result)
   end
   if type(err) == 'table' and #err == 2 and type(err[2]) == 'string' then
     if err[1] == 0 then
-      err = "exception: " .. err[2]
+      err = 'exception: ' .. err[2]
     elseif err[1] == 1 then
-      err =  "validation: " .. err[2]
+      err = 'validation: ' .. err[2]
     end
   end
   cb(false, err)
@@ -214,7 +234,7 @@ local function new_child(cmd, args, env) --> Nvim
   local ep
   local stdin, stdout = uv.new_pipe(false), uv.new_pipe(false)
   local proc, pid = uv.spawn(cmd, {
-    stdio = {stdin, stdout, 2},
+    stdio = { stdin, stdout, 2 },
     args = args,
     env = env,
   }, function()
@@ -246,7 +266,9 @@ function Nvim:__index(k)
     return x
   end
   local method = 'nvim_' .. k
-  local f = function(nvim, ...) return nvim._ep:request_level(2, method, ...) end
+  local f = function(nvim, ...)
+    return nvim._ep:request_level(2, method, ...)
+  end
   mt[k] = f
   return f
 end
@@ -268,9 +290,8 @@ end
 
 -- call calls an Nvim function and returns the result.
 function Nvim:call(f, ...) --> result
-  return self._ep:request_level(2, 'nvim_call_function', f, {...})
+  return self._ep:request_level(2, 'nvim_call_function', f, { ... })
 end
-
 
 local NvimOutput = {}
 NvimOutput.__index = NvimOutput
@@ -311,7 +332,7 @@ function NvimOutput.spawn(argv, env)
   self.handle, self.pid = uv.spawn(argv[1], {
     args = { unpack(argv, 2) },
     env = env,
-    stdio = {nil, stdout_pipe, stderr_pipe},
+    stdio = { nil, stdout_pipe, stderr_pipe },
   }, function(code, signal)
     self.code = code
     self.signal = signal
@@ -348,5 +369,5 @@ return {
   new_stdio = new_stdio,
   new_proc = new_proc,
   Nvim = Nvim,
-  notify = notify
+  notify = notify,
 }

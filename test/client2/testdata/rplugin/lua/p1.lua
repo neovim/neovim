@@ -6,12 +6,14 @@ example_globar_var = 'global'
 
 plugin.command {
   name = 'Hello',
-  func = function() nvim.command('echo "World"') end
+  func = function()
+    nvim.command('echo "World"')
+  end,
 }
 
 plugin.func {
   name = 'Add',
-  func = function(args) 
-    return math.add(unpack(args)) 
-  end
+  func = function(args)
+    return math.add(unpack(args))
+  end,
 }
