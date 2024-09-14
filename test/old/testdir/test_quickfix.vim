@@ -4071,11 +4071,23 @@ func Test_ll_window_ctx()
   enew | only
 endfunc
 
+" Similar to the problem above, but for user data.
+func Test_ll_window_user_data()
+  call setloclist(0, [#{bufnr: bufnr(), user_data: {}}])
+  lopen
+  wincmd t
+  close
+  call test_garbagecollect_now()
+  call feedkeys("\<CR>", 'tx')
+  call test_garbagecollect_now()
+  %bwipe!
+endfunc
+
 " The following test used to crash vim
 func Test_lfile_crash()
   sp Xtest
   au QuickFixCmdPre * bw
-  call assert_fails('lfile', 'E40')
+  call assert_fails('lfile', 'E40:')
   au! QuickFixCmdPre
 endfunc
 

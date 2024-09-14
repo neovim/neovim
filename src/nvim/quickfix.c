@@ -6875,7 +6875,8 @@ bool set_ref_in_quickfix(int copyID)
       // In a location list window and none of the other windows is
       // referring to this location list. Mark the location list
       // context as still in use.
-      if (mark_quickfix_ctx(win->w_llist_ref, copyID)) {
+      if (mark_quickfix_ctx(win->w_llist_ref, copyID)
+          || mark_quickfix_user_data(win->w_llist_ref, copyID)) {
         return true;
       }
     }
