@@ -1,6 +1,6 @@
-local uv = require('luv')
-local mpack = require('mpack')
-local uvutil = require('uvutil')
+local uv = vim.uv
+local mpack = vim.mpack
+local uvutil = require('test.functional.luaclient2.uvutil')
 
 -- notify is a sentinel value used to mark message as a notification.
 local notify = {}
@@ -47,7 +47,7 @@ Error.__index = Error
 function Error.new(message) return setmetatable({message=message}, Error) end
 function Error:__tostring() return self.message end
 
--- Endpoint is the MsgPack RPC endpoint.
+-- MsgPack RPC endpoint.
 local Endpoint = {}
 Endpoint.__index = Endpoint
 
@@ -99,7 +99,7 @@ function Endpoint:close()
   self.nvim = nil
 end
 
--- request_cb sends a message to the peer and invokes cb on completion. If the
+-- Sends a RPC message to the peer and invokes cb on completion. If the
 -- last argument is the sentinel value notify, then a notification is sent.
 -- Otherwise, a request is sent and cb is called (ok, reply or error).
 function Endpoint:request_cb(cb, method, ...)
@@ -112,7 +112,7 @@ function Endpoint:request_cb(cb, method, ...)
   self.w:write(self.session:request(cb) .. self.pack(method) .. self.pack(args))
 end
 
--- request_level is like request_cb, except it waits for the reply from peer.
+-- Like request_cb, except it waits for the reply from peer.
 -- If the reply is an error, then error is called with the specified level.
 function Endpoint:request_level(level, method, ...) --> result
   local cb, wait = uvutil.cb_wait()
@@ -124,7 +124,7 @@ function Endpoint:request_level(level, method, ...) --> result
   return result
 end
 
--- on_read handles data callbacks from self.r.
+-- Handles data callbacks from self.r.
 function Endpoint:on_read(err, chunk)
   if err then
     error(err)
@@ -271,10 +271,74 @@ function Nvim:call(f, ...) --> result
   return self._ep:request_level(2, 'nvim_call_function', f, {...})
 end
 
+
+local NvimOutput = {}
+NvimOutput.__index = NvimOutput
+
+function NvimOutput:on_read(stream, err, chunk)
+  if err then
+    self[stream .. '_error'] = err
+  elseif chunk then
+    self[stream] = self[stream] .. chunk
+  else
+    self[stream .. '_eof'] = true
+  end
+end
+
+function NvimOutput.spawn(argv, env)
+  local self = setmetatable({
+    cmd = argv,
+    stdout = '',
+    stderr = '',
+    stdout_error = nil,
+    stderr_error = nil,
+    stdout_eof = false,
+    stderr_eof = false,
+    code = nil,
+    signal = nil,
+  }, NvimOutput)
+
+  local stdout_pipe = assert(uv.new_pipe())
+  local stderr_pipe = assert(uv.new_pipe())
+
+  self.handle, self.pid = uv.spawn(argv[1], {
+    args = { unpack(argv, 2) },
+    env = env,
+    stdio = {nil, stdout_pipe, stderr_pipe},
+  }, function(code, signal)
+    self.code = code
+    self.signal = signal
+  end)
+
+  uv.read_start(stdout_pipe, function(err, chunk)
+    self:on_read('stdout', err, chunk)
+  end)
+
+  uv.read_start(stderr_pipe, function(err, chunk)
+    self:on_read('stderr', err, chunk)
+  end)
+
+  while not (self.stdout_eof and self.stderr_eof) do
+    uv.run('once')
+  end
+
+  uv.close(stdout_pipe)
+  uv.close(stderr_pipe)
+  uv.close(self.handle)
+
+  return self
+end
+
+local function new_proc(argv, env) --> NvimOutput
+  local nvim = NvimOutput.spawn(argv, env)
+  return nvim
+end
+
 return {
   new = new,
   new_child = new_child,
   new_stdio = new_stdio,
+  new_proc = new_proc,
   Nvim = Nvim,
   notify = notify
 }

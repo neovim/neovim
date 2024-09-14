@@ -2,7 +2,7 @@ expose('require uv once to prevent segfault', function()
   require('luv')
 end)
 
-local neovim = require('neovim')
+local neovim = require('test.client2.neovim')
 
 describe('nvim client', function()
   local nvim
@@ -38,7 +38,7 @@ describe('nvim client', function()
   end)
 
   it('can handle errors returned from nvim', function()
-   assert.has_error(function() nvim:call('bogus function') end, 'exception: Error calling function.')
+   assert.has_error(function() nvim:call('bogus function') end, 'exception: Vim:E117: Unknown function: bogus function')
 
    -- Caught: (no error)  Expected: (string) ''
    -- assert.has_error(function() nvim:call('eval', 'bogus expr') end, '')
@@ -54,7 +54,7 @@ describe('nvim client', function()
     -- assert.has_error(function() nvim:call('rpcrequest', channel, 'error_test') end, 'ouch')
 
     -- Yuck. Is there a better way to check the error?
-    assert.are.equal('\nouch',
+    assert.are.equal("\nError invoking 'error_test' on channel 1:\nouch",
       nvim:call('execute', 'silent! call rpcrequest(' .. channel .. ', "error_test")'))
   end)
 
