@@ -802,7 +802,7 @@ local function parse_buf(fname, text, parser_path)
   if parser_path then
     vim.treesitter.language.add('vimdoc', { path = parser_path })
   end
-  local lang_tree = assert(vim.treesitter._get_parser(buf), 'vimdoc parser not found.')
+  local lang_tree = assert(vim.treesitter.get_parser(buf, nil, { error = false }))
   return lang_tree, buf
 end
 

@@ -9,7 +9,7 @@
 local function get_commentstring(ref_position)
   local buf_cs = vim.bo.commentstring
 
-  local ts_parser = vim.treesitter._get_parser()
+  local ts_parser = vim.treesitter.get_parser(0, '', { error = false })
   if not ts_parser then
     return buf_cs
   end

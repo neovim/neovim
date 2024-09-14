@@ -177,7 +177,7 @@ function M.lint(buf, opts)
       is_first_lang = i == 1,
     }
 
-    local parser = assert(vim.treesitter._get_parser(buf), 'query parser not found.')
+    local parser = assert(vim.treesitter.get_parser(buf, nil, { error = false }))
     parser:parse()
     parser:for_each_tree(function(tree, ltree)
       if ltree:lang() == 'query' then
