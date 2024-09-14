@@ -15,7 +15,7 @@ local function run_idle_calls()
   end
 end
 
--- add_idle_call schedules func to be called with unpack(args) at the top of
+-- Schedules func to be called with unpack(args) at the top of
 -- the IO loop.
 local function add_idle_call(func, args)
     idle_calls[#idle_calls+1] = {func, args}
@@ -24,7 +24,7 @@ local function add_idle_call(func, args)
     end
 end
 
--- cb_wait returns a function to invoke on the completion of an operation and a
+-- Returns a function to invoke on the completion of an operation and a
 -- function to wait on the invocation of that callback. Arguments passed to the
 -- callback function are returned from the wait function.
 local function cb_wait()
