@@ -282,6 +282,13 @@ function NvimOutput:on_read(stream, err, chunk)
     self[stream] = self[stream] .. chunk
   else
     self[stream .. '_eof'] = true
+    self:check_done()
+  end
+end
+
+function NvimOutput:check_done()
+  if self.stdout_eof and self.stderr_eof and self.exited then
+    self.wait_cb()
   end
 end
 
@@ -294,6 +301,7 @@ function NvimOutput.spawn(argv, env)
     stderr_error = nil,
     stdout_eof = false,
     stderr_eof = false,
+    exited = false,
     code = nil,
     signal = nil,
   }, NvimOutput)
@@ -308,6 +316,8 @@ function NvimOutput.spawn(argv, env)
   }, function(code, signal)
     self.code = code
     self.signal = signal
+    self.exited = true
+    self:check_done()
   end)
 
   uv.read_start(stdout_pipe, function(err, chunk)
@@ -318,9 +328,9 @@ function NvimOutput.spawn(argv, env)
     self:on_read('stderr', err, chunk)
   end)
 
-  while not (self.stdout_eof and self.stderr_eof) do
-    uv.run('once')
-  end
+  self.wait_cb, self.wait = uvutil.cb_wait()
+
+  self.wait()
 
   uv.close(stdout_pipe)
   uv.close(stderr_pipe)
