@@ -969,14 +969,15 @@ add({lang}, {opts})                            *vim.treesitter.language.add()*
     Parameters: ~
       • {lang}  (`string`) Name of the parser (alphanumerical and `_` only)
       • {opts}  (`table?`) Options:
-                • {filetype}? (`string|string[]`, default: {lang}) Default
-                  filetype the parser should be associated with.
                 • {path}? (`string`) Optional path the parser is located at
                 • {symbol_name}? (`string`) Internal symbol name for the
                   language to load
 
 get_filetypes({lang})                *vim.treesitter.language.get_filetypes()*
-    Get the filetypes associated with the parser named {lang}.
+    Returns the filetypes for which a parser named {lang} is used.
+
+    The list includes {lang} itself plus all filetypes registered via
+    |vim.treesitter.language.register()|.
 
     Parameters: ~
       • {lang}  (`string`) Name of parser
@@ -985,6 +986,11 @@ get_filetypes({lang})                *vim.treesitter.language.get_filetypes()*
         (`string[]`) filetypes
 
 get_lang({filetype})                      *vim.treesitter.language.get_lang()*
+    Returns the language name to be used when loading a parser for {filetype}.
+
+    If no language has been explicitly registered via
+    |vim.treesitter.language.register()|, default to {filetype}. For composite
+    filetypes like `html.glimmer`, only the main filetype is returned.
 
     Parameters: ~
       • {filetype}  (`string`)
