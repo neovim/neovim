@@ -7,7 +7,7 @@ local neovim = require('test.client2.neovim')
 describe('nvim client', function()
   local nvim
   setup(function()
-    nvim = neovim.new_child('nvim', {'--embed', '-u', 'NONE', '-i', 'NONE'})
+    nvim = neovim.new_child('nvim', { '--embed', '-u', 'NONE', '-i', 'NONE' })
   end)
 
   teardown(function()
@@ -23,7 +23,12 @@ describe('nvim client', function()
   it('can handle requests from nvim', function()
     local channel = nvim:get_api_info()[1]
     local arg
-    nvim.handlers = {request_test = function(a) arg = a return 'world' end}
+    nvim.handlers = {
+      request_test = function(a)
+        arg = a
+        return 'world'
+      end,
+    }
     assert.are.equal('world', nvim:call('rpcrequest', channel, 'request_test', 'hello'))
     assert.are.equal('hello', arg)
   end)
@@ -31,17 +36,23 @@ describe('nvim client', function()
   it('can handle notifications from nvim', function()
     local channel = nvim:get_api_info()[1]
     local arg
-    nvim.handlers = {request_test = function(a) arg = a end}
+    nvim.handlers = {
+      request_test = function(a)
+        arg = a
+      end,
+    }
     nvim:call('rpcnotify', channel, 'request_test', 'hello')
     nvim:get_api_info() -- ensure that notify was received
     assert.are.equal('hello', arg)
   end)
 
   it('can handle errors returned from nvim', function()
-   assert.has_error(function() nvim:call('bogus function') end, 'exception: Vim:E117: Unknown function: bogus function')
+    assert.has_error(function()
+      nvim:call('bogus function')
+    end, 'exception: Vim:E117: Unknown function: bogus function')
 
-   -- Caught: (no error)  Expected: (string) ''
-   -- assert.has_error(function() nvim:call('eval', 'bogus expr') end, '')
+    -- Caught: (no error)  Expected: (string) ''
+    -- assert.has_error(function() nvim:call('eval', 'bogus expr') end, '')
   end)
 
   it('can return errors to nvim', function()
@@ -54,8 +65,10 @@ describe('nvim client', function()
     -- assert.has_error(function() nvim:call('rpcrequest', channel, 'error_test') end, 'ouch')
 
     -- Yuck. Is there a better way to check the error?
-    assert.are.equal("\nError invoking 'error_test' on channel 1:\nouch",
-      nvim:call('execute', 'silent! call rpcrequest(' .. channel .. ', "error_test")'))
+    assert.are.equal(
+      "\nError invoking 'error_test' on channel 1:\nouch",
+      nvim:call('execute', 'silent! call rpcrequest(' .. channel .. ', "error_test")')
+    )
   end)
 
   it('can construct extension types', function()
@@ -78,7 +91,6 @@ describe('nvim client', function()
   end)
 
   describe('buf', function()
-
     it('can compare eq', function()
       local bufs1 = nvim:list_bufs()
       local bufs2 = nvim:list_bufs()
@@ -94,7 +106,7 @@ describe('nvim client', function()
     it('line functions', function()
       local buf = nvim:get_current_buf()
       assert.are.equal(1, buf:line_count())
-      buf:set_lines(1, 2, false, {'line'})
+      buf:set_lines(1, 2, false, { 'line' })
       assert.are.equal(2, buf:line_count())
       local lines = buf:get_lines(0, -1, true)
       assert.are.equal(2, #lines)
@@ -103,7 +115,5 @@ describe('nvim client', function()
       buf:set_lines(1, 2, true, {})
       assert.are.equal(1, buf:line_count())
     end)
-
   end)
-
 end)

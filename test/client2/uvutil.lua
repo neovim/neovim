@@ -1,7 +1,7 @@
 -- uvutil is a utility for implementing cooperative multitasking using luv and
 -- Lua coroutines.
 
-local uv = require("luv")
+local uv = require('luv')
 
 local idle_handle = uv.new_idle()
 local idle_calls = {}
@@ -18,10 +18,10 @@ end
 -- Schedules func to be called with unpack(args) at the top of
 -- the IO loop.
 local function add_idle_call(func, args)
-    idle_calls[#idle_calls+1] = {func, args}
-    if #idle_calls == 1 then
-      idle_handle:start(run_idle_calls)
-    end
+  idle_calls[#idle_calls + 1] = { func, args }
+  if #idle_calls == 1 then
+    idle_handle:start(run_idle_calls)
+  end
 end
 
 -- Returns a function to invoke on the completion of an operation and a
@@ -34,10 +34,9 @@ local function cb_wait()
     -- function stops the event loop.
     local args
     return function(...)
-      args = {...}
+      args = { ... }
       uv.stop()
-    end,
-    function()
+    end, function()
       if args == nil then
         uv.run()
       end
@@ -47,13 +46,12 @@ local function cb_wait()
     -- If not at the top level, the wait function yields the current coroutine
     -- and the callback resumes the coroutine.
     return function(...)
-      add_idle_call(coroutine.resume, {co, ...})
-    end,
-    coroutine.yield
+      add_idle_call(coroutine.resume, { co, ... })
+    end, coroutine.yield
   end
 end
 
 return {
   cb_wait = cb_wait,
-  add_idle_call = add_idle_call
+  add_idle_call = add_idle_call,
 }

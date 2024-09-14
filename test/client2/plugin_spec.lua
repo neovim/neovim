@@ -11,7 +11,7 @@ describe('plugin host', function()
   local p2_path = 'testdata/rplugin/lua/p2.lua'
 
   setup(function()
-    nvim = neovim.new_child('nvim', {'--embed', '-u', 'NONE', '-i', 'NONE'})
+    nvim = neovim.new_child('nvim', { '--embed', '-u', 'NONE', '-i', 'NONE' })
   end)
 
   teardown(function()
@@ -28,13 +28,13 @@ describe('plugin host', function()
         name = 'Hello',
         type = 'command',
         sync = true,
-        opts = {x = 0},
+        opts = { x = 0 },
       },
       {
         name = 'Add',
         type = 'function',
         sync = true,
-        opts = {x = 0},
+        opts = { x = 0 },
       },
     }, specs)
     assert.is.equal('function', type(handlers[':command:Hello']))
@@ -43,7 +43,7 @@ describe('plugin host', function()
 
   it('works with nvim', function()
     local host = plugin.new_host(nvim)
-    for _, p in pairs{p1_path, p2_path} do
+    for _, p in pairs { p1_path, p2_path } do
       local specs, _ = host:get_plugin(p):load_script(p)
       nvim:call('remote#host#RegisterPlugin', 'luaX', p, specs)
     end
@@ -53,7 +53,6 @@ describe('plugin host', function()
 
     assert.is.equal(3, nvim:call('Add', 1, 2))
     assert.is.equal(-3, nvim:call('Sub', 2, 1))
-
   end)
 
   it('isolates global variables to plugin', function()
@@ -70,5 +69,4 @@ describe('plugin host', function()
     -- p2 should see global created by p1
     assert.is.equal('global', p1.env.example_globar_var)
   end)
-
 end)
