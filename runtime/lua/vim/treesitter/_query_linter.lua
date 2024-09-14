@@ -41,7 +41,7 @@ local function guess_query_lang(buf)
   local filename = api.nvim_buf_get_name(buf)
   if filename ~= '' then
     local resolved_filename = vim.F.npcall(vim.fn.fnamemodify, filename, ':p:h:t')
-    return resolved_filename and vim.treesitter.language.get_lang(resolved_filename) or nil
+    return resolved_filename and vim.treesitter.language.get_lang(resolved_filename)
   end
 end
 
