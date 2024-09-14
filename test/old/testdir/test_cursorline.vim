@@ -300,7 +300,7 @@ func Test_cursorline_screenline_update()
       set cursorline cursorlineopt=screenline
       inoremap <F2> <Cmd>call cursor(1, 1)<CR>
   END
-  call writefile(lines, 'Xcul_screenline')
+  call writefile(lines, 'Xcul_screenline', 'D')
 
   let buf = RunVimInTerminal('-S Xcul_screenline', #{rows: 8})
   call term_sendkeys(buf, "A")
@@ -310,7 +310,17 @@ func Test_cursorline_screenline_update()
   call term_sendkeys(buf, "\<Esc>")
 
   call StopVimInTerminal(buf)
-  call delete('Xcul_screenline')
+endfunc
+
+func Test_cursorline_screenline_zero_width()
+  CheckOption foldcolumn
+
+  set cursorline culopt=screenline winminwidth=1 foldcolumn=1
+  " This used to crash Vim
+  1vnew | redraw
+
+  bwipe!
+  set cursorline& culopt& winminwidth& foldcolumn&
 endfunc
 
 func Test_cursorline_cursorbind_horizontal_scroll()
