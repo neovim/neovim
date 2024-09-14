@@ -1078,6 +1078,44 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  -- oldtest: Test_cursorline_screenline_resize()
+  it("'cursorlineopt' screenline is updated on window resize", function()
+    local screen = Screen.new(75, 8)
+    screen:attach()
+    exec([[
+      50vnew
+      call setline(1, repeat('xyz ', 30))
+      setlocal number cursorline cursorlineopt=screenline
+      normal! $
+    ]])
+    screen:expect([[
+      {8:  1 }xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xy│                        |
+      {8:    }z xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz │{1:~                       }|
+      {8:    }{21:xyz xyz xyz xyz xyz xyz xyz^                   }│{1:~                       }|
+      {1:~                                                 }│{1:~                       }|*3
+      {3:[No Name] [+]                                      }{2:[No Name]               }|
+                                                                                 |
+    ]])
+    command('vertical resize -4')
+    screen:expect([[
+      {8:  1 }xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xy│                            |
+      {8:    }z xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz │{1:~                           }|
+      {8:    }{21:xyz xyz xyz xyz xyz xyz xyz xyz xyz^       }│{1:~                           }|
+      {1:~                                             }│{1:~                           }|*3
+      {3:[No Name] [+]                                  }{2:[No Name]                   }|
+                                                                                 |
+    ]])
+    command('set cpoptions+=n')
+    screen:expect([[
+      {8:  1 }xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xy│                            |
+      z xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz │{1:~                           }|
+      {21:xyz xyz xyz xyz xyz xyz xyz xyz^               }│{1:~                           }|
+      {1:~                                             }│{1:~                           }|*3
+      {3:[No Name] [+]                                  }{2:[No Name]                   }|
+                                                                                 |
+    ]])
+  end)
+
   -- oldtest: Test_cursorline_after_yank()
   it('always updated. vim-patch:8.1.0849', function()
     local screen = Screen.new(50, 5)

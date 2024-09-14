@@ -170,28 +170,26 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
   // cache previous calculations depending on w_virtcol
   static int saved_w_virtcol;
   static win_T *prev_wp;
+  static int prev_width1;
+  static int prev_width2;
   static int prev_left_col;
   static int prev_right_col;
-  static int prev_col_off;
 
   int cur_col_off = win_col_off(wp);
-  int width1;
-  int width2;
+  int width1 = wp->w_width_inner - cur_col_off;
+  int width2 = width1 + win_col_off2(wp);
 
   if (saved_w_virtcol == wp->w_virtcol && prev_wp == wp
-      && prev_col_off == cur_col_off) {
+      && prev_width1 == width1 && prev_width2 == width2) {
     *right_col = prev_right_col;
     *left_col = prev_left_col;
     return;
   }
 
-  width1 = wp->w_width_inner - cur_col_off;
-  width2 = width1 + win_col_off2(wp);
-
   *left_col = 0;
   *right_col = width1;
 
-  if (wp->w_virtcol >= (colnr_T)width1) {
+  if (wp->w_virtcol >= (colnr_T)width1 && width2 > 0) {
     *right_col = width1 + ((wp->w_virtcol - width1) / width2 + 1) * width2;
   }
   if (wp->w_virtcol >= (colnr_T)width1 && width2 > 0) {
@@ -202,8 +200,9 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
   prev_left_col = *left_col;
   prev_right_col = *right_col;
   prev_wp = wp;
+  prev_width1 = width1;
+  prev_width2 = width2;
   saved_w_virtcol = wp->w_virtcol;
-  prev_col_off = cur_col_off;
 }
 
 /// Put a single char from an UTF-8 buffer into a line buffer.
