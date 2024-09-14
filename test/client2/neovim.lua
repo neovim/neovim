@@ -1,6 +1,6 @@
 local uv = vim.uv
 local mpack = vim.mpack
-local uvutil = require('test.functional.luaclient2.uvutil')
+local uvutil = require('test.client2.uvutil')
 
 -- notify is a sentinel value used to mark message as a notification.
 local notify = {}
@@ -287,7 +287,7 @@ function NvimOutput:on_read(stream, err, chunk)
 end
 
 function NvimOutput:check_done()
-  if self.stdout_eof and self.stderr_eof and self.exited then
+  if self.stdout_eof and self.stderr_eof and (self.code or self.signal) then
     self.wait_cb()
   end
 end
@@ -301,7 +301,6 @@ function NvimOutput.spawn(argv, env)
     stderr_error = nil,
     stdout_eof = false,
     stderr_eof = false,
-    exited = false,
     code = nil,
     signal = nil,
   }, NvimOutput)
@@ -316,7 +315,6 @@ function NvimOutput.spawn(argv, env)
   }, function(code, signal)
     self.code = code
     self.signal = signal
-    self.exited = true
     self:check_done()
   end)
 
