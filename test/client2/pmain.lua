@@ -1,0 +1,5 @@
+local neovim = require('neovim')
+local plugin = require('plugin')
+local uv = require('luv')
+plugin.new_host(neovim.new_stdio())
+uv.run()
