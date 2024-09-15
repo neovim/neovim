@@ -1,6 +1,13 @@
--- To test tui/input.c, this module spawns `nvim` inside :terminal and sends
--- bytes via jobsend().  Note: the functional/testutil.lua test-session methods
--- operate on the _host_ session, _not_ the child session.
+-- Functions to test :terminal and the Nvim TUI.
+-- Starts a child process in a `:terminal` and sends bytes to the child via nvim_chan_send().
+-- Note: the global functional/testutil.lua test-session is _host_ session, _not_
+-- the child session.
+--
+-- - Use `setup_screen()` to test `:terminal` behavior with an arbitrary command.
+-- - Use `setup_child_nvim()` to test the Nvim TUI.
+--    - NOTE: Only use this if your test actually needs the full lifecycle/capabilities of the
+--    builtin Nvim TUI. Most tests should just use `Screen.new()` directly, or plain old API calls.
+
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
@@ -9,18 +16,20 @@ local exec_lua = n.exec_lua
 local api = n.api
 local nvim_prog = n.nvim_prog
 
-local function feed_data(data)
+local M = {}
+
+function M.feed_data(data)
   if type(data) == 'table' then
     data = table.concat(data, '\n')
   end
   exec_lua('vim.api.nvim_chan_send(vim.b.terminal_job_id, ...)', data)
 end
 
-local function feed_termcode(data)
-  feed_data('\027' .. data)
+function M.feed_termcode(data)
+  M.feed_data('\027' .. data)
 end
 
-local function make_lua_executor(session)
+function M.make_lua_executor(session)
   return function(code, ...)
     local status, rv = session:request('nvim_exec_lua', code, { ... })
     if not status then
@@ -34,60 +43,68 @@ end
 -- some t for controlling the terminal. the codes were taken from
 -- infocmp xterm-256color which is less what libvterm understands
 -- civis/cnorm
-local function hide_cursor()
-  feed_termcode('[?25l')
+function M.hide_cursor()
+  M.feed_termcode('[?25l')
 end
-local function show_cursor()
-  feed_termcode('[?25h')
+function M.show_cursor()
+  M.feed_termcode('[?25h')
 end
 -- smcup/rmcup
-local function enter_altscreen()
-  feed_termcode('[?1049h')
+function M.enter_altscreen()
+  M.feed_termcode('[?1049h')
 end
-local function exit_altscreen()
-  feed_termcode('[?1049l')
+function M.exit_altscreen()
+  M.feed_termcode('[?1049l')
 end
 -- character attributes
-local function set_fg(num)
-  feed_termcode('[38;5;' .. num .. 'm')
+function M.set_fg(num)
+  M.feed_termcode('[38;5;' .. num .. 'm')
 end
-local function set_bg(num)
-  feed_termcode('[48;5;' .. num .. 'm')
+function M.set_bg(num)
+  M.feed_termcode('[48;5;' .. num .. 'm')
 end
-local function set_bold()
-  feed_termcode('[1m')
+function M.set_bold()
+  M.feed_termcode('[1m')
 end
-local function set_italic()
-  feed_termcode('[3m')
+function M.set_italic()
+  M.feed_termcode('[3m')
 end
-local function set_underline()
-  feed_termcode('[4m')
+function M.set_underline()
+  M.feed_termcode('[4m')
 end
-local function set_underdouble()
-  feed_termcode('[4:2m')
+function M.set_underdouble()
+  M.feed_termcode('[4:2m')
 end
-local function set_undercurl()
-  feed_termcode('[4:3m')
+function M.set_undercurl()
+  M.feed_termcode('[4:3m')
 end
-local function set_strikethrough()
-  feed_termcode('[9m')
+function M.set_strikethrough()
+  M.feed_termcode('[9m')
 end
-local function clear_attrs()
-  feed_termcode('[0;10m')
+function M.clear_attrs()
+  M.feed_termcode('[0;10m')
 end
 -- mouse
-local function enable_mouse()
-  feed_termcode('[?1002h')
+function M.enable_mouse()
+  M.feed_termcode('[?1002h')
 end
-local function disable_mouse()
-  feed_termcode('[?1002l')
+function M.disable_mouse()
+  M.feed_termcode('[?1002l')
 end
 
 local default_command = { testprg('tty-test') }
 
-local function screen_setup(extra_rows, command, cols, env, screen_opts)
+--- Runs `cmd` in a :terminal, and returns a `Screen` object.
+---
+---@param extra_rows? integer Extra rows to add to the default screen.
+---@param cmd? string|string[] Command to run in the terminal (default: `{ 'tty-test' }`)
+---@param cols? integer Create screen with this many columns (default: 50)
+---@param env? table Environment set on the `cmd` job.
+---@param screen_opts? table Options for `Screen.new()`.
+---@return test.functional.ui.screen # Screen attached to the global (not child) Nvim session.
+function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
   extra_rows = extra_rows and extra_rows or 0
-  command = command and command or default_command
+  cmd = cmd and cmd or default_command
   cols = cols and cols or 50
 
   api.nvim_command('highlight TermCursor cterm=reverse')
@@ -120,7 +137,7 @@ local function screen_setup(extra_rows, command, cols, env, screen_opts)
   screen:attach(screen_opts or { rgb = false })
 
   api.nvim_command('enew')
-  api.nvim_call_function('termopen', { command, env and { env = env } or nil })
+  api.nvim_call_function('termopen', { cmd, env and { env = env } or nil })
   api.nvim_input('<CR>')
   local vim_errmsg = api.nvim_eval('v:errmsg')
   if vim_errmsg and '' ~= vim_errmsg then
@@ -133,7 +150,7 @@ local function screen_setup(extra_rows, command, cols, env, screen_opts)
 
   -- tty-test puts the terminal into raw mode and echoes input. Tests work by
   -- feeding termcodes to control the display and asserting by screen:expect.
-  if command == default_command and screen_opts == nil then
+  if cmd == default_command and screen_opts == nil then
     -- Wait for "tty ready" to be printed before each test or the terminal may
     -- still be in canonical mode (will echo characters for example).
     local empty_line = (' '):rep(cols)
@@ -160,37 +177,24 @@ local function screen_setup(extra_rows, command, cols, env, screen_opts)
   return screen
 end
 
-local function setup_child_nvim(args, opts)
+--- Spawns Nvim with `args` in a :terminal, and returns a `Screen` object.
+---
+--- @note Only use this if you actually need the full lifecycle/capabilities of the builtin Nvim
+--- TUI. Most tests should just use `Screen.new()` directly, or plain old API calls.
+---
+---@param args? string[] Args passed to child Nvim.
+---@param opts? table Options
+---@return test.functional.ui.screen # Screen attached to the global (not child) Nvim session.
+function M.setup_child_nvim(args, opts)
   opts = opts or {}
-  local argv = { nvim_prog, unpack(args) }
+  local argv = { nvim_prog, unpack(args or {}) }
 
   local env = opts.env or {}
   if not env.VIMRUNTIME then
     env.VIMRUNTIME = os.getenv('VIMRUNTIME')
   end
 
-  return screen_setup(opts.extra_rows, argv, opts.cols, env)
+  return M.setup_screen(opts.extra_rows, argv, opts.cols, env)
 end
 
-return {
-  feed_data = feed_data,
-  feed_termcode = feed_termcode,
-  make_lua_executor = make_lua_executor,
-  hide_cursor = hide_cursor,
-  show_cursor = show_cursor,
-  enter_altscreen = enter_altscreen,
-  exit_altscreen = exit_altscreen,
-  set_fg = set_fg,
-  set_bg = set_bg,
-  set_bold = set_bold,
-  set_italic = set_italic,
-  set_underline = set_underline,
-  set_underdouble = set_underdouble,
-  set_undercurl = set_undercurl,
-  set_strikethrough = set_strikethrough,
-  clear_attrs = clear_attrs,
-  enable_mouse = enable_mouse,
-  disable_mouse = disable_mouse,
-  screen_setup = screen_setup,
-  setup_child_nvim = setup_child_nvim,
-}
+return M

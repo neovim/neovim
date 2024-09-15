@@ -114,6 +114,7 @@ function Session:request(method, ...)
   return true, result
 end
 
+--- Runs the event loop.
 function Session:run(request_cb, notification_cb, setup_cb, timeout)
   local function on_request(method, args, response)
     coroutine_exec(request_cb, method, args, function(status, result, flag)
