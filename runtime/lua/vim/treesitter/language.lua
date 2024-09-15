@@ -62,8 +62,22 @@ function M.require_language(lang, path, silent, symbol_name)
     return installed
   end
 
-  M.add(lang, opts)
-  return true
+  return M.add(lang, opts)
+end
+
+--- Load wasm or native parser (wrapper)
+--- todo(clason): move to C
+---
+---@param path string Path of parser library
+---@param lang string Language name
+---@param symbol_name? string Internal symbol name for the language to load (default lang)
+---@return boolean? True if parser is loaded
+local function loadparser(path, lang, symbol_name)
+  if vim.endswith(path, '.wasm') then
+    return vim._ts_add_language_from_wasm and vim._ts_add_language_from_wasm(path, lang)
+  else
+    return vim._ts_add_language_from_object(path, lang, symbol_name)
+  end
 end
 
 ---@class vim.treesitter.language.add.Opts
@@ -77,10 +91,18 @@ end
 
 --- Load parser with name {lang}
 ---
---- Parsers are searched in the `parser` runtime directory, or the provided {path}
+--- Parsers are searched in the `parser` runtime directory, or the provided {path}.
+--- Can be used to check for available parsers before enabling treesitter features, e.g.,
+--- ```lua
+---   if vim.treesitter.language.add('markdown') then
+---     vim.treesitter.start(bufnr, 'markdown')
+---   end
+--- ```
 ---
 ---@param lang string Name of the parser (alphanumerical and `_` only)
 ---@param opts? vim.treesitter.language.add.Opts Options:
+---@return boolean? True if parser is loaded
+---@return string? Error if parser cannot be loaded
 function M.add(lang, opts)
   opts = opts or {}
   local path = opts.path
@@ -96,30 +118,25 @@ function M.add(lang, opts)
   lang = lang:lower()
 
   if vim._ts_has_language(lang) then
-    return
+    return true
   end
 
   if path == nil then
+    -- allow only safe language names when looking for libraries to load
     if not (lang and lang:match('[%w_]+') == lang) then
-      error("'" .. lang .. "' is not a valid language name")
+      return nil, string.format('Invalid language name "%s"', lang)
     end
 
     local fname = 'parser/' .. lang .. '.*'
     local paths = api.nvim_get_runtime_file(fname, false)
     if #paths == 0 then
-      error("no parser for '" .. lang .. "' language, see :help treesitter-parsers")
+      return nil, string.format('No parser for language "%s"', lang)
     end
     path = paths[1]
   end
 
-  if vim.endswith(path, '.wasm') then
-    if not vim._ts_add_language_from_wasm then
-      error(string.format("Unable to load wasm parser '%s': not built with ENABLE_WASMTIME ", path))
-    end
-    vim._ts_add_language_from_wasm(path, lang)
-  else
-    vim._ts_add_language_from_object(path, lang, symbol_name)
-  end
+  return loadparser(path, lang, symbol_name) or nil,
+    string.format('Cannot load parser %s for language "%s"', path, lang)
 end
 
 --- @param x string|string[]
