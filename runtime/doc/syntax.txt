@@ -1683,6 +1683,12 @@ In order to highlight nested parens with different colors, define colors for
 or >
 	:hi javaParen ctermfg=blue guifg=#0000ff
 
+Certain modifiers are incompatible with each other, e.g. `abstract` and
+`final`: >
+	:syn list javaConceptKind
+and can be differently highlighted as a group than other modifiers with >
+	:hi link javaConceptKind NonText
+
 If you notice highlighting errors while scrolling backwards, which are fixed
 when redrawing with CTRL-L, try setting the "g:java_minlines" variable to
 a larger number: >
