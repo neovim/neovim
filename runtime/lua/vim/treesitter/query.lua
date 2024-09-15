@@ -247,8 +247,7 @@ end)
 ---
 ---@see [vim.treesitter.query.get()]
 M.parse = memoize('concat-2', function(lang, query)
-  language.add(lang)
-
+  assert(language.add(lang))
   local ts_query = vim._ts_parse_query(lang, query)
   return Query.new(lang, ts_query)
 end)
