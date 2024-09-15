@@ -417,10 +417,10 @@ list(SORT NVIM_HEADERS)
 
 foreach(sfile ${NVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
-  if(WIN32 AND ${f} MATCHES "^(pty_process_unix.c)$")
+  if(WIN32 AND ${f} MATCHES "^(pty_proc_unix.c)$")
     list(REMOVE_ITEM NVIM_SOURCES ${sfile})
   endif()
-  if(NOT WIN32 AND ${f} MATCHES "^(pty_process_win.c)$")
+  if(NOT WIN32 AND ${f} MATCHES "^(pty_proc_win.c)$")
     list(REMOVE_ITEM NVIM_SOURCES ${sfile})
   endif()
   if(NOT WIN32 AND ${f} MATCHES "^(pty_conpty_win.c)$")
@@ -436,7 +436,7 @@ foreach(hfile ${NVIM_HEADERS})
   if(WIN32 AND ${f} MATCHES "^(unix_defs.h)$")
     list(REMOVE_ITEM NVIM_HEADERS ${hfile})
   endif()
-  if(WIN32 AND ${f} MATCHES "^(pty_process_unix.h)$")
+  if(WIN32 AND ${f} MATCHES "^(pty_proc_unix.h)$")
     list(REMOVE_ITEM NVIM_HEADERS ${hfile})
   endif()
   if(NOT WIN32 AND ${f} MATCHES "^(win_defs.h)$")
@@ -832,12 +832,12 @@ find_program(CLANG_TIDY_PRG clang-tidy)
 set(EXCLUDE_CLANG_TIDY typval_encode.c.h ui_events.in.h)
 if(WIN32)
   list(APPEND EXCLUDE_CLANG_TIDY
-    os/pty_process_unix.h
+    os/pty_proc_unix.h
     os/unix_defs.h)
 else()
   list(APPEND EXCLUDE_CLANG_TIDY
     os/win_defs.h
-    os/pty_process_win.h
+    os/pty_proc_win.h
     os/pty_conpty_win.h
     os/os_win_console.h)
 endif()

@@ -19,7 +19,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
-#include "nvim/event/process.h"
+#include "nvim/event/proc.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/socket.h"
 #include "nvim/event/stream.h"
@@ -88,7 +88,7 @@ void channel_free_all_mem(void)
 bool channel_close(uint64_t id, ChannelPart part, const char **error)
 {
   Channel *chan;
-  Process *proc;
+  Proc *proc;
 
   const char *dummy;
   if (!error) {
@@ -139,8 +139,8 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
     if (part == kChannelPartStderr || part == kChannelPartAll) {
       rstream_may_close(&proc->err);
     }
-    if (proc->type == kProcessTypePty && part == kChannelPartAll) {
-      pty_process_close_master(&chan->stream.pty);
+    if (proc->type == kProcTypePty && part == kChannelPartAll) {
+      pty_proc_close_master(&chan->stream.pty);
     }
 
     break;
@@ -289,7 +289,7 @@ static void channel_destroy(Channel *chan)
   }
 
   if (chan->streamtype == kChannelStreamProc) {
-    process_free(&chan->stream.proc);
+    proc_free(&chan->stream.proc);
   }
 
   callback_reader_free(&chan->on_data);
@@ -376,7 +376,7 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
       *status_out = 0;
       return NULL;
     }
-    chan->stream.pty = pty_process_init(&main_loop, chan);
+    chan->stream.pty = pty_proc_init(&main_loop, chan);
     if (pty_width > 0) {
       chan->stream.pty.width = pty_width;
     }
@@ -384,22 +384,22 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
       chan->stream.pty.height = pty_height;
     }
   } else {
-    chan->stream.uv = libuv_process_init(&main_loop, chan);
+    chan->stream.uv = libuv_proc_init(&main_loop, chan);
   }
 
-  Process *proc = &chan->stream.proc;
+  Proc *proc = &chan->stream.proc;
   proc->argv = argv;
   proc->exepath = exepath;
-  proc->cb = channel_process_exit_cb;
+  proc->cb = channel_proc_exit_cb;
   proc->events = chan->events;
   proc->detach = detach;
   proc->cwd = cwd;
   proc->env = env;
   proc->overlapped = overlapped;
 
-  char *cmd = xstrdup(process_get_exepath(proc));
+  char *cmd = xstrdup(proc_get_exepath(proc));
   bool has_out, has_err;
-  if (proc->type == kProcessTypePty) {
+  if (proc->type == kProcTypePty) {
     has_out = true;
     has_err = false;
   } else {
@@ -410,7 +410,7 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
 
   bool has_in = stdin_mode == kChannelStdinPipe;
 
-  int status = process_spawn(proc, has_in, has_out, has_err);
+  int status = proc_spawn(proc, has_in, has_out, has_err);
   if (status) {
     semsg(_(e_jobspawn), os_strerror(status), cmd);
     xfree(cmd);
@@ -760,7 +760,7 @@ void channel_reader_callbacks(Channel *chan, CallbackReader *reader)
   }
 }
 
-static void channel_process_exit_cb(Process *proc, int status, void *data)
+static void channel_proc_exit_cb(Proc *proc, int status, void *data)
 {
   Channel *chan = data;
   if (chan->term) {
@@ -847,7 +847,7 @@ static void term_write(const char *buf, size_t size, void *data)
 static void term_resize(uint16_t width, uint16_t height, void *data)
 {
   Channel *chan = data;
-  pty_process_resize(&chan->stream.pty, width, height);
+  pty_proc_resize(&chan->stream.pty, width, height);
 }
 
 static inline void term_delayed_free(void **argv)
@@ -867,7 +867,7 @@ static inline void term_delayed_free(void **argv)
 static void term_close(void *data)
 {
   Channel *chan = data;
-  process_stop(&chan->stream.proc);
+  proc_stop(&chan->stream.proc);
   multiqueue_put(chan->events, term_delayed_free, data);
 }
 
@@ -907,7 +907,7 @@ bool channel_job_running(uint64_t id)
   Channel *chan = find_channel(id);
   return (chan
           && chan->streamtype == kChannelStreamProc
-          && !process_is_stopped(&chan->stream.proc));
+          && !proc_is_stopped(&chan->stream.proc));
 }
 
 Dictionary channel_info(uint64_t id, Arena *arena)
@@ -924,8 +924,8 @@ Dictionary channel_info(uint64_t id, Arena *arena)
   switch (chan->streamtype) {
   case kChannelStreamProc: {
     stream_desc = "job";
-    if (chan->stream.proc.type == kProcessTypePty) {
-      const char *name = pty_process_tty_name(&chan->stream.pty);
+    if (chan->stream.proc.type == kProcTypePty) {
+      const char *name = pty_proc_tty_name(&chan->stream.pty);
       PUT_C(info, "pty", CSTR_TO_ARENA_OBJ(arena, name));
     }
 

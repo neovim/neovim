@@ -7,11 +7,11 @@
 #include "nvim/channel_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/defs.h"
-#include "nvim/event/libuv_process.h"
+#include "nvim/event/libuv_proc.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
-#include "nvim/os/pty_process.h"
+#include "nvim/os/pty_proc.h"
 #include "nvim/types_defs.h"
 
 struct Channel {
@@ -21,9 +21,9 @@ struct Channel {
 
   ChannelStreamType streamtype;
   union {
-    Process proc;
-    LibuvProcess uv;
-    PtyProcess pty;
+    Proc proc;
+    LibuvProc uv;
+    PtyProc pty;
     RStream socket;
     StdioPair stdio;
     StderrState err;

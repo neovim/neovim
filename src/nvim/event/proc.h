@@ -6,9 +6,9 @@
 #include "nvim/event/defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"
 
-static inline Process process_init(Loop *loop, ProcessType type, void *data)
+static inline Proc proc_init(Loop *loop, ProcType type, void *data)
 {
-  return (Process) {
+  return (Proc) {
     .type = type,
     .data = data,
     .loop = loop,
@@ -33,17 +33,17 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
 }
 
 /// Get the path to the executable of the process.
-static inline const char *process_get_exepath(Process *proc)
+static inline const char *proc_get_exepath(Proc *proc)
 {
   return proc->exepath != NULL ? proc->exepath : proc->argv[0];
 }
 
-static inline bool process_is_stopped(Process *proc)
+static inline bool proc_is_stopped(Proc *proc)
 {
   bool exited = (proc->status >= 0);
   return exited || (proc->stopped_time != 0);
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/process.h.generated.h"
+# include "event/proc.h.generated.h"
 #endif

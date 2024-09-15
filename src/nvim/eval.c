@@ -32,7 +32,7 @@
 #include "nvim/eval/vars.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
-#include "nvim/event/process.h"
+#include "nvim/event/proc.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
@@ -8506,7 +8506,7 @@ Channel *find_job(uint64_t id, bool show_error)
 {
   Channel *data = find_channel(id);
   if (!data || data->streamtype != kChannelStreamProc
-      || process_is_stopped(&data->stream.proc)) {
+      || proc_is_stopped(&data->stream.proc)) {
     if (show_error) {
       if (data && data->streamtype != kChannelStreamProc) {
         emsg(_(e_invchanjob));

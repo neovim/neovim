@@ -7,5 +7,5 @@
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/process.h.generated.h"
+# include "os/proc.h.generated.h"
 #endif

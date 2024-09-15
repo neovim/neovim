@@ -34,16 +34,16 @@
 #include "nvim/eval/typval.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
-#include "nvim/event/process.h"
+#include "nvim/event/proc.h"
 #include "nvim/log.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
-#include "nvim/os/pty_process.h"
-#include "nvim/os/pty_process_unix.h"
+#include "nvim/os/pty_proc.h"
+#include "nvim/os/pty_proc_unix.h"
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_process_unix.c.generated.h"
+# include "os/pty_proc_unix.c.generated.h"
 #endif
 
 #if defined(__sun) && !defined(HAVE_FORKPTY)
@@ -158,7 +158,7 @@ static pid_t forkpty(int *amaster, char *name, struct termios *termp, struct win
 #endif
 
 /// @returns zero on success, or negative error code
-int pty_process_spawn(PtyProcess *ptyproc)
+int pty_proc_spawn(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
   // termios initialized at first use
@@ -168,7 +168,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
   }
 
   int status = 0;  // zero or negative error code (libuv convention)
-  Process *proc = (Process *)ptyproc;
+  Proc *proc = (Proc *)ptyproc;
   assert(proc->err.s.closed);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
   ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
@@ -224,29 +224,29 @@ error:
   return status;
 }
 
-const char *pty_process_tty_name(PtyProcess *ptyproc)
+const char *pty_proc_tty_name(PtyProc *ptyproc)
 {
   return ptsname(ptyproc->tty_fd);
 }
 
-void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
+void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
   ptyproc->winsize = (struct winsize){ height, width, 0, 0 };
   ioctl(ptyproc->tty_fd, TIOCSWINSZ, &ptyproc->winsize);
 }
 
-void pty_process_close(PtyProcess *ptyproc)
+void pty_proc_close(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
-  pty_process_close_master(ptyproc);
-  Process *proc = (Process *)ptyproc;
+  pty_proc_close_master(ptyproc);
+  Proc *proc = (Proc *)ptyproc;
   if (proc->internal_close_cb) {
     proc->internal_close_cb(proc);
   }
 }
 
-void pty_process_close_master(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
+void pty_proc_close_master(PtyProc *ptyproc) FUNC_ATTR_NONNULL_ALL
 {
   if (ptyproc->tty_fd >= 0) {
     close(ptyproc->tty_fd);
@@ -254,12 +254,12 @@ void pty_process_close_master(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
   }
 }
 
-void pty_process_teardown(Loop *loop)
+void pty_proc_teardown(Loop *loop)
 {
   uv_signal_stop(&loop->children_watcher);
 }
 
-static void init_child(PtyProcess *ptyproc)
+static void init_child(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
 #if defined(HAVE__NSGETENVIRON)
@@ -277,13 +277,13 @@ static void init_child(PtyProcess *ptyproc)
   signal(SIGTERM, SIG_DFL);
   signal(SIGALRM, SIG_DFL);
 
-  Process *proc = (Process *)ptyproc;
+  Proc *proc = (Proc *)ptyproc;
   if (proc->cwd && os_chdir(proc->cwd) != 0) {
     ELOG("chdir(%s) failed: %s", proc->cwd, strerror(errno));
     return;
   }
 
-  const char *prog = process_get_exepath(proc);
+  const char *prog = proc_get_exepath(proc);
 
   assert(proc->env);
   environ = tv_dict_to_env(proc->env);
@@ -388,7 +388,7 @@ static void chld_handler(uv_signal_t *handle, int signum)
   Loop *loop = handle->loop->data;
 
   kl_iter(WatcherPtr, loop->children, current) {
-    Process *proc = (*current)->data;
+    Proc *proc = (*current)->data;
     do {
       pid = waitpid(proc->pid, &stat, WNOHANG);
     } while (pid < 0 && errno == EINTR);
@@ -406,10 +406,10 @@ static void chld_handler(uv_signal_t *handle, int signum)
   }
 }
 
-PtyProcess pty_process_init(Loop *loop, void *data)
+PtyProc pty_proc_init(Loop *loop, void *data)
 {
-  PtyProcess rv;
-  rv.process = process_init(loop, kProcessTypePty, data);
+  PtyProc rv;
+  rv.proc = proc_init(loop, kProcTypePty, data);
   rv.width = 80;
   rv.height = 24;
   rv.tty_fd = -1;

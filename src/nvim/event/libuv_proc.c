@@ -5,9 +5,9 @@
 
 #include "nvim/eval/typval.h"
 #include "nvim/event/defs.h"
-#include "nvim/event/libuv_process.h"
+#include "nvim/event/libuv_proc.h"
 #include "nvim/event/loop.h"
-#include "nvim/event/process.h"
+#include "nvim/event/proc.h"
 #include "nvim/log.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
@@ -15,15 +15,15 @@
 #include "nvim/ui_client.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/libuv_process.c.generated.h"
+# include "event/libuv_proc.c.generated.h"
 #endif
 
 /// @returns zero on success, or negative error code
-int libuv_process_spawn(LibuvProcess *uvproc)
+int libuv_proc_spawn(LibuvProc *uvproc)
   FUNC_ATTR_NONNULL_ALL
 {
-  Process *proc = (Process *)uvproc;
-  uvproc->uvopts.file = process_get_exepath(proc);
+  Proc *proc = (Proc *)uvproc;
+  uvproc->uvopts.file = proc_get_exepath(proc);
   uvproc->uvopts.args = proc->argv;
   uvproc->uvopts.flags = UV_PROCESS_WINDOWS_HIDE;
 #ifdef MSWIN
@@ -101,7 +101,7 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   return status;
 }
 
-void libuv_process_close(LibuvProcess *uvproc)
+void libuv_proc_close(LibuvProc *uvproc)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   uv_close((uv_handle_t *)&uvproc->uv, close_cb);
@@ -109,11 +109,11 @@ void libuv_process_close(LibuvProcess *uvproc)
 
 static void close_cb(uv_handle_t *handle)
 {
-  Process *proc = handle->data;
+  Proc *proc = handle->data;
   if (proc->internal_close_cb) {
     proc->internal_close_cb(proc);
   }
-  LibuvProcess *uvproc = (LibuvProcess *)proc;
+  LibuvProc *uvproc = (LibuvProc *)proc;
   if (uvproc->uvopts.env) {
     os_free_fullenv(uvproc->uvopts.env);
   }
@@ -121,7 +121,7 @@ static void close_cb(uv_handle_t *handle)
 
 static void exit_cb(uv_process_t *handle, int64_t status, int term_signal)
 {
-  Process *proc = handle->data;
+  Proc *proc = handle->data;
 #if defined(MSWIN)
   // Use stored/expected signal.
   term_signal = proc->exit_signal;
@@ -130,10 +130,10 @@ static void exit_cb(uv_process_t *handle, int64_t status, int term_signal)
   proc->internal_exit_cb(proc);
 }
 
-LibuvProcess libuv_process_init(Loop *loop, void *data)
+LibuvProc libuv_proc_init(Loop *loop, void *data)
 {
-  LibuvProcess rv = {
-    .process = process_init(loop, kProcessTypeUv, data)
+  LibuvProc rv = {
+    .proc = proc_init(loop, kProcTypeUv, data)
   };
   return rv;
 }

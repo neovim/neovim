@@ -49,7 +49,7 @@
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
-#include "nvim/event/process.h"
+#include "nvim/event/proc.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
@@ -101,7 +101,7 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
-#include "nvim/os/pty_process.h"
+#include "nvim/os/pty_proc.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/os/time.h"
@@ -3770,7 +3770,7 @@ static void f_jobpid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  Process *proc = &data->stream.proc;
+  Proc *proc = &data->stream.proc;
   rettv->vval.v_number = proc->pid;
 }
 
@@ -3796,13 +3796,13 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  if (data->stream.proc.type != kProcessTypePty) {
+  if (data->stream.proc.type != kProcTypePty) {
     emsg(_(e_channotpty));
     return;
   }
 
-  pty_process_resize(&data->stream.pty, (uint16_t)argvars[1].vval.v_number,
-                     (uint16_t)argvars[2].vval.v_number);
+  pty_proc_resize(&data->stream.pty, (uint16_t)argvars[1].vval.v_number,
+                  (uint16_t)argvars[2].vval.v_number);
   rettv->vval.v_number = 1;
 }
 
@@ -4077,7 +4077,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     // Ignore return code, but show error later.
     channel_close(data->id, kChannelPartRpc, &error);
   }
-  process_stop(&data->stream.proc);
+  proc_stop(&data->stream.proc);
   rettv->vval.v_number = 1;
   if (error) {
     emsg(error);
@@ -4113,10 +4113,10 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         || !(chan = find_channel((uint64_t)TV_LIST_ITEM_TV(arg)->vval.v_number))
         || chan->streamtype != kChannelStreamProc) {
       jobs[i] = NULL;  // Invalid job.
-    } else if (process_is_stopped(&chan->stream.proc)) {
+    } else if (proc_is_stopped(&chan->stream.proc)) {
       // Job is stopped but not fully destroyed.
       // Ensure all callbacks on its event queue are executed. #15402
-      process_wait(&chan->stream.proc, -1, NULL);
+      proc_wait(&chan->stream.proc, -1, NULL);
       jobs[i] = NULL;  // Invalid job.
     } else {
       jobs[i] = chan;
@@ -4144,8 +4144,8 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (jobs[i] == NULL) {
       continue;  // Invalid job, will assign status=-3 below.
     }
-    int status = process_wait(&jobs[i]->stream.proc, remaining,
-                              waiting_jobs);
+    int status = proc_wait(&jobs[i]->stream.proc, remaining,
+                           waiting_jobs);
     if (status < 0) {
       break;  // Interrupted (CTRL-C) or timeout, skip remaining jobs.
     }
@@ -8207,7 +8207,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  int pid = chan->stream.pty.process.pid;
+  int pid = chan->stream.pty.proc.pid;
 
   // "./…" => "/home/foo/…"
   vim_FullName(cwd, NameBuff, sizeof(NameBuff), false);

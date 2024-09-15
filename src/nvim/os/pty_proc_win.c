@@ -10,20 +10,20 @@
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
 #include "nvim/os/pty_conpty_win.h"
-#include "nvim/os/pty_process_win.h"
+#include "nvim/os/pty_proc_win.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_process_win.c.generated.h"
+# include "os/pty_proc_win.c.generated.h"
 #endif
 
-static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
+static void CALLBACK pty_proc_finish1(void *context, BOOLEAN unused)
   FUNC_ATTR_NONNULL_ALL
 {
-  PtyProcess *ptyproc = (PtyProcess *)context;
-  Process *proc = (Process *)ptyproc;
+  PtyProc *ptyproc = (PtyProc *)context;
+  Proc *proc = (Proc *)ptyproc;
 
   os_conpty_free(ptyproc->conpty);
-  // NB: pty_process_finish1() is called on a separate thread,
+  // NB: pty_proc_finish1() is called on a separate thread,
   // but the timer only works properly if it's started by the main thread.
   loop_schedule_fast(proc->loop, event_create(start_wait_eof_timer, ptyproc));
 }
@@ -31,7 +31,7 @@ static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
 static void start_wait_eof_timer(void **argv)
   FUNC_ATTR_NONNULL_ALL
 {
-  PtyProcess *ptyproc = (PtyProcess *)argv[0];
+  PtyProc *ptyproc = (PtyProc *)argv[0];
 
   if (ptyproc->finish_wait != NULL) {
     uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
@@ -39,15 +39,15 @@ static void start_wait_eof_timer(void **argv)
 }
 
 /// @returns zero on success, or negative error code.
-int pty_process_spawn(PtyProcess *ptyproc)
+int pty_proc_spawn(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
-  Process *proc = (Process *)ptyproc;
+  Proc *proc = (Proc *)ptyproc;
   int status = 0;
   conpty_t *conpty_object = NULL;
   char *in_name = NULL;
   char *out_name = NULL;
-  HANDLE process_handle = NULL;
+  HANDLE proc_handle = NULL;
   uv_connect_t *in_req = NULL;
   uv_connect_t *out_req = NULL;
   wchar_t *cmd_line = NULL;
@@ -69,7 +69,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
     uv_pipe_connect(in_req,
                     &proc->in.uv.pipe,
                     in_name,
-                    pty_process_connect_cb);
+                    pty_proc_connect_cb);
   }
 
   if (!proc->out.s.closed) {
@@ -77,7 +77,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
     uv_pipe_connect(out_req,
                     &proc->out.s.uv.pipe,
                     out_name,
-                    pty_process_connect_cb);
+                    pty_proc_connect_cb);
   }
 
   if (proc->cwd != NULL) {
@@ -105,7 +105,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
   }
 
   if (!os_conpty_spawn(conpty_object,
-                       &process_handle,
+                       &proc_handle,
                        NULL,
                        cmd_line,
                        cwd,
@@ -114,42 +114,42 @@ int pty_process_spawn(PtyProcess *ptyproc)
     status = (int)GetLastError();
     goto cleanup;
   }
-  proc->pid = (int)GetProcessId(process_handle);
+  proc->pid = (int)GetProcessId(proc_handle);
 
   uv_timer_init(&proc->loop->uv, &ptyproc->wait_eof_timer);
   ptyproc->wait_eof_timer.data = (void *)ptyproc;
   if (!RegisterWaitForSingleObject(&ptyproc->finish_wait,
-                                   process_handle,
-                                   pty_process_finish1,
+                                   proc_handle,
+                                   pty_proc_finish1,
                                    ptyproc,
                                    INFINITE,
                                    WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE)) {
     abort();
   }
 
-  // Wait until pty_process_connect_cb is called.
+  // Wait until pty_proc_connect_cb is called.
   while ((in_req != NULL && in_req->handle != NULL)
          || (out_req != NULL && out_req->handle != NULL)) {
     uv_run(&proc->loop->uv, UV_RUN_ONCE);
   }
 
   ptyproc->conpty = conpty_object;
-  ptyproc->process_handle = process_handle;
+  ptyproc->proc_handle = proc_handle;
   conpty_object = NULL;
-  process_handle = NULL;
+  proc_handle = NULL;
 
 cleanup:
   if (status) {
     // In the case of an error of MultiByteToWideChar or CreateProcessW.
-    ELOG("pty_process_spawn(%s): %s: error code: %d",
+    ELOG("pty_proc_spawn(%s): %s: error code: %d",
          proc->argv[0], emsg, status);
     status = os_translate_sys_error(status);
   }
   os_conpty_free(conpty_object);
   xfree(in_name);
   xfree(out_name);
-  if (process_handle != NULL) {
-    CloseHandle(process_handle);
+  if (proc_handle != NULL) {
+    CloseHandle(proc_handle);
   }
   xfree(in_req);
   xfree(out_req);
@@ -159,32 +159,32 @@ cleanup:
   return status;
 }
 
-const char *pty_process_tty_name(PtyProcess *ptyproc)
+const char *pty_proc_tty_name(PtyProc *ptyproc)
 {
   return "?";
 }
 
-void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
+void pty_proc_resize(PtyProc *ptyproc, uint16_t width, uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
   os_conpty_set_size(ptyproc->conpty, width, height);
 }
 
-void pty_process_close(PtyProcess *ptyproc)
+void pty_proc_close(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
-  Process *proc = (Process *)ptyproc;
+  Proc *proc = (Proc *)ptyproc;
 
-  pty_process_close_master(ptyproc);
+  pty_proc_close_master(ptyproc);
 
   if (ptyproc->finish_wait != NULL) {
     UnregisterWaitEx(ptyproc->finish_wait, NULL);
     ptyproc->finish_wait = NULL;
     uv_close((uv_handle_t *)&ptyproc->wait_eof_timer, NULL);
   }
-  if (ptyproc->process_handle != NULL) {
-    CloseHandle(ptyproc->process_handle);
-    ptyproc->process_handle = NULL;
+  if (ptyproc->proc_handle != NULL) {
+    CloseHandle(ptyproc->proc_handle);
+    ptyproc->proc_handle = NULL;
   }
 
   if (proc->internal_close_cb) {
@@ -192,17 +192,17 @@ void pty_process_close(PtyProcess *ptyproc)
   }
 }
 
-void pty_process_close_master(PtyProcess *ptyproc)
+void pty_proc_close_master(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
 }
 
-void pty_process_teardown(Loop *loop)
+void pty_proc_teardown(Loop *loop)
   FUNC_ATTR_NONNULL_ALL
 {
 }
 
-static void pty_process_connect_cb(uv_connect_t *req, int status)
+static void pty_proc_connect_cb(uv_connect_t *req, int status)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(status == 0);
@@ -212,23 +212,23 @@ static void pty_process_connect_cb(uv_connect_t *req, int status)
 static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
   FUNC_ATTR_NONNULL_ALL
 {
-  PtyProcess *ptyproc = wait_eof_timer->data;
-  Process *proc = (Process *)ptyproc;
+  PtyProc *ptyproc = wait_eof_timer->data;
+  Proc *proc = (Proc *)ptyproc;
 
   assert(ptyproc->finish_wait != NULL);
   if (proc->out.s.closed || proc->out.did_eof || !uv_is_readable(proc->out.s.uvstream)) {
     uv_timer_stop(&ptyproc->wait_eof_timer);
-    pty_process_finish2(ptyproc);
+    pty_proc_finish2(ptyproc);
   }
 }
 
-static void pty_process_finish2(PtyProcess *ptyproc)
+static void pty_proc_finish2(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
-  Process *proc = (Process *)ptyproc;
+  Proc *proc = (Proc *)ptyproc;
 
   DWORD exit_code = 0;
-  GetExitCodeProcess(ptyproc->process_handle, &exit_code);
+  GetExitCodeProcess(ptyproc->proc_handle, &exit_code);
   proc->status = proc->exit_signal ? 128 + proc->exit_signal : (int)exit_code;
 
   proc->internal_exit_cb(proc);
@@ -427,14 +427,14 @@ cleanup:
   return rc;
 }
 
-PtyProcess pty_process_init(Loop *loop, void *data)
+PtyProc pty_proc_init(Loop *loop, void *data)
 {
-  PtyProcess rv;
-  rv.process = process_init(loop, kProcessTypePty, data);
+  PtyProc rv;
+  rv.proc = proc_init(loop, kProcTypePty, data);
   rv.width = 80;
   rv.height = 24;
   rv.conpty = NULL;
   rv.finish_wait = NULL;
-  rv.process_handle = NULL;
+  rv.proc_handle = NULL;
   return rv;
 }
