@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Sep 10
+" Last Change:		2024 Sep 11
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -663,7 +663,7 @@ hi def link javaStorageClass		StorageClass
 hi def link javaMethodDecl		javaStorageClass
 hi def link javaClassDecl		javaStorageClass
 hi def link javaScopeDecl		javaStorageClass
-hi def link javaConceptKind		NonText
+hi def link javaConceptKind		javaStorageClass
 
 hi def link javaBoolean			Boolean
 hi def link javaSpecial			Special
