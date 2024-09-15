@@ -103,7 +103,7 @@ Debugging tests
     DBG 2022-06-15T18:37:45.227 T57.58016.0/c UI: stop
     INF 2022-06-15T18:37:45.227 T57.58016.0/c os_exit:595: Nvim exit: 0
     DBG 2022-06-15T18:37:45.229 T57.58016.0   read_cb:118: closing Stream (0x7fd5d700ea18): EOF (end of file)
-    INF 2022-06-15T18:37:45.229 T57.58016.0   on_process_exit:400: exited: pid=58017 status=0 stoptime=0
+    INF 2022-06-15T18:37:45.229 T57.58016.0   on_proc_exit:400: exited: pid=58017 status=0 stoptime=0
   ```
 - You can set `$GDB` to [run functional tests under gdbserver](https://github.com/neovim/neovim/pull/1527):
 

@@ -43,7 +43,7 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
-#include "nvim/event/process.h"
+#include "nvim/event/proc.h"
 #include "nvim/event/stream.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
@@ -174,7 +174,7 @@ bool event_teardown(void)
   loop_poll_events(&main_loop, 0);  // Drain thread_events, fast_events.
   input_stop();
   channel_teardown();
-  process_teardown(&main_loop);
+  proc_teardown(&main_loop);
   timer_teardown();
   server_teardown();
   signal_teardown();
@@ -2207,7 +2207,7 @@ static void usage(void)
   printf(_("  --headless            Don't start a user interface\n"));
   printf(_("  --listen <address>    Serve RPC API from this address\n"));
   printf(_("  --remote[-subcommand] Execute commands remotely on a server\n"));
-  printf(_("  --server <address>    Specify RPC server to send commands to\n"));
+  printf(_("  --server <address>    Connect to this Nvim server\n"));
   printf(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
   printf(_("\nSee \":help startup-options\" for all options.\n"));
 }

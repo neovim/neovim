@@ -950,8 +950,8 @@ void time_msg(const char *mesg, const proftime_T *start)
 /// Initializes the `time_fd` stream for the --startuptime report.
 ///
 /// @param fname startuptime report file path
-/// @param process_name name of the current Nvim process to write in the report.
-void time_init(const char *fname, const char *process_name)
+/// @param proc_name name of the current Nvim process to write in the report.
+void time_init(const char *fname, const char *proc_name)
 {
   const size_t bufsize = 8192;  // Big enough for the entire --startuptime report.
   time_fd = fopen(fname, "a");
@@ -972,7 +972,7 @@ void time_init(const char *fname, const char *process_name)
     semsg("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
     return;
   }
-  fprintf(time_fd, "--- Startup times for process: %s ---\n", process_name);
+  fprintf(time_fd, "--- Startup times for process: %s ---\n", proc_name);
 }
 
 /// Flushes the startuptimes to disk for the current process

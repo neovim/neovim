@@ -5,12 +5,12 @@
 #include "nvim/event/defs.h"
 
 typedef struct {
-  Process process;
+  Proc proc;
   uv_process_t uv;
   uv_process_options_t uvopts;
   uv_stdio_container_t uvstdio[4];
-} LibuvProcess;
+} LibuvProc;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/libuv_process.h.generated.h"
+# include "event/libuv_proc.h.generated.h"
 #endif

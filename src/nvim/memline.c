@@ -84,7 +84,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
-#include "nvim/os/process.h"
+#include "nvim/os/proc.h"
 #include "nvim/os/time.h"
 #include "nvim/os/time_defs.h"
 #include "nvim/path.h"
@@ -743,7 +743,7 @@ static void add_b0_fenc(ZeroBlock *b0p, buf_T *buf)
 /// @param swap_fname Name of the swapfile. If it's from before a reboot, the result is 0.
 ///
 /// @return PID, or 0 if process is not running or the swapfile is from before a reboot.
-static int swapfile_process_running(const ZeroBlock *b0p, const char *swap_fname)
+static int swapfile_proc_running(const ZeroBlock *b0p, const char *swap_fname)
 {
   FileInfo st;
   double uptime;
@@ -1214,7 +1214,7 @@ void ml_recover(bool checkext)
       msg(_("Recovery completed. Buffer contents equals file contents."), 0);
     }
     msg_puts(_("\nYou may want to delete the .swp file now."));
-    if (swapfile_process_running(b0p, fname_used)) {
+    if (swapfile_proc_running(b0p, fname_used)) {
       // Warn there could be an active Vim on the same file, the user may
       // want to kill it.
       msg_puts(_("\nNote: process STILL RUNNING: "));
@@ -1462,7 +1462,7 @@ char *make_percent_swname(char *dir, char *dir_end, const char *name)
 }
 
 // PID of swapfile owner, or zero if not running.
-static int process_running;
+static int proc_running;
 
 /// For Vimscript "swapinfo()".
 ///
@@ -1488,7 +1488,7 @@ void swapfile_dict(const char *fname, dict_T *d)
         tv_dict_add_str_len(d, S_LEN("fname"), b0.b0_fname,
                             B0_FNAME_SIZE_ORG);
 
-        tv_dict_add_nr(d, S_LEN("pid"), swapfile_process_running(&b0, fname));
+        tv_dict_add_nr(d, S_LEN("pid"), swapfile_proc_running(&b0, fname));
         tv_dict_add_nr(d, S_LEN("mtime"), char_to_long(b0.b0_mtime));
         tv_dict_add_nr(d, S_LEN("dirty"), b0.b0_dirty ? 1 : 0);
         tv_dict_add_nr(d, S_LEN("inode"), char_to_long(b0.b0_ino));
@@ -1572,7 +1572,7 @@ static time_t swapfile_info(char *fname)
         if (char_to_long(b0.b0_pid) != 0) {
           msg_puts(_("\n        process ID: "));
           msg_outnum((int)char_to_long(b0.b0_pid));
-          if ((process_running = swapfile_process_running(&b0, fname))) {
+          if ((proc_running = swapfile_proc_running(&b0, fname))) {
             msg_puts(_(" (STILL RUNNING)"));
           }
         }
@@ -1640,7 +1640,7 @@ static bool swapfile_unchanged(char *fname)
   }
 
   // process must be known and not running.
-  if (char_to_long(b0.b0_pid) == 0 || swapfile_process_running(&b0, fname)) {
+  if (char_to_long(b0.b0_pid) == 0 || swapfile_proc_running(&b0, fname)) {
     ret = false;
   }
 
@@ -3399,7 +3399,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         fd = os_open(fname, O_RDONLY, 0);
         if (fd >= 0) {
           if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
-            process_running = swapfile_process_running(&b0, fname);
+            proc_running = swapfile_proc_running(&b0, fname);
 
             // If the swapfile has the same directory as the
             // buffer don't compare the directory names, they can
@@ -3459,7 +3459,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             choice = SEA_CHOICE_READONLY;
           }
 
-          process_running = 0;  // Set by attention_message..swapfile_info.
+          proc_running = 0;  // Set by attention_message..swapfile_info.
           if (choice == SEA_CHOICE_NONE) {
             // Show info about the existing swapfile.
             attention_message(buf, fname);
@@ -3491,12 +3491,12 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
               = do_dialog(VIM_WARNING,
                           _("VIM - ATTENTION"),
                           name,
-                          process_running
+                          proc_running
                           ? _("&Open Read-Only\n&Edit anyway\n&Recover\n&Quit\n&Abort")
                           : _("&Open Read-Only\n&Edit anyway\n&Recover\n&Delete it\n&Quit\n&Abort"),
                           1, NULL, false);
 
-            if (process_running && dialog_result >= 4) {
+            if (proc_running && dialog_result >= 4) {
               // compensate for missing "Delete it" button
               dialog_result++;
             }

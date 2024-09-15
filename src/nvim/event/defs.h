@@ -142,30 +142,31 @@ struct socket_watcher {
 };
 
 typedef enum {
-  kProcessTypeUv,
-  kProcessTypePty,
-} ProcessType;
+  kProcTypeUv,
+  kProcTypePty,
+} ProcType;
 
-typedef struct process Process;
-typedef void (*process_exit_cb)(Process *proc, int status, void *data);
-typedef void (*internal_process_cb)(Process *proc);
+/// OS process
+typedef struct proc Proc;
+typedef void (*proc_exit_cb)(Proc *proc, int status, void *data);
+typedef void (*internal_proc_cb)(Proc *proc);
 
-struct process {
-  ProcessType type;
+struct proc {
+  ProcType type;
   Loop *loop;
   void *data;
   int pid, status, refcount;
   uint8_t exit_signal;  // Signal used when killing (on Windows).
-  uint64_t stopped_time;  // process_stop() timestamp
+  uint64_t stopped_time;  // proc_stop() timestamp
   const char *cwd;
   char **argv;
   const char *exepath;
   dict_T *env;
   Stream in;
   RStream out, err;
-  /// Exit handler. If set, user must call process_free().
-  process_exit_cb cb;
-  internal_process_cb internal_exit_cb, internal_close_cb;
+  /// Exit handler. If set, user must call proc_free().
+  proc_exit_cb cb;
+  internal_proc_cb internal_exit_cb, internal_close_cb;
   bool closed, detach, overlapped, fwd_err;
   MultiQueue *events;
 };

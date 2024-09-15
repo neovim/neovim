@@ -1,20 +1,20 @@
 #pragma once
-// IWYU pragma: private, include "nvim/os/pty_process.h"
+// IWYU pragma: private, include "nvim/os/pty_proc.h"
 
 #include <uv.h>
 
-#include "nvim/event/process.h"
+#include "nvim/event/proc.h"
 #include "nvim/lib/queue_defs.h"
 #include "nvim/os/pty_conpty_win.h"
 
 typedef struct pty_process {
-  Process process;
+  Proc proc;
   uint16_t width, height;
   conpty_t *conpty;
   HANDLE finish_wait;
-  HANDLE process_handle;
+  HANDLE proc_handle;
   uv_timer_t wait_eof_timer;
-} PtyProcess;
+} PtyProc;
 
 // Structure used by build_cmd_line()
 typedef struct arg_node {
@@ -23,5 +23,5 @@ typedef struct arg_node {
 } ArgNode;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_process_win.h.generated.h"
+# include "os/pty_proc_win.h.generated.h"
 #endif

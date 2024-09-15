@@ -848,7 +848,7 @@ def CheckIncludes(filename, lines, error):
             or filename.endswith('.in.h')
             or FileInfo(filename).RelativePath() in {
         'func_attr.h',
-        'os/pty_process.h',
+        'os/pty_proc.h',
     }):
         return
 
@@ -869,7 +869,7 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/msgpack_rpc/unpacker.h",
             "src/nvim/option.h",
             "src/nvim/os/pty_conpty_win.h",
-            "src/nvim/os/pty_process_win.h",
+            "src/nvim/os/pty_proc_win.h",
                              ]
 
     skip_headers = [

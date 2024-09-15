@@ -143,7 +143,7 @@ finished:
   return conpty_object;
 }
 
-bool os_conpty_spawn(conpty_t *conpty_object, HANDLE *process_handle, wchar_t *name,
+bool os_conpty_spawn(conpty_t *conpty_object, HANDLE *proc_handle, wchar_t *name,
                      wchar_t *cmd_line, wchar_t *cwd, wchar_t *env)
 {
   PROCESS_INFORMATION pi = { 0 };
@@ -159,7 +159,7 @@ bool os_conpty_spawn(conpty_t *conpty_object, HANDLE *process_handle, wchar_t *n
                       &pi)) {
     return false;
   }
-  *process_handle = pi.hProcess;
+  *proc_handle = pi.hProcess;
   return true;
 }
 
