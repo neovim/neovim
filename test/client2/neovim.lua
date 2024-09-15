@@ -2,7 +2,7 @@ local uv = vim.uv
 local mpack = vim.mpack
 local uvutil = require('test.client2.uvutil')
 
--- notify is a sentinel value used to mark message as a notification.
+-- Sentinel value used to mark message as a notification.
 local notify = {}
 
 local Nvim = {
@@ -15,6 +15,7 @@ Thunk.__call = function(self, ...)
   return self.f(self.a, ...)
 end
 
+--- Buffer/Window/Tabpage msgpack extension types.
 local extension_metatables = {}
 
 for name, ext in pairs { buf = 0, win = 1, tabpage = 2 } do
@@ -75,14 +76,14 @@ function Endpoint.new(w, r) --> Endpoint
   local unpackext, packext = {}, {}
   for ext, mt in pairs(extension_metatables) do
     unpackext[ext] = function(_, s)
-      return setmetatable({ id = mpack.unpack(s), nvim = nvim }, mt)
+      return setmetatable({ id = mpack.decode(s), nvim = nvim }, mt)
     end
     packext[mt] = function(o)
-      return ext, mpack.pack(o.id)
+      return ext, mpack.encode(o.id)
     end
   end
   ep.session = mpack.Session({ unpack = mpack.Unpacker({ ext = unpackext }) })
-  ep.pack = mpack.Packer({ ext = packext })
+  ep.encode = mpack.Packer({ ext = packext })
   uv.read_start(r, function(err, chunk)
     return ep:on_read(err, chunk)
   end)
@@ -118,11 +119,11 @@ end
 function Endpoint:request_cb(cb, method, ...)
   local args = { ... }
   if #args > 0 and args[#args] == notify then
-    self.w:write(self.session:notify() .. self.pack(method) .. self.pack(table.remove(args)))
+    self.w:write(self.session:notify() .. self.encode(method) .. self.encode(table.remove(args)))
     cb()
     return
   end
-  self.w:write(self.session:request(cb) .. self.pack(method) .. self.pack(args))
+  self.w:write(self.session:request(cb) .. self.encode(method) .. self.encode(args))
 end
 
 -- Like request_cb, except it waits for the reply from peer.
@@ -149,9 +150,14 @@ function Endpoint:on_read(err, chunk)
   local pos, len = 1, #chunk
   while pos <= len do
     local mtype, id_or_cb, method_or_error, args_or_result
-    mtype, id_or_cb, method_or_error, args_or_result, pos = self.session:receive(chunk, pos)
+    mtype, --[[@type string]]
+      id_or_cb, --[[@type number|function]]
+      method_or_error, --[[@type string]]
+      args_or_result, --[[@type any]]
+      pos --[[@type number]] =
+      self.session:receive(chunk, pos)
     if mtype ~= nil then
-      local f = self['on_' .. mtype]
+      local f = self['on_' .. mtype] -- on_request/on_notification/on_response.
       if not f then
         error('unknown mpack receive type: ' .. mtype)
       end
@@ -171,13 +177,13 @@ end
 function Endpoint:on_request(id, method, args)
   local handler = self.nvim.handlers[method]
   if not handler then
-    self.w:write(self.session:reply(id) .. self.pack('method not found') .. self.pack(mpack.NIL))
+    self.w:write(self.session:reply(id) .. self.encode('method not found') .. self.encode(vim.NIL))
     return
   end
   uvutil.add_idle_call(coroutine.resume, {
     coroutine.create(function()
       local ok, result = xpcall(handler, errorHandler, unpack(args))
-      local err, resp = mpack.NIL, mpack.NIL
+      local err, resp = vim.NIL, vim.NIL
       if ok then
         if result ~= nil then
           resp = result
@@ -190,14 +196,14 @@ function Endpoint:on_request(id, method, args)
         -- TODO: does nvim expect array in error?
         --err = {0, err}
       end
-      self.w:write(self.session:reply(id) .. self.pack(err) .. self.pack(resp))
+      self.w:write(self.session:reply(id) .. self.encode(err) .. self.encode(resp))
     end),
   })
 end
 
--- on_notification handles MsgPack notifications.
+-- Handles MsgPack notifications.
 function Endpoint:on_notification(_, method, args)
-  -- TODO run notifications in a single coroutine to ensure in order execution.
+  -- TODO run notifications in a single coroutine to ensure in-order execution.
   local handler = self.nvim.handlers[method]
   if not handler then
     return
@@ -212,7 +218,7 @@ end
 
 -- on_response handles MsgPack responses.
 function Endpoint:on_response(cb, err, result)
-  if err == mpack.NIL then
+  if err == vim.NIL then
     cb(true, result)
     return
   end

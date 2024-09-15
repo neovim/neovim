@@ -1,3 +1,7 @@
+" TODO(justinmk):
+" - Delete this "remote plugins v1" impl.
+" - Add test coverage for "remote plugins v2". https://github.com/neovim/neovim/issues/27949
+
 if exists('g:loaded_luahost')
     finish
 endif

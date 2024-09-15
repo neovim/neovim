@@ -1,13 +1,11 @@
-expose('require uv once to prevent segfault', function()
-  require('luv')
-end)
-
+local t = require('test.testutil')
+local n = require('test.functional.testnvim')()
 local neovim = require('test.client2.neovim')
 
 describe('nvim client', function()
   local nvim
   setup(function()
-    nvim = neovim.new_child('nvim', { '--embed', '-u', 'NONE', '-i', 'NONE' })
+    nvim = neovim.new_child(n.nvim_prog, { '--embed', '-u', 'NONE', '-i', 'NONE' })
   end)
 
   teardown(function()
@@ -17,7 +15,7 @@ describe('nvim client', function()
   end)
 
   it('can call to nvim', function()
-    assert.are.equal(3, nvim:eval('1 + 2'))
+    t.eq(3, nvim:eval('1 + 2'))
   end)
 
   it('can handle requests from nvim', function()
@@ -29,8 +27,8 @@ describe('nvim client', function()
         return 'world'
       end,
     }
-    assert.are.equal('world', nvim:call('rpcrequest', channel, 'request_test', 'hello'))
-    assert.are.equal('hello', arg)
+    t.eq('world', nvim:call('rpcrequest', channel, 'request_test', 'hello'))
+    t.eq('hello', arg)
   end)
 
   it('can handle notifications from nvim', function()
@@ -43,7 +41,7 @@ describe('nvim client', function()
     }
     nvim:call('rpcnotify', channel, 'request_test', 'hello')
     nvim:get_api_info() -- ensure that notify was received
-    assert.are.equal('hello', arg)
+    t.eq('hello', arg)
   end)
 
   it('can handle errors returned from nvim', function()
@@ -65,7 +63,7 @@ describe('nvim client', function()
     -- assert.has_error(function() nvim:call('rpcrequest', channel, 'error_test') end, 'ouch')
 
     -- Yuck. Is there a better way to check the error?
-    assert.are.equal(
+    t.eq(
       "\nError invoking 'error_test' on channel 1:\nouch",
       nvim:call('execute', 'silent! call rpcrequest(' .. channel .. ', "error_test")')
     )
@@ -77,24 +75,24 @@ describe('nvim client', function()
     x = nvim:get_current_buf()
     assert.is_not_nil(x)
     y = nvim:buf(x.id)
-    assert.are.equal(x, y)
+    t.eq(x, y)
 
     x = nvim:get_current_win()
     assert.is_not_nil(x)
     y = nvim:win(x.id)
-    assert.are.equal(x, y)
+    t.eq(x, y)
 
     x = nvim:get_current_tabpage()
     assert.is_not_nil(x)
     y = nvim:tabpage(x.id)
-    assert.are.equal(x, y)
+    t.eq(x, y)
   end)
 
   describe('buf', function()
     it('can compare eq', function()
       local bufs1 = nvim:list_bufs()
       local bufs2 = nvim:list_bufs()
-      assert.are.equal(bufs1[1], bufs2[1])
+      t.eq(bufs1[1], bufs2[1])
     end)
 
     it('not eq win', function()
@@ -105,15 +103,16 @@ describe('nvim client', function()
 
     it('line functions', function()
       local buf = nvim:get_current_buf()
-      assert.are.equal(1, buf:line_count())
+      -- nvim:put({'line1', 'line2'}, 'l', false, false)
+      t.eq(1, buf:line_count())
       buf:set_lines(1, 2, false, { 'line' })
-      assert.are.equal(2, buf:line_count())
+      t.eq(2, buf:line_count())
       local lines = buf:get_lines(0, -1, true)
-      assert.are.equal(2, #lines)
-      assert.are.equal('', lines[1])
-      assert.are.equal('line', lines[2])
+      t.eq(2, #lines)
+      t.eq('', lines[1])
+      t.eq('line', lines[2])
       buf:set_lines(1, 2, true, {})
-      assert.are.equal(1, buf:line_count())
+      t.eq(1, buf:line_count())
     end)
   end)
 end)

@@ -1,14 +1,10 @@
-expose('require uv once to prevent segfault', function()
-  require('luv')
-end)
-
-local neovim = require('neovim')
-local plugin = require('plugin')
+local neovim = require('test.client2.neovim')
+local plugin = require('test.client2.plugin')
 
 describe('plugin host', function()
   local nvim
-  local p1_path = 'testdata/rplugin/lua/p1.lua'
-  local p2_path = 'testdata/rplugin/lua/p2.lua'
+  local p1_path = 'test/client2/testdata/rplugin/lua/p1.lua'
+  local p2_path = 'test/client2/testdata/rplugin/lua/p2.lua'
 
   setup(function()
     nvim = neovim.new_child('nvim', { '--embed', '-u', 'NONE', '-i', 'NONE' })
