@@ -23,6 +23,7 @@
 "   2024 Aug 15 by Vim Project: style changes, prevent E121 (#15501)
 "   2024 Aug 22 by Vim Project: fix mf-selection highlight (#15551)
 "   2024 Aug 22 by Vim Project: adjust echo output of mx command (#15550)
+"   2024 Sep 15 by Vim Project: more strict confirmation dialog (#15680)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -11275,7 +11276,7 @@ fun! s:NetrwLocalRm(path) range
     let ok= s:NetrwLocalRmFile(a:path,fname,all)
     if ok =~# 'q\%[uit]' || ok == "no"
      break
-    elseif ok =~# 'a\%[ll]'
+    elseif ok =~# '^a\%[ll]$'
      let all= 1
     endif
    endfor
@@ -11304,7 +11305,7 @@ fun! s:NetrwLocalRm(path) range
     let ok= s:NetrwLocalRmFile(a:path,curword,all)
     if ok =~# 'q\%[uit]' || ok == "no"
      break
-    elseif ok =~# 'a\%[ll]'
+    elseif ok =~# '^a\%[ll]$'
      let all= 1
     endif
     let ctr= ctr + 1
@@ -11351,12 +11352,12 @@ fun! s:NetrwLocalRmFile(path,fname,all)
 "    call Decho("response: ok<".ok.">",'~'.expand("<slnum>"))
     let ok= substitute(ok,'\[{y(es)},n(o),a(ll),q(uit)]\s*','','e')
 "    call Decho("response: ok<".ok."> (after sub)",'~'.expand("<slnum>"))
-    if ok =~# 'a\%[ll]'
+    if ok =~# '^a\%[ll]$'
      let all= 1
     endif
    endif
 
-   if all || ok =~# 'y\%[es]' || ok == ""
+   if all || ok =~# '^y\%[es]$' || ok == ""
     let ret= s:NetrwDelete(rmfile)
 "    call Decho("errcode=".v:shell_error." ret=".ret,'~'.expand("<slnum>"))
    endif
@@ -11372,13 +11373,13 @@ fun! s:NetrwLocalRmFile(path,fname,all)
     if ok == ""
      let ok="no"
     endif
-    if ok =~# 'a\%[ll]'
+    if ok =~# '^a\%[ll]$'
      let all= 1
     endif
    endif
    let rmfile= substitute(rmfile,'[\/]$','','e')
 
-   if all || ok =~# 'y\%[es]' || ok == ""
+   if all || ok =~# '^y\%[es]$' || ok == ""
     if delete(rmfile,"rf")
      call netrw#ErrorMsg(s:ERROR,"unable to delete directory <".rmfile.">!",103)
     endif
