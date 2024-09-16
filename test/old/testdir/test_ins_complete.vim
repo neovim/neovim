@@ -2898,10 +2898,38 @@ func Test_complete_fuzzy_match()
   call feedkeys("Su\<C-X>\<C-L>\<C-P>\<Esc>0", 'tx!')
   call assert_equal('no one can save me but you', getline('.'))
 
+  " issue #15412
+  call setline(1, ['alpha bravio charlie'])
+  call feedkeys("Salpha\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha bravio', getline('.'))
+  call feedkeys("Salp\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha', getline('.'))
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha bravio', getline('.'))
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha bravio charlie', getline('.'))
+
+  set complete-=i
+  call feedkeys("Salp\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha', getline('.'))
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha bravio', getline('.'))
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha bravio charlie', getline('.'))
+
+  call setline(1, ['alpha bravio charlie', 'alpha another'])
+  call feedkeys("Salpha\<C-X>\<C-N>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('alpha another', getline('.'))
+  call setline(1, ['你好 我好', '你好 他好'])
+  call feedkeys("S你好\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('你好 我好', getline('.'))
+  call feedkeys("S你好\<C-X>\<C-N>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('你好 他好', getline('.'))
+
   " issue #15526
   set completeopt=fuzzy,menuone,menu,noselect
   call setline(1, ['Text', 'ToText', ''])
-  call cursor(2, 1)
+  call cursor(3, 1)
   call feedkeys("STe\<C-X>\<C-N>x\<CR>\<Esc>0", 'tx!')
   call assert_equal('Tex', getline('.'))
 
