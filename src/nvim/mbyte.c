@@ -1379,22 +1379,11 @@ int utf_fold(int a)
     return a;
   }
 
-  utf8proc_uint8_t input_str[16] = { 0 };
-  if (utf8proc_encode_char(a, input_str) <= 0) {
-    return a;
-  }
+  utf8proc_int32_t result[1];
 
-  utf8proc_uint8_t *fold_str_utf;
-  if (utf8proc_map((utf8proc_uint8_t *)input_str, 0, &fold_str_utf,
-                   UTF8PROC_NULLTERM | UTF8PROC_CASEFOLD) < 0) {
-    return a;
-  }
+  utf8proc_ssize_t res = utf8proc_decompose_char(a, result, 1, UTF8PROC_CASEFOLD, NULL);
 
-  int fold_codepoint_utf = utf_ptr2char((char *)fold_str_utf);
-
-  xfree(fold_str_utf);
-
-  return fold_codepoint_utf;
+  return (res == 1) ? result[0] : a;
 }
 
 // Vim's own character class functions.  These exist because many library
