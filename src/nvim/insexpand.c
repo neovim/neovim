@@ -4602,6 +4602,7 @@ static int ins_compl_start(void)
     line = ml_get(curwin->w_cursor.lnum);
   }
 
+  bool in_fuzzy = get_cot_flags() & kOptCotFlagFuzzy;
   if (compl_status_adding()) {
     edit_submode_pre = _(" Adding");
     if (ctrl_x_mode_line_or_eval()) {
@@ -4615,6 +4616,9 @@ static int ins_compl_start(void)
       curbuf->b_p_com = old;
       compl_length = 0;
       compl_col = curwin->w_cursor.col;
+    } else if (ctrl_x_mode_normal() && in_fuzzy) {
+      compl_startpos = curwin->w_cursor;
+      compl_cont_status &= CONT_S_IPOS;
     }
   } else {
     edit_submode_pre = NULL;
