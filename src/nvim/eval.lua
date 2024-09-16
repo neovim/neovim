@@ -8044,7 +8044,7 @@ M.funcs = {
 
     ]=],
     name = 'prompt_getprompt',
-    params = { { 'buf', 'any' } },
+    params = { { 'buf', 'integer|string' } },
     signature = 'prompt_getprompt({buf})',
   },
   prompt_setcallback = {
@@ -8084,7 +8084,7 @@ M.funcs = {
 
     ]=],
     name = 'prompt_setcallback',
-    params = { { 'buf', 'any' }, { 'expr', 'any' } },
+    params = { { 'buf', 'integer|string' }, { 'expr', 'string|function' } },
     signature = 'prompt_setcallback({buf}, {expr})',
   },
   prompt_setinterrupt = {
@@ -8101,7 +8101,7 @@ M.funcs = {
 
     ]=],
     name = 'prompt_setinterrupt',
-    params = { { 'buf', 'any' }, { 'expr', 'any' } },
+    params = { { 'buf', 'integer|string' }, { 'expr', 'string|function' } },
     signature = 'prompt_setinterrupt({buf}, {expr})',
   },
   prompt_setprompt = {
@@ -8116,7 +8116,7 @@ M.funcs = {
       <
     ]=],
     name = 'prompt_setprompt',
-    params = { { 'buf', 'any' }, { 'text', 'any' } },
+    params = { { 'buf', 'integer|string' }, { 'text', 'string' } },
     signature = 'prompt_setprompt({buf}, {text})',
   },
   pum_getpos = {
