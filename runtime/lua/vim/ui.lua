@@ -140,6 +140,9 @@ function M.open(path)
   end
 
   local cmd --- @type string[]
+  local opts --- @type vim.SystemOpts
+
+  opts = { text = true, detach = true }
 
   if vim.fn.has('mac') == 1 then
     cmd = { 'open', path }
@@ -149,17 +152,19 @@ function M.open(path)
     else
       return nil, 'vim.ui.open: rundll32 not found'
     end
+  elseif vim.fn.executable('xdg-open') == 1 then
+    cmd = { 'xdg-open', path }
+    opts.stdout = false
+    opts.stderr = false
   elseif vim.fn.executable('wslview') == 1 then
     cmd = { 'wslview', path }
   elseif vim.fn.executable('explorer.exe') == 1 then
     cmd = { 'explorer.exe', path }
-  elseif vim.fn.executable('xdg-open') == 1 then
-    cmd = { 'xdg-open', path }
   else
     return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open)'
   end
 
-  return vim.system(cmd, { text = true, detach = true }), nil
+  return vim.system(cmd, opts), nil
 end
 
 return M
