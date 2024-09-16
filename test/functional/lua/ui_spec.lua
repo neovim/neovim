@@ -157,5 +157,28 @@ describe('vim.ui', function()
         exec_lua [[local _, err = vim.ui.open('foo') ; return err]]
       )
     end)
+
+    it('opt.cmd #29490', function()
+      t.matches(
+        'ENOENT: no such file or directory',
+        t.pcall_err(exec_lua, function()
+          vim.ui.open('foo', { cmd = { 'non-existent-tool' } })
+        end)
+      )
+
+      eq(
+        {
+          code = 0,
+          signal = 0,
+          stderr = '',
+          stdout = 'arg1=arg1;arg2=https://example.com;',
+        },
+        exec_lua(function(cmd_)
+          local cmd, err = vim.ui.open('https://example.com', { cmd = cmd_ })
+          assert(cmd and not err)
+          return cmd:wait()
+        end, { n.testprg('printargs-test'), 'arg1' })
+      )
+    end)
   end)
 end)
