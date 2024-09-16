@@ -74,10 +74,12 @@ end
 --- ```
 --- @field on_list? fun(t: vim.lsp.LocationOpts.OnList)
 --- @field loclist? boolean
+--- @field get_target? fun(): any
 
 --- @class vim.lsp.LocationOpts.OnList
 --- @field items table[] Structured like |setqflist-what|
 --- @field title? string Title for the list.
+--- @field target? any Target of the list. e.g. search symbol
 --- @field context? table `ctx` from |lsp-handler|
 
 --- @class vim.lsp.LocationOpts: vim.lsp.ListOpts
@@ -90,6 +92,12 @@ end
 --- @param opts? vim.lsp.LocationOpts
 function M.declaration(opts)
   local params = util.make_position_params()
+  local target_symbol = vim.fn.expand('<cword>')
+  opts = vim.tbl_extend('keep', opts or {}, {
+    get_target = function()
+      return target_symbol
+    end,
+  })
   request_with_opts(ms.textDocument_declaration, params, opts)
 end
 
@@ -97,6 +105,12 @@ end
 --- @param opts? vim.lsp.LocationOpts
 function M.definition(opts)
   local params = util.make_position_params()
+  local target_symbol = vim.fn.expand('<cword>')
+  opts = vim.tbl_extend('keep', opts or {}, {
+    get_target = function()
+      return target_symbol
+    end,
+  })
   request_with_opts(ms.textDocument_definition, params, opts)
 end
 
@@ -104,6 +118,12 @@ end
 --- @param opts? vim.lsp.LocationOpts
 function M.type_definition(opts)
   local params = util.make_position_params()
+  local target_symbol = vim.fn.expand('<cword>')
+  opts = vim.tbl_extend('keep', opts or {}, {
+    get_target = function()
+      return target_symbol
+    end,
+  })
   request_with_opts(ms.textDocument_typeDefinition, params, opts)
 end
 
@@ -112,6 +132,12 @@ end
 --- @param opts? vim.lsp.LocationOpts
 function M.implementation(opts)
   local params = util.make_position_params()
+  local target_symbol = vim.fn.expand('<cword>')
+  opts = vim.tbl_extend('keep', opts or {}, {
+    get_target = function()
+      return target_symbol
+    end,
+  })
   request_with_opts(ms.textDocument_implementation, params, opts)
 end
 
@@ -442,6 +468,12 @@ function M.references(context, opts)
   params.context = context or {
     includeDeclaration = true,
   }
+  local target_symbol = vim.fn.expand('<cword>')
+  opts = vim.tbl_extend('keep', opts or {}, {
+    get_target = function()
+      return target_symbol
+    end,
+  })
   request_with_opts(ms.textDocument_references, params, opts)
 end
 

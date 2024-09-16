@@ -251,10 +251,18 @@ M[ms.textDocument_references] = function(_, result, ctx, config)
 
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
   config = config or {}
-  local title = 'References'
+  local title --- @type string
+  local target_symbol ---@type string?
+  if config.get_target then
+    assert(vim.is_callable(config.get_target), 'get_target is not a function')
+    target_symbol = tostring(config.get_target())
+    title = 'References for ' .. target_symbol
+  else
+    title = 'References'
+  end
   local items = util.locations_to_items(result, client.offset_encoding)
 
-  local list = { title = title, items = items, context = ctx }
+  local list = { title = title, items = items, context = ctx, target = target_symbol }
   if config.loclist then
     vim.fn.setloclist(0, {}, ' ', list)
     vim.cmd.lopen()
@@ -432,12 +440,20 @@ local function location_handler(_, result, ctx, config)
     result = { result }
   end
 
-  local title = 'LSP locations'
+  local title ---@type string
+  local target_symbol ---@type string?
+  if config.get_target then
+    assert(vim.is_callable(config.get_target), 'get_target is not a function')
+    target_symbol = tostring(config.get_target())
+    title = 'LSP locations for ' .. target_symbol
+  else
+    title = 'LSP locations'
+  end
   local items = util.locations_to_items(result, client.offset_encoding)
 
   if config.on_list then
     assert(vim.is_callable(config.on_list), 'on_list is not a function')
-    config.on_list({ title = title, items = items })
+    config.on_list({ title = title, items = items, target = target_symbol })
     return
   end
   if #result == 1 then
