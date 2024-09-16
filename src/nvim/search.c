@@ -3636,6 +3636,8 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
   pos_T circly_end;
   bool found_new_match = false;
   bool looped_around = false;
+  char *next_word_end = NULL;
+  char *match_word = NULL;
 
   if (whole_line) {
     current_pos.lnum += dir;
@@ -3667,6 +3669,27 @@ bool search_for_fuzzy_match(buf_T *buf, pos_T *pos, char *pattern, int dir, pos_
           // Try to find a fuzzy match in the current line starting from current position
           found_new_match = fuzzy_match_str_in_line(ptr, pattern, len, &current_pos);
           if (found_new_match) {
+            if (ctrl_x_mode_normal()) {
+              match_word = xstrnsave(*ptr, (size_t)(*len));
+              if (strcmp(match_word, pattern) == 0) {
+                next_word_end = find_word_start(*ptr + *len);
+                if (*next_word_end != NUL && *next_word_end != NL) {
+                  // Find end of the word.
+                  while (*next_word_end != NUL) {
+                    int l = utfc_ptr2len(next_word_end);
+                    if (l < 2 && !vim_iswordc(*next_word_end)) {
+                      break;
+                    }
+                    next_word_end += l;
+                  }
+                } else if (looped_around) {
+                  found_new_match = false;
+                }
+                *len = (int)(next_word_end - *ptr);
+                current_pos.col = *len;
+              }
+              xfree(match_word);
+            }
             *pos = current_pos;
             break;
           } else if (looped_around && current_pos.lnum == circly_end.lnum) {
