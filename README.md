@@ -25,7 +25,7 @@ Features
 
 - Modern [GUIs](https://github.com/neovim/neovim/wiki/Related-projects#gui)
 - [API access](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
-  from any language including C/C++, C#, Clojure, D, Elixir, Go, Haskell, Java/Kotlin,
+  from any language including C/C++, C#, Clojure, D, Elixir, Gleam, Go, Haskell, Java/Kotlin,
   JavaScript/Node.js, Julia, Lisp, Lua, Perl, Python, Racket, Ruby, Rust
 - Embedded, scriptable [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
 - Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
