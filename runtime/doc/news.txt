@@ -199,6 +199,8 @@ UI
   globally set this, you can override vim.ui.open using the same approach
   described at |vim.paste()|.
 
+• |vim.fs.abspath()| converts paths to absolute paths.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
