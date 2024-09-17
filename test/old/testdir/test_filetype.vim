@@ -633,6 +633,7 @@ func s:GetFilenameChecks() abort
     \ 'rtf': ['file.rtf'],
     \ 'ruby': ['.irbrc', 'irbrc', '.irb_history', 'irb_history', 'file.rb', 'file.rbw', 'file.gemspec', 'file.ru', 'Gemfile', 'file.builder', 'file.rxml', 'file.rjs', 'file.rant', 'file.rake', 'rakefile', 'Rakefile', 'rantfile', 'Rantfile', 'rakefile-file', 'Rakefile-file', 'Puppetfile', 'Vagrantfile'],
     \ 'rust': ['file.rs'],
+    \ 'salt': ['file.sls'],
     \ 'samba': ['smb.conf'],
     \ 'sas': ['file.sas'],
     \ 'sass': ['file.sass'],
