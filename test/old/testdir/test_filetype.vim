@@ -366,6 +366,7 @@ func s:GetFilenameChecks() abort
     \ 'javascriptreact': ['file.jsx'],
     \ 'jess': ['file.clp'],
     \ 'jgraph': ['file.jgr'],
+    \ 'jinja': ['file.jinja'],
     \ 'jj': ['file.jjdescription'],
     \ 'jq': ['file.jq'],
     \ 'jovial': ['file.jov', 'file.j73', 'file.jovial'],

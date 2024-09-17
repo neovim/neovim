@@ -612,6 +612,7 @@ local extension = {
   jsx = 'javascriptreact',
   clp = 'jess',
   jgr = 'jgraph',
+  jinja = 'jinja',
   jjdescription = 'jj',
   j73 = 'jovial',
   jov = 'jovial',
