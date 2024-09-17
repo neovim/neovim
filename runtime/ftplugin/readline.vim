@@ -35,11 +35,11 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
 endif
 
 if has('unix') && executable('less')
-  if !has('gui_running')
+  if !has('gui_running') && !has('nvim')
     command -buffer -nargs=1 ReadlineKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s+' . <q-args> . '\b'' --hilite-search" man ' . '3 readline' |
           \ redraw!
-  elseif has('terminal')
+  elseif has('terminal') || has('nvim')
     command -buffer -nargs=1 ReadlineKeywordPrg
           \ silent exe 'term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s+' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . '3 readline'
   endif

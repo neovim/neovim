@@ -17,11 +17,11 @@ setlocal comments=:# commentstring=#\ %s include=^\\s*include
 setlocal formatoptions-=t formatoptions+=croql
 
 if has('unix') && executable('less')
-  if !has('gui_running')
+  if !has('gui_running') && !has('nvim')
     command -buffer -nargs=1 ModconfKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s{,8}' . <q-args> . '\b'' --hilite-search" man ' . 'modprobe.d' |
           \ redraw!
-  elseif has('terminal')
+  elseif has('terminal') || has('nvim')
     command -buffer -nargs=1 ModconfKeywordPrg
           \ silent exe ':term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s{,8}' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . 'modprobe.d'
   endif

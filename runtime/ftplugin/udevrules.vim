@@ -16,11 +16,11 @@ let b:undo_ftplugin = "setl com< cms< fo<"
 setlocal comments=:# commentstring=#\ %s formatoptions-=t formatoptions+=croql
 
 if has('unix') && executable('less')
-  if !has('gui_running')
+  if !has('gui_running') && !has('nvim')
     command -buffer -nargs=1 UdevrulesKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s{,8}' . <q-args> . '\b'' --hilite-search" man ' . 'udev' |
           \ redraw!
-  elseif has('terminal')
+  elseif has('terminal') || has('nvim')
     command -buffer -nargs=1 UdevrulesKeywordPrg
           \ silent exe ':term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s{,8}' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . 'udev'
   endif

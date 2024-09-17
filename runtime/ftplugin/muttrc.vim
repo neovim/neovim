@@ -19,11 +19,11 @@ setlocal formatoptions-=t formatoptions+=croql
 let &l:include = '^\s*source\>'
 
 if has('unix') && executable('less')
-  if !has('gui_running')
+  if !has('gui_running') && !has('nvim')
     command -buffer -nargs=1 MuttrcKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s+' . <q-args> . '\b'' --hilite-search" man ' . 'muttrc' |
           \ redraw!
-  elseif has('terminal')
+  elseif has('terminal') || has('nvim')
     command -buffer -nargs=1 MuttrcKeywordPrg
           \ silent exe 'term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s+' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . 'muttrc'
   endif

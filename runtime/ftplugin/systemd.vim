@@ -9,9 +9,9 @@ if !exists('b:did_ftplugin')
 endif
 
 if has('unix') && executable('less')
-  if !has('gui_running')
+  if !has('gui_running') && !has('nvim')
     command -buffer -nargs=1 SystemdKeywordPrg silent exe '!' . KeywordLookup_systemd(<q-args>) | redraw!
-  elseif has('terminal')
+  elseif has('terminal') || has('nvim')
     command -buffer -nargs=1 SystemdKeywordPrg silent exe 'term ' . KeywordLookup_systemd(<q-args>)
   endif
   if exists(':SystemdKeywordPrg') == 2

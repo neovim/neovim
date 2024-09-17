@@ -15,11 +15,11 @@ setlocal comments=:# commentstring=#\ %s formatoptions-=t formatoptions+=croql
 let b:undo_ftplugin = 'setlocal com< cms< fo<'
 
 if has('unix') && executable('less')
-  if !has('gui_running')
+  if !has('gui_running') && !has('nvim')
     command -buffer -nargs=1 SshconfigKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s+' . <q-args> . '$'' --hilite-search" man ' . 'ssh_config' |
           \ redraw!
-  elseif has('terminal')
+  elseif has('terminal') || has('nvim')
     command -buffer -nargs=1 SshconfigKeywordPrg
           \ silent exe 'term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s+' . <q-args> . '$', '\') . ''' --hilite-search" man ' . 'ssh_config'
   endif
