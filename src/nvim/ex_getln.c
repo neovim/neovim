@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <lua.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +48,8 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/converter.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/mapping.h"
@@ -3163,8 +3166,6 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
   TryState tstate;
   Error err = ERROR_INIT;
   const char *err_errmsg = e_intern2;
-  bool dgc_ret = true;
-  bool tl_ret = true;
 
   if (colored_ccline->prompt_id != prev_prompt_id) {
     prev_prompt_errors = 0;
@@ -3177,17 +3178,33 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     assert(colored_ccline->input_fn);
     color_cb = colored_ccline->highlight_callback;
   } else if (colored_ccline->cmdfirstc == ':') {
-    try_enter(&tstate);
-    err_errmsg = N_("E5408: Unable to get g:Nvim_color_cmdline callback: %s");
-    dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
-                                   &color_cb);
-    tl_ret = try_leave(&tstate, &err);
+    typval_T lua_color_cb = TV_INITIAL_VALUE;
+    lua_State *lstate = get_global_lstate();
+    bool bad_value = false;
+#ifndef NDEBUG
+    int top = lua_gettop(lstate);
+#endif
+    lua_getglobal(lstate, "vim");
+    lua_getfield(lstate, -1, "_cmdline");
+    if (!lua_isfunction(lstate, -1)) {
+      bad_value = true;
+      lua_pop(lstate, 1);
+    } else if (!nlua_pop_typval(lstate, &lua_color_cb)) {
+      bad_value = true;
+    } else if (!callback_from_typval(&color_cb, &lua_color_cb)) {
+      bad_value = true;
+    }
+    lua_pop(lstate, 1);
+    tv_clear(&lua_color_cb);
     can_free_cb = true;
+#ifndef NDEBUG
+    assert(top == lua_gettop(lstate));
+#endif
+    if (bad_value) {
+      goto color_cmdline_end;
+    }
   } else if (colored_ccline->cmdfirstc == '=') {
     color_expr_cmdline(colored_ccline, ccline_colors);
-  }
-  if (!tl_ret || !dgc_ret) {
-    goto color_cmdline_error;
   }
 
   if (color_cb.type == kCallbackNone) {
@@ -3221,6 +3238,10 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     getln_interrupted_highlight = true;
   }
   if (!try_leave(&tstate, &err) || !cbcall_ret) {
+    // If callback is a lua function and calling it fails, err wont be set
+    if (!ERROR_SET(&err)) {
+      goto color_cmdline_end;
+    }
     goto color_cmdline_error;
   }
   if (tv.v_type != VAR_LIST) {

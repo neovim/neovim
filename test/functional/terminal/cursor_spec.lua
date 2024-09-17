@@ -169,6 +169,8 @@ describe('buffer cursor position is correct in terminal without number column', 
       'cnoremap <C-O> <Right>',
       '--cmd',
       'set notermguicolors',
+      '--cmd',
+      'lua vim._cmdline=false',
     }, {
       cols = 70,
     })
@@ -486,6 +488,8 @@ describe('buffer cursor position is correct in terminal with number column', fun
       'cnoremap <C-O> <Right>',
       '--cmd',
       'set notermguicolors',
+      '--cmd',
+      'lua vim._cmdline=false',
     }, {
       cols = 70,
     })

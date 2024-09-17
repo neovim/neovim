@@ -153,6 +153,9 @@ before_each(function()
     E = { foreground = Screen.colors.Red, background = Screen.colors.Blue },
     M = { bold = true },
     MSEP = { bold = true, reverse = true },
+    KEYWORD = { bold = true, foreground = Screen.colors.Brown },
+    BRACKET = { foreground = Screen.colors.SlateBlue },
+    NUMBER = { foreground = Screen.colors.Fuchsia },
   })
 end)
 
@@ -613,8 +616,20 @@ describe('Command-line coloring', function()
   end)
 end)
 describe('Ex commands coloring', function()
+  before_each(function()
+    source('lua vim._cmdline=require("vim._cmdline")')
+  end)
+
   it('works', function()
-    api.nvim_set_var('Nvim_color_cmdline', 'RainBowParens')
+    feed(':echo (((1)))')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|*6
+      :{KEYWORD:echo} {BRACKET:(((}{NUMBER:1}{BRACKET:)))}^                           |
+    ]])
+  end)
+  it('works when overridden', function()
+    source('lua vim._cmdline=vim.fn.RainBowParens')
     feed(':echo (((1)))')
     screen:expect([[
                                               |
@@ -623,7 +638,7 @@ describe('Ex commands coloring', function()
     ]])
   end)
   it('still executes command-line even if errored out', function()
-    api.nvim_set_var('Nvim_color_cmdline', 'SplitMultibyteStart')
+    source('lua vim._cmdline=vim.fn.SplitMultibyteStart')
     feed(':let x = "«"\n')
     eq('«', api.nvim_get_var('x'))
     local msg = 'E5405: Chunk 0 start 10 splits multibyte character'
@@ -708,17 +723,17 @@ describe('Ex commands coloring', function()
       exec_capture('messages')
     )
   end)
-  it('errors out when failing to get callback', function()
-    api.nvim_set_var('Nvim_color_cmdline', 42)
+  it('Nothing happens when failing to get callback', function()
+    source('lua vim._cmdline=42')
     feed(':#')
     screen:expect([[
                                               |
       {EOB:~                                       }|
-      {MSEP:                                        }|
-      :                                       |
-      {ERR:E5408: Unable to get g:Nvim_color_cmdlin}|
-      {ERR:e callback: Vim:E6000: Argument is not a}|
-      {ERR: function or function name}              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
       :#^                                      |
     ]])
   end)

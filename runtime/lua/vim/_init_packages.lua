@@ -70,6 +70,13 @@ setmetatable(vim, {
     if vim._submodules[key] then
       t[key] = require('vim.' .. key)
       return t[key]
+    elseif key == '_cmdline' then
+      if not pcall(function()
+        t[key] = require('vim._cmdline')
+      end) then
+        t[key] = false
+      end
+      return t[key]
     elseif key == 'inspect_pos' or key == 'show_pos' then
       require('vim._inspector')
       return t[key]

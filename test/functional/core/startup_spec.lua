@@ -1421,6 +1421,8 @@ describe('inccommand on ex mode', function()
       'NONE',
       '-c',
       'set termguicolors background=dark',
+      '-c',
+      'lua vim._cmdline=false',
       '-E',
       'test/README.md',
     }, {
