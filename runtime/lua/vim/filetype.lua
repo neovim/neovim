@@ -1024,6 +1024,7 @@ local extension = {
   rake = 'ruby',
   rs = 'rust',
   sage = 'sage',
+  sls = 'salt',
   sas = 'sas',
   sass = 'sass',
   sa = 'sather',
