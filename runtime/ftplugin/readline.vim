@@ -39,7 +39,7 @@ if has('unix') && executable('less')
     command -buffer -nargs=1 ReadlineKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s+' . <q-args> . '\b'' --hilite-search" man ' . '3 readline' |
           \ redraw!
-  elseif executable(':terminal') == 2
+  elseif exists(':terminal') == 2
     command -buffer -nargs=1 ReadlineKeywordPrg
           \ silent exe 'term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s+' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . '3 readline'
   endif

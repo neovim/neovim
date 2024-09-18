@@ -21,7 +21,7 @@ let b:undo_ftplugin = "setl com< cms< fo< "
 if executable('zsh') && &shell !~# '/\%(nologin\|false\)$'
   if !has('gui_running') && !has("nvim") && executable('less')
     command! -buffer -nargs=1 ZshKeywordPrg silent exe '!MANPAGER= zsh -c "autoload -Uz run-help; run-help <args> 2>/dev/null | LESS= less"' | redraw!
-  elseif executable(':terminal') == 2
+  elseif exists(':terminal') == 2
     command! -buffer -nargs=1 ZshKeywordPrg silent exe ':term zsh -c "autoload -Uz run-help; run-help <args>"'
   else
     command! -buffer -nargs=1 ZshKeywordPrg echo system('MANPAGER= zsh -c "autoload -Uz run-help; run-help <args> 2>/dev/null"')

@@ -20,7 +20,7 @@ if has('unix') && executable('less')
     command -buffer -nargs=1 GpgKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s+--' . <q-args> . '\b'' --hilite-search" man ' . 'gpg' |
           \ redraw!
-  elseif executable(':terminal') == 2
+  elseif exists(':terminal') == 2
     command -buffer -nargs=1 GpgKeywordPrg
           \ silent exe ':term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s+--' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . 'gpg'
   endif

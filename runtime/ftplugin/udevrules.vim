@@ -20,7 +20,7 @@ if has('unix') && executable('less')
     command -buffer -nargs=1 UdevrulesKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s{,8}' . <q-args> . '\b'' --hilite-search" man ' . 'udev' |
           \ redraw!
-  elseif executable(':terminal') == 2
+  elseif exists(':terminal') == 2
     command -buffer -nargs=1 UdevrulesKeywordPrg
           \ silent exe ':term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s{,8}' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . 'udev'
   endif

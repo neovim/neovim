@@ -47,7 +47,7 @@ endif
 if get(b:, "is_bash", 0)
   if !has("gui_running") && !has("nvim") && executable("less")
     command! -buffer -nargs=1 ShKeywordPrg silent exe '!bash -c "{ help "<args>" 2>/dev/null || MANPAGER= man "<args>"; } | LESS= less"' | redraw!
-  elseif executable(':terminal') == 2
+  elseif exists(':terminal') == 2
     command! -buffer -nargs=1 ShKeywordPrg silent exe ':term bash -c "help "<args>" 2>/dev/null || man "<args>""'
   else
     command! -buffer -nargs=1 ShKeywordPrg echo system('bash -c "help <args>" 2>/dev/null || MANPAGER= man "<args>"')
