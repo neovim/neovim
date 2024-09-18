@@ -408,7 +408,7 @@ static void chld_handler(uv_signal_t *handle, int signum)
 
 PtyProc pty_proc_init(Loop *loop, void *data)
 {
-  PtyProc rv;
+  PtyProc rv = { 0 };
   rv.proc = proc_init(loop, kProcTypePty, data);
   rv.width = 80;
   rv.height = 24;
