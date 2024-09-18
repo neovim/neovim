@@ -1,4 +1,4 @@
-*terminal_emulator.txt*   Nvim
+*terminal.txt*   Nvim
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
