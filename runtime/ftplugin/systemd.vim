@@ -3,10 +3,11 @@
 " Keyword Lookup Support:	Enno Nagel <enno.nagel+vim@gmail.com>
 " Latest Revision:      2023-10-07
 
-if !exists('b:did_ftplugin')
-  " Looks a lot like dosini files.
-  runtime! ftplugin/dosini.vim
+if exists("b:did_ftplugin")
+  finish
 endif
+" Looks a lot like dosini files.
+runtime! ftplugin/dosini.vim
 
 if has('unix') && executable('less')
   if !has('gui_running')
