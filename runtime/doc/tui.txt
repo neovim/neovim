@@ -6,28 +6,45 @@
 
 Terminal UI						*TUI* *tui*
 
-Nvim uses a list of terminal capabilities to display its user interface
-(except in |--embed| and |--headless| modes). If that information is wrong,
-the screen may be messed up or keys may not be recognized.
+By default when you run `nvim` (without |--embed| or |--headless|) it starts
+the builtin "terminal UI" (TUI). This default UI is optional: you can run Nvim
+as a "headless" server, or you can use a |GUI|.
 
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-Startup						*startup-terminal*
+Startup					*startup-tui* *startup-terminal*
+
+Nvim has a client-server architecture: by default when you run `nvim`, this
+starts the builtin UI client, which starts a `nvim --embed` server (child)
+process that the UI client connects to. After attaching to the server, the UI
+client calls |nvim_set_client_info()| (as recommended for all UIs |dev-ui|)
+and sets these fields on its channel: >
+
+  client = {
+    attributes = {
+      license = 'Apache 2',
+      pid = …,
+      website = 'https://neovim.io',
+    },
+    name = 'nvim-tui',
+    type = 'ui',
+    version = { … },
+  }
 
 Nvim guesses the terminal type when it starts (except in |--embed| and
 |--headless| modes). The |$TERM| environment variable is the primary hint that
 determines the terminal type.
 
 					*terminfo* *E557* *E558* *E559*
-The terminfo database is used if available.
+To display its user interface, Nvim reads a list of "terminal capabilities"
+from the system terminfo database (or builtin defaults if terminfo is not
+found). If that information is wrong, the screen may be messed up or keys may
+not be recognized.
 
-The Unibilium library (used by Nvim to read terminfo) allows you to override
-the system terminfo with one in $HOME/.terminfo/ directory, in part or in
-whole.
-
-Building your own terminfo is usually as simple as running this as
-a non-superuser:
+The Unibilium library (used to read terminfo) allows you to override the
+system terminfo with one in the "$HOME/.terminfo/" directory. Building your
+own terminfo is usually as simple as running this:
 >
   curl -LO https://invisible-island.net/datafiles/current/terminfo.src.gz
   gunzip terminfo.src.gz

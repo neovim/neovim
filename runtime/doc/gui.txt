@@ -6,14 +6,38 @@
 
 Nvim Graphical User Interface				*gui* *GUI*
 
+Any client that supports the Nvim |ui-protocol| can be used as a UI for Nvim.
+And multiple UIs can connect to the same Nvim instance! The terms "UI" and
+"GUI" are often used interchangeably because all Nvim UI clients have the same
+potential capabilities; the "TUI" refers to a UI client that outputs to your
+terminal, whereas a "GUI" outputs directly to the OS graphics system.
+
+Except where noted, this document describes UI capabilities available to both
+TUI and GUI (assuming the UI supports the given feature). See |TUI| for notes
+specific to the terminal UI. Help tags with the "gui-" prefix refer to UI
+features, whereas help tags with the "ui-" prefix refer to the |ui-protocol|.
+
+Nvim provides a default, builtin UI (the |TUI|), but there are many other
+(third-party) GUIs that you can use instead:
+
+- Firenvim (Nvim in your web browser!) https://github.com/glacambre/firenvim
+- vscode-neovim (Nvim in VSCode!) https://github.com/vscode-neovim/vscode-neovim
+- Neovide https://neovide.dev/
+- Goneovim https://github.com/akiyosi/goneovim
+- Nvy https://github.com/RMichelsen/Nvy
+- Neovim-Qt (Qt5) https://github.com/equalsraf/neovim-qt
+- VimR (macOS) https://github.com/qvacua/vimr
+- Others https://github.com/neovim/neovim/wiki/Related-projects#gui
+
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-Starting the GUI				*gui-start* *E229* *E233*
+Starting the GUI				*gui-config* *gui-start*
 
 				*ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
 For GUI-specific configuration Nvim provides the |UIEnter| event.  This
-happens after other |initialization|s, like reading your vimrc file.
+happens after other |initialization|s, or whenever a UI attaches (multiple UIs
+can connect to any Nvim instance).
 
 Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
 	:autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb

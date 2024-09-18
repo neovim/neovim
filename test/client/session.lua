@@ -96,8 +96,7 @@ end
 
 --- @param method string
 --- @param ... any
---- @return boolean
---- @return table
+--- @return boolean, table
 function Session:request(method, ...)
   local args = { ... }
   local err, result

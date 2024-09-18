@@ -182,9 +182,10 @@ bool ui_override(void)
   return false;
 }
 
-bool ui_active(void)
+/// Gets the number of UIs connected to this server.
+size_t ui_active(void)
 {
-  return ui_count > 0;
+  return ui_count;
 }
 
 void ui_refresh(void)
@@ -197,7 +198,7 @@ void ui_refresh(void)
   int height = INT_MAX;
   bool ext_widgets[kUIExtCount];
   bool inclusive = ui_override();
-  memset(ext_widgets, ui_active(), ARRAY_SIZE(ext_widgets));
+  memset(ext_widgets, !!ui_active(), ARRAY_SIZE(ext_widgets));
 
   for (size_t i = 0; i < ui_count; i++) {
     RemoteUI *ui = uis[i];

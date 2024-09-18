@@ -24,6 +24,7 @@
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/profile.h"
 #include "nvim/tui/tui.h"
 #include "nvim/tui/tui_defs.h"
 #include "nvim/ui.h"
@@ -81,12 +82,15 @@ uint64_t ui_client_start_server(int argc, char **argv)
   return channel->id;
 }
 
+/// Attaches this client to the UI channel, and sets its client info.
 void ui_client_attach(int width, int height, char *term, bool rgb)
 {
+  //
+  // nvim_ui_attach
+  //
   MAXSIZE_TEMP_ARRAY(args, 3);
   ADD_C(args, INTEGER_OBJ(width));
   ADD_C(args, INTEGER_OBJ(height));
-
   MAXSIZE_TEMP_DICT(opts, 9);
   PUT_C(opts, "rgb", BOOLEAN_OBJ(rgb));
   PUT_C(opts, "ext_linegrid", BOOLEAN_OBJ(true));
@@ -94,7 +98,6 @@ void ui_client_attach(int width, int height, char *term, bool rgb)
   if (term) {
     PUT_C(opts, "term_name", CSTR_AS_OBJ(term));
   }
-
   PUT_C(opts, "term_colors", INTEGER_OBJ(t_colors));
   if (!ui_client_is_remote) {
     PUT_C(opts, "stdin_tty", BOOLEAN_OBJ(stdin_isatty));
@@ -108,6 +111,40 @@ void ui_client_attach(int width, int height, char *term, bool rgb)
 
   rpc_send_event(ui_client_channel_id, "nvim_ui_attach", args);
   ui_client_attached = true;
+
+  TIME_MSG("nvim_ui_attach");
+
+  //
+  // nvim_set_client_info
+  //
+  MAXSIZE_TEMP_ARRAY(args2, 5);
+  ADD_C(args2, CSTR_AS_OBJ("nvim-tui"));            // name
+  Object m = api_metadata();
+  Dictionary version = { 0 };
+  assert(m.data.dictionary.size > 0);
+  for (size_t i = 0; i < m.data.dictionary.size; i++) {
+    if (strequal(m.data.dictionary.items[i].key.data, "version")) {
+      version = m.data.dictionary.items[i].value.data.dictionary;
+      break;
+    } else if (i + 1 == m.data.dictionary.size) {
+      abort();
+    }
+  }
+  ADD_C(args2, DICTIONARY_OBJ(version));            // version
+  ADD_C(args2, CSTR_AS_OBJ("ui"));                  // type
+  // We don't send api_metadata.functions as the "methods" because:
+  // 1. it consumes memory.
+  // 2. it is unlikely to be useful, since the peer can just call `nvim_get_api`.
+  // 3. nvim_set_client_info expects a dict instead of an array.
+  ADD_C(args2, ARRAY_OBJ((Array)ARRAY_DICT_INIT));  // methods
+  MAXSIZE_TEMP_DICT(info, 9);                       // attributes
+  PUT_C(info, "website", CSTR_AS_OBJ("https://neovim.io"));
+  PUT_C(info, "license", CSTR_AS_OBJ("Apache 2"));
+  PUT_C(info, "pid", INTEGER_OBJ(os_get_pid()));
+  ADD_C(args2, DICTIONARY_OBJ(info));               // attributes
+  rpc_send_event(ui_client_channel_id, "nvim_set_client_info", args2);
+
+  TIME_MSG("nvim_set_client_info");
 }
 
 void ui_client_detach(void)
@@ -131,6 +168,8 @@ void ui_client_run(bool remote_ui)
   if (os_env_exists("__NVIM_TEST_LOG")) {
     ELOG("test log message");
   }
+
+  time_finish();
 
   // os_exit() will be invoked when the client channel detaches
   while (true) {

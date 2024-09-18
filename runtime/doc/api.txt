@@ -779,7 +779,7 @@ nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
       • {chan}  channel_id, or 0 for current channel
 
     Return: ~
-        Dictionary describing a channel, with these keys:
+        Channel info dict with these keys:
         • "id" Channel id.
         • "argv" (optional) Job arguments list.
         • "stream" Stream underlying the channel.
@@ -792,11 +792,11 @@ nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
           • "terminal" |terminal| instance interprets ASCII sequences.
           • "rpc" |RPC| communication on the channel is active.
         • "pty" (optional) Name of pseudoterminal. On a POSIX system this is a
-          device path like "/dev/pts/1". If the name is unknown, the key will
-          still be present if a pty is used (e.g. for conpty on Windows).
-        • "buffer" (optional) Buffer with connected |terminal| instance.
+          device path like "/dev/pts/1". If unknown, the key will still be
+          present if a pty is used (e.g. for conpty on Windows).
+        • "buffer" (optional) Buffer connected to |terminal| instance.
         • "client" (optional) Info about the peer (client on the other end of
-          the RPC channel), if provided by it via |nvim_set_client_info()|.
+          the RPC channel), which it provided via |nvim_set_client_info()|.
 
 nvim_get_color_by_name({name})                      *nvim_get_color_by_name()*
     Returns the 24-bit RGB value of a |nvim_get_color_map()| color name or
@@ -1285,6 +1285,7 @@ nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
                         inclusive.
       • {attributes}  Arbitrary string:string map of informal client
                       properties. Suggested keys:
+                      • "pid": Process id.
                       • "website": Client homepage URL (e.g. GitHub
                         repository)
                       • "license": License description ("Apache 2", "GPLv3",
