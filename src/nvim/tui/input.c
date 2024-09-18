@@ -464,7 +464,7 @@ static void tinput_timer_cb(uv_timer_t *handle)
 {
   TermInput *input = handle->data;
   // If the raw buffer is not empty, process the raw buffer first because it is
-  // processing an incomplete bracketed paster sequence.
+  // processing an incomplete bracketed paste sequence.
   size_t size = rstream_available(&input->read_stream);
   if (size) {
     size_t consumed = handle_raw_buffer(input, true, input->read_stream.read_pos, size);
