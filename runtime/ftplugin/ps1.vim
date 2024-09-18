@@ -49,7 +49,7 @@ if exists('s:pwsh_cmd')
         \ !(exists('$ConEmuBuild') && &term =~? '^xterm')
     " For exclusion of ConEmu, see https://github.com/Maximus5/ConEmu/issues/2048
     command! -buffer -nargs=1 GetHelp silent exe '!' . s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full "<args>" | ' . (has('unix') ? 'LESS= less' : 'less') | redraw!
-  elseif has('terminal') || has('nvim')
+  elseif executable(':terminal') == 2
     command! -buffer -nargs=1 GetHelp silent exe 'term ' . s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full "<args>"' . (executable('less') ? ' | less' : '')
   else
     command! -buffer -nargs=1 GetHelp echo system(s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full <args>')

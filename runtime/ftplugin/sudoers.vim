@@ -20,7 +20,7 @@ if has('unix') && executable('less')
     command -buffer -nargs=1 SudoersKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''\b' . <q-args> . '\b'' --hilite-search" man ' . 'sudoers' |
           \ redraw!
-  elseif has('terminal') || has('nvim')
+  elseif executable(':terminal') == 2
     command -buffer -nargs=1 SudoersKeywordPrg
           \ silent exe ':term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('\b' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . 'sudoers'
   endif

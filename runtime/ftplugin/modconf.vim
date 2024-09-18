@@ -21,7 +21,7 @@ if has('unix') && executable('less')
     command -buffer -nargs=1 ModconfKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s{,8}' . <q-args> . '\b'' --hilite-search" man ' . 'modprobe.d' |
           \ redraw!
-  elseif has('terminal') || has('nvim')
+  elseif executable(':terminal') == 2
     command -buffer -nargs=1 ModconfKeywordPrg
           \ silent exe ':term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s{,8}' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . 'modprobe.d'
   endif
