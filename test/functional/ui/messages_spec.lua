@@ -1165,7 +1165,12 @@ describe('ui/builtin messages', function()
 
   it(':syntax list langGroup output', function()
     command('syntax on')
-    command('set syntax=vim')
+    exec([[
+      syn match	vimComment	excludenl +\s"[^\-:.%#=*].*$+lc=1	contains=@vimCommentGroup,vimCommentString
+      syn match	vimComment	+\<endif\s\+".*$+lc=5	contains=@vimCommentGroup,vimCommentString
+      syn match	vimComment	+\<else\s\+".*$+lc=4	contains=@vimCommentGroup,vimCommentString
+      hi link vimComment Comment
+    ]])
     screen:try_resize(110, 7)
     feed(':syntax list vimComment<cr>')
     screen:expect([[
