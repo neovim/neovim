@@ -3611,7 +3611,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Otherwise only one space is inserted.
 
 						*'jumpoptions'* *'jop'*
-'jumpoptions' 'jop'	string	(default "")
+'jumpoptions' 'jop'	string	(default "clean")
 			global
 	List of words that change the behavior of the |jumplist|.
 	  stack         Make the jumplist behave like the tagstack.
@@ -3623,6 +3623,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  view          When moving through the jumplist, |changelist|,
 			|alternate-file| or using |mark-motions| try to
 			restore the |mark-view| in which the action occurred.
+
+	  clean         Remove unloaded buffers from the jumplist.
+			EXPERIMENTAL: this flag may change in the future.
 
 						*'keymap'* *'kmp'*
 'keymap' 'kmp'		string	(default "")
