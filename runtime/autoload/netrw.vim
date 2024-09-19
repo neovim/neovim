@@ -24,6 +24,7 @@
 "   2024 Aug 22 by Vim Project: fix mf-selection highlight (#15551)
 "   2024 Aug 22 by Vim Project: adjust echo output of mx command (#15550)
 "   2024 Sep 15 by Vim Project: more strict confirmation dialog (#15680)
+"   2024 Sep 19 by Vim Project: mf-selection highlight uses wrong pattern (#15700)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -6827,7 +6828,7 @@ fun! s:NetrwMarkFile(islocal,fname)
 
   let ykeep   = @@
   let curbufnr= bufnr("%")
-  let leader= '\(^\|\s\)\zs'
+  let leader= '\%(^\|\s\)\zs'
   if a:fname =~ '\a$'
    let trailer = '\>[@=|\/\*]\=\ze\%(  \|\t\|$\)'
   else
