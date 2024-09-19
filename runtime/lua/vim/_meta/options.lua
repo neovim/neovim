@@ -3577,11 +3577,11 @@ vim.go.js = vim.go.joinspaces
 --- 		|alternate-file` or using `mark-motions` try to
 --- 		restore the `mark-view` in which the action occurred.
 ---
----   unload        Remove unloaded buffers from the jumplist.
+---   clean         Remove unloaded buffers from the jumplist.
 --- 		EXPERIMENTAL: this flag may change in the future.
 ---
 --- @type string
-vim.o.jumpoptions = "unload"
+vim.o.jumpoptions = "clean"
 vim.o.jop = vim.o.jumpoptions
 vim.go.jumpoptions = vim.o.jumpoptions
 vim.go.jop = vim.go.jumpoptions

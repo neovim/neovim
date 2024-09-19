@@ -540,7 +540,7 @@ EXTERN char *p_jop;             ///< 'jumpooptions'
 EXTERN unsigned jop_flags;
 #define JOP_STACK               0x01
 #define JOP_VIEW                0x02
-#define JOP_UNLOAD              0x04
+#define JOP_CLEAN               0x04
 EXTERN char *p_keymap;          ///< 'keymap'
 EXTERN char *p_kp;              ///< 'keywordprg'
 EXTERN char *p_km;              ///< 'keymodel'

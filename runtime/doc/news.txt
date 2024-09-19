@@ -18,6 +18,10 @@ BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 The following changes to UNRELEASED features were made during the development
 cycle (Nvim HEAD, the "master" branch).
 
+OPTIONS
+
+• 'jumpoptions' flag "unload" has been renamed to "clean".
+
 ==============================================================================
 BREAKING CHANGES                                                *news-breaking*
 
