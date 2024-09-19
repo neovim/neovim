@@ -410,10 +410,11 @@ int start_driver_ti(TermKey *tk, void *info)
   // Can't call putp or tputs because they suck and don't give us fd control
   len = strlen(start_string);
   while (len) {
-    size_t written = (size_t)write(tk->fd, start_string, (unsigned)len);
-    if (written == (size_t)-1) {
+    ssize_t result = write(tk->fd, start_string, (unsigned)len);
+    if (result < 0) {
       return 0;
     }
+    size_t written = (size_t)result;
     start_string += written;
     len -= written;
   }
@@ -448,10 +449,11 @@ int stop_driver_ti(TermKey *tk, void *info)
   // Can't call putp or tputs because they suck and don't give us fd control
   len = strlen(stop_string);
   while (len) {
-    size_t written = (size_t)write(tk->fd, stop_string, (unsigned)len);
-    if (written == (size_t)-1) {
+    ssize_t result = write(tk->fd, stop_string, (unsigned)len);
+    if (result < 0) {
       return 0;
     }
+    size_t written = (size_t)result;
     stop_string += written;
     len -= written;
   }
