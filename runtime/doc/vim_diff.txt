@@ -62,7 +62,7 @@ Defaults                                                    *nvim-defaults*
 - 'isfname' does not include ":" (on Windows). Drive letters are handled
   correctly without it. (Use |gF| for filepaths suffixed with ":line:col").
 - 'joinspaces' is disabled
-- 'jumpoptions' defaults to "unload"
+- 'jumpoptions' defaults to "clean"
 - 'langnoremap' is enabled
 - 'langremap' is disabled
 - 'laststatus' defaults to 2 (statusline is always shown)
@@ -348,7 +348,7 @@ string options work.
                 and |:command-preview| commands
 - 'jumpoptions'
     - "view" tries to restore |mark-view| when moving through the jumplist.
-    - "unload" removes unloaded buffers from the jumplist.
+    - "clean" removes unloaded buffers from the jumplist.
 - the |jumplist|, |changelist|, |alternate-file| or using |mark-motions|.
 - 'laststatus'  global statusline support
 - 'mousescroll' amount to scroll by when scrolling with a mouse

@@ -139,7 +139,7 @@ static char *(p_fdc_values[]) = { "auto", "auto:1", "auto:2", "auto:3", "auto:4"
                                   "5", "6", "7", "8", "9", NULL };
 static char *(p_spo_values[]) = { "camel", "noplainbuffer", NULL };
 static char *(p_icm_values[]) = { "nosplit", "split", NULL };
-static char *(p_jop_values[]) = { "stack", "view", "unload", NULL };
+static char *(p_jop_values[]) = { "stack", "view", "clean", NULL };
 static char *(p_tpf_values[]) = { "BS", "HT", "FF", "ESC", "DEL", "C0", "C1", NULL };
 static char *(p_rdb_values[]) = { "compositor", "nothrottle", "invalid", "nodelta", "line",
                                   "flush", NULL };
