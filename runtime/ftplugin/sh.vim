@@ -4,7 +4,7 @@
 " Previous Maintainer:	Dan Sharp
 " Contributor:		Enno Nagel <ennonagel+vim@gmail.com>
 "			Eisuke Kawashima
-" Last Change:		2024 May 06 by Vim Project (MANPAGER=)
+" Last Change:		2024 Sep 19 by Vim Project (compiler shellcheck)
 
 if exists("b:did_ftplugin")
   finish
@@ -54,6 +54,11 @@ if get(b:, "is_bash", 0)
   endif
   setlocal keywordprg=:ShKeywordPrg
   let b:undo_ftplugin ..= " | setl kp< | sil! delc -buffer ShKeywordPrg"
+
+  if !exists('current_compiler')
+    compiler shellcheck
+  endif
+  let b:undo_ftplugin .= ' | compiler make'
 endif
 
 let &cpo = s:save_cpo
