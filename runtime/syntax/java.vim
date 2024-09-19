@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Sep 11
+" Last Change:		2024 Sep 18
 
 " Please check :help java.vim for comments on some of the options available.
 
@@ -283,19 +283,27 @@ if exists("g:java_space_errors")
 endif
 
 exec 'syn match javaUserLabel "^\s*\<\K\k*\>\%(\<default\>\)\@' . s:ff.Peek('7', '') . '<!\s*::\@!"he=e-1'
-syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaLabelCastType,javaLabelNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaGenerics,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
+
+if s:ff.IsRequestedPreviewFeature(455)
+  syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaBoolean,javaNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaGenerics,javaType,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
+else
+  syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<case\>" matchgroup=NONE end=":\|->" contains=javaLabelCastType,javaLabelNumber,javaCharacter,javaString,javaConstant,@javaClasses,javaGenerics,javaLabelDefault,javaLabelVarType,javaLabelWhenClause
+  syn keyword javaLabelCastType	contained char byte short int
+  syn match   javaLabelNumber	contained "\<0\>[lL]\@!"
+  syn match   javaLabelNumber	contained "\<\%(0\%([xX]\x\%(_*\x\)*\|_*\o\%(_*\o\)*\|[bB][01]\%(_*[01]\)*\)\|[1-9]\%(_*\d\)*\)\>[lL]\@!"
+  hi def link javaLabelCastType	javaType
+  hi def link javaLabelNumber	javaNumber
+endif
+
 syn region  javaLabelRegion	transparent matchgroup=javaLabel start="\<default\>\%(\s*\%(:\|->\)\)\@=" matchgroup=NONE end=":\|->" oneline
 " Consider grouped _default_ _case_ labels, i.e.
 " case null, default ->
 " case null: default:
 syn keyword javaLabelDefault	contained default
 syn keyword javaLabelVarType	contained var
-syn keyword javaLabelCastType	contained char byte short int
 " Allow for the contingency of the enclosing region not being able to
 " _keep_ its _end_, e.g. case ':':.
 syn region  javaLabelWhenClause	contained transparent matchgroup=javaLabel start="\<when\>" matchgroup=NONE end=":"me=e-1 end="->"me=e-2 contains=TOP,javaExternal,javaLambdaDef
-syn match   javaLabelNumber	contained "\<0\>[lL]\@!"
-syn match   javaLabelNumber	contained "\<\%(0\%([xX]\x\%(_*\x\)*\|_*\o\%(_*\o\)*\|[bB][01]\%(_*[01]\)*\)\|[1-9]\%(_*\d\)*\)\>[lL]\@!"
 
 " Comments
 syn keyword javaTodo		contained TODO FIXME XXX
@@ -692,8 +700,6 @@ hi def link javaUserLabelRef		javaUserLabel
 hi def link javaLabel			Label
 hi def link javaLabelDefault		javaLabel
 hi def link javaLabelVarType		javaOperator
-hi def link javaLabelNumber		javaNumber
-hi def link javaLabelCastType		javaType
 
 hi def link javaComment			Comment
 hi def link javaCommentStar		javaComment
