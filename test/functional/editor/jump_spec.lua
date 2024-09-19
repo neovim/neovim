@@ -194,7 +194,7 @@ describe("jumpoptions=stack behaves like 'tagstack'", function()
   end)
 end)
 
-describe('buffer deletion with jumpoptions+=unload', function()
+describe('buffer deletion with jumpoptions+=clean', function()
   local base_file = 'Xtest-functional-buffer-deletion'
   local file1 = base_file .. '1'
   local file2 = base_file .. '2'
@@ -325,7 +325,7 @@ describe('buffer deletion with jumpoptions+=unload', function()
   end)
 end)
 
-describe('buffer deletion with jumpoptions-=unload', function()
+describe('buffer deletion with jumpoptions-=clean', function()
   local base_file = 'Xtest-functional-buffer-deletion'
   local file1 = base_file .. '1'
   local file2 = base_file .. '2'
@@ -336,7 +336,7 @@ describe('buffer deletion with jumpoptions-=unload', function()
   before_each(function()
     clear()
     command('clearjumps')
-    command('set jumpoptions-=unload')
+    command('set jumpoptions-=clean')
 
     write_file(file1, content1, false, false)
     write_file(file2, content2, false, false)
