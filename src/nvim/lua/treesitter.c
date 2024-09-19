@@ -271,12 +271,16 @@ int tslua_inspect_lang(lua_State *L)
       // not used by the API
       continue;
     }
-    lua_createtable(L, 2, 0);  // [retval, symbols, elem]
-    lua_pushstring(L, ts_language_symbol_name(lang, (TSSymbol)i));
-    lua_rawseti(L, -2, 1);
-    lua_pushboolean(L, t == TSSymbolTypeRegular);
-    lua_rawseti(L, -2, 2);  // [retval, symbols, elem]
-    lua_rawseti(L, -2, (int)i);  // [retval, symbols]
+    const char *name = ts_language_symbol_name(lang, (TSSymbol)i);
+    bool named = t == TSSymbolTypeRegular;
+    lua_pushboolean(L, named);  // [retval, symbols, is_named]
+    if (!named) {
+      char buf[256];
+      snprintf(buf, sizeof(buf), "\"%s\"", name);
+      lua_setfield(L, -2, buf);  // [retval, symbols]
+    } else {
+      lua_setfield(L, -2, name);  // [retval, symbols]
+    }
   }
 
   lua_setfield(L, -2, "symbols");  // [retval]
