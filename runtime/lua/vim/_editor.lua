@@ -268,8 +268,8 @@ do
     end
 
     local recording = vim.fn.reg_recording() -- Check if recording is currently happening
-    local function feed_paste_as_input(text, mode)
-      if mode == 'i' then
+    local function feed_paste_as_input(text, input_mode)
+      if input_mode == 'i' then
         vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(text, true, false, true), 'it', true)
       else
         vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(text, true, false, true), 'nt', true)
@@ -277,7 +277,7 @@ do
       end
     end
 
-    local text = table.concat(lines, "\n")
+    local text = table.concat(lines, '\n')
 
     if mode:find('^i') or mode:find('^n?t') then -- Insert mode or Terminal buffer
       if recording ~= '' then
