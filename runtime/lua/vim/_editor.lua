@@ -266,8 +266,26 @@ do
     if undo_started then
       vim.api.nvim_command('undojoin')
     end
+
+    local recording = vim.fn.reg_recording() -- Check if recording is currently happening
+    local function feed_paste_as_input(text, mode)
+      if mode == 'i' then
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(text, true, false, true), 'it', true)
+      else
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(text, true, false, true), 'nt', true)
+        vim.api.nvim_feedkeys('', 'x', true)
+      end
+    end
+
+    local text = table.concat(lines, "\n")
+
     if mode:find('^i') or mode:find('^n?t') then -- Insert mode or Terminal buffer
-      vim.api.nvim_put(lines, 'c', false, true)
+      if recording ~= '' then
+        -- Feed the pasted text as keypresses so it gets recorded
+        feed_paste_as_input(text, 'i')
+      else
+        vim.api.nvim_put(lines, 'c', false, true)
+      end
     elseif phase < 2 and mode:find('^R') and not mode:find('^Rv') then -- Replace mode
       -- TODO: implement Replace mode streamed pasting
       -- TODO: support Virtual Replace mode
@@ -285,10 +303,15 @@ do
       vim.api.nvim_buf_set_lines(0, row - 1, row, false, lines)
     elseif mode:find('^[nvV\22sS\19]') then -- Normal or Visual or Select mode
       if mode:find('^n') then -- Normal mode
-        -- When there was a trailing new line in the previous chunk,
-        -- the cursor is on the first character of the next line,
-        -- so paste before the cursor instead of after it.
-        vim.api.nvim_put(lines, 'c', not trailing_nl, false)
+        if recording ~= '' then
+          -- Simulate a normal paste operation
+          feed_paste_as_input('a' .. text .. '<ESC>', 'n')
+        else
+          -- When there was a trailing new line in the previous chunk,
+          -- the cursor is on the first character of the next line,
+          -- so paste before the cursor instead of after it.
+          vim.api.nvim_put(lines, 'c', not trailing_nl, false)
+        end
       else -- Visual or Select mode
         vim.api.nvim_command([[exe "silent normal! \<Del>"]])
         local del_start = vim.fn.getpos("'[")
