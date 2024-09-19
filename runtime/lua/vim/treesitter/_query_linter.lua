@@ -65,7 +65,7 @@ local function normalize_opts(buf, opts)
 end
 
 local lint_query = [[;; query
-  (program [(named_node) (list) (grouping)] @toplevel)
+  (program [(named_node) (anonymous_node) (list) (grouping)] @toplevel)
   (named_node
     name: _ @node.named)
   (anonymous_node
@@ -171,17 +171,17 @@ function M.lint(buf, opts)
 
     --- @type (table|nil)
     local parser_info = vim.F.npcall(vim.treesitter.language.inspect, lang)
+    local lang_context = {
+      lang = lang,
+      parser_info = parser_info,
+      is_first_lang = i == 1,
+    }
 
     local parser = assert(vim.treesitter._get_parser(buf), 'query parser not found.')
     parser:parse()
     parser:for_each_tree(function(tree, ltree)
       if ltree:lang() == 'query' then
         for _, match, _ in query:iter_matches(tree:root(), buf, 0, -1) do
-          local lang_context = {
-            lang = lang,
-            parser_info = parser_info,
-            is_first_lang = i == 1,
-          }
           lint_match(buf, match, query, lang_context, diagnostics)
         end
       end
