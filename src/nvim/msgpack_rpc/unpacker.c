@@ -59,7 +59,7 @@ static void api_parse_enter(mpack_parser_t *parser, mpack_node_t *node)
     }
     case MPACK_TOKEN_MAP: {
       Object *obj = parent->data[0].p;
-      KeyValuePair *kv = &kv_A(obj->data.dictionary, parent->pos);
+      KeyValuePair *kv = &kv_A(obj->data.dict, parent->pos);
       if (!parent->key_visited) {
         // TODO(bfredl): when implementing interrupt parse on error,
         // stop parsing here when node is not a STR/BIN
@@ -166,10 +166,10 @@ static void api_parse_enter(mpack_parser_t *parser, mpack_node_t *node)
     break;
   }
   case MPACK_TOKEN_MAP: {
-    Dictionary dict = KV_INITIAL_VALUE;
+    Dict dict = KV_INITIAL_VALUE;
     kv_fixsize_arena(&p->arena, dict, node->tok.length);
     kv_size(dict) = node->tok.length;
-    *result = DICTIONARY_OBJ(dict);
+    *result = DICT_OBJ(dict);
     node->data[0].p = result;
     break;
   }
@@ -620,7 +620,7 @@ bool unpack_keydict(void *retval, FieldHashfn hashy, AdditionalDataBuilder *ad, 
 
   int result = mpack_rtoken(data, size, &tok);
   if (result || tok.type != MPACK_TOKEN_MAP) {
-    *error = xstrdup("is not a dictionary");
+    *error = xstrdup("is not a dict");
     return false;
   }
 

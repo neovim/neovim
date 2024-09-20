@@ -216,7 +216,7 @@ typedef enum {
   /// kExprNodeCurlyBracesIdentifier.
   kExprNodeUnknownFigure,
   kExprNodeLambda,  ///< Lambda.
-  kExprNodeDictLiteral,  ///< Dictionary literal.
+  kExprNodeDictLiteral,  ///< Dict literal.
   kExprNodeCurlyBracesIdentifier,  ///< Part of the curly braces name.
   kExprNodeComma,  ///< Comma “operator”.
   kExprNodeColon,  ///< Colon “operator”.

@@ -911,7 +911,7 @@ describe('json_encode() function', function()
     eq('[]', eval('json_encode(v:_null_list)'))
   end)
 
-  it('can dump NULL dictionary', function()
+  it('can dump NULL dict', function()
     eq('{}', eval('json_encode(v:_null_dict)'))
   end)
 

@@ -3005,8 +3005,7 @@ viml_pexpr_parse_end:
         break;
       case kExprNodeCurlyBracesIdentifier:
         // Until trailing "}" it is impossible to distinguish curly braces
-        // identifier and dictionary, so it must not appear in the stack like
-        // this.
+        // identifier and Dict, so it must not appear in the stack like this.
         abort();
       case kExprNodeInteger:
       case kExprNodeFloat:

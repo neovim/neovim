@@ -178,8 +178,8 @@ EXTERN long emsg_assert_fails_lnum INIT( = 0);
 EXTERN char *emsg_assert_fails_context INIT( = NULL);
 
 EXTERN bool did_endif INIT( = false);        // just had ":endif"
-EXTERN dict_T vimvardict;                   // Dictionary with v: variables
-EXTERN dict_T globvardict;                  // Dictionary with g: variables
+EXTERN dict_T vimvardict;                   // Dict with v: variables
+EXTERN dict_T globvardict;                  // Dict with g: variables
 /// g: value
 #define globvarht globvardict.dv_hashtab
 EXTERN int did_emsg;                        // incremented by emsg() when a

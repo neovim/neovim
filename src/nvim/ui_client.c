@@ -107,7 +107,7 @@ void ui_client_attach(int width, int height, char *term, bool rgb)
       ui_client_forward_stdin = false;  // stdin shouldn't be forwarded again #22292
     }
   }
-  ADD_C(args, DICTIONARY_OBJ(opts));
+  ADD_C(args, DICT_OBJ(opts));
 
   rpc_send_event(ui_client_channel_id, "nvim_ui_attach", args);
   ui_client_attached = true;
@@ -120,17 +120,17 @@ void ui_client_attach(int width, int height, char *term, bool rgb)
   MAXSIZE_TEMP_ARRAY(args2, 5);
   ADD_C(args2, CSTR_AS_OBJ("nvim-tui"));            // name
   Object m = api_metadata();
-  Dictionary version = { 0 };
-  assert(m.data.dictionary.size > 0);
-  for (size_t i = 0; i < m.data.dictionary.size; i++) {
-    if (strequal(m.data.dictionary.items[i].key.data, "version")) {
-      version = m.data.dictionary.items[i].value.data.dictionary;
+  Dict version = { 0 };
+  assert(m.data.dict.size > 0);
+  for (size_t i = 0; i < m.data.dict.size; i++) {
+    if (strequal(m.data.dict.items[i].key.data, "version")) {
+      version = m.data.dict.items[i].value.data.dict;
       break;
-    } else if (i + 1 == m.data.dictionary.size) {
+    } else if (i + 1 == m.data.dict.size) {
       abort();
     }
   }
-  ADD_C(args2, DICTIONARY_OBJ(version));            // version
+  ADD_C(args2, DICT_OBJ(version));                  // version
   ADD_C(args2, CSTR_AS_OBJ("ui"));                  // type
   // We don't send api_metadata.functions as the "methods" because:
   // 1. it consumes memory.
@@ -141,7 +141,7 @@ void ui_client_attach(int width, int height, char *term, bool rgb)
   PUT_C(info, "website", CSTR_AS_OBJ("https://neovim.io"));
   PUT_C(info, "license", CSTR_AS_OBJ("Apache 2"));
   PUT_C(info, "pid", INTEGER_OBJ(os_get_pid()));
-  ADD_C(args2, DICTIONARY_OBJ(info));               // attributes
+  ADD_C(args2, DICT_OBJ(info));               // attributes
   rpc_send_event(ui_client_channel_id, "nvim_set_client_info", args2);
 
   TIME_MSG("nvim_set_client_info");
@@ -215,7 +215,7 @@ Object handle_ui_client_redraw(uint64_t channel_id, Array args, Arena *arena, Er
   return NIL;
 }
 
-static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
+static HlAttrs ui_client_dict2hlattrs(Dict d, bool rgb)
 {
   Error err = ERROR_INIT;
   Dict(highlight) dict = KEYDICT_INIT;

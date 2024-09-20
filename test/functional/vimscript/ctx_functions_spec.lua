@@ -295,7 +295,7 @@ describe('context functions', function()
       eq(outofbounds, pcall_err(call, 'ctxget', 0))
     end)
 
-    it('returns context dictionary at index in context stack', function()
+    it('returns context dict at index in context stack', function()
       feed('i1<cr>2<cr>3<c-[>ddddddqahjklq')
       command('edit! ' .. fname1)
       feed('G')
@@ -404,7 +404,7 @@ describe('context functions', function()
       eq(outofbounds, pcall_err(call, 'ctxset', { dummy = 1 }, 0))
     end)
 
-    it('errors when context dictionary is invalid', function()
+    it('errors when context dict is invalid', function()
       call('ctxpush')
       eq(
         'Vim:E474: Failed to convert list to msgpack string buffer',
@@ -412,7 +412,7 @@ describe('context functions', function()
       )
     end)
 
-    it('sets context dictionary at index in context stack', function()
+    it('sets context dict at index in context stack', function()
       api.nvim_set_var('one', 1)
       api.nvim_set_var('Two', 2)
       api.nvim_set_var('THREE', 3)

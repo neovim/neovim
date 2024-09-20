@@ -80,7 +80,7 @@ enum_w('')
 --- @type { [string]: string }
 local option_index = {}
 
--- Generate option index enum and populate the `option_index` dictionary.
+-- Generate option index enum and populate the `option_index` dict.
 enum_w('typedef enum {')
 enum_w('  kOptInvalid = -1,')
 

@@ -54,7 +54,7 @@ local function call_ui_event_method(output, ev)
       local kind = ev.parameters[j][1]
       if kind ~= 'Object' then
         if kind == 'HlAttrs' then
-          kind = 'Dictionary'
+          kind = 'Dict'
         end
         output:write('\n      || args.items[' .. (j - 1) .. '].type != kObjectType' .. kind .. '')
       end
@@ -74,7 +74,7 @@ local function call_ui_event_method(output, ev)
       output:write(
         'ui_client_dict2hlattrs(args.items['
           .. (j - 1)
-          .. '].data.dictionary, '
+          .. '].data.dict, '
           .. (hlattrs_args_count == 0 and 'true' or 'false')
           .. ');\n'
       )
@@ -206,7 +206,7 @@ for _, ev in ipairs(events) do
   end
   for _, p in ipairs(ev_exported.parameters) do
     if p[1] == 'HlAttrs' then
-      p[1] = 'Dictionary'
+      p[1] = 'Dict'
     end
   end
   if not ev.noexport then

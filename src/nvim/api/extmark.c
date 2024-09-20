@@ -74,10 +74,10 @@ Integer nvim_create_namespace(String name)
 /// Gets existing, non-anonymous |namespace|s.
 ///
 /// @return dict that maps from names to namespace ids.
-Dictionary nvim_get_namespaces(Arena *arena)
+Dict nvim_get_namespaces(Arena *arena)
   FUNC_API_SINCE(5)
 {
-  Dictionary retval = arena_dict(arena, map_size(&namespace_ids));
+  Dict retval = arena_dict(arena, map_size(&namespace_ids));
   String name;
   handle_T id;
 
@@ -158,7 +158,7 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
   if (add_dict) {
     // TODO(bfredl): coding the size like this is a bit fragile.
     // We want ArrayOf(Dict(set_extmark)) as the return type..
-    Dictionary dict = arena_dict(arena, ARRAY_SIZE(set_extmark_table));
+    Dict dict = arena_dict(arena, ARRAY_SIZE(set_extmark_table));
 
     PUT_C(dict, "ns_id", INTEGER_OBJ((Integer)start.ns));
 
@@ -183,7 +183,7 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 
     decor_to_dict_legacy(&dict, mt_decor(start), hl_name, arena);
 
-    ADD_C(rv, DICTIONARY_OBJ(dict));
+    ADD_C(rv, DICT_OBJ(dict));
   }
 
   return rv;

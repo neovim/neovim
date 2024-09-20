@@ -1229,7 +1229,7 @@ describe('lua stdlib', function()
     )
   end)
 
-  it('vim.fn should error when calling API function', function()
+  it('vim.fn errors when calling API function', function()
     matches(
       'Tried to call API function with vim.fn: use vim.api.nvim_get_current_line instead',
       pcall_err(exec_lua, 'vim.fn.nvim_get_current_line()')
@@ -1947,7 +1947,7 @@ describe('lua stdlib', function()
     eq(NIL, fn.luaeval 'vim.v.null')
     matches([[attempt to index .* nil value]], pcall_err(exec_lua, 'return vim.v[0].progpath'))
     eq('Key is read-only: count', pcall_err(exec_lua, [[vim.v.count = 42]]))
-    eq('Dictionary is locked', pcall_err(exec_lua, [[vim.v.nosuchvar = 42]]))
+    eq('Dict is locked', pcall_err(exec_lua, [[vim.v.nosuchvar = 42]]))
     eq('Key is fixed: errmsg', pcall_err(exec_lua, [[vim.v.errmsg = nil]]))
     exec_lua([[vim.v.errmsg = 'set by Lua']])
     eq('set by Lua', eval('v:errmsg'))
@@ -2067,7 +2067,7 @@ describe('lua stdlib', function()
     -- TODO: We still need to write some tests for optlocal, opt and then getting the options
     --  Probably could also do some stuff with getting things from viml side as well to confirm behavior is the same.
 
-    it('should allow setting number values', function()
+    it('allows setting number values', function()
       local scrolloff = exec_lua [[
         vim.opt.scrolloff = 10
         return vim.o.scrolloff
@@ -2075,7 +2075,7 @@ describe('lua stdlib', function()
       eq(10, scrolloff)
     end)
 
-    pending('should handle STUPID window things', function()
+    pending('handles STUPID window things', function()
       local result = exec_lua [[
         local result = {}
 
@@ -2088,7 +2088,7 @@ describe('lua stdlib', function()
       eq({}, result)
     end)
 
-    it('should allow setting tables', function()
+    it('allows setting tables', function()
       local wildignore = exec_lua [[
         vim.opt.wildignore = { 'hello', 'world' }
         return vim.o.wildignore
@@ -2096,7 +2096,7 @@ describe('lua stdlib', function()
       eq('hello,world', wildignore)
     end)
 
-    it('should allow setting tables with shortnames', function()
+    it('allows setting tables with shortnames', function()
       local wildignore = exec_lua [[
         vim.opt.wig = { 'hello', 'world' }
         return vim.o.wildignore
@@ -2104,7 +2104,7 @@ describe('lua stdlib', function()
       eq('hello,world', wildignore)
     end)
 
-    it('should error when you attempt to set string values to numeric options', function()
+    it('errors when you attempt to set string values to numeric options', function()
       local result = exec_lua [[
         return {
           pcall(function() vim.opt.textwidth = 'hello world' end)
@@ -2114,7 +2114,7 @@ describe('lua stdlib', function()
       eq(false, result[1])
     end)
 
-    it('should error when you attempt to setlocal a global value', function()
+    it('errors when you attempt to setlocal a global value', function()
       local result = exec_lua [[
         return pcall(function() vim.opt_local.clipboard = "hello" end)
       ]]
@@ -2122,7 +2122,7 @@ describe('lua stdlib', function()
       eq(false, result)
     end)
 
-    it('should allow you to set boolean values', function()
+    it('allows you to set boolean values', function()
       eq(
         { true, false, true },
         exec_lua [[
@@ -2142,7 +2142,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should change current buffer values and defaults for global local values', function()
+    it('changes current buffer values and defaults for global local values', function()
       local result = exec_lua [[
         local result = {}
 
@@ -2181,7 +2181,7 @@ describe('lua stdlib', function()
       eq('', result[8])
     end)
 
-    it('should allow you to retrieve window opts even if they have not been set', function()
+    it('allows you to retrieve window opts even if they have not been set', function()
       local result = exec_lua [[
         local result = {}
         table.insert(result, vim.opt.number:get())
@@ -2196,7 +2196,7 @@ describe('lua stdlib', function()
       eq({ false, false, true, true }, result)
     end)
 
-    it('should allow all sorts of string manipulation', function()
+    it('allows all sorts of string manipulation', function()
       eq(
         { 'hello', 'hello world', 'start hello world' },
         exec_lua [[
@@ -2217,7 +2217,7 @@ describe('lua stdlib', function()
     end)
 
     describe('option:get()', function()
-      it('should work for boolean values', function()
+      it('works for boolean values', function()
         eq(
           false,
           exec_lua [[
@@ -2227,7 +2227,7 @@ describe('lua stdlib', function()
         )
       end)
 
-      it('should work for number values', function()
+      it('works for number values', function()
         local tabstop = exec_lua [[
           vim.opt.tabstop = 10
           return vim.opt.tabstop:get()
@@ -2236,7 +2236,7 @@ describe('lua stdlib', function()
         eq(10, tabstop)
       end)
 
-      it('should work for string values', function()
+      it('works for string values', function()
         eq(
           'hello world',
           exec_lua [[
@@ -2246,7 +2246,7 @@ describe('lua stdlib', function()
         )
       end)
 
-      it('should work for set type flaglists', function()
+      it('works for set type flaglists', function()
         local formatoptions = exec_lua [[
           vim.opt.formatoptions = 'tcro'
           return vim.opt.formatoptions:get()
@@ -2256,7 +2256,7 @@ describe('lua stdlib', function()
         eq(true, not formatoptions.q)
       end)
 
-      it('should work for set type flaglists', function()
+      it('works for set type flaglists', function()
         local formatoptions = exec_lua [[
           vim.opt.formatoptions = { t = true, c = true, r = true, o = true }
           return vim.opt.formatoptions:get()
@@ -2266,7 +2266,7 @@ describe('lua stdlib', function()
         eq(true, not formatoptions.q)
       end)
 
-      it('should work for array list type options', function()
+      it('works for array list type options', function()
         local wildignore = exec_lua [[
           vim.opt.wildignore = "*.c,*.o,__pycache__"
           return vim.opt.wildignore:get()
@@ -2276,7 +2276,7 @@ describe('lua stdlib', function()
         eq('*.c', wildignore[1])
       end)
 
-      it('should work for options that are both commalist and flaglist', function()
+      it('works for options that are both commalist and flaglist', function()
         local result = exec_lua [[
           vim.opt.whichwrap = "b,s"
           return vim.opt.whichwrap:get()
@@ -2292,7 +2292,7 @@ describe('lua stdlib', function()
         eq({ b = true, h = true }, result)
       end)
 
-      it('should work for key-value pair options', function()
+      it('works for key-value pair options', function()
         local listchars = exec_lua [[
           vim.opt.listchars = "tab:> ,space:_"
           return vim.opt.listchars:get()
@@ -2304,7 +2304,7 @@ describe('lua stdlib', function()
         }, listchars)
       end)
 
-      it('should allow you to add numeric options', function()
+      it('allows you to add numeric options', function()
         eq(
           16,
           exec_lua [[
@@ -2315,7 +2315,7 @@ describe('lua stdlib', function()
         )
       end)
 
-      it('should allow you to subtract numeric options', function()
+      it('allows you to subtract numeric options', function()
         eq(
           2,
           exec_lua [[
@@ -2328,7 +2328,7 @@ describe('lua stdlib', function()
     end)
 
     describe('key:value style options', function()
-      it('should handle dictionary style', function()
+      it('handles dict style', function()
         local listchars = exec_lua [[
           vim.opt.listchars = {
             eol = "~",
@@ -2340,7 +2340,7 @@ describe('lua stdlib', function()
         eq('eol:~,space:.', listchars)
       end)
 
-      it('should allow adding dictionary style', function()
+      it('allows adding dict style', function()
         local listchars = exec_lua [[
           vim.opt.listchars = {
             eol = "~",
@@ -2355,7 +2355,7 @@ describe('lua stdlib', function()
         eq('eol:~,space:-', listchars)
       end)
 
-      it('should allow adding dictionary style', function()
+      it('allows adding dict style', function()
         local listchars = exec_lua [[
           vim.opt.listchars = {
             eol = "~",
@@ -2369,7 +2369,7 @@ describe('lua stdlib', function()
         eq('eol:~,space:_', listchars)
       end)
 
-      it('should allow completely new keys', function()
+      it('allows completely new keys', function()
         local listchars = exec_lua [[
           vim.opt.listchars = {
             eol = "~",
@@ -2383,7 +2383,7 @@ describe('lua stdlib', function()
         eq('eol:~,space:.,tab:>>>', listchars)
       end)
 
-      it('should allow subtracting dictionary style', function()
+      it('allows subtracting dict style', function()
         local listchars = exec_lua [[
           vim.opt.listchars = {
             eol = "~",
@@ -2397,7 +2397,7 @@ describe('lua stdlib', function()
         eq('eol:~', listchars)
       end)
 
-      it('should allow subtracting dictionary style', function()
+      it('allows subtracting dict style', function()
         local listchars = exec_lua [[
           vim.opt.listchars = {
             eol = "~",
@@ -2411,7 +2411,7 @@ describe('lua stdlib', function()
         eq('', listchars)
       end)
 
-      it('should allow subtracting dictionary style multiple times', function()
+      it('allows subtracting dict style multiple times', function()
         local listchars = exec_lua [[
           vim.opt.listchars = {
             eol = "~",
@@ -2425,7 +2425,7 @@ describe('lua stdlib', function()
         eq('eol:~', listchars)
       end)
 
-      it('should allow adding a key:value string to a listchars', function()
+      it('allows adding a key:value string to a listchars', function()
         local listchars = exec_lua [[
           vim.opt.listchars = {
             eol = "~",
@@ -2439,7 +2439,7 @@ describe('lua stdlib', function()
         eq('eol:~,space:.,tab:>~', listchars)
       end)
 
-      it('should allow prepending a key:value string to a listchars', function()
+      it('allows prepending a key:value string to a listchars', function()
         local listchars = exec_lua [[
           vim.opt.listchars = {
             eol = "~",
@@ -2454,7 +2454,7 @@ describe('lua stdlib', function()
       end)
     end)
 
-    it('should automatically set when calling remove', function()
+    it('automatically sets when calling remove', function()
       eq(
         'foo,baz',
         exec_lua [[
@@ -2466,7 +2466,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should automatically set when calling remove with a table', function()
+    it('automatically sets when calling remove with a table', function()
       eq(
         'foo',
         exec_lua [[
@@ -2478,7 +2478,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should automatically set when calling append', function()
+    it('automatically sets when calling append', function()
       eq(
         'foo,bar,baz,bing',
         exec_lua [[
@@ -2490,7 +2490,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should automatically set when calling append with a table', function()
+    it('automatically sets when calling append with a table', function()
       eq(
         'foo,bar,baz,bing,zap',
         exec_lua [[
@@ -2502,7 +2502,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should allow adding tables', function()
+    it('allows adding tables', function()
       local wildignore = exec_lua [[
         vim.opt.wildignore = 'foo'
         return vim.o.wildignore
@@ -2516,7 +2516,7 @@ describe('lua stdlib', function()
       eq('foo,bar,baz', wildignore)
     end)
 
-    it('should handle adding duplicates', function()
+    it('handles adding duplicates', function()
       local wildignore = exec_lua [[
         vim.opt.wildignore = 'foo'
         return vim.o.wildignore
@@ -2536,7 +2536,7 @@ describe('lua stdlib', function()
       eq('foo,bar,baz', wildignore)
     end)
 
-    it('should allow adding multiple times', function()
+    it('allows adding multiple times', function()
       local wildignore = exec_lua [[
         vim.opt.wildignore = 'foo'
         vim.opt.wildignore = vim.opt.wildignore + 'bar' + 'baz'
@@ -2545,7 +2545,7 @@ describe('lua stdlib', function()
       eq('foo,bar,baz', wildignore)
     end)
 
-    it('should remove values when you use minus', function()
+    it('removes values when you use minus', function()
       local wildignore = exec_lua [[
         vim.opt.wildignore = 'foo'
         return vim.o.wildignore
@@ -2565,7 +2565,7 @@ describe('lua stdlib', function()
       eq('foo,baz', wildignore)
     end)
 
-    it('should prepend values when using ^', function()
+    it('prepends values when using ^', function()
       local wildignore = exec_lua [[
         vim.opt.wildignore = 'foo'
         vim.opt.wildignore = vim.opt.wildignore ^ 'first'
@@ -2580,7 +2580,7 @@ describe('lua stdlib', function()
       eq('super_first,first,foo', wildignore)
     end)
 
-    it('should not remove duplicates from wildmode: #14708', function()
+    it('does not remove duplicates from wildmode: #14708', function()
       local wildmode = exec_lua [[
         vim.opt.wildmode = {"full", "list", "full"}
         return vim.o.wildmode
@@ -2590,7 +2590,7 @@ describe('lua stdlib', function()
     end)
 
     describe('option types', function()
-      it('should allow to set option with numeric value', function()
+      it('allows to set option with numeric value', function()
         eq(
           4,
           exec_lua [[
@@ -2639,7 +2639,7 @@ describe('lua stdlib', function()
         )
       end)
 
-      it('should allow to set option with boolean value', function()
+      it('allows to set option with boolean value', function()
         eq(
           true,
           exec_lua [[
@@ -2688,7 +2688,7 @@ describe('lua stdlib', function()
         )
       end)
 
-      it('should allow to set option with array or string value', function()
+      it('allows to set option with array or string value', function()
         eq(
           'indent,eol,start',
           exec_lua [[
@@ -2735,7 +2735,7 @@ describe('lua stdlib', function()
         )
       end)
 
-      it('should allow set option with map or string value', function()
+      it('allows set option with map or string value', function()
         eq(
           'eol:~,space:.',
           exec_lua [[
@@ -2785,7 +2785,7 @@ describe('lua stdlib', function()
         )
       end)
 
-      it('should allow set option with set or string value', function()
+      it('allows set option with set or string value', function()
         local ww = exec_lua [[
           vim.opt.whichwrap = {
             b = true,
@@ -3235,11 +3235,11 @@ describe('lua stdlib', function()
       ]]
     end)
 
-    it('should run from lua', function()
+    it('runs from lua', function()
       exec_lua [[vim.wait(100, function() return true end)]]
     end)
 
-    it('should wait the expected time if false', function()
+    it('waits the expected time if false', function()
       eq(
         { time = true, wait_result = { false, -1 } },
         exec_lua [[
@@ -3255,7 +3255,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should not block other events', function()
+    it('does not block other events', function()
       eq(
         { time = true, wait_result = true },
         exec_lua [[
@@ -3280,7 +3280,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should not process non-fast events when commanded', function()
+    it('does not process non-fast events when commanded', function()
       eq(
         { wait_result = false },
         exec_lua [[
@@ -3303,7 +3303,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should work with vim.defer_fn', function()
+    it('works with vim.defer_fn', function()
       eq(
         { time = true, wait_result = true },
         exec_lua [[
@@ -3320,7 +3320,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should not crash when callback errors', function()
+    it('does not crash when callback errors', function()
       local result = exec_lua [[
         return {pcall(function() vim.wait(1000, function() error("As Expected") end) end)}
       ]]
@@ -3336,7 +3336,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should allow waiting with no callback, explicit', function()
+    it('allows waiting with no callback, explicit', function()
       eq(
         true,
         exec_lua [[
@@ -3347,7 +3347,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should allow waiting with no callback, implicit', function()
+    it('allows waiting with no callback, implicit', function()
       eq(
         true,
         exec_lua [[
@@ -3358,7 +3358,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should call callbacks exactly once if they return true immediately', function()
+    it('calls callbacks exactly once if they return true immediately', function()
       eq(
         true,
         exec_lua [[
@@ -3372,7 +3372,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should call callbacks few times with large `interval`', function()
+    it('calls callbacks few times with large `interval`', function()
       eq(
         true,
         exec_lua [[
@@ -3383,7 +3383,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should play nice with `not` when fails', function()
+    it('plays nice with `not` when fails', function()
       eq(
         true,
         exec_lua [[
@@ -3396,7 +3396,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should play nice with `if` when success', function()
+    it('plays nice with `if` when success', function()
       eq(
         true,
         exec_lua [[
@@ -3409,7 +3409,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should return immediately with false if timeout is 0', function()
+    it('returns immediately with false if timeout is 0', function()
       eq(
         { false, -1 },
         exec_lua [[
@@ -3420,7 +3420,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should work with tables with __call', function()
+    it('works with tables with __call', function()
       eq(
         true,
         exec_lua [[
@@ -3430,7 +3430,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should work with tables with __call that change', function()
+    it('works with tables with __call that change', function()
       eq(
         true,
         exec_lua [[
@@ -3447,7 +3447,7 @@ describe('lua stdlib', function()
       )
     end)
 
-    it('should not work with negative intervals', function()
+    it('fails with negative intervals', function()
       local pcall_result = exec_lua [[
         return pcall(function() vim.wait(1000, function() return false end, -1) end)
       ]]
@@ -3455,7 +3455,7 @@ describe('lua stdlib', function()
       eq(false, pcall_result)
     end)
 
-    it('should not work with weird intervals', function()
+    it('fails with weird intervals', function()
       local pcall_result = exec_lua [[
         return pcall(function() vim.wait(1000, function() return false end, 'a string value') end)
       ]]
@@ -3498,7 +3498,7 @@ describe('lua stdlib', function()
       end)
     end)
 
-    it('should not run in fast callbacks #26122', function()
+    it('fails in fast callbacks #26122', function()
       local screen = Screen.new(80, 10)
       screen:attach()
       exec_lua([[
