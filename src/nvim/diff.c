@@ -2127,9 +2127,10 @@ static void run_alignment_algorithm(diff_T *dp, diff_alignment_T diff_alignment)
     }
   }
 
-  generateAllignmentAlgorithmHelpers( diff_alignment, iwhite, total_chars_length, diff_lines,
-      ndiffs, result_diff_start_pos, &iwhite_index_offset, word_offset, word_offset_size,
-      diff_length, &total_word_count, diffbufs);
+  generateAllignmentAlgorithmHelpers(diff_alignment, iwhite, total_chars_length, diff_lines,
+                                     ndiffs, result_diff_start_pos, &iwhite_index_offset,
+                                     word_offset, word_offset_size,
+                                     diff_length, &total_word_count, diffbufs);
 
   // we will get the output of the linematch algorithm in the format of an array
   // of integers (*decisions) and the length of that array (decisions_length)
@@ -2188,26 +2189,27 @@ static void run_alignment_algorithm(diff_T *dp, diff_alignment_T diff_alignment)
         size_t decisions_length = linematch_nbuffers((const char **)diffbufs, diff_length, ndiffs,
                                                      &decisions, 1, word_offset, word_offset_size);
         for (size_t i = 0; i < decisions_length; i++) {
-
           // 0: no highlight
           // 1: highlight (changed word / character)
           int highlightvalue = decisions[i] == (pow(2, (double)ndiffs) - 1) ? 0 : 1;
           for (size_t j = 0; j < ndiffs; j++) {
-            if(highlightvalue == 0 || (highlightvalue == 1 && (decisions[i] & (1 << j)))) {
-
+            if (highlightvalue == 0 || (highlightvalue == 1 && (decisions[i] & (1 << j)))) {
               // iterate over the token length: for WORDMATCH, the result represents multiple
               // characters, so we fill in the word length. For charmatch, each character has it's
               // own highlight value so we only fill in one highlight value
-              for (size_t k = 0; k < (diff_alignment == WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
+              for (size_t k = 0;
+                   k <
+                   (diff_alignment ==
+                    WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
                 size_t l = result_diff_start_pos[j]++;
-                dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = highlightvalue;
+                dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] +
+                               l : l] = highlightvalue;
               }
               word_offset_result_index[j]++;
 
               if (highlightvalue == 1) {
                 break;
               }
-
             }
           }
         }
@@ -2244,10 +2246,14 @@ static void run_alignment_algorithm(diff_T *dp, diff_alignment_T diff_alignment)
 /// @param      total_word_count
 /// @param      diffbufs
 ///
-static void generateAllignmentAlgorithmHelpers( const diff_alignment_T diff_alignment, const bool
-    iwhite, const size_t total_chars_length, const int *diff_lines, const size_t ndiffs, const
-    size_t *result_diff_start_pos, size_t **iwhite_index_offset, size_t **word_offset, size_t
-    **word_offset_size, int *diff_length, size_t *total_word_count, char **diffbufs)
+static void generateAllignmentAlgorithmHelpers(const diff_alignment_T diff_alignment, const bool
+                                               iwhite, const size_t total_chars_length,
+                                               const int *diff_lines, const size_t ndiffs, const
+                                               size_t *result_diff_start_pos,
+                                               size_t **iwhite_index_offset, size_t **word_offset,
+                                               size_t
+                                               **word_offset_size, int *diff_length,
+                                               size_t *total_word_count, char **diffbufs)
 {
   // allocate all the memory we will need to keep track of tokens positions and their respective
   // lengths. For word matching, this is the 'word' as vim defines it, for character matching, the
@@ -2339,7 +2345,6 @@ static void generateAllignmentAlgorithmHelpers( const diff_alignment_T diff_alig
       }
     }
   }
-
 }
 
 /// Check diff status for line "lnum" in buffer "buf":
