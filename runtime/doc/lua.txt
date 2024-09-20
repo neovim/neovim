@@ -4368,7 +4368,10 @@ vim.snippet.active({filter})                            *vim.snippet.active()*
 vim.snippet.expand({input})                             *vim.snippet.expand()*
     Expands the given snippet text. Refer to
     https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax
-    for the specification of valid input.
+    for the specification of valid input. If no key mappings for snippet jump
+    (tab/shift-tab) are detected, this function will automatically add
+    mappings for 'tab' and 'shift-tab' in both insert ('i') and select ('s')
+    modes. restore after leave snippet.
 
     Tabstops are highlighted with |hl-SnippetTabstop|.
 

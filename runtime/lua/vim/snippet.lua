@@ -224,7 +224,7 @@ end
 function Session:set_keymaps()
   local function maparg(key, mode)
     local map = vim.fn.maparg(key, mode, false, true) --[[ @as table ]]
-    if not vim.tbl_isempty(map) and map.buffer == 1 then
+    if not vim.tbl_isempty(map) then
       return map
     else
       return nil
@@ -232,7 +232,15 @@ function Session:set_keymaps()
   end
 
   local function set(jump_key, direction)
-    vim.keymap.set({ 'i', 's' }, jump_key, function()
+    local jump_keymaps = jump_key == jump_forward_key and 'tab_keymaps' or 'shift_tab_keymaps'
+    local mode = { 'i', 's' }
+    mode = vim.tbl_filter(function(m)
+      return not self[jump_keymaps][m]
+    end, mode)
+    if #mode == 0 then
+      return
+    end
+    vim.keymap.set(mode, jump_key, function()
       return vim.snippet.active({ direction = direction })
           and '<cmd>lua vim.snippet.jump(' .. direction .. ')<cr>'
         or jump_key
@@ -470,6 +478,9 @@ end
 --- Expands the given snippet text.
 --- Refer to https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax
 --- for the specification of valid input.
+--- If no key mappings for snippet jump (tab/shift-tab) are detected,
+--- this function will automatically add mappings for 'tab' and 'shift-tab'
+--- in both insert ('i') and select ('s') modes. restore after leave snippet.
 ---
 --- Tabstops are highlighted with |hl-SnippetTabstop|.
 ---
