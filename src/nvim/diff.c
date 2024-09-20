@@ -2275,32 +2275,26 @@ static void run_alignment_algorithm(diff_T *dp, diff_alignment_T diff_alignment)
         size_t decisions_length = linematch_nbuffers((const char **)diffbufs, diff_length, ndiffs,
                                                      &decisions, 1, word_offset, word_offset_size);
         for (size_t i = 0; i < decisions_length; i++) {
-          if (decisions[i] == (pow(2, (double)ndiffs) - 1)) {
-            // it's a comparison of all the buffers (don't highlight)
-            for (size_t j = 0; j < ndiffs; j++) {
-              for (size_t k = 0;
-                   k <
-                   (diff_alignment ==
-                    WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
+
+          // 0: no highlight
+          // 1: highlight (changed word / character)
+          int highlightvalue = decisions[i] == (pow(2, (double)ndiffs) - 1) ? 0 : 1;
+          for (size_t j = 0; j < ndiffs; j++) {
+            if(highlightvalue == 0 || (highlightvalue == 1 && (decisions[i] & (1 << j)))) {
+
+              // iterate over the token length: for WORDMATCH, the result represents multiple
+              // characters, so we fill in the word length. For charmatch, each character has it's
+              // own highlight value so we only fill in one highlight value
+              for (size_t k = 0; k < (diff_alignment == WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
                 size_t l = result_diff_start_pos[j]++;
-                dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 0;
+                dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = highlightvalue;
               }
               word_offset_result_index[j]++;
-            }
-          } else {
-            // it's a skip in a single buffer (highlight as changed)
-            for (size_t j = 0; j < ndiffs; j++) {
-              if (decisions[i] & (1 << j)) {
-                for (size_t k = 0;
-                     k <
-                     (diff_alignment ==
-                      WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
-                  size_t l = result_diff_start_pos[j]++;
-                  dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 1;
-                }
-                word_offset_result_index[j]++;
+
+              if (highlightvalue == 1) {
                 break;
               }
+
             }
           }
         }
