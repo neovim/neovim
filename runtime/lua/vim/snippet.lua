@@ -674,7 +674,11 @@ end
 --- @return boolean
 function M.active(filter)
   local active = M._session ~= nil and M._session.bufnr == vim.api.nvim_get_current_buf()
-
+  -- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionClientCapabilities
+  local current_index = vim.tbl_get(M, '_session', 'current_tabstop', 'index')
+  if current_index and current_index == 0 then
+    return false
+  end
   local in_direction = true
   if active and filter and filter.direction then
     in_direction = M._session:get_dest_index(filter.direction) ~= nil
