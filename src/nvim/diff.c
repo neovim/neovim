@@ -139,7 +139,7 @@ typedef enum {
   LINEMATCH,
   CHARMATCH,
   WORDMATCH,
-} diff_allignment_T;
+} diff_alignment_T;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "diff.c.generated.h"
 #endif
@@ -2064,7 +2064,16 @@ static void apply_linematch_results(diff_T *dp, size_t decisions_length, const i
   dp->is_linematched = true;
 }
 
-static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignment)
+/// Run the alignment algorithm for either line alignment (linematch) or character / word
+/// highlighting. This function generates the inputs which will be passed to the alignment
+/// algorithm, and also checks if the token count has been exceeded, depending on if it has been
+/// exceeded, it returns the results or an array of '-1' indicating the token limit has been
+/// exceeded
+///
+/// @param dp
+/// @param diff_alignment
+///
+static void run_alignment_algorithm(diff_T *dp, diff_alignment_T diff_alignment)
 {
   // define buffers for diff algorithm
   mmfile_t diffbufs_mm[DB_COUNT] = { 0 };
@@ -2093,7 +2102,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       diffbufs[ndiffs] = diffbufs_mm[ndiffs].ptr;
 
       diff_lines[ndiffs] = dp->df_count[i];
-      if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
+      if (diff_alignment == CHARMATCH || diff_alignment == WORDMATCH) {
         // before removing whitespace for charmatch
         result_diff_start_pos[ndiffs] = total_chars_length;
         // get the length of each of the diffs
@@ -2106,7 +2115,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           }
           p++;
         }
-      } else if (diff_allignment == LINEMATCH) {
+      } else if (diff_alignment == LINEMATCH) {
         // LINEMATCH
         // keep track of the length of this diff block to pass it to the linematch
         // algorithm
@@ -2121,7 +2130,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   // allocate all the memory we will need to keep track of tokens positions and their respective
   // lengths. For word matching, this is the 'word' as vim defines it, for character matching, the
   // token is the one or more 8 bit 'chars' that make up a utf character
-  if (diff_allignment == WORDMATCH || diff_allignment == CHARMATCH) {
+  if (diff_alignment == WORDMATCH || diff_alignment == CHARMATCH) {
     // are we ignoring whitespace in the comparison?
     if (iwhite) {
       // allocate array for index mapping of result array
@@ -2166,7 +2175,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
         // we have a character which is not a blank (or we are not using iwhite)
 
         // how we determine when there is a new token depends on if this is chardiff or worddiff
-        if (diff_allignment == WORDMATCH) {
+        if (diff_alignment == WORDMATCH) {
           // WORDMATCH
           if (utf_class(diffbufs[i][j]) != cls || diffbufs[i][j] == '\n') {
             // this is a new token
@@ -2178,7 +2187,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           word_offset_size[i][diff_length[i] - 1]++;  // still the same class (iterating over the
                                                       // same type of word), so the current word
                                                       // length is getting longer
-        } else if (diff_allignment == CHARMATCH) {
+        } else if (diff_alignment == CHARMATCH) {
           // CHARMATCH
           if (cur_char_length == 0) {
             // get the length of current character
@@ -2197,7 +2206,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           cur_char_length--;
         }
         // if ignoring whitespace, keep track of the white space index
-        if (iwhite && (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH)) {
+        if (iwhite && (diff_alignment == CHARMATCH || diff_alignment == WORDMATCH)) {
           // keep track of the index offset with ignoring whitespace to use when populating the results
           iwhite_index_offset[w++] = j - k;
         }
@@ -2211,20 +2220,24 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
 
   // we will get the output of the linematch algorithm in the format of an array
   // of integers (*decisions) and the length of that array (decisions_length)
-  if (diff_allignment == LINEMATCH) {
+  if (diff_alignment == LINEMATCH) {
     int *decisions = NULL;
     size_t decisions_length = linematch_nbuffers((const char **)diffbufs, diff_length, ndiffs,
                                                  &decisions, 0, NULL, NULL);
     apply_linematch_results(dp, decisions_length, decisions);
     xfree(decisions);
-  } else if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
-    dp->charmatchp = xmalloc(total_chars_length * sizeof(int));  // will hold results
+  } else if (diff_alignment == CHARMATCH || diff_alignment == WORDMATCH) {
+    dp->charmatchp = xmalloc(total_chars_length * sizeof(int));  // will hold the highlight values
+                                                                 // of characters
+                                                                 // 0: no highlight,
+                                                                 // 1: changed character
+                                                                 // 2: new character
     dp->n_charmatch = total_chars_length;
 
     bool lim_exceeded = false;
-    if (diff_allignment == CHARMATCH && total_chars_length > (size_t)chardiff_chars) {
+    if (diff_alignment == CHARMATCH && total_chars_length > (size_t)chardiff_chars) {
       lim_exceeded = true;
-    } else if (diff_allignment == WORDMATCH && total_word_count > (size_t)worddiff_words) {
+    } else if (diff_alignment == WORDMATCH && total_word_count > (size_t)worddiff_words) {
       lim_exceeded = true;
     }
 
@@ -2267,7 +2280,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
             for (size_t j = 0; j < ndiffs; j++) {
               for (size_t k = 0;
                    k <
-                   (diff_allignment ==
+                   (diff_alignment ==
                     WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
                 size_t l = result_diff_start_pos[j]++;
                 dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 0;
@@ -2280,7 +2293,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
               if (decisions[i] & (1 << j)) {
                 for (size_t k = 0;
                      k <
-                     (diff_allignment ==
+                     (diff_alignment ==
                       WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
                   size_t l = result_diff_start_pos[j]++;
                   dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 1;
@@ -2879,17 +2892,17 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int **hl
 
   linenr_T off = lnum - dp->df_lnum[idx];
   if (chardiff()) {
-    diff_allignment_T diff_allignment;
+    diff_alignment_T diff_alignment;
     if (diff_flags & DIFF_CHARDIFF) {
       // if both chardiff & worddiff are enabled, it will pick chardiff
-      diff_allignment = CHARMATCH;
+      diff_alignment = CHARMATCH;
     } else if (diff_flags & DIFF_WORDDIFF) {
-      diff_allignment = WORDMATCH;
+      diff_alignment = WORDMATCH;
     }
     if (dp->charmatchp == NULL) {
       // get the first buffers
       // try running on the whole diff buffer first
-      run_alignment_algorithm(dp, diff_allignment);
+      run_alignment_algorithm(dp, diff_alignment);
     }
     size_t charcount = 0;
     for (int i = 0; i < DB_COUNT; i++) {
@@ -2922,6 +2935,8 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int **hl
       *diffchars_line_len = strlen(ml_get_buf(curtab->tp_diffbuf[idx], dp->df_lnum[idx] + off));
       hlresult_line_offset = get_buffer_position(idx, dp, off);
       if (*(dp->charmatchp + hlresult_line_offset) == -1) {
+        // the character / word limit has been exceeded once here we will attempt to diff the hunk
+        // line by line and see if we are within the limits
         diff_T dp_tmp;
         for (int i = 0; i < DB_COUNT; i++) {
           if (curtab->tp_diffbuf[i] != NULL) {
@@ -2933,7 +2948,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int **hl
         // run charmatch on this line of the diff
         // figure out how many buffers we are diffing
         // what line number is this in each buffer?
-        run_alignment_algorithm(&dp_tmp, diff_allignment);
+        run_alignment_algorithm(&dp_tmp, diff_alignment);
         if (dp_tmp.n_charmatch > 0) {
           for (int i = 0, p = 0; i < DB_COUNT; i++) {
             if (curtab->tp_diffbuf[i] != NULL) {
