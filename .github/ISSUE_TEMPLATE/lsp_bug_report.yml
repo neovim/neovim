@@ -1,5 +1,6 @@
 name: Language server (LSP) client bug
 description: Report an issue with Neovim LSP
+title: "LSP: "
 labels: [bug, lsp]
 body:
 
