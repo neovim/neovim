@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question
-    url: https://vi.stackexchange.com/
-    about: Ask questions about configuration and usage of Neovim
+    url: https://github.com/neovim/neovim/discussions
+    about: Ask about configuration and usage of Nvim
