@@ -2127,6 +2127,23 @@ static void run_alignment_algorithm(diff_T *dp, diff_alignment_T diff_alignment)
     }
   }
 
+  // allocate all the memory we will need to keep track of tokens positions and their respective
+  // lengths. For word matching, this is the 'word' as vim defines it, for character matching, the
+  // token is the one or more 8 bit 'chars' that make up a utf character
+  if (diff_alignment == WORDMATCH || diff_alignment == CHARMATCH) {
+    // are we ignoring whitespace in the comparison?
+    if (iwhite) {
+      // allocate array for index mapping of result array
+      iwhite_index_offset = xmalloc(total_chars_length * sizeof(size_t));
+    }
+    for (size_t i = 0; i < ndiffs; i++) {
+      word_offset[i] = xmalloc(total_chars_length * sizeof(size_t));
+      word_offset_size[i] = xmalloc(total_chars_length * sizeof(size_t));
+      for (size_t j = 0; j < total_chars_length; j++) {
+        word_offset_size[i][j] = 0;
+      }
+    }
+  }
   generateAllignmentAlgorithmHelpers(diff_alignment, iwhite, total_chars_length, diff_lines,
                                      ndiffs, result_diff_start_pos, &iwhite_index_offset,
                                      word_offset, word_offset_size,
@@ -2255,23 +2272,6 @@ static void generateAllignmentAlgorithmHelpers(const diff_alignment_T diff_align
                                                **word_offset_size, int *diff_length,
                                                size_t *total_word_count, char **diffbufs)
 {
-  // allocate all the memory we will need to keep track of tokens positions and their respective
-  // lengths. For word matching, this is the 'word' as vim defines it, for character matching, the
-  // token is the one or more 8 bit 'chars' that make up a utf character
-  if (diff_alignment == WORDMATCH || diff_alignment == CHARMATCH) {
-    // are we ignoring whitespace in the comparison?
-    if (iwhite) {
-      // allocate array for index mapping of result array
-      (*iwhite_index_offset) = xmalloc(total_chars_length * sizeof(size_t));
-    }
-    for (size_t i = 0; i < ndiffs; i++) {
-      word_offset[i] = xmalloc(total_chars_length * sizeof(size_t));
-      word_offset_size[i] = xmalloc(total_chars_length * sizeof(size_t));
-      for (size_t j = 0; j < total_chars_length; j++) {
-        word_offset_size[i][j] = 0;
-      }
-    }
-  }
   // calculate the token lengths and white space offset and pre process the contents of the diffs to
   // remove white space if necessary
   for (size_t i = 0; i < ndiffs; i++) {
