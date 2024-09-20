@@ -1106,7 +1106,7 @@ describe('TUI', function()
     screen:expect(expected_grid1)
     -- Dot-repeat/redo.
     feed_data('.')
-    screen:expect([[
+    local expected_grid2 = [[
       ESC:{6:^[} / CR:                                      |
       xline 1                                           |
       ESC:{6:^[} / CR:                                      |
@@ -1114,7 +1114,8 @@ describe('TUI', function()
       {5:[No Name] [+]                   5,1            Bot}|
                                                         |
       {3:-- TERMINAL --}                                    |
-    ]])
+    ]]
+    screen:expect(expected_grid2)
     -- Undo.
     feed_data('u')
     expect_child_buf_lines(expected_crlf)
@@ -1128,6 +1129,14 @@ describe('TUI', function()
     feed_data('\027[200~' .. table.concat(expected_lf, '\r\n') .. '\027[201~')
     screen:expect(expected_grid1)
     expect_child_buf_lines(expected_crlf)
+    -- Dot-repeat/redo.
+    feed_data('.')
+    screen:expect(expected_grid2)
+    -- Undo.
+    feed_data('u')
+    expect_child_buf_lines(expected_crlf)
+    feed_data('u')
+    expect_child_buf_lines({ '' })
   end)
 
   it('paste: cmdline-mode inserts 1 line', function()
