@@ -42,9 +42,9 @@ The RPC API is like a more powerful version of Vim's "clientserver" feature.
 CONNECTING                                              *rpc-connecting*
 
 See |channel-intro| for various ways to open a channel. Channel-opening
-functions take an `rpc` key in the options dictionary. RPC channels can also
-be opened by other processes connecting to TCP/IP sockets or named pipes
-listened to by Nvim.
+functions take an `rpc` key in the options dict. RPC channels can also be
+opened by other processes connecting to TCP/IP sockets or named pipes listened
+to by Nvim.
 
 Nvim creates a default RPC socket at |startup|, given by |v:servername|. To
 start with a TCP/IP socket instead, use |--listen| with a TCP-style address: >
@@ -108,9 +108,9 @@ Basic types ~
   Integer (signed 64-bit integer)       int64_t
   Float (IEEE 754 double precision)     double
   String                                {char* data, size_t size} struct
-  Array
-  Dictionary (msgpack: map)
-  Object
+  Array                                 kvec
+  Dict (msgpack: map)                   kvec
+  Object                                any of the above
 <
   Note:
     - Empty Array is accepted as a valid Dictionary parameter.
@@ -708,12 +708,12 @@ nvim_eval_statusline({str}, {opts})                   *nvim_eval_statusline()*
                   line number instead of statusline.
 
     Return: ~
-        Dictionary containing statusline information, with these keys:
+        Dict containing statusline information, with these keys:
         • str: (string) Characters that will be displayed on the statusline.
         • width: (number) Display width of the statusline.
         • highlights: Array containing highlight information of the
           statusline. Only included when the "highlights" key in {opts} is
-          true. Each element of the array is a |Dictionary| with these keys:
+          true. Each element of the array is a |Dict| with these keys:
           • start: (number) Byte index (0-based) of first character that uses
             the highlight.
           • group: (string) Name of highlight group.
@@ -763,7 +763,7 @@ nvim_feedkeys({keys}, {mode}, {escape_ks})                   *nvim_feedkeys()*
 
 nvim_get_api_info()                                      *nvim_get_api_info()*
     Returns a 2-tuple (Array), where item 0 is the current channel id and item
-    1 is the |api-metadata| map (Dictionary).
+    1 is the |api-metadata| map (Dict).
 
     Attributes: ~
         |api-fast|
@@ -939,7 +939,7 @@ nvim_get_mode()                                              *nvim_get_mode()*
         |api-fast|
 
     Return: ~
-        Dictionary { "mode": String, "blocking": Boolean }
+        Dict { "mode": String, "blocking": Boolean }
 
 nvim_get_proc({pid})                                         *nvim_get_proc()*
     Gets info describing process `pid`.
@@ -1249,8 +1249,7 @@ nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
 
     Parameters: ~
       • {name}        Short name for the connected client
-      • {version}     Dictionary describing the version, with these (optional)
-                      keys:
+      • {version}     Dict describing the version, with these (optional) keys:
                       • "major" major version (defaults to 0 if not set, for
                         no release yet)
                       • "minor" minor version
@@ -1475,7 +1474,7 @@ nvim__complete_set({index}, {opts})                     *nvim__complete_set()*
                  • info: (string) info text.
 
     Return: ~
-        Dictionary containing these keys:
+        Dict containing these keys:
         • winid: (number) floating window id
         • bufnr: (number) buffer id in floating window
 
@@ -1517,14 +1516,14 @@ nvim__id_array({arr})                                       *nvim__id_array()*
     Return: ~
         its argument.
 
-nvim__id_dictionary({dct})                             *nvim__id_dictionary()*
-    Returns dictionary given as argument.
+nvim__id_dict({dct})                                         *nvim__id_dict()*
+    Returns dict given as argument.
 
     This API function is used for testing. One should not rely on its presence
     in plugins.
 
     Parameters: ~
-      • {dct}  Dictionary to return.
+      • {dct}  Dict to return.
 
     Return: ~
         its argument.
@@ -1595,7 +1594,7 @@ nvim_call_dict_function({dict}, {fn}, {args})
     On execution error: fails with Vimscript error, updates v:errmsg.
 
     Parameters: ~
-      • {dict}  Dictionary, or String evaluating to a Vimscript |self| dict
+      • {dict}  Dict, or String evaluating to a Vimscript |self| dict
       • {fn}    Name of the function defined on the Vimscript dict
       • {args}  Function arguments packed in an Array
 
@@ -1629,7 +1628,7 @@ nvim_command({command})                                       *nvim_command()*
       • {command}  Ex command string
 
 nvim_eval({expr})                                                *nvim_eval()*
-    Evaluates a Vimscript |expression|. Dictionaries and Lists are recursively
+    Evaluates a Vimscript |expression|. Dicts and Lists are recursively
     expanded.
 
     On execution error: fails with Vimscript error, updates v:errmsg.
@@ -1656,7 +1655,7 @@ nvim_exec2({src}, {opts})                                       *nvim_exec2()*
                   return all (non-error, non-shell |:!|) output.
 
     Return: ~
-        Dictionary containing information about execution, with these keys:
+        Dict containing information about execution, with these keys:
         • output: (string|nil) Output if `opts.output` is true.
 
     See also: ~
@@ -1693,9 +1692,9 @@ nvim_parse_expression({expr}, {flags}, {highlight})
                      region [start_col, end_col)).
 
     Return: ~
-        • AST: top-level dictionary with these keys:
-          • "error": Dictionary with error, present only if parser saw some
-            error. Contains the following keys:
+        • AST: top-level dict with these keys:
+          • "error": Dict with error, present only if parser saw some error.
+            Contains the following keys:
             • "message": String, error message in printf format, translated.
               Must contain exactly one "%.*s".
             • "arg": String, error message argument.
@@ -1703,7 +1702,7 @@ nvim_parse_expression({expr}, {flags}, {highlight})
             that should be equal to the length of expr string. ("Successfully
             parsed" here means "participated in AST creation", not "till the
             first error".)
-          • "ast": AST, either nil or a dictionary with these keys:
+          • "ast": AST, either nil or a dict with these keys:
             • "type": node type, one of the value names from ExprASTNodeType
               stringified without "kExprNode" prefix.
             • "start": a pair `[line, column]` describing where node is
@@ -1779,8 +1778,8 @@ nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
 nvim_cmd({cmd}, {opts})                                           *nvim_cmd()*
     Executes an Ex command.
 
-    Unlike |nvim_command()| this command takes a structured Dictionary instead
-    of a String. This allows for easier construction and manipulation of an Ex
+    Unlike |nvim_command()| this command takes a structured Dict instead of a
+    String. This allows for easier construction and manipulation of an Ex
     command. This also allows for things such as having spaces inside a
     command argument, expanding filenames in a command that otherwise doesn't
     expand filenames, etc. Command arguments may also be Number, Boolean or
@@ -1794,8 +1793,8 @@ nvim_cmd({cmd}, {opts})                                           *nvim_cmd()*
     On execution error: fails with Vimscript error, updates v:errmsg.
 
     Parameters: ~
-      • {cmd}   Command to execute. Must be a Dictionary that can contain the
-                same values as the return value of |nvim_parse_cmd()| except
+      • {cmd}   Command to execute. Must be a Dict that can contain the same
+                values as the return value of |nvim_parse_cmd()| except
                 "addr", "nargs" and "nextcmd" which are ignored if provided.
                 All values except for "cmd" are optional.
       • {opts}  Optional parameters.
@@ -1897,7 +1896,7 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
       • {opts}  Optional parameters. Reserved for future use.
 
     Return: ~
-        Dictionary containing command information, with these keys:
+        Dict containing command information, with these keys:
         • cmd: (string) Command name.
         • range: (array) (optional) Command range (<line1> <line2>). Omitted
           if command doesn't accept a range. Otherwise, has no elements if no
@@ -1914,15 +1913,15 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
         • nargs: (string) Value of |:command-nargs|.
         • nextcmd: (string) Next command if there are multiple commands
           separated by a |:bar|. Empty if there isn't a next command.
-        • magic: (dictionary) Which characters have special meaning in the
-          command arguments.
+        • magic: (dict) Which characters have special meaning in the command
+          arguments.
           • file: (boolean) The command expands filenames. Which means
             characters such as "%", "#" and wildcards are expanded.
           • bar: (boolean) The "|" character is treated as a command separator
             and the double quote character (") is treated as the start of a
             comment.
-        • mods: (dictionary) |:command-modifiers|.
-          • filter: (dictionary) |:filter|.
+        • mods: (dict) |:command-modifiers|.
+          • filter: (dict) |:filter|.
             • pattern: (string) Filter pattern. Empty string if there is no
               filter.
             • force: (boolean) Whether filter is inverted or not.
@@ -1959,11 +1958,11 @@ Options Functions                                                *api-options*
 nvim_get_all_options_info()                      *nvim_get_all_options_info()*
     Gets the option information for all options.
 
-    The dictionary has the full option names as keys and option metadata
-    dictionaries as detailed at |nvim_get_option_info2()|.
+    The dict has the full option names as keys and option metadata dicts as
+    detailed at |nvim_get_option_info2()|.
 
     Return: ~
-        dictionary of all options
+        dict of all options
 
     See also: ~
       • |nvim_get_commands()|
@@ -1971,7 +1970,7 @@ nvim_get_all_options_info()                      *nvim_get_all_options_info()*
 nvim_get_option_info2({name}, {opts})                *nvim_get_option_info2()*
     Gets the option information for one option from arbitrary buffer or window
 
-    Resulting dictionary has keys:
+    Resulting dict has keys:
     • name: Name of the option (like 'filetype')
     • shortname: Shortened name of the option (like 'ft')
     • type: type of option ("string", "number" or "boolean")
@@ -3081,7 +3080,7 @@ nvim_win_text_height({window}, {opts})                *nvim_win_text_height()*
                     omitted include the whole line.
 
     Return: ~
-        Dictionary containing text height information, with these keys:
+        Dict containing text height information, with these keys:
         • all: The total number of screen lines occupied by the range.
         • fill: The number of diff filler or virtual lines among them.
 
@@ -3405,7 +3404,7 @@ nvim_create_augroup({name}, {opts})                    *nvim_create_augroup()*
 
     Parameters: ~
       • {name}  String: The name of the group
-      • {opts}  Dictionary Parameters
+      • {opts}  Dict Parameters
                 • clear (bool) optional: defaults to true. Clear existing
                   commands if the group already exists |autocmd-groups|.
 
@@ -3524,7 +3523,7 @@ nvim_exec_autocmds({event}, {opts})                     *nvim_exec_autocmds()*
 
     Parameters: ~
       • {event}  (String|Array) The event or events to execute
-      • {opts}   Dictionary of autocommand options:
+      • {opts}   Dict of autocommand options:
                  • group (string|integer) optional: the autocommand group name
                    or id to match against. |autocmd-groups|.
                  • pattern (string|array) optional: defaults to "*"
@@ -3560,7 +3559,7 @@ nvim_get_autocmds({opts})                                *nvim_get_autocmds()*
     autocommands that match any combination of them.
 
     Parameters: ~
-      • {opts}  Dictionary with at least one of the following:
+      • {opts}  Dict with at least one of the following:
                 • group (string|integer): the autocommand group name or id to
                   match against.
                 • event (string|array): event or events to match against

@@ -995,9 +995,9 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   Arena arena = ARENA_EMPTY;
-  Dictionary ctx_dict = ctx_to_dict(ctx, &arena);
+  Dict ctx_dict = ctx_to_dict(ctx, &arena);
   Error err = ERROR_INIT;
-  object_to_vim(DICTIONARY_OBJ(ctx_dict), rettv, &err);
+  object_to_vim(DICT_OBJ(ctx_dict), rettv, &err);
   arena_mem_free(arena_finish(&arena));
   api_clear_error(&err);
 }
@@ -1067,7 +1067,7 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   did_emsg = false;
 
   Arena arena = ARENA_EMPTY;
-  Dictionary dict = vim_to_object(&argvars[0], &arena, true).data.dictionary;
+  Dict dict = vim_to_object(&argvars[0], &arena, true).data.dict;
   Context tmp = CONTEXT_INIT;
   Error err = ERROR_INIT;
   ctx_from_dict(dict, &tmp, &err);

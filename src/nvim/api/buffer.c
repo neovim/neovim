@@ -866,7 +866,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @param[out]  err   Error details, if any
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer handle.
-ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Arena *arena, Error *err)
+ArrayOf(Dict) nvim_buf_get_keymap(Buffer buffer, String mode, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -1221,14 +1221,14 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
 }
 
 /// @nodoc
-Dictionary nvim__buf_stats(Buffer buffer, Arena *arena, Error *err)
+Dict nvim__buf_stats(Buffer buffer, Arena *arena, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
-    return (Dictionary)ARRAY_DICT_INIT;
+    return (Dict)ARRAY_DICT_INIT;
   }
 
-  Dictionary rv = arena_dict(arena, 7);
+  Dict rv = arena_dict(arena, 7);
   // Number of times the cached line was flushed.
   // This should generally not increase while editing the same
   // line in the same mode.

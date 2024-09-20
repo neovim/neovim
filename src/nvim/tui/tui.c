@@ -1199,7 +1199,7 @@ static CursorShape tui_cursor_decode_shape(const char *shape_str)
   return shape;
 }
 
-static cursorentry_T decode_cursor_entry(Dictionary args)
+static cursorentry_T decode_cursor_entry(Dict args)
 {
   cursorentry_T r = shape_table[0];
 
@@ -1231,8 +1231,8 @@ void tui_mode_info_set(TUIData *tui, bool guicursor_enabled, Array args)
 
   // cursor style entries as defined by `shape_table`.
   for (size_t i = 0; i < args.size; i++) {
-    assert(args.items[i].type == kObjectTypeDictionary);
-    cursorentry_T r = decode_cursor_entry(args.items[i].data.dictionary);
+    assert(args.items[i].type == kObjectTypeDict);
+    cursorentry_T r = decode_cursor_entry(args.items[i].data.dict);
     tui->cursor_shapes[i] = r;
   }
 
@@ -1539,7 +1539,7 @@ static void show_verbose_terminfo(TUIData *tui)
   ADD_C(args, BOOLEAN_OBJ(true));  // history
   MAXSIZE_TEMP_DICT(opts, 1);
   PUT_C(opts, "verbose", BOOLEAN_OBJ(true));
-  ADD_C(args, DICTIONARY_OBJ(opts));
+  ADD_C(args, DICT_OBJ(opts));
   rpc_send_event(ui_client_channel_id, "nvim_echo", args);
   xfree(str.data);
 }

@@ -48,12 +48,12 @@
 ///           - output: (boolean, default false) Whether to capture and return
 ///                     all (non-error, non-shell |:!|) output.
 /// @param[out] err Error details (Vim error), if any
-/// @return Dictionary containing information about execution, with these keys:
+/// @return Dict containing information about execution, with these keys:
 ///       - output: (string|nil) Output if `opts.output` is true.
-Dictionary nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
+Dict nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
   FUNC_API_SINCE(11) FUNC_API_RET_ALLOC
 {
-  Dictionary result = ARRAY_DICT_INIT;
+  Dict result = ARRAY_DICT_INIT;
 
   String output = exec_impl(channel_id, src, opts, err);
   if (ERROR_SET(err)) {
@@ -140,8 +140,7 @@ void nvim_command(String command, Error *err)
   try_end(err);
 }
 
-/// Evaluates a Vimscript |expression|.
-/// Dictionaries and Lists are recursively expanded.
+/// Evaluates a Vimscript |expression|. Dicts and Lists are recursively expanded.
 ///
 /// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
@@ -270,7 +269,7 @@ Object nvim_call_function(String fn, Array args, Arena *arena, Error *err)
 ///
 /// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
-/// @param dict Dictionary, or String evaluating to a Vimscript |self| dict
+/// @param dict Dict, or String evaluating to a Vimscript |self| dict
 /// @param fn Name of the function defined on the Vimscript dict
 /// @param args Function arguments packed in an Array
 /// @param[out] err Error details, if any
@@ -297,12 +296,11 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
     // refcount of a dict. Not necessary for a RPC dict.
     mustfree = true;
     break;
-  case kObjectTypeDictionary:
+  case kObjectTypeDict:
     object_to_vim(dict, &rettv, err);
     break;
   default:
-    api_set_error(err, kErrorTypeValidation,
-                  "dict argument type must be String or Dictionary");
+    api_set_error(err, kErrorTypeValidation, "dict argument type must be String or Dict");
     return rv;
   }
   dict_T *self_dict = rettv.vval.v_dict;
@@ -311,7 +309,7 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
     goto end;
   }
 
-  if (fn.data && fn.size > 0 && dict.type != kObjectTypeDictionary) {
+  if (fn.data && fn.size > 0 && dict.type != kObjectTypeDict) {
     dictitem_T *const di = tv_dict_find(self_dict, fn.data, (ptrdiff_t)fn.size);
     if (di == NULL) {
       api_set_error(err, kErrorTypeValidation, "Not found: %s", fn.data);
@@ -377,8 +375,8 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                        one should highlight region [start_col, end_col)).
 ///
 /// @return
-///      - AST: top-level dictionary with these keys:
-///        - "error": Dictionary with error, present only if parser saw some
+///      - AST: top-level dict with these keys:
+///        - "error": Dict with error, present only if parser saw some
 ///                 error. Contains the following keys:
 ///          - "message": String, error message in printf format, translated.
 ///                       Must contain exactly one "%.*s".
@@ -387,7 +385,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                 that should be equal to the length of expr string.
 ///                 ("Successfully parsed" here means "participated in AST
 ///                  creation", not "till the first error".)
-///        - "ast": AST, either nil or a dictionary with these keys:
+///        - "ast": AST, either nil or a dict with these keys:
 ///          - "type": node type, one of the value names from ExprASTNodeType
 ///                    stringified without "kExprNode" prefix.
 ///          - "start": a pair `[line, column]` describing where node is "started"
@@ -427,8 +425,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///        - "svalue": String, value for "SingleQuotedString" and
 ///                    "DoubleQuotedString" nodes.
 /// @param[out] err Error details, if any
-Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *arena,
-                                 Error *err)
+Dict nvim_parse_expression(String expr, String flags, Boolean highlight, Arena *arena, Error *err)
   FUNC_API_SINCE(4) FUNC_API_FAST
 {
   int pflags = 0;
@@ -443,11 +440,11 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, A
     case NUL:
       api_set_error(err, kErrorTypeValidation, "Invalid flag: '\\0' (%u)",
                     (unsigned)flags.data[i]);
-      return (Dictionary)ARRAY_DICT_INIT;
+      return (Dict)ARRAY_DICT_INIT;
     default:
       api_set_error(err, kErrorTypeValidation, "Invalid flag: '%c' (%u)",
                     flags.data[i], (unsigned)flags.data[i]);
-      return (Dictionary)ARRAY_DICT_INIT;
+      return (Dict)ARRAY_DICT_INIT;
     }
   }
   ParserLine parser_lines[] = {
@@ -471,15 +468,15 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, A
                            + (size_t)highlight  // "highlight"
                            + 0);
 
-  Dictionary ret = arena_dict(arena, ret_size);
+  Dict ret = arena_dict(arena, ret_size);
   PUT_C(ret, "len", INTEGER_OBJ((Integer)(pstate.pos.line == 1
                                           ? parser_lines[0].size
                                           : pstate.pos.col)));
   if (east.err.msg != NULL) {
-    Dictionary err_dict = arena_dict(arena, 2);
+    Dict err_dict = arena_dict(arena, 2);
     PUT_C(err_dict, "message", CSTR_TO_ARENA_OBJ(arena, east.err.msg));
     PUT_C(err_dict, "arg", CBUF_TO_ARENA_OBJ(arena, east.err.arg, (size_t)east.err.arg_len));
-    PUT_C(ret, "error", DICTIONARY_OBJ(err_dict));
+    PUT_C(ret, "error", DICT_OBJ(err_dict));
   }
   if (highlight) {
     Array hl = arena_array(arena, kv_size(colors));
@@ -530,10 +527,10 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, A
                                         || node->type == kExprNodeSingleQuotedString)  // "svalue"
                                      + (node->type == kExprNodeAssignment)  // "augmentation"
                                      + 0);
-        Dictionary ret_node = arena_dict(arena, items_size);
-        *cur_item.ret_node_p = DICTIONARY_OBJ(ret_node);
+        Dict ret_node = arena_dict(arena, items_size);
+        *cur_item.ret_node_p = DICT_OBJ(ret_node);
       }
-      Dictionary *ret_node = &cur_item.ret_node_p->data.dictionary;
+      Dict *ret_node = &cur_item.ret_node_p->data.dict;
       if (node->children != NULL) {
         const size_t num_children = 1 + (node->children->next != NULL);
         Array children_array = arena_array(arena, num_children);
@@ -638,8 +635,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, A
         case kExprNodeMod:
           break;
         }
-        assert(cur_item.ret_node_p->data.dictionary.size
-               == cur_item.ret_node_p->data.dictionary.capacity);
+        assert(cur_item.ret_node_p->data.dict.size == cur_item.ret_node_p->data.dict.capacity);
         xfree(*cur_item.node_p);
         *cur_item.node_p = NULL;
       }

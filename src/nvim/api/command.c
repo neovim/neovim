@@ -46,7 +46,7 @@
 /// @param str       Command line string to parse. Cannot contain "\n".
 /// @param opts      Optional parameters. Reserved for future use.
 /// @param[out] err  Error details, if any.
-/// @return Dictionary containing command information, with these keys:
+/// @return Dict containing command information, with these keys:
 ///         - cmd: (string) Command name.
 ///         - range: (array) (optional) Command range ([<line1>] [<line2>]).
 ///                          Omitted if command doesn't accept a range.
@@ -63,13 +63,13 @@
 ///         - nargs: (string) Value of |:command-nargs|.
 ///         - nextcmd: (string) Next command if there are multiple commands separated by a |:bar|.
 ///                             Empty if there isn't a next command.
-///         - magic: (dictionary) Which characters have special meaning in the command arguments.
+///         - magic: (dict) Which characters have special meaning in the command arguments.
 ///             - file: (boolean) The command expands filenames. Which means characters such as "%",
 ///                               "#" and wildcards are expanded.
 ///             - bar: (boolean) The "|" character is treated as a command separator and the double
 ///                              quote character (") is treated as the start of a comment.
-///         - mods: (dictionary) |:command-modifiers|.
-///             - filter: (dictionary) |:filter|.
+///         - mods: (dict) |:command-modifiers|.
+///             - filter: (dict) |:filter|.
 ///                 - pattern: (string) Filter pattern. Empty string if there is no filter.
 ///                 - force: (boolean) Whether filter is inverted or not.
 ///             - silent: (boolean) |:silent|.
@@ -230,12 +230,12 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   PUT_KEY(result, cmd, nextcmd, CSTR_AS_OBJ(ea.nextcmd));
 
   // TODO(bfredl): nested keydict would be nice..
-  Dictionary mods = arena_dict(arena, 20);
+  Dict mods = arena_dict(arena, 20);
 
-  Dictionary filter = arena_dict(arena, 2);
+  Dict filter = arena_dict(arena, 2);
   PUT_C(filter, "pattern", CSTR_TO_ARENA_OBJ(arena, cmdinfo.cmdmod.cmod_filter_pat));
   PUT_C(filter, "force", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_filter_force));
-  PUT_C(mods, "filter", DICTIONARY_OBJ(filter));
+  PUT_C(mods, "filter", DICT_OBJ(filter));
 
   PUT_C(mods, "silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SILENT));
   PUT_C(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT));
@@ -272,7 +272,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
 
   PUT_KEY(result, cmd, mods, mods);
 
-  Dictionary magic = arena_dict(arena, 2);
+  Dict magic = arena_dict(arena, 2);
   PUT_C(magic, "file", BOOLEAN_OBJ(cmdinfo.magic.file));
   PUT_C(magic, "bar", BOOLEAN_OBJ(cmdinfo.magic.bar));
   PUT_KEY(result, cmd, magic, magic);
@@ -284,7 +284,7 @@ end:
 
 /// Executes an Ex command.
 ///
-/// Unlike |nvim_command()| this command takes a structured Dictionary instead of a String. This
+/// Unlike |nvim_command()| this command takes a structured Dict instead of a String. This
 /// allows for easier construction and manipulation of an Ex command. This also allows for things
 /// such as having spaces inside a command argument, expanding filenames in a command that otherwise
 /// doesn't expand filenames, etc. Command arguments may also be Number, Boolean or String.
@@ -298,7 +298,7 @@ end:
 /// @see |nvim_exec2()|
 /// @see |nvim_command()|
 ///
-/// @param cmd       Command to execute. Must be a Dictionary that can contain the same values as
+/// @param cmd       Command to execute. Must be a Dict that can contain the same values as
 ///                  the return value of |nvim_parse_cmd()| except "addr", "nargs" and "nextcmd"
 ///                  which are ignored if provided. All values except for "cmd" are optional.
 /// @param opts      Optional parameters.
@@ -1166,7 +1166,7 @@ err:
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dictionary nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
+Dict nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
   return nvim_buf_get_commands(-1, opts, arena, err);
@@ -1179,25 +1179,25 @@ Dictionary nvim_get_commands(Dict(get_commands) *opts, Arena *arena, Error *err)
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
-Dictionary nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Arena *arena, Error *err)
+Dict nvim_buf_get_commands(Buffer buffer, Dict(get_commands) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
   bool global = (buffer == -1);
   if (ERROR_SET(err)) {
-    return (Dictionary)ARRAY_DICT_INIT;
+    return (Dict)ARRAY_DICT_INIT;
   }
 
   if (global) {
     if (opts->builtin) {
       api_set_error(err, kErrorTypeValidation, "builtin=true not implemented");
-      return (Dictionary)ARRAY_DICT_INIT;
+      return (Dict)ARRAY_DICT_INIT;
     }
     return commands_array(NULL, arena);
   }
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (opts->builtin || !buf) {
-    return (Dictionary)ARRAY_DICT_INIT;
+    return (Dict)ARRAY_DICT_INIT;
   }
   return commands_array(buf, arena);
 }

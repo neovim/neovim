@@ -2052,7 +2052,7 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     }
 
     MAXSIZE_TEMP_ARRAY(args, 1);
-    ADD_C(args, DICTIONARY_OBJ(data));
+    ADD_C(args, DICT_OBJ(data));
 
     Object result = nlua_call_ref(callback.data.luaref, NULL, args, kRetNilBool, NULL, NULL);
     return LUARET_TRUTHY(result);

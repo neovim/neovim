@@ -230,9 +230,9 @@ int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
 ///
 /// @param pid Process to inspect.
 /// @return Map of process properties, empty on error.
-Dictionary os_proc_info(int pid, Arena *arena)
+Dict os_proc_info(int pid, Arena *arena)
 {
-  Dictionary pinfo = ARRAY_DICT_INIT;
+  Dict pinfo = ARRAY_DICT_INIT;
   PROCESSENTRY32 pe;
 
   // Snapshot of all processes.  This is used instead of:

@@ -94,8 +94,7 @@ static Object typval_cbuf_to_obj(EncodedData *edata, const char *data, size_t le
   kvi_push(edata->stack, ARRAY_OBJ(((Array) { .capacity = 0, .size = 0 })))
 
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
-  kvi_push(edata->stack, \
-           DICTIONARY_OBJ(((Dictionary) { .capacity = 0, .size = 0 })))
+  kvi_push(edata->stack, DICT_OBJ(((Dict) { .capacity = 0, .size = 0 })))
 
 static inline void typval_encode_list_start(EncodedData *const edata, const size_t len)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
@@ -137,7 +136,7 @@ static inline void typval_encode_list_end(EncodedData *const edata)
 static inline void typval_encode_dict_start(EncodedData *const edata, const size_t len)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
-  kvi_push(edata->stack, DICTIONARY_OBJ(arena_dict(edata->arena, len)));
+  kvi_push(edata->stack, DICT_OBJ(arena_dict(edata->arena, len)));
 }
 
 #define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
@@ -152,13 +151,13 @@ static inline void typval_encode_after_key(EncodedData *const edata)
 {
   Object key = kv_pop(edata->stack);
   Object *const dict = &kv_last(edata->stack);
-  assert(dict->type == kObjectTypeDictionary);
-  assert(dict->data.dictionary.size < dict->data.dictionary.capacity);
+  assert(dict->type == kObjectTypeDict);
+  assert(dict->data.dict.size < dict->data.dict.capacity);
   if (key.type == kObjectTypeString) {
-    dict->data.dictionary.items[dict->data.dictionary.size].key
+    dict->data.dict.items[dict->data.dict.size].key
       = key.data.string;
   } else {
-    dict->data.dictionary.items[dict->data.dictionary.size].key
+    dict->data.dict.items[dict->data.dict.size].key
       = STATIC_CSTR_AS_STRING("__INVALID_KEY__");
   }
 }
@@ -171,9 +170,9 @@ static inline void typval_encode_between_dict_items(EncodedData *const edata)
 {
   Object val = kv_pop(edata->stack);
   Object *const dict = &kv_last(edata->stack);
-  assert(dict->type == kObjectTypeDictionary);
-  assert(dict->data.dictionary.size < dict->data.dictionary.capacity);
-  dict->data.dictionary.items[dict->data.dictionary.size++].value = val;
+  assert(dict->type == kObjectTypeDict);
+  assert(dict->data.dict.size < dict->data.dict.capacity);
+  dict->data.dict.items[dict->data.dict.size++].value = val;
 }
 
 #define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
@@ -185,7 +184,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
   typval_encode_between_dict_items(edata);
 #ifndef NDEBUG
   const Object *const dict = &kv_last(edata->stack);
-  assert(dict->data.dictionary.size == dict->data.dictionary.capacity);
+  assert(dict->data.dict.size == dict->data.dict.capacity);
 #endif
 }
 
@@ -325,11 +324,11 @@ void object_to_vim_take_luaref(Object *obj, typval_T *tv, bool take_luaref, Erro
     break;
   }
 
-  case kObjectTypeDictionary: {
+  case kObjectTypeDict: {
     dict_T *const dict = tv_dict_alloc();
 
-    for (uint32_t i = 0; i < obj->data.dictionary.size; i++) {
-      KeyValuePair *item = &obj->data.dictionary.items[i];
+    for (uint32_t i = 0; i < obj->data.dict.size; i++) {
+      KeyValuePair *item = &obj->data.dict.items[i];
       String key = item->key;
       dictitem_T *const di = tv_dict_item_alloc(key.data);
       object_to_vim_take_luaref(&item->value, &di->di_tv, take_luaref, err);

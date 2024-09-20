@@ -61,7 +61,7 @@ typedef struct {
   bool ll_empty2;     ///< Second index is empty: [i:].
   int ll_n1;          ///< First index for list.
   int ll_n2;          ///< Second index for list range.
-  dict_T *ll_dict;    ///< The Dictionary or NULL.
+  dict_T *ll_dict;    ///< The Dict or NULL.
   dictitem_T *ll_di;  ///< The dictitem or NULL.
   char *ll_newkey;    ///< New key for Dict in allocated memory or NULL.
   blob_T *ll_blob;    ///< The Blob or NULL.
@@ -172,7 +172,7 @@ typedef enum {
   VV_MSGPACK_TYPES,
   VV__NULL_STRING,  // String with NULL value. For test purposes only.
   VV__NULL_LIST,  // List with NULL value. For test purposes only.
-  VV__NULL_DICT,  // Dictionary with NULL value. For test purposes only.
+  VV__NULL_DICT,  // Dict with NULL value. For test purposes only.
   VV__NULL_BLOB,  // Blob with NULL value. For test purposes only.
   VV_LUA,
   VV_RELNUM,

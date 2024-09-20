@@ -2061,20 +2061,20 @@ void f_hasmapto(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = map_to_exists(name, mode, abbr);
 }
 
-/// Fill a Dictionary with all applicable maparg() like dictionaries
+/// Fill a Dict with all applicable maparg() like dictionaries
 ///
 /// @param mp            The maphash that contains the mapping information
 /// @param buffer_value  The "buffer" value
 /// @param abbr          True if abbreviation
 /// @param compatible    True for compatible with old maparg() dict
 ///
-/// @return  A Dictionary.
-static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt,
-                                     const int buffer_value, const bool abbr, const bool compatible,
-                                     Arena *arena)
+/// @return  Dict.
+static Dict mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt,
+                               const int buffer_value, const bool abbr, const bool compatible,
+                               Arena *arena)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  Dictionary dict = arena_dict(arena, 19);
+  Dict dict = arena_dict(arena, 19);
   char *const lhs = str2special_arena(mp->m_keys, compatible, !compatible, arena);
   char *mapmode = arena_alloc(arena, 7, false);
   map_mode_to_chars(mp->m_mode, mapmode);
@@ -2193,9 +2193,9 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     // Return a dictionary.
     if (mp != NULL && (rhs != NULL || rhs_lua != LUA_NOREF)) {
       Arena arena = ARENA_EMPTY;
-      Dictionary dict = mapblock_fill_dict(mp, did_simplify ? keys_simplified : NULL,
-                                           buffer_local, abbr, true, &arena);
-      object_to_vim_take_luaref(&DICTIONARY_OBJ(dict), rettv, true, NULL);
+      Dict dict = mapblock_fill_dict(mp, did_simplify ? keys_simplified : NULL,
+                                     buffer_local, abbr, true, &arena);
+      object_to_vim_take_luaref(&DICT_OBJ(dict), rettv, true, NULL);
       arena_mem_free(arena_finish(&arena));
     } else {
       // Return an empty dictionary.
@@ -2406,10 +2406,10 @@ void f_maplist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         replace_termcodes(lhs, strlen(lhs), &keys_buf, 0, flags, &did_simplify,
                           p_cpo);
 
-        Dictionary dict = mapblock_fill_dict(mp, did_simplify ? keys_buf : NULL,
-                                             buffer_local, abbr, true, &arena);
+        Dict dict = mapblock_fill_dict(mp, did_simplify ? keys_buf : NULL, buffer_local, abbr, true,
+                                       &arena);
         typval_T d = TV_INITIAL_VALUE;
-        object_to_vim_take_luaref(&DICTIONARY_OBJ(dict), &d, true, NULL);
+        object_to_vim_take_luaref(&DICT_OBJ(dict), &d, true, NULL);
         assert(d.v_type == VAR_DICT);
         tv_list_append_dict(rettv->vval.v_list, d.vval.v_dict);
         arena_mem_free(arena_finish(&arena));
@@ -2814,7 +2814,7 @@ fail_and_free:
 /// @param  mode  The abbreviation for the mode
 /// @param  buf  The buffer to get the mapping array. NULL for global
 /// @returns Array of maparg()-like dictionaries describing mappings
-ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, Arena *arena)
+ArrayOf(Dict) keymap_array(String mode, buf_T *buf, Arena *arena)
 {
   ArrayBuilder mappings = KV_INITIAL_VALUE;
   kvi_init(mappings);
@@ -2843,8 +2843,8 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, Arena *arena)
       }
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
-        kvi_push(mappings, DICTIONARY_OBJ(mapblock_fill_dict(current_maphash, NULL, buffer_value,
-                                                             is_abbrev, false, arena)));
+        kvi_push(mappings, DICT_OBJ(mapblock_fill_dict(current_maphash, NULL, buffer_value,
+                                                       is_abbrev, false, arena)));
       }
     }
   }

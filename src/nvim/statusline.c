@@ -648,14 +648,14 @@ static void ui_ext_tabline_update(void)
 
   Array tabs = arena_array(&arena, n_tabs);
   FOR_ALL_TABS(tp) {
-    Dictionary tab_info = arena_dict(&arena, 2);
+    Dict tab_info = arena_dict(&arena, 2);
     PUT_C(tab_info, "tab", TABPAGE_OBJ(tp->handle));
 
     win_T *cwp = (tp == curtab) ? curwin : tp->tp_curwin;
     get_trans_bufname(cwp->w_buffer);
     PUT_C(tab_info, "name", CSTR_TO_ARENA_OBJ(&arena, NameBuff));
 
-    ADD_C(tabs, DICTIONARY_OBJ(tab_info));
+    ADD_C(tabs, DICT_OBJ(tab_info));
   }
 
   size_t n_buffers = 0;
@@ -670,13 +670,13 @@ static void ui_ext_tabline_update(void)
       continue;
     }
 
-    Dictionary buffer_info = arena_dict(&arena, 2);
+    Dict buffer_info = arena_dict(&arena, 2);
     PUT_C(buffer_info, "buffer", BUFFER_OBJ(buf->handle));
 
     get_trans_bufname(buf);
     PUT_C(buffer_info, "name", CSTR_TO_ARENA_OBJ(&arena, NameBuff));
 
-    ADD_C(buffers, DICTIONARY_OBJ(buffer_info));
+    ADD_C(buffers, DICT_OBJ(buffer_info));
   }
 
   ui_call_tabline_update(curtab->handle, tabs, curbuf->handle, buffers);

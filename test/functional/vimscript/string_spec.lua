@@ -170,9 +170,9 @@ describe('string() function', function()
       )
     end)
 
-    it('does not show errors when dumping partials referencing the same dictionary', function()
+    it('does not show errors when dumping partials referencing the same dict', function()
       command('let d = {}')
-      -- Regression for “eval/typval_encode: Dump empty dictionary before
+      -- Regression for “eval/typval_encode: Dump empty dict before
       -- checking for refcycle”, results in error.
       eq(
         "[function('tr', {}), function('tr', {})]",
@@ -256,7 +256,7 @@ describe('string() function', function()
   end)
 
   describe('used to represent dictionaries', function()
-    it('dumps empty dictionary', function()
+    it('dumps empty dict', function()
       eq('{}', eval('string({})'))
     end)
 
@@ -267,7 +267,7 @@ describe('string() function', function()
       eq("[{}, function('tr', {})]", eval('string([d, function("tr", d)])'))
     end)
 
-    it('dumps non-empty dictionary', function()
+    it('dumps non-empty dict', function()
       eq("{'t''est': 1}", fn.string({ ["t'est"] = 1 }))
     end)
 

@@ -186,7 +186,7 @@ describe('luaeval()', function()
   end)
 
   it('issues an error in some cases', function()
-    eq("Vim(call):E5100: Cannot convert given lua table: table should contain either only integer keys or only string keys",
+    eq("Vim(call):E5100: Cannot convert given Lua table: table should contain either only integer keys or only string keys",
        exc_exec('call luaeval("{1, foo=2}")'))
 
     startswith("Vim(call):E5107: Error loading lua [string \"luaeval()\"]:",

@@ -35,10 +35,10 @@ local function init_obj2lua_tab()
       end
       return ret
     end,
-    [tonumber(api.kObjectTypeDictionary)] = function(obj)
+    [tonumber(api.kObjectTypeDict)] = function(obj)
       local ret = {}
-      for i = 1, tonumber(obj.data.dictionary.size) do
-        local kv_pair = obj.data.dictionary.items[i - 1]
+      for i = 1, tonumber(obj.data.dict.size) do
+        local kv_pair = obj.data.dict.items[i - 1]
         ret[ffi.string(kv_pair.key.data, kv_pair.key.size)] = obj2lua(kv_pair.value)
       end
       return ret
@@ -112,8 +112,8 @@ local lua2obj_type_tab = {
       end
     end
     local len = #kvs
-    local dct = obj(api.kObjectTypeDictionary, {
-      dictionary = {
+    local dct = obj(api.kObjectTypeDict, {
+      dict = {
         size = len,
         capacity = len,
         items = ffi.cast('KeyValuePair *', api.xmalloc(len * ffi.sizeof('KeyValuePair'))),
@@ -121,7 +121,7 @@ local lua2obj_type_tab = {
     })
     for i = 1, len do
       local key, val = unpack(kvs[i])
-      dct.data.dictionary.items[i - 1] = ffi.new(
+      dct.data.dict.items[i - 1] = ffi.new(
         'KeyValuePair',
         { key = ffi.gc(lua2obj(key), nil).data.string, value = ffi.gc(lua2obj(val), nil) }
       )

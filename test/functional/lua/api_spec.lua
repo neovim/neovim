@@ -224,42 +224,39 @@ describe('luaeval(vim.api.…)', function()
   end)
 
   it('correctly converts dictionaries with type_idx to API objects', function()
-    eq(
-      4,
-      eval([[type(luaeval('vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.dictionary})'))]])
-    )
+    eq(4, eval([[type(luaeval('vim.api.nvim__id_dict({[vim.type_idx]=vim.types.dictionary})'))]]))
 
-    eq({}, fn.luaeval('vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.dictionary})'))
+    eq({}, fn.luaeval('vim.api.nvim__id_dict({[vim.type_idx]=vim.types.dictionary})'))
 
     eq(
       { v = { 42 } },
       fn.luaeval(
-        'vim.api.nvim__id_dictionary({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'
+        'vim.api.nvim__id_dict({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'
       )
     )
     eq(
       { foo = 2 },
       fn.luaeval(
-        'vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'
+        'vim.api.nvim__id_dict({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'
       )
     )
     eq(
       { v = 10 },
       fn.luaeval(
-        'vim.api.nvim__id_dictionary({v={[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'
+        'vim.api.nvim__id_dict({v={[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'
       )
     )
     eq(
       { v = {} },
       fn.luaeval(
-        'vim.api.nvim__id_dictionary({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2}})'
+        'vim.api.nvim__id_dict({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2}})'
       )
     )
 
-    -- If API requests dictionary, then empty table will be the one. This is not
+    -- If API requests dict, then empty table will be the one. This is not
     -- the case normally because empty table is an empty array.
-    eq({}, fn.luaeval('vim.api.nvim__id_dictionary({})'))
-    eq(4, eval([[type(luaeval('vim.api.nvim__id_dictionary({})'))]]))
+    eq({}, fn.luaeval('vim.api.nvim__id_dict({})'))
+    eq(4, eval([[type(luaeval('vim.api.nvim__id_dict({})'))]]))
   end)
 
   it('converts booleans in positional args', function()
@@ -365,12 +362,12 @@ describe('luaeval(vim.api.…)', function()
 
     eq(
       [[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'dct': Expected Lua table]],
-      remove_trace(exc_exec([[call luaeval("vim.api.nvim__id_dictionary(1)")]]))
+      remove_trace(exc_exec([[call luaeval("vim.api.nvim__id_dict(1)")]]))
     )
     eq(
       [[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'dct': Expected Dict-like Lua table]],
       remove_trace(
-        exc_exec([[call luaeval("vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.array})")]])
+        exc_exec([[call luaeval("vim.api.nvim__id_dict({[vim.type_idx]=vim.types.array})")]])
       )
     )
 

@@ -693,7 +693,7 @@ describe('API', function()
         pcall_err(request, 'nvim_call_dict_function', "{ 'f': '' }", 'f', { 1, 2 })
       )
       eq(
-        'dict argument type must be String or Dictionary',
+        'dict argument type must be String or Dict',
         pcall_err(request, 'nvim_call_dict_function', 42, 'f', { 1, 2 })
       )
       eq(
@@ -1573,7 +1573,7 @@ describe('API', function()
 
     it('nvim_get_vvar, nvim_set_vvar', function()
       eq('Key is read-only: count', pcall_err(request, 'nvim_set_vvar', 'count', 42))
-      eq('Dictionary is locked', pcall_err(request, 'nvim_set_vvar', 'nosuchvar', 42))
+      eq('Dict is locked', pcall_err(request, 'nvim_set_vvar', 'nosuchvar', 42))
       api.nvim_set_vvar('errmsg', 'set by API')
       eq('set by API', api.nvim_get_vvar('errmsg'))
       api.nvim_set_vvar('completed_item', { word = 'a', user_data = vim.empty_dict() })
@@ -2212,7 +2212,7 @@ describe('API', function()
   end)
 
   describe('nvim_load_context', function()
-    it('sets current editor state to given context dictionary', function()
+    it('sets current editor state to given context dict', function()
       local opts = { types = { 'regs', 'jumps', 'bufs', 'gvars' } }
       eq({}, parse_context(api.nvim_get_context(opts)))
 
@@ -2228,7 +2228,7 @@ describe('API', function()
       eq({ 1, 2, 3 }, eval('[g:one, g:Two, g:THREE]'))
     end)
 
-    it('errors when context dictionary is invalid', function()
+    it('errors when context dict is invalid', function()
       eq(
         'E474: Failed to convert list to msgpack string buffer',
         pcall_err(api.nvim_load_context, { regs = { {} }, jumps = { {} } })

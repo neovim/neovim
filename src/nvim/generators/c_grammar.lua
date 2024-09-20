@@ -35,11 +35,7 @@ local cdoc_comment = P('///') * opt(Ct(Cg(rep(space) * rep(not_nl), 'comment')))
 local c_preproc = P('#') * rep(not_nl)
 local dllexport = P('DLLEXPORT') * rep1(ws)
 
-local typed_container = (
-  (P('ArrayOf(') + P('DictionaryOf(') + P('Dict('))
-  * rep1(any - P(')'))
-  * P(')')
-)
+local typed_container = ((P('ArrayOf(') + P('DictOf(') + P('Dict(')) * rep1(any - P(')')) * P(')'))
 
 local c_id = (typed_container + (letter * rep(alpha)))
 local c_void = P('void')

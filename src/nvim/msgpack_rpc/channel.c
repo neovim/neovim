@@ -80,7 +80,7 @@ void rpc_start(Channel *channel)
   rpc->unpacker = xcalloc(1, sizeof *rpc->unpacker);
   unpacker_init(rpc->unpacker);
   rpc->next_request_id = 1;
-  rpc->info = (Dictionary)ARRAY_DICT_INIT;
+  rpc->info = (Dict)ARRAY_DICT_INIT;
   kv_init(rpc->call_stack);
 
   if (channel->streamtype != kChannelStreamInternal) {
@@ -500,7 +500,7 @@ void rpc_free(Channel *channel)
   xfree(channel->rpc.unpacker);
 
   kv_destroy(channel->rpc.call_stack);
-  api_free_dictionary(channel->rpc.info);
+  api_free_dict(channel->rpc.info);
 }
 
 static void chan_close_with_error(Channel *channel, char *msg, int loglevel)
@@ -610,14 +610,14 @@ static void channel_flush_callback(PackerBuffer *packer)
   packer_buffer_init_channels(packer->anydata, (size_t)packer->anyint, packer);
 }
 
-void rpc_set_client_info(uint64_t id, Dictionary info)
+void rpc_set_client_info(uint64_t id, Dict info)
 {
   Channel *chan = find_rpc_channel(id);
   if (!chan) {
     abort();
   }
 
-  api_free_dictionary(chan->rpc.info);
+  api_free_dict(chan->rpc.info);
   chan->rpc.info = info;
 
   // Parse "type" on "info" and set "client_type"
@@ -641,9 +641,9 @@ void rpc_set_client_info(uint64_t id, Dictionary info)
   channel_info_changed(chan, false);
 }
 
-Dictionary rpc_client_info(Channel *chan)
+Dict rpc_client_info(Channel *chan)
 {
-  return copy_dictionary(chan->rpc.info, NULL);
+  return copy_dict(chan->rpc.info, NULL);
 }
 
 const char *get_client_info(Channel *chan, const char *key)
@@ -652,7 +652,7 @@ const char *get_client_info(Channel *chan, const char *key)
   if (!chan->is_rpc) {
     return NULL;
   }
-  Dictionary info = chan->rpc.info;
+  Dict info = chan->rpc.info;
   for (size_t i = 0; i < info.size; i++) {
     if (strequal(key, info.items[i].key.data)
         && info.items[i].value.type == kObjectTypeString) {
