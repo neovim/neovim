@@ -601,6 +601,7 @@ func s:GetFilenameChecks() abort
     \ 'radiance': ['file.rad', 'file.mat'],
     \ 'raku': ['file.pm6', 'file.p6', 'file.t6', 'file.pod6', 'file.raku', 'file.rakumod', 'file.rakudoc', 'file.rakutest'],
     \ 'raml': ['file.raml'],
+    \ 'rapid': ['file.sysx', 'file.Sysx', 'file.SysX', 'file.SYSx', 'file.SYSX', 'file.modx', 'file.Modx', 'file.ModX', 'file.MODx', 'file.MODX'],
     \ 'rasi': ['file.rasi'],
     \ 'ratpoison': ['.ratpoisonrc', 'ratpoisonrc'],
     \ 'rbs': ['file.rbs'],
