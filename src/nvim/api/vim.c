@@ -573,10 +573,10 @@ typedef struct {
   Arena *arena;
 } RuntimeCookie;
 
-/// Find files in runtime directories
+/// Finds files in runtime directories, in 'runtimepath' order.
 ///
 /// "name" can contain wildcards. For example
-/// nvim_get_runtime_file("colors/*.vim", true) will return all color
+/// `nvim_get_runtime_file("colors/*.{vim,lua}", true)` will return all color
 /// scheme files. Always use forward slashes (/) in the search pattern for
 /// subdirectories regardless of platform.
 ///
