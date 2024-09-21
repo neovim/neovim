@@ -57,7 +57,6 @@ describe(':terminal window', function()
 
   describe("with 'number'", function()
     it('wraps text', function()
-      skip(is_os('win')) -- todo(clason): unskip when reenabling reflow
       feed([[<C-\><C-N>]])
       feed([[:set numberwidth=1 number<CR>i]])
       screen:expect([[
@@ -107,7 +106,6 @@ describe(':terminal window', function()
 
   describe("with 'statuscolumn'", function()
     it('wraps text', function()
-      skip(is_os('win')) -- todo(clason): unskip when reenabling reflow
       command([[set number statuscolumn=++%l\ \ ]])
       screen:expect([[
         {7:++1  }tty ready                                    |
