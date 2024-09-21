@@ -1,3 +1,10 @@
+-- Example (manual) invocation:
+--
+--    make
+--    cp build/nvim_version.lua src/nvim/
+--    cd src/nvim
+--    nvim -l generators/gen_api_dispatch.lua "../../build/src/nvim/auto/api/private/dispatch_wrappers.generated.h" "../../build/src/nvim/auto/api/private/api_metadata.generated.h" "../../build/funcs_metadata.mpack" "../../build/src/nvim/auto/lua_api_c_bindings.generated.h" "../../build/src/nvim/auto/keysets_defs.generated.h" "../../build/ui_metadata.mpack" "../../build/cmake.config/auto/versiondef_git.h" "./api/autocmd.h" "./api/buffer.h" "./api/command.h" "./api/deprecated.h" "./api/extmark.h" "./api/keysets_defs.h" "./api/options.h" "./api/tabpage.h" "./api/ui.h" "./api/vim.h" "./api/vimscript.h" "./api/win_config.h" "./api/window.h" "../../build/include/api/autocmd.h.generated.h" "../../build/include/api/buffer.h.generated.h" "../../build/include/api/command.h.generated.h" "../../build/include/api/deprecated.h.generated.h" "../../build/include/api/extmark.h.generated.h" "../../build/include/api/options.h.generated.h" "../../build/include/api/tabpage.h.generated.h" "../../build/include/api/ui.h.generated.h" "../../build/include/api/vim.h.generated.h" "../../build/include/api/vimscript.h.generated.h" "../../build/include/api/win_config.h.generated.h" "../../build/include/api/window.h.generated.h"
+
 local mpack = vim.mpack
 
 local hashy = require 'generators.hashy'
@@ -8,7 +15,7 @@ assert(#arg >= pre_args)
 local dispatch_outputf = arg[1]
 -- output h file with packed metadata (api_metadata.generated.h)
 local api_metadata_outputf = arg[2]
--- output metadata mpack file, for use by other build scripts (api_metadata.mpack)
+-- output metadata mpack file, for use by other build scripts (funcs_metadata.mpack)
 local mpack_outputf = arg[3]
 local lua_c_bindings_outputf = arg[4] -- lua_api_c_bindings.generated.c
 local keysets_outputf = arg[5] -- keysets_defs.generated.h
@@ -235,7 +242,7 @@ for x in string.gmatch(ui_options_text, '"([a-z][a-z_]+)"') do
   table.insert(ui_options, x)
 end
 
-local version = require 'nvim_version'
+local version = require 'nvim_version' -- `build/nvim_version.lua` file.
 local git_version = io.open(git_version_inputf):read '*a'
 local version_build = string.match(git_version, '#define NVIM_VERSION_BUILD "([^"]+)"') or vim.NIL
 
@@ -266,10 +273,7 @@ fixdict(1 + #version)
 for _, item in ipairs(version) do
   -- NB: all items are mandatory. But any error will be less confusing
   -- with placeholder vim.NIL (than invalid mpack data)
-  local val = item[2]
-  if val == nil then
-    val = vim.NIL
-  end
+  local val = item[2] == nil and vim.NIL or item[2]
   put(item[1], val)
 end
 put('build', version_build)

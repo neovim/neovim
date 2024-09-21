@@ -257,6 +257,11 @@ if arg[1] == '--test' then
     'char *xstpcpy(char *restrict dst, const char *restrict src) {}',
     'bool try_leave(const TryState *const tstate, Error *const err) {}',
     'void api_set_error(ErrorType errType) {}',
+    {
+      'void nvim_subscribe(uint64_t channel_id, String event)',
+      'FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13) FUNC_API_REMOTE_ONLY',
+      '{}',
+    },
 
     -- Do not consume leading preproc statements
     {
