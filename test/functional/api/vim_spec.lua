@@ -1301,8 +1301,62 @@ describe('API', function()
     end)
     it('crlf=false does not break lines at CR, CRLF', function()
       api.nvim_paste('line 1\r\n\r\rline 2\nline 3\rline 4\r', false, -1)
-      expect('line 1\r\n\r\rline 2\nline 3\rline 4\r')
+      local expected = 'line 1\r\n\r\rline 2\nline 3\rline 4\r'
+      expect(expected)
       eq({ 0, 3, 14, 0 }, fn.getpos('.'))
+      feed('u') -- Undo.
+      expect('')
+      feed('.') -- Dot-repeat.
+      expect(expected)
+    end)
+    describe('repeating a paste via redo/recording', function()
+      -- Test with indent and control chars and multibyte chars containing 0x80 bytes
+      local text = dedent(([[
+      foo
+        bar
+          baz
+      !!!%s!!!%s!!!%s!!!
+      最…倒…倀…
+      ]]):format('\0', '\2\3\6\21\22\23\24\27', '\127'))
+      before_each(function()
+        api.nvim_set_option_value('autoindent', true, {})
+      end)
+      local function test_paste_repeat_normal_insert(is_insert)
+        feed('qr' .. (is_insert and 'i' or ''))
+        eq('r', fn.reg_recording())
+        api.nvim_paste(text, true, -1)
+        feed(is_insert and '<Esc>' or '')
+        expect(text)
+        feed('.')
+        expect(text:rep(2))
+        feed('q')
+        eq('', fn.reg_recording())
+        feed('3.')
+        expect(text:rep(5))
+        feed('2@r')
+        expect(text:rep(9))
+      end
+      it('works in Normal mode', function()
+        test_paste_repeat_normal_insert(false)
+      end)
+      it('works in Insert mode', function()
+        test_paste_repeat_normal_insert(true)
+      end)
+      local function test_paste_repeat_visual_select(is_select)
+        insert(('xxx\n'):rep(5))
+        feed('ggqr' .. (is_select and 'gH' or 'V'))
+        api.nvim_paste(text, true, -1)
+        feed('q')
+        expect(text .. ('xxx\n'):rep(4))
+        feed('2@r')
+        expect(text:rep(3) .. ('xxx\n'):rep(2))
+      end
+      it('works in Visual mode (recording only)', function()
+        test_paste_repeat_visual_select(false)
+      end)
+      it('works in Select mode (recording only)', function()
+        test_paste_repeat_visual_select(true)
+      end)
     end)
     it('vim.paste() failure', function()
       api.nvim_exec_lua('vim.paste = (function(lines, phase) error("fake fail") end)', {})

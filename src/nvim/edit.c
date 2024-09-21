@@ -907,6 +907,10 @@ static int insert_handle_key(InsertState *s)
   case K_IGNORE:      // Something mapped to nothing
     break;
 
+  case K_PASTE_START:
+    paste_repeat(1);
+    goto check_pum;
+
   case K_EVENT:       // some event
     state_handle_k_event();
     // If CTRL-G U was used apply it to the next typed key.

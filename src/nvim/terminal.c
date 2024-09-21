@@ -748,6 +748,10 @@ static int terminal_execute(VimState *state, int key)
     }
     break;
 
+  case K_PASTE_START:
+    paste_repeat(1);
+    break;
+
   case K_EVENT:
     // We cannot let an event free the terminal yet. It is still needed.
     s->term->refcount++;

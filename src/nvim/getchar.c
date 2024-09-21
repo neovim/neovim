@@ -13,6 +13,7 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
@@ -308,6 +309,24 @@ static void add_num_buff(buffheader_T *buf, int n)
   add_buff(buf, number, -1);
 }
 
+/// Add byte or special key 'c' to buffer "buf".
+/// Translates special keys, NUL and K_SPECIAL.
+static void add_byte_buff(buffheader_T *buf, int c)
+{
+  char temp[4];
+  if (IS_SPECIAL(c) || c == K_SPECIAL || c == NUL) {
+    // Translate special key code into three byte sequence.
+    temp[0] = (char)K_SPECIAL;
+    temp[1] = (char)K_SECOND(c);
+    temp[2] = (char)K_THIRD(c);
+    temp[3] = NUL;
+  } else {
+    temp[0] = (char)c;
+    temp[1] = NUL;
+  }
+  add_buff(buf, temp, -1);
+}
+
 /// Add character 'c' to buffer "buf".
 /// Translates special keys, NUL, K_SPECIAL and multibyte characters.
 static void add_char_buff(buffheader_T *buf, int c)
@@ -325,19 +344,7 @@ static void add_char_buff(buffheader_T *buf, int c)
     if (!IS_SPECIAL(c)) {
       c = bytes[i];
     }
-
-    char temp[4];
-    if (IS_SPECIAL(c) || c == K_SPECIAL || c == NUL) {
-      // Translate special key code into three byte sequence.
-      temp[0] = (char)K_SPECIAL;
-      temp[1] = (char)K_SECOND(c);
-      temp[2] = (char)K_THIRD(c);
-      temp[3] = NUL;
-    } else {
-      temp[0] = (char)c;
-      temp[1] = NUL;
-    }
-    add_buff(buf, temp, -1);
+    add_byte_buff(buf, c);
   }
 }
 
@@ -3181,4 +3188,127 @@ bool map_execute_lua(bool may_repeat)
 
   ga_clear(&line_ga);
   return true;
+}
+
+static bool paste_repeat_active = false;  ///< true when paste_repeat() is pasting
+
+/// Wraps pasted text stream with K_PASTE_START and K_PASTE_END, and
+/// appends to redo buffer and/or record buffer if needed.
+/// Escapes all K_SPECIAL and NUL bytes in the content.
+///
+/// @param state  kFalse for the start of a paste
+///               kTrue for the end of a paste
+///               kNone for the content of a paste
+/// @param str    the content of the paste (only used when state is kNone)
+void paste_store(const TriState state, const String str, const bool crlf)
+{
+  if (State & MODE_CMDLINE) {
+    return;
+  }
+
+  const bool need_redo = !block_redo;
+  const bool need_record = reg_recording != 0 && !paste_repeat_active;
+
+  if (!need_redo && !need_record) {
+    return;
+  }
+
+  if (state != kNone) {
+    const int c = state == kFalse ? K_PASTE_START : K_PASTE_END;
+    if (need_redo) {
+      if (state == kFalse && !(State & MODE_INSERT)) {
+        ResetRedobuff();
+      }
+      add_char_buff(&redobuff, c);
+    }
+    if (need_record) {
+      add_char_buff(&recordbuff, c);
+    }
+    return;
+  }
+
+  const char *s = str.data;
+  const char *const str_end = str.data + str.size;
+
+  while (s < str_end) {
+    const char *start = s;
+    while (s < str_end && (uint8_t)(*s) != K_SPECIAL && *s != NUL
+           && *s != NL && !(crlf && *s == CAR)) {
+      s++;
+    }
+
+    if (s > start) {
+      if (need_redo) {
+        add_buff(&redobuff, start, s - start);
+      }
+      if (need_record) {
+        add_buff(&recordbuff, start, s - start);
+      }
+    }
+
+    if (s < str_end) {
+      int c = (uint8_t)(*s++);
+      if (crlf && c == CAR) {
+        if (s < str_end && *s == NL) {
+          s++;
+        }
+        c = NL;
+      }
+      if (need_redo) {
+        add_byte_buff(&redobuff, c);
+      }
+      if (need_record) {
+        add_byte_buff(&recordbuff, c);
+      }
+    }
+  }
+}
+
+/// Gets a paste stored by paste_store() from typeahead and repeats it.
+void paste_repeat(int count)
+{
+  garray_T ga = GA_INIT(1, 32);
+  bool aborted = false;
+
+  no_mapping++;
+
+  got_int = false;
+  while (!aborted) {
+    ga_grow(&ga, 32);
+    uint8_t c1 = (uint8_t)vgetorpeek(true);
+    if (c1 == K_SPECIAL) {
+      c1 = (uint8_t)vgetorpeek(true);
+      uint8_t c2 = (uint8_t)vgetorpeek(true);
+      int c = TO_SPECIAL(c1, c2);
+      if (c == K_PASTE_END) {
+        break;
+      } else if (c == K_ZERO) {
+        ga_append(&ga, NUL);
+      } else if (c == K_SPECIAL) {
+        ga_append(&ga, K_SPECIAL);
+      } else {
+        ga_append(&ga, K_SPECIAL);
+        ga_append(&ga, c1);
+        ga_append(&ga, c2);
+      }
+    } else {
+      ga_append(&ga, c1);
+    }
+    aborted = got_int;
+  }
+
+  no_mapping--;
+
+  String str = cbuf_as_string(ga.ga_data, (size_t)ga.ga_len);
+  Arena arena = ARENA_EMPTY;
+  Error err = ERROR_INIT;
+  paste_repeat_active = true;
+  for (int i = 0; !aborted && i < count; i++) {
+    nvim_paste(str, false, -1, &arena, &err);
+    aborted = ERROR_SET(&err);
+  }
+  paste_repeat_active = false;
+  api_clear_error(&err);
+  arena_mem_free(arena_finish(&arena));
+  ga_clear(&ga);
 }
