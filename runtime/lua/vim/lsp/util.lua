@@ -652,6 +652,7 @@ function M.rename(old_fname, new_fname, opts)
   end
 end
 
+--- @param change lsp.CreateFile
 local function create_file(change)
   local opts = change.options or {}
   -- from spec: Overwrite wins over `ignoreIfExists`
@@ -666,23 +667,15 @@ local function create_file(change)
   vim.fn.bufadd(fname)
 end
 
+--- @param change lsp.DeleteFile
 local function delete_file(change)
   local opts = change.options or {}
   local fname = vim.uri_to_fname(change.uri)
-  local stat = uv.fs_stat(fname)
-  if opts.ignoreIfNotExists and not stat then
-    return
-  end
-  assert(stat, 'Cannot delete not existing file or folder ' .. fname)
-  local flags
-  if stat and stat.type == 'directory' then
-    flags = opts.recursive and 'rf' or 'd'
-  else
-    flags = ''
-  end
   local bufnr = vim.fn.bufadd(fname)
-  local result = tonumber(vim.fn.delete(fname, flags))
-  assert(result == 0, 'Could not delete file: ' .. fname .. ', stat: ' .. vim.inspect(stat))
+  vim.fs.rm(fname, {
+    force = opts.ignoreIfNotExists,
+    recursive = opts.recursive,
+  })
   api.nvim_buf_delete(bufnr, { force = true })
 end
 

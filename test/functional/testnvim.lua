@@ -759,58 +759,21 @@ function M.assert_visible(bufnr, visible)
   end
 end
 
---- @param path string
-local function do_rmdir(path)
-  local stat = uv.fs_stat(path)
-  if stat == nil then
-    return
-  end
-  if stat.type ~= 'directory' then
-    error(string.format('rmdir: not a directory: %s', path))
-  end
-  for file in vim.fs.dir(path) do
-    if file ~= '.' and file ~= '..' then
-      local abspath = path .. '/' .. file
-      if t.isdir(abspath) then
-        do_rmdir(abspath) -- recurse
-      else
-        local ret, err = os.remove(abspath)
-        if not ret then
-          if not session then
-            error('os.remove: ' .. err)
-          else
-            -- Try Nvim delete(): it handles `readonly` attribute on Windows,
-            -- and avoids Lua cross-version/platform incompatibilities.
-            if -1 == M.call('delete', abspath) then
-              local hint = (is_os('win') and ' (hint: try :%bwipeout! before rmdir())' or '')
-              error('delete() failed' .. hint .. ': ' .. abspath)
-            end
-          end
-        end
-      end
-    end
-  end
-  local ret, err = uv.fs_rmdir(path)
-  if not ret then
-    error('luv.fs_rmdir(' .. path .. '): ' .. err)
-  end
-end
-
 local start_dir = uv.cwd()
 
 function M.rmdir(path)
-  local ret, _ = pcall(do_rmdir, path)
+  local ret, _ = pcall(vim.fs.rm, path, { recursive = true, force = true })
   if not ret and is_os('win') then
     -- Maybe "Permission denied"; try again after changing the nvim
     -- process to the top-level directory.
     M.command([[exe 'cd '.fnameescape(']] .. start_dir .. "')")
-    ret, _ = pcall(do_rmdir, path)
+    ret, _ = pcall(vim.fs.rm, path, { recursive = true, force = true })
   end
   -- During teardown, the nvim process may not exit quickly enough, then rmdir()
   -- will fail (on Windows).
   if not ret then -- Try again.
     sleep(1000)
-    do_rmdir(path)
+    vim.fs.rm(path, { recursive = true, force = true })
   end
 end
 

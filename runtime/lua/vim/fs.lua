@@ -1,6 +1,8 @@
+local uv = vim.uv
+
 local M = {}
 
-local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
+local iswin = uv.os_uname().sysname == 'Windows_NT'
 local os_sep = iswin and '\\' or '/'
 
 --- Iterate over all the parents of the given path.
@@ -122,12 +124,12 @@ function M.dir(path, opts)
 
   path = M.normalize(path)
   if not opts.depth or opts.depth == 1 then
-    local fs = vim.uv.fs_scandir(path)
+    local fs = uv.fs_scandir(path)
     return function()
       if not fs then
         return
       end
-      return vim.uv.fs_scandir_next(fs)
+      return uv.fs_scandir_next(fs)
     end
   end
 
@@ -138,9 +140,9 @@ function M.dir(path, opts)
       --- @type string, integer
       local dir0, level = unpack(table.remove(dirs, 1))
       local dir = level == 1 and dir0 or M.joinpath(path, dir0)
-      local fs = vim.uv.fs_scandir(dir)
+      local fs = uv.fs_scandir(dir)
       while fs do
-        local name, t = vim.uv.fs_scandir_next(fs)
+        local name, t = uv.fs_scandir_next(fs)
         if not name then
           break
         end
@@ -234,7 +236,7 @@ function M.find(names, opts)
     names = { names }
   end
 
-  local path = opts.path or assert(vim.uv.cwd())
+  local path = opts.path or assert(uv.cwd())
   local stop = opts.stop
   local limit = opts.limit or 1
 
@@ -265,7 +267,7 @@ function M.find(names, opts)
         local t = {} --- @type string[]
         for _, name in ipairs(names) do
           local f = M.joinpath(p, name)
-          local stat = vim.uv.fs_stat(f)
+          local stat = uv.fs_stat(f)
           if stat and (not opts.type or opts.type == stat.type) then
             t[#t + 1] = f
           end
@@ -365,7 +367,7 @@ function M.root(source, marker)
     path = source
   elseif type(source) == 'number' then
     if vim.bo[source].buftype ~= '' then
-      path = assert(vim.uv.cwd())
+      path = assert(uv.cwd())
     else
       path = vim.api.nvim_buf_get_name(source)
     end
@@ -552,7 +554,7 @@ function M.normalize(path, opts)
 
   -- Expand ~ to users home directory
   if vim.startswith(path, '~') then
-    local home = vim.uv.os_homedir() or '~'
+    local home = uv.os_homedir() or '~'
     if home:sub(-1) == os_sep_local then
       home = home:sub(1, -2)
     end
@@ -561,7 +563,7 @@ function M.normalize(path, opts)
 
   -- Expand environment variables if `opts.expand_env` isn't `false`
   if opts.expand_env == nil or opts.expand_env then
-    path = path:gsub('%$([%w_]+)', vim.uv.os_getenv)
+    path = path:gsub('%$([%w_]+)', uv.os_getenv)
   end
 
   if win then
@@ -607,6 +609,57 @@ function M.normalize(path, opts)
   end
 
   return path
+end
+
+--- @param path string Path to remove
+--- @param ty string type of path
+--- @param recursive? boolean
+--- @param force? boolean
+local function rm(path, ty, recursive, force)
+  --- @diagnostic disable-next-line:no-unknown
+  local rm_fn
+
+  if ty == 'directory' then
+    if recursive then
+      for file, fty in vim.fs.dir(path) do
+        rm(M.joinpath(path, file), fty, true, force)
+      end
+    elseif not force then
+      error(string.format('%s is a directory', path))
+    end
+
+    rm_fn = uv.fs_rmdir
+  else
+    rm_fn = uv.fs_unlink
+  end
+
+  local ret, err, errnm = rm_fn(path)
+  if ret == nil and (not force or errnm ~= 'ENOENT') then
+    error(err)
+  end
+end
+
+--- @class vim.fs.rm.Opts
+--- @inlinedoc
+---
+--- Remove directories and their contents recursively
+--- @field recursive? boolean
+---
+--- Ignore nonexistent files and arguments
+--- @field force? boolean
+
+--- Remove files or directories
+--- @param path string Path to remove
+--- @param opts? vim.fs.rm.Opts
+function M.rm(path, opts)
+  opts = opts or {}
+
+  local stat, err, errnm = uv.fs_stat(path)
+  if stat then
+    rm(path, stat.type, opts.recursive, opts.force)
+  elseif not opts.force or errnm ~= 'ENOENT' then
+    error(err)
+  end
 end
 
 return M

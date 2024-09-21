@@ -152,7 +152,7 @@ LSP
 
 LUA
 
-• TODO
+• |vim.fs.rm()| can delete files and directories.
 
 OPTIONS
 
