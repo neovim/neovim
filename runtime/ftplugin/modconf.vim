@@ -1,7 +1,8 @@
 " Vim filetype plugin file
 " Language:             modules.conf(5) configuration file
+" Maintainer:           This runtime file is looking for a new maintainer.
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2024-09-19 (simplify keywordprg #15696)
+" Latest Revision:      2024-09-20 (remove erroneous endif)
 
 if exists("b:did_ftplugin")
   finish
@@ -22,7 +23,6 @@ if has('unix') && executable('less') && exists(':terminal') == 2
   setlocal iskeyword+=-
   setlocal keywordprg=:ModconfKeywordPrg
   let b:undo_ftplugin .= '| setlocal keywordprg< iskeyword< | sil! delc -buffer ModconfKeywordPrg'
-endif
 endif
 
 let &cpo = s:cpo_save
