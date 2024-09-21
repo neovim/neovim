@@ -351,6 +351,7 @@ static const struct nv_cmd {
   { K_F1,      nv_help,        NV_NCW,                 0 },
   { K_XF1,     nv_help,        NV_NCW,                 0 },
   { K_SELECT,  nv_select,      0,                      0 },
+  { K_PASTE_START, nv_paste,   NV_KEEPREG,             0 },
   { K_EVENT,   nv_event,       NV_KEEPREG,             0 },
   { K_COMMAND, nv_colon,       0,                      0 },
   { K_LUA, nv_colon,           0,                      0 },
@@ -6591,6 +6592,12 @@ static void nv_open(cmdarg_T *cap)
   } else {
     n_opencmd(cap);
   }
+}
+
+/// Handles K_PASTE_START, repeats pasted text.
+static void nv_paste(cmdarg_T *cap)
+{
+  paste_repeat(cap->count1);
 }
 
 /// Handle an arbitrary event in normal mode
