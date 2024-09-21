@@ -3028,7 +3028,6 @@ void realloc_cmdbuff(int len)
   // there, thus copy up to the NUL and add a NUL.
   memmove(ccline.cmdbuff, p, (size_t)ccline.cmdlen);
   ccline.cmdbuff[ccline.cmdlen] = NUL;
-  xfree(p);
 
   if (ccline.xpc != NULL
       && ccline.xpc->xp_pattern != NULL
@@ -3042,6 +3041,8 @@ void realloc_cmdbuff(int len)
       ccline.xpc->xp_pattern = ccline.cmdbuff + i;
     }
   }
+
+  xfree(p);
 }
 
 enum { MAX_CB_ERRORS = 1, };
