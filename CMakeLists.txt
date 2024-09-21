@@ -6,12 +6,7 @@
 #     - variable_watch https://cmake.org/cmake/help/latest/command/variable_watch.html
 
 # Version should match the tested CMAKE_URL in .github/workflows/build.yml.
-cmake_minimum_required(VERSION 3.13)
-
-# Can be removed once minimum version is at least 3.15
-if(POLICY CMP0092)
-  cmake_policy(SET CMP0092 NEW)
-endif()
+cmake_minimum_required(VERSION 3.16)
 
 project(nvim C)
 
