@@ -3021,6 +3021,16 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
         (`nil`)
         (`string?`)
 
+vim.fs.rm({path}, {opts})                                        *vim.fs.rm()*
+    Remove files or directories
+
+    Parameters: ~
+      • {path}  (`string`) Path to remove
+      • {opts}  (`table?`) A table with the following fields:
+                • {recursive}? (`boolean`) Remove directories and their
+                  contents recursively
+                • {force}? (`boolean`) Ignore nonexistent files and arguments
+
 vim.fs.root({source}, {marker})                                *vim.fs.root()*
     Find the first parent directory containing a specific "marker", relative
     to a file path or buffer.
