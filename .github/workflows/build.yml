@@ -41,8 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      CMAKE_URL: 'https://cmake.org/files/v3.13/cmake-3.13.0-Linux-x86_64.sh'
-      CMAKE_VERSION: '3.13.0'
+      CMAKE_URL: 'https://cmake.org/files/v3.16/cmake-3.16.0-Linux-x86_64.sh'
+      CMAKE_VERSION: '3.16.0'
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
