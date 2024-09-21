@@ -832,12 +832,6 @@ local function set_upvalues(f, upvalues)
   end
 end
 
---- @type fun(f: function): table<string,any>
-_G.__get_upvalues = nil
-
---- @type fun(f: function, upvalues: table<string,any>)
-_G.__set_upvalues = nil
-
 --- @param self table<string,function>
 --- @param bytecode string
 --- @param upvalues table<string,any>
