@@ -18,11 +18,6 @@ if(APPLE)
   list(APPEND DEPS_CMAKE_ARGS -D CMAKE_FIND_FRAMEWORK=${CMAKE_FIND_FRAMEWORK})
 endif()
 
-# Can be removed once minimum version is at least 3.15
-if(POLICY CMP0092)
-  list(APPEND DEPS_CMAKE_ARGS -D CMAKE_POLICY_DEFAULT_CMP0092=NEW)
-endif()
-
 find_program(CACHE_PRG NAMES ccache sccache)
 if(CACHE_PRG)
   set(CMAKE_C_COMPILER_LAUNCHER ${CMAKE_COMMAND} -E env CCACHE_SLOPPINESS=pch_defines,time_macros ${CACHE_PRG})
