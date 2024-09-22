@@ -6,18 +6,12 @@ ifeq ($(OS),Windows_NT)
   RM := remove-item -force
   CMAKE := cmake
   CMAKE_GENERATOR := Ninja
-  define rmdir
-    if (Test-Path $1) { remove-item -recurse $1 }
-  endef
 else
   MKDIR := mkdir -p
   TOUCH := touch
   RM := rm -rf
   CMAKE := $(shell (command -v cmake3 || command -v cmake || echo cmake))
   CMAKE_GENERATOR ?= "$(shell (command -v ninja > /dev/null 2>&1 && echo "Ninja") || echo "Unix Makefiles")"
-  define rmdir
-    rm -rf $1
-  endef
 endif
 
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -152,9 +146,7 @@ endif
 	$(MAKE) -C runtime/indent clean
 
 distclean:
-	$(call rmdir, $(DEPS_BUILD_DIR))
-	$(call rmdir, build)
-	$(MAKE) clean
+	git clean -fdx
 
 install: checkprefix nvim
 	$(CMAKE) --install build
