@@ -2604,7 +2604,7 @@ vim.fs.basename({file})                                    *vim.fs.basename()*
       • {file}  (`string?`) Path
 
     Return: ~
-        (`string?`) Basename of {file}
+        (`string?`) Basename of `file`
 
 vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
     Gets an iterator over items found in `path` (normalized via
@@ -2642,7 +2642,7 @@ vim.fs.dirname({file})                                      *vim.fs.dirname()*
       • {file}  (`string?`) Path
 
     Return: ~
-        (`string?`) Parent directory of {file}
+        (`string?`) Parent directory of `file`
 
 vim.fs.ext({file}, {opts})                                      *vim.fs.ext()*
     Return the file's last extension, if any.
