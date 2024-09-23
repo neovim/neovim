@@ -205,8 +205,9 @@ for _, ev in ipairs(events) do
     ev_exported[attr] = ev[attr]
   end
   for _, p in ipairs(ev_exported.parameters) do
-    if p[1] == 'HlAttrs' then
-      p[1] = 'Dict'
+    if p[1] == 'HlAttrs' or p[1] == 'Dict' then
+      -- TODO(justinmk): for back-compat, but do clients actually look at this?
+      p[1] = 'Dictionary'
     end
   end
   if not ev.noexport then
