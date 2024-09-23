@@ -35,6 +35,12 @@ API
   now maintain their own list of channels.
   • In the future, |vim.rpcnotify()| may accept a list of channels, if there
     is demand for this use-case.
+• "Dictionary" was renamed to "Dict" internally and in the RPC |api-metadata|.
+  This is not expected to break clients because there are no known clients
+  that actually use the `return_type` field or the parameter type names
+  reported by |--api-info| or |nvim_get_api_info()|.
+• Renamed `nvim__id_dictionary` (unsupported/experimental API) to
+  `nvim__id_dict`.
 
 DEFAULTS
 

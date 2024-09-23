@@ -183,11 +183,11 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
 /// @param[out] err Error details, if any
 /// @return Highlight definition map
 /// @see nvim_get_hl_by_name
-Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *err)
+Dict nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
   FUNC_API_DEPRECATED_SINCE(9)
 {
-  Dictionary dic = ARRAY_DICT_INIT;
+  Dict dic = ARRAY_DICT_INIT;
   VALIDATE_INT((syn_get_final_id((int)hl_id) != 0), "highlight id", hl_id, {
     return dic;
   });
@@ -204,11 +204,11 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *er
 /// @param[out] err Error details, if any
 /// @return Highlight definition map
 /// @see nvim_get_hl_by_id
-Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *err)
+Dict nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
   FUNC_API_DEPRECATED_SINCE(9)
 {
-  Dictionary result = ARRAY_DICT_INIT;
+  Dict result = ARRAY_DICT_INIT;
   int id = syn_name2id(name.data);
 
   VALIDATE_S((id != 0), "highlight name", name.data, {
@@ -515,7 +515,7 @@ static int64_t convert_index(int64_t index)
 /// @param          name Option name
 /// @param[out] err Error details, if any
 /// @return         Option Information
-Dictionary nvim_get_option_info(String name, Arena *arena, Error *err)
+Dict nvim_get_option_info(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_DEPRECATED_SINCE(11)
 {

@@ -226,14 +226,14 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
     case kObjectTypeTabpage:
       mpack_handle(current->type, (handle_T)current->data.integer, packer);
       break;
-    case kObjectTypeDictionary:
+    case kObjectTypeDict:
     case kObjectTypeArray: {}
       size_t current_size;
       if (current->type == kObjectTypeArray) {
         current_size = current->data.array.size;
         mpack_array(&packer->ptr, (uint32_t)current_size);
       } else {
-        current_size = current->data.dictionary.size;
+        current_size = current->data.dict.size;
         mpack_map(&packer->ptr, (uint32_t)current_size);
       }
       if (current_size > 0) {
@@ -270,7 +270,7 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
         container = NULL;
       }
     } else {
-      Dictionary dict = container->data.dictionary;
+      Dict dict = container->data.dict;
       KeyValuePair *it = &dict.items[container_idx++];
       mpack_check_buffer(packer);
       mpack_str(it->key, packer);

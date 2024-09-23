@@ -216,15 +216,15 @@ for _, f in ipairs(functions) do
     end
     f_exported.parameters = {}
     for i, param in ipairs(f.parameters) do
-      if param[1] == 'DictionaryOf(LuaRef)' then
-        param = { 'Dictionary', param[2] }
+      if param[1] == 'DictOf(LuaRef)' then
+        param = { 'Dict', param[2] }
       elseif startswith(param[1], 'Dict(') then
-        param = { 'Dictionary', param[2] }
+        param = { 'Dict', param[2] }
       end
       f_exported.parameters[i] = param
     end
     if startswith(f.return_type, 'Dict(') then
-      f_exported.return_type = 'Dictionary'
+      f_exported.return_type = 'Dict'
     end
     exported_functions[#exported_functions + 1] = f_exported
   end
@@ -406,7 +406,7 @@ local function real_type(type)
     if rv:match('Array') then
       rv = 'Array'
     else
-      rv = 'Dictionary'
+      rv = 'Dict'
     end
   end
   return rv
@@ -466,7 +466,7 @@ for i = 1, #functions do
         output:write('\n  ' .. converted .. ' = args.items[' .. (j - 1) .. '];\n')
       elseif rt:match('^KeyDict_') then
         converted = '&' .. converted
-        output:write('\n  if (args.items[' .. (j - 1) .. '].type == kObjectTypeDictionary) {') --luacheck: ignore 631
+        output:write('\n  if (args.items[' .. (j - 1) .. '].type == kObjectTypeDict) {') --luacheck: ignore 631
         output:write('\n    memset(' .. converted .. ', 0, sizeof(*' .. converted .. '));') -- TODO: neeeee
         output:write(
           '\n    if (!api_dict_to_keydict('
@@ -475,7 +475,7 @@ for i = 1, #functions do
             .. rt
             .. '_get_field, args.items['
             .. (j - 1)
-            .. '].data.dictionary, error)) {'
+            .. '].data.dict, error)) {'
         )
         output:write('\n      goto cleanup;')
         output:write('\n    }')
@@ -554,7 +554,7 @@ for i = 1, #functions do
           )
         end
         -- accept empty lua tables as empty dictionaries
-        if rt:match('^Dictionary') then
+        if rt:match('^Dict') then
           output:write(
             '\n  } else if (args.items['
               .. (j - 1)
@@ -562,7 +562,7 @@ for i = 1, #functions do
               .. (j - 1)
               .. '].data.array.size == 0) {'
           ) --luacheck: ignore 631
-          output:write('\n    ' .. converted .. ' = (Dictionary)ARRAY_DICT_INIT;')
+          output:write('\n    ' .. converted .. ' = (Dict)ARRAY_DICT_INIT;')
         end
         output:write('\n  } else {')
         output:write(
@@ -643,7 +643,7 @@ for i = 1, #functions do
     if string.match(ret_type, '^KeyDict_') then
       local table = string.sub(ret_type, 9) .. '_table'
       output:write(
-        '\n  ret = DICTIONARY_OBJ(api_keydict_to_dict(&rv, '
+        '\n  ret = DICT_OBJ(api_keydict_to_dict(&rv, '
           .. table
           .. ', ARRAY_SIZE('
           .. table
@@ -779,12 +779,12 @@ local function process_function(fn)
     local param = fn.parameters[j]
     local cparam = string.format('arg%u', j)
     local param_type = real_type(param[1])
-    local extra = param_type == 'Dictionary' and 'false, ' or ''
+    local extra = param_type == 'Dict' and 'false, ' or ''
     local arg_free_code = ''
     if param[1] == 'Object' then
       extra = 'true, '
       arg_free_code = 'api_luarefs_free_object(' .. cparam .. ');'
-    elseif param[1] == 'DictionaryOf(LuaRef)' then
+    elseif param[1] == 'DictOf(LuaRef)' then
       extra = 'true, '
       arg_free_code = 'api_luarefs_free_dict(' .. cparam .. ');'
     elseif param[1] == 'LuaRef' then

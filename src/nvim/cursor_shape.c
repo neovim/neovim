@@ -57,7 +57,7 @@ Array mode_style_array(Arena *arena)
 
   for (int i = 0; i < SHAPE_IDX_COUNT; i++) {
     cursorentry_T *cur = &shape_table[i];
-    Dictionary dic = arena_dict(arena, 3 + ((cur->used_for & SHAPE_CURSOR) ? 9 : 0));
+    Dict dic = arena_dict(arena, 3 + ((cur->used_for & SHAPE_CURSOR) ? 9 : 0));
     PUT_C(dic, "name", CSTR_AS_OBJ(cur->full_name));
     PUT_C(dic, "short_name", CSTR_AS_OBJ(cur->name));
     if (cur->used_for & SHAPE_MOUSE) {
@@ -86,7 +86,7 @@ Array mode_style_array(Arena *arena)
       PUT_C(dic, "attr_id_lm", INTEGER_OBJ(cur->id_lm ? syn_id2attr(cur->id_lm) : 0));
     }
 
-    ADD_C(all, DICTIONARY_OBJ(dic));
+    ADD_C(all, DICT_OBJ(dic));
   }
 
   return all;

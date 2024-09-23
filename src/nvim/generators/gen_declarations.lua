@@ -70,7 +70,7 @@ local raw_word = concat(w, any_amount(aw))
 local right_word = concat(raw_word, neg_look_ahead(aw))
 local word = branch(
   concat(
-    branch(lit('ArrayOf('), lit('DictionaryOf('), lit('Dict(')), -- typed container macro
+    branch(lit('ArrayOf('), lit('DictOf('), lit('Dict(')), -- typed container macro
     one_or_more(any_character - lit(')')),
     lit(')')
   ),

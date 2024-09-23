@@ -239,11 +239,11 @@ void channel_create_event(Channel *chan, const char *ext_source)
 
   assert(chan->id <= VARNUMBER_MAX);
   Arena arena = ARENA_EMPTY;
-  Dictionary info = channel_info(chan->id, &arena);
+  Dict info = channel_info(chan->id, &arena);
   typval_T tv = TV_INITIAL_VALUE;
   // TODO(bfredl): do the conversion in one step. Also would be nice
   // to pretty print top level dict in defined order
-  object_to_vim(DICTIONARY_OBJ(info), &tv, NULL);
+  object_to_vim(DICT_OBJ(info), &tv, NULL);
   assert(tv.v_type == VAR_DICT);
   char *str = encode_tv2json(&tv, NULL);
   ILOG("new channel %" PRIu64 " (%s) : %s", chan->id, source, str);
@@ -888,9 +888,9 @@ static void set_info_event(void **argv)
   save_v_event_T save_v_event;
   dict_T *dict = get_v_event(&save_v_event);
   Arena arena = ARENA_EMPTY;
-  Dictionary info = channel_info(chan->id, &arena);
+  Dict info = channel_info(chan->id, &arena);
   typval_T retval;
-  object_to_vim(DICTIONARY_OBJ(info), &retval, NULL);
+  object_to_vim(DICT_OBJ(info), &retval, NULL);
   assert(retval.v_type == VAR_DICT);
   tv_dict_add_dict(dict, S_LEN("info"), retval.vval.v_dict);
   tv_dict_set_keys_readonly(dict);
@@ -910,14 +910,14 @@ bool channel_job_running(uint64_t id)
           && !proc_is_stopped(&chan->stream.proc));
 }
 
-Dictionary channel_info(uint64_t id, Arena *arena)
+Dict channel_info(uint64_t id, Arena *arena)
 {
   Channel *chan = find_channel(id);
   if (!chan) {
-    return (Dictionary)ARRAY_DICT_INIT;
+    return (Dict)ARRAY_DICT_INIT;
   }
 
-  Dictionary info = arena_dict(arena, 8);
+  Dict info = arena_dict(arena, 8);
   PUT_C(info, "id", INTEGER_OBJ((Integer)chan->id));
 
   const char *stream_desc, *mode_desc;
@@ -963,7 +963,7 @@ Dictionary channel_info(uint64_t id, Arena *arena)
 
   if (chan->is_rpc) {
     mode_desc = "rpc";
-    PUT_C(info, "client", DICTIONARY_OBJ(chan->rpc.info));
+    PUT_C(info, "client", DICT_OBJ(chan->rpc.info));
   } else if (chan->term) {
     mode_desc = "terminal";
     PUT_C(info, "buffer", BUFFER_OBJ(terminal_buf(chan->term)));
@@ -996,7 +996,7 @@ Array channel_all_info(Arena *arena)
 
   Array ret = arena_array(arena, ids.size);
   for (size_t i = 0; i < ids.size; i++) {
-    ADD_C(ret, DICTIONARY_OBJ(channel_info((uint64_t)ids.items[i], arena)));
+    ADD_C(ret, DICT_OBJ(channel_info((uint64_t)ids.items[i], arena)));
   }
   return ret;
 }

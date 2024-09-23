@@ -53,9 +53,9 @@
     .type = kObjectTypeArray, \
     .data.array = a })
 
-#define DICTIONARY_OBJ(d) ((Object) { \
-    .type = kObjectTypeDictionary, \
-    .data.dictionary = d })
+#define DICT_OBJ(d) ((Object) { \
+    .type = kObjectTypeDict, \
+    .data.dict = d })
 
 #define LUAREF_OBJ(r) ((Object) { \
     .type = kObjectTypeLuaRef, \
@@ -90,7 +90,7 @@
   name.items = name##__items; \
 
 #define MAXSIZE_TEMP_DICT(name, maxsize) \
-  Dictionary name = ARRAY_DICT_INIT; \
+  Dict name = ARRAY_DICT_INIT; \
   KeyValuePair name##__items[maxsize]; \
   name.capacity = maxsize; \
   name.items = name##__items; \
@@ -121,7 +121,7 @@ typedef kvec_withinit_t(Object, 16) ArrayBuilder;
 #define api_init_tabpage
 #define api_init_object = NIL
 #define api_init_array = ARRAY_DICT_INIT
-#define api_init_dictionary = ARRAY_DICT_INIT
+#define api_init_dict = ARRAY_DICT_INIT
 
 #define KEYDICT_INIT { 0 }
 

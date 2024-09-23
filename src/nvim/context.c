@@ -265,17 +265,17 @@ static inline String array_to_string(Array array, Error *err)
   return sbuf;
 }
 
-/// Converts Context to Dictionary representation.
+/// Converts Context to Dict representation.
 ///
 /// @param[in]  ctx  Context to convert.
 ///
-/// @return Dictionary representing "ctx".
-Dictionary ctx_to_dict(Context *ctx, Arena *arena)
+/// @return Dict representing "ctx".
+Dict ctx_to_dict(Context *ctx, Arena *arena)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(ctx != NULL);
 
-  Dictionary rv = arena_dict(arena, 5);
+  Dict rv = arena_dict(arena, 5);
 
   PUT_C(rv, "regs", ARRAY_OBJ(string_to_array(ctx->regs, false, arena)));
   PUT_C(rv, "jumps", ARRAY_OBJ(string_to_array(ctx->jumps, false, arena)));
@@ -286,14 +286,14 @@ Dictionary ctx_to_dict(Context *ctx, Arena *arena)
   return rv;
 }
 
-/// Converts Dictionary representation of Context back to Context object.
+/// Converts Dict representation of Context back to Context object.
 ///
-/// @param[in]   dict  Context Dictionary representation.
+/// @param[in]   dict  Context Dict representation.
 /// @param[out]  ctx   Context object to store conversion result into.
 /// @param[out]  err   Error object.
 ///
 /// @return types of included context items.
-int ctx_from_dict(Dictionary dict, Context *ctx, Error *err)
+int ctx_from_dict(Dict dict, Context *ctx, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(ctx != NULL);

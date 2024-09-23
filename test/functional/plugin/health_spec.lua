@@ -389,7 +389,7 @@ describe(':checkhealth window', function()
     command('file my_buff')
     command('checkhealth success1')
     -- define a function that collects all buffers in each tab
-    -- returns a dictionary like {tab1 = ["buf1", "buf2"], tab2 = ["buf3"]}
+    -- returns a dict like {tab1 = ["buf1", "buf2"], tab2 = ["buf3"]}
     source([[
         function CollectBuffersPerTab()
                 let buffs = {}

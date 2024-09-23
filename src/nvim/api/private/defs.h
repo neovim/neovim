@@ -17,7 +17,7 @@
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # define ArrayOf(...) Array
-# define DictionaryOf(...) Dictionary
+# define DictOf(...) Dict
 # define Dict(name) KeyDict_##name
 # define DictHash(name) KeyDict_##name##_get_field
 # define DictKey(name)
@@ -88,7 +88,7 @@ typedef struct object Object;
 typedef kvec_t(Object) Array;
 
 typedef struct key_value_pair KeyValuePair;
-typedef kvec_t(KeyValuePair) Dictionary;
+typedef kvec_t(KeyValuePair) Dict;
 
 typedef kvec_t(String) StringArray;
 
@@ -99,7 +99,7 @@ typedef enum {
   kObjectTypeFloat,
   kObjectTypeString,
   kObjectTypeArray,
-  kObjectTypeDictionary,
+  kObjectTypeDict,
   kObjectTypeLuaRef,
   // EXT types, cannot be split or reordered, see #EXT_OBJECT_TYPE_SHIFT
   kObjectTypeBuffer,
@@ -127,7 +127,7 @@ struct object {
     Float floating;
     String string;
     Array array;
-    Dictionary dictionary;
+    Dict dict;
     LuaRef luaref;
   } data;
 };

@@ -112,7 +112,7 @@ local API_TYPES = {
   String = 'string',
   Array = 'any[]',
   LuaRef = 'function',
-  Dictionary = 'table<string,any>',
+  Dict = 'table<string,any>',
   Float = 'number',
   HLGroupID = 'number|string',
   void = '',
@@ -140,7 +140,7 @@ local function api_type(t)
     return 'vim.api.keyset.' .. d
   end
 
-  local d0 = t:match('^DictionaryOf%((.*)%)')
+  local d0 = t:match('^DictOf%((.*)%)')
   if d0 then
     return 'table<string,' .. api_type(d0) .. '>'
   end

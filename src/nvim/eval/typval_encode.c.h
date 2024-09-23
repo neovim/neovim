@@ -173,8 +173,7 @@
 ///             point to a special dictionary.
 /// @param  dict  Converted dictionary, lvalue or #TYPVAL_ENCODE_NODICT_VAR
 ///               (for dictionaries represented as special lists).
-/// @param  len  Dictionary length. Is an expression which evaluates to an
-///              integer.
+/// @param  len  Dict length. Is an expression which evaluates to an integer.
 
 /// @def TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START
 /// @brief Macros used after pushing dictionary onto the stack

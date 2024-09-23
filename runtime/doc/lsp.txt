@@ -1058,7 +1058,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 `client.cancel_request(request_id)` to cancel
                                 the request.
       • {request_sync}          (`fun(method: string, params: table?, timeout_ms: integer?, bufnr: integer): {err: lsp.ResponseError?, result:any}?, string?`)
-                                err # a dictionary, where
+                                err # a dict
       • {notify}                (`fun(method: string, params: table?): boolean`)
                                 Sends a notification to an LSP server.
                                 Returns: a boolean to indicate if the

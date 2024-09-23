@@ -955,7 +955,7 @@ void remove_funccal(void)
 /// @param[out] rettv  Return value.
 /// @param[in] firstline  First line of range.
 /// @param[in] lastline  Last line of range.
-/// @param selfdict  Dictionary for "self" for dictionary functions.
+/// @param selfdict  Dict for "self" for dictionary functions.
 void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rettv,
                     linenr_T firstline, linenr_T lastline, dict_T *selfdict)
   FUNC_ATTR_NONNULL_ARG(1, 3, 4)
@@ -1922,7 +1922,7 @@ static int list_func_head(ufunc_T *fp, bool indent, bool force)
 }
 
 /// Get a function name, translating "<SID>" and "<SNR>".
-/// Also handles a Funcref in a List or Dictionary.
+/// Also handles a Funcref in a List or Dict.
 /// flags:
 /// TFN_INT:         internal function name OK
 /// TFN_QUIET:       be quiet
@@ -3242,7 +3242,7 @@ static int ex_call_inner(exarg_T *eap, char *name, char **arg, char *startarg,
       break;
     }
 
-    // Handle a function returning a Funcref, Dictionary or List.
+    // Handle a function returning a Funcref, Dict or List.
     if (handle_subscript((const char **)arg, &rettv, &EVALARG_EVALUATE, true) == FAIL) {
       failed = true;
       break;

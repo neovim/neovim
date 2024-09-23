@@ -40,6 +40,6 @@ typedef struct {
   Unpacker *unpacker;
   uint32_t next_request_id;
   kvec_t(ChannelCallFrame *) call_stack;
-  Dictionary info;
+  Dict info;
   ClientType client_type;
 } RpcState;

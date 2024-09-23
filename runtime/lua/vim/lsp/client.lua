@@ -233,11 +233,11 @@ local validate = vim.validate
 ---
 --- Sends a request to the server and synchronously waits for the response.
 --- This is a wrapper around {client.request}
---- Returns: { err=err, result=result }, a dictionary, where `err` and `result`
+--- Returns: { err=err, result=result }, a dict, where `err` and `result`
 --- come from the |lsp-handler|. On timeout, cancel or error, returns `(nil,
 --- err)` where `err` is a string describing the failure reason. If the request
 --- was unsuccessful returns `nil`.
---- @field request_sync fun(method: string, params: table?, timeout_ms: integer?, bufnr: integer): {err: lsp.ResponseError|nil, result:any}|nil, string|nil err # a dictionary, where
+--- @field request_sync fun(method: string, params: table?, timeout_ms: integer?, bufnr: integer): {err: lsp.ResponseError|nil, result:any}|nil, string|nil err # a dict
 ---
 --- Sends a notification to an LSP server.
 --- Returns: a boolean to indicate if the notification was successful. If
@@ -738,7 +738,7 @@ end
 --- @param timeout_ms (integer|nil) Maximum time in milliseconds to wait for
 ---                                a result. Defaults to 1000
 --- @param bufnr (integer) Buffer handle (0 for current).
---- @return {err: lsp.ResponseError|nil, result:any}|nil, string|nil err # a dictionary, where
+--- @return {err: lsp.ResponseError|nil, result:any}|nil, string|nil err # a dict, where
 --- `err` and `result` come from the |lsp-handler|.
 --- On timeout, cancel or error, returns `(nil, err)` where `err` is a
 --- string describing the failure reason. If the request was unsuccessful

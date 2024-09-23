@@ -1743,14 +1743,14 @@ int do_ucmd(exarg_T *eap, bool preview)
 /// @param buf  Buffer to inspect, or NULL to get global commands.
 ///
 /// @return Map of maps describing commands
-Dictionary commands_array(buf_T *buf, Arena *arena)
+Dict commands_array(buf_T *buf, Arena *arena)
 {
   garray_T *gap = (buf == NULL) ? &ucmds : &buf->b_ucmds;
 
-  Dictionary rv = arena_dict(arena, (size_t)gap->ga_len);
+  Dict rv = arena_dict(arena, (size_t)gap->ga_len);
   for (int i = 0; i < gap->ga_len; i++) {
     char arg[2] = { 0, 0 };
-    Dictionary d = arena_dict(arena, 14);
+    Dict d = arena_dict(arena, 14);
     ucmd_T *cmd = USER_CMD_GA(gap, i);
 
     PUT_C(d, "name", CSTR_AS_OBJ(cmd->uc_name));
@@ -1814,7 +1814,7 @@ Dictionary commands_array(buf_T *buf, Arena *arena)
     }
     PUT_C(d, "addr", obj);
 
-    PUT_C(rv, cmd->uc_name, DICTIONARY_OBJ(d));
+    PUT_C(rv, cmd->uc_name, DICT_OBJ(d));
   }
   return rv;
 }

@@ -967,8 +967,8 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
     os_exit(2);
   }
 
-  if (o.type == kObjectTypeDictionary) {
-    rvobj.data.dictionary = o.data.dictionary;
+  if (o.type == kObjectTypeDict) {
+    rvobj.data.dict = o.data.dict;
   } else {
     fprintf(stderr, "vim._cs_remote returned unexpected value\n");
     os_exit(2);
@@ -977,32 +977,32 @@ static void remote_request(mparm_T *params, int remote_args, char *server_addr, 
   TriState should_exit = kNone;
   TriState tabbed = kNone;
 
-  for (size_t i = 0; i < rvobj.data.dictionary.size; i++) {
-    if (strequal(rvobj.data.dictionary.items[i].key.data, "errmsg")) {
-      if (rvobj.data.dictionary.items[i].value.type != kObjectTypeString) {
+  for (size_t i = 0; i < rvobj.data.dict.size; i++) {
+    if (strequal(rvobj.data.dict.items[i].key.data, "errmsg")) {
+      if (rvobj.data.dict.items[i].value.type != kObjectTypeString) {
         fprintf(stderr, "vim._cs_remote returned an unexpected type for 'errmsg'\n");
         os_exit(2);
       }
-      fprintf(stderr, "%s\n", rvobj.data.dictionary.items[i].value.data.string.data);
+      fprintf(stderr, "%s\n", rvobj.data.dict.items[i].value.data.string.data);
       os_exit(2);
-    } else if (strequal(rvobj.data.dictionary.items[i].key.data, "result")) {
-      if (rvobj.data.dictionary.items[i].value.type != kObjectTypeString) {
+    } else if (strequal(rvobj.data.dict.items[i].key.data, "result")) {
+      if (rvobj.data.dict.items[i].value.type != kObjectTypeString) {
         fprintf(stderr, "vim._cs_remote returned an unexpected type for 'result'\n");
         os_exit(2);
       }
-      printf("%s", rvobj.data.dictionary.items[i].value.data.string.data);
-    } else if (strequal(rvobj.data.dictionary.items[i].key.data, "tabbed")) {
-      if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
+      printf("%s", rvobj.data.dict.items[i].value.data.string.data);
+    } else if (strequal(rvobj.data.dict.items[i].key.data, "tabbed")) {
+      if (rvobj.data.dict.items[i].value.type != kObjectTypeBoolean) {
         fprintf(stderr, "vim._cs_remote returned an unexpected type for 'tabbed'\n");
         os_exit(2);
       }
-      tabbed = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
-    } else if (strequal(rvobj.data.dictionary.items[i].key.data, "should_exit")) {
-      if (rvobj.data.dictionary.items[i].value.type != kObjectTypeBoolean) {
+      tabbed = rvobj.data.dict.items[i].value.data.boolean ? kTrue : kFalse;
+    } else if (strequal(rvobj.data.dict.items[i].key.data, "should_exit")) {
+      if (rvobj.data.dict.items[i].value.type != kObjectTypeBoolean) {
         fprintf(stderr, "vim._cs_remote returned an unexpected type for 'should_exit'\n");
         os_exit(2);
       }
-      should_exit = rvobj.data.dictionary.items[i].value.data.boolean ? kTrue : kFalse;
+      should_exit = rvobj.data.dict.items[i].value.data.boolean ? kTrue : kFalse;
     }
   }
   if (should_exit == kNone || tabbed == kNone) {

@@ -58,7 +58,7 @@ describe('ShaDa error handling', function()
   it('fails on search pattern item with zero length', function()
     wshada('\002\000\000')
     eq(
-      'Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 is not a dictionary',
+      'Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 is not a dict',
       exc_exec(sdrcmd())
     )
   end)
@@ -92,7 +92,7 @@ describe('ShaDa error handling', function()
     -- that cannot do this)
     wshada('\002\000\001\193')
     eq(
-      'Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 is not a dictionary',
+      'Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 is not a dict',
       exc_exec(sdrcmd())
     )
   end)
@@ -124,7 +124,7 @@ describe('ShaDa error handling', function()
   it('fails on search pattern item with NIL value', function()
     wshada('\002\000\001\192')
     eq(
-      'Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 is not a dictionary',
+      'Vim(rshada):E575: Error while reading ShaDa file: search pattern entry at position 0 is not a dict',
       exc_exec(sdrcmd())
     )
   end)
@@ -227,7 +227,7 @@ describe('ShaDa error handling', function()
     it('fails on ' .. v.name .. ' item with NIL value', function()
       wshada(v.mpack .. '\000\001\192')
       eq(
-        'Vim(rshada):E575: Error while reading ShaDa file: mark entry at position 0 is not a dictionary',
+        'Vim(rshada):E575: Error while reading ShaDa file: mark entry at position 0 is not a dict',
         exc_exec(sdrcmd())
       )
     end)
@@ -301,7 +301,7 @@ describe('ShaDa error handling', function()
   it('fails on register item with NIL value', function()
     wshada('\005\000\001\192')
     eq(
-      'Vim(rshada):E575: Error while reading ShaDa file: register entry at position 0 is not a dictionary',
+      'Vim(rshada):E575: Error while reading ShaDa file: register entry at position 0 is not a dict',
       exc_exec(sdrcmd())
     )
   end)
@@ -504,7 +504,7 @@ describe('ShaDa error handling', function()
     nvim_command('set shada+=%')
     wshada('\009\000\008\146\129\161f\196\001/\192')
     eq(
-      'Vim(rshada):E575: Error while reading ShaDa file: buffer list at position 0 contains entry that is not a dictionary',
+      'Vim(rshada):E575: Error while reading ShaDa file: buffer list at position 0 contains entry that is not a dict',
       exc_exec(sdrcmd())
     )
   end)

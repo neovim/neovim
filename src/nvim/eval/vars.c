@@ -1108,7 +1108,7 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
     // unlet a List item.
     tv_list_item_remove(lp->ll_list, lp->ll_li);
   } else {
-    // unlet a Dictionary item.
+    // unlet a Dict item.
     dict_T *d = lp->ll_dict;
     assert(d != NULL);
     dictitem_T *di = lp->ll_di;
@@ -1283,7 +1283,7 @@ static int do_lock_var(lval_T *lp, char *name_end FUNC_ATTR_UNUSED, exarg_T *eap
     // (un)lock a List item.
     tv_item_lock(TV_LIST_ITEM_TV(lp->ll_li), deep, lock, false);
   } else {
-    // (un)lock a Dictionary item.
+    // (un)lock a Dict item.
     tv_item_lock(&lp->ll_di->di_tv, deep, lock, false);
   }
 

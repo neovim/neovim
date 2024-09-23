@@ -938,7 +938,7 @@ int decor_virt_lines(win_T *wp, int start_row, int end_row, VirtLines *lines, bo
 /// This assumes maximum one entry of each kind, which will not always be the case.
 ///
 /// NB: assumes caller has allocated enough space in dict for all fields!
-void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name, Arena *arena)
+void decor_to_dict_legacy(Dict *dict, DecorInline decor, bool hl_name, Arena *arena)
 {
   DecorSignHighlight sh_hl = DECOR_SIGN_HIGHLIGHT_INIT;
   DecorSignHighlight sh_sign = DECOR_SIGN_HIGHLIGHT_INIT;

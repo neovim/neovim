@@ -64,14 +64,14 @@ function vim.api.nvim__id(obj) end
 function vim.api.nvim__id_array(arr) end
 
 --- @private
---- Returns dictionary given as argument.
+--- Returns dict given as argument.
 ---
 --- This API function is used for testing. One should not rely on its presence
 --- in plugins.
 ---
---- @param dct table<string,any> Dictionary to return.
+--- @param dct table<string,any> Dict to return.
 --- @return table<string,any>
-function vim.api.nvim__id_dictionary(dct) end
+function vim.api.nvim__id_dict(dct) end
 
 --- @private
 --- Returns floating-point value given as argument.
@@ -777,7 +777,7 @@ function vim.api.nvim_buf_set_virtual_text(buffer, src_id, line, chunks, opts) e
 ---
 --- On execution error: fails with Vimscript error, updates v:errmsg.
 ---
---- @param dict any Dictionary, or String evaluating to a Vimscript `self` dict
+--- @param dict any Dict, or String evaluating to a Vimscript `self` dict
 --- @param fn string Name of the function defined on the Vimscript dict
 --- @param args any[] Function arguments packed in an Array
 --- @return any
@@ -830,8 +830,8 @@ function vim.api.nvim_clear_autocmds(opts) end
 
 --- Executes an Ex command.
 ---
---- Unlike `nvim_command()` this command takes a structured Dictionary instead
---- of a String. This allows for easier construction and manipulation of an Ex
+--- Unlike `nvim_command()` this command takes a structured Dict instead of a
+--- String. This allows for easier construction and manipulation of an Ex
 --- command. This also allows for things such as having spaces inside a
 --- command argument, expanding filenames in a command that otherwise doesn't
 --- expand filenames, etc. Command arguments may also be Number, Boolean or
@@ -844,10 +844,10 @@ function vim.api.nvim_clear_autocmds(opts) end
 ---
 --- On execution error: fails with Vimscript error, updates v:errmsg.
 ---
---- @param cmd vim.api.keyset.cmd Command to execute. Must be a Dictionary that can contain the
----            same values as the return value of `nvim_parse_cmd()` except
----            "addr", "nargs" and "nextcmd" which are ignored if provided.
----            All values except for "cmd" are optional.
+--- @param cmd vim.api.keyset.cmd Command to execute. Must be a Dict that can contain the same
+---            values as the return value of `nvim_parse_cmd()` except "addr",
+---            "nargs" and "nextcmd" which are ignored if provided. All values
+---            except for "cmd" are optional.
 --- @param opts vim.api.keyset.cmd_opts Optional parameters.
 ---             • output: (boolean, default false) Whether to return command
 ---               output.
@@ -884,7 +884,7 @@ function vim.api.nvim_command_output(command) end
 ---
 ---
 --- @param name string String: The name of the group
---- @param opts vim.api.keyset.create_augroup Dictionary Parameters
+--- @param opts vim.api.keyset.create_augroup Dict Parameters
 ---             • clear (bool) optional: defaults to true. Clear existing
 ---               commands if the group already exists `autocmd-groups`.
 --- @return integer
@@ -1111,7 +1111,7 @@ function vim.api.nvim_err_write(str) end
 --- @param str string Message
 function vim.api.nvim_err_writeln(str) end
 
---- Evaluates a Vimscript `expression`. Dictionaries and Lists are recursively
+--- Evaluates a Vimscript `expression`. Dicts and Lists are recursively
 --- expanded.
 ---
 --- On execution error: fails with Vimscript error, updates v:errmsg.
@@ -1165,7 +1165,7 @@ function vim.api.nvim_exec2(src, opts) end
 --- `autocmd-execute`.
 ---
 --- @param event any (String|Array) The event or events to execute
---- @param opts vim.api.keyset.exec_autocmds Dictionary of autocommand options:
+--- @param opts vim.api.keyset.exec_autocmds Dict of autocommand options:
 ---             • group (string|integer) optional: the autocommand group name
 ---               or id to match against. `autocmd-groups`.
 ---             • pattern (string|array) optional: defaults to "*"
@@ -1204,8 +1204,8 @@ function vim.api.nvim_feedkeys(keys, mode, escape_ks) end
 
 --- Gets the option information for all options.
 ---
---- The dictionary has the full option names as keys and option metadata
---- dictionaries as detailed at `nvim_get_option_info2()`.
+--- The dict has the full option names as keys and option metadata dicts as
+--- detailed at `nvim_get_option_info2()`.
 ---
 --- @return table<string,any>
 function vim.api.nvim_get_all_options_info() end
@@ -1231,7 +1231,7 @@ function vim.api.nvim_get_all_options_info() end
 --- NOTE: When multiple patterns or events are provided, it will find all the
 --- autocommands that match any combination of them.
 ---
---- @param opts vim.api.keyset.get_autocmds Dictionary with at least one of the following:
+--- @param opts vim.api.keyset.get_autocmds Dict with at least one of the following:
 ---             • group (string|integer): the autocommand group name or id to
 ---               match against.
 ---             • event (string|array): event or events to match against
@@ -1394,7 +1394,7 @@ function vim.api.nvim_get_option_info(name) end
 
 --- Gets the option information for one option from arbitrary buffer or window
 ---
---- Resulting dictionary has keys:
+--- Resulting dict has keys:
 --- • name: Name of the option (like 'filetype')
 --- • shortname: Shortened name of the option (like 'ft')
 --- • type: type of option ("string", "number" or "boolean")

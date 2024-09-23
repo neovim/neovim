@@ -437,16 +437,16 @@ describe('msgpackparse() function', function()
     parse_eq({ 'ab' }, { '\196\002ab' })
   end)
 
-  it('restores FIXEXT1 as special dictionary', function()
+  it('restores FIXEXT1 as special dict', function()
     parse_eq({ { _TYPE = {}, _VAL = { 0x10, { '', '' } } } }, { '\212\016', '' })
     eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.ext'))
   end)
 
-  it('restores MAP with BIN key as ordinary dictionary', function()
+  it('restores MAP with BIN key as ordinary dict', function()
     parse_eq({ { a = '' } }, { '\129\196\001a\196\n' })
   end)
 
-  it('restores MAP with duplicate STR keys as special dictionary', function()
+  it('restores MAP with duplicate STR keys as special dict', function()
     command('let dumped = ["\\x82\\xA1a\\xC4\\n\\xA1a\\xC4\\n"]')
     -- FIXME Internal error bug, can't use parse_eq() here
     command('silent! let parsed = msgpackparse(dumped)')
@@ -464,7 +464,7 @@ describe('msgpackparse() function', function()
     eq(eval('v:t_string'), eval('type(g:parsed[0]._VAL[1][0])'))
   end)
 
-  it('restores MAP with MAP key as special dictionary', function()
+  it('restores MAP with MAP key as special dict', function()
     parse_eq({ { _TYPE = {}, _VAL = { { {}, '' } } } }, { '\129\128\196\n' })
     eq(1, eval('g:parsed[0]._TYPE is v:msgpack_types.map'))
   end)
@@ -510,7 +510,7 @@ describe('msgpackparse() function', function()
     )
   end)
 
-  it('fails to parse a dictionary', function()
+  it('fails to parse a dict', function()
     eq(
       'Vim(call):E899: Argument of msgpackparse() must be a List or Blob',
       exc_exec('call msgpackparse({})')
@@ -764,7 +764,7 @@ describe('msgpackdump() function', function()
     )
   end)
 
-  it('fails to dump a dictionary', function()
+  it('fails to dump a dict', function()
     eq('Vim(call):E686: Argument of msgpackdump() must be a List', exc_exec('call msgpackdump({})'))
   end)
 
@@ -813,7 +813,7 @@ describe('msgpackdump() function', function()
     eq({ '\144' }, eval('msgpackdump([v:_null_list])'))
   end)
 
-  it('can dump NULL dictionary', function()
+  it('can dump NULL dict', function()
     eq({ '\128' }, eval('msgpackdump([v:_null_dict])'))
   end)
 end)
