@@ -2,7 +2,9 @@ local uv = vim.uv
 
 local M = {}
 
-local iswin = uv.os_uname().sysname == 'Windows_NT'
+-- Can't use `has('win32')` because the `nvim -ll` test runner doesn't support `vim.fn` yet.
+local sysname = uv.os_uname().sysname:lower()
+local iswin = not not (sysname:find('windows') or sysname:find('mingw'))
 local os_sep = iswin and '\\' or '/'
 
 --- Iterate over all the parents of the given path.
