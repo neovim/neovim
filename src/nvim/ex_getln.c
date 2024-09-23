@@ -4132,6 +4132,28 @@ void f_getcmdpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = p != NULL ? p->cmdpos + 1 : 0;
 }
 
+static char current_prompt[CMDBUFFSIZE + 1] = "";
+
+/// Get current command line prompt.
+static char *get_prompt(void)
+{
+  return current_prompt;
+}
+
+/// Set current command line prompt.
+void set_prompt(const char *str)
+{
+  xstrlcpy(current_prompt, str, sizeof(current_prompt));
+}
+
+/// "getcmdprompt()" function
+void f_getcmdprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  CmdlineInfo *p = get_ccline_ptr();
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = p != NULL ? xstrdup(get_prompt()) : NULL;
+}
+
 /// "getcmdscreenpos()" function
 void f_getcmdscreenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -4730,6 +4752,8 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   const bool cmd_silent_save = cmd_silent;
 
   cmd_silent = false;  // Want to see the prompt.
+  set_prompt(prompt);
+
   // Only the part of the message after the last NL is considered as
   // prompt for the command line, unlsess cmdline is externalized
   const char *p = prompt;
