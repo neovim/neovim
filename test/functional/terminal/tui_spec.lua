@@ -1298,6 +1298,41 @@ describe('TUI', function()
     expect_child_buf_lines({ 'foo', '' })
   end)
 
+  it('paste: vim.paste() cancel (retval=false) with streaming #30462', function()
+    child_session:request(
+      'nvim_exec_lua',
+      [[
+        vim.paste = (function(overridden)
+          return function(lines, phase)
+            for i, line in ipairs(lines) do
+              if line:find('!') then
+                return false
+              end
+            end
+            return overridden(lines, phase)
+          end
+        end)(vim.paste)
+      ]],
+      {}
+    )
+    feed_data('A')
+    wait_for_mode('i')
+    feed_data('\027[200~aaa')
+    expect_child_buf_lines({ 'aaa' })
+    feed_data('bbb')
+    expect_child_buf_lines({ 'aaabbb' })
+    feed_data('ccc!') -- This chunk is cancelled.
+    expect_child_buf_lines({ 'aaabbb' })
+    feed_data('ddd\027[201~') -- This chunk is ignored.
+    expect_child_buf_lines({ 'aaabbb' })
+    feed_data('\027[27u')
+    wait_for_mode('n')
+    feed_data('.') -- Dot-repeat only includes chunks actually pasted.
+    expect_child_buf_lines({ 'aaabbbaaabbb' })
+    feed_data('$\027[200~eee\027[201~') -- A following paste works normally.
+    expect_child_buf_lines({ 'aaabbbaaabbbeee' })
+  end)
+
   it("paste: 'nomodifiable' buffer", function()
     child_session:request('nvim_command', 'set nomodifiable')
     child_session:request(
