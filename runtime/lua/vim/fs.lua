@@ -48,27 +48,8 @@ end
 ---@param file T Path
 ---@return T Parent directory of {file}
 function M.dirname(file)
-  if file == nil then
-    return nil
-  end
-  vim.validate({ file = { file, 's' } })
-  if iswin then
-    file = file:gsub(os_sep, '/') --[[@as string]]
-    if file:match('^%w:/?$') then
-      return file
-    end
-  end
-  if not file:match('/') then
-    return '.'
-  elseif file == '/' or file:match('^/[^/]+$') then
-    return '/'
-  end
-  ---@type string
-  local dir = file:match('/$') and file:sub(1, #file - 1) or file:match('^(/?.+)/')
-  if iswin and dir:match('^%w:$') then
-    return dir .. '/'
-  end
-  return dir
+  vim.validate('file', file, 'string')
+  return vim.fn.fnamemodify(file, ':h')
 end
 
 --- Return the basename of the given path
@@ -77,17 +58,8 @@ end
 ---@param file T Path
 ---@return T Basename of {file}
 function M.basename(file)
-  if file == nil then
-    return nil
-  end
-  vim.validate({ file = { file, 's' } })
-  if iswin then
-    file = file:gsub(os_sep, '/') --[[@as string]]
-    if file:match('^%w:/?$') then
-      return ''
-    end
-  end
-  return file:match('/$') and '' or (file:match('[^/]*$'))
+  vim.validate('file', file, 'string')
+  return vim.fn.fnamemodify(file, ':t')
 end
 
 --- Concatenate directories and/or file paths into a single path with normalization
