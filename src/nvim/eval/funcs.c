@@ -813,6 +813,8 @@ static void f_confirm(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *message = tv_get_string_chk(&argvars[0]);
   if (message == NULL) {
     error = true;
+  } else {
+    set_prompt(message);
   }
   if (argvars[1].v_type != VAR_UNKNOWN) {
     buttons = tv_get_string_buf_chk(&argvars[1], buf);
