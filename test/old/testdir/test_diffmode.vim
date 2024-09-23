@@ -997,8 +997,16 @@ func Test_diff_screen()
   call WriteDiffFiles(buf, ['a ', 'x', 'cd', 'ef', 'xx  xx', 'foo', 'bar'], ['a', 'x', 'c d', ' ef', 'xx xx', 'foo', '', 'bar'])
   call VerifyInternal(buf, 'Test_diff_19', " diffopt+=iwhiteeol")
 
-  " Test 19: test diffopt+=iwhiteall
+  " Test 20: test diffopt+=iwhiteall
   call VerifyInternal(buf, 'Test_diff_20', " diffopt+=iwhiteall")
+
+  " Test 21: Delete all lines
+  call WriteDiffFiles(buf, [0], [])
+  call VerifyBoth(buf, "Test_diff_21", "")
+
+  " Test 22: Add line to empty file
+  call WriteDiffFiles(buf, [], [0])
+  call VerifyBoth(buf, "Test_diff_22", "")
 
   " clean up
   call StopVimInTerminal(buf)
