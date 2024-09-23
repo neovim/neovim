@@ -148,6 +148,9 @@ end
 
 local function detect_noext(path, bufnr)
   local root = fn.fnamemodify(path, ':r')
+  if root == path then
+    return
+  end
   return M.match({ buf = bufnr, filename = root })
 end
 
@@ -1383,8 +1386,7 @@ local extension = {
   ['dpkg-new'] = detect_noext,
   ['in'] = function(path, bufnr)
     if vim.fs.basename(path) ~= 'configure.in' then
-      local root = fn.fnamemodify(path, ':r')
-      return M.match({ buf = bufnr, filename = root })
+      return detect_noext(path, bufnr)
     end
   end,
   new = detect_noext,
