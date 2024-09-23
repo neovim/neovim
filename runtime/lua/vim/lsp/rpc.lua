@@ -3,7 +3,7 @@ local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedule_wrap
 
-local is_win = uv.os_uname().version:find('Windows')
+local is_win = vim.fn.has('win32') == 1
 
 --- Checks whether a given path exists and is a directory.
 ---@param filename string path to check

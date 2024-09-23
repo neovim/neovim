@@ -392,7 +392,7 @@ function M.check_logs()
   )
 end
 
-function M.sysname()
+local function sysname()
   return uv.os_uname().sysname:lower()
 end
 
@@ -403,11 +403,11 @@ function M.is_os(s)
     error('unknown platform: ' .. tostring(s))
   end
   return not not (
-    (s == 'win' and (M.sysname():find('windows') or M.sysname():find('mingw')))
-    or (s == 'mac' and M.sysname() == 'darwin')
-    or (s == 'freebsd' and M.sysname() == 'freebsd')
-    or (s == 'openbsd' and M.sysname() == 'openbsd')
-    or (s == 'bsd' and M.sysname():find('bsd'))
+    (s == 'win' and (sysname():find('windows') or sysname():find('mingw')))
+    or (s == 'mac' and sysname() == 'darwin')
+    or (s == 'freebsd' and sysname() == 'freebsd')
+    or (s == 'openbsd' and sysname() == 'openbsd')
+    or (s == 'bsd' and sysname():find('bsd'))
   )
 end
 

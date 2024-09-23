@@ -1,5 +1,5 @@
 local health = vim.health
-local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
+local iswin = vim.fn.has('win32') == 1
 
 local M = {}
 
