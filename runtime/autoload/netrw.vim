@@ -25,6 +25,7 @@
 "   2024 Aug 22 by Vim Project: adjust echo output of mx command (#15550)
 "   2024 Sep 15 by Vim Project: more strict confirmation dialog (#15680)
 "   2024 Sep 19 by Vim Project: mf-selection highlight uses wrong pattern (#15700)
+"   2024 Sep 21 by Vim Project: remove extraneous closing bracket (#15718)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -4183,7 +4184,7 @@ fun! s:NetrwGetBuffer(islocal,dirname)
     endif
 "    call Decho("  NetrwTreeListing: bufnum#".bufnum,'~'.expand("<slnum>"))
     if !bufexists(bufnum)
-     call remove(s:netrwbuf,"NetrwTreeListing"])
+     call remove(s:netrwbuf,"NetrwTreeListing")
      let bufnum= -1
     endif
    elseif bufnr("NetrwTreeListing") != -1
