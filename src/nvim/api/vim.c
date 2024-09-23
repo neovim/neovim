@@ -1219,8 +1219,8 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 ///
 /// Errors ('nomodifiable', `vim.paste()` failure, …) are reflected in `err`
 /// but do not affect the return value (which is strictly decided by
-/// `vim.paste()`).  On error, subsequent calls are ignored ("drained") until
-/// the next paste is initiated (phase 1 or -1).
+/// `vim.paste()`).  On error or cancel, subsequent calls are ignored
+/// ("drained") until the next paste is initiated (phase 1 or -1).
 ///
 /// @param data  Multiline input. May be binary (containing NUL bytes).
 /// @param crlf  Also break lines at CR and CRLF.
@@ -1233,20 +1233,19 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 /// @param[out] err Error details, if any
 /// @return
 ///     - true: Client may continue pasting.
-///     - false: Client must cancel the paste.
+///     - false: Client should cancel the paste.
 Boolean nvim_paste(String data, Boolean crlf, Integer phase, Arena *arena, Error *err)
   FUNC_API_SINCE(6)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
-  static bool draining = false;
-  bool cancel = false;
+  static bool cancelled = false;
 
   VALIDATE_INT((phase >= -1 && phase <= 3), "phase", phase, {
     return false;
   });
   if (phase == -1 || phase == 1) {  // Start of paste-stream.
-    draining = false;
-  } else if (draining) {
+    cancelled = false;
+  } else if (cancelled) {
     // Skip remaining chunks.  Report error only once per "stream".
     goto theend;
   }
@@ -1255,26 +1254,26 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Arena *arena, Error
   ADD_C(args, ARRAY_OBJ(lines));
   ADD_C(args, INTEGER_OBJ(phase));
   Object rv = NLUA_EXEC_STATIC("return vim.paste(...)", args, kRetNilBool, arena, err);
-  if (ERROR_SET(err)) {
-    draining = true;
-    goto theend;
+  // vim.paste() decides if client should cancel.
+  if (ERROR_SET(err) || (rv.type == kObjectTypeBoolean && !rv.data.boolean)) {
+    cancelled = true;
   }
-  if (phase == -1 || phase == 1) {
+  if (!cancelled && (phase == -1 || phase == 1)) {
     paste_store(kFalse, NULL_STRING, crlf);
   }
-  // vim.paste() decides if client should cancel.  Errors do NOT cancel: we
-  // want to drain remaining chunks (rather than divert them to main input).
-  cancel = (rv.type == kObjectTypeBoolean && !rv.data.boolean);
-  if (!cancel) {
+  if (!cancelled) {
     paste_store(kNone, data, crlf);
   }
-theend:
-  if (cancel || phase == -1 || phase == 3) {  // End of paste-stream.
-    draining = false;
+  if (phase == 3 || phase == (cancelled ? 2 : -1)) {
     paste_store(kTrue, NULL_STRING, crlf);
   }
-
-  return !cancel;
+theend:
+  ;
+  bool retval = !cancelled;
+  if (phase == -1 || phase == 3) {  // End of paste-stream.
+    cancelled = false;
+  }
+  return retval;
 }
 
 /// Puts text at cursor, in any mode.

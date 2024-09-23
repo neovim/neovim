@@ -1816,8 +1816,8 @@ function vim.api.nvim_parse_expression(expr, flags, highlight) end
 ---
 --- Errors ('nomodifiable', `vim.paste()` failure, …) are reflected in `err`
 --- but do not affect the return value (which is strictly decided by
---- `vim.paste()`). On error, subsequent calls are ignored ("drained") until
---- the next paste is initiated (phase 1 or -1).
+--- `vim.paste()`). On error or cancel, subsequent calls are ignored
+--- ("drained") until the next paste is initiated (phase 1 or -1).
 ---
 --- @param data string Multiline input. May be binary (containing NUL bytes).
 --- @param crlf boolean Also break lines at CR and CRLF.

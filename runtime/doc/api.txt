@@ -1155,8 +1155,8 @@ nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
 
     Errors ('nomodifiable', `vim.paste()` failure, …) are reflected in `err`
     but do not affect the return value (which is strictly decided by
-    `vim.paste()`). On error, subsequent calls are ignored ("drained") until
-    the next paste is initiated (phase 1 or -1).
+    `vim.paste()`). On error or cancel, subsequent calls are ignored
+    ("drained") until the next paste is initiated (phase 1 or -1).
 
     Attributes: ~
         not allowed when |textlock| is active
@@ -1173,7 +1173,7 @@ nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
 
     Return: ~
         • true: Client may continue pasting.
-        • false: Client must cancel the paste.
+        • false: Client should cancel the paste.
 
 nvim_put({lines}, {type}, {after}, {follow})                      *nvim_put()*
     Puts text at cursor, in any mode.
