@@ -736,6 +736,12 @@ static void clear_diffout(diffout_T *dout)
 /// @return FAIL for failure.
 static int diff_write_buffer(buf_T *buf, mmfile_t *m, linenr_T start, linenr_T end)
 {
+  if (buf->b_ml.ml_flags & ML_EMPTY) {
+    m->ptr = NULL;
+    m->size = 0;
+    return OK;
+  }
+
   size_t len = 0;
 
   if (end < 0) {

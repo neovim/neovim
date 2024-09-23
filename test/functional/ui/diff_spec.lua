@@ -614,6 +614,34 @@ int main(int argc, char **argv)
     ]])
   end)
 
+  it('Diff empty and non-empty file', function()
+    write_file(fname, '', false)
+    write_file(fname_2, 'foo\nbar\nbaz', false)
+    reread()
+
+    feed(':set diffopt=filler<cr>')
+    screen:expect([[
+      {7:  }{23:------------------}│{7:  }{22:foo              }|
+      {7:  }{23:------------------}│{7:  }{22:bar              }|
+      {7:  }{23:------------------}│{7:  }{22:baz              }|
+      {7:  }^                  │{1:~                  }|
+      {1:~                   }│{1:~                  }|*10
+      {3:<onal-diff-screen-1  }{2:<l-diff-screen-1.2 }|
+      :set diffopt=filler                     |
+    ]])
+
+    feed(':set diffopt+=internal<cr>')
+    screen:expect([[
+      {7:  }{23:------------------}│{7:  }{22:foo              }|
+      {7:  }{23:------------------}│{7:  }{22:bar              }|
+      {7:  }{23:------------------}│{7:  }{22:baz              }|
+      {7:  }^                  │{1:~                  }|
+      {1:~                   }│{1:~                  }|*10
+      {3:<onal-diff-screen-1  }{2:<l-diff-screen-1.2 }|
+      :set diffopt+=internal                  |
+    ]])
+  end)
+
   it('diffopt+=icase', function()
     write_file(fname, 'a\nb\ncd\n', false)
     write_file(fname_2, 'A\nb\ncDe\n', false)
