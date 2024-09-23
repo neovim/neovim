@@ -31,5 +31,5 @@ vim.keymap.set('n', 'gO', function()
   require('vim.vimhelp').show_toc()
 end, { buffer = 0, silent = true })
 
+vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '') .. '\n exe "nunmap <buffer> gO"'
 vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | call v:lua.vim.treesitter.stop()'
-vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | nunmap <buffer> gO'

@@ -34,5 +34,5 @@ end
 -- it's a lisp!
 vim.cmd([[runtime! ftplugin/lisp.vim]])
 
-vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | setl omnifunc< iskeyword<'
+vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '') .. '\n setl omnifunc< iskeyword<'
 vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | call v:lua.vim.treesitter.stop()'
