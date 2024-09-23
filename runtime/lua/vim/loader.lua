@@ -208,8 +208,7 @@ end
 ---@return string|function
 ---@private
 function Loader.loader_lib(modname)
-  local sysname = uv.os_uname().sysname:lower() or ''
-  local is_win = sysname:find('win', 1, true) and not sysname:find('darwin', 1, true)
+  local is_win = vim.fn.has('win32') == 1
   local ret = M.find(modname, { patterns = is_win and { '.dll' } or { '.so' } })[1]
   if ret then
     -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
