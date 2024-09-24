@@ -531,6 +531,19 @@ attribute: >query
     ((super_important_node) @superimportant (#set! priority 105))
 <
 
+                                          *treesitter-highlight-commentstring*
+Treesitter highlighting supports finer-grained 'commentstring's, used by the
+built-in |commenting| plugin. When the cursor is within a node that sets the
+`bo.commentstring` metadata property (|treesitter-directive-set!|), that
+property defines the comment delimiter (where "innermost wins"). This is
+useful for languages like `JSX` that have different comment syntax depending
+on the code region, for example: >query
+
+    ((jsx_element) @_tag (#set! @_tag bo.commentstring "{/* %s */}"))
+<
+When multiple captures set this metadata over a region, only the innermost
+(most specific) one is applied to a given area.
+
 ==============================================================================
 TREESITTER LANGUAGE INJECTIONS                *treesitter-language-injections*
 <
