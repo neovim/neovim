@@ -462,12 +462,8 @@ end:
 /// = row` and `start_col = end_col = col`. To delete the text in a range, use
 /// `replacement = {}`.
 ///
-/// Prefer |nvim_buf_set_lines()| if you are only adding or deleting entire lines.
-///
-/// Prefer |nvim_put()| if you want to insert text at the cursor position.
-///
-/// @see |nvim_buf_set_lines()|
-/// @see |nvim_put()|
+/// @note Prefer |nvim_buf_set_lines()| (for performance) to add or delete entire lines.
+/// @note Prefer |nvim_paste()| or |nvim_put()| to insert (instead of replace) text at cursor.
 ///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer

@@ -95,9 +95,9 @@ variable is and what it was initialized to. In particular, initialization
 should be used instead of declaration and assignment, e.g. >c
 
     int i;
-    i = f();      // BAD: initialization separate from declaration.
+    i = f();      // ❌: initialization separate from declaration.
 
-    int j = g();  // GOOD: declaration has initialization.
+    int j = g();  // ✅: declaration has initialization.
 
 
 Initialization ~
@@ -107,16 +107,13 @@ but each initialization should be done on a separate line.
 
 >c
     int i;
-    int j; // GOOD
-
-    int i, j;   // GOOD: multiple declarations, no initialization.
-
+    int j;              // ✅
+    int i, j;           // ✅: multiple declarations, no initialization.
     int i = 0;
-    int j = 0;  // GOOD: one initialization per line.
+    int j = 0;          // ✅: one initialization per line.
 
-    int i = 0, j;  // BAD: multiple declarations with initialization.
-
-    int i = 0, j = 0;  // BAD: multiple declarations with initialization.
+    int i = 0, j;       // ❌: multiple declarations with initialization.
+    int i = 0, j = 0;   // ❌: multiple declarations with initialization.
 
 ==============================================================================
 Nvim-Specific Magic
@@ -152,10 +149,10 @@ Postincrement and Postdecrement ~
 Use postfix form (`i++`) in statements. >c
 
     for (int i = 0; i < 3; i++) { }
-    int j = ++i;  // OK: ++i is used as an expression.
+    int j = ++i;  // ✅: ++i is used as an expression.
 
     for (int i = 0; i < 3; ++i) { }
-    ++i;  // BAD: ++i is used as a statement.
+    ++i;  // ❌: ++i is used as a statement.
 
 
 Use of const ~
@@ -217,7 +214,7 @@ Booleans ~
 
 Use `bool` to represent boolean values. >c
 
-    int loaded = 1;  // BAD: loaded should have type bool.
+    int loaded = 1;  // ❌: loaded should have type bool.
 
 
 Conditions ~
@@ -382,7 +379,7 @@ Filenames should be all lowercase and can include underscores (`_`).
 Use underscores to separate words. Examples of acceptable file names: >
 
     my_useful_file.c
-    getline_fix.c  // OK: getline refers to the glibc function.
+    getline_fix.c  // ✅: getline refers to the glibc function.
 
 C files should end in `.c` and header files should end in `.h`.
 
@@ -415,10 +412,10 @@ instance: `my_exciting_local_variable`.
 
     For example: >c
 
-        string table_name;  // OK: uses underscore.
-        string tablename;   // OK: all lowercase.
+        string table_name;  // ✅: uses underscore.
+        string tablename;   // ✅: all lowercase.
 
-        string tableName;   // BAD: mixed case.
+        string tableName;   // ❌: mixed case.
 <
 
     Struct Variables ~

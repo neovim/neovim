@@ -307,19 +307,36 @@ See also |dev-naming|.
   easier to inspect and print, and inherently compatible with all Lua plugins.
   (This guideline doesn't apply to opaque, non-data objects like `vim.cmd`.)
 - stdlib functions should follow these common patterns:
-  - accept iterable instead of table
-    - exception: in some cases iterable doesn't make sense, e.g. spair() sorts
-      the input by definition, so there is no reason for it to accept an
-      iterable, because the input needs to be "reified"; it can't operate on
-      a "stream".
-  - return iterable instead of table
-  - mimic the pairs() or ipairs() interface if the function is intended to be
-    used in a "for" loop.
-  - when a result-or-error interface is needed, return `result|nil, nil|errmsg`: >
-    ---@return Foo|nil # Result object, or nil if not found.
-    ---@return nil|string # Error message on failure, or nil on success.
-<
-    - Examples: |vim.ui.open()| |io.open()| |luv-error-handling|
+  - Return |lua-result-or-message| (`any|nil,nil|string`) to communicate
+    failure, or choose from |dev-error-patterns| when appropriate.
+  - Accept iterable instead of only table.
+    - Note: in some cases iterable doesn't make sense, e.g. spair() sorts the
+      input by definition, so there is no reason for it to accept an iterable,
+      because the input needs to be "reified"; it can't operate on a "stream".
+  - Return an iterable (generator) instead of table, if possible.
+  - Mimic the pairs() or ipairs() interface if the function is intended for
+    use in a |for-in| loop.
+
+                                                          *dev-error-patterns*
+To communicate failure to a consumer, choose from these patterns (in order of
+preference):
+1. `retval, errmsg`
+  - When failure is normal, or when it is practical for the consumer to
+    continue (fallback) in some other way. See |lua-result-or-message|.
+2. optional result, no errormsg
+  - Special case of 1. When there is only a single case of "doesn't exist"
+    (e.g. cache lookup, dict lookup).
+3. `error("no luck")`
+  - For invalid state ("must not happen"), when failure is exceptional, or at
+    a low level where the consumers are unlikely to handle it in a meaningful
+    way. Advantage is that propagation happens for free and it's harder to
+    accidentally swallow errors. (E.g. using
+    `uv_handle/pipe:write()` without checking return values is common.)
+4. `on_error` parameter
+  - For async and "visitors" traversing a graph, where many errors may be
+    collected while work continues.
+5. `vim.notify` (sometimes with optional `opts.silent` (async, visitors ^))
+  - High-level / application-level messages. End-user invokes these directly.
 
                                                         *dev-patterns*
 Interface conventions ~
