@@ -137,6 +137,9 @@ DEFAULTS
 
 EDITOR
 
+• Improved |paste| handling for redo (dot-repeat) and macros (|recording|):
+  • Redoing a large paste is significantly faster and ignores 'autoindent'.
+  • Replaying a macro with |@| also replays pasted text.
 • On Windows, filename arguments on the command-line prefixed with "~\" or
   "~/" are now expanded to the user's profile directory, not a relative path
   to a literal "~" directory.
