@@ -122,6 +122,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
     lua_pop(lstate, 1);
   }
   if (ret.has_type_key) {
+    assert(tsize > 0);
     if (ret.type == kObjectTypeFloat
         && (!has_val_key || val_type != LUA_TNUMBER)) {
       ret.type = kObjectTypeNil;
@@ -1150,6 +1151,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Arena *arena, Error *c
         if (table_props.maxidx != 0) {
           cur.obj->data.array = arena_array(arena, table_props.maxidx);
           cur.container = true;
+          assert(kv_size(stack) < SIZE_MAX);
           kvi_push(stack, cur);
         }
         break;
@@ -1158,6 +1160,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Arena *arena, Error *c
         if (table_props.string_keys_num != 0) {
           cur.obj->data.dict = arena_dict(arena, table_props.string_keys_num);
           cur.container = true;
+          assert(kv_size(stack) < SIZE_MAX);
           kvi_push(stack, cur);
           lua_pushnil(lstate);
         }
