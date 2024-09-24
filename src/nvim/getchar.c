@@ -3190,8 +3190,6 @@ bool map_execute_lua(bool may_repeat)
   return true;
 }
 
-static bool paste_repeat_active = false;  ///< true when paste_repeat() is pasting
-
 /// Wraps pasted text stream with K_PASTE_START and K_PASTE_END, and
 /// appends to redo buffer and/or record buffer if needed.
 /// Escapes all K_SPECIAL and NUL bytes in the content.
@@ -3200,14 +3198,14 @@ static bool paste_repeat_active = false;  ///< true when paste_repeat() is pasti
 ///               kTrue for the end of a paste
 ///               kNone for the content of a paste
 /// @param str    the content of the paste (only used when state is kNone)
-void paste_store(const TriState state, const String str, const bool crlf)
+void paste_store(const uint64_t channel_id, const TriState state, const String str, const bool crlf)
 {
   if (State & MODE_CMDLINE) {
     return;
   }
 
   const bool need_redo = !block_redo;
-  const bool need_record = reg_recording != 0 && !paste_repeat_active;
+  const bool need_record = reg_recording != 0 && !is_internal_call(channel_id);
 
   if (!need_redo && !need_record) {
     return;
@@ -3302,12 +3300,10 @@ void paste_repeat(int count)
   String str = cbuf_as_string(ga.ga_data, (size_t)ga.ga_len);
   Arena arena = ARENA_EMPTY;
   Error err = ERROR_INIT;
-  paste_repeat_active = true;
   for (int i = 0; !aborted && i < count; i++) {
-    nvim_paste(str, false, -1, &arena, &err);
+    nvim_paste(LUA_INTERNAL_CALL, str, false, -1, &arena, &err);
     aborted = ERROR_SET(&err);
   }
-  paste_repeat_active = false;
   api_clear_error(&err);
   arena_mem_free(arena_finish(&arena));
   ga_clear(&ga);
