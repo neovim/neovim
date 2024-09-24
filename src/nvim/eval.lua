@@ -20,6 +20,8 @@
 --- @field signature? string
 --- @field desc? string
 --- @field params [string, string, string][]
+--- @field notes? string[]
+--- @field see? string[]
 --- @field lua? false Do not render type information
 --- @field tags? string[] Extra tags
 --- @field data? string Used by gen_eval.lua

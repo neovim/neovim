@@ -1226,7 +1226,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 ///
 /// Useful in mappings and scripts to insert multiline text. Example:
 ///
-/// ```vim
+/// ```lua
 /// vim.keymap.set('n', 'x', function()
 ///   vim.api.nvim_paste([[
 ///     line1
