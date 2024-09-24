@@ -3,7 +3,9 @@
 " Maintainer:		This runtime file is looking for a new maintainer.
 " Former Maintainer:	Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Former Repository:	https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:		2024 Feb 28 by Vim Project
+" Last Change:
+"  2024 Feb 28 by Vim Project
+"  2024 Sep 23 by Vim Project: properly restore fex option
 " Original work by Alex Zvoleff
 
 " Only do this when not yet done for this buffer
@@ -48,9 +50,9 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
 endif
 
 if exists('b:undo_ftplugin')
-  let b:undo_ftplugin .= " | setl cms< com< fo< flp< isk< | unlet! b:browsefilter"
+  let b:undo_ftplugin .= " | setl cms< com< fo< flp< isk< fex< | unlet! b:browsefilter"
 else
-  let b:undo_ftplugin = "setl cms< com< fo< flp< isk< | unlet! b:browsefilter"
+  let b:undo_ftplugin = "setl cms< com< fo< flp< isk< fex< | unlet! b:browsefilter"
 endif
 
 let &cpo = s:cpo_save
