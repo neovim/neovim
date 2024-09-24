@@ -586,6 +586,140 @@ describe('commenting', function()
       feed('.')
       eq(get_lines(), { '"set background=dark', 'lua << EOF', '-- print(1)', 'EOF' })
     end)
+
+    it('respects tree-sitter commentstring metadata', function()
+      exec_lua [=[
+        vim.treesitter.query.set('vim', 'highlights', [[
+          ((list) @_list (#set! @_list bo.commentstring "!! %s"))
+        ]])
+      ]=]
+      setup_treesitter()
+
+      local lines = {
+        'set background=dark',
+        'let mylist = [',
+        [[  \"a",]],
+        [[  \"b",]],
+        [[  \"c",]],
+        '  \\]',
+      }
+      set_lines(lines)
+
+      set_cursor(1, 0)
+      feed('gcc')
+      eq(
+        { '"set background=dark', 'let mylist = [', [[  \"a",]], [[  \"b",]], [[  \"c",]], '  \\]' },
+        get_lines()
+      )
+
+      -- Should work with dot-repeat
+      set_cursor(4, 0)
+      feed('.')
+      eq({
+        '"set background=dark',
+        'let mylist = [',
+        [[  \"a",]],
+        [[  !! \"b",]],
+        [[  \"c",]],
+        '  \\]',
+      }, get_lines())
+    end)
+
+    it('only applies the innermost tree-sitter commentstring metadata', function()
+      exec_lua [=[
+        vim.treesitter.query.set('vim', 'highlights', [[
+          ((list) @_list (#gsub! @_list "(.*)" "%1") (#set! bo.commentstring "!! %s"))
+          ((script_file) @_src (#set! @_src bo.commentstring "## %s"))
+        ]])
+      ]=]
+      setup_treesitter()
+
+      local lines = {
+        'set background=dark',
+        'let mylist = [',
+        [[  \"a",]],
+        [[  \"b",]],
+        [[  \"c",]],
+        '  \\]',
+      }
+      set_lines(lines)
+
+      set_cursor(1, 0)
+      feed('gcc')
+      eq({
+        '## set background=dark',
+        'let mylist = [',
+        [[  \"a",]],
+        [[  \"b",]],
+        [[  \"c",]],
+        '  \\]',
+      }, get_lines())
+
+      -- Should work with dot-repeat
+      set_cursor(4, 0)
+      feed('.')
+      eq({
+        '## set background=dark',
+        'let mylist = [',
+        [[  \"a",]],
+        [[  !! \"b",]],
+        [[  \"c",]],
+        '  \\]',
+      }, get_lines())
+    end)
+
+    it('respects injected tree-sitter commentstring metadata', function()
+      exec_lua [=[
+        vim.treesitter.query.set('lua', 'highlights', [[
+          ((string) @string (#set! @string bo.commentstring "; %s"))
+        ]])
+      ]=]
+      setup_treesitter()
+
+      local lines = {
+        'set background=dark',
+        'lua << EOF',
+        'print[[',
+        'Inside string',
+        ']]',
+        'EOF',
+      }
+      set_lines(lines)
+
+      set_cursor(1, 0)
+      feed('gcc')
+      eq({
+        '"set background=dark',
+        'lua << EOF',
+        'print[[',
+        'Inside string',
+        ']]',
+        'EOF',
+      }, get_lines())
+
+      -- Should work with dot-repeat
+      set_cursor(4, 0)
+      feed('.')
+      eq({
+        '"set background=dark',
+        'lua << EOF',
+        'print[[',
+        '; Inside string',
+        ']]',
+        'EOF',
+      }, get_lines())
+
+      set_cursor(3, 0)
+      feed('.')
+      eq({
+        '"set background=dark',
+        'lua << EOF',
+        '-- print[[',
+        '; Inside string',
+        ']]',
+        'EOF',
+      }, get_lines())
+    end)
   end)
 
   describe('Textobject', function()
