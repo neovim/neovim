@@ -1358,6 +1358,13 @@ describe('API', function()
         test_paste_repeat_visual_select(true)
       end)
     end)
+    it('in a mapping recorded in a macro', function()
+      command([[nnoremap <F2> <Cmd>call nvim_paste('foo', v:false, -1)<CR>]])
+      feed('qr<F2>$q')
+      expect('foo')
+      feed('@r') -- repeating a macro containing the mapping should only paste once
+      expect('foofoo')
+    end)
     local function test_paste_cancel_error(is_error)
       before_each(function()
         exec_lua(([[
