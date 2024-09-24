@@ -639,9 +639,6 @@ a menu item - you don't need to do a :tunmenu as well.
 You can cause a menu to popup at the cursor.  This behaves similarly to the
 PopUp menus except that any menu tree can be popped up.
 
-This command is for backwards compatibility, using it is discouraged, because
-it behaves in a strange way.
-
 							*:popup* *:popu*
 :popu[p] {name}			Popup the menu {name}.  The menu named must
 				have at least one subentry, but need not

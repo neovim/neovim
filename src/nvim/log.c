@@ -258,6 +258,7 @@ void log_callstack_to_file(FILE *log_file, const char *const func_name, const in
 
   do_log_to_file(log_file, LOGLVL_DBG, NULL, func_name, line_num, true, "trace:");
   FILE *fp = popen(cmdbuf, "r");
+  assert(fp);
   char linebuf[IOSIZE];
   while (fgets(linebuf, sizeof(linebuf) - 1, fp) != NULL) {
     fprintf(log_file, "  %s", linebuf);

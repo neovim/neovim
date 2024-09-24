@@ -4,7 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
-Nvim                                                       *nvim* *nvim-intro*
+Nvim                                              *neovim* *nvim* *nvim-intro*
 
 Nvim is based on Vim by Bram Moolenaar.
 

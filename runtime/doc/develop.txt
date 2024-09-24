@@ -7,8 +7,8 @@
 Development of Nvim                                     *development* *dev*
 
 This reference describes design constraints and guidelines, for developing
-Nvim applications or Nvim itself.
-Architecture and internal concepts are covered in src/nvim/README.md
+Nvim applications or Nvim itself. See |dev-arch| for discussion of Nvim's
+architecture and internal concepts.
 
 Nvim is free and open source.  Everybody is encouraged to contribute.
     https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md
