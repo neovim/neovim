@@ -1248,7 +1248,8 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 /// @return
 ///     - true: Client may continue pasting.
 ///     - false: Client should cancel the paste.
-Boolean nvim_paste(String data, Boolean crlf, Integer phase, Arena *arena, Error *err)
+Boolean nvim_paste(uint64_t channel_id, String data, Boolean crlf, Integer phase, Arena *arena,
+                   Error *err)
   FUNC_API_SINCE(6)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
@@ -1273,13 +1274,13 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Arena *arena, Error
     cancelled = true;
   }
   if (!cancelled && (phase == -1 || phase == 1)) {
-    paste_store(kFalse, NULL_STRING, crlf);
+    paste_store(channel_id, kFalse, NULL_STRING, crlf);
   }
   if (!cancelled) {
-    paste_store(kNone, data, crlf);
+    paste_store(channel_id, kNone, data, crlf);
   }
   if (phase == 3 || phase == (cancelled ? 2 : -1)) {
-    paste_store(kTrue, NULL_STRING, crlf);
+    paste_store(channel_id, kTrue, NULL_STRING, crlf);
   }
 theend:
   ;
