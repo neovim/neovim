@@ -4,6 +4,7 @@
 #   - pitfalls: https://izzys.casa/2019/02/everything-you-never-wanted-to-know-about-cmake/
 #   - troubleshooting:
 #     - variable_watch https://cmake.org/cmake/help/latest/command/variable_watch.html
+#     - verbose output: cmake --build build --verbose
 
 # Version should match the tested CMAKE_URL in .github/workflows/build.yml.
 cmake_minimum_required(VERSION 3.16)

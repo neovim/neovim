@@ -67,7 +67,7 @@ See https://luajit.org/ext_profiler.html or the `p.lua` source for details: >
 ==============================================================================
 LUA CONCEPTS AND IDIOMS                                         *lua-concepts*
 
-Lua is very simple: this means that, while there are some quirks, once you
+Lua is very simple, and _consistent_: while there are some quirks, once you
 internalize those quirks, everything works the same everywhere. Scopes
 (closures) in particular are very consistent, unlike JavaScript or most other
 languages.
@@ -85,6 +85,36 @@ https://www.lua.org/doc/cacm2018.pdf
 - Stackful coroutines enable cooperative multithreading, generators, and
   versatile control for both Lua and its host (Nvim).
 
+                                                          *lua-error-handling*
+Lua functions may throw |lua-errors| for exceptional (unexpected) failures,
+which you can handle with |pcall()|.
+                                                       *lua-result-or-message*
+When failure is normal and expected, it's idiomatic to return `nil` which
+signals to the caller that failure is not "exceptional" and must be handled.
+This "result-or-message" pattern is expressed as the multi-value return type
+`any|nil,nil|string`, or in LuaLS notation: >
+
+    ---@return any|nil    # result on success, nil on failure.
+    ---@return nil|string # nil on success, error message on failure.
+<
+Examples of the "result-or-message" pattern:
+- |vim.ui.open()|
+- |io.open()|
+- |luv-error-handling|
+
+When a caller can't proceed on failure, it's idiomatic to `assert()` the
+"result-or-message" result: >lua
+
+    local value = assert(fn())
+
+Guidance: use the "result-or-message" pattern for...
+- Functions where failure is expected, especially when communicating with the
+  external world. E.g. HTTP requests or LSP requests often fail because of
+  server problems, even if the caller did everything right.
+- Functions that return a value, e.g. Foo:new().
+- When there is a list of known error codes which can be returned as a third
+  value (like |luv-error-handling|).
+<
                                                                     *iterator*
 An iterator is just a function that can be called repeatedly to get the "next"
 value of a collection (or any other |iterable|). This interface is expected by
@@ -1666,8 +1696,11 @@ vim.on_key({fn}, {ns_id})                                       *vim.on_key()*
         callbacks if on_key() is called without arguments.
 
 vim.paste({lines}, {phase})                                      *vim.paste()*
-    Paste handler, invoked by |nvim_paste()| when a conforming UI (such as the
-    |TUI|) pastes text into the editor.
+    Paste handler, invoked by |nvim_paste()|.
+
+    Note: This is provided only as a "hook", don't call it directly; call
+    |nvim_paste()| instead, which arranges redo (dot-repeat) and invokes
+    `vim.paste`.
 
     Example: To remove ANSI color codes when pasting: >lua
         vim.paste = (function(overridden)

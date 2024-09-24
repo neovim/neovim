@@ -996,6 +996,9 @@ nvim_input({keys})                                              *nvim_input()*
     input buffer and the call is non-blocking (input is processed
     asynchronously by the eventloop).
 
+    To input blocks of text, |nvim_paste()| is much faster and should be
+    preferred.
+
     On execution error: does not fail, but updates v:errmsg.
 
     Note: ~
@@ -1148,21 +1151,35 @@ nvim_out_write({str})                                       *nvim_out_write()*
       • {str}  Message
 
 nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
-    Pastes at cursor, in any mode.
+    Pastes at cursor (in any mode), and sets "redo" so dot (|.|) will repeat
+    the input. UIs call this to implement "paste", but it's also intended for
+    use by scripts to input large, dot-repeatable blocks of text (as opposed
+    to |nvim_input()| which is subject to mappings/events and is thus much
+    slower).
 
-    Invokes the `vim.paste` handler, which handles each mode appropriately.
-    Sets redo/undo. Faster than |nvim_input()|. Lines break at LF ("\n").
+    Invokes the |vim.paste()| handler, which handles each mode appropriately.
 
     Errors ('nomodifiable', `vim.paste()` failure, …) are reflected in `err`
     but do not affect the return value (which is strictly decided by
     `vim.paste()`). On error or cancel, subsequent calls are ignored
     ("drained") until the next paste is initiated (phase 1 or -1).
 
+    Useful in mappings and scripts to insert multiline text. Example: >vim
+        vim.keymap.set('n', 'x', function()
+          vim.api.nvim_paste([[
+            line1
+            line2
+            line3
+          ]], false, -1)
+        end, { buffer = true })
+<
+
     Attributes: ~
         not allowed when |textlock| is active
 
     Parameters: ~
-      • {data}   Multiline input. May be binary (containing NUL bytes).
+      • {data}   Multiline input. Lines break at LF ("\n"). May be binary
+                 (containing NUL bytes).
       • {crlf}   Also break lines at CR and CRLF.
       • {phase}  -1: paste in a single call (i.e. without streaming). To
                  "stream" a paste, call `nvim_paste` sequentially with these
@@ -1176,7 +1193,8 @@ nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
         • false: Client should cancel the paste.
 
 nvim_put({lines}, {type}, {after}, {follow})                      *nvim_put()*
-    Puts text at cursor, in any mode.
+    Puts text at cursor, in any mode. For dot-repeatable input, use
+    |nvim_paste()|.
 
     Compare |:put| and |p| which are always linewise.
 
@@ -2460,10 +2478,11 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
     `start_row = end_row = row` and `start_col = end_col = col`. To delete the
     text in a range, use `replacement = {}`.
 
-    Prefer |nvim_buf_set_lines()| if you are only adding or deleting entire
-    lines.
-
-    Prefer |nvim_put()| if you want to insert text at the cursor position.
+    Note: ~
+      • Prefer |nvim_buf_set_lines()| (for performance) to add or delete
+        entire lines.
+      • Prefer |nvim_paste()| or |nvim_put()| to insert (instead of replace)
+        text at cursor.
 
     Attributes: ~
         not allowed when |textlock| is active
@@ -2475,10 +2494,6 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
       • {end_row}      Last line index, inclusive
       • {end_col}      Ending column (byte offset) on last line, exclusive
       • {replacement}  Array of lines to use as replacement
-
-    See also: ~
-      • |nvim_buf_set_lines()|
-      • |nvim_put()|
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
     Sets a buffer-scoped (b:) variable

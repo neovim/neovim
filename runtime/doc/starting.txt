@@ -422,6 +422,10 @@ argument.
 		Start |RPC| server on pipe or TCP address {addr}. Sets the
 		primary listen address |v:servername| to {addr}. |serverstart()|
 
+		To start the server on-demand with systemd, use a systemd
+		socket unit and associated service unit running: >
+		systemd-socket-proxyd --exit-idle-time
+<
 ==============================================================================
 Initialization					*initialization* *startup*
 

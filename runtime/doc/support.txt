@@ -25,6 +25,9 @@ Note: Windows 10 "Version 1809" or later is required for |:terminal|. To check
 your Windows version, run the "winver" command and look for "Version xxxx"
 (NOT "OS Build").
 
+Note: On Windows "Server" you may need to install vcruntime140.dll:
+https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
+
 Support types ~
 
 * Tier 1: Officially supported and tested with CI. Any contributed patch
