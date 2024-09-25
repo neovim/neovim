@@ -2078,7 +2078,7 @@ end
 --- @field title? string
 ---
 --- See |diagnostic-severity|.
---- @field severity? vim.diagnostic.Severity
+--- @field severity? vim.diagnostic.SeverityFilter
 
 --- Add all diagnostics to the quickfix list.
 ---
@@ -2106,7 +2106,7 @@ end
 --- @field title? string
 ---
 --- See |diagnostic-severity|.
---- @field severity? vim.diagnostic.Severity
+--- @field severity? vim.diagnostic.SeverityFilter
 
 --- Add buffer diagnostics to the location list.
 ---
