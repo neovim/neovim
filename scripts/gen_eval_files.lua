@@ -245,6 +245,16 @@ local function get_api_meta()
   for _, fun in pairs(functions) do
     local deprecated = fun.deprecated_since ~= nil
 
+    local notes = {} --- @type string[]
+    for _, note in ipairs(fun.notes or {}) do
+      notes[#notes + 1] = note.desc
+    end
+
+    local sees = {} --- @type string[]
+    for _, see in ipairs(fun.see or {}) do
+      sees[#sees + 1] = see.desc
+    end
+
     local params = {} --- @type [string,string][]
     for _, p in ipairs(fun.params) do
       params[#params + 1] = {
@@ -258,6 +268,8 @@ local function get_api_meta()
       signature = 'NA',
       name = fun.name,
       params = params,
+      notes = notes,
+      see = sees,
       returns = api_type(fun.returns[1].type),
       deprecated = deprecated,
     }
@@ -315,6 +327,26 @@ local function render_api_meta(_f, fun, write)
     end
   end
 
+  -- LuaLS doesn't support @note. Render @note items as a markdown list.
+  if fun.notes and #fun.notes > 0 then
+    write('--- Note:')
+    for _, note in ipairs(fun.notes) do
+      -- XXX: abuse md_to_vimdoc() to force-fit the markdown list. Need norm_md()?
+      note = text_utils.md_to_vimdoc(' - ' .. note, 0, 0, 74)
+      for _, l in ipairs(split(vim.trim(norm_text(note)))) do
+        write('--- ' .. l:gsub('\n*$', ''))
+      end
+    end
+    write('---')
+  end
+
+  for _, see in ipairs(fun.see or {}) do
+    see = text_utils.md_to_vimdoc('@see ' .. see, 0, 0, 74)
+    for _, l in ipairs(split(vim.trim(norm_text(see)))) do
+      write('--- ' .. l:gsub([[\s*$]], ''))
+    end
+  end
+
   local param_names = {} --- @type string[]
   local params = process_params(fun.params)
   for _, p in ipairs(params) do
@@ -336,6 +368,7 @@ local function render_api_meta(_f, fun, write)
       write('--- @param ' .. p[1] .. ' ' .. p[2])
     end
   end
+
   if fun.returns ~= '' then
     local ret_desc = fun.returns_desc and ' : ' .. fun.returns_desc or ''
     ret_desc = text_utils.md_to_vimdoc(ret_desc, 0, 0, 74)
