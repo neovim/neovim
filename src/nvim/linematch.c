@@ -331,6 +331,13 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
                           int **decisions, bool iwhite)
 {
   assert(ndiffs <= LN_MAX_BUFS);
+  // check for valid inputs
+  for (size_t i = 0; i < ndiffs; i++) {
+    if (diff_blk[i] == NULL) {
+      // unable to calculate alignment, no input given
+      return 0;
+    }
+  }
 
   size_t memsize = 1;
   size_t memsize_decisions = 0;
