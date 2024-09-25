@@ -151,6 +151,10 @@ local function filter_complex_blocks(body)
         or string.find(line, 'mach_vm_range_recipe')
       )
     then
+      -- Remove bitfields from structs as luajit can't seem to handle those well.
+      line = line:gsub('typedef struct {(.-)}', function(s)
+        return string.format('typedef struct {%s}', s:gsub('%s*:%s*%d+%s*;', ';'))
+      end)
       result[#result + 1] = line
     end
   end
