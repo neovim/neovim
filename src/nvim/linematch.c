@@ -31,7 +31,7 @@ struct diffcmppath_S {
 
 static size_t line_len(const char *s)
 {
-  char *end = strchr(s, '\n');
+  char *end = strchr_ignoringterminator(s, '\n');
   if (end) {
     return (size_t)(end - s);
   }
@@ -146,7 +146,7 @@ static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite)
 void fastforward_buf_to_lnum(const char **s, linenr_T lnum)
 {
   for (int i = 0; i < lnum - 1; i++) {
-    *s = strchr(*s, '\n');
+    *s = strchr_ignoringterminator(*s, '\n');
     if (!*s) {
       return;
     }
@@ -401,4 +401,16 @@ static size_t test_charmatch_paths(diffcmppath_T *node, int lastdecision)
     }
   }
   return (size_t)node->df_choice_mem[lastdecision];
+}
+
+
+// functionally the same as 'strchr', but able to handle file contents that contain '\0'
+static char *strchr_ignoringterminator(const char *p, char c) {
+  while (*p) {
+    if (*p == c) {
+      return (char *)p;
+    }
+    p++;
+  }
+  return (char *)p;
 }
