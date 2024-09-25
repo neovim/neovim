@@ -1164,7 +1164,7 @@ nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
     `vim.paste()`). On error or cancel, subsequent calls are ignored
     ("drained") until the next paste is initiated (phase 1 or -1).
 
-    Useful in mappings and scripts to insert multiline text. Example: >vim
+    Useful in mappings and scripts to insert multiline text. Example: >lua
         vim.keymap.set('n', 'x', function()
           vim.api.nvim_paste([[
             line1
