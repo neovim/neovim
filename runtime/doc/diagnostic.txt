@@ -831,7 +831,7 @@ setloclist({opts})                               *vim.diagnostic.setloclist()*
                   after setting.
                 • {title}? (`string`) Title of the location list. Defaults to
                   "Diagnostics".
-                • {severity}? (`vim.diagnostic.Severity`) See
+                • {severity}? (`vim.diagnostic.SeverityFilter`) See
                   |diagnostic-severity|.
 
 setqflist({opts})                                 *vim.diagnostic.setqflist()*
@@ -845,7 +845,7 @@ setqflist({opts})                                 *vim.diagnostic.setqflist()*
                   after setting.
                 • {title}? (`string`) Title of quickfix list. Defaults to
                   "Diagnostics".
-                • {severity}? (`vim.diagnostic.Severity`) See
+                • {severity}? (`vim.diagnostic.SeverityFilter`) See
                   |diagnostic-severity|.
 
                                                        *vim.diagnostic.show()*
