@@ -159,16 +159,8 @@ function M.is_ancestor(dest, source)
     return false
   end
 
-  local current = source ---@type TSNode?
-  while current ~= nil do
-    if current == dest then
-      return true
-    end
-
-    current = current:parent()
-  end
-
-  return false
+  -- child_containing_descendant returns nil if dest is a direct parent
+  return source:parent() == dest or dest:child_containing_descendant(source) ~= nil
 end
 
 --- Returns the node's range or an unpacked range table
