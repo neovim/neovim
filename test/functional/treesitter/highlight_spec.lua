@@ -12,6 +12,7 @@ local fn = n.fn
 local eq = t.eq
 
 local hl_query_c = [[
+  ; query
   (ERROR) @error
 
   "if" @keyword
@@ -639,8 +640,8 @@ describe('treesitter highlighting (C)', function()
     }
 
     eq({
-      { capture = 'constant', metadata = { priority = '101' }, lang = 'c' },
-      { capture = 'type', metadata = {}, lang = 'c' },
+      { capture = 'constant', metadata = { priority = '101' }, lang = 'c', id = 14 },
+      { capture = 'type', metadata = {}, lang = 'c', id = 3 },
     }, exec_lua [[ return vim.treesitter.get_captures_at_pos(0, 0, 2) ]])
   end)
 
