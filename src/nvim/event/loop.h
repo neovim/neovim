@@ -9,8 +9,8 @@
 
 typedef void *WatcherPtr;
 
-#define _NOOP(x)
-KLIST_INIT(WatcherPtr, WatcherPtr, _NOOP)
+#define NOOP(x)
+KLIST_INIT(WatcherPtr, WatcherPtr, NOOP)
 
 struct loop {
   uv_loop_t uv;
