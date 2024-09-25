@@ -2847,24 +2847,24 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
       • |vim.keymap.set()|
 
 vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
-    Adds a new |mapping|. Examples: >lua
-        -- Map to a Lua function:
-        vim.keymap.set('n', 'lhs', function() print("real lua function") end)
-        -- Map to multiple modes:
-        vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer = true })
-        -- Buffer-local mapping:
-        vim.keymap.set('n', '<leader>w', "<cmd>w<cr>", { silent = true, buffer = 5 })
-        -- Expr mapping:
+    Defines a |mapping| of |keycodes| to a function or keycodes.
+
+    Examples: >lua
+        -- Map "x" to a Lua function:
+        vim.keymap.set('n', 'x', function() print("real lua function") end)
+        -- Map "<leader>x" to multiple modes for the current buffer:
+        vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buffer = true })
+        -- Map <Tab> to an expression (|:map-<expr>|):
         vim.keymap.set('i', '<Tab>', function()
           return vim.fn.pumvisible() == 1 and "<C-n>" or "<Tab>"
         end, { expr = true })
-        -- <Plug> mapping:
+        -- Map "[%%" to a <Plug> mapping:
         vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
 <
 
     Parameters: ~
-      • {mode}  (`string|string[]`) Mode short-name, see |nvim_set_keymap()|.
-                Can also be list of modes to create mapping on multiple modes.
+      • {mode}  (`string|string[]`) Mode "short-name" (see
+                |nvim_set_keymap()|), or a list thereof.
       • {lhs}   (`string`) Left-hand side |{lhs}| of the mapping.
       • {rhs}   (`string|function`) Right-hand side |{rhs}| of the mapping,
                 can be a Lua function.
