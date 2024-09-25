@@ -232,7 +232,7 @@ static int parse_osc8(VTermStringFragment frag, int *attr)
 {
   // Parse the URI from the OSC 8 sequence and add the URL to our URL set.
   // Skip the ID, we don't use it (for now)
-  size_t i = 0;
+  int i = 0;
   for (; i < frag.len; i++) {
     if (frag.str[i] == ';') {
       break;
@@ -248,21 +248,21 @@ static int parse_osc8(VTermStringFragment frag, int *attr)
   }
 
   // Find the terminator
-  const size_t start = i;
+  const int start = i;
   for (; i < frag.len; i++) {
     if (frag.str[i] == '\a' || frag.str[i] == '\x1b') {
       break;
     }
   }
 
-  const size_t len = i - start;
+  const int len = i - start;
   if (len == 0) {
     // Empty OSC 8, no URL
     *attr = 0;
     return 1;
   }
 
-  char *url = xmemdupz(&frag.str[start], len + 1);
+  char *url = xmemdupz(&frag.str[start], (size_t)len + 1);
   url[len] = 0;
   *attr = hl_add_url(0, url);
   xfree(url);
@@ -294,7 +294,7 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
 
   StringBuilder request = KV_INITIAL_VALUE;
   kv_printf(request, "\x1b]%d;", command);
-  kv_concat_len(request, frag.str, frag.len);
+  kv_concat_len(request, frag.str, (size_t)frag.len);
   schedule_termrequest(term, request.items, request.size);
   return 1;
 }
@@ -310,7 +310,7 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
 
   StringBuilder request = KV_INITIAL_VALUE;
   kv_printf(request, "\x1bP%*s", (int)commandlen, command);
-  kv_concat_len(request, frag.str, frag.len);
+  kv_concat_len(request, frag.str, (size_t)frag.len);
   schedule_termrequest(user, request.items, request.size);
   return 1;
 }
@@ -1143,21 +1143,21 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     VTermStringFragment frag = val->string;
 
     if (frag.initial && frag.final) {
-      buf_set_term_title(buf, frag.str, frag.len);
+      buf_set_term_title(buf, frag.str, (size_t)frag.len);
       break;
     }
 
     if (frag.initial) {
       term->title_len = 0;
-      term->title_size = MAX(frag.len, 1024);
+      term->title_size = MAX((size_t)frag.len, 1024);
       term->title = xmalloc(sizeof(char *) * term->title_size);
-    } else if (term->title_len + frag.len > term->title_size) {
+    } else if (term->title_len + (size_t)frag.len > term->title_size) {
       term->title_size *= 2;
       term->title = xrealloc(term->title, sizeof(char *) * term->title_size);
     }
 
-    memcpy(term->title + term->title_len, frag.str, frag.len);
-    term->title_len += frag.len;
+    memcpy(term->title + term->title_len, frag.str, (size_t)frag.len);
+    term->title_len += (size_t)frag.len;
 
     if (frag.final) {
       buf_set_term_title(buf, term->title, term->title_len);
@@ -1314,7 +1314,7 @@ static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag,
     kv_size(term->selection) = 0;
   }
 
-  kv_concat_len(term->selection, frag.str, frag.len);
+  kv_concat_len(term->selection, frag.str, (size_t)frag.len);
 
   if (frag.final) {
     char *data = xmemdupz(term->selection.items, kv_size(term->selection));
