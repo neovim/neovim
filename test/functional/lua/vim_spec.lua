@@ -4043,7 +4043,36 @@ end)
 describe('vim.keymap', function()
   before_each(clear)
 
-  it('can make a mapping', function()
+  it('validates', function()
+    matches(
+      'mode: expected string|table, got number',
+      pcall_err(exec_lua, [[vim.keymap.set(42, 'x', print)]])
+    )
+
+    matches(
+      'rhs: expected string|function, got nil',
+      pcall_err(exec_lua, [[vim.keymap.set('n', 'x')]])
+    )
+
+    matches(
+      'lhs: expected string, got table',
+      pcall_err(exec_lua, [[vim.keymap.set('n', {}, print)]])
+    )
+
+    matches(
+      'opts: expected table, got function',
+      pcall_err(exec_lua, [[vim.keymap.set({}, 'x', 42, function() end)]])
+    )
+
+    matches(
+      'rhs: expected string|function, got number',
+      pcall_err(exec_lua, [[vim.keymap.set('z', 'x', 42)]])
+    )
+
+    matches('Invalid mode shortname: "z"', pcall_err(exec_lua, [[vim.keymap.set('z', 'x', 'y')]]))
+  end)
+
+  it('mapping', function()
     eq(
       0,
       exec_lua [[
@@ -4058,7 +4087,7 @@ describe('vim.keymap', function()
     eq(1, exec_lua [[return GlobalCount]])
   end)
 
-  it('can make an expr mapping', function()
+  it('expr mapping', function()
     exec_lua [[
       vim.keymap.set('n', 'aa', function() return '<Insert>π<C-V><M-π>foo<lt><Esc>' end, {expr = true})
     ]]
@@ -4068,7 +4097,7 @@ describe('vim.keymap', function()
     eq({ 'π<M-π>foo<' }, api.nvim_buf_get_lines(0, 0, -1, false))
   end)
 
-  it('can overwrite a mapping', function()
+  it('overwrite a mapping', function()
     eq(
       0,
       exec_lua [[
@@ -4091,7 +4120,7 @@ describe('vim.keymap', function()
     eq(0, exec_lua [[return GlobalCount]])
   end)
 
-  it('can unmap a mapping', function()
+  it('unmap', function()
     eq(
       0,
       exec_lua [[
@@ -4115,7 +4144,7 @@ describe('vim.keymap', function()
     eq('\nNo mapping found', n.exec_capture('nmap asdf'))
   end)
 
-  it('works with buffer-local mappings', function()
+  it('buffer-local mappings', function()
     eq(
       0,
       exec_lua [[
@@ -4157,7 +4186,7 @@ describe('vim.keymap', function()
     )
   end)
 
-  it('can do <Plug> mappings', function()
+  it('<Plug> mappings', function()
     eq(
       0,
       exec_lua [[
