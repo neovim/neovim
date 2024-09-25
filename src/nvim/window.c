@@ -359,13 +359,13 @@ newwindow:
             wp = lastwin;  // wrap around
           }
           while (wp != NULL && wp->w_floating
-                 && !wp->w_config.focusable) {
+                 && (wp->w_config.hide || !wp->w_config.focusable)) {
             wp = wp->w_prev;
           }
         } else {  // go to next window
           wp = curwin->w_next;
           while (wp != NULL && wp->w_floating
-                 && !wp->w_config.focusable) {
+                 && (wp->w_config.hide || !wp->w_config.focusable)) {
             wp = wp->w_next;
           }
           if (wp == NULL) {
@@ -2851,7 +2851,7 @@ int win_close(win_T *win, bool free_buf, bool force)
           break;
         }
         if (!wp->w_p_pvw && !bt_quickfix(wp->w_buffer)
-            && !(wp->w_floating && !wp->w_config.focusable)) {
+            && !(wp->w_floating && (wp->w_config.hide || !wp->w_config.focusable))) {
           curwin = wp;
           break;
         }
