@@ -2883,20 +2883,20 @@ function vim.fn.getcharstr(expr) end
 --- Only works when the command line is being edited, thus
 --- requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
 --- See |:command-completion| for the return string.
---- Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()| and
---- |setcmdline()|.
+--- Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
+--- |getcmdprompt()| and |setcmdline()|.
 --- Returns an empty string when completion is not defined.
 ---
 --- @return string
 function vim.fn.getcmdcompltype() end
 
---- Return the current command-line.  Only works when the command
---- line is being edited, thus requires use of |c_CTRL-\_e| or
---- |c_CTRL-R_=|.
+--- Return the current command-line input.  Only works when the
+--- command line is being edited, thus requires use of
+--- |c_CTRL-\_e| or |c_CTRL-R_=|.
 --- Example: >vim
 ---   cmap <F7> <C-\>eescape(getcmdline(), ' \')<CR>
---- <Also see |getcmdtype()|, |getcmdpos()|, |setcmdpos()| and
---- |setcmdline()|.
+--- <Also see |getcmdtype()|, |getcmdpos()|, |setcmdpos()|,
+--- |getcmdprompt()| and |setcmdline()|.
 --- Returns an empty string when entering a password or using
 --- |inputsecret()|.
 ---
@@ -2908,11 +2908,21 @@ function vim.fn.getcmdline() end
 --- Only works when editing the command line, thus requires use of
 --- |c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
 --- Returns 0 otherwise.
---- Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()| and
---- |setcmdline()|.
+--- Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
+--- |getcmdprompt()| and |setcmdline()|.
 ---
 --- @return integer
 function vim.fn.getcmdpos() end
+
+--- Return the current command-line prompt when using functions
+--- like |input()| or |confirm()|.
+--- Only works when the command line is being edited, thus
+--- requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+--- Also see |getcmdtype()|, |getcmdline()|, |getcmdpos()|,
+--- |setcmdpos()| and |setcmdline()|.
+---
+--- @return string
+function vim.fn.getcmdprompt() end
 
 --- Return the screen position of the cursor in the command line
 --- as a byte count.  The first column is 1.

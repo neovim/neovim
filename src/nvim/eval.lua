@@ -3594,8 +3594,8 @@ M.funcs = {
       Only works when the command line is being edited, thus
       requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
       See |:command-completion| for the return string.
-      Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()| and
-      |setcmdline()|.
+      Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
+      |getcmdprompt()| and |setcmdline()|.
       Returns an empty string when completion is not defined.
     ]=],
     name = 'getcmdcompltype',
@@ -3605,13 +3605,13 @@ M.funcs = {
   },
   getcmdline = {
     desc = [=[
-      Return the current command-line.  Only works when the command
-      line is being edited, thus requires use of |c_CTRL-\_e| or
-      |c_CTRL-R_=|.
+      Return the current command-line input.  Only works when the
+      command line is being edited, thus requires use of
+      |c_CTRL-\_e| or |c_CTRL-R_=|.
       Example: >vim
       	cmap <F7> <C-\>eescape(getcmdline(), ' \')<CR>
-      <Also see |getcmdtype()|, |getcmdpos()|, |setcmdpos()| and
-      |setcmdline()|.
+      <Also see |getcmdtype()|, |getcmdpos()|, |setcmdpos()|,
+      |getcmdprompt()| and |setcmdline()|.
       Returns an empty string when entering a password or using
       |inputsecret()|.
     ]=],
@@ -3627,13 +3627,27 @@ M.funcs = {
       Only works when editing the command line, thus requires use of
       |c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
       Returns 0 otherwise.
-      Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()| and
-      |setcmdline()|.
+      Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
+      |getcmdprompt()| and |setcmdline()|.
     ]=],
     name = 'getcmdpos',
     params = {},
     returns = 'integer',
     signature = 'getcmdpos()',
+  },
+  getcmdprompt = {
+    desc = [=[
+      Return the current command-line prompt when using functions
+      like |input()| or |confirm()|.
+      Only works when the command line is being edited, thus
+      requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+      Also see |getcmdtype()|, |getcmdline()|, |getcmdpos()|,
+      |setcmdpos()| and |setcmdline()|.
+    ]=],
+    name = 'getcmdprompt',
+    params = {},
+    returns = 'string',
+    signature = 'getcmdprompt()',
   },
   getcmdscreenpos = {
     desc = [=[
