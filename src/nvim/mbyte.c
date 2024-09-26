@@ -1380,11 +1380,15 @@ int utf_fold(int a)
   }
 
   utf8proc_uint8_t input_str[16] = { 0 };
-  utf8proc_encode_char(a, input_str);
+  if (utf8proc_encode_char(a, input_str) <= 0) {
+    return a;
+  }
 
   utf8proc_uint8_t *fold_str_utf;
-  utf8proc_map((utf8proc_uint8_t *)input_str, 0, &fold_str_utf,
-               UTF8PROC_NULLTERM | UTF8PROC_CASEFOLD);
+  if (utf8proc_map((utf8proc_uint8_t *)input_str, 0, &fold_str_utf,
+                   UTF8PROC_NULLTERM | UTF8PROC_CASEFOLD) < 0) {
+    return a;
+  }
 
   int fold_codepoint_utf = utf_ptr2char((char *)fold_str_utf);
 
