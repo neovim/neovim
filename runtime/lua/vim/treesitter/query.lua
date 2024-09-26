@@ -1018,6 +1018,14 @@ function M.omnifunc(findstart, base)
   return vim.treesitter._query_linter.omnifunc(findstart, base)
 end
 
+--- Optional keyword arguments:
+--- @class vim.treesitter.query.edit.Opts
+--- @inlinedoc
+---
+--- command used to create a new window. Defaults to 60vnew or new depending on inspect window
+--- presence.
+--- @field wincmd? string
+
 --- Opens a live editor to query the buffer you started from.
 ---
 --- Can also be shown with [:EditQuery]().
@@ -1027,8 +1035,9 @@ end
 --- example queries at `$VIMRUNTIME/queries/`.
 ---
 --- @param lang? string language to open the query editor for. If omitted, inferred from the current buffer's filetype.
-function M.edit(lang)
-  vim.treesitter.dev.edit_query(lang)
+--- @param opts? vim.treesitter.query.edit.Opts
+function M.edit(lang, opts)
+  vim.treesitter.dev.edit_query(lang, opts)
 end
 
 return M

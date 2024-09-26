@@ -22,7 +22,11 @@ do
   end, { desc = 'Inspect treesitter language tree for buffer', count = true })
 
   vim.api.nvim_create_user_command('EditQuery', function(cmd)
-    vim.treesitter.query.edit(cmd.fargs[1])
+    local opts = {}
+    if cmd.smods.horizontal then
+      opts.wincmd = 'new'
+    end
+    vim.treesitter.query.edit(cmd.fargs[1], opts)
   end, { desc = 'Edit treesitter query', nargs = '?' })
 end
 

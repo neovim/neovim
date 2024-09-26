@@ -1056,7 +1056,7 @@ add_predicate({name}, {handler}, {opts})
                      instead of a single node. Defaults to true. This option
                      will be removed in a future release.
 
-edit({lang})                                     *vim.treesitter.query.edit()*
+edit({lang}, {opts})                             *vim.treesitter.query.edit()*
     Opens a live editor to query the buffer you started from.
 
     Can also be shown with *:EditQuery*.
@@ -1069,6 +1069,10 @@ edit({lang})                                     *vim.treesitter.query.edit()*
     Parameters: ~
       • {lang}  (`string?`) language to open the query editor for. If omitted,
                 inferred from the current buffer's filetype.
+      • {opts}  (`table?`) Optional keyword arguments:
+                • {wincmd}? (`string`) command used to create a new window.
+                  Defaults to 60vnew or new depending on inspect window
+                  presence.
 
 get({lang}, {query_name})                         *vim.treesitter.query.get()*
     Returns the runtime query {query_name} for {lang}.

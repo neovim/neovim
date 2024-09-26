@@ -573,7 +573,9 @@ end
 
 --- @private
 --- @param lang? string language to open the query editor for.
-function M.edit_query(lang)
+--- @param opts? vim.treesitter.query.edit.Opts
+function M.edit_query(lang, opts)
+  opts = opts or {}
   local buf = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
 
@@ -593,7 +595,7 @@ function M.edit_query(lang)
     win = base_win
     cmd = 'new'
   end
-  vim.cmd(cmd)
+  vim.cmd(opts.wincmd and opts.wincmd or cmd)
 
   local parser = vim.treesitter._get_parser(buf, lang)
   if not parser then
