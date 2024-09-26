@@ -347,4 +347,10 @@ describe('mbyte', function()
     check('L̓̉̑̒̌̚ơ̗̌̒̄̀ŕ̈̈̎̐̕è̇̅̄̄̐m̖̟̟̅̄̚', {'L̓̉̑̒̌̚', 'ơ̗̌̒̄̀', 'ŕ̈̈̎̐̕', 'è̇̅̄̄̐', 'm̖̟̟̅̄̚'})
     -- stylua: ignore end
   end)
+
+  describe('utf_fold', function()
+    itp('does not crash with surrogates #30527', function()
+      eq(0xDDFB, lib.utf_fold(0xDDFB))
+    end)
+  end)
 end)
