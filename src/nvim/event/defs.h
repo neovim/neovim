@@ -86,8 +86,9 @@ struct stream {
     uv_tty_t tty;
 #endif
   } uv;
-  uv_stream_t *uvstream;
-  uv_file fd;
+  uv_stream_t *uvstream;  ///< NULL when the stream is a file
+  uv_file fd;    ///< When the stream is a file, this is its file descriptor
+  int64_t fpos;  ///< When the stream is a file, this is the position in file
   void *cb_data;
   stream_close_cb close_cb, internal_close_cb;
   void *close_cb_data, *internal_data;
@@ -112,7 +113,6 @@ struct rstream {
   uv_buf_t uvbuf;
   stream_read_cb read_cb;
   size_t num_bytes;
-  int64_t fpos;
 };
 
 #define ADDRESS_MAX_SIZE 256
