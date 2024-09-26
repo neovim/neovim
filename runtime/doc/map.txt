@@ -1684,7 +1684,7 @@ The valid escape sequences are
 		nothing. Supported modifiers are |:aboveleft|, |:belowright|,
 		|:botright|, |:browse|, |:confirm|, |:hide|, |:horizontal|,
 		|:keepalt|, |:keepjumps|, |:keepmarks|, |:keeppatterns|,
-		|:leftabove|, |:lockmarks|, |:noautocmd|, |:noswapfile|
+		|:leftabove|, |:lockmarks|, |:noautocmd|, |:noswapfile|,
 		|:rightbelow|, |:sandbox|, |:silent|, |:tab|, |:topleft|,
 		|:unsilent|, |:verbose|, and |:vertical|.
 		Note that |:filter| is not supported.
