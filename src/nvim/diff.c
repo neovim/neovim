@@ -2005,7 +2005,7 @@ static void run_linematch_algorithm(diff_T *dp)
 {
   // define buffers for diff algorithm
   mmfile_t diffbufs_mm[DB_COUNT];
-  const char *diffbufs[DB_COUNT];
+  const mmfile_t *diffbufs[DB_COUNT];
   int diff_length[DB_COUNT];
   size_t ndiffs = 0;
   for (int i = 0; i < DB_COUNT; i++) {
@@ -2015,9 +2015,7 @@ static void run_linematch_algorithm(diff_T *dp)
       diff_write_buffer(curtab->tp_diffbuf[i], &diffbufs_mm[ndiffs],
                         dp->df_lnum[i], dp->df_lnum[i] + dp->df_count[i] - 1);
 
-      // we want to get the char* to the diff buffer that was just written
-      // we add it to the array of char*, diffbufs
-      diffbufs[ndiffs] = diffbufs_mm[ndiffs].ptr;
+      diffbufs[ndiffs] = &diffbufs_mm[ndiffs];
 
       // keep track of the length of this diff block to pass it to the linematch
       // algorithm

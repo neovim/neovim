@@ -10,6 +10,8 @@
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/pos_defs.h"
+#include "nvim/strings.h"
+#include "xdiff/xdiff.h"
 
 #define LN_MAX_BUFS 8
 #define LN_DECISION_MAX 255  // pow(2, LN_MAX_BUFS(8)) - 1 = 255
@@ -29,48 +31,48 @@ struct diffcmppath_S {
 # include "linematch.c.generated.h"
 #endif
 
-static size_t line_len(const char *s)
+static size_t line_len(const mmfile_t *m)
 {
-  char *end = strchr(s, '\n');
+  char *s = m->ptr;
+  size_t n = (size_t)m->size;
+  char *end = strnchr(s, &n, '\n');
   if (end) {
     return (size_t)(end - s);
   }
-  return strlen(s);
+  return (size_t)m->size;
 }
+
+#define MATCH_CHAR_MAX_LEN 800
 
 /// Same as matching_chars but ignore whitespace
 ///
 /// @param s1
 /// @param s2
-static int matching_chars_iwhite(const char *s1, const char *s2)
+static int matching_chars_iwhite(const mmfile_t *s1, const mmfile_t *s2)
 {
   // the newly processed strings that will be compared
-  // delete the white space characters, and/or replace all upper case with lower
-  char *strsproc[2];
-  const char *strsorig[2] = { s1, s2 };
+  // delete the white space characters
+  mmfile_t sp[2];
+  char p[2][MATCH_CHAR_MAX_LEN];
   for (int k = 0; k < 2; k++) {
-    size_t d = 0;
-    size_t i = 0;
-    size_t slen = line_len(strsorig[k]);
-    strsproc[k] = xmalloc((slen + 1) * sizeof(char));
-    while (d + i < slen) {
-      char e = strsorig[k][i + d];
+    const mmfile_t *s = k == 0 ? s1 : s2;
+    size_t pi = 0;
+    size_t slen = MIN(MATCH_CHAR_MAX_LEN - 1, line_len(s));
+    for (size_t i = 0; i <= slen; i++) {
+      char e = s->ptr[i];
       if (e != ' ' && e != '\t') {
-        strsproc[k][i] = e;
-        i++;
-      } else {
-        d++;
+        p[k][pi] = e;
+        pi++;
       }
     }
-    strsproc[k][i] = NUL;
-  }
-  int matching = matching_chars(strsproc[0], strsproc[1]);
-  xfree(strsproc[0]);
-  xfree(strsproc[1]);
-  return matching;
-}
 
-#define MATCH_CHAR_MAX_LEN 800
+    sp[k] = (mmfile_t){
+      .ptr = p[k],
+      .size = (int)pi,
+    };
+  }
+  return matching_chars(&sp[0], &sp[1]);
+}
 
 /// Return matching characters between "s1" and "s2" whilst respecting sequence order.
 /// Consider the case of two strings 'AAACCC' and 'CCCAAA', the
@@ -83,12 +85,14 @@ static int matching_chars_iwhite(const char *s1, const char *s2)
 ///   matching_chars("abcdefg", "gfedcba")         -> 1  // all characters in common,
 ///                                                      // but only at most 1 in sequence
 ///
-/// @param s1
-/// @param s2
-static int matching_chars(const char *s1, const char *s2)
+/// @param m1
+/// @param m2
+static int matching_chars(const mmfile_t *m1, const mmfile_t *m2)
 {
-  size_t s1len = MIN(MATCH_CHAR_MAX_LEN - 1, line_len(s1));
-  size_t s2len = MIN(MATCH_CHAR_MAX_LEN - 1, line_len(s2));
+  size_t s1len = MIN(MATCH_CHAR_MAX_LEN - 1, line_len(m1));
+  size_t s2len = MIN(MATCH_CHAR_MAX_LEN - 1, line_len(m2));
+  char *s1 = m1->ptr;
+  char *s2 = m2->ptr;
   int matrix[2][MATCH_CHAR_MAX_LEN] = { 0 };
   bool icur = 1;  // save space by storing only two rows for i axis
   for (size_t i = 0; i < s1len; i++) {
@@ -119,13 +123,13 @@ static int matching_chars(const char *s1, const char *s2)
 /// @param sp
 /// @param fomvals
 /// @param n
-static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite)
+static int count_n_matched_chars(mmfile_t **sp, const size_t n, bool iwhite)
 {
   int matched_chars = 0;
   int matched = 0;
   for (size_t i = 0; i < n; i++) {
     for (size_t j = i + 1; j < n; j++) {
-      if (sp[i] != NULL && sp[j] != NULL) {
+      if (sp[i]->ptr != NULL && sp[j]->ptr != NULL) {
         matched++;
         // TODO(lewis6991): handle whitespace ignoring higher up in the stack
         matched_chars += iwhite ? matching_chars_iwhite(sp[i], sp[j])
@@ -143,15 +147,17 @@ static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite)
   return matched_chars;
 }
 
-void fastforward_buf_to_lnum(const char **s, linenr_T lnum)
+mmfile_t fastforward_buf_to_lnum(mmfile_t s, linenr_T lnum)
 {
   for (int i = 0; i < lnum - 1; i++) {
-    *s = strchr(*s, '\n');
-    if (!*s) {
-      return;
+    s.ptr = strnchr(s.ptr, (size_t *)&s.size, '\n');
+    if (!s.ptr) {
+      break;
     }
-    (*s)++;
+    s.ptr++;
+    s.size--;
   }
+  return s;
 }
 
 /// try all the different ways to compare these lines and use the one that
@@ -167,25 +173,25 @@ void fastforward_buf_to_lnum(const char **s, linenr_T lnum)
 /// @param diff_blk
 static void try_possible_paths(const int *df_iters, const size_t *paths, const int npaths,
                                const int path_idx, int *choice, diffcmppath_T *diffcmppath,
-                               const int *diff_len, const size_t ndiffs, const char **diff_blk,
+                               const int *diff_len, const size_t ndiffs, const mmfile_t **diff_blk,
                                bool iwhite)
 {
   if (path_idx == npaths) {
     if ((*choice) > 0) {
       int from_vals[LN_MAX_BUFS] = { 0 };
       const int *to_vals = df_iters;
-      const char *current_lines[LN_MAX_BUFS];
+      mmfile_t mm[LN_MAX_BUFS];  // stack memory for current_lines
+      mmfile_t *current_lines[LN_MAX_BUFS];
       for (size_t k = 0; k < ndiffs; k++) {
         from_vals[k] = df_iters[k];
         // get the index at all of the places
         if ((*choice) & (1 << k)) {
           from_vals[k]--;
-          const char *p = diff_blk[k];
-          fastforward_buf_to_lnum(&p, df_iters[k]);
-          current_lines[k] = p;
+          mm[k] = fastforward_buf_to_lnum(*diff_blk[k], df_iters[k]);
         } else {
-          current_lines[k] = NULL;
+          mm[k] = (mmfile_t){ 0 };
         }
+        current_lines[k] = &mm[k];
       }
       size_t unwrapped_idx_from = unwrap_indexes(from_vals, diff_len, ndiffs);
       size_t unwrapped_idx_to = unwrap_indexes(to_vals, diff_len, ndiffs);
@@ -244,7 +250,7 @@ static size_t unwrap_indexes(const int *values, const int *diff_len, const size_
 /// @param ndiffs
 /// @param diff_blk
 static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *diffcmppath,
-                            const int *diff_len, const size_t ndiffs, const char **diff_blk,
+                            const int *diff_len, const size_t ndiffs, const mmfile_t **diff_blk,
                             bool iwhite)
 {
   if (ch_dim == ndiffs) {
@@ -327,7 +333,7 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
 /// @param ndiffs
 /// @param [out] [allocated] decisions
 /// @return the length of decisions
-size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size_t ndiffs,
+size_t linematch_nbuffers(const mmfile_t **diff_blk, const int *diff_len, const size_t ndiffs,
                           int **decisions, bool iwhite)
 {
   assert(ndiffs <= LN_MAX_BUFS);
