@@ -34,7 +34,6 @@ void rstream_init_stream(RStream *stream, uv_stream_t *uvstream)
 void rstream_init(RStream *stream)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  stream->fpos = 0;
   stream->read_cb = NULL;
   stream->num_bytes = 0;
   stream->buffer = alloc_block();
@@ -156,7 +155,7 @@ static void fread_idle_cb(uv_idle_t *handle)
   stream->uvbuf.len = UV_BUF_LEN(rstream_space(stream));
 
   // Synchronous read
-  uv_fs_read(handle->loop, &req, stream->s.fd, &stream->uvbuf, 1, stream->fpos, NULL);
+  uv_fs_read(handle->loop, &req, stream->s.fd, &stream->uvbuf, 1, stream->s.fpos, NULL);
 
   uv_fs_req_cleanup(&req);
 
@@ -168,7 +167,7 @@ static void fread_idle_cb(uv_idle_t *handle)
 
   // no errors (req.result (ssize_t) is positive), it's safe to use.
   stream->write_pos += req.result;
-  stream->fpos += req.result;
+  stream->s.fpos += req.result;
   invoke_read_cb(stream, false);
 }
 
