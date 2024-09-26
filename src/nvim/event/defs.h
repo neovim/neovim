@@ -84,16 +84,16 @@ struct stream {
     uv_tty_t tty;
 #endif
   } uv;
-  uv_stream_t *uvstream;
+  uv_stream_t *uvstream;  ///< NULL when the stream is a file
   uv_buf_t uvbuf;
   RBuffer *buffer;
-  uv_file fd;
+  uv_file fd;    ///< When the stream is a file, this is its file descriptor
   stream_read_cb read_cb;
   stream_write_cb write_cb;
   void *cb_data;
   stream_close_cb close_cb, internal_close_cb;
   void *close_cb_data, *internal_data;
-  size_t fpos;
+  size_t fpos;  ///< When the stream is a file, this is the position in file
   size_t curmem;
   size_t maxmem;
   size_t pending_reqs;

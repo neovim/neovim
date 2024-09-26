@@ -288,6 +288,37 @@ describe('channels', function()
     eq({ 'notification', 'exit', { 3, 0 } }, next_msg())
   end)
 
+  it('stdio channel works with stdout redirected to file #30509', function()
+    t.write_file(
+      'Xstdio_write.vim',
+      [[
+        let chan = stdioopen({})
+        call chansend(chan, 'foo')
+        call chansend(chan, 'bar')
+        qall!
+      ]]
+    )
+    local fd = assert(vim.uv.fs_open('Xstdio_redir', 'w', 420))
+    local exit_code, exit_signal
+    local handle = vim.uv.spawn(nvim_prog, {
+      args = { '-u', 'NONE', '-i', 'NONE', '--headless', '-S', 'Xstdio_write.vim' },
+      -- Simulate shell redirection: "nvim ... > Xstdio_redir". #30509
+      stdio = { nil, fd, nil },
+    }, function(code, signal)
+      vim.uv.stop()
+      exit_code, exit_signal = code, signal
+    end)
+    finally(function()
+      handle:close()
+      vim.uv.fs_close(fd)
+      os.remove('Xstdio_write.vim')
+      os.remove('Xstdio_redir')
+    end)
+    vim.uv.run('default')
+    eq({ 0, 0 }, { exit_code, exit_signal })
+    eq('foobar', t.read_file('Xstdio_redir'))
+  end)
+
   it('can use buffered output mode', function()
     skip(fn.executable('grep') == 0, 'missing "grep" command')
     source([[

@@ -45,6 +45,8 @@ int stream_set_blocking(int fd, bool blocking)
 void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
   FUNC_ATTR_NONNULL_ARG(2)
 {
+  // The underlying stream is either a file or an existing uv stream.
+  assert(uvstream == NULL ? fd >= 0 : fd < 0);
   stream->uvstream = uvstream;
 
   if (fd >= 0) {
