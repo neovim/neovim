@@ -379,7 +379,14 @@ function M._check(mods, plugin_names)
       s_output = {}
       M.error('The healthcheck report for "' .. name .. '" plugin is empty.')
     end
-    local header = { string.rep('=', 78), name .. ': ' .. func, '' }
+
+    local header = {
+      string.rep('=', 78),
+      -- Example: `foo.health: [ …] require("foo.health").check()`
+      ('%s: %s%s'):format(name, (' '):rep(76 - name:len() - func:len()), func),
+      '',
+    }
+
     -- remove empty line after header from report_start
     if s_output[1] == '' then
       local tmp = {} ---@type string[]
