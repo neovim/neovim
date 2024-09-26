@@ -79,7 +79,7 @@ describe('vim.health', function()
       n.expect([[
 
       ==============================================================================
-      test_plug.full_render: require("test_plug.full_render.health").check()
+      test_plug.full_render:         require("test_plug.full_render.health").check()
 
       report 1 ~
       - OK life is fine
@@ -102,7 +102,7 @@ describe('vim.health', function()
       n.expect([[
 
         ==============================================================================
-        test_plug: require("test_plug.health").check()
+        test_plug:                                 require("test_plug.health").check()
 
         report 1 ~
         - OK everything is fine
@@ -111,7 +111,7 @@ describe('vim.health', function()
         - OK nothing to see here
 
         ==============================================================================
-        test_plug.success1: require("test_plug.success1.health").check()
+        test_plug.success1:               require("test_plug.success1.health").check()
 
         report 1 ~
         - OK everything is fine
@@ -120,7 +120,7 @@ describe('vim.health', function()
         - OK nothing to see here
 
         ==============================================================================
-        test_plug.success2: require("test_plug.success2.health").check()
+        test_plug.success2:               require("test_plug.success2.health").check()
 
         another 1 ~
         - OK ok
@@ -132,7 +132,7 @@ describe('vim.health', function()
       n.expect([[
 
         ==============================================================================
-        test_plug.submodule: require("test_plug.submodule.health").check()
+        test_plug.submodule:             require("test_plug.submodule.health").check()
 
         report 1 ~
         - OK everything is fine
@@ -157,9 +157,10 @@ describe('vim.health', function()
       local screen = Screen.new(50, 12)
       screen:attach()
       screen:set_default_attr_ids({
+        h1 = { reverse = true },
+        h2 = { foreground = tonumber('0x6a0dad') },
         Ok = { foreground = Screen.colors.LightGreen },
         Error = { foreground = Screen.colors.Red },
-        Heading = { foreground = tonumber('0x6a0dad') },
         Bar = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGrey },
       })
       command('checkhealth foo success1')
@@ -167,15 +168,15 @@ describe('vim.health', function()
       screen:expect {
         grid = [[
         ^                                                  |
-        {Bar:──────────────────────────────────────────────────}|
-        {Heading:foo: }                                             |
+        {Bar:                                                  }|
+        {h1:foo:                                              }|
                                                           |
         - {Error:ERROR} No healthcheck found for "foo" plugin.    |
                                                           |
-        {Bar:──────────────────────────────────────────────────}|
-        {Heading:test_plug.success1: require("test_plug.success1.he}|
+        {Bar:                                                  }|
+        {h1:test_plug.success1:               require("test_pl}|
                                                           |
-        {Heading:report 1}                                          |
+        {h2:report 1}                                          |
         - {Ok:OK} everything is fine                           |
                                                           |
       ]],
@@ -188,7 +189,7 @@ describe('vim.health', function()
       n.expect([[
 
         ==============================================================================
-        non_existent_healthcheck: 
+        non_existent_healthcheck:                                                     
 
         - ERROR No healthcheck found for "non_existent_healthcheck" plugin.
         ]])
@@ -223,9 +224,10 @@ describe(':checkhealth window', function()
   it('opens directly if no buffer created', function()
     local screen = Screen.new(50, 12)
     screen:set_default_attr_ids {
+      h1 = { reverse = true },
+      h2 = { foreground = tonumber('0x6a0dad') },
       [1] = { foreground = Screen.colors.Blue, bold = true },
       [14] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
-      [31] = { foreground = tonumber('0x6a0dad') },
       [32] = { foreground = Screen.colors.PaleGreen2 },
     }
     screen:attach({ ext_multigrid = true })
@@ -237,15 +239,15 @@ describe(':checkhealth window', function()
       [3:--------------------------------------------------]|
     ## grid 2
       ^                                                  |
-      {14:──────────────────────────────────────────────────}|
-      {14:────────────────────────────}                      |
-      {31:test_plug.success1: require("test_plug.success1.  }|
-      {31:health").check()}                                  |
+      {14:                                                  }|
+      {14:                            }                      |
+      {h1:test_plug.success1:                               }|
+      {h1:require("test_plug.success1.health").check()}      |
                                                         |
-      {31:report 1}                                          |
+      {h2:report 1}                                          |
       - {32:OK} everything is fine                           |
                                                         |
-      {31:report 2}                                          |
+      {h2:report 2}                                          |
       - {32:OK} nothing to see here                          |
     ## grid 3
                                                         |
@@ -256,9 +258,10 @@ describe(':checkhealth window', function()
   local function test_health_vsplit(left, emptybuf, mods)
     local screen = Screen.new(50, 20)
     screen:set_default_attr_ids {
+      h1 = { reverse = true },
+      h2 = { foreground = tonumber('0x6a0dad') },
       [1] = { foreground = Screen.colors.Blue, bold = true },
       [14] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },
-      [31] = { foreground = tonumber('0x6a0dad') },
       [32] = { foreground = Screen.colors.PaleGreen2 },
     }
     screen:attach({ ext_multigrid = true })
@@ -278,19 +281,20 @@ describe(':checkhealth window', function()
                                                         |
     ## grid 4
       ^                         |
-      {14:─────────────────────────}|*3
-      {14:───}                      |
-      {31:test_plug.success1:      }|
-      {31:require("test_plug.      }|
-      {31:success1.health").check()}|
+      {14:                         }|*3
+      {14:   }                      |
+      {h1:test_plug.               }|
+      {h1:success1:                }|
+      {h1:require("test_plug.      }|
+      {h1:success1.health").check()}|
                                |
-      {31:report 1}                 |
+      {h2:report 1}                 |
       - {32:OK} everything is fine  |
                                |
-      {31:report 2}                 |
+      {h2:report 2}                 |
       - {32:OK} nothing to see here |
                                |
-      {1:~                        }|*4
+      {1:~                        }|*3
     ]]):format(
         left and '[4:-------------------------]│[2:------------------------]|*19'
           or '[2:------------------------]│[4:-------------------------]|*19',
@@ -337,10 +341,10 @@ describe(':checkhealth window', function()
                                                         |
     ## grid 4
       ^                                                  |
-      ──────────────────────────────────────────────────|
-      ────────────────────────────                      |
-      test_plug.success1: require("test_plug.success1.  |
-      health").check()                                  |
+                                                        |
+                                                        |
+      test_plug.success1:                               |
+      require("test_plug.success1.health").check()      |
                                                         |
       report 1                                          |
       - OK everything is fine                           |
