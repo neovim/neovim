@@ -2922,96 +2922,17 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int **hl
 
   linenr_T off = lnum - dp->df_lnum[idx];
   if (chardiff()) {
-    diff_alignment_T diff_alignment;
-    if (diff_flags & DIFF_CHARDIFF) {
-      // if both chardiff & worddiff are enabled, it will pick chardiff
-      diff_alignment = CHARMATCH;
-    } else if (diff_flags & DIFF_WORDDIFF) {
-      diff_alignment = WORDMATCH;
-    }
-    if (dp->charmatchp == NULL) {
-      // get the first buffers
-      // try running on the whole diff buffer first
-      run_alignment_algorithm(dp, diff_alignment);
-    }
-    size_t charcount = 0;
-    for (int i = 0; i < DB_COUNT; i++) {
-      // for each diff buffer
-      if (curtab->tp_diffbuf[i] != NULL) {
-        for (int j = 0; j < dp->df_count[i]; j++) {
-          // for each line in that buffer
-          // get a pointer to the line
-          char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j);
-          while (*diffline != '\0') {
-            diffline++; charcount++;
-          }
-          charcount++;
-        }
-      }
-    }
-    if (dp->n_charmatch != charcount) {
-      // we need to re run if the length of the diff has changed
-      // count the number of characters in this diff
-      // the line is currently being edited in insert mode, so pause highlighting until the diff is
-      // recalculated, then resume the charmatch highlighting
-      (*hlresult) = NULL;
-    } else {
-      // charmatchp is not null, is the whole thing already diffed?
-      // get the correct offset for hlresult
-      //
-      // if the character count is not null
-      size_t hlresult_line_offset = 0;
-      // get the offset for the highlight of this line
-      *diffchars_line_len = strlen(ml_get_buf(curtab->tp_diffbuf[idx], dp->df_lnum[idx] + off));
-      hlresult_line_offset = get_buffer_position(idx, dp, off);
-      if (*(dp->charmatchp + hlresult_line_offset) == -1) {
-        // the character / word limit has been exceeded once here we will attempt to diff the hunk
-        // line by line and see if we are within the limits
-        diff_T dp_tmp;
-        for (int i = 0; i < DB_COUNT; i++) {
-          if (curtab->tp_diffbuf[i] != NULL) {
-            dp_tmp.df_lnum[i] = dp->df_lnum[i] + off;
-            dp_tmp.df_count[i] = off < dp->df_count[i] ? 1 : 0;
-          }
-        }
-        // this line has not yet been calculated
-        // run charmatch on this line of the diff
-        // figure out how many buffers we are diffing
-        // what line number is this in each buffer?
-        run_alignment_algorithm(&dp_tmp, diff_alignment);
-        if (dp_tmp.n_charmatch > 0) {
-          for (int i = 0, p = 0; i < DB_COUNT; i++) {
-            if (curtab->tp_diffbuf[i] != NULL) {
-              // get the offset in the original charmatchp
-              if (off < dp->df_count[i]) {
-                size_t length = strlen(ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + off)) + 1;
-                size_t k = get_buffer_position(i, dp, off);
-                for (size_t m = 0; m < length; m++) {
-                  int val = dp_tmp.charmatchp[p++];
-                  dp->charmatchp[k + m] = val == -1 ? -2 : val;  // if this individual line is still
-                                                                 // too long to diff, mark it as a
-                                                                 // -2, meaning it's been attempted
-                                                                 // already
-                }
-              }
-            }
-          }
-          // extract the results from here
-        }
-        xfree(dp_tmp.charmatchp);
-      }
-      (*hlresult) = dp->charmatchp + hlresult_line_offset;
-    }
-    if ((*hlresult) == NULL) {
+    (*hlresult) = get_charmatch_highlightresult(dp, &diffchars_line_len, idx, off);
+    if ((*hlresult) == NULL || (*hlresult)[0] != -2) {
+      // (*hlresult) == NULL means we are currently not drawing any highlighting
+      // (*hlresult) == -2 indicates that we've attempted a character wise diff with the entire
+      // block, and then with this individual line, and still exceeded the character limit
       xfree(line_org);
       return false;
-    } else if ((*hlresult)[0] != -2) {  // -2 indicates that we've attempted a character wise diff with the
-      xfree(line_org);
-      return false;                     // entire block, and with this individual line, and still exceeded
-    } else {                            // the character limit
-                                        //
-      *diffchars_lim_exceeded = true;   // go to the default highlighting behaviour without character
-    }                                   // wise matching
+    } else {
+      *diffchars_lim_exceeded = true;   // go to the default highlighting behaviour without
+                                        // character matching
+    }
   }
 
   for (int i = 0; i < DB_COUNT; i++) {
@@ -3871,4 +3792,89 @@ static size_t get_buffer_position(const int idx, const diff_T *dp, linenr_T offs
   }
   // what is the line length for this pointer?
   return comparison_mem_offset;
+}
+
+
+static int *get_charmatch_highlightresult(diff_T *dp, size_t **diffchars_line_len, int idx, linenr_T off)
+{
+  diff_alignment_T diff_alignment;
+  if (diff_flags & DIFF_CHARDIFF) {
+    // if both chardiff & worddiff are enabled, it will pick chardiff
+    diff_alignment = CHARMATCH;
+  } else if (diff_flags & DIFF_WORDDIFF) {
+    diff_alignment = WORDMATCH;
+  }
+  if (dp->charmatchp == NULL) {
+    // get the first buffers
+    // try running on the whole diff buffer first
+    run_alignment_algorithm(dp, diff_alignment);
+  }
+  size_t charcount = 0;
+  for (int i = 0; i < DB_COUNT; i++) {
+    // for each diff buffer
+    if (curtab->tp_diffbuf[i] != NULL) {
+      for (int j = 0; j < dp->df_count[i]; j++) {
+        // for each line in that buffer
+        // get a pointer to the line
+        char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j);
+        while (*diffline != '\0') { // TODO handle case where text content has NULL character
+          diffline++; charcount++;
+        }
+        charcount++;
+      }
+    }
+  }
+  if (dp->n_charmatch != charcount) {
+    // we need to re run if the length of the diff has changed
+    // count the number of characters in this diff
+    // the line is currently being edited in insert mode, so pause highlighting until the diff is
+    // recalculated, then resume the charmatch highlighting
+    return NULL;
+  } else {
+    // charmatchp is not null, is the whole thing already diffed?
+    // get the correct offset for hlresult
+    //
+    // if the character count is not null
+    size_t hlresult_line_offset = 0;
+    // get the offset for the highlight of this line
+    (**diffchars_line_len) = strlen(ml_get_buf(curtab->tp_diffbuf[idx], dp->df_lnum[idx] + off));
+    hlresult_line_offset = get_buffer_position(idx, dp, off);
+    if (*(dp->charmatchp + hlresult_line_offset) == -1) {
+      // the character / word limit has been exceeded once here we will attempt to diff the hunk
+      // line by line and see if we are within the limits
+      diff_T dp_tmp;
+      for (int i = 0; i < DB_COUNT; i++) {
+        if (curtab->tp_diffbuf[i] != NULL) {
+          dp_tmp.df_lnum[i] = dp->df_lnum[i] + off;
+          dp_tmp.df_count[i] = off < dp->df_count[i] ? 1 : 0;
+        }
+      }
+      // this line has not yet been calculated
+      // run charmatch on this line of the diff
+      // figure out how many buffers we are diffing
+      // what line number is this in each buffer?
+      run_alignment_algorithm(&dp_tmp, diff_alignment);
+      if (dp_tmp.n_charmatch > 0) {
+        for (int i = 0, p = 0; i < DB_COUNT; i++) {
+          if (curtab->tp_diffbuf[i] != NULL) {
+            // get the offset in the original charmatchp
+            if (off < dp->df_count[i]) {
+              size_t length = strlen(ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + off)) + 1;
+              size_t k = get_buffer_position(i, dp, off);
+              for (size_t m = 0; m < length; m++) {
+                int val = dp_tmp.charmatchp[p++];
+                dp->charmatchp[k + m] = val == -1 ? -2 : val;  // if this individual line is still
+                                                               // too long to diff, mark it as a
+                                                               // -2, meaning it's been attempted
+                                                               // already
+              }
+            }
+          }
+        }
+        // extract the results from here
+      }
+      xfree(dp_tmp.charmatchp);
+    }
+    return dp->charmatchp + hlresult_line_offset;
+  }
 }
