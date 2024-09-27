@@ -1,3 +1,4 @@
+#include <lauxlib.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -23,6 +24,7 @@
 #include "nvim/globals.h"
 #include "nvim/grid_defs.h"
 #include "nvim/highlight_group.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -132,9 +134,12 @@
 ///       |nvim_set_current_win()|, or, when the `mouse` field is set to true,
 ///       by mouse events.
 ///   - mouse: Specify how this window interacts with mouse events.
-///       Defaults to `focusable` value.
+///       May be a boolean or a Lua callback. Defaults to `focusable` value.
 ///       - If false, mouse events pass through this window.
 ///       - If true, mouse events interact with this window normally.
+///       - If a Lua callback, mouse events interact with this window,
+///         but the callback is called in place of the default handling.
+///         The default handling will be used again if callback returns `true`.
 ///   - external: GUI should display the window as an external
 ///       top-level window. Currently accepts no other positioning
 ///       configuration together with this.
@@ -719,7 +724,18 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   PUT_KEY_X(rv, focusable, config->focusable);
   PUT_KEY_X(rv, external, config->external);
   PUT_KEY_X(rv, hide, config->hide);
-  PUT_KEY_X(rv, mouse, config->mouse);
+
+  switch (config->mouse) {
+  case kWinMouseIgnore:
+    PUT_KEY_X(rv, mouse, BOOLEAN_OBJ(false));
+    break;
+  case kWinMouseDefault:
+    PUT_KEY_X(rv, mouse, BOOLEAN_OBJ(true));
+    break;
+  case kWinMouseCallback:
+    PUT_KEY_X(rv, mouse, LUAREF_OBJ(api_new_luaref(config->mouse_cb)));
+    break;
+  }
 
   if (wp->w_floating) {
     PUT_KEY_X(rv, width, config->width);
@@ -1208,11 +1224,22 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
 
   if (HAS_KEY_X(config, focusable)) {
     fconfig->focusable = config->focusable;
-    fconfig->mouse = config->focusable;
+    if (fconfig->mouse != kWinMouseCallback) {
+      fconfig->mouse = config->focusable ? kWinMouseDefault : kWinMouseIgnore;
+    }
   }
 
   if (HAS_KEY_X(config, mouse)) {
-    fconfig->mouse = config->mouse;
+    if (config->mouse.type == kObjectTypeLuaRef) {
+      fconfig->mouse = kWinMouseCallback;
+      fconfig->mouse_cb = config->mouse.data.luaref;
+      config->mouse.data.luaref = LUA_NOREF;
+    } else if (config->mouse.type == kObjectTypeBoolean) {
+      fconfig->mouse = config->mouse.data.boolean ? kWinMouseDefault : kWinMouseIgnore;
+      fconfig->mouse_cb = LUA_NOREF;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "invalid type for 'mouse'");
+    }
   }
 
   if (HAS_KEY_X(config, zindex)) {

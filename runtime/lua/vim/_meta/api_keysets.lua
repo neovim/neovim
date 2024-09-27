@@ -295,7 +295,7 @@ error('Cannot require a meta file')
 --- @field bufpos? any[]
 --- @field external? boolean
 --- @field focusable? boolean
---- @field mouse? boolean
+--- @field mouse? any
 --- @field vertical? boolean
 --- @field zindex? integer
 --- @field border? any
