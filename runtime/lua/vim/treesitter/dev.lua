@@ -153,7 +153,7 @@ end
 
 ---@param w integer
 ---@param b integer
-local function set_dev_properties(w, b)
+local function set_dev_options(w, b)
   vim.wo[w].scrolloff = 5
   vim.wo[w].wrap = false
   vim.wo[w].foldmethod = 'expr'
@@ -164,6 +164,7 @@ local function set_dev_properties(w, b)
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
   vim.bo[b].filetype = 'query'
+  vim.bo[b].swapfile = false
 end
 
 --- Updates the cursor position in the inspector to match the node under the cursor.
@@ -354,7 +355,7 @@ function M.inspect_tree(opts)
   vim.b[buf].dev_inspect = w
   vim.b[b].dev_base = win -- base window handle
   vim.b[b].disable_query_linter = true
-  set_dev_properties(w, b)
+  set_dev_options(w, b)
 
   local title --- @type string?
   local opts_title = opts.title
@@ -606,7 +607,7 @@ function M.edit_query(lang)
 
   vim.b[buf].dev_edit = query_win
   vim.bo[query_buf].omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
-  set_dev_properties(query_win, query_buf)
+  set_dev_options(query_win, query_buf)
 
   -- Note that omnifunc guesses the language based on the containing folder,
   -- so we add the parser's language to the buffer's name so that omnifunc
