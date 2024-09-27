@@ -2922,7 +2922,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int **hl
 
   linenr_T off = lnum - dp->df_lnum[idx];
   if (chardiff()) {
-    (*hlresult) = get_charmatch_highlightresult(dp, &diffchars_line_len, idx, off);
+    (*hlresult) = get_charmatch_highlightresult(dp, diffchars_line_len, idx, off);
     if ((*hlresult) == NULL || (*hlresult)[0] != -2) {
       // (*hlresult) == NULL means we are currently not drawing any highlighting
       // (*hlresult) == -2 indicates that we've attempted a character wise diff with the entire
@@ -3795,7 +3795,7 @@ static size_t get_buffer_position(const int idx, const diff_T *dp, linenr_T offs
 }
 
 
-static int *get_charmatch_highlightresult(diff_T *dp, size_t **diffchars_line_len, int idx, linenr_T off)
+static int *get_charmatch_highlightresult(diff_T *dp, size_t *diffchars_line_len, int idx, linenr_T off)
 {
   diff_alignment_T diff_alignment;
   if (diff_flags & DIFF_CHARDIFF) {
@@ -3837,7 +3837,7 @@ static int *get_charmatch_highlightresult(diff_T *dp, size_t **diffchars_line_le
     // if the character count is not null
     size_t hlresult_line_offset = 0;
     // get the offset for the highlight of this line
-    (**diffchars_line_len) = strlen(ml_get_buf(curtab->tp_diffbuf[idx], dp->df_lnum[idx] + off));
+    (*diffchars_line_len) = strlen(ml_get_buf(curtab->tp_diffbuf[idx], dp->df_lnum[idx] + off));
     hlresult_line_offset = get_buffer_position(idx, dp, off);
     if (*(dp->charmatchp + hlresult_line_offset) == -1) {
       // the character / word limit has been exceeded once here we will attempt to diff the hunk
