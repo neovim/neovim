@@ -854,19 +854,11 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, 
   int *width;
   switch (bordertext_type) {
   case kBorderTextTitle:
-    if (fconfig->title) {
-      clear_virttext(&fconfig->title_chunks);
-    }
-
     is_present = &fconfig->title;
     chunks = &fconfig->title_chunks;
     width = &fconfig->title_width;
     break;
   case kBorderTextFooter:
-    if (fconfig->footer) {
-      clear_virttext(&fconfig->footer_chunks);
-    }
-
     is_present = &fconfig->footer;
     chunks = &fconfig->footer_chunks;
     width = &fconfig->footer_width;
@@ -878,6 +870,7 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, 
       *is_present = false;
       return;
     }
+    kv_init(*chunks);
     kv_push(*chunks, ((VirtTextChunk){ .text = xstrdup(bordertext.data.string.data),
                                        .hl_id = -1 }));
     *width = (int)mb_string2cells(bordertext.data.string.data);
@@ -1055,13 +1048,13 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   if (config->relative.size > 0) {
     if (!parse_float_relative(config->relative, &fconfig->relative)) {
       api_set_error(err, kErrorTypeValidation, "Invalid value of 'relative' key");
-      return false;
+      goto fail;
     }
 
     if (config->relative.size > 0 && !(HAS_KEY_X(config, row) && HAS_KEY_X(config, col))
         && !HAS_KEY_X(config, bufpos)) {
       api_set_error(err, kErrorTypeValidation, "'relative' requires 'row'/'col' or 'bufpos'");
-      return false;
+      goto fail;
     }
 
     has_relative = true;
@@ -1076,39 +1069,39 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     } else if (wp == NULL) {  // new win
       api_set_error(err, kErrorTypeValidation,
                     "Must specify 'relative' or 'external' when creating a float");
-      return false;
+      goto fail;
     }
   }
 
   if (HAS_KEY_X(config, vertical)) {
     if (!is_split) {
       api_set_error(err, kErrorTypeValidation, "floating windows cannot have 'vertical'");
-      return false;
+      goto fail;
     }
   }
 
   if (HAS_KEY_X(config, split)) {
     if (!is_split) {
       api_set_error(err, kErrorTypeValidation, "floating windows cannot have 'split'");
-      return false;
+      goto fail;
     }
     if (!parse_config_split(config->split, &fconfig->split)) {
       api_set_error(err, kErrorTypeValidation, "Invalid value of 'split' key");
-      return false;
+      goto fail;
     }
   }
 
   if (HAS_KEY_X(config, anchor)) {
     if (!parse_float_anchor(config->anchor, &fconfig->anchor)) {
       api_set_error(err, kErrorTypeValidation, "Invalid value of 'anchor' key");
-      return false;
+      goto fail;
     }
   }
 
   if (HAS_KEY_X(config, row)) {
     if (!has_relative || is_split) {
       generate_api_error(wp, "row", err);
-      return false;
+      goto fail;
     }
     fconfig->row = config->row;
   }
@@ -1116,7 +1109,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   if (HAS_KEY_X(config, col)) {
     if (!has_relative || is_split) {
       generate_api_error(wp, "col", err);
-      return false;
+      goto fail;
     }
     fconfig->col = config->col;
   }
@@ -1124,11 +1117,11 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   if (HAS_KEY_X(config, bufpos)) {
     if (!has_relative || is_split) {
       generate_api_error(wp, "bufpos", err);
-      return false;
+      goto fail;
     } else {
       if (!parse_float_bufpos(config->bufpos, &fconfig->bufpos)) {
         api_set_error(err, kErrorTypeValidation, "Invalid value of 'bufpos' key");
-        return false;
+        goto fail;
       }
 
       if (!HAS_KEY_X(config, row)) {
@@ -1145,11 +1138,11 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
       fconfig->width = (int)config->width;
     } else {
       api_set_error(err, kErrorTypeValidation, "'width' key must be a positive Integer");
-      return false;
+      goto fail;
     }
   } else if (!reconf && !is_split) {
     api_set_error(err, kErrorTypeValidation, "Must specify 'width'");
-    return false;
+    goto fail;
   }
 
   if (HAS_KEY_X(config, height)) {
@@ -1157,23 +1150,23 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
       fconfig->height = (int)config->height;
     } else {
       api_set_error(err, kErrorTypeValidation, "'height' key must be a positive Integer");
-      return false;
+      goto fail;
     }
   } else if (!reconf && !is_split) {
     api_set_error(err, kErrorTypeValidation, "Must specify 'height'");
-    return false;
+    goto fail;
   }
 
   if (relative_is_win || is_split) {
     if (reconf && relative_is_win) {
       win_T *target_win = find_window_by_handle(config->win, err);
       if (!target_win) {
-        return false;
+        goto fail;
       }
 
       if (target_win == wp) {
         api_set_error(err, kErrorTypeException, "floating window cannot be relative to itself");
-        return false;
+        goto fail;
       }
     }
     fconfig->window = curwin->handle;
@@ -1186,11 +1179,11 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     if (has_relative) {
       api_set_error(err, kErrorTypeValidation,
                     "'win' key is only valid with relative='win' and relative=''");
-      return false;
+      goto fail;
     } else if (!is_split) {
       api_set_error(err, kErrorTypeValidation,
                     "non-float with 'win' requires at least 'split' or 'vertical'");
-      return false;
+      goto fail;
     }
   }
 
@@ -1199,11 +1192,11 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     if (has_relative && fconfig->external) {
       api_set_error(err, kErrorTypeValidation,
                     "Only one of 'relative' and 'external' must be used");
-      return false;
+      goto fail;
     }
     if (fconfig->external && !ui_has(kUIMultigrid)) {
       api_set_error(err, kErrorTypeValidation, "UI doesn't support external windows");
-      return false;
+      goto fail;
     }
   }
 
@@ -1214,78 +1207,78 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   if (HAS_KEY_X(config, zindex)) {
     if (is_split) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'zindex'");
-      return false;
+      goto fail;
     }
     if (config->zindex > 0) {
       fconfig->zindex = (int)config->zindex;
     } else {
       api_set_error(err, kErrorTypeValidation, "'zindex' key must be a positive Integer");
-      return false;
+      goto fail;
     }
   }
 
   if (HAS_KEY_X(config, title)) {
     if (is_split) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'title'");
-      return false;
+      goto fail;
     }
     // title only work with border
     if (!HAS_KEY_X(config, border) && !fconfig->border) {
       api_set_error(err, kErrorTypeException, "title requires border to be set");
-      return false;
+      goto fail;
     }
 
     parse_bordertext(config->title, kBorderTextTitle, fconfig, err);
     if (ERROR_SET(err)) {
-      return false;
+      goto fail;
     }
 
     // handles unset 'title_pos' same as empty string
     if (!parse_bordertext_pos(config->title_pos, kBorderTextTitle, fconfig, err)) {
-      return false;
+      goto fail;
     }
   } else {
     if (HAS_KEY_X(config, title_pos)) {
       api_set_error(err, kErrorTypeException, "title_pos requires title to be set");
-      return false;
+      goto fail;
     }
   }
 
   if (HAS_KEY_X(config, footer)) {
     if (is_split) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'footer'");
-      return false;
+      goto fail;
     }
     // footer only work with border
     if (!HAS_KEY_X(config, border) && !fconfig->border) {
       api_set_error(err, kErrorTypeException, "footer requires border to be set");
-      return false;
+      goto fail;
     }
 
     parse_bordertext(config->footer, kBorderTextFooter, fconfig, err);
     if (ERROR_SET(err)) {
-      return false;
+      goto fail;
     }
 
     // handles unset 'footer_pos' same as empty string
     if (!parse_bordertext_pos(config->footer_pos, kBorderTextFooter, fconfig, err)) {
-      return false;
+      goto fail;
     }
   } else {
     if (HAS_KEY_X(config, footer_pos)) {
       api_set_error(err, kErrorTypeException, "footer_pos requires footer to be set");
-      return false;
+      goto fail;
     }
   }
 
   if (HAS_KEY_X(config, border)) {
     if (is_split) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'border'");
-      return false;
+      goto fail;
     }
     parse_border_style(config->border, fconfig, err);
     if (ERROR_SET(err)) {
-      return false;
+      goto fail;
     }
   }
 
@@ -1296,14 +1289,14 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
       fconfig->style = kWinStyleMinimal;
     } else {
       api_set_error(err, kErrorTypeValidation, "Invalid value of 'style' key");
-      return false;
+      goto fail;
     }
   }
 
   if (HAS_KEY_X(config, noautocmd)) {
     if (wp) {
       api_set_error(err, kErrorTypeValidation, "'noautocmd' cannot be used with existing windows");
-      return false;
+      goto fail;
     }
     fconfig->noautocmd = config->noautocmd;
   }
@@ -1317,5 +1310,14 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   return true;
+
+fail:
+  if (wp == NULL || fconfig->title_chunks.items != wp->w_config.title_chunks.items) {
+    clear_virttext(&fconfig->title_chunks);
+  }
+  if (wp == NULL || fconfig->footer_chunks.items != wp->w_config.footer_chunks.items) {
+    clear_virttext(&fconfig->footer_chunks);
+  }
+  return false;
 #undef HAS_KEY_X
 }
