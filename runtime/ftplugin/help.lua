@@ -1,7 +1,7 @@
 -- use treesitter over syntax (for highlighted code blocks)
 vim.treesitter.start()
 
--- add custom highlights for list in `:h highlight-groups`
+-- Add custom highlights for list in `:h highlight-groups`.
 local bufname = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
 if vim.endswith(bufname, '/doc/syntax.txt') then
   require('vim.vimhelp').highlight_groups({

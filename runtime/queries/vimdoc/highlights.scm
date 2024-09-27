@@ -1,9 +1,9 @@
 (h1
-  (delimiter) @markup.heading.1
+  (delimiter) @markup.heading.1.delimiter
   (heading) @markup.heading.1)
 
 (h2
-  (delimiter) @markup.heading.2
+  (delimiter) @markup.heading.2.delimiter
   (heading) @markup.heading.2)
 
 (h3
