@@ -1,5 +1,6 @@
 #pragma once
 
+#include <lauxlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -904,6 +905,12 @@ typedef enum {
   kFloatRelativeMouse = 3,
 } FloatRelative;
 
+typedef enum {
+  kWinMouseIgnore = 0,
+  kWinMouseDefault = 1,
+  kWinMouseCallback = 2,
+} WinMouseEvent;
+
 /// Keep in sync with win_split_str[] in nvim_win_get_config() (api/win_config.c)
 typedef enum {
   kWinSplitLeft = 0,
@@ -938,6 +945,8 @@ typedef struct {
   FloatRelative relative;
   bool external;
   bool focusable;
+  WinMouseEvent mouse;
+  LuaRef mouse_cb;
   WinSplit split;
   int zindex;
   WinStyle style;
@@ -964,6 +973,8 @@ typedef struct {
                                       .row = 0, .col = 0, .anchor = 0, \
                                       .relative = 0, .external = false, \
                                       .focusable = true, \
+                                      .mouse = kWinMouseDefault, \
+                                      .mouse_cb = LUA_NOREF, \
                                       .split = 0, \
                                       .zindex = kZIndexFloatDefault, \
                                       .style = kWinStyleUnused, \

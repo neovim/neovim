@@ -1768,6 +1768,13 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- - focusable: Enable focus by user actions (wincmds, mouse events).
 ---     Defaults to true. Non-focusable windows can be entered by
 ---     `nvim_set_current_win()`.
+--- - mouse: Specify how this window affects mouse events.
+---     May be a boolean or a Lua callback. Defaults to `focusable` value.
+---     - If false, mouse events ignore this window.
+---     - If true, mouse events interact with this window normally.
+---     - If a Lua callback, mouse events interact with this window,
+---       but the callback is called in place of the default handling.
+---       The default handling will be used again if callback returns `true`.
 --- - external: GUI should display the window as an external
 ---     top-level window. Currently accepts no other positioning
 ---     configuration together with this.
