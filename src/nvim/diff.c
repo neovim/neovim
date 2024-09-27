@@ -1609,6 +1609,7 @@ static void process_hunk(diff_T **dpp, diff_T **dprevp, int idx_orig, int idx_ne
       for (int i = idx_orig; i < idx_new; i++) {
         if (curtab->tp_diffbuf[i] != NULL) {
           dp->df_lnum[i] -= off;
+          dp->df_count[i] += off;
         }
       }
       dp->df_lnum[idx_new] = hunk->lnum_new;
@@ -1619,11 +1620,7 @@ static void process_hunk(diff_T **dpp, diff_T **dprevp, int idx_orig, int idx_ne
       dp->df_count[idx_new] = (linenr_T)hunk->count_new - off;
     } else {
       // second overlap of new block with existing block
-      dp->df_count[idx_new] += (linenr_T)hunk->count_new - (linenr_T)hunk->count_orig
-                               + dpl->df_lnum[idx_orig] +
-                               dpl->df_count[idx_orig]
-                               - (dp->df_lnum[idx_orig] +
-                                  dp->df_count[idx_orig]);
+      dp->df_count[idx_new] += (linenr_T)hunk->count_new;
     }
 
     // Adjust the size of the block to include all the lines to the
@@ -1632,11 +1629,8 @@ static void process_hunk(diff_T **dpp, diff_T **dprevp, int idx_orig, int idx_ne
           - (dpl->df_lnum[idx_orig] + dpl->df_count[idx_orig]);
 
     if (off < 0) {
-      // new change ends in existing block, adjust the end if not
-      // done already
-      if (*notsetp) {
-        dp->df_count[idx_new] += -off;
-      }
+      // new change ends in existing block, adjust the end
+      dp->df_count[idx_new] += -off;
       off = 0;
     }
 
