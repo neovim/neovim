@@ -857,7 +857,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
       String anchor = cstr_as_string(float_anchor_str[c.anchor]);
       if (!c.hide) {
         ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
-                              grid->handle, row, col, c.focusable,
+                              grid->handle, row, col, c.mouse,
                               wp->w_grid_alloc.zindex);
       } else {
         ui_call_win_hide(wp->w_grid_alloc.handle);
@@ -889,7 +889,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
         ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
                          wp->w_height_outer, wp->w_width_outer, valid, false);
         ui_check_cursor_grid(wp->w_grid_alloc.handle);
-        wp->w_grid_alloc.focusable = wp->w_config.focusable;
+        wp->w_grid_alloc.mouse_enabled = wp->w_config.mouse;
         if (!valid) {
           wp->w_grid_alloc.valid = false;
           redraw_later(wp, UPD_NOT_VALID);
@@ -4044,6 +4044,7 @@ void win_alloc_aucmd_win(int idx)
   fconfig.width = Columns;
   fconfig.height = 5;
   fconfig.focusable = false;
+  fconfig.mouse = false;
   aucmd_win[idx].auc_win = win_new_float(NULL, true, fconfig, &err);
   aucmd_win[idx].auc_win->w_buffer->b_nwindows--;
   RESET_BINDING(aucmd_win[idx].auc_win);
