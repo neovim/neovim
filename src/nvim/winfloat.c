@@ -10,6 +10,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/globals.h"
@@ -202,6 +203,12 @@ void win_config_float(win_T *wp, WinConfig fconfig)
                                   wp->w_config.border_hl_ids,
                                   sizeof fconfig.border_hl_ids) != 0);
 
+  if (fconfig.title_chunks.items != wp->w_config.title_chunks.items) {
+    clear_virttext(&wp->w_config.title_chunks);
+  }
+  if (fconfig.footer_chunks.items != wp->w_config.footer_chunks.items) {
+    clear_virttext(&wp->w_config.footer_chunks);
+  }
   wp->w_config = fconfig;
 
   bool has_border = wp->w_floating && wp->w_config.border;
