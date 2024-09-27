@@ -1278,7 +1278,7 @@ describe('float window', function()
     it('return their configuration', function()
       local buf = api.nvim_create_buf(false, false)
       local win = api.nvim_open_win(buf, false, {relative='editor', width=20, height=2, row=3, col=5, zindex=60})
-      local expected = {anchor='NW', col=5, external=false, focusable=true, height=2, relative='editor', row=3, width=20, zindex=60, hide=false}
+      local expected = {anchor='NW', col=5, external=false, focusable=true, mouse=true, height=2, relative='editor', row=3, width=20, zindex=60, hide=false}
       eq(expected, api.nvim_win_get_config(win))
       eq(true, exec_lua([[
         local expected, win = ...
@@ -1290,11 +1290,11 @@ describe('float window', function()
         end
         return true]], expected, win))
 
-      eq({external=false, focusable=true, hide=false, relative='',split="left",width=40,height=6}, api.nvim_win_get_config(0))
+      eq({external=false, focusable=true, mouse=true, hide=false, relative='',split="left",width=40,height=6}, api.nvim_win_get_config(0))
 
       if multigrid then
         api.nvim_win_set_config(win, {external=true, width=10, height=1})
-        eq({external=true,focusable=true,width=10,height=1,relative='',hide=false}, api.nvim_win_get_config(win))
+        eq({external=true,focusable=true,mouse=true,width=10,height=1,relative='',hide=false}, api.nvim_win_get_config(win))
       end
     end)
 
@@ -3988,7 +3988,7 @@ describe('float window', function()
         ]]}
       end
       eq({relative='win', width=12, height=1, bufpos={1,32}, anchor='NW', hide=false,
-          external=false, col=0, row=1, win=firstwin, focusable=true, zindex=50}, api.nvim_win_get_config(win))
+          external=false, col=0, row=1, win=firstwin, focusable=true, mouse=true, zindex=50}, api.nvim_win_get_config(win))
 
       feed('<c-e>')
       if multigrid then
