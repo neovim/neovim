@@ -2765,43 +2765,11 @@ describe('API/win', function()
         border = 'single',
       })
       eq(
-        'title/footer cannot be an empty array',
-        pcall_err(api.nvim_win_set_config, win, { title = {} })
+        'title/footer must be string or array',
+        pcall_err(api.nvim_win_set_config, win, { title = 0 })
       )
       command('redraw!')
       assert_alive()
-    end)
-
-    it('no crash with invalid footer', function()
-      local win = api.nvim_open_win(0, true, {
-        width = 10,
-        height = 10,
-        relative = 'editor',
-        row = 10,
-        col = 10,
-        footer = { { 'test' } },
-        border = 'single',
-      })
-      eq(
-        'title/footer cannot be an empty array',
-        pcall_err(api.nvim_win_set_config, win, { footer = {} })
-      )
-      command('redraw!')
-      assert_alive()
-    end)
-  end)
-
-  describe('set_config', function()
-    it('no crash with invalid title', function()
-      local win = api.nvim_open_win(0, true, {
-        width = 10,
-        height = 10,
-        relative = 'editor',
-        row = 10,
-        col = 10,
-        title = { { 'test' } },
-        border = 'single',
-      })
       eq(
         'title/footer cannot be an empty array',
         pcall_err(api.nvim_win_set_config, win, { title = {} })
@@ -2820,6 +2788,12 @@ describe('API/win', function()
         footer = { { 'test' } },
         border = 'single',
       })
+      eq(
+        'title/footer must be string or array',
+        pcall_err(api.nvim_win_set_config, win, { footer = 0 })
+      )
+      command('redraw!')
+      assert_alive()
       eq(
         'title/footer cannot be an empty array',
         pcall_err(api.nvim_win_set_config, win, { footer = {} })
