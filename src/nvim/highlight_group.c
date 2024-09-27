@@ -301,6 +301,11 @@ static const char *highlight_init_both[] = {
   "default link @tag         Tag",
   "default link @tag.builtin Special",
 
+  // :help
+  // Higlight "===" and "---" heading delimiters specially.
+  "default @markup.heading.1.delimiter.vimdoc guibg=bg guifg=bg guisp=fg gui=underdouble,nocombine ctermbg=NONE ctermfg=NONE cterm=underdouble,nocombine",
+  "default @markup.heading.2.delimiter.vimdoc guibg=bg guifg=bg guisp=fg gui=underline,nocombine ctermbg=NONE ctermfg=NONE cterm=underline,nocombine",
+
   // LSP semantic tokens
   "default link @lsp.type.class         @type",
   "default link @lsp.type.comment       @comment",

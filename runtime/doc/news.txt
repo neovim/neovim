@@ -119,6 +119,9 @@ API
 
 DEFAULTS
 
+• Highlighting:
+  • Improved styling of :checkhealth and :help buffers.
+
 • Mappings:
   • |grn| in Normal mode maps to |vim.lsp.buf.rename()|
   • |grr| in Normal mode maps to |vim.lsp.buf.references()|

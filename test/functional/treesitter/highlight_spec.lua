@@ -894,7 +894,43 @@ describe('treesitter highlighting (help)', function()
       [3] = { bold = true, foreground = Screen.colors.Brown },
       [4] = { foreground = Screen.colors.Cyan4 },
       [5] = { foreground = Screen.colors.Magenta1 },
+      title = { bold = true, foreground = Screen.colors.Magenta1 },
+      h1_delim = { nocombine = true, underdouble = true },
+      h2_delim = { nocombine = true, underline = true },
     }
+  end)
+
+  it('defaults in vimdoc/highlights.scm', function()
+    -- Avoid regressions when syncing upstream vimdoc queries.
+
+    insert [[
+    ==============================================================================
+    NVIM DOCUMENTATION
+
+    ------------------------------------------------------------------------------
+    ABOUT NVIM                                                     *tag-1* *tag-2*
+
+    |news|			News
+    |nvim|			NVim
+    ]]
+
+    feed('gg')
+    exec_lua(function()
+      vim.wo.wrap = false
+      vim.bo.filetype = 'help'
+      vim.treesitter.start()
+    end)
+
+    screen:expect({
+      grid = [[
+        {h1_delim:^========================================}|
+        {title:NVIM DOCUMENTATION}                      |
+                                                |
+        {h2_delim:----------------------------------------}|
+        {title:ABOUT NVIM}                              |
+                                                |
+      ]],
+    })
   end)
 
   it('correctly redraws added/removed injections', function()
