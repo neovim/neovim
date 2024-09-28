@@ -797,6 +797,19 @@ int win_fdccol_count(win_T *wp)
   return fdc[0] - '0';
 }
 
+/// Merges two window configs, freeing replaced fields if necessary.
+void merge_win_config(WinConfig *dst, const WinConfig src)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (dst->title_chunks.items != src.title_chunks.items) {
+    clear_virttext(&dst->title_chunks);
+  }
+  if (dst->footer_chunks.items != src.footer_chunks.items) {
+    clear_virttext(&dst->footer_chunks);
+  }
+  *dst = src;
+}
+
 void ui_ext_win_position(win_T *wp, bool validate)
 {
   wp->w_pos_changed = false;
@@ -1297,7 +1310,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     new_frame(wp);
 
     // non-floating window doesn't store float config or have a border.
-    wp->w_config = WIN_CONFIG_INIT;
+    merge_win_config(&wp->w_config, WIN_CONFIG_INIT);
     CLEAR_FIELD(wp->w_border_adj);
   }
 
