@@ -30,7 +30,6 @@
 #endif
 
 #include "auto/config.h"
-#include "klib/klist.h"
 #include "nvim/eval/typval.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
@@ -387,8 +386,8 @@ static void chld_handler(uv_signal_t *handle, int signum)
 
   Loop *loop = handle->loop->data;
 
-  kl_iter(WatcherPtr, loop->children, current) {
-    Proc *proc = (*current)->data;
+  for (size_t i = 0; i < kv_size(loop->children); i++) {
+    Proc *proc = kv_A(loop->children, i);
     do {
       pid = waitpid(proc->pid, &stat, WNOHANG);
     } while (pid < 0 && errno == EINTR);
