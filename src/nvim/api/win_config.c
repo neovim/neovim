@@ -448,7 +448,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
         }
       }
     }
-    win->w_config = fconfig;
+    merge_win_config(&win->w_config, fconfig);
 
     // If there's no "vertical" or "split" set, or if "split" is unchanged,
     // then we can just change the size of the window.
@@ -1312,12 +1312,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   return true;
 
 fail:
-  if (wp == NULL || fconfig->title_chunks.items != wp->w_config.title_chunks.items) {
-    clear_virttext(&fconfig->title_chunks);
-  }
-  if (wp == NULL || fconfig->footer_chunks.items != wp->w_config.footer_chunks.items) {
-    clear_virttext(&fconfig->footer_chunks);
-  }
+  merge_win_config(fconfig, wp != NULL ? wp->w_config : WIN_CONFIG_INIT);
   return false;
 #undef HAS_KEY_X
 }
