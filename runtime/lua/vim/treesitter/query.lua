@@ -1028,11 +1028,7 @@ end
 ---
 --- @param lang? string language to open the query editor for. If omitted, inferred from the current buffer's filetype.
 function M.edit(lang)
-  -- TODO(ribru17): Make edit_query return true upon success so we can just assert here
-  local _, err_msg = vim.treesitter.dev.edit_query(lang)
-  if err_msg then
-    error(err_msg)
-  end
+  assert(vim.treesitter.dev.edit_query(lang))
 end
 
 return M
