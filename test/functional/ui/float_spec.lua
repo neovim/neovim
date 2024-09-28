@@ -9195,6 +9195,7 @@ describe('float window', function()
       eq(win3, api.nvim_get_current_win())
       eq(6, api.nvim_win_get_height(win3))
       eq(2, api.nvim_win_get_height(win))
+      eq(('Failed to set the current window to a hidden floating window %d'):format(win), pcall_err(api.nvim_set_current_win, win))
     end)
 
     it(':fclose command #9663', function()

@@ -949,6 +949,12 @@ void nvim_set_current_win(Window window, Error *err)
     return;
   }
 
+  if (win->w_floating && win->w_config.hide) {
+    api_set_error(err, kErrorTypeException,
+                  "Failed to set the current window to a hidden floating window %d", window);
+    return;
+  }
+
   try_start();
   goto_tabpage_win(win_find_tabpage(win), win);
   if (!try_end(err) && win != curwin) {
