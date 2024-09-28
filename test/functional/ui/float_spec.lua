@@ -2515,6 +2515,37 @@ describe('float window', function()
       end
       eq({{"🦄", ""}, {"BB", {"B0", "B1", ""}}}, api.nvim_win_get_config(win).title)
       eq({{"🦄", ""}, {"BB", {"B0", "B1", ""}}}, api.nvim_win_get_config(win).footer)
+
+      -- making it a split should not leak memory
+      api.nvim_win_set_config(win, { vertical = true })
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [4:--------------------]{5:│}[2:-------------------]|*5
+          {5:[No Name] [+]        }{4:[No Name]          }|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                   |
+          {0:~                  }|*4
+        ## grid 3
+                                                  |
+        ## grid 4
+           halloj!            |
+           BORDAA             |
+          {0:~                   }|*3
+        ]], win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+           halloj!            {5:│}^                   |
+           BORDAA             {5:│}{0:~                  }|
+          {0:~                   }{5:│}{0:~                  }|*3
+          {5:[No Name] [+]        }{4:[No Name]          }|
+                                                  |
+        ]]}
+      end
     end)
 
     it('terminates border on edge of viewport when window extends past viewport', function()
