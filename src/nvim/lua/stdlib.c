@@ -260,35 +260,6 @@ static int nlua_str_utf_end(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
-/// convert UTF-32 or UTF-16 indices to byte index.
-///
-/// Expects up to three args: string, index and use_utf16.
-/// If use_utf16 is not supplied it defaults to false (use UTF-32)
-///
-/// Returns the byte index.
-int nlua_str_byteindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
-{
-  size_t s1_len;
-  const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
-  intptr_t idx = luaL_checkinteger(lstate, 2);
-  if (idx < 0) {
-    return luaL_error(lstate, "index out of range");
-  }
-  bool use_utf16 = false;
-  if (lua_gettop(lstate) >= 3) {
-    use_utf16 = lua_toboolean(lstate, 3);
-  }
-
-  ssize_t byteidx = mb_utf_index_to_bytes(s1, s1_len, (size_t)idx, use_utf16);
-  if (byteidx == -1) {
-    return luaL_error(lstate, "index out of range");
-  }
-
-  lua_pushinteger(lstate, (lua_Integer)byteidx);
-
-  return 1;
-}
-
 int nlua_regex(lua_State *lstate)
 {
   Error err = ERROR_INIT;
@@ -696,9 +667,6 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     // str_utfindex
     lua_pushcfunction(lstate, &nlua_str_utfindex);
     lua_setfield(lstate, -2, "str_utfindex");
-    // str_byteindex
-    lua_pushcfunction(lstate, &nlua_str_byteindex);
-    lua_setfield(lstate, -2, "str_byteindex");
     // str_utf_pos
     lua_pushcfunction(lstate, &nlua_str_utf_pos);
     lua_setfield(lstate, -2, "str_utf_pos");
