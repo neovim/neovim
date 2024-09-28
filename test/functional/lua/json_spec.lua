@@ -152,6 +152,45 @@ describe('vim.json.encode()', function()
     clear()
   end)
 
+  it('dumps strings with & without escaped slash', function()
+    -- With slash
+    eq('"Test\\/"', exec_lua([[return vim.json.encode('Test/', { escape_slash = true })]]))
+    eq(
+      'Test/',
+      exec_lua([[return vim.json.decode(vim.json.encode('Test/', { escape_slash = true }))]])
+    )
+
+    -- Without slash
+    eq('"Test/"', exec_lua([[return vim.json.encode('Test/')]]))
+    eq('"Test/"', exec_lua([[return vim.json.encode('Test/', {})]]))
+    eq('"Test/"', exec_lua([[return vim.json.encode('Test/', { _invalid = true })]]))
+    eq('"Test/"', exec_lua([[return vim.json.encode('Test/', { escape_slash = false })]]))
+    eq(
+      '"Test/"',
+      exec_lua([[return vim.json.encode('Test/', { _invalid = true, escape_slash = false })]])
+    )
+    eq(
+      'Test/',
+      exec_lua([[return vim.json.decode(vim.json.encode('Test/', { escape_slash = false }))]])
+    )
+
+    -- Checks for for global side-effects
+    eq(
+      '"Test/"',
+      exec_lua([[
+        vim.json.encode('Test/', { escape_slash = true })
+        return vim.json.encode('Test/')
+      ]])
+    )
+    eq(
+      '"Test\\/"',
+      exec_lua([[
+        vim.json.encode('Test/', { escape_slash = false })
+        return vim.json.encode('Test/', { escape_slash = true })
+      ]])
+    )
+  end)
+
   it('dumps strings', function()
     eq('"Test"', exec_lua([[return vim.json.encode('Test')]]))
     eq('""', exec_lua([[return vim.json.encode('')]]))

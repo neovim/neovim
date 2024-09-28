@@ -811,11 +811,14 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
     Return: ~
         (`any`)
 
-vim.json.encode({obj})                                     *vim.json.encode()*
+vim.json.encode({obj}, {opts})                             *vim.json.encode()*
     Encodes (or "packs") Lua object {obj} as JSON in a Lua string.
 
     Parameters: ~
-      • {obj}  (`any`)
+      • {obj}   (`any`)
+      • {opts}  (`table<string,any>?`) Options table with keys:
+                • escape_slash: (boolean) (default false) When true, escapes
+                  `/` character in JSON strings
 
     Return: ~
         (`string`)
