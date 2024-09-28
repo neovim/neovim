@@ -3,14 +3,9 @@
 #include <stdbool.h>
 #include <uv.h>
 
-#include "klib/klist.h"
+#include "klib/kvec.h"
 #include "nvim/event/defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
-
-typedef void *WatcherPtr;
-
-#define NOOP(x)
-KLIST_INIT(WatcherPtr, WatcherPtr, NOOP)
 
 struct loop {
   uv_loop_t uv;
@@ -27,7 +22,7 @@ struct loop {
   MultiQueue *fast_events;
 
   // used by process/job-control subsystem
-  klist_t(WatcherPtr) *children;
+  kvec_t(Proc *) children;
   uv_signal_t children_watcher;
   uv_timer_t children_kill_timer;
 
