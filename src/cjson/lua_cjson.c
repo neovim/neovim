@@ -173,7 +173,12 @@ typedef struct {
 } json_config_t;
 
 typedef struct {
+    const char **char2escape[256];
+} json_encode_options_t;
+
+typedef struct {
     json_config_t *cfg;
+    json_encode_options_t *options;
     strbuf_t *json;
 } json_encode_t;
 
@@ -214,7 +219,7 @@ static const char *char2escape[256] = {
     "\\u0018", "\\u0019", "\\u001a", "\\u001b",
     "\\u001c", "\\u001d", "\\u001e", "\\u001f",
     NULL, NULL, "\\\"", NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, "\\/",
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -593,7 +598,7 @@ static void json_append_string(lua_State *l, json_encode_t *ctx, int lindex)
 
     strbuf_append_char_unsafe(json, '\"');
     for (i = 0; i < len; i++) {
-        escstr = char2escape[(unsigned char)str[i]];
+        escstr = (*ctx->options->char2escape)[(unsigned char)str[i]];
         if (escstr)
             strbuf_append_string(json, escstr);
         else
@@ -883,13 +888,44 @@ static void json_append_data(lua_State *l, json_encode_t *ctx,
 static int json_encode(lua_State *l)
 {
     json_config_t *cfg = json_fetch_config(l);
-    json_encode_t ctx = { .cfg = cfg };
+    json_encode_options_t options = { .char2escape = { char2escape } };
+    json_encode_t ctx = { .options = &options, .cfg = cfg };
     strbuf_t local_encode_buf;
     strbuf_t *encode_buf;
     char *json;
     int len;
+    const char *customChar2escape[256];
 
-    luaL_argcheck(l, lua_gettop(l) == 1, 1, "expected 1 argument");
+    switch (lua_gettop(l)) {
+    case 1:
+        break;
+    case 2:
+        luaL_checktype(l, 2, LUA_TTABLE);
+        lua_getfield(l, 2, "escape_slash");
+
+        /* We only handle the escape_slash option for now */
+        if (lua_isnil(l, -1)) {
+            lua_pop(l, 2);
+            break;
+        }
+
+        luaL_checktype(l, -1, LUA_TBOOLEAN);
+
+        int escape_slash = lua_toboolean(l, -1);
+
+        if (escape_slash) {
+            /* This can be optimised by adding a new hard-coded escape table for this case,
+             * but this path will rarely if ever be used, so let's just memcpy.*/ 
+            memcpy(customChar2escape, char2escape, sizeof(char2escape));
+            customChar2escape['/'] = "\\/";
+            *ctx.options->char2escape = customChar2escape;
+        }
+
+        lua_pop(l, 2);
+        break;
+    default:
+        return luaL_error (l, "expected 1 or 2 arguments");
+    }
 
     if (!cfg->encode_keep_buffer) {
         /* Use private buffer */
