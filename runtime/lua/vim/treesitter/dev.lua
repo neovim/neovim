@@ -579,6 +579,8 @@ end
 
 --- @private
 --- @param lang? string language to open the query editor for.
+--- @return boolean? `true` on success, `nil` on failure
+--- @return string? error message, if applicable
 function M.edit_query(lang)
   local buf = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
@@ -678,6 +680,8 @@ function M.edit_query(lang)
   })
   vim.cmd('normal! G')
   vim.cmd.startinsert()
+
+  return true
 end
 
 return M
