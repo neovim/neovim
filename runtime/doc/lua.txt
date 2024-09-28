@@ -1001,22 +1001,6 @@ vim.schedule({fn})                                            *vim.schedule()*
     Parameters: ~
       • {fn}  (`fun()`)
 
-vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
-    Convert UTF-32 or UTF-16 {index} to byte index. If {use_utf16} is not
-    supplied, it defaults to false (use UTF-32). Returns the byte index.
-
-    Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|. An {index}
-    in the middle of a UTF-16 sequence is rounded upwards to the end of that
-    sequence.
-
-    Parameters: ~
-      • {str}        (`string`)
-      • {index}      (`integer`)
-      • {use_utf16}  (`boolean?`)
-
-    Return: ~
-        (`integer`)
-
 vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
     Gets the distance (in bytes) from the last byte of the codepoint
     (character) that {index} points to.
@@ -1771,6 +1755,29 @@ vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
       • |lua-loop-callbacks|
       • |vim.schedule()|
       • |vim.in_fast_event()|
+
+vim.str_byteindex({s}, {index}, {opts})                  *vim.str_byteindex()*
+    Convert UTF-32 or UTF-16 {index} to byte index. {opts} can be a table
+    containing two properties:i
+    • an "encoding" property of "utf-8", "utf-16" or "utf-32"
+    • an "error" property of true or false, if error is false then then an out
+      of range index will return byte length instead of throwing an error.
+
+    {opts} can also be supplied as a boolean, true for utf-16 and false for
+    utf-32. If {opts} is not supplied, it defaults to false (UTF-32). Returns
+    the byte index.
+
+    Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|. An {index}
+    in the middle of a UTF-16 sequence is rounded upwards to the end of that
+    sequence.
+
+    Parameters: ~
+      • {s}      (`string`)
+      • {index}  (`integer`)
+      • {opts}   (`boolean?|{ encoding: "utf-8"|"utf-16"|"utf-32", error?: boolean }?`)
+
+    Return: ~
+        (`integer`)
 
 vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
     Runs a system command or throws an error if {cmd} cannot be run.
