@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 
 local api, clear, eq = n.api, n.clear, t.eq
 local eval, exec, feed = n.eval, n.exec, n.feed
+local exec_lua = n.exec_lua
 
 describe('Signs', function()
   local screen
@@ -606,5 +607,16 @@ describe('Signs', function()
     -- Unplacing the sign does not crash by decrementing tracked signs below zero
     exec('sign unplace 1')
     screen:expect(s1)
+  end)
+
+  it('signcolumn width is set immediately after splitting window #30547', function()
+    local infos = exec_lua([[
+      vim.o.number = true
+      vim.o.signcolumn = 'yes'
+      vim.cmd.wincmd('v')
+      return vim.fn.getwininfo()
+    ]])
+    eq(6, infos[1].textoff)
+    eq(6, infos[2].textoff)
   end)
 end)
