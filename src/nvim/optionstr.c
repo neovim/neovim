@@ -306,26 +306,26 @@ int check_signcolumn(win_T *wp)
       wp->w_minscwidth = 0;
       wp->w_maxscwidth = 1;
     }
-    return OK;
+  } else {
+    if (strncmp(val, "auto:", 5) != 0
+        || strlen(val) != 8
+        || !ascii_isdigit(val[5])
+        || val[6] != '-'
+        || !ascii_isdigit(val[7])) {
+      return FAIL;
+    }
+    // auto:<NUM>-<NUM>
+    int min = val[5] - '0';
+    int max = val[7] - '0';
+    if (min < 1 || max < 2 || min > 8 || min >= max) {
+      return FAIL;
+    }
+    wp->w_minscwidth = min;
+    wp->w_maxscwidth = max;
   }
 
-  if (strncmp(val, "auto:", 5) != 0
-      || strlen(val) != 8
-      || !ascii_isdigit(val[5])
-      || val[6] != '-'
-      || !ascii_isdigit(val[7])) {
-    return FAIL;
-  }
-
-  // auto:<NUM>-<NUM>
-  int min = val[5] - '0';
-  int max = val[7] - '0';
-  if (min < 1 || max < 2 || min > 8 || min >= max) {
-    return FAIL;
-  }
-
-  wp->w_minscwidth = min;
-  wp->w_maxscwidth = max;
+  int scwidth = wp->w_minscwidth <= 0 ? 0 : MIN(wp->w_maxscwidth, wp->w_scwidth);
+  wp->w_scwidth = MAX(wp->w_minscwidth, scwidth);
   return OK;
 }
 
@@ -2038,8 +2038,6 @@ const char *did_set_signcolumn(optset_T *args)
   if (check_signcolumn(win) != OK) {
     return e_invarg;
   }
-  int scwidth = win->w_minscwidth <= 0 ? 0 : MIN(win->w_maxscwidth, win->w_scwidth);
-  win->w_scwidth = MAX(win->w_minscwidth, scwidth);
   // When changing the 'signcolumn' to or from 'number', recompute the
   // width of the number column if 'number' or 'relativenumber' is set.
   if ((*oldval == 'n' && *(oldval + 1) == 'u') || win->w_minscwidth == SCL_NUM) {
