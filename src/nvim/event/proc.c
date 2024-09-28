@@ -3,7 +3,6 @@
 #include <signal.h>
 #include <uv.h>
 
-#include "klib/klist.h"
 #include "nvim/event/libuv_proc.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
@@ -123,7 +122,7 @@ int proc_spawn(Proc *proc, bool in, bool out, bool err)
   proc->internal_exit_cb = on_proc_exit;
   proc->internal_close_cb = decref;
   proc->refcount++;
-  kl_push(WatcherPtr, proc->loop->children, proc);
+  kv_push(proc->loop->children, proc);
   DLOG("new: pid=%d exepath=[%s]", proc->pid, proc_get_exepath(proc));
   return 0;
 }
@@ -131,8 +130,8 @@ int proc_spawn(Proc *proc, bool in, bool out, bool err)
 void proc_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
 {
   proc_is_tearing_down = true;
-  kl_iter(WatcherPtr, loop->children, current) {
-    Proc *proc = (*current)->data;
+  for (size_t i = 0; i < kv_size(loop->children); i++) {
+    Proc *proc = kv_A(loop->children, i);
     if (proc->detach || proc->type == kProcTypePty) {
       // Close handles to process without killing it.
       CREATE_EVENT(loop->events, proc_close_handles, proc);
@@ -143,7 +142,7 @@ void proc_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
 
   // Wait until all children exit and all close events are processed.
   LOOP_PROCESS_EVENTS_UNTIL(loop, loop->events, -1,
-                            kl_empty(loop->children) && multiqueue_empty(loop->events));
+                            kv_size(loop->children) == 0 && multiqueue_empty(loop->events));
   pty_proc_teardown(loop);
 }
 
@@ -254,8 +253,8 @@ static void children_kill_cb(uv_timer_t *handle)
 {
   Loop *loop = handle->loop->data;
 
-  kl_iter(WatcherPtr, loop->children, current) {
-    Proc *proc = (*current)->data;
+  for (size_t i = 0; i < kv_size(loop->children); i++) {
+    Proc *proc = kv_A(loop->children, i);
     bool exited = (proc->status >= 0);
     if (exited || !proc->stopped_time) {
       continue;
@@ -294,15 +293,19 @@ static void decref(Proc *proc)
   }
 
   Loop *loop = proc->loop;
-  kliter_t(WatcherPtr) **node = NULL;
-  kl_iter(WatcherPtr, loop->children, current) {
-    if ((*current)->data == proc) {
-      node = current;
+  size_t i;
+  for (i = 0; i < kv_size(loop->children); i++) {
+    Proc *current = kv_A(loop->children, i);
+    if (current == proc) {
       break;
     }
   }
-  assert(node);
-  kl_shift_at(WatcherPtr, loop->children, node);
+  assert(i < kv_size(loop->children));  // element found
+  if (i < kv_size(loop->children) - 1) {
+    memmove(&kv_A(loop->children, i), &kv_A(loop->children, i + 1),
+            sizeof(&kv_A(loop->children, i)) * (kv_size(loop->children) - (i + 1)));
+  }
+  kv_size(loop->children)--;
   CREATE_EVENT(proc->events, proc_close_event, proc);
 }
 
