@@ -2,7 +2,7 @@
 " Language:		indent(1) configuration file
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
-" Last Change:		2021 Nov 17
+" Last Change:		2024 Sep 29
 "   indent_is_bsd:      If exists, will change somewhat to match BSD implementation
 "
 " TODO:     is the deny-all (a la lilo.vim nice or no?)...
@@ -34,7 +34,7 @@ endif
 syn match   indentOptions '-\%(bli\|c\%([bl]i\|[dip]\)\=\|di\=\|ip\=\|lc\=\|pp\=i\|sbi\|ts\|-\%(brace-indent\|comment-indentation\|case-brace-indentation\|declaration-comment-column\|continuation-indentation\|case-indentation\|else-endif-column\|line-comments-indentation\|declaration-indentation\|indent-level\|parameter-indentation\|line-length\|comment-line-length\|paren-indentation\|preprocessor-indentation\|struct-brace-indentation\|tab-size\)\)'
                         \ nextgroup=indentNumber skipwhite skipempty
 
-syn match   indentNumber  display contained '\d\+\>'
+syn match   indentNumber  display contained '-\=\d\+\>'
 
 syn match   indentOptions '-T'
                         \ nextgroup=indentIdent skipwhite skipempty
