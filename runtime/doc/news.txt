@@ -223,7 +223,7 @@ CHANGED FEATURES                                                 *news-changed*
 
 These existing features changed their behavior.
 
-• 'scrollbind' now works properly with buffers that contain virutal lines.
+• 'scrollbind' now works properly with buffers that contain virtual lines.
 
   Scrollbind works by aligning to a target top line of each window in a tab
   page. Previously this was done by calculating the difference between the old

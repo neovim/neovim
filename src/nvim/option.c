@@ -246,7 +246,7 @@ static void set_init_default_backupskip(void)
       // note: the value (and therefore plen) may already include a path separator
       size_t itemsize = plen + (has_trailing_path_sep ? 0 : 1) + 2;
       char *item = xmalloc(itemsize);
-      // add a preceeding comma as a separator after the first item
+      // add a preceding comma as a separator after the first item
       size_t itemseplen = (ga.ga_len == 0) ? 0 : 1;
 
       size_t itemlen = (size_t)vim_snprintf(item, itemsize, "%s%s*", p,

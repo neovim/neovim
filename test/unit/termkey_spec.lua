@@ -332,7 +332,7 @@ describe('termkey', function()
     t.eq(termkey.termkey_get_buffer_remaining(tk), 511) -- buffer free 511 after push_bytes
     t.eq(termkey.termkey_get_buffer_size(tk), 512) -- buffer size 512 after push_bytes
 
-    t.eq(termkey.termkey_getkey(tk, key), termkey.TERMKEY_RES_KEY) -- buffered key still useable after resize
+    t.eq(termkey.termkey_getkey(tk, key), termkey.TERMKEY_RES_KEY) -- buffered key still usable after resize
 
     termkey.termkey_destroy(tk)
   end)

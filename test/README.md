@@ -263,7 +263,7 @@ by the semantic component they are testing.
 Lint
 ====
 
-`make lint` (and `make lualint`) runs [luacheck](https://github.com/mpeterv/luacheck)
+`make lint` (and `make lintlua`) runs [luacheck](https://github.com/mpeterv/luacheck)
 on the test code.
 
 If a luacheck warning must be ignored, specify the warning code. Example:

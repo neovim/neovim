@@ -261,7 +261,7 @@ end
 ---@param row integer Position row
 ---@param col integer Position column
 ---
----@return {capture: string, lang: string, metadata: table}[]
+---@return {capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata}[]
 function M.get_captures_at_pos(bufnr, row, col)
   if bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
