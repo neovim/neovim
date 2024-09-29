@@ -662,6 +662,22 @@ describe('float window', function()
     screen:detach()
   end)
 
+  it('no crash with relative="win" after %bdelete #30569', function()
+    exec([[
+      botright vsplit
+      %bdelete
+    ]])
+    api.nvim_open_win(0, false, {
+      relative = 'win',
+      win = 0,
+      row = 0,
+      col = 5,
+      width = 5,
+      height = 5,
+    })
+    assert_alive()
+  end)
+
   describe('with only one tabpage,', function()
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
     local old_buf, old_win
