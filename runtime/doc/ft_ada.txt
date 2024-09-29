@@ -156,10 +156,9 @@ several versions available which differ in the licence terms used.
 
 The GNAT compiler plug-in will perform a compile on pressing <F7> and then
 immediately shows the result. You can set the project file to be used by
-setting:
- >
- > call g:gnat.Set_Project_File ('my_project.gpr')
-
+setting: >
+		call g:gnat.Set_Project_File ('my_project.gpr')
+<
 Setting a project file will also create a Vim session (|views-sessions|) so -
 like with the GPS - opened files, window positions etc. will be remembered
 separately for all projects.
