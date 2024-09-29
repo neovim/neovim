@@ -1294,7 +1294,7 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
   end, 'valid directory')
   vim.validate('to_dir', to_dir, 'string')
   vim.validate('include', include, 'table', true)
-  vim.validate('commit', commit, 'sring', true)
+  vim.validate('commit', commit, 'string', true)
   vim.validate('parser_path', parser_path, function(f)
     return vim.fn.filereadable(vim.fs.normalize(f)) == 1
   end, true, 'valid vimdoc.{so,dll} filepath')

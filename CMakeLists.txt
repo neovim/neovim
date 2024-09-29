@@ -132,8 +132,8 @@ message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 set_default_buildtype(Debug)
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
-  # Unlike build dependencies in cmake.deps, we assume we want dev dependencies
-  # such as Uncrustify to always be built with Release.
+  # Unlike build dependencies in cmake.deps, we want dev dependencies such as
+  # Uncrustify to always be built with Release.
   list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=Release)
 endif()
 
