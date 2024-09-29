@@ -59,7 +59,7 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
       if (!tp) {
         return NULL;
       }
-      tp_last = tp->tp_lastwin;
+      tp_last = tp == curtab ? lastwin : tp->tp_lastwin;
       while (tp_last->w_floating && tp_last->w_prev) {
         tp_last = tp_last->w_prev;
       }
