@@ -64,9 +64,8 @@ Symbols:
   - `extern` variables (including the `EXTERN` macro)
 
 Non-symbols:
-  - macros, i.e. `#define`.
-  - static inline functions, but only if its function declaration has a
-    `REAL_FATTR_ALWAYS_INLINE` attribute.
+  - macros, i.e. `#define`
+  - static inline functions with the `FUNC_ATTR_ALWAYS_INLINE` attribute
   - typedefs
   - structs
   - enums

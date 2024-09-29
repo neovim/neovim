@@ -542,10 +542,10 @@ LspDetach                                                          *LspDetach*
 
         -- Remove the autocommand to format the buffer on save, if it exists
         if client.supports_method('textDocument/formatting') then
-            vim.api.nvim_clear_autocmds({
-                event = 'BufWritePre',
-                buffer = args.buf,
-            })
+          vim.api.nvim_clear_autocmds({
+            event = 'BufWritePre',
+            buffer = args.buf,
+          })
         end
       end,
     })
@@ -867,9 +867,9 @@ start({config}, {opts})                                      *vim.lsp.start()*
       |vim.lsp.start_client()|.
     • `root_dir` path to the project root. By default this is used to decide
       if an existing client should be re-used. The example above uses
-      |vim.fs.root()| and |vim.fs.dirname()| to detect the root by traversing
-      the file system upwards starting from the current directory until either
-      a `pyproject.toml` or `setup.py` file is found.
+      |vim.fs.root()| to detect the root by traversing the file system upwards
+      starting from the current directory until either a `pyproject.toml` or
+      `setup.py` file is found.
     • `workspace_folders` list of `{ uri:string, name: string }` tables
       specifying the project root folders used by the language server. If
       `nil` the property is derived from `root_dir` for convenience.
