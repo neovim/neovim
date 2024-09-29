@@ -12,7 +12,6 @@
     - To build on Windows, see the [Building on Windows](#building-on-windows) section. _MSVC (Visual Studio) is recommended._
 4. `sudo make install`
     - Default install location is `/usr/local`
-    - On Debian/Ubuntu, instead of installing files directly with `sudo make install`, you can run `cd build && cpack -G DEB && sudo dpkg -i nvim-linux64.deb` to build DEB-package and install it. This should help ensuring the clean removal of installed files.
 
 **Notes**:
 - From the repository's root directory, running `make` will download and build all the needed dependencies and put the `nvim` executable in `build/bin`.
@@ -284,7 +283,8 @@ General requirements (see [#1469](https://github.com/neovim/neovim/issues/1469#i
 
 - Clang or GCC version 4.9+
 - CMake version 3.16+, built with TLS/SSL support
-  - Optional: Get the latest CMake from an [installer](https://github.com/Kitware/CMake/releases) or the [Python package](https://pypi.org/project/cmake/) (`pip install cmake`)
+  - Optional: Get the latest CMake from https://cmake.org/download/
+    - Provides a shell script which works on most Linux systems. After running it, ensure the resulting `cmake` binary is in your $PATH so the the Nvim build will find it.
 
 Platform-specific requirements are listed below.
 

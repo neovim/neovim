@@ -1310,7 +1310,7 @@ make, say :make html or :make pdf.
 Additional arguments can be passed to groff by setting them in
 `b:groff_compiler_args` or `g:groff_compiler_args`. The `language` argument
 passed to groff is set using 'spelllang'; it can be overridden by setting
-`b:groff_compiler_lang`. The default enconding is `UTF-8` and can be changed
+`b:groff_compiler_lang`. The default encoding is `UTF-8` and can be changed
 by setting `b:groff_compiler_encoding` or `g:groff_compiler_encoding`.
 
 PANDOC					*quickfix-pandoc* *compiler-pandoc*

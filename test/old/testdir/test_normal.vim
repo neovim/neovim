@@ -4284,7 +4284,7 @@ func Test_halfpage_longline()
 endfunc
 
 " Test for Ctrl-E with long line and very narrow window,
-" used to cause an inifite loop
+" used to cause an infinite loop
 func Test_scroll_longline_no_loop()
   4vnew
   setl smoothscroll number showbreak=> scrolloff=2

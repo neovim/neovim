@@ -757,7 +757,7 @@ get_captures_at_pos({bufnr}, {row}, {col})
       • {col}    (`integer`) Position column
 
     Return: ~
-        (`{capture: string, lang: string, metadata: table}[]`)
+        (`{capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata}[]`)
 
 get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position

@@ -222,7 +222,7 @@ do
   ---       -- Scrub ANSI color codes from paste input.
   ---       lines[i] = line:gsub('\27%[[0-9;mK]+', '')
   ---     end
-  ---     overridden(lines, phase)
+  ---     return overridden(lines, phase)
   ---   end
   --- end)(vim.paste)
   --- ```
