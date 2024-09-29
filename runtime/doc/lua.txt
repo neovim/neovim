@@ -715,7 +715,7 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
       • {b}     (`string`) Second string to compare
       • {opts}  (`table?`) Optional parameters:
                 • {on_hunk}?
-                  (`fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer`)
+                  (`fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer?`)
                   Invoked for each hunk in the diff. Return a negative number
                   to cancel the callback for any remaining hunks. Arguments:
                   • `start_a` (`integer`): Start line of hunk in {a}.

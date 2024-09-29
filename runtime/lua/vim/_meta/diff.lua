@@ -11,7 +11,7 @@
 ---   - `count_a` (`integer`): Hunk size in {a}.
 ---   - `start_b` (`integer`): Start line of hunk in {b}.
 ---   - `count_b` (`integer`): Hunk size in {b}.
---- @field on_hunk? fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer
+--- @field on_hunk? fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer?
 ---
 --- Form of the returned diff:
 ---   - `unified`: String in unified format.
