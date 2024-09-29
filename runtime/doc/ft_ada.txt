@@ -48,14 +48,12 @@ ctermfg=White often shows well).
 There are several options you can select in this Ada mode. See |ft-ada-options|
 for a complete list.
 
-To enable them, assign a value to the option.  For example, to turn one on:
- >
-    > let g:ada_standard_types = 1
-
-To disable them use ":unlet".  Example:
->
-    > unlet g:ada_standard_types
-
+To enable them, assign a value to the option.  For example, to turn one on: >
+	let g:ada_standard_types = 1
+<
+To disable them use ":unlet".  Example: >
+	unlet g:ada_standard_types
+<
 You can just use ":" and type these into the command line to set these
 temporarily before loading an Ada file.  You can make these option settings
 permanent by adding the "let" command(s), without a colon, to your |init.vim|
