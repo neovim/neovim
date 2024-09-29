@@ -68,6 +68,7 @@ local new_layout = {
   ['dev_theme.txt'] = true,
   ['dev_tools.txt'] = true,
   ['dev_vimpatch.txt'] = true,
+  ['editorconfig.txt'] = true,
   ['faq.txt'] = true,
   ['lua.txt'] = true,
   ['luaref.txt'] = true,
