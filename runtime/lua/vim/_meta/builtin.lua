@@ -182,8 +182,8 @@ function vim.str_utf_end(str, index) end
 --- that sequence.
 --- @param str string
 --- @param index? integer
---- @return integer UTF-32 index
---- @return integer UTF-16 index
+--- @return integer # UTF-32 index
+--- @return integer # UTF-16 index
 function vim.str_utfindex(str, index) end
 
 --- The result is a String, which is the text {str} converted from
