@@ -7,10 +7,6 @@
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
-// Includes final NUL. MAX_MCO is no longer used, but at least 4*(MAX_MCO+1)+1=29
-// ensures we can fit all composed chars which did fit before.
-#define MAX_SCHAR_SIZE 32
-
 enum {
   kZIndexDefaultGrid = 0,
   kZIndexFloatDefault = 50,

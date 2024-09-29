@@ -835,21 +835,29 @@ static void normal_get_additional_char(NormalState *s)
       // because if it's put back with vungetc() it's too late to apply
       // mapping.
       no_mapping--;
+      GraphemeState state = GRAPHEME_STATE_INIT;
+      int prev_code = s->ca.nchar;
+
       while ((s->c = vpeekc()) > 0
              && (s->c >= 0x100 || MB_BYTE2LEN(vpeekc()) > 1)) {
         s->c = plain_vgetc();
-        // TODO(bfredl): only allowing up to two composing chars is cringe af.
-        // Could reuse/abuse schar_T to at least allow us to input anything we are able
-        // to display and use the stateful utf8proc algorithm like utf_composinglike
-        if (!utf_iscomposing_legacy(s->c)) {
+
+        if (!utf_iscomposing(prev_code, s->c, &state)) {
           vungetc(s->c);                   // it wasn't, put it back
           break;
-        } else if (s->ca.ncharC1 == 0) {
-          s->ca.ncharC1 = s->c;
-        } else {
-          s->ca.ncharC2 = s->c;
         }
+
+        // first composing char, first put base char into buffer
+        if (s->ca.nchar_len == 0) {
+          s->ca.nchar_len = utf_char2bytes(s->ca.nchar, s->ca.nchar_composing);
+        }
+
+        if (s->ca.nchar_len + utf_char2len(s->c) < (int)sizeof(s->ca.nchar_composing)) {
+          s->ca.nchar_len += utf_char2bytes(s->c, s->ca.nchar_composing + s->ca.nchar_len);
+        }
+        prev_code = s->c;
       }
+      s->ca.nchar_composing[s->ca.nchar_len] = NUL;
       no_mapping++;
       // Vim may be in a different mode when the user types the next key,
       // but when replaying a recording the next key is already in the
@@ -1735,7 +1743,12 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
 static void prep_redo_cmd(cmdarg_T *cap)
 {
   prep_redo(cap->oap->regname, cap->count0,
-            NUL, cap->cmdchar, NUL, NUL, cap->nchar);
+            NUL, cap->cmdchar, NUL, NUL, NUL);
+  if (cap->nchar_len > 0) {
+    AppendToRedobuff(cap->nchar_composing);
+  } else {
+    AppendCharToRedobuff(cap->nchar);
+  }
 }
 
 /// Prepare for redo of any command.
@@ -4548,17 +4561,15 @@ static void nv_replace(cmdarg_T *cap)
     // Give 'r' to edit(), to get the redo command right.
     invoke_edit(cap, true, 'r', false);
   } else {
-    prep_redo(cap->oap->regname, cap->count1,
-              NUL, 'r', NUL, had_ctrl_v, cap->nchar);
+    prep_redo(cap->oap->regname, cap->count1, NUL, 'r', NUL, had_ctrl_v, 0);
 
     curbuf->b_op_start = curwin->w_cursor;
     const int old_State = State;
 
-    if (cap->ncharC1 != 0) {
-      AppendCharToRedobuff(cap->ncharC1);
-    }
-    if (cap->ncharC2 != 0) {
-      AppendCharToRedobuff(cap->ncharC2);
+    if (cap->nchar_len > 0) {
+      AppendToRedobuff(cap->nchar_composing);
+    } else {
+      AppendCharToRedobuff(cap->nchar);
     }
 
     // This is slow, but it handles replacing a single-byte with a
@@ -4576,15 +4587,13 @@ static void nv_replace(cmdarg_T *cap)
           curwin->w_cursor.col++;
         }
       } else {
-        ins_char(cap->nchar);
+        if (cap->nchar_len) {
+          ins_char_bytes(cap->nchar_composing, (size_t)cap->nchar_len);
+        } else {
+          ins_char(cap->nchar);
+        }
       }
       State = old_State;
-      if (cap->ncharC1 != 0) {
-        ins_char(cap->ncharC1);
-      }
-      if (cap->ncharC2 != 0) {
-        ins_char(cap->ncharC2);
-      }
     }
     curwin->w_cursor.col--;         // cursor on the last replaced char
     // if the character on the left of the current cursor is a multi-byte
