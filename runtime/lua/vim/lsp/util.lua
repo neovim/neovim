@@ -146,38 +146,6 @@ function M._str_utfindex_enc(line, index, encoding)
   end
 end
 
---- Convert UTF index to `encoding` index.
---- Convenience wrapper around vim.str_byteindex
----Alternative to vim.str_byteindex that takes an encoding.
----@param line string line to be indexed
----@param index integer UTF index
----@param encoding string utf-8|utf-16|utf-32| defaults to utf-16
----@return integer byte (utf-8) index of `encoding` index `index` in `line`
-function M._str_byteindex_enc(line, index, encoding)
-  local len = #line
-  if index > len then
-    -- LSP spec: if character > line length, default to the line length.
-    -- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#position
-    return len
-  end
-  if not encoding then
-    encoding = 'utf-16'
-  end
-  if encoding == 'utf-8' then
-    if index then
-      return index
-    else
-      return len
-    end
-  elseif encoding == 'utf-16' then
-    return vim.str_byteindex(line, index, true)
-  elseif encoding == 'utf-32' then
-    return vim.str_byteindex(line, index)
-  else
-    error('Invalid encoding: ' .. vim.inspect(encoding))
-  end
-end
-
 --- Replaces text in a range with new text.
 ---
 --- CAUTION: Changes in-place!
@@ -344,7 +312,7 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- character
   if col > 0 then
     local line = get_line(bufnr, position.line) or ''
-    return M._str_byteindex_enc(line, col, offset_encoding or 'utf-16')
+    return vim.str_byteindex(line, col, { encoding = offset_encoding or 'utf-16', error = false })
   end
   return col
 end
@@ -1795,8 +1763,13 @@ function M.locations_to_items(locations, offset_encoding)
       local end_row = end_pos.line
       local line = lines[row] or ''
       local end_line = lines[end_row] or ''
-      local col = M._str_byteindex_enc(line, pos.character, offset_encoding)
-      local end_col = M._str_byteindex_enc(end_line, end_pos.character, offset_encoding)
+      local col =
+        vim.str_byteindex(line, pos.character, { encoding = offset_encoding, error = false })
+      local end_col = vim.str_byteindex(
+        end_line,
+        end_pos.character,
+        { encoding = offset_encoding, error = false }
+      )
 
       table.insert(items, {
         filename = filename,
