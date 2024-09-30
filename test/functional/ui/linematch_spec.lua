@@ -803,6 +803,73 @@ void testFunction () {
       ]])
     end)
   end)
+  describe('setup a diff with 2 files and set linematch:30', function()
+    before_each(function()
+      feed(':set diffopt+=linematch:30<cr>')
+      local f1 = [[
+start
+   ?a
+      ]]
+      local f2 = [[
+start
+!b
+!a
+   !c
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    it('display results', function()
+      screen:expect([[
+      {7:  }{8:  1 }^start                                      │{7:  }{8:  1 }start                                       |
+      {7:  }{8:  2 }{22:!b                                         }│{7:  }{8:    }{23:--------------------------------------------}|
+      {7:  }{8:  3 }{22:!a                                         }│{7:  }{8:    }{23:--------------------------------------------}|
+      {7:  }{8:  4 }{4:   }{27:!c}{4:                                      }│{7:  }{8:  2 }{4:   }{27:?a}{4:                                       }|
+      {7:  }{8:  5 }                                           │{7:  }{8:  3 }                                            |
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+      :e                                                                                                  |
+      ]])
+    end)
+    it('display results with ignore white', function()
+      feed(':set diffopt+=iwhiteall<cr>')
+      screen:expect([[
+      {7:  }{8:  1 }^start                                      │{7:  }{8:  1 }start                                       |
+      {7:  }{8:  2 }{22:!b                                         }│{7:  }{8:    }{23:--------------------------------------------}|
+      {7:  }{8:  3 }{27:!}{4:a                                         }│{7:  }{8:  2 }{4:   }{27:?}{4:a                                       }|
+      {7:  }{8:  4 }{22:   !c                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+      {7:  }{8:  5 }                                           │{7:  }{8:  3 }                                            |
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {1:~                                                }│{1:~                                                 }|
+      {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+      :set diffopt+=iwhiteall                                                                             |
+      ]])
+    end)
+  end)
   describe('a diff that would result in multiple groups before grouping optimization', function()
     before_each(function()
       feed(':set diffopt+=linematch:30<cr>')
@@ -1083,6 +1150,436 @@ something
       ]])
       end
     )
+  end)
+  describe('show a diff with charmatch enabled', function()
+    before_each(function()
+      local f1 = [[
+abbcabbcdefghijklmnop
+      ]]
+      local f2 = [[
+abca?bc
+dfgh?ijl
+mnop?
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    describe('when the entire hunk is compared, cross-line', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:100<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {7:  }{8:  1 }{4:^abca}{27:?}{4:bc                                    }│{7:  }{8:  1 }{4:a}{27:b}{4:bca}{27:b}{4:bcd}{27:e}{4:fghij}{27:k}{4:lmnop                       }|
+       {7:  }{8:  2 }{4:dfgh}{27:?}{4:ijl                                   }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  3 }{4:mnop}{27:?}{4:                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:100                                                                          |
+        ]])
+      end)
+    end)
+    describe('when the single line is compared, cross-line', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:30<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {7:  }{8:  1 }{4:^abca}{27:?}{4:bc                                    }│{7:  }{8:  1 }{4:a}{27:b}{4:bca}{27:b}{4:bc}{27:defghijklmnop}{4:                       }|
+       {7:  }{8:  2 }{22:dfgh?ijl                                   }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  3 }{22:mnop?                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:30                                                                           |
+        ]])
+      end)
+    end)
+    describe('when the diff hunk and the single line are too long to run chardiff', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:10<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {7:  }{8:  1 }{4:^ab}{27:ca?bc}{4:                                    }│{7:  }{8:  1 }{4:ab}{27:bcabbcdefghijklmnop}{4:                       }|
+       {7:  }{8:  2 }{22:dfgh?ijl                                   }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  3 }{22:mnop?                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:10                                                                           |
+        ]])
+      end)
+    end)
+  end)
+  describe('show a diff with wordmatch enabled', function()
+    before_each(function()
+      local f1 = [[
+wA w1 wB w1 w2 wC w3 w4
+      ]]
+      local f2 = [[
+w1 w2
+w2 w3
+w4 w5
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+
+    describe('when the entire hunk is compared, cross-line', function()
+      it('display results', function()
+        feed(':set diffopt+=worddiff:30<cr>')
+        screen:expect([[
+       {7:  }{8:  1 }{4:^w1 w2                                      }│{7:  }{8:  1 }{27:wA w1 wB }{4:w1 w2}{27: wC}{4: w3}{27: }{4:w4                     }|
+       {7:  }{8:  2 }{27:w2}{4: w3                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  3 }{4:w4}{27: w5}{4:                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=worddiff:30                                                                           |
+        ]])
+      end)
+      it('display results, with ignore white', function()
+        feed(':set diffopt+=worddiff:20<cr>:set diffopt+=iwhiteall<cr>')
+        screen:expect([[
+       {7:  }{8:  1 }{4:^w1 w2                                      }│{7:  }{8:  1 }{27:wA}{4: }{27:w1}{4: }{27:wB}{4: w1 w2 }{27:wC}{4: w3 w4                     }|
+       {7:  }{8:  2 }{27:w2}{4: w3                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  3 }{4:w4 }{27:w5}{4:                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=iwhiteall                                                                             |
+        ]])
+      end)
+    end)
+
+    describe('when the single line is compared, cross-line', function()
+      it('display results', function()
+        feed(':set diffopt+=worddiff:20<cr>')
+        screen:expect([[
+       {7:  }{8:  1 }{4:^w1 w2                                      }│{7:  }{8:  1 }{27:wA w1 wB }{4:w1 w2}{27: wC w3 w4}{4:                     }|
+       {7:  }{8:  2 }{22:w2 w3                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  3 }{22:w4 w5                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=worddiff:20                                                                           |
+        ]])
+      end)
+      it('display results, with ignore white', function()
+        feed(':set diffopt+=worddiff:15<cr>:set diffopt+=iwhiteall<cr>')
+        screen:expect([[
+       {7:  }{8:  1 }{4:^w1 w2                                      }│{7:  }{8:  1 }{27:wA}{4: }{27:w1}{4: }{27:wB}{4: w1 w2 }{27:wC}{4: }{27:w3}{4: }{27:w4}{4:                     }|
+       {7:  }{8:  2 }{22:w2 w3                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  3 }{22:w4 w5                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=iwhiteall                                                                             |
+        ]])
+      end)
+    end)
+    describe('when the diff hunk and the single line are too long to run chardiff', function()
+      it('display results', function()
+        feed(':set diffopt+=worddiff:10<cr>')
+        screen:expect([[
+       {7:  }{8:  1 }{4:^w}{27:1 w2}{4:                                      }│{7:  }{8:  1 }{4:w}{27:A w1 wB w1 w2 wC w3 w4}{4:                     }|
+       {7:  }{8:  2 }{22:w2 w3                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  3 }{22:w4 w5                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=worddiff:10                                                                           |
+        ]])
+      end)
+      it('display results, with ignore white', function()
+        feed(':set diffopt+=worddiff:10<cr>:set diffopt+=iwhiteall<cr>')
+        screen:expect([[
+       {7:  }{8:  1 }{4:^w}{27:1 w2}{4:                                      }│{7:  }{8:  1 }{4:w}{27:A w1 wB w1 w2 wC w3 w4}{4:                     }|
+       {7:  }{8:  2 }{22:w2 w3                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  3 }{22:w4 w5                                      }│{7:  }{8:    }{23:--------------------------------------------}|
+       {7:  }{8:  4 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=iwhiteall                                                                             |
+        ]])
+      end)
+    end)
+  end)
+  describe('show a diff with charmatch enabled, with and without ignore white', function()
+    before_each(function()
+      local f1 = [[
+ababcabcdabcde
+      ]]
+      local f2 = [[
+abc abcd abcde abcdef
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    describe('normal comparison, including whitespace', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:100<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {7:  }{8:  1 }{4:^ab}{27:c }{4:abc}{27:d }{4:abcd}{27:e }{4:abcde}{27:f}{4:                      }│{7:  }{8:  1 }{4:ababcabcdabcde                              }|
+       {7:  }{8:  2 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:100                                                                          |
+        ]])
+      end)
+    end)
+    describe('ignore whitespace', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:100<cr>:set diffopt+=iwhiteall<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {7:  }{8:  1 }{4:^ab}{27:c}{4: abc}{27:d}{4: abcd}{27:e}{4: abcde}{27:f}{4:                      }│{7:  }{8:  1 }{4:ababcabcdabcde                              }|
+       {7:  }{8:  2 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=iwhiteall                                                                             |
+        ]])
+      end)
+    end)
+  end)
+  describe('show a diff with charmatch enabled, with different UTF-8 character', function()
+    before_each(function()
+      local f1 = [[
+aaaहaaa
+      ]]
+      local f2 = [[
+aaaसaaa
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    describe('normal comparison, including whitespace', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:100<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {7:  }{8:  1 }{4:^aaa}{27:स}{4:a}{27:a}{4:a                                    }│{7:  }{8:  1 }{4:aaa}{27:ह}{4:a}{27:a}{4:a                                     }|
+       {7:  }{8:  2 }                                           │{7:  }{8:  2 }                                            |
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:100                                                                          |
+        ]])
+      end)
+    end)
+  end)
+  describe('show a diff with charmatch enabled, with same UTF-8 character', function()
+    before_each(function()
+      local f1 = [[
+aaaहaaa
+      ]]
+      local f2 = [[
+aaaहaaa
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    describe('normal comparison, including whitespace', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:100<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {7:+ }{8:  1 }{13:^+--  2 lines: aaaहaaa······················}│{7:+ }{8:  1 }{13:+--  2 lines: aaaहaaa·······················}|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {1:~                                                }│{1:~                                                 }|
+       {3:Xtest-functional-diff-screen-1.2                  }{2:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=chardiff:100                                                                          |
+        ]])
+      end)
+    end)
   end)
 end)
 
