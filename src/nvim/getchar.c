@@ -3181,7 +3181,7 @@ bool map_execute_lua(bool may_repeat)
   Error err = ERROR_INIT;
   Array args = ARRAY_DICT_INIT;
   nlua_call_ref(ref, NULL, args, kRetNilBool, NULL, &err);
-  if (err.type != kErrorTypeNone) {
+  if (ERROR_SET(&err)) {
     semsg_multiline("E5108: %s", err.msg);
     api_clear_error(&err);
   }
