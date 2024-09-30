@@ -165,36 +165,6 @@ static struct luaL_Reg regex_meta[] = {
   { NULL, NULL }
 };
 
-/// convert byte index to UTF-32 and UTF-16 indices
-///
-/// Expects a string and an optional index. If no index is supplied, the length
-/// of the string is returned.
-///
-/// Returns two values: the UTF-32 and UTF-16 indices.
-int nlua_str_utfindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
-{
-  size_t s1_len;
-  const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
-  intptr_t idx;
-  if (lua_isnoneornil(lstate, 2)) {
-    idx = (intptr_t)s1_len;
-  } else {
-    idx = luaL_checkinteger(lstate, 2);
-    if (idx < 0 || idx > (intptr_t)s1_len) {
-      return luaL_error(lstate, "index out of range");
-    }
-  }
-
-  size_t codepoints = 0;
-  size_t codeunits = 0;
-  mb_utflen(s1, (size_t)idx, &codepoints, &codeunits);
-
-  lua_pushinteger(lstate, (lua_Integer)codepoints);
-  lua_pushinteger(lstate, (lua_Integer)codeunits);
-
-  return 2;
-}
-
 /// return byte indices of codepoints in a string (only supports utf-8 currently).
 ///
 /// Expects a string.
@@ -664,9 +634,6 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     // stricmp
     lua_pushcfunction(lstate, &nlua_stricmp);
     lua_setfield(lstate, -2, "stricmp");
-    // str_utfindex
-    lua_pushcfunction(lstate, &nlua_str_utfindex);
-    lua_setfield(lstate, -2, "str_utfindex");
     // str_utf_pos
     lua_pushcfunction(lstate, &nlua_str_utf_pos);
     lua_setfield(lstate, -2, "str_utf_pos");

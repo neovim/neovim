@@ -812,6 +812,55 @@ function vim.str_byteindex(s, index, opts)
   return utf8_ptr_len
 end
 
+--- Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
+--- supplied, the length of the string is used. All indices are zero-based.
+---
+--- Embedded NUL bytes are treated as terminating the string. Invalid UTF-8
+--- bytes, and embedded surrogates are counted as one code point each. An
+--- {index} in the middle of a UTF-8 sequence is rounded upwards to the end of
+--- that sequence.
+--- @param str string
+--- @param index? integer
+--- @param opts? { error: boolean }
+--- @return integer UTF-32 index
+--- @return integer UTF-16 index
+--- @return integer UTF-8 index
+function vim.str_utfindex(str, index, opts)
+  vim.validate({
+    str = { str, 'string' },
+    index = { index, 'number', true },
+    opts = { opts, 'table', true },
+  })
+
+  local len = #str
+  opts = opts or { error = true }
+  index = index or len
+
+  if index == 0 then
+    return 0, 0, 0
+  end
+
+  if index > len then
+    index = opts.error and error('index out of range') or len
+  end
+
+  local utf16_ptr = 0
+  local utf32_ptr = 0
+  local utf8_ptr, utf8_char = 1, 1
+
+  while index > 0 do
+    local c, char_len = utf_ptr2char(str:sub(utf8_char))
+    utf32_ptr = utf32_ptr + 1
+    utf16_ptr = utf16_ptr + (c > 0xFFFF and 2 or 1)
+    utf8_ptr = utf8_ptr + 1
+
+    utf8_char = utf8_char + char_len
+    index = index - char_len
+  end
+
+  return utf32_ptr, utf16_ptr, utf8_ptr - 1
+end
+
 --- Generates a list of possible completions for the string.
 --- String has the pattern.
 ---
