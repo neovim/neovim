@@ -174,4 +174,13 @@ describe('xdiff bindings', function()
       pcall_err(exec_lua, [[vim.diff('a', 'b', { on_hunk = true })]])
     )
   end)
+
+  it('can handle strings with embedded NUL characters (GitHub #30305)', function()
+    eq(
+      { { 0, 0, 1, 1 }, { 1, 0, 3, 2 } },
+      exec_lua([[
+        return vim.diff('\n', '\0\n\n\nb', { linematch = true, result_type = 'indices' })
+      ]])
+    )
+  end)
 end)
