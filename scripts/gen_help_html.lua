@@ -665,13 +665,13 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       code = ('<pre>%s</pre>'):format(trim(trim_indent(text), 2))
     end
     return code
-  elseif node_name == 'tag' then -- anchor
+  elseif node_name == 'tag' then -- anchor, h4 pseudo-heading
     if root:has_error() then
       return text
     end
     local in_heading = vim.list_contains({ 'h1', 'h2', 'h3' }, parent)
-    local cssclass = (not in_heading and get_indent(node_text()) > 8) and 'help-tag-right'
-      or 'help-tag'
+    local h4 = (not in_heading and get_indent(node_text()) > 8)
+    local cssclass = h4 and 'help-tag-right' or 'help-tag'
     local tagname = node_text(root:child(1), false)
     if vim.tbl_count(stats.first_tags) < 2 then
       -- Force the first 2 tags in the doc to be anchored at the main heading.
@@ -711,7 +711,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       -- End the <span> container for tags in a heading.
       return string.format('%s</span>', s)
     end
-    return s
+    return s .. (h4 and '<br>' or '') -- HACK: <br> avoids h4 pseudo-heading mushing with text.
   elseif node_name == 'delimiter' or node_name == 'modeline' then
     return ''
   elseif node_name == 'ERROR' then
@@ -1151,6 +1151,7 @@ local function gen_css(fname)
       margin-left: auto;
       margin-right: 0;
       float: right;
+      display: block;
     }
     .help-tag a,
     .help-tag-right a {
