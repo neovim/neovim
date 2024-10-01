@@ -731,11 +731,12 @@ vim.go.cd = vim.go.cdpath
 --- The key used in Command-line Mode to open the command-line window.
 --- Only non-printable keys are allowed.
 --- The key can be specified as a single character, but it is difficult to
---- type.  The preferred way is to use the <> notation.  Examples:
+--- type.  The preferred way is to use `key-notation` (e.g. <Up>, <C-F>) or
+--- a letter preceded with a caret (e.g. `^F` is CTRL-F).  Examples:
 ---
 --- ```vim
---- 	exe "set cedit=\\<C-Y>"
---- 	exe "set cedit=\\<Esc>"
+--- 	set cedit=^Y
+--- 	set cedit=<Esc>
 --- ```
 --- `Nvi` also has this option, but it only uses the first character.
 --- See `cmdwin`.
