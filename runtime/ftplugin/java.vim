@@ -3,17 +3,28 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Dan Sharp
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Apr 18
+" Last Change:		2024 Sep 26
 "			2024 Jan 14 by Vim Project (browsefilter)
 "			2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
-
-if exists("b:did_ftplugin") | finish | endif
-let b:did_ftplugin = 1
 
 " Make sure the continuation lines below do not cause problems in
 " compatibility mode.
 let s:save_cpo = &cpo
 set cpo-=C
+
+if (exists("g:java_ignore_javadoc") || exists("g:java_ignore_markdown")) &&
+	\ exists("*javaformat#RemoveCommonMarkdownWhitespace")
+    delfunction javaformat#RemoveCommonMarkdownWhitespace
+    unlet! g:loaded_javaformat
+endif
+
+if exists("b:did_ftplugin")
+    let &cpo = s:save_cpo
+    unlet s:save_cpo
+    finish
+endif
+
+let b:did_ftplugin = 1
 
 " For filename completion, prefer the .java extension over the .class
 " extension.
@@ -26,6 +37,8 @@ setlocal suffixesadd=.java
 
 " Clean up in case this file is sourced again.
 unlet! s:zip_func_upgradable
+
+"""" STRIVE TO REMAIN COMPATIBLE FOR AT LEAST VIM 7.0.
 
 " Documented in ":help ft-java-plugin".
 if exists("g:ftplugin_java_source_path") &&
@@ -59,8 +72,9 @@ endif
 " and insert the comment leader when hitting <CR> or using "o".
 setlocal formatoptions-=t formatoptions+=croql
 
-" Set 'comments' to format dashed lists in comments. Behaves just like C.
-setlocal comments& comments^=sO:*\ -,mO:*\ \ ,exO:*/
+" Set 'comments' to format Markdown Javadoc comments and dashed lists
+" in other multi-line comments (it behaves just like C).
+setlocal comments& comments^=:///,sO:*\ -,mO:*\ \ ,exO:*/
 
 setlocal commentstring=//\ %s
 
@@ -103,3 +117,4 @@ endif
 " Restore the saved compatibility options.
 let &cpo = s:save_cpo
 unlet s:save_cpo
+" vim: fdm=syntax sw=4 ts=8 noet sta

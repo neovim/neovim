@@ -661,6 +661,27 @@ Remember to manually trigger the |FileType| event from a buffer with a Java
 file loaded in it each time after assigning a new value to the variable: >
 	doautocmd FileType
 <
+Markdown documentation comments may contain common runs of vertical leading
+whitespace following the comment marks (`///`) for aesthetic reasons; however,
+some horizontal runs of leading whitespace are significant in Markdown because
+they denote code blocks etc.  For convenience, a 'formatexpr' function is
+provided for the |gq| operator.  As long as neither "g:java_ignore_javadoc"
+nor "g:java_ignore_markdown" is defined, the reformatting of Markdown comments
+can be enabled on demand with: >
+	setlocal formatexpr=g:javaformat#RemoveCommonMarkdownWhitespace()
+<
+Or for Vim versions less than `7.4.265`, with: >
+	setlocal formatexpr=javaformat#RemoveCommonMarkdownWhitespace()
+<
+This function accepts a range of lines, removes a common run of vertical
+leading whitespace, and rewrites the lines of the range.  Depending on the
+author's layout style and the comment contents, which lines to select for
+reformatting can vary from the whole comment to only some portion of it.
+To enable the recognition of Markdown comments each time after removing
+"g:java_ignore_markdown" or "g:java_ignore_javadoc", remember to manually
+re-source "javaformat.vim" for Vim versions greater than `8.2.1397`: >
+	runtime autoload/javaformat.vim
+<
 
 MAIL							*ft-mail-plugin*
 
