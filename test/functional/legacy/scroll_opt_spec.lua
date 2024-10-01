@@ -375,6 +375,108 @@ describe('smoothscroll', function()
     screen:expect_unchanged()
   end)
 
+  -- oldtest: Test_smoothscroll_diff_change_line()
+  it('works in diff mode when changing line', function()
+    screen:try_resize(55, 20)
+    exec([[
+      set diffopt+=followwrap smoothscroll
+      call setline(1, repeat(' abc', &columns))
+      call setline(2, 'bar')
+      call setline(3, repeat(' abc', &columns))
+      vnew
+      call setline(1, repeat(' abc', &columns))
+      call setline(2, 'foo')
+      call setline(3, 'bar')
+      call setline(4, repeat(' abc', &columns))
+      windo exe "normal! 2gg5\<C-E>"
+      windo diffthis
+    ]])
+
+    screen:expect([[
+      {1:<<<}bc abc abc abc abc abc a│{1:<<<}bc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc     │{7:  } abc abc abc abc abc     |
+      {7:  }{22:foo                      }│{7:  }{23:-------------------------}|
+      {7:  }bar                      │{7:  }^bar                      |
+      {7:  } abc abc abc abc abc abc │{7:  } abc abc abc abc abc abc |
+      {7:  }abc abc abc abc abc abc a│{7:  }abc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc abc │{7:  } abc abc abc abc abc abc |
+      {7:  }abc abc abc abc abc abc a│{7:  }abc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc     │{7:  } abc abc abc abc abc     |
+      {1:~                          }│{1:~                          }|*3
+      {2:[No Name] [+]               }{3:[No Name] [+]              }|
+                                                             |
+    ]])
+    feed('Abar')
+    screen:expect([[
+      {1:<<<}bc abc abc abc abc abc a│{1:<<<}bc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc     │{7:  } abc abc abc abc abc     |
+      {7:  }{22:foo                      }│{7:  }{23:-------------------------}|
+      {7:  }bar                      │{7:  }barbar^                   |
+      {7:  } abc abc abc abc abc abc │{7:  } abc abc abc abc abc abc |
+      {7:  }abc abc abc abc abc abc a│{7:  }abc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc abc │{7:  } abc abc abc abc abc abc |
+      {7:  }abc abc abc abc abc abc a│{7:  }abc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc     │{7:  } abc abc abc abc abc     |
+      {1:~                          }│{1:~                          }|*3
+      {2:[No Name] [+]               }{3:[No Name] [+]              }|
+      {5:-- INSERT --}                                           |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      {1:<<<}bc abc abc abc abc abc a│{1:<<<}bc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc     │{7:  } abc abc abc abc abc     |
+      {7:  }{27:foo}{4:                      }│{7:  }{27:barba^r}{4:                   }|
+      {7:  }{22:bar                      }│{7:  }{23:-------------------------}|
+      {7:  } abc abc abc abc abc abc │{7:  } abc abc abc abc abc abc |
+      {7:  }abc abc abc abc abc abc a│{7:  }abc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc abc │{7:  } abc abc abc abc abc abc |
+      {7:  }abc abc abc abc abc abc a│{7:  }abc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc     │{7:  } abc abc abc abc abc     |
+      {1:~                          }│{1:~                          }|*3
+      {2:[No Name] [+]               }{3:[No Name] [+]              }|
+                                                             |
+    ]])
+    feed('yyp')
+    screen:expect([[
+      {1:<<<}bc abc abc abc abc abc a│{1:<<<}bc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc     │{7:  } abc abc abc abc abc     |
+      {7:  }{27:foo}{4:                      }│{7:  }{27:barbar}{4:                   }|
+      {7:  }{4:bar                      }│{7:  }{4:^bar}{27:bar}{4:                   }|
+      {7:  } abc abc abc abc abc abc │{7:  } abc abc abc abc abc abc |
+      {7:  }abc abc abc abc abc abc a│{7:  }abc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc abc │{7:  } abc abc abc abc abc abc |
+      {7:  }abc abc abc abc abc abc a│{7:  }abc abc abc abc abc abc a|
+      {7:  }bc abc abc abc abc abc ab│{7:  }bc abc abc abc abc abc ab|
+      {7:  }c abc abc abc abc abc abc│{7:  }c abc abc abc abc abc abc|
+      {7:  } abc abc abc abc abc     │{7:  } abc abc abc abc abc     |
+      {1:~                          }│{1:~                          }|*3
+      {2:[No Name] [+]               }{3:[No Name] [+]              }|
+                                                             |
+    ]])
+  end)
+
   -- oldtest: Test_smoothscroll_wrap_scrolloff_zero()
   it("works with zero 'scrolloff'", function()
     screen:try_resize(40, 8)
