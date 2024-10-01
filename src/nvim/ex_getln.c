@@ -4302,7 +4302,7 @@ const char *did_set_cedit(optset_T *args)
     cedit_key = -1;
   } else {
     int n = string_to_key(p_cedit);
-    if (vim_isprintc(n)) {
+    if (n == 0 || vim_isprintc(n)) {
       return e_invarg;
     }
     cedit_key = n;
