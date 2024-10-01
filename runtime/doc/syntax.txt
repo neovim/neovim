@@ -1634,7 +1634,8 @@ respectively.
 Javadoc is a program that takes special comments out of Java program files and
 creates HTML pages.  The standard configuration will highlight this HTML code
 similarly to HTML files (see |html.vim|).  You can even add JavaScript and CSS
-inside this code (see below).  The HTML rendering diverges as follows:
+inside this code (see below).  The HTML rendering and the Markdown rendering
+diverge as follows:
   1. The first sentence (all characters up to the first period `.`, which is
      followed by a whitespace character or a line terminator, or up to the
      first block tag, e.g. `@param`, `@return`) is colored as
@@ -1647,8 +1648,13 @@ inside this code (see below).  The HTML rendering diverges as follows:
 	`*Special`	special symbols
      and some of their arguments are colored as
 	`*Function`	function names.
-To turn this feature off, add the following line to your startup file: >
+To turn this feature off for both HTML and Markdown, add the following line to
+your startup file: >
 	:let g:java_ignore_javadoc = 1
+Alternatively, only suppress HTML comments or Markdown comments: >
+	:let g:java_ignore_html = 1
+	:let g:java_ignore_markdown = 1
+See |ft-java-plugin| for additional support available for Markdown comments.
 
 If you use the special Javadoc comment highlighting described above, you can
 also turn on special highlighting for JavaScript, Visual Basic scripts, and
