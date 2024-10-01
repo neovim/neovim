@@ -810,6 +810,16 @@ void draw_tabline(void)
       }
     }
 
+    for (int scol = col; scol < Columns; scol++) {
+      // Use 0 as tabpage number here, so that double-click opens a tabpage
+      // after the last one, and single-click goes to the next tabpage.
+      tab_page_click_defs[scol] = (StlClickDefinition) {
+        .type = kStlClickTabSwitch,
+        .tabnr = 0,
+        .func = NULL,
+      };
+    }
+
     char c = use_sep_chars ? '_' : ' ';
     grid_line_fill(col, Columns, schar_from_ascii(c), attr_fill);
 
@@ -1246,24 +1256,17 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     // TABPAGE pairs are used to denote a region that when clicked will
     // either switch to or close a tab.
     //
-    // Ex: tabline=%0Ttab\ zero%X
-    //   This tabline has a TABPAGENR item with minwid `0`,
+    // Ex: tabline=%1Ttab\ one%X
+    //   This tabline has a TABPAGENR item with minwid `1`,
     //   which is then closed with a TABCLOSENR item.
-    //   Clicking on this region with mouse enabled will switch to tab 0.
+    //   Clicking on this region with mouse enabled will switch to tab 1.
     //   Setting the minwid to a different value will switch
     //   to that tab, if it exists
     //
     // Ex: tabline=%1Xtab\ one%X
     //   This tabline has a TABCLOSENR item with minwid `1`,
     //   which is then closed with a TABCLOSENR item.
-    //   Clicking on this region with mouse enabled will close tab 0.
-    //   This is determined by the following formula:
-    //      tab to close = (1 - minwid)
-    //   This is because for TABPAGENR we use `minwid` = `tab number`.
-    //   For TABCLOSENR we store the tab number as a negative value.
-    //   Because 0 is a valid TABPAGENR value, we have to
-    //   start our numbering at `-1`.
-    //   So, `-1` corresponds to us wanting to close tab `0`
+    //   Clicking on this region with mouse enabled will close tab 1.
     //
     // Note: These options are only valid when creating a tabline.
     if (*fmt_p == STL_TABPAGENR || *fmt_p == STL_TABCLOSENR) {

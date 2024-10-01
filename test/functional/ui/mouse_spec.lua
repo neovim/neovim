@@ -367,7 +367,7 @@ describe('ui/mouse/input', function()
       })
     end)
 
-    it('left click in default tabline (position 4) switches to tab', function()
+    it('left click in default tabline (tabpage label) switches to tab', function()
       feed_command('%delete')
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
@@ -385,9 +385,47 @@ describe('ui/mouse/input', function()
         {0:~                        }|*2
                                  |
       ]])
+      feed('<LeftMouse><6,0>')
+      screen:expect_unchanged()
+      feed('<LeftMouse><10,0>')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r{0:$}             |
+        {0:~                        }|*2
+                                 |
+      ]])
+      feed('<LeftMouse><12,0>')
+      screen:expect_unchanged()
     end)
 
-    it('left click in default tabline (position 24) closes tab', function()
+    it('left click in default tabline (blank space) switches tab', function()
+      feed_command('%delete')
+      insert('this is foo')
+      feed_command('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r{0:$}             |
+        {0:~                        }|*2
+                                 |
+      ]])
+      feed('<LeftMouse><20,0>')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        {0:~                        }|*2
+                                 |
+      ]])
+      feed('<LeftMouse><22,0>')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r{0:$}             |
+        {0:~                        }|*2
+                                 |
+      ]])
+    end)
+
+    it('left click in default tabline (close label) closes tab', function()
       api.nvim_set_option_value('hidden', true, {})
       feed_command('%delete')
       insert('this is foo')
@@ -407,8 +445,7 @@ describe('ui/mouse/input', function()
       ]])
     end)
 
-    it('double click in default tabline (position 4) opens new tab', function()
-      api.nvim_set_option_value('hidden', true, {})
+    it('double click in default tabline opens new tab before', function()
       feed_command('%delete')
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
@@ -422,6 +459,34 @@ describe('ui/mouse/input', function()
       feed('<2-LeftMouse><4,0>')
       screen:expect([[
         {sel:  Name] }{tab: + foo  + bar }{fill:  }{tab:X}|
+        {0:^$}                        |
+        {0:~                        }|*2
+                                 |
+      ]])
+      command('tabclose')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        {0:~                        }|*2
+                                 |
+      ]])
+      feed('<2-LeftMouse><20,0>')
+      screen:expect([[
+        {tab: + foo  + bar }{sel:  Name] }{fill:  }{tab:X}|
+        {0:^$}                        |
+        {0:~                        }|*2
+                                 |
+      ]])
+      command('tabclose')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r{0:$}             |
+        {0:~                        }|*2
+                                 |
+      ]])
+      feed('<2-LeftMouse><10,0>')
+      screen:expect([[
+        {tab: + foo }{sel:  Name] }{tab: + bar }{fill:  }{tab:X}|
         {0:^$}                        |
         {0:~                        }|*2
                                  |
