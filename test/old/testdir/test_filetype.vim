@@ -340,6 +340,7 @@ func s:GetFilenameChecks() abort
     \ 'hostconf': ['/etc/host.conf', 'any/etc/host.conf'],
     \ 'hostsaccess': ['/etc/hosts.allow', '/etc/hosts.deny', 'any/etc/hosts.allow', 'any/etc/hosts.deny'],
     \ 'html': ['file.html', 'file.htm', 'file.cshtml', 'file.component.html'],
+    \ 'http': ['file.http'],
     \ 'htmlm4': ['file.html.m4'],
     \ 'httest': ['file.htt', 'file.htb'],
     \ 'hurl': ['file.hurl'],

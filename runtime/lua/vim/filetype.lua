@@ -578,6 +578,7 @@ local extension = {
   stm = detect.html,
   htt = 'httest',
   htb = 'httest',
+  http = 'http',
   hurl = 'hurl',
   hw = detect.hw,
   module = detect.hw,
