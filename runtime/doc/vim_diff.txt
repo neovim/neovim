@@ -156,6 +156,11 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - [D |[D-default|
 - ]D |]D-default|
 - <C-W>d |CTRL-W_d-default|
+- |[q|, |]q|, |[Q|, |]Q|, |[CTRL-Q|, |]CTRL-Q|
+- |[l|, |]l|, |[L|, |]L|, |[CTRL-L|, |]CTRL-L|
+- |[t|, |]t|, |[T|, |]T|, |[CTRL-T|, |]CTRL-T|
+- |[a|, |]a|, |[A|, |]A|
+- |[b|, |]b|, |[B|, |]B|
 - Nvim LSP client defaults |lsp-defaults|
   - K |K-lsp-default|
 
