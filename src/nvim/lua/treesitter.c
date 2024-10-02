@@ -39,7 +39,6 @@
 #define TS_META_QUERY "treesitter_query"
 #define TS_META_QUERYCURSOR "treesitter_querycursor"
 #define TS_META_QUERYMATCH "treesitter_querymatch"
-#define TS_META_TREECURSOR "treesitter_treecursor"
 
 typedef struct {
   LuaRef cb;
@@ -802,20 +801,6 @@ static int tree_root(lua_State *L)
   return 1;
 }
 
-// TSTreeCursor
-
-static struct luaL_Reg treecursor_meta[] = {
-  { "__gc", treecursor_gc },
-  { NULL, NULL }
-};
-
-static int treecursor_gc(lua_State *L)
-{
-  TSTreeCursor *cursor = luaL_checkudata(L, 1, TS_META_TREECURSOR);
-  ts_tree_cursor_delete(cursor);
-  return 0;
-}
-
 // TSNode
 static struct luaL_Reg node_meta[] = {
   { "__tostring", node_tostring },
@@ -1006,23 +991,14 @@ static int node_field(lua_State *L)
   size_t name_len;
   const char *field_name = luaL_checklstring(L, 2, &name_len);
 
-  TSTreeCursor cursor = ts_tree_cursor_new(node);
-
   lua_newtable(L);  // [table]
-  size_t curr_index = 0;
 
-  if (ts_tree_cursor_goto_first_child(&cursor)) {
-    do {
-      const char *current_field = ts_tree_cursor_current_field_name(&cursor);
-
-      if (current_field != NULL && !strcmp(field_name, current_field)) {
-        push_node(L, ts_tree_cursor_current_node(&cursor), 1);  // [table, node]
-        lua_rawseti(L, -2, (int)++curr_index);
-      }
-    } while (ts_tree_cursor_goto_next_sibling(&cursor));
+  TSNode field = ts_node_child_by_field_name(node, field_name, (uint32_t)name_len);
+  if (!ts_node_is_null(field)) {
+    push_node(L, field, 1);  // [table, node]
+    lua_rawseti(L, -2, 1);
   }
 
-  ts_tree_cursor_delete(&cursor);
   return 1;
 }
 
@@ -1118,45 +1094,35 @@ static int node_named_descendant_for_range(lua_State *L)
 
 static int node_next_child(lua_State *L)
 {
-  TSTreeCursor *cursor = luaL_checkudata(L, lua_upvalueindex(1), TS_META_TREECURSOR);
+  uint32_t *child_index = lua_touserdata(L, lua_upvalueindex(1));
   TSNode source = node_check(L, lua_upvalueindex(2));
 
-  // First call should return first child
-  if (ts_node_eq(source, ts_tree_cursor_current_node(cursor))) {
-    if (ts_tree_cursor_goto_first_child(cursor)) {
-      goto push;
-    } else {
-      return 0;
-    }
-  }
-
-  if (!ts_tree_cursor_goto_next_sibling(cursor)) {
+  if (*child_index >= ts_node_child_count(source)) {
     return 0;
   }
 
-push:
-  push_node(L, ts_tree_cursor_current_node(cursor), lua_upvalueindex(2));  // [node]
+  TSNode child = ts_node_child(source, *child_index);
+  push_node(L, child, lua_upvalueindex(2));
 
-  const char *field = ts_tree_cursor_current_field_name(cursor);
-
+  const char *field = ts_node_field_name_for_child(source, *child_index);
   if (field != NULL) {
-    lua_pushstring(L, ts_tree_cursor_current_field_name(cursor));
+    lua_pushstring(L, field);
   } else {
     lua_pushnil(L);
   }  // [node, field_name_or_nil]
+
+  (*child_index)++;
+
   return 2;
 }
 
 static int node_iter_children(lua_State *L)
 {
-  TSNode node = node_check(L, 1);
+  node_check(L, 1);
+  uint32_t *child_index = lua_newuserdata(L, sizeof(uint32_t));  // [source_node,..., udata]
+  *child_index = 0;
 
-  TSTreeCursor *ud = lua_newuserdata(L, sizeof(TSTreeCursor));  // [udata]
-  *ud = ts_tree_cursor_new(node);
-
-  lua_getfield(L, LUA_REGISTRYINDEX, TS_META_TREECURSOR);  // [udata, mt]
-  lua_setmetatable(L, -2);  // [udata]
-  lua_pushvalue(L, 1);  // [udata, source_node]
+  lua_pushvalue(L, 1);  // [source_node, ..., udata, source_node]
   lua_pushcclosure(L, node_next_child, 2);
 
   return 1;
@@ -1248,22 +1214,19 @@ static int node_prev_named_sibling(lua_State *L)
 static int node_named_children(lua_State *L)
 {
   TSNode source = node_check(L, 1);
-  TSTreeCursor cursor = ts_tree_cursor_new(source);
 
   lua_newtable(L);
   int curr_index = 0;
 
-  if (ts_tree_cursor_goto_first_child(&cursor)) {
-    do {
-      TSNode node = ts_tree_cursor_current_node(&cursor);
-      if (ts_node_is_named(node)) {
-        push_node(L, node, 1);
-        lua_rawseti(L, -2, ++curr_index);
-      }
-    } while (ts_tree_cursor_goto_next_sibling(&cursor));
+  uint32_t n = ts_node_child_count(source);
+  for (uint32_t i = 0; i < n; i++) {
+    TSNode child = ts_node_child(source, i);
+    if (ts_node_is_named(child)) {
+      push_node(L, child, 1);
+      lua_rawseti(L, -2, ++curr_index);
+    }
   }
 
-  ts_tree_cursor_delete(&cursor);
   return 1;
 }
 
@@ -1673,7 +1636,6 @@ void tslua_init(lua_State *L)
   build_meta(L, TS_META_QUERY, query_meta);
   build_meta(L, TS_META_QUERYCURSOR, querycursor_meta);
   build_meta(L, TS_META_QUERYMATCH, querymatch_meta);
-  build_meta(L, TS_META_TREECURSOR, treecursor_meta);
 
   ts_set_allocator(xmalloc, xcalloc, xrealloc, xfree);
 }
