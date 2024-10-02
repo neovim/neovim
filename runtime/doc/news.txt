@@ -108,6 +108,9 @@ TREESITTER
   if no languages are explicitly registered.
 • |vim.treesitter.language.add()| returns `true` if a parser was loaded
   successfully and `nil,errmsg` otherwise instead of throwing an error.
+• New |TSNode:child_with_descendant()|, which is nearly identical to
+  |TSNode:child_containing_descendant()| except that it can return the
+  descendant itself.
 
 TUI
 

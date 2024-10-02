@@ -36,6 +36,11 @@ DIAGNOSTICS
 - The "cursor_position" parameter of |vim.diagnostic.JumpOpts| is renamed to
   "pos"
 
+TREESITTER
+• *TSNode:child_containing_descendant()*	Use
+  |TSNode:child_with_descendant()| instead; it is identical except that it can
+  return the descendant itself.
+
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*
 
