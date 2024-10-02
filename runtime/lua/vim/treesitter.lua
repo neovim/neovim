@@ -152,8 +152,7 @@ function M.is_ancestor(dest, source)
     return false
   end
 
-  -- child_containing_descendant returns nil if dest is a direct parent
-  return source:parent() == dest or dest:child_containing_descendant(source) ~= nil
+  return dest:child_with_descendant(source) ~= nil
 end
 
 --- Returns the node's range or an unpacked range table
