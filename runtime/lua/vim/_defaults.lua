@@ -225,13 +225,13 @@ do
     })
 
     vim.keymap.set('n', '[Q', function()
-      vim.cmd.crewind({ args = vim.v.count ~= 0 and { vim.v.count } or nil })
+      vim.cmd.crewind({ count = vim.v.count ~= 0 and vim.v.count or nil })
     end, {
       desc = ':crewind',
     })
 
     vim.keymap.set('n', ']Q', function()
-      vim.cmd.clast({ args = vim.v.count ~= 0 and { vim.v.count } or nil })
+      vim.cmd.clast({ count = vim.v.count ~= 0 and vim.v.count or nil })
     end, {
       desc = ':clast',
     })
@@ -262,13 +262,13 @@ do
     })
 
     vim.keymap.set('n', '[L', function()
-      vim.cmd.lrewind({ args = vim.v.count ~= 0 and { vim.v.count } or nil })
+      vim.cmd.lrewind({ count = vim.v.count ~= 0 and vim.v.count or nil })
     end, {
       desc = ':lrewind',
     })
 
     vim.keymap.set('n', ']L', function()
-      vim.cmd.llast({ args = vim.v.count ~= 0 and { vim.v.count } or nil })
+      vim.cmd.llast({ count = vim.v.count ~= 0 and vim.v.count or nil })
     end, {
       desc = ':llast',
     })
