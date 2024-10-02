@@ -2671,7 +2671,8 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
       • {opts}    Optional parameters.
                   • id : id of the extmark to edit.
                   • end_row : ending line of the mark, 0-based inclusive.
-                  • end_col : ending col of the mark, 0-based exclusive.
+                  • end_col : ending col of the mark, 0-based exclusive, or -1
+                    to extend the range of the extmark to the end of the line.
                   • hl_group : name of the highlight group used to highlight
                     this mark.
                   • hl_eol : when true, for a multiline highlight covering the
