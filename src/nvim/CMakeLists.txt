@@ -160,8 +160,6 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   # ENABLE_EXPORTS is set to true. See
   # https://github.com/neovim/neovim/issues/25295
   target_link_options(nvim_bin PRIVATE "-Wl,-export_dynamic")
-  # Apple Clang 16's new deduplication pass leads to lock-up on start
-  target_link_options(nvim_bin PRIVATE "-Wl,-no_deduplicate")
 elseif(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
   target_link_libraries(main_lib INTERFACE pthread c++abi)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
