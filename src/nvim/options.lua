@@ -2812,14 +2812,14 @@ return {
         	/* vim: set filetype=idl : */
         <	|FileType| |filetypes|
         When a dot appears in the value then this separates two filetype
-        names.  Example: >c
+        names, it should therefore not be used for a filetype.  Example: >c
         	/* vim: set filetype=c.doxygen : */
         <	This will use the "c" filetype first, then the "doxygen" filetype.
         This works both for filetype plugins and for syntax files.  More than
         one dot may appear.
         This option is not copied to another buffer, independent of the 's' or
         'S' flag in 'cpoptions'.
-        Only normal file name characters can be used, `/\*?[|<>` are illegal.
+        Only alphanumeric characters, '-' and '_' can be used.
       ]=],
       full_name = 'filetype',
       noglob = true,
@@ -4551,7 +4551,7 @@ return {
         Setting this option to a valid keymap name has the side effect of
         setting 'iminsert' to one, so that the keymap becomes effective.
         'imsearch' is also set to one, unless it was -1
-        Only normal file name characters can be used, `/\*?[|<>` are illegal.
+        Only alphanumeric characters, '.', '-' and '_' can be used.
       ]=],
       full_name = 'keymap',
       normal_fname_chars = true,
@@ -8522,7 +8522,7 @@ return {
         Syntax autocommand event is triggered with the value as argument.
         This option is not copied to another buffer, independent of the 's' or
         'S' flag in 'cpoptions'.
-        Only normal file name characters can be used, `/\*?[|<>` are illegal.
+        Only alphanumeric characters, '.', '-' and '_' can be used.
       ]=],
       full_name = 'syntax',
       noglob = true,
