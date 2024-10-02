@@ -5640,12 +5640,82 @@ static void ex_syncbind(exarg_T *eap)
   }
 }
 
+void do_read_cmd(exarg_T *eap)
+{
+  char *cmd = eap->arg + 1;
+  if (*cmd == NUL) {
+    emsg(_(e_invarg));
+    return;
+  }
+
+  const int save_msg_silent = msg_silent;
+  const int save_emsg_silent = emsg_silent;
+  const bool save_emsg_noredir = emsg_noredir;
+  const bool save_redir_off = redir_off;
+  garray_T *const save_capture_ga = capture_ga;
+
+  char *tmp_file_name = NULL;
+  if ((tmp_file_name = vim_tempname()) == NULL) {
+    emsg(_(e_notmp));
+    return;
+  }
+
+  msg_silent++;
+  emsg_silent = true;
+  emsg_noredir = true;
+
+  garray_T capture_local;
+  ga_init(&capture_local, (int)sizeof(char), 80);
+  capture_ga = &capture_local;
+
+  do_cmdline(cmd, NULL, NULL, 0);
+
+  msg_silent = save_msg_silent;
+  emsg_silent = save_emsg_silent;
+  emsg_noredir = save_emsg_noredir;
+  redir_off = save_redir_off;
+
+  ga_append(capture_ga, NUL);
+
+  FILE *tmp_fd = NULL;
+  tmp_fd = os_fopen(tmp_file_name, "w");
+  if (tmp_fd == NULL) {
+    semsg(_(e_notopen), tmp_file_name);
+    goto reset_capture_ga;
+  }
+
+  if( fputs((char *) capture_ga->ga_data, tmp_fd) < 0) {
+    emsg(_(e_write));
+    goto reset_capture_ga;
+  }
+  fclose(tmp_fd);
+
+  if( u_save(eap->line2, eap->line2 + 1) == FAIL) {
+     goto reset_capture_ga;
+  }
+
+  if( readfile(tmp_file_name, NULL, eap->line2, 0, (linenr_T)MAXLNUM, eap, READ_FILTER, false) == OK) {
+    curwin->w_cursor.lnum = curbuf->b_op_end.lnum;
+  } else {
+    semsg(_(e_notread), tmp_file_name);
+  }
+
+reset_capture_ga:
+  ga_clear(capture_ga);
+  capture_ga = save_capture_ga;
+}
+
 static void ex_read(exarg_T *eap)
 {
   int empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
 
   if (eap->usefilter) {  // :r!cmd
     do_bang(1, eap, false, false, true);
+    return;
+  }
+
+  if (*eap->arg == ':') {
+    do_read_cmd(eap);
     return;
   }
 
