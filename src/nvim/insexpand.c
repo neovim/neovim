@@ -151,13 +151,6 @@ static char *ctrl_x_mode_names[] = {
   "cmdline",
 };
 
-// Array indexes used for cp_text[].
-#define CPT_ABBR        0   ///< "abbr"
-#define CPT_MENU        1   ///< "menu"
-#define CPT_KIND        2   ///< "kind"
-#define CPT_INFO        3   ///< "info"
-#define CPT_COUNT       4   ///< Number of entries
-
 /// Structure used to store one match for insert completion.
 typedef struct compl_S compl_T;
 struct compl_S {

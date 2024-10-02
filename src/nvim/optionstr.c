@@ -995,6 +995,51 @@ int expand_set_complete(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
+/// The 'completeitemalign' option is changed.
+const char *did_set_completeitemalign(optset_T *args)
+{
+  char *p = p_cia;
+  unsigned new_cia_flags = 0;
+  bool seen[3] = { false, false, false };
+  int count = 0;
+  char buf[10];
+  while (*p) {
+    copy_option_part(&p, buf, sizeof(buf), ",");
+    if (count >= 3) {
+      return e_invarg;
+    }
+    if (strequal(buf, "abbr")) {
+      if (seen[CPT_ABBR]) {
+        return e_invarg;
+      }
+      new_cia_flags = new_cia_flags * 10 + CPT_ABBR;
+      seen[CPT_ABBR] = true;
+      count++;
+    } else if (strequal(buf, "kind")) {
+      if (seen[CPT_KIND]) {
+        return e_invarg;
+      }
+      new_cia_flags = new_cia_flags * 10 + CPT_KIND;
+      seen[CPT_KIND] = true;
+      count++;
+    } else if (strequal(buf, "menu")) {
+      if (seen[CPT_MENU]) {
+        return e_invarg;
+      }
+      new_cia_flags = new_cia_flags * 10 + CPT_MENU;
+      seen[CPT_MENU] = true;
+      count++;
+    } else {
+      return e_invarg;
+    }
+  }
+  if (new_cia_flags == 0 || count != 3) {
+    return e_invarg;
+  }
+  cia_flags = new_cia_flags;
+  return NULL;
+}
+
 /// The 'completeopt' option is changed.
 const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
 {

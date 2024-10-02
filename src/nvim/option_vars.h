@@ -429,6 +429,8 @@ EXTERN char *p_cms;             ///< 'commentstring'
 EXTERN char *p_cpt;             ///< 'complete'
 EXTERN OptInt p_columns;        ///< 'columns'
 EXTERN int p_confirm;           ///< 'confirm'
+EXTERN char *p_cia;             ///< 'completeitemalign'
+EXTERN unsigned cia_flags;      ///<  order flags of 'completeitemalign'
 EXTERN char *p_cot;             ///< 'completeopt'
 EXTERN unsigned cot_flags;      ///< flags from 'completeopt'
 // Keep in sync with p_cot_values in optionstr.c

@@ -1427,6 +1427,26 @@ return {
       varname = 'p_cfu',
     },
     {
+      abbreviation = 'cia',
+      cb = 'did_set_completeitemalign',
+      defaults = { if_true = 'abbr,kind,menu' },
+      deny_duplicates = true,
+      desc = [=[
+        A comma-separated list of |complete-items| that controls the alignment
+        and display order of items in the popup menu during Insert mode
+        completion. The supported values are abbr, kind, and menu. These
+        options allow to customize how the completion items are shown in the
+        popup menu.  Note: must always contain those three values in any
+        order.
+      ]=],
+      full_name = 'completeitemalign',
+      list = 'onecomma',
+      scope = { 'global' },
+      short_desc = N_('Insert mode completion item align order'),
+      type = 'string',
+      varname = 'p_cia',
+    },
+    {
       abbreviation = 'cot',
       cb = 'did_set_completeopt',
       defaults = { if_true = 'menu,preview' },
