@@ -406,7 +406,7 @@ bool pat_has_uppercase(char *pat)
   FUNC_ATTR_NONNULL_ALL
 {
   char *p = pat;
-  magic_T magic_val = MAGIC_ON;
+  int magic_val = MAGIC_ON;
 
   // get the magicness of the pattern
   skip_regexp_ex(pat, NUL, magic_isset(), NULL, NULL, &magic_val);

@@ -590,10 +590,10 @@ static MarkMoveRes switch_to_mark_buf(fmark_T *fm, bool pcmark_on_switch)
 /// @param flags  MarkMove flags to configure the movement to the mark.
 ///
 /// @return  MarkMovekRes flags representing the outcome
-MarkMoveRes mark_move_to(fmark_T *fm, MarkMove flags)
+int mark_move_to(fmark_T *fm, int flags)
 {
   static fmark_T fm_copy = INIT_FMARK;
-  MarkMoveRes res = kMarkMoveSuccess;
+  int res = kMarkMoveSuccess;
   const char *errormsg = NULL;
   if (!mark_check(fm, &errormsg)) {
     if (errormsg != NULL) {

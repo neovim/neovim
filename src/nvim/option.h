@@ -47,7 +47,7 @@ typedef struct {
   void *var;                ///< global option: pointer to variable;
                             ///< window-local option: VAR_WIN;
                             ///< buffer-local option: global value
-  idopt_T indir;            ///< global option: PV_NONE;
+  int indir;                ///< global option: PV_NONE;
                             ///< local option: indirect option index
   bool hidden;              ///< option is hidden, any attempt to set its value will be ignored.
   bool immutable;           ///< option is immutable, trying to set its value will give an error.

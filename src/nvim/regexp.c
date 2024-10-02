@@ -770,10 +770,9 @@ char *skip_regexp_err(char *startp, int delim, int magic)
 /// is changed in-place.
 /// If a "\?" is changed to "?" then "dropped" is incremented, unless NULL.
 /// If "magic_val" is not NULL, returns the effective magicness of the pattern
-char *skip_regexp_ex(char *startp, int dirc, int magic, char **newp, int *dropped,
-                     magic_T *magic_val)
+char *skip_regexp_ex(char *startp, int dirc, int magic, char **newp, int *dropped, int *magic_val)
 {
-  magic_T mymagic;
+  int mymagic;
   char *p = startp;
   size_t startplen = 0;
 
@@ -1319,8 +1318,7 @@ static regsubmatch_T rsm;  ///< can only be used when can_f_submatch is true
 ///
 /// @param flags  a bitmask that controls what info is to be returned
 ///               and whether or not submatch is in effect.
-static void reg_getline_common(linenr_T lnum, reg_getline_flags_T flags, char **line,
-                               colnr_T *length)
+static void reg_getline_common(linenr_T lnum, int flags, char **line, colnr_T *length)
 {
   bool get_line = flags & RGLF_LINE;
   bool get_length = flags & RGLF_LENGTH;

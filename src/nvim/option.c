@@ -1162,7 +1162,7 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
   vimoption_T *opt = &options[opt_idx];
   char *arg = *argp;
   // When setting the local value of a global option, the old value may be the global value.
-  const bool oldval_is_global = ((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL);
+  const bool oldval_is_global = (opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL);
   OptVal oldval = optval_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp);
   OptVal newval = NIL_OPTVAL;
 
@@ -1371,10 +1371,10 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
       // Mention where the option was last set.
       if (varp == options[opt_idx].var) {
         option_last_set_msg(options[opt_idx].last_set);
-      } else if ((int)options[opt_idx].indir & PV_WIN) {
-        option_last_set_msg(curwin->w_p_script_ctx[(int)options[opt_idx].indir & PV_MASK]);
-      } else if ((int)options[opt_idx].indir & PV_BUF) {
-        option_last_set_msg(curbuf->b_p_script_ctx[(int)options[opt_idx].indir & PV_MASK]);
+      } else if (options[opt_idx].indir & PV_WIN) {
+        option_last_set_msg(curwin->w_p_script_ctx[options[opt_idx].indir & PV_MASK]);
+      } else if (options[opt_idx].indir & PV_BUF) {
+        option_last_set_msg(curbuf->b_p_script_ctx[options[opt_idx].indir & PV_MASK]);
       }
     }
 
@@ -1759,7 +1759,7 @@ uint32_t *insecure_flag(win_T *const wp, OptIndex opt_idx, int opt_flags)
 {
   if (opt_flags & OPT_LOCAL) {
     assert(wp != NULL);
-    switch ((int)options[opt_idx].indir) {
+    switch (options[opt_idx].indir) {
     case PV_STL:
       return &wp->w_p_stl_flags;
     case PV_WBR:
@@ -1870,7 +1870,7 @@ sctx_T *get_option_sctx(OptIndex opt_idx)
 void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
 {
   bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
-  int indir = (int)options[opt_idx].indir;
+  int indir = options[opt_idx].indir;
   nlua_set_sctx(&script_ctx);
   LastSet last_set = {
     .script_ctx = script_ctx,
@@ -3443,7 +3443,7 @@ static bool is_option_local_value_unset(OptIndex opt_idx)
   vimoption_T *opt = get_option(opt_idx);
 
   // Local value of option that isn't global-local is always considered set.
-  if (!((int)opt->indir & PV_BOTH)) {
+  if (!(opt->indir & PV_BOTH)) {
     return false;
   }
 
@@ -4554,8 +4554,8 @@ void *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
     }
     return p->var;
   }
-  if ((scope & OPT_LOCAL) && ((int)p->indir & PV_BOTH)) {
-    switch ((int)p->indir) {
+  if ((scope & OPT_LOCAL) && (p->indir & PV_BOTH)) {
+    switch (p->indir) {
     case PV_FP:
       return &(buf->b_p_fp);
     case PV_EFM:
@@ -4642,7 +4642,7 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return NULL;
   }
 
-  switch ((int)p->indir) {
+  switch (p->indir) {
   case PV_NONE:
     return p->var;
 

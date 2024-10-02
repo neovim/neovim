@@ -289,7 +289,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   bool delim_optional = false;
   const char *dummy;
   bool retval = false;
-  magic_T magic = 0;
+  int magic = 0;
 
   *skiplen = 0;
   *patlen = ccline.cmdlen;
@@ -2204,7 +2204,7 @@ static int command_line_not_changed(CommandLineState *s)
 static bool empty_pattern(char *p, int delim)
 {
   size_t n = strlen(p);
-  magic_T magic_val = MAGIC_ON;
+  int magic_val = MAGIC_ON;
 
   if (n > 0) {
     skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic_val);
@@ -2215,7 +2215,7 @@ static bool empty_pattern(char *p, int delim)
   return empty_pattern_magic(p, n, magic_val);
 }
 
-static bool empty_pattern_magic(char *p, size_t len, magic_T magic_val)
+static bool empty_pattern_magic(char *p, size_t len, int magic_val)
 {
   // remove trailing \v and the like
   while (len >= 2 && p[len - 2] == '\\'

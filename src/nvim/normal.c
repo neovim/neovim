@@ -4270,7 +4270,7 @@ static void nv_brackets(cmdarg_T *cap)
     if (fm == NULL) {
       fm = prev_fm;
     }
-    MarkMove flags = kMarkContext;
+    int flags = kMarkContext;
     flags |= cap->nchar == '\'' ? kMarkBeginLine : 0;
     nv_mark_move_to(cap, flags, fm);
   } else if (cap->nchar >= K_RIGHTRELEASE && cap->nchar <= K_LEFTMOUSE) {
@@ -4766,9 +4766,9 @@ static void n_swapchar(cmdarg_T *cap)
 /// @param flags for mark_move_to()
 /// @param mark  mark
 /// @return  The result of calling mark_move_to()
-static MarkMoveRes nv_mark_move_to(cmdarg_T *cap, MarkMove flags, fmark_T *fm)
+static int nv_mark_move_to(cmdarg_T *cap, int flags, fmark_T *fm)
 {
-  MarkMoveRes res = mark_move_to(fm, flags);
+  int res = mark_move_to(fm, flags);
   if (res & kMarkMoveFailed) {
     clearop(cap->oap);
   }
@@ -4854,12 +4854,12 @@ static void nv_optrans(cmdarg_T *cap)
 static void nv_gomark(cmdarg_T *cap)
 {
   int name;
-  MarkMove flags = jop_flags & JOP_VIEW ? kMarkSetView : 0;  // flags for moving to the mark
+  int flags = jop_flags & JOP_VIEW ? kMarkSetView : 0;  // flags for moving to the mark
   if (cap->oap->op_type != OP_NOP) {
     // When there is a pending operator, do not restore the view as this is usually unexpected.
     flags = 0;
   }
-  MarkMoveRes move_res = 0;  // Result from moving to the mark
+  int move_res = 0;  // Result from moving to the mark
   const bool old_KeyTyped = KeyTyped;  // getting file may reset it
 
   if (cap->cmdchar == 'g') {
@@ -4894,8 +4894,8 @@ static void nv_gomark(cmdarg_T *cap)
 static void nv_pcmark(cmdarg_T *cap)
 {
   fmark_T *fm = NULL;
-  MarkMove flags = jop_flags & JOP_VIEW ? kMarkSetView : 0;  // flags for moving to the mark
-  MarkMoveRes move_res = 0;  // Result from moving to the mark
+  int flags = jop_flags & JOP_VIEW ? kMarkSetView : 0;  // flags for moving to the mark
+  int move_res = 0;  // Result from moving to the mark
   const bool old_KeyTyped = KeyTyped;  // getting file may reset it.
 
   if (checkclearopq(cap->oap)) {
