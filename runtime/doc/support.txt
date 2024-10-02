@@ -12,7 +12,7 @@ Support                                                              *support*
 Supported platforms					 *supported-platforms*
 
 `System`          `Tier`      `Versions`                  `Tested versions`
-Linux            1      >= 2.6.32, glibc >= 2.12     Ubuntu 22.04
+Linux            1      >= 2.6.32, glibc >= 2.12     Ubuntu 24.04
 macOS (Intel)    1      >= 11                        macOS 12
 macOS (M1)       1      >= 11                        macOS 14
 Windows 64-bit   1      >= Windows 10 Version 1809   Windows Server 2022
