@@ -622,21 +622,29 @@ TSNode:child({index})                                         *TSNode:child()*
     Return: ~
         (`TSNode?`)
 
-                                        *TSNode:child_containing_descendant()*
-TSNode:child_containing_descendant({descendant})
-    Get the node's child that contains {descendant}.
+TSNode:child_count()                                    *TSNode:child_count()*
+    Get the node's number of children.
+
+    Return: ~
+        (`integer`)
+
+                                              *TSNode:child_with_descendant()*
+TSNode:child_with_descendant({descendant})
+    Get the node's child that contains {descendant} (includes {descendant}).
+
+    For example, with the following node hierarchy: >
+        a -> b -> c
+
+        a:child_with_descendant(c) == b
+        a:child_with_descendant(b) == b
+        a:child_with_descendant(a) == nil
+<
 
     Parameters: ~
       • {descendant}  (`TSNode`)
 
     Return: ~
         (`TSNode?`)
-
-TSNode:child_count()                                    *TSNode:child_count()*
-    Get the node's number of children.
-
-    Return: ~
-        (`integer`)
 
                                                *TSNode:descendant_for_range()*
 TSNode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
@@ -778,9 +786,8 @@ TSNode:next_sibling()                                  *TSNode:next_sibling()*
         (`TSNode?`)
 
 TSNode:parent()                                              *TSNode:parent()*
-    Get the node's immediate parent. Prefer
-    |TSNode:child_containing_descendant()| for iterating over the node's
-    ancestors.
+    Get the node's immediate parent. Prefer |TSNode:child_with_descendant()|
+    for iterating over the node's ancestors.
 
     Return: ~
         (`TSNode?`)

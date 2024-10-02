@@ -15,7 +15,7 @@ error('Cannot require a meta file')
 local TSNode = {} -- luacheck: no unused
 
 --- Get the node's immediate parent.
---- Prefer |TSNode:child_containing_descendant()|
+--- Prefer |TSNode:child_with_descendant()|
 --- for iterating over the node's ancestors.
 --- @return TSNode?
 function TSNode:parent() end
@@ -71,7 +71,23 @@ function TSNode:named_child(index) end
 --- Get the node's child that contains {descendant}.
 --- @param descendant TSNode
 --- @return TSNode?
+--- @deprecated
 function TSNode:child_containing_descendant(descendant) end
+
+--- Get the node's child that contains {descendant} (includes {descendant}).
+---
+--- For example, with the following node hierarchy:
+---
+--- ```
+--- a -> b -> c
+---
+--- a:child_with_descendant(c) == b
+--- a:child_with_descendant(b) == b
+--- a:child_with_descendant(a) == nil
+--- ```
+--- @param descendant TSNode
+--- @return TSNode?
+function TSNode:child_with_descendant(descendant) end
 
 --- Get the node's start position. Return three values: the row, column and
 --- total byte count (all zero-based).

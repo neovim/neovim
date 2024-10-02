@@ -828,6 +828,7 @@ static struct luaL_Reg node_meta[] = {
   { "parent", node_parent },
   { "__has_ancestor", __has_ancestor },
   { "child_containing_descendant", node_child_containing_descendant },
+  { "child_with_descendant", node_child_with_descendant },
   { "iter_children", node_iter_children },
   { "next_sibling", node_next_sibling },
   { "prev_sibling", node_prev_sibling },
@@ -1146,7 +1147,7 @@ static int __has_ancestor(lua_State *L)
   int const pred_len = (int)lua_objlen(L, 2);
 
   TSNode node = ts_tree_root_node(descendant.tree);
-  while (!ts_node_is_null(node)) {
+  while (node.id != descendant.id) {
     char const *node_type = ts_node_type(node);
     size_t node_type_len = strlen(node_type);
 
@@ -1163,7 +1164,7 @@ static int __has_ancestor(lua_State *L)
       lua_pop(L, 1);
     }
 
-    node = ts_node_child_containing_descendant(node, descendant);
+    node = ts_node_child_with_descendant(node, descendant);
   }
 
   lua_pushboolean(L, false);
@@ -1175,6 +1176,15 @@ static int node_child_containing_descendant(lua_State *L)
   TSNode node = node_check(L, 1);
   TSNode descendant = node_check(L, 2);
   TSNode child = ts_node_child_containing_descendant(node, descendant);
+  push_node(L, child, 1);
+  return 1;
+}
+
+static int node_child_with_descendant(lua_State *L)
+{
+  TSNode node = node_check(L, 1);
+  TSNode descendant = node_check(L, 2);
+  TSNode child = ts_node_child_with_descendant(node, descendant);
   push_node(L, child, 1);
   return 1;
 }
