@@ -1,3 +1,6 @@
+if(APPLE)
+  set(CMAKE_FIND_LIBRARY_PREFIXES ";lib")
+endif()
 find_library2(LPEG_LIBRARY NAMES lpeg_a lpeg liblpeg_a lpeg${CMAKE_SHARED_LIBRARY_SUFFIX} PATH_SUFFIXES lua/5.1)
 
 find_package_handle_standard_args(Lpeg DEFAULT_MSG LPEG_LIBRARY)
