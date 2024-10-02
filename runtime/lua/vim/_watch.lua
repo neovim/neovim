@@ -30,6 +30,8 @@ M.FileChangeType = {
 --- @class vim._watch.watch.Opts : vim._watch.Opts
 --- @field uvflags? uv.fs_event_start.flags
 
+--- Decides if `path` should be skipped.
+---
 --- @param path string
 --- @param opts? vim._watch.Opts
 local function skip(path, opts)
@@ -69,7 +71,7 @@ function M.watch(path, opts, callback)
   local uvflags = opts and opts.uvflags or {}
   local handle = assert(uv.new_fs_event())
 
-  local _, start_err = handle:start(path, uvflags, function(err, filename, events)
+  local _, start_err, start_errname = handle:start(path, uvflags, function(err, filename, events)
     assert(not err, err)
     local fullpath = path
     if filename then
@@ -96,7 +98,15 @@ function M.watch(path, opts, callback)
     callback(fullpath, change_type)
   end)
 
-  assert(not start_err, start_err)
+  if start_err then
+    if start_errname == 'ENOENT' then
+      -- Server may send "workspace/didChangeWatchedFiles" with nonexistent `baseUri` path.
+      -- This is mostly a placeholder until we have `nvim_log` API.
+      vim.notify_once(('watch.watch: %s'):format(start_err), vim.log.levels.INFO)
+    end
+    -- TODO(justinmk): log important errors once we have `nvim_log` API.
+    return function() end
+  end
 
   return function()
     local _, stop_err = handle:stop()
@@ -193,7 +203,18 @@ function M.watchdirs(path, opts, callback)
 
   local root_handle = assert(uv.new_fs_event())
   handles[path] = root_handle
-  root_handle:start(path, {}, create_on_change(path))
+  local _, start_err, start_errname = root_handle:start(path, {}, create_on_change(path))
+
+  if start_err then
+    if start_errname == 'ENOENT' then
+      -- Server may send "workspace/didChangeWatchedFiles" with nonexistent `baseUri` path.
+      -- This is mostly a placeholder until we have `nvim_log` API.
+      vim.notify_once(('watch.watchdirs: %s'):format(start_err), vim.log.levels.INFO)
+    end
+    -- TODO(justinmk): log important errors once we have `nvim_log` API.
+
+    -- Continue. vim.fs.dir() will return nothing, so the code below is harmless.
+  end
 
   --- "640K ought to be enough for anyone"
   --- Who has folders this deep?
