@@ -91,6 +91,7 @@ struct qfline_S {
   int qf_end_col;         ///< column when the error has range or zero
   int qf_nr;              ///< error number
   char *qf_module;        ///< module name for this error
+  char *qf_fname;         ///< different filename if there're hard links
   char *qf_pattern;       ///< search pattern for the error
   char *qf_text;          ///< description of the error
   char qf_viscol;         ///< set to true if qf_col and qf_end_col is screen column
@@ -1866,11 +1867,13 @@ static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, in
                         char vis_col, char *pattern, int nr, char type, typval_T *user_data,
                         char valid)
 {
+  buf_T *buf;
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
+  char *fullname = NULL;
+  char *p = NULL;
 
   if (bufnum != 0) {
-    buf_T *buf = buflist_findnr(bufnum);
-
+    buf = buflist_findnr(bufnum);
     qfp->qf_fnum = bufnum;
     if (buf != NULL) {
       buf->b_has_qf_entry |=
@@ -1878,7 +1881,21 @@ static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, in
     }
   } else {
     qfp->qf_fnum = qf_get_fnum(qfl, dir, fname);
+    buf = buflist_findnr(qfp->qf_fnum);
   }
+  if (fname != NULL) {
+    fullname = fix_fname(fname);
+  }
+  qfp->qf_fname = NULL;
+  if (buf != NULL && buf->b_ffname != NULL && fullname != NULL) {
+    if (path_fnamecmp(fullname, buf->b_ffname) != 0) {
+      p = path_try_shorten_fname(fullname);
+      if (p != NULL) {
+        qfp->qf_fname = xstrdup(p);
+      }
+    }
+  }
+  xfree(fullname);
   qfp->qf_text = xstrdup(mesg);
   qfp->qf_lnum = lnum;
   qfp->qf_end_lnum = end_lnum;
@@ -3145,7 +3162,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
     buf_T *buf;
     if (qfp->qf_fnum != 0
         && (buf = buflist_findnr(qfp->qf_fnum)) != NULL) {
-      fname = buf->b_fname;
+      fname = qfp->qf_fname == NULL ? buf->b_fname : qfp->qf_fname;
       if (qfp->qf_type == 1) {  // :helpgrep
         fname = path_tail(fname);
       }
@@ -3431,6 +3448,7 @@ static void qf_free_items(qf_list_T *qfl)
     qfline_T *qfp = qfl->qf_start;
     qfline_T *qfpnext = qfp->qf_next;
     if (!stop) {
+      xfree(qfp->qf_fname);
       xfree(qfp->qf_module);
       xfree(qfp->qf_text);
       xfree(qfp->qf_pattern);
@@ -4059,7 +4077,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
           }
           shorten_buf_fname(errbuf, dirname, false);
         }
-        ga_concat(gap, errbuf->b_fname);
+        ga_concat(gap, qfp->qf_fname == NULL ? errbuf->b_fname : qfp->qf_fname);
       }
     }
 
