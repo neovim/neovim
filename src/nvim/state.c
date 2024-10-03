@@ -66,9 +66,11 @@ getkey:
       // Event was made available after the last multiqueue_process_events call
       key = K_EVENT;
     } else {
-      // Duplicate display updating logic in vgetorpeek()
-      if (((State & MODE_INSERT) != 0 || p_lz) && (State & MODE_CMDLINE) == 0
-          && must_redraw != 0 && !need_wait_return) {
+      // Ensure the screen is fully updated before blocking for input. Because of the duality of
+      // redraw_later, this can't be done in command-line or when waiting for "Press ENTER".
+      // In many of those cases the redraw is expected AFTER the key press, while normally it should
+      // update the screen immediately.
+      if (must_redraw != 0 && !need_wait_return && (State & MODE_CMDLINE) == 0) {
         update_screen();
         setcursor();  // put cursor back where it belongs
       }
