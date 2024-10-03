@@ -4140,6 +4140,7 @@ endfunc
 
 " The following test used to crash Vim
 func Test_lvimgrep_crash()
+  " this leaves a swapfile .test_quickfix.vim.swp around, why?
   sv Xtest
   augroup QF_Test
     au!
@@ -4202,8 +4203,8 @@ endfunc
 " :vimgrep/:lvimgrep commands are running.
 func Test_vimgrep_autocmd()
   call setqflist([], 'f')
-  call writefile(['stars'], 'Xtest1.txt')
-  call writefile(['stars'], 'Xtest2.txt')
+  call writefile(['stars'], 'Xtest1.txt', 'D')
+  call writefile(['stars'], 'Xtest2.txt', 'D')
 
   " Test 1:
   " When searching for a pattern using :vimgrep, if the quickfix list is
@@ -4233,9 +4234,9 @@ func Test_vimgrep_autocmd()
   autocmd BufRead Xtest2.txt call setloclist(g:save_winid, [], 'f')
   call assert_fails('lvimgrep stars Xtest*.txt', 'E926:')
   au! BufRead Xtest2.txt
+  " cleanup the swap files
+  bw! Xtest2.txt Xtest1.txt
 
-  call delete('Xtest1.txt')
-  call delete('Xtest2.txt')
   call setqflist([], 'f')
 endfunc
 
@@ -6456,6 +6457,43 @@ endfunc
 func Test_cbuffer_range()
   call XbufferTests_range('c')
   call XbufferTests_range('l')
+endfunc
+
+" Test for displaying fname pass from setqflist when the name
+" are hard links to prevent seemly duplicate entries.
+func Xtest_hardlink_fname(cchar)
+  call s:setup_commands(a:cchar)
+  %bwipe
+  " Create a sample source file
+  let lines =<< trim END
+    void sample() {}
+    int main() { sample(); return 0; }
+  END
+  call writefile(lines, 'test_qf_hardlink1.c', 'D')
+  defer delete('test_qf_hardlink1.c')
+  defer delete('test_qf_hardlink2.c')
+  call system('ln test_qf_hardlink1.c test_qf_hardlink2.c')
+  if v:shell_error
+    throw 'Skipped: ln throws error on this platform'
+  endif
+  call g:Xsetlist([], 'f')
+  " Make a qflist that contains the file and it's hard link
+  " like how LSP plugins set response into qflist
+  call g:Xsetlist([{'filename' : 'test_qf_hardlink1.c', 'lnum' : 1},
+        \ {'filename' : 'test_qf_hardlink2.c', 'lnum' : 1}], ' ')
+  Xopen
+  " Ensure that two entries are displayed with different name
+  " so that they aren't seen as duplication.
+  call assert_equal(['test_qf_hardlink1.c|1| ',
+        \ 'test_qf_hardlink2.c|1| '], getline(1, '$'))
+  Xclose
+endfunc
+
+func Test_hardlink_fname()
+  CheckUnix
+  CheckExecutable ln
+  call Xtest_hardlink_fname('c')
+  call Xtest_hardlink_fname('l')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
