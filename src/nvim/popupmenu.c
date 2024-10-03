@@ -764,7 +764,7 @@ void pum_redraw(void)
       // Stop when there is nothing more to display.
       if ((j == 2)
           || (next_isempty && (j == 1 || (j == 0 && pum_get_item(idx, order[j + 2]) == NULL)))
-          || (pum_base_width + n >= pum_width)) {
+          || (basic_width + n >= pum_width)) {
         break;
       }
 

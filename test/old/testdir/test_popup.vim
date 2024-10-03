@@ -1597,6 +1597,17 @@ func Test_pum_completeitemalign()
             \ { 'word': '你好', 'kind': 'C', 'menu': '中文' },
             \]}
     endfunc
+
+    func Omni_long(findstart, base)
+      if a:findstart
+        return col(".")
+      endif
+      return {
+            \ 'words': [
+            \ { 'word': 'loooong_foo', 'kind': 'S', 'menu': 'menu' },
+            \ { 'word': 'loooong_bar', 'kind': 'T', 'menu': 'menu' },
+            \]}
+    endfunc
     set omnifunc=Omni_test
     command! -nargs=0 T1 set cia=abbr,kind,menu
     command! -nargs=0 T2 set cia=abbr,menu,kind
@@ -1638,8 +1649,11 @@ func Test_pum_completeitemalign()
   " T6
   call term_sendkeys(buf, ":T6\<CR>S\<C-X>\<C-O>")
   call VerifyScreenDump(buf, 'Test_pum_completeitemalign_06', {})
-  call term_sendkeys(buf, "\<C-E>\<Esc>:T7\<CR>")
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
 
+  call term_sendkeys(buf, ":set columns=12 cmdheight=2 omnifunc=Omni_long\<CR>S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_completeitemalign_07', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>:T7\<CR>")
   call StopVimInTerminal(buf)
 endfunc
 
