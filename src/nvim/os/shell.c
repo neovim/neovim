@@ -115,7 +115,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   size_t len;
   char *p;
   char *extra_shell_arg = NULL;
-  ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
+  int shellopts = kShellOptExpand | kShellOptSilent;
   int j;
   char *tempname;
 #define STYLE_ECHO      0       // use "echo", the default
@@ -659,7 +659,7 @@ char *shell_argv_to_str(char **const argv)
 /// @param extra_args Extra arguments to the shell, or NULL.
 ///
 /// @return shell command exit code
-int os_call_shell(char *cmd, ShellOpts opts, char *extra_args)
+int os_call_shell(char *cmd, int opts, char *extra_args)
 {
   StringBuilder input = KV_INITIAL_VALUE;
   char *output = NULL;
@@ -714,8 +714,10 @@ int os_call_shell(char *cmd, ShellOpts opts, char *extra_args)
 /// os_call_shell() wrapper. Handles 'verbose', :profile, and v:shell_error.
 /// Invalidates cached tags.
 ///
+/// @param opts  a combination of ShellOpts flags
+///
 /// @return shell command exit code
-int call_shell(char *cmd, ShellOpts opts, char *extra_shell_arg)
+int call_shell(char *cmd, int opts, char *extra_shell_arg)
 {
   int retval;
   proftime_T wait_time;
@@ -759,7 +761,7 @@ int call_shell(char *cmd, ShellOpts opts, char *extra_shell_arg)
 /// @param  ret_len  length of the stdout
 ///
 /// @return an allocated string, or NULL for error.
-char *get_cmd_output(char *cmd, char *infile, ShellOpts flags, size_t *ret_len)
+char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
 {
   char *buffer = NULL;
 
