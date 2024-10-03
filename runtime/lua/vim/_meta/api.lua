@@ -2192,6 +2192,10 @@ function vim.api.nvim_set_vvar(name, value) end
 --- @return integer
 function vim.api.nvim_strwidth(text) end
 
+--- @deprecated
+--- @param event string
+function vim.api.nvim_subscribe(event) end
+
 --- Removes a tab-scoped (t:) variable
 ---
 --- @param tabpage integer Tabpage handle, or 0 for current tabpage
@@ -2241,6 +2245,10 @@ function vim.api.nvim_tabpage_set_var(tabpage, name, value) end
 --- @param tabpage integer Tabpage handle, or 0 for current tabpage
 --- @param win integer Window handle, must already belong to {tabpage}
 function vim.api.nvim_tabpage_set_win(tabpage, win) end
+
+--- @deprecated
+--- @param event string
+function vim.api.nvim_unsubscribe(event) end
 
 --- Calls a function with window as temporary current window.
 ---

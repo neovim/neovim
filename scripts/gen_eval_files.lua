@@ -243,7 +243,8 @@ local function get_api_meta()
   end
 
   for _, fun in pairs(functions) do
-    local deprecated = fun.deprecated_since ~= nil
+    -- TODO(justinmk): why isn't `fun.deprecated_since` set for nvim_subscribe?
+    local deprecated = fun.deprecated_since ~= nil or fun.deprecated
 
     local notes = {} --- @type string[]
     for _, note in ipairs(fun.notes or {}) do
