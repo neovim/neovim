@@ -58,151 +58,6 @@ loaded: >lua
 <
 
 ==============================================================================
-TREESITTER TREES                                             *treesitter-tree*
-                                                                      *TSTree*
-
-A "treesitter tree" represents the parsed contents of a buffer, which can be
-used to perform further analysis. It is a |userdata| reference to an object
-held by the treesitter library.
-
-An instance `TSTree` of a treesitter tree supports the following methods.
-
-TSTree:root()                                           *TSTree:root()*
-    Return the root node of this tree.
-
-TSTree:copy()                                           *TSTree:copy()*
-    Returns a copy of the `TSTree`.
-
-==============================================================================
-TREESITTER NODES                                             *treesitter-node*
-                                                                      *TSNode*
-
-A "treesitter node" represents one specific element of the parsed contents of
-a buffer, which can be captured by a |Query| for, e.g., highlighting. It is
-a |userdata| reference to an object held by the treesitter library.
-
-An instance `TSNode` of a treesitter node supports the following methods.
-
-TSNode:parent()                                         *TSNode:parent()*
-    Get the node's immediate parent.
-    Prefer |TSNode:child_containing_descendant()|
-    for iterating over the node's ancestors.
-
-TSNode:next_sibling()                                   *TSNode:next_sibling()*
-    Get the node's next sibling.
-
-TSNode:prev_sibling()                                   *TSNode:prev_sibling()*
-    Get the node's previous sibling.
-
-TSNode:next_named_sibling()                       *TSNode:next_named_sibling()*
-    Get the node's next named sibling.
-
-TSNode:prev_named_sibling()                       *TSNode:prev_named_sibling()*
-    Get the node's previous named sibling.
-
-TSNode:iter_children()                                 *TSNode:iter_children()*
-    Iterates over all the direct children of {TSNode}, regardless of whether
-    they are named or not.
-    Returns the child node plus the eventual field name corresponding to this
-    child node.
-
-TSNode:field({name})                                    *TSNode:field()*
-    Returns a table of the nodes corresponding to the {name} field.
-
-TSNode:child_count()                                    *TSNode:child_count()*
-    Get the node's number of children.
-
-TSNode:child({index})                                   *TSNode:child()*
-    Get the node's child at the given {index}, where zero represents the first
-    child.
-
-TSNode:named_child_count()                         *TSNode:named_child_count()*
-    Get the node's number of named children.
-
-TSNode:named_child({index})                              *TSNode:named_child()*
-    Get the node's named child at the given {index}, where zero represents the
-    first named child.
-
-TSNode:child_containing_descendant({descendant})  *TSNode:child_containing_descendant()*
-    Get the node's child that contains {descendant}.
-
-TSNode:start()                                          *TSNode:start()*
-    Get the node's start position. Return three values: the row, column and
-    total byte count (all zero-based).
-
-TSNode:end_()                                           *TSNode:end_()*
-    Get the node's end position. Return three values: the row, column and
-    total byte count (all zero-based).
-
-TSNode:range({include_bytes})                           *TSNode:range()*
-    Get the range of the node.
-
-    Return four or six values:
-        - start row
-        - start column
-        - start byte (if {include_bytes} is `true`)
-        - end row
-        - end column
-        - end byte (if {include_bytes} is `true`)
-
-TSNode:type()                                           *TSNode:type()*
-    Get the node's type as a string.
-
-TSNode:symbol()                                         *TSNode:symbol()*
-    Get the node's type as a numerical id.
-
-TSNode:named()                                          *TSNode:named()*
-    Check if the node is named. Named nodes correspond to named rules in the
-    grammar, whereas anonymous nodes correspond to string literals in the
-    grammar.
-
-TSNode:missing()                                        *TSNode:missing()*
-    Check if the node is missing. Missing nodes are inserted by the parser in
-    order to recover from certain kinds of syntax errors.
-
-TSNode:extra()                                          *TSNode:extra()*
-    Check if the node is extra. Extra nodes represent things like comments,
-    which are not required by the grammar but can appear anywhere.
-
-TSNode:has_changes()                                    *TSNode:has_changes()*
-    Check if a syntax node has been edited.
-
-TSNode:has_error()                                      *TSNode:has_error()*
-    Check if the node is a syntax error or contains any syntax errors.
-
-TSNode:sexpr()                                          *TSNode:sexpr()*
-    Get an S-expression representing the node as a string.
-
-TSNode:id()                                             *TSNode:id()*
-    Get a unique identifier for the node inside its own tree.
-
-    No guarantees are made about this identifier's internal representation,
-    except for being a primitive Lua type with value equality (so not a
-    table). Presently it is a (non-printable) string.
-
-    Note: The `id` is not guaranteed to be unique for nodes from different
-    trees.
-
-TSNode:tree()                                           *TSNode:tree()*
-    Get the |TSTree| of the node.
-                                                *TSNode:descendant_for_range()*
-TSNode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
-    Get the smallest node within this node that spans the given range of (row,
-    column) positions
-
-                                          *TSNode:named_descendant_for_range()*
-TSNode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
-    Get the smallest named node within this node that spans the given range of
-    (row, column) positions
-                                                        *TSNode:equal()*
-TSNode:equal({node})
-    Check if {node} refers to the same node within the same tree.
-
-                                                        *TSNode:byte_length()*
-TSNode:byte_length()
-    Return the number of bytes spanned by this node.
-
-==============================================================================
 TREESITTER QUERIES                                          *treesitter-query*
 
 Treesitter queries are a way to extract information about a parsed |TSTree|,
@@ -717,6 +572,278 @@ library.
                                      *vim.treesitter.minimum_language_version*
 The earliest parser ABI version that is supported by the bundled treesitter
 library.
+
+==============================================================================
+TREESITTER TREES                                    *treesitter-tree* *TSTree*
+
+A "treesitter tree" represents the parsed contents of a buffer, which can be
+used to perform further analysis. It is a |userdata| reference to an object
+held by the treesitter library.
+
+An instance `TSTree` of a treesitter tree supports the following methods.
+
+
+TSTree:copy()                                                  *TSTree:copy()*
+    Returns a copy of the `TSTree`.
+
+    Return: ~
+        (`TSTree`)
+
+TSTree:root()                                                  *TSTree:root()*
+    Return the root node of this tree.
+
+    Return: ~
+        (`TSNode`)
+
+
+==============================================================================
+TREESITTER NODES                                    *treesitter-node* *TSNode*
+
+A "treesitter node" represents one specific element of the parsed contents of
+a buffer, which can be captured by a |Query| for, e.g., highlighting. It is a
+|userdata| reference to an object held by the treesitter library.
+
+An instance `TSNode` of a treesitter node supports the following methods.
+
+
+TSNode:byte_length()                                    *TSNode:byte_length()*
+    Return the number of bytes spanned by this node.
+
+    Return: ~
+        (`integer`)
+
+TSNode:child({index})                                         *TSNode:child()*
+    Get the node's child at the given {index}, where zero represents the first
+    child.
+
+    Parameters: ~
+      • {index}  (`integer`)
+
+    Return: ~
+        (`TSNode?`)
+
+                                        *TSNode:child_containing_descendant()*
+TSNode:child_containing_descendant({descendant})
+    Get the node's child that contains {descendant}.
+
+    Parameters: ~
+      • {descendant}  (`TSNode`)
+
+    Return: ~
+        (`TSNode?`)
+
+TSNode:child_count()                                    *TSNode:child_count()*
+    Get the node's number of children.
+
+    Return: ~
+        (`integer`)
+
+                                               *TSNode:descendant_for_range()*
+TSNode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
+    Get the smallest node within this node that spans the given range of (row,
+    column) positions
+
+    Parameters: ~
+      • {start_row}  (`integer`)
+      • {start_col}  (`integer`)
+      • {end_row}    (`integer`)
+      • {end_col}    (`integer`)
+
+    Return: ~
+        (`TSNode?`)
+
+TSNode:end_()                                                  *TSNode:end_()*
+    Get the node's end position. Return three values: the row, column and
+    total byte count (all zero-based).
+
+    Return (multiple): ~
+        (`integer`)
+        (`integer`)
+        (`integer`)
+
+TSNode:equal({node})                                          *TSNode:equal()*
+    Check if {node} refers to the same node within the same tree.
+
+    Parameters: ~
+      • {node}  (`TSNode`)
+
+    Return: ~
+        (`boolean`)
+
+TSNode:extra()                                                *TSNode:extra()*
+    Check if the node is extra. Extra nodes represent things like comments,
+    which are not required by the grammar but can appear anywhere.
+
+    Return: ~
+        (`boolean`)
+
+TSNode:field({name})                                          *TSNode:field()*
+    Returns a table of the nodes corresponding to the {name} field.
+
+    Parameters: ~
+      • {name}  (`string`)
+
+    Return: ~
+        (`TSNode[]`)
+
+TSNode:has_changes()                                    *TSNode:has_changes()*
+    Check if a syntax node has been edited.
+
+    Return: ~
+        (`boolean`)
+
+TSNode:has_error()                                        *TSNode:has_error()*
+    Check if the node is a syntax error or contains any syntax errors.
+
+    Return: ~
+        (`boolean`)
+
+TSNode:id()                                                      *TSNode:id()*
+    Get a unique identifier for the node inside its own tree.
+
+    No guarantees are made about this identifier's internal representation,
+    except for being a primitive Lua type with value equality (so not a
+    table). Presently it is a (non-printable) string.
+
+    Note: The `id` is not guaranteed to be unique for nodes from different
+    trees.
+
+    Return: ~
+        (`string`)
+
+TSNode:iter_children()                                *TSNode:iter_children()*
+    Iterates over all the direct children of {TSNode}, regardless of whether
+    they are named or not. Returns the child node plus the eventual field name
+    corresponding to this child node.
+
+    Return: ~
+        (`fun(): TSNode, string`)
+
+TSNode:missing()                                            *TSNode:missing()*
+    Check if the node is missing. Missing nodes are inserted by the parser in
+    order to recover from certain kinds of syntax errors.
+
+    Return: ~
+        (`boolean`)
+
+TSNode:named()                                                *TSNode:named()*
+    Check if the node is named. Named nodes correspond to named rules in the
+    grammar, whereas anonymous nodes correspond to string literals in the
+    grammar.
+
+    Return: ~
+        (`boolean`)
+
+TSNode:named_child({index})                             *TSNode:named_child()*
+    Get the node's named child at the given {index}, where zero represents the
+    first named child.
+
+    Parameters: ~
+      • {index}  (`integer`)
+
+    Return: ~
+        (`TSNode?`)
+
+TSNode:named_child_count()                        *TSNode:named_child_count()*
+    Get the node's number of named children.
+
+    Return: ~
+        (`integer`)
+
+                                         *TSNode:named_descendant_for_range()*
+TSNode:named_descendant_for_range({start_row}, {start_col}, {end_row},
+                                  {end_col})
+    Get the smallest named node within this node that spans the given range of
+    (row, column) positions
+
+    Parameters: ~
+      • {start_row}  (`integer`)
+      • {start_col}  (`integer`)
+      • {end_row}    (`integer`)
+      • {end_col}    (`integer`)
+
+    Return: ~
+        (`TSNode?`)
+
+TSNode:next_named_sibling()                      *TSNode:next_named_sibling()*
+    Get the node's next named sibling.
+
+    Return: ~
+        (`TSNode?`)
+
+TSNode:next_sibling()                                  *TSNode:next_sibling()*
+    Get the node's next sibling.
+
+    Return: ~
+        (`TSNode?`)
+
+TSNode:parent()                                              *TSNode:parent()*
+    Get the node's immediate parent. Prefer
+    |TSNode:child_containing_descendant()| for iterating over the node's
+    ancestors.
+
+    Return: ~
+        (`TSNode?`)
+
+TSNode:prev_named_sibling()                      *TSNode:prev_named_sibling()*
+    Get the node's previous named sibling.
+
+    Return: ~
+        (`TSNode?`)
+
+TSNode:prev_sibling()                                  *TSNode:prev_sibling()*
+    Get the node's previous sibling.
+
+    Return: ~
+        (`TSNode?`)
+
+TSNode:range({include_bytes})                                 *TSNode:range()*
+    Get the range of the node.
+
+    Return four or six values:
+    • start row
+    • start column
+    • start byte (if {include_bytes} is `true`)
+    • end row
+    • end column
+    • end byte (if {include_bytes} is `true`)
+
+    Parameters: ~
+      • {include_bytes}  (`boolean?`)
+
+TSNode:sexpr()                                                *TSNode:sexpr()*
+    Get an S-expression representing the node as a string.
+
+    Return: ~
+        (`string`)
+
+TSNode:start()                                                *TSNode:start()*
+    Get the node's start position. Return three values: the row, column and
+    total byte count (all zero-based).
+
+    Return (multiple): ~
+        (`integer`)
+        (`integer`)
+        (`integer`)
+
+TSNode:symbol()                                              *TSNode:symbol()*
+    Get the node's type as a numerical id.
+
+    Return: ~
+        (`integer`)
+
+TSNode:tree()                                                  *TSNode:tree()*
+    Get the |TSTree| of the node.
+
+    Return: ~
+        (`TSTree`)
+
+TSNode:type()                                                  *TSNode:type()*
+    Get the node's type as a string.
+
+    Return: ~
+        (`string`)
+
 
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*

@@ -50,7 +50,7 @@ local INDENTATION = 4
 --- For generated section names.
 --- @field section_fmt fun(name: string): string
 ---
---- @field helptag_fmt fun(name: string): string
+--- @field helptag_fmt fun(name: string): string|string[]
 ---
 --- Per-function helptag.
 --- @field fn_helptag_fmt? fun(fun: nvim.luacats.parser.fun): string
@@ -319,6 +319,8 @@ local config = {
   treesitter = {
     filename = 'treesitter.txt',
     section_order = {
+      'tstree.lua',
+      'tsnode.lua',
       'treesitter.lua',
       'language.lua',
       'query.lua',
@@ -327,18 +329,27 @@ local config = {
       'dev.lua',
     },
     files = {
+      'runtime/lua/vim/treesitter/_meta/',
       'runtime/lua/vim/treesitter.lua',
       'runtime/lua/vim/treesitter/',
     },
     section_fmt = function(name)
       if name:lower() == 'treesitter' then
         return 'Lua module: vim.treesitter'
+      elseif name:lower() == 'tstree' then
+        return 'TREESITTER TREES'
+      elseif name:lower() == 'tsnode' then
+        return 'TREESITTER NODES'
       end
       return 'Lua module: vim.treesitter.' .. name:lower()
     end,
     helptag_fmt = function(name)
       if name:lower() == 'treesitter' then
         return 'lua-treesitter-core'
+      elseif name:lower() == 'tstree' then
+        return { 'treesitter-tree', 'TSTree' }
+      elseif name:lower() == 'tsnode' then
+        return { 'treesitter-node', 'TSNode' }
       end
       return 'lua-treesitter-' .. name:lower()
     end,
@@ -374,7 +385,7 @@ local config = {
       return 'Checkhealth'
     end,
     helptag_fmt = function()
-      return 'vim.health* *health' -- HACK
+      return { 'vim.health', 'health' }
     end,
   },
 }
@@ -869,7 +880,11 @@ local function make_section(filename, cfg, section_docs, funs_txt)
   local sectname = cfg.section_name and cfg.section_name[filename] or mktitle(name)
 
   -- section tag: e.g., "*api-autocmd*"
-  local help_tag = '*' .. cfg.helptag_fmt(sectname) .. '*'
+  local help_labels = cfg.helptag_fmt(sectname)
+  if type(help_labels) == 'table' then
+    help_labels = table.concat(help_labels, '* *')
+  end
+  local help_tags = '*' .. help_labels .. '*'
 
   if funs_txt == '' and #section_docs == 0 then
     return
@@ -878,7 +893,7 @@ local function make_section(filename, cfg, section_docs, funs_txt)
   return {
     name = sectname,
     title = cfg.section_fmt(sectname),
-    help_tag = help_tag,
+    help_tag = help_tags,
     funs_txt = funs_txt,
     doc = section_docs,
   }
