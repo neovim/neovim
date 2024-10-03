@@ -826,6 +826,7 @@ static struct luaL_Reg node_meta[] = {
   { "descendant_for_range", node_descendant_for_range },
   { "named_descendant_for_range", node_named_descendant_for_range },
   { "parent", node_parent },
+  { "ancestors", node_ancestors },
   { "__has_ancestor", __has_ancestor },
   { "child_containing_descendant", node_child_containing_descendant },
   { "iter_children", node_iter_children },
@@ -1133,6 +1134,32 @@ static int node_parent(lua_State *L)
   TSNode node = node_check(L, 1);
   TSNode parent = ts_node_parent(node);
   push_node(L, parent, 1);
+  return 1;
+}
+
+static int node_ancestors(lua_State *L)
+{
+  TSNode node = node_check(L, 1);
+  lua_newtable(L);
+
+  TSNode root = ts_tree_root_node(node.tree);
+  TSTreeCursor c = ts_tree_cursor_new(root);
+  uint32_t start_byte = ts_node_start_byte(node);
+
+  do {
+    if (ts_node_eq(ts_tree_cursor_current_node(&c), node)) {
+      // Found the descendant, traverse back up and collect all the parents
+      for (int i = 1; ts_tree_cursor_goto_parent(&c); i++) {
+        push_node(L, ts_tree_cursor_current_node(&c), 1);
+        lua_rawseti(L, -2, i);
+      }
+      break;
+    }
+  } while (ts_tree_cursor_goto_first_child_for_byte(&c, start_byte) >= 0
+           || ts_tree_cursor_goto_next_sibling(&c));
+
+  ts_tree_cursor_delete(&c);
+
   return 1;
 }
 
