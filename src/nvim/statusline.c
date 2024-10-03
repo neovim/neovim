@@ -758,7 +758,9 @@ void draw_tabline(void)
       bool modified = false;
 
       for (wincount = 0; wp != NULL; wp = wp->w_next, wincount++) {
-        if (bufIsChanged(wp->w_buffer)) {
+        if (!wp->w_config.focusable) {
+          wincount--;
+        } else if (bufIsChanged(wp->w_buffer)) {
           modified = true;
         }
       }
