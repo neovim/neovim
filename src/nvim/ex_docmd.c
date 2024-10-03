@@ -5684,17 +5684,18 @@ void do_read_cmd(exarg_T *eap)
     goto reset_capture_ga;
   }
 
-  if( fputs((char *) capture_ga->ga_data, tmp_fd) < 0) {
+  if (fputs((char *)capture_ga->ga_data, tmp_fd) < 0) {
     emsg(_(e_write));
     goto reset_capture_ga;
   }
   fclose(tmp_fd);
 
-  if( u_save(eap->line2, eap->line2 + 1) == FAIL) {
-     goto reset_capture_ga;
+  if (u_save(eap->line2, eap->line2 + 1) == FAIL) {
+    goto reset_capture_ga;
   }
 
-  if( readfile(tmp_file_name, NULL, eap->line2, 0, (linenr_T)MAXLNUM, eap, READ_FILTER, false) == OK) {
+  if (readfile(tmp_file_name, NULL, eap->line2, 0, (linenr_T)MAXLNUM, eap, READ_FILTER,
+               false) == OK) {
     curwin->w_cursor.lnum = curbuf->b_op_end.lnum;
   } else {
     semsg(_(e_notread), tmp_file_name);
