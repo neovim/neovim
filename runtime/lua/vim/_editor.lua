@@ -715,6 +715,152 @@ function vim._on_key(buf, typed_buf)
   end
 end
 
+-- Decodes a UTF-8 character to a Unicode code point.
+---@private
+---@param s string
+---@return integer, integer
+local function utf_ptr2char(s)
+  local b1, b2, b3, b4 = s:byte(1, 4)
+
+  if b1 < 0x80 then
+    -- 1-byte sequence (ASCII character)
+    return b1, 1
+  elseif b1 < 0xE0 then
+    -- 2-byte sequence
+    return ((b1 % 0x20) * 0x40) + (b2 % 0x40), 2
+  elseif b1 < 0xF0 then
+    -- 3-byte sequence
+    return ((b1 % 0x10) * 0x1000) + ((b2 % 0x40) * 0x40) + (b3 % 0x40), 3
+  else
+    -- 4-byte sequence
+    return ((b1 % 0x08) * 0x40000) + ((b2 % 0x40) * 0x1000) + ((b3 % 0x40) * 0x40) + (b4 % 0x40), 4
+  end
+end
+
+--- Convert UTF-32 or UTF-16 {index} to byte index.
+--- {opts} can be a table containing two properties:i
+--- * an "encoding" property of "utf-8", "utf-16" or "utf-32"
+--- * an "error" property of true or false, if error is false
+--- then then an out of range index will return byte length
+--- instead of throwing an error.
+---
+--- {opts} can also be supplied as a boolean, true for utf-16 and false for utf-32.
+--- If {opts} is not supplied, it defaults to false (UTF-32). Returns the byte index.
+---
+--- Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|.
+--- An {index} in the middle of a UTF-16 sequence is rounded upwards to
+--- the end of that sequence.
+---@param s string
+---@param index integer
+---@param opts? boolean|nil| { encoding: "utf-8"|"utf-16"|"utf-32", error?: boolean }
+---@return integer
+function vim.str_byteindex(s, index, opts)
+  vim.validate({ s = { s, 'string' }, index = { index, 'number' } })
+  local utf8_ptr_len = #s
+  if index == 0 then
+    return 0
+  end
+
+  local utf16_ptr, utf16_char = 0, 0
+  local utf32_ptr, utf32_char = 0, 0
+  local utf8_ptr, utf8_char = 1, 1
+
+  if index > utf8_ptr_len then
+    --- Skips the loop if the index is greater than the byte length of the string.
+    utf8_char = utf8_ptr_len + 1
+  end
+
+  opts = opts or { encoding = 'utf-32', error = true }
+  if type(opts) == 'boolean' then
+    opts = opts and { encoding = 'utf-16', error = true } or { encoding = 'utf-32', error = true }
+  end
+  local encoding = opts.encoding or 'utf-32'
+  local valid_encodings = { ['utf-8'] = true, ['utf-16'] = true, ['utf-32'] = true }
+  if not valid_encodings[encoding] then
+    error('Invalid encoding: ' .. encoding)
+  end
+
+  -- Prepare string by removing NUL characters
+  local prepared_string = s:find('%z') and s:gsub('%z', ' ') or s
+  local strlen = vim.fn.strchars(prepared_string)
+
+  -- Traverse the string and calculate pointers for UTF-16 and UTF-32
+  while utf8_char <= strlen do
+    local c, char_len = utf_ptr2char(s:sub(utf8_ptr))
+
+    utf16_char = utf16_char + (c > 0xFFFF and 2 or 1)
+    utf16_ptr = utf16_ptr + char_len
+
+    utf32_ptr = utf32_ptr + char_len
+    utf32_char = utf32_char + 1
+
+    utf8_ptr = utf8_ptr + char_len
+
+    if encoding == 'utf-16' and utf16_char >= index then
+      return utf16_ptr
+    elseif encoding == 'utf-32' and utf32_char >= index then
+      return utf32_ptr
+    elseif encoding == 'utf-8' and utf8_char >= index then
+      return utf8_ptr - 1
+    end
+    utf8_char = utf8_char + 1
+  end
+
+  if opts.error then
+    error('index out of range')
+  end
+  return utf8_ptr_len
+end
+
+--- Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
+--- supplied, the length of the string is used. All indices are zero-based.
+---
+--- Embedded NUL bytes are treated as terminating the string. Invalid UTF-8
+--- bytes, and embedded surrogates are counted as one code point each. An
+--- {index} in the middle of a UTF-8 sequence is rounded upwards to the end of
+--- that sequence.
+--- @param str string
+--- @param index? integer
+--- @param opts? { error: boolean }
+--- @return integer UTF-32 index
+--- @return integer UTF-16 index
+--- @return integer UTF-8 index
+function vim.str_utfindex(str, index, opts)
+  vim.validate({
+    str = { str, 'string' },
+    index = { index, 'number', true },
+    opts = { opts, 'table', true },
+  })
+
+  local len = #str
+  opts = opts or { error = true }
+  index = index or len
+
+  if index == 0 then
+    return 0, 0, 0
+  end
+
+  if index > len then
+    index = opts.error and error('index out of range') or len
+  end
+
+  local utf16_ptr = 0
+  local utf32_ptr = 0
+  local utf8_ptr, utf8_char = 1, 1
+
+  while index > 0 do
+    local c, char_len = utf_ptr2char(str:sub(utf8_char))
+    utf32_ptr = utf32_ptr + 1
+    utf16_ptr = utf16_ptr + (c > 0xFFFF and 2 or 1)
+    utf8_ptr = utf8_ptr + 1
+
+    utf8_char = utf8_char + char_len
+    index = index - char_len
+  end
+
+  return utf32_ptr, utf16_ptr, utf8_ptr - 1
+end
+
 --- Generates a list of possible completions for the string.
 --- String has the pattern.
 ---

@@ -319,21 +319,76 @@ describe('lua stdlib', function()
       49,
       51,
     }
+    local indices8 = {
+      [0] = 0,
+      1,
+      2,
+      3,
+      5,
+      7,
+      9,
+      10,
+      12,
+      13,
+      16,
+      19,
+      20,
+      23,
+      24,
+      28,
+      29,
+      33,
+      34,
+      35,
+      37,
+      38,
+      40,
+      42,
+      44,
+      46,
+      48,
+      49,
+      51,
+    }
     for i, k in pairs(indices32) do
       eq(k, exec_lua('return vim.str_byteindex(_G.test_text, ...)', i), i)
+      eq(k, exec_lua('return vim.str_byteindex(_G.test_text, ..., false)', i), i)
+      eq(k, exec_lua('return vim.str_byteindex(_G.test_text, ..., { encoding = "utf-32"})', i), i)
     end
     for i, k in pairs(indices16) do
       eq(k, exec_lua('return vim.str_byteindex(_G.test_text, ..., true)', i), i)
+      eq(k, exec_lua('return vim.str_byteindex(_G.test_text, ..., { encoding = "utf-16"})', i), i)
     end
-    eq(
+    for i, k in pairs(indices8) do
+      eq(k, exec_lua('return vim.str_byteindex(_G.test_text, ..., { encoding = "utf-8"})', i), i)
+    end
+    matches(
       'index out of range',
       pcall_err(exec_lua, 'return vim.str_byteindex(_G.test_text, ...)', #indices32 + 1)
     )
-    eq(
+    matches(
       'index out of range',
       pcall_err(exec_lua, 'return vim.str_byteindex(_G.test_text, ..., true)', #indices16 + 1)
     )
-    local i32, i16 = 0, 0
+    eq(
+      indices32[#indices32],
+      exec_lua(
+        'return vim.str_byteindex(_G.test_text, 99999, { encoding = "utf-32", error = false})'
+      )
+    )
+    eq(
+      indices16[#indices16],
+      exec_lua(
+        'return vim.str_byteindex(_G.test_text, 99999, { encoding = "utf-16", error = false})'
+      )
+    )
+    eq(
+      indices8[#indices8],
+      exec_lua(
+        'return vim.str_byteindex(_G.test_text, 99999, { encoding = "utf-8", error = false})'
+      )
+    )
+    local i32, i16, i8 = 0, 0, 0
     local len = 51
     for k = 0, len do
       if indices32[i32] < k then
@@ -345,12 +400,20 @@ describe('lua stdlib', function()
           i16 = i16 + 1
         end
       end
-      eq({ i32, i16 }, exec_lua('return {vim.str_utfindex(_G.test_text, ...)}', k), k)
+      if indices8[i8] < k then
+        i8 = i8 + 1
+      end
+      eq({ i32, i16, i8 }, exec_lua('return {vim.str_utfindex(_G.test_text, ...)}', k), k)
     end
-    eq(
+    matches(
       'index out of range',
       pcall_err(exec_lua, 'return vim.str_utfindex(_G.test_text, ...)', len + 1)
     )
+    eq(
+      { #indices32, #indices16, #indices8 },
+      exec_lua('return {vim.str_utfindex(_G.test_text, 99999, { error = false })}')
+    )
+    eq({ #indices32, #indices16, #indices8 }, exec_lua('return {vim.str_utfindex(_G.test_text)}'))
   end)
 
   it('vim.str_utf_start', function()
