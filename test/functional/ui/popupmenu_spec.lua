@@ -5077,6 +5077,17 @@ describe('builtin popupmenu', function()
                   \ { 'word': '你好', 'kind': 'C', 'menu': '中文' },
                   \]}
           endfunc
+
+          func Omni_long(findstart, base)
+            if a:findstart
+              return col(".")
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'loooong_foo', 'kind': 'S', 'menu': 'menu' },
+                  \ { 'word': 'loooong_bar', 'kind': 'T', 'menu': 'menu' },
+                  \]}
+          endfunc
           set omnifunc=Omni_test
         ]])
         -- T1
@@ -5162,6 +5173,20 @@ describe('builtin popupmenu', function()
           {1:~                             }|*10
           {2:-- }{5:match 1 of 3}               |
         ]])
+        feed('<C-E><ESC>')
+
+        -- Test_pum_completeitemalign_07
+        command('set cia=menu,kind,abbr columns=12 cmdheight=2 omnifunc=Omni_long')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          loooong_foo^ |
+          {s:menu S loooo}|
+          {n:menu T loooo}|
+          {1:~           }|*10
+                      |
+          {2:--}          |
+        ]])
+        feed('<C-E><ESC>')
       end)
     end
   end
