@@ -166,4 +166,122 @@ describe('luacats grammar', function()
     name = 'type',
     type = '[number,string,"good"|"bad"]',
   })
+
+  test('@class vim.diagnostic.JumpOpts', {
+    kind = 'class',
+    name = 'vim.diagnostic.JumpOpts',
+  })
+
+  test('@class vim.diagnostic.JumpOpts : vim.diagnostic.GetOpts', {
+    kind = 'class',
+    name = 'vim.diagnostic.JumpOpts',
+    parent = 'vim.diagnostic.GetOpts',
+  })
+
+  test('@param opt? { cmd?: string[] } Options', {
+    kind = 'param',
+    name = 'opt?',
+    type = '{ cmd?: string[] }',
+    desc = 'Options',
+  })
+
+  ---@type [string, string?][]
+  local test_cases = {
+    { 'foo' },
+    { 'foo   ', 'foo' }, -- trims whitespace
+    { 'true' },
+    { 'vim.type' },
+    { 'vim-type' },
+    { 'vim_type' },
+    { 'foo.bar-baz_baz' },
+    { '`ABC`' },
+    { '42' },
+    { '-42' },
+    { '(foo)', 'foo' }, -- removes unnecessary parens
+    { 'true?' },
+    { '(true)?' },
+    { 'string[]' },
+    { 'string|number' },
+    { '(string)[]' },
+    { '(string|number)[]' },
+    { 'coalesce??', 'coalesce?' }, -- removes unnecessary ?
+    { 'number?|string' },
+    { "'foo'|'bar'|'baz'" },
+    { '"foo"|"bar"|"baz"' },
+    { '(number)?|string' }, --
+    { 'number[]|string' },
+    { 'string[]?' },
+    { 'foo?[]' },
+    { 'vim.type?|string?   ', 'vim.type?|string?' },
+    { 'number[][]' },
+    { 'number[][][]' },
+    { 'number[][]?' },
+    { 'string|integer[][]?' },
+
+    -- tuples
+    { '[string]' },
+    { '[1]' },
+    { '[string, number]' },
+    { '[string, number]?' },
+    { '[string, number][]' },
+    { '[string, number]|string' },
+    { '[string|number, number?]' },
+    { 'string|[string, number]' },
+    { '(true)?|[foo]' },
+    { '[fun(a: string):boolean]' },
+
+    -- dict
+    { '{[string]:string}' },
+    { '{ [ string ] : string }' },
+    { '{ [ string|any ] : string }' },
+    { '{[string]: string, [number]: boolean}' },
+
+    -- key-value table
+    { 'table<string,any>' },
+    { 'table' },
+    { 'string|table|boolean' },
+    { 'string|table|(boolean)' },
+
+    -- table literal
+    { '{foo: number}' },
+    { '{foo: string, bar: [number, boolean]?}' },
+    { 'boolean|{reverse?:boolean}' },
+    { '{ cmd?: string[] }' },
+
+    -- function
+    { 'fun(a: string, b:foo|bar): string' },
+    { 'fun(a?: string): string' },
+    { 'fun(a?: string): number?,string?' },
+    { '(fun(a: string, b:foo|bar): string)?' },
+    { 'fun(a: string, b:foo|bar): string, string' },
+    { 'fun(a: string, b:foo|bar)' },
+    { 'fun(_, foo, bar): string' },
+    { 'fun(...): number' },
+    { 'fun( ... ): number' },
+    { 'fun(...:number): number' },
+    { 'fun( ... : number): number' },
+
+    -- generics
+    { 'elem_or_list<string>' },
+    {
+      'elem_or_list<fun(client: vim.lsp.Client, initialize_result: lsp.InitializeResult)>',
+      nil,
+    },
+  }
+
+  for _, tc in ipairs(test_cases) do
+    local ty, exp_ty = tc[1], tc[2]
+    if exp_ty == nil then
+      exp_ty = ty
+    end
+
+    local var, desc = 'x', 'some desc'
+    local param = string.format('@param %s %s %s', var, ty, desc)
+    test(param, {
+      kind = 'param',
+      name = var,
+      type = exp_ty,
+      desc = desc,
+    })
+  end
 end)

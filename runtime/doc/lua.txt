@@ -752,8 +752,8 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
                   the internal diff library.
 
     Return: ~
-        (`string|integer[]`) See {opts.result_type}. `nil` if {opts.on_hunk}
-        is given.
+        (`string|integer[][]?`) See {opts.result_type}. `nil` if
+        {opts.on_hunk} is given.
 
 
 ==============================================================================
