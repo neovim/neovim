@@ -562,7 +562,7 @@ function protocol.make_client_capabilities()
       workDoneProgress = true,
       showMessage = {
         messageActionItem = {
-          additionalPropertiesSupport = false,
+          additionalPropertiesSupport = true,
         },
       },
       showDocument = {
