@@ -1080,7 +1080,9 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
         row += rowoff;
       }
 
-      col -= wp->w_leftcol;
+      if (col > (int)wp->w_leftcol) {
+        col -= wp->w_leftcol;
+      }
 
       if (col >= 0 && col < wp->w_width_inner && row >= 0 && row < wp->w_height_inner) {
         coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
