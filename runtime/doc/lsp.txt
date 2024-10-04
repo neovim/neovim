@@ -1673,6 +1673,9 @@ enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
         vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {enable}  (`boolean?`) true/nil to enable, false to disable
       • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
@@ -1697,6 +1700,9 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
         })
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {filter}  (`table?`) Optional filters |kwargs|:
                   • {bufnr} (`integer?`)
@@ -1710,6 +1716,9 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
 
 is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
     Query whether inlay hint is enabled in the {filter}ed scope
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.

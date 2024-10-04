@@ -248,7 +248,7 @@ function vim.schedule(fn) end
 ---     - If {callback} errors, the error is raised.
 function vim.wait(time, callback, interval, fast_only) end
 
---- Attach to ui events, similar to |nvim_ui_attach()| but receive events
+--- Attach to |ui-events|, similar to |nvim_ui_attach()| but receive events
 --- as Lua callback. Can be used to implement screen elements like
 --- popupmenu or message handling in Lua.
 ---
@@ -281,6 +281,8 @@ function vim.wait(time, callback, interval, fast_only) end
 ---   end
 --- end)
 --- ```
+---
+--- @since 0
 ---
 --- @param ns integer
 --- @param options table<string, any>

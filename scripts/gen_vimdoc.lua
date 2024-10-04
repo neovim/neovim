@@ -18,12 +18,12 @@
 
 local luacats_parser = require('scripts.luacats_parser')
 local cdoc_parser = require('scripts.cdoc_parser')
-local text_utils = require('scripts.text_utils')
+local util = require('scripts.util')
 
 local fmt = string.format
 
-local wrap = text_utils.wrap
-local md_to_vimdoc = text_utils.md_to_vimdoc
+local wrap = util.wrap
+local md_to_vimdoc = util.md_to_vimdoc
 
 local TEXT_WIDTH = 78
 local INDENTATION = 4
@@ -730,17 +730,23 @@ local function render_fun(fun, classes, cfg)
   table.insert(ret, render_fun_header(fun, cfg))
   table.insert(ret, '\n')
 
-  if fun.desc then
-    table.insert(ret, md_to_vimdoc(fun.desc, INDENTATION, INDENTATION, TEXT_WIDTH))
+  if fun.since then
+    local since = assert(tonumber(fun.since), 'invalid @since on ' .. fun.name)
+    local info = nvim_api_info()
+    if since == 0 or (info.prerelease and since == info.level) then
+      -- Experimental = (since==0 or current prerelease)
+      local s = 'WARNING: This feature is experimental/unstable.'
+      table.insert(ret, md_to_vimdoc(s, INDENTATION, INDENTATION, TEXT_WIDTH))
+      table.insert(ret, '\n')
+    else
+      local v = assert(util.version_level[since], 'invalid @since on ' .. fun.name)
+      fun.attrs = fun.attrs or {}
+      table.insert(fun.attrs, ('Since: %s'):format(v))
+    end
   end
 
-  if fun.since then
-    local since = tonumber(fun.since)
-    local info = nvim_api_info()
-    if since and (since > info.level or since == info.level and info.prerelease) then
-      fun.notes = fun.notes or {}
-      table.insert(fun.notes, { desc = 'This API is pre-release (unstable).' })
-    end
+  if fun.desc then
+    table.insert(ret, md_to_vimdoc(fun.desc, INDENTATION, INDENTATION, TEXT_WIDTH))
   end
 
   if fun.notes then

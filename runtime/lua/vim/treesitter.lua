@@ -447,6 +447,7 @@ end
 ---
 --- Can also be shown with `:InspectTree`. [:InspectTree]()
 ---
+---@since 11
 ---@param opts table|nil Optional options table with the following possible keys:
 ---                      - lang (string|nil): The language of the source buffer. If omitted, detect
 ---                        from the filetype of the source buffer.
@@ -470,6 +471,7 @@ end
 --- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 --- ```
 ---
+---@since 11
 ---@param lnum integer|nil Line number to calculate fold level for
 ---@return string
 function M.foldexpr(lnum)

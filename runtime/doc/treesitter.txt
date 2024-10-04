@@ -854,6 +854,9 @@ foldexpr({lnum})                                   *vim.treesitter.foldexpr()*
         vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 <
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {lnum}  (`integer?`) Line number to calculate fold level for
 
@@ -1002,6 +1005,9 @@ inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
     in the source buffer. Folding also works (try |zo|, |zc|, etc.).
 
     Can also be shown with `:InspectTree`.                      *:InspectTree*
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {opts}  (`table?`) Optional options table with the following possible
