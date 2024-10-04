@@ -25,6 +25,7 @@ local os_sep = iswin and '\\' or '/'
 --- end
 --- ```
 ---
+---@since 10
 ---@param start (string) Initial path.
 ---@return fun(_, dir: string): string? # Iterator
 ---@return nil
@@ -44,6 +45,7 @@ end
 
 --- Return the parent directory of the given path
 ---
+---@since 10
 ---@generic T : string|nil
 ---@param file T Path
 ---@return T Parent directory of {file}
@@ -73,6 +75,7 @@ end
 
 --- Return the basename of the given path
 ---
+---@since 10
 ---@generic T : string|nil
 ---@param file T Path
 ---@return T Basename of {file}
@@ -93,6 +96,7 @@ end
 --- Concatenate directories and/or file paths into a single path with normalization
 --- (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
 ---
+---@since 12
 ---@param ... string
 ---@return string
 function M.joinpath(...)
@@ -103,6 +107,7 @@ end
 
 --- Return an iterator over the items located in {path}
 ---
+---@since 10
 ---@param path (string) An absolute or relative path to the directory to iterate
 ---            over. The path is first normalized |vim.fs.normalize()|.
 --- @param opts table|nil Optional keyword arguments:
@@ -214,6 +219,7 @@ end
 --- end, {limit = math.huge, type = 'file'})
 --- ```
 ---
+---@since 10
 ---@param names (string|string[]|fun(name: string, path: string): boolean) Names of the items to find.
 ---             Must be base names, paths and globs are not supported when {names} is a string or a table.
 ---             If {names} is a function, it is called for each traversed item with args:
@@ -353,6 +359,7 @@ end
 --- end)
 --- ```
 ---
+--- @since 12
 --- @param source integer|string Buffer number (0 for current buffer) or file path (absolute or
 ---               relative to the |current-directory|) to begin the search from.
 --- @param marker (string|string[]|fun(name: string, path: string): boolean) A marker, or list
@@ -532,6 +539,7 @@ end
 --- [[\\?\UNC\server\share\foo\..\..\..\bar]] => "//?/UNC/server/share/bar"
 --- ```
 ---
+---@since 10
 ---@param path (string) Path to normalize
 ---@param opts? vim.fs.normalize.Opts
 ---@return (string) : Normalized path
@@ -651,6 +659,7 @@ end
 --- @field force? boolean
 
 --- Remove files or directories
+--- @since 13
 --- @param path string Path to remove
 --- @param opts? vim.fs.rm.Opts
 function M.rm(path, opts)
