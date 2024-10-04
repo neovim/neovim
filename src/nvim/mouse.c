@@ -194,7 +194,11 @@ static void call_click_def_func(StlClickDefinition *click_defs, int col, int whi
                         ? "r"
                         : (which_button == MOUSE_MIDDLE
                            ? "m"
-                           : "?")))
+                           : (which_button == MOUSE_X1
+                              ? "x1"
+                              : (which_button == MOUSE_X2
+                                 ? "x2"
+                                 : "?")))))
       },
     },
     {
