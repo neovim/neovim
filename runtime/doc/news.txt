@@ -78,6 +78,9 @@ LUA
 
 • API functions now consistently return an empty dictionary as
   |vim.empty_dict()|. Earlier, a |lua-special-tbl| was sometimes used.
+• Command-line completions for: `vim.g`, `vim.t`, `vim.w`, `vim.b`, `vim.v`,
+  `vim.o`, `vim.wo`, `vim.bo`, `vim.opt`, `vim.opt_local`, `vim.opt_global`,
+  and `vim.fn`.
 
 OPTIONS
 
