@@ -2910,6 +2910,9 @@ Lua module: vim.fs                                                    *vim.fs*
 vim.fs.basename({file})                                    *vim.fs.basename()*
     Return the basename of the given path
 
+    Attributes: ~
+        Since: 0.8.0
+
     Parameters: ~
       • {file}  (`string?`) Path
 
@@ -2918,6 +2921,9 @@ vim.fs.basename({file})                                    *vim.fs.basename()*
 
 vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
     Return an iterator over the items located in {path}
+
+    Attributes: ~
+        Since: 0.8.0
 
     Parameters: ~
       • {path}  (`string`) An absolute or relative path to the directory to
@@ -2937,6 +2943,9 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
 
 vim.fs.dirname({file})                                      *vim.fs.dirname()*
     Return the parent directory of the given path
+
+    Attributes: ~
+        Since: 0.8.0
 
     Parameters: ~
       • {file}  (`string?`) Path
@@ -2970,6 +2979,9 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
         end, {limit = math.huge, type = 'file'})
 <
 
+    Attributes: ~
+        Since: 0.8.0
+
     Parameters: ~
       • {names}  (`string|string[]|fun(name: string, path: string): boolean`)
                  Names of the items to find. Must be base names, paths and
@@ -3000,6 +3012,9 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
 vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Concatenate directories and/or file paths into a single path with
     normalization (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {...}  (`string`)
@@ -3037,6 +3052,9 @@ vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
         [[\\?\UNC\server\share\foo\..\..\..\bar]] => "//?/UNC/server/share/bar"
 <
 
+    Attributes: ~
+        Since: 0.8.0
+
     Parameters: ~
       • {path}  (`string`) Path to normalize
       • {opts}  (`table?`) A table with the following fields:
@@ -3065,6 +3083,9 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
         end
 <
 
+    Attributes: ~
+        Since: 0.8.0
+
     Parameters: ~
       • {start}  (`string`) Initial path.
 
@@ -3074,6 +3095,8 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
         (`string?`)
 
 vim.fs.rm({path}, {opts})                                        *vim.fs.rm()*
+    WARNING: This feature is experimental/unstable.
+
     Remove files or directories
 
     Parameters: ~
@@ -3102,6 +3125,9 @@ vim.fs.root({source}, {marker})                                *vim.fs.root()*
           return name:match('%.csproj$') ~= nil
         end)
 <
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {source}  (`integer|string`) Buffer number (0 for current buffer) or
