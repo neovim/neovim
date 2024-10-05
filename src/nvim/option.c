@@ -5096,6 +5096,12 @@ void clear_winopt(winopt_T *wop)
 
 void didset_window_options(win_T *wp, bool valid_cursor)
 {
+  // Set w_leftcol or w_skipcol to zero.
+  if (wp->w_p_wrap) {
+    wp->w_leftcol = 0;
+  } else {
+    wp->w_skipcol = 0;
+  }
   check_colorcolumn(wp);
   briopt_check(wp);
   fill_culopt_flags(NULL, wp);

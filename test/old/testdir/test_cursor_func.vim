@@ -279,6 +279,21 @@ func Test_screenpos_number()
   bwipe!
 endfunc
 
+func Test_screenpos_edit_newfile()
+  new
+  20vsp
+  setl nowrap
+  call setline(1, 'abcdefghijklmnopqrstuvwxyz')
+  call cursor(1, 10)
+  norm! 5zl
+  call assert_equal(#{col: 5, row: 1, endcol: 5, curscol: 5}, screenpos(win_getid(), 1, 10))
+  enew!
+  call assert_equal(1, &l:wrap)
+  call assert_equal(#{col: 1, row: 1, endcol: 1, curscol: 1}, screenpos(win_getid(), 1, 1))
+
+  bwipe!
+endfunc
+
 " Save the visual start character position
 func SaveVisualStartCharPos()
   call add(g:VisualStartPos, getcharpos('v'))
