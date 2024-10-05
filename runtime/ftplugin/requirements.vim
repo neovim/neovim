@@ -36,7 +36,11 @@ let b:undo_ftplugin = "setl iskeyword< commentstring<"
 " pip options contain "-"
 setlocal iskeyword+=-
 setlocal commentstring=#\ %s
-compiler pip_compile
+
+if !exists('current_compiler')
+  let b:undo_ftplugin ..= "| compiler make"
+  compiler  pip_compile
+endif
 
 let &cpoptions = s:save_cpoptions
 unlet s:save_cpoptions

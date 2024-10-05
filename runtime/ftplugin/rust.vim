@@ -148,6 +148,7 @@ endif
 " Cleanup {{{1
 
 let b:undo_ftplugin = "
+            \ compiler make |
             \ setlocal formatoptions< comments< commentstring< include< includeexpr< suffixesadd<
             \|if exists('b:rust_set_style')
                 \|setlocal tabstop< shiftwidth< softtabstop< expandtab< textwidth<
