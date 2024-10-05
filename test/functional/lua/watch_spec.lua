@@ -92,7 +92,7 @@ describe('vim._watch', function()
         skip(is_os('bsd'), 'Stopped working on bsd after 3ca967387c49c754561c3b11a574797504d40f38')
       elseif watchfunc == 'watchdirs' and is_os('mac') then
         -- Bump this (or fix the bug) if CI continues to fail in future versions of macos CI.
-        skip(is_ci() and vim.uv.os_uname().release == '23.6.0', 'weird failure for macOS arm 14 CI')
+        skip(is_ci() and vim.uv.os_uname().release == '24.0.0', 'weird failure for macOS arm 15 CI')
       else
         skip(
           is_os('bsd'),
