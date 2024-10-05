@@ -740,25 +740,21 @@ describe('vim.lsp.completion: protocol', function()
       isIncomplete = false,
       items = { completion_item },
     }
+
     local client_id = create_server(completion_list)
-    local line = 'vim._with({n|}, f)'
+
+    local line = ('vim._with({%s|}, f)'):format(completed_word:sub(1, 2))
     local initial_cursor_col = line:find('|') - 1
     line = line:gsub('|', '')
     local line_to_cursor = line:sub(1, initial_cursor_col)
     local word_start = exec_lua(function()
       return vim.fn.match(line_to_cursor, '\\k*$')
     end)
-    -- eq('vim._with({', line:sub(1, word_start))
 
     local expected_cursor_column = word_start + #completed_word
 
-    exec_lua(function()
-      local buf = vim.api.nvim_get_current_buf()
-      vim.api.nvim_buf_set_lines(buf, 0, 1, true, { line })
-      vim.api.nvim_win_set_cursor(0, { 1, initial_cursor_col })
-    end)
-
-    feed('i')
+    feed('i' .. line)
+    trigger_at_pos({ 1, initial_cursor_col })
 
     exec_lua(function()
       vim.v.completed_item = {
@@ -767,8 +763,8 @@ describe('vim.lsp.completion: protocol', function()
             lsp = {
               client_id = client_id,
               completion_item = completion_item,
-            }
-          }
+            },
+          },
         },
         word = completed_word,
       }
