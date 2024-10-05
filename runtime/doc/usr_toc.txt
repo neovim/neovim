@@ -2,7 +2,7 @@
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
-			      Table Of Contents		       *user-manual* *usr*
+			      Table Of Contents		*user-manual* *usr*
 
 ==============================================================================
 Overview
