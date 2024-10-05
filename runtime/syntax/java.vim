@@ -3,16 +3,32 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Sep 28
+" Last Change:		2024 Oct 03
 
-" Please check :help java.vim for comments on some of the options available.
+" Please check ":help java.vim" for comments on some of the options
+" available.
 
-" quit when a syntax file was already loaded
-if !exists("g:main_syntax")
-  if exists("b:current_syntax")
-    finish
+" Do not aggregate syntax items from circular inclusion.
+if exists("b:current_syntax")
+  finish
+endif
+
+if exists("g:main_syntax")
+  " Reject attendant circularity for every :syn-included syntax file,
+  " but ACCEPT FAILURE when "g:main_syntax" is set to "java".
+  if g:main_syntax == 'html'
+    if !exists("g:java_ignore_html")
+      let g:java_ignore_html = 1
+      let s:clear_java_ignore_html = 1
+    endif
+  elseif g:main_syntax == 'markdown'
+    if !exists("g:java_ignore_markdown")
+      let g:java_ignore_markdown = 1
+      let s:clear_java_ignore_markdown = 1
+    endif
   endif
-  " we define it here so that included files can test for it
+else
+  " Allow syntax files that include this file test for its inclusion.
   let g:main_syntax = 'java'
 endif
 
@@ -364,15 +380,17 @@ if !exists("g:java_ignore_javadoc") && (s:with_html || s:with_markdown) && g:mai
 
   " Include HTML syntax coloring for Javadoc comments.
   if s:with_html
-    syntax include @javaHtml syntax/html.vim
-    unlet b:current_syntax
+    try
+      syntax include @javaHtml syntax/html.vim
+    finally
+      unlet! b:current_syntax
+    endtry
   endif
 
   " Include Markdown syntax coloring (v7.2.437) for Javadoc comments.
   if s:with_markdown
     try
       syntax include @javaMarkdown syntax/markdown.vim
-      unlet b:current_syntax
       let s:ff.WithMarkdown = s:ff.LeftConstant
     catch /\<E48[45]:/
       call s:ReportOnce(v:exception)
@@ -383,6 +401,8 @@ if !exists("g:java_ignore_javadoc") && (s:with_html || s:with_markdown) && g:mai
       hi clear markdownCodeBlock
       hi clear markdownCodeDelimiter
       hi clear markdownLinkDelimiter
+    finally
+      unlet! b:current_syntax
     endtry
   endif
 
@@ -837,6 +857,14 @@ let b:current_syntax = "java"
 
 if g:main_syntax == 'java'
   unlet g:main_syntax
+endif
+
+if exists("s:clear_java_ignore_html")
+  unlet! s:clear_java_ignore_html g:java_ignore_html
+endif
+
+if exists("s:clear_java_ignore_markdown")
+  unlet! s:clear_java_ignore_markdown g:java_ignore_markdown
 endif
 
 let b:spell_options = "contained"
