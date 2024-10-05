@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:     Zig
 " Maintainer:   Mathias Lindgren <math.lindgren@gmail.com>
-" Last Change:  2024 May 21
+" Last Change:  2024 Oct 04
 " Based on:     https://github.com/ziglang/zig.vim
 
 if exists("b:did_ftplugin")
@@ -12,8 +12,6 @@ let b:did_ftplugin = 1
 
 let s:cpo_save = &cpo
 set cpo&vim
-
-compiler zig_build
 
 " Match Zig builtin fns
 setlocal iskeyword+=@-@
@@ -45,6 +43,11 @@ endif
 if exists('g:zig_std_dir')
     let &l:path .= ',' . g:zig_std_dir
     let b:undo_ftplugin .= ' | setl pa<'
+endif
+
+if !exists('current_compiler')
+    compiler zig_build
+    let b:undo_ftplugin .= "| compiler make"
 endif
 
 let &cpo = s:cpo_save

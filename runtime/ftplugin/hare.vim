@@ -1,7 +1,7 @@
 " Vim filetype plugin.
 " Language:     Hare
 " Maintainer:   Amelia Clarke <selene@perilune.dev>
-" Last Updated: 2024-05-10
+" Last Updated: 2024 Oct 04
 " Upstream:     https://git.sr.ht/~sircmpwn/hare.vim
 
 if exists('b:did_ftplugin')
@@ -11,9 +11,6 @@ let b:did_ftplugin = 1
 
 let s:cpo_save = &cpo
 set cpo&vim
-
-" Set the default compiler.
-compiler hare
 
 " Formatting settings.
 setlocal comments=://
@@ -52,6 +49,11 @@ augroup hare.vim
     autocmd InsertLeave * hi link hareSpaceError Error
   endif
 augroup END
+
+if !exists('current_compiler')
+  let b:undo_ftplugin .= "| compiler make"
+  compiler hare
+endif
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
