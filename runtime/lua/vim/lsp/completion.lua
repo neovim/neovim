@@ -113,12 +113,11 @@ local function parse_snippet(input)
 end
 
 --- @param item lsp.CompletionItem
---- @param suffix? string
-local function apply_snippet(item, suffix)
+local function apply_snippet(item)
   if item.textEdit then
-    vim.snippet.expand(item.textEdit.newText .. suffix)
+    vim.snippet.expand(item.textEdit.newText)
   elseif item.insertText then
-    vim.snippet.expand(item.insertText .. suffix)
+    vim.snippet.expand(item.insertText)
   end
 end
 
@@ -462,6 +461,7 @@ local function trigger(bufnr, clients)
       end
     end
     local start_col = (server_start_boundary or word_boundary) + 1
+    vim.print('Matches:', matches)
     vim.fn.complete(start_col, matches)
   end)
 
@@ -508,6 +508,7 @@ local function on_complete_done()
     Context:reset()
     return
   end
+  vim.print(completed_item)
 
   local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
   cursor_row = cursor_row - 1
@@ -539,15 +540,12 @@ local function on_complete_done()
 
     -- Remove the already inserted word.
     local start_char = cursor_col - #completed_item.word
-    local line = api.nvim_buf_get_lines(bufnr, cursor_row, cursor_row + 1, true)[1]
     api.nvim_buf_set_text(bufnr, cursor_row, start_char, cursor_row, cursor_col, { '' })
-    return line:sub(cursor_col + 1)
   end
 
-  --- @param suffix? string
-  local function apply_snippet_and_command(suffix)
+  local function apply_snippet_and_command()
     if expand_snippet then
-      apply_snippet(completion_item, suffix)
+      apply_snippet(completion_item)
     end
 
     local command = completion_item.command
@@ -565,9 +563,9 @@ local function on_complete_done()
   end
 
   if completion_item.additionalTextEdits and next(completion_item.additionalTextEdits) then
-    local suffix = clear_word()
+    clear_word()
     lsp.util.apply_text_edits(completion_item.additionalTextEdits, bufnr, offset_encoding)
-    apply_snippet_and_command(suffix)
+    apply_snippet_and_command()
   elseif resolve_provider and type(completion_item) == 'table' then
     local changedtick = vim.b[bufnr].changedtick
 
@@ -577,7 +575,7 @@ local function on_complete_done()
         return
       end
 
-      local suffix = clear_word()
+      clear_word()
       if err then
         vim.notify_once(err.message, vim.log.levels.WARN)
       elseif result and result.additionalTextEdits then
@@ -587,11 +585,10 @@ local function on_complete_done()
         end
       end
 
-      apply_snippet_and_command(suffix)
+      apply_snippet_and_command()
     end, bufnr)
   else
-    local suffix = clear_word()
-    apply_snippet_and_command(suffix)
+    apply_snippet_and_command()
   end
 end
 
