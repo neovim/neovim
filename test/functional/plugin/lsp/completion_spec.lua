@@ -725,4 +725,70 @@ describe('vim.lsp.completion: protocol', function()
       eq('foo', matches[1].abbr)
     end)
   end)
+
+  it('should put cursor at the end of completed word', function()
+    local completed_word = 'noautocmd'
+    local completion_item = {
+      isIncomplete = false,
+      insertText = completed_word,
+      insertTextFormat = 2,
+      kind = 10,
+      label = completed_word,
+    }
+
+    local completion_list = {
+      isIncomplete = false,
+      items = { completion_item },
+    }
+    local client_id = create_server(completion_list)
+    local line = 'vim._with({n|}, f)'
+    local initial_cursor_col = line:find('|') - 1
+    line = line:gsub('|', '')
+    local line_to_cursor = line:sub(1, initial_cursor_col)
+    local word_start = exec_lua(function()
+      return vim.fn.match(line_to_cursor, '\\k*$')
+    end)
+    -- eq('vim._with({', line:sub(1, word_start))
+
+    local expected_cursor_column = word_start + #completed_word
+
+    exec_lua(function()
+      local buf = vim.api.nvim_get_current_buf()
+      vim.api.nvim_buf_set_lines(buf, 0, 1, true, { line })
+      vim.api.nvim_win_set_cursor(0, { 1, initial_cursor_col })
+    end)
+
+    feed('i')
+    trigger_at_pos({ 1, initial_cursor_col })
+
+    exec_lua(function()
+      vim.v.completed_item = {
+        user_data = {
+          nvim = {
+            lsp = {
+              client_id = client_id,
+              completion_item = completion_item,
+            }
+          }
+        },
+        word = completed_word,
+      }
+    end)
+
+    feed('<C-x><C-o><C-y>')
+
+    assert_matches(function(matches)
+      eq(1, #matches)
+      eq(completed_word, matches[1].word)
+    end)
+
+    local cursor_column = exec_lua(function()
+      local _, col = unpack(vim.api.nvim_win_get_cursor(0))
+
+      return col
+      -- return vim.api.nvim_buf_get_lines(0, 0, 1, true)[1]
+    end)
+
+    eq(expected_cursor_column, cursor_column)
+  end)
 end)
