@@ -1264,6 +1264,32 @@ For writing a compiler plugin, see |write-compiler-plugin|.
 
 Use the |compiler-make| plugin to undo the effect of a compiler plugin.
 
+CPPCHECK			*quickfix-cppcheck* *compiler-cppcheck*
+
+Use g/b:`c_cppcheck_params` to set cppcheck parameters. The global
+settings by default include
+
+- `--verbose`: Enables verbose output.
+- `--force`: Forces checking of all configurations.
+- `--inline-suppr`: Allows inline suppressions.
+- `--enable=...`: Enables specific checks like warnings, style, performance,
+  portability, information, and missing includes.
+- `-j`: Utilizes multiple processors if available, determined by the
+  `getconf` command if available (requires omitting the unusedFunction check)
+
+For C++ files (`filetype == 'cpp'`), the `--language=c++` option is added to
+ensure Cppcheck treats the file as C++.
+
+If compile_commands.json is present in the current directory, it is added as a
+`--project` parameter to the command line. Otherwise, by default the
+directories in &path are passed as include directories. These can be set by
+g/b:`c_cppcheck_includes` as a list of `-I` flags. Tim Pope's vim-apathy
+plug-in [0] can expand &path. To also append the folders in a git repo use >
+
+  let &l:path = join(systemlist('git ls-tree -d --name-only -r HEAD'), ',')
+
+[0] https://github.com/tpope/vim-apathy
+
 DOTNET							*compiler-dotnet*
 
 The .NET CLI compiler outputs both errors and warnings by default. The output
