@@ -736,6 +736,26 @@ InsertLeavePre			Just before leaving Insert mode.  Also when
 							*InsertLeave*
 InsertLeave			Just after leaving Insert mode.  Also when
 				using CTRL-O |i_CTRL-O|.  But not for |i_CTRL-C|.
+							*KeyInputPre*
+KeyInputPre			Just before a key is processed after mappings
+				matched against a string that indicates the
+				have been applied. The pattern is matched
+				current mode, which is the same as what is
+				against a string that indicates the current
+				returned by `mode(1)`.
+				The |v:char| variable indicates the key typed
+				and can be changed during the event to process
+				a different key.  When |v:char| is not a
+				single character or a special key, the first
+				character is used.
+				The following values of |v:event| are set:
+				   typed	The key is typed or not.
+				   typedchar	The (actual) typed key since
+						the last |KeyInputPre| call.
+				Note: "typedchar" may be empty if successive
+				|KeyInputPre| autocmds are processed.
+				It is not allowed to change the text
+				|textlock| or the current mode.
 							*MenuPopup*
 MenuPopup			Just before showing the popup menu (under the
 				right mouse button).  Useful for adjusting the
