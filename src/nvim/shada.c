@@ -1886,13 +1886,18 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
           shada_free_shada_entry(&entry);
           break;
         }
-        if (wms->global_marks[idx].data.type == kSDItemMissing) {
+
+        // Global or numbered mark.
+        PossiblyFreedShadaEntry *mark
+          = idx < 26 ? &wms->global_marks[idx] : &wms->numbered_marks[idx];
+
+        if (mark->data.type == kSDItemMissing) {
           if (namedfm[idx].fmark.timestamp >= entry.timestamp) {
             shada_free_shada_entry(&entry);
             break;
           }
         }
-        COMPARE_WITH_ENTRY(&wms->global_marks[idx], entry);
+        COMPARE_WITH_ENTRY(mark, entry);
       }
       break;
     case kSDItemChange:
