@@ -759,7 +759,6 @@ describe('vim.lsp.completion: protocol', function()
     end)
 
     feed('i')
-    trigger_at_pos({ 1, initial_cursor_col })
 
     exec_lua(function()
       vim.v.completed_item = {
