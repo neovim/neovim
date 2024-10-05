@@ -173,6 +173,19 @@ local function parse_md(text)
   return extract(root) or {}
 end
 
+--- Prefixes each line in `text`.
+---
+--- Does not wrap, that's not important for "meta" files? (You probably want md_to_vimdoc instead.)
+---
+--- @param text string
+--- @param prefix_ string
+function M.prefix(prefix_, text)
+  if (text):find('\n$') then
+    return text:gsub('([^\n]*)[\t ]*\n', prefix_ .. '%1\n')
+  end
+  return prefix_ .. text:gsub('([^\n]*)[\t ]*\n', '%1\n' .. prefix_)
+end
+
 --- @param x string
 --- @param start_indent integer
 --- @param indent integer
