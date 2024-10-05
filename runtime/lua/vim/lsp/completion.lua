@@ -540,7 +540,7 @@ local function on_complete_done()
     -- Remove the already inserted word.
     local start_char = cursor_col - #completed_item.word
     local line = api.nvim_buf_get_lines(bufnr, cursor_row, cursor_row + 1, true)[1]
-    api.nvim_buf_set_text(bufnr, cursor_row, start_char, cursor_col, #line, { '' })
+    api.nvim_buf_set_text(bufnr, cursor_row, start_char, cursor_row, cursor_col, { '' })
     return line:sub(cursor_col + 1)
   end
 
