@@ -34,7 +34,7 @@ following command: >
 
 "ctags" is a separate program.  Most Unix systems already have it installed.
 If you do not have it yet, you can find Universal ctags at:
-	https://ctags.io ~
+	https://ctags.io
 
 Universal ctags is preferred, Exuberant ctags is no longer being developed.
 
