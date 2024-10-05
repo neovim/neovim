@@ -293,7 +293,8 @@ do
     })
 
     vim.keymap.set('n', ']a', function()
-      vim.cmd.next({ count = vim.v.count1 })
+      -- count doesn't work with :next, must use range. See #30641.
+      vim.cmd.next({ range = { vim.v.count1 } })
     end, {
       desc = ':next',
     })
@@ -320,32 +321,37 @@ do
 
     -- Tags
     vim.keymap.set('n', '[t', function()
-      vim.cmd.tprevious({ count = vim.v.count1 })
+      -- count doesn't work with :tprevious, must use range. See #30641.
+      vim.cmd.tprevious({ range = { vim.v.count1 } })
     end, { desc = ':tprevious' })
 
     vim.keymap.set('n', ']t', function()
-      vim.cmd.tnext({ count = vim.v.count1 })
+      -- count doesn't work with :tnext, must use range. See #30641.
+      vim.cmd.tnext({ range = { vim.v.count1 } })
     end, { desc = ':tnext' })
 
     vim.keymap.set('n', '[T', function()
-      vim.cmd.trewind({ count = vim.v.count ~= 0 and vim.v.count or nil })
+      -- count doesn't work with :trewind, must use range. See #30641.
+      vim.cmd.trewind({ range = vim.v.count ~= 0 and { vim.v.count } or nil })
     end, { desc = ':trewind' })
 
     vim.keymap.set('n', ']T', function()
       -- :tlast does not accept a count, so use :trewind if count given
       if vim.v.count ~= 0 then
-        vim.cmd.trewind({ count = vim.v.count })
+        vim.cmd.trewind({ range = { vim.v.count } })
       else
         vim.cmd.tlast()
       end
     end, { desc = ':tlast' })
 
     vim.keymap.set('n', '[<C-T>', function()
-      vim.cmd.ptprevious({ count = vim.v.count1 })
+      -- count doesn't work with :ptprevious, must use range. See #30641.
+      vim.cmd.ptprevious({ range = { vim.v.count1 } })
     end, { desc = ' :ptprevious' })
 
     vim.keymap.set('n', ']<C-T>', function()
-      vim.cmd.ptnext({ count = vim.v.count1 })
+      -- count doesn't work with :ptnext, must use range. See #30641.
+      vim.cmd.ptnext({ range = { vim.v.count1 } })
     end, { desc = ':ptnext' })
 
     -- Buffers

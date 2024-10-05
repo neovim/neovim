@@ -20,6 +20,7 @@ end
 -- Map of api_level:version, by inspection of:
 --    :lua= vim.mpack.decode(vim.fn.readfile('test/functional/fixtures/api_level_9.mpack','B')).version
 M.version_level = {
+  [13] = '0.11.0',
   [12] = '0.10.0',
   [11] = '0.9.0',
   [10] = '0.8.0',
@@ -170,6 +171,19 @@ local function parse_md(text)
   end
 
   return extract(root) or {}
+end
+
+--- Prefixes each line in `text`.
+---
+--- Does not wrap, that's not important for "meta" files? (You probably want md_to_vimdoc instead.)
+---
+--- @param text string
+--- @param prefix_ string
+function M.prefix(prefix_, text)
+  if (text):find('\n$') then
+    return text:gsub('([^\n]*)[\t ]*\n', prefix_ .. '%1\n')
+  end
+  return prefix_ .. text:gsub('([^\n]*)[\t ]*\n', '%1\n' .. prefix_)
 end
 
 --- @param x string

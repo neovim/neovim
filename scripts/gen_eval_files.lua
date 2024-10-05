@@ -276,7 +276,7 @@ local function get_api_meta()
 
     if not deprecated then
       r.desc = fun.desc
-      r.return_desc = fun.returns[1].desc
+      r.returns_desc = fun.returns[1].desc
     end
 
     ret[fun.name] = r
@@ -370,10 +370,9 @@ local function render_api_meta(_f, fun, write)
   end
 
   if fun.returns ~= '' then
-    local ret_desc = fun.returns_desc and ' : ' .. fun.returns_desc or ''
-    ret_desc = util.md_to_vimdoc(ret_desc, 0, 0, 74)
+    local ret_desc = fun.returns_desc and ' # ' .. fun.returns_desc or ''
     local ret = LUA_API_RETURN_OVERRIDES[fun.name] or fun.returns
-    write('--- @return ' .. ret .. ret_desc)
+    write(util.prefix('--- ', '@return ' .. ret .. ret_desc))
   end
   local param_str = table.concat(param_names, ', ')
 

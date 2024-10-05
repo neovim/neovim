@@ -787,7 +787,7 @@ function vim._expand_pat(pat, env)
       if mt and type(mt.__index) == 'table' then
         field = rawget(mt.__index, key)
       elseif final_env == vim and (vim._submodules[key] or vim._extra[key]) then
-        field = vim[key]
+        field = vim[key] --- @type any
       end
     end
     final_env = field
@@ -798,13 +798,23 @@ function vim._expand_pat(pat, env)
   end
 
   local keys = {} --- @type table<string,true>
+
   --- @param obj table<any,any>
   local function insert_keys(obj)
     for k, _ in pairs(obj) do
-      if type(k) == 'string' and string.sub(k, 1, string.len(match_part)) == match_part then
+      if
+        type(k) == 'string'
+        and string.sub(k, 1, string.len(match_part)) == match_part
+        and k:match('^[_%w]+$') ~= nil -- filter out invalid identifiers for field, e.g. 'foo#bar'
+      then
         keys[k] = true
       end
     end
+  end
+  ---@param acc table<string,any>
+  local function _fold_to_map(acc, k, v)
+    acc[k] = (v or true)
+    return acc
   end
 
   if type(final_env) == 'table' then
@@ -814,9 +824,59 @@ function vim._expand_pat(pat, env)
   if mt and type(mt.__index) == 'table' then
     insert_keys(mt.__index)
   end
+
   if final_env == vim then
     insert_keys(vim._submodules)
     insert_keys(vim._extra)
+  end
+
+  -- Completion for dict accessors (special vim variables and vim.fn)
+  if mt and vim.tbl_contains({ vim.g, vim.t, vim.w, vim.b, vim.v, vim.fn }, final_env) then
+    local prefix, type = unpack(
+      vim.fn == final_env and { '', 'function' }
+        or vim.g == final_env and { 'g:', 'var' }
+        or vim.t == final_env and { 't:', 'var' }
+        or vim.w == final_env and { 'w:', 'var' }
+        or vim.b == final_env and { 'b:', 'var' }
+        or vim.v == final_env and { 'v:', 'var' }
+        or { nil, nil }
+    )
+    assert(prefix, "Can't resolve final_env")
+    local vars = vim.fn.getcompletion(prefix .. match_part, type) --- @type string[]
+    insert_keys(vim
+      .iter(vars)
+      :map(function(s) ---@param s string
+        s = s:gsub('[()]+$', '') -- strip '(' and ')' for function completions
+        return s:sub(#prefix + 1) -- strip the prefix, e.g., 'g:foo' => 'foo'
+      end)
+      :fold({}, _fold_to_map))
+  end
+
+  -- Completion for option accessors (full names only)
+  if
+    mt
+    and vim.tbl_contains(
+      { vim.o, vim.go, vim.bo, vim.wo, vim.opt, vim.opt_local, vim.opt_global },
+      final_env
+    )
+  then
+    --- @type fun(option_name: string, option: vim.api.keyset.get_option_info): boolean
+    local filter = function(_, _)
+      return true
+    end
+    if vim.bo == final_env then
+      filter = function(_, option)
+        return option.scope == 'buf'
+      end
+    elseif vim.wo == final_env then
+      filter = function(_, option)
+        return option.scope == 'win'
+      end
+    end
+
+    --- @type table<string, vim.api.keyset.get_option_info>
+    local options = vim.api.nvim_get_all_options_info()
+    insert_keys(vim.iter(options):filter(filter):fold({}, _fold_to_map))
   end
 
   keys = vim.tbl_keys(keys)
