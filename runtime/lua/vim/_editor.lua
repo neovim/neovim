@@ -724,9 +724,14 @@ end
 -- Decodes a UTF-8 character to a Unicode code point.
 ---@private
 ---@param s string
+---@param utf8_ptr integer
 ---@return integer, integer
-local function utf_ptr2char(s)
-  local b1, b2, b3, b4 = s:byte(1, 4)
+local function utf_ptr2char(s, utf8_ptr)
+  local b1, b2, b3, b4 = s:byte(utf8_ptr, utf8_ptr + 3)
+
+  if not b1 then
+    return 0, math.huge
+  end
 
   if b1 < 0x80 then
     -- 1-byte sequence (ASCII character)
@@ -761,7 +766,9 @@ end
 ---@param opts? boolean|nil| { encoding: "utf-8"|"utf-16"|"utf-32", error?: boolean }
 ---@return integer
 function vim.str_byteindex(s, index, opts)
-  vim.validate({ s = { s, 'string' }, index = { index, 'number' } })
+  vim.validate('s', s, 'string')
+  vim.validate('index', index, 'number')
+
   local utf8_ptr_len = #s
   if index == 0 then
     return 0
@@ -769,29 +776,33 @@ function vim.str_byteindex(s, index, opts)
 
   local utf16_ptr, utf16_char = 0, 0
   local utf32_ptr, utf32_char = 0, 0
-  local utf8_ptr, utf8_char = 1, 1
-
-  if index > utf8_ptr_len then
-    --- Skips the loop if the index is greater than the byte length of the string.
-    utf8_char = utf8_ptr_len + 1
-  end
+  local processed_bytes = 0
 
   opts = opts or { encoding = 'utf-32', error = true }
   if type(opts) == 'boolean' then
     opts = opts and { encoding = 'utf-16', error = true } or { encoding = 'utf-32', error = true }
   end
+
   local encoding = opts.encoding or 'utf-32'
   if not utfs[encoding] then
     error('Invalid encoding: ' .. encoding)
   end
 
-  -- Prepare string by removing NUL characters
-  local prepared_string = s:find('%z') and s:gsub('%z', ' ') or s
-  local strlen = vim.fn.strchars(prepared_string)
+  if encoding == 'utf-8' then
+    if index > utf8_ptr_len then
+      return opts.error and error('index out of range') or utf8_ptr_len
+    end
+    return index
+  end
+
+  if index > utf8_ptr_len then
+    --- Skips the loop if the index is greater than the byte length of the string.
+    processed_bytes = utf8_ptr_len + 1
+  end
 
   -- Traverse the string and calculate pointers for UTF-16 and UTF-32
-  while utf8_char <= strlen do
-    local c, char_len = utf_ptr2char(s:sub(utf8_ptr))
+  while processed_bytes < utf8_ptr_len do
+    local c, char_len = utf_ptr2char(s, processed_bytes + 1)
 
     utf16_char = utf16_char + (c > 0xFFFF and 2 or 1)
     utf16_ptr = utf16_ptr + char_len
@@ -799,16 +810,12 @@ function vim.str_byteindex(s, index, opts)
     utf32_ptr = utf32_ptr + char_len
     utf32_char = utf32_char + 1
 
-    utf8_ptr = utf8_ptr + char_len
-
     if encoding == 'utf-16' and utf16_char >= index then
       return utf16_ptr
     elseif encoding == 'utf-32' and utf32_char >= index then
       return utf32_ptr
-    elseif encoding == 'utf-8' and utf8_char >= index then
-      return utf8_ptr - 1
     end
-    utf8_char = utf8_char + 1
+    processed_bytes = processed_bytes + char_len
   end
 
   if opts.error then
