@@ -1112,6 +1112,14 @@ void create_user_command(uint64_t channel_id, String name, Object command, Dict(
     });
   }
 
+  if(opts->expand_files) {
+     if(context == EXPAND_SHELLCMD) {
+       argt |= EX_XFILE;
+     } else {
+       goto err;
+     }
+   }
+
   if (HAS_KEY(opts, user_command, preview)) {
     VALIDATE_T("preview", kObjectTypeLuaRef, opts->preview.type, {
       goto err;

@@ -93,6 +93,7 @@ typedef struct {
 typedef struct {
   OptionalKeys is_set__user_command_;
   Object addr;
+  Boolean expand_files;
   Boolean bang;
   Boolean bar;
   Object complete;

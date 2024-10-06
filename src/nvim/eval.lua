@@ -3603,6 +3603,13 @@ M.funcs = {
     returns = 'string',
     signature = 'getcmdcompltype()',
   },
+  getcmdcomplpat = {
+    desc = "TODO",
+    name = 'getcmdcomplpat',
+    params = {},
+    returns = 'string',
+    signature = 'getcmdcomplpat()',
+  },
   getcmdline = {
     desc = [=[
       Return the current command-line input.  Only works when the

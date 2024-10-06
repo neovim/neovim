@@ -4074,6 +4074,33 @@ static char *get_cmdline_str(void)
   return xstrnsave(p->cmdbuff, (size_t)p->cmdlen);
 }
 
+/// Get the current command-line completion pattern.
+static char *get_cmdline_completion_pattern(void)
+{
+  if (cmdline_star > 0) {
+    return NULL;
+  }
+  CmdlineInfo *p = get_ccline_ptr();
+
+  if (p == NULL || p->xpc == NULL) {
+    return NULL;
+  }
+
+  // Not sure if we need that, maybe pattern aready set
+  int xp_context = p->xpc->xp_context;
+  if (xp_context == EXPAND_NOTHING) {
+    set_expand_context(p->xpc);
+    xp_context = p->xpc->xp_context;
+    p->xpc->xp_context = EXPAND_NOTHING;
+  }
+
+  if (xp_context == EXPAND_UNSUCCESSFUL) {
+    return NULL;
+  }
+
+  return xstrdup(p->xpc->xp_pattern);
+}
+
 /// Get the current command-line completion type.
 static char *get_cmdline_completion(void)
 {
@@ -4109,6 +4136,13 @@ static char *get_cmdline_completion(void)
   }
 
   return xstrdup(cmd_compl);
+}
+
+/// "getcmdcomplpat()" function
+void f_getcmdcomplpat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = get_cmdline_completion_pattern();
 }
 
 /// "getcmdcompltype()" function

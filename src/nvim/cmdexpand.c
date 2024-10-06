@@ -1527,7 +1527,7 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
   xp->xp_context = EXPAND_FILES;
 
   // For a shell command more chars need to be escaped.
-  if (usefilter || eap->cmdidx == CMD_bang || eap->cmdidx == CMD_terminal) {
+  if (usefilter || eap->cmdidx == CMD_bang || eap->cmdidx == CMD_terminal || *complp == EXPAND_SHELLCMD) {
 #ifndef BACKSLASH_IN_FILENAME
     xp->xp_shell = true;
 #endif

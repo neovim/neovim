@@ -2890,6 +2890,10 @@ function vim.fn.getcharstr(expr) end
 --- @return string
 function vim.fn.getcmdcompltype() end
 
+--- TODO
+--- @return string
+function vim.fn.getcmdcomplpat() end
+
 --- Return the current command-line input.  Only works when the
 --- command line is being edited, thus requires use of
 --- |c_CTRL-\_e| or |c_CTRL-R_=|.

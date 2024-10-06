@@ -286,7 +286,6 @@ const char *set_context_in_user_cmdarg(const char *cmd FUNC_ATTR_UNUSED, const c
 
   if (argt & EX_XFILE) {
     // EX_XFILE: file names are handled above.
-    xp->xp_context = context;
     return NULL;
   }
 
