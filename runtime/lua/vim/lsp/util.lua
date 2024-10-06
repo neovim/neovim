@@ -99,15 +99,21 @@ local function get_border_size(opts)
   return { height = height, width = width }
 end
 
----@param s string Multline string
----@param no_blank boolean? Drop blank lines after main description.
---- Workaround for https://github.com/LuaLS/lua-language-server/issues/2333
+--- Splits string at newlines, optionally removing unwanted blank lines.
+---
+--- @param s string Multiline string
+--- @param no_blank boolean? Drop blank lines for each @param/@return (except one empty line
+--- separating each). Workaround for https://github.com/LuaLS/lua-language-server/issues/2333
 local function split_lines(s, no_blank)
   s = string.gsub(s, '\r\n?', '\n')
   local lines = {}
   local in_desc = true -- Main description block, before seeing any @foo.
   for line in vim.gsplit(s, '\n', { plain = true, trimempty = true }) do
-    in_desc = (not line:find('^ ?%@.?param')) and in_desc or false
+    local start_annotation = not not line:find('^ ?%@.?[pr]')
+    in_desc = (not start_annotation) and in_desc or false
+    if start_annotation and no_blank and not (lines[#lines] or ''):find('^%s*$') then
+      table.insert(lines, '') -- Separate each @foo with a blank line.
+    end
     if in_desc or not no_blank or not line:find('^%s*$') then
       table.insert(lines, line)
     end
@@ -127,7 +133,7 @@ end
 --- Convenience wrapper around vim.str_utfindex
 ---@param line string line to be indexed
 ---@param index integer|nil byte index (utf-8), or `nil` for length
----@param encoding string|nil utf-8|utf-16|utf-32|nil defaults to utf-16
+---@param encoding 'utf-8'|'utf-16'|'utf-32'|nil defaults to utf-16
 ---@return integer `encoding` index of `index` in `line`
 function M._str_utfindex_enc(line, index, encoding)
   local len32, len16 = vim.str_utfindex(line)

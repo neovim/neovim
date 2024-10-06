@@ -87,7 +87,7 @@ describe('vim.lsp.util', function()
     local r = exec_lua(function()
       local hover_data = {
         kind = 'markdown',
-        value = '```lua\nfunction vim.api.nvim_buf_attach(buffer: integer, send_buffer: boolean, opts: vim.api.keyset.buf_attach)\n  -> boolean\n```\n\n---\n\n Activates buffer-update events on a channel.\n\n Example (Lua):\n\n ```lua\n events = {}\n vim.api.nvim_buf_attach(0, false, {\n   on_lines = function(...)\n     table.insert(events, {...})\n   end,\n })\n ```\n\n\n @see `nvim_buf_detach()`\n @see `api-buffer-updates-lua`\n\n@*param* `buffer` — Buffer handle, or 0 for current buffer\n\n@*param* `send_buffer` — True if whole buffer.\n Else the first notification will be `nvim_buf_changedtick_event`.\n\n\n@*param* `opts` — Optional parameters.\n\n - on_lines: Lua callback. Args:\n   - the string "lines"\n   - buffer handle\n   - b:changedtick\n@*return* — False if foo;\n\n otherwise True.',
+        value = '```lua\nfunction vim.api.nvim_buf_attach(buffer: integer, send_buffer: boolean, opts: vim.api.keyset.buf_attach)\n  -> boolean\n```\n\n---\n\n Activates buffer-update events. Example:\n\n\n\n ```lua\n events = {}\n vim.api.nvim_buf_attach(0, false, {\n   on_lines = function(...)\n     table.insert(events, {...})\n   end,\n })\n ```\n\n\n @see `nvim_buf_detach()`\n @see `api-buffer-updates-lua`\n@*param* `buffer` — Buffer handle, or 0 for current buffer\n\n\n\n@*param* `send_buffer` — True if whole buffer.\n Else the first notification will be `nvim_buf_changedtick_event`.\n\n\n@*param* `opts` — Optional parameters.\n\n - on_lines: Lua callback. Args:\n   - the string "lines"\n   - buffer handle\n   - b:changedtick\n@*return* — False if foo;\n\n otherwise True.\n\n@see foo\n@see bar\n\n',
       }
       return vim.lsp.util.convert_input_to_markdown_lines(hover_data)
     end)
@@ -99,9 +99,9 @@ describe('vim.lsp.util', function()
       '',
       '---',
       '',
-      ' Activates buffer-update events on a channel.',
+      ' Activates buffer-update events. Example:',
       '',
-      ' Example (Lua):',
+      '',
       '',
       ' ```lua',
       ' events = {}',
@@ -116,17 +116,24 @@ describe('vim.lsp.util', function()
       ' @see `nvim_buf_detach()`',
       ' @see `api-buffer-updates-lua`',
       '',
-      -- Following the main description, blank lines are removed. #30695
+      -- For each @param/@return: #30695
+      --  - Separate each by one empty line.
+      --  - Remove all other blank lines.
       '@*param* `buffer` — Buffer handle, or 0 for current buffer',
+      '',
       '@*param* `send_buffer` — True if whole buffer.',
       ' Else the first notification will be `nvim_buf_changedtick_event`.',
+      '',
       '@*param* `opts` — Optional parameters.',
       ' - on_lines: Lua callback. Args:',
       '   - the string "lines"',
       '   - buffer handle',
       '   - b:changedtick',
+      '',
       '@*return* — False if foo;',
       ' otherwise True.',
+      '@see foo',
+      '@see bar',
     }
     eq(expected, r)
   end)
