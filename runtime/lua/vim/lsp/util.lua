@@ -99,9 +99,20 @@ local function get_border_size(opts)
   return { height = height, width = width }
 end
 
-local function split_lines(value)
-  value = string.gsub(value, '\r\n?', '\n')
-  return split(value, '\n', { plain = true, trimempty = true })
+---@param s string Multline string
+---@param no_blank boolean? Drop blank lines after main description.
+--- Workaround for https://github.com/LuaLS/lua-language-server/issues/2333
+local function split_lines(s, no_blank)
+  s = string.gsub(s, '\r\n?', '\n')
+  local lines = {}
+  local in_desc = true -- Main description block, before seeing any @foo.
+  for line in vim.gsplit(s, '\n', { plain = true, trimempty = true }) do
+    in_desc = (not line:find('^ ?%@.?param')) and in_desc or false
+    if in_desc or not no_blank or not line:find('^%s*$') then
+      table.insert(lines, line)
+    end
+  end
+  return lines
 end
 
 local function create_window_without_focus()
@@ -735,13 +746,13 @@ function M.convert_input_to_markdown_lines(input, contents)
   contents = contents or {}
   -- MarkedString variation 1
   if type(input) == 'string' then
-    list_extend(contents, split_lines(input))
+    list_extend(contents, split_lines(input, true))
   else
     assert(type(input) == 'table', 'Expected a table for LSP input')
     -- MarkupContent
     if input.kind then
       local value = input.value or ''
-      list_extend(contents, split_lines(value))
+      list_extend(contents, split_lines(value, true))
       -- MarkupString variation 2
     elseif input.language then
       table.insert(contents, '```' .. input.language)
@@ -1633,10 +1644,9 @@ function M.open_floating_preview(contents, syntax, opts)
   if do_stylize then
     vim.wo[floating_winnr].conceallevel = 2
   end
-  -- disable folding
-  vim.wo[floating_winnr].foldenable = false
-  -- soft wrapping
-  vim.wo[floating_winnr].wrap = opts.wrap
+  vim.wo[floating_winnr].foldenable = false -- Disable folding.
+  vim.wo[floating_winnr].wrap = opts.wrap -- Soft wrapping.
+  vim.wo[floating_winnr].breakindent = true -- Slightly better list presentation.
 
   vim.bo[floating_bufnr].modifiable = false
   vim.bo[floating_bufnr].bufhidden = 'wipe'
