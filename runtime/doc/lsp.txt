@@ -87,8 +87,11 @@ To override or delete any of the above defaults, set or unset the options on
 
     vim.api.nvim_create_autocmd('LspAttach', {
       callback = function(args)
+        -- Unset 'formatexpr'
         vim.bo[args.buf].formatexpr = nil
+        -- Unset 'omnifunc'
         vim.bo[args.buf].omnifunc = nil
+        -- Unmap K
         vim.keymap.del('n', 'K', { buffer = args.buf })
       end,
     })
@@ -119,6 +122,7 @@ server. Example: >lua
               vim.lsp.buf.format({bufnr = args.buf, id = client.id})
             end,
           })
+        end
       end,
     })
 <
@@ -523,32 +527,25 @@ EVENTS                                                            *lsp-events*
 LspAttach                                                          *LspAttach*
     After an LSP client attaches to a buffer. The |autocmd-pattern| is the
     name of the buffer. When used from Lua, the client ID is passed to the
-    callback in the "data" table. Example: >lua
-
-    vim.api.nvim_create_autocmd("LspAttach", {
-      callback = function(args)
-        local bufnr = args.buf
-        local client = vim.lsp.get_client_by_id(args.data.client_id)
-        if client.supports_method("textDocument/completion") then
-          vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
-        end
-        if client.supports_method("textDocument/definition") then
-          vim.bo[bufnr].tagfunc = "v:lua.vim.lsp.tagfunc"
-        end
-      end,
-    })
-<
+    callback in the "data" table. See |lsp-config| for an example.
 
 LspDetach                                                          *LspDetach*
     Just before an LSP client detaches from a buffer. The |autocmd-pattern|
     is the name of the buffer. When used from Lua, the client ID is passed
     to the callback in the "data" table. Example: >lua
 
-    vim.api.nvim_create_autocmd("LspDetach", {
+    vim.api.nvim_create_autocmd('LspDetach', {
       callback = function(args)
+        -- Get the detaching client
         local client = vim.lsp.get_client_by_id(args.data.client_id)
-        -- Do something with the client
-        vim.cmd("setlocal tagfunc< omnifunc<")
+
+        -- Remove the autocommand to format the buffer on save, if it exists
+        if client.supports_method('textDocument/formatting') then
+            vim.api.nvim_clear_autocmds({
+                event = 'BufWritePre',
+                buffer = args.buf,
+            })
+        end
       end,
     })
 <
