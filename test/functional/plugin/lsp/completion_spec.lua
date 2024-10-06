@@ -728,8 +728,18 @@ describe('vim.lsp.completion: protocol', function()
 
   it('should put cursor at the end of completed word', function()
     local completed_word = 'noautocmd'
+
+    local line = ('vim._with({%s|}, f)'):format(completed_word:sub(1, 2))
+    local initial_cursor_col = line:find('|') - 1
+    line = line:gsub('|', '')
+    local line_to_cursor = line:sub(1, initial_cursor_col)
+    local word_start = exec_lua(function()
+      return vim.fn.match(line_to_cursor, '\\k*$')
+    end)
+
+    local expected_cursor_column = word_start + #completed_word
+
     local completion_item = {
-      isIncomplete = false,
       insertText = completed_word,
       insertTextFormat = 2,
       kind = 10,
@@ -742,16 +752,6 @@ describe('vim.lsp.completion: protocol', function()
     }
 
     local client_id = create_server(completion_list)
-
-    local line = ('vim._with({%s|}, f)'):format(completed_word:sub(1, 2))
-    local initial_cursor_col = line:find('|') - 1
-    line = line:gsub('|', '')
-    local line_to_cursor = line:sub(1, initial_cursor_col)
-    local word_start = exec_lua(function()
-      return vim.fn.match(line_to_cursor, '\\k*$')
-    end)
-
-    local expected_cursor_column = word_start + #completed_word
 
     feed('i' .. line)
     trigger_at_pos({ 1, initial_cursor_col })
