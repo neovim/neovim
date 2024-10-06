@@ -39,6 +39,7 @@
 #include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/option_vars.h"
+#include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
@@ -665,6 +666,12 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     linenr_T adjust = end_row >= start_row ? MAXLNUM : 0;
     mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row - 1, adjust, (linenr_T)extra,
                     true, true, kExtmarkNOOP);
+
+    // Adjust Visual start pos
+    if (VIsual_active && buf == curbuf && start_row == VIsual.lnum && VIsual_mode != Ctrl_V) {
+        mark_col_adjust((linenr_T)(start_row), 0, 0,
+                        (colnr_T)((int)last_item.size - (int)(end_col - start_col)), 0);
+    }
 
     extmark_splice(buf, (int)start_row - 1, (colnr_T)start_col,
                    (int)(end_row - start_row), col_extent, old_byte,

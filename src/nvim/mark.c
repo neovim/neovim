@@ -1245,6 +1245,11 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
     ONE_ADJUST_NODEL(&(buf->b_visual.vi_start.lnum));
     ONE_ADJUST_NODEL(&(buf->b_visual.vi_end.lnum));
 
+    // Current active Visual selection (global VIsual variable)
+    if (VIsual_active && curwin->w_buffer == buf) {
+      ONE_ADJUST_NODEL(&(VIsual.lnum));
+    }
+
     // quickfix marks
     if (!qf_mark_adjust(buf, NULL, line1, line2, amount, amount_after)) {
       buf->b_has_qf_entry &= ~BUF_HAS_QF_ENTRY;
@@ -1413,6 +1418,10 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, colnr_
   // Visual area
   COL_ADJUST(&(curbuf->b_visual.vi_start));
   COL_ADJUST(&(curbuf->b_visual.vi_end));
+  // Current active Visual selection (global VIsual variable)
+  if (VIsual_active && curwin->w_buffer == curbuf) {
+    COL_ADJUST(&VIsual);
+  }
 
   // previous context mark
   COL_ADJUST(&(curwin->w_pcmark));
