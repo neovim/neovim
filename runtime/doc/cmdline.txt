@@ -449,13 +449,13 @@ The 'wildignorecase' option can be set to ignore case in filenames.  For
 completing other texts (e.g. command names), the 'ignorecase' option is used
 instead (fuzzy matching always ignores case, however).
 
-If you like tcsh's autolist completion, you can use this mapping:
+If you like tcsh's autolist completion, you can use this mapping: >
 	:cnoremap X <C-L><C-D>
 (Where X is the command key to use, <C-L> is CTRL-L and <C-D> is CTRL-D)
 This will find the longest match and then list all matching files.
 
 If you like tcsh's autolist completion, you can use the 'wildmode' option to
-emulate it.  For example, this mimics autolist=ambiguous:
+emulate it.  For example, this mimics autolist=ambiguous: >
 	:set wildmode=longest,list
 This will find the longest match with the first 'wildchar', then list all
 matching files with the next.

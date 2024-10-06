@@ -162,9 +162,9 @@ h		or					*h*
 CTRL-H		or					*CTRL-H* *<BS>*
 <BS>			[count] characters to the left.  |exclusive| motion.
 			Note: If you prefer <BS> to delete a character, use
-			the mapping:
+			the mapping: >
 				:map CTRL-V<BS>		X
-			(to enter "CTRL-V<BS>" type the CTRL-V key, followed
+<			(to enter "CTRL-V<BS>" type the CTRL-V key, followed
 			by the <BS> key)
 
 l		or					*l*
