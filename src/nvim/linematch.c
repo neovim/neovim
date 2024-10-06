@@ -150,7 +150,9 @@ static int count_n_matched_chars(mmfile_t **sp, const size_t n, bool iwhite)
 mmfile_t fastforward_buf_to_lnum(mmfile_t s, linenr_T lnum)
 {
   for (int i = 0; i < lnum - 1; i++) {
-    s.ptr = strnchr(s.ptr, (size_t *)&s.size, '\n');
+    size_t n = (size_t)s.size;
+    s.ptr = strnchr(s.ptr, &n, '\n');
+    s.size = (int)n;
     if (!s.ptr) {
       break;
     }
