@@ -199,14 +199,6 @@ local function process_params(params)
   return params
 end
 
---- @class vim.gen_vim_doc_fun
---- @field signature string
---- @field doc string[]
---- @field parameters_doc table<string,string>
---- @field return string[]
---- @field seealso string[]
---- @field annotations string[]
-
 --- @return table<string, vim.EvalFn>
 local function get_api_meta()
   local ret = {} --- @type table<string, vim.EvalFn>
@@ -290,8 +282,19 @@ end
 --- Ensure code blocks have one empty line before the start fence and after the closing fence.
 ---
 --- @param x string
+--- @param special string?
+---                | 'see-api-meta' Normalize `@see` for API meta docstrings.
 --- @return string
-local function norm_text(x)
+local function norm_text(x, special)
+  if special == 'see-api-meta' then
+    -- Try to guess a symbol that actually works in @see.
+    -- "nvim_xx()" => "vim.api.nvim_xx"
+    x = x:gsub([=[%|?(nvim_[^.()| ]+)%(?%)?%|?]=], 'vim.api.%1')
+    -- TODO: Remove backticks when LuaLS resolves: https://github.com/LuaLS/lua-language-server/issues/2889
+    -- "|foo|" => "`:help foo`"
+    x = x:gsub([=[|([^ ]+)|]=], '`:help %1`')
+  end
+
   return (
     x:gsub('|([^ ]+)|', '`%1`')
       :gsub('\n*>lua', '\n\n```lua')
@@ -332,7 +335,7 @@ local function render_api_meta(_f, fun, write)
   end
 
   for _, see in ipairs(fun.see or {}) do
-    write(util.prefix_lines('--- @see ', norm_text(see)))
+    write(util.prefix_lines('--- @see ', norm_text(see, 'see-api-meta')))
   end
 
   local param_names = {} --- @type string[]
