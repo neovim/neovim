@@ -488,18 +488,23 @@ describe('vim.lsp.completion: protocol', function()
   after_each(clear)
 
   --- @param completion_result lsp.CompletionList
+  --- @param resolve_result lsp.CompletionList?
   --- @return integer
-  local function create_server(completion_result)
+  local function create_server(completion_result, resolve_result)
     return exec_lua(function()
       local server = _G._create_server({
         capabilities = {
           completionProvider = {
             triggerCharacters = { '.' },
+            resolveProvider = (resolve_result ~= nil),
           },
         },
         handlers = {
           ['textDocument/completion'] = function(_, _, callback)
             callback(nil, completion_result)
+          end,
+          ['completionItem/resolve'] = function(_, _, callback)
+            callback(nil, resolve_result)
           end,
         },
       })
@@ -751,7 +756,14 @@ describe('vim.lsp.completion: protocol', function()
       items = { completion_item },
     }
 
-    local client_id = create_server(completion_list)
+    local resolve_item = {
+      insertText = 'noautocmd',
+      insertTextFormat = 2,
+      kind = 10,
+      label = 'noautocmd?',
+    }
+
+    local client_id = create_server(completion_list, resolve_item)
 
     feed('i' .. line)
     trigger_at_pos({ 1, initial_cursor_col })
