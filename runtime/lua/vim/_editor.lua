@@ -68,6 +68,12 @@ vim.log = {
   },
 }
 
+local utfs = {
+  ['utf-8'] = true,
+  ['utf-16'] = true,
+  ['utf-32'] = true,
+}
+
 -- TODO(lewis6991): document that the signature is system({cmd}, [{opts},] {on_exit})
 --- Runs a system command or throws an error if {cmd} cannot be run.
 ---
@@ -739,6 +745,10 @@ function vim.str_byteindex(s, index, opts)
     return 0
   end
 
+  if type(opts) == 'boolean' or not opts then
+    return vim.__str_byteindex(s, index, opts)
+  end
+
   if index > len then
     if opts.error then
       error('index out of range')
@@ -747,21 +757,16 @@ function vim.str_byteindex(s, index, opts)
   end
 
   opts = opts or { encoding = 'utf-32', error = true }
-  if type(opts) == 'boolean' then
-    opts = opts and { encoding = 'utf-16', error = true } or { encoding = 'utf-32', error = true }
-  end
-  local encoding = opts.encoding or 'utf-32'
-  local valid_encodings = { ['utf-8'] = true, ['utf-16'] = true, ['utf-32'] = true }
-  if not valid_encodings[encoding] then
-    error('Invalid encoding: ' .. encoding)
+  if not utfs[opts.encoding] then
+    error('Invalid encoding: ' .. opts.encoding)
   end
 
-  if encoding == 'utf-16' then
-    return vim.__str_byteindex(s, index, true)
-  elseif encoding == 'utf-32' then
-    return vim.__str_byteindex(s, index, false)
-  elseif encoding == 'utf-8' then
+  if opts.encoding == 'utf-8' then
     return index
+  elseif opts.encoding == 'utf-16' then
+    return vim.__str_byteindex(s, index, true)
+  elseif opts.encoding == 'utf-32' then
+    return vim.__str_byteindex(s, index, false)
   end
 
   return len
