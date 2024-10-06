@@ -122,7 +122,7 @@ function vim.api.nvim__ns_set(ns_id, opts) end
 --- Instruct Nvim to redraw various components.
 ---
 ---
---- @see `:redraw`
+--- @see `:help :redraw`
 --- @param opts vim.api.keyset.redraw Optional parameters.
 --- - win: Target a specific `window-ID` as described below.
 --- - buf: Target a specific buffer number as described below.
@@ -209,8 +209,8 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 --- ```
 ---
 ---
---- @see `nvim_buf_detach()`
---- @see `api-buffer-updates-lua`
+--- @see vim.api.nvim_buf_detach
+--- @see `:help api-buffer-updates-lua`
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param send_buffer boolean True if the initial notification should contain the
 --- whole buffer: first notification will be `nvim_buf_lines_event`.
@@ -307,7 +307,7 @@ function vim.api.nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end) e
 
 --- Creates a buffer-local command `user-commands`.
 ---
---- @see nvim_create_user_command
+--- @see vim.api.nvim_create_user_command
 --- @param buffer integer Buffer handle, or 0 for current buffer.
 --- @param name string
 --- @param command any
@@ -325,7 +325,7 @@ function vim.api.nvim_buf_del_extmark(buffer, ns_id, id) end
 --- Unmaps a buffer-local `mapping` for the given mode.
 ---
 ---
---- @see `nvim_del_keymap()`
+--- @see vim.api.nvim_del_keymap
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param mode string
 --- @param lhs string
@@ -337,8 +337,8 @@ function vim.api.nvim_buf_del_keymap(buffer, mode, lhs) end
 --- only deletes marks set in the buffer, if the mark is not set
 --- in the buffer it will return false.
 ---
---- @see `nvim_buf_set_mark()`
---- @see `nvim_del_mark()`
+--- @see vim.api.nvim_buf_set_mark
+--- @see vim.api.nvim_del_mark
 --- @param buffer integer Buffer to set the mark on
 --- @param name string Mark name
 --- @return boolean # true if the mark was deleted, else false.
@@ -478,8 +478,8 @@ function vim.api.nvim_buf_get_lines(buffer, start, end_, strict_indexing) end
 ---
 --- Marks are (1,0)-indexed. `api-indexing`
 ---
---- @see `nvim_buf_set_mark()`
---- @see `nvim_buf_del_mark()`
+--- @see vim.api.nvim_buf_set_mark
+--- @see vim.api.nvim_buf_del_mark
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param name string Mark name
 --- @return integer[] # (row, col) tuple, (0, 0) if the mark is not set, or is an
@@ -704,7 +704,7 @@ function vim.api.nvim_buf_set_extmark(buffer, ns_id, line, col, opts) end
 --- Sets a buffer-local `mapping` for the given mode.
 ---
 ---
---- @see `nvim_set_keymap()`
+--- @see vim.api.nvim_set_keymap
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param mode string
 --- @param lhs string
@@ -725,7 +725,7 @@ function vim.api.nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts) end
 --- `strict_indexing` is set.
 ---
 ---
---- @see `nvim_buf_set_text()`
+--- @see vim.api.nvim_buf_set_text
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param start integer First line index
 --- @param end_ integer Last line index, exclusive
@@ -742,8 +742,8 @@ function vim.api.nvim_buf_set_lines(buffer, start, end_, strict_indexing, replac
 --- Passing 0 as line deletes the mark
 ---
 ---
---- @see `nvim_buf_del_mark()`
---- @see `nvim_buf_get_mark()`
+--- @see vim.api.nvim_buf_del_mark
+--- @see vim.api.nvim_buf_get_mark
 --- @param buffer integer Buffer to set the mark on
 --- @param name string Mark name
 --- @param line integer Line number
@@ -875,8 +875,8 @@ function vim.api.nvim_clear_autocmds(opts) end
 --- On execution error: fails with Vimscript error, updates v:errmsg.
 ---
 ---
---- @see `nvim_exec2()`
---- @see `nvim_command()`
+--- @see vim.api.nvim_exec2
+--- @see vim.api.nvim_command
 --- @param cmd vim.api.keyset.cmd Command to execute. Must be a Dict that can contain the same values as
 --- the return value of `nvim_parse_cmd()` except "addr", "nargs" and "nextcmd"
 --- which are ignored if provided. All values except for "cmd" are optional.
@@ -898,7 +898,7 @@ function vim.api.nvim_cmd(cmd, opts) end
 function vim.api.nvim_command(command) end
 
 --- @deprecated
---- @see nvim_exec2
+--- @see vim.api.nvim_exec2
 --- @param command string
 --- @return string
 function vim.api.nvim_command_output(command) end
@@ -913,7 +913,7 @@ function vim.api.nvim_command_output(command) end
 --- })
 --- ```
 ---
---- @see `autocmd-groups`
+--- @see `:help autocmd-groups`
 --- @param name string String: The name of the group
 --- @param opts vim.api.keyset.create_augroup Dict Parameters
 --- - clear (bool) optional: defaults to true. Clear existing
@@ -951,8 +951,8 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- pattern = vim.fn.expand("~") .. "/some/path/*.py"
 --- ```
 ---
---- @see `autocommand`
---- @see `nvim_del_autocmd()`
+--- @see `:help autocommand`
+--- @see vim.api.nvim_del_autocmd
 --- @param event any (string|array) Event(s) that will trigger the handler (`callback` or `command`).
 --- @param opts vim.api.keyset.create_autocmd Options dict:
 --- - group (string|integer) optional: autocommand group name or id to match against.
@@ -1051,8 +1051,8 @@ function vim.api.nvim_create_user_command(name, command, opts) end
 ---
 --- NOTE: behavior differs from `:augroup-delete`. When deleting a group, autocommands contained in
 --- this group will also be deleted and cleared. This group will no longer exist.
---- @see `nvim_del_augroup_by_name()`
---- @see `nvim_create_augroup()`
+--- @see vim.api.nvim_del_augroup_by_name
+--- @see vim.api.nvim_create_augroup
 --- @param id integer Integer The id of the group.
 function vim.api.nvim_del_augroup_by_id(id) end
 
@@ -1060,7 +1060,7 @@ function vim.api.nvim_del_augroup_by_id(id) end
 ---
 --- NOTE: behavior differs from `:augroup-delete`. When deleting a group, autocommands contained in
 --- this group will also be deleted and cleared. This group will no longer exist.
---- @see `autocmd-groups`
+--- @see `:help autocmd-groups`
 --- @param name string String The name of the group.
 function vim.api.nvim_del_augroup_by_name(name) end
 
@@ -1077,7 +1077,7 @@ function vim.api.nvim_del_current_line() end
 ---
 --- To unmap a buffer-local mapping, use `nvim_buf_del_keymap()`.
 ---
---- @see `nvim_set_keymap()`
+--- @see vim.api.nvim_set_keymap
 --- @param mode string
 --- @param lhs string
 function vim.api.nvim_del_keymap(mode, lhs) end
@@ -1087,8 +1087,8 @@ function vim.api.nvim_del_keymap(mode, lhs) end
 --- Note:
 --- Lowercase name (or other buffer-local mark) is an error.
 ---
---- @see `nvim_buf_del_mark()`
---- @see `nvim_get_mark()`
+--- @see vim.api.nvim_buf_del_mark
+--- @see vim.api.nvim_get_mark
 --- @param name string Mark name
 --- @return boolean # true if the mark was deleted, else false.
 function vim.api.nvim_del_mark(name) end
@@ -1124,7 +1124,7 @@ function vim.api.nvim_err_write(str) end
 --- Writes a message to the Vim error buffer. Appends "\n", so the buffer is
 --- flushed (and displayed).
 ---
---- @see nvim_err_write()
+--- @see vim.api.nvim_err_write
 --- @param str string Message
 function vim.api.nvim_err_writeln(str) end
 
@@ -1160,7 +1160,7 @@ function vim.api.nvim_eval(expr) end
 function vim.api.nvim_eval_statusline(str, opts) end
 
 --- @deprecated
---- @see nvim_exec2
+--- @see vim.api.nvim_exec2
 --- @param src string
 --- @param output boolean
 --- @return string
@@ -1175,9 +1175,9 @@ function vim.api.nvim_exec(src, output) end
 --- On execution error: fails with Vimscript error, updates v:errmsg.
 ---
 ---
---- @see `execute()`
---- @see `nvim_command()`
---- @see `nvim_cmd()`
+--- @see `:help execute()`
+--- @see vim.api.nvim_command
+--- @see vim.api.nvim_cmd
 --- @param src string Vimscript code
 --- @param opts vim.api.keyset.exec_opts Optional parameters.
 --- - output: (boolean, default false) Whether to capture and return
@@ -1188,7 +1188,7 @@ function vim.api.nvim_exec2(src, opts) end
 
 --- Execute all autocommands for {event} that match the corresponding
 ---  {opts} `autocmd-execute`.
---- @see `:doautocmd`
+--- @see `:help :doautocmd`
 --- @param event any (String|Array) The event or events to execute
 --- @param opts vim.api.keyset.exec_autocmds Dict of autocommand options:
 --- - group (string|integer) optional: the autocommand group name or
@@ -1234,7 +1234,7 @@ function vim.api.nvim_feedkeys(keys, mode, escape_ks) end
 --- `nvim_get_option_info2()`.
 ---
 ---
---- @see `nvim_get_commands()`
+--- @see vim.api.nvim_get_commands
 --- @return table<string,any> # dict of all options
 function vim.api.nvim_get_all_options_info() end
 
@@ -1334,7 +1334,7 @@ function vim.api.nvim_get_color_map() end
 --- Currently only `user-commands` are supported, not builtin Ex commands.
 ---
 ---
---- @see `nvim_get_all_options_info()`
+--- @see vim.api.nvim_get_all_options_info
 --- @param opts vim.api.keyset.get_commands Optional parameters. Currently only supports
 --- {"builtin":false}
 --- @return table<string,any> # Map of maps describing commands.
@@ -1387,14 +1387,14 @@ function vim.api.nvim_get_current_win() end
 function vim.api.nvim_get_hl(ns_id, opts) end
 
 --- @deprecated
---- @see nvim_get_hl_by_name
+--- @see vim.api.nvim_get_hl_by_name
 --- @param hl_id integer
 --- @param rgb boolean
 --- @return table<string,any>
 function vim.api.nvim_get_hl_by_id(hl_id, rgb) end
 
 --- @deprecated
---- @see nvim_get_hl_by_id
+--- @see vim.api.nvim_get_hl_by_id
 --- @param name string
 --- @param rgb boolean
 --- @return table<string,any>
@@ -1433,8 +1433,8 @@ function vim.api.nvim_get_keymap(mode) end
 --- Note:
 --- Lowercase name (or other buffer-local mark) is an error.
 ---
---- @see `nvim_buf_set_mark()`
---- @see `nvim_del_mark()`
+--- @see vim.api.nvim_buf_set_mark
+--- @see vim.api.nvim_del_mark
 --- @param name string Mark name
 --- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
 --- @return vim.api.keyset.get_mark # 4-tuple (row, col, buffer, buffername), (0, 0, 0, '') if the mark is
@@ -2333,8 +2333,8 @@ function vim.api.nvim_tabpage_set_win(tabpage, win) end
 --- Calls a function with window as temporary current window.
 ---
 ---
---- @see `win_execute()`
---- @see `nvim_buf_call()`
+--- @see `:help win_execute()`
+--- @see vim.api.nvim_buf_call
 --- @param window integer Window handle, or 0 for current window
 --- @param fun function Function to call inside the window (currently Lua callable
 --- only)
@@ -2376,7 +2376,7 @@ function vim.api.nvim_win_get_config(window) end
 --- positions). `api-indexing`
 ---
 ---
---- @see `getcurpos()`
+--- @see `:help getcurpos()`
 --- @param window integer Window handle, or 0 for current window
 --- @return integer[] # (row, col) tuple
 function vim.api.nvim_win_get_cursor(window) end
@@ -2453,7 +2453,7 @@ function vim.api.nvim_win_set_buf(window, buffer) end
 --- `row`/`col` and `relative` must be reconfigured together.
 ---
 ---
---- @see `nvim_open_win()`
+--- @see vim.api.nvim_open_win
 --- @param window integer Window handle, or 0 for current window
 --- @param config vim.api.keyset.win_config Map defining the window configuration,
 --- see `nvim_open_win()`
@@ -2513,7 +2513,7 @@ function vim.api.nvim_win_set_width(window, width) end
 ---
 --- Line indexing is similar to `nvim_buf_get_text()`.
 ---
---- @see `virtcol()` for text width.
+--- @see `:help virtcol()` for text width.
 --- @param window integer Window handle, or 0 for current window.
 --- @param opts vim.api.keyset.win_text_height Optional parameters:
 --- - start_row: Starting line index, 0-based inclusive.
