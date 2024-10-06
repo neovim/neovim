@@ -9464,7 +9464,7 @@ M.funcs = {
       To clear the overrides pass an empty {list}: >vim
          call setcellwidths([])
 
-      <You can use the script $VIMRUNTIME/tools/emoji_list.vim to see
+      <You can use the script $VIMRUNTIME/tools/emoji_list.lua to see
       the effect for known emoji characters.  Move the cursor
       through the text to check if the cell widths of your terminal
       match with what Vim knows about each emoji.  If it doesn't

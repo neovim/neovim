@@ -1723,7 +1723,7 @@ optionality will be discontinued.
 
 
 JSON			*json.vim* *ft-json-syntax* *g:vim_json_conceal*
-					       *g:vim_json_warnings*
+						*g:vim_json_warnings*
 
 The json syntax file provides syntax highlighting with conceal support by
 default. To disable concealment: >

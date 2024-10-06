@@ -1889,7 +1889,7 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
 
         // Global or numbered mark.
         PossiblyFreedShadaEntry *mark
-          = idx < 26 ? &wms->global_marks[idx] : &wms->numbered_marks[idx];
+          = idx < 26 ? &wms->global_marks[idx] : &wms->numbered_marks[idx - 26];
 
         if (mark->data.type == kSDItemMissing) {
           if (namedfm[idx].fmark.timestamp >= entry.timestamp) {

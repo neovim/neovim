@@ -175,15 +175,16 @@ end
 
 --- Prefixes each line in `text`.
 ---
---- Does not wrap, that's not important for "meta" files? (You probably want md_to_vimdoc instead.)
+--- Does not wrap, not important for "meta" files? (You probably want md_to_vimdoc instead.)
 ---
 --- @param text string
 --- @param prefix_ string
-function M.prefix(prefix_, text)
-  if (text):find('\n$') then
-    return text:gsub('([^\n]*)[\t ]*\n', prefix_ .. '%1\n')
+function M.prefix_lines(prefix_, text)
+  local r = ''
+  for _, l in ipairs(vim.split(text, '\n', { plain = true })) do
+    r = r .. vim.trim(prefix_ .. l) .. '\n'
   end
-  return prefix_ .. text:gsub('([^\n]*)[\t ]*\n', '%1\n' .. prefix_)
+  return r
 end
 
 --- @param x string
