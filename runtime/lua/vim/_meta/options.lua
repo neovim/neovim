@@ -6417,7 +6417,8 @@ vim.go.spr = vim.go.splitright
 --- non-blank of the line.  When off the cursor is kept in the same column
 --- (if possible).  This applies to the commands:
 --- - CTRL-D, CTRL-U, CTRL-B, CTRL-F, "G", "H", "M", "L", "gg"
---- - "d", "<<" and ">>" with a linewise operator
+--- - "d", "<<", "==" and ">>" with a linewise operator
+---   (`operator-resulting-pos`)
 --- - "%" with a count
 --- - buffer changing commands (CTRL-^, :bnext, :bNext, etc.)
 --- - Ex commands that only have a line number, e.g., ":25" or ":+".

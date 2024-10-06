@@ -60,10 +60,12 @@ When doubling the operator it operates on a line.  When using a count, before
 or after the first character, that many lines are operated upon.  Thus `3dd`
 deletes three lines. A count before and after the first character is
 multiplied, thus `2y3y` yanks six lines.
-
+						*operator-resulting-pos*
 After applying the operator the cursor is mostly left at the start of the text
 that was operated upon.  For example, "yfe" doesn't move the cursor, but "yFe"
 moves the cursor leftwards to the "e" where the yank started.
+The 'startofline' option applies only to the "d", "<<", "==" and ">>" linewise
+operations.
 
 						*linewise* *charwise* *characterwise*
 The operator either affects whole lines, or the characters between the start
