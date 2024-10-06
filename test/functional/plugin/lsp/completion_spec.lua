@@ -488,7 +488,7 @@ describe('vim.lsp.completion: protocol', function()
   after_each(clear)
 
   --- @param completion_result lsp.CompletionList
-  --- @param resolve_result lsp.CompletionList?
+  --- @param resolve_result lsp.CompletionItem?
   --- @return integer
   local function create_server(completion_result, resolve_result)
     return exec_lua(function()
