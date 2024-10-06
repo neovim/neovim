@@ -461,7 +461,6 @@ local function trigger(bufnr, clients)
       end
     end
     local start_col = (server_start_boundary or word_boundary) + 1
-    vim.print('Matches:', matches)
     vim.fn.complete(start_col, matches)
   end)
 
@@ -508,7 +507,6 @@ local function on_complete_done()
     Context:reset()
     return
   end
-  vim.print(completed_item)
 
   local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
   cursor_row = cursor_row - 1
