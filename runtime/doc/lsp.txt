@@ -89,10 +89,8 @@ To override or delete any of the above defaults, set or unset the options on
       callback = function(args)
         -- Unset 'formatexpr'
         vim.bo[args.buf].formatexpr = nil
-
         -- Unset 'omnifunc'
         vim.bo[args.buf].omnifunc = nil
-
         -- Unmap K
         vim.keymap.del('n', 'K', { buffer = args.buf })
       end,
