@@ -107,7 +107,7 @@ static int lookup_colour(const VTermState *state, int palette, const long args[]
 
     vterm_color_indexed(col, args[0]);
 
-    return argcount ? 1 : 0;
+    return 1;
 
   default:
     DEBUG_LOG("Unrecognised colour palette %d\n", palette);
