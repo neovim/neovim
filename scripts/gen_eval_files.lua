@@ -321,30 +321,18 @@ local function render_api_meta(_f, fun, write)
 
   local desc = fun.desc
   if desc then
-    desc = util.md_to_vimdoc(desc, 0, 0, 74)
-    for _, l in ipairs(split(norm_text(desc))) do
-      write('--- ' .. l)
-    end
+    write(util.prefix_lines('--- ', norm_text(desc)))
   end
 
   -- LuaLS doesn't support @note. Render @note items as a markdown list.
   if fun.notes and #fun.notes > 0 then
     write('--- Note:')
-    for _, note in ipairs(fun.notes) do
-      -- XXX: abuse md_to_vimdoc() to force-fit the markdown list. Need norm_md()?
-      note = util.md_to_vimdoc(' - ' .. note, 0, 0, 74)
-      for _, l in ipairs(split(vim.trim(norm_text(note)))) do
-        write('--- ' .. l:gsub('\n*$', ''))
-      end
-    end
+    write(util.prefix_lines('--- ', table.concat(fun.notes, '\n')))
     write('---')
   end
 
   for _, see in ipairs(fun.see or {}) do
-    see = util.md_to_vimdoc('@see ' .. see, 0, 0, 74)
-    for _, l in ipairs(split(vim.trim(norm_text(see)))) do
-      write('--- ' .. l:gsub([[\s*$]], ''))
-    end
+    write(util.prefix_lines('--- @see ', norm_text(see)))
   end
 
   local param_names = {} --- @type string[]
@@ -354,8 +342,6 @@ local function render_api_meta(_f, fun, write)
     local pdesc = p[3]
     if pdesc then
       local s = '--- @param ' .. p[1] .. ' ' .. p[2] .. ' '
-      local indent = #('@param ' .. p[1] .. ' ')
-      pdesc = util.md_to_vimdoc(pdesc, #s, indent, 74, true)
       local pdesc_a = split(vim.trim(norm_text(pdesc)))
       write(s .. pdesc_a[1])
       for i = 2, #pdesc_a do
@@ -372,7 +358,7 @@ local function render_api_meta(_f, fun, write)
   if fun.returns ~= '' then
     local ret_desc = fun.returns_desc and ' # ' .. fun.returns_desc or ''
     local ret = LUA_API_RETURN_OVERRIDES[fun.name] or fun.returns
-    write(util.prefix('--- ', '@return ' .. ret .. ret_desc))
+    write(util.prefix_lines('--- ', '@return ' .. ret .. ret_desc))
   end
   local param_str = table.concat(param_names, ', ')
 
