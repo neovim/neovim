@@ -411,6 +411,7 @@ describe('lua stdlib', function()
         'return vim.str_byteindex(_G.test_text, 99999, { encoding = "utf-8", error = false})'
       )
     )
+    eq(2, exec_lua('return vim.str_byteindex("é", 2, { encoding = "utf-16", error = false})'))
     local i32, i16 = 0, 0
     local len = 51
     for k = 0, len do
