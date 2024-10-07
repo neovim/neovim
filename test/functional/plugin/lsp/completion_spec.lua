@@ -762,29 +762,34 @@ describe('vim.lsp.completion: integration', function()
       return vim.fn.match(line_to_cursor, '\\k*$')
     end)
 
+    exec_lua(function()
+      vim.api.nvim_create_autocmd('CompleteDone', {
+        callback = function()
+          vim.v.completed_item = {
+            user_data = {
+              nvim = {
+                lsp = {
+                  client_id = vim.tbl_keys(vim.lsp.get_clients())[1],
+                  completion_item = completion_item,
+                },
+              },
+            },
+            word = completed_word,
+          }
+        end,
+      })
+    end)
+
     local expected_cursor_column = word_start + #completed_word
 
-    local client_id = create_server(completion_list, completion_item)
+    create_server(completion_list, completion_item)
+    eq(1, exec_lua(function() return #vim.lsp.get_clients() end))
 
     feed('i' .. line)
 
     exec_lua(function()
       vim.api.nvim_win_set_cursor(0, { 1, initial_cursor_col })
       vim.lsp.completion.trigger()
-    end)
-
-    exec_lua(function()
-      vim.v.completed_item = {
-        user_data = {
-          nvim = {
-            lsp = {
-              client_id = client_id,
-              completion_item = completion_item,
-            },
-          },
-        },
-        word = completed_word,
-      }
     end)
 
     feed('<C-x><C-o><C-y>')
