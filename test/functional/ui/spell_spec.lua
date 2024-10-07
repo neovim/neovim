@@ -377,4 +377,35 @@ describe("'spell'", function()
                                                  |
     ]])
   end)
+
+  it('overrides syntax when Visual selection is active', function()
+    screen:try_resize(43, 3)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { foreground = Screen.colors.Blue },
+      [2] = { foreground = Screen.colors.Red },
+      [3] = { foreground = Screen.colors.Blue, underline = true },
+      [4] = { foreground = Screen.colors.Red, underline = true },
+      [5] = { bold = true },
+    })
+    exec([[
+      hi! Comment guibg=NONE guifg=Blue gui=NONE guisp=NONE
+      hi! SpellBad guibg=NONE guifg=Red gui=NONE guisp=NONE
+      hi! Visual guibg=NONE guifg=NONE gui=underline guisp=NONE
+      syn match Comment "//.*"
+      call setline(1, '// Here is a misspeld word.')
+      set spell
+    ]])
+    screen:expect([[
+      {1:^// Here is a }{2:misspeld}{1: word.}                |
+      {0:~                                          }|
+                                                 |
+    ]])
+    feed('V')
+    screen:expect([[
+      {1:^/}{3:/ Here is a }{4:misspeld}{3: word.}                |
+      {0:~                                          }|
+      {5:-- VISUAL LINE --}                          |
+    ]])
+  end)
 end)
