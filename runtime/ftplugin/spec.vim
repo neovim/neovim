@@ -14,6 +14,9 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
+setlocal comments=b:#
+setlocal commentstring=#\ %s
+
 if !exists("no_plugin_maps") && !exists("no_spec_maps")
 	if !hasmapto("<Plug>SpecChangelog")
 		map <buffer> <LocalLeader>c <Plug>SpecChangelog
