@@ -1525,7 +1525,9 @@ static int find_key_len(const char *arg_arg, size_t len, bool has_lt)
   // Don't use get_special_key_code() for t_xx, we don't want it to call
   // add_termcap_entry().
   if (len >= 4 && arg[0] == 't' && arg[1] == '_') {
-    key = TERMCAP2KEY((uint8_t)arg[2], (uint8_t)arg[3]);
+    if (!has_lt || arg[4] == '>') {
+      key = TERMCAP2KEY((uint8_t)arg[2], (uint8_t)arg[3]);
+    }
   } else if (has_lt) {
     arg--;  // put arg at the '<'
     int modifiers = 0;
@@ -1539,14 +1541,18 @@ static int find_key_len(const char *arg_arg, size_t len, bool has_lt)
 }
 
 /// Convert a key name or string into a key value.
-/// Used for 'wildchar' and 'cedit' options.
+/// Used for 'cedit', 'wildchar' and 'wildcharm' options.
 int string_to_key(char *arg)
 {
-  if (*arg == '<') {
+  if (*arg == '<' && arg[1]) {
     return find_key_len(arg + 1, strlen(arg), true);
   }
-  if (*arg == '^') {
-    return CTRL_CHR((uint8_t)arg[1]);
+  if (*arg == '^' && arg[1]) {
+    int key = CTRL_CHR((uint8_t)arg[1]);
+    if (key == 0) {  // ^@ is <Nul>
+      key = K_ZERO;
+    }
+    return key;
   }
   return (uint8_t)(*arg);
 }

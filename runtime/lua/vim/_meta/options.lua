@@ -7699,9 +7699,14 @@ vim.go.ww = vim.go.whichwrap
 --- Some keys will not work, such as CTRL-C, <CR> and Enter.
 --- <Esc> can be used, but hitting it twice in a row will still exit
 --- command-line as a failsafe measure.
---- Although 'wc' is a number option, you can set it to a special key:
+--- Although 'wc' is a number option, it can be specified as a number, a
+--- single character, a `key-notation` (e.g. <Up>, <C-F>) or a letter
+--- preceded with a caret (e.g. `^F` is CTRL-F):
 ---
 --- ```vim
+--- 	:set wc=27
+--- 	:set wc=X
+--- 	:set wc=^I
 --- 	set wc=<Tab>
 --- ```
 ---
