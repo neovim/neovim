@@ -746,7 +746,7 @@ describe('vim.lsp.completion: integration', function()
 
     local completion_item = {
       insertText = completed_word,
-      insertTextFormat = 2,
+      insertTextFormat = 2, -- vim.lsp.protocol.InsertTextFormat.Snippet
       label = completed_word,
     }
 
