@@ -15,7 +15,7 @@ error('Cannot require a meta file')
 ---   echo abs(-4)
 --- <  4
 ---
---- @param expr any
+--- @param expr number
 --- @return number
 function vim.fn.abs(expr) end
 
@@ -31,7 +31,7 @@ function vim.fn.abs(expr) end
 ---   echo acos(-0.5)
 --- <  2.094395
 ---
---- @param expr any
+--- @param expr number
 --- @return number
 function vim.fn.acos(expr) end
 
@@ -57,8 +57,8 @@ function vim.fn.add(object, expr) end
 ---   let flag = and(bits, 0x80)
 --- <
 ---
---- @param expr any
---- @param expr1 any
+--- @param expr number
+--- @param expr1 number
 --- @return integer
 vim.fn['and'] = function(expr, expr1) end
 
@@ -86,7 +86,7 @@ function vim.fn.api_info() end
 --- <
 ---
 --- @param lnum integer
---- @param text any
+--- @param text string|string[]
 --- @return 0|1
 function vim.fn.append(lnum, text) end
 

@@ -54,7 +54,7 @@ M.funcs = {
 
     ]=],
     name = 'abs',
-    params = { { 'expr', 'any' } },
+    params = { { 'expr', 'number' } },
     signature = 'abs({expr})',
     returns = 'number',
   },
@@ -77,7 +77,7 @@ M.funcs = {
     ]=],
     float_func = 'acos',
     name = 'acos',
-    params = { { 'expr', 'any' } },
+    params = { { 'expr', 'number' } },
     returns = 'number',
     signature = 'acos({expr})',
   },
@@ -114,7 +114,7 @@ M.funcs = {
       <
     ]=],
     name = 'and',
-    params = { { 'expr', 'any' }, { 'expr', 'any' } },
+    params = { { 'expr', 'number' }, { 'expr', 'number' } },
     returns = 'integer',
     signature = 'and({expr}, {expr})',
   },
@@ -152,7 +152,7 @@ M.funcs = {
 
     ]=],
     name = 'append',
-    params = { { 'lnum', 'integer' }, { 'text', 'any' } },
+    params = { { 'lnum', 'integer' }, { 'text', 'string|string[]' } },
     returns = '0|1',
     signature = 'append({lnum}, {text})',
   },

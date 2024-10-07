@@ -26,7 +26,7 @@ abs({expr})                                                              *abs()*
 <			4
 
                 Parameters: ~
-                  • {expr} (`any`)
+                  • {expr} (`number`)
 
                 Return: ~
                   (`number`)
@@ -45,7 +45,7 @@ acos({expr})                                                            *acos()*
 <			2.094395
 
                 Parameters: ~
-                  • {expr} (`any`)
+                  • {expr} (`number`)
 
                 Return: ~
                   (`number`)
@@ -78,8 +78,8 @@ and({expr}, {expr})                                                      *and()*
 <
 
                 Parameters: ~
-                  • {expr} (`any`)
-                  • {expr1} (`any`)
+                  • {expr} (`number`)
+                  • {expr1} (`number`)
 
                 Return: ~
                   (`integer`)
@@ -111,7 +111,7 @@ append({lnum}, {text})                                                *append()*
 
                 Parameters: ~
                   • {lnum} (`integer`)
-                  • {text} (`any`)
+                  • {text} (`string|string[]`)
 
                 Return: ~
                   (`0|1`)

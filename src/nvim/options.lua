@@ -1,3 +1,5 @@
+-- vim: tw=80
+
 --- @class vim.option_meta
 --- @field full_name string
 --- @field desc? string
@@ -1229,11 +1231,10 @@ return {
         used.  The command-line will cover the last line of the screen when
         shown.
 
-        WARNING: `cmdheight=0` is considered experimental. Expect some
-        unwanted behaviour. Some 'shortmess' flags and similar
-        mechanism might fail to take effect, causing unwanted hit-enter
-        prompts.  Some informative messages, both from Nvim itself and
-        plugins, will not be displayed.
+        WARNING: `cmdheight=0` is EXPERIMENTAL. Expect some unwanted behaviour.
+        Some 'shortmess' flags and similar mechanism might fail to take effect,
+        causing unwanted hit-enter prompts.  Some informative messages, both
+        from Nvim itself and plugins, will not be displayed.
       ]=],
       full_name = 'cmdheight',
       redraw = { 'all_windows' },
@@ -8096,7 +8097,6 @@ return {
       cb = 'did_set_statuscolumn',
       defaults = { if_true = '' },
       desc = [=[
-        EXPERIMENTAL
         When non-empty, this option determines the content of the area to the
         side of a window, normally containing the fold, sign and number columns.
         The format of this option is like that of 'statusline'.

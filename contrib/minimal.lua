@@ -2,7 +2,8 @@
 
 for name, url in pairs {
   -- ADD PLUGINS _NECESSARY_ TO REPRODUCE THE ISSUE, e.g:
-  -- some_plugin = 'https://github.com/author/plugin.nvim'
+  -- 'https://github.com/author1/plugin1',
+  -- 'https://github.com/author2/plugin2',
 } do
   local install_path = vim.fn.fnamemodify('nvim_issue/' .. name, ':p')
   if vim.fn.isdirectory(install_path) == 0 then

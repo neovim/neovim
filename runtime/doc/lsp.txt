@@ -321,7 +321,7 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
     }
 <
   Some handlers do not have an explicitly named handler function (such as
-  ||vim.lsp.diagnostic.on_publish_diagnostics()|). To override these, first
+  |vim.lsp.diagnostic.on_publish_diagnostics()|). To override these, first
   create a reference to the existing handler: >lua
 
     local on_references = vim.lsp.handlers["textDocument/references"]

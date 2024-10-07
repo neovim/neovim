@@ -7,7 +7,9 @@
 Tools and techniques for developing Nvim                        *dev-tools*
 
 The following advice is helpful when working on or debugging issues with Nvim
-itself. See also |debug.txt| for advice that applies to Vim.
+itself.
+
+TODO: merge |debug.txt| into here.
 
                                   Type |gO| to see the table of contents.
 

@@ -29,6 +29,7 @@ These changes may require adaptations in your config or plugins.
 
 API
 
+• Improved API "meta" docstrings and :help documentation.
 • `vim.rpcnotify(0)` and `rpcnotify(0)` broadcast to ALL channels. Previously
   they would "multicast" only to subscribed channels (controlled by
   `nvim_subscribe()`). Plugins and clients that want "multicast" behavior must
@@ -69,6 +70,7 @@ EVENTS
 
 LSP
 
+• Improved rendering of LSP hover docs. |K-lsp-default|
 • |vim.lsp.completion.enable()| gained the `convert` callback which enables
   customizing the transformation of an LSP CompletionItem to |complete-items|.
 • |vim.lsp.diagnostic.from()| can be used to convert a list of
