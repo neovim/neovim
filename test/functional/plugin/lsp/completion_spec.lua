@@ -747,7 +747,6 @@ describe('vim.lsp.completion: integration', function()
     local completion_item = {
       insertText = completed_word,
       insertTextFormat = 2,
-      kind = 10,
       label = completed_word,
     }
 
@@ -759,7 +758,6 @@ describe('vim.lsp.completion: integration', function()
     local resolve_item = {
       insertText = 'noautocmd',
       insertTextFormat = 2,
-      kind = 10,
       label = 'noautocmd?',
     }
 
@@ -782,7 +780,6 @@ describe('vim.lsp.completion: integration', function()
     end)
 
     exec_lua(function()
-      -- vim.api.nvim_clear_autocmds({group = ('vim/lsp/completion-%d'):format(vim.api.nvim_get_current_buf())})
       vim.v.completed_item = {
         user_data = {
           nvim = {
