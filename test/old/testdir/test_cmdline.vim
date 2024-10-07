@@ -4070,4 +4070,15 @@ func Test_term_option()
   let &cpo = _cpo
 endfunc
 
+func Test_cd_bslsh_completion_windows()
+  CheckMSWindows
+  let save_shellslash = &shellslash
+  set noshellslash
+  call system('mkdir XXXa\_b')
+  defer delete('XXXa', 'rf')
+  call feedkeys(":cd XXXa\\_b\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"cd XXXa\_b\', @:)
+  let &shellslash = save_shellslash
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
