@@ -769,7 +769,7 @@ describe('vim.lsp.completion: integration', function()
             user_data = {
               nvim = {
                 lsp = {
-                  client_id = vim.tbl_keys(vim.lsp.get_clients())[1],
+                  client_id = vim.tbl_keys(vim.lsp.get_clients({ name = 'dummy' }))[1],
                   completion_item = completion_item,
                 },
               },
@@ -783,7 +783,12 @@ describe('vim.lsp.completion: integration', function()
     local expected_cursor_column = word_start + #completed_word
 
     create_server(completion_list, completion_item)
-    eq(1, exec_lua(function() return #vim.lsp.get_clients() end))
+    eq(
+      1,
+      exec_lua(function()
+        return #vim.lsp.get_clients()
+      end)
+    )
 
     feed('i' .. line)
 
