@@ -55,6 +55,8 @@ describe('folded lines', function()
         },
         [19] = { background = Screen.colors.Yellow, foreground = Screen.colors.DarkBlue },
         [20] = { background = Screen.colors.Red, bold = true, foreground = Screen.colors.Blue },
+        [21] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Green },
+        [22] = { background = Screen.colors.Red, foreground = Screen.colors.Green },
       })
     end)
 
@@ -2625,6 +2627,8 @@ describe('folded lines', function()
       command('hi! CursorLine guibg=NONE guifg=Red gui=NONE')
       command('hi F0 guibg=Red guifg=Black')
       command('hi F1 guifg=White')
+      command([[syn match Keyword /\<sentence\>/]])
+      command('hi! Keyword guibg=NONE guifg=Green')
       api.nvim_set_option_value('cursorline', true, {})
       api.nvim_set_option_value('foldcolumn', '4', {})
       api.nvim_set_option_value('foldtext', '', {})
@@ -2662,7 +2666,7 @@ describe('folded lines', function()
         ## grid 2
           {7:    }This is a                 |
           {7:-   }valid English             |
-          {7:│+  }{5:sentence composed by······}|
+          {7:│+  }{21:sentence}{5: composed by······}|
           {7:│+  }{13:^in his cave.··············}|
           {1:~                             }|*2
         ## grid 3
@@ -2672,7 +2676,7 @@ describe('folded lines', function()
         screen:expect([[
           {7:    }This is a                 |
           {7:-   }valid English             |
-          {7:│+  }{5:sentence composed by······}|
+          {7:│+  }{21:sentence}{5: composed by······}|
           {7:│+  }{13:^in his cave.··············}|
           {1:~                             }|*2
                                         |
@@ -2689,7 +2693,7 @@ describe('folded lines', function()
         ## grid 2
           {7:    }This is a                 |
           {7:-   }^v{14:alid English}             |
-          {7:│+  }{15:sentence composed by······}|
+          {7:│+  }{22:sentence}{15: composed by······}|
           {7:│+  }{15:in his cave.··············}|
           {1:~                             }|*2
         ## grid 3
@@ -2699,7 +2703,7 @@ describe('folded lines', function()
         screen:expect([[
           {7:    }This is a                 |
           {7:-   }^v{14:alid English}             |
-          {7:│+  }{15:sentence composed by······}|
+          {7:│+  }{22:sentence}{15: composed by······}|
           {7:│+  }{15:in his cave.··············}|
           {1:~                             }|*2
           {11:-- VISUAL LINE --}             |
@@ -2715,7 +2719,7 @@ describe('folded lines', function()
         ## grid 2
                            a si sihT{7:    }|
                        {14:hsilgnE dila}^v{7:   -}|
-          {15:······yb desopmoc ecnetnes}{7:  +│}|
+          {15:······yb desopmoc }{22:ecnetnes}{7:  +│}|
           {15:··············.evac sih ni}{7:  +│}|
           {1:                             ~}|*2
         ## grid 3
@@ -2725,7 +2729,7 @@ describe('folded lines', function()
         screen:expect([[
                            a si sihT{7:    }|
                        {14:hsilgnE dila}^v{7:   -}|
-          {15:······yb desopmoc ecnetnes}{7:  +│}|
+          {15:······yb desopmoc }{22:ecnetnes}{7:  +│}|
           {15:··············.evac sih ni}{7:  +│}|
           {1:                             ~}|*2
           {11:-- VISUAL LINE --}             |
