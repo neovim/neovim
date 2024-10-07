@@ -296,6 +296,9 @@ local function get_lines(bufnr, rows)
   end
 
   local filename = api.nvim_buf_get_name(bufnr)
+  if vim.fn.isdirectory(filename) ~= 0 then
+    return {}
+  end
 
   -- get the data from the file
   local fd = uv.fs_open(filename, 'r', 438)
