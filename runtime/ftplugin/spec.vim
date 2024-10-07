@@ -5,6 +5,7 @@
 " Last Change: 2015 Jun 01
 "  Update by Zdenek Dohnal, 2022 May 17
 "  2024 Sep 10 by Vim Project: add epoch support for spec changelog, #15537
+"  2024 Oct 07 by Vim Project: add comment support, #15817
 
 if exists("b:did_ftplugin")
 	finish
@@ -13,6 +14,11 @@ let b:did_ftplugin = 1
 
 let s:cpo_save = &cpo
 set cpo&vim
+
+setlocal comments=b:#
+setlocal commentstring=#\ %s
+
+let b:undo_ftplugin = "setlocal comments< commentstring<"
 
 if !exists("no_plugin_maps") && !exists("no_spec_maps")
 	if !hasmapto("<Plug>SpecChangelog")
@@ -216,4 +222,4 @@ let b:match_words =
 let &cpo = s:cpo_save
 unlet s:cpo_save
 
-let b:undo_ftplugin = "unlet! b:match_ignorecase b:match_words"
+let b:undo_ftplugin ..= " | unlet! b:match_ignorecase b:match_words"
