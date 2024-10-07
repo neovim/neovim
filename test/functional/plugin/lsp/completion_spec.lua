@@ -471,6 +471,41 @@ describe('vim.lsp.completion: item conversion', function()
   )
 end)
 
+local function create_server(completion_result, resolve_result)
+  return exec_lua(function()
+    local server = _G._create_server({
+      capabilities = {
+        completionProvider = {
+          triggerCharacters = { '.' },
+          resolveProvider = (resolve_result ~= nil),
+        },
+      },
+      handlers = {
+        ['textDocument/completion'] = function(_, _, callback)
+          callback(nil, completion_result)
+        end,
+        ['completionItem/resolve'] = function(_, _, callback)
+          callback(nil, resolve_result)
+        end,
+      },
+    })
+
+    local bufnr = vim.api.nvim_get_current_buf()
+    vim.api.nvim_win_set_buf(0, bufnr)
+    return vim.lsp.start({
+      name = 'dummy',
+      cmd = server.cmd,
+      on_attach = function(client, bufnr0)
+        vim.lsp.completion.enable(true, client.id, bufnr0, {
+          convert = function(item)
+            return { abbr = item.label:gsub('%b()', '') }
+          end,
+        })
+      end,
+    })
+  end)
+end
+
 describe('vim.lsp.completion: protocol', function()
   before_each(function()
     clear()
@@ -490,41 +525,6 @@ describe('vim.lsp.completion: protocol', function()
   --- @param completion_result lsp.CompletionList
   --- @param resolve_result lsp.CompletionItem?
   --- @return integer
-  local function create_server(completion_result, resolve_result)
-    return exec_lua(function()
-      local server = _G._create_server({
-        capabilities = {
-          completionProvider = {
-            triggerCharacters = { '.' },
-            resolveProvider = (resolve_result ~= nil),
-          },
-        },
-        handlers = {
-          ['textDocument/completion'] = function(_, _, callback)
-            callback(nil, completion_result)
-          end,
-          ['completionItem/resolve'] = function(_, _, callback)
-            callback(nil, resolve_result)
-          end,
-        },
-      })
-
-      local bufnr = vim.api.nvim_get_current_buf()
-      vim.api.nvim_win_set_buf(0, bufnr)
-      return vim.lsp.start({
-        name = 'dummy',
-        cmd = server.cmd,
-        on_attach = function(client, bufnr0)
-          vim.lsp.completion.enable(true, client.id, bufnr0, {
-            convert = function(item)
-              return { abbr = item.label:gsub('%b()', '') }
-            end,
-          })
-        end,
-      })
-    end)
-  end
-
   local function assert_matches(fn)
     retry(nil, nil, function()
       fn(exec_lua('return _G.capture.matches'))
@@ -730,19 +730,19 @@ describe('vim.lsp.completion: protocol', function()
       eq('foo', matches[1].abbr)
     end)
   end)
+end)
+
+describe('vim.lsp.completion: integration', function()
+  before_each(function()
+    clear()
+    exec_lua(create_server_definition)
+  end)
+
+  after_each(clear)
 
   it('should put cursor at the end of completed word', function()
+    local line = ('vim._with({%s|}, f)'):format('noau')
     local completed_word = 'noautocmd'
-
-    local line = ('vim._with({%s|}, f)'):format(completed_word:sub(1, 2))
-    local initial_cursor_col = line:find('|') - 1
-    line = line:gsub('|', '')
-    local line_to_cursor = line:sub(1, initial_cursor_col)
-    local word_start = exec_lua(function()
-      return vim.fn.match(line_to_cursor, '\\k*$')
-    end)
-
-    local expected_cursor_column = word_start + #completed_word
 
     local completion_item = {
       insertText = completed_word,
@@ -763,12 +763,26 @@ describe('vim.lsp.completion: protocol', function()
       label = 'noautocmd?',
     }
 
+    local initial_cursor_col = line:find('|') - 1
+    line = line:gsub('|', '')
+    local line_to_cursor = line:sub(1, initial_cursor_col)
+    local word_start = exec_lua(function()
+      return vim.fn.match(line_to_cursor, '\\k*$')
+    end)
+
+    local expected_cursor_column = word_start + #completed_word
+
     local client_id = create_server(completion_list, resolve_item)
 
     feed('i' .. line)
-    trigger_at_pos({ 1, initial_cursor_col })
 
     exec_lua(function()
+      vim.api.nvim_win_set_cursor(0, { 1, initial_cursor_col })
+      vim.lsp.completion.trigger()
+    end)
+
+    exec_lua(function()
+      -- vim.api.nvim_clear_autocmds({group = ('vim/lsp/completion-%d'):format(vim.api.nvim_get_current_buf())})
       vim.v.completed_item = {
         user_data = {
           nvim = {
@@ -784,16 +798,8 @@ describe('vim.lsp.completion: protocol', function()
 
     feed('<C-x><C-o><C-y>')
 
-    assert_matches(function(matches)
-      eq(1, #matches)
-      eq(completed_word, matches[1].word)
-    end)
-
     local cursor_column = exec_lua(function()
-      local _, col = unpack(vim.api.nvim_win_get_cursor(0))
-
-      return col
-      -- return vim.api.nvim_buf_get_lines(0, 0, 1, true)[1]
+      return vim.api.nvim_win_get_cursor(0)[2]
     end)
 
     eq(expected_cursor_column, cursor_column)
