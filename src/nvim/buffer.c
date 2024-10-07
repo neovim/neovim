@@ -478,6 +478,11 @@ static bool can_unload_buffer(buf_T *buf)
   return can_unload;
 }
 
+bool buf_locked(buf_T *buf)
+{
+  return buf->b_locked || buf->b_locked_split;
+}
+
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.

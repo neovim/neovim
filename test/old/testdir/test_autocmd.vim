@@ -15,6 +15,13 @@ func s:cleanup_buffers() abort
   endfor
 endfunc
 
+func CleanUpTestAuGroup()
+  augroup testing
+    au!
+  augroup END
+  augroup! testing
+endfunc
+
 func Test_vim_did_enter()
   call assert_false(v:vim_did_enter)
 
@@ -4150,6 +4157,25 @@ func Test_BufEnter_botline()
   bwipe! Xxx2
   au! BufEnter Xxx1
   set hidden&vim
+endfunc
+
+" This was using freed memory
+func Test_autocmd_BufWinLeave_with_vsp()
+  new
+  let fname = 'XXXBufWinLeaveUAF.txt'
+  let dummy = 'XXXDummy.txt'
+  call writefile([], fname)
+  call writefile([], dummy)
+  defer delete(fname)
+  defer delete(dummy)
+  exe "e " fname
+  vsp
+  augroup testing
+    exe "au BufWinLeave " .. fname .. " :e " dummy .. "| vsp " .. fname
+  augroup END
+  bw
+  call CleanUpTestAuGroup()
+  exe "bw! " .. dummy
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
