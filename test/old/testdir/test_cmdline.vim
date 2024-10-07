@@ -4070,7 +4070,7 @@ func Test_term_option()
   let &cpo = _cpo
 endfunc
 
-func Test_cd_bslsh_completion_windows()
+func Test_cd_bslash_completion_windows()
   CheckMSWindows
   let save_shellslash = &shellslash
   set noshellslash
