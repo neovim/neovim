@@ -3618,6 +3618,7 @@ bool match_file_list(char *list, char *sfname, char *ffname)
 /// @param pat_end     first char after pattern or NULL
 /// @param allow_dirs  Result passed back out in here
 /// @param no_bslash   Don't use a backward slash as pathsep
+///                    (only makes a difference when BACKSLASH_IN_FILENAME in defined)
 ///
 /// @return            NULL on failure.
 char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs, int no_bslash)

@@ -959,7 +959,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern, char *path_option)
   file_pattern[0] = '*';
   file_pattern[1] = NUL;
   strcat(file_pattern, pattern);
-  char *pat = file_pat_to_reg_pat(file_pattern, NULL, NULL, true);
+  char *pat = file_pat_to_reg_pat(file_pattern, NULL, NULL, false);
   xfree(file_pattern);
   if (pat == NULL) {
     return;
