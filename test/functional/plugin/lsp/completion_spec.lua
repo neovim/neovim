@@ -740,7 +740,7 @@ describe('vim.lsp.completion: integration', function()
 
   after_each(clear)
 
-  it('should put cursor at the end of completed word', function()
+  it('puts cursor at the end of completed word', function()
     local line = ('vim._with({%s|}, f)'):format('noau')
     local completed_word = 'noautocmd'
 
