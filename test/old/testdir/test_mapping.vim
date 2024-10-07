@@ -6,33 +6,62 @@ source screendump.vim
 source term_util.vim
 
 func Test_abbreviation()
+  new
   " abbreviation with 0x80 should work
   inoreab чкпр   vim
   call feedkeys("Goчкпр \<Esc>", "xt")
   call assert_equal('vim ', getline('$'))
   iunab чкпр
-  set nomodified
+  bwipe!
+endfunc
+
+func Test_abbreviation_with_noremap()
+  nnoremap <F2> :echo "cheese"
+  cabbr cheese xxx
+  call feedkeys(":echo \"cheese\"\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"echo "xxx"', @:)
+  call feedkeys("\<F2>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"echo "cheese"', @:)
+  nnoremap <F2> :echo "cheese<C-]>"
+  call feedkeys("\<F2>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"echo "xxx"', @:)
+  nunmap <F2>
+  cunabbr cheese
+
+  new
+  inoremap <buffer> ( <C-]>()
+  iabbr <buffer> fnu fun
+  call feedkeys("ifnu(", 'tx')
+  call assert_equal('fun()', getline(1))
+  bwipe!
 endfunc
 
 func Test_abclear()
-   abbrev foo foobar
-   iabbrev fooi foobari
-   cabbrev fooc foobarc
-   call assert_equal("\n\nc  fooc          foobarc\ni  fooi          foobari\n!  foo           foobar", execute('abbrev'))
+  abbrev foo foobar
+  iabbrev fooi foobari
+  cabbrev fooc foobarc
+  call assert_equal("\n\n"
+        \        .. "c  fooc          foobarc\n"
+        \        .. "i  fooi          foobari\n"
+        \        .. "!  foo           foobar", execute('abbrev'))
 
-   iabclear
-   call assert_equal("\n\nc  fooc          foobarc\nc  foo           foobar", execute('abbrev'))
-   abbrev foo foobar
-   iabbrev fooi foobari
+  iabclear
+  call assert_equal("\n\n"
+        \        .. "c  fooc          foobarc\n"
+        \        .. "c  foo           foobar", execute('abbrev'))
+  abbrev foo foobar
+  iabbrev fooi foobari
 
-   cabclear
-   call assert_equal("\n\ni  fooi          foobari\ni  foo           foobar", execute('abbrev'))
-   abbrev foo foobar
-   cabbrev fooc foobarc
+  cabclear
+  call assert_equal("\n\n"
+        \        .. "i  fooi          foobari\n"
+        \        .. "i  foo           foobar", execute('abbrev'))
+  abbrev foo foobar
+  cabbrev fooc foobarc
 
-   abclear
-   call assert_equal("\n\nNo abbreviation found", execute('abbrev'))
-   call assert_fails('%abclear', 'E481:')
+  abclear
+  call assert_equal("\n\nNo abbreviation found", execute('abbrev'))
+  call assert_fails('%abclear', 'E481:')
 endfunc
 
 func Test_abclear_buffer()
@@ -42,15 +71,21 @@ func Test_abclear_buffer()
   new X2
   abbrev <buffer> foo2 foobar2
 
-  call assert_equal("\n\n!  foo2         @foobar2\n!  foo           foobar", execute('abbrev'))
+  call assert_equal("\n\n"
+        \        .. "!  foo2         @foobar2\n"
+        \        .. "!  foo           foobar", execute('abbrev'))
 
   abclear <buffer>
-  call assert_equal("\n\n!  foo           foobar", execute('abbrev'))
+  call assert_equal("\n\n"
+        \        .. "!  foo           foobar", execute('abbrev'))
 
   b X1
-  call assert_equal("\n\n!  foo1         @foobar1\n!  foo           foobar", execute('abbrev'))
+  call assert_equal("\n\n"
+        \        .. "!  foo1         @foobar1\n"
+        \        .. "!  foo           foobar", execute('abbrev'))
   abclear <buffer>
-  call assert_equal("\n\n!  foo           foobar", execute('abbrev'))
+  call assert_equal("\n\n"
+        \        .. "!  foo           foobar", execute('abbrev'))
 
   abclear
    call assert_equal("\n\nNo abbreviation found", execute('abbrev'))

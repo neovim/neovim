@@ -6459,8 +6459,8 @@ func Test_cbuffer_range()
   call XbufferTests_range('l')
 endfunc
 
-" Test for displaying fname pass from setqflist when the name
-" are hard links to prevent seemly duplicate entries.
+" Test for displaying fname passed from setqflist() when the names include
+" hard links to prevent seemingly duplicate entries.
 func Xtest_hardlink_fname(cchar)
   call s:setup_commands(a:cchar)
   %bwipe
