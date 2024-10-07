@@ -755,12 +755,6 @@ describe('vim.lsp.completion: integration', function()
       items = { completion_item },
     }
 
-    local resolve_item = {
-      insertText = 'noautocmd',
-      insertTextFormat = 2,
-      label = 'noautocmd?',
-    }
-
     local initial_cursor_col = line:find('|') - 1
     line = line:gsub('|', '')
     local line_to_cursor = line:sub(1, initial_cursor_col)
@@ -770,7 +764,7 @@ describe('vim.lsp.completion: integration', function()
 
     local expected_cursor_column = word_start + #completed_word
 
-    local client_id = create_server(completion_list, resolve_item)
+    local client_id = create_server(completion_list, completion_item)
 
     feed('i' .. line)
 
