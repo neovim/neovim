@@ -471,6 +471,9 @@ describe('vim.lsp.completion: item conversion', function()
   )
 end)
 
+--- @param completion_result lsp.CompletionList
+--- @param resolve_result lsp.CompletionItem?
+--- @return integer
 local function create_server(completion_result, resolve_result)
   return exec_lua(function()
     local server = _G._create_server({
@@ -522,9 +525,6 @@ describe('vim.lsp.completion: protocol', function()
 
   after_each(clear)
 
-  --- @param completion_result lsp.CompletionList
-  --- @param resolve_result lsp.CompletionItem?
-  --- @return integer
   local function assert_matches(fn)
     retry(nil, nil, function()
       fn(exec_lua('return _G.capture.matches'))
