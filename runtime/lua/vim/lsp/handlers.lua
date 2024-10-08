@@ -242,31 +242,6 @@ M[ms.textDocument_inlayHint] = function(...)
   return vim.lsp.inlay_hint.on_inlayhint(...)
 end
 
---- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-M[ms.textDocument_references] = function(_, result, ctx, config)
-  if not result or vim.tbl_isempty(result) then
-    vim.notify('No references found')
-    return
-  end
-
-  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
-  config = config or {}
-  local title = 'References'
-  local items = util.locations_to_items(result, client.offset_encoding)
-
-  local list = { title = title, items = items, context = ctx }
-  if config.loclist then
-    vim.fn.setloclist(0, {}, ' ', list)
-    vim.cmd.lopen()
-  elseif config.on_list then
-    assert(vim.is_callable(config.on_list), 'on_list is not a function')
-    config.on_list(list)
-  else
-    vim.fn.setqflist({}, ' ', list)
-    vim.cmd('botright copen')
-  end
-end
-
 --- Return a function that converts LSP responses to list items and opens the list
 ---
 --- The returned function has an optional {config} parameter that accepts |vim.lsp.ListOpts|

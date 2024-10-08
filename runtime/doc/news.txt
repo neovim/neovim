@@ -77,6 +77,9 @@ LSP
   customizing the transformation of an LSP CompletionItem to |complete-items|.
 • |vim.lsp.diagnostic.from()| can be used to convert a list of
   |vim.Diagnostic| objects into their LSP diagnostic representation.
+• |vim.lsp.buf.references()| now handles multiple clients but no longer
+  triggers the global `textDocument/references` handler from
+  `vim.lsp.handlers`
 
 LUA
 
