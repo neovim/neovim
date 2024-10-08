@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Vim help file
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2024 Oct 05
+" Last Change:	2024 Oct 08
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -92,6 +92,7 @@ syn match helpSpecial		"\[group]"
 syn match helpNormal		"\[\(readonly\|fifo\|socket\|converted\|crypted\)]"
 
 syn match helpSpecial		"CTRL-."
+syn match helpSpecial		"CTRL-<\a\+>"
 syn match helpSpecial		"CTRL-SHIFT-."
 syn match helpSpecial		"CTRL-Break"
 syn match helpSpecial		"CTRL-PageUp"
