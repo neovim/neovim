@@ -62,6 +62,19 @@ typedef enum {
   kNumBaseHexadecimal = 16,
 } NumberBase;
 
+/// @return  default fmt string. If p_ru is set then it changes slightly
+char *statusline_default_fmt(void)
+{
+  static char *fmt = "%<%f %h%m%r";
+  static char *fmt_with_ru = "%<%f %h%m%r%=%-14.(%l,%c%V%) %P";
+
+  if (p_ru) {
+    return fmt_with_ru;
+  } else {
+    return fmt;
+  }
+}
+
 /// Redraw the status line of window `wp`.
 ///
 /// If inversion is possible we use it. Else '=' characters are used.
@@ -88,88 +101,8 @@ void win_redr_status(win_T *wp)
     // Don't redraw right now, do it later. Don't update status line when
     // popup menu is visible and may be drawn over it
     wp->w_redr_status = true;
-  } else if (*p_stl != NUL || *wp->w_p_stl != NUL) {
-    // redraw custom status line
-    redraw_custom_statusline(wp);
   } else {
-    schar_T fillchar = fillchar_status(&attr, wp);
-    const int stl_width = is_stl_global ? Columns : wp->w_width;
-
-    get_trans_bufname(wp->w_buffer);
-    char *p = NameBuff;
-    int len = (int)strlen(p);
-
-    if ((bt_help(wp->w_buffer)
-         || wp->w_p_pvw
-         || bufIsChanged(wp->w_buffer)
-         || wp->w_buffer->b_p_ro)
-        && len < MAXPATHL - 1) {
-      *(p + len++) = ' ';
-    }
-    if (bt_help(wp->w_buffer)) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[Help]"));
-      len += (int)strlen(p + len);
-    }
-    if (wp->w_p_pvw) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[Preview]"));
-      len += (int)strlen(p + len);
-    }
-    if (bufIsChanged(wp->w_buffer)) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", "[+]");
-      len += (int)strlen(p + len);
-    }
-    if (wp->w_buffer->b_p_ro) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[RO]"));
-      // len += (int)strlen(p + len);  // dead assignment
-    }
-
-    int this_ru_col = MAX(ru_col - (Columns - stl_width), (stl_width + 1) / 2);
-    if (this_ru_col <= 1) {
-      p = "<";                // No room for file name!
-      len = 1;
-    } else {
-      int i;
-
-      // Count total number of display cells.
-      int clen = (int)mb_string2cells(p);
-
-      // Find first character that will fit.
-      // Going from start to end is much faster for DBCS.
-      for (i = 0; p[i] != NUL && clen >= this_ru_col - 1;
-           i += utfc_ptr2len(p + i)) {
-        clen -= utf_ptr2cells(p + i);
-      }
-      len = clen;
-      if (i > 0) {
-        p = p + i - 1;
-        *p = '<';
-        len++;
-      }
-    }
-
-    grid_line_start(&default_grid, is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp));
-    const int off = is_stl_global ? 0 : wp->w_wincol;
-
-    int width = grid_line_puts(off, p, -1, attr);
-    grid_line_fill(off + width, off + this_ru_col, fillchar, attr);
-
-    if (get_keymap_str(wp, "<%s>", NameBuff, MAXPATHL)
-        && this_ru_col - len > (int)strlen(NameBuff) + 1) {
-      grid_line_puts(off + this_ru_col - (int)strlen(NameBuff) - 1, NameBuff, -1, attr);
-    }
-
-    win_redr_ruler(wp);
-
-    // Draw the 'showcmd' information if 'showcmdloc' == "statusline".
-    if (p_sc && *p_sloc == 's') {
-      const int sc_width = MIN(10, this_ru_col - len - 2);
-
-      if (sc_width > 0) {
-        grid_line_puts(off + this_ru_col - sc_width - 1, showcmd_buf, sc_width, attr);
-      }
-    }
-
-    grid_line_flush();
+    redraw_custom_statusline(wp);
   }
 
   // May need to draw the character below the vertical separator.
@@ -382,7 +315,13 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       }
     } else {
       opt_idx = kOptStatusline;
+
       stl = ((*wp->w_p_stl != NUL) ? wp->w_p_stl : p_stl);
+      // For back-compat, statusline has a fallback when empty (unlike 'winbar').
+      if (*stl == NUL) {
+        stl = statusline_default_fmt();
+      }
+
       opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
     }
 
