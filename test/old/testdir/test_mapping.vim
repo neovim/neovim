@@ -88,7 +88,7 @@ func Test_abclear_buffer()
         \        .. "!  foo           foobar", execute('abbrev'))
 
   abclear
-   call assert_equal("\n\nNo abbreviation found", execute('abbrev'))
+  call assert_equal("\n\nNo abbreviation found", execute('abbrev'))
 
   %bwipe
 endfunc
