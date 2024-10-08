@@ -461,7 +461,9 @@ local function trigger(bufnr, clients)
       end
     end
     local start_col = (server_start_boundary or word_boundary) + 1
-    vim.fn.complete(start_col, matches)
+    vim.schedule(function()
+      vim.fn.complete(start_col, matches)
+    end)
   end)
 
   table.insert(Context.pending_requests, cancel_request)
