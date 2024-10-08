@@ -14,8 +14,9 @@ If you are new to Vim, try the 30-minute tutorial: >vim
     :Tutor<Enter>
 
 Nvim is emphatically a fork of Vim, not a clone: compatibility with Vim
-(especially editor and Vimscript features) is maintained where possible. See
-|vim-differences| for the complete reference of differences from Vim.
+(especially editor and Vimscript features, except |Vim9script|) is maintained
+where possible. See |vim-differences| for the complete reference of
+differences from Vim.
 
                                       Type |gO| to see the table of contents.
 

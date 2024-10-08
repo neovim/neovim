@@ -686,7 +686,7 @@ Cscope:
   https://github.com/dhananjaylatkar/cscope_maps.nvim
 
 Eval:
-- Vim9script
+- *Vim9script* (the Vim 9+ flavor of Vimscript) is not supported.
 - *cscope_connection()*
 - *err_teapot()*
 - *js_encode()*

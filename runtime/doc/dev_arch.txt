@@ -46,11 +46,11 @@ Remember to bump NVIM_API_LEVEL if it wasn't already during this development
 cycle.
 
 Other references:
-* |msgpack-rpc|
-* |ui|
-* https://github.com/neovim/neovim/pull/3246
-* https://github.com/neovim/neovim/pull/18375
-* https://github.com/neovim/neovim/pull/21605
+- |msgpack-rpc|
+- |ui|
+- https://github.com/neovim/neovim/pull/3246
+- https://github.com/neovim/neovim/pull/18375
+- https://github.com/neovim/neovim/pull/21605
 
 
 
