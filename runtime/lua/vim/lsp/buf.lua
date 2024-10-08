@@ -438,11 +438,59 @@ end
 ---@param opts? vim.lsp.ListOpts
 function M.references(context, opts)
   validate('context', context, 'table', true)
-  local params = util.make_position_params()
-  params.context = context or {
-    includeDeclaration = true,
-  }
-  request_with_opts(ms.textDocument_references, params, opts)
+  local clients = vim.lsp.get_clients({ method = ms.textDocument_references })
+  if not next(clients) then
+    return
+  end
+  local win = api.nvim_get_current_win()
+  local bufnr = api.nvim_get_current_buf()
+  opts = opts or {}
+
+  local all_items = {}
+  local title = 'References'
+
+  local function on_done()
+    if not next(all_items) then
+      vim.notify('No references found')
+    else
+      local list = {
+        title = title,
+        items = all_items,
+        context = {
+          method = ms.textDocument_references,
+          bufnr = bufnr,
+        },
+      }
+      if opts.loclist then
+        vim.fn.setloclist(0, {}, ' ', list)
+        vim.cmd.lopen()
+      elseif opts.on_list then
+        assert(vim.is_callable(opts.on_list), 'on_list is not a function')
+        opts.on_list(list)
+      else
+        vim.fn.setqflist({}, ' ', list)
+        vim.cmd('botright copen')
+      end
+    end
+  end
+
+  local remaining = #clients
+  for _, client in ipairs(clients) do
+    local params = util.make_position_params(win, client.offset_encoding)
+
+    ---@diagnostic disable-next-line: inject-field
+    params.context = context or {
+      includeDeclaration = true,
+    }
+    client.request(ms.textDocument_references, params, function(_, result)
+      local items = util.locations_to_items(result or {}, client.offset_encoding)
+      vim.list_extend(all_items, items)
+      remaining = remaining - 1
+      if remaining == 0 then
+        on_done()
+      end
+    end)
+  end
 end
 
 --- Lists all symbols in the current buffer in the quickfix window.
