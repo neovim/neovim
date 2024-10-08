@@ -741,7 +741,7 @@ describe('vim.lsp.completion: integration', function()
       items = {
         {
           label = 'hello',
-          insertText = "${1:hello} friends",
+          insertText = '${1:hello} friends',
           insertTextFormat = 2,
         },
       },
@@ -752,18 +752,29 @@ describe('vim.lsp.completion: integration', function()
     create_server(completion_list)
     feed('i world<esc>0ih<c-x><c-o>')
     retry(nil, nil, function()
-      eq(1, exec_lua(function() return vim.fn.pumvisible() end))
+      eq(
+        1,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
     end)
     feed('<C-n><C-y>')
-    eq({true, {"hello friends world"}}, exec_lua(function()
-      return {
-        vim.snippet.active({ direction = 1}),
-        vim.api.nvim_buf_get_lines(0, 0, -1, true)
-      }
-    end))
+    eq(
+      { true, { 'hello friends world' } },
+      exec_lua(function()
+        return {
+          vim.snippet.active({ direction = 1 }),
+          vim.api.nvim_buf_get_lines(0, 0, -1, true),
+        }
+      end)
+    )
     feed('<tab>')
-    eq(#"hello friends", exec_lua(function()
-      return vim.api.nvim_win_get_cursor(0)[2]
-    end))
+    eq(
+      #'hello friends',
+      exec_lua(function()
+        return vim.api.nvim_win_get_cursor(0)[2]
+      end)
+    )
   end)
 end)
