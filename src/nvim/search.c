@@ -380,6 +380,11 @@ char *last_search_pattern(void)
   return spats[RE_SEARCH].pat;
 }
 
+size_t last_search_pattern_len(void)
+{
+  return spats[RE_SEARCH].patlen;
+}
+
 /// Return true when case should be ignored for search pattern "pat".
 /// Uses the 'ignorecase' and 'smartcase' options.
 int ignorecase(char *pat)
