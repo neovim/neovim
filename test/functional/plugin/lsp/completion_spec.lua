@@ -472,23 +472,18 @@ describe('vim.lsp.completion: item conversion', function()
 end)
 
 --- @param completion_result lsp.CompletionList
---- @param resolve_result lsp.CompletionItem?
 --- @return integer
-local function create_server(completion_result, resolve_result)
+local function create_server(completion_result)
   return exec_lua(function()
     local server = _G._create_server({
       capabilities = {
         completionProvider = {
           triggerCharacters = { '.' },
-          resolveProvider = (resolve_result ~= nil),
         },
       },
       handlers = {
         ['textDocument/completion'] = function(_, _, callback)
           callback(nil, completion_result)
-        end,
-        ['completionItem/resolve'] = function(_, _, callback)
-          callback(nil, resolve_result)
         end,
       },
     })
@@ -741,68 +736,34 @@ describe('vim.lsp.completion: integration', function()
   after_each(clear)
 
   it('puts cursor at the end of completed word', function()
-    local line = ('vim._with({%s|}, f)'):format('noau')
-    local completed_word = 'noautocmd'
-
-    local completion_item = {
-      insertText = completed_word,
-      insertTextFormat = 2, -- vim.lsp.protocol.InsertTextFormat.Snippet
-      label = completed_word,
-    }
-
     local completion_list = {
       isIncomplete = false,
-      items = { completion_item },
+      items = {
+        {
+          label = 'hello',
+          insertText = "${1:hello} friends",
+          insertTextFormat = 2,
+        },
+      },
     }
-
-    local initial_cursor_col = line:find('|') - 1
-    line = line:gsub('|', '')
-    local line_to_cursor = line:sub(1, initial_cursor_col)
-    local word_start = exec_lua(function()
-      return vim.fn.match(line_to_cursor, '\\k*$')
-    end)
-
     exec_lua(function()
-      vim.api.nvim_create_autocmd('CompleteDone', {
-        callback = function()
-          vim.v.completed_item = {
-            user_data = {
-              nvim = {
-                lsp = {
-                  client_id = vim.tbl_keys(vim.lsp.get_clients({ name = 'dummy' }))[1],
-                  completion_item = completion_item,
-                },
-              },
-            },
-            word = completed_word,
-          }
-        end,
-      })
+      vim.o.completeopt = 'menuone,noselect'
     end)
-
-    local expected_cursor_column = word_start + #completed_word
-
-    create_server(completion_list, completion_item)
-    eq(
-      1,
-      exec_lua(function()
-        return #vim.lsp.get_clients()
-      end)
-    )
-
-    feed('i' .. line)
-
-    exec_lua(function()
-      vim.api.nvim_win_set_cursor(0, { 1, initial_cursor_col })
-      vim.lsp.completion.trigger()
+    create_server(completion_list)
+    feed('i world<esc>0ih<c-x><c-o>')
+    retry(nil, nil, function()
+      eq(1, exec_lua(function() return vim.fn.pumvisible() end))
     end)
-
-    feed('<C-x><C-o><C-y>')
-
-    local cursor_column = exec_lua(function()
+    feed('<C-n><C-y>')
+    eq({true, {"hello friends world"}}, exec_lua(function()
+      return {
+        vim.snippet.active({ direction = 1}),
+        vim.api.nvim_buf_get_lines(0, 0, -1, true)
+      }
+    end))
+    feed('<tab>')
+    eq(#"hello friends", exec_lua(function()
       return vim.api.nvim_win_get_cursor(0)[2]
-    end)
-
-    eq(expected_cursor_column, cursor_column)
+    end))
   end)
 end)
