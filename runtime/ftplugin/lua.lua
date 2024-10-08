@@ -1,3 +1,7 @@
+if vim.b.did_ftplugin == 1 then
+  return
+end
+
 -- use treesitter over syntax
 vim.treesitter.start()
 

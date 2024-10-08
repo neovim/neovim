@@ -1,3 +1,7 @@
+if vim.b.did_ftplugin == 1 then
+  return
+end
+
 -- These are the default option values in Vim, but not in Nvim, so must be set explicitly.
 vim.bo.commentstring = '// %s'
 vim.bo.define = '^\\s*#\\s*define'
