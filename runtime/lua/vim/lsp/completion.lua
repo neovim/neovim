@@ -586,6 +586,7 @@ local function on_complete_done()
       apply_snippet_and_command()
     end, bufnr)
   else
+    clear_word()
     apply_snippet_and_command()
   end
 end
