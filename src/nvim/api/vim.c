@@ -2090,6 +2090,11 @@ Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena,
 {
   Dict result = ARRAY_DICT_INIT;
 
+  if (str.size == 0) {
+    str.data = statusline_default_fmt();
+    str.size = strlen(str.data);
+  }
+
   int maxwidth;
   schar_T fillchar = 0;
   int statuscol_lnum = 0;
