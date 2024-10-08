@@ -1413,6 +1413,8 @@ completion can be enabled:
 	-complete=runtime	file and directory names in |'runtimepath'|
 	-complete=scriptnames	sourced script names
 	-complete=shellcmd	Shell command
+	-complete=shellcmdline	First is a shell command and subsequent ones
+				are filenames. The same behavior as |:!cmd|
 	-complete=sign		|:sign| suboptions
 	-complete=syntax	syntax file names |'syntax'|
 	-complete=syntime	|:syntime| suboptions
