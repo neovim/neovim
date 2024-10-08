@@ -554,11 +554,8 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return '' -- Spurious "===" or "---" in the help doc.
     end
 
-    -- Use the first *tag* node as the heading anchor, if any.
-    local tagnode = first(heading_node, 'tag')
-    -- Use the *tag* as the heading anchor id, if possible.
-    local tagname = tagnode and url_encode(trim(node_text(tagnode:child(1), false)))
-      or to_heading_tag(hname)
+    -- Generate an anchor id from the heading text.
+    local tagname = to_heading_tag(hname)
     if node_name == 'h1' or #headings == 0 then
       ---@type nvim.gen_help_html.heading
       local heading = { name = hname, subheadings = {}, tag = tagname }
@@ -678,7 +675,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       table.insert(stats.first_tags, tagname)
       return ''
     end
-    local el = in_heading and 'span' or 'code'
+    local el = 'span'
     local encoded_tagname = url_encode(tagname)
     local s = ('%s<%s id="%s" class="%s"><a href="#%s">%s</a></%s>'):format(
       ws(),
@@ -694,15 +691,6 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
 
     if in_heading and prev ~= 'tag' then
-      -- Don't set "id", let the heading use the tag as its "id" (used by search engines).
-      s = ('%s<%s class="%s"><a href="#%s">%s</a></%s>'):format(
-        ws(),
-        el,
-        cssclass,
-        encoded_tagname,
-        trimmed,
-        el
-      )
       -- Start the <span> container for tags in a heading.
       -- This makes "justify-content:space-between" right-align the tags.
       --    <h2>foo bar<span>tag1 tag2</span></h2>
@@ -957,7 +945,7 @@ local function gen_one(fname, text, to_fname, old, commit, parser_path)
 
   <div class="container golden-grid help-body">
   <div class="col-wide">
-  <a name="%s"></a><h1 id="%s">%s</h1>
+  <a name="%s" href="#%s"><h1 id="%s">%s</h1></a>
   <p>
     <i>
     Nvim <code>:help</code> pages, <a href="https://github.com/neovim/neovim/blob/master/scripts/gen_help_html.lua">generated</a>
@@ -970,8 +958,9 @@ local function gen_one(fname, text, to_fname, old, commit, parser_path)
   </div>
   ]]):format(
     logo_svg,
-    stats.first_tags[2] or '',
     stats.first_tags[1] or '',
+    stats.first_tags[2] or '',
+    stats.first_tags[2] or '',
     title,
     vim.fs.basename(fname),
     main
