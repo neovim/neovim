@@ -337,7 +337,7 @@ preference):
     way. Advantage is that propagation happens for free and it's harder to
     accidentally swallow errors. (E.g. using
     `uv_handle/pipe:write()` without checking return values is common.)
-4. `on_error` parameter
+4. `on_error` callback
   - For async and "visitors" traversing a graph, where many errors may be
     collected while work continues.
 5. `vim.notify` (sometimes with optional `opts.silent` (async, visitors ^))
