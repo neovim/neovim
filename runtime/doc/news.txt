@@ -235,6 +235,9 @@ UI
   globally set this, you can override vim.ui.open using the same approach
   described at |vim.paste()|.
 
+• |complete_info()| returns a `pum_matches` item to indicate which items are put
+  in the |ins-completion-menu|.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
