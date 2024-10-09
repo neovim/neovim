@@ -274,10 +274,8 @@ vim.go = setmetatable({}, {
 })
 
 --- Get or set buffer-scoped |options| for the buffer with number {bufnr}.
---- If {bufnr} is omitted then the current buffer is used.
+--- Like `:setlocal`. If {bufnr} is omitted then the current buffer is used.
 --- Invalid {bufnr} or key is an error.
----
---- Note: this is equivalent to `:setlocal` for |global-local| options and `:set` otherwise.
 ---
 --- Example:
 ---

@@ -1464,12 +1464,9 @@ Option:remove({value})                                      *vim.opt:remove()*
       • {value}  (`string`) Value to remove
 
 vim.bo[{bufnr}]                                                       *vim.bo*
-    Get or set buffer-scoped |options| for the buffer with number {bufnr}. If
-    {bufnr} is omitted then the current buffer is used. Invalid {bufnr} or key
-    is an error.
-
-    Note: this is equivalent to `:setlocal` for |global-local| options and
-    `:set` otherwise.
+    Get or set buffer-scoped |options| for the buffer with number {bufnr}.
+    Like `:setlocal`. If {bufnr} is omitted then the current buffer is used.
+    Invalid {bufnr} or key is an error.
 
     Example: >lua
         local bufnr = vim.api.nvim_get_current_buf()
