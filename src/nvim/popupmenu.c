@@ -733,8 +733,7 @@ void pum_redraw(void)
             }
 
             if (attrs != NULL) {
-              xfree(attrs);
-              attrs = NULL;
+              XFREE_CLEAR(attrs);
             }
 
             if (*p != TAB) {
@@ -743,10 +742,10 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (pum_rl) {
-              grid_line_puts(grid_col - 1, "  ", 2, orig_attr);
+              grid_line_puts(grid_col - 1, "  ", 2, attr);
               grid_col -= 2;
             } else {
-              grid_line_puts(grid_col, "  ", 2, orig_attr);
+              grid_line_puts(grid_col, "  ", 2, attr);
               grid_col += 2;
             }
             totwidth += 2;
@@ -777,10 +776,12 @@ void pum_redraw(void)
       }
 
       if (pum_rl) {
-        grid_line_fill(col_off - basic_width - n + 1, grid_col + 1, schar_from_ascii(' '), attr);
+        grid_line_fill(col_off - basic_width - n + 1, grid_col + 1,
+                       schar_from_ascii(' '), orig_attr);
         grid_col = col_off - basic_width - n;
       } else {
-        grid_line_fill(grid_col, col_off + basic_width + n, schar_from_ascii(' '), orig_attr);
+        grid_line_fill(grid_col, col_off + basic_width + n,
+                       schar_from_ascii(' '), orig_attr);
         grid_col = col_off + basic_width + n;
       }
       totwidth = basic_width + n;
