@@ -68,6 +68,12 @@ vim.log = {
   },
 }
 
+local utfs = {
+  ['utf-8'] = true,
+  ['utf-16'] = true,
+  ['utf-32'] = true,
+}
+
 -- TODO(lewis6991): document that the signature is system({cmd}, [{opts},] {on_exit})
 --- Runs a system command or throws an error if {cmd} cannot be run.
 ---
@@ -712,6 +718,60 @@ function vim._on_key(buf, typed_buf)
       )
     )
   end
+end
+
+--- Convert UTF-32, UTF-16 or UTF-8 {index} to byte index.
+--- If {strict_indexing} is false
+--- then then an out of range index will return byte length
+--- instead of throwing an error.
+---
+--- Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|.
+--- An {index} in the middle of a UTF-16 sequence is rounded upwards to
+--- the end of that sequence.
+---@param s string
+---@param encoding "utf-8"|"utf-16"|"utf-32"
+---@param index integer
+---@param strict_indexing? boolean # default: true
+---@return integer
+function vim.str_byteindex(s, encoding, index, strict_indexing)
+  if type(encoding) == 'number' then
+    -- Legacy support for old API
+    -- Parameters: ~
+    --   • {str}        (`string`)
+    --   • {index}      (`integer`)
+    --   • {use_utf16}  (`boolean?`)
+    local old_index = encoding
+    local use_utf16 = index or false
+    return vim.__str_byteindex(s, old_index, use_utf16) or error('index out of range')
+  end
+
+  vim.validate('s', s, 'string')
+  vim.validate('index', index, 'number')
+
+  local len = #s
+
+  if index == 0 or len == 0 then
+    return 0
+  end
+
+  vim.validate('encoding', encoding, function(v)
+    return utfs[v], 'invalid encoding'
+  end)
+
+  vim.validate('strict_indexing', strict_indexing, 'boolean', true)
+  if strict_indexing == nil then
+    strict_indexing = true
+  end
+
+  if encoding == 'utf-8' then
+    if index > len then
+      return strict_indexing and error('index out of range') or len
+    end
+    return index
+  end
+  return vim.__str_byteindex(s, index, encoding == 'utf-16')
+    or strict_indexing and error('index out of range')
+    or len
 end
 
 --- Generates a list of possible completions for the string.
