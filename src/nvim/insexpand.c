@@ -164,7 +164,7 @@ struct compl_S {
   int cp_flags;                  ///< CP_ values
   int cp_number;                 ///< sequence number
   int cp_score;                  ///< fuzzy match score
-  int cp_user_abbr_hlattr;       ///< highlight attribute to combine with for abbr
+  int cp_user_abbr_hlattr;       ///< highlight attribute for abbr
   int cp_user_kind_hlattr;       ///< highlight attribute for kind
 };
 
