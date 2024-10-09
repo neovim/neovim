@@ -97,8 +97,7 @@ end
 local function reset(state, screen)
   if state then
     vterm.vterm_state_reset(state, 1)
-    local state_pos = t.ffi.new('VTermPos')
-    vterm.vterm_state_get_cursorpos(state, state_pos)
+    vterm.vterm_state_get_cursorpos(state, vterm.state_pos)
   end
   if screen then
     vterm.vterm_screen_reset(screen, 1)
@@ -116,6 +115,13 @@ local function expect(expected)
 
   vim.fs.rm(test_output_file)
   t.eq(expected .. '\n', actual)
+end
+
+local function cursor(row, col, state)
+  local pos = t.ffi.new('VTermPos')
+  vterm.vterm_state_get_cursorpos(state, pos)
+  t.eq(row, pos.row)
+  t.eq(col, pos.col)
 end
 
 describe('vterm', function()
@@ -443,7 +449,233 @@ describe('vterm', function()
     expect('putglyph 41 1 0,0\nputglyph 42 1 0,1 prot\nputglyph 43 1 0,2')
   end)
 
-  pending('11state_movecursor', function() end)
+  itp('11state_movecursor', function()
+    local vt = init()
+    vterm.vterm_set_utf8(vt, true)
+    local state = wantstate(vt, '')
+
+    -- Implicit
+    push('ABC', vt)
+    cursor(0, 3, state)
+
+    -- Backspace
+    push('\b', vt)
+    cursor(0, 2, state)
+    -- Horizontal Tab
+    push('\t', vt)
+    cursor(0, 8, state)
+    -- Carriage Return
+    push('\r', vt)
+    cursor(0, 0, state)
+    -- Linefeed
+    push('\n', vt)
+    cursor(1, 0, state)
+
+    -- Backspace bounded by lefthand edge
+    push('\x1b[4;2H', vt)
+    cursor(3, 1, state)
+    push('\b', vt)
+    cursor(3, 0, state)
+    push('\b', vt)
+    cursor(3, 0, state)
+
+    -- Backspace cancels phantom
+    push('\x1b[4;80H', vt)
+    cursor(3, 79, state)
+    push('X', vt)
+    cursor(3, 79, state)
+    push('\b', vt)
+    cursor(3, 78, state)
+
+    -- HT bounded by righthand edge
+    push('\x1b[1;78H', vt)
+    cursor(0, 77, state)
+    push('\t', vt)
+    cursor(0, 79, state)
+    push('\t', vt)
+    cursor(0, 79, state)
+
+    reset(state, nil)
+
+    -- Index
+    push('ABC\x1bD', vt)
+    cursor(1, 3, state)
+    -- Reverse Index
+    push('\x1bM', vt)
+    cursor(0, 3, state)
+    -- Newline
+    push('\x1bE', vt)
+    cursor(1, 0, state)
+
+    reset(state, nil)
+
+    -- Cursor Forward
+    push('\x1b[B', vt)
+    cursor(1, 0, state)
+    push('\x1b[3B', vt)
+    cursor(4, 0, state)
+    push('\x1b[0B', vt)
+    cursor(5, 0, state)
+
+    -- Cursor Down
+    push('\x1b[C', vt)
+    cursor(5, 1, state)
+    push('\x1b[3C', vt)
+    cursor(5, 4, state)
+    push('\x1b[0C', vt)
+    cursor(5, 5, state)
+
+    -- Cursor Up
+    push('\x1b[A', vt)
+    cursor(4, 5, state)
+    push('\x1b[3A', vt)
+    cursor(1, 5, state)
+    push('\x1b[0A', vt)
+    cursor(0, 5, state)
+
+    -- Cursor Backward
+    push('\x1b[D', vt)
+    cursor(0, 4, state)
+    push('\x1b[3D', vt)
+    cursor(0, 1, state)
+    push('\x1b[0D', vt)
+    cursor(0, 0, state)
+
+    -- Cursor Next Line
+    push('   ', vt)
+    cursor(0, 3, state)
+    push('\x1b[E', vt)
+    cursor(1, 0, state)
+    push('   ', vt)
+    cursor(1, 3, state)
+    push('\x1b[2E', vt)
+    cursor(3, 0, state)
+    push('\x1b[0E', vt)
+    cursor(4, 0, state)
+
+    -- Cursor Previous Line
+    push('   ', vt)
+    cursor(4, 3, state)
+    push('\x1b[F', vt)
+    cursor(3, 0, state)
+    push('   ', vt)
+    cursor(3, 3, state)
+    push('\x1b[2F', vt)
+    cursor(1, 0, state)
+    push('\x1b[0F', vt)
+    cursor(0, 0, state)
+
+    -- Cursor Horizonal Absolute
+    push('\n', vt)
+    cursor(1, 0, state)
+    push('\x1b[20G', vt)
+    cursor(1, 19, state)
+    push('\x1b[G', vt)
+    cursor(1, 0, state)
+
+    -- Cursor Position
+    push('\x1b[10;5H', vt)
+    cursor(9, 4, state)
+    push('\x1b[8H', vt)
+    cursor(7, 0, state)
+    push('\x1b[H', vt)
+    cursor(0, 0, state)
+
+    -- Cursor Position cancels phantom
+    push('\x1b[10;78H', vt)
+    cursor(9, 77, state)
+    push('ABC', vt)
+    cursor(9, 79, state)
+    push('\x1b[10;80H', vt)
+    push('C', vt)
+    cursor(9, 79, state)
+    push('X', vt)
+    cursor(10, 1, state)
+
+    reset(state, nil)
+
+    -- Bounds Checking
+    push('\x1b[A', vt)
+    cursor(0, 0, state)
+    push('\x1b[D', vt)
+    cursor(0, 0, state)
+    push('\x1b[25;80H', vt)
+    cursor(24, 79, state)
+    push('\x1b[B', vt)
+    cursor(24, 79, state)
+    push('\x1b[C', vt)
+    cursor(24, 79, state)
+    push('\x1b[E', vt)
+    cursor(24, 0, state)
+    push('\x1b[H', vt)
+    cursor(0, 0, state)
+    push('\x1b[F', vt)
+    cursor(0, 0, state)
+    push('\x1b[999G', vt)
+    cursor(0, 79, state)
+    push('\x1b[99;99H', vt)
+    cursor(24, 79, state)
+
+    reset(state, nil)
+
+    -- Horizontal Position Absolute
+    push('\x1b[5`', vt)
+    cursor(0, 4, state)
+
+    -- Horizontal Position Relative
+    push('\x1b[3a', vt)
+    cursor(0, 7, state)
+
+    -- Horizontal Position Backward
+    push('\x1b[3j', vt)
+    cursor(0, 4, state)
+
+    -- Horizontal and Vertical Position
+    push('\x1b[3;3f', vt)
+    cursor(2, 2, state)
+
+    -- Vertical Position Absolute
+    push('\x1b[5d', vt)
+    cursor(4, 2, state)
+
+    -- Vertical Position Relative
+    push('\x1b[2e', vt)
+    cursor(6, 2, state)
+
+    -- Vertical Position Backward
+    push('\x1b[2k', vt)
+    cursor(4, 2, state)
+
+    reset(state, nil)
+
+    -- Horizontal Tab
+    push('\t', vt)
+    cursor(0, 8, state)
+    push('   ', vt)
+    cursor(0, 11, state)
+    push('\t', vt)
+    cursor(0, 16, state)
+    push('       ', vt)
+    cursor(0, 23, state)
+    push('\t', vt)
+    cursor(0, 24, state)
+    push('        ', vt)
+    cursor(0, 32, state)
+    push('\t', vt)
+    cursor(0, 40, state)
+
+    -- Cursor Horizontal Tab
+    push('\x1b[I', vt)
+    cursor(0, 48, state)
+    push('\x1b[2I', vt)
+    cursor(0, 64, state)
+
+    -- Cursor Backward Tab
+    push('\x1b[Z', vt)
+    cursor(0, 56, state)
+    push('\x1b[2Z', vt)
+    cursor(0, 40, state)
+  end)
   pending('12state_scroll', function() end)
   pending('13state_edit', function() end)
 
