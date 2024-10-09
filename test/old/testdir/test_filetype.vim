@@ -477,6 +477,7 @@ func s:GetFilenameChecks() abort
     \ 'mgp': ['file.mgp'],
     \ 'mib': ['file.mib', 'file.my'],
     \ 'mix': ['file.mix', 'file.mixal'],
+    \ 'mlir': ['file.mlir'],
     \ 'mma': ['file.nb', 'file.wl'],
     \ 'mmp': ['file.mmp'],
     \ 'modconf': ['/etc/modules.conf', '/etc/modules', '/etc/conf.modules', '/etc/modprobe.file', 'any/etc/conf.modules', 'any/etc/modprobe.file', 'any/etc/modules', 'any/etc/modules.conf'],
