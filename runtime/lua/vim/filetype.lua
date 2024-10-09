@@ -752,6 +752,7 @@ local extension = {
   mib = 'mib',
   mix = 'mix',
   mixal = 'mix',
+  mlir = 'mlir',
   mm = detect.mm,
   nb = 'mma',
   wl = 'mma',
