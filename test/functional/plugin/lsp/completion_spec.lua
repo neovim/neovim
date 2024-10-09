@@ -320,7 +320,7 @@ describe('vim.lsp.completion: item conversion', function()
       info = '',
       kind = 'Module',
       menu = '',
-      hl_group = '',
+      abbr_hlgroup = '',
       word = 'this_thread',
     }
     local result = complete('  std::this|', completion_list)
@@ -376,7 +376,7 @@ describe('vim.lsp.completion: item conversion', function()
       info = '',
       kind = 'Module',
       menu = '',
-      hl_group = '',
+      abbr_hlgroup = '',
       word = 'this_thread',
     }
     local result = complete('  std::this|is', completion_list)
@@ -570,7 +570,7 @@ describe('vim.lsp.completion: protocol', function()
           info = '',
           kind = 'Unknown',
           menu = '',
-          hl_group = '',
+          abbr_hlgroup = '',
           user_data = {
             nvim = {
               lsp = {
@@ -591,7 +591,7 @@ describe('vim.lsp.completion: protocol', function()
           info = '',
           kind = 'Unknown',
           menu = '',
-          hl_group = 'DiagnosticDeprecated',
+          abbr_hlgroup = 'DiagnosticDeprecated',
           user_data = {
             nvim = {
               lsp = {
@@ -613,7 +613,7 @@ describe('vim.lsp.completion: protocol', function()
           info = '',
           kind = 'Unknown',
           menu = '',
-          hl_group = 'DiagnosticDeprecated',
+          abbr_hlgroup = 'DiagnosticDeprecated',
           user_data = {
             nvim = {
               lsp = {

@@ -654,11 +654,14 @@ void pum_redraw(void)
       int item_type = order[j];
       hlf = hlfs[item_type];
       attr = win_hl_attr(curwin, (int)hlf);
-      if (pum_array[idx].pum_user_hlattr > 0) {
-        attr = hl_combine_attr(attr, pum_array[idx].pum_user_hlattr);
+      int orig_attr = attr;
+      int user_abbr_hlattr = pum_array[idx].pum_user_abbr_hlattr;
+      int user_kind_hlattr = pum_array[idx].pum_user_kind_hlattr;
+      if (item_type == CPT_ABBR && user_abbr_hlattr > 0) {
+        attr = hl_combine_attr(attr, user_abbr_hlattr);
       }
-      if (item_type == CPT_KIND && pum_array[idx].pum_user_kind_hlattr > 0) {
-        attr = hl_combine_attr(attr, pum_array[idx].pum_user_kind_hlattr);
+      if (item_type == CPT_KIND && user_kind_hlattr > 0) {
+        attr = hl_combine_attr(attr, user_kind_hlattr);
       }
       int width = 0;
       char *s = NULL;
@@ -684,8 +687,10 @@ void pum_redraw(void)
               *p = saved;
             }
 
-            int user_hlattr = pum_array[idx].pum_user_hlattr;
-            int *attrs = pum_compute_text_attrs(st, hlf, user_hlattr);
+            int *attrs = NULL;
+            if (item_type == CPT_ABBR) {
+              attrs = pum_compute_text_attrs(st, hlf, user_abbr_hlattr);
+            }
 
             if (pum_rl) {
               char *rt = reverse_text(st);
@@ -727,7 +732,10 @@ void pum_redraw(void)
               grid_col += width;
             }
 
-            xfree(attrs);
+            if (attrs != NULL) {
+              xfree(attrs);
+              attrs = NULL;
+            }
 
             if (*p != TAB) {
               break;
@@ -735,10 +743,10 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (pum_rl) {
-              grid_line_puts(grid_col - 1, "  ", 2, attr);
+              grid_line_puts(grid_col - 1, "  ", 2, orig_attr);
               grid_col -= 2;
             } else {
-              grid_line_puts(grid_col, "  ", 2, attr);
+              grid_line_puts(grid_col, "  ", 2, orig_attr);
               grid_col += 2;
             }
             totwidth += 2;
@@ -772,7 +780,7 @@ void pum_redraw(void)
         grid_line_fill(col_off - basic_width - n + 1, grid_col + 1, schar_from_ascii(' '), attr);
         grid_col = col_off - basic_width - n;
       } else {
-        grid_line_fill(grid_col, col_off + basic_width + n, schar_from_ascii(' '), attr);
+        grid_line_fill(grid_col, col_off + basic_width + n, schar_from_ascii(' '), orig_attr);
         grid_col = col_off + basic_width + n;
       }
       totwidth = basic_width + n;
