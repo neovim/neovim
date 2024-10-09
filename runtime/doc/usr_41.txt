@@ -906,6 +906,8 @@ Buffers, windows and the argument list:
 	swapname()		get the swap file path of a buffer
 
 Command line:					*command-line-functions*
+	getcmdcomplpat()	get completion pattern of the current command
+				line
 	getcmdcompltype()	get the type of the current command line
 				completion
 	getcmdline()		get the current command line input
