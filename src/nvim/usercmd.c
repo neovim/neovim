@@ -91,6 +91,7 @@ static const char *command_complete[] = {
   [EXPAND_PACKADD] = "packadd",
   [EXPAND_RUNTIME] = "runtime",
   [EXPAND_SHELLCMD] = "shellcmd",
+  [EXPAND_SHELLCMDLINE] = "shellcmdline",
   [EXPAND_SIGN] = "sign",
   [EXPAND_TAGS] = "tag",
   [EXPAND_TAGS_LISTFILES] = "tag_listfiles",
@@ -285,8 +286,7 @@ const char *set_context_in_user_cmdarg(const char *cmd FUNC_ATTR_UNUSED, const c
   }
 
   if (argt & EX_XFILE) {
-    // EX_XFILE: file names are handled above.
-    xp->xp_context = context;
+    // EX_XFILE: file names are handled before this call.
     return NULL;
   }
 
@@ -675,7 +675,8 @@ int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, 
       *complp = i;
       if (i == EXPAND_BUFFERS) {
         *argt |= EX_BUFNAME;
-      } else if (i == EXPAND_DIRECTORIES || i == EXPAND_FILES) {
+      } else if (i == EXPAND_DIRECTORIES || i == EXPAND_FILES
+                 || i == EXPAND_SHELLCMDLINE) {
         *argt |= EX_XFILE;
       }
       break;

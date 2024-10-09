@@ -2879,12 +2879,22 @@ function vim.fn.getcharsearch() end
 --- @return string
 function vim.fn.getcharstr(expr) end
 
+--- Return completion pattern of the current command-line.
+--- Only works when the command line is being edited, thus
+--- requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+--- Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
+--- |getcmdprompt()|, |getcmdcompltype()| and |setcmdline()|.
+--- Returns an empty string when completion is not defined.
+---
+--- @return string
+function vim.fn.getcmdcomplpat() end
+
 --- Return the type of the current command-line completion.
 --- Only works when the command line is being edited, thus
 --- requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
 --- See |:command-completion| for the return string.
 --- Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
---- |getcmdprompt()| and |setcmdline()|.
+--- |getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
 --- Returns an empty string when completion is not defined.
 ---
 --- @return string
