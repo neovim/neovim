@@ -1,13 +1,14 @@
 " Vim syntax file
 " Language:		SKILL
 " Maintainer:	Toby Schaffer <jtschaff@eos.ncsu.edu>
-" Last Change:	2003 May 11
 " Comments:		SKILL is a Lisp-like programming language for use in EDA
 "				tools from Cadence Design Systems. It allows you to have
 "				a programming environment within the Cadence environment
 "				that gives you access to the complete tool set and design
 "				database. This file also defines syntax highlighting for
 "				certain Design Framework II interface functions.
+" Last Change:	2003 May 11
+" 2024 Oct 08 by Vim Project: allow double backslashes in skillString
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -509,7 +510,7 @@ syn match skilltechFunctions		"(\(tech\|tc\)\u\a\+\>"hs=s+1
 syn match skilltechFunctions		"\<\(tech\|tc\)\u\a\+("he=e-1
 
 " strings
-syn region skillString				start=+"+ skip=+\\"+ end=+"+
+syn region skillString				start=+"+ skip=+\\\@<!\\"+ end=+"+
 
 syn keyword skillTodo contained		TODO FIXME XXX
 syn keyword skillNote contained		NOTE IMPORTANT
