@@ -62,16 +62,31 @@ typedef enum {
   kNumBaseHexadecimal = 16,
 } NumberBase;
 
-/// @return  default fmt string. If p_ru is set then it changes slightly
+/// @return  fallback fmt string when 'statusline' is empty. Changes if 'rule' is set or if 'showcmdloc=statusline'
 char *statusline_default_fmt(void)
 {
-  static char *fmt = "%<%f %h%m%r";
-  static char *fmt_with_ru = "%<%f %h%m%r%=%-14.(%l,%c%V%) %P";
+  // 'showcmd' information if 'showcmdloc' == "statusline".
+  bool showcmd_in_statusline = p_sc && *p_sloc == 's';
 
-  if (p_ru) {
-    return fmt_with_ru;
+  // The fallback statusline changes depending on the following:
+  // The possible cases are:
+  //  - 'showcmdloc' == "statusline" and 'ruler' is set
+  //  - 'showcmdloc' == "statusline" and 'ruler' is unset
+  //  - 'showcmdloc' != "statusline" and 'ruler' is set
+  //  - 'showcmdloc' != "statusline" and 'ruler' is unset
+
+  if (showcmd_in_statusline) {
+    if (p_ru) {
+      return "%<%f %h%m%r%=%-10(%S%) %-14.(%l,%c%V%) %P";
+    } else {
+      return "%<%f %h%m%r%=%-11(%S%)";
+    }
   } else {
-    return fmt;
+    if (p_ru) {
+      return "%<%f %h%m%r%=%-14.(%l,%c%V%) %P";
+    } else {
+      return "%<%f %h%m%r";
+    }
   }
 }
 
