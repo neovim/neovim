@@ -265,19 +265,25 @@ int tslua_inspect_lang(lua_State *L)
   assert(nsymbols < INT_MAX);
 
   lua_createtable(L, (int)(nsymbols - 1), 1);  // [retval, symbols]
+#define BUFSIZE 256
+  char buf[BUFSIZE];
   for (uint32_t i = 0; i < nsymbols; i++) {
     TSSymbolType t = ts_language_symbol_type(lang, (TSSymbol)i);
     if (t == TSSymbolTypeAuxiliary) {
       // not used by the API
       continue;
     }
-    lua_createtable(L, 2, 0);  // [retval, symbols, elem]
-    lua_pushstring(L, ts_language_symbol_name(lang, (TSSymbol)i));
-    lua_rawseti(L, -2, 1);
-    lua_pushboolean(L, t == TSSymbolTypeRegular);
-    lua_rawseti(L, -2, 2);  // [retval, symbols, elem]
-    lua_rawseti(L, -2, (int)i);  // [retval, symbols]
+    const char *name = ts_language_symbol_name(lang, (TSSymbol)i);
+    bool named = t == TSSymbolTypeRegular;
+    lua_pushboolean(L, named);  // [retval, symbols, is_named]
+    if (!named) {
+      snprintf(buf, BUFSIZE, "\"%s\"", name);
+      lua_setfield(L, -2, buf);  // [retval, symbols]
+    } else {
+      lua_setfield(L, -2, name);  // [retval, symbols]
+    }
   }
+#undef BUFSIZE
 
   lua_setfield(L, -2, "symbols");  // [retval]
 

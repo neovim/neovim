@@ -170,7 +170,12 @@ end
 
 --- Inspects the provided language.
 ---
---- Inspecting provides some useful information on the language like node names, ...
+--- Inspecting provides some useful information on the language like node and field names, ABI
+--- version, and whether the language came from a WASM module.
+---
+--- Node names are returned in a table mapping each node name to a `boolean` indicating whether or
+--- not the node is named (i.e., not anonymous). Anonymous nodes are surrounded with double quotes
+--- (`"`).
 ---
 ---@param lang string Language
 ---@return table
