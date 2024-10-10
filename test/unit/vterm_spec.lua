@@ -55,7 +55,7 @@ local function wantstate(vt, opts)
   state_cbs['setpenattr'] = vterm.state_setpenattr
   state_cbs['settermprop'] = vterm.state_settermprop
   -- state_cbs['setlineinfo'] = vterm.state_setlineinfo
-  -- state_cbs['sb_clear'] = vterm.state_sb_clear
+  state_cbs['sb_clear'] = vterm.state_sb_clear
 
   local selection_cbs = t.ffi.new('VTermSelectionCallbacks')
   selection_cbs['set'] = vterm.selection_set
@@ -68,9 +68,6 @@ local function wantstate(vt, opts)
   vterm.vterm_state_set_bold_highbright(state, 1)
   vterm.vterm_state_reset(state, 1)
 
-  vterm.want_state_erase = opts.e or false
-  vterm.want_state_putglyph = opts.g or false
-
   local fallbacks = t.ffi.new('VTermStateFallbacks')
   fallbacks['control'] = vterm.parser_control
   fallbacks['csi'] = vterm.parser_csi
@@ -79,8 +76,11 @@ local function wantstate(vt, opts)
   fallbacks['apc'] = vterm.parser_apc
   fallbacks['pm'] = vterm.parser_pm
   fallbacks['sos'] = vterm.parser_sos
-  vterm.vterm_state_set_unrecognised_fallbacks(state, opts.f and fallbacks or nil, nil)
 
+  vterm.want_state_scrollback = opts.b or false
+  vterm.want_state_erase = opts.e or false
+  vterm.vterm_state_set_unrecognised_fallbacks(state, opts.f and fallbacks or nil, nil)
+  vterm.want_state_putglyph = opts.g or false
   vterm.want_state_moverect = opts.m or false
   vterm.want_state_settermprop = opts.p or false
   vterm.want_state_scrollrect = opts.s or false
@@ -833,7 +833,305 @@ describe('vterm', function()
     cursor(0, 0, state)
   end)
 
-  pending('13state_edit', function() end)
+  itp('13state_edit', function()
+    local vt = init()
+    vterm.vterm_set_utf8(vt, true)
+    local state = wantstate(vt, { s = true, e = true, b = true })
+
+    -- ICH
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('ACD', vt)
+    push('\x1b[2D', vt)
+    cursor(0, 1, state)
+    push('\x1b[@', vt)
+    expect('scrollrect 0..1,1..80 => +0,-1')
+    cursor(0, 1, state)
+    push('B', vt)
+    cursor(0, 2, state)
+    push('\x1b[3@', vt)
+    expect('scrollrect 0..1,2..80 => +0,-3')
+
+    -- ICH with DECSLRM
+    push('\x1b[?69h', vt)
+    push('\x1b[;50s', vt)
+    push('\x1b[20G\x1b[@', vt)
+    expect('scrollrect 0..1,19..50 => +0,-1')
+
+    -- ICH outside DECSLRM
+    push('\x1b[70G\x1b[@', vt)
+    -- nothing happens
+
+    -- DCH
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('ABBC', vt)
+    push('\x1b[3D', vt)
+    cursor(0, 1, state)
+    push('\x1b[P', vt)
+    expect('scrollrect 0..1,1..80 => +0,+1')
+    cursor(0, 1, state)
+    push('\x1b[3P', vt)
+    expect('scrollrect 0..1,1..80 => +0,+3')
+    cursor(0, 1, state)
+
+    -- DCH with DECSLRM
+    push('\x1b[?69h', vt)
+    push('\x1b[;50s', vt)
+    push('\x1b[20G\x1b[P', vt)
+    expect('scrollrect 0..1,19..50 => +0,+1')
+
+    -- DCH outside DECSLRM
+    push('\x1b[70G\x1b[P', vt)
+    -- nothing happens
+
+    -- ECH
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('ABC', vt)
+    push('\x1b[2D', vt)
+    cursor(0, 1, state)
+    push('\x1b[X', vt)
+    expect('erase 0..1,1..2')
+    cursor(0, 1, state)
+    push('\x1b[3X', vt)
+    expect('erase 0..1,1..4')
+    cursor(0, 1, state)
+    -- ECH more columns than there are should be bounded
+    push('\x1b[100X', vt)
+    expect('erase 0..1,1..80')
+
+    -- IL
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('A\r\nC', vt)
+    cursor(1, 1, state)
+    push('\x1b[L', vt)
+    expect('scrollrect 1..25,0..80 => -1,+0')
+    -- TODO: ECMA-48 says we should move to line home, but neither xterm nor xfce4-terminal do this
+    cursor(1, 1, state)
+    push('\rB', vt)
+    cursor(1, 1, state)
+    push('\x1b[3L', vt)
+    expect('scrollrect 1..25,0..80 => -3,+0')
+
+    -- IL with DECSTBM
+    push('\x1b[5;15r', vt)
+    push('\x1b[5H\x1b[L', vt)
+    expect('scrollrect 4..15,0..80 => -1,+0')
+
+    -- IL outside DECSTBM
+    push('\x1b[20H\x1b[L', vt)
+    -- nothing happens
+
+    -- IL with DECSTBM+DECSLRM
+    push('\x1b[?69h', vt)
+    push('\x1b[10;50s', vt)
+    push('\x1b[5;10H\x1b[L', vt)
+    expect('scrollrect 4..15,9..50 => -1,+0')
+
+    -- DL
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('A\r\nB\r\nB\r\nC', vt)
+    cursor(3, 1, state)
+    push('\x1b[2H', vt)
+    cursor(1, 0, state)
+    push('\x1b[M', vt)
+    expect('scrollrect 1..25,0..80 => +1,+0')
+    cursor(1, 0, state)
+    push('\x1b[3M', vt)
+    expect('scrollrect 1..25,0..80 => +3,+0')
+    cursor(1, 0, state)
+
+    -- DL with DECSTBM
+    push('\x1b[5;15r', vt)
+    push('\x1b[5H\x1b[M', vt)
+    expect('scrollrect 4..15,0..80 => +1,+0')
+
+    -- DL outside DECSTBM
+    push('\x1b[20H\x1b[M', vt)
+    -- nothing happens
+
+    -- DL with DECSTBM+DECSLRM
+    push('\x1b[?69h', vt)
+    push('\x1b[10;50s', vt)
+    push('\x1b[5;10H\x1b[M', vt)
+    expect('scrollrect 4..15,9..50 => +1,+0')
+
+    -- DECIC
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    push("\x1b[20G\x1b[5'}", vt)
+    expect('scrollrect 0..25,19..80 => +0,-5')
+
+    -- DECIC with DECSTBM+DECSLRM
+    push('\x1b[?69h', vt)
+    push('\x1b[4;20r\x1b[20;60s', vt)
+    push("\x1b[4;20H\x1b[3'}", vt)
+    expect('scrollrect 3..20,19..60 => +0,-3')
+
+    -- DECIC outside DECSLRM
+    push("\x1b[70G\x1b['}", vt)
+    -- nothing happens
+
+    -- DECDC
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    push("\x1b[20G\x1b[5'~", vt)
+    expect('scrollrect 0..25,19..80 => +0,+5')
+
+    -- DECDC with DECSTBM+DECSLRM
+    push('\x1b[?69h', vt)
+    push('\x1b[4;20r\x1b[20;60s', vt)
+    push("\x1b[4;20H\x1b[3'~", vt)
+    expect('scrollrect 3..20,19..60 => +0,+3')
+
+    -- DECDC outside DECSLRM
+    push("\x1b[70G\x1b['~", vt)
+    -- nothing happens
+
+    -- EL 0
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('ABCDE', vt)
+    push('\x1b[3D', vt)
+    cursor(0, 2, state)
+    push('\x1b[0K', vt)
+    expect('erase 0..1,2..80')
+    cursor(0, 2, state)
+
+    -- EL 1
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('ABCDE', vt)
+    push('\x1b[3D', vt)
+    cursor(0, 2, state)
+    push('\x1b[1K', vt)
+    expect('erase 0..1,0..3')
+    cursor(0, 2, state)
+
+    -- EL 2
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('ABCDE', vt)
+    push('\x1b[3D', vt)
+    cursor(0, 2, state)
+    push('\x1b[2K', vt)
+    expect('erase 0..1,0..80')
+    cursor(0, 2, state)
+
+    -- SEL
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('\x1b[11G', vt)
+    cursor(0, 10, state)
+    push('\x1b[?0K', vt)
+    expect('erase 0..1,10..80 selective')
+    cursor(0, 10, state)
+    push('\x1b[?1K', vt)
+    expect('erase 0..1,0..11 selective')
+    cursor(0, 10, state)
+    push('\x1b[?2K', vt)
+    expect('erase 0..1,0..80 selective')
+    cursor(0, 10, state)
+
+    -- ED 0
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('\x1b[2;2H', vt)
+    cursor(1, 1, state)
+    push('\x1b[0J', vt)
+    expect('erase 1..2,1..80\nerase 2..25,0..80')
+    cursor(1, 1, state)
+
+    -- ED 1
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('\x1b[2;2H', vt)
+    cursor(1, 1, state)
+    push('\x1b[1J', vt)
+    expect('erase 0..1,0..80\nerase 1..2,0..2')
+    cursor(1, 1, state)
+
+    -- ED 2
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('\x1b[2;2H', vt)
+    cursor(1, 1, state)
+    push('\x1b[2J', vt)
+    expect('erase 0..25,0..80')
+    cursor(1, 1, state)
+
+    -- ED 3
+    push('\x1b[3J', vt)
+    expect('sb_clear')
+
+    -- SED
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    push('\x1b[5;5H', vt)
+    cursor(4, 4, state)
+    push('\x1b[?0J', vt)
+    expect('erase 4..5,4..80 selective\nerase 5..25,0..80 selective')
+    cursor(4, 4, state)
+    push('\x1b[?1J', vt)
+    expect('erase 0..4,0..80 selective\nerase 4..5,0..5 selective')
+    cursor(4, 4, state)
+    push('\x1b[?2J', vt)
+    expect('erase 0..25,0..80 selective')
+    cursor(4, 4, state)
+
+    -- TODO(dundargoc): fix or remove
+    -- -- DECRQSS on DECSCA
+    -- push "\x1b[2\"q"
+    -- push "\x1bP\$q\"q\x1b\\"
+    --   output "\x1bP1\$r2\"q\x1b\\"
+
+    state = wantstate(vt, { m = true, e = true, b = true })
+    expect('erase 0..25,0..80') -- NOTE(dundargoc): strange, this should not be needed according to the original code
+
+    -- ICH move+erase emuation
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('ACD', vt)
+    push('\x1b[2D', vt)
+    cursor(0, 1, state)
+    push('\x1b[@', vt)
+    expect('moverect 0..1,1..79 -> 0..1,2..80\nerase 0..1,1..2')
+    cursor(0, 1, state)
+    push('B', vt)
+    cursor(0, 2, state)
+    push('\x1b[3@', vt)
+    expect('moverect 0..1,2..77 -> 0..1,5..80\nerase 0..1,2..5')
+
+    -- DCH move+erase emulation
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('ABBC', vt)
+    push('\x1b[3D', vt)
+    cursor(0, 1, state)
+    push('\x1b[P', vt)
+    expect('moverect 0..1,2..80 -> 0..1,1..79\nerase 0..1,79..80')
+    cursor(0, 1, state)
+    push('\x1b[3P', vt)
+    expect('moverect 0..1,4..80 -> 0..1,1..77\nerase 0..1,77..80')
+    cursor(0, 1, state)
+  end)
 
   itp('14state_encoding', function()
     local vt = init()

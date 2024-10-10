@@ -872,4 +872,17 @@ int state_setpenattr(VTermAttr attr, VTermValue *val, void *user)
   return 1;
 }
 
+bool want_state_scrollback;
+int state_sb_clear(void *user) {
+  if(!want_state_scrollback) {
+    return 1;
+  }
+
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  fprintf(f,"sb_clear\n");
+  fclose(f);
+
+  return 0;
+}
+
 #endif

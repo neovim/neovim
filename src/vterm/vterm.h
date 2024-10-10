@@ -654,6 +654,7 @@ int state_moverect(VTermRect dest, VTermRect src, void *user);
 int state_settermprop(VTermProp prop, VTermValue *val, void *user);
 int state_erase(VTermRect rect, int selective, void *user);
 int state_setpenattr(VTermAttr attr, VTermValue *val, void *user);
+int state_sb_clear(void *user);
 EXTERN VTermPos state_pos;
 EXTERN bool want_state_putglyph INIT (=false);
 EXTERN bool want_state_movecursor INIT(= false);
@@ -661,6 +662,7 @@ EXTERN bool want_state_erase INIT(= false);
 EXTERN bool want_state_scrollrect INIT(= false);
 EXTERN bool want_state_moverect INIT(= false);
 EXTERN bool want_state_settermprop INIT(= false);
+EXTERN bool want_state_scrollback INIT(= false);
 
 #endif
 
