@@ -1503,6 +1503,28 @@ return {
       varname = 'p_cot',
     },
     {
+      abbreviation = 'cpp',
+      cb = 'did_set_completepopup',
+      defaults = { if_true = '' },
+      desc = [=[
+        This option is used to set the completion window and info floating
+        preview window. The option is a comma-separated list of values:
+        `align`, `border`, `title`, `titlepos`, `footer`, `footerpos`.
+        see |nvim_open_win()|.
+        When the "align" value is "item" then the info floating preview window
+        is positioned close to the selected item.  Changing the selection will
+        also move the popup.  When "align" is "menu" then the floating preview
+        window is aligned with the top of the menu if the menu is below the text,
+        and the bottom of the menu otherwise.
+      ]=],
+      full_name = 'completepopup',
+      list = 'onecomma',
+      scope = { 'global' },
+      short_desc = N_('options for completion window'),
+      type = 'string',
+      varname = 'p_cpp',
+    },
+    {
       abbreviation = 'csl',
       cb = 'did_set_completeslash',
       defaults = { if_true = '' },

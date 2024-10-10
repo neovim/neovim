@@ -11,6 +11,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
@@ -38,6 +39,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/os.h"
+#include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
@@ -1070,6 +1072,23 @@ int expand_set_completeopt(optexpand_T *args, int *numMatches, char ***matches)
                                ARRAY_SIZE(p_cot_values) - 1,
                                numMatches,
                                matches);
+}
+
+const char *did_set_completepopup(optset_T *args FUNC_ATTR_UNUSED)
+{
+  WinConfig config = WIN_CONFIG_INIT;
+  int adj[4];
+  bool result = parse_completepopup(&config, adj);
+  if (config.title) {
+    clear_virttext(&config.title_chunks);
+  }
+  if (config.footer) {
+    clear_virttext(&config.footer_chunks);
+  }
+  if (!result) {
+    return e_invarg;
+  }
+  return NULL;
 }
 
 #ifdef BACKSLASH_IN_FILENAME

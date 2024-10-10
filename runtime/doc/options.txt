@@ -1582,6 +1582,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    list of alternatives, but not how the candidates are
 		    collected (using different completion types).
 
+						*'completepopup'* *'cpp'*
+'completepopup' 'cpp'	string	(default "")
+			global
+	This option is used to set the completion window and info floating
+	preview window. The option is a comma-separated list of values:
+	`align`, `border`, `title`, `titlepos`, `footer`, `footerpos`.
+	see |nvim_open_win()|.
+	When the "align" value is "item" then the info floating preview window
+	is positioned close to the selected item.  Changing the selection will
+	also move the popup.  When "align" is "menu" then the floating preview
+	window is aligned with the top of the menu if the menu is below the text,
+	and the bottom of the menu otherwise.
+
 						*'completeslash'* *'csl'*
 'completeslash' 'csl'	string	(default "")
 			local to buffer
