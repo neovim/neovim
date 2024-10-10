@@ -42,7 +42,7 @@ local function wantparser(vt)
   vterm.vterm_parser_set_callbacks(vt, parser_cbs, nil)
 end
 
-local function wantstate(vt, mode)
+local function wantstate(vt, opts)
   assert(vt)
   local state = vterm.vterm_obtain_state(vt)
 
@@ -69,11 +69,15 @@ local function wantstate(vt, mode)
   vterm.vterm_state_reset(state, 1)
 
   local sense = true
-  if mode == 'e' then
+  if opts.e then
     vterm.want_state_erase = sense
-  elseif mode == 'g' then
+  end
+
+  if opts.g then
     vterm.want_state_putglyph = sense
-  elseif mode == 'f' then
+  end
+
+  if opts.f then
     local fallbacks = t.ffi.new('VTermStateFallbacks')
     fallbacks['control'] = vterm.parser_control
     fallbacks['csi'] = vterm.parser_csi
@@ -83,11 +87,17 @@ local function wantstate(vt, mode)
     fallbacks['pm'] = vterm.parser_pm
     fallbacks['sos'] = vterm.parser_sos
     vterm.vterm_state_set_unrecognised_fallbacks(state, sense and fallbacks or nil, nil)
-  elseif mode == 'm' then
+  end
+
+  if opts.m then
     vterm.want_state_moverect = sense
-  elseif mode == 'p' then
+  end
+
+  if opts.p then
     vterm.want_state_settermprop = sense
-  elseif mode == 's' then
+  end
+
+  if opts.s then
     vterm.want_state_scrollrect = sense
   end
 
@@ -385,7 +395,7 @@ describe('vterm', function()
   itp('10state_putglyph', function()
     local vt = init()
     vterm.vterm_set_utf8(vt, true)
-    local state = wantstate(vt, 'g')
+    local state = wantstate(vt, { g = true })
 
     -- Low
     reset(state, nil)
@@ -452,7 +462,7 @@ describe('vterm', function()
   itp('11state_movecursor', function()
     local vt = init()
     vterm.vterm_set_utf8(vt, true)
-    local state = wantstate(vt, '')
+    local state = wantstate(vt, {})
 
     -- Implicit
     push('ABC', vt)
@@ -681,7 +691,7 @@ describe('vterm', function()
 
   itp('14state_encoding', function()
     local vt = init()
-    local state = wantstate(vt, 'g')
+    local state = wantstate(vt, { g = true })
 
     -- Default
     reset(state, nil)
@@ -795,7 +805,7 @@ describe('vterm', function()
 
   itp('29state_fallback', function()
     local vt = init()
-    local state = wantstate(vt, 'f')
+    local state = wantstate(vt, { f = true })
     reset(state, nil)
 
     -- Unrecognised control
@@ -832,7 +842,7 @@ describe('vterm', function()
   itp('31state_rep', function()
     local vt = init()
     vterm.vterm_set_utf8(vt, true)
-    local state = wantstate(vt, 'g')
+    local state = wantstate(vt, { g = true })
 
     -- REP no argument
     reset(state, nil)
@@ -879,7 +889,7 @@ describe('vterm', function()
   pending('40state_selection', function()
     local vt = init()
     vterm.vterm_set_utf8(vt, true)
-    local _ = wantstate(vt, '')
+    local _ = wantstate(vt, {})
 
     -- Set clipboard; final chunk len 4
     push('\x1b]52;c;SGVsbG8s\x1b\\', vt)
