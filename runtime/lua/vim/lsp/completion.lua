@@ -272,7 +272,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
         icase = 1,
         dup = 1,
         empty = 1,
-        hl_group = hl_group,
+        abbr_hlgroup = hl_group,
         user_data = {
           nvim = {
             lsp = {

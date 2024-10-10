@@ -4963,8 +4963,8 @@ describe('builtin popupmenu', function()
         feed('<C-E><Esc>')
       end)
 
-      -- oldtest: Test_pum_user_hl_group()
-      it('custom hl_group override', function()
+      -- oldtest: Test_pum_user_abbr_hlgroup()
+      it('custom abbr_hlgroup override', function()
         exec([[
           func CompleteFunc( findstart, base )
             if a:findstart
@@ -4972,9 +4972,9 @@ describe('builtin popupmenu', function()
             endif
             return {
                   \ 'words': [
-                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'hl_group': 'StrikeFake' },
+                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'abbr_hlgroup': 'StrikeFake' },
                   \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
-                  \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'hl_group': 'StrikeFake' },
+                  \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'abbr_hlgroup': 'StrikeFake' },
                   \]}
           endfunc
           set completeopt=menu
@@ -4990,9 +4990,9 @@ describe('builtin popupmenu', function()
         feed('Saw<C-X><C-U>')
         screen:expect([[
           aword1^                          |
-          {ds:aword1 W extra text 1 }{1:          }|
+          {ds:aword1}{s: W extra text 1 }{1:          }|
           {n:aword2 W extra text 2 }{1:          }|
-          {dn:你好   W extra text 3 }{1:          }|
+          {dn:你好}{n:   W extra text 3 }{1:          }|
           {1:~                               }|*15
           {2:-- }{5:match 1 of 3}                 |
         ]])
@@ -5003,18 +5003,18 @@ describe('builtin popupmenu', function()
         feed('Saw<C-X><C-U>')
         screen:expect([[
           aword1^                          |
-          {uds:aw}{ds:ord1 W extra text 1 }{1:          }|
+          {uds:aw}{ds:ord1}{s: W extra text 1 }{1:          }|
           {umn:aw}{n:ord2 W extra text 2 }{1:          }|
-          {dn:你好   W extra text 3 }{1:          }|
+          {dn:你好}{n:   W extra text 3 }{1:          }|
           {1:~                               }|*15
           {2:-- }{5:match 1 of 3}                 |
         ]])
         feed('<C-N>')
         screen:expect([[
           aword2^                          |
-          {udn:aw}{dn:ord1 W extra text 1 }{1:          }|
+          {udn:aw}{dn:ord1}{n: W extra text 1 }{1:          }|
           {ums:aw}{s:ord2 W extra text 2 }{1:          }|
-          {dn:你好   W extra text 3 }{1:          }|
+          {dn:你好}{n:   W extra text 3 }{1:          }|
           {1:~                               }|*15
           {2:-- }{5:match 2 of 3}                 |
         ]])
@@ -5030,7 +5030,7 @@ describe('builtin popupmenu', function()
             endif
             return {
                   \ 'words': [
-                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'variable', 'kind_hlgroup': 'KindVar', 'hl_group': 'StrikeFake' },
+                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'variable', 'kind_hlgroup': 'KindVar', 'abbr_hlgroup': 'StrikeFake' },
                   \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'function', 'kind_hlgroup': 'KindFunc' },
                   \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'class', 'kind_hlgroup': 'KindClass'  },
                   \]}
@@ -5053,9 +5053,9 @@ describe('builtin popupmenu', function()
         feed('S<C-X><C-U>')
         screen:expect([[
           aword1^                          |
-          {ds:aword1 }{kvs:variable }{ds:extra text 1 }{1:   }|
-          {n:aword2 }{kfn:function }{n:extra text 2 }{1:   }|
-          {n:你好   }{kcn:class    }{n:extra text 3 }{1:   }|
+          {ds:aword1}{s: }{kvs:variable}{s: extra text 1 }{1:   }|
+          {n:aword2 }{kfn:function}{n: extra text 2 }{1:   }|
+          {n:你好   }{kcn:class}{n:    extra text 3 }{1:   }|
           {1:~                               }|*15
           {2:-- }{5:match 1 of 3}                 |
         ]])
