@@ -9,6 +9,7 @@ extern "C" {
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "nvim/macros_defs.h"
 #include "vterm_keycodes.h"
 
 #define VTERM_VERSION_MAJOR 0
@@ -219,7 +220,7 @@ typedef enum {
 
 typedef struct {
   const char *str;
-  size_t      len : 30;
+  int         len : 30;
   bool        initial : 1;
   bool        final : 1;
 } VTermStringFragment;
@@ -633,6 +634,38 @@ void vterm_copy_cells(VTermRect dest,
                       VTermRect src,
                       void (*copycell)(VTermPos dest, VTermPos src, void *user),
                       void *user);
+
+#ifndef NDEBUG
+int parser_text(const char bytes[], size_t len, void *user);
+int parser_control(unsigned char control, void *user);
+int parser_escape(const char bytes[], size_t len, void *user);
+int parser_csi(const char *leader, const long args[], int argcount, const char *intermed, char command, void *user);
+int parser_osc(int command, VTermStringFragment frag, void *user);
+int parser_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user);
+int parser_apc(VTermStringFragment frag, void *user);
+int parser_pm(VTermStringFragment frag, void *user);
+int parser_sos(VTermStringFragment frag, void *user);
+int selection_set(VTermSelectionMask mask, VTermStringFragment frag, void *user);
+int selection_query(VTermSelectionMask mask, void *user);
+int state_putglyph(VTermGlyphInfo *info, VTermPos pos, void *user);
+int state_movecursor(VTermPos pos, VTermPos oldpos, int visible, void *user);
+int state_scrollrect(VTermRect rect, int downward, int rightward, void *user);
+int state_moverect(VTermRect dest, VTermRect src, void *user);
+int state_settermprop(VTermProp prop, VTermValue *val, void *user);
+int state_erase(VTermRect rect, int selective, void *user);
+int state_setpenattr(VTermAttr attr, VTermValue *val, void *user);
+int state_sb_clear(void *user);
+int state_setlineinfo(int row, const VTermLineInfo *newinfo, const VTermLineInfo *oldinfo, void *user);
+EXTERN VTermPos state_pos;
+EXTERN bool want_state_putglyph INIT (=false);
+EXTERN bool want_state_movecursor INIT(= false);
+EXTERN bool want_state_erase INIT(= false);
+EXTERN bool want_state_scrollrect INIT(= false);
+EXTERN bool want_state_moverect INIT(= false);
+EXTERN bool want_state_settermprop INIT(= false);
+EXTERN bool want_state_scrollback INIT(= false);
+
+#endif
 
 #ifdef __cplusplus
 }
