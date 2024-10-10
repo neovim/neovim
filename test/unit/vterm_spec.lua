@@ -1361,7 +1361,67 @@ describe('vterm', function()
 
   pending('17state_mouse', function() end)
   pending('18state_termprops', function() end)
-  pending('20state_wrapping', function() end)
+
+  itp('20state_wrapping', function()
+    local vt = init()
+    vterm.vterm_set_utf8(vt, true)
+    local state = wantstate(vt, { g = true, m = true })
+
+    -- 79th Column
+    push('\x1b[75G', vt)
+    push(string.rep('A', 5), vt)
+    expect(
+      'putglyph 41 1 0,74\nputglyph 41 1 0,75\nputglyph 41 1 0,76\nputglyph 41 1 0,77\nputglyph 41 1 0,78'
+    )
+    cursor(0, 79, state)
+
+    -- 80th Column Phantom
+    push('A', vt)
+    expect('putglyph 41 1 0,79')
+    cursor(0, 79, state)
+
+    -- Line Wraparound
+    push('B', vt)
+    expect('putglyph 42 1 1,0')
+    cursor(1, 1, state)
+
+    -- Line Wraparound during combined write
+    push('\x1b[78G', vt)
+    push('BBBCC', vt)
+    expect(
+      'putglyph 42 1 1,77\nputglyph 42 1 1,78\nputglyph 42 1 1,79\nputglyph 43 1 2,0\nputglyph 43 1 2,1'
+    )
+    cursor(2, 2, state)
+
+    -- DEC Auto Wrap Mode
+    reset(state, nil)
+    push('\x1b[?7l', vt)
+    push('\x1b[75G', vt)
+    push(string.rep('D', 6), vt)
+    expect(
+      'putglyph 44 1 0,74\nputglyph 44 1 0,75\nputglyph 44 1 0,76\nputglyph 44 1 0,77\nputglyph 44 1 0,78\nputglyph 44 1 0,79'
+    )
+    cursor(0, 79, state)
+    push('D', vt)
+    expect('putglyph 44 1 0,79')
+    cursor(0, 79, state)
+    push('\x1b[?7h', vt)
+
+    -- 80th column causes linefeed on wraparound
+    push('\x1b[25;78HABC', vt)
+    expect('putglyph 41 1 24,77\nputglyph 42 1 24,78\nputglyph 43 1 24,79')
+    cursor(24, 79, state)
+    push('D', vt)
+    expect('moverect 1..25,0..80 -> 0..24,0..80\nputglyph 44 1 24,0')
+
+    -- 80th column phantom linefeed phantom cancelled by explicit cursor move
+    push('\x1b[25;78HABC', vt)
+    expect('putglyph 41 1 24,77\nputglyph 42 1 24,78\nputglyph 43 1 24,79')
+    cursor(24, 79, state)
+    push('\x1b[25;1HD', vt)
+    expect('putglyph 44 1 24,0')
+  end)
+
   pending('21state_tabstops', function() end)
   pending('22state_save', function() end)
   pending('25state_input', function() end)
