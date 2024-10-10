@@ -462,6 +462,8 @@ M[ms.textDocument_typeDefinition] = location_handler
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation
 M[ms.textDocument_implementation] = location_handler
 
+local sig_help_ns = api.nvim_create_namespace('lsp_signature_help')
+
 --- |lsp-handler| for the method "textDocument/signatureHelp".
 ---
 --- The active parameter is highlighted with |hl-LspSignatureActiveParameter|.
@@ -476,7 +478,7 @@ M[ms.textDocument_implementation] = location_handler
 --- ```
 ---
 ---@param _ lsp.ResponseError?
----@param result lsp.SignatureHelp  Response from the language server
+---@param result lsp.SignatureHelp? Response from the language server
 ---@param ctx lsp.HandlerContext Client context
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
@@ -510,9 +512,13 @@ function M.signature_help(_, result, ctx, config)
   end
   local fbuf, fwin = util.open_floating_preview(lines, 'markdown', config)
   if hl then
-    -- Highlight the second line if the signature is wrapped in a Markdown code block.
-    local line = vim.startswith(lines[1], '```') and 1 or 0
-    api.nvim_buf_add_highlight(fbuf, -1, 'LspSignatureActiveParameter', line, unpack(hl))
+    vim.highlight.range(
+      fbuf,
+      sig_help_ns,
+      'LspSignatureActiveParameter',
+      { hl[1], hl[2] },
+      { hl[3], hl[4] }
+    )
   end
   return fbuf, fwin
 end
