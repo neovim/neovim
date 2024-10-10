@@ -19,6 +19,22 @@ local function get_commentstring(ref_position)
   local row, col = ref_position[1] - 1, ref_position[2]
   local ref_range = { row, col, row, col + 1 }
 
+  -- Get 'commentstring' from tree-sitter captures' metadata.
+  -- Traverse backwards to prefer narrower captures.
+  -- TODO(ribru17): Generalize this to a helper function which can also be used in "_get_urls()"
+  local caps = vim.treesitter.get_captures_at_pos(0, row, col)
+  for i = #caps, 1, -1 do
+    local metadata = caps[i].metadata
+    if metadata['bo.commentstring'] then
+      return metadata['bo.commentstring']
+    end
+    for _, value in pairs(metadata) do
+      if value['bo.commentstring'] then
+        return value['bo.commentstring']
+      end
+    end
+  end
+
   -- - Get 'commentstring' from the deepest LanguageTree which both contains
   --   reference range and has valid 'commentstring' (meaning it has at least
   --   one associated 'filetype' with valid 'commentstring').
