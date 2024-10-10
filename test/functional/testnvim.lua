@@ -46,6 +46,8 @@ M.nvim_argv = {
   'lua dofile("runtime/colors/vim.lua")',
   '--cmd',
   'unlet g:colors_name',
+  '--cmd',
+  'lua vim._cmdline=false',
   '--embed',
 }
 

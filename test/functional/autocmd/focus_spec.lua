@@ -25,6 +25,8 @@ describe('autoread TUI FocusGained/FocusLost', function()
       'colorscheme vim',
       '--cmd',
       'set noswapfile noshowcmd noruler notermguicolors',
+      '--cmd',
+      'lua vim._cmdline=false',
     })
   end)
 

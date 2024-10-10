@@ -32,6 +32,8 @@ describe('shell command :!', function()
       'colorscheme vim',
       '--cmd',
       n.nvim_set .. ' notermguicolors',
+      '--cmd',
+      'lua vim._cmdline=false',
     })
     screen:expect([[
       {1: }                                                 |

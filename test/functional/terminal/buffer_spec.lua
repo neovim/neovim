@@ -495,6 +495,8 @@ describe('terminal input', function()
       '--cmd',
       'set notermguicolors',
       '-c',
+      'lua vim._cmdline=false',
+      '--cmd',
       'while 1 | redraw | echo keytrans(getcharstr()) | endwhile',
     })
     screen:expect([[

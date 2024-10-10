@@ -58,6 +58,8 @@ describe('TUI', function()
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
       '--cmd',
       'colorscheme vim',
+      '--cmd',
+      'lua vim._cmdline=false',
     })
     screen:expect([[
       {1: }                                                 |
@@ -2098,6 +2100,8 @@ describe('TUI', function()
       '--cmd',
       'set notermguicolors',
       '--cmd',
+      'lua vim._cmdline=false',
+      '--cmd',
       'let start = reltime() | while v:true | if reltimefloat(reltime(start)) > 2 | break | endif | endwhile',
     }, {
       env = {
@@ -2227,6 +2231,8 @@ describe('TUI', function()
       '--cmd',
       'set noruler notermguicolors',
       '--cmd',
+      'lua vim._cmdline=false',
+      '--cmd',
       ':nnoremap <C-h> :echomsg "\\<C-h\\>"<CR>',
     })
     screen:expect {
@@ -2259,6 +2265,8 @@ describe('TUI', function()
       'set notermguicolors',
       '--cmd',
       'colorscheme vim',
+      '--cmd',
+      'lua vim._cmdline=false',
       '--cmd',
       'call setline(1, ["1st line" .. repeat(" ", 153), "2nd line"])',
     }, { cols = 80 })
@@ -2381,6 +2389,8 @@ describe('TUI UIEnter/UILeave', function()
       '--cmd',
       'colorscheme vim',
       '--cmd',
+      'lua vim._cmdline=false',
+      '--cmd',
       'set noswapfile noshowcmd noruler notermguicolors',
       '--cmd',
       'let g:evs = []',
@@ -2429,6 +2439,8 @@ describe('TUI FocusGained/FocusLost', function()
       'NONE',
       '--cmd',
       'colorscheme vim',
+      '--cmd',
+      'lua vim._cmdline=false',
       '--cmd',
       'set noswapfile noshowcmd noruler notermguicolors background=dark',
     })
@@ -2646,6 +2658,8 @@ describe("TUI 't_Co' (terminal colors)", function()
       'NONE',
       '--cmd',
       'colorscheme vim',
+      '--cmd',
+      'lua vim._cmdline=false',
       '--cmd',
       nvim_set .. ' notermguicolors',
     }, {
@@ -2990,6 +3004,8 @@ describe('TUI', function()
       '--cmd',
       'colorscheme vim',
       '--cmd',
+      'lua vim._cmdline=false',
+      '--cmd',
       nvim_set .. ' notermguicolors',
       extra_args,
     }, {
@@ -3209,6 +3225,8 @@ describe('TUI bg color', function()
       '--cmd',
       'colorscheme vim',
       '--cmd',
+      'lua vim._cmdline=false',
+      '--cmd',
       'set noswapfile',
     })
     screen:expect({ any = '%[No Name%]' })
@@ -3231,6 +3249,8 @@ describe('TUI bg color', function()
       'NONE',
       '--cmd',
       'colorscheme vim',
+      '--cmd',
+      'lua vim._cmdline=false',
       '--cmd',
       'set noswapfile',
     })
@@ -3261,6 +3281,8 @@ describe('TUI bg color', function()
       '--cmd',
       'colorscheme vim',
       '--cmd',
+      'lua vim._cmdline=false',
+      '--cmd',
       'set noswapfile',
     })
     retry(nil, 1000, function()
@@ -3276,6 +3298,8 @@ describe('TUI bg color', function()
       'NONE',
       '--cmd',
       'colorscheme vim',
+      '--cmd',
+      'lua vim._cmdline=false',
       '--cmd',
       'set noswapfile',
       '-c',
@@ -3313,6 +3337,8 @@ describe('TUI as a client', function()
       'NONE',
       '--cmd',
       'colorscheme vim',
+      '--cmd',
+      'lua vim._cmdline=false',
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
     })
@@ -3455,6 +3481,8 @@ describe('TUI as a client', function()
       'NONE',
       '--cmd',
       'colorscheme vim',
+      '--cmd',
+      'lua vim._cmdline=false',
       '--cmd',
       nvim_set .. ' notermguicolors laststatus=2 background=dark',
     })

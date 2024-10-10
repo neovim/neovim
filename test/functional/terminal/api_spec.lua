@@ -24,6 +24,8 @@ describe('api', function()
       'colorscheme vim',
       '--cmd',
       n.nvim_set .. ' notermguicolors',
+      '--cmd',
+      'lua vim._cmdline=false',
     })
   end)
   after_each(function()
