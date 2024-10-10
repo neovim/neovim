@@ -1101,7 +1101,7 @@ describe('vterm', function()
     --   output "\x1bP1\$r2\"q\x1b\\"
 
     state = wantstate(vt, { m = true, e = true, b = true })
-    expect('erase 0..25,0..80') -- NOTE(dundargoc): strange, this should not be needed according to the original code
+    expect('erase 0..25,0..80') -- TODO(dundargoc): strange, this should not be needed according to the original code
 
     -- ICH move+erase emuation
     reset(state, nil)
@@ -1487,7 +1487,43 @@ describe('vterm', function()
   pending('22state_save', function() end)
   pending('25state_input', function() end)
   pending('26state_query', function() end)
-  pending('27state_reset', function() end)
+
+  itp('27state_reset', function()
+    local vt = init()
+    local state = wantstate(vt, {})
+
+    reset(state, nil)
+
+    -- RIS homes cursor
+    push('\x1b[5;5H', vt)
+    cursor(4, 4, state)
+    state = wantstate(vt, { m = true })
+    push('\x1bc', vt)
+    cursor(0, 0, state)
+    state = wantstate(vt, {})
+
+    -- RIS cancels scrolling region
+    push('\x1b[5;10r', vt)
+    state = wantstate(vt, { s = true })
+    push('\x1bc\x1b[25H\n', vt)
+    expect('scrollrect 0..25,0..80 => +1,+0')
+    state = wantstate(vt, {})
+
+    -- RIS erases screen
+    push('ABCDE', vt)
+    state = wantstate(vt, { e = true })
+    push('\x1bc', vt)
+    expect('erase 0..25,0..80')
+    state = wantstate(vt, {})
+    expect('erase 0..25,0..80') -- TODO(dundargoc): strange, this should not be needed according to the original code
+
+    -- RIS clears tabstops
+    push('\x1b[5G\x1bH\x1b[G\t', vt)
+    cursor(0, 4, state)
+    push('\x1bc\t', vt)
+    cursor(0, 8, state)
+  end)
+
   pending('28state_dbl_wh', function() end)
 
   itp('29state_fallback', function()
