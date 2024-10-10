@@ -1550,14 +1550,11 @@ int searchc(cmdarg_T *cap, bool t_cmd)
       *lastc = (uint8_t)c;
       set_csearch_direction(dir);
       set_csearch_until(t_cmd);
-      lastc_bytelen = utf_char2bytes(c, lastc_bytes);
-      if (cap->ncharC1 != 0) {
-        lastc_bytelen += utf_char2bytes(cap->ncharC1,
-                                        lastc_bytes + lastc_bytelen);
-        if (cap->ncharC2 != 0) {
-          lastc_bytelen += utf_char2bytes(cap->ncharC2,
-                                          lastc_bytes + lastc_bytelen);
-        }
+      if (cap->nchar_len) {
+        lastc_bytelen = cap->nchar_len;
+        memcpy(lastc_bytes, cap->nchar_composing, (size_t)cap->nchar_len);
+      } else {
+        lastc_bytelen = utf_char2bytes(c, lastc_bytes);
       }
     }
   } else {            // repeat previous search
