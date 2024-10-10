@@ -1236,7 +1236,85 @@ describe('vterm', function()
     --   putglyph 0044 1 0,3
   end)
 
-  pending('15state_mode', function() end)
+  itp('15state_mode', function()
+    local vt = init()
+    vterm.vterm_set_utf8(vt, true)
+    local state = wantstate(vt, { g = true, m = true, e = true })
+
+    -- Insert/Replace Mode
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('AC\x1b[DB', vt)
+    expect('putglyph 41 1 0,0\nputglyph 43 1 0,1\nputglyph 42 1 0,1')
+    push('\x1b[4h', vt)
+    push('\x1b[G', vt)
+    push('AC\x1b[DB', vt)
+    expect(
+      'moverect 0..1,0..79 -> 0..1,1..80\nerase 0..1,0..1\nputglyph 41 1 0,0\nmoverect 0..1,1..79 -> 0..1,2..80\nerase 0..1,1..2\nputglyph 43 1 0,1\nmoverect 0..1,1..79 -> 0..1,2..80\nerase 0..1,1..2\nputglyph 42 1 0,1'
+    )
+
+    -- Insert mode only happens once for UTF-8 combining
+    push('e', vt)
+    expect('moverect 0..1,2..79 -> 0..1,3..80\nerase 0..1,2..3\nputglyph 65 1 0,2')
+    push('\xCC\x81', vt)
+    expect('putglyph 65,301 1 0,2')
+
+    -- Newline/Linefeed mode
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('\x1b[5G\n', vt)
+    cursor(1, 4, state)
+    push('\x1b[20h', vt)
+    push('\x1b[5G\n', vt)
+    cursor(2, 0, state)
+
+    -- DEC origin mode
+    reset(state, nil)
+    expect('erase 0..25,0..80')
+    cursor(0, 0, state)
+    push('\x1b[5;15r', vt)
+    push('\x1b[H', vt)
+    cursor(0, 0, state)
+    push('\x1b[3;3H', vt)
+    cursor(2, 2, state)
+    push('\x1b[?6h', vt)
+    push('\x1b[H', vt)
+    cursor(4, 0, state)
+    push('\x1b[3;3H', vt)
+    cursor(6, 2, state)
+
+    -- TODO(dundargoc): fix or remove
+    -- -- DECRQM on DECOM
+    -- push "\x1b[?6h"
+    -- push "\x1b[?6\$p"
+    --   output "\x1b[?6;1\$y"
+    -- push "\x1b[?6l"
+    -- push "\x1b[?6\$p"
+    --   output "\x1b[?6;2\$y"
+
+    -- Origin mode with DECSLRM
+    push('\x1b[?6h', vt)
+    push('\x1b[?69h', vt)
+    push('\x1b[20;60s', vt)
+    push('\x1b[H', vt)
+    cursor(4, 19, state)
+
+    push('\x1b[?69l', vt)
+
+    -- Origin mode bounds cursor to scrolling region
+    push('\x1b[H', vt)
+    push('\x1b[10A', vt)
+    cursor(4, 0, state)
+    push('\x1b[20B', vt)
+    cursor(14, 0, state)
+
+    -- Origin mode without scroll region
+    push('\x1b[?6l', vt)
+    push('\x1b[r\x1b[?6h', vt)
+    cursor(0, 0, state)
+  end)
 
   itp('16state_resize', function()
     local vt = init()
