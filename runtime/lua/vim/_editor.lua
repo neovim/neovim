@@ -68,6 +68,12 @@ vim.log = {
   },
 }
 
+local utfs = {
+  ['utf-8'] = true,
+  ['utf-16'] = true,
+  ['utf-32'] = true,
+}
+
 -- TODO(lewis6991): document that the signature is system({cmd}, [{opts},] {on_exit})
 --- Runs a system command or throws an error if {cmd} cannot be run.
 ---
@@ -713,6 +719,109 @@ function vim._on_key(buf, typed_buf)
       )
     )
   end
+end
+
+-- Decodes a UTF-8 character to a Unicode code point.
+---@private
+---@param s string
+---@param utf8_ptr integer
+---@return integer, integer
+local function utf_ptr2char(s, utf8_ptr)
+  local b1, b2, b3, b4 = s:byte(utf8_ptr, utf8_ptr + 3)
+
+  if not b1 then
+    return 0, math.huge
+  end
+
+  if b1 < 0x80 then
+    -- 1-byte sequence (ASCII character)
+    return b1, 1
+  elseif b1 < 0xE0 then
+    -- 2-byte sequence
+    return ((b1 % 0x20) * 0x40) + (b2 % 0x40), 2
+  elseif b1 < 0xF0 then
+    -- 3-byte sequence
+    return ((b1 % 0x10) * 0x1000) + ((b2 % 0x40) * 0x40) + (b3 % 0x40), 3
+  else
+    -- 4-byte sequence
+    return ((b1 % 0x08) * 0x40000) + ((b2 % 0x40) * 0x1000) + ((b3 % 0x40) * 0x40) + (b4 % 0x40), 4
+  end
+end
+
+--- Convert UTF-32 or UTF-16 {index} to byte index.
+--- {opts} can be a table containing two properties:i
+--- * an "encoding" property of "utf-8", "utf-16" or "utf-32"
+--- * an "error" property of true or false, if error is false
+--- then then an out of range index will return byte length
+--- instead of throwing an error.
+---
+--- {opts} can also be supplied as a boolean, true for utf-16 and false for utf-32.
+--- If {opts} is not supplied, it defaults to false (UTF-32). Returns the byte index.
+---
+--- Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|.
+--- An {index} in the middle of a UTF-16 sequence is rounded upwards to
+--- the end of that sequence.
+---@param s string
+---@param index integer
+---@param opts? boolean|nil| { encoding: "utf-8"|"utf-16"|"utf-32", error?: boolean }
+---@return integer
+function vim.str_byteindex(s, index, opts)
+  vim.validate('s', s, 'string')
+  vim.validate('index', index, 'number')
+
+  local utf8_ptr_len = #s
+  if index == 0 then
+    return 0
+  end
+
+  local utf16_ptr, utf16_char = 0, 0
+  local utf32_ptr, utf32_char = 0, 0
+  local processed_bytes = 0
+
+  opts = opts or { encoding = 'utf-32', error = true }
+  if type(opts) == 'boolean' then
+    opts = opts and { encoding = 'utf-16', error = true } or { encoding = 'utf-32', error = true }
+  end
+
+  local encoding = opts.encoding or 'utf-32'
+  if not utfs[encoding] then
+    error('Invalid encoding: ' .. encoding)
+  end
+
+  if encoding == 'utf-8' then
+    if index > utf8_ptr_len then
+      return opts.error and error('index out of range') or utf8_ptr_len
+    end
+    return index
+  end
+
+  if index > utf8_ptr_len then
+    --- Skips the loop if the index is greater than the byte length of the string.
+    processed_bytes = utf8_ptr_len + 1
+  end
+
+  -- Traverse the string and calculate pointers for UTF-16 and UTF-32
+  while processed_bytes < utf8_ptr_len do
+    local c, char_len = utf_ptr2char(s, processed_bytes + 1)
+
+    utf16_char = utf16_char + (c > 0xFFFF and 2 or 1)
+    utf16_ptr = utf16_ptr + char_len
+
+    utf32_ptr = utf32_ptr + char_len
+    utf32_char = utf32_char + 1
+
+    if encoding == 'utf-16' and utf16_char >= index then
+      return utf16_ptr
+    elseif encoding == 'utf-32' and utf32_char >= index then
+      return utf32_ptr
+    end
+    processed_bytes = processed_bytes + char_len
+  end
+
+  if opts.error then
+    error('index out of range')
+  end
+  return utf8_ptr_len
 end
 
 --- Generates a list of possible completions for the string.
