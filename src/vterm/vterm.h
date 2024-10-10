@@ -220,7 +220,7 @@ typedef enum {
 
 typedef struct {
   const char *str;
-  size_t      len : 30;
+  int         len : 30;
   bool        initial : 1;
   bool        final : 1;
 } VTermStringFragment;
@@ -655,6 +655,7 @@ int state_settermprop(VTermProp prop, VTermValue *val, void *user);
 int state_erase(VTermRect rect, int selective, void *user);
 int state_setpenattr(VTermAttr attr, VTermValue *val, void *user);
 int state_sb_clear(void *user);
+int state_setlineinfo(int row, const VTermLineInfo *newinfo, const VTermLineInfo *oldinfo, void *user);
 EXTERN VTermPos state_pos;
 EXTERN bool want_state_putglyph INIT (=false);
 EXTERN bool want_state_movecursor INIT(= false);

@@ -885,4 +885,9 @@ int state_sb_clear(void *user) {
   return 0;
 }
 
+int state_setlineinfo(int row, const VTermLineInfo *newinfo, const VTermLineInfo *oldinfo, void *user)
+{
+  return 1;
+}
+
 #endif

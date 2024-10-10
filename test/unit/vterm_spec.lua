@@ -54,7 +54,7 @@ local function wantstate(vt, opts)
   state_cbs['erase'] = vterm.state_erase
   state_cbs['setpenattr'] = vterm.state_setpenattr
   state_cbs['settermprop'] = vterm.state_settermprop
-  -- state_cbs['setlineinfo'] = vterm.state_setlineinfo
+  state_cbs['setlineinfo'] = vterm.state_setlineinfo
   state_cbs['sb_clear'] = vterm.state_sb_clear
 
   local selection_cbs = t.ffi.new('VTermSelectionCallbacks')
@@ -116,6 +116,17 @@ local function cursor(row, col, state)
   vterm.vterm_state_get_cursorpos(state, pos)
   t.eq(row, pos.row)
   t.eq(col, pos.col)
+end
+
+local function lineinfo(row, expected, state)
+  local info = vterm.vterm_state_get_lineinfo(state, row)
+  local dwl = info.doublewidth == 1
+  local dhl = info.doubleheight == 1
+  local cont = info.continuation == 1
+
+  t.eq(dwl, expected.dwl or false)
+  t.eq(dhl, expected.dhl or false)
+  t.eq(cont, expected.cont or false)
 end
 
 local function resize(rows, cols, vt)
@@ -1607,7 +1618,36 @@ describe('vterm', function()
     )
   end)
 
-  pending('32state_flow', function() end)
+  itp('32state_flow', function()
+    local vt = init()
+    local state = wantstate(vt, {})
+
+    -- Many of these test cases inspired by
+    -- https://blueprints.launchpad.net/libvterm/+spec/reflow-cases
+
+    -- Spillover text marks continuation on second line
+    reset(state, nil)
+    push(string.rep('A', 100), vt)
+    push('\r\n', vt)
+    lineinfo(0, {}, state)
+    lineinfo(1, { cont = true }, state)
+
+    -- CRLF in column 80 does not mark continuation
+    reset(state, nil)
+    push(string.rep('B', 80), vt)
+    push('\r\n', vt)
+    push(string.rep('B', 20), vt)
+    push('\r\n', vt)
+    lineinfo(0, {}, state)
+    lineinfo(1, {}, state)
+
+    -- EL cancels continuation of following line
+    reset(state, nil)
+    push(string.rep('D', 100), vt)
+    lineinfo(1, { cont = true }, state)
+    push('\x1bM\x1b[79G\x1b[K', vt)
+    lineinfo(1, {}, state)
+  end)
 
   pending('40state_selection', function()
     local vt = init()
