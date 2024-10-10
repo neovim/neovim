@@ -928,16 +928,18 @@ static bool pum_set_selected(int n, int repeat)
   int context = pum_height / 2;
   int prev_selected = pum_selected;
 
+  // Close the floating preview window when 'selected' is -1, meaning we are back to the original.
+  // Or no info item in this selected.
+  if (n < 0 || (n >= 0 && pum_array[n].pum_info == NULL)) {
+    win_T *wp = win_float_find_preview();
+    if (wp) {
+      win_close(wp, true, true);
+    }
+  }
+
   pum_selected = n;
   unsigned cur_cot_flags = get_cot_flags();
   bool use_float = (cur_cot_flags & COT_POPUP) != 0;
-  // when new leader add and info window is shown and no selected we still
-  // need use the first index item to update the info float window position.
-  bool force_select = use_float && pum_selected < 0 && win_float_find_preview();
-  if (force_select) {
-    pum_selected = 0;
-  }
-
   if ((pum_selected >= 0) && (pum_selected < pum_size)) {
     if (pum_first > pum_selected - 4) {
       // scroll down; when we did a jump it's probably a PageUp then
@@ -1152,11 +1154,6 @@ static bool pum_set_selected(int n, int repeat)
         unblock_autocmds();
       }
     }
-  }
-
-  // restore before selected value
-  if (force_select) {
-    pum_selected = n;
   }
 
   return resized;
