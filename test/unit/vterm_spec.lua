@@ -129,6 +129,30 @@ local function lineinfo(row, expected, state)
   t.eq(cont, expected.cont or false)
 end
 
+local function pen(attribute, expected, state)
+  local is_bool = { bold = true, italic = true, blink = true, reverse = true }
+  local vterm_attribute = {
+    bold = vterm.VTERM_ATTR_BOLD,
+    underline = vterm.VTERM_ATTR_UNDERLINE,
+    italic = vterm.VTERM_ATTR_ITALIC,
+    blink = vterm.VTERM_ATTR_BLINK,
+    reverse = vterm.VTERM_ATTR_REVERSE,
+    font = vterm.VTERM_ATTR_FONT,
+  }
+
+  local val = t.ffi.new('VTermValue')
+  vterm.vterm_state_get_penattr(state, vterm_attribute[attribute], val)
+  local actual = val.boolean
+  if is_bool[attribute] then
+    actual = val.boolean == 1
+  end
+  t.eq(expected, actual)
+
+  -- local file = io.open('dundar', 'a')
+  -- file:write(vim.inspect(val.boolean) .. '\n')
+  -- file:close()
+end
+
 local function resize(rows, cols, vt)
   vterm.vterm_set_size(vt, rows, cols)
 end
@@ -1370,7 +1394,142 @@ describe('vterm', function()
     cursor(0, 81, state)
   end)
 
-  pending('17state_mouse', function() end)
+  pending('17state_mouse', function()
+    local vt = init()
+    vterm.vterm_set_utf8(vt, true)
+    local state = wantstate(vt, '')
+
+    -- Reset
+    push('\x1b[m', vt)
+    pen('bold', false, state)
+    pen('underline', 0, state)
+    pen('italic', false, state)
+    pen('blink', false, state)
+    pen('reverse', false, state)
+    pen('font', 0, state)
+    -- ?pen foreground = rgb(240,240,240,is_default_fg)
+    -- ?pen background = rgb(0,0,0,is_default_bg)
+
+    -- Bold
+    push('\x1b[1m', vt)
+    pen('bold', true, state)
+    push('\x1b[22m', vt)
+    pen('bold', false, state)
+    push('\x1b[1m\x1b[m', vt)
+    pen('bold', false, state)
+
+    -- Underline
+    push('\x1b[4m', vt)
+    pen('underline', 1, state)
+    push('\x1b[21m', vt)
+    pen('underline', 2, state)
+    push('\x1b[24m', vt)
+    pen('underline', 0, state)
+    push('\x1b[4m\x1b[4:0m', vt)
+    pen('underline', 0, state)
+    push('\x1b[4:1m', vt)
+    pen('underline', 1, state)
+    push('\x1b[4:2m', vt)
+    pen('underline', 2, state)
+    push('\x1b[4:3m', vt)
+    pen('underline', 3, state)
+    push('\x1b[4m\x1b[m', vt)
+    pen('underline', 0, state)
+
+    -- Italic
+    push('\x1b[3m', vt)
+    pen('italic', true, state)
+    push('\x1b[23m', vt)
+    pen('italic', false, state)
+    push('\x1b[3m\x1b[m', vt)
+    pen('italic', false, state)
+
+    -- Blink
+    push('\x1b[5m', vt)
+    pen('blink', true, state)
+    push('\x1b[25m', vt)
+    pen('blink', false, state)
+    push('\x1b[5m\x1b[m', vt)
+    pen('blink', false, state)
+
+    -- Reverse
+    push('\x1b[7m', vt)
+    pen('reverse', true, state)
+    push('\x1b[27m', vt)
+    pen('reverse', false, state)
+    push('\x1b[7m\x1b[m', vt)
+    pen('reverse', false, state)
+
+    -- Font Selection
+    push('\x1b[11m', vt)
+    pen('font', 1, state)
+    push('\x1b[19m', vt)
+    pen('font', 9, state)
+    push('\x1b[10m', vt)
+    pen('font', 0, state)
+    push('\x1b[11m\x1b[m', vt)
+    pen('font', 0, state)
+
+    -- -- Foreground
+    -- push "\x1b[31m"
+    --   ?pen foreground = idx(1)
+    -- push "\x1b[32m"
+    --   ?pen foreground = idx(2)
+    -- push "\x1b[34m"
+    --   ?pen foreground = idx(4)
+    -- push "\x1b[91m"
+    --   ?pen foreground = idx(9)
+    -- push "\x1b[38:2:10:20:30m"
+    --   ?pen foreground = rgb(10,20,30)
+    -- push "\x1b[38:5:1m"
+    --   ?pen foreground = idx(1)
+    -- push "\x1b[39m"
+    --   ?pen foreground = rgb(240,240,240,is_default_fg)
+
+    -- -- Background
+    -- push "\x1b[41m"
+    --   ?pen background = idx(1)
+    -- push "\x1b[42m"
+    --   ?pen background = idx(2)
+    -- push "\x1b[44m"
+    --   ?pen background = idx(4)
+    -- push "\x1b[101m"
+    --   ?pen background = idx(9)
+    -- push "\x1b[48:2:10:20:30m"
+    --   ?pen background = rgb(10,20,30)
+    -- push "\x1b[48:5:1m"
+    --   ?pen background = idx(1)
+    -- push "\x1b[49m"
+    --   ?pen background = rgb(0,0,0,is_default_bg)
+
+    -- -- Bold+ANSI colour == highbright
+    -- push "\x1b[m\x1b[1;37m"
+    --   ?pen bold = on
+    --   ?pen foreground = idx(15)
+    -- push "\x1b[m\x1b[37;1m"
+    --   ?pen bold = on
+    --   ?pen foreground = idx(15)
+
+    -- -- Super/Subscript
+    -- push "\x1b[73m"
+    --   ?pen small = on
+    --   ?pen baseline = raise
+    -- push "\x1b[74m"
+    --   ?pen small = on
+    --   ?pen baseline = lower
+    -- push "\x1b[75m"
+    --   ?pen small = off
+    --   ?pen baseline = normal
+
+    -- -- DECSTR resets pen attributes
+    -- push "\x1b[1;4m"
+    --   ?pen bold = on
+    --   ?pen underline = 1
+    -- push "\x1b[!p"
+    --   ?pen bold = off
+    --   ?pen underline = 0
+  end)
+
   pending('18state_termprops', function() end)
 
   itp('20state_wrapping', function()
