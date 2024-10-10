@@ -1,0 +1,12 @@
+.{
+    .name = "libuv",
+    .version = "1.48.0",
+    .paths = .{""},
+
+    .dependencies = .{
+        .libuv = .{
+            .url = "https://github.com/libuv/libuv/archive/v1.48.0.tar.gz",
+            .hash = "1220c2e1269cfee3735a7331f1fa4c13aa3e4f355fca5b402be3ea72a464c76f1324",
+        },
+    },
+}
