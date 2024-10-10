@@ -140,7 +140,11 @@ local function tokens_to_ranges(data, bufnr, client, request)
     local function _get_byte_pos(col)
       if col > 0 then
         local buf_line = lines[line + 1] or ''
-        return util._str_byteindex_enc(buf_line, col, client.offset_encoding)
+        return vim.str_byteindex(
+          buf_line,
+          col,
+          { encoding = client.offset_encoding, error = false }
+        )
       end
       return col
     end
