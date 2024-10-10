@@ -3008,6 +3008,7 @@ function vim.fn.getcmdwintype() end
 --- runtime    |:runtime| completion
 --- scriptnames  sourced script names |:scriptnames|
 --- shellcmd  Shell command
+--- shellcmdline  Shell command line with filename arguments
 --- sign    |:sign| suboptions
 --- syntax    syntax file names |'syntax'|
 --- syntime    |:syntime| suboptions
