@@ -68,6 +68,12 @@ vim.log = {
   },
 }
 
+local utfs = {
+  ['utf-8'] = true,
+  ['utf-16'] = true,
+  ['utf-32'] = true,
+}
+
 -- TODO(lewis6991): document that the signature is system({cmd}, [{opts},] {on_exit})
 --- Runs a system command or throws an error if {cmd} cannot be run.
 ---
@@ -713,6 +719,57 @@ function vim._on_key(buf, typed_buf)
       )
     )
   end
+end
+
+--- Convert UTF-32 or UTF-16 {index} to byte index.
+--- {opts} can be a table containing two properties:i
+--- * an "encoding" property of "utf-8", "utf-16" or "utf-32"
+--- * an "error" property of true or false, if error is false
+--- then then an out of range index will return byte length
+--- instead of throwing an error.
+---
+--- {opts} can also be supplied as a boolean, true for utf-16 and false for utf-32.
+--- If {opts} is not supplied, it defaults to false (UTF-32). Returns the byte index.
+---
+--- Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|.
+--- An {index} in the middle of a UTF-16 sequence is rounded upwards to
+--- the end of that sequence.
+---@param s string
+---@param index integer
+---@param opts? boolean|nil| { encoding: "utf-8"|"utf-16"|"utf-32", error?: boolean }
+---@return integer
+function vim.str_byteindex(s, index, opts)
+  if type(opts) == 'boolean' or not opts then
+    return vim.__str_byteindex(s, index, opts) or error('index out of range')
+  end
+
+  vim.validate('s', s, 'string')
+  vim.validate('index', index, 'number')
+
+  local len = #s
+
+  if index == 0 or len == 0 then
+    return 0
+  end
+
+  opts = opts or { encoding = 'utf-32', error = true }
+  local encoding = opts.encoding or 'utf-32'
+  if not utfs[encoding] then
+    error('Invalid encoding: ' .. encoding)
+  end
+
+  if encoding == 'utf-8' then
+    if index > len then
+      return opts.error and error('index out of range') or len
+    end
+    return index
+  elseif encoding == 'utf-16' then
+    return vim.__str_byteindex(s, index, true) or opts.error and error('index out of range') or len
+  elseif encoding == 'utf-32' then
+    return vim.__str_byteindex(s, index, false) or opts.error and error('index out of range') or len
+  end
+
+  return len
 end
 
 --- Generates a list of possible completions for the string.
