@@ -713,10 +713,13 @@ int state_scrollrect(VTermRect rect, int downward, int rightward, void *user)
     return 0;
   }
 
-  printf("scrollrect %d..%d,%d..%d => %+d,%+d\n",
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+
+  fprintf(f,"scrollrect %d..%d,%d..%d => %+d,%+d\n",
       rect.start_row, rect.end_row, rect.start_col, rect.end_col,
       downward, rightward);
 
+  fclose(f);
   return 1;
 }
 
@@ -727,10 +730,12 @@ int state_moverect(VTermRect dest, VTermRect src, void *user)
     return 0;
   }
 
-  printf("moverect %d..%d,%d..%d -> %d..%d,%d..%d\n",
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+  fprintf(f,"moverect %d..%d,%d..%d -> %d..%d,%d..%d\n",
       src.start_row,  src.end_row,  src.start_col,  src.end_col,
       dest.start_row, dest.end_row, dest.start_col, dest.end_col);
 
+  fclose(f);
   return 1;
 }
 
@@ -793,10 +798,13 @@ int state_erase(VTermRect rect, int selective, void *user)
     return 1;
   }
 
-  printf("erase %d..%d,%d..%d%s\n",
+  FILE *f = fopen(TEST_PARSER_FILE, "a");
+
+  fprintf(f,"erase %d..%d,%d..%d%s\n",
       rect.start_row, rect.end_row, rect.start_col, rect.end_col,
       selective ? " selective" : "");
 
+  fclose(f);
   return 1;
 }
 

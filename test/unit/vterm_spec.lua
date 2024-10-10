@@ -68,38 +68,22 @@ local function wantstate(vt, opts)
   vterm.vterm_state_set_bold_highbright(state, 1)
   vterm.vterm_state_reset(state, 1)
 
-  local sense = true
-  if opts.e then
-    vterm.want_state_erase = sense
-  end
+  vterm.want_state_erase = opts.e or false
+  vterm.want_state_putglyph = opts.g or false
 
-  if opts.g then
-    vterm.want_state_putglyph = sense
-  end
+  local fallbacks = t.ffi.new('VTermStateFallbacks')
+  fallbacks['control'] = vterm.parser_control
+  fallbacks['csi'] = vterm.parser_csi
+  fallbacks['osc'] = vterm.parser_osc
+  fallbacks['dcs'] = vterm.parser_dcs
+  fallbacks['apc'] = vterm.parser_apc
+  fallbacks['pm'] = vterm.parser_pm
+  fallbacks['sos'] = vterm.parser_sos
+  vterm.vterm_state_set_unrecognised_fallbacks(state, opts.f and fallbacks or nil, nil)
 
-  if opts.f then
-    local fallbacks = t.ffi.new('VTermStateFallbacks')
-    fallbacks['control'] = vterm.parser_control
-    fallbacks['csi'] = vterm.parser_csi
-    fallbacks['osc'] = vterm.parser_osc
-    fallbacks['dcs'] = vterm.parser_dcs
-    fallbacks['apc'] = vterm.parser_apc
-    fallbacks['pm'] = vterm.parser_pm
-    fallbacks['sos'] = vterm.parser_sos
-    vterm.vterm_state_set_unrecognised_fallbacks(state, sense and fallbacks or nil, nil)
-  end
-
-  if opts.m then
-    vterm.want_state_moverect = sense
-  end
-
-  if opts.p then
-    vterm.want_state_settermprop = sense
-  end
-
-  if opts.s then
-    vterm.want_state_scrollrect = sense
-  end
+  vterm.want_state_moverect = opts.m or false
+  vterm.want_state_settermprop = opts.p or false
+  vterm.want_state_scrollrect = opts.s or false
 
   return state
 end
@@ -259,6 +243,7 @@ describe('vterm', function()
     push('\x1b[12\x18AB', vt)
     expect('text 41,42')
 
+    -- TODO(dundargoc): fix or remove
     -- C0 in Escape interrupts and continues
     -- push "\x1b(\nX"
     --   control 10
@@ -690,7 +675,164 @@ describe('vterm', function()
     push('\x1b[2Z', vt)
     cursor(0, 40, state)
   end)
-  pending('12state_scroll', function() end)
+
+  itp('12state_scroll', function()
+    local vt = init()
+    vterm.vterm_set_utf8(vt, true)
+    local state = wantstate(vt, { s = true })
+
+    -- Linefeed
+    push(string.rep('\n', 24), vt)
+    cursor(24, 0, state)
+    push('\n', vt)
+    expect('scrollrect 0..25,0..80 => +1,+0')
+    cursor(24, 0, state)
+
+    reset(state, nil)
+
+    -- Index
+    push('\x1b[25H', vt)
+    push('\x1bD', vt)
+    expect('scrollrect 0..25,0..80 => +1,+0')
+
+    reset(state, nil)
+
+    -- Reverse Index
+    push('\x1bM', vt)
+    expect('scrollrect 0..25,0..80 => -1,+0')
+
+    reset(state, nil)
+
+    -- Linefeed in DECSTBM
+    push('\x1b[1;10r', vt)
+    cursor(0, 0, state)
+    push(string.rep('\n', 9), vt)
+    cursor(9, 0, state)
+    push('\n', vt)
+    expect('scrollrect 0..10,0..80 => +1,+0')
+    cursor(9, 0, state)
+
+    -- Linefeed outside DECSTBM
+    push('\x1b[20H', vt)
+    cursor(19, 0, state)
+    push('\n', vt)
+    cursor(20, 0, state)
+
+    -- Index in DECSTBM
+    push('\x1b[9;10r', vt)
+    push('\x1b[10H', vt)
+    push('\x1bM', vt)
+    cursor(8, 0, state)
+    push('\x1bM', vt)
+    expect('scrollrect 8..10,0..80 => -1,+0')
+
+    -- Reverse Index in DECSTBM
+    push('\x1b[25H', vt)
+    cursor(24, 0, state)
+    push('\n', vt)
+    -- no scrollrect
+    cursor(24, 0, state)
+
+    -- Linefeed in DECSTBM+DECSLRM
+    push('\x1b[?69h', vt)
+    push('\x1b[3;10r\x1b[10;40s', vt)
+    push('\x1b[10;10H\n', vt)
+    expect('scrollrect 2..10,9..40 => +1,+0')
+
+    -- IND/RI in DECSTBM+DECSLRM
+    push('\x1bD', vt)
+    expect('scrollrect 2..10,9..40 => +1,+0')
+    push('\x1b[3;10H\x1bM', vt)
+    expect('scrollrect 2..10,9..40 => -1,+0')
+
+    -- TODO(dundargoc): fix or remove
+    -- -- DECRQSS on DECSTBM
+    -- push "\x1bP\$qr\x1b\\"
+    --   output "\x1bP1\$r3;10r\x1b\\"
+
+    -- TODO(dundargoc): fix or remove
+    -- -- DECRQSS on DECSLRM
+    -- push "\x1bP\$qs\x1b\\"
+    --   output "\x1bP1\$r10;40s\x1b\\"
+
+    -- Setting invalid DECSLRM with !DECVSSM is still rejected
+    push('\x1b[?69l\x1b[;0s\x1b[?69h', vt)
+
+    reset(state, nil)
+
+    -- Scroll Down
+    push('\x1b[S', vt)
+    expect('scrollrect 0..25,0..80 => +1,+0')
+    cursor(0, 0, state)
+    push('\x1b[2S', vt)
+    expect('scrollrect 0..25,0..80 => +2,+0')
+    cursor(0, 0, state)
+    push('\x1b[100S', vt)
+    expect('scrollrect 0..25,0..80 => +25,+0')
+
+    -- Scroll Up
+    push('\x1b[T', vt)
+    expect('scrollrect 0..25,0..80 => -1,+0')
+    cursor(0, 0, state)
+    push('\x1b[2T', vt)
+    expect('scrollrect 0..25,0..80 => -2,+0')
+    cursor(0, 0, state)
+    push('\x1b[100T', vt)
+    expect('scrollrect 0..25,0..80 => -25,+0')
+
+    -- SD/SU in DECSTBM
+    push('\x1b[5;20r', vt)
+    push('\x1b[S', vt)
+    expect('scrollrect 4..20,0..80 => +1,+0')
+    push('\x1b[T', vt)
+    expect('scrollrect 4..20,0..80 => -1,+0')
+
+    reset(state, nil)
+
+    -- SD/SU in DECSTBM+DECSLRM
+    push('\x1b[?69h', vt)
+    push('\x1b[3;10r\x1b[10;40s', vt)
+    cursor(0, 0, state)
+    push('\x1b[3;10H', vt)
+    cursor(2, 9, state)
+    push('\x1b[S', vt)
+    expect('scrollrect 2..10,9..40 => +1,+0')
+    push('\x1b[?69l', vt)
+    push('\x1b[S', vt)
+    expect('scrollrect 2..10,0..80 => +1,+0')
+
+    -- Invalid boundaries
+    reset(state, nil)
+
+    push('\x1b[100;105r\x1bD', vt)
+    push('\x1b[5;2r\x1bD', vt)
+
+    reset(state, nil)
+    state = wantstate(vt, { m = true, e = true })
+
+    -- Scroll Down move+erase emulation
+    push('\x1b[S', vt)
+    expect('moverect 1..25,0..80 -> 0..24,0..80\nerase 24..25,0..80')
+    cursor(0, 0, state)
+    push('\x1b[2S', vt)
+    expect('moverect 2..25,0..80 -> 0..23,0..80\nerase 23..25,0..80')
+    cursor(0, 0, state)
+
+    -- Scroll Up move+erase emulation
+    push('\x1b[T', vt)
+    expect('moverect 0..24,0..80 -> 1..25,0..80\nerase 0..1,0..80')
+    cursor(0, 0, state)
+    push('\x1b[2T', vt)
+    expect('moverect 0..23,0..80 -> 2..25,0..80\nerase 0..2,0..80')
+    cursor(0, 0, state)
+
+    -- DECSTBM resets cursor position
+    push('\x1b[5;5H', vt)
+    cursor(4, 4, state)
+    push('\x1b[r', vt)
+    cursor(0, 0, state)
+  end)
+
   pending('13state_edit', function() end)
 
   itp('14state_encoding', function()
@@ -784,6 +926,7 @@ describe('vterm', function()
     push('\xe1', vt)
     expect('putglyph 2592 1 0,1')
 
+    -- TODO(dundargoc): fix or remove
     -- Mixed US-ASCII and UTF-8
     -- U+0108 == c4 88
     -- reset(state,nil)
