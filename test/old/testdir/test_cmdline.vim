@@ -1032,6 +1032,8 @@ func Test_cmdline_complete_shellcmdline()
 
   call feedkeys(":MyCmd whoam\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('^".*\<whoami\>', @:)
+  let l = getcompletion('whoam', 'shellcmdline')
+  call assert_match('\<whoami\>', join(l, ' '))
 
   delcommand MyCmd
 endfunc
@@ -3818,9 +3820,13 @@ func Test_cmdline_complete_shellcmdline_argument()
 
   call feedkeys(":MyCmd vim test_cmdline.\<Tab>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"MyCmd vim test_cmdline.vim', @:)
+  call assert_equal(['test_cmdline.vim'],
+        \ getcompletion('vim test_cmdline.', 'shellcmdline'))
 
   call feedkeys(":MyCmd vim nonexistentfile\<Tab>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"MyCmd vim nonexistentfile', @:)
+  call assert_equal([],
+        \ getcompletion('vim nonexistentfile', 'shellcmdline'))
 
   let compl1 = getcompletion('', 'file')[0]
   let compl2 = getcompletion('', 'file')[1]
@@ -3837,9 +3843,13 @@ func Test_cmdline_complete_shellcmdline_argument()
   set wildoptions&
   call feedkeys(":MyCmd vim test_cmdline.\<Tab>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"MyCmd vim test_cmdline.vim', @:)
+  call assert_equal(['test_cmdline.vim'],
+        \ getcompletion('vim test_cmdline.', 'shellcmdline'))
 
   call feedkeys(":MyCmd vim nonexistentfile\<Tab>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"MyCmd vim nonexistentfile', @:)
+  call assert_equal([],
+        \ getcompletion('vim nonexistentfile', 'shellcmdline'))
 
   let compl1 = getcompletion('', 'file')[0]
   let compl2 = getcompletion('', 'file')[1]
