@@ -1691,6 +1691,7 @@ describe("'winhighlight' highlight", function()
       [29] = { foreground = Screen.colors.Blue1, background = Screen.colors.Red, bold = true },
       [30] = { background = tonumber('0xff8800') },
       [31] = { background = tonumber('0xff8800'), bold = true, foreground = Screen.colors.Blue },
+      [32] = { bold = true, reverse = true, background = Screen.colors.DarkGreen },
     }
     command('hi Background1 guibg=DarkBlue')
     command('hi Background2 guibg=DarkGreen')
@@ -2253,10 +2254,10 @@ describe("'winhighlight' highlight", function()
       some text                               |
       more tex^t                               |
       {0:~                                       }|
-      {3:[No Name]                        }{1:2,9 All}|
+      {3:[No Name]                        }{11:2,9 All}|
       some text                               |
       more text                               |
-      {4:[No Name]                        }{1:1,1 All}|
+      {4:[No Name]                        }{14:1,1 All}|
                                               |
     ]],
     }
@@ -2267,10 +2268,10 @@ describe("'winhighlight' highlight", function()
       some text                               |
       more tex^t                               |
       {0:~                                       }|
-      {3:[No Name]                        }{5:2,9 All}|
+      {3:[No Name]                        }{32:2,9 All}|
       some text                               |
       more text                               |
-      {4:[No Name]                        }{1:1,1 All}|
+      {4:[No Name]                        }{14:1,1 All}|
                                               |
     ]],
     }
@@ -2281,10 +2282,10 @@ describe("'winhighlight' highlight", function()
       some tex^t                               |
       more text                               |
       {0:~                                       }|
-      {3:[No Name]                        }{5:1,9 All}|
+      {3:[No Name]                        }{32:1,9 All}|
       some text                               |
       more text                               |
-      {4:[No Name]                        }{1:1,1 All}|
+      {4:[No Name]                        }{14:1,1 All}|
                                               |
     ]],
     }
