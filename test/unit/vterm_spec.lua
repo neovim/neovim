@@ -134,6 +134,10 @@ local function cursor(row, col, state)
   t.eq(col, pos.col)
 end
 
+local function resize(rows, cols, vt)
+  vterm.vterm_set_size(vt, rows, cols)
+end
+
 describe('vterm', function()
   itp('02parser', function()
     local vt = init()
@@ -699,9 +703,9 @@ describe('vterm', function()
     expect('putglyph 23 1 0,0')
 
     -- Designate G0=UK
-    reset(state,nil)
-    push( "\x1b(A",vt)
-    push( "#",vt)
+    reset(state, nil)
+    push('\x1b(A', vt)
+    push('#', vt)
     expect('putglyph a3 1 0,0')
 
     -- Designate G0=DEC drawing
@@ -792,7 +796,50 @@ describe('vterm', function()
   end)
 
   pending('15state_mode', function() end)
-  pending('16state_resize', function() end)
+
+  itp('16state_resize', function()
+    local vt = init()
+    local state = wantstate(vt, { g = true })
+
+    -- Placement
+    reset(state, nil)
+    push('AB\x1b[79GCDE', vt)
+    expect(
+      'putglyph 41 1 0,0\nputglyph 42 1 0,1\nputglyph 43 1 0,78\nputglyph 44 1 0,79\nputglyph 45 1 1,0'
+    )
+
+    -- Resize
+    reset(state, nil)
+    resize(27, 85, vt)
+    push('AB\x1b[79GCDE', vt)
+    expect(
+      'putglyph 41 1 0,0\nputglyph 42 1 0,1\nputglyph 43 1 0,78\nputglyph 44 1 0,79\nputglyph 45 1 0,80'
+    )
+    cursor(0, 81, state)
+
+    -- Resize without reset
+    resize(28, 90, vt)
+    cursor(0, 81, state)
+    push('FGHI', vt)
+    expect('putglyph 46 1 0,81\nputglyph 47 1 0,82\nputglyph 48 1 0,83\nputglyph 49 1 0,84')
+    cursor(0, 85, state)
+
+    -- Resize shrink moves cursor
+    resize(25, 80, vt)
+    cursor(0, 79, state)
+
+    -- Resize grow doesn't cancel phantom
+    reset(state, nil)
+    push('\x1b[79GAB', vt)
+    expect('putglyph 41 1 0,78\nputglyph 42 1 0,79')
+    cursor(0, 79, state)
+    resize(30, 100, vt)
+    cursor(0, 80, state)
+    push('C', vt)
+    expect('putglyph 43 1 0,80')
+    cursor(0, 81, state)
+  end)
+
   pending('17state_mouse', function() end)
   pending('18state_termprops', function() end)
   pending('20state_wrapping', function() end)
