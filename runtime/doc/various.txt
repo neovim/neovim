@@ -610,4 +610,64 @@ gc			Text object for the largest contiguous block of
 			`gcgc` uncomments a comment block; `dgc` deletes it).
 			Works only in Operator-pending mode.
 
+==============================================================================
+3. Directional Operators			*[-default* *]-default*
+
+{operator}[{object}	Do `{operator}` from `{object}` to the start to the cursor.
+{operator}]{object}	Do `{operator}` from the cursor to `{object}` end.
+
+Some useful examples include:
+
+- `d[a}`	Delete around the start of a {}-pair to the cursor.
+- `d]a}`	Delete around the cursor to the end of a {}-pair.
+- `gc[ip`	Comment from the start of the paragraph to the cursor.
+- `gc]ip`	Comment from the cursor to the end of the paragraph.
+- `gw[ip`	Format from the start of the paragraph to the cursor.
+- `gw]ip`	Format from the cursor to the end of the paragraph.
+- `v[ip`	Select from the start of the paragraph to the cursor.
+- `v]ip`	Select from the cursor to the end of the paragraph.
+- `y[ib`	Yank inside start of a ()-pair to the cursor.
+- `y]ib`	Yank inside the cursor to the end of a ()-pair.
+
+etc etc.
+
+This works with many {operator}-{object} pairs.
+Using `[` / `]` also work with text-object plugins!
+
+------------------------------------------------------------------------------
+Custom Text Objects
+
+For example
+
+Using https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+enables mappings like:
+
+- `V]ic`	Select lines from the cursor to the end of a class.
+- `V[ic`	Select lines from the start of a class to the cursor.
+- `V]if`	Select lines from the cursor to the end of a function.
+- `V[if`	Select lines from the start of a function to the cursor.
+
+Treesitter is not required. For example https://github.com/kana/vim-textobj-indent
+lets you operate on indented blocks.
+
+- `c[ii`	Change from start of the indented-lines to the cursor.
+- `c]ii`	Change from the cursor to the end of the indented-lines.
+
+etc.
+
+------------------------------------------------------------------------------
+Custom Text Operators
+
+Previously we talked about using `[` and `]` with custom text objects like
+`ic`, `if`, `ii`. `[` and `]` also work with custom text operators!
+
+For example
+
+Using https://github.com/ralismark/opsort.vim enables mappings like:
+
+- `gs]ip`	Sort from the cursor to the end of a paragraph.
+- `gs[ip`	Sort from the start of a paragraph to the cursor.
+
+As you can see, the `[` / `]` operators are very flexible!
+
  vim:noet:tw=78:ts=8:ft=help:norl:

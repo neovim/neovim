@@ -151,6 +151,35 @@ do
     vim.keymap.set({ 'o' }, 'gc', textobject_rhs, { desc = 'Comment textobject' })
   end
 
+  --- Default maps for directional operators.
+  ---
+  --- See |[-default| and |]-default|.
+  do
+    local function omap(keys, options, desc)
+      vim.keymap.set('o', keys, function()
+        local data = vim.tbl_extend('force', options, { count = vim.v.count1 })
+
+        require('vim._cursor').prepare(data)
+
+        return string.format(
+          "<Esc>:<C-U>set operatorfunc=v:lua.require'vim._cursor'.operatorfunc<CR>%sg@",
+          data.count
+        )
+      end, { expr = true, silent = true, desc = desc })
+    end
+
+    omap(
+      '[',
+      { direction = 'up' },
+      "Run from the start of the text object to the cursor's current position"
+    )
+    omap(
+      ']',
+      { direction = 'down' },
+      "Run from the cursor's current position to the end of the text object"
+    )
+  end
+
   --- Default maps for LSP functions.
   ---
   --- These are mapped unconditionally to avoid different behavior depending on whether an LSP

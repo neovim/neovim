@@ -195,6 +195,7 @@ EDITOR
   "~/" are now expanded to the user's profile directory, not a relative path
   to a literal "~" directory.
 • |hl-PmenuMatch| and |hl-PmenuMatchSel| show matched text in completion popup.
+• Added new [ / ] cursor-aware operators. See |[-default| / |]-default|.
 
 EVENTS
 
