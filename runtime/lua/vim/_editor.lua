@@ -658,6 +658,8 @@ local on_key_cbs = {} --- @type table<integer,function>
 --- and cannot be toggled dynamically.
 ---
 ---@note {fn} will be removed on error.
+---@note {fn} won't be invoked recursively, i.e. if {fn} itself consumes input,
+---           it won't be invoked for those keys.
 ---@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
 ---
 ---@param fn fun(key: string, typed: string)?

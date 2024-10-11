@@ -1678,6 +1678,8 @@ vim.on_key({fn}, {ns_id})                                       *vim.on_key()*
 
     Note: ~
       • {fn} will be removed on error.
+      • {fn} won't be invoked recursively, i.e. if {fn} itself consumes input,
+        it won't be invoked for those keys.
       • {fn} will not be cleared by |nvim_buf_clear_namespace()|
 
     Parameters: ~
