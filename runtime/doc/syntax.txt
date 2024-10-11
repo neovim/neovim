@@ -5202,7 +5202,7 @@ NormalNC	Normal text in non-current windows.
 							*hl-Pmenu*
 Pmenu		Popup menu: Normal item.
 							*hl-PmenuSel*
-PmenuSel	Popup menu: Selected item.
+PmenuSel	Popup menu: Selected item. Combined with |hl-Pmenu|.
 							*hl-PmenuKind*
 PmenuKind	Popup menu: Normal item "kind".
 							*hl-PmenuKindSel*
@@ -5216,9 +5216,11 @@ PmenuSbar	Popup menu: Scrollbar.
 							*hl-PmenuThumb*
 PmenuThumb	Popup menu: Thumb of the scrollbar.
 							*hl-PmenuMatch*
-PmenuMatch	Popup menu: Matched text in normal item.
+PmenuMatch	Popup menu: Matched text in normal item. Combined with
+		|hl-Pmenu|.
 							*hl-PmenuMatchSel*
-PmenuMatchSel	Popup menu: Matched text in selected item.
+PmenuMatchSel	Popup menu: Matched text in selected item. Combined with
+		|hl-PmenuMatch| and |hl-PmenuSel|.
 							*hl-Question*
 Question	|hit-enter| prompt and yes/no questions.
 							*hl-QuickFixLine*

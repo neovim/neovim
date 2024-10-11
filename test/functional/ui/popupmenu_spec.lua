@@ -3636,6 +3636,59 @@ describe('builtin popupmenu', function()
           :sign un^                        |
         ]])
       end)
+
+      it(
+        'cascading highlights for matched text (PmenuMatch, PmenuMatchSel) in cmdline pum',
+        function()
+          screen:set_default_attr_ids({
+            [1] = { foreground = Screen.colors.Blue1, bold = true },
+            [2] = {
+              underline = true,
+              italic = true,
+              foreground = Screen.colors.White,
+              background = Screen.colors.Grey,
+            },
+            [3] = {
+              foreground = Screen.colors.Red,
+              background = Screen.colors.Grey,
+              strikethrough = true,
+              underline = true,
+              italic = true,
+            },
+            [4] = {
+              foreground = Screen.colors.Yellow,
+              background = Screen.colors.Pink,
+              bold = true,
+              underline = true,
+              italic = true,
+            },
+            [5] = {
+              foreground = Screen.colors.Black,
+              background = Screen.colors.White,
+              bold = true,
+              underline = true,
+              italic = true,
+              strikethrough = true,
+            },
+          })
+          exec([[
+            set wildoptions=pum,fuzzy
+            hi Pmenu          guifg=White guibg=Grey gui=underline,italic
+            hi PmenuSel       guifg=Red gui=strikethrough
+            hi PmenuMatch     guifg=Yellow guibg=Pink gui=bold
+            hi PmenuMatchSel  guifg=Black guibg=White
+          ]])
+
+          feed(':sign plc<Tab>')
+          screen:expect([[
+                                            |
+            {1:~                               }|*16
+            {1:~    }{3: }{5:pl}{3:a}{5:c}{3:e          }{1:           }|
+            {1:~    }{2: un}{4:pl}{2:a}{4:c}{2:e        }{1:           }|
+            :sign place^                     |
+          ]])
+        end
+      )
     end
 
     it("'pumheight'", function()
