@@ -2035,7 +2035,7 @@ func Test_edit_browse()
     au!
   augroup END
 
-  " When the USE_FNAME_CASE is defined this used to cause a crash.
+  " When the CASE_INSENSITIVE_FILENAME is defined this used to cause a crash.
   browse enew
   bwipe!
 
