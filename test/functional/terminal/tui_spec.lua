@@ -1225,16 +1225,12 @@ describe('TUI', function()
   end)
 
   it('paste: recovers from vim.paste() failure', function()
-    child_session:request(
-      'nvim_exec_lua',
-      [[
+    child_exec_lua([[
       _G.save_paste_fn = vim.paste
       -- Stack traces for this test are non-deterministic, so disable them
       _G.debug.traceback = function(msg) return msg end
       vim.paste = function(lines, phase) error("fake fail") end
-    ]],
-      {}
-    )
+    ]])
     -- Prepare something for dot-repeat/redo.
     feed_data('ifoo\n\027[27u')
     wait_for_mode('n')
@@ -1287,7 +1283,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     -- Paste works if vim.paste() succeeds.
-    child_session:request('nvim_exec_lua', [[vim.paste = _G.save_paste_fn]], {})
+    child_exec_lua([[vim.paste = _G.save_paste_fn]])
     feed_data('\027[200~line A\nline B\n\027[201~')
     screen:expect([[
       foo                                               |
@@ -1303,13 +1299,9 @@ describe('TUI', function()
   it('paste: vim.paste() cancel (retval=false) #10865', function()
     -- This test only exercises the "cancel" case.  Use-case would be "dangling
     -- paste", but that is not implemented yet. #10865
-    child_session:request(
-      'nvim_exec_lua',
-      [[
+    child_exec_lua([[
       vim.paste = function(lines, phase) return false end
-    ]],
-      {}
-    )
+    ]])
     feed_data('\027[200~line A\nline B\n\027[201~')
     expect_child_buf_lines({ '' })
     feed_data('ifoo\n\027[27u')
@@ -1317,22 +1309,18 @@ describe('TUI', function()
   end)
 
   it('paste: vim.paste() cancel (retval=false) with streaming #30462', function()
-    child_session:request(
-      'nvim_exec_lua',
-      [[
-        vim.paste = (function(overridden)
-          return function(lines, phase)
-            for i, line in ipairs(lines) do
-              if line:find('!') then
-                return false
-              end
+    child_exec_lua([[
+      vim.paste = (function(overridden)
+        return function(lines, phase)
+          for i, line in ipairs(lines) do
+            if line:find('!') then
+              return false
             end
-            return overridden(lines, phase)
           end
-        end)(vim.paste)
-      ]],
-      {}
-    )
+          return overridden(lines, phase)
+        end
+      end)(vim.paste)
+    ]])
     feed_data('A')
     wait_for_mode('i')
     feed_data('\027[200~aaa')
@@ -1353,15 +1341,11 @@ describe('TUI', function()
   end)
 
   it("paste: 'nomodifiable' buffer", function()
-    child_session:request('nvim_command', 'set nomodifiable')
-    child_session:request(
-      'nvim_exec_lua',
-      [[
+    child_exec_lua([[
+      vim.bo.modifiable = false
       -- Truncate the error message to hide the line number
       _G.debug.traceback = function(msg) return msg:sub(-49) end
-    ]],
-      {}
-    )
+    ]])
     feed_data('\027[200~fail 1\nfail 2\n\027[201~')
     screen:expect([[
                                                         |
@@ -1373,7 +1357,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\n') -- <Enter> to dismiss hit-enter prompt
-    child_session:request('nvim_command', 'set modifiable')
+    child_exec_lua('vim.bo.modifiable = true')
     feed_data('\027[200~success 1\nsuccess 2\n\027[201~')
     screen:expect([[
       success 1                                         |
@@ -1528,9 +1512,7 @@ describe('TUI', function()
   end)
 
   it('paste: streamed paste with isolated "stop paste" code', function()
-    child_session:request(
-      'nvim_exec_lua',
-      [[
+    child_exec_lua([[
       _G.paste_phases = {}
       vim.paste = (function(overridden)
         return function(lines, phase)
@@ -1538,9 +1520,7 @@ describe('TUI', function()
           overridden(lines, phase)
         end
       end)(vim.paste)
-    ]],
-      {}
-    )
+    ]])
     feed_data('i')
     wait_for_mode('i')
     feed_data('\027[200~pasted') -- phase 1
@@ -1563,7 +1543,7 @@ describe('TUI', function()
     feed_data('\027[201~') -- phase 3
     poke_both_eventloop()
     screen:expect_unchanged()
-    local _, rv = child_session:request('nvim_exec_lua', [[return _G.paste_phases]], {})
+    local rv = child_exec_lua('return _G.paste_phases')
     -- In rare cases there may be multiple chunks of phase 2 because of timing.
     eq({ 1, 2, 3 }, { rv[1], rv[2], rv[#rv] })
   end)
@@ -1749,9 +1729,7 @@ describe('TUI', function()
     eq(expected, rv)
 
     ---@type table
-    local expected_version = ({
-      child_session:request('nvim_exec_lua', 'return vim.version()', {}),
-    })[2]
+    local expected_version = child_exec_lua('return vim.version()')
     -- vim.version() returns `prerelease` string. Coerce it to boolean.
     expected_version.prerelease = not not expected_version.prerelease
 
