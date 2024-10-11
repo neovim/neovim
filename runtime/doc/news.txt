@@ -139,6 +139,7 @@ DEFAULTS
 • Mappings:
   • |grn| in Normal mode maps to |vim.lsp.buf.rename()|
   • |grr| in Normal mode maps to |vim.lsp.buf.references()|
+  • |gri| in Normal mode maps to |vim.lsp.buf.implementation()|
   • |gra| in Normal and Visual mode maps to |vim.lsp.buf.code_action()|
   • CTRL-S in Insert mode maps to |vim.lsp.buf.signature_help()|
   • Mouse |popup-menu| includes an "Open in web browser" item when you right-click
