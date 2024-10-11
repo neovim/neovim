@@ -65,6 +65,7 @@
 --- @field winid integer
 --- @field winnr integer
 --- @field winrow integer
+--- @field lastused integer
 
 --- @class vim.fn.sign_define.dict
 --- @field text string
