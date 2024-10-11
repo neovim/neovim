@@ -73,7 +73,7 @@ describe('treesitter language API', function()
     eq(true, fset['directive'])
     eq(true, fset['initializer'])
 
-    local has_named, has_anonymous
+    local has_named, has_anonymous, has_supertype
     for symbol, named in pairs(symbols) do
       eq('string', type(symbol))
       eq('boolean', type(named))
@@ -81,11 +81,13 @@ describe('treesitter language API', function()
         has_named = true
       elseif symbol == '"|="' and named == false then
         has_anonymous = true
+      elseif symbol == 'statement' and named == true then
+        has_supertype = true
       end
     end
     eq(
-      { has_named = true, has_anonymous = true },
-      { has_named = has_named, has_anonymous = has_anonymous }
+      { has_named = true, has_anonymous = true, has_supertype = true },
+      { has_named = has_named, has_anonymous = has_anonymous, has_supertype = has_supertype }
     )
   end)
 

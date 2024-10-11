@@ -272,7 +272,7 @@ int tslua_inspect_lang(lua_State *L)
       continue;
     }
     const char *name = ts_language_symbol_name(lang, (TSSymbol)i);
-    bool named = t == TSSymbolTypeRegular;
+    bool named = t != TSSymbolTypeAnonymous;
     lua_pushboolean(L, named);  // [retval, symbols, is_named]
     if (!named) {
       char buf[256];
