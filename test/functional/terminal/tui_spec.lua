@@ -87,6 +87,21 @@ describe('TUI', function()
     end)
   end
 
+  -- Ensure both child client and child server have processed pending events.
+  local function poke_both_eventloop()
+    child_exec_lua([[
+      _G.termresponse = nil
+      vim.api.nvim_create_autocmd('TermResponse', {
+        once = true,
+        callback = function(ev) _G.termresponse = ev.data end,
+      })
+    ]])
+    feed_data('\027P0$r\027\\')
+    retry(nil, nil, function()
+      eq('\027P0$r', child_exec_lua('return _G.termresponse'))
+    end)
+  end
+
   it('rapid resize #7572 #7628', function()
     -- Need buffer rows to provoke the behavior.
     feed_data(':edit test/functional/fixtures/bigfile.txt\n')
@@ -975,6 +990,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027[201~') -- End paste.
+    poke_both_eventloop()
     screen:expect_unchanged()
     feed_data('\027[27u') -- ESC: go to Normal mode.
     wait_for_mode('n')
@@ -1157,6 +1173,7 @@ describe('TUI', function()
     feed_data('\027[200~line 1\nline 2\n')
     wait_for_mode('c')
     feed_data('line 3\nline 4\n\027[201~')
+    poke_both_eventloop()
     wait_for_mode('c')
     screen:expect([[
       foo                                               |
@@ -1201,6 +1218,7 @@ describe('TUI', function()
     expect_cmdline('"stuff 1 more"')
     -- End the paste sequence.
     feed_data('\027[201~')
+    poke_both_eventloop()
     expect_cmdline('"stuff 1 more"')
     feed_data(' typed')
     expect_cmdline('"stuff 1 more typed"')
@@ -1324,6 +1342,7 @@ describe('TUI', function()
     feed_data('ccc!') -- This chunk is cancelled.
     expect_child_buf_lines({ 'aaabbb' })
     feed_data('ddd\027[201~') -- This chunk is ignored.
+    poke_both_eventloop()
     expect_child_buf_lines({ 'aaabbb' })
     feed_data('\027[27u')
     wait_for_mode('n')
@@ -1542,6 +1561,7 @@ describe('TUI', function()
     ]])
     -- Send isolated "stop paste" sequence.
     feed_data('\027[201~') -- phase 3
+    poke_both_eventloop()
     screen:expect_unchanged()
     local _, rv = child_session:request('nvim_exec_lua', [[return _G.paste_phases]], {})
     -- In rare cases there may be multiple chunks of phase 2 because of timing.
