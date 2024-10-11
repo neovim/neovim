@@ -2134,7 +2134,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     if (sfname == NULL) {
       sfname = ffname;
     }
-#ifdef USE_FNAME_CASE
+#ifdef CASE_INSENSITIVE_FILENAME
     if (sfname != NULL) {
       path_fix_case(sfname);             // set correct case for sfname
     }
