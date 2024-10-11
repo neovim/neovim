@@ -71,11 +71,12 @@ options are not restored when the LSP client is stopped or detached.
 - |K| is mapped to |vim.lsp.buf.hover()| unless |'keywordprg'| is customized or
   a custom keymap for `K` exists.
 
-                                                *grr* *gra* *grn* *i_CTRL-S*
+                                          *grr* *gra* *grn* *gri* *i_CTRL-S*
 Some keymaps are created unconditionally when Nvim starts:
 - "grn" is mapped in Normal mode to |vim.lsp.buf.rename()|
 - "gra" is mapped in Normal and Visual mode to |vim.lsp.buf.code_action()|
 - "grr" is mapped in Normal mode to |vim.lsp.buf.references()|
+- "gri" is mapped in Normal mode to |vim.lsp.buf.implementation()|
 - CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
 
 If not wanted, these keymaps can be removed at any time using
