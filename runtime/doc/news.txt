@@ -234,6 +234,10 @@ UI
   which controls the tool used to open the given path or URL. If you want to
   globally set this, you can override vim.ui.open using the same approach
   described at |vim.paste()|.
+• The |ins-completion-menu| now supports cascading highlight styles.
+  |hl-PmenuSel| and |hl-PmenuMatch| both inherit from |hl-Pmenu|, and
+  |hl-PmenuMatchSel| inherits highlights from both |hl-PmenuSel| and
+  |hl-PmenuMatch|.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
