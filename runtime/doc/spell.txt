@@ -776,7 +776,7 @@ them before the Vim word list is made.  The tools for this can be found in the
 The format for the affix and word list files is based on what Myspell uses
 (the spell checker of Mozilla and OpenOffice.org).  A description can be found
 here:
-	https://lingucomponent.openoffice.org/affix.readme ~
+	https://lingucomponent.openoffice.org/affix.readme
 Note that affixes are case sensitive, this isn't obvious from the description.
 
 Vim supports quite a few extras.  They are described below |spell-affix-vim|.

@@ -1,7 +1,9 @@
+-- TODO(justinmk): move most of this to `vim.text`.
+
 local fmt = string.format
 
---- @class nvim.text_utils.MDNode
---- @field [integer] nvim.text_utils.MDNode
+--- @class nvim.util.MDNode
+--- @field [integer] nvim.util.MDNode
 --- @field type string
 --- @field text? string
 
@@ -14,6 +16,24 @@ local M = {}
 local function contains(t, xs)
   return vim.tbl_contains(xs, t)
 end
+
+-- Map of api_level:version, by inspection of:
+--    :lua= vim.mpack.decode(vim.fn.readfile('test/functional/fixtures/api_level_9.mpack','B')).version
+M.version_level = {
+  [13] = '0.11.0',
+  [12] = '0.10.0',
+  [11] = '0.9.0',
+  [10] = '0.8.0',
+  [9] = '0.7.0',
+  [8] = '0.6.0',
+  [7] = '0.5.0',
+  [6] = '0.4.0',
+  [5] = '0.3.2',
+  [4] = '0.3.0',
+  [3] = '0.2.1',
+  [2] = '0.2.0',
+  [1] = '0.1.0',
+}
 
 --- @param txt string
 --- @param srow integer
@@ -47,13 +67,13 @@ local function slice_text(txt, srow, scol, erow, ecol)
 end
 
 --- @param text string
---- @return nvim.text_utils.MDNode
+--- @return nvim.util.MDNode
 local function parse_md_inline(text)
   local parser = vim.treesitter.languagetree.new(text, 'markdown_inline')
   local root = parser:parse(true)[1]:root()
 
   --- @param node TSNode
-  --- @return nvim.text_utils.MDNode?
+  --- @return nvim.util.MDNode?
   local function extract(node)
     local ntype = node:type()
 
@@ -101,7 +121,7 @@ local function parse_md_inline(text)
 end
 
 --- @param text string
---- @return nvim.text_utils.MDNode
+--- @return nvim.util.MDNode
 local function parse_md(text)
   local parser = vim.treesitter.languagetree.new(text, 'markdown', {
     injections = { markdown = '' },
@@ -119,7 +139,7 @@ local function parse_md(text)
   }
 
   --- @param node TSNode
-  --- @return nvim.text_utils.MDNode?
+  --- @return nvim.util.MDNode?
   local function extract(node)
     local ntype = node:type()
 
@@ -153,6 +173,20 @@ local function parse_md(text)
   return extract(root) or {}
 end
 
+--- Prefixes each line in `text`.
+---
+--- Does not wrap, not important for "meta" files? (You probably want md_to_vimdoc instead.)
+---
+--- @param text string
+--- @param prefix_ string
+function M.prefix_lines(prefix_, text)
+  local r = ''
+  for _, l in ipairs(vim.split(text, '\n', { plain = true })) do
+    r = r .. vim.trim(prefix_ .. l) .. '\n'
+  end
+  return r
+end
+
 --- @param x string
 --- @param start_indent integer
 --- @param indent integer
@@ -179,7 +213,7 @@ function M.wrap(x, start_indent, indent, text_width)
   return (table.concat(parts):gsub('%s+\n', '\n'):gsub('\n+$', ''))
 end
 
---- @param node nvim.text_utils.MDNode
+--- @param node nvim.util.MDNode
 --- @param start_indent integer
 --- @param indent integer
 --- @param text_width integer

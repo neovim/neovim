@@ -688,7 +688,7 @@ The current mode is "-- INSERT --" or "-- REPLACE --", see |'showmode'|.  The
 command characters are those that you typed but were not used yet.
 
 If you have a slow terminal you can switch off the status messages to speed
-up editing:
+up editing: >
 	:set nosc noru nosm
 
 If there is an error, an error message will be shown for at least one second

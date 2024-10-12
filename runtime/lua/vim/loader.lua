@@ -289,6 +289,9 @@ function Loader.load(modpath, opts)
 end
 
 --- Finds Lua modules for the given module name.
+---
+--- @since 0
+---
 ---@param modname string Module name, or `"*"` to find the top-level modules instead
 ---@param opts? vim.loader.find.Opts Options for finding a module:
 ---@return vim.loader.ModuleInfo[]
@@ -377,8 +380,10 @@ function M.find(modname, opts)
   return results
 end
 
---- Resets the cache for the path, or all the paths
---- if path is nil.
+--- Resets the cache for the path, or all the paths if path is nil.
+---
+--- @since 0
+---
 ---@param path string? path to reset
 function M.reset(path)
   if path then
@@ -398,6 +403,8 @@ end
 --- * adds the Lua loader using the byte-compilation cache
 --- * adds the libs loader
 --- * removes the default Nvim loader
+---
+--- @since 0
 function M.enable()
   if M.enabled then
     return
@@ -421,6 +428,8 @@ end
 --- Disables the experimental Lua module loader:
 --- * removes the loaders
 --- * adds the default Nvim loader
+---
+--- @since 0
 function M.disable()
   if not M.enabled then
     return

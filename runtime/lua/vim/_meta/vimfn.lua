@@ -15,7 +15,7 @@ error('Cannot require a meta file')
 ---   echo abs(-4)
 --- <  4
 ---
---- @param expr any
+--- @param expr number
 --- @return number
 function vim.fn.abs(expr) end
 
@@ -31,7 +31,7 @@ function vim.fn.abs(expr) end
 ---   echo acos(-0.5)
 --- <  2.094395
 ---
---- @param expr any
+--- @param expr number
 --- @return number
 function vim.fn.acos(expr) end
 
@@ -47,7 +47,7 @@ function vim.fn.acos(expr) end
 ---
 --- @param object any
 --- @param expr any
---- @return any
+--- @return any # Resulting |List| or |Blob|, or 1 if {object} is not a |List| or a |Blob|.
 function vim.fn.add(object, expr) end
 
 --- Bitwise AND on the two arguments.  The arguments are converted
@@ -57,8 +57,8 @@ function vim.fn.add(object, expr) end
 ---   let flag = and(bits, 0x80)
 --- <
 ---
---- @param expr any
---- @param expr1 any
+--- @param expr number
+--- @param expr1 number
 --- @return integer
 vim.fn['and'] = function(expr, expr1) end
 
@@ -86,7 +86,7 @@ function vim.fn.api_info() end
 --- <
 ---
 --- @param lnum integer
---- @param text any
+--- @param text string|string[]
 --- @return 0|1
 function vim.fn.append(lnum, text) end
 
@@ -110,7 +110,7 @@ function vim.fn.append(lnum, text) end
 --- <However, when {text} is an empty list then no error is given
 --- for an invalid {lnum}, since {lnum} isn't actually used.
 ---
---- @param buf any
+--- @param buf integer|string
 --- @param lnum integer
 --- @param text string
 --- @return 0|1
@@ -195,7 +195,7 @@ function vim.fn.asin(expr) end
 --- Also see |assert_fails()|, |assert_nobeep()| and
 --- |assert-return|.
 ---
---- @param cmd any
+--- @param cmd string
 --- @return 0|1
 function vim.fn.assert_beeps(cmd) end
 
@@ -227,8 +227,10 @@ function vim.fn.assert_equal(expected, actual, msg) end
 --- When {fname-one} or {fname-two} does not exist the error will
 --- mention that.
 ---
+--- @param fname-one string
+--- @param fname-two string
 --- @return 0|1
-function vim.fn.assert_equalfile() end
+function vim.fn.assert_equalfile(fname-one, fname-two) end
 
 --- When v:exception does not contain the string {error} an error
 --- message is added to |v:errors|.  Also see |assert-return|.
@@ -281,7 +283,7 @@ function vim.fn.assert_exception(error, msg) end
 --- Note that beeping is not considered an error, and some failing
 --- commands only beep.  Use |assert_beeps()| for those.
 ---
---- @param cmd any
+--- @param cmd string
 --- @param error? any
 --- @param msg? any
 --- @param lnum? integer
@@ -311,10 +313,10 @@ function vim.fn.assert_false(actual, msg) end
 --- but got {actual}".  When {msg} is present it is prefixed to
 --- that.
 ---
---- @param lower any
---- @param upper any
---- @param actual any
---- @param msg? any
+--- @param lower number
+--- @param upper number
+--- @param actual number
+--- @param msg? string
 --- @return 0|1
 function vim.fn.assert_inrange(lower, upper, actual, msg) end
 
@@ -337,9 +339,9 @@ function vim.fn.assert_inrange(lower, upper, actual, msg) end
 --- <Will result in a string to be added to |v:errors|:
 ---   test.vim line 12: Pattern '^f.*o$' does not match 'foobar' ~
 ---
---- @param pattern any
---- @param actual any
---- @param msg? any
+--- @param pattern string
+--- @param actual string
+--- @param msg? string
 --- @return 0|1
 function vim.fn.assert_match(pattern, actual, msg) end
 
@@ -347,7 +349,7 @@ function vim.fn.assert_match(pattern, actual, msg) end
 --- produces a beep or visual bell.
 --- Also see |assert_beeps()|.
 ---
---- @param cmd any
+--- @param cmd string
 --- @return 0|1
 function vim.fn.assert_nobeep(cmd) end
 
@@ -365,16 +367,16 @@ function vim.fn.assert_notequal(expected, actual, msg) end
 --- |v:errors| when {pattern} matches {actual}.
 --- Also see |assert-return|.
 ---
---- @param pattern any
---- @param actual any
---- @param msg? any
+--- @param pattern string
+--- @param actual string
+--- @param msg? string
 --- @return 0|1
 function vim.fn.assert_notmatch(pattern, actual, msg) end
 
 --- Report a test failure directly, using String {msg}.
 --- Always returns one.
 ---
---- @param msg any
+--- @param msg string
 --- @return 0|1
 function vim.fn.assert_report(msg) end
 
@@ -387,7 +389,7 @@ function vim.fn.assert_report(msg) end
 --- along with the location of the assert when run from a script.
 ---
 --- @param actual any
---- @param msg? any
+--- @param msg? string
 --- @return 0|1
 function vim.fn.assert_true(actual, msg) end
 
@@ -401,7 +403,7 @@ function vim.fn.assert_true(actual, msg) end
 ---   echo atan(-4.01)
 --- <  -1.326405
 ---
---- @param expr any
+--- @param expr number
 --- @return number
 function vim.fn.atan(expr) end
 
@@ -416,8 +418,8 @@ function vim.fn.atan(expr) end
 ---   echo atan2(1, -1)
 --- <  2.356194
 ---
---- @param expr1 any
---- @param expr2 any
+--- @param expr1 number
+--- @param expr2 number
 --- @return number
 function vim.fn.atan2(expr1, expr2) end
 
@@ -443,9 +445,9 @@ function vim.fn.blob2list(blob) end
 --- something went wrong, or browsing is not possible.
 ---
 --- @param save any
---- @param title any
---- @param initdir any
---- @param default any
+--- @param title string
+--- @param initdir string
+--- @param default string
 --- @return 0|1
 function vim.fn.browse(save, title, initdir, default) end
 
@@ -460,8 +462,8 @@ function vim.fn.browse(save, title, initdir, default) end
 --- When the "Cancel" button is hit, something went wrong, or
 --- browsing is not possible, an empty string is returned.
 ---
---- @param title any
---- @param initdir any
+--- @param title string
+--- @param initdir string
 --- @return 0|1
 function vim.fn.browsedir(title, initdir) end
 
@@ -733,7 +735,7 @@ function vim.fn.call(func, arglist, dict) end
 ---
 --- Returns 0.0 if {expr} is not a |Float| or a |Number|.
 ---
---- @param expr any
+--- @param expr number
 --- @return number
 function vim.fn.ceil(expr) end
 
@@ -746,8 +748,8 @@ function vim.fn.ceil(expr) end
 --- For a socket, there is only one stream, and {stream} should be
 --- omitted.
 ---
---- @param id any
---- @param stream? any
+--- @param id integer
+--- @param stream? string
 --- @return 0|1
 function vim.fn.chanclose(id, stream) end
 
@@ -779,8 +781,8 @@ function vim.fn.changenr() end
 --- was created with `"rpc":v:true` then the channel expects RPC
 --- messages, use |rpcnotify()| and |rpcrequest()| instead.
 ---
---- @param id any
---- @param data any
+--- @param id number
+--- @param data string|string[]
 --- @return 0|1
 function vim.fn.chansend(id, data) end
 
@@ -824,8 +826,9 @@ function vim.fn.charclass(string) end
 --- With the cursor on '세' in line 5 with text "여보세요": >vim
 ---   echo charcol('.')  " returns 3
 ---   echo col('.')    " returns 7
+--- <
 ---
---- @param expr any
+--- @param expr string|integer[]
 --- @param winid? integer
 --- @return integer
 function vim.fn.charcol(expr, winid) end
@@ -865,8 +868,8 @@ function vim.fn.charcol(expr, winid) end
 ---
 --- @param string string
 --- @param idx integer
---- @param countcc? any
---- @param utf16? any
+--- @param countcc? boolean
+--- @param utf16? boolean
 --- @return integer
 function vim.fn.charidx(string, idx, countcc, utf16) end
 
@@ -890,6 +893,7 @@ function vim.fn.charidx(string, idx, countcc, utf16) end
 ---      " ... do some work
 ---      call chdir(save_dir)
 ---   endif
+--- <
 ---
 --- @param dir string
 --- @return string
@@ -911,7 +915,7 @@ function vim.fn.cindent(lnum) end
 --- If {win} is specified, use the window with this number or
 --- window ID instead of the current window.
 ---
---- @param win? any
+--- @param win? integer
 function vim.fn.clearmatches(win) end
 
 --- The result is a Number, which is the byte index of the column
@@ -950,8 +954,9 @@ function vim.fn.clearmatches(win) end
 --- line.  Also, when using a <Cmd> mapping the cursor isn't
 --- moved, this can be used to obtain the column in Insert mode: >vim
 ---   imap <F2> <Cmd>echo col(".").."\n"<CR>
+--- <
 ---
---- @param expr any
+--- @param expr string|integer[]
 --- @param winid? integer
 --- @return integer
 function vim.fn.col(expr, winid) end
@@ -985,8 +990,8 @@ function vim.fn.col(expr, winid) end
 --- <This isn't very useful, but it shows how it works.  Note that
 --- an empty string is returned to avoid a zero being inserted.
 ---
---- @param startcol any
---- @param matches any
+--- @param startcol integer
+--- @param matches any[]
 function vim.fn.complete(startcol, matches) end
 
 --- Add {expr} to the list of matches.  Only to be used by the
@@ -1069,8 +1074,9 @@ function vim.fn.complete_check() end
 ---   call complete_info(['mode'])
 ---   " Get only 'mode' and 'pum_visible'
 ---   call complete_info(['mode', 'pum_visible'])
+--- <
 ---
---- @param what? any
+--- @param what? any[]
 --- @return table
 function vim.fn.complete_info(what) end
 
@@ -1125,10 +1131,10 @@ function vim.fn.complete_info(what) end
 --- don't fit, a vertical layout is used anyway.  For some systems
 --- the horizontal layout is always used.
 ---
---- @param msg any
---- @param choices? any
---- @param default? any
---- @param type? any
+--- @param msg string
+--- @param choices? string
+--- @param default? integer
+--- @param type? string
 --- @return integer
 function vim.fn.confirm(msg, choices, default, type) end
 
@@ -1154,7 +1160,7 @@ function vim.fn.copy(expr) end
 ---   echo cos(-4.01)
 --- <  -0.646043
 ---
---- @param expr any
+--- @param expr number
 --- @return number
 function vim.fn.cos(expr) end
 
@@ -1168,7 +1174,7 @@ function vim.fn.cos(expr) end
 ---   echo cosh(-0.5)
 --- <  -1.127626
 ---
---- @param expr any
+--- @param expr number
 --- @return number
 function vim.fn.cosh(expr) end
 
@@ -1184,10 +1190,10 @@ function vim.fn.cosh(expr) end
 --- occurrences of {expr} is returned. Zero is returned when
 --- {expr} is an empty string.
 ---
---- @param comp any
+--- @param comp string|table|any[]
 --- @param expr any
---- @param ic? any
---- @param start? any
+--- @param ic? boolean
+--- @param start? integer
 --- @return integer
 function vim.fn.count(comp, expr, ic, start) end
 
@@ -1195,7 +1201,7 @@ function vim.fn.count(comp, expr, ic, start) end
 --- from the top of the |context-stack| (see |context-dict|).
 --- If {index} is not given, it is assumed to be 0 (i.e.: top).
 ---
---- @param index? any
+--- @param index? integer
 --- @return table
 function vim.fn.ctxget(index) end
 
@@ -1211,7 +1217,7 @@ function vim.fn.ctxpop() end
 --- which |context-types| to include in the pushed context.
 --- Otherwise, all context types are included.
 ---
---- @param types? any
+--- @param types? string[]
 --- @return any
 function vim.fn.ctxpush(types) end
 
@@ -1220,8 +1226,8 @@ function vim.fn.ctxpush(types) end
 --- {context} is a Dictionary with context data (|context-dict|).
 --- If {index} is not given, it is assumed to be 0 (i.e.: top).
 ---
---- @param context any
---- @param index? any
+--- @param context table
+--- @param index? integer
 --- @return any
 function vim.fn.ctxset(context, index) end
 
@@ -1232,7 +1238,7 @@ function vim.fn.ctxsize() end
 
 --- @param lnum integer
 --- @param col? integer
---- @param off? any
+--- @param off? integer
 --- @return any
 function vim.fn.cursor(lnum, col, off) end
 
@@ -1267,7 +1273,7 @@ function vim.fn.cursor(lnum, col, off) end
 --- position within a <Tab> or after the last character.
 --- Returns 0 when the position could be set, -1 otherwise.
 ---
---- @param list any
+--- @param list integer[]
 --- @return any
 function vim.fn.cursor(list) end
 
@@ -1279,7 +1285,7 @@ function vim.fn.cursor(list) end
 --- Returns |TRUE| if successfully interrupted the program.
 --- Otherwise returns |FALSE|.
 ---
---- @param pid any
+--- @param pid integer
 --- @return any
 function vim.fn.debugbreak(pid) end
 
@@ -1303,7 +1309,7 @@ function vim.fn.debugbreak(pid) end
 --- Also see |copy()|.
 ---
 --- @param expr any
---- @param noref? any
+--- @param noref? boolean
 --- @return any
 function vim.fn.deepcopy(expr, noref) end
 
@@ -1343,9 +1349,9 @@ function vim.fn.delete(fname, flags) end
 --- when using |line()| this refers to the current buffer. Use "$"
 --- to refer to the last line in buffer {buf}.
 ---
---- @param buf any
---- @param first any
---- @param last? any
+--- @param buf integer|string
+--- @param first integer|string
+--- @param last? integer|string
 --- @return any
 function vim.fn.deletebufline(buf, first, last) end
 
@@ -1388,9 +1394,9 @@ function vim.fn.deletebufline(buf, first, last) end
 --- This function can be used by plugins to implement options with
 --- validation and parsing logic.
 ---
---- @param dict any
---- @param pattern any
---- @param callback any
+--- @param dict table
+--- @param pattern string
+--- @param callback function
 --- @return any
 function vim.fn.dictwatcheradd(dict, pattern, callback) end
 
@@ -1399,8 +1405,8 @@ function vim.fn.dictwatcheradd(dict, pattern, callback) end
 --- order for the watcher to be successfully deleted.
 ---
 --- @param dict any
---- @param pattern any
---- @param callback any
+--- @param pattern string
+--- @param callback function
 --- @return any
 function vim.fn.dictwatcherdel(dict, pattern, callback) end
 
@@ -1461,7 +1467,7 @@ function vim.fn.diff_hlID(lnum, col) end
 --- echo digraph_get('aa')    " Returns 'あ'
 --- <
 ---
---- @param chars any
+--- @param chars string
 --- @return any
 function vim.fn.digraph_get(chars) end
 
@@ -1479,7 +1485,7 @@ function vim.fn.digraph_get(chars) end
 --- echo digraph_getlist(1)
 --- <
 ---
---- @param listall? any
+--- @param listall? boolean
 --- @return any
 function vim.fn.digraph_getlist(listall) end
 
@@ -1499,12 +1505,9 @@ function vim.fn.digraph_getlist(listall) end
 --- Example: >vim
 ---   call digraph_set('  ', 'あ')
 --- <
---- Can be used as a |method|: >vim
----   GetString()->digraph_set('あ')
---- <
 ---
---- @param chars any
---- @param digraph any
+--- @param chars string
+--- @param digraph string
 --- @return any
 function vim.fn.digraph_set(chars, digraph) end
 
@@ -1522,11 +1525,7 @@ function vim.fn.digraph_set(chars, digraph) end
 --- <Except that the function returns after the first error,
 --- following digraphs will not be added.
 ---
---- Can be used as a |method|: >vim
----     GetList()->digraph_setlist()
---- <
----
---- @param digraphlist any
+--- @param digraphlist table<integer,string[]>
 --- @return any
 function vim.fn.digraph_setlist(digraphlist) end
 
@@ -1561,7 +1560,7 @@ function vim.fn.environ() end
 --- <Also see |shellescape()| and |fnameescape()|.
 ---
 --- @param string string
---- @param chars any
+--- @param chars string
 --- @return any
 function vim.fn.escape(string, chars) end
 
@@ -1611,7 +1610,7 @@ function vim.fn.eventhandler() end
 ---   0  does not exist
 --- |exepath()| can be used to get the full path of an executable.
 ---
---- @param expr any
+--- @param expr string
 --- @return 0|1
 function vim.fn.executable(expr) end
 
@@ -1652,7 +1651,7 @@ function vim.fn.execute(command, silent) end
 --- Returns empty string otherwise.
 --- If {expr} starts with "./" the |current-directory| is used.
 ---
---- @param expr any
+--- @param expr string
 --- @return string
 function vim.fn.exepath(expr) end
 
@@ -1744,7 +1743,7 @@ function vim.fn.exepath(expr) end
 --- <This doesn't check for existence of the "bufcount" variable,
 --- but gets the value of "bufcount", and checks if that exists.
 ---
---- @param expr any
+--- @param expr string
 --- @return 0|1
 function vim.fn.exists(expr) end
 
@@ -1758,7 +1757,7 @@ function vim.fn.exists(expr) end
 ---   echo exp(-1)
 --- <  0.367879
 ---
---- @param expr any
+--- @param expr number
 --- @return any
 function vim.fn.exp(expr) end
 
@@ -1927,9 +1926,9 @@ function vim.fn.expandcmd(string, options) end
 --- fails.
 --- Returns {expr1}.  Returns 0 on error.
 ---
---- @param expr1 any
---- @param expr2 any
---- @param expr3? any
+--- @param expr1 table
+--- @param expr2 table
+--- @param expr3? table
 --- @return any
 function vim.fn.extend(expr1, expr2, expr3) end
 
@@ -1937,9 +1936,9 @@ function vim.fn.extend(expr1, expr2, expr3) end
 --- List or Dictionary is created and returned.  {expr1} remains
 --- unchanged.
 ---
---- @param expr1 any
---- @param expr2 any
---- @param expr3? any
+--- @param expr1 table
+--- @param expr2 table
+--- @param expr3? table
 --- @return any
 function vim.fn.extendnew(expr1, expr2, expr3) end
 
@@ -2094,8 +2093,8 @@ function vim.fn.filewritable(file) end
 --- When {expr2} is a Funcref errors inside a function are ignored,
 --- unless it was defined with the "abort" flag.
 ---
---- @param expr1 any
---- @param expr2 any
+--- @param expr1 string|table
+--- @param expr2 string|function
 --- @return any
 function vim.fn.filter(expr1, expr2) end
 
@@ -2118,7 +2117,7 @@ function vim.fn.filter(expr1, expr2) end
 ---
 --- @param name string
 --- @param path? string
---- @param count? any
+--- @param count? integer
 --- @return any
 function vim.fn.finddir(name, path, count) end
 
@@ -2153,15 +2152,15 @@ function vim.fn.findfile(name, path, count) end
 ---   echo flatten([1, [2, [3, 4]], 5], 1)
 --- <  [1, 2, [3, 4], 5]
 ---
---- @param list any
---- @param maxdepth? any
+--- @param list any[]
+--- @param maxdepth? integer
 --- @return any[]|0
 function vim.fn.flatten(list, maxdepth) end
 
 --- Like |flatten()| but first make a copy of {list}.
 ---
---- @param list any
---- @param maxdepth? any
+--- @param list any[]
+--- @param maxdepth? integer
 --- @return any[]|0
 function vim.fn.flattennew(list, maxdepth) end
 
@@ -2186,7 +2185,7 @@ function vim.fn.flattennew(list, maxdepth) end
 ---   echo float2nr(1.0e-100)
 --- <  0
 ---
---- @param expr any
+--- @param expr number
 --- @return any
 function vim.fn.float2nr(expr) end
 
@@ -2202,7 +2201,7 @@ function vim.fn.float2nr(expr) end
 ---   echo floor(4.0)
 --- <  4.0
 ---
---- @param expr any
+--- @param expr number
 --- @return any
 function vim.fn.floor(expr) end
 
@@ -2221,8 +2220,8 @@ function vim.fn.floor(expr) end
 ---   echo fmod(-12.33, 1.22)
 --- <  -0.13
 ---
---- @param expr1 any
---- @param expr2 any
+--- @param expr1 number
+--- @param expr2 number
 --- @return any
 function vim.fn.fmod(expr1, expr2) end
 
@@ -2367,8 +2366,8 @@ function vim.fn.foldtextresult(lnum) end
 --- When {expr2} is a Funcref errors inside a function are ignored,
 --- unless it was defined with the "abort" flag.
 ---
---- @param expr1 any
---- @param expr2 any
+--- @param expr1 string|table
+--- @param expr2 string|function
 --- @return any
 function vim.fn.foreach(expr1, expr2) end
 
@@ -2510,7 +2509,7 @@ vim.fn['function'] = function(name, arglist, dict) end
 --- it's safe to perform.  This is when waiting for the user to
 --- type a character.
 ---
---- @param atexit? any
+--- @param atexit? boolean
 --- @return any
 function vim.fn.garbagecollect(atexit) end
 
@@ -2671,8 +2670,9 @@ function vim.fn.getbufinfo(dict) end
 ---
 --- Example: >vim
 ---   let lines = getbufline(bufnr("myfile"), 1, "$")
+--- <
 ---
---- @param buf any
+--- @param buf integer|string
 --- @param lnum integer
 --- @param end_? integer
 --- @return any
@@ -2706,7 +2706,7 @@ function vim.fn.getbufoneline(buf, lnum) end
 ---   let bufmodified = getbufvar(1, "&mod")
 ---   echo "todo myvar = " .. getbufvar("todo", "myvar")
 ---
---- @param buf any
+--- @param buf integer|string
 --- @param varname string
 --- @param def? any
 --- @return any
@@ -2838,7 +2838,7 @@ function vim.fn.getcharmod() end
 ---   getpos('.')    returns [0, 5, 7, 0]
 --- <
 ---
---- @param expr any
+--- @param expr string
 --- @return integer[]
 function vim.fn.getcharpos(expr) end
 
@@ -2879,12 +2879,22 @@ function vim.fn.getcharsearch() end
 --- @return string
 function vim.fn.getcharstr(expr) end
 
+--- Return completion pattern of the current command-line.
+--- Only works when the command line is being edited, thus
+--- requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+--- Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
+--- |getcmdprompt()|, |getcmdcompltype()| and |setcmdline()|.
+--- Returns an empty string when completion is not defined.
+---
+--- @return string
+function vim.fn.getcmdcomplpat() end
+
 --- Return the type of the current command-line completion.
 --- Only works when the command line is being edited, thus
 --- requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
 --- See |:command-completion| for the return string.
 --- Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()|,
---- |getcmdprompt()| and |setcmdline()|.
+--- |getcmdprompt()|, |getcmdcomplpat()| and |setcmdline()|.
 --- Returns an empty string when completion is not defined.
 ---
 --- @return string
@@ -2998,6 +3008,7 @@ function vim.fn.getcmdwintype() end
 --- runtime    |:runtime| completion
 --- scriptnames  sourced script names |:scriptnames|
 --- shellcmd  Shell command
+--- shellcmdline  Shell command line with filename arguments
 --- sign    |:sign| suboptions
 --- syntax    syntax file names |'syntax'|
 --- syntime    |:syntime| suboptions
@@ -3029,9 +3040,9 @@ function vim.fn.getcmdwintype() end
 --- If there are no matches, an empty list is returned.  An
 --- invalid value for {type} produces an error.
 ---
---- @param pat any
---- @param type any
---- @param filtered? any
+--- @param pat string
+--- @param type string
+--- @param filtered? boolean
 --- @return string[]
 function vim.fn.getcompletion(pat, type, filtered) end
 
@@ -3277,7 +3288,7 @@ function vim.fn.getline(lnum, end_) end
 --- <
 ---
 --- @param nr integer
---- @param what? any
+--- @param what? table
 --- @return any
 function vim.fn.getloclist(nr, what) end
 
@@ -3334,7 +3345,7 @@ function vim.fn.getmarklist(buf) end
 ---   unlet m
 --- <
 ---
---- @param win? any
+--- @param win? integer
 --- @return any
 function vim.fn.getmatches(win) end
 
@@ -3542,7 +3553,7 @@ function vim.fn.getpos(expr) end
 ---   echo getqflist({'lines' : ["F1:10:L10"]})
 --- <
 ---
---- @param what? any
+--- @param what? table
 --- @return any
 function vim.fn.getqflist(what) end
 
@@ -3857,7 +3868,7 @@ function vim.fn.gettagstack(winnr) end
 --- xgettext does not understand escaping in single quoted
 --- strings.
 ---
---- @param text any
+--- @param text string
 --- @return any
 function vim.fn.gettext(text) end
 
@@ -3984,10 +3995,10 @@ function vim.fn.getwinvar(winnr, varname, def) end
 --- See |expand()| for expanding special Vim variables.  See
 --- |system()| for getting the raw output of an external command.
 ---
---- @param expr any
+--- @param expr string
 --- @param nosuf? boolean
---- @param list? any
---- @param alllinks? any
+--- @param list? boolean
+--- @param alllinks? boolean
 --- @return any
 function vim.fn.glob(expr, nosuf, list, alllinks) end
 
@@ -4045,10 +4056,10 @@ function vim.fn.glob2regpat(string) end
 --- supported, thus using 'path' will not always work properly.
 ---
 --- @param path string
---- @param expr any
+--- @param expr string
 --- @param nosuf? boolean
---- @param list? any
---- @param allinks? any
+--- @param list? boolean
+--- @param allinks? boolean
 --- @return any
 function vim.fn.globpath(path, expr, nosuf, list, allinks) end
 
@@ -4119,7 +4130,7 @@ function vim.fn.globpath(path, expr, nosuf, list, allinks) end
 ---   endif
 --- <
 ---
---- @param feature any
+--- @param feature string
 --- @return 0|1
 function vim.fn.has(feature) end
 
@@ -4127,8 +4138,8 @@ function vim.fn.has(feature) end
 --- has an entry with key {key}.  FALSE otherwise. The {key}
 --- argument is a string.
 ---
---- @param dict any
---- @param key any
+--- @param dict table
+--- @param key string
 --- @return 0|1
 function vim.fn.has_key(dict, key) end
 
@@ -4185,7 +4196,7 @@ function vim.fn.haslocaldir(winnr, tabnr) end
 ---
 --- @param what any
 --- @param mode? string
---- @param abbr? any
+--- @param abbr? boolean
 --- @return 0|1
 function vim.fn.hasmapto(what, mode, abbr) end
 
@@ -4223,7 +4234,7 @@ function vim.fn.highlight_exists(name) end
 ---   let date=input("Enter date: ")
 --- <This function is not available in the |sandbox|.
 ---
---- @param history any
+--- @param history string
 --- @param item any
 --- @return 0|1
 function vim.fn.histadd(history, item) end
@@ -4260,7 +4271,7 @@ function vim.fn.histadd(history, item) end
 ---   let \@/ = histget("search", -1)
 --- <
 ---
---- @param history any
+--- @param history string
 --- @param item? any
 --- @return 0|1
 function vim.fn.histdel(history, item) end
@@ -4280,8 +4291,8 @@ function vim.fn.histdel(history, item) end
 ---   command -nargs=1 H execute histget("cmd", 0+<args>)
 --- <
 ---
---- @param history any
---- @param index? any
+--- @param history string
+--- @param index? integer|string
 --- @return string
 function vim.fn.histget(history, index) end
 
@@ -4291,8 +4302,9 @@ function vim.fn.histget(history, index) end
 ---
 --- Example: >vim
 ---   let inp_index = histnr("expr")
+--- <
 ---
---- @param history any
+--- @param history string
 --- @return integer
 function vim.fn.histnr(history) end
 
@@ -4338,8 +4350,8 @@ function vim.fn.hostname() end
 --- cannot use UCS-2 in a string anyway, because of the NUL bytes.
 ---
 --- @param string string
---- @param from any
---- @param to any
+--- @param from string
+--- @param to string
 --- @return any
 function vim.fn.iconv(string, from, to) end
 
@@ -4398,11 +4410,12 @@ function vim.fn.indent(lnum) end
 ---   if index(numbers, 123) >= 0
 ---     " ...
 ---   endif
+--- <
 ---
 --- @param object any
 --- @param expr any
---- @param start? any
---- @param ic? any
+--- @param start? integer
+--- @param ic? boolean
 --- @return any
 function vim.fn.index(object, expr, start, ic) end
 
@@ -4442,6 +4455,7 @@ function vim.fn.index(object, expr, start, ic) end
 ---   echo indexof(l, "v:val.n == 20")
 ---   echo indexof(l, {i, v -> v.n == 30})
 ---   echo indexof(l, "v:val.n == 20", #{startidx: 1})
+--- <
 ---
 --- @param object any
 --- @param expr any
@@ -4450,9 +4464,9 @@ function vim.fn.index(object, expr, start, ic) end
 function vim.fn.indexof(object, expr, opts) end
 
 ---
---- @param prompt any
---- @param text? any
---- @param completion? any
+--- @param prompt string
+--- @param text? string
+--- @param completion? string
 --- @return any
 function vim.fn.input(prompt, text, completion) end
 
@@ -4564,6 +4578,7 @@ function vim.fn.input(prompt, text, completion) end
 ---     let g:Foo = input("enter search pattern: ")
 ---     call inputrestore()
 ---   endfunction
+--- <
 ---
 --- @param opts table
 --- @return any
@@ -4592,7 +4607,7 @@ function vim.fn.inputdialog(...) end
 ---   let color = inputlist(['Select color:', '1. red',
 ---     \ '2. green', '3. blue'])
 ---
---- @param textlist any
+--- @param textlist string[]
 --- @return any
 function vim.fn.inputlist(textlist) end
 
@@ -4624,8 +4639,8 @@ function vim.fn.inputsave() end
 --- typed on the command-line in response to the issued prompt.
 --- NOTE: Command-line completion is not supported.
 ---
---- @param prompt any
---- @param text? any
+--- @param prompt string
+--- @param text? string
 --- @return any
 function vim.fn.inputsecret(prompt, text) end
 
@@ -4672,7 +4687,7 @@ function vim.fn.interrupt() end
 ---   let bits = invert(bits)
 --- <
 ---
---- @param expr any
+--- @param expr number
 --- @return any
 function vim.fn.invert(expr) end
 
@@ -4690,7 +4705,7 @@ function vim.fn.invert(expr) end
 ---   echo isabsolutepath('\\remote\file')  " 1
 --- <
 ---
---- @param path any
+--- @param path string
 --- @return 0|1
 function vim.fn.isabsolutepath(path) end
 
@@ -4699,7 +4714,7 @@ function vim.fn.isabsolutepath(path) end
 --- exist, or isn't a directory, the result is |FALSE|.  {directory}
 --- is any expression, which is used as a String.
 ---
---- @param directory any
+--- @param directory string
 --- @return 0|1
 function vim.fn.isdirectory(directory) end
 
@@ -4710,7 +4725,7 @@ function vim.fn.isdirectory(directory) end
 ---   echo isinf(-1.0 / 0.0)
 --- <  -1
 ---
---- @param expr any
+--- @param expr number
 --- @return 1|0|-1
 function vim.fn.isinf(expr) end
 
@@ -4735,7 +4750,7 @@ function vim.fn.islocked(expr) end
 ---   echo isnan(0.0 / 0.0)
 --- <  1
 ---
---- @param expr any
+--- @param expr number
 --- @return 0|1
 function vim.fn.isnan(expr) end
 
@@ -4765,7 +4780,7 @@ function vim.fn.jobclose(...) end
 
 --- Return the PID (process id) of |job-id| {job}.
 ---
---- @param job any
+--- @param job integer
 --- @return integer
 function vim.fn.jobpid(job) end
 
@@ -4773,7 +4788,7 @@ function vim.fn.jobpid(job) end
 --- columns and {height} rows.
 --- Fails if the job was not started with `"pty":v:true`.
 ---
---- @param job any
+--- @param job integer
 --- @param width integer
 --- @param height integer
 --- @return any
@@ -4871,7 +4886,7 @@ function vim.fn.jobsend(...) end
 ---   - -1 if {cmd}[0] is not executable.
 --- See also |job-control|, |channel|, |msgpack-rpc|.
 ---
---- @param cmd any
+--- @param cmd string|string[]
 --- @param opts? table
 --- @return any
 function vim.fn.jobstart(cmd, opts) end
@@ -4885,7 +4900,7 @@ function vim.fn.jobstart(cmd, opts) end
 --- Returns 1 for valid job id, 0 for invalid id, including jobs have
 --- exited or stopped.
 ---
---- @param id any
+--- @param id integer
 --- @return any
 function vim.fn.jobstop(id) end
 
@@ -4909,7 +4924,7 @@ function vim.fn.jobstop(id) end
 ---   -2 if the job was interrupted (by |CTRL-C|)
 ---   -3 if the job-id is invalid
 ---
---- @param jobs any
+--- @param jobs integer[]
 --- @param timeout? integer
 --- @return any
 function vim.fn.jobwait(jobs, timeout) end
@@ -4924,8 +4939,8 @@ function vim.fn.jobwait(jobs, timeout) end
 --- converted into a string like with |string()|.
 --- The opposite function is |split()|.
 ---
---- @param list any
---- @param sep? any
+--- @param list any[]
+--- @param sep? string
 --- @return any
 function vim.fn.join(list, sep) end
 
@@ -4965,7 +4980,7 @@ function vim.fn.json_encode(expr) end
 --- Return a |List| with all the keys of {dict}.  The |List| is in
 --- arbitrary order.  Also see |items()| and |values()|.
 ---
---- @param dict any
+--- @param dict table
 --- @return any
 function vim.fn.keys(dict) end
 
@@ -5079,7 +5094,7 @@ function vim.fn.libcallnr(libname, funcname, argument) end
 --- To jump to the last known position when opening a file see
 --- |last-position-jump|.
 ---
---- @param expr any
+--- @param expr string|integer[]
 --- @param winid? integer
 --- @return integer
 function vim.fn.line(expr, winid) end
@@ -5119,7 +5134,7 @@ function vim.fn.lispindent(lnum) end
 ---
 --- |blob2list()| does the opposite.
 ---
---- @param list any
+--- @param list any[]
 --- @return any
 function vim.fn.list2blob(list) end
 
@@ -5138,8 +5153,8 @@ function vim.fn.list2blob(list) end
 --- <
 --- Returns an empty string on error.
 ---
---- @param list any
---- @param utf8? any
+--- @param list any[]
+--- @param utf8? boolean
 --- @return any
 function vim.fn.list2str(list, utf8) end
 
@@ -5159,7 +5174,7 @@ function vim.fn.localtime() end
 ---   echo log(exp(5))
 --- <  5.0
 ---
---- @param expr any
+--- @param expr number
 --- @return any
 function vim.fn.log(expr) end
 
@@ -5172,7 +5187,7 @@ function vim.fn.log(expr) end
 ---   echo log10(0.01)
 --- <  -2.0
 ---
---- @param expr any
+--- @param expr number
 --- @return any
 function vim.fn.log10(expr) end
 
@@ -5229,8 +5244,8 @@ function vim.fn.log10(expr) end
 --- When {expr2} is a Funcref errors inside a function are ignored,
 --- unless it was defined with the "abort" flag.
 ---
---- @param expr1 any
---- @param expr2 any
+--- @param expr1 string|table|any[]
+--- @param expr2 string|function
 --- @return any
 function vim.fn.map(expr1, expr2) end
 
@@ -5305,6 +5320,7 @@ function vim.fn.map(expr1, expr2) end
 --- This function can be used to map a key even when it's already
 --- mapped, and have it do the original mapping too.  Sketch: >vim
 ---   exe 'nnoremap <Tab> ==' .. maparg('<Tab>', 'n')
+--- <
 ---
 --- @param name string
 --- @param mode? string
@@ -5354,7 +5370,7 @@ function vim.fn.maparg(name, mode, abbr, dict) end
 ---
 --- @param name string
 --- @param mode? string
---- @param abbr? any
+--- @param abbr? boolean
 --- @return any
 function vim.fn.mapcheck(name, mode, abbr) end
 
@@ -5387,6 +5403,7 @@ function vim.fn.mapcheck(name, mode, abbr) end
 ---       \ {_, m -> m.lhs == 'xyzzy'})[0].mode_bits
 ---   ounmap xyzzy
 ---   echo printf("Operator-pending mode bit: 0x%x", op_bit)
+--- <
 ---
 --- @param abbr? 0|1
 --- @return table[]
@@ -5403,8 +5420,8 @@ function vim.fn.maplist(abbr) end
 function vim.fn.mapnew(expr1, expr2) end
 
 --- @param mode string
---- @param abbr? any
---- @param dict? any
+--- @param abbr? boolean
+--- @param dict? boolean
 --- @return any
 function vim.fn.mapset(mode, abbr, dict) end
 
@@ -5442,8 +5459,9 @@ function vim.fn.mapset(mode, abbr, dict) end
 ---   for d in save_maps
 ---       call mapset(d)
 ---   endfor
+--- <
 ---
---- @param dict any
+--- @param dict boolean
 --- @return any
 function vim.fn.mapset(dict) end
 
@@ -5509,10 +5527,10 @@ function vim.fn.mapset(dict) end
 --- zero matches at the start instead of a number of matches
 --- further down in the text.
 ---
---- @param expr any
---- @param pat any
---- @param start? any
---- @param count? any
+--- @param expr string|any[]
+--- @param pat string
+--- @param start? integer
+--- @param count? integer
 --- @return any
 function vim.fn.match(expr, pat, start, count) end
 
@@ -5573,11 +5591,11 @@ function vim.fn.match(expr, pat, start, count) end
 --- available from |getmatches()|.  All matches can be deleted in
 --- one operation by |clearmatches()|.
 ---
---- @param group any
---- @param pattern any
---- @param priority? any
---- @param id? any
---- @param dict? any
+--- @param group integer|string
+--- @param pattern string
+--- @param priority? integer
+--- @param id? integer
+--- @param dict? string
 --- @return any
 function vim.fn.matchadd(group, pattern, priority, id, dict) end
 
@@ -5617,11 +5635,11 @@ function vim.fn.matchadd(group, pattern, priority, id, dict) end
 --- <Matches added by |matchaddpos()| are returned by
 --- |getmatches()|.
 ---
---- @param group any
---- @param pos any
---- @param priority? any
---- @param id? any
---- @param dict? any
+--- @param group integer|string
+--- @param pos any[]
+--- @param priority? integer
+--- @param id? integer
+--- @param dict? string
 --- @return any
 function vim.fn.matchaddpos(group, pos, priority, id, dict) end
 
@@ -5698,8 +5716,8 @@ function vim.fn.matchbufline(buf, pat, lnum, end_, dict) end
 --- If {win} is specified, use the window with this number or
 --- window ID instead of the current window.
 ---
---- @param id any
---- @param win? any
+--- @param id integer
+--- @param win? integer
 --- @return any
 function vim.fn.matchdelete(id, win) end
 
@@ -5722,9 +5740,9 @@ function vim.fn.matchdelete(id, win) end
 --- When {expr} is a |List| the result is equal to |match()|.
 ---
 --- @param expr any
---- @param pat any
---- @param start? any
---- @param count? any
+--- @param pat string
+--- @param start? integer
+--- @param count? integer
 --- @return any
 function vim.fn.matchend(expr, pat, start, count) end
 
@@ -5790,9 +5808,9 @@ function vim.fn.matchend(expr, pat, start, count) end
 ---         \ {'matchseq': 1})
 --- <results in `['two one']`.
 ---
---- @param list any
---- @param str any
---- @param dict? any
+--- @param list any[]
+--- @param str string
+--- @param dict? string
 --- @return any
 function vim.fn.matchfuzzy(list, str, dict) end
 
@@ -5817,9 +5835,9 @@ function vim.fn.matchfuzzy(list, str, dict) end
 ---     \ ->matchfuzzypos('ll', {'key' : 'text'})
 --- <results in `[[{"id": 10, "text": "hello"}], [[2, 3]], [127]]`
 ---
---- @param list any
---- @param str any
---- @param dict? any
+--- @param list any[]
+--- @param str string
+--- @param dict? string
 --- @return any
 function vim.fn.matchfuzzypos(list, str, dict) end
 
@@ -5835,9 +5853,9 @@ function vim.fn.matchfuzzypos(list, str, dict) end
 --- You can pass in a List, but that is not very useful.
 ---
 --- @param expr any
---- @param pat any
---- @param start? any
---- @param count? any
+--- @param pat string
+--- @param start? integer
+--- @param count? integer
 --- @return any
 function vim.fn.matchlist(expr, pat, start, count) end
 
@@ -5854,9 +5872,9 @@ function vim.fn.matchlist(expr, pat, start, count) end
 --- The type isn't changed, it's not necessarily a String.
 ---
 --- @param expr any
---- @param pat any
---- @param start? any
---- @param count? any
+--- @param pat string
+--- @param start? integer
+--- @param count? integer
 --- @return any
 function vim.fn.matchstr(expr, pat, start, count) end
 
@@ -5916,9 +5934,9 @@ function vim.fn.matchstrlist(list, pat, dict) end
 --- The type isn't changed, it's not necessarily a String.
 ---
 --- @param expr any
---- @param pat any
---- @param start? any
---- @param count? any
+--- @param pat string
+--- @param start? integer
+--- @param count? integer
 --- @return any
 function vim.fn.matchstrpos(expr, pat, start, count) end
 
@@ -5981,7 +5999,7 @@ function vim.fn.max(expr) end
 --- <
 ---
 --- @param path string
---- @param modes? any
+--- @param modes? string
 --- @return any
 function vim.fn.menu_get(path, modes) end
 
@@ -6114,7 +6132,7 @@ function vim.fn.min(expr) end
 ---
 --- @param name string
 --- @param flags? string
---- @param prot? any
+--- @param prot? string
 --- @return any
 function vim.fn.mkdir(name, flags, prot) end
 
@@ -6295,8 +6313,8 @@ function vim.fn.nextnonblank(lnum) end
 --- characters.  nr2char(0) is a real NUL and terminates the
 --- string, thus results in an empty string.
 ---
---- @param expr any
---- @param utf8? any
+--- @param expr integer
+--- @param utf8? boolean
 --- @return any
 function vim.fn.nr2char(expr, utf8) end
 
@@ -6311,8 +6329,8 @@ function vim.fn.nr2char(expr, utf8) end
 --- to separate commands.  In many places it would not be clear if
 --- "|" is an operator or a command separator.
 ---
---- @param expr any
---- @param expr1 any
+--- @param expr number
+--- @param expr1 number
 --- @return any
 vim.fn['or'] = function(expr, expr1) end
 
@@ -6330,7 +6348,7 @@ vim.fn['or'] = function(expr, expr1) end
 --- Returns an empty string on error.
 ---
 --- @param path string
---- @param len? any
+--- @param len? integer
 --- @return any
 function vim.fn.pathshorten(path, len) end
 
@@ -6363,8 +6381,8 @@ function vim.fn.perleval(expr) end
 ---   echo pow(32, 0.20)
 --- <  2.0
 ---
---- @param x any
---- @param y any
+--- @param x number
+--- @param y number
 --- @return any
 function vim.fn.pow(x, y) end
 
@@ -6702,7 +6720,7 @@ function vim.fn.prevnonblank(lnum) end
 --- into this, copying the exact format string and parameters that
 --- were used.
 ---
---- @param fmt any
+--- @param fmt string
 --- @param expr1? any
 --- @return string
 function vim.fn.printf(fmt, expr1) end
@@ -6850,7 +6868,7 @@ function vim.fn.pyxeval(expr) end
 ---   echo rand(seed) % 16  " random number 0 - 15
 --- <
 ---
---- @param expr? any
+--- @param expr? number
 --- @return any
 function vim.fn.rand(expr) end
 
@@ -6873,8 +6891,8 @@ function vim.fn.rand(expr) end
 --- <
 ---
 --- @param expr any
---- @param max? any
---- @param stride? any
+--- @param max? integer
+--- @param stride? integer
 --- @return any
 function vim.fn.range(expr, max, stride) end
 
@@ -6902,8 +6920,8 @@ function vim.fn.range(expr, max, stride) end
 --- Also see |readfile()| and |writefile()|.
 ---
 --- @param fname string
---- @param offset? any
---- @param size? any
+--- @param offset? integer
+--- @param size? integer
 --- @return any
 function vim.fn.readblob(fname, offset, size) end
 
@@ -6936,8 +6954,8 @@ function vim.fn.readblob(fname, offset, size) end
 --- <
 --- Returns an empty List on error.
 ---
---- @param directory any
---- @param expr? any
+--- @param directory string
+--- @param expr? integer
 --- @return any
 function vim.fn.readdir(directory, expr) end
 
@@ -6974,8 +6992,8 @@ function vim.fn.readdir(directory, expr) end
 --- Also see |writefile()|.
 ---
 --- @param fname string
---- @param type? any
---- @param max? any
+--- @param type? string
+--- @param max? integer
 --- @return any
 function vim.fn.readfile(fname, type, max) end
 
@@ -6997,7 +7015,7 @@ function vim.fn.readfile(fname, type, max) end
 --- <
 ---
 --- @param object any
---- @param func any
+--- @param func function
 --- @param initial? any
 --- @return any
 function vim.fn.reduce(object, func, initial) end
@@ -7103,9 +7121,9 @@ function vim.fn.remove(list, idx) end
 --- <
 --- Use |delete()| to remove a file.
 ---
---- @param list any
+--- @param list any[]
 --- @param idx integer
---- @param end_? any
+--- @param end_? integer
 --- @return any
 function vim.fn.remove(list, idx, end_) end
 
@@ -7128,7 +7146,7 @@ function vim.fn.remove(blob, idx) end
 ---
 --- @param blob any
 --- @param idx integer
---- @param end_? any
+--- @param end_? integer
 --- @return any
 function vim.fn.remove(blob, idx, end_) end
 
@@ -7139,7 +7157,7 @@ function vim.fn.remove(blob, idx, end_) end
 --- Returns zero on error.
 ---
 --- @param dict any
---- @param key any
+--- @param key string
 --- @return any
 function vim.fn.remove(dict, key) end
 
@@ -7150,8 +7168,8 @@ function vim.fn.remove(dict, key) end
 --- NOTE: If {to} exists it is overwritten without warning.
 --- This function is not available in the |sandbox|.
 ---
---- @param from any
---- @param to any
+--- @param from string
+--- @param to string
 --- @return any
 function vim.fn.rename(from, to) end
 
@@ -7165,7 +7183,7 @@ function vim.fn.rename(from, to) end
 --- <Results in ['a', 'b', 'a', 'b', 'a', 'b'].
 ---
 --- @param expr any
---- @param count any
+--- @param count integer
 --- @return any
 vim.fn['repeat'] = function(expr, count) end
 
@@ -7181,7 +7199,7 @@ vim.fn['repeat'] = function(expr, count) end
 --- current directory (provided the result is still a relative
 --- path name) and also keeps a trailing path separator.
 ---
---- @param filename any
+--- @param filename string
 --- @return any
 function vim.fn.resolve(filename) end
 
@@ -7212,7 +7230,7 @@ function vim.fn.reverse(object) end
 ---   echo round(-4.5)
 --- <  -5.0
 ---
---- @param expr any
+--- @param expr number
 --- @return any
 function vim.fn.round(expr) end
 
@@ -7222,8 +7240,8 @@ function vim.fn.round(expr) end
 ---   au VimLeave call rpcnotify(0, "leaving")
 --- <
 ---
---- @param channel any
---- @param event any
+--- @param channel integer
+--- @param event string
 --- @param args? any
 --- @return any
 function vim.fn.rpcnotify(channel, event, args) end
@@ -7234,19 +7252,20 @@ function vim.fn.rpcnotify(channel, event, args) end
 ---   let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
 --- <
 ---
---- @param channel any
---- @param method any
+--- @param channel integer
+--- @param method string
 --- @param args? any
 --- @return any
 function vim.fn.rpcrequest(channel, method, args) end
 
+--- @deprecated
 --- Deprecated. Replace  >vim
 ---   let id = rpcstart('prog', ['arg1', 'arg2'])
 --- <with >vim
 ---   let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
 --- <
 ---
---- @param prog any
+--- @param prog string
 --- @param argv? any
 --- @return any
 function vim.fn.rpcstart(prog, argv) end
@@ -7279,7 +7298,7 @@ function vim.fn.rubyeval(expr) end
 --- attribute at other positions.
 --- Returns -1 when row or col is out of range.
 ---
---- @param row any
+--- @param row integer
 --- @param col integer
 --- @return any
 function vim.fn.screenattr(row, col) end
@@ -7293,7 +7312,7 @@ function vim.fn.screenattr(row, col) end
 --- This is mainly to be used for testing.
 --- Returns -1 when row or col is out of range.
 ---
---- @param row any
+--- @param row integer
 --- @param col integer
 --- @return any
 function vim.fn.screenchar(row, col) end
@@ -7304,7 +7323,7 @@ function vim.fn.screenchar(row, col) end
 --- This is mainly to be used for testing.
 --- Returns an empty List when row or col is out of range.
 ---
---- @param row any
+--- @param row integer
 --- @param col integer
 --- @return any
 function vim.fn.screenchars(row, col) end
@@ -7372,7 +7391,7 @@ function vim.fn.screenrow() end
 --- This is mainly to be used for testing.
 --- Returns an empty String when row or col is out of range.
 ---
---- @param row any
+--- @param row integer
 --- @param col integer
 --- @return any
 function vim.fn.screenstring(row, col) end
@@ -7481,11 +7500,11 @@ function vim.fn.screenstring(row, col) end
 --- without the 'e' flag if the cursor is on the "f" of "if".
 --- The 'n' flag tells the function not to move the cursor.
 ---
---- @param pattern any
+--- @param pattern string
 --- @param flags? string
---- @param stopline? any
+--- @param stopline? integer
 --- @param timeout? integer
---- @param skip? any
+--- @param skip? string|function
 --- @return any
 function vim.fn.search(pattern, flags, stopline, timeout, skip) end
 
@@ -7632,8 +7651,8 @@ function vim.fn.searchcount(options) end
 --- <
 ---
 --- @param name string
---- @param global? any
---- @param thisblock? any
+--- @param global? boolean
+--- @param thisblock? boolean
 --- @return any
 function vim.fn.searchdecl(name, global, thisblock) end
 
@@ -7721,12 +7740,12 @@ function vim.fn.searchdecl(name, global, thisblock) end
 ---        \ 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string"')
 --- <
 ---
---- @param start any
---- @param middle any
---- @param end_ any
+--- @param start string
+--- @param middle string
+--- @param end_ string
 --- @param flags? string
---- @param skip? any
---- @param stopline? any
+--- @param skip? string|function
+--- @param stopline? integer
 --- @param timeout? integer
 --- @return integer
 function vim.fn.searchpair(start, middle, end_, flags, skip, stopline, timeout) end
@@ -7741,12 +7760,12 @@ function vim.fn.searchpair(start, middle, end_, flags, skip, stopline, timeout) 
 --- <
 --- See |match-parens| for a bigger and more useful example.
 ---
---- @param start any
---- @param middle any
---- @param end_ any
+--- @param start string
+--- @param middle string
+--- @param end_ string
 --- @param flags? string
---- @param skip? any
---- @param stopline? any
+--- @param skip? string|function
+--- @param stopline? integer
 --- @param timeout? integer
 --- @return [integer, integer]
 function vim.fn.searchpairpos(start, middle, end_, flags, skip, stopline, timeout) end
@@ -7765,11 +7784,11 @@ function vim.fn.searchpairpos(start, middle, end_, flags, skip, stopline, timeou
 --- <In this example "submatch" is 2 when a lowercase letter is
 --- found |/\l|, 3 when an uppercase letter is found |/\u|.
 ---
---- @param pattern any
+--- @param pattern string
 --- @param flags? string
---- @param stopline? any
+--- @param stopline? integer
 --- @param timeout? integer
---- @param skip? any
+--- @param skip? string|function
 --- @return any
 function vim.fn.searchpos(pattern, flags, stopline, timeout, skip) end
 
@@ -7815,7 +7834,7 @@ function vim.fn.serverlist() end
 ---   echo serverstart('::1:12345')
 --- <
 ---
---- @param address? any
+--- @param address? string
 --- @return any
 function vim.fn.serverstart(address) end
 
@@ -7824,7 +7843,7 @@ function vim.fn.serverstart(address) end
 --- If |v:servername| is stopped it is set to the next available
 --- address in |serverlist()|.
 ---
---- @param address any
+--- @param address string
 --- @return any
 function vim.fn.serverstop(address) end
 
@@ -7852,9 +7871,9 @@ function vim.fn.serverstop(address) end
 --- If {buf} is not a valid buffer or {lnum} is not valid, an
 --- error message is given.
 ---
---- @param buf any
+--- @param buf integer|string
 --- @param lnum integer
---- @param text any
+--- @param text string|string[]
 --- @return any
 function vim.fn.setbufline(buf, lnum, text) end
 
@@ -7871,7 +7890,7 @@ function vim.fn.setbufline(buf, lnum, text) end
 ---   call setbufvar("todo", "myvar", "foobar")
 --- <This function is not available in the |sandbox|.
 ---
---- @param buf any
+--- @param buf integer|string
 --- @param varname string
 --- @param val any
 --- @return any
@@ -7904,13 +7923,13 @@ function vim.fn.setbufvar(buf, varname, val) end
 --- To clear the overrides pass an empty {list}: >vim
 ---    call setcellwidths([])
 ---
---- <You can use the script $VIMRUNTIME/tools/emoji_list.vim to see
+--- <You can use the script $VIMRUNTIME/tools/emoji_list.lua to see
 --- the effect for known emoji characters.  Move the cursor
 --- through the text to check if the cell widths of your terminal
 --- match with what Vim knows about each emoji.  If it doesn't
 --- look right you need to adjust the {list} argument.
 ---
---- @param list any
+--- @param list any[]
 --- @return any
 function vim.fn.setcellwidths(list) end
 
@@ -7924,8 +7943,8 @@ function vim.fn.setcellwidths(list) end
 ---   call setpos('.', [0, 8, 4, 0])
 --- <positions the cursor on the second character '보'.
 ---
---- @param expr any
---- @param list any
+--- @param expr string
+--- @param list integer[]
 --- @return any
 function vim.fn.setcharpos(expr, list) end
 
@@ -7948,7 +7967,7 @@ function vim.fn.setcharpos(expr, list) end
 ---   call setcharsearch(prevsearch)
 --- <Also see |getcharsearch()|.
 ---
---- @param dict any
+--- @param dict string
 --- @return any
 function vim.fn.setcharsearch(dict) end
 
@@ -7958,8 +7977,8 @@ function vim.fn.setcharsearch(dict) end
 --- Returns 0 when successful, 1 when not editing the command
 --- line.
 ---
---- @param str any
---- @param pos? any
+--- @param str string
+--- @param pos? integer
 --- @return any
 function vim.fn.setcmdline(str, pos) end
 
@@ -7977,13 +7996,13 @@ function vim.fn.setcmdline(str, pos) end
 --- Returns 0 when successful, 1 when not editing the command
 --- line.
 ---
---- @param pos any
+--- @param pos integer
 --- @return any
 function vim.fn.setcmdpos(pos) end
 
 --- @param lnum integer
 --- @param col? integer
---- @param off? any
+--- @param off? integer
 --- @return any
 function vim.fn.setcursorcharpos(lnum, col, off) end
 
@@ -7997,7 +8016,7 @@ function vim.fn.setcursorcharpos(lnum, col, off) end
 ---   call cursor(4, 3)
 --- <positions the cursor on the first character '여'.
 ---
---- @param list any
+--- @param list integer[]
 --- @return any
 function vim.fn.setcursorcharpos(list) end
 
@@ -8008,7 +8027,7 @@ function vim.fn.setcursorcharpos(list) end
 --- See also |expr-env|.
 ---
 --- @param name string
---- @param val any
+--- @param val string
 --- @return any
 function vim.fn.setenv(name, val) end
 
@@ -8082,8 +8101,8 @@ function vim.fn.setline(lnum, text) end
 ---
 --- @param nr integer
 --- @param list any
---- @param action? any
---- @param what? any
+--- @param action? string
+--- @param what? table
 --- @return any
 function vim.fn.setloclist(nr, list, action, what) end
 
@@ -8095,7 +8114,7 @@ function vim.fn.setloclist(nr, list, action, what) end
 --- window ID instead of the current window.
 ---
 --- @param list any
---- @param win? any
+--- @param win? integer
 --- @return any
 function vim.fn.setmatches(list, win) end
 
@@ -8147,8 +8166,8 @@ function vim.fn.setmatches(list, win) end
 --- also set the preferred column.  Also see the "curswant" key in
 --- |winrestview()|.
 ---
---- @param expr any
---- @param list any
+--- @param expr string
+--- @param list integer[]
 --- @return any
 function vim.fn.setpos(expr, list) end
 
@@ -8265,9 +8284,9 @@ function vim.fn.setpos(expr, list) end
 --- independent of the 'errorformat' setting.  Use a command like
 --- `:cc 1` to jump to the first position.
 ---
---- @param list any
---- @param action? any
---- @param what? any
+--- @param list any[]
+--- @param action? string
+--- @param what? table
 --- @return any
 function vim.fn.setqflist(list, action, what) end
 
@@ -8402,7 +8421,7 @@ function vim.fn.settabwinvar(tabnr, winnr, varname, val) end
 ---
 --- @param nr integer
 --- @param dict any
---- @param action? any
+--- @param action? string
 --- @return any
 function vim.fn.settagstack(nr, dict, action) end
 
@@ -8456,7 +8475,7 @@ function vim.fn.sha256(string) end
 --- <See also |::S|.
 ---
 --- @param string string
---- @param special? any
+--- @param special? boolean
 --- @return any
 function vim.fn.shellescape(string, special) end
 
@@ -8639,7 +8658,7 @@ function vim.fn.sign_getdefined(name) end
 ---   echo sign_getplaced()
 --- <
 ---
---- @param buf? any
+--- @param buf? integer|string
 --- @param dict? vim.fn.sign_getplaced.dict
 --- @return vim.fn.sign_getplaced.ret.item[]
 function vim.fn.sign_getplaced(buf, dict) end
@@ -8713,10 +8732,10 @@ function vim.fn.sign_jump(id, group, buf) end
 ---       \ {'lnum' : 40, 'priority' : 90})
 --- <
 ---
---- @param id any
---- @param group any
+--- @param id integer
+--- @param group string
 --- @param name string
---- @param buf any
+--- @param buf integer|string
 --- @param dict? vim.fn.sign_place.dict
 --- @return integer
 function vim.fn.sign_place(id, group, name, buf, dict) end
@@ -8908,7 +8927,7 @@ function vim.fn.sign_unplacelist(list) end
 --- directory.  In order to resolve all the involved symbolic
 --- links before simplifying the path name, use |resolve()|.
 ---
---- @param filename any
+--- @param filename string
 --- @return any
 function vim.fn.simplify(filename) end
 
@@ -8921,7 +8940,7 @@ function vim.fn.simplify(filename) end
 ---   echo sin(-4.01)
 --- <  0.763301
 ---
---- @param expr any
+--- @param expr number
 --- @return any
 function vim.fn.sin(expr) end
 
@@ -8935,7 +8954,7 @@ function vim.fn.sin(expr) end
 ---   echo sinh(-0.9)
 --- <  -1.026517
 ---
---- @param expr any
+--- @param expr number
 --- @return any
 function vim.fn.sinh(expr) end
 
@@ -8949,8 +8968,8 @@ function vim.fn.sinh(expr) end
 --- Returns an empty value if {start} or {end} are invalid.
 ---
 --- @param expr any
---- @param start any
---- @param end_? any
+--- @param start integer
+--- @param end_? integer
 --- @return any
 function vim.fn.slice(expr, start, end_) end
 
@@ -8979,7 +8998,7 @@ function vim.fn.slice(expr, start, end_) end
 ---   - 0 on invalid arguments or connection failure.
 ---
 --- @param mode string
---- @param address any
+--- @param address string
 --- @param opts? table
 --- @return any
 function vim.fn.sockconnect(mode, address, opts) end
@@ -9057,7 +9076,7 @@ function vim.fn.sockconnect(mode, address, opts) end
 --- <
 ---
 --- @param list any
---- @param how? any
+--- @param how? string|function
 --- @param dict? any
 --- @return any
 function vim.fn.sort(list, how, dict) end
@@ -9069,7 +9088,7 @@ function vim.fn.sort(list, how, dict) end
 --- This can be used for making spelling suggestions.  Note that
 --- the method can be quite slow.
 ---
---- @param word any
+--- @param word string
 --- @return any
 function vim.fn.soundfold(word) end
 
@@ -9096,7 +9115,7 @@ function vim.fn.soundfold(word) end
 --- The spelling information for the current window and the value
 --- of 'spelllang' are used.
 ---
---- @param sentence? any
+--- @param sentence? string
 --- @return any
 function vim.fn.spellbadword(sentence) end
 
@@ -9120,9 +9139,9 @@ function vim.fn.spellbadword(sentence) end
 --- The spelling information for the current window is used.  The
 --- values of 'spelllang' and 'spellsuggest' are used.
 ---
---- @param word any
---- @param max? any
---- @param capital? any
+--- @param word string
+--- @param max? integer
+--- @param capital? boolean
 --- @return any
 function vim.fn.spellsuggest(word, max, capital) end
 
@@ -9151,8 +9170,8 @@ function vim.fn.spellsuggest(word, max, capital) end
 --- <The opposite function is |join()|.
 ---
 --- @param string string
---- @param pattern? any
---- @param keepempty? any
+--- @param pattern? string
+--- @param keepempty? boolean
 --- @return any
 function vim.fn.split(string, pattern, keepempty) end
 
@@ -9168,7 +9187,7 @@ function vim.fn.split(string, pattern, keepempty) end
 --- <  str2float("nan")
 --- NaN may be different, it depends on system libraries.
 ---
---- @param expr any
+--- @param expr number
 --- @return any
 function vim.fn.sqrt(expr) end
 
@@ -9186,7 +9205,7 @@ function vim.fn.sqrt(expr) end
 ---   echo rand(seed)
 --- <
 ---
---- @param expr? any
+--- @param expr? number
 --- @return any
 function vim.fn.srand(expr) end
 
@@ -9291,7 +9310,7 @@ function vim.fn.stdpath(what) end
 --- Returns 0.0 if the conversion fails.
 ---
 --- @param string string
---- @param quoted? any
+--- @param quoted? boolean
 --- @return any
 function vim.fn.str2float(string, quoted) end
 
@@ -9307,7 +9326,7 @@ function vim.fn.str2float(string, quoted) end
 ---   echo str2list("á")    " returns [97, 769]
 ---
 --- @param string string
---- @param utf8? any
+--- @param utf8? boolean
 --- @return any
 function vim.fn.str2list(string, utf8) end
 
@@ -9330,7 +9349,7 @@ function vim.fn.str2list(string, utf8) end
 --- Returns 0 if {string} is empty or on error.
 ---
 --- @param string string
---- @param base? any
+--- @param base? integer
 --- @return any
 function vim.fn.str2nr(string, base) end
 
@@ -9361,10 +9380,10 @@ function vim.fn.strcharlen(string) end
 ---
 --- Returns an empty string on error.
 ---
---- @param src any
---- @param start any
---- @param len? any
---- @param skipcc? any
+--- @param src string
+--- @param start integer
+--- @param len? integer
+--- @param skipcc? boolean
 --- @return any
 function vim.fn.strcharpart(src, start, len, skipcc) end
 
@@ -9397,7 +9416,7 @@ function vim.fn.strcharpart(src, start, len, skipcc) end
 --- <
 ---
 --- @param string string
---- @param skipcc? any
+--- @param skipcc? boolean
 --- @return integer
 function vim.fn.strchars(string, skipcc) end
 
@@ -9435,8 +9454,8 @@ function vim.fn.strdisplaywidth(string, col) end
 ---   echo strftime("%c", getftime("file.c"))
 ---            " Show mod time of file.c.
 ---
---- @param format any
---- @param time? any
+--- @param format string
+--- @param time? number
 --- @return string
 function vim.fn.strftime(format, time) end
 
@@ -10010,7 +10029,7 @@ function vim.fn.systemlist(cmd, input, keepempty) end
 ---   endfor
 --- <Note that a buffer may appear in more than one window.
 ---
---- @param arg? any
+--- @param arg? integer
 --- @return any
 function vim.fn.tabpagebuflist(arg) end
 
@@ -10153,7 +10172,7 @@ function vim.fn.tempname() end
 --- except $TERM is set to "xterm-256color". Full behavior is
 --- described in |terminal|.
 ---
---- @param cmd any
+--- @param cmd string|string[]
 --- @param opts? table
 --- @return any
 function vim.fn.termopen(cmd, opts) end
@@ -10172,7 +10191,7 @@ function vim.fn.termopen(cmd, opts) end
 ---         -1 means forever
 ---     "callback"      the callback
 ---
---- @param id? any
+--- @param id? integer
 --- @return any
 function vim.fn.timer_info(id) end
 
@@ -10188,8 +10207,8 @@ function vim.fn.timer_info(id) end
 --- String, then the timer is paused, otherwise it is unpaused.
 --- See |non-zero-arg|.
 ---
---- @param timer any
---- @param paused any
+--- @param timer integer
+--- @param paused boolean
 --- @return any
 function vim.fn.timer_pause(timer, paused) end
 
@@ -10222,8 +10241,8 @@ function vim.fn.timer_pause(timer, paused) end
 ---     \ {'repeat': 3})
 --- <This invokes MyHandler() three times at 500 msec intervals.
 ---
---- @param time any
---- @param callback any
+--- @param time number
+--- @param callback string|function
 --- @param options? table
 --- @return any
 function vim.fn.timer_start(time, callback, options) end
@@ -10232,7 +10251,7 @@ function vim.fn.timer_start(time, callback, options) end
 --- {timer} is an ID returned by timer_start(), thus it must be a
 --- Number.  If {timer} does not exist there is no error.
 ---
---- @param timer any
+--- @param timer integer
 --- @return any
 function vim.fn.timer_stop(timer) end
 
@@ -10247,7 +10266,7 @@ function vim.fn.timer_stopall() end
 --- characters turned into lowercase (just like applying |gu| to
 --- the string).  Returns an empty string on error.
 ---
---- @param expr any
+--- @param expr string
 --- @return string
 function vim.fn.tolower(expr) end
 
@@ -10255,7 +10274,7 @@ function vim.fn.tolower(expr) end
 --- characters turned into uppercase (just like applying |gU| to
 --- the string).  Returns an empty string on error.
 ---
---- @param expr any
+--- @param expr string
 --- @return string
 function vim.fn.toupper(expr) end
 
@@ -10307,7 +10326,7 @@ function vim.fn.tr(src, fromstr, tostr) end
 ---   echo trim("  vim  ", " ", 2)
 --- <returns "  vim"
 ---
---- @param text any
+--- @param text string
 --- @param mask? string
 --- @param dir? 0|1|2
 --- @return string
@@ -10325,7 +10344,7 @@ function vim.fn.trim(text, mask, dir) end
 ---   echo trunc(4.0)
 --- <  4.0
 ---
---- @param expr any
+--- @param expr number
 --- @return integer
 function vim.fn.trunc(expr) end
 
@@ -10354,6 +10373,7 @@ function vim.fn.trunc(expr) end
 ---   if myvar is v:null | endif
 --- <To check if the v:t_ variables exist use this: >vim
 ---   if exists('v:t_number') | endif
+--- <
 ---
 --- @param expr any
 --- @return integer
@@ -10464,8 +10484,8 @@ function vim.fn.uniq(list, func, dict) end
 ---
 --- @param string string
 --- @param idx integer
---- @param countcc? any
---- @param charidx? any
+--- @param countcc? boolean
+--- @param charidx? boolean
 --- @return integer
 function vim.fn.utf16idx(string, idx, countcc, charidx) end
 
@@ -10522,9 +10542,10 @@ function vim.fn.values(dict) end
 --- A more advanced example that echoes the maximum length of
 --- all lines: >vim
 ---     echo max(map(range(1, line('$')), "virtcol([v:val, '$'])"))
+--- <
 ---
---- @param expr any
---- @param list? any
+--- @param expr string|integer[]
+--- @param list? boolean
 --- @param winid? integer
 --- @return any
 function vim.fn.virtcol(expr, list, winid) end
@@ -10573,7 +10594,7 @@ function vim.fn.virtcol2col(winid, lnum, col) end
 --- a non-empty String, then the Visual mode will be cleared and
 --- the old value is returned.  See |non-zero-arg|.
 ---
---- @param expr? any
+--- @param expr? boolean
 --- @return any
 function vim.fn.visualmode(expr) end
 
@@ -10594,7 +10615,7 @@ function vim.fn.visualmode(expr) end
 ---
 --- @param timeout integer
 --- @param condition any
---- @param interval? any
+--- @param interval? number
 --- @return any
 function vim.fn.wait(timeout, condition, interval) end
 
@@ -10624,8 +10645,8 @@ function vim.fn.wildmenumode() end
 --- When window {id} does not exist then no error is given and
 --- an empty string is returned.
 ---
---- @param id any
---- @param command any
+--- @param id integer
+--- @param command string
 --- @param silent? boolean
 --- @return any
 function vim.fn.win_execute(id, command, silent) end
@@ -10633,7 +10654,7 @@ function vim.fn.win_execute(id, command, silent) end
 --- Returns a |List| with |window-ID|s for windows that contain
 --- buffer {bufnr}.  When there is none the list is empty.
 ---
---- @param bufnr any
+--- @param bufnr integer
 --- @return integer[]
 function vim.fn.win_findbuf(bufnr) end
 
@@ -10645,8 +10666,8 @@ function vim.fn.win_findbuf(bufnr) end
 --- number {tab}.  The first tab has number one.
 --- Return zero if the window cannot be found.
 ---
---- @param win? any
---- @param tab? any
+--- @param win? integer
+--- @param tab? integer
 --- @return integer
 function vim.fn.win_getid(win, tab) end
 
@@ -10675,7 +10696,7 @@ function vim.fn.win_gettype(nr) end
 --- tabpage.
 --- Return TRUE if successful, FALSE if the window cannot be found.
 ---
---- @param expr any
+--- @param expr integer
 --- @return 0|1
 function vim.fn.win_gotoid(expr) end
 
@@ -10683,14 +10704,14 @@ function vim.fn.win_gotoid(expr) end
 --- with ID {expr}: [tabnr, winnr].
 --- Return [0, 0] if the window cannot be found.
 ---
---- @param expr any
+--- @param expr integer
 --- @return any
 function vim.fn.win_id2tabwin(expr) end
 
 --- Return the window number of window with ID {expr}.
 --- Return 0 if the window cannot be found in the current tabpage.
 ---
---- @param expr any
+--- @param expr integer
 --- @return any
 function vim.fn.win_id2win(expr) end
 
@@ -10709,7 +10730,7 @@ function vim.fn.win_id2win(expr) end
 --- Only works for the current tab page. *E1308*
 ---
 --- @param nr integer
---- @param offset any
+--- @param offset integer
 --- @return any
 function vim.fn.win_move_separator(nr, offset) end
 
@@ -10725,7 +10746,7 @@ function vim.fn.win_move_separator(nr, offset) end
 --- Only works for the current tab page.
 ---
 --- @param nr integer
---- @param offset any
+--- @param offset integer
 --- @return any
 function vim.fn.win_move_statusline(nr, offset) end
 
@@ -10760,7 +10781,7 @@ function vim.fn.win_screenpos(nr) end
 ---     'splitright' are used.
 ---
 --- @param nr integer
---- @param target any
+--- @param target integer
 --- @param options? table
 --- @return any
 function vim.fn.win_splitmove(nr, target, options) end
@@ -10802,6 +10823,7 @@ function vim.fn.windowsversion() end
 --- This excludes any window toolbar line.
 --- Examples: >vim
 ---   echo "The current window has " .. winheight(0) .. " lines."
+--- <
 ---
 --- @param nr integer
 --- @return integer
@@ -10885,8 +10907,9 @@ function vim.fn.winline() end
 ---   let window_count = winnr('$')
 ---   let prev_window = winnr('#')
 ---   let wnum = winnr('3k')
+--- <
 ---
---- @param arg? any
+--- @param arg? string|integer
 --- @return any
 function vim.fn.winnr(arg) end
 
@@ -11035,6 +11058,7 @@ function vim.fn.wordcount() end
 --- To copy a file byte for byte: >vim
 ---   let fl = readfile("foo", "b")
 ---   call writefile(fl, "foocopy", "b")
+--- <
 ---
 --- @param object any
 --- @param fname string
@@ -11049,7 +11073,7 @@ function vim.fn.writefile(object, fname, flags) end
 ---   let bits = xor(bits, 0x80)
 --- <
 ---
---- @param expr any
---- @param expr1 any
+--- @param expr number
+--- @param expr1 number
 --- @return any
 function vim.fn.xor(expr, expr1) end

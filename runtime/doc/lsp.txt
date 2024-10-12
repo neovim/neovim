@@ -71,11 +71,12 @@ options are not restored when the LSP client is stopped or detached.
 - |K| is mapped to |vim.lsp.buf.hover()| unless |'keywordprg'| is customized or
   a custom keymap for `K` exists.
 
-                                                *grr* *gra* *grn* *i_CTRL-S*
+                                          *grr* *gra* *grn* *gri* *i_CTRL-S*
 Some keymaps are created unconditionally when Nvim starts:
 - "grn" is mapped in Normal mode to |vim.lsp.buf.rename()|
 - "gra" is mapped in Normal and Visual mode to |vim.lsp.buf.code_action()|
 - "grr" is mapped in Normal mode to |vim.lsp.buf.references()|
+- "gri" is mapped in Normal mode to |vim.lsp.buf.implementation()|
 - CTRL-S is mapped in Insert mode to |vim.lsp.buf.signature_help()|
 
 If not wanted, these keymaps can be removed at any time using
@@ -87,8 +88,11 @@ To override or delete any of the above defaults, set or unset the options on
 
     vim.api.nvim_create_autocmd('LspAttach', {
       callback = function(args)
+        -- Unset 'formatexpr'
         vim.bo[args.buf].formatexpr = nil
+        -- Unset 'omnifunc'
         vim.bo[args.buf].omnifunc = nil
+        -- Unmap K
         vim.keymap.del('n', 'K', { buffer = args.buf })
       end,
     })
@@ -119,6 +123,7 @@ server. Example: >lua
               vim.lsp.buf.format({bufnr = args.buf, id = client.id})
             end,
           })
+        end
       end,
     })
 <
@@ -317,7 +322,7 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
     }
 <
   Some handlers do not have an explicitly named handler function (such as
-  ||vim.lsp.diagnostic.on_publish_diagnostics()|). To override these, first
+  |vim.lsp.diagnostic.on_publish_diagnostics()|). To override these, first
   create a reference to the existing handler: >lua
 
     local on_references = vim.lsp.handlers["textDocument/references"]
@@ -523,32 +528,25 @@ EVENTS                                                            *lsp-events*
 LspAttach                                                          *LspAttach*
     After an LSP client attaches to a buffer. The |autocmd-pattern| is the
     name of the buffer. When used from Lua, the client ID is passed to the
-    callback in the "data" table. Example: >lua
-
-    vim.api.nvim_create_autocmd("LspAttach", {
-      callback = function(args)
-        local bufnr = args.buf
-        local client = vim.lsp.get_client_by_id(args.data.client_id)
-        if client.supports_method("textDocument/completion") then
-          vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
-        end
-        if client.supports_method("textDocument/definition") then
-          vim.bo[bufnr].tagfunc = "v:lua.vim.lsp.tagfunc"
-        end
-      end,
-    })
-<
+    callback in the "data" table. See |lsp-config| for an example.
 
 LspDetach                                                          *LspDetach*
     Just before an LSP client detaches from a buffer. The |autocmd-pattern|
     is the name of the buffer. When used from Lua, the client ID is passed
     to the callback in the "data" table. Example: >lua
 
-    vim.api.nvim_create_autocmd("LspDetach", {
+    vim.api.nvim_create_autocmd('LspDetach', {
       callback = function(args)
+        -- Get the detaching client
         local client = vim.lsp.get_client_by_id(args.data.client_id)
-        -- Do something with the client
-        vim.cmd("setlocal tagfunc< omnifunc<")
+
+        -- Remove the autocommand to format the buffer on save, if it exists
+        if client.supports_method('textDocument/formatting') then
+            vim.api.nvim_clear_autocmds({
+                event = 'BufWritePre',
+                buffer = args.buf,
+            })
+        end
       end,
     })
 <
@@ -1673,6 +1671,9 @@ enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
         vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {enable}  (`boolean?`) true/nil to enable, false to disable
       • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
@@ -1697,6 +1698,9 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
         })
 <
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {filter}  (`table?`) Optional filters |kwargs|:
                   • {bufnr} (`integer?`)
@@ -1710,6 +1714,9 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
 
 is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
     Query whether inlay hint is enabled in the {filter}ed scope
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.

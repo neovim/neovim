@@ -1012,8 +1012,7 @@ func Test_cmdline_complete_user_names()
       call feedkeys(':e ~' . first_letter . "\<c-a>\<c-B>\"\<cr>", 'tx')
       call assert_match('^"e \~.*\<' . whoami . '\>', @:)
     endif
-  endif
-  if has('win32')
+  elseif has('win32')
     " Just in case: check that the system has an Administrator account.
     let names = system('net user')
     if names =~ 'Administrator'
@@ -1022,14 +1021,27 @@ func Test_cmdline_complete_user_names()
       call feedkeys(':e ~A' . "\<c-a>\<c-B>\"\<cr>", 'tx')
       call assert_match('^"e \~.*Administrator', @:)
     endif
+  else
+    throw 'Skipped: does not work on this platform'
   endif
 endfunc
 
+func Test_cmdline_complete_shellcmdline()
+  CheckExecutable whoami
+  command -nargs=1 -complete=shellcmdline MyCmd
+
+  call feedkeys(":MyCmd whoam\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match('^".*\<whoami\>', @:)
+  let l = getcompletion('whoam', 'shellcmdline')
+  call assert_match('\<whoami\>', join(l, ' '))
+
+  delcommand MyCmd
+endfunc
+
 func Test_cmdline_complete_bang()
-  if executable('whoami')
-    call feedkeys(":!whoam\<C-A>\<C-B>\"\<CR>", 'tx')
-    call assert_match('^".*\<whoami\>', @:)
-  endif
+  CheckExecutable whoami
+  call feedkeys(":!whoam\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match('^".*\<whoami\>', @:)
 endfunc
 
 func Test_cmdline_complete_languages()
@@ -3800,6 +3812,60 @@ func Test_cmdline_complete_substitute_short()
   endfor
 endfunc
 
+" Test for shellcmdline command argument completion
+func Test_cmdline_complete_shellcmdline_argument()
+  command -nargs=+ -complete=shellcmdline MyCmd
+
+  set wildoptions=fuzzy
+
+  call feedkeys(":MyCmd vim test_cmdline.\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd vim test_cmdline.vim', @:)
+  call assert_equal(['test_cmdline.vim'],
+        \ getcompletion('vim test_cmdline.', 'shellcmdline'))
+
+  call feedkeys(":MyCmd vim nonexistentfile\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd vim nonexistentfile', @:)
+  call assert_equal([],
+        \ getcompletion('vim nonexistentfile', 'shellcmdline'))
+
+  let compl1 = getcompletion('', 'file')[0]
+  let compl2 = getcompletion('', 'file')[1]
+  call feedkeys(":MyCmd vim \<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd vim ' .. compl1, @:)
+
+  call feedkeys(":MyCmd vim \<Tab> \<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd vim ' .. compl1 .. ' ' .. compl1, @:)
+
+  let compl = getcompletion('', 'file')[1]
+  call feedkeys(":MyCmd vim \<Tab> \<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd vim ' .. compl1 .. ' ' .. compl2, @:)
+
+  set wildoptions&
+  call feedkeys(":MyCmd vim test_cmdline.\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd vim test_cmdline.vim', @:)
+  call assert_equal(['test_cmdline.vim'],
+        \ getcompletion('vim test_cmdline.', 'shellcmdline'))
+
+  call feedkeys(":MyCmd vim nonexistentfile\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd vim nonexistentfile', @:)
+  call assert_equal([],
+        \ getcompletion('vim nonexistentfile', 'shellcmdline'))
+
+  let compl1 = getcompletion('', 'file')[0]
+  let compl2 = getcompletion('', 'file')[1]
+  call feedkeys(":MyCmd vim \<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd vim ' .. compl1, @:)
+
+  call feedkeys(":MyCmd vim \<Tab> \<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd vim ' .. compl1 .. ' ' .. compl1, @:)
+
+  let compl = getcompletion('', 'file')[1]
+  call feedkeys(":MyCmd vim \<Tab> \<Tab>\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd vim ' .. compl1 .. ' ' .. compl2, @:)
+
+  delcommand MyCmd
+endfunc
+
 " Test for :! shell command argument completion
 func Test_cmdline_complete_bang_cmd_argument()
   set wildoptions=fuzzy
@@ -3811,30 +3877,32 @@ func Test_cmdline_complete_bang_cmd_argument()
 endfunc
 
 func Call_cmd_funcs()
-  return [getcmdpos(), getcmdscreenpos(), getcmdcompltype()]
+  return [getcmdpos(), getcmdscreenpos(), getcmdcompltype(), getcmdcomplpat()]
 endfunc
 
 func Test_screenpos_and_completion()
   call assert_equal(0, getcmdpos())
   call assert_equal(0, getcmdscreenpos())
   call assert_equal('', getcmdcompltype())
+  call assert_equal('', getcmdcomplpat())
 
   cnoremap <expr> <F2> string(Call_cmd_funcs())
   call feedkeys(":let a\<F2>\<C-B>\"\<CR>", "xt")
-  call assert_equal("\"let a[6, 7, 'var']", @:)
+  call assert_equal("\"let a[6, 7, 'var', 'a']", @:)
   call feedkeys(":quit \<F2>\<C-B>\"\<CR>", "xt")
-  call assert_equal("\"quit [6, 7, '']", @:)
+  call assert_equal("\"quit [6, 7, '', '']", @:)
   call feedkeys(":nosuchcommand \<F2>\<C-B>\"\<CR>", "xt")
-  call assert_equal("\"nosuchcommand [15, 16, '']", @:)
+  call assert_equal("\"nosuchcommand [15, 16, '', '']", @:)
 
-  " Check that getcmdcompltype() doesn't interfere with cmdline completion.
+  " Check that getcmdcompltype() and getcmdcomplpat() don't interfere with
+  " cmdline completion.
   let g:results = []
   cnoremap <F2> <Cmd>let g:results += [[getcmdline()] + Call_cmd_funcs()]<CR>
   call feedkeys(":sign un\<Tab>\<F2>\<Tab>\<F2>\<Tab>\<F2>\<C-C>", "xt")
   call assert_equal([
-        \ ['sign undefine', 14, 15, 'sign'],
-        \ ['sign unplace', 13, 14, 'sign'],
-        \ ['sign un', 8, 9, 'sign']], g:results)
+        \ ['sign undefine', 14, 15, 'sign', 'undefine'],
+        \ ['sign unplace', 13, 14, 'sign', 'unplace'],
+        \ ['sign un', 8, 9, 'sign', 'un']], g:results)
 
   unlet g:results
   cunmap <F2>
@@ -4068,6 +4136,17 @@ func Test_term_option()
   call feedkeys(":set t_\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match(expected, @:)
   let &cpo = _cpo
+endfunc
+
+func Test_cd_bslash_completion_windows()
+  CheckMSWindows
+  let save_shellslash = &shellslash
+  set noshellslash
+  call system('mkdir XXXa\_b')
+  defer delete('XXXa', 'rf')
+  call feedkeys(":cd XXXa\\_b\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"cd XXXa\_b\', @:)
+  let &shellslash = save_shellslash
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

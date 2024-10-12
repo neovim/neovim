@@ -1448,7 +1448,7 @@ scripterror:
         p = r;
       }
 
-#ifdef USE_FNAME_CASE
+#ifdef CASE_INSENSITIVE_FILENAME
       // Make the case of the file name match the actual file.
       path_fix_case(p);
 #endif

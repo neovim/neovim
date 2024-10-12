@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:             YAML (YAML Ain't Markup Language)
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se> (inactive)
-" Last Change:      	2020 Mar 02
+" Last Change:  2024 Oct 04
 
 if exists("b:did_ftplugin")
   finish
@@ -18,7 +18,10 @@ setlocal formatoptions-=t formatoptions+=croql
 
 " rime input method engine uses `*.custom.yaml` as its config files
 if expand('%:r:e') ==# 'custom'
-  compiler rime_deployer
+  if !exists('current_compiler')
+    compiler rime_deployer
+    let b:undo_ftplugin ..= "| compiler make"
+  endif
   setlocal include=__include:\\s*
   let b:undo_ftplugin ..= " inc<"
 endif

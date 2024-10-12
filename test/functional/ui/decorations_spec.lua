@@ -1964,7 +1964,7 @@ describe('extmark decorations', function()
     ]]}
   end)
 
-  pending('highlight applies to a full TAB in visual block mode', function()
+  it('highlight applies to a full TAB in visual block mode', function()
     screen:try_resize(50, 8)
     command('hi! Visual guifg=NONE guibg=LightGrey')
     api.nvim_buf_set_lines(0, 0, -1, true, {'asdf', '\tasdf', '\tasdf', '\tasdf', 'asdf'})

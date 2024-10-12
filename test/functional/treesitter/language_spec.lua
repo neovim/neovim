@@ -51,7 +51,7 @@ describe('treesitter language API', function()
   it('inspects language', function()
     local keys, fields, symbols = unpack(exec_lua(function()
       local lang = vim.treesitter.language.inspect('c')
-      local keys, symbols = {}, {}
+      local keys = {}
       for k, v in pairs(lang) do
         if type(v) == 'boolean' then
           keys[k] = v
@@ -60,12 +60,7 @@ describe('treesitter language API', function()
         end
       end
 
-      -- symbols array can have "holes" and is thus not a valid msgpack array
-      -- but we don't care about the numbers here (checked in the parser test)
-      for _, v in pairs(lang.symbols) do
-        table.insert(symbols, v)
-      end
-      return { keys, lang.fields, symbols }
+      return { keys, lang.fields, lang.symbols }
     end))
 
     eq({ fields = true, symbols = true, _abi_version = true, _wasm = false }, keys)
@@ -78,17 +73,22 @@ describe('treesitter language API', function()
     eq(true, fset['directive'])
     eq(true, fset['initializer'])
 
-    local has_named, has_anonymous
-    for _, s in pairs(symbols) do
-      eq('string', type(s[1]))
-      eq('boolean', type(s[2]))
-      if s[1] == 'for_statement' and s[2] == true then
+    local has_named, has_anonymous, has_supertype
+    for symbol, named in pairs(symbols) do
+      eq('string', type(symbol))
+      eq('boolean', type(named))
+      if symbol == 'for_statement' and named == true then
         has_named = true
-      elseif s[1] == '|=' and s[2] == false then
+      elseif symbol == '"|="' and named == false then
         has_anonymous = true
+      elseif symbol == 'statement' and named == true then
+        has_supertype = true
       end
     end
-    eq({ true, true }, { has_named, has_anonymous })
+    eq(
+      { has_named = true, has_anonymous = true, has_supertype = true },
+      { has_named = has_named, has_anonymous = has_anonymous, has_supertype = has_supertype }
+    )
   end)
 
   it(

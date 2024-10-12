@@ -1,3 +1,5 @@
+-- vim: tw=80
+
 --- @class vim.option_meta
 --- @field full_name string
 --- @field desc? string
@@ -1229,11 +1231,10 @@ return {
         used.  The command-line will cover the last line of the screen when
         shown.
 
-        WARNING: `cmdheight=0` is considered experimental. Expect some
-        unwanted behaviour. Some 'shortmess' flags and similar
-        mechanism might fail to take effect, causing unwanted hit-enter
-        prompts.  Some informative messages, both from Nvim itself and
-        plugins, will not be displayed.
+        WARNING: `cmdheight=0` is EXPERIMENTAL. Expect some unwanted behaviour.
+        Some 'shortmess' flags and similar mechanism might fail to take effect,
+        causing unwanted hit-enter prompts.  Some informative messages, both
+        from Nvim itself and plugins, will not be displayed.
       ]=],
       full_name = 'cmdheight',
       redraw = { 'all_windows' },
@@ -8075,7 +8076,8 @@ return {
         non-blank of the line.  When off the cursor is kept in the same column
         (if possible).  This applies to the commands:
         - CTRL-D, CTRL-U, CTRL-B, CTRL-F, "G", "H", "M", "L", "gg"
-        - "d", "<<" and ">>" with a linewise operator
+        - "d", "<<", "==" and ">>" with a linewise operator
+          (|operator-resulting-pos|)
         - "%" with a count
         - buffer changing commands (CTRL-^, :bnext, :bNext, etc.)
         - Ex commands that only have a line number, e.g., ":25" or ":+".
@@ -8095,7 +8097,6 @@ return {
       cb = 'did_set_statuscolumn',
       defaults = { if_true = '' },
       desc = [=[
-        EXPERIMENTAL
         When non-empty, this option determines the content of the area to the
         side of a window, normally containing the fold, sign and number columns.
         The format of this option is like that of 'statusline'.
@@ -9619,7 +9620,12 @@ return {
         Some keys will not work, such as CTRL-C, <CR> and Enter.
         <Esc> can be used, but hitting it twice in a row will still exit
         command-line as a failsafe measure.
-        Although 'wc' is a number option, you can set it to a special key: >vim
+        Although 'wc' is a number option, it can be specified as a number, a
+        single character, a |key-notation| (e.g. <Up>, <C-F>) or a letter
+        preceded with a caret (e.g. `^F` is CTRL-F): >vim
+        	:set wc=27
+        	:set wc=X
+        	:set wc=^I
         	set wc=<Tab>
         <
       ]=],

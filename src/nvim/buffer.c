@@ -478,6 +478,11 @@ static bool can_unload_buffer(buf_T *buf)
   return can_unload;
 }
 
+bool buf_locked(buf_T *buf)
+{
+  return buf->b_locked || buf->b_locked_split;
+}
+
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.
@@ -2980,7 +2985,7 @@ int setfname(buf_T *buf, char *ffname_arg, char *sfname_arg, bool message)
       close_buffer(NULL, obuf, DOBUF_WIPE, false, false);
     }
     sfname = xstrdup(sfname);
-#ifdef USE_FNAME_CASE
+#ifdef CASE_INSENSITIVE_FILENAME
     path_fix_case(sfname);            // set correct case for short file name
 #endif
     if (buf->b_sfname != buf->b_ffname) {

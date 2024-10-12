@@ -169,6 +169,7 @@ VERSIONS
 DEVELOPING NVIM
 
 |dev|			Development of Nvim
+|dev-arch|		Internal architecture, modules, data structures
 |dev-style|		Development style guidelines
 |dev-theme|		Design guidelines (colorschemes etc.)
 |dev-tools|		Tools and techniques for developing Nvim

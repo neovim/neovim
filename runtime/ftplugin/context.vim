@@ -12,10 +12,6 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-if !exists('current_compiler')
-  compiler context
-endif
-
 let b:undo_ftplugin = "setl com< cms< def< inc< sua< fo< ofu<"
 
 setlocal comments=b:%D,b:%C,b:%M,:% commentstring=%\ %s formatoptions+=tjcroql2
@@ -108,6 +104,12 @@ if get(g:, 'context_mappings', 1)
     endif
 endif
 
+if !exists('current_compiler')
+  let b:undo_ftplugin ..= "| compiler make"
+  compiler context
+endif
+
+let b:undo_ftplugin ..= "| sil! delc -buffer ConTeXt | sil! delc -buffer ConTeXtLog | sil! delc -buffer ConTeXtJobStatus | sil! delc -buffer ConTeXtStopJobs"
 " Commands for asynchronous typesetting
 command! -buffer -nargs=? -complete=file ConTeXt          call context#typeset(<q-args>)
 command!         -nargs=0                ConTeXtJobStatus call context#job_status()

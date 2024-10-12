@@ -320,7 +320,7 @@ describe('vim.lsp.completion: item conversion', function()
       info = '',
       kind = 'Module',
       menu = '',
-      hl_group = '',
+      abbr_hlgroup = '',
       word = 'this_thread',
     }
     local result = complete('  std::this|', completion_list)
@@ -376,7 +376,7 @@ describe('vim.lsp.completion: item conversion', function()
       info = '',
       kind = 'Module',
       menu = '',
-      hl_group = '',
+      abbr_hlgroup = '',
       word = 'this_thread',
     }
     local result = complete('  std::this|is', completion_list)
@@ -471,6 +471,39 @@ describe('vim.lsp.completion: item conversion', function()
   )
 end)
 
+--- @param completion_result lsp.CompletionList
+--- @return integer
+local function create_server(completion_result)
+  return exec_lua(function()
+    local server = _G._create_server({
+      capabilities = {
+        completionProvider = {
+          triggerCharacters = { '.' },
+        },
+      },
+      handlers = {
+        ['textDocument/completion'] = function(_, _, callback)
+          callback(nil, completion_result)
+        end,
+      },
+    })
+
+    local bufnr = vim.api.nvim_get_current_buf()
+    vim.api.nvim_win_set_buf(0, bufnr)
+    return vim.lsp.start({
+      name = 'dummy',
+      cmd = server.cmd,
+      on_attach = function(client, bufnr0)
+        vim.lsp.completion.enable(true, client.id, bufnr0, {
+          convert = function(item)
+            return { abbr = item.label:gsub('%b()', '') }
+          end,
+        })
+      end,
+    })
+  end)
+end
+
 describe('vim.lsp.completion: protocol', function()
   before_each(function()
     clear()
@@ -486,39 +519,6 @@ describe('vim.lsp.completion: protocol', function()
   end)
 
   after_each(clear)
-
-  --- @param completion_result lsp.CompletionList
-  --- @return integer
-  local function create_server(completion_result)
-    return exec_lua(function()
-      local server = _G._create_server({
-        capabilities = {
-          completionProvider = {
-            triggerCharacters = { '.' },
-          },
-        },
-        handlers = {
-          ['textDocument/completion'] = function(_, _, callback)
-            callback(nil, completion_result)
-          end,
-        },
-      })
-
-      local bufnr = vim.api.nvim_get_current_buf()
-      vim.api.nvim_win_set_buf(0, bufnr)
-      return vim.lsp.start({
-        name = 'dummy',
-        cmd = server.cmd,
-        on_attach = function(client, bufnr0)
-          vim.lsp.completion.enable(true, client.id, bufnr0, {
-            convert = function(item)
-              return { abbr = item.label:gsub('%b()', '') }
-            end,
-          })
-        end,
-      })
-    end)
-  end
 
   local function assert_matches(fn)
     retry(nil, nil, function()
@@ -570,7 +570,7 @@ describe('vim.lsp.completion: protocol', function()
           info = '',
           kind = 'Unknown',
           menu = '',
-          hl_group = '',
+          abbr_hlgroup = '',
           user_data = {
             nvim = {
               lsp = {
@@ -591,7 +591,7 @@ describe('vim.lsp.completion: protocol', function()
           info = '',
           kind = 'Unknown',
           menu = '',
-          hl_group = 'DiagnosticDeprecated',
+          abbr_hlgroup = 'DiagnosticDeprecated',
           user_data = {
             nvim = {
               lsp = {
@@ -613,7 +613,7 @@ describe('vim.lsp.completion: protocol', function()
           info = '',
           kind = 'Unknown',
           menu = '',
-          hl_group = 'DiagnosticDeprecated',
+          abbr_hlgroup = 'DiagnosticDeprecated',
           user_data = {
             nvim = {
               lsp = {
@@ -724,5 +724,60 @@ describe('vim.lsp.completion: protocol', function()
     assert_matches(function(matches)
       eq('foo', matches[1].abbr)
     end)
+  end)
+end)
+
+describe('vim.lsp.completion: integration', function()
+  before_each(function()
+    clear()
+    exec_lua(create_server_definition)
+    exec_lua(function()
+      vim.fn.complete = vim.schedule_wrap(vim.fn.complete)
+    end)
+  end)
+
+  after_each(clear)
+
+  it('puts cursor at the end of completed word', function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          label = 'hello',
+          insertText = '${1:hello} friends',
+          insertTextFormat = 2,
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,noselect'
+    end)
+    create_server(completion_list)
+    feed('i world<esc>0ih<c-x><c-o>')
+    retry(nil, nil, function()
+      eq(
+        1,
+        exec_lua(function()
+          return vim.fn.pumvisible()
+        end)
+      )
+    end)
+    feed('<C-n><C-y>')
+    eq(
+      { true, { 'hello friends world' } },
+      exec_lua(function()
+        return {
+          vim.snippet.active({ direction = 1 }),
+          vim.api.nvim_buf_get_lines(0, 0, -1, true),
+        }
+      end)
+    )
+    feed('<tab>')
+    eq(
+      #'hello friends',
+      exec_lua(function()
+        return vim.api.nvim_win_get_cursor(0)[2]
+      end)
+    )
   end)
 end)

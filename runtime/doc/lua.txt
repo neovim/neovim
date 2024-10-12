@@ -1103,7 +1103,9 @@ vim.stricmp({a}, {b})                                          *vim.stricmp()*
         lesser than {b}, respectively.
 
 vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
-    Attach to ui events, similar to |nvim_ui_attach()| but receive events as
+    WARNING: This feature is experimental/unstable.
+
+    Attach to |ui-events|, similar to |nvim_ui_attach()| but receive events as
     Lua callback. Can be used to implement screen elements like popupmenu or
     message handling in Lua.
 
@@ -1462,12 +1464,9 @@ Option:remove({value})                                      *vim.opt:remove()*
       • {value}  (`string`) Value to remove
 
 vim.bo[{bufnr}]                                                       *vim.bo*
-    Get or set buffer-scoped |options| for the buffer with number {bufnr}. If
-    {bufnr} is omitted then the current buffer is used. Invalid {bufnr} or key
-    is an error.
-
-    Note: this is equivalent to `:setlocal` for |global-local| options and
-    `:set` otherwise.
+    Get or set buffer-scoped |options| for the buffer with number {bufnr}.
+    Like `:setlocal`. If {bufnr} is omitted then the current buffer is used.
+    Invalid {bufnr} or key is an error.
 
     Example: >lua
         local bufnr = vim.api.nvim_get_current_buf()
@@ -1679,21 +1678,29 @@ vim.on_key({fn}, {ns_id})                                       *vim.on_key()*
 
     Note: ~
       • {fn} will be removed on error.
+      • {fn} won't be invoked recursively, i.e. if {fn} itself consumes input,
+        it won't be invoked for those keys.
       • {fn} will not be cleared by |nvim_buf_clear_namespace()|
 
     Parameters: ~
-      • {fn}     (`fun(key: string, typed: string)?`) Function invoked on
-                 every key press. |i_CTRL-V| {key} is the key after mappings
-                 have been applied, and {typed} is the key(s) before mappings
-                 are applied, which may be empty if {key} is produced by
-                 non-typed keys. When {fn} is nil and {ns_id} is specified,
-                 the callback associated with namespace {ns_id} is removed.
+      • {fn}     (`fun(key: string, typed: string)?`) Function invoked for
+                 every input key, after mappings have been applied but before
+                 further processing. Arguments {key} and {typed} are raw
+                 keycodes, where {key} is the key after mappings are applied,
+                 and {typed} is the key(s) before mappings are applied.
+                 {typed} may be empty if {key} is produced by non-typed key(s)
+                 or by the same typed key(s) that produced a previous {key}.
+                 When {fn} is `nil` and {ns_id} is specified, the callback
+                 associated with namespace {ns_id} is removed.
       • {ns_id}  (`integer?`) Namespace ID. If nil or 0, generates and returns
                  a new |nvim_create_namespace()| id.
 
     Return: ~
         (`integer`) Namespace id associated with {fn}. Or count of all
         callbacks if on_key() is called without arguments.
+
+    See also: ~
+      • |keytrans()|
 
 vim.paste({lines}, {phase})                                      *vim.paste()*
     Paste handler, invoked by |nvim_paste()|.
@@ -1856,6 +1863,9 @@ vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
 
     Can also be pretty-printed with `:Inspect!`.                   *:Inspect!*
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {bufnr}   (`integer?`) defaults to the current buffer
       • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
@@ -1888,6 +1898,9 @@ vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
     Show all the items at a given buffer position.
 
     Can also be shown with `:Inspect`.                              *:Inspect*
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {bufnr}   (`integer?`) defaults to the current buffer
@@ -2461,11 +2474,15 @@ vim.validate({opt})                                           *vim.validate()*
 Lua module: vim.loader                                            *vim.loader*
 
 vim.loader.disable()                                    *vim.loader.disable()*
+    WARNING: This feature is experimental/unstable.
+
     Disables the experimental Lua module loader:
     • removes the loaders
     • adds the default Nvim loader
 
 vim.loader.enable()                                      *vim.loader.enable()*
+    WARNING: This feature is experimental/unstable.
+
     Enables the experimental Lua module loader:
     • overrides loadfile
     • adds the Lua loader using the byte-compilation cache
@@ -2473,6 +2490,8 @@ vim.loader.enable()                                      *vim.loader.enable()*
     • removes the default Nvim loader
 
 vim.loader.find({modname}, {opts})                         *vim.loader.find()*
+    WARNING: This feature is experimental/unstable.
+
     Finds Lua modules for the given module name.
 
     Parameters: ~
@@ -2498,6 +2517,8 @@ vim.loader.find({modname}, {opts})                         *vim.loader.find()*
           returned for `modname="*"`
 
 vim.loader.reset({path})                                  *vim.loader.reset()*
+    WARNING: This feature is experimental/unstable.
+
     Resets the cache for the path, or all the paths if path is nil.
 
     Parameters: ~
@@ -2767,6 +2788,9 @@ vim.filetype.get_option({filetype}, {option})
     means |ftplugin| and |FileType| autocommands are only triggered once and
     may not reflect later changes.
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {filetype}  (`string`) Filetype
       • {option}    (`string`) Option name
@@ -2891,6 +2915,9 @@ Lua module: vim.fs                                                    *vim.fs*
 vim.fs.basename({file})                                    *vim.fs.basename()*
     Return the basename of the given path
 
+    Attributes: ~
+        Since: 0.8.0
+
     Parameters: ~
       • {file}  (`string?`) Path
 
@@ -2899,6 +2926,9 @@ vim.fs.basename({file})                                    *vim.fs.basename()*
 
 vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
     Return an iterator over the items located in {path}
+
+    Attributes: ~
+        Since: 0.8.0
 
     Parameters: ~
       • {path}  (`string`) An absolute or relative path to the directory to
@@ -2918,6 +2948,9 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
 
 vim.fs.dirname({file})                                      *vim.fs.dirname()*
     Return the parent directory of the given path
+
+    Attributes: ~
+        Since: 0.8.0
 
     Parameters: ~
       • {file}  (`string?`) Path
@@ -2951,6 +2984,9 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
         end, {limit = math.huge, type = 'file'})
 <
 
+    Attributes: ~
+        Since: 0.8.0
+
     Parameters: ~
       • {names}  (`string|string[]|fun(name: string, path: string): boolean`)
                  Names of the items to find. Must be base names, paths and
@@ -2981,6 +3017,9 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
 vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Concatenate directories and/or file paths into a single path with
     normalization (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {...}  (`string`)
@@ -3018,6 +3057,9 @@ vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
         [[\\?\UNC\server\share\foo\..\..\..\bar]] => "//?/UNC/server/share/bar"
 <
 
+    Attributes: ~
+        Since: 0.8.0
+
     Parameters: ~
       • {path}  (`string`) Path to normalize
       • {opts}  (`table?`) A table with the following fields:
@@ -3046,6 +3088,9 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
         end
 <
 
+    Attributes: ~
+        Since: 0.8.0
+
     Parameters: ~
       • {start}  (`string`) Initial path.
 
@@ -3055,6 +3100,8 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
         (`string?`)
 
 vim.fs.rm({path}, {opts})                                        *vim.fs.rm()*
+    WARNING: This feature is experimental/unstable.
+
     Remove files or directories
 
     Parameters: ~
@@ -3083,6 +3130,9 @@ vim.fs.root({source}, {marker})                                *vim.fs.root()*
           return name:match('%.csproj$') ~= nil
         end)
 <
+
+    Attributes: ~
+        Since: 0.10.0
 
     Parameters: ~
       • {source}  (`integer|string`) Buffer number (0 for current buffer) or
@@ -3607,10 +3657,10 @@ within a single line.
 
                                                           *regex:match_line()*
 regex:match_line({bufnr}, {line_idx}, {start}, {end_})
-    Match line {line_idx} (zero-based) in buffer {bufnr}. If {start} and {end}
-    are supplied, match only this byte index range. Otherwise see
-    |regex:match_str()|. If {start} is used, then the returned byte indices
-    will be relative {start}.
+    Matches line at `line_idx` (zero-based) in buffer `bufnr`. Match is
+    restricted to byte index range `start` and `end_` if given, otherwise see
+    |regex:match_str()|. Returned byte indices are relative to `start` if
+    given.
 
     Parameters: ~
       • {bufnr}     (`integer`)
@@ -3618,19 +3668,28 @@ regex:match_line({bufnr}, {line_idx}, {start}, {end_})
       • {start}     (`integer?`)
       • {end_}      (`integer?`)
 
+    Return (multiple): ~
+        (`integer?`) match start (byte index) relative to `start`, or `nil` if
+        no match
+        (`integer?`) match end (byte index) relative to `start`, or `nil` if
+        no match
+
 regex:match_str({str})                                     *regex:match_str()*
-    Match the string against the regex. If the string should match the regex
-    precisely, surround the regex with `^` and `$`. If there was a match, the
-    byte indices for the beginning and end of the match are returned. When
-    there is no match, `nil` is returned. Because any integer is "truthy",
-    `regex:match_str()` can be directly used as a condition in an
-    if-statement.
+    Matches string `str` against this regex. To match the string precisely,
+    surround the regex with "^" and "$". Returns the byte indices for the
+    start and end of the match, or `nil` if there is no match. Because any
+    integer is "truthy", `regex:match_str()` can be directly used as a
+    condition in an if-statement.
 
     Parameters: ~
       • {str}  (`string`)
 
+    Return (multiple): ~
+        (`integer?`) match start (byte index), or `nil` if no match
+        (`integer?`) match end (byte index), or `nil` if no match
+
 vim.regex({re})                                                  *vim.regex()*
-    Parse the Vim regex {re} and return a regex object. Regexes are "magic"
+    Parses the Vim regex `re` and returns a regex object. Regexes are "magic"
     and case-sensitive by default, regardless of 'magic' and 'ignorecase'.
     They can be controlled with flags, see |/magic| and |/ignorecase|.
 
@@ -3649,6 +3708,9 @@ vim.secure.read({path})                                    *vim.secure.read()*
     be trusted. The user's choice is persisted in a trust database at
     $XDG_STATE_HOME/nvim/trust.
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {path}  (`string`) Path to a file to read.
 
@@ -3663,6 +3725,9 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
     Manage the trust database.
 
     The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {opts}  (`table`) A table with the following fields:
@@ -3755,6 +3820,9 @@ vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
       • Per semver, build metadata is ignored when comparing two
         otherwise-equivalent versions.
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`) Version object.
       • {v2}  (`vim.Version|number[]|string`) Version to compare with `v1`.
@@ -3766,6 +3834,9 @@ vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
     Returns `true` if the given versions are equal. See |vim.version.cmp()|
     for usage.
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`)
       • {v2}  (`vim.Version|number[]|string`)
@@ -3776,6 +3847,9 @@ vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
 vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
     Returns `true` if `v1 >= v2`. See |vim.version.cmp()| for usage.
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`)
       • {v2}  (`vim.Version|number[]|string`)
@@ -3785,6 +3859,9 @@ vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
 
 vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
     Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`)
@@ -3805,6 +3882,9 @@ vim.version.last({versions})                              *vim.version.last()*
 vim.version.le({v1}, {v2})                                  *vim.version.le()*
     Returns `true` if `v1 <= v2`. See |vim.version.cmp()| for usage.
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`)
       • {v2}  (`vim.Version|number[]|string`)
@@ -3814,6 +3894,9 @@ vim.version.le({v1}, {v2})                                  *vim.version.le()*
 
 vim.version.lt({v1}, {v2})                                  *vim.version.lt()*
     Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`)
@@ -3828,6 +3911,9 @@ vim.version.parse({version}, {opts})                     *vim.version.parse()*
     returns: >
         { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
 <
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {version}  (`string`) Version string to parse.
@@ -3868,6 +3954,9 @@ vim.version.range({spec})                                *vim.version.range()*
         local r = vim.version.range('1.0.0 - 2.0.0') -- >=1.0, <2.0
         print(vim.version.ge({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
 <
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {spec}  (`string`) Version range "spec"

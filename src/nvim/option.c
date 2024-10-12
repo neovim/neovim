@@ -1216,8 +1216,9 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
     // Different ways to set a number option:
     // &            set to default value
     // <            set to global value
-    // <xx>         accept special key codes for 'wildchar'
-    // c            accept any non-digit for 'wildchar'
+    // <xx>         accept special key codes for 'wildchar' or 'wildcharm'
+    // ^x           accept ctrl key codes for 'wildchar' or 'wildcharm'
+    // c            accept any non-digit for 'wildchar' or 'wildcharm'
     // [-]0-9       set number
     // other        error
     arg++;
@@ -1239,7 +1240,7 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
                    || (*arg != NUL && (!arg[1] || ascii_iswhite(arg[1]))
                        && !ascii_isdigit(*arg)))) {
       newval_num = string_to_key(arg);
-      if (newval_num == 0 && (OptInt *)varp != &p_wcm) {
+      if (newval_num == 0) {
         *errmsg = e_invarg;
         return newval;
       }
@@ -1524,7 +1525,9 @@ static int find_key_len(const char *arg_arg, size_t len, bool has_lt)
   // Don't use get_special_key_code() for t_xx, we don't want it to call
   // add_termcap_entry().
   if (len >= 4 && arg[0] == 't' && arg[1] == '_') {
-    key = TERMCAP2KEY((uint8_t)arg[2], (uint8_t)arg[3]);
+    if (!has_lt || arg[4] == '>') {
+      key = TERMCAP2KEY((uint8_t)arg[2], (uint8_t)arg[3]);
+    }
   } else if (has_lt) {
     arg--;  // put arg at the '<'
     int modifiers = 0;
@@ -1538,14 +1541,18 @@ static int find_key_len(const char *arg_arg, size_t len, bool has_lt)
 }
 
 /// Convert a key name or string into a key value.
-/// Used for 'wildchar' and 'cedit' options.
+/// Used for 'cedit', 'wildchar' and 'wildcharm' options.
 int string_to_key(char *arg)
 {
-  if (*arg == '<') {
+  if (*arg == '<' && arg[1]) {
     return find_key_len(arg + 1, strlen(arg), true);
   }
-  if (*arg == '^') {
-    return CTRL_CHR((uint8_t)arg[1]);
+  if (*arg == '^' && arg[1]) {
+    int key = CTRL_CHR((uint8_t)arg[1]);
+    if (key == 0) {  // ^@ is <Nul>
+      key = K_ZERO;
+    }
+    return key;
   }
   return (uint8_t)(*arg);
 }
@@ -5095,6 +5102,12 @@ void clear_winopt(winopt_T *wop)
 
 void didset_window_options(win_T *wp, bool valid_cursor)
 {
+  // Set w_leftcol or w_skipcol to zero.
+  if (wp->w_p_wrap) {
+    wp->w_leftcol = 0;
+  } else {
+    wp->w_skipcol = 0;
+  }
   check_colorcolumn(wp);
   briopt_check(wp);
   fill_culopt_flags(NULL, wp);

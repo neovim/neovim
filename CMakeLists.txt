@@ -111,10 +111,8 @@ if(APPLE)
 endif()
 
 if(WIN32 OR APPLE)
-  # Ignore case when comparing filenames on Windows and Mac.
+  # Handle case-insensitive filenames for Windows and Mac.
   set(CASE_INSENSITIVE_FILENAME TRUE)
-  # Enable fixing case-insensitive filenames for Windows and Mac.
-  set(USE_FNAME_CASE TRUE)
 endif()
 
 if (MINGW)
@@ -146,9 +144,9 @@ set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 12)        # Bump this after any API change.
+set(NVIM_API_LEVEL 13)        # Bump this after any API/stdlib change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE false)
+set(NVIM_API_PRERELEASE true)
 
 # Build-type: RelWithDebInfo
 # /Og means something different in MSVC

@@ -41,6 +41,7 @@ end
 --- trusted. The user's choice is persisted in a trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---
+---@since 11
 ---@see |:trust|
 ---
 ---@param path (string) Path to a file to read.
@@ -126,6 +127,7 @@ end
 ---
 --- The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
 ---
+---@since 11
 ---@param opts vim.trust.opts
 ---@return boolean success true if operation was successful
 ---@return string msg full path if operation was successful, else error message

@@ -622,21 +622,29 @@ TSNode:child({index})                                         *TSNode:child()*
     Return: ~
         (`TSNode?`)
 
-                                        *TSNode:child_containing_descendant()*
-TSNode:child_containing_descendant({descendant})
-    Get the node's child that contains {descendant}.
+TSNode:child_count()                                    *TSNode:child_count()*
+    Get the node's number of children.
+
+    Return: ~
+        (`integer`)
+
+                                              *TSNode:child_with_descendant()*
+TSNode:child_with_descendant({descendant})
+    Get the node's child that contains {descendant} (includes {descendant}).
+
+    For example, with the following node hierarchy: >
+        a -> b -> c
+
+        a:child_with_descendant(c) == b
+        a:child_with_descendant(b) == b
+        a:child_with_descendant(a) == nil
+<
 
     Parameters: ~
       • {descendant}  (`TSNode`)
 
     Return: ~
         (`TSNode?`)
-
-TSNode:child_count()                                    *TSNode:child_count()*
-    Get the node's number of children.
-
-    Return: ~
-        (`integer`)
 
                                                *TSNode:descendant_for_range()*
 TSNode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
@@ -778,9 +786,8 @@ TSNode:next_sibling()                                  *TSNode:next_sibling()*
         (`TSNode?`)
 
 TSNode:parent()                                              *TSNode:parent()*
-    Get the node's immediate parent. Prefer
-    |TSNode:child_containing_descendant()| for iterating over the node's
-    ancestors.
+    Get the node's immediate parent. Prefer |TSNode:child_with_descendant()|
+    for iterating over the node's ancestors.
 
     Return: ~
         (`TSNode?`)
@@ -853,6 +860,9 @@ foldexpr({lnum})                                   *vim.treesitter.foldexpr()*
     directly to 'foldexpr': >lua
         vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 <
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {lnum}  (`integer?`) Line number to calculate fold level for
@@ -1003,6 +1013,9 @@ inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
 
     Can also be shown with `:InspectTree`.                      *:InspectTree*
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {opts}  (`table?`) Optional options table with the following possible
                 keys:
@@ -1137,8 +1150,13 @@ get_lang({filetype})                      *vim.treesitter.language.get_lang()*
 inspect({lang})                            *vim.treesitter.language.inspect()*
     Inspects the provided language.
 
-    Inspecting provides some useful information on the language like node
-    names, ...
+    Inspecting provides some useful information on the language like node and
+    field names, ABI version, and whether the language came from a WASM
+    module.
+
+    Node names are returned in a table mapping each node name to a `boolean`
+    indicating whether or not the node is named (i.e., not anonymous).
+    Anonymous nodes are surrounded with double quotes (`"`).
 
     Parameters: ~
       • {lang}  (`string`) Language

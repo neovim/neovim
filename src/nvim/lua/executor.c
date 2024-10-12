@@ -2065,6 +2065,13 @@ char *nlua_register_table_as_callable(const typval_T *const arg)
 
 void nlua_execute_on_key(int c, char *typed_buf)
 {
+  static bool recursive = false;
+
+  if (recursive) {
+    return;
+  }
+  recursive = true;
+
   char buf[MB_MAXBYTES * 3 + 4];
   size_t buf_len = special_to_buf(c, mod_mask, false, buf);
   vim_unescape_ks(typed_buf);
@@ -2103,6 +2110,8 @@ void nlua_execute_on_key(int c, char *typed_buf)
   // [ ]
   assert(top == lua_gettop(lstate));
 #endif
+
+  recursive = false;
 }
 
 // Sets the editor "script context" during Lua execution. Used by :verbose.

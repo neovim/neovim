@@ -3636,6 +3636,59 @@ describe('builtin popupmenu', function()
           :sign un^                        |
         ]])
       end)
+
+      it(
+        'cascading highlights for matched text (PmenuMatch, PmenuMatchSel) in cmdline pum',
+        function()
+          screen:set_default_attr_ids({
+            [1] = { foreground = Screen.colors.Blue1, bold = true },
+            [2] = {
+              underline = true,
+              italic = true,
+              foreground = Screen.colors.White,
+              background = Screen.colors.Grey,
+            },
+            [3] = {
+              foreground = Screen.colors.Red,
+              background = Screen.colors.Grey,
+              strikethrough = true,
+              underline = true,
+              italic = true,
+            },
+            [4] = {
+              foreground = Screen.colors.Yellow,
+              background = Screen.colors.Pink,
+              bold = true,
+              underline = true,
+              italic = true,
+            },
+            [5] = {
+              foreground = Screen.colors.Black,
+              background = Screen.colors.White,
+              bold = true,
+              underline = true,
+              italic = true,
+              strikethrough = true,
+            },
+          })
+          exec([[
+            set wildoptions=pum,fuzzy
+            hi Pmenu          guifg=White guibg=Grey gui=underline,italic
+            hi PmenuSel       guifg=Red gui=strikethrough
+            hi PmenuMatch     guifg=Yellow guibg=Pink gui=bold
+            hi PmenuMatchSel  guifg=Black guibg=White
+          ]])
+
+          feed(':sign plc<Tab>')
+          screen:expect([[
+                                            |
+            {1:~                               }|*16
+            {1:~    }{3: }{5:pl}{3:a}{5:c}{3:e          }{1:           }|
+            {1:~    }{2: un}{4:pl}{2:a}{4:c}{2:e        }{1:           }|
+            :sign place^                     |
+          ]])
+        end
+      )
     end
 
     it("'pumheight'", function()
@@ -4963,8 +5016,8 @@ describe('builtin popupmenu', function()
         feed('<C-E><Esc>')
       end)
 
-      -- oldtest: Test_pum_user_hl_group()
-      it('custom hl_group override', function()
+      -- oldtest: Test_pum_user_abbr_hlgroup()
+      it('custom abbr_hlgroup override', function()
         exec([[
           func CompleteFunc( findstart, base )
             if a:findstart
@@ -4972,9 +5025,9 @@ describe('builtin popupmenu', function()
             endif
             return {
                   \ 'words': [
-                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'hl_group': 'StrikeFake' },
+                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'abbr_hlgroup': 'StrikeFake' },
                   \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
-                  \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'hl_group': 'StrikeFake' },
+                  \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'abbr_hlgroup': 'StrikeFake' },
                   \]}
           endfunc
           set completeopt=menu
@@ -4990,9 +5043,9 @@ describe('builtin popupmenu', function()
         feed('Saw<C-X><C-U>')
         screen:expect([[
           aword1^                          |
-          {ds:aword1 W extra text 1 }{1:          }|
+          {ds:aword1}{s: W extra text 1 }{1:          }|
           {n:aword2 W extra text 2 }{1:          }|
-          {dn:你好   W extra text 3 }{1:          }|
+          {dn:你好}{n:   W extra text 3 }{1:          }|
           {1:~                               }|*15
           {2:-- }{5:match 1 of 3}                 |
         ]])
@@ -5003,18 +5056,18 @@ describe('builtin popupmenu', function()
         feed('Saw<C-X><C-U>')
         screen:expect([[
           aword1^                          |
-          {uds:aw}{ds:ord1 W extra text 1 }{1:          }|
+          {uds:aw}{ds:ord1}{s: W extra text 1 }{1:          }|
           {umn:aw}{n:ord2 W extra text 2 }{1:          }|
-          {dn:你好   W extra text 3 }{1:          }|
+          {dn:你好}{n:   W extra text 3 }{1:          }|
           {1:~                               }|*15
           {2:-- }{5:match 1 of 3}                 |
         ]])
         feed('<C-N>')
         screen:expect([[
           aword2^                          |
-          {udn:aw}{dn:ord1 W extra text 1 }{1:          }|
+          {udn:aw}{dn:ord1}{n: W extra text 1 }{1:          }|
           {ums:aw}{s:ord2 W extra text 2 }{1:          }|
-          {dn:你好   W extra text 3 }{1:          }|
+          {dn:你好}{n:   W extra text 3 }{1:          }|
           {1:~                               }|*15
           {2:-- }{5:match 2 of 3}                 |
         ]])
@@ -5030,7 +5083,7 @@ describe('builtin popupmenu', function()
             endif
             return {
                   \ 'words': [
-                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'variable', 'kind_hlgroup': 'KindVar', 'hl_group': 'StrikeFake' },
+                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'variable', 'kind_hlgroup': 'KindVar', 'abbr_hlgroup': 'StrikeFake' },
                   \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'function', 'kind_hlgroup': 'KindFunc' },
                   \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'class', 'kind_hlgroup': 'KindClass'  },
                   \]}
@@ -5053,9 +5106,9 @@ describe('builtin popupmenu', function()
         feed('S<C-X><C-U>')
         screen:expect([[
           aword1^                          |
-          {ds:aword1 }{kvs:variable }{ds:extra text 1 }{1:   }|
-          {n:aword2 }{kfn:function }{n:extra text 2 }{1:   }|
-          {n:你好   }{kcn:class    }{n:extra text 3 }{1:   }|
+          {ds:aword1}{s: }{kvs:variable}{s: extra text 1 }{1:   }|
+          {n:aword2 }{kfn:function}{n: extra text 2 }{1:   }|
+          {n:你好   }{kcn:class}{n:    extra text 3 }{1:   }|
           {1:~                               }|*15
           {2:-- }{5:match 1 of 3}                 |
         ]])

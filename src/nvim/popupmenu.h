@@ -16,7 +16,7 @@ typedef struct {
   char *pum_info;       ///< extra info
   int pum_score;        ///< fuzzy match score
   int pum_idx;          ///< index of item before sorting by score
-  int pum_user_hlattr;  ///< highlight attribute to combine with
+  int pum_user_abbr_hlattr;  ///< highlight attribute for abbr
   int pum_user_kind_hlattr;  ///< highlight attribute for kind
 } pumitem_T;
 

@@ -152,8 +152,7 @@ function M.is_ancestor(dest, source)
     return false
   end
 
-  -- child_containing_descendant returns nil if dest is a direct parent
-  return source:parent() == dest or dest:child_containing_descendant(source) ~= nil
+  return dest:child_with_descendant(source) ~= nil
 end
 
 --- Returns the node's range or an unpacked range table
@@ -447,6 +446,7 @@ end
 ---
 --- Can also be shown with `:InspectTree`. [:InspectTree]()
 ---
+---@since 11
 ---@param opts table|nil Optional options table with the following possible keys:
 ---                      - lang (string|nil): The language of the source buffer. If omitted, detect
 ---                        from the filetype of the source buffer.
@@ -470,6 +470,7 @@ end
 --- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 --- ```
 ---
+---@since 11
 ---@param lnum integer|nil Line number to calculate fold level for
 ---@return string
 function M.foldexpr(lnum)

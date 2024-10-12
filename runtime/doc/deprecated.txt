@@ -36,6 +36,11 @@ DIAGNOSTICS
 - The "cursor_position" parameter of |vim.diagnostic.JumpOpts| is renamed to
   "pos"
 
+TREESITTER
+• *TSNode:child_containing_descendant()*	Use
+  |TSNode:child_with_descendant()| instead; it is identical except that it can
+  return the descendant itself.
+
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*
 
@@ -173,6 +178,7 @@ FUNCTIONS
 - *jobclose()*		Obsolete name for |chanclose()|
 - *jobsend()*		Obsolete name for |chansend()|
 - *last_buffer_nr()*	Obsolete name for bufnr("$").
+- *rpcstart()*		Use |jobstart()| with `{'rpc': v:true}` instead.
 - *rpcstop()*		Use |jobstop()| instead to stop any job, or
 			`chanclose(id, "rpc")` to close RPC communication
 			without stopping the job. Use chanclose(id) to close

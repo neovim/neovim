@@ -64,6 +64,16 @@ will not change.
 The main Vim window can hold several split windows.  There are also tab pages
 |tab-page|, each of which can hold multiple windows.
 
+							*focusable*
+If a window is focusable, it is part of the "navigation stack", that is,
+editor commands such as :windo, |CTRL-W|, etc., will consider the window as
+one that can be made the "current window". A non-focusable window will be
+skipped by such commands (though it can be explicitly focused by
+|nvim_set_current_win()|).
+
+Windows (especially floating windows) can have many other |api-win_config|
+properties such as "hide" and "fixed" which also affect behavior.
+
 					*window-ID* *winid* *windowid*
 Each window has a unique identifier called the window ID.  This identifier
 will not change within a Vim session. The |win_getid()| and |win_id2tabwin()|
@@ -426,18 +436,19 @@ CTRL-W l	Move cursor to Nth window right of current one.  Uses the
 		cursor position to select between alternatives.
 
 CTRL-W w					*CTRL-W_w* *CTRL-W_CTRL-W*
-CTRL-W CTRL-W	Without count: move cursor to window below/right of the
-		current one.  If there is no window below or right, go to
-		top-left window.
-		With count: go to Nth window (windows are numbered from
-		top-left to bottom-right).  To obtain the window number see
-		|bufwinnr()| and |winnr()|.  When N is larger than the number
-		of windows go to the last window.
+CTRL-W CTRL-W	Without count: move cursor to the |focusable| window
+		below/right of the current one.  If there is no (focusable)
+		window below or right, go to top-left window. With count: go
+		to Nth window (windows are numbered from top-left to
+		bottom-right).  To obtain the window number see |bufwinnr()|
+		and |winnr()|.  When N is larger than the number of windows go
+		to the last window.
 
 						*CTRL-W_W*
-CTRL-W W	Without count: move cursor to window above/left of current
-		one.  If there is no window above or left, go to bottom-right
-		window.  With count: go to Nth window, like with CTRL-W w.
+CTRL-W W	Without count: move cursor to the |focusable| window
+		above/left of current one.  If there is no window above or
+		left, go to bottom-right window.  With count: go to Nth
+		window, like with CTRL-W w.
 
 CTRL-W t					*CTRL-W_t* *CTRL-W_CTRL-T*
 CTRL-W CTRL-T	Move cursor to top-left window.
@@ -794,9 +805,9 @@ can also get to them with the buffer list commands, like ":bnext".
 8. Do a command in all buffers or windows			*list-repeat*
 
 							*:windo*
-:[range]windo {cmd}	Execute {cmd} in each window or if [range] is given
-			only in windows for which the window number lies in
-			the [range]. It works like doing this: >
+:[range]windo {cmd}	Execute {cmd} in each |focusable| window, or only for
+			windows in a given [range] of window numbers. It works
+			like doing this: >
 				CTRL-W t
 				:{cmd}
 				CTRL-W w

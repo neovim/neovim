@@ -119,6 +119,7 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_PACKADD
          && xp->xp_context != EXPAND_RUNTIME
          && xp->xp_context != EXPAND_SHELLCMD
+         && xp->xp_context != EXPAND_SHELLCMDLINE
          && xp->xp_context != EXPAND_TAGS
          && xp->xp_context != EXPAND_TAGS_LISTFILES
          && xp->xp_context != EXPAND_USER_LIST
@@ -356,7 +357,8 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
       .pum_info = NULL,
       .pum_extra = NULL,
       .pum_kind = NULL,
-      .pum_user_hlattr = -1,
+      .pum_user_abbr_hlattr = -1,
+      .pum_user_kind_hlattr = -1,
     };
   }
 
@@ -1527,7 +1529,9 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
   xp->xp_context = EXPAND_FILES;
 
   // For a shell command more chars need to be escaped.
-  if (usefilter || eap->cmdidx == CMD_bang || eap->cmdidx == CMD_terminal) {
+  if (usefilter
+      || (eap != NULL && (eap->cmdidx == CMD_bang || eap->cmdidx == CMD_terminal))
+      || *complp == EXPAND_SHELLCMDLINE) {
 #ifndef BACKSLASH_IN_FILENAME
     xp->xp_shell = true;
 #endif
@@ -3599,6 +3603,11 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
   if (xpc.xp_context == EXPAND_RUNTIME) {
     set_context_in_runtime_cmd(&xpc, xpc.xp_pattern);
+    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+  }
+  if (xpc.xp_context == EXPAND_SHELLCMDLINE) {
+    int context = EXPAND_SHELLCMDLINE;
+    set_context_for_wildcard_arg(NULL, xpc.xp_pattern, false, &xpc, &context);
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
 

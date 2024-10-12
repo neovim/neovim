@@ -150,6 +150,7 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
   - |grn|
   - |grr|
   - |gra|
+  - |gri|
 - <C-S> |i_CTRL-S|
 - ]d |]d-default|
 - [d |[d-default|
@@ -561,6 +562,9 @@ Highlight groups:
     the regexp `[a-zA-Z0-9_.@-]*` (see |group-name|).
 - |hl-StatusLineTerm| |hl-StatusLineTermNC| are implemented as 'winhighlight'
   window-local highlights which are set by the default |TermOpen| handler.
+- The |ins-completion-menu| has cascading highlight styles. |hl-PmenuSel| and
+  |hl-PmenuMatch| both inherit from |hl-Pmenu|, and |hl-PmenuMatchSel|
+  inherits highlights from both |hl-PmenuSel| and |hl-PmenuMatch|.
 
 Macro (|recording|) behavior:
 - Replay of a macro recorded during :lmap produces the same actions as when it

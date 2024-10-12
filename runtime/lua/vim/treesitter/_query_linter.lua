@@ -240,8 +240,12 @@ function M.omnifunc(findstart, base)
       table.insert(items, text)
     end
   end
-  for _, s in pairs(parser_info.symbols) do
-    local text = s[2] and s[1] or string.format('%q', s[1]):gsub('\n', 'n') ---@type string
+  for text, named in
+    pairs(parser_info.symbols --[[@as table<string, boolean>]])
+  do
+    if not named then
+      text = string.format('%q', text:sub(2, -2)):gsub('\n', 'n') ---@type string
+    end
     if text:find(base, 1, true) then
       table.insert(items, text)
     end

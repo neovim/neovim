@@ -2134,7 +2134,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     if (sfname == NULL) {
       sfname = ffname;
     }
-#ifdef USE_FNAME_CASE
+#ifdef CASE_INSENSITIVE_FILENAME
     if (sfname != NULL) {
       path_fix_case(sfname);             // set correct case for sfname
     }
@@ -2259,6 +2259,16 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       set_bufref(&old_curbuf, curbuf);
     }
     if (buf == NULL) {
+      goto theend;
+    }
+    // autocommands try to edit a file that is goind to be removed, abort
+    if (buf_locked(buf)) {
+      // window was split, but not editing the new buffer, reset b_nwindows again
+      if (oldwin == NULL
+          && curwin->w_buffer != NULL
+          && curwin->w_buffer->b_nwindows > 1) {
+        curwin->w_buffer->b_nwindows--;
+      }
       goto theend;
     }
     if (curwin->w_alt_fnum == buf->b_fnum && prev_alt_fnum != 0) {
