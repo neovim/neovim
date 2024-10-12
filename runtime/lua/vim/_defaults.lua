@@ -175,11 +175,11 @@ do
       vim.lsp.buf.implementation()
     end, { desc = 'vim.lsp.buf.implementation()' })
 
-    vim.keymap.set('n', 'grS', function()
+    vim.keymap.set('n', 'grs', function()
       vim.lsp.buf.workspace_symbol()
     end, { desc = 'vim.lsp.buf.workspace_symbol()' })
 
-    vim.keymap.set('n', 'grs', function()
+    vim.keymap.set('n', 'gO', function()
       vim.lsp.buf.document_symbol()
     end, { desc = 'vim.lsp.buf.document_symbol()' })
 
