@@ -474,26 +474,42 @@ describe('multibyte rendering: statusline', function()
   end)
 
   it('emoji with ZWJ in filename with custom stl', function()
+    screen:add_extra_attr_ids {
+      [100] = {
+        bold = true,
+        reverse = true,
+        foreground = Screen.colors.Gray100,
+        background = Screen.colors.Red,
+      },
+    }
     command('set statusline=xx%#ErrorMsg#%f%##yy')
     command('file 🧑‍💻')
     screen:expect {
       grid = [[
       ^                                        |
       {1:~                                       }|
-      {3:xx}{9:🧑‍💻}{3:yy                                  }|
+      {3:xx}{100:🧑‍💻}{3:yy                                  }|
                                               |
     ]],
     }
   end)
 
   it('unprintable chars in filename with custom stl', function()
+    screen:add_extra_attr_ids {
+      [100] = {
+        bold = true,
+        reverse = true,
+        foreground = Screen.colors.Gray100,
+        background = Screen.colors.Red,
+      },
+    }
     command('set statusline=xx%#ErrorMsg#%f%##yy')
     command('file 🧑​💻')
     screen:expect {
       grid = [[
       ^                                        |
       {1:~                                       }|
-      {3:xx}{9:🧑<200b>💻}{3:yy                          }|
+      {3:xx}{100:🧑<200b>💻}{3:yy                          }|
                                               |
     ]],
     }

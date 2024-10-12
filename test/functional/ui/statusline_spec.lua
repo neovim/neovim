@@ -27,6 +27,7 @@ for _, model in ipairs(mousemodels) do
       screen:set_default_attr_ids({
         [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
         [1] = { bold = true, reverse = true }, -- StatusLine
+        [2] = { bold = true, foreground = Screen.colors.Blue, reverse = true }, -- NonText combined with StatusLine
       })
       screen:attach()
       command('set laststatus=2 mousemodel=' .. model)
@@ -87,7 +88,7 @@ for _, model in ipairs(mousemodels) do
         grid = [[
         ^                                        |
         {0:~                                       }|*5
-        {1:^I}{0:^A^I^A^I}{1:^A                            }|
+        {1:^I}{2:^A^I^A^I}{1:^A                            }|
                                                 |
       ]],
       }
