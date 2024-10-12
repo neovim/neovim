@@ -22,7 +22,7 @@ let b:undo_ftplugin .= "| unlet! b:match_ignorecase b:match_skip b:match_words"
 let &l:define .= '\|\\new\(count\|dimen\|skip\|muskip\|box\|toks\|read\|write'
 	\ .	'\|fam\|insert\)'
 
-" The following lines enable the macros/matchit.vim plugin for
+" The following lines enable the matchit.vim plugin for
 " extended matching with the % key.
 " There is no default meaning for \(...\) etc., but many users define one.
 if exists("loaded_matchit")

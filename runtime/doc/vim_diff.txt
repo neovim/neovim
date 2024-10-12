@@ -801,6 +801,10 @@ Plugins:
 - logiPat
 - rrhelper
 - *vimball*
+- macmap.vim
+- tools/check_colors.vim
+- macros/{justify,matchit,shellmenu,swapmous}.vim: use `packadd! justify` etc.
+  directly
 
 Providers:
 

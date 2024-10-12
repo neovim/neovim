@@ -97,7 +97,7 @@ if !exists('*ErlangFoldText')
   endfunction
 endif
 
-" The following lines enable the macros/matchit.vim plugin for extended
+" The following lines enable the matchit.vim plugin for extended
 " matching with the % key.
 let b:match_ignorecase = 0
 let b:match_words =

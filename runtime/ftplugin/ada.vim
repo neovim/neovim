@@ -103,7 +103,7 @@ endif
 if !exists ("b:match_words")  &&
   \ exists ("loaded_matchit")
    "
-   " The following lines enable the macros/matchit.vim plugin for
+   " The following lines enable the matchit.vim plugin for
    " Ada-specific extended matching with the % key.
    "
    let s:notend      = '\%(\<end\s\+\)\@<!'
