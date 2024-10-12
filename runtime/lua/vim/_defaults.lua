@@ -157,7 +157,7 @@ do
   --- client is attached. If no client is attached, or if a server does not support a capability, an
   --- error message is displayed rather than exhibiting different behavior.
   ---
-  --- See |grr|, |grn|, |gra|, |gri|, |grs|, |grS|, |i_CTRL-S|.
+  --- See |grr|, |grn|, |gra|, |gri|, |grs|, |gO|, |i_CTRL-S|.
   do
     vim.keymap.set('n', 'grn', function()
       vim.lsp.buf.rename()
