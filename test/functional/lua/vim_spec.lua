@@ -3223,6 +3223,45 @@ describe('lua stdlib', function()
       feed('<C-C>')
       eq('/', exec_lua([[return _G.ctrl_c_cmdtype]]))
     end)
+
+    it('callback is not invoked recursively #30752', function()
+      local screen = Screen.new(60, 10)
+      screen:attach()
+      exec_lua([[
+        vim.on_key(function(key, typed)
+          vim.api.nvim_echo({
+            { 'key_cb\n' },
+            { ("KEYCB: key '%s', typed '%s'\n"):format(key, typed) },
+          }, false, {})
+        end)
+      ]])
+      feed('^')
+      screen:expect([[
+                                                                    |
+        {1:~                                                           }|*5
+        {3:                                                            }|
+        key_cb                                                      |
+        KEYCB: key '^', typed '^'                                   |
+        {6:Press ENTER or type command to continue}^                     |
+      ]])
+      feed('<C-C>')
+      screen:expect([[
+                                                                    |
+        {1:~                                                           }|*3
+        {3:                                                            }|
+        key_cb                                                      |
+        KEYCB: key '^', typed '^'                                   |
+        key_cb                                                      |
+        KEYCB: key '{18:^C}', typed '{18:^C}'                                 |
+        {6:Press ENTER or type command to continue}^                     |
+      ]])
+      feed('<C-C>')
+      screen:expect([[
+        ^                                                            |
+        {1:~                                                           }|*8
+                                                                    |
+      ]])
+    end)
   end)
 
   describe('vim.wait', function()
