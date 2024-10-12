@@ -656,15 +656,18 @@ local on_key_cbs = {} --- @type table<integer,function>
 ---@note {fn} will be removed on error.
 ---@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
 ---
----@param fn fun(key: string, typed: string)?
----                   Function invoked on every key press. |i_CTRL-V|
----                   {key} is the key after mappings have been applied, and
----                   {typed} is the key(s) before mappings are applied, which
----                   may be empty if {key} is produced by non-typed keys.
----                   When {fn} is nil and {ns_id} is specified, the callback
----                   associated with namespace {ns_id} is removed.
+---@param fn fun(key: string, typed: string)? Function invoked for every input key,
+---          after mappings have been applied but before further processing. Arguments
+---          {key} and {typed} are raw keycodes, where {key} is the key after mappings
+---          are applied, and {typed} is the key(s) before mappings are applied.
+---          {typed} may be empty if {key} is produced by non-typed key(s) or by the
+---          same typed key(s) that produced a previous {key}.
+---          When {fn} is `nil` and {ns_id} is specified, the callback associated with
+---          namespace {ns_id} is removed.
 ---@param ns_id integer? Namespace ID. If nil or 0, generates and returns a
----                     new |nvim_create_namespace()| id.
+---                      new |nvim_create_namespace()| id.
+---
+---@see |keytrans()|
 ---
 ---@return integer Namespace id associated with {fn}. Or count of all callbacks
 ---if on_key() is called without arguments.
