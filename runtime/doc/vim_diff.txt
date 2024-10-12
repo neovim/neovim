@@ -151,6 +151,8 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
   - |grr|
   - |gra|
   - |gri|
+  - |grs|
+  - |grS|
 - <C-S> |i_CTRL-S|
 - ]d |]d-default|
 - [d |[d-default|
