@@ -4,7 +4,7 @@
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Define the string to use for items that are present both in Edit, Popup and
-" Toolbar menu.  Also used in mswin.vim and macmap.vim.
+" Toolbar menu.  Also used in mswin.vim.
 
 let paste#paste_cmd = {'n': ":call paste#Paste()<CR>"}
 let paste#paste_cmd['v'] = '"-c<Esc>' . paste#paste_cmd['n']
