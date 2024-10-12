@@ -105,13 +105,14 @@ vim.log = {
 ---     and closed. Defaults to `false`.
 ---   - stdout: (boolean|function)
 ---     Handle output from stdout. When passed as a function must have the signature `fun(err: string, data: string)`.
----     Defaults to `true`
+---     Defaults to `true`.
 ---   - stderr: (boolean|function)
 ---     Handle output from stderr. When passed as a function must have the signature `fun(err: string, data: string)`.
 ---     Defaults to `true`.
 ---   - text: (boolean) Handle stdout and stderr as text. Replaces `\r\n` with `\n`.
----   - timeout: (integer) Run the command with a time limit. Upon timeout the process is sent the
----     TERM signal (15) and the exit code is set to 124.
+---   - timeout: (integer) Run the command with a time limit (given in milliseconds).
+---     Upon timeout the process is sent the TERM signal (15) and the exit code is set to 124.
+---     `timeout` must be >= 1.
 ---   - detach: (boolean) If true, spawn the child process in a detached state - this will make it
 ---     a process group leader, and will effectively enable the child to keep running after the
 ---     parent exits. Note that the child process will still keep the parent's event loop alive
@@ -123,10 +124,11 @@ vim.log = {
 --- @return vim.SystemObj Object with the fields:
 ---   - cmd (string[]) Command name and args
 ---   - pid (integer) Process ID
----   - wait (fun(timeout: integer|nil): SystemCompleted) Wait for the process to complete. Upon
----     timeout the process is sent the KILL signal (9) and the exit code is set to 124. Cannot
----     be called in |api-fast|.
----     - SystemCompleted is an object with the fields:
+---   - wait (fun(timeout: integer|nil): vim.SystemCompleted) Wait for the process to complete,
+---     for {timeout} milliseconds (if {timeout} is given) or the timeout specified in {opts}.
+---     Upon timeout the process is sent the TERM signal (15) and the exit code is set to 124.
+---     {timeout} must be >= 1. Cannot be called in |api-fast|.
+---     - vim.SystemCompleted is an object with the fields:
 ---       - code: (integer)
 ---       - signal: (integer)
 ---       - stdout: (string), nil if stdout argument is passed
