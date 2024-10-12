@@ -262,6 +262,10 @@ These existing features changed their behavior.
   more emoji characters than before, including those encoded with multiple
   emoji codepoints combined with ZWJ (zero width joiner) codepoints.
 
+• Text in the 'statusline', 'tabline', and 'winbar' now inherits highlights
+  from the respective |hl-StatusLine|, |hl-TabLine|, and |hl-WinBar| highlight
+  groups.
+
 • |vim.on_key()| callbacks won't be invoked recursively when a callback itself
   consumes input.
 
