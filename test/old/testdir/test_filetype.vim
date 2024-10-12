@@ -227,7 +227,7 @@ func s:GetFilenameChecks() abort
     \ 'dockerfile': ['Containerfile', 'Dockerfile', 'dockerfile', 'file.Dockerfile', 'file.dockerfile', 'Dockerfile.debian', 'Containerfile.something'],
     \ 'dosbatch': ['file.bat'],
     \ 'dosini': ['/etc/yum.conf', '/etc/nfs.conf', '/etc/nfsmount.conf', 'file.ini',
-    \            'npmrc', '.npmrc', 'php.ini', 'php.ini-5', 'php.ini-file',
+    \            'npmrc', '.npmrc', 'php.ini', 'php.ini-5', 'php.ini-file', 'php-fpm.conf', 'php-fpm.conf.default', 'www.conf', 'www.conf.default',
     \            '/etc/yum.repos.d/file', 'any/etc/yum.conf', 'any/etc/yum.repos.d/file', 'file.wrap',
     \            'file.vbp', 'ja2.ini', 'JA2.INI', 'mimeapps.list', 'pip.conf', 'setup.cfg', 'pudb.cfg',
     \            '.coveragerc', '.pypirc', '.gitlint', '.oelint.cfg', 'pylintrc', '.pylintrc',
