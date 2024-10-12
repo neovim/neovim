@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Oct 03
+" Last Change:		2024 Oct 10
 
 " Please check ":help java.vim" for comments on some of the options
 " available.
@@ -724,10 +724,15 @@ if exists("g:java_highlight_debug")
   hi def link DebugType			Type
 endif
 
+" Complement javaBlock and javaInParen for highlighting.
+syn region javaBlockOther transparent matchgroup=javaBlockOtherStart start="{" end="}"
+
 " Try not to fold top-level-type bodies under assumption that there is
 " but one such body.
-exec 'syn region javaBlock transparent start="\%(^\|^\S[^:]\+\)\@' . s:ff.Peek('120', '') . '<!{" end="}" fold'
+exec 'syn region javaBlock transparent matchgroup=javaBlockStart start="\%(^\|^\S[^:]\+\)\@' . s:ff.Peek('120', '') . '<!{" end="}" fold'
 
+" See "D.2.1 Anonymous Classes" at
+" https://web.archive.org/web/20010821025330/java.sun.com/docs/books/jls/first_edition/html/1.1Update.html#12959.
 if exists("g:java_mark_braces_in_parens_as_errors")
   syn match javaInParen contained "[{}]"
   hi def link javaInParen javaError
