@@ -32,7 +32,7 @@ let &l:include .= '\|\\include{'
 " TeX file has \include{fname} (LaTeX only), strip everything except "fname".
 let &l:includeexpr = "substitute(v:fname, '^.\\{-}{\\|}.*', '', 'g')"
 
-" The following lines enable the macros/matchit.vim plugin for
+" The following lines enable the matchit.vim plugin for
 " extended matching with the % key.
 " ftplugin/plaintex.vim already defines b:match_skip and b:match_ignorecase
 " and matches \(, \), \[, \], \{, and \} .

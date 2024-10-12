@@ -210,7 +210,7 @@ if !exists("*s:ParseRpmVars")
     endfunction
 endif
 
-" The following lines, along with the macros/matchit.vim plugin,
+" The following lines, along with the matchit.vim plugin,
 " make it easy to navigate the different sections of a spec file
 " with the % key (thanks to Max Ischenko).
 

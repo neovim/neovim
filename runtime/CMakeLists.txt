@@ -118,4 +118,4 @@ foreach(D ${RUNTIME_DIRS})
 endforeach()
 
 # only foo.sh script in runtime/
-install_helper(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/macros/less.sh DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/macros/)
+install_helper(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/less.sh DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/scripts/)

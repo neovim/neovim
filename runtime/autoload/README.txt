@@ -7,7 +7,7 @@ gzip.vim	for editing compressed files
 netrw*.vim	browsing (remote) directories and editing remote files
 tar.vim		browsing tar files
 zip.vim		browsing zip files
-paste.vim	common code for mswin.vim, menu.vim and macmap.vim
+paste.vim	common code for mswin.vim and menu.vim
 spellfile.vim	downloading of a missing spell file
 
 Omni completion files:

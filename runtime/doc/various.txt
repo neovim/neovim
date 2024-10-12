@@ -548,9 +548,9 @@ gO			Show a filetype-specific, navigable "outline" of the
 
 If you use the less or more program to view a file, you don't get syntax
 highlighting.  Thus you would like to use Vim instead.  You can do this by
-using the shell script "$VIMRUNTIME/macros/less.sh".
+using the shell script "$VIMRUNTIME/scripts/less.sh".
 
-This shell script uses the Vim script "$VIMRUNTIME/macros/less.vim".  It sets
+This shell script uses the Vim script "$VIMRUNTIME/scripts/less.vim".  It sets
 up mappings to simulate the commands that less supports.  Otherwise, you can
 still use the Vim commands.
 
