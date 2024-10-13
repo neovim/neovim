@@ -1965,14 +1965,12 @@ typval_T optval_as_tv(OptVal value, bool numbool)
   case kOptValTypeNil:
     break;
   case kOptValTypeBoolean:
-    if (value.data.boolean != kNone) {
-      if (numbool) {
-        rettv.v_type = VAR_NUMBER;
-        rettv.vval.v_number = value.data.boolean == kTrue;
-      } else {
-        rettv.v_type = VAR_BOOL;
-        rettv.vval.v_bool = value.data.boolean == kTrue;
-      }
+    if (numbool) {
+      rettv.v_type = VAR_NUMBER;
+      rettv.vval.v_number = value.data.boolean;
+    } else if (value.data.boolean != kNone) {
+      rettv.v_type = VAR_BOOL;
+      rettv.vval.v_bool = value.data.boolean == kTrue;
     }
     break;  // return v:null for None boolean value.
   case kOptValTypeNumber:
