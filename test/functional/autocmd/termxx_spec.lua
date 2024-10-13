@@ -198,8 +198,11 @@ it('autocmd TermEnter, TermLeave', function()
 end)
 
 describe('autocmd TextChangedT', function()
-  clear()
-  local screen = tt.setup_screen()
+  local screen
+  before_each(function()
+    clear()
+    screen = tt.setup_screen()
+  end)
 
   it('works', function()
     command('autocmd TextChangedT * ++once let g:called = 1')
