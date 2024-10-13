@@ -2264,6 +2264,7 @@ local pattern = {
     ['^%.?neomuttrc'] = detect_neomuttrc,
     ['/%.neomutt/neomuttrc'] = detect_neomuttrc,
     ['^Neomuttrc'] = detect_neomuttrc,
+    ['%.neomuttdebug'] = 'neomuttlog',
   },
   ['^%.'] = {
     ['^%.cshrc'] = detect.csh,
