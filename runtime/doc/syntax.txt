@@ -2051,6 +2051,12 @@ set "msql_minlines" to the value you desire.  Example: >
 	:let msql_minlines = 200
 
 
+NEOMUTT			*neomutt.vim* *ft-neomuttrc-syntax* *ft-neomuttlog-syntax*
+
+To disable the default NeoMutt log colors >
+
+	:let g:neolog_disable_default_colors = 1
+
 N1QL						*n1ql.vim* *ft-n1ql-syntax*
 
 N1QL is a SQL-like declarative language for manipulating JSON documents in
