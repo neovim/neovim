@@ -175,8 +175,7 @@ function(add_target)
   add_custom_target(${target} DEPENDS ${touch_file})
 endfunction()
 
-# Set default build type to BUILD_TYPE. Also limit the list of allowable build
-# types to the ones defined in variable allowableBuildTypes.
+# Set default build type to BUILD_TYPE.
 #
 # The correct way to specify build type (for example Release) for
 # single-configuration generators (Make and Ninja) is to run
@@ -193,28 +192,24 @@ endfunction()
 # Passing CMAKE_BUILD_TYPE for multi-config generators will not only not be
 # used, but also generate a warning for the user.
 function(set_default_buildtype BUILD_TYPE)
-  set(allowableBuildTypes Debug Release MinSizeRel RelWithDebInfo)
-  if(NOT BUILD_TYPE IN_LIST allowableBuildTypes)
-    message(FATAL_ERROR "Invalid build type: ${BUILD_TYPE}")
-  endif()
+  set(defaultBuildTypes Debug Release MinSizeRel RelWithDebInfo)
 
   get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
   if(isMultiConfig)
-    # Multi-config generators use the first element in CMAKE_CONFIGURATION_TYPES as the default build type
-    list(INSERT allowableBuildTypes 0 ${BUILD_TYPE})
-    list(REMOVE_DUPLICATES allowableBuildTypes)
-    set(CMAKE_CONFIGURATION_TYPES ${allowableBuildTypes} PARENT_SCOPE)
+    # Multi-config generators use the first element in
+    # CMAKE_CONFIGURATION_TYPES as the default build type
+    list(INSERT defaultBuildTypes 0 ${BUILD_TYPE})
+    list(REMOVE_DUPLICATES defaultBuildTypes)
+    set(CMAKE_CONFIGURATION_TYPES ${defaultBuildTypes} PARENT_SCOPE)
     if(CMAKE_BUILD_TYPE)
       message(WARNING "CMAKE_BUILD_TYPE specified which is ignored on \
       multi-configuration generators. Defaulting to ${BUILD_TYPE} build type.")
     endif()
   else()
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "${allowableBuildTypes}")
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "${defaultBuildTypes}")
     if(NOT CMAKE_BUILD_TYPE)
       message(STATUS "CMAKE_BUILD_TYPE not specified, default is '${BUILD_TYPE}'")
       set(CMAKE_BUILD_TYPE ${BUILD_TYPE} CACHE STRING "Choose the type of build" FORCE)
-    elseif(NOT CMAKE_BUILD_TYPE IN_LIST allowableBuildTypes)
-      message(FATAL_ERROR "Invalid build type: ${CMAKE_BUILD_TYPE}")
     else()
       message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
     endif()
