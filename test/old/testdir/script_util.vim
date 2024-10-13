@@ -1,4 +1,4 @@
-" Functions shared by the tests for Vim Script
+" Functions shared by the tests for Vim script
 
 " Commands to track the execution path of a script
 com!		   XpathINIT  let g:Xpath = ''
