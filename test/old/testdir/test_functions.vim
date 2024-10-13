@@ -384,8 +384,10 @@ func Test_simplify()
   call assert_equal('/',           simplify('/..'))
   call assert_equal('/...',        simplify('/...'))
   call assert_equal('//path',      simplify('//path'))
-  call assert_equal('/path',       simplify('///path'))
-  call assert_equal('/path',       simplify('////path'))
+  if has('unix')
+    call assert_equal('/path',       simplify('///path'))
+    call assert_equal('/path',       simplify('////path'))
+  endif
 
   call assert_equal('./dir/file',  './dir/file'->simplify())
   call assert_equal('./dir/file',  simplify('.///dir//file'))
