@@ -592,7 +592,7 @@ local function on_complete_done()
 end
 
 --- @class vim.lsp.completion.BufferOpts
---- @field autotrigger? boolean Whether to trigger completion automatically. Default: false
+--- @field autotrigger? boolean  Default: false When true, completion triggers automatically based on the server's `triggerCharacters`.
 --- @field convert? fun(item: lsp.CompletionItem): table Transforms an LSP CompletionItem to |complete-items|.
 
 ---@param client_id integer
