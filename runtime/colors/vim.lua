@@ -245,7 +245,7 @@ if vim.o.background == 'light' then
   hi('Constant',         { fg = 'Magenta',                              ctermfg = 'DarkRed' })
   hi('Special',          { fg = '#6a5acd',                              ctermfg = 'DarkMagenta' })
   hi('Identifier',       { fg = 'DarkCyan',                             ctermfg = 'DarkCyan' })
-  hi('Statement',        { fg = 'Brown', bold = true,                   ctermfg = 'Brown' })
+  hi('Statement',        { fg = 'DarkYellow', bold = true,              ctermfg = 'DarkYellow', cterm = { bold = true } })
   hi('PreProc',          { fg = '#6a0dad',                              ctermfg = 'DarkMagenta' })
   hi('Type',             { fg = 'SeaGreen', bold = true,                ctermfg = 'DarkGreen' })
   hi('Underlined',       { fg = 'SlateBlue', underline = true,          ctermfg = 'DarkMagenta', cterm = { underline = true } })
