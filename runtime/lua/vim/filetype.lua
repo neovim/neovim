@@ -1611,6 +1611,7 @@ local filename = {
   ['ldaprc'] = 'ldapconf',
   ['.ldaprc'] = 'ldapconf',
   ['ldap.conf'] = 'ldapconf',
+  ['lfrc'] = 'lf',
   ['lftp.conf'] = 'lftp',
   ['.lftprc'] = 'lftp',
   ['/.libao'] = 'libao',
