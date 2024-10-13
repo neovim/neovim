@@ -1639,8 +1639,9 @@ Lua module: vim.lsp.completion                                *lsp-completion*
 *vim.lsp.completion.BufferOpts*
 
     Fields: ~
-      • {autotrigger}?  (`boolean`) Whether to trigger completion
-                        automatically. Default: false
+      • {autotrigger}?  (`boolean`) Default: false When true, completion
+                        triggers automatically based on the server's
+                        `triggerCharacters`.
       • {convert}?      (`fun(item: lsp.CompletionItem): table`) Transforms an
                         LSP CompletionItem to |complete-items|.
 
