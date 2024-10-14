@@ -13,7 +13,6 @@ local eq = t.eq
 local feed_data = tt.feed_data
 local clear = n.clear
 local command = n.command
-local dedent = t.dedent
 local exec = n.exec
 local exec_lua = n.exec_lua
 local testprg = n.testprg
@@ -1853,19 +1852,19 @@ describe('TUI', function()
   end)
 
   it('draws correctly when cursor_address overflows #21643', function()
-    t.skip(is_os('mac'), 'FIXME: crashes/errors on macOS')
-    screen:try_resize(77, 855)
+    screen:try_resize(70, 333)
     retry(nil, nil, function()
-      eq({ true, 852 }, { child_session:request('nvim_win_get_height', 0) })
+      eq({ true, 330 }, { child_session:request('nvim_win_get_height', 0) })
     end)
     -- Use full screen message so that redrawing afterwards is more deterministic.
     child_session:notify('nvim_command', 'intro')
-    screen:expect({ any = 'Nvim' })
+    screen:expect({ any = 'Nvim is open source and freely distributable' })
     -- Going to top-left corner needs 3 bytes.
     -- Setting underline attribute needs 9 bytes.
-    -- The whole line needs 3 + 9 + 65513 + 3 = 65528 bytes.
+    -- A Ꝩ character takes 3 bytes.
+    -- The whole line needs 3 + 9 + 3 * 21838 + 3 = 65529 bytes.
     -- The cursor_address that comes after will overflow the 65535-byte buffer.
-    local line = ('a'):rep(65513) .. '℃'
+    local line = ('Ꝩ'):rep(21838) .. '℃'
     child_session:notify(
       'nvim_exec_lua',
       [[
@@ -1876,22 +1875,16 @@ describe('TUI', function()
     )
     -- Close the :intro message and redraw the lines.
     feed_data('\n')
-    screen:expect(
-      '{13:a}{12:'
-        .. ('a'):rep(76)
-        .. '}|\n'
-        .. ('{12:' .. ('a'):rep(77) .. '}|\n'):rep(849)
-        .. '{12:'
-        .. ('a'):rep(63)
-        .. '℃'
-        .. (' '):rep(13)
-        .. '}|\n'
-        .. dedent([[
-      b                                                                            |
-      {5:[No Name] [+]                                                                }|
-                                                                                   |
-      {3:-- TERMINAL --}                                                               |]])
-    )
+    screen:expect([[
+      {13:Ꝩ}{12:ꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨ}|
+      {12:ꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨ}|*310
+      {12:ꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨ℃ }|
+      b                                                                     |
+      {4:~                                                                     }|*17
+      {5:[No Name] [+]                                                         }|
+                                                                            |
+      {3:-- TERMINAL --}                                                        |
+    ]])
   end)
 
   it('visual bell (padding) does not crash #21610', function()
