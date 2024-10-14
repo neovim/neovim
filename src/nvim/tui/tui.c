@@ -134,11 +134,12 @@ struct TUIData {
     int resize_screen;
     int reset_scroll_region;
     int set_cursor_style, reset_cursor_style;
-    int save_title, restore_title;
+    int save_title, restore_title, set_title;
     int set_underline_style;
     int set_underline_color;
     int sync;
   } unibi_ext;
+  char *set_title;
   char *space_buf;
   size_t space_buf_len;
   bool stopped;
@@ -536,6 +537,7 @@ static void terminfo_stop(TUIData *tui)
     abort();
   }
   unibi_destroy(tui->ut);
+  XFREE_CLEAR(tui->set_title);
 }
 
 static void tui_terminal_start(TUIData *tui)
@@ -1567,8 +1569,7 @@ void tui_suspend(TUIData *tui)
 
 void tui_set_title(TUIData *tui, String title)
 {
-  if (!(unibi_get_str(tui->ut, unibi_to_status_line)
-        && unibi_get_str(tui->ut, unibi_from_status_line))) {
+  if (!unibi_get_ext_str(tui->ut, (unsigned)tui->unibi_ext.set_title)) {
     return;
   }
   if (title.size > 0) {
@@ -1577,9 +1578,9 @@ void tui_set_title(TUIData *tui, String title)
       unibi_out_ext(tui, tui->unibi_ext.save_title);
       tui->title_enabled = true;
     }
-    unibi_out(tui, unibi_to_status_line);
-    out(tui, title.data, title.size);
-    unibi_out(tui, unibi_from_status_line);
+    UNIBI_SET_NUM_VAR(tui->params[0], 0);
+    UNIBI_SET_STR_VAR(tui->params[1], title.data);
+    unibi_out_ext(tui, tui->unibi_ext.set_title);
   } else if (tui->title_enabled) {
     // Restore title/icon from the "stack". #4063
     unibi_out_ext(tui, tui->unibi_ext.restore_title);
@@ -1803,12 +1804,17 @@ static void unibi_goto(TUIData *tui, int row, int col)
       memset(&vars, 0, sizeof(vars)); \
       tui->cork = true; \
 retry: \
+      /* Copy parameters on every retry, as unibi_format() may modify them. */ \
       memcpy(params, tui->params, sizeof(params)); \
       unibi_format(vars, vars + 26, str, params, out, tui, pad, tui); \
       if (tui->overflow) { \
         tui->bufpos = orig_pos; \
-        flush_buf(tui); \
-        goto retry; \
+        /* If orig_pos is 0, there's nothing to flush and retrying won't work. */ \
+        /* TODO(zeertzjq): should this situation still be handled? */ \
+        if (orig_pos > 0) { \
+          flush_buf(tui); \
+          goto retry; \
+        } \
       } \
       tui->cork = false; \
     } \
@@ -1840,6 +1846,7 @@ static void out(void *ctx, const char *str, size_t len)
     }
     flush_buf(tui);
   }
+  // TODO(zeertzjq): handle string longer than buffer size? #30794
 
   memcpy(tui->buf + tui->bufpos, str, len);
   tui->bufpos += len;
@@ -2377,6 +2384,19 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
 
   tui->unibi_ext.save_title = (int)unibi_add_ext_str(ut, "ext.save_title", "\x1b[22;0t");
   tui->unibi_ext.restore_title = (int)unibi_add_ext_str(ut, "ext.restore_title", "\x1b[23;0t");
+
+  const char *tsl = unibi_get_str(ut, unibi_to_status_line);
+  const char *fsl = unibi_get_str(ut, unibi_from_status_line);
+  if (tsl != NULL && fsl != NULL) {
+    // Add a single extended capability for the whole sequence to set title,
+    // as it is usually an OSC sequence that cannot be cut in half.
+    // Use %p2 for the title string, as to_status_line may take an argument.
+    size_t set_title_len = strlen(tsl) + strlen("%p2%s") + strlen(fsl);
+    char *set_title = xmallocz(set_title_len);
+    snprintf(set_title, set_title_len + 1, "%s%s%s", tsl, "%p2%s", fsl);
+    tui->unibi_ext.set_title = (int)unibi_add_ext_str(ut, "ext.set_title", set_title);
+    tui->set_title = set_title;
+  }
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
