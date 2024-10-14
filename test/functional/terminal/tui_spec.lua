@@ -1856,6 +1856,7 @@ describe('TUI', function()
     retry(nil, nil, function()
       eq({ true, 330 }, { child_session:request('nvim_win_get_height', 0) })
     end)
+    child_session:request('nvim_set_option_value', 'cursorline', true, {})
     -- Use full screen message so that redrawing afterwards is more deterministic.
     child_session:notify('nvim_command', 'intro')
     screen:expect({ any = 'Nvim is open source and freely distributable' })
@@ -1865,14 +1866,7 @@ describe('TUI', function()
     -- The whole line needs 3 + 9 + 3 * 21838 + 3 = 65529 bytes.
     -- The cursor_address that comes after will overflow the 65535-byte buffer.
     local line = ('Ꝩ'):rep(21838) .. '℃'
-    child_session:notify(
-      'nvim_exec_lua',
-      [[
-      vim.api.nvim_buf_set_lines(0, 0, -1, true, {...})
-      vim.o.cursorline = true
-    ]],
-      { line, 'b' }
-    )
+    child_session:notify('nvim_buf_set_lines', 0, 0, -1, true, { line, 'b' })
     -- Close the :intro message and redraw the lines.
     feed_data('\n')
     screen:expect([[
@@ -1885,6 +1879,46 @@ describe('TUI', function()
                                                                             |
       {3:-- TERMINAL --}                                                        |
     ]])
+  end)
+
+  it('draws correctly when setting title overflows #30793', function()
+    screen:try_resize(67, 327)
+    retry(nil, nil, function()
+      eq({ true, 324 }, { child_session:request('nvim_win_get_height', 0) })
+    end)
+    child_exec_lua([[
+      vim.o.cmdheight = 0
+      vim.o.laststatus = 0
+      vim.o.ruler = false
+      vim.o.showcmd = false
+      vim.o.termsync = false
+      vim.o.title = true
+    ]])
+    retry(nil, nil, function()
+      eq('[No Name] - Nvim', api.nvim_buf_get_var(0, 'term_title'))
+      eq({ true, 326 }, { child_session:request('nvim_win_get_height', 0) })
+    end)
+    -- Use full screen message so that redrawing afterwards is more deterministic.
+    child_session:notify('nvim_command', 'intro')
+    screen:expect({ any = 'Nvim is open source and freely distributable' })
+    -- Going to top-left corner needs 3 bytes.
+    -- A Ꝩ character takes 3 bytes.
+    -- The whole line needs 3 + 3 * 21842 = 65529 bytes.
+    -- The title will be updated because the buffer is now modified.
+    -- The start of the OSC 0 sequence to set title can fit in the 65535-byte buffer,
+    -- but the title string cannot.
+    local line = ('Ꝩ'):rep(21842)
+    child_session:notify('nvim_buf_set_lines', 0, 0, -1, true, { line })
+    -- Close the :intro message and redraw the lines.
+    feed_data('\n')
+    screen:expect([[
+      {1:Ꝩ}ꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨ|
+      ꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨꝨ|*325
+      {3:-- TERMINAL --}                                                     |
+    ]])
+    retry(nil, nil, function()
+      eq('[No Name] + - Nvim', api.nvim_buf_get_var(0, 'term_title'))
+    end)
   end)
 
   it('visual bell (padding) does not crash #21610', function()
