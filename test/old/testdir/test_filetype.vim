@@ -524,7 +524,7 @@ func s:GetFilenameChecks() abort
     \ 'nanorc': ['/etc/nanorc', 'file.nanorc', 'any/etc/nanorc'],
     \ 'natural': ['file.NSA', 'file.NSC', 'file.NSG', 'file.NSL', 'file.NSM', 'file.NSN', 'file.NSP', 'file.NSS'],
     \ 'ncf': ['file.ncf'],
-    \ 'neomuttlog': ['foo.neomuttdebug'],
+    \ 'neomuttlog': ['/home/user/.neomuttdebug1'],
     \ 'neomuttrc': ['Neomuttrc', '.neomuttrc', '.neomuttrc-file', '/.neomutt/neomuttrc', '/.neomutt/neomuttrc-file', 'Neomuttrc', 'Neomuttrc-file', 'any/.neomutt/neomuttrc', 'any/.neomutt/neomuttrc-file', 'neomuttrc', 'neomuttrc-file'],
     \ 'netrc': ['.netrc'],
     \ 'nginx': ['file.nginx', 'nginxfile.conf', 'filenginx.conf', 'any/etc/nginx/file', 'any/usr/local/nginx/conf/file', 'any/nginx/file.conf'],
