@@ -27,7 +27,7 @@ MessagePack-RPC protocol with these extra (out-of-spec) constraints:
 
 MessagePack-RPC specification:
   https://github.com/msgpack-rpc/msgpack-rpc/blob/master/spec.md
-  https://github.com/msgpack/msgpack/blob/0b8f5ac/spec.md
+  https://github.com/msgpack/msgpack/blob/master/spec.md
 
 Many clients use the API: user interfaces (GUIs), remote plugins, scripts like
 "nvr" (https://github.com/mhinz/neovim-remote).  Even Nvim itself can control
