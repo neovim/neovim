@@ -1130,7 +1130,7 @@ else
   endif
   tmenu ToolBar.LoadSesn	Choose a session to load
   tmenu ToolBar.SaveSesn	Save current session
-  tmenu ToolBar.RunScript	Choose a Vim Script to run
+  tmenu ToolBar.RunScript	Choose a Vim script to run
   tmenu ToolBar.Make		Make current project (:make)
   tmenu ToolBar.RunCtags	Build tags in current directory tree (!ctags -R .)
   tmenu ToolBar.TagJump		Jump to tag under cursor
