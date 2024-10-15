@@ -2091,7 +2091,7 @@ char *parse_spelllang(win_T *wp)
       int_wordlist_spl(spf_name);
     } else {
       // One entry in 'spellfile'.
-      copy_option_part(&spf, spf_name, MAXPATHL - 5, ",");
+      copy_option_part(&spf, spf_name, MAXPATHL - 4, ",");
       strcat(spf_name, ".spl");
       int c;
 
@@ -3664,29 +3664,25 @@ bool valid_spelllang(const char *val)
 bool valid_spellfile(const char *val)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  for (const char *s = val; *s != NUL; s++) {
-    if (!vim_is_fname_char((uint8_t)(*s))) {
+  char spf_name[MAXPATHL];
+  char *spf = (char *)val;
+  while (*spf != NUL) {
+    size_t l = copy_option_part(&spf, spf_name, MAXPATHL, ",");
+    if (l >= MAXPATHL - 4 || l < 4 || strcmp(spf_name + l - 4, ".add") != 0) {
       return false;
+    }
+    for (char *s = spf_name; *s != NUL; s++) {
+      if (!vim_is_fname_char((uint8_t)(*s))) {
+        return false;
+      }
     }
   }
   return true;
 }
 
-const char *did_set_spell_option(bool is_spellfile)
+const char *did_set_spell_option(void)
 {
   const char *errmsg = NULL;
-
-  if (is_spellfile) {
-    int l = (int)strlen(curwin->w_s->b_p_spf);
-    if (l > 0
-        && (l < 4 || strcmp(curwin->w_s->b_p_spf + l - 4, ".add") != 0)) {
-      errmsg = e_invarg;
-    }
-  }
-
-  if (errmsg != NULL) {
-    return errmsg;
-  }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == curbuf && wp->w_p_spell) {

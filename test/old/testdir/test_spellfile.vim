@@ -1155,7 +1155,7 @@ endfunc
 " 'spellfile' accepts '@' on top of 'isfname'.
 func Test_spellfile_allow_at_character()
   call mkdir('Xtest/the foo@bar,dir', 'p')
-  let &spellfile = './Xtest/the foo@bar,dir/Xspellfile.add'
+  let &spellfile = './Xtest/the foo@bar\,dir/Xspellfile.add'
   let &spellfile = ''
   call delete('Xtest', 'rf')
 endfunc
