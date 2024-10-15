@@ -3519,6 +3519,30 @@ describe('LSP', function()
       local expected = { '```cs', 'TestEntity.TestEntity()', '```', 'some doc' }
       eq(expected, result)
     end)
+
+    it('highlights active parameters in multiline signature labels', function()
+      local _, hl = exec_lua(function()
+        local signature_help = {
+          activeSignature = 0,
+          signatures = {
+            {
+              activeParameter = 1,
+              label = 'fn bar(\n    _: void,\n    _: void,\n) void',
+              parameters = {
+                { label = '_: void' },
+                { label = '_: void' },
+              },
+            },
+          },
+        }
+        return vim.lsp.util.convert_signature_help_to_markdown_lines(signature_help, 'zig', { '(' })
+      end)
+      -- Note that although the higlight positions below are 0-indexed, the 2nd parameter
+      -- corresponds to the 3rd line because the first line is the ``` from the
+      -- Markdown block.
+      local expected = { 3, 4, 3, 11 }
+      eq(expected, hl)
+    end)
   end)
 
   describe('lsp.util.get_effective_tabstop', function()

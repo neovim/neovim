@@ -1855,7 +1855,7 @@ signature_help({_}, {result}, {ctx}, {config})
 <
 
     Parameters: ~
-      • {result}  (`lsp.SignatureHelp`) Response from the language server
+      • {result}  (`lsp.SignatureHelp?`) Response from the language server
       • {ctx}     (`lsp.HandlerContext`) Client context
       • {config}  (`table`) Configuration table.
                   • border: (default=nil)
@@ -1973,7 +1973,7 @@ convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
 
     Return (multiple): ~
         (`string[]?`) table list of lines of converted markdown.
-        (`number[]?`) table of active hl
+        (`Range4?`) table of active hl
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
