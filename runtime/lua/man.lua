@@ -675,7 +675,6 @@ function M.init_pager()
     vim.cmd.file({ 'man://' .. fn.fnameescape(ref):lower(), mods = { silent = true } })
   end
 
-  vim.g.pager = true
   set_options()
 end
 
