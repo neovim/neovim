@@ -269,6 +269,10 @@ These existing features changed their behavior.
 • |vim.on_key()| callbacks won't be invoked recursively when a callback itself
   consumes input.
 
+• "q" in man pages now uses |CTRL-W_q| instead of |CTRL-W_c| to close the
+  current window, and it no longer throws |E444| when there is only one window
+  on the screen. Global variable `vim.g.pager` is removed.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
