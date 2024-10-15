@@ -289,12 +289,13 @@ vim.go.bk = vim.go.backup
 --- useful for example in source trees where all the files are symbolic or
 --- hard links and any changes should stay in the local source tree, not
 --- be propagated back to the original source.
---- 						*crontab*
+--- 							*crontab*
 --- One situation where "no" and "auto" will cause problems: A program
 --- that opens a file, invokes Vim to edit that file, and then tests if
 --- the open file was changed (through the file descriptor) will check the
 --- backup file instead of the newly created file.  "crontab -e" is an
---- example.
+--- example, as are several `file-watcher` daemons like inotify.  In that
+--- case you probably want to switch this option.
 ---
 --- When a copy is made, the original file is truncated and then filled
 --- with the new text.  This means that protection bits, owner and
@@ -6695,7 +6696,7 @@ vim.wo.stc = vim.wo.statuscolumn
 --- Emulate standard status line with 'ruler' set
 ---
 --- ```vim
----   set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+---   set statusline=%<%f\ %h%w%m%r%=%-14.(%l,%c%V%)\ %P
 --- ```
 --- Similar, but add ASCII value of char under the cursor (like "ga")
 ---

@@ -1032,6 +1032,15 @@ explanation of when the copy is made and when the file is renamed.
 If the creation of a backup file fails, the write is not done.  If you want
 to write anyway add a '!' to the command.
 
+							*file-watcher*
+When you notice issues with programs, that act upon when a buffer is written
+(like inotify, entr or fswatch) or when external applications execute Vim to
+edit the file (like git) and those programs do not seem to notice that the
+original file has been changed, you may want to consider switching the
+'backupcopy' option value to "yes".  This makes sure, Vim writes to the same
+file, that those watcher programs expect, without creating a new file (which
+prevents them from detecting that the file has changed).  See also |crontab|
+
 							*write-permissions*
 When writing a new file the permissions are read-write.  For unix the mask is
 0o666 with additionally umask applied.  When writing a file that was read Vim
