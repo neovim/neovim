@@ -6701,7 +6701,7 @@ vim.wo.stc = vim.wo.statuscolumn
 --- Similar, but add ASCII value of char under the cursor (like "ga")
 ---
 --- ```vim
----   set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
+---   set statusline=%<%f%h%w%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
 --- ```
 --- Display byte count and byte value, modified flag in red.
 ---
