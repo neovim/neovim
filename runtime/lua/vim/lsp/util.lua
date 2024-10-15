@@ -375,11 +375,10 @@ end
 ---@param offset_encoding string utf-8|utf-16|utf-32
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr, offset_encoding)
-  validate({
-    text_edits = { text_edits, 't', false },
-    bufnr = { bufnr, 'number', false },
-    offset_encoding = { offset_encoding, 'string', false },
-  })
+  validate('text_edits', text_edits, 'table', false)
+  validate('bufnr', bufnr, 'number', false)
+  validate('offset_encoding', offset_encoding, 'string', false)
+
   if not next(text_edits) then
     return
   end
@@ -932,14 +931,10 @@ end
 ---            to display the full window height.
 ---@return table Options
 function M.make_floating_popup_options(width, height, opts)
-  validate({
-    opts = { opts, 't', true },
-  })
+  validate('opts', opts, 'table', true)
   opts = opts or {}
-  validate({
-    ['opts.offset_x'] = { opts.offset_x, 'n', true },
-    ['opts.offset_y'] = { opts.offset_y, 'n', true },
-  })
+  validate('opts.offset_x', opts.offset_x, 'n', true)
+  validate('opts.offset_y', opts.offset_y, 'n', true)
 
   local anchor = ''
   local row, col
@@ -1211,10 +1206,8 @@ end
 ---  - separator insert separator after code block
 ---@return table stripped content
 function M.stylize_markdown(bufnr, contents, opts)
-  validate({
-    contents = { contents, 't' },
-    opts = { opts, 't', true },
-  })
+  validate('contents', contents, 'table')
+  validate('opts', opts, 'table', true)
   opts = opts or {}
 
   -- table of fence types to {ft, begin, end}
@@ -1413,10 +1406,8 @@ end
 ---@return string[] table of lines containing normalized Markdown
 ---@see https://github.github.com/gfm
 function M._normalize_markdown(contents, opts)
-  validate({
-    contents = { contents, 't' },
-    opts = { opts, 't', true },
-  })
+  validate('contents', contents, 'table')
+  validate('opts', opts, 'table', true)
   opts = opts or {}
 
   -- 1. Carriage returns are removed
@@ -1493,10 +1484,8 @@ end
 ---@return integer width size of float
 ---@return integer height size of float
 function M._make_floating_popup_size(contents, opts)
-  validate({
-    contents = { contents, 't' },
-    opts = { opts, 't', true },
-  })
+  validate('contents', contents, 'table')
+  validate('opts', opts, 'table', true)
   opts = opts or {}
 
   local width = opts.width
@@ -1603,11 +1592,9 @@ end
 ---@return integer bufnr of newly created float window
 ---@return integer winid of newly created float window preview window
 function M.open_floating_preview(contents, syntax, opts)
-  validate({
-    contents = { contents, 't' },
-    syntax = { syntax, 's', true },
-    opts = { opts, 't', true },
-  })
+  validate('contents', contents, 'table')
+  validate('syntax', syntax, 'string', true)
+  validate('opts', opts, 'table', true)
   opts = opts or {}
   opts.wrap = opts.wrap ~= false -- wrapping by default
   opts.focus = opts.focus ~= false
@@ -1709,7 +1696,6 @@ do --[[ References ]]
   ---
   ---@param bufnr integer|nil Buffer id
   function M.buf_clear_references(bufnr)
-    validate({ bufnr = { bufnr, { 'n' }, true } })
     api.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
   end
 
@@ -1720,10 +1706,8 @@ do --[[ References ]]
   ---@param offset_encoding string One of "utf-8", "utf-16", "utf-32".
   ---@see https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
   function M.buf_highlight_references(bufnr, references, offset_encoding)
-    validate({
-      bufnr = { bufnr, 'n', true },
-      offset_encoding = { offset_encoding, 'string', false },
-    })
+    validate('bufnr', bufnr, 'number', true)
+    validate('offset_encoding', offset_encoding, 'string', false)
     for _, reference in ipairs(references) do
       local start_line, start_char =
         reference['range']['start']['line'], reference['range']['start']['character']
@@ -1994,9 +1978,7 @@ end
 ---@param bufnr integer buffer handle or 0 for current, defaults to current
 ---@return string encoding first client if there is one, nil otherwise
 function M._get_offset_encoding(bufnr)
-  validate({
-    bufnr = { bufnr, 'n', true },
-  })
+  validate('bufnr', bufnr, 'number', true)
 
   local offset_encoding
 
@@ -2055,11 +2037,9 @@ end
 ---@return table { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`start_position`, end = `end_position` } }
 function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
-  validate({
-    start_pos = { start_pos, 't', true },
-    end_pos = { end_pos, 't', true },
-    offset_encoding = { offset_encoding, 's', true },
-  })
+  validate('start_pos', start_pos, 'table', true)
+  validate('end_pos', end_pos, 'table', true)
+  validate('offset_encoding', offset_encoding, 'string', true)
   bufnr = bufnr or api.nvim_get_current_buf()
   offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
   local A = list_extend({}, start_pos or api.nvim_buf_get_mark(bufnr, '<'))
@@ -2112,7 +2092,7 @@ end
 ---@param bufnr integer|nil: Buffer handle, defaults to current
 ---@return integer indentation size
 function M.get_effective_tabstop(bufnr)
-  validate({ bufnr = { bufnr, 'n', true } })
+  validate('bufnr', bufnr, 'number', true)
   local bo = bufnr and vim.bo[bufnr] or vim.bo
   local sw = bo.shiftwidth
   return (sw == 0 and bo.tabstop) or sw
@@ -2124,7 +2104,7 @@ end
 ---@return lsp.DocumentFormattingParams object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 function M.make_formatting_params(options)
-  validate({ options = { options, 't', true } })
+  validate('options', options, 'table', true)
   options = vim.tbl_extend('keep', options or {}, {
     tabSize = M.get_effective_tabstop(),
     insertSpaces = vim.bo.expandtab,
