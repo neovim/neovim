@@ -2118,7 +2118,7 @@ const char *did_set_spellfile(optset_T *args)
   if ((!valid_spellfile(*varp))) {
     return e_invarg;
   }
-  return did_set_spell_option(true);
+  return did_set_spell_option();
 }
 
 /// The 'spelllang' option is changed.
@@ -2131,7 +2131,7 @@ const char *did_set_spelllang(optset_T *args)
   if (!valid_spelllang(*varp)) {
     return e_invarg;
   }
-  return did_set_spell_option(false);
+  return did_set_spell_option();
 }
 
 /// The 'spelloptions' option is changed.

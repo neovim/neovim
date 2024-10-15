@@ -1705,7 +1705,7 @@ static void didset_options(void)
   spell_check_msm();
   spell_check_sps();
   compile_cap_prog(curwin->w_s);
-  did_set_spell_option(true);
+  did_set_spell_option();
   // set cedit_key
   did_set_cedit(NULL);
   // initialize the table for 'breakat'.
