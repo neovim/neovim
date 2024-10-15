@@ -8229,6 +8229,8 @@ function vim.fn.setpos(expr, list) end
 ---   clear the list: >vim
 ---     call setqflist([], 'r')
 --- <
+--- 'u'  Like 'r', but tries to preserve the current selection
+---   in the quickfix list.
 --- 'f'  All the quickfix lists in the quickfix stack are
 ---   freed.
 ---
