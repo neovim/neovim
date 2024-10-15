@@ -6695,7 +6695,7 @@ vim.wo.stc = vim.wo.statuscolumn
 --- Emulate standard status line with 'ruler' set
 ---
 --- ```vim
----   set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+---   set statusline=%<%f\ %h%w%m%r%=%-14.(%l,%c%V%)\ %P
 --- ```
 --- Similar, but add ASCII value of char under the cursor (like "ga")
 ---
