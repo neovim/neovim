@@ -6340,7 +6340,9 @@ func Test_quickfix_buffer_contents()
   call setqflist([], 'f')
 endfunc
 
-func Test_quickfix_update()
+func XquickfixUpdateTests(cchar)
+  call s:setup_commands(a:cchar)
+
   " Setup: populate a couple buffers
   new
   call setline(1, range(1, 5))
@@ -6350,25 +6352,32 @@ func Test_quickfix_update()
   let b2 = bufnr()
   " Setup: set a quickfix list.
   let items = [{'bufnr': b1, 'lnum': 1}, {'bufnr': b1, 'lnum': 2}, {'bufnr': b2, 'lnum': 1}, {'bufnr': b2, 'lnum': 2}]
-  call setqflist(items)
+  call g:Xsetlist(items)
 
   " Open the quickfix list, select the third entry.
-  copen
+  Xopen
   exe "normal jj\<CR>"
-  call assert_equal(3, getqflist({'idx' : 0}).idx)
+  call assert_equal(3, g:Xgetlist({'idx' : 0}).idx)
 
   " Update the quickfix list. Make sure the third entry is still selected.
-  call setqflist([], 'u', { 'items': items })
-  call assert_equal(3, getqflist({'idx' : 0}).idx)
+  call g:Xsetlist([], 'u', { 'items': items })
+  call assert_equal(3, g:Xgetlist({'idx' : 0}).idx)
 
   " Update the quickfix list again, but this time with missing line number
   " information. Confirm that we keep the current buffer selected.
-  call setqflist([{'bufnr': b1}, {'bufnr': b2}], 'u')
-  call assert_equal(2, getqflist({'idx' : 0}).idx)
+  call g:Xsetlist([{'bufnr': b1}, {'bufnr': b2}], 'u')
+  call assert_equal(2, g:Xgetlist({'idx' : 0}).idx)
+
+  Xclose
 
   " Cleanup the buffers we allocated during this test.
   %bwipe!
-  %bwipe!
+endfunc
+
+" Test for updating a quickfix list using the "u" flag in setqflist()
+func Test_quickfix_update()
+  call XquickfixUpdateTests('c')
+  call XquickfixUpdateTests('l')
 endfunc
 
 func Test_quickfix_update_with_missing_coordinate_info()
