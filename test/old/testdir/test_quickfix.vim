@@ -6340,6 +6340,97 @@ func Test_quickfix_buffer_contents()
   call setqflist([], 'f')
 endfunc
 
+func Test_quickfix_update()
+  " Setup: populate a couple buffers
+  new
+  call setline(1, range(1, 5))
+  let b1 = bufnr()
+  new
+  call setline(1, range(1, 3))
+  let b2 = bufnr()
+  " Setup: set a quickfix list.
+  let items = [{'bufnr': b1, 'lnum': 1}, {'bufnr': b1, 'lnum': 2}, {'bufnr': b2, 'lnum': 1}, {'bufnr': b2, 'lnum': 2}]
+  call setqflist(items)
+
+  " Open the quickfix list, select the third entry.
+  copen
+  exe "normal jj\<CR>"
+  call assert_equal(3, getqflist({'idx' : 0}).idx)
+
+  " Update the quickfix list. Make sure the third entry is still selected.
+  call setqflist([], 'u', { 'items': items })
+  call assert_equal(3, getqflist({'idx' : 0}).idx)
+
+  " Update the quickfix list again, but this time with missing line number
+  " information. Confirm that we keep the current buffer selected.
+  call setqflist([{'bufnr': b1}, {'bufnr': b2}], 'u')
+  call assert_equal(2, getqflist({'idx' : 0}).idx)
+
+  " Cleanup the buffers we allocated during this test.
+  %bwipe!
+  %bwipe!
+endfunc
+
+func Test_quickfix_update_with_missing_coordinate_info()
+  new
+  call setline(1, range(1, 5))
+  let b1 = bufnr()
+
+  new
+  call setline(1, range(1, 3))
+  let b2 = bufnr()
+
+  new
+  call setline(1, range(1, 2))
+  let b3 = bufnr()
+
+  " Setup: set a quickfix list with no coordinate information at all.
+  call setqflist([{}, {}])
+
+  " Open the quickfix list, select the second entry.
+  copen
+  exe "normal j\<CR>"
+  call assert_equal(2, getqflist({'idx' : 0}).idx)
+
+  " Update the quickfix list. As the previously selected entry has no
+  " coordinate information, we expect the first entry to now be selected.
+  call setqflist([{'bufnr': b1}, {'bufnr': b2}, {'bufnr': b3}], 'u')
+  call assert_equal(1, getqflist({'idx' : 0}).idx)
+
+  " Select the second entry in the quickfix list.
+  copen
+  exe "normal j\<CR>"
+  call assert_equal(2, getqflist({'idx' : 0}).idx)
+
+  " Update the quickfix list again. The currently selected entry does not have
+  " a line number, but we should keep the file selected.
+  call setqflist([{'bufnr': b1}, {'bufnr': b2, 'lnum': 3}, {'bufnr': b3}], 'u')
+  call assert_equal(2, getqflist({'idx' : 0}).idx)
+
+  " Update the quickfix list again. The currently selected entry (bufnr=b2, lnum=3)
+  " is no longer present. We should pick the nearest entry.
+  call setqflist([{'bufnr': b1}, {'bufnr': b2, 'lnum': 1}, {'bufnr': b2, 'lnum': 4}], 'u')
+  call assert_equal(3, getqflist({'idx' : 0}).idx)
+
+  " Set the quickfix list again, with a specific column number. The currently selected entry doesn't have a
+  " column number, but they share a line number.
+  call setqflist([{'bufnr': b1}, {'bufnr': b2, 'lnum': 4, 'col': 5}, {'bufnr': b2, 'lnum': 4, 'col': 6}], 'u')
+  call assert_equal(2, getqflist({'idx' : 0}).idx)
+
+  " Set the quickfix list again. The currently selected column number (6) is
+  " no longer present. We should select the nearest column number.
+  call setqflist([{'bufnr': b1}, {'bufnr': b2, 'lnum': 4, 'col': 2}, {'bufnr': b2, 'lnum': 4, 'col': 4}], 'u')
+  call assert_equal(3, getqflist({'idx' : 0}).idx)
+
+  " Now set the quickfix list, but without columns. We should still pick the
+  " same line.
+  call setqflist([{'bufnr': b2, 'lnum': 3}, {'bufnr': b2, 'lnum': 4}, {'bufnr': b2, 'lnum': 4}], 'u')
+  call assert_equal(2, getqflist({'idx' : 0}).idx)
+
+  " Cleanup the buffers we allocated during this test.
+  %bwipe!
+endfunc
+
 " Test for "%b" in "errorformat"
 func Test_efm_format_b()
   call setqflist([], 'f')
