@@ -248,6 +248,8 @@ UI
   |hl-PmenuSel| and |hl-PmenuMatch| both inherit from |hl-Pmenu|, and
   |hl-PmenuMatchSel| inherits highlights from both |hl-PmenuSel| and
   |hl-PmenuMatch|.
+• |vim.diagnostic.setqflist()| updates existing diagnostics quickfix list if one
+  exists.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
