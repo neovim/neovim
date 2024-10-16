@@ -1783,18 +1783,14 @@ function M.locations_to_items(locations, offset_encoding)
   end
 
   local items = {} --- @type vim.quickfix.entry[]
+
   ---@type table<string, {start: lsp.Position, end: lsp.Position, location: lsp.Location|lsp.LocationLink}[]>
-  local grouped = setmetatable({}, {
-    __index = function(t, k)
-      local v = {}
-      rawset(t, k, v)
-      return v
-    end,
-  })
+  local grouped = {}
   for _, d in ipairs(locations) do
     -- locations may be Location or LocationLink
     local uri = d.uri or d.targetUri
     local range = d.range or d.targetSelectionRange
+    grouped[uri] = grouped[uri] or {}
     table.insert(grouped[uri], { start = range.start, ['end'] = range['end'], location = d })
   end
 
