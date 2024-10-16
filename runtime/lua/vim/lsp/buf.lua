@@ -338,6 +338,8 @@ function M.rename(new_name, opts)
   -- Compute early to account for cursor movements after going async
   local cword = vim.fn.expand('<cword>')
 
+  --- @param range lsp.Range
+  --- @param offset_encoding string
   local function get_text_at_range(range, offset_encoding)
     return api.nvim_buf_get_text(
       bufnr,

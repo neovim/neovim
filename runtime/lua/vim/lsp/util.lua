@@ -347,7 +347,7 @@ end
 
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
 ---@param position lsp.Position
----@param offset_encoding? string utf-8|utf-16|utf-32
+---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return integer
 local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- LSP's line and characters are 0-indexed
@@ -357,7 +357,7 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- character
   if col > 0 then
     local line = get_line(bufnr, position.line) or ''
-    return M._str_byteindex_enc(line, col, offset_encoding or 'utf-16')
+    return M._str_byteindex_enc(line, col, offset_encoding)
   end
   return col
 end
@@ -512,6 +512,7 @@ function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
       'apply_text_document_edit must be called with valid offset encoding',
       vim.log.levels.WARN
     )
+    return
   end
 
   -- For lists of text document edits,
@@ -703,6 +704,7 @@ function M.apply_workspace_edit(workspace_edit, offset_encoding)
       'apply_workspace_edit must be called with valid offset encoding',
       vim.log.levels.WARN
     )
+    return
   end
   if workspace_edit.documentChanges then
     for idx, change in ipairs(workspace_edit.documentChanges) do
@@ -988,6 +990,7 @@ function M.show_document(location, offset_encoding, opts)
   end
   if offset_encoding == nil then
     vim.notify_once('show_document must be called with valid offset encoding', vim.log.levels.WARN)
+    return false
   end
   local bufnr = vim.uri_to_bufnr(uri)
 

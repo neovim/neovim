@@ -2586,7 +2586,7 @@ describe('LSP', function()
           },
         },
       }
-      eq(false, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit))
+      eq(false, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16'))
       eq(false, vim.uv.fs_stat(tmpfile) ~= nil)
     end)
   end)
