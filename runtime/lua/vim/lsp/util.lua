@@ -843,16 +843,12 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
   if signature.parameters and #signature.parameters > 0 then
     -- First check if the signature has an activeParameter. If it doesn't check if the response
     -- had that property instead. Else just default to 0.
-    local active_parameter = (signature.activeParameter or signature_help.activeParameter or 0)
-    if active_parameter < 0 then
-      active_parameter = 0
-    end
+    local active_parameter =
+      math.max(signature.activeParameter or signature_help.activeParameter or 0, 0)
 
     -- If the activeParameter is > #parameters, then set it to the last
     -- NOTE: this is not fully according to the spec, but a client-side interpretation
-    if active_parameter >= #signature.parameters then
-      active_parameter = #signature.parameters - 1
-    end
+    active_parameter = math.min(active_parameter, #signature.parameters - 1)
 
     local parameter = signature.parameters[active_parameter + 1]
     local parameter_label = parameter.label
