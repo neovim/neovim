@@ -565,10 +565,8 @@ local M = {}
 ---  - debounce (integer, default: 200): Debounce token requests
 ---        to the server by the given number in milliseconds
 function M.start(bufnr, client_id, opts)
-  vim.validate({
-    bufnr = { bufnr, 'n', false },
-    client_id = { client_id, 'n', false },
-  })
+  vim.validate('bufnr', bufnr, 'number')
+  vim.validate('client_id', client_id, 'number')
 
   if bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
@@ -622,10 +620,8 @@ end
 ---@param bufnr (integer) Buffer number, or `0` for current buffer
 ---@param client_id (integer) The ID of the |vim.lsp.Client|
 function M.stop(bufnr, client_id)
-  vim.validate({
-    bufnr = { bufnr, 'n', false },
-    client_id = { client_id, 'n', false },
-  })
+  vim.validate('bufnr', bufnr, 'number')
+  vim.validate('client_id', client_id, 'number')
 
   if bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
@@ -708,9 +704,7 @@ end
 ---@param bufnr (integer|nil) filter by buffer. All buffers if nil, current
 ---       buffer if 0
 function M.force_refresh(bufnr)
-  vim.validate({
-    bufnr = { bufnr, 'n', true },
-  })
+  vim.validate('bufnr', bufnr, 'number', true)
 
   local buffers = bufnr == nil and vim.tbl_keys(STHighlighter.active)
     or bufnr == 0 and { api.nvim_get_current_buf() }

@@ -2736,9 +2736,7 @@ end
 ---                     filetype specific buffer variables). The function accepts a buffer number as
 ---                     its only argument.
 function M.match(args)
-  vim.validate({
-    arg = { args, 't' },
-  })
+  vim.validate('arg', args, 'table')
 
   if not (args.buf or args.filename or args.contents) then
     error('At least one of "buf", "filename", or "contents" must be given')

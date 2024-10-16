@@ -291,7 +291,7 @@ local client_index = 0
 --- @param filename (string) path to check
 --- @return boolean # true if {filename} exists and is a directory, false otherwise
 local function is_dir(filename)
-  validate({ filename = { filename, 's' } })
+  validate('filename', filename, 'string')
   local stat = uv.fs_stat(filename)
   return stat and stat.type == 'directory' or false
 end
@@ -312,9 +312,7 @@ local valid_encodings = {
 --- @param encoding string? Encoding to normalize
 --- @return string # normalized encoding name
 local function validate_encoding(encoding)
-  validate({
-    encoding = { encoding, 's', true },
-  })
+  validate('encoding', encoding, 'string', true)
   if not encoding then
     return valid_encodings.UTF16
   end
@@ -350,9 +348,7 @@ end
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
 --- @param config vim.lsp.ClientConfig
 local function validate_config(config)
-  validate({
-    config = { config, 't' },
-  })
+  validate('config', config, 'table')
   validate({
     handlers = { config.handlers, 't', true },
     capabilities = { config.capabilities, 't', true },
@@ -640,7 +636,7 @@ end
 --- @param bufnr (integer|nil) Buffer number to resolve. Defaults to current buffer
 --- @return integer bufnr
 local function resolve_bufnr(bufnr)
-  validate({ bufnr = { bufnr, 'n', true } })
+  validate('bufnr', bufnr, 'number', true)
   if bufnr == nil or bufnr == 0 then
     return api.nvim_get_current_buf()
   end
@@ -806,7 +802,7 @@ end
 --- @return boolean status true if notification was successful. false otherwise
 --- @see |vim.lsp.client.notify()|
 function Client:_cancel_request(id)
-  validate({ id = { id, 'n' } })
+  validate('id', id, 'number')
   local request = self.requests[id]
   if request and request.type == 'pending' then
     request.type = 'cancel'

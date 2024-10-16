@@ -195,7 +195,7 @@ local _client_pull_namespaces = {}
 ---@param client_id integer The id of the LSP client
 ---@param is_pull boolean? Whether the namespace is for a pull or push client. Defaults to push
 function M.get_namespace(client_id, is_pull)
-  vim.validate({ client_id = { client_id, 'n' } })
+  vim.validate('client_id', client_id, 'number')
 
   local client = vim.lsp.get_client_by_id(client_id)
   if is_pull then

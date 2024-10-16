@@ -133,10 +133,8 @@ end
 ---
 ---@return vim.treesitter.LanguageTree object to use for parsing
 function M.get_string_parser(str, lang, opts)
-  vim.validate({
-    str = { str, 'string' },
-    lang = { lang, 'string' },
-  })
+  vim.validate('str', str, 'string')
+  vim.validate('lang', lang, 'string')
 
   return LanguageTree.new(str, lang, opts)
 end

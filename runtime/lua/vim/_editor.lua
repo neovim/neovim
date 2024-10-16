@@ -473,9 +473,7 @@ do
   --- @param handle? false|integer
   --- @return vim.var_accessor
   local function make_dict_accessor(scope, handle)
-    validate({
-      scope = { scope, 's' },
-    })
+    validate('scope', scope, 'string')
     local mt = {}
     function mt:__newindex(k, v)
       return vim._setvar(scope, handle or 0, k, v)
@@ -1171,12 +1169,10 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
     local displayed = vim._truncated_echo_once(msg)
     return displayed and msg or nil
   else
-    vim.validate {
-      name = { name, 'string' },
-      alternative = { alternative, 'string', true },
-      version = { version, 'string', true },
-      plugin = { plugin, 'string', true },
-    }
+    vim.validate('name', name, 'string')
+    vim.validate('alternative', alternative, 'string', true)
+    vim.validate('version', version, 'string', true)
+    vim.validate('plugin', plugin, 'string', true)
 
     local msg = ('%s is deprecated'):format(name)
     msg = alternative and ('%s, use %s instead.'):format(msg, alternative) or (msg .. '.')
