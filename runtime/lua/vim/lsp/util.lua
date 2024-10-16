@@ -362,7 +362,7 @@ end
 --- Applies a list of text edits to a buffer.
 ---@param text_edits lsp.TextEdit[]
 ---@param bufnr integer Buffer id
----@param offset_encoding string utf-8|utf-16|utf-32
+---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   validate('text_edits', text_edits, 'table', false)
@@ -497,7 +497,7 @@ end
 ---
 ---@param text_document_edit lsp.TextDocumentEdit
 ---@param index? integer: Optional index of the edit, if from a list of edits (or nil, if not from a list)
----@param offset_encoding? string
+---@param offset_encoding? 'utf-8'|'utf-16'|'utf-32'
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
 function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
   local text_document = text_document_edit.textDocument
@@ -1025,7 +1025,7 @@ end
 --- Jumps to a location.
 ---
 ---@param location lsp.Location|lsp.LocationLink
----@param offset_encoding string? utf-8|utf-16|utf-32
+---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'?
 ---@param reuse_win boolean? Jump to existing window if buffer is already open.
 ---@return boolean `true` if the jump succeeded
 function M.jump_to_location(location, offset_encoding, reuse_win)
@@ -1694,7 +1694,7 @@ do --[[ References ]]
   ---
   ---@param bufnr integer Buffer id
   ---@param references lsp.DocumentHighlight[] objects to highlight
-  ---@param offset_encoding string One of "utf-8", "utf-16", "utf-32".
+  ---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
   ---@see https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
   function M.buf_highlight_references(bufnr, references, offset_encoding)
     validate('bufnr', bufnr, 'number', true)
@@ -1748,8 +1748,8 @@ end)
 --- |setloclist()|.
 ---
 ---@param locations lsp.Location[]|lsp.LocationLink[]
----@param offset_encoding string offset_encoding for locations utf-8|utf-16|utf-32
----                              default to first client of buffer
+---@param offset_encoding? 'utf-8'|'utf-16'|'utf-32'
+---                         default to first client of buffer
 ---@return vim.quickfix.entry[] # See |setqflist()| for the format
 function M.locations_to_items(locations, offset_encoding)
   if offset_encoding == nil then
@@ -2088,7 +2088,8 @@ end
 ---@param buf integer buffer number (0 for current)
 ---@param row integer 0-indexed line
 ---@param col integer 0-indexed byte offset in line
----@param offset_encoding string utf-8|utf-16|utf-32 defaults to `offset_encoding` of first client of `buf`
+---@param offset_encoding? 'utf-8'|'utf-16'|'utf-32'
+---                        defaults to `offset_encoding` of first client of `buf`
 ---@return integer `offset_encoding` index of the character in line {row} column {col} in buffer {buf}
 function M.character_offset(buf, row, col, offset_encoding)
   local line = get_line(buf, row)
@@ -2126,7 +2127,7 @@ end
 ---@param bufnr integer
 ---@param start_line integer
 ---@param end_line integer
----@param offset_encoding lsp.PositionEncodingKind
+---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.Range
 local function make_line_range_params(bufnr, start_line, end_line, offset_encoding)
   local last_line = api.nvim_buf_line_count(bufnr) - 1
