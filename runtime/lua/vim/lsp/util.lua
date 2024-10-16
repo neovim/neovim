@@ -1838,57 +1838,45 @@ function M.locations_to_items(locations, offset_encoding)
   return items
 end
 
--- According to LSP spec, if the client set "symbolKind.valueSet",
--- the client must handle it properly even if it receives a value outside the specification.
--- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
-function M._get_symbol_kind_name(symbol_kind)
-  return protocol.SymbolKind[symbol_kind] or 'Unknown'
-end
-
 --- Converts symbols to quickfix list items.
 ---
 ---@param symbols lsp.DocumentSymbol[]|lsp.SymbolInformation[]
 ---@param bufnr? integer
 ---@return vim.quickfix.entry[] # See |setqflist()| for the format
 function M.symbols_to_items(symbols, bufnr)
-  ---@param _symbols lsp.DocumentSymbol[]|lsp.SymbolInformation[]
-  ---@param _items vim.quickfix.entry[]
-  ---@param _bufnr integer
-  ---@return vim.quickfix.entry[]
-  local function _symbols_to_items(_symbols, _items, _bufnr)
-    for _, symbol in ipairs(_symbols) do
-      if symbol.location then -- SymbolInformation type
-        local range = symbol.location.range
-        local kind = M._get_symbol_kind_name(symbol.kind)
-        _items[#_items + 1] = {
-          filename = vim.uri_to_fname(symbol.location.uri),
-          lnum = range.start.line + 1,
-          col = range.start.character + 1,
-          kind = kind,
-          text = '[' .. kind .. '] ' .. symbol.name,
-        }
-      elseif symbol.selectionRange then -- DocumentSymbole type
-        local kind = M._get_symbol_kind_name(symbol.kind)
-        _items[#_items + 1] = {
-          -- bufnr = _bufnr,
-          filename = api.nvim_buf_get_name(_bufnr),
-          lnum = symbol.selectionRange.start.line + 1,
-          col = symbol.selectionRange.start.character + 1,
-          kind = kind,
-          text = '[' .. kind .. '] ' .. symbol.name,
-        }
-        if symbol.children then
-          for _, v in ipairs(_symbols_to_items(symbol.children, _items, _bufnr)) do
-            for _, s in ipairs(v) do
-              table.insert(_items, s)
-            end
-          end
-        end
-      end
+  bufnr = bufnr or 0
+  local items = {} --- @type vim.quickfix.entry[]
+  for _, symbol in ipairs(symbols) do
+    --- @type string?, lsp.Position?
+    local filename, pos
+
+    if symbol.location then
+      --- @cast symbol lsp.SymbolInformation
+      filename = vim.uri_to_fname(symbol.location.uri)
+      pos = symbol.location.range.start
+    elseif symbol.selectionRange then
+      --- @cast symbol lsp.DocumentSymbol
+      filename = api.nvim_buf_get_name(bufnr)
+      pos = symbol.selectionRange.start
     end
-    return _items
+
+    if filename and pos then
+      local kind = protocol.SymbolKind[symbol.kind] or 'Unknown'
+      items[#items + 1] = {
+        filename = filename,
+        lnum = pos.line + 1,
+        col = pos.character + 1,
+        kind = kind,
+        text = '[' .. kind .. '] ' .. symbol.name,
+      }
+    end
+
+    if symbol.children then
+      list_extend(items, M.symbols_to_items(symbol.children, bufnr))
+    end
   end
-  return _symbols_to_items(symbols, {}, bufnr or 0)
+
+  return items
 end
 
 --- Removes empty lines from the beginning and end.

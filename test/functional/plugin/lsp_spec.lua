@@ -3134,44 +3134,6 @@ describe('LSP', function()
     end)
   end)
 
-  describe('lsp.util._get_symbol_kind_name', function()
-    it('returns the name specified by protocol', function()
-      eq(
-        'File',
-        exec_lua(function()
-          return vim.lsp.util._get_symbol_kind_name(1)
-        end)
-      )
-      eq(
-        'TypeParameter',
-        exec_lua(function()
-          return vim.lsp.util._get_symbol_kind_name(26)
-        end)
-      )
-    end)
-
-    it('returns the name not specified by protocol', function()
-      eq(
-        'Unknown',
-        exec_lua(function()
-          return vim.lsp.util._get_symbol_kind_name(nil)
-        end)
-      )
-      eq(
-        'Unknown',
-        exec_lua(function()
-          return vim.lsp.util._get_symbol_kind_name(vim.NIL)
-        end)
-      )
-      eq(
-        'Unknown',
-        exec_lua(function()
-          return vim.lsp.util._get_symbol_kind_name(1000)
-        end)
-      )
-    end)
-  end)
-
   describe('lsp.util.jump_to_location', function()
     local target_bufnr --- @type integer
 
