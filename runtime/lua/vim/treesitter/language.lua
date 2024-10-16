@@ -108,11 +108,9 @@ function M.add(lang, opts)
   local path = opts.path
   local symbol_name = opts.symbol_name
 
-  vim.validate({
-    lang = { lang, 'string' },
-    path = { path, 'string', true },
-    symbol_name = { symbol_name, 'string', true },
-  })
+  vim.validate('lang', lang, 'string')
+  vim.validate('path', path, 'string', true)
+  vim.validate('symbol_name', symbol_name, 'string', true)
 
   -- parser names are assumed to be lowercase (consistent behavior on case-insensitive file systems)
   lang = lang:lower()

@@ -37,10 +37,8 @@ local M = {}
 ---               `idx` is the 1-based index of `item` within `items`.
 ---               `nil` if the user aborted the dialog.
 function M.select(items, opts, on_choice)
-  vim.validate({
-    items = { items, 'table', false },
-    on_choice = { on_choice, 'function', false },
-  })
+  vim.validate('items', items, 'table', false)
+  vim.validate('on_choice', on_choice, 'function', false)
   opts = opts or {}
   local choices = { opts.prompt or 'Select one of:' }
   local format_item = opts.format_item or tostring
@@ -86,10 +84,8 @@ end
 ---               an empty string if nothing was entered), or
 ---               `nil` if the user aborted the dialog.
 function M.input(opts, on_confirm)
-  vim.validate({
-    opts = { opts, 'table', true },
-    on_confirm = { on_confirm, 'function', false },
-  })
+  vim.validate('opts', opts, 'table', true)
+  vim.validate('on_confirm', on_confirm, 'function', false)
 
   opts = (opts and not vim.tbl_isempty(opts)) and opts or vim.empty_dict()
 
@@ -135,9 +131,7 @@ end
 ---
 ---@see |vim.system()|
 function M.open(path, opt)
-  vim.validate({
-    path = { path, 'string' },
-  })
+  vim.validate('path', path, 'string')
   local is_uri = path:match('%w+:')
   if not is_uri then
     path = vim.fs.normalize(path)

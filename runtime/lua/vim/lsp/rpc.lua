@@ -152,9 +152,7 @@ end
 ---@param err table The error object
 ---@return string error_message The formatted error message
 function M.format_rpc_error(err)
-  validate({
-    err = { err, 't' },
-  })
+  validate('err', err, 'table')
 
   -- There is ErrorCodes in the LSP specification,
   -- but in ResponseError.code it is not used and the actual type is number.
@@ -329,10 +327,8 @@ end
 ---@return boolean success `true` if request could be sent, `false` if not
 ---@return integer? message_id if request could be sent, `nil` if not
 function Client:request(method, params, callback, notify_reply_callback)
-  validate({
-    callback = { callback, 'f' },
-    notify_reply_callback = { notify_reply_callback, 'f', true },
-  })
+  validate('callback', callback, 'function')
+  validate('notify_reply_callback', notify_reply_callback, 'function', true)
   self.message_index = self.message_index + 1
   local message_id = self.message_index
   local result = self:encode_and_send({
@@ -465,9 +461,7 @@ function Client:handle_body(body)
     local notify_reply_callbacks = self.notify_reply_callbacks
     local notify_reply_callback = notify_reply_callbacks and notify_reply_callbacks[result_id]
     if notify_reply_callback then
-      validate({
-        notify_reply_callback = { notify_reply_callback, 'f' },
-      })
+      validate('notify_reply_callback', notify_reply_callback, 'function')
       notify_reply_callback(result_id)
       notify_reply_callbacks[result_id] = nil
     end
@@ -498,9 +492,7 @@ function Client:handle_body(body)
     local callback = message_callbacks and message_callbacks[result_id]
     if callback then
       message_callbacks[result_id] = nil
-      validate({
-        callback = { callback, 'f' },
-      })
+      validate('callback', callback, 'function')
       if decoded.error then
         decoded.error = setmetatable(decoded.error, {
           __tostring = M.format_rpc_error,
@@ -734,10 +726,8 @@ end
 function M.start(cmd, dispatchers, extra_spawn_params)
   log.info('Starting RPC client', { cmd = cmd, extra = extra_spawn_params })
 
-  validate({
-    cmd = { cmd, 't' },
-    dispatchers = { dispatchers, 't', true },
-  })
+  validate('cmd', cmd, 'table')
+  validate('dispatchers', dispatchers, 'table', true)
 
   extra_spawn_params = extra_spawn_params or {}
 

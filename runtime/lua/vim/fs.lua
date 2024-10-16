@@ -53,7 +53,7 @@ function M.dirname(file)
   if file == nil then
     return nil
   end
-  vim.validate({ file = { file, 's' } })
+  vim.validate('file', file, 'string')
   if iswin then
     file = file:gsub(os_sep, '/') --[[@as string]]
     if file:match('^%w:/?$') then
@@ -83,7 +83,7 @@ function M.basename(file)
   if file == nil then
     return nil
   end
-  vim.validate({ file = { file, 's' } })
+  vim.validate('file', file, 'string')
   if iswin then
     file = file:gsub(os_sep, '/') --[[@as string]]
     if file:match('^%w:/?$') then
@@ -123,11 +123,9 @@ end
 function M.dir(path, opts)
   opts = opts or {}
 
-  vim.validate({
-    path = { path, { 'string' } },
-    depth = { opts.depth, { 'number' }, true },
-    skip = { opts.skip, { 'function' }, true },
-  })
+  vim.validate('path', path, 'string')
+  vim.validate('depth', opts.depth, 'number', true)
+  vim.validate('skip', opts.skip, 'function', true)
 
   path = M.normalize(path)
   if not opts.depth or opts.depth == 1 then
@@ -231,14 +229,12 @@ end
 ---@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
 function M.find(names, opts)
   opts = opts or {}
-  vim.validate({
-    names = { names, { 's', 't', 'f' } },
-    path = { opts.path, 's', true },
-    upward = { opts.upward, 'b', true },
-    stop = { opts.stop, 's', true },
-    type = { opts.type, 's', true },
-    limit = { opts.limit, 'n', true },
-  })
+  vim.validate({ names = { names, { 'string', 'table', 'function' } } })
+  vim.validate('path', opts.path, 'string', true)
+  vim.validate('upward', opts.upward, 'boolean', true)
+  vim.validate('stop', opts.stop, 'string', true)
+  vim.validate('type', opts.type, 'string', true)
+  vim.validate('limit', opts.limit, 'number', true)
 
   if type(names) == 'string' then
     names = { names }
@@ -547,11 +543,9 @@ function M.normalize(path, opts)
   opts = opts or {}
 
   if not opts._fast then
-    vim.validate({
-      path = { path, { 'string' } },
-      expand_env = { opts.expand_env, { 'boolean' }, true },
-      win = { opts.win, { 'boolean' }, true },
-    })
+    vim.validate('path', path, 'string')
+    vim.validate('expand_env', opts.expand_env, 'boolean', true)
+    vim.validate('win', opts.win, 'boolean', true)
   end
 
   local win = opts.win == nil and iswin or not not opts.win

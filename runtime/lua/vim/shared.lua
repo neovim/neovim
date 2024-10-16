@@ -109,7 +109,9 @@ function vim.gsplit(s, sep, opts)
   if type(opts) == 'boolean' then
     plain = opts -- For backwards compatibility.
   else
-    vim.validate({ s = { s, 's' }, sep = { sep, 's' }, opts = { opts, 't', true } })
+    vim.validate('s', s, 'string')
+    vim.validate('sep', sep, 'string')
+    vim.validate('opts', opts, 'table', true)
     opts = opts or {}
     plain, trimempty = opts.plain, opts.trimempty
   end
@@ -303,7 +305,8 @@ end
 ---@param opts? vim.tbl_contains.Opts Keyword arguments |kwargs|:
 ---@return boolean `true` if `t` contains `value`
 function vim.tbl_contains(t, value, opts)
-  vim.validate({ t = { t, 't' }, opts = { opts, 't', true } })
+  vim.validate('t', t, 'table')
+  vim.validate('opts', opts, 'table', true)
   --- @cast t table<any,any>
 
   local pred --- @type fun(v: any): boolean?
@@ -550,12 +553,10 @@ end
 ---@param finish integer? Final index on src. Defaults to `#src`
 ---@return T dst
 function vim.list_extend(dst, src, start, finish)
-  vim.validate({
-    dst = { dst, 't' },
-    src = { src, 't' },
-    start = { start, 'n', true },
-    finish = { finish, 'n', true },
-  })
+  vim.validate('dst', dst, 'table')
+  vim.validate('src', src, 'table')
+  vim.validate('start', start, 'number', true)
+  vim.validate('finish', finish, 'number', true)
   for i = start or 1, finish or #src do
     table.insert(dst, src[i])
   end
@@ -987,6 +988,10 @@ do
 
       ok = (actual == expected) or (v == nil and optional == true)
       if not ok then
+        if not jit and (actual ~= 'string' or actual ~= 'number') then
+          -- PUC-Lua can only handle string and number for %s in string.format()
+          v = vim.inspect(v)
+        end
         err_msg = ('%s: expected %s, got %s%s'):format(
           name,
           expected,

@@ -320,7 +320,7 @@ local global_diagnostic_options = {
 --- @type table<string,vim.diagnostic.Handler>
 M.handlers = setmetatable({}, {
   __newindex = function(t, name, handler)
-    vim.validate({ handler = { handler, 't' } })
+    vim.validate('handler', handler, 'table')
     rawset(t, name, handler)
     if global_diagnostic_options[name] == nil then
       global_diagnostic_options[name] = true
@@ -477,10 +477,8 @@ end
 --- @param diagnostics vim.Diagnostic[]
 --- @return vim.Diagnostic[]
 local function reformat_diagnostics(format, diagnostics)
-  vim.validate({
-    format = { format, 'f' },
-    diagnostics = { diagnostics, 't' },
-  })
+  vim.validate('format', format, 'function')
+  vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
 
   local formatted = vim.deepcopy(diagnostics, true)
   for _, diagnostic in ipairs(formatted) do
@@ -1012,10 +1010,8 @@ end
 ---                          When omitted, update the global diagnostic options.
 ---@return vim.diagnostic.Opts? : Current diagnostic config if {opts} is omitted.
 function M.config(opts, namespace)
-  vim.validate({
-    opts = { opts, 't', true },
-    namespace = { namespace, 'n', true },
-  })
+  vim.validate('opts', opts, 'table', true)
+  vim.validate('namespace', namespace, 'number', true)
 
   local t --- @type vim.diagnostic.Opts
   if namespace then
@@ -1058,16 +1054,10 @@ end
 ---@param diagnostics vim.Diagnostic[]
 ---@param opts? vim.diagnostic.Opts Display options to pass to |vim.diagnostic.show()|
 function M.set(namespace, bufnr, diagnostics, opts)
-  vim.validate({
-    namespace = { namespace, 'n' },
-    bufnr = { bufnr, 'n' },
-    diagnostics = {
-      diagnostics,
-      vim.islist,
-      'a list of diagnostics',
-    },
-    opts = { opts, 't', true },
-  })
+  vim.validate('namespace', namespace, 'number')
+  vim.validate('bufnr', bufnr, 'number')
+  vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
+  vim.validate('opts', opts, 'table', true)
 
   bufnr = get_bufnr(bufnr)
 
@@ -1092,7 +1082,7 @@ end
 ---@param namespace integer Diagnostic namespace
 ---@return vim.diagnostic.NS : Namespace metadata
 function M.get_namespace(namespace)
-  vim.validate({ namespace = { namespace, 'n' } })
+  vim.validate('namespace', namespace, 'number')
   if not all_namespaces[namespace] then
     local name --- @type string?
     for k, v in pairs(api.nvim_get_namespaces()) do
@@ -1131,10 +1121,8 @@ end
 ---@return vim.Diagnostic[] : Fields `bufnr`, `end_lnum`, `end_col`, and `severity`
 ---                           are guaranteed to be present.
 function M.get(bufnr, opts)
-  vim.validate({
-    bufnr = { bufnr, 'n', true },
-    opts = { opts, 't', true },
-  })
+  vim.validate('bufnr', bufnr, 'number', true)
+  vim.validate('opts', opts, 'table', true)
 
   return vim.deepcopy(get_diagnostics(bufnr, opts, false), true)
 end
@@ -1147,10 +1135,8 @@ end
 ---@return table : Table with actually present severity values as keys
 ---                (see |diagnostic-severity|) and integer counts as values.
 function M.count(bufnr, opts)
-  vim.validate({
-    bufnr = { bufnr, 'n', true },
-    opts = { opts, 't', true },
-  })
+  vim.validate('bufnr', bufnr, 'number', true)
+  vim.validate('opts', opts, 'table', true)
 
   local diagnostics = get_diagnostics(bufnr, opts, false)
   local count = {} --- @type table<integer,integer>
@@ -1348,16 +1334,10 @@ end
 
 M.handlers.signs = {
   show = function(namespace, bufnr, diagnostics, opts)
-    vim.validate({
-      namespace = { namespace, 'n' },
-      bufnr = { bufnr, 'n' },
-      diagnostics = {
-        diagnostics,
-        vim.islist,
-        'a list of diagnostics',
-      },
-      opts = { opts, 't', true },
-    })
+    vim.validate('namespace', namespace, 'number')
+    vim.validate('bufnr', bufnr, 'number')
+    vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
+    vim.validate('opts', opts, 'table', true)
 
     bufnr = get_bufnr(bufnr)
     opts = opts or {}
@@ -1475,16 +1455,10 @@ M.handlers.signs = {
 
 M.handlers.underline = {
   show = function(namespace, bufnr, diagnostics, opts)
-    vim.validate({
-      namespace = { namespace, 'n' },
-      bufnr = { bufnr, 'n' },
-      diagnostics = {
-        diagnostics,
-        vim.islist,
-        'a list of diagnostics',
-      },
-      opts = { opts, 't', true },
-    })
+    vim.validate('namespace', namespace, 'number')
+    vim.validate('bufnr', bufnr, 'number')
+    vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
+    vim.validate('opts', opts, 'table', true)
 
     bufnr = get_bufnr(bufnr)
     opts = opts or {}
@@ -1548,16 +1522,10 @@ M.handlers.underline = {
 
 M.handlers.virtual_text = {
   show = function(namespace, bufnr, diagnostics, opts)
-    vim.validate({
-      namespace = { namespace, 'n' },
-      bufnr = { bufnr, 'n' },
-      diagnostics = {
-        diagnostics,
-        vim.islist,
-        'a list of diagnostics',
-      },
-      opts = { opts, 't', true },
-    })
+    vim.validate('namespace', namespace, 'number')
+    vim.validate('bufnr', bufnr, 'number')
+    vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
+    vim.validate('opts', opts, 'table', true)
 
     bufnr = get_bufnr(bufnr)
     opts = opts or {}
@@ -1681,10 +1649,8 @@ end
 ---@param bufnr integer? Buffer number, or 0 for current buffer. When
 ---                      omitted, hide diagnostics in all buffers.
 function M.hide(namespace, bufnr)
-  vim.validate({
-    namespace = { namespace, 'n', true },
-    bufnr = { bufnr, 'n', true },
-  })
+  vim.validate('namespace', namespace, 'number', true)
+  vim.validate('bufnr', bufnr, 'number', true)
 
   local buffers = bufnr and { get_bufnr(bufnr) } or vim.tbl_keys(diagnostic_cache)
   for _, iter_bufnr in ipairs(buffers) do
@@ -1741,9 +1707,9 @@ end
 ---                             or {bufnr} is nil.
 ---@param opts? vim.diagnostic.Opts Display options.
 function M.show(namespace, bufnr, diagnostics, opts)
+  vim.validate('namespace', namespace, 'number', true)
+  vim.validate('bufnr', bufnr, 'number', true)
   vim.validate({
-    namespace = { namespace, 'n', true },
-    bufnr = { bufnr, 'n', true },
     diagnostics = {
       diagnostics,
       function(v)
@@ -1751,8 +1717,8 @@ function M.show(namespace, bufnr, diagnostics, opts)
       end,
       'a list of diagnostics',
     },
-    opts = { opts, 't', true },
   })
+  vim.validate('opts', opts, 'table', true)
 
   if not bufnr or not namespace then
     assert(not diagnostics, 'Cannot show diagnostics without a buffer and namespace')
@@ -1825,9 +1791,7 @@ function M.open_float(opts, ...)
     bufnr = opts
     opts = ... --- @type vim.diagnostic.Opts.Float
   else
-    vim.validate({
-      opts = { opts, 't', true },
-    })
+    vim.validate('opts', opts, 'table', true)
   end
 
   opts = opts or {}
@@ -2038,10 +2002,8 @@ end
 ---@param bufnr integer? Remove diagnostics for the given buffer. When omitted,
 ---                     diagnostics are removed for all buffers.
 function M.reset(namespace, bufnr)
-  vim.validate({
-    namespace = { namespace, 'n', true },
-    bufnr = { bufnr, 'n', true },
-  })
+  vim.validate('namespace', namespace, 'number', true)
+  vim.validate('bufnr', bufnr, 'number', true)
 
   local buffers = bufnr and { get_bufnr(bufnr) } or vim.tbl_keys(diagnostic_cache)
   for _, iter_bufnr in ipairs(buffers) do
@@ -2144,10 +2106,8 @@ function M.enable(enable, filter)
       '0.12'
     )
 
-    vim.validate({
-      enable = { enable, 'n', true }, -- Legacy `bufnr` arg.
-      filter = { filter, 'n', true }, -- Legacy `namespace` arg.
-    })
+    vim.validate('enable', enable, 'number', true) -- Legacy `bufnr` arg.
+    vim.validate('filter', filter, 'number', true) -- Legacy `namespace` arg.
 
     local ns_id = type(filter) == 'number' and filter or nil
     filter = {}
@@ -2156,10 +2116,8 @@ function M.enable(enable, filter)
     enable = true
   else
     filter = filter or {}
-    vim.validate({
-      enable = { enable, 'b', true },
-      filter = { filter, 't', true },
-    })
+    vim.validate('enable', enable, 'boolean', true)
+    vim.validate('filter', filter, 'table', true)
   end
 
   enable = enable == nil and true or enable
@@ -2234,13 +2192,11 @@ end
 ---                       ERROR.
 ---@return vim.Diagnostic?: |vim.Diagnostic| structure or `nil` if {pat} fails to match {str}.
 function M.match(str, pat, groups, severity_map, defaults)
-  vim.validate({
-    str = { str, 's' },
-    pat = { pat, 's' },
-    groups = { groups, 't' },
-    severity_map = { severity_map, 't', true },
-    defaults = { defaults, 't', true },
-  })
+  vim.validate('str', str, 'string')
+  vim.validate('pat', pat, 'string')
+  vim.validate('groups', groups, 'table')
+  vim.validate('severity_map', severity_map, 'table', true)
+  vim.validate('defaults', defaults, 'table', true)
 
   --- @type table<string,vim.diagnostic.Severity>
   severity_map = severity_map or M.severity
@@ -2283,13 +2239,7 @@ local errlist_type_map = {
 ---@param diagnostics vim.Diagnostic[]
 ---@return table[] : Quickfix list items |setqflist-what|
 function M.toqflist(diagnostics)
-  vim.validate({
-    diagnostics = {
-      diagnostics,
-      vim.islist,
-      'a list of diagnostics',
-    },
-  })
+  vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
 
   local list = {} --- @type table[]
   for _, v in ipairs(diagnostics) do
@@ -2323,13 +2273,7 @@ end
 ---@param list table[] List of quickfix items from |getqflist()| or |getloclist()|.
 ---@return vim.Diagnostic[]
 function M.fromqflist(list)
-  vim.validate({
-    list = {
-      list,
-      vim.islist,
-      'a list of quickfix items',
-    },
-  })
+  vim.validate('list', list, 'table')
 
   local diagnostics = {} --- @type vim.Diagnostic[]
   for _, item in ipairs(list) do

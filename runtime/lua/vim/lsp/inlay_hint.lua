@@ -145,7 +145,7 @@ end
 --- @return vim.lsp.inlay_hint.get.ret[]
 --- @since 12
 function M.get(filter)
-  vim.validate({ filter = { filter, 'table', true } })
+  vim.validate('filter', filter, 'table', true)
   filter = filter or {}
 
   local bufnr = filter.bufnr
@@ -375,11 +375,11 @@ api.nvim_set_decoration_provider(namespace, {
 --- @return boolean
 --- @since 12
 function M.is_enabled(filter)
-  vim.validate({ filter = { filter, 'table', true } })
+  vim.validate('filter', filter, 'table', true)
   filter = filter or {}
   local bufnr = filter.bufnr
 
-  vim.validate({ bufnr = { bufnr, 'number', true } })
+  vim.validate('bufnr', bufnr, 'number', true)
   if bufnr == nil then
     return globalstate.enabled
   elseif bufnr == 0 then
@@ -406,7 +406,8 @@ end
 --- @param filter vim.lsp.inlay_hint.enable.Filter?
 --- @since 12
 function M.enable(enable, filter)
-  vim.validate({ enable = { enable, 'boolean', true }, filter = { filter, 'table', true } })
+  vim.validate('enable', enable, 'boolean', true)
+  vim.validate('filter', filter, 'table', true)
   enable = enable == nil or enable
   filter = filter or {}
 

@@ -330,9 +330,7 @@ end
 ---
 --- @param opts vim.treesitter.dev.inspect_tree.Opts?
 function M.inspect_tree(opts)
-  vim.validate({
-    opts = { opts, 't', true },
-  })
+  vim.validate('opts', opts, 'table', true)
 
   opts = opts or {}
 

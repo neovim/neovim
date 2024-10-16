@@ -21,10 +21,8 @@ local M = {}
 ---
 ---@see |vim.lsp.buf_request()|
 local function request(method, params, handler)
-  validate({
-    method = { method, 's' },
-    handler = { handler, 'f', true },
-  })
+  validate('method', method, 'string')
+  validate('handler', handler, 'function', true)
   return vim.lsp.buf_request(0, method, params, handler)
 end
 
@@ -437,7 +435,7 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 ---@param opts? vim.lsp.ListOpts
 function M.references(context, opts)
-  validate({ context = { context, 't', true } })
+  validate('context', context, 'table', true)
   local params = util.make_position_params()
   params.context = context or {
     includeDeclaration = true,
@@ -847,7 +845,7 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 ---@see vim.lsp.protocol.CodeActionTriggerKind
 function M.code_action(opts)
-  validate({ options = { opts, 't', true } })
+  validate('options', opts, 'table', true)
   opts = opts or {}
   -- Detect old API call code_action(context) which should now be
   -- code_action({ context = context} )
@@ -925,10 +923,8 @@ end
 --- @param command_params lsp.ExecuteCommandParams
 --- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 function M.execute_command(command_params)
-  validate({
-    command = { command_params.command, 's' },
-    arguments = { command_params.arguments, 't', true },
-  })
+  validate('command', command_params.command, 'string')
+  validate('arguments', command_params.arguments, 'table', true)
   command_params = {
     command = command_params.command,
     arguments = command_params.arguments,
