@@ -6,7 +6,6 @@ local highlight = vim.highlight
 local uv = vim.uv
 
 local npcall = vim.F.npcall
-local split = vim.split
 
 local M = {}
 
@@ -432,7 +431,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     local start_col = get_line_byte_from_position(bufnr, text_edit.range.start, offset_encoding)
     local end_row = text_edit.range['end'].line
     local end_col = get_line_byte_from_position(bufnr, text_edit.range['end'], offset_encoding)
-    local text = split(text_edit.newText, '\n', { plain = true })
+    local text = vim.split(text_edit.newText, '\n', { plain = true })
 
     local max = api.nvim_buf_line_count(bufnr)
     -- If the whole edit is after the lines in the buffer we can simply add the new text to the end
@@ -818,7 +817,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
     -- wrap inside a code block for proper rendering
     label = ('```%s\n%s\n```'):format(ft, label)
   end
-  list_extend(contents, split(label, '\n', { plain = true, trimempty = true }))
+  list_extend(contents, vim.split(label, '\n', { plain = true, trimempty = true }))
   local doc = signature.documentation
   if doc then
     -- if LSP returns plain string, we treat it as plaintext. This avoids
