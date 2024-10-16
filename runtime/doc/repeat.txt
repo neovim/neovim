@@ -979,9 +979,9 @@ For example, to profile the one_script.vim script file: >
 		clear the profiling statistics and start profiling again.
 
 :prof[ile] pause
-		Don't profile until the following `:profile continue`.  Can be
-		used when doing something that should not be counted (e.g., an
-		external command).  Does not nest.
+		Stop profiling until the next `:profile continue` command.
+		Can be used when doing something that should not be counted
+		(e.g., an external command).  Does not nest.
 
 :prof[ile] continue
 		Continue profiling after `:profile pause`.
