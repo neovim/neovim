@@ -1700,10 +1700,10 @@ do --[[ References ]]
     validate('bufnr', bufnr, 'number', true)
     validate('offset_encoding', offset_encoding, 'string', false)
     for _, reference in ipairs(references) do
-      local start_line, start_char =
-        reference['range']['start']['line'], reference['range']['start']['character']
-      local end_line, end_char =
-        reference['range']['end']['line'], reference['range']['end']['character']
+      local start_line = reference.range.start.line
+      local start_char = reference.range.start.character
+      local end_line = reference.range['end'].line
+      local end_char = reference.range['end'].character
 
       local start_idx = get_line_byte_from_position(
         bufnr,
@@ -1772,8 +1772,7 @@ function M.locations_to_items(locations, offset_encoding)
     table.insert(grouped[uri], { start = range.start, ['end'] = range['end'], location = d })
   end
 
-  for uri in vim.spairs(grouped) do
-    local rows = grouped[uri]
+  for uri, rows in vim.spairs(grouped) do
     table.sort(rows, position_sort)
     local filename = vim.uri_to_fname(uri)
 
@@ -2008,19 +2007,19 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
   validate('offset_encoding', offset_encoding, 'string', true)
   bufnr = bufnr or api.nvim_get_current_buf()
   offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
-  --- @type integer[]
-  local A = list_extend({}, start_pos or api.nvim_buf_get_mark(bufnr, '<'))
-  --- @type integer[]
-  local B = list_extend({}, end_pos or api.nvim_buf_get_mark(bufnr, '>'))
+  --- @type [integer, integer]
+  local A = { unpack(start_pos or api.nvim_buf_get_mark(bufnr, '<')) }
+  --- @type [integer, integer]
+  local B = { unpack(end_pos or api.nvim_buf_get_mark(bufnr, '>')) }
   -- convert to 0-index
   A[1] = A[1] - 1
   B[1] = B[1] - 1
   -- account for offset_encoding.
   if A[2] > 0 then
-    A = { A[1], M.character_offset(bufnr, A[1], A[2], offset_encoding) }
+    A[2] = M.character_offset(bufnr, A[1], A[2], offset_encoding)
   end
   if B[2] > 0 then
-    B = { B[1], M.character_offset(bufnr, B[1], B[2], offset_encoding) }
+    B[2] = M.character_offset(bufnr, B[1], B[2], offset_encoding)
   end
   -- we need to offset the end character position otherwise we loose the last
   -- character of the selection, as LSP end position is exclusive
