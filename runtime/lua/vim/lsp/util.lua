@@ -5,8 +5,6 @@ local list_extend = vim.list_extend
 local highlight = vim.highlight
 local uv = vim.uv
 
-local npcall = vim.F.npcall
-
 local M = {}
 
 local default_border = {
@@ -1082,7 +1080,7 @@ end
 
 local function find_window_by_var(name, value)
   for _, win in ipairs(api.nvim_list_wins()) do
-    if npcall(api.nvim_win_get_var, win, name) == value then
+    if vim.w[win][name] == value then
       return win
     end
   end
@@ -1604,7 +1602,7 @@ function M.open_floating_preview(contents, syntax, opts)
   if opts.focus_id and opts.focusable ~= false and opts.focus then
     -- Go back to previous window if we are in a focusable one
     local current_winnr = api.nvim_get_current_win()
-    if npcall(api.nvim_win_get_var, current_winnr, opts.focus_id) then
+    if vim.w[current_winnr][opts.focus_id] then
       api.nvim_command('wincmd p')
       return bufnr, current_winnr
     end
@@ -1621,7 +1619,7 @@ function M.open_floating_preview(contents, syntax, opts)
 
   -- check if another floating preview already exists for this buffer
   -- and close it if needed
-  local existing_float = npcall(api.nvim_buf_get_var, bufnr, 'lsp_floating_preview')
+  local existing_float = vim.b[bufnr].lsp_floating_preview
   if existing_float and api.nvim_win_is_valid(existing_float) then
     api.nvim_win_close(existing_float, true)
   end
