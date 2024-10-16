@@ -161,19 +161,6 @@ function vim.str_utf_start(str, index) end
 --- @return integer
 function vim.str_utf_end(str, index) end
 
---- Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
---- supplied, the length of the string is used. All indices are zero-based.
----
---- Embedded NUL bytes are treated as terminating the string. Invalid UTF-8
---- bytes, and embedded surrogates are counted as one code point each. An
---- {index} in the middle of a UTF-8 sequence is rounded upwards to the end of
---- that sequence.
---- @param str string
---- @param index? integer
---- @return integer # UTF-32 index
---- @return integer # UTF-16 index
-function vim.str_utfindex(str, index) end
-
 --- The result is a String, which is the text {str} converted from
 --- encoding {from} to encoding {to}. When the conversion fails `nil` is
 --- returned.  When some characters could not be converted they

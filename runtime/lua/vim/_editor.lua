@@ -780,7 +780,76 @@ function vim.str_byteindex(s, encoding, index, no_out_of_range)
   return len
 end
 
---- Generates a list of possible completions for the string.
+--- Convert byte index to UTF-32, UTF-16 or UTF-8 indices. If {index} is not
+--- supplied, the length of the string is used. All indices are zero-based.
+---
+--- If {no_out_of_range} is true then an out of range index will return string
+--- length instead of throwing an error.
+--- Invalid UTF-8 bytes, and embedded surrogates are counted as one code point
+--- each. An {index} in the middle of a UTF-8 sequence is rounded upwards to the end of
+--- that sequence.
+---@param s string
+---@param encoding "utf-8"|"utf-16"|"utf-32"
+---@param index integer
+---@param no_out_of_range? boolean
+---@return integer
+function vim.str_utfindex(s, encoding, index, no_out_of_range)
+  if encoding == nil or type(encoding) == 'number' then
+    -- Legacy support for old API
+    -- Parameters: ~
+    --   • {str}    (`string`)
+    --   • {index}  (`integer?`)
+    local old_index = encoding or nil
+    local col32, col16 = vim.__str_utfindex(s, old_index) --[[@as integer,integer]]
+    if not col32 or not col16 then
+      error('index out of range')
+    end
+    -- Return (multiple): ~
+    --     (`integer`) UTF-32 index
+    --     (`integer`) UTF-16 index
+    return col32, col16
+  end
+
+  if index == 0 then
+    return 0
+  end
+  no_out_of_range = no_out_of_range or false
+
+  if not utfs[encoding] then
+    error('Invalid encoding: ' .. encoding)
+  end
+
+  if encoding == 'utf-8' then
+    local len = #s
+    if not index then
+      return len
+    end
+    if index > len then
+      return no_out_of_range and len or error('index out of range')
+    end
+    return index
+  end
+  local col32, col16 = vim.__str_utfindex(s, index) --[[@as integer?,integer?]]
+  local max32, max16 --[[@type integer,integer]]
+  if no_out_of_range then
+    max32, max16 = vim.__str_utfindex(s) --[[@as integer,integer]]
+  end
+  if encoding == 'utf-16' then
+    if not col16 then
+      return no_out_of_range and max16 or error('index out of range')
+    end
+    return col16
+  elseif encoding == 'utf-32' then
+    if not col32 then
+      return no_out_of_range and max32 or error('index out of range')
+    end
+    return col32
+  end
+
+  error('Invalid encoding: ' .. encoding)
+end
+
+--- Generates a list of possible completions for the str
 --- String has the pattern.
 ---
 --- 1. Can we get it to just return things in the global namespace with that name prefix

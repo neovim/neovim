@@ -418,7 +418,7 @@ describe('lua stdlib', function()
       exec_lua('return vim.str_byteindex(_G.test_text, "utf-8", 99999, true)')
     )
     eq(2, exec_lua('return vim.str_byteindex("é", "utf-16", 2, true)'))
-    local i32, i16 = 0, 0
+    local i32, i16, i8 = 0, 0, 0
     local len = 51
     for k = 0, len do
       if indices32[i32] < k then
@@ -430,9 +430,25 @@ describe('lua stdlib', function()
           i16 = i16 + 1
         end
       end
+      if indices8[i8] < k then
+        i8 = i8 + 1
+      end
       eq({ i32, i16 }, exec_lua('return {vim.str_utfindex(_G.test_text, ...)}', k), k)
+      eq({ i32 }, exec_lua('return {vim.str_utfindex(_G.test_text, "utf-32", ...)}', k), k)
+      eq({ i16 }, exec_lua('return {vim.str_utfindex(_G.test_text, "utf-16", ...)}', k), k)
+      eq({ i8 }, exec_lua('return {vim.str_utfindex(_G.test_text, "utf-8", ...)}', k), k)
     end
-    eq(
+
+    eq({ #indices32, #indices16 }, exec_lua('return {vim.str_utfindex(_G.test_text)}'))
+
+    eq(#indices32, exec_lua('return vim.str_utfindex(_G.test_text, "utf-32", math.huge, true)'))
+    eq(#indices16, exec_lua('return vim.str_utfindex(_G.test_text, "utf-16", math.huge, true)'))
+    eq(#indices8, exec_lua('return vim.str_utfindex(_G.test_text, "utf-8", math.huge, true)'))
+    matches(
+      'Invalid encoding',
+      pcall_err(exec_lua, 'return vim.str_utfindex(_G.test_text, "madeupencoding", ...)', 1)
+    )
+    matches(
       'index out of range',
       pcall_err(exec_lua, 'return vim.str_utfindex(_G.test_text, ...)', len + 1)
     )
