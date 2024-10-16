@@ -1238,57 +1238,56 @@ function M.stylize_markdown(bufnr, contents, opts)
   local highlights = {} --- @type {ft:string,start:integer,finish:integer}[]
   -- keep track of lnums that contain markdown
   local markdown_lines = {} --- @type table<integer,boolean>
-  do
-    local i = 1
-    while i <= #contents do
-      local line = contents[i]
-      local match = match_begin(line)
-      if match then
-        local start = #stripped
-        i = i + 1
-        while i <= #contents do
-          line = contents[i]
-          if match_end(line, match) then
-            i = i + 1
-            break
-          end
-          table.insert(stripped, line)
+
+  local i = 1
+  while i <= #contents do
+    local line = contents[i]
+    local match = match_begin(line)
+    if match then
+      local start = #stripped
+      i = i + 1
+      while i <= #contents do
+        line = contents[i]
+        if match_end(line, match) then
           i = i + 1
+          break
         end
-        table.insert(highlights, {
-          ft = match.ft,
-          start = start + 1,
-          finish = #stripped,
-        })
-        -- add a separator, but not on the last line
-        if opts.separator and i < #contents then
-          table.insert(stripped, '---')
-          markdown_lines[#stripped] = true
-        end
-      else
-        -- strip any empty lines or separators prior to this separator in actual markdown
-        if line:match('^---+$') then
-          while
-            markdown_lines[#stripped]
-            and (stripped[#stripped]:match('^%s*$') or stripped[#stripped]:match('^---+$'))
-          do
-            markdown_lines[#stripped] = false
-            table.remove(stripped, #stripped)
-          end
-        end
-        -- add the line if its not an empty line following a separator
-        if
-          not (
-            line:match('^%s*$')
-            and markdown_lines[#stripped]
-            and stripped[#stripped]:match('^---+$')
-          )
-        then
-          table.insert(stripped, line)
-          markdown_lines[#stripped] = true
-        end
+        table.insert(stripped, line)
         i = i + 1
       end
+      table.insert(highlights, {
+        ft = match.ft,
+        start = start + 1,
+        finish = #stripped,
+      })
+      -- add a separator, but not on the last line
+      if opts.separator and i < #contents then
+        table.insert(stripped, '---')
+        markdown_lines[#stripped] = true
+      end
+    else
+      -- strip any empty lines or separators prior to this separator in actual markdown
+      if line:match('^---+$') then
+        while
+          markdown_lines[#stripped]
+          and (stripped[#stripped]:match('^%s*$') or stripped[#stripped]:match('^---+$'))
+        do
+          markdown_lines[#stripped] = false
+          table.remove(stripped, #stripped)
+        end
+      end
+      -- add the line if its not an empty line following a separator
+      if
+        not (
+          line:match('^%s*$')
+          and markdown_lines[#stripped]
+          and stripped[#stripped]:match('^---+$')
+        )
+      then
+        table.insert(stripped, line)
+        markdown_lines[#stripped] = true
+      end
+      i = i + 1
     end
   end
 
