@@ -554,17 +554,24 @@ local function path_under_prefix(path, prefix)
   return true
 end
 
---- Get list of buffers whose filename matches the given path prefix (normalized full path)
+--- Get list of loaded writable buffers whose filename matches the given path
+--- prefix (normalized full path).
 ---@param prefix string
 ---@return integer[]
-local function get_bufs_with_prefix(prefix)
+local function get_writable_bufs(prefix)
   local prefix_parts = path_components(prefix)
-  local buffers = {}
-  for _, v in ipairs(api.nvim_list_bufs()) do
-    local bname = api.nvim_buf_get_name(v)
-    local path = path_components(vim.fs.normalize(bname, { expand_env = false }))
-    if path_under_prefix(path, prefix_parts) then
-      table.insert(buffers, v)
+  local buffers = {} --- @type integer[]
+  for _, buf in ipairs(api.nvim_list_bufs()) do
+    -- No need to care about unloaded or nofile buffers. Also :saveas won't work for them.
+    if
+      api.nvim_buf_is_loaded(buf)
+      and not vim.list_contains({ 'nofile', 'nowrite' }, vim.bo[buf].buftype)
+    then
+      local bname = api.nvim_buf_get_name(buf)
+      local path = path_components(vim.fs.normalize(bname, { expand_env = false }))
+      if path_under_prefix(path, prefix_parts) then
+        buffers[#buffers + 1] = buf
+      end
     end
   end
   return buffers
@@ -608,13 +615,7 @@ function M.rename(old_fname, new_fname, opts)
 
   local buf_rename = {} ---@type table<integer, {from: string, to: string}>
   local old_fname_pat = '^' .. vim.pesc(old_fname_full)
-  for b in
-    vim.iter(get_bufs_with_prefix(old_fname_full)):filter(function(b)
-      -- No need to care about unloaded or nofile buffers. Also :saveas won't work for them.
-      return api.nvim_buf_is_loaded(b)
-        and not vim.list_contains({ 'nofile', 'nowrite' }, vim.bo[b].buftype)
-    end)
-  do
+  for _, b in ipairs(get_writable_bufs(old_fname_full)) do
     -- Renaming a buffer may conflict with another buffer that happens to have the same name. In
     -- most cases, this would have been already detected by the file conflict check above, but the
     -- conflicting buffer may not be associated with a file. For example, 'buftype' can be "nofile"
