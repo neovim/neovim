@@ -7310,7 +7310,9 @@ vim.go.titleold = vim.o.titleold
 --- window.  This happens only when the 'title' option is on.
 ---
 --- When this option contains printf-style '%' items, they will be
---- expanded according to the rules used for 'statusline'.
+--- expanded according to the rules used for 'statusline'.  If it contains
+--- an invalid '%' format, the value is used as-is and no error or warning
+--- will be given when the value is set.
 --- This option cannot be set in a modeline when 'modelineexpr' is off.
 ---
 --- Example:
