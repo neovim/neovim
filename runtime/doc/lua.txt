@@ -1057,23 +1057,6 @@ vim.str_utf_start({str}, {index})                        *vim.str_utf_start()*
     Return: ~
         (`integer`)
 
-vim.str_utfindex({str}, {index})                          *vim.str_utfindex()*
-    Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
-    supplied, the length of the string is used. All indices are zero-based.
-
-    Embedded NUL bytes are treated as terminating the string. Invalid UTF-8
-    bytes, and embedded surrogates are counted as one code point each. An
-    {index} in the middle of a UTF-8 sequence is rounded upwards to the end of
-    that sequence.
-
-    Parameters: ~
-      • {str}    (`string`)
-      • {index}  (`integer?`)
-
-    Return (multiple): ~
-        (`integer`) UTF-32 index
-        (`integer`) UTF-16 index
-
 vim.stricmp({a}, {b})                                          *vim.stricmp()*
     Compares strings case-insensitively.
 
@@ -1774,6 +1757,25 @@ vim.str_byteindex({s}, {encoding}, {index}, {strict_indexing})
       • {s}                (`string`)
       • {encoding}         (`"utf-8"|"utf-16"|"utf-32"`)
       • {index}            (`integer`)
+      • {strict_indexing}  (`boolean?`) default: true
+
+    Return: ~
+        (`integer`)
+
+                                                          *vim.str_utfindex()*
+vim.str_utfindex({s}, {encoding}, {index}, {strict_indexing})
+    Convert byte index to UTF-32, UTF-16 or UTF-8 indices. If {index} is not
+    supplied, the length of the string is used. All indices are zero-based.
+
+    If {strict_indexing} is false then an out of range index will return
+    string length instead of throwing an error. Invalid UTF-8 bytes, and
+    embedded surrogates are counted as one code point each. An {index} in the
+    middle of a UTF-8 sequence is rounded upwards to the end of that sequence.
+
+    Parameters: ~
+      • {s}                (`string`)
+      • {encoding}         (`"utf-8"|"utf-16"|"utf-32"`)
+      • {index}            (`integer?`)
       • {strict_indexing}  (`boolean?`) default: true
 
     Return: ~

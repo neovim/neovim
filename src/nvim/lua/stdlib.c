@@ -181,7 +181,9 @@ int nlua_str_utfindex(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   } else {
     idx = luaL_checkinteger(lstate, 2);
     if (idx < 0 || idx > (intptr_t)s1_len) {
-      return luaL_error(lstate, "index out of range");
+      lua_pushnil(lstate);
+      lua_pushnil(lstate);
+      return 2;
     }
   }
 
@@ -697,7 +699,7 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     lua_setfield(lstate, -2, "stricmp");
     // str_utfindex
     lua_pushcfunction(lstate, &nlua_str_utfindex);
-    lua_setfield(lstate, -2, "str_utfindex");
+    lua_setfield(lstate, -2, "__str_utfindex");
     // str_byteindex
     lua_pushcfunction(lstate, &nlua_str_byteindex);
     lua_setfield(lstate, -2, "__str_byteindex");
