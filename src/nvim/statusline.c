@@ -62,34 +62,6 @@ typedef enum {
   kNumBaseHexadecimal = 16,
 } NumberBase;
 
-/// @return  fallback fmt string when 'statusline' is empty. Changes if 'rule' is set or if 'showcmdloc=statusline'
-char *statusline_default_fmt(void)
-{
-  // 'showcmd' information if 'showcmdloc' == "statusline".
-  bool showcmd_in_statusline = p_sc && *p_sloc == 's';
-
-  // The fallback statusline changes depending on the following:
-  // The possible cases are:
-  //  - 'showcmdloc' == "statusline" and 'ruler' is set
-  //  - 'showcmdloc' == "statusline" and 'ruler' is unset
-  //  - 'showcmdloc' != "statusline" and 'ruler' is set
-  //  - 'showcmdloc' != "statusline" and 'ruler' is unset
-
-  if (showcmd_in_statusline) {
-    if (p_ru) {
-      return "%<%f %h%m%r%=%-10(%S%) %-14.(%l,%c%V%) %P";
-    } else {
-      return "%<%f %h%m%r%=%-11(%S%)";
-    }
-  } else {
-    if (p_ru) {
-      return "%<%f %h%m%r%=%-14.(%l,%c%V%) %P";
-    } else {
-      return "%<%f %h%m%r";
-    }
-  }
-}
-
 /// Redraw the status line of window `wp`.
 ///
 /// If inversion is possible we use it. Else '=' characters are used.
@@ -334,7 +306,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       stl = ((*wp->w_p_stl != NUL) ? wp->w_p_stl : p_stl);
       // For back-compat, statusline has a fallback when empty (unlike 'winbar').
       if (*stl == NUL) {
-        stl = statusline_default_fmt();
+        stl = STL_DEFAULT_FMT;
       }
 
       opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
