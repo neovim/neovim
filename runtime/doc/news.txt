@@ -182,6 +182,8 @@ LSP
 • |vim.lsp.buf.format()| now supports passing a list of ranges
   via the `range` parameter (this requires support for the
   `textDocument/rangesFormatting` request).
+• |vim.lsp.buf.code_action()| actions show client name when there are multiple
+  clients.
 
 LUA
 
