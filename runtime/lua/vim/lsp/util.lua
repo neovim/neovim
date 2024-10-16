@@ -125,10 +125,10 @@ local function split_lines(s, no_blank)
 end
 
 local function create_window_without_focus()
-  local prev = vim.api.nvim_get_current_win()
+  local prev = api.nvim_get_current_win()
   vim.cmd.new()
-  local new = vim.api.nvim_get_current_win()
-  vim.api.nvim_set_current_win(prev)
+  local new = api.nvim_get_current_win()
+  api.nvim_set_current_win(prev)
   return new
 end
 
@@ -496,7 +496,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       -- make sure we don't go out of bounds
       pos[1] = math.min(pos[1], max)
       pos[2] = math.min(pos[2], #(get_line(bufnr, pos[1] - 1) or ''))
-      vim.api.nvim_buf_set_mark(bufnr or 0, mark, pos[1], pos[2], {})
+      api.nvim_buf_set_mark(bufnr or 0, mark, pos[1], pos[2], {})
     end
   end
 
@@ -572,8 +572,8 @@ end
 local function get_bufs_with_prefix(prefix)
   local prefix_parts = path_components(prefix)
   local buffers = {}
-  for _, v in ipairs(vim.api.nvim_list_bufs()) do
-    local bname = vim.api.nvim_buf_get_name(v)
+  for _, v in ipairs(api.nvim_list_bufs()) do
+    local bname = api.nvim_buf_get_name(v)
     local path = path_components(vim.fs.normalize(bname, { expand_env = false }))
     if path_under_prefix(path, prefix_parts) then
       table.insert(buffers, v)
@@ -632,7 +632,7 @@ function M.rename(old_fname, new_fname, opts)
     -- conflicting buffer may not be associated with a file. For example, 'buftype' can be "nofile"
     -- or "nowrite", or the buffer can be a normal buffer but has not been written to the file yet.
     -- Renaming should fail in such cases to avoid losing the contents of the conflicting buffer.
-    local old_bname = vim.api.nvim_buf_get_name(b)
+    local old_bname = api.nvim_buf_get_name(b)
     local new_bname = old_bname:gsub(old_fname_pat, escape_gsub_repl(new_fname))
     if vim.fn.bufexists(new_bname) == 1 then
       local existing_buf = vim.fn.bufnr(new_bname)
@@ -2173,7 +2173,7 @@ local function make_line_range_params(bufnr, start_line, end_line, offset_encodi
   ---@type lsp.Position
   local end_pos
 
-  if end_line == last_line and not vim.api.nvim_get_option_value('endofline', { buf = bufnr }) then
+  if end_line == last_line and not vim.bo[bufnr].endofline then
     end_pos = {
       line = end_line,
       character = M.character_offset(bufnr, end_line, #get_line(bufnr, end_line), offset_encoding),
