@@ -66,6 +66,97 @@
 --- @field winnr integer
 --- @field winrow integer
 
+--- @class vim.quickfix.entry
+--- buffer number; must be the number of a valid buffer
+--- @field bufnr? integer
+---
+--- name of a file; only used when "bufnr" is not
+--- present or it is invalid.
+--- @field filename? string
+---
+--- name of a module; if given it will be used in
+--- quickfix error window instead of the filename.
+--- @field module? string
+---
+--- line number in the file
+--- @field lnum? integer
+---
+--- end of lines, if the item spans multiple lines
+--- @field end_lnum? integer
+---
+--- search pattern used to locate the error
+--- @field pattern? string
+---
+--- column number
+--- @field col? integer
+---
+--- when non-zero: "col" is visual column
+--- when zero: "col" is byte index
+--- @field vcol? integer
+---
+--- end column, if the item spans multiple columns
+--- @field end_col? integer
+---
+--- error number
+--- @field nr? integer
+---
+--- description of the error
+--- @field text? string
+---
+--- single-character error type, 'E', 'W', etc.
+--- @field type? string
+---
+--- recognized error message
+--- @field valid? boolean
+---
+--- custom data associated with the item, can be
+--- any type.
+--- @field user_data? any
+
+--- @class vim.fn.setqflist.what
+---
+--- quickfix list context. See |quickfix-context|
+--- @field context? table
+---
+--- errorformat to use when parsing text from
+--- "lines". If this is not present, then the
+--- 'errorformat' option value is used.
+--- See |quickfix-parse|
+--- @field efm? string
+---
+--- quickfix list identifier |quickfix-ID|
+--- @field id? integer
+--- index of the current entry in the quickfix
+--- list specified by "id" or "nr". If set to '$',
+--- then the last entry in the list is set as the
+--- current entry. See |quickfix-index|
+--- @field idx? integer
+---
+--- list of quickfix entries. Same as the {list}
+--- argument.
+--- @field items? vim.quickfix.entry[]
+---
+--- use 'errorformat' to parse a list of lines and
+--- add the resulting entries to the quickfix list
+--- {nr} or {id}. Only a |List| value is supported.
+--- See |quickfix-parse|
+--- @field lines? string[]
+---
+--- list number in the quickfix stack; zero
+--- means the current quickfix list and "$" means
+--- the last quickfix list.
+--- @field nr? integer
+---
+--- function to get the text to display in the
+--- quickfix window. The value can be the name of
+--- a function or a funcref or a lambda. Refer
+--- to |quickfix-window-function| for an explanation
+--- of how to write the function and an example.
+--- @field quickfixtextfunc? function
+---
+--- quickfix list title text. See |quickfix-title|
+--- @field title? string
+
 --- @class vim.fn.sign_define.dict
 --- @field text string
 --- @field icon? string

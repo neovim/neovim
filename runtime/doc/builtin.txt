@@ -9097,9 +9097,9 @@ setqflist({list} [, {action} [, {what}]])                          *setqflist()*
 		`:cc 1` to jump to the first position.
 
                 Parameters: ~
-                  • {list} (`any[]`)
+                  • {list} (`vim.quickfix.entry[]`)
                   • {action} (`string?`)
-                  • {what} (`table?`)
+                  • {what} (`vim.fn.setqflist.what?`)
 
                 Return: ~
                   (`any`)

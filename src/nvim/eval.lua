@@ -9955,7 +9955,11 @@ M.funcs = {
 
     ]=],
     name = 'setqflist',
-    params = { { 'list', 'any[]' }, { 'action', 'string' }, { 'what', 'table' } },
+    params = {
+      { 'list', 'vim.quickfix.entry[]' },
+      { 'action', 'string' },
+      { 'what', 'vim.fn.setqflist.what' },
+    },
     signature = 'setqflist({list} [, {action} [, {what}]])',
   },
   setreg = {
