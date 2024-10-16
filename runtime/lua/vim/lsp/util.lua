@@ -510,17 +510,12 @@ function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
     return
   end
 
-  -- For lists of text document edits,
-  -- do not check the version after the first edit.
-  local should_check_version = true
-  if index and index > 1 then
-    should_check_version = false
-  end
-
   -- `VersionedTextDocumentIdentifier`s version may be null
   --  https://microsoft.github.io/language-server-protocol/specification#versionedTextDocumentIdentifier
   if
-    should_check_version
+    -- For lists of text document edits,
+    -- do not check the version after the first edit.
+    not (index and index > 1)
     and (
       text_document.version
       and text_document.version > 0
@@ -2179,9 +2174,7 @@ function M._refresh(method, opts)
 
   local textDocument = M.make_text_document_params(bufnr)
 
-  local only_visible = opts.only_visible or false
-
-  if only_visible then
+  if opts.only_visible then
     for _, window in ipairs(api.nvim_list_wins()) do
       if api.nvim_win_get_buf(window) == bufnr then
         local first = vim.fn.line('w0', window)
