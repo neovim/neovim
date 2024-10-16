@@ -770,7 +770,65 @@ function vim.str_byteindex(s, encoding, index, no_out_of_range)
     or error('index out of range')
 end
 
---- Generates a list of possible completions for the string.
+--- Convert byte index to UTF-32, UTF-16 or UTF-8 indices. If {index} is not
+--- supplied, the length of the string is used. All indices are zero-based.
+---
+--- If {no_out_of_range} is true then an out of range index will return string
+--- length instead of throwing an error.
+--- Invalid UTF-8 bytes, and embedded surrogates are counted as one code point
+--- each. An {index} in the middle of a UTF-8 sequence is rounded upwards to the end of
+--- that sequence.
+---@param s string
+---@param encoding "utf-8"|"utf-16"|"utf-32"
+---@param index integer
+---@param no_out_of_range? boolean
+---@return integer
+function vim.str_utfindex(s, encoding, index, no_out_of_range)
+  if encoding == nil or type(encoding) == 'number' then
+    -- Legacy support for old API
+    -- Parameters: ~
+    --   • {str}    (`string`)
+    --   • {index}  (`integer?`)
+    local old_index = encoding
+    local col32, col16 = vim.__str_utfindex(s, old_index) --[[@as integer,integer]]
+    if not col32 or not col16 then
+      error('index out of range')
+    end
+    -- Return (multiple): ~
+    --     (`integer`) UTF-32 index
+    --     (`integer`) UTF-16 index
+    return col32, col16
+  end
+
+  vim.validate('s', s, 'string')
+  vim.validate('index', index, 'number')
+
+  if index == 0 then
+    return 0
+  end
+
+  vim.validate('encoding', encoding, function(v)
+    return utfs[v], 'invalid encoding'
+  end)
+  vim.validate('no_out_of_range', no_out_of_range, 'boolean', true)
+
+  if encoding == 'utf-8' then
+    local len = #s
+    return index <= len and index or (no_out_of_range and len or error('index out of range'))
+  end
+  local col32, col16 = vim.__str_utfindex(s, index) --[[@as integer?,integer?]]
+  local col = encoding == 'utf-16' and col16 or col32
+  if col then
+    return col
+  end
+  if not no_out_of_range then
+    error('index out of range')
+  end
+  local max32, max16 = vim.__str_utfindex(s)--[[@as integer integer]]
+  return encoding == 'utf-16' and max16 or max32
+end
+
+--- Generates a list of possible completions for the str
 --- String has the pattern.
 ---
 --- 1. Can we get it to just return things in the global namespace with that name prefix
