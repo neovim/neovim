@@ -187,6 +187,8 @@ LSP
   `textDocument/rangesFormatting` request).
 • |vim.lsp.buf.code_action()| actions show client name when there are multiple
   clients.
+• LSP document highlight has been reimplemented: |lsp-document_highlight|
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentHighlight
 
 LUA
 
