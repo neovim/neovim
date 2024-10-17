@@ -1164,6 +1164,32 @@ function vim._defer_require(root, mod)
   })
 end
 
+--- @private
+--- Creates a module alias/shim that lazy-loads a target module.
+---
+--- Unlike `vim.defaulttable()` this also:
+--- - implements __call
+--- - calls vim.deprecate()
+---
+--- @param old_name string Name of the deprecated module, which will be shimmed.
+--- @param new_name string Name of the new module, which will be loaded by require().
+function vim._defer_deprecated_module(old_name, new_name)
+  return setmetatable({}, {
+    ---@param _ table<string, any>
+    ---@param k string
+    __index = function(_, k)
+      vim.deprecate(old_name, new_name, '2.0.0', nil, false)
+      local target = require(new_name)
+      return target[k]
+    end,
+    __call = function(self)
+      vim.deprecate(old_name, new_name, '2.0.0', nil, false)
+      local target = require(new_name)
+      return target(self)
+    end,
+  })
+end
+
 --- @nodoc
 --- @class vim.context.mods
 --- @field bo? table<string, any>
