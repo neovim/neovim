@@ -2063,12 +2063,13 @@ char *nlua_register_table_as_callable(const typval_T *const arg)
   return name;
 }
 
-void nlua_execute_on_key(int c, char *typed_buf)
+/// @return true to discard the key
+bool nlua_execute_on_key(int c, char *typed_buf)
 {
   static bool recursive = false;
 
   if (recursive) {
-    return;
+    return false;
   }
   recursive = true;
 
@@ -2097,9 +2098,15 @@ void nlua_execute_on_key(int c, char *typed_buf)
 
   int save_got_int = got_int;
   got_int = false;  // avoid interrupts when the key typed is Ctrl-C
-  if (nlua_pcall(lstate, 2, 0)) {
+  bool discard = false;
+  if (nlua_pcall(lstate, 2, 1)) {
     nlua_error(lstate,
                _("Error executing  vim.on_key Lua callback: %.*s"));
+  } else {
+    if (lua_isboolean(lstate, -1)) {
+      discard = lua_toboolean(lstate, -1);
+    }
+    lua_pop(lstate, 1);
   }
   got_int |= save_got_int;
 
@@ -2112,6 +2119,7 @@ void nlua_execute_on_key(int c, char *typed_buf)
 #endif
 
   recursive = false;
+  return discard;
 }
 
 // Sets the editor "script context" during Lua execution. Used by :verbose.
