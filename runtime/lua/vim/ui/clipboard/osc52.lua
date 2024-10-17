@@ -6,7 +6,11 @@ local M = {}
 --- @param contents string The Base64 encoded contents to write to the clipboard, or '?' to read
 ---                        from the clipboard
 local function osc52(clipboard, contents)
-  return string.format('\027]52;%s;%s\027\\', clipboard, contents)
+  local query = string.format('\027]52;%s;%s\027\\', clipboard, contents)
+  if os.getenv('TMUX') then
+    query = string.format('\027Ptmux;%s\027\\', query:gsub('\027', '\027\027'))
+  end
+  return query
 end
 
 function M.copy(reg)
