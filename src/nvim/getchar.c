@@ -1772,7 +1772,9 @@ int vgetc(void)
 
   // Execute Lua on_key callbacks.
   kvi_push(on_key_buf, NUL);
-  nlua_execute_on_key(c, on_key_buf.items);
+  if (nlua_execute_on_key(c, on_key_buf.items)) {
+    c = K_IGNORE;
+  }
   kvi_destroy(on_key_buf);
   kvi_init(on_key_buf);
 
