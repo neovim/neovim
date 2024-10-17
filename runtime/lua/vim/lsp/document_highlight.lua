@@ -20,7 +20,7 @@ local augroup = api.nvim_create_augroup('vim_lsp_document_highlight', {})
 ---Index in the form of client_id -> (row -> highlights)
 ---@field client_hilights table<integer, table<integer, lsp.DocumentHighlight[]?>?>
 
----Each buffer attached by at least one LSP server must exists,
+---Each buffer attached by at least one supported LSP server must exists,
 ---otherwise it should not exists or be cleaned up.
 ---
 ---Index in the form of bufnr -> bufstate
@@ -28,27 +28,37 @@ local augroup = api.nvim_create_augroup('vim_lsp_document_highlight', {})
 local bufstates = {}
 for _, client in ipairs(vim.lsp.get_clients()) do
   for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(client.id)) do
-    local bufstate = bufstates[bufnr] or {}
-    local client_hilights = bufstate.client_hilights or {}
+    if client.supports_method(ms.textDocument_documentHighlight, { bufnr = bufnr }) then
+      local bufstate = bufstates[bufnr] or {}
+      local client_hilights = bufstate.client_hilights or {}
 
-    if not client_hilights[client.id] then
-      client_hilights[client.id] = {}
+      if not client_hilights[client.id] then
+        client_hilights[client.id] = {}
+      end
+
+      bufstate.client_hilights = client_hilights
+      bufstates[bufnr] = bufstate
     end
-
-    bufstate.client_hilights = client_hilights
-    bufstates[bufnr] = bufstate
   end
 end
 api.nvim_create_autocmd('LspAttach', {
   group = augroup,
   callback = function(args)
     ---@type integer
+    local client_id = args.data.client_id
+    if
+      not assert(vim.lsp.get_client_by_id(client_id)).supports_method(
+        ms.textDocument_documentHighlight
+      )
+    then
+      return
+    end
+
+    ---@type integer
     local bufnr = args.buf
     local bufstate = bufstates[bufnr] or {}
     bufstates[bufnr] = bufstate
 
-    ---@type integer
-    local client_id = args.data.client_id
     local client_hilights = bufstate.client_hilights or {}
     client_hilights[client_id] = {}
     bufstate.client_hilights = client_hilights
@@ -132,9 +142,13 @@ api.nvim_create_autocmd('LspNotify', {
   callback = function(args)
     ---@type integer
     local bufnr = args.buf
+    local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
     if
-      args.data.method == ms.textDocument_didChange
-      or args.data.method == ms.textDocument_didOpen
+      client.supports_method(ms.textDocument_documentHighlight, { bufnr = bufnr })
+      and (
+        args.data.method == ms.textDocument_didChange
+        or args.data.method == ms.textDocument_didOpen
+      )
     then
       refresh(bufnr)
     end
