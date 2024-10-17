@@ -126,7 +126,7 @@ end
 --- end
 --- ```
 ---
----@param path string Path or URL to open
+---@param path? string Path or URL to open, or `nil` to get path or URL at cursor.
 ---@param opt? { cmd?: string[] } Options
 ---     - cmd string[]|nil Command used to open the path or URL.
 ---
@@ -136,40 +136,79 @@ end
 ---@see |vim.system()|
 function M.open(path, opt)
   vim.validate({
-    path = { path, 'string' },
+    path = { path, 'string', true },
   })
-  local is_uri = path:match('%w+:')
-  if not is_uri then
-    path = vim.fs.normalize(path)
-  end
 
   opt = opt or {}
-  local cmd ---@type string[]
-  local job_opt = { text = true, detach = true } --- @type vim.SystemOpts
+  local function do_open(uri)
+    local cmd ---@type string[]
+    local job_opt = { text = true, detach = true } --- @type vim.SystemOpts
 
-  if opt.cmd then
-    cmd = vim.list_extend(opt.cmd --[[@as string[] ]], { path })
-  elseif vim.fn.has('mac') == 1 then
-    cmd = { 'open', path }
-  elseif vim.fn.has('win32') == 1 then
-    if vim.fn.executable('rundll32') == 1 then
-      cmd = { 'rundll32', 'url.dll,FileProtocolHandler', path }
+    if opt.cmd then
+      cmd = vim.list_extend(opt.cmd --[[@as string[] ]], { uri })
+    elseif vim.fn.has('mac') == 1 then
+      cmd = { 'open', uri }
+    elseif vim.fn.has('win32') == 1 then
+      if vim.fn.executable('rundll32') == 1 then
+        cmd = { 'rundll32', 'url.dll,FileProtocolHandler', uri }
+      else
+        return nil, 'vim.ui.open: rundll32 not found'
+      end
+    elseif vim.fn.executable('xdg-open') == 1 then
+      cmd = { 'xdg-open', uri }
+      job_opt.stdout = false
+      job_opt.stderr = false
+    elseif vim.fn.executable('wslview') == 1 then
+      cmd = { 'wslview', uri }
+    elseif vim.fn.executable('explorer.exe') == 1 then
+      cmd = { 'explorer.exe', uri }
     else
-      return nil, 'vim.ui.open: rundll32 not found'
+      return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open)'
     end
-  elseif vim.fn.executable('xdg-open') == 1 then
-    cmd = { 'xdg-open', path }
-    job_opt.stdout = false
-    job_opt.stderr = false
-  elseif vim.fn.executable('wslview') == 1 then
-    cmd = { 'wslview', path }
-  elseif vim.fn.executable('explorer.exe') == 1 then
-    cmd = { 'explorer.exe', path }
-  else
-    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open)'
+
+    return vim.system(cmd, job_opt), nil
   end
 
-  return vim.system(cmd, job_opt), nil
+  local function do_open2(uri)
+    local cmd, err = do_open(uri)
+    -- wait() terminates the process if necessary (avoids stale processes), and allows us to show an
+    -- error message if needed.
+    local rv = cmd and cmd:wait(1000) or nil
+    if cmd and rv and rv.code ~= 0 then
+      err = ('vim.ui.open: command %s (%d): %s'):format(
+        (rv.code == 124 and 'timeout' or 'failed'),
+        rv.code,
+        vim.inspect(cmd.cmd)
+      )
+    end
+    return err
+  end
+
+  if path then
+    local is_uri = path:match('%w+:')
+    if not is_uri then
+      path = vim.fs.normalize(path)
+    end
+    return do_open(path)
+  else -- DWIM mode: get the URL or path from the cursor position, and show error.
+    local visual = not not vim.fn.mode():match('[vV\22]')
+    if visual then
+      local lines =
+        vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'), { type = vim.fn.mode() })
+      -- Trim whitespace on each line and concatenate.
+      local err = do_open2(table.concat(vim.iter(lines):map(vim.trim):totable()))
+      if err then
+        vim.notify(err, vim.log.levels.ERROR)
+      end
+    else
+      for _, url in ipairs(M._get_urls()) do
+        local err = do_open2(url)
+        if err then
+          vim.notify(err, vim.log.levels.ERROR)
+        end
+      end
+    end
+  end
 end
 
 --- Returns all URLs at cursor, if any.
