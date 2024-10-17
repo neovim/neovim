@@ -464,7 +464,7 @@ Use |:Inspect| to view the highlights for a specific token. Use |:hi| or
     hi @lsp.mod.deprecated gui=strikethrough  " deprecated is crossed out
     hi @lsp.typemod.function.async guifg=Blue " async functions are blue
 <
-The value |vim.highlight.priorities|`.semantic_tokens` is the priority of the
+The value |vim.hl.priorities|`.semantic_tokens` is the priority of the
 `@lsp.type.*` highlights. The `@lsp.mod.*` and `@lsp.typemod.*` highlights
 have priorities one and two higher, respectively.
 
@@ -1780,8 +1780,8 @@ highlight_token({token}, {bufnr}, {client_id}, {hl_group}, {opts})
       • {hl_group}   (`string`) Highlight group name
       • {opts}       (`table?`) Optional parameters:
                      • {priority}? (`integer`, default:
-                       `vim.highlight.priorities.semantic_tokens + 3`)
-                       Priority for the applied extmark.
+                       `vim.hl.priorities.semantic_tokens + 3`) Priority for
+                       the applied extmark.
 
 start({bufnr}, {client_id}, {opts})          *vim.lsp.semantic_tokens.start()*
     Start the semantic token highlighting engine for the given buffer with the
