@@ -827,11 +827,19 @@ local function on_code_action_results(results, opts)
     return
   end
 
-  ---@param item {action: lsp.Command|lsp.CodeAction}
+  ---@param item {action: lsp.Command|lsp.CodeAction, ctx: lsp.HandlerContext}
   local function format_item(item)
-    local title = item.action.title:gsub('\r\n', '\\r\\n')
-    return title:gsub('\n', '\\n')
+    local clients = vim.lsp.get_clients({ bufnr = item.ctx.bufnr })
+    local title = item.action.title:gsub('\r\n', '\\r\\n'):gsub('\n', '\\n')
+
+    if #clients == 1 then
+      return title
+    end
+
+    local source = vim.lsp.get_client_by_id(item.ctx.client_id).name
+    return ('%s [%s]'):format(title, source)
   end
+
   local select_opts = {
     prompt = 'Code actions:',
     kind = 'codeaction',
