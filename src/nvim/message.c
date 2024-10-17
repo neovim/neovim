@@ -2187,7 +2187,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
       msg_row = Rows - 1;
 
       // When no more prompt and no more room, truncate here
-      if (msg_no_more && lines_left == 0) {
+      if ((!recurse && *s == '\r') || (msg_no_more && lines_left == 0)) {
         break;
       }
 
