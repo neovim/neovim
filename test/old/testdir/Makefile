@@ -55,6 +55,8 @@ else
 	endif
 endif
 
+default: nongui
+
 nongui: nolog $(FIXFF) newtests report
 
 .gdbinit:
@@ -112,6 +114,7 @@ CLEAN_FILES := *.out \
   *.rej             \
   *.orig            \
   *.tlog            \
+  opt_test.vim      \
   test_result.log   \
   $(CLEANUP_FILES)  \
   $(RM_ON_RUN)      \
@@ -150,6 +153,18 @@ newtests: newtestssilent
 	             fi"
 
 newtestssilent: $(NEW_TESTS_RES)
+
+GEN_OPT_DEPS = gen_opt_test.vim ../../../src/nvim/options.lua
+
+opt_test.vim: $(GEN_OPT_DEPS)
+	$(NVIM_PRG) -e -s -u NONE $(NO_INITS) -S $(GEN_OPT_DEPS)
+	@if test -f test.log; then \
+		cat test.log; \
+		exit 1; \
+	fi
+
+# Explicit dependencies.
+test_options.res test_alot.res: opt_test.vim
 
 %.res: %.vim .gdbinit
 	@echo "[OLDTEST] Running" $*
