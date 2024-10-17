@@ -270,6 +270,11 @@ function M.is_enabled(filter)
     return globalstate.enabled
   else
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    local bufstate = bufstates[bufnr]
+    if not bufstate then
+      return false
+    end
+
     if bufstates[bufnr].enabled == nil then
       return globalstate.enabled
     else
@@ -301,10 +306,15 @@ function M.enable(enable, filter)
     end
   else
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    local bufstate = bufstates[bufnr]
+    if not bufstate then
+      return
+    end
+
     if enable == globalstate.enabled then
-      bufstates[bufnr].enabled = nil
+      bufstate.enabled = nil
     else
-      bufstates[bufnr].enabled = enable
+      bufstate.enabled = enable
     end
     refresh(bufnr)
   end
