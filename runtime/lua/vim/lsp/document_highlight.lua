@@ -140,13 +140,39 @@ local function refresh(bufnr)
   vim.lsp.buf_request(bufnr, ms.textDocument_documentHighlight, params)
 end
 
+local function debunce(f)
+  ---@type uv.uv_timer_t?
+  local timer = nil
+  return function(...)
+    local args = { ... }
+    if timer then
+      vim.uv.timer_stop(timer)
+      timer:close()
+      timer = nil
+    end
+    timer = assert(vim.uv.new_timer())
+    vim.uv.timer_start(
+      timer,
+      100,
+      0,
+      vim.schedule_wrap(function()
+        timer:close()
+        timer = nil
+        f(unpack(args))
+      end)
+    )
+  end
+end
+
+local debounced_refresh = debunce(refresh)
+
 api.nvim_create_autocmd('CursorMoved', {
   group = augroup,
   callback = function(args)
     ---@type integer
     local bufnr = args.buf
     if bufstates[bufnr] then
-      refresh(bufnr)
+      debounced_refresh(bufnr)
     end
   end,
 })
@@ -163,7 +189,7 @@ api.nvim_create_autocmd('LspNotify', {
         or args.data.method == ms.textDocument_didOpen
       )
     then
-      refresh(bufnr)
+      debounced_refresh(bufnr)
     end
   end,
 })
