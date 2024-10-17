@@ -572,12 +572,16 @@ local directive_handlers = {
 
     metadata[id].text = text:gsub(pattern, replacement)
   end,
-  -- Trim blank lines from end of the node
-  -- Example: (#trim! @fold)
-  -- TODO(clason): generalize to arbitrary whitespace removal
+  -- Trim whitespace from both sides of the node
+  -- Example: (#trim! @fold 1 1 1 1)
   ['trim!'] = function(match, _, bufnr, pred, metadata)
     local capture_id = pred[2]
     assert(type(capture_id) == 'number')
+
+    local trim_start_lines = pred[3] == '1'
+    local trim_start_cols = pred[4] == '1'
+    local trim_end_lines = pred[5] == '1' or not pred[3] -- default true for backwards compatibility
+    local trim_end_cols = pred[6] == '1'
 
     local nodes = match[capture_id]
     if not nodes or #nodes == 0 then
@@ -588,20 +592,36 @@ local directive_handlers = {
 
     local start_row, start_col, end_row, end_col = node:range()
 
-    -- Don't trim if region ends in middle of a line
-    if end_col ~= 0 then
-      return
+    local node_text = vim.split(vim.treesitter.get_node_text(node, bufnr), '\n')
+    local end_idx = #node_text
+    local start_idx = 1
+
+    if trim_end_lines then
+      while end_idx > 0 and node_text[end_idx]:find('^%s*$') do
+        end_idx = end_idx - 1
+        end_row = end_row - 1
+      end
+    end
+    if trim_end_cols then
+      if end_idx == 0 then
+        end_row = start_row
+        end_col = start_col
+      else
+        local whitespace_start = node_text[end_idx]:find('(%s*)$')
+        end_col = (whitespace_start - 1) + (end_idx == 1 and start_col or 0)
+      end
     end
 
-    while end_row >= start_row do
-      -- As we only care when end_col == 0, always inspect one line above end_row.
-      local end_line = api.nvim_buf_get_lines(bufnr, end_row - 1, end_row, true)[1]
-
-      if end_line ~= '' then
-        break
+    if trim_start_lines then
+      while start_idx <= end_idx and node_text[start_idx]:find('^%s*$') do
+        start_idx = start_idx + 1
+        start_row = start_row + 1
       end
-
-      end_row = end_row - 1
+    end
+    if trim_start_cols and node_text[start_idx] then
+      local _, whitespace_end = node_text[start_idx]:find('^(%s*)')
+      whitespace_end = whitespace_end or 0
+      start_col = (start_idx == 1 and start_col or 0) + whitespace_end
     end
 
     -- If this produces an invalid range, we just skip it.
