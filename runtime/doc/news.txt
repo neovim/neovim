@@ -245,6 +245,9 @@ UI
   |hl-PmenuMatchSel| inherits highlights from both |hl-PmenuSel| and
   |hl-PmenuMatch|.
 
+• |complete_info()| returns a `pum_matches` item to indicate which items are put
+  in the |ins-completion-menu|.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
