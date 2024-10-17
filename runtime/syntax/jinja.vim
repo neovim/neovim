@@ -2,8 +2,9 @@
 " Language: Jinja
 " Maintainer: Gregory Anders
 " Upstream: https://gitlab.com/HiPhish/jinja.vim
+" Last Change: 2024 Oct 16
 
-if exists('b:current_syntax')
+if exists('b:current_syntax') && b:current_syntax =~? 'jinja'
     finish
 endif
 
