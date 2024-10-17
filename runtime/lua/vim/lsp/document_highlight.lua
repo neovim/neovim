@@ -134,6 +134,39 @@ local function refresh(bufnr)
   vim.lsp.buf_request(bufnr, ms.textDocument_documentHighlight, params)
 end
 
+---@param f function
+---@param timeout integer
+local function debunce(f, timeout)
+  ---@type uv.uv_timer_t?
+  local timer = nil
+  return function(...)
+    local args = { ... }
+    if timer then
+      vim.uv.timer_stop(timer)
+      timer:close()
+      timer = nil
+    end
+    timer = assert(vim.uv.new_timer())
+    vim.uv.timer_start(
+      timer,
+      timeout,
+      0,
+      vim.schedule_wrap(function()
+        if timer then
+          vim.uv.timer_stop(timer)
+          timer:close()
+          timer = nil
+        end
+        f(unpack(args))
+      end)
+    )
+  end
+end
+
+-- The interval for reporting keyboard events is usually 30ms,
+-- 100ms is a reasonable value to debounce the cursor movement.
+local debounced_refresh = debunce(refresh, 100)
+
 api.nvim_create_autocmd('CursorMoved', {
   group = augroup,
   desc = 'Refresh document highlights on cursor movement',
@@ -141,7 +174,7 @@ api.nvim_create_autocmd('CursorMoved', {
     ---@type integer
     local bufnr = args.buf
     if bufstates[bufnr] then
-      refresh(bufnr)
+      debounced_refresh(bufnr)
     end
   end,
 })
