@@ -21,6 +21,7 @@ API
 
 LUA
 - vim.region()		Use |getregionpos()| instead.
+- *vim.highlight*	Renamed to |vim.hl|.
 
 DIAGNOSTICS
 - *vim.diagnostic.goto_next()*	Use |vim.diagnostic.jump()| with `{count=1, float=true}` instead.
