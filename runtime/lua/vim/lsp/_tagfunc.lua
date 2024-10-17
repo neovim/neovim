@@ -27,15 +27,20 @@ local function query_definition(pattern)
     return {}
   end
   local results = {}
+
+  --- @param range lsp.Range
+  --- @param uri string
+  --- @param offset_encoding string
   local add = function(range, uri, offset_encoding)
     table.insert(results, mk_tag_item(pattern, range, uri, offset_encoding))
   end
+
   for client_id, lsp_results in pairs(assert(results_by_client)) do
     local client = lsp.get_client_by_id(client_id)
     local offset_encoding = client and client.offset_encoding or 'utf-16'
     local result = lsp_results.result or {}
     if result.range then -- Location
-      add(result.range, result.uri)
+      add(result.range, result.uri, offset_encoding)
     else
       result = result --[[@as (lsp.Location[]|lsp.LocationLink[])]]
       for _, item in pairs(result) do

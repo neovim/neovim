@@ -8286,9 +8286,9 @@ function vim.fn.setpos(expr, list) end
 --- independent of the 'errorformat' setting.  Use a command like
 --- `:cc 1` to jump to the first position.
 ---
---- @param list any[]
+--- @param list vim.quickfix.entry[]
 --- @param action? string
---- @param what? table
+--- @param what? vim.fn.setqflist.what
 --- @return any
 function vim.fn.setqflist(list, action, what) end
 

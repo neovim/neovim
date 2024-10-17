@@ -1867,6 +1867,42 @@ signature_help({_}, {result}, {ctx}, {config})
 ==============================================================================
 Lua module: vim.lsp.util                                            *lsp-util*
 
+*vim.lsp.util.open_floating_preview.Opts*
+
+    Fields: ~
+      • {height}?        (`integer`) Height of floating window
+      • {width}?         (`integer`) Width of floating window
+      • {wrap}?          (`boolean`, default: `true`) Wrap long lines
+      • {wrap_at}?       (`integer`) Character to wrap at for computing height
+                         when wrap is enabled
+      • {max_width}?     (`integer`) Maximal width of floating window
+      • {max_height}?    (`integer`) Maximal height of floating window
+      • {focus_id}?      (`string`) If a popup with this id is opened, then
+                         focus it
+      • {close_events}?  (`table`) List of events that closes the floating
+                         window
+      • {focusable}?     (`boolean`, default: `true`) Make float focusable.
+      • {focus}?         (`boolean`, default: `true`) If `true`, and if
+                         {focusable} is also `true`, focus an existing
+                         floating window with the same {focus_id}
+      • {offset_x}?      (`integer`) offset to add to `col`
+      • {offset_y}?      (`integer`) offset to add to `row`
+      • {border}?        (`(string|[string,string])[]`) override `border`
+      • {zindex}?        (`integer`) override `zindex`, defaults to 50
+      • {title}?         (`string`)
+      • {title_pos}?     (`'left'|'center'|'right'`)
+      • {relative}?      (`'mouse'|'cursor'`) (default: `'cursor'`)
+      • {anchor_bias}?   (`'auto'|'above'|'below'`, default: `'auto'`) -
+                         "auto": place window based on which side of the
+                         cursor has more lines
+                         • "above": place the window above the cursor unless
+                           there are not enough lines to display the full
+                           window height.
+                         • "below": place the window below the cursor unless
+                           there are not enough lines to display the full
+                           window height.
+
+
                                      *vim.lsp.util.apply_text_document_edit()*
 apply_text_document_edit({text_document_edit}, {index}, {offset_encoding})
     Applies a `TextDocumentEdit`, which is a list of changes to a single
@@ -1876,7 +1912,7 @@ apply_text_document_edit({text_document_edit}, {index}, {offset_encoding})
       • {text_document_edit}  (`lsp.TextDocumentEdit`)
       • {index}               (`integer?`) Optional index of the edit, if from
                               a list of edits (or nil, if not from a list)
-      • {offset_encoding}     (`string?`)
+      • {offset_encoding}     (`'utf-8'|'utf-16'|'utf-32'?`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
@@ -1888,7 +1924,7 @@ apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
     Parameters: ~
       • {text_edits}       (`lsp.TextEdit[]`)
       • {bufnr}            (`integer`) Buffer id
-      • {offset_encoding}  (`string`) utf-8|utf-16|utf-32
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
@@ -1899,7 +1935,7 @@ apply_workspace_edit({workspace_edit}, {offset_encoding})
 
     Parameters: ~
       • {workspace_edit}   (`lsp.WorkspaceEdit`)
-      • {offset_encoding}  (`string`) utf-8|utf-16|utf-32 (required)
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`) (required)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
@@ -1917,7 +1953,7 @@ buf_highlight_references({bufnr}, {references}, {offset_encoding})
     Parameters: ~
       • {bufnr}            (`integer`) Buffer id
       • {references}       (`lsp.DocumentHighlight[]`) objects to highlight
-      • {offset_encoding}  (`string`) One of "utf-8", "utf-16", "utf-32".
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
@@ -1930,7 +1966,7 @@ character_offset({buf}, {row}, {col}, {offset_encoding})
       • {buf}              (`integer`) buffer number (0 for current)
       • {row}              (`integer`) 0-indexed line
       • {col}              (`integer`) 0-indexed byte offset in line
-      • {offset_encoding}  (`string`) utf-8|utf-16|utf-32 defaults to
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) defaults to
                            `offset_encoding` of first client of `buf`
 
     Return: ~
@@ -1968,12 +2004,13 @@ convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
                           `textDocument/SignatureHelp`
       • {ft}              (`string?`) filetype that will be use as the `lang`
                           for the label markdown code block
-      • {triggers}        (`table?`) list of trigger characters from the lsp
-                          server. used to better determine parameter offsets
+      • {triggers}        (`string[]?`) list of trigger characters from the
+                          lsp server. used to better determine parameter
+                          offsets
 
     Return (multiple): ~
-        (`string[]?`) table list of lines of converted markdown.
-        (`Range4?`) table of active hl
+        (`string[]?`) lines of converted markdown.
+        (`Range4?`) highlight range for the active parameter
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
@@ -1996,7 +2033,7 @@ jump_to_location({location}, {offset_encoding}, {reuse_win})
 
     Parameters: ~
       • {location}         (`lsp.Location|lsp.LocationLink`)
-      • {offset_encoding}  (`string?`) utf-8|utf-16|utf-32
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`)
       • {reuse_win}        (`boolean?`) Jump to existing window if buffer is
                            already open.
 
@@ -2016,19 +2053,11 @@ locations_to_items({locations}, {offset_encoding})
 
     Parameters: ~
       • {locations}        (`lsp.Location[]|lsp.LocationLink[]`)
-      • {offset_encoding}  (`string`) offset_encoding for locations
-                           utf-8|utf-16|utf-32 default to first client of
-                           buffer
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) default to first
+                           client of buffer
 
     Return: ~
-        (`table[]`) A list of objects with the following fields:
-        • {filename} (`string`)
-        • {lnum} (`integer`) 1-indexed line number
-        • {end_lnum} (`integer`) 1-indexed end line number
-        • {col} (`integer`) 1-indexed column
-        • {end_col} (`integer`) 1-indexed end column
-        • {text} (`string`)
-        • {user_data} (`lsp.Location|lsp.LocationLink`)
+        (`vim.quickfix.entry[]`) See |setqflist()| for the format
 
                                   *vim.lsp.util.make_floating_popup_options()*
 make_floating_popup_options({width}, {height}, {opts})
@@ -2038,20 +2067,8 @@ make_floating_popup_options({width}, {height}, {opts})
     Parameters: ~
       • {width}   (`integer`) window width (in character cells)
       • {height}  (`integer`) window height (in character cells)
-      • {opts}    (`table`) optional
-                  • offset_x (integer) offset to add to `col`
-                  • offset_y (integer) offset to add to `row`
-                  • border (string or table) override `border`
-                  • focusable (string or table) override `focusable`
-                  • zindex (string or table) override `zindex`, defaults to 50
-                  • relative ("mouse"|"cursor") defaults to "cursor"
-                  • anchor_bias ("auto"|"above"|"below") defaults to "auto"
-                    • "auto": place window based on which side of the cursor
-                      has more lines
-                    • "above": place the window above the cursor unless there
-                      are not enough lines to display the full window height.
-                    • "below": place the window below the cursor unless there
-                      are not enough lines to display the full window height.
+      • {opts}    (`vim.lsp.util.open_floating_preview.Opts?`) See
+                  |vim.lsp.util.open_floating_preview.Opts|.
 
     Return: ~
         (`table`) Options
@@ -2077,13 +2094,15 @@ make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
     similar to |vim.lsp.util.make_range_params()|.
 
     Parameters: ~
-      • {start_pos}        (`integer[]?`) {row,col} mark-indexed position.
-                           Defaults to the start of the last visual selection.
-      • {end_pos}          (`integer[]?`) {row,col} mark-indexed position.
-                           Defaults to the end of the last visual selection.
+      • {start_pos}        (`[integer,integer]?`) {row,col} mark-indexed
+                           position. Defaults to the start of the last visual
+                           selection.
+      • {end_pos}          (`[integer,integer]?`) {row,col} mark-indexed
+                           position. Defaults to the end of the last visual
+                           selection.
       • {bufnr}            (`integer?`) buffer handle or 0 for current,
                            defaults to current
-      • {offset_encoding}  (`"utf-8"|"utf-16"|"utf-32"?`) defaults to
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) defaults to
                            `offset_encoding` of first client of `bufnr`
 
     Return: ~
@@ -2098,7 +2117,7 @@ make_position_params({window}, {offset_encoding})
     Parameters: ~
       • {window}           (`integer?`) window handle or 0 for current,
                            defaults to current
-      • {offset_encoding}  (`string?`) utf-8|utf-16|utf-32|nil defaults to
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) defaults to
                            `offset_encoding` of first client of buffer of
                            `window`
 
@@ -2157,27 +2176,11 @@ open_floating_preview({contents}, {syntax}, {opts})
     Parameters: ~
       • {contents}  (`table`) of lines to show in window
       • {syntax}    (`string`) of syntax to set for opened buffer
-      • {opts}      (`table?`) with optional fields (additional keys are
-                    filtered with |vim.lsp.util.make_floating_popup_options()|
-                    before they are passed on to |nvim_open_win()|)
-                    • {height}? (`integer`) Height of floating window
-                    • {width}? (`integer`) Width of floating window
-                    • {wrap}? (`boolean`, default: `true`) Wrap long lines
-                    • {wrap_at}? (`integer`) Character to wrap at for
-                      computing height when wrap is enabled
-                    • {max_width}? (`integer`) Maximal width of floating
-                      window
-                    • {max_height}? (`integer`) Maximal height of floating
-                      window
-                    • {focus_id}? (`string`) If a popup with this id is
-                      opened, then focus it
-                    • {close_events}? (`table`) List of events that closes the
-                      floating window
-                    • {focusable}? (`boolean`, default: `true`) Make float
-                      focusable.
-                    • {focus}? (`boolean`, default: `true`) If `true`, and if
-                      {focusable} is also `true`, focus an existing floating
-                      window with the same {focus_id}
+      • {opts}      (`vim.lsp.util.open_floating_preview.Opts?`) with optional
+                    fields (additional keys are filtered with
+                    |vim.lsp.util.make_floating_popup_options()| before they
+                    are passed on to |nvim_open_win()|). See
+                    |vim.lsp.util.open_floating_preview.Opts|.
 
     Return (multiple): ~
         (`integer`) bufnr of newly created float window
@@ -2193,7 +2196,8 @@ preview_location({location}, {opts})         *vim.lsp.util.preview_location()*
 
     Parameters: ~
       • {location}  (`lsp.Location|lsp.LocationLink`)
-      • {opts}      (`table`)
+      • {opts}      (`vim.lsp.util.open_floating_preview.Opts?`) See
+                    |vim.lsp.util.open_floating_preview.Opts|.
 
     Return (multiple): ~
         (`integer?`) buffer id of float window
@@ -2223,12 +2227,12 @@ show_document({location}, {offset_encoding}, {opts})
 
     Parameters: ~
       • {location}         (`lsp.Location|lsp.LocationLink`)
-      • {offset_encoding}  (`string?`) utf-8|utf-16|utf-32
-      • {opts}             (`table?`) options
-                           • reuse_win (boolean) Jump to existing window if
-                             buffer is already open.
-                           • focus (boolean) Whether to focus/jump to location
-                             if possible. Defaults to true.
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`)
+      • {opts}             (`table?`) A table with the following fields:
+                           • {reuse_win}? (`boolean`) Jump to existing window
+                             if buffer is already open.
+                           • {focus}? (`boolean`) Whether to focus/jump to
+                             location if possible. (defaults: true)
 
     Return: ~
         (`boolean`) `true` if succeeded
@@ -2248,7 +2252,7 @@ stylize_markdown({bufnr}, {contents}, {opts})
     Parameters: ~
       • {bufnr}     (`integer`)
       • {contents}  (`string[]`) of lines to show in window
-      • {opts}      (`table`) with optional fields
+      • {opts}      (`table?`) with optional fields
                     • height of floating window
                     • width of floating window
                     • wrap_at character to wrap at for computing height
@@ -2263,8 +2267,11 @@ symbols_to_items({symbols}, {bufnr})         *vim.lsp.util.symbols_to_items()*
     Converts symbols to quickfix list items.
 
     Parameters: ~
-      • {symbols}  (`table`) DocumentSymbol[] or SymbolInformation[]
+      • {symbols}  (`lsp.DocumentSymbol[]|lsp.SymbolInformation[]`)
       • {bufnr}    (`integer?`)
+
+    Return: ~
+        (`vim.quickfix.entry[]`) See |setqflist()| for the format
 
 
 ==============================================================================

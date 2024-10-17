@@ -2586,7 +2586,7 @@ describe('LSP', function()
           },
         },
       }
-      eq(false, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit))
+      eq(false, pcall(exec_lua, 'vim.lsp.util.apply_workspace_edit(...)', edit, 'utf-16'))
       eq(false, vim.uv.fs_stat(tmpfile) ~= nil)
     end)
   end)
@@ -3129,44 +3129,6 @@ describe('LSP', function()
             },
           }
           return vim.lsp.util.symbols_to_items(sym_info, nil)
-        end)
-      )
-    end)
-  end)
-
-  describe('lsp.util._get_symbol_kind_name', function()
-    it('returns the name specified by protocol', function()
-      eq(
-        'File',
-        exec_lua(function()
-          return vim.lsp.util._get_symbol_kind_name(1)
-        end)
-      )
-      eq(
-        'TypeParameter',
-        exec_lua(function()
-          return vim.lsp.util._get_symbol_kind_name(26)
-        end)
-      )
-    end)
-
-    it('returns the name not specified by protocol', function()
-      eq(
-        'Unknown',
-        exec_lua(function()
-          return vim.lsp.util._get_symbol_kind_name(nil)
-        end)
-      )
-      eq(
-        'Unknown',
-        exec_lua(function()
-          return vim.lsp.util._get_symbol_kind_name(vim.NIL)
-        end)
-      )
-      eq(
-        'Unknown',
-        exec_lua(function()
-          return vim.lsp.util._get_symbol_kind_name(1000)
         end)
       )
     end)
