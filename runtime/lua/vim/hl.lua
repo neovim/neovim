@@ -17,7 +17,7 @@ M.priorities = {
   user = 200,
 }
 
---- @class vim.highlight.range.Opts
+--- @class vim.hl.range.Opts
 --- @inlinedoc
 ---
 --- Type of range. See [getregtype()]
@@ -28,8 +28,8 @@ M.priorities = {
 --- (default: `false`)
 --- @field inclusive? boolean
 ---
---- Indicates priority of highlight
---- (default: `vim.highlight.priorities.user`)
+--- Highlight priority
+--- (default: `vim.hl.priorities.user`)
 --- @field priority? integer
 
 --- Apply highlight group to range of text.
@@ -39,7 +39,7 @@ M.priorities = {
 ---@param higroup string Highlight group to use for highlighting
 ---@param start integer[]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
 ---@param finish integer[]|string End of region as a (line, column) tuple or string accepted by |getpos()|
----@param opts? vim.highlight.range.Opts
+---@param opts? vim.hl.range.Opts
 function M.range(bufnr, ns, higroup, start, finish, opts)
   opts = opts or {}
   local regtype = opts.regtype or 'v'
@@ -124,7 +124,7 @@ local yank_cancel --- @type fun()?
 --- Add the following to your `init.vim`:
 ---
 --- ```vim
---- autocmd TextYankPost * silent! lua vim.highlight.on_yank {higroup='Visual', timeout=300}
+--- autocmd TextYankPost * silent! lua vim.hl.on_yank {higroup='Visual', timeout=300}
 --- ```
 ---
 --- @param opts table|nil Optional parameters
@@ -133,7 +133,7 @@ local yank_cancel --- @type fun()?
 ---              - on_macro  highlight when executing macro (default false)
 ---              - on_visual highlight when yanking visual selection (default true)
 ---              - event     event structure (default vim.v.event)
----              - priority  integer priority (default |vim.highlight.priorities|`.user`)
+---              - priority  integer priority (default |vim.hl.priorities|`.user`)
 function M.on_yank(opts)
   vim.validate({
     opts = {
@@ -145,7 +145,7 @@ function M.on_yank(opts)
           return type(t) == 'table'
         end
       end,
-      'a table or nil to configure options (see `:h highlight.on_yank`)',
+      'a table or nil to configure options (see `:h vim.hl.on_yank`)',
     },
   })
   opts = opts or {}

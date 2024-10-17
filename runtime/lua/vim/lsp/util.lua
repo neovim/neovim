@@ -2,7 +2,6 @@ local protocol = require('vim.lsp.protocol')
 local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
-local highlight = vim.highlight
 local uv = vim.uv
 
 local M = {}
@@ -1716,13 +1715,13 @@ do --[[ References ]]
         [protocol.DocumentHighlightKind.Write] = 'LspReferenceWrite',
       }
       local kind = reference['kind'] or protocol.DocumentHighlightKind.Text
-      highlight.range(
+      vim.hl.range(
         bufnr,
         reference_ns,
         document_highlight_kind[kind],
         { start_line, start_idx },
         { end_line, end_idx },
-        { priority = vim.highlight.priorities.user }
+        { priority = vim.hl.priorities.user }
       )
     end
   end

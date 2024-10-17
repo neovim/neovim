@@ -32,7 +32,7 @@ for k, v in pairs({
   func = true,
   F = true,
   lsp = true,
-  highlight = true,
+  hl = true,
   diagnostic = true,
   keymap = true,
   ui = true,
@@ -1196,5 +1196,8 @@ require('vim._options')
 -- Remove at Nvim 1.0
 ---@deprecated
 vim.loop = vim.uv
+
+-- Deprecated. Remove at Nvim 2.0
+vim.highlight = vim._defer_deprecated_module('vim.highlight', 'vim.hl')
 
 return vim

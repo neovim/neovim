@@ -249,7 +249,7 @@ backwards-compatibility cost. Some examples:
 
 Some features are built in that otherwise required external plugins:
 
-- Highlighting the yanked region, see |vim.highlight|.
+- Highlighting the yanked region, see |vim.hl|.
 
 ARCHITECTURE
 

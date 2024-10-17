@@ -552,7 +552,7 @@ This means that if your callback itself takes an (even optional) argument, you
 must wrap it in `function() end` to avoid an error:
 >lua
     vim.api.nvim_create_autocmd('TextYankPost', {
-      callback = function() vim.highlight.on_yank() end
+      callback = function() vim.hl.on_yank() end
     })
 <
 (Since unused arguments can be omitted in Lua function definitions, this is
@@ -576,7 +576,7 @@ Instead of using a pattern, you can create a buffer-local autocommand (see
 Similarly to mappings, you can (and should) add a description using `desc`:
 >lua
     vim.api.nvim_create_autocmd('TextYankPost', {
-      callback = function() vim.highlight.on_yank() end,
+      callback = function() vim.hl.on_yank() end,
       desc = "Briefly highlight yanked text"
     })
 <
