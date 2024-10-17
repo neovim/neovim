@@ -1424,13 +1424,11 @@ describe('API/extmarks', function()
 
   it('throws consistent error codes', function()
     local ns_invalid = ns2 + 1
-    eq(
-      "Invalid 'ns_id': 3",
-      pcall_err(set_extmark, ns_invalid, marks[1], positions[1][1], positions[1][2])
-    )
-    eq("Invalid 'ns_id': 3", pcall_err(api.nvim_buf_del_extmark, 0, ns_invalid, marks[1]))
-    eq("Invalid 'ns_id': 3", pcall_err(get_extmarks, ns_invalid, positions[1], positions[2]))
-    eq("Invalid 'ns_id': 3", pcall_err(get_extmark_by_id, ns_invalid, marks[1]))
+    local errmsg = "Invalid 'ns_id': " .. ns_invalid
+    eq(errmsg, pcall_err(set_extmark, ns_invalid, marks[1], positions[1][1], positions[1][2]))
+    eq(errmsg, pcall_err(api.nvim_buf_del_extmark, 0, ns_invalid, marks[1]))
+    eq(errmsg, pcall_err(get_extmarks, ns_invalid, positions[1], positions[2]))
+    eq(errmsg, pcall_err(get_extmark_by_id, ns_invalid, marks[1]))
   end)
 
   it('when col = line-length, set the mark on eol', function()
@@ -1533,7 +1531,7 @@ describe('API/extmarks', function()
         0,
         0,
         {
-          ns_id = 1,
+          ns_id = ns,
           end_col = 0,
           end_row = 1,
           right_gravity = true,
@@ -1596,7 +1594,7 @@ describe('API/extmarks', function()
         hl_group = 'String',
         hl_mode = 'blend',
         line_hl_group = 'Statement',
-        ns_id = 1,
+        ns_id = ns,
         number_hl_group = 'Statement',
         priority = 0,
         right_gravity = false,
@@ -1619,7 +1617,7 @@ describe('API/extmarks', function()
       0,
       0,
       {
-        ns_id = 1,
+        ns_id = ns,
         right_gravity = true,
         priority = 0,
         virt_text = { { '', 'Macro' }, { '', { 'Type', 'Search' } }, { '' } },
@@ -1634,7 +1632,7 @@ describe('API/extmarks', function()
       0,
       0,
       {
-        ns_id = 1,
+        ns_id = ns,
         cursorline_hl_group = 'Statement',
         priority = 4096,
         right_gravity = true,
@@ -1653,7 +1651,7 @@ describe('API/extmarks', function()
         end_col = 1,
         end_right_gravity = false,
         end_row = 0,
-        ns_id = 1,
+        ns_id = ns,
         right_gravity = true,
         spell = true,
       },
@@ -1669,7 +1667,7 @@ describe('API/extmarks', function()
         end_col = 1,
         end_right_gravity = false,
         end_row = 0,
-        ns_id = 1,
+        ns_id = ns,
         right_gravity = true,
         spell = false,
       },
