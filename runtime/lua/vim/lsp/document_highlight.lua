@@ -52,13 +52,23 @@ api.nvim_create_autocmd('LspAttach', {
     local client_hilights = bufstate.client_hilights or {}
     client_hilights[client_id] = {}
     bufstate.client_hilights = client_hilights
+
+    api.nvim_buf_attach(bufnr, false, {
+      on_detach = function()
+        bufstates[bufnr] = nil
+      end,
+    })
   end,
 })
 api.nvim_create_autocmd('LspDetach', {
   group = augroup,
   callback = function(args)
-    ---@type integer
+    -- bufnr may not exists if the buffer is already unloaded
+    ---@type integer?
     local bufnr = args.bufnr
+    if not bufnr then
+      return
+    end
     local bufstate = assert(bufstates[bufnr])
 
     ---@type integer
