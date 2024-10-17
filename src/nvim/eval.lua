@@ -12768,7 +12768,7 @@ M.funcs = {
       For example to make <c-j> work like <down> in wildmode, use: >vim
           cnoremap <expr> <C-j> wildmenumode() ? "\<Down>\<Tab>" : "\<c-j>"
       <
-      (Note, this needs the 'wildcharm' option set appropriately).
+      (Note: this needs the 'wildcharm' option set appropriately).
     ]=],
     name = 'wildmenumode',
     params = {},

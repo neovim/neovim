@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Vim help file
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2024 Oct 08
+" Last Change:	2024 Oct 16
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -43,7 +43,8 @@ syn match helpOption		"'[a-z]\{2,\}'"
 syn match helpOption		"'t_..'"
 syn match helpNormal		"'ab'"
 syn match helpCommand		"`[^` \t]\+`"hs=s+1,he=e-1 contains=helpBacktick
-syn match helpCommand		"\(^\|[^a-z"[]\)\zs`[^`]\+`\ze\([^a-z\t."']\|$\)"hs=s+1,he=e-1 contains=helpBacktick
+" doesn't allow a . directly after an ending backtick. See :helpgrep `[^`,]\+ [^`,]\+`\.
+syn match helpCommand		"\(^\|[^a-z"[]\)\zs`[^`]\+`\ze\([^a-z\t."']\|[.?!]\?$\)"hs=s+1,he=e-1 contains=helpBacktick
 syn match helpHeader		"\s*\zs.\{-}\ze\s\=\~$" nextgroup=helpIgnore
 syn match helpGraphic		".* \ze`$" nextgroup=helpIgnore
 if has("conceal")
@@ -52,6 +53,7 @@ else
   syn match helpIgnore		"." contained
 endif
 syn keyword helpNote		note Note NOTE note: Note: NOTE: Notes Notes:
+syn match helpNote		"\c(note\(:\|\>\)"ms=s+1
 syn keyword helpWarning		WARNING WARNING: Warning:
 syn keyword helpDeprecated	DEPRECATED DEPRECATED: Deprecated:
 syn match helpSpecial		"\<N\>"
@@ -64,6 +66,10 @@ syn match helpSpecial		"\[N]"
 syn match helpSpecial		"N  N"he=s+1
 syn match helpSpecial		"Nth"me=e-2
 syn match helpSpecial		"N-1"me=e-2
+" highlighting N for :resize in windows.txt
+syn match helpSpecial		"] -N\>"ms=s+3
+syn match helpSpecial		"+N\>"ms=s+1
+syn match helpSpecial		"\[+-]N\>"ms=s+4
 " highlighting N of cinoptions-values in indent.txt
 syn match helpSpecial		"^\t-\?\zsNs\?\s"me=s+1
 " highlighting N of cinoptions-values in indent.txt
@@ -139,7 +145,7 @@ syn match helpUnderlined	"\t[* ]Underlined\t\+[a-z].*"
 syn match helpError		"\t[* ]Error\t\+[a-z].*"
 syn match helpTodo		"\t[* ]Todo\t\+[a-z].*"
 
-syn match helpURL `\v<(((https?|ftp|gopher)://|(mailto|file|news):)[^' 	<>"]+|(www|web|w3)[a-z0-9_-]*\.[a-z0-9._-]+\.[^' 	<>"]+)[a-zA-Z0-9/]`
+syn match helpURL `\v<(((https?|ftp|gopher)://|(mailto|file|news):)[^'" \t<>{}]+|(www|web|w3)[a-z0-9_-]*\.[a-z0-9._-]+\.[^'" \t<>{}]+)[a-zA-Z0-9/]`
 
 syn match helpDiffAdded		"\t[* ]Added\t\+[a-z].*"
 syn match helpDiffChanged	"\t[* ]Changed\t\+[a-z].*"
@@ -149,16 +155,6 @@ syn match helpDiffRemoved	"\t[* ]Removed\t\+[a-z].*"
 let s:i = match(expand("%"), '\.\a\ax$')
 if s:i > 0
   exe "runtime syntax/help_" . strpart(expand("%"), s:i + 1, 2) . ".vim"
-endif
-
-" Italian
-if v:lang =~ '\<IT\>' || v:lang =~ '_IT\>' || v:lang =~? "italian"
-  syn keyword helpNote		nota Nota NOTA nota: Nota: NOTA: notare Notare NOTARE notare: Notare: NOTARE:
-  syn match helpSpecial		"Nma"me=e-2
-  syn match helpSpecial		"Nme"me=e-2
-  syn match helpSpecial		"Nmi"me=e-2
-  syn match helpSpecial		"Nmo"me=e-2
-  syn match helpSpecial		"\[interv.]"
 endif
 
 syn sync minlines=40

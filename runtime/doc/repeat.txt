@@ -967,21 +967,24 @@ For example, to profile the one_script.vim script file: >
 
 
 :prof[ile] start {fname}			*:prof* *:profile* *E750*
-		Start profiling, write the output in {fname} upon exit.
+		Start profiling, write the output in {fname} upon exit or when
+		a `:profile stop` or `:profile dump` command is invoked.
 		"~/" and environment variables in {fname} will be expanded.
 		If {fname} already exists it will be silently overwritten.
 		The variable |v:profiling| is set to one.
 
 :prof[ile] stop
-		Write the logfile and stop profiling.
+		Write the collected profiling information to the logfile and
+		stop profiling. You can use the `:profile start` command to
+		clear the profiling statistics and start profiling again.
 
 :prof[ile] pause
-		Don't profile until the following ":profile continue".  Can be
-		used when doing something that should not be counted (e.g., an
-		external command).  Does not nest.
+		Stop profiling until the next `:profile continue` command.
+		Can be used when doing something that should not be counted
+		(e.g., an external command).  Does not nest.
 
 :prof[ile] continue
-		Continue profiling after ":profile pause".
+		Continue profiling after `:profile pause`.
 
 :prof[ile] func {pattern}
 		Profile function that matches the pattern {pattern}.
@@ -999,16 +1002,24 @@ For example, to profile the one_script.vim script file: >
 		won't work.
 
 :prof[ile] dump
-		Don't wait until exiting Vim and write the current state of
-		profiling to the log immediately.
+		Write the current state of profiling to the logfile
+		immediately.  After running this command, Vim continues to
+		collect the profiling statistics.
 
 :profd[el] ...						*:profd* *:profdel*
 		Stop profiling for the arguments specified. See |:breakdel|
-		for the arguments.
-
+		for the arguments. Examples: >
+			profdel func MyFunc
+			profdel file MyScript.vim
+			profdel here
 
 You must always start with a ":profile start fname" command.  The resulting
-file is written when Vim exits.  Here is an example of the output, with line
+file is written when Vim exits.  For example, to profile one specific
+function: >
+	profile start /tmp/vimprofile
+	profile func MyFunc
+
+Here is an example of the output, with line
 numbers prepended for the explanation:
 
   1 FUNCTION  Test2() ~
