@@ -2,7 +2,6 @@ local protocol = require('vim.lsp.protocol')
 local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
-local highlight = vim.highlight
 local uv = vim.uv
 
 local M = {}
@@ -1677,60 +1676,6 @@ function M.open_floating_preview(contents, syntax, opts)
   api.nvim_buf_set_var(bufnr, 'lsp_floating_preview', floating_winnr)
 
   return floating_bufnr, floating_winnr
-end
-
-do --[[ References ]]
-  local reference_ns = api.nvim_create_namespace('vim_lsp_references')
-
-  --- Removes document highlights from a buffer.
-  ---
-  ---@param bufnr integer? Buffer id
-  function M.buf_clear_references(bufnr)
-    api.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
-  end
-
-  --- Shows a list of document highlights for a certain buffer.
-  ---
-  ---@param bufnr integer Buffer id
-  ---@param references lsp.DocumentHighlight[] objects to highlight
-  ---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
-  ---@see https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
-  function M.buf_highlight_references(bufnr, references, offset_encoding)
-    validate('bufnr', bufnr, 'number', true)
-    validate('offset_encoding', offset_encoding, 'string', false)
-    for _, reference in ipairs(references) do
-      local start_line = reference.range.start.line
-      local start_char = reference.range.start.character
-      local end_line = reference.range['end'].line
-      local end_char = reference.range['end'].character
-
-      local start_idx = get_line_byte_from_position(
-        bufnr,
-        { line = start_line, character = start_char },
-        offset_encoding
-      )
-      local end_idx = get_line_byte_from_position(
-        bufnr,
-        { line = start_line, character = end_char },
-        offset_encoding
-      )
-
-      local document_highlight_kind = {
-        [protocol.DocumentHighlightKind.Text] = 'LspReferenceText',
-        [protocol.DocumentHighlightKind.Read] = 'LspReferenceRead',
-        [protocol.DocumentHighlightKind.Write] = 'LspReferenceWrite',
-      }
-      local kind = reference['kind'] or protocol.DocumentHighlightKind.Text
-      highlight.range(
-        bufnr,
-        reference_ns,
-        document_highlight_kind[kind],
-        { start_line, start_idx },
-        { end_line, end_idx },
-        { priority = vim.highlight.priorities.user }
-      )
-    end
-  end
 end
 
 local position_sort = sort_by_key(function(v)

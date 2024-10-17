@@ -1,0 +1,323 @@
+local util = require('vim.lsp.util')
+local log = require('vim.lsp.log')
+local ms = require('vim.lsp.protocol').Methods
+local api = vim.api
+
+local M = {}
+
+local namespace = api.nvim_create_namespace('vim_lsp_document_highlight')
+local augroup = api.nvim_create_augroup('vim_lsp_document_highlight', {})
+
+local globalstate = {
+  enabled = false,
+}
+
+---Buffer-local state for document highlights
+---@class (private) vim.lsp.document_highlight.BufState
+---
+---Whether document highlights are enabled for this buffer,
+---`nil` indicates following the global state.
+---@field enabled? boolean
+---
+---Each client attached to this buffer must exists.
+---
+---Index in the form of client_id -> (row -> highlights)
+---@field client_hilights table<integer, table<integer, lsp.DocumentHighlight[]?>?>
+
+---Each buffer attached by at least one supported LSP server must exists,
+---otherwise it should not exists or be cleaned up.
+---
+---Index in the form of bufnr -> bufstate
+---@type table<integer, vim.lsp.document_highlight.BufState?>
+local bufstates = {}
+for _, client in ipairs(vim.lsp.get_clients()) do
+  for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(client.id)) do
+    if client.supports_method(ms.textDocument_documentHighlight, { bufnr = bufnr }) then
+      local bufstate = bufstates[bufnr] or {}
+      local client_hilights = bufstate.client_hilights or {}
+
+      if not client_hilights[client.id] then
+        client_hilights[client.id] = {}
+      end
+
+      bufstate.client_hilights = client_hilights
+      bufstates[bufnr] = bufstate
+    end
+  end
+end
+api.nvim_create_autocmd('LspAttach', {
+  group = augroup,
+  callback = function(args)
+    ---@type integer
+    local client_id = args.data.client_id
+    if
+      not assert(vim.lsp.get_client_by_id(client_id)).supports_method(
+        ms.textDocument_documentHighlight
+      )
+    then
+      return
+    end
+
+    ---@type integer
+    local bufnr = args.buf
+    local bufstate = bufstates[bufnr] or {}
+    bufstates[bufnr] = bufstate
+
+    local client_hilights = bufstate.client_hilights or {}
+    client_hilights[client_id] = {}
+    bufstate.client_hilights = client_hilights
+
+    api.nvim_buf_attach(bufnr, false, {
+      on_detach = function()
+        bufstates[bufnr] = nil
+      end,
+    })
+  end,
+})
+api.nvim_create_autocmd('LspDetach', {
+  group = augroup,
+  callback = function(args)
+    -- bufnr may not exists if the buffer is already unloaded
+    ---@type integer?
+    local bufnr = args.bufnr
+    if not bufnr then
+      return
+    end
+    local bufstate = assert(bufstates[bufnr])
+
+    ---@type integer
+    local client_id = args.data.client_id
+    bufstate.client_hilights[client_id] = nil
+    if vim.tbl_isempty(bufstate.client_hilights) then
+      bufstates[bufnr] = nil
+    end
+  end,
+})
+
+---|lsp-handler| for the method `textDocument/documentHighlight`
+---Store hints for a specific buffer and client
+---@param result? lsp.DocumentHighlight[]
+---@param ctx lsp.HandlerContext
+function M.on_document_highlight(err, result, ctx)
+  if err then
+    log.error('document highlight', err)
+  end
+
+  local bufnr = assert(ctx.bufnr)
+  local bufstate = assert(bufstates[bufnr])
+
+  local client_id = assert(ctx.client_id)
+  local client_hilights = bufstate.client_hilights
+
+  ---@type table<integer, lsp.DocumentHighlight[]?>
+  local row_highlights = {}
+  for _, highlight in pairs(result or {}) do
+    for row = highlight.range['start'].line, highlight.range['end'].line do
+      local highlights = row_highlights[row] or {}
+      highlights[#highlights + 1] = highlight
+      row_highlights[row] = highlights
+    end
+  end
+  client_hilights[client_id] = row_highlights
+  api.nvim__redraw({ buf = bufnr, valid = true })
+end
+
+---@param bufnr integer
+local function refresh(bufnr)
+  local bufstate = assert(bufstates[bufnr])
+  local enabled = bufstate.enabled
+  if enabled == nil then
+    enabled = globalstate.enabled
+  end
+
+  if not enabled then
+    api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
+    api.nvim__redraw({ buf = bufnr, valid = true })
+    return
+  end
+
+  local params = util.make_position_params()
+  vim.lsp.buf_request(bufnr, ms.textDocument_documentHighlight, params)
+end
+
+local function debunce(f)
+  ---@type uv.uv_timer_t?
+  local timer = nil
+  return function(...)
+    local args = { ... }
+    if timer then
+      vim.uv.timer_stop(timer)
+      timer:close()
+      timer = nil
+    end
+    timer = assert(vim.uv.new_timer())
+    vim.uv.timer_start(
+      timer,
+      100,
+      0,
+      vim.schedule_wrap(function()
+        timer:close()
+        timer = nil
+        f(unpack(args))
+      end)
+    )
+  end
+end
+
+local debounced_refresh = debunce(refresh)
+
+api.nvim_create_autocmd('CursorMoved', {
+  group = augroup,
+  callback = function(args)
+    ---@type integer
+    local bufnr = args.buf
+    if bufstates[bufnr] then
+      debounced_refresh(bufnr)
+    end
+  end,
+})
+api.nvim_create_autocmd('LspNotify', {
+  group = augroup,
+  callback = function(args)
+    ---@type integer
+    local bufnr = args.buf
+    local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
+    if
+      client.supports_method(ms.textDocument_documentHighlight, { bufnr = bufnr })
+      and (
+        args.data.method == ms.textDocument_didChange
+        or args.data.method == ms.textDocument_didOpen
+      )
+    then
+      debounced_refresh(bufnr)
+    end
+  end,
+})
+
+---@param kind lsp.DocumentHighlightKind
+---@return string
+local function kind_to_hl_group(kind)
+  local base = 'LspReference'
+  if kind == 2 then
+    return string.format('%sRead', base)
+  elseif kind == 3 then
+    return string.format('%sWrite', base)
+  else -- kind == 1 also the default
+    return string.format('%sText', base)
+  end
+end
+
+api.nvim_set_decoration_provider(namespace, {
+  on_win = function(_, _, bufnr, toprow, botrow)
+    local bufstate = bufstates[bufnr]
+    if not bufstate then
+      return
+    end
+
+    local enabled = bufstate.enabled
+    if enabled == nil then
+      enabled = globalstate.enabled
+    end
+
+    if not enabled then
+      return
+    end
+
+    local client_hilights = bufstate.client_hilights
+
+    for row = toprow, botrow do
+      api.nvim_buf_clear_namespace(bufnr, namespace, row, row + 1)
+      -- TODO(ofseed): When deleting characters at the end of a line or the entire line,
+      -- the extmark range might still remain as it was before the deletion,
+      -- causing outbounds error when trying to set the extmark.
+      -- Better to avoid rendering expired extmarks.
+      local max_col = #api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1]
+
+      for _, row_highlights in pairs(client_hilights) do
+        local highlights = row_highlights[row] or {}
+        for _, highlight in pairs(highlights) do
+          local col = math.min(highlight.range['start'].character, max_col)
+          local end_row = highlight.range['end'].line
+          local end_col = math.min(highlight.range['end'].character, max_col)
+          api.nvim_buf_set_extmark(bufnr, namespace, row, col, {
+            hl_group = kind_to_hl_group(highlight.kind),
+            ephemeral = false,
+            end_row = end_row,
+            end_col = end_col,
+          })
+        end
+      end
+    end
+  end,
+})
+
+---Optional filters |kwargs|, or `nil` for all.
+---@class vim.lsp.document_highlight.enable.Filter
+---@inlinedoc
+---
+---Buffer number, or 0 for current buffer, or nil for all.
+---@field bufnr? integer
+
+---Query whether document highlight is enabled in the {filter}ed scope
+---@param filter? vim.lsp.document_highlight.enable.Filter
+---@return boolean
+function M.is_enabled(filter)
+  vim.validate({ filter = { filter, 'table', true } })
+  filter = filter or {}
+
+  local bufnr = filter.bufnr
+  if bufnr == nil then
+    return globalstate.enabled
+  else
+    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    local bufstate = bufstates[bufnr]
+    if not bufstate then
+      return false
+    end
+
+    if bufstates[bufnr].enabled == nil then
+      return globalstate.enabled
+    else
+      return bufstates[bufnr].enabled
+    end
+  end
+end
+
+---Enables or disables document highlights for the {filter}ed scope.
+---
+---To "toggle", pass the inverse of `is_enabled()`:
+---
+---```lua
+---vim.lsp.document_highlight.enable(not vim.lsp.document_highlight.is_enabled())
+---```
+---@param enable? boolean
+---@param filter? vim.lsp.document_highlight.enable.Filter
+function M.enable(enable, filter)
+  vim.validate({ enable = { enable, 'boolean', true }, filter = { filter, 'table', true } })
+  enable = enable == nil or enable
+  filter = filter or {}
+
+  local bufnr = filter.bufnr
+  if bufnr == nil then
+    globalstate.enabled = enable
+    for b, bufstate in pairs(bufstates) do
+      bufstate.enabled = nil
+      refresh(b)
+    end
+  else
+    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    local bufstate = bufstates[bufnr]
+    if not bufstate then
+      return
+    end
+
+    if enable == globalstate.enabled then
+      bufstate.enabled = nil
+    else
+      bufstate.enabled = enable
+    end
+    refresh(bufnr)
+  end
+end
+
+return M
