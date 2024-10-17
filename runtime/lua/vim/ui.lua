@@ -159,8 +159,10 @@ function M.open(path, opt)
     cmd = { 'wslview', path }
   elseif vim.fn.executable('explorer.exe') == 1 then
     cmd = { 'explorer.exe', path }
+  elseif vim.fn.executable('lemonade') == 1 then
+    cmd = { 'lemonade', 'open', path }
   else
-    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open)'
+    return nil, 'vim.ui.open: no handler found (tried: wslview, explorer.exe, xdg-open, lemonade)'
   end
 
   return vim.system(cmd, job_opt), nil
