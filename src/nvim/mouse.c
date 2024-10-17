@@ -280,6 +280,15 @@ static int get_fpos_of_mouse(pos_T *mpos)
   return IN_BUFFER;
 }
 
+/// Check that mouse support is enabled for visual mode
+static bool mouse_supports_visual(void)
+{
+  return !*p_mouse
+         || vim_strchr(p_mouse, 'a') != NULL
+         || vim_strchr(p_mouse, MOUSE_VISUAL) != NULL
+         || (curbuf->b_help && vim_strchr(p_mouse, MOUSE_HELP) != NULL);
+}
+
 /// Do the appropriate action for the current mouse click in the current mode.
 /// Not used for Command-line mode.
 ///
@@ -633,7 +642,7 @@ popupexit:
         if (VIsual_active) {
           jump_flags |= MOUSE_MAY_STOP_VIS;
         }
-      } else {
+      } else if (mouse_supports_visual()) {
         jump_flags |= MOUSE_MAY_VIS;
       }
     } else if (which_button == MOUSE_RIGHT) {
@@ -648,7 +657,9 @@ popupexit:
         }
       }
       jump_flags |= MOUSE_FOCUS;
-      jump_flags |= MOUSE_MAY_VIS;
+      if (mouse_supports_visual()) {
+        jump_flags |= MOUSE_MAY_VIS;
+      }
     }
   }
 
@@ -891,7 +902,8 @@ popupexit:
   } else if (in_status_line || in_sep_line) {
     // Do nothing if on status line or vertical separator
     // Handle double clicks otherwise
-  } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (MODE_NORMAL | MODE_INSERT))) {
+  } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (MODE_NORMAL | MODE_INSERT))
+             && mouse_supports_visual()) {
     if (is_click || !VIsual_active) {
       if (VIsual_active) {
         orig_cursor = VIsual;
