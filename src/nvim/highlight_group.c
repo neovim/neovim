@@ -144,6 +144,8 @@ static const char e_missing_argument_str[]
 static const char *highlight_init_both[] = {
   "Cursor            guifg=bg      guibg=fg",
   "CursorLineNr      gui=bold      cterm=bold",
+  "PmenuMatch        gui=bold      cterm=bold",
+  "PmenuMatchSel     gui=bold      cterm=bold",
   "PmenuSel          gui=reverse   cterm=reverse,underline blend=0",
   "RedrawDebugNormal gui=reverse   cterm=reverse",
   "TabLineSel        gui=bold      cterm=bold",
@@ -170,8 +172,6 @@ static const char *highlight_init_both[] = {
   "default link PmenuExtraSel    PmenuSel",
   "default link PmenuKind        Pmenu",
   "default link PmenuKindSel     PmenuSel",
-  "default link PmenuMatch       Pmenu",
-  "default link PmenuMatchSel    PmenuSel",
   "default link PmenuSbar        Pmenu",
   "default link Substitute       Search",
   "default link StatusLineTerm   StatusLine",
