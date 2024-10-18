@@ -6406,7 +6406,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       {expr1} must be a |List|, |String|, |Blob| or |Dictionary|.
-      When {expr1} is a |List|| or |Dictionary|, replace each
+      When {expr1} is a |List| or |Dictionary|, replace each
       item in {expr1} with the result of evaluating {expr2}.
       For a |Blob| each byte is replaced.
       For a |String|, each character, including composing
