@@ -37,8 +37,8 @@ local M = {}
 ---               `idx` is the 1-based index of `item` within `items`.
 ---               `nil` if the user aborted the dialog.
 function M.select(items, opts, on_choice)
-  vim.validate('items', items, 'table', false)
-  vim.validate('on_choice', on_choice, 'function', false)
+  vim.validate('items', items, 'table')
+  vim.validate('on_choice', on_choice, 'function')
   opts = opts or {}
   local choices = { opts.prompt or 'Select one of:' }
   local format_item = opts.format_item or tostring
@@ -85,7 +85,7 @@ end
 ---               `nil` if the user aborted the dialog.
 function M.input(opts, on_confirm)
   vim.validate('opts', opts, 'table', true)
-  vim.validate('on_confirm', on_confirm, 'function', false)
+  vim.validate('on_confirm', on_confirm, 'function')
 
   opts = (opts and not vim.tbl_isempty(opts)) and opts or vim.empty_dict()
 
