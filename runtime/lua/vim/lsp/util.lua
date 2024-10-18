@@ -888,8 +888,8 @@ end
 function M.make_floating_popup_options(width, height, opts)
   validate('opts', opts, 'table', true)
   opts = opts or {}
-  validate('opts.offset_x', opts.offset_x, 'n', true)
-  validate('opts.offset_y', opts.offset_y, 'n', true)
+  validate('opts.offset_x', opts.offset_x, 'number', true)
+  validate('opts.offset_y', opts.offset_y, 'number', true)
 
   local anchor = ''
 
