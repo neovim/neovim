@@ -105,10 +105,16 @@ function M.on_document_highlight(err, result, ctx)
 
   local bufnr = assert(ctx.bufnr)
   local client_id = assert(ctx.client_id)
+  local client = assert(vim.lsp.get_client_by_id(client_id))
 
   ---@type table<integer, lsp.DocumentHighlight[]?>
   local row_highlights = {}
   for _, highlight in pairs(result or {}) do
+    highlight.range['start'].character =
+      util._get_line_byte_from_position(bufnr, highlight.range['start'], client.offset_encoding)
+    highlight.range['end'].character =
+      util._get_line_byte_from_position(bufnr, highlight.range['end'], client.offset_encoding)
+
     for row = highlight.range['start'].line, highlight.range['end'].line do
       local highlights = row_highlights[row] or {}
       highlights[#highlights + 1] = highlight
@@ -138,8 +144,11 @@ local function refresh(bufnr)
     return
   end
 
-  local params = util.make_position_params()
-  vim.lsp.buf_request(bufnr, ms.textDocument_documentHighlight, params)
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_documentHighlight })
+  for _, client in ipairs(clients) do
+    local params = util.make_position_params(0, client.offset_encoding)
+    client:request(ms.textDocument_documentHighlight, params, nil, bufnr)
+  end
 end
 
 ---@param f function
