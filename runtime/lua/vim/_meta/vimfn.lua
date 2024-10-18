@@ -510,24 +510,12 @@ function vim.fn.bufadd(name) end
 function vim.fn.bufexists(buf) end
 
 --- @deprecated
---- Obsolete name for |bufexists()|.
----
---- @param ... any
---- @return 0|1
 function vim.fn.buffer_exists(...) end
 
 --- @deprecated
---- Obsolete name for |bufname()|.
----
---- @param ... any
---- @return string
 function vim.fn.buffer_name(...) end
 
 --- @deprecated
---- Obsolete name for |bufnr()|.
----
---- @param ... any
---- @return integer
 function vim.fn.buffer_number(...) end
 
 --- The result is a Number, which is |TRUE| if a buffer called
@@ -1993,10 +1981,6 @@ function vim.fn.extendnew(expr1, expr2, expr3) end
 function vim.fn.feedkeys(string, mode) end
 
 --- @deprecated
---- Obsolete name for |filereadable()|.
----
---- @param file string
---- @return any
 function vim.fn.file_readable(file) end
 
 --- Copy the file pointed to by the name {from} to {to}. The
@@ -4201,17 +4185,9 @@ function vim.fn.haslocaldir(winnr, tabnr) end
 function vim.fn.hasmapto(what, mode, abbr) end
 
 --- @deprecated
---- Obsolete name for |hlID()|.
----
---- @param name string
---- @return any
 function vim.fn.highlightID(name) end
 
 --- @deprecated
---- Obsolete name for |hlexists()|.
----
---- @param name string
---- @return any
 function vim.fn.highlight_exists(name) end
 
 --- Add the String {item} to the history {history} which can be
@@ -4585,10 +4561,6 @@ function vim.fn.input(prompt, text, completion) end
 function vim.fn.input(opts) end
 
 --- @deprecated
---- Use |input()| instead.
----
---- @param ... any
---- @return any
 function vim.fn.inputdialog(...) end
 
 --- {textlist} must be a |List| of strings.  This |List| is
@@ -4772,10 +4744,6 @@ function vim.fn.isnan(expr) end
 function vim.fn.items(dict) end
 
 --- @deprecated
---- Obsolete name for |chanclose()|
----
---- @param ... any
---- @return any
 function vim.fn.jobclose(...) end
 
 --- Return the PID (process id) of |job-id| {job}.
@@ -4795,10 +4763,6 @@ function vim.fn.jobpid(job) end
 function vim.fn.jobresize(job, width, height) end
 
 --- @deprecated
---- Obsolete name for |chansend()|
----
---- @param ... any
---- @return any
 function vim.fn.jobsend(...) end
 
 --- Note: Prefer |vim.system()| in Lua (unless using the `pty` option).
@@ -4995,9 +4959,6 @@ function vim.fn.keys(dict) end
 function vim.fn.keytrans(string) end
 
 --- @deprecated
---- Obsolete name for bufnr("$").
----
---- @return any
 function vim.fn.last_buffer_nr() end
 
 --- The result is a Number, which is the length of the argument.
@@ -7242,9 +7203,9 @@ function vim.fn.round(expr) end
 ---
 --- @param channel integer
 --- @param event string
---- @param args? any
+--- @param ... any
 --- @return any
-function vim.fn.rpcnotify(channel, event, args) end
+function vim.fn.rpcnotify(channel, event, ...) end
 
 --- Sends a request to {channel} to invoke {method} via
 --- |RPC| and blocks until a response is received.
@@ -7254,30 +7215,14 @@ function vim.fn.rpcnotify(channel, event, args) end
 ---
 --- @param channel integer
 --- @param method string
---- @param args? any
+--- @param ... any
 --- @return any
-function vim.fn.rpcrequest(channel, method, args) end
+function vim.fn.rpcrequest(channel, method, ...) end
 
 --- @deprecated
---- Deprecated. Replace  >vim
----   let id = rpcstart('prog', ['arg1', 'arg2'])
---- <with >vim
----   let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
---- <
----
---- @param prog string
---- @param argv? any
---- @return any
 function vim.fn.rpcstart(prog, argv) end
 
 --- @deprecated
---- Use |jobstop()| instead to stop any job, or
---- `chanclose(id, "rpc")` to close RPC communication
---- without stopping the job. Use chanclose(id) to close
---- any socket.
----
---- @param ... any
---- @return any
 function vim.fn.rpcstop(...) end
 
 --- Evaluate Ruby expression {expr} and return its result
@@ -9326,6 +9271,7 @@ function vim.fn.str2float(string, quoted) end
 --- and exists only for backwards-compatibility.
 --- With UTF-8 composing characters are handled properly: >vim
 ---   echo str2list("á")    " returns [97, 769]
+--- <
 ---
 --- @param string string
 --- @param utf8? boolean
@@ -10868,7 +10814,7 @@ function vim.fn.winheight(nr) end
 --- <
 ---
 --- @param tabnr? integer
---- @return any
+--- @return any[]
 function vim.fn.winlayout(tabnr) end
 
 --- The result is a Number, which is the screen line of the cursor
