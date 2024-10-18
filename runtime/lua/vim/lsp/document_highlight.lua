@@ -8,6 +8,10 @@ local M = {}
 local namespace = api.nvim_create_namespace('vim_lsp_document_highlight')
 local augroup = api.nvim_create_augroup('vim_lsp_document_highlight', {})
 
+local globalstate = {
+  enabled = false,
+}
+
 ---Buffer-local state for document highlights
 ---@class (private) vim.lsp.document_highlight.BufState
 ---
@@ -114,6 +118,18 @@ end
 
 ---@param bufnr integer
 local function refresh(bufnr)
+  local bufstate = assert(bufstates[bufnr])
+  local enabled = bufstate.enabled
+  if enabled == nil then
+    enabled = globalstate.enabled
+  end
+
+  if not enabled then
+    api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
+    api.nvim__redraw({ buf = bufnr, valid = true })
+    return
+  end
+
   local params = util.make_position_params()
   vim.lsp.buf_request(bufnr, ms.textDocument_documentHighlight, params)
 end
@@ -166,6 +182,15 @@ api.nvim_set_decoration_provider(namespace, {
       return
     end
 
+    local enabled = bufstate.enabled
+    if enabled == nil then
+      enabled = globalstate.enabled
+    end
+
+    if not enabled then
+      return
+    end
+
     local client_highlights = bufstate.client_highlights
 
     for row = toprow, botrow do
@@ -196,16 +221,64 @@ api.nvim_set_decoration_provider(namespace, {
   end,
 })
 
+---Optional filters |kwargs|, or `nil` for all.
 ---@class vim.lsp.document_highlight.enable.Filter
 ---@inlinedoc
+---
+---Buffer number, or 0 for current buffer, or nil for all.
+---@field bufnr? integer
 
----@param enable boolean
+---Query whether document highlight is enabled in the {filter}ed scope
+---@param filter? vim.lsp.document_highlight.enable.Filter
+---@return boolean
+function M.is_enabled(filter)
+  vim.validate({ filter = { filter, 'table', true } })
+  filter = filter or {}
+
+  local bufnr = filter.bufnr
+  if bufnr == nil then
+    return globalstate.enabled
+  end
+
+  bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+  if bufstates[bufnr].enabled == nil then
+    return globalstate.enabled
+  else
+    return bufstates[bufnr].enabled
+  end
+end
+
+---Enables or disables document highlights for the {filter}ed scope.
+---
+---To "toggle", pass the inverse of `is_enabled()`:
+---
+---```lua
+---vim.lsp.document_highlight.enable(not vim.lsp.document_highlight.is_enabled())
+---```
+---@param enable? boolean
 ---@param filter? vim.lsp.document_highlight.enable.Filter
 function M.enable(enable, filter)
   vim.validate('enable', enable, 'boolean', true)
   vim.validate('filter', filter, 'table', true)
   enable = enable == nil or enable
   filter = filter or {}
+
+  local bufnr = filter.bufnr
+  if bufnr == nil then
+    globalstate.enabled = enable
+    for b, bufstate in pairs(bufstates) do
+      bufstate.enabled = nil
+      refresh(b)
+    end
+  else
+    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    if enable == globalstate.enabled then
+      bufstates[bufnr].enabled = nil
+    else
+      bufstates[bufnr].enabled = enable
+    end
+    refresh(bufnr)
+  end
 end
 
 return M
