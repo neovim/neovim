@@ -349,24 +349,22 @@ end
 --- @param config vim.lsp.ClientConfig
 local function validate_config(config)
   validate('config', config, 'table')
-  validate({
-    handlers = { config.handlers, 't', true },
-    capabilities = { config.capabilities, 't', true },
-    cmd_cwd = { config.cmd_cwd, optional_validator(is_dir), 'directory' },
-    cmd_env = { config.cmd_env, 't', true },
-    detached = { config.detached, 'b', true },
-    name = { config.name, 's', true },
-    on_error = { config.on_error, 'f', true },
-    on_exit = { config.on_exit, { 'f', 't' }, true },
-    on_init = { config.on_init, { 'f', 't' }, true },
-    on_attach = { config.on_attach, { 'f', 't' }, true },
-    settings = { config.settings, 't', true },
-    commands = { config.commands, 't', true },
-    before_init = { config.before_init, { 'f', 't' }, true },
-    offset_encoding = { config.offset_encoding, 's', true },
-    flags = { config.flags, 't', true },
-    get_language_id = { config.get_language_id, 'f', true },
-  })
+  validate('handlers', config.handlers, 'table', true)
+  validate('capabilities', config.capabilities, 'table', true)
+  validate('cmd_cwd', config.cmd_cwd, optional_validator(is_dir), 'directory')
+  validate('cmd_env', config.cmd_env, 'table', true)
+  validate('detached', config.detached, 'boolean', true)
+  validate('name', config.name, 'string', true)
+  validate('on_error', config.on_error, 'function', true)
+  validate('on_exit', config.on_exit, { 'function', 'table' }, true)
+  validate('on_init', config.on_init, { 'function', 'table' }, true)
+  validate('on_attach', config.on_attach, { 'function', 'table' }, true)
+  validate('settings', config.settings, 'table', true)
+  validate('commands', config.commands, 'table', true)
+  validate('before_init', config.before_init, { 'function', 'table' }, true)
+  validate('offset_encoding', config.offset_encoding, 'string', true)
+  validate('flags', config.flags, 'table', true)
+  validate('get_language_id', config.get_language_id, 'function', true)
 
   assert(
     (

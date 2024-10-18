@@ -1289,25 +1289,15 @@ end
 ---
 --- @return nvim.gen_help_html.gen_result result
 function M.gen(help_dir, to_dir, include, commit, parser_path)
-  vim.validate {
-    help_dir = {
-      help_dir,
-      function(d)
-        return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
-      end,
-      'valid directory',
-    },
-    to_dir = { to_dir, 's' },
-    include = { include, 't', true },
-    commit = { commit, 's', true },
-    parser_path = {
-      parser_path,
-      function(f)
-        return f == nil or vim.fn.filereadable(vim.fs.normalize(f)) == 1
-      end,
-      'valid vimdoc.{so,dll} filepath',
-    },
-  }
+  vim.validate('help_dir', help_dir, function(d)
+    return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
+  end, 'valid directory')
+  vim.validate('to_dir', to_dir, 'string')
+  vim.validate('include', include, 'table', true)
+  vim.validate('commit', commit, 'sring', true)
+  vim.validate('parser_path', parser_path, function(f)
+    return vim.fn.filereadable(vim.fs.normalize(f)) == 1
+  end, true, 'valid vimdoc.{so,dll} filepath')
 
   local err_count = 0
   local redirects_count = 0
@@ -1410,23 +1400,13 @@ end
 ---
 --- @return nvim.gen_help_html.validate_result result
 function M.validate(help_dir, include, parser_path)
-  vim.validate {
-    help_dir = {
-      help_dir,
-      function(d)
-        return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
-      end,
-      'valid directory',
-    },
-    include = { include, 't', true },
-    parser_path = {
-      parser_path,
-      function(f)
-        return f == nil or vim.fn.filereadable(vim.fs.normalize(f)) == 1
-      end,
-      'valid vimdoc.{so,dll} filepath',
-    },
-  }
+  vim.validate('help_dir', help_dir, function(d)
+    return vim.fn.isdirectory(vim.fs.normalize(d)) == 1
+  end, 'valid directory')
+  vim.validate('include', include, 'table', true)
+  vim.validate('parser_path', parser_path, function(f)
+    return vim.fn.filereadable(vim.fs.normalize(f)) == 1
+  end, true, 'valid vimdoc.{so,dll} filepath')
   local err_count = 0 ---@type integer
   local files_to_errors = {} ---@type table<string, string[]>
   ensure_runtimepath()

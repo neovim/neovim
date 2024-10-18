@@ -467,13 +467,11 @@ vim.cmd = setmetatable({}, {
 
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
-  local validate = vim.validate
-
   --- @param scope string
   --- @param handle? false|integer
   --- @return vim.var_accessor
   local function make_dict_accessor(scope, handle)
-    validate('scope', scope, 'string')
+    vim.validate('scope', scope, 'string')
     local mt = {}
     function mt:__newindex(k, v)
       return vim._setvar(scope, handle or 0, k, v)
@@ -589,7 +587,7 @@ end
 ---@param timeout integer Number of milliseconds to wait before calling `fn`
 ---@return table timer luv timer object
 function vim.defer_fn(fn, timeout)
-  vim.validate({ fn = { fn, 'c', true } })
+  vim.validate('fn', fn, 'callable', true)
   local timer = assert(vim.uv.new_timer())
   timer:start(
     timeout,
@@ -680,10 +678,8 @@ function vim.on_key(fn, ns_id)
     return vim.tbl_count(on_key_cbs)
   end
 
-  vim.validate({
-    fn = { fn, 'c', true },
-    ns_id = { ns_id, 'n', true },
-  })
+  vim.validate('fn', fn, 'callable', true)
+  vim.validate('ns_id', ns_id, 'number', true)
 
   if ns_id == nil or ns_id == 0 then
     ns_id = vim.api.nvim_create_namespace('')

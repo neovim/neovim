@@ -1356,7 +1356,79 @@ describe('lua stdlib', function()
     eq('{"a": {}, "b": []}', exec_lua([[ return vim.fn.json_encode({a=vim.empty_dict(), b={}}) ]]))
   end)
 
-  it('vim.validate', function()
+  it('vim.validate (fast form)', function()
+    exec_lua("vim.validate('arg1', {}, 'table')")
+    exec_lua("vim.validate('arg1', nil, 'table', true)")
+    exec_lua("vim.validate('arg1', { foo='foo' }, 'table')")
+    exec_lua("vim.validate('arg1', { 'foo' }, 'table')")
+    exec_lua("vim.validate('arg1', 'foo', 'string')")
+    exec_lua("vim.validate('arg1', nil, 'string', true)")
+    exec_lua("vim.validate('arg1', 1, 'number')")
+    exec_lua("vim.validate('arg1', 0, 'number')")
+    exec_lua("vim.validate('arg1', 0.1, 'number')")
+    exec_lua("vim.validate('arg1', nil, 'number', true)")
+    exec_lua("vim.validate('arg1', true, 'boolean')")
+    exec_lua("vim.validate('arg1', false, 'boolean')")
+    exec_lua("vim.validate('arg1', nil, 'boolean', true)")
+    exec_lua("vim.validate('arg1', function()end, 'function')")
+    exec_lua("vim.validate('arg1', nil, 'function', true)")
+    exec_lua("vim.validate('arg1', nil, 'nil')")
+    exec_lua("vim.validate('arg1', nil, 'nil', true)")
+    exec_lua("vim.validate('arg1', coroutine.create(function()end), 'thread')")
+    exec_lua("vim.validate('arg1', nil, 'thread', true)")
+    exec_lua("vim.validate('arg1', 2, function(a) return (a % 2) == 0  end, 'even number')")
+    exec_lua("vim.validate('arg1', 5, {'number', 'string'})")
+    exec_lua("vim.validate('arg2', 'foo', {'number', 'string'})")
+
+    matches('arg1: expected number, got nil', pcall_err(vim.validate, 'arg1', nil, 'number'))
+    matches('arg1: expected string, got nil', pcall_err(vim.validate, 'arg1', nil, 'string'))
+    matches('arg1: expected table, got nil', pcall_err(vim.validate, 'arg1', nil, 'table'))
+    matches('arg1: expected function, got nil', pcall_err(vim.validate, 'arg1', nil, 'function'))
+    matches('arg1: expected string, got number', pcall_err(vim.validate, 'arg1', 5, 'string'))
+    matches('arg1: expected table, got number', pcall_err(vim.validate, 'arg1', 5, 'table'))
+    matches('arg1: expected function, got number', pcall_err(vim.validate, 'arg1', 5, 'function'))
+    matches('arg1: expected number, got string', pcall_err(vim.validate, 'arg1', '5', 'number'))
+    matches('arg1: expected x, got number', pcall_err(exec_lua, "vim.validate('arg1', 1, 'x')"))
+    matches('invalid validator: 1', pcall_err(exec_lua, "vim.validate('arg1', 1, 1)"))
+    matches('invalid arguments', pcall_err(exec_lua, "vim.validate('arg1', { 1 })"))
+
+    -- Validated parameters are required by default.
+    matches(
+      'arg1: expected string, got nil',
+      pcall_err(exec_lua, "vim.validate('arg1',  nil, 'string')")
+    )
+    -- Explicitly required.
+    matches(
+      'arg1: expected string, got nil',
+      pcall_err(exec_lua, "vim.validate('arg1', nil, 'string', false)")
+    )
+
+    matches(
+      'arg1: expected table, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, 'table')")
+    )
+
+    matches(
+      'arg1: expected even number, got 3',
+      pcall_err(exec_lua, "vim.validate('arg1', 3, function(a) return a == 1 end, 'even number')")
+    )
+    matches(
+      'arg1: expected %?, got 3',
+      pcall_err(exec_lua, "vim.validate('arg1', 3, function(a) return a == 1 end)")
+    )
+    matches(
+      'arg1: expected number|string, got nil',
+      pcall_err(exec_lua, "vim.validate('arg1', nil, {'number', 'string'})")
+    )
+
+    -- Pass an additional message back.
+    matches(
+      'arg1: expected %?, got 3. Info: TEST_MSG',
+      pcall_err(exec_lua, "vim.validate('arg1', 3, function(a) return a == 1, 'TEST_MSG' end)")
+    )
+  end)
+
+  it('vim.validate (spec form)', function()
     exec_lua("vim.validate{arg1={{}, 'table' }}")
     exec_lua("vim.validate{arg1={{}, 't' }}")
     exec_lua("vim.validate{arg1={nil, 't', true }}")
@@ -1385,29 +1457,11 @@ describe('lua stdlib', function()
     exec_lua("vim.validate{arg1={{}, 't' }, arg2={ 'foo', 's' }}")
     exec_lua("vim.validate{arg1={2, function(a) return (a % 2) == 0  end, 'even number' }}")
     exec_lua("vim.validate{arg1={5, {'n', 's'} }, arg2={ 'foo', {'n', 's'} }}")
-    vim.validate('arg1', 5, 'number')
-    vim.validate('arg1', '5', 'string')
-    vim.validate('arg1', { 5 }, 'table')
-    vim.validate('arg1', function()
-      return 5
-    end, 'function')
-    vim.validate('arg1', nil, 'number', true)
-    vim.validate('arg1', nil, 'string', true)
-    vim.validate('arg1', nil, 'table', true)
-    vim.validate('arg1', nil, 'function', true)
 
-    matches('arg1: expected number, got nil', pcall_err(vim.validate, 'arg1', nil, 'number'))
-    matches('arg1: expected string, got nil', pcall_err(vim.validate, 'arg1', nil, 'string'))
-    matches('arg1: expected table, got nil', pcall_err(vim.validate, 'arg1', nil, 'table'))
-    matches('arg1: expected function, got nil', pcall_err(vim.validate, 'arg1', nil, 'function'))
-    matches('arg1: expected string, got number', pcall_err(vim.validate, 'arg1', 5, 'string'))
-    matches('arg1: expected table, got number', pcall_err(vim.validate, 'arg1', 5, 'table'))
-    matches('arg1: expected function, got number', pcall_err(vim.validate, 'arg1', 5, 'function'))
-    matches('arg1: expected number, got string', pcall_err(vim.validate, 'arg1', '5', 'number'))
     matches('expected table, got number', pcall_err(exec_lua, "vim.validate{ 1, 'x' }"))
-    matches('invalid type name: x', pcall_err(exec_lua, "vim.validate{ arg1={ 1, 'x' }}"))
-    matches('invalid type name: 1', pcall_err(exec_lua, 'vim.validate{ arg1={ 1, 1 }}'))
-    matches('invalid type name: nil', pcall_err(exec_lua, 'vim.validate{ arg1={ 1 }}'))
+    matches('arg1: expected x, got number', pcall_err(exec_lua, "vim.validate{ arg1={ 1, 'x' }}"))
+    matches('invalid validator: 1', pcall_err(exec_lua, 'vim.validate{ arg1={ 1, 1 }}'))
+    matches('invalid validator: nil', pcall_err(exec_lua, 'vim.validate{ arg1={ 1 }}'))
 
     -- Validated parameters are required by default.
     matches(
@@ -4092,8 +4146,13 @@ describe('vim.keymap', function()
     )
 
     matches(
-      'opts: expected table, got function',
+      'rhs: expected string|function, got number',
       pcall_err(exec_lua, [[vim.keymap.set({}, 'x', 42, function() end)]])
+    )
+
+    matches(
+      'opts: expected table, got function',
+      pcall_err(exec_lua, [[vim.keymap.set({}, 'x', 'x', function() end)]])
     )
 
     matches(

@@ -229,7 +229,7 @@ end
 ---@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
 function M.find(names, opts)
   opts = opts or {}
-  vim.validate({ names = { names, { 'string', 'table', 'function' } } })
+  vim.validate('names', names, { 'string', 'table', 'function' })
   vim.validate('path', opts.path, 'string', true)
   vim.validate('upward', opts.upward, 'boolean', true)
   vim.validate('stop', opts.stop, 'string', true)

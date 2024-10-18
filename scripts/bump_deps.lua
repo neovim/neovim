@@ -325,10 +325,8 @@ function M.commit(dependency_name, commit)
 end
 
 function M.version(dependency_name, version)
-  vim.validate {
-    dependency_name = { dependency_name, 's' },
-    version = { version, 's' },
-  }
+  vim.validate('dependency_name', dependency_name, 'string')
+  vim.validate('version', version, 'string')
   local dependency = assert(get_dependency(dependency_name))
   verify_cmakelists_committed()
   local commit_sha = get_gh_commit_sha(dependency.repo, version)

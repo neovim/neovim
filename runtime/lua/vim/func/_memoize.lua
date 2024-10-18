@@ -39,10 +39,8 @@ end
 --- @param strong? boolean
 --- @return F
 return function(hash, fn, strong)
-  vim.validate({
-    hash = { hash, { 'number', 'string', 'function' } },
-    fn = { fn, 'function' },
-  })
+  vim.validate('hash', hash, { 'number', 'string', 'function' })
+  vim.validate('fn', fn, 'function')
 
   ---@type table<any,table<any,any>>
   local cache = {}

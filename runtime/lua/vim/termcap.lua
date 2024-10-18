@@ -17,10 +17,8 @@ local M = {}
 ---           otherwise. {seq} is the control sequence for the capability if found, or nil for
 ---           boolean capabilities.
 function M.query(caps, cb)
-  vim.validate({
-    caps = { caps, { 'string', 'table' } },
-    cb = { cb, 'f' },
-  })
+  vim.validate('caps', caps, { 'string', 'table' })
+  vim.validate('cb', cb, 'function')
 
   if type(caps) ~= 'table' then
     caps = { caps }
