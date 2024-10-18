@@ -779,15 +779,17 @@ function vim.endswith(s, suffix)
 end
 
 do
-  --- @alias vim.validate.Type
-  --- | 't' | 'table'
-  --- | 's' | 'string'
-  --- | 'n' | 'number'
-  --- | 'f' | 'function'
-  --- | 'c' | 'callable'
+  --- @alias vim.validate.LuaType
   --- | 'nil'
+  --- | 'number'
+  --- | 'string'
+  --- | 'boolean'
+  --- | 'table'
+  --- | 'function'
   --- | 'thread'
-  --- | 'userdata
+  --- | 'userdata'
+  ---
+  --- @alias vim.validate.Type vim.validate.LuaType | 't' | 's' | 'n' | 'f' | 'c'
 
   local type_names = {
     ['table'] = 'table',
@@ -810,7 +812,7 @@ do
   --- @nodoc
   --- @class vim.validate.Spec [any, string|string[], boolean]
   --- @field [1] any Argument value
-  --- @field [2] string|string[]|fun(v:any):boolean, string? Type name, or callable
+  --- @field [2] vim.validate.Type|vim.validate.Type[]|fun(v:any):boolean, string? Type name, or callable
   --- @field [3]? boolean
 
   local function _is_type(val, t)
@@ -973,7 +975,7 @@ do
   ---               only if the argument is valid. Can optionally return an additional
   ---               informative error message as the second returned value.
   ---             - msg: (optional) error string if validation fails
-  --- @overload fun(name: string, val: any, expected: string, optional?: boolean)
+  --- @overload fun(name: string, val: any, expected: vim.validate.LuaType, optional?: boolean)
   function vim.validate(opt, ...)
     local ok = false
     local err_msg ---@type string?
