@@ -475,4 +475,26 @@ function M.foldexpr(lnum)
   return M._fold.foldexpr(lnum)
 end
 
+---@private
+--- Get highlight information from parser.
+---
+---@param parser vim.treesitter.LanguageTree
+---@return vim.treesitter.highlighter.Info[]
+function M._get_highlight(parser)
+  local highlights = {}
+  parser:for_each_tree(function(tree, ltree)
+    local source = ltree:source()
+    local hl_query = M.query.get(ltree:lang(), 'highlights')
+
+    if not hl_query then
+      return
+    end
+
+    for info in M.highlighter._iter_highlight_info(hl_query, tree:root(), source, 0, -1) do
+      table.insert(highlights, info)
+    end
+  end)
+  return highlights
+end
+
 return M
