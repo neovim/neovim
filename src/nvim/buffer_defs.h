@@ -938,6 +938,7 @@ typedef struct {
   FloatRelative relative;
   bool external;
   bool focusable;
+  bool mouse;
   WinSplit split;
   int zindex;
   WinStyle style;
@@ -964,6 +965,7 @@ typedef struct {
                                       .row = 0, .col = 0, .anchor = 0, \
                                       .relative = 0, .external = false, \
                                       .focusable = true, \
+                                      .mouse = true, \
                                       .split = 0, \
                                       .zindex = kZIndexFloatDefault, \
                                       .style = kWinStyleUnused, \
