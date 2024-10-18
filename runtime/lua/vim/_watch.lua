@@ -59,9 +59,9 @@ end
 --- @param callback vim._watch.Callback Callback for new events
 --- @return fun() cancel Stops the watcher
 function M.watch(path, opts, callback)
-  vim.validate('path', path, 'string', false)
+  vim.validate('path', path, 'string')
   vim.validate('opts', opts, 'table', true)
-  vim.validate('callback', callback, 'function', false)
+  vim.validate('callback', callback, 'function')
 
   opts = opts or {}
 
@@ -125,9 +125,9 @@ end
 --- @param callback vim._watch.Callback Callback for new events
 --- @return fun() cancel Stops the watcher
 function M.watchdirs(path, opts, callback)
-  vim.validate('path', path, 'string', false)
+  vim.validate('path', path, 'string')
   vim.validate('opts', opts, 'table', true)
-  vim.validate('callback', callback, 'function', false)
+  vim.validate('callback', callback, 'function')
 
   opts = opts or {}
   local debounce = opts.debounce or 500

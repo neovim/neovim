@@ -478,7 +478,7 @@ end
 --- @return vim.Diagnostic[]
 local function reformat_diagnostics(format, diagnostics)
   vim.validate('format', format, 'function')
-  vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
+  vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
 
   local formatted = vim.deepcopy(diagnostics, true)
   for _, diagnostic in ipairs(formatted) do
@@ -1056,7 +1056,7 @@ end
 function M.set(namespace, bufnr, diagnostics, opts)
   vim.validate('namespace', namespace, 'number')
   vim.validate('bufnr', bufnr, 'number')
-  vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
+  vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
   vim.validate('opts', opts, 'table', true)
 
   bufnr = get_bufnr(bufnr)
@@ -1336,7 +1336,7 @@ M.handlers.signs = {
   show = function(namespace, bufnr, diagnostics, opts)
     vim.validate('namespace', namespace, 'number')
     vim.validate('bufnr', bufnr, 'number')
-    vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
+    vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
     vim.validate('opts', opts, 'table', true)
 
     bufnr = get_bufnr(bufnr)
@@ -1457,7 +1457,7 @@ M.handlers.underline = {
   show = function(namespace, bufnr, diagnostics, opts)
     vim.validate('namespace', namespace, 'number')
     vim.validate('bufnr', bufnr, 'number')
-    vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
+    vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
     vim.validate('opts', opts, 'table', true)
 
     bufnr = get_bufnr(bufnr)
@@ -1524,7 +1524,7 @@ M.handlers.virtual_text = {
   show = function(namespace, bufnr, diagnostics, opts)
     vim.validate('namespace', namespace, 'number')
     vim.validate('bufnr', bufnr, 'number')
-    vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
+    vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
     vim.validate('opts', opts, 'table', true)
 
     bufnr = get_bufnr(bufnr)
@@ -1709,15 +1709,7 @@ end
 function M.show(namespace, bufnr, diagnostics, opts)
   vim.validate('namespace', namespace, 'number', true)
   vim.validate('bufnr', bufnr, 'number', true)
-  vim.validate({
-    diagnostics = {
-      diagnostics,
-      function(v)
-        return v == nil or vim.islist(v)
-      end,
-      'a list of diagnostics',
-    },
-  })
+  vim.validate('diagnostics', diagnostics, vim.islist, true, 'a list of diagnostics')
   vim.validate('opts', opts, 'table', true)
 
   if not bufnr or not namespace then
@@ -1869,13 +1861,7 @@ function M.open_float(opts, ...)
   local highlights = {} --- @type table[]
   local header = if_nil(opts.header, 'Diagnostics:')
   if header then
-    vim.validate({
-      header = {
-        header,
-        { 'string', 'table' },
-        "'string' or 'table'",
-      },
-    })
+    vim.validate('header', header, { 'string', 'table' }, "'string' or 'table'")
     if type(header) == 'table' then
       -- Don't insert any lines for an empty string
       if string.len(if_nil(header[1], '')) > 0 then
@@ -1903,13 +1889,12 @@ function M.open_float(opts, ...)
 
   local prefix, prefix_hl_group --- @type string?, string?
   if prefix_opt then
-    vim.validate({
-      prefix = {
-        prefix_opt,
-        { 'string', 'table', 'function' },
-        "'string' or 'table' or 'function'",
-      },
-    })
+    vim.validate(
+      'prefix',
+      prefix_opt,
+      { 'string', 'table', 'function' },
+      "'string' or 'table' or 'function'"
+    )
     if type(prefix_opt) == 'string' then
       prefix, prefix_hl_group = prefix_opt, 'NormalFloat'
     elseif type(prefix_opt) == 'table' then
@@ -1923,13 +1908,12 @@ function M.open_float(opts, ...)
 
   local suffix, suffix_hl_group --- @type string?, string?
   if suffix_opt then
-    vim.validate({
-      suffix = {
-        suffix_opt,
-        { 'string', 'table', 'function' },
-        "'string' or 'table' or 'function'",
-      },
-    })
+    vim.validate(
+      'suffix',
+      suffix_opt,
+      { 'string', 'table', 'function' },
+      "'string' or 'table' or 'function'"
+    )
     if type(suffix_opt) == 'string' then
       suffix, suffix_hl_group = suffix_opt, 'NormalFloat'
     elseif type(suffix_opt) == 'table' then
@@ -2239,7 +2223,7 @@ local errlist_type_map = {
 ---@param diagnostics vim.Diagnostic[]
 ---@return table[] : Quickfix list items |setqflist-what|
 function M.toqflist(diagnostics)
-  vim.validate({ diagnostics = { diagnostics, vim.islist, 'a list of diagnostics' } })
+  vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
 
   local list = {} --- @type table[]
   for _, v in ipairs(diagnostics) do

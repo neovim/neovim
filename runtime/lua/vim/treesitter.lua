@@ -241,11 +241,9 @@ end
 ---
 ---@return boolean True if the {node} contains the {range}
 function M.node_contains(node, range)
-  vim.validate({
-    -- allow a table so nodes can be mocked
-    node = { node, { 'userdata', 'table' } },
-    range = { range, M._range.validate, 'integer list with 4 or 6 elements' },
-  })
+  -- allow a table so nodes can be mocked
+  vim.validate('node', node, { 'userdata', 'table' })
+  vim.validate('range', range, M._range.validate, 'integer list with 4 or 6 elements')
   return M._range.contains({ node:range() }, range)
 end
 
