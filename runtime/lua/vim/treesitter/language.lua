@@ -154,10 +154,8 @@ end
 --- @param lang string Name of parser
 --- @param filetype string|string[] Filetype(s) to associate with lang
 function M.register(lang, filetype)
-  vim.validate({
-    lang = { lang, 'string' },
-    filetype = { filetype, { 'string', 'table' } },
-  })
+  vim.validate('lang', lang, 'string')
+  vim.validate('filetype', filetype, { 'string', 'table' })
 
   for _, f in ipairs(ensure_list(filetype)) do
     if f ~= '' then

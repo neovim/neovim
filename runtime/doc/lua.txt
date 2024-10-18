@@ -2398,31 +2398,29 @@ vim.trim({s})                                                     *vim.trim()*
       • |lua-patterns|
       • https://www.lua.org/pil/20.2.html
 
-vim.validate({opt})                                           *vim.validate()*
+                                                              *vim.validate()*
+vim.validate({name}, {value}, {validator}, {optional}, {message})
     Validate function arguments.
 
     This function has two valid forms:
-    1. vim.validate(name: str, value: any, type: string, optional?: bool)
-    2. vim.validate(spec: table)
-
-    Form 1 validates that argument {name} with value {value} has the type
-    {type}. {type} must be a value returned by |lua-type()|. If {optional} is
-    true, then {value} may be null. This form is significantly faster and
-    should be preferred for simple cases.
-
-    Example: >lua
-        function vim.startswith(s, prefix)
+    1. `vim.validate(name, value, validator[, optional][, message])`
+       Validates that argument {name} with value {value} satisfies
+       {validator}. If {optional} is given and is `true`, then {value} may be
+       `nil`. If {message} is given, then it is used as the expected type in
+       the error message.
+       Example: >lua
+         function vim.startswith(s, prefix)
           vim.validate('s', s, 'string')
           vim.validate('prefix', prefix, 'string')
           ...
         end
 <
-
-    Form 2 validates a parameter specification (types and values). Specs are
-    evaluated in alphanumeric order, until the first failure.
-
-    Usage example: >lua
-        function user.new(name, age, hobbies)
+    2. `vim.validate(spec)` (deprecated) where `spec` is of type
+       `table<string,[value:any, validator: vim.validate.Validator, optional_or_msg? : boolean|string]>)`
+       Validates a argument specification. Specs are evaluated in alphanumeric
+       order, until the first failure.
+       Example: >lua
+         function user.new(name, age, hobbies)
           vim.validate{
             name={name, 'string'},
             age={age, 'number'},
@@ -2433,40 +2431,44 @@ vim.validate({opt})                                           *vim.validate()*
 <
 
     Examples with explicit argument values (can be run directly): >lua
-        vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
+        vim.validate('arg1', {'foo'}, 'table')
+           --> NOP (success)
+        vim.validate('arg2', 'foo', 'string')
            --> NOP (success)
 
-        vim.validate{arg1={1, 'table'}}
+        vim.validate('arg1', 1, 'table')
            --> error('arg1: expected table, got number')
 
-        vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+        vim.validate('arg1', 3, function(a) return (a % 2) == 0 end, 'even number')
            --> error('arg1: expected even number, got 3')
 <
 
     If multiple types are valid they can be given as a list. >lua
-        vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
+        vim.validate('arg1', {'foo'}, {'table', 'string'})
+        vim.validate('arg2', 'foo', {'table', 'string'})
         -- NOP (success)
 
-        vim.validate{arg1={1, {'string', 'table'}}}
+        vim.validate('arg1', 1, {'string', 'table'})
         -- error('arg1: expected string|table, got number')
 <
 
+    Note: ~
+      • `validator` set to a value returned by |lua-type()| provides the best
+        performance.
+
     Parameters: ~
-      • {opt}  (`table`) Names of parameters to validate. Each key is a
-               parameter name; each value is a tuple in one of these forms:
-               1. (arg_value, type_name, optional)
-                  • arg_value: argument value
-                  • type_name: string|table type name, one of: ("table", "t",
-                    "string", "s", "number", "n", "boolean", "b", "function",
-                    "f", "nil", "thread", "userdata") or list of them.
-                  • optional: (optional) boolean, if true, `nil` is valid
-               2. (arg_value, fn, msg)
-                  • arg_value: argument value
-                  • fn: any function accepting one argument, returns true if
-                    and only if the argument is valid. Can optionally return
-                    an additional informative error message as the second
-                    returned value.
-                  • msg: (optional) error string if validation fails
+      • {name}       (`string`) Argument name
+      • {value}      (`string`) Argument value
+      • {validator}  (`vim.validate.Validator`)
+                     • (`string|string[]`): Any value that can be returned
+                       from |lua-type()| in addition to `'callable'`:
+                       `'boolean'`, `'callable'`, `'function'`, `'nil'`,
+                       `'number'`, `'string'`, `'table'`, `'thread'`,
+                       `'userdata'`.
+                     • (`fun(val:any): boolean, string?`) A function that
+                       returns a boolean and an optional string message.
+      • {optional}   (`boolean?`) Argument is optional (may be omitted)
+      • {message}    (`string?`) message when validation fails
 
 
 ==============================================================================

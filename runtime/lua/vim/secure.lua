@@ -132,17 +132,11 @@ end
 ---@return boolean success true if operation was successful
 ---@return string msg full path if operation was successful, else error message
 function M.trust(opts)
-  vim.validate({
-    path = { opts.path, 's', true },
-    bufnr = { opts.bufnr, 'n', true },
-    action = {
-      opts.action,
-      function(m)
-        return m == 'allow' or m == 'deny' or m == 'remove'
-      end,
-      [["allow" or "deny" or "remove"]],
-    },
-  })
+  vim.validate('path', opts.path, 'string', true)
+  vim.validate('bufnr', opts.bufnr, 'number', true)
+  vim.validate('action', opts.action, function(m)
+    return m == 'allow' or m == 'deny' or m == 'remove'
+  end, [["allow" or "deny" or "remove"]])
 
   ---@cast opts vim.trust.opts
   local path = opts.path

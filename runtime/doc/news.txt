@@ -200,6 +200,8 @@ LSP
 LUA
 
 • |vim.fs.rm()| can delete files and directories.
+• |vim.validate()| now has a new signature which uses less tables,
+  is more peformant and easier to read.
 
 OPTIONS
 

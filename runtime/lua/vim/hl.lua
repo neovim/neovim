@@ -135,19 +135,7 @@ local yank_cancel --- @type fun()?
 ---              - event     event structure (default vim.v.event)
 ---              - priority  integer priority (default |vim.hl.priorities|`.user`)
 function M.on_yank(opts)
-  vim.validate({
-    opts = {
-      opts,
-      function(t)
-        if t == nil then
-          return true
-        else
-          return type(t) == 'table'
-        end
-      end,
-      'a table or nil to configure options (see `:h vim.hl.on_yank`)',
-    },
-  })
+  vim.validate('opts', opts, 'table', true)
   opts = opts or {}
   local event = opts.event or vim.v.event
   local on_macro = opts.on_macro or false
