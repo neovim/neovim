@@ -20,7 +20,7 @@ local augroup = api.nvim_create_augroup('vim_lsp_document_highlight', {})
 ---Index in the form of client_id -> (row -> highlights)
 ---@field client_highlights table<integer, table<integer, lsp.DocumentHighlight[]?>?>
 
----Each buffer attached by at least one LSP server must exists,
+---Each buffer attached by at least one supported LSP server must exists,
 ---otherwise it should not exists or be cleaned up.
 ---
 ---Index in the form of bufnr -> bufstate
@@ -28,27 +28,37 @@ local augroup = api.nvim_create_augroup('vim_lsp_document_highlight', {})
 local bufstates = {}
 for _, client in ipairs(vim.lsp.get_clients()) do
   for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(client.id)) do
-    local bufstate = bufstates[bufnr] or {}
-    local client_highlights = bufstate.client_highlights or {}
+    if client:supports_method(ms.textDocument_documentHighlight, bufnr) then
+      local bufstate = bufstates[bufnr] or {}
+      local client_highlights = bufstate.client_highlights or {}
 
-    if not client_highlights[client.id] then
-      client_highlights[client.id] = {}
+      if not client_highlights[client.id] then
+        client_highlights[client.id] = {}
+      end
+
+      bufstate.client_highlights = client_highlights
+      bufstates[bufnr] = bufstate
     end
-
-    bufstate.client_highlights = client_highlights
-    bufstates[bufnr] = bufstate
   end
 end
 api.nvim_create_autocmd('LspAttach', {
   group = augroup,
   callback = function(args)
     ---@type integer
+    local client_id = args.data.client_id
+    if
+      not assert(vim.lsp.get_client_by_id(client_id)):supports_method(
+        ms.textDocument_documentHighlight
+      )
+    then
+      return
+    end
+
+    ---@type integer
     local bufnr = args.buf
     local bufstate = bufstates[bufnr] or {}
     bufstates[bufnr] = bufstate
 
-    ---@type integer
-    local client_id = args.data.client_id
     local client_highlights = bufstate.client_highlights or {}
     client_highlights[client_id] = {}
     bufstate.client_highlights = client_highlights
