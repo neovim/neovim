@@ -1178,9 +1178,10 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
   return 1;
 }
 
+/// Called when the terminal wants to ring the system bell.
 static int term_bell(void *data)
 {
-  ui_call_bell();
+  vim_beep(BO_TERM);
   return 1;
 }
 
