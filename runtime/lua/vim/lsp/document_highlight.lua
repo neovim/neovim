@@ -352,4 +352,114 @@ function M.enable(enable, filter)
   end
 end
 
+---@param bufnr integer
+---@param pos [integer, integer]
+---@param client_highlights table<integer, table<integer, lsp.DocumentHighlight[]?>?>
+---@return [integer, integer]
+local function jump_next(bufnr, pos, client_highlights)
+  for _, row_highlights in pairs(client_highlights) do
+    for row = pos[1], #api.nvim_buf_get_lines(bufnr, 0, -1, true) do
+      local highlights = row_highlights[row] or {}
+
+      for i = 1, #highlights do
+        local highlight = highlights[i]
+
+        if row == pos[1] then
+          if highlight.range['start'].character > pos[2] then
+            return { highlight.range['start'].line, highlight.range['start'].character }
+          end
+        else
+          return { highlight.range['start'].line, highlight.range['start'].character }
+        end
+      end
+    end
+  end
+
+  return pos
+end
+
+---@param bufnr integer
+---@param pos [integer, integer]
+---@param client_highlights table<integer, table<integer, lsp.DocumentHighlight[]?>?>
+---@return [integer, integer]
+---@diagnostic disable-next-line: unused-local
+local function jump_prev(bufnr, pos, client_highlights)
+  assert(bufnr) -- reserved but not used
+
+  -- Same logic as jump forward but in reverse
+  for _, row_highlights in pairs(client_highlights) do
+    for row = pos[1], 0, -1 do
+      local highlights = row_highlights[row] or {}
+
+      for i = #highlights, 1, -1 do
+        local highlight = highlights[i]
+
+        if row == pos[1] then
+          if highlight.range['end'].character < pos[2] then
+            return { highlight.range['start'].line, highlight.range['start'].character }
+          end
+        else
+          return { highlight.range['start'].line, highlight.range['start'].character }
+        end
+      end
+    end
+  end
+
+  return pos
+end
+
+---@class vim.lsp.document_highlight.JumpOpts
+---@inlinedoc
+---The number of highlights to move by, starting from {pos}. A positive
+---integer moves forward by {count} highlights, while a negative integer moves
+---backward by {count} highlights.
+---@field count integer
+---
+---Cursor position as a `(row, col)` tuple. See |nvim_win_get_cursor()|.
+---Used to find the nearest highlight.
+---Default is the current cursor position.
+---@field pos? [integer,integer]
+---
+---Window ID
+---(default: `0`)
+---@field winid? integer
+
+---Move to a document highlight
+---@param opts vim.lsp.document_highlight.JumpOpts
+function M.jump(opts)
+  vim.validate('opts', opts, 'table')
+  vim.validate('count', opts.count, 'number')
+
+  local count = opts.count
+
+  local winid = opts.winid or api.nvim_get_current_win()
+  local pos = opts.pos or api.nvim_win_get_cursor(winid)
+  ---@cast pos [integer, integer]
+  pos = { pos[1] - 1, pos[2] }
+
+  local bufnr = api.nvim_win_get_buf(winid)
+  local bufstate = bufstates[bufnr]
+  if not bufstate then
+    return
+  end
+
+  while count > 0 do
+    pos = jump_next(bufnr, pos, bufstate.client_highlights)
+    count = count - 1
+  end
+
+  while count < 0 do
+    pos = jump_prev(bufnr, pos, bufstate.client_highlights)
+    count = count + 1
+  end
+
+  vim._with({ win = winid }, function()
+    -- Save position in the window's jumplist
+    vim.cmd("normal! m'")
+    vim.api.nvim_win_set_cursor(winid, { pos[1] + 1, pos[2] })
+    -- Open folds under the cursor
+    vim.cmd('normal! zv')
+  end)
+end
+
 return M

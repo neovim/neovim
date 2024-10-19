@@ -1597,6 +1597,21 @@ is_enabled({filter})                 *vim.lsp.document_highlight.is_enabled()*
     Return: ~
         (`boolean`)
 
+jump({opts})                               *vim.lsp.document_highlight.jump()*
+    Move to a document highlight
+
+    Parameters: ~
+      • {opts}  (`table`) A table with the following fields:
+                • {count} (`integer`) The number of highlights to move by,
+                  starting from {pos}. A positive integer moves forward by
+                  {count} highlights, while a negative integer moves backward
+                  by {count} highlights.
+                • {pos}? (`[integer,integer]`) Cursor position as a
+                  `(row, col)` tuple. See |nvim_win_get_cursor()|. Used to
+                  find the nearest highlight. Default is the current cursor
+                  position.
+                • {winid}? (`integer`, default: `0`) Window ID
+
                           *vim.lsp.document_highlight.on_document_highlight()*
 on_document_highlight({result}, {ctx})
     |lsp-handler| for the method `textDocument/documentHighlight` Store hints
