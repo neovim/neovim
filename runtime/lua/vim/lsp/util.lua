@@ -1779,25 +1779,33 @@ function M.symbols_to_items(symbols, bufnr)
   bufnr = bufnr or 0
   local items = {} --- @type vim.quickfix.entry[]
   for _, symbol in ipairs(symbols) do
-    --- @type string?, lsp.Position?
-    local filename, pos
+    --- @type string?, lsp.Range?
+    local filename, range
 
     if symbol.location then
       --- @cast symbol lsp.SymbolInformation
       filename = vim.uri_to_fname(symbol.location.uri)
-      pos = symbol.location.range.start
+      range = symbol.location.range
     elseif symbol.selectionRange then
       --- @cast symbol lsp.DocumentSymbol
       filename = api.nvim_buf_get_name(bufnr)
-      pos = symbol.selectionRange.start
+      range = symbol.selectionRange
     end
 
-    if filename and pos then
+    if filename and range then
       local kind = protocol.SymbolKind[symbol.kind] or 'Unknown'
+
+      local lnum = range['start'].line + 1
+      local col = range['start'].character + 1
+      local end_lnum = range['end'].line + 1
+      local end_col = range['end'].character + 1
+
       items[#items + 1] = {
         filename = filename,
-        lnum = pos.line + 1,
-        col = pos.character + 1,
+        lnum = lnum,
+        col = col,
+        end_lnum = end_lnum,
+        end_col = end_col,
         kind = kind,
         text = '[' .. kind .. '] ' .. symbol.name,
       }
