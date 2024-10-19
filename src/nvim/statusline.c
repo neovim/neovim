@@ -275,7 +275,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
                                                    &wp->w_status_click_defs_size);
 
     if (draw_ruler) {
-      stl = p_ruf;
+      stl = (*p_ruf != NUL) ? p_ruf : STL_DEFAULT_RULER_FMT;
       opt_idx = kOptRulerformat;
       // advance past any leading group spec - implicit in ru_col
       if (*stl == '%') {
@@ -436,6 +436,9 @@ void win_redr_ruler(win_T *wp)
     win_redr_custom(wp, false, true);
     return;
   }
+
+  // TODO(saher): might not need the remainder of this function if an empty `p_ruf` will fallback to
+  // `STL_DEFAULT_RULER_FMT`
 
   // Check if not in Insert mode and the line is empty (will show "0-1").
   int empty_line = (State & MODE_INSERT) == 0
@@ -839,12 +842,21 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
                      int opt_scope, schar_T fillchar, int maxwidth, stl_hlrec_t **hltab,
                      size_t *hltab_len, StlClickRecord **tabtab, statuscol_T *stcp)
 {
-  static size_t stl_items_len = 20;  // Initial value, grows as needed.
-  static stl_item_t *stl_items = NULL;
-  static int *stl_groupitems = NULL;
-  static stl_hlrec_t *stl_hltab = NULL;
-  static StlClickRecord *stl_tabtab = NULL;
-  static int *stl_separator_locations = NULL;
+  static size_t base_items_len = 20;  // Initial value, grows as needed.
+  static stl_item_t *base_items = NULL;
+  static int *base_groupitems = NULL;
+  static stl_hlrec_t *base_hltab = NULL;
+  static StlClickRecord *base_tabtab = NULL;
+  static int *base_separator_locations = NULL;
+  static int off = 0;  // offset from "base_*". Always 0 unless in a recursive call
+
+  // adjusted version of "base_*" using offset
+  size_t stl_items_len;
+  stl_item_t *stl_items;
+  int *stl_groupitems;
+  stl_hlrec_t *stl_hltab;
+  StlClickRecord *stl_tabtab;
+  int *stl_separator_locations;
 
 #define TMPLEN 70
   char buf_tmp[TMPLEN];
@@ -864,17 +876,26 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     redraw_not_allowed = true;
   }
 
-  if (stl_items == NULL) {
-    stl_items = xmalloc(sizeof(stl_item_t) * stl_items_len);
-    stl_groupitems = xmalloc(sizeof(int) * stl_items_len);
+  if (base_items == NULL) {
+    base_items = xmalloc(sizeof(stl_item_t) * base_items_len);
+    base_groupitems = xmalloc(sizeof(int) * base_items_len);
 
     // Allocate one more, because the last element is used to indicate the
     // end of the list.
-    stl_hltab = xmalloc(sizeof(stl_hlrec_t) * (stl_items_len + 1));
-    stl_tabtab = xmalloc(sizeof(StlClickRecord) * (stl_items_len + 1));
+    base_hltab = xmalloc(sizeof(stl_hlrec_t) * (base_items_len + 1));
+    base_tabtab = xmalloc(sizeof(StlClickRecord) * (base_items_len + 1));
 
-    stl_separator_locations = xmalloc(sizeof(int) * stl_items_len);
+    base_separator_locations = xmalloc(sizeof(int) * base_items_len);
   }
+
+  // Adjust based on offset.
+  // offset is always 0 unless in a recursive call
+  stl_items_len = base_items_len - off;
+  stl_items = base_items + off;
+  stl_groupitems = base_groupitems + off;
+  stl_hltab = base_hltab + off;
+  stl_tabtab = base_tabtab + off;
+  stl_separator_locations = base_separator_locations + off;
 
   // If "fmt" was set insecurely it needs to be evaluated in the sandbox.
   // "opt_idx" will be kOptInvalid when caller is nvim_eval_statusline().
@@ -947,16 +968,22 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   // fmt_p is the current position in the input buffer
   for (char *fmt_p = usefmt; *fmt_p != NUL;) {
     if (curitem == (int)stl_items_len) {
-      size_t new_len = stl_items_len * 3 / 2;
+      size_t new_len = base_items_len * 3 / 2;
 
-      stl_items = xrealloc(stl_items, sizeof(stl_item_t) * new_len);
-      stl_groupitems = xrealloc(stl_groupitems, sizeof(int) * new_len);
-      stl_hltab = xrealloc(stl_hltab, sizeof(stl_hlrec_t) * (new_len + 1));
-      stl_tabtab = xrealloc(stl_tabtab, sizeof(StlClickRecord) * (new_len + 1));
-      stl_separator_locations =
-        xrealloc(stl_separator_locations, sizeof(int) * new_len);
+      base_items = xrealloc(base_items, sizeof(stl_item_t) * new_len);
+      base_groupitems = xrealloc(base_groupitems, sizeof(int) * new_len);
+      base_hltab = xrealloc(base_hltab, sizeof(stl_hlrec_t) * (new_len + 1));
+      base_tabtab = xrealloc(base_tabtab, sizeof(StlClickRecord) * (new_len + 1));
+      base_separator_locations = xrealloc(base_separator_locations, sizeof(int) * new_len);
 
-      stl_items_len = new_len;
+      stl_items = base_items + off;
+      stl_groupitems = base_groupitems + off;
+      stl_hltab = base_hltab + off;
+      stl_tabtab = base_tabtab + off;
+      stl_separator_locations = base_separator_locations + off;
+
+      base_items_len = new_len;
+      stl_items_len = new_len - off;
     }
 
     if (*fmt_p != '%') {
@@ -1666,6 +1693,44 @@ stcsign:
       }
       continue;
     }
+
+    case STL_RULER:
+      // ignore "%u" when called to build ruler. Or...
+      // ignore "%u" when 'ruler' is not set.
+      if (!p_ru || opt_idx == kOptRulerformat) {
+        continue;
+      }
+
+      char *ruf = (*p_ruf != NUL) ? p_ruf : STL_DEFAULT_RULER_FMT;
+      char *ruler_fmt = ruf;
+
+      // advance past any leading group spec - implicit in ru_col
+      if (*ruler_fmt == '%') {
+        if (*++ruler_fmt == '-') {
+          ruler_fmt++;
+        }
+        if (atoi(ruler_fmt)) {
+          while (ascii_isdigit(*ruler_fmt)) {
+            ruler_fmt++;
+          }
+        }
+        if (*ruler_fmt++ != '(') {
+          ruler_fmt = ruf;
+        }
+      }
+
+      // prepare for recursive call
+      int old_off = off;
+      off = curitem;  // to prevent the recursive call from overriding stl_items and friends
+      int col = MAX(ru_col - (Columns - maxwidth), (maxwidth + 1) / 2);
+      int ruler_maxwidth = maxwidth - col;
+      char buf[MAXPATHL];
+      build_stl_str_hl(wp, buf, sizeof(buf), ruler_fmt, kOptRulerformat, opt_scope,
+                       fillchar, ruler_maxwidth, hltab, hltab_len, tabtab, stcp);
+
+      off = old_off;  // restore offset
+      str = buf;
+      break;
     }
 
     // If we made it this far, the item is normal and starts at

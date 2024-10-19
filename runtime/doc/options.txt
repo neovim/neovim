@@ -6163,6 +6163,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	P S   Percentage through file of displayed window.  This is like the
 	      percentage described for 'ruler'.  Always 3 in length, unless
 	      translated.
+	u S   'ruler' content, see 'rulerfmt'.
 	S S   'showcmd' content, see 'showcmdloc'.
 	a S   Argument list status as in default title.  ({current} of {max})
 	      Empty if the argument file count is zero or one.

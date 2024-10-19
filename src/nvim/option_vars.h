@@ -310,6 +310,7 @@ enum {
   STL_TABPAGENR       = 'T',  ///< Tab page label nr.
   STL_TABCLOSENR      = 'X',  ///< Tab page close nr.
   STL_CLICK_FUNC      = '@',  ///< Click region start.
+  STL_RULER           = 'u',  ///< 'ruler' when active.
 };
 /// C string containing all 'statusline' option flags
 #define STL_ALL ((char[]) { \
@@ -321,7 +322,7 @@ enum {
     STL_QUICKFIX, STL_PERCENTAGE, STL_ALTPERCENT, STL_ARGLISTSTAT, STL_PAGENUM, \
     STL_SHOWCMD, STL_FOLDCOL, STL_SIGNCOL, STL_VIM_EXPR, STL_SEPARATE, \
     STL_TRUNCMARK, STL_USER_HL, STL_HIGHLIGHT, STL_TABPAGENR, STL_TABCLOSENR, \
-    STL_CLICK_FUNC, STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, \
+    STL_CLICK_FUNC, STL_TABPAGENR, STL_TABCLOSENR, STL_CLICK_FUNC, STL_RULER, \
     0, })
 
 // flags used for parsed 'wildmode'

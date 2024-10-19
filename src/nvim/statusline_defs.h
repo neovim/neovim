@@ -5,6 +5,9 @@
 #include "nvim/fold_defs.h"
 #include "nvim/sign_defs.h"
 
+#define STL_DEFAULT_FMT "%<%f %h%m%r%=%-10.S%k %u"
+#define STL_DEFAULT_RULER_FMT "%l,%c%V%= %P"
+
 /// Status line click definition
 typedef struct {
   enum {
