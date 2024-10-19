@@ -63,6 +63,8 @@ EDITOR
 • Moving in the buffer list using |:bnext| and similar commands behaves as
   documented and skips help buffers if run from a non-help buffer, otherwise
   it moves to another help buffer.
+• Bells from a |terminal| buffer are now silent by default, unless 'belloff'
+  option doesn't contain "term" or "all".
 
 EVENTS
 

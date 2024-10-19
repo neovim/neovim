@@ -403,7 +403,8 @@ EXTERN unsigned bo_flags;
 #define BO_REG    0x8000
 #define BO_SH     0x10000
 #define BO_SPELL  0x20000
-#define BO_WILD   0x40000
+#define BO_TERM   0x40000
+#define BO_WILD   0x80000
 
 EXTERN char *p_bsk;             ///< 'backupskip'
 EXTERN char *p_breakat;         ///< 'breakat'

@@ -422,6 +422,44 @@ describe(':terminal buffer', function()
                                                         |*2
     ]])
   end)
+
+  it("handles bell respecting 'belloff' and 'visualbell'", function()
+    local screen = Screen.new(50, 7)
+    screen:attach()
+    local chan = api.nvim_open_term(0, {})
+
+    command('set belloff=')
+    api.nvim_chan_send(chan, '\a')
+    screen:expect(function()
+      eq({ true, false }, { screen.bell, screen.visual_bell })
+    end)
+    screen.bell = false
+
+    command('set visualbell')
+    api.nvim_chan_send(chan, '\a')
+    screen:expect(function()
+      eq({ false, true }, { screen.bell, screen.visual_bell })
+    end)
+    screen.visual_bell = false
+
+    command('set belloff=term')
+    api.nvim_chan_send(chan, '\a')
+    screen:expect({
+      condition = function()
+        eq({ false, false }, { screen.bell, screen.visual_bell })
+      end,
+      unchanged = true,
+    })
+
+    command('set belloff=all')
+    api.nvim_chan_send(chan, '\a')
+    screen:expect({
+      condition = function()
+        eq({ false, false }, { screen.bell, screen.visual_bell })
+      end,
+      unchanged = true,
+    })
+  end)
 end)
 
 describe('on_lines does not emit out-of-bounds line indexes when', function()
