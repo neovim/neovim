@@ -116,8 +116,18 @@ function M.on_document_highlight(err, result, ctx)
       util._get_line_byte_from_position(bufnr, highlight.range['end'], client.offset_encoding)
 
     for row = highlight.range['start'].line, highlight.range['end'].line do
+      -- `highlights` is sorted by `highlight.range['start'].character`.
+      -- In practice, LSP almost always returns sorted results.
       local highlights = row_highlights[row] or {}
-      highlights[#highlights + 1] = highlight
+      ---@type integer
+      local pos = 0
+      for i = #highlights, 1, -1 do
+        if highlight.range['start'].character > highlights[i].range['start'].character then
+          pos = i
+          break
+        end
+      end
+      highlights[pos + 1] = highlight
       row_highlights[row] = highlights
     end
   end
