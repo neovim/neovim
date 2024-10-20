@@ -57,6 +57,7 @@ local function get_locations(method, opts)
   local bufnr = api.nvim_get_current_buf()
   local clients = vim.lsp.get_clients({ method = method, bufnr = bufnr })
   if not next(clients) then
+    vim.notify(vim.lsp._unsupported_method(method), vim.log.levels.WARN)
     return
   end
   local win = api.nvim_get_current_win()
@@ -68,7 +69,10 @@ local function get_locations(method, opts)
   ---@param result nil|lsp.Location|lsp.Location[]
   ---@param client vim.lsp.Client
   local function on_response(_, result, client)
-    local locations = vim.islist(result or {}) and (result or {}) or { result }
+    local locations = {}
+    if result then
+      locations = vim.islist(result) and result or { result }
+    end
     local items = util.locations_to_items(locations, client.offset_encoding)
     vim.list_extend(all_items, items)
     remaining = remaining - 1

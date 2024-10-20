@@ -2027,19 +2027,6 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
     See also: ~
       • 'shiftwidth'
 
-                                             *vim.lsp.util.jump_to_location()*
-jump_to_location({location}, {offset_encoding}, {reuse_win})
-    Jumps to a location.
-
-    Parameters: ~
-      • {location}         (`lsp.Location|lsp.LocationLink`)
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`)
-      • {reuse_win}        (`boolean?`) Jump to existing window if buffer is
-                           already open.
-
-    Return: ~
-        (`boolean`) `true` if the jump succeeded
-
                                            *vim.lsp.util.locations_to_items()*
 locations_to_items({locations}, {offset_encoding})
     Returns the items with the byte position calculated correctly and in
