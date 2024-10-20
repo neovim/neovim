@@ -678,11 +678,13 @@ void os_exit(int r)
   } else {
     ui_flush();
     ui_call_stop();
-    ml_close_all(true);           // remove all memfiles
   }
 
   if (!event_teardown() && r == 0) {
     r = 1;  // Exit with error if main_loop did not teardown gracefully.
+  }
+  if (!ui_client_channel_id) {
+    ml_close_all(true);  // remove all memfiles
   }
   if (used_stdin) {
     stream_set_blocking(STDIN_FILENO, true);  // normalize stream (#2598)
