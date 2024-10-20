@@ -528,16 +528,8 @@ end
 M[ms.textDocument_signatureHelp] = M.signature_help
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
-M[ms.textDocument_documentHighlight] = function(_, result, ctx, _)
-  if not result then
-    return
-  end
-  local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
-  if not client then
-    return
-  end
-  util.buf_highlight_references(ctx.bufnr, result, client.offset_encoding)
+M[ms.textDocument_documentHighlight] = function(...)
+  vim.lsp.document_highlight.on_document_highlight(...)
 end
 
 --- @private
