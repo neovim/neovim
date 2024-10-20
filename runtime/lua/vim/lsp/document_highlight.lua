@@ -141,7 +141,8 @@ function M.on_document_highlight(err, result, ctx)
 end
 
 ---@param bufnr integer
-local function refresh(bufnr)
+---@param opts? {client_id?: integer}
+local function refresh(bufnr, opts)
   local bufstate = assert(bufstates[bufnr])
   local enabled = bufstate.enabled
   if enabled == nil then
@@ -154,7 +155,16 @@ local function refresh(bufnr)
     return
   end
 
-  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_documentHighlight })
+  opts = opts or {}
+
+  ---@type vim.lsp.Client[]
+  local clients
+  if opts.client_id then
+    clients = { assert(vim.lsp.get_client_by_id(opts.client_id)) }
+  else
+    clients = vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_documentHighlight })
+  end
+
   for _, client in ipairs(clients) do
     local params = util.make_position_params(0, client.offset_encoding)
     client:request(ms.textDocument_documentHighlight, params, nil, bufnr)
@@ -211,14 +221,16 @@ api.nvim_create_autocmd('LspNotify', {
   callback = function(args)
     ---@type integer
     local bufnr = args.buf
+    local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
     if
       bufstates[bufnr]
+      and client:supports_method(ms.textDocument_documentHighlight, bufnr)
       and (
         args.data.method == ms.textDocument_didChange
         or args.data.method == ms.textDocument_didOpen
       )
     then
-      refresh(bufnr)
+      refresh(bufnr, { client_id = client.id })
     end
   end,
 })
@@ -410,6 +422,7 @@ end
 
 ---@class vim.lsp.document_highlight.JumpOpts
 ---@inlinedoc
+---
 ---The number of highlights to move by, starting from {pos}. A positive
 ---integer moves forward by {count} highlights, while a negative integer moves
 ---backward by {count} highlights.
