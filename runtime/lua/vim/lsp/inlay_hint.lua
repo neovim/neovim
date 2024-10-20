@@ -69,21 +69,10 @@ function M.on_inlayhint(err, result, ctx, _)
     return
   end
 
-  local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  ---@param position lsp.Position
-  ---@return integer
-  local function pos_to_byte(position)
-    local col = position.character
-    if col > 0 then
-      local line = lines[position.line + 1] or ''
-      return util._str_byteindex_enc(line, col, client.offset_encoding)
-    end
-    return col
-  end
-
   for _, hint in ipairs(result) do
     local lnum = hint.position.line
-    hint.position.character = pos_to_byte(hint.position)
+    hint.position.character =
+      util._get_line_byte_from_position(bufnr, hint.position, client.offset_encoding)
     table.insert(new_lnum_hints[lnum], hint)
   end
 
