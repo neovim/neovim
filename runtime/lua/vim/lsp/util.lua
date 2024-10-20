@@ -1023,18 +1023,13 @@ end
 
 --- Jumps to a location.
 ---
+---@deprecated
 ---@param location lsp.Location|lsp.LocationLink
 ---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'?
 ---@param reuse_win boolean? Jump to existing window if buffer is already open.
 ---@return boolean `true` if the jump succeeded
 function M.jump_to_location(location, offset_encoding, reuse_win)
-  if offset_encoding == nil then
-    vim.notify_once(
-      'jump_to_location must be called with valid offset encoding',
-      vim.log.levels.WARN
-    )
-  end
-
+  vim.deprecate('vim.lsp.util.jump_to_location', nil, '0.12')
   return M.show_document(location, offset_encoding, { reuse_win = reuse_win, focus = true })
 end
 
