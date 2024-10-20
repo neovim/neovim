@@ -105,7 +105,7 @@ func Test_WindowsHome()
       RestoreEnv
       let $HOME = save_home
       let env = ''
-      let job = job_start('cmd /c set', {'out_cb': {ch,x->[env,execute('let env=x')]}})
+      let job = job_start('cmd /D /c set', {'out_cb': {ch,x->[env,execute('let env=x')]}})
       sleep 1
       let env = filter(split(env, "\n"), 'v:val=="HOME"')
       let home = len(env) == 0 ? "" : env[0]

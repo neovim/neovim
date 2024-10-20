@@ -64,7 +64,7 @@ func RunCommand(cmd)
     let job = job_start(a:cmd, {"stoponexit": "hup"})
     call job_setoptions(job, {"stoponexit": "kill"})
   elseif has('win32')
-    exe 'silent !start cmd /c start "test_channel" ' . a:cmd
+    exe 'silent !start cmd /D /c start "test_channel" ' . a:cmd
   else
     exe 'silent !' . a:cmd . '&'
   endif
