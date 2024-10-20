@@ -82,6 +82,11 @@ LSP
 • |vim.lsp.buf.references()| now handles multiple clients but no longer
   triggers the global `textDocument/references` handler from
   `vim.lsp.handlers`
+• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
+  |vim.lsp.buf.type_definition()| and |vim.lsp.buf.implementation()| now
+  support merging the results of multiple clients but no longer trigger the
+  global handlers from `vim.lsp.handlers`
+
 
 LUA
 
