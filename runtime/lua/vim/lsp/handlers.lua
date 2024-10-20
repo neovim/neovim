@@ -437,7 +437,7 @@ function M.signature_help(_, result, ctx, config)
   local fbuf, fwin = util.open_floating_preview(lines, 'markdown', config)
   -- Highlight the active parameter.
   if hl then
-    vim.highlight.range(
+    vim.hl.range(
       fbuf,
       sig_help_ns,
       'LspSignatureActiveParameter',

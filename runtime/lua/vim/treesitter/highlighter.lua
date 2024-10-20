@@ -328,7 +328,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         -- The "priority" attribute can be set at the pattern level or on a particular capture
         local priority = (
           tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
-          or vim.highlight.priorities.treesitter
+          or vim.hl.priorities.treesitter
         ) + spell_pri_offset
 
         -- The "conceal" attribute can be set at the pattern level or on a particular capture

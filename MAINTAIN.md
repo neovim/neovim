@@ -79,6 +79,8 @@ When a (non-experimental) feature is slated to be removed it should:
       `v0.10.0-dev-1957+gd676746c33` then use `0.12`.
     - For Vimscript features, use `v:lua.vim.deprecate()`. Use the same version
       as described for Lua features.
+    - `vim.deprecate(…, 'x.y.z')` where major version `x` is greater than the
+      current Nvim major version, is always treated as _soft_ deprecation.
 2. Be _hard_ deprecated in a following a release in which it was soft deprecated.
     - Use of the deprecated feature will still work but should issue a warning.
     - Features implemented in C will need bespoke implementations to communicate

@@ -636,13 +636,13 @@ A subset of the `vim.*` API is available in threads. This includes:
 
 
 ==============================================================================
-VIM.HIGHLIGHT                                                  *vim.highlight*
+VIM.HL                                                                *vim.hl*
 
-vim.highlight.on_yank({opts})                        *vim.highlight.on_yank()*
+vim.hl.on_yank({opts})                                      *vim.hl.on_yank()*
     Highlight the yanked text during a |TextYankPost| event.
 
     Add the following to your `init.vim`: >vim
-        autocmd TextYankPost * silent! lua vim.highlight.on_yank {higroup='Visual', timeout=300}
+        autocmd TextYankPost * silent! lua vim.hl.on_yank {higroup='Visual', timeout=300}
 <
 
     Parameters: ~
@@ -655,9 +655,9 @@ vim.highlight.on_yank({opts})                        *vim.highlight.on_yank()*
                   true)
                 • event event structure (default vim.v.event)
                 • priority integer priority (default
-                  |vim.highlight.priorities|`.user`)
+                  |vim.hl.priorities|`.user`)
 
-vim.highlight.priorities                            *vim.highlight.priorities*
+vim.hl.priorities                                          *vim.hl.priorities*
     Table with default priorities used for highlighting:
     • `syntax`: `50`, used for standard syntax highlighting
     • `treesitter`: `100`, used for treesitter-based highlighting
@@ -666,8 +666,8 @@ vim.highlight.priorities                            *vim.highlight.priorities*
     • `user`: `200`, used for user-triggered highlights such as LSP document
       symbols or `on_yank` autocommands
 
-                                                       *vim.highlight.range()*
-vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
+                                                              *vim.hl.range()*
+vim.hl.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
     Apply highlight group to range of text.
 
     Parameters: ~
@@ -684,8 +684,7 @@ vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
                    • {inclusive}? (`boolean`, default: `false`) Indicates
                      whether the range is end-inclusive
                    • {priority}? (`integer`, default:
-                     `vim.highlight.priorities.user`) Indicates priority of
-                     highlight
+                     `vim.hl.priorities.user`) Highlight priority
 
 
 ==============================================================================

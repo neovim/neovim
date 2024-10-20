@@ -135,7 +135,7 @@ local config = {
   lua = {
     filename = 'lua.txt',
     section_order = {
-      'highlight.lua',
+      'hl.lua',
       'diff.lua',
       'mpack.lua',
       'json.lua',
@@ -174,7 +174,7 @@ local config = {
       'runtime/lua/vim/filetype.lua',
       'runtime/lua/vim/keymap.lua',
       'runtime/lua/vim/fs.lua',
-      'runtime/lua/vim/highlight.lua',
+      'runtime/lua/vim/hl.lua',
       'runtime/lua/vim/secure.lua',
       'runtime/lua/vim/version.lua',
       'runtime/lua/vim/_inspector.lua',
@@ -221,7 +221,7 @@ local config = {
       end
       if
         contains(name, {
-          'highlight',
+          'hl',
           'mpack',
           'json',
           'base64',

@@ -443,7 +443,7 @@ function STHighlighter:on_win(topline, botline)
         vim.api.nvim_buf_set_extmark(self.bufnr, state.namespace, token.line, token.start_col, {
           hl_group = hl_group,
           end_col = token.end_col,
-          priority = vim.highlight.priorities.semantic_tokens + delta,
+          priority = vim.hl.priorities.semantic_tokens + delta,
           strict = false,
         })
       end
@@ -723,7 +723,7 @@ end
 --- @inlinedoc
 ---
 --- Priority for the applied extmark.
---- (Default: `vim.highlight.priorities.semantic_tokens + 3`)
+--- (Default: `vim.hl.priorities.semantic_tokens + 3`)
 --- @field priority? integer
 
 --- Highlight a semantic token.
@@ -752,7 +752,7 @@ function M.highlight_token(token, bufnr, client_id, hl_group, opts)
   end
 
   opts = opts or {}
-  local priority = opts.priority or vim.highlight.priorities.semantic_tokens + 3
+  local priority = opts.priority or vim.hl.priorities.semantic_tokens + 3
 
   vim.api.nvim_buf_set_extmark(bufnr, state.namespace, token.line, token.start_col, {
     hl_group = hl_group,

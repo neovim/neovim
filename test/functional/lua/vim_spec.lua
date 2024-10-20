@@ -155,10 +155,10 @@ describe('lua stdlib', function()
       end)
 
       it('plugin=nil, no error if soft-deprecated', function()
-        eq(
-          vim.NIL,
-          exec_lua('return vim.deprecate(...)', 'foo.baz()', 'foo.better_baz()', '0.99.0')
-        )
+        eq(vim.NIL, exec_lua [[return vim.deprecate('old1', 'new1', '0.99.0')]])
+        -- Major version > current Nvim major is always "soft-deprecated".
+        -- XXX: This is also a reminder to update the hardcoded `nvim_major`, when Nvim reaches 1.0.
+        eq(vim.NIL, exec_lua [[return vim.deprecate('old2', 'new2', '1.0.0')]])
       end)
 
       it('plugin=nil, show error if hard-deprecated', function()
@@ -172,13 +172,6 @@ describe('lua stdlib', function()
             foo.hard_dep() is deprecated. Run ":checkhealth vim.deprecated" for more information]]
           ):format(was_removed, nextver),
           exec_lua('return vim.deprecate(...)', 'foo.hard_dep()', 'vim.new_api()', nextver)
-        )
-      end)
-
-      it('plugin=nil, to be deleted in the next major version (1.0)', function()
-        eq(
-          [[foo.baz() is deprecated. Run ":checkhealth vim.deprecated" for more information]],
-          exec_lua [[ return vim.deprecate('foo.baz()', nil, '1.0') ]]
         )
       end)
 
