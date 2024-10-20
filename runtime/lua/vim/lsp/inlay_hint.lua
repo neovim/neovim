@@ -4,23 +4,20 @@ local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
 local M = {}
 
----@class (private) vim.lsp.inlay_hint.globalstate Global state for inlay hints
----@field enabled boolean Whether inlay hints are enabled for this scope
----@type vim.lsp.inlay_hint.globalstate
-local globalstate = {
-  enabled = false,
-}
+---@type boolean
+vim.g.inlay_hint_enabled = false
 
----@class (private) vim.lsp.inlay_hint.bufstate: vim.lsp.inlay_hint.globalstate Buffer local state for inlay hints
+---@class (private) vim.lsp.inlay_hint.bufstate Buffer local state for inlay hints
 ---@field version? integer
+---@field enabled boolean Whether inlay hints are enabled for this buffer
 ---@field client_hints? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
 ---@field applied table<integer, integer> Last version of hints applied to this line
 ---@type table<integer, vim.lsp.inlay_hint.bufstate>
 local bufstates = vim.defaulttable(function(_)
   return setmetatable({ applied = {} }, {
-    __index = globalstate,
+    __index = { enabled = vim.g.inlay_hint_enabled },
     __newindex = function(state, key, value)
-      if globalstate[key] == value then
+      if key == 'enabled' and value == vim.g.inlay_hint_enabled then
         rawset(state, key, nil)
       else
         rawset(state, key, value)
@@ -370,7 +367,7 @@ function M.is_enabled(filter)
 
   vim.validate('bufnr', bufnr, 'number', true)
   if bufnr == nil then
-    return globalstate.enabled
+    return vim.g.inlay_hint_enabled
   elseif bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
@@ -401,7 +398,7 @@ function M.enable(enable, filter)
   filter = filter or {}
 
   if filter.bufnr == nil then
-    globalstate.enabled = enable
+    vim.g.inlay_hint_enabled = true
     for _, bufnr in ipairs(api.nvim_list_bufs()) do
       if api.nvim_buf_is_loaded(bufnr) then
         if enable == false then
