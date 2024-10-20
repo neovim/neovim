@@ -4,12 +4,30 @@ local Range = require('vim.treesitter._range')
 
 local ns = api.nvim_create_namespace('treesitter/highlighter')
 
----@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch
+--- @class vim.treesitter.highlighter.Info
+--- @inlinedoc
+--- The range of the highlight
+--- @field range Range6
+--- Highlight |group-name|
+--- @field hl_group string
+--- Highlight priority |treesitter-highlight-priority|
+--- @field priority integer
+--- Highlight conceal |treesitter-highlight-conceal|
+--- @field conceal string?
+--- Highlight spell/nospell |treesitter-highlight-spell|
+---   - If `true` then `@spell` is set
+---   - If `false` then `@nospell` is set
+---   - If `nil` then neither `@spell` nor `@nospell` is set
+--- @field spell boolean?
+--- Extmark URL, see "url" option at |nvim_buf_set_extmark()|
+--- @field url string?
+
+---@alias vim.treesitter.highlighter.Iter fun(end_line:integer):vim.treesitter.highlighter.Info?,TSNode?
 
 ---@class (private) vim.treesitter.highlighter.Query
 ---@field private _query vim.treesitter.Query?
 ---@field private lang string
----@field private hl_cache table<integer,integer>
+---@field private hl_cache table<string,integer>
 local TSHighlighterQuery = {}
 TSHighlighterQuery.__index = TSHighlighterQuery
 
@@ -32,19 +50,18 @@ function TSHighlighterQuery.new(lang, query_string)
 end
 
 ---@package
----@param capture integer
+---@param name string
 ---@return integer?
-function TSHighlighterQuery:get_hl_from_capture(capture)
-  if not self.hl_cache[capture] then
-    local name = self._query.captures[capture]
+function TSHighlighterQuery:get_hl_from_capture(name)
+  if not self.hl_cache[name] then
     local id = 0
     if not vim.startswith(name, '_') then
-      id = api.nvim_get_hl_id_by_name('@' .. name .. '.' .. self.lang)
+      id = api.nvim_get_hl_id_by_name(name)
     end
-    self.hl_cache[capture] = id
+    self.hl_cache[name] = id
   end
 
-  return self.hl_cache[capture]
+  return self.hl_cache[name]
 end
 
 ---@nodoc
@@ -247,11 +264,11 @@ function TSHighlighter:get_query(lang)
 end
 
 --- @param match TSQueryMatch
---- @param bufnr integer
+--- @param source integer|string Buffer id, or text
 --- @param capture integer
 --- @param metadata vim.treesitter.query.TSMetadata
 --- @return string?
-local function get_url(match, bufnr, capture, metadata)
+local function get_url(match, source, capture, metadata)
   ---@type string|number|nil
   local url = metadata[capture] and metadata[capture].url
 
@@ -269,7 +286,7 @@ local function get_url(match, bufnr, capture, metadata)
   -- from the first.
   local other_node = captures[url][1]
 
-  return vim.treesitter.get_node_text(other_node, bufnr, {
+  return vim.treesitter.get_node_text(other_node, source, {
     metadata = metadata[url],
   })
 end
@@ -284,6 +301,57 @@ local function get_spell(capture_name)
     return false, 1
   end
   return nil, 0
+end
+
+---@param hl_query vim.treesitter.Query
+---@param root_node TSNode
+---@param source integer|string
+---@param start_row integer?
+---@param end_row integer?
+---@return vim.treesitter.highlighter.Iter
+function TSHighlighter._iter_highlight_info(hl_query, root_node, source, start_row, end_row)
+  local iter = hl_query:iter_captures(root_node, source, start_row, end_row)
+
+  return function(end_line)
+    local capture, node, metadata, match = iter(end_line)
+    if not node then
+      return
+    end
+
+    if not capture then
+      return nil, node
+    end
+
+    local range = vim.treesitter.get_range(node, source, metadata and metadata[capture])
+
+    local capture_name = hl_query.captures[capture]
+
+    local hl_group = capture_name
+    if not vim.startswith(hl_group, '_') then
+      hl_group = '@' .. hl_group .. '.' .. hl_query.lang
+    end
+
+    local spell, spell_pri_offset = get_spell(capture_name)
+
+    local priority = (
+      tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
+      or vim.highlight.priorities.treesitter
+    ) + spell_pri_offset
+
+    local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
+
+    local url = get_url(match, source, capture, metadata)
+
+    return {
+      range = range,
+      hl_group = hl_group,
+      priority = priority,
+      conceal = conceal,
+      spell = spell,
+      url = url,
+    },
+      node
+  end
 end
 
 ---@param self vim.treesitter.highlighter
@@ -305,47 +373,37 @@ local function on_line_impl(self, buf, line, is_spell_nav)
 
       -- TODO(lewis6991): Creating a new iterator loses the cached predicate results for query
       -- matches. Move this logic inside iter_captures() so we can maintain the cache.
-      state.iter =
-        state.highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
+      state.iter = TSHighlighter._iter_highlight_info(
+        state.highlighter_query:query(),
+        root_node,
+        self.bufnr,
+        line,
+        root_end_row + 1
+      )
     end
 
     while line >= state.next_row do
-      local capture, node, metadata, match = state.iter(line)
+      local info, node = state.iter(line)
 
       local range = { root_end_row + 1, 0, root_end_row + 1, 0 }
       if node then
-        range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
+        range = info and info.range or vim.treesitter.get_range(node, buf)
       end
       local start_row, start_col, end_row, end_col = Range.unpack4(range)
 
-      if capture then
-        local hl = state.highlighter_query:get_hl_from_capture(capture)
+      if info then
+        local hl = state.highlighter_query:get_hl_from_capture(info.hl_group)
 
-        local capture_name = state.highlighter_query:query().captures[capture]
-
-        local spell, spell_pri_offset = get_spell(capture_name)
-
-        -- The "priority" attribute can be set at the pattern level or on a particular capture
-        local priority = (
-          tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
-          or vim.highlight.priorities.treesitter
-        ) + spell_pri_offset
-
-        -- The "conceal" attribute can be set at the pattern level or on a particular capture
-        local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
-
-        local url = get_url(match, buf, capture, metadata)
-
-        if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
+        if hl and end_row >= line and (not is_spell_nav or info.spell ~= nil) then
           api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
             end_line = end_row,
             end_col = end_col,
             hl_group = hl,
             ephemeral = true,
-            priority = priority,
-            conceal = conceal,
-            spell = spell,
-            url = url,
+            priority = info.priority,
+            conceal = info.conceal,
+            spell = info.spell,
+            url = info.url,
           })
         end
       end
