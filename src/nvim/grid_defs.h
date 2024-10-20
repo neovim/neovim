@@ -80,8 +80,8 @@ struct ScreenGrid {
   // whether the compositor should blend the grid with the background grid
   bool blending;
 
-  // whether the grid can be focused with mouse clicks.
-  bool focusable;
+  // whether the grid interacts with mouse events.
+  bool mouse_enabled;
 
   // z-index: the order in the stack of grids.
   int zindex;

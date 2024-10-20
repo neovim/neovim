@@ -275,7 +275,7 @@ ScreenGrid *ui_comp_mouse_focus(int row, int col)
 {
   for (ssize_t i = (ssize_t)kv_size(layers) - 1; i > 0; i--) {
     ScreenGrid *grid = kv_A(layers, i);
-    if (grid->focusable
+    if (grid->mouse_enabled
         && row >= grid->comp_row && row < grid->comp_row + grid->rows
         && col >= grid->comp_col && col < grid->comp_col + grid->cols) {
       return grid;

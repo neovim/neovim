@@ -389,6 +389,7 @@ win_T *win_float_create(bool enter, bool new_buf)
   config.row = curwin->w_wrow;
   config.relative = kFloatRelativeEditor;
   config.focusable = false;
+  config.mouse = false;
   config.anchor = 0;  // NW
   config.noautocmd = true;
   config.hide = true;

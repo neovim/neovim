@@ -199,7 +199,7 @@ void msg_grid_validate(void)
     ui_call_grid_resize(msg_grid.handle, msg_grid.cols, msg_grid.rows);
 
     msg_scrolled_at_flush = msg_scrolled;
-    msg_grid.focusable = false;
+    msg_grid.mouse_enabled = false;
     msg_grid_adj.target = &msg_grid;
   } else if (!should_alloc && msg_grid.chars) {
     ui_comp_remove_grid(&msg_grid);

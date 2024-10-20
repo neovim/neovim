@@ -129,7 +129,12 @@
 ///            fractional.
 ///   - focusable: Enable focus by user actions (wincmds, mouse events).
 ///       Defaults to true. Non-focusable windows can be entered by
-///       |nvim_set_current_win()|.
+///       |nvim_set_current_win()|, or, when the `mouse` field is set to true,
+///       by mouse events.
+///   - mouse: Specify how this window interacts with mouse events.
+///       Defaults to `focusable` value.
+///       - If false, mouse events pass through this window.
+///       - If true, mouse events interact with this window normally.
 ///   - external: GUI should display the window as an external
 ///       top-level window. Currently accepts no other positioning
 ///       configuration together with this.
@@ -714,6 +719,7 @@ Dict(win_config) nvim_win_get_config(Window window, Arena *arena, Error *err)
   PUT_KEY_X(rv, focusable, config->focusable);
   PUT_KEY_X(rv, external, config->external);
   PUT_KEY_X(rv, hide, config->hide);
+  PUT_KEY_X(rv, mouse, config->mouse);
 
   if (wp->w_floating) {
     PUT_KEY_X(rv, width, config->width);
@@ -1202,6 +1208,11 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
 
   if (HAS_KEY_X(config, focusable)) {
     fconfig->focusable = config->focusable;
+    fconfig->mouse = config->focusable;
+  }
+
+  if (HAS_KEY_X(config, mouse)) {
+    fconfig->mouse = config->mouse;
   }
 
   if (HAS_KEY_X(config, zindex)) {
