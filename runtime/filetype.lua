@@ -11,21 +11,13 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
     if not vim.api.nvim_buf_is_valid(args.buf) then
       return
     end
-    local ft, on_detect = vim.filetype.match({
+    local ft, on_detect, is_fallback = vim.filetype.match({
       -- The unexpanded file name is needed here. #27914
       -- Neither args.file nor args.match are guaranteed to be unexpanded.
       filename = vim.fn.bufname(args.buf),
       buf = args.buf,
     })
-    if not ft then
-      -- Generic configuration file used as fallback
-      ft = require('vim.filetype.detect').conf(args.file, args.buf)
-      if ft then
-        vim._with({ buf = args.buf }, function()
-          vim.api.nvim_cmd({ cmd = 'setf', args = { 'FALLBACK', ft } }, {})
-        end)
-      end
-    else
+    if ft then
       -- on_detect is called before setting the filetype so that it can set any buffer local
       -- variables that may be used the filetype's ftplugin
       if on_detect then
@@ -33,7 +25,10 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
       end
 
       vim._with({ buf = args.buf }, function()
-        vim.api.nvim_cmd({ cmd = 'setf', args = { ft } }, {})
+        vim.api.nvim_cmd({
+          cmd = 'setf',
+          args = (is_fallback and { 'FALLBACK', ft } or { ft }),
+        }, {})
       end)
     end
   end,
