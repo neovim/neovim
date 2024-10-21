@@ -1304,6 +1304,7 @@ local extension = {
   xpfm = 'xml',
   spfm = 'xml',
   bxml = 'xml',
+  mmi = 'xml',
   xcu = 'xml',
   xlb = 'xml',
   xlc = 'xml',
