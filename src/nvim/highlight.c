@@ -331,12 +331,12 @@ int hl_get_ui_attr(int ns_id, int idx, int final_id, bool optional)
 /// @param attr  The original attribute code.
 ///
 /// @return      The attribute code with 'winblend' applied.
-int hl_apply_winblend(win_T *wp, int attr)
+int hl_apply_winblend(int winbl, int attr)
 {
   HlEntry entry = attr_entry(attr);
   // if blend= attribute is not set, 'winblend' value overrides it.
-  if (entry.attr.hl_blend == -1 && wp->w_p_winbl > 0) {
-    entry.attr.hl_blend = (int)wp->w_p_winbl;
+  if (entry.attr.hl_blend == -1 && winbl > 0) {
+    entry.attr.hl_blend = winbl;
     attr = get_attr_entry(entry);
   }
   return attr;
@@ -381,7 +381,7 @@ void update_window_hl(win_T *wp, bool invalid)
   }
 
   if (wp->w_floating) {
-    wp->w_hl_attr_normal = hl_apply_winblend(wp, wp->w_hl_attr_normal);
+    wp->w_hl_attr_normal = hl_apply_winblend((int)wp->w_p_winbl, wp->w_hl_attr_normal);
   }
 
   wp->w_config.shadow = false;
@@ -392,7 +392,7 @@ void update_window_hl(win_T *wp, bool invalid)
         attr = hl_get_ui_attr(ns_id, HLF_BORDER,
                               wp->w_config.border_hl_ids[i], false);
       }
-      attr = hl_apply_winblend(wp, attr);
+      attr = hl_apply_winblend((int)wp->w_p_winbl, attr);
       if (syn_attr2entry(attr).hl_blend > 0) {
         wp->w_config.shadow = true;
       }
@@ -413,7 +413,7 @@ void update_window_hl(win_T *wp, bool invalid)
   }
 
   if (wp->w_floating) {
-    wp->w_hl_attr_normalnc = hl_apply_winblend(wp, wp->w_hl_attr_normalnc);
+    wp->w_hl_attr_normalnc = hl_apply_winblend((int)wp->w_p_winbl, wp->w_hl_attr_normalnc);
   }
 }
 
