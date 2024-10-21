@@ -451,42 +451,11 @@ int parser_text(const char bytes[], size_t len, void *user)
   return i;
 }
 
-int parser_control(unsigned char control, void *user)
-{
-  FILE *f = fopen(VTERM_TEST_FILE, "a");
-  fprintf(f,"control %02x\n", control);
-  fclose(f);
-
-  return 1;
-}
-
 static void printchars(const char *s, size_t len, FILE *f)
 {
   while(len--) {
     fprintf(f, "%c", (s++)[0]);
   }
-}
-
-int parser_escape(const char bytes[], size_t len, void *user)
-{
-  FILE *f = fopen(VTERM_TEST_FILE, "a");
-  if(bytes[0] >= 0x20 && bytes[0] < 0x30) {
-    if(len < 2) {
-      return -1;
-    }
-    len = 2;
-  }
-  else {
-    len = 1;
-  }
-
-  fprintf(f,"escape ");
-  printchars(bytes, len, f);
-  fprintf(f,"\n");
-
-  fclose(f);
-
-  return len;
 }
 
 int parser_csi(const char *leader, const long args[], int argcount, const char *intermed, char command, void *user)
@@ -894,11 +863,6 @@ int state_sb_clear(void *user) {
   fclose(f);
 
   return 0;
-}
-
-int state_setlineinfo(int row, const VTermLineInfo *newinfo, const VTermLineInfo *oldinfo, void *user)
-{
-  return 1;
 }
 
 bool want_screen_scrollback;

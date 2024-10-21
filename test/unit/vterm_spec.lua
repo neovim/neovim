@@ -22,10 +22,8 @@ local bit = require('bit')
 --- @field VTERM_MOD_CTRL integer
 --- @field VTERM_MOD_SHIFT integer
 --- @field parser_apc function
---- @field parser_control function
 --- @field parser_csi function
 --- @field parser_dcs function
---- @field parser_escape function
 --- @field parser_osc function
 --- @field parser_pm function
 --- @field parser_sos function
@@ -43,7 +41,6 @@ local bit = require('bit')
 --- @field state_putglyph function
 --- @field state_sb_clear function
 --- @field state_scrollrect function
---- @field state_setlineinfo function
 --- @field state_setpenattr function
 --- @field state_settermprop function
 --- @field term_output function
@@ -93,13 +90,28 @@ local function read_rm()
   return text
 end
 
+local function append(str)
+  local f = assert(io.open(t.paths.vterm_test_file, 'a'))
+  f:write(str)
+  f:close()
+  return 1
+end
+
+local function parser_control(control)
+  return append(string.format('control %02x\n', control))
+end
+
+local function parser_escape(bytes)
+  return append(string.format('escape %s\n', t.ffi.string(bytes)))
+end
+
 local function wantparser(vt)
   assert(vt)
 
   local parser_cbs = t.ffi.new('VTermParserCallbacks')
   parser_cbs['text'] = vterm.parser_text
-  parser_cbs['control'] = vterm.parser_control
-  parser_cbs['escape'] = vterm.parser_escape
+  parser_cbs['control'] = parser_control
+  parser_cbs['escape'] = parser_escape
   parser_cbs['csi'] = vterm.parser_csi
   parser_cbs['osc'] = vterm.parser_osc
   parser_cbs['dcs'] = vterm.parser_dcs
@@ -118,6 +130,10 @@ local function init()
   return vt
 end
 
+local function state_setlineinfo()
+  return 1
+end
+
 --- @return any
 local function wantstate(vt, opts)
   opts = opts or {}
@@ -132,7 +148,7 @@ local function wantstate(vt, opts)
   state_cbs['erase'] = vterm.state_erase
   state_cbs['setpenattr'] = vterm.state_setpenattr
   state_cbs['settermprop'] = vterm.state_settermprop
-  state_cbs['setlineinfo'] = vterm.state_setlineinfo
+  state_cbs['setlineinfo'] = state_setlineinfo
   state_cbs['sb_clear'] = vterm.state_sb_clear
 
   local selection_cbs = t.ffi.new('VTermSelectionCallbacks')
@@ -147,7 +163,7 @@ local function wantstate(vt, opts)
   vterm.vterm_state_reset(state, 1)
 
   local fallbacks = t.ffi.new('VTermStateFallbacks')
-  fallbacks['control'] = vterm.parser_control
+  fallbacks['control'] = parser_control
   fallbacks['csi'] = vterm.parser_csi
   fallbacks['osc'] = vterm.parser_osc
   fallbacks['dcs'] = vterm.parser_dcs
