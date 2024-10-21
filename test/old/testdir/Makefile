@@ -154,7 +154,7 @@ newtests: newtestssilent
 
 newtestssilent: $(NEW_TESTS_RES)
 
-GEN_OPT_DEPS = gen_opt_test.vim ../../../src/nvim/options.lua
+GEN_OPT_DEPS = gen_opt_test.vim ../../../src/nvim/options.lua ../../../runtime/doc/options.txt
 
 opt_test.vim: $(GEN_OPT_DEPS)
 	$(NVIM_PRG) -e -s -u NONE $(NO_INITS) -S $(GEN_OPT_DEPS)
@@ -164,7 +164,7 @@ opt_test.vim: $(GEN_OPT_DEPS)
 	fi
 
 # Explicit dependencies.
-test_options.res test_alot.res: opt_test.vim
+test_options_all.res: opt_test.vim
 
 %.res: %.vim .gdbinit
 	@echo "[OLDTEST] Running" $*
