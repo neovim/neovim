@@ -4,8 +4,8 @@
 " Date:		  May 03, 2023
 " Version:	173a
 " Last Change: {{{1
-" 	2023 Nov 21 by Vim Project: ignore wildignore when expanding $COMSPEC	(v173a)
-" 	2023 Nov 22 by Vim Project: fix handling of very long filename on longlist style	(v173a)
+"   2023 Nov 21 by Vim Project: ignore wildignore when expanding $COMSPEC	(v173a)
+"   2023 Nov 22 by Vim Project: fix handling of very long filename on longlist style	(v173a)
 "   2024 Feb 19 by Vim Project: (announce adoption)
 "   2024 Feb 29 by Vim Project: handle symlinks in tree mode correctly
 "   2024 Apr 03 by Vim Project: detect filetypes for remote edited files
@@ -26,6 +26,7 @@
 "   2024 Sep 15 by Vim Project: more strict confirmation dialog (#15680)
 "   2024 Sep 19 by Vim Project: mf-selection highlight uses wrong pattern (#15700)
 "   2024 Sep 21 by Vim Project: remove extraneous closing bracket (#15718)
+"   2024 Oct 21 by Vim Project: remove netrwFileHandlers (#15895)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -5398,11 +5399,7 @@ fun! netrw#BrowseX(fname,remote)
 
   " execute the file handler
 "  call Decho("execute the file handler (if any)",'~'.expand("<slnum>"))
-  if exists("g:netrw_browsex_viewer") && g:netrw_browsex_viewer == '-'
-"   call Decho("(netrw#BrowseX) g:netrw_browsex_viewer<".g:netrw_browsex_viewer.">",'~'.expand("<slnum>"))
-   let ret= netrwFileHandlers#Invoke(exten,fname)
-
-  elseif exists("g:netrw_browsex_viewer") && executable(viewer)
+  if exists("g:netrw_browsex_viewer") && executable(viewer)
 "   call Decho("(netrw#BrowseX) g:netrw_browsex_viewer<".g:netrw_browsex_viewer.">",'~'.expand("<slnum>"))
    call s:NetrwExe("sil !".viewer." ".viewopt.s:ShellEscape(fname,1).redir)
    let ret= v:shell_error
@@ -5468,17 +5465,13 @@ fun! netrw#BrowseX(fname,remote)
 "   call Decho("(netrw#BrowseX) macunix and open",'~'.expand("<slnum>"))
    call s:NetrwExe("sil !open ".s:ShellEscape(fname,1)." ".redir)
    let ret= v:shell_error
-
   else
-   " netrwFileHandlers#Invoke() always returns 0
-"   call Decho("(netrw#BrowseX) use netrwFileHandlers",'~'.expand("<slnum>"))
-   let ret= netrwFileHandlers#Invoke(exten,fname)
+   call netrw#ErrorMsg(s:ERROR, "Couldn't find a program to open '".a:fname."'", 0)
+   let ret=0
   endif
 
-  " if unsuccessful, attempt netrwFileHandlers#Invoke()
   if ret
-"   call Decho("(netrw#BrowseX) ret=".ret," indicates unsuccessful thus far",'~'.expand("<slnum>"))
-   let ret= netrwFileHandlers#Invoke(exten,fname)
+   call netrw#ErrorMsg(s:ERROR, "Failed to open '".a:fname."'", 0)
   endif
 
   " restoring redraw! after external file handlers

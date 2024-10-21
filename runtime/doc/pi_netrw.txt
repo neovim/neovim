@@ -1467,7 +1467,6 @@ permission to remove a file, it will issue an error message.
 
 						*netrw-gx*
 CUSTOMIZING BROWSING WITH A SPECIAL HANDLER	*netrw-x* *netrw-handler* {{{2
-						(also see |netrw_filehandler|)
 
 Certain files, such as html, gif, jpeg, (word/office) doc, etc, files, are
 best seen with a special handler (ie. a tool provided with your computer's
@@ -1486,21 +1485,12 @@ Netrw determines which special handler by the following method:
 <   or >
 	:let g:netrw_browsex_viewer= "xdg-open"
 <
-    If g:netrw_browsex_viewer == '-', then netrwFileHandlers#Invoke() will be
-    used instead (see |netrw_filehandler|).
-
     If the viewer you wish to use does not support handling of a remote URL
     directory, set |g:netrw_browsex_support_remote| to 0.
   * for Windows 32 or 64, the URL and FileProtocolHandler dlls are used.
   * for Gnome (with gnome-open): gnome-open is used.
   * for KDE (with kfmclient)   : kfmclient is used
   * for Mac OS X               : open is used.
-  * otherwise the netrwFileHandler plugin is used.
-
-The file's suffix is used by these various approaches to determine an
-appropriate application to use to "handle" these files.  Such things as
-OpenOffice (*.sfx), visualization (*.jpg, *.gif, etc), and PostScript (*.ps,
-*.eps) can be handled.
 
 The gx mapping extends to all buffers; apply "gx" while atop a word and netrw
 will apply a special handler to it (like "x" works when in a netrw buffer).
@@ -1516,46 +1506,6 @@ Associated setting variables:
 	|g:netrw_gx|	control how gx picks up the text under the cursor
 	|g:netrw_nogx|	prevent gx map while editing
 	|g:netrw_suppress_gx_mesg| controls gx's suppression of browser messages
-
-							*netrw_filehandler*
-
-When |g:netrw_browsex_viewer| exists and is "-", then netrw will attempt to
-handle the special file with a vim function.  The "x" map applies a function
-to a file, based on its extension.  Of course, the handler function must exist
-for it to be called!
->
- Ex. mypgm.html   x -> NFH_html("scp://user@host/some/path/mypgm.html")
-
-<	Users may write their own netrw File Handler functions to
-	support more suffixes with special handling.  See
-	<autoload/netrwFileHandlers.vim> for examples on how to make
-	file handler functions.   As an example: >
-
-	" NFH_suffix(filename)
-	fun! NFH_suffix(filename)
-	..do something special with filename..
-	endfun
-<
-These functions need to be defined in some file in your .vim/plugin
-(vimfiles\plugin) directory.  Vim's function names may not have punctuation
-characters (except for the underscore) in them.  To support suffices that
-contain such characters, netrw will first convert the suffix using the
-following table: >
-
-    @ -> AT       ! -> EXCLAMATION    % -> PERCENT
-    : -> COLON    = -> EQUAL          ? -> QUESTION
-    , -> COMMA    - -> MINUS          ; -> SEMICOLON
-    $ -> DOLLAR   + -> PLUS           ~ -> TILDE
-<
-So, for example: >
-
-	file.rcs,v  ->  NFH_rcsCOMMAv()
-<
-If more such translations are necessary, please send me email: >
-		NcampObell@SdrPchip.AorgM-NOSPAM
-with a request.  (remove the embedded NOSPAM first)
-
-Associated setting variable: |g:netrw_browsex_viewer|
 
 							*netrw-curdir*
 DELETING BOOKMARKS					*netrw-mB* {{{2
@@ -2569,12 +2519,7 @@ your browsing preferences.  (see also: |netrw-settings|)
   *g:netrw_browsex_viewer*	specify user's preference for a viewer: >
 					"kfmclient exec"
 					"gnome-open"
-<				If >
-					"-"
-<				is used, then netrwFileHandler() will look for
-				a script/function to handle the given
-				extension.  (see |netrw_filehandler|).
-
+<
   *g:netrw_browsex_support_remote*
 				specify if the specified viewer supports a
 				remote URL.  (see |netrw-handler|).
