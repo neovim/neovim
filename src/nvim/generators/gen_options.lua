@@ -1,4 +1,5 @@
 local options_file = arg[1]
+local options_input_file = arg[2]
 
 local opt_fd = assert(io.open(options_file, 'w'))
 
@@ -11,7 +12,7 @@ local w = function(s)
 end
 
 --- @module 'nvim.options'
-local options = require('options')
+local options = loadfile(options_input_file)()
 
 local cstr = options.cstr
 

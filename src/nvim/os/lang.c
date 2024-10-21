@@ -1,4 +1,4 @@
-#ifdef __APPLE__
+#ifdef BAD__APPLE__
 # define Boolean CFBoolean  // Avoid conflict with API's Boolean
 # define FileInfo CSFileInfo  // Avoid conflict with API's Fileinfo
 # include <CoreServices/CoreServices.h>
@@ -339,7 +339,7 @@ char *get_locales(expand_T *xp, int idx)
 
 void lang_init(void)
 {
-#ifdef __APPLE__
+#ifdef BAD__APPLE__
   if (os_getenv("LANG") == NULL) {
     char buf[50] = { 0 };
 

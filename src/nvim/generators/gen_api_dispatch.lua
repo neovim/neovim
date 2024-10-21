@@ -2,8 +2,6 @@ local mpack = vim.mpack
 
 local hashy = require 'generators.hashy'
 
-local pre_args = 7
-assert(#arg >= pre_args)
 -- output h file with generated dispatch functions (dispatch_wrappers.generated.h)
 local dispatch_outputf = arg[1]
 -- output h file with packed metadata (api_metadata.generated.h)
@@ -14,6 +12,12 @@ local lua_c_bindings_outputf = arg[4] -- lua_api_c_bindings.generated.c
 local keysets_outputf = arg[5] -- keysets_defs.generated.h
 local ui_metadata_inputf = arg[6] -- ui events metadata
 local git_version_inputf = arg[7] -- git version header
+local nvim_version_inputf = arg[8] -- nvim version
+local c_grammar_inputf = arg[9]
+local dump_bin_array_inputf = arg[10]
+local dispatch_deprecated_inputf = arg[11]
+local pre_args = 11
+assert(#arg >= pre_args)
 
 local functions = {}
 
@@ -24,7 +28,7 @@ local headers = {}
 -- set of function names, used to detect duplicates
 local function_names = {}
 
-local c_grammar = require('generators.c_grammar')
+local c_grammar = loadfile(c_grammar_inputf)()
 
 local startswith = vim.startswith
 
@@ -143,7 +147,7 @@ end
 
 -- Export functions under older deprecated names.
 -- These will be removed eventually.
-local deprecated_aliases = require('api.dispatch_deprecated')
+local deprecated_aliases = loadfile(dispatch_deprecated_inputf)()
 for _, f in ipairs(shallowcopy(functions)) do
   local ismethod = false
   if startswith(f.name, 'nvim_') then
@@ -235,7 +239,7 @@ for x in string.gmatch(ui_options_text, '"([a-z][a-z_]+)"') do
   table.insert(ui_options, x)
 end
 
-local version = require 'nvim_version'
+local version = loadfile(nvim_version_inputf)()
 local git_version = io.open(git_version_inputf):read '*a'
 local version_build = string.match(git_version, '#define NVIM_VERSION_BUILD "([^"]+)"') or vim.NIL
 
@@ -296,7 +300,7 @@ for i, item in ipairs(types) do
 end
 
 local packed = table.concat(pieces)
-local dump_bin_array = require('generators.dump_bin_array')
+local dump_bin_array = loadfile(dump_bin_array_inputf)()
 dump_bin_array(api_metadata_output, 'packed_api_metadata', packed)
 api_metadata_output:close()
 
