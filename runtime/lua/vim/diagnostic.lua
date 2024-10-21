@@ -1478,6 +1478,24 @@ M.handlers.underline = {
     end
 
     local underline_ns = ns.user_data.underline_ns
+    local priority = vim.hl.priorities.diagnostics
+
+    --- @type fun(severity: integer): integer
+    local get_priority = function()
+      return priority
+    end
+    if opts.severity_sort then
+      if type(opts.severity_sort) == 'table' and opts.severity_sort.reverse then
+        get_priority = function(severity)
+          return priority + (severity - vim.diagnostic.severity.ERROR)
+        end
+      else
+        get_priority = function(severity)
+          return priority + (vim.diagnostic.severity.HINT - severity)
+        end
+      end
+    end
+
     for _, diagnostic in ipairs(diagnostics) do
       --- @type string?
       local higroup = underline_highlight_map[assert(diagnostic.severity)]
@@ -1504,7 +1522,7 @@ M.handlers.underline = {
         higroup,
         { diagnostic.lnum, diagnostic.col },
         { diagnostic.end_lnum, diagnostic.end_col },
-        { priority = vim.hl.priorities.diagnostics }
+        { priority = get_priority(diagnostic.severity) }
       )
     end
     save_extmarks(underline_ns, bufnr)
@@ -1558,10 +1576,21 @@ M.handlers.virtual_text = {
 
     local virt_text_ns = ns.user_data.virt_text_ns
     local buffer_line_diagnostics = diagnostic_lines(diagnostics)
+
     for line, line_diagnostics in pairs(buffer_line_diagnostics) do
       if severity then
         line_diagnostics = filter_by_severity(severity, line_diagnostics)
       end
+
+      if opts.severity_sort then
+        table.sort(line_diagnostics, function(a, b)
+          if type(opts.severity_sort) == 'table' and opts.severity_sort.reverse then
+            return a.severity < b.severity
+          end
+          return a.severity > b.severity
+        end)
+      end
+
       local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts.virtual_text)
 
       if virt_texts then
