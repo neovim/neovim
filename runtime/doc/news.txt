@@ -200,6 +200,7 @@ LSP
 LUA
 
 • |vim.fs.rm()| can delete files and directories.
+• |vim.filetype.match()| now takes an option `fast` to perform fast detection.
 
 OPTIONS
 
@@ -208,7 +209,7 @@ OPTIONS
 
 PERFORMANCE
 
-• TODO
+• |vim.filetype.match()| overall performance is improved.
 
 PLUGINS
 
