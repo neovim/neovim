@@ -1808,9 +1808,20 @@ end
 ---
 ---@param symbols lsp.DocumentSymbol[]|lsp.SymbolInformation[]
 ---@param bufnr? integer
+---@param offset_encoding? 'utf-8'|'utf-16'|'utf-32'
+---                         default to first client of buffer
 ---@return vim.quickfix.entry[] # See |setqflist()| for the format
-function M.symbols_to_items(symbols, bufnr)
+function M.symbols_to_items(symbols, bufnr, offset_encoding)
   bufnr = bufnr or 0
+  if offset_encoding == nil then
+    vim.notify_once(
+      'symbols_to_items must be called with valid offset encoding',
+      vim.log.levels.WARN
+    )
+    local clients = vim.lsp.get_clients({ bufnr = bufnr })
+    offset_encoding = vim.tbl_isempty(clients) and 'utf-16' or clients[1].offset_encoding
+  end
+
   local items = {} --- @type vim.quickfix.entry[]
   for _, symbol in ipairs(symbols) do
     --- @type string?, lsp.Range?
@@ -1830,9 +1841,9 @@ function M.symbols_to_items(symbols, bufnr)
       local kind = protocol.SymbolKind[symbol.kind] or 'Unknown'
 
       local lnum = range['start'].line + 1
-      local col = range['start'].character + 1
+      local col = get_line_byte_from_position(bufnr, range['start'], offset_encoding) + 1
       local end_lnum = range['end'].line + 1
-      local end_col = range['end'].character + 1
+      local end_col = get_line_byte_from_position(bufnr, range['end'], offset_encoding) + 1
 
       items[#items + 1] = {
         filename = filename,
@@ -1846,7 +1857,7 @@ function M.symbols_to_items(symbols, bufnr)
     end
 
     if symbol.children then
-      list_extend(items, M.symbols_to_items(symbol.children, bufnr))
+      list_extend(items, M.symbols_to_items(symbol.children, bufnr, offset_encoding))
     end
   end
 
