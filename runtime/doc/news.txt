@@ -55,6 +55,8 @@ DIAGNOSTICS
 
 • |vim.diagnostic.config()| accepts a "jump" table to specify defaults for
   |vim.diagnostic.jump()|.
+• The "underline" diagnostics handler sorts diagnostics by severity when using
+  the "severity_sort" option.
 
 EDITOR
 
