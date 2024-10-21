@@ -45,6 +45,7 @@
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
@@ -802,6 +803,9 @@ int win_fdccol_count(win_T *wp)
 void merge_win_config(WinConfig *dst, const WinConfig src)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (dst->mouse_cb != src.mouse_cb) {
+    api_free_luaref(dst->mouse_cb);
+  }
   if (dst->title_chunks.items != src.title_chunks.items) {
     clear_virttext(&dst->title_chunks);
   }
@@ -857,7 +861,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
       String anchor = cstr_as_string(float_anchor_str[c.anchor]);
       if (!c.hide) {
         ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
-                              grid->handle, row, col, c.mouse,
+                              grid->handle, row, col, c.mouse != kWinMouseIgnore,
                               wp->w_grid_alloc.zindex);
       } else {
         ui_call_win_hide(wp->w_grid_alloc.handle);
@@ -889,7 +893,7 @@ void ui_ext_win_position(win_T *wp, bool validate)
         ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
                          wp->w_height_outer, wp->w_width_outer, valid, false);
         ui_check_cursor_grid(wp->w_grid_alloc.handle);
-        wp->w_grid_alloc.mouse_enabled = wp->w_config.mouse;
+        wp->w_grid_alloc.mouse_enabled = wp->w_config.mouse != kWinMouseIgnore;
         if (!valid) {
           wp->w_grid_alloc.valid = false;
           redraw_later(wp, UPD_NOT_VALID);
@@ -4044,7 +4048,7 @@ void win_alloc_aucmd_win(int idx)
   fconfig.width = Columns;
   fconfig.height = 5;
   fconfig.focusable = false;
-  fconfig.mouse = false;
+  fconfig.mouse = kWinMouseIgnore;
   aucmd_win[idx].auc_win = win_new_float(NULL, true, fconfig, &err);
   aucmd_win[idx].auc_win->w_buffer->b_nwindows--;
   RESET_BINDING(aucmd_win[idx].auc_win);
@@ -5263,9 +5267,8 @@ void win_free(win_T *wp, tabpage_T *tp)
     }
   }
 
-  // free the border text
-  clear_virttext(&wp->w_config.title_chunks);
-  clear_virttext(&wp->w_config.footer_chunks);
+  // free allocated resources in w_config
+  merge_win_config(&wp->w_config, WIN_CONFIG_INIT);
 
   clear_matches(wp);
 
