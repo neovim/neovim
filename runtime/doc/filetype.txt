@@ -1039,6 +1039,19 @@ TYPST							*ft-typst-plugin*
 							*g:typst_conceal*
 When |TRUE| the Typst filetype plugin will set the 'conceallevel' option to 2.
 
+							*g:typst_folding*
+When |TRUE| the Typst filetype plugin will fold headings. (default: |FALSE|)
+
+To enable: >
+	let g:typst_folding = 1
+<
+							*g:typst_foldnested*
+When |TRUE| the Typst filetype plugin will fold nested heading under their parents
+(default: |TRUE|)
+
+To disable: >
+	let g:typst_foldnested = 0
+<
 VIM							*ft-vim-plugin*
 
 The Vim filetype plugin defines mappings to move to the start and end of
