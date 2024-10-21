@@ -1,6 +1,6 @@
 " Language:    Typst
 " Maintainer:  Gregory Anders
-" Last Change: 2024-07-14
+" Last Change: 2024 Oct 21
 " Based on:    https://github.com/kaarmu/typst.vim
 
 function! typst#indentexpr() abort
@@ -29,6 +29,31 @@ function! typst#indentexpr() abort
     endif
 
     return l:ind
+endfunction
+
+function typst#foldexpr()
+    let line = getline(v:lnum)
+
+    " Whenever the user wants to fold nested headers under the parent
+    let nested = get(g:, "typst_foldnested", 1)
+
+    " Regular headers
+    let depth = match(line, '\(^=\+\)\@<=\( .*$\)\@=')
+
+    " Do not fold nested regular headers
+    if depth > 1 && !nested
+        let depth = 1
+    endif
+
+    if depth > 0
+        " check syntax, it should be typstMarkupHeading
+        let syncode = synstack(v:lnum, 1)
+        if len(syncode) > 0 && synIDattr(syncode[0], 'name') ==# 'typstMarkupHeading'
+            return ">" . depth
+        endif
+    endif
+
+    return "="
 endfunction
 
 " Gets the previous non-blank line that is not a comment.
