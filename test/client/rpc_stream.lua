@@ -1,34 +1,41 @@
+---
+--- Reading/writing of msgpack over any of the stream types from `uv_stream.lua`.
+--- Does not implement the RPC protocol, see `session.lua` for that.
+---
+
 local mpack = vim.mpack
 
 local Response = {}
 Response.__index = Response
 
-function Response.new(msgpack_rpc_stream, request_id)
+function Response.new(rpc_stream, request_id)
   return setmetatable({
-    _msgpack_rpc_stream = msgpack_rpc_stream,
+    _rpc_stream = rpc_stream,
     _request_id = request_id,
   }, Response)
 end
 
 function Response:send(value, is_error)
-  local data = self._msgpack_rpc_stream._session:reply(self._request_id)
+  local data = self._rpc_stream._session:reply(self._request_id)
   if is_error then
-    data = data .. self._msgpack_rpc_stream._pack(value)
-    data = data .. self._msgpack_rpc_stream._pack(mpack.NIL)
+    data = data .. self._rpc_stream._pack(value)
+    data = data .. self._rpc_stream._pack(mpack.NIL)
   else
-    data = data .. self._msgpack_rpc_stream._pack(mpack.NIL)
-    data = data .. self._msgpack_rpc_stream._pack(value)
+    data = data .. self._rpc_stream._pack(mpack.NIL)
+    data = data .. self._rpc_stream._pack(value)
   end
-  self._msgpack_rpc_stream._stream:write(data)
+  self._rpc_stream._stream:write(data)
 end
 
---- @class test.MsgpackRpcStream
+--- Nvim msgpack RPC stream.
+---
+--- @class test.RpcStream
 --- @field private _stream test.Stream
 --- @field private __pack table
-local MsgpackRpcStream = {}
-MsgpackRpcStream.__index = MsgpackRpcStream
+local RpcStream = {}
+RpcStream.__index = RpcStream
 
-function MsgpackRpcStream.new(stream)
+function RpcStream.new(stream)
   return setmetatable({
     _stream = stream,
     _pack = mpack.Packer(),
@@ -50,10 +57,10 @@ function MsgpackRpcStream.new(stream)
         },
       }),
     }),
-  }, MsgpackRpcStream)
+  }, RpcStream)
 end
 
-function MsgpackRpcStream:write(method, args, response_cb)
+function RpcStream:write(method, args, response_cb)
   local data
   if response_cb then
     assert(type(response_cb) == 'function')
@@ -66,10 +73,10 @@ function MsgpackRpcStream:write(method, args, response_cb)
   self._stream:write(data)
 end
 
-function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
+function RpcStream:read_start(on_request, on_notification, on_eof)
   self._stream:read_start(function(data)
     if not data then
-      return eof_cb()
+      return on_eof()
     end
     local type, id_or_cb, method_or_error, args_or_result
     local pos = 1
@@ -78,9 +85,9 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
       type, id_or_cb, method_or_error, args_or_result, pos = self._session:receive(data, pos)
       if type == 'request' or type == 'notification' then
         if type == 'request' then
-          request_cb(method_or_error, args_or_result, Response.new(self, id_or_cb))
+          on_request(method_or_error, args_or_result, Response.new(self, id_or_cb))
         else
-          notification_cb(method_or_error, args_or_result)
+          on_notification(method_or_error, args_or_result)
         end
       elseif type == 'response' then
         if method_or_error == mpack.NIL then
@@ -94,12 +101,12 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
   end)
 end
 
-function MsgpackRpcStream:read_stop()
+function RpcStream:read_stop()
   self._stream:read_stop()
 end
 
-function MsgpackRpcStream:close(signal)
+function RpcStream:close(signal)
   self._stream:close(signal)
 end
 
-return MsgpackRpcStream
+return RpcStream

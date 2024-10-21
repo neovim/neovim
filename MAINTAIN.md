@@ -143,6 +143,8 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 
 * `src/mpack/`: [libmpack](https://github.com/libmpack/libmpack)
     * send improvements upstream!
+* `src/mpack/lmpack.c`: [libmpack-lua](https://github.com/libmpack/libmpack-lua)
+    * send improvements upstream!
 * `src/xdiff/`: [xdiff](https://github.com/git/git/tree/master/xdiff)
 * `src/cjson/`: [lua-cjson](https://github.com/openresty/lua-cjson)
 * `src/klib/`: [Klib](https://github.com/attractivechaos/klib)
