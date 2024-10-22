@@ -86,7 +86,8 @@ LSP
   |vim.lsp.buf.type_definition()| and |vim.lsp.buf.implementation()| now
   support merging the results of multiple clients but no longer trigger the
   global handlers from `vim.lsp.handlers`
-
+• |vim.lsp.util.symbols_to_items()| now requires an `offset_encoding`
+  parameter.
 
 LUA
 
@@ -190,7 +191,8 @@ LSP
 
 • Completion side effects (including snippet expansion, execution of commands
   and application of additional text edits) is now built-in.
-• |vim.lsp.util.locations_to_items()| sets `end_col` and `end_lnum` fields.
+• |vim.lsp.util.locations_to_items()| and |vim.lsp.util.symbols_to_items()| sets
+  `end_col` and `end_lnum` fields.
 • |vim.lsp.buf.format()| now supports passing a list of ranges
   via the `range` parameter (this requires support for the
   `textDocument/rangesFormatting` request).
