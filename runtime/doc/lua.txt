@@ -2677,7 +2677,7 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
                        item shape. Plugins reimplementing `vim.ui.select` may
                        wish to use this to infer the structure or semantics of
                        `items`, or the context in which select() was called.
-      • {on_choice}  (`fun(item: any?, idx: integer?)`) Called once the user
+      • {on_choice}  (`fun(item: T?, idx: integer?)`) Called once the user
                      made a choice. `idx` is the 1-based index of `item`
                      within `items`. `nil` if the user aborted the dialog.
 

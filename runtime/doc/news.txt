@@ -86,6 +86,8 @@ LSP
   |vim.lsp.buf.type_definition()| and |vim.lsp.buf.implementation()| now
   support merging the results of multiple clients but no longer trigger the
   global handlers from `vim.lsp.handlers`
+• |vim.lsp.buf.typehierarchy()| now passes the correct params for each
+  client request.
 
 
 LUA
