@@ -1047,7 +1047,7 @@ char *eval_to_string_eap(char *arg, const bool join_list, exarg_T *eap,
     retval = typval2string(&tv, join_list);
     tv_clear(&tv);
   }
-  clear_evalarg(&EVALARG_EVALUATE, NULL);
+  clear_evalarg(&evalarg, NULL);
 
   return retval;
 }
