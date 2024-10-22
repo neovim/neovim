@@ -22,6 +22,12 @@ func Test_var()
   call assert_equal('Chance', getwinvar(9, '', def_str))
   call assert_equal(0, getwinvar(1, '&nu'))
   call assert_equal(0, getwinvar(1, '&nu', 1))
+  call assert_match(v:t_dict, type(getwinvar(1, '&')))
+  call assert_match(v:t_dict, type(getwinvar(1, '&', def_str)))
+  call assert_equal('', getwinvar(9, '&'))
+  call assert_equal('Chance', getwinvar(9, '&', def_str))
+  call assert_equal('', getwinvar(1, '&nux'))
+  call assert_equal('Chance', getwinvar(1, '&nux', def_str))
   unlet def_str
 
   " test for gettabvar()
@@ -83,7 +89,12 @@ func Test_var()
 
   unlet def_dict
 
+  call assert_match(v:t_dict, type(gettabwinvar(2, 3, '&')))
+  call assert_match(v:t_dict, type(gettabwinvar(2, 3, '&', 1)))
   call assert_equal("", gettabwinvar(9, 2020, ''))
+  call assert_equal(1, gettabwinvar(9, 2020, '', 1))
+  call assert_equal('', gettabwinvar(9, 2020, '&'))
+  call assert_equal(1, gettabwinvar(9, 2020, '&', 1))
   call assert_equal('', gettabwinvar(2, 3, '&nux'))
   call assert_equal(1, gettabwinvar(2, 3, '&nux', 1))
   tabonly
