@@ -658,7 +658,7 @@ static const void *shada_hist_iter(const void *const iter, const uint8_t history
           .histtype = history_type,
           .string = hist_he.hisstr,
           .sep = (char)(history_type == HIST_SEARCH
-                        ? hist_he.hisstr[strlen(hist_he.hisstr) + 1]
+                        ? hist_he.hisstr[hist_he.hisstrlen + 1]
                         : 0),
         }
       },
@@ -784,6 +784,7 @@ static inline void hms_to_he_array(const HistoryMergerState *const hms_p,
     hist->timestamp = cur_entry->data.timestamp;
     hist->hisnum = (int)(hist - hist_array) + 1;
     hist->hisstr = cur_entry->data.data.history_item.string;
+    hist->hisstrlen = strlen(cur_entry->data.data.history_item.string);
     hist->additional_data = cur_entry->data.additional_data;
     hist++;
   })
