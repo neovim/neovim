@@ -623,7 +623,12 @@ These legacy Vim features are not yet implemented:
 
 - *:gui*
 - *:gvim*
+- *'browsedir'* *'bsdir'*
 - *'completepopup'*
+- *'guioptions'* *'go'*
+- *'guitablabel'* *'gtl'*
+- *'guitabtooltip'* *'gtt'*
+- *'mouseshape'* *'mouses'*
 - *'previewpopup'*
 
 ==============================================================================
@@ -730,6 +735,8 @@ Options:
   CMD-v (macOS), middle-click, …).
 - *'imactivatefunc'* *'imaf'*
 - *'imactivatekey'* *'imak'*
+- *'imcmdline'* *'imc'* *'noimcmdline'* *'noimc'*
+- *'imdisable'* *'imd'* *'noimdisable'* *'noimd'*
 - *'imstatusfunc'* *'imsf'*
 - *'insertmode'* *'im'* Use the following script to emulate 'insertmode': >vim
     autocmd BufWinEnter * startinsert
@@ -767,6 +774,7 @@ Options:
     6 composing chars only.
 - *'maxmem'* Nvim delegates memory-management to the OS.
 - *'maxmemtot'* Nvim delegates memory-management to the OS.
+- *'opendevice'* *'odev'* *'noopendevice'* *'noodev'*
 - printoptions
 - *'printdevice'*
 - *'printencoding'*
