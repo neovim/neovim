@@ -657,6 +657,28 @@ local function save_extmarks(namespace, bufnr)
     api.nvim_buf_get_extmarks(bufnr, namespace, 0, -1, { details = true })
 end
 
+---@param opts vim.diagnostic.OptsResolved
+---@return fun(severity: vim.diagnostic.Severity): integer
+local function create_extmark_priority_getter(opts, priority)
+  local get_priority = function()
+    return priority
+  end
+
+  if opts.severity_sort then
+    if type(opts.severity_sort) == 'table' and opts.severity_sort.reverse then
+      get_priority = function(severity)
+        return priority + (severity - vim.diagnostic.severity.ERROR)
+      end
+    else
+      get_priority = function(severity)
+        return priority + (vim.diagnostic.severity.HINT - severity)
+      end
+    end
+  end
+
+  return get_priority
+end
+
 --- @type table<string,true>
 local registered_autocmds = {}
 
@@ -1352,22 +1374,7 @@ M.handlers.signs = {
 
     -- 10 is the default sign priority when none is explicitly specified
     local priority = opts.signs and opts.signs.priority or 10
-    local get_priority --- @type function
-    if opts.severity_sort then
-      if type(opts.severity_sort) == 'table' and opts.severity_sort.reverse then
-        get_priority = function(severity)
-          return priority + (severity - vim.diagnostic.severity.ERROR)
-        end
-      else
-        get_priority = function(severity)
-          return priority + (vim.diagnostic.severity.HINT - severity)
-        end
-      end
-    else
-      get_priority = function()
-        return priority
-      end
-    end
+    local get_priority = create_extmark_priority_getter(opts, priority)
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.sign_ns then
@@ -1479,22 +1486,7 @@ M.handlers.underline = {
 
     local underline_ns = ns.user_data.underline_ns
     local priority = vim.hl.priorities.diagnostics
-
-    --- @type fun(severity: integer): integer
-    local get_priority = function()
-      return priority
-    end
-    if opts.severity_sort then
-      if type(opts.severity_sort) == 'table' and opts.severity_sort.reverse then
-        get_priority = function(severity)
-          return priority + (severity - vim.diagnostic.severity.ERROR)
-        end
-      else
-        get_priority = function(severity)
-          return priority + (vim.diagnostic.severity.HINT - severity)
-        end
-      end
-    end
+    local get_priority = create_extmark_priority_getter(opts, priority)
 
     for _, diagnostic in ipairs(diagnostics) do
       --- @type string?
