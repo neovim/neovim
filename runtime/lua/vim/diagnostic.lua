@@ -657,27 +657,26 @@ local function save_extmarks(namespace, bufnr)
     api.nvim_buf_get_extmarks(bufnr, namespace, 0, -1, { details = true })
 end
 
----@param priority integer
----@param opts vim.diagnostic.OptsResolved
----@return fun(severity: vim.diagnostic.Severity): integer
-local function create_extmark_priority_getter(priority, opts)
-  local get_priority = function()
-    return priority
-  end
-
+--- Create a function that converts a diagnostic severity to an extmark priority.
+--- @param priority integer Base priority
+--- @param opts vim.diagnostic.OptsResolved
+--- @return fun(severity: vim.diagnostic.Severity): integer
+local function severity_to_extmark_priority(priority, opts)
   if opts.severity_sort then
     if type(opts.severity_sort) == 'table' and opts.severity_sort.reverse then
-      get_priority = function(severity)
+      return function(severity)
         return priority + (severity - vim.diagnostic.severity.ERROR)
       end
-    else
-      get_priority = function(severity)
-        return priority + (vim.diagnostic.severity.HINT - severity)
-      end
+    end
+
+    return function(severity)
+      return priority + (vim.diagnostic.severity.HINT - severity)
     end
   end
 
-  return get_priority
+  return function()
+    return priority
+  end
 end
 
 --- @type table<string,true>
@@ -1375,7 +1374,7 @@ M.handlers.signs = {
 
     -- 10 is the default sign priority when none is explicitly specified
     local priority = opts.signs and opts.signs.priority or 10
-    local get_priority = create_extmark_priority_getter(priority, opts)
+    local get_priority = severity_to_extmark_priority(priority, opts)
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.sign_ns then
@@ -1486,7 +1485,7 @@ M.handlers.underline = {
     end
 
     local underline_ns = ns.user_data.underline_ns
-    local get_priority = create_extmark_priority_getter(vim.hl.priorities.diagnostics, opts)
+    local get_priority = severity_to_extmark_priority(vim.hl.priorities.diagnostics, opts)
 
     for _, diagnostic in ipairs(diagnostics) do
       --- @type string?
