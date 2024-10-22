@@ -84,14 +84,19 @@ let test_values = {
       "\ Nvim-only options
       \ 'channel': [[], []],
       \ 'inccommand': [['', 'nosplit', 'split'], ['xxx']],
-      \ 'mousescroll': [['ver:1', 'hor:2', 'ver:1,hor:2', 'hor:1,ver:2'], ['xxx']],
+      \ 'mousescroll': [['ver:1', 'hor:2', 'ver:1,hor:2', 'hor:1,ver:2'],
+      \		['xxx', 'ver:1,xxx', 'hor:2,xxx']],
       \ 'redrawdebug': [[''], ['xxx']],
       \ 'shada': [['', '''50', '"30'], ['xxx']],
-      \ 'termpastefilter': [['BS', 'HT', 'FF', 'ESC', 'DEL', 'C0', 'C1', 'C0,C1'], ['xxx']],
-      \ 'winhighlight': [['', 'Visual:Search'], ['xxx']],
+      \ 'termpastefilter': [['BS', 'HT', 'FF', 'ESC', 'DEL', 'C0', 'C1', 'C0,C1'],
+      \		['xxx', 'C0,C1,xxx']],
+      \ 'winhighlight': [['', 'a:b', 'a:', 'a:b,c:d'],
+      \		['a', ':', ':b', 'a:b:c', 'a:/', '/:b', ',', 'a:b,,', 'a:b,c']],
       \
       "\ Options for which Nvim has different allowed values
-      \ 'backspace': [[2, '', 'eol', 'eol,start', 'indent,eol,nostop'], ['4', 'xxx']],
+      \ 'backspace': [[2, '', 'indent', 'eol', 'start', 'nostop',
+      \		'eol,start', 'indent,eol,nostop'],
+      \		[-1, 4, 'xxx']],
       \ 'buftype': [['', 'nofile', 'nowrite', 'acwrite', 'quickfix', 'help',
       \		'prompt'],
       \		['xxx', 'help,nofile']],
@@ -105,7 +110,7 @@ let test_values = {
       \ 'highlight': [[&highlight], []],
       \ 'iminsert': [[0, 1], [-1, 2, 3, 999]],
       \ 'imsearch': [[-1, 0, 1], [-2, 2, 3, 999]],
-      \ 'signcolumn': [['auto', 'no'], ['xxx', 'no,yes']],
+      \ 'signcolumn': [['auto', 'no', 'yes', 'number'], ['', 'xxx', 'no,yes']],
       \ 'writedelay': [[0, 100], [-1, '']],
       \
       "\ boolean options
