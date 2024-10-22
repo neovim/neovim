@@ -221,7 +221,7 @@ static int in_history(int type, const char *str, int move_to_front, int sep)
     // well.
     char *p = history[type][i].hisstr;
     if (strcmp(str, p) == 0
-        && (type != HIST_SEARCH || sep == p[strlen(p) + 1])) {
+        && (type != HIST_SEARCH || sep == p[history[type][i].hisstrlen + 1])) {
       if (!move_to_front) {
         return true;
       }
@@ -239,6 +239,7 @@ static int in_history(int type, const char *str, int move_to_front, int sep)
 
   AdditionalData *ad = history[type][i].additional_data;
   char *const save_hisstr = history[type][i].hisstr;
+  const size_t save_hisstrlen = history[type][i].hisstrlen;
   while (i != hisidx[type]) {
     if (++i >= hislen) {
       i = 0;
@@ -249,6 +250,7 @@ static int in_history(int type, const char *str, int move_to_front, int sep)
   xfree(ad);
   history[type][i].hisnum = ++hisnum[type];
   history[type][i].hisstr = save_hisstr;
+  history[type][i].hisstrlen = save_hisstrlen;
   history[type][i].timestamp = os_time();
   history[type][i].additional_data = NULL;
   return true;
@@ -339,6 +341,7 @@ void add_to_history(int histype, const char *new_entry, size_t new_entrylen, boo
   hisptr->timestamp = os_time();
   hisptr->additional_data = NULL;
   hisptr->hisstr[new_entrylen + 1] = (char)sep;
+  hisptr->hisstrlen = new_entrylen;
 
   hisptr->hisnum = ++hisnum[histype];
   if (histype == HIST_SEARCH && in_map) {
@@ -398,19 +401,6 @@ static int calc_hist_idx(int histype, int num)
     }
   }
   return -1;
-}
-
-/// Get a history entry by its index.
-///
-/// @param histype  may be one of the HIST_ values.
-static char *get_history_entry(int histype, int idx)
-{
-  idx = calc_hist_idx(histype, idx);
-  if (idx >= 0) {
-    return history[histype][idx].hisstr;
-  } else {
-    return "";
-  }
 }
 
 /// Clear all entries in a history
@@ -575,10 +565,15 @@ void f_histget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (argvars[1].v_type == VAR_UNKNOWN) {
       idx = get_history_idx(type);
     } else {
-      idx = (int)tv_get_number_chk(&argvars[1], NULL);
+      idx = (int)tv_get_number_chk(&argvars[1], NULL);  // -1 on type error
     }
-    // -1 on type error
-    rettv->vval.v_string = xstrdup(get_history_entry(type, idx));
+    idx = calc_hist_idx(type, idx);
+    if (idx < 0) {
+      rettv->vval.v_string = xstrnsave("", 0);
+    } else {
+      rettv->vval.v_string = xstrnsave(history[type][idx].hisstr,
+                                       history[type][idx].hisstrlen);
+    }
   }
   rettv->v_type = VAR_STRING;
 }
@@ -591,9 +586,10 @@ void f_histnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                   ? HIST_INVALID
                   : get_histtype(histname, strlen(histname), false);
   if (i != HIST_INVALID) {
-    i = get_history_idx(i);
+    rettv->vval.v_number = get_history_idx(i);
+  } else {
+    rettv->vval.v_number = HIST_INVALID;
   }
-  rettv->vval.v_number = i;
 }
 
 /// :history command - print a history
@@ -642,10 +638,8 @@ void ex_history(exarg_T *eap)
   }
 
   for (; !got_int && histype1 <= histype2; histype1++) {
-    xstrlcpy(IObuff, "\n      #  ", IOSIZE);
     assert(history_names[histype1] != NULL);
-    xstrlcat(IObuff, history_names[histype1], IOSIZE);
-    xstrlcat(IObuff, " history", IOSIZE);
+    vim_snprintf(IObuff, IOSIZE, "\n      #  %s history", history_names[histype1]);
     msg_puts_title(IObuff);
     int idx = hisidx[histype1];
     histentry_T *hist = history[histype1];
@@ -666,13 +660,12 @@ void ex_history(exarg_T *eap)
             && hist[i].hisnum >= j && hist[i].hisnum <= k
             && !message_filtered(hist[i].hisstr)) {
           msg_putchar('\n');
-          snprintf(IObuff, IOSIZE, "%c%6d  ", i == idx ? '>' : ' ',
-                   hist[i].hisnum);
+          int len = snprintf(IObuff, IOSIZE,
+                             "%c%6d  ", i == idx ? '>' : ' ', hist[i].hisnum);
           if (vim_strsize(hist[i].hisstr) > Columns - 10) {
-            trunc_string(hist[i].hisstr, IObuff + strlen(IObuff),
-                         Columns - 10, IOSIZE - (int)strlen(IObuff));
+            trunc_string(hist[i].hisstr, IObuff + len, Columns - 10, IOSIZE - len);
           } else {
-            xstrlcat(IObuff, hist[i].hisstr, IOSIZE);
+            xstrlcpy(IObuff + len, hist[i].hisstr, (size_t)(IOSIZE - len));
           }
           msg_outtrans(IObuff, 0);
         }

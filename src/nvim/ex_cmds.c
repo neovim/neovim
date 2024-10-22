@@ -4434,11 +4434,11 @@ void ex_global(exarg_T *eap)
     delim = *cmd;               // get the delimiter
     cmd++;                      // skip delimiter if there is one
     pat = cmd;                  // remember start of pattern
-    patlen = strlen(pat);
     cmd = skip_regexp_ex(cmd, delim, magic_isset(), &eap->arg, NULL, NULL);
     if (cmd[0] == delim) {                  // end delimiter found
       *cmd++ = NUL;                         // replace it with a NUL
     }
+    patlen = strlen(pat);
   }
 
   char *used_pat;

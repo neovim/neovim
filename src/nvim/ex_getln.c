@@ -1789,7 +1789,7 @@ static int command_line_browse_history(CommandLineState *s)
       plen = s->lookforlen;
     } else {
       p = get_histentry(s->histype)[s->hiscnt].hisstr;
-      plen = (int)strlen(p);
+      plen = (int)get_histentry(s->histype)[s->hiscnt].hisstrlen;
     }
 
     if (s->histype == HIST_SEARCH
