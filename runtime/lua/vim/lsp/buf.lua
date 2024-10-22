@@ -569,6 +569,23 @@ function M.document_symbol(opts)
   request_with_opts(ms.textDocument_documentSymbol, params, opts)
 end
 
+--- @param client_id integer
+--- @param method string
+--- @param params table
+--- @param handler? lsp.Handler
+--- @param bufnr? integer
+local function request_with_id(client_id, method, params, handler, bufnr)
+  local client = vim.lsp.get_client_by_id(client_id)
+  if not client then
+    vim.notify(
+      string.format('Client with id=%d disappeared during call hierarchy request', client_id),
+      vim.log.levels.WARN
+    )
+    return
+  end
+  client.request(method, params, handler, bufnr)
+end
+
 --- @param call_hierarchy_items lsp.CallHierarchyItem[]
 --- @return lsp.CallHierarchyItem?
 local function pick_call_hierarchy_item(call_hierarchy_items)
@@ -600,19 +617,11 @@ local function call_hierarchy(method)
       vim.notify('No item resolved', vim.log.levels.WARN)
       return
     end
-    local call_hierarchy_item = pick_call_hierarchy_item(result)
-    if not call_hierarchy_item then
+    local item = pick_call_hierarchy_item(result)
+    if not item then
       return
     end
-    local client = vim.lsp.get_client_by_id(ctx.client_id)
-    if client then
-      client.request(method, { item = call_hierarchy_item }, nil, ctx.bufnr)
-    else
-      vim.notify(
-        string.format('Client with id=%d disappeared during call hierarchy request', ctx.client_id),
-        vim.log.levels.WARN
-      )
-    end
+    request_with_id(ctx.client_id, method, { item = item }, nil, ctx.bufnr)
   end)
 end
 
@@ -630,78 +639,74 @@ function M.outgoing_calls()
   call_hierarchy(ms.callHierarchy_outgoingCalls)
 end
 
+--- @param item lsp.TypeHierarchyItem
+local function format_type_hierarchy_item(item)
+  if not item.detail or #item.detail == 0 then
+    return item.name
+  end
+  return string.format('%s %s', item.name, item.detail)
+end
+
 --- Lists all the subtypes or supertypes of the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
 --- multiple items, the user can pick one using |vim.ui.select()|.
 ---@param kind "subtypes"|"supertypes"
 function M.typehierarchy(kind)
   local method = kind == 'subtypes' and ms.typeHierarchy_subtypes or ms.typeHierarchy_supertypes
-
-  --- Merge results from multiple clients into a single table. Client-ID is preserved.
-  ---
-  --- @param results table<integer, {error: lsp.ResponseError?, result: lsp.TypeHierarchyItem[]?}>
-  --- @return [integer, lsp.TypeHierarchyItem][]
-  local function merge_results(results)
-    local merged_results = {}
-    for client_id, client_result in pairs(results) do
-      if client_result.error then
-        vim.notify(client_result.error.message, vim.log.levels.WARN)
-      elseif client_result.result then
-        for _, item in pairs(client_result.result) do
-          table.insert(merged_results, { client_id, item })
-        end
-      end
-    end
-    return merged_results
+  local bufnr = api.nvim_get_current_buf()
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = method })
+  if not next(clients) then
+    vim.notify(vim.lsp._unsupported_method(method), vim.log.levels.WARN)
+    return
   end
 
-  local bufnr = api.nvim_get_current_buf()
-  local params = util.make_position_params()
-  --- @param results table<integer, {error: lsp.ResponseError?, result: lsp.TypeHierarchyItem[]?}>
-  vim.lsp.buf_request_all(bufnr, ms.textDocument_prepareTypeHierarchy, params, function(results)
-    local merged_results = merge_results(results)
-    if #merged_results == 0 then
-      vim.notify('No items resolved', vim.log.levels.INFO)
-      return
-    end
+  local win = api.nvim_get_current_win()
 
-    if #merged_results == 1 then
-      local item = merged_results[1]
-      local client = vim.lsp.get_client_by_id(item[1])
-      if client then
-        client.request(method, { item = item[2] }, nil, bufnr)
-      else
-        vim.notify(
-          string.format('Client with id=%d disappeared during call hierarchy request', item[1]),
-          vim.log.levels.WARN
-        )
-      end
+  --- @param results [integer, lsp.TypeHierarchyItem][]
+  local function on_response(results)
+    if #results == 0 then
+      vim.notify('No items resolved', vim.log.levels.INFO)
+    elseif #results == 1 then
+      local client_id, item = results[1][1], results[1][2]
+      request_with_id(client_id, method, { item = item }, nil, bufnr)
     else
-      local select_opts = {
+      vim.ui.select(results, {
         prompt = 'Select a type hierarchy item:',
         kind = 'typehierarchy',
-        format_item = function(item)
-          if not item[2].detail or #item[2].detail == 0 then
-            return item[2].name
-          end
-          return string.format('%s %s', item[2].name, item[2].detail)
+        format_item = function(x)
+          return format_type_hierarchy_item(x[2])
         end,
-      }
-
-      vim.ui.select(merged_results, select_opts, function(item)
-        local client = vim.lsp.get_client_by_id(item[1])
-        if client then
-          --- @type lsp.TypeHierarchyItem
-          client.request(method, { item = item[2] }, nil, bufnr)
-        else
-          vim.notify(
-            string.format('Client with id=%d disappeared during call hierarchy request', item[1]),
-            vim.log.levels.WARN
-          )
+      }, function(x)
+        if x then
+          local client_id, item = x[1], x[2]
+          request_with_id(client_id, method, { item = item }, nil, bufnr)
         end
       end)
     end
-  end)
+  end
+
+  local results = {} --- @type [integer, lsp.TypeHierarchyItem][]
+
+  local remaining = #clients
+
+  for _, client in ipairs(clients) do
+    local params = util.make_position_params(win, client.offset_encoding)
+    client.request(method, params, function(err, result, ctx)
+      --- @cast result lsp.TypeHierarchyItem[]?
+      if err then
+        vim.notify(err.message, vim.log.levels.WARN)
+      elseif result then
+        for _, item in pairs(result) do
+          results[#results + 1] = { ctx.client_id, item }
+        end
+      end
+
+      remaining = remaining - 1
+      if remaining == 0 then
+        on_response(results)
+      end
+    end, bufnr)
+  end
 end
 
 --- List workspace folders.
