@@ -5472,7 +5472,8 @@ This will set the "w:current_syntax" variable to "foo".  The value of
 restoring "b:current_syntax", since the syntax files do set
 "b:current_syntax".  The value set by the syntax file is assigned to
 "w:current_syntax".
-Note: This resets the 'spell', 'spellcapcheck' and 'spellfile' options.
+Note: This resets the 'spell', 'spellcapcheck', 'spellfile' and 'spelloptions'
+options.
 
 Once a window has its own syntax, syntax commands executed from other windows
 on the same buffer (including :syntax clear) have no effect. Conversely,
