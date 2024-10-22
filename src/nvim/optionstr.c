@@ -2116,7 +2116,7 @@ const char *did_set_spellfile(optset_T *args)
 
   // When there is a window for this buffer in which 'spell'
   // is set load the wordlists.
-  if ((!valid_spellfile(*varp))) {
+  if (!valid_spellfile(*varp)) {
     return e_invarg;
   }
   return did_set_spell_option();
@@ -2139,8 +2139,15 @@ const char *did_set_spelllang(optset_T *args)
 const char *did_set_spelloptions(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  if (opt_strings_flags(win->w_s->b_p_spo, p_spo_values, &(win->w_s->b_p_spo_flags),
-                        true) != OK) {
+  int opt_flags = args->os_flags;
+  const char *val = args->os_newval.string.data;
+
+  if (!(opt_flags & OPT_LOCAL)
+      && opt_strings_flags(val, p_spo_values, &spo_flags, true) != OK) {
+    return e_invarg;
+  }
+  if (!(opt_flags & OPT_GLOBAL)
+      && opt_strings_flags(val, p_spo_values, &win->w_s->b_p_spo_flags, true) != OK) {
     return e_invarg;
   }
   return NULL;
