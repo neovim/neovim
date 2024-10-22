@@ -1667,11 +1667,10 @@ describe('vim.diagnostic', function()
   end)
 
   describe('config()', function()
-    describe('severity_sort', function()
+    describe('underline severity_sort', function()
       before_each(function()
         exec_lua(function()
           vim.diagnostic.config({
-            virtual_text = true,
             underline = true,
             severity_sort = true,
           })
@@ -1682,34 +1681,6 @@ describe('vim.diagnostic', function()
             _G.make_hint('Some Hint', 0, 0, 0, 0),
           })
         end)
-      end)
-
-      it('virt_text respects severity_sort reverse=false', function()
-        eq(
-          ' Some Error',
-          exec_lua(function()
-            local extmarks = _G.get_virt_text_extmarks(_G.diagnostic_ns)
-            local virt_text = extmarks[1][4].virt_text
-            return virt_text[5][1]
-          end)
-        )
-      end)
-
-      it('virt_text respects severity_sort reverse=true', function()
-        exec_lua(function()
-          vim.diagnostic.config({
-            severity_sort = { reverse = true },
-          })
-        end)
-
-        eq(
-          ' Some Hint',
-          exec_lua(function()
-            local extmarks = _G.get_virt_text_extmarks(_G.diagnostic_ns)
-            local virt_text = extmarks[1][4].virt_text
-            return virt_text[5][1]
-          end)
-        )
       end)
 
       it('underline respects severity_sort reverse=false', function()
