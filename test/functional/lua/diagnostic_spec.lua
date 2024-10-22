@@ -111,6 +111,19 @@ describe('vim.diagnostic', function()
           { details = true }
         )
       end
+
+      ---@param ns integer
+      function _G.get_underline_extmarks(ns)
+        ---@type integer
+        local underline_ns = vim.diagnostic.get_namespace(ns).user_data.underline_ns
+        return vim.api.nvim_buf_get_extmarks(
+          _G.diagnostic_bufnr,
+          underline_ns,
+          0,
+          -1,
+          { details = true }
+        )
+      end
     end)
 
     exec_lua(function()
@@ -1654,6 +1667,84 @@ describe('vim.diagnostic', function()
   end)
 
   describe('config()', function()
+    describe('severity_sort', function()
+      before_each(function()
+        exec_lua(function()
+          vim.diagnostic.config({
+            virtual_text = true,
+            underline = true,
+            severity_sort = true,
+          })
+
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+            _G.make_warning('Some Warning', 0, 0, 0, 0),
+            _G.make_error('Some Error', 0, 0, 0, 0),
+            _G.make_hint('Some Hint', 0, 0, 0, 0),
+          })
+        end)
+      end)
+
+      it('virt_text respects severity_sort reverse=false', function()
+        eq(
+          ' Some Error',
+          exec_lua(function()
+            local extmarks = _G.get_virt_text_extmarks(_G.diagnostic_ns)
+            local virt_text = extmarks[1][4].virt_text
+            return virt_text[5][1]
+          end)
+        )
+      end)
+
+      it('virt_text respects severity_sort reverse=true', function()
+        exec_lua(function()
+          vim.diagnostic.config({
+            severity_sort = { reverse = true },
+          })
+        end)
+
+        eq(
+          ' Some Hint',
+          exec_lua(function()
+            local extmarks = _G.get_virt_text_extmarks(_G.diagnostic_ns)
+            local virt_text = extmarks[1][4].virt_text
+            return virt_text[5][1]
+          end)
+        )
+      end)
+
+      it('underline respects severity_sort reverse=false', function()
+        eq(
+          'DiagnosticUnderlineError',
+          exec_lua(function()
+            local extmarks = _G.get_underline_extmarks(_G.diagnostic_ns)
+            table.sort(extmarks, function(a, b)
+              return a[4].priority > b[4].priority
+            end)
+            return extmarks[1][4].hl_group
+          end)
+        )
+      end)
+
+      it('underline respects severity_sort reverse=true', function()
+        exec_lua(function()
+          vim.diagnostic.config({
+            severity_sort = { reverse = true },
+          })
+        end)
+
+        eq(
+          'DiagnosticUnderlineHint',
+          exec_lua(function()
+            local extmarks = _G.get_underline_extmarks(_G.diagnostic_ns)
+            table.sort(extmarks, function(a, b)
+              return a[4].priority > b[4].priority
+            end)
+            return extmarks[1][4].hl_group
+          end)
+        )
+      end)
+    end)
+
     it('works with global, namespace, and ephemeral options', function()
       eq(
         1,

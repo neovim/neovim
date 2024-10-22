@@ -1576,21 +1576,10 @@ M.handlers.virtual_text = {
 
     local virt_text_ns = ns.user_data.virt_text_ns
     local buffer_line_diagnostics = diagnostic_lines(diagnostics)
-
     for line, line_diagnostics in pairs(buffer_line_diagnostics) do
       if severity then
         line_diagnostics = filter_by_severity(severity, line_diagnostics)
       end
-
-      if opts.severity_sort then
-        table.sort(line_diagnostics, function(a, b)
-          if type(opts.severity_sort) == 'table' and opts.severity_sort.reverse then
-            return a.severity < b.severity
-          end
-          return a.severity > b.severity
-        end)
-      end
-
       local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts.virtual_text)
 
       if virt_texts then
