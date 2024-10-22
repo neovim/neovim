@@ -1,0 +1,16 @@
+
+!recurse && msg_row >= Rows - 1 && (*s == '\n' || (cmdmsg_rl ? (msg_col <= 1 || (*s == '\011' && msg_col <= 7) || (utf_ptr2cells(s) > 1 && msg_col <= 2)) : ((*s != '\r' && msg_col + t_col >= Columns - 1) || (*s == '\011' && msg_col + t_col >= ((Columns - 1) & ~7)) || (utf_ptr2cells(s) > 1 && msg_col + t_col >= Columns - 2))))
+
+
+
+    if (!recurse && msg_row >= Rows - 1
+        && (*s == '\n' || (cmdmsg_rl
+                           ? (msg_col <= 1
+                              || (*s == TAB && msg_col <= 7)
+                              || (utf_ptr2cells(s) > 1
+                                  && msg_col <= 2))
+                           : ((*s != '\r' && msg_col + t_col >= Columns - 1)
+                              || (*s == TAB
+                                  && msg_col + t_col >= ((Columns - 1) & ~7))
+                              || (utf_ptr2cells(s) > 1
+                                  && msg_col + t_col >= Columns - 2))))) {
