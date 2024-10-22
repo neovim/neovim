@@ -1853,6 +1853,9 @@ bool parse_winhl_opt(win_T *wp)
       return false;
     }
     int hl_id_link = nlen ? syn_check_group(p, nlen) : 0;
+    if (hl_id_link == 0) {
+      return false;
+    }
 
     HlAttrs attrs = HLATTRS_INIT;
     attrs.rgb_ae_attr |= HL_GLOBAL;
