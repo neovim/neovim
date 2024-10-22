@@ -56,7 +56,6 @@ let skip_setglobal_reasons = #{
       \ shiftwidth:	'TODO: fix missing error handling for setglobal',
       \ sidescrolloff:	'TODO: fix missing error handling for setglobal',
       \ signcolumn:	'TODO(nvim): fix missing error handling for setglobal',
-      \ spelloptions:	'TODO(nvim): fix missing error handling for setglobal',
       \ tabstop:	'TODO: fix missing error handling for setglobal',
       \ termwinkey:	'TODO: fix missing error handling for setglobal',
       \ termwinsize:	'TODO: fix missing error handling for setglobal',
