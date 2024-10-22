@@ -1,4 +1,10 @@
-" Script to generate testdir/opt_test.vim from options.lua
+" Script to generate test/old/testdir/opt_test.vim from src/nvim/options.lua
+" and runtime/doc/options.txt
+
+set cpo&vim
+
+" Only do this when build with the +eval feature.
+if 1
 
 try
 
@@ -6,13 +12,64 @@ set nomore
 
 const K_KENTER = -16715
 
+" Get global-local options.
+" "key" is full-name of the option.
+" "value" is the local value to switch back to the global value.
+b options.txt
+call cursor(1, 1)
+let global_locals = {}
+while search("^'[^']*'.*\\n.*|global-local", 'W')
+  let fullname = getline('.')->matchstr("^'\\zs[^']*")
+  let global_locals[fullname] = ''
+endwhile
+call extend(global_locals, #{
+      \ scrolloff: -1,
+      \ sidescrolloff: -1,
+      \ undolevels: -12345,
+      \})
+
+" Get local-noglobal options.
+" "key" is full-name of the option.
+" "value" is no used.
+b options.txt
+call cursor(1, 1)
+let local_noglobals = {}
+while search("^'[^']*'.*\\n.*|local-noglobal", 'W')
+  let fullname = getline('.')->matchstr("^'\\zs[^']*")
+  let local_noglobals[fullname] = v:true
+endwhile
+
+" Options to skip `setglobal` tests.
+" "key" is full-name of the option.
+" "value" is the reason.
+let skip_setglobal_reasons = #{
+      \ iminsert: 'The global value is always overwritten by the local value',
+      \ imsearch: 'The global value is always overwritten by the local value',
+      \ breakindentopt:	'TODO: fix missing error handling for setglobal',
+      \ colorcolumn:	'TODO: fix missing error handling for setglobal',
+      \ conceallevel:	'TODO: fix missing error handling for setglobal',
+      \ foldcolumn:	'TODO: fix missing error handling for setglobal',
+      \ foldmethod:	'TODO: fix `setglobal fdm=` not given an error',
+      \ iskeyword:	'TODO: fix missing error handling for setglobal',
+      \ numberwidth:	'TODO: fix missing error handling for setglobal',
+      \ scrolloff:	'TODO: fix missing error handling for setglobal',
+      \ shiftwidth:	'TODO: fix missing error handling for setglobal',
+      \ sidescrolloff:	'TODO: fix missing error handling for setglobal',
+      \ signcolumn:	'TODO(nvim): fix missing error handling for setglobal',
+      \ spelloptions:	'TODO(nvim): fix missing error handling for setglobal',
+      \ tabstop:	'TODO: fix missing error handling for setglobal',
+      \ termwinkey:	'TODO: fix missing error handling for setglobal',
+      \ termwinsize:	'TODO: fix missing error handling for setglobal',
+      \ textwidth:	'TODO: fix missing error handling for setglobal',
+      \ winhighlight:	'TODO(nvim): fix missing error handling for setglobal',
+      \}
+
 " The terminal size is restored at the end.
 let script = [
       \ '" DO NOT EDIT: Generated with gen_opt_test.vim',
-      \ '" Used by test_options.vim.',
+      \ '" Used by test_options_all.vim.',
       \ '',
-      \ 'let save_columns = &columns',
-      \ 'let save_lines = &lines',
+      \ 'scriptencoding utf-8',
       \ ]
 
 let options = luaeval('loadfile("../../../src/nvim/options.lua")().options')
@@ -314,6 +371,27 @@ let test_values = {
       \ 'otherstring': [['', 'xxx'], []],
       \}
 
+" Two lists with values: values that pre- and post-processing in test.
+" Clear out t_WS: we don't want to resize the actual terminal.
+let test_prepost = {
+      \ 'browsedir': [["call mkdir('Xdir with space', 'D')"], []],
+      \ 'columns': [[
+      \		'set t_WS=',
+      \		'let save_columns = &columns'
+      \		], [
+      \		'let &columns = save_columns',
+      \		'set t_WS&'
+      \		]],
+      \ 'lines': [[
+      \		'set t_WS=',
+      \		'let save_lines = &lines'
+      \		], [
+      \		'let &lines = save_lines',
+      \		'set t_WS&'
+      \		]],
+      \ 'verbosefile': [[], ['call delete("Xfile")']],
+      \}
+
 const invalid_options = test_values->keys()
       \->filter({-> v:val !~# '^other' && !exists($"&{v:val}")})
 if !empty(invalid_options)
@@ -321,69 +399,102 @@ if !empty(invalid_options)
 endif
 
 for option in options
-  let name = option.full_name
-  let shortname = get(option, 'abbreviation', name)
+  let fullname = option.full_name
+  let shortname = get(option, 'abbreviation', fullname)
 
   if get(option, 'immutable', v:false)
     continue
   endif
 
-  if has_key(test_values, name)
-    let a = test_values[name]
-  elseif option.type == 'number'
-    let a = test_values['othernum']
-  else
-    let a = test_values['otherstring']
+  let [valid_values, invalid_values] = test_values[
+	\ has_key(test_values, fullname) ? fullname
+	\ : option.type == 'number' ? 'othernum'
+	\ : 'otherstring']
+
+  if empty(valid_values) && empty(invalid_values)
+    continue
   endif
-  if len(a[0]) > 0 || len(a[1]) > 0
-    if name == 'browsedir'
-      call add(script, 'call mkdir("Xdir with space")')
-    endif
 
-    if option.type == 'boolean'
-      call add(script, 'set ' . name)
-      call add(script, 'set ' . shortname)
-      call add(script, 'set no' . name)
-      call add(script, 'set no' . shortname)
-    else
-      for val in a[0]
-	call add(script, 'set ' . name . '=' . val)
-	call add(script, 'set ' . shortname . '=' . val)
+  call add(script, $"func Test_opt_set_{fullname}()")
+  call add(script, $"if exists('+{fullname}') && execute('set!') =~# '\\n..{fullname}\\([=\\n]\\|$\\)'")
+  call add(script, $"let l:saved = [&g:{fullname}, &l:{fullname}]")
+  call add(script, 'endif')
+
+  let [pre_processing, post_processing] = get(test_prepost, fullname, [[], []])
+  let script += pre_processing
+
+  if option.type == 'boolean'
+    for opt in [fullname, shortname]
+      for cmd in ['set', 'setlocal', 'setglobal']
+	call add(script, $'{cmd} {opt}')
+	call add(script, $'{cmd} no{opt}')
+	call add(script, $'{cmd} inv{opt}')
+	call add(script, $'{cmd} {opt}!')
       endfor
-
-      " setting an option can only fail when it's implemented.
-      call add(script, "if exists('+" . name . "')")
-      for val in a[1]
-	call add(script, "silent! call assert_fails('set " . name . "=" . val . "')")
-	call add(script, "silent! call assert_fails('set " . shortname . "=" . val . "')")
+    endfor
+  else  " P_NUM || P_STRING
+    " Normal tests
+    for opt in [fullname, shortname]
+      for cmd in ['set', 'setlocal', 'setglobal']
+	for val in valid_values
+	  if local_noglobals->has_key(fullname) && cmd ==# 'setglobal'
+	    " Skip `:setglobal {option}={val}` for local-noglobal option.
+	    " It has no effect.
+	    let pre = '" Skip local-noglobal: '
+	  else
+	    let pre = ''
+	  endif
+	  call add(script, $'{pre}{cmd} {opt}={val}')
+	endfor
       endfor
-      call add(script, "endif")
-    endif
+      " Testing to clear the local value and switch back to the global value.
+      if global_locals->has_key(fullname)
+	let swichback_val = global_locals[fullname]
+	call add(script, $'setlocal {opt}={swichback_val}')
+      endif
+    endfor
 
-    " cannot change 'termencoding' in GTK
-    if name != 'termencoding' || !has('gui_gtk')
-      call add(script, 'set ' . name . '&')
-      call add(script, 'set ' . shortname . '&')
-    endif
-    if name == 'browsedir'
-      call add(script, 'call delete("Xdir with space", "d")')
-    elseif name == 'verbosefile'
-      call add(script, 'call delete("Xfile")')
-    endif
-
-    if name == 'more'
-      call add(script, 'set nomore')
-    elseif name == 'laststatus'
-      call add(script, 'set laststatus=1')
-    elseif name == 'lines'
-      call add(script, 'let &lines = save_lines')
-    endif
+    " Failure tests
+    " Setting an option can only fail when it's implemented.
+    call add(script, $"if exists('+{fullname}')")
+    for opt in [fullname, shortname]
+      for cmd in ['set', 'setlocal', 'setglobal']
+	for val in invalid_values
+	  if val is# global_locals->get(fullname, {}) && cmd ==# 'setlocal'
+	    " Skip setlocal switchback-value to global-local option. It will
+	    " not result in failure.
+	    let pre = '" Skip global-local: '
+	  elseif local_noglobals->has_key(fullname) && cmd ==# 'setglobal'
+	    " Skip setglobal to local-noglobal option. It will not result in
+	    " failure.
+	    let pre = '" Skip local-noglobal: '
+	  elseif skip_setglobal_reasons->has_key(fullname) && cmd ==# 'setglobal'
+	    " Skip setglobal to reasoned option. It will not result in failure.
+	    let reason = skip_setglobal_reasons[fullname]
+	    let pre = $'" Skip {reason}: '
+	  else
+	    let pre = ''
+	  endif
+	  let cmdline = $'{cmd} {opt}={val}'
+	  call add(script, $"{pre}silent! call assert_fails({string(cmdline)})")
+	endfor
+      endfor
+    endfor
+    call add(script, "endif")
   endif
+
+  " Cannot change 'termencoding' in GTK
+  if fullname != 'termencoding' || !has('gui_gtk')
+    call add(script, $'set {fullname}&')
+    call add(script, $'set {shortname}&')
+    call add(script, $"if exists('l:saved')")
+    call add(script, $"let [&g:{fullname}, &l:{fullname}] = l:saved")
+    call add(script, 'endif')
+  endif
+
+  let script += post_processing
+  call add(script, 'endfunc')
 endfor
-
-call add(script, 'let &columns = save_columns')
-call add(script, 'let &lines = save_lines')
-call add(script, 'source unix.vim')
 
 call writefile(script, 'opt_test.vim')
 
@@ -397,4 +508,8 @@ catch
   write
 endtry
 
+endif
+
 qa!
+
+" vim:sw=2:ts=8:noet:nolist:nosta:

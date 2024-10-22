@@ -670,7 +670,7 @@ local function scope_to_doc(s)
     return m[s[1]]
   end
   assert(s[1] == 'global')
-  return 'global or ' .. m[s[2]] .. ' |global-local|'
+  return 'global or ' .. m[s[2]] .. (s[2] ~= 'tab' and ' |global-local|' or '')
 end
 
 -- @param o vim.option_meta

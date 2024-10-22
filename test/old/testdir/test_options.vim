@@ -1,7 +1,10 @@
 " Test for options
 
+source shared.vim
 source check.vim
 source view_util.vim
+
+scriptencoding utf-8
 
 func Test_whichwrap()
   set whichwrap=b,s
@@ -1022,15 +1025,6 @@ func Test_set_all_one_column()
   call assert_equal(out_one[0], '--- Options ---')
   let options = out_one[1:]->mapnew({_, line -> line[2:]})
   call assert_equal(sort(copy(options)), options)
-endfunc
-
-func Test_set_values()
-  " opt_test.vim is generated from ../optiondefs.h using gen_opt_test.vim
-  if filereadable('opt_test.vim')
-    source opt_test.vim
-  else
-    throw 'Skipped: opt_test.vim does not exist'
-  endif
 endfunc
 
 func Test_renderoptions()

@@ -777,7 +777,11 @@ void getout(int exitval)
     }
   }
 
-  if (p_shada && *p_shada != NUL) {
+  if (
+#ifdef EXITFREE
+      !entered_free_all_mem &&
+#endif
+      p_shada && *p_shada != NUL) {
     // Write out the registers, history, marks etc, to the ShaDa file
     shada_write_file(NULL, false);
   }
