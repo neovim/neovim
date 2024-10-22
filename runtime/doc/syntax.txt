@@ -45,7 +45,7 @@ directory where the Vim stuff is located.  For example, if your syntax files
 are in the "/usr/vim/vim82/syntax" directory, set $VIMRUNTIME to
 "/usr/vim/vim82".  You must do this in the shell, before starting Vim.
 This command also sources the |menu.vim| script when the GUI is running or
-will start soon.  See |'go-M'| about avoiding that.
+will start soon.
 
 					*:hi-normal* *:highlight-normal*
 If you are running in the GUI, you can get white text on a black background

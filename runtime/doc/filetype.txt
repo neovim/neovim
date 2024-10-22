@@ -40,7 +40,7 @@ Detail: The ":filetype on" command will load these files:
 	$VIMRUNTIME/scripts.vim is used to detect it from the contents of the
 	file.
 	When the GUI is running or will start soon, the |menu.vim| script is
-	also sourced.  See |'go-M'| about avoiding that.
+	also sourced.
 
 To add your own file types, see |new-filetype| below.  To search for help on a
 filetype prepend "ft-" and optionally append "-syntax", "-indent" or
