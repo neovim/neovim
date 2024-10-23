@@ -219,13 +219,13 @@ describe('vim.lsp.diagnostic', function()
       eq(1, #result)
       eq(
         exec_lua(function()
-          return vim.str_byteindex(line, 7, true)
+          return vim.str_byteindex(line, 'utf-16', 7)
         end),
         result[1].col
       )
       eq(
         exec_lua(function()
-          return vim.str_byteindex(line, 8, true)
+          return vim.str_byteindex(line, 'utf-16', 8)
         end),
         result[1].end_col
       )
