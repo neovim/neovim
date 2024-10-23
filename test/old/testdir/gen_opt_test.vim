@@ -49,7 +49,6 @@ let skip_setglobal_reasons = #{
       \ colorcolumn:	'TODO: fix missing error handling for setglobal',
       \ conceallevel:	'TODO: fix missing error handling for setglobal',
       \ foldcolumn:	'TODO: fix missing error handling for setglobal',
-      \ foldmethod:	'TODO: fix `setglobal fdm=` not given an error',
       \ iskeyword:	'TODO: fix missing error handling for setglobal',
       \ numberwidth:	'TODO: fix missing error handling for setglobal',
       \ scrolloff:	'TODO: fix missing error handling for setglobal',

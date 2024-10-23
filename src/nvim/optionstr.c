@@ -1448,8 +1448,7 @@ const char *did_set_foldmethod(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
   char **varp = (char **)args->os_varp;
-  if (check_opt_strings(*varp, p_fdm_values, false) != OK
-      || *win->w_p_fdm == NUL) {
+  if (check_opt_strings(*varp, p_fdm_values, false) != OK || **varp == NUL) {
     return e_invarg;
   }
   foldUpdateAll(win);
