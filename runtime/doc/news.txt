@@ -275,6 +275,10 @@ These existing features changed their behavior.
   current window, and it no longer throws |E444| when there is only one window
   on the screen. Global variable `vim.g.pager` is removed.
 
+• 'titlestring' now uses printf-style '%' items (see: 'statusline') to
+  implement the default behaviour. The implementation is equivalent to setting
+  'titlestring' to `%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim`.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
