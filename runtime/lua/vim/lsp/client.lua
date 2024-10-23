@@ -676,19 +676,6 @@ function Client:_request(method, params, handler, bufnr)
       log.trace(self.name, 'handler', method, { err = err, result = result, ctx = context })
     end
 
-    -- Per LSP, don't show ContentModified error to the user.
-    if err and err.code ~= lsp.protocol.ErrorCodes.ContentModified then
-      -- (#25464) The haskell-language-server supports resolve only for a subset
-      -- of code actions. For many code actions trying to resolve the `edit`
-      -- property results in an error. The protocol specification is
-      -- unfortunately a bit vague about this, and what the
-      -- haskell-language-server does seems to be valid.
-      --
-      -- In these cases do not present the error to the user, but still log it.
-      local notify = method ~= ms.codeAction_resolve
-      self:error(err.code, err.message, notify)
-    end
-
     handler(err, result, context)
   end, function(request_id)
     local request = self.requests[request_id]

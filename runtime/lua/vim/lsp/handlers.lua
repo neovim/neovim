@@ -18,9 +18,8 @@ local function err_message(client_id, msg)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
-M[ms.workspace_executeCommand] = function(_, _, _, _)
-  -- Error handling is done implicitly by wrapping all handlers; see end of this file
-end
+M[ms.workspace_executeCommand] = vim.lsp._handler_wrap(function(_, _, _, _)
+end)
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
 ---@param params lsp.ProgressParams
@@ -634,12 +633,13 @@ end
 
 -- Add boilerplate error handling for all of these.
 for k, fn in pairs(M) do
-  M[k] = function(err, result, ctx, config)
+  M[k] = function(err, ...)
     if err then
+      vim.lsp._handler_wrap()(err, ...)
       return
     end
 
-    return fn(err, result, ctx, config)
+    return fn(err, ...)
   end
 end
 

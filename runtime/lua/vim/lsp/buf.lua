@@ -20,10 +20,35 @@ local M = {}
 ---iterate all clients and call their `cancel_request()` methods.
 ---
 ---@see |vim.lsp.buf_request()|
-local function request(method, params, handler)
+local function buf_request(method, params, handler)
   validate('method', method, 'string')
   validate('handler', handler, 'function', true)
   return vim.lsp.buf_request(0, method, params, handler)
+end
+
+--- @param client vim.lsp.Client
+--- @param method string
+--- @param params? table
+--- @param handler? lsp.Handler
+--- @param bufnr integer
+local function request(client, method, params, handler, bufnr)
+  client.request(method, params, vim.lsp._handler_wrap(handler), bufnr)
+end
+
+--- @param client vim.lsp.Client
+--- @param method string
+--- @param params? table
+--- @param timeout_ms? integer
+--- @param bufnr integer
+local function request_sync(client, method, params, timeout_ms, bufnr)
+  local result, timeout_err = client.request_sync(method, params, timeout_ms, bufnr)
+  local err = result and result.err
+  if timeout_err or err then
+    err = err or {}
+    --- @diagnostic disable-next-line:invisible
+    client:error(err.code, err.message or timeout_err)
+  end
+  return result
 end
 
 --- Displays hover information about the symbol under the cursor in a floating
@@ -35,7 +60,7 @@ end
 --- You can scroll the contents the same as you would any other buffer.
 function M.hover()
   local params = util.make_position_params()
-  request(ms.textDocument_hover, params)
+  buf_request(ms.textDocument_hover, params)
 end
 
 local function request_with_opts(name, params, opts)
@@ -47,7 +72,7 @@ local function request_with_opts(name, params, opts)
       handler(err, result, ctx, vim.tbl_extend('force', config or {}, opts))
     end
   end
-  request(name, params, req_handler)
+  buf_request(name, params, req_handler)
 end
 
 ---@param method string
@@ -117,9 +142,9 @@ local function get_locations(method, opts)
   end
   for _, client in ipairs(clients) do
     local params = util.make_position_params(win, client.offset_encoding)
-    client.request(method, params, function(_, result)
+    request(client, method, params, function(_, result)
       on_response(_, result, client)
-    end)
+    end, bufnr)
   end
 end
 
@@ -186,7 +211,7 @@ end
 --- floating window.
 function M.signature_help()
   local params = util.make_position_params()
-  request(ms.textDocument_signatureHelp, params)
+  buf_request(ms.textDocument_signatureHelp, params)
 end
 
 --- Retrieves the completion items at the current cursor position. Can only be
@@ -200,7 +225,7 @@ end
 function M.completion(context)
   local params = util.make_position_params()
   params.context = context
-  return request(ms.textDocument_completion, params)
+  return buf_request(ms.textDocument_completion, params)
 end
 
 ---@param bufnr integer
@@ -343,7 +368,7 @@ function M.format(opts)
         return
       end
       local params = set_range(client, util.make_formatting_params(opts.formatting_options))
-      client.request(method, params, function(...)
+      request(client, method, params, function(...)
         local handler = client.handlers[method] or vim.lsp.handlers[method]
         handler(...)
         do_format(next(clients, idx))
@@ -354,7 +379,7 @@ function M.format(opts)
     local timeout_ms = opts.timeout_ms or 1000
     for _, client in pairs(clients) do
       local params = set_range(client, util.make_formatting_params(opts.formatting_options))
-      local result = client.request_sync(method, params, timeout_ms, bufnr)
+      local result = request_sync(client, method, params, timeout_ms, bufnr)
       if result and result.result then
         util.apply_text_edits(result.result, bufnr, client.offset_encoding)
       end
@@ -427,7 +452,7 @@ function M.rename(new_name, opts)
       params.newName = name
       local handler = client.handlers[ms.textDocument_rename]
         or vim.lsp.handlers[ms.textDocument_rename]
-      client.request(ms.textDocument_rename, params, function(...)
+      request(client, ms.textDocument_rename, params, function(...)
         handler(...)
         try_use_client(next(clients, idx))
       end, bufnr)
@@ -435,7 +460,7 @@ function M.rename(new_name, opts)
 
     if client.supports_method(ms.textDocument_prepareRename) then
       local params = util.make_position_params(win, client.offset_encoding)
-      client.request(ms.textDocument_prepareRename, params, function(err, result)
+      request(client, ms.textDocument_prepareRename, params, function(err, result)
         if err or result == nil then
           if next(clients, idx) then
             try_use_client(next(clients, idx))
@@ -545,14 +570,14 @@ function M.references(context, opts)
     params.context = context or {
       includeDeclaration = true,
     }
-    client.request(ms.textDocument_references, params, function(_, result)
+    request(client, ms.textDocument_references, params, function(_, result)
       local items = util.locations_to_items(result or {}, client.offset_encoding)
       vim.list_extend(all_items, items)
       remaining = remaining - 1
       if remaining == 0 then
         on_done()
       end
-    end)
+    end, bufnr)
   end
 end
 
@@ -567,7 +592,7 @@ end
 --- @param method string
 --- @param params table
 --- @param handler? lsp.Handler
---- @param bufnr? integer
+--- @param bufnr integer
 local function request_with_id(client_id, method, params, handler, bufnr)
   local client = vim.lsp.get_client_by_id(client_id)
   if not client then
@@ -577,7 +602,7 @@ local function request_with_id(client_id, method, params, handler, bufnr)
     )
     return
   end
-  client.request(method, params, handler, bufnr)
+  request(client, method, params, handler, bufnr)
 end
 
 --- @param call_hierarchy_items lsp.CallHierarchyItem[]
@@ -602,7 +627,7 @@ end
 local function call_hierarchy(method)
   local params = util.make_position_params()
   --- @param result lsp.CallHierarchyItem[]?
-  request(ms.textDocument_prepareCallHierarchy, params, function(_, result, ctx)
+  buf_request(ms.textDocument_prepareCallHierarchy, params, function(_, result, ctx)
     if not result or vim.tbl_isempty(result) then
       vim.notify('No item resolved', vim.log.levels.WARN)
       return
@@ -681,7 +706,7 @@ function M.typehierarchy(kind)
 
   for _, client in ipairs(clients) do
     local params = util.make_position_params(win, client.offset_encoding)
-    client.request(method, params, function(_, result, ctx)
+    request(client, method, params, function(_, result, ctx)
       --- @cast result lsp.TypeHierarchyItem[]?
       if result then
         for _, item in pairs(result) do
@@ -781,7 +806,7 @@ end
 ---         |hl-LspReferenceWrite|
 function M.document_highlight()
   local params = util.make_position_params()
-  request(ms.textDocument_documentHighlight, params)
+  buf_request(ms.textDocument_documentHighlight, params)
 end
 
 --- Removes document highlights from current buffer.
@@ -914,7 +939,7 @@ local function on_code_action_results(results, opts)
       or client.supports_method(ms.codeAction_resolve)
 
     if not action.edit and client and supports_resolve then
-      client.request(ms.codeAction_resolve, action, function(err, resolved_action)
+      request(client, ms.codeAction_resolve, action, function(err, resolved_action)
         -- (#25464) Trying to resolve the `edit` property may result in an error,
         -- but the unresolved action already contains a command that can be executed
         -- without issue.
@@ -1036,7 +1061,7 @@ function M.code_action(opts)
       })
     end
 
-    client.request(ms.textDocument_codeAction, params, on_result, bufnr)
+    request(client, ms.textDocument_codeAction, params, on_result, bufnr)
   end
 end
 
@@ -1051,7 +1076,7 @@ function M.execute_command(command_params)
     arguments = command_params.arguments,
     workDoneToken = command_params.workDoneToken,
   }
-  request(ms.workspace_executeCommand, command_params)
+  buf_request(ms.workspace_executeCommand, command_params)
 end
 
 return M
