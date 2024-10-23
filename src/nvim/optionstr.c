@@ -898,7 +898,8 @@ int expand_set_clipboard(optexpand_T *args, int *numMatches, char ***matches)
 const char *did_set_colorcolumn(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  return check_colorcolumn(win);
+  char **varp = (char **)args->os_varp;
+  return check_colorcolumn(*varp, varp == &win->w_p_cc ? win : NULL);
 }
 
 /// The 'comments' option is changed.

@@ -255,7 +255,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     emsg(_("E83: Cannot allocate buffer, using other one..."));
     enter_buffer(curbuf);
     if (old_tw != curbuf->b_p_tw) {
-      check_colorcolumn(curwin);
+      check_colorcolumn(NULL, curwin);
     }
     return FAIL;
   }
@@ -1029,7 +1029,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
       enter_buffer(buf);
 
       if (old_tw != curbuf->b_p_tw) {
-        check_colorcolumn(curwin);
+        check_colorcolumn(NULL, curwin);
       }
     }
     // If "old_curbuf" is NULL we are in big trouble here...
@@ -1669,7 +1669,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
     // enter some buffer.  Using the last one is hopefully OK.
     enter_buffer(valid ? buf : lastbuf);
     if (old_tw != curbuf->b_p_tw) {
-      check_colorcolumn(curwin);
+      check_colorcolumn(NULL, curwin);
     }
   }
 

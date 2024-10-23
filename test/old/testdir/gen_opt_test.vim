@@ -46,7 +46,6 @@ let skip_setglobal_reasons = #{
       \ iminsert: 'The global value is always overwritten by the local value',
       \ imsearch: 'The global value is always overwritten by the local value',
       \ breakindentopt:	'TODO: fix missing error handling for setglobal',
-      \ colorcolumn:	'TODO: fix missing error handling for setglobal',
       \ conceallevel:	'TODO: fix missing error handling for setglobal',
       \ foldcolumn:	'TODO: fix missing error handling for setglobal',
       \ numberwidth:	'TODO: fix missing error handling for setglobal',
