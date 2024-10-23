@@ -7371,18 +7371,37 @@ static int int_cmp(const void *pa, const void *pb)
   return a == b ? 0 : a < b ? -1 : 1;
 }
 
-/// Handle setting 'colorcolumn' or 'textwidth' in window "wp".
+/// Check "cc" as 'colorcolumn' and update the members of "wp".
+/// This is called when 'colorcolumn' or 'textwidth' is changed.
+///
+/// @param cc  when NULL: use "wp->w_p_cc"
+/// @param wp  when NULL: only parse "cc"
 ///
 /// @return error message, NULL if it's OK.
-const char *check_colorcolumn(win_T *wp)
+const char *check_colorcolumn(char *cc, win_T *wp)
 {
-  if (wp->w_buffer == NULL) {
+  if (wp != NULL && wp->w_buffer == NULL) {
     return NULL;      // buffer was closed
+  }
+
+  char *s = empty_string_option;
+  if (cc != NULL) {
+    s = cc;
+  } else if (wp != NULL) {
+    s = wp->w_p_cc;
+  }
+
+  OptInt tw;
+  if (wp != NULL) {
+    tw = wp->w_buffer->b_p_tw;
+  } else {
+    // buffer-local value not set, assume zero
+    tw = 0;
   }
 
   unsigned count = 0;
   int color_cols[256];
-  for (char *s = wp->w_p_cc; *s != NUL && count < 255;) {
+  while (*s != NUL && count < 255) {
     int col;
     if (*s == '-' || *s == '+') {
       // -N and +N: add to 'textwidth'
@@ -7392,16 +7411,12 @@ const char *check_colorcolumn(win_T *wp)
         return e_invarg;
       }
       col = col * getdigits_int(&s, true, 0);
-      if (wp->w_buffer->b_p_tw == 0) {
+      if (tw == 0) {
         goto skip;          // 'textwidth' not set, skip this item
       }
-      assert((col >= 0
-              && wp->w_buffer->b_p_tw <= INT_MAX - col
-              && wp->w_buffer->b_p_tw + col >= INT_MIN)
-             || (col < 0
-                 && wp->w_buffer->b_p_tw >= INT_MIN - col
-                 && wp->w_buffer->b_p_tw + col <= INT_MAX));
-      col += (int)wp->w_buffer->b_p_tw;
+      assert((col >= 0 && tw <= INT_MAX - col && tw + col >= INT_MIN)
+             || (col < 0 && tw >= INT_MIN - col && tw + col <= INT_MAX));
+      col += (int)tw;
       if (col < 0) {
         goto skip;
       }
@@ -7421,6 +7436,10 @@ skip:
     if (*++s == NUL) {
       return e_invarg;        // illegal trailing comma as in "set cc=80,"
     }
+  }
+
+  if (wp == NULL) {
+    return NULL;  // only parse "cc"
   }
 
   xfree(wp->w_p_cc_cols);

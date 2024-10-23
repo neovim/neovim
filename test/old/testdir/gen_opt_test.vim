@@ -45,21 +45,7 @@ endwhile
 let skip_setglobal_reasons = #{
       \ iminsert: 'The global value is always overwritten by the local value',
       \ imsearch: 'The global value is always overwritten by the local value',
-      \ breakindentopt:	'TODO: fix missing error handling for setglobal',
-      \ colorcolumn:	'TODO: fix missing error handling for setglobal',
-      \ conceallevel:	'TODO: fix missing error handling for setglobal',
-      \ foldcolumn:	'TODO: fix missing error handling for setglobal',
-      \ foldmethod:	'TODO: fix `setglobal fdm=` not given an error',
-      \ iskeyword:	'TODO: fix missing error handling for setglobal',
-      \ numberwidth:	'TODO: fix missing error handling for setglobal',
-      \ scrolloff:	'TODO: fix missing error handling for setglobal',
-      \ shiftwidth:	'TODO: fix missing error handling for setglobal',
-      \ sidescrolloff:	'TODO: fix missing error handling for setglobal',
       \ signcolumn:	'TODO(nvim): fix missing error handling for setglobal',
-      \ tabstop:	'TODO: fix missing error handling for setglobal',
-      \ termwinkey:	'TODO: fix missing error handling for setglobal',
-      \ termwinsize:	'TODO: fix missing error handling for setglobal',
-      \ textwidth:	'TODO: fix missing error handling for setglobal',
       \ winhighlight:	'TODO(nvim): fix missing error handling for setglobal',
       \}
 

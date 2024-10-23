@@ -717,11 +717,14 @@ const char *did_set_breakat(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_breakindentopt(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  if (briopt_check(win) == FAIL) {
+  char **varp = (char **)args->os_varp;
+
+  if (briopt_check(*varp, varp == &win->w_p_briopt ? win : NULL) == FAIL) {
     return e_invarg;
   }
+
   // list setting requires a redraw
-  if (win == curwin && win->w_briopt_list) {
+  if (varp == &win->w_p_briopt && win->w_briopt_list) {
     redraw_all_later(UPD_NOT_VALID);
   }
 
@@ -898,7 +901,8 @@ int expand_set_clipboard(optexpand_T *args, int *numMatches, char ***matches)
 const char *did_set_colorcolumn(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  return check_colorcolumn(win);
+  char **varp = (char **)args->os_varp;
+  return check_colorcolumn(*varp, varp == &win->w_p_cc ? win : NULL);
 }
 
 /// The 'comments' option is changed.
@@ -1448,8 +1452,7 @@ const char *did_set_foldmethod(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
   char **varp = (char **)args->os_varp;
-  if (check_opt_strings(*varp, p_fdm_values, false) != OK
-      || *win->w_p_fdm == NUL) {
+  if (check_opt_strings(*varp, p_fdm_values, false) != OK || **varp == NUL) {
     return e_invarg;
   }
   foldUpdateAll(win);
@@ -1573,12 +1576,28 @@ int expand_set_inccommand(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
+/// The 'iskeyword' option is changed.
+const char *did_set_iskeyword(optset_T *args)
+{
+  char **varp = (char **)args->os_varp;
+
+  if (varp == &p_isk) {       // only check for global-value
+    if (check_isopt(*varp) == FAIL) {
+      return e_invarg;
+    }
+  } else {                    // fallthrough for local-value
+    return did_set_isopt(args);
+  }
+
+  return NULL;
+}
+
 /// The 'isident' or the 'iskeyword' or the 'isprint' or the 'isfname' option is
 /// changed.
 const char *did_set_isopt(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  // 'isident', 'iskeyword', 'isprint or 'isfname' option: refill g_chartab[]
+  // 'isident', 'iskeyword', 'isprint' or 'isfname' option: refill g_chartab[]
   // If the new option is invalid, use old value.
   // 'lisp' option: refill g_chartab[] for '-' char
   if (buf_init_chartab(buf, true) == FAIL) {
