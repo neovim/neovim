@@ -2112,6 +2112,7 @@ local pattern = {
     ['/build/conf/.*%.conf$'] = 'bitbake',
     ['/meta%-.*/conf/.*%.conf$'] = 'bitbake',
     ['/meta/conf/.*%.conf$'] = 'bitbake',
+    ['/project%-spec/configs/.*%.conf$'] = 'bitbake',
     ['/%.cabal/config$'] = 'cabalconfig',
     ['/cabal/config$'] = 'cabalconfig',
     ['/%.aws/config$'] = 'confini',

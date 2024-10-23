@@ -134,7 +134,7 @@ func s:GetFilenameChecks() abort
     \ 'bib': ['file.bib'],
     \ 'bicep': ['file.bicep', 'file.bicepparam'],
     \ 'bindzone': ['named.root', '/bind/db.file', '/named/db.file', 'any/bind/db.file', 'any/named/db.file', 'foobar.zone'],
-    \ 'bitbake': ['file.bb', 'file.bbappend', 'file.bbclass', 'build/conf/local.conf', 'meta/conf/layer.conf', 'build/conf/bbappend.conf', 'meta-layer/conf/distro/foo.conf'],
+    \ 'bitbake': ['file.bb', 'file.bbappend', 'file.bbclass', 'build/conf/local.conf', 'meta/conf/layer.conf', 'build/conf/bbappend.conf', 'meta-layer/conf/distro/foo.conf', 'project-spec/configs/zynqmp-generic-xczu7ev.conf'],
     \ 'blade': ['file.blade.php'],
     \ 'blank': ['file.bl'],
     \ 'blueprint': ['file.blp'],
