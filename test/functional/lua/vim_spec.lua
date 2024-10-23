@@ -312,21 +312,106 @@ describe('lua stdlib', function()
       49,
       51,
     }
+    local indices8 = {
+      [0] = 0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+    }
     for i, k in pairs(indices32) do
       eq(k, exec_lua('return vim.str_byteindex(_G.test_text, ...)', i), i)
+      eq(k, exec_lua('return vim.str_byteindex(_G.test_text, ..., false)', i), i)
+      eq(k, exec_lua('return vim.str_byteindex(_G.test_text, "utf-32", ...)', i), i)
     end
     for i, k in pairs(indices16) do
       eq(k, exec_lua('return vim.str_byteindex(_G.test_text, ..., true)', i), i)
+      eq(k, exec_lua('return vim.str_byteindex(_G.test_text, "utf-16", ...)', i), i)
     end
-    eq(
+    for i, k in pairs(indices8) do
+      eq(k, exec_lua('return vim.str_byteindex(_G.test_text, "utf-8", ...)', i), i)
+    end
+    matches(
       'index out of range',
       pcall_err(exec_lua, 'return vim.str_byteindex(_G.test_text, ...)', #indices32 + 1)
     )
-    eq(
+    matches(
       'index out of range',
       pcall_err(exec_lua, 'return vim.str_byteindex(_G.test_text, ..., true)', #indices16 + 1)
     )
-    local i32, i16 = 0, 0
+    matches(
+      'index out of range',
+      pcall_err(exec_lua, 'return vim.str_byteindex(_G.test_text, "utf-16", ...)', #indices16 + 1)
+    )
+    matches(
+      'index out of range',
+      pcall_err(exec_lua, 'return vim.str_byteindex(_G.test_text, "utf-32", ...)', #indices32 + 1)
+    )
+    matches(
+      'invalid encoding',
+      pcall_err(exec_lua, 'return vim.str_byteindex("hello", "madeupencoding", 1)')
+    )
+    eq(
+      indices32[#indices32],
+      exec_lua('return vim.str_byteindex(_G.test_text, "utf-32", 99999, false)')
+    )
+    eq(
+      indices16[#indices16],
+      exec_lua('return vim.str_byteindex(_G.test_text, "utf-16", 99999, false)')
+    )
+    eq(
+      indices8[#indices8],
+      exec_lua('return vim.str_byteindex(_G.test_text, "utf-8", 99999, false)')
+    )
+    eq(2, exec_lua('return vim.str_byteindex("é", "utf-16", 2, false)'))
+    local i32, i16, i8 = 0, 0, 0
     local len = 51
     for k = 0, len do
       if indices32[i32] < k then
@@ -338,9 +423,29 @@ describe('lua stdlib', function()
           i16 = i16 + 1
         end
       end
+      if indices8[i8] < k then
+        i8 = i8 + 1
+      end
       eq({ i32, i16 }, exec_lua('return {vim.str_utfindex(_G.test_text, ...)}', k), k)
+      eq({ i32 }, exec_lua('return {vim.str_utfindex(_G.test_text, "utf-32", ...)}', k), k)
+      eq({ i16 }, exec_lua('return {vim.str_utfindex(_G.test_text, "utf-16", ...)}', k), k)
+      eq({ i8 }, exec_lua('return {vim.str_utfindex(_G.test_text, "utf-8", ...)}', k), k)
     end
-    eq(
+
+    eq({ #indices32, #indices16 }, exec_lua('return {vim.str_utfindex(_G.test_text)}'))
+
+    eq(#indices32, exec_lua('return vim.str_utfindex(_G.test_text, "utf-32", math.huge, false)'))
+    eq(#indices16, exec_lua('return vim.str_utfindex(_G.test_text, "utf-16", math.huge, false)'))
+    eq(#indices8, exec_lua('return vim.str_utfindex(_G.test_text, "utf-8", math.huge, false)'))
+
+    eq(#indices32, exec_lua('return vim.str_utfindex(_G.test_text, "utf-32")'))
+    eq(#indices16, exec_lua('return vim.str_utfindex(_G.test_text, "utf-16")'))
+    eq(#indices8, exec_lua('return vim.str_utfindex(_G.test_text, "utf-8")'))
+    matches(
+      'invalid encoding',
+      pcall_err(exec_lua, 'return vim.str_utfindex(_G.test_text, "madeupencoding", ...)', 1)
+    )
+    matches(
       'index out of range',
       pcall_err(exec_lua, 'return vim.str_utfindex(_G.test_text, ...)', len + 1)
     )

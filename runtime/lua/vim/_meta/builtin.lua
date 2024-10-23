@@ -112,18 +112,6 @@ function vim.rpcrequest(channel, method, ...) end
 --- equal, {a} is greater than {b} or {a} is lesser than {b}, respectively.
 function vim.stricmp(a, b) end
 
---- Convert UTF-32 or UTF-16 {index} to byte index. If {use_utf16} is not
---- supplied, it defaults to false (use UTF-32). Returns the byte index.
----
---- Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|.
---- An {index} in the middle of a UTF-16 sequence is rounded upwards to
---- the end of that sequence.
---- @param str string
---- @param index integer
---- @param use_utf16? boolean
---- @return integer
-function vim.str_byteindex(str, index, use_utf16) end
-
 --- Gets a list of the starting byte positions of each UTF-8 codepoint in the given string.
 ---
 --- Embedded NUL bytes are treated as terminating the string.
@@ -172,19 +160,6 @@ function vim.str_utf_start(str, index) end
 --- @param index integer
 --- @return integer
 function vim.str_utf_end(str, index) end
-
---- Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
---- supplied, the length of the string is used. All indices are zero-based.
----
---- Embedded NUL bytes are treated as terminating the string. Invalid UTF-8
---- bytes, and embedded surrogates are counted as one code point each. An
---- {index} in the middle of a UTF-8 sequence is rounded upwards to the end of
---- that sequence.
---- @param str string
---- @param index? integer
---- @return integer # UTF-32 index
---- @return integer # UTF-16 index
-function vim.str_utfindex(str, index) end
 
 --- The result is a String, which is the text {str} converted from
 --- encoding {from} to encoding {to}. When the conversion fails `nil` is

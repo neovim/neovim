@@ -1000,22 +1000,6 @@ vim.schedule({fn})                                            *vim.schedule()*
     Parameters: ~
       • {fn}  (`fun()`)
 
-vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
-    Convert UTF-32 or UTF-16 {index} to byte index. If {use_utf16} is not
-    supplied, it defaults to false (use UTF-32). Returns the byte index.
-
-    Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|. An {index}
-    in the middle of a UTF-16 sequence is rounded upwards to the end of that
-    sequence.
-
-    Parameters: ~
-      • {str}        (`string`)
-      • {index}      (`integer`)
-      • {use_utf16}  (`boolean?`)
-
-    Return: ~
-        (`integer`)
-
 vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
     Gets the distance (in bytes) from the last byte of the codepoint
     (character) that {index} points to.
@@ -1072,23 +1056,6 @@ vim.str_utf_start({str}, {index})                        *vim.str_utf_start()*
 
     Return: ~
         (`integer`)
-
-vim.str_utfindex({str}, {index})                          *vim.str_utfindex()*
-    Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
-    supplied, the length of the string is used. All indices are zero-based.
-
-    Embedded NUL bytes are treated as terminating the string. Invalid UTF-8
-    bytes, and embedded surrogates are counted as one code point each. An
-    {index} in the middle of a UTF-8 sequence is rounded upwards to the end of
-    that sequence.
-
-    Parameters: ~
-      • {str}    (`string`)
-      • {index}  (`integer?`)
-
-    Return (multiple): ~
-        (`integer`) UTF-32 index
-        (`integer`) UTF-16 index
 
 vim.stricmp({a}, {b})                                          *vim.stricmp()*
     Compares strings case-insensitively.
@@ -1775,6 +1742,44 @@ vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
       • |lua-loop-callbacks|
       • |vim.schedule()|
       • |vim.in_fast_event()|
+
+                                                         *vim.str_byteindex()*
+vim.str_byteindex({s}, {encoding}, {index}, {strict_indexing})
+    Convert UTF-32, UTF-16 or UTF-8 {index} to byte index. If
+    {strict_indexing} is false then then an out of range index will return
+    byte length instead of throwing an error.
+
+    Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|. An {index}
+    in the middle of a UTF-16 sequence is rounded upwards to the end of that
+    sequence.
+
+    Parameters: ~
+      • {s}                (`string`)
+      • {encoding}         (`"utf-8"|"utf-16"|"utf-32"`)
+      • {index}            (`integer`)
+      • {strict_indexing}  (`boolean?`) default: true
+
+    Return: ~
+        (`integer`)
+
+                                                          *vim.str_utfindex()*
+vim.str_utfindex({s}, {encoding}, {index}, {strict_indexing})
+    Convert byte index to UTF-32, UTF-16 or UTF-8 indices. If {index} is not
+    supplied, the length of the string is used. All indices are zero-based.
+
+    If {strict_indexing} is false then an out of range index will return
+    string length instead of throwing an error. Invalid UTF-8 bytes, and
+    embedded surrogates are counted as one code point each. An {index} in the
+    middle of a UTF-8 sequence is rounded upwards to the end of that sequence.
+
+    Parameters: ~
+      • {s}                (`string`)
+      • {encoding}         (`"utf-8"|"utf-16"|"utf-32"`)
+      • {index}            (`integer?`)
+      • {strict_indexing}  (`boolean?`) default: true
+
+    Return: ~
+        (`integer`)
 
 vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
     Runs a system command or throws an error if {cmd} cannot be run.
