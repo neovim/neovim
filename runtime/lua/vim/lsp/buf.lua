@@ -354,11 +354,9 @@ function M.format(opts)
     local timeout_ms = opts.timeout_ms or 1000
     for _, client in pairs(clients) do
       local params = set_range(client, util.make_formatting_params(opts.formatting_options))
-      local result, err = client.request_sync(method, params, timeout_ms, bufnr)
+      local result = client.request_sync(method, params, timeout_ms, bufnr)
       if result and result.result then
         util.apply_text_edits(result.result, bufnr, client.offset_encoding)
-      elseif err then
-        vim.notify(string.format('[LSP][%s] %s', client.name, err), vim.log.levels.WARN)
       end
     end
   end
@@ -441,10 +439,6 @@ function M.rename(new_name, opts)
         if err or result == nil then
           if next(clients, idx) then
             try_use_client(next(clients, idx))
-          else
-            local msg = err and ('Error on prepareRename: ' .. (err.message or ''))
-              or 'Nothing to rename'
-            vim.notify(msg, vim.log.levels.INFO)
           end
           return
         end
@@ -608,11 +602,7 @@ end
 local function call_hierarchy(method)
   local params = util.make_position_params()
   --- @param result lsp.CallHierarchyItem[]?
-  request(ms.textDocument_prepareCallHierarchy, params, function(err, result, ctx)
-    if err then
-      vim.notify(err.message, vim.log.levels.WARN)
-      return
-    end
+  request(ms.textDocument_prepareCallHierarchy, params, function(_, result, ctx)
     if not result or vim.tbl_isempty(result) then
       vim.notify('No item resolved', vim.log.levels.WARN)
       return
@@ -691,11 +681,9 @@ function M.typehierarchy(kind)
 
   for _, client in ipairs(clients) do
     local params = util.make_position_params(win, client.offset_encoding)
-    client.request(method, params, function(err, result, ctx)
+    client.request(method, params, function(_, result, ctx)
       --- @cast result lsp.TypeHierarchyItem[]?
-      if err then
-        vim.notify(err.message, vim.log.levels.WARN)
-      elseif result then
+      if result then
         for _, item in pairs(result) do
           results[#results + 1] = { ctx.client_id, item }
         end
@@ -927,11 +915,12 @@ local function on_code_action_results(results, opts)
 
     if not action.edit and client and supports_resolve then
       client.request(ms.codeAction_resolve, action, function(err, resolved_action)
+        -- (#25464) Trying to resolve the `edit` property may result in an error,
+        -- but the unresolved action already contains a command that can be executed
+        -- without issue.
         if err then
           if action.command then
             apply_action(action, client, choice.ctx)
-          else
-            vim.notify(err.code .. ': ' .. err.message, vim.log.levels.ERROR)
           end
         else
           apply_action(resolved_action, client, choice.ctx)

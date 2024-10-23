@@ -189,8 +189,6 @@ local validate = vim.validate
 --- Buffers that should be attached to upon initialize()
 --- @field package _buffers_to_attach table<integer,true>
 ---
---- @field private _log_prefix string
----
 --- Track this so that we can escalate automatically if we've already tried a
 --- graceful shutdown
 --- @field private _graceful_shutdown_failed true?
@@ -447,7 +445,6 @@ function Client.create(config)
     handlers = config.handlers or {},
     offset_encoding = validate_encoding(config.offset_encoding),
     name = name,
-    _log_prefix = string.format('LSP[%s]', name),
     requests = {},
     attached_buffers = {},
     server_capabilities = {},
@@ -524,7 +521,7 @@ function Client:_run_callbacks(cbs, error_id, ...)
     --- @type boolean, string?
     local status, err = pcall(cb, ...)
     if not status then
-      self:write_error(error_id, err)
+      self:error(error_id, err)
     end
   end
 end
@@ -574,7 +571,7 @@ function Client:initialize()
     config
   )
 
-  log.trace(self._log_prefix, 'initialize_params', initialize_params)
+  log.trace(self.name, 'initialize_params', initialize_params)
 
   local rpc = self.rpc
 
@@ -611,11 +608,7 @@ function Client:initialize()
       end
     end
 
-    log.info(
-      self._log_prefix,
-      'server_capabilities',
-      { server_capabilities = self.server_capabilities }
-    )
+    log.info(self.name, 'server_capabilities', { server_capabilities = self.server_capabilities })
   end)
 end
 
@@ -669,7 +662,7 @@ function Client:_request(method, params, handler, bufnr)
   changetracking.flush(self, bufnr)
   local version = lsp.util.buf_versions[bufnr]
   bufnr = resolve_bufnr(bufnr)
-  log.debug(self._log_prefix, 'client.request', self.id, method, params, handler, bufnr)
+  log.debug(self.name, 'client.request', self.id, method, params, handler, bufnr)
   local success, request_id = self.rpc.request(method, params, function(err, result)
     local context = {
       method = method,
@@ -678,6 +671,24 @@ function Client:_request(method, params, handler, bufnr)
       params = params,
       version = version,
     }
+
+    if log.trace() then
+      log.trace(self.name, 'handler', method, { err = err, result = result, ctx = context })
+    end
+
+    -- Per LSP, don't show ContentModified error to the user.
+    if err and err.code ~= lsp.protocol.ErrorCodes.ContentModified then
+      -- (#25464) The haskell-language-server supports resolve only for a subset
+      -- of code actions. For many code actions trying to resolve the `edit`
+      -- property results in an error. The protocol specification is
+      -- unfortunately a bit vague about this, and what the
+      -- haskell-language-server does seems to be valid.
+      --
+      -- In these cases do not present the error to the user, but still log it.
+      local notify = method ~= ms.codeAction_resolve
+      self:error(err.code, err.message, notify)
+    end
+
     handler(err, result, context)
   end, function(request_id)
     local request = self.requests[request_id]
@@ -705,22 +716,6 @@ end
 
 -- TODO(lewis6991): duplicated from lsp.lua
 local wait_result_reason = { [-1] = 'timeout', [-2] = 'interrupted', [-3] = 'error' }
-
---- Concatenates and writes a list of strings to the Vim error buffer.
----
---- @param ... string List to write to the buffer
-local function err_message(...)
-  local message = table.concat(vim.iter({ ... }):flatten():totable())
-  if vim.in_fast_event() then
-    vim.schedule(function()
-      api.nvim_err_writeln(message)
-      api.nvim_command('redraw')
-    end)
-  else
-    api.nvim_err_writeln(message)
-    api.nvim_command('redraw')
-  end
-end
 
 --- @private
 --- Sends a request to the server and synchronously waits for the response.
@@ -757,7 +752,9 @@ function Client:_request_sync(method, params, timeout_ms, bufnr)
     if request_id then
       self:_cancel_request(request_id)
     end
-    return nil, wait_result_reason[reason]
+    local msg = wait_result_reason[reason]
+    self:error(reason, msg)
+    return nil, msg
   end
   return request_result
 end
@@ -961,12 +958,24 @@ end
 
 --- @private
 --- Logs the given error to the LSP log and to the error buffer.
---- @param code integer Error code
+--- Shows a notification to the user on first error.
+--- @param code? integer Error code
 --- @param err any Error arguments
-function Client:write_error(code, err)
-  local client_error = lsp.client_errors[code] --- @type string|integer
-  log.error(self._log_prefix, 'on_error', { code = client_error, err = err })
-  err_message(self._log_prefix, ': Error ', client_error, ': ', vim.inspect(err))
+--- @param notify? boolean (default true)
+function Client:error(code, err, notify)
+  if notify ~= false then
+    vim.notify_once(
+      string.format(
+        'LSP:%s%s: %s',
+        self.name,
+        code and string.format(' (%s)', lsp.client_errors[code] or tostring(code)) or '',
+        type(err) == 'table' and vim.inspect(err) or tostring(err)
+      ),
+      vim.log.levels.ERROR
+    )
+  end
+
+  log.error(self.name, { code = code and lsp.client_errors[code] or nil, err = err })
 end
 
 --- @private
@@ -994,7 +1003,7 @@ end
 --- @param method string LSP method name
 --- @param params table The parameters for that method.
 function Client:_notification(method, params)
-  log.trace('notification', method, params)
+  log.trace(self.name, 'notification', method, params)
   local handler = self:_resolve_handler(method)
   if handler then
     -- Method name is provided here for convenience.
@@ -1010,13 +1019,13 @@ end
 --- @return any result
 --- @return lsp.ResponseError error code and message set in case an exception happens during the request.
 function Client:_server_request(method, params)
-  log.trace('server_request', method, params)
+  log.trace(self.name, 'server_request', method, params)
   local handler = self:_resolve_handler(method)
   if handler then
-    log.trace('server_request: found handler for', method)
+    log.trace(self.name, 'server_request: found handler for', method)
     return handler(nil, params, { method = method, client_id = self.id })
   end
-  log.warn('server_request: no handler found for', method)
+  log.warn(self.name, 'server_request: no handler found for', method)
   return nil, lsp.rpc_response_error(lsp.protocol.ErrorCodes.MethodNotFound)
 end
 
@@ -1028,13 +1037,12 @@ end
 --- @see vim.lsp.rpc.client_errors for possible errors. Use
 --- `vim.lsp.rpc.client_errors[code]` to get a human-friendly name.
 function Client:_on_error(code, err)
-  self:write_error(code, err)
+  self:error(code, err)
   if self._on_error_cb then
     --- @type boolean, string
     local status, usererr = pcall(self._on_error_cb, code, err)
     if not status then
-      log.error(self._log_prefix, 'user on_error failed', { err = usererr })
-      err_message(self._log_prefix, ' user on_error failed: ', tostring(usererr))
+      self:error(nil, usererr)
     end
   end
 end

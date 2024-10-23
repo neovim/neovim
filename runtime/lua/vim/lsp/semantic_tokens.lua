@@ -762,6 +762,7 @@ function M.highlight_token(token, bufnr, client_id, hl_group, opts)
   })
 end
 
+--- @private
 --- |lsp-handler| for the method `workspace/semanticTokens/refresh`
 ---
 --- Refresh requests are sent by the server to indicate a project-wide change
@@ -769,11 +770,7 @@ end
 --- invalidate the current results of all buffers and automatically kick off a
 --- new request for buffers that are displayed in a window. For those that aren't, a
 --- the BufWinEnter event should take care of it next time it's displayed.
-function M._refresh(err, _, ctx)
-  if err then
-    return vim.NIL
-  end
-
+function M.on_refresh(_, _, ctx)
   for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(ctx.client_id)) do
     local highlighter = STHighlighter.active[bufnr]
     if highlighter and highlighter.client_state[ctx.client_id] then

@@ -561,12 +561,10 @@ local function buf_attach(bufnr)
           client.notify(ms.textDocument_willSave, params)
         end
         if client.supports_method(ms.textDocument_willSaveWaitUntil) then
-          local result, err =
+          local result =
             client.request_sync(ms.textDocument_willSaveWaitUntil, params, 1000, ctx.buf)
           if result and result.result then
             util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
-          elseif err then
-            log.error(vim.inspect(err))
           end
         end
       end
@@ -634,7 +632,7 @@ function lsp.buf_attach_client(bufnr, client_id)
   validate('client_id', client_id, 'number')
   bufnr = resolve_bufnr(bufnr)
   if not api.nvim_buf_is_loaded(bufnr) then
-    log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
+    log.warn('lsp.buf_attach_client', string.format('called on unloaded buffer (id: %d): ', bufnr))
     return false
   end
 

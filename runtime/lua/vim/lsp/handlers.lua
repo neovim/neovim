@@ -10,10 +10,10 @@ local M = {}
 
 -- FIXME: DOC: Expose in vimdocs
 
---- Writes to error buffer.
----@param ... string Will be concatenated before being written
-local function err_message(...)
-  vim.notify(table.concat(vim.iter({ ... }):flatten():totable()), vim.log.levels.ERROR)
+--- @param client_id integer
+--- @param msg string
+local function err_message(client_id, msg)
+  vim.notify(string.format('LSP: client_id=%d: %s', client_id, msg), vim.log.levels.ERROR)
   api.nvim_command('redraw')
 end
 
@@ -28,7 +28,7 @@ end
 M[ms.dollar_progress] = function(_, params, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
-    err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
+    err_message(ctx.client_id, 'client has shut down during progress update')
     return vim.NIL
   end
   local kind = nil
@@ -64,7 +64,7 @@ end
 M[ms.window_workDoneProgress_create] = function(_, result, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
-    err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
+    err_message(ctx.client_id, 'client has shut down during progress update')
     return vim.NIL
   end
   client.progress:push(result)
@@ -133,7 +133,7 @@ M[ms.client_registerCapability] = function(_, result, ctx)
       .. 'Report upstream, this warning is harmless'
     local client_name = client and client.name or string.format('id=%d', client_id)
     local warning = string.format(warning_tpl, client_name, table.concat(unsupported, ', '))
-    log.warn(warning)
+    log.warn(client.name, ms.client_unregisterCapability, warning)
   end
   return vim.NIL
 end
@@ -187,11 +187,7 @@ M[ms.workspace_configuration] = function(_, result, ctx)
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
   if not client then
-    err_message(
-      'LSP[',
-      client_id,
-      '] client has shut down after sending a workspace/configuration request'
-    )
+    err_message(client_id, 'client has shut down after sending a workspace/configuration request')
     return
   end
   if not result.items then
@@ -220,7 +216,7 @@ M[ms.workspace_workspaceFolders] = function(_, _, ctx)
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
   if not client then
-    err_message('LSP[id=', client_id, '] client has shut down after sending the message')
+    err_message(client_id, 'client has shut down after sending the message')
     return
   end
   return client.workspace_folders or vim.NIL
@@ -547,18 +543,18 @@ M[ms.window_logMessage] = function(_, result, ctx, _)
   local message = result.message
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
-  local client_name = client and client.name or string.format('id=%d', client_id)
   if not client then
-    err_message('LSP[', client_name, '] client has shut down after sending ', message)
+    err_message(client_id, 'client has shut down after sending ' .. message)
+    return
   end
   if message_type == protocol.MessageType.Error then
-    log.error(message)
+    log.error(client.name, message)
   elseif message_type == protocol.MessageType.Warning then
-    log.warn(message)
+    log.warn(client.name, message)
   elseif message_type == protocol.MessageType.Info or message_type == protocol.MessageType.Log then
-    log.info(message)
+    log.info(client.name, message)
   else
-    log.debug(message)
+    log.debug(client.name, message)
   end
   return result
 end
@@ -572,10 +568,10 @@ M[ms.window_showMessage] = function(_, result, ctx, _)
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format('id=%d', client_id)
   if not client then
-    err_message('LSP[', client_name, '] client has shut down after sending ', message)
+    err_message(client_id, 'client has shut down after sending ' .. message)
   end
   if message_type == protocol.MessageType.Error then
-    err_message('LSP[', client_name, '] ', message)
+    err_message(client_id, message)
   else
     --- @type string
     local message_type_name = protocol.MessageType[message_type]
@@ -609,9 +605,8 @@ M[ms.window_showDocument] = function(_, result, ctx, _)
 
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
-  local client_name = client and client.name or string.format('id=%d', client_id)
   if not client then
-    err_message('LSP[', client_name, '] client has shut down after sending ', ctx.method)
+    err_message(client_id, 'client has shut down after sending ' .. ctx.method)
     return vim.NIL
   end
 
@@ -628,41 +623,19 @@ M[ms.window_showDocument] = function(_, result, ctx, _)
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh
-M[ms.workspace_inlayHint_refresh] = function(err, result, ctx, config)
-  return vim.lsp.inlay_hint.on_refresh(err, result, ctx, config)
+M[ms.workspace_inlayHint_refresh] = function(...)
+  return vim.lsp.inlay_hint.on_refresh(...)
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
-M[ms.workspace_semanticTokens_refresh] = function(err, result, ctx, _config)
-  return vim.lsp.semantic_tokens._refresh(err, result, ctx)
+M[ms.workspace_semanticTokens_refresh] = function(...)
+  return vim.lsp.semantic_tokens.on_refresh(...)
 end
 
--- Add boilerplate error validation and logging for all of these.
+-- Add boilerplate error handling for all of these.
 for k, fn in pairs(M) do
   M[k] = function(err, result, ctx, config)
-    if log.trace() then
-      log.trace('default_handler', ctx.method, {
-        err = err,
-        result = result,
-        ctx = vim.inspect(ctx),
-        config = config,
-      })
-    end
-
     if err then
-      -- LSP spec:
-      -- interface ResponseError:
-      --  code: integer;
-      --  message: string;
-      --  data?: string | number | boolean | array | object | null;
-
-      -- Per LSP, don't show ContentModified error to the user.
-      if err.code ~= protocol.ErrorCodes.ContentModified then
-        local client = vim.lsp.get_client_by_id(ctx.client_id)
-        local client_name = client and client.name or string.format('client_id=%d', ctx.client_id)
-
-        err_message(client_name .. ': ' .. tostring(err.code) .. ': ' .. err.message)
-      end
       return
     end
 
