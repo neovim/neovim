@@ -291,8 +291,7 @@ static void set_init_default_cdpath(void)
     }
   }
   buf[j] = NUL;
-  options[kOptCdpath].def_val = CSTR_AS_OPTVAL(buf);
-  options[kOptCdpath].flags |= P_DEF_ALLOCED;
+  set_option_default(kOptCdpath, CSTR_AS_OPTVAL(buf));
 
   xfree(cdpath);
 }
@@ -302,8 +301,6 @@ static void set_init_default_cdpath(void)
 /// only happen for non-indirect options.
 /// Also set the default to the expanded value, so ":set" does not list
 /// them.
-/// Don't set the P_ALLOCED flag, because we don't want to free the
-/// default.
 static void set_init_expand_env(void)
 {
   for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
@@ -318,14 +315,8 @@ static void set_init_expand_env(void)
       p = option_expand(opt_idx, NULL);
     }
     if (p != NULL) {
-      set_option_varp(opt_idx, opt->var, CSTR_TO_OPTVAL(p), opt->flags & P_ALLOCED);
-      opt->flags |= P_ALLOCED;
-
-      if (opt->flags & P_DEF_ALLOCED) {
-        optval_free(opt->def_val);
-      }
-      opt->def_val = CSTR_TO_OPTVAL(p);
-      opt->flags |= P_DEF_ALLOCED;
+      set_option_varp(opt_idx, opt->var, CSTR_TO_OPTVAL(p), true);
+      set_option_default(opt_idx, CSTR_TO_OPTVAL(p));
     }
   }
 }
@@ -356,6 +347,9 @@ void set_init_1(bool clean_arg)
 {
   langmap_init();
 
+  // Allocate the default option values.
+  alloc_options_default();
+
   set_init_default_shell();
   set_init_default_backupskip();
   set_init_default_cdpath();
@@ -384,7 +378,7 @@ void set_init_1(bool clean_arg)
 
   // Set all the options (except the terminal options) to their default
   // value.  Also set the global value for local options.
-  set_options_default(0);
+  set_options_to_default(0);
 
   curbuf->b_p_initialized = true;
   curbuf->b_p_ar = -1;          // no local 'autoread' value
@@ -463,12 +457,31 @@ static OptVal get_option_default(const OptIndex opt_idx, int opt_flags)
   }
 }
 
+/// Allocate the default values for all options by copying them from the stack.
+/// This ensures that we don't need to always check if the option default is allocated or not.
+static void alloc_options_default(void)
+{
+  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+    options[opt_idx].def_val = optval_copy(options[opt_idx].def_val);
+  }
+}
+
+/// Change the default value for an option.
+///
+/// @param  opt_idx  Option index in options[] table.
+/// @param  value    New default value. Must be allocated.
+static void set_option_default(const OptIndex opt_idx, OptVal value)
+{
+  optval_free(options[opt_idx].def_val);
+  options[opt_idx].def_val = value;
+}
+
 /// Set an option to its default value.
 /// This does not take care of side effects!
 ///
 /// @param  opt_idx    Option index in options[] table.
 /// @param  opt_flags  Option flags.
-static void set_option_default(const OptIndex opt_idx, int opt_flags)
+static void set_option_to_default(const OptIndex opt_idx, int opt_flags)
 {
   OptVal def_val = get_option_default(opt_idx, opt_flags);
   set_option_direct(opt_idx, def_val, opt_flags, current_sctx.sc_sid);
@@ -485,11 +498,11 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
 /// Set all options (except terminal options) to their default value.
 ///
 /// @param  opt_flags  Option flags.
-static void set_options_default(int opt_flags)
+static void set_options_to_default(int opt_flags)
 {
   for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
     if (!(options[opt_idx].flags & P_NODEFAULT)) {
-      set_option_default(opt_idx, opt_flags);
+      set_option_to_default(opt_idx, opt_flags);
     }
   }
 
@@ -512,17 +525,8 @@ static void set_options_default(int opt_flags)
 static void set_string_default(OptIndex opt_idx, char *val, bool allocated)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (opt_idx == kOptInvalid) {
-    return;
-  }
-
-  vimoption_T *opt = &options[opt_idx];
-  if (opt->flags & P_DEF_ALLOCED) {
-    optval_free(opt->def_val);
-  }
-
-  opt->def_val = CSTR_AS_OPTVAL(allocated ? val : xstrdup(val));
-  opt->flags |= P_DEF_ALLOCED;
+  assert(opt_idx != kOptInvalid);
+  set_option_default(opt_idx, CSTR_AS_OPTVAL(allocated ? val : xstrdup(val)));
 }
 
 /// For an option value that contains comma separated items, find "newval" in
@@ -563,16 +567,14 @@ void free_all_options(void)
   for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
     if (options[opt_idx].indir == PV_NONE) {
       // global option: free value and default value.
-      if ((options[opt_idx].flags & P_ALLOCED) && options[opt_idx].var != NULL) {
+      if (options[opt_idx].var != NULL) {
         optval_free(optval_from_varp(opt_idx, options[opt_idx].var));
-      }
-      if (options[opt_idx].flags & P_DEF_ALLOCED) {
-        optval_free(options[opt_idx].def_val);
       }
     } else if (options[opt_idx].var != VAR_WIN) {
       // buffer-local option: free global value
       optval_free(optval_from_varp(opt_idx, options[opt_idx].var));
     }
+    optval_free(options[opt_idx].def_val);
   }
   free_operatorfunc_option();
   free_tagfunc_option();
@@ -591,7 +593,7 @@ void set_init_2(bool headless)
   // 'scroll' defaults to half the window height. The stored default is zero,
   // which results in the actual value computed from the window height.
   if (!(options[kOptScroll].flags & P_WAS_SET)) {
-    set_option_default(kOptScroll, OPT_LOCAL);
+    set_option_to_default(kOptScroll, OPT_LOCAL);
   }
   comp_col();
 
@@ -600,7 +602,7 @@ void set_init_2(bool headless)
   if (!option_was_set(kOptWindow)) {
     p_window = Rows - 1;
   }
-  options[kOptWindow].def_val = NUMBER_OPTVAL(Rows - 1);
+  set_option_default(kOptWindow, NUMBER_OPTVAL(Rows - 1));
 }
 
 /// Initialize the options, part three: After reading the .vimrc
@@ -632,12 +634,12 @@ void set_init_3(void)
       const OptVal sp =
         is_csh ? STATIC_CSTR_AS_OPTVAL("|& tee") : STATIC_CSTR_AS_OPTVAL("2>&1| tee");
       set_option_direct(kOptShellpipe, sp, 0, SID_NONE);
-      options[kOptShellpipe].def_val = sp;
+      set_option_default(kOptShellpipe, optval_copy(sp));
     }
     if (do_srr) {
       const OptVal srr = is_csh ? STATIC_CSTR_AS_OPTVAL(">&") : STATIC_CSTR_AS_OPTVAL(">%s 2>&1");
       set_option_direct(kOptShellredir, srr, 0, SID_NONE);
-      options[kOptShellredir].def_val = srr;
+      set_option_default(kOptShellredir, optval_copy(srr));
     }
   }
   xfree(p);
@@ -670,9 +672,7 @@ void set_helplang_default(const char *lang)
     return;
   }
 
-  if (options[kOptHelplang].flags & P_ALLOCED) {
-    free_string_option(p_hlg);
-  }
+  free_string_option(p_hlg);
   p_hlg = xmemdupz(lang, lang_len);
   // zh_CN becomes "cn", zh_TW becomes "tw".
   if (STRNICMP(p_hlg, "zh_", 3) == 0 && lang_len >= 5) {
@@ -684,7 +684,6 @@ void set_helplang_default(const char *lang)
     p_hlg[1] = 'n';
   }
   p_hlg[2] = NUL;
-  options[kOptHelplang].flags |= P_ALLOCED;
 }
 
 /// 'title' and 'icon' only default to true if they have not been set or reset
@@ -698,11 +697,11 @@ void set_title_defaults(void)
   // icon name.  Saves a bit of time, because the X11 display server does
   // not need to be contacted.
   if (!(options[kOptTitle].flags & P_WAS_SET)) {
-    options[kOptTitle].def_val = BOOLEAN_OPTVAL(false);
+    set_option_default(kOptTitle, BOOLEAN_OPTVAL(false));
     p_title = 0;
   }
   if (!(options[kOptIcon].flags & P_WAS_SET)) {
-    options[kOptIcon].def_val = BOOLEAN_OPTVAL(false);
+    set_option_default(kOptIcon, BOOLEAN_OPTVAL(false));
     p_icon = 0;
   }
 }
@@ -1373,7 +1372,7 @@ int do_set(char *arg, int opt_flags)
         if (*arg == '&') {
           arg++;
           // Only for :set command set global value of local options.
-          set_options_default(opt_flags);
+          set_options_to_default(opt_flags);
           didset_options();
           didset_options2();
           ui_refresh_options();
@@ -3441,9 +3440,9 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
   vimoption_T *opt = &options[opt_idx];
   const char *errmsg = NULL;
   bool restore_chartab = false;
-  bool free_oldval = (opt->flags & P_ALLOCED);
   bool value_changed = false;
   bool value_checked = false;
+  static bool opt_initialized[kOptIndexCount] = { 0 };
 
   optset_T did_set_cb_args = {
     .os_varp = varp,
@@ -3518,11 +3517,13 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
   }
 
   // Free options that are in allocated memory.
-  // Use "free_oldval", because recursiveness may change the flags (esp. init_highlight()).
-  if (free_oldval) {
+  // NOTE: When initializing an option for the first time, don't try to free its value as it has
+  // not been allocated yet.
+  if (opt_initialized[opt_idx]) {
     optval_free(old_value);
+  } else {
+    opt_initialized[opt_idx] = true;
   }
-  opt->flags |= P_ALLOCED;
 
   const bool scope_both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
 
@@ -5398,7 +5399,7 @@ void reset_modifiable(void)
 {
   curbuf->b_p_ma = false;
   p_ma = false;
-  options[kOptModifiable].def_val = BOOLEAN_OPTVAL(false);
+  set_option_default(kOptModifiable, BOOLEAN_OPTVAL(false));
 }
 
 /// Set the global value for 'iminsert' to the local value.

@@ -250,7 +250,6 @@ void check_buf_options(buf_T *buf)
 /// Free the string allocated for an option.
 /// Checks for the string being empty_string_option. This may happen if we're out of memory,
 /// xstrdup() returned NULL, which was replaced by empty_string_option by check_options().
-/// Does NOT check for P_ALLOCED flag!
 void free_string_option(char *p)
 {
   if (p != empty_string_option) {
