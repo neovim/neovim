@@ -8,16 +8,12 @@
 // option_vars.h: definition of global variables for settable options
 
 // Option Flags
-#define P_ALLOCED      0x01U        ///< the option is in allocated memory,
-                                    ///< must use free_string_option() when
-                                    ///< assigning new value. Not set if default is
-                                    ///< the same.
+// #define P_ALLOCED      0x01U     ///< Not used
 #define P_EXPAND       0x02U        ///< environment expansion.  NOTE: P_EXPAND can
                                     ///< never be used for local or hidden options
 #define P_NO_DEF_EXP   0x04U        ///< do not expand default value
 #define P_NODEFAULT    0x08U        ///< don't set to default value
-#define P_DEF_ALLOCED  0x10U        ///< default value is in allocated memory, must
-                                    ///< use free() when assigning new value
+// #define P_DEF_ALLOCED  0x10U     ///< Not used
 #define P_WAS_SET      0x20U        ///< option has been set/reset
 #define P_NO_MKRC      0x40U        ///< don't include in :mkvimrc output
 
@@ -347,6 +343,12 @@ enum {
 
 #define LISPWORD_VALUE \
   "defun,define,defmacro,set!,lambda,if,case,let,flet,let*,letrec,do,do*,define-syntax,let-syntax,letrec-syntax,destructuring-bind,defpackage,defparameter,defstruct,deftype,defvar,do-all-symbols,do-external-symbols,do-symbols,dolist,dotimes,ecase,etypecase,eval-when,labels,macrolet,multiple-value-bind,multiple-value-call,multiple-value-prog1,multiple-value-setq,prog1,progv,typecase,unless,unwind-protect,when,with-input-from-string,with-open-file,with-open-stream,with-output-to-string,with-package-iterator,define-condition,handler-bind,handler-case,restart-bind,restart-case,with-simple-restart,store-value,use-value,muffle-warning,abort,continue,with-slots,with-slots*,with-accessors,with-accessors*,defclass,defmethod,print-unreadable-object"
+
+// When a string option is NULL, it is set to empty_string_option,
+// to avoid having to check for NULL everywhere.
+//
+// TODO(famiu): Remove this when refcounted strings are used for string options.
+EXTERN char empty_string_option[] INIT( = "");
 
 // The following are actual variables for the options
 
@@ -770,7 +772,7 @@ EXTERN unsigned ve_flags;
 #define VE_NONEU       32U      // "NONE"
 EXTERN OptInt p_verbose;        ///< 'verbose'
 #ifdef IN_OPTION_C
-char *p_vfile = "";             ///< used before options are initialized
+char *p_vfile = empty_string_option;  ///< used before options are initialized
 #else
 extern char *p_vfile;           ///< 'verbosefile'
 #endif

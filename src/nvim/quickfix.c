@@ -7348,7 +7348,6 @@ void ex_helpgrep(exarg_T *eap)
   bool updated = false;
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *const save_cpo = p_cpo;
-  const bool save_cpo_allocated = (get_option(kOptCpoptions)->flags & P_ALLOCED);
   p_cpo = empty_string_option;
 
   bool new_qi = false;
@@ -7388,9 +7387,7 @@ void ex_helpgrep(exarg_T *eap)
     if (*p_cpo == NUL) {
       set_option_value_give_err(kOptCpoptions, CSTR_AS_OPTVAL(save_cpo), 0);
     }
-    if (save_cpo_allocated) {
-      free_string_option(save_cpo);
-    }
+    free_string_option(save_cpo);
   }
 
   if (updated) {

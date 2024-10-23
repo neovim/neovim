@@ -713,12 +713,6 @@ EXTERN char *escape_chars INIT( = " \t\\\"|");  // need backslash in cmd line
 
 EXTERN bool keep_help_flag INIT( = false);  // doing :ta from help file
 
-// When a string option is NULL (which only happens in out-of-memory situations), it is set to
-// empty_string_option, to avoid having to check for NULL everywhere.
-//
-// TODO(famiu): Remove this when refcounted strings are used for string options.
-EXTERN char *empty_string_option INIT( = "");
-
 EXTERN bool redir_off INIT( = false);        // no redirection for a moment
 EXTERN FILE *redir_fd INIT( = NULL);         // message redirection file
 EXTERN int redir_reg INIT( = 0);             // message redirection register

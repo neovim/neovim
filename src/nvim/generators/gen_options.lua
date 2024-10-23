@@ -67,7 +67,6 @@ local function get_flags(o)
     end
   end
   for _, flag_desc in ipairs({
-    { 'alloced' },
     { 'nodefault' },
     { 'no_mkrc' },
     { 'secure' },
