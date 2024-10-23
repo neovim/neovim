@@ -3282,8 +3282,6 @@ static char *option_get_valid_types(OptIndex opt_idx)
   // Ensure that the string is NUL-terminated.
   kv_push(str, NUL);
   return str.items;
-
-#undef OPTION_ADD_TYPE
 }
 
 /// Check if option is hidden.

@@ -2705,7 +2705,7 @@ describe('vterm', function()
     pen('font', 0, state)
 
     -- TODO(dundargoc): fix
-    -- -- Foreground
+    -- Foreground
     -- push "\x1b[31m"
     --   ?pen foreground = idx(1)
     -- push "\x1b[32m"
@@ -2721,7 +2721,7 @@ describe('vterm', function()
     -- push "\x1b[39m"
     --   ?pen foreground = rgb(240,240,240,is_default_fg)
     --
-    -- -- Background
+    -- Background
     -- push "\x1b[41m"
     --   ?pen background = idx(1)
     -- push "\x1b[42m"
@@ -2737,7 +2737,7 @@ describe('vterm', function()
     -- push "\x1b[49m"
     --   ?pen background = rgb(0,0,0,is_default_bg)
     --
-    -- -- Bold+ANSI colour == highbright
+    -- Bold+ANSI colour == highbright
     -- push "\x1b[m\x1b[1;37m"
     --   ?pen bold = on
     --   ?pen foreground = idx(15)
@@ -2745,7 +2745,7 @@ describe('vterm', function()
     --   ?pen bold = on
     --   ?pen foreground = idx(15)
     --
-    -- -- Super/Subscript
+    -- Super/Subscript
     -- push "\x1b[73m"
     --   ?pen small = on
     --   ?pen baseline = raise
@@ -2756,7 +2756,7 @@ describe('vterm', function()
     --   ?pen small = off
     --   ?pen baseline = normal
     --
-    -- -- DECSTR resets pen attributes
+    -- DECSTR resets pen attributes
     -- push "\x1b[1;4m"
     --   ?pen bold = on
     --   ?pen underline = 1
@@ -2896,25 +2896,25 @@ describe('vterm', function()
     expect('selection-query mask=0001')
 
     -- TODO(dundargoc): fix
-    -- -- Send clipboard; final chunk len 4
+    -- Send clipboard; final chunk len 4
     -- SELECTION 1 ["Hello,"]
     --   output "\x1b]52;c;"
     --   output "SGVsbG8s"
     --   output "\x1b\\"
     --
-    -- -- Send clipboard; final chunk len 3
+    -- Send clipboard; final chunk len 3
     -- SELECTION 1 ["Hello, w"]
     --   output "\x1b]52;c;"
     --   output "SGVsbG8s"
     --   output "IHc=\x1b\\"
     --
-    -- -- Send clipboard; final chunk len 2
+    -- Send clipboard; final chunk len 2
     -- SELECTION 1 ["Hello, world\n"]
     --   output "\x1b]52;c;"
     --   output "SGVsbG8sIHdvcmxk"
     --   output "Cg==\x1b\\"
     --
-    -- -- Send clipboard; split between chunks
+    -- Send clipboard; split between chunks
     -- SELECTION 1 ["Hel"
     --   output "\x1b]52;c;"
     --   output "SGVs"
@@ -2922,7 +2922,7 @@ describe('vterm', function()
     --   output "bG8s"
     --   output "\x1b\\"
     --
-    -- -- Send clipboard; split within chunk
+    -- Send clipboard; split within chunk
     -- SELECTION 1 ["Hello"
     --   output "\x1b]52;c;"
     --   output "SGVs"
