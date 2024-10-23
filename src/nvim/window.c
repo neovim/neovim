@@ -7384,10 +7384,10 @@ const char *check_colorcolumn(char *cc, win_T *wp)
     return NULL;      // buffer was closed
   }
 
-  char *s;
+  char *s = empty_string_option;
   if (cc != NULL) {
     s = cc;
-  } else {
+  } else if (wp != NULL) {
     s = wp->w_p_cc;
   }
 
