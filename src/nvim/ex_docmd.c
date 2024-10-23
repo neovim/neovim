@@ -5651,7 +5651,7 @@ void do_read_cmd(exarg_T *eap)
   kv_printf(put_cmd, "execute ln | ");
   kv_printf(put_cmd, "norm! w");
 
-  do_cmdline(put_cmd.items, NUL, NUL, 0);
+  do_cmdline(put_cmd.items, eap->ea_getline, eap->cookie, eap->flags);
   kv_destroy(put_cmd);
 }
 
