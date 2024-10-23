@@ -215,173 +215,126 @@ do
 
   --- vim-unimpaired style mappings. See: https://github.com/tpope/vim-unimpaired
   do
+    ---@param lhs string
+    ---@param rhs function
+    ---@param desc string
+    local function create_unimpaired_mapping(lhs, rhs, desc)
+      vim.keymap.set('n', lhs, function()
+        local _, err = pcall(rhs) ---@type any, string
+        if err then
+          vim.api.nvim_err_writeln(err)
+        end
+      end, { desc = desc })
+    end
+
     -- Quickfix mappings
-    vim.keymap.set('n', '[q', function()
+    create_unimpaired_mapping('[q', function()
       vim.cmd.cprevious({ count = vim.v.count1 })
-    end, {
-      desc = ':cprevious',
-    })
-
-    vim.keymap.set('n', ']q', function()
+    end, ':cprevious')
+    create_unimpaired_mapping(']q', function()
       vim.cmd.cnext({ count = vim.v.count1 })
-    end, {
-      desc = ':cnext',
-    })
-
-    vim.keymap.set('n', '[Q', function()
-      vim.cmd.crewind({ count = vim.v.count ~= 0 and vim.v.count or nil })
-    end, {
-      desc = ':crewind',
-    })
-
-    vim.keymap.set('n', ']Q', function()
-      vim.cmd.clast({ count = vim.v.count ~= 0 and vim.v.count or nil })
-    end, {
-      desc = ':clast',
-    })
-
-    vim.keymap.set('n', '[<C-Q>', function()
+    end, ':cnext')
+    create_unimpaired_mapping('[<C-Q>', function()
       vim.cmd.cpfile({ count = vim.v.count1 })
-    end, {
-      desc = ':cpfile',
-    })
-
-    vim.keymap.set('n', ']<C-Q>', function()
+    end, ':cpfile')
+    create_unimpaired_mapping(']<C-Q>', function()
       vim.cmd.cnfile({ count = vim.v.count1 })
-    end, {
-      desc = ':cnfile',
-    })
+    end, ':cnfile')
 
     -- Location list mappings
-    vim.keymap.set('n', '[l', function()
+    create_unimpaired_mapping('[l', function()
       vim.cmd.lprevious({ count = vim.v.count1 })
-    end, {
-      desc = ':lprevious',
-    })
-
-    vim.keymap.set('n', ']l', function()
+    end, ':lprevious')
+    create_unimpaired_mapping(']l', function()
       vim.cmd.lnext({ count = vim.v.count1 })
-    end, {
-      desc = ':lnext',
-    })
-
-    vim.keymap.set('n', '[L', function()
+    end, ':lnext')
+    create_unimpaired_mapping('[L', function()
       vim.cmd.lrewind({ count = vim.v.count ~= 0 and vim.v.count or nil })
-    end, {
-      desc = ':lrewind',
-    })
-
-    vim.keymap.set('n', ']L', function()
+    end, ':lrewind')
+    create_unimpaired_mapping(']L', function()
       vim.cmd.llast({ count = vim.v.count ~= 0 and vim.v.count or nil })
-    end, {
-      desc = ':llast',
-    })
-
-    vim.keymap.set('n', '[<C-L>', function()
+    end, ':llast')
+    create_unimpaired_mapping('[<C-L>', function()
       vim.cmd.lpfile({ count = vim.v.count1 })
-    end, {
-      desc = ':lpfile',
-    })
-
-    vim.keymap.set('n', ']<C-L>', function()
+    end, ':lpfile')
+    create_unimpaired_mapping(']<C-L>', function()
       vim.cmd.lnfile({ count = vim.v.count1 })
-    end, {
-      desc = ':lnfile',
-    })
+    end, ':lnfile')
 
     -- Argument list
-    vim.keymap.set('n', '[a', function()
+    create_unimpaired_mapping('[a', function()
       vim.cmd.previous({ count = vim.v.count1 })
-    end, {
-      desc = ':previous',
-    })
-
-    vim.keymap.set('n', ']a', function()
+    end, ':previous')
+    create_unimpaired_mapping(']a', function()
       -- count doesn't work with :next, must use range. See #30641.
       vim.cmd.next({ range = { vim.v.count1 } })
-    end, {
-      desc = ':next',
-    })
-
-    vim.keymap.set('n', '[A', function()
+    end, ':next')
+    create_unimpaired_mapping('[A', function()
       if vim.v.count ~= 0 then
         vim.cmd.argument({ count = vim.v.count })
       else
         vim.cmd.rewind()
       end
-    end, {
-      desc = ':rewind',
-    })
-
-    vim.keymap.set('n', ']A', function()
+    end, ':rewind')
+    create_unimpaired_mapping(']A', function()
       if vim.v.count ~= 0 then
         vim.cmd.argument({ count = vim.v.count })
       else
         vim.cmd.last()
       end
-    end, {
-      desc = ':last',
-    })
+    end, ':last')
 
     -- Tags
-    vim.keymap.set('n', '[t', function()
+    create_unimpaired_mapping('[t', function()
       -- count doesn't work with :tprevious, must use range. See #30641.
       vim.cmd.tprevious({ range = { vim.v.count1 } })
-    end, { desc = ':tprevious' })
-
-    vim.keymap.set('n', ']t', function()
+    end, ':tprevious')
+    create_unimpaired_mapping(']t', function()
       -- count doesn't work with :tnext, must use range. See #30641.
       vim.cmd.tnext({ range = { vim.v.count1 } })
-    end, { desc = ':tnext' })
-
-    vim.keymap.set('n', '[T', function()
+    end, ':tnext')
+    create_unimpaired_mapping('[T', function()
       -- count doesn't work with :trewind, must use range. See #30641.
       vim.cmd.trewind({ range = vim.v.count ~= 0 and { vim.v.count } or nil })
-    end, { desc = ':trewind' })
-
-    vim.keymap.set('n', ']T', function()
+    end, ':trewind')
+    create_unimpaired_mapping(']T', function()
       -- :tlast does not accept a count, so use :trewind if count given
       if vim.v.count ~= 0 then
         vim.cmd.trewind({ range = { vim.v.count } })
       else
         vim.cmd.tlast()
       end
-    end, { desc = ':tlast' })
-
-    vim.keymap.set('n', '[<C-T>', function()
+    end, ':tlast')
+    create_unimpaired_mapping('[<C-T>', function()
       -- count doesn't work with :ptprevious, must use range. See #30641.
       vim.cmd.ptprevious({ range = { vim.v.count1 } })
-    end, { desc = ' :ptprevious' })
-
-    vim.keymap.set('n', ']<C-T>', function()
+    end, ' :ptprevious')
+    create_unimpaired_mapping(']<C-T>', function()
       -- count doesn't work with :ptnext, must use range. See #30641.
       vim.cmd.ptnext({ range = { vim.v.count1 } })
-    end, { desc = ':ptnext' })
+    end, ':ptnext')
 
     -- Buffers
-    vim.keymap.set('n', '[b', function()
+    create_unimpaired_mapping('[b', function()
       vim.cmd.bprevious({ count = vim.v.count1 })
-    end, { desc = ':bprevious' })
-
-    vim.keymap.set('n', ']b', function()
+    end, ':bprevious')
+    create_unimpaired_mapping(']b', function()
       vim.cmd.bnext({ count = vim.v.count1 })
-    end, { desc = ':bnext' })
-
-    vim.keymap.set('n', '[B', function()
+    end, ':bnext')
+    create_unimpaired_mapping('[B', function()
       if vim.v.count ~= 0 then
         vim.cmd.buffer({ count = vim.v.count })
       else
         vim.cmd.brewind()
       end
-    end, { desc = ':brewind' })
-
-    vim.keymap.set('n', ']B', function()
+    end, ':brewind')
+    create_unimpaired_mapping(']B', function()
       if vim.v.count ~= 0 then
         vim.cmd.buffer({ count = vim.v.count })
       else
         vim.cmd.blast()
       end
-    end, { desc = ':blast' })
+    end, ':blast')
   end
 end
 
