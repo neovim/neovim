@@ -545,7 +545,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   -- TODO: handle double-width characters
   if regtype:byte() == 22 then
     local bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
-    pos1[2] = vim.str_utfindex(bufline, pos1[2])
+    pos1[2] = vim.str_utfindex(bufline, 'utf-32', pos1[2])
   end
 
   local region = {}
@@ -557,14 +557,14 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       c2 = c1 + tonumber(regtype:sub(2))
       -- and adjust for non-ASCII characters
       local bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
-      local utflen = vim.str_utfindex(bufline, #bufline)
+      local utflen = vim.str_utfindex(bufline, 'utf-32', #bufline)
       if c1 <= utflen then
-        c1 = assert(tonumber(vim.str_byteindex(bufline, c1)))
+        c1 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c1)))
       else
         c1 = #bufline + 1
       end
       if c2 <= utflen then
-        c2 = assert(tonumber(vim.str_byteindex(bufline, c2)))
+        c2 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c2)))
       else
         c2 = #bufline + 1
       end
