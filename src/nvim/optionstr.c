@@ -1572,12 +1572,28 @@ int expand_set_inccommand(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
+/// The 'iskeyword' option is changed.
+const char *did_set_iskeyword(optset_T *args)
+{
+  char **varp = (char **)args->os_varp;
+
+  if (varp == &p_isk) {       // only check for global-value
+    if (check_isopt(*varp) == FAIL) {
+      return e_invarg;
+    }
+  } else {                    // fallthrough for local-value
+    return did_set_isopt(args);
+  }
+
+  return NULL;
+}
+
 /// The 'isident' or the 'iskeyword' or the 'isprint' or the 'isfname' option is
 /// changed.
 const char *did_set_isopt(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  // 'isident', 'iskeyword', 'isprint or 'isfname' option: refill g_chartab[]
+  // 'isident', 'iskeyword', 'isprint' or 'isfname' option: refill g_chartab[]
   // If the new option is invalid, use old value.
   // 'lisp' option: refill g_chartab[] for '-' char
   if (buf_init_chartab(buf, true) == FAIL) {

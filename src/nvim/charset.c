@@ -88,13 +88,11 @@ int init_chartab(void)
 /// an error, OK otherwise.
 int buf_init_chartab(buf_T *buf, bool global)
 {
-  int c;
-
   if (global) {
     // Set the default size for printable characters:
     // From <Space> to '~' is 1 (printable), others are 2 (not printable).
     // This also inits all 'isident' and 'isfname' flags to false.
-    c = 0;
+    int c = 0;
 
     while (c < ' ') {
       g_chartab[c++] = (dy_flags & DY_UHEX) ? 4 : 2;
@@ -124,9 +122,7 @@ int buf_init_chartab(buf_T *buf, bool global)
     SET_CHARTAB(buf, '-');
   }
 
-  // Walk through the 'isident', 'iskeyword', 'isfname' and 'isprint'
-  // options Each option is a list of characters, character numbers or
-  // ranges, separated by commas, e.g.: "200-210,x,#-178,-"
+  // Walk through the 'isident', 'iskeyword', 'isfname' and 'isprint' options.
   for (int i = global ? 0 : 3; i <= 3; i++) {
     const char *p;
     if (i == 0) {
@@ -142,110 +138,130 @@ int buf_init_chartab(buf_T *buf, bool global)
       // fourth round: 'iskeyword'
       p = buf->b_p_isk;
     }
-
-    while (*p) {
-      bool tilde = false;
-      bool do_isalpha = false;
-
-      if ((*p == '^') && (p[1] != NUL)) {
-        tilde = true;
-        p++;
-      }
-
-      if (ascii_isdigit(*p)) {
-        c = getdigits_int((char **)&p, true, 0);
-      } else {
-        c = mb_ptr2char_adv(&p);
-      }
-      int c2 = -1;
-
-      if ((*p == '-') && (p[1] != NUL)) {
-        p++;
-
-        if (ascii_isdigit(*p)) {
-          c2 = getdigits_int((char **)&p, true, 0);
-        } else {
-          c2 = mb_ptr2char_adv(&p);
-        }
-      }
-
-      if ((c <= 0)
-          || (c >= 256)
-          || ((c2 < c) && (c2 != -1))
-          || (c2 >= 256)
-          || !((*p == NUL) || (*p == ','))) {
-        return FAIL;
-      }
-
-      if (c2 == -1) {  // not a range
-        // A single '@' (not "@-@"):
-        // Decide on letters being ID/printable/keyword chars with
-        // standard function isalpha(). This takes care of locale for
-        // single-byte characters).
-        if (c == '@') {
-          do_isalpha = true;
-          c = 1;
-          c2 = 255;
-        } else {
-          c2 = c;
-        }
-      }
-
-      while (c <= c2) {
-        // Use the MB_ functions here, because isalpha() doesn't
-        // work properly when 'encoding' is "latin1" and the locale is
-        // "C".
-        if (!do_isalpha
-            || mb_islower(c)
-            || mb_isupper(c)) {
-          if (i == 0) {
-            // (re)set ID flag
-            if (tilde) {
-              g_chartab[c] &= (uint8_t) ~CT_ID_CHAR;
-            } else {
-              g_chartab[c] |= CT_ID_CHAR;
-            }
-          } else if (i == 1) {
-            // (re)set printable
-            if (c < ' ' || c > '~') {
-              if (tilde) {
-                g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK)
-                                         + ((dy_flags & DY_UHEX) ? 4 : 2));
-                g_chartab[c] &= (uint8_t) ~CT_PRINT_CHAR;
-              } else {
-                g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK) + 1);
-                g_chartab[c] |= CT_PRINT_CHAR;
-              }
-            }
-          } else if (i == 2) {
-            // (re)set fname flag
-            if (tilde) {
-              g_chartab[c] &= (uint8_t) ~CT_FNAME_CHAR;
-            } else {
-              g_chartab[c] |= CT_FNAME_CHAR;
-            }
-          } else {  // i == 3
-            // (re)set keyword flag
-            if (tilde) {
-              RESET_CHARTAB(buf, c);
-            } else {
-              SET_CHARTAB(buf, c);
-            }
-          }
-        }
-        c++;
-      }
-
-      c = (uint8_t)(*p);
-      p = skip_to_option_part(p);
-
-      if ((c == ',') && (*p == NUL)) {
-        // Trailing comma is not allowed.
-        return FAIL;
-      }
+    if (parse_isopt(p, buf, false) == FAIL) {
+      return FAIL;
     }
   }
+
   chartab_initialized = true;
+  return OK;
+}
+
+/// Checks the format for the option settings 'iskeyword', 'isident', 'isfname'
+/// or 'isprint'.
+/// Returns FAIL if has an error, OK otherwise.
+int check_isopt(char *var)
+{
+  return parse_isopt(var, NULL, true);
+}
+
+/// @param only_check  if false: refill g_chartab[]
+static int parse_isopt(const char *var, buf_T *buf, bool only_check)
+{
+  const char *p = var;
+
+  // Parses the 'isident', 'iskeyword', 'isfname' and 'isprint' options.
+  // Each option is a list of characters, character numbers or ranges,
+  // separated by commas, e.g.: "200-210,x,#-178,-"
+  while (*p) {
+    bool tilde = false;
+    bool do_isalpha = false;
+
+    if (*p == '^' && p[1] != NUL) {
+      tilde = true;
+      p++;
+    }
+
+    int c;
+    if (ascii_isdigit(*p)) {
+      c = getdigits_int((char **)&p, true, 0);
+    } else {
+      c = mb_ptr2char_adv(&p);
+    }
+    int c2 = -1;
+
+    if (*p == '-' && p[1] != NUL) {
+      p++;
+
+      if (ascii_isdigit(*p)) {
+        c2 = getdigits_int((char **)&p, true, 0);
+      } else {
+        c2 = mb_ptr2char_adv(&p);
+      }
+    }
+
+    if (c <= 0 || c >= 256 || (c2 < c && c2 != -1) || c2 >= 256
+        || !(*p == NUL || *p == ',')) {
+      return FAIL;
+    }
+
+    bool trail_comma = *p == ',';
+    p = skip_to_option_part(p);
+    if (trail_comma && *p == NUL) {
+      // Trailing comma is not allowed.
+      return FAIL;
+    }
+
+    if (only_check) {
+      continue;
+    }
+
+    if (c2 == -1) {  // not a range
+      // A single '@' (not "@-@"):
+      // Decide on letters being ID/printable/keyword chars with
+      // standard function isalpha(). This takes care of locale for
+      // single-byte characters).
+      if (c == '@') {
+        do_isalpha = true;
+        c = 1;
+        c2 = 255;
+      } else {
+        c2 = c;
+      }
+    }
+
+    while (c <= c2) {
+      // Use the MB_ functions here, because isalpha() doesn't
+      // work properly when 'encoding' is "latin1" and the locale is
+      // "C".
+      if (!do_isalpha
+          || mb_islower(c)
+          || mb_isupper(c)) {
+        if (var == p_isi) {  // (re)set ID flag
+          if (tilde) {
+            g_chartab[c] &= (uint8_t) ~CT_ID_CHAR;
+          } else {
+            g_chartab[c] |= CT_ID_CHAR;
+          }
+        } else if (var == p_isp) {  // (re)set printable
+          if (c < ' ' || c > '~') {
+            if (tilde) {
+              g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK)
+                                       + ((dy_flags & DY_UHEX) ? 4 : 2));
+              g_chartab[c] &= (uint8_t) ~CT_PRINT_CHAR;
+            } else {
+              g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK) + 1);
+              g_chartab[c] |= CT_PRINT_CHAR;
+            }
+          }
+        } else if (var == p_isf) {  // (re)set fname flag
+          if (tilde) {
+            g_chartab[c] &= (uint8_t) ~CT_FNAME_CHAR;
+          } else {
+            g_chartab[c] |= CT_FNAME_CHAR;
+          }
+        } else {  // (var == p_isk || var == buf->b_p_isk) (re)set keyword flag
+          if (tilde) {
+            RESET_CHARTAB(buf, c);
+          } else {
+            SET_CHARTAB(buf, c);
+          }
+        }
+      }
+      c++;
+    }
+  }
+
   return OK;
 }
 

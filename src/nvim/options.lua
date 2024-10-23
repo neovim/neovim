@@ -4459,7 +4459,7 @@ return {
     {
       abbreviation = 'isk',
       alloced = true,
-      cb = 'did_set_isopt',
+      cb = 'did_set_iskeyword',
       defaults = { if_true = '@,48-57,_,192-255' },
       deny_duplicates = true,
       desc = [=[
