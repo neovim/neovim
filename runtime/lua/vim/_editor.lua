@@ -740,6 +740,11 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
     --   • {str}        (`string`)
     --   • {index}      (`integer`)
     --   • {use_utf16}  (`boolean?`)
+    vim.deprecate(
+      'vim.str_byteindex',
+      'vim.str_byteindex(s, encoding, index, strict_indexing)',
+      '1.0'
+    )
     local old_index = encoding
     local use_utf16 = index or false
     return vim.__str_byteindex(s, old_index, use_utf16) or error('index out of range')
@@ -793,6 +798,11 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
     -- Parameters: ~
     --   • {str}    (`string`)
     --   • {index}  (`integer?`)
+    vim.deprecate(
+      'vim.str_utfindex',
+      'vim.str_utfindex(s, encoding, index, strict_indexing)',
+      '1.0'
+    )
     local old_index = encoding
     local col32, col16 = vim.__str_utfindex(s, old_index) --[[@as integer,integer]]
     if not col32 or not col16 then
