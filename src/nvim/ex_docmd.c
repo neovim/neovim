@@ -5645,7 +5645,11 @@ void do_read_cmd(exarg_T *eap)
 {
   char *cmd = eap->arg + 1;
   StringBuilder put_cmd = KV_INITIAL_VALUE;
-  kv_printf(put_cmd, "$put =execute('%s')", cmd);
+  kv_printf(put_cmd, "let ln = line('.')  + 1| ");
+  kv_printf(put_cmd, ".put =execute('%s') | ", cmd);
+  kv_printf(put_cmd, "execute ln 'd _' | ");
+  kv_printf(put_cmd, "execute ln | ");
+  kv_printf(put_cmd, "norm! w");
 
   do_cmdline(put_cmd.items, NUL, NUL, 0);
   kv_destroy(put_cmd);
