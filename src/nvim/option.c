@@ -5112,7 +5112,7 @@ void didset_window_options(win_T *wp, bool valid_cursor)
     wp->w_skipcol = 0;
   }
   check_colorcolumn(NULL, wp);
-  briopt_check(wp);
+  briopt_check(NULL, wp);
   fill_culopt_flags(NULL, wp);
   set_chars_option(wp, wp->w_p_fcs, kFillchars, true, NULL, 0);
   set_chars_option(wp, wp->w_p_lcs, kListchars, true, NULL, 0);

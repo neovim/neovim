@@ -717,11 +717,14 @@ const char *did_set_breakat(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_breakindentopt(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  if (briopt_check(win) == FAIL) {
+  char **varp = (char **)args->os_varp;
+
+  if (briopt_check(*varp, varp == &win->w_p_briopt ? win : NULL) == FAIL) {
     return e_invarg;
   }
+
   // list setting requires a redraw
-  if (win == curwin && win->w_briopt_list) {
+  if (varp == &win->w_p_briopt && win->w_briopt_list) {
     redraw_all_later(UPD_NOT_VALID);
   }
 
