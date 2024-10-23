@@ -137,16 +137,10 @@ local function tokens_to_ranges(data, bufnr, client, request)
     local token_type = token_types[data[i + 3] + 1]
     local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
 
-    local function _get_byte_pos(col)
-      if col > 0 then
-        local buf_line = lines[line + 1] or ''
-        return util._str_byteindex_enc(buf_line, col, client.offset_encoding)
-      end
-      return col
-    end
-
-    local start_col = _get_byte_pos(start_char)
-    local end_col = _get_byte_pos(start_char + data[i + 2])
+    local end_char = start_char + data[i + 2]
+    local buf_line = lines and lines[line + 1] or ''
+    local start_col = vim.str_byteindex(buf_line, client.offset_encoding, start_char, false)
+    local end_col = vim.str_byteindex(buf_line, client.offset_encoding, end_char, false)
 
     if token_type then
       ranges[#ranges + 1] = {
