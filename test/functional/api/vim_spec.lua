@@ -3141,14 +3141,23 @@ describe('API', function()
 
   describe('nvim_create_namespace', function()
     it('works', function()
-      eq({}, api.nvim_get_namespaces())
-      eq(1, api.nvim_create_namespace('ns-1'))
-      eq(2, api.nvim_create_namespace('ns-2'))
-      eq(1, api.nvim_create_namespace('ns-1'))
-      eq({ ['ns-1'] = 1, ['ns-2'] = 2 }, api.nvim_get_namespaces())
-      eq(3, api.nvim_create_namespace(''))
-      eq(4, api.nvim_create_namespace(''))
-      eq({ ['ns-1'] = 1, ['ns-2'] = 2 }, api.nvim_get_namespaces())
+      local augoup_ns =
+        { nvim_cmdwin = 3, nvim_popupmenu = 1, nvim_swapfile = 4, nvim_terminal = 2 }
+      eq(augoup_ns, api.nvim_get_namespaces())
+      local ns_offset = vim.tbl_count(augoup_ns)
+      eq(1 + ns_offset, api.nvim_create_namespace('ns-1'))
+      eq(2 + ns_offset, api.nvim_create_namespace('ns-2'))
+      eq(1 + ns_offset, api.nvim_create_namespace('ns-1'))
+      eq(
+        vim.tbl_extend('error', { ['ns-1'] = 1 + ns_offset, ['ns-2'] = 2 + ns_offset }, augoup_ns),
+        api.nvim_get_namespaces()
+      )
+      eq(3 + ns_offset, api.nvim_create_namespace(''))
+      eq(4 + ns_offset, api.nvim_create_namespace(''))
+      eq(
+        vim.tbl_extend('error', { ['ns-1'] = 1 + ns_offset, ['ns-2'] = 2 + ns_offset }, augoup_ns),
+        api.nvim_get_namespaces()
+      )
     end)
   end)
 
