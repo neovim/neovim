@@ -191,6 +191,7 @@ function M.signature_help()
   lsp.buf_request(0, ms.textDocument_signatureHelp, client_positional_params())
 end
 
+--- @deprecated
 --- Retrieves the completion items at the current cursor position. Can only be
 --- called in Insert mode.
 ---
@@ -200,6 +201,7 @@ end
 ---
 ---@see vim.lsp.protocol.CompletionTriggerKind
 function M.completion(context)
+  vim.depends('vim.lsp.buf.completion', 'vim.lsp.commpletion.trigger', '0.12')
   return lsp.buf_request(
     0,
     ms.textDocument_completion,

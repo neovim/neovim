@@ -1309,19 +1309,6 @@ code_action({opts})                                *vim.lsp.buf.code_action()*
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
       • vim.lsp.protocol.CodeActionTriggerKind
 
-completion({context})                               *vim.lsp.buf.completion()*
-    Retrieves the completion items at the current cursor position. Can only be
-    called in Insert mode.
-
-    Parameters: ~
-      • {context}  (`table`) (context support not yet implemented) Additional
-                   information about the context in which a completion was
-                   triggered (how it was triggered, and by which trigger
-                   character, if applicable)
-
-    See also: ~
-      • vim.lsp.protocol.CompletionTriggerKind
-
 declaration({opts})                                *vim.lsp.buf.declaration()*
     Jumps to the declaration of the symbol under the cursor.
 
