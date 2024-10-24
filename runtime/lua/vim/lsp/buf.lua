@@ -7,26 +7,6 @@ local ms = require('vim.lsp.protocol').Methods
 
 local M = {}
 
---- Sends an async request to all active clients attached to the current
---- buffer.
----
----@param method (string) LSP method name
----@param params (table|nil) Parameters to send to the server
----@param handler lsp.Handler? See |lsp-handler|. Follows |lsp-handler-resolution|
----
----@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
----for all successful requests.
----@return function _cancel_all_requests Function which can be used to
----cancel all the requests. You could instead
----iterate all clients and call their `cancel_request()` methods.
----
----@see |vim.lsp.buf_request()|
-local function request(method, params, handler)
-  validate('method', method, 'string')
-  validate('handler', handler, 'function', true)
-  return lsp.buf_request(0, method, params, handler)
-end
-
 --- Displays hover information about the symbol under the cursor in a floating
 --- window. The window will be dismissed on cursor move.
 --- Calling the function twice will jump into the floating window
@@ -48,7 +28,7 @@ local function request_with_opts(name, params, opts)
       handler(err, result, ctx, vim.tbl_extend('force', config or {}, opts))
     end
   end
-  request(name, params, req_handler)
+  lsp.buf_request(0, name, params, req_handler)
 end
 
 ---@param method string
@@ -187,7 +167,7 @@ end
 --- floating window.
 function M.signature_help()
   local params = util.make_position_params()
-  request(ms.textDocument_signatureHelp, params)
+  lsp.buf_request(0, ms.textDocument_signatureHelp, params)
 end
 
 --- Retrieves the completion items at the current cursor position. Can only be
@@ -201,7 +181,7 @@ end
 function M.completion(context)
   local params = util.make_position_params()
   params.context = context
-  return request(ms.textDocument_completion, params)
+  return lsp.buf_request(0, ms.textDocument_completion, params)
 end
 
 ---@param bufnr integer
@@ -609,7 +589,7 @@ end
 local function call_hierarchy(method)
   local params = util.make_position_params()
   --- @param result lsp.CallHierarchyItem[]?
-  request(ms.textDocument_prepareCallHierarchy, params, function(err, result, ctx)
+  lsp.buf_request(0, ms.textDocument_prepareCallHierarchy, params, function(err, result, ctx)
     if err then
       vim.notify(err.message, vim.log.levels.WARN)
       return
@@ -794,7 +774,7 @@ end
 ---         |hl-LspReferenceWrite|
 function M.document_highlight()
   local params = util.make_position_params()
-  request(ms.textDocument_documentHighlight, params)
+  lsp.buf_request(0, ms.textDocument_documentHighlight, params)
 end
 
 --- Removes document highlights from current buffer.
@@ -1063,7 +1043,7 @@ function M.execute_command(command_params)
     arguments = command_params.arguments,
     workDoneToken = command_params.workDoneToken,
   }
-  request(ms.workspace_executeCommand, command_params)
+  lsp.buf_request(0, ms.workspace_executeCommand, command_params)
 end
 
 return M
