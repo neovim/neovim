@@ -7,6 +7,19 @@ local ms = require('vim.lsp.protocol').Methods
 
 local M = {}
 
+--- @param params? table
+--- @return fun(client: vim.lsp.Client): lsp.TextDocumentPositionParams
+local function client_positional_params(params)
+  local win = api.nvim_get_current_win()
+  return function(client)
+    local ret = util.make_position_params(win, client.offset_encoding)
+    if params then
+      ret = vim.tbl_extend('force', ret, params)
+    end
+    return ret
+  end
+end
+
 --- Displays hover information about the symbol under the cursor in a floating
 --- window. The window will be dismissed on cursor move.
 --- Calling the function twice will jump into the floating window
@@ -15,8 +28,7 @@ local M = {}
 --- except that "q" dismisses the window.
 --- You can scroll the contents the same as you would any other buffer.
 function M.hover()
-  local params = util.make_position_params()
-  lsp.buf_request(0, ms.textDocument_hover, params)
+  lsp.buf_request(0, ms.textDocument_hover, client_positional_params())
 end
 
 local function request_with_opts(name, params, opts)
@@ -166,8 +178,7 @@ end
 --- Displays signature information about the symbol under the cursor in a
 --- floating window.
 function M.signature_help()
-  local params = util.make_position_params()
-  lsp.buf_request(0, ms.textDocument_signatureHelp, params)
+  lsp.buf_request(0, ms.textDocument_signatureHelp, client_positional_params())
 end
 
 --- Retrieves the completion items at the current cursor position. Can only be
@@ -179,9 +190,13 @@ end
 ---
 ---@see vim.lsp.protocol.CompletionTriggerKind
 function M.completion(context)
-  local params = util.make_position_params()
-  params.context = context
-  return lsp.buf_request(0, ms.textDocument_completion, params)
+  return lsp.buf_request(
+    0,
+    ms.textDocument_completion,
+    client_positional_params({
+      context = context,
+    })
+  )
 end
 
 ---@param bufnr integer
@@ -587,23 +602,27 @@ end
 
 --- @param method string
 local function call_hierarchy(method)
-  local params = util.make_position_params()
-  --- @param result lsp.CallHierarchyItem[]?
-  lsp.buf_request(0, ms.textDocument_prepareCallHierarchy, params, function(err, result, ctx)
-    if err then
-      vim.notify(err.message, vim.log.levels.WARN)
-      return
+  lsp.buf_request(
+    0,
+    ms.textDocument_prepareCallHierarchy,
+    client_positional_params(),
+    --- @param result lsp.CallHierarchyItem[]?
+    function(err, result, ctx)
+      if err then
+        vim.notify(err.message, vim.log.levels.WARN)
+        return
+      end
+      if not result or vim.tbl_isempty(result) then
+        vim.notify('No item resolved', vim.log.levels.WARN)
+        return
+      end
+      local item = pick_call_hierarchy_item(result)
+      if not item then
+        return
+      end
+      request_with_id(ctx.client_id, method, { item = item }, nil, ctx.bufnr)
     end
-    if not result or vim.tbl_isempty(result) then
-      vim.notify('No item resolved', vim.log.levels.WARN)
-      return
-    end
-    local item = pick_call_hierarchy_item(result)
-    if not item then
-      return
-    end
-    request_with_id(ctx.client_id, method, { item = item }, nil, ctx.bufnr)
-  end)
+  )
 end
 
 --- Lists all the call sites of the symbol under the cursor in the
@@ -773,8 +792,7 @@ end
 ---         |hl-LspReferenceRead|
 ---         |hl-LspReferenceWrite|
 function M.document_highlight()
-  local params = util.make_position_params()
-  lsp.buf_request(0, ms.textDocument_documentHighlight, params)
+  lsp.buf_request(0, ms.textDocument_documentHighlight, client_positional_params())
 end
 
 --- Removes document highlights from current buffer.
