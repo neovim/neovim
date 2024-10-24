@@ -5645,7 +5645,7 @@ void do_read_cmd(exarg_T *eap)
 {
   char *cmd = eap->arg + 1;
   StringBuilder put_cmd = KV_INITIAL_VALUE;
-  kv_printf(put_cmd, ".put=execute('%s') | ", cmd);
+  kv_printf(put_cmd, "%dput=execute('%s') | ", eap->line2, cmd);
   kv_printf(put_cmd, "execute 'norm! `.' | ");
   kv_printf(put_cmd, "execute 'd _' | ");
 
