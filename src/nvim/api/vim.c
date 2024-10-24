@@ -781,8 +781,8 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///                can be omitted for no highlight.
 /// @param history  if true, add to |message-history|.
 /// @param opts  Optional parameters.
-///          - verbose: Message was printed as a result of 'verbose' option
-///            if Nvim was invoked with -V3log_file, the message will be
+///          - verbose: Message is printed as a result of 'verbose' option.
+///            If Nvim was invoked with -V3log_file, the message will be
 ///            redirected to the log_file and suppressed from direct output.
 void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
   FUNC_API_SINCE(7)
