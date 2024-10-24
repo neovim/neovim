@@ -104,6 +104,10 @@ OPTIONS
   changes according to related options. It takes care of alignment, 'number',
   'relativenumber' and 'signcolumn' set to "number". The now redundant `%r` item
   is no longer treated specially for 'statuscolumn'.
+• `:set {option}<` removes the local value for all |global-local| options instead
+  of just string |global-local| options.
+• `:setlocal {option}<` copies the global value to the local value for number
+  and boolean |global-local| options instead of removing the local value.
 
 PLUGINS
 
