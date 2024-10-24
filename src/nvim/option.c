@@ -1816,12 +1816,22 @@ void check_blending(win_T *wp)
 }
 
 /// Handle setting `winhighlight' in window "wp"
-bool parse_winhl_opt(win_T *wp)
+///
+/// @param winhl  when NULL: use "wp->w_p_winhl"
+/// @param wp     when NULL: only parse "winhl"
+///
+/// @return  whether the option value is valid.
+bool parse_winhl_opt(const char *winhl, win_T *wp)
 {
-  const char *p = wp->w_p_winhl;
+  const char *p = empty_string_option;
+  if (winhl != NULL) {
+    p = winhl;
+  } else if (wp != NULL) {
+    p = wp->w_p_winhl;
+  }
 
   if (!*p) {
-    if (wp->w_ns_hl_winhl && wp->w_ns_hl == wp->w_ns_hl_winhl) {
+    if (wp != NULL && wp->w_ns_hl_winhl && wp->w_ns_hl == wp->w_ns_hl_winhl) {
       wp->w_ns_hl = 0;
       wp->w_hl_needs_update = true;
     }
@@ -1829,24 +1839,27 @@ bool parse_winhl_opt(win_T *wp)
     return true;
   }
 
-  if (wp->w_ns_hl_winhl == 0) {
-    wp->w_ns_hl_winhl = (int)nvim_create_namespace(NULL_STRING);
-  } else {
-    // namespace already exist. invalidate existing items
-    DecorProvider *dp = get_decor_provider(wp->w_ns_hl_winhl, true);
-    dp->hl_valid++;
+  int ns_hl = 0;
+  if (wp != NULL) {
+    if (wp->w_ns_hl_winhl == 0) {
+      wp->w_ns_hl_winhl = (int)nvim_create_namespace(NULL_STRING);
+    } else {
+      // Namespace already exists. Invalidate existing items.
+      DecorProvider *dp = get_decor_provider(wp->w_ns_hl_winhl, true);
+      dp->hl_valid++;
+    }
+    wp->w_ns_hl = wp->w_ns_hl_winhl;
+    ns_hl = wp->w_ns_hl;
   }
-  wp->w_ns_hl = wp->w_ns_hl_winhl;
-  int ns_hl = wp->w_ns_hl;
 
   while (*p) {
-    char *colon = strchr(p, ':');
+    const char *colon = strchr(p, ':');
     if (!colon) {
       return false;
     }
     size_t nlen = (size_t)(colon - p);
-    char *hi = colon + 1;
-    char *commap = xstrchrnul(hi, ',');
+    const char *hi = colon + 1;
+    const char *commap = xstrchrnul(hi, ',');
     size_t len = (size_t)(commap - hi);
     int hl_id = len ? syn_check_group(hi, len) : -1;
     if (hl_id == 0) {
@@ -1857,14 +1870,18 @@ bool parse_winhl_opt(win_T *wp)
       return false;
     }
 
-    HlAttrs attrs = HLATTRS_INIT;
-    attrs.rgb_ae_attr |= HL_GLOBAL;
-    ns_hl_def(ns_hl, hl_id_link, attrs, hl_id, NULL);
+    if (wp != NULL) {
+      HlAttrs attrs = HLATTRS_INIT;
+      attrs.rgb_ae_attr |= HL_GLOBAL;
+      ns_hl_def(ns_hl, hl_id_link, attrs, hl_id, NULL);
+    }
 
     p = *commap ? commap + 1 : "";
   }
 
-  wp->w_hl_needs_update = true;
+  if (wp != NULL) {
+    wp->w_hl_needs_update = true;
+  }
   return true;
 }
 
@@ -2281,7 +2298,7 @@ static const char *did_set_number_relativenumber(optset_T *args)
     // When 'relativenumber'/'number' is changed and 'statuscolumn' is set, reset width.
     win->w_nrwidth_line_count = 0;
   }
-  check_signcolumn(win);
+  check_signcolumn(NULL, win);
   return NULL;
 }
 
@@ -5116,10 +5133,10 @@ void didset_window_options(win_T *wp, bool valid_cursor)
   fill_culopt_flags(NULL, wp);
   set_chars_option(wp, wp->w_p_fcs, kFillchars, true, NULL, 0);
   set_chars_option(wp, wp->w_p_lcs, kListchars, true, NULL, 0);
-  parse_winhl_opt(wp);  // sets w_hl_needs_update also for w_p_winbl
+  parse_winhl_opt(NULL, wp);  // sets w_hl_needs_update also for w_p_winbl
   check_blending(wp);
   set_winbar_win(wp, false, valid_cursor);
-  check_signcolumn(wp);
+  check_signcolumn(NULL, wp);
   wp->w_grid_alloc.blending = wp->w_p_winbl > 0;
 }
 
