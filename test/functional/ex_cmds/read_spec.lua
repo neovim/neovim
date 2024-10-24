@@ -1,7 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local eq, write_file, clear = t.eq, t.write_file, n.clear
+local eq, write_file, clear, pcall_err = t.eq, t.write_file, n.clear, t.pcall_err
 local fn = n.fn
 local setline, getline, setcharpos, execute = fn.setline, fn.getline, fn.setcharpos, fn.execute
 
@@ -81,5 +81,11 @@ describe(':read', function()
   end)
   it('command reads can be undone', function()
     test_undo('read ' .. tmp_file)
+  end)
+  it('errors out correctly when a non-existant file is used', function ()
+    eq('Vim(read):E484: Can\'t open file asdfasdf', pcall_err(execute, ':read asdfasdf'))
+  end)
+  it('errors out correctly when an invalid command is used', function ()
+    eq('Vim:E492: Not an editor command: asdfasdf', pcall_err(execute, ':read :asdfasdf'))
   end)
 end)
