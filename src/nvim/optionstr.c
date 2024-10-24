@@ -283,15 +283,27 @@ static bool valid_filetype(const char *val)
 
 /// Handle setting 'signcolumn' for value 'val'. Store minimum and maximum width.
 ///
+/// @param wcl  when NULL: use "wp->w_p_scl"
+/// @param wp   when NULL: only parse "scl"
+///
 /// @return OK when the value is valid, FAIL otherwise
-int check_signcolumn(win_T *wp)
+int check_signcolumn(char *scl, win_T *wp)
 {
-  char *val = wp->w_p_scl;
+  char *val = empty_string_option;
+  if (scl != NULL) {
+    val = scl;
+  } else if (wp != NULL) {
+    val = wp->w_p_scl;
+  }
+
   if (*val == NUL) {
     return FAIL;
   }
 
   if (check_opt_strings(val, p_scl_values, false) == OK) {
+    if (wp == NULL) {
+      return OK;
+    }
     if (!strncmp(val, "no", 2)) {  // no
       wp->w_minscwidth = wp->w_maxscwidth = SCL_NO;
     } else if (!strncmp(val, "nu", 2) && (wp->w_p_nu || wp->w_p_rnu)) {  // number
@@ -320,6 +332,9 @@ int check_signcolumn(win_T *wp)
     int max = val[7] - '0';
     if (min < 1 || max < 2 || min > 8 || min >= max) {
       return FAIL;
+    }
+    if (wp == NULL) {
+      return OK;
     }
     wp->w_minscwidth = min;
     wp->w_maxscwidth = max;
@@ -2099,8 +2114,9 @@ int expand_set_showcmdloc(optexpand_T *args, int *numMatches, char ***matches)
 const char *did_set_signcolumn(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
+  char **varp = (char **)args->os_varp;
   const char *oldval = args->os_oldval.string.data;
-  if (check_signcolumn(win) != OK) {
+  if (check_signcolumn(*varp, varp == &win->w_p_scl ? win : NULL) != OK) {
     return e_invarg;
   }
   // When changing the 'signcolumn' to or from 'number', recompute the
@@ -2568,7 +2584,8 @@ const char *did_set_winbar(optset_T *args)
 const char *did_set_winhighlight(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  if (!parse_winhl_opt(win)) {
+  char **varp = (char **)args->os_varp;
+  if (!parse_winhl_opt(*varp, varp == &win->w_p_winhl ? win : NULL)) {
     return e_invarg;
   }
   return NULL;
