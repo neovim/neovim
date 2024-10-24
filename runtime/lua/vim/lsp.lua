@@ -915,7 +915,9 @@ end
 ---
 ---@param bufnr (integer) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
----@param params? table|(fun(client: vim.lsp.Client, bufnr: integer): table?) Parameters to send to the server
+---@param params? table|(fun(client: vim.lsp.Client, bufnr: integer): table?) Parameters to send to the server.
+---               Can also be passed as a function that returns the params table for cases where
+---               parameters are specific to the client.
 ---@param handler lsp.MultiHandler (function)
 --- Handler called after all requests are completed. Server results are passed as
 --- a `client_id:result` map.

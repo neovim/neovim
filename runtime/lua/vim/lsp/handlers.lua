@@ -317,7 +317,7 @@ M[ms.textDocument_formatting] = function(_, result, ctx, _)
   util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
---- @deprecated
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 M[ms.textDocument_completion] = function(_, result, _, _)
   if vim.tbl_isempty(result or {}) then
@@ -334,6 +334,7 @@ M[ms.textDocument_completion] = function(_, result, _, _)
   vim.fn.complete(textMatch + 1, matches)
 end
 
+--- @deprecated
 --- |lsp-handler| for the method "textDocument/hover"
 ---
 --- ```lua
@@ -384,7 +385,9 @@ function M.hover(_, result, ctx, config)
   return util.open_floating_preview(contents, format, config)
 end
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
+--- @diagnostic disable-next-line: deprecated
 M[ms.textDocument_hover] = M.hover
 
 local sig_help_ns = api.nvim_create_namespace('vim_lsp_signature_help')
