@@ -112,10 +112,10 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
     local _end = diagnostic.range['end']
     local message = diagnostic.message
     if type(message) ~= 'string' then
-      vim.notify_once(
-        string.format('Unsupported Markup message from LSP client %d', client_id),
-        vim.lsp.log_levels.ERROR
-      )
+      if client then
+        --- @diagnostic disable-next-line:invisible
+        client:error(nil, 'Unsupported Markup message of type ' .. vim.inspect(message))
+      end
       message = diagnostic.message.value
     end
     --- @type vim.Diagnostic

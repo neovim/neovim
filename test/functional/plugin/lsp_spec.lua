@@ -5024,13 +5024,14 @@ describe('LSP', function()
         vim.notify = function(msg, _)
           _G.notify_msg = msg
         end
+        vim.notify_once = vim.notify
       end)
       local fail_msg = '[LSP] Format request failed, no matching language servers.'
       --- @param name string
       --- @param formatting boolean
       --- @param range_formatting boolean
       local function check_notify(name, formatting, range_formatting)
-        local timeout_msg = '[LSP][' .. name .. '] timeout'
+        local timeout_msg = 'LSP:' .. name .. ' (-1): timeout'
         exec_lua(function()
           local server = _G._create_server({
             capabilities = {

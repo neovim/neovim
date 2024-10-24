@@ -565,8 +565,9 @@ local function buf_attach(bufnr)
             client.request_sync(ms.textDocument_willSaveWaitUntil, params, 1000, ctx.buf)
           if result and result.result then
             util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
-          elseif err then
-            log.error(vim.inspect(err))
+          elseif err or result and result.err then
+            --- @diagnostic disable-next-line:need-check-nil
+            log.error(vim.inspect(err or result.err.message))
           end
         end
       end
@@ -634,7 +635,7 @@ function lsp.buf_attach_client(bufnr, client_id)
   validate('client_id', client_id, 'number')
   bufnr = resolve_bufnr(bufnr)
   if not api.nvim_buf_is_loaded(bufnr) then
-    log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
+    log.warn('lsp.buf_attach_client', string.format('called on unloaded buffer (id: %d): ', bufnr))
     return false
   end
 
@@ -1060,11 +1061,14 @@ function lsp.formatexpr(opts)
           character = end_col,
         },
       }
-      local response =
+      local response, err =
         client.request_sync(ms.textDocument_rangeFormatting, params, timeout_ms, bufnr)
       if response and response.result then
         lsp.util.apply_text_edits(response.result, bufnr, client.offset_encoding)
         return 0
+      elseif err or response and response.err then
+        --- @diagnostic disable-next-line:need-check-nil
+        log.error(vim.inspect(err or response.err.message))
       end
     end
   end
@@ -1212,6 +1216,25 @@ function lsp._with_extend(name, options, user_config)
   end
 
   return resulting_config
+end
+
+--- @param handler? lsp.Handler
+--- @param silent? boolean
+--- @return lsp.Handler
+function lsp._handler_wrap(handler, silent)
+  return function(err, result, params, ctx)
+    -- Per LSP, don't show ContentModified error to the user.
+    if err and err.code ~= lsp.protocol.ErrorCodes.ContentModified then
+      local client = vim.lsp.get_client_by_id(ctx.client_id)
+      if client then
+        --- @diagnostic disable-next-line:invisible
+        client:error(err.code, err.message, not silent)
+      end
+    end
+    if handler then
+      return handler(err, result, params, ctx)
+    end
+  end
 end
 
 --- Registry for client side commands.

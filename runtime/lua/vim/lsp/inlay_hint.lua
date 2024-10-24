@@ -1,5 +1,4 @@
 local util = require('vim.lsp.util')
-local log = require('vim.lsp.log')
 local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
 local M = {}
@@ -37,11 +36,7 @@ local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
 ---@param result lsp.InlayHint[]?
 ---@param ctx lsp.HandlerContext
 ---@private
-function M.on_inlayhint(err, result, ctx, _)
-  if err then
-    log.error('inlayhint', err)
-    return
-  end
+function M.on_inlayhint(_err, result, ctx, _)
   local bufnr = assert(ctx.bufnr)
   if
     util.buf_versions[bufnr] ~= ctx.version
@@ -95,10 +90,7 @@ end
 --- |lsp-handler| for the method `workspace/inlayHint/refresh`
 ---@param ctx lsp.HandlerContext
 ---@private
-function M.on_refresh(err, _, ctx, _)
-  if err then
-    return vim.NIL
-  end
+function M.on_refresh(_err, _, ctx, _)
   for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(ctx.client_id)) do
     for _, winid in ipairs(api.nvim_list_wins()) do
       if api.nvim_win_get_buf(winid) == bufnr then

@@ -1,5 +1,4 @@
 local util = require('vim.lsp.util')
-local log = require('vim.lsp.log')
 local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
 local M = {}
@@ -264,7 +263,6 @@ end
 function M.on_codelens(err, result, ctx, _)
   if err then
     active_refreshes[assert(ctx.bufnr)] = nil
-    log.error('codelens', err)
     return
   end
 

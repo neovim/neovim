@@ -549,7 +549,8 @@ local function on_complete_done()
     local command = completion_item.command
     if command then
       client:_exec_cmd(command, { bufnr = bufnr }, nil, function()
-        vim.lsp.log.warn(
+        lsp.log.warn(
+          'on_complete_done',
           string.format(
             'Language server `%s` does not support command `%s`. This command may require a client extension.',
             client.name,
@@ -568,15 +569,13 @@ local function on_complete_done()
     local changedtick = vim.b[bufnr].changedtick
 
     --- @param result lsp.CompletionItem
-    client.request(ms.completionItem_resolve, completion_item, function(err, result)
+    client.request(ms.completionItem_resolve, completion_item, function(_, result)
       if changedtick ~= vim.b[bufnr].changedtick then
         return
       end
 
       clear_word()
-      if err then
-        vim.notify_once(err.message, vim.log.levels.WARN)
-      elseif result and result.additionalTextEdits then
+      if result and result.additionalTextEdits then
         lsp.util.apply_text_edits(result.additionalTextEdits, bufnr, offset_encoding)
         if result.command then
           completion_item.command = result.command
@@ -731,7 +730,7 @@ end
 --- - findstart=0: column where the completion starts, or -2 or -3
 --- - findstart=1: list of matches (actually just calls |complete()|)
 function M._omnifunc(findstart, base)
-  vim.lsp.log.debug('omnifunc.findstart', { findstart = findstart, base = base })
+  lsp.log.debug('omnifunc', { findstart = findstart, base = base })
   assert(base) -- silence luals
   local bufnr = api.nvim_get_current_buf()
   local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_completion })
