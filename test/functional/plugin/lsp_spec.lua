@@ -5107,10 +5107,15 @@ describe('LSP', function()
         return {
           cursor = vim.api.nvim_win_get_cursor(win),
           messages = server.messages,
+          tagstack = vim.fn.gettagstack(win),
         }
       end)
       eq('textDocument/definition', result.messages[3].method)
       eq({ 1, 0 }, result.cursor)
+      eq(1, #result.tagstack.items)
+      eq('x', result.tagstack.items[1].tagname)
+      eq(3, result.tagstack.items[1].from[2])
+      eq(7, result.tagstack.items[1].from[3])
     end)
     it('merges results from multiple servers', function()
       exec_lua(create_server_definition)
