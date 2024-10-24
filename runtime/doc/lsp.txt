@@ -1084,6 +1084,11 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {is_stopped}            (`fun(): boolean`) Checks whether a client is
                                 stopped. Returns: true if the client is fully
                                 stopped.
+      • {exec_cmd}              (`fun(self: vim.lsp.Client, command: lsp.Command, context: {bufnr?: integer}?, handler: lsp.Handler?)`)
+                                Execute a lsp command, either via client
+                                command function (if available) or via
+                                workspace/executeCommand (if supported by the
+                                server)
 
 *vim.lsp.Client.Progress*
     Extends: |vim.Ringbuf|
@@ -1212,6 +1217,15 @@ Lua module: vim.lsp.client                                        *lsp-client*
                               base its workspaceFolders, rootUri, and rootPath
                               on initialization.
 
+
+Client:exec_cmd({command}, {context}, {handler})           *Client:exec_cmd()*
+    Execute a lsp command, either via client command function (if available)
+    or via workspace/executeCommand (if supported by the server)
+
+    Parameters: ~
+      • {command}  (`lsp.Command`)
+      • {context}  (`{bufnr?: integer}?`)
+      • {handler}  (`lsp.Handler?`) only called if a server command
 
 
 ==============================================================================
@@ -1343,15 +1357,6 @@ document_symbol({opts})                        *vim.lsp.buf.document_symbol()*
 
     Parameters: ~
       • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
-
-execute_command({command_params})              *vim.lsp.buf.execute_command()*
-    Executes an LSP server command.
-
-    Parameters: ~
-      • {command_params}  (`lsp.ExecuteCommandParams`)
-
-    See also: ~
-      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 
 format({opts})                                          *vim.lsp.buf.format()*
     Formats a buffer using the attached (and optionally filtered) language

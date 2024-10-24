@@ -859,10 +859,9 @@ end
 --- or via workspace/executeCommand (if supported by the server)
 ---
 --- @param command lsp.Command
---- @param context? {bufnr: integer}
+--- @param context? {bufnr?: integer}
 --- @param handler? lsp.Handler only called if a server command
---- @param on_unsupported? function handler invoked when the command is not supported by the client.
-function Client:_exec_cmd(command, context, handler, on_unsupported)
+function Client:exec_cmd(command, context, handler)
   context = vim.deepcopy(context or {}, true) --[[@as lsp.HandlerContext]]
   context.bufnr = context.bufnr or api.nvim_get_current_buf()
   context.client_id = self.id
@@ -875,25 +874,23 @@ function Client:_exec_cmd(command, context, handler, on_unsupported)
 
   local command_provider = self.server_capabilities.executeCommandProvider
   local commands = type(command_provider) == 'table' and command_provider.commands or {}
+
   if not vim.list_contains(commands, cmdname) then
-    if on_unsupported then
-      on_unsupported()
-    else
-      vim.notify_once(
-        string.format(
-          'Language server `%s` does not support command `%s`. This command may require a client extension.',
-          self.name,
-          cmdname
-        ),
-        vim.log.levels.WARN
-      )
-    end
+    vim.notify_once(
+      string.format(
+        'Language server `%s` does not support command `%s`. This command may require a client extension.',
+        self.name,
+        cmdname
+      ),
+      vim.log.levels.WARN
+    )
     return
   end
   -- Not using command directly to exclude extra properties,
   -- see https://github.com/python-lsp/python-lsp-server/issues/146
+  --- @type lsp.ExecuteCommandParams
   local params = {
-    command = command.command,
+    command = cmdname,
     arguments = command.arguments,
   }
   self.request(ms.workspace_executeCommand, params, handler, context.bufnr)
