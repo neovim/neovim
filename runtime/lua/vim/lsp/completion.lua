@@ -227,33 +227,40 @@ end
 --- @param result vim.lsp.CompletionResult Result of `textDocument/completion`
 --- @param prefix string prefix to filter the completion items
 --- @param client_id integer? Client ID
+--- @param opts? vim.lsp.completion.get.Opts
 --- @return table[]
 --- @see complete-items
-function M._lsp_to_complete_items(result, prefix, client_id)
+function M._lsp_to_complete_items(result, prefix, client_id, opts)
   local items = get_items(result)
   if vim.tbl_isempty(items) then
     return {}
   end
 
-  ---@type fun(item: lsp.CompletionItem):boolean
+  opts = opts or {}
+
+  ---@type fun(prefix: string, item: lsp.CompletionItem):boolean
   local matches
-  if not prefix:find('%w') then
-    matches = function(_)
+  local filter = opts.filter
+  if filter then
+    matches = filter
+  elseif not prefix:find('%w') then
+    matches = function(_, _)
       return true
     end
   else
+    ---@param p string
     ---@param item lsp.CompletionItem
-    matches = function(item)
+    matches = function(p, item)
       local text = item.filterText or item.label
-      return next(vim.fn.matchfuzzy({ text }, prefix)) ~= nil
+      return next(vim.fn.matchfuzzy({ text }, p)) ~= nil
     end
   end
 
   local candidates = {}
   local bufnr = api.nvim_get_current_buf()
-  local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
+  local user_convert = opts.convert or vim.tbl_get(buf_handles, bufnr, 'convert')
   for _, item in ipairs(items) do
-    if matches(item) then
+    if matches(prefix, item) then
       local word = get_completion_word(item)
       local hl_group = ''
       if
@@ -330,6 +337,7 @@ end
 --- @param server_start_boundary? integer 0-indexed word boundary, based on textEdit.range.start.character
 --- @param result vim.lsp.CompletionResult
 --- @param encoding string
+--- @param opts? vim.lsp.completion.get.Opts
 --- @return table[] matches
 --- @return integer? server_start_boundary
 function M._convert_results(
@@ -340,7 +348,8 @@ function M._convert_results(
   client_start_boundary,
   server_start_boundary,
   result,
-  encoding
+  encoding,
+  opts
 )
   -- Completion response items may be relative to a position different than `client_start_boundary`.
   -- Concrete example, with lua-language-server:
@@ -365,7 +374,7 @@ function M._convert_results(
     server_start_boundary = client_start_boundary
   end
   local prefix = line:sub((server_start_boundary or client_start_boundary) + 1, cursor_col)
-  local matches = M._lsp_to_complete_items(result, prefix, client_id)
+  local matches = M._lsp_to_complete_items(result, prefix, client_id, opts)
   return matches, server_start_boundary
 end
 
@@ -405,13 +414,17 @@ local function request(clients, bufnr, win, callback)
   end
 end
 
-local function trigger(bufnr, clients)
+---@param bufnr integer
+---@param clients table<integer, vim.lsp.Client>
+---@param opts? vim.lsp.completion.get.Opts
+local function get(bufnr, clients, opts)
   reset_timer()
   Context:cancel_pending()
 
   if tonumber(vim.fn.pumvisible()) == 1 and not Context.isIncomplete then
     return
   end
+  opts = opts or {}
 
   local win = api.nvim_get_current_win()
   local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(win)) --- @type integer, integer
@@ -420,6 +433,12 @@ local function trigger(bufnr, clients)
   local word_boundary = vim.fn.match(line_to_cursor, '\\k*$')
   local start_time = vim.uv.hrtime()
   Context.last_request_time = start_time
+
+  local on_result = opts.on_result or vim.fn.complete
+  if not next(clients) then
+    on_result(word_boundary + 1, {})
+    return
+  end
 
   local cancel_request = request(clients, bufnr, win, function(responses)
     local end_time = vim.uv.hrtime()
@@ -461,10 +480,16 @@ local function trigger(bufnr, clients)
       end
     end
     local start_col = (server_start_boundary or word_boundary) + 1
-    vim.fn.complete(start_col, matches)
+    on_result(start_col, matches)
   end)
 
   table.insert(Context.pending_requests, cancel_request)
+end
+
+local function trigger()
+  local bufnr = api.nvim_get_current_buf()
+  local clients = (buf_handles[bufnr] or {}).clients
+  get(bufnr, clients)
 end
 
 --- @param handle vim.lsp.completion.BufHandle
@@ -475,10 +500,10 @@ local function on_insert_char_pre(handle)
 
       local debounce_ms = next_debounce()
       if debounce_ms == 0 then
-        vim.schedule(M.trigger)
+        vim.schedule(trigger)
       else
         completion_timer = new_timer()
-        completion_timer:start(debounce_ms, 0, vim.schedule_wrap(M.trigger))
+        completion_timer:start(debounce_ms, 0, vim.schedule_wrap(trigger))
       end
     end
 
@@ -490,7 +515,7 @@ local function on_insert_char_pre(handle)
     completion_timer = assert(vim.uv.new_timer())
     completion_timer:start(25, 0, function()
       reset_timer()
-      vim.schedule(M.trigger)
+      vim.schedule(trigger)
     end)
   end
 end
@@ -703,11 +728,18 @@ function M.enable(enable, client_id, bufnr, opts)
   end
 end
 
+---@class vim.lsp.completion.get.Opts
+---@field convert? fun(item: lsp.CompletionItem): table
+---@field filter? fun(prefix: string, item: lsp.CompletionItem): boolean
+---@field on_result? fun(startcol: integer, matches: table[]) defaults to vim.fn.complete
+
 --- Trigger LSP completion in the current buffer.
-function M.trigger()
+---@param opts? vim.lsp.completion.get.Opts
+function M.get(opts)
   local bufnr = api.nvim_get_current_buf()
-  local clients = (buf_handles[bufnr] or {}).clients or {}
-  trigger(bufnr, clients)
+  local clients = (buf_handles[bufnr] or {}).clients
+    or lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_completion })
+  get(bufnr, clients, opts)
 end
 
 --- Implements 'omnifunc' compatible LSP completion.
@@ -732,7 +764,7 @@ function M._omnifunc(findstart, base)
     return findstart == 1 and -1 or {}
   end
 
-  trigger(bufnr, clients)
+  get(bufnr, clients)
 
   -- Return -2 to signal that we should continue completion so that we can
   -- async complete.
