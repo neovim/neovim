@@ -720,6 +720,32 @@ function vim._on_key(buf, typed_buf)
   end
 end
 
+---@private
+---@param s string
+---@param utf8_ptr integer
+---@return integer, integer
+local function utf_ptr2char(s, utf8_ptr)
+  local b1, b2, b3, b4 = s:byte(utf8_ptr, utf8_ptr + 3)
+
+  if not b1 then
+    return 0, math.huge
+  end
+
+  if b1 < 0x80 then
+    -- 1-byte sequence (ASCII character)
+    return b1, 1
+  elseif b1 < 0xE0 then
+    -- 2-byte sequence
+    return ((b1 % 0x20) * 0x40) + (b2 % 0x40), 2
+  elseif b1 < 0xF0 then
+    -- 3-byte sequence
+    return ((b1 % 0x10) * 0x1000) + ((b2 % 0x40) * 0x40) + (b3 % 0x40), 3
+  else
+    -- 4-byte sequence
+    return ((b1 % 0x08) * 0x40000) + ((b2 % 0x40) * 0x1000) + ((b3 % 0x40) * 0x40) + (b4 % 0x40), 4
+  end
+end
+
 --- Convert UTF-32, UTF-16 or UTF-8 {index} to byte index.
 --- If {strict_indexing} is false
 --- then then an out of range index will return byte length
@@ -741,19 +767,21 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
     --   • {index}      (`integer`)
     --   • {use_utf16}  (`boolean?`)
     local old_index = encoding
-    local use_utf16 = index or false
-    return vim.__str_byteindex(s, old_index, use_utf16) or error('index out of range')
+    local old_encoding = index and 'utf-16' or 'utf-32'
+    index = old_index
+    encoding = old_encoding
+    strict_indexing = true
   end
 
   vim.validate('s', s, 'string')
   vim.validate('index', index, 'number')
 
-  local len = #s
-
-  if index == 0 or len == 0 then
+  local utf8_ptr_len = #s
+  if index == 0 then
     return 0
   end
 
+  encoding = encoding or 'utf-32'
   vim.validate('encoding', encoding, function(v)
     return utfs[v], 'invalid encoding'
   end)
@@ -763,15 +791,44 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
     strict_indexing = true
   end
 
+  if index == 0 or utf8_ptr_len == 0 then
+    return 0
+  end
+
+  local utf16_ptr, utf16_char = 0, 0
+  local utf32_ptr, utf32_char = 0, 0
+  local processed_bytes = 0
+
   if encoding == 'utf-8' then
-    if index > len then
-      return strict_indexing and error('index out of range') or len
+    if index > utf8_ptr_len then
+      return strict_indexing and error('index out of range') or utf8_ptr_len
     end
     return index
   end
-  return vim.__str_byteindex(s, index, encoding == 'utf-16')
-    or strict_indexing and error('index out of range')
-    or len
+
+  if index > utf8_ptr_len then
+    --- Skips the loop if the index is greater than the byte length of the string.
+    processed_bytes = math.huge
+  end
+  -- Traverse the string and calculate pointers for UTF-16 and UTF-32
+  while processed_bytes < utf8_ptr_len do
+    local c, char_len = utf_ptr2char(s, processed_bytes + 1)
+
+    utf16_char = utf16_char + (c > 0xFFFF and 2 or 1)
+    utf16_ptr = utf16_ptr + char_len
+
+    utf32_ptr = utf32_ptr + char_len
+    utf32_char = utf32_char + 1
+
+    if encoding == 'utf-16' and utf16_char >= index then
+      return utf16_ptr
+    elseif encoding == 'utf-32' and utf32_char >= index then
+      return utf32_ptr
+    end
+    processed_bytes = processed_bytes + char_len
+  end
+
+  return strict_indexing and error('index out of range') or utf8_ptr_len
 end
 
 --- Convert byte index to UTF-32, UTF-16 or UTF-8 indices. If {index} is not
