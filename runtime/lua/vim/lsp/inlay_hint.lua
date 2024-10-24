@@ -2,6 +2,7 @@ local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
 local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
+---@class vim.lsp.inlay_hint
 local M = {}
 
 ---@class (private) vim.lsp.inlay_hint.globalstate Global state for inlay hints

@@ -3,6 +3,7 @@
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
 
+---@class vim.uri
 local M = {}
 local sbyte = string.byte
 local schar = string.char

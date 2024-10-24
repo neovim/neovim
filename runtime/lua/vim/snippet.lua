@@ -306,6 +306,7 @@ function Session:set_group_gravity(index, right_gravity)
   end
 end
 
+---@class vim.snippet
 local M = { session = nil }
 
 --- Displays the choices for the given tabstop as completion items.

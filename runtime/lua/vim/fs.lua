@@ -1,5 +1,6 @@
 local uv = vim.uv
 
+---@class vim.fs
 local M = {}
 
 -- Can't use `has('win32')` because the `nvim -ll` test runner doesn't support `vim.fn` yet.

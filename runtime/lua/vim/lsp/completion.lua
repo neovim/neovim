@@ -1,3 +1,4 @@
+---@class vim.lsp.completion
 local M = {}
 
 local api = vim.api

@@ -64,6 +64,7 @@ local function gen_methods(protocol)
     '---@enum vim.lsp.protocol.Methods',
     '---@see https://microsoft.github.io/language-server-protocol/specification/#metaModel',
     '--- LSP method names.',
+    '---@type table<string, string>',
     'protocol.Methods = {',
   }
   local indent = (' '):rep(2)

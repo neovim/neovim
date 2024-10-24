@@ -1,3 +1,4 @@
+---@class vim.F
 local F = {}
 
 --- Returns the first argument which is not nil.

@@ -544,6 +544,7 @@ function STHighlighter:reset_timer()
   end
 end
 
+---@class vim.lsp.semantic_tokens
 local M = {}
 
 --- Start the semantic token highlighting engine for the given buffer with the

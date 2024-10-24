@@ -5,6 +5,7 @@ local protocol = require('vim.lsp.protocol')
 local ms = protocol.Methods
 local lpeg = vim.lpeg
 
+---@class vim.lsp._watchfiles
 local M = {}
 
 if vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1 then

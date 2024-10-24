@@ -5,6 +5,7 @@ local util = require('vim.lsp.util')
 local api = vim.api
 local uv = vim.uv
 
+---@class vim.lsp._changetracking
 local M = {}
 
 --- LSP has 3 different sync modes:

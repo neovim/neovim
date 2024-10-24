@@ -1,3 +1,4 @@
+---@class vim.keymap
 local keymap = {}
 
 --- Table of |:map-arguments|.

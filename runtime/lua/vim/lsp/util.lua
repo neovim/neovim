@@ -4,6 +4,7 @@ local api = vim.api
 local list_extend = vim.list_extend
 local uv = vim.uv
 
+---@class vim.lsp.util
 local M = {}
 
 local default_border = {

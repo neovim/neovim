@@ -216,6 +216,7 @@ local function compute_folds_levels(bufnr, info, srow, erow, parse_injections)
   end
 end
 
+---@class vim.treesitter._fold
 local M = {}
 
 ---@type table<integer,TS.FoldInfo>

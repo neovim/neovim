@@ -623,6 +623,7 @@ end
 ---@enum vim.lsp.protocol.Methods
 ---@see https://microsoft.github.io/language-server-protocol/specification/#metaModel
 --- LSP method names.
+---@type table<string, string>
 protocol.Methods = {
   --- A request to resolve the incoming calls for a given `CallHierarchyItem`.
   --- @since 3.16.0

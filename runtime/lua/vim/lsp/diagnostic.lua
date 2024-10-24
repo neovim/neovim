@@ -3,6 +3,7 @@ local ms = protocol.Methods
 
 local api = vim.api
 
+---@class vim.lsp.diagnostic
 local M = {}
 
 local augroup = api.nvim_create_augroup('vim_lsp_diagnostic', {})

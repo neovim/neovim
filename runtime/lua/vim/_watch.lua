@@ -1,5 +1,6 @@
 local uv = vim.uv
 
+---@class vim._watch
 local M = {}
 
 --- @enum vim._watch.FileChangeType

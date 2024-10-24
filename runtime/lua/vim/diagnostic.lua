@@ -1,5 +1,6 @@
 local api, if_nil = vim.api, vim.F.if_nil
 
+---@class vim.diagnostic
 local M = {}
 
 --- [diagnostic-structure]()

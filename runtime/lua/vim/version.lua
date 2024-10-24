@@ -52,6 +52,7 @@
 --- 1.2 - 2.3.0       is 1.2.0 - 2.3.0
 --- ```
 
+---@class vim.version
 local M = {}
 
 ---@nodoc

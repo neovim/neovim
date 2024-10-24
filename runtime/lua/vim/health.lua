@@ -86,6 +86,7 @@
 ---         return M
 ---</pre>
 
+---@class vim.health
 local M = {}
 
 local s_output = {} ---@type string[]

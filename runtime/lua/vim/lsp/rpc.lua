@@ -126,6 +126,7 @@ local function request_parser_loop()
   end
 end
 
+---@class vim.lsp.rpc
 local M = {}
 
 --- Mapping of error codes used by the client

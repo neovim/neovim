@@ -1,5 +1,6 @@
 local api = vim.api
 
+---@class vim.treesitter._range
 local M = {}
 
 ---@class Range2

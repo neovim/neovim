@@ -5,7 +5,8 @@ local util = require('vim.lsp.util')
 local api = vim.api
 local completion = require('vim.lsp.completion')
 
---- @type table<string,lsp.Handler>
+---@class vim.lsp.handlers
+---@field [string] lsp.Handler
 local M = {}
 
 -- FIXME: DOC: Expose in vimdocs

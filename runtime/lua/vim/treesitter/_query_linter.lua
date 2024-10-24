@@ -2,6 +2,7 @@ local api = vim.api
 
 local namespace = api.nvim_create_namespace('vim.treesitter.query_linter')
 
+---@class vim.treesitter._query_linter
 local M = {}
 
 --- @class QueryLinterNormalizedOpts

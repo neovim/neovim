@@ -5,6 +5,7 @@ local uri_encode = vim.uri_encode --- @type function
 --- @type (fun(modename: string): fun()|string)[]
 local loaders = package.loaders
 
+---@class vim.loader
 local M = {}
 
 ---@alias CacheHash {mtime: {nsec: integer, sec: integer}, size: integer, type?: string}

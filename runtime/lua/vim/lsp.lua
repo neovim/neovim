@@ -1,7 +1,27 @@
 local api = vim.api
 local validate = vim.validate
 
-local lsp = vim._defer_require('vim.lsp', {
+---@class vim.lsp
+---@field _changetracking vim.lsp._changetracking
+---@field _dynamic lsp.DynamicCapabilities
+---@field _snippet_grammar vim.lsp._snippet_grammar
+---@field _tagfunc function
+---@field _watchfiles vim.lsp._watchfiles
+---@field buf vim.lsp.buf
+---@field client vim.lsp.Client
+---@field codelens vim.lsp.codelens
+---@field completion vim.lsp.completion
+---@field diagnostic vim.lsp.diagnostic
+---@field handlers vim.lsp.handlers
+---@field inlay_hint vim.lsp.inlay_hint
+---@field log vim.lsp.log
+---@field protocol vim.lsp.protocol
+---@field rpc vim.lsp.rpc
+---@field semantic_tokens vim.lsp.semantic_tokens
+---@field util vim.lsp.util
+local lsp
+
+lsp = vim._defer_require('vim.lsp', {
   _changetracking = ..., --- @module 'vim.lsp._changetracking'
   _dynamic = ..., --- @module 'vim.lsp._dynamic'
   _snippet_grammar = ..., --- @module 'vim.lsp._snippet_grammar'

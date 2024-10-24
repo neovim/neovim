@@ -1,6 +1,7 @@
 local api = vim.api
 local fn = vim.fn
 
+---@class vim.filetype
 local M = {}
 
 --- @alias vim.filetype.mapfn fun(path:string,bufnr:integer, ...):string?, fun(b:integer)?

@@ -1,3 +1,4 @@
+---@class vim.secure
 local M = {}
 
 --- Reads trust database from $XDG_STATE_HOME/nvim/trust.

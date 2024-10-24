@@ -1,5 +1,6 @@
 -- Text processing functions.
 
+---@class vim.text
 local M = {}
 
 --- Hex encode a string.

@@ -2,6 +2,7 @@ local api = vim.api
 local language = require('vim.treesitter.language')
 local memoize = vim.func._memoize
 
+---@class vim.treesitter.query
 local M = {}
 
 ---@nodoc

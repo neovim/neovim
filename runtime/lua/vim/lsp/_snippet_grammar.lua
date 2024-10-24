@@ -4,6 +4,7 @@ local lpeg = vim.lpeg
 local P, S, R, V = lpeg.P, lpeg.S, lpeg.R, lpeg.V
 local C, Cg, Ct = lpeg.C, lpeg.Cg, lpeg.Ct
 
+---@class vim.lsp._snippet_grammar
 local M = {}
 
 local alpha = R('az', 'AZ')

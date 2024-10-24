@@ -3,7 +3,18 @@ local api = vim.api
 ---@type table<integer,vim.treesitter.LanguageTree>
 local parsers = setmetatable({}, { __mode = 'v' })
 
-local M = vim._defer_require('vim.treesitter', {
+---@class vim.treesitter
+---@field _fold vim.treesitter._fold
+---@field _query_linter vim.treesitter._query_linter
+---@field _range vim.treesitter._range
+---@field dev vim.treesitter.dev
+---@field highlighter vim.treesitter.highlighter
+---@field language vim.treesitter.language
+---@field languagetree vim.treesitter.LanguageTree
+---@field query vim.treesitter.query
+local M
+
+M = vim._defer_require('vim.treesitter', {
   _fold = ..., --- @module 'vim.treesitter._fold'
   _query_linter = ..., --- @module 'vim.treesitter._query_linter'
   _range = ..., --- @module 'vim.treesitter._range'

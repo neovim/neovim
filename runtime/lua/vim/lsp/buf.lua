@@ -5,6 +5,7 @@ local util = require('vim.lsp.util')
 local npcall = vim.F.npcall
 local ms = require('vim.lsp.protocol').Methods
 
+---@class vim.lsp.buf
 local M = {}
 
 --- @param params? table

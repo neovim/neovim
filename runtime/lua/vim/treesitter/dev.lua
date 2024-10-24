@@ -1,5 +1,6 @@
 local api = vim.api
 
+---@class vim.treesitter.dev
 local M = {}
 
 ---@class (private) vim.treesitter.dev.TSTreeView

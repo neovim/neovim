@@ -1,3 +1,4 @@
+---@class vim.func
 local M = {}
 
 -- TODO(lewis6991): Private for now until:

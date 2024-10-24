@@ -259,6 +259,7 @@ end
 
 
 -- exported names
+---@class vim.re
 local re = {
   compile = compile,
   match = match,

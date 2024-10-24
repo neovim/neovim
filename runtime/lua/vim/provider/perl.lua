@@ -1,3 +1,4 @@
+---@class vim.provider.perl
 local M = {}
 local s_err ---@type string?
 local s_host ---@type string?

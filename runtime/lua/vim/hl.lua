@@ -1,5 +1,6 @@
 local api = vim.api
 
+---@class vim.hl
 local M = {}
 
 --- Table with default priorities used for highlighting:

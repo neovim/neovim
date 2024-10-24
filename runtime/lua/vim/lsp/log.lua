@@ -1,5 +1,6 @@
 -- Logger for language client plugin.
 
+---@class vim.lsp.log
 local log = {}
 
 local log_levels = vim.log.levels
@@ -169,7 +170,7 @@ end
 
 --- Checks whether the level is sufficient for logging.
 ---@param level integer log level
----@return bool : true if would log, false if not
+---@return boolean : true if would log, false if not
 function log.should_log(level)
   return level >= current_log_level
 end

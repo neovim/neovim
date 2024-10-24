@@ -2,6 +2,7 @@ local lpeg = vim.lpeg
 local P, S, V, R, B = lpeg.P, lpeg.S, lpeg.V, lpeg.R, lpeg.B
 local C, Cc, Ct, Cf, Cmt = lpeg.C, lpeg.Cc, lpeg.Ct, lpeg.Cf, lpeg.Cmt
 
+---@class vim.glob
 local M = {}
 
 local pathsep = P('/')

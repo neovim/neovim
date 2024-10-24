@@ -1,3 +1,4 @@
+---@class vim.ui
 local M = {}
 
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)

@@ -1,3 +1,4 @@
+---@class vim.provider.python
 local M = {}
 local min_version = '3.7'
 local s_err ---@type string?
