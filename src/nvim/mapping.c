@@ -568,6 +568,12 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   mapblock_T **abbr_table = args->buffer ? &buf->b_first_abbr : &first_abbr;
   mapblock_T *mp_result[2] = { NULL, NULL };
 
+  bool unmap_lhs_only = false;
+  if (maptype == MAPTYPE_UNMAP_LHS) {
+    unmap_lhs_only = true;
+    maptype = MAPTYPE_UNMAP;
+  }
+
   // For ":noremap" don't remap, otherwise do remap.
   int noremap = args->script ? REMAP_SCRIPT
                              : maptype == MAPTYPE_NOREMAP ? REMAP_NONE : REMAP_YES;
@@ -720,8 +726,8 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     // entry with a matching 'to' part. This was done to allow ":ab foo bar"
     // to be unmapped by typing ":unab foo", where "foo" will be replaced by
     // "bar" because of the abbreviation.
-    for (int round = 0; (round == 0 || maptype == MAPTYPE_UNMAP) && round <= 1
-         && !did_it && !got_int; round++) {
+    const int num_rounds = maptype == MAPTYPE_UNMAP && !unmap_lhs_only ? 2 : 1;
+    for (int round = 0; round < num_rounds && !did_it && !got_int; round++) {
       int hash_start, hash_end;
       if ((round == 0 && has_lhs) || is_abbrev) {
         // just use one hash
@@ -935,9 +941,11 @@ theend:
 /// for :cabbr mode is MODE_CMDLINE
 /// ```
 ///
-/// @param maptype  MAPTYPE_MAP for |:map|
-///                 MAPTYPE_UNMAP for |:unmap|
-///                 MAPTYPE_NOREMAP for |:noremap|.
+/// @param maptype  MAPTYPE_MAP for |:map| or |:abbr|
+///                 MAPTYPE_UNMAP for |:unmap| or |:unabbr|
+///                 MAPTYPE_NOREMAP for |:noremap| or |:noreabbr|
+///                 MAPTYPE_UNMAP_LHS is like MAPTYPE_UNMAP, but doesn't try to match
+///                 with {rhs} if there is no match with {lhs}.
 /// @param arg      C-string containing the arguments of the map/abbrev
 ///                 command, i.e. everything except the initial `:[X][nore]map`.
 ///                 - Cannot be a read-only string; it will be modified.
@@ -2348,7 +2356,7 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   MapArguments unmap_args = MAP_ARGUMENTS_INIT;
   set_maparg_lhs_rhs(lhs, strlen(lhs), "", 0, LUA_NOREF, p_cpo, &unmap_args);
   unmap_args.buffer = buffer;
-  buf_do_map(MAPTYPE_UNMAP, &unmap_args, mode, is_abbr, curbuf);
+  buf_do_map(MAPTYPE_UNMAP_LHS, &unmap_args, mode, is_abbr, curbuf);
   xfree(unmap_args.rhs);
   xfree(unmap_args.orig_rhs);
 
