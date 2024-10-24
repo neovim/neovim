@@ -839,6 +839,13 @@ bool utf_composinglike(const char *p1, const char *p2, GraphemeState *state)
   return arabic_combine(first, second);
 }
 
+/// same as utf_composinglike but operating on UCS-4 values
+bool utf_iscomposing(int c1, int c2, GraphemeState *state)
+{
+  return (!utf8proc_grapheme_break_stateful(c1, c2, state)
+          || arabic_combine(c1, c2));
+}
+
 /// Get the screen char at the beginning of a string
 ///
 /// Caller is expected to check for things like unprintable chars etc
@@ -1852,8 +1859,7 @@ StrCharInfo utfc_next_impl(StrCharInfo cur)
   while (true) {
     uint8_t const next_len = utf8len_tab[*next];
     int32_t const next_code = utf_ptr2CharInfo_impl(next, (uintptr_t)next_len);
-    if (utf8proc_grapheme_break_stateful(prev_code, next_code, &state)
-        && !arabic_combine(prev_code, next_code)) {
+    if (!utf_iscomposing(prev_code, next_code, &state)) {
       return (StrCharInfo){
         .ptr = (char *)next,
         .chr = (CharInfo){ .value = next_code, .len = (next_code < 0 ? 1 : next_len) },
