@@ -584,7 +584,7 @@ local function request_with_id(client_id, method, params, handler, bufnr)
   local client = lsp.get_client_by_id(client_id)
   if not client then
     vim.notify(
-      string.format('Client with id=%d disappeared during call hierarchy request', client_id),
+      string.format('Client with id=%d disappeared during hierarchy request', client_id),
       vim.log.levels.WARN
     )
     return
@@ -592,80 +592,33 @@ local function request_with_id(client_id, method, params, handler, bufnr)
   client.request(method, params, handler, bufnr)
 end
 
---- @param call_hierarchy_items lsp.CallHierarchyItem[]
---- @return lsp.CallHierarchyItem?
-local function pick_call_hierarchy_item(call_hierarchy_items)
-  if #call_hierarchy_items == 1 then
-    return call_hierarchy_items[1]
-  end
-  local items = {}
-  for i, item in pairs(call_hierarchy_items) do
-    local entry = item.detail or item.name
-    table.insert(items, string.format('%d. %s', i, entry))
-  end
-  local choice = vim.fn.inputlist(items)
-  if choice < 1 or choice > #items then
-    return
-  end
-  return call_hierarchy_items[choice]
-end
-
---- @param method string
-local function call_hierarchy(method)
-  lsp.buf_request(
-    0,
-    ms.textDocument_prepareCallHierarchy,
-    client_positional_params(),
-    --- @param result lsp.CallHierarchyItem[]?
-    function(err, result, ctx)
-      if err then
-        vim.notify(err.message, vim.log.levels.WARN)
-        return
-      end
-      if not result or vim.tbl_isempty(result) then
-        vim.notify('No item resolved', vim.log.levels.WARN)
-        return
-      end
-      local item = pick_call_hierarchy_item(result)
-      if not item then
-        return
-      end
-      request_with_id(ctx.client_id, method, { item = item }, nil, ctx.bufnr)
-    end
-  )
-end
-
---- Lists all the call sites of the symbol under the cursor in the
---- |quickfix| window. If the symbol can resolve to multiple
---- items, the user can pick one in the |inputlist()|.
-function M.incoming_calls()
-  call_hierarchy(ms.callHierarchy_incomingCalls)
-end
-
---- Lists all the items that are called by the symbol under the
---- cursor in the |quickfix| window. If the symbol can resolve to
---- multiple items, the user can pick one in the |inputlist()|.
-function M.outgoing_calls()
-  call_hierarchy(ms.callHierarchy_outgoingCalls)
-end
-
---- @param item lsp.TypeHierarchyItem
-local function format_type_hierarchy_item(item)
+--- @param item lsp.TypeHierarchyItem|lsp.CallHierarchyItem
+local function format_hierarchy_item(item)
   if not item.detail or #item.detail == 0 then
     return item.name
   end
   return string.format('%s %s', item.name, item.detail)
 end
 
---- Lists all the subtypes or supertypes of the symbol under the
---- cursor in the |quickfix| window. If the symbol can resolve to
---- multiple items, the user can pick one using |vim.ui.select()|.
----@param kind "subtypes"|"supertypes"
-function M.typehierarchy(kind)
-  local method = kind == 'subtypes' and ms.typeHierarchy_subtypes or ms.typeHierarchy_supertypes
-  local pmethod = ms.textDocument_prepareTypeHierarchy
+local hierarchy_methods = {
+  [ms.typeHierarchy_subtypes] = 'type',
+  [ms.typeHierarchy_supertypes] = 'type',
+  [ms.callHierarchy_incomingCalls] = 'call',
+  [ms.callHierarchy_outgoingCalls] = 'call',
+}
+
+--- @param method string
+local function hierarchy(method)
+  local kind = hierarchy_methods[method]
+  if not kind then
+    error('unsupported method ' .. method)
+  end
+
+  local prepare_method = kind == 'type' and ms.textDocument_prepareTypeHierarchy
+    or ms.textDocument_prepareCallHierarchy
+
   local bufnr = api.nvim_get_current_buf()
-  local clients = lsp.get_clients({ bufnr = bufnr, method = pmethod })
+  local clients = lsp.get_clients({ bufnr = bufnr, method = prepare_method })
   if not next(clients) then
     vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
     return
@@ -673,19 +626,19 @@ function M.typehierarchy(kind)
 
   local win = api.nvim_get_current_win()
 
-  --- @param results [integer, lsp.TypeHierarchyItem][]
+  --- @param results [integer, lsp.TypeHierarchyItem|lsp.CallHierarchyItem][]
   local function on_response(results)
     if #results == 0 then
-      vim.notify('No items resolved', vim.log.levels.INFO)
+      vim.notify('No item resolved', vim.log.levels.WARN)
     elseif #results == 1 then
       local client_id, item = results[1][1], results[1][2]
       request_with_id(client_id, method, { item = item }, nil, bufnr)
     else
       vim.ui.select(results, {
-        prompt = 'Select a type hierarchy item:',
-        kind = 'typehierarchy',
+        prompt = string.format('Select a %s hierarchy item:', kind),
+        kind = kind .. 'hierarchy',
         format_item = function(x)
-          return format_type_hierarchy_item(x[2])
+          return format_hierarchy_item(x[2])
         end,
       }, function(x)
         if x then
@@ -696,18 +649,18 @@ function M.typehierarchy(kind)
     end
   end
 
-  local results = {} --- @type [integer, lsp.TypeHierarchyItem][]
+  local results = {} --- @type [integer, lsp.TypeHierarchyItem|lsp.CallHierarchyItem][]
 
   local remaining = #clients
 
   for _, client in ipairs(clients) do
     local params = util.make_position_params(win, client.offset_encoding)
-    client.request(pmethod, params, function(err, result, ctx)
-      --- @cast result lsp.TypeHierarchyItem[]?
+    --- @param result lsp.CallHierarchyItem[]|lsp.TypeHierarchyItem[]?
+    client.request(prepare_method, params, function(err, result, ctx)
       if err then
         vim.notify(err.message, vim.log.levels.WARN)
       elseif result then
-        for _, item in pairs(result) do
+        for _, item in ipairs(result) do
           results[#results + 1] = { ctx.client_id, item }
         end
       end
@@ -718,6 +671,29 @@ function M.typehierarchy(kind)
       end
     end, bufnr)
   end
+end
+
+--- Lists all the call sites of the symbol under the cursor in the
+--- |quickfix| window. If the symbol can resolve to multiple
+--- items, the user can pick one in the |inputlist()|.
+function M.incoming_calls()
+  hierarchy(ms.callHierarchy_incomingCalls)
+end
+
+--- Lists all the items that are called by the symbol under the
+--- cursor in the |quickfix| window. If the symbol can resolve to
+--- multiple items, the user can pick one in the |inputlist()|.
+function M.outgoing_calls()
+  hierarchy(ms.callHierarchy_outgoingCalls)
+end
+
+--- Lists all the subtypes or supertypes of the symbol under the
+--- cursor in the |quickfix| window. If the symbol can resolve to
+--- multiple items, the user can pick one using |vim.ui.select()|.
+---@param kind "subtypes"|"supertypes"
+function M.typehierarchy(kind)
+  local method = kind == 'subtypes' and ms.typeHierarchy_subtypes or ms.typeHierarchy_supertypes
+  hierarchy(method)
 end
 
 --- List workspace folders.
