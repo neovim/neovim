@@ -663,8 +663,9 @@ end
 ---@param kind "subtypes"|"supertypes"
 function M.typehierarchy(kind)
   local method = kind == 'subtypes' and ms.typeHierarchy_subtypes or ms.typeHierarchy_supertypes
+  local pmethod = ms.textDocument_prepareTypeHierarchy
   local bufnr = api.nvim_get_current_buf()
-  local clients = lsp.get_clients({ bufnr = bufnr, method = method })
+  local clients = lsp.get_clients({ bufnr = bufnr, method = pmethod })
   if not next(clients) then
     vim.notify(lsp._unsupported_method(method), vim.log.levels.WARN)
     return
@@ -701,7 +702,7 @@ function M.typehierarchy(kind)
 
   for _, client in ipairs(clients) do
     local params = util.make_position_params(win, client.offset_encoding)
-    client.request(method, params, function(err, result, ctx)
+    client.request(pmethod, params, function(err, result, ctx)
       --- @cast result lsp.TypeHierarchyItem[]?
       if err then
         vim.notify(err.message, vim.log.levels.WARN)
