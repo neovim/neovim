@@ -61,6 +61,9 @@ local function get_locations(method, opts)
     return
   end
   local win = api.nvim_get_current_win()
+  local from = vim.fn.getpos('.')
+  from[1] = bufnr
+  local tagname = vim.fn.expand('<cword>')
   local remaining = #clients
 
   ---@type vim.quickfix.entry[]
@@ -96,6 +99,13 @@ local function get_locations(method, opts)
       if #all_items == 1 then
         local item = all_items[1]
         local b = item.bufnr or vim.fn.bufadd(item.filename)
+
+        -- Save position in jumplist
+        vim.cmd("normal! m'")
+        -- Push a new item into tagstack
+        local tagstack = { { tagname = tagname, from = from } }
+        vim.fn.settagstack(vim.fn.win_getid(win), { items = tagstack }, 't')
+
         vim.bo[b].buflisted = true
         local w = opts.reuse_win and vim.fn.win_findbuf(b)[1] or win
         api.nvim_win_set_buf(w, b)
