@@ -249,14 +249,15 @@ end
 
 --- Returns a list of highlight captures at the given position
 ---
---- Each capture is represented by a table containing the capture name as a string as
---- well as a table of metadata (`priority`, `conceal`, ...; empty if none are defined).
+--- Each capture is represented by a table containing the capture name as a string, the capture's
+--- language, a table of metadata (`priority`, `conceal`, ...; empty if none are defined), and the
+--- id of the capture.
 ---
 ---@param bufnr integer Buffer number (0 for current buffer)
 ---@param row integer Position row
 ---@param col integer Position column
 ---
----@return {capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata}[]
+---@return {capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata, id: integer}[]
 function M.get_captures_at_pos(bufnr, row, col)
   if bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
@@ -291,12 +292,15 @@ function M.get_captures_at_pos(bufnr, row, col)
 
     local iter = q:query():iter_captures(root, buf_highlighter.bufnr, row, row + 1)
 
-    for capture, node, metadata in iter do
+    for id, node, metadata in iter do
       if M.is_in_node_range(node, row, col) then
         ---@diagnostic disable-next-line: invisible
-        local c = q._query.captures[capture] -- name of the capture in the query
-        if c ~= nil then
-          table.insert(matches, { capture = c, metadata = metadata, lang = tree:lang() })
+        local capture = q._query.captures[id] -- name of the capture in the query
+        if capture ~= nil then
+          table.insert(
+            matches,
+            { capture = capture, metadata = metadata, lang = tree:lang(), id = id }
+          )
         end
       end
     end
