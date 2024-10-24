@@ -27,8 +27,69 @@ end
 --- In the floating window, all commands and mappings are available as usual,
 --- except that "q" dismisses the window.
 --- You can scroll the contents the same as you would any other buffer.
-function M.hover()
-  lsp.buf_request(0, ms.textDocument_hover, client_positional_params())
+--- @param config? vim.lsp.util.open_floating_preview.Opts
+function M.hover(config)
+  config = config or {}
+  config.focus_id = ms.textDocument_hover
+
+  lsp.buf_request_all(0, ms.textDocument_hover, client_positional_params(), function(results, ctx)
+    if api.nvim_get_current_buf() ~= ctx.bufnr then
+      -- Ignore result since buffer changed. This happens for slow language servers.
+      return
+    end
+
+    -- Filter errors from results
+    local results1 = {} --- @type table<integer,lsp.Hover>
+
+    for client_id, resp in pairs(results) do
+      local err, result = resp.error, resp.result
+      if err then
+        lsp.log.error(err.code, err.message)
+      elseif result then
+        results1[client_id] = result
+      end
+    end
+
+    if #results1 == 0 then
+      if config.silent ~= true then
+        vim.notify('No information available')
+      end
+      return
+    end
+
+    local contents = {} --- @type string[]
+
+    for client_id, result in pairs(results1) do
+      if #results1 > 1 then
+        -- Show client name if there are multiple clients
+        contents[#contents + 1] = string.format('# %s', lsp.get_client_by_id(client_id).name)
+      end
+      if type(result.contents) == 'table' and result.contents.kind == 'plaintext' then
+        -- Surround plaintext with ``` to get correct formatting
+        contents[#contents + 1] = '```'
+        vim.list_extend(
+          contents,
+          vim.split(result.contents.value or '', '\n', { trimempty = true })
+        )
+        contents[#contents + 1] = '```'
+      else
+        vim.list_extend(contents, util.convert_input_to_markdown_lines(result.contents))
+      end
+      contents[#contents + 1] = '---'
+    end
+
+    -- Remove last linebreak ('---')
+    contents[#contents] = nil
+
+    if vim.tbl_isempty(contents) then
+      if config.silent ~= true then
+        vim.notify('No information available')
+      end
+      return
+    end
+
+    lsp.util.open_floating_preview(contents, 'markdown', config)
+  end)
 end
 
 local function request_with_opts(name, params, opts)
