@@ -289,6 +289,9 @@ local config = {
     },
     fn_xform = function(fun)
       fun.name = fun.name:gsub('result%.', '')
+      if fun.module == 'vim.lsp.protocol' then
+        fun.classvar = nil
+      end
     end,
     section_fmt = function(name)
       if name:lower() == 'lsp' then
