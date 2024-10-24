@@ -651,7 +651,7 @@ do
   end
 end
 
-local on_key_cbs = {} --- @type table<integer,function>
+local on_key_cbs = {} --- @type table<integer,[function, { may_discard: boolean }?}>
 
 --- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
 --- yes every, input key.
@@ -670,28 +670,33 @@ local on_key_cbs = {} --- @type table<integer,function>
 ---          are applied, and {typed} is the key(s) before mappings are applied.
 ---          {typed} may be empty if {key} is produced by non-typed key(s) or by the
 ---          same typed key(s) that produced a previous {key}.
+---          If {opts.may_discard} then when {fn} returns
+---          true, {key} is ignored.
 ---          When {fn} is `nil` and {ns_id} is specified, the callback associated with
 ---          namespace {ns_id} is removed.
 ---@param ns_id integer? Namespace ID. If nil or 0, generates and returns a
 ---                      new |nvim_create_namespace()| id.
+---@param opts table|nil Optional parameters
+---              - may_discard {fn} controls discard (default false)
 ---
 ---@see |keytrans()|
 ---
 ---@return integer Namespace id associated with {fn}. Or count of all callbacks
 ---if on_key() is called without arguments.
-function vim.on_key(fn, ns_id)
+function vim.on_key(fn, ns_id, opts)
   if fn == nil and ns_id == nil then
     return vim.tbl_count(on_key_cbs)
   end
 
   vim.validate('fn', fn, 'callable', true)
   vim.validate('ns_id', ns_id, 'number', true)
+  vim.validate('opts', opts, 'table', true)
 
   if ns_id == nil or ns_id == 0 then
     ns_id = vim.api.nvim_create_namespace('')
   end
 
-  on_key_cbs[ns_id] = fn
+  on_key_cbs[ns_id] = fn and { fn, opts }
   return ns_id
 end
 
@@ -700,12 +705,19 @@ end
 function vim._on_key(buf, typed_buf)
   local failed_ns_ids = {}
   local failed_messages = {}
+  local discard = false
   for k, v in pairs(on_key_cbs) do
-    local ok, err_msg = pcall(v, buf, typed_buf)
+    local ok, discard_or_err_msg = pcall(v[1], buf, typed_buf)
     if not ok then
       vim.on_key(nil, k)
       table.insert(failed_ns_ids, k)
-      table.insert(failed_messages, err_msg)
+      table.insert(failed_messages, discard_or_err_msg)
+    elseif v[2] and v[2].may_discard then
+      if discard_or_err_msg == true then
+        discard = true
+        -- break   -- Without break deliver to all callbacks even if it eventually discards.
+        -- "break" does not make sense unless callbacks are sorted by ???.
+      end
     end
   end
 
@@ -718,6 +730,7 @@ function vim._on_key(buf, typed_buf)
       )
     )
   end
+  return discard
 end
 
 --- Convert UTF-32, UTF-16 or UTF-8 {index} to byte index.
