@@ -894,7 +894,8 @@ local function on_code_action_results(results, opts)
     local a_cmd = action.command
     if a_cmd then
       local command = type(a_cmd) == 'table' and a_cmd or action
-      client:_exec_cmd(command, ctx)
+      --- @cast command lsp.Command
+      client:exec_cmd(command, ctx)
     end
   end
 
@@ -1050,12 +1051,14 @@ function M.code_action(opts)
   end
 end
 
+--- @deprecated
 --- Executes an LSP server command.
 --- @param command_params lsp.ExecuteCommandParams
 --- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 function M.execute_command(command_params)
   validate('command', command_params.command, 'string')
   validate('arguments', command_params.arguments, 'table', true)
+  vim.deprecate('execute_command', 'client:exec_cmd', '0.12')
   command_params = {
     command = command_params.command,
     arguments = command_params.arguments,
