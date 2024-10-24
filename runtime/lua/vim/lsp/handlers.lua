@@ -317,6 +317,7 @@ M[ms.textDocument_formatting] = function(_, result, ctx, _)
   util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
+--- @deprecated
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 M[ms.textDocument_completion] = function(_, result, _, _)
   if vim.tbl_isempty(result or {}) then
