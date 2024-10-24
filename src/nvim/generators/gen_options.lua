@@ -90,6 +90,12 @@ local function get_flags(o)
   return flags
 end
 
+--- @param opt_type vim.option_type
+--- @return string
+local function opt_type_enum(opt_type)
+  return ('kOptValType%s'):format(lowercase_to_titlecase(opt_type))
+end
+
 --- @param o vim.option_meta
 --- @return string
 local function get_type_flags(o)
@@ -99,7 +105,7 @@ local function get_type_flags(o)
 
   for _, opt_type in ipairs(opt_types) do
     assert(type(opt_type) == 'string')
-    type_flags = ('%s | (1 << kOptValType%s)'):format(type_flags, lowercase_to_titlecase(opt_type))
+    type_flags = ('%s | (1 << %s)'):format(type_flags, opt_type_enum(opt_type))
   end
 
   return type_flags
@@ -125,27 +131,48 @@ local function get_cond(c, base_string)
   return cond_string
 end
 
+--- @param s string
+--- @return string
+local static_cstr_as_string = function(s)
+  return ('{ .data = %s, .size = sizeof(%s) - 1 }'):format(s, s)
+end
+
+--- @param v vim.option_value|function
+--- @return string
+local get_opt_val = function(v)
+  --- @type vim.option_type
+  local v_type
+
+  if type(v) == 'function' then
+    v, v_type = v() --[[ @as string, vim.option_type ]]
+
+    if v_type == 'string' then
+      v = static_cstr_as_string(v)
+    end
+  else
+    v_type = type(v) --[[ @as vim.option_type ]]
+
+    if v_type == 'boolean' then
+      v = v and 'true' or 'false'
+    elseif v_type == 'number' then
+      v = ('%iL'):format(v)
+    elseif v_type == 'string' then
+      v = static_cstr_as_string(cstr(v))
+    end
+  end
+
+  return ('{ .type = %s, .data.%s = %s }'):format(opt_type_enum(v_type), v_type, v)
+end
+
+--- @param d vim.option_value|function
+--- @param n string
+--- @return string
+
 local get_defaults = function(d, n)
   if d == nil then
     error("option '" .. n .. "' should have a default value")
   end
-
-  local value_dumpers = {
-    ['function'] = function(v)
-      return v()
-    end,
-    string = function(v)
-      return '.string=' .. cstr(v)
-    end,
-    boolean = function(v)
-      return '.boolean=' .. (v and 'true' or 'false')
-    end,
-    number = function(v)
-      return ('.number=%iL'):format(v)
-    end,
-  }
-
-  return value_dumpers[type(d)](d)
+  return get_opt_val(d)
 end
 
 --- @type [string,string][]
@@ -165,23 +192,17 @@ local function dump_option(i, o)
     w(get_cond(o.enable_if))
   end
 
-  -- An option cannot be both hidden and immutable.
-  assert(not o.hidden or not o.immutable)
-
-  local has_var = true
   if o.varname then
     w('    .var=&' .. o.varname)
-  elseif o.hidden or o.immutable then
-    -- Hidden and immutable options can directly point to the default value.
-    w(('    .var=&options[%u].def_val'):format(i - 1))
+  elseif o.immutable then
+    -- Immutable options can directly point to the default value.
+    w(('    .var=&options[%u].def_val.data'):format(i - 1))
   elseif #o.scope == 1 and o.scope[1] == 'window' then
     w('    .var=VAR_WIN')
   else
-    has_var = false
+    -- Option must be immutable or have a variable.
+    assert(false)
   end
-  -- `enable_if = false` should be present iff there is no variable.
-  assert((o.enable_if == false) == not has_var)
-  w('    .hidden=' .. (o.hidden and 'true' or 'false'))
   w('    .immutable=' .. (o.immutable and 'true' or 'false'))
   if #o.scope == 1 and o.scope[1] == 'global' then
     w('    .indir=PV_NONE')
@@ -211,7 +232,10 @@ local function dump_option(i, o)
   end
   if o.enable_if then
     w('#else')
-    w('    .var=NULL')
+    -- Hidden option directly points to default value.
+    w(('    .var=&options[%u].def_val.data'):format(i - 1))
+    -- Option is always immutable on the false branch of `enable_if`.
+    w('    .immutable=true')
     w('    .indir=PV_NONE')
     w('#endif')
   end
@@ -219,14 +243,16 @@ local function dump_option(i, o)
     if o.defaults.condition then
       w(get_cond(o.defaults.condition))
     end
-    w('    .def_val' .. get_defaults(o.defaults.if_true, o.full_name))
+    w('    .def_val=' .. get_defaults(o.defaults.if_true, o.full_name))
     if o.defaults.condition then
       if o.defaults.if_false then
         w('#else')
-        w('    .def_val' .. get_defaults(o.defaults.if_false, o.full_name))
+        w('    .def_val=' .. get_defaults(o.defaults.if_false, o.full_name))
       end
       w('#endif')
     end
+  else
+    w('    .def_val=NIL_OPTVAL')
   end
   w('  },')
 end

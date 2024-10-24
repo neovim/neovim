@@ -306,19 +306,13 @@ created, thus they behave slightly differently:
 
 :se[t] {option}<	Set the effective value of {option} to its global
 			value.
-			For string |global-local| options, the local value is
-			removed, so that the global value will be used.
+			For |global-local| options, the local value is removed,
+			so that the global value will be used.
 			For all other options, the global value is copied to
 			the local value.
 
 :setl[ocal] {option}<	Set the effective value of {option} to its global
-			value.
-			For number and boolean |global-local| options, the
-			local value is removed, so that the global value will
-			be used.
-			For all other options, including string |global-local|
-			options, the global value is copied to the local
-			value.
+			value by copying the global value to the local value.
 
 Note that the behaviour for |global-local| options is slightly different
 between string and number-based options.
@@ -647,11 +641,12 @@ Hidden options						*hidden-options*
 
 Not all options are supported in all versions.  This depends on the supported
 features and sometimes on the system.  A remark about this is in curly braces
-below.  When an option is not supported it may still be set without getting an
-error, this is called a hidden option.  You can't get the value of a hidden
-option though, it is not stored.
+below.  When an option is not supported, it is called a hidden option.  Trying
+to get the value of a hidden option will not give an error, it will return the
+default value for that option instead. You can't set the value of a hidden
+option.
 
-To test if option "foo" can be used with ":set" use something like this: >
+To test if "foo" is a valid option name, use something like this: >
 	if exists('&foo')
 This also returns true for a hidden option.  To test if option "foo" is really
 supported use something like this: >

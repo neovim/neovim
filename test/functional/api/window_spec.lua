@@ -121,7 +121,7 @@ describe('API/win', function()
       local newwin
 
       before_each(function()
-        command('set shellslash')
+        command('if exists("+shellslash") | set shellslash | endif')
         topdir = fn.getcwd()
         t.mkdir(topdir .. '/Xacd')
         t.mkdir(topdir .. '/Xacd/foo')
@@ -1775,7 +1775,7 @@ describe('API/win', function()
       local otherbuf
 
       before_each(function()
-        command('set shellslash')
+        command('if exists("+shellslash") | set shellslash | endif')
         topdir = fn.getcwd()
         t.mkdir(topdir .. '/Xacd')
         t.mkdir(topdir .. '/Xacd/foo')

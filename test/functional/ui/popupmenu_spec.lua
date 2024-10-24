@@ -2849,7 +2849,7 @@ describe('builtin popupmenu', function()
         screen:try_resize(32, 10)
         command('set wildmenu')
         command('set wildoptions=pum')
-        command('set shellslash')
+        command('if exists("+shellslash") | set shellslash | endif')
         command('cd test/functional/fixtures/wildpum')
 
         feed(':sign ')

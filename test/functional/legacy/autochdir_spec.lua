@@ -16,7 +16,7 @@ describe('autochdir behavior', function()
   before_each(function()
     mkdir(dir)
     clear()
-    command('set shellslash')
+    command('if exists("+shellslash") | set shellslash | endif')
   end)
 
   after_each(function()
