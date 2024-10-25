@@ -624,7 +624,6 @@ These legacy Vim features are not yet implemented:
 - *:gui*
 - *:gvim*
 - *'browsedir'* *'bsdir'*
-- *'completepopup'*
 - *'guioptions'* *'go'*
 - *'guitablabel'* *'gtl'*
 - *'guitabtooltip'* *'gtt'*
