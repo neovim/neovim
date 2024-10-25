@@ -3198,10 +3198,15 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                     entered by |nvim_set_current_win()|, or, when the `mouse`
                     field is set to true, by mouse events.
                   • mouse: Specify how this window interacts with mouse
-                    events. Defaults to `focusable` value.
+                    events. May be a boolean or a Lua callback. Defaults to
+                    `focusable` value.
                     • If false, mouse events pass through this window.
                     • If true, mouse events interact with this window
                       normally.
+                    • If a Lua callback, mouse events interact with this
+                      window, but the callback is called in place of the
+                      default handling. The default handling will be used
+                      again if callback returns `true`.
                   • external: GUI should display the window as an external
                     top-level window. Currently accepts no other positioning
                     configuration together with this.
