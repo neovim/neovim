@@ -339,10 +339,8 @@ Normal commands:
 
 Options:
 
-Local values for global-local number/boolean options are unset when the option
-is set without a scope (e.g. by using |:set|), similarly to how global-local
-string options work.
-
+- `:set {option}<` removes local value for all |global-local| options.
+- `:setlocal {option}<` copies global value to local value for all options.
 - 'autoread'    works in the terminal (if it supports "focus" events)
 - 'cpoptions'   flags: |cpo-_|
 - 'diffopt'     "linematch" feature

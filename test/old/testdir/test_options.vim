@@ -1386,7 +1386,8 @@ func Test_local_scrolloff()
   call assert_equal(5, &so)
   wincmd w
   call assert_equal(3, &so)
-  setlocal so<
+  "setlocal so<
+  set so<
   call assert_equal(5, &so)
   setglob so=8
   call assert_equal(8, &so)
@@ -1403,7 +1404,8 @@ func Test_local_scrolloff()
   call assert_equal(7, &siso)
   wincmd w
   call assert_equal(3, &siso)
-  setlocal siso<
+  "setlocal siso<
+  set siso<
   call assert_equal(7, &siso)
   setglob siso=4
   call assert_equal(4, &siso)
@@ -1595,17 +1597,17 @@ func Test_set_number_global_local_option()
   call assert_equal(12, &l:scrolloff)
   call assert_equal(12, &scrolloff)
 
-  " :set {option}< set the effective value of {option} to its global value.
-  set scrolloff<
-  " Nvim: local value is removed
-  " call assert_equal(10, &l:scrolloff)
-  call assert_equal(-1, &l:scrolloff)
+  " :setlocal {option}< set the effective value of {option} to its global value.
+  "set scrolloff<
+  setlocal scrolloff<
+  call assert_equal(10, &l:scrolloff)
   call assert_equal(10, &scrolloff)
 
-  " :setlocal {option}< removes the local value, so that the global value will be used.
+  " :set {option}< removes the local value, so that the global value will be used.
   setglobal scrolloff=15
   setlocal scrolloff=18
-  setlocal scrolloff<
+  "setlocal scrolloff<
+  set scrolloff<
   call assert_equal(-1, &l:scrolloff)
   call assert_equal(15, &scrolloff)
 
@@ -1620,17 +1622,17 @@ func Test_set_boolean_global_local_option()
   call assert_equal(0, &l:autoread)
   call assert_equal(0, &autoread)
 
-  " :set {option}< set the effective value of {option} to its global value.
-  set autoread<
-  " Nvim: local value is removed
-  " call assert_equal(1, &l:autoread)
-  call assert_equal(-1, &l:autoread)
+  " :setlocal {option}< set the effective value of {option} to its global value.
+  "set autoread<
+  setlocal autoread<
+  call assert_equal(1, &l:autoread)
   call assert_equal(1, &autoread)
 
-  " :setlocal {option}< removes the local value, so that the global value will be used.
+  " :set {option}< removes the local value, so that the global value will be used.
   setglobal noautoread
   setlocal autoread
-  setlocal autoread<
+  "setlocal autoread<
+  set autoread<
   call assert_equal(-1, &l:autoread)
   call assert_equal(0, &autoread)
 
