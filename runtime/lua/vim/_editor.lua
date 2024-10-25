@@ -545,7 +545,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   -- TODO: handle double-width characters
   if regtype:byte() == 22 then
     local bufline = vim.api.nvim_buf_get_lines(bufnr, pos1[1], pos1[1] + 1, true)[1]
-    pos1[2] = vim.str_utfindex(bufline, pos1[2])
+    pos1[2] = vim.str_utfindex(bufline, 'utf-32', pos1[2])
   end
 
   local region = {}
@@ -557,14 +557,14 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       c2 = c1 + tonumber(regtype:sub(2))
       -- and adjust for non-ASCII characters
       local bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
-      local utflen = vim.str_utfindex(bufline, #bufline)
+      local utflen = vim.str_utfindex(bufline, 'utf-32', #bufline)
       if c1 <= utflen then
-        c1 = assert(tonumber(vim.str_byteindex(bufline, c1)))
+        c1 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c1)))
       else
         c1 = #bufline + 1
       end
       if c2 <= utflen then
-        c2 = assert(tonumber(vim.str_byteindex(bufline, c2)))
+        c2 = assert(tonumber(vim.str_byteindex(bufline, 'utf-32', c2)))
       else
         c2 = #bufline + 1
       end
@@ -740,9 +740,14 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
     --   • {str}        (`string`)
     --   • {index}      (`integer`)
     --   • {use_utf16}  (`boolean?`)
+    vim.deprecate(
+      'vim.str_byteindex',
+      'vim.str_byteindex(s, encoding, index, strict_indexing)',
+      '1.0'
+    )
     local old_index = encoding
     local use_utf16 = index or false
-    return vim.__str_byteindex(s, old_index, use_utf16) or error('index out of range')
+    return vim._str_byteindex(s, old_index, use_utf16) or error('index out of range')
   end
 
   vim.validate('s', s, 'string')
@@ -769,7 +774,7 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
     end
     return index
   end
-  return vim.__str_byteindex(s, index, encoding == 'utf-16')
+  return vim._str_byteindex(s, index, encoding == 'utf-16')
     or strict_indexing and error('index out of range')
     or len
 end
@@ -793,8 +798,13 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
     -- Parameters: ~
     --   • {str}    (`string`)
     --   • {index}  (`integer?`)
+    vim.deprecate(
+      'vim.str_utfindex',
+      'vim.str_utfindex(s, encoding, index, strict_indexing)',
+      '1.0'
+    )
     local old_index = encoding
-    local col32, col16 = vim.__str_utfindex(s, old_index) --[[@as integer,integer]]
+    local col32, col16 = vim._str_utfindex(s, old_index) --[[@as integer,integer]]
     if not col32 or not col16 then
       error('index out of range')
     end
@@ -828,7 +838,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
     local len = #s
     return index <= len and index or (strict_indexing and error('index out of range') or len)
   end
-  local col32, col16 = vim.__str_utfindex(s, index) --[[@as integer?,integer?]]
+  local col32, col16 = vim._str_utfindex(s, index) --[[@as integer?,integer?]]
   local col = encoding == 'utf-16' and col16 or col32
   if col then
     return col
@@ -836,7 +846,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
   if strict_indexing then
     error('index out of range')
   end
-  local max32, max16 = vim.__str_utfindex(s)--[[@as integer integer]]
+  local max32, max16 = vim._str_utfindex(s)--[[@as integer integer]]
   return encoding == 'utf-16' and max16 or max32
 end
 

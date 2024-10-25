@@ -48,45 +48,6 @@ local str_utfindex = vim.str_utfindex
 local str_utf_start = vim.str_utf_start
 local str_utf_end = vim.str_utf_end
 
--- Given a line, byte idx, and offset_encoding convert to the
--- utf-8, utf-16, or utf-32 index.
----@param line string the line to index into
----@param byte integer the byte idx
----@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
----@return integer utf_idx for the given encoding
-local function byte_to_utf(line, byte, offset_encoding)
-  -- convert to 0 based indexing for str_utfindex
-  byte = byte - 1
-
-  local utf_idx, _ --- @type integer, integer
-  -- Convert the byte range to utf-{8,16,32} and convert 1-based (lua) indexing to 0-based
-  if offset_encoding == 'utf-16' then
-    _, utf_idx = str_utfindex(line, byte)
-  elseif offset_encoding == 'utf-32' then
-    utf_idx, _ = str_utfindex(line, byte)
-  else
-    utf_idx = byte
-  end
-
-  -- convert to 1 based indexing
-  return utf_idx + 1
-end
-
----@param line string
----@param offset_encoding string
----@return integer
-local function compute_line_length(line, offset_encoding)
-  local length, _ --- @type integer, integer
-  if offset_encoding == 'utf-16' then
-    _, length = str_utfindex(line)
-  elseif offset_encoding == 'utf-32' then
-    length, _ = str_utfindex(line)
-  else
-    length = #line
-  end
-  return length
-end
-
 -- Given a line, byte idx, alignment, and offset_encoding convert to the aligned
 -- utf-8 index and either the utf-16, or utf-32 index.
 ---@param line string the line to index into
@@ -101,7 +62,7 @@ local function align_end_position(line, byte, offset_encoding)
     char = byte
     -- Called in the case of extending an empty line "" -> "a"
   elseif byte == #line + 1 then
-    char = compute_line_length(line, offset_encoding) + 1
+    char = str_utfindex(line, offset_encoding) + 1
   else
     -- Modifying line, find the nearest utf codepoint
     local offset = str_utf_start(line, byte)
@@ -111,9 +72,10 @@ local function align_end_position(line, byte, offset_encoding)
       byte = byte + str_utf_end(line, byte) + 1
     end
     if byte <= #line then
-      char = byte_to_utf(line, byte, offset_encoding)
+      --- Convert to 0 based for input, and from 0 based for output
+      char = str_utfindex(line, offset_encoding, byte - 1) + 1
     else
-      char = compute_line_length(line, offset_encoding) + 1
+      char = str_utfindex(line, offset_encoding) + 1
     end
     -- Extending line, find the nearest utf codepoint for the last valid character
   end
@@ -153,7 +115,7 @@ local function compute_start_range(
     if line then
       line_idx = firstline - 1
       byte_idx = #line + 1
-      char_idx = compute_line_length(line, offset_encoding) + 1
+      char_idx = str_utfindex(line, offset_encoding) + 1
     else
       line_idx = firstline
       byte_idx = 1
@@ -190,10 +152,11 @@ local function compute_start_range(
     char_idx = 1
   elseif start_byte_idx == #prev_line + 1 then
     byte_idx = start_byte_idx
-    char_idx = compute_line_length(prev_line, offset_encoding) + 1
+    char_idx = str_utfindex(prev_line, offset_encoding) + 1
   else
     byte_idx = start_byte_idx + str_utf_start(prev_line, start_byte_idx)
-    char_idx = byte_to_utf(prev_line, byte_idx, offset_encoding)
+    --- Convert to 0 based for input, and from 0 based for output
+    char_idx = vim.str_utfindex(prev_line, offset_encoding, byte_idx - 1) + 1
   end
 
   -- Return the start difference (shared for new and prev lines)
@@ -230,7 +193,7 @@ local function compute_end_range(
     return {
       line_idx = lastline - 1,
       byte_idx = #prev_line + 1,
-      char_idx = compute_line_length(prev_line, offset_encoding) + 1,
+      char_idx = str_utfindex(prev_line, offset_encoding) + 1,
     }, { line_idx = 1, byte_idx = 1, char_idx = 1 }
   end
   -- If firstline == new_lastline, the first change occurred on a line that was deleted.
@@ -376,7 +339,7 @@ local function compute_range_length(lines, start_range, end_range, offset_encodi
   local start_line = lines[start_range.line_idx]
   local range_length --- @type integer
   if start_line and #start_line > 0 then
-    range_length = compute_line_length(start_line, offset_encoding)
+    range_length = str_utfindex(start_line, offset_encoding)
       - start_range.char_idx
       + 1
       + line_ending_length
@@ -389,7 +352,7 @@ local function compute_range_length(lines, start_range, end_range, offset_encodi
   for idx = start_range.line_idx + 1, end_range.line_idx - 1 do
     -- Length full line plus newline character
     if #lines[idx] > 0 then
-      range_length = range_length + compute_line_length(lines[idx], offset_encoding) + #line_ending
+      range_length = range_length + str_utfindex(lines[idx], offset_encoding) + #line_ending
     else
       range_length = range_length + line_ending_length
     end

@@ -699,10 +699,10 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     lua_setfield(lstate, -2, "stricmp");
     // str_utfindex
     lua_pushcfunction(lstate, &nlua_str_utfindex);
-    lua_setfield(lstate, -2, "__str_utfindex");
+    lua_setfield(lstate, -2, "_str_utfindex");
     // str_byteindex
     lua_pushcfunction(lstate, &nlua_str_byteindex);
-    lua_setfield(lstate, -2, "__str_byteindex");
+    lua_setfield(lstate, -2, "_str_byteindex");
     // str_utf_pos
     lua_pushcfunction(lstate, &nlua_str_utf_pos);
     lua_setfield(lstate, -2, "str_utf_pos");

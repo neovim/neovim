@@ -33,25 +33,6 @@ local function severity_vim_to_lsp(severity)
   return severity
 end
 
----@param lines string[]?
----@param lnum integer
----@param col integer
----@param offset_encoding string
----@return integer
-local function line_byte_from_position(lines, lnum, col, offset_encoding)
-  if not lines or offset_encoding == 'utf-8' then
-    return col
-  end
-
-  local line = lines[lnum + 1]
-  local ok, result = pcall(vim.str_byteindex, line, col, offset_encoding == 'utf-16')
-  if ok then
-    return result --- @type integer
-  end
-
-  return col
-end
-
 ---@param bufnr integer
 ---@return string[]?
 local function get_buf_lines(bufnr)
@@ -118,12 +99,13 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
       )
       message = diagnostic.message.value
     end
+    local line = buf_lines and buf_lines[start.line + 1] or ''
     --- @type vim.Diagnostic
     return {
       lnum = start.line,
-      col = line_byte_from_position(buf_lines, start.line, start.character, offset_encoding),
+      col = vim.str_byteindex(line, offset_encoding, start.character, false),
       end_lnum = _end.line,
-      end_col = line_byte_from_position(buf_lines, _end.line, _end.character, offset_encoding),
+      end_col = vim.str_byteindex(line, offset_encoding, _end.character, false),
       severity = severity_lsp_to_vim(diagnostic.severity),
       message = message,
       source = diagnostic.source,

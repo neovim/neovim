@@ -116,71 +116,6 @@ local function create_window_without_focus()
   return new
 end
 
---- Convert byte index to `encoding` index.
---- Convenience wrapper around vim.str_utfindex
----@param line string line to be indexed
----@param index integer? byte index (utf-8), or `nil` for length
----@param encoding 'utf-8'|'utf-16'|'utf-32'? defaults to utf-16
----@return integer `encoding` index of `index` in `line`
-function M._str_utfindex_enc(line, index, encoding)
-  local len32, len16 = vim.str_utfindex(line)
-  if not encoding then
-    encoding = 'utf-16'
-  end
-  if encoding == 'utf-8' then
-    if index then
-      return index
-    else
-      return #line
-    end
-  elseif encoding == 'utf-16' then
-    if not index or index > len16 then
-      return len16
-    end
-    local _, col16 = vim.str_utfindex(line, index)
-    return col16
-  elseif encoding == 'utf-32' then
-    if not index or index > len32 then
-      return len32
-    end
-    local col32, _ = vim.str_utfindex(line, index)
-    return col32
-  else
-    error('Invalid encoding: ' .. vim.inspect(encoding))
-  end
-end
-
---- Convert UTF index to `encoding` index.
---- Convenience wrapper around vim.str_byteindex
----Alternative to vim.str_byteindex that takes an encoding.
----@param line string line to be indexed
----@param index integer UTF index
----@param encoding string utf-8|utf-16|utf-32| defaults to utf-16
----@return integer byte (utf-8) index of `encoding` index `index` in `line`
-function M._str_byteindex_enc(line, index, encoding)
-  -- LSP spec: if character > line length, default to the line length.
-  -- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#position
-  local len8 = #line
-  if not encoding then
-    encoding = 'utf-16'
-  end
-  if encoding == 'utf-8' then
-    if index and index <= len8 then
-      return index
-    else
-      return len8
-    end
-  end
-  local len32, len16 = vim.str_utfindex(line)
-  if encoding == 'utf-16' then
-    return index <= len16 and vim.str_byteindex(line, index, true) or len8
-  elseif encoding == 'utf-32' then
-    return index <= len32 and vim.str_byteindex(line, index) or len8
-  else
-    error('Invalid encoding: ' .. vim.inspect(encoding))
-  end
-end
-
 --- Replaces text in a range with new text.
 ---
 --- CAUTION: Changes in-place!
@@ -352,7 +287,7 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- character
   if col > 0 then
     local line = get_line(bufnr, position.line) or ''
-    return M._str_byteindex_enc(line, col, offset_encoding)
+    return vim.str_byteindex(line, offset_encoding, col, false)
   end
   return col
 end
@@ -1787,8 +1722,8 @@ function M.locations_to_items(locations, offset_encoding)
       local end_row = end_pos.line
       local line = lines[row] or ''
       local end_line = lines[end_row] or ''
-      local col = M._str_byteindex_enc(line, pos.character, offset_encoding)
-      local end_col = M._str_byteindex_enc(end_line, end_pos.character, offset_encoding)
+      local col = vim.str_byteindex(line, offset_encoding, pos.character, false)
+      local end_col = vim.str_byteindex(end_line, offset_encoding, end_pos.character, false)
 
       items[#items + 1] = {
         filename = filename,
@@ -1911,7 +1846,7 @@ local function make_position_param(window, offset_encoding)
     return { line = 0, character = 0 }
   end
 
-  col = M._str_utfindex_enc(line, col, offset_encoding)
+  col = vim.str_utfindex(line, offset_encoding, col, false)
 
   return { line = row, character = col }
 end
@@ -2092,7 +2027,7 @@ function M.character_offset(buf, row, col, offset_encoding)
     )
     offset_encoding = vim.lsp.get_clients({ bufnr = buf })[1].offset_encoding
   end
-  return M._str_utfindex_enc(line, col, offset_encoding)
+  return vim.str_utfindex(line, offset_encoding, col, false)
 end
 
 --- Helper function to return nested values in language server settings
