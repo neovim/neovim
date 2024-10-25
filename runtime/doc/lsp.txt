@@ -783,18 +783,10 @@ get_buffers_by_client_id({client_id})
     Return: ~
         (`integer[]`) buffers list of buffer ids
 
-get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
-    Gets a client by id, or nil if the id is invalid. The returned client may
-    not yet be fully initialized.
-
-    Parameters: ~
-      • {client_id}  (`integer`) client id
-
-    Return: ~
-        (`vim.lsp.Client?`) client rpc object
-
 get_clients({filter})                                  *vim.lsp.get_clients()*
     Get active clients.
+
+    The returned client(s) may not yet be fully initialized.
 
     Parameters: ~
       • {filter}  (`table?`) Key-value pairs used to filter the returned
@@ -909,9 +901,8 @@ start_client({config})                                *vim.lsp.start_client()*
                   |vim.lsp.ClientConfig|.
 
     Return (multiple): ~
-        (`integer?`) client_id |vim.lsp.get_client_by_id()| Note: client may
-        not be fully initialized. Use `on_init` to do any actions once the
-        client has been initialized.
+        (`integer?`) client_id Note: client may not be fully initialized. Use
+        `on_init` to do any actions once the client has been initialized.
         (`string?`) Error message, if any
 
 status()                                                    *vim.lsp.status()*

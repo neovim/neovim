@@ -447,9 +447,8 @@ end
 
 --- Starts and initializes a client with the given configuration.
 --- @param config vim.lsp.ClientConfig Configuration for the server.
---- @return integer? client_id |vim.lsp.get_client_by_id()| Note: client may not be
----         fully initialized. Use `on_init` to do any actions once
----         the client has been initialized.
+--- @return integer? client_id Note: client may not be fully initialized. Use `on_init` to do any
+---         actions once the client has been initialized.
 --- @return string? # Error message, if any
 function lsp.start_client(config)
   local ok, res = pcall(require('vim.lsp.client').create, config)
@@ -639,7 +638,7 @@ function lsp.buf_attach_client(bufnr, client_id)
     return false
   end
 
-  local client = lsp.get_client_by_id(client_id)
+  local client = lsp.get_clients({ id = client_id })[1]
   if not client then
     return false
   end
@@ -695,6 +694,8 @@ function lsp.buf_is_attached(bufnr, client_id)
   return lsp.get_clients({ bufnr = bufnr, id = client_id, _uninitialized = true })[1] ~= nil
 end
 
+--- @deprecated
+--- Use `get_clients({ id = client_id })[1]`
 --- Gets a client by id, or nil if the id is invalid.
 --- The returned client may not yet be fully initialized.
 ---
@@ -766,6 +767,8 @@ end
 --- @field package _uninitialized? boolean
 
 --- Get active clients.
+---
+--- The returned client(s) may not yet be fully initialized.
 ---
 ---@param filter? vim.lsp.get_clients.Filter
 ---@return vim.lsp.Client[]: List of |vim.lsp.Client| objects

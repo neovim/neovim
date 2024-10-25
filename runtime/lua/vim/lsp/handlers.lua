@@ -26,7 +26,7 @@ end
 ---@param params lsp.ProgressParams
 ---@param ctx lsp.HandlerContext
 M[ms.dollar_progress] = function(_, params, ctx)
-  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local client = vim.lsp.get_clients({ id = ctx.client_id })[1]
   if not client then
     err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
     return vim.NIL
@@ -62,7 +62,7 @@ end
 ---@param result lsp.WorkDoneProgressCreateParams
 ---@param ctx lsp.HandlerContext
 M[ms.window_workDoneProgress_create] = function(_, result, ctx)
-  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local client = vim.lsp.get_clients({ id = ctx.client_id })[1]
   if not client then
     err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
     return vim.NIL
@@ -111,7 +111,7 @@ end
 --- @param result lsp.RegistrationParams
 M[ms.client_registerCapability] = function(_, result, ctx)
   local client_id = ctx.client_id
-  local client = assert(vim.lsp.get_client_by_id(client_id))
+  local client = assert(vim.lsp.get_clients({ id = client_id })[1])
 
   client.dynamic_capabilities:register(result.registrations)
   for bufnr, _ in pairs(client.attached_buffers) do
@@ -142,7 +142,7 @@ end
 --- @param result lsp.UnregistrationParams
 M[ms.client_unregisterCapability] = function(_, result, ctx)
   local client_id = ctx.client_id
-  local client = assert(vim.lsp.get_client_by_id(client_id))
+  local client = assert(vim.lsp.get_clients({ id = client_id })[1])
   client.dynamic_capabilities:unregister(result.unregisterations)
 
   for _, unreg in ipairs(result.unregisterations) do
@@ -161,7 +161,7 @@ M[ms.workspace_applyEdit] = function(_, workspace_edit, ctx)
   )
   -- TODO(ashkan) Do something more with label?
   local client_id = ctx.client_id
-  local client = assert(vim.lsp.get_client_by_id(client_id))
+  local client = assert(vim.lsp.get_clients({ id = client_id })[1])
   if workspace_edit.label then
     print('Workspace edit', workspace_edit.label)
   end
@@ -185,7 +185,7 @@ end
 --- @param result lsp.ConfigurationParams
 M[ms.workspace_configuration] = function(_, result, ctx)
   local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   if not client then
     err_message(
       'LSP[',
@@ -218,7 +218,7 @@ end
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_workspaceFolders
 M[ms.workspace_workspaceFolders] = function(_, _, ctx)
   local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   if not client then
     err_message('LSP[id=', client_id, '] client has shut down after sending the message')
     return
@@ -295,7 +295,7 @@ M[ms.textDocument_rename] = function(_, result, ctx, _)
     vim.notify("Language server couldn't provide rename result", vim.log.levels.INFO)
     return
   end
-  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+  local client = assert(vim.lsp.get_clients({ id = ctx.client_id })[1])
   util.apply_workspace_edit(result, client.offset_encoding)
 end
 
@@ -304,7 +304,7 @@ M[ms.textDocument_rangeFormatting] = function(_, result, ctx, _)
   if not result then
     return
   end
-  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+  local client = assert(vim.lsp.get_clients({ id = ctx.client_id })[1])
   util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
@@ -313,7 +313,7 @@ M[ms.textDocument_formatting] = function(_, result, ctx, _)
   if not result then
     return
   end
-  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+  local client = assert(vim.lsp.get_clients({ id = ctx.client_id })[1])
   util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
@@ -424,7 +424,7 @@ function M.signature_help(_, result, ctx, config)
     end
     return
   end
-  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+  local client = assert(vim.lsp.get_clients({ id = ctx.client_id })[1])
   local triggers =
     vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
   local ft = vim.bo[ctx.bufnr].filetype
@@ -458,7 +458,7 @@ M[ms.textDocument_documentHighlight] = function(_, result, ctx, _)
     return
   end
   local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   if not client then
     return
   end
@@ -515,7 +515,7 @@ local function make_type_hierarchy_handler()
       end
       return string.format('%s %s', item.name, item.detail)
     end
-    local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+    local client = assert(vim.lsp.get_clients({ id = ctx.client_id })[1])
     local items = {}
     for _, type_hierarchy_item in pairs(result) do
       local col = util._get_line_byte_from_position(
@@ -547,7 +547,7 @@ M[ms.window_logMessage] = function(_, result, ctx, _)
   local message_type = result.type
   local message = result.message
   local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   local client_name = client and client.name or string.format('id=%d', client_id)
   if not client then
     err_message('LSP[', client_name, '] client has shut down after sending ', message)
@@ -570,7 +570,7 @@ M[ms.window_showMessage] = function(_, result, ctx, _)
   local message_type = result.type
   local message = result.message
   local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   local client_name = client and client.name or string.format('id=%d', client_id)
   if not client then
     err_message('LSP[', client_name, '] client has shut down after sending ', message)
@@ -609,7 +609,7 @@ M[ms.window_showDocument] = function(_, result, ctx, _)
   end
 
   local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   local client_name = client and client.name or string.format('id=%d', client_id)
   if not client then
     err_message('LSP[', client_name, '] client has shut down after sending ', ctx.method)

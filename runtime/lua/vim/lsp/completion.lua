@@ -397,7 +397,7 @@ local function request(clients, bufnr, win, callback)
 
   return function()
     for client_id, request_id in pairs(request_ids) do
-      local client = lsp.get_client_by_id(client_id)
+      local client = vim.lsp.get_clients({ id = client_id })[1]
       if client then
         client.cancel_request(request_id)
       end
@@ -444,7 +444,7 @@ local function trigger(bufnr, clients)
       local result = response.result
       if result then
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
-        local client = lsp.get_client_by_id(client_id)
+        local client = vim.lsp.get_clients({ id = client_id })[1]
         local encoding = client and client.offset_encoding or 'utf-16'
         local client_matches
         client_matches, server_start_boundary = M._convert_results(
@@ -523,7 +523,7 @@ local function on_complete_done()
 
   Context:reset()
 
-  local client = lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   if not client then
     return
   end
@@ -636,7 +636,7 @@ local function enable_completions(client_id, bufnr, opts)
   end
 
   if not buf_handle.clients[client_id] then
-    local client = lsp.get_client_by_id(client_id)
+    local client = vim.lsp.get_clients({ id = client_id })[1]
     assert(client, 'invalid client ID')
 
     -- Add the new client to the buffer's clients.

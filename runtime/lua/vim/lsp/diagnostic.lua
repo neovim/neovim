@@ -84,7 +84,7 @@ end
 ---@return vim.Diagnostic[]
 local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   local buf_lines = get_buf_lines(bufnr)
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   local offset_encoding = client and client.offset_encoding or 'utf-16'
   --- @param diagnostic lsp.Diagnostic
   --- @return vim.Diagnostic
@@ -179,7 +179,7 @@ local _client_pull_namespaces = {}
 function M.get_namespace(client_id, is_pull)
   vim.validate('client_id', client_id, 'number')
 
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   if is_pull then
     local server_id =
       vim.tbl_get((client or {}).server_capabilities, 'diagnosticProvider', 'identifier')

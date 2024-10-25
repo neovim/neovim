@@ -46,7 +46,7 @@ local function execute_lens(lens, bufnr, client_id)
   local line = lens.range.start.line
   api.nvim_buf_clear_namespace(bufnr, namespaces[client_id], line, line + 1)
 
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   assert(client, 'Client is required to execute lens, client_id=' .. client_id)
   client:exec_cmd(lens.command, { bufnr = bufnr }, function(...)
     vim.lsp.handlers[ms.workspace_executeCommand](...)
@@ -225,7 +225,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
     end
   end
   local ns = namespaces[client_id]
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_clients({ id = client_id })[1]
   for _, lens in pairs(lenses or {}) do
     if lens.command then
       countdown()
