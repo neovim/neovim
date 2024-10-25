@@ -17,9 +17,9 @@ get an idea of what lurks beneath: >vim
     :lua vim.print(package.loaded)
 
 Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
-"editor stdlib" (|builtin-functions| and |Ex-commands|) and the |API|, all of
-which can be used from Lua code (|lua-vimscript| |vim.api|). Together these
-"namespaces" form the Nvim programming interface.
+"editor stdlib" (|vimscript-functions| + |Ex-commands|) and the |API|, all of
+which can be used from Lua code (|lua-vimscript| |vim.api|). These three
+namespaces form the Nvim programming interface.
 
 Lua plugins and user config are automatically discovered and loaded, just like
 Vimscript. See |lua-guide| for practical guidance.
