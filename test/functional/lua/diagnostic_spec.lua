@@ -111,6 +111,19 @@ describe('vim.diagnostic', function()
           { details = true }
         )
       end
+
+      ---@param ns integer
+      function _G.get_underline_extmarks(ns)
+        ---@type integer
+        local underline_ns = vim.diagnostic.get_namespace(ns).user_data.underline_ns
+        return vim.api.nvim_buf_get_extmarks(
+          _G.diagnostic_bufnr,
+          underline_ns,
+          0,
+          -1,
+          { details = true }
+        )
+      end
     end)
 
     exec_lua(function()
@@ -1813,6 +1826,21 @@ describe('vim.diagnostic', function()
           _G.make_info('Info', 4, 4, 4, 4),
         })
 
+        function _G.get_highest_underline_hl(severity_sort)
+          vim.diagnostic.config({
+            underline = true,
+            severity_sort = severity_sort,
+          })
+
+          local extmarks = _G.get_underline_extmarks(_G.diagnostic_ns)
+
+          table.sort(extmarks, function(a, b)
+            return a[4].priority > b[4].priority
+          end)
+
+          return extmarks[1][4].hl_group
+        end
+
         function _G.get_virt_text_and_signs(severity_sort)
           vim.diagnostic.config({
             severity_sort = severity_sort,
@@ -1864,6 +1892,12 @@ describe('vim.diagnostic', function()
       result = exec_lua [[return _G.get_virt_text_and_signs({ reverse = true })]]
       eq({ 'Error', 'Warn', 'Info' }, result[1])
       eq({ 'Info', 'Warn', 'Error' }, result[2])
+
+      local underline_hl = exec_lua [[return _G.get_highest_underline_hl(true)]]
+      eq('DiagnosticUnderlineError', underline_hl)
+
+      underline_hl = exec_lua [[return _G.get_highest_underline_hl({ reverse = true })]]
+      eq('DiagnosticUnderlineInfo', underline_hl)
     end)
 
     it('can show diagnostic sources in virtual text', function()
