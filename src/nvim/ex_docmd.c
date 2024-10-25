@@ -12,6 +12,7 @@
 #include <uv.h>
 
 #include "auto/config.h"
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/arglist.h"
@@ -5640,12 +5641,31 @@ static void ex_syncbind(exarg_T *eap)
   }
 }
 
+void do_read_cmd(exarg_T *eap)
+{
+  char *cmd = eap->arg + 1;
+  StringBuilder put_cmd = KV_INITIAL_VALUE;
+  kv_printf(put_cmd, "try | ");
+  kv_printf(put_cmd, "%dput=execute('%s') | ", eap->line2, cmd);
+  kv_printf(put_cmd, "execute 'norm! `.' | ");
+  kv_printf(put_cmd, "execute 'd _' | ");
+  kv_printf(put_cmd, "endtry");
+
+  do_cmdline(put_cmd.items, eap->ea_getline, eap->cookie, eap->flags);
+  kv_destroy(put_cmd);
+}
+
 static void ex_read(exarg_T *eap)
 {
   int empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
 
   if (eap->usefilter) {  // :r!cmd
     do_bang(1, eap, false, false, true);
+    return;
+  }
+
+  if (*eap->arg == ':') {
+    do_read_cmd(eap);
     return;
   }
 
