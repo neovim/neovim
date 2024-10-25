@@ -244,8 +244,24 @@ function M._lsp_to_complete_items(result, prefix, client_id)
   else
     ---@param item lsp.CompletionItem
     matches = function(item)
-      local text = item.filterText or item.label
-      return next(vim.fn.matchfuzzy({ text }, prefix)) ~= nil
+      if item.filterText then
+        return next(vim.fn.matchfuzzy({ item.filterText }, prefix)) ~= nil
+      end
+
+      if item.textEdit then
+        -- server took care of filtering
+        return true
+      end
+
+      local text = item.label
+      if vim.o.completeopt:find('fuzzy') ~= nil then
+        return next(vim.fn.matchfuzzy({ text }, prefix)) ~= nil
+      end
+
+      if vim.o.ignorecase and (not vim.o.smartcase or not prefix:find('%u')) then
+        return vim.startswith(text:lower(), prefix:lower())
+      end
+      return vim.startswith(text, prefix)
     end
   end
 
