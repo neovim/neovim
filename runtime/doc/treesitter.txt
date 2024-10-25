@@ -1211,7 +1211,7 @@ add_predicate({name}, {handler}, {opts})
 
     Parameters: ~
       • {name}     (`string`) Name of the predicate, without leading #
-      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata)`)
+      • {handler}  (`fun(match: table<integer,TSNode[]>, pattern: integer, source: integer|string, predicate: any[], metadata: vim.treesitter.query.TSMetadata): boolean?`)
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
       • {opts}     (`table?`) A table with the following fields:
