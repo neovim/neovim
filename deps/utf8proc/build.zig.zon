@@ -1,0 +1,12 @@
+.{
+    .name = "utf8proc",
+    .version = "0.23.1",
+    .paths = .{""},
+
+    .dependencies = .{
+        .utf8proc = .{
+            .url = "https://github.com/JuliaStrings/utf8proc/archive/3de4596fbe28956855df2ecb3c11c0bbc3535838.tar.gz",
+            .hash = "1220abfe737a4fc87dd25bc8540e1497757a86745c642d37abb22d9656382a2e1bb9",
+        },
+    },
+}
