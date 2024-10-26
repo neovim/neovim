@@ -957,7 +957,7 @@ end
 
 --- Jumps to a location.
 ---
----@deprecated
+---@deprecated use `vim.lsp.util.show_document` with `{focus=true}` instead
 ---@param location lsp.Location|lsp.LocationLink
 ---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'?
 ---@param reuse_win boolean? Jump to existing window if buffer is already open.
