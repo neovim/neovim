@@ -1049,7 +1049,7 @@ function lsp.formatexpr(opts)
     if client.supports_method(ms.textDocument_rangeFormatting) then
       local params = util.make_formatting_params()
       local end_line = vim.fn.getline(end_lnum) --[[@as string]]
-      local end_col = util._str_utfindex_enc(end_line, nil, client.offset_encoding)
+      local end_col = vim.str_utfindex(end_line, client.offset_encoding)
       --- @cast params +lsp.DocumentRangeFormattingParams
       params.range = {
         start = {

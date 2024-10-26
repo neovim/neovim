@@ -208,6 +208,8 @@ LUA
 • |vim.fs.rm()| can delete files and directories.
 • |vim.validate()| now has a new signature which uses less tables,
   is more peformant and easier to read.
+• |vim.str_byteindex()| and |vim.str_utfindex()| gained overload signatures
+  supporting two new parameters, `encoding` and `strict_indexing`.
 
 OPTIONS
 

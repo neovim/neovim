@@ -305,7 +305,7 @@ local function matchstr(text, pat_or_re)
     return
   end
 
-  return text:sub(vim.str_utfindex(text, s) + 1, vim.str_utfindex(text, e))
+  return text:sub(vim.str_utfindex(text, 'utf-32', s) + 1, vim.str_utfindex(text, 'utf-32', e))
 end
 
 -- attempt to extract the name and sect out of 'name(sect)'

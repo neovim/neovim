@@ -315,7 +315,7 @@ local function adjust_start_col(lnum, line, items, encoding)
     end
   end
   if min_start_char then
-    return lsp.util._str_byteindex_enc(line, min_start_char, encoding)
+    return vim.str_byteindex(line, encoding, min_start_char, false)
   else
     return nil
   end
