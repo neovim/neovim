@@ -445,10 +445,10 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                              updated on |InsertLeave|)
       • {severity_sort}?     (`boolean|{reverse?:boolean}`, default: `false`)
                              Sort diagnostics by severity. This affects the
-                             order in which signs and virtual text are
-                             displayed. When true, higher severities are
-                             displayed before lower severities (e.g. ERROR is
-                             displayed before WARN). Options:
+                             order in which signs, virtual text, and
+                             highlights are displayed. When true, higher
+                             severities are displayed before lower severities
+                             (e.g. ERROR is displayed before WARN). Options:
                              • {reverse}? (boolean) Reverse sort order
       • {jump}?              (`vim.diagnostic.Opts.Jump`) Default values for
                              |vim.diagnostic.jump()|. See

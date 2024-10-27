@@ -71,9 +71,9 @@ local M = {}
 --- (default: `false`)
 --- @field update_in_insert? boolean
 ---
---- Sort diagnostics by severity. This affects the order in which signs and
---- virtual text are displayed. When true, higher severities are displayed
---- before lower severities (e.g. ERROR is displayed before WARN).
+--- Sort diagnostics by severity. This affects the order in which signs,
+--- virtual text, and highlights are displayed. When true, higher severities are
+--- displayed before lower severities (e.g. ERROR is displayed before WARN).
 --- Options:
 ---   - {reverse}? (boolean) Reverse sort order
 --- (default: `false`)
@@ -655,6 +655,28 @@ local function save_extmarks(namespace, bufnr)
   end
   diagnostic_cache_extmarks[bufnr][namespace] =
     api.nvim_buf_get_extmarks(bufnr, namespace, 0, -1, { details = true })
+end
+
+--- Create a function that converts a diagnostic severity to an extmark priority.
+--- @param priority integer Base priority
+--- @param opts vim.diagnostic.OptsResolved
+--- @return fun(severity: vim.diagnostic.Severity): integer
+local function severity_to_extmark_priority(priority, opts)
+  if opts.severity_sort then
+    if type(opts.severity_sort) == 'table' and opts.severity_sort.reverse then
+      return function(severity)
+        return priority + (severity - vim.diagnostic.severity.ERROR)
+      end
+    end
+
+    return function(severity)
+      return priority + (vim.diagnostic.severity.HINT - severity)
+    end
+  end
+
+  return function()
+    return priority
+  end
 end
 
 --- @type table<string,true>
@@ -1352,22 +1374,7 @@ M.handlers.signs = {
 
     -- 10 is the default sign priority when none is explicitly specified
     local priority = opts.signs and opts.signs.priority or 10
-    local get_priority --- @type function
-    if opts.severity_sort then
-      if type(opts.severity_sort) == 'table' and opts.severity_sort.reverse then
-        get_priority = function(severity)
-          return priority + (severity - vim.diagnostic.severity.ERROR)
-        end
-      else
-        get_priority = function(severity)
-          return priority + (vim.diagnostic.severity.HINT - severity)
-        end
-      end
-    else
-      get_priority = function()
-        return priority
-      end
-    end
+    local get_priority = severity_to_extmark_priority(priority, opts)
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.sign_ns then
@@ -1478,6 +1485,8 @@ M.handlers.underline = {
     end
 
     local underline_ns = ns.user_data.underline_ns
+    local get_priority = severity_to_extmark_priority(vim.hl.priorities.diagnostics, opts)
+
     for _, diagnostic in ipairs(diagnostics) do
       --- @type string?
       local higroup = underline_highlight_map[assert(diagnostic.severity)]
@@ -1504,7 +1513,7 @@ M.handlers.underline = {
         higroup,
         { diagnostic.lnum, diagnostic.col },
         { diagnostic.end_lnum, diagnostic.end_col },
-        { priority = vim.hl.priorities.diagnostics }
+        { priority = get_priority(diagnostic.severity) }
       )
     end
     save_extmarks(underline_ns, bufnr)
