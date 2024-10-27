@@ -39,12 +39,27 @@ local function check_active_clients()
       elseif type(client.config.cmd) == 'function' then
         cmd = tostring(client.config.cmd)
       end
+      local dirs_info ---@type string
+      if client.workspace_folders and #client.workspace_folders > 1 then
+        dirs_info = string.format(
+          '  Workspace folders:\n    %s',
+          vim
+            .iter(client.workspace_folders)
+            ---@param folder lsp.WorkspaceFolder
+            :map(function(folder)
+              return folder.name
+            end)
+            :join('\n    ')
+        )
+      else
+        dirs_info = string.format(
+          '  Root directory: %s',
+          client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~')
+        ) or nil
+      end
       report_info(table.concat({
         string.format('%s (id: %d)', client.name, client.id),
-        string.format(
-          '  Root directory: %s',
-          client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~') or nil
-        ),
+        dirs_info,
         string.format('  Command: %s', cmd),
         string.format('  Settings: %s', vim.inspect(client.settings, { newline = '\n  ' })),
         string.format(
