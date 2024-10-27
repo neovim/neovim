@@ -536,9 +536,7 @@ struct file_buffer {
   char *b_p_cot;                ///< 'completeopt' local value
   unsigned b_cot_flags;         ///< flags for 'completeopt'
   char *b_p_cpt;                ///< 'complete'
-#ifdef BACKSLASH_IN_FILENAME
   char *b_p_csl;                ///< 'completeslash'
-#endif
   char *b_p_cfu;                ///< 'completefunc'
   Callback b_cfu_cb;            ///< 'completefunc' callback
   char *b_p_ofu;                ///< 'omnifunc'

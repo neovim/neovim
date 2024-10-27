@@ -2441,10 +2441,10 @@ static const char *did_set_scrollbind(optset_T *args)
   return NULL;
 }
 
-#ifdef BACKSLASH_IN_FILENAME
 /// Process the updated 'shellslash' option value.
 static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
 {
+#ifdef BACKSLASH_IN_FILENAME
   if (p_ssl) {
     psepc = '/';
     psepcN = '\\';
@@ -2459,9 +2459,13 @@ static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
   buflist_slash_adjust();
   alist_slash_adjust();
   scriptnames_slash_adjust();
+#else
+  // Setting 'shellslash' is no-op outside of Windows.
+  set_option_varp(kOptShellslash, args->os_varp, BOOLEAN_OPTVAL(true), true);
+  args->os_doskip = true;
+#endif
   return NULL;
 }
-#endif
 
 /// Process the new 'shiftwidth' or the 'tabstop' option value.
 static const char *did_set_shiftwidth_tabstop(optset_T *args)
@@ -3193,7 +3197,7 @@ OptVal optval_from_varp(OptIndex opt_idx, void *varp)
 /// @param[out]  varp         Pointer to option variable.
 /// @param[in]   value        New option value.
 /// @param       free_oldval  Free old value.
-static void set_option_varp(OptIndex opt_idx, void *varp, OptVal value, bool free_oldval)
+void set_option_varp(OptIndex opt_idx, void *varp, OptVal value, bool free_oldval)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   assert(option_has_type(opt_idx, value.type));
@@ -3428,13 +3432,14 @@ static bool is_option_local_value_unset(OptIndex opt_idx)
 ///                                SID_NONE: Don't set script ID.
 /// @param       direct          Don't process side-effects.
 /// @param       value_replaced  Value was replaced completely.
+/// @param[out]  doskip          Whether option should be processed further.
 /// @param[out]  errbuf          Buffer for error message.
 /// @param       errbuflen       Length of error buffer.
 ///
 /// @return  NULL on success, an untranslated error message on error.
 static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value, OptVal new_value,
                                   int opt_flags, scid_T set_sid, const bool direct,
-                                  const bool value_replaced, char *errbuf,  // NOLINT(readability-non-const-parameter)
+                                  const bool value_replaced, bool *doskip, char *errbuf,  // NOLINT(readability-non-const-parameter)
                                   size_t errbuflen)
 {
   vimoption_T *opt = &options[opt_idx];
@@ -3484,6 +3489,8 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     // The 'isident', 'iskeyword', 'isprint' and 'isfname' options may change the character table.
     // On failure, this needs to be restored.
     restore_chartab = did_set_cb_args.os_restore_chartab;
+    // Whether option should be processed further or skipped.
+    *doskip = did_set_cb_args.os_doskip;
   }
 
   // If option is hidden or if an error is detected, restore the previous value and don't do any
@@ -3495,6 +3502,9 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
       buf_init_chartab(curbuf, true);
     }
 
+    return errmsg;
+  } else if (*doskip) {
+    // Don't process option any further.
     return errmsg;
   }
 
@@ -3709,12 +3719,13 @@ static const char *set_option(const OptIndex opt_idx, void *varp, OptVal value, 
   // Set option through its variable pointer.
   set_option_varp(opt_idx, varp, value, false);
   // Process any side effects.
+  bool doskip = false;
   errmsg = did_set_option(opt_idx, varp, old_value, value, opt_flags, set_sid, direct,
-                          value_replaced, errbuf, errbuflen);
+                          value_replaced, &doskip, errbuf, errbuflen);
 
   secure = secure_saved;
 
-  if (errmsg == NULL && !direct) {
+  if (errmsg == NULL && !direct && !doskip) {
     if (!starting) {
       apply_optionset_autocmd(opt_idx, opt_flags, saved_used_value, saved_old_global_value,
                               saved_old_local_value, saved_new_value, errmsg);
@@ -4782,10 +4793,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(buf->b_p_cms);
   case PV_CPT:
     return &(buf->b_p_cpt);
-#ifdef BACKSLASH_IN_FILENAME
   case PV_CSL:
     return &(buf->b_p_csl);
-#endif
   case PV_CFU:
     return &(buf->b_p_cfu);
   case PV_OFU:
@@ -5214,10 +5223,8 @@ void buf_copy_options(buf_T *buf, int flags)
       }
       buf->b_p_cpt = xstrdup(p_cpt);
       COPY_OPT_SCTX(buf, BV_CPT);
-#ifdef BACKSLASH_IN_FILENAME
       buf->b_p_csl = xstrdup(p_csl);
       COPY_OPT_SCTX(buf, BV_CSL);
-#endif
       buf->b_p_cfu = xstrdup(p_cfu);
       COPY_OPT_SCTX(buf, BV_CFU);
       set_buflocal_cfu_callback(buf);

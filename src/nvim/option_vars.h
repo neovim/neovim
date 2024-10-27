@@ -448,9 +448,7 @@ EXTERN unsigned cot_flags;      ///< flags from 'completeopt'
 #define COT_NOINSERT    0x020  // false: select & insert, true: noinsert
 #define COT_NOSELECT    0x040  // false: select & insert, true: noselect
 #define COT_FUZZY       0x080  // true: fuzzy match enabled
-#ifdef BACKSLASH_IN_FILENAME
 EXTERN char *p_csl;             ///< 'completeslash'
-#endif
 EXTERN OptInt p_pb;             ///< 'pumblend'
 EXTERN OptInt p_ph;             ///< 'pumheight'
 EXTERN OptInt p_pw;             ///< 'pumwidth'
@@ -661,9 +659,7 @@ EXTERN char *p_sxq;             ///< 'shellxquote'
 EXTERN char *p_sxe;             ///< 'shellxescape'
 EXTERN char *p_srr;             ///< 'shellredir'
 EXTERN int p_stmp;              ///< 'shelltemp'
-#ifdef BACKSLASH_IN_FILENAME
 EXTERN int p_ssl;               ///< 'shellslash'
-#endif
 EXTERN char *p_stl;             ///< 'statusline'
 EXTERN char *p_wbr;             ///< 'winbar'
 EXTERN int p_sr;                ///< 'shiftround'

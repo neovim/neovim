@@ -127,9 +127,7 @@ static char *(p_fdm_values[]) = { "manual", "expr", "marker", "indent",
 static char *(p_fcl_values[]) = { "all", NULL };
 static char *(p_cot_values[]) = { "menu", "menuone", "longest", "preview", "popup",
                                   "noinsert", "noselect", "fuzzy", NULL };
-#ifdef BACKSLASH_IN_FILENAME
 static char *(p_csl_values[]) = { "slash", "backslash", NULL };
-#endif
 
 static char *(p_scl_values[]) = { "yes", "no", "auto", "auto:1", "auto:2", "auto:3", "auto:4",
                                   "auto:5", "auto:6", "auto:7", "auto:8", "auto:9", "yes:1",
@@ -1091,15 +1089,20 @@ int expand_set_completeopt(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
-#ifdef BACKSLASH_IN_FILENAME
 /// The 'completeslash' option is changed.
 const char *did_set_completeslash(optset_T *args)
 {
+#ifdef BACKSLASH_IN_FILENAME
   buf_T *buf = (buf_T *)args->os_buf;
   if (check_opt_strings(p_csl, p_csl_values, false) != OK
       || check_opt_strings(buf->b_p_csl, p_csl_values, false) != OK) {
     return e_invarg;
   }
+#else
+  // Setting 'completeslash' is no-op outside of Windows.
+  set_option_varp(kOptCompleteslash, args->os_varp, CSTR_AS_OPTVAL(empty_string_option), true);
+  args->os_doskip = true;
+#endif
   return NULL;
 }
 
@@ -1111,7 +1114,6 @@ int expand_set_completeslash(optexpand_T *args, int *numMatches, char ***matches
                                numMatches,
                                matches);
 }
-#endif
 
 /// The 'concealcursor' option is changed.
 const char *did_set_concealcursor(optset_T *args)

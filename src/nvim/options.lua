@@ -1505,7 +1505,6 @@ return {
         For Insert mode completion the buffer-local value is used.  For
         command line completion the global value is used.
       ]=],
-      enable_if = 'BACKSLASH_IN_FILENAME',
       expand_cb = 'expand_set_completeslash',
       full_name = 'completeslash',
       scope = { 'buffer' },
@@ -7210,7 +7209,11 @@ return {
     {
       abbreviation = 'ssl',
       cb = 'did_set_shellslash',
-      defaults = { if_true = false },
+      defaults = {
+        condition = 'BACKSLASH_IN_FILENAME',
+        if_true = false,
+        if_false = true,
+      },
       desc = [=[
         		only for MS-Windows
         When set, a forward slash is used when expanding file names.  This is
@@ -7225,7 +7228,6 @@ return {
         	if exists('+shellslash')
         <	Also see 'completeslash'.
       ]=],
-      enable_if = 'BACKSLASH_IN_FILENAME',
       full_name = 'shellslash',
       scope = { 'global' },
       short_desc = N_('use forward slash for shell file names'),
