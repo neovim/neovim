@@ -189,9 +189,10 @@ local function reuse_client_default(client, config)
   end
 
   if config.root_dir then
+    local root = vim.uri_from_fname(config.root_dir)
     for _, dir in ipairs(client.workspace_folders or {}) do
       -- note: do not need to check client.root_dir since that should be client.workspace_folders[1]
-      if config.root_dir == dir.name then
+      if root == dir.uri then
         return true
       end
     end
