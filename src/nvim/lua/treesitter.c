@@ -1151,7 +1151,7 @@ static int __has_ancestor(lua_State *L)
   int const pred_len = (int)lua_objlen(L, 2);
 
   TSNode node = ts_tree_root_node(descendant.tree);
-  while (node.id != descendant.id) {
+  while (node.id != descendant.id && !ts_node_is_null(node)) {
     char const *node_type = ts_node_type(node);
     size_t node_type_len = strlen(node_type);
 
