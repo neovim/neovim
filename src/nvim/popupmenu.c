@@ -1365,8 +1365,8 @@ static void pum_select_mouse_pos(void)
 
   int idx = mouse_row - pum_row;
 
-  bool out_of_bounds = (idx < 0 || idx >= pum_height || mouse_col < pum_col -1
-                        || mouse_col > pum_col + pum_width -1);
+  bool out_of_bounds = (idx < 0 || idx >= pum_height || mouse_col < pum_col - 1
+                        || mouse_col > pum_col + pum_width - 1);
 
   if (out_of_bounds) {
     pum_selected = -1;
