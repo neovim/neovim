@@ -419,9 +419,9 @@ const char *check_stl_option(char *s)
 /// often illegal in a file name. Be more permissive if "secure" is off.
 bool check_illegal_path_names(char *val, uint32_t flags)
 {
-  return (((flags & P_NFNAME)
+  return (((flags & kOptFlagNFname)
            && strpbrk(val, (secure ? "/\\*?[|;&<>\r\n" : "/\\*?[<>\r\n")) != NULL)
-          || ((flags & P_NDNAME)
+          || ((flags & kOptFlagNDname)
               && strpbrk(val, "*?[|;&<>\r\n") != NULL));
 }
 
@@ -1377,7 +1377,7 @@ const char *did_set_filetype_or_syntax(optset_T *args)
 
   args->os_value_changed = strcmp(args->os_oldval.string.data, *varp) != 0;
 
-  // Since we check the value, there is no need to set P_INSECURE,
+  // Since we check the value, there is no need to set kOptFlagInsecure,
   // even when the value comes from a modeline.
   args->os_value_checked = true;
 
@@ -1658,7 +1658,7 @@ const char *did_set_keymap(optset_T *args)
 
   secure = secure_save;
 
-  // Since we check the value, there is no need to set P_INSECURE,
+  // Since we check the value, there is no need to set kOptFlagInsecure,
   // even when the value comes from a modeline.
   args->os_value_checked = true;
 
