@@ -735,7 +735,6 @@ return {
     },
     {
       abbreviation = 'briopt',
-      alloced = true,
       cb = 'did_set_breakindentopt',
       defaults = { if_true = '' },
       deny_duplicates = true,
@@ -798,7 +797,6 @@ return {
     },
     {
       abbreviation = 'bh',
-      alloced = true,
       cb = 'did_set_bufhidden',
       defaults = { if_true = '' },
       desc = [=[
@@ -851,7 +849,6 @@ return {
     },
     {
       abbreviation = 'bt',
-      alloced = true,
       cb = 'did_set_buftype',
       defaults = { if_true = '' },
       desc = [=[
@@ -1103,7 +1100,6 @@ return {
     },
     {
       abbreviation = 'cink',
-      alloced = true,
       defaults = { if_true = '0{,0},0),0],:,0#,!^F,o,O,e' },
       deny_duplicates = true,
       desc = [=[
@@ -1122,7 +1118,6 @@ return {
     },
     {
       abbreviation = 'cino',
-      alloced = true,
       cb = 'did_set_cinoptions',
       defaults = { if_true = '' },
       deny_duplicates = true,
@@ -1140,7 +1135,6 @@ return {
     },
     {
       abbreviation = 'cinsd',
-      alloced = true,
       defaults = { if_true = 'public,protected,private' },
       deny_duplicates = true,
       desc = [=[
@@ -1159,7 +1153,6 @@ return {
     },
     {
       abbreviation = 'cinw',
-      alloced = true,
       defaults = { if_true = 'if,else,while,do,for,switch' },
       deny_duplicates = true,
       desc = [=[
@@ -1309,7 +1302,6 @@ return {
     },
     {
       abbreviation = 'com',
-      alloced = true,
       cb = 'did_set_comments',
       defaults = { if_true = 's1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-,fb:•' },
       deny_duplicates = true,
@@ -1328,7 +1320,6 @@ return {
     },
     {
       abbreviation = 'cms',
-      alloced = true,
       cb = 'did_set_commentstring',
       defaults = { if_true = '' },
       desc = [=[
@@ -1354,7 +1345,6 @@ return {
     },
     {
       abbreviation = 'cpt',
-      alloced = true,
       cb = 'did_set_complete',
       defaults = { if_true = '.,w,b,u,t' },
       deny_duplicates = true,
@@ -1403,7 +1393,6 @@ return {
     },
     {
       abbreviation = 'cfu',
-      alloced = true,
       cb = 'did_set_completefunc',
       defaults = { if_true = '' },
       desc = [=[
@@ -1525,7 +1514,6 @@ return {
     },
     {
       abbreviation = 'cocu',
-      alloced = true,
       cb = 'did_set_concealcursor',
       defaults = { if_true = '' },
       desc = [=[
@@ -1968,7 +1956,6 @@ return {
     },
     {
       abbreviation = 'def',
-      alloced = true,
       defaults = { if_true = '' },
       desc = [=[
         Pattern to be used to find a macro definition.  It is a search
@@ -2088,7 +2075,6 @@ return {
     },
     {
       abbreviation = 'dip',
-      alloced = true,
       cb = 'did_set_diffopt',
       defaults = { if_true = 'internal,filler,closeoff' },
       deny_duplicates = true,
@@ -2583,7 +2569,6 @@ return {
     },
     {
       abbreviation = 'fenc',
-      alloced = true,
       cb = 'did_set_encoding',
       defaults = { if_true = '' },
       desc = [=[
@@ -2697,7 +2682,6 @@ return {
     },
     {
       abbreviation = 'ff',
-      alloced = true,
       cb = 'did_set_fileformat',
       defaults = {
         if_true = macros('DFLT_FF', 'string'),
@@ -2813,7 +2797,6 @@ return {
     },
     {
       abbreviation = 'ft',
-      alloced = true,
       cb = 'did_set_filetype_or_syntax',
       defaults = { if_true = '' },
       desc = [=[
@@ -2849,7 +2832,6 @@ return {
     },
     {
       abbreviation = 'fcs',
-      alloced = true,
       cb = 'did_set_chars_option',
       defaults = { if_true = '' },
       deny_duplicates = true,
@@ -2964,7 +2946,6 @@ return {
     },
     {
       abbreviation = 'fdc',
-      alloced = true,
       cb = 'did_set_foldcolumn',
       defaults = { if_true = '0' },
       desc = [=[
@@ -3003,7 +2984,6 @@ return {
     },
     {
       abbreviation = 'fde',
-      alloced = true,
       cb = 'did_set_foldexpr',
       defaults = { if_true = '0' },
       desc = [=[
@@ -3029,7 +3009,6 @@ return {
     },
     {
       abbreviation = 'fdi',
-      alloced = true,
       cb = 'did_set_foldignore',
       defaults = { if_true = '#' },
       desc = [=[
@@ -3084,7 +3063,6 @@ return {
     },
     {
       abbreviation = 'fmr',
-      alloced = true,
       cb = 'did_set_foldmarker',
       defaults = { if_true = '{{{,}}}' },
       deny_duplicates = true,
@@ -3104,7 +3082,6 @@ return {
     },
     {
       abbreviation = 'fdm',
-      alloced = true,
       cb = 'did_set_foldmethod',
       defaults = { if_true = 'manual' },
       desc = [=[
@@ -3205,7 +3182,6 @@ return {
     },
     {
       abbreviation = 'fdt',
-      alloced = true,
       cb = 'did_set_optexpr',
       defaults = { if_true = 'foldtext()' },
       desc = [=[
@@ -3233,7 +3209,6 @@ return {
     },
     {
       abbreviation = 'fex',
-      alloced = true,
       cb = 'did_set_optexpr',
       defaults = { if_true = '' },
       desc = [=[
@@ -3287,7 +3262,6 @@ return {
     },
     {
       abbreviation = 'flp',
-      alloced = true,
       defaults = { if_true = '^\\s*\\d\\+[\\]:.)}\\t ]\\s*' },
       desc = [=[
         A pattern that is used to recognize a list header.  This is used for
@@ -3308,7 +3282,6 @@ return {
     },
     {
       abbreviation = 'fo',
-      alloced = true,
       cb = 'did_set_formatoptions',
       defaults = { if_true = macros('DFLT_FO_VIM', 'string') },
       desc = [=[
@@ -4151,7 +4124,6 @@ return {
     },
     {
       abbreviation = 'inc',
-      alloced = true,
       defaults = { if_true = '' },
       desc = [=[
         Pattern to be used to find an include command.  It is a search
@@ -4173,7 +4145,6 @@ return {
     },
     {
       abbreviation = 'inex',
-      alloced = true,
       cb = 'did_set_optexpr',
       defaults = { if_true = '' },
       desc = [=[
@@ -4258,7 +4229,6 @@ return {
     },
     {
       abbreviation = 'inde',
-      alloced = true,
       cb = 'did_set_optexpr',
       defaults = { if_true = '' },
       desc = [=[
@@ -4312,7 +4282,6 @@ return {
     },
     {
       abbreviation = 'indk',
-      alloced = true,
       defaults = { if_true = '0{,0},0),0],:,0#,!^F,o,O,e' },
       deny_duplicates = true,
       desc = [=[
@@ -4454,7 +4423,6 @@ return {
     },
     {
       abbreviation = 'isk',
-      alloced = true,
       cb = 'did_set_iskeyword',
       defaults = { if_true = '@,48-57,_,192-255' },
       deny_duplicates = true,
@@ -4563,7 +4531,6 @@ return {
     },
     {
       abbreviation = 'kmp',
-      alloced = true,
       cb = 'did_set_keymap',
       defaults = { if_true = '' },
       desc = [=[
@@ -4940,7 +4907,6 @@ return {
     },
     {
       abbreviation = 'lcs',
-      alloced = true,
       cb = 'did_set_chars_option',
       defaults = { if_true = 'tab:> ,trail:-,nbsp:+' },
       deny_duplicates = true,
@@ -5162,7 +5128,6 @@ return {
     },
     {
       abbreviation = 'mps',
-      alloced = true,
       cb = 'did_set_matchpairs',
       defaults = { if_true = '(:),{:},[:]' },
       deny_duplicates = true,
@@ -5730,7 +5695,6 @@ return {
     },
     {
       abbreviation = 'nf',
-      alloced = true,
       cb = 'did_set_nrformats',
       defaults = { if_true = 'bin,hex' },
       deny_duplicates = true,
@@ -5841,7 +5805,6 @@ return {
     },
     {
       abbreviation = 'ofu',
-      alloced = true,
       cb = 'did_set_omnifunc',
       defaults = { if_true = '' },
       desc = [=[
@@ -6225,7 +6188,6 @@ return {
     },
     {
       abbreviation = 'qe',
-      alloced = true,
       defaults = { if_true = '\\' },
       desc = [=[
         The characters that are used to escape quotes in a string.  Used for
@@ -6436,7 +6398,6 @@ return {
     },
     {
       abbreviation = 'rlc',
-      alloced = true,
       cb = 'did_set_rightleftcmd',
       defaults = { if_true = 'search' },
       desc = [=[
@@ -6491,7 +6452,6 @@ return {
     },
     {
       abbreviation = 'ruf',
-      alloced = true,
       cb = 'did_set_rulerformat',
       defaults = { if_true = '' },
       desc = [=[
@@ -7640,7 +7600,6 @@ return {
     },
     {
       abbreviation = 'scl',
-      alloced = true,
       cb = 'did_set_signcolumn',
       defaults = { if_true = 'auto' },
       desc = [=[
@@ -7797,7 +7756,6 @@ return {
     },
     {
       abbreviation = 'spc',
-      alloced = true,
       cb = 'did_set_spellcapcheck',
       defaults = { if_true = '[.?!]\\_[\\])\'"\\t ]\\+' },
       desc = [=[
@@ -7820,7 +7778,6 @@ return {
     },
     {
       abbreviation = 'spf',
-      alloced = true,
       cb = 'did_set_spellfile',
       defaults = { if_true = '' },
       deny_duplicates = true,
@@ -7858,7 +7815,6 @@ return {
     },
     {
       abbreviation = 'spl',
-      alloced = true,
       cb = 'did_set_spelllang',
       defaults = { if_true = 'en' },
       deny_duplicates = true,
@@ -8092,7 +8048,6 @@ return {
     },
     {
       abbreviation = 'stc',
-      alloced = true,
       cb = 'did_set_statuscolumn',
       defaults = { if_true = '' },
       desc = [=[
@@ -8158,7 +8113,6 @@ return {
     },
     {
       abbreviation = 'stl',
-      alloced = true,
       cb = 'did_set_statusline',
       defaults = { if_true = '' },
       desc = [=[
@@ -8407,7 +8361,6 @@ return {
     },
     {
       abbreviation = 'sua',
-      alloced = true,
       defaults = { if_true = '' },
       deny_duplicates = true,
       desc = [=[
@@ -8516,7 +8469,6 @@ return {
     },
     {
       abbreviation = 'syn',
-      alloced = true,
       cb = 'did_set_filetype_or_syntax',
       defaults = { if_true = '' },
       desc = [=[
@@ -9003,7 +8955,6 @@ return {
     },
     {
       abbreviation = 'tsrfu',
-      alloced = true,
       cb = 'did_set_thesaurusfunc',
       defaults = { if_true = '' },
       desc = [=[
@@ -9863,7 +9814,6 @@ return {
     },
     {
       abbreviation = 'wbr',
-      alloced = true,
       cb = 'did_set_winbar',
       defaults = { if_true = '' },
       desc = [=[
@@ -10006,7 +9956,6 @@ return {
     },
     {
       abbreviation = 'winhl',
-      alloced = true,
       cb = 'did_set_winhighlight',
       defaults = { if_true = '' },
       deny_duplicates = true,
