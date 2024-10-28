@@ -41,6 +41,15 @@ M.vars = {
       included here, because it will be executed anyway.
     ]=],
   },
+  cmdbang = {
+    type = 'integer',
+    desc = [=[
+      Set like v:cmdarg for a file read/write command.  When a "!"
+      was used the value is 1, otherwise it is 0.  Note that this
+      can only be used in autocommands.  For user commands |<bang>|
+      can be used.
+    ]=],
+  },
   collate = {
     type = 'string',
     desc = [=[
@@ -51,15 +60,6 @@ M.vars = {
       This variable can not be set directly, use the |:language|
       command.
       See |multi-lang|.
-    ]=],
-  },
-  cmdbang = {
-    type = 'integer',
-    desc = [=[
-      Set like v:cmdarg for a file read/write command.  When a "!"
-      was used the value is 1, otherwise it is 0.  Note that this
-      can only be used in autocommands.  For user commands |<bang>|
-      can be used.
     ]=],
   },
   completed_item = {
@@ -116,15 +116,6 @@ M.vars = {
       <
       Note: if another deadly signal is caught when v:dying is one,
       VimLeave autocommands will not be executed.
-    ]=],
-  },
-  exiting = {
-    desc = [=[
-      Exit code, or |v:null| before invoking the |VimLeavePre|
-      and |VimLeave| autocmds.  See |:q|, |:x| and |:cquit|.
-      Example: >vim
-        :au VimLeave * echo "Exit value is " .. v:exiting
-      <
     ]=],
   },
   echospace = {
@@ -243,18 +234,13 @@ M.vars = {
       or |expr7| when used with numeric operators). Read-only.
     ]=],
   },
-  fcs_reason = {
-    type = 'string',
+  exiting = {
     desc = [=[
-      The reason why the |FileChangedShell| event was triggered.
-      Can be used in an autocommand to decide what to do and/or what
-      to set v:fcs_choice to.  Possible values:
-        deleted   file no longer exists
-        conflict  file contents, mode or timestamp was
-                  changed and buffer is modified
-        changed   file contents has changed
-        mode      mode of file changed
-        time      only file timestamp changed
+      Exit code, or |v:null| before invoking the |VimLeavePre|
+      and |VimLeave| autocmds.  See |:q|, |:x| and |:cquit|.
+      Example: >vim
+        :au VimLeave * echo "Exit value is " .. v:exiting
+      <
     ]=],
   },
   fcs_choice = {
@@ -280,11 +266,32 @@ M.vars = {
       Vim behaves like it is empty, there is no warning message.
     ]=],
   },
+  fcs_reason = {
+    type = 'string',
+    desc = [=[
+      The reason why the |FileChangedShell| event was triggered.
+      Can be used in an autocommand to decide what to do and/or what
+      to set v:fcs_choice to.  Possible values:
+        deleted   file no longer exists
+        conflict  file contents, mode or timestamp was
+                  changed and buffer is modified
+        changed   file contents has changed
+        mode      mode of file changed
+        time      only file timestamp changed
+    ]=],
+  },
   fname = {
     type = 'string',
     desc = [=[
       When evaluating 'includeexpr': the file name that was
       detected.  Empty otherwise.
+    ]=],
+  },
+  fname_diff = {
+    type = 'string',
+    desc = [=[
+      The name of the diff (patch) file.  Only valid while
+      evaluating 'patchexpr'.
     ]=],
   },
   fname_in = {
@@ -296,6 +303,13 @@ M.vars = {
         'diffexpr'     original file
         'patchexpr'    original file
       And set to the swap file name for |SwapExists|.
+    ]=],
+  },
+  fname_new = {
+    type = 'string',
+    desc = [=[
+      The name of the new version of the file.  Only valid while
+      evaluating 'diffexpr'.
     ]=],
   },
   fname_out = {
@@ -313,20 +327,6 @@ M.vars = {
       file and different from v:fname_in.
     ]=],
   },
-  fname_new = {
-    type = 'string',
-    desc = [=[
-      The name of the new version of the file.  Only valid while
-      evaluating 'diffexpr'.
-    ]=],
-  },
-  fname_diff = {
-    type = 'string',
-    desc = [=[
-      The name of the diff (patch) file.  Only valid while
-      evaluating 'patchexpr'.
-    ]=],
-  },
   folddashes = {
     type = 'string',
     desc = [=[
@@ -335,17 +335,17 @@ M.vars = {
       Read-only in the |sandbox|. |fold-foldtext|
     ]=],
   },
-  foldlevel = {
-    type = 'integer',
-    desc = [=[
-      Used for 'foldtext': foldlevel of closed fold.
-      Read-only in the |sandbox|. |fold-foldtext|
-    ]=],
-  },
   foldend = {
     type = 'integer',
     desc = [=[
       Used for 'foldtext': last line of closed fold.
+      Read-only in the |sandbox|. |fold-foldtext|
+    ]=],
+  },
+  foldlevel = {
+    type = 'integer',
+    desc = [=[
+      Used for 'foldtext': foldlevel of closed fold.
       Read-only in the |sandbox|. |fold-foldtext|
     ]=],
   },
@@ -435,6 +435,22 @@ M.vars = {
       2147483647 on all systems.
     ]=],
   },
+  mouse_col = {
+    type = 'integer',
+    desc = [=[
+      Column number for a mouse click obtained with |getchar()|.
+      This is the screen column number, like with |virtcol()|.  The
+      value is zero when there was no mouse button click.
+    ]=],
+  },
+  mouse_lnum = {
+    type = 'integer',
+    desc = [=[
+      Line number for a mouse click obtained with |getchar()|.
+      This is the text line number, not the screen line number.  The
+      value is zero when there was no mouse button click.
+    ]=],
+  },
   mouse_win = {
     type = 'integer',
     desc = [=[
@@ -448,22 +464,6 @@ M.vars = {
     desc = [=[
       |window-ID| for a mouse click obtained with |getchar()|.
       The value is zero when there was no mouse button click.
-    ]=],
-  },
-  mouse_lnum = {
-    type = 'integer',
-    desc = [=[
-      Line number for a mouse click obtained with |getchar()|.
-      This is the text line number, not the screen line number.  The
-      value is zero when there was no mouse button click.
-    ]=],
-  },
-  mouse_col = {
-    type = 'integer',
-    desc = [=[
-      Column number for a mouse click obtained with |getchar()|.
-      This is the screen column number, like with |virtcol()|.  The
-      value is zero when there was no mouse button click.
     ]=],
   },
   msgpack_types = {
@@ -516,51 +516,6 @@ M.vars = {
       than String this will cause trouble.
     ]=],
   },
-  option_new = {
-    desc = [=[
-      New value of the option. Valid while executing an |OptionSet|
-      autocommand.
-    ]=],
-  },
-  option_old = {
-    desc = [=[
-      Old value of the option. Valid while executing an |OptionSet|
-      autocommand. Depending on the command used for setting and the
-      kind of option this is either the local old value or the
-      global old value.
-    ]=],
-  },
-  option_oldlocal = {
-    desc = [=[
-      Old local value of the option. Valid while executing an
-      |OptionSet| autocommand.
-    ]=],
-  },
-  option_oldglobal = {
-    desc = [=[
-      Old global value of the option. Valid while executing an
-      |OptionSet| autocommand.
-    ]=],
-  },
-  option_type = {
-    type = 'string',
-    desc = [=[
-      Scope of the set command. Valid while executing an
-      |OptionSet| autocommand. Can be either "global" or "local"
-    ]=],
-  },
-  option_command = {
-    type = 'string',
-    desc = [=[
-      Command used to set the option. Valid while executing an
-      |OptionSet| autocommand.
-        value        option was set via ~
-        "setlocal"   |:setlocal| or `:let l:xxx`
-        "setglobal"  |:setglobal| or `:let g:xxx`
-        "set"        |:set| or |:let|
-        "modeline"   |modeline|
-    ]=],
-  },
   operator = {
     type = 'string',
     desc = [=[
@@ -576,6 +531,51 @@ M.vars = {
       v:operator is not set for |:delete|, |:yank| or other Ex
       commands.
       Read-only.
+    ]=],
+  },
+  option_command = {
+    type = 'string',
+    desc = [=[
+      Command used to set the option. Valid while executing an
+      |OptionSet| autocommand.
+        value        option was set via ~
+        "setlocal"   |:setlocal| or `:let l:xxx`
+        "setglobal"  |:setglobal| or `:let g:xxx`
+        "set"        |:set| or |:let|
+        "modeline"   |modeline|
+    ]=],
+  },
+  option_new = {
+    desc = [=[
+      New value of the option. Valid while executing an |OptionSet|
+      autocommand.
+    ]=],
+  },
+  option_old = {
+    desc = [=[
+      Old value of the option. Valid while executing an |OptionSet|
+      autocommand. Depending on the command used for setting and the
+      kind of option this is either the local old value or the
+      global old value.
+    ]=],
+  },
+  option_oldglobal = {
+    desc = [=[
+      Old global value of the option. Valid while executing an
+      |OptionSet| autocommand.
+    ]=],
+  },
+  option_oldlocal = {
+    desc = [=[
+      Old local value of the option. Valid while executing an
+      |OptionSet| autocommand.
+    ]=],
+  },
+  option_type = {
+    type = 'string',
+    desc = [=[
+      Scope of the set command. Valid while executing an
+      |OptionSet| autocommand. Can be either "global" or "local"
     ]=],
   },
   prevcount = {
@@ -641,6 +641,17 @@ M.vars = {
       hit-enter prompt.
     ]=],
   },
+  searchforward = {
+    type = 'integer',
+    desc = [=[
+      Search direction:  1 after a forward search, 0 after a
+      backward search.  It is reset to forward when directly setting
+      the last search pattern, see |quote/|.
+      Note that the value is restored when returning from a
+      function. |function-search-undo|.
+      Read-write.
+    ]=],
+  },
   servername = {
     type = 'string',
     desc = [=[
@@ -662,17 +673,6 @@ M.vars = {
       <
 
       Note the contents of $NVIM may change in the future.
-    ]=],
-  },
-  searchforward = {
-    type = 'integer',
-    desc = [=[
-      Search direction:  1 after a forward search, 0 after a
-      backward search.  It is reset to forward when directly setting
-      the last search pattern, see |quote/|.
-      Note that the value is restored when returning from a
-      function. |function-search-undo|.
-      Read-write.
     ]=],
   },
   shell_error = {
@@ -709,14 +709,6 @@ M.vars = {
       <
     ]=],
   },
-  swapname = {
-    type = 'string',
-    desc = [=[
-      Name of the swapfile found.
-      Only valid during |SwapExists| event.
-      Read-only.
-    ]=],
-  },
   swapchoice = {
     type = 'string',
     desc = [=[
@@ -741,6 +733,14 @@ M.vars = {
       another Vim open the file and jump to the right place.  For
       example, when jumping to a tag the value is ":tag tagname\r".
       For ":edit +cmd file" the value is ":cmd\r".
+    ]=],
+  },
+  swapname = {
+    type = 'string',
+    desc = [=[
+      Name of the swapfile found.
+      Only valid during |SwapExists| event.
+      Read-only.
     ]=],
   },
   t_blob = {
@@ -776,15 +776,6 @@ M.vars = {
     type = 'integer',
     desc = 'Value of |String| type.  Read-only.  See: |type()|',
   },
-  termresponse = {
-    type = 'string',
-    desc = [=[
-      The value of the most recent OSC or DCS control sequence
-      received by Nvim from the terminal. This can be read in a
-      |TermResponse| event handler after querying the terminal using
-      another escape sequence.
-    ]=],
-  },
   termrequest = {
     type = 'string',
     desc = [=[
@@ -792,6 +783,15 @@ M.vars = {
       sent from a process running in the embedded |terminal|.
       This can be read in a |TermRequest| event handler to respond
       to queries from embedded applications.
+    ]=],
+  },
+  termresponse = {
+    type = 'string',
+    desc = [=[
+      The value of the most recent OSC or DCS control sequence
+      received by Nvim from the terminal. This can be read in a
+      |TermResponse| event handler after querying the terminal using
+      another escape sequence.
     ]=],
   },
   testing = {
@@ -849,6 +849,13 @@ M.vars = {
       <
     ]=],
   },
+  vim_did_enter = {
+    type = 'integer',
+    desc = [=[
+      0 during startup, 1 just before |VimEnter|.
+      Read-only.
+    ]=],
+  },
   virtnum = {
     type = 'integer',
     desc = [=[
@@ -856,13 +863,6 @@ M.vars = {
       Negative when drawing the status column for virtual lines, zero
       when drawing an actual buffer line, and positive when drawing
       the wrapped part of a buffer line.
-      Read-only.
-    ]=],
-  },
-  vim_did_enter = {
-    type = 'integer',
-    desc = [=[
-      0 during startup, 1 just before |VimEnter|.
       Read-only.
     ]=],
   },
