@@ -1358,14 +1358,15 @@ static void pum_select_mouse_pos(void)
   if (mouse_grid == pum_grid.handle) {
     pum_selected = mouse_row;
     return;
-  } else if (mouse_grid != pum_anchor_grid) {
+  } else if (mouse_grid != pum_anchor_grid || mouse_col < pum_grid.comp_col
+             || mouse_col >= pum_grid.comp_col + pum_grid.comp_width) {
     pum_selected = -1;
     return;
   }
 
-  int idx = mouse_row - pum_row;
+  int idx = mouse_row - pum_grid.comp_row;
 
-  if (idx < 0 || idx >= pum_height) {
+  if (idx < 0 || idx >= pum_grid.comp_height) {
     pum_selected = -1;
   } else if (*pum_array[idx].pum_text != NUL) {
     pum_selected = idx;
