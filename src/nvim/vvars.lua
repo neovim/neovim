@@ -50,6 +50,13 @@ M.vars = {
       can be used.
     ]=],
   },
+  cmdcomplete = {
+    type = 'boolean',
+    desc = [=[
+      When evaluating 'findexpr': if 'findexpr' is used for cmdline
+      completion the value is |v:true|, otherwise it is |v:false|.
+    ]=],
+  },
   collate = {
     type = 'string',
     desc = [=[

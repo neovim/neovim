@@ -5167,13 +5167,14 @@ static void ex_wrongmodifier(exarg_T *eap)
 
 /// Evaluate the 'findexpr' expression and return the result.  When evaluating
 /// the expression, v:fname is set to the ":find" command argument.
-static list_T *eval_findexpr(const char *ptr)
+static list_T *eval_findexpr(const char *pat, bool cmdcomplete)
 {
   const sctx_T saved_sctx = current_sctx;
 
   char *findexpr = get_findexpr();
 
-  set_vim_var_string(VV_FNAME, ptr, -1);
+  set_vim_var_string(VV_FNAME, pat, -1);
+  set_vim_var_bool(VV_CMDCOMPLETE, cmdcomplete ? kBoolVarTrue : kBoolVarFalse);
   current_sctx = curbuf->b_p_script_ctx[BV_FEXPR].script_ctx;
 
   char *arg = skipwhite(findexpr);
@@ -5198,6 +5199,7 @@ static list_T *eval_findexpr(const char *ptr)
   clear_evalarg(&EVALARG_EVALUATE, NULL);
 
   set_vim_var_string(VV_FNAME, NULL, 0);
+  set_vim_var_bool(VV_CMDCOMPLETE, kBoolVarFalse);
   current_sctx = saved_sctx;
 
   return retlist;
@@ -5211,18 +5213,7 @@ int expand_findexpr(const char *pat, char ***files, int *numMatches)
   *numMatches = 0;
   *files = NULL;
 
-  // File name expansion uses wildchars.  But the 'findexpr' expression
-  // expects a regular expression argument.  So convert wildchars in the
-  // argument to regular expression patterns.
-  char *regpat = file_pat_to_reg_pat(pat, NULL, NULL, false);
-  if (regpat == NULL) {
-    return FAIL;
-  }
-
-  list_T *l = eval_findexpr(regpat);
-
-  xfree(regpat);
-
+  list_T *l = eval_findexpr(pat, true);
   if (l == NULL) {
     return FAIL;
   }
@@ -5258,7 +5249,7 @@ static char *findexpr_find_file(char *findarg, size_t findarg_len, int count)
   const char cc = findarg[findarg_len];
   findarg[findarg_len] = NUL;
 
-  list_T *fname_list = eval_findexpr(findarg);
+  list_T *fname_list = eval_findexpr(findarg, false);
   int fname_count = tv_list_len(fname_list);
 
   if (fname_count == 0) {

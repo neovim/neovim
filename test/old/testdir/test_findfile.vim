@@ -379,7 +379,7 @@ func Test_findexpr()
 
   " Expression returning a string
   set findexpr='abc'
-  call assert_fails('find Xfindexpr1.c', 'E1514: findexpr did not return a List type')
+  call assert_fails('find Xfindexpr1.c', "E1514: 'findexpr' did not return a List type")
 
   set findexpr&
   delfunc! FindExpr1
@@ -459,29 +459,52 @@ endfunc
 
 " Test for expanding the argument to the :find command using 'findexpr'
 func Test_findexpr_expand_arg()
-  func FindExpr1()
-    let fnames = ['Xfindexpr1.c', 'Xfindexpr2.c', 'Xfindexpr3.c']
-    return fnames->copy()->filter('v:val =~? v:fname')
+  let s:fnames = ['Xfindexpr1.c', 'Xfindexpr2.c', 'Xfindexpr3.c']
+
+  " 'findexpr' that accepts a regular expression
+  func FindExprRegexp()
+    return s:fnames->copy()->filter('v:val =~? v:fname')
   endfunc
-  set findexpr=FindExpr1()
 
-  call feedkeys(":find \<Tab>\<C-B>\"\<CR>", "xt")
-  call assert_equal('"find Xfindexpr1.c', @:)
+  " 'findexpr' that accepts a glob
+  func FindExprGlob()
+    let pat = glob2regpat(v:cmdcomplete ? $'*{v:fname}*' : v:fname)
+    return s:fnames->copy()->filter('v:val =~? pat')
+  endfunc
 
-  call feedkeys(":find Xfind\<Tab>\<Tab>\<C-B>\"\<CR>", "xt")
-  call assert_equal('"find Xfindexpr2.c', @:)
+  for regexp in [v:true, v:false]
+    let &findexpr = regexp ? 'FindExprRegexp()' : 'FindExprGlob()'
 
-  call feedkeys(":find *3*\<Tab>\<C-B>\"\<CR>", "xt")
-  call assert_equal('"find Xfindexpr3.c', @:)
+    call feedkeys(":find \<Tab>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find Xfindexpr1.c', @:)
 
-  call feedkeys(":find Xfind\<C-A>\<C-B>\"\<CR>", "xt")
-  call assert_equal('"find Xfindexpr1.c Xfindexpr2.c Xfindexpr3.c', @:)
+    call feedkeys(":find Xfind\<Tab>\<Tab>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find Xfindexpr2.c', @:)
 
-  call feedkeys(":find abc\<Tab>\<C-B>\"\<CR>", "xt")
-  call assert_equal('"find abc', @:)
+    call assert_equal(s:fnames, getcompletion('find ', 'cmdline'))
+    call assert_equal(s:fnames, getcompletion('find Xfind', 'cmdline'))
+
+    let pat = regexp ? 'X.*1\.c' : 'X*1.c'
+    call feedkeys($":find {pat}\<Tab>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find Xfindexpr1.c', @:)
+    call assert_equal(['Xfindexpr1.c'], getcompletion($'find {pat}', 'cmdline'))
+
+    call feedkeys(":find 3\<Tab>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find Xfindexpr3.c', @:)
+    call assert_equal(['Xfindexpr3.c'], getcompletion($'find 3', 'cmdline'))
+
+    call feedkeys(":find Xfind\<C-A>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find Xfindexpr1.c Xfindexpr2.c Xfindexpr3.c', @:)
+
+    call feedkeys(":find abc\<Tab>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find abc', @:)
+    call assert_equal([], getcompletion('find abc', 'cmdline'))
+  endfor
 
   set findexpr&
-  delfunc! FindExpr1
+  delfunc! FindExprRegexp
+  delfunc! FindExprGlob
+  unlet s:fnames
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

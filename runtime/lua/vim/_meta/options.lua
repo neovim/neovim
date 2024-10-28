@@ -2304,6 +2304,10 @@ vim.go.fcs = vim.go.fillchars
 --- The expression is evaluated only once per `:find` command invocation.
 --- The expression can process all the directories specified in 'path'.
 ---
+--- The expression may be evaluated for command-line completion as well,
+--- in which case the `v:cmdcomplete` variable will be set to `v:true`,
+--- otherwise it will be set to `v:false`.
+---
 --- If a match is found, the expression should return a `List` containing
 --- one or more file names.  If a match is not found, the expression
 --- should return an empty List.
@@ -2324,7 +2328,8 @@ vim.go.fcs = vim.go.fillchars
 --- ```vim
 ---     " Use glob()
 ---     func FindExprGlob()
---- 	return glob(v:fname, v:false, v:true)
+--- 	let pat = v:cmdcomplete ? $'{v:fname}*' : v:fname
+--- 	return glob(pat, v:false, v:true)
 ---     endfunc
 ---     set findexpr=FindExprGlob()
 ---
