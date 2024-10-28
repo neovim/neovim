@@ -5654,11 +5654,9 @@ void do_read_cmd(exarg_T *eap)
     return;
   }
 
-  kv_printf(put_cmd, "try | ");
   kv_printf(put_cmd, "%dput=execute(g:%s) | ", eap->line2, cmd_var_name.data);
   kv_printf(put_cmd, "execute 'norm! )`.' | ");
   kv_printf(put_cmd, "execute 'd _' | ");
-  kv_printf(put_cmd, "endtry");
 
   do_cmdline(put_cmd.items, eap->ea_getline, eap->cookie, eap->flags);
   kv_destroy(put_cmd);
