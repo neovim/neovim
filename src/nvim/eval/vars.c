@@ -1908,7 +1908,7 @@ static OptVal tv_to_optval(typval_T *tv, OptIndex opt_idx, const char *option, b
   const bool option_has_num = !is_tty_opt && option_has_type(opt_idx, kOptValTypeNumber);
   const bool option_has_str = is_tty_opt || option_has_type(opt_idx, kOptValTypeString);
 
-  if (!is_tty_opt && (get_option(opt_idx)->flags & P_FUNC) && tv_is_func(*tv)) {
+  if (!is_tty_opt && (get_option(opt_idx)->flags & kOptFlagFunc) && tv_is_func(*tv)) {
     // If the option can be set to a function reference or a lambda
     // and the passed value is a function reference, then convert it to
     // the name (string) of the function reference.

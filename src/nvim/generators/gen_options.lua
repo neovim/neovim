@@ -16,23 +16,23 @@ local options = require('options')
 local cstr = options.cstr
 
 local redraw_flags = {
-  ui_option = 'P_UI_OPTION',
-  tabline = 'P_RTABL',
-  statuslines = 'P_RSTAT',
-  current_window = 'P_RWIN',
-  current_buffer = 'P_RBUF',
-  all_windows = 'P_RALL',
-  curswant = 'P_CURSWANT',
-  highlight_only = 'P_HLONLY',
+  ui_option = 'kOptFlagUIOption',
+  tabline = 'kOptFlagRedrTabl',
+  statuslines = 'kOptFlagRedrStat',
+  current_window = 'kOptFlagRedrWin',
+  current_buffer = 'kOptFlagRedrBuf',
+  all_windows = 'kOptFlagRedrAll',
+  curswant = 'kOptFlagCurswant',
+  highlight_only = 'kOptFlagHLOnly',
 }
 
 local list_flags = {
-  comma = 'P_COMMA',
-  onecomma = 'P_ONECOMMA',
-  commacolon = 'P_COMMA|P_COLON',
-  onecommacolon = 'P_ONECOMMA|P_COLON',
-  flags = 'P_FLAGLIST',
-  flagscomma = 'P_COMMA|P_FLAGLIST',
+  comma = 'kOptFlagComma',
+  onecomma = 'kOptFlagOneComma',
+  commacolon = 'kOptFlagComma|kOptFlagColon',
+  onecommacolon = 'kOptFlagOneComma|kOptFlagColon',
+  flags = 'kOptFlagFlagList',
+  flagscomma = 'kOptFlagComma|kOptFlagFlagList',
 }
 
 --- @param s string
@@ -61,27 +61,27 @@ local function get_flags(o)
     end
   end
   if o.expand then
-    add_flag('P_EXPAND')
+    add_flag('kOptFlagExpand')
     if o.expand == 'nodefault' then
-      add_flag('P_NO_DEF_EXP')
+      add_flag('kOptFlagNoDefExp')
     end
   end
   for _, flag_desc in ipairs({
-    { 'nodefault' },
-    { 'no_mkrc' },
+    { 'nodefault', 'NoDefault' },
+    { 'no_mkrc', 'NoMkrc' },
     { 'secure' },
     { 'gettext' },
-    { 'noglob' },
-    { 'normal_fname_chars', 'P_NFNAME' },
-    { 'normal_dname_chars', 'P_NDNAME' },
-    { 'pri_mkrc' },
-    { 'deny_in_modelines', 'P_NO_ML' },
-    { 'deny_duplicates', 'P_NODUP' },
-    { 'modelineexpr', 'P_MLE' },
+    { 'noglob', 'NoGlob' },
+    { 'normal_fname_chars', 'NFname' },
+    { 'normal_dname_chars', 'NDname' },
+    { 'pri_mkrc', 'PriMkrc' },
+    { 'deny_in_modelines', 'NoML' },
+    { 'deny_duplicates', 'NoDup' },
+    { 'modelineexpr', 'MLE' },
     { 'func' },
   }) do
     local key_name = flag_desc[1]
-    local def_name = flag_desc[2] or ('P_' .. key_name:upper())
+    local def_name = 'kOptFlag' .. (flag_desc[2] or lowercase_to_titlecase(key_name))
     if o[key_name] then
       add_flag(def_name)
     end
