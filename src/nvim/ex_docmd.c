@@ -5167,28 +5167,17 @@ static void ex_wrongmodifier(exarg_T *eap)
 
 /// Evaluate the 'findexpr' expression and return the result.  When evaluating
 /// the expression, v:fname is set to the ":find" command argument.
-static list_T *eval_findexpr(const char *ptr, size_t len)
+static list_T *eval_findexpr(const char *ptr)
 {
   const sctx_T saved_sctx = current_sctx;
-  bool use_sandbox = false;
 
-  char *findexpr;
-  if (*curbuf->b_p_fexpr == NUL) {
-    use_sandbox = was_set_insecurely(curwin, kOptFindexpr, OPT_GLOBAL);
-    findexpr = p_fexpr;
-  } else {
-    use_sandbox = was_set_insecurely(curwin, kOptFindexpr, OPT_LOCAL);
-    findexpr = curbuf->b_p_fexpr;
-  }
+  char *findexpr = get_findexpr();
 
-  set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
+  set_vim_var_string(VV_FNAME, ptr, -1);
   current_sctx = curbuf->b_p_script_ctx[BV_FEXPR].script_ctx;
 
   char *arg = skipwhite(findexpr);
 
-  if (use_sandbox) {
-    sandbox++;
-  }
   textlock++;
 
   // Evaluate the expression.  If the expression is "FuncName()" call the
@@ -5200,11 +5189,10 @@ static list_T *eval_findexpr(const char *ptr, size_t len)
   } else {
     if (tv.v_type == VAR_LIST) {
       retlist = tv_list_copy(NULL, tv.vval.v_list, true, get_copyID());
+    } else {
+      emsg(_(e_invalid_return_type_from_findexpr));
     }
     tv_clear(&tv);
-  }
-  if (use_sandbox) {
-    sandbox--;
   }
   textlock--;
   clear_evalarg(&EVALARG_EVALUATE, NULL);
@@ -5213,6 +5201,52 @@ static list_T *eval_findexpr(const char *ptr, size_t len)
   current_sctx = saved_sctx;
 
   return retlist;
+}
+
+/// Find file names matching "pat" using 'findexpr' and return it in "files".
+/// Used for expanding the :find, :sfind and :tabfind command argument.
+/// Returns OK on success and FAIL otherwise.
+int expand_findexpr(const char *pat, char ***files, int *numMatches)
+{
+  *numMatches = 0;
+  *files = NULL;
+
+  // File name expansion uses wildchars.  But the 'findexpr' expression
+  // expects a regular expression argument.  So convert wildchars in the
+  // argument to regular expression patterns.
+  char *regpat = file_pat_to_reg_pat(pat, NULL, NULL, false);
+  if (regpat == NULL) {
+    return FAIL;
+  }
+
+  list_T *l = eval_findexpr(regpat);
+
+  xfree(regpat);
+
+  if (l == NULL) {
+    return FAIL;
+  }
+
+  int len = tv_list_len(l);
+  if (len == 0) {  // empty List
+    return FAIL;
+  }
+
+  *files = xmalloc(sizeof(char *) * (size_t)len);
+
+  // Copy all the List items
+  int idx = 0;
+  TV_LIST_ITER_CONST(l, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING) {
+      (*files)[idx] = xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string);
+      idx++;
+    }
+  });
+
+  *numMatches = idx;
+  tv_list_free(l);
+
+  return OK;
 }
 
 /// Use 'findexpr' to find file 'findarg'.  The 'count' argument is used to find
@@ -5224,7 +5258,7 @@ static char *findexpr_find_file(char *findarg, size_t findarg_len, int count)
   const char cc = findarg[findarg_len];
   findarg[findarg_len] = NUL;
 
-  list_T *fname_list = eval_findexpr(findarg, findarg_len);
+  list_T *fname_list = eval_findexpr(findarg);
   int fname_count = tv_list_len(fname_list);
 
   if (fname_count == 0) {

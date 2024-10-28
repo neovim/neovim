@@ -2955,6 +2955,7 @@ return {
       scope = { 'global', 'buffer' },
       secure = true,
       short_desc = N_('expression used for :find'),
+      tags = { 'E1514' },
       type = 'string',
       varname = 'p_fexpr',
     },

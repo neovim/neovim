@@ -2598,7 +2598,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  eob		EndOfBuffer		|hl-EndOfBuffer|
 	  lastline	NonText			|hl-NonText|
 
-						*'findexpr'* *'fexpr'*
+					*'findexpr'* *'fexpr'* *E1514*
 'findexpr' 'fexpr'	string	(default "")
 			global or local to buffer |global-local|
 	Expression that is evaluated to obtain the filename(s) for the |:find|

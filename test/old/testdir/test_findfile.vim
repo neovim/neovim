@@ -299,7 +299,6 @@ func Test_findexpr()
   " basic tests
   func FindExpr1()
     let fnames = ['Xfindexpr1.c', 'Xfindexpr2.c', 'Xfindexpr3.c']
-    "return fnames->copy()->filter('v:val =~? v:fname')->join("\n")
     return fnames->copy()->filter('v:val =~? v:fname')
   endfunc
 
@@ -358,8 +357,8 @@ func Test_findexpr()
   set findexpr=FindExpr2()
   call assert_fails('find Xfindexpr1.c', 'find error')
 
-  " Try using a null string as the expression
-  set findexpr=v:_null_string
+  " Try using a null List as the expression
+  set findexpr=v:_null_list
   call assert_fails('find Xfindexpr1.c', 'E345: Can''t find file "Xfindexpr1.c" in path')
 
   " Try to create a new window from the find expression
@@ -377,6 +376,10 @@ func Test_findexpr()
   endfunc
   set findexpr=FindExpr4()
   call assert_fails('find Xfindexpr1.c', 'E565: Not allowed to change text or change window')
+
+  " Expression returning a string
+  set findexpr='abc'
+  call assert_fails('find Xfindexpr1.c', 'E1514: findexpr did not return a List type')
 
   set findexpr&
   delfunc! FindExpr1
@@ -452,6 +455,33 @@ func Test_findexpr_scriptlocal_func()
 
   set findexpr=
   delfunc s:FindExprScript
+endfunc
+
+" Test for expanding the argument to the :find command using 'findexpr'
+func Test_findexpr_expand_arg()
+  func FindExpr1()
+    let fnames = ['Xfindexpr1.c', 'Xfindexpr2.c', 'Xfindexpr3.c']
+    return fnames->copy()->filter('v:val =~? v:fname')
+  endfunc
+  set findexpr=FindExpr1()
+
+  call feedkeys(":find \<Tab>\<C-B>\"\<CR>", "xt")
+  call assert_equal('"find Xfindexpr1.c', @:)
+
+  call feedkeys(":find Xfind\<Tab>\<Tab>\<C-B>\"\<CR>", "xt")
+  call assert_equal('"find Xfindexpr2.c', @:)
+
+  call feedkeys(":find *3*\<Tab>\<C-B>\"\<CR>", "xt")
+  call assert_equal('"find Xfindexpr3.c', @:)
+
+  call feedkeys(":find Xfind\<C-A>\<C-B>\"\<CR>", "xt")
+  call assert_equal('"find Xfindexpr1.c Xfindexpr2.c Xfindexpr3.c', @:)
+
+  call feedkeys(":find abc\<Tab>\<C-B>\"\<CR>", "xt")
+  call assert_equal('"find abc', @:)
+
+  set findexpr&
+  delfunc! FindExpr1
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
