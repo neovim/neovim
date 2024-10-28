@@ -1017,6 +1017,39 @@ something
       end
     )
   end)
+
+  describe('very big diff with linematch:8000 can be canceled with ctrl-c', function()
+    before_each(function()
+      local f1 = [[
+a
+a
+a
+a
+a
+a
+      ]])
+      local f2 = [[
+ba
+ba
+ba
+
+ba
+ba
+ba
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+
+    it(
+      'cancel the linematch algorithm',
+      function()
+      feed(':set diffopt+=linematch:800<cr>')
+      -- feed('<C-c>') -- cancel from user
+      end
+    )
+  end)
 end)
 
 describe('regressions', function()
