@@ -2,7 +2,7 @@
 " Language:		awk, nawk, gawk, mawk
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Antonio Colombo <azc100@gmail.com>
-" Last Change:		2020 Aug 18
+" Last Change:		2024 Oct 28
 
 " AWK  ref. is: Alfred V. Aho, Brian W. Kernighan, Peter J. Weinberger
 " The AWK Programming Language, Addison-Wesley, 1988
@@ -92,7 +92,7 @@ syn match   awkSpecialCharacter display contained "\\x[0-9A-Fa-f]\+"
 syn match   awkFieldVars	"\$\d\+"
 
 " catch errors caused by wrong parenthesis
-syn region	awkParen	transparent start="(" end=")" contains=ALLBUT,awkParenError,awkSpecialCharacter,awkArrayElement,awkArrayArray,awkTodo,awkRegExp,awkBrktRegExp,awkBrackets,awkCharClass,awkComment
+syn region	awkParen	transparent start="(" end=")" contains=ALLBUT,awkParenError,awkSpecialCharacter,awkArrayElement,awkArrayArray,awkTodo,awkRegExp,awkBrktRegExp,awkBrackets,awkCharClass
 syn match	awkParenError	display ")"
 "syn match	awkInParen	display contained "[{}]"
 
