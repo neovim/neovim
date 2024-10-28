@@ -2631,7 +2631,7 @@ static int may_call_simple_func(const char *arg, typval_T *rettv)
 
 /// Handle zero level expression with optimization for a simple function call.
 /// Same arguments and return value as eval0().
-static int eval0_simple_funccal(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
+int eval0_simple_funccal(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
 {
   int r = may_call_simple_func(arg, rettv);
 

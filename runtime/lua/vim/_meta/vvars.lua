@@ -267,7 +267,8 @@ vim.v.fcs_choice = ...
 vim.v.fcs_reason = ...
 
 --- When evaluating 'includeexpr': the file name that was
---- detected.  Empty otherwise.
+--- detected.  When evaluating 'findexpr': the argument passed to
+--- the `:find` command.  Empty otherwise.
 --- @type string
 vim.v.fname = ...
 

@@ -2906,6 +2906,59 @@ return {
       varname = 'p_fcs',
     },
     {
+      abbreviation = 'fexpr',
+      cb = 'did_set_optexpr',
+      defaults = { if_true = '' },
+      desc = [=[
+        Expression that is evaluated to obtain the filename(s) for the |:find|
+        command.  When this option is empty, the internal |file-searching|
+        mechanism is used.
+
+        While evaluating the expression, the |v:fname| variable is set to the
+        argument of the |:find| command.
+
+        The expression is evaluated only once per |:find| command invocation.
+        The expression can process all the directories specified in 'path'.
+
+        If a match is found, the expression should return a |List| containing
+        one or more file names.  If a match is not found, the expression
+        should return an empty List.
+
+        If any errors are encountered during the expression evaluation, an
+        empty List is used as the return value.
+
+        Using a function call without arguments is faster |expr-option-function|
+
+        It is not allowed to change text or jump to another window while
+        evaluating 'findexpr' |textlock|.
+
+        This option cannot be set from a |modeline| or in the |sandbox|, for
+        security reasons.
+
+        Examples:
+        >vim
+            " Use glob()
+            func FindExprGlob()
+        	return glob(v:fname, v:false, v:true)
+            endfunc
+            set findexpr=FindExprGlob()
+
+            " Use the 'git ls-files' output
+            func FindGitFiles()
+        	let fnames = systemlist('git ls-files')
+        	return fnames->filter('v:val =~? v:fname')
+            endfunc
+            set findexpr=FindGitFiles()
+        <
+      ]=],
+      full_name = 'findexpr',
+      scope = { 'global', 'buffer' },
+      secure = true,
+      short_desc = N_('expression used for :find'),
+      type = 'string',
+      varname = 'p_fexpr',
+    },
+    {
       abbreviation = 'fixeol',
       cb = 'did_set_eof_eol_fixeol_bomb',
       defaults = { if_true = true },

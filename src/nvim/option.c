@@ -4530,6 +4530,8 @@ void *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
     switch ((int)p->indir) {
     case PV_FP:
       return &(buf->b_p_fp);
+    case PV_FEXPR:
+      return &(buf->b_p_fexpr);
     case PV_EFM:
       return &(buf->b_p_efm);
     case PV_GP:
@@ -4651,6 +4653,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_tsrfu != NUL ? &(buf->b_p_tsrfu) : p->var;
   case PV_FP:
     return *buf->b_p_fp != NUL ? &(buf->b_p_fp) : p->var;
+  case PV_FEXPR:
+    return *buf->b_p_fexpr != NUL ? &(buf->b_p_fexpr) : p->var;
   case PV_EFM:
     return *buf->b_p_efm != NUL ? &(buf->b_p_efm) : p->var;
   case PV_GP:
@@ -4920,6 +4924,15 @@ char *get_equalprg(void)
     return p_ep;
   }
   return curbuf->b_p_ep;
+}
+
+/// Get the value of 'findexpr', either the buffer-local one or the global one.
+char *get_findexpr(void)
+{
+  if (*curbuf->b_p_fexpr == NUL) {
+    return p_fexpr;
+  }
+  return curbuf->b_p_fexpr;
 }
 
 /// Copy options from one window to another.
@@ -5320,6 +5333,8 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_mp = empty_string_option;
       buf->b_p_efm = empty_string_option;
       buf->b_p_ep = empty_string_option;
+      buf->b_p_fexpr = xstrdup(p_fexpr);
+      COPY_OPT_SCTX(buf, BV_FEXPR);
       buf->b_p_kp = empty_string_option;
       buf->b_p_path = empty_string_option;
       buf->b_p_tags = empty_string_option;

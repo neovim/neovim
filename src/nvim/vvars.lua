@@ -284,7 +284,8 @@ M.vars = {
     type = 'string',
     desc = [=[
       When evaluating 'includeexpr': the file name that was
-      detected.  Empty otherwise.
+      detected.  When evaluating 'findexpr': the argument passed to
+      the |:find| command.  Empty otherwise.
     ]=],
   },
   fname_diff = {
