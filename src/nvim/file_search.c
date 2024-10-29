@@ -1489,15 +1489,15 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
   if (file_name == NULL && (options & FNAME_MESS)) {
     if (first == true) {
       if (find_what == FINDFILE_DIR) {
-        semsg(_("E344: Can't find directory \"%s\" in cdpath"), *file_to_find);
+        semsg(_(e_cant_find_directory_str_in_cdpath), *file_to_find);
       } else {
-        semsg(_("E345: Can't find file \"%s\" in path"), *file_to_find);
+        semsg(_(e_cant_find_file_str_in_path), *file_to_find);
       }
     } else {
       if (find_what == FINDFILE_DIR) {
-        semsg(_("E346: No more directory \"%s\" found in cdpath"), *file_to_find);
+        semsg(_(e_no_more_directory_str_found_in_cdpath), *file_to_find);
       } else {
-        semsg(_("E347: No more file \"%s\" found in path"), *file_to_find);
+        semsg(_(e_no_more_file_str_found_in_path), *file_to_find);
       }
     }
   }

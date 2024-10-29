@@ -1,5 +1,7 @@
 " Test findfile() and finddir()
 
+source check.vim
+
 let s:files = [ 'Xfinddir1/foo',
       \         'Xfinddir1/bar',
       \         'Xfinddir1/Xdir2/foo',
@@ -284,6 +286,225 @@ func Test_find_non_existing_path()
   call delete('dir1/file.txt', 'rf')
   call delete('dir1', 'rf')
   let &path = save_path
+endfunc
+
+" Test for 'findexpr'
+func Test_findexpr()
+  CheckUnix
+  call assert_equal('', &findexpr)
+  call writefile(['aFile'], 'Xfindexpr1.c', 'D')
+  call writefile(['bFile'], 'Xfindexpr2.c', 'D')
+  call writefile(['cFile'], 'Xfindexpr3.c', 'D')
+
+  " basic tests
+  func FindExpr1()
+    let fnames = ['Xfindexpr1.c', 'Xfindexpr2.c', 'Xfindexpr3.c']
+    return fnames->copy()->filter('v:val =~? v:fname')
+  endfunc
+
+  set findexpr=FindExpr1()
+  find Xfindexpr3
+  call assert_match('Xfindexpr3.c', @%)
+  bw!
+  2find Xfind
+  call assert_match('Xfindexpr2.c', @%)
+  bw!
+  call assert_fails('4find Xfind', 'E347: No more file "Xfind" found in path')
+  call assert_fails('find foobar', 'E345: Can''t find file "foobar" in path')
+
+  sfind Xfindexpr2.c
+  call assert_match('Xfindexpr2.c', @%)
+  call assert_equal(2, winnr('$'))
+  %bw!
+  call assert_fails('sfind foobar', 'E345: Can''t find file "foobar" in path')
+
+  tabfind Xfindexpr3.c
+  call assert_match('Xfindexpr3.c', @%)
+  call assert_equal(2, tabpagenr())
+  %bw!
+  call assert_fails('tabfind foobar', 'E345: Can''t find file "foobar" in path')
+
+  " Buffer-local option
+  set findexpr=['abc']
+  new
+  setlocal findexpr=['def']
+  find xxxx
+  call assert_equal('def', @%)
+  wincmd w
+  find xxxx
+  call assert_equal('abc', @%)
+  aboveleft new
+  call assert_equal("['abc']", &findexpr)
+  wincmd k
+  aboveleft new
+  call assert_equal("['abc']", &findexpr)
+  %bw!
+
+  " Empty list
+  set findexpr=[]
+  call assert_fails('find xxxx', 'E345: Can''t find file "xxxx" in path')
+
+  " Error cases
+
+  " Syntax error in the expression
+  set findexpr=FindExpr1{}
+  call assert_fails('find Xfindexpr1.c', 'E15: Invalid expression')
+
+  " Find expression throws an error
+  func FindExpr2()
+    throw 'find error'
+  endfunc
+  set findexpr=FindExpr2()
+  call assert_fails('find Xfindexpr1.c', 'find error')
+
+  " Try using a null List as the expression
+  set findexpr=v:_null_list
+  call assert_fails('find Xfindexpr1.c', 'E345: Can''t find file "Xfindexpr1.c" in path')
+
+  " Try to create a new window from the find expression
+  func FindExpr3()
+    new
+    return ["foo"]
+  endfunc
+  set findexpr=FindExpr3()
+  call assert_fails('find Xfindexpr1.c', 'E565: Not allowed to change text or change window')
+
+  " Try to modify the current buffer from the find expression
+  func FindExpr4()
+    call setline(1, ['abc'])
+    return ["foo"]
+  endfunc
+  set findexpr=FindExpr4()
+  call assert_fails('find Xfindexpr1.c', 'E565: Not allowed to change text or change window')
+
+  " Expression returning a string
+  set findexpr='abc'
+  call assert_fails('find Xfindexpr1.c', "E1514: 'findexpr' did not return a List type")
+
+  set findexpr&
+  delfunc! FindExpr1
+  delfunc! FindExpr2
+  delfunc! FindExpr3
+  delfunc! FindExpr4
+endfunc
+
+" Test for using a script-local function for 'findexpr'
+func Test_findexpr_scriptlocal_func()
+  func! s:FindExprScript()
+    let g:FindExprArg = v:fname
+    return ['xxx']
+  endfunc
+
+  set findexpr=s:FindExprScript()
+  call assert_equal(expand('<SID>') .. 'FindExprScript()', &findexpr)
+  call assert_equal(expand('<SID>') .. 'FindExprScript()', &g:findexpr)
+  new | only
+  let g:FindExprArg = ''
+  find abc
+  call assert_equal('abc', g:FindExprArg)
+  bw!
+
+  set findexpr=<SID>FindExprScript()
+  call assert_equal(expand('<SID>') .. 'FindExprScript()', &findexpr)
+  call assert_equal(expand('<SID>') .. 'FindExprScript()', &g:findexpr)
+  new | only
+  let g:FindExprArg = ''
+  find abc
+  call assert_equal('abc', g:FindExprArg)
+  bw!
+
+  let &findexpr = 's:FindExprScript()'
+  call assert_equal(expand('<SID>') .. 'FindExprScript()', &g:findexpr)
+  new | only
+  let g:FindExprArg = ''
+  find abc
+  call assert_equal('abc', g:FindExprArg)
+  bw!
+
+  let &findexpr = '<SID>FindExprScript()'
+  call assert_equal(expand('<SID>') .. 'FindExprScript()', &g:findexpr)
+  new | only
+  let g:FindExprArg = ''
+  find abc
+  call assert_equal('abc', g:FindExprArg)
+  bw!
+
+  set findexpr=
+  setglobal findexpr=s:FindExprScript()
+  setlocal findexpr=
+  call assert_equal(expand('<SID>') .. 'FindExprScript()', &findexpr)
+  call assert_equal(expand('<SID>') .. 'FindExprScript()', &g:findexpr)
+  call assert_equal('', &l:findexpr)
+  new | only
+  let g:FindExprArg = ''
+  find abc
+  call assert_equal('abc', g:FindExprArg)
+  bw!
+
+  new | only
+  set findexpr=
+  setglobal findexpr=
+  setlocal findexpr=s:FindExprScript()
+  call assert_equal(expand('<SID>') .. 'FindExprScript()', &findexpr)
+  call assert_equal(expand('<SID>') .. 'FindExprScript()', &l:findexpr)
+  call assert_equal('', &g:findexpr)
+  let g:FindExprArg = ''
+  find abc
+  call assert_equal('abc', g:FindExprArg)
+  bw!
+
+  set findexpr=
+  delfunc s:FindExprScript
+endfunc
+
+" Test for expanding the argument to the :find command using 'findexpr'
+func Test_findexpr_expand_arg()
+  let s:fnames = ['Xfindexpr1.c', 'Xfindexpr2.c', 'Xfindexpr3.c']
+
+  " 'findexpr' that accepts a regular expression
+  func FindExprRegexp()
+    return s:fnames->copy()->filter('v:val =~? v:fname')
+  endfunc
+
+  " 'findexpr' that accepts a glob
+  func FindExprGlob()
+    let pat = glob2regpat(v:cmdcomplete ? $'*{v:fname}*' : v:fname)
+    return s:fnames->copy()->filter('v:val =~? pat')
+  endfunc
+
+  for regexp in [v:true, v:false]
+    let &findexpr = regexp ? 'FindExprRegexp()' : 'FindExprGlob()'
+
+    call feedkeys(":find \<Tab>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find Xfindexpr1.c', @:)
+
+    call feedkeys(":find Xfind\<Tab>\<Tab>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find Xfindexpr2.c', @:)
+
+    call assert_equal(s:fnames, getcompletion('find ', 'cmdline'))
+    call assert_equal(s:fnames, getcompletion('find Xfind', 'cmdline'))
+
+    let pat = regexp ? 'X.*1\.c' : 'X*1.c'
+    call feedkeys($":find {pat}\<Tab>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find Xfindexpr1.c', @:)
+    call assert_equal(['Xfindexpr1.c'], getcompletion($'find {pat}', 'cmdline'))
+
+    call feedkeys(":find 3\<Tab>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find Xfindexpr3.c', @:)
+    call assert_equal(['Xfindexpr3.c'], getcompletion($'find 3', 'cmdline'))
+
+    call feedkeys(":find Xfind\<C-A>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find Xfindexpr1.c Xfindexpr2.c Xfindexpr3.c', @:)
+
+    call feedkeys(":find abc\<Tab>\<C-B>\"\<CR>", "xt")
+    call assert_equal('"find abc', @:)
+    call assert_equal([], getcompletion('find abc', 'cmdline'))
+  endfor
+
+  set findexpr&
+  delfunc! FindExprRegexp
+  delfunc! FindExprGlob
+  unlet s:fnames
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

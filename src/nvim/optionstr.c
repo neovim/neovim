@@ -233,6 +233,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_mp);
   check_string_option(&buf->b_p_efm);
   check_string_option(&buf->b_p_ep);
+  check_string_option(&buf->b_p_fexpr);
   check_string_option(&buf->b_p_path);
   check_string_option(&buf->b_p_tags);
   check_string_option(&buf->b_p_tfu);
@@ -1885,8 +1886,9 @@ int expand_set_nrformats(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
-/// One of the '*expr' options is changed:, 'diffexpr', 'foldexpr', 'foldtext',
-/// 'formatexpr', 'includeexpr', 'indentexpr', 'patchexpr' and 'charconvert'.
+/// One of the '*expr' options is changed:, 'diffexpr', 'findexpr',
+/// 'foldexpr', 'foldtext', 'formatexpr', 'includeexpr', 'indentexpr',
+/// 'patchexpr' and 'charconvert'.
 const char *did_set_optexpr(optset_T *args)
 {
   char **varp = (char **)args->os_varp;

@@ -2294,6 +2294,62 @@ vim.wo.fcs = vim.wo.fillchars
 vim.go.fillchars = vim.o.fillchars
 vim.go.fcs = vim.go.fillchars
 
+--- Expression that is evaluated to obtain the filename(s) for the `:find`
+--- command.  When this option is empty, the internal `file-searching`
+--- mechanism is used.
+---
+--- While evaluating the expression, the `v:fname` variable is set to the
+--- argument of the `:find` command.
+---
+--- The expression is evaluated only once per `:find` command invocation.
+--- The expression can process all the directories specified in 'path'.
+---
+--- The expression may be evaluated for command-line completion as well,
+--- in which case the `v:cmdcomplete` variable will be set to `v:true`,
+--- otherwise it will be set to `v:false`.
+---
+--- If a match is found, the expression should return a `List` containing
+--- one or more file names.  If a match is not found, the expression
+--- should return an empty List.
+---
+--- If any errors are encountered during the expression evaluation, an
+--- empty List is used as the return value.
+---
+--- Using a function call without arguments is faster `expr-option-function`
+---
+--- It is not allowed to change text or jump to another window while
+--- evaluating 'findexpr' `textlock`.
+---
+--- This option cannot be set from a `modeline` or in the `sandbox`, for
+--- security reasons.
+---
+--- Examples:
+---
+--- ```vim
+---     " Use glob()
+---     func FindExprGlob()
+--- 	let pat = v:cmdcomplete ? $'{v:fname}*' : v:fname
+--- 	return glob(pat, v:false, v:true)
+---     endfunc
+---     set findexpr=FindExprGlob()
+---
+---     " Use the 'git ls-files' output
+---     func FindGitFiles()
+--- 	let fnames = systemlist('git ls-files')
+--- 	return fnames->filter('v:val =~? v:fname')
+---     endfunc
+---     set findexpr=FindGitFiles()
+--- ```
+---
+---
+--- @type string
+vim.o.findexpr = ""
+vim.o.fexpr = vim.o.findexpr
+vim.bo.findexpr = vim.o.findexpr
+vim.bo.fexpr = vim.bo.findexpr
+vim.go.findexpr = vim.o.findexpr
+vim.go.fexpr = vim.go.findexpr
+
 --- When writing a file and this option is on, <EOL> at the end of file
 --- will be restored if missing.  Turn this option off if you want to
 --- preserve the situation from the original file.

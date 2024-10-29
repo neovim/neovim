@@ -156,6 +156,11 @@ EXTERN const char e_luv_api_disabled[] INIT(= N_("E5560: %s must not be called i
 EXTERN const char e_floatonly[] INIT(= N_("E5601: Cannot close window, only floating window would remain"));
 EXTERN const char e_floatexchange[] INIT(= N_("E5602: Cannot exchange or rotate float"));
 
+EXTERN const char e_cant_find_directory_str_in_cdpath[] INIT(= N_("E344: Can't find directory \"%s\" in cdpath"));
+EXTERN const char e_cant_find_file_str_in_path[] INIT(= N_("E345: Can't find file \"%s\" in path"));
+EXTERN const char e_no_more_directory_str_found_in_cdpath[] INIT(= N_("E346: No more directory \"%s\" found in cdpath"));
+EXTERN const char e_no_more_file_str_found_in_path[] INIT(= N_("E347: No more file \"%s\" found in path"));
+
 EXTERN const char e_cannot_define_autocommands_for_all_events[] INIT(= N_("E1155: Cannot define autocommands for ALL events"));
 
 EXTERN const char e_resulting_text_too_long[] INIT(= N_("E1240: Resulting text too long"));
@@ -181,6 +186,7 @@ INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch")
 
 EXTERN const char e_winfixbuf_cannot_go_to_buffer[]
 INIT(= N_("E1513: Cannot switch buffer. 'winfixbuf' is enabled"));
+EXTERN const char e_invalid_return_type_from_findexpr[] INIT( = N_("E1514: 'findexpr' did not return a List type"));
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
 

@@ -48,6 +48,11 @@ v:cmdbang
 		can only be used in autocommands.  For user commands |<bang>|
 		can be used.
 
+				*v:cmdcomplete* *cmdcomplete-variable*
+v:cmdcomplete
+		When evaluating 'findexpr': if 'findexpr' is used for cmdline
+		completion the value is |v:true|, otherwise it is |v:false|.
+
 					*v:collate* *collate-variable*
 v:collate
 		The current locale setting for collation order of the runtime
@@ -254,7 +259,8 @@ v:fcs_reason
 					*v:fname* *fname-variable*
 v:fname
 		When evaluating 'includeexpr': the file name that was
-		detected.  Empty otherwise.
+		detected.  When evaluating 'findexpr': the argument passed to
+		the |:find| command.  Empty otherwise.
 
 				*v:fname_diff* *fname_diff-variable*
 v:fname_diff

@@ -270,6 +270,7 @@ static struct vimvar {
   VV(VV_COLLATE,          "collate",          VAR_STRING, VV_RO),
   VV(VV_EXITING,          "exiting",          VAR_NUMBER, VV_RO),
   VV(VV_MAXCOL,           "maxcol",           VAR_NUMBER, VV_RO),
+  VV(VV_CMDCOMPLETE,      "cmdcomplete",      VAR_BOOL, VV_RO),
   // Neovim
   VV(VV_STDERR,           "stderr",           VAR_NUMBER, VV_RO),
   VV(VV_MSGPACK_TYPES,    "msgpack_types",    VAR_DICT, VV_RO),
@@ -460,6 +461,9 @@ void eval_init(void)
   set_vim_var_nr(VV_SEARCHFORWARD, 1);
   set_vim_var_nr(VV_HLSEARCH, 1);
   set_vim_var_nr(VV_COUNT1, 1);
+  set_vim_var_special(VV_EXITING, kSpecialVarNull);
+  set_vim_var_bool(VV_CMDCOMPLETE, kBoolVarFalse);
+
   set_vim_var_nr(VV_TYPE_NUMBER, VAR_TYPE_NUMBER);
   set_vim_var_nr(VV_TYPE_STRING, VAR_TYPE_STRING);
   set_vim_var_nr(VV_TYPE_FUNC,   VAR_TYPE_FUNC);
@@ -475,7 +479,6 @@ void eval_init(void)
   set_vim_var_nr(VV_NUMBERMAX, VARNUMBER_MAX);
   set_vim_var_nr(VV_NUMBERMIN, VARNUMBER_MIN);
   set_vim_var_nr(VV_NUMBERSIZE, sizeof(varnumber_T) * 8);
-  set_vim_var_special(VV_EXITING, kSpecialVarNull);
   set_vim_var_nr(VV_MAXCOL, MAXCOL);
 
   set_vim_var_nr(VV_ECHOSPACE,    sc_col - 1);
@@ -2631,7 +2634,7 @@ static int may_call_simple_func(const char *arg, typval_T *rettv)
 
 /// Handle zero level expression with optimization for a simple function call.
 /// Same arguments and return value as eval0().
-static int eval0_simple_funccal(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
+int eval0_simple_funccal(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
 {
   int r = may_call_simple_func(arg, rettv);
 
