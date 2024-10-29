@@ -95,6 +95,63 @@ describe('default', function()
     end)
   end)
 
-  -- describe('key mappings', function()
-  -- end)
+  describe('key mappings', function()
+    describe('unimpaired-style mappings', function()
+      it('do not show a full stack trace #30625', function()
+        n.clear({ args_rm = { '--cmd' } })
+        local screen = Screen.new(40, 8)
+        screen:attach()
+        screen:set_default_attr_ids({
+          [1] = { foreground = Screen.colors.NvimDarkGray4 },
+          [2] = {
+            background = Screen.colors.NvimLightGrey3,
+            foreground = Screen.colors.NvimDarkGray3,
+          },
+          [3] = { foreground = Screen.colors.NvimLightRed },
+          [4] = { foreground = Screen.colors.NvimLightCyan },
+        })
+
+        n.feed('[a')
+        screen:expect({
+          grid = [[
+                                                    |
+            {1:~                                       }|*4
+            {2:                                        }|
+            {3:E163: There is only one file to edit}    |
+            {4:Press ENTER or type command to continue}^ |
+          ]],
+        })
+
+        n.feed('[q')
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {1:~                                       }|*5
+            {2:[No Name]             0,0-1          All}|
+            {3:E42: No Errors}                          |
+          ]],
+        })
+
+        n.feed('[l')
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {1:~                                       }|*5
+            {2:[No Name]             0,0-1          All}|
+            {3:E776: No location list}                  |
+          ]],
+        })
+
+        n.feed('[t')
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {1:~                                       }|*5
+            {2:[No Name]             0,0-1          All}|
+            {3:E73: Tag stack empty}                    |
+          ]],
+        })
+      end)
+    end)
+  end)
 end)
