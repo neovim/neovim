@@ -81,13 +81,10 @@ LSP
   customizing the transformation of an LSP CompletionItem to |complete-items|.
 • |vim.lsp.diagnostic.from()| can be used to convert a list of
   |vim.Diagnostic| objects into their LSP diagnostic representation.
-• |vim.lsp.buf.references()| now handles multiple clients but no longer
-  triggers the global `textDocument/references` handler from
-  `vim.lsp.handlers`
-• |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
-  |vim.lsp.buf.type_definition()| and |vim.lsp.buf.implementation()| now
-  support merging the results of multiple clients but no longer trigger the
-  global handlers from `vim.lsp.handlers`
+• |vim.lsp.buf.references()|, |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
+  |vim.lsp.buf.type_definition()|, |vim.lsp.buf.implementation()| and
+  |vim.lsp.buf.hover()| now support merging the results of multiple clients
+  but no longer trigger the global handlers from `vim.lsp.handlers`
 • |vim.lsp.buf.typehierarchy()| now passes the correct params for each
   client request.
 

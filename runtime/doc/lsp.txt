@@ -703,7 +703,10 @@ buf_request_all({bufnr}, {method}, {params}, {handler})
     Parameters: ~
       • {bufnr}    (`integer`) Buffer handle, or 0 for current.
       • {method}   (`string`) LSP method name
-      • {params}   (`table?`) Parameters to send to the server
+      • {params}   (`table|(fun(client: vim.lsp.Client, bufnr: integer): table?)?`)
+                   Parameters to send to the server. Can also be passed as a
+                   function that returns the params table for cases where
+                   parameters are specific to the client.
       • {handler}  (`function`) Handler called after all requests are
                    completed. Server results are passed as a
                    `client_id:result` map.
@@ -1269,6 +1272,13 @@ Lua module: vim.lsp.buf                                              *lsp-buf*
       • {title}?    (`string`) Title for the list.
       • {context}?  (`table`) `ctx` from |lsp-handler|
 
+*vim.lsp.buf.hover.Opts*
+    Extends: |vim.lsp.util.open_floating_preview.Opts|
+
+
+    Fields: ~
+      • {silent}?  (`boolean`)
+
 
                                           *vim.lsp.buf.add_workspace_folder()*
 add_workspace_folder({workspace_folder})
@@ -1386,13 +1396,16 @@ format({opts})                                          *vim.lsp.buf.format()*
                   contain `start` and `end` keys as described above, in which
                   case `textDocument/rangesFormatting` support is required.
 
-hover()                                                  *vim.lsp.buf.hover()*
+hover({config})                                          *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating
     window. The window will be dismissed on cursor move. Calling the function
     twice will jump into the floating window (thus by default, "KK" will open
     the hover window and focus it). In the floating window, all commands and
     mappings are available as usual, except that "q" dismisses the window. You
     can scroll the contents the same as you would any other buffer.
+
+    Parameters: ~
+      • {config}  (`vim.lsp.buf.hover.Opts?`) See |vim.lsp.buf.hover.Opts|.
 
 implementation({opts})                          *vim.lsp.buf.implementation()*
     Lists all the implementations for the symbol under the cursor in the
@@ -1812,27 +1825,6 @@ stop({bufnr}, {client_id})                    *vim.lsp.semantic_tokens.stop()*
 
 ==============================================================================
 Lua module: vim.lsp.handlers                                    *lsp-handlers*
-
-hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
-    |lsp-handler| for the method "textDocument/hover" >lua
-        vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
-          vim.lsp.handlers.hover, {
-            -- Use a sharp border with `FloatBorder` highlights
-            border = "single",
-            -- add the title in hover float window
-            title = "hover"
-          }
-        )
-<
-
-    Parameters: ~
-      • {result}  (`lsp.Hover`)
-      • {ctx}     (`lsp.HandlerContext`)
-      • {config}  (`table`) Configuration table.
-                  • border: (default=nil)
-                    • Add borders to the floating window
-                    • See |vim.lsp.util.open_floating_preview()| for more
-                      options.
 
                                            *vim.lsp.handlers.signature_help()*
 signature_help({_}, {result}, {ctx}, {config})

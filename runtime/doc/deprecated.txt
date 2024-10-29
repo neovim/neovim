@@ -48,6 +48,8 @@ LSP
   `{focus=true}` instead.
 • *vim.lsp.buf.execute_command*		Use |Client:exec_cmd()| instead.
 • *vim.lsp.buf.completion*		Use |vim.lsp.completion.trigger()| instead.
+• vim.lsp.buf_request_all		The `error` key has been renamed to `err` inside
+					the result parameter of the handler.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*
