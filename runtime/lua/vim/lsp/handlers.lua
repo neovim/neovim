@@ -5,10 +5,21 @@ local util = require('vim.lsp.util')
 local api = vim.api
 local completion = require('vim.lsp.completion')
 
---- @type table<string,lsp.Handler>
+--- @type table<string, lsp.Handler>
 local M = {}
 
--- FIXME: DOC: Expose in vimdocs
+--- @deprecated
+--- Client to server response handlers.
+--- @type table<vim.lsp.protocol.Method.ClientToServer, lsp.Handler>
+local RCS = {}
+
+--- Server to client request handlers.
+--- @type table<vim.lsp.protocol.Method.ServerToClient, lsp.Handler>
+local RSC = {}
+
+--- Server to client notification handlers.
+--- @type table<vim.lsp.protocol.Method.ServerToClient, lsp.Handler>
+local NSC = {}
 
 --- Writes to error buffer.
 ---@param ... string Will be concatenated before being written
@@ -18,14 +29,15 @@ local function err_message(...)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
-M[ms.workspace_executeCommand] = function(_, _, _, _)
+RCS[ms.workspace_executeCommand] = function(_, _, _)
   -- Error handling is done implicitly by wrapping all handlers; see end of this file
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
 ---@param params lsp.ProgressParams
 ---@param ctx lsp.HandlerContext
-M[ms.dollar_progress] = function(_, params, ctx)
+---@diagnostic disable-next-line:no-unknown
+RSC[ms.dollar_progress] = function(_, params, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
     err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
@@ -59,26 +71,26 @@ M[ms.dollar_progress] = function(_, params, ctx)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_workDoneProgress_create
----@param result lsp.WorkDoneProgressCreateParams
+---@param params lsp.WorkDoneProgressCreateParams
 ---@param ctx lsp.HandlerContext
-M[ms.window_workDoneProgress_create] = function(_, result, ctx)
+RSC[ms.window_workDoneProgress_create] = function(_, params, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
     err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
     return vim.NIL
   end
-  client.progress:push(result)
+  client.progress:push(params)
   return vim.NIL
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
----@param result lsp.ShowMessageRequestParams
-M[ms.window_showMessageRequest] = function(_, result)
-  local actions = result.actions or {}
+---@param params lsp.ShowMessageRequestParams
+RSC[ms.window_showMessageRequest] = function(_, params)
+  local actions = params.actions or {}
   local co, is_main = coroutine.running()
   if co and not is_main then
     local opts = {
-      prompt = result.message .. ': ',
+      prompt = params.message .. ': ',
       format_item = function(action)
         return (action.title:gsub('\r\n', '\\r\\n')):gsub('\n', '\\n')
       end,
@@ -92,7 +104,7 @@ M[ms.window_showMessageRequest] = function(_, result)
     end)
     return coroutine.yield()
   else
-    local option_strings = { result.message, '\nRequest Actions:' }
+    local option_strings = { params.message, '\nRequest Actions:' }
     for i, action in ipairs(actions) do
       local title = action.title:gsub('\r\n', '\\r\\n')
       title = title:gsub('\n', '\\n')
@@ -108,19 +120,19 @@ M[ms.window_showMessageRequest] = function(_, result)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_registerCapability
---- @param result lsp.RegistrationParams
-M[ms.client_registerCapability] = function(_, result, ctx)
+--- @param params lsp.RegistrationParams
+RSC[ms.client_registerCapability] = function(_, params, ctx)
   local client_id = ctx.client_id
   local client = assert(vim.lsp.get_client_by_id(client_id))
 
-  client.dynamic_capabilities:register(result.registrations)
+  client.dynamic_capabilities:register(params.registrations)
   for bufnr, _ in pairs(client.attached_buffers) do
     vim.lsp._set_defaults(client, bufnr)
   end
 
   ---@type string[]
   local unsupported = {}
-  for _, reg in ipairs(result.registrations) do
+  for _, reg in ipairs(params.registrations) do
     if reg.method == ms.workspace_didChangeWatchedFiles then
       vim.lsp._watchfiles.register(reg, ctx)
     elseif not client.dynamic_capabilities:supports_registration(reg.method) then
@@ -139,13 +151,13 @@ M[ms.client_registerCapability] = function(_, result, ctx)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_unregisterCapability
---- @param result lsp.UnregistrationParams
-M[ms.client_unregisterCapability] = function(_, result, ctx)
+--- @param params lsp.UnregistrationParams
+RSC[ms.client_unregisterCapability] = function(_, params, ctx)
   local client_id = ctx.client_id
   local client = assert(vim.lsp.get_client_by_id(client_id))
-  client.dynamic_capabilities:unregister(result.unregisterations)
+  client.dynamic_capabilities:unregister(params.unregisterations)
 
-  for _, unreg in ipairs(result.unregisterations) do
+  for _, unreg in ipairs(params.unregisterations) do
     if unreg.method == ms.workspace_didChangeWatchedFiles then
       vim.lsp._watchfiles.unregister(unreg, ctx)
     end
@@ -153,20 +165,20 @@ M[ms.client_unregisterCapability] = function(_, result, ctx)
   return vim.NIL
 end
 
+-- TODO(lewis6991): Do we need to notify other servers?
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
-M[ms.workspace_applyEdit] = function(_, workspace_edit, ctx)
+RSC[ms.workspace_applyEdit] = function(_, params, ctx)
   assert(
-    workspace_edit,
+    params,
     'workspace/applyEdit must be called with `ApplyWorkspaceEditParams`. Server is violating the specification'
   )
   -- TODO(ashkan) Do something more with label?
   local client_id = ctx.client_id
   local client = assert(vim.lsp.get_client_by_id(client_id))
-  if workspace_edit.label then
-    print('Workspace edit', workspace_edit.label)
+  if params.label then
+    print('Workspace edit', params.label)
   end
-  local status, result =
-    pcall(util.apply_workspace_edit, workspace_edit.edit, client.offset_encoding)
+  local status, result = pcall(util.apply_workspace_edit, params.edit, client.offset_encoding)
   return {
     applied = status,
     failureReason = result,
@@ -182,8 +194,8 @@ local function lookup_section(table, section)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_configuration
---- @param result lsp.ConfigurationParams
-M[ms.workspace_configuration] = function(_, result, ctx)
+--- @param params lsp.ConfigurationParams
+RSC[ms.workspace_configuration] = function(_, params, ctx)
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
   if not client then
@@ -194,12 +206,12 @@ M[ms.workspace_configuration] = function(_, result, ctx)
     )
     return
   end
-  if not result.items then
+  if not params.items then
     return {}
   end
 
   local response = {}
-  for _, item in ipairs(result.items) do
+  for _, item in ipairs(params.items) do
     if item.section then
       local value = lookup_section(client.settings, item.section)
       -- For empty sections with no explicit '' key, return settings as is
@@ -216,7 +228,7 @@ M[ms.workspace_configuration] = function(_, result, ctx)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_workspaceFolders
-M[ms.workspace_workspaceFolders] = function(_, _, ctx)
+RSC[ms.workspace_workspaceFolders] = function(_, _, ctx)
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
   if not client then
@@ -226,19 +238,22 @@ M[ms.workspace_workspaceFolders] = function(_, _, ctx)
   return client.workspace_folders or vim.NIL
 end
 
-M[ms.textDocument_publishDiagnostics] = function(...)
+NSC[ms.textDocument_publishDiagnostics] = function(...)
   return vim.lsp.diagnostic.on_publish_diagnostics(...)
 end
 
-M[ms.textDocument_diagnostic] = function(...)
+--- @private
+RCS[ms.textDocument_diagnostic] = function(...)
   return vim.lsp.diagnostic.on_diagnostic(...)
 end
 
-M[ms.textDocument_codeLens] = function(...)
+--- @private
+RCS[ms.textDocument_codeLens] = function(...)
   return vim.lsp.codelens.on_codelens(...)
 end
 
-M[ms.textDocument_inlayHint] = function(...)
+--- @private
+RCS[ms.textDocument_inlayHint] = function(...)
   return vim.lsp.inlay_hint.on_inlayhint(...)
 end
 
@@ -251,6 +266,7 @@ end
 ---@param title_fn fun(ctx: lsp.HandlerContext): string Function to call to generate list title
 ---@return lsp.Handler
 local function response_to_list(map_result, entity, title_fn)
+  --- @diagnostic disable-next-line:redundant-parameter
   return function(_, result, ctx, config)
     if not result or vim.tbl_isempty(result) then
       vim.notify('No ' .. entity .. ' found')
@@ -274,8 +290,9 @@ local function response_to_list(map_result, entity, title_fn)
   end
 end
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
-M[ms.textDocument_documentSymbol] = response_to_list(
+RCS[ms.textDocument_documentSymbol] = response_to_list(
   util.symbols_to_items,
   'document symbols',
   function(ctx)
@@ -284,13 +301,15 @@ M[ms.textDocument_documentSymbol] = response_to_list(
   end
 )
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
-M[ms.workspace_symbol] = response_to_list(util.symbols_to_items, 'symbols', function(ctx)
+RCS[ms.workspace_symbol] = response_to_list(util.symbols_to_items, 'symbols', function(ctx)
   return string.format("Symbols matching '%s'", ctx.params.query)
 end)
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
-M[ms.textDocument_rename] = function(_, result, ctx, _)
+RCS[ms.textDocument_rename] = function(_, result, ctx)
   if not result then
     vim.notify("Language server couldn't provide rename result", vim.log.levels.INFO)
     return
@@ -299,8 +318,9 @@ M[ms.textDocument_rename] = function(_, result, ctx, _)
   util.apply_workspace_edit(result, client.offset_encoding)
 end
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rangeFormatting
-M[ms.textDocument_rangeFormatting] = function(_, result, ctx, _)
+RCS[ms.textDocument_rangeFormatting] = function(_, result, ctx)
   if not result then
     return
   end
@@ -308,8 +328,9 @@ M[ms.textDocument_rangeFormatting] = function(_, result, ctx, _)
   util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
-M[ms.textDocument_formatting] = function(_, result, ctx, _)
+RCS[ms.textDocument_formatting] = function(_, result, ctx)
   if not result then
     return
   end
@@ -319,7 +340,7 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-M[ms.textDocument_completion] = function(_, result, _, _)
+RCS[ms.textDocument_completion] = function(_, result, _)
   if vim.tbl_isempty(result or {}) then
     return
   end
@@ -355,6 +376,7 @@ end
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
 ---         - See |vim.lsp.util.open_floating_preview()| for more options.
+--- @diagnostic disable-next-line:redundant-parameter
 function M.hover(_, result, ctx, config)
   config = config or {}
   config.focus_id = ctx.method
@@ -388,10 +410,11 @@ end
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 --- @diagnostic disable-next-line: deprecated
-M[ms.textDocument_hover] = M.hover
+RCS[ms.textDocument_hover] = M.hover
 
 local sig_help_ns = api.nvim_create_namespace('vim_lsp_signature_help')
 
+--- @deprecated remove in 0.13
 --- |lsp-handler| for the method "textDocument/signatureHelp".
 ---
 --- The active parameter is highlighted with |hl-LspSignatureActiveParameter|.
@@ -412,6 +435,7 @@ local sig_help_ns = api.nvim_create_namespace('vim_lsp_signature_help')
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
 ---         - See |vim.lsp.util.open_floating_preview()| for more options
+--- @diagnostic disable-next-line:redundant-parameter
 function M.signature_help(_, result, ctx, config)
   config = config or {}
   config.focus_id = ctx.method
@@ -452,11 +476,14 @@ function M.signature_help(_, result, ctx, config)
   return fbuf, fwin
 end
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
-M[ms.textDocument_signatureHelp] = M.signature_help
+--- @diagnostic disable-next-line:deprecated
+RCS[ms.textDocument_signatureHelp] = M.signature_help
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
-M[ms.textDocument_documentHighlight] = function(_, result, ctx, _)
+RCS[ms.textDocument_documentHighlight] = function(_, result, ctx)
   if not result then
     return
   end
@@ -499,11 +526,13 @@ local function make_call_hierarchy_handler(direction)
   end
 end
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_incomingCalls
-M[ms.callHierarchy_incomingCalls] = make_call_hierarchy_handler('from')
+RCS[ms.callHierarchy_incomingCalls] = make_call_hierarchy_handler('from')
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_outgoingCalls
-M[ms.callHierarchy_outgoingCalls] = make_call_hierarchy_handler('to')
+RCS[ms.callHierarchy_outgoingCalls] = make_call_hierarchy_handler('to')
 
 --- Displays type hierarchy in the quickfix window.
 local function make_type_hierarchy_handler()
@@ -538,17 +567,19 @@ local function make_type_hierarchy_handler()
   end
 end
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#typeHierarchy_incomingCalls
-M[ms.typeHierarchy_subtypes] = make_type_hierarchy_handler()
+RCS[ms.typeHierarchy_subtypes] = make_type_hierarchy_handler()
 
+--- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#typeHierarchy_outgoingCalls
-M[ms.typeHierarchy_supertypes] = make_type_hierarchy_handler()
+RCS[ms.typeHierarchy_supertypes] = make_type_hierarchy_handler()
 
 --- @see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_logMessage
---- @param result lsp.LogMessageParams
-M[ms.window_logMessage] = function(_, result, ctx, _)
-  local message_type = result.type
-  local message = result.message
+--- @param params lsp.LogMessageParams
+NSC['window/logMessage'] = function(_, params, ctx)
+  local message_type = params.type
+  local message = params.message
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format('id=%d', client_id)
@@ -564,14 +595,14 @@ M[ms.window_logMessage] = function(_, result, ctx, _)
   else
     log.debug(message)
   end
-  return result
+  return params
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessage
---- @param result lsp.ShowMessageParams
-M[ms.window_showMessage] = function(_, result, ctx, _)
-  local message_type = result.type
-  local message = result.message
+--- @param params lsp.ShowMessageParams
+NSC['window/showMessage'] = function(_, params, ctx)
+  local message_type = params.type
+  local message = params.message
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
   local client_name = client and client.name or string.format('id=%d', client_id)
@@ -585,15 +616,16 @@ M[ms.window_showMessage] = function(_, result, ctx, _)
     local message_type_name = protocol.MessageType[message_type]
     api.nvim_out_write(string.format('LSP[%s][%s] %s\n', client_name, message_type_name, message))
   end
-  return result
+  return params
 end
 
+--- @private
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showDocument
---- @param result lsp.ShowDocumentParams
-M[ms.window_showDocument] = function(_, result, ctx, _)
-  local uri = result.uri
+--- @param params lsp.ShowDocumentParams
+RSC[ms.window_showDocument] = function(_, params, ctx)
+  local uri = params.uri
 
-  if result.external then
+  if params.external then
     -- TODO(lvimuser): ask the user for confirmation
     local cmd, err = vim.ui.open(uri)
     local ret = cmd and cmd:wait(2000) or nil
@@ -621,35 +653,39 @@ M[ms.window_showDocument] = function(_, result, ctx, _)
 
   local location = {
     uri = uri,
-    range = result.selection,
+    range = params.selection,
   }
 
   local success = util.show_document(location, client.offset_encoding, {
     reuse_win = true,
-    focus = result.takeFocus,
+    focus = params.takeFocus,
   })
   return { success = success or false }
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh
-M[ms.workspace_inlayHint_refresh] = function(err, result, ctx, config)
-  return vim.lsp.inlay_hint.on_refresh(err, result, ctx, config)
+RSC[ms.workspace_inlayHint_refresh] = function(err, result, ctx)
+  return vim.lsp.inlay_hint.on_refresh(err, result, ctx)
 end
 
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
-M[ms.workspace_semanticTokens_refresh] = function(err, result, ctx, _config)
+RSC[ms.workspace_semanticTokens_refresh] = function(err, result, ctx)
   return vim.lsp.semantic_tokens._refresh(err, result, ctx)
 end
 
+--- @nodoc
+--- @type table<string, lsp.Handler>
+M = vim.tbl_extend('force', M, RSC, NSC, RCS)
+
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(M) do
+  --- @diagnostic disable-next-line:redundant-parameter
   M[k] = function(err, result, ctx, config)
     if log.trace() then
       log.trace('default_handler', ctx.method, {
         err = err,
         result = result,
         ctx = vim.inspect(ctx),
-        config = config,
       })
     end
 
@@ -670,6 +706,7 @@ for k, fn in pairs(M) do
       return
     end
 
+    --- @diagnostic disable-next-line:redundant-parameter
     return fn(err, result, ctx, config)
   end
 end

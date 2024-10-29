@@ -258,10 +258,72 @@ function M.implementation(opts)
   get_locations(ms.textDocument_implementation, opts)
 end
 
+local sig_help_ns = api.nvim_create_namespace('vim_lsp_signature_help')
+
+--- @class vim.lsp.buf.signature_help.Opts : vim.lsp.util.open_floating_preview.Opts
+--- @field silent? boolean
+
+-- TODO(lewis6991): support multiple clients
 --- Displays signature information about the symbol under the cursor in a
 --- floating window.
-function M.signature_help()
-  lsp.buf_request(0, ms.textDocument_signatureHelp, client_positional_params())
+--- @param config? vim.lsp.buf.signature_help.Opts
+function M.signature_help(config)
+  local method = ms.textDocument_signatureHelp
+
+  config = config or {}
+  config.focus_id = method
+
+  lsp.buf_request(0, method, client_positional_params(), function(err, result, ctx)
+    local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+
+    if err then
+      vim.notify(
+        client.name .. ': ' .. tostring(err.code) .. ': ' .. err.message,
+        vim.log.levels.ERROR
+      )
+      api.nvim_command('redraw')
+      return
+    end
+
+    if api.nvim_get_current_buf() ~= ctx.bufnr then
+      -- Ignore result since buffer changed. This happens for slow language servers.
+      return
+    end
+
+    -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
+    -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
+    if not result or not result.signatures or not result.signatures[1] then
+      if config.silent ~= true then
+        print('No signature help available')
+      end
+      return
+    end
+
+    local triggers =
+      vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
+
+    local ft = vim.bo[ctx.bufnr].filetype
+    local lines, hl = util.convert_signature_help_to_markdown_lines(result, ft, triggers)
+    if not lines or vim.tbl_isempty(lines) then
+      if config.silent ~= true then
+        print('No signature help available')
+      end
+      return
+    end
+
+    local fbuf = util.open_floating_preview(lines, 'markdown', config)
+
+    -- Highlight the active parameter.
+    if hl then
+      vim.hl.range(
+        fbuf,
+        sig_help_ns,
+        'LspSignatureActiveParameter',
+        { hl[1], hl[2] },
+        { hl[3], hl[4] }
+      )
+    end
+  end)
 end
 
 --- @deprecated

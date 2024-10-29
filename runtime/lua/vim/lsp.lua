@@ -1165,6 +1165,7 @@ function lsp.for_each_buffer_client(bufnr, fn)
   end
 end
 
+--- @deprecated
 --- Function to manage overriding defaults for LSP handlers.
 ---@param handler (lsp.Handler) See |lsp-handler|
 ---@param override_config (table) Table containing the keys to override behavior of the {handler}

@@ -37,7 +37,7 @@ local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
 ---@param result lsp.InlayHint[]?
 ---@param ctx lsp.HandlerContext
 ---@private
-function M.on_inlayhint(err, result, ctx, _)
+function M.on_inlayhint(err, result, ctx)
   if err then
     log.error('inlayhint', err)
     return
@@ -87,7 +87,7 @@ end
 --- |lsp-handler| for the method `workspace/inlayHint/refresh`
 ---@param ctx lsp.HandlerContext
 ---@private
-function M.on_refresh(err, _, ctx, _)
+function M.on_refresh(err, _, ctx)
   if err then
     return vim.NIL
   end
