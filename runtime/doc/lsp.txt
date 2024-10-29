@@ -195,41 +195,41 @@ Requests and notifications defined by the LSP specification are referred to as
 They are also listed below. Note that handlers depend on server support: they
 won't run if your server doesn't support them.
 
-- callHierarchy/incomingCalls
-- callHierarchy/outgoingCalls
-- textDocument/codeAction
-- textDocument/completion
-- textDocument/declaration*
-- textDocument/definition
-- textDocument/diagnostic
-- textDocument/documentHighlight
-- textDocument/documentSymbol
-- textDocument/formatting
-- textDocument/hover
-- textDocument/implementation*
-- textDocument/inlayHint
-- textDocument/prepareTypeHierarchy
-- textDocument/publishDiagnostics
-- textDocument/rangeFormatting
-- textDocument/rangesFormatting
-- textDocument/references
-- textDocument/rename
-- textDocument/semanticTokens/full
-- textDocument/semanticTokens/full/delta
-- textDocument/signatureHelp
-- textDocument/typeDefinition*
-- typeHierarchy/subtypes
-- typeHierarchy/supertypes
-- window/logMessage
-- window/showMessage
-- window/showDocument
-- window/showMessageRequest
-- workspace/applyEdit
-- workspace/configuration
-- workspace/executeCommand
-- workspace/inlayHint/refresh
-- workspace/symbol
-- workspace/workspaceFolders
+- `'callHierarchy/incomingCalls'`
+- `'callHierarchy/outgoingCalls'`
+- `'textDocument/codeAction'`
+- `'textDocument/completion'`
+- `'textDocument/declaration'`
+- `'textDocument/definition'`
+- `'textDocument/diagnostic'`
+- `'textDocument/documentHighlight'`
+- `'textDocument/documentSymbol'`
+- `'textDocument/formatting'`
+- `'textDocument/hover'`
+- `'textDocument/implementation'`
+- `'textDocument/inlayHint'`
+- `'textDocument/prepareTypeHierarchy'`
+- `'textDocument/publishDiagnostics'`
+- `'textDocument/rangeFormatting'`
+- `'textDocument/rangesFormatting'`
+- `'textDocument/references'`
+- `'textDocument/rename'`
+- `'textDocument/semanticTokens/full'`
+- `'textDocument/semanticTokens/full/delta'`
+- `'textDocument/signatureHelp'`
+- `'textDocument/typeDefinition*'`
+- `'typeHierarchy/subtypes'`
+- `'typeHierarchy/supertypes'`
+- `'window/logMessage'`
+- `'window/showMessage'`
+- `'window/showDocument'`
+- `'window/showMessageRequest'`
+- `'workspace/applyEdit'`
+- `'workspace/configuration'`
+- `'workspace/executeCommand'`
+- `'workspace/inlayHint/refresh'`
+- `'workspace/symbol'`
+- `'workspace/workspaceFolders'`
 
                                                                  *lsp-handler*
 LSP handlers are functions that handle |lsp-response|s to requests made by Nvim
@@ -238,7 +238,7 @@ there is no response, so they can't be handled. |lsp-notification|)
 
 Each response handler has this signature: >
 
-    function(err, result, ctx, config)
+    function(err, result, ctx)
 <
     Parameters: ~
       • {err}     (`table|nil`) Error info dict, or `nil` if the request
@@ -255,121 +255,53 @@ Each response handler has this signature: >
                                  request. Handlers can compare this to the
                                  current document version to check if the
                                  response is "stale". See also |b:changedtick|.
-      • {config}  (`table`) Handler-defined configuration table, which allows
-                  users to customize handler behavior.
-                  For an example, see:
-                      |vim.lsp.diagnostic.on_publish_diagnostics()|
-                  To configure a particular |lsp-handler|, see:
-                      |lsp-handler-configuration|
 
     Returns: ~
         Two values `result, err` where `err` is shaped like an RPC error: >
             { code, message, data? }
 <        You can use |vim.lsp.rpc.rpc_response_error()| to create this object.
 
-                                                   *lsp-handler-configuration*
-
-To configure the behavior of a builtin |lsp-handler|, the convenient method
-|vim.lsp.with()| is provided for users.
-
-  To configure the behavior of |vim.lsp.diagnostic.on_publish_diagnostics()|,
-  consider the following example, where a new |lsp-handler| is created using
-  |vim.lsp.with()| that no longer generates signs for the diagnostics: >lua
-
-    vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-      vim.lsp.diagnostic.on_publish_diagnostics, {
-        -- Disable signs
-        signs = false,
-      }
-    )
-<
-  To enable signs, use |vim.lsp.with()| again to create and assign a new
-  |lsp-handler| to |vim.lsp.handlers| for the associated method: >lua
-
-    vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-      vim.lsp.diagnostic.on_publish_diagnostics, {
-        -- Enable signs
-        signs = true,
-      }
-    )
-<
-  To configure a handler on a per-server basis, you can use the {handlers} key
-  for |vim.lsp.start_client()| >lua
-
-    vim.lsp.start_client {
-      ..., -- Other configuration omitted.
-      handlers = {
-        ["textDocument/publishDiagnostics"] = vim.lsp.with(
-          vim.lsp.diagnostic.on_publish_diagnostics, {
-            -- Disable virtual_text
-            virtual_text = false,
-          }
-        ),
-      },
-    }
-<
-  or if using "nvim-lspconfig", you can use the {handlers} key of `setup()`:
-  >lua
-
-    require('lspconfig').rust_analyzer.setup {
-      handlers = {
-        ["textDocument/publishDiagnostics"] = vim.lsp.with(
-          vim.lsp.diagnostic.on_publish_diagnostics, {
-            -- Disable virtual_text
-            virtual_text = false
-          }
-        ),
-      }
-    }
-<
-  Some handlers do not have an explicitly named handler function (such as
-  |vim.lsp.diagnostic.on_publish_diagnostics()|). To override these, first
-  create a reference to the existing handler: >lua
-
-    local on_references = vim.lsp.handlers["textDocument/references"]
-    vim.lsp.handlers["textDocument/references"] = vim.lsp.with(
-      on_references, {
-        -- Use location list instead of quickfix list
-        loclist = true,
-      }
-    )
-<
                                                       *lsp-handler-resolution*
-Handlers can be set by:
+Handlers can be set by (in increasing priority):
 
 - Setting a field in vim.lsp.handlers.                      *vim.lsp.handlers*
-  vim.lsp.handlers is a global table that contains the default mapping of
-  |lsp-method| names to |lsp-handlers|. To override the handler for the
-  `"textDocument/definition"` method: >lua
+  `vim.lsp.handlers` is a global table that contains the default mapping of
+  |lsp-method| names to lsp-handlers.
 
-    vim.lsp.handlers["textDocument/definition"] = my_custom_default_definition
+  Example: >lua
+
+    vim.lsp.handlers['textDocument/publishDiagnostics'] = my_custom_diagnostics_handler
 <
+  Note: this only applies for requests/notifications made by the
+  server to the client.
+
 - The {handlers} parameter of |vim.lsp.start()|. This sets the default
-  |lsp-handler| for the server being started. Example: >lua
+  |lsp-handler| for a specific server.
+
+  Example: >lua
 
     vim.lsp.start {
       ..., -- Other configuration omitted.
       handlers = {
-        ["textDocument/definition"] = my_custom_server_definition
+        ['textDocument/publishDiagnostics'] = my_custom_server_definition
       },
     }
+<
+  Note: this only applies for requests/notifications made by the
+  server to the client.
 
 - The {handler} parameter of |vim.lsp.buf_request_all()|. This sets
-  the |lsp-handler| ONLY for the given request(s). Example: >lua
+  the |lsp-handler| ONLY for the given request(s).
+
+  Example: >lua
 
     vim.lsp.buf_request_all(
       0,
-      "textDocument/definition",
+      'textDocument/publishDiagnostics',
       my_request_params,
       my_handler
     )
 <
-In summary, the |lsp-handler| will be chosen based on the current |lsp-method|
-in the following order:
-
-1. Handler passed to |vim.lsp.buf_request_all()|, if any.
-2. Handler defined in |vim.lsp.start()|, if any.
-3. Handler defined in |vim.lsp.handlers|, if any.
 
                                                             *vim.lsp.log_levels*
 Log levels are defined in |vim.log.levels|
@@ -955,14 +887,6 @@ tagfunc({pattern}, {flags})                                *vim.lsp.tagfunc()*
     Return: ~
         (`table[]`) tags A list of matching tags
 
-with({handler}, {override_config})                            *vim.lsp.with()*
-    Function to manage overriding defaults for LSP handlers.
-
-    Parameters: ~
-      • {handler}          (`lsp.Handler`) See |lsp-handler|
-      • {override_config}  (`table`) Table containing the keys to override
-                           behavior of the {handler}
-
 
 ==============================================================================
 Lua module: vim.lsp.client                                        *lsp-client*
@@ -1279,6 +1203,13 @@ Lua module: vim.lsp.buf                                              *lsp-buf*
     Fields: ~
       • {silent}?  (`boolean`)
 
+*vim.lsp.buf.signature_help.Opts*
+    Extends: |vim.lsp.util.open_floating_preview.Opts|
+
+
+    Fields: ~
+      • {silent}?  (`boolean`)
+
 
                                           *vim.lsp.buf.add_workspace_folder()*
 add_workspace_folder({workspace_folder})
@@ -1461,9 +1392,13 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
                       ones where client.name matches this field.
                     • {bufnr}? (`integer`) (default: current buffer)
 
-signature_help()                                *vim.lsp.buf.signature_help()*
+signature_help({config})                        *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
     floating window.
+
+    Parameters: ~
+      • {config}  (`vim.lsp.buf.signature_help.Opts?`) See
+                  |vim.lsp.buf.signature_help.Opts|.
 
 type_definition({opts})                        *vim.lsp.buf.type_definition()*
     Jumps to the definition of the type of the symbol under the cursor.
@@ -1514,66 +1449,24 @@ get_namespace({client_id}, {is_pull})
                      client. Defaults to push
 
                                           *vim.lsp.diagnostic.on_diagnostic()*
-on_diagnostic({_}, {result}, {ctx}, {config})
+on_diagnostic({_}, {result}, {ctx})
     |lsp-handler| for the method "textDocument/diagnostic"
 
-    See |vim.diagnostic.config()| for configuration options. Handler-specific
-    configuration can be set using |vim.lsp.with()|: >lua
-        vim.lsp.handlers["textDocument/diagnostic"] = vim.lsp.with(
-          vim.lsp.diagnostic.on_diagnostic, {
-            -- Enable underline, use default values
-            underline = true,
-            -- Enable virtual text, override spacing to 4
-            virtual_text = {
-              spacing = 4,
-            },
-            -- Use a function to dynamically turn signs off
-            -- and on, using buffer local variables
-            signs = function(namespace, bufnr)
-              return vim.b[bufnr].show_signs == true
-            end,
-            -- Disable a feature
-            update_in_insert = false,
-          }
-        )
-<
+    See |vim.diagnostic.config()| for configuration options.
 
     Parameters: ~
       • {result}  (`lsp.DocumentDiagnosticReport`)
       • {ctx}     (`lsp.HandlerContext`)
-      • {config}  (`vim.diagnostic.Opts`) Configuration table (see
-                  |vim.diagnostic.config()|).
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*
-on_publish_diagnostics({_}, {result}, {ctx}, {config})
+on_publish_diagnostics({_}, {result}, {ctx})
     |lsp-handler| for the method "textDocument/publishDiagnostics"
 
-    See |vim.diagnostic.config()| for configuration options. Handler-specific
-    configuration can be set using |vim.lsp.with()|: >lua
-        vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-          vim.lsp.diagnostic.on_publish_diagnostics, {
-            -- Enable underline, use default values
-            underline = true,
-            -- Enable virtual text, override spacing to 4
-            virtual_text = {
-              spacing = 4,
-            },
-            -- Use a function to dynamically turn signs off
-            -- and on, using buffer local variables
-            signs = function(namespace, bufnr)
-              return vim.b[bufnr].show_signs == true
-            end,
-            -- Disable a feature
-            update_in_insert = false,
-          }
-        )
-<
+    See |vim.diagnostic.config()| for configuration options.
 
     Parameters: ~
       • {result}  (`lsp.PublishDiagnosticsParams`)
       • {ctx}     (`lsp.HandlerContext`)
-      • {config}  (`vim.diagnostic.Opts?`) Configuration table (see
-                  |vim.diagnostic.config()|).
 
 
 ==============================================================================
@@ -1821,32 +1714,6 @@ stop({bufnr}, {client_id})                    *vim.lsp.semantic_tokens.stop()*
     Parameters: ~
       • {bufnr}      (`integer`) Buffer number, or `0` for current buffer
       • {client_id}  (`integer`) The ID of the |vim.lsp.Client|
-
-
-==============================================================================
-Lua module: vim.lsp.handlers                                    *lsp-handlers*
-
-                                           *vim.lsp.handlers.signature_help()*
-signature_help({_}, {result}, {ctx}, {config})
-    |lsp-handler| for the method "textDocument/signatureHelp".
-
-    The active parameter is highlighted with |hl-LspSignatureActiveParameter|. >lua
-        vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
-          vim.lsp.handlers.signature_help, {
-            -- Use a sharp border with `FloatBorder` highlights
-            border = "single"
-          }
-        )
-<
-
-    Parameters: ~
-      • {result}  (`lsp.SignatureHelp?`) Response from the language server
-      • {ctx}     (`lsp.HandlerContext`) Client context
-      • {config}  (`table`) Configuration table.
-                  • border: (default=nil)
-                    • Add borders to the floating window
-                    • See |vim.lsp.util.open_floating_preview()| for more
-                      options
 
 
 ==============================================================================

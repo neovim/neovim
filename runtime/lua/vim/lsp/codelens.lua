@@ -261,7 +261,7 @@ end
 ---@param err lsp.ResponseError?
 ---@param result lsp.CodeLens[]
 ---@param ctx lsp.HandlerContext
-function M.on_codelens(err, result, ctx, _)
+function M.on_codelens(err, result, ctx)
   if err then
     active_refreshes[assert(ctx.bufnr)] = nil
     log.error('codelens', err)

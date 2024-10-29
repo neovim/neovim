@@ -87,7 +87,13 @@ LSP
   but no longer trigger the global handlers from `vim.lsp.handlers`
 • |vim.lsp.buf.typehierarchy()| now passes the correct params for each
   client request.
-
+• |vim.lsp.handlers.signature_help()| is no longer used.
+• |vim.lsp.diagnostic.on_publish_diagnostics()| and
+  |vim.lsp.diagnostic.on_diagnostic()| no longer accept a config parameter and
+  can no longer be configured with |vim.lsp.with()|.
+  Instead use: >lua
+    vim.diagnostic.config(config, vim.lsp.diagnostic.get_namespace(client_id))
+<
 
 LUA
 

@@ -9,14 +9,6 @@ local augroup = api.nvim_create_augroup('vim_lsp_diagnostic', {})
 
 local DEFAULT_CLIENT_ID = -1
 
-local function get_client_id(client_id)
-  if client_id == nil then
-    client_id = DEFAULT_CLIENT_ID
-  end
-
-  return client_id
-end
-
 ---@param severity lsp.DiagnosticSeverity
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
@@ -218,8 +210,7 @@ end
 --- @param client_id? integer
 --- @param diagnostics vim.Diagnostic[]
 --- @param is_pull boolean
---- @param config? vim.diagnostic.Opts
-local function handle_diagnostics(uri, client_id, diagnostics, is_pull, config)
+local function handle_diagnostics(uri, client_id, diagnostics, is_pull)
   local fname = vim.uri_to_fname(uri)
 
   if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
@@ -231,91 +222,39 @@ local function handle_diagnostics(uri, client_id, diagnostics, is_pull, config)
     return
   end
 
-  client_id = get_client_id(client_id)
-  local namespace = M.get_namespace(client_id, is_pull)
-
-  if config then
-    --- @cast config table<string, table>
-    for _, opt in pairs(config) do
-      convert_severity(opt)
-    end
-    -- Persist configuration to ensure buffer reloads use the same
-    -- configuration. To make lsp.with configuration work (See :help
-    -- lsp-handler-configuration)
-    vim.diagnostic.config(config, namespace)
+  if client_id == nil then
+    client_id = DEFAULT_CLIENT_ID
   end
+
+  local namespace = M.get_namespace(client_id, is_pull)
 
   vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
 end
 
 --- |lsp-handler| for the method "textDocument/publishDiagnostics"
 ---
---- See |vim.diagnostic.config()| for configuration options. Handler-specific
---- configuration can be set using |vim.lsp.with()|:
----
---- ```lua
---- vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
----   vim.lsp.diagnostic.on_publish_diagnostics, {
----     -- Enable underline, use default values
----     underline = true,
----     -- Enable virtual text, override spacing to 4
----     virtual_text = {
----       spacing = 4,
----     },
----     -- Use a function to dynamically turn signs off
----     -- and on, using buffer local variables
----     signs = function(namespace, bufnr)
----       return vim.b[bufnr].show_signs == true
----     end,
----     -- Disable a feature
----     update_in_insert = false,
----   }
---- )
---- ```
+--- See |vim.diagnostic.config()| for configuration options.
 ---
 ---@param _ lsp.ResponseError?
 ---@param result lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
----@param config? vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
-function M.on_publish_diagnostics(_, result, ctx, config)
-  handle_diagnostics(result.uri, ctx.client_id, result.diagnostics, false, config)
+function M.on_publish_diagnostics(_, result, ctx)
+  handle_diagnostics(result.uri, ctx.client_id, result.diagnostics, false)
 end
 
 --- |lsp-handler| for the method "textDocument/diagnostic"
 ---
---- See |vim.diagnostic.config()| for configuration options. Handler-specific
---- configuration can be set using |vim.lsp.with()|:
----
---- ```lua
---- vim.lsp.handlers["textDocument/diagnostic"] = vim.lsp.with(
----   vim.lsp.diagnostic.on_diagnostic, {
----     -- Enable underline, use default values
----     underline = true,
----     -- Enable virtual text, override spacing to 4
----     virtual_text = {
----       spacing = 4,
----     },
----     -- Use a function to dynamically turn signs off
----     -- and on, using buffer local variables
----     signs = function(namespace, bufnr)
----       return vim.b[bufnr].show_signs == true
----     end,
----     -- Disable a feature
----     update_in_insert = false,
----   }
---- )
---- ```
+--- See |vim.diagnostic.config()| for configuration options.
 ---
 ---@param _ lsp.ResponseError?
 ---@param result lsp.DocumentDiagnosticReport
 ---@param ctx lsp.HandlerContext
----@param config vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
-function M.on_diagnostic(_, result, ctx, config)
+function M.on_diagnostic(_, result, ctx)
   if result == nil or result.kind == 'unchanged' then
     return
   end
 
-  handle_diagnostics(ctx.params.textDocument.uri, ctx.client_id, result.items, true, config)
+  handle_diagnostics(ctx.params.textDocument.uri, ctx.client_id, result.items, true)
 end
 
 --- Clear push diagnostics and diagnostic cache.

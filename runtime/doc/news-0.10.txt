@@ -246,7 +246,7 @@ The following new features were added.
     indicator to see if a server supports a feature. Instead use
     `client.supports_method(<method>)`. It considers both the dynamic
     capabilities and static `server_capabilities`.
-  • `anchor_bias` option to |lsp-handlers| aids in positioning of floating
+  • `anchor_bias` option to lsp-handlers aids in positioning of floating
     windows.
   • |vim.lsp.util.locations_to_items()| sets the `user_data` of each item to
     the original LSP `Location` or `LocationLink`.
