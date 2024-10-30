@@ -9550,7 +9550,7 @@ fun! s:NetrwTreeListing(dirname)
     let w:netrw_treetop= a:dirname
     let s:netrw_treetop= w:netrw_treetop
 "    call Decho("w:netrw_treetop<".w:netrw_treetop."> (reusing)",'~'.expand("<slnum>"))
-   elseif (w:netrw_treetop =~ ('^'.a:dirname) && s:Strlen(a:dirname) < s:Strlen(w:netrw_treetop)) || a:dirname !~ ('^'.w:netrw_treetop)
+   elseif (('\M'.w:netrw_treetop) =~ ('^'.'\M'.a:dirname) && s:Strlen(a:dirname) < s:Strlen(w:netrw_treetop)) || ('\M'.a:dirname) !~ ('^'.'\M'.w:netrw_treetop)
 "    call Decho("update the treetop  (override w:netrw_treetop with a:dirname<".a:dirname.">)",'~'.expand("<slnum>"))
     let w:netrw_treetop= a:dirname
     let s:netrw_treetop= w:netrw_treetop
