@@ -265,6 +265,7 @@ w([[
 #include "nvim/mapping.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/option_cb.h"
 #include "nvim/optionstr.h"
 #include "nvim/quickfix.h"
 #include "nvim/runtime.h"

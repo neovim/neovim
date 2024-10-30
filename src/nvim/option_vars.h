@@ -315,6 +315,13 @@ EXTERN char *p_ambw;             ///< 'ambiwidth'
 EXTERN int p_acd;                ///< 'autochdir'
 EXTERN int p_ai;                 ///< 'autoindent'
 EXTERN int p_bin;                ///< 'binary'
+
+// Saved values for when 'bin' is set.
+EXTERN int p_et_nobin;
+EXTERN int p_ml_nobin;
+EXTERN OptInt p_tw_nobin;
+EXTERN OptInt p_wm_nobin;
+
 EXTERN int p_bomb;               ///< 'bomb'
 EXTERN int p_bl;                 ///< 'buflisted'
 EXTERN int p_cin;                ///< 'cindent'
@@ -554,6 +561,15 @@ EXTERN char *p_nf;              ///< 'nrformats'
 EXTERN char *p_opfunc;          ///< 'operatorfunc'
 EXTERN char *p_para;            ///< 'paragraphs'
 EXTERN int p_paste;             ///< 'paste'
+
+// Saved values for when 'paste' is set.
+EXTERN int p_ai_nopaste;
+EXTERN int p_et_nopaste;
+EXTERN OptInt p_sts_nopaste;
+EXTERN OptInt p_tw_nopaste;
+EXTERN OptInt p_wm_nopaste;
+EXTERN char *p_vsts_nopaste;
+
 EXTERN char *p_pex;             ///< 'patchexpr'
 EXTERN char *p_pm;              ///< 'patchmode'
 EXTERN char *p_path;            ///< 'path'
