@@ -53,7 +53,7 @@ function M.hover(config)
       end
     end
 
-    if #results1 == 0 then
+    if vim.tbl_isempty(results1) then
       if config.silent ~= true then
         vim.notify('No information available')
       end
