@@ -154,8 +154,8 @@ describe('default', function()
       end)
 
       describe('[<Space>', function()
-        it('#tagged should add an empty line above the cursors current line', function()
-          n.clear()
+        it('should add an empty line above the cursors current line', function()
+          n.clear({ args_rm = { '--cmd' } })
           n.insert([[first line]])
           n.feed('[<Space>')
           n.expect([[
@@ -163,12 +163,23 @@ describe('default', function()
           first line]])
         end)
 
-        -- TODO: multiple lines
+        it('should add 5 empty lines above the cursors current line', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed('5[<Space>')
+          n.expect([[
+
+
+
+
+
+          first line]])
+        end)
       end)
 
       describe(']<Space>', function()
-        it('#tagged should add an empty line below the cursors current line', function()
-          n.clear()
+        it('should add an empty line below the cursors current line', function()
+          n.clear({ args_rm = { '--cmd' } })
           n.insert([[first line]])
           n.feed(']<Space>')
           n.expect([[
@@ -176,7 +187,18 @@ describe('default', function()
           ]])
         end)
 
-        -- TODO: multiple lines
+        it('should add 5 empty lines below the cursors current line', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed('5]<Space>')
+          n.expect([[
+          first line
+
+
+
+
+          ]])
+        end)
       end)
     end)
   end)
