@@ -4351,8 +4351,16 @@ static void f_line(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (wp != NULL && tp != NULL) {
       switchwin_T switchwin;
       if (switch_win_noblock(&switchwin, wp, tp, true) == OK) {
+        // in diff mode, prevent that the window scrolls
+        // and keep the topline
+        if (curwin->w_p_diff && switchwin.sw_curwin->w_p_diff) {
+          skip_update_topline = true;
+        }
         check_cursor(curwin);
         fp = var2fpos(&argvars[0], true, &fnum, false);
+      }
+      if (curwin->w_p_diff && switchwin.sw_curwin->w_p_diff) {
+        skip_update_topline = false;
       }
       restore_win_noblock(&switchwin, true);
     }
