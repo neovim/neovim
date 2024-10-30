@@ -8,6 +8,16 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local get_lines = function(from, to)
+  from, to = from or 0, to or -1
+  return n.api.nvim_buf_get_lines(0, from, to, false)
+end
+
+local set_lines = function(lines, from, to)
+  from, to = from or 0, to or -1
+  n.api.nvim_buf_set_lines(0, from, to, false, lines)
+end
+
 describe('default', function()
   describe('autocommands', function()
     it('nvim_terminal.TermClose closes terminal with default shell on success', function()
@@ -151,6 +161,48 @@ describe('default', function()
             {3:E73: Tag stack empty}                    |
           ]],
         })
+      end)
+
+      -- describe('[<Space>', function()
+      --   it('should add an empty line above the cursors current line', function()
+      --     n.clear()
+      --     set_lines({ 'first line' })
+      --     n.feed(']<Space>')
+      --     t.eq({ '', 'first line' }, get_lines())
+      --   end)
+      --
+      --   it('should accept a count', function()
+      --     n.clear()
+      --     n.insert([[first line]])
+      --     n.feed('2[<Space>')
+      --     n.expect([[
+      --
+      --
+      --   first line
+      -- ]])
+      --   end)
+      -- end)
+      --
+      describe(']<Space>', function()
+        it('should add an empty line above the cursors current line', function()
+          n.clear()
+          n.insert([[first line]])
+          n.feed(']<Space>')
+          n.expect([[
+            first line
+            ]])
+        end)
+
+      --   it('should accept a count', function()
+      --     n.clear()
+      --     n.insert([[first line]])
+      --     n.feed('2]<Space>')
+      --     n.expect([[
+      --   first line
+      --
+      --
+      -- ]])
+      --   end)
       end)
     end)
   end)
