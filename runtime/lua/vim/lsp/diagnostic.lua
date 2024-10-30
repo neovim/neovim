@@ -306,11 +306,20 @@ end
 --- )
 --- ```
 ---
----@param _ lsp.ResponseError?
+---@param error lsp.ResponseError?
 ---@param result lsp.DocumentDiagnosticReport
 ---@param ctx lsp.HandlerContext
 ---@param config vim.diagnostic.Opts Configuration table (see |vim.diagnostic.config()|).
-function M.on_diagnostic(_, result, ctx, config)
+function M.on_diagnostic(error, result, ctx, config)
+  if error ~= nil and error.code == protocol.ErrorCodes.ServerCancelled then
+    if error.data == nil or error.data.retriggerRequest == true then
+      local client = vim.lsp.get_client_by_id(ctx.client_id)
+      if client ~= nil then
+        client.request(ctx.method, ctx.params)
+      end
+    end
+    return
+  end
   if result == nil or result.kind == 'unchanged' then
     return
   end
