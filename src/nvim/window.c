@@ -4035,21 +4035,6 @@ void win_alloc_first(void)
   unuse_tabpage(first_tabpage);
 }
 
-// Init `aucmd_win[idx]`. This can only be done after the first window
-// is fully initialized, thus it can't be in win_alloc_first().
-void win_alloc_aucmd_win(int idx)
-{
-  Error err = ERROR_INIT;
-  WinConfig fconfig = WIN_CONFIG_INIT;
-  fconfig.width = Columns;
-  fconfig.height = 5;
-  fconfig.focusable = false;
-  fconfig.mouse = false;
-  aucmd_win[idx].auc_win = win_new_float(NULL, true, fconfig, &err);
-  aucmd_win[idx].auc_win->w_buffer->b_nwindows--;
-  RESET_BINDING(aucmd_win[idx].auc_win);
-}
-
 // Allocate the first window or the first window in a new tab page.
 // When "oldwin" is NULL create an empty buffer for it.
 // When "oldwin" is not NULL copy info from it to the new window.

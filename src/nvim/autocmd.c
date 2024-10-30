@@ -1252,6 +1252,27 @@ bool check_nomodeline(char **argp)
   return true;
 }
 
+// Init `aucmd_win[idx]`. This can only be done after the first window
+// is fully initialized, thus it can't be in win_alloc_first().
+static bool aucmd_win_alloc(int idx)
+{
+  Error err = ERROR_INIT;
+  WinConfig fconfig = WIN_CONFIG_INIT;
+  fconfig.width = Columns;
+  fconfig.height = 5;
+  fconfig.focusable = false;
+  fconfig.mouse = false;
+  aucmd_win[idx].auc_win = win_new_float(NULL, true, fconfig, &err);
+  if (!aucmd_win[idx].auc_win && ERROR_SET(&err)) {
+    emsg(err.msg);
+    api_clear_error(&err);
+    return false;
+  }
+  aucmd_win[idx].auc_win->w_buffer->b_nwindows--;
+  RESET_BINDING(aucmd_win[idx].auc_win);
+  return true;
+}
+
 /// Prepare for executing autocommands for (hidden) buffer `buf`.
 /// If the current buffer is not in any visible window, put it in a temporary
 /// floating window using an entry in `aucmd_win[]`.
@@ -1295,7 +1316,9 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     }
 
     if (aucmd_win[auc_idx].auc_win == NULL) {
-      win_alloc_aucmd_win(auc_idx);
+      if (!aucmd_win_alloc(auc_idx)) {
+        abort();
+      }
       need_append = false;
     }
     auc_win = aucmd_win[auc_idx].auc_win;
