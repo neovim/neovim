@@ -2007,4 +2007,31 @@ func Test_diff_overlapped_diff_blocks_will_be_merged()
   call StopVimInTerminal(buf)
 endfunc
 
+" switching windows in diff mode caused an unneccessary scroll
+func Test_diff_topline_noscroll()
+  CheckScreendump
+
+  let content =<< trim END
+    call setline(1, range(1,60))
+    vnew
+    call setline(1, range(1,10) + range(50,60))
+    windo diffthis
+    norm! G
+    exe "norm! 30\<C-y>"
+  END
+  call writefile(content, 'Xcontent', 'D')
+  let buf = RunVimInTerminal('-S Xcontent', {'rows': 20})
+  call VerifyScreenDump(buf, 'Test_diff_topline_1', {})
+  call term_sendkeys(buf, ":echo line('w0', 1001)\<cr>")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_diff_topline_2', {})
+  call term_sendkeys(buf, "\<C-W>p")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_diff_topline_3', {})
+  call term_sendkeys(buf, "\<C-W>p")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_diff_topline_4', {})
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
