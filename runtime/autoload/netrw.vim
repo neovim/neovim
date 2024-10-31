@@ -27,6 +27,7 @@
 "   2024 Sep 19 by Vim Project: mf-selection highlight uses wrong pattern (#15700)
 "   2024 Sep 21 by Vim Project: remove extraneous closing bracket (#15718)
 "   2024 Oct 21 by Vim Project: remove netrwFileHandlers (#15895)
+"   2024 Oct 27 by Vim Project: clean up gx mapping (#15721)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -533,7 +534,6 @@ if !exists("g:netrw_sort_sequence")
 endif
 call s:NetrwInit("g:netrw_special_syntax"   , 0)
 call s:NetrwInit("g:netrw_ssh_browse_reject", '^total\s\+\d\+$')
-call s:NetrwInit("g:netrw_suppress_gx_mesg",  1)
 call s:NetrwInit("g:netrw_use_noswf"        , 1)
 call s:NetrwInit("g:netrw_sizestyle"        ,"b")
 " Default values - t-w ---------- {{{3
@@ -5356,25 +5356,6 @@ fun! netrw#BrowseX(fname,remote)
 "  call Decho("fname<".fname.">",'~'.expand("<slnum>"))
 "  call Decho("exten<".exten."> "."netrwFileHandlers#NFH_".exten."():exists=".exists("*netrwFileHandlers#NFH_".exten),'~'.expand("<slnum>"))
 
-  " set up redirection (avoids browser messages)
-  " by default, g:netrw_suppress_gx_mesg is true
-  if g:netrw_suppress_gx_mesg
-   if &srr =~ "%s"
-    if has("win32")
-     let redir= substitute(&srr,"%s","nul","")
-    else
-     let redir= substitute(&srr,"%s","/dev/null","")
-    endif
-   elseif has("win32")
-    let redir= &srr . "nul"
-   else
-    let redir= &srr . "/dev/null"
-   endif
-  else
-   let redir= ""
-  endif
-"  call Decho("set up redirection: redir{".redir."} srr{".&srr."}",'~'.expand("<slnum>"))
-
   " extract any viewing options.  Assumes that they're set apart by spaces.
   if exists("g:netrw_browsex_viewer")
 "   call Decho("extract any viewing options from g:netrw_browsex_viewer<".g:netrw_browsex_viewer.">",'~'.expand("<slnum>"))
@@ -5397,85 +5378,13 @@ fun! netrw#BrowseX(fname,remote)
 "   call Decho("viewer<".viewer.">  viewopt<".viewopt.">",'~'.expand("<slnum>"))
   endif
 
-  " execute the file handler
-"  call Decho("execute the file handler (if any)",'~'.expand("<slnum>"))
   if exists("g:netrw_browsex_viewer") && executable(viewer)
 "   call Decho("(netrw#BrowseX) g:netrw_browsex_viewer<".g:netrw_browsex_viewer.">",'~'.expand("<slnum>"))
-   call s:NetrwExe("sil !".viewer." ".viewopt.s:ShellEscape(fname,1).redir)
-   let ret= v:shell_error
-
-  elseif has("win32")
-"   call Decho("(netrw#BrowseX) win".(has("win32")? "32" : "64"),'~'.expand("<slnum>"))
-   if executable("start")
-    call s:NetrwExe('sil! !start rundll32 url.dll,FileProtocolHandler '.s:ShellEscape(fname,1))
-   elseif executable("rundll32")
-    call s:NetrwExe('sil! !rundll32 url.dll,FileProtocolHandler '.s:ShellEscape(fname,1))
-   else
-    call netrw#ErrorMsg(s:WARNING,"rundll32 not on path",74)
-   endif
-   let ret= v:shell_error
-
-  elseif has("win32unix")
-   let winfname= 'c:\cygwin'.substitute(fname,'/','\\','g')
-"   call Decho("(netrw#BrowseX) cygwin: winfname<".s:ShellEscape(winfname,1).">",'~'.expand("<slnum>"))
-   if executable("start")
-"    call Decho("(netrw#BrowseX) win32unix+start",'~'.expand("<slnum>"))
-    call s:NetrwExe('sil !start rundll32 url.dll,FileProtocolHandler '.s:ShellEscape(winfname,1))
-   elseif executable("rundll32")
-"    call Decho("(netrw#BrowseX) win32unix+rundll32",'~'.expand("<slnum>"))
-    call s:NetrwExe('sil !rundll32 url.dll,FileProtocolHandler '.s:ShellEscape(winfname,1))
-   elseif executable("cygstart")
-"    call Decho("(netrw#BrowseX) win32unix+cygstart",'~'.expand("<slnum>"))
-    call s:NetrwExe('sil !cygstart '.s:ShellEscape(fname,1))
-   else
-    call netrw#ErrorMsg(s:WARNING,"rundll32 not on path",74)
-   endif
-   let ret= v:shell_error
-
-  elseif has("unix") && $DESKTOP_SESSION == "mate" && executable("atril")
-"   call Decho("(netrw#BrowseX) unix and atril",'~'.expand("<slnum>"))
-   if a:fname =~ '^https\=://'
-    " atril does not appear to understand how to handle html -- so use gvim to edit the document
-    let use_ctrlo= 0
-"    call Decho("fname<".fname.">")
-"    call Decho("a:fname<".a:fname.">")
-    call s:NetrwExe("sil! !gvim ".fname.' -c "keepj keepalt file '.fnameescape(a:fname).'"')
-
-   else
-    call s:NetrwExe("sil !atril ".s:ShellEscape(fname,1).redir)
-   endif
-   let ret= v:shell_error
-
-  elseif has("unix") && executable("kfmclient") && s:CheckIfKde()
-"   call Decho("(netrw#BrowseX) unix and kfmclient",'~'.expand("<slnum>"))
-   call s:NetrwExe("sil !kfmclient exec ".s:ShellEscape(fname,1)." ".redir)
-   let ret= v:shell_error
-
-  elseif has("unix") && executable("exo-open") && executable("xdg-open") && executable("setsid")
-"   call Decho("(netrw#BrowseX) unix, exo-open, xdg-open",'~'.expand("<slnum>"))
-   call s:NetrwExe("sil !setsid xdg-open ".s:ShellEscape(fname,1).redir.'&')
-   let ret= v:shell_error
-
-  elseif has("unix") && executable("xdg-open")
-"   call Decho("(netrw#BrowseX) unix and xdg-open",'~'.expand("<slnum>"))
-   call s:NetrwExe("sil !xdg-open ".s:ShellEscape(fname,1).redir.'&')
-   let ret= v:shell_error
-
-  elseif has("macunix") && executable("open")
-"   call Decho("(netrw#BrowseX) macunix and open",'~'.expand("<slnum>"))
-   call s:NetrwExe("sil !open ".s:ShellEscape(fname,1)." ".redir)
-   let ret= v:shell_error
+    exe 'Launch' viewer viewopt shellescape(fname, 1)
   else
-   call netrw#ErrorMsg(s:ERROR, "Couldn't find a program to open '".a:fname."'", 0)
-   let ret=0
+     " though shellescape(..., 1) is used in Open, it's insufficient
+     exe 'Open' escape(fname, '#%')
   endif
-
-  if ret
-   call netrw#ErrorMsg(s:ERROR, "Failed to open '".a:fname."'", 0)
-  endif
-
-  " restoring redraw! after external file handlers
-  redraw!
 
   " cleanup: remove temporary file,
   "          delete current buffer if success with handler,
@@ -5513,11 +5422,36 @@ fun! netrw#GX()
   if &ft == "netrw"
    let fname= s:NetrwGetWord()
   else
-   let fname= expand((exists("g:netrw_gx")? g:netrw_gx : '<cfile>'))
+   let fname= exists("g:netrw_gx")? expand(g:netrw_gx) : s:GetURL()
   endif
 "  call Dret("netrw#GX <".fname.">")
   return fname
 endfun
+
+fun! s:GetURL() abort
+   let URL = ''
+   if exists('*Netrw_get_URL_' .. &filetype)
+      let URL = call('Netrw_get_URL_' .. &filetype, [])
+   endif
+   if !empty(URL) | return URL | endif
+  " URLs end in letter, digit or forward slash
+  let URL = matchstr(expand("<cWORD>"), '\<' .. g:netrw_regex_url .. '\ze[^A-Za-z0-9/]*$')
+  if !empty(URL) | return URL | endif
+
+  " Is it a file in the current work dir ...
+  let file = expand("<cfile>")
+  if filereadable(file) | return file | endif
+  " ... or in that of the current buffer?
+  let path = fnamemodify(expand('%'), ':p')
+  if isdirectory(path)
+    let dir = path
+  elseif filereadable(path)
+    let dir = fnamemodify(path, ':h')
+  endif
+  if exists('dir') && filereadable(dir..'/'..file) | return dir..'/'..file | endif
+
+  return ''
+endf
 
 " ---------------------------------------------------------------------
 " netrw#BrowseXVis: used by gx in visual mode to select a file for browsing {{{2
@@ -6670,6 +6604,7 @@ fun! s:NetrwMaps(islocal)
    nnoremap <buffer> <silent> <nowait> U	:<c-u>call <SID>NetrwBookHistHandler(5,b:netrw_curdir)<cr>
    nnoremap <buffer> <silent> <nowait> v	:call <SID>NetrwSplit(2)<cr>
    nnoremap <buffer> <silent> <nowait> x	:<c-u>call netrw#BrowseX(<SID>NetrwBrowseChgDir(0,<SID>NetrwGetWord()),1)<cr>
+   nmap     <buffer>          <nowait> gx	x
    if !hasmapto('<Plug>NetrwHideEdit')
     nmap <buffer> <c-h> <Plug>NetrwHideEdit
    endif
@@ -12043,13 +11978,16 @@ endfun
 " s:NetrwExe: executes a string using "!" {{{2
 fun! s:NetrwExe(cmd)
 "  call Dfunc("s:NetrwExe(a:cmd<".a:cmd.">)")
-  if has("win32") && &shell !~? 'cmd\|pwsh\|powershell' && !g:netrw_cygwin
+  if has("win32")
 "    call Decho("using win32:",expand("<slnum>"))
     let savedShell=[&shell,&shellcmdflag,&shellxquote,&shellxescape,&shellquote,&shellpipe,&shellredir,&shellslash]
     set shell& shellcmdflag& shellxquote& shellxescape&
     set shellquote& shellpipe& shellredir& shellslash&
-    exe a:cmd
-    let [&shell,&shellcmdflag,&shellxquote,&shellxescape,&shellquote,&shellpipe,&shellredir,&shellslash] = savedShell
+    try
+     exe a:cmd
+    finally
+      let [&shell,&shellcmdflag,&shellxquote,&shellxescape,&shellquote,&shellpipe,&shellredir,&shellslash] = savedShell
+    endtry
   else
 "   call Decho("exe ".a:cmd,'~'.expand("<slnum>"))
    exe a:cmd
