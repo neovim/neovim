@@ -29,6 +29,7 @@
 "   2024 Oct 21 by Vim Project: remove netrwFileHandlers (#15895)
 "   2024 Oct 27 by Vim Project: clean up gx mapping (#15721)
 "   2024 Oct 30 by Vim Project: fix filetype detection for remote files (#15961)
+"   2024 Oct 30 by Vim Project: fix x mapping on cygwin (#13687)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -5221,27 +5222,13 @@ endfun
 "              given filename; typically this means given their extension.
 "              0=local, 1=remote
 fun! netrw#BrowseX(fname,remote)
-  let use_ctrlo= 1
-"  call Dfunc("netrw#BrowseX(fname<".a:fname."> remote=".a:remote.")  implements x and gx maps")
-
   if a:remote == 0 && isdirectory(a:fname)
    " if its really just a local directory, then do a "gf" instead
-"   call Decho("remote≡0 and a:fname<".a:fname."> ".(isdirectory(a:fname)? "is a directory" : "is not a directory"),'~'.expand("<slnum>"))
-"   call Decho("..appears to be a local directory; using e ".a:fname." instead",'~'.expand("<slnum>"))
    exe "e ".a:fname
-"   call Dret("netrw#BrowseX")
-   return
   elseif a:remote == 1 && a:fname !~ '^https\=:' && a:fname =~ '/$'
    " remote directory, not a webpage access, looks like an attempt to do a directory listing
-"   call Decho("remote≡1 and a:fname<".a:fname.">",'~'.expand("<slnum>"))
-"   call Decho("..and fname ".((a:fname =~ '^https\=:')? 'matches' : 'does not match').'^https\=:','~'.expand("<slnum>"))
-"   call Decho("..and fname ".((a:fname =~ '/$')?        'matches' : 'does not match').' /$','~'.expand("<slnum>"))
-"   call Decho("..appears to be a remote directory listing request; using gf instead",'~'.expand("<slnum>"))
    norm! gf
-"   call Dret("netrw#BrowseX")
-   return
   endif
-"  call Decho("not a local file nor a webpage request",'~'.expand("<slnum>"))
 
   if exists("g:netrw_browsex_viewer") && exists("g:netrw_browsex_support_remote") && !g:netrw_browsex_support_remote
     let remote = a:remote
@@ -5251,7 +5238,6 @@ fun! netrw#BrowseX(fname,remote)
 
   let ykeep      = @@
   let screenposn = winsaveview()
-"  call Decho("saving posn to screenposn<".string(screenposn).">",'~'.expand("<slnum>"))
 
   " need to save and restore aw setting as gx can invoke this function from non-netrw buffers
   let awkeep     = &aw
@@ -5262,22 +5248,18 @@ fun! netrw#BrowseX(fname,remote)
    if exists("g:Netrw_corehandler")
     if type(g:Netrw_corehandler) == 2
      " g:Netrw_corehandler is a function reference (see :help Funcref)
-"     call Decho("g:Netrw_corehandler is a funcref",'~'.expand("<slnum>"))
      call g:Netrw_corehandler(s:NetrwFile(a:fname))
     elseif type(g:Netrw_corehandler) == 3
      " g:Netrw_corehandler is a List of function references (see :help Funcref)
-"     call Decho("g:Netrw_corehandler is a List",'~'.expand("<slnum>"))
      for Fncref in g:Netrw_corehandler
       if type(Fncref) == 2
        call Fncref(a:fname)
       endif
      endfor
     endif
-"    call Decho("restoring posn: screenposn<".string(screenposn).">,'~'.expand("<slnum>"))"
     call winrestview(screenposn)
     let @@= ykeep
     let &aw= awkeep
-"    call Dret("netrw#BrowseX : coredump handler invoked")
     return
    endif
   endif
@@ -5291,46 +5273,35 @@ fun! netrw#BrowseX(fname,remote)
   if exten =~ "[\\/]"
    let exten= ""
   endif
-"  call Decho("exten<".exten.">",'~'.expand("<slnum>"))
 
   if remote == 1
    " create a local copy
-"   call Decho("remote: remote=".remote.": create a local copy of <".a:fname.">",'~'.expand("<slnum>"))
    setl bh=delete
    call netrw#NetRead(3,a:fname)
    " attempt to rename tempfile
    let basename= substitute(a:fname,'^\(.*\)/\(.*\)\.\([^.]*\)$','\2','')
    let newname = substitute(s:netrw_tmpfile,'^\(.*\)/\(.*\)\.\([^.]*\)$','\1/'.basename.'.\3','')
-"   call Decho("basename<".basename.">",'~'.expand("<slnum>"))
-"   call Decho("newname <".newname.">",'~'.expand("<slnum>"))
    if s:netrw_tmpfile != newname && newname != ""
     if rename(s:netrw_tmpfile,newname) == 0
      " renaming succeeded
-"     call Decho("renaming succeeded (tmpfile<".s:netrw_tmpfile."> to <".newname.">)")
      let fname= newname
     else
      " renaming failed
-"     call Decho("renaming failed (tmpfile<".s:netrw_tmpfile."> to <".newname.">)")
      let fname= s:netrw_tmpfile
     endif
    else
     let fname= s:netrw_tmpfile
    endif
   else
-"   call Decho("local: remote=".remote.": handling local copy of <".a:fname.">",'~'.expand("<slnum>"))
    let fname= a:fname
    " special ~ handler for local
    if fname =~ '^\~' && expand("$HOME") != ""
-"    call Decho('invoking special ~ handler','~'.expand("<slnum>"))
     let fname= s:NetrwFile(substitute(fname,'^\~',expand("$HOME"),''))
    endif
   endif
-"  call Decho("fname<".fname.">",'~'.expand("<slnum>"))
-"  call Decho("exten<".exten."> "."netrwFileHandlers#NFH_".exten."():exists=".exists("*netrwFileHandlers#NFH_".exten),'~'.expand("<slnum>"))
 
   " extract any viewing options.  Assumes that they're set apart by spaces.
   if exists("g:netrw_browsex_viewer")
-"   call Decho("extract any viewing options from g:netrw_browsex_viewer<".g:netrw_browsex_viewer.">",'~'.expand("<slnum>"))
    if g:netrw_browsex_viewer =~ '\s'
     let viewer  = substitute(g:netrw_browsex_viewer,'\s.*$','','')
     let viewopt = substitute(g:netrw_browsex_viewer,'^\S\+\s*','','')." "
@@ -5341,17 +5312,14 @@ fun! netrw#BrowseX(fname,remote)
      let viewopt = substitute(g:netrw_browsex_viewer,'^\(\(^\S\+\s\+\)\{'.cnt.'}\S\+\)\(.*\)$','\3','')." "
      let cnt     = cnt + 1
      let oviewer = viewer
-"     call Decho("!exe: viewer<".viewer.">  viewopt<".viewopt.">",'~'.expand("<slnum>"))
     endwhile
    else
     let viewer  = g:netrw_browsex_viewer
     let viewopt = ""
    endif
-"   call Decho("viewer<".viewer.">  viewopt<".viewopt.">",'~'.expand("<slnum>"))
   endif
 
   if exists("g:netrw_browsex_viewer") && executable(viewer)
-"   call Decho("(netrw#BrowseX) g:netrw_browsex_viewer<".g:netrw_browsex_viewer.">",'~'.expand("<slnum>"))
     exe 'Launch' viewer viewopt shellescape(fname, 1)
   else
      " though shellescape(..., 1) is used in Open, it's insufficient
@@ -5364,7 +5332,6 @@ fun! netrw#BrowseX(fname,remote)
   "          Feb 12, 2008: had to de-activate removal of
   "          temporary file because it wasn't getting seen.
 "  if remote == 1 && fname != a:fname
-""   call Decho("deleting temporary file<".fname.">",'~'.expand("<slnum>"))
 "   call s:NetrwDelete(fname)
 "  endif
 
@@ -5373,16 +5340,11 @@ fun! netrw#BrowseX(fname,remote)
    if g:netrw_use_noswf
     setl noswf
    endif
-   if use_ctrlo
-    exe "sil! NetrwKeepj norm! \<c-o>"
-   endif
+   exe "sil! NetrwKeepj norm! \<c-o>"
   endif
-"  call Decho("restoring posn to screenposn<".string(screenposn).">",'~'.expand("<slnum>"))
   call winrestview(screenposn)
   let @@ = ykeep
   let &aw= awkeep
-
-"  call Dret("netrw#BrowseX")
 endfun
 
 " ---------------------------------------------------------------------
