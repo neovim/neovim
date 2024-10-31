@@ -1872,7 +1872,8 @@ Lua module: vim.lsp.util                                            *lsp-util*
                          floating window with the same {focus_id}
       • {offset_x}?      (`integer`) offset to add to `col`
       • {offset_y}?      (`integer`) offset to add to `row`
-      • {border}?        (`(string|[string,string])[]`) override `border`
+      • {border}?        (`string|(string|[string,string])[]`) override
+                         `border`
       • {zindex}?        (`integer`) override `zindex`, defaults to 50
       • {title}?         (`string`)
       • {title_pos}?     (`'left'|'center'|'right'`)
