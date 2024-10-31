@@ -10,8 +10,8 @@ local VERSION = 4
 
 local M = {}
 
----@alias vim.loader.CacheHash {mtime: {nsec: integer, sec: integer}, size: integer, type?: string}
----@alias vim.loader.CacheEntry {hash:vim.loader.CacheHash, chunk:string}
+--- @alias vim.loader.CacheHash {mtime: {nsec: integer, sec: integer}, size: integer, type?: string}
+--- @alias vim.loader.CacheEntry {hash:vim.loader.CacheHash, chunk:string}
 
 --- @class vim.loader.find.Opts
 --- @inlinedoc
@@ -45,21 +45,21 @@ local M = {}
 --- The fs_stat of the module path. Won't be returned for `modname="*"`
 --- @field stat? uv.fs_stat.result
 
----@alias vim.loader.Stats table<string, {total:number, time:number, [string]:number?}?>
+--- @alias vim.loader.Stats table<string, {total:number, time:number, [string]:number?}?>
 
----@nodoc
+--- @private
 M.path = vim.fn.stdpath('cache') .. '/luac'
 
----@nodoc
+--- @private
 M.enabled = false
 
----@type vim.loader.Stats
+--- @type vim.loader.Stats
 local stats = { find = { total = 0, time = 0, not_found = 0 } }
 
 --- @type table<string, uv.fs_stat.result>?
 local fs_stat_cache
 
----@type table<string, table<string,vim.loader.ModuleInfo>>
+--- @type table<string, table<string,vim.loader.ModuleInfo>>
 local indexed = {}
 
 --- @param path string
@@ -113,17 +113,17 @@ local function get_rtp()
 end
 
 --- Returns the cache file name
----@param name string can be a module name, or a file name
----@return string file_name
+--- @param name string can be a module name, or a file name
+--- @return string file_name
 local function cache_filename(name)
   local ret = ('%s/%s'):format(M.path, uri_encode(name, 'rfc2396'))
   return ret:sub(-4) == '.lua' and (ret .. 'c') or (ret .. '.luac')
 end
 
 --- Saves the cache entry for a given module or file
----@param cname string cache filename
----@param hash vim.loader.CacheHash
----@param chunk function
+--- @param cname string cache filename
+--- @param hash vim.loader.CacheHash
+--- @param chunk function
 local function write_cachefile(cname, hash, chunk)
   local f = assert(uv.fs_open(cname, 'w', 438))
   local header = {
@@ -144,16 +144,16 @@ local function readfile(path, mode)
   local f = uv.fs_open(path, 'r', mode)
   if f then
     local size = assert(uv.fs_fstat(f)).size
-    local data = uv.fs_read(f, size, 0) --[[@as string?]]
+    local data = uv.fs_read(f, size, 0)
     uv.fs_close(f)
     return data
   end
 end
 
 --- Loads the cache entry for a given module or file
----@param cname string cache filename
----@return vim.loader.CacheHash? hash
----@return string? chunk
+--- @param cname string cache filename
+--- @return vim.loader.CacheHash? hash
+--- @return string? chunk
 local function read_cachefile(cname)
   local data = readfile(cname, 438)
   if not data then
@@ -165,7 +165,7 @@ local function read_cachefile(cname)
     return
   end
 
-  ---@type integer[]|{[0]:integer}
+  --- @type integer[]|{[0]:integer}
   local header = vim.split(data:sub(1, zero - 1), ',')
   if tonumber(header[1]) ~= VERSION then
     return
@@ -182,8 +182,8 @@ local function read_cachefile(cname)
 end
 
 --- The `package.loaders` loader for Lua files using the cache.
----@param modname string module name
----@return string|function
+--- @param modname string module name
+--- @return string|function
 local function loader_cached(modname)
   fs_stat_cache = {}
   local ret = M.find(modname)[1]
@@ -201,8 +201,8 @@ end
 local is_win = vim.fn.has('win32') == 1
 
 --- The `package.loaders` loader for libs
----@param modname string module name
----@return string|function
+--- @param modname string module name
+--- @return string|function
 local function loader_lib_cached(modname)
   local ret = M.find(modname, { patterns = { is_win and '.dll' or '.so' } })[1]
   if not ret then
@@ -224,8 +224,8 @@ end
 --- * file size
 --- * mtime in seconds
 --- * mtime in nanoseconds
----@param a? vim.loader.CacheHash
----@param b? vim.loader.CacheHash
+--- @param a? vim.loader.CacheHash
+--- @param b? vim.loader.CacheHash
 local function hash_eq(a, b)
   return a
     and b
@@ -236,10 +236,10 @@ end
 
 --- `loadfile` using the cache
 --- Note this has the mode and env arguments which is supported by LuaJIT and is 5.1 compatible.
----@param filename? string
----@param mode? "b"|"t"|"bt"
----@param env? table
----@return function?, string?  error_message
+--- @param filename? string
+--- @param mode? "b"|"t"|"bt"
+--- @param env? table
+--- @return function?, string?  error_message
 local function loadfile_cached(filename, mode, env)
   local modpath = normalize(filename)
   local stat = fs_stat_cached(modpath)
@@ -263,7 +263,7 @@ local function loadfile_cached(filename, mode, env)
 end
 
 --- Return the top-level \`/lua/*` modules for this path
----@param path string path to check for top-level Lua modules
+--- @param path string path to check for top-level Lua modules
 local function lsmod(path)
   if not indexed[path] then
     indexed[path] = {}
@@ -271,7 +271,7 @@ local function lsmod(path)
       local modpath = path .. '/lua/' .. name
       -- HACK: type is not always returned due to a bug in luv
       t = t or fs_stat_cached(modpath).type
-      ---@type string
+      --- @type string
       local topname
       local ext = name:sub(-4)
       if ext == '.lua' or ext == '.dll' then
@@ -293,9 +293,9 @@ end
 ---
 --- @since 0
 ---
----@param modname string Module name, or `"*"` to find the top-level modules instead
----@param opts? vim.loader.find.Opts Options for finding a module:
----@return vim.loader.ModuleInfo[]
+--- @param modname string Module name, or `"*"` to find the top-level modules instead
+--- @param opts? vim.loader.find.Opts Options for finding a module:
+--- @return vim.loader.ModuleInfo[]
 function M.find(modname, opts)
   opts = opts or {}
 
@@ -321,7 +321,7 @@ function M.find(modname, opts)
     patterns[p] = '/lua/' .. basename .. pattern
   end
 
-  ---@type vim.loader.ModuleInfo[]
+  --- @type vim.loader.ModuleInfo[]
   local results = {}
 
   -- Only continue if we haven't found anything yet or we want to find all
@@ -331,7 +331,7 @@ function M.find(modname, opts)
 
   -- Checks if the given paths contain the top-level module.
   -- If so, it tries to find the module path for the given module name.
-  ---@param paths string[]
+  --- @param paths string[]
   local function _find(paths)
     for _, path in ipairs(paths) do
       if topmod == '*' then
@@ -385,7 +385,7 @@ end
 ---
 --- @since 0
 ---
----@param path string? path to reset
+--- @param path string? path to reset
 function M.reset(path)
   if path then
     indexed[normalize(path)] = nil
@@ -460,13 +460,13 @@ local function track(stat, f)
   end
 end
 
----@class (private) vim.loader._profile.Opts
----@field loaders? boolean Add profiling to the loaders
+--- @class (private) vim.loader._profile.Opts
+--- @field loaders? boolean Add profiling to the loaders
 
 --- Debug function that wraps all loaders and tracks stats
 --- Must be called before vim.loader.enable()
----@private
----@param opts vim.loader._profile.Opts?
+--- @private
+--- @param opts vim.loader._profile.Opts?
 function M._profile(opts)
   get_rtp = track('get_rtp', get_rtp)
   read_cachefile = track('read', read_cachefile)
@@ -485,15 +485,15 @@ function M._profile(opts)
 end
 
 --- Prints all cache stats
----@param opts? {print?:boolean}
----@return vim.loader.Stats
----@private
+--- @param opts? {print?:boolean}
+--- @return vim.loader.Stats
+--- @private
 function M._inspect(opts)
   if opts and opts.print then
     local function ms(nsec)
       return math.floor(nsec / 1e6 * 1000 + 0.5) / 1000 .. 'ms'
     end
-    local chunks = {} ---@type string[][]
+    local chunks = {} --- @type string[][]
     for _, stat in vim.spairs(stats) do
       vim.list_extend(chunks, {
         { '\n' .. stat .. '\n', 'Title' },
