@@ -231,13 +231,30 @@ end
 --- `loadfile` using the cache
 --- Note this has the mode and env arguments which is supported by LuaJIT and is 5.1 compatible.
 ---@param filename? string
----@param _mode? "b"|"t"|"bt"
+---@param mode? "b"|"t"|"bt"
 ---@param env? table
 ---@return function?, string?  error_message
 ---@private
-function Loader.loadfile(filename, _mode, env)
-  -- ignore mode, since we byte-compile the Lua source files
-  return Loader.load(normalize(filename), { env = env })
+function Loader.loadfile(filename, mode, env)
+  local modpath = normalize(filename)
+  local hash = Loader.get_hash(modpath)
+  local cname = Loader.cache_file(modpath)
+  if hash then
+    local e_hash, e_chunk = Loader.read(cname)
+    if Loader.eq(e_hash, hash) and e_chunk then
+      -- found in cache and up to date
+      local chunk, err = load(e_chunk, '@' .. modpath, mode, env)
+      if not (err and err:find('cannot load incompatible bytecode', 1, true)) then
+        return chunk, err
+      end
+    end
+  end
+
+  local chunk, err = Loader._loadfile(modpath, mode, env)
+  if chunk then
+    Loader.write(cname, hash, chunk)
+  end
+  return chunk, err
 end
 
 --- Checks whether two cache hashes are the same based on:
@@ -253,40 +270,6 @@ function Loader.eq(a, b)
     and a.size == b.size
     and a.mtime.sec == b.mtime.sec
     and a.mtime.nsec == b.mtime.nsec
-end
-
---- Loads the given module path using the cache
----@param modpath string
----@param opts? {mode?: "b"|"t"|"bt", env?:table} (table|nil) Options for loading the module:
----    - mode: (string) the mode to load the module with. "b"|"t"|"bt" (defaults to `nil`)
----    - env: (table) the environment to load the module in. (defaults to `nil`)
----@see |luaL_loadfile()|
----@return function?, string? error_message
----@private
-function Loader.load(modpath, opts)
-  opts = opts or {}
-  local hash = Loader.get_hash(modpath)
-  if not hash then
-    -- trigger correct error
-    return Loader._loadfile(modpath, opts.mode, opts.env)
-  end
-
-  local cname = Loader.cache_file(modpath)
-
-  local e_hash, e_chunk = Loader.read(cname)
-  if Loader.eq(e_hash, hash) and e_chunk then
-    -- found in cache and up to date
-    local chunk, err = load(e_chunk, '@' .. modpath, opts.mode, opts.env)
-    if not (err and err:find('cannot load incompatible bytecode', 1, true)) then
-      return chunk, err
-    end
-  end
-
-  local chunk, err = Loader._loadfile(modpath, opts.mode, opts.env)
-  if chunk then
-    Loader.write(cname, hash, chunk)
-  end
-  return chunk, err
 end
 
 --- Finds Lua modules for the given module name.
@@ -501,7 +484,6 @@ function M._profile(opts)
   Loader.loader = Loader.track('loader', Loader.loader)
   Loader.loader_lib = Loader.track('loader_lib', Loader.loader_lib)
   Loader.loadfile = Loader.track('loadfile', Loader.loadfile)
-  Loader.load = Loader.track('load', Loader.load)
   M.find = Loader.track('find', M.find)
   Loader.lsmod = Loader.track('lsmod', Loader.lsmod)
 
