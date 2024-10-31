@@ -125,11 +125,10 @@ function Loader.cache_file(name)
 end
 
 --- Saves the cache entry for a given module or file
----@param name string module name or filename
+---@param cname string cache filename
 ---@param entry CacheEntry
 ---@private
-function Loader.write(name, entry)
-  local cname = Loader.cache_file(name)
+function Loader.write(cname, entry)
   local f = assert(uv.fs_open(cname, 'w', 438))
   local header = {
     Loader.VERSION,
@@ -156,11 +155,10 @@ local function readfile(path, mode)
 end
 
 --- Loads the cache entry for a given module or file
----@param name string module name or filename
+---@param cname string cache filename
 ---@return CacheEntry?
 ---@private
-function Loader.read(name)
-  local cname = Loader.cache_file(name)
+function Loader.read(cname)
   local data = readfile(cname, 438)
   if data then
     local zero = data:find('\0', 1, true)
@@ -268,7 +266,9 @@ function Loader.load(modpath, opts)
     return Loader._loadfile(modpath, opts.mode, opts.env)
   end
 
-  local entry = Loader.read(modpath)
+  local cname = Loader.cache_file(modpath)
+
+  local entry = Loader.read(cname)
   if entry and Loader.eq(entry.hash, hash) then
     -- found in cache and up to date
     chunk, err = load(entry.chunk --[[@as string]], '@' .. modpath, opts.mode, opts.env)
@@ -281,7 +281,7 @@ function Loader.load(modpath, opts)
   chunk, err = Loader._loadfile(modpath, opts.mode, opts.env)
   if chunk then
     entry.chunk = string.dump(chunk)
-    Loader.write(modpath, entry)
+    Loader.write(cname, entry)
   end
   return chunk, err
 end
