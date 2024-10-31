@@ -2519,8 +2519,8 @@ vim.loader.find({modname}, {opts})                         *vim.loader.find()*
         (`table[]`) A list of objects with the following fields:
         • {modpath} (`string`) Path of the module
         • {modname} (`string`) Name of the module
-        • {stat}? (`uv.uv_fs_t`) The fs_stat of the module path. Won't be
-          returned for `modname="*"`
+        • {stat}? (`uv.fs_stat.result`) The fs_stat of the module path. Won't
+          be returned for `modname="*"`
 
 vim.loader.reset({path})                                  *vim.loader.reset()*
     WARNING: This feature is experimental/unstable.
