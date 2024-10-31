@@ -5,6 +5,7 @@
 " Last Change:
 "   2024 May 08 by Vim Project: cleanup legacy Win9X checks
 "   2024 Oct 27 by Vim Project: cleanup gx mapping
+"   2024 Oct 28 by Vim Project: further improvements
 " Former Maintainer:   Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 1999-2021 Charles E. Campbell {{{1
@@ -53,7 +54,7 @@ if has('unix')
     " If cygstart provided, then assume Cygwin and use cygstart --hide; see man cygstart.
     if executable('cygstart')
       command -complete=shellcmd -nargs=1 -bang Launch
-          \ exe 'silent ! cygstart --hide' trim(<q-args>)  s:redir | redraw!
+          \ exe 'silent ! cygstart --hide' trim(<q-args>)  s:redir() | redraw!
     elseif !empty($MSYSTEM) && executable('start')
       " MSYS2/Git Bash comes by default without cygstart; see
       " https://www.msys2.org/wiki/How-does-MSYS2-differ-from-Cygwin
