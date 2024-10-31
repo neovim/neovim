@@ -38,7 +38,7 @@ function M.query(caps, cb)
       local k, rest = resp:match('^\027P1%+r(%x+)(.*)$')
       if k and rest then
         local cap = vim.text.hexdecode(k)
-        if not pending[cap] then
+        if not cap or not pending[cap] then
           -- Received a response for a capability we didn't request. This can happen if there are
           -- multiple concurrent XTGETTCAP requests
           return

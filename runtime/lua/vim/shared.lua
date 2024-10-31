@@ -782,7 +782,8 @@ end
 
 do
   --- @alias vim.validate.Validator
-  --- | type|'callable'
+  --- | type
+  --- | 'callable'
   --- | (type|'callable')[]
   --- | fun(v:any):boolean, string?
 
@@ -1170,11 +1171,13 @@ function vim._defer_deprecated_module(old_name, new_name)
     ---@param k string
     __index = function(_, k)
       vim.deprecate(old_name, new_name, '2.0.0', nil, false)
+      --- @diagnostic disable-next-line:no-unknown
       local target = require(new_name)
       return target[k]
     end,
     __call = function(self)
       vim.deprecate(old_name, new_name, '2.0.0', nil, false)
+      --- @diagnostic disable-next-line:no-unknown
       local target = require(new_name)
       return target(self)
     end,
@@ -1217,11 +1220,14 @@ local state_restore_order = { 'bo', 'wo', 'go', 'env' }
 --- @param context vim.context.mods
 --- @return vim.context.state
 local get_context_state = function(context)
+  --- @type vim.context.state
   local res = { bo = {}, env = {}, go = {}, wo = {} }
 
   -- Use specific order from possibly most to least intrusive
   for _, scope in ipairs(scope_order) do
-    for name, _ in pairs(context[scope] or {}) do
+    for name, _ in
+      pairs(context[scope] or {} --[[@as table<string,any>]])
+    do
       local sc = scope == 'o' and scope_map[vim.api.nvim_get_option_info2(name, {}).scope] or scope
 
       -- Do not override already set state and fall back to `vim.NIL` for
@@ -1315,7 +1321,10 @@ function vim._with(context, f)
     -- Apply some parts of the context in specific order
     -- NOTE: triggers `OptionSet` event
     for _, scope in ipairs(scope_order) do
-      for name, context_value in pairs(context[scope] or {}) do
+      for name, context_value in
+        pairs(context[scope] or {} --[[@as table<string,any>]])
+      do
+        --- @diagnostic disable-next-line:no-unknown
         vim[scope][name] = context_value
       end
     end
@@ -1326,7 +1335,10 @@ function vim._with(context, f)
     -- Restore relevant cached values in specific order, global scope last
     -- NOTE: triggers `OptionSet` event
     for _, scope in ipairs(state_restore_order) do
-      for name, cached_value in pairs(state[scope]) do
+      for name, cached_value in
+        pairs(state[scope] --[[@as table<string,any>]])
+      do
+        --- @diagnostic disable-next-line:no-unknown
         vim[scope][name] = cached_value
       end
     end

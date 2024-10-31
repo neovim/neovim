@@ -1908,7 +1908,7 @@ local function match_from_hashbang(contents, path, dispatch_extension)
   end
 
   for k, v in pairs(patterns_hashbang) do
-    local ft = type(v) == 'table' and v[1] or v
+    local ft = type(v) == 'table' and v[1] or v --[[@as string]]
     local opts = type(v) == 'table' and v[2] or {}
     if opts.vim_regex and matchregex(name, k) or name:find(k) then
       return ft
@@ -2080,6 +2080,7 @@ local function match_from_text(contents, path)
         return ft
       end
     else
+      --- @cast k string
       local opts = type(v) == 'table' and v[2] or {}
       if opts.start_lnum and opts.end_lnum then
         assert(
