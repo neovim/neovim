@@ -165,7 +165,7 @@ function M.get_node_range(node_or_range)
   if type(node_or_range) == 'table' then
     return unpack(node_or_range)
   else
-    return node_or_range:range()
+    return node_or_range:range(false)
   end
 end
 

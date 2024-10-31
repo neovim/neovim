@@ -43,7 +43,9 @@ function M.select(items, opts, on_choice)
   opts = opts or {}
   local choices = { opts.prompt or 'Select one of:' }
   local format_item = opts.format_item or tostring
-  for i, item in ipairs(items) do
+  for i, item in
+    ipairs(items --[[@as any[] ]])
+  do
     table.insert(choices, string.format('%d: %s', i, format_item(item)))
   end
   local choice = vim.fn.inputlist(choices)
@@ -204,7 +206,9 @@ function M._get_urls()
             if vim.treesitter.node_contains(node, range) then
               local url = metadata[id] and metadata[id].url
               if url and match[url] then
-                for _, n in ipairs(match[url]) do
+                for _, n in
+                  ipairs(match[url] --[[@as TSNode[] ]])
+                do
                   urls[#urls + 1] =
                     vim.treesitter.get_node_text(n, bufnr, { metadata = metadata[url] })
                 end
