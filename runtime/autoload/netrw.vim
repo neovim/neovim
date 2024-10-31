@@ -30,6 +30,7 @@
 "   2024 Oct 27 by Vim Project: clean up gx mapping (#15721)
 "   2024 Oct 30 by Vim Project: fix filetype detection for remote files (#15961)
 "   2024 Oct 30 by Vim Project: fix x mapping on cygwin (#13687)
+"   2024 Oct 31 by Vim Project: add netrw#Launch() and netrw#Open() (#15962)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -1155,47 +1156,35 @@ fun! netrw#Lexplore(count,rightside,...)
    " if a netrw window is already on the left-side of the tab
    " and a directory has been specified, explore with that
    " directory.
-"   call Decho("case has input argument(s) (a:1<".a:1.">)")
    let a1 = expand(a:1)
-"   call Decho("a:1<".a:1.">  curwin#".curwin,'~'.expand("<slnum>"))
    exe "1wincmd w"
    if &ft == "netrw"
-"    call Decho("exe Explore ".fnameescape(a:1),'~'.expand("<slnum>"))
     exe "Explore ".fnameescape(a1)
     exe curwin."wincmd w"
     let s:lexplore_win= curwin
     let w:lexplore_buf= bufnr("%")
     if exists("t:netrw_lexposn")
-"     call Decho("forgetting t:netrw_lexposn",'~'.expand("<slnum>"))
      unlet t:netrw_lexposn
     endif
-"    call Dret("netrw#Lexplore")
     return
    endif
    exe curwin."wincmd w"
   else
    let a1= ""
-"   call Decho("no input arguments")
   endif
 
   if exists("t:netrw_lexbufnr")
    " check if t:netrw_lexbufnr refers to a netrw window
    let lexwinnr = bufwinnr(t:netrw_lexbufnr)
-"   call Decho("lexwinnr= bufwinnr(t:netrw_lexbufnr#".t:netrw_lexbufnr.")=".lexwinnr)
   else
    let lexwinnr= 0
-"   call Decho("t:netrw_lexbufnr doesn't exist")
   endif
-"  call Decho("lexwinnr=".lexwinnr,'~'.expand("<slnum>"))
 
   if lexwinnr > 0
    " close down netrw explorer window
-"   call Decho("t:netrw_lexbufnr#".t:netrw_lexbufnr.": close down netrw window",'~'.expand("<slnum>"))
    exe lexwinnr."wincmd w"
    let g:netrw_winsize = -winwidth(0)
    let t:netrw_lexposn = winsaveview()
-"   call Decho("saving posn to t:netrw_lexposn<".string(t:netrw_lexposn).">",'~'.expand("<slnum>"))
-"   call Decho("saving t:netrw_lexposn",'~'.expand("<slnum>"))
    close
    if lexwinnr < curwin
     let curwin= curwin - 1
@@ -1204,11 +1193,9 @@ fun! netrw#Lexplore(count,rightside,...)
     exe curwin."wincmd w"
    endif
    unlet t:netrw_lexbufnr
-"   call Decho("unlet t:netrw_lexbufnr")
 
   else
    " open netrw explorer window
-"   call Decho("t:netrw_lexbufnr<n/a>: open netrw explorer window",'~'.expand("<slnum>"))
    exe "1wincmd w"
    let keep_altv    = g:netrw_altv
    let g:netrw_altv = 0
@@ -1217,18 +1204,13 @@ fun! netrw#Lexplore(count,rightside,...)
     let g:netrw_winsize = a:count
    endif
    let curfile= expand("%")
-"   call Decho("curfile<".curfile.">",'~'.expand("<slnum>"))
    exe (a:rightside? "botright" : "topleft")." vertical ".((g:netrw_winsize > 0)? (g:netrw_winsize*winwidth(0))/100 : -g:netrw_winsize) . " new"
-"   call Decho("new buf#".bufnr("%")." win#".winnr())
    if a:0 > 0 && a1 != ""
-"    call Decho("case 1: Explore ".a1,'~'.expand("<slnum>"))
     call netrw#Explore(0,0,0,a1)
     exe "Explore ".fnameescape(a1)
    elseif curfile =~ '^\a\{3,}://'
-"    call Decho("case 2: Explore ".substitute(curfile,'[^/\\]*$','',''),'~'.expand("<slnum>"))
     call netrw#Explore(0,0,0,substitute(curfile,'[^/\\]*$','',''))
    else
-"    call Decho("case 3: Explore .",'~'.expand("<slnum>"))
     call netrw#Explore(0,0,0,".")
    endif
    if a:count != 0
@@ -1241,11 +1223,7 @@ fun! netrw#Lexplore(count,rightside,...)
    " Since the intended use of :Lexplore is to have an always-present explorer window, the extra
    " effort to prevent mis-use of :Lex is warranted.
    set bh=wipe
-"   call Decho("let t:netrw_lexbufnr=".t:netrw_lexbufnr) 
-"   call Decho("t:netrw_lexposn".(exists("t:netrw_lexposn")? string(t:netrw_lexposn) : " n/a"))
    if exists("t:netrw_lexposn")
-"    call Decho("restoring to t:netrw_lexposn",'~'.expand("<slnum>"))
-"    call Decho("restoring posn to t:netrw_lexposn<".string(t:netrw_lexposn).">",'~'.expand("<slnum>"))
     call winrestview(t:netrw_lexposn)
     unlet t:netrw_lexposn
    endif
@@ -1258,10 +1236,8 @@ fun! netrw#Lexplore(count,rightside,...)
    else
     let g:netrw_chgwin= 2
    endif
-"   call Decho("let g:netrw_chgwin=".g:netrw_chgwin)
   endif
 
-"  call Dret("netrw#Lexplore")
 endfun
 
 " ---------------------------------------------------------------------
@@ -5217,6 +5193,120 @@ fun! s:NetrwBrowseUpDir(islocal)
 "  call Dret("s:NetrwBrowseUpDir")
 endfun
 
+func s:redir()
+  " set up redirection (avoids browser messages)
+  " by default if not set, g:netrw_suppress_gx_mesg is true
+  if get(g:, 'netrw_suppress_gx_mesg', 1)
+    if &srr =~# "%s"
+      return printf(&srr, has("win32") ? "nul" : "/dev/null")
+    else
+      return &srr .. (has("win32") ? "nul" : "/dev/null")
+    endif
+  endif
+  return ''
+endfunc
+
+if has('unix')
+ if has('win32unix')
+  " Cygwin provides cygstart
+  if executable('cygstart')
+   fun! netrw#Launch(args)
+     exe 'silent ! cygstart --hide' a:args s:redir() | redraw!
+   endfun
+  elseif !empty($MSYSTEM) && executable('start')
+   " MSYS2/Git Bash comes by default without cygstart; see
+   " https://www.msys2.org/wiki/How-does-MSYS2-differ-from-Cygwin
+   " Instead it provides /usr/bin/start script running `cmd.exe //c start`
+   " Adding "" //b` sets void title, hides cmd window and blocks path conversion
+   " of /b to \b\ " by MSYS2; see https://www.msys2.org/docs/filesystem-paths/
+   fun! netrw#Launch(args)
+     exe 'silent !start "" //b' a:args s:redir() | redraw!
+   endfun
+  else
+   " imitate /usr/bin/start script for other environments and hope for the best
+   fun! netrw#Launch(args)
+     exe 'silent !cmd //c start "" //b' a:args s:redir() | redraw!
+   endfun
+  endif
+ elseif exists('$WSL_DISTRO_NAME') " use cmd.exe to start GUI apps in WSL
+  fun! netrw#Launch(args)
+    let args = a:args
+    exe 'silent !' ..
+      \ ((args =~? '\v<\f+\.(exe|com|bat|cmd)>') ?
+      \ 'cmd.exe /c start "" /b ' .. args :
+      \ 'nohup ' .. args .. ' ' .. s:redir() .. ' &')
+      \ | redraw!
+  endfun
+ else
+  fun! netrw#Launch(args)
+    exe ':silent ! nohup' a:args s:redir() '&' | redraw!
+  endfun
+ endif
+elseif has('win32')
+ fun! netrw#Launch(args)
+   exe 'silent !' .. (&shell =~? '\<cmd\.exe\>' ? '' : 'cmd.exe /c')
+     \ 'start "" /b' a:args s:redir() | redraw!
+ endfun
+else
+ fun! netrw#Launch(dummy)
+   echom 'No common launcher found'
+ endfun
+endif
+
+" Git Bash
+if has('win32unix')
+   " (cyg)start suffices
+   let s:os_viewer = ''
+" Windows / WSL
+elseif executable('explorer.exe')
+   let s:os_viewer = 'explorer.exe'
+" Linux / BSD
+elseif executable('xdg-open')
+   let s:os_viewer = 'xdg-open'
+" MacOS
+elseif executable('open')
+   let s:os_viewer = 'open'
+endif
+
+fun! s:viewer()
+  if exists('g:netrw_browsex_viewer') && executable(g:netrw_browsex_viewer)
+    " extract any viewing options.  Assumes that they're set apart by spaces.
+    "   call Decho("extract any viewing options from g:netrw_browsex_viewer<".g:netrw_browsex_viewer.">",'~'.expand("<slnum>"))
+    if g:netrw_browsex_viewer =~ '\s'
+      let viewer  = substitute(g:netrw_browsex_viewer,'\s.*$','','')
+      let viewopt = substitute(g:netrw_browsex_viewer,'^\S\+\s*','','')." "
+      let oviewer = ''
+      let cnt     = 1
+      while !executable(viewer) && viewer != oviewer
+        let viewer  = substitute(g:netrw_browsex_viewer,'^\(\(^\S\+\s\+\)\{'.cnt.'}\S\+\)\(.*\)$','\1','')
+        let viewopt = substitute(g:netrw_browsex_viewer,'^\(\(^\S\+\s\+\)\{'.cnt.'}\S\+\)\(.*\)$','\3','')." "
+        let cnt     = cnt + 1
+        let oviewer = viewer
+        "     call Decho("!exe: viewer<".viewer.">  viewopt<".viewopt.">",'~'.expand("<slnum>"))
+      endwhile
+    else
+      let viewer  = g:netrw_browsex_viewer
+      let viewopt = ""
+    endif
+    "   call Decho("viewer<".viewer.">  viewopt<".viewopt.">",'~'.expand("<slnum>"))
+    return viewer .. ' ' .. viewopt
+  else
+    if !exists('s:os_viewer')
+      call netrw#ErrorMsg(s:ERROR,"No program to open this path found. See :help Open for more information.",106)
+    else
+      return s:os_viewer
+    endif
+  endif
+endfun
+
+fun! netrw#Open(file) abort
+  call netrw#Launch(s:viewer() .. ' ' .. shellescape(a:file, 1))
+endf
+
+if !exists('g:netrw_regex_url')
+  let g:netrw_regex_url = '\%(\%(http\|ftp\|irc\)s\?\|file\)://\S\{-}'
+endif
+
 " ---------------------------------------------------------------------
 " netrw#BrowseX:  (implements "x" and "gx") executes a special "viewer" script or program for the {{{2
 "              given filename; typically this means given their extension.
@@ -5300,31 +5390,8 @@ fun! netrw#BrowseX(fname,remote)
    endif
   endif
 
-  " extract any viewing options.  Assumes that they're set apart by spaces.
-  if exists("g:netrw_browsex_viewer")
-   if g:netrw_browsex_viewer =~ '\s'
-    let viewer  = substitute(g:netrw_browsex_viewer,'\s.*$','','')
-    let viewopt = substitute(g:netrw_browsex_viewer,'^\S\+\s*','','')." "
-    let oviewer = ''
-    let cnt     = 1
-    while !executable(viewer) && viewer != oviewer
-     let viewer  = substitute(g:netrw_browsex_viewer,'^\(\(^\S\+\s\+\)\{'.cnt.'}\S\+\)\(.*\)$','\1','')
-     let viewopt = substitute(g:netrw_browsex_viewer,'^\(\(^\S\+\s\+\)\{'.cnt.'}\S\+\)\(.*\)$','\3','')." "
-     let cnt     = cnt + 1
-     let oviewer = viewer
-    endwhile
-   else
-    let viewer  = g:netrw_browsex_viewer
-    let viewopt = ""
-   endif
-  endif
-
-  if exists("g:netrw_browsex_viewer") && executable(viewer)
-    exe 'Launch' viewer viewopt shellescape(fname, 1)
-  else
-     " though shellescape(..., 1) is used in Open, it's insufficient
-     exe 'Open' escape(fname, '#%')
-  endif
+  " although shellescape(..., 1) is used in netrw#Open(), it's insufficient
+  call netrw#Open(escape(fname, '#%'))
 
   " cleanup: remove temporary file,
   "          delete current buffer if success with handler,
@@ -5621,7 +5688,7 @@ fun! s:NetrwGlob(direntry,expr,pare)
    endif
    let w:netrw_liststyle= keep_liststyle
   else
-   let path= s:ComposePath(fnameescape(a:direntry),a:expr) 
+   let path= s:ComposePath(fnameescape(a:direntry), a:expr)
     if has("win32")
      " escape [ so it is not detected as wildcard character, see :h wildcard
      let path= substitute(path, '[', '[[]', 'g')
@@ -5635,7 +5702,6 @@ fun! s:NetrwGlob(direntry,expr,pare)
      let filelist= map(filelist,'substitute(v:val, "^.*/", "", "")')
     endif
   endif
-"  call Dret("s:NetrwGlob ".string(filelist))
   return filelist
 endfun
 
@@ -8110,7 +8176,7 @@ fun! netrw#Shrink()
    elseif winwidth(bufwinnr(t:netrw_lexbufnr)) >= 0
     exe "vert resize ".t:netrw_winwidth
 "    call Decho("vert resize ".t:netrw_winwidth,'~'.expand("<slnum>"))
-   else 
+   else
     call netrw#Lexplore(0,0)
    endif
 
@@ -8427,7 +8493,7 @@ fun! s:NetrwPrevWinOpen(islocal)
 "  call Decho("COMBAK#11: mod=".&mod)
 "   call Decho("wincmd p  (now in win#".winnr().") curdir<".curdir.">",'~'.expand("<slnum>"))
 "  call Decho("COMBAK#12: mod=".&mod)
-   
+
    if exists("s:lexplore_win") && s:lexplore_win == winnr()
     " whoops -- user trying to open file in the Lexplore window.
     " Use Lexplore's opening-file window instead.
@@ -11832,7 +11898,7 @@ fun! s:NetrwEnew(...)
 "  call Dfunc("s:NetrwEnew() a:0=".a:0." win#".winnr()." winnr($)=".winnr("$")." bufnr($)=".bufnr("$")." expand(%)<".expand("%").">")
 "  call Decho("curdir<".((a:0>0)? a:1 : "")."> buf#".bufnr("%")."<".bufname("%").">",'~'.expand("<slnum>"))
 
-  " Clean out the last buffer: 
+  " Clean out the last buffer:
   " Check if the last buffer has # > 1, is unlisted, is unnamed, and does not appear in a window
   " If so, delete it.
   call s:NetrwBufRemover(bufnr("$"))
@@ -12024,7 +12090,7 @@ fun! s:NetrwHumanReadable(sz)
 "  call Dfunc("s:NetrwHumanReadable(sz=".a:sz.") type=".type(a:sz)." style=".g:netrw_sizestyle )
 
   if g:netrw_sizestyle == 'h'
-   if a:sz >= 1000000000 
+   if a:sz >= 1000000000
     let sz = printf("%.1f",a:sz/1000000000.0)."g"
    elseif a:sz >= 10000000
     let sz = printf("%d",a:sz/1000000)."m"
@@ -12452,7 +12518,7 @@ endfun
 fun! s:ShellEscape(s, ...)
   if has('win32') && $SHELL == '' && &shellslash
     return printf('"%s"', substitute(a:s, '"', '""', 'g'))
-  endif 
+  endif
   let f = a:0 > 0 ? a:1 : 0
   return shellescape(a:s, f)
 endfun
