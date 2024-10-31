@@ -39,10 +39,6 @@ module.exports = async ({ github, context }) => {
     reviewers.add("lewis6991");
   }
 
-  if (labels.includes("documentation")) {
-    reviewers.add("clason");
-  }
-
   if (labels.includes("editorconfig")) {
     reviewers.add("gpanders");
   }
@@ -53,7 +49,6 @@ module.exports = async ({ github, context }) => {
 
   if (labels.includes("filetype")) {
     reviewers.add("clason");
-    reviewers.add("gpanders");
   }
 
   if (labels.includes("inccommand")) {
@@ -90,10 +85,6 @@ module.exports = async ({ github, context }) => {
     reviewers.add("famiu");
   }
 
-  if (labels.includes("test")) {
-    reviewers.add("justinmk");
-  }
-
   if (labels.includes("treesitter")) {
     reviewers.add("bfredl");
     reviewers.add("clason");
@@ -110,7 +101,6 @@ module.exports = async ({ github, context }) => {
   }
 
   if (labels.includes("vim-patch")) {
-    reviewers.add("seandewar");
     reviewers.add("zeertzjq");
   }
 
