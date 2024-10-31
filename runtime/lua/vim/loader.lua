@@ -43,7 +43,7 @@ local M = {}
 --- @field modname string
 ---
 --- The fs_stat of the module path. Won't be returned for `modname="*"`
---- @field stat? uv.uv_fs_t
+--- @field stat? uv.fs_stat.result
 
 ---@alias vim.loader.Stats table<string, {total:number, time:number, [string]:number?}?>
 
@@ -56,25 +56,25 @@ M.enabled = false
 ---@type vim.loader.Stats
 local stats = { find = { total = 0, time = 0, not_found = 0 } }
 
---- @type table<string, vim.loader.CacheHash>?
-local hashes
+--- @type table<string, uv.fs_stat.result>?
+local fs_stat_cache
 
 ---@type table<string, table<string,vim.loader.ModuleInfo>>
 local indexed = {}
 
 --- @param path string
---- @return vim.loader.CacheHash
-local function get_hash(path)
-  if not hashes then
-    return uv.fs_stat(path) --[[@as vim.loader.CacheHash]]
+--- @return uv.fs_stat.result?
+local function fs_stat_cached(path)
+  if not fs_stat_cache then
+    return uv.fs_stat(path)
   end
 
-  if not hashes[path] then
+  if not fs_stat_cache[path] then
     -- Note we must never save a stat for a non-existent path.
     -- For non-existent paths fs_stat() will return nil.
-    hashes[path] = uv.fs_stat(path)
+    fs_stat_cache[path] = uv.fs_stat(path)
   end
-  return hashes[path]
+  return fs_stat_cache[path]
 end
 
 local function normalize(path)
@@ -143,8 +143,8 @@ end
 local function readfile(path, mode)
   local f = uv.fs_open(path, 'r', mode)
   if f then
-    local hash = assert(uv.fs_fstat(f))
-    local data = uv.fs_read(f, hash.size, 0) --[[@as string?]]
+    local size = assert(uv.fs_fstat(f)).size
+    local data = uv.fs_read(f, size, 0) --[[@as string?]]
     uv.fs_close(f)
     return data
   end
@@ -185,16 +185,16 @@ end
 ---@param modname string module name
 ---@return string|function
 local function loader_cached(modname)
-  hashes = {}
+  fs_stat_cache = {}
   local ret = M.find(modname)[1]
   if ret then
     -- Make sure to call the global loadfile so we respect any augmentations done elsewhere.
     -- E.g. profiling
     local chunk, err = loadfile(ret.modpath)
-    hashes = nil
+    fs_stat_cache = nil
     return chunk or error(err)
   end
-  hashes = nil
+  fs_stat_cache = nil
   return ("\n\tcache_loader: module '%s' not found"):format(modname)
 end
 
@@ -242,11 +242,11 @@ end
 ---@return function?, string?  error_message
 local function loadfile_cached(filename, mode, env)
   local modpath = normalize(filename)
-  local hash = get_hash(modpath)
+  local stat = fs_stat_cached(modpath)
   local cname = cache_filename(modpath)
-  if hash then
+  if stat then
     local e_hash, e_chunk = read_cachefile(cname)
-    if hash_eq(e_hash, hash) and e_chunk then
+    if hash_eq(e_hash, stat) and e_chunk then
       -- found in cache and up to date
       local chunk, err = load(e_chunk, '@' .. modpath, mode, env)
       if not (err and err:find('cannot load incompatible bytecode', 1, true)) then
@@ -256,8 +256,8 @@ local function loadfile_cached(filename, mode, env)
   end
 
   local chunk, err = _loadfile(modpath, mode, env)
-  if chunk then
-    write_cachefile(cname, hash, chunk)
+  if chunk and stat then
+    write_cachefile(cname, stat, chunk)
   end
   return chunk, err
 end
@@ -270,7 +270,7 @@ local function lsmod(path)
     for name, t in fs.dir(path .. '/lua') do
       local modpath = path .. '/lua/' .. name
       -- HACK: type is not always returned due to a bug in luv
-      t = t or get_hash(modpath).type
+      t = t or fs_stat_cached(modpath).type
       ---@type string
       local topname
       local ext = name:sub(-4)
@@ -345,9 +345,9 @@ function M.find(modname, opts)
         for _, pattern in ipairs(patterns) do
           local modpath = path .. pattern
           stats.find.stat = (stats.find.stat or 0) + 1
-          local hash = get_hash(modpath)
-          if hash then
-            results[#results + 1] = { modpath = modpath, stat = hash, modname = modname }
+          local stat = fs_stat_cached(modpath)
+          if stat then
+            results[#results + 1] = { modpath = modpath, stat = stat, modname = modname }
             if not continue() then
               return
             end
@@ -394,8 +394,8 @@ function M.reset(path)
   end
 
   -- Path could be a directory so just clear all the hashes.
-  if hashes then
-    hashes = {}
+  if fs_stat_cache then
+    fs_stat_cache = {}
   end
 end
 
