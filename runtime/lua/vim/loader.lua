@@ -59,8 +59,6 @@ local Loader = {
   VERSION = 4,
   ---@type table<string, table<string,vim.loader.ModuleInfo>>
   _indexed = {},
-  ---@type table<string, string[]>
-  _topmods = {},
   _loadfile = loadfile,
   ---@type LoaderStats
   _stats = {
@@ -466,10 +464,6 @@ function Loader.lsmod(path)
       end
       if topname then
         Loader._indexed[path][topname] = { modpath = modpath, modname = topname }
-        Loader._topmods[topname] = Loader._topmods[topname] or {}
-        if not vim.list_contains(Loader._topmods[topname], path) then
-          table.insert(Loader._topmods[topname], path)
-        end
       end
     end
   end
