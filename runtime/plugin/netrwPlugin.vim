@@ -35,17 +35,18 @@ set cpo&vim
 " Commands Launch/URL {{{2
 " surpress output of command; use bang for GUI applications
 
-" set up redirection (avoids browser messages)
-" by default if not set, g:netrw_suppress_gx_mesg is true
-if get(g:, 'netrw_suppress_gx_mesg', 1)
-  if &srr =~# "%s"
-    let s:redir = printf(&srr, has("win32") ? "nul" : "/dev/null")
-  else
-    let s:redir= &srr .. (has("win32") ? "nul" : "/dev/null")
+func s:redir()
+  " set up redirection (avoids browser messages)
+  " by default if not set, g:netrw_suppress_gx_mesg is true
+  if get(g:, 'netrw_suppress_gx_mesg', 1)
+    if &srr =~# "%s"
+      return printf(&srr, has("win32") ? "nul" : "/dev/null")
+    else
+      return &srr .. (has("win32") ? "nul" : "/dev/null")
+    endif
   endif
-else
-  let s:redir= ""
-endif
+  return ''
+endfunc
 
 if has('unix')
   if has('win32unix')
@@ -60,26 +61,26 @@ if has('unix')
       " Adding "" //b` sets void title, hides cmd window and blocks path conversion
       " of /b to \b\ " by MSYS2; see https://www.msys2.org/docs/filesystem-paths/
       command -complete=shellcmd -nargs=1 -bang Launch
-            \ exe 'silent !start "" //b' trim(<q-args>)  s:redir | redraw!
+            \ exe 'silent !start "" //b' trim(<q-args>)  s:redir() | redraw!
     else
       " imitate /usr/bin/start script for other environments and hope for the best
       command -complete=shellcmd -nargs=1 -bang Launch
-            \ exe 'silent !cmd //c start "" //b' trim(<q-args>)  s:redir | redraw!
+            \ exe 'silent !cmd //c start "" //b' trim(<q-args>)  s:redir() | redraw!
     endif
   elseif exists('$WSL_DISTRO_NAME') " use cmd.exe to start GUI apps in WSL
     command -complete=shellcmd -nargs=1 -bang Launch execute ':silent !'..
           \ ((<q-args> =~? '\v<\f+\.(exe|com|bat|cmd)>') ?
             \ 'cmd.exe /c start "" /b' trim(<q-args>) :
-            \ 'nohup ' trim(<q-args>) s:redir '&')
+            \ 'nohup ' trim(<q-args>) s:redir() '&')
           \ | redraw!
   else
     command -complete=shellcmd -nargs=1 -bang Launch
-        \ exe ':silent ! nohup' trim(<q-args>) s:redir '&' | redraw!
+        \ exe ':silent ! nohup' trim(<q-args>) s:redir() '&' | redraw!
   endif
 elseif has('win32')
   command -complete=shellcmd -nargs=1 -bang Launch
         \ exe 'silent !'.. (&shell =~? '\<cmd\.exe\>' ? '' : 'cmd.exe /c')
-        \ 'start /b ' trim(<q-args>) s:redir | redraw!
+        \ 'start /b ' trim(<q-args>) s:redir() | redraw!
 endif
 if exists(':Launch') == 2
   " Git Bash
@@ -95,17 +96,15 @@ if exists(':Launch') == 2
   " MacOS
   elseif executable('open')
       let s:cmd = 'open'
-  else
-      let s:cmd = ''
   endif
-  function s:Open(cmd, file)
-    if empty(a:cmd) && !exists('g:netrw_browsex_viewer')
+  function s:Open(file)
+    if !exists('s:cmd') && !exists('g:netrw_browsex_viewer')
       echoerr "No program to open this path found. See :help Open for more information."
     else
-      Launch cmd shellescape(a:file, 1)
+      exe 'Launch' s:cmd shellescape(a:file, 1)
     endif
   endfunction
-  command -complete=file -nargs=1 Open call s:Open(s:cmd, <q-args>)
+  command -complete=file -nargs=1 Open call s:Open(<q-args>)
 endif
 
 if !exists('g:netrw_regex_url')
