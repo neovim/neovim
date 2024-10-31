@@ -7,8 +7,8 @@ local loaders = package.loaders
 
 local M = {}
 
----@alias CacheHash {mtime: {nsec: integer, sec: integer}, size: integer, type?: string}
----@alias CacheEntry {hash:CacheHash, chunk:string}
+---@alias vim.loader.CacheHash {mtime: {nsec: integer, sec: integer}, size: integer, type?: string}
+---@alias vim.loader.CacheEntry {hash:vim.loader.CacheHash, chunk:string}
 
 --- @class vim.loader.find.Opts
 --- @inlinedoc
@@ -54,7 +54,7 @@ M.enabled = false
 ---@field private _rtp string[]
 ---@field private _rtp_pure string[]
 ---@field private _rtp_key string
----@field private _hashes? table<string, CacheHash>
+---@field private _hashes? table<string, vim.loader.CacheHash>
 local Loader = {
   VERSION = 4,
   ---@type table<string, table<string,vim.loader.ModuleInfo>>
@@ -67,11 +67,11 @@ local Loader = {
 }
 
 --- @param path string
---- @return CacheHash
+--- @return vim.loader.CacheHash
 --- @private
 function Loader.get_hash(path)
   if not Loader._hashes then
-    return uv.fs_stat(path) --[[@as CacheHash]]
+    return uv.fs_stat(path) --[[@as vim.loader.CacheHash]]
   end
 
   if not Loader._hashes[path] then
@@ -126,7 +126,7 @@ end
 
 --- Saves the cache entry for a given module or file
 ---@param cname string cache filename
----@param hash CacheHash
+---@param hash vim.loader.CacheHash
 ---@param chunk function
 ---@private
 function Loader.write(cname, hash, chunk)
@@ -157,7 +157,7 @@ end
 
 --- Loads the cache entry for a given module or file
 ---@param cname string cache filename
----@return CacheHash? hash
+---@return vim.loader.CacheHash? hash
 ---@return string? chunk
 ---@private
 function Loader.read(cname)
@@ -261,8 +261,8 @@ end
 --- * file size
 --- * mtime in seconds
 --- * mtime in nanoseconds
----@param a? CacheHash
----@param b? CacheHash
+---@param a? vim.loader.CacheHash
+---@param b? vim.loader.CacheHash
 ---@private
 function Loader.eq(a, b)
   return a
