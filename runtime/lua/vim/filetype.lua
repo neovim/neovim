@@ -402,6 +402,7 @@ local extension = {
   dtso = 'dts',
   its = 'dts',
   keymap = 'dts',
+  overlay = 'dts',
   dylan = 'dylan',
   intr = 'dylanintr',
   lid = 'dylanlid',
