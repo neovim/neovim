@@ -205,25 +205,27 @@ function Loader.loader(modname)
   return ("\n\tcache_loader: module '%s' not found"):format(modname)
 end
 
+local is_win = vim.fn.has('win32') == 1
+
 --- The `package.loaders` loader for libs
 ---@param modname string module name
 ---@return string|function
 ---@private
 function Loader.loader_lib(modname)
-  local is_win = vim.fn.has('win32') == 1
-  local ret = M.find(modname, { patterns = is_win and { '.dll' } or { '.so' } })[1]
-  if ret then
-    -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
-    -- a) strip prefix up to and including the first dash, if any
-    -- b) replace all dots by underscores
-    -- c) prepend "luaopen_"
-    -- So "foo-bar.baz" should result in "luaopen_bar_baz"
-    local dash = modname:find('-', 1, true)
-    local funcname = dash and modname:sub(dash + 1) or modname
-    local chunk, err = package.loadlib(ret.modpath, 'luaopen_' .. funcname:gsub('%.', '_'))
-    return chunk or error(err)
+  local ret = M.find(modname, { patterns = { is_win and '.dll' or '.so' } })[1]
+  if not ret then
+    return ("\n\tcache_loader_lib: module '%s' not found"):format(modname)
   end
-  return ("\n\tcache_loader_lib: module '%s' not found"):format(modname)
+
+  -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
+  -- a) strip prefix up to and including the first dash, if any
+  -- b) replace all dots by underscores
+  -- c) prepend "luaopen_"
+  -- So "foo-bar.baz" should result in "luaopen_bar_baz"
+  local dash = modname:find('-', 1, true)
+  local funcname = dash and modname:sub(dash + 1) or modname
+  local chunk, err = package.loadlib(ret.modpath, 'luaopen_' .. funcname:gsub('%.', '_'))
+  return chunk or error(err)
 end
 
 --- `loadfile` using the cache
