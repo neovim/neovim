@@ -36,8 +36,8 @@ set cpo&vim
 " surpress output of command; use bang for GUI applications
 
 " set up redirection (avoids browser messages)
-" by default, g:netrw_suppress_gx_mesg is true
-if get(g:, ':netrw_suppress_gx_mesg', 1)
+" by default if not set, g:netrw_suppress_gx_mesg is true
+if get(g:, 'netrw_suppress_gx_mesg', 1)
   if &srr =~# "%s"
     let s:redir = printf(&srr, has("win32") ? "nul" : "/dev/null")
   else
@@ -96,7 +96,7 @@ if exists(':Launch') == 2
   elseif executable('open')
       let s:cmd = 'open'
   else
-    s:cmd = ''
+      let s:cmd = ''
   endif
   function s:Open(cmd, file)
     if empty(a:cmd) && !exists('g:netrw_browsex_viewer')
