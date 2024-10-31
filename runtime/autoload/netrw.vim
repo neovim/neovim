@@ -28,6 +28,7 @@
 "   2024 Sep 21 by Vim Project: remove extraneous closing bracket (#15718)
 "   2024 Oct 21 by Vim Project: remove netrwFileHandlers (#15895)
 "   2024 Oct 27 by Vim Project: clean up gx mapping (#15721)
+"   2024 Oct 30 by Vim Project: fix filetype detection for remote files (#15961)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -1743,29 +1744,20 @@ endfun
 " ---------------------------------------------------------------------
 " s:NetrwOptionsRestore: restore options (based on prior s:NetrwOptionsSave) {{{2
 fun! s:NetrwOptionsRestore(vt)
-"  call Dfunc("s:NetrwOptionsRestore(vt<".a:vt.">) win#".winnr()." buf#".bufnr("%")."<".bufname("%")."> winnr($)=".winnr("$"))
-"  call Decho("(s:NetrwOptionsRestore) lines=".&lines)
-"  call Decho("settings buf#".bufnr("%")."<".bufname("%").">: ".((&l:ma == 0)? "no" : "")."ma ".((&l:mod == 0)? "no" : "")."mod ".((&l:bl == 0)? "no" : "")."bl ".((&l:ro == 0)? "no" : "")."ro fo=".&l:fo." a:vt=".a:vt,'~'.expand("<slnum>"))
   if !exists("{a:vt}netrw_optionsave")
-"   call Decho("case ".a:vt."netrw_optionsave : doesn't exist",'~'.expand("<slnum>"))
-
-   " filereadable() returns zero for remote files (e.g. scp://localhost//etc/fstab)
-   if filereadable(expand("%")) || expand("%") =~# '^\w\+://\f\+/'
-"    call Decho("..doing filetype detect anyway")
+   " filereadable() returns zero for remote files (e.g. scp://user@localhost//etc/fstab)
+   " Note: @ may not be in 'isfname', so '^\w\+://\f\+/' may not match
+   if filereadable(expand("%")) || expand("%") =~# '^\w\+://\f\+'
     filetype detect
-"    call Decho("..settings buf#".bufnr("%")."<".bufname("%").">: ".((&l:ma == 0)? "no" : "")."ma ".((&l:mod == 0)? "no" : "")."mod ".((&l:bl == 0)? "no" : "")."bl ".((&l:ro == 0)? "no" : "")."ro fo=".&l:fo." a:vt=".a:vt,'~'.expand("<slnum>"))
    else
     setl ft=netrw
    endif
-"   call Decho("..ro=".&l:ro." ma=".&l:ma." mod=".&l:mod." wrap=".&l:wrap." (filename<".expand("%")."> win#".winnr()." ft<".&ft.">)",'~'.expand("<slnum>"))
-"   call Dret("s:NetrwOptionsRestore : ".a:vt."netrw_optionsave doesn't exist")
    return
   endif
   unlet {a:vt}netrw_optionsave
 
   if exists("+acd")
    if exists("{a:vt}netrw_acdkeep")
-"    call Decho("g:netrw_keepdir=".g:netrw_keepdir.": getcwd<".getcwd()."> acd=".&acd,'~'.expand("<slnum>"))
     let curdir = getcwd()
     let &l:acd = {a:vt}netrw_acdkeep
     unlet {a:vt}netrw_acdkeep
@@ -1774,53 +1766,43 @@ fun! s:NetrwOptionsRestore(vt)
     endif
    endif
   endif
-"  call Decho("(s:NetrwOptionsRestore) #1 lines=".&lines)
   call s:NetrwRestoreSetting(a:vt."netrw_aikeep","&l:ai")
   call s:NetrwRestoreSetting(a:vt."netrw_awkeep","&l:aw")
   call s:NetrwRestoreSetting(a:vt."netrw_blkeep","&l:bl")
   call s:NetrwRestoreSetting(a:vt."netrw_btkeep","&l:bt")
   call s:NetrwRestoreSetting(a:vt."netrw_bombkeep","&l:bomb")
-"  call Decho("(s:NetrwOptionsRestore) #2 lines=".&lines)
   call s:NetrwRestoreSetting(a:vt."netrw_cedit","&cedit")
   call s:NetrwRestoreSetting(a:vt."netrw_cikeep","&l:ci")
   call s:NetrwRestoreSetting(a:vt."netrw_cinkeep","&l:cin")
   call s:NetrwRestoreSetting(a:vt."netrw_cinokeep","&l:cino")
   call s:NetrwRestoreSetting(a:vt."netrw_comkeep","&l:com")
-"  call Decho("(s:NetrwOptionsRestore) #3 lines=".&lines)
   call s:NetrwRestoreSetting(a:vt."netrw_cpokeep","&l:cpo")
   call s:NetrwRestoreSetting(a:vt."netrw_diffkeep","&l:diff")
   call s:NetrwRestoreSetting(a:vt."netrw_fenkeep","&l:fen")
   if exists("g:netrw_ffkeep") && g:netrw_ffkeep
    call s:NetrwRestoreSetting(a:vt."netrw_ffkeep")","&l:ff")
   endif
-"  call Decho("(s:NetrwOptionsRestore) #4 lines=".&lines)
   call s:NetrwRestoreSetting(a:vt."netrw_fokeep"   ,"&l:fo")
   call s:NetrwRestoreSetting(a:vt."netrw_gdkeep"   ,"&l:gd")
   call s:NetrwRestoreSetting(a:vt."netrw_gokeep"   ,"&go")
   call s:NetrwRestoreSetting(a:vt."netrw_hidkeep"  ,"&l:hidden")
-"  call Decho("(s:NetrwOptionsRestore) #5 lines=".&lines)
   call s:NetrwRestoreSetting(a:vt."netrw_imkeep"   ,"&l:im")
   call s:NetrwRestoreSetting(a:vt."netrw_iskkeep"  ,"&l:isk")
-"  call Decho("(s:NetrwOptionsRestore) #6 lines=".&lines)
   call s:NetrwRestoreSetting(a:vt."netrw_lines"    ,"&lines")
-"  call Decho("(s:NetrwOptionsRestore) #7 lines=".&lines)
   call s:NetrwRestoreSetting(a:vt."netrw_lskeep"   ,"&l:ls")
   call s:NetrwRestoreSetting(a:vt."netrw_makeep"   ,"&l:ma")
   call s:NetrwRestoreSetting(a:vt."netrw_magickeep","&l:magic")
   call s:NetrwRestoreSetting(a:vt."netrw_modkeep"  ,"&l:mod")
   call s:NetrwRestoreSetting(a:vt."netrw_nukeep"   ,"&l:nu")
-"  call Decho("(s:NetrwOptionsRestore) #8 lines=".&lines)
   call s:NetrwRestoreSetting(a:vt."netrw_rnukeep"  ,"&l:rnu")
   call s:NetrwRestoreSetting(a:vt."netrw_repkeep"  ,"&l:report")
   call s:NetrwRestoreSetting(a:vt."netrw_rokeep"   ,"&l:ro")
   call s:NetrwRestoreSetting(a:vt."netrw_selkeep"  ,"&l:sel")
-"  call Decho("(s:NetrwOptionsRestore) #9 lines=".&lines)
   call s:NetrwRestoreSetting(a:vt."netrw_spellkeep","&l:spell")
   call s:NetrwRestoreSetting(a:vt."netrw_twkeep"   ,"&l:tw")
   call s:NetrwRestoreSetting(a:vt."netrw_wigkeep"  ,"&l:wig")
   call s:NetrwRestoreSetting(a:vt."netrw_wrapkeep" ,"&l:wrap")
   call s:NetrwRestoreSetting(a:vt."netrw_writekeep","&l:write")
-"  call Decho("(s:NetrwOptionsRestore) #10 lines=".&lines)
   call s:NetrwRestoreSetting("s:yykeep","@@")
   " former problem: start with liststyle=0; press <i> : result, following line resets l:ts.
   " Fixed; in s:PerformListing, when w:netrw_liststyle is s:LONGLIST, will use a printf to pad filename with spaces
@@ -1853,22 +1835,12 @@ fun! s:NetrwOptionsRestore(vt)
   endif
   call s:NetrwRestoreSetting(a:vt."netrw_slashkeep","@/")
 
-"  call Decho("g:netrw_keepdir=".g:netrw_keepdir.": getcwd<".getcwd()."> acd=".&acd,'~'.expand("<slnum>"))
-"  call Decho("fo=".&fo.(exists("+acd")? " acd=".&acd : " acd doesn't exist"),'~'.expand("<slnum>"))
-"  call Decho("ro=".&l:ro." ma=".&l:ma." mod=".&l:mod." wrap=".&l:wrap." (filename<".expand("%")."> win#".winnr()." ft<".&ft.">)",'~'.expand("<slnum>"))
-"  call Decho("diff=".&l:diff." win#".winnr()." w:netrw_diffkeep=".(exists("w:netrw_diffkeep")? w:netrw_diffkeep : "doesn't exist"),'~'.expand("<slnum>"))
-"  call Decho("ts=".&l:ts,'~'.expand("<slnum>"))
   " Moved the filetype detect here from NetrwGetFile() because remote files
   " were having their filetype detect-generated settings overwritten by
   " NetrwOptionRestore.
   if &ft != "netrw"
-"   call Decho("before: filetype detect  (ft=".&ft.")",'~'.expand("<slnum>"))
    filetype detect
-"   call Decho("after : filetype detect  (ft=".&ft.")",'~'.expand("<slnum>"))
   endif
-"  call Decho("(s:NetrwOptionsRestore) lines=".&lines)
-"  call Decho("settings buf#".bufnr("%")."<".bufname("%").">: ".((&l:ma == 0)? "no" : "")."ma ".((&l:mod == 0)? "no" : "")."mod ".((&l:bl == 0)? "no" : "")."bl ".((&l:ro == 0)? "no" : "")."ro fo=".&l:fo." a:vt=".a:vt,'~'.expand("<slnum>"))
-"  call Dret("s:NetrwOptionsRestore : tab#".tabpagenr()." win#".winnr()." buf#".bufnr("%")."<".bufname("%")."> modified=".&modified." modifiable=".&modifiable." readonly=".&readonly)
 endfun
 
 " ---------------------------------------------------------------------
