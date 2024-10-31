@@ -126,18 +126,19 @@ end
 
 --- Saves the cache entry for a given module or file
 ---@param cname string cache filename
----@param entry CacheEntry
+---@param hash CacheHash
+---@param chunk function
 ---@private
-function Loader.write(cname, entry)
+function Loader.write(cname, hash, chunk)
   local f = assert(uv.fs_open(cname, 'w', 438))
   local header = {
     Loader.VERSION,
-    entry.hash.size,
-    entry.hash.mtime.sec,
-    entry.hash.mtime.nsec,
+    hash.size,
+    hash.mtime.sec,
+    hash.mtime.nsec,
   }
   uv.fs_write(f, table.concat(header, ',') .. '\0')
-  uv.fs_write(f, entry.chunk)
+  uv.fs_write(f, string.dump(chunk))
   uv.fs_close(f)
 end
 
@@ -156,29 +157,34 @@ end
 
 --- Loads the cache entry for a given module or file
 ---@param cname string cache filename
----@return CacheEntry?
+---@return CacheHash? hash
+---@return string? chunk
 ---@private
 function Loader.read(cname)
   local data = readfile(cname, 438)
-  if data then
-    local zero = data:find('\0', 1, true)
-    if not zero then
-      return
-    end
-
-    ---@type integer[]|{[0]:integer}
-    local header = vim.split(data:sub(1, zero - 1), ',')
-    if tonumber(header[1]) ~= Loader.VERSION then
-      return
-    end
-    return {
-      hash = {
-        size = tonumber(header[2]),
-        mtime = { sec = tonumber(header[3]), nsec = tonumber(header[4]) },
-      },
-      chunk = data:sub(zero + 1),
-    }
+  if not data then
+    return
   end
+
+  local zero = data:find('\0', 1, true)
+  if not zero then
+    return
+  end
+
+  ---@type integer[]|{[0]:integer}
+  local header = vim.split(data:sub(1, zero - 1), ',')
+  if tonumber(header[1]) ~= Loader.VERSION then
+    return
+  end
+
+  local hash = {
+    size = tonumber(header[2]),
+    mtime = { sec = tonumber(header[3]), nsec = tonumber(header[4]) },
+  }
+
+  local chunk = data:sub(zero + 1)
+
+  return hash, chunk
 end
 
 --- The `package.loaders` loader for Lua files using the cache.
@@ -236,15 +242,15 @@ end
 --- * file size
 --- * mtime in seconds
 --- * mtime in nanoseconds
----@param h1 CacheHash
----@param h2 CacheHash
+---@param a? CacheHash
+---@param b? CacheHash
 ---@private
-function Loader.eq(h1, h2)
-  return h1
-    and h2
-    and h1.size == h2.size
-    and h1.mtime.sec == h2.mtime.sec
-    and h1.mtime.nsec == h2.mtime.nsec
+function Loader.eq(a, b)
+  return a
+    and b
+    and a.size == b.size
+    and a.mtime.sec == b.mtime.sec
+    and a.mtime.nsec == b.mtime.nsec
 end
 
 --- Loads the given module path using the cache
@@ -258,9 +264,6 @@ end
 function Loader.load(modpath, opts)
   opts = opts or {}
   local hash = Loader.get_hash(modpath)
-  ---@type function?, string?
-  local chunk, err
-
   if not hash then
     -- trigger correct error
     return Loader._loadfile(modpath, opts.mode, opts.env)
@@ -268,20 +271,18 @@ function Loader.load(modpath, opts)
 
   local cname = Loader.cache_file(modpath)
 
-  local entry = Loader.read(cname)
-  if entry and Loader.eq(entry.hash, hash) then
+  local e_hash, e_chunk = Loader.read(cname)
+  if Loader.eq(e_hash, hash) and e_chunk then
     -- found in cache and up to date
-    chunk, err = load(entry.chunk --[[@as string]], '@' .. modpath, opts.mode, opts.env)
+    local chunk, err = load(e_chunk, '@' .. modpath, opts.mode, opts.env)
     if not (err and err:find('cannot load incompatible bytecode', 1, true)) then
       return chunk, err
     end
   end
-  entry = { hash = hash, modpath = modpath }
 
-  chunk, err = Loader._loadfile(modpath, opts.mode, opts.env)
+  local chunk, err = Loader._loadfile(modpath, opts.mode, opts.env)
   if chunk then
-    entry.chunk = string.dump(chunk)
-    Loader.write(cname, entry)
+    Loader.write(cname, hash, chunk)
   end
   return chunk, err
 end
