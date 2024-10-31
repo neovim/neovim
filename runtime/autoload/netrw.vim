@@ -31,6 +31,7 @@
 "   2024 Oct 30 by Vim Project: fix filetype detection for remote files (#15961)
 "   2024 Oct 30 by Vim Project: fix x mapping on cygwin (#13687)
 "   2024 Oct 31 by Vim Project: add netrw#Launch() and netrw#Open() (#15962)
+"   2024 Oct 31 by Vim Project: fix E874 when browsing remote dir (#15964)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -9474,22 +9475,16 @@ endfun
 "                     Called by s:PerformListing()
 fun! s:NetrwTreeListing(dirname)
   if exists("w:netrw_liststyle") && w:netrw_liststyle == s:TREELIST
-"   call Dfunc("s:NetrwTreeListing() bufname<".expand("%").">")
-"   call Decho("curdir<".a:dirname.">",'~'.expand("<slnum>"))
-"   call Decho("win#".winnr().": w:netrw_treetop ".(exists("w:netrw_treetop")? "exists" : "doesn't exist")." w:netrw_treedict ".(exists("w:netrw_treedict")? "exists" : "doesn't exit"),'~'.expand("<slnum>"))
-"   call Decho("g:netrw_banner=".g:netrw_banner.": banner ".(g:netrw_banner? "enabled" : "suppressed").": (line($)=".line("$")." byte2line(1)=".byte2line(1)." bannercnt=".w:netrw_bannercnt.")",'~'.expand("<slnum>"))
 
    " update the treetop
    if !exists("w:netrw_treetop")
-"    call Decho("update the treetop  (w:netrw_treetop doesn't exist yet)",'~'.expand("<slnum>"))
     let w:netrw_treetop= a:dirname
     let s:netrw_treetop= w:netrw_treetop
-"    call Decho("w:netrw_treetop<".w:netrw_treetop."> (reusing)",'~'.expand("<slnum>"))
-   elseif (w:netrw_treetop =~ ('^'.a:dirname) && s:Strlen(a:dirname) < s:Strlen(w:netrw_treetop)) || a:dirname !~ ('^'.w:netrw_treetop)
-"    call Decho("update the treetop  (override w:netrw_treetop with a:dirname<".a:dirname.">)",'~'.expand("<slnum>"))
+   " use \V in case the directory contains specials chars like '$' or '~'
+   elseif (w:netrw_treetop =~ ('^'.'\V'.a:dirname) && s:Strlen(a:dirname) < s:Strlen(w:netrw_treetop))
+    \ || a:dirname !~ ('^'.'\V'.w:netrw_treetop)
     let w:netrw_treetop= a:dirname
     let s:netrw_treetop= w:netrw_treetop
-"    call Decho("w:netrw_treetop<".w:netrw_treetop."> (went up)",'~'.expand("<slnum>"))
    endif
    if exists("w:netrw_treetop")
     let s:netrw_treetop= w:netrw_treetop
@@ -9500,16 +9495,12 @@ fun! s:NetrwTreeListing(dirname)
 
    if !exists("w:netrw_treedict")
     " insure that we have a treedict, albeit empty
-"    call Decho("initializing w:netrw_treedict to empty",'~'.expand("<slnum>"))
     let w:netrw_treedict= {}
    endif
 
    " update the dictionary for the current directory
-"   call Decho("updating: w:netrw_treedict[".a:dirname.'] -> [directory listing]','~'.expand("<slnum>"))
-"   call Decho("w:netrw_bannercnt=".w:netrw_bannercnt." line($)=".line("$"),'~'.expand("<slnum>"))
    exe "sil! NetrwKeepj ".w:netrw_bannercnt.',$g@^\.\.\=/$@d _'
    let w:netrw_treedict[a:dirname]= getline(w:netrw_bannercnt,line("$"))
-"   call Decho("w:treedict[".a:dirname."]= ".string(w:netrw_treedict[a:dirname]),'~'.expand("<slnum>"))
    exe "sil! NetrwKeepj ".w:netrw_bannercnt.",$d _"
 
    " if past banner, record word
@@ -9518,23 +9509,17 @@ fun! s:NetrwTreeListing(dirname)
    else
     let fname= ""
    endif
-"   call Decho("fname<".fname.">",'~'.expand("<slnum>"))
-"   call Decho("g:netrw_banner=".g:netrw_banner.": banner ".(g:netrw_banner? "enabled" : "suppressed").": (line($)=".line("$")." byte2line(1)=".byte2line(1)." bannercnt=".w:netrw_bannercnt.")",'~'.expand("<slnum>"))
 
    " display from treetop on down
-"   call Decho("(s:NetrwTreeListing) w:netrw_treetop<".w:netrw_treetop.">")
    NetrwKeepj call s:NetrwTreeDisplay(w:netrw_treetop,"")
-"   call Decho("s:NetrwTreeDisplay) setl noma nomod ro",'~'.expand("<slnum>"))
 
    " remove any blank line remaining as line#1 (happens in treelisting mode with banner suppressed)
    while getline(1) =~ '^\s*$' && byte2line(1) > 0
-"    call Decho("deleting blank line",'~'.expand("<slnum>"))
     1d
    endwhile
 
    exe "setl ".g:netrw_bufsettings
 
-"   call Dret("s:NetrwTreeListing : bufname<".expand("%").">")
    return
   endif
 endfun
