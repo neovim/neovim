@@ -209,6 +209,8 @@ LSP
   `textDocument/rangesFormatting` request).
 • |vim.lsp.buf.code_action()| actions show client name when there are multiple
   clients.
+• |vim.lsp.buf.signature_help()| can now cycle through different signatures
+  using `<C-s>` and also support multiple clients.
 
 LUA
 

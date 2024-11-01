@@ -737,7 +737,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
   if active_signature >= #signature_help.signatures or active_signature < 0 then
     active_signature = 0
   end
-  local signature = signature_help.signatures[active_signature + 1]
+  local signature = vim.deepcopy(signature_help.signatures[active_signature + 1])
   local label = signature.label
   if ft then
     -- wrap inside a code block for proper rendering
@@ -804,9 +804,11 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
       active_offset[2] = active_offset[2] + #contents[1]
     end
 
-    active_hl = {}
-    list_extend(active_hl, get_pos_from_offset(active_offset[1], contents) or {})
-    list_extend(active_hl, get_pos_from_offset(active_offset[2], contents) or {})
+    local a_start = get_pos_from_offset(active_offset[1], contents)
+    local a_end = get_pos_from_offset(active_offset[2], contents)
+    if a_start and a_end then
+      active_hl = { a_start[1], a_start[2], a_end[1], a_end[2] }
+    end
   end
 
   return contents, active_hl
@@ -818,7 +820,7 @@ end
 ---@param width integer window width (in character cells)
 ---@param height integer window height (in character cells)
 ---@param opts? vim.lsp.util.open_floating_preview.Opts
----@return table Options
+---@return vim.api.keyset.win_config
 function M.make_floating_popup_options(width, height, opts)
   validate('opts', opts, 'table', true)
   opts = opts or {}
@@ -1500,6 +1502,8 @@ end
 ---   to display the full window height.
 --- (default: `'auto'`)
 --- @field anchor_bias? 'auto'|'above'|'below'
+---
+--- @field _update_win? integer
 
 --- Shows contents in a floating window.
 ---
@@ -1521,43 +1525,49 @@ function M.open_floating_preview(contents, syntax, opts)
 
   local bufnr = api.nvim_get_current_buf()
 
-  -- check if this popup is focusable and we need to focus
-  if opts.focus_id and opts.focusable ~= false and opts.focus then
-    -- Go back to previous window if we are in a focusable one
-    local current_winnr = api.nvim_get_current_win()
-    if vim.w[current_winnr][opts.focus_id] then
-      api.nvim_command('wincmd p')
-      return bufnr, current_winnr
-    end
-    do
-      local win = find_window_by_var(opts.focus_id, bufnr)
-      if win and api.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
-        -- focus and return the existing buf, win
-        api.nvim_set_current_win(win)
-        api.nvim_command('stopinsert')
-        return api.nvim_win_get_buf(win), win
+  local floating_winnr = opts._update_win
+
+  -- Create/get the buffer
+  local floating_bufnr --- @type integer
+  if floating_winnr then
+    floating_bufnr = api.nvim_win_get_buf(floating_winnr)
+  else
+    -- check if this popup is focusable and we need to focus
+    if opts.focus_id and opts.focusable ~= false and opts.focus then
+      -- Go back to previous window if we are in a focusable one
+      local current_winnr = api.nvim_get_current_win()
+      if vim.w[current_winnr][opts.focus_id] then
+        api.nvim_command('wincmd p')
+        return bufnr, current_winnr
+      end
+      do
+        local win = find_window_by_var(opts.focus_id, bufnr)
+        if win and api.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
+          -- focus and return the existing buf, win
+          api.nvim_set_current_win(win)
+          api.nvim_command('stopinsert')
+          return api.nvim_win_get_buf(win), win
+        end
       end
     end
-  end
 
-  -- check if another floating preview already exists for this buffer
-  -- and close it if needed
-  local existing_float = vim.b[bufnr].lsp_floating_preview
-  if existing_float and api.nvim_win_is_valid(existing_float) then
-    api.nvim_win_close(existing_float, true)
+    -- check if another floating preview already exists for this buffer
+    -- and close it if needed
+    local existing_float = vim.b[bufnr].lsp_floating_preview
+    if existing_float and api.nvim_win_is_valid(existing_float) then
+      api.nvim_win_close(existing_float, true)
+    end
+    floating_bufnr = api.nvim_create_buf(false, true)
   end
-
-  -- Create the buffer
-  local floating_bufnr = api.nvim_create_buf(false, true)
 
   -- Set up the contents, using treesitter for markdown
   local do_stylize = syntax == 'markdown' and vim.g.syntax_on ~= nil
+
   if do_stylize then
     local width = M._make_floating_popup_size(contents, opts)
     contents = M._normalize_markdown(contents, { width = width })
     vim.bo[floating_bufnr].filetype = 'markdown'
     vim.treesitter.start(floating_bufnr)
-    api.nvim_buf_set_lines(floating_bufnr, 0, -1, false, contents)
   else
     -- Clean up input: trim empty lines
     contents = vim.split(table.concat(contents, '\n'), '\n', { trimempty = true })
@@ -1565,19 +1575,47 @@ function M.open_floating_preview(contents, syntax, opts)
     if syntax then
       vim.bo[floating_bufnr].syntax = syntax
     end
-    api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   end
 
-  -- Compute size of float needed to show (wrapped) lines
-  if opts.wrap then
-    opts.wrap_at = opts.wrap_at or api.nvim_win_get_width(0)
+  vim.bo[floating_bufnr].modifiable = true
+  api.nvim_buf_set_lines(floating_bufnr, 0, -1, false, contents)
+
+  if floating_winnr then
+    api.nvim_win_set_config(floating_winnr, {
+      border = opts.border,
+      title = opts.title,
+    })
   else
-    opts.wrap_at = nil
-  end
-  local width, height = M._make_floating_popup_size(contents, opts)
+    -- Compute size of float needed to show (wrapped) lines
+    if opts.wrap then
+      opts.wrap_at = opts.wrap_at or api.nvim_win_get_width(0)
+    else
+      opts.wrap_at = nil
+    end
 
-  local float_option = M.make_floating_popup_options(width, height, opts)
-  local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
+    -- TODO(lewis6991): These function assume the current window to determine options,
+    -- therefore it won't work for opts._update_win and the current window if the floating
+    -- window
+    local width, height = M._make_floating_popup_size(contents, opts)
+    local float_option = M.make_floating_popup_options(width, height, opts)
+
+    floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
+
+    api.nvim_buf_set_keymap(
+      floating_bufnr,
+      'n',
+      'q',
+      '<cmd>bdelete<cr>',
+      { silent = true, noremap = true, nowait = true }
+    )
+    close_preview_autocmd(opts.close_events, floating_winnr, { floating_bufnr, bufnr })
+
+    -- save focus_id
+    if opts.focus_id then
+      api.nvim_win_set_var(floating_winnr, opts.focus_id, bufnr)
+    end
+    api.nvim_buf_set_var(bufnr, 'lsp_floating_preview', floating_winnr)
+  end
 
   if do_stylize then
     vim.wo[floating_winnr].conceallevel = 2
@@ -1589,21 +1627,6 @@ function M.open_floating_preview(contents, syntax, opts)
 
   vim.bo[floating_bufnr].modifiable = false
   vim.bo[floating_bufnr].bufhidden = 'wipe'
-
-  api.nvim_buf_set_keymap(
-    floating_bufnr,
-    'n',
-    'q',
-    '<cmd>bdelete<cr>',
-    { silent = true, noremap = true, nowait = true }
-  )
-  close_preview_autocmd(opts.close_events, floating_winnr, { floating_bufnr, bufnr })
-
-  -- save focus_id
-  if opts.focus_id then
-    api.nvim_win_set_var(floating_winnr, opts.focus_id, bufnr)
-  end
-  api.nvim_buf_set_var(bufnr, 'lsp_floating_preview', floating_winnr)
 
   return floating_bufnr, floating_winnr
 end
