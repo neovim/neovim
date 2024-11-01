@@ -28,42 +28,45 @@ local function check_log()
   report_fn(string.format('Log size: %d KB', log_size / 1000))
 end
 
+--- @param f function
+--- @return string
+local function func_tostring(f)
+  local info = debug.getinfo(f, 'S')
+  return ('<function %s:%s>'):format(info.source, info.linedefined)
+end
+
 local function check_active_clients()
   vim.health.start('vim.lsp: Active Clients')
   local clients = vim.lsp.get_clients()
   if next(clients) then
     for _, client in pairs(clients) do
       local cmd ---@type string
-      if type(client.config.cmd) == 'table' then
-        cmd = table.concat(client.config.cmd --[[@as table]], ' ')
-      elseif type(client.config.cmd) == 'function' then
-        cmd = tostring(client.config.cmd)
+      local ccmd = client.config.cmd
+      if type(ccmd) == 'table' then
+        cmd = vim.inspect(ccmd)
+      elseif type(ccmd) == 'function' then
+        cmd = func_tostring(ccmd)
       end
       local dirs_info ---@type string
       if client.workspace_folders and #client.workspace_folders > 1 then
-        dirs_info = string.format(
-          '  Workspace folders:\n    %s',
-          vim
-            .iter(client.workspace_folders)
-            ---@param folder lsp.WorkspaceFolder
-            :map(function(folder)
-              return folder.name
-            end)
-            :join('\n    ')
-        )
+        local wfolders = {} --- @type string[]
+        for _, dir in ipairs(client.workspace_folders) do
+          wfolders[#wfolders + 1] = dir.name
+        end
+        dirs_info = ('- Workspace folders:\n    %s'):format(table.concat(wfolders, '\n    '))
       else
         dirs_info = string.format(
-          '  Root directory: %s',
+          '- Root directory: %s',
           client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~')
         ) or nil
       end
       report_info(table.concat({
         string.format('%s (id: %d)', client.name, client.id),
         dirs_info,
-        string.format('  Command: %s', cmd),
-        string.format('  Settings: %s', vim.inspect(client.settings, { newline = '\n  ' })),
+        string.format('- Command: %s', cmd),
+        string.format('- Settings: %s', vim.inspect(client.settings, { newline = '\n  ' })),
         string.format(
-          '  Attached buffers: %s',
+          '- Attached buffers: %s',
           vim.iter(pairs(client.attached_buffers)):map(tostring):join(', ')
         ),
       }, '\n'))
@@ -174,10 +177,45 @@ local function check_position_encodings()
   end
 end
 
+local function check_enabled_configs()
+  vim.health.start('vim.lsp: Enabled Configurations')
+
+  for name in vim.spairs(vim.lsp._enabled_configs) do
+    local config = vim.lsp._resolve_config(name)
+    local text = {} --- @type string[]
+    text[#text + 1] = ('%s:'):format(name)
+    for k, v in
+      vim.spairs(config --[[@as table<string,any>]])
+    do
+      local v_str --- @type string?
+      if k == 'name' then
+        v_str = nil
+      elseif k == 'filetypes' or k == 'root_markers' then
+        v_str = table.concat(v, ', ')
+      elseif type(v) == 'function' then
+        v_str = func_tostring(v)
+      else
+        v_str = vim.inspect(v, { newline = '\n  ' })
+      end
+
+      if k == 'cmd' and type(v) == 'table' and vim.fn.executable(v[1]) == 0 then
+        report_warn(("'%s' is not executable. Configuration will not be used."):format(v[1]))
+      end
+
+      if v_str then
+        text[#text + 1] = ('- %s: %s'):format(k, v_str)
+      end
+    end
+    text[#text + 1] = ''
+    report_info(table.concat(text, '\n'))
+  end
+end
+
 --- Performs a healthcheck for LSP
 function M.check()
   check_log()
   check_active_clients()
+  check_enabled_configs()
   check_watcher()
   check_position_encodings()
 end
