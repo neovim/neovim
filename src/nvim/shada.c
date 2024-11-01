@@ -246,7 +246,7 @@ typedef struct {
     struct reg {  // yankreg_T
       char name;
       MotionType type;
-      char **contents;
+      String *contents;
       bool is_unnamed;
       size_t contents_size;
       size_t width;
@@ -1491,7 +1491,7 @@ static ShaDaWriteResult shada_pack_entry(PackerBuffer *const packer, ShadaEntry 
     PACK_KEY(REG_KEY_CONTENTS);
     mpack_array(&sbuf.ptr, (uint32_t)entry.data.reg.contents_size);
     for (size_t i = 0; i < entry.data.reg.contents_size; i++) {
-      mpack_bin(cstr_as_string(entry.data.reg.contents[i]), &sbuf);
+      mpack_bin(entry.data.reg.contents[i], &sbuf);
     }
     PACK_KEY(KEY_NAME_CHAR);
     mpack_uint(&sbuf.ptr, (uint8_t)entry.data.reg.name);
@@ -2930,7 +2930,7 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
     break;
   case kSDItemRegister:
     for (size_t i = 0; i < entry->data.reg.contents_size; i++) {
-      xfree(entry->data.reg.contents[i]);
+      api_free_string(entry->data.reg.contents[i]);
     }
     xfree(entry->data.reg.contents);
     break;
@@ -3312,9 +3312,9 @@ shada_read_next_item_start:
       goto shada_read_next_item_error;
     }
     entry->data.reg.contents_size = it.rc.size;
-    entry->data.reg.contents = xmalloc(it.rc.size * sizeof(char *));
+    entry->data.reg.contents = xmalloc(it.rc.size * sizeof(String));
     for (size_t j = 0; j < it.rc.size; j++) {
-      entry->data.reg.contents[j] = xmemdupz(it.rc.items[j].data, it.rc.items[j].size);
+      entry->data.reg.contents[j] = copy_string(it.rc.items[j], NULL);
     }
     kv_destroy(it.rc);
 
