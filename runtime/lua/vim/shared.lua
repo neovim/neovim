@@ -1399,4 +1399,14 @@ function vim._with(context, f)
   return vim._with_c(context, callback)
 end
 
+--- @generic T
+--- @param x elem_or_list<T>?
+--- @return T[]
+function vim._ensure_list(x)
+  if type(x) == 'table' then
+    return x
+  end
+  return { x }
+end
+
 return vim
