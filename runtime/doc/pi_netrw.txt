@@ -54,9 +54,10 @@ Copyright: Copyright (C) 2017 Charles E Campbell    *netrw-copyright*
       Browsing With A Horizontally Split Window...........|netrw-o|
       Browsing With A New Tab.............................|netrw-t|
       Browsing With A Vertically Split Window.............|netrw-v|
-      Change File Permission..............................|netrw-gp|
-      Change Listing Style.(thin wide long tree)..........|netrw-i|
+      Change Listing Style (thin wide long tree)..........|netrw-i|
       Changing To A Bookmarked Directory..................|netrw-gb|
+      Quick hide/unhide of dot-files......................|netrw-gh|
+      Changing local-only File Permission.................|netrw-gp|
       Changing To A Predecessor Directory.................|netrw-u|
       Changing To A Successor Directory...................|netrw-U|
       Customizing Browsing With A Special Handler.........|netrw-x|
