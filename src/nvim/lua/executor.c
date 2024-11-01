@@ -2099,9 +2099,9 @@ bool nlua_execute_on_key(int c, char *typed_buf)
   int save_got_int = got_int;
   got_int = false;  // avoid interrupts when the key typed is Ctrl-C
   bool discard = false;
-  if (nlua_pcall(lstate, 2, 1)) {
-    nlua_error(lstate,
-               _("Error executing  vim.on_key Lua callback: %.*s"));
+  // Do not use nlua_pcall here to avoid duplicate stack trace information
+  if (lua_pcall(lstate, 2, 1, 0)) {
+    nlua_error(lstate, _("Error executing vim.on_key() callbacks: %.*s"));
   } else {
     if (lua_isboolean(lstate, -1)) {
       discard = lua_toboolean(lstate, -1);
