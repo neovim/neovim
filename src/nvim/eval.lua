@@ -1111,7 +1111,7 @@ M.funcs = {
       The character class is one of:
       	0	blank
       	1	punctuation
-      	2	word character
+      	2	word character (depends on 'iskeyword')
       	3	emoji
       	other	specific Unicode class
       The class is used in patterns and word motions.
