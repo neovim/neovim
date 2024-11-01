@@ -498,6 +498,52 @@ do
   vim.t = make_vim_accessor('t')
 end
 
+--- @class (private) vim.lua_accessor
+--- @field [string] any
+--- @field [integer] vim.lua_accessor
+
+-- These are the scoped lua variable magic accessors.
+do
+  --- @generic T
+  --- @param v T
+  --- @return fun(): T
+  local function store_lua_var(v)
+    return function()
+      return v
+    end
+  end
+
+  --- @param vim_accessor vim.vim_accessor
+  --- @return vim.lua_accessor
+  local function make_lua_accessor(vim_accessor)
+    local mt = {}
+    function mt:__newindex(k, v)
+      if type(k) == 'string' then
+        ---@cast k string
+        vim_accessor['lua_var_' .. k] = store_lua_var(v)
+      end
+    end
+    function mt:__index(k)
+      if type(k) == 'number' then
+        ---@cast k integer
+        return make_lua_accessor(vim_accessor[k])
+      elseif type(k) == 'string' then
+        ---@cast k string
+        local v = vim_accessor['lua_var_' .. k]
+        if type(v) == 'function' then
+          return v()
+        end
+      end
+    end
+    return setmetatable({}, mt)
+  end
+
+  vim.gl = make_lua_accessor(vim.g)
+  vim.bl = make_lua_accessor(vim.b)
+  vim.wl = make_lua_accessor(vim.w)
+  vim.tl = make_lua_accessor(vim.t)
+end
+
 --- @deprecated
 --- Gets a dict of line segment ("chunk") positions for the region from `pos1` to `pos2`.
 ---
