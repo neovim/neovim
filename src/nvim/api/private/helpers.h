@@ -111,6 +111,12 @@ typedef kvec_withinit_t(Object, 16) ArrayBuilder;
 #define STATIC_CSTR_AS_OBJ(s) STRING_OBJ(STATIC_CSTR_AS_STRING(s))
 #define STATIC_CSTR_TO_OBJ(s) STRING_OBJ(STATIC_CSTR_TO_STRING(s))
 
+#define API_CLEAR_STRING(s) \
+  do { \
+    XFREE_CLEAR(s.data); \
+    s.size = 0; \
+  } while (0)
+
 // Helpers used by the generated msgpack-rpc api wrappers
 #define api_init_boolean
 #define api_init_integer

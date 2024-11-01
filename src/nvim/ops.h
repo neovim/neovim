@@ -105,7 +105,7 @@ enum GRegFlags {
 
 /// Definition of one register
 typedef struct {
-  char **y_array;           ///< Pointer to an array of line pointers.
+  String *y_array;          ///< Pointer to an array of Strings.
   size_t y_size;            ///< Number of lines in y_array.
   MotionType y_type;        ///< Register type
   colnr_T y_width;          ///< Register width (only valid for y_type == kBlockWise).

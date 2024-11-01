@@ -1317,15 +1317,15 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
     return;  // Nothing to do.
   }
 
-  reg->y_array = arena_alloc(arena, lines.size * sizeof(uint8_t *), true);
+  reg->y_array = arena_alloc(arena, lines.size * sizeof(String), true);
   reg->y_size = lines.size;
   for (size_t i = 0; i < lines.size; i++) {
     VALIDATE_T("line", kObjectTypeString, lines.items[i].type, {
       return;
     });
     String line = lines.items[i].data.string;
-    reg->y_array[i] = arena_memdupz(arena, line.data, line.size);
-    memchrsub(reg->y_array[i], NUL, NL, line.size);
+    reg->y_array[i] = copy_string(line, arena);
+    memchrsub(reg->y_array[i].data, NUL, NL, line.size);
   }
 
   finish_yankreg_from_object(reg, false);
