@@ -1911,11 +1911,11 @@ The following commands insert text, but stay in normal mode:
 
 							*]<Space>*
 ]<Space>		Insert an empty line below the cursor without leaving
-			normal mode, repeat [count] times.
+			Normal mode, repeat [count] times.
 
 							*[<Space>*
 [<Space>		Insert an empty line above the cursor without leaving
-			normal mode, repeat [count] times.
+			Normal mode, repeat [count] times.
 
 When 'autoindent' is on, the indent for a new line is obtained from the
 previous line.  When 'smartindent' or 'cindent' is on, the indent for a line
