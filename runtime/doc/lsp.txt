@@ -1911,7 +1911,7 @@ make_floating_popup_options({width}, {height}, {opts})
                   |vim.lsp.util.open_floating_preview.Opts|.
 
     Return: ~
-        (`table`) Options
+        (`vim.api.keyset.win_config`)
 
                                        *vim.lsp.util.make_formatting_params()*
 make_formatting_params({options})

@@ -258,6 +258,33 @@ function M.implementation(opts)
   get_locations(ms.textDocument_implementation, opts)
 end
 
+--- @param results table<integer,{err: lsp.ResponseError?, result: lsp.SignatureHelp?}>
+local function process_signature_help_results(results)
+  local signatures = {} --- @type [vim.lsp.Client,lsp.SignatureInformation][]
+
+  -- Pre-process results
+  for client_id, r in pairs(results) do
+    local err = r.err
+    local client = assert(lsp.get_client_by_id(client_id))
+    if err then
+      vim.notify(
+        client.name .. ': ' .. tostring(err.code) .. ': ' .. err.message,
+        vim.log.levels.ERROR
+      )
+      api.nvim_command('redraw')
+    else
+      local result = r.result --- @type lsp.SignatureHelp
+      if result and result.signatures and result.signatures[1] then
+        for _, sig in ipairs(result.signatures) do
+          signatures[#signatures + 1] = { client, sig }
+        end
+      end
+    end
+  end
+
+  return signatures
+end
+
 local sig_help_ns = api.nvim_create_namespace('vim_lsp_signature_help')
 
 --- @class vim.lsp.buf.signature_help.Opts : vim.lsp.util.open_floating_preview.Opts
@@ -270,58 +297,79 @@ local sig_help_ns = api.nvim_create_namespace('vim_lsp_signature_help')
 function M.signature_help(config)
   local method = ms.textDocument_signatureHelp
 
-  config = config or {}
+  config = config and vim.deepcopy(config) or {}
   config.focus_id = method
 
-  lsp.buf_request(0, method, client_positional_params(), function(err, result, ctx)
-    local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
-
-    if err then
-      vim.notify(
-        client.name .. ': ' .. tostring(err.code) .. ': ' .. err.message,
-        vim.log.levels.ERROR
-      )
-      api.nvim_command('redraw')
-      return
-    end
-
+  lsp.buf_request_all(0, method, client_positional_params(), function(results, ctx)
     if api.nvim_get_current_buf() ~= ctx.bufnr then
       -- Ignore result since buffer changed. This happens for slow language servers.
       return
     end
 
-    -- When use `autocmd CompleteDone <silent><buffer> lua vim.lsp.buf.signature_help()` to call signatureHelp handler
-    -- If the completion item doesn't have signatures It will make noise. Change to use `print` that can use `<silent>` to ignore
-    if not result or not result.signatures or not result.signatures[1] then
+    local signatures = process_signature_help_results(results)
+
+    if not next(signatures) then
       if config.silent ~= true then
         print('No signature help available')
       end
       return
     end
-
-    local triggers =
-      vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
 
     local ft = vim.bo[ctx.bufnr].filetype
-    local lines, hl = util.convert_signature_help_to_markdown_lines(result, ft, triggers)
-    if not lines or vim.tbl_isempty(lines) then
-      if config.silent ~= true then
-        print('No signature help available')
+    local total = #signatures
+    local idx = 0
+
+    --- @param update_win? integer
+    local function show_signature(update_win)
+      idx = (idx % total) + 1
+      local client, result = signatures[idx][1], signatures[idx][2]
+      --- @type string[]?
+      local triggers =
+        vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
+      local lines, hl =
+        util.convert_signature_help_to_markdown_lines({ signatures = { result } }, ft, triggers)
+      if not lines then
+        return
       end
-      return
+
+      local sfx = total > 1 and string.format(' (%d/%d) (<C-s> to cycle)', idx, total) or ''
+      local title = string.format('Signature Help: %s%s', client.name, sfx)
+      if config.border then
+        config.title = title
+      else
+        table.insert(lines, 1, '# ' .. title)
+        if hl then
+          hl[1] = hl[1] + 1
+          hl[3] = hl[3] + 1
+        end
+      end
+
+      config._update_win = update_win
+
+      local buf, win = util.open_floating_preview(lines, 'markdown', config)
+
+      if hl then
+        vim.api.nvim_buf_clear_namespace(buf, sig_help_ns, 0, -1)
+        vim.hl.range(
+          buf,
+          sig_help_ns,
+          'LspSignatureActiveParameter',
+          { hl[1], hl[2] },
+          { hl[3], hl[4] }
+        )
+      end
+      return buf, win
     end
 
-    local fbuf = util.open_floating_preview(lines, 'markdown', config)
+    local fbuf, fwin = show_signature()
 
-    -- Highlight the active parameter.
-    if hl then
-      vim.hl.range(
-        fbuf,
-        sig_help_ns,
-        'LspSignatureActiveParameter',
-        { hl[1], hl[2] },
-        { hl[3], hl[4] }
-      )
+    if total > 1 then
+      vim.keymap.set('n', '<C-s>', function()
+        show_signature(fwin)
+      end, {
+        buffer = fbuf,
+        desc = 'Cycle next signature',
+      })
     end
   end)
 end
