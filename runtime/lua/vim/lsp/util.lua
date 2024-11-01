@@ -1485,7 +1485,7 @@ end
 ---
 --- offset to add to `row`
 --- @field offset_y? integer
---- @field border? (string|[string,string])[] override `border`
+--- @field border? string|(string|[string,string])[] override `border`
 --- @field zindex? integer override `zindex`, defaults to 50
 --- @field title? string
 --- @field title_pos? 'left'|'center'|'right'
