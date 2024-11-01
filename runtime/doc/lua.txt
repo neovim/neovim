@@ -1259,6 +1259,43 @@ vim.t                                                                  *vim.t*
 vim.v                                                                  *vim.v*
     |v:| variables.
     Invalid or unset key returns `nil`.
+                                                        *lua-scoped-variables*
+Lua variables can be created with the same lifecycle as Vim variables like
+|g:|, |b:|, |w:|, and |t:|.
+
+Example: >lua
+
+    vim.bl[2].foo = { key = 'value' }  -- Set local variable fo buffer 2
+    vim.print(vim.bl[2].foo)           -- "{ key = 'value' }"
+    vim.print(vim.bl[3].foo)           -- "nil"
+    vim.api.nvim_buf_delete(2, {})     -- Delete buffer 2
+    vim.print(vim.bl[2].foo)           -- "nil"
+
+Note that these variables are stored as Lua data rather than VimScript data,
+so they must be evaluated via function calls in VimScript.
+
+Example: >
+    let b:foo = b:lua_var_foo()  " Retrieve the value of `vim.bl.foo`
+    echo b:foo                   " {'key': 'value'}
+
+vim.gl                                                                *vim.gl*
+    Global editor Lua variables.
+    Key with no value returns `nil`.
+
+vim.bl                                                                *vim.bl*
+    Buffer-scoped Lua variables for the current buffer.
+    Invalid or unset key returns `nil`. Can be indexed with
+    an integer to access variables for a specific buffer.
+
+vim.w                                                                 *vim.wl*
+    Window-scoped Lua variables for the current window.
+    Invalid or unset key returns `nil`. Can be indexed with
+    an integer to access variables for a specific window.
+
+vim.tl                                                                *vim.tl*
+    Tabpage-scoped Lua variables for the current tabpage.
+    Invalid or unset key returns `nil`. Can be indexed with
+    an integer to access variables for a specific tabpage.
 
 
                                                                  *lua-options*

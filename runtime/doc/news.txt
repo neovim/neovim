@@ -69,6 +69,7 @@ EDITOR
   it moves to another help buffer.
 • Bells from a |terminal| buffer are now silent by default, unless 'belloff'
   option doesn't contain "term" or "all".
+• Add |vim.gl|,|vim.bl|,|vim.wl|, |vim.tl| for scoped variables.
 
 EVENTS
 
