@@ -191,6 +191,7 @@ EVENTS
 
 • |CompleteDone| now sets the `reason` key in `v:event` which specifies the reason
   for completion being done.
+• |vim.on_key()| callbacks can consume the key by returning an empty string.
 
 LSP
 
