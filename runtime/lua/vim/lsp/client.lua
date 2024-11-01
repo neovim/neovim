@@ -359,16 +359,6 @@ local function get_name(id, config)
   return tostring(id)
 end
 
---- @generic T
---- @param x elem_or_list<T>?
---- @return T[]
-local function ensure_list(x)
-  if type(x) == 'table' then
-    return x
-  end
-  return { x }
-end
-
 --- @nodoc
 --- @param config vim.lsp.ClientConfig
 --- @return vim.lsp.Client?
@@ -395,13 +385,13 @@ function Client.create(config)
     settings = config.settings or {},
     flags = config.flags or {},
     get_language_id = config.get_language_id or default_get_language_id,
-    capabilities = config.capabilities or lsp.protocol.make_client_capabilities(),
+    capabilities = config.capabilities,
     workspace_folders = lsp._get_workspace_folders(config.workspace_folders or config.root_dir),
     root_dir = config.root_dir,
     _before_init_cb = config.before_init,
-    _on_init_cbs = ensure_list(config.on_init),
-    _on_exit_cbs = ensure_list(config.on_exit),
-    _on_attach_cbs = ensure_list(config.on_attach),
+    _on_init_cbs = vim._ensure_list(config.on_init),
+    _on_exit_cbs = vim._ensure_list(config.on_exit),
+    _on_attach_cbs = vim._ensure_list(config.on_attach),
     _on_error_cb = config.on_error,
     _trace = get_trace(config.trace),
 
@@ -416,6 +406,9 @@ function Client.create(config)
     --- @deprecated use client.progress instead
     messages = { name = name, messages = {}, progress = {}, status = {} },
   }
+
+  self.capabilities =
+    vim.tbl_deep_extend('force', lsp.protocol.make_client_capabilities(), self.capabilities or {})
 
   --- @class lsp.DynamicCapabilities
   --- @nodoc

@@ -28,31 +28,114 @@ Follow these steps to get LSP features:
    upstream installation instructions. You can find language servers here:
    https://microsoft.github.io/language-server-protocol/implementors/servers/
 
-2. Use |vim.lsp.start()| to start the LSP server (or attach to an existing
-   one) when a file is opened. Example: >lua
-    -- Create an event handler for the FileType autocommand
-    vim.api.nvim_create_autocmd('FileType', {
-      -- This handler will fire when the buffer's 'filetype' is "python"
-      pattern = 'python',
-      callback = function(args)
-        vim.lsp.start({
-          name = 'my-server-name',
-          cmd = {'name-of-language-server-executable', '--option', 'arg1', 'arg2'},
+2. Use |vim.lsp.config()| to define a configuration for an LSP client.
+    Example: >lua
+      vim.lsp.config['luals'] = {
+        -- Command and arguments to start the server.
+        cmd = { 'lua-language-server' }
 
-          -- Set the "root directory" to the parent directory of the file in the
-          -- current buffer (`args.buf`) that contains either a "setup.py" or a
-          -- "pyproject.toml" file. Files that share a root directory will reuse
-          -- the connection to the same LSP server.
-          root_dir = vim.fs.root(args.buf, {'setup.py', 'pyproject.toml'}),
-        })
-      end,
-    })
+        -- Filetypes to automatically attach to.
+        filetypes = { 'lua' },
+
+        -- Sets the "root directory" to the parent directory of the file in the
+        -- current buffer that contains either a ".luarc.json" or a
+        -- ".luarc.jsonc" file. Files that share a root directory will reuse
+        -- the connection to the same LSP server.
+        root_markers = { '.luarc.json', '.luarc.jsonc' },
+
+        -- Specific settings to send to the server. The schema for this is
+        -- defined by the server. For example the schema for lua-language-server
+        -- can be found here https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json
+        settings = {
+          Lua = {
+            runtime = {
+              version = 'LuaJIT',
+            }
+          }
+        }
+      }
 <
-3. Check that the buffer is attached to the server: >vim
-    :checkhealth lsp
+3. Use |vim.lsp.enable()| to enable a configuration.
+   Example: >lua
+     vim.lsp.enable('luals')
+<
+4. Check that the buffer is attached to the server: >vim
+    :checkhealth vim.lsp
+<
+5. (Optional) Configure keymaps and autocommands to use LSP features.
+   |lsp-attach|
 
-4. (Optional) Configure keymaps and autocommands to use LSP features. |lsp-config|
+                                                        *lsp-config*
 
+Configurations for LSP clients is done via |vim.lsp.config()|.
+
+When an LSP client starts, it resolves a configuration by merging
+configurations, in increasing priority, from the following:
+
+1. Configuration defined for the `'*'` name.
+
+2. Configuration from the result of sourcing all `lsp/<name>.lua` files
+   in 'runtimepath' for a server of name `name`.
+
+   Note: because of this, calls to |vim.lsp.config()| in `lsp/*.lua` are
+   treated independently to other calls. This ensures configurations
+   defined in `lsp/*.lua` have a lower priority.
+
+3. Configurations defined anywhere else.
+
+Note: The merge semantics of configurations follow the behaviour of
+|vim.tbl_deep_extend()|.
+
+Example:
+
+Given: >lua
+  -- Defined in init.lua
+  vim.lsp.config('*', {
+    capabilities = {
+      textDocument = {
+        semanticTokens = {
+          multilineTokenSupport = true,
+        }
+      }
+    }
+    root_markers = { '.git' },
+  })
+
+  -- Defined in ../lsp/clangd.lua
+  vim.lsp.config('clangd', {
+    cmd = { 'clangd' },
+    root_markers = { '.clangd', 'compile_commands.json' },
+    filetypes = { 'c', 'cpp' },
+  })
+
+  -- Defined in init.lua
+  vim.lsp.config('clangd', {
+    filetypes = { 'c' },
+  })
+<
+Results in the configuration: >lua
+  {
+    -- From the clangd configuration in <rtp>/lsp/clangd.lua
+    cmd = { 'clangd' },
+
+    -- From the clangd configuration in <rtp>/lsp/clangd.lua
+    -- Overrides the * configuration in init.lua
+    root_markers = { '.clangd', 'compile_commands.json' },
+
+    -- From the clangd configuration in init.lua
+    -- Overrides the * configuration in init.lua
+    filetypes = { 'c' },
+
+    -- From the * configuration in init.lua
+    capabilities = {
+      textDocument = {
+        semanticTokens = {
+          multilineTokenSupport = true,
+        }
+      }
+    }
+  }
+<
                                                         *lsp-defaults*
 When the Nvim LSP client starts it enables diagnostics |vim.diagnostic| (see
 |vim.diagnostic.config()| to customize). It also sets various default options,
@@ -98,7 +181,7 @@ To override or delete any of the above defaults, set or unset the options on
       end,
     })
 <
-                                                        *lsp-config*
+                                                        *lsp-attach*
 To use other LSP features, set keymaps and other buffer options on
 |LspAttach|. Not all language servers provide the same capabilities. Use
 capability checks to ensure you only use features supported by the language
@@ -107,16 +190,16 @@ server. Example: >lua
     vim.api.nvim_create_autocmd('LspAttach', {
       callback = function(args)
         local client = vim.lsp.get_client_by_id(args.data.client_id)
-        if client.supports_method('textDocument/implementation') then
+        if client:supports_method('textDocument/implementation') then
           -- Create a keymap for vim.lsp.buf.implementation
         end
 
-        if client.supports_method('textDocument/completion') then
+        if client:supports_method('textDocument/completion') then
           -- Enable auto-completion
           vim.lsp.completion.enable(true, client.id, args.buf, {autotrigger = true})
         end
 
-        if client.supports_method('textDocument/formatting') then
+        if client:supports_method('textDocument/formatting') then
           -- Format the current buffer on save
           vim.api.nvim_create_autocmd('BufWritePre', {
             buffer = args.buf,
@@ -465,7 +548,7 @@ EVENTS                                                            *lsp-events*
 LspAttach                                                          *LspAttach*
     After an LSP client attaches to a buffer. The |autocmd-pattern| is the
     name of the buffer. When used from Lua, the client ID is passed to the
-    callback in the "data" table. See |lsp-config| for an example.
+    callback in the "data" table. See |lsp-attach| for an example.
 
 LspDetach                                                          *LspDetach*
     Just before an LSP client detaches from a buffer. The |autocmd-pattern|
@@ -478,7 +561,7 @@ LspDetach                                                          *LspDetach*
         local client = vim.lsp.get_client_by_id(args.data.client_id)
 
         -- Remove the autocommand to format the buffer on save, if it exists
-        if client.supports_method('textDocument/formatting') then
+        if client:supports_method('textDocument/formatting') then
           vim.api.nvim_clear_autocmds({
             event = 'BufWritePre',
             buffer = args.buf,
@@ -590,6 +673,27 @@ LspTokenUpdate                                                *LspTokenUpdate*
 ==============================================================================
 Lua module: vim.lsp                                                 *lsp-core*
 
+*vim.lsp.Config*
+    Extends: |vim.lsp.ClientConfig|
+
+
+    Fields: ~
+      • {cmd}?           (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
+                         See `cmd` in |vim.lsp.ClientConfig|.
+      • {filetypes}?     (`string[]`) Filetypes the client will attach to, if
+                         activated by `vim.lsp.enable()`. If not provided,
+                         then the client will attach to all filetypes.
+      • {root_markers}?  (`string[]`) Directory markers (.e.g. '.git/') where
+                         the LSP server will base its workspaceFolders,
+                         rootUri, and rootPath on initialization. Unused if
+                         `root_dir` is provided.
+      • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
+                         Predicate used to decide if a client should be
+                         re-used. Used on all running clients. The default
+                         implementation re-uses a client if name and root_dir
+                         matches.
+
+
 buf_attach_client({bufnr}, {client_id})          *vim.lsp.buf_attach_client()*
     Implements the `textDocument/did…` notifications required to track a
     buffer for any language server.
@@ -689,7 +793,7 @@ commands                                                    *vim.lsp.commands*
     value is a function which is called if any LSP action (code action, code
     lenses, ...) triggers the command.
 
-    If a LSP response contains a command for which no matching entry is
+    If an LSP response contains a command for which no matching entry is
     available in this registry, the command will be executed via the LSP
     server using `workspace/executeCommand`.
 
@@ -697,6 +801,65 @@ commands                                                    *vim.lsp.commands*
     String command: String arguments?: any[]
 
     The second argument is the `ctx` of |lsp-handler|
+
+config({name}, {cfg})                                       *vim.lsp.config()*
+    Update the configuration for an LSP client.
+
+    Use name '*' to set default configuration for all clients.
+
+    Can also be table-assigned to redefine the configuration for a client.
+
+    Examples:
+    • Add a root marker for all clients: >lua
+        vim.lsp.config('*', {
+          root_markers = { '.git' },
+        })
+<
+    • Add additional capabilities to all clients: >lua
+        vim.lsp.config('*', {
+          capabilities = {
+            textDocument = {
+              semanticTokens = {
+                multilineTokenSupport = true,
+              }
+            }
+          }
+        })
+<
+    • (Re-)define the configuration for clangd: >lua
+        vim.lsp.config.clangd = {
+          cmd = {
+            'clangd',
+            '--clang-tidy',
+            '--background-index',
+            '--offset-encoding=utf-8',
+          },
+          root_markers = { '.clangd', 'compile_commands.json' },
+          filetypes = { 'c', 'cpp' },
+        }
+<
+    • Get configuration for luals: >lua
+        local cfg = vim.lsp.config.luals
+<
+
+    Parameters: ~
+      • {name}  (`string`)
+      • {cfg}   (`vim.lsp.Config`) See |vim.lsp.Config|.
+
+enable({name}, {enable})                                    *vim.lsp.enable()*
+    Enable an LSP server to automatically start when opening a buffer.
+
+    Uses configuration defined with `vim.lsp.config`.
+
+    Examples: >lua
+          vim.lsp.enable('clangd')
+
+          vim.lsp.enable({'luals', 'pyright'})
+<
+
+    Parameters: ~
+      • {name}    (`string|string[]`) Name(s) of client(s) to enable.
+      • {enable}  (`boolean?`) `true|nil` to enable, `false` to disable.
 
 foldclose({kind}, {winid})                               *vim.lsp.foldclose()*
     Close all {kind} of folds in the the window with {winid}.
