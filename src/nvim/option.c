@@ -4368,34 +4368,23 @@ int makeset(FILE *fd, int opt_flags, int local_only)
             cmd = "setlocal";
           }
 
-          if (option_has_type(opt_idx, kOptValTypeBoolean)) {
-            if (put_setbool(fd, cmd, opt->fullname, *(int *)varp) == FAIL) {
+          bool do_endif = false;
+          // Don't set 'syntax' and 'filetype' again if the value is
+          // already right, avoids reloading the syntax file.
+          if (opt->indir == PV_SYN || opt->indir == PV_FT) {
+            if (fprintf(fd, "if &%s != '%s'", opt->fullname,
+                        *(char **)(varp)) < 0
+                || put_eol(fd) < 0) {
               return FAIL;
             }
-          } else if (option_has_type(opt_idx, kOptValTypeNumber)) {
-            if (put_setnum(fd, cmd, opt->fullname, (OptInt *)varp) == FAIL) {
+            do_endif = true;
+          }
+          if (put_set(fd, cmd, opt_idx, varp) == FAIL) {
+            return FAIL;
+          }
+          if (do_endif) {
+            if (put_line(fd, "endif") == FAIL) {
               return FAIL;
-            }
-          } else {    // string
-            bool do_endif = false;
-
-            // Don't set 'syntax' and 'filetype' again if the value is
-            // already right, avoids reloading the syntax file.
-            if (opt->indir == PV_SYN || opt->indir == PV_FT) {
-              if (fprintf(fd, "if &%s != '%s'", opt->fullname,
-                          *(char **)(varp)) < 0
-                  || put_eol(fd) < 0) {
-                return FAIL;
-              }
-              do_endif = true;
-            }
-            if (put_setstring(fd, cmd, opt->fullname, (char **)varp, opt->flags) == FAIL) {
-              return FAIL;
-            }
-            if (do_endif) {
-              if (put_line(fd, "endif") == FAIL) {
-                return FAIL;
-              }
             }
           }
         }
@@ -4409,110 +4398,133 @@ int makeset(FILE *fd, int opt_flags, int local_only)
 /// 'sessionoptions' or 'viewoptions' contains "folds" but not "options".
 int makefoldset(FILE *fd)
 {
-  if (put_setstring(fd, "setlocal", "fdm", &curwin->w_p_fdm, 0) == FAIL
-      || put_setstring(fd, "setlocal", "fde", &curwin->w_p_fde, 0) == FAIL
-      || put_setstring(fd, "setlocal", "fmr", &curwin->w_p_fmr, 0) == FAIL
-      || put_setstring(fd, "setlocal", "fdi", &curwin->w_p_fdi, 0) == FAIL
-      || put_setnum(fd, "setlocal", "fdl", &curwin->w_p_fdl) == FAIL
-      || put_setnum(fd, "setlocal", "fml", &curwin->w_p_fml) == FAIL
-      || put_setnum(fd, "setlocal", "fdn", &curwin->w_p_fdn) == FAIL
-      || put_setbool(fd, "setlocal", "fen", curwin->w_p_fen) == FAIL) {
+  if (put_set(fd, "setlocal", kOptFoldmethod, &curwin->w_p_fdm) == FAIL
+      || put_set(fd, "setlocal", kOptFoldexpr, &curwin->w_p_fde) == FAIL
+      || put_set(fd, "setlocal", kOptFoldmarker, &curwin->w_p_fmr) == FAIL
+      || put_set(fd, "setlocal", kOptFoldignore, &curwin->w_p_fdi) == FAIL
+      || put_set(fd, "setlocal", kOptFoldlevel, &curwin->w_p_fdl) == FAIL
+      || put_set(fd, "setlocal", kOptFoldminlines, &curwin->w_p_fml) == FAIL
+      || put_set(fd, "setlocal", kOptFoldnestmax, &curwin->w_p_fdn) == FAIL
+      || put_set(fd, "setlocal", kOptFoldenable, &curwin->w_p_fen) == FAIL) {
     return FAIL;
   }
 
   return OK;
 }
 
-static int put_setstring(FILE *fd, char *cmd, char *name, char **valuep, uint64_t flags)
+/// Print the ":set" command to set a single option to file.
+///
+/// @param  fd       File descriptor.
+/// @param  cmd      Command name.
+/// @param  opt_idx  Option index in options[] table.
+/// @param  varp     Pointer to option variable.
+///
+/// @return FAIL on error, OK otherwise.
+static int put_set(FILE *fd, char *cmd, OptIndex opt_idx, void *varp)
 {
-  if (fprintf(fd, "%s %s=", cmd, name) < 0) {
-    return FAIL;
-  }
+  OptVal value = optval_from_varp(opt_idx, varp);
+  vimoption_T *opt = &options[opt_idx];
+  char *name = opt->fullname;
+  uint64_t flags = opt->flags;
 
-  char *buf = NULL;
-  char *part = NULL;
-
-  if (*valuep != NULL) {
-    if ((flags & kOptFlagExpand) != 0) {
-      size_t size = (size_t)strlen(*valuep) + 1;
-
-      // replace home directory in the whole option value into "buf"
-      buf = xmalloc(size);
-      home_replace(NULL, *valuep, buf, size, false);
-
-      // If the option value is longer than MAXPATHL, we need to append
-      // each comma separated part of the option separately, so that it
-      // can be expanded when read back.
-      if (size >= MAXPATHL && (flags & kOptFlagComma) != 0
-          && vim_strchr(*valuep, ',') != NULL) {
-        part = xmalloc(size);
-
-        // write line break to clear the option, e.g. ':set rtp='
-        if (put_eol(fd) == FAIL) {
-          goto fail;
-        }
-        char *p = buf;
-        while (*p != NUL) {
-          // for each comma separated option part, append value to
-          // the option, :set rtp+=value
-          if (fprintf(fd, "%s %s+=", cmd, name) < 0) {
-            goto fail;
-          }
-          copy_option_part(&p, part, size, ",");
-          if (put_escstr(fd, part, 2) == FAIL || put_eol(fd) == FAIL) {
-            goto fail;
-          }
-        }
-        xfree(buf);
-        xfree(part);
-        return OK;
-      }
-      if (put_escstr(fd, buf, 2) == FAIL) {
-        xfree(buf);
-        return FAIL;
-      }
-      xfree(buf);
-    } else if (put_escstr(fd, *valuep, 2) == FAIL) {
-      return FAIL;
-    }
-  }
-  if (put_eol(fd) < 0) {
-    return FAIL;
-  }
-  return OK;
-fail:
-  xfree(buf);
-  xfree(part);
-  return FAIL;
-}
-
-static int put_setnum(FILE *fd, char *cmd, char *name, OptInt *valuep)
-{
-  if (fprintf(fd, "%s %s=", cmd, name) < 0) {
-    return FAIL;
-  }
-  OptInt wc;
-  if (wc_use_keyname(valuep, &wc)) {
-    // print 'wildchar' and 'wildcharm' as a key name
-    if (fputs(get_special_key_name((int)wc, 0), fd) < 0) {
-      return FAIL;
-    }
-  } else if (fprintf(fd, "%" PRId64, (int64_t)(*valuep)) < 0) {
-    return FAIL;
-  }
-  if (put_eol(fd) < 0) {
-    return FAIL;
-  }
-  return OK;
-}
-
-static int put_setbool(FILE *fd, char *cmd, char *name, int value)
-{
-  if (value < 0) {      // global/local option using global value
+  if ((opt->indir & PV_BOTH) && varp != opt->var
+      && optval_equal(value, get_option_unset_value(opt_idx))) {
+    // Processing unset local value of global-local option. Do nothing.
     return OK;
   }
-  if (fprintf(fd, "%s %s%s", cmd, value ? "" : "no", name) < 0
-      || put_eol(fd) < 0) {
+
+  switch (value.type) {
+  case kOptValTypeNil:
+    abort();
+  case kOptValTypeBoolean: {
+    assert(value.data.boolean != kNone);
+    bool value_bool = TRISTATE_TO_BOOL(value.data.boolean, false);
+
+    if (fprintf(fd, "%s %s%s", cmd, value_bool ? "" : "no", name) < 0) {
+      return FAIL;
+    }
+    break;
+  }
+  case kOptValTypeNumber: {
+    if (fprintf(fd, "%s %s=", cmd, name) < 0) {
+      return FAIL;
+    }
+
+    OptInt value_num = value.data.number;
+
+    OptInt wc;
+    if (wc_use_keyname(varp, &wc)) {
+      // print 'wildchar' and 'wildcharm' as a key name
+      if (fputs(get_special_key_name((int)wc, 0), fd) < 0) {
+        return FAIL;
+      }
+    } else if (fprintf(fd, "%" PRId64, value_num) < 0) {
+      return FAIL;
+    }
+    break;
+  }
+  case kOptValTypeString: {
+    if (fprintf(fd, "%s %s=", cmd, name) < 0) {
+      return FAIL;
+    }
+
+    char *value_str = value.data.string.data;
+    char *buf = NULL;
+    char *part = NULL;
+
+    if (value_str != NULL) {
+      if ((flags & kOptFlagExpand) != 0) {
+        size_t size = (size_t)strlen(value_str) + 1;
+
+        // replace home directory in the whole option value into "buf"
+        buf = xmalloc(size);
+        home_replace(NULL, value_str, buf, size, false);
+
+        // If the option value is longer than MAXPATHL, we need to append
+        // each comma separated part of the option separately, so that it
+        // can be expanded when read back.
+        if (size >= MAXPATHL && (flags & kOptFlagComma) != 0
+            && vim_strchr(value_str, ',') != NULL) {
+          part = xmalloc(size);
+
+          // write line break to clear the option, e.g. ':set rtp='
+          if (put_eol(fd) == FAIL) {
+            goto fail;
+          }
+          char *p = buf;
+          while (*p != NUL) {
+            // for each comma separated option part, append value to
+            // the option, :set rtp+=value
+            if (fprintf(fd, "%s %s+=", cmd, name) < 0) {
+              goto fail;
+            }
+            copy_option_part(&p, part, size, ",");
+            if (put_escstr(fd, part, 2) == FAIL || put_eol(fd) == FAIL) {
+              goto fail;
+            }
+          }
+          xfree(buf);
+          xfree(part);
+          return OK;
+        }
+        if (put_escstr(fd, buf, 2) == FAIL) {
+          xfree(buf);
+          return FAIL;
+        }
+        xfree(buf);
+      } else if (put_escstr(fd, value_str, 2) == FAIL) {
+        return FAIL;
+      }
+    }
+    break;
+  fail:
+    xfree(buf);
+    xfree(part);
+    return FAIL;
+  }
+  }
+
+  if (put_eol(fd) < 0) {
     return FAIL;
   }
   return OK;
