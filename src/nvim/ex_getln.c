@@ -2543,6 +2543,9 @@ static bool cmdpreview_may_show(CommandLineState *s)
     goto end;
   }
 
+  // Cursor may be at the end of the message grid rather than at cmdspos.
+  // Place it there in case preview callback flushes it. #30696
+  cursorcmd();
   // Flush now: external cmdline may itself wish to update the screen which is
   // currently disallowed during cmdpreview(no longer needed in case that changes).
   cmdline_ui_flush();
