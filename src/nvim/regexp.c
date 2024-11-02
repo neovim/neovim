@@ -10621,7 +10621,7 @@ collection:
           // Normally, simply emit startc. But if we get char
           // code=0 from a collating char, then replace it with
           // 0x0a.
-          // This is needed to completely mimic the behaviour of
+          // This is needed to completely mimic the behavior of
           // the backtracking engine.
           if (startc == NFA_NEWL) {
             // Line break can't be matched as part of the

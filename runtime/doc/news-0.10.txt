@@ -283,7 +283,7 @@ The following new features were added.
     from byte representations.
   • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
     Windows `explorer`, Linux `xdg-open`, etc.)
-  • |vim.wo| can now be double indexed for |:setlocal| behaviour. Currently
+  • |vim.wo| can now be double indexed for |:setlocal| behavior. Currently
     only `0` for the buffer index is supported.
   • Improved messages for type errors in `vim.api.*` calls (including `opts` params).
   • Lua type annotations for:
@@ -320,7 +320,7 @@ The following new features were added.
   • 'errorfile' (|-q|) accepts `-` as an alias for stdin.
 
 • Performance:
-  • 'diffopt' "linematch" scoring algorithm now favours larger and less groups
+  • 'diffopt' "linematch" scoring algorithm now favors larger and less groups
     https://github.com/neovim/neovim/pull/23611
   • Treesitter highlighting now parses injections incrementally during
     screen redraws only for the line range being rendered. This significantly

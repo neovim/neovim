@@ -684,9 +684,9 @@ M.lua = {
 
 M.describe_lua_and_rpc = function(describe)
   return function(what, tests)
-    local function d(flavour)
-      describe(string.format('%s (%s)', what, flavour), function(...)
-        return tests(M[flavour].api, ...)
+    local function d(flavor)
+      describe(string.format('%s (%s)', what, flavor), function(...)
+        return tests(M[flavor].api, ...)
       end)
     end
 

@@ -823,7 +823,7 @@ static inline void hms_dealloc(HistoryMergerState *const hms_p)
 /// @return Pointer that needs to be passed to next `var_shada_iter` invocation
 ///         or NULL to indicate that iteration is over.
 static const void *var_shada_iter(const void *const iter, const char **const name, typval_T *rettv,
-                                  var_flavour_T flavour)
+                                  var_flavor_T flavor)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   const hashitem_T *hi;
@@ -834,7 +834,7 @@ static const void *var_shada_iter(const void *const iter, const char **const nam
     hi = globvarht.ht_array;
     while ((size_t)(hi - hifirst) < hinum
            && (HASHITEM_EMPTY(hi)
-               || !(var_flavour(hi->hi_key) & flavour))) {
+               || !(var_flavor(hi->hi_key) & flavor))) {
       hi++;
     }
     if ((size_t)(hi - hifirst) == hinum) {
@@ -846,7 +846,7 @@ static const void *var_shada_iter(const void *const iter, const char **const nam
   *name = TV_DICT_HI2DI(hi)->di_key;
   tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
   while ((size_t)(++hi - hifirst) < hinum) {
-    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavor(hi->hi_key) & flavor)) {
       return hi;
     }
   }
@@ -2340,7 +2340,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
     do {
       typval_T vartv;
       const char *name = NULL;
-      var_iter = var_shada_iter(var_iter, &name, &vartv, VAR_FLAVOUR_SHADA);
+      var_iter = var_shada_iter(var_iter, &name, &vartv, VAR_FLAVOR_SHADA);
       if (name == NULL) {
         break;
       }
@@ -3686,7 +3686,7 @@ String shada_encode_gvars(void)
     typval_T vartv;
     const char *name = NULL;
     var_iter = var_shada_iter(var_iter, &name, &vartv,
-                              VAR_FLAVOUR_DEFAULT | VAR_FLAVOUR_SESSION | VAR_FLAVOUR_SHADA);
+                              VAR_FLAVOR_DEFAULT | VAR_FLAVOR_SESSION | VAR_FLAVOR_SHADA);
     if (name == NULL) {
       break;
     }

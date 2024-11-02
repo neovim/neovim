@@ -279,7 +279,7 @@ the file).
 Configuration
 =============
 
-Test behaviour is affected by environment variables. Currently supported
+Test behavior is affected by environment variables. Currently supported
 (Functional, Unit, Benchmarks) (when Defined; when set to _1_; when defined,
 treated as Integer; when defined, treated as String; when defined, treated as
 Number; !must be defined to function properly):

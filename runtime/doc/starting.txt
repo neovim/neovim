@@ -1351,7 +1351,7 @@ exactly four MessagePack objects:
 Errors in ShaDa file may have two types:
 1. E575 for “logical” errors.
 2. E576 for “critical” errors.
-When writing, critical errors trigger behaviour described in
+When writing, critical errors trigger behavior described in
 |shada-error-handling|.
 When reading, critical errors cause the rest of the file to be skipped.
 Critical errors include:

@@ -1384,7 +1384,7 @@ func Test_search_skip_all_matches()
   bwipe!
 endfunc
 
-func Test_search_undefined_behaviour()
+func Test_search_undefined_behavior()
   CheckFeature terminal
 
   let h = winheight(0)
@@ -1398,7 +1398,7 @@ func Test_search_undefined_behaviour()
   bwipe!
 endfunc
 
-func Test_search_undefined_behaviour2()
+func Test_search_undefined_behavior2()
   call search("\%UC0000000")
 endfunc
 

@@ -249,7 +249,7 @@ describe("'langmap'", function()
     command('set langmap=ïx')
     testrecording('ï', 'ello', local_setup)
     -- The test below checks that what's recorded is correct.
-    -- It doesn't check the behaviour, as in order to cause some behaviour we
+    -- It doesn't check the behavior, as in order to cause some behavior we
     -- need to map the multi-byte character, and there is a known bug
     -- preventing this from working (see the test below).
     command('set langmap=xï')
@@ -266,8 +266,8 @@ describe("'langmap'", function()
     command('nnoremap ï ix<esc>')
     testrecording('x', 'xhello', local_setup)
   end)
-  -- This test is to ensure the behaviour doesn't change from what's already
-  -- around. I (hardenedapple) personally think this behaviour should be
+  -- This test is to ensure the behavior doesn't change from what's already
+  -- around. I (hardenedapple) personally think this behavior should be
   -- changed.
   it('treats control modified keys as characters', function()
     command('nnoremap <C-w> iw<esc>')

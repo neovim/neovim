@@ -109,7 +109,7 @@ static inline bool ascii_iswhite_or_nul(int c)
 /// example, returns true for superscript 1 (¹) in locales where encoding
 /// contains it in lower 8 bits. Also avoids crashes in case c is below
 /// 0 or above 255: library functions are officially defined as accepting
-/// only EOF and unsigned char values (otherwise it is undefined behaviour)
+/// only EOF and unsigned char values (otherwise it is undefined behavior)
 /// what may be used for some optimizations (e.g. simple `return
 /// isdigit_table[c];`).
 static inline bool ascii_isdigit(int c)

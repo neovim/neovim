@@ -2353,7 +2353,7 @@ describe('TUI', function()
   end)
 
   it('no heap-buffer-overflow when changing &columns', function()
-    -- Set a different bg colour and change $TERM to something dumber so the `print_spaces()`
+    -- Set a different bg color and change $TERM to something dumber so the `print_spaces()`
     -- codepath in `clear_region()` is hit.
     local screen = tt.setup_child_nvim({
       '-u',
@@ -2731,13 +2731,13 @@ describe("TUI 't_Co' (terminal colors)", function()
     assert_term_colors('ansi', 'yet-another-term-256color', 256)
   end)
 
-  it('TERM=ansi-256color sets 256 colours', function()
+  it('TERM=ansi-256color sets 256 colors', function()
     assert_term_colors('ansi-256color', nil, 256)
   end)
 
   -- Unknown terminal types:
 
-  it('unknown TERM no COLORTERM sets 8 colours', function()
+  it('unknown TERM no COLORTERM sets 8 colors', function()
     assert_term_colors('yet-another-term', nil, 8)
   end)
 
@@ -2745,7 +2745,7 @@ describe("TUI 't_Co' (terminal colors)", function()
     assert_term_colors('yet-another-term', 'yet-another-term', 16)
   end)
 
-  it('unknown TERM with 256 in name sets 256 colours', function()
+  it('unknown TERM with 256 in name sets 256 colors', function()
     assert_term_colors('yet-another-term-256color', nil, 256)
   end)
 
@@ -2769,8 +2769,8 @@ describe("TUI 't_Co' (terminal colors)", function()
 
   -- screen:
   --
-  -- FreeBSD falls back to the built-in screen-256colour entry.
-  -- Linux and MacOS have a screen entry in external terminfo with 8 colours,
+  -- FreeBSD falls back to the built-in screen-256color entry.
+  -- Linux and MacOS have a screen entry in external terminfo with 8 colors,
   -- which is raised to 16 by COLORTERM.
 
   it('TERM=screen no COLORTERM uses 8/256 colors', function()
@@ -2799,8 +2799,8 @@ describe("TUI 't_Co' (terminal colors)", function()
 
   -- tmux:
   --
-  -- FreeBSD and MacOS fall back to the built-in tmux-256colour entry.
-  -- Linux has a tmux entry in external terminfo with 8 colours,
+  -- FreeBSD and MacOS fall back to the built-in tmux-256color entry.
+  -- Linux has a tmux entry in external terminfo with 8 colors,
   -- which is raised to 256.
 
   it('TERM=tmux no COLORTERM uses 256 colors', function()
@@ -2840,9 +2840,9 @@ describe("TUI 't_Co' (terminal colors)", function()
   -- rxvt and stterm:
   --
   -- FreeBSD and MacOS fall back to the built-in rxvt-256color and
-  -- st-256colour entries.
+  -- st-256color entries.
   -- Linux has an rxvt, an st, and an st-16color entry in external terminfo
-  -- with 8, 8, and 16 colours respectively, which are raised to 256.
+  -- with 8, 8, and 16 colors respectively, which are raised to 256.
 
   it('TERM=rxvt no COLORTERM uses 256 colors', function()
     assert_term_colors('rxvt', nil, 256)
@@ -2888,7 +2888,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   --
   -- FreeBSD and MacOS fall back to the built-in vte-256color entry.
   -- Linux has a gnome, a vte, a gnome-256color, and a vte-256color entry in
-  -- external terminfo with 8, 8, 256, and 256 colours respectively, which are
+  -- external terminfo with 8, 8, 256, and 256 colors respectively, which are
   -- raised to 256.
 
   it('TERM=gnome no COLORTERM uses 256 colors', function()

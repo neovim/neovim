@@ -36,13 +36,13 @@ The Ada mode handles a number of situations cleanly.
 
 For example, it knows that the "-" in "-5" is a number, but the same character
 in "A-5" is an operator.  Normally, a "with" or "use" clause referencing
-another compilation unit is coloured the same way as C's "#include" is coloured.
-If you have "Conditional" or "Repeat" groups coloured differently, then "end
-if" and "end loop" will be coloured as part of those respective groups.
+another compilation unit is colored the same way as C's "#include" is colored.
+If you have "Conditional" or "Repeat" groups colored differently, then "end
+if" and "end loop" will be colored as part of those respective groups.
 
-You can set these to different colours using vim's "highlight" command (e.g.,
+You can set these to different colors using vim's "highlight" command (e.g.,
 to change how loops are displayed, enter the command ":hi Repeat" followed by
-the colour specification; on simple terminals the colour specification
+the color specification; on simple terminals the color specification
 ctermfg=White often shows well).
 
 There are several options you can select in this Ada mode. See |ft-ada-options|
@@ -281,7 +281,7 @@ g:ada_line_errors	  bool (true when exists)
 
 							 *g:ada_rainbow_color*
 g:ada_rainbow_color	  bool (true when exists)
-		Use rainbow colours for '(' and ')'. You need the
+		Use rainbow colors for '(' and ')'. You need the
 		rainbow_parenthesis for this to work.
 
 							       *g:ada_folding*
@@ -321,7 +321,7 @@ g:ada_withuse_ordinary	  bool (true when exists)
 
 							 *g:ada_begin_preproc*
 g:ada_begin_preproc	  bool (true when exists)
-		Show all begin-like keywords using the colouring of C
+		Show all begin-like keywords using the coloring of C
 		preprocessor commands.
 
 						    *g:ada_omni_with_keywords*
@@ -368,7 +368,7 @@ makes no difference.
 							     *ft-ada-commands*
 
 :AdaRainbow							 *:AdaRainbow*
-		Toggles rainbow colour (|g:ada_rainbow_color|) mode for
+		Toggles rainbow color (|g:ada_rainbow_color|) mode for
 		'(' and ')'.
 
 :AdaLines							   *:AdaLines*
@@ -384,7 +384,7 @@ makes no difference.
 		Creates tags file for the current file.
 
 :AdaTypes							   *:AdaTypes*
-		Toggles standard types (|g:ada_standard_types|) colour.
+		Toggles standard types (|g:ada_standard_types|) color.
 
 :GnatFind							   *:GnatFind*
 		Calls |g:gnat.Find()|

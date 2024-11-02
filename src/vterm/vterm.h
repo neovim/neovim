@@ -67,12 +67,12 @@ static inline void vterm_rect_move(VTermRect *rect, int row_delta, int col_delta
  */
 typedef enum {
   /**
-   * If the lower bit of `type` is not set, the colour is 24-bit RGB.
+   * If the lower bit of `type` is not set, the color is 24-bit RGB.
    */
   VTERM_COLOR_RGB = 0x00,
 
   /**
-   * The colour is an index into a palette of 256 colours.
+   * The color is an index into a palette of 256 colors.
    */
   VTERM_COLOR_INDEXED = 0x01,
 
@@ -82,17 +82,17 @@ typedef enum {
   VTERM_COLOR_TYPE_MASK = 0x01,
 
   /**
-   * If set, indicates that this colour should be the default foreground
-   * color, i.e. there was no SGR request for another colour. When
-   * rendering this colour it is possible to ignore "idx" and just use a
-   * colour that is not in the palette.
+   * If set, indicates that this color should be the default foreground
+   * color, i.e. there was no SGR request for another color. When
+   * rendering this color it is possible to ignore "idx" and just use a
+   * color that is not in the palette.
    */
   VTERM_COLOR_DEFAULT_FG = 0x02,
 
   /**
-   * If set, indicates that this colour should be the default background
-   * color, i.e. there was no SGR request for another colour. A common
-   * option when rendering this colour is to not render a background at
+   * If set, indicates that this color should be the default background
+   * color, i.e. there was no SGR request for another color. A common
+   * option when rendering this color is to not render a background at
    * all, for example by rendering the window transparently at this spot.
    */
   VTERM_COLOR_DEFAULT_BG = 0x04,
@@ -105,14 +105,14 @@ typedef enum {
 
 /**
  * Returns true if the VTERM_COLOR_RGB `type` flag is set, indicating that the
- * given VTermColor instance is an indexed colour.
+ * given VTermColor instance is an indexed color.
  */
 #define VTERM_COLOR_IS_INDEXED(col) \
   (((col)->type & VTERM_COLOR_TYPE_MASK) == VTERM_COLOR_INDEXED)
 
 /**
  * Returns true if the VTERM_COLOR_INDEXED `type` flag is set, indicating that
- * the given VTermColor instance is an rgb colour.
+ * the given VTermColor instance is an rgb color.
  */
 #define VTERM_COLOR_IS_RGB(col) \
   (((col)->type & VTERM_COLOR_TYPE_MASK) == VTERM_COLOR_RGB)
@@ -134,10 +134,10 @@ typedef enum {
   (!!((col)->type & VTERM_COLOR_DEFAULT_BG))
 
 /**
- * Tagged union storing either an RGB color or an index into a colour palette.
- * In order to convert indexed colours to RGB, you may use the
+ * Tagged union storing either an RGB color or an index into a color palette.
+ * In order to convert indexed colors to RGB, you may use the
  * vterm_state_convert_color_to_rgb() or vterm_screen_convert_color_to_rgb()
- * functions which lookup the RGB colour from the palette maintained by a
+ * functions which lookup the RGB color from the palette maintained by a
  * VTermState or VTermScreen instance.
  */
 typedef union {
@@ -150,7 +150,7 @@ typedef union {
   uint8_t type;
 
   /**
-   * Valid if `VTERM_COLOR_IS_RGB(type)` is true. Holds the RGB colour values.
+   * Valid if `VTERM_COLOR_IS_RGB(type)` is true. Holds the RGB color values.
    */
   struct {
     /**
@@ -159,14 +159,14 @@ typedef union {
     uint8_t type;
 
     /**
-     * The actual 8-bit red, green, blue colour values.
+     * The actual 8-bit red, green, blue color values.
      */
     uint8_t red, green, blue;
   } rgb;
 
   /**
    * If `VTERM_COLOR_IS_INDEXED(type)` is true, this member holds the index into
-   * the colour palette.
+   * the color palette.
    */
   struct {
     /**
@@ -175,7 +175,7 @@ typedef union {
     uint8_t type;
 
     /**
-     * Index into the colour map.
+     * Index into the color map.
      */
     uint8_t idx;
   } indexed;
@@ -204,7 +204,7 @@ static inline void vterm_color_indexed(VTermColor *col, uint8_t idx)
 }
 
 /**
- * Compares two colours. Returns true if the colors are equal, false otherwise.
+ * Compares two colors. Returns true if the colors are equal, false otherwise.
  */
 int vterm_color_is_equal(const VTermColor *a, const VTermColor *b);
 
@@ -341,7 +341,7 @@ VTerm *vterm_build(const struct VTermBuilder *builder);
 
 /* A convenient shortcut for default cases */
 VTerm *vterm_new(int rows, int cols);
-/* This shortcuts are generally discouraged in favour of just using vterm_build() */
+/* This shortcuts are generally discouraged in favor of just using vterm_build() */
 VTerm *vterm_new_with_allocator(int rows, int cols, VTermAllocatorFunctions *funcs, void *allocdata);
 
 void   vterm_free(VTerm* vt);
@@ -479,14 +479,14 @@ void vterm_state_focus_out(VTermState *state);
 const VTermLineInfo *vterm_state_get_lineinfo(const VTermState *state, int row);
 
 /**
- * Makes sure that the given color `col` is indeed an RGB colour. After this
+ * Makes sure that the given color `col` is indeed an RGB color. After this
  * function returns, VTERM_COLOR_IS_RGB(col) will return true, while all other
  * flags stored in `col->type` will have been reset.
  *
- * @param state is the VTermState instance from which the colour palette should
+ * @param state is the VTermState instance from which the color palette should
  * be extracted.
  * @param col is a pointer at the VTermColor instance that should be converted
- * to an RGB colour.
+ * to an RGB color.
  */
 void vterm_state_convert_color_to_rgb(const VTermState *state, VTermColor *col);
 
@@ -611,7 +611,7 @@ int vterm_screen_is_eol(const VTermScreen *screen, VTermPos pos);
 void vterm_screen_convert_color_to_rgb(const VTermScreen *screen, VTermColor *col);
 
 /**
- * Similar to vterm_state_set_default_colors(), but also resets colours in the
+ * Similar to vterm_state_set_default_colors(), but also resets colors in the
  * screen buffer(s)
  */
 void vterm_screen_set_default_colors(VTermScreen *screen, const VTermColor *default_fg, const VTermColor *default_bg);

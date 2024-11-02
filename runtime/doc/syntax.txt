@@ -959,7 +959,7 @@ doxygen_my_rendering		0	Disable rendering of HTML bold, italic
 					and html_my_rendering underline.
 
 doxygen_javadoc_autobrief	1	Set to 0 to disable javadoc autobrief
-					colour highlighting.
+					color highlighting.
 
 doxygen_end_punctuation		'[.]'	Set to regexp match for the ending
 					punctuation of brief
@@ -968,9 +968,9 @@ There are also some highlight groups worth mentioning as they can be useful in
 configuration.
 
 Highlight			Effect ~
-doxygenErrorComment		The colour of an end-comment when missing
+doxygenErrorComment		The color of an end-comment when missing
 				punctuation in a code, verbatim or dot section
-doxygenLinkError		The colour of an end-comment when missing the
+doxygenLinkError		The color of an end-comment when missing the
 				\endlink from a \link section.
 
 
@@ -1350,7 +1350,7 @@ Haskell code, the latter in both Bird style and TeX style.  The Haskell
 syntax highlighting will also highlight C preprocessor directives.
 
 If you want to highlight delimiter characters (useful if you have a
-light-coloured background), add to your vimrc: >
+light-colored background), add to your vimrc: >
 	:let hs_highlight_delimiters = 1
 To treat True and False as keywords as opposed to ordinary identifiers,
 add: >
@@ -1553,7 +1553,7 @@ idl_no_ms_extensions		Disable some of the Microsoft specific
 idl_no_extensions		Disable complex extensions
 idlsyntax_showerror		Show IDL errors (can be rather intrusive, but
 				quite helpful)
-idlsyntax_showerror_soft	Use softer colours by default for errors
+idlsyntax_showerror_soft	Use softer colors by default for errors
 
 
 JAVA						*java.vim* *ft-java-syntax*
@@ -2281,7 +2281,7 @@ you set the variable: >
 	:let papp_include_html=1
 
 in your startup file it will try to syntax-highlight html code inside phtml
-sections, but this is relatively slow and much too colourful to be able to
+sections, but this is relatively slow and much too colorful to be able to
 edit sensibly. ;)
 
 The newest version of the papp.vim syntax file can usually be found at

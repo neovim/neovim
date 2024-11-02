@@ -1952,7 +1952,7 @@ In English, that sed script:
 
 						*errorformat-ant*
 For ant (https://jakarta.apache.org/) the above errorformat has to be modified
-to honour the leading [javac] in front of each javac output line: >
+to honor the leading [javac] in front of each javac output line: >
   :set efm=%A\ %#[javac]\ %f:%l:\ %m,%-Z\ %#[javac]\ %p^,%-C%.%#
 
 The 'errorformat' can also be configured to handle ant together with either

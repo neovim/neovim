@@ -554,7 +554,7 @@ function Client:initialize()
     },
     -- The rootPath of the workspace. Is null if no folder is open.
     --
-    -- @deprecated in favour of rootUri.
+    -- @deprecated in favor of rootUri.
     rootPath = root_path or vim.NIL,
     -- The rootUri of the workspace. Is null if no folder is open. If both
     -- `rootPath` and `rootUri` are set `rootUri` wins.

@@ -157,7 +157,7 @@ local function wantstate(vt, opts)
 
   vterm.vterm_state_set_callbacks(state, state_cbs, nil)
 
-  -- In some tests we want to check the behaviour of overflowing the buffer, so make it nicely small
+  -- In some tests we want to check the behavior of overflowing the buffer, so make it nicely small
   vterm.vterm_state_set_selection_callbacks(state, selection_cbs, nil, nil, 16)
   vterm.vterm_state_set_bold_highbright(state, 1)
   vterm.vterm_state_reset(state, 1)
@@ -2481,22 +2481,22 @@ describe('vterm', function()
     push('\x1bP$qm\x1b\\', vt)
     expect_output('\x1bP1$r1;5;7m\x1b\\')
 
-    -- DECRQSS on SGR ANSI colours
+    -- DECRQSS on SGR ANSI colors
     push('\x1b[0;31;42m', vt)
     push('\x1bP$qm\x1b\\', vt)
     expect_output('\x1bP1$r31;42m\x1b\\')
 
-    -- DECRQSS on SGR ANSI hi-bright colours
+    -- DECRQSS on SGR ANSI hi-bright colors
     push('\x1b[0;93;104m', vt)
     push('\x1bP$qm\x1b\\', vt)
     expect_output('\x1bP1$r93;104m\x1b\\')
 
-    -- DECRQSS on SGR 256-palette colours
+    -- DECRQSS on SGR 256-palette colors
     push('\x1b[0;38:5:56;48:5:78m', vt)
     push('\x1bP$qm\x1b\\', vt)
     expect_output('\x1bP1$r38:5:56;48:5:78m\x1b\\')
 
-    -- DECRQSS on SGR RGB8 colours
+    -- DECRQSS on SGR RGB8 colors
     push('\x1b[0;38:2:24:68:112;48:2:13:57:101m', vt)
     push('\x1bP$qm\x1b\\', vt)
     expect_output('\x1bP1$r38:2:24:68:112;48:2:13:57:101m\x1b\\')
@@ -2737,7 +2737,7 @@ describe('vterm', function()
     -- push "\x1b[49m"
     --   ?pen background = rgb(0,0,0,is_default_bg)
     --
-    -- Bold+ANSI colour == highbright
+    -- Bold+ANSI color == highbright
     -- push "\x1b[m\x1b[1;37m"
     --   ?pen bold = on
     --   ?pen foreground = idx(15)
@@ -3229,7 +3229,7 @@ describe('vterm', function()
     screen_cell(0, 9, '{30} width=1 attrs={S_} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
     screen_cell(0, 10, '{32} width=1 attrs={S^} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
 
-    -- EL sets only colours to end of line, not other attrs
+    -- EL sets only colors to end of line, not other attrs
     push('\x1b[H\x1b[7;33;44m\x1b[K', vt)
     screen_cell(0, 0, '{} width=1 attrs={} fg=rgb(224,224,0) bg=rgb(0,0,224)', screen)
     screen_cell(0, 79, '{} width=1 attrs={} fg=rgb(224,224,0) bg=rgb(0,0,224)', screen)
@@ -3247,7 +3247,7 @@ describe('vterm', function()
     -- push('\x1b[?5$p')
     -- expect_output('\x1b[?5;2$y')
 
-    -- Set default colours
+    -- Set default colors
     reset(nil, screen)
     push('ABC\x1b[31mDEF\x1b[m', vt)
     screen_cell(0, 0, '{41} width=1 attrs={} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
@@ -3408,7 +3408,7 @@ describe('vterm', function()
     lineinfo(1, { cont = true }, state)
     cursor(1, 3, state)
 
-    -- Shell wrapped prompt behaviour
+    -- Shell wrapped prompt behavior
     reset(state, screen)
     resize(5, 10, vt)
     push('PROMPT GOES HERE\r\n> \r\n\r\nPROMPT GOES HERE\r\n> ', vt)

@@ -154,7 +154,7 @@ describe('marktree', function()
       eq(ipos[1], k.pos.row)
       eq(ipos[2], k.pos.col, ipos[1])
       lib.marktree_itr_next(tree, iter)
-      -- TODO(bfredl): use id2pos to check neighbour?
+      -- TODO(bfredl): use id2pos to check neighbor?
       -- local k2 = lib.marktree_itr_current(iter)
     end
 

@@ -1409,7 +1409,7 @@ window the current directory is changed to the last specified local current
 directory.  If none was specified, the global or tab-local directory is used.
 When creating a new window it inherits the local directory of the current window.
 
-When changing tabs the same behaviour applies.  If the current tab has no
+When changing tabs the same behavior applies.  If the current tab has no
 local working directory the global working directory is used.
 
 When a |:cd| command is used, the current window and tab will lose their local

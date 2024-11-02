@@ -41,7 +41,7 @@ static int ramp24[] = {
   0x85, 0x90, 0x9B, 0xA6, 0xB1, 0xBC, 0xC7, 0xD2, 0xDD, 0xE8, 0xF3, 0xFF,
 };
 
-static void lookup_default_colour_ansi(long idx, VTermColor *col)
+static void lookup_default_color_ansi(long idx, VTermColor *col)
 {
   if (idx >= 0 && idx < 16) {
     vterm_color_rgb(
@@ -50,7 +50,7 @@ static void lookup_default_colour_ansi(long idx, VTermColor *col)
   }
 }
 
-static bool lookup_colour_ansi(const VTermState *state, long index, VTermColor *col)
+static bool lookup_color_ansi(const VTermState *state, long index, VTermColor *col)
 {
   if(index >= 0 && index < 16) {
     *col = state->colors[index];
@@ -60,14 +60,14 @@ static bool lookup_colour_ansi(const VTermState *state, long index, VTermColor *
   return false;
 }
 
-static bool lookup_colour_palette(const VTermState *state, long index, VTermColor *col)
+static bool lookup_color_palette(const VTermState *state, long index, VTermColor *col)
 {
   if(index >= 0 && index < 16) {
-    // Normal 8 colours or high intensity - parse as palette 0
-    return lookup_colour_ansi(state, index, col);
+    // Normal 8 colors or high intensity - parse as palette 0
+    return lookup_color_ansi(state, index, col);
   }
   else if(index >= 16 && index < 232) {
-    // 216-colour cube
+    // 216-color cube
     index -= 16;
 
     vterm_color_rgb(col, ramp6[index/6/6 % 6],
@@ -88,10 +88,10 @@ static bool lookup_colour_palette(const VTermState *state, long index, VTermColo
   return false;
 }
 
-static int lookup_colour(const VTermState *state, int palette, const long args[], int argcount, VTermColor *col)
+static int lookup_color(const VTermState *state, int palette, const long args[], int argcount, VTermColor *col)
 {
   switch(palette) {
-  case 2: // RGB mode - 3 args contain colour values directly
+  case 2: // RGB mode - 3 args contain color values directly
     if(argcount < 3)
       return argcount;
 
@@ -99,7 +99,7 @@ static int lookup_colour(const VTermState *state, int palette, const long args[]
 
     return 3;
 
-  case 5: // XTerm 256-colour mode
+  case 5: // XTerm 256-color mode
     if (!argcount || CSI_ARG_IS_MISSING(args[0])) {
       return argcount ? 1 : 0;
     }
@@ -109,7 +109,7 @@ static int lookup_colour(const VTermState *state, int palette, const long args[]
     return argcount ? 1 : 0;
 
   default:
-    DEBUG_LOG("Unrecognised colour palette %d\n", palette);
+    DEBUG_LOG("Unrecognised color palette %d\n", palette);
     return 0;
   }
 }
@@ -164,7 +164,7 @@ INTERNAL void vterm_state_newpen(VTermState *state)
   vterm_state_set_default_colors(state, &state->default_fg, &state->default_bg);
 
   for(int col = 0; col < 16; col++)
-    lookup_default_colour_ansi(col, &state->colors[col]);
+    lookup_default_color_ansi(col, &state->colors[col]);
 }
 
 INTERNAL void vterm_state_resetpen(VTermState *state)
@@ -214,7 +214,7 @@ INTERNAL void vterm_state_savepen(VTermState *state, int save)
 
 int vterm_color_is_equal(const VTermColor *a, const VTermColor *b)
 {
-  /* First make sure that the two colours are of the same type (RGB/Indexed) */
+  /* First make sure that the two colors are of the same type (RGB/Indexed) */
   if (a->type != b->type) {
     return false;
   }
@@ -240,7 +240,7 @@ void vterm_state_get_default_colors(const VTermState *state, VTermColor *default
 
 void vterm_state_get_palette_color(const VTermState *state, int index, VTermColor *col)
 {
-  lookup_colour_palette(state, index, col);
+  lookup_color_palette(state, index, col);
 }
 
 void vterm_state_set_default_colors(VTermState *state, const VTermColor *default_fg, const VTermColor *default_bg)
@@ -267,7 +267,7 @@ void vterm_state_set_palette_color(VTermState *state, int index, const VTermColo
 void vterm_state_convert_color_to_rgb(const VTermState *state, VTermColor *col)
 {
   if (VTERM_COLOR_IS_INDEXED(col)) { /* Convert indexed colors to RGB */
-    lookup_colour_palette(state, col->indexed.idx, col);
+    lookup_color_palette(state, col->indexed.idx, col);
   }
   col->type &= VTERM_COLOR_TYPE_MASK; /* Reset any metadata but the type */
 }
@@ -399,35 +399,35 @@ INTERNAL void vterm_state_setpen(VTermState *state, const long args[], int argco
       break;
 
     case 30: case 31: case 32: case 33:
-    case 34: case 35: case 36: case 37: // Foreground colour palette
+    case 34: case 35: case 36: case 37: // Foreground color palette
       value = CSI_ARG(args[argi]) - 30;
       if(state->pen.bold && state->bold_is_highbright)
         value += 8;
       set_pen_col_ansi(state, VTERM_ATTR_FOREGROUND, value);
       break;
 
-    case 38: // Foreground colour alternative palette
+    case 38: // Foreground color alternative palette
       if(argcount - argi < 1)
         return;
-      argi += 1 + lookup_colour(state, CSI_ARG(args[argi+1]), args+argi+2, argcount-argi-2, &state->pen.fg);
+      argi += 1 + lookup_color(state, CSI_ARG(args[argi+1]), args+argi+2, argcount-argi-2, &state->pen.fg);
       setpenattr_col(state, VTERM_ATTR_FOREGROUND, state->pen.fg);
       break;
 
-    case 39: // Foreground colour default
+    case 39: // Foreground color default
       state->pen.fg = state->default_fg;
       setpenattr_col(state, VTERM_ATTR_FOREGROUND, state->pen.fg);
       break;
 
     case 40: case 41: case 42: case 43:
-    case 44: case 45: case 46: case 47: // Background colour palette
+    case 44: case 45: case 46: case 47: // Background color palette
       value = CSI_ARG(args[argi]) - 40;
       set_pen_col_ansi(state, VTERM_ATTR_BACKGROUND, value);
       break;
 
-    case 48: // Background colour alternative palette
+    case 48: // Background color alternative palette
       if(argcount - argi < 1)
         return;
-      argi += 1 + lookup_colour(state, CSI_ARG(args[argi+1]), args+argi+2, argcount-argi-2, &state->pen.bg);
+      argi += 1 + lookup_color(state, CSI_ARG(args[argi+1]), args+argi+2, argcount-argi-2, &state->pen.bg);
       setpenattr_col(state, VTERM_ATTR_BACKGROUND, state->pen.bg);
       break;
 
@@ -449,13 +449,13 @@ INTERNAL void vterm_state_setpen(VTermState *state, const long args[], int argco
       break;
 
     case 90: case 91: case 92: case 93:
-    case 94: case 95: case 96: case 97: // Foreground colour high-intensity palette
+    case 94: case 95: case 96: case 97: // Foreground color high-intensity palette
       value = CSI_ARG(args[argi]) - 90 + 8;
       set_pen_col_ansi(state, VTERM_ATTR_FOREGROUND, value);
       break;
 
     case 100: case 101: case 102: case 103:
-    case 104: case 105: case 106: case 107: // Background colour high-intensity palette
+    case 104: case 105: case 106: case 107: // Background color high-intensity palette
       value = CSI_ARG(args[argi]) - 100 + 8;
       set_pen_col_ansi(state, VTERM_ATTR_BACKGROUND, value);
       break;

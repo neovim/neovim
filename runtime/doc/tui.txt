@@ -172,21 +172,21 @@ special key encoding. If Nvim does not exit cleanly then your terminal
 emulator could be in a bad state. If this happens, simply run "reset".
 
 							*tui-colors*
-Nvim uses 256 colours by default, ignoring |terminfo| for most terminal types,
-including "linux" (whose virtual terminals have had 256-colour support since
+Nvim uses 256 colors by default, ignoring |terminfo| for most terminal types,
+including "linux" (whose virtual terminals have had 256-color support since
 4.8) and anything claiming to be "xterm".  Also when $COLORTERM or $TERM
 contain the string "256".
 
 Nvim similarly assumes that any terminal emulator that sets $COLORTERM to any
-value, is capable of at least 16-colour operation.
+value, is capable of at least 16-color operation.
 
 						*true-color* *xterm-true-color*
-Nvim emits true (24-bit) colours in the terminal, if 'termguicolors' is set.
+Nvim emits true (24-bit) colors in the terminal, if 'termguicolors' is set.
 
 It uses the "setrgbf" and "setrgbb" |terminfo| extensions (proposed by Rüdiger
 Sonderfeld in 2013). If your terminfo definition is missing them, then Nvim
 will decide whether to add them to your terminfo definition, using the ISO
-8613-6:1994/ITU T.416:1993 control sequences for setting RGB colours (but
+8613-6:1994/ITU T.416:1993 control sequences for setting RGB colors (but
 modified to use semicolons instead of colons unless the terminal is known to
 follow the standard).
 
@@ -272,11 +272,11 @@ between them you might want to set the 'timeout' and/or 'ttimeout' option.
 
 If you are using a color terminal that is slow when displaying lines beyond
 the end of a buffer, this is because Nvim is drawing the whitespace twice, in
-two sets of colours and attributes.  To prevent this, use this command: >vim
+two sets of colors and attributes.  To prevent this, use this command: >vim
         hi NonText cterm=NONE ctermfg=NONE
-This draws the spaces with the default colours and attributes, which allows the
+This draws the spaces with the default colors and attributes, which allows the
 second pass of drawing to be optimized away.  Note: Although in theory the
-colours of whitespace are immaterial, in practice they change the colours of
+colors of whitespace are immaterial, in practice they change the colors of
 cursors and selections that cross them.  This may have a visible, but minor,
 effect on some UIs.
 

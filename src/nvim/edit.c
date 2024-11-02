@@ -3938,11 +3938,11 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
     Insstart_orig.col = curwin->w_cursor.col;
   }
 
-  // vi behaviour: the cursor moves backward but the character that
+  // vi behavior: the cursor moves backward but the character that
   //               was there remains visible
-  // Vim behaviour: the cursor moves backward and the character that
+  // Vim behavior: the cursor moves backward and the character that
   //                was there is erased from the screen.
-  // We can emulate the vi behaviour by pretending there is a dollar
+  // We can emulate the vi behavior by pretending there is a dollar
   // displayed even when there isn't.
   //  --pkv Sun Jan 19 01:56:40 EST 2003
   if (vim_strchr(p_cpo, CPO_BACKSPACE) != NULL && dollar_vcol == -1) {
@@ -4426,7 +4426,7 @@ bool ins_eol(int c)
   }
   undisplay_dollar();
 
-  // Strange Vi behaviour: In Replace mode, typing a NL will not delete the
+  // Strange Vi behavior: In Replace mode, typing a NL will not delete the
   // character under the cursor.  Only push a NUL on the replace stack,
   // nothing to put back when the NL is deleted.
   if ((State & REPLACE_FLAG) && !(State & VREPLACE_FLAG)) {

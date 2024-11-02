@@ -32,7 +32,7 @@
 " arguments.
 "
 " To aid user defined commands, negative  values  are  accepted  aswell.
-" Using a negative value specifies the default behaviour: any length  of
+" Using a negative value specifies the default behavior: any length  of
 " space runs will be used to justify the text.
 
 " indent argument
@@ -59,14 +59,14 @@
 " negative 'sw' or 'ts' value.
 "
 " As with the other arguments,  ''  may  be  used  to  get  the  default
-" behaviour.
+" behavior.
 
 
 " Notes:
 "
 " If the line, adjusted for space runs and leading/trailing  whitespace,
 " is wider than the used textwidth, the line will be left untouched  (no
-" whitespace removed).  This should be equivalent to  the  behaviour  of
+" whitespace removed).  This should be equivalent to  the  behavior  of
 " :left, :right and :center.
 "
 " If the resulting line is shorter than the used textwidth  it  is  left

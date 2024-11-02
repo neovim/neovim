@@ -80,9 +80,9 @@ function Test_match()
   call clearmatches()
 
   " --- Check that "setmatches()" will not add two matches with the same ID. The
-  " --- expected behaviour (for now) is to add the first match but not the
+  " --- expected behavior (for now) is to add the first match but not the
   " --- second and to return 0 (even though it is a matter of debate whether
-  " --- this can be considered successful behaviour).
+  " --- this can be considered successful behavior).
   let data = [{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1},
         \    {'group': 'MyGroup2', 'pattern': 'FIXME', 'priority': 10, 'id': 1}]
   call assert_fails('call setmatches(data)', 'E801:')

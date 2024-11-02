@@ -67,12 +67,12 @@ typedef struct {
   blob_T *ll_blob;    ///< The Blob or NULL.
 } lval_T;
 
-/// enum used by var_flavour()
+/// enum used by var_flavor()
 typedef enum {
-  VAR_FLAVOUR_DEFAULT = 1,   // doesn't start with uppercase
-  VAR_FLAVOUR_SESSION = 2,   // starts with uppercase, some lower
-  VAR_FLAVOUR_SHADA   = 4,  // all uppercase
-} var_flavour_T;
+  VAR_FLAVOR_DEFAULT = 1,   // doesn't start with uppercase
+  VAR_FLAVOR_SESSION = 2,   // starts with uppercase, some lower
+  VAR_FLAVOR_SHADA   = 4,  // all uppercase
+} var_flavor_T;
 
 /// Defines for Vim variables
 typedef enum {

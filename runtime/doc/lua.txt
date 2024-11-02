@@ -850,7 +850,7 @@ vim.spell.check({str})                                     *vim.spell.check()*
     Check {str} for spelling errors. Similar to the Vimscript function
     |spellbadword()|.
 
-    Note: The behaviour of this function is dependent on: 'spelllang',
+    Note: The behavior of this function is dependent on: 'spelllang',
     'spellfile', 'spellcapcheck' and 'spelloptions' which can all be local to
     the buffer. Consider calling this with |nvim_buf_call()|.
 

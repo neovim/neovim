@@ -3639,7 +3639,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
         do_again = false;
 
         // 1. Match empty string does not count, except for first
-        // match.  This reproduces the strange vi behaviour.
+        // match.  This reproduces the strange vi behavior.
         // This also catches endless loops.
         if (matchcol == prev_matchcol
             && regmatch.endpos[0].lnum == 0

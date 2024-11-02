@@ -243,7 +243,7 @@ describe('undo tree:', function()
       12
       d]])
 
-    -- The above behaviour was tested in the legacy Vim test because the
+    -- The above behavior was tested in the legacy Vim test because the
     -- legacy tests were executed with ':so!'.  The behavior differs for
     -- interactive use (even in Vim; see ":help :undojoin"):
     feed(normal_commands)

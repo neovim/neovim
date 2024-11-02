@@ -904,7 +904,7 @@ vim.go.cb = vim.go.clipboard
 --- used.  The command-line will cover the last line of the screen when
 --- shown.
 ---
---- WARNING: `cmdheight=0` is EXPERIMENTAL. Expect some unwanted behaviour.
+--- WARNING: `cmdheight=0` is EXPERIMENTAL. Expect some unwanted behavior.
 --- Some 'shortmess' flags and similar mechanism might fail to take effect,
 --- causing unwanted hit-enter prompts.  Some informative messages, both
 --- from Nvim itself and plugins, will not be displayed.
@@ -2740,7 +2740,7 @@ vim.go.gfm = vim.go.grepformat
 --- - `findstr /n $* nul` on Windows.
 --- Ripgrep can perform additional filtering such as using .gitignore rules
 --- and skipping hidden files. This is disabled by default (see the -u option)
---- to more closely match the behaviour of standard grep.
+--- to more closely match the behavior of standard grep.
 --- You can make ripgrep match Vim's case handling using the
 --- -i/--ignore-case and -S/--smart-case options.
 --- An `OptionSet` autocmd can be used to set it up to match automatically.

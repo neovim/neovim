@@ -1831,7 +1831,7 @@ done:
 /// @param[out]  lp  Lvalue definition. When evaluation errors occur `->ll_name`
 ///                  is NULL.
 /// @param[in]  unlet  True if using `:unlet`. This results in slightly
-///                    different behaviour when something is wrong; must end in
+///                    different behavior when something is wrong; must end in
 ///                    space or cmd separator.
 /// @param[in]  skip  True when skipping.
 /// @param[in]  flags  @see GetLvalFlags.
@@ -8014,7 +8014,7 @@ const char *find_option_var_end(const char **const arg, OptIndex *const opt_idxp
   return end;
 }
 
-var_flavour_T var_flavour(char *varname)
+var_flavor_T var_flavor(char *varname)
   FUNC_ATTR_PURE
 {
   char *p = varname;
@@ -8022,12 +8022,12 @@ var_flavour_T var_flavour(char *varname)
   if (ASCII_ISUPPER(*p)) {
     while (*(++p)) {
       if (ASCII_ISLOWER(*p)) {
-        return VAR_FLAVOUR_SESSION;
+        return VAR_FLAVOR_SESSION;
       }
     }
-    return VAR_FLAVOUR_SHADA;
+    return VAR_FLAVOR_SHADA;
   }
-  return VAR_FLAVOUR_DEFAULT;
+  return VAR_FLAVOR_DEFAULT;
 }
 
 void var_set_global(const char *const name, typval_T vartv)

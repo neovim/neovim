@@ -147,7 +147,7 @@ describe('profiling related functions', function()
   describe('profile_divide', function()
     itp('actually performs division', function()
       -- note: the routine actually performs floating-point division to get
-      -- better rounding behaviour, we have to take that into account when
+      -- better rounding behavior, we have to take that into account when
       -- checking. (check range, not exact number).
       local divisor = 10
 

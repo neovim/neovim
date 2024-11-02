@@ -356,7 +356,7 @@ let test_values = {
       \ 'term': [[], []],
       \ 'ttytype': [[], []],
       \
-      "\ default behaviours
+      "\ default behaviors
       \ 'othernum': [[-1, 0, 100], ['']],
       \ 'otherstring': [['', 'xxx'], []],
       \}

@@ -314,7 +314,7 @@ created, thus they behave slightly differently:
 :setl[ocal] {option}<	Set the effective value of {option} to its global
 			value by copying the global value to the local value.
 
-Note that the behaviour for |global-local| options is slightly different
+Note that the behavior for |global-local| options is slightly different
 between string and number-based options.
 
 							*:setg* *:setglobal*
@@ -1413,7 +1413,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	used.  The command-line will cover the last line of the screen when
 	shown.
 
-	WARNING: `cmdheight=0` is EXPERIMENTAL. Expect some unwanted behaviour.
+	WARNING: `cmdheight=0` is EXPERIMENTAL. Expect some unwanted behavior.
 	Some 'shortmess' flags and similar mechanism might fail to take effect,
 	causing unwanted hit-enter prompts.  Some informative messages, both
 	from Nvim itself and plugins, will not be displayed.
@@ -2971,7 +2971,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- `findstr /n $* nul` on Windows.
 	Ripgrep can perform additional filtering such as using .gitignore rules
 	and skipping hidden files. This is disabled by default (see the -u option)
-	to more closely match the behaviour of standard grep.
+	to more closely match the behavior of standard grep.
 	You can make ripgrep match Vim's case handling using the
 	-i/--ignore-case and -S/--smart-case options.
 	An |OptionSet| autocmd can be used to set it up to match automatically.

@@ -1288,11 +1288,11 @@ static inline bool can_syn_spell(win_T *wp, linenr_T lnum, int col)
 /// to after badly spelled word before the cursor.
 ///
 /// @param dir  FORWARD or BACKWARD
-/// @param behaviour  Behaviour of the function
+/// @param behavior  Behavior of the function
 /// @param attrp  return: attributes of bad word or NULL (only when "dir" is FORWARD)
 ///
 /// @return  0 if not found, length of the badly spelled word otherwise.
-size_t spell_move_to(win_T *wp, int dir, smt_T behaviour, bool curline, hlf_T *attrp)
+size_t spell_move_to(win_T *wp, int dir, smt_T behavior, bool curline, hlf_T *attrp)
 {
   if (no_spell_checking(wp)) {
     return 0;
@@ -1394,9 +1394,9 @@ size_t spell_move_to(win_T *wp, int dir, smt_T behaviour, bool curline, hlf_T *a
 
       if (attr != HLF_COUNT) {
         // We found a bad word.  Check the attribute.
-        if (behaviour == SMT_ALL
-            || (behaviour == SMT_BAD && attr == HLF_SPB)
-            || (behaviour == SMT_RARE && attr == HLF_SPR)) {
+        if (behavior == SMT_ALL
+            || (behavior == SMT_BAD && attr == HLF_SPB)
+            || (behavior == SMT_RARE && attr == HLF_SPR)) {
           // When searching forward only accept a bad word after
           // the cursor.
           if (dir == BACKWARD

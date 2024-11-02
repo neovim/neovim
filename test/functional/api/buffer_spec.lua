@@ -177,7 +177,7 @@ describe('api/buf', function()
       }
     end)
 
-    it('line_count has defined behaviour for unloaded buffers', function()
+    it('line_count has defined behavior for unloaded buffers', function()
       -- we'll need to know our bufnr for when it gets unloaded
       local bufnr = api.nvim_buf_get_number(0)
       -- replace the buffer contents with these three lines
@@ -191,7 +191,7 @@ describe('api/buf', function()
       eq(0, api.nvim_buf_line_count(bufnr))
     end)
 
-    it('get_lines has defined behaviour for unloaded buffers', function()
+    it('get_lines has defined behavior for unloaded buffers', function()
       -- we'll need to know our bufnr for when it gets unloaded
       local bufnr = api.nvim_buf_get_number(0)
       -- replace the buffer contents with these three lines

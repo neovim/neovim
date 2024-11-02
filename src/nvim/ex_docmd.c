@@ -2070,7 +2070,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // If we find a '|' or '\n' we set ea.nextcmd.
   if (*ea.cmd == NUL || *ea.cmd == '"'
       || (ea.nextcmd = check_nextcmd(ea.cmd)) != NULL) {
-    // strange vi behaviour:
+    // strange vi behavior:
     // ":3"     jumps to line 3
     // ":3|..." prints line 3
     // ":|"     prints current line

@@ -52,11 +52,11 @@ describe('NULL', function()
     end)
   end
   describe('list', function()
-    -- Subjectable behaviour
+    -- Subjectable behavior
     null_expr_test('is equal to empty list', 'L == []', 0, 1)
     null_expr_test('is equal to empty list (reverse order)', '[] == L', 0, 1)
 
-    -- Correct behaviour
+    -- Correct behavior
     null_test(
       'can be :unlet item with error message for empty list',
       ':unlet L[0]',

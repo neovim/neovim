@@ -1446,7 +1446,7 @@ int op_delete(oparg_T *oap)
 
   mb_adjust_opend(oap);
 
-  // Imitate the strange Vi behaviour: If the delete spans more than one
+  // Imitate the strange Vi behavior: If the delete spans more than one
   // line and motion_type == kMTCharWise and the result is a blank line, make the
   // delete linewise.  Don't do this for the change command or Visual mode.
   if (oap->motion_type == kMTCharWise
@@ -4982,7 +4982,7 @@ void write_reg_contents_lst(int name, char **strings, bool must_append, MotionTy
 /// @param str The contents to write
 /// @param len If >= 0, write `len` bytes of `str`. Otherwise, write
 ///               `strlen(str)` bytes. If `len` is larger than the
-///               allocated size of `src`, the behaviour is undefined.
+///               allocated size of `src`, the behavior is undefined.
 /// @param must_append If true, append the contents of `str` to the current
 ///                    contents of the register. Note that regardless of
 ///                    `must_append`, this function will append when `name`

@@ -66,48 +66,48 @@ static unibi_term *terminfo_builtin(const char *term, char **termname)
 {
   if (terminfo_is_term_family(term, "xterm")) {
     *termname = xstrdup("builtin_xterm");
-    return unibi_from_mem((const char *)xterm_256colour_terminfo,
-                          sizeof xterm_256colour_terminfo);
+    return unibi_from_mem((const char *)xterm_256color_terminfo,
+                          sizeof xterm_256color_terminfo);
   } else if (terminfo_is_term_family(term, "screen")) {
     *termname = xstrdup("builtin_screen");
-    return unibi_from_mem((const char *)screen_256colour_terminfo,
-                          sizeof screen_256colour_terminfo);
+    return unibi_from_mem((const char *)screen_256color_terminfo,
+                          sizeof screen_256color_terminfo);
   } else if (terminfo_is_term_family(term, "tmux")) {
     *termname = xstrdup("builtin_tmux");
-    return unibi_from_mem((const char *)tmux_256colour_terminfo,
-                          sizeof tmux_256colour_terminfo);
+    return unibi_from_mem((const char *)tmux_256color_terminfo,
+                          sizeof tmux_256color_terminfo);
   } else if (terminfo_is_term_family(term, "rxvt")) {
     *termname = xstrdup("builtin_rxvt");
-    return unibi_from_mem((const char *)rxvt_256colour_terminfo,
-                          sizeof rxvt_256colour_terminfo);
+    return unibi_from_mem((const char *)rxvt_256color_terminfo,
+                          sizeof rxvt_256color_terminfo);
   } else if (terminfo_is_term_family(term, "putty")) {
     *termname = xstrdup("builtin_putty");
-    return unibi_from_mem((const char *)putty_256colour_terminfo,
-                          sizeof putty_256colour_terminfo);
+    return unibi_from_mem((const char *)putty_256color_terminfo,
+                          sizeof putty_256color_terminfo);
   } else if (terminfo_is_term_family(term, "linux")) {
     *termname = xstrdup("builtin_linux");
-    return unibi_from_mem((const char *)linux_16colour_terminfo,
-                          sizeof linux_16colour_terminfo);
+    return unibi_from_mem((const char *)linux_16color_terminfo,
+                          sizeof linux_16color_terminfo);
   } else if (terminfo_is_term_family(term, "interix")) {
     *termname = xstrdup("builtin_interix");
-    return unibi_from_mem((const char *)interix_8colour_terminfo,
-                          sizeof interix_8colour_terminfo);
+    return unibi_from_mem((const char *)interix_8color_terminfo,
+                          sizeof interix_8color_terminfo);
   } else if (terminfo_is_term_family(term, "iterm")
              || terminfo_is_term_family(term, "iterm2")
              || terminfo_is_term_family(term, "iTerm.app")
              || terminfo_is_term_family(term, "iTerm2.app")) {
     *termname = xstrdup("builtin_iterm");
-    return unibi_from_mem((const char *)iterm_256colour_terminfo,
-                          sizeof iterm_256colour_terminfo);
+    return unibi_from_mem((const char *)iterm_256color_terminfo,
+                          sizeof iterm_256color_terminfo);
   } else if (terminfo_is_term_family(term, "st")) {
     *termname = xstrdup("builtin_st");
-    return unibi_from_mem((const char *)st_256colour_terminfo,
-                          sizeof st_256colour_terminfo);
+    return unibi_from_mem((const char *)st_256color_terminfo,
+                          sizeof st_256color_terminfo);
   } else if (terminfo_is_term_family(term, "gnome")
              || terminfo_is_term_family(term, "vte")) {
     *termname = xstrdup("builtin_vte");
-    return unibi_from_mem((const char *)vte_256colour_terminfo,
-                          sizeof vte_256colour_terminfo);
+    return unibi_from_mem((const char *)vte_256color_terminfo,
+                          sizeof vte_256color_terminfo);
   } else if (terminfo_is_term_family(term, "cygwin")) {
     *termname = xstrdup("builtin_cygwin");
     return unibi_from_mem((const char *)cygwin_terminfo,

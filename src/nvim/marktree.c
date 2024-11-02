@@ -527,7 +527,7 @@ void marktree_put_key(MarkTree *b, MTKey k)
 ///     - if the node is big enough, terminate
 ///     - if we can steal from the left, steal
 ///     - if we can steal from the right, steal
-///     - otherwise merge this node with a neighbour. This might make our
+///     - otherwise merge this node with a neighbor. This might make our
 ///       parent undersized. So repeat 5 for the parent.
 /// 6. If 4 went all the way to the root node. The root node
 ///    might have ended up with size 0. Delete it then.
@@ -697,16 +697,16 @@ uint64_t marktree_del_itr(MarkTree *b, MarkTreeIter *itr, bool rev)
     if (pi > 0 && p->ptr[pi - 1]->n > T - 1) {
       *lasti += 1;
       itr_dirty = true;
-      // steal one key from the left neighbour
+      // steal one key from the left neighbor
       pivot_right(b, ppos, p, pi - 1);
       break;
     } else if (pi < p->n && p->ptr[pi + 1]->n > T - 1) {
-      // steal one key from right neighbour
+      // steal one key from right neighbor
       pivot_left(b, ppos, p, pi);
       break;
     } else if (pi > 0) {
       assert(p->ptr[pi - 1]->n == T - 1);
-      // merge with left neighbour
+      // merge with left neighbor
       *lasti += T;
       x = merge_node(b, p, pi - 1);
       if (lasti == &itr->i) {

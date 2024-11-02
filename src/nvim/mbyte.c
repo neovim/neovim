@@ -1115,7 +1115,7 @@ int utf_char2bytes(const int c, char *const buf)
 
 /// Return true if "c" is a legacy composing UTF-8 character.
 ///
-/// This is deprecated in favour of utf_composinglike() which uses the modern
+/// This is deprecated in favor of utf_composinglike() which uses the modern
 /// stateful algorithm to determine grapheme clusters. Still available
 /// to support some legacy code which hasn't been refactored yet.
 ///

@@ -42,7 +42,7 @@ describe('luaeval()', function()
     it('is successfully received', function()
       local q = {t=true, f=false, --[[n=NIL,]] d={l={'string', 42, 0.42}}}
       eq(q, fn.luaeval("_A", q))
-      -- Not tested: nil, funcrefs, returned object identity: behaviour will
+      -- Not tested: nil, funcrefs, returned object identity: behavior will
       -- most likely change.
     end)
   end)
@@ -50,7 +50,7 @@ describe('luaeval()', function()
     it('are successfully transformed', function()
       eq({n=1, f=1.5, s='string', l={4, 2}},
          fn.luaeval('{n=1, f=1.5, s="string", l={4, 2}}'))
-      -- Not tested: nil inside containers: behaviour will most likely change.
+      -- Not tested: nil inside containers: behavior will most likely change.
       eq(NIL, fn.luaeval('nil'))
       eq({['']=1}, fn.luaeval('{[""]=1}'))
     end)

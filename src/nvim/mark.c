@@ -1597,7 +1597,7 @@ const void *mark_global_iter(const void *const iter, char *const name, xfmark_T 
 ///
 ///                            Current mark name must either be NUL, '"', '^',
 ///                            '.' or 'a' .. 'z'. If it is neither of these
-///                            behaviour is undefined.
+///                            behavior is undefined.
 ///
 /// @return Pointer to the next mark or NULL.
 static inline const fmark_T *next_buffer_mark(const buf_T *const buf, char *const mark_name)

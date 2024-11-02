@@ -968,7 +968,7 @@ func Test_tabpage_alloc_failure()
 endfunc
 
 func Test_tabpage_tabclose()
-  " Default behaviour, move to the right.
+  " Default behavior, move to the right.
   call s:reconstruct_tabpage_for_test(6)
   norm! 4gt
   setl tcl=

@@ -4251,7 +4251,7 @@ static void nv_brackets(cmdarg_T *cap)
       flag = '}';                   // "][" or "[]"
     }
     curwin->w_set_curswant = true;
-    // Imitate strange Vi behaviour: When using "]]" with an operator we also stop at '}'.
+    // Imitate strange Vi behavior: When using "]]" with an operator we also stop at '}'.
     if (!findpar(&cap->oap->inclusive, cap->arg, cap->count1, flag,
                  (cap->oap->op_type != OP_NOP
                   && cap->arg == FORWARD && flag == '{'))) {
@@ -4549,7 +4549,7 @@ static void nv_replace(cmdarg_T *cap)
 
   if (had_ctrl_v != Ctrl_V && (cap->nchar == '\r' || cap->nchar == '\n')) {
     // Replace character(s) by a single newline.
-    // Strange vi behaviour: Only one newline is inserted.
+    // Strange vi behavior: Only one newline is inserted.
     // Delete the characters here.
     // Insert the newline with an insert command, takes care of
     // autoindent.      The insert command depends on being on the last

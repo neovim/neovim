@@ -533,7 +533,7 @@ static int store_session_globals(FILE *fd)
   TV_DICT_ITER(&globvardict, this_var, {
     if ((this_var->di_tv.v_type == VAR_NUMBER
          || this_var->di_tv.v_type == VAR_STRING)
-        && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
+        && var_flavor(this_var->di_key) == VAR_FLAVOR_SESSION) {
       // Escape special characters with a backslash.  Turn a LF and
       // CR into \n and \r.
       char *const p = vim_strsave_escaped(tv_get_string(&this_var->di_tv), "\\\"\n\r");
@@ -555,7 +555,7 @@ static int store_session_globals(FILE *fd)
       }
       xfree(p);
     } else if (this_var->di_tv.v_type == VAR_FLOAT
-               && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
+               && var_flavor(this_var->di_key) == VAR_FLAVOR_SESSION) {
       float_T f = this_var->di_tv.vval.v_float;
       int sign = ' ';
 

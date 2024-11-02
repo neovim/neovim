@@ -2411,14 +2411,14 @@ error('Cannot require a meta file')
 ---The rootPath of the workspace. Is null
 ---if no folder is open.
 ---
----@deprecated in favour of rootUri.
+---@deprecated in favor of rootUri.
 ---@field rootPath? string|lsp.null
 ---
 ---The rootUri of the workspace. Is null if no
 ---folder is open. If both `rootPath` and `rootUri` are set
 ---`rootUri` wins.
 ---
----@deprecated in favour of workspaceFolders.
+---@deprecated in favor of workspaceFolders.
 ---@field rootUri lsp.DocumentUri|lsp.null
 ---
 ---The capabilities provided by the client (editor or tool)

@@ -333,7 +333,7 @@ Pattern matching has several differences:
 - Filetype patterns are grouped by their parent pattern to improve matching
   performance: If the parent pattern does not match, skip testing all child
   patterns. Note that unlike leaf patterns, parent patterns do not have
-  special matching behaviour if they contain a `/`.
+  special matching behavior if they contain a `/`.
 
   When adding a new filetype with pattern matching, consider the following:
   - If there is already a group with appropriate parent pattern, use it.

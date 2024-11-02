@@ -477,12 +477,12 @@ The examples below assume a 'shiftwidth' of 4.
 <
 							*cino-k*
 	kN    When in unclosed parentheses which follow "if", "for" or
-	      "while" and N is non-zero, overrides the behaviour defined by
+	      "while" and N is non-zero, overrides the behavior defined by
 	      "(N": causes the indent to be N characters relative to the outer
 	      context (i.e. the line where "if", "for" or "while" is).  Has
 	      no effect on deeper levels of nesting.  Affects flags like "wN"
 	      only for the "if", "for" and "while" conditions.  If 0, defaults
-	      to behaviour defined by the "(N" flag.  (default: 0).
+	      to behavior defined by the "(N" flag.  (default: 0).
 
 		cino=(0			   cino=(0,ks >
 		  if (condition1	    if (condition1
@@ -697,8 +697,8 @@ two spaces relative to the opening paren:
 	  bar
 	  baz)
 <
-Setting this option to `1` changes this behaviour so that all subforms are
-aligned to the same column, emulating the default behaviour of
+Setting this option to `1` changes this behavior so that all subforms are
+aligned to the same column, emulating the default behavior of
 clojure-mode.el:
 >
 	(foo

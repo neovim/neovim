@@ -158,7 +158,7 @@ static const struct luaL_Reg bit_funcs[] = {
 
 /* Signed right-shifts are implementation-defined per C89/C99.
 ** But the de facto standard are arithmetic right-shifts on two's
-** complement CPUs. This behaviour is required here, so test for it.
+** complement CPUs. This behavior is required here, so test for it.
 */
 #define BAD_SAR		(bsar(-8, 2) != (SBits)-2)
 

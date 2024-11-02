@@ -690,7 +690,7 @@ void ex_history(exarg_T *eap)
 ///                            @warning When using this parameter user is
 ///                                     responsible for calling clr_history()
 ///                                     itself after iteration is over. If
-///                                     clr_history() is not called behaviour is
+///                                     clr_history() is not called behavior is
 ///                                     undefined. No functions that work with
 ///                                     history must be called during iteration
 ///                                     in this case.

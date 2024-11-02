@@ -1605,7 +1605,7 @@ will override the "r" and "l" flag.
 
 Enabling 'cindent' will override the alignment flags in many cases.
 Reindenting using a different method like |gq| or |=| will not consult
-alignment flags either. The same behaviour can be defined in those other
+alignment flags either. The same behavior can be defined in those other
 formatting options. One consideration is that 'cindent' has additional options
 for context based indenting of comments but cannot replicate many three piece
 indent alignments.  However, 'indentexpr' has the ability to work better with

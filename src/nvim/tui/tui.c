@@ -2136,7 +2136,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
 #define XTERM_SETAB_16 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e39%;m"
 
-  // Terminals with 256-colour SGR support despite what terminfo says.
+  // Terminals with 256-color SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals
     if (true_xterm || iterm || iterm_pretending_xterm) {
@@ -2144,7 +2144,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_COLON);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_COLON);
     } else if (konsolev || xterm || gnome || rxvt || st || putty
-               || linuxvt  // Linux 4.8+ supports 256-colour SGR.
+               || linuxvt  // Linux 4.8+ supports 256-color SGR.
                || mate_pretending_xterm || gnome_pretending_xterm
                || tmux
                || (colorterm && strstr(colorterm, "256"))
@@ -2154,7 +2154,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
     }
   }
-  // Terminals with 16-colour SGR support despite what terminfo says.
+  // Terminals with 16-color SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 16) {
     if (colorterm) {
       unibi_set_num(ut, unibi_max_colors, 16);
@@ -2352,7 +2352,7 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   tui->unibi_ext.set_cursor_color = unibi_find_ext_str(ut, "Cs");
   if (-1 == tui->unibi_ext.set_cursor_color) {
     if (iterm || iterm_pretending_xterm) {
-      // FIXME: Bypassing tmux like this affects the cursor colour globally, in
+      // FIXME: Bypassing tmux like this affects the cursor color globally, in
       // all panes, which is not particularly desirable.  A better approach
       // would use a tmux control sequence and an extra if(screen) test.
       tui->unibi_ext.set_cursor_color =

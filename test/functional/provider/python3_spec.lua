@@ -173,7 +173,7 @@ describe('python3 provider', function()
 end)
 
 describe('python2 feature test', function()
-  -- python2 is not supported, so correct behaviour is to return 0
+  -- python2 is not supported, so correct behavior is to return 0
   it('works', function()
     eq(0, fn.has('python2'))
     eq(0, fn.has('python'))

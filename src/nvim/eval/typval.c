@@ -3978,7 +3978,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic)
 ///
 /// Error messages are compatible with tv_get_number() previously used for the
 /// same purpose in buf*() functions. Special values are not accepted (previous
-/// behaviour: silently fail to find buffer).
+/// behavior: silently fail to find buffer).
 ///
 /// @param[in]  tv  Value to check.
 ///

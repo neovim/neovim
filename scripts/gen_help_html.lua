@@ -44,6 +44,16 @@ local spell_dict = {
   viml = 'Vimscript',
   ['tree-sitter'] = 'treesitter',
   ['Tree-sitter'] = 'Treesitter',
+  colour = 'color',
+  Colour = 'Color',
+  flavour = 'flavor',
+  Flavour = 'Flavor',
+  behaviour = 'behavior',
+  Behaviour = 'Behavior',
+  favour = 'favor',
+  Favour = 'Favor',
+  honour = 'honor',
+  Honour = 'Honor',
 }
 --- specify the list of keywords to ignore (i.e. allow), or true to disable spell check completely.
 --- @type table<string, true|string[]>
