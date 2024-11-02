@@ -5475,7 +5475,7 @@ return {
     },
     {
       cb = 'did_set_mouse',
-      defaults = { if_true = 'nvi' },
+      defaults = { if_true = 'a' },
       desc = [=[
         Enables mouse support. For example, to enable the mouse in Normal mode
         and Visual mode: >vim

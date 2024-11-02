@@ -4145,7 +4145,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	listing continues until finished.
 
 							*'mouse'*
-'mouse'			string	(default "nvi")
+'mouse'			string	(default "a")
 			global
 	Enables mouse support. For example, to enable the mouse in Normal mode
 	and Visual mode: >vim

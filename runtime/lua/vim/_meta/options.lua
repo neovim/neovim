@@ -4250,7 +4250,7 @@ vim.go.more = vim.o.more
 --- 'selectmode'	whether to start Select mode or Visual mode
 ---
 --- @type string
-vim.o.mouse = "nvi"
+vim.o.mouse = "a"
 vim.go.mouse = vim.o.mouse
 
 --- The window that the mouse pointer is on is automatically activated.
