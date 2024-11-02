@@ -287,6 +287,10 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Arena *arena, Error *err)
 
       if (ac->exec.type == CALLABLE_CB) {
         PUT_C(autocmd_info, "command", STRING_OBJ(STRING_INIT));
+        char *exec_to_string = aucmd_exec_to_string(ac, ac->exec);
+        if (exec_to_string) {
+          PUT_C(autocmd_info, "callbackpath", CSTR_AS_OBJ(exec_to_string));
+        }
 
         Callback *cb = &ac->exec.callable.cb;
         switch (cb->type) {
