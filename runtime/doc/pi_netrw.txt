@@ -1538,7 +1538,7 @@ OPENING FILES AND LAUNCHING APPS                 *netrw-gx* *:Open* *:Launch* {{
 Netrw determines which special handler by the following method:
 
   * if |g:netrw_browsex_viewer| exists, then it will be used to attempt to
-    view files.  Examples of useful settings (place into your <.vimrc>):
+    view files.
     If the viewer you wish to use does not support handling of a remote URL
     directory, set |g:netrw_browsex_support_remote| to 0.
   * otherwise:
