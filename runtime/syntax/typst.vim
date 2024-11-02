@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:    Typst
 " Maintainer:  Gregory Anders <greg@gpanders.com>
-" Last Change: 2024-07-14
+" Last Change: 2024 Nov 02
 " Based on:    https://github.com/kaarmu/typst.vim
 
 if exists('b:current_syntax')
@@ -18,8 +18,8 @@ syntax cluster typstCommon
 " Common > Comment {{{2
 syntax cluster typstComment
     \ contains=typstCommentBlock,typstCommentLine
-syntax match typstCommentBlock
-    \ #/\*\%(\_.\{-}\)\*/#
+syntax region typstCommentBlock
+    \ start="/\*" end="\*/" keepend
     \ contains=typstCommentTodo,@Spell
 syntax match typstCommentLine
     \ #//.*#
