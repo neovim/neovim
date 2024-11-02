@@ -3312,10 +3312,17 @@ describe('lua stdlib', function()
       eq('inext lines<ESC>', exec_lua [[return table.concat(keys, '')]])
     end)
 
-    it('skips any function that caused an error', function()
+    it('skips any function that caused an error and shows stacktrace', function()
       insert([[hello world]])
 
       exec_lua [[
+        local function ErrF2()
+          error("Dumb Error")
+        end
+        local function ErrF1()
+          ErrF2()
+        end
+
         keys = {}
 
         return vim.on_key(function(buf)
@@ -3326,7 +3333,7 @@ describe('lua stdlib', function()
           table.insert(keys, buf)
 
           if buf == 'l' then
-            error("Dumb Error")
+            ErrF1()
           end
         end)
       ]]
@@ -3336,6 +3343,19 @@ describe('lua stdlib', function()
 
       -- Only the first letter gets added. After that we remove the callback
       eq('inext l', exec_lua [[ return table.concat(keys, '') ]])
+
+      local errmsg = api.nvim_get_vvar('errmsg')
+      matches(
+        [[
+^Error executing vim%.on%_key%(%) callbacks:.*
+With ns%_id %d+: .*: Dumb Error
+stack traceback:
+.*: in function 'error'
+.*: in function 'ErrF2'
+.*: in function 'ErrF1'
+.*]],
+        errmsg
+      )
     end)
 
     it('argument 1 is keys after mapping, argument 2 is typed keys', function()
@@ -3449,6 +3469,7 @@ describe('lua stdlib', function()
       -- second key produces an error which removes the callback
       exec_lua [[
         n_call = 0
+
         vim.on_key(function(buf, typed_buf)
           if typed_buf == 'x' then
             n_call = n_call + 1
@@ -3460,7 +3481,7 @@ describe('lua stdlib', function()
       api.nvim_buf_set_lines(0, 0, -1, true, { '54321' })
 
       local function cleanup_msg(msg)
-        return (remove_trace(msg):gsub('^Error.*\n *Messages: ', ''))
+        return msg:gsub('^Error .*\nWith ns%_id %d+: ', '')
       end
 
       feed('x')

@@ -701,11 +701,13 @@ end
 --- Executes the on_key callbacks.
 ---@private
 function vim._on_key(buf, typed_buf)
-  local failed_ns_ids = {}
-  local failed_messages = {}
+  local failed = {} ---@type [integer, string][]
   local discard = false
   for k, v in pairs(on_key_cbs) do
-    local ok, rv = pcall(v[1], buf, typed_buf)
+    local fn = v[1]
+    local ok, rv = xpcall(function()
+      return fn(buf, typed_buf)
+    end, debug.traceback)
     if ok and rv ~= nil then
       if type(rv) == 'string' and #rv == 0 then
         discard = true
@@ -718,19 +720,16 @@ function vim._on_key(buf, typed_buf)
     end
     if not ok then
       vim.on_key(nil, k)
-      table.insert(failed_ns_ids, k)
-      table.insert(failed_messages, rv)
+      table.insert(failed, { k, rv })
     end
   end
 
-  if failed_ns_ids[1] then
-    error(
-      string.format(
-        "Error executing 'on_key' with ns_ids '%s'\n    Messages: %s",
-        table.concat(failed_ns_ids, ', '),
-        table.concat(failed_messages, '\n')
-      )
-    )
+  if #failed > 0 then
+    local errmsg = ''
+    for _, v in ipairs(failed) do
+      errmsg = errmsg .. string.format('\nWith ns_id %d: %s', v[1], v[2])
+    end
+    error(errmsg)
   end
   return discard
 end
