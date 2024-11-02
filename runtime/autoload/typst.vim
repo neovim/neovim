@@ -1,6 +1,6 @@
 " Language:    Typst
 " Maintainer:  Gregory Anders
-" Last Change: 2024 Oct 21
+" Last Change: 2024 Nov 02
 " Based on:    https://github.com/kaarmu/typst.vim
 
 function! typst#indentexpr() abort
@@ -18,6 +18,9 @@ function! typst#indentexpr() abort
     " Use last indent for block comments
     if l:synname == 'typstCommentBlock'
         return l:ind
+    " do not change the indents of bullet lists
+    elseif l:synname == 'typstMarkupBulletList'
+        return indent(a:lnum)
     endif
 
     if l:pline =~ '\v[{[(]\s*$'
