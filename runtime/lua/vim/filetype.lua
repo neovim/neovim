@@ -1151,6 +1151,7 @@ local extension = {
   sface = 'surface',
   svelte = 'svelte',
   svg = 'svg',
+  sw = 'sway',
   swift = 'swift',
   swiftinterface = 'swift',
   swig = 'swig',
