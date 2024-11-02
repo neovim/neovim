@@ -1509,9 +1509,17 @@ endfunc
 func Test_pum_user_abbr_hlgroup()
   CheckScreendump
   let lines =<< trim END
-    func CompleteFunc( findstart, base )
+    let s:var = 0
+    func CompleteFunc(findstart, base)
       if a:findstart
         return 0
+      endif
+      if s:var == 1
+        return {
+              \ 'words': [
+              \ { 'word': 'aword1', 'abbr_hlgroup': 'StrikeFake' },
+              \ { 'word': '你好', 'abbr_hlgroup': 'StrikeFake' },
+              \]}
       endif
       return {
             \ 'words': [
@@ -1519,6 +1527,9 @@ func Test_pum_user_abbr_hlgroup()
             \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
             \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'abbr_hlgroup': 'StrikeFake' },
             \]}
+    endfunc
+    func ChangeVar()
+      let s:var = 1
     endfunc
     set completeopt=menu
     set completefunc=CompleteFunc
@@ -1547,13 +1558,20 @@ func Test_pum_user_abbr_hlgroup()
   call VerifyScreenDump(buf, 'Test_pum_highlights_14', {})
   call term_sendkeys(buf, "\<C-E>\<Esc>")
 
+  call TermWait(buf)
+  call term_sendkeys(buf, ":call ChangeVar()\<CR>")
+  call TermWait(buf)
+  call term_sendkeys(buf, "S\<C-X>\<C-U>")
+  call VerifyScreenDump(buf, 'Test_pum_highlights_17', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
   call StopVimInTerminal(buf)
 endfunc
 
 func Test_pum_user_kind_hlgroup()
   CheckScreendump
   let lines =<< trim END
-    func CompleteFunc( findstart, base )
+    func CompleteFunc(findstart, base)
       if a:findstart
         return 0
       endif
