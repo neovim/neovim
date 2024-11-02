@@ -219,8 +219,8 @@ end
 ---@package
 ---@param changes Range6[]
 function TSHighlighter:on_changedtree(changes)
-  for _, ch in ipairs(changes) do
-    api.nvim__redraw({ buf = self.bufnr, range = { ch[1], ch[4] + 1 } })
+  for i, ch in ipairs(changes) do
+    api.nvim__redraw({ buf = self.bufnr, range = { ch[1], ch[4] + 1 }, flush = i == #changes })
   end
 end
 
