@@ -150,6 +150,7 @@ The following new features were added.
 API
 
 • |nvim__ns_set()| can set properties for a namespace
+• add api |nvim_win_get_view()| for get view information for a specified window.
 
 DEFAULTS
 

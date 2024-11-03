@@ -2423,6 +2423,18 @@ function vim.api.nvim_win_get_tabpage(window) end
 --- @return any # Variable value
 function vim.api.nvim_win_get_var(window, name) end
 
+--- Retrieves view-related information for a specified window.
+---
+--- @param window integer Window handle, or 0 for current window
+--- @param opts vim.api.keyset.empty Optional parameters. Currently unused.
+--- @return table<string,any> # Dict containing text height information, with these keys:
+--- - lnum: cursor line number in the given window.
+--- - topline: first line in the given window.
+--- - botline: bottom line in the given window.
+--- - leftcol: first column displayed; only used when 'wrap' is off.
+--- - skipcol: columns skipped.
+function vim.api.nvim_win_get_view(window, opts) end
+
 --- Gets the window width
 ---
 --- @param window integer Window handle, or 0 for current window

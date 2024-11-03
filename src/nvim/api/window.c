@@ -581,3 +581,43 @@ Dict nvim_win_text_height(Window window, Dict(win_text_height) *opts, Arena *are
   PUT_C(rv, "fill", INTEGER_OBJ(fill));
   return rv;
 }
+
+/// Retrieves view-related information for a specified window.
+///
+/// @param window     Window handle, or 0 for current window
+/// @param opts       Optional parameters. Currently unused.
+/// @param[out] err   Error details, if any
+///
+/// @return  Dict containing text height information, with these keys:
+///          - lnum: cursor line number in the given window.
+///          - topline: first line in the given window.
+///          - botline: bottom line in the given window.
+///          - leftcol: first column displayed; only used when 'wrap' is off.
+///          - skipcol: columns skipped.
+Dict nvim_win_get_view(Window window, Dict(empty) *opts, Arena *arena, Error *err)
+  FUNC_API_SINCE(13)
+{
+  Dict rv = arena_dict(arena, 5);
+  win_T *wp = find_window_by_handle(window, err);
+  if (!wp) {
+    return rv;
+  }
+  bool need_swicth = curwin != wp;
+  switchwin_T switchwin;
+  tabpage_T *tp = NULL;
+  if (need_swicth && switch_win_noblock(&switchwin, wp, tp, true)) {
+    check_cursor(curwin);
+    update_topline(curwin);
+  }
+  // In silent Ex mode topline is zero, use one instead.
+  PUT_C(rv, "topline", INTEGER_OBJ(wp->w_topline > 0 ? wp->w_topline : 1));
+  PUT_C(rv, "lnum", INTEGER_OBJ(wp->w_cursor.lnum));
+  PUT_C(rv, "leftcol", INTEGER_OBJ(wp->w_leftcol));
+  // In silent Ex mode botline is zero, return zero then.
+  PUT_C(rv, "botline", INTEGER_OBJ(wp->w_botline > 0 ? wp->w_botline - 1 : 0));
+  PUT_C(rv, "skipcol", INTEGER_OBJ(wp->w_skipcol));
+  if (need_swicth) {
+    restore_win_noblock(&switchwin, true);
+  }
+  return rv;
+}

@@ -2985,6 +2985,21 @@ nvim_win_get_var({window}, {name})                        *nvim_win_get_var()*
     Return: ~
         Variable value
 
+nvim_win_get_view({window}, {opts})                      *nvim_win_get_view()*
+    Retrieves view-related information for a specified window.
+
+    Parameters: ~
+      • {window}  Window handle, or 0 for current window
+      • {opts}    Optional parameters. Currently unused.
+
+    Return: ~
+        Dict containing text height information, with these keys:
+        • lnum: cursor line number in the given window.
+        • topline: first line in the given window.
+        • botline: bottom line in the given window.
+        • leftcol: first column displayed; only used when 'wrap' is off.
+        • skipcol: columns skipped.
+
 nvim_win_get_width({window})                            *nvim_win_get_width()*
     Gets the window width
 

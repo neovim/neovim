@@ -2877,4 +2877,67 @@ describe('API/win', function()
       end)
     end)
   end)
+
+  describe('get_view', function()
+    local win
+    before_each(function()
+      win = api.nvim_open_win(0, false, {
+        relative = 'editor',
+        row = 1,
+        col = 1,
+        height = 3,
+        width = 3,
+      })
+    end)
+
+    it('errors on invalid window', function()
+      eq('Invalid window id: 9999', pcall_err(api.nvim_win_get_view, 9999, {}))
+    end)
+
+    it('on empty buffer', function()
+      eq(
+        { lnum = 1, leftcol = 0, topline = 1, botline = 1, skipcol = 0 },
+        api.nvim_win_get_view(win, {})
+      )
+    end)
+
+    it('topline botline cursorline in view range', function()
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'a', 'b', 'c', 'd' })
+      eq(
+        { lnum = 1, leftcol = 0, topline = 1, botline = 3, skipcol = 0 },
+        api.nvim_win_get_view(win, {})
+      )
+      api.nvim_win_set_cursor(win, { 2, 1 })
+      eq(
+        { lnum = 2, leftcol = 0, topline = 1, botline = 3, skipcol = 0 },
+        api.nvim_win_get_view(win, {})
+      )
+      feed('<C-w>wGzz<C-w>p')
+      eq(
+        { lnum = 4, leftcol = 0, topline = 3, botline = 4, skipcol = 0 },
+        api.nvim_win_get_view(win, {})
+      )
+    end)
+
+    it('leftcol bigger than zero', function()
+      api.nvim_set_option_value('wrap', false, { scope = 'local', win = win })
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'looooooooooooooong' })
+      feed('<C-w>wlllllll<C-w>p')
+      eq(
+        { lnum = 1, leftcol = 6, topline = 1, botline = 1, skipcol = 0 },
+        api.nvim_win_get_view(win, {})
+      )
+    end)
+
+    it('get skipcol', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { ('foo'):rep(8) })
+      api.nvim_win_set_cursor(win, { 1, 7 })
+      api.nvim_set_current_win(win)
+      feed('gj')
+      eq(
+        { lnum = 1, leftcol = 0, topline = 1, botline = 1, skipcol = 3 },
+        api.nvim_win_get_view(win, {})
+      )
+    end)
+  end)
 end)
