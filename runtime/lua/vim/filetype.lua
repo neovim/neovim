@@ -926,8 +926,15 @@ local extension = {
   ai = 'postscr',
   pov = 'pov',
   ppd = 'ppd',
-  it = 'ppwiz',
+  idr = function(path, bufnr)
+    if vim.g.filetype_idr then
+      return vim.g.filetype_idr
+    end
+    return 'idris2'
+  end,
   ih = 'ppwiz',
+  ipkg = 'ipkg',
+  it = 'ppwiz',
   action = 'privoxy',
   prg = detect.prg,
   Prg = detect.prg,
