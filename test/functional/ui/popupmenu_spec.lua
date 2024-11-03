@@ -5190,9 +5190,17 @@ describe('builtin popupmenu', function()
       -- oldtest: Test_pum_user_abbr_hlgroup()
       it('custom abbr_hlgroup override', function()
         exec([[
-          func CompleteFunc( findstart, base )
+          let s:var = 0
+          func CompleteFunc(findstart, base)
             if a:findstart
               return 0
+            endif
+            if s:var == 1
+              return {
+                    \ 'words': [
+                    \ { 'word': 'aword1', 'abbr_hlgroup': 'StrikeFake' },
+                    \ { 'word': '你好', 'abbr_hlgroup': 'StrikeFake' },
+                    \]}
             endif
             return {
                   \ 'words': [
@@ -5200,6 +5208,9 @@ describe('builtin popupmenu', function()
                   \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
                   \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'abbr_hlgroup': 'StrikeFake' },
                   \]}
+          endfunc
+          func ChangeVar()
+            let s:var = 1
           endfunc
           set completeopt=menu
           set completefunc=CompleteFunc
@@ -5241,6 +5252,17 @@ describe('builtin popupmenu', function()
           {dn:你好}{n:   W extra text 3 }{1:          }|
           {1:~                               }|*15
           {2:-- }{5:match 2 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
+
+        command('call ChangeVar()')
+        feed('S<C-X><C-U>')
+        screen:expect([[
+          aword1^                          |
+          {ds:aword1}{s:         }{1:                 }|
+          {dn:你好}{n:           }{1:                 }|
+          {1:~                               }|*16
+          {2:-- }{5:match 1 of 2}                 |
         ]])
         feed('<C-E><Esc>')
       end)

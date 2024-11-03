@@ -657,11 +657,14 @@ void pum_redraw(void)
     pum_align_order(order);
     int basic_width = items_width_array[order[0]];  // first item width
     bool last_isabbr = order[2] == CPT_ABBR;
+    int orig_attr = -1;
+
     for (int j = 0; j < 3; j++) {
       int item_type = order[j];
       hlf = hlfs[item_type];
       attr = win_hl_attr(curwin, (int)hlf);
-      int orig_attr = attr;
+      attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), attr);
+      orig_attr = attr;
       int user_abbr_hlattr = pum_array[idx].pum_user_abbr_hlattr;
       int user_kind_hlattr = pum_array[idx].pum_user_kind_hlattr;
       if (item_type == CPT_ABBR && user_abbr_hlattr > 0) {
@@ -670,7 +673,6 @@ void pum_redraw(void)
       if (item_type == CPT_KIND && user_kind_hlattr > 0) {
         attr = hl_combine_attr(attr, user_kind_hlattr);
       }
-      attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), attr);
       int width = 0;
       char *s = NULL;
       p = pum_get_item(idx, item_type);
@@ -796,9 +798,9 @@ void pum_redraw(void)
     }
 
     if (pum_rl) {
-      grid_line_fill(col_off - pum_width + 1, grid_col + 1, schar_from_ascii(' '), attr);
+      grid_line_fill(col_off - pum_width + 1, grid_col + 1, schar_from_ascii(' '), orig_attr);
     } else {
-      grid_line_fill(grid_col, col_off + pum_width, schar_from_ascii(' '), attr);
+      grid_line_fill(grid_col, col_off + pum_width, schar_from_ascii(' '), orig_attr);
     }
 
     if (pum_scrollbar > 0) {
