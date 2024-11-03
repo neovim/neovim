@@ -364,7 +364,7 @@ func Test_findfunc()
 
   " Error cases
 
-  " Function that doesn't any argument
+  " Function that doesn't take any arguments
   func FindFuncNoArg()
   endfunc
   set findfunc=FindFuncNoArg
@@ -479,6 +479,41 @@ func Test_findfunc_scriptlocal_func()
   call assert_equal(expand('<SID>') .. 'FindFuncScript', &findfunc)
   call assert_equal(expand('<SID>') .. 'FindFuncScript', &l:findfunc)
   call assert_equal('', &g:findfunc)
+  let g:FindFuncArg = ''
+  find abc
+  call assert_equal('abc', g:FindFuncArg)
+  bw!
+
+  new | only
+  set findfunc=
+  setlocal findfunc=NoSuchFunc
+  setglobal findfunc=s:FindFuncScript
+  call assert_equal('NoSuchFunc', &findfunc)
+  call assert_equal('NoSuchFunc', &l:findfunc)
+  call assert_equal(expand('<SID>') .. 'FindFuncScript', &g:findfunc)
+  new | only
+  call assert_equal(expand('<SID>') .. 'FindFuncScript', &findfunc)
+  call assert_equal(expand('<SID>') .. 'FindFuncScript', &g:findfunc)
+  call assert_equal('', &l:findfunc)
+  let g:FindFuncArg = ''
+  find abc
+  call assert_equal('abc', g:FindFuncArg)
+  bw!
+
+  new | only
+  set findfunc=
+  setlocal findfunc=NoSuchFunc
+  set findfunc=s:FindFuncScript
+  call assert_equal(expand('<SID>') .. 'FindFuncScript', &findfunc)
+  call assert_equal(expand('<SID>') .. 'FindFuncScript', &g:findfunc)
+  call assert_equal('', &l:findfunc)
+  let g:FindFuncArg = ''
+  find abc
+  call assert_equal('abc', g:FindFuncArg)
+  new | only
+  call assert_equal(expand('<SID>') .. 'FindFuncScript', &findfunc)
+  call assert_equal(expand('<SID>') .. 'FindFuncScript', &g:findfunc)
+  call assert_equal('', &l:findfunc)
   let g:FindFuncArg = ''
   find abc
   call assert_equal('abc', g:FindFuncArg)

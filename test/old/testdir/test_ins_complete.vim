@@ -2268,6 +2268,7 @@ func Test_thesaurusfunc_callback()
     call add(g:TsrFunc3Args, [a:findstart, a:base])
     return a:findstart ? 0 : []
   endfunc
+
   set tsrfu=s:TsrFunc3
   new
   call setline(1, 'script1')
@@ -2283,6 +2284,46 @@ func Test_thesaurusfunc_callback()
   call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
   call assert_equal([[1, ''], [0, 'script2']], g:TsrFunc3Args)
   bw!
+
+  new | only
+  set thesaurusfunc=
+  setlocal thesaurusfunc=NoSuchFunc
+  setglobal thesaurusfunc=s:TsrFunc3
+  call assert_equal('NoSuchFunc', &thesaurusfunc)
+  call assert_equal('NoSuchFunc', &l:thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  new | only
+  call assert_equal('s:TsrFunc3', &thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal('', &l:thesaurusfunc)
+  call setline(1, 'script1')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
+  bw!
+
+  new | only
+  set thesaurusfunc=
+  setlocal thesaurusfunc=NoSuchFunc
+  set thesaurusfunc=s:TsrFunc3
+  call assert_equal('s:TsrFunc3', &thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal('', &l:thesaurusfunc)
+  call setline(1, 'script1')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
+  setlocal bufhidden=wipe
+  new | only!
+  call assert_equal('s:TsrFunc3', &thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal('', &l:thesaurusfunc)
+  call setline(1, 'script1')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
+  bw!
+
   delfunc s:TsrFunc3
 
   " invalid return value
