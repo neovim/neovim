@@ -950,6 +950,46 @@ func Test_completeopt_buffer_local()
   call assert_equal('menu', &completeopt)
   call assert_equal('menu', &g:completeopt)
 
+  new | only
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  set completeopt&
+  setlocal completeopt=menu,fuzzy,noinsert
+  setglobal completeopt=menu,longest
+  call assert_equal('menu,fuzzy,noinsert', &completeopt)
+  call assert_equal('menu,fuzzy,noinsert', &l:completeopt)
+  call assert_equal('menu,longest', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>bz\<C-Y>", 'tnix')
+  call assert_equal('foobaz', getline('.'))
+  setlocal bufhidden=wipe
+  new | only!
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  call assert_equal('menu,longest', &completeopt)
+  call assert_equal('menu,longest', &g:completeopt)
+  call assert_equal('', &l:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-X>\<C-Z>", 'tnix')
+  call assert_equal('foo', getline('.'))
+  bwipe!
+
+  new | only
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  set completeopt&
+  setlocal completeopt=menu,fuzzy,noinsert
+  set completeopt=menu,longest
+  call assert_equal('menu,longest', &completeopt)
+  call assert_equal('menu,longest', &g:completeopt)
+  call assert_equal('', &l:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-X>\<C-Z>", 'tnix')
+  call assert_equal('foo', getline('.'))
+  setlocal bufhidden=wipe
+  new | only!
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  call assert_equal('menu,longest', &completeopt)
+  call assert_equal('menu,longest', &g:completeopt)
+  call assert_equal('', &l:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-X>\<C-Z>", 'tnix')
+  call assert_equal('foo', getline('.'))
+  bwipe!
+
   set completeopt&
 endfunc
 
@@ -2228,6 +2268,7 @@ func Test_thesaurusfunc_callback()
     call add(g:TsrFunc3Args, [a:findstart, a:base])
     return a:findstart ? 0 : []
   endfunc
+
   set tsrfu=s:TsrFunc3
   new
   call setline(1, 'script1')
@@ -2243,6 +2284,46 @@ func Test_thesaurusfunc_callback()
   call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
   call assert_equal([[1, ''], [0, 'script2']], g:TsrFunc3Args)
   bw!
+
+  new | only
+  set thesaurusfunc=
+  setlocal thesaurusfunc=NoSuchFunc
+  setglobal thesaurusfunc=s:TsrFunc3
+  call assert_equal('NoSuchFunc', &thesaurusfunc)
+  call assert_equal('NoSuchFunc', &l:thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  new | only
+  call assert_equal('s:TsrFunc3', &thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal('', &l:thesaurusfunc)
+  call setline(1, 'script1')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
+  bw!
+
+  new | only
+  set thesaurusfunc=
+  setlocal thesaurusfunc=NoSuchFunc
+  set thesaurusfunc=s:TsrFunc3
+  call assert_equal('s:TsrFunc3', &thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal('', &l:thesaurusfunc)
+  call setline(1, 'script1')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
+  setlocal bufhidden=wipe
+  new | only!
+  call assert_equal('s:TsrFunc3', &thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal('', &l:thesaurusfunc)
+  call setline(1, 'script1')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
+  bw!
+
   delfunc s:TsrFunc3
 
   " invalid return value

@@ -655,6 +655,9 @@ const char *did_set_backupcopy(optset_T *args)
   if (opt_flags & OPT_LOCAL) {
     bkc = buf->b_p_bkc;
     flags = &buf->b_bkc_flags;
+  } else if (!(opt_flags & OPT_GLOBAL)) {
+    // When using :set, clear the local flags.
+    buf->b_bkc_flags = 0;
   }
 
   if ((opt_flags & OPT_LOCAL) && *bkc == NUL) {
@@ -1070,6 +1073,9 @@ const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
   if (args->os_flags & OPT_LOCAL) {
     cot = buf->b_p_cot;
     flags = &buf->b_cot_flags;
+  } else if (!(args->os_flags & OPT_GLOBAL)) {
+    // When using :set, clear the local flags.
+    buf->b_cot_flags = 0;
   }
 
   if (check_opt_strings(cot, p_cot_values, true) != OK) {
