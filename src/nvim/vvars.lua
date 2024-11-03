@@ -50,13 +50,6 @@ M.vars = {
       can be used.
     ]=],
   },
-  cmdcomplete = {
-    type = 'boolean',
-    desc = [=[
-      When evaluating 'findexpr': if 'findexpr' is used for cmdline
-      completion the value is |v:true|, otherwise it is |v:false|.
-    ]=],
-  },
   collate = {
     type = 'string',
     desc = [=[
@@ -291,8 +284,7 @@ M.vars = {
     type = 'string',
     desc = [=[
       When evaluating 'includeexpr': the file name that was
-      detected.  When evaluating 'findexpr': the argument passed to
-      the |:find| command.  Empty otherwise.
+      detected.  Empty otherwise.
     ]=],
   },
   fname_diff = {

@@ -109,7 +109,7 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_FILES
          && xp->xp_context != EXPAND_FILES_IN_PATH
          && xp->xp_context != EXPAND_FILETYPE
-         && xp->xp_context != EXPAND_FINDEXPR
+         && xp->xp_context != EXPAND_FINDFUNC
          && xp->xp_context != EXPAND_HELP
          && xp->xp_context != EXPAND_KEYMAP
          && xp->xp_context != EXPAND_LUA
@@ -1229,7 +1229,7 @@ char *addstar(char *fname, size_t len, int context)
 
     // For help tags the translation is done in find_help_tags().
     // For a tag pattern starting with "/" no translation is needed.
-    if (context == EXPAND_FINDEXPR
+    if (context == EXPAND_FINDFUNC
         || context == EXPAND_HELP
         || context == EXPAND_COLORS
         || context == EXPAND_COMPILER
@@ -1829,7 +1829,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_sfind:
   case CMD_tabfind:
     if (xp->xp_context == EXPAND_FILES) {
-      xp->xp_context = *get_findexpr() != NUL ? EXPAND_FINDEXPR : EXPAND_FILES_IN_PATH;
+      xp->xp_context = *get_findfunc() != NUL ? EXPAND_FINDFUNC : EXPAND_FILES_IN_PATH;
     }
     break;
   case CMD_cd:
@@ -2500,8 +2500,8 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
   }
 
   int ret = FAIL;
-  if (xp->xp_context == EXPAND_FINDEXPR) {
-    ret = expand_findexpr(pat, matches, numMatches);
+  if (xp->xp_context == EXPAND_FINDFUNC) {
+    ret = expand_findfunc(pat, matches, numMatches);
   } else {
     if (xp->xp_context == EXPAND_FILES) {
       flags |= EW_FILE;
@@ -2722,7 +2722,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   if (xp->xp_context == EXPAND_FILES
       || xp->xp_context == EXPAND_DIRECTORIES
       || xp->xp_context == EXPAND_FILES_IN_PATH
-      || xp->xp_context == EXPAND_FINDEXPR
+      || xp->xp_context == EXPAND_FINDFUNC
       || xp->xp_context == EXPAND_DIRS_IN_CDPATH) {
     return expand_files_and_dirs(xp, pat, matches, numMatches, flags, options);
   }

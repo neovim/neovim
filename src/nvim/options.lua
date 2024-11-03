@@ -2906,35 +2906,35 @@ return {
       varname = 'p_fcs',
     },
     {
-      abbreviation = 'fexpr',
-      cb = 'did_set_optexpr',
+      abbreviation = 'ffu',
+      cb = 'did_set_findfunc',
       defaults = { if_true = '' },
       desc = [=[
-        Expression that is evaluated to obtain the filename(s) for the |:find|
+        Function that is called to obtain the filename(s) for the |:find|
         command.  When this option is empty, the internal |file-searching|
         mechanism is used.
 
-        While evaluating the expression, the |v:fname| variable is set to the
-        argument of the |:find| command.
+        The value can be the name of a function, a |lambda| or a |Funcref|.
+        See |option-value-function| for more information.
 
-        The expression is evaluated only once per |:find| command invocation.
-        The expression can process all the directories specified in 'path'.
+        The function is called with two arguments.  The first argument is a
+        |String| and is the |:find| command argument.  The second argument is
+        a |Boolean| and is set to |v:true| when the function is called to get
+        a List of command-line completion matches for the |:find| command.
+        The function should return a List of strings.
 
-        The expression may be evaluated for command-line completion as well,
-        in which case the |v:cmdcomplete| variable will be set to |v:true|,
-        otherwise it will be set to |v:false|.
+        The function is called only once per |:find| command invocation.
+        The function can process all the directories specified in 'path'.
 
-        If a match is found, the expression should return a |List| containing
-        one or more file names.  If a match is not found, the expression
+        If a match is found, the function should return a |List| containing
+        one or more file names.  If a match is not found, the function
         should return an empty List.
 
-        If any errors are encountered during the expression evaluation, an
+        If any errors are encountered during the function invocation, an
         empty List is used as the return value.
 
-        Using a function call without arguments is faster |expr-option-function|
-
         It is not allowed to change text or jump to another window while
-        evaluating 'findexpr' |textlock|.
+        executing the 'findfunc' |textlock|.
 
         This option cannot be set from a |modeline| or in the |sandbox|, for
         security reasons.
@@ -2942,27 +2942,28 @@ return {
         Examples:
         >vim
             " Use glob()
-            func FindExprGlob()
-        	let pat = v:cmdcomplete ? $'{v:fname}*' : v:fname
+            func FindFuncGlob(cmdarg, cmdcomplete)
+        	let pat = a:cmdcomplete ? $'{a:cmdarg}*' : a:cmdarg
         	return glob(pat, v:false, v:true)
             endfunc
-            set findexpr=FindExprGlob()
+            set findfunc=FindFuncGlob
 
             " Use the 'git ls-files' output
-            func FindGitFiles()
+            func FindGitFiles(cmdarg, cmdcomplete)
         	let fnames = systemlist('git ls-files')
-        	return fnames->filter('v:val =~? v:fname')
+        	return fnames->filter('v:val =~? a:cmdarg')
             endfunc
-            set findexpr=FindGitFiles()
+            set findfunc=FindGitFiles
         <
       ]=],
-      full_name = 'findexpr',
+      full_name = 'findfunc',
+      func = true,
       scope = { 'global', 'buffer' },
       secure = true,
-      short_desc = N_('expression used for :find'),
+      short_desc = N_('function called for :find'),
       tags = { 'E1514' },
       type = 'string',
-      varname = 'p_fexpr',
+      varname = 'p_ffu',
     },
     {
       abbreviation = 'fixeol',

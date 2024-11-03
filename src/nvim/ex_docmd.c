@@ -5165,55 +5165,68 @@ static void ex_wrongmodifier(exarg_T *eap)
   eap->errmsg = _(e_invcmd);
 }
 
-/// Evaluate the 'findexpr' expression and return the result.  When evaluating
-/// the expression, v:fname is set to the ":find" command argument.
-static list_T *eval_findexpr(const char *pat, bool cmdcomplete)
+/// callback function for 'findfunc'
+static Callback ffu_cb;
+
+static Callback *get_findfunc_callback(void)
+{
+  return *curbuf->b_p_ffu != NUL ? &curbuf->b_ffu_cb : &ffu_cb;
+}
+
+/// Call 'findfunc' to obtain the list of file names.
+static list_T *call_findfunc(char *pat, BoolVarValue cmdcomplete)
 {
   const sctx_T saved_sctx = current_sctx;
 
-  char *findexpr = get_findexpr();
+  typval_T args[3];
+  args[0].v_type = VAR_STRING;
+  args[0].vval.v_string = pat;
+  args[1].v_type = VAR_BOOL;
+  args[1].vval.v_bool = cmdcomplete;
+  args[2].v_type = VAR_UNKNOWN;
 
-  set_vim_var_string(VV_FNAME, pat, -1);
-  set_vim_var_bool(VV_CMDCOMPLETE, cmdcomplete ? kBoolVarTrue : kBoolVarFalse);
-  current_sctx = curbuf->b_p_script_ctx[BV_FEXPR].script_ctx;
-
-  char *arg = skipwhite(findexpr);
-
+  // Lock the text to prevent weird things from happening.  Also disallow
+  // switching to another window, it should not be needed and may end up in
+  // Insert mode in another buffer.
   textlock++;
 
-  // Evaluate the expression.  If the expression is "FuncName()" call the
-  // function directly.
-  typval_T tv;
-  list_T *retlist = NULL;
-  if (eval0_simple_funccal(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
-    retlist = NULL;
-  } else {
-    if (tv.v_type == VAR_LIST) {
-      retlist = tv_list_copy(NULL, tv.vval.v_list, true, get_copyID());
-    } else {
-      emsg(_(e_invalid_return_type_from_findexpr));
-    }
-    tv_clear(&tv);
+  sctx_T *ctx = get_option_sctx(kOptFindfunc);
+  if (ctx != NULL) {
+    current_sctx = *ctx;
   }
-  textlock--;
-  clear_evalarg(&EVALARG_EVALUATE, NULL);
 
-  set_vim_var_string(VV_FNAME, NULL, 0);
-  set_vim_var_bool(VV_CMDCOMPLETE, kBoolVarFalse);
+  Callback *cb = get_findfunc_callback();
+  typval_T rettv;
+  int retval = callback_call(cb, 2, args, &rettv);
+
   current_sctx = saved_sctx;
+
+  textlock--;
+
+  list_T *retlist = NULL;
+
+  if (retval == OK) {
+    if (rettv.v_type == VAR_LIST) {
+      retlist = tv_list_copy(NULL, rettv.vval.v_list, false, get_copyID());
+    } else {
+      emsg(_(e_invalid_return_type_from_findfunc));
+    }
+
+    tv_clear(&rettv);
+  }
 
   return retlist;
 }
 
-/// Find file names matching "pat" using 'findexpr' and return it in "files".
+/// Find file names matching "pat" using 'findfunc' and return it in "files".
 /// Used for expanding the :find, :sfind and :tabfind command argument.
 /// Returns OK on success and FAIL otherwise.
-int expand_findexpr(const char *pat, char ***files, int *numMatches)
+int expand_findfunc(char *pat, char ***files, int *numMatches)
 {
   *numMatches = 0;
   *files = NULL;
 
-  list_T *l = eval_findexpr(pat, true);
+  list_T *l = call_findfunc(pat, kBoolVarTrue);
   if (l == NULL) {
     return FAIL;
   }
@@ -5240,16 +5253,16 @@ int expand_findexpr(const char *pat, char ***files, int *numMatches)
   return OK;
 }
 
-/// Use 'findexpr' to find file 'findarg'.  The 'count' argument is used to find
+/// Use 'findfunc' to find file 'findarg'.  The 'count' argument is used to find
 /// the n'th matching file.
-static char *findexpr_find_file(char *findarg, size_t findarg_len, int count)
+static char *findfunc_find_file(char *findarg, size_t findarg_len, int count)
 {
   char *ret_fname = NULL;
 
   const char cc = findarg[findarg_len];
   findarg[findarg_len] = NUL;
 
-  list_T *fname_list = eval_findexpr(findarg, false);
+  list_T *fname_list = call_findfunc(findarg, kBoolVarFalse);
   int fname_count = tv_list_len(fname_list);
 
   if (fname_count == 0) {
@@ -5272,6 +5285,51 @@ static char *findexpr_find_file(char *findarg, size_t findarg_len, int count)
   findarg[findarg_len] = cc;
 
   return ret_fname;
+}
+
+/// Process the 'findfunc' option value.
+/// Returns NULL on success and an error message on failure.
+const char *did_set_findfunc(optset_T *args)
+{
+  buf_T *buf = (buf_T *)args->os_buf;
+  int retval;
+
+  if (*buf->b_p_ffu != NUL) {
+    // buffer-local option set
+    retval = option_set_callback_func(buf->b_p_ffu, &buf->b_ffu_cb);
+  } else {
+    // global option set
+    retval = option_set_callback_func(p_ffu, &ffu_cb);
+  }
+
+  if (retval == FAIL) {
+    return e_invarg;
+  }
+
+  // If the option value starts with <SID> or s:, then replace that with
+  // the script identifier.
+  char **varp = (char **)args->os_varp;
+  char *name = get_scriptlocal_funcname(*varp);
+  if (name != NULL) {
+    free_string_option(*varp);
+    *varp = name;
+  }
+
+  return NULL;
+}
+
+void free_findfunc_option(void)
+{
+  callback_free(&ffu_cb);
+}
+
+/// Mark the global 'findfunc' callback with "copyID" so that it is not
+/// garbage collected.
+bool set_ref_in_findfunc(int copyID)
+{
+  bool abort = false;
+  abort = set_ref_in_callback(&ffu_cb, copyID, NULL, NULL);
+  return abort;
 }
 
 /// :sview [+command] file       split window with new file, read-only
@@ -5305,8 +5363,8 @@ void ex_splitview(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_sfind || eap->cmdidx == CMD_tabfind) {
-    if (*get_findexpr() != NUL) {
-      fname = findexpr_find_file(eap->arg, strlen(eap->arg),
+    if (*get_findfunc() != NUL) {
+      fname = findfunc_find_file(eap->arg, strlen(eap->arg),
                                  eap->addr_count > 0 ? eap->line2 : 1);
     } else {
       char *file_to_find = NULL;
@@ -5512,8 +5570,8 @@ static void ex_find(exarg_T *eap)
   }
 
   char *fname = NULL;
-  if (*get_findexpr() != NUL) {
-    fname = findexpr_find_file(eap->arg, strlen(eap->arg),
+  if (*get_findfunc() != NUL) {
+    fname = findfunc_find_file(eap->arg, strlen(eap->arg),
                                eap->addr_count > 0 ? eap->line2 : 1);
   } else {
     char *file_to_find = NULL;

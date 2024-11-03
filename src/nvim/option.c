@@ -578,6 +578,7 @@ void free_all_options(void)
   }
   free_operatorfunc_option();
   free_tagfunc_option();
+  free_findfunc_option();
   XFREE_CLEAR(fenc_default);
   XFREE_CLEAR(p_term);
   XFREE_CLEAR(p_ttytype);
@@ -4472,8 +4473,8 @@ void *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
     switch ((int)p->indir) {
     case PV_FP:
       return &(buf->b_p_fp);
-    case PV_FEXPR:
-      return &(buf->b_p_fexpr);
+    case PV_FFU:
+      return &(buf->b_p_ffu);
     case PV_EFM:
       return &(buf->b_p_efm);
     case PV_GP:
@@ -4595,8 +4596,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *buf->b_p_tsrfu != NUL ? &(buf->b_p_tsrfu) : p->var;
   case PV_FP:
     return *buf->b_p_fp != NUL ? &(buf->b_p_fp) : p->var;
-  case PV_FEXPR:
-    return *buf->b_p_fexpr != NUL ? &(buf->b_p_fexpr) : p->var;
+  case PV_FFU:
+    return *buf->b_p_ffu != NUL ? &(buf->b_p_ffu) : p->var;
   case PV_EFM:
     return *buf->b_p_efm != NUL ? &(buf->b_p_efm) : p->var;
   case PV_GP:
@@ -4868,13 +4869,13 @@ char *get_equalprg(void)
   return curbuf->b_p_ep;
 }
 
-/// Get the value of 'findexpr', either the buffer-local one or the global one.
-char *get_findexpr(void)
+/// Get the value of 'findfunc', either the buffer-local one or the global one.
+char *get_findfunc(void)
 {
-  if (*curbuf->b_p_fexpr == NUL) {
-    return p_fexpr;
+  if (*curbuf->b_p_ffu == NUL) {
+    return p_ffu;
   }
-  return curbuf->b_p_fexpr;
+  return curbuf->b_p_ffu;
 }
 
 /// Copy options from one window to another.
@@ -5275,8 +5276,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_mp = empty_string_option;
       buf->b_p_efm = empty_string_option;
       buf->b_p_ep = empty_string_option;
-      buf->b_p_fexpr = xstrdup(p_fexpr);
-      COPY_OPT_SCTX(buf, BV_FEXPR);
+      buf->b_p_ffu = empty_string_option;
       buf->b_p_kp = empty_string_option;
       buf->b_p_path = empty_string_option;
       buf->b_p_tags = empty_string_option;
