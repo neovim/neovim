@@ -1713,10 +1713,10 @@ func Test_completefunc_callback()
   call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set completefunc=(a,\ b)\ =>\ CompleteFunc1(21,\ a,\ b)
+  set completefunc=(a,\ b)\ =>\ CompleteFunc1(21,\ a,\ b)
   new | only
   let g:CompleteFunc1Args = []
-  " call assert_fails('call feedkeys("A\<C-X>\<C-U>\<Esc>", "x")', 'E117:')
+  call assert_fails('call feedkeys("A\<C-X>\<C-U>\<Esc>", "x")', 'E117:')
   call assert_equal([], g:CompleteFunc1Args)
 
   " set 'completefunc' to a partial with dict. This used to cause a crash.
@@ -1970,10 +1970,10 @@ func Test_omnifunc_callback()
   call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set omnifunc=(a,\ b)\ =>\ OmniFunc1(21,\ a,\ b)
+  set omnifunc=(a,\ b)\ =>\ OmniFunc1(21,\ a,\ b)
   new | only
   let g:OmniFunc1Args = []
-  " call assert_fails('call feedkeys("A\<C-X>\<C-O>\<Esc>", "x")', 'E117:')
+  call assert_fails('call feedkeys("A\<C-X>\<C-O>\<Esc>", "x")', 'E117:')
   call assert_equal([], g:OmniFunc1Args)
 
   " set 'omnifunc' to a partial with dict. This used to cause a crash.
@@ -2250,10 +2250,10 @@ func Test_thesaurusfunc_callback()
   call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set thesaurusfunc=(a,\ b)\ =>\ TsrFunc1(21,\ a,\ b)
+  set thesaurusfunc=(a,\ b)\ =>\ TsrFunc1(21,\ a,\ b)
   new | only
   let g:TsrFunc1Args = []
-  " call assert_fails('call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")', 'E117:')
+  call assert_fails('call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")', 'E117:')
   call assert_equal([], g:TsrFunc1Args)
   bw!
 

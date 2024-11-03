@@ -270,7 +270,6 @@ static struct vimvar {
   VV(VV_COLLATE,          "collate",          VAR_STRING, VV_RO),
   VV(VV_EXITING,          "exiting",          VAR_NUMBER, VV_RO),
   VV(VV_MAXCOL,           "maxcol",           VAR_NUMBER, VV_RO),
-  VV(VV_CMDCOMPLETE,      "cmdcomplete",      VAR_BOOL, VV_RO),
   // Neovim
   VV(VV_STDERR,           "stderr",           VAR_NUMBER, VV_RO),
   VV(VV_MSGPACK_TYPES,    "msgpack_types",    VAR_DICT, VV_RO),
@@ -462,7 +461,6 @@ void eval_init(void)
   set_vim_var_nr(VV_HLSEARCH, 1);
   set_vim_var_nr(VV_COUNT1, 1);
   set_vim_var_special(VV_EXITING, kSpecialVarNull);
-  set_vim_var_bool(VV_CMDCOMPLETE, kBoolVarFalse);
 
   set_vim_var_nr(VV_TYPE_NUMBER, VAR_TYPE_NUMBER);
   set_vim_var_nr(VV_TYPE_STRING, VAR_TYPE_STRING);
@@ -4793,6 +4791,7 @@ bool garbage_collect(bool testing)
     ABORTING(set_ref_in_callback)(&buf->b_ofu_cb, copyID, NULL, NULL);
     ABORTING(set_ref_in_callback)(&buf->b_tsrfu_cb, copyID, NULL, NULL);
     ABORTING(set_ref_in_callback)(&buf->b_tfu_cb, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_ffu_cb, copyID, NULL, NULL);
   }
 
   // 'completefunc', 'omnifunc' and 'thesaurusfunc' callbacks
@@ -4803,6 +4802,9 @@ bool garbage_collect(bool testing)
 
   // 'tagfunc' callback
   ABORTING(set_ref_in_tagfunc)(copyID);
+
+  // 'findfunc' callback
+  ABORTING(set_ref_in_findfunc)(copyID);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     // window-local variables

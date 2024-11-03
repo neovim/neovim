@@ -1559,7 +1559,7 @@ endfunc
 
 " Test for changing options in a sandbox
 func Test_opt_sandbox()
-  for opt in ['backupdir', 'cdpath', 'exrc', 'findexpr']
+  for opt in ['backupdir', 'cdpath', 'exrc', 'findfunc']
     call assert_fails('sandbox set ' .. opt .. '?', 'E48:')
     call assert_fails('sandbox let &' .. opt .. ' = 1', 'E48:')
   endfor

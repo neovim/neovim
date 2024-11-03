@@ -260,6 +260,7 @@ local function dump_option(i, o)
 end
 
 w([[
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/insexpand.h"
 #include "nvim/mapping.h"
