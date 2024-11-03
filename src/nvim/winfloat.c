@@ -412,8 +412,8 @@ win_T *win_float_create(bool enter, bool new_buf)
       return handle_error_and_cleanup(wp, &err);
     }
     buf->b_p_bl = false;  // unlist
-    set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL, 0, kOptReqBuf,
-                          buf);
+    set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL, 0,
+                          kOptScopeBuf, buf);
     win_set_buf(wp, buf, &err);
     if (ERROR_SET(&err)) {
       return handle_error_and_cleanup(wp, &err);

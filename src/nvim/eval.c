@@ -1368,7 +1368,7 @@ int eval_foldexpr(win_T *wp, int *cp)
   const bool use_sandbox = was_set_insecurely(wp, kOptFoldexpr, OPT_LOCAL);
 
   char *arg = skipwhite(wp->w_p_fde);
-  current_sctx = wp->w_p_script_ctx[WV_FDE].script_ctx;
+  current_sctx = wp->w_p_script_ctx[kWinOptFoldexpr].script_ctx;
 
   emsg_off++;
   if (use_sandbox) {

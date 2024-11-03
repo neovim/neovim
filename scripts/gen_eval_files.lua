@@ -617,8 +617,8 @@ local function render_option_meta(_f, opt, write)
   end
 
   for _, s in pairs {
-    { 'wo', 'window' },
-    { 'bo', 'buffer' },
+    { 'wo', 'win' },
+    { 'bo', 'buf' },
     { 'go', 'global' },
   } do
     local id, scope = s[1], s[2]
@@ -661,8 +661,8 @@ end
 local function scope_to_doc(s)
   local m = {
     global = 'global',
-    buffer = 'local to buffer',
-    window = 'local to window',
+    buf = 'local to buffer',
+    win = 'local to window',
     tab = 'local to tab page',
   }
 
@@ -717,7 +717,7 @@ local function get_option_meta()
   local optinfo = vim.api.nvim_get_all_options_info()
   local ret = {} --- @type table<string,vim.option_meta>
   for _, o in ipairs(opts) do
-    local is_window_option = #o.scope == 1 and o.scope[1] == 'window'
+    local is_window_option = #o.scope == 1 and o.scope[1] == 'win'
     local is_option_hidden = o.immutable and not o.varname and not is_window_option
     if not is_option_hidden and o.desc then
       if o.full_name == 'cmdheight' then

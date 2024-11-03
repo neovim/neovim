@@ -13,56 +13,6 @@
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
-/// The options that are local to a window or buffer have "indir" set to one of
-/// these values.  Special values:
-/// PV_NONE: global option.
-/// PV_WIN is added: window-local option
-/// PV_BUF is added: buffer-local option
-/// PV_BOTH is added: global option which also has a local value.
-enum {
-  PV_BOTH = 0x1000,
-  PV_WIN  = 0x2000,
-  PV_BUF  = 0x4000,
-  PV_MASK = 0x0fff,
-};
-#define OPT_WIN(x)  (idopt_T)(PV_WIN + (int)(x))
-#define OPT_BUF(x)  (idopt_T)(PV_BUF + (int)(x))
-#define OPT_BOTH(x) (idopt_T)(PV_BOTH + (int)(x))
-
-/// WV_ and BV_ values get typecasted to this for the "indir" field
-typedef enum {
-  PV_NONE = 0,
-  PV_MAXVAL = 0xffff,  ///< to avoid warnings for value out of range
-} idopt_T;
-
-// Options local to a window have a value local to a buffer and global to all
-// buffers.  Indicate this by setting "var" to VAR_WIN.
-#define VAR_WIN ((char *)-1)
-
-typedef struct {
-  char *fullname;           ///< full option name
-  char *shortname;          ///< permissible abbreviation
-  uint32_t flags;           ///< see above
-  OptTypeFlags type_flags;  ///< option type flags, see OptValType
-  void *var;                ///< global option: pointer to variable;
-                            ///< window-local option: VAR_WIN;
-                            ///< buffer-local option: global value
-  idopt_T indir;            ///< global option: PV_NONE;
-                            ///< local option: indirect option index
-  bool immutable;           ///< option is immutable, trying to set its value will give an error.
-
-  /// callback function to invoke after an option is modified to validate and
-  /// apply the new value.
-  opt_did_set_cb_T opt_did_set_cb;
-
-  /// callback function to invoke when expanding possible values on the
-  /// cmdline. Only useful for string options.
-  opt_expand_cb_T opt_expand_cb;
-
-  OptVal def_val;    ///< default value
-  LastSet last_set;  ///< script in which the option was last set
-} vimoption_T;
-
 /// flags for buf_copy_options()
 enum {
   BCO_ENTER  = 1,  ///< going to enter the buffer
@@ -84,13 +34,6 @@ typedef enum {
   OPT_NO_REDRAW = 0x40,  ///< ignore redraw flags on option
   OPT_SKIPRTP   = 0x80,  ///< "skiprtp" in 'sessionoptions'
 } OptionSetFlags;
-
-/// Return value from get_option_attrs().
-enum {
-  SOPT_GLOBAL = 0x01,  ///< Option has global value
-  SOPT_WIN    = 0x02,  ///< Option has window-local value
-  SOPT_BUF    = 0x04,  ///< Option has buffer-local value
-};
 
 /// Get name of OptValType as a string.
 static inline const char *optval_type_get_name(const OptValType type)

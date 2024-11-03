@@ -1731,7 +1731,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
 
       curwin = wp;
       curbuf = wp->w_buffer;
-      current_sctx = wp->w_p_script_ctx[WV_FDT].script_ctx;
+      current_sctx = wp->w_p_script_ctx[kWinOptFoldtext].script_ctx;
 
       emsg_off++;  // handle exceptions, but don't display errors
 

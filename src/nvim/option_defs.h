@@ -54,11 +54,19 @@ typedef enum {
   kOptValTypeNumber,
   kOptValTypeString,
 } OptValType;
-
 /// Always update this whenever a new option type is added.
 #define kOptValTypeSize (kOptValTypeString + 1)
-
 typedef uint32_t OptTypeFlags;
+
+/// Scopes that an option can support.
+typedef enum {
+  kOptScopeGlobal = 0,  ///< Request global option value
+  kOptScopeWin,      ///< Request window-local option value
+  kOptScopeBuf,      ///< Request buffer-local option value
+} OptScope;
+/// Always update this whenever a new option scope is added.
+#define kOptScopeSize (kOptScopeBuf + 1)
+typedef uint8_t OptScopeFlags;
 
 typedef union {
   // boolean options are actually tri-states because they have a third "None" value.
@@ -161,9 +169,26 @@ typedef struct {
 /// caller.
 typedef int (*opt_expand_cb_T)(optexpand_T *args, int *numMatches, char ***matches);
 
-/// Requested option scopes for various functions in option.c
-typedef enum {
-  kOptReqGlobal = 0,  ///< Request global option value
-  kOptReqWin    = 1,  ///< Request window-local option value
-  kOptReqBuf    = 2,  ///< Request buffer-local option value
-} OptReqScope;
+typedef struct {
+  char *fullname;                    ///< full option name
+  char *shortname;                   ///< permissible abbreviation
+  uint32_t flags;                    ///< see above
+  OptTypeFlags type_flags;           ///< option type flags, see OptValType
+  OptScopeFlags scope_flags;         ///< option scope flags, see OptScope
+  void *var;                         ///< global option: pointer to variable;
+                                     ///< window-local option: NULL;
+                                     ///< buffer-local option: global value
+  ssize_t scope_idx[kOptScopeSize];  ///< index of option at every scope.
+  bool immutable;                    ///< option is immutable, trying to set it will give an error.
+
+  /// callback function to invoke after an option is modified to validate and
+  /// apply the new value.
+  opt_did_set_cb_T opt_did_set_cb;
+
+  /// callback function to invoke when expanding possible values on the
+  /// cmdline. Only useful for string options.
+  opt_expand_cb_T opt_expand_cb;
+
+  OptVal def_val;                    ///< default value
+  LastSet last_set;                  ///< script in which the option was last set
+} vimoption_T;

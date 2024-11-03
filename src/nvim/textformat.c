@@ -863,7 +863,7 @@ int fex_format(linenr_T lnum, long count, int c)
 
   // Make a copy, the option could be changed while calling it.
   char *fex = xstrdup(curbuf->b_p_fex);
-  current_sctx = curbuf->b_p_script_ctx[BV_FEX].script_ctx;
+  current_sctx = curbuf->b_p_script_ctx[kBufOptFormatexpr].script_ctx;
 
   // Evaluate the function.
   if (use_sandbox) {
