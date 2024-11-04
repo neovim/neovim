@@ -1326,7 +1326,7 @@ format({opts})                                          *vim.lsp.buf.format()*
                   keys as described above, in which case
                   `textDocument/rangesFormatting` support is required.
 
-hover({config})                                          *vim.lsp.buf.hover()*
+hover({opts})                                            *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating
     window. The window will be dismissed on cursor move. Calling the function
     twice will jump into the floating window (thus by default, "KK" will open
@@ -1335,7 +1335,7 @@ hover({config})                                          *vim.lsp.buf.hover()*
     can scroll the contents the same as you would any other buffer.
 
     Parameters: ~
-      • {config}  (`vim.lsp.buf.hover.Opts?`) See |vim.lsp.buf.hover.Opts|.
+      • {opts}  (`vim.lsp.buf.hover.Opts?`) See |vim.lsp.buf.hover.Opts|.
 
 implementation({opts})                          *vim.lsp.buf.implementation()*
     Lists all the implementations for the symbol under the cursor in the
@@ -1391,13 +1391,13 @@ rename({new_name}, {opts})                              *vim.lsp.buf.rename()*
                       ones where client.name matches this field.
                     • {bufnr}? (`integer`) (default: current buffer)
 
-signature_help({config})                        *vim.lsp.buf.signature_help()*
+signature_help({opts})                          *vim.lsp.buf.signature_help()*
     Displays signature information about the symbol under the cursor in a
     floating window.
 
     Parameters: ~
-      • {config}  (`vim.lsp.buf.signature_help.Opts?`) See
-                  |vim.lsp.buf.signature_help.Opts|.
+      • {opts}  (`vim.lsp.buf.signature_help.Opts?`) See
+                |vim.lsp.buf.signature_help.Opts|.
 
 type_definition({opts})                        *vim.lsp.buf.type_definition()*
     Jumps to the definition of the type of the symbol under the cursor.

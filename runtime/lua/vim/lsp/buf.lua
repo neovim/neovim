@@ -30,10 +30,10 @@ end
 --- In the floating window, all commands and mappings are available as usual,
 --- except that "q" dismisses the window.
 --- You can scroll the contents the same as you would any other buffer.
---- @param config? vim.lsp.buf.hover.Opts
-function M.hover(config)
-  config = config or {}
-  config.focus_id = ms.textDocument_hover
+--- @param opts? vim.lsp.buf.hover.Opts
+function M.hover(opts)
+  opts = opts or {}
+  opts.focus_id = ms.textDocument_hover
 
   lsp.buf_request_all(0, ms.textDocument_hover, client_positional_params(), function(results, ctx)
     if api.nvim_get_current_buf() ~= ctx.bufnr then
@@ -54,7 +54,7 @@ function M.hover(config)
     end
 
     if vim.tbl_isempty(results1) then
-      if config.silent ~= true then
+      if opts.silent ~= true then
         vim.notify('No information available')
       end
       return
@@ -94,13 +94,13 @@ function M.hover(config)
     contents[#contents] = nil
 
     if vim.tbl_isempty(contents) then
-      if config.silent ~= true then
+      if opts.silent ~= true then
         vim.notify('No information available')
       end
       return
     end
 
-    lsp.util.open_floating_preview(contents, format, config)
+    lsp.util.open_floating_preview(contents, format, opts)
   end)
 end
 
@@ -290,15 +290,14 @@ local sig_help_ns = api.nvim_create_namespace('vim_lsp_signature_help')
 --- @class vim.lsp.buf.signature_help.Opts : vim.lsp.util.open_floating_preview.Opts
 --- @field silent? boolean
 
--- TODO(lewis6991): support multiple clients
 --- Displays signature information about the symbol under the cursor in a
 --- floating window.
---- @param config? vim.lsp.buf.signature_help.Opts
-function M.signature_help(config)
+--- @param opts? vim.lsp.buf.signature_help.Opts
+function M.signature_help(opts)
   local method = ms.textDocument_signatureHelp
 
-  config = config and vim.deepcopy(config) or {}
-  config.focus_id = method
+  opts = opts and vim.deepcopy(opts) or {}
+  opts.focus_id = method
 
   lsp.buf_request_all(0, method, client_positional_params(), function(results, ctx)
     if api.nvim_get_current_buf() ~= ctx.bufnr then
@@ -309,7 +308,7 @@ function M.signature_help(config)
     local signatures = process_signature_help_results(results)
 
     if not next(signatures) then
-      if config.silent ~= true then
+      if opts.silent ~= true then
         print('No signature help available')
       end
       return
@@ -334,8 +333,8 @@ function M.signature_help(config)
 
       local sfx = total > 1 and string.format(' (%d/%d) (<C-s> to cycle)', idx, total) or ''
       local title = string.format('Signature Help: %s%s', client.name, sfx)
-      if config.border then
-        config.title = title
+      if opts.border then
+        opts.title = title
       else
         table.insert(lines, 1, '# ' .. title)
         if hl then
@@ -344,9 +343,9 @@ function M.signature_help(config)
         end
       end
 
-      config._update_win = update_win
+      opts._update_win = update_win
 
-      local buf, win = util.open_floating_preview(lines, 'markdown', config)
+      local buf, win = util.open_floating_preview(lines, 'markdown', opts)
 
       if hl then
         vim.api.nvim_buf_clear_namespace(buf, sig_help_ns, 0, -1)
