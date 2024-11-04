@@ -350,6 +350,7 @@ UI
 • |vim.diagnostic.setqflist()| updates an existing quickfix list with the
   given title if found
 • |ui-messages| content chunks now also contain the highlight group ID.
+• |ui-multigrid| provides composition information and absolute coordinates.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
