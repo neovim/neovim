@@ -3596,38 +3596,14 @@ void put_on_cmdline(const char *str, int len, bool redraw)
   memmove(ccline.cmdbuff + ccline.cmdpos, str, (size_t)len);
   ccline.cmdbuff[ccline.cmdlen] = NUL;
 
-  {
-    // When the inserted text starts with a composing character,
-    // backup to the character before it.  There could be two of them.
-    int i = 0;
-    int c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
-    // TODO(bfredl): this can be corrected/simplified as utf_head_off implements the
-    // correct grapheme cluster breaks
-    while (ccline.cmdpos > 0 && utf_iscomposing_legacy(c)) {
-      i = utf_head_off(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+  // When the inserted text starts with a composing character,
+  // backup to the character before it.
+  if (ccline.cmdpos > 0 && (uint8_t)ccline.cmdbuff[ccline.cmdpos] >= 0x80) {
+    int i = utf_head_off(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos);
+    if (i != 0) {
       ccline.cmdpos -= i;
       len += i;
-      c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
-    }
-    if (i == 0 && ccline.cmdpos > 0 && arabic_maycombine(c)) {
-      // Check the previous character for Arabic combining pair.
-      i = utf_head_off(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos - 1) + 1;
-      if (arabic_combine(utf_ptr2char(ccline.cmdbuff + ccline.cmdpos - i), c)) {
-        ccline.cmdpos -= i;
-        len += i;
-      } else {
-        i = 0;
-      }
-    }
-    if (i != 0) {
-      // Also backup the cursor position.
-      i = ptr2cells(ccline.cmdbuff + ccline.cmdpos);
-      ccline.cmdspos -= i;
-      msg_col -= i;
-      if (msg_col < 0) {
-        msg_col += Columns;
-        msg_row--;
-      }
+      ccline.cmdspos = cmd_screencol(ccline.cmdpos);
     }
   }
 
