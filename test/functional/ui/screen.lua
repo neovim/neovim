@@ -338,6 +338,7 @@ local ext_keys = {
   'showmode',
   'showcmd',
   'ruler',
+  'win_pos',
   'float_pos',
   'win_viewport',
   'win_viewport_margins',
@@ -357,6 +358,7 @@ local expect_keys = {
   request_cb = true,
   hl_groups = true,
   extmarks = true,
+  win_pos = true,
 }
 
 for _, v in ipairs(ext_keys) do
@@ -426,6 +428,7 @@ end
 --- @field mouse_enabled? boolean
 ---
 --- @field win_viewport? table<integer,table<string,integer>>
+--- @field win_pos? table<integer,table<string,integer>>
 --- @field float_pos? [integer,integer]
 --- @field hl_groups? table<string,integer>
 ---
@@ -627,6 +630,9 @@ screen:redraw_debug() to show all intermediate screen states.]]
     end
     if expected.win_viewport_margins == nil then
       extstate.win_viewport_margins = nil
+    end
+    if expected.win_pos == nil then
+      extstate.win_pos = nil
     end
 
     if expected.float_pos then
@@ -1520,6 +1526,7 @@ function Screen:_extstate_repr(attr_state)
     float_pos = self.float_pos,
     win_viewport = win_viewport,
     win_viewport_margins = win_viewport_margins,
+    win_pos = self.win_position,
   }
 end
 
