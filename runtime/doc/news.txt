@@ -113,6 +113,8 @@ OPTIONS
   of just string |global-local| options.
 • `:setlocal {option}<` copies the global value to the local value for number
   and boolean |global-local| options instead of removing the local value.
+• Setting |hidden-options| now gives an error. In particular, setting
+  'noshellslash' is now only allowed on Windows.
 
 PLUGINS
 

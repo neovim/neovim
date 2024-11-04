@@ -1106,7 +1106,7 @@ vim.bo.cot = vim.bo.completeopt
 vim.go.completeopt = vim.o.completeopt
 vim.go.cot = vim.go.completeopt
 
---- 		only for MS-Windows
+--- 		only modifiable in MS-Windows
 --- When this option is set it overrules 'shellslash' for completion:
 --- - When this option is set to "slash", a forward slash is used for path
 ---   completion in insert mode. This is useful when editing HTML tag, or
@@ -5547,7 +5547,7 @@ vim.o.srr = vim.o.shellredir
 vim.go.shellredir = vim.o.shellredir
 vim.go.srr = vim.go.shellredir
 
---- 		only for MS-Windows
+--- 		only modifiable in MS-Windows
 --- When set, a forward slash is used when expanding file names.  This is
 --- useful when a Unix-like shell is used instead of cmd.exe.  Backward
 --- slashes can still be typed, but they are changed to forward slashes by
@@ -5564,7 +5564,7 @@ vim.go.srr = vim.go.shellredir
 --- Also see 'completeslash'.
 ---
 --- @type boolean
-vim.o.shellslash = false
+vim.o.shellslash = true
 vim.o.ssl = vim.o.shellslash
 vim.go.shellslash = vim.o.shellslash
 vim.go.ssl = vim.go.shellslash

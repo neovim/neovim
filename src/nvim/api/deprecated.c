@@ -647,10 +647,6 @@ static bool option_has_scope(OptIndex opt_idx, OptReqScope req_scope)
 
   vimoption_T *opt = get_option(opt_idx);
 
-  // Hidden option.
-  if (opt->var == NULL) {
-    return false;
-  }
   // TTY option.
   if (is_tty_option(opt->fullname)) {
     return req_scope == kOptReqGlobal;

@@ -717,7 +717,9 @@ local function get_option_meta()
   local optinfo = vim.api.nvim_get_all_options_info()
   local ret = {} --- @type table<string,vim.option_meta>
   for _, o in ipairs(opts) do
-    if not o.immutable and not o.hidden and o.enable_if ~= false and o.desc then
+    local is_window_option = #o.scope == 1 and o.scope[1] == 'window'
+    local is_option_hidden = o.immutable and not o.varname and not is_window_option
+    if not is_option_hidden and o.desc then
       if o.full_name == 'cmdheight' then
         table.insert(o.scope, 'tab')
       end

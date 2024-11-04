@@ -392,7 +392,7 @@ for option in options
   let fullname = option.full_name
   let shortname = get(option, 'abbreviation', fullname)
 
-  if get(option, 'immutable', v:false)
+  if !exists('+' .. fullname)
     continue
   endif
 

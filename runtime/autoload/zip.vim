@@ -408,7 +408,9 @@ fun! s:SetSaneOpts()
   let dict.shellslash = &shellslash
 
   let &report = 10
-  let &shellslash = 0
+  if exists('+shellslash')
+    let &shellslash = 0
+  endif
 
   return dict
 endfun
