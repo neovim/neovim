@@ -35,12 +35,20 @@ func PythonProg()
   if has('unix')
     " We also need the job feature or the pkill command to make sure the server
     " can be stopped.
-    if !(executable('python') && (has('job') || executable('pkill')))
+    if !(has('job') || executable('pkill'))
       return ''
     endif
-    let s:python = 'python'
+    if executable('python3')
+      let s:python = 'python3'
+    elseif executable('python')
+      let s:python = 'python'
+    else
+      return ''
+    end
   elseif has('win32')
     " Use Python Launcher for Windows (py.exe) if available.
+    " NOTE: if you get a "Python was not found" error, disable the Python
+    " shortcuts in "Windows menu / Settings / Manage App Execution Aliases".
     if executable('py.exe')
       let s:python = 'py.exe'
     elseif executable('python.exe')
