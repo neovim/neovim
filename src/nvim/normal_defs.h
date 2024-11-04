@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "nvim/pos_defs.h"
+#include "nvim/types_defs.h"
 
 /// Motion types, used for operators and for yank/delete registers.
 ///
@@ -47,8 +48,8 @@ typedef struct {
   int prechar;      ///< prefix character (optional, always 'g')
   int cmdchar;      ///< command character
   int nchar;        ///< next command character (optional)
-  int ncharC1;      ///< first composing character (optional)
-  int ncharC2;      ///< second composing character (optional)
+  char nchar_composing[MAX_SCHAR_SIZE];  ///< next char with composing chars (optional)
+  int nchar_len;    ///< len of nchar_composing (when zero, use nchar instead)
   int extra_char;   ///< yet another character (optional)
   int opcount;      ///< count before an operator
   int count0;       ///< count before command, default 0
