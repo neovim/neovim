@@ -2019,16 +2019,17 @@ end
 --- Creates a `DocumentFormattingParams` object for the current buffer and cursor position.
 ---
 ---@param options lsp.FormattingOptions? with valid `FormattingOptions` entries
+---@param bufnr? integer buffer handle or 0 for current, defaults to current
 ---@return lsp.DocumentFormattingParams object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
-function M.make_formatting_params(options)
+function M.make_formatting_params(options, bufnr)
   validate('options', options, 'table', true)
   options = vim.tbl_extend('keep', options or {}, {
     tabSize = M.get_effective_tabstop(),
     insertSpaces = vim.bo.expandtab,
   })
   return {
-    textDocument = { uri = vim.uri_from_bufnr(0) },
+    textDocument = { uri = vim.uri_from_bufnr(bufnr or 0) },
     options = options,
   }
 end

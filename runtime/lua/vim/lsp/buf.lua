@@ -396,7 +396,7 @@ end
 
 ---@param bufnr integer
 ---@param mode "v"|"V"
----@return table {start={row,col}, end={row,col}} using (1, 0) indexing
+---@return lsp.Range
 local function range_from_selection(bufnr, mode)
   -- TODO: Use `vim.fn.getregionpos()` instead.
 
@@ -425,6 +425,34 @@ local function range_from_selection(bufnr, mode)
     ['start'] = { start_row, start_col - 1 },
     ['end'] = { end_row, end_col - 1 },
   }
+end
+
+--- @param opts lsp.FormattingOptions
+--- @param bufnr integer
+--- @param encoding? string
+--- @param range? lsp.Range|lsp.Range[]
+--- @return lsp.DocumentFormattingParams|lsp.DocumentRangeFormattingParams|lsp.DocumentRangesFormattingParams
+local function make_format_params(opts, bufnr, encoding, range)
+  local params = util.make_formatting_params(opts, bufnr)
+  --- @diagnostic disable-next-line:cast-type-mismatch
+  --- @cast params lsp.DocumentFormattingParams|lsp.DocumentRangeFormattingParams|lsp.DocumentRangesFormattingParams
+
+  if range then
+    --- @return lsp.Range[]
+    local function to_lsp_range(r)
+      return util.make_given_range_params(r.start, r['end'], bufnr, encoding).range
+    end
+
+    if #range > 0 and type(range[1]) == 'table' then
+      --- @cast range lsp.Range[]
+      params.ranges = vim.tbl_map(to_lsp_range, range)
+    else
+      --- @cast range lsp.Range
+      params.range = to_lsp_range(range)
+    end
+  end
+
+  return params
 end
 
 --- @class vim.lsp.buf.format.Opts
@@ -472,7 +500,7 @@ end
 --- in which case `textDocument/rangesFormatting` support is required.
 --- (Default: current selection in visual mode, `nil` in other modes,
 --- formatting the full buffer)
---- @field range? {start:[integer,integer],end:[integer, integer]}|{start:[integer,integer],end:[integer,integer]}[]
+--- @field range? lsp.Range|lsp.Range[]
 
 --- Formats a buffer using the attached (and optionally filtered) language
 --- server clients.
@@ -488,8 +516,9 @@ function M.format(opts)
     range = range_from_selection(bufnr, mode)
   end
 
-  local passed_multiple_ranges = (range and #range ~= 0 and type(range[1]) == 'table')
-  local method ---@type string
+  local passed_multiple_ranges = range and #range > 0 and type(range[1]) == 'table'
+
+  local method --- @type string
   if passed_multiple_ranges then
     method = ms.textDocument_rangesFormatting
   elseif range then
@@ -498,60 +527,48 @@ function M.format(opts)
     method = ms.textDocument_formatting
   end
 
-  local clients = lsp.get_clients({
-    id = opts.id,
-    bufnr = bufnr,
-    name = opts.name,
-    method = method,
-  })
+  local clients =
+    lsp.get_clients({ id = opts.id, bufnr = bufnr, name = opts.name, method = method })
+
   if opts.filter then
     clients = vim.tbl_filter(opts.filter, clients)
   end
 
   if #clients == 0 then
     vim.notify('[LSP] Format request failed, no matching language servers.')
+    return
   end
 
-  --- @param client vim.lsp.Client
-  --- @param params lsp.DocumentFormattingParams
-  --- @return lsp.DocumentFormattingParams
-  local function set_range(client, params)
-    local to_lsp_range = function(r) ---@return lsp.DocumentRangeFormattingParams|lsp.DocumentRangesFormattingParams
-      return util.make_given_range_params(r.start, r['end'], bufnr, client.offset_encoding).range
+  local done = false
+
+  --- @param idx? integer
+  --- @param client? vim.lsp.Client
+  local function do_format(idx, client)
+    if not client then
+      done = true
+      return
     end
 
-    if passed_multiple_ranges then
-      params.ranges = vim.tbl_map(to_lsp_range, range)
-    elseif range then
-      params.range = to_lsp_range(range)
-    end
-    return params
-  end
+    local params = make_format_params(opts.formatting_options, bufnr, client.offset_encoding, range)
 
-  if opts.async then
-    local function do_format(idx, client)
-      if not client then
-        return
-      end
-      local params = set_range(client, util.make_formatting_params(opts.formatting_options))
-      client.request(method, params, function(...)
-        local handler = client.handlers[method] or lsp.handlers[method]
-        handler(...)
-        do_format(next(clients, idx))
-      end, bufnr)
-    end
-    do_format(next(clients))
-  else
-    local timeout_ms = opts.timeout_ms or 1000
-    for _, client in pairs(clients) do
-      local params = set_range(client, util.make_formatting_params(opts.formatting_options))
-      local result, err = client.request_sync(method, params, timeout_ms, bufnr)
-      if result and result.result then
-        util.apply_text_edits(result.result, bufnr, client.offset_encoding)
-      elseif err then
+    --- @param result lsp.TextEdit[]
+    client.request(method, params, function(err, result)
+      if err then
         vim.notify(string.format('[LSP][%s] %s', client.name, err), vim.log.levels.WARN)
+      elseif result then
+        util.apply_text_edits(result, bufnr, client.offset_encoding)
       end
-    end
+
+      do_format(next(clients, idx))
+    end, bufnr)
+  end
+
+  do_format(next(clients))
+
+  if not opts.async then
+    vim.wait(opts.timeout_ms or 1000, function()
+      return done
+    end, 10)
   end
 end
 

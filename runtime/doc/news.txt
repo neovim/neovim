@@ -93,6 +93,8 @@ LSP
   can no longer be configured with |vim.lsp.with()|.
   Instead use: >lua
     vim.diagnostic.config(config, vim.lsp.diagnostic.get_namespace(client_id))
+• |vim.lsp.buf.format()| no longer triggers the global handlers from
+  `vim.lsp.handlers`
 <
 
 LUA
