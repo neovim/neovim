@@ -160,6 +160,7 @@ vim.v.errors = ...
 ---                    an aborting condition (e.g. `c_Esc` or
 ---                    `c_CTRL-C` for `CmdlineLeave`).
 ---   chan             `channel-id`
+---   info             As returned by `nvim_get_chan_info()`.
 ---   cmdlevel         Level of cmdline.
 ---   cmdtype          Type of cmdline, `cmdline-char`.
 ---   cwd              Current working directory.
