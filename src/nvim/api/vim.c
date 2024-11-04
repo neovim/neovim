@@ -385,7 +385,10 @@ Integer nvim_input(uint64_t channel_id, String keys)
 ///                 The same specifiers are used as for a key press, except
 ///                 that the "-" separator is optional, so "C-A-", "c-a"
 ///                 and "CA" can all be used to specify Ctrl+Alt+click.
-/// @param grid Grid number if the client uses |ui-multigrid|, else 0.
+/// @param grid Grid number if the client uses |ui-multigrid|, with manual positioning of the
+///             windows else 0. If you  are using multigrid and let nvim determine the positioning
+///             of the windows when using multigrid, you can pass 0 and nvim will find the window
+///             grid for you. You can combine both approaches.
 /// @param row Mouse row-position (zero-based, like redraw events)
 /// @param col Mouse column-position (zero-based, like redraw events)
 /// @param[out] err Error details, if any

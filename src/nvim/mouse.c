@@ -1741,18 +1741,25 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
     }
   } else if (*gridp == 0) {
     ScreenGrid *grid = ui_comp_mouse_focus(*rowp, *colp);
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (&wp->w_grid_alloc != grid) {
-        continue;
-      }
+    if (grid == &pum_grid) {
       *gridp = grid->handle;
-      *rowp -= grid->comp_row + wp->w_grid.row_offset;
-      *colp -= grid->comp_col + wp->w_grid.col_offset;
-      return wp;
+      *rowp -= grid->comp_row + grid->row_offset;
+      *colp -= grid->comp_col + grid->col_offset;
+      // TODO(fredizzimo): Does the popup have a window?
+      return NULL;
+    } else {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+        if (&wp->w_grid_alloc != grid) {
+          continue;
+        }
+        *gridp = grid->handle;
+        *rowp -= wp->w_winrow + wp->w_grid.row_offset;
+        *colp -= wp->w_wincol + wp->w_grid.col_offset;
+        return wp;
+      }
     }
 
     // no float found, click on the default grid
-    // TODO(bfredl): grid can be &pum_grid, allow select pum items by mouse?
     *gridp = DEFAULT_GRID_HANDLE;
   }
   return NULL;
@@ -1873,7 +1880,8 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   int start_row = 0;
   int start_col = 0;
   grid_adjust(&gp, &start_row, &start_col);
-  if (gp->handle != click_grid || gp->chars == NULL) {
+  // Grid 1 is special when using multigrid
+  if ((gp->handle != click_grid && click_grid != 1) || gp->chars == NULL) {
     return;
   }
   click_row += start_row;
