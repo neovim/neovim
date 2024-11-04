@@ -152,6 +152,54 @@ describe('default', function()
           ]],
         })
       end)
+
+      describe('[<Space>', function()
+        it('adds an empty line above the current line', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed('[<Space>')
+          n.expect([[
+
+          first line]])
+        end)
+
+        it('works with a count', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed('5[<Space>')
+          n.expect([[
+
+
+
+
+
+          first line]])
+        end)
+      end)
+
+      describe(']<Space>', function()
+        it('adds an empty line below the current line', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed(']<Space>')
+          n.expect([[
+          first line
+          ]])
+        end)
+
+        it('works with a count', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed('5]<Space>')
+          n.expect([[
+          first line
+
+
+
+
+          ]])
+        end)
+      end)
     end)
   end)
 end)

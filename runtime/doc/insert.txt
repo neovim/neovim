@@ -1907,6 +1907,16 @@ These commands are used to start inserting text.  You can end insert mode with
 <Esc>.  See |mode-ins-repl| for the other special characters in Insert mode.
 The effect of [count] takes place after Insert mode is exited.
 
+The following commands insert text, but stay in normal mode:
+
+							*]<Space>*
+]<Space>		Insert an empty line below the cursor without leaving
+			Normal mode, repeat [count] times.
+
+							*[<Space>*
+[<Space>		Insert an empty line above the cursor without leaving
+			Normal mode, repeat [count] times.
+
 When 'autoindent' is on, the indent for a new line is obtained from the
 previous line.  When 'smartindent' or 'cindent' is on, the indent for a line
 is automatically adjusted for C programs.

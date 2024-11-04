@@ -163,6 +163,7 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - |[t|, |]t|, |[T|, |]T|, |[CTRL-T|, |]CTRL-T|
 - |[a|, |]a|, |[A|, |]A|
 - |[b|, |]b|, |[B|, |]B|
+- |[<Space>|, |]<Space>|
 - Nvim LSP client defaults |lsp-defaults|
   - K |K-lsp-default|
 

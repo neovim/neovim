@@ -178,6 +178,7 @@ DEFAULTS
     • |[t|, |]t|, |[T|, |]T|, |[CTRL-T|, |]CTRL-T| navigate through the |tag-matchlist|
     • |[a|, |]a|, |[A|, |]A| navigate through the |argument-list|
     • |[b|, |]b|, |[B|, |]B| navigate through the |buffer-list|
+    • |[<Space>|, |]<Space>| add an empty line above and below the cursor
 
 • Snippet:
   • `<Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = 1 })`

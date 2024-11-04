@@ -363,6 +363,19 @@ do
         cmd({ cmd = 'blast' })
       end
     end, { desc = ':blast' })
+
+    -- Add empty lines
+    vim.keymap.set('n', '[<Space>', function()
+      local repeated = vim.fn['repeat']({ '' }, vim.v.count1)
+      local linenr = vim.api.nvim_win_get_cursor(0)[1]
+      vim.api.nvim_buf_set_lines(0, linenr - 1, linenr - 1, true, repeated)
+    end, { desc = 'Add empty line above cursor' })
+
+    vim.keymap.set('n', ']<Space>', function()
+      local repeated = vim.fn['repeat']({ '' }, vim.v.count1)
+      local linenr = vim.api.nvim_win_get_cursor(0)[1]
+      vim.api.nvim_buf_set_lines(0, linenr, linenr, true, repeated)
+    end, { desc = 'Add empty line below cursor' })
   end
 end
 
