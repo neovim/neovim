@@ -424,6 +424,7 @@ UI
 • |ui-messages| content chunks now also contain the highlight group ID.
 • |:checkhealth| can display in a floating window, controlled by the
   |g:health| variable.
+• |ui-multigrid| provides composition information and absolute coordinates.
 
 VIMSCRIPT
 
