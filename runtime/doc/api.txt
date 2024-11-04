@@ -1147,8 +1147,9 @@ nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
                     press, except that the "-" separator is optional, so
                     "C-A-", "c-a" and "CA" can all be used to specify
                     Ctrl+Alt+click.
-      • {grid}      (`integer`) Grid number if the client uses |ui-multigrid|,
-                    else 0.
+      • {grid}      (`integer`) Grid number (used by |ui-multigrid| client),
+                    or 0 to let Nvim decide positioning of windows. For more
+                    information, see |dev-ui-multigrid|
       • {row}       (`integer`) Mouse row-position (zero-based, like redraw
                     events)
       • {col}       (`integer`) Mouse column-position (zero-based, like redraw
