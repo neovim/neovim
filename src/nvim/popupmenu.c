@@ -37,6 +37,7 @@
 #include "nvim/memory_defs.h"
 #include "nvim/menu.h"
 #include "nvim/message.h"
+#include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
@@ -1325,6 +1326,10 @@ static void pum_position_at_mouse(int min_width)
   int col = mouse_col;
   pum_win_row_offset = 0;
   pum_win_col_offset = 0;
+
+  if (ui_has(kUIMultigrid) && grid == 0) {
+    mouse_find_win_outer(&grid, &row, &col);
+  }
   if (grid > 1) {
     win_T *wp = get_win_by_grid_handle(grid);
     if (wp != NULL) {
@@ -1395,17 +1400,27 @@ static void pum_position_at_mouse(int min_width)
 /// Select the pum entry at the mouse position.
 static void pum_select_mouse_pos(void)
 {
-  if (mouse_grid == pum_grid.handle) {
-    pum_selected = mouse_row;
+  int grid = mouse_grid;
+  int row = mouse_row;
+  int col = mouse_col;
+
+  if (grid == 0) {
+    mouse_find_win_outer(&grid, &row, &col);
+  }
+
+  if (grid == pum_grid.handle) {
+    pum_selected = row;
     return;
-  } else if (mouse_grid != pum_anchor_grid
-             || mouse_col < pum_left_col - pum_win_col_offset
-             || mouse_col >= pum_right_col - pum_win_col_offset) {
+  }
+
+  if (grid != pum_anchor_grid
+      || col < pum_left_col - pum_win_col_offset
+      || col >= pum_right_col - pum_win_col_offset) {
     pum_selected = -1;
     return;
   }
 
-  int idx = mouse_row - (pum_row - pum_win_row_offset);
+  int idx = row - (pum_row - pum_win_row_offset);
 
   if (idx < 0 || idx >= pum_height) {
     pum_selected = -1;

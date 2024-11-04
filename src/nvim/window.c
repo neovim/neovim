@@ -5187,6 +5187,8 @@ win_T *win_alloc(win_T *after, bool hidden)
   new_wp->handle = ++last_win_id;
   pmap_put(int)(&window_handles, new_wp->handle, new_wp);
 
+  new_wp->w_grid_alloc.mouse_enabled = true;
+
   grid_assign_handle(&new_wp->w_grid_alloc);
 
   // Init w: variables.

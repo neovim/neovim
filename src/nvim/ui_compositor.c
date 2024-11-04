@@ -318,6 +318,15 @@ ScreenGrid *ui_comp_mouse_focus(int row, int col)
       return grid;
     }
   }
+  if (ui_has(kUIMultigrid)) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      ScreenGrid *grid = &wp->w_grid_alloc;
+      if (grid->mouse_enabled && row >= wp->w_winrow && row < wp->w_winrow + grid->rows
+          && col >= wp->w_wincol && col < wp->w_wincol + grid->cols) {
+        return grid;
+      }
+    }
+  }
   return NULL;
 }
 

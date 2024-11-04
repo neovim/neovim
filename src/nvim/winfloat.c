@@ -192,7 +192,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
     int row = mouse_row;
     int col = mouse_col;
     int grid = mouse_grid;
-    win_T *mouse_win = mouse_find_win(&grid, &row, &col);
+    win_T *mouse_win = mouse_find_win_inner(&grid, &row, &col);
     if (mouse_win != NULL) {
       fconfig.relative = kFloatRelativeWindow;
       fconfig.row += row;
