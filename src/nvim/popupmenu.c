@@ -40,6 +40,7 @@
 #include "nvim/memory_defs.h"
 #include "nvim/menu.h"
 #include "nvim/message.h"
+#include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -612,6 +613,8 @@ void pum_redraw(void)
   }
 
   grid_assign_handle(&pum_grid);
+
+  pum_grid.mouse_enabled = true;
 
   pum_left_col = pum_col - col_off;
   pum_right_col = pum_left_col + grid_width;
@@ -1321,6 +1324,13 @@ static void pum_position_at_mouse(int min_width)
   int col = mouse_col;
   pum_win_row_offset = 0;
   pum_win_col_offset = 0;
+
+  if (ui_has(kUIMultigrid) && (grid == 0 || grid == 1)) {
+    win_T *wp = mouse_find_win(&grid, &row, &col);
+    // mouse_find_win compensates for offsets (e.g. 'winbar'), but we don't want that here.
+    row += wp->w_winrow_off;
+    col += wp->w_wincol_off;
+  }
   if (grid > 1) {
     win_T *wp = get_win_by_grid_handle(grid);
     if (wp != NULL) {
@@ -1391,17 +1401,33 @@ static void pum_position_at_mouse(int min_width)
 /// Select the pum entry at the mouse position.
 static void pum_select_mouse_pos(void)
 {
-  if (mouse_grid == pum_grid.handle) {
-    pum_selected = mouse_row;
+  int grid = mouse_grid;
+  int row = mouse_row;
+  int col = mouse_col;
+  win_T *wp = NULL;
+
+  if (grid == 0) {
+    wp = mouse_find_win(&grid, &row, &col);
+    // mouse_find_win compensates for offsets (e.g. 'winbar'), but we don't want that here.
+    if (wp) {
+      row += wp->w_winrow_off;
+      col += wp->w_wincol_off;
+    }
+  }
+
+  if (grid == pum_grid.handle) {
+    pum_selected = row;
     return;
-  } else if (mouse_grid != pum_anchor_grid
-             || mouse_col < pum_left_col - pum_win_col_offset
-             || mouse_col >= pum_right_col - pum_win_col_offset) {
+  }
+
+  if (grid != pum_anchor_grid
+      || col < pum_left_col - pum_win_col_offset
+      || col >= pum_right_col - pum_win_col_offset) {
     pum_selected = -1;
     return;
   }
 
-  int idx = mouse_row - (pum_row - pum_win_row_offset);
+  int idx = row - (pum_row - pum_win_row_offset);
 
   if (idx < 0 || idx >= pum_height) {
     pum_selected = -1;
