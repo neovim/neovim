@@ -408,6 +408,7 @@ func s:GetFilenameChecks() abort
     \ 'lean': ['file.lean'],
     \ 'ledger': ['file.ldg', 'file.ledger', 'file.journal'],
     \ 'less': ['file.less'],
+    \ 'leo': ['file.leo'],
     \ 'lex': ['file.lex', 'file.l', 'file.lxx', 'file.l++'],
     \ 'lf': ['lfrc'],
     \ 'lftp': ['lftp.conf', '.lftprc', 'anylftp/rc', 'lftp/rc', 'some-lftp/rc'],

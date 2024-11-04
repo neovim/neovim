@@ -670,6 +670,7 @@ local extension = {
   journal = 'ledger',
   ldg = 'ledger',
   ledger = 'ledger',
+  leo = 'leo',
   less = 'less',
   lex = 'lex',
   lxx = 'lex',
