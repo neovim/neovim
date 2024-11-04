@@ -1,5 +1,4 @@
 local G = vim.lsp._snippet_grammar
-local snippet_group = vim.api.nvim_create_augroup('vim/snippet', {})
 local snippet_ns = vim.api.nvim_create_namespace('vim/snippet')
 local hl_group = 'SnippetTabstop'
 local jump_forward_key = '<tab>'
@@ -384,8 +383,9 @@ end
 ---
 --- @param bufnr integer
 local function setup_autocmds(bufnr)
+  local g = vim.api.nvim_create_augroup(('snippet_%d'):format(bufnr), { clear = true })
   vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI' }, {
-    group = snippet_group,
+    group = g,
     desc = 'Update snippet state when the cursor moves',
     buffer = bufnr,
     callback = function()
@@ -429,7 +429,7 @@ local function setup_autocmds(bufnr)
   })
 
   vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI' }, {
-    group = snippet_group,
+    group = g,
     desc = 'Update active tabstops when buffer text changes',
     buffer = bufnr,
     callback = function()
@@ -458,7 +458,7 @@ local function setup_autocmds(bufnr)
   })
 
   vim.api.nvim_create_autocmd('BufLeave', {
-    group = snippet_group,
+    group = g,
     desc = 'Stop the snippet session when leaving the buffer',
     buffer = bufnr,
     callback = function()
@@ -634,8 +634,11 @@ function M.jump(direction)
     end
   end
 
-  -- Clear the autocommands so that we can move the cursor freely while selecting the tabstop.
-  vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
+  local gname = ('snippet_%d'):format(M._session.bufnr)
+  local ok = pcall(vim.api.nvim_get_autocmds, { buffer = M._session.bufnr, group = gname })
+  if not ok then
+    setup_autocmds(M._session.bufnr)
+  end
 
   -- Deactivate expansion of the current tabstop.
   M._session:set_group_gravity(M._session.current_tabstop.index, true)
@@ -645,9 +648,6 @@ function M.jump(direction)
 
   -- Activate expansion of the destination tabstop.
   M._session:set_group_gravity(dest.index, false)
-
-  -- Restore the autocommands.
-  setup_autocmds(M._session.bufnr)
 end
 
 --- @class vim.snippet.ActiveFilter
@@ -691,7 +691,7 @@ function M.stop()
 
   M._session:restore_keymaps()
 
-  vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
+  vim.api.nvim_del_augroup_by_name(('snippet_%d'):format(M._session.bufnr))
   vim.api.nvim_buf_clear_namespace(M._session.bufnr, snippet_ns, 0, -1)
 
   M._session = nil
