@@ -892,7 +892,7 @@ static void set_info_event(void **argv)
   typval_T retval;
   object_to_vim(DICT_OBJ(info), &retval, NULL);
   assert(retval.v_type == VAR_DICT);
-  tv_dict_add_dict(dict, S_LEN("info"), retval.vval.v_dict);
+  tv_dict_add_dict(dict, S_LEN("chan_info"), retval.vval.v_dict);
   tv_dict_set_keys_readonly(dict);
 
   apply_autocmds(event, NULL, NULL, false, curbuf);

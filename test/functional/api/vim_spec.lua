@@ -2604,7 +2604,7 @@ describe('API', function()
         { do_stuff = { n_args = { 2, 3 } } },
         { license = 'Apache2' }
       )
-      local info = {
+      local chan_info = {
         stream = 'stdio',
         id = 1,
         mode = 'rpc',
@@ -2616,30 +2616,30 @@ describe('API', function()
           attributes = { license = 'Apache2' },
         },
       }
-      eq({ info = info }, api.nvim_get_var('info_event'))
-      eq({ [1] = info, [2] = stderr }, api.nvim_list_chans())
-      eq(info, api.nvim_get_chan_info(1))
+      eq({ chan_info = chan_info }, api.nvim_get_var('info_event'))
+      eq({ [1] = chan_info, [2] = stderr }, api.nvim_list_chans())
+      eq(chan_info, api.nvim_get_chan_info(1))
     end)
 
     it('stream=job channel', function()
       eq(3, eval("jobstart(['cat'], {'rpc': v:true})"))
       local catpath = eval('exepath("cat")')
-      local info = {
+      local chan_info = {
         stream = 'job',
         id = 3,
         argv = { catpath },
         mode = 'rpc',
         client = {},
       }
-      eq({ info = info }, api.nvim_get_var('opened_event'))
-      eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
-      eq(info, api.nvim_get_chan_info(3))
+      eq({ chan_info = chan_info }, api.nvim_get_var('opened_event'))
+      eq({ [1] = testinfo, [2] = stderr, [3] = chan_info }, api.nvim_list_chans())
+      eq(chan_info, api.nvim_get_chan_info(3))
       eval(
         'rpcrequest(3, "nvim_set_client_info", "amazing-cat", {}, "remote",'
           .. '{"nvim_command":{"n_args":1}},' -- and so on
           .. '{"description":"The Amazing Cat"})'
       )
-      info = {
+      chan_info = {
         stream = 'job',
         id = 3,
         argv = { catpath },
@@ -2652,14 +2652,14 @@ describe('API', function()
           attributes = { description = 'The Amazing Cat' },
         },
       }
-      eq({ info = info }, api.nvim_get_var('info_event'))
-      eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
+      eq({ chan_info = chan_info }, api.nvim_get_var('info_event'))
+      eq({ [1] = testinfo, [2] = stderr, [3] = chan_info }, api.nvim_list_chans())
 
       eq(
         "Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1 when calling nvim_set_current_buf, expecting Buffer",
         pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)')
       )
-      eq(info, eval('rpcrequest(3, "nvim_get_chan_info", 0)'))
+      eq(chan_info, eval('rpcrequest(3, "nvim_get_chan_info", 0)'))
     end)
 
     it('stream=job :terminal channel', function()
@@ -2667,7 +2667,7 @@ describe('API', function()
       eq(1, api.nvim_get_current_buf())
       eq(3, api.nvim_get_option_value('channel', { buf = 1 }))
 
-      local info = {
+      local chan_info = {
         stream = 'job',
         id = 3,
         argv = { eval('exepath(&shell)') },
@@ -2677,13 +2677,13 @@ describe('API', function()
       }
       local event = api.nvim_get_var('opened_event')
       if not is_os('win') then
-        info.pty = event.info.pty
-        neq(nil, string.match(info.pty, '^/dev/'))
+        chan_info.pty = event.chan_info.pty
+        neq(nil, string.match(chan_info.pty, '^/dev/'))
       end
-      eq({ info = info }, event)
-      info.buffer = 1
-      eq({ [1] = testinfo, [2] = stderr, [3] = info }, api.nvim_list_chans())
-      eq(info, api.nvim_get_chan_info(3))
+      eq({ chan_info = chan_info }, event)
+      chan_info.buffer = 1
+      eq({ [1] = testinfo, [2] = stderr, [3] = chan_info }, api.nvim_list_chans())
+      eq(chan_info, api.nvim_get_chan_info(3))
 
       -- :terminal with args + running process.
       command('enew')
