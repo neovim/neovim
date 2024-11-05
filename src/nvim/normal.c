@@ -1348,7 +1348,7 @@ static void normal_check_folds(NormalState *s)
   if (hasAnyFolding(curwin) && !char_avail()) {
     foldCheckClose();
 
-    if (fdo_flags & FDO_ALL) {
+    if (fdo_flags & kOptFdoFlagAll) {
       foldOpenCursor();
     }
   }
@@ -2310,7 +2310,7 @@ static void nv_gd(oparg_T *oap, int nchar, int thisblock)
     return;
   }
 
-  if ((fdo_flags & FDO_SEARCH) && KeyTyped && oap->op_type == OP_NOP) {
+  if ((fdo_flags & kOptFdoFlagSearch) && KeyTyped && oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
   // clear any search statistics
@@ -3752,7 +3752,7 @@ static void nv_right(cmdarg_T *cap)
       }
     }
   }
-  if (n != cap->count1 && (fdo_flags & FDO_HOR) && KeyTyped
+  if (n != cap->count1 && (fdo_flags & kOptFdoFlagHor) && KeyTyped
       && cap->oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
@@ -3811,7 +3811,7 @@ static void nv_left(cmdarg_T *cap)
       break;
     }
   }
-  if (n != cap->count1 && (fdo_flags & FDO_HOR) && KeyTyped
+  if (n != cap->count1 && (fdo_flags & kOptFdoFlagHor) && KeyTyped
       && cap->oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
@@ -3929,7 +3929,7 @@ static void nv_dollar(cmdarg_T *cap)
   if (cursor_down(cap->count1 - 1,
                   cap->oap->op_type == OP_NOP) == false) {
     clearopbeep(cap->oap);
-  } else if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP) {
+  } else if ((fdo_flags & kOptFdoFlagHor) && KeyTyped && cap->oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
 }
@@ -4016,7 +4016,7 @@ static int normal_search(cmdarg_T *cap, int dir, char *pat, size_t patlen, int o
       cap->oap->motion_type = kMTLineWise;
     }
     curwin->w_cursor.coladd = 0;
-    if (cap->oap->op_type == OP_NOP && (fdo_flags & FDO_SEARCH) && KeyTyped) {
+    if (cap->oap->op_type == OP_NOP && (fdo_flags & kOptFdoFlagSearch) && KeyTyped) {
       foldOpenCursor();
     }
   }
@@ -4065,7 +4065,7 @@ static void nv_csearch(cmdarg_T *cap)
     curwin->w_cursor.coladd = 0;
   }
   adjust_for_sel(cap);
-  if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP) {
+  if ((fdo_flags & kOptFdoFlagHor) && KeyTyped && cap->oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
 }
@@ -4181,7 +4181,7 @@ static void nv_bracket_block(cmdarg_T *cap, const pos_T *old_pos)
     setpcmark();
     curwin->w_cursor = *pos;
     curwin->w_set_curswant = true;
-    if ((fdo_flags & FDO_BLOCK) && KeyTyped
+    if ((fdo_flags & kOptFdoFlagBlock) && KeyTyped
         && cap->oap->op_type == OP_NOP) {
       foldOpenCursor();
     }
@@ -4261,7 +4261,7 @@ static void nv_brackets(cmdarg_T *cap)
       if (cap->oap->op_type == OP_NOP) {
         beginline(BL_WHITE | BL_FIX);
       }
-      if ((fdo_flags & FDO_BLOCK) && KeyTyped && cap->oap->op_type == OP_NOP) {
+      if ((fdo_flags & kOptFdoFlagBlock) && KeyTyped && cap->oap->op_type == OP_NOP) {
         foldOpenCursor();
       }
     }
@@ -4319,7 +4319,7 @@ static void nv_brackets(cmdarg_T *cap)
       }
       curwin->w_set_curswant = true;
     }
-    if (cap->oap->op_type == OP_NOP && (fdo_flags & FDO_SEARCH) && KeyTyped) {
+    if (cap->oap->op_type == OP_NOP && (fdo_flags & kOptFdoFlagSearch) && KeyTyped) {
       foldOpenCursor();
     }
   } else {
@@ -4371,7 +4371,7 @@ static void nv_percent(cmdarg_T *cap)
   }
   if (cap->oap->op_type == OP_NOP
       && lnum != curwin->w_cursor.lnum
-      && (fdo_flags & FDO_PERCENT)
+      && (fdo_flags & kOptFdoFlagPercent)
       && KeyTyped) {
     foldOpenCursor();
   }
@@ -4395,7 +4395,7 @@ static void nv_brace(cmdarg_T *cap)
   // Don't leave the cursor on the NUL past end of line.
   adjust_cursor(cap->oap);
   curwin->w_cursor.coladd = 0;
-  if ((fdo_flags & FDO_BLOCK) && KeyTyped && cap->oap->op_type == OP_NOP) {
+  if ((fdo_flags & kOptFdoFlagBlock) && KeyTyped && cap->oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
 }
@@ -4426,7 +4426,7 @@ static void nv_findpar(cmdarg_T *cap)
   }
 
   curwin->w_cursor.coladd = 0;
-  if ((fdo_flags & FDO_BLOCK) && KeyTyped && cap->oap->op_type == OP_NOP) {
+  if ((fdo_flags & kOptFdoFlagBlock) && KeyTyped && cap->oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
 }
@@ -4864,7 +4864,7 @@ static void nv_optrans(cmdarg_T *cap)
 static void nv_gomark(cmdarg_T *cap)
 {
   int name;
-  MarkMove flags = jop_flags & JOP_VIEW ? kMarkSetView : 0;  // flags for moving to the mark
+  MarkMove flags = jop_flags & kOptJopFlagView ? kMarkSetView : 0;  // flags for moving to the mark
   if (cap->oap->op_type != OP_NOP) {
     // When there is a pending operator, do not restore the view as this is usually unexpected.
     flags = 0;
@@ -4893,7 +4893,7 @@ static void nv_gomark(cmdarg_T *cap)
   if (cap->oap->op_type == OP_NOP
       && move_res & kMarkMoveSuccess
       && (move_res & kMarkSwitchedBuf || move_res & kMarkChangedCursor)
-      && (fdo_flags & FDO_MARK)
+      && (fdo_flags & kOptFdoFlagMark)
       && old_KeyTyped) {
     foldOpenCursor();
   }
@@ -4904,7 +4904,7 @@ static void nv_gomark(cmdarg_T *cap)
 static void nv_pcmark(cmdarg_T *cap)
 {
   fmark_T *fm = NULL;
-  MarkMove flags = jop_flags & JOP_VIEW ? kMarkSetView : 0;  // flags for moving to the mark
+  MarkMove flags = jop_flags & kOptJopFlagView ? kMarkSetView : 0;  // flags for moving to the mark
   MarkMoveRes move_res = 0;  // Result from moving to the mark
   const bool old_KeyTyped = KeyTyped;  // getting file may reset it.
 
@@ -4943,7 +4943,7 @@ static void nv_pcmark(cmdarg_T *cap)
   }
   if (cap->oap->op_type == OP_NOP
       && (move_res & kMarkSwitchedBuf || move_res & kMarkChangedLine)
-      && (fdo_flags & FDO_MARK)
+      && (fdo_flags & kOptFdoFlagMark)
       && old_KeyTyped) {
     foldOpenCursor();
   }
@@ -5094,7 +5094,7 @@ static void n_start_visual_mode(int c)
   // Corner case: the 0 position in a tab may change when going into
   // virtualedit.  Recalculate curwin->w_cursor to avoid bad highlighting.
   //
-  if (c == Ctrl_V && (get_ve_flags(curwin) & VE_BLOCK) && gchar_cursor() == TAB) {
+  if (c == Ctrl_V && (get_ve_flags(curwin) & kOptVeFlagBlock) && gchar_cursor() == TAB) {
     validate_virtcol(curwin);
     coladvance(curwin, curwin->w_virtcol);
   }
@@ -5915,7 +5915,7 @@ static void nv_bck_word(cmdarg_T *cap)
   curwin->w_set_curswant = true;
   if (bck_word(cap->count1, cap->arg, false) == false) {
     clearopbeep(cap->oap);
-  } else if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP) {
+  } else if ((fdo_flags & kOptFdoFlagHor) && KeyTyped && cap->oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
 }
@@ -5975,7 +5975,7 @@ static void nv_wordcmd(cmdarg_T *cap)
     clearopbeep(cap->oap);
   } else {
     adjust_for_sel(cap);
-    if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP) {
+    if ((fdo_flags & kOptFdoFlagHor) && KeyTyped && cap->oap->op_type == OP_NOP) {
       foldOpenCursor();
     }
   }
@@ -5993,7 +5993,7 @@ static void adjust_cursor(oparg_T *oap)
   if (curwin->w_cursor.col > 0 && gchar_cursor() == NUL
       && (!VIsual_active || *p_sel == 'o')
       && !virtual_active(curwin)
-      && (get_ve_flags(curwin) & VE_ONEMORE) == 0) {
+      && (get_ve_flags(curwin) & kOptVeFlagOnemore) == 0) {
     curwin->w_cursor.col--;
     // prevent cursor from moving on the trail byte
     mb_adjust_cursor();
@@ -6008,7 +6008,7 @@ static void nv_beginline(cmdarg_T *cap)
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
   beginline(cap->arg);
-  if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP) {
+  if ((fdo_flags & kOptFdoFlagHor) && KeyTyped && cap->oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
   ins_at_eol = false;       // Don't move cursor past eol (only necessary in a
@@ -6097,7 +6097,7 @@ static void nv_goto(cmdarg_T *cap)
   lnum = MIN(MAX(lnum, 1), curbuf->b_ml.ml_line_count);
   curwin->w_cursor.lnum = lnum;
   beginline(BL_SOL | BL_FIX);
-  if ((fdo_flags & FDO_JUMP) && KeyTyped && cap->oap->op_type == OP_NOP) {
+  if ((fdo_flags & kOptFdoFlagJump) && KeyTyped && cap->oap->op_type == OP_NOP) {
     foldOpenCursor();
   }
 }
@@ -6167,7 +6167,7 @@ static void nv_esc(cmdarg_T *cap)
     curwin->w_set_curswant = true;
     redraw_curbuf_later(UPD_INVERTED);
   } else if (no_reason) {
-    vim_beep(BO_ESC);
+    vim_beep(kOptBoFlagEsc);
   }
   clearop(cap->oap);
 }
@@ -6176,7 +6176,7 @@ static void nv_esc(cmdarg_T *cap)
 void set_cursor_for_append_to_line(void)
 {
   curwin->w_set_curswant = true;
-  if (get_ve_flags(curwin) == VE_ALL) {
+  if (get_ve_flags(curwin) == kOptVeFlagAll) {
     const int save_State = State;
     // Pretend Insert mode here to allow the cursor on the
     // character past the end of the line
@@ -6501,7 +6501,8 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
     int regname = cap->oap->regname;
     bool keep_registers = cap->cmdchar == 'P';
     // '+' and '*' could be the same selection
-    bool clipoverwrite = (regname == '+' || regname == '*') && (cb_flags & CB_UNNAMEDMASK);
+    bool clipoverwrite = (regname == '+' || regname == '*')
+                         && (cb_flags & (kOptCbFlagUnnamed | kOptCbFlagUnnamedplus));
     if (regname == 0 || regname == '"' || clipoverwrite
         || ascii_isdigit(regname) || regname == '-') {
       // The delete might overwrite the register we want to put, save it first

@@ -471,7 +471,7 @@ void beep_flush(void)
 {
   if (emsg_silent == 0) {
     flush_buffers(FLUSH_MINIMAL);
-    vim_beep(BO_ERROR);
+    vim_beep(kOptBoFlagError);
   }
 }
 

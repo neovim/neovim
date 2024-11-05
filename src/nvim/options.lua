@@ -14,6 +14,8 @@
 --- @field deny_duplicates? boolean
 --- @field enable_if? string
 --- @field defaults? vim.option_defaults
+--- @field values? vim.option_valid_values
+--- @field flags? true|table<string,integer>
 --- @field secure? true
 --- @field noglob? true
 --- @field normal_fname_chars? true
@@ -43,6 +45,7 @@
 --- @alias vim.option_scope 'global'|'buf'|'win'
 --- @alias vim.option_type 'boolean'|'number'|'string'
 --- @alias vim.option_value boolean|number|string
+--- @alias vim.option_valid_values (string|[string,vim.option_valid_values])[]
 
 --- @alias vim.option_redraw
 --- |'statuslines'
@@ -112,6 +115,7 @@ return {
       abbreviation = 'ambw',
       cb = 'did_set_ambiwidth',
       defaults = { if_true = 'single' },
+      values = { 'single', 'double' },
       desc = [=[
         Tells Vim what to do with characters with East Asian Width Class
         Ambiguous (such as Euro, Registered Sign, Copyright Sign, Greek
@@ -306,6 +310,7 @@ return {
       abbreviation = 'bg',
       cb = 'did_set_background',
       defaults = { if_true = 'dark' },
+      values = { 'light', 'dark' },
       desc = [=[
         When set to "dark" or "light", adjusts the default color groups for
         that background type.  The |TUI| or other UI sets this on startup
@@ -341,6 +346,7 @@ return {
       abbreviation = 'bs',
       cb = 'did_set_backspace',
       defaults = { if_true = 'indent,eol,start' },
+      values = { 'indent', 'eol', 'start', 'nostop' },
       deny_duplicates = true,
       desc = [=[
         Influences the working of <BS>, <Del>, CTRL-W and CTRL-U in Insert
@@ -390,6 +396,8 @@ return {
       abbreviation = 'bkc',
       cb = 'did_set_backupcopy',
       defaults = { condition = 'UNIX', if_false = 'auto', if_true = 'auto' },
+      values = { 'yes', 'auto', 'no', 'breaksymlink', 'breakhardlink' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         When writing a file and a backup is made, this option tells how it's
@@ -587,6 +595,29 @@ return {
       abbreviation = 'bo',
       cb = 'did_set_belloff',
       defaults = { if_true = 'all' },
+      values = {
+        'all',
+        'backspace',
+        'cursor',
+        'complete',
+        'copy',
+        'ctrlg',
+        'error',
+        'esc',
+        'ex',
+        'hangul',
+        'insertmode',
+        'lang',
+        'mess',
+        'showmatch',
+        'operator',
+        'register',
+        'shell',
+        'spell',
+        'term',
+        'wildmode',
+      },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         Specifies for which events the bell will not be rung. It is a comma-
@@ -708,6 +739,7 @@ return {
         if_true = ' \t!@*-+;:,./?',
         doc = '" ^I!@*-+;:,./?"',
       },
+      flags = true,
       desc = [=[
         This option lets you choose which characters might cause a line
         break if 'linebreak' is on.  Only works for ASCII characters.
@@ -738,6 +770,8 @@ return {
       abbreviation = 'briopt',
       cb = 'did_set_breakindentopt',
       defaults = { if_true = '' },
+      -- Keep this in sync with briopt_check().
+      values = { 'shift:', 'min:', 'sbr', 'list:', 'column:' },
       deny_duplicates = true,
       desc = [=[
         Settings for 'breakindent'. It can consist of the following optional
@@ -800,6 +834,7 @@ return {
       abbreviation = 'bh',
       cb = 'did_set_bufhidden',
       defaults = { if_true = '' },
+      values = { 'hide', 'unload', 'delete', 'wipe' },
       desc = [=[
         This option specifies what happens when a buffer is no longer
         displayed in a window:
@@ -852,6 +887,15 @@ return {
       abbreviation = 'bt',
       cb = 'did_set_buftype',
       defaults = { if_true = '' },
+      values = {
+        'nofile',
+        'nowrite',
+        'quickfix',
+        'help',
+        'acwrite',
+        'terminal',
+        'prompt',
+      },
       desc = [=[
         The value of this option specifies the type of a buffer:
           <empty>	normal buffer
@@ -911,6 +955,8 @@ return {
       abbreviation = 'cmp',
       cb = 'did_set_casemap',
       defaults = { if_true = 'internal,keepascii' },
+      values = { 'internal', 'keepascii' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         Specifies details about changing the case of letters.  It may contain
@@ -1175,6 +1221,8 @@ return {
       abbreviation = 'cb',
       cb = 'did_set_clipboard',
       defaults = { if_true = '' },
+      values = { 'unnamed', 'unnamedplus' },
+      flags = true,
       desc = [=[
         This option is a list of comma-separated names.
         These names are recognized:
@@ -1348,6 +1396,7 @@ return {
       abbreviation = 'cpt',
       cb = 'did_set_complete',
       defaults = { if_true = '.,w,b,u,t' },
+      values = { '.', 'w', 'b', 'u', 'k', 'kspell', 's', 'i', 'd', ']', 't', 'U', 'f' },
       deny_duplicates = true,
       desc = [=[
         This option specifies how keyword completion |ins-completion| works
@@ -1418,6 +1467,7 @@ return {
       abbreviation = 'cia',
       cb = 'did_set_completeitemalign',
       defaults = { if_true = 'abbr,kind,menu' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         A comma-separated list of |complete-items| that controls the alignment
@@ -1438,6 +1488,17 @@ return {
       abbreviation = 'cot',
       cb = 'did_set_completeopt',
       defaults = { if_true = 'menu,preview' },
+      values = {
+        'menu',
+        'menuone',
+        'longest',
+        'preview',
+        'popup',
+        'noinsert',
+        'noselect',
+        'fuzzy',
+      },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         A comma-separated list of options for Insert mode completion
@@ -1493,6 +1554,7 @@ return {
       abbreviation = 'csl',
       cb = 'did_set_completeslash',
       defaults = { if_true = '' },
+      values = { 'slash', 'backslash' },
       desc = [=[
         		only modifiable in MS-Windows
         When this option is set it overrules 'shellslash' for completion:
@@ -1908,6 +1970,13 @@ return {
       abbreviation = 'culopt',
       cb = 'did_set_cursorlineopt',
       defaults = { if_true = 'both' },
+      -- Keep this in sync with fill_culopt_flags().
+      values = { 'line', 'screenline', 'number', 'both' },
+      flags = {
+        Line = 0x01,
+        Screenline = 0x02,
+        Number = 0x04,
+      },
       deny_duplicates = true,
       desc = [=[
         Comma-separated list of settings for how 'cursorline' is displayed.
@@ -1935,6 +2004,7 @@ return {
     {
       cb = 'did_set_debug',
       defaults = { if_true = '' },
+      values = { 'msg', 'throw', 'beep' },
       desc = [=[
         These values can be used:
         msg	Error messages that would otherwise be omitted will be given
@@ -2077,6 +2147,26 @@ return {
       abbreviation = 'dip',
       cb = 'did_set_diffopt',
       defaults = { if_true = 'internal,filler,closeoff' },
+      -- Keep this in sync with diffopt_changed().
+      values = {
+        'filler',
+        'context:',
+        'iblank',
+        'icase',
+        'iwhite',
+        'iwhiteall',
+        'iwhiteeol',
+        'horizontal',
+        'vertical',
+        'closeoff',
+        'hiddenoff',
+        'foldcolumn:',
+        'followwrap',
+        'internal',
+        'indent-heuristic',
+        'linematch:',
+        { 'algorithm:', { 'myers', 'minimal', 'patience', 'histogram' } },
+      },
       deny_duplicates = true,
       desc = [=[
         Option settings for diff mode.  It can consist of the following items.
@@ -2269,6 +2359,8 @@ return {
       abbreviation = 'dy',
       cb = 'did_set_display',
       defaults = { if_true = 'lastline' },
+      values = { 'lastline', 'truncate', 'uhex', 'msgsep' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         Change the way text is displayed.  This is a comma-separated list of
@@ -2302,6 +2394,7 @@ return {
       abbreviation = 'ead',
       cb = 'did_set_eadirection',
       defaults = { if_true = 'both' },
+      values = { 'both', 'ver', 'hor' },
       desc = [=[
         Tells when the 'equalalways' option applies:
         	ver	vertically, width of windows is not affected
@@ -2689,6 +2782,7 @@ return {
         if_false = 'unix',
         doc = 'Windows: "dos", Unix: "unix"',
       },
+      values = { 'unix', 'dos', 'mac' },
       desc = [=[
         This gives the <EOL> of the current buffer, which is used for
         reading/writing the buffer from/to a file:
@@ -2993,6 +3087,7 @@ return {
       abbreviation = 'fcl',
       cb = 'did_set_foldclose',
       defaults = { if_true = '' },
+      values = { 'all' },
       deny_duplicates = true,
       desc = [=[
         When set to "all", a fold is closed when the cursor isn't in it and
@@ -3012,6 +3107,28 @@ return {
       abbreviation = 'fdc',
       cb = 'did_set_foldcolumn',
       defaults = { if_true = '0' },
+      values = {
+        'auto',
+        'auto:1',
+        'auto:2',
+        'auto:3',
+        'auto:4',
+        'auto:5',
+        'auto:6',
+        'auto:7',
+        'auto:8',
+        'auto:9',
+        '0',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+      },
       desc = [=[
         When and how to draw the foldcolumn. Valid values are:
             "auto":       resize to the minimum amount of folds to display.
@@ -3148,6 +3265,7 @@ return {
       abbreviation = 'fdm',
       cb = 'did_set_foldmethod',
       defaults = { if_true = 'manual' },
+      values = { 'manual', 'expr', 'marker', 'indent', 'syntax', 'diff' },
       desc = [=[
         The kind of folding used for the current window.  Possible values:
         |fold-manual|	manual	    Folds are created manually.
@@ -3202,6 +3320,20 @@ return {
       abbreviation = 'fdo',
       cb = 'did_set_foldopen',
       defaults = { if_true = 'block,hor,mark,percent,quickfix,search,tag,undo' },
+      values = {
+        'all',
+        'block',
+        'hor',
+        'mark',
+        'percent',
+        'quickfix',
+        'search',
+        'tag',
+        'insert',
+        'undo',
+        'jump',
+      },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         Specifies for which type of commands folds will be opened, if the
@@ -4163,6 +4295,7 @@ return {
       abbreviation = 'icm',
       cb = 'did_set_inccommand',
       defaults = { if_true = 'nosplit' },
+      values = { 'nosplit', 'split' },
       desc = [=[
         When nonempty, shows the effects of |:substitute|, |:smagic|,
         |:snomagic| and user commands with the |:command-preview| flag as you
@@ -4568,6 +4701,8 @@ return {
       abbreviation = 'jop',
       cb = 'did_set_jumpoptions',
       defaults = { if_true = 'clean' },
+      values = { 'stack', 'view', 'clean' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         List of words that change the behavior of the |jumplist|.
@@ -4616,6 +4751,7 @@ return {
       abbreviation = 'km',
       cb = 'did_set_keymodel',
       defaults = { if_true = '' },
+      values = { 'startsel', 'stopsel' },
       deny_duplicates = true,
       desc = [=[
         List of comma-separated words, which enable special things that keys
@@ -4903,6 +5039,7 @@ return {
       abbreviation = 'lop',
       cb = 'did_set_lispoptions',
       defaults = { if_true = '' },
+      values = { 'expr:0', 'expr:1' },
       deny_duplicates = true,
       desc = [=[
         Comma-separated list of items that influence the Lisp indenting when
@@ -5559,6 +5696,7 @@ return {
       abbreviation = 'mousem',
       cb = 'did_set_mousemodel',
       defaults = { if_true = 'popup_setpos' },
+      values = { 'extend', 'popup', 'popup_setpos', 'mac' },
       desc = [=[
         Sets the model to use for the mouse.  The name mostly specifies what
         the right mouse button is used for:
@@ -5635,6 +5773,7 @@ return {
     {
       cb = 'did_set_mousescroll',
       defaults = { if_true = 'ver:3,hor:6' },
+      values = { 'hor:', 'ver:' },
       desc = [=[
         This option controls the number of lines / columns to scroll by when
         scrolling with a mouse wheel (|scroll-mouse-wheel|). The option is
@@ -5770,6 +5909,7 @@ return {
       abbreviation = 'nf',
       cb = 'did_set_nrformats',
       defaults = { if_true = 'bin,hex' },
+      values = { 'bin', 'octal', 'hex', 'alpha', 'unsigned', 'blank' },
       deny_duplicates = true,
       desc = [=[
         This defines what bases Vim will consider for numbers when using the
@@ -6301,6 +6441,15 @@ return {
       abbreviation = 'rdb',
       cb = 'did_set_redrawdebug',
       defaults = { if_true = '' },
+      values = {
+        'compositor',
+        'nothrottle',
+        'invalid',
+        'nodelta',
+        'line',
+        'flush',
+      },
+      flags = true,
       desc = [=[
         Flags to change the way redrawing works, for debugging purposes.
         Most useful with 'writedelay' set to some reasonable value.
@@ -6473,6 +6622,7 @@ return {
       abbreviation = 'rlc',
       cb = 'did_set_rightleftcmd',
       defaults = { if_true = 'search' },
+      values = { 'search' },
       desc = [=[
         Each word in this option enables the command line editing to work in
         right-to-left mode for a group of commands:
@@ -6756,6 +6906,7 @@ return {
       abbreviation = 'sbo',
       cb = 'did_set_scrollopt',
       defaults = { if_true = 'ver,jump' },
+      values = { 'ver', 'hor', 'jump' },
       deny_duplicates = true,
       desc = [=[
         This is a comma-separated list of words that specifies how
@@ -6821,6 +6972,7 @@ return {
       abbreviation = 'sel',
       cb = 'did_set_selection',
       defaults = { if_true = 'inclusive' },
+      values = { 'inclusive', 'exclusive', 'old' },
       desc = [=[
         This option defines the behavior of the selection.  It is only used
         in Visual and Select mode.
@@ -6851,6 +7003,7 @@ return {
       abbreviation = 'slm',
       cb = 'did_set_selectmode',
       defaults = { if_true = '' },
+      values = { 'mouse', 'key', 'cmd' },
       deny_duplicates = true,
       desc = [=[
         This is a comma-separated list of words, which specifies when to start
@@ -6873,6 +7026,28 @@ return {
       abbreviation = 'ssop',
       cb = 'did_set_sessionoptions',
       defaults = { if_true = 'blank,buffers,curdir,folds,help,tabpages,winsize,terminal' },
+      -- Also used for 'viewoptions'.
+      values = {
+        'buffers',
+        'winpos',
+        'resize',
+        'winsize',
+        'localoptions',
+        'options',
+        'help',
+        'blank',
+        'globals',
+        'slash',
+        'unix',
+        'sesdir',
+        'curdir',
+        'folds',
+        'cursor',
+        'tabpages',
+        'terminal',
+        'skiprtp',
+      },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         Changes the effect of the |:mksession| command.  It is a comma-
@@ -7527,6 +7702,7 @@ return {
       abbreviation = 'sloc',
       cb = 'did_set_showcmdloc',
       defaults = { if_true = 'last' },
+      values = { 'last', 'statusline', 'tabline' },
       desc = [=[
         This option can be used to display the (partially) entered command in
         another location.  Possible values are:
@@ -7678,6 +7854,30 @@ return {
       abbreviation = 'scl',
       cb = 'did_set_signcolumn',
       defaults = { if_true = 'auto' },
+      values = {
+        'yes',
+        'no',
+        'auto',
+        'auto:1',
+        'auto:2',
+        'auto:3',
+        'auto:4',
+        'auto:5',
+        'auto:6',
+        'auto:7',
+        'auto:8',
+        'auto:9',
+        'yes:1',
+        'yes:2',
+        'yes:3',
+        'yes:4',
+        'yes:5',
+        'yes:6',
+        'yes:7',
+        'yes:8',
+        'yes:9',
+        'number',
+      },
       desc = [=[
         When and how to draw the signcolumn. Valid values are:
            "auto"	only when there is a sign to display
@@ -7944,6 +8144,8 @@ return {
       abbreviation = 'spo',
       cb = 'did_set_spelloptions',
       defaults = { if_true = '' },
+      values = { 'camel', 'noplainbuffer' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         A comma-separated list of options for spell checking:
@@ -7969,6 +8171,8 @@ return {
       abbreviation = 'sps',
       cb = 'did_set_spellsuggest',
       defaults = { if_true = 'best' },
+      -- Keep this in sync with spell_check_sps().
+      values = { 'best', 'fast', 'double', 'expr:', 'file:', 'timeout:' },
       deny_duplicates = true,
       desc = [=[
         Methods used for spelling suggestions.  Both for the |z=| command and
@@ -8064,6 +8268,7 @@ return {
       abbreviation = 'spk',
       cb = 'did_set_splitkeep',
       defaults = { if_true = 'cursor' },
+      values = { 'cursor', 'screen', 'topline' },
       desc = [=[
         The value of this option determines the scroll behavior when opening,
         closing or resizing horizontal splits.
@@ -8486,6 +8691,8 @@ return {
       abbreviation = 'swb',
       cb = 'did_set_switchbuf',
       defaults = { if_true = 'uselast' },
+      values = { 'useopen', 'usetab', 'split', 'newtab', 'vsplit', 'uselast' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         This option controls the behavior when switching between buffers.
@@ -8583,6 +8790,8 @@ return {
       abbreviation = 'tcl',
       cb = 'did_set_tabclose',
       defaults = { if_true = '' },
+      values = { 'left', 'uselast' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         This option controls the behavior when closing tab pages (e.g., using
@@ -8765,6 +8974,8 @@ return {
       abbreviation = 'tc',
       cb = 'did_set_tagcase',
       defaults = { if_true = 'followic' },
+      values = { 'followic', 'ignore', 'match', 'followscs', 'smart' },
+      flags = true,
       desc = [=[
         This option specifies how case is handled when searching the tags
         file:
@@ -8929,6 +9140,8 @@ return {
       abbreviation = 'tpf',
       cb = 'did_set_termpastefilter',
       defaults = { if_true = 'BS,HT,ESC,DEL' },
+      values = { 'BS', 'HT', 'FF', 'ESC', 'DEL', 'C0', 'C1' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         A comma-separated list of options for specifying control characters
@@ -9506,6 +9719,7 @@ return {
       abbreviation = 'vop',
       cb = 'did_set_viewoptions',
       defaults = { if_true = 'folds,cursor,curdir' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         Changes the effect of the |:mkview| command.  It is a comma-separated
@@ -9533,6 +9747,15 @@ return {
       abbreviation = 've',
       cb = 'did_set_virtualedit',
       defaults = { if_true = '' },
+      values = { 'block', 'insert', 'all', 'onemore', 'none', 'NONE' },
+      flags = {
+        Block = 5,
+        Insert = 6,
+        All = 4,
+        Onemore = 8,
+        None = 16,
+        NoneU = 32,
+      },
       deny_duplicates = true,
       desc = [=[
         A comma-separated list of these words:
@@ -9777,6 +10000,9 @@ return {
       abbreviation = 'wim',
       cb = 'did_set_wildmode',
       defaults = { if_true = 'full' },
+      -- Keep this in sync with check_opt_wim().
+      values = { 'full', 'longest', 'list', 'lastused' },
+      flags = true,
       deny_duplicates = false,
       desc = [=[
         Completion mode that is used for the character specified with
@@ -9835,6 +10061,8 @@ return {
       abbreviation = 'wop',
       cb = 'did_set_wildoptions',
       defaults = { if_true = 'pum,tagfile' },
+      values = { 'fuzzy', 'tagfile', 'pum' },
+      flags = true,
       deny_duplicates = true,
       desc = [=[
         A list of words that change how |cmdline-completion| is done.
@@ -9867,6 +10095,7 @@ return {
       abbreviation = 'wak',
       cb = 'did_set_winaltkeys',
       defaults = { if_true = 'menu' },
+      values = { 'yes', 'menu', 'no' },
       desc = [=[
         		only used in Win32
         Some GUI versions allow the access to menu entries by using the ALT

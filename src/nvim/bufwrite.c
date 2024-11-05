@@ -725,9 +725,9 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
   FileInfo file_info;
   const bool no_prepend_dot = false;
 
-  if ((bkc & BKC_YES) || append) {       // "yes"
+  if ((bkc & kOptBkcFlagYes) || append) {       // "yes"
     *backup_copyp = true;
-  } else if ((bkc & BKC_AUTO)) {          // "auto"
+  } else if ((bkc & kOptBkcFlagAuto)) {          // "auto"
     // Don't rename the file when:
     // - it's a hard link
     // - it's a symbolic link
@@ -773,19 +773,19 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
   }
 
   // Break symlinks and/or hardlinks if we've been asked to.
-  if ((bkc & BKC_BREAKSYMLINK) || (bkc & BKC_BREAKHARDLINK)) {
+  if ((bkc & kOptBkcFlagBreaksymlink) || (bkc & kOptBkcFlagBreakhardlink)) {
 #ifdef UNIX
     bool file_info_link_ok = os_fileinfo_link(fname, &file_info);
 
     // Symlinks.
-    if ((bkc & BKC_BREAKSYMLINK)
+    if ((bkc & kOptBkcFlagBreaksymlink)
         && file_info_link_ok
         && !os_fileinfo_id_equal(&file_info, file_info_old)) {
       *backup_copyp = false;
     }
 
     // Hardlinks.
-    if ((bkc & BKC_BREAKHARDLINK)
+    if ((bkc & kOptBkcFlagBreakhardlink)
         && os_fileinfo_hardlinks(file_info_old) > 1
         && (!file_info_link_ok
             || os_fileinfo_id_equal(&file_info, file_info_old))) {

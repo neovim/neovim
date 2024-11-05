@@ -383,7 +383,7 @@ void grid_line_start(ScreenGrid *grid, int row)
 
   assert((size_t)grid_line_maxcol <= linebuf_size);
 
-  if (rdb_flags & RDB_INVALID) {
+  if (rdb_flags & kOptRdbFlagInvalid) {
     // Current batch must not depend on previous contents of linebuf_char.
     // Set invalid values which will cause assertion failures later if they are used.
     memset(linebuf_char, 0xFF, sizeof(schar_T) * linebuf_size);
@@ -602,7 +602,7 @@ void grid_line_flush(void)
 void grid_line_flush_if_valid_row(void)
 {
   if (grid_line_row < 0 || grid_line_row >= grid_line_grid->rows) {
-    if (rdb_flags & RDB_INVALID) {
+    if (rdb_flags & kOptRdbFlagInvalid) {
       abort();
     } else {
       grid_line_grid = NULL;
@@ -639,7 +639,7 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int col, size_t off_to, int 
                || (cols > 1 && linebuf_char[col + 1] == 0
                    && linebuf_char[col + 1] != grid->chars[off_to + 1]))
               || exmode_active  // TODO(bfredl): what in the actual fuck
-              || rdb_flags & RDB_NODELTA));
+              || rdb_flags & kOptRdbFlagNodelta));
 }
 
 /// Move one buffered line to the window grid, but only the characters that
@@ -784,7 +784,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
     size_t off = off_to + (size_t)col;
     if (grid->chars[off] != schar_from_ascii(' ')
         || grid->attrs[off] != bg_attr
-        || rdb_flags & RDB_NODELTA) {
+        || rdb_flags & kOptRdbFlagNodelta) {
       grid->chars[off] = schar_from_ascii(' ');
       grid->attrs[off] = bg_attr;
       if (clear_dirty_start == -1) {

@@ -1393,7 +1393,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
 
     // If the buffer to be deleted is not the current one, delete it here.
     if (buf != curbuf) {
-      if (jop_flags & JOP_CLEAN) {
+      if (jop_flags & kOptJopFlagClean) {
         // Remove the buffer to be deleted from the jump list.
         mark_jumplist_forget_file(curwin, buf_fnum);
       }
@@ -1419,7 +1419,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
     if (au_new_curbuf.br_buf != NULL && bufref_valid(&au_new_curbuf)) {
       buf = au_new_curbuf.br_buf;
     } else if (curwin->w_jumplistlen > 0) {
-      if (jop_flags & JOP_CLEAN) {
+      if (jop_flags & kOptJopFlagClean) {
         // Remove the buffer from the jump list.
         mark_jumplist_forget_file(curwin, buf_fnum);
       }
@@ -1429,7 +1429,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
       if (curwin->w_jumplistlen > 0) {
         int jumpidx = curwin->w_jumplistidx;
 
-        if (jop_flags & JOP_CLEAN) {
+        if (jop_flags & kOptJopFlagClean) {
           // If the index is the same as the length, the current position was not yet added to the
           // jump list. So we can safely go back to the last entry and search from there.
           if (jumpidx == curwin->w_jumplistlen) {
@@ -1443,7 +1443,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
         }
 
         forward = jumpidx;
-        while ((jop_flags & JOP_CLEAN) || jumpidx != curwin->w_jumplistidx) {
+        while ((jop_flags & kOptJopFlagClean) || jumpidx != curwin->w_jumplistidx) {
           buf = buflist_findnr(curwin->w_jumplist[jumpidx].fmark.fnum);
 
           if (buf != NULL) {
@@ -1460,7 +1460,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
             }
           }
           if (buf != NULL) {         // found a valid buffer: stop searching
-            if (jop_flags & JOP_CLEAN) {
+            if (jop_flags & kOptJopFlagClean) {
               curwin->w_jumplistidx = jumpidx;
               update_jumplist = false;
             }
@@ -2159,11 +2159,11 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 
     // If 'switchbuf' contains "split", "vsplit" or "newtab" and the
     // current buffer isn't empty: open new tab or window
-    if (wp == NULL && (swb_flags & (SWB_VSPLIT | SWB_SPLIT | SWB_NEWTAB))
+    if (wp == NULL && (swb_flags & (kOptSwbFlagVsplit | kOptSwbFlagSplit | kOptSwbFlagNewtab))
         && !buf_is_empty(curbuf)) {
-      if (swb_flags & SWB_NEWTAB) {
+      if (swb_flags & kOptSwbFlagNewtab) {
         tabpage_new();
-      } else if (win_split(0, (swb_flags & SWB_VSPLIT) ? WSP_VERT : 0)
+      } else if (win_split(0, (swb_flags & kOptSwbFlagVsplit) ? WSP_VERT : 0)
                  == FAIL) {
         return FAIL;
       }
@@ -2183,7 +2183,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
       curwin->w_cursor.coladd = 0;
       curwin->w_set_curswant = true;
     }
-    if (jop_flags & JOP_VIEW && restore_view) {
+    if (jop_flags & kOptJopFlagView && restore_view) {
       mark_view_restore(fm);
     }
     return OK;
@@ -3638,7 +3638,7 @@ void ex_buffer_all(exarg_T *eap)
 
       // Open the buffer in this window.
       swap_exists_action = SEA_DIALOG;
-      set_curbuf(buf, DOBUF_GOTO, !(jop_flags & JOP_CLEAN));
+      set_curbuf(buf, DOBUF_GOTO, !(jop_flags & kOptJopFlagClean));
       if (!bufref_valid(&bufref)) {
         // Autocommands deleted the buffer.
         swap_exists_action = SEA_NONE;

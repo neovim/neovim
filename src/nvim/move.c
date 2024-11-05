@@ -170,7 +170,7 @@ static void redraw_for_cursorcolumn(win_T *wp)
   if (wp->w_p_cuc) {
     // When 'cursorcolumn' is set need to redraw with UPD_SOME_VALID.
     redraw_later(wp, UPD_SOME_VALID);
-  } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
+  } else if (wp->w_p_cul && (wp->w_p_culopt_flags & kOptCuloptFlagScreenline)) {
     // When 'cursorlineopt' contains "screenline" need to redraw with UPD_VALID.
     redraw_later(wp, UPD_VALID);
   }

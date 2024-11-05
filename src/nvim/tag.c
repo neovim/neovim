@@ -451,7 +451,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         curwin->w_cursor.col = saved_fmark.mark.col;
         curwin->w_set_curswant = true;
         check_cursor(curwin);
-        if ((fdo_flags & FDO_TAG) && old_KeyTyped) {
+        if ((fdo_flags & kOptFdoFlagTag) && old_KeyTyped) {
           foldOpenCursor();
         }
 
@@ -2294,17 +2294,17 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   // Change the value of 'ignorecase' according to 'tagcase' for the
   // duration of this function.
   switch (curbuf->b_tc_flags ? curbuf->b_tc_flags : tc_flags) {
-  case TC_FOLLOWIC: break;
-  case TC_IGNORE:
+  case kOptTcFlagFollowic: break;
+  case kOptTcFlagIgnore:
     p_ic = true;
     break;
-  case TC_MATCH:
+  case kOptTcFlagMatch:
     p_ic = false;
     break;
-  case TC_FOLLOWSCS:
+  case kOptTcFlagFollowscs:
     p_ic = ignorecase(pat);
     break;
-  case TC_SMART:
+  case kOptTcFlagSmart:
     p_ic = ignorecase_opt(pat, true, true);
     break;
   default:
@@ -2846,7 +2846,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
 
   // If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
   // open a new tab page.
-  if (postponed_split && (swb_flags & (SWB_USEOPEN | SWB_USETAB))) {
+  if (postponed_split && (swb_flags & (kOptSwbFlagUseopen | kOptSwbFlagUsetab))) {
     buf_T *const existing_buf = buflist_findname_exp(fname);
 
     if (existing_buf != NULL) {
@@ -3015,7 +3015,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
       if (curbuf->b_help) {
         set_topline(curwin, curwin->w_cursor.lnum);
       }
-      if ((fdo_flags & FDO_TAG) && old_KeyTyped) {
+      if ((fdo_flags & kOptFdoFlagTag) && old_KeyTyped) {
         foldOpenCursor();
       }
     }

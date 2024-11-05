@@ -186,13 +186,13 @@ win_T *swbuf_goto_win_with_buf(buf_T *buf)
 
   // If 'switchbuf' contains "useopen": jump to first window in the current
   // tab page containing "buf" if one exists.
-  if (swb_flags & SWB_USEOPEN) {
+  if (swb_flags & kOptSwbFlagUseopen) {
     wp = buf_jump_open_win(buf);
   }
 
   // If 'switchbuf' contains "usetab": jump to first window in any tab page
   // containing "buf" if one exists.
-  if (wp == NULL && (swb_flags & SWB_USETAB)) {
+  if (wp == NULL && (swb_flags & kOptSwbFlagUsetab)) {
     wp = buf_jump_open_tab(buf);
   }
 
@@ -583,7 +583,7 @@ wingotofile:
       // If 'switchbuf' is set to 'useopen' or 'usetab' and the
       // file is already opened in a window, then jump to it.
       win_T *wp = NULL;
-      if ((swb_flags & (SWB_USEOPEN | SWB_USETAB))
+      if ((swb_flags & (kOptSwbFlagUseopen | kOptSwbFlagUsetab))
           && cmdmod.cmod_tab == 0) {
         wp = swbuf_goto_win_with_buf(buflist_findname_exp(ptr));
       }
@@ -3448,13 +3448,13 @@ static frame_T *win_altframe(win_T *win, tabpage_T *tp)
 static tabpage_T *alt_tabpage(void)
 {
   // Use the last accessed tab page, if possible.
-  if ((tcl_flags & TCL_USELAST) && valid_tabpage(lastused_tabpage)) {
+  if ((tcl_flags & kOptTclFlagUselast) && valid_tabpage(lastused_tabpage)) {
     return lastused_tabpage;
   }
 
   // Use the next tab page, if possible.
   bool forward = curtab->tp_next != NULL
-                 && ((tcl_flags & TCL_LEFT) == 0 || curtab == first_tabpage);
+                 && ((tcl_flags & kOptTclFlagLeft) == 0 || curtab == first_tabpage);
 
   tabpage_T *tp;
   if (forward) {

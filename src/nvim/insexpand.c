@@ -475,7 +475,7 @@ bool check_compl_option(bool dict_opt)
     msg((dict_opt ? _("'dictionary' option is empty") : _("'thesaurus' option is empty")),
         HLF_E);
     if (emsg_silent == 0 && !in_assert_fails) {
-      vim_beep(BO_COMPL);
+      vim_beep(kOptBoFlagComplete);
       setcursor();
       ui_flush();
       os_delay(2004, false);
@@ -1069,7 +1069,7 @@ bool pum_wanted(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // "completeopt" must contain "menu" or "menuone"
-  return (get_cot_flags() & COT_ANY_MENU) != 0;
+  return (get_cot_flags() & (kOptCotFlagMenu | kOptCotFlagMenuone)) != 0;
 }
 
 /// Check that there are two or more matches to be shown in the popup menu.
@@ -1088,7 +1088,7 @@ static bool pum_enough_matches(void)
     comp = comp->cp_next;
   } while (!is_first_match(comp));
 
-  if (get_cot_flags() & COT_MENUONE) {
+  if (get_cot_flags() & kOptCotFlagMenuone) {
     return i >= 1;
   }
   return i >= 2;
@@ -1171,8 +1171,8 @@ static int ins_compl_build_pum(void)
   const int lead_len = compl_leader != NULL ? (int)strlen(compl_leader) : 0;
   int max_fuzzy_score = 0;
   unsigned cur_cot_flags = get_cot_flags();
-  bool compl_no_select = (cur_cot_flags & COT_NOSELECT) != 0;
-  bool compl_fuzzy_match = (cur_cot_flags & COT_FUZZY) != 0;
+  bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0;
+  bool compl_fuzzy_match = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
 
   do {
     // When 'completeopt' contains "fuzzy" and leader is not NULL or empty,
@@ -2236,7 +2236,7 @@ bool ins_compl_prep(int c)
   // Set "compl_get_longest" when finding the first matches.
   if (ctrl_x_mode_not_defined_yet()
       || (ctrl_x_mode_normal() && !compl_started)) {
-    compl_get_longest = (get_cot_flags() & COT_LONGEST) != 0;
+    compl_get_longest = (get_cot_flags() & kOptCotFlagLongest) != 0;
     compl_used_match = true;
   }
 
@@ -2682,9 +2682,9 @@ static void set_completion(colnr_T startcol, list_T *list)
 {
   int flags = CP_ORIGINAL_TEXT;
   unsigned cur_cot_flags = get_cot_flags();
-  bool compl_longest = (cur_cot_flags & COT_LONGEST) != 0;
-  bool compl_no_insert = (cur_cot_flags & COT_NOINSERT) != 0;
-  bool compl_no_select = (cur_cot_flags & COT_NOSELECT) != 0;
+  bool compl_longest = (cur_cot_flags & kOptCotFlagLongest) != 0;
+  bool compl_no_insert = (cur_cot_flags & kOptCotFlagNoinsert) != 0;
+  bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0;
 
   // If already doing completions stop it.
   if (ctrl_x_mode_not_default()) {
@@ -3731,8 +3731,8 @@ static int find_next_completion_match(bool allow_get_expansion, int todo, bool a
   bool found_end = false;
   compl_T *found_compl = NULL;
   unsigned cur_cot_flags = get_cot_flags();
-  bool compl_no_select = (cur_cot_flags & COT_NOSELECT) != 0;
-  bool compl_fuzzy_match = (cur_cot_flags & COT_FUZZY) != 0;
+  bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0;
+  bool compl_fuzzy_match = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
 
   while (--todo >= 0) {
     if (compl_shows_dir_forward() && compl_shown_match->cp_next != NULL) {
@@ -3836,8 +3836,8 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   const bool started = compl_started;
   buf_T *const orig_curbuf = curbuf;
   unsigned cur_cot_flags = get_cot_flags();
-  bool compl_no_insert = (cur_cot_flags & COT_NOINSERT) != 0;
-  bool compl_fuzzy_match = (cur_cot_flags & COT_FUZZY) != 0;
+  bool compl_no_insert = (cur_cot_flags & kOptCotFlagNoinsert) != 0;
+  bool compl_fuzzy_match = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
 
   // When user complete function return -1 for findstart which is next
   // time of 'always', compl_shown_match become NULL.
@@ -3976,7 +3976,7 @@ void ins_compl_check_keys(int frequency, bool in_compl_func)
       }
     }
   }
-  if (compl_pending != 0 && !got_int && !(cot_flags & COT_NOINSERT)) {
+  if (compl_pending != 0 && !got_int && !(cot_flags & kOptCotFlagNoinsert)) {
     int todo = compl_pending > 0 ? compl_pending : -compl_pending;
 
     compl_pending = 0;

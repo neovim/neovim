@@ -1882,7 +1882,7 @@ static void win_update(win_T *wp)
         unsigned save_ve_flags = curwin->w_ve_flags;
 
         if (curwin->w_p_lbr) {
-          curwin->w_ve_flags = VE_ALL;
+          curwin->w_ve_flags = kOptVeFlagAll;
         }
 
         getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc);
@@ -1891,7 +1891,7 @@ static void win_update(win_T *wp)
         // Highlight to the end of the line, unless 'virtualedit' has
         // "block".
         if (curwin->w_curswant == MAXCOL) {
-          if (get_ve_flags(curwin) & VE_BLOCK) {
+          if (get_ve_flags(curwin) & kOptVeFlagBlock) {
             pos_T pos;
             int cursor_above = curwin->w_cursor.lnum < VIsual.lnum;
 
@@ -2227,7 +2227,7 @@ static void win_update(win_T *wp)
           && wp->w_lines[idx].wl_valid
           && wp->w_lines[idx].wl_lnum == lnum
           && lnum > wp->w_topline
-          && !(dy_flags & (DY_LASTLINE | DY_TRUNCATE))
+          && !(dy_flags & (kOptDyFlagLastline | kOptDyFlagTruncate))
           && srow + wp->w_lines[idx].wl_size > wp->w_grid.rows
           && win_get_fill(wp, lnum) == 0) {
         // This line is not going to fit.  Don't draw anything here,
@@ -2354,7 +2354,7 @@ redr_statuscol:
       // Window ends in filler lines.
       wp->w_botline = lnum;
       wp->w_filler_rows = wp->w_grid.rows - srow;
-    } else if (dy_flags & DY_TRUNCATE) {      // 'display' has "truncate"
+    } else if (dy_flags & kOptDyFlagTruncate) {      // 'display' has "truncate"
       // Last line isn't finished: Display "@@@" in the last screen line.
       grid_line_start(&wp->w_grid, wp->w_grid.rows - 1);
       grid_line_fill(0, MIN(wp->w_grid.cols, 3), wp->w_p_fcs_chars.lastline, at_attr);
@@ -2362,7 +2362,7 @@ redr_statuscol:
       grid_line_flush();
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
-    } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
+    } else if (dy_flags & kOptDyFlagLastline) {      // 'display' has "lastline"
       // Last line isn't finished: Display "@@@" at the end.
       // If this would split a doublewidth char in two, we need to display "@@@@" instead
       grid_line_start(&wp->w_grid, wp->w_grid.rows - 1);

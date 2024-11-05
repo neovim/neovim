@@ -1,10 +1,12 @@
 local options_file = arg[1]
 local options_enum_file = arg[2]
 local options_map_file = arg[3]
+local option_vars_file = arg[4]
 
 local opt_fd = assert(io.open(options_file, 'w'))
 local opt_enum_fd = assert(io.open(options_enum_file, 'w'))
 local opt_map_fd = assert(io.open(options_map_file, 'w'))
+local opt_vars_fd = assert(io.open(option_vars_file, 'w'))
 
 local w = function(s)
   if s:match('^    %.') then
@@ -22,6 +24,10 @@ end
 --- @param s string
 local function map_w(s)
   opt_map_fd:write(s .. '\n')
+end
+
+local function vars_w(s)
+  opt_vars_fd:write(s .. '\n')
 end
 
 --- @module 'nvim.options'
@@ -137,6 +143,92 @@ map_w('};\n')
 map_w('static ' .. hashfun)
 
 opt_map_fd:close()
+
+vars_w('// IWYU pragma: private, include "nvim/option_vars.h"')
+
+-- Generate enums for option flags.
+for _, option in ipairs(options_meta) do
+  if option.flags and (type(option.flags) == 'table' or option.values) then
+    vars_w('')
+    vars_w('typedef enum {')
+
+    local opt_name = lowercase_to_titlecase(option.abbreviation or option.full_name)
+    --- @type table<string,integer>
+    local enum_values
+
+    if type(option.flags) == 'table' then
+      enum_values = option.flags --[[ @as table<string,integer> ]]
+    else
+      enum_values = {}
+      for i, flag_name in ipairs(option.values) do
+        assert(type(flag_name) == 'string')
+        enum_values[flag_name] = math.pow(2, i - 1)
+      end
+    end
+
+    -- Sort the keys by the flag value so that the enum can be generated in order.
+    --- @type string[]
+    local flag_names = vim.tbl_keys(enum_values)
+    table.sort(flag_names, function(a, b)
+      return enum_values[a] < enum_values[b]
+    end)
+
+    for _, flag_name in pairs(flag_names) do
+      vars_w(
+        ('  kOpt%sFlag%s = 0x%02x,'):format(
+          opt_name,
+          lowercase_to_titlecase(flag_name),
+          enum_values[flag_name]
+        )
+      )
+    end
+
+    vars_w(('} Opt%sFlags;'):format(opt_name))
+  end
+end
+
+-- Generate valid values for each option.
+for _, option in ipairs(options_meta) do
+  --- @type function
+  local preorder_traversal
+  --- @param prefix string
+  --- @param values vim.option_valid_values
+  preorder_traversal = function(prefix, values)
+    vars_w('')
+    vars_w(
+      ('EXTERN const char *(%s_values[%s]) INIT( = {'):format(prefix, #vim.tbl_keys(values) + 1)
+    )
+
+    --- @type [string,vim.option_valid_values][]
+    local children = {}
+
+    for _, value in ipairs(values) do
+      if type(value) == 'string' then
+        vars_w(('  "%s",'):format(value))
+      else
+        assert(type(value) == 'table' and type(value[1]) == 'string' and type(value[2]) == 'table')
+
+        vars_w(('  "%s",'):format(value[1]))
+        table.insert(children, value)
+      end
+    end
+
+    vars_w('  NULL')
+    vars_w('});')
+
+    for _, value in pairs(children) do
+      -- Remove trailing colon from the added prefix to prevent syntax errors.
+      preorder_traversal(prefix .. '_' .. value[1]:gsub(':$', ''), value[2])
+    end
+  end
+
+  -- Since option values can be nested, we need to do preorder traversal to generate the values.
+  if option.values then
+    preorder_traversal(('opt_%s'):format(option.abbreviation or option.full_name), option.values)
+  end
+end
+
+opt_vars_fd:close()
 
 local redraw_flags = {
   ui_option = 'kOptFlagUIOption',

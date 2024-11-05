@@ -325,7 +325,7 @@ void ui_busy_stop(void)
 
 /// Emit a bell or visualbell as a warning
 ///
-/// val is one of the BO_ values, e.g., BO_OPER
+/// val is one of the OptBoFlags values, e.g., kOptBoFlagOperator
 void vim_beep(unsigned val)
 {
   called_vim_beep = true;
@@ -334,7 +334,7 @@ void vim_beep(unsigned val)
     return;
   }
 
-  if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
+  if (!((bo_flags & val) || (bo_flags & kOptBoFlagAll))) {
     static int beeps = 0;
     static uint64_t start_time = 0;
 
@@ -477,7 +477,7 @@ void ui_line(ScreenGrid *grid, int row, bool invalid_row, int startcol, int endc
                    (const sattr_T *)grid->attrs + off);
 
   // 'writedelay': flush & delay each time.
-  if (p_wd && (rdb_flags & RDB_LINE)) {
+  if (p_wd && (rdb_flags & kOptRdbFlagLine)) {
     // If 'writedelay' is active, set the cursor to indicate what was drawn.
     ui_call_grid_cursor_goto(grid->handle, row,
                              MIN(clearcol, (int)grid->cols - 1));
@@ -564,7 +564,7 @@ void ui_flush(void)
   }
   ui_call_flush();
 
-  if (p_wd && (rdb_flags & RDB_FLUSH)) {
+  if (p_wd && (rdb_flags & kOptRdbFlagFlush)) {
     os_sleep((uint64_t)llabs(p_wd));
   }
 }

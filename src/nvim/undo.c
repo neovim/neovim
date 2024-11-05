@@ -2528,7 +2528,7 @@ static void u_undoredo(bool undo, bool do_buf_event)
 /// @param absolute  used ":undo N"
 static void u_undo_end(bool did_undo, bool absolute, bool quiet)
 {
-  if ((fdo_flags & FDO_UNDO) && KeyTyped) {
+  if ((fdo_flags & kOptFdoFlagUndo) && KeyTyped) {
     foldOpenCursor();
   }
 

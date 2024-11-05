@@ -402,7 +402,7 @@ int spell_check_sps(void)
       if (*s != NUL && !ascii_isdigit(*s)) {
         f = -1;
       }
-      // Note: Keep this in sync with p_sps_values.
+      // Note: Keep this in sync with opt_sps_values.
     } else if (strcmp(buf, "best") == 0) {
       f = SPS_BEST;
     } else if (strcmp(buf, "fast") == 0) {
@@ -464,7 +464,7 @@ void spell_suggest(int count)
     // Use the Visually selected text as the bad word.  But reject
     // a multi-line selection.
     if (curwin->w_cursor.lnum != VIsual.lnum) {
-      vim_beep(BO_SPELL);
+      vim_beep(kOptBoFlagSpell);
       return;
     }
     badlen = (int)curwin->w_cursor.col - (int)VIsual.col;

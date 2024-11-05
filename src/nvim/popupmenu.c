@@ -456,7 +456,7 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
 
   int *attrs = xmalloc(sizeof(int) * (size_t)vim_strsize(text));
   bool in_fuzzy = State == MODE_CMDLINE ? cmdline_compl_is_fuzzy()
-                                        : (get_cot_flags() & COT_FUZZY) != 0;
+                                        : (get_cot_flags() & kOptCotFlagFuzzy) != 0;
   size_t leader_len = strlen(leader);
 
   garray_T *ga = NULL;
@@ -844,7 +844,7 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
   }
   // delete the empty last line
   ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
-  if (get_cot_flags() & COT_POPUP) {
+  if (get_cot_flags() & kOptCotFlagPopup) {
     extmark_splice(buf, 1, 0, 1, 0, 0, buf->b_ml.ml_line_count, 0, inserted_bytes, kExtmarkNoUndo);
   }
 }
@@ -940,7 +940,7 @@ static bool pum_set_selected(int n, int repeat)
 
   pum_selected = n;
   unsigned cur_cot_flags = get_cot_flags();
-  bool use_float = (cur_cot_flags & COT_POPUP) != 0;
+  bool use_float = (cur_cot_flags & kOptCotFlagPopup) != 0;
   // when new leader add and info window is shown and no selected we still
   // need use the first index item to update the info float window position.
   bool force_select = use_float && pum_selected < 0 && win_float_find_preview();
@@ -1006,7 +1006,7 @@ static bool pum_set_selected(int n, int repeat)
     if ((pum_array[pum_selected].pum_info != NULL)
         && (Rows > 10)
         && (repeat <= 1)
-        && (cur_cot_flags & COT_ANY_PREVIEW)) {
+        && (cur_cot_flags & (kOptCotFlagPreview | kOptCotFlagPopup))) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
 

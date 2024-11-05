@@ -1070,23 +1070,23 @@ static int command_line_wildchar_complete(CommandLineState *s)
 {
   int res;
   int options = WILD_NO_BEEP;
-  if (wim_flags[s->wim_index] & WIM_BUFLASTUSED) {
+  if (wim_flags[s->wim_index] & kOptWimFlagLastused) {
     options |= WILD_BUFLASTUSED;
   }
   if (s->xpc.xp_numfiles > 0) {       // typed p_wc at least twice
     // if 'wildmode' contains "list" may still need to list
     if (s->xpc.xp_numfiles > 1
         && !s->did_wild_list
-        && ((wim_flags[s->wim_index] & WIM_LIST)
-            || (p_wmnu && (wim_flags[s->wim_index] & WIM_FULL) != 0))) {
-      showmatches(&s->xpc, p_wmnu && ((wim_flags[s->wim_index] & WIM_LIST) == 0));
+        && ((wim_flags[s->wim_index] & kOptWimFlagList)
+            || (p_wmnu && (wim_flags[s->wim_index] & kOptWimFlagFull) != 0))) {
+      showmatches(&s->xpc, p_wmnu && ((wim_flags[s->wim_index] & kOptWimFlagList) == 0));
       redrawcmd();
       s->did_wild_list = true;
     }
 
-    if (wim_flags[s->wim_index] & WIM_LONGEST) {
+    if (wim_flags[s->wim_index] & kOptWimFlagLongest) {
       res = nextwild(&s->xpc, WILD_LONGEST, options, s->firstc != '@');
-    } else if (wim_flags[s->wim_index] & WIM_FULL) {
+    } else if (wim_flags[s->wim_index] & kOptWimFlagFull) {
       res = nextwild(&s->xpc, WILD_NEXT, options, s->firstc != '@');
     } else {
       res = OK;                 // don't insert 'wildchar' now
@@ -1097,7 +1097,7 @@ static int command_line_wildchar_complete(CommandLineState *s)
 
     // if 'wildmode' first contains "longest", get longest
     // common part
-    if (wim_flags[0] & WIM_LONGEST) {
+    if (wim_flags[0] & kOptWimFlagLongest) {
       res = nextwild(&s->xpc, WILD_LONGEST, options, s->firstc != '@');
     } else {
       res = nextwild(&s->xpc, WILD_EXPAND_KEEP, options, s->firstc != '@');
@@ -1118,12 +1118,12 @@ static int command_line_wildchar_complete(CommandLineState *s)
     if (res == OK && s->xpc.xp_numfiles > 1) {
       // a "longest" that didn't do anything is skipped (but not
       // "list:longest")
-      if (wim_flags[0] == WIM_LONGEST && ccline.cmdpos == j) {
+      if (wim_flags[0] == kOptWimFlagLongest && ccline.cmdpos == j) {
         s->wim_index = 1;
       }
-      if ((wim_flags[s->wim_index] & WIM_LIST)
-          || (p_wmnu && (wim_flags[s->wim_index] & WIM_FULL) != 0)) {
-        if (!(wim_flags[0] & WIM_LONGEST)) {
+      if ((wim_flags[s->wim_index] & kOptWimFlagList)
+          || (p_wmnu && (wim_flags[s->wim_index] & kOptWimFlagFull) != 0)) {
+        if (!(wim_flags[0] & kOptWimFlagLongest)) {
           int p_wmnu_save = p_wmnu;
           p_wmnu = 0;
           // remove match
@@ -1131,17 +1131,17 @@ static int command_line_wildchar_complete(CommandLineState *s)
           p_wmnu = p_wmnu_save;
         }
 
-        showmatches(&s->xpc, p_wmnu && ((wim_flags[s->wim_index] & WIM_LIST) == 0));
+        showmatches(&s->xpc, p_wmnu && ((wim_flags[s->wim_index] & kOptWimFlagList) == 0));
         redrawcmd();
         s->did_wild_list = true;
 
-        if (wim_flags[s->wim_index] & WIM_LONGEST) {
+        if (wim_flags[s->wim_index] & kOptWimFlagLongest) {
           nextwild(&s->xpc, WILD_LONGEST, options, s->firstc != '@');
-        } else if (wim_flags[s->wim_index] & WIM_FULL) {
+        } else if (wim_flags[s->wim_index] & kOptWimFlagFull) {
           nextwild(&s->xpc, WILD_NEXT, options, s->firstc != '@');
         }
       } else {
-        vim_beep(BO_WILD);
+        vim_beep(kOptBoFlagWildmode);
       }
     } else if (s->xpc.xp_numfiles == -1) {
       s->xpc.xp_context = EXPAND_NOTHING;
@@ -1380,9 +1380,9 @@ static int command_line_execute(VimState *state, int key)
   if (s->c == K_S_TAB && KeyTyped) {
     if (nextwild(&s->xpc, WILD_EXPAND_KEEP, 0, s->firstc != '@') == OK) {
       if (s->xpc.xp_numfiles > 1
-          && ((!s->did_wild_list && (wim_flags[s->wim_index] & WIM_LIST)) || p_wmnu)) {
+          && ((!s->did_wild_list && (wim_flags[s->wim_index] & kOptWimFlagList)) || p_wmnu)) {
         // Trigger the popup menu when wildoptions=pum
-        showmatches(&s->xpc, p_wmnu && ((wim_flags[s->wim_index] & WIM_LIST) == 0));
+        showmatches(&s->xpc, p_wmnu && ((wim_flags[s->wim_index] & kOptWimFlagList) == 0));
       }
       nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
       nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
@@ -1511,7 +1511,7 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
     redrawcmdline();
     curwin->w_cursor = s->match_end;
   } else {
-    vim_beep(BO_ERROR);
+    vim_beep(kOptBoFlagError);
   }
   restore_last_search_pattern();
   return FAIL;
@@ -2820,19 +2820,19 @@ int check_opt_wim(void)
   }
 
   for (char *p = p_wim; *p; p++) {
-    // Note: Keep this in sync with p_wim_values.
+    // Note: Keep this in sync with opt_wim_values.
     for (i = 0; ASCII_ISALPHA(p[i]); i++) {}
     if (p[i] != NUL && p[i] != ',' && p[i] != ':') {
       return FAIL;
     }
     if (i == 7 && strncmp(p, "longest", 7) == 0) {
-      new_wim_flags[idx] |= WIM_LONGEST;
+      new_wim_flags[idx] |= kOptWimFlagLongest;
     } else if (i == 4 && strncmp(p, "full", 4) == 0) {
-      new_wim_flags[idx] |= WIM_FULL;
+      new_wim_flags[idx] |= kOptWimFlagFull;
     } else if (i == 4 && strncmp(p, "list", 4) == 0) {
-      new_wim_flags[idx] |= WIM_LIST;
+      new_wim_flags[idx] |= kOptWimFlagList;
     } else if (i == 8 && strncmp(p, "lastused", 8) == 0) {
-      new_wim_flags[idx] |= WIM_BUFLASTUSED;
+      new_wim_flags[idx] |= kOptWimFlagLastused;
     } else {
       return FAIL;
     }
