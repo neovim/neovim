@@ -649,10 +649,8 @@ void set_init_3(void)
   xfree(p);
 
   if (buf_is_empty(curbuf)) {
-    int idx_ffs = find_option("ffs");
-
     // Apply the first entry of 'fileformats' to the initial buffer.
-    if (idx_ffs >= 0 && (options[idx_ffs].flags & kOptFlagWasSet)) {
+    if (options[kOptFileformats].flags & kOptFlagWasSet) {
       set_fileformat(default_fileformat(), OPT_LOCAL);
     }
   }
