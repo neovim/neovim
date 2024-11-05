@@ -44,9 +44,8 @@ M._poll_exclude_pattern = glob.to_lpeg('**/.git/{objects,subtree-cache}/**')
 --- Registers the workspace/didChangeWatchedFiles capability dynamically.
 ---
 ---@param reg lsp.Registration LSP Registration object.
----@param ctx lsp.HandlerContext Context from the |lsp-handler|.
-function M.register(reg, ctx)
-  local client_id = ctx.client_id
+---@param client_id integer Client ID.
+function M.register(reg, client_id)
   local client = assert(vim.lsp.get_client_by_id(client_id), 'Client must be running')
   -- Ill-behaved servers may not honor the client capability and try to register
   -- anyway, so ignore requests when the user has opted out of the feature.
@@ -155,9 +154,8 @@ end
 --- Unregisters the workspace/didChangeWatchedFiles capability dynamically.
 ---
 ---@param unreg lsp.Unregistration LSP Unregistration object.
----@param ctx lsp.HandlerContext Context from the |lsp-handler|.
-function M.unregister(unreg, ctx)
-  local client_id = ctx.client_id
+---@param client_id integer Client ID.
+function M.unregister(unreg, client_id)
   local client_cancels = cancels[client_id]
   local reg_cancels = client_cancels[unreg.id]
   while #reg_cancels > 0 do

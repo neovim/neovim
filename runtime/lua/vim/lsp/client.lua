@@ -91,8 +91,8 @@ local validate = vim.validate
 --- (default: client-id)
 --- @field name? string
 ---
---- Language ID as string. Defaults to the filetype.
---- @field get_language_id? fun(bufnr: integer, filetype: string): string
+--- Language ID as string. Defaults to the buffer filetype.
+--- @field get_language_id? fun(bufnr: integer, filetype?: string): string
 ---
 --- The encoding that the LSP server expects. Client does not verify this is correct.
 --- @field offset_encoding? 'utf-8'|'utf-16'|'utf-32'
@@ -212,10 +212,11 @@ local validate = vim.validate
 --- A table with flags for the client. The current (experimental) flags are:
 --- @field flags vim.lsp.Client.Flags
 ---
---- @field get_language_id fun(bufnr: integer, filetype: string): string
+--- @field get_language_id fun(bufnr: integer, filetype?: string): string
 ---
 --- The capabilities provided by the client (editor or tool)
 --- @field capabilities lsp.ClientCapabilities
+--- @field private registrations table<string,lsp.Registration[]>
 --- @field dynamic_capabilities lsp.DynamicCapabilities
 ---
 --- Sends a request to the server.
@@ -339,10 +340,10 @@ end
 --- By default, get_language_id just returns the exact filetype it is passed.
 --- It is possible to pass in something that will calculate a different filetype,
 --- to be sent by the client.
---- @param _bufnr integer
---- @param filetype string
-local function default_get_language_id(_bufnr, filetype)
-  return filetype
+--- @param bufnr integer
+--- @param filetype? string
+local function default_get_language_id(bufnr, filetype)
+  return filetype or vim.bo[bufnr].filetype
 end
 
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
@@ -403,18 +404,16 @@ local function get_name(id, config)
   return tostring(id)
 end
 
---- @param workspace_folders lsp.WorkspaceFolder[]?
---- @param root_dir string?
+--- @param workspace_folders string|lsp.WorkspaceFolder[]?
 --- @return lsp.WorkspaceFolder[]?
-local function get_workspace_folders(workspace_folders, root_dir)
-  if workspace_folders then
+local function get_workspace_folders(workspace_folders)
+  if type(workspace_folders) == 'table' then
     return workspace_folders
-  end
-  if root_dir then
+  elseif type(workspace_folders) == 'string' then
     return {
       {
-        uri = vim.uri_from_fname(root_dir),
-        name = root_dir,
+        uri = vim.uri_from_fname(workspace_folders),
+        name = workspace_folders,
       },
     }
   end
@@ -451,13 +450,13 @@ function Client.create(config)
     requests = {},
     attached_buffers = {},
     server_capabilities = {},
-    dynamic_capabilities = lsp._dynamic.new(id),
+    registrations = {},
     commands = config.commands or {},
     settings = config.settings or {},
     flags = config.flags or {},
     get_language_id = config.get_language_id or default_get_language_id,
     capabilities = config.capabilities or lsp.protocol.make_client_capabilities(),
-    workspace_folders = get_workspace_folders(config.workspace_folders, config.root_dir),
+    workspace_folders = get_workspace_folders(config.workspace_folders or config.root_dir),
     root_dir = config.root_dir,
     _before_init_cb = config.before_init,
     _on_init_cbs = ensure_list(config.on_init),
@@ -476,6 +475,28 @@ function Client.create(config)
 
     --- @deprecated use client.progress instead
     messages = { name = name, messages = {}, progress = {}, status = {} },
+  }
+
+  --- @class lsp.DynamicCapabilities
+  --- @nodoc
+  self.dynamic_capabilities = {
+    capabilities = self.registrations,
+    client_id = id,
+    register = function(_, registrations)
+      return self:_register_dynamic(registrations)
+    end,
+    unregister = function(_, unregistrations)
+      return self:_unregister_dynamic(unregistrations)
+    end,
+    get = function(_, method, opts)
+      return self:_get_registration(method, opts and opts.bufnr)
+    end,
+    supports_registration = function(_, method)
+      return self:_supports_registration(method)
+    end,
+    supports = function(_, method, opts)
+      return self:_get_registration(method, opts and opts.bufnr) ~= nil
+    end,
   }
 
   self.request = method_wrapper(self, Client._request)
@@ -846,6 +867,100 @@ function Client:_stop(force)
   end)
 end
 
+--- Get options for a method that is registered dynamically.
+--- @param method string
+function Client:_supports_registration(method)
+  local capability = vim.tbl_get(self.capabilities, unpack(vim.split(method, '/')))
+  return type(capability) == 'table' and capability.dynamicRegistration
+end
+
+--- @private
+--- @param registrations lsp.Registration[]
+function Client:_register_dynamic(registrations)
+  -- remove duplicates
+  self:_unregister_dynamic(registrations)
+  for _, reg in ipairs(registrations) do
+    local method = reg.method
+    if not self.registrations[method] then
+      self.registrations[method] = {}
+    end
+    table.insert(self.registrations[method], reg)
+  end
+end
+
+--- @param registrations lsp.Registration[]
+function Client:_register(registrations)
+  self:_register_dynamic(registrations)
+
+  local unsupported = {} --- @type string[]
+
+  for _, reg in ipairs(registrations) do
+    local method = reg.method
+    if method == ms.workspace_didChangeWatchedFiles then
+      vim.lsp._watchfiles.register(reg, self.id)
+    elseif not self:_supports_registration(method) then
+      unsupported[#unsupported + 1] = method
+    end
+  end
+
+  if #unsupported > 0 then
+    local warning_tpl = 'The language server %s triggers a registerCapability '
+      .. 'handler for %s despite dynamicRegistration set to false. '
+      .. 'Report upstream, this warning is harmless'
+    log.warn(string.format(warning_tpl, self.name, table.concat(unsupported, ', ')))
+  end
+end
+
+--- @private
+--- @param unregistrations lsp.Unregistration[]
+function Client:_unregister_dynamic(unregistrations)
+  for _, unreg in ipairs(unregistrations) do
+    local sreg = self.registrations[unreg.method]
+    -- Unegister dynamic capability
+    for i, reg in ipairs(sreg or {}) do
+      if reg.id == unreg.id then
+        table.remove(sreg, i)
+        break
+      end
+    end
+  end
+end
+
+--- @param unregistrations lsp.Unregistration[]
+function Client:_unregister(unregistrations)
+  self:_unregister_dynamic(unregistrations)
+  for _, unreg in ipairs(unregistrations) do
+    if unreg.method == ms.workspace_didChangeWatchedFiles then
+      vim.lsp._watchfiles.unregister(unreg, self.id)
+    end
+  end
+end
+
+--- @param method string
+--- @param bufnr? integer
+--- @return lsp.Registration?
+function Client:_get_registration(method, bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  for _, reg in ipairs(self.registrations[method] or {}) do
+    if not reg.registerOptions or not reg.registerOptions.documentSelector then
+      return reg
+    end
+    local documentSelector = reg.registerOptions.documentSelector
+    local language = self.get_language_id(bufnr)
+    local uri = vim.uri_from_bufnr(bufnr)
+    local fname = vim.uri_to_fname(uri)
+    for _, filter in ipairs(documentSelector) do
+      if
+        not (filter.language and language ~= filter.language)
+        and not (filter.scheme and not vim.startswith(uri, filter.scheme .. ':'))
+        and not (filter.pattern and not vim.glob.to_lpeg(filter.pattern):match(fname))
+      then
+        return reg
+      end
+    end
+  end
+end
+
 --- @private
 --- Checks whether a client is stopped.
 ---
@@ -908,12 +1023,11 @@ function Client:_text_document_did_open_handler(bufnr)
     return
   end
 
-  local filetype = vim.bo[bufnr].filetype
   self.notify(ms.textDocument_didOpen, {
     textDocument = {
       version = lsp.util.buf_versions[bufnr],
       uri = vim.uri_from_bufnr(bufnr),
-      languageId = self.get_language_id(bufnr, filetype),
+      languageId = self.get_language_id(bufnr),
       text = lsp._buf_get_full_text(bufnr),
     },
   })
@@ -978,10 +1092,35 @@ function Client:_supports_method(method, opts)
   if vim.tbl_get(self.server_capabilities, unpack(required_capability)) then
     return true
   end
-  if self.dynamic_capabilities:supports_registration(method) then
-    return self.dynamic_capabilities:supports(method, opts)
+
+  local rmethod = lsp._resolve_to_request[method]
+  if rmethod then
+    if self:_supports_registration(rmethod) then
+      local reg = self:_get_registration(rmethod, opts and opts.bufnr)
+      return vim.tbl_get(reg or {}, 'registerOptions', 'resolveProvider') or false
+    end
+  else
+    if self:_supports_registration(method) then
+      return self:_get_registration(method, opts and opts.bufnr) ~= nil
+    end
   end
   return false
+end
+
+--- Get options for a method that is registered dynamically.
+--- @param method string
+--- @param bufnr? integer
+--- @return lsp.LSPAny?
+function Client:_get_registration_options(method, bufnr)
+  if not self:_supports_registration(method) then
+    return
+  end
+
+  local reg = self:_get_registration(method, bufnr)
+
+  if reg then
+    return reg.registerOptions
+  end
 end
 
 --- @private
@@ -1061,7 +1200,7 @@ function Client:_add_workspace_folder(dir)
     end
   end
 
-  local wf = assert(get_workspace_folders(nil, dir))
+  local wf = assert(get_workspace_folders(dir))
 
   self:_notify(ms.workspace_didChangeWorkspaceFolders, {
     event = { added = wf, removed = {} },
@@ -1076,7 +1215,7 @@ end
 --- Remove a directory to the workspace folders.
 --- @param dir string?
 function Client:_remove_workspace_folder(dir)
-  local wf = assert(get_workspace_folders(nil, dir))
+  local wf = assert(get_workspace_folders(dir))
 
   self:_notify(ms.workspace_didChangeWorkspaceFolders, {
     event = { added = {}, removed = wf },
