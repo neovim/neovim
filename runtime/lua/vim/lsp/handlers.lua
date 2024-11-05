@@ -122,30 +122,10 @@ end
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_registerCapability
 --- @param params lsp.RegistrationParams
 RSC[ms.client_registerCapability] = function(_, params, ctx)
-  local client_id = ctx.client_id
-  local client = assert(vim.lsp.get_client_by_id(client_id))
-
-  client.dynamic_capabilities:register(params.registrations)
-  for bufnr, _ in pairs(client.attached_buffers) do
+  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+  client:_register(params.registrations)
+  for bufnr in pairs(client.attached_buffers) do
     vim.lsp._set_defaults(client, bufnr)
-  end
-
-  ---@type string[]
-  local unsupported = {}
-  for _, reg in ipairs(params.registrations) do
-    if reg.method == ms.workspace_didChangeWatchedFiles then
-      vim.lsp._watchfiles.register(reg, ctx)
-    elseif not client.dynamic_capabilities:supports_registration(reg.method) then
-      unsupported[#unsupported + 1] = reg.method
-    end
-  end
-  if #unsupported > 0 then
-    local warning_tpl = 'The language server %s triggers a registerCapability '
-      .. 'handler for %s despite dynamicRegistration set to false. '
-      .. 'Report upstream, this warning is harmless'
-    local client_name = client and client.name or string.format('id=%d', client_id)
-    local warning = string.format(warning_tpl, client_name, table.concat(unsupported, ', '))
-    log.warn(warning)
   end
   return vim.NIL
 end
@@ -153,15 +133,8 @@ end
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_unregisterCapability
 --- @param params lsp.UnregistrationParams
 RSC[ms.client_unregisterCapability] = function(_, params, ctx)
-  local client_id = ctx.client_id
-  local client = assert(vim.lsp.get_client_by_id(client_id))
-  client.dynamic_capabilities:unregister(params.unregisterations)
-
-  for _, unreg in ipairs(params.unregisterations) do
-    if unreg.method == ms.workspace_didChangeWatchedFiles then
-      vim.lsp._watchfiles.unregister(unreg, ctx)
-    end
-  end
+  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+  client:_unregister(params.unregisterations)
   return vim.NIL
 end
 
@@ -173,8 +146,7 @@ RSC[ms.workspace_applyEdit] = function(_, params, ctx)
     'workspace/applyEdit must be called with `ApplyWorkspaceEditParams`. Server is violating the specification'
   )
   -- TODO(ashkan) Do something more with label?
-  local client_id = ctx.client_id
-  local client = assert(vim.lsp.get_client_by_id(client_id))
+  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
   if params.label then
     print('Workspace edit', params.label)
   end
@@ -196,12 +168,11 @@ end
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_configuration
 --- @param params lsp.ConfigurationParams
 RSC[ms.workspace_configuration] = function(_, params, ctx)
-  local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
     err_message(
       'LSP[',
-      client_id,
+      ctx.client_id,
       '] client has shut down after sending a workspace/configuration request'
     )
     return
@@ -229,10 +200,9 @@ end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_workspaceFolders
 RSC[ms.workspace_workspaceFolders] = function(_, _, ctx)
-  local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
-    err_message('LSP[id=', client_id, '] client has shut down after sending the message')
+    err_message('LSP[id=', ctx.client_id, '] client has shut down after sending the message')
     return
   end
   return client.workspace_folders or vim.NIL

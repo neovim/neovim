@@ -1131,12 +1131,7 @@ local function on_code_action_results(results, opts)
     local action = choice.action
     local bufnr = assert(choice.ctx.bufnr, 'Must have buffer number')
 
-    local reg = client.dynamic_capabilities:get(ms.textDocument_codeAction, { bufnr = bufnr })
-
-    local supports_resolve = vim.tbl_get(reg or {}, 'registerOptions', 'resolveProvider')
-      or client.supports_method(ms.codeAction_resolve)
-
-    if not action.edit and client and supports_resolve then
+    if not action.edit and client.supports_method(ms.codeAction_resolve) then
       client.request(ms.codeAction_resolve, action, function(err, resolved_action)
         if err then
           if action.command then

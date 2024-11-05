@@ -3,7 +3,6 @@ local validate = vim.validate
 
 local lsp = vim._defer_require('vim.lsp', {
   _changetracking = ..., --- @module 'vim.lsp._changetracking'
-  _dynamic = ..., --- @module 'vim.lsp._dynamic'
   _snippet_grammar = ..., --- @module 'vim.lsp._snippet_grammar'
   _tagfunc = ..., --- @module 'vim.lsp._tagfunc'
   _watchfiles = ..., --- @module 'vim.lsp._watchfiles'
@@ -30,6 +29,13 @@ local changetracking = lsp._changetracking
 -- Export these directly from rpc.
 ---@nodoc
 lsp.rpc_response_error = lsp.rpc.rpc_response_error
+
+lsp._resolve_to_request = {
+  [ms.codeAction_resolve] = ms.textDocument_codeAction,
+  [ms.codeLens_resolve] = ms.textDocument_codeLens,
+  [ms.documentLink_resolve] = ms.textDocument_documentLink,
+  [ms.inlayHint_resolve] = ms.textDocument_inlayHint,
+}
 
 -- maps request name to the required server_capability in the client.
 lsp._request_name_to_capability = {
