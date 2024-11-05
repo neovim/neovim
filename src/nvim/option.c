@@ -311,13 +311,14 @@ static void set_init_expand_env(void)
       continue;
     }
     char *p;
-    if ((opt->flags & kOptFlagGettext) && opt->var != NULL) {
-      p = _(*(char **)opt->var);
+    void *varp = option_get_scope_varp(opt_idx, kOptScopeGlobal);
+    if ((opt->flags & kOptFlagGettext) && varp != NULL) {
+      p = _(*(char **)varp);
     } else {
       p = option_expand(opt_idx, NULL);
     }
     if (p != NULL) {
-      set_option_varp(opt_idx, opt->var, CSTR_TO_OPTVAL(p), true);
+      set_option_varp(opt_idx, varp, CSTR_TO_OPTVAL(p), true);
       change_option_default(opt_idx, CSTR_TO_OPTVAL(p));
     }
   }
@@ -567,18 +568,11 @@ static char *find_dup_item(char *origval, const char *newval, const size_t newva
 void free_all_options(void)
 {
   for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
-    bool hidden = is_option_hidden(opt_idx);
-
-    if (option_is_global_only(opt_idx) || hidden) {
-      // global option: free value and default value.
-      // hidden option: free default value only.
-      if (!hidden) {
-        optval_free(optval_from_varp(opt_idx, options[opt_idx].var));
-      }
-    } else if (!option_is_window_local(opt_idx)) {
-      // buffer-local option: free global value.
-      optval_free(optval_from_varp(opt_idx, options[opt_idx].var));
+    // Free global value of option.
+    if (option_has_scope(opt_idx, kOptScopeGlobal)) {
+      optval_free(optval_from_varp(opt_idx, option_get_scope_varp(opt_idx, kOptScopeGlobal)));
     }
+    // Free allocated default value of option.
     optval_free(options[opt_idx].def_val);
   }
   free_operatorfunc_option();
@@ -1283,13 +1277,7 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
 
     if (p_verbose > 0) {
       // Mention where the option was last set.
-      if (varp == options[opt_idx].var) {
-        option_last_set_msg(options[opt_idx].last_set);
-      } else if (option_has_scope(opt_idx, kOptScopeWin)) {
-        option_last_set_msg(curwin->w_p_script_ctx[option_scope_idx(opt_idx, kOptScopeWin)]);
-      } else if (option_has_scope(opt_idx, kOptScopeBuf)) {
-        option_last_set_msg(curbuf->b_p_script_ctx[option_scope_idx(opt_idx, kOptScopeBuf)]);
-      }
+      option_last_set_msg(option_get_last_set(opt_idx, option_varp_get_scope(opt_idx, varp)));
     }
 
     if (nextchar != '?' && nextchar != NUL && !ascii_iswhite(afterchar)) {
@@ -1576,7 +1564,7 @@ static char *option_expand(OptIndex opt_idx, char *val)
   }
 
   if (val == NULL) {
-    val = *(char **)options[opt_idx].var;
+    val = *(char **)option_get_scope_varp(opt_idx, kOptScopeGlobal);
   }
 
   // If val is longer than MAXPATHL no meaningful expansion can be done,
@@ -1589,10 +1577,8 @@ static char *option_expand(OptIndex opt_idx, char *val)
   // Escape spaces when expanding 'tags', they are used to separate file
   // names.
   // For 'spellsuggest' expand after "file:".
-  expand_env_esc(val, NameBuff, MAXPATHL,
-                 (char **)options[opt_idx].var == &p_tags, false,
-                 (char **)options[opt_idx].var == &p_sps ? "file:"
-                                                         : NULL);
+  expand_env_esc(val, NameBuff, MAXPATHL, opt_idx == kOptTags, false,
+                 opt_idx == kOptSpellsuggest ? "file:" : NULL);
   if (strcmp(NameBuff, val) == 0) {   // they are the same
     return NULL;
   }
@@ -1643,9 +1629,10 @@ static void didset_options2(void)
 /// Check for string options that are NULL (normally only termcap options).
 void check_options(void)
 {
-  for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
-    if ((option_has_type(opt_idx, kOptValTypeString)) && options[opt_idx].var != NULL) {
-      check_string_option((char **)get_varp(&(options[opt_idx])));
+  for (GlobalOptIndex opt_idx_global = 0; opt_idx_global < kGlobalOptCount; opt_idx_global++) {
+    OptIndex opt_idx = global_opt_idx[opt_idx_global];
+    if (option_has_type(opt_idx, kOptValTypeString)) {
+      check_string_option((char **)option_get_scope_varp(opt_idx, kOptScopeGlobal));
     }
   }
 }
@@ -3298,9 +3285,7 @@ static char *option_get_valid_types(OptIndex opt_idx)
 /// @return  True if option is hidden, false otherwise. Returns false if option name is invalid.
 bool is_option_hidden(OptIndex opt_idx)
 {
-  // Hidden options are always immutable and point to their default value
-  return opt_idx != kOptInvalid && options[opt_idx].immutable
-         && options[opt_idx].var == &options[opt_idx].def_val.data;
+  return opt_idx != kOptInvalid && options[opt_idx].immutable;
 }
 
 /// Check if option is multitype (supports multiple types).
@@ -3340,7 +3325,7 @@ bool option_has_scope(OptIndex opt_idx, OptScope scope)
 /// Check if option is global-local.
 static inline bool option_is_global_local(OptIndex opt_idx)
 {
-  // Global-local options have at least two types, so their type flag cannot be a power of two.
+  // Global-local options have at least two scopes, so their scope flag cannot be a power of two.
   return opt_idx != kOptInvalid && !is_power_of_two(options[opt_idx].scope_flags);
 }
 
@@ -3713,8 +3698,9 @@ static const char *set_option(const OptIndex opt_idx, OptVal value, int opt_flag
 
   // When using ":set opt=val" for a global option with a local value the local value will be reset,
   // use the global value in that case.
-  void *varp
-    = scope_both && option_is_global_local(opt_idx) ? opt->var : get_varp_scope(opt, opt_flags);
+  void *varp = scope_both && option_is_global_local(opt_idx)
+               ? option_get_scope_varp(opt_idx, kOptScopeGlobal)
+               : get_varp_scope(opt, opt_flags);
   void *varp_local = get_varp_scope(opt, OPT_LOCAL);
   void *varp_global = get_varp_scope(opt, OPT_GLOBAL);
 
@@ -4158,7 +4144,8 @@ void ui_refresh_options(void)
       continue;
     }
     String name = cstr_as_string(options[opt_idx].fullname);
-    Object value = optval_as_object(optval_from_varp(opt_idx, options[opt_idx].var));
+    Object value
+      = optval_as_object(optval_from_varp(opt_idx, option_get_scope_varp(opt_idx, kOptScopeGlobal)));
     ui_call_option_set(name, value);
   }
   if (p_mouse != NULL) {
@@ -4258,8 +4245,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
           continue;
         }
 
-        if ((opt_flags & OPT_SKIPRTP)
-            && (opt->var == &p_rtp || opt->var == &p_pp)) {
+        if ((opt_flags & OPT_SKIPRTP) && (opt_idx == kOptRuntimepath || opt_idx == kOptPackpath)) {
           continue;
         }
 
@@ -4351,7 +4337,7 @@ static int put_set(FILE *fd, char *cmd, OptIndex opt_idx, void *varp)
   char *name = opt->fullname;
   uint64_t flags = opt->flags;
 
-  if (option_is_global_local(opt_idx) && varp != opt->var
+  if (option_is_global_local(opt_idx) && option_varp_get_scope(opt_idx, varp) != kOptScopeGlobal
       && optval_equal(value, get_option_unset_value(opt_idx))) {
     // Processing unset local value of global-local option. Do nothing.
     return OK;
@@ -4462,7 +4448,7 @@ void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
     if (option_is_window_local(opt_idx)) {
       return GLOBAL_WO(get_varp_from(p, buf, win));
     }
-    return p->var;
+    return option_get_scope_varp(opt_idx, kOptScopeGlobal);
   }
 
   if ((opt_flags & OPT_LOCAL) && option_is_global_local(opt_idx)) {
@@ -4552,72 +4538,75 @@ void *get_option_varp_scope_from(OptIndex opt_idx, int opt_flags, buf_T *buf, wi
 void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
 {
   OptIndex opt_idx = get_opt_idx(p);
+  void *varp_global = option_has_scope(opt_idx, kOptScopeGlobal)
+                      ? option_get_scope_varp(opt_idx, kOptScopeGlobal)
+                      : NULL;
 
   // Hidden options and global-only options always use the same var pointer
   if (is_option_hidden(opt_idx) || option_is_global_only(opt_idx)) {
-    return p->var;
+    return varp_global;
   }
 
   switch (opt_idx) {
   // global option with local value: use local value if it's been set
   case kOptEqualprg:
-    return *buf->b_p_ep != NUL ? &buf->b_p_ep : p->var;
+    return *buf->b_p_ep != NUL ? &buf->b_p_ep : varp_global;
   case kOptKeywordprg:
-    return *buf->b_p_kp != NUL ? &buf->b_p_kp : p->var;
+    return *buf->b_p_kp != NUL ? &buf->b_p_kp : varp_global;
   case kOptPath:
-    return *buf->b_p_path != NUL ? &(buf->b_p_path) : p->var;
+    return *buf->b_p_path != NUL ? &(buf->b_p_path) : varp_global;
   case kOptAutoread:
-    return buf->b_p_ar >= 0 ? &(buf->b_p_ar) : p->var;
+    return buf->b_p_ar >= 0 ? &(buf->b_p_ar) : varp_global;
   case kOptTags:
-    return *buf->b_p_tags != NUL ? &(buf->b_p_tags) : p->var;
+    return *buf->b_p_tags != NUL ? &(buf->b_p_tags) : varp_global;
   case kOptTagcase:
-    return *buf->b_p_tc != NUL ? &(buf->b_p_tc) : p->var;
+    return *buf->b_p_tc != NUL ? &(buf->b_p_tc) : varp_global;
   case kOptSidescrolloff:
-    return win->w_p_siso >= 0 ? &(win->w_p_siso) : p->var;
+    return win->w_p_siso >= 0 ? &(win->w_p_siso) : varp_global;
   case kOptScrolloff:
-    return win->w_p_so >= 0 ? &(win->w_p_so) : p->var;
+    return win->w_p_so >= 0 ? &(win->w_p_so) : varp_global;
   case kOptBackupcopy:
-    return *buf->b_p_bkc != NUL ? &(buf->b_p_bkc) : p->var;
+    return *buf->b_p_bkc != NUL ? &(buf->b_p_bkc) : varp_global;
   case kOptDefine:
-    return *buf->b_p_def != NUL ? &(buf->b_p_def) : p->var;
+    return *buf->b_p_def != NUL ? &(buf->b_p_def) : varp_global;
   case kOptInclude:
-    return *buf->b_p_inc != NUL ? &(buf->b_p_inc) : p->var;
+    return *buf->b_p_inc != NUL ? &(buf->b_p_inc) : varp_global;
   case kOptCompleteopt:
-    return *buf->b_p_cot != NUL ? &(buf->b_p_cot) : p->var;
+    return *buf->b_p_cot != NUL ? &(buf->b_p_cot) : varp_global;
   case kOptDictionary:
-    return *buf->b_p_dict != NUL ? &(buf->b_p_dict) : p->var;
+    return *buf->b_p_dict != NUL ? &(buf->b_p_dict) : varp_global;
   case kOptThesaurus:
-    return *buf->b_p_tsr != NUL ? &(buf->b_p_tsr) : p->var;
+    return *buf->b_p_tsr != NUL ? &(buf->b_p_tsr) : varp_global;
   case kOptThesaurusfunc:
-    return *buf->b_p_tsrfu != NUL ? &(buf->b_p_tsrfu) : p->var;
+    return *buf->b_p_tsrfu != NUL ? &(buf->b_p_tsrfu) : varp_global;
   case kOptFormatprg:
-    return *buf->b_p_fp != NUL ? &(buf->b_p_fp) : p->var;
+    return *buf->b_p_fp != NUL ? &(buf->b_p_fp) : varp_global;
   case kOptFindfunc:
-    return *buf->b_p_ffu != NUL ? &(buf->b_p_ffu) : p->var;
+    return *buf->b_p_ffu != NUL ? &(buf->b_p_ffu) : varp_global;
   case kOptErrorformat:
-    return *buf->b_p_efm != NUL ? &(buf->b_p_efm) : p->var;
+    return *buf->b_p_efm != NUL ? &(buf->b_p_efm) : varp_global;
   case kOptGrepprg:
-    return *buf->b_p_gp != NUL ? &(buf->b_p_gp) : p->var;
+    return *buf->b_p_gp != NUL ? &(buf->b_p_gp) : varp_global;
   case kOptMakeprg:
-    return *buf->b_p_mp != NUL ? &(buf->b_p_mp) : p->var;
+    return *buf->b_p_mp != NUL ? &(buf->b_p_mp) : varp_global;
   case kOptShowbreak:
-    return *win->w_p_sbr != NUL ? &(win->w_p_sbr) : p->var;
+    return *win->w_p_sbr != NUL ? &(win->w_p_sbr) : varp_global;
   case kOptStatusline:
-    return *win->w_p_stl != NUL ? &(win->w_p_stl) : p->var;
+    return *win->w_p_stl != NUL ? &(win->w_p_stl) : varp_global;
   case kOptWinbar:
-    return *win->w_p_wbr != NUL ? &(win->w_p_wbr) : p->var;
+    return *win->w_p_wbr != NUL ? &(win->w_p_wbr) : varp_global;
   case kOptUndolevels:
-    return buf->b_p_ul != NO_LOCAL_UNDOLEVEL ? &(buf->b_p_ul) : p->var;
+    return buf->b_p_ul != NO_LOCAL_UNDOLEVEL ? &(buf->b_p_ul) : varp_global;
   case kOptLispwords:
-    return *buf->b_p_lw != NUL ? &(buf->b_p_lw) : p->var;
+    return *buf->b_p_lw != NUL ? &(buf->b_p_lw) : varp_global;
   case kOptMakeencoding:
-    return *buf->b_p_menc != NUL ? &(buf->b_p_menc) : p->var;
+    return *buf->b_p_menc != NUL ? &(buf->b_p_menc) : varp_global;
   case kOptFillchars:
-    return *win->w_p_fcs != NUL ? &(win->w_p_fcs) : p->var;
+    return *win->w_p_fcs != NUL ? &(win->w_p_fcs) : varp_global;
   case kOptListchars:
-    return *win->w_p_lcs != NUL ? &(win->w_p_lcs) : p->var;
+    return *win->w_p_lcs != NUL ? &(win->w_p_lcs) : varp_global;
   case kOptVirtualedit:
-    return *win->w_p_ve != NUL ? &win->w_p_ve : p->var;
+    return *win->w_p_ve != NUL ? &win->w_p_ve : varp_global;
 
   case kOptArabic:
     return &(win->w_p_arab);
@@ -4841,6 +4830,145 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
   }
   // always return a valid pointer to avoid a crash!
   return &(buf->b_p_wm);
+}
+
+/// Get pointer to option variable at scope.
+///
+/// @param  opt_idx  Option index in options[] table.
+/// @param  scope    Target scope.
+/// @param  buf      Buffer to get option for.
+/// @param  win      Window to get option for.
+///
+/// @return Pointer to option variable.
+void *option_get_scope_varp_from(OptIndex opt_idx, OptScope scope, buf_T *buf, win_T *win)
+{
+  assert(opt_idx != kOptInvalid);
+  assert(option_has_scope(opt_idx, scope));
+
+  ssize_t opt_scope_idx = options[opt_idx].scope_idx[scope];
+  assert(opt_scope_idx >= 0);
+
+  switch (scope) {
+  case kOptScopeGlobal:
+    return ((char *)&g_opts + global_opt_vars_offsets[opt_scope_idx]);
+  case kOptScopeWin:
+    return ((char *)&win->w_opts + win_opt_vars_offsets[opt_scope_idx]);
+  case kOptScopeBuf:
+    return ((char *)&buf->b_opts + buf_opt_vars_offsets[opt_scope_idx]);
+  }
+  UNREACHABLE;
+}
+
+/// Get pointer to option variable at innermost scope.
+///
+/// @param  opt_idx  Option index in options[] table.
+/// @param  buf      Buffer to get option for.
+/// @param  win      Window to get option for.
+///
+/// @return Pointer to option variable.
+static void *option_get_varp_from(OptIndex opt_idx, buf_T *buf, win_T *win)
+{
+  // Option must have at least one scope.
+  assert(options[opt_idx].scope_flags != 0);
+
+  // Option scope with higher value is deeper in the scope hierarchy.
+  // Iterate from the innermost scope to the outermost scope, and return the pointer for the first
+  // scope that the option supports.
+  for (OptScope scope = kOptScopeSize - 1; scope >= 0; scope--) {
+    if (option_has_scope(opt_idx, scope)) {
+      return option_get_scope_varp_from(opt_idx, scope, buf, win);
+    }
+  }
+  UNREACHABLE;
+}
+
+/// Get pointer to option variable at scope for current context.
+///
+/// @param  opt_idx  Option index in options[] table.
+/// @param  scope    Target scope.
+///
+/// @return Pointer to option variable.
+static void *option_get_scope_varp(OptIndex opt_idx, OptScope scope)
+{
+  return option_get_scope_varp_from(opt_idx, scope, curbuf, curwin);
+}
+
+/// Get pointer to option variable at innermost scope for current context.
+///
+/// @param  opt_idx  Option index in options[] table.
+///
+/// @return Pointer to option variable.
+static void *option_get_varp(OptIndex opt_idx)
+{
+  return option_get_varp_from(opt_idx, curbuf, curwin);
+}
+
+/// Get scope of option variable from option pointer.
+///
+/// @param  opt_idx  Option index in options[] table.
+/// @param  varp     Pointer to option variable.
+/// @param  buf      Buffer to get option for.
+/// @param  win      Window to get option for.
+///
+/// @return Scope of option variable.
+static OptScope option_varp_get_scope_from(OptIndex opt_idx, void *varp, buf_T *buf, win_T *win)
+{
+  for (OptScope scope = kOptScopeGlobal; scope < kOptScopeSize; scope++) {
+    if (varp == option_get_scope_varp_from(opt_idx, scope, buf, win)) {
+      return scope;
+    }
+  }
+  // Variable pointer is not valid, something went wrong.
+  abort();
+}
+
+/// Get scope of option variable from option pointer for current context.
+///
+/// @param  opt_idx  Option index in options[] table.
+/// @param  varp     Pointer to option variable.
+///
+/// @return Scope of option variable.
+static OptScope option_varp_get_scope(OptIndex opt_idx, void *varp)
+{
+  return option_varp_get_scope_from(opt_idx, varp, curbuf, curwin);
+}
+
+/// Get when an option was last set at a specific scope.
+///
+/// @param  opt_idx  Option index in options[] table.
+/// @param  scope    Target scope.
+/// @param  buf      Buffer to use as context.
+/// @param  win      Window to use as context.
+///
+/// @return When option was last set at the scope.
+static LastSet option_get_last_set_from(OptIndex opt_idx, OptScope scope, buf_T *buf, win_T *win)
+{
+  assert(opt_idx != kOptInvalid);
+  assert(option_has_scope(opt_idx, scope));
+
+  ssize_t opt_scope_idx = options[opt_idx].scope_idx[scope];
+  assert(opt_scope_idx >= 0);
+
+  switch (scope) {
+  case kOptScopeGlobal:
+    return g_opts.last_set[opt_scope_idx];
+  case kOptScopeWin:
+    return curwin->w_opts.last_set[opt_scope_idx];
+  case kOptScopeBuf:
+    return curbuf->b_opts.last_set[opt_scope_idx];
+  }
+  UNREACHABLE;
+}
+
+/// Get when an option was last set at a specific scope for current context.
+///
+/// @param  opt_idx  Option index in options[] table.
+/// @param  scope    Target scope.
+///
+/// @return When option was last set at the scope.
+static LastSet option_get_last_set(OptIndex opt_idx, OptScope scope)
+{
+  return option_get_last_set_from(opt_idx, scope, curbuf, curwin);
 }
 
 /// Get option index from option pointer
@@ -5476,15 +5604,15 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
 
   // Certain options currently have special case handling to reuse the
   // expansion logic with other commands.
-  if (options[opt_idx].var == &p_syn) {
+  if (opt_idx == kOptSyntax) {
     xp->xp_context = EXPAND_OWNSYNTAX;
     return;
   }
-  if (options[opt_idx].var == &p_ft) {
+  if (opt_idx == kOptFiletype) {
     xp->xp_context = EXPAND_FILETYPE;
     return;
   }
-  if (options[opt_idx].var == &p_keymap) {
+  if (opt_idx == kOptKeymap) {
     xp->xp_context = EXPAND_KEYMAP;
     return;
   }
@@ -5511,14 +5639,9 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
 
   // Options that have kOptFlagExpand are considered to all use file/dir expansion.
   if (flags & kOptFlagExpand) {
-    p = options[opt_idx].var;
-    if (p == (char *)&p_bdir
-        || p == (char *)&p_dir
-        || p == (char *)&p_path
-        || p == (char *)&p_pp
-        || p == (char *)&p_rtp
-        || p == (char *)&p_cdpath
-        || p == (char *)&p_vdir) {
+    if (opt_idx == kOptBackupdir || opt_idx == kOptDirectory || opt_idx == kOptPath
+        || opt_idx == kOptPackpath || opt_idx == kOptRuntimepath || opt_idx == kOptCdpath
+        || opt_idx == kOptViewdir) {
       xp->xp_context = EXPAND_DIRECTORIES;
       if (p == (char *)&p_path || p == (char *)&p_cdpath) {
         xp->xp_backslash = XP_BS_THREE;
@@ -5576,7 +5699,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
   // expansion depending on what the user typed. Unfortunately we have to
   // manually handle it here to make sure we have the correct xp_context set.
   // for 'spellsuggest' start at "file:"
-  if (options[opt_idx].var == &p_sps) {
+  if (opt_idx == kOptSpellsuggest) {
     if (strncmp(xp->xp_pattern, "file:", 5) == 0) {
       xp->xp_pattern += 5;
       return;
@@ -5799,10 +5922,7 @@ int ExpandSettingSubtract(expand_T *xp, regmatch_T *regmatch, int *numMatches, c
     return ExpandOldSetting(numMatches, matches);
   }
 
-  char *option_val = *(char **)get_option_varp_scope_from(expand_option_idx,
-                                                          expand_option_flags,
-                                                          curbuf, curwin);
-
+  char *option_val = *(char **)get_varp_scope(get_option(expand_option_idx), expand_option_flags);
   uint32_t option_flags = options[expand_option_idx].flags;
 
   if (option_has_type(expand_option_idx, kOptValTypeNumber)) {
