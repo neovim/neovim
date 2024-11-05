@@ -66,6 +66,18 @@ describe(':checkhealth', function()
     eq({}, getcompletion('', 'checkhealth'))
     assert_alive()
   end)
+
+  it('vim.g.health', function()
+    clear()
+    command("let g:health = {'style':'float'}")
+    command('checkhealth lsp')
+    eq(
+      'editor',
+      exec_lua([[
+      return vim.api.nvim_win_get_config(0).relative
+    ]])
+    )
+  end)
 end)
 
 describe('vim.health', function()
