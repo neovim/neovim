@@ -11,6 +11,16 @@
 --- <
 --- Plugin authors are encouraged to write new healthchecks. |health-dev|
 ---
+---                                                              *g:health*
+--- g:health  This global variable controls the behavior and appearance of the
+---           `health` floating window. It should be a dictionary containing the
+---           following optional keys:
+---           - `style`: string? Determines the display style of the `health` window.
+---                             Set to `'float'` to enable a floating window. Other
+---                             styles are not currently supported.
+---           Example: >vim
+---             let g:health = { 'style': 'float' }
+---
 --- Commands                                *health-commands*
 ---
 ---                                                              *:che* *:checkhealth*
@@ -331,13 +341,28 @@ function M._check(mods, plugin_names)
 
   local emptybuf = vim.fn.bufnr('$') == 1 and vim.fn.getline(1) == '' and 1 == vim.fn.line('$')
 
-  -- When no command modifiers are used:
-  -- - If the current buffer is empty, open healthcheck directly.
-  -- - If not specified otherwise open healthcheck in a tab.
-  local buf_cmd = #mods > 0 and (mods .. ' sbuffer') or emptybuf and 'buffer' or 'tab sbuffer'
-
   local bufnr = vim.api.nvim_create_buf(true, true)
-  vim.cmd(buf_cmd .. ' ' .. bufnr)
+  if
+    vim.g.health
+    and type(vim.g.health) == 'table'
+    and vim.tbl_get(vim.g.health, 'style') == 'float'
+  then
+    local float_bufnr, float_winid = vim.lsp.util.open_floating_preview({}, '', {
+      height = math.floor(vim.o.lines * 0.8),
+      width = math.floor(vim.o.columns * 0.8),
+      pos = 'center',
+      relative = 'editor',
+    })
+    vim.api.nvim_set_current_win(float_winid)
+    vim.bo[float_bufnr].modifiable = true
+    vim.wo[float_winid].list = false
+  else
+    -- When no command modifiers are used:
+    -- - If the current buffer is empty, open healthcheck directly.
+    -- - If not specified otherwise open healthcheck in a tab.
+    local buf_cmd = #mods > 0 and (mods .. ' sbuffer') or emptybuf and 'buffer' or 'tab sbuffer'
+    vim.cmd(buf_cmd .. ' ' .. bufnr)
+  end
 
   if vim.fn.bufexists('health://') == 1 then
     vim.cmd.bwipe('health://')
