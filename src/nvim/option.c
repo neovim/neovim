@@ -5103,13 +5103,13 @@ void buf_copy_options(buf_T *buf, int flags)
         buf->b_p_fenc = xstrdup(p_fenc);
         switch (*p_ffs) {
         case 'm':
-          buf->b_p_ff = xstrdup(FF_MAC);
+          buf->b_p_ff = xstrdup("mac");
           break;
         case 'd':
-          buf->b_p_ff = xstrdup(FF_DOS);
+          buf->b_p_ff = xstrdup("dos");
           break;
         case 'u':
-          buf->b_p_ff = xstrdup(FF_UNIX);
+          buf->b_p_ff = xstrdup("unix");
           break;
         default:
           buf->b_p_ff = xstrdup(p_ff);
@@ -6238,13 +6238,13 @@ void set_fileformat(int eol_style, int opt_flags)
 
   switch (eol_style) {
   case EOL_UNIX:
-    p = FF_UNIX;
+    p = "unix";
     break;
   case EOL_MAC:
-    p = FF_MAC;
+    p = "mac";
     break;
   case EOL_DOS:
-    p = FF_DOS;
+    p = "dos";
     break;
   }
 

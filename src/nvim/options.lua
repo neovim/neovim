@@ -2684,7 +2684,9 @@ return {
       abbreviation = 'ff',
       cb = 'did_set_fileformat',
       defaults = {
-        if_true = macros('DFLT_FF', 'string'),
+        condition = 'USE_CRNL',
+        if_true = 'dos',
+        if_false = 'unix',
         doc = 'Windows: "dos", Unix: "unix"',
       },
       desc = [=[
@@ -2717,7 +2719,9 @@ return {
       abbreviation = 'ffs',
       cb = 'did_set_fileformats',
       defaults = {
-        if_true = macros('DFLT_FFS_VIM', 'string'),
+        condition = 'USE_CRNL',
+        if_true = 'dos,unix',
+        if_false = 'unix,dos',
         doc = 'Windows: "dos,unix", Unix: "unix,dos"',
       },
       deny_duplicates = true,

@@ -801,7 +801,7 @@ static int diff_write(buf_T *buf, diffin_T *din)
 
   // Always use 'fileformat' set to "unix".
   char *save_ff = buf->b_p_ff;
-  buf->b_p_ff = xstrdup(FF_UNIX);
+  buf->b_p_ff = xstrdup("unix");
   const bool save_cmod_flags = cmdmod.cmod_flags;
   // Writing the buffer is an implementation detail of performing the diff,
   // so it shouldn't update the '[ and '] marks.
