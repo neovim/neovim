@@ -2370,11 +2370,10 @@ static void copy_global_to_buflocal_cb(Callback *globcb, Callback *bufcb)
 /// lambda expression.
 const char *did_set_completefunc(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-  if (option_set_callback_func(buf->b_p_cfu, &cfu_cb) == FAIL) {
+  if (option_set_callback_func(curbuf->b_p_cfu, &cfu_cb) == FAIL) {
     return e_invarg;
   }
-  set_buflocal_cfu_callback(buf);
+  set_buflocal_cfu_callback(curbuf);
   return NULL;
 }
 
@@ -2391,11 +2390,10 @@ void set_buflocal_cfu_callback(buf_T *buf)
 /// lambda expression.
 const char *did_set_omnifunc(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-  if (option_set_callback_func(buf->b_p_ofu, &ofu_cb) == FAIL) {
+  if (option_set_callback_func(curbuf->b_p_ofu, &ofu_cb) == FAIL) {
     return e_invarg;
   }
-  set_buflocal_ofu_callback(buf);
+  set_buflocal_ofu_callback(curbuf);
   return NULL;
 }
 
@@ -2412,18 +2410,17 @@ void set_buflocal_ofu_callback(buf_T *buf)
 /// lambda expression.
 const char *did_set_thesaurusfunc(optset_T *args FUNC_ATTR_UNUSED)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
   int retval;
 
   if (args->os_flags & OPT_LOCAL) {
     // buffer-local option set
-    retval = option_set_callback_func(buf->b_p_tsrfu, &buf->b_tsrfu_cb);
+    retval = option_set_callback_func(curbuf->b_p_tsrfu, &curbuf->b_tsrfu_cb);
   } else {
     // global option set
     retval = option_set_callback_func(p_tsrfu, &tsrfu_cb);
     // when using :set, free the local callback
     if (!(args->os_flags & OPT_GLOBAL)) {
-      callback_free(&buf->b_tsrfu_cb);
+      callback_free(&curbuf->b_tsrfu_cb);
     }
   }
 

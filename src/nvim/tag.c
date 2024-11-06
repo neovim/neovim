@@ -229,20 +229,18 @@ static Callback tfu_cb;          // 'tagfunc' callback function
 /// a function (string), or function(<name>) or funcref(<name>) or a lambda.
 const char *did_set_tagfunc(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-
   callback_free(&tfu_cb);
-  callback_free(&buf->b_tfu_cb);
+  callback_free(&curbuf->b_tfu_cb);
 
-  if (*buf->b_p_tfu == NUL) {
+  if (*curbuf->b_p_tfu == NUL) {
     return NULL;
   }
 
-  if (option_set_callback_func(buf->b_p_tfu, &tfu_cb) == FAIL) {
+  if (option_set_callback_func(curbuf->b_p_tfu, &tfu_cb) == FAIL) {
     return e_invarg;
   }
 
-  callback_copy(&buf->b_tfu_cb, &tfu_cb);
+  callback_copy(&curbuf->b_tfu_cb, &tfu_cb);
   return NULL;
 }
 

@@ -5291,18 +5291,17 @@ static char *findfunc_find_file(char *findarg, size_t findarg_len, int count)
 /// Returns NULL on success and an error message on failure.
 const char *did_set_findfunc(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
   int retval;
 
   if (args->os_flags & OPT_LOCAL) {
     // buffer-local option set
-    retval = option_set_callback_func(buf->b_p_ffu, &buf->b_ffu_cb);
+    retval = option_set_callback_func(curbuf->b_p_ffu, &curbuf->b_ffu_cb);
   } else {
     // global option set
     retval = option_set_callback_func(p_ffu, &ffu_cb);
     // when using :set, free the local callback
     if (!(args->os_flags & OPT_GLOBAL)) {
-      callback_free(&buf->b_ffu_cb);
+      callback_free(&curbuf->b_ffu_cb);
     }
   }
 

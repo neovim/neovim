@@ -113,9 +113,6 @@ typedef struct {
   char *os_errbuf;
   /// length of the error buffer
   size_t os_errbuflen;
-
-  void *os_win;
-  void *os_buf;
 } optset_T;
 
 /// Type for the callback function that is invoked after an option value is
