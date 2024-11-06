@@ -920,36 +920,38 @@ function M.exec_lua(code, ...)
     return M.api.nvim_exec_lua(code, { ... })
   end
 
-  assert(session)
+  assert(session, 'no Nvim session')
 
   if not session.exec_lua_setup then
-    M.api.nvim_exec_lua(
-      [[
-      _G.__test_exec_lua = {
-        get_upvalues = loadstring((select(1,...))),
-        set_upvalues = loadstring((select(2,...))),
-        handler = loadstring((select(3,...)))
-      }
-      setmetatable(_G.__test_exec_lua, { __index = _G.__test_exec_lua })
-    ]],
-      { string.dump(get_upvalues), string.dump(set_upvalues), string.dump(exec_lua_handler) }
+    assert(
+      session:request(
+        'nvim_exec_lua',
+        [[
+          _G.__test_exec_lua = {
+            get_upvalues = loadstring((select(1,...))),
+            set_upvalues = loadstring((select(2,...))),
+            handler = loadstring((select(3,...)))
+          }
+          setmetatable(_G.__test_exec_lua, { __index = _G.__test_exec_lua })
+        ]],
+        { string.dump(get_upvalues), string.dump(set_upvalues), string.dump(exec_lua_handler) }
+      )
     )
     session.exec_lua_setup = true
   end
 
+  local stat, rv = session:request(
+    'nvim_exec_lua',
+    'return { _G.__test_exec_lua:handler(...) }',
+    { string.dump(code), get_upvalues(code), ... }
+  )
+
+  if not stat then
+    error(rv[2])
+  end
+
   --- @type any[], table<string,any>
-  local ret, upvalues = unpack(M.api.nvim_exec_lua(
-    [[
-      return {
-        _G.__test_exec_lua:handler(...)
-      }
-    ]],
-    {
-      string.dump(code),
-      get_upvalues(code),
-      ...,
-    }
-  ))
+  local ret, upvalues = unpack(rv)
 
   -- Update upvalues
   if next(upvalues) then
