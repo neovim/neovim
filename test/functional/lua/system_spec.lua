@@ -9,7 +9,7 @@ local function system_sync(cmd, opts)
   return exec_lua(function()
     local obj = vim.system(cmd, opts)
 
-    if opts.timeout then
+    if opts and opts.timeout then
       -- Minor delay before calling wait() so the timeout uv timer can have a headstart over the
       -- internal call to vim.wait() in wait().
       vim.wait(10)
@@ -75,7 +75,7 @@ describe('vim.system', function()
 
   it('kill processes', function()
     exec_lua(function()
-      local signal
+      local signal --- @type integer?
       local cmd = vim.system({ 'cat', '-' }, { stdin = true }, function(r)
         signal = r.signal
       end) -- run forever
@@ -112,4 +112,12 @@ describe('vim.system', function()
     )
     eq(true, exec_lua([[return _G.processed]]))
   end)
+
+  if t.is_os('win') then
+    it('can resolve windows command extentions.', function()
+      t.write_file('test.bat', 'echo hello world')
+      system_sync({ 'chmod', '+x', 'test.bat' })
+      system_sync({ './test' })
+    end)
+  end
 end)
