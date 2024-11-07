@@ -4,15 +4,22 @@ local fn = vim.fn
 local M = {}
 
 --- @alias vim.filetype.mapfn fun(path:string,bufnr:integer, ...):string?, fun(b:integer)?
---- @alias vim.filetype.mapopts { parent: string, priority: number }
+--- @alias vim.filetype.mapopts { priority: number }
 --- @alias vim.filetype.maptbl [string|vim.filetype.mapfn, vim.filetype.mapopts]
 --- @alias vim.filetype.mapping.value string|vim.filetype.mapfn|vim.filetype.maptbl
 --- @alias vim.filetype.mapping table<string,vim.filetype.mapping.value>
 
+--- @class vim.filetype.mapping.sorted
+--- @nodoc
+--- @field [1] string parent pattern
+--- @field [2] string pattern
+--- @field [3] string|vim.filetype.mapfn
+--- @field [4] integer priority
+
 --- @param ft string|vim.filetype.mapfn
---- @param opts? vim.filetype.mapopts
+--- @param priority? integer
 --- @return vim.filetype.maptbl
-local function starsetf(ft, opts)
+local function starsetf(ft, priority)
   return {
     function(path, bufnr)
       -- Note: when `ft` is a function its return value may be nil.
@@ -27,11 +34,8 @@ local function starsetf(ft, opts)
       end
     end,
     {
-      -- Allow setting "parent" to be reused in closures, but don't have default as it will be
-      -- assigned later from grouping
-      parent = opts and opts.parent,
       -- Starset matches should have lowest priority by default
-      priority = (opts and opts.priority) or -math.huge,
+      priority = priority or -math.huge,
     },
   }
 end
@@ -1874,11 +1878,10 @@ local filename = {
 }
 
 -- Re-use closures as much as possible
-local detect_apache_diretc = starsetf('apache', { parent = '/etc/' })
-local detect_apache_dotconf = starsetf('apache', { parent = '%.conf' })
-local detect_muttrc = starsetf('muttrc', { parent = 'utt' })
-local detect_neomuttrc = starsetf('neomuttrc', { parent = 'utt' })
-local detect_xkb = starsetf('xkb', { parent = '/usr/' })
+local detect_apache = starsetf('apache')
+local detect_muttrc = starsetf('muttrc')
+local detect_neomuttrc = starsetf('neomuttrc')
+local detect_xkb = starsetf('xkb')
 
 ---@type table<string,vim.filetype.mapping>
 local pattern = {
@@ -1895,14 +1898,14 @@ local pattern = {
     ['/etc/asound%.conf$'] = 'alsaconf',
     ['/etc/apache2/sites%-.*/.*%.com$'] = 'apache',
     ['/etc/httpd/.*%.conf$'] = 'apache',
-    ['/etc/apache2/.*%.conf'] = detect_apache_diretc,
-    ['/etc/apache2/conf%..*/'] = detect_apache_diretc,
-    ['/etc/apache2/mods%-.*/'] = detect_apache_diretc,
-    ['/etc/apache2/sites%-.*/'] = detect_apache_diretc,
-    ['/etc/httpd/conf%..*/'] = detect_apache_diretc,
-    ['/etc/httpd/conf%.d/.*%.conf'] = detect_apache_diretc,
-    ['/etc/httpd/mods%-.*/'] = detect_apache_diretc,
-    ['/etc/httpd/sites%-.*/'] = detect_apache_diretc,
+    ['/etc/apache2/.*%.conf'] = detect_apache,
+    ['/etc/apache2/conf%..*/'] = detect_apache,
+    ['/etc/apache2/mods%-.*/'] = detect_apache,
+    ['/etc/apache2/sites%-.*/'] = detect_apache,
+    ['/etc/httpd/conf%..*/'] = detect_apache,
+    ['/etc/httpd/conf%.d/.*%.conf'] = detect_apache,
+    ['/etc/httpd/mods%-.*/'] = detect_apache,
+    ['/etc/httpd/sites%-.*/'] = detect_apache,
     ['/etc/proftpd/.*%.conf'] = starsetf('apachestyle'),
     ['/etc/proftpd/conf%..*/'] = starsetf('apachestyle'),
     ['/etc/cdrdao%.conf$'] = 'cdrdaoconf',
@@ -2193,13 +2196,13 @@ local pattern = {
   },
   ['%.conf'] = {
     ['^proftpd%.conf'] = starsetf('apachestyle'),
-    ['^access%.conf'] = detect_apache_dotconf,
-    ['^apache%.conf'] = detect_apache_dotconf,
-    ['^apache2%.conf'] = detect_apache_dotconf,
-    ['^httpd%.conf'] = detect_apache_dotconf,
-    ['^httpd%-.*%.conf'] = detect_apache_dotconf,
-    ['^proxy%-html%.conf'] = detect_apache_dotconf,
-    ['^srm%.conf'] = detect_apache_dotconf,
+    ['^access%.conf'] = detect_apache,
+    ['^apache%.conf'] = detect_apache,
+    ['^apache2%.conf'] = detect_apache,
+    ['^httpd%.conf'] = detect_apache,
+    ['^httpd%-.*%.conf'] = detect_apache,
+    ['^proxy%-html%.conf'] = detect_apache,
+    ['^srm%.conf'] = detect_apache,
     ['asterisk/.*%.conf'] = starsetf('asterisk'),
     ['asterisk.*/.*voicemail%.conf'] = starsetf('asteriskvm'),
     ['^dictd.*%.conf$'] = 'dictdconf',
@@ -2372,7 +2375,7 @@ local pattern = {
     ['/app%-defaults/'] = starsetf('xdefaults'),
     ['^Xresources'] = starsetf('xdefaults'),
     -- Increase priority to run before the pattern below
-    ['^XF86Config%-4'] = starsetf(detect.xfree86_v4, { priority = -math.huge + 1 }),
+    ['^XF86Config%-4'] = starsetf(detect.xfree86_v4, -math.huge + 1),
     ['^XF86Config'] = starsetf(detect.xfree86_v3),
     ['Xmodmap$'] = 'xmodmap',
     ['xmodmap'] = starsetf('xmodmap'),
@@ -2398,8 +2401,10 @@ local pattern = {
 --- @type table<string,vim.filetype.pattern_cache>
 local pattern_lookup = {}
 
+--- @param a vim.filetype.mapping.sorted
+--- @param b vim.filetype.mapping.sorted
 local function compare_by_priority(a, b)
-  return a[next(a)][2].priority > b[next(b)][2].priority
+  return a[4] > b[4]
 end
 
 --- @param pat string
@@ -2409,30 +2414,30 @@ local function parse_pattern(pat)
 end
 
 --- @param t table<string,vim.filetype.mapping>
---- @return vim.filetype.mapping[]
---- @return vim.filetype.mapping[]
+--- @return vim.filetype.mapping.sorted[]
+--- @return vim.filetype.mapping.sorted[]
 local function sort_by_priority(t)
   -- Separate patterns with non-negative and negative priority because they
   -- will be processed separately
-  local pos = {} --- @type vim.filetype.mapping[]
-  local neg = {} --- @type vim.filetype.mapping[]
+  local pos = {} --- @type vim.filetype.mapping.sorted[]
+  local neg = {} --- @type vim.filetype.mapping.sorted[]
   for parent, ft_map in pairs(t) do
     pattern_lookup[parent] = pattern_lookup[parent] or parse_pattern(parent)
     for pat, maptbl in pairs(ft_map) do
-      local ft = type(maptbl) == 'table' and maptbl[1] or maptbl
+      local ft_or_fun = type(maptbl) == 'table' and maptbl[1] or maptbl
       assert(
-        type(ft) == 'string' or type(ft) == 'function',
+        type(ft_or_fun) == 'string' or type(ft_or_fun) == 'function',
         'Expected string or function for filetype'
       )
 
       -- Parse pattern for common data and cache it once
       pattern_lookup[pat] = pattern_lookup[pat] or parse_pattern(pat)
 
-      local opts = (type(maptbl) == 'table' and type(maptbl[2]) == 'table') and maptbl[2] or {}
-      opts.parent = opts.parent or parent
-      opts.priority = opts.priority or 0
+      --- @type vim.filetype.mapopts?
+      local opts = (type(maptbl) == 'table' and type(maptbl[2]) == 'table') and maptbl[2] or nil
+      local priority = opts and opts.priority or 0
 
-      table.insert(opts.priority >= 0 and pos or neg, { [pat] = { ft, opts } })
+      table.insert(priority >= 0 and pos or neg, { parent, pat, ft_or_fun, priority })
     end
   end
 
@@ -2643,7 +2648,8 @@ local function match_pattern(name, path, tail, pat, try_all_candidates)
     if some_env_missing then
       return nil
     end
-    pat, has_slash = expanded, expanded:find('/') ~= nil
+    pat = expanded
+    has_slash = has_slash or expanded:find('/') ~= nil
   end
 
   -- Try all possible candidates to make parent patterns not depend on slash presence
@@ -2665,14 +2671,13 @@ end
 --- @param name string
 --- @param path string
 --- @param tail string
---- @param pattern_sorted vim.filetype.mapping[]
+--- @param pattern_sorted vim.filetype.mapping.sorted[]
 --- @param parent_matches table<string,boolean>
 --- @param bufnr integer?
 local function match_pattern_sorted(name, path, tail, pattern_sorted, parent_matches, bufnr)
-  for i = 1, #pattern_sorted do
-    local pat, ft_data = next(pattern_sorted[i])
+  for _, p in ipairs(pattern_sorted) do
+    local parent, pat, ft_or_fn = p[1], p[2], p[3]
 
-    local parent = ft_data[2].parent
     local parent_is_matched = parent_matches[parent]
     if parent_is_matched == nil then
       parent_matches[parent] = match_pattern(name, path, tail, parent, true) ~= nil
@@ -2682,7 +2687,7 @@ local function match_pattern_sorted(name, path, tail, pattern_sorted, parent_mat
     if parent_is_matched then
       local matches = match_pattern(name, path, tail, pat, false)
       if matches then
-        local ft, on_detect = dispatch(ft_data[1], path, bufnr, matches)
+        local ft, on_detect = dispatch(ft_or_fn, path, bufnr, matches)
         if ft then
           return ft, on_detect
         end
