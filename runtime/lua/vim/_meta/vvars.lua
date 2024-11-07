@@ -166,7 +166,7 @@ vim.v.errors = ...
 ---   inclusive        Motion is `inclusive`, else exclusive.
 ---   scope            Event-specific scope name.
 ---   operator         Current `operator`.  Also set for Ex
----   commands         (unlike `v:operator`). For
+---                    commands (unlike `v:operator`). For
 ---                    example if `TextYankPost` is triggered
 ---                    by the `:yank` Ex command then
 ---                    `v:event.operator` is "y".
