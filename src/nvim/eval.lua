@@ -2165,6 +2165,7 @@ M.funcs = {
       If {expr} starts with "./" the |current-directory| is used.
 
     ]=],
+    fast = true,
     name = 'exepath',
     params = { { 'expr', 'string' } },
     signature = 'exepath({expr})',
