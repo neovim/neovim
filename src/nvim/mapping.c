@@ -133,6 +133,16 @@ static const char e_entries_missing_in_mapset_dict_argument[]
 static const char e_illegal_map_mode_string_str[]
   = N_("E1276: Illegal map mode string: '%s'");
 
+/// Whether new mappings should be marked as "default". This is modified only in map_set_default().
+static bool create_default_maps;
+
+/// Enable or disable creationg of default mappings.
+///
+/// @param value True if new mappings should be marked as default mappings.
+void map_set_default(bool value) {
+  create_default_maps = value;
+}
+
 /// Get the start of the hashed map list for "state" and first character "c".
 mapblock_T *get_maphash_list(int state, int c)
 {
@@ -535,6 +545,8 @@ static mapblock_T *map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr
     nlua_set_sctx(&mp->m_script_ctx);
   }
   mp->m_desc = args->desc;
+
+  mp->m_default = create_default_maps;
 
   // add the new entry in front of the abbrlist or maphash[] list
   if (is_abbr) {
@@ -2130,6 +2142,9 @@ static Dict mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt
   PUT_C(dict, "mode", CSTR_AS_OBJ(mapmode));
   PUT_C(dict, "abbr", INTEGER_OBJ(abbr ? 1 : 0));
   PUT_C(dict, "mode_bits", INTEGER_OBJ(mp->m_mode));
+  if (mp->m_default) {
+    PUT_C(dict, "default", INTEGER_OBJ(1));
+  }
 
   return dict;
 }
