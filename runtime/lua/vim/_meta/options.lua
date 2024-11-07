@@ -5112,12 +5112,10 @@ vim.go.sj = vim.go.scrolljump
 --- you set it to a very large value (999) the cursor line will always be
 --- in the middle of the window (except at the start or end of the file or
 --- when long lines wrap).
---- After using the local value, go back the global value with one of
---- these two:
+--- After using the local value, go back the global value with this:
 ---
 --- ```vim
---- 	setlocal scrolloff<
---- 	setlocal scrolloff=-1
+--- 	set scrolloff<
 --- ```
 --- For scrolling horizontally see 'sidescrolloff'.
 ---
@@ -5845,12 +5843,10 @@ vim.go.ss = vim.go.sidescroll
 --- to a large value (like 999) has the effect of keeping the cursor
 --- horizontally centered in the window, as long as one does not come too
 --- close to the beginning of the line.
---- After using the local value, go back the global value with one of
---- these two:
+--- After using the local value, go back the global value with this:
 ---
 --- ```vim
---- 	setlocal sidescrolloff<
---- 	setlocal sidescrolloff=-1
+--- 	set sidescrolloff<
 --- ```
 ---
 --- Example: Try this together with 'sidescroll' and 'listchars' as
@@ -7224,8 +7220,6 @@ vim.bo.udf = vim.bo.undofile
 --- 	setlocal ul=-1
 --- ```
 --- This helps when you run out of memory for a single change.
----
---- The local value is set to -123456 when the global value is to be used.
 ---
 --- Also see `clear-undo`.
 ---

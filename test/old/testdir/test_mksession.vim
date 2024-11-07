@@ -1135,7 +1135,8 @@ func Test_scrolloff()
   set sessionoptions+=localoptions
   setlocal so=1 siso=1
   mksession! Xtest_mks.out
-  setlocal so=-1 siso=-1
+  "setlocal so=-1 siso=-1
+  set so< siso<
   source Xtest_mks.out
   call assert_equal(1, &l:so)
   call assert_equal(1, &l:siso)

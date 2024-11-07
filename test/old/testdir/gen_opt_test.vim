@@ -22,11 +22,11 @@ while search("^'[^']*'.*\\n.*|global-local", 'W')
   let fullname = getline('.')->matchstr("^'\\zs[^']*")
   let global_locals[fullname] = ''
 endwhile
-call extend(global_locals, #{
-      \ scrolloff: -1,
-      \ sidescrolloff: -1,
-      \ undolevels: -123456,
-      \})
+"call extend(global_locals, #{
+"      \ scrolloff: -1,
+"      \ sidescrolloff: -1,
+"      \ undolevels: -123456,
+"      \})
 
 " Get local-noglobal options.
 " "key" is full-name of the option.
@@ -438,7 +438,8 @@ for option in options
 	endfor
       endfor
       " Testing to clear the local value and switch back to the global value.
-      if global_locals->has_key(fullname)
+      "if global_locals->has_key(fullname)
+      if option.type == 'string' && global_locals->has_key(fullname)
 	let switchback_val = global_locals[fullname]
 	call add(script, $'setlocal {opt}={switchback_val}')
 	call add(script, $'call assert_equal(&g:{fullname}, &{fullname})')

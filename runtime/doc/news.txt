@@ -115,6 +115,8 @@ OPTIONS
   and boolean |global-local| options instead of removing the local value.
 • Setting |hidden-options| now gives an error. In particular, setting
   'noshellslash' is now only allowed on Windows.
+• Setting the local value of |'scrolloff'| or |'sidescrolloff'| to `-1` now gives an
+  error. Use `:set {option}<` instead to unset the local option value.
 
 PLUGINS
 

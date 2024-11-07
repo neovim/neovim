@@ -1015,7 +1015,7 @@ void ex_mkrc(exarg_T *eap)
     if (!failed && view_session) {
       if (put_line(fd,
                    "let s:so_save = &g:so | let s:siso_save = &g:siso"
-                   " | setg so=0 siso=0 | setl so=-1 siso=-1") == FAIL) {
+                   " | setg so=0 siso=0 | set so< siso<") == FAIL) {
         failed = true;
       }
       if (eap->cmdidx == CMD_mksession) {

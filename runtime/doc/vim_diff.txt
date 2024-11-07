@@ -362,6 +362,7 @@ Options:
 - 'mousescroll' amount to scroll by when scrolling with a mouse
 - 'pumblend'    pseudo-transparent popupmenu
 - 'scrollback'
+- |'scrolloff'|, |'sidescrolloff'| cannot be set to `-1`
 - 'shortmess'
     - "F" flag does not affect output from autocommands.
     - "q" flag fully hides macro recording message.

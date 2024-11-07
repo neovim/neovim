@@ -2205,7 +2205,7 @@ describe('lua stdlib', function()
     exec_lua [[vim.o.scrolloff = 100]]
     exec_lua [[vim.wo.scrolloff = 200]]
     eq(200, fn.luaeval 'vim.wo.scrolloff')
-    exec_lua [[vim.wo.scrolloff = -1]]
+    exec_lua [[vim.wo.scrolloff = nil]]
     eq(100, fn.luaeval 'vim.wo.scrolloff')
     exec_lua [[
     vim.wo[0][0].scrolloff = 200
