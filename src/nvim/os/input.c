@@ -289,8 +289,8 @@ size_t input_enqueue(String keys)
     unsigned new_size
       = trans_special(&ptr, (size_t)(end - ptr), (char *)buf, FSK_KEYCODE, true, NULL);
 
-    if (new_size) {
-      if ((new_size = handle_mouse_event(&ptr, buf, new_size))) {
+    if (new_size > 0) {
+      if ((new_size = handle_mouse_event(&ptr, buf, new_size)) > 0) {
         input_enqueue_raw((char *)buf, new_size);
       }
       continue;
@@ -351,9 +351,9 @@ static uint8_t check_multiclick(int code, int grid, int row, int col, bool *skip
              || code == KE_X1MOUSE || code == KE_X2MOUSE) {
     // For click events the number of clicks is updated.
     uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
-    // compute the time elapsed since the previous mouse click and
-    // convert p_mouse from ms to ns
+    // Compute the time elapsed since the previous mouse click.
     uint64_t timediff = mouse_time - orig_mouse_time;
+    // Convert 'mousetime' from ms to ns.
     uint64_t mouset = (uint64_t)p_mouset * 1000000;
     if (code == orig_mouse_code
         && no_move
@@ -407,7 +407,7 @@ static unsigned handle_mouse_event(const char **ptr, uint8_t *buf, unsigned bufs
     return bufsize;
   }
 
-  // a <[COL],[ROW]> sequence can follow and will set the mouse_row/mouse_col
+  // A <[COL],[ROW]> sequence can follow and will set the mouse_row/mouse_col
   // global variables. This is ugly but its how the rest of the code expects to
   // find mouse coordinates, and it would be too expensive to refactor this
   // now.
