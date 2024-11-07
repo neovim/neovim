@@ -245,6 +245,7 @@ typedef struct {
   Boolean nested;
   Boolean once;
   Object pattern;
+  Integer ns_id;
 } Dict(create_autocmd);
 
 typedef struct {

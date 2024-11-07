@@ -118,6 +118,14 @@ static char *old_termresponse = NULL;
 static Map(String, int) map_augroup_name_to_id = MAP_INIT;
 static Map(int, String) map_augroup_id_to_name = MAP_INIT;
 
+// TODO(altermo): this is very similar to mt_scoped_in_win
+// so maybe refactor all ns_scoped_in into one function
+// which takes the arguments (namespace,win,buf,...)
+static inline bool au_ns_scoped_in_win(uint32_t ns, win_T *wp)
+{
+  return set_has(uint32_t, &wp->w_ns_set, ns);
+}
+
 static void augroup_map_del(int id, const char *name)
 {
   if (name != NULL) {
@@ -962,7 +970,7 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, char
       AucmdExecutable exec = AUCMD_EXECUTABLE_INIT;
       exec.type = CALLABLE_EX;
       exec.callable.cmd = cmd;
-      autocmd_register(0, event, pat, patlen, group, once, nested, NULL, exec);
+      autocmd_register(0, event, pat, patlen, group, once, nested, NULL, exec, 0);
     }
 
     pat = aucmd_next_pattern(pat, (size_t)patlen);
@@ -974,7 +982,7 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, char
 }
 
 int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int group, bool once,
-                     bool nested, char *desc, AucmdExecutable aucmd)
+                     bool nested, char *desc, AucmdExecutable aucmd, uint32_t ns)
 {
   // 0 is not a valid group.
   assert(group != 0);
@@ -1089,6 +1097,7 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
   ac->once = once;
   ac->nested = nested;
   ac->desc = desc == NULL ? NULL : xstrdup(desc);
+  ac->ns = ns;
 
   return OK;
 }
@@ -1986,6 +1995,11 @@ static void aucmd_next(AutoPatCmd *apc)
       if (ap->buflocal_nr == 0
           ? !match_file_pat(NULL, &ap->reg_prog, apc->fname, apc->sfname, apc->tail, ap->allow_dirs)
           : ap->buflocal_nr != apc->arg_bufnr) {
+        continue;
+      }
+
+      // TODO(altermo): autocmd may trigger in not current window
+      if (ac->ns != 0 && !au_ns_scoped_in_win(ac->ns, curwin)) {
         continue;
       }
 

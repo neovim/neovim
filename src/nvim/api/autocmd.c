@@ -501,7 +501,8 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
                                   opts->once,
                                   opts->nested,
                                   desc,
-                                  aucmd);
+                                  aucmd,
+                                  HAS_KEY(opts, create_autocmd, ns_id) ? (uint32_t)opts->ns_id : 0);
       });
 
       if (retval == FAIL) {

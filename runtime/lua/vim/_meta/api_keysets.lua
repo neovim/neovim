@@ -86,6 +86,7 @@ error('Cannot require a meta file')
 --- @field nested? boolean
 --- @field once? boolean
 --- @field pattern? any
+--- @field ns_id? integer
 
 --- @class vim.api.keyset.echo_opts
 --- @field verbose? boolean
