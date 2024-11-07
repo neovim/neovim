@@ -2387,19 +2387,9 @@ msgstr "[no hay fin de línea]"
 msgid "[Incomplete last line]"
 msgstr "[Última línea incompleta]"
 
-# don't overwrite messages here
-# must give this prompt
-# don't use emsg() here, don't want to flush the buffers
-#. don't overwrite messages here
-#. must give this prompt
-#. don't use emsg() here, don't want to flush the buffers
-#: ../fileio.c:3865
-msgid "WARNING: The file has been changed since reading it!!!"
-msgstr "ADVERTENCIA: ¡¡¡El archivo ha cambiado desde que se leyó!!!"
-
-#: ../fileio.c:3867
-msgid "Do you really want to write to it"
-msgstr "¿Desea realmente escribir al archivo?"
+#: ../bufwrite.c:362
+msgid "WARNING: The file has been changed since reading it. Do you really want to write to it?"
+msgstr "ADVERTENCIA: El archivo ha cambiado desde que se leyó. ¿Desea realmente escribir en él?"
 
 #: ../fileio.c:4648
 #, c-format
