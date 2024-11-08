@@ -47,7 +47,7 @@ static bool did_add_space = false;  ///< auto_format() added an extra space
                                     ///< under the cursor
 
 #define WHITECHAR(cc) (ascii_iswhite(cc) \
-                       && !utf_iscomposing(utf_ptr2char((char *)get_cursor_pos_ptr() + 1)))
+                       && !utf_iscomposing_first(utf_ptr2char((char *)get_cursor_pos_ptr() + 1)))
 
 /// Return true if format option 'x' is in effect.
 /// Take care of no formatting when 'paste' is set.
@@ -348,9 +348,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       inc_cursor();
     }
     startcol -= curwin->w_cursor.col;
-    if (startcol < 0) {
-      startcol = 0;
-    }
+    startcol = MAX(startcol, 0);
 
     if (State & VREPLACE_FLAG) {
       // In MODE_VREPLACE state, we will backspace over the text to be
@@ -402,7 +400,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
         }
         if (second_indent >= 0) {
           if (State & VREPLACE_FLAG) {
-            change_indent(INDENT_SET, second_indent, false, NUL, true);
+            change_indent(INDENT_SET, second_indent, false, true);
           } else if (leader_len > 0 && second_indent - leader_len > 0) {
             int padding = second_indent - leader_len;
 
@@ -433,9 +431,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       // may have added or removed indent.
       curwin->w_cursor.col += startcol;
       colnr_T len = get_cursor_line_len();
-      if (curwin->w_cursor.col > len) {
-        curwin->w_cursor.col = len;
-      }
+      curwin->w_cursor.col = MIN(curwin->w_cursor.col, len);
     }
 
     haveto_redraw = true;
@@ -758,14 +754,9 @@ int comp_textwidth(bool ff)
       textwidth -= 8;
     }
   }
-  if (textwidth < 0) {
-    textwidth = 0;
-  }
+  textwidth = MAX(textwidth, 0);
   if (ff && textwidth == 0) {
-    textwidth = curwin->w_width_inner - 1;
-    if (textwidth > 79) {
-      textwidth = 79;
-    }
+    textwidth = MIN(curwin->w_width_inner - 1, 79);
   }
   return textwidth;
 }
@@ -878,7 +869,7 @@ int fex_format(linenr_T lnum, long count, int c)
   if (use_sandbox) {
     sandbox++;
   }
-  int r = (int)eval_to_number(fex);
+  int r = (int)eval_to_number(fex, true);
   if (use_sandbox) {
     sandbox--;
   }
@@ -1105,11 +1096,7 @@ void format_lines(linenr_T line_count, bool avoid_fex)
         }
         first_par_line = false;
         // If the line is getting long, format it next time
-        if (get_cursor_line_len() > max_len) {
-          force_format = true;
-        } else {
-          force_format = false;
-        }
+        force_format = get_cursor_line_len() > max_len;
       }
     }
     line_breakcheck();

@@ -9,7 +9,7 @@ Nvim UI protocol					*UI* *ui*
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-UI Events						*ui-events*
+UI Events						*ui-protocol* *ui-events*
 
 UIs can be implemented as external client processes communicating with Nvim
 over the RPC API. The default UI model is a terminal-like grid with a single,
@@ -398,8 +398,8 @@ numerical highlight ids to the actual attributes.
 	`grid` will not be used anymore and the UI can free any data associated
 	with it.
 
-["grid_cursor_goto", grid, row, column] ~
-	Makes `grid` the current grid and `row, column` the cursor position on this
+["grid_cursor_goto", grid, row, col] ~
+	Makes `grid` the current grid and `row, col` the cursor position on this
 	grid.  This event will be sent at most once in a `redraw` batch and
 	indicates the visible cursor position.
 
@@ -610,11 +610,12 @@ tabs.
 	size). If the window was previously hidden, it should now be shown
 	again.
 
-["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, focusable] ~
+["win_float_pos", grid, win, anchor, anchor_grid, anchor_row, anchor_col, mouse_enabled, zindex] ~
 	Display or reconfigure floating window `win`. The window should be
 	displayed above another grid `anchor_grid` at the specified position
-	`anchor_row` and `anchor_col`. For the meaning of `anchor` and more
-	details of positioning, see |nvim_open_win()|.
+	`anchor_row` and `anchor_col`. For the meaning of `anchor` and more details
+	of positioning, see |nvim_open_win()|. `mouse_enabled` is true if the
+	window can receive mouse events.
 
 ["win_external_pos", grid, win] ~
 	Display or reconfigure external window `win`. The window should be

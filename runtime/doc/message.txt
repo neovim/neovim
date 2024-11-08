@@ -690,6 +690,7 @@ Ex command or function was given an invalid argument. Or |jobstart()| or
 
 							*E488*  >
   Trailing characters
+  Trailing characters: {text}
 
 An argument was given to an Ex command that does not permit one.
 Or the argument has invalid characters and has not been recognized.
@@ -756,7 +757,7 @@ src/ex_cmds.lua.  Update the lookup table by re-running the build. >
 This is an (incomplete) overview of various messages that Vim gives:
 
 			*hit-enter* *press-enter* *hit-return*
-			*press-return* *hit-enter-prompt*
+			*press-return* *hit-enter-prompt*  >
 
   Press ENTER or type command to continue
 

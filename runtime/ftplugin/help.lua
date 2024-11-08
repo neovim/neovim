@@ -1,7 +1,7 @@
 -- use treesitter over syntax (for highlighted code blocks)
 vim.treesitter.start()
 
--- add custom highlights for list in `:h highlight-groups`
+-- Add custom highlights for list in `:h highlight-groups`.
 local bufname = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
 if vim.endswith(bufname, '/doc/syntax.txt') then
   require('vim.vimhelp').highlight_groups({
@@ -26,3 +26,10 @@ elseif vim.endswith(bufname, '/doc/lsp.txt') then
     { start = [[\*lsp-semantic-highlight\*]], stop = '^======', match = '^@[%w%p]+' },
   })
 end
+
+vim.keymap.set('n', 'gO', function()
+  require('vim.vimhelp').show_toc()
+end, { buffer = 0, silent = true })
+
+vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '') .. '\n exe "nunmap <buffer> gO"'
+vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | call v:lua.vim.treesitter.stop()'

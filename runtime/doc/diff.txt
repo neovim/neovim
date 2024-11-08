@@ -369,6 +369,9 @@ Additionally, 'diffexpr' should take care of "icase" and "iwhite" in the
 'diffopt' option.  'diffexpr' cannot change the value of 'lines' and
 'columns'.
 
+The advantage of using a function call without arguments is that it is faster,
+see |expr-option-function|.
+
 Example (this does almost the same as 'diffexpr' being empty): >
 
 	set diffexpr=MyDiff()
@@ -433,6 +436,9 @@ will have the same effect.  These variables are set to the file names used:
 	v:fname_in		original file
 	v:fname_diff		patch file
 	v:fname_out		resulting patched file
+
+The advantage of using a function call without arguments is that it is faster,
+see |expr-option-function|.
 
 Example (this does the same as 'patchexpr' being empty): >
 

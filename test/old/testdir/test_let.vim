@@ -521,12 +521,12 @@ END
 END
   call assert_equal(['vim', '', 'end', '  END', 'END '], var3)
 
-  let var1 =<< trim END
-  Line1
-    Line2
-  	Line3
-   END
-  END
+	let var1 =<< trim END
+	Line1
+	  Line2
+		Line3
+	 END
+	END
   call assert_equal(['Line1', '  Line2', "\tLine3", ' END'], var1)
 
   let var1 =<< trim !!!
@@ -562,6 +562,14 @@ END
   endfunc
   END
   call assert_equal(['something', 'endfunc'], var1)
+
+  " not concatenate lines
+  let var1 =<< END
+some
+  \thing
+  \ else
+END
+  call assert_equal(['some', '  \thing', '  \ else'], var1)
 
   " ignore "python << xx"
   let var1 =<<END

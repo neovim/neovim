@@ -15,6 +15,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/debugger.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/funcs.h"
@@ -264,7 +265,7 @@ static void set_ufunc_name(ufunc_T *fp, char *name)
   if ((uint8_t)name[0] == K_SPECIAL) {
     fp->uf_name_exp = xmalloc(strlen(name) + 3);
     STRCPY(fp->uf_name_exp, "<SNR>");
-    STRCAT(fp->uf_name_exp, fp->uf_name + 3);
+    strcat(fp->uf_name_exp, fp->uf_name + 3);
   }
 }
 
@@ -641,6 +642,44 @@ static char *fname_trans_sid(const char *const name, char *const fname_buf, char
   return fname;
 }
 
+int get_func_arity(const char *name, int *required, int *optional, bool *varargs)
+{
+  int argcount = 0;
+  int min_argcount = 0;
+
+  const EvalFuncDef *fdef = find_internal_func(name);
+  if (fdef != NULL) {
+    argcount = fdef->max_argc;
+    min_argcount = fdef->min_argc;
+    *varargs = false;
+  } else {
+    char fname_buf[FLEN_FIXED + 1];
+    char *tofree = NULL;
+    int error = FCERR_NONE;
+
+    // May need to translate <SNR>123_ to K_SNR.
+    char *fname = fname_trans_sid(name, fname_buf, &tofree, &error);
+    ufunc_T *ufunc = NULL;
+    if (error == FCERR_NONE) {
+      ufunc = find_func(fname);
+    }
+    xfree(tofree);
+
+    if (ufunc == NULL) {
+      return FAIL;
+    }
+
+    argcount = ufunc->uf_args.ga_len;
+    min_argcount = ufunc->uf_args.ga_len - ufunc->uf_def_args.ga_len;
+    *varargs = ufunc->uf_varargs;
+  }
+
+  *required = min_argcount;
+  *optional = argcount - min_argcount;
+
+  return OK;
+}
+
 /// Find a function by name, return pointer to it in ufuncs.
 ///
 /// @return  NULL for unknown function.
@@ -916,7 +955,7 @@ void remove_funccal(void)
 /// @param[out] rettv  Return value.
 /// @param[in] firstline  First line of range.
 /// @param[in] lastline  Last line of range.
-/// @param selfdict  Dictionary for "self" for dictionary functions.
+/// @param selfdict  Dict for "self" for dictionary functions.
 void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rettv,
                     linenr_T firstline, linenr_T lastline, dict_T *selfdict)
   FUNC_ATTR_NONNULL_ARG(1, 3, 4)
@@ -1522,12 +1561,12 @@ varnumber_T callback_call_retnr(Callback *callback, int argcount, typval_T *argv
 
 /// Give an error message for the result of a function.
 /// Nothing if "error" is FCERR_NONE.
-static void user_func_error(int error, const char *name, funcexe_T *funcexe)
+static void user_func_error(int error, const char *name, bool found_var)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   switch (error) {
   case FCERR_UNKNOWN:
-    if (funcexe->fe_found_var) {
+    if (found_var) {
       semsg(_(e_not_callable_type_str), name);
     } else {
       emsg_funcname(e_unknown_function_str, name);
@@ -1647,12 +1686,9 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
   }
 
   if (error == FCERR_NONE && funcexe->fe_evaluate) {
-    char *rfname = fname;
-
-    // Ignore "g:" before a function name.
-    if (fp == NULL && fname[0] == 'g' && fname[1] == ':') {
-      rfname = fname + 2;
-    }
+    // Skip "g:" before a function name.
+    bool is_global = fp == NULL && fname[0] == 'g' && fname[1] == ':';
+    char *rfname = is_global ? fname + 2 : fname;
 
     rettv->v_type = VAR_NUMBER;         // default rettv is number zero
     rettv->vval.v_number = 0;
@@ -1726,7 +1762,7 @@ theend:
   // Report an error unless the argument evaluation or function call has been
   // cancelled due to an aborting error, an interrupt, or an exception.
   if (!aborting()) {
-    user_func_error(error, (name != NULL) ? name : funcname, funcexe);
+    user_func_error(error, (name != NULL) ? name : funcname, funcexe->fe_found_var);
   }
 
   // clear the copies made from the partial
@@ -1734,6 +1770,70 @@ theend:
     tv_clear(&argv[--argv_clear + argv_base]);
   }
 
+  xfree(tofree);
+  xfree(name);
+
+  return ret;
+}
+
+int call_simple_luafunc(const char *funcname, size_t len, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  rettv->v_type = VAR_NUMBER;  // default rettv is number zero
+  rettv->vval.v_number = 0;
+
+  typval_T argvars[1];
+  argvars[0].v_type = VAR_UNKNOWN;
+  nlua_typval_call(funcname, len, argvars, 0, rettv);
+  return OK;
+}
+
+/// Call a function without arguments, partial or dict.
+/// This is like call_func() when the call is only "FuncName()".
+/// To be used by "expr" options.
+/// Returns NOTDONE when the function could not be found.
+///
+/// @param funcname  name of the function
+/// @param len       length of "name"
+/// @param rettv     return value goes here
+int call_simple_func(const char *funcname, size_t len, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int ret = FAIL;
+
+  rettv->v_type = VAR_NUMBER;  // default rettv is number zero
+  rettv->vval.v_number = 0;
+
+  // Make a copy of the name, an option can be changed in the function.
+  char *name = xstrnsave(funcname, len);
+
+  int error = FCERR_NONE;
+  char *tofree = NULL;
+  char fname_buf[FLEN_FIXED + 1];
+  char *fname = fname_trans_sid(name, fname_buf, &tofree, &error);
+
+  // Skip "g:" before a function name.
+  bool is_global = fname[0] == 'g' && fname[1] == ':';
+  char *rfname = is_global ? fname + 2 : fname;
+
+  ufunc_T *fp = find_func(rfname);
+  if (fp == NULL) {
+    ret = NOTDONE;
+  } else if (fp != NULL && (fp->uf_flags & FC_DELETED)) {
+    error = FCERR_DELETED;
+  } else if (fp != NULL) {
+    typval_T argvars[1];
+    argvars[0].v_type = VAR_UNKNOWN;
+    funcexe_T funcexe = FUNCEXE_INIT;
+    funcexe.fe_evaluate = true;
+
+    error = call_user_func_check(fp, 0, argvars, rettv, &funcexe, NULL);
+    if (error == FCERR_NONE) {
+      ret = OK;
+    }
+  }
+
+  user_func_error(error, name, false);
   xfree(tofree);
   xfree(name);
 
@@ -1822,7 +1922,7 @@ static int list_func_head(ufunc_T *fp, bool indent, bool force)
 }
 
 /// Get a function name, translating "<SID>" and "<SNR>".
-/// Also handles a Funcref in a List or Dictionary.
+/// Also handles a Funcref in a List or Dict.
 /// flags:
 /// TFN_INT:         internal function name OK
 /// TFN_QUIET:       be quiet
@@ -2045,7 +2145,7 @@ char *get_scriptlocal_funcname(char *funcname)
 
   if (strncmp(funcname, "s:", 2) != 0
       && strncmp(funcname, "<SID>", 5) != 0) {
-    // The function name is not a script-local function name
+    // The function name does not have a script-local prefix.
     return NULL;
   }
 
@@ -2061,7 +2161,7 @@ char *get_scriptlocal_funcname(char *funcname)
   const int off = *funcname == 's' ? 2 : 5;
   char *newname = xmalloc(strlen(sid_buf) + strlen(funcname + off) + 1);
   STRCPY(newname, sid_buf);
-  STRCAT(newname, funcname + off);
+  strcat(newname, funcname + off);
 
   return newname;
 }
@@ -3142,7 +3242,7 @@ static int ex_call_inner(exarg_T *eap, char *name, char **arg, char *startarg,
       break;
     }
 
-    // Handle a function returning a Funcref, Dictionary or List.
+    // Handle a function returning a Funcref, Dict or List.
     if (handle_subscript((const char **)arg, &rettv, &EVALARG_EVALUATE, true) == FAIL) {
       failed = true;
       break;
@@ -3209,7 +3309,7 @@ static int ex_defer_inner(char *name, char **arg, const partial_T *const partial
       if (ufunc != NULL) {
         int error = check_user_func_argcount(ufunc, argcount);
         if (error != FCERR_UNKNOWN) {
-          user_func_error(error, name, NULL);
+          user_func_error(error, name, false);
           r = FAIL;
         }
       }

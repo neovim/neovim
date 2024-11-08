@@ -22,6 +22,12 @@ func Test_var()
   call assert_equal('Chance', getwinvar(9, '', def_str))
   call assert_equal(0, getwinvar(1, '&nu'))
   call assert_equal(0, getwinvar(1, '&nu', 1))
+  call assert_match(v:t_dict, type(getwinvar(1, '&')))
+  call assert_match(v:t_dict, type(getwinvar(1, '&', def_str)))
+  call assert_equal('', getwinvar(9, '&'))
+  call assert_equal('Chance', getwinvar(9, '&', def_str))
+  call assert_equal('', getwinvar(1, '&nux'))
+  call assert_equal('Chance', getwinvar(1, '&nux', def_str))
   unlet def_str
 
   " test for gettabvar()
@@ -83,7 +89,12 @@ func Test_var()
 
   unlet def_dict
 
+  call assert_match(v:t_dict, type(gettabwinvar(2, 3, '&')))
+  call assert_match(v:t_dict, type(gettabwinvar(2, 3, '&', 1)))
   call assert_equal("", gettabwinvar(9, 2020, ''))
+  call assert_equal(1, gettabwinvar(9, 2020, '', 1))
+  call assert_equal('', gettabwinvar(9, 2020, '&'))
+  call assert_equal(1, gettabwinvar(9, 2020, '&', 1))
   call assert_equal('', gettabwinvar(2, 3, '&nux'))
   call assert_equal(1, gettabwinvar(2, 3, '&nux', 1))
   tabonly
@@ -142,21 +153,31 @@ func Test_get_func()
   let l:F = function('tr')
   call assert_equal('tr', get(l:F, 'name'))
   call assert_equal(l:F, get(l:F, 'func'))
+  call assert_equal({'required': 3, 'optional': 0, 'varargs': v:false},
+      \ get(l:F, 'arity'))
 
   let Fb_func = function('s:FooBar')
   call assert_match('<SNR>\d\+_FooBar', get(Fb_func, 'name'))
+  call assert_equal({'required': 0, 'optional': 0, 'varargs': v:false},
+      \ get(Fb_func, 'arity'))
   let Fb_ref = funcref('s:FooBar')
   call assert_match('<SNR>\d\+_FooBar', get(Fb_ref, 'name'))
+  call assert_equal({'required': 0, 'optional': 0, 'varargs': v:false},
+      \ get(Fb_ref, 'arity'))
 
   call assert_equal({'func has': 'no dict'}, get(l:F, 'dict', {'func has': 'no dict'}))
   call assert_equal(0, get(l:F, 'dict'))
   call assert_equal([], get(l:F, 'args'))
+
   " Nvim doesn't have null functions
   " let NF = test_null_function()
   " call assert_equal('', get(NF, 'name'))
   " call assert_equal(NF, get(NF, 'func'))
   " call assert_equal(0, get(NF, 'dict'))
   " call assert_equal([], get(NF, 'args'))
+  " call assert_equal({'required': 0, 'optional': 0, 'varargs': v:false}, get(NF, 'arity'))
 endfunc
 
 " get({partial}, {what} [, {default}]) - in test_partial.vim
+
+" vim: shiftwidth=2 sts=2 expandtab

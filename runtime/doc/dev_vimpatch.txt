@@ -139,7 +139,6 @@ TYPES OF "NOT APPLICABLE" VIM PATCHES ~
     - NA files: `src/gui_*`, `src/gvim_*`, `src/GvimExt/*`, `src/testdir/test_gui*`
 - `balloon` changes: Nvim does not support balloon feature
     - NA files: `src/beval_*`, `src/testdir/test_balloon_*`
-- libvterm changes: Nvim does not vendor libvterm in `src/`.
 - Screendump tests from `test_popupwin.vim`, `test_popupwin_textprop.vim`:
   https://github.com/neovim/neovim/pull/12741#issuecomment-704677141
 - json changes: incompatible API https://github.com/neovim/neovim/pull/4131
@@ -204,6 +203,8 @@ information.
   mb_ptr2char                                          utf_ptr2char
   mb_head_off                                          utf_head_off
   mb_tail_off                                          utf_cp_bounds
+  mb_strnicmp2                                         utf_strnicmp
+  MB_STRNICMP2                                         utf_strnicmp
   mb_lefthalve                                        grid_lefthalve
   mb_fix_col                                           grid_fix_col
   utf_off2cells                                       grid_off2cells
@@ -301,5 +302,59 @@ used in new documentation:
 
 - `{Only when compiled with ...}`: the vast majority of features have been
   made non-optional (see https://github.com/neovim/neovim/wiki/Introduction)
+
+==============================================================================
+FILETYPE DETECTION                 *dev-vimpatch-filetype*
+
+Nvim's filetype detection behavior matches Vim, but is implemented as part of
+|vim.filetype| (see `$VIMRUNTIME/lua/vim/filetype.lua`). The logic is encoded in
+three tables, listed in order of precedence (the first match is returned):
+1. `filename` for literal full path or basename lookup;
+2. `pattern` for matching filenames or paths against |lua-patterns|, optimized
+   for fast lookup;
+3. `extension` for literal extension lookup.
+
+Logic that requires checking file contents or buffer variables is implemented
+in `$VIMRUNTIME/lua/vim/filetype/detect.lua`.
+
+When porting filetype patches from Vim, keep the following in mind:
+
+Prefer explicit filenames or extensions over patterns, especially for case
+insensitive matches (see https://github.com/neovim/neovim/pull/29800): >
+    "*[mM]akefile" regex -> "makefile", "Makefile" filenames
+    "*.js\c"       regex -> "js", "jS", "Js", "jS" extensions
+
+Pattern matching has several differences:
+- It is done using explicit Lua patterns without implicit anchoring instead
+  of Vim regexes: >
+    "*/debian/changelog" -> "/debian/changelog$"
+    "*/bind/db.*"        -> "/bind/db%."
+<
+- Filetype patterns are grouped by their parent pattern to improve matching
+  performance: If the parent pattern does not match, skip testing all child
+  patterns. Note that unlike leaf patterns, parent patterns do not have
+  special matching behaviour if they contain a `/`.
+
+  When adding a new filetype with pattern matching, consider the following:
+  - If there is already a group with appropriate parent pattern, use it.
+  - If there can be a fast and specific enough pattern to group at least 3
+    filetype patterns, add it as a separate grouped entry.
+
+  New parent patterns should be
+  - fast: rule of thumb is that it should be a short explicit string
+  (i.e. no quantifiers or character sets);
+  - specific: rules of thumb, in order:
+    - full directory name (e.g., `"/etc/"`, `"/log/"`);
+    - part of a rare enough directory name (e.g., `"/conf"`, `"git/"`);
+    - string rarely used in real full paths (e.g., `"nginx"`).
+
+  Example:
+  - Filetype pattern: `".*/etc/a2ps/.*%.cfg"`
+  - Good parents: `"/etc/"` or `"%.cfg$"`
+  - Bad parents: `"%."` (fast but not specific) or `"/a2ps/.*%."` (specific
+    but slow)
+
+  When modifying an existing regular pattern, make sure that it still fits its
+  group.
 
 vim:tw=78:ts=8:noet:ft=help:norl:

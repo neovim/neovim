@@ -27,6 +27,7 @@ for _, model in ipairs(mousemodels) do
       screen:set_default_attr_ids({
         [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
         [1] = { bold = true, reverse = true }, -- StatusLine
+        [2] = { bold = true, foreground = Screen.colors.Blue, reverse = true }, -- NonText combined with StatusLine
       })
       screen:attach()
       command('set laststatus=2 mousemodel=' .. model)
@@ -63,6 +64,22 @@ for _, model in ipairs(mousemodels) do
       eq('0 3 r', eval('g:testvar'))
       api.nvim_input_mouse('right', 'press', '', 0, 6, 28)
       eq('0 4 r', eval('g:testvar'))
+      api.nvim_input_mouse('x1', 'press', '', 0, 6, 17)
+      eq('0 1 x1', eval('g:testvar'))
+      api.nvim_input_mouse('x1', 'press', '', 0, 6, 17)
+      eq('0 2 x1', eval('g:testvar'))
+      api.nvim_input_mouse('x1', 'press', '', 0, 6, 17)
+      eq('0 3 x1', eval('g:testvar'))
+      api.nvim_input_mouse('x1', 'press', '', 0, 6, 17)
+      eq('0 4 x1', eval('g:testvar'))
+      api.nvim_input_mouse('x2', 'press', '', 0, 6, 28)
+      eq('0 1 x2', eval('g:testvar'))
+      api.nvim_input_mouse('x2', 'press', '', 0, 6, 28)
+      eq('0 2 x2', eval('g:testvar'))
+      api.nvim_input_mouse('x2', 'press', '', 0, 6, 28)
+      eq('0 3 x2', eval('g:testvar'))
+      api.nvim_input_mouse('x2', 'press', '', 0, 6, 28)
+      eq('0 4 x2', eval('g:testvar'))
     end)
 
     it('works with control characters and highlight', function()
@@ -71,7 +88,7 @@ for _, model in ipairs(mousemodels) do
         grid = [[
         ^                                        |
         {0:~                                       }|*5
-        {1:^I}{0:^A^I^A^I}{1:^A                            }|
+        {1:^I}{2:^A^I^A^I}{1:^A                            }|
                                                 |
       ]],
       }

@@ -280,6 +280,9 @@ func Test_chinese_char_on_wrap_column()
   call s:compare_lines(expect, lines)
   call assert_equal(len(expect), winline())
   call assert_equal(strwidth(trim(expect[-1], ' ', 2)), wincol())
+  norm! g0
+  call assert_equal(len(expect), winline())
+  call assert_equal(1, wincol())
   call s:close_windows()
 endfunc
 
@@ -315,6 +318,9 @@ func Test_chinese_char_on_wrap_column_sbr()
   call s:compare_lines(expect, lines)
   call assert_equal(len(expect), winline())
   call assert_equal(strwidth(trim(expect[-1], ' ', 2)), wincol())
+  norm! g0
+  call assert_equal(len(expect), winline())
+  call assert_equal(4, wincol())
   call s:close_windows()
 endfunc
 

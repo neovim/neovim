@@ -3,6 +3,7 @@
 " Maintainer:   Doug Kearns <dougkearns@gmail.com>
 " Contributor:  Romain Lafourcade <romainlafourcade@gmail.com>
 " Last Change:	2024 Jan 14
+" 		2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 if exists("b:did_ftplugin")
     finish
@@ -24,7 +25,7 @@ endif
 " Set 'comments' to format dashed lists in comments.
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
 
-setlocal commentstring=//%s
+setlocal commentstring=//\ %s
 
 " Change the :browse e filter to primarily show JavaScript-related files.
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")

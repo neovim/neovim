@@ -25,7 +25,8 @@ enum {
   EW_DODOT      = 0x4000,   ///< also files starting with a dot
   EW_EMPTYOK    = 0x8000,   ///< no matches is not an error
   EW_NOTENV     = 0x10000,  ///< do not expand environment variables
-  EW_NOBREAK    = 0x20000,  ///< do not invoke breakcheck
+  EW_CDPATH     = 0x20000,  ///< search in 'cdpath' too
+  EW_NOBREAK    = 0x40000,  ///< do not invoke breakcheck
 };
 // Note: mostly EW_NOTFOUND and EW_SILENT are mutually exclusive: EW_NOTFOUND
 // is used when executing commands and EW_SILENT for interactive expanding.

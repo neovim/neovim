@@ -3,6 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Dan Sharp
 " Last Change:		2024 Jan 14
+" 			2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
@@ -11,7 +12,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 set comments=s:(*,m:\ ,e:*),s:{,m:\ ,e:}
-set commentstring={%s}
+set commentstring={\ %s\ }
 
 if exists("pascal_delphi")
   set comments+=:///

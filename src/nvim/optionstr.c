@@ -14,6 +14,7 @@
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
@@ -71,8 +72,9 @@ static char *(p_ambw_values[]) = { "single", "double", NULL };
 static char *(p_bg_values[]) = { "light", "dark", NULL };
 static char *(p_bkc_values[]) = { "yes", "auto", "no", "breaksymlink", "breakhardlink", NULL };
 static char *(p_bo_values[]) = { "all", "backspace", "cursor", "complete", "copy", "ctrlg", "error",
-                                 "esc", "ex", "hangul", "lang", "mess", "showmatch", "operator",
-                                 "register", "shell", "spell", "wildmode", NULL };
+                                 "esc", "ex", "hangul", "insertmode", "lang", "mess", "showmatch",
+                                 "operator", "register", "shell", "spell", "term", "wildmode",
+                                 NULL };
 // Note: Keep this in sync with briopt_check()
 static char *(p_briopt_values[]) = { "shift:", "min:", "sbr", "list:", "column:", NULL };
 // Note: Keep this in sync with diffopt_changed()
@@ -81,8 +83,8 @@ static char *(p_dip_values[]) = { "filler", "context:", "iblank", "icase",
                                   "closeoff", "hiddenoff", "foldcolumn:", "followwrap", "internal",
                                   "indent-heuristic", "linematch:", "algorithm:", NULL };
 static char *(p_dip_algorithm_values[]) = { "myers", "minimal", "patience", "histogram", NULL };
-static char *(p_nf_values[]) = { "bin", "octal", "hex", "alpha", "unsigned", NULL };
-static char *(p_ff_values[]) = { FF_UNIX, FF_DOS, FF_MAC, NULL };
+static char *(p_nf_values[]) = { "bin", "octal", "hex", "alpha", "unsigned", "blank", NULL };
+static char *(p_ff_values[]) = { "unix", "dos", "mac", NULL };
 static char *(p_cb_values[]) = { "unnamed", "unnamedplus", NULL };
 static char *(p_cmp_values[]) = { "internal", "keepascii", NULL };
 // Note: Keep this in sync with fill_culopt_flags()
@@ -97,11 +99,13 @@ static char *(p_ssop_values[]) = { "buffers", "winpos", "resize", "winsize", "lo
                                    "options", "help", "blank", "globals", "slash", "unix", "sesdir",
                                    "curdir", "folds", "cursor", "tabpages", "terminal", "skiprtp",
                                    NULL };
-// Keep in sync with SWB_ flags in option_defs.h
+// Keep in sync with SWB_ flags in option_vars.h
 static char *(p_swb_values[]) = { "useopen", "usetab", "split", "newtab", "vsplit", "uselast",
                                   NULL };
 static char *(p_spk_values[]) = { "cursor", "screen", "topline", NULL };
 static char *(p_tc_values[]) = { "followic", "ignore", "match", "followscs", "smart", NULL };
+// Keep in sync with TCL_ flags in option_vars.h
+static char *(p_tcl_values[]) = { "left", "uselast", NULL };
 static char *(p_ve_values[]) = { "block", "insert", "all", "onemore", "none", "NONE", NULL };
 // Note: Keep this in sync with check_opt_wim()
 static char *(p_wim_values[]) = { "full", "longest", "list", "lastused", NULL };
@@ -121,8 +125,8 @@ static char *(p_bs_values[]) = { "indent", "eol", "start", "nostop", NULL };
 static char *(p_fdm_values[]) = { "manual", "expr", "marker", "indent",
                                   "syntax",  "diff", NULL };
 static char *(p_fcl_values[]) = { "all", NULL };
-static char *(p_cot_values[]) = { "menu", "menuone", "longest", "preview", "noinsert", "noselect",
-                                  "popup", NULL };
+static char *(p_cot_values[]) = { "menu", "menuone", "longest", "preview", "popup",
+                                  "noinsert", "noselect", "fuzzy", NULL };
 #ifdef BACKSLASH_IN_FILENAME
 static char *(p_csl_values[]) = { "slash", "backslash", NULL };
 #endif
@@ -136,7 +140,7 @@ static char *(p_fdc_values[]) = { "auto", "auto:1", "auto:2", "auto:3", "auto:4"
                                   "5", "6", "7", "8", "9", NULL };
 static char *(p_spo_values[]) = { "camel", "noplainbuffer", NULL };
 static char *(p_icm_values[]) = { "nosplit", "split", NULL };
-static char *(p_jop_values[]) = { "stack", "view", NULL };
+static char *(p_jop_values[]) = { "stack", "view", "clean", NULL };
 static char *(p_tpf_values[]) = { "BS", "HT", "FF", "ESC", "DEL", "C0", "C1", NULL };
 static char *(p_rdb_values[]) = { "compositor", "nothrottle", "invalid", "nodelta", "line",
                                   "flush", NULL };
@@ -157,6 +161,7 @@ void didset_string_options(void)
   opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true);
   opt_strings_flags(p_bkc, p_bkc_values, &bkc_flags, true);
   opt_strings_flags(p_bo, p_bo_values, &bo_flags, true);
+  opt_strings_flags(p_cot, p_cot_values, &cot_flags, true);
   opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true);
   opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true);
   opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true);
@@ -167,6 +172,7 @@ void didset_string_options(void)
   opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true);
   opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
   opt_strings_flags(p_swb, p_swb_values, &swb_flags, true);
+  opt_strings_flags(p_tcl, p_tcl_values, &tcl_flags, true);
   opt_strings_flags(p_wop, p_wop_values, &wop_flags, true);
   opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
 }
@@ -218,6 +224,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_ft);
   check_string_option(&buf->b_p_cinw);
   check_string_option(&buf->b_p_cinsd);
+  check_string_option(&buf->b_p_cot);
   check_string_option(&buf->b_p_cpt);
   check_string_option(&buf->b_p_cfu);
   check_string_option(&buf->b_p_ofu);
@@ -228,6 +235,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_ep);
   check_string_option(&buf->b_p_path);
   check_string_option(&buf->b_p_tags);
+  check_string_option(&buf->b_p_ffu);
   check_string_option(&buf->b_p_tfu);
   check_string_option(&buf->b_p_tc);
   check_string_option(&buf->b_p_dict);
@@ -243,7 +251,6 @@ void check_buf_options(buf_T *buf)
 /// Free the string allocated for an option.
 /// Checks for the string being empty_string_option. This may happen if we're out of memory,
 /// xstrdup() returned NULL, which was replaced by empty_string_option by check_options().
-/// Does NOT check for P_ALLOCED flag!
 void free_string_option(char *p)
 {
   if (p != empty_string_option) {
@@ -276,15 +283,27 @@ static bool valid_filetype(const char *val)
 
 /// Handle setting 'signcolumn' for value 'val'. Store minimum and maximum width.
 ///
+/// @param wcl  when NULL: use "wp->w_p_scl"
+/// @param wp   when NULL: only parse "scl"
+///
 /// @return OK when the value is valid, FAIL otherwise
-int check_signcolumn(win_T *wp)
+int check_signcolumn(char *scl, win_T *wp)
 {
-  char *val = wp->w_p_scl;
+  char *val = empty_string_option;
+  if (scl != NULL) {
+    val = scl;
+  } else if (wp != NULL) {
+    val = wp->w_p_scl;
+  }
+
   if (*val == NUL) {
     return FAIL;
   }
 
   if (check_opt_strings(val, p_scl_values, false) == OK) {
+    if (wp == NULL) {
+      return OK;
+    }
     if (!strncmp(val, "no", 2)) {  // no
       wp->w_minscwidth = wp->w_maxscwidth = SCL_NO;
     } else if (!strncmp(val, "nu", 2) && (wp->w_p_nu || wp->w_p_rnu)) {  // number
@@ -300,26 +319,29 @@ int check_signcolumn(win_T *wp)
       wp->w_minscwidth = 0;
       wp->w_maxscwidth = 1;
     }
-    return OK;
+  } else {
+    if (strncmp(val, "auto:", 5) != 0
+        || strlen(val) != 8
+        || !ascii_isdigit(val[5])
+        || val[6] != '-'
+        || !ascii_isdigit(val[7])) {
+      return FAIL;
+    }
+    // auto:<NUM>-<NUM>
+    int min = val[5] - '0';
+    int max = val[7] - '0';
+    if (min < 1 || max < 2 || min > 8 || min >= max) {
+      return FAIL;
+    }
+    if (wp == NULL) {
+      return OK;
+    }
+    wp->w_minscwidth = min;
+    wp->w_maxscwidth = max;
   }
 
-  if (strncmp(val, "auto:", 5) != 0
-      || strlen(val) != 8
-      || !ascii_isdigit(val[5])
-      || val[6] != '-'
-      || !ascii_isdigit(val[7])) {
-    return FAIL;
-  }
-
-  // auto:<NUM>-<NUM>
-  int min = val[5] - '0';
-  int max = val[7] - '0';
-  if (min < 1 || max < 2 || min > 8 || min >= max) {
-    return FAIL;
-  }
-
-  wp->w_minscwidth = min;
-  wp->w_maxscwidth = max;
+  int scwidth = wp->w_minscwidth <= 0 ? 0 : MIN(wp->w_maxscwidth, wp->w_scwidth);
+  wp->w_scwidth = MAX(wp->w_minscwidth, scwidth);
   return OK;
 }
 
@@ -398,9 +420,9 @@ const char *check_stl_option(char *s)
 /// often illegal in a file name. Be more permissive if "secure" is off.
 bool check_illegal_path_names(char *val, uint32_t flags)
 {
-  return (((flags & P_NFNAME)
+  return (((flags & kOptFlagNFname)
            && strpbrk(val, (secure ? "/\\*?[|;&<>\r\n" : "/\\*?[<>\r\n")) != NULL)
-          || ((flags & P_NDNAME)
+          || ((flags & kOptFlagNDname)
               && strpbrk(val, "*?[|;&<>\r\n") != NULL));
 }
 
@@ -633,6 +655,9 @@ const char *did_set_backupcopy(optset_T *args)
   if (opt_flags & OPT_LOCAL) {
     bkc = buf->b_p_bkc;
     flags = &buf->b_bkc_flags;
+  } else if (!(opt_flags & OPT_GLOBAL)) {
+    // When using :set, clear the local flags.
+    buf->b_bkc_flags = 0;
   }
 
   if ((opt_flags & OPT_LOCAL) && *bkc == NUL) {
@@ -710,11 +735,14 @@ const char *did_set_breakat(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_breakindentopt(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  if (briopt_check(win) == FAIL) {
+  char **varp = (char **)args->os_varp;
+
+  if (briopt_check(*varp, varp == &win->w_p_briopt ? win : NULL) == FAIL) {
     return e_invarg;
   }
+
   // list setting requires a redraw
-  if (win == curwin && win->w_briopt_list) {
+  if (varp == &win->w_p_briopt && win->w_briopt_list) {
     redraw_all_later(UPD_NOT_VALID);
   }
 
@@ -891,7 +919,8 @@ int expand_set_clipboard(optexpand_T *args, int *numMatches, char ***matches)
 const char *did_set_colorcolumn(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  return check_colorcolumn(win);
+  char **varp = (char **)args->os_varp;
+  return check_colorcolumn(*varp, varp == &win->w_p_cc ? win : NULL);
 }
 
 /// The 'comments' option is changed.
@@ -989,13 +1018,74 @@ int expand_set_complete(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
+/// The 'completeitemalign' option is changed.
+const char *did_set_completeitemalign(optset_T *args)
+{
+  char *p = p_cia;
+  unsigned new_cia_flags = 0;
+  bool seen[3] = { false, false, false };
+  int count = 0;
+  char buf[10];
+  while (*p) {
+    copy_option_part(&p, buf, sizeof(buf), ",");
+    if (count >= 3) {
+      return e_invarg;
+    }
+    if (strequal(buf, "abbr")) {
+      if (seen[CPT_ABBR]) {
+        return e_invarg;
+      }
+      new_cia_flags = new_cia_flags * 10 + CPT_ABBR;
+      seen[CPT_ABBR] = true;
+      count++;
+    } else if (strequal(buf, "kind")) {
+      if (seen[CPT_KIND]) {
+        return e_invarg;
+      }
+      new_cia_flags = new_cia_flags * 10 + CPT_KIND;
+      seen[CPT_KIND] = true;
+      count++;
+    } else if (strequal(buf, "menu")) {
+      if (seen[CPT_MENU]) {
+        return e_invarg;
+      }
+      new_cia_flags = new_cia_flags * 10 + CPT_MENU;
+      seen[CPT_MENU] = true;
+      count++;
+    } else {
+      return e_invarg;
+    }
+  }
+  if (new_cia_flags == 0 || count != 3) {
+    return e_invarg;
+  }
+  cia_flags = new_cia_flags;
+  return NULL;
+}
+
 /// The 'completeopt' option is changed.
 const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
 {
-  if (check_opt_strings(p_cot, p_cot_values, true) != OK) {
+  buf_T *buf = (buf_T *)args->os_buf;
+  char *cot = p_cot;
+  unsigned *flags = &cot_flags;
+
+  if (args->os_flags & OPT_LOCAL) {
+    cot = buf->b_p_cot;
+    flags = &buf->b_cot_flags;
+  } else if (!(args->os_flags & OPT_GLOBAL)) {
+    // When using :set, clear the local flags.
+    buf->b_cot_flags = 0;
+  }
+
+  if (check_opt_strings(cot, p_cot_values, true) != OK) {
     return e_invarg;
   }
-  completeopt_was_set();
+
+  if (opt_strings_flags(cot, p_cot_values, flags, true) != OK) {
+    return e_invarg;
+  }
+
   return NULL;
 }
 
@@ -1294,7 +1384,7 @@ const char *did_set_filetype_or_syntax(optset_T *args)
 
   args->os_value_changed = strcmp(args->os_oldval.string.data, *varp) != 0;
 
-  // Since we check the value, there is no need to set P_INSECURE,
+  // Since we check the value, there is no need to set kOptFlagInsecure,
   // even when the value comes from a modeline.
   args->os_value_checked = true;
 
@@ -1383,8 +1473,7 @@ const char *did_set_foldmethod(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
   char **varp = (char **)args->os_varp;
-  if (check_opt_strings(*varp, p_fdm_values, false) != OK
-      || *win->w_p_fdm == NUL) {
+  if (check_opt_strings(*varp, p_fdm_values, false) != OK || **varp == NUL) {
     return e_invarg;
   }
   foldUpdateAll(win);
@@ -1508,12 +1597,28 @@ int expand_set_inccommand(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
+/// The 'iskeyword' option is changed.
+const char *did_set_iskeyword(optset_T *args)
+{
+  char **varp = (char **)args->os_varp;
+
+  if (varp == &p_isk) {       // only check for global-value
+    if (check_isopt(*varp) == FAIL) {
+      return e_invarg;
+    }
+  } else {                    // fallthrough for local-value
+    return did_set_isopt(args);
+  }
+
+  return NULL;
+}
+
 /// The 'isident' or the 'iskeyword' or the 'isprint' or the 'isfname' option is
 /// changed.
 const char *did_set_isopt(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  // 'isident', 'iskeyword', 'isprint or 'isfname' option: refill g_chartab[]
+  // 'isident', 'iskeyword', 'isprint' or 'isfname' option: refill g_chartab[]
   // If the new option is invalid, use old value.
   // 'lisp' option: refill g_chartab[] for '-' char
   if (buf_init_chartab(buf, true) == FAIL) {
@@ -1560,7 +1665,7 @@ const char *did_set_keymap(optset_T *args)
 
   secure = secure_save;
 
-  // Since we check the value, there is no need to set P_INSECURE,
+  // Since we check the value, there is no need to set kOptFlagInsecure,
   // even when the value comes from a modeline.
   args->os_value_checked = true;
 
@@ -2015,12 +2120,11 @@ int expand_set_showcmdloc(optexpand_T *args, int *numMatches, char ***matches)
 const char *did_set_signcolumn(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
+  char **varp = (char **)args->os_varp;
   const char *oldval = args->os_oldval.string.data;
-  if (check_signcolumn(win) != OK) {
+  if (check_signcolumn(*varp, varp == &win->w_p_scl ? win : NULL) != OK) {
     return e_invarg;
   }
-  int scwidth = win->w_minscwidth <= 0 ? 0 : MIN(win->w_maxscwidth, win->w_scwidth);
-  win->w_scwidth = MAX(win->w_minscwidth, scwidth);
   // When changing the 'signcolumn' to or from 'number', recompute the
   // width of the number column if 'number' or 'relativenumber' is set.
   if ((*oldval == 'n' && *(oldval + 1) == 'u') || win->w_minscwidth == SCL_NUM) {
@@ -2053,10 +2157,10 @@ const char *did_set_spellfile(optset_T *args)
 
   // When there is a window for this buffer in which 'spell'
   // is set load the wordlists.
-  if ((!valid_spellfile(*varp))) {
+  if (!valid_spellfile(*varp)) {
     return e_invarg;
   }
-  return did_set_spell_option(true);
+  return did_set_spell_option();
 }
 
 /// The 'spelllang' option is changed.
@@ -2069,15 +2173,22 @@ const char *did_set_spelllang(optset_T *args)
   if (!valid_spelllang(*varp)) {
     return e_invarg;
   }
-  return did_set_spell_option(false);
+  return did_set_spell_option();
 }
 
 /// The 'spelloptions' option is changed.
 const char *did_set_spelloptions(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  if (opt_strings_flags(win->w_s->b_p_spo, p_spo_values, &(win->w_s->b_p_spo_flags),
-                        true) != OK) {
+  int opt_flags = args->os_flags;
+  const char *val = args->os_newval.string.data;
+
+  if (!(opt_flags & OPT_LOCAL)
+      && opt_strings_flags(val, p_spo_values, &spo_flags, true) != OK) {
+    return e_invarg;
+  }
+  if (!(opt_flags & OPT_GLOBAL)
+      && opt_strings_flags(val, p_spo_values, &win->w_s->b_p_spo_flags, true) != OK) {
     return e_invarg;
   }
   return NULL;
@@ -2187,6 +2298,21 @@ int expand_set_switchbuf(optexpand_T *args, int *numMatches, char ***matches)
   return expand_set_opt_string(args,
                                p_swb_values,
                                ARRAY_SIZE(p_swb_values) - 1,
+                               numMatches,
+                               matches);
+}
+
+/// The 'tabclose' option is changed.
+const char *did_set_tabclose(optset_T *args FUNC_ATTR_UNUSED)
+{
+  return did_set_opt_flags(p_tcl, p_tcl_values, &tcl_flags, true);
+}
+
+int expand_set_tabclose(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_tcl_values,
+                               ARRAY_SIZE(p_tcl_values) - 1,
                                numMatches,
                                matches);
 }
@@ -2464,7 +2590,8 @@ const char *did_set_winbar(optset_T *args)
 const char *did_set_winhighlight(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  if (!parse_winhl_opt(win)) {
+  char **varp = (char **)args->os_varp;
+  if (!parse_winhl_opt(*varp, varp == &win->w_p_winhl ? win : NULL)) {
     return e_invarg;
   }
   return NULL;

@@ -63,13 +63,13 @@ const char *os_getenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   char *e = NULL;
-  if (name[0] == '\0') {
+  if (name[0] == NUL) {
     return NULL;
   }
   int r = 0;
   if (map_has(cstr_t, &envmap, name)
       && !!(e = (char *)pmap_get(cstr_t)(&envmap, name))) {
-    if (e[0] != '\0') {
+    if (e[0] != NUL) {
       // Found non-empty cached env var.
       // NOTE: This risks incoherence if an in-process library changes the
       //       environment without going through our os_setenv() wrapper.  If
@@ -85,11 +85,11 @@ const char *os_getenv(const char *name)
   if (r == UV_ENOBUFS) {
     e = xmalloc(size);
     r = uv_os_getenv(name, e, &size);
-    if (r != 0 || size == 0 || e[0] == '\0') {
+    if (r != 0 || size == 0 || e[0] == NUL) {
       XFREE_CLEAR(e);
       goto end;
     }
-  } else if (r != 0 || size == 0 || buf[0] == '\0') {
+  } else if (r != 0 || size == 0 || buf[0] == NUL) {
     e = NULL;
     goto end;
   } else {
@@ -110,7 +110,7 @@ end:
 bool os_env_exists(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (name[0] == '\0') {
+  if (name[0] == NUL) {
     return false;
   }
   // Use a tiny buffer because we don't care about the value: if uv_os_getenv()
@@ -134,14 +134,14 @@ bool os_env_exists(const char *name)
 int os_setenv(const char *name, const char *value, int overwrite)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (name[0] == '\0') {
+  if (name[0] == NUL) {
     return -1;
   }
 #ifdef MSWIN
   if (!overwrite && os_getenv(name) != NULL) {
     return 0;
   }
-  if (value[0] == '\0') {
+  if (value[0] == NUL) {
     // Windows (Vim-compat): Empty string undefines the env var.
     return os_unsetenv(name);
   }
@@ -174,7 +174,7 @@ int os_setenv(const char *name, const char *value, int overwrite)
 int os_unsetenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (name[0] == '\0') {
+  if (name[0] == NUL) {
     return -1;
   }
   pmap_del2(&envmap, name);
@@ -344,7 +344,7 @@ char *os_getenvname_at_index(size_t index)
 #endif
 }
 
-/// Get the process ID of the Neovim process.
+/// Get the process ID of the Nvim process.
 ///
 /// @return the process ID.
 int64_t os_get_pid(void)
@@ -366,7 +366,7 @@ void os_get_hostname(char *hostname, size_t size)
   struct utsname vutsname;
 
   if (uname(&vutsname) < 0) {
-    *hostname = '\0';
+    *hostname = NUL;
   } else {
     xstrlcpy(hostname, vutsname.nodename, size);
   }
@@ -374,12 +374,12 @@ void os_get_hostname(char *hostname, size_t size)
   wchar_t host_utf16[MAX_COMPUTERNAME_LENGTH + 1];
   DWORD host_wsize = sizeof(host_utf16) / sizeof(host_utf16[0]);
   if (GetComputerNameW(host_utf16, &host_wsize) == 0) {
-    *hostname = '\0';
+    *hostname = NUL;
     DWORD err = GetLastError();
     semsg("GetComputerNameW failed: %d", err);
     return;
   }
-  host_utf16[host_wsize] = '\0';
+  host_utf16[host_wsize] = NUL;
 
   char *host_utf8;
   int conversion_result = utf16_to_utf8(host_utf16, -1, &host_utf8);
@@ -391,27 +391,38 @@ void os_get_hostname(char *hostname, size_t size)
   xfree(host_utf8);
 #else
   emsg("os_get_hostname failed: missing uname()");
-  *hostname = '\0';
+  *hostname = NUL;
 #endif
 }
 
-/// To get the "real" home directory:
+/// The "real" home directory as determined by `init_homedir`.
+static char *homedir = NULL;
+static char *os_uv_homedir(void);
+
+/// Gets the "real", resolved user home directory as determined by `init_homedir`.
+const char *os_homedir(void)
+{
+  if (!homedir) {
+    emsg("os_homedir failed: homedir not initialized");
+    return NULL;
+  }
+  return homedir;
+}
+
+/// Sets `homedir` to the "real", resolved user home directory, as follows:
 ///   1. get value of $HOME
 ///   2. if $HOME is not set, try the following
 /// For Windows:
 ///   1. assemble homedir using HOMEDRIVE and HOMEPATH
-///   2. try os_homedir()
+///   2. try os_uv_homedir()
 ///   3. resolve a direct reference to another system variable
 ///   4. guess C drive
 /// For Unix:
-///   1. try os_homedir()
+///   1. try os_uv_homedir()
 ///   2. go to that directory
 ///     This also works with mounts and links.
 ///     Don't do this for Windows, it will change the "current dir" for a drive.
 ///   3. fall back to current working directory as a last resort
-static char *homedir = NULL;
-static char *os_homedir(void);
-
 void init_homedir(void)
 {
   // In case we are called a second time.
@@ -440,7 +451,7 @@ void init_homedir(void)
     }
   }
   if (var == NULL) {
-    var = os_homedir();
+    var = os_uv_homedir();
   }
 
   // Weird but true: $HOME may contain an indirect reference to another
@@ -471,7 +482,7 @@ void init_homedir(void)
 
 #ifdef UNIX
   if (var == NULL) {
-    var = os_homedir();
+    var = os_uv_homedir();
   }
 
   // Get the actual path.  This resolves links.
@@ -492,7 +503,7 @@ void init_homedir(void)
 
 static char homedir_buf[MAXPATHL];
 
-static char *os_homedir(void)
+static char *os_uv_homedir(void)
 {
   homedir_buf[0] = NUL;
   size_t homedir_size = MAXPATHL;
@@ -885,9 +896,9 @@ void vim_get_prefix_from_exepath(char *exe_name)
   // but c_grammar.lua does not recognize it (yet).
   xstrlcpy(exe_name, get_vim_var_str(VV_PROGPATH), MAXPATHL * sizeof(*exe_name));
   char *path_end = path_tail_with_sep(exe_name);
-  *path_end = '\0';  // remove the trailing "nvim.exe"
+  *path_end = NUL;  // remove the trailing "nvim.exe"
   path_end = path_tail(exe_name);
-  *path_end = '\0';  // remove the trailing "bin/"
+  *path_end = NUL;  // remove the trailing "bin/"
 }
 
 /// Vim getenv() wrapper with special handling of $HOME, $VIM, $VIMRUNTIME,

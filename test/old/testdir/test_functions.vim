@@ -272,17 +272,17 @@ func Test_strftime()
     let tz = $TZ
   endif
 
-  " Force EST and then UTC, save the current hour (24-hour clock) for each
-  let $TZ = 'EST' | let est = strftime('%H')
-  let $TZ = 'UTC' | let utc = strftime('%H')
+  " Force different time zones, save the current hour (24-hour clock) for each
+  let $TZ = 'GMT+1' | let one = strftime('%H')
+  let $TZ = 'GMT+2' | let two = strftime('%H')
 
   " Those hours should be two bytes long, and should not be the same; if they
   " are, a tzset(3) call may have failed somewhere
-  call assert_equal(strlen(est), 2)
-  call assert_equal(strlen(utc), 2)
+  call assert_equal(strlen(one), 2)
+  call assert_equal(strlen(two), 2)
   " TODO: this fails on MS-Windows
   if has('unix')
-    call assert_notequal(est, utc)
+    call assert_notequal(one, two)
   endif
 
   " If we cached a timezone value, put it back, otherwise clear it
@@ -383,6 +383,12 @@ func Test_simplify()
   call assert_equal('/',           simplify('/.'))
   call assert_equal('/',           simplify('/..'))
   call assert_equal('/...',        simplify('/...'))
+  call assert_equal('//path',      simplify('//path'))
+  if has('unix')
+    call assert_equal('/path',       simplify('///path'))
+    call assert_equal('/path',       simplify('////path'))
+  endif
+
   call assert_equal('./dir/file',  './dir/file'->simplify())
   call assert_equal('./dir/file',  simplify('.///dir//file'))
   call assert_equal('./dir/file',  simplify('./dir/./file'))
@@ -809,6 +815,10 @@ func Test_mode()
   call assert_equal('c-cv', g:current_modes)
   call feedkeys("gQ\<Insert>\<F2>vi\<CR>", 'xt')
   call assert_equal("c-cvr", g:current_modes)
+
+  " Commandline mode in Visual mode should return "c-c", never "v-v".
+  call feedkeys("v\<Cmd>call input('')\<CR>\<F2>\<CR>\<Esc>", 'xt')
+  call assert_equal("c-c", g:current_modes)
 
   " Executing commands in Vim Ex mode should return "cv", never "cvr",
   " as Cmdline editing has already ended.
@@ -2065,6 +2075,7 @@ endfunc
 
 " Test for the inputdialog() function
 func Test_inputdialog()
+  set timeout timeoutlen=10
   if has('gui_running')
     call assert_fails('let v=inputdialog([], "xx")', 'E730:')
     call assert_fails('let v=inputdialog("Q", [])', 'E730:')
@@ -2074,6 +2085,7 @@ func Test_inputdialog()
     call feedkeys(":let v=inputdialog('Q:', 'xx', 'yy')\<CR>\<Esc>", 'xt')
     call assert_equal('yy', v)
   endif
+  set timeout& timeoutlen&
 endfunc
 
 " Test for inputlist()
@@ -3085,7 +3097,7 @@ func Test_range()
     call assert_fails('call term_start(range(3, 4))', 'E474:')
     let g:terminal_ansi_colors = range(16)
     if has('win32')
-      let cmd = "cmd /c dir"
+      let cmd = "cmd /D /c dir"
     else
       let cmd = "ls"
     endif
@@ -3448,6 +3460,56 @@ func Test_glob()
   call assert_fails("call glob('*', 0, {})", 'E728:')
 endfunc
 
+func Test_glob2()
+  call mkdir('[XglobDir]', 'R')
+  call mkdir('abc[glob]def', 'R')
+
+  call writefile(['glob'], '[XglobDir]/Xglob')
+  call writefile(['glob'], 'abc[glob]def/Xglob')
+  if has("unix")
+    call assert_equal([], (glob('[XglobDir]/*', 0, 1)))
+    call assert_equal([], (glob('abc[glob]def/*', 0, 1)))
+    call assert_equal(['[XglobDir]/Xglob'], (glob('\[XglobDir]/*', 0, 1)))
+    call assert_equal(['abc[glob]def/Xglob'], (glob('abc\[glob]def/*', 0, 1)))
+  elseif has("win32")
+    let _sl=&shellslash
+    call assert_equal([], (glob('[XglobDir]\*', 0, 1)))
+    call assert_equal([], (glob('abc[glob]def\*', 0, 1)))
+    call assert_equal([], (glob('\[XglobDir]\*', 0, 1)))
+    call assert_equal([], (glob('abc\[glob]def\*', 0, 1)))
+    set noshellslash
+    call assert_equal(['[XglobDir]\Xglob'], (glob('[[]XglobDir]/*', 0, 1)))
+    call assert_equal(['abc[glob]def\Xglob'], (glob('abc[[]glob]def/*', 0, 1)))
+    set shellslash
+    call assert_equal(['[XglobDir]/Xglob'], (glob('[[]XglobDir]/*', 0, 1)))
+    call assert_equal(['abc[glob]def/Xglob'], (glob('abc[[]glob]def/*', 0, 1)))
+    let &shellslash=_sl
+  endif
+endfunc
+
+func Test_glob_symlinks()
+  call writefile([], 'Xglob1')
+
+  if has("win32")
+    silent !mklink XglobBad DoesNotExist
+    if v:shell_error
+      throw 'Skipped: cannot create symlinks'
+    endif
+    silent !mklink XglobOk Xglob1
+  else
+    silent !ln -s DoesNotExist XglobBad
+    silent !ln -s Xglob1 XglobOk
+  endif
+
+  " The broken symlink is excluded when alllinks is false.
+  call assert_equal(['Xglob1', 'XglobBad', 'XglobOk'], sort(glob('Xglob*', 0, 1, 1)))
+  call assert_equal(['Xglob1', 'XglobOk'], sort(glob('Xglob*', 0, 1, 0)))
+
+  call delete('Xglob1')
+  call delete('XglobBad')
+  call delete('XglobOk')
+endfunc
+
 " Test for browse()
 func Test_browse()
   CheckFeature browse
@@ -3509,6 +3571,42 @@ func Test_builtin_check()
   unlet bar
 endfunc
 
+" Test for isabsolutepath()
+func Test_isabsolutepath()
+  call assert_false(isabsolutepath(''))
+  call assert_false(isabsolutepath('.'))
+  call assert_false(isabsolutepath('../Foo'))
+  call assert_false(isabsolutepath('Foo/'))
+  if has('win32')
+    call assert_true(isabsolutepath('A:\'))
+    call assert_true(isabsolutepath('A:\Foo'))
+    call assert_true(isabsolutepath('A:/Foo'))
+    call assert_false(isabsolutepath('A:Foo'))
+    call assert_false(isabsolutepath('\Windows'))
+    call assert_true(isabsolutepath('\\Server2\Share\Test\Foo.txt'))
+  else
+    call assert_true(isabsolutepath('/'))
+    call assert_true(isabsolutepath('/usr/share/'))
+  endif
+endfunc
+
+" Test for exepath()
+func Test_exepath()
+  if has('win32')
+    call assert_notequal(exepath('cmd'), '')
+
+    let oldNoDefaultCurrentDirectoryInExePath = $NoDefaultCurrentDirectoryInExePath
+    call writefile(['@echo off', 'echo Evil'], 'vim-test-evil.bat')
+    let $NoDefaultCurrentDirectoryInExePath = ''
+    call assert_notequal(exepath("vim-test-evil.bat"), '')
+    let $NoDefaultCurrentDirectoryInExePath = '1'
+    call assert_equal(exepath("vim-test-evil.bat"), '')
+    let $NoDefaultCurrentDirectoryInExePath = oldNoDefaultCurrentDirectoryInExePath
+    call delete('vim-test-evil.bat')
+  else
+    call assert_notequal(exepath('sh'), '')
+  endif
+endfunc
 
 " Test for virtcol()
 func Test_virtcol()
@@ -3573,7 +3671,7 @@ func Test_string_reverse()
     call assert_equal('', reverse(v:_null_string))
     for [s1, s2] in [['', ''], ['a', 'a'], ['ab', 'ba'], ['abc', 'cba'],
                    \ ['abcd', 'dcba'], ['«-«-»-»', '»-»-«-«'],
-                   \ ['🇦', '🇦'], ['🇦🇧', '🇧🇦'], ['🇦🇧🇨', '🇨🇧🇦'],
+                   \ ['🇦', '🇦'], ['🇦🇧', '🇦🇧'], ['🇦🇧🇨', '🇨🇦🇧'],
                    \ ['🇦«🇧-🇨»🇩', '🇩»🇨-🇧«🇦']]
       call assert_equal(s2, reverse(s1))
     endfor
@@ -3681,6 +3779,8 @@ func Test_slice()
     call assert_equal('', 'ὰ̳β̳́γ̳̂δ̳̃ε̳̄ζ̳̅'->slice(1, -6))
   END
   call CheckLegacyAndVim9Success(lines)
+
+  call assert_equal(0, slice(v:true, 1))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

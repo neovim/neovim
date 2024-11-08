@@ -1,7 +1,7 @@
 " Vim syntax file
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2015-05-29
+" Latest Revision:      2024-07-19
 " License:              Vim (see :h license)
 " Repository:		https://github.com/chrisbra/vim-kconfig
 
@@ -714,8 +714,6 @@ syn region  kconfigHelpText
       \ start='\%(help\|---help---\)\ze\s*\n\z(\s\+\)'
       \ skip='^$'
       \ end='^\z1\@!'
-
-syn sync    match kconfigSyncHelp     grouphere kconfigHelpText 'help\|---help---'
 
 hi def link kconfigTodo         Todo
 hi def link kconfigComment      Comment

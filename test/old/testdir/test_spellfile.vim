@@ -191,6 +191,11 @@ func Spellfile_Test(content, emsg)
   " Add the spell file header and version (VIMspell2)
   let v = 0z56494D7370656C6C32 + a:content
   call writefile(v, splfile, 'b')
+
+  " 'encoding' is set before each test to clear the previously loaded suggest
+  " file from memory.
+  set encoding=utf-8
+
   set runtimepath=./Xtest
   set spelllang=Xtest
   if a:emsg != ''
@@ -207,7 +212,7 @@ endfunc
 " The spell file format is described in spellfile.c
 func Test_spellfile_format_error()
   let save_rtp = &rtp
-  call mkdir('Xtest/spell', 'p')
+  call mkdir('Xtest/spell', 'pR')
   let splfile = './Xtest/spell/Xtest.utf-8.spl'
 
   " empty spell file
@@ -311,6 +316,12 @@ func Test_spellfile_format_error()
   " SN_SOFO: missing sofoto
   call Spellfile_Test(0z0600000000050001610000, 'E759:')
 
+  " SN_SOFO: empty sofofrom and sofoto
+  call Spellfile_Test(0z06000000000400000000FF000000000000000000000000, '')
+
+  " SN_SOFO: multi-byte characters in sofofrom and sofoto
+  call Spellfile_Test(0z0600000000080002CF810002CF82FF000000000000000000000000, '')
+
   " SN_COMPOUND: compmax is less than 2
   call Spellfile_Test(0z08000000000101, 'E759:')
 
@@ -320,6 +331,12 @@ func Test_spellfile_format_error()
   " SN_COMPOUND: missing compoptions
   call Spellfile_Test(0z080000000005040101, 'E758:')
 
+  " SN_COMPOUND: missing comppattern
+  call Spellfile_Test(0z08000000000704010100000001, 'E758:')
+
+  " SN_COMPOUND: incorrect comppatlen
+  call Spellfile_Test(0z080000000007040101000000020165, 'E758:')
+
   " SN_INFO: missing info
   call Spellfile_Test(0z0F0000000005040101, '')
 
@@ -328,6 +345,12 @@ func Test_spellfile_format_error()
 
   " SN_MAP: missing midword
   call Spellfile_Test(0z0700000000040102, '')
+
+  " SN_MAP: empty map string
+  call Spellfile_Test(0z070000000000FF000000000000000000000000, '')
+
+  " SN_MAP: duplicate multibyte character
+  call Spellfile_Test(0z070000000004DC81DC81, 'E783:')
 
   " SN_SYLLABLE: missing SYLLABLE item
   call Spellfile_Test(0z0900000000040102, '')
@@ -345,20 +368,28 @@ func Test_spellfile_format_error()
   " LWORDTREE: missing tree node value
   call Spellfile_Test(0zFF0000000402, 'E758:')
 
+  " LWORDTREE: incorrect sibling node count
+  call Spellfile_Test(0zFF00000001040000000000000000, 'E759:')
+
   " KWORDTREE: missing tree node
   call Spellfile_Test(0zFF0000000000000004, 'E758:')
 
   " PREFIXTREE: missing tree node
   call Spellfile_Test(0zFF000000000000000000000004, 'E758:')
 
+  " PREFIXTREE: incorrect prefcondnr
+  call Spellfile_Test(0zFF000000000000000000000002010200000020, 'E759:')
+
+  " PREFIXTREE: invalid nodeidx
+  call Spellfile_Test(0zFF00000000000000000000000201010000, 'E759:')
+
   let &rtp = save_rtp
-  call delete('Xtest', 'rf')
 endfunc
 
 " Test for format errors in suggest file
 func Test_sugfile_format_error()
   let save_rtp = &rtp
-  call mkdir('Xtest/spell', 'p')
+  call mkdir('Xtest/spell', 'pR')
   let splfile = './Xtest/spell/Xtest.utf-8.spl'
   let sugfile = './Xtest/spell/Xtest.utf-8.sug'
 
@@ -441,7 +472,6 @@ func Test_sugfile_format_error()
   set nospell spelllang&
 
   let &rtp = save_rtp
-  call delete('Xtest', 'rf')
 endfunc
 
 " Test for using :mkspell to create a spell file from a list of words
@@ -454,7 +484,7 @@ func Test_wordlist_dic()
     /encoding=latin1
     example
   [END]
-  call writefile(lines, 'Xwordlist.dic')
+  call writefile(lines, 'Xwordlist.dic', 'D')
   let output = execute('mkspell Xwordlist.spl Xwordlist.dic')
   call assert_match('Duplicate /encoding= line ignored in Xwordlist.dic line 4: /encoding=latin1', output)
 
@@ -518,14 +548,27 @@ func Test_wordlist_dic()
   let output = execute('mkspell! -ascii Xwordlist.spl Xwordlist.dic')
   call assert_match('Ignored 1 words with non-ASCII characters', output)
 
+  " keep case of a word
+  let lines =<< trim [END]
+    example/=
+  [END]
+  call writefile(lines, 'Xwordlist.dic')
+  let output = execute('mkspell! Xwordlist.spl Xwordlist.dic')
+  call assert_match('Compressed keep-case:', output)
+
   call delete('Xwordlist.spl')
-  call delete('Xwordlist.dic')
 endfunc
 
 " Test for the :mkspell command
 func Test_mkspell()
   call assert_fails('mkspell Xtest_us.spl', 'E751:')
+  call assert_fails('mkspell Xtest.spl abc', 'E484:')
   call assert_fails('mkspell a b c d e f g h i j k', 'E754:')
+
+  " create a .aff file but not the .dic file
+  call writefile([], 'Xtest.aff')
+  call assert_fails('mkspell Xtest.spl Xtest', 'E484:')
+  call delete('Xtest.aff')
 
   call writefile([], 'Xtest.spl')
   call writefile([], 'Xtest.dic')
@@ -554,8 +597,8 @@ func Test_aff_file_format_error()
   CheckNotMSWindows
 
   " No word count in .dic file
-  call writefile([], 'Xtest.dic')
-  call writefile([], 'Xtest.aff')
+  call writefile([], 'Xtest.dic', 'D')
+  call writefile([], 'Xtest.aff', 'D')
   call assert_fails('mkspell! Xtest.spl Xtest', 'E760:')
 
   " create a .dic file for the tests below
@@ -656,7 +699,7 @@ func Test_aff_file_format_error()
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Different combining flag in continued affix block in Xtest.aff line 3', output)
 
-  " Try to reuse a affix used for BAD flag
+  " Try to reuse an affix used for BAD flag
   call writefile(['BAD x', 'PFX x Y 1', 'PFX x 0 re x'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST in Xtest.aff line 2: x', output)
@@ -730,6 +773,44 @@ func Test_aff_file_format_error()
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Illegal flag in Xtest.aff line 2: L', output)
 
+  " Nvim: non-utf8 encoding not supported
+  " " missing character in UPP entry. The character table is used only in a
+  " " non-utf8 encoding
+  " call writefile(['FOL abc', 'LOW abc', 'UPP A'], 'Xtest.aff')
+  " let save_encoding = &encoding
+  " set encoding=cp949
+  " call assert_fails('mkspell! Xtest.spl Xtest', 'E761:')
+  " let &encoding = save_encoding
+  "
+  " " character range doesn't match between FOL and LOW entries
+  " call writefile(["FOL \u0102bc", 'LOW abc', 'UPP ABC'], 'Xtest.aff')
+  " let save_encoding = &encoding
+  " set encoding=cp949
+  " call assert_fails('mkspell! Xtest.spl Xtest', 'E762:')
+  " let &encoding = save_encoding
+  "
+  " " character range doesn't match between FOL and UPP entries
+  " call writefile(["FOL \u0102bc", "LOW \u0102bc", 'UPP ABC'], 'Xtest.aff')
+  " let save_encoding = &encoding
+  " set encoding=cp949
+  " call assert_fails('mkspell! Xtest.spl Xtest', 'E762:')
+  " let &encoding = save_encoding
+  "
+  " " additional characters in LOW and UPP entries
+  " call writefile(["FOL ab", "LOW abc", 'UPP ABC'], 'Xtest.aff')
+  " let save_encoding = &encoding
+  " set encoding=cp949
+  " call assert_fails('mkspell! Xtest.spl Xtest', 'E761:')
+  " let &encoding = save_encoding
+  "
+  " " missing UPP entry
+  " call writefile(["FOL abc", "LOW abc"], 'Xtest.aff')
+  " let save_encoding = &encoding
+  " set encoding=cp949
+  " let output = execute('mkspell! Xtest.spl Xtest')
+  " call assert_match('Missing FOL/LOW/UPP line in Xtest.aff', output)
+  " let &encoding = save_encoding
+
   " duplicate word in the .dic file
   call writefile(['2', 'good', 'good', 'good'], 'Xtest.dic')
   call writefile(['NAME vim'], 'Xtest.aff')
@@ -737,8 +818,16 @@ func Test_aff_file_format_error()
   call assert_match('First duplicate word in Xtest.dic line 3: good', output)
   call assert_match('2 duplicate word(s) in Xtest.dic', output)
 
-  call delete('Xtest.dic')
-  call delete('Xtest.aff')
+  " use multiple .aff files with different values for COMPOUNDWORDMAX and
+  " MIDWORD (number and string)
+  call writefile(['1', 'world'], 'Xtest_US.dic', 'D')
+  call writefile(['1', 'world'], 'Xtest_CA.dic', 'D')
+  call writefile(["COMPOUNDWORDMAX 3", "MIDWORD '-"], 'Xtest_US.aff', 'D')
+  call writefile(["COMPOUNDWORDMAX 4", "MIDWORD '="], 'Xtest_CA.aff', 'D')
+  let output = execute('mkspell! Xtest.spl Xtest_US Xtest_CA')
+  call assert_match('COMPOUNDWORDMAX value differs from what is used in another .aff file', output)
+  call assert_match('MIDWORD value differs from what is used in another .aff file', output)
+
   call delete('Xtest.spl')
   call delete('Xtest.sug')
 endfunc
@@ -757,9 +846,25 @@ func Test_spell_add_word()
   %bw!
 endfunc
 
+func Test_spell_add_long_word()
+  set spell spellfile=./Xspellfile.add spelllang=en
+
+  let word = repeat('a', 9000)
+  let v:errmsg = ''
+  " Spell checking doesn't really work for such a long word,
+  " but this should not cause an E1510 error.
+  exe 'spellgood ' .. word
+  call assert_equal('', v:errmsg)
+  call assert_equal([word], readfile('./Xspellfile.add'))
+
+  set spell& spellfile= spelllang& encoding=utf-8
+  call delete('./Xspellfile.add')
+  call delete('./Xspellfile.add.spl')
+endfunc
+
 func Test_spellfile_verbose()
-  call writefile(['1', 'one'], 'XtestVerbose.dic')
-  call writefile([], 'XtestVerbose.aff')
+  call writefile(['1', 'one'], 'XtestVerbose.dic', 'D')
+  call writefile([], 'XtestVerbose.aff', 'D')
   mkspell! XtestVerbose-utf8.spl XtestVerbose
   set spell
 
@@ -772,15 +877,13 @@ func Test_spellfile_verbose()
   call assert_notmatch('Reading spell file "XtestVerbose-utf8.spl"', a)
 
   set spell& spelllang&
-  call delete('XtestVerbose.dic')
-  call delete('XtestVerbose.aff')
   call delete('XtestVerbose-utf8.spl')
 endfunc
 
 " Test NOBREAK (see :help spell-NOBREAK)
 func Test_NOBREAK()
-  call writefile(['3', 'one', 'two', 'three' ], 'XtestNOBREAK.dic')
-  call writefile(['NOBREAK' ], 'XtestNOBREAK.aff')
+  call writefile(['3', 'one', 'two', 'three' ], 'XtestNOBREAK.dic', 'D')
+  call writefile(['NOBREAK' ], 'XtestNOBREAK.aff', 'D')
 
   mkspell! XtestNOBREAK-utf8.spl XtestNOBREAK
   set spell spelllang=XtestNOBREAK-utf8.spl
@@ -802,8 +905,6 @@ func Test_NOBREAK()
 
   bw!
   set spell& spelllang&
-  call delete('XtestNOBREAK.dic')
-  call delete('XtestNOBREAK.aff')
   call delete('XtestNOBREAK-utf8.spl')
 endfunc
 
@@ -813,11 +914,11 @@ func Test_spellfile_CHECKCOMPOUNDPATTERN()
         \         'one/c',
         \         'two/c',
         \         'three/c',
-        \         'four'], 'XtestCHECKCOMPOUNDPATTERN.dic')
+        \         'four'], 'XtestCHECKCOMPOUNDPATTERN.dic', 'D')
   " Forbid compound words where first word ends with 'wo' and second starts with 'on'.
   call writefile(['CHECKCOMPOUNDPATTERN 1',
         \         'CHECKCOMPOUNDPATTERN wo on',
-        \         'COMPOUNDFLAG c'], 'XtestCHECKCOMPOUNDPATTERN.aff')
+        \         'COMPOUNDFLAG c'], 'XtestCHECKCOMPOUNDPATTERN.aff', 'D')
 
   mkspell! XtestCHECKCOMPOUNDPATTERN-utf8.spl XtestCHECKCOMPOUNDPATTERN
   set spell spelllang=XtestCHECKCOMPOUNDPATTERN-utf8.spl
@@ -841,8 +942,6 @@ func Test_spellfile_CHECKCOMPOUNDPATTERN()
   endfor
 
   set spell& spelllang&
-  call delete('XtestCHECKCOMPOUNDPATTERN.dic')
-  call delete('XtestCHECKCOMPOUNDPATTERN.aff')
   call delete('XtestCHECKCOMPOUNDPATTERN-utf8.spl')
 endfunc
 
@@ -851,15 +950,15 @@ func Test_spellfile_NOCOMPOUNDSUGS()
   call writefile(['3',
         \         'one/c',
         \         'two/c',
-        \         'three/c'], 'XtestNOCOMPOUNDSUGS.dic')
+        \         'three/c'], 'XtestNOCOMPOUNDSUGS.dic', 'D')
 
   " pass 0 tests without NOCOMPOUNDSUGS, pass 1 tests with NOCOMPOUNDSUGS
   for pass in [0, 1]
     if pass == 0
-      call writefile(['COMPOUNDFLAG c'], 'XtestNOCOMPOUNDSUGS.aff')
+      call writefile(['COMPOUNDFLAG c'], 'XtestNOCOMPOUNDSUGS.aff', 'D')
     else
       call writefile(['NOCOMPOUNDSUGS',
-          \           'COMPOUNDFLAG c'], 'XtestNOCOMPOUNDSUGS.aff')
+          \           'COMPOUNDFLAG c'], 'XtestNOCOMPOUNDSUGS.aff', 'D')
     endif
 
     mkspell! XtestNOCOMPOUNDSUGS-utf8.spl XtestNOCOMPOUNDSUGS
@@ -887,8 +986,6 @@ func Test_spellfile_NOCOMPOUNDSUGS()
   endfor
 
   set spell& spelllang&
-  call delete('XtestNOCOMPOUNDSUGS.dic')
-  call delete('XtestNOCOMPOUNDSUGS.aff')
   call delete('XtestNOCOMPOUNDSUGS-utf8.spl')
 endfunc
 
@@ -901,8 +998,8 @@ func Test_spellfile_COMMON()
         \         'any',
         \         'tee',
         \         'the',
-        \         'ted'], 'XtestCOMMON.dic')
-  call writefile(['COMMON the and'], 'XtestCOMMON.aff')
+        \         'ted'], 'XtestCOMMON.dic', 'D')
+  call writefile(['COMMON the and'], 'XtestCOMMON.aff', 'D')
 
   mkspell! XtestCOMMON-utf8.spl XtestCOMMON
   set spell spelllang=XtestCOMMON-utf8.spl
@@ -914,15 +1011,13 @@ func Test_spellfile_COMMON()
   call assert_equal(['the', 'tee'], spellsuggest('dhe', 2))
 
   set spell& spelllang&
-  call delete('XtestCOMMON.dic')
-  call delete('XtestCOMMON.aff')
   call delete('XtestCOMMON-utf8.spl')
 endfunc
 
 " Test NOSUGGEST (see :help spell-COMMON)
 func Test_spellfile_NOSUGGEST()
-  call writefile(['2', 'foo/X', 'fog'], 'XtestNOSUGGEST.dic')
-  call writefile(['NOSUGGEST X'], 'XtestNOSUGGEST.aff')
+  call writefile(['2', 'foo/X', 'fog'], 'XtestNOSUGGEST.dic', 'D')
+  call writefile(['NOSUGGEST X'], 'XtestNOSUGGEST.aff', 'D')
 
   mkspell! XtestNOSUGGEST-utf8.spl XtestNOSUGGEST
   set spell spelllang=XtestNOSUGGEST-utf8.spl
@@ -940,8 +1035,6 @@ func Test_spellfile_NOSUGGEST()
   call assert_equal(['fog'], spellsuggest('fogg', 1))
 
   set spell& spelllang&
-  call delete('XtestNOSUGGEST.dic')
-  call delete('XtestNOSUGGEST.aff')
   call delete('XtestNOSUGGEST-utf8.spl')
 endfunc
 
@@ -950,7 +1043,7 @@ endfunc
 func Test_spellfile_CIRCUMFIX()
   " Example taken verbatim from https://github.com/hunspell/hunspell/tree/master/tests
   call writefile(['1',
-        \         'nagy/C	po:adj'], 'XtestCIRCUMFIX.dic')
+        \         'nagy/C	po:adj'], 'XtestCIRCUMFIX.dic', 'D')
   call writefile(['# circumfixes: ~ obligate prefix/suffix combinations',
         \         '# superlative in Hungarian: leg- (prefix) AND -bb (suffix)',
         \         '',
@@ -965,7 +1058,7 @@ func Test_spellfile_CIRCUMFIX()
         \         'SFX C Y 3',
         \         'SFX C 0 obb . is:COMPARATIVE',
         \         'SFX C 0 obb/AX . is:SUPERLATIVE',
-        \         'SFX C 0 obb/BX . is:SUPERSUPERLATIVE'], 'XtestCIRCUMFIX.aff')
+        \         'SFX C 0 obb/BX . is:SUPERSUPERLATIVE'], 'XtestCIRCUMFIX.aff', 'D')
 
   mkspell! XtestCIRCUMFIX-utf8.spl XtestCIRCUMFIX
   set spell spelllang=XtestCIRCUMFIX-utf8.spl
@@ -984,8 +1077,6 @@ func Test_spellfile_CIRCUMFIX()
   endfor
 
   set spell& spelllang&
-  call delete('XtestCIRCUMFIX.dic')
-  call delete('XtestCIRCUMFIX.aff')
   call delete('XtestCIRCUMFIX-utf8.spl')
 endfunc
 
@@ -997,12 +1088,12 @@ func Test_spellfile_SFX_strip()
         \         'SFX A are hiamo [cg]are',
         \         'SFX A re mo iare',
         \         'SFX A re vamo are'],
-        \         'XtestSFX.aff')
+        \         'XtestSFX.aff', 'D')
   " Examples of Italian verbs:
   " - cantare = to sing
   " - cercare = to search
   " - odiare = to hate
-  call writefile(['3', 'cantare/A', 'cercare/A', 'odiare/A'], 'XtestSFX.dic')
+  call writefile(['3', 'cantare/A', 'cercare/A', 'odiare/A'], 'XtestSFX.dic', 'D')
 
   mkspell! XtestSFX-utf8.spl XtestSFX
   set spell spelllang=XtestSFX-utf8.spl
@@ -1026,8 +1117,6 @@ func Test_spellfile_SFX_strip()
   call assert_equal(['odiamo'],    spellsuggest('odiiamo', 1))
 
   set spell& spelllang&
-  call delete('XtestSFX.dic')
-  call delete('XtestSFX.aff')
   call delete('XtestSFX-utf8.spl')
 endfunc
 
@@ -1036,7 +1125,7 @@ endfunc
 func Test_init_spellfile()
   let save_rtp = &rtp
   let save_encoding = &encoding
-  call mkdir('Xrtp/spell', 'p')
+  call mkdir('Xrtp/spell', 'pR')
   call writefile(['vim'], 'Xrtp/spell/Xtest.dic')
   silent mkspell Xrtp/spell/Xtest.utf-8.spl Xrtp/spell/Xtest.dic
   set runtimepath=./Xrtp
@@ -1046,8 +1135,8 @@ func Test_init_spellfile()
   call assert_equal('./Xrtp/spell/Xtest.utf-8.add', &spellfile)
   call assert_equal(['abc'], readfile('Xrtp/spell/Xtest.utf-8.add'))
   call assert_true(filereadable('Xrtp/spell/Xtest.utf-8.spl'))
+
   set spell& spelllang& spellfile&
-  call delete('Xrtp', 'rf')
   let &encoding = save_encoding
   let &rtp = save_rtp
   %bw!
@@ -1066,19 +1155,17 @@ endfunc
 " 'spellfile' accepts '@' on top of 'isfname'.
 func Test_spellfile_allow_at_character()
   call mkdir('Xtest/the foo@bar,dir', 'p')
-  let &spellfile = './Xtest/the foo@bar,dir/Xspellfile.add'
+  let &spellfile = './Xtest/the foo@bar\,dir/Xspellfile.add'
   let &spellfile = ''
   call delete('Xtest', 'rf')
 endfunc
 
 " this was using a NULL pointer
 func Test_mkspell_empty_dic()
-  call writefile(['1'], 'XtestEmpty.dic')
-  call writefile(['SOFOFROM abcd', 'SOFOTO ABCD', 'SAL CIA X'], 'XtestEmpty.aff')
+  call writefile(['1'], 'XtestEmpty.dic', 'D')
+  call writefile(['SOFOFROM abcd', 'SOFOTO ABCD', 'SAL CIA X'], 'XtestEmpty.aff', 'D')
   mkspell! XtestEmpty.spl XtestEmpty
 
-  call delete('XtestEmpty.dic')
-  call delete('XtestEmpty.aff')
   call delete('XtestEmpty.spl')
 endfunc
 

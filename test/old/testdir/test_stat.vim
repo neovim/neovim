@@ -63,7 +63,7 @@ func Test_checktime()
   let fname = 'Xtest.tmp'
 
   let fl = ['Hello World!']
-  call writefile(fl, fname)
+  call writefile(fl, fname, 'D')
   set autoread
   exec 'e' fname
   call SleepForTimestamp()
@@ -72,8 +72,6 @@ func Test_checktime()
   call writefile(fl, fname)
   checktime
   call assert_equal(fl[0], getline(1))
-
-  call delete(fname)
 endfunc
 
 func Test_checktime_fast()
@@ -82,7 +80,7 @@ func Test_checktime_fast()
   let fname = 'Xtest.tmp'
 
   let fl = ['Hello World!']
-  call writefile(fl, fname)
+  call writefile(fl, fname, 'D')
   set autoread
   exec 'e' fname
   let fl = readfile(fname)
@@ -91,8 +89,6 @@ func Test_checktime_fast()
   call writefile(fl, fname)
   checktime
   call assert_equal(fl[0], getline(1))
-
-  call delete(fname)
 endfunc
 
 func Test_autoread_fast()
@@ -106,12 +102,10 @@ func Test_autoread_fast()
   call setline(1, 'foo')
   w!
   sleep 10m
-  call writefile(['bar'], 'Xautoread')
+  call writefile(['bar'], 'Xautoread', 'D')
   sleep 10m
   checktime
   call assert_equal('bar', trim(getline(1)))
-
-  call delete('Xautoread')
 endfunc
 
 func Test_autoread_file_deleted()

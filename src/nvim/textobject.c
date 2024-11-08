@@ -1193,13 +1193,18 @@ again:
   pos_T end_pos = curwin->w_cursor;
 
   if (!do_include) {
-    // Exclude the start tag.
+    // Exclude the start tag,
+    // but skip over '>' if it appears in quotes
+    bool in_quotes = false;
     curwin->w_cursor = start_pos;
     while (inc_cursor() >= 0) {
-      if (*get_cursor_pos_ptr() == '>') {
+      p = get_cursor_pos_ptr();
+      if (*p == '>' && !in_quotes) {
         inc_cursor();
         start_pos = curwin->w_cursor;
         break;
+      } else if (*p == '"' || *p == '\'') {
+        in_quotes = !in_quotes;
       }
     }
     curwin->w_cursor = end_pos;
@@ -1264,11 +1269,7 @@ int current_par(oparg_T *oap, int count, bool include, int type)
   // When visual area is more than one line: extend it.
   if (VIsual_active && start_lnum != VIsual.lnum) {
 extend:
-    if (start_lnum < VIsual.lnum) {
-      dir = BACKWARD;
-    } else {
-      dir = FORWARD;
-    }
+    dir = start_lnum < VIsual.lnum ? BACKWARD : FORWARD;
     for (int i = count; --i >= 0;) {
       if (start_lnum ==
           (dir == BACKWARD ? 1 : curbuf->b_ml.ml_line_count)) {

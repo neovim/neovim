@@ -67,7 +67,7 @@ static int64_t next_autocmd_id = 1;
 /// NOTE: When multiple patterns or events are provided, it will find all the autocommands that
 /// match any combination of them.
 ///
-/// @param opts Dictionary with at least one of the following:
+/// @param opts Dict with at least one of the following:
 ///             - group (string|integer): the autocommand group name or id to match against.
 ///             - event (string|array): event or events to match against |autocmd-events|.
 ///             - pattern (string|array): pattern or patterns to match against |autocmd-pattern|.
@@ -270,7 +270,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Arena *arena, Error *err)
         }
       }
 
-      Dictionary autocmd_info = arena_dict(arena, 11);
+      Dict autocmd_info = arena_dict(arena, 11);
 
       if (ap->group != AUGROUP_DEFAULT) {
         PUT_C(autocmd_info, "group", INTEGER_OBJ(ap->group));
@@ -334,7 +334,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Arena *arena, Error *err)
       // PUT_C(autocmd_info, "sid", INTEGER_OBJ(ac->script_ctx.sc_sid));
       // PUT_C(autocmd_info, "lnum", INTEGER_OBJ(ac->script_ctx.sc_lnum));
 
-      kvi_push(autocmd_list, DICTIONARY_OBJ(autocmd_info));
+      kvi_push(autocmd_list, DICT_OBJ(autocmd_info));
     }
   }
 
@@ -621,7 +621,7 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Arena *arena, Error *err)
 /// ```
 ///
 /// @param name String: The name of the group
-/// @param opts Dictionary Parameters
+/// @param opts Dict Parameters
 ///                 - clear (bool) optional: defaults to true. Clear existing
 ///                 commands if the group already exists |autocmd-groups|.
 /// @return Integer id of the created group.
@@ -686,7 +686,7 @@ void nvim_del_augroup_by_name(String name, Error *err)
 /// Execute all autocommands for {event} that match the corresponding
 ///  {opts} |autocmd-execute|.
 /// @param event (String|Array) The event or events to execute
-/// @param opts Dictionary of autocommand options:
+/// @param opts Dict of autocommand options:
 ///             - group (string|integer) optional: the autocommand group name or
 ///             id to match against. |autocmd-groups|.
 ///             - pattern (string|array) optional: defaults to "*" |autocmd-pattern|. Cannot be used

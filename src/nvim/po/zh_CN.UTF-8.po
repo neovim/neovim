@@ -3716,8 +3716,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " 全能补全 (^O^N^P)"
 
 #: ../insexpand.c:113
-msgid " Spelling suggestion (s^N^P)"
-msgstr " 拼写建议 (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " 拼写建议 (^S^N^P)"
 
 #: ../insexpand.c:114
 msgid " Keyword Local completion (^N^P)"
@@ -4780,8 +4780,8 @@ msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) 上次编辑此文件时崩溃。\n"
 
 #: ../memline.c:3099
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    如果是这样，请用 \":recover\" 或 \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    如果是这样，请用 \":recover\" 或 \"nvim -r "
 
 #: ../memline.c:3101
 msgid ""

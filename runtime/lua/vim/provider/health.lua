@@ -1,5 +1,5 @@
 local health = vim.health
-local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
+local iswin = vim.fn.has('win32') == 1
 
 local M = {}
 
@@ -353,7 +353,7 @@ end
 --- their respective paths. If either of those is invalid, return two empty
 --- strings, effectively ignoring pyenv.
 ---
---- @return {[1]: string, [2]: string}
+--- @return [string, string]
 local function check_for_pyenv()
   local pyenv_path = vim.fn.resolve(vim.fn.exepath('pyenv'))
 
@@ -366,7 +366,17 @@ local function check_for_pyenv()
   local pyenv_root = vim.fn.resolve(os.getenv('PYENV_ROOT') or '')
 
   if pyenv_root == '' then
-    pyenv_root = vim.fn.system({ pyenv_path, 'root' })
+    local p = vim.system({ pyenv_path, 'root' }):wait()
+    if p.code ~= 0 then
+      local message = string.format(
+        'pyenv: Failed to infer the root of pyenv by running `%s root` : %s. Ignoring pyenv for all following checks.',
+        pyenv_path,
+        p.stderr
+      )
+      health.warn(message)
+      return { '', '' }
+    end
+    pyenv_root = vim.trim(p.stdout)
     health.info('pyenv: $PYENV_ROOT is not set. Infer from `pyenv root`.')
   end
 
@@ -409,12 +419,15 @@ local function download(url)
       return out
     end
   elseif vim.fn.executable('python') == 1 then
-    local script = "try:\n\
-          from urllib.request import urlopen\n\
-          except ImportError:\n\
-          from urllib2 import urlopen\n\
-          response = urlopen('" .. url .. "')\n\
-          print(response.read().decode('utf8'))\n"
+    local script = ([[
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
+
+response = urlopen('%s')
+print(response.read().decode('utf8'))
+]]):format(url)
     local out, rc = system({ 'python', '-c', script })
     if out == '' and rc ~= 0 then
       return 'python urllib.request error: ' .. rc
@@ -436,7 +449,7 @@ end
 --- Get the latest Nvim Python client (pynvim) version from PyPI.
 local function latest_pypi_version()
   local pypi_version = 'unable to get pypi response'
-  local pypi_response = download('https://pypi.python.org/pypi/pynvim/json')
+  local pypi_response = download('https://pypi.org/pypi/pynvim/json')
   if pypi_response ~= '' then
     local pcall_ok, output = pcall(vim.fn.json_decode, pypi_response)
     if not pcall_ok then
@@ -751,7 +764,7 @@ local function python()
   local venv_bins = vim.fn.glob(string.format('%s/%s/python*', virtual_env, bin_dir), true, true)
   venv_bins = vim.tbl_filter(function(v)
     -- XXX: Remove irrelevant executables found in bin/.
-    return not v:match('python%-config')
+    return not v:match('python.*%-config')
   end, venv_bins)
   if vim.tbl_count(venv_bins) > 0 then
     for _, venv_bin in pairs(venv_bins) do

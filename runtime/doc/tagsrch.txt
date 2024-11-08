@@ -274,25 +274,25 @@ g CTRL-]		Like CTRL-], but use ":tjump" instead of ":tag".
 {Visual}g CTRL-]	Same as "g CTRL-]", but use the highlighted text as
 			the identifier.
 
-							*:tn* *:tnext*
+							*:tn* *:tnext* *]t*
 :[count]tn[ext][!]	Jump to [count] next matching tag (default 1).  See
 			|tag-!| for [!].
 
-							*:tp* *:tprevious*
+							*:tp* *:tprevious* *[t*
 :[count]tp[revious][!]	Jump to [count] previous matching tag (default 1).
 			See |tag-!| for [!].
 
 							*:tN* *:tNext*
 :[count]tN[ext][!]	Same as ":tprevious".
 
-							*:tr* *:trewind*
+							*:tr* *:trewind* *[T*
 :[count]tr[ewind][!]	Jump to first matching tag.  If [count] is given, jump
 			to [count]th matching tag.  See |tag-!| for [!].
 
 							*:tf* *:tfirst*
 :[count]tf[irst][!]	Same as ":trewind".
 
-							*:tl* *:tlast*
+							*:tl* *:tlast* *]T*
 :tl[ast][!]		Jump to last matching tag.  See |tag-!| for [!].
 
 							*:lt* *:ltag*
@@ -335,10 +335,10 @@ the same as above, with a "p" prepended.
 :ptj[ump][!] [name]	Does ":tjump[!] [name]" and shows the new tag in a
 			"Preview" window.  See |:ptag| for more info.
 
-							*:ptn* *:ptnext*
+							*:ptn* *:ptnext* *]CTRL-T*
 :[count]ptn[ext][!]	":tnext" in the preview window.  See |:ptag|.
 
-							*:ptp* *:ptprevious*
+							*:ptp* *:ptprevious* *[CTRL-T*
 :[count]ptp[revious][!]	":tprevious" in the preview window.  See |:ptag|.
 
 							*:ptN* *:ptNext*
@@ -565,12 +565,12 @@ ctags).
 {term}		;" The two characters semicolon and double quote.  This is
 		interpreted by Vi as the start of a comment, which makes the
 		following be ignored.  This is for backwards compatibility
-		with Vi, it ignores the following fields. Example:
+		with Vi, it ignores the following fields. Example: >
 			APP	file	/^static int APP;$/;"	v
-		When {tagaddress} is not a line number or search pattern, then
+<		When {tagaddress} is not a line number or search pattern, then
 		{term} must be `|;"`.  Here the bar ends the command (excluding
 		the bar) and `;"` is used to have Vi ignore the rest of the
-		line.  Example:
+		line.  Example: >
 			APP	file.c	call cursor(3, 4)|;"	v
 
 {field} ..	A list of optional fields.  Each field has the form:
@@ -588,7 +588,9 @@ ctags).
 
 		There is one field that doesn't have a ':'.  This is the kind
 		of the tag.  It is handled like it was preceded with "kind:".
-		See the documentation of ctags for the kinds it produces.
+		In the above example, this was "kind:v" (typically variable).
+		See the documentation of ctags for the kinds it produces, with
+		ctags you can use `ctags --list-kinds` .
 
 		The only other field currently recognized by Vim is "file:"
 		(with an empty value).  It is used for a static tag.
@@ -633,14 +635,14 @@ If the command is a normal search command (it starts and ends with "/" or
   The direction of the search is forward for "/", backward for "?".
   Note that 'wrapscan' does not matter, the whole file is always searched.
 - If the search fails, another try is done ignoring case.  If that fails too,
-  a search is done for:
+  a search is done for: >
 	"^tagname[ \t]*("
-  (the tag with '^' prepended and "[ \t]*(" appended).  When using function
+<  (the tag with '^' prepended and "[ \t]*(" appended).  When using function
   names, this will find the function name when it is in column 0.  This will
   help when the arguments to the function have changed since the tags file was
-  made.  If this search also fails another search is done with:
+  made.  If this search also fails another search is done with: >
 	"^[#a-zA-Z_].*\<tagname[ \t]*("
-  This means: A line starting with '#' or an identifier and containing the tag
+<  This means: A line starting with '#' or an identifier and containing the tag
   followed by white space and a '('.  This will find macro names and function
   names with a type prepended.
 

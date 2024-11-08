@@ -17,6 +17,9 @@ endif
 if !exists("g:matchparen_insert_timeout")
   let g:matchparen_insert_timeout = 60
 endif
+if !exists("g:matchparen_disable_cursor_hl")
+  let g:matchparen_disable_cursor_hl = 0
+endif
 
 let s:has_matchaddpos = exists('*matchaddpos')
 
@@ -60,12 +63,8 @@ func s:Highlight_Matching_Pair()
   let before = 0
 
   let text = getline(c_lnum)
-  let matches = matchlist(text, '\(.\)\=\%'.c_col.'c\(.\=\)')
-  if empty(matches)
-    let [c_before, c] = ['', '']
-  else
-    let [c_before, c] = matches[1:2]
-  endif
+  let c_before = text->strpart(0, c_col - 1)->slice(-1)
+  let c = text->strpart(c_col - 1)->slice(0, 1)
   let plist = split(&matchpairs, '.\zs[:,]')
   let i = index(plist, c)
   if i < 0
@@ -193,10 +192,18 @@ func s:Highlight_Matching_Pair()
   " If a match is found setup match highlighting.
   if m_lnum > 0 && m_lnum >= stoplinetop && m_lnum <= stoplinebottom 
     if s:has_matchaddpos
-      call add(w:matchparen_ids, matchaddpos('MatchParen', [[c_lnum, c_col - before], [m_lnum, m_col]], 10))
+      if !g:matchparen_disable_cursor_hl
+        call add(w:matchparen_ids, matchaddpos('MatchParen', [[c_lnum, c_col - before], [m_lnum, m_col]], 10))
+      else
+        call add(w:matchparen_ids, matchaddpos('MatchParen', [[m_lnum, m_col]], 10))
+      endif
     else
-      exe '3match MatchParen /\(\%' . c_lnum . 'l\%' . (c_col - before) .
-	    \ 'c\)\|\(\%' . m_lnum . 'l\%' . m_col . 'c\)/'
+      if !g:matchparen_disable_cursor_hl
+        exe '3match MatchParen /\(\%' . c_lnum . 'l\%' . (c_col - before) .
+              \ 'c\)\|\(\%' . m_lnum . 'l\%' . m_col . 'c\)/'
+      else
+        exe '3match MatchParen /\(\%' . m_lnum . 'l\%' . m_col . 'c\)/'
+      endif
       call add(w:matchparen_ids, 3)
     endif
     let w:paren_hl_on = 1

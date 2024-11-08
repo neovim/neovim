@@ -1,7 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
-local tt = require('test.functional.terminal.testutil')
+local tt = require('test.functional.testterm')
 
 local assert_alive = n.assert_alive
 local feed, clear = n.feed, n.clear
@@ -29,7 +29,7 @@ describe(':terminal buffer', function()
   before_each(function()
     clear()
     command('set modifiable swapfile undolevels=20')
-    screen = tt.screen_setup()
+    screen = tt.setup_screen()
   end)
 
   it('terminal-mode forces various options', function()
@@ -199,7 +199,7 @@ describe(':terminal buffer', function()
       {5:==========                                        }|
       rows: 2, cols: 50                                 |
       {2: }                                                 |
-      {1:==========                                        }|
+      {18:==========                                        }|
                                                         |
     ]])
 
@@ -312,6 +312,16 @@ describe(':terminal buffer', function()
       pcall_err(command, 'write test/functional/fixtures/tty-test.c')
     )
   end)
+
+  it('external interrupt (got_int) does not hang #20726', function()
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    command('call timer_start(0, {-> interrupt()})')
+    feed('<Ignore>') -- Add input to separate two RPC requests
+    eq({ mode = 't', blocking = false }, api.nvim_get_mode())
+    feed([[<C-\><C-N>]])
+    eq({ mode = 'nt', blocking = false }, api.nvim_get_mode())
+    command('bd!')
+  end)
 end)
 
 describe(':terminal buffer', function()
@@ -332,7 +342,7 @@ describe(':terminal buffer', function()
     command('wincmd p')
 
     -- cwd will be inserted in a file URI, which cannot contain backs
-    local cwd = fn.getcwd():gsub('\\', '/')
+    local cwd = t.fix_slashes(fn.getcwd())
     local parent = cwd:match('^(.+/)')
     local expected = '\027]7;file://host' .. parent
     api.nvim_chan_send(term, string.format('%s\027\\', expected))
@@ -340,7 +350,7 @@ describe(':terminal buffer', function()
     eq(termbuf, eval('g:termbuf'))
   end)
 
-  it('TermReqeust synchronization #27572', function()
+  it('TermRequest synchronization #27572', function()
     command('autocmd! nvim_terminal TermRequest')
     local term = exec_lua([[
       _G.input = {}
@@ -411,6 +421,44 @@ describe(':terminal buffer', function()
       3: å̲                                              |
                                                         |*2
     ]])
+  end)
+
+  it("handles bell respecting 'belloff' and 'visualbell'", function()
+    local screen = Screen.new(50, 7)
+    screen:attach()
+    local chan = api.nvim_open_term(0, {})
+
+    command('set belloff=')
+    api.nvim_chan_send(chan, '\a')
+    screen:expect(function()
+      eq({ true, false }, { screen.bell, screen.visual_bell })
+    end)
+    screen.bell = false
+
+    command('set visualbell')
+    api.nvim_chan_send(chan, '\a')
+    screen:expect(function()
+      eq({ false, true }, { screen.bell, screen.visual_bell })
+    end)
+    screen.visual_bell = false
+
+    command('set belloff=term')
+    api.nvim_chan_send(chan, '\a')
+    screen:expect({
+      condition = function()
+        eq({ false, false }, { screen.bell, screen.visual_bell })
+      end,
+      unchanged = true,
+    })
+
+    command('set belloff=all')
+    api.nvim_chan_send(chan, '\a')
+    screen:expect({
+      condition = function()
+        eq({ false, false }, { screen.bell, screen.visual_bell })
+      end,
+      unchanged = true,
+    })
   end)
 end)
 
@@ -564,7 +612,7 @@ if is_os('win') then
       feed_command('set modifiable swapfile undolevels=20')
       poke_eventloop()
       local cmd = { 'cmd.exe', '/K', 'PROMPT=$g$s' }
-      screen = tt.screen_setup(nil, cmd)
+      screen = tt.setup_screen(nil, cmd)
     end)
 
     it('"put" operator sends data normally', function()

@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:    Kivy
-" Maintainer:  Corey Prophitt <prophitt.corey@gmail.com>
-" Last Change: May 29th, 2014
+" Maintainer:  Corey Prophitt <corey@prophitt.me>
+" Last Change: Jul 31st, 2024
 " Version:     1
-" URL:         http://kivy.org/
+" URL:         https://kivy.org/
 
 if exists("b:current_syntax")
     finish
@@ -13,11 +13,11 @@ endif
 syn include @pyth $VIMRUNTIME/syntax/python.vim
 
 " Kivy language rules can be found here
-"   http://kivy.org/docs/guide/lang.html
+"   https://kivy.org/doc/stable/guide/lang.html
 
 " Define Kivy syntax
 syn match kivyPreProc   /#:.*/
-syn match kivyComment   /#.*/
+syn match kivyComment   /#[^:].*/
 syn match kivyRule      /<\I\i*\(,\s*\I\i*\)*>:/
 syn match kivyAttribute /\<\I\i*\>/ nextgroup=kivyValue
 

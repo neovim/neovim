@@ -2934,6 +2934,7 @@ func Test_tfirst()
         \ "Xtags", 'D')
   call writefile(["one", "two", "three"], "Xfile", 'D')
   call writefile(["one"], "Xother", 'D')
+  tag one
   edit Xother
 
   set winfixbuf

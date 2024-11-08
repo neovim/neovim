@@ -438,7 +438,7 @@ end
 --- @field mouse_enabled? boolean
 ---
 --- @field win_viewport? table<integer,table<string,integer>>
---- @field float_pos? {[1]:integer,[2]:integer}
+--- @field float_pos? [integer,integer]
 --- @field hl_groups? table<string,integer>
 ---
 --- The following keys should be used to expect the state of various ext_
@@ -788,7 +788,9 @@ function Screen:_wait(check, flags)
   end
   local eof = run_session(self._session, flags.request_cb, notification_cb, nil, minimal_timeout)
   if not did_flush then
-    err = 'no flush received'
+    if eof then
+      err = 'no flush received'
+    end
   elseif not checked then
     err = check()
     if not err and flags.unchanged then
@@ -801,6 +803,9 @@ function Screen:_wait(check, flags)
     did_minimal_timeout = true
     eof =
       run_session(self._session, flags.request_cb, notification_cb, nil, timeout - minimal_timeout)
+    if not did_flush then
+      err = 'no flush received'
+    end
   end
 
   local did_warn = false

@@ -194,6 +194,8 @@ registers. Nvim looks for these clipboard tools, in order of priority:
   - lemonade (for SSH) https://github.com/pocke/lemonade
   - doitclient (for SSH) https://www.chiark.greenend.org.uk/~sgtatham/doit/
   - win32yank (Windows)
+  - putclip, getclip (Windows) https://cygwin.com/packages/summary/cygutils.html
+  - clip, powershell (Windows) https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/clip
   - termux (via termux-clipboard-set, termux-clipboard-set)
   - tmux (if $TMUX is set)
 
@@ -248,8 +250,8 @@ For Windows WSL, try this g:clipboard definition:
                 \      '*': 'clip.exe',
                 \    },
                 \   'paste': {
-                \      '+': 'powershell.exe -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
-                \      '*': 'powershell.exe -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+                \      '+': 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+                \      '*': 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
                 \   },
                 \   'cache_enabled': 0,
                 \ }

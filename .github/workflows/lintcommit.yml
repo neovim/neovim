@@ -1,4 +1,4 @@
-name: "lintcommit"
+name: lintcommit
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]

@@ -11,15 +11,15 @@ func Test_spellrareword()
   " Create a small word list to test that spellbadword('...')
   " can return ['...', 'rare'].
   let lines =<< trim END
-     foo
-     foobar/?
-     foobara/?
-END
-   call writefile(lines, 'Xwords', 'D')
+    foo
+    foobar/?
+    foobara/?
+  END
+  call writefile(lines, 'Xwords', 'D')
 
-   mkspell! Xwords.spl Xwords
-   set spelllang=Xwords.spl
-   call assert_equal(['foobar', 'rare'], spellbadword('foo foobar'))
+  mkspell! Xwords.spl Xwords
+  set spelllang=Xwords.spl
+  call assert_equal(['foobar', 'rare'], spellbadword('foo foobar'))
 
   new
   call setline(1, ['foo', '', 'foo bar foo bar foobara foo foo foo foobar', '', 'End'])

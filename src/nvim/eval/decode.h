@@ -1,8 +1,8 @@
 #pragma once
 
-#include <msgpack.h>  // IWYU pragma: keep
 #include <stddef.h>  // IWYU pragma: keep
 
+#include "mpack/object.h"
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 

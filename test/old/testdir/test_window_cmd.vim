@@ -539,7 +539,7 @@ func Test_equalalways_on_close()
   1wincmd w
   split
   4wincmd w
-  resize + 5
+  resize +5
   " left column has three windows, equalized heights.
   " right column has two windows, top one a bit higher
   let height_1 = winheight(1)

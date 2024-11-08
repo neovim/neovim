@@ -13,6 +13,7 @@
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
@@ -146,25 +147,42 @@ int tabstop_padding(colnr_T col, OptInt ts_arg, const colnr_T *vts)
 }
 
 /// Find the size of the tab that covers a particular column.
-int tabstop_at(colnr_T col, OptInt ts, const colnr_T *vts)
+///
+/// If this is being called as part of a shift operation, col is not the cursor
+/// column but is the column number to the left of the first non-whitespace
+/// character in the line.  If the shift is to the left (left == true), then
+/// return the size of the tab interval to the left of the column.
+int tabstop_at(colnr_T col, OptInt ts, const colnr_T *vts, bool left)
 {
-  colnr_T tabcol = 0;
-  int t;
-  int tab_size = 0;
-
   if (vts == NULL || vts[0] == 0) {
     return (int)ts;
   }
 
-  const int tabcount = vts[0];
+  colnr_T tabcol = 0;  // Column of the tab stop under consideration.
+  int t;  // Tabstop index in the list of variable tab stops.
+  int tab_size = 0;  // Size of the tab stop interval to the right or left of the col.
+  const int tabcount  // Number of tab stops in the list of variable tab stops.
+    = vts[0];
   for (t = 1; t <= tabcount; t++) {
     tabcol += vts[t];
     if (tabcol > col) {
-      tab_size = vts[t];
+      // If shifting left (left == true), and if the column to the left of
+      // the first first non-blank character (col) in the line is
+      // already to the left of the first tabstop, set the shift amount
+      // (tab_size) to just enough to shift the line to the left margin.
+      // The value doesn't seem to matter as long as it is at least that
+      // distance.
+      if (left && (t == 1)) {
+        tab_size = col;
+      } else {
+        tab_size = vts[t - (left ? 1 : 0)];
+      }
       break;
     }
   }
-  if (t > tabcount) {
+  if (t > tabcount) {  // If the value of the index t is beyond the
+                       // end of the list, use the tab stop value at
+                       // the end of the list.
     tab_size = vts[tabcount];
   }
 
@@ -311,35 +329,35 @@ int tabstop_first(colnr_T *ts)
 /// 'tabstop' value when 'shiftwidth' is zero.
 int get_sw_value(buf_T *buf)
 {
-  int result = get_sw_value_col(buf, 0);
+  int result = get_sw_value_col(buf, 0, false);
   return result;
 }
 
 /// Idem, using "pos".
-int get_sw_value_pos(buf_T *buf, pos_T *pos)
+int get_sw_value_pos(buf_T *buf, pos_T *pos, bool left)
 {
   pos_T save_cursor = curwin->w_cursor;
 
   curwin->w_cursor = *pos;
-  int sw_value = get_sw_value_col(buf, get_nolist_virtcol());
+  int sw_value = get_sw_value_col(buf, get_nolist_virtcol(), left);
   curwin->w_cursor = save_cursor;
   return sw_value;
 }
 
 /// Idem, using the first non-black in the current line.
-int get_sw_value_indent(buf_T *buf)
+int get_sw_value_indent(buf_T *buf, bool left)
 {
   pos_T pos = curwin->w_cursor;
 
   pos.col = (colnr_T)getwhitecols_curline();
-  return get_sw_value_pos(buf, &pos);
+  return get_sw_value_pos(buf, &pos, left);
 }
 
 /// Idem, using virtual column "col".
-int get_sw_value_col(buf_T *buf, colnr_T col)
+int get_sw_value_col(buf_T *buf, colnr_T col, bool left)
 {
   return buf->b_p_sw ? (int)buf->b_p_sw
-                     : tabstop_at(col, buf->b_p_ts, buf->b_p_vts_array);
+                     : tabstop_at(col, buf->b_p_ts, buf->b_p_vts_array, left);
 }
 
 /// Return the effective softtabstop value for the current buffer,
@@ -751,9 +769,15 @@ int get_number_indent(linenr_T lnum)
   return (int)col;
 }
 
+/// Check "briopt" as 'breakindentopt' and update the members of "wp".
 /// This is called when 'breakindentopt' is changed and when a window is
 /// initialized
-bool briopt_check(win_T *wp)
+///
+/// @param briopt  when NULL: use "wp->w_p_briopt"
+/// @param wp      when NULL: only check "briopt"
+///
+/// @return  FAIL for failure, OK otherwise.
+bool briopt_check(char *briopt, win_T *wp)
 {
   int bri_shift = 0;
   int bri_min = 20;
@@ -761,7 +785,13 @@ bool briopt_check(win_T *wp)
   int bri_list = 0;
   int bri_vcol = 0;
 
-  char *p = wp->w_p_briopt;
+  char *p = empty_string_option;
+  if (briopt != NULL) {
+    p = briopt;
+  } else if (wp != NULL) {
+    p = wp->w_p_briopt;
+  }
+
   while (*p != NUL) {
     // Note: Keep this in sync with p_briopt_values
     if (strncmp(p, "shift:", 6) == 0
@@ -787,6 +817,10 @@ bool briopt_check(win_T *wp)
     if (*p == ',') {
       p++;
     }
+  }
+
+  if (wp == NULL) {
+    return OK;
   }
 
   wp->w_briopt_shift = bri_shift;
@@ -873,7 +907,17 @@ int get_breakindent_win(win_T *wp, char *line)
           if (wp->w_briopt_list > 0) {
             prev_list += wp->w_briopt_list;
           } else {
-            prev_indent = (int)(*regmatch.endp - *regmatch.startp);
+            char *ptr = *regmatch.startp;
+            char *end_ptr = *regmatch.endp;
+            int indent = 0;
+            // Compute the width of the matched text.
+            // Use win_chartabsize() so that TAB size is correct,
+            // while wrapping is ignored.
+            while (ptr < end_ptr) {
+              indent += win_chartabsize(wp, ptr, indent);
+              MB_PTR_ADV(ptr);
+            }
+            prev_indent = indent;
           }
         }
         vim_regfree(regmatch.regprog);
@@ -1143,7 +1187,7 @@ int get_expr_indent(void)
   // Need to make a copy, the 'indentexpr' option could be changed while
   // evaluating it.
   char *inde_copy = xstrdup(curbuf->b_p_inde);
-  int indent = (int)eval_to_number(inde_copy);
+  int indent = (int)eval_to_number(inde_copy, true);
   xfree(inde_copy);
 
   if (use_sandbox) {
@@ -1389,7 +1433,7 @@ void fixthisline(IndentGetter get_the_indent)
     return;
   }
 
-  change_indent(INDENT_SET, amount, false, 0, true);
+  change_indent(INDENT_SET, amount, false, true);
   if (linewhite(curwin->w_cursor.lnum)) {
     did_ai = true;  // delete the indent if the line stays empty
   }

@@ -18,6 +18,7 @@
 #include "nvim/bufwrite.h"
 #include "nvim/change.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds.h"
@@ -260,11 +261,8 @@ static int buf_write_convert(struct bw_info *ip, char **bufp, int *lenp)
           ip->bw_restlen += *lenp;
           break;
         }
-        if (n > 1) {
-          c = (unsigned)utf_ptr2char((char *)ip->bw_rest);
-        } else {
-          c = ip->bw_rest[0];
-        }
+        c = (n > 1) ? (unsigned)utf_ptr2char((char *)ip->bw_rest)
+                    : ip->bw_rest[0];
         if (n >= ip->bw_restlen) {
           n -= ip->bw_restlen;
           ip->bw_restlen = 0;
@@ -288,11 +286,8 @@ static int buf_write_convert(struct bw_info *ip, char **bufp, int *lenp)
                   (size_t)ip->bw_restlen);
           break;
         }
-        if (n > 1) {
-          c = (unsigned)utf_ptr2char(*bufp + wlen);
-        } else {
-          c = (uint8_t)(*bufp)[wlen];
-        }
+        c = n > 1 ? (unsigned)utf_ptr2char(*bufp + wlen)
+                  : (uint8_t)(*bufp)[wlen];
       }
 
       if (ucs2bytes(c, &p, flags) && !ip->bw_conv_error) {
@@ -820,10 +815,6 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
       // Isolate one directory name, using an entry in 'bdir'.
       size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
       char *p = IObuff + dir_len;
-      bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
-      if (trailing_pathseps) {
-        IObuff[dir_len - 2] = NUL;
-      }
       if (*dirp == NUL && !os_isdir(IObuff)) {
         int ret;
         char *failed_dir;
@@ -833,9 +824,9 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
           xfree(failed_dir);
         }
       }
-      if (trailing_pathseps) {
+      if (after_pathsep(IObuff, p) && p[-1] == p[-2]) {
         // Ends with '//', Use Full path
-        if ((p = make_percent_swname(IObuff, fname))
+        if ((p = make_percent_swname(IObuff, p, fname))
             != NULL) {
           *backupp = modname(p, backup_ext, no_prepend_dot);
           xfree(p);
@@ -879,9 +870,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
             // Change one character, just before the extension.
             //
             char *wp = *backupp + strlen(*backupp) - 1 - strlen(backup_ext);
-            if (wp < *backupp) {                // empty file name ???
-              wp = *backupp;
-            }
+            wp = MAX(wp, *backupp);  // empty file name ???
             *wp = 'z';
             while (*wp > 'a' && os_fileinfo(*backupp, &file_info_new)) {
               (*wp)--;
@@ -962,10 +951,6 @@ nobackup:
       // Isolate one directory name and make the backup file name.
       size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
       char *p = IObuff + dir_len;
-      bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
-      if (trailing_pathseps) {
-        IObuff[dir_len - 2] = NUL;
-      }
       if (*dirp == NUL && !os_isdir(IObuff)) {
         int ret;
         char *failed_dir;
@@ -975,9 +960,9 @@ nobackup:
           xfree(failed_dir);
         }
       }
-      if (trailing_pathseps) {
+      if (after_pathsep(IObuff, p) && p[-1] == p[-2]) {
         // path ends with '//', use full path
-        if ((p = make_percent_swname(IObuff, fname))
+        if ((p = make_percent_swname(IObuff, p, fname))
             != NULL) {
           *backupp = modname(p, backup_ext, no_prepend_dot);
           xfree(p);
@@ -1000,9 +985,7 @@ nobackup:
         // Change one character, just before the extension.
         if (!p_bk && os_path_exists(*backupp)) {
           p = *backupp + strlen(*backupp) - 1 - strlen(backup_ext);
-          if (p < *backupp) {           // empty file name ???
-            p = *backupp;
-          }
+          p = MAX(p, *backupp);  // empty file name ???
           *p = 'z';
           while (*p > 'a' && os_path_exists(*backupp)) {
             (*p)--;
@@ -1065,7 +1048,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   bool whole = (start == 1 && end == buf->b_ml.ml_line_count);
   bool write_undo_file = false;
   context_sha256_T sha_ctx;
-  unsigned bkc = get_bkc_value(buf);
+  unsigned bkc = get_bkc_flags(buf);
 
   if (fname == NULL || *fname == NUL) {  // safety check
     return FAIL;
@@ -1262,9 +1245,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     status_redraw_all();            // redraw status lines later
   }
 
-  if (end > buf->b_ml.ml_line_count) {
-    end = buf->b_ml.ml_line_count;
-  }
+  end = MIN(end, buf->b_ml.ml_line_count);
   if (buf->b_ml.ml_flags & ML_EMPTY) {
     start = end + 1;
   }

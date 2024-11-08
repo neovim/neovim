@@ -643,8 +643,8 @@ msgstr " Кориснички дефинисано довршавање (^U^N^P)
 msgid " Omni completion (^O^N^P)"
 msgstr " Omni довршавање (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Правописни предлог (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Правописни предлог (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Довршавање локалне кључне речи (^N^P)"
@@ -3002,8 +3002,8 @@ msgstr " Кориснички дефинисано довршавање (^U^N^P)
 msgid " Omni completion (^O^N^P)"
 msgstr " Omni довршавање (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Правописни предлог (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Правописни предлог (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Довршавање локалне кључне речи (^N^P)"
@@ -4048,8 +4048,8 @@ msgstr ""
 msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) Сесија уређивања ове датотеке се срушила.\n"
 
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Ако је ово случај, користите \":recover\" или \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Ако је ово случај, користите \":recover\" или \"nvim -r "
 
 msgid ""
 "\"\n"

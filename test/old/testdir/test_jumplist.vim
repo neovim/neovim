@@ -19,7 +19,7 @@ func Test_getjumplist()
   for i in range(1, 100)
     call add(lines, "Line " . i)
   endfor
-  call writefile(lines, "Xtest")
+  call writefile(lines, "Xtest", 'D')
 
   " Jump around and create a jump list
   edit Xtest
@@ -61,33 +61,65 @@ func Test_getjumplist()
   clearjumps
   call test_garbagecollect_now()
   call assert_equal(4, l[1])
-
-  call delete("Xtest")
 endfunc
 
-func Test_jumplist_invalid()
+func Test_jumplist_wipe_buf()
   new
   clearjumps
-  " put some randome text
-  put ='a'
-  let prev = bufnr('%')
+  " Put some random text and fill the jump list.
+  call setline(1, ['foo', 'bar', 'baz'])
+  normal G
+  normal gg
   setl nomodified bufhidden=wipe
   e XXJumpListBuffer
-  let bnr = bufnr('%')
-  " 1) empty jumplist
-  let expected = [[
-   \ {'lnum': 2, 'bufnr': prev, 'col': 0, 'coladd': 0}], 1]
-  call assert_equal(expected, getjumplist())
+  " The jump list is empty as the buffer was wiped out.
+  call assert_equal([[], 0], getjumplist())
   let jumps = execute(':jumps')
   call assert_equal('>', jumps[-1:])
-  " now jump back
-  exe ":norm! \<c-o>"
-  let expected = [[
-    \ {'lnum': 2, 'bufnr': prev, 'col': 0, 'coladd': 0},
-    \ {'lnum': 1, 'bufnr': bnr,  'col': 0, 'coladd': 0}], 0]
-  call assert_equal(expected, getjumplist())
-  let jumps = execute(':jumps')
-  call assert_match('>  0     2    0 -invalid-', jumps)
+
+  " Put some random text and fill the jump list.
+  call setline(1, ['foo', 'bar', 'baz'])
+  setl bufhidden=hide
+
+  " References to wiped buffer are deleted with multiple tabpages.
+  let [w1, t1] = [win_getid(), tabpagenr()]
+  clearjumps
+  normal G
+  normal gg
+  enew
+
+  split XXJumpListBuffer
+  let [w2, t2] = [win_getid(), tabpagenr()]
+  clearjumps
+  normal G
+  normal gg
+  enew
+
+  tabnew XXJumpListBuffer
+  let [w3, t3] = [win_getid(), tabpagenr()]
+  clearjumps
+  normal G
+  normal gg
+  enew
+
+  split XXJumpListBuffer
+  let [w4, t4] = [win_getid(), tabpagenr()]
+  clearjumps
+  normal G
+  normal gg
+  enew
+
+  for [w, t] in [[w1, t1], [w2, t2], [w3, t3], [w4, t4]]
+    call assert_equal(2, len(getjumplist(w, t)[0]))
+  endfor
+
+  bwipe! XXJumpListBuffer
+
+  for [w, t] in [[w1, t1], [w2, t2], [w3, t3], [w4, t4]]
+    call assert_equal(0, len(getjumplist(w, t)[0]))
+  endfor
+
+  %bwipe!
 endfunc
 
 " Test for '' mark in an empty buffer

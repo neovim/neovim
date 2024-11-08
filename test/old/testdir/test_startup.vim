@@ -163,6 +163,7 @@ endfunc
 " horizontally or vertically.
 func Test_o_arg()
   let after =<< trim [CODE]
+    set cpo&vim
     call writefile([winnr("$"),
 		\ winheight(1), winheight(2), &lines,
 		\ winwidth(1), winwidth(2), &columns,
@@ -1274,5 +1275,37 @@ func Test_write_in_vimrc()
   endif
   call delete('Xvimrc')
 endfunc
+
+func Test_echo_true_in_cmd()
+  CheckNotGui
+
+  let lines =<< trim END
+      echo v:true
+      call writefile(['done'], 'Xresult')
+      quit
+  END
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--cmd "source Xscript"')
+    call assert_equal(['done'], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
+endfunc
+
+func Test_rename_buffer_on_startup()
+  CheckUnix
+
+  let lines =<< trim END
+      call writefile(['done'], 'Xresult')
+      qa!
+  END
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], "--clean -e -s --cmd 'file x|new|file x' --cmd 'so Xscript'")
+    call assert_equal(['done'], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

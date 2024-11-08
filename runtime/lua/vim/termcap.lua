@@ -17,10 +17,8 @@ local M = {}
 ---           otherwise. {seq} is the control sequence for the capability if found, or nil for
 ---           boolean capabilities.
 function M.query(caps, cb)
-  vim.validate({
-    caps = { caps, { 'string', 'table' } },
-    cb = { cb, 'f' },
-  })
+  vim.validate('caps', caps, { 'string', 'table' })
+  vim.validate('cb', cb, 'function')
 
   if type(caps) ~= 'table' then
     caps = { caps }
@@ -40,7 +38,7 @@ function M.query(caps, cb)
       local k, rest = resp:match('^\027P1%+r(%x+)(.*)$')
       if k and rest then
         local cap = vim.text.hexdecode(k)
-        if not pending[cap] then
+        if not cap or not pending[cap] then
           -- Received a response for a capability we didn't request. This can happen if there are
           -- multiple concurrent XTGETTCAP requests
           return

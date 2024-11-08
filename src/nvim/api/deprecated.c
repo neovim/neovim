@@ -170,7 +170,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
   DecorInline decor = { .ext = true, .data.ext.vt = vt, .data.ext.sh_idx = DECOR_ID_INVALID };
 
   extmark_set(buf, ns_id, NULL, (int)line, 0, -1, -1, decor, 0, true,
-              false, false, false, false, NULL);
+              false, false, false, NULL);
   return src_id;
 }
 
@@ -183,11 +183,11 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
 /// @param[out] err Error details, if any
 /// @return Highlight definition map
 /// @see nvim_get_hl_by_name
-Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *err)
+Dict nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
   FUNC_API_DEPRECATED_SINCE(9)
 {
-  Dictionary dic = ARRAY_DICT_INIT;
+  Dict dic = ARRAY_DICT_INIT;
   VALIDATE_INT((syn_get_final_id((int)hl_id) != 0), "highlight id", hl_id, {
     return dic;
   });
@@ -204,11 +204,11 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *er
 /// @param[out] err Error details, if any
 /// @return Highlight definition map
 /// @see nvim_get_hl_by_id
-Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *err)
+Dict nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
   FUNC_API_DEPRECATED_SINCE(9)
 {
-  Dictionary result = ARRAY_DICT_INIT;
+  Dict result = ARRAY_DICT_INIT;
   int id = syn_name2id(name.data);
 
   VALIDATE_S((id != 0), "highlight name", name.data, {
@@ -515,7 +515,7 @@ static int64_t convert_index(int64_t index)
 /// @param          name Option name
 /// @param[out] err Error details, if any
 /// @return         Option Information
-Dictionary nvim_get_option_info(String name, Arena *arena, Error *err)
+Dict nvim_get_option_info(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_DEPRECATED_SINCE(11)
 {
@@ -633,6 +633,36 @@ void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object
   set_option_to(channel_id, win, kOptReqWin, name, value, err);
 }
 
+/// Check if option has a value in the requested scope.
+///
+/// @param  opt_idx    Option index in options[] table.
+/// @param  req_scope  Requested option scope. See OptReqScope in option.h.
+///
+/// @return  true if option has a value in the requested scope, false otherwise.
+static bool option_has_scope(OptIndex opt_idx, OptReqScope req_scope)
+{
+  if (opt_idx == kOptInvalid) {
+    return false;
+  }
+
+  vimoption_T *opt = get_option(opt_idx);
+
+  // TTY option.
+  if (is_tty_option(opt->fullname)) {
+    return req_scope == kOptReqGlobal;
+  }
+
+  switch (req_scope) {
+  case kOptReqGlobal:
+    return opt->var != VAR_WIN;
+  case kOptReqBuf:
+    return opt->indir & PV_BUF;
+  case kOptReqWin:
+    return opt->indir & PV_WIN;
+  }
+  UNREACHABLE;
+}
+
 /// Gets the value of a global or local (buffer, window) option.
 ///
 /// @param[in]   from       Pointer to buffer or window for local option value.
@@ -647,9 +677,15 @@ static Object get_option_from(void *from, OptReqScope req_scope, String name, Er
     return (Object)OBJECT_INIT;
   });
 
-  OptVal value = get_option_value_strict(find_option(name.data), req_scope, from, err);
-  if (ERROR_SET(err)) {
-    return (Object)OBJECT_INIT;
+  OptIndex opt_idx = find_option(name.data);
+  OptVal value = NIL_OPTVAL;
+
+  if (option_has_scope(opt_idx, req_scope)) {
+    value = get_option_value_for(opt_idx, req_scope == kOptReqGlobal ? OPT_GLOBAL : OPT_LOCAL,
+                                 req_scope, from, err);
+    if (ERROR_SET(err)) {
+      return (Object)OBJECT_INIT;
+    }
   }
 
   VALIDATE_S(value.type != kOptValTypeNil, "option name", name.data, {

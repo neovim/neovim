@@ -36,7 +36,7 @@ describe('maparg()', function()
     lnum = 0,
   }
 
-  it('returns a dictionary', function()
+  it('returns a dict', function()
     command('nnoremap foo bar')
     eq('bar', fn.maparg('foo'))
     eq(foo_bar_map_table, fn.maparg('foo', 'n', false, true))
@@ -54,7 +54,7 @@ describe('maparg()', function()
     eq('', fn.maparg('not a mapping'))
   end)
 
-  it('returns an empty dictionary when no map is present and dict is requested', function()
+  it('returns an empty dict when no map is present and dict is requested', function()
     eq({}, fn.maparg('not a mapping', 'n', false, true))
   end)
 

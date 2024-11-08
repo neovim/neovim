@@ -72,14 +72,19 @@ local keysets = {}
 local function add_keyset(val)
   local keys = {}
   local types = {}
+  local c_names = {}
   local is_set_name = 'is_set__' .. val.keyset_name .. '_'
   local has_optional = false
   for i, field in ipairs(val.fields) do
+    local dict_key = field.dict_key or field.name
     if field.type ~= 'Object' then
-      types[field.name] = field.type
+      types[dict_key] = field.type
     end
     if field.name ~= is_set_name and field.type ~= 'OptionalKeys' then
-      table.insert(keys, field.name)
+      table.insert(keys, dict_key)
+      if dict_key ~= field.name then
+        c_names[dict_key] = field.name
+      end
     else
       if i > 1 then
         error("'is_set__{type}_' must be first if present")
@@ -94,6 +99,7 @@ local function add_keyset(val)
   table.insert(keysets, {
     name = val.keyset_name,
     keys = keys,
+    c_names = c_names,
     types = types,
     has_optional = has_optional,
   })
@@ -210,15 +216,15 @@ for _, f in ipairs(functions) do
     end
     f_exported.parameters = {}
     for i, param in ipairs(f.parameters) do
-      if param[1] == 'DictionaryOf(LuaRef)' then
-        param = { 'Dictionary', param[2] }
+      if param[1] == 'DictOf(LuaRef)' then
+        param = { 'Dict', param[2] }
       elseif startswith(param[1], 'Dict(') then
-        param = { 'Dictionary', param[2] }
+        param = { 'Dict', param[2] }
       end
       f_exported.parameters[i] = param
     end
     if startswith(f.return_type, 'Dict(') then
-      f_exported.return_type = 'Dictionary'
+      f_exported.return_type = 'Dict'
     end
     exported_functions[#exported_functions + 1] = f_exported
   end
@@ -306,6 +312,7 @@ local keysets_defs = assert(io.open(keysets_outputf, 'wb'))
 --  so that the dispatcher can find the C functions that you are creating!
 -- ===========================================================================
 output:write([[
+#include "nvim/errors.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/globals.h"
@@ -331,19 +338,6 @@ output:write([[
 keysets_defs:write('// IWYU pragma: private, include "nvim/api/private/dispatch.h"\n\n')
 
 for _, k in ipairs(keysets) do
-  local c_name = {}
-
-  for i = 1, #k.keys do
-    -- some keys, like "register" are c keywords and get
-    -- escaped with a trailing _ in the struct.
-    if vim.endswith(k.keys[i], '_') then
-      local orig = k.keys[i]
-      k.keys[i] = string.sub(k.keys[i], 1, #k.keys[i] - 1)
-      c_name[k.keys[i]] = orig
-      k.types[k.keys[i]] = k.types[orig]
-    end
-  end
-
   local neworder, hashfun = hashy.hashy_hash(k.name, k.keys, function(idx)
     return k.name .. '_table[' .. idx .. '].str'
   end)
@@ -353,6 +347,8 @@ for _, k in ipairs(keysets) do
   local function typename(type)
     if type == 'HLGroupID' then
       return 'kObjectTypeInteger'
+    elseif type == 'StringArray' then
+      return 'kUnpackTypeStringArray'
     elseif type ~= nil then
       return 'kObjectType' .. type
     else
@@ -373,7 +369,7 @@ for _, k in ipairs(keysets) do
         .. '", offsetof(KeyDict_'
         .. k.name
         .. ', '
-        .. (c_name[key] or key)
+        .. (k.c_names[key] or key)
         .. '), '
         .. typename(k.types[key])
         .. ', '
@@ -410,7 +406,7 @@ local function real_type(type)
     if rv:match('Array') then
       rv = 'Array'
     else
-      rv = 'Dictionary'
+      rv = 'Dict'
     end
   end
   return rv
@@ -470,7 +466,7 @@ for i = 1, #functions do
         output:write('\n  ' .. converted .. ' = args.items[' .. (j - 1) .. '];\n')
       elseif rt:match('^KeyDict_') then
         converted = '&' .. converted
-        output:write('\n  if (args.items[' .. (j - 1) .. '].type == kObjectTypeDictionary) {') --luacheck: ignore 631
+        output:write('\n  if (args.items[' .. (j - 1) .. '].type == kObjectTypeDict) {') --luacheck: ignore 631
         output:write('\n    memset(' .. converted .. ', 0, sizeof(*' .. converted .. '));') -- TODO: neeeee
         output:write(
           '\n    if (!api_dict_to_keydict('
@@ -479,7 +475,7 @@ for i = 1, #functions do
             .. rt
             .. '_get_field, args.items['
             .. (j - 1)
-            .. '].data.dictionary, error)) {'
+            .. '].data.dict, error)) {'
         )
         output:write('\n      goto cleanup;')
         output:write('\n    }')
@@ -558,7 +554,7 @@ for i = 1, #functions do
           )
         end
         -- accept empty lua tables as empty dictionaries
-        if rt:match('^Dictionary') then
+        if rt:match('^Dict') then
           output:write(
             '\n  } else if (args.items['
               .. (j - 1)
@@ -566,7 +562,7 @@ for i = 1, #functions do
               .. (j - 1)
               .. '].data.array.size == 0) {'
           ) --luacheck: ignore 631
-          output:write('\n    ' .. converted .. ' = (Dictionary)ARRAY_DICT_INIT;')
+          output:write('\n    ' .. converted .. ' = (Dict)ARRAY_DICT_INIT;')
         end
         output:write('\n  } else {')
         output:write(
@@ -647,7 +643,7 @@ for i = 1, #functions do
     if string.match(ret_type, '^KeyDict_') then
       local table = string.sub(ret_type, 9) .. '_table'
       output:write(
-        '\n  ret = DICTIONARY_OBJ(api_keydict_to_dict(&rv, '
+        '\n  ret = DICT_OBJ(api_keydict_to_dict(&rv, '
           .. table
           .. ', ARRAY_SIZE('
           .. table
@@ -783,12 +779,12 @@ local function process_function(fn)
     local param = fn.parameters[j]
     local cparam = string.format('arg%u', j)
     local param_type = real_type(param[1])
-    local extra = param_type == 'Dictionary' and 'false, ' or ''
+    local extra = param_type == 'Dict' and 'false, ' or ''
     local arg_free_code = ''
     if param[1] == 'Object' then
       extra = 'true, '
       arg_free_code = 'api_luarefs_free_object(' .. cparam .. ');'
-    elseif param[1] == 'DictionaryOf(LuaRef)' then
+    elseif param[1] == 'DictOf(LuaRef)' then
       extra = 'true, '
       arg_free_code = 'api_luarefs_free_dict(' .. cparam .. ');'
     elseif param[1] == 'LuaRef' then

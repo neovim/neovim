@@ -45,7 +45,7 @@ describe('78', function()
       silent recover Xtest
 
       call delete(g:swapname)
-      new
+      noswapfile new
       call append(0, 'recovery start')
       wincmd w
 

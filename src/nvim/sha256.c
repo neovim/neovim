@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "nvim/ascii_defs.h"
 #include "nvim/memory.h"
 #include "nvim/sha256.h"
 
@@ -222,18 +223,15 @@ static uint8_t sha256_padding[SHA256_BUFFER_SIZE] = {
 
 void sha256_finish(context_sha256_T *ctx, uint8_t digest[SHA256_SUM_SIZE])
 {
-  uint32_t last, padn;
-  uint32_t high, low;
+  uint32_t high = (ctx->total[0] >> 29) | (ctx->total[1] <<  3);
+  uint32_t low = (ctx->total[0] <<  3);
+
   uint8_t msglen[8];
-
-  high = (ctx->total[0] >> 29) | (ctx->total[1] <<  3);
-  low = (ctx->total[0] <<  3);
-
   PUT_UINT32(high, msglen, 0);
   PUT_UINT32(low,  msglen, 4);
 
-  last = ctx->total[0] & 0x3F;
-  padn = (last < 56) ? (56 - last) : (120 - last);
+  uint32_t last = ctx->total[0] & 0x3F;
+  uint32_t padn = (last < 56) ? (56 - last) : (120 - last);
 
   sha256_update(ctx, sha256_padding, padn);
   sha256_update(ctx, msglen,            8);
@@ -262,24 +260,24 @@ void sha256_finish(context_sha256_T *ctx, uint8_t digest[SHA256_SUM_SIZE])
 const char *sha256_bytes(const uint8_t *restrict buf,  size_t buf_len, const uint8_t *restrict salt,
                          size_t salt_len)
 {
-  uint8_t sha256sum[SHA256_SUM_SIZE];
   static char hexit[SHA256_BUFFER_SIZE + 1];  // buf size + NULL
-  context_sha256_T ctx;
 
   sha256_self_test();
 
+  context_sha256_T ctx;
   sha256_start(&ctx);
   sha256_update(&ctx, buf, buf_len);
 
   if (salt != NULL) {
     sha256_update(&ctx, salt, salt_len);
   }
+  uint8_t sha256sum[SHA256_SUM_SIZE];
   sha256_finish(&ctx, sha256sum);
 
   for (size_t j = 0; j < SHA256_SUM_SIZE; j++) {
     snprintf(hexit + j * SHA_STEP, SHA_STEP + 1, "%02x", sha256sum[j]);
   }
-  hexit[sizeof(hexit) - 1] = '\0';
+  hexit[sizeof(hexit) - 1] = NUL;
   return hexit;
 }
 
@@ -340,7 +338,7 @@ bool sha256_self_test(void)
 
     if (memcmp(output, sha_self_test_vector[i], SHA256_BUFFER_SIZE) != 0) {
       failures = true;
-      output[sizeof(output) - 1] = '\0';
+      output[sizeof(output) - 1] = NUL;
 
       // printf("sha256_self_test %d failed %s\n", i, output);
     }

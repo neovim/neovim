@@ -62,11 +62,12 @@ Defaults                                                    *nvim-defaults*
 - 'isfname' does not include ":" (on Windows). Drive letters are handled
   correctly without it. (Use |gF| for filepaths suffixed with ":line:col").
 - 'joinspaces' is disabled
+- 'jumpoptions' defaults to "clean"
 - 'langnoremap' is enabled
 - 'langremap' is disabled
 - 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
-- 'mouse' defaults to "nvi"
+- 'mouse' defaults to "nvi", see |default-mouse| for details
 - 'mousemodel' defaults to "popup_setpos"
 - 'nrformats' defaults to "bin,hex"
 - 'path' defaults to ".,,". The C ftplugin adds "/usr/include" if it exists.
@@ -100,28 +101,35 @@ Defaults                                                    *nvim-defaults*
 
 DEFAULT MOUSE
                                                 *default-mouse* *disable-mouse*
-By default the mouse is enabled, and <RightMouse> opens a |popup-menu| with
-standard actions ("Cut", "Copy", "Paste", …). Mouse is NOT enabled in
-|command-mode| or the |more-prompt|, so you can temporarily disable it just by
-typing ":".
+By default the mouse is enabled. This means |scroll-mouse-wheel| will scroll
+the window instead of moving the cursor; <LeftMouse> click places the cursor;
+and <RightMouse> click opens the default |popup-menu| with standard actions.
 
-If you don't like this you can disable the mouse in your |config| using any of
-the following:
+Mouse is NOT enabled in |Cmdline-mode| or the |more-prompt|, so you can
+temporarily disable it just by typing ":". Or if you want to partially or
+fully disable the mouse or popup-menu, do any of the following:
+
 - Disable mouse completely by unsetting the 'mouse' option: >vim
   set mouse=
-- Pressing <RightMouse> extends selection instead of showing popup-menu: >vim
+- Change the 'mousemodel', so <RightMouse> extends selection instead of
+  showing the popup-menu: >vim
   set mousemodel=extend
-- Pressing <A-LeftMouse> releases mouse until the cursor moves:  >vim
+- Map <A-LeftMouse> so that it temporarily disables mouse until the cursor
+  moves:  >vim
   nnoremap <A-LeftMouse> <Cmd>
     \ set mouse=<Bar>
     \ echo 'mouse OFF until next cursor-move'<Bar>
     \ autocmd CursorMoved * ++once set mouse&<Bar>
     \ echo 'mouse ON'<CR>
 <
-To remove the "How-to disable mouse" menu item and the separator above it: >vim
+To remove the default popup-menu without disabling mouse: >vim
+  aunmenu PopUp
+  autocmd! nvim_popupmenu
+
+To remove only the "How-to disable mouse" menu item (and its separator): >vim
   aunmenu PopUp.How-to\ disable\ mouse
-  aunmenu PopUp.-1-
-<
+  aunmenu PopUp.-2-
+
 DEFAULT MAPPINGS
                                                         *default-mappings*
 Nvim creates the following default mappings at |startup|. You can disable any
@@ -142,12 +150,20 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
   - |grn|
   - |grr|
   - |gra|
+  - |gri|
+  - |gO|
 - <C-S> |i_CTRL-S|
 - ]d |]d-default|
 - [d |[d-default|
 - [D |[D-default|
 - ]D |]D-default|
 - <C-W>d |CTRL-W_d-default|
+- |[q|, |]q|, |[Q|, |]Q|, |[CTRL-Q|, |]CTRL-Q|
+- |[l|, |]l|, |[L|, |]L|, |[CTRL-L|, |]CTRL-L|
+- |[t|, |]t|, |[T|, |]T|, |[CTRL-T|, |]CTRL-T|
+- |[a|, |]a|, |[A|, |]A|
+- |[b|, |]b|, |[B|, |]B|
+- |[<Space>|, |]<Space>|
 - Nvim LSP client defaults |lsp-defaults|
   - K |K-lsp-default|
 
@@ -166,6 +182,14 @@ nvim_terminal:
   when 'background' is "light". While this may not reflect the actual
   foreground/background color, it permits 'background' to be retained for a
   nested Nvim instance running in the terminal emulator.
+- TermOpen: Sets default options for |terminal| buffers:
+    - 'nomodifiable'
+    - 'undolevels' set to -1
+    - 'textwidth' set to 0
+    - 'nowrap'
+    - 'nolist'
+    - 'winhighlight' uses |hl-StatusLineTerm| and |hl-StatusLineTermNC| in
+      place of |hl-StatusLine| and |hl-StatusLineNC|
 
 nvim_cmdwin:
 - CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
@@ -227,7 +251,7 @@ backwards-compatibility cost. Some examples:
 
 Some features are built in that otherwise required external plugins:
 
-- Highlighting the yanked region, see |vim.highlight|.
+- Highlighting the yanked region, see |vim.hl|.
 
 ARCHITECTURE
 
@@ -317,10 +341,8 @@ Normal commands:
 
 Options:
 
-Local values for global-local number/boolean options are unset when the option
-is set without a scope (e.g. by using |:set|), similarly to how global-local
-string options work.
-
+- `:set {option}<` removes local value for all |global-local| options.
+- `:setlocal {option}<` copies global value to local value for all options.
 - 'autoread'    works in the terminal (if it supports "focus" events)
 - 'cpoptions'   flags: |cpo-_|
 - 'diffopt'     "linematch" feature
@@ -332,7 +354,9 @@ string options work.
 - 'guicursor'   works in the terminal (TUI)
 - 'inccommand'  shows interactive results for |:substitute|-like commands
                 and |:command-preview| commands
-- 'jumpoptions' "view" tries to restore the |mark-view| when moving through
+- 'jumpoptions'
+    - "view" tries to restore |mark-view| when moving through the jumplist.
+    - "clean" removes unloaded buffers from the jumplist.
 - the |jumplist|, |changelist|, |alternate-file| or using |mark-motions|.
 - 'laststatus'  global statusline support
 - 'mousescroll' amount to scroll by when scrolling with a mouse
@@ -531,13 +555,16 @@ Functions:
 Highlight groups:
 - |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
   groups
-- |hl-CurSearch| highlights match under cursor instead of last match found
-  using |n| or |N|
 - |hl-CursorLine| is low-priority unless foreground color is set
 - |hl-VertSplit| superseded by |hl-WinSeparator|
 - Highlight groups names are allowed to contain `@` characters.
   - It is an error to define a highlight group with a name that doesn't match
     the regexp `[a-zA-Z0-9_.@-]*` (see |group-name|).
+- |hl-StatusLineTerm| |hl-StatusLineTermNC| are implemented as 'winhighlight'
+  window-local highlights which are set by the default |TermOpen| handler.
+- The |ins-completion-menu| has cascading highlight styles. |hl-PmenuSel| and
+  |hl-PmenuMatch| both inherit from |hl-Pmenu|, and |hl-PmenuMatchSel|
+  inherits highlights from both |hl-PmenuSel| and |hl-PmenuMatch|.
 
 Macro (|recording|) behavior:
 - Replay of a macro recorded during :lmap produces the same actions as when it
@@ -596,7 +623,12 @@ These legacy Vim features are not yet implemented:
 
 - *:gui*
 - *:gvim*
+- *'browsedir'* *'bsdir'*
 - *'completepopup'*
+- *'guioptions'* *'go'*
+- *'guitablabel'* *'gtl'*
+- *'guitabtooltip'* *'gtt'*
+- *'mouseshape'* *'mouses'*
 - *'previewpopup'*
 
 ==============================================================================
@@ -665,17 +697,6 @@ Events:
 - *SafeStateAgain*
 - *SigUSR1* Use |Signal| to detect `SIGUSR1` signal instead.
 
-Highlight groups:
-- *hl-StatusLineTerm* *hl-StatusLineTermNC* are unnecessary because Nvim
-  supports 'winhighlight' window-local highlights. For example, to mimic Vim's
-  StatusLineTerm:  >vim
-      hi StatusLineTerm ctermfg=black ctermbg=green
-      hi StatusLineTermNC ctermfg=green
-      autocmd TermOpen,WinEnter * if &buftype=='terminal'
-        \|setlocal winhighlight=StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC
-        \|else|setlocal winhighlight=|endif
-<
-
 Options:
 - *'aleph'* *'al'*
 - antialias
@@ -714,6 +735,8 @@ Options:
   CMD-v (macOS), middle-click, …).
 - *'imactivatefunc'* *'imaf'*
 - *'imactivatekey'* *'imak'*
+- *'imcmdline'* *'imc'* *'noimcmdline'* *'noimc'*
+- *'imdisable'* *'imd'* *'noimdisable'* *'noimd'*
 - *'imstatusfunc'* *'imsf'*
 - *'insertmode'* *'im'* Use the following script to emulate 'insertmode': >vim
     autocmd BufWinEnter * startinsert
@@ -751,6 +774,7 @@ Options:
     6 composing chars only.
 - *'maxmem'* Nvim delegates memory-management to the OS.
 - *'maxmemtot'* Nvim delegates memory-management to the OS.
+- *'opendevice'* *'odev'* *'noopendevice'* *'noodev'*
 - printoptions
 - *'printdevice'*
 - *'printencoding'*
@@ -785,6 +809,10 @@ Plugins:
 - logiPat
 - rrhelper
 - *vimball*
+- macmap.vim
+- tools/check_colors.vim
+- macros/{justify,matchit,shellmenu,swapmous}.vim: use `packadd! justify` etc.
+  directly
 
 Providers:
 

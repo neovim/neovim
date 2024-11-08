@@ -71,6 +71,11 @@ static inline void mpack_map(char **buf, uint32_t len)
   }
 }
 
+static inline size_t mpack_remaining(PackerBuffer *packer)
+{
+  return (size_t)(packer->endptr - packer->ptr);
+}
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/packer.h.generated.h"
 #endif

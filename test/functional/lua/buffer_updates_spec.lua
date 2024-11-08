@@ -27,30 +27,35 @@ local origlines = {
 
 before_each(function()
   clear()
-  exec_lua [[
-    local evname = ...
+  exec_lua(function()
     local events = {}
 
-    function test_register(bufnr, evname, id, changedtick, utf_sizes, preview)
+    function _G.test_register(bufnr, evname, id, changedtick, utf_sizes, preview)
       local function callback(...)
-        table.insert(events, {id, ...})
-        if test_unreg == id then
+        table.insert(events, { id, ... })
+        if _G.test_unreg == id then
           return true
         end
       end
-      local opts = {[evname]=callback, on_detach=callback, on_reload=callback, utf_sizes=utf_sizes, preview=preview}
+      local opts = {
+        [evname] = callback,
+        on_detach = callback,
+        on_reload = callback,
+        utf_sizes = utf_sizes,
+        preview = preview,
+      }
       if changedtick then
         opts.on_changedtick = callback
       end
       vim.api.nvim_buf_attach(bufnr, false, opts)
     end
 
-    function get_events()
+    function _G.get_events()
       local ret_events = events
       events = {}
       return ret_events
     end
-  ]]
+  end)
 end)
 
 describe('lua buffer event callbacks: on_lines', function()
@@ -257,13 +262,13 @@ describe('lua buffer event callbacks: on_lines', function()
 
   it('has valid cursor position while shifting', function()
     api.nvim_buf_set_lines(0, 0, -1, true, { 'line1' })
-    exec_lua([[
+    exec_lua(function()
       vim.api.nvim_buf_attach(0, false, {
         on_lines = function()
           vim.api.nvim_set_var('listener_cursor_line', vim.api.nvim_win_get_cursor(0)[1])
         end,
       })
-    ]])
+    end)
     feed('>>')
     eq(1, api.nvim_get_var('listener_cursor_line'))
   end)
@@ -277,19 +282,19 @@ describe('lua buffer event callbacks: on_lines', function()
   end)
 
   it('does not SEGFAULT when accessing window buffer info in on_detach #14998', function()
-    local code = [[
+    local code = function()
       local buf = vim.api.nvim_create_buf(false, false)
 
-      vim.cmd"split"
+      vim.cmd 'split'
       vim.api.nvim_win_set_buf(0, buf)
 
       vim.api.nvim_buf_attach(buf, false, {
-        on_detach = function(_, buf)
+        on_detach = function(_, buf0)
           vim.fn.tabpagebuflist()
-          vim.fn.win_findbuf(buf)
-        end
+          vim.fn.win_findbuf(buf0)
+        end,
       })
-    ]]
+    end
 
     exec_lua(code)
     command('q!')
@@ -302,13 +307,13 @@ describe('lua buffer event callbacks: on_lines', function()
 
   it('#12718 lnume', function()
     api.nvim_buf_set_lines(0, 0, -1, true, { '1', '2', '3' })
-    exec_lua([[
+    exec_lua(function()
       vim.api.nvim_buf_attach(0, false, {
         on_lines = function(...)
           vim.api.nvim_set_var('linesev', { ... })
         end,
       })
-    ]])
+    end)
     feed('1G0')
     feed('y<C-v>2j')
     feed('G0')
@@ -326,13 +331,13 @@ describe('lua buffer event callbacks: on_lines', function()
   end)
 
   it('nvim_buf_call() from callback does not cause wrong Normal mode CTRL-A #16729', function()
-    exec_lua([[
+    exec_lua(function()
       vim.api.nvim_buf_attach(0, false, {
-        on_lines = function(...)
+        on_lines = function()
           vim.api.nvim_buf_call(0, function() end)
         end,
       })
-    ]])
+    end)
     feed('itest123<Esc><C-A>')
     eq('test124', api.nvim_get_current_line())
   end)
@@ -342,19 +347,19 @@ describe('lua buffer event callbacks: on_lines', function()
     screen:attach()
 
     api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa', 'bbb', 'ccc' })
-    exec_lua([[
+    exec_lua(function()
       local ns = vim.api.nvim_create_namespace('')
       vim.api.nvim_buf_attach(0, false, {
         on_lines = function(_, _, _, row, _, end_row)
           vim.api.nvim_buf_clear_namespace(0, ns, row, end_row)
           for i = row, end_row - 1 do
-            local id = vim.api.nvim_buf_set_extmark(0, ns, i, 0, {
-              virt_text = {{ 'NEW' .. tostring(i), 'WarningMsg' }},
+            vim.api.nvim_buf_set_extmark(0, ns, i, 0, {
+              virt_text = { { 'NEW' .. tostring(i), 'WarningMsg' } },
             })
           end
         end,
       })
-    ]])
+    end)
 
     feed('o')
     screen:expect({
@@ -378,6 +383,25 @@ describe('lua buffer event callbacks: on_lines', function()
         {5:-- INSERT --}                            |
       ]],
     })
+  end)
+
+  it('line lengths are correct when pressing TAB with folding #29119', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'a', 'b' })
+
+    exec_lua(function()
+      _G.res = {}
+      vim.o.foldmethod = 'indent'
+      vim.o.softtabstop = -1
+      vim.api.nvim_buf_attach(0, false, {
+        on_lines = function(_, bufnr, _, row, _, end_row)
+          local lines = vim.api.nvim_buf_get_lines(bufnr, row, end_row, true)
+          table.insert(_G.res, lines)
+        end,
+      })
+    end)
+
+    feed('i<Tab>')
+    eq({ '\ta' }, exec_lua('return _G.res[#_G.res]'))
   end)
 end)
 

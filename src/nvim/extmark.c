@@ -54,12 +54,12 @@
 /// must not be used during iteration!
 void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col, int end_row,
                  colnr_T end_col, DecorInline decor, uint16_t decor_flags, bool right_gravity,
-                 bool end_right_gravity, bool no_undo, bool invalidate, bool scoped, Error *err)
+                 bool end_right_gravity, bool no_undo, bool invalidate, Error *err)
 {
   uint32_t *ns = map_put_ref(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, NULL, NULL);
   uint32_t id = idp ? *idp : 0;
 
-  uint16_t flags = mt_flags(right_gravity, no_undo, invalidate, decor.ext, scoped) | decor_flags;
+  uint16_t flags = mt_flags(right_gravity, no_undo, invalidate, decor.ext) | decor_flags;
   if (id == 0) {
     id = ++*ns;
   } else {
@@ -70,24 +70,19 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
         extmark_del_id(buf, ns_id, id);
       } else {
         assert(marktree_itr_valid(itr));
-        bool invalid = mt_invalid(old_mark);
         if (old_mark.pos.row == row && old_mark.pos.col == col) {
           // not paired: we can revise in place
-          if (!invalid && mt_decor_any(old_mark)) {
-            // TODO(bfredl): conflict of concerns: buf_decor_remove() must process
-            // the buffer as if MT_FLAG_DECOR_SIGNTEXT is already removed, however
-            // marktree must precisely adjust the set of flags from the old set to the new
-            uint16_t save_flags = mt_itr_rawkey(itr).flags;
-            mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_DECOR_SIGNTEXT;
+          if (!mt_invalid(old_mark) && mt_decor_any(old_mark)) {
+            mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_EXTERNAL_MASK;
             buf_decor_remove(buf, row, row, col, mt_decor(old_mark), true);
-            mt_itr_rawkey(itr).flags = save_flags;
           }
-          marktree_revise_flags(buf->b_marktree, itr, flags);
+          mt_itr_rawkey(itr).flags |= flags;
           mt_itr_rawkey(itr).decor_data = decor.data;
+          marktree_revise_meta(buf->b_marktree, itr, old_mark);
           goto revised;
         }
         marktree_del_itr(buf->b_marktree, itr, false);
-        if (!invalid) {
+        if (!mt_invalid(old_mark)) {
           buf_decor_remove(buf, old_mark.pos.row, old_mark.pos.row, old_mark.pos.col,
                            mt_decor(old_mark), true);
         }
@@ -116,16 +111,10 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
 {
   MarkTreeIter itr[1] = { 0 };
   MTKey key = marktree_lookup(buf->b_marktree, mark, itr);
-  if (key.pos.row < 0 || (key.pos.row == row && key.pos.col == col)) {
-    // Does this hold? If it doesn't, we should still revalidate.
-    assert(!invalid || !mt_invalid(key));
-    return;
-  }
-
-  // Key already revalidated(how?) Avoid adding to decor again.
-  if (invalid && !mt_invalid(key)) {
-    invalid = false;
-  }
+  bool move = key.pos.row >= 0 && (key.pos.row != row || key.pos.col != col);
+  // Already valid keys were being revalidated, presumably when encountering a
+  // SavePos from a modified mark. Avoid adding that to the decor again.
+  invalid = invalid && mt_invalid(key);
 
   // Only the position before undo needs to be redrawn here,
   // as the position after undo should be marked as changed.
@@ -137,19 +126,22 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
   int row2 = 0;
   if (invalid) {
     mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
-  } else if (key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
+    marktree_revise_meta(buf->b_marktree, itr, key);
+  } else if (move && key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
     MTPos end = marktree_get_altpos(buf->b_marktree, key, NULL);
     row1 = MIN(end.row, MIN(key.pos.row, row));
     row2 = MAX(end.row, MAX(key.pos.row, row));
     buf_signcols_count_range(buf, row1, row2, 0, kTrue);
   }
 
-  marktree_move(buf->b_marktree, itr, row, col);
+  if (move) {
+    marktree_move(buf->b_marktree, itr, row, col);
+  }
 
   if (invalid) {
     row2 = mt_paired(key) ? marktree_get_altpos(buf->b_marktree, key, NULL).row : row;
     buf_put_decor(buf, mt_decor(key), row, row2);
-  } else if (key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
+  } else if (move && key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
     buf_signcols_count_range(buf, row1, row2, 0, kNone);
   }
 }
@@ -398,6 +390,7 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
         } else {
           invalidated = true;
           mt_itr_rawkey(itr).flags |= MT_FLAG_INVALID;
+          marktree_revise_meta(buf->b_marktree, itr, mark);
           buf_decor_remove(buf, mark.pos.row, endpos.row, mark.pos.col, mt_decor(mark), false);
         }
       }

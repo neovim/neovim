@@ -367,7 +367,7 @@ describe('ui/mouse/input', function()
       })
     end)
 
-    it('left click in default tabline (position 4) switches to tab', function()
+    it('left click in default tabline (tabpage label) switches to tab', function()
       feed_command('%delete')
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
@@ -385,9 +385,47 @@ describe('ui/mouse/input', function()
         {0:~                        }|*2
                                  |
       ]])
+      feed('<LeftMouse><6,0>')
+      screen:expect_unchanged()
+      feed('<LeftMouse><10,0>')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r{0:$}             |
+        {0:~                        }|*2
+                                 |
+      ]])
+      feed('<LeftMouse><12,0>')
+      screen:expect_unchanged()
     end)
 
-    it('left click in default tabline (position 24) closes tab', function()
+    it('left click in default tabline (blank space) switches tab', function()
+      feed_command('%delete')
+      insert('this is foo')
+      feed_command('silent file foo | tabnew | file bar')
+      insert('this is bar')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r{0:$}             |
+        {0:~                        }|*2
+                                 |
+      ]])
+      feed('<LeftMouse><20,0>')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        {0:~                        }|*2
+                                 |
+      ]])
+      feed('<LeftMouse><22,0>')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r{0:$}             |
+        {0:~                        }|*2
+                                 |
+      ]])
+    end)
+
+    it('left click in default tabline (close label) closes tab', function()
       api.nvim_set_option_value('hidden', true, {})
       feed_command('%delete')
       insert('this is foo')
@@ -407,8 +445,7 @@ describe('ui/mouse/input', function()
       ]])
     end)
 
-    it('double click in default tabline (position 4) opens new tab', function()
-      api.nvim_set_option_value('hidden', true, {})
+    it('double click in default tabline opens new tab before', function()
       feed_command('%delete')
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
@@ -422,6 +459,34 @@ describe('ui/mouse/input', function()
       feed('<2-LeftMouse><4,0>')
       screen:expect([[
         {sel:  Name] }{tab: + foo  + bar }{fill:  }{tab:X}|
+        {0:^$}                        |
+        {0:~                        }|*2
+                                 |
+      ]])
+      command('tabclose')
+      screen:expect([[
+        {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+        this is fo^o              |
+        {0:~                        }|*2
+                                 |
+      ]])
+      feed('<2-LeftMouse><20,0>')
+      screen:expect([[
+        {tab: + foo  + bar }{sel:  Name] }{fill:  }{tab:X}|
+        {0:^$}                        |
+        {0:~                        }|*2
+                                 |
+      ]])
+      command('tabclose')
+      screen:expect([[
+        {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
+        this is ba^r{0:$}             |
+        {0:~                        }|*2
+                                 |
+      ]])
+      feed('<2-LeftMouse><10,0>')
+      screen:expect([[
+        {tab: + foo }{sel:  Name] }{tab: + bar }{fill:  }{tab:X}|
         {0:^$}                        |
         {0:~                        }|*2
                                  |
@@ -987,7 +1052,7 @@ describe('ui/mouse/input', function()
     command('set sidescroll=0')
     feed('<esc>:set nowrap<cr>')
 
-    feed('a <esc>20Ab<esc>')
+    feed('a <esc>17Ab<esc>3Ab<esc>')
     screen:expect([[
                                |*2
       bbbbbbbbbbbbbbb^b         |
@@ -1017,7 +1082,7 @@ describe('ui/mouse/input', function()
     command('set sidescroll=0')
     feed('<esc>:set nowrap<cr>')
 
-    feed('a <esc>20Ab<esc>')
+    feed('a <esc>17Ab<esc>3Ab<esc>')
     screen:expect([[
                                |*2
       bbbbbbbbbbbbbbb^b         |
@@ -1843,17 +1908,38 @@ describe('ui/mouse/input', function()
     eq(0, api.nvim_get_var('mouse_up2'))
   end)
 
-  it('<MouseMove> is not translated into multiclicks and can be mapped', function()
+  it('<MouseMove> to different locations can be mapped', function()
     api.nvim_set_var('mouse_move', 0)
     api.nvim_set_var('mouse_move2', 0)
     command('nnoremap <MouseMove> <Cmd>let g:mouse_move += 1<CR>')
     command('nnoremap <2-MouseMove> <Cmd>let g:mouse_move2 += 1<CR>')
-    feed('<MouseMove><0,0>')
-    feed('<MouseMove><0,0>')
-    api.nvim_input_mouse('move', '', '', 0, 0, 0)
-    api.nvim_input_mouse('move', '', '', 0, 0, 0)
+    feed('<MouseMove><1,0>')
+    feed('<MouseMove><2,0>')
+    api.nvim_input_mouse('move', '', '', 0, 0, 3)
+    api.nvim_input_mouse('move', '', '', 0, 0, 4)
     eq(4, api.nvim_get_var('mouse_move'))
     eq(0, api.nvim_get_var('mouse_move2'))
+  end)
+
+  it('<MouseMove> to same location does not generate events #31103', function()
+    api.nvim_set_var('mouse_move', 0)
+    api.nvim_set_var('mouse_move2', 0)
+    command('nnoremap <MouseMove> <Cmd>let g:mouse_move += 1<CR>')
+    command('nnoremap <2-MouseMove> <Cmd>let g:mouse_move2 += 1<CR>')
+    api.nvim_input_mouse('move', '', '', 0, 0, 3)
+    eq(1, api.nvim_get_var('mouse_move'))
+    eq(0, api.nvim_get_var('mouse_move2'))
+    feed('<MouseMove><3,0>')
+    feed('<MouseMove><3,0>')
+    api.nvim_input_mouse('move', '', '', 0, 0, 3)
+    api.nvim_input_mouse('move', '', '', 0, 0, 3)
+    eq(1, api.nvim_get_var('mouse_move'))
+    eq(0, api.nvim_get_var('mouse_move2'))
+    eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    feed('<MouseMove><3,0><Insert>')
+    eq(1, api.nvim_get_var('mouse_move'))
+    eq(0, api.nvim_get_var('mouse_move2'))
+    eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
   end)
 
   it('feeding <MouseMove> in Normal mode does not use uninitialized memory #19480', function()
@@ -2002,5 +2088,24 @@ describe('ui/mouse/input', function()
     feed('<Down><CR>')
     eq({ 4, 20 }, api.nvim_win_get_cursor(0))
     eq('the moon', fn.getreg('"'))
+
+    -- Try clicking in the cmdline
+    api.nvim_input_mouse('right', 'press', '', 0, 23, 0)
+    api.nvim_input_mouse('right', 'release', '', 0, 23, 0)
+    feed('<Down><Down><Down><CR>')
+    eq('baz', api.nvim_get_var('menustr'))
+
+    -- Try clicking in horizontal separator with global statusline
+    command('set laststatus=3')
+    api.nvim_input_mouse('right', 'press', '', 0, 5, 0)
+    api.nvim_input_mouse('right', 'release', '', 0, 5, 0)
+    feed('<Down><CR>')
+    eq('foo', api.nvim_get_var('menustr'))
+
+    -- Try clicking in the cmdline with global statusline
+    api.nvim_input_mouse('right', 'press', '', 0, 23, 0)
+    api.nvim_input_mouse('right', 'release', '', 0, 23, 0)
+    feed('<Down><Down><CR>')
+    eq('bar', api.nvim_get_var('menustr'))
   end)
 end)

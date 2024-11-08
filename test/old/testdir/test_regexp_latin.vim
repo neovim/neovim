@@ -28,58 +28,47 @@ func s:equivalence_test()
 endfunc
 
 func Test_equivalence_re1()
-  throw 'skipped: Nvim does not support enc=latin1'
   set re=1
   call s:equivalence_test()
+  set re=0
 endfunc
 
 func Test_equivalence_re2()
-  throw 'skipped: Nvim does not support enc=latin1'
   set re=2
   call s:equivalence_test()
+  set re=0
 endfunc
 
-func Test_range_with_newline()
+func Test_recursive_substitute()
   new
-  call setline(1, "a")
-  call assert_equal(0, search("[ -*\\n- ]"))
-  call assert_equal(0, search("[ -*\\t-\\n]"))
+  s/^/\=execute("s#^##gn")
+  " check we are now not in the sandbox
+  call setwinvar(1, 'myvar', 1)
   bwipe!
 endfunc
 
-func Test_pattern_compile_speed()
-  CheckOption spellcapcheck
-  CheckFunction reltimefloat
+func Test_nested_backrefs()
+  " Check example in change.txt.
+  new
+  for re in range(0, 2)
+    exe 'set re=' . re
+    call setline(1, 'aa ab x')
+    1s/\(\(a[a-d] \)*\)\(x\)/-\1- -\2- -\3-/
+    call assert_equal('-aa ab - -ab - -x-', getline(1))
 
-  let start = reltime()
-  " this used to be very slow, not it should be about a second
-  set spc=\\v(((((Nxxxxxxx&&xxxx){179})+)+)+){179}
-  call assert_inrange(0.01, 10.0, reltimefloat(reltime(start)))
-  set spc=
+    call assert_equal('-aa ab - -ab - -x-', substitute('aa ab x', '\(\(a[a-d] \)*\)\(x\)', '-\1- -\2- -\3-', ''))
+  endfor
+  bwipe!
+  set re=0
 endfunc
 
-func Test_get_equi_class()
-  new
-  " Incomplete equivalence class caused invalid memory access
-  s/^/[[=
-  call assert_equal(1, search(getline(1)))
-  s/.*/[[.
-  call assert_equal(1, search(getline(1)))
-endfunc
-
-func Test_rex_init()
-  set noincsearch
-  set re=1
-  new
-  setlocal iskeyword=a-z
-  call setline(1, ['abc', 'ABC'])
-  call assert_equal(1, search('[[:keyword:]]'))
-  new
-  setlocal iskeyword=A-Z
-  call setline(1, ['abc', 'ABC'])
-  call assert_equal(2, search('[[:keyword:]]'))
-  bwipe!
-  bwipe!
+func Test_eow_with_optional()
+  let expected = ['abc def', 'abc', 'def', '', '', '', '', '', '', '']
+  for re in range(0, 2)
+    exe 'set re=' . re
+    let actual = matchlist('abc def', '\(abc\>\)\?\s*\(def\)')
+    call assert_equal(expected, actual)
+  endfor
   set re=0
 endfunc
 
@@ -142,6 +131,50 @@ func Test_out_of_memory()
   s/^/,n
   " This will be slow...
   call assert_fails('call search("\\v((n||<)+);")', 'E363:')
+endfunc
+
+func Test_get_equi_class()
+  new
+  " Incomplete equivalence class caused invalid memory access
+  s/^/[[=
+  call assert_equal(1, search(getline(1)))
+  s/.*/[[.
+  call assert_equal(1, search(getline(1)))
+endfunc
+
+func Test_rex_init()
+  set noincsearch
+  set re=1
+  new
+  setlocal iskeyword=a-z
+  call setline(1, ['abc', 'ABC'])
+  call assert_equal(1, search('[[:keyword:]]'))
+  new
+  setlocal iskeyword=A-Z
+  call setline(1, ['abc', 'ABC'])
+  call assert_equal(2, search('[[:keyword:]]'))
+  bwipe!
+  bwipe!
+  set re=0
+endfunc
+
+func Test_range_with_newline()
+  new
+  call setline(1, "a")
+  call assert_equal(0, search("[ -*\\n- ]"))
+  call assert_equal(0, search("[ -*\\t-\\n]"))
+  bwipe!
+endfunc
+
+func Test_pattern_compile_speed()
+  CheckOption spellcapcheck
+  CheckFunction reltimefloat
+
+  let start = reltime()
+  " this used to be very slow, not it should be about a second
+  set spc=\\v(((((Nxxxxxxx&&xxxx){179})+)+)+){179}
+  call assert_inrange(0.01, 10.0, reltimefloat(reltime(start)))
+  set spc=
 endfunc
 
 " Tests for regexp patterns without multi-byte support.
@@ -937,8 +970,17 @@ func Test_regexp_error()
   call assert_fails("call matchlist('x x', '\\%#=1 \\ze*')", 'E888:')
   call assert_fails("call matchlist('x x', '\\%#=2 \\zs*')", 'E888:')
   call assert_fails("call matchlist('x x', '\\%#=2 \\ze*')", 'E888:')
-  call assert_fails('exe "normal /\\%#=1\\%[x\\%[x]]\<CR>"', 'E369:')
   call assert_fails("call matchstr('abcd', '\\%o841\\%o142')", 'E678:')
+  call assert_fails("call matchstr('abcd', '\\%#=2\\%2147483647c')", 'E951:')
+  call assert_fails("call matchstr('abcd', '\\%#=2\\%2147483647l')", 'E951:')
+  call assert_fails("call matchstr('abcd', '\\%#=2\\%2147483647v')", 'E951:')
+  call assert_fails('exe "normal /\\%#=1\\%[x\\%[x]]\<CR>"',   'E369:')
+  call assert_fails('exe "normal /\\%#=2\\%2147483647l\<CR>"', 'E951:')
+  call assert_fails('exe "normal /\\%#=2\\%2147483647c\<CR>"', 'E951:')
+  call assert_fails('exe "normal /\\%#=2\\%102261126v\<CR>"',  'E951:')
+  call assert_fails('exe "normal /\\%#=2\\%2147483646l\<CR>"', 'E486:')
+  call assert_fails('exe "normal /\\%#=2\\%2147483646c\<CR>"', 'E486:')
+  call assert_fails('exe "normal /\\%#=2\\%102261125v\<CR>"',  'E486:')
   call assert_equal('', matchstr('abcd', '\%o181\%o142'))
 endfunc
 
@@ -1104,5 +1146,33 @@ func Test_recursive_substitute_expr()
   bwipe!
   delfunc Repl
 endfunc
+
+" def Test_compare_columns()
+"   # this was using a line below the last line
+"   enew
+"   setline(1, ['', ''])
+"   prop_type_add('name', {highlight: 'ErrorMsg'})
+"   prop_add(1, 1, {length: 1, type: 'name'})
+"   search('\%#=1\%>.l\n.*\%<2v', 'nW')
+"   search('\%#=2\%>.l\n.*\%<2v', 'nW')
+"   bwipe!
+"   prop_type_delete('name')
+" enddef
+
+func Test_compare_column_matchstr()
+  " do some search in text to set the line number, it should be ignored in
+  " matchstr().
+  enew
+  call setline(1, ['one', 'two', 'three'])
+  :3
+  :/ee
+  bwipe!
+  set re=1
+  call assert_equal('aaa', matchstr('aaaaaaaaaaaaaaaaaaaa', '.*\%<5v'))
+  set re=2
+  call assert_equal('aaa', matchstr('aaaaaaaaaaaaaaaaaaaa', '.*\%<5v'))
+  set re=0
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

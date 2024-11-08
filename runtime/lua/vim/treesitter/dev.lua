@@ -76,10 +76,14 @@ end
 ---
 ---@package
 function TSTreeView:new(bufnr, lang)
-  local ok, parser = pcall(vim.treesitter.get_parser, bufnr or 0, lang)
-  if not ok then
-    local err = parser --[[ @as string ]]
-    return nil, 'No parser available for the given buffer:\n' .. err
+  local parser = vim.treesitter.get_parser(bufnr or 0, lang, { error = false })
+  if not parser then
+    return nil,
+      string.format(
+        'Failed to create TSTreeView for buffer %s: no parser for lang "%s"',
+        bufnr,
+        lang
+      )
   end
 
   -- For each child tree (injected language), find the root of the tree and locate the node within
@@ -154,7 +158,8 @@ end
 
 ---@param w integer
 ---@param b integer
-local function set_dev_properties(w, b)
+---@param opts nil|{ indent?: integer }
+local function set_dev_options(w, b, opts)
   vim.wo[w].scrolloff = 5
   vim.wo[w].wrap = false
   vim.wo[w].foldmethod = 'expr'
@@ -165,6 +170,12 @@ local function set_dev_properties(w, b)
   vim.bo[b].buftype = 'nofile'
   vim.bo[b].bufhidden = 'wipe'
   vim.bo[b].filetype = 'query'
+  vim.bo[b].swapfile = false
+
+  opts = opts or {}
+  if opts.indent then
+    vim.bo[b].shiftwidth = opts.indent
+  end
 end
 
 --- Updates the cursor position in the inspector to match the node under the cursor.
@@ -174,7 +185,7 @@ end
 --- @param source_buf integer
 --- @param inspect_buf integer
 --- @param inspect_win integer
---- @param pos? { [1]: integer, [2]: integer }
+--- @param pos? [integer, integer]
 local function set_inspector_cursor(treeview, lang, source_buf, inspect_buf, inspect_win, pos)
   api.nvim_buf_clear_namespace(inspect_buf, treeview.ns, 0, -1)
 
@@ -183,6 +194,7 @@ local function set_inspector_cursor(treeview, lang, source_buf, inspect_buf, ins
     lang = lang,
     pos = pos,
     ignore_injections = false,
+    include_anonymous = treeview.opts.anon,
   })
   if not cursor_node then
     return
@@ -220,13 +232,12 @@ function TSTreeView:draw(bufnr)
 
     local text ---@type string
     if item.node:named() then
-      if item.field then
-        text = string.format('%s: (%s', item.field, item.node:type())
-      else
-        text = string.format('(%s', item.node:type())
-      end
+      text = string.format('(%s', item.node:type())
     else
       text = string.format('%q', item.node:type()):gsub('\n', 'n')
+    end
+    if item.field then
+      text = string.format('%s: %s', item.field, text)
     end
 
     local next = self:get(i + 1)
@@ -319,9 +330,7 @@ end
 ---
 --- @param opts vim.treesitter.dev.inspect_tree.Opts?
 function M.inspect_tree(opts)
-  vim.validate({
-    opts = { opts, 't', true },
-  })
+  vim.validate('opts', opts, 'table', true)
 
   opts = opts or {}
 
@@ -355,7 +364,7 @@ function M.inspect_tree(opts)
   vim.b[buf].dev_inspect = w
   vim.b[b].dev_base = win -- base window handle
   vim.b[b].disable_query_linter = true
-  set_dev_properties(w, b)
+  set_dev_options(w, b, { indent = treeview.opts.indent })
 
   local title --- @type string?
   local opts_title = opts.title
@@ -518,7 +527,7 @@ function M.inspect_tree(opts)
     end,
   })
 
-  api.nvim_create_autocmd('BufHidden', {
+  api.nvim_create_autocmd({ 'BufHidden', 'BufUnload' }, {
     group = group,
     buffer = buf,
     once = true,
@@ -539,7 +548,7 @@ local edit_ns = api.nvim_create_namespace('treesitter/dev-edit')
 local function update_editor_highlights(query_win, base_win, lang)
   local base_buf = api.nvim_win_get_buf(base_win)
   local query_buf = api.nvim_win_get_buf(query_win)
-  local parser = vim.treesitter.get_parser(base_buf, lang)
+  local parser = assert(vim.treesitter.get_parser(base_buf, lang, { error = false }))
   api.nvim_buf_clear_namespace(base_buf, edit_ns, 0, -1)
   local query_content = table.concat(api.nvim_buf_get_lines(query_buf, 0, -1, false), '\n')
 
@@ -574,6 +583,8 @@ end
 
 --- @private
 --- @param lang? string language to open the query editor for.
+--- @return boolean? `true` on success, `nil` on failure
+--- @return string? error message, if applicable
 function M.edit_query(lang)
   local buf = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
@@ -596,9 +607,10 @@ function M.edit_query(lang)
   end
   vim.cmd(cmd)
 
-  local ok, parser = pcall(vim.treesitter.get_parser, buf, lang)
-  if not ok then
-    return nil, 'No parser available for the given buffer'
+  local parser = vim.treesitter.get_parser(buf, lang, { error = false })
+  if not parser then
+    return nil,
+      string.format('Failed to show query editor for buffer %s: no parser for lang "%s"', buf, lang)
   end
   lang = parser:lang()
 
@@ -607,7 +619,7 @@ function M.edit_query(lang)
 
   vim.b[buf].dev_edit = query_win
   vim.bo[query_buf].omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
-  set_dev_properties(query_win, query_buf)
+  set_dev_options(query_win, query_buf)
 
   -- Note that omnifunc guesses the language based on the containing folder,
   -- so we add the parser's language to the buffer's name so that omnifunc
@@ -653,10 +665,10 @@ function M.edit_query(lang)
       api.nvim_buf_clear_namespace(query_buf, edit_ns, 0, -1)
     end,
   })
-  api.nvim_create_autocmd('BufHidden', {
+  api.nvim_create_autocmd({ 'BufHidden', 'BufUnload' }, {
     group = group,
     buffer = buf,
-    desc = 'Close the editor window when the source buffer is hidden',
+    desc = 'Close the editor window when the source buffer is hidden or unloaded',
     once = true,
     callback = function()
       close_win(query_win)
@@ -672,6 +684,8 @@ function M.edit_query(lang)
   })
   vim.cmd('normal! G')
   vim.cmd.startinsert()
+
+  return true
 end
 
 return M

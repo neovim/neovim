@@ -382,8 +382,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Omni-дополнение (^O^N^P)"
 
 #: ../edit.c:96
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Предложение исправления правописания (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Предложение исправления правописания (^S^N^P)"
 
 #: ../edit.c:97
 msgid " Keyword Local completion (^N^P)"
@@ -3985,8 +3985,8 @@ msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) Сеанс редактирования этого файла завершён аварийно.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    В этом случае, используйте команду \":recover\" или \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    В этом случае, используйте команду \":recover\" или \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

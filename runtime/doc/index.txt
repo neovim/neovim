@@ -196,10 +196,12 @@ tag		char	      note action in Normal mode	~
 |<Tab>|		<Tab>		1  go to N newer entry in jump list
 |CTRL-I|	CTRL-I		1  same as <Tab>
 |<NL>|		<NL>		1  same as "j"
+|<S-NL>|	<S-NL>		1  same as CTRL-F
 |CTRL-J|	CTRL-J		1  same as "j"
 		CTRL-K		   not used
 |CTRL-L|	CTRL-L		   redraw screen
 |<CR>|		<CR>		1  cursor to the first CHAR N lines lower
+|<S-CR>|	<S-CR>		1  same as CTRL-F
 |CTRL-M|	CTRL-M		1  same as <CR>
 |CTRL-N|	CTRL-N		1  same as "j"
 |CTRL-O|	CTRL-O		1  go to N older entry in jump list
@@ -272,9 +274,11 @@ tag		char	      note action in Normal mode	~
 |star|		*		1  search forward for the Nth occurrence of
 				   the ident under the cursor
 |+|		+		1  same as <CR>
+|<S-Plus>|	<S-+>		1  same as CTRL-F
 |,|		,		1  repeat latest f, t, F or T in opposite
 				   direction N times
 |-|		-		1  cursor to the first CHAR N lines higher
+|<S-Minus>|	<S-->		1  same as CTRL-B
 |.|		.		2  repeat last change with count replaced with
 				   N
 |/|		/{pattern}<CR>	1  search forward for the Nth occurrence of
@@ -366,7 +370,7 @@ tag		char	      note action in Normal mode	~
 				   or start of putted text
 |`]|		`]		1  cursor to the end of last operated text or
 				   end of putted text
-|``|		``		1  cursor to the position before latest jump
+|``|		"``"		1  cursor to the position before latest jump
 |`{|		`{		1  cursor to the start of the current paragraph
 |`}|		`}		1  cursor to the end of the current paragraph
 |a|		a		2  append text after the cursor N times
@@ -397,7 +401,7 @@ tag		char	      note action in Normal mode	~
 |q|		q{0-9a-zA-Z"}	   record typed characters into named register
 				   {0-9a-zA-Z"} (uppercase to append)
 |q|		q		   (while recording) stops recording
-|Q|		Q		   replay last recorded macro
+|Q|		Q		2  replay last recorded register
 |q:|		q:		   edit : command-line in command-line window
 |q/|		q/		   edit / command-line in command-line window
 |q?|		q?		   edit ? command-line in command-line window
@@ -736,7 +740,7 @@ tag		char	      note action in Normal mode	~
 				   search pattern and Visually select it
 |gP|		["x]gP		2  put the text [from register x] before the
 				   cursor N times, leave the cursor after it
-|gQ|		gQ		    switch to "Ex" mode with Vim editing
+|gQ|		gQ		   switch to "Ex" mode with Vim editing
 |gR|		gR		2  enter Virtual Replace mode
 |gT|		gT		   go to the previous tab page
 |gU|		gU{motion}	2  make Nmove text uppercase
@@ -923,7 +927,6 @@ tag		command	      note action in Visual mode	~
 |v_O|		O		   move horizontally to other corner of area
 |v_P|		P		   replace highlighted area with register
 				   contents; registers are unchanged
-		Q		   does not start Ex mode
 |v_R|		R		2  delete the highlighted lines and start
 				   insert
 |v_S|		S		2  delete the highlighted lines and start
@@ -1136,7 +1139,7 @@ tag		command		action ~
 |:!!|		:!!		repeat last ":!" command
 |:#|		:#		same as ":number"
 |:&|		:&		repeat last ":substitute"
-|:star|		:*		use the last Visual area, like :'<,'>
+|:star|		:*		use the last Visual area, like ":'<,'>"
 |:<|		:<		shift lines one 'shiftwidth' left
 |:=|		:=		print the last line number
 |:>|		:>		shift lines one 'shiftwidth' right

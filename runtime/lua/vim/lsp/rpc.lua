@@ -3,7 +3,7 @@ local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedule_wrap
 
-local is_win = uv.os_uname().version:find('Windows')
+local is_win = vim.fn.has('win32') == 1
 
 --- Checks whether a given path exists and is a directory.
 ---@param filename string path to check
@@ -140,7 +140,7 @@ local client_errors = {
   SERVER_RESULT_CALLBACK_ERROR = 7,
 }
 
---- @type table<string|integer, string|integer>
+--- @type table<string,integer> | table<integer,string>
 --- @nodoc
 M.client_errors = vim.deepcopy(client_errors)
 for k, v in pairs(client_errors) do
@@ -152,9 +152,7 @@ end
 ---@param err table The error object
 ---@return string error_message The formatted error message
 function M.format_rpc_error(err)
-  validate({
-    err = { err, 't' },
-  })
+  validate('err', err, 'table')
 
   -- There is ErrorCodes in the LSP specification,
   -- but in ResponseError.code it is not used and the actual type is number.
@@ -329,10 +327,8 @@ end
 ---@return boolean success `true` if request could be sent, `false` if not
 ---@return integer? message_id if request could be sent, `nil` if not
 function Client:request(method, params, callback, notify_reply_callback)
-  validate({
-    callback = { callback, 'f' },
-    notify_reply_callback = { notify_reply_callback, 'f', true },
-  })
+  validate('callback', callback, 'function')
+  validate('notify_reply_callback', notify_reply_callback, 'function', true)
   self.message_index = self.message_index + 1
   local message_id = self.message_index
   local result = self:encode_and_send({
@@ -407,7 +403,9 @@ function Client:handle_body(body)
   end
   log.debug('rpc.receive', decoded)
 
-  if type(decoded.method) == 'string' and decoded.id then
+  if type(decoded) ~= 'table' then
+    self:on_error(M.client_errors.INVALID_SERVER_MESSAGE, decoded)
+  elseif type(decoded.method) == 'string' and decoded.id then
     local err --- @type lsp.ResponseError|nil
     -- Schedule here so that the users functions don't trigger an error and
     -- we can still use the result.
@@ -463,9 +461,7 @@ function Client:handle_body(body)
     local notify_reply_callbacks = self.notify_reply_callbacks
     local notify_reply_callback = notify_reply_callbacks and notify_reply_callbacks[result_id]
     if notify_reply_callback then
-      validate({
-        notify_reply_callback = { notify_reply_callback, 'f' },
-      })
+      validate('notify_reply_callback', notify_reply_callback, 'function')
       notify_reply_callback(result_id)
       notify_reply_callbacks[result_id] = nil
     end
@@ -496,13 +492,11 @@ function Client:handle_body(body)
     local callback = message_callbacks and message_callbacks[result_id]
     if callback then
       message_callbacks[result_id] = nil
-      validate({
-        callback = { callback, 'f' },
-      })
+      validate('callback', callback, 'function')
       if decoded.error then
         decoded.error = setmetatable(decoded.error, {
           __tostring = M.format_rpc_error,
-        }) --- @type table
+        })
       end
       self:try_call(
         M.client_errors.SERVER_RESULT_CALLBACK_ERROR,
@@ -548,7 +542,7 @@ local function new_client(dispatchers, transport)
 end
 
 ---@class vim.lsp.rpc.PublicClient
----@field request fun(method: string, params: table?, callback: fun(err: lsp.ResponseError|nil, result: any), notify_reply_callback: fun(integer)|nil):boolean,integer? see |vim.lsp.rpc.request()|
+---@field request fun(method: string, params: table?, callback: fun(err: lsp.ResponseError|nil, result: any), notify_reply_callback: fun(message_id: integer)|nil):boolean,integer? see |vim.lsp.rpc.request()|
 ---@field notify fun(method: string, params: any):boolean see |vim.lsp.rpc.notify()|
 ---@field is_closing fun(): boolean
 ---@field terminate fun()
@@ -701,7 +695,9 @@ function M.connect(host_or_path, port)
     if port == nil then
       handle:connect(host_or_path, on_connect)
     else
-      handle:connect(host_or_path, port, on_connect)
+      local info = uv.getaddrinfo(host_or_path, nil)
+      local resolved_host = info and info[1] and info[1].addr or host_or_path
+      handle:connect(resolved_host, port, on_connect)
     end
 
     return public_client(client)
@@ -730,10 +726,8 @@ end
 function M.start(cmd, dispatchers, extra_spawn_params)
   log.info('Starting RPC client', { cmd = cmd, extra = extra_spawn_params })
 
-  validate({
-    cmd = { cmd, 't' },
-    dispatchers = { dispatchers, 't', true },
-  })
+  validate('cmd', cmd, 'table')
+  validate('dispatchers', dispatchers, 'table', true)
 
   extra_spawn_params = extra_spawn_params or {}
 

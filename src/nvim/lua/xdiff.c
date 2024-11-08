@@ -67,11 +67,11 @@ static void get_linematch_results(lua_State *lstate, mmfile_t *ma, mmfile_t *mb,
                                   int count_a, int start_b, int count_b, bool iwhite)
 {
   // get the pointer to char of the start of the diff to pass it to linematch algorithm
-  const char *diff_begin[2] = { ma->ptr, mb->ptr };
-  int diff_length[2] = { count_a, count_b };
+  mmfile_t ma0 = fastforward_buf_to_lnum(*ma, (linenr_T)start_a + 1);
+  mmfile_t mb0 = fastforward_buf_to_lnum(*mb, (linenr_T)start_b + 1);
 
-  fastforward_buf_to_lnum(&diff_begin[0], (linenr_T)start_a + 1);
-  fastforward_buf_to_lnum(&diff_begin[1], (linenr_T)start_b + 1);
+  const mmfile_t *diff_begin[2] = { &ma0, &mb0 };
+  int diff_length[2] = { count_a, count_b };
 
   int *decisions = NULL;
   size_t decisions_length = linematch_nbuffers(diff_begin, diff_length, 2, &decisions, iwhite);
@@ -185,7 +185,12 @@ static mmfile_t get_string_arg(lua_State *lstate, int idx)
     luaL_argerror(lstate, idx, "expected string");
   }
   mmfile_t mf;
-  mf.ptr = (char *)lua_tolstring(lstate, idx, (size_t *)&mf.size);
+  size_t size;
+  mf.ptr = (char *)lua_tolstring(lstate, idx, &size);
+  if (size > INT_MAX) {
+    luaL_argerror(lstate, idx, "string too long");
+  }
+  mf.size = (int)size;
   return mf;
 }
 

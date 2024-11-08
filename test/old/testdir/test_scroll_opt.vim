@@ -302,6 +302,36 @@ func Test_smoothscroll_diff_mode()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_smoothscroll_diff_change_line()
+  CheckScreendump
+
+  let lines =<< trim END
+    set diffopt+=followwrap smoothscroll
+    call setline(1, repeat(' abc', &columns))
+    call setline(2, 'bar')
+    call setline(3, repeat(' abc', &columns))
+    vnew
+    call setline(1, repeat(' abc', &columns))
+    call setline(2, 'foo')
+    call setline(3, 'bar')
+    call setline(4, repeat(' abc', &columns))
+    windo exe "normal! 2gg5\<C-E>"
+    windo diffthis
+  END
+  call writefile(lines, 'XSmoothDiffChangeLine', 'D')
+  let buf = RunVimInTerminal('-S XSmoothDiffChangeLine', #{rows: 20, columns: 55})
+
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_1', {})
+  call term_sendkeys(buf, "Abar")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_2', {})
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_3', {})
+  call term_sendkeys(buf, "yyp")
+  call VerifyScreenDump(buf, 'Test_smooth_diff_change_line_4', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_smoothscroll_wrap_scrolloff_zero()
   CheckScreendump
 
@@ -369,18 +399,18 @@ func Test_smoothscroll_wrap_long_line()
   call term_sendkeys(buf, ":set scrolloff=1\<CR>")
   call term_sendkeys(buf, "10|\<C-E>")
   call VerifyScreenDump(buf, 'Test_smooth_long_6', {})
-  
+
   " 'scrolloff' set to 1, scrolling down, cursor moves screen line up
   call term_sendkeys(buf, "\<C-E>")
   call term_sendkeys(buf, "gjgj")
   call term_sendkeys(buf, "\<C-Y>")
   call VerifyScreenDump(buf, 'Test_smooth_long_7', {})
-  
+
   " 'scrolloff' set to 2, scrolling up, cursor moves screen line down
   call term_sendkeys(buf, ":set scrolloff=2\<CR>")
   call term_sendkeys(buf, "10|\<C-E>")
   call VerifyScreenDump(buf, 'Test_smooth_long_8', {})
-  
+
   " 'scrolloff' set to 2, scrolling down, cursor moves screen line up
   call term_sendkeys(buf, "\<C-E>")
   call term_sendkeys(buf, "gj")
@@ -421,7 +451,7 @@ func Test_smoothscroll_wrap_long_line()
   call term_sendkeys(buf, "3Gzt")
   call term_sendkeys(buf, "\<C-E>j")
   call VerifyScreenDump(buf, 'Test_smooth_long_16', {})
-  
+
   call StopVimInTerminal(buf)
 endfunc
 
@@ -436,7 +466,7 @@ func Test_smoothscroll_one_long_line()
   call writefile(lines, 'XSmoothOneLong', 'D')
   let buf = RunVimInTerminal('-S XSmoothOneLong', #{rows: 6, cols: 40})
   call VerifyScreenDump(buf, 'Test_smooth_one_long_1', {})
-  
+
   call term_sendkeys(buf, "\<C-E>")
   call VerifyScreenDump(buf, 'Test_smooth_one_long_2', {})
 
@@ -458,7 +488,7 @@ func Test_smoothscroll_long_line_showbreak()
   call writefile(lines, 'XSmoothLongShowbreak', 'D')
   let buf = RunVimInTerminal('-S XSmoothLongShowbreak', #{rows: 6, cols: 40})
   call VerifyScreenDump(buf, 'Test_smooth_long_showbreak_1', {})
-  
+
   call term_sendkeys(buf, "\<C-E>")
   call VerifyScreenDump(buf, 'Test_smooth_long_showbreak_2', {})
 
@@ -648,7 +678,7 @@ func Test_smoothscroll_cursor_scrolloff()
   call NewWindow(10, 20)
   setl smoothscroll wrap
   setl scrolloff=3
-  
+
   " 120 chars are 6 screen lines
   call setline(1, "abcdefghijklmnopqrstABCDEFGHIJKLMNOPQRSTabcdefghijklmnopqrstABCDEFGHIJKLMNOPQRSTabcdefghijklmnopqrstABCDEFGHIJKLMNOPQRST")
   call setline(2, "below")
@@ -1165,7 +1195,6 @@ func Test_smooth_long_scrolloff()
   END
   call writefile(lines, 'XSmoothLongScrolloff', 'D')
   let buf = RunVimInTerminal('-u NONE -S XSmoothLongScrolloff', #{rows: 8, cols: 40})
-  "FIXME: empty screen due to reset_skipcol()/curs_columns() shenanigans
   call term_sendkeys(buf, ":norm j721|\<CR>")
   call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_1', {})
 
@@ -1185,7 +1214,6 @@ func Test_smooth_long_scrolloff()
   call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_6', {})
 
   call term_sendkeys(buf, "gk")
-  "FIXME: empty screen due to reset_skipcol()/curs_columns() shenanigans
   call VerifyScreenDump(buf, 'Test_smooth_long_scrolloff_7', {})
 
   call StopVimInTerminal(buf)

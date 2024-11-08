@@ -389,8 +389,8 @@ msgstr " Comhlánú saincheaptha (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " Comhlánú Omni (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Moladh litrithe (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Moladh litrithe (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Comhlánú logánta lorgfhocal (^N^P)"
@@ -3696,8 +3696,8 @@ msgstr ""
 msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) Thuairteáil seisiún eagarthóireachta.\n"
 
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Más amhlaidh, bain úsáid as \":recover\" nó \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Más amhlaidh, bain úsáid as \":recover\" nó \"nvim -r "
 
 msgid ""
 "\"\n"

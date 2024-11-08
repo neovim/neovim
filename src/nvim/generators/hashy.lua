@@ -73,11 +73,15 @@ function M.switcher(put, tab, maxlen, worst_buck_size)
           vim.list_extend(neworder, buck)
           local endidx = #neworder
           put("      case '" .. c .. "': ")
-          put('low = ' .. startidx .. '; ')
-          if bucky then
-            put('high = ' .. endidx .. '; ')
+          if len == 1 then
+            put('return ' .. startidx .. ';\n')
+          else
+            put('low = ' .. startidx .. '; ')
+            if bucky then
+              put('high = ' .. endidx .. '; ')
+            end
+            put 'break;\n'
           end
-          put 'break;\n'
         end
         put '      default: break;\n'
         put '    }\n    '
@@ -105,13 +109,19 @@ function M.hashy_hash(name, strings, access)
   end
   local len_pos_buckets, maxlen, worst_buck_size = M.build_pos_hash(strings)
   put('int ' .. name .. '_hash(const char *str, size_t len)\n{\n')
-  if worst_buck_size > 1 then
+  if maxlen == 1 then
+    put('\n') -- nothing
+  elseif worst_buck_size > 1 then
     put('  int low = 0, high = 0;\n')
   else
     put('  int low = -1;\n')
   end
   local neworder = M.switcher(put, len_pos_buckets, maxlen, worst_buck_size)
-  if worst_buck_size > 1 then
+  if maxlen == 1 then
+    put([[
+  return -1;
+]])
+  elseif worst_buck_size > 1 then
     put([[
   for (int i = low; i < high; i++) {
     if (!memcmp(str, ]] .. access('i') .. [[, len)) {

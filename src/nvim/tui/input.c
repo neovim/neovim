@@ -7,28 +7,29 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/rstream.h"
 #include "nvim/event/stream.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
 #include "nvim/memory.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
-#include "nvim/rbuffer.h"
 #include "nvim/strings.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/input_defs.h"
+#include "nvim/tui/termkey/driver-csi.h"
+#include "nvim/tui/termkey/termkey.h"
 #include "nvim/tui/tui.h"
 #include "nvim/ui_client.h"
+
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
-#include "nvim/event/rstream.h"
-#include "nvim/msgpack_rpc/channel.h"
 
 #define READ_STREAM_SIZE 0xfff
-#define KEY_BUFFER_SIZE 0xfff
 
 /// Size of libtermkey's internal input buffer. The buffer may grow larger than
 /// this when processing very long escape sequences, but will shrink back to
@@ -132,7 +133,6 @@ void tinput_init(TermInput *input, Loop *loop)
   input->key_encoding = kKeyEncodingLegacy;
   input->ttimeout = (bool)p_ttimeout;
   input->ttimeoutlen = p_ttm;
-  input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
 
   for (size_t i = 0; i < ARRAY_SIZE(kitty_key_map_entry); i++) {
     pmap_put(int)(&kitty_key_map, kitty_key_map_entry[i].key, (ptr_t)kitty_key_map_entry[i].name);
@@ -155,7 +155,7 @@ void tinput_init(TermInput *input, Loop *loop)
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
 
   // setup input handle
-  rstream_init_fd(loop, &input->read_stream, input->in_fd, READ_STREAM_SIZE);
+  rstream_init_fd(loop, &input->read_stream, input->in_fd);
 
   // initialize a timer handle for handling ESC with libtermkey
   uv_timer_init(&loop->uv, &input->timer_handle);
@@ -165,9 +165,8 @@ void tinput_init(TermInput *input, Loop *loop)
 void tinput_destroy(TermInput *input)
 {
   map_destroy(int, &kitty_key_map);
-  rbuffer_free(input->key_buffer);
   uv_close((uv_handle_t *)&input->timer_handle, NULL);
-  stream_close(&input->read_stream, NULL, NULL);
+  rstream_may_close(&input->read_stream);
   termkey_destroy(input->tk);
 }
 
@@ -191,44 +190,38 @@ static void tinput_done_event(void **argv)
 /// Send all pending input in key buffer to Nvim server.
 static void tinput_flush(TermInput *input)
 {
+  String keys = { .data = input->key_buffer, .size = input->key_buffer_len };
   if (input->paste) {  // produce exactly one paste event
-    const size_t len = rbuffer_size(input->key_buffer);
-    String keys = { .data = xmallocz(len), .size = len };
-    rbuffer_read(input->key_buffer, keys.data, len);
     MAXSIZE_TEMP_ARRAY(args, 3);
     ADD_C(args, STRING_OBJ(keys));  // 'data'
     ADD_C(args, BOOLEAN_OBJ(true));  // 'crlf'
     ADD_C(args, INTEGER_OBJ(input->paste));  // 'phase'
     rpc_send_event(ui_client_channel_id, "nvim_paste", args);
-    api_free_string(keys);
     if (input->paste == 1) {
       // Paste phase: "continue"
       input->paste = 2;
     }
-    rbuffer_reset(input->key_buffer);
   } else {  // enqueue input
-    RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-      const String keys = { .data = buf, .size = len };
+    if (input->key_buffer_len > 0) {
       MAXSIZE_TEMP_ARRAY(args, 1);
       ADD_C(args, STRING_OBJ(keys));
       // NOTE: This is non-blocking and won't check partially processed input,
       // but should be fine as all big sends are handled with nvim_paste, not nvim_input
       rpc_send_event(ui_client_channel_id, "nvim_input", args);
-      rbuffer_consumed(input->key_buffer, len);
-      rbuffer_reset(input->key_buffer);
     }
   }
+  input->key_buffer_len = 0;
 }
 
-static void tinput_enqueue(TermInput *input, char *buf, size_t size)
+static void tinput_enqueue(TermInput *input, const char *buf, size_t size)
 {
-  if (rbuffer_size(input->key_buffer) >
-      rbuffer_capacity(input->key_buffer) - 0xff) {
-    // don't ever let the buffer get too full or we risk putting incomplete keys
-    // into it
+  if (input->key_buffer_len > KEY_BUFFER_SIZE - size) {
+    // don't ever let the buffer get too full or we risk putting incomplete keys into it
     tinput_flush(input);
   }
-  rbuffer_write(input->key_buffer, buf, size);
+  size_t to_copy = MIN(size, KEY_BUFFER_SIZE - input->key_buffer_len);
+  memcpy(input->key_buffer + input->key_buffer_len, buf, to_copy);
+  input->key_buffer_len += to_copy;
 }
 
 /// Handle TERMKEY_KEYMOD_* modifiers, i.e. Shift, Alt and Ctrl.
@@ -271,7 +264,7 @@ static size_t handle_more_modifiers(TermKeyKey *key, char *buf, size_t buflen)
 
 static void handle_kitty_key_protocol(TermInput *input, TermKeyKey *key)
 {
-  const char *name = pmap_get(int)(&kitty_key_map, (int)key->code.codepoint);
+  const char *name = pmap_get(int)(&kitty_key_map, key->code.codepoint);
   if (name) {
     char buf[64];
     size_t len = 0;
@@ -471,9 +464,11 @@ static void tinput_timer_cb(uv_timer_t *handle)
 {
   TermInput *input = handle->data;
   // If the raw buffer is not empty, process the raw buffer first because it is
-  // processing an incomplete bracketed paster sequence.
-  if (rbuffer_size(input->read_stream.buffer)) {
-    handle_raw_buffer(input, true);
+  // processing an incomplete bracketed paste sequence.
+  size_t size = rstream_available(&input->read_stream);
+  if (size) {
+    size_t consumed = handle_raw_buffer(input, true, input->read_stream.read_pos, size);
+    rstream_consume(&input->read_stream, consumed);
   }
   tk_getkeys(input, true);
   tinput_flush(input);
@@ -487,39 +482,37 @@ static void tinput_timer_cb(uv_timer_t *handle)
 ///
 /// @param input the input stream
 /// @return true iff handle_focus_event consumed some input
-static bool handle_focus_event(TermInput *input)
+static size_t handle_focus_event(TermInput *input, const char *ptr, size_t size)
 {
-  if (rbuffer_size(input->read_stream.buffer) > 2
-      && (!rbuffer_cmp(input->read_stream.buffer, "\x1b[I", 3)
-          || !rbuffer_cmp(input->read_stream.buffer, "\x1b[O", 3))) {
-    bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
-    // Advance past the sequence
-    rbuffer_consumed(input->read_stream.buffer, 3);
+  if (size >= 3
+      && (!memcmp(ptr, "\x1b[I", 3)
+          || !memcmp(ptr, "\x1b[O", 3))) {
+    bool focus_gained = ptr[2] == 'I';
 
     MAXSIZE_TEMP_ARRAY(args, 1);
     ADD_C(args, BOOLEAN_OBJ(focus_gained));
     rpc_send_event(ui_client_channel_id, "nvim_ui_set_focus", args);
-    return true;
+    return 3;  // Advance past the sequence
   }
-  return false;
+  return 0;
 }
 
 #define START_PASTE "\x1b[200~"
 #define END_PASTE   "\x1b[201~"
-static HandleState handle_bracketed_paste(TermInput *input)
+static size_t handle_bracketed_paste(TermInput *input, const char *ptr, size_t size,
+                                     bool *incomplete)
 {
-  size_t buf_size = rbuffer_size(input->read_stream.buffer);
-  if (buf_size > 5
-      && (!rbuffer_cmp(input->read_stream.buffer, START_PASTE, 6)
-          || !rbuffer_cmp(input->read_stream.buffer, END_PASTE, 6))) {
-    bool enable = *rbuffer_get(input->read_stream.buffer, 4) == '0';
+  if (size >= 6
+      && (!memcmp(ptr, START_PASTE, 6)
+          || !memcmp(ptr, END_PASTE, 6))) {
+    bool enable = ptr[4] == '0';
     if (input->paste && enable) {
-      return kNotApplicable;  // Pasting "start paste" code literally.
+      return 0;  // Pasting "start paste" code literally.
     }
+
     // Advance past the sequence
-    rbuffer_consumed(input->read_stream.buffer, 6);
     if (!!input->paste == enable) {
-      return kComplete;  // Spurious "disable paste" code.
+      return 6;  // Spurious "disable paste" code.
     }
 
     if (enable) {
@@ -534,15 +527,15 @@ static HandleState handle_bracketed_paste(TermInput *input)
       // Paste phase: "disabled".
       input->paste = 0;
     }
-    return kComplete;
-  } else if (buf_size < 6
-             && (!rbuffer_cmp(input->read_stream.buffer, START_PASTE, buf_size)
-                 || !rbuffer_cmp(input->read_stream.buffer,
-                                 END_PASTE, buf_size))) {
+    return 6;
+  } else if (size < 6
+             && (!memcmp(ptr, START_PASTE, size)
+                 || !memcmp(ptr, END_PASTE, size))) {
     // Wait for further input, as the sequence may be split.
-    return kIncomplete;
+    *incomplete = true;
+    return 0;
   }
-  return kNotApplicable;
+  return 0;
 }
 
 /// Handle an OSC or DCS response sequence from the terminal.
@@ -606,10 +599,10 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
 {
   // There is no specified limit on the number of parameters a CSI sequence can
   // contain, so just allocate enough space for a large upper bound
-  long args[16];
-  size_t nargs = 16;
-  unsigned long cmd;
-  if (termkey_interpret_csi(input->tk, key, args, &nargs, &cmd) != TERMKEY_RES_KEY) {
+  TermKeyCsiParam params[16];
+  size_t nparams = 16;
+  unsigned cmd;
+  if (termkey_interpret_csi(input->tk, key, params, &nparams, &cmd) != TERMKEY_RES_KEY) {
     return;
   }
 
@@ -648,25 +641,55 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
       break;
     }
     break;
+  case 't':
+    if (nparams == 5) {
+      // We only care about the first 3 parameters, and we ignore subparameters
+      int args[3];
+      for (size_t i = 0; i < ARRAY_SIZE(args); i++) {
+        if (termkey_interpret_csi_param(params[i], &args[i], NULL, NULL) != TERMKEY_RES_KEY) {
+          return;
+        }
+      }
+
+      if (args[0] == 48) {
+        // In-band resize event (DEC private mode 2048)
+        int height_chars = args[1];
+        int width_chars = args[2];
+        tui_set_size(input->tui_data, width_chars, height_chars);
+        ui_client_set_size(width_chars, height_chars);
+      }
+    }
+    break;
   default:
     break;
   }
 }
 
-static void handle_raw_buffer(TermInput *input, bool force)
+static size_t handle_raw_buffer(TermInput *input, bool force, const char *data, size_t size)
 {
-  HandleState is_paste = kNotApplicable;
+  const char *ptr = data;
 
   do {
-    if (!force
-        && (handle_focus_event(input)
-            || (is_paste = handle_bracketed_paste(input)) != kNotApplicable)) {
-      if (is_paste == kIncomplete) {
+    if (!force) {
+      size_t consumed = handle_focus_event(input, ptr, size);
+      if (consumed) {
+        ptr += consumed;
+        size -= consumed;
+        continue;
+      }
+
+      bool incomplete = false;
+      consumed = handle_bracketed_paste(input, ptr, size, &incomplete);
+      if (incomplete) {
+        assert(consumed == 0);
         // Wait for the next input, leaving it in the raw buffer due to an
         // incomplete sequence.
-        return;
+        return (size_t)(ptr - data);
+      } else if (consumed) {
+        ptr += consumed;
+        size -= consumed;
+        continue;
       }
-      continue;
     }
 
     //
@@ -675,55 +698,47 @@ static void handle_raw_buffer(TermInput *input, bool force)
     // calls (above) depend on this.
     //
     size_t count = 0;
-    RBUFFER_EACH(input->read_stream.buffer, c, i) {
+    for (size_t i = 0; i < size; i++) {
       count = i + 1;
-      if (c == '\x1b' && count > 1) {
+      if (ptr[i] == '\x1b' && count > 1) {
         count--;
         break;
       }
     }
     // Push bytes directly (paste).
     if (input->paste) {
-      RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
-        size_t consumed = MIN(count, len);
-        assert(consumed <= input->read_stream.buffer->size);
-        tinput_enqueue(input, ptr, consumed);
-        rbuffer_consumed(input->read_stream.buffer, consumed);
-        if (!(count -= consumed)) {
-          break;
-        }
-      }
+      tinput_enqueue(input, ptr, count);
+      ptr += count;
+      size -= count;
       continue;
     }
+
     // Push through libtermkey (translates to "<keycode>" strings, etc.).
-    RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
-      const size_t size = MIN(count, len);
-      if (size > termkey_get_buffer_remaining(input->tk)) {
+    {
+      const size_t to_use = MIN(count, size);
+      if (to_use > termkey_get_buffer_remaining(input->tk)) {
         // We are processing a very long escape sequence. Increase termkey's
         // internal buffer size. We don't handle out of memory situations so
         // abort if it fails
-        const size_t delta = size - termkey_get_buffer_remaining(input->tk);
+        const size_t delta = to_use - termkey_get_buffer_remaining(input->tk);
         const size_t bufsize = termkey_get_buffer_size(input->tk);
         if (!termkey_set_buffer_size(input->tk, MAX(bufsize + delta, bufsize * 2))) {
           abort();
         }
       }
 
-      size_t consumed = termkey_push_bytes(input->tk, ptr, size);
+      size_t consumed = termkey_push_bytes(input->tk, ptr, to_use);
 
       // We resize termkey's buffer when it runs out of space, so this should
       // never happen
-      assert(consumed <= rbuffer_size(input->read_stream.buffer));
-      rbuffer_consumed(input->read_stream.buffer, consumed);
+      assert(consumed <= to_use);
+      ptr += consumed;
+      size -= consumed;
 
       // Process the input buffer now for any keys
       tk_getkeys(input, false);
-
-      if (!(count -= consumed)) {
-        break;
-      }
     }
-  } while (rbuffer_size(input->read_stream.buffer));
+  } while (size);
 
   const size_t tk_size = termkey_get_buffer_size(input->tk);
   const size_t tk_remaining = termkey_get_buffer_remaining(input->tk);
@@ -735,23 +750,25 @@ static void handle_raw_buffer(TermInput *input, bool force)
       abort();
     }
   }
+
+  return (size_t)(ptr - data);
 }
 
-static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_, void *data, bool eof)
+static size_t tinput_read_cb(RStream *stream, const char *buf, size_t count_, void *data, bool eof)
 {
   TermInput *input = data;
 
+  size_t consumed = handle_raw_buffer(input, false, buf, count_);
+  tinput_flush(input);
+
   if (eof) {
     loop_schedule_fast(&main_loop, event_create(tinput_done_event, NULL));
-    return;
+    return consumed;
   }
-
-  handle_raw_buffer(input, false);
-  tinput_flush(input);
 
   // An incomplete sequence was found. Leave it in the raw buffer and wait for
   // the next input.
-  if (rbuffer_size(input->read_stream.buffer)) {
+  if (consumed < count_) {
     // If 'ttimeout' is not set, start the timer with a timeout of 0 to process
     // the next input.
     int64_t ms = input->ttimeout
@@ -759,11 +776,7 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_, void *da
     // Stop the current timer if already running
     uv_timer_stop(&input->timer_handle);
     uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
-    return;
   }
 
-  // Make sure the next input escape sequence fits into the ring buffer without
-  // wraparound, else it could be misinterpreted (because rbuffer_read_ptr()
-  // exposes the underlying buffer to callers unaware of the wraparound).
-  rbuffer_reset(input->read_stream.buffer);
+  return consumed;
 }

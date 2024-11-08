@@ -39,12 +39,27 @@ local function check_active_clients()
       elseif type(client.config.cmd) == 'function' then
         cmd = tostring(client.config.cmd)
       end
+      local dirs_info ---@type string
+      if client.workspace_folders and #client.workspace_folders > 1 then
+        dirs_info = string.format(
+          '  Workspace folders:\n    %s',
+          vim
+            .iter(client.workspace_folders)
+            ---@param folder lsp.WorkspaceFolder
+            :map(function(folder)
+              return folder.name
+            end)
+            :join('\n    ')
+        )
+      else
+        dirs_info = string.format(
+          '  Root directory: %s',
+          client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~')
+        ) or nil
+      end
       report_info(table.concat({
         string.format('%s (id: %d)', client.name, client.id),
-        string.format(
-          '  Root directory: %s',
-          client.root_dir and vim.fn.fnamemodify(client.root_dir, ':~') or nil
-        ),
+        dirs_info,
         string.format('  Command: %s', cmd),
         string.format('  Settings: %s', vim.inspect(client.settings, { newline = '\n  ' })),
         string.format(
@@ -90,8 +105,8 @@ local function check_watcher()
     watchfunc_name = 'libuv-watch'
   elseif watchfunc == vim._watch.watchdirs then
     watchfunc_name = 'libuv-watchdirs'
-  elseif watchfunc == vim._watch.fswatch then
-    watchfunc_name = 'fswatch'
+  elseif watchfunc == vim._watch.inotifywait then
+    watchfunc_name = 'inotifywait'
   else
     local nm = debug.getinfo(watchfunc, 'S').source
     watchfunc_name = string.format('Custom (%s)', nm)
@@ -99,7 +114,7 @@ local function check_watcher()
 
   report_info('File watch backend: ' .. watchfunc_name)
   if watchfunc_name == 'libuv-watchdirs' then
-    report_warn('libuv-watchdirs has known performance issues. Consider installing fswatch.')
+    report_warn('libuv-watchdirs has known performance issues. Consider installing inotify-tools.')
   end
 end
 

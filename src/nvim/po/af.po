@@ -315,7 +315,7 @@ msgstr " Bevelreëlvoltooiing (^V^N^P)"
 #~ msgstr " Etiketvoltooiing (^]^N^P)"
 
 #, fuzzy
-#~ msgid " Spelling suggestion (s^N^P)"
+#~ msgid " Spelling suggestion (^S^N^P)"
 #~ msgstr " Hele-reël voltooiing (^L^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
@@ -3608,8 +3608,8 @@ msgstr ""
 #~ "\n"
 #~ "(2) 'n Bewerkingsessie van hierdie lêer het ineengestort.\n"
 
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Indien wel, gebruik \":recover\" of \"vim -r"
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Indien wel, gebruik \":recover\" of \"nvim -r"
 
 msgid ""
 "\"\n"

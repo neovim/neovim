@@ -17,7 +17,7 @@ void api_err_invalid(Error *err, const char *name, const char *val_s, int64_t va
   char *has_space = strchr(name, ' ');
 
   // No value.
-  if (val_s && val_s[0] == '\0') {
+  if (val_s && val_s[0] == NUL) {
     api_set_error(err, errtype, has_space ? "Invalid %s" : "Invalid '%s'", name);
     return;
   }

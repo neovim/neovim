@@ -2,21 +2,15 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local eq = t.eq
-local exec_lua = n.exec_lua
 
 describe('glob', function()
   before_each(n.clear)
   after_each(n.clear)
 
-  local match = function(...)
-    return exec_lua(
-      [[
-      local pattern = select(1, ...)
-      local str = select(2, ...)
-      return require("vim.glob").to_lpeg(pattern):match(str) ~= nil
-    ]],
-      ...
-    )
+  local match = function(pattern, str)
+    return n.exec_lua(function()
+      return require('vim.glob').to_lpeg(pattern):match(str) ~= nil
+    end)
   end
 
   describe('glob matching', function()
@@ -161,7 +155,7 @@ describe('glob', function()
       eq(false, match('{ab,cd}', 'a'))
       eq(true, match('{ab,cd}', 'cd'))
       eq(true, match('{a,b,c}', 'c'))
-      eq(true, match('{a,{b,c}}', 'c'))
+      eq(false, match('{a,{b,c}}', 'c')) -- {} cannot nest
     end)
 
     it('should match [] groups', function()
@@ -205,6 +199,19 @@ describe('glob', function()
       eq(true, match('[!a-zA-Z0-9]', '!'))
     end)
 
+    it('should handle long patterns', function()
+      -- lpeg has a recursion limit of 200 by default, make sure the grammar does trigger it on
+      -- strings longer than that
+      local fill_200 =
+        'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      eq(200, fill_200:len())
+      local long_lit = fill_200 .. 'a'
+      eq(false, match(long_lit, 'b'))
+      eq(true, match(long_lit, long_lit))
+      local long_pat = fill_200 .. 'a/**/*.c'
+      eq(true, match(long_pat, fill_200 .. 'a/b/c/d.c'))
+    end)
+
     it('should match complex patterns', function()
       eq(false, match('**/*.{c,h}', ''))
       eq(false, match('**/*.{c,h}', 'c'))
@@ -223,6 +230,17 @@ describe('glob', function()
       eq(true, match('{[0-9],[a-z]}', '0'))
       eq(true, match('{[0-9],[a-z]}', 'a'))
       eq(false, match('{[0-9],[a-z]}', 'A'))
+
+      -- glob is from willRename filter in typescript-language-server
+      -- https://github.com/typescript-language-server/typescript-language-server/blob/b224b878652438bcdd639137a6b1d1a6630129e4/src/lsp-server.ts#L266
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.js'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.ts'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.mts'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.mjs'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.cjs'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.cts'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.jsx'))
+      eq(true, match('**/*.{ts,js,jsx,tsx,mjs,mts,cjs,cts}', 'test.tsx'))
     end)
   end)
 end)

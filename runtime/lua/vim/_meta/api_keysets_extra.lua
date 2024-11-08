@@ -23,16 +23,16 @@ error('Cannot require a meta file')
 --- @field conceal? boolean
 --- @field spell? boolean
 --- @field ui_watched? boolean
---- @field url? boolean
+--- @field url? string
 --- @field hl_mode? string
 ---
---- @field virt_text? {[1]: string, [2]: string}[]
+--- @field virt_text? [string, string][]
 --- @field virt_text_hide? boolean
 --- @field virt_text_repeat_linebreak? boolean
 --- @field virt_text_win_col? integer
 --- @field virt_text_pos? string
 ---
---- @field virt_lines? {[1]: string, [2]: string}[][]
+--- @field virt_lines? [string, string][][]
 --- @field virt_lines_above? boolean
 --- @field virt_lines_leftcol? boolean
 ---
@@ -43,10 +43,16 @@ error('Cannot require a meta file')
 --- @field line_hl_group? string
 --- @field cursorline_hl_group? string
 
---- @class vim.api.keyset.get_extmark_item
+--- @class vim.api.keyset.get_extmark_item_by_id
 --- @field [1] integer row
 --- @field [2] integer col
 --- @field [3] vim.api.keyset.extmark_details?
+
+--- @class vim.api.keyset.get_extmark_item
+--- @field [1] integer extmark_id
+--- @field [2] integer row
+--- @field [3] integer col
+--- @field [4] vim.api.keyset.extmark_details?
 
 --- @class vim.api.keyset.get_mark
 --- @field [1] integer row
@@ -96,20 +102,29 @@ error('Cannot require a meta file')
 --- @field strikethrough? true
 --- @field altfont? true
 --- @field nocombine? true
-
---- @class vim.api.keyset.hl_info.cterm : vim.api.keyset.hl_info.base
 --- @field ctermfg? integer
 --- @field ctermbg? integer
+
+--- @class vim.api.keyset.hl_info.cterm : vim.api.keyset.hl_info.base
 --- @field foreground? integer
 --- @field background? integer
 
---- @class vim.api.keyset.hl_info : vim.api.keyset.hl_info.base
+--- @class vim.api.keyset.get_hl_info : vim.api.keyset.hl_info.base
 --- @field fg? integer
 --- @field bg? integer
 --- @field sp? integer
 --- @field default? true
+--- @field blend? integer
+--- @field cterm? vim.api.keyset.hl_info.cterm
+
+--- @class vim.api.keyset.set_hl_info : vim.api.keyset.hl_info.base
+--- @field fg? integer|string
+--- @field bg? integer|string
+--- @field sp? integer|string
+--- @field default? true
 --- @field link? string
 --- @field blend? integer
+--- @field force? true
 --- @field cterm? vim.api.keyset.hl_info.cterm
 
 --- @class vim.api.keyset.get_mode

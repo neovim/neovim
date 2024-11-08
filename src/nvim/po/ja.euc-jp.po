@@ -409,8 +409,8 @@ msgstr " ユーザー定義補完 (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " オムニ補完 (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " 綴り修正候補 (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " 綴り修正候補 (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " 局所キーワード補完 (^N^P)"
@@ -3466,8 +3466,8 @@ msgstr ""
 msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) このファイルの編集セッションがクラッシュした.\n"
 
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    この場合には \":recover\" か \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    この場合には \":recover\" か \"nvim -r "
 
 msgid ""
 "\"\n"

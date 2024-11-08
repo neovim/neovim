@@ -11,6 +11,40 @@
 # include "options_enum.generated.h"
 #endif
 
+/// Option flags.
+typedef enum {
+  kOptFlagExpand    = 1 << 0,  ///< Environment expansion.
+                               ///< NOTE: kOptFlagExpand can never be used for local or hidden options.
+  kOptFlagNoDefExp  = 1 << 1,  ///< Don't expand default value.
+  kOptFlagNoDefault = 1 << 2,  ///< Don't set to default value.
+  kOptFlagWasSet    = 1 << 3,  ///< Option has been set/reset.
+  kOptFlagNoMkrc    = 1 << 4,  ///< Don't include in :mkvimrc output.
+  kOptFlagUIOption  = 1 << 5,  ///< Send option to remote UI.
+  kOptFlagRedrTabl  = 1 << 6,  ///< Redraw tabline.
+  kOptFlagRedrStat  = 1 << 7,  ///< Redraw status lines.
+  kOptFlagRedrWin   = 1 << 8,  ///< Redraw current window and recompute text.
+  kOptFlagRedrBuf   = 1 << 9,  ///< Redraw current buffer and recompute text.
+  kOptFlagRedrAll   = kOptFlagRedrBuf | kOptFlagRedrWin,  ///< Redraw all windows and recompute text.
+  kOptFlagRedrClear = kOptFlagRedrAll | kOptFlagRedrStat,  ///< Clear and redraw all and recompute text.
+  kOptFlagComma     = 1 << 10,  ///< Comma-separated list.
+  kOptFlagOneComma  = (1 << 11) | kOptFlagComma,  ///< Comma-separated list that cannot have two consecutive commas.
+  kOptFlagNoDup     = 1 << 12,  ///< Don't allow duplicate strings.
+  kOptFlagFlagList  = 1 << 13,  ///< List of single-char flags.
+  kOptFlagSecure    = 1 << 14,  ///< Cannot change in modeline or secure mode.
+  kOptFlagGettext   = 1 << 15,  ///< Expand default value with _().
+  kOptFlagNoGlob    = 1 << 16,  ///< Do not use local value for global vimrc.
+  kOptFlagNFname    = 1 << 17,  ///< Only normal file name chars allowed.
+  kOptFlagInsecure  = 1 << 18,  ///< Option was set from a modeline.
+  kOptFlagPriMkrc   = 1 << 19,  ///< Priority for :mkvimrc (setting option has side effects).
+  kOptFlagNoML      = 1 << 20,  ///< Not allowed in modeline.
+  kOptFlagCurswant  = 1 << 21,  ///< Update curswant required; not needed when there is a redraw flag.
+  kOptFlagNDname    = 1 << 22,  ///< Only normal directory name chars allowed.
+  kOptFlagHLOnly    = 1 << 23,  ///< Option only changes highlight, not text.
+  kOptFlagMLE       = 1 << 24,  ///< Under control of 'modelineexpr'.
+  kOptFlagFunc      = 1 << 25,  ///< Accept a function reference or a lambda.
+  kOptFlagColon     = 1 << 26,  ///< Values use colons to create sublists.
+} OptFlags;
+
 /// Option value type.
 /// These types are also used as type flags by using the type value as an index for the type_flags
 /// bit field (@see option_has_type()).
@@ -62,7 +96,7 @@ typedef struct {
   /// New value of the option.
   OptValData os_newval;
 
-  /// Option value was checked to be safe, no need to set P_INSECURE
+  /// Option value was checked to be safe, no need to set kOptFlagInsecure
   /// Used for the 'keymap', 'filetype' and 'syntax' options.
   bool os_value_checked;
   /// Option value changed.  Used for the 'filetype' and 'syntax' options.

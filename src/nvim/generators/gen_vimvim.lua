@@ -80,12 +80,13 @@ for _, cmd_desc in ipairs(ex_cmds.cmds) do
 end
 
 local vimopt_start = 'syn keyword vimOption contained '
+local vimopt_end = ' skipwhite nextgroup=vimSetEqual,vimSetMod'
 w('\n\n' .. vimopt_start)
 
 for _, opt_desc in ipairs(options.options) do
   if not opt_desc.immutable then
     if lld.line_length > 850 then
-      w('\n' .. vimopt_start)
+      w(vimopt_end .. '\n' .. vimopt_start)
     end
     w(' ' .. opt_desc.full_name)
     if opt_desc.abbreviation then
@@ -102,7 +103,9 @@ for _, opt_desc in ipairs(options.options) do
   end
 end
 
-w('\n\nsyn case ignore')
+w(vimopt_end .. '\n')
+
+w('\nsyn case ignore')
 local vimau_start = 'syn keyword vimAutoEvent contained '
 w('\n\n' .. vimau_start)
 

@@ -393,8 +393,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Omni-compleció (^O^N^P)"
 
 #: ../edit.c:96
-msgid " Spelling suggestion (s^N^P)"
-msgstr "Suggeriment ortogràfic (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr "Suggeriment ortogràfic (^S^N^P)"
 
 # buscar un nom, en lloc del verb «completar».  eac
 #: ../edit.c:97
@@ -4015,8 +4015,8 @@ msgstr ""
 "(2) El Vim s'ha estrellat mentre s'editava aquest fitxer.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    En aquest cas, useu \":recover\" o bé \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    En aquest cas, useu \":recover\" o bé \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

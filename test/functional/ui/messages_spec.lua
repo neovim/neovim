@@ -1081,6 +1081,22 @@ stack traceback:
       },
     })
   end)
+
+  it('does not do showmode unnecessarily #29086', function()
+    local screen_showmode = screen._handle_msg_showmode
+    local showmode = 0
+    screen._handle_msg_showmode = function(...)
+      screen_showmode(...)
+      showmode = showmode + 1
+    end
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+    })
+    eq(showmode, 1)
+  end)
 end)
 
 describe('ui/builtin messages', function()
@@ -1149,7 +1165,12 @@ describe('ui/builtin messages', function()
 
   it(':syntax list langGroup output', function()
     command('syntax on')
-    command('set syntax=vim')
+    exec([[
+      syn match	vimComment	excludenl +\s"[^\-:.%#=*].*$+lc=1	contains=@vimCommentGroup,vimCommentString
+      syn match	vimComment	+\<endif\s\+".*$+lc=5	contains=@vimCommentGroup,vimCommentString
+      syn match	vimComment	+\<else\s\+".*$+lc=4	contains=@vimCommentGroup,vimCommentString
+      hi link vimComment Comment
+    ]])
     screen:try_resize(110, 7)
     feed(':syntax list vimComment<cr>')
     screen:expect([[
@@ -1418,6 +1439,41 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
       {6:Press ENTER or type command to continue}^                     |
     ]],
     }
+  end)
+
+  it('supports nvim_echo messages with emoji', function()
+    -- stylua: ignore
+    async_meths.nvim_echo(
+      { { 'wow, 🏳️‍⚧️🧑‍🌾❤️😂🏴‍☠️\nvariant ❤️ one\nvariant ❤ two' } }, true, {}
+    )
+
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {3:                                                            }|
+      wow, 🏳️‍⚧️🧑‍🌾❤️😂🏴‍☠️                                             |
+      variant ❤️ one                                              |
+      variant ❤ two                                               |
+      {6:Press ENTER or type command to continue}^                     |
+    ]])
+
+    feed '<cr>'
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*5
+                                                                  |
+    ]])
+
+    feed ':messages<cr>'
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {3:                                                            }|
+      wow, 🏳️‍⚧️🧑‍🌾❤️😂🏴‍☠️                                             |
+      variant ❤️ one                                              |
+      variant ❤ two                                               |
+      {6:Press ENTER or type command to continue}^                     |
+    ]])
   end)
 
   it('prints lines in Ex mode correctly with a burst of carriage returns #19341', function()

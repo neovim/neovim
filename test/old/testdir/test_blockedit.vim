@@ -53,7 +53,7 @@ func Test_blockinsert_autoindent()
   let expected =<< trim END
       vim9script
       var d = {
-      	a: (): asdf => 0,
+	a: (): asdf => 0,
       b: (): asdf => 0,
       c: (): asdf => 0,
       }

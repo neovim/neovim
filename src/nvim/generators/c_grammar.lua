@@ -35,11 +35,7 @@ local cdoc_comment = P('///') * opt(Ct(Cg(rep(space) * rep(not_nl), 'comment')))
 local c_preproc = P('#') * rep(not_nl)
 local dllexport = P('DLLEXPORT') * rep1(ws)
 
-local typed_container = (
-  (P('ArrayOf(') + P('DictionaryOf(') + P('Dict('))
-  * rep1(any - P(')'))
-  * P(')')
-)
+local typed_container = ((P('ArrayOf(') + P('DictOf(') + P('Dict(')) * rep1(any - P(')')) * P(')'))
 
 local c_id = (typed_container + (letter * rep(alpha)))
 local c_void = P('void')
@@ -91,7 +87,9 @@ local c_proto = Ct(
     * (P(';') + (P('{') * nl + (impl_line ^ 0) * P('}')))
 )
 
-local c_field = Ct(Cg(c_id, 'type') * ws * Cg(c_id, 'name') * fill * P(';') * fill)
+local dict_key = P('DictKey(') * Cg(rep1(any - P(')')), 'dict_key') * P(')')
+local keyset_field =
+  Ct(Cg(c_id, 'type') * ws * Cg(c_id, 'name') * fill * (dict_key ^ -1) * fill * P(';') * fill)
 local c_keyset = Ct(
   P('typedef')
     * ws
@@ -99,7 +97,7 @@ local c_keyset = Ct(
     * fill
     * P('{')
     * fill
-    * Cg(Ct(c_field ^ 1), 'fields')
+    * Cg(Ct(keyset_field ^ 1), 'fields')
     * P('}')
     * fill
     * P('Dict')

@@ -48,7 +48,7 @@ local function execute_lens(lens, bufnr, client_id)
 
   local client = vim.lsp.get_client_by_id(client_id)
   assert(client, 'Client is required to execute lens, client_id=' .. client_id)
-  client:_exec_cmd(lens.command, { bufnr = bufnr }, function(...)
+  client:exec_cmd(lens.command, { bufnr = bufnr }, function(...)
     vim.lsp.handlers[ms.workspace_executeCommand](...)
     M.refresh()
   end)
@@ -261,7 +261,7 @@ end
 ---@param err lsp.ResponseError?
 ---@param result lsp.CodeLens[]
 ---@param ctx lsp.HandlerContext
-function M.on_codelens(err, result, ctx, _)
+function M.on_codelens(err, result, ctx)
   if err then
     active_refreshes[assert(ctx.bufnr)] = nil
     log.error('codelens', err)
@@ -307,7 +307,13 @@ function M.refresh(opts)
       }
       active_refreshes[buf] = true
 
-      local request_ids = vim.lsp.buf_request(buf, ms.textDocument_codeLens, params, M.on_codelens)
+      local request_ids = vim.lsp.buf_request(
+        buf,
+        ms.textDocument_codeLens,
+        params,
+        M.on_codelens,
+        function() end
+      )
       if vim.tbl_isempty(request_ids) then
         active_refreshes[buf] = nil
       end

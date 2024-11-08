@@ -282,7 +282,7 @@ func Test_ruby_Vim_buffer_get()
   call assert_match('Xfoo1$', rubyeval('Vim::Buffer[1].name'))
   call assert_match('Xfoo2$', rubyeval('Vim::Buffer[2].name'))
   call assert_fails('ruby print Vim::Buffer[3].name',
-        \           "NoMethodError: undefined method `name' for nil:NilClass")
+        \           "NoMethodError: undefined method `name' for nil")
   %bwipe
 endfunc
 
@@ -335,6 +335,14 @@ func Test_ruby_Vim_evaluate()
   call assert_equal('TrueClass', rubyeval('Vim::evaluate("v:true").class'))
   call assert_equal(v:false,     rubyeval('Vim::evaluate("v:false")'))
   call assert_equal('FalseClass',rubyeval('Vim::evaluate("v:false").class'))
+endfunc
+
+func Test_ruby_Vim_blob()
+  throw 'skipped: TODO: '
+  call assert_equal('0z',         rubyeval('Vim::blob("")'))
+  call assert_equal('0z31326162', rubyeval('Vim::blob("12ab")'))
+  call assert_equal('0z00010203', rubyeval('Vim::blob("\x00\x01\x02\x03")'))
+  call assert_equal('0z8081FEFF', rubyeval('Vim::blob("\x80\x81\xfe\xff")'))
 endfunc
 
 func Test_ruby_Vim_evaluate_list()

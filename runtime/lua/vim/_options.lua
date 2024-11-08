@@ -95,7 +95,6 @@
 local api = vim.api
 
 -- TODO(tjdevries): Improve option metadata so that this doesn't have to be hardcoded.
---                  Can be done in a separate PR.
 local key_value_options = {
   fillchars = true,
   fcs = true,
@@ -175,6 +174,11 @@ local function new_buf_opt_accessor(bufnr)
 end
 
 local function new_win_opt_accessor(winid, bufnr)
+  -- TODO(lewis6991): allow passing both buf and win to nvim_get_option_value
+  if bufnr ~= nil and bufnr ~= 0 then
+    error('only bufnr=0 is supported')
+  end
+
   return setmetatable({}, {
     __index = function(_, k)
       if bufnr == nil and type(k) == 'number' then
@@ -185,11 +189,6 @@ local function new_win_opt_accessor(winid, bufnr)
         end
       end
 
-      if bufnr ~= nil and bufnr ~= 0 then
-        error('only bufnr=0 is supported')
-      end
-
-      -- TODO(lewis6991): allow passing both buf and win to nvim_get_option_value
       return api.nvim_get_option_value(k, {
         scope = bufnr and 'local' or nil,
         win = winid or 0,
@@ -197,7 +196,6 @@ local function new_win_opt_accessor(winid, bufnr)
     end,
 
     __newindex = function(_, k, v)
-      -- TODO(lewis6991): allow passing both buf and win to nvim_set_option_value
       return api.nvim_set_option_value(k, v, {
         scope = bufnr and 'local' or nil,
         win = winid or 0,
@@ -276,10 +274,8 @@ vim.go = setmetatable({}, {
 })
 
 --- Get or set buffer-scoped |options| for the buffer with number {bufnr}.
---- If {bufnr} is omitted then the current buffer is used.
+--- Like `:setlocal`. If {bufnr} is omitted then the current buffer is used.
 --- Invalid {bufnr} or key is an error.
----
---- Note: this is equivalent to `:setlocal` for |global-local| options and `:set` otherwise.
 ---
 --- Example:
 ---

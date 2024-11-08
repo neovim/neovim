@@ -40,7 +40,7 @@ Detail: The ":filetype on" command will load these files:
 	$VIMRUNTIME/scripts.vim is used to detect it from the contents of the
 	file.
 	When the GUI is running or will start soon, the |menu.vim| script is
-	also sourced.  See |'go-M'| about avoiding that.
+	also sourced.
 
 To add your own file types, see |new-filetype| below.  To search for help on a
 filetype prepend "ft-" and optionally append "-syntax", "-indent" or
@@ -147,6 +147,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.csh`		g:filetype_csh		|ft-csh-syntax|
 	`*.dat`		g:filetype_dat
 	`*.def`		g:filetype_def
+	`*.dsp`		g:filetype_dsp
 	`*.f`		g:filetype_f		|ft-forth-syntax|
 	`*.frm`		g:filetype_frm		|ft-form-syntax|
 	`*.fs`		g:filetype_fs		|ft-forth-syntax|
@@ -585,11 +586,33 @@ any #lang directive overrides, use the following command: >
 	let g:freebasic_lang = "fblite"
 
 
+GDSCRIPT						*ft-gdscript-plugin*
+
+By default the following options are set, based on Godot official docs: >
+
+	setlocal noexpandtab softtabstop=0 shiftwidth=0
+
+To disable this behavior, set the following variable in your vimrc: >
+
+	let g:gdscript_recommended_style = 0
+
+
 GIT COMMIT                                              *ft-gitcommit-plugin*
 
 One command, :DiffGitCached, is provided to show a diff of the current commit
 in the preview window.  It is equivalent to calling "git diff --cached" plus
 any arguments given to the command.
+
+
+GO							*ft-go-plugin*
+
+By default the following options are set, based on Golang official docs: >
+
+	setlocal noexpandtab softtabstop=0 shiftwidth=0
+
+To disable this behavior, set the following variable in your vimrc: >
+
+	let g:go_recommended_style = 0
 
 
 GPROF							*ft-gprof-plugin*
@@ -637,6 +660,27 @@ in the "path" and to try to load it.
 Remember to manually trigger the |FileType| event from a buffer with a Java
 file loaded in it each time after assigning a new value to the variable: >
 	doautocmd FileType
+<
+Markdown documentation comments may contain common runs of vertical leading
+whitespace following the comment marks (`///`) for aesthetic reasons; however,
+some horizontal runs of leading whitespace are significant in Markdown because
+they denote code blocks etc.  For convenience, a 'formatexpr' function is
+provided for the |gq| operator.  As long as neither "g:java_ignore_javadoc"
+nor "g:java_ignore_markdown" is defined, the reformatting of Markdown comments
+can be enabled on demand with: >
+	setlocal formatexpr=g:javaformat#RemoveCommonMarkdownWhitespace()
+<
+Or for Vim versions less than `7.4.265`, with: >
+	setlocal formatexpr=javaformat#RemoveCommonMarkdownWhitespace()
+<
+This function accepts a range of lines, removes a common run of vertical
+leading whitespace, and rewrites the lines of the range.  Depending on the
+author's layout style and the comment contents, which lines to select for
+reformatting can vary from the whole comment to only some portion of it.
+To enable the recognition of Markdown comments each time after removing
+"g:java_ignore_markdown" or "g:java_ignore_javadoc", remember to manually
+re-source "javaformat.vim" for Vim versions greater than `8.2.1397`: >
+	runtime autoload/javaformat.vim
 <
 
 MAIL							*ft-mail-plugin*
@@ -990,7 +1034,24 @@ You can change the default by defining the variable g:tex_flavor to the format
 	let g:tex_flavor = "latex"
 Currently no other formats are recognized.
 
+TYPST							*ft-typst-plugin*
 
+							*g:typst_conceal*
+When |TRUE| the Typst filetype plugin will set the 'conceallevel' option to 2.
+
+							*g:typst_folding*
+When |TRUE| the Typst filetype plugin will fold headings. (default: |FALSE|)
+
+To enable: >
+	let g:typst_folding = 1
+<
+							*g:typst_foldnested*
+When |TRUE| the Typst filetype plugin will fold nested heading under their parents
+(default: |TRUE|)
+
+To disable: >
+	let g:typst_foldnested = 0
+<
 VIM							*ft-vim-plugin*
 
 The Vim filetype plugin defines mappings to move to the start and end of

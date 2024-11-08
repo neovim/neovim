@@ -157,7 +157,7 @@ syn match modula2Base16Num "0[ux][0-9A-F]\+\('[0-9A-F]\+\)*"
 "| which greatly diminishes readability and thereby increases the opportunity
 "| for error during maintenance. Ideally, regular expressions should be split
 "| into small human readable pieces with interleaved comments that explain
-"| precisely what each piece is doing.  Vimscript imposes poor design. :-(
+"| precisely what each piece is doing.  Vim script imposes poor design. :-(
 
 syn match modula2Base10Num
   \ "\(\(0[bux]\@!\|[1-9]\)[0-9]*\('[0-9]\+\)*\)\(\.[0-9]\+\('[0-9]\+\)*\(e[+-]\?[0-9]\+\('[0-9]\+\)*\)\?\)\?"

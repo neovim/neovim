@@ -7,7 +7,6 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/extmark_defs.h"  // IWYU pragma: keep
-#include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
 #include "nvim/normal_defs.h"
 #include "nvim/option_defs.h"  // IWYU pragma: keep
@@ -106,12 +105,12 @@ enum GRegFlags {
 
 /// Definition of one register
 typedef struct {
-  char **y_array;           ///< Pointer to an array of line pointers.
+  String *y_array;          ///< Pointer to an array of Strings.
   size_t y_size;            ///< Number of lines in y_array.
   MotionType y_type;        ///< Register type
   colnr_T y_width;          ///< Register width (only valid for y_type == kBlockWise).
   Timestamp timestamp;      ///< Time when register was last modified.
-  dict_T *additional_data;  ///< Additional data from ShaDa file.
+  AdditionalData *additional_data;  ///< Additional data from ShaDa file.
 } yankreg_T;
 
 /// Modes for get_yank_register()
@@ -121,8 +120,10 @@ typedef enum {
   YREG_PUT,
 } yreg_mode_t;
 
-static inline int op_reg_index(int regname)
-  REAL_FATTR_CONST;
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ops.h.generated.h"
+# include "ops.h.inline.generated.h"
+#endif
 
 /// Convert register name into register index
 ///
@@ -130,6 +131,7 @@ static inline int op_reg_index(int regname)
 ///
 /// @return Index in y_regs array or -1 if register name was not recognized.
 static inline int op_reg_index(const int regname)
+  FUNC_ATTR_CONST
 {
   if (ascii_isdigit(regname)) {
     return regname - '0';
@@ -148,19 +150,13 @@ static inline int op_reg_index(const int regname)
   }
 }
 
-static inline bool is_literal_register(int regname)
-  REAL_FATTR_CONST;
-
 /// @see get_yank_register
 /// @return  true when register should be inserted literally
 /// (selection or clipboard)
 static inline bool is_literal_register(const int regname)
+  FUNC_ATTR_CONST
 {
   return regname == '*' || regname == '+';
 }
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ops.h.generated.h"
-#endif
 
 EXTERN LuaRef repeat_luaref INIT( = LUA_NOREF);  ///< LuaRef for "."

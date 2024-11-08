@@ -1,10 +1,11 @@
 " Vim filetype plugin file
-" Language:      Raku
-" Maintainer:    vim-perl <vim-perl@googlegroups.com>
-" Homepage:      https://github.com/Raku/vim-raku
+" Language:	Raku
+" Maintainer:	vim-perl <vim-perl@googlegroups.com>
+" Homepage:	https://github.com/Raku/vim-raku
 " Bugs/requests: https://github.com/Raku/vim-raku/issues
-" Last Change:   2021-04-16
-" Contributors:  Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
+" Last Change:	2021 Apr 16
+"		2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
+" Contributors:	Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "
 " Based on ftplugin/perl.vim by Dan Sharp <dwsharp at hotmail dot com>
 
@@ -21,7 +22,7 @@ setlocal formatoptions+=crqol
 setlocal keywordprg=p6doc
 
 setlocal comments=:#\|,:#=,:#
-setlocal commentstring=#%s
+setlocal commentstring=#\ %s
 
 " Provided by Ned Konz <ned at bike-nomad dot com>
 "---------------------------------------------

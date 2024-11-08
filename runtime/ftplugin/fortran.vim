@@ -11,6 +11,7 @@
 "  Doug Kearns, and Fritz Reese.
 " Last Change:	2023 Dec 22
 "		2024 Jan 14 by Vim Project (browsefilter)
+"		2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 " Only do these settings when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -89,7 +90,7 @@ else
 endif
 
 " Set commentstring for foldmethod=marker
-setlocal cms=!%s
+setlocal cms=!\ %s
 
 " Tabs are not a good idea in Fortran so the default is to expand tabs
 if !exists("fortran_have_tabs")

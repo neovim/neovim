@@ -1,5 +1,6 @@
 name: Language server (LSP) client bug
-description: Report an issue with Neovim LSP
+description: Report an issue with Nvim LSP
+title: "LSP: "
 labels: [bug, lsp]
 body:
 
@@ -59,7 +60,7 @@ body:
 
   - type: input
     attributes:
-      label: "Neovim version (nvim -v)"
+      label: "Nvim version (nvim -v)"
       placeholder: "0.6.0 commit db1b0ee3b30f"
     validations:
       required: true

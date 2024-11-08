@@ -79,6 +79,8 @@ When a (non-experimental) feature is slated to be removed it should:
       `v0.10.0-dev-1957+gd676746c33` then use `0.12`.
     - For Vimscript features, use `v:lua.vim.deprecate()`. Use the same version
       as described for Lua features.
+    - `vim.deprecate(…, 'x.y.z')` where major version `x` is greater than the
+      current Nvim major version, is always treated as _soft_ deprecation.
 2. Be _hard_ deprecated in a following a release in which it was soft deprecated.
     - Use of the deprecated feature will still work but should issue a warning.
     - Features implemented in C will need bespoke implementations to communicate
@@ -129,8 +131,6 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 * [gettext](https://ftp.gnu.org/pub/gnu/gettext/)
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
 * [libuv](https://github.com/libuv/libuv)
-* [libvterm](https://www.leonerd.org.uk/code/libvterm/)
-    * Downloading from the original source is unreliable, so we use our [mirror](https://github.com/neovim/libvterm) instead.
 * [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
 * [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 * [unibilium](https://github.com/neovim/unibilium)
@@ -146,6 +146,8 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 * `src/xdiff/`: [xdiff](https://github.com/git/git/tree/master/xdiff)
 * `src/cjson/`: [lua-cjson](https://github.com/openresty/lua-cjson)
 * `src/klib/`: [Klib](https://github.com/attractivechaos/klib)
+* `src/vterm/`: [libvterm](https://www.leonerd.org.uk/code/libvterm/),
+    [mirror](https://github.com/neovim/libvterm)
 * `runtime/lua/vim/inspect.lua`: [inspect.lua](https://github.com/kikito/inspect.lua)
 * `src/nvim/tui/terminfo_defs.h`: terminfo definitions
     * Run `scripts/update_terminfo.sh` to update these definitions.
@@ -160,7 +162,6 @@ These dependencies are "vendored" (inlined), we must update the sources manually
     * Needs to be updated when LPeg is updated.
 * `src/bit.c`: only for PUC lua: port of `require'bit'` from luajit https://bitop.luajit.org/
 * `runtime/lua/coxpcall.lua`: coxpcall (only needed for PUC lua, builtin to luajit)
-* `src/termkey`: [libtermkey](https://github.com/neovim/libtermkey)
 
 Other dependencies
 --------------------------
@@ -170,6 +171,9 @@ Other dependencies
     * https://github.com/nvim-winget
 * Org secrets/tokens:
     * `CODECOV_TOKEN`
+    * `BACKPORT_KEY`
+* Org/repo variables:
+    * `BACKPORT_APP`
 * Domain names (held in https://namecheap.com):
     * neovim.org
     * neovim.io
@@ -185,10 +189,10 @@ Refactoring
 
 Refactoring Vim structurally and aesthetically is an important goal of Neovim.
 But there are some modules that should not be changed significantly, because
-they are maintained Vim, at present. Until someone takes "ownership" of these
-modules, the cost of any significant changes (including style or structural
-changes that re-arrange the code) to these modules outweighs the benefit. The
-modules are:
+they are maintained by Vim, at present. Until someone takes "ownership" of
+these modules, the cost of any significant changes (including style or
+structural changes that re-arrange the code) to these modules outweighs the
+benefit. The modules are:
 
 - `regexp.c`
 - `indent_c.c`
@@ -211,12 +215,12 @@ https://github.com/neovim/neovim-backup
     * For special-purpose jobs where the runner version doesn't really matter,
       prefer `-latest` tags so we don't need to manually bump the versions. An
       example of a special-purpose workflow is `labeler_pr.yml`.
-    * For our testing job `test.yml`, prefer to use the latest stable (i.e.
-      non-beta) version explicitly. Avoid using the `-latest` tags here as it
-      makes it difficult to determine from an unrelated PR if a failure is due
-      to the PR itself or due to GitHub bumping the `-latest` tag without our
-      knowledge. There's also a high risk that automatically bumping the CI
-      versions will fail due to manual work being required from experience.
+    * For our testing job `test.yml`, prefer to use the latest version
+      explicitly. Avoid using the `-latest` tags here as it makes it difficult
+      to determine from an unrelated PR if a failure is due to the PR itself or
+      due to GitHub bumping the `-latest` tag without our knowledge. There's
+      also a high risk that automatically bumping the CI versions will fail due
+      to manual work being required from experience.
     * For our release job, which is `release.yml`, prefer to use the oldest
       stable (i.e. non-deprecated) versions available. The reason is that we're
       trying to produce images that work in the broadest number of environments,

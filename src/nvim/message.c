@@ -18,6 +18,7 @@
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -198,7 +199,7 @@ void msg_grid_validate(void)
     ui_call_grid_resize(msg_grid.handle, msg_grid.cols, msg_grid.rows);
 
     msg_scrolled_at_flush = msg_scrolled;
-    msg_grid.focusable = false;
+    msg_grid.mouse_enabled = false;
     msg_grid_adj.target = &msg_grid;
   } else if (!should_alloc && msg_grid.chars) {
     ui_comp_remove_grid(&msg_grid);
@@ -445,9 +446,7 @@ void trunc_string(const char *s, char *buf, int room_in, int buflen)
   // Last part: End of the string.
   half = i = (int)strlen(s);
   while (true) {
-    do {
-      half = half - utf_head_off(s, s + half - 1) - 1;
-    } while (half > 0 && utf_iscomposing(utf_ptr2char(s + half)));
+    half = half - utf_head_off(s, s + half - 1) - 1;
     n = ptr2cells(s + half);
     if (len + n > room || half == 0) {
       break;
@@ -1383,11 +1382,7 @@ void msgmore(int n)
     return;
   }
 
-  if (n > 0) {
-    pn = n;
-  } else {
-    pn = -n;
-  }
+  pn = abs(n);
 
   if (pn > p_report) {
     if (n > 0) {
@@ -1425,9 +1420,7 @@ void msg_start(void)
 {
   bool did_return = false;
 
-  if (msg_row < cmdline_row) {
-    msg_row = cmdline_row;
-  }
+  msg_row = MAX(msg_row, cmdline_row);
 
   if (!msg_silent) {
     XFREE_CLEAR(keep_msg);              // don't display old message now
@@ -2689,7 +2682,7 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
         *p++ = '\r';
       }
       memcpy(p, s, (size_t)len);
-      *(p + len) = '\0';
+      *(p + len) = NUL;
       if (info_message) {
         printf("%s", buf);
       } else {
@@ -3381,9 +3374,7 @@ void msg_advance(int col)
     }
     return;
   }
-  if (col >= Columns) {         // not enough room
-    col = Columns - 1;
-  }
+  col = MIN(col, Columns - 1);  // not enough room
   while (msg_col < col) {
     msg_putchar(' ');
   }

@@ -4,6 +4,7 @@
 " Previous Maintainers: Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 "			Claudio Fleiner <claudio@fleiner.com>
 " Last Change:		2023 Nov 28
+" 2024 Jul 30 by Vim Project: increase syn-sync-minlines to 250
 
 " See :help html.vim for some comments and a description of the options
 
@@ -191,7 +192,7 @@ syn keyword htmlArg contained step title translate typemustmatch
 syn match   htmlArg contained "\<data-\h\%(\w\|[-.]\)*\%(\_s*=\)\@="
 
 " special characters
-syn match htmlSpecialChar "&#\=[0-9A-Za-z]\{1,8};"
+syn match htmlSpecialChar "&#\=[0-9A-Za-z]\{1,32};"
 
 " Comments (the real ones or the old netscape ones)
 if exists("html_wrong_comments")
@@ -320,7 +321,7 @@ if main_syntax == "html"
   syn sync match htmlHighlight groupthere NONE "<[/a-zA-Z]"
   syn sync match htmlHighlight groupthere javaScript "<script"
   syn sync match htmlHighlightSkip "^.*['\"].*$"
-  syn sync minlines=10
+  exe "syn sync minlines=" . get(g:, 'html_minlines', 250)
 endif
 
 " Folding

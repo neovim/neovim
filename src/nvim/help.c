@@ -13,6 +13,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/errors.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -957,8 +958,8 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
           if (s == p2
               && (p1 == IObuff || p1[-1] == ' ' || p1[-1] == '\t')
               && (vim_strchr(" \t\n\r", (uint8_t)s[1]) != NULL
-                  || s[1] == '\0')) {
-            *p2 = '\0';
+                  || s[1] == NUL)) {
+            *p2 = NUL;
             p1++;
             size_t s_len = (size_t)(p2 - p1) + strlen(fname) + 2;
             s = xmalloc(s_len);

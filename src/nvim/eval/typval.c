@@ -10,11 +10,13 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
 #include "nvim/charset.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/executor.h"
 #include "nvim/eval/gc.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
@@ -58,6 +60,13 @@ typedef struct {
 
 typedef int (*ListSorter)(const void *, const void *);
 
+/// Type for tv_dict2list() function
+typedef enum {
+  kDict2ListKeys,    ///< List dictionary keys.
+  kDict2ListValues,  ///< List dictionary values.
+  kDict2ListItems,   ///< List dictionary contents: [keys, values].
+} DictListType;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.c.generated.h"
 #endif
@@ -84,6 +93,8 @@ static const char e_string_or_number_required_for_argument_nr[]
   = N_("E1220: String or Number required for argument %d");
 static const char e_string_or_list_required_for_argument_nr[]
   = N_("E1222: String or List required for argument %d");
+static const char e_string_list_or_dict_required_for_argument_nr[]
+  = N_("E1225: String, List or Dictionary required for argument %d");
 static const char e_list_or_blob_required_for_argument_nr[]
   = N_("E1226: List or Blob required for argument %d");
 static const char e_blob_required_for_argument_nr[]
@@ -474,13 +485,14 @@ void tv_list_append_tv(list_T *const l, typval_T *const tv)
 /// Like tv_list_append_tv(), but tv is moved to a list
 ///
 /// This means that it is no longer valid to use contents of the typval_T after
-/// function exits.
-void tv_list_append_owned_tv(list_T *const l, typval_T tv)
+/// function exits. A pointer is returned to the allocated typval which can be used
+typval_T *tv_list_append_owned_tv(list_T *const l, typval_T tv)
   FUNC_ATTR_NONNULL_ALL
 {
   listitem_T *const li = tv_list_item_alloc();
   *TV_LIST_ITEM_TV(li) = tv;
   tv_list_append(l, li);
+  return TV_LIST_ITEM_TV(li);
 }
 
 /// Append a list to a list as one item
@@ -778,6 +790,51 @@ void tv_list_flatten(list_T *list, listitem_T *first, int64_t maxitems, int64_t 
 
     done++;
     item = next;
+  }
+}
+
+/// "items(list)" function
+/// Caller must have already checked that argvars[0] is a List.
+static void tv_list2items(typval_T *argvars, typval_T *rettv)
+{
+  list_T *l = argvars[0].vval.v_list;
+
+  tv_list_alloc_ret(rettv, tv_list_len(l));
+  if (l == NULL) {
+    return;  // null list behaves like an empty list
+  }
+
+  varnumber_T idx = 0;
+  TV_LIST_ITER(l, li, {
+    list_T *l2 = tv_list_alloc(2);
+    tv_list_append_list(rettv->vval.v_list, l2);
+    tv_list_append_number(l2, idx);
+    tv_list_append_tv(l2, TV_LIST_ITEM_TV(li));
+    idx++;
+  });
+}
+
+/// "items(string)" function
+/// Caller must have already checked that argvars[0] is a String.
+static void tv_string2items(typval_T *argvars, typval_T *rettv)
+{
+  const char *p = argvars[0].vval.v_string;
+
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+  if (p == NULL) {
+    return;  // null string behaves like an empty string
+  }
+
+  for (varnumber_T idx = 0; *p != NUL; idx++) {
+    int len = utfc_ptr2len(p);
+    if (len == 0) {
+      break;
+    }
+    list_T *l2 = tv_list_alloc(2);
+    tv_list_append_list(rettv->vval.v_list, l2);
+    tv_list_append_number(l2, idx);
+    tv_list_append_string(l2, p, len);
+    p += len;
   }
 }
 
@@ -1459,10 +1516,9 @@ void f_uniq(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// @param[in]  l1  First list to compare.
 /// @param[in]  l2  Second list to compare.
 /// @param[in]  ic  True if case is to be ignored.
-/// @param[in]  recursive  True when used recursively.
 ///
 /// @return True if lists are equal, false otherwise.
-bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic, const bool recursive)
+bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (l1 == l2) {
@@ -1484,8 +1540,7 @@ bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic, const bool
   for (; item1 != NULL && item2 != NULL
        ; (item1 = TV_LIST_ITEM_NEXT(l1, item1),
           item2 = TV_LIST_ITEM_NEXT(l2, item2))) {
-    if (!tv_equal(TV_LIST_ITEM_TV(item1), TV_LIST_ITEM_TV(item2), ic,
-                  recursive)) {
+    if (!tv_equal(TV_LIST_ITEM_TV(item1), TV_LIST_ITEM_TV(item2), ic)) {
       return false;
     }
   }
@@ -1823,7 +1878,7 @@ char *callback_to_string(Callback *cb, Arena *arena)
     snprintf(msg, msglen, "<vim partial: %s>", cb->data.partial->pt_name);
     break;
   default:
-    *msg = '\0';
+    *msg = NUL;
     break;
   }
   return msg;
@@ -2678,8 +2733,9 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2, const char *const action
 /// @param[in]  d1  First dictionary.
 /// @param[in]  d2  Second dictionary.
 /// @param[in]  ic  True if case is to be ignored.
-/// @param[in]  recursive  True when used recursively.
-bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic, const bool recursive)
+///
+/// @return True if dictionaries are equal, false otherwise.
+bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (d1 == d2) {
@@ -2701,7 +2757,7 @@ bool tv_dict_equal(dict_T *const d1, dict_T *const d2, const bool ic, const bool
     if (di2 == NULL) {
       return false;
     }
-    if (!tv_equal(&di1->di_tv, &di2->di_tv, ic, recursive)) {
+    if (!tv_equal(&di1->di_tv, &di2->di_tv, ic)) {
       return false;
     }
   });
@@ -3063,8 +3119,7 @@ void f_blob2list(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// list2blob() function
 void f_list2blob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  tv_blob_alloc_ret(rettv);
-  blob_T *const blob = rettv->vval.v_blob;
+  blob_T *blob = tv_blob_alloc_ret(rettv);
 
   if (tv_check_for_list_arg(argvars, 0) == FAIL) {
     return;
@@ -3135,49 +3190,45 @@ void tv_dict_alloc_ret(typval_T *const ret_tv)
 
 /// Turn a dictionary into a list
 ///
-/// @param[in] tv      Dictionary to convert. Is checked for actually being
+/// @param[in] argvars Arguments to items(). The first argument is check for being
 ///                    a dictionary, will give an error if not.
 /// @param[out] rettv  Location where result will be saved.
 /// @param[in] what    What to save in rettv.
-static void tv_dict_list(typval_T *const tv, typval_T *const rettv, const DictListType what)
+static void tv_dict2list(typval_T *const argvars, typval_T *const rettv, const DictListType what)
 {
-  if (tv->v_type != VAR_DICT) {
-    emsg(_(e_dictreq));
+  if ((what == kDict2ListItems
+       ? tv_check_for_string_or_list_or_dict_arg(argvars, 0)
+       : tv_check_for_dict_arg(argvars, 0)) == FAIL) {
+    tv_list_alloc_ret(rettv, 0);
     return;
   }
 
-  tv_list_alloc_ret(rettv, tv_dict_len(tv->vval.v_dict));
-  if (tv->vval.v_dict == NULL) {
+  dict_T *d = argvars[0].vval.v_dict;
+  tv_list_alloc_ret(rettv, tv_dict_len(d));
+  if (d == NULL) {
     // NULL dict behaves like an empty dict
     return;
   }
 
-  TV_DICT_ITER(tv->vval.v_dict, di, {
+  TV_DICT_ITER(d, di, {
     typval_T tv_item = { .v_lock = VAR_UNLOCKED };
 
     switch (what) {
-      case kDictListKeys:
+      case kDict2ListKeys:
         tv_item.v_type = VAR_STRING;
         tv_item.vval.v_string = xstrdup(di->di_key);
         break;
-      case kDictListValues:
+      case kDict2ListValues:
         tv_copy(&di->di_tv, &tv_item);
         break;
-      case kDictListItems: {
+      case kDict2ListItems: {
         // items()
         list_T *const sub_l = tv_list_alloc(2);
         tv_item.v_type = VAR_LIST;
         tv_item.vval.v_list = sub_l;
         tv_list_ref(sub_l);
-
-        tv_list_append_owned_tv(sub_l, (typval_T) {
-          .v_type = VAR_STRING,
-          .v_lock = VAR_UNLOCKED,
-          .vval.v_string = xstrdup(di->di_key),
-        });
-
+        tv_list_append_string(sub_l, di->di_key, -1);
         tv_list_append_tv(sub_l, &di->di_tv);
-
         break;
       }
     }
@@ -3189,19 +3240,25 @@ static void tv_dict_list(typval_T *const tv, typval_T *const rettv, const DictLi
 /// "items(dict)" function
 void f_items(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  tv_dict_list(argvars, rettv, 2);
+  if (argvars[0].v_type == VAR_STRING) {
+    tv_string2items(argvars, rettv);
+  } else if (argvars[0].v_type == VAR_LIST) {
+    tv_list2items(argvars, rettv);
+  } else {
+    tv_dict2list(argvars, rettv, kDict2ListItems);
+  }
 }
 
 /// "keys()" function
 void f_keys(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  tv_dict_list(argvars, rettv, 0);
+  tv_dict2list(argvars, rettv, kDict2ListKeys);
 }
 
 /// "values(dict)" function
 void f_values(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  tv_dict_list(argvars, rettv, 1);
+  tv_dict2list(argvars, rettv, kDict2ListValues);
 }
 
 /// "has_key()" function
@@ -3251,11 +3308,12 @@ void tv_dict_remove(typval_T *argvars, typval_T *rettv, const char *arg_errmsg)
 /// Also sets reference count.
 ///
 /// @param[out]  ret_tv  Structure where blob is saved.
-void tv_blob_alloc_ret(typval_T *const ret_tv)
+blob_T *tv_blob_alloc_ret(typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
   blob_T *const b = tv_blob_alloc();
   tv_blob_set_ret(ret_tv, b);
+  return b;
 }
 
 /// Copy a blob typval to a different typval.
@@ -3283,6 +3341,7 @@ void tv_blob_copy(blob_T *const from, typval_T *const to)
 
 //{{{3 Clear
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false
+#define TYPVAL_ENCODE_CHECK_BEFORE
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
   do { \
@@ -3499,6 +3558,7 @@ static inline void _nothing_conv_dict_end(typval_T *const tv, dict_T **const dic
 #undef TYPVAL_ENCODE_FIRST_ARG_NAME
 
 #undef TYPVAL_ENCODE_ALLOW_SPECIALS
+#undef TYPVAL_ENCODE_CHECK_BEFORE
 #undef TYPVAL_ENCODE_CONV_NIL
 #undef TYPVAL_ENCODE_CONV_BOOL
 #undef TYPVAL_ENCODE_CONV_NUMBER
@@ -3835,10 +3895,9 @@ static int tv_equal_recurse_limit;
 /// @param[in]  tv1  First value to compare.
 /// @param[in]  tv2  Second value to compare.
 /// @param[in]  ic  True if case is to be ignored.
-/// @param[in]  recursive  True when used recursively.
 ///
 /// @return true if values are equal.
-bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic, const bool recursive)
+bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // TODO(ZyX-I): Make this not recursive
@@ -3854,7 +3913,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic, const boo
   // Reduce the limit every time running into it. That should work fine for
   // deeply linked structures that are not recursively linked and catch
   // recursiveness quickly.
-  if (!recursive) {
+  if (recursive_cnt == 0) {
     tv_equal_recurse_limit = 1000;
   }
   if (recursive_cnt >= tv_equal_recurse_limit) {
@@ -3865,15 +3924,13 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic, const boo
   switch (tv1->v_type) {
   case VAR_LIST: {
     recursive_cnt++;
-    const bool r = tv_list_equal(tv1->vval.v_list, tv2->vval.v_list, ic,
-                                 true);
+    const bool r = tv_list_equal(tv1->vval.v_list, tv2->vval.v_list, ic);
     recursive_cnt--;
     return r;
   }
   case VAR_DICT: {
     recursive_cnt++;
-    const bool r = tv_dict_equal(tv1->vval.v_dict, tv2->vval.v_dict, ic,
-                                 true);
+    const bool r = tv_dict_equal(tv1->vval.v_dict, tv2->vval.v_dict, ic);
     recursive_cnt--;
     return r;
   }
@@ -4152,6 +4209,29 @@ linenr_T tv_get_lnum(const typval_T *const tv)
   return lnum;
 }
 
+/// Get the line number from Vimscript object
+///
+/// @note Unlike tv_get_lnum(), this one supports only "$" special string.
+///
+/// @param[in] tv   Object to get value from. Is expected to be a number or
+///                 a special string "$".
+/// @param[in] buf  Buffer to take last line number from in case tv is "$". May
+///                 be NULL, in this case "$" results in zero return.
+///
+/// @return  Line number or 0 in case of error.
+linenr_T tv_get_lnum_buf(const typval_T *const tv, const buf_T *const buf)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (tv->v_type == VAR_STRING
+      && tv->vval.v_string != NULL
+      && tv->vval.v_string[0] == '$'
+      && tv->vval.v_string[1] == NUL
+      && buf != NULL) {
+    return buf->b_ml.ml_line_count;
+  }
+  return (linenr_T)tv_get_number_chk(tv, NULL);
+}
+
 /// Get the floating-point value of a Vimscript object
 ///
 /// Raises an error if object is not number or floating-point.
@@ -4397,6 +4477,19 @@ int tv_check_for_opt_string_or_list_arg(const typval_T *const args, const int id
 {
   return (args[idx].v_type == VAR_UNKNOWN
           || tv_check_for_string_or_list_arg(args, idx) != FAIL) ? OK : FAIL;
+}
+
+/// Give an error and return FAIL unless "args[idx]" is a string or a list or a dict
+int tv_check_for_string_or_list_or_dict_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_STRING
+      && args[idx].v_type != VAR_LIST
+      && args[idx].v_type != VAR_DICT) {
+    semsg(_(e_string_list_or_dict_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
 }
 
 /// Give an error and return FAIL unless "args[idx]" is a string

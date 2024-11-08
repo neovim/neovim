@@ -1177,6 +1177,18 @@ items:
 	user_data	custom data which is associated with the item and
 			available in |v:completed_item|; it can be any type;
 			defaults to an empty string
+	abbr_hlgroup	an additional highlight group whose attributes are
+			combined with |hl-PmenuSel| and |hl-Pmenu| or
+			|hl-PmenuMatchSel| and |hl-PmenuMatch| highlight
+			attributes in the popup menu to apply cterm and gui
+			properties (with higher priority) like strikethrough
+			to the completion items abbreviation
+	kind_hlgroup	an additional highlight group specifically for setting
+			the highlight attributes of the completion kind. When
+			this field is present, it will override the
+			|hl-PmenuKind| highlight group, allowing for the
+			customization of ctermfg and guifg properties for the
+			completion kind
 
 All of these except "icase", "equal", "dup" and "empty" must be a string.  If
 an item does not meet these requirements then an error message is given and
@@ -1895,6 +1907,16 @@ These commands are used to start inserting text.  You can end insert mode with
 <Esc>.  See |mode-ins-repl| for the other special characters in Insert mode.
 The effect of [count] takes place after Insert mode is exited.
 
+The following commands insert text, but stay in normal mode:
+
+							*]<Space>*
+]<Space>		Insert an empty line below the cursor without leaving
+			Normal mode, repeat [count] times.
+
+							*[<Space>*
+[<Space>		Insert an empty line above the cursor without leaving
+			Normal mode, repeat [count] times.
+
 When 'autoindent' is on, the indent for a new line is obtained from the
 previous line.  When 'smartindent' or 'cindent' is on, the indent for a line
 is automatically adjusted for C programs.
@@ -1927,11 +1949,16 @@ These two commands will keep on asking for lines, until you type a line
 containing only a ".".  Watch out for lines starting with a backslash, see
 |line-continuation|.
 
-When in Ex mode (see |-e|) a backslash at the end of the line can be used to
-insert a NUL character.  To be able to have a line ending in a backslash use
-two backslashes.  This means that the number of backslashes is halved, but
-only at the end of the line.
-
+Text typed after a "|" command separator is used first. So the following
+command in ex mode: >
+	:a|one
+	two
+	.
+	:visual
+appends the following text, after the cursor line: >
+	one
+	two
+<
 NOTE: These commands cannot be used with |:global| or |:vglobal|.
 ":append" and ":insert" don't work properly in between ":if" and
 ":endif", ":for" and ":endfor", ":while" and ":endwhile".

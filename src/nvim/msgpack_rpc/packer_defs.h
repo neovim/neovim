@@ -19,6 +19,6 @@ struct packer_buffer_t {
 
   // these are free to be used by packer_flush for any purpose, if want
   void *anydata;
-  size_t anylen;
+  int64_t anyint;
   PackerBufferFlush packer_flush;
 };

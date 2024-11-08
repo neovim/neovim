@@ -35,7 +35,7 @@ local function highlight_line(line, linenr)
   ---@type string[]
   local chars = {}
   local prev_char = ''
-  local overstrike, escape = false, false
+  local overstrike, escape, osc8 = false, false, false
 
   ---@type table<integer,{attr:integer,start:integer,final:integer}>
   local hls = {} -- Store highlight groups as { attr, start, final }
@@ -139,6 +139,12 @@ local function highlight_line(line, linenr)
       prev_char = ''
       byte = byte + #char
       chars[#chars + 1] = char
+    elseif osc8 then
+      -- eat characters until String Terminator or bell
+      if (prev_char == '\027' and char == '\\') or char == '\a' then
+        osc8 = false
+      end
+      prev_char = char
     elseif escape then
       -- Use prev_char to store the escape sequence
       prev_char = prev_char .. char
@@ -157,8 +163,11 @@ local function highlight_line(line, linenr)
           add_attr_hl(match + 0) -- coerce to number
         end
         escape = false
-      elseif not prev_char:match('^%[[\032-\063]*$') then
-        -- Stop looking if this isn't a partial CSI sequence
+      elseif prev_char == ']8;' then
+        osc8 = true
+        escape = false
+      elseif not prev_char:match('^[][][\032-\063]*$') then
+        -- Stop looking if this isn't a partial CSI or OSC sequence
         escape = false
       end
     elseif char == '\027' then
@@ -296,7 +305,7 @@ local function matchstr(text, pat_or_re)
     return
   end
 
-  return text:sub(vim.str_utfindex(text, s) + 1, vim.str_utfindex(text, e))
+  return text:sub(vim.str_utfindex(text, 'utf-32', s) + 1, vim.str_utfindex(text, 'utf-32', e))
 end
 
 -- attempt to extract the name and sect out of 'name(sect)'
@@ -470,7 +479,13 @@ local function put_page(page)
   -- XXX: nroff justifies text by filling it with whitespace.  That interacts
   -- badly with our use of $MANWIDTH=999.  Hack around this by using a fixed
   -- size for those whitespace regions.
-  vim.cmd([[silent! keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g]])
+  -- Use try/catch to avoid setting v:errmsg.
+  vim.cmd([[
+    try
+      keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g
+    catch
+    endtry
+  ]])
   vim.cmd('1') -- Move cursor to first line
   highlight_man_page()
   set_options()
@@ -660,7 +675,6 @@ function M.init_pager()
     vim.cmd.file({ 'man://' .. fn.fnameescape(ref):lower(), mods = { silent = true } })
   end
 
-  vim.g.pager = true
   set_options()
 end
 
@@ -708,7 +722,7 @@ function M.open_page(count, smods, args)
   end
 
   sect, name = extract_sect_and_name_path(path)
-  local buf = fn.bufnr()
+  local buf = api.nvim_get_current_buf()
   local save_tfu = vim.bo[buf].tagfunc
   vim.bo[buf].tagfunc = "v:lua.require'man'.goto_tag"
 
@@ -724,7 +738,9 @@ function M.open_page(count, smods, args)
     end
   end)
 
-  vim.bo[buf].tagfunc = save_tfu
+  if api.nvim_buf_is_valid(buf) then
+    vim.bo[buf].tagfunc = save_tfu
+  end
 
   if not ok then
     error(ret)

@@ -7,8 +7,8 @@
 Development of Nvim                                     *development* *dev*
 
 This reference describes design constraints and guidelines, for developing
-Nvim applications or Nvim itself.
-Architecture and internal concepts are covered in src/nvim/README.md
+Nvim applications or Nvim itself. See |dev-arch| for discussion of Nvim's
+architecture and internal concepts.
 
 Nvim is free and open source.  Everybody is encouraged to contribute.
     https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md
@@ -138,15 +138,15 @@ DOCUMENTATION                                           *dev-doc*
 - Write docstrings (as opposed to inline comments) with present tense ("Gets"),
   not imperative ("Get"). This tends to reduce ambiguity and improve clarity
   by describing "What" instead of "How". >
-    GOOD:
+    ✅ OK:
     /// Gets a highlight definition.
-    BAD:
+    ❌ NO:
     /// Get a highlight definition.
 - Avoid starting docstrings with "The" or "A" unless needed to avoid
   ambiguity. This is a visual aid and reduces noise. >
-    GOOD:
+    ✅ OK:
     /// @param dirname Path fragment before `pend`
-    BAD:
+    ❌ NO:
     /// @param dirname The path fragment before `pend`
 - Vim differences:
     - Do not prefix help tags with "nvim-". Use |vim_diff.txt| to catalog
@@ -247,6 +247,10 @@ Docstring format:
 - References are written as `[tag]`
 - Use ``` for code samples.
   Code samples can be annotated as `vim` or `lua`
+- Use `@since <api-level>` to note the |api-level| when the function became
+  "stable". If `<api-level>` is greater than the current stable release (or
+  0), it is marked as "experimental".
+  - See scripts/util.lua for the mapping of api-level to Nvim version.
 - Use `@nodoc` to prevent documentation generation.
 - Use `@inlinedoc` to inline `@class` blocks into `@param` blocks.
   E.g. >lua
@@ -271,7 +275,7 @@ Docstring format:
                       - {somefield}? (integer) Documentation
                         for some field
 <
-- Files which has `@meta` are only used for typing and documentation.
+- Files declared as `@meta` are only used for typing and documentation (similar to "*.d.ts" typescript files).
 
 Example: the help for |vim.paste()| is generated from a docstring decorating
 vim.paste in runtime/lua/vim/_editor.lua like this: >
@@ -288,6 +292,7 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
     --- end)()
     --- ```
     ---
+    --- @since 12
     --- @see |paste|
     ---
     --- @param lines  ...
@@ -307,19 +312,36 @@ See also |dev-naming|.
   easier to inspect and print, and inherently compatible with all Lua plugins.
   (This guideline doesn't apply to opaque, non-data objects like `vim.cmd`.)
 - stdlib functions should follow these common patterns:
-  - accept iterable instead of table
-    - exception: in some cases iterable doesn't make sense, e.g. spair() sorts
-      the input by definition, so there is no reason for it to accept an
-      iterable, because the input needs to be "reified"; it can't operate on
-      a "stream".
-  - return iterable instead of table
-  - mimic the pairs() or ipairs() interface if the function is intended to be
-    used in a "for" loop.
-  - when a result-or-error interface is needed, return `result|nil, nil|errmsg`: >
-    ---@return Foo|nil # Result object, or nil if not found.
-    ---@return nil|string # Error message on failure, or nil on success.
-<
-    - Examples: |vim.ui.open()| |io.open()| |luv-error-handling|
+  - Return |lua-result-or-message| (`any|nil,nil|string`) to communicate
+    failure, or choose from |dev-error-patterns| when appropriate.
+  - Accept iterable instead of only table.
+    - Note: in some cases iterable doesn't make sense, e.g. spair() sorts the
+      input by definition, so there is no reason for it to accept an iterable,
+      because the input needs to be "reified"; it can't operate on a "stream".
+  - Return an iterable (generator) instead of table, if possible.
+  - Mimic the pairs() or ipairs() interface if the function is intended for
+    use in a |for-in| loop.
+
+                                                          *dev-error-patterns*
+To communicate failure to a consumer, choose from these patterns (in order of
+preference):
+1. `retval, errmsg`
+  - When failure is normal, or when it is practical for the consumer to
+    continue (fallback) in some other way. See |lua-result-or-message|.
+2. optional result, no errormsg
+  - Special case of 1. When there is only a single case of "doesn't exist"
+    (e.g. cache lookup, dict lookup).
+3. `error("no luck")`
+  - For invalid state ("must not happen"), when failure is exceptional, or at
+    a low level where the consumers are unlikely to handle it in a meaningful
+    way. Advantage is that propagation happens for free and it's harder to
+    accidentally swallow errors. (E.g. using
+    `uv_handle/pipe:write()` without checking return values is common.)
+4. `on_error` parameter
+  - For async and "visitors" traversing a graph, where many errors may be
+    collected while work continues.
+5. `vim.notify` (sometimes with optional `opts.silent` (async, visitors ^))
+  - High-level / application-level messages. End-user invokes these directly.
 
                                                         *dev-patterns*
 Interface conventions ~
@@ -329,13 +351,20 @@ Where possible, these patterns apply to _both_ Lua and the API:
 - When accepting a buffer id, etc., 0 means "current buffer", nil means "all
   buffers".  Likewise for window id, tabpage id, etc.
   - Examples: |vim.lsp.codelens.clear()| |vim.diagnostic.enable()|
-- Any function signature that accepts a callback function should define the
-  callback as the LAST parameter, if possible. This improves readability of
-  calls by placing the less "noisy" arguments near the start. >
-    GOOD:
-    filter(table, opts, function() … end)
-    BAD:
-    filter(function() … end, table, opts)
+- Any function signature that accepts a callback (example: |table.foreach()|)
+  should place it as the LAST parameter (after opts), if possible (or ALWAYS
+  for "continuation callbacks"—functions called exactly once).
+  - Improves readability by placing the less "noisy" arguments near the start.
+  - Consistent with luv.
+  - Useful for future async lib which transforms functions of the form
+    `function(<args>, cb(<ret)>))` => `function(<args>) -> <ret>`.
+  - Example: >lua
+    -- ✅ OK:
+    filter(…, opts, function() … end)
+    -- ❌ NO:
+    filter(function() … end, …, opts)
+    -- ❌ NO:
+    filter(…, function() … end, opts)
 - "Enable" ("toggle") interface and behavior:
   - `enable(…, nil)` and `enable(…, {buf=nil})` are synonyms and control the
     the "global" enablement of a feature.
@@ -566,10 +595,10 @@ a good name: it's idiomatic and unambiguous. If the package is named "neovim",
 it confuses users, and complicates documentation and discussions.
 
 Examples of API-client package names:
-- GOOD: nvim-racket
-- GOOD: pynvim
-- BAD:  python-client
-- BAD:  neovim_
+- ✅ OK: nvim-racket
+- ✅ OK: pynvim
+- ❌ NO: python-client
+- ❌ NO: neovim_
 
 API client implementation guidelines ~
 

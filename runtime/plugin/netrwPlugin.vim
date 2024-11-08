@@ -1,9 +1,12 @@
 " netrwPlugin.vim: Handles file transfer and remote directory listing across a network
 "            PLUGIN SECTION
 " Maintainer:	This runtime file is looking for a new maintainer.
-" Date:		Feb 09, 2021
+" Date:		Sep 09, 2021
 " Last Change:
 "   2024 May 08 by Vim Project: cleanup legacy Win9X checks
+"   2024 Oct 27 by Vim Project: cleanup gx mapping
+"   2024 Oct 28 by Vim Project: further improvements
+"   2024 Oct 31 by Vim Project: use autoloaded functions
 " Former Maintainer:   Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 1999-2021 Charles E. Campbell {{{1
@@ -31,6 +34,10 @@ set cpo&vim
 " ---------------------------------------------------------------------
 " Public Interface: {{{1
 
+" Commands Launch/URL {{{2
+command -complete=shellcmd -nargs=1   Launch  call netrw#Launch(trim(<q-args>))
+command -complete=file     -nargs=1   Open    call netrw#Open(trim(<q-args>))
+" " }}}
 " Local Browsing Autocmds: {{{2
 augroup FileExplorer
  au!

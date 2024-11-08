@@ -848,7 +848,7 @@ def CheckIncludes(filename, lines, error):
             or filename.endswith('.in.h')
             or FileInfo(filename).RelativePath() in {
         'func_attr.h',
-        'os/pty_process.h',
+        'os/pty_proc.h',
     }):
         return
 
@@ -869,7 +869,7 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/msgpack_rpc/unpacker.h",
             "src/nvim/option.h",
             "src/nvim/os/pty_conpty_win.h",
-            "src/nvim/os/pty_process_win.h",
+            "src/nvim/os/pty_proc_win.h",
                              ]
 
     skip_headers = [
@@ -880,6 +880,8 @@ def CheckIncludes(filename, lines, error):
             "mpack/object.h",
             "nvim/func_attr.h",
             "termkey/termkey.h",
+            "vterm/vterm.h",
+            "xdiff/xdiff.h",
             ]
 
     for i in check_includes_ignore:
@@ -895,6 +897,7 @@ def CheckIncludes(filename, lines, error):
             if (not name.endswith('.h.generated.h') and
                     not name.endswith('/defs.h') and
                     not name.endswith('_defs.h') and
+                    not name.endswith('h.inline.generated.h') and
                     not name.endswith('_defs.generated.h') and
                     not name.endswith('_enum.generated.h')):
                 error(filename, i, 'build/include_defs', 5,
@@ -1779,7 +1782,7 @@ def CheckSpacing(filename, clean_lines, linenum, error):
                    r'(?<!\bPMap)'
                    r'(?<!\bSet)'
                    r'(?<!\bArrayOf)'
-                   r'(?<!\bDictionaryOf)'
+                   r'(?<!\bDictOf)'
                    r'(?<!\bDict)'
                    r'\((?:const )?(?:struct )?[a-zA-Z_]\w*(?: *\*(?:const)?)*\)'
                    r' +'
@@ -1995,7 +1998,7 @@ def CheckLanguage(filename, clean_lines, linenum, error):
     if match:
         error(filename, linenum, 'runtime/printf', 4,
               'Use xstrlcpy, xmemcpyz or snprintf instead of %s' % match.group(1))
-    match = Search(r'\b(STRNCAT|strncat|strcat|vim_strcat)\b', line)
+    match = Search(r'\b(STRNCAT|strncat|vim_strcat)\b', line)
     if match:
         error(filename, linenum, 'runtime/printf', 4,
               'Use xstrlcat or snprintf instead of %s' % match.group(1))

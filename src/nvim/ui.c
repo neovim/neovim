@@ -144,11 +144,15 @@ void ui_free_all_mem(void)
 /// Returns true if any `rgb=true` UI is attached.
 bool ui_rgb_attached(void)
 {
-  if (!headless_mode && p_tgc) {
+  if (p_tgc) {
     return true;
   }
   for (size_t i = 0; i < ui_count; i++) {
-    if (uis[i]->rgb) {
+    // We do not consider the TUI in this loop because we already checked for 'termguicolors' at the
+    // beginning of this function. In this loop, we are checking to see if any _other_ UIs which
+    // support RGB are attached.
+    bool tui = uis[i]->stdin_tty || uis[i]->stdout_tty;
+    if (!tui && uis[i]->rgb) {
       return true;
     }
   }
@@ -178,9 +182,10 @@ bool ui_override(void)
   return false;
 }
 
-bool ui_active(void)
+/// Gets the number of UIs connected to this server.
+size_t ui_active(void)
 {
-  return ui_count > 0;
+  return ui_count;
 }
 
 void ui_refresh(void)
@@ -193,7 +198,7 @@ void ui_refresh(void)
   int height = INT_MAX;
   bool ext_widgets[kUIExtCount];
   bool inclusive = ui_override();
-  memset(ext_widgets, ui_active(), ARRAY_SIZE(ext_widgets));
+  memset(ext_widgets, !!ui_active(), ARRAY_SIZE(ext_widgets));
 
   for (size_t i = 0; i < ui_count; i++) {
     RemoteUI *ui = uis[i];
@@ -654,7 +659,7 @@ Array ui_array(Arena *arena)
   Array all_uis = arena_array(arena, ui_count);
   for (size_t i = 0; i < ui_count; i++) {
     RemoteUI *ui = uis[i];
-    Dictionary info = arena_dict(arena, 10 + kUIExtCount);
+    Dict info = arena_dict(arena, 10 + kUIExtCount);
     PUT_C(info, "width", INTEGER_OBJ(ui->width));
     PUT_C(info, "height", INTEGER_OBJ(ui->height));
     PUT_C(info, "rgb", BOOLEAN_OBJ(ui->rgb));
@@ -677,7 +682,7 @@ Array ui_array(Arena *arena)
     }
     PUT_C(info, "chan", INTEGER_OBJ((Integer)ui->channel_id));
 
-    ADD_C(all_uis, DICTIONARY_OBJ(info));
+    ADD_C(all_uis, DICT_OBJ(info));
   }
   return all_uis;
 }

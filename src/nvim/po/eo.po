@@ -410,8 +410,8 @@ msgstr " Kompletigo difinita de uzanto (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " Kompletigo Omni (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Sugesto de literumo (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Sugesto de literumo (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Kompletigo loka de ŝlosilvorto (^N/^P)"
@@ -3531,8 +3531,8 @@ msgstr ""
 msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) Redakta seanco de tiu dosiero kolapsis.\n"
 
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Se veras, uzu \":recover\" aŭ \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Se veras, uzu \":recover\" aŭ \"nvim -r "
 
 msgid ""
 "\"\n"

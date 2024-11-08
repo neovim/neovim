@@ -52,7 +52,9 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
-#include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
+#include "nvim/cursor.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -63,6 +65,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
@@ -349,23 +352,24 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
     search_ctx->ffsc_stopdirs_v = xmalloc(sizeof(char *));
 
     do {
-      char *helper;
-      void *ptr;
-
-      helper = walker;
-      ptr = xrealloc(search_ctx->ffsc_stopdirs_v,
-                     (dircount + 1) * sizeof(char *));
+      char *helper = walker;
+      void *ptr = xrealloc(search_ctx->ffsc_stopdirs_v,
+                           (dircount + 1) * sizeof(char *));
       search_ctx->ffsc_stopdirs_v = ptr;
       walker = vim_strchr(walker, ';');
-      if (walker) {
-        assert(walker - helper >= 0);
-        search_ctx->ffsc_stopdirs_v[dircount - 1] = xstrnsave(helper, (size_t)(walker - helper));
-        walker++;
+      assert(!walker || walker - helper >= 0);
+      size_t len = walker ? (size_t)(walker - helper) : strlen(helper);
+      // "" means ascent till top of directory tree.
+      if (*helper != NUL && !vim_isAbsName(helper) && len + 1 < MAXPATHL) {
+        // Make the stop dir an absolute path name.
+        xmemcpyz(ff_expand_buffer, helper, len);
+        search_ctx->ffsc_stopdirs_v[dircount - 1] = FullName_save(helper, len);
       } else {
-        // this might be "", which means ascent till top of directory tree.
-        search_ctx->ffsc_stopdirs_v[dircount - 1] = xstrdup(helper);
+        search_ctx->ffsc_stopdirs_v[dircount - 1] = xmemdupz(helper, len);
       }
-
+      if (walker) {
+        walker++;
+      }
       dircount++;
     } while (walker != NULL);
     search_ctx->ffsc_stopdirs_v[dircount - 1] = NULL;
@@ -506,24 +510,36 @@ error_return:
 /// @return  the stopdir string.  Check that ';' is not escaped.
 char *vim_findfile_stopdir(char *buf)
 {
-  char *r_ptr = buf;
-
-  while (*r_ptr != NUL && *r_ptr != ';') {
-    if (r_ptr[0] == '\\' && r_ptr[1] == ';') {
-      // Overwrite the escape char,
-      // use strlen(r_ptr) to move the trailing '\0'.
-      STRMOVE(r_ptr, r_ptr + 1);
-      r_ptr++;
+  for (; *buf != NUL && *buf != ';' && (buf[0] != '\\' || buf[1] != ';'); buf++) {}
+  char *dst = buf;
+  if (*buf == ';') {
+    goto is_semicolon;
+  }
+  if (*buf == NUL) {
+    goto is_nul;
+  }
+  goto start;
+  while (*buf != NUL && *buf != ';') {
+    if (buf[0] == '\\' && buf[1] == ';') {
+start:
+      // Overwrite the escape char.
+      *dst++ = ';';
+      buf += 2;
+    } else {
+      *dst++ = *buf++;
     }
-    r_ptr++;
   }
-  if (*r_ptr == ';') {
-    *r_ptr = 0;
-    r_ptr++;
-  } else if (*r_ptr == NUL) {
-    r_ptr = NULL;
+  assert(dst < buf);
+  *dst = NUL;
+  if (*buf == ';') {
+is_semicolon:
+    *buf = NUL;
+    buf++;
+  } else {  // if (*buf == NUL)
+is_nul:
+    buf = NULL;
   }
-  return r_ptr;
+  return buf;
 }
 
 /// Clean up the given search context. Can handle a NULL pointer.
@@ -773,7 +789,7 @@ char *vim_findfile(void *search_ctx_arg)
               ff_free_stack_element(stackp);
               goto fail;
             }
-            STRCAT(file_path, search_ctx->ffsc_file_to_search);
+            strcat(file_path, search_ctx->ffsc_file_to_search);
 
             // Try without extra suffix and then with suffixes
             // from 'suffixesadd'.
@@ -884,11 +900,12 @@ char *vim_findfile(void *search_ctx_arg)
     if (search_ctx->ffsc_start_dir
         && search_ctx->ffsc_stopdirs_v != NULL && !got_int) {
       ff_stack_T *sptr;
+      // path_end may point to the NUL or the previous path separator
+      ptrdiff_t plen = (path_end - search_ctx->ffsc_start_dir) + (*path_end != NUL);
 
       // is the last starting directory in the stop list?
       if (ff_path_in_stoplist(search_ctx->ffsc_start_dir,
-                              (int)(path_end - search_ctx->ffsc_start_dir),
-                              search_ctx->ffsc_stopdirs_v)) {
+                              (size_t)plen, search_ctx->ffsc_stopdirs_v)) {
         break;
       }
 
@@ -1224,7 +1241,7 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
 /// check if the given path is in the stopdirs
 ///
 /// @return  true if yes else false
-static bool ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
+static bool ff_path_in_stoplist(char *path, size_t path_len, char **stopdirs_v)
 {
   // eat up trailing path separators, except the first
   while (path_len > 1 && vim_ispathsep(path[path_len - 1])) {
@@ -1237,20 +1254,16 @@ static bool ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
   }
 
   for (int i = 0; stopdirs_v[i] != NULL; i++) {
-    if ((int)strlen(stopdirs_v[i]) > path_len) {
-      // match for parent directory. So '/home' also matches
-      // '/home/rks'. Check for PATHSEP in stopdirs_v[i], else
-      // '/home/r' would also match '/home/rks'
-      if (path_fnamencmp(stopdirs_v[i], path, (size_t)path_len) == 0
-          && vim_ispathsep(stopdirs_v[i][path_len])) {
-        return true;
-      }
-    } else {
-      if (path_fnamecmp(stopdirs_v[i], path) == 0) {
-        return true;
-      }
+    // match for parent directory. So '/home' also matches
+    // '/home/rks'. Check for PATHSEP in stopdirs_v[i], else
+    // '/home/r' would also match '/home/rks'
+    if (path_fnamencmp(stopdirs_v[i], path, path_len) == 0
+        && (strlen(stopdirs_v[i]) <= path_len
+            || vim_ispathsep(stopdirs_v[i][path_len]))) {
+      return true;
     }
   }
+
   return false;
 }
 
@@ -1481,20 +1494,239 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
   if (file_name == NULL && (options & FNAME_MESS)) {
     if (first == true) {
       if (find_what == FINDFILE_DIR) {
-        semsg(_("E344: Can't find directory \"%s\" in cdpath"), *file_to_find);
+        semsg(_(e_cant_find_directory_str_in_cdpath), *file_to_find);
       } else {
-        semsg(_("E345: Can't find file \"%s\" in path"), *file_to_find);
+        semsg(_(e_cant_find_file_str_in_path), *file_to_find);
       }
     } else {
       if (find_what == FINDFILE_DIR) {
-        semsg(_("E346: No more directory \"%s\" found in cdpath"), *file_to_find);
+        semsg(_(e_no_more_directory_str_found_in_cdpath), *file_to_find);
       } else {
-        semsg(_("E347: No more file \"%s\" found in path"), *file_to_find);
+        semsg(_(e_no_more_file_str_found_in_path), *file_to_find);
       }
     }
   }
 
 theend:
+  return file_name;
+}
+
+/// Get the file name at the cursor.
+/// If Visual mode is active, use the selected text if it's in one line.
+/// Returns the name in allocated memory, NULL for failure.
+char *grab_file_name(int count, linenr_T *file_lnum)
+{
+  int options = FNAME_MESS | FNAME_EXP | FNAME_REL | FNAME_UNESC;
+  if (VIsual_active) {
+    size_t len;
+    char *ptr;
+    if (get_visual_text(NULL, &ptr, &len) == FAIL) {
+      return NULL;
+    }
+    // Only recognize ":123" here
+    if (file_lnum != NULL && ptr[len] == ':' && isdigit((uint8_t)ptr[len + 1])) {
+      char *p = ptr + len + 1;
+
+      *file_lnum = getdigits_int32(&p, false, 0);
+    }
+    return find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
+  }
+  return file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
+}
+
+/// Return the file name under or after the cursor.
+///
+/// The 'path' option is searched if the file name is not absolute.
+/// The string returned has been alloc'ed and should be freed by the caller.
+/// NULL is returned if the file name or file is not found.
+///
+/// options:
+/// FNAME_MESS       give error messages
+/// FNAME_EXP        expand to path
+/// FNAME_HYP        check for hypertext link
+/// FNAME_INCL       apply "includeexpr"
+char *file_name_at_cursor(int options, int count, linenr_T *file_lnum)
+{
+  return file_name_in_line(get_cursor_line_ptr(),
+                           curwin->w_cursor.col, options, count, curbuf->b_ffname,
+                           file_lnum);
+}
+
+/// @param rel_fname  file we are searching relative to
+/// @param file_lnum  line number after the file name
+///
+/// @return  the name of the file under or after ptr[col].
+///
+/// Otherwise like file_name_at_cursor().
+char *file_name_in_line(char *line, int col, int options, int count, char *rel_fname,
+                        linenr_T *file_lnum)
+{
+  // search forward for what could be the start of a file name
+  char *ptr = line + col;
+  while (*ptr != NUL && !vim_isfilec((uint8_t)(*ptr))) {
+    MB_PTR_ADV(ptr);
+  }
+  if (*ptr == NUL) {            // nothing found
+    if (options & FNAME_MESS) {
+      emsg(_("E446: No file name under cursor"));
+    }
+    return NULL;
+  }
+
+  size_t len;
+  bool in_type = true;
+  bool is_url = false;
+
+  // Search backward for first char of the file name.
+  // Go one char back to ":" before "//", or to the drive letter before ":\" (even if ":"
+  // is not in 'isfname').
+  while (ptr > line) {
+    if ((len = (size_t)(utf_head_off(line, ptr - 1))) > 0) {
+      ptr -= len + 1;
+    } else if (vim_isfilec((uint8_t)ptr[-1]) || ((options & FNAME_HYP) && path_is_url(ptr - 1))) {
+      ptr--;
+    } else {
+      break;
+    }
+  }
+
+  // Search forward for the last char of the file name.
+  // Also allow ":/" when ':' is not in 'isfname'.
+  len = path_has_drive_letter(ptr) ? 2 : 0;
+  while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
+         || ((options & FNAME_HYP) && path_is_url(ptr + len))
+         || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
+    // After type:// we also include :, ?, & and = as valid characters, so that
+    // http://google.com:8080?q=this&that=ok works.
+    if ((ptr[len] >= 'A' && ptr[len] <= 'Z') || (ptr[len] >= 'a' && ptr[len] <= 'z')) {
+      if (in_type && path_is_url(ptr + len + 1)) {
+        is_url = true;
+      }
+    } else {
+      in_type = false;
+    }
+
+    if (ptr[len] == '\\' && ptr[len + 1] == ' ') {
+      // Skip over the "\" in "\ ".
+      len++;
+    }
+    len += (size_t)(utfc_ptr2len(ptr + len));
+  }
+
+  // If there is trailing punctuation, remove it.
+  // But don't remove "..", could be a directory name.
+  if (len > 2 && vim_strchr(".,:;!", (uint8_t)ptr[len - 1]) != NULL
+      && ptr[len - 2] != '.') {
+    len--;
+  }
+
+  if (file_lnum != NULL) {
+    const char *line_english = " line ";
+    const char *line_transl = _(line_msg);
+
+    // Get the number after the file name and a separator character.
+    // Also accept " line 999" with and without the same translation as
+    // used in last_set_msg().
+    char *p = ptr + len;
+    if (strncmp(p, line_english, strlen(line_english)) == 0) {
+      p += strlen(line_english);
+    } else if (strncmp(p, line_transl, strlen(line_transl)) == 0) {
+      p += strlen(line_transl);
+    } else {
+      p = skipwhite(p);
+    }
+    if (*p != NUL) {
+      if (!isdigit((uint8_t)(*p))) {
+        p++;                        // skip the separator
+      }
+      p = skipwhite(p);
+      if (isdigit((uint8_t)(*p))) {
+        *file_lnum = (linenr_T)getdigits_long(&p, false, 0);
+      }
+    }
+  }
+
+  return find_file_name_in_path(ptr, len, options, count, rel_fname);
+}
+
+static char *eval_includeexpr(const char *const ptr, const size_t len)
+{
+  const sctx_T save_sctx = current_sctx;
+  set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
+  current_sctx = curbuf->b_p_script_ctx[BV_INEX].script_ctx;
+
+  char *res = eval_to_string_safe(curbuf->b_p_inex,
+                                  was_set_insecurely(curwin, kOptIncludeexpr, OPT_LOCAL),
+                                  true);
+
+  set_vim_var_string(VV_FNAME, NULL, 0);
+  current_sctx = save_sctx;
+  return res;
+}
+
+/// Return the name of the file ptr[len] in 'path'.
+/// Otherwise like file_name_at_cursor().
+///
+/// @param rel_fname  file we are searching relative to
+char *find_file_name_in_path(char *ptr, size_t len, int options, long count, char *rel_fname)
+{
+  char *file_name;
+  char *tofree = NULL;
+
+  if (len == 0) {
+    return NULL;
+  }
+
+  if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
+    tofree = eval_includeexpr(ptr, len);
+    if (tofree != NULL) {
+      ptr = tofree;
+      len = strlen(ptr);
+    }
+  }
+
+  if (options & FNAME_EXP) {
+    char *file_to_find = NULL;
+    char *search_ctx = NULL;
+
+    file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
+                                  true, rel_fname, &file_to_find, &search_ctx);
+
+    // If the file could not be found in a normal way, try applying
+    // 'includeexpr' (unless done already).
+    if (file_name == NULL
+        && !(options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
+      tofree = eval_includeexpr(ptr, len);
+      if (tofree != NULL) {
+        ptr = tofree;
+        len = strlen(ptr);
+        file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
+                                      true, rel_fname, &file_to_find, &search_ctx);
+      }
+    }
+    if (file_name == NULL && (options & FNAME_MESS)) {
+      char c = ptr[len];
+      ptr[len] = NUL;
+      semsg(_("E447: Can't find file \"%s\" in path"), ptr);
+      ptr[len] = c;
+    }
+
+    // Repeat finding the file "count" times.  This matters when it
+    // appears several times in the path.
+    while (file_name != NULL && --count > 0) {
+      xfree(file_name);
+      file_name = find_file_in_path(ptr, len, options, false, rel_fname,
+                                    &file_to_find, &search_ctx);
+    }
+
+    xfree(file_to_find);
+    vim_findfile_cleanup(search_ctx);
+  } else {
+    file_name = xstrnsave(ptr, len);
+  }
+
+  xfree(tofree);
+
   return file_name;
 }
 

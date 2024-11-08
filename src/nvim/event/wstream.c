@@ -73,6 +73,26 @@ bool wstream_write(Stream *stream, WBuffer *buffer)
   // This should not be called after a stream was freed
   assert(!stream->closed);
 
+  uv_buf_t uvbuf;
+  uvbuf.base = buffer->data;
+  uvbuf.len = UV_BUF_LEN(buffer->size);
+
+  if (!stream->uvstream) {
+    uv_fs_t req;
+
+    // Synchronous write
+    uv_fs_write(stream->uv.idle.loop, &req, stream->fd, &uvbuf, 1, stream->fpos, NULL);
+
+    uv_fs_req_cleanup(&req);
+
+    wstream_release_wbuffer(buffer);
+
+    assert(stream->write_cb == NULL);
+
+    stream->fpos += MAX(req.result, 0);
+    return req.result > 0;
+  }
+
   if (stream->curmem > stream->maxmem) {
     goto err;
   }
@@ -83,10 +103,6 @@ bool wstream_write(Stream *stream, WBuffer *buffer)
   data->stream = stream;
   data->buffer = buffer;
   data->uv_req.data = data;
-
-  uv_buf_t uvbuf;
-  uvbuf.base = buffer->data;
-  uvbuf.len = UV_BUF_LEN(buffer->size);
 
   if (uv_write(&data->uv_req, stream->uvstream, &uvbuf, 1, write_cb)) {
     xfree(data);
@@ -141,7 +157,7 @@ static void write_cb(uv_write_t *req, int status)
 
   if (data->stream->closed && data->stream->pending_reqs == 0) {
     // Last pending write, free the stream;
-    stream_close_handle(data->stream);
+    stream_close_handle(data->stream, false);
   }
 
   xfree(data);
@@ -157,4 +173,9 @@ void wstream_release_wbuffer(WBuffer *buffer)
 
     xfree(buffer);
   }
+}
+
+void wstream_may_close(Stream *stream)
+{
+  stream_may_close(stream, false);
 }

@@ -5,12 +5,14 @@
 "              Pierre Vittet       <pierre-vittet@pvittet.com>
 "              Stefano Zacchiroli  <zack@bononia.it>
 "              Vincent Aravantinos <firstname.name@imag.fr>
+"              Riley Bruins <ribru17@gmail.com> ('commentstring')
 " URL:         https://github.com/ocaml/vim-ocaml
 " Last Change:
 "              2013 Oct 27 - Added commentstring (MM)
 "              2013 Jul 26 - load default compiler settings (MM)
 "              2013 Jul 24 - removed superfluous efm-setting (MM)
 "              2013 Jul 22 - applied fixes supplied by Hirotaka Hamada (MM)
+"              2024 May 23 - added space in commentstring (RB)
 
 if exists("b:did_ftplugin")
   finish
@@ -40,7 +42,7 @@ set cpo&vim
 " Comment string
 setlocal comments=sr:(*\ ,mb:\ ,ex:*)
 setlocal comments^=sr:(**,mb:\ \ ,ex:*)
-setlocal commentstring=(*%s*)
+setlocal commentstring=(*\ %s\ *)
 
 " Add mappings, unless the user didn't want this.
 if !exists("no_plugin_maps") && !exists("no_ocaml_maps")

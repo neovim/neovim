@@ -7,7 +7,6 @@ local eq = t.eq
 local pathsep = n.get_pathsep()
 local fn = n.fn
 local api = n.api
-local exec_lua = n.exec_lua
 
 local testdir = 'Xtest-editorconfig'
 
@@ -16,8 +15,16 @@ local testdir = 'Xtest-editorconfig'
 local function test_case(name, expected)
   local filename = testdir .. pathsep .. name
   command('edit ' .. filename)
+
   for opt, val in pairs(expected) do
-    eq(val, api.nvim_get_option_value(opt, { buf = 0 }), name)
+    local opt_info = api.nvim_get_option_info2(opt, {})
+    if opt_info.scope == 'win' then
+      eq(val, api.nvim_get_option_value(opt, { win = 0 }), name)
+    elseif opt_info.scope == 'buf' then
+      eq(val, api.nvim_get_option_value(opt, { buf = 0 }), name)
+    else
+      eq(val, api.nvim_get_option_value(opt, {}), name)
+    end
   end
 end
 
@@ -93,6 +100,12 @@ setup(function()
 
     [max_line_length.txt]
     max_line_length = 42
+
+    [short_spelling_language.txt]
+    spelling_language = de
+
+    [long_spelling_language.txt]
+    spelling_language = en-NZ
     ]]
   )
 end)
@@ -213,13 +226,18 @@ But not this one
   end)
 
   it('does not operate on invalid buffers', function()
-    local ok, err = unpack(exec_lua([[
+    local ok, err = unpack(n.exec_lua(function()
       vim.cmd.edit('test.txt')
       local bufnr = vim.api.nvim_get_current_buf()
       vim.cmd.bwipeout(bufnr)
-      return {pcall(require('editorconfig').config, bufnr)}
-    ]]))
+      return { pcall(require('editorconfig').config, bufnr) }
+    end))
 
     eq(true, ok, err)
+  end)
+
+  it('sets spelllang', function()
+    test_case('short_spelling_language.txt', { spelllang = 'de' })
+    test_case('long_spelling_language.txt', { spelllang = 'en_nz' })
   end)
 end)

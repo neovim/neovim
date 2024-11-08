@@ -30,6 +30,8 @@ M.FileChangeType = {
 --- @class vim._watch.watch.Opts : vim._watch.Opts
 --- @field uvflags? uv.fs_event_start.flags
 
+--- Decides if `path` should be skipped.
+---
 --- @param path string
 --- @param opts? vim._watch.Opts
 local function skip(path, opts)
@@ -57,11 +59,9 @@ end
 --- @param callback vim._watch.Callback Callback for new events
 --- @return fun() cancel Stops the watcher
 function M.watch(path, opts, callback)
-  vim.validate({
-    path = { path, 'string', false },
-    opts = { opts, 'table', true },
-    callback = { callback, 'function', false },
-  })
+  vim.validate('path', path, 'string')
+  vim.validate('opts', opts, 'table', true)
+  vim.validate('callback', callback, 'function')
 
   opts = opts or {}
 
@@ -69,7 +69,7 @@ function M.watch(path, opts, callback)
   local uvflags = opts and opts.uvflags or {}
   local handle = assert(uv.new_fs_event())
 
-  local _, start_err = handle:start(path, uvflags, function(err, filename, events)
+  local _, start_err, start_errname = handle:start(path, uvflags, function(err, filename, events)
     assert(not err, err)
     local fullpath = path
     if filename then
@@ -96,7 +96,15 @@ function M.watch(path, opts, callback)
     callback(fullpath, change_type)
   end)
 
-  assert(not start_err, start_err)
+  if start_err then
+    if start_errname == 'ENOENT' then
+      -- Server may send "workspace/didChangeWatchedFiles" with nonexistent `baseUri` path.
+      -- This is mostly a placeholder until we have `nvim_log` API.
+      vim.notify_once(('watch.watch: %s'):format(start_err), vim.log.levels.INFO)
+    end
+    -- TODO(justinmk): log important errors once we have `nvim_log` API.
+    return function() end
+  end
 
   return function()
     local _, stop_err = handle:stop()
@@ -117,11 +125,9 @@ end
 --- @param callback vim._watch.Callback Callback for new events
 --- @return fun() cancel Stops the watcher
 function M.watchdirs(path, opts, callback)
-  vim.validate({
-    path = { path, 'string', false },
-    opts = { opts, 'table', true },
-    callback = { callback, 'function', false },
-  })
+  vim.validate('path', path, 'string')
+  vim.validate('opts', opts, 'table', true)
+  vim.validate('callback', callback, 'function')
 
   opts = opts or {}
   local debounce = opts.debounce or 500
@@ -193,7 +199,18 @@ function M.watchdirs(path, opts, callback)
 
   local root_handle = assert(uv.new_fs_event())
   handles[path] = root_handle
-  root_handle:start(path, {}, create_on_change(path))
+  local _, start_err, start_errname = root_handle:start(path, {}, create_on_change(path))
+
+  if start_err then
+    if start_errname == 'ENOENT' then
+      -- Server may send "workspace/didChangeWatchedFiles" with nonexistent `baseUri` path.
+      -- This is mostly a placeholder until we have `nvim_log` API.
+      vim.notify_once(('watch.watchdirs: %s'):format(start_err), vim.log.levels.INFO)
+    end
+    -- TODO(justinmk): log important errors once we have `nvim_log` API.
+
+    -- Continue. vim.fs.dir() will return nothing, so the code below is harmless.
+  end
 
   --- "640K ought to be enough for anyone"
   --- Who has folders this deep?
@@ -227,11 +244,12 @@ end
 --- @param data string
 --- @param opts vim._watch.Opts?
 --- @param callback vim._watch.Callback
-local function fswatch_output_handler(data, opts, callback)
+local function on_inotifywait_output(data, opts, callback)
   local d = vim.split(data, '%s+')
 
   -- only consider the last reported event
-  local fullpath, event = d[1], d[#d]
+  local path, event, file = d[1], d[2], d[#d]
+  local fullpath = vim.fs.joinpath(path, file)
 
   if skip(fullpath, opts) then
     return
@@ -240,20 +258,16 @@ local function fswatch_output_handler(data, opts, callback)
   --- @type integer
   local change_type
 
-  if event == 'Created' then
+  if event == 'CREATE' then
     change_type = M.FileChangeType.Created
-  elseif event == 'Removed' then
+  elseif event == 'DELETE' then
     change_type = M.FileChangeType.Deleted
-  elseif event == 'Updated' then
+  elseif event == 'MODIFY' then
     change_type = M.FileChangeType.Changed
-  elseif event == 'Renamed' then
-    local _, staterr, staterrname = uv.fs_stat(fullpath)
-    if staterrname == 'ENOENT' then
-      change_type = M.FileChangeType.Deleted
-    else
-      assert(not staterr, staterr)
-      change_type = M.FileChangeType.Created
-    end
+  elseif event == 'MOVED_FROM' then
+    change_type = M.FileChangeType.Deleted
+  elseif event == 'MOVED_TO' then
+    change_type = M.FileChangeType.Created
   end
 
   if change_type then
@@ -265,24 +279,22 @@ end
 --- @param opts vim._watch.Opts?
 --- @param callback vim._watch.Callback Callback for new events
 --- @return fun() cancel Stops the watcher
-function M.fswatch(path, opts, callback)
-  -- debounce isn't the same as latency but close enough
-  local latency = 0.5 -- seconds
-  if opts and opts.debounce then
-    latency = opts.debounce / 1000
-  end
-
+function M.inotify(path, opts, callback)
   local obj = vim.system({
-    'fswatch',
-    '--event=Created',
-    '--event=Removed',
-    '--event=Updated',
-    '--event=Renamed',
-    '--event-flags',
+    'inotifywait',
+    '--quiet', -- suppress startup messages
+    '--no-dereference', -- don't follow symlinks
+    '--monitor', -- keep listening for events forever
     '--recursive',
-    '--latency=' .. tostring(latency),
-    '--exclude',
-    '/.git/',
+    '--event',
+    'create',
+    '--event',
+    'delete',
+    '--event',
+    'modify',
+    '--event',
+    'move',
+    string.format('@%s/.git', path), -- ignore git directory
     path,
   }, {
     stderr = function(err, data)
@@ -292,11 +304,11 @@ function M.fswatch(path, opts, callback)
 
       if data and #vim.trim(data) > 0 then
         vim.schedule(function()
-          if vim.fn.has('linux') == 1 and vim.startswith(data, 'Event queue overflow') then
-            data = 'inotify(7) limit reached, see :h fswatch-limitations for more info.'
+          if vim.fn.has('linux') == 1 and vim.startswith(data, 'Failed to watch') then
+            data = 'inotify(7) limit reached, see :h inotify-limitations for more info.'
           end
 
-          vim.notify('fswatch: ' .. data, vim.log.levels.ERROR)
+          vim.notify('inotify: ' .. data, vim.log.levels.ERROR)
         end)
       end
     end,
@@ -306,7 +318,7 @@ function M.fswatch(path, opts, callback)
       end
 
       for line in vim.gsplit(data or '', '\n', { plain = true, trimempty = true }) do
-        fswatch_output_handler(line, opts, callback)
+        on_inotifywait_output(line, opts, callback)
       end
     end,
     -- --latency is locale dependent but tostring() isn't and will always have '.' as decimal point.

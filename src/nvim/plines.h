@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nvim/func_attr.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
@@ -39,11 +38,8 @@ typedef struct {
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "plines.h.generated.h"
+# include "plines.h.inline.generated.h"
 #endif
-
-static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t chr,
-                                    CharsizeArg *csarg)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Get the number of cells taken up on the screen by the given character at vcol.
 /// "csarg->cur_text_width_left" and "csarg->cur_text_width_right" are set
@@ -55,16 +51,14 @@ static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t 
 /// of 'showbreak'/'breakindent' before where cursor should be placed.
 static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t chr,
                                     CharsizeArg *csarg)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   if (cstype == kCharsizeFast) {
-    return charsize_fast(csarg, vcol, chr);
+    return charsize_fast(csarg, ptr, vcol, chr);
   } else {
     return charsize_regular(csarg, ptr, vcol, chr);
   }
 }
-
-static inline int linetabsize_str(char *s)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Return the number of cells the string "s" will take on the screen,
 /// taking into account the size of a tab.
@@ -73,12 +67,10 @@ static inline int linetabsize_str(char *s)
 ///
 /// @return Number of cells the string will take on the screen.
 static inline int linetabsize_str(char *s)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   return linetabsize_col(0, s);
 }
-
-static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE;
 
 /// Like linetabsize_str(), but for a given window instead of the current one.
 ///
@@ -88,6 +80,7 @@ static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T 
 ///
 /// @return Number of cells the string will take on the screen.
 static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   CharsizeArg csarg;
   CSType const cstype = init_charsize_arg(&csarg, wp, lnum, line);

@@ -2,6 +2,7 @@
 " Language:	Modula-3
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
 " Last Change:	2024 Jan 14
+" 		2024 May 24 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
 if exists("b:did_ftplugin")
   finish
@@ -12,7 +13,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 setlocal comments=s0:(*,mb:\ ,ex:*)
-setlocal commentstring=(*%s*)
+setlocal commentstring=(*\ %s\ *)
 setlocal formatoptions-=t formatoptions+=croql
 setlocal suffixesadd+=.m3
 setlocal formatprg=m3pp

@@ -18,6 +18,9 @@ endif
 if !has('vim9script')
   function dist#vim#IsSafeExecutable(filetype, executable)
     let cwd = getcwd()
+    if empty(exepath(a:executable))
+      return v:false
+    endif
     return get(g:, a:filetype .. '_exec', get(g:, 'plugin_exec', 0)) &&
           \ (fnamemodify(exepath(a:executable), ':p:h') !=# cwd
           \ || (split($PATH, has('win32') ? ';' : ':')->index(cwd) != -1 &&

@@ -851,6 +851,8 @@ describe('ui/ext_popupmenu', function()
       set mouse=a mousemodel=popup
 
       aunmenu PopUp
+      " Delete the default MenuPopup event handler.
+      autocmd! nvim_popupmenu
       menu PopUp.foo :let g:menustr = 'foo'<CR>
       menu PopUp.bar :let g:menustr = 'bar'<CR>
       menu PopUp.baz :let g:menustr = 'baz'<CR>
@@ -1129,7 +1131,7 @@ describe("builtin popupmenu 'pumblend'", function()
       [10] = { foreground = tonumber('0x000002') },
     })
     screen:attach({ rgb = false })
-    command('set notermguicolors pumblend=10')
+    command('set pumblend=10')
     insert([[
       Lorem ipsum dolor sit amet, consectetur
       adipisicing elit, sed do eiusmod tempor
@@ -1160,23 +1162,47 @@ describe('builtin popupmenu', function()
       screen = Screen.new(32, 20)
       screen:set_default_attr_ids({
         -- popup selected item / scrollbar track
-        ['s'] = { background = Screen.colors.WebGray },
+        s = { background = Screen.colors.Grey },
         -- popup non-selected item
-        ['n'] = { background = Screen.colors.LightMagenta },
+        n = { background = Screen.colors.Plum1 },
         -- popup scrollbar knob
-        ['c'] = { background = Screen.colors.Grey0 },
+        c = { background = Screen.colors.Black },
         [1] = { bold = true, foreground = Screen.colors.Blue },
         [2] = { bold = true },
         [3] = { reverse = true },
         [4] = { bold = true, reverse = true },
         [5] = { bold = true, foreground = Screen.colors.SeaGreen },
-        [6] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+        [6] = { foreground = Screen.colors.White, background = Screen.colors.Red },
         [7] = { background = Screen.colors.Yellow }, -- Search
         [8] = { foreground = Screen.colors.Red },
-        kn = { foreground = Screen.colors.Red, background = Screen.colors.Magenta },
         ks = { foreground = Screen.colors.Red, background = Screen.colors.Grey },
-        xn = { foreground = Screen.colors.White, background = Screen.colors.Magenta },
+        kn = { foreground = Screen.colors.Red, background = Screen.colors.Plum1 },
         xs = { foreground = Screen.colors.Black, background = Screen.colors.Grey },
+        xn = { foreground = Screen.colors.White, background = Screen.colors.Plum1 },
+        ms = { foreground = Screen.colors.Blue, background = Screen.colors.Grey },
+        mn = { foreground = Screen.colors.Blue, background = Screen.colors.Plum1 },
+        ds = { foreground = Screen.colors.DarkRed, background = Screen.colors.Grey },
+        dn = { foreground = Screen.colors.DarkRed, background = Screen.colors.Plum1 },
+        ums = {
+          foreground = Screen.colors.Blue,
+          background = Screen.colors.Grey,
+          underline = true,
+        },
+        umn = {
+          foreground = Screen.colors.Blue,
+          background = Screen.colors.Plum1,
+          underline = true,
+        },
+        uds = {
+          foreground = Screen.colors.DarkRed,
+          background = Screen.colors.Grey,
+          underline = true,
+        },
+        udn = {
+          foreground = Screen.colors.DarkRed,
+          background = Screen.colors.Plum1,
+          underline = true,
+        },
       })
       screen:attach({ ext_multigrid = multigrid })
     end)
@@ -2528,6 +2554,7 @@ describe('builtin popupmenu', function()
         ]],
         }
 
+        -- oldtest: Test_wildmenu_pum_rightleft()
         feed('<tab>')
         screen:expect {
           grid = [[
@@ -2917,11 +2944,12 @@ describe('builtin popupmenu', function()
         feed('<C-U>sign define <Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|*2
+          {1:~                               }|
           {1:~           }{s: culhl=         }{1:    }|
           {1:~           }{n: icon=          }{1:    }|
           {1:~           }{n: linehl=        }{1:    }|
           {1:~           }{n: numhl=         }{1:    }|
+          {1:~           }{n: priority=      }{1:    }|
           {1:~           }{n: text=          }{1:    }|
           {1:~           }{n: texthl=        }{1:    }|
           :sign define culhl=^             |
@@ -2930,11 +2958,12 @@ describe('builtin popupmenu', function()
         feed('<Space><Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|*2
+          {1:~                               }|
           {1:~                  }{s: culhl=     }{1: }|
           {1:~                  }{n: icon=      }{1: }|
           {1:~                  }{n: linehl=    }{1: }|
           {1:~                  }{n: numhl=     }{1: }|
+          {1:~                  }{n: priority=  }{1: }|
           {1:~                  }{n: text=      }{1: }|
           {1:~                  }{n: texthl=    }{1: }|
           :sign define culhl= culhl=^      |
@@ -3547,6 +3576,119 @@ describe('builtin popupmenu', function()
                                         |
         ]])
       end)
+
+      -- oldtest: Test_wildmenu_pum_hl_match()
+      it('highlighting matched text in cmdline pum', function()
+        exec([[
+          set wildoptions=pum,fuzzy
+          hi PmenuMatchSel  guifg=Blue guibg=Grey
+          hi PmenuMatch     guifg=Blue guibg=Plum1
+        ]])
+
+        feed(':sign plc<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{s: }{ms:pl}{s:a}{ms:c}{s:e          }{1:           }|
+          {1:~    }{n: un}{mn:pl}{n:a}{mn:c}{n:e        }{1:           }|
+          :sign place^                     |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:pl}{n:a}{mn:c}{n:e          }{1:           }|
+          {1:~    }{s: un}{ms:pl}{s:a}{ms:c}{s:e        }{1:           }|
+          :sign unplace^                   |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:pl}{n:a}{mn:c}{n:e          }{1:           }|
+          {1:~    }{n: un}{mn:pl}{n:a}{mn:c}{n:e        }{1:           }|
+          :sign plc^                       |
+        ]])
+        feed('<Esc>')
+        command('set wildoptions-=fuzzy')
+        feed(':sign un<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{s: }{ms:un}{s:define       }{1:           }|
+          {1:~    }{n: }{mn:un}{n:place        }{1:           }|
+          :sign undefine^                  |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:un}{n:define       }{1:           }|
+          {1:~    }{s: }{ms:un}{s:place        }{1:           }|
+          :sign unplace^                   |
+        ]])
+        feed('<Tab>')
+        screen:expect([[
+                                          |
+          {1:~                               }|*16
+          {1:~    }{n: }{mn:un}{n:define       }{1:           }|
+          {1:~    }{n: }{mn:un}{n:place        }{1:           }|
+          :sign un^                        |
+        ]])
+      end)
+
+      it(
+        'cascading highlights for matched text (PmenuMatch, PmenuMatchSel) in cmdline pum',
+        function()
+          screen:set_default_attr_ids({
+            [1] = { foreground = Screen.colors.Blue1, bold = true },
+            [2] = {
+              underline = true,
+              italic = true,
+              foreground = Screen.colors.White,
+              background = Screen.colors.Grey,
+            },
+            [3] = {
+              foreground = Screen.colors.Red,
+              background = Screen.colors.Grey,
+              strikethrough = true,
+              underline = true,
+              italic = true,
+            },
+            [4] = {
+              foreground = Screen.colors.Yellow,
+              background = Screen.colors.Pink,
+              bold = true,
+              underline = true,
+              italic = true,
+            },
+            [5] = {
+              foreground = Screen.colors.Black,
+              background = Screen.colors.White,
+              bold = true,
+              underline = true,
+              italic = true,
+              strikethrough = true,
+            },
+          })
+          exec([[
+            set wildoptions=pum,fuzzy
+            hi Pmenu          guifg=White guibg=Grey gui=underline,italic
+            hi PmenuSel       guifg=Red gui=strikethrough
+            hi PmenuMatch     guifg=Yellow guibg=Pink gui=bold
+            hi PmenuMatchSel  guifg=Black guibg=White
+          ]])
+
+          feed(':sign plc<Tab>')
+          screen:expect([[
+                                            |
+            {1:~                               }|*16
+            {1:~    }{3: }{5:pl}{3:a}{5:c}{3:e          }{1:           }|
+            {1:~    }{2: un}{4:pl}{2:a}{4:c}{2:e        }{1:           }|
+            :sign place^                     |
+          ]])
+        end
+      )
     end
 
     it("'pumheight'", function()
@@ -3718,6 +3860,8 @@ describe('builtin popupmenu', function()
         call setline(1, 'popup menu test')
         set mouse=a mousemodel=popup
 
+        " Delete the default MenuPopup event handler.
+        autocmd! nvim_popupmenu
         aunmenu PopUp
         menu PopUp.foo :let g:menustr = 'foo'<CR>
         menu PopUp.bar :let g:menustr = 'bar'<CR>
@@ -4362,9 +4506,10 @@ describe('builtin popupmenu', function()
           :let g:menustr = 'foo'          |
         ]])
       end
+      local no_menu_screen ---@type string|test.function.ui.screen.Expect
       if multigrid then
         api.nvim_input_mouse('left', 'press', '', 4, 1, 2)
-        screen:expect({
+        no_menu_screen = {
           grid = [[
         ## grid 1
           [2:--------------------------------]|*2
@@ -4383,25 +4528,198 @@ describe('builtin popupmenu', function()
           {2:WINBAR          }|
           ^popup menu test |
         ]],
-        })
+        }
       else
         feed('<LeftMouse><31,2>')
-        screen:expect([[
+        no_menu_screen = {
+          grid = [[
           popup menu test                 |
           {1:~                               }|
           {3:[No Name] [+]                   }|
           popup menu test│{2:WINBAR          }|
           {1:~              }│^popup menu test |
           :let g:menustr = 'bar'          |
-        ]])
+        ]],
+        }
       end
+      screen:expect(no_menu_screen)
       eq('bar', api.nvim_get_var('menustr'))
+
+      local no_sel_screen ---@type string|test.function.ui.screen.Expect
+      if multigrid then
+        no_sel_screen = {
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*2
+          {3:[No Name] [+]                   }|
+          [5:---------------]│[6:----------------]|*2
+          [3:--------------------------------]|
+        ## grid 2
+          popup menu test                 |
+          {1:~                               }|
+        ## grid 3
+          :let g:menustr = 'bar'          |
+        ## grid 4
+          {n: foo }|
+          {n: bar }|
+          {n: baz }|
+        ## grid 5
+          popup menu test|
+          {1:~              }|
+        ## grid 6
+          {2:WINBAR          }|
+          ^popup menu test |
+        ]],
+          float_pos = { [4] = { -1, 'NW', 1, 1, 19, false, 250 } },
+        }
+      else
+        no_sel_screen = {
+          grid = [[
+          popup menu test                 |
+          {1:~                  }{n: foo }{1:        }|
+          {3:[No Name] [+]      }{n: bar }{3:        }|
+          popup menu test│{2:WIN}{n: baz }{2:        }|
+          {1:~              }│^popup menu test |
+          :let g:menustr = 'bar'          |
+        ]],
+        }
+      end
+      local sel_screens = {} ---@type (string|test.function.ui.screen.Expect)[]
+      for i, s in ipairs({ 'foo', 'bar', 'baz' }) do
+        local sel_screen = vim.deepcopy(no_sel_screen)
+        local grid = assert(sel_screen.grid)
+        grid = grid:gsub(vim.pesc(('{n: %s }'):format(s)), ('{s: %s }'):format(s))
+        sel_screen.grid = grid
+        sel_screens[i] = sel_screen
+      end
+
+      command([[let g:menustr = '']])
+      local g = multigrid and 1 or 0
+
+      api.nvim_input_mouse('right', 'press', '', g, 0, 20)
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('move', '', '', g, 1, 19)
+      screen:expect(sel_screens[1])
+      api.nvim_input_mouse('move', '', '', g, 1, 18)
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('move', '', '', g, 2, 23)
+      screen:expect(sel_screens[2])
+      api.nvim_input_mouse('move', '', '', g, 2, 24)
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('move', '', '', g, 3, 19)
+      screen:expect(sel_screens[3])
+      api.nvim_input_mouse('left', 'press', '', g, 3, 18)
+      screen:expect(no_menu_screen)
+      eq('', api.nvim_get_var('menustr'))
+
+      command('wincmd t | set rightleft')
+      if multigrid then
+        no_menu_screen = {
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*2
+          {4:[No Name] [+]                   }|
+          [5:---------------]│[6:----------------]|*2
+          [3:--------------------------------]|
+        ## grid 2
+                           tset unem pupo^p|
+          {1:                               ~}|
+        ## grid 3
+          :let g:menustr = 'bar'          |
+        ## grid 5
+          popup menu test|
+          {1:~              }|
+        ## grid 6
+          {2:WINBAR          }|
+          popup menu test |
+        ]],
+        }
+      else
+        no_menu_screen = {
+          grid = [[
+                           tset unem pupo^p|
+          {1:                               ~}|
+          {4:[No Name] [+]                   }|
+          popup menu test│{2:WINBAR          }|
+          {1:~              }│popup menu test |
+          :let g:menustr = 'bar'          |
+        ]],
+        }
+      end
+      screen:expect(no_menu_screen)
+
+      if multigrid then
+        no_sel_screen = {
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*2
+          {4:[No Name] [+]                   }|
+          [5:---------------]│[6:----------------]|*2
+          [3:--------------------------------]|
+        ## grid 2
+                           tset unem pupo^p|
+          {1:                               ~}|
+        ## grid 3
+          :let g:menustr = 'bar'          |
+        ## grid 4
+          {n: oof }|
+          {n: rab }|
+          {n: zab }|
+        ## grid 5
+          popup menu test|
+          {1:~              }|
+        ## grid 6
+          {2:WINBAR          }|
+          popup menu test |
+        ]],
+          float_pos = { [4] = { -1, 'NW', 1, 1, 17, false, 250 } },
+        }
+      else
+        no_sel_screen = {
+          grid = [[
+                           tset unem pupo^p|
+          {1:                 }{n: oof }{1:         ~}|
+          {4:[No Name] [+]    }{n: rab }{4:          }|
+          popup menu test│{2:W}{n: zab }{2:          }|
+          {1:~              }│popup menu test |
+          :let g:menustr = 'bar'          |
+        ]],
+        }
+      end
+      for i, s in ipairs({ 'oof', 'rab', 'zab' }) do
+        local sel_screen = vim.deepcopy(no_sel_screen)
+        local grid = assert(sel_screen.grid)
+        grid = grid:gsub(vim.pesc(('{n: %s }'):format(s)), ('{s: %s }'):format(s))
+        sel_screen.grid = grid
+        sel_screens[i] = sel_screen
+      end
+
+      api.nvim_input_mouse('right', 'press', '', g, 0, 20)
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('move', '', '', g, 1, 21)
+      screen:expect(sel_screens[1])
+      api.nvim_input_mouse('move', '', '', g, 1, 22)
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('move', '', '', g, 2, 17)
+      screen:expect(sel_screens[2])
+      api.nvim_input_mouse('move', '', '', g, 2, 16)
+      screen:expect(no_sel_screen)
+      api.nvim_input_mouse('move', '', '', g, 3, 21)
+      screen:expect(sel_screens[3])
+      api.nvim_input_mouse('left', 'press', '', g, 3, 22)
+      screen:expect(no_menu_screen)
+      eq('', api.nvim_get_var('menustr'))
+
+      command('set norightleft')
     end)
 
     if not multigrid then
       -- oldtest: Test_popup_command_dump()
       it(':popup command', function()
         exec([[
+          " Delete the default MenuPopup event handler.
+          autocmd! nvim_popupmenu
+
           func ChangeMenu()
             aunmenu PopUp.&Paste
             nnoremenu 1.40 PopUp.&Paste :echomsg "pasted"<CR>
@@ -4477,6 +4795,27 @@ describe('builtin popupmenu', function()
 
         feed('<Esc>')
 
+        command('set rightleft')
+        feed('/X<CR>:popup PopUp<CR>')
+        screen:expect([[
+                   evif ruof eerht owt eno|
+              evif ruof eerht{7:^X} owt eno dna|
+             {n:             odnU }wt erom eno|
+          {1:   }{n:                  }{1:          ~}|
+          {1:   }{n:            etsaP }{1:          ~}|
+          {1:   }{n:                  }{1:          ~}|
+          {1:   }{n:      droW tceleS }{1:          ~}|
+          {1:   }{n:  ecnetneS tceleS }{1:          ~}|
+          {1:   }{n: hpargaraP tceleS }{1:          ~}|
+          {1:   }{n:      eniL tceleS }{1:          ~}|
+          {1:   }{n:     kcolB tceleS }{1:          ~}|
+          {1:   }{n:       llA tceleS }{1:          ~}|
+          {1:                               ~}|*7
+          :popup PopUp                    |
+        ]])
+        feed('<Esc>')
+        command('set norightleft')
+
         -- Set an <expr> mapping to change a menu entry while it's displayed.
         -- The text should not change but the command does.
         -- Also verify that "changed" shows up, which means the mapping triggered.
@@ -4533,6 +4872,57 @@ describe('builtin popupmenu', function()
         feed('<Esc>')
       end)
 
+      -- oldtest: Test_mouse_popup_position()
+      it('position of right-click menu when clicking near edge', function()
+        screen:try_resize(50, 20)
+        exec([[
+          set mousemodel=popup_setpos
+          " Delete the default MenuPopup event handler.
+          autocmd! nvim_popupmenu
+          aunmenu *
+          source $VIMRUNTIME/menu.vim
+          call setline(1, join(range(20)))
+        ]])
+
+        api.nvim_input_mouse('right', 'press', '', 0, 0, 45 - 1)
+        screen:expect([[
+          0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 ^18 19 |
+          {1:~                                }{n: Undo            }|
+          {1:~                                }{n:                 }|
+          {1:~                                }{n: Paste           }|
+          {1:~                                }{n:                 }|
+          {1:~                                }{n: Select Word     }|
+          {1:~                                }{n: Select Sentence }|
+          {1:~                                }{n: Select Paragraph}|
+          {1:~                                }{n: Select Line     }|
+          {1:~                                }{n: Select Block    }|
+          {1:~                                }{n: Select All      }|
+          {1:~                                                 }|*8
+                                                            |
+        ]])
+        feed('<Esc>')
+
+        command('set rightleft')
+        api.nvim_input_mouse('right', 'press', '', 0, 0, 50 - 45)
+        screen:expect([[
+           91 8^1 71 61 51 41 31 21 11 01 9 8 7 6 5 4 3 2 1 0|
+          {n:            odnU }{1:                                ~}|
+          {n:                 }{1:                                ~}|
+          {n:           etsaP }{1:                                ~}|
+          {n:                 }{1:                                ~}|
+          {n:     droW tceleS }{1:                                ~}|
+          {n: ecnetneS tceleS }{1:                                ~}|
+          {n:hpargaraP tceleS }{1:                                ~}|
+          {n:     eniL tceleS }{1:                                ~}|
+          {n:    kcolB tceleS }{1:                                ~}|
+          {n:      llA tceleS }{1:                                ~}|
+          {1:                                                 ~}|*8
+                                                            |
+        ]])
+        feed('<Esc>')
+        command('set norightleft')
+      end)
+
       describe('"kind" and "menu"', function()
         before_each(function()
           screen:try_resize(30, 8)
@@ -4569,9 +4959,9 @@ describe('builtin popupmenu', function()
         -- oldtest: Test_pum_highlights_custom()
         it('custom highlight groups', function()
           exec([[
-            hi PmenuKind      guifg=Red guibg=Magenta
+            hi PmenuKind      guifg=Red guibg=Plum1
             hi PmenuKindSel   guifg=Red guibg=Grey
-            hi PmenuExtra     guifg=White guibg=Magenta
+            hi PmenuExtra     guifg=White guibg=Plum1
             hi PmenuExtraSel  guifg=Black guibg=Grey
           ]])
           feed('iaw<C-X><C-u>')
@@ -4584,6 +4974,465 @@ describe('builtin popupmenu', function()
             {2:-- }{5:match 1 of 3}               |
           ]])
         end)
+      end)
+
+      -- oldtest: Test_pum_highlights_match()
+      it('can highlight matched text', function()
+        exec([[
+          func Omni_test(findstart, base)
+            if a:findstart
+              return col(".")
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'foo', 'kind': 'fookind' },
+                  \ { 'word': 'foofoo', 'kind': 'fookind' },
+                  \ { 'word': 'foobar', 'kind': 'fookind' },
+                  \ { 'word': 'fooBaz', 'kind': 'fookind' },
+                  \ { 'word': 'foobala', 'kind': 'fookind' },
+                  \ { 'word': '你好' },
+                  \ { 'word': '你好吗' },
+                  \ { 'word': '你不好吗' },
+                  \ { 'word': '你可好吗' },
+                  \]}
+          endfunc
+
+          func Comp()
+            let col = col('.')
+            if getline('.') == 'f'
+              let col -= 1
+            endif
+            call complete(col, [
+                  \ #{word: "foo", icase: 1},
+                  \ #{word: "Foobar", icase: 1},
+                  \ #{word: "fooBaz", icase: 1},
+                  \])
+            return ''
+          endfunc
+
+          set omnifunc=Omni_test
+          set completeopt=menu,noinsert,fuzzy
+          hi PmenuMatchSel  guifg=Blue guibg=Grey
+          hi PmenuMatch     guifg=Blue guibg=Plum1
+        ]])
+        feed('i<C-X><C-O>')
+        local pum_start = [[
+          ^                                |
+          {s:foo      fookind }{1:               }|
+          {n:foofoo   fookind }{1:               }|
+          {n:foobar   fookind }{1:               }|
+          {n:fooBaz   fookind }{1:               }|
+          {n:foobala  fookind }{1:               }|
+          {n:你好             }{1:               }|
+          {n:你好吗           }{1:               }|
+          {n:你不好吗         }{1:               }|
+          {n:你可好吗         }{1:               }|
+          {1:~                               }|*9
+          {2:-- }{5:match 1 of 9}                 |
+        ]]
+        screen:expect(pum_start)
+        feed('fo')
+        screen:expect([[
+          fo^                              |
+          {ms:fo}{s:o     fookind }{1:                }|
+          {mn:fo}{n:ofoo  fookind }{1:                }|
+          {mn:fo}{n:obar  fookind }{1:                }|
+          {mn:fo}{n:oBaz  fookind }{1:                }|
+          {mn:fo}{n:obala fookind }{1:                }|
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('<Esc>S<C-X><C-O>')
+        screen:expect(pum_start)
+        feed('你')
+        screen:expect([[
+          你^                              |
+          {ms:你}{s:好           }{1:                 }|
+          {mn:你}{n:好吗         }{1:                 }|
+          {mn:你}{n:不好吗       }{1:                 }|
+          {mn:你}{n:可好吗       }{1:                 }|
+          {1:~                               }|*14
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('吗')
+        screen:expect([[
+          你吗^                            |
+          {ms:你}{s:好}{ms:吗}{s:         }{1:                 }|
+          {mn:你}{n:不好}{mn:吗}{n:       }{1:                 }|
+          {mn:你}{n:可好}{mn:吗}{n:       }{1:                 }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('<C-E><Esc>')
+
+        command('set rightleft')
+        feed('S<C-X><C-O>')
+        local pum_start_rl = [[
+                                         ^ |
+          {1:               }{s: dnikoof      oof}|
+          {1:               }{n: dnikoof   oofoof}|
+          {1:               }{n: dnikoof   raboof}|
+          {1:               }{n: dnikoof   zaBoof}|
+          {1:               }{n: dnikoof  alaboof}|
+          {1:               }{n:             好你}|
+          {1:               }{n:           吗好你}|
+          {1:               }{n:         吗好不你}|
+          {1:               }{n:         吗好可你}|
+          {1:                               ~}|*9
+          {2:-- }{5:match 1 of 9}                 |
+        ]]
+        screen:expect(pum_start_rl)
+        feed('fo')
+        screen:expect([[
+                                       ^ of|
+          {1:                }{s: dnikoof     o}{ms:of}|
+          {1:                }{n: dnikoof  oofo}{mn:of}|
+          {1:                }{n: dnikoof  rabo}{mn:of}|
+          {1:                }{n: dnikoof  zaBo}{mn:of}|
+          {1:                }{n: dnikoof alabo}{mn:of}|
+          {1:                               ~}|*13
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('<Esc>S<C-X><C-O>')
+        screen:expect(pum_start_rl)
+        feed('你')
+        screen:expect([[
+                                       ^ 你|
+          {1:                 }{s:           好}{ms:你}|
+          {1:                 }{n:         吗好}{mn:你}|
+          {1:                 }{n:       吗好不}{mn:你}|
+          {1:                 }{n:       吗好可}{mn:你}|
+          {1:                               ~}|*14
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('吗')
+        screen:expect([[
+                                     ^ 吗你|
+          {1:                 }{s:         }{ms:吗}{s:好}{ms:你}|
+          {1:                 }{n:       }{mn:吗}{n:好不}{mn:你}|
+          {1:                 }{n:       }{mn:吗}{n:好可}{mn:你}|
+          {1:                               ~}|*15
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('<C-E><Esc>')
+        command('set norightleft')
+
+        command('set completeopt-=fuzzy')
+        feed('S<C-X><C-O>')
+        screen:expect(pum_start)
+        feed('fo')
+        screen:expect([[
+          fo^                              |
+          {ms:fo}{s:o     fookind }{1:                }|
+          {mn:fo}{n:ofoo  fookind }{1:                }|
+          {mn:fo}{n:obar  fookind }{1:                }|
+          {mn:fo}{n:oBaz  fookind }{1:                }|
+          {mn:fo}{n:obala fookind }{1:                }|
+          {1:~                               }|*13
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('<C-E><Esc>')
+
+        command('set rightleft')
+        feed('S<C-X><C-O>')
+        screen:expect(pum_start_rl)
+        feed('fo')
+        screen:expect([[
+                                       ^ of|
+          {1:                }{s: dnikoof     o}{ms:of}|
+          {1:                }{n: dnikoof  oofo}{mn:of}|
+          {1:                }{n: dnikoof  rabo}{mn:of}|
+          {1:                }{n: dnikoof  zaBo}{mn:of}|
+          {1:                }{n: dnikoof alabo}{mn:of}|
+          {1:                               ~}|*13
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
+        feed('<C-E><Esc>')
+        command('set norightleft')
+
+        feed('S<C-R>=Comp()<CR>f')
+        screen:expect([[
+          f^                               |
+          {ms:f}{s:oo            }{1:                 }|
+          {mn:F}{n:oobar         }{1:                 }|
+          {mn:f}{n:ooBaz         }{1:                 }|
+          {1:~                               }|*15
+          {2:-- INSERT --}                    |
+        ]])
+        feed('o<BS><C-R>=Comp()<CR>')
+        screen:expect_unchanged(true)
+
+        feed('<Esc>')
+        command('set completeopt+=fuzzy,menu')
+        feed('S hello helio hero h<C-X><C-P>')
+        screen:expect([[
+           hello helio hero h^             |
+          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
+          {1:~                }{n: }{mn:h}{n:elio        }{1: }|
+          {1:~                }{s: }{ms:h}{s:ero         }{1: }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+
+        feed('<Esc>S hello helio hero h<C-X><C-P><C-P>')
+        screen:expect([[
+           hello helio hero h^             |
+          {1:~                }{n: }{mn:h}{n:ello        }{1: }|
+          {1:~                }{s: }{ms:h}{s:elio        }{1: }|
+          {1:~                }{n: }{mn:h}{n:ero         }{1: }|
+          {1:~                               }|*15
+          {2:-- }{5:match 2 of 3}                 |
+        ]])
+
+        feed('<C-E><Esc>')
+      end)
+
+      -- oldtest: Test_pum_user_abbr_hlgroup()
+      it('custom abbr_hlgroup override', function()
+        exec([[
+          let s:var = 0
+          func CompleteFunc(findstart, base)
+            if a:findstart
+              return 0
+            endif
+            if s:var == 1
+              return {
+                    \ 'words': [
+                    \ { 'word': 'aword1', 'abbr_hlgroup': 'StrikeFake' },
+                    \ { 'word': '你好', 'abbr_hlgroup': 'StrikeFake' },
+                    \]}
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'W', 'abbr_hlgroup': 'StrikeFake' },
+                  \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'W', },
+                  \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'W', 'abbr_hlgroup': 'StrikeFake' },
+                  \]}
+          endfunc
+          func ChangeVar()
+            let s:var = 1
+          endfunc
+          set completeopt=menu
+          set completefunc=CompleteFunc
+
+          hi StrikeFake guifg=DarkRed
+          func HlMatch()
+            hi PmenuMatchSel  guifg=Blue guibg=Grey gui=underline
+            hi PmenuMatch     guifg=Blue guibg=Plum1 gui=underline
+          endfunc
+        ]])
+
+        feed('Saw<C-X><C-U>')
+        screen:expect([[
+          aword1^                          |
+          {ds:aword1}{s: W extra text 1 }{1:          }|
+          {n:aword2 W extra text 2 }{1:          }|
+          {dn:你好}{n:   W extra text 3 }{1:          }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
+
+        command('call HlMatch()')
+
+        feed('Saw<C-X><C-U>')
+        screen:expect([[
+          aword1^                          |
+          {uds:aw}{ds:ord1}{s: W extra text 1 }{1:          }|
+          {umn:aw}{n:ord2 W extra text 2 }{1:          }|
+          {dn:你好}{n:   W extra text 3 }{1:          }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-N>')
+        screen:expect([[
+          aword2^                          |
+          {udn:aw}{dn:ord1}{n: W extra text 1 }{1:          }|
+          {ums:aw}{s:ord2 W extra text 2 }{1:          }|
+          {dn:你好}{n:   W extra text 3 }{1:          }|
+          {1:~                               }|*15
+          {2:-- }{5:match 2 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
+
+        command('call ChangeVar()')
+        feed('S<C-X><C-U>')
+        screen:expect([[
+          aword1^                          |
+          {ds:aword1}{s:         }{1:                 }|
+          {dn:你好}{n:           }{1:                 }|
+          {1:~                               }|*16
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+        feed('<C-E><Esc>')
+      end)
+
+      -- oldtest: Test_pum_user_kind_hlgroup()
+      it('custom kind_hlgroup override', function()
+        exec([[
+          func CompleteFunc( findstart, base )
+            if a:findstart
+              return 0
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'aword1', 'menu': 'extra text 1', 'kind': 'variable', 'kind_hlgroup': 'KindVar', 'abbr_hlgroup': 'StrikeFake' },
+                  \ { 'word': 'aword2', 'menu': 'extra text 2', 'kind': 'function', 'kind_hlgroup': 'KindFunc' },
+                  \ { 'word': '你好', 'menu': 'extra text 3', 'kind': 'class', 'kind_hlgroup': 'KindClass'  },
+                  \]}
+          endfunc
+          set completeopt=menu
+          set completefunc=CompleteFunc
+
+          hi StrikeFake guifg=DarkRed
+          hi KindVar guifg=DarkYellow
+          hi KindFunc guifg=DarkBlue
+          hi KindClass guifg=DarkGreen
+        ]])
+
+        local attr_ids = screen:get_default_attr_ids()
+        attr_ids.kvs = { foreground = Screen.colors.DarkYellow, background = Screen.colors.Grey }
+        attr_ids.kfn = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Plum1 }
+        attr_ids.kcn = { foreground = Screen.colors.DarkGreen, background = Screen.colors.Plum1 }
+        screen:set_default_attr_ids(attr_ids)
+
+        feed('S<C-X><C-U>')
+        screen:expect([[
+          aword1^                          |
+          {ds:aword1}{s: }{kvs:variable}{s: extra text 1 }{1:   }|
+          {n:aword2 }{kfn:function}{n: extra text 2 }{1:   }|
+          {n:你好   }{kcn:class}{n:    extra text 3 }{1:   }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
+      end)
+
+      -- oldtest: Test_pum_completeitemalign()
+      it('completeitemalign option', function()
+        screen:try_resize(30, 15)
+        exec([[
+          func Omni_test(findstart, base)
+            if a:findstart
+              return col(".")
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'foo', 'kind': 'S', 'menu': 'menu' },
+                  \ { 'word': 'bar', 'kind': 'T', 'menu': 'menu' },
+                  \ { 'word': '你好', 'kind': 'C', 'menu': '中文' },
+                  \]}
+          endfunc
+
+          func Omni_long(findstart, base)
+            if a:findstart
+              return col(".")
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'loooong_foo', 'kind': 'S', 'menu': 'menu' },
+                  \ { 'word': 'loooong_bar', 'kind': 'T', 'menu': 'menu' },
+                  \]}
+          endfunc
+          set omnifunc=Omni_test
+        ]])
+        -- T1
+        command('set cia=abbr,kind,menu')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          foo^                           |
+          {s:foo  S menu    }{1:               }|
+          {n:bar  T menu    }{1:               }|
+          {n:你好 C 中文    }{1:               }|
+          {1:~                             }|*10
+          {2:-- }{5:match 1 of 3}               |
+        ]])
+        feed('<C-E><ESC>')
+        -- T2
+        command('set cia=abbr,menu,kind')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          foo^                           |
+          {s:foo  menu S    }{1:               }|
+          {n:bar  menu T    }{1:               }|
+          {n:你好 中文 C    }{1:               }|
+          {1:~                             }|*10
+          {2:-- }{5:match 1 of 3}               |
+        ]])
+        feed('<C-E><ESC>')
+        -- T3
+        command('set cia=kind,abbr,menu')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          foo^                           |
+          {s:S foo  menu    }{1:               }|
+          {n:T bar  menu    }{1:               }|
+          {n:C 你好 中文    }{1:               }|
+          {1:~                             }|*10
+          {2:-- }{5:match 1 of 3}               |
+        ]])
+        feed('<C-E><ESC>')
+        -- T4
+        command('set cia=kind,menu,abbr')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          foo^                           |
+          {s:S menu foo     }{1:               }|
+          {n:T menu bar     }{1:               }|
+          {n:C 中文 你好    }{1:               }|
+          {1:~                             }|*10
+          {2:-- }{5:match 1 of 3}               |
+        ]])
+        feed('<C-E><ESC>')
+        -- T5
+        command('set cia=menu,abbr,kind')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          foo^                           |
+          {s:menu foo  S    }{1:               }|
+          {n:menu bar  T    }{1:               }|
+          {n:中文 你好 C    }{1:               }|
+          {1:~                             }|*10
+          {2:-- }{5:match 1 of 3}               |
+        ]])
+        feed('<C-E><ESC>')
+        -- T6
+        command('set cia=menu,kind,abbr')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          foo^                           |
+          {s:menu S foo     }{1:               }|
+          {n:menu T bar     }{1:               }|
+          {n:中文 C 你好    }{1:               }|
+          {1:~                             }|*10
+          {2:-- }{5:match 1 of 3}               |
+        ]])
+        feed('<C-E><ESC>')
+        -- T7
+        command('set cia&')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          foo^                           |
+          {s:foo  S menu    }{1:               }|
+          {n:bar  T menu    }{1:               }|
+          {n:你好 C 中文    }{1:               }|
+          {1:~                             }|*10
+          {2:-- }{5:match 1 of 3}               |
+        ]])
+        feed('<C-E><ESC>')
+
+        -- Test_pum_completeitemalign_07
+        command('set cia=menu,kind,abbr columns=12 cmdheight=2 omnifunc=Omni_long')
+        feed('S<C-X><C-O>')
+        screen:expect([[
+          loooong_foo^ |
+          {s:menu S loooo}|
+          {n:menu T loooo}|
+          {1:~           }|*10
+                      |
+          {2:--}          |
+        ]])
+        feed('<C-E><ESC>')
       end)
     end
   end

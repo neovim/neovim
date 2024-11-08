@@ -1,5 +1,5 @@
 " Tests for Unicode manipulations
- 
+
 source check.vim
 source view_util.vim
 source screendump.vim
@@ -112,7 +112,7 @@ func Test_list2str_str2list_latin1()
 
   let save_encoding = &encoding
   " set encoding=latin1
-  
+
   let lres = str2list(s, 1)
   let sres = list2str(l, 1)
   call assert_equal([65, 66, 67], str2list("ABC"))
@@ -228,6 +228,9 @@ func Test_setcellwidths()
     call setcellwidths([[0x2103, 0x2103, 2]])
     redraw
     call assert_equal(19, wincol())
+    call setcellwidths([])
+    redraw
+    call assert_equal((aw == 'single') ? 10 : 19, wincol())
   endfor
   set ambiwidth& isprint&
 
@@ -252,15 +255,21 @@ func Test_setcellwidths()
 
   call assert_fails('call setcellwidths([[0x33, 0x44, 2]])', 'E1114:')
 
-  set listchars=tab:--\\u2192
+  set listchars=tab:--\\u2192 fillchars=stl:\\u2501
   call assert_fails('call setcellwidths([[0x2192, 0x2192, 2]])', 'E834:')
-
-  set fillchars=stl:\\u2501
   call assert_fails('call setcellwidths([[0x2501, 0x2501, 2]])', 'E835:')
 
+  call setcellwidths([[0x201c, 0x201d, 1]])
+  set listchars& fillchars& ambiwidth=double
+
+  set listchars=nbsp:\\u201c fillchars=vert:\\u201d
+  call assert_fails('call setcellwidths([])', 'E834:')
   set listchars&
+  call assert_fails('call setcellwidths([])', 'E835:')
   set fillchars&
+
   call setcellwidths([])
+  set ambiwidth&
   bwipe!
 endfunc
 

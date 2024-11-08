@@ -40,8 +40,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vterm.h>
-#include <vterm_keycodes.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
@@ -94,6 +92,8 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "vterm/vterm.h"
+#include "vterm/vterm_keycodes.h"
 
 typedef struct {
   VimState state;
@@ -112,6 +112,9 @@ typedef struct {
 // libvterm. Improves performance when receiving large bursts of data.
 #define REFRESH_DELAY 10
 
+#define TEXTBUF_SIZE      0x1fff
+#define SELECTIONBUF_SIZE 0x0400
+
 static TimeWatcher refresh_timer;
 static bool refresh_pending = false;
 
@@ -127,7 +130,7 @@ struct terminal {
   // buffer used to:
   //  - convert VTermScreen cell arrays into utf8 strings
   //  - receive data from libvterm as a result of key presses.
-  char textbuf[0x1fff];
+  char textbuf[TEXTBUF_SIZE];
 
   ScrollbackLine **sb_buffer;       // Scrollback storage.
   size_t sb_current;                // Lines stored in sb_buffer.
@@ -166,6 +169,9 @@ struct terminal {
   // When there is a pending TermRequest autocommand, block and store input.
   StringBuilder *pending_send;
 
+  char *selection_buffer;  /// libvterm selection buffer
+  StringBuilder selection;  /// Growable array containing full selection data
+
   size_t refcount;                  // reference count
 };
 
@@ -177,6 +183,12 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .bell = term_bell,
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
   .sb_popline = term_sb_pop,
+};
+
+static VTermSelectionCallbacks vterm_selection_callbacks = {
+  .set = term_selection_set,
+  // For security reasons we don't support querying the system clipboard from the embedded terminal
+  .query = NULL,
 };
 
 static Set(ptr_t) invalidated_terminals = SET_INIT;
@@ -215,11 +227,67 @@ static void schedule_termrequest(Terminal *term, char *payload, size_t payload_l
                  term->pending_send);
 }
 
-static int on_osc(int command, VTermStringFragment frag, void *user)
+static int parse_osc8(VTermStringFragment frag, int *attr)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (frag.str == NULL) {
+  // Parse the URI from the OSC 8 sequence and add the URL to our URL set.
+  // Skip the ID, we don't use it (for now)
+  size_t i = 0;
+  for (; i < frag.len; i++) {
+    if (frag.str[i] == ';') {
+      break;
+    }
+  }
+
+  // Move past the semicolon
+  i++;
+
+  if (i >= frag.len) {
+    // Invalid OSC sequence
     return 0;
   }
+
+  // Find the terminator
+  const size_t start = i;
+  for (; i < frag.len; i++) {
+    if (frag.str[i] == '\a' || frag.str[i] == '\x1b') {
+      break;
+    }
+  }
+
+  const size_t len = i - start;
+  if (len == 0) {
+    // Empty OSC 8, no URL
+    *attr = 0;
+    return 1;
+  }
+
+  char *url = xmemdupz(&frag.str[start], len + 1);
+  url[len] = 0;
+  *attr = hl_add_url(0, url);
+  xfree(url);
+
+  return 1;
+}
+
+static int on_osc(int command, VTermStringFragment frag, void *user)
+  FUNC_ATTR_NONNULL_ALL
+{
+  Terminal *term = user;
+
+  if (frag.str == NULL || frag.len == 0) {
+    return 0;
+  }
+
+  if (command == 8) {
+    int attr = 0;
+    if (parse_osc8(frag, &attr)) {
+      VTermState *state = vterm_obtain_state(term->vt);
+      VTermValue value = { .number = attr };
+      vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
+    }
+  }
+
   if (!has_event(EVENT_TERMREQUEST)) {
     return 1;
   }
@@ -227,7 +295,7 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   StringBuilder request = KV_INITIAL_VALUE;
   kv_printf(request, "\x1b]%d;", command);
   kv_concat_len(request, frag.str, frag.len);
-  schedule_termrequest(user, request.items, request.size);
+  schedule_termrequest(term, request.items, request.size);
   return 1;
 }
 
@@ -307,14 +375,18 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   // Set up screen
   term->vts = vterm_obtain_screen(term->vt);
   vterm_screen_enable_altscreen(term->vts, true);
-  // TODO(clason): reenable when https://github.com/neovim/neovim/issues/23762 is fixed
-  // vterm_screen_enable_reflow(term->vts, true);
+  vterm_screen_enable_reflow(term->vts, true);
   // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
   vterm_screen_set_unrecognised_fallbacks(term->vts, &vterm_fallbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(term->vts, 1);
   vterm_output_set_callback(term->vt, term_output_callback, term);
+
+  term->selection_buffer = xcalloc(SELECTIONBUF_SIZE, 1);
+  vterm_state_set_selection_callbacks(state, &vterm_selection_callbacks, term,
+                                      term->selection_buffer, SELECTIONBUF_SIZE);
+
   // force a initial refresh of the screen to ensure the buffer will always
   // have as many lines as screen rows when refresh_scrollback is called
   term->invalid_start = 0;
@@ -326,14 +398,6 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   refresh_screen(term, buf);
   set_option_value(kOptBuftype, STATIC_CSTR_AS_OPTVAL("terminal"), OPT_LOCAL);
 
-  // Default settings for terminal buffers
-  buf->b_p_ma = false;     // 'nomodifiable'
-  buf->b_p_ul = -1;        // 'undolevels'
-  buf->b_p_scbk =          // 'scrollback' (initialize local from global)
-                  (p_scbk < 0) ? 10000 : MAX(1, p_scbk);
-  buf->b_p_tw = 0;         // 'textwidth'
-  set_option_value(kOptWrap, BOOLEAN_OPTVAL(false), OPT_LOCAL);
-  set_option_value(kOptList, BOOLEAN_OPTVAL(false), OPT_LOCAL);
   if (buf->b_ffname != NULL) {
     buf_set_term_title(buf, buf->b_ffname, strlen(buf->b_ffname));
   }
@@ -684,6 +748,10 @@ static int terminal_execute(VimState *state, int key)
     }
     break;
 
+  case K_PASTE_START:
+    paste_repeat(1);
+    break;
+
   case K_EVENT:
     // We cannot let an event free the terminal yet. It is still needed.
     s->term->refcount++;
@@ -718,6 +786,12 @@ static int terminal_execute(VimState *state, int key)
     FALLTHROUGH;
 
   default:
+    if (key == Ctrl_C) {
+      // terminal_enter() always sets `mapped_ctrl_c` to avoid `got_int`. 8eeda7169aa4
+      // But `got_int` may be set elsewhere, e.g. by interrupt() or an autocommand,
+      // so ensure that it is cleared.
+      got_int = false;
+    }
     if (key == Ctrl_BSL && !s->got_bsl) {
       s->got_bsl = true;
       break;
@@ -769,6 +843,8 @@ void terminal_destroy(Terminal **termpp)
     }
     xfree(term->sb_buffer);
     xfree(term->title);
+    xfree(term->selection_buffer);
+    kv_destroy(term->selection);
     vterm_free(term->vt);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
@@ -819,13 +895,13 @@ static bool is_filter_char(int c)
   return !!(tpf_flags & flag);
 }
 
-void terminal_paste(int count, char **y_array, size_t y_size)
+void terminal_paste(int count, String *y_array, size_t y_size)
 {
   if (y_size == 0) {
     return;
   }
   vterm_keyboard_start_paste(curbuf->terminal->vt);
-  size_t buff_len = strlen(y_array[0]);
+  size_t buff_len = y_array[0].size;
   char *buff = xmalloc(buff_len);
   for (int i = 0; i < count; i++) {
     // feed the lines to the terminal
@@ -838,14 +914,14 @@ void terminal_paste(int count, char **y_array, size_t y_size)
         terminal_send(curbuf->terminal, "\n", 1);
 #endif
       }
-      size_t len = strlen(y_array[j]);
+      size_t len = y_array[j].size;
       if (len > buff_len) {
         buff = xrealloc(buff, len);
         buff_len = len;
       }
       char *dst = buff;
-      char *src = y_array[j];
-      while (*src != '\0') {
+      char *src = y_array[j].data;
+      while (*src != NUL) {
         len = (size_t)utf_ptr2len(src);
         int c = utf_ptr2char(src);
         if (!is_filter_char(c)) {
@@ -982,6 +1058,10 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
       });
     }
 
+    if (cell.uri > 0) {
+      attr_id = hl_combine_attr(attr_id, cell.uri);
+    }
+
     if (term->cursor.visible && term->cursor.row == row
         && term->cursor.col == col) {
       attr_id = hl_combine_attr(attr_id,
@@ -1098,9 +1178,10 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
   return 1;
 }
 
+/// Called when the terminal wants to ring the system bell.
 static int term_bell(void *data)
 {
-  ui_call_bell();
+  vim_beep(BO_TERM);
   return 1;
 }
 
@@ -1180,10 +1261,7 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
   memmove(term->sb_buffer, term->sb_buffer + 1,
           sizeof(term->sb_buffer[0]) * (term->sb_current));
 
-  size_t cols_to_copy = (size_t)cols;
-  if (cols_to_copy > sbrow->cols) {
-    cols_to_copy = sbrow->cols;
-  }
+  size_t cols_to_copy = MIN((size_t)cols, sbrow->cols);
 
   // copy to vterm state
   memcpy(cells, sbrow->cells, sizeof(cells[0]) * cols_to_copy);
@@ -1194,6 +1272,54 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
 
   xfree(sbrow);
   set_put(ptr_t, &invalidated_terminals, term);
+
+  return 1;
+}
+
+static void term_clipboard_set(void **argv)
+{
+  VTermSelectionMask mask = (VTermSelectionMask)(long)argv[0];
+  char *data = argv[1];
+
+  char regname;
+  switch (mask) {
+  case VTERM_SELECTION_CLIPBOARD:
+    regname = '+';
+    break;
+  case VTERM_SELECTION_PRIMARY:
+    regname = '*';
+    break;
+  default:
+    regname = '+';
+    break;
+  }
+
+  list_T *lines = tv_list_alloc(1);
+  tv_list_append_allocated_string(lines, data);
+
+  list_T *args = tv_list_alloc(3);
+  tv_list_append_list(args, lines);
+
+  const char regtype = 'v';
+  tv_list_append_string(args, &regtype, 1);
+
+  tv_list_append_string(args, &regname, 1);
+  eval_call_provider("clipboard", "set", args, true);
+}
+
+static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag, void *user)
+{
+  Terminal *term = user;
+  if (frag.initial) {
+    kv_size(term->selection) = 0;
+  }
+
+  kv_concat_len(term->selection, frag.str, frag.len);
+
+  if (frag.final) {
+    char *data = xmemdupz(term->selection.items, kv_size(term->selection));
+    multiqueue_put(main_loop.events, term_clipboard_set, (void *)mask, data);
+  }
 
   return 1;
 }

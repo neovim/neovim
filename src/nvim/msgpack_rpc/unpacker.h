@@ -41,6 +41,8 @@ struct Unpacker {
   bool has_grid_line_event;
 };
 
+typedef kvec_t(char) AdditionalDataBuilder;
+
 // unrecovareble error. unpack_error should be set!
 #define unpacker_closed(p) ((p)->state < 0)
 

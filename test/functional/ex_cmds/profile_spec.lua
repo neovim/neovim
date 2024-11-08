@@ -6,16 +6,10 @@ require('os')
 local eval = n.eval
 local command = n.command
 local eq, neq = t.eq, t.neq
-local tempfile = t.tmpname()
+local tempfile = t.tmpname(false)
 local source = n.source
 local matches = t.matches
 local read_file = t.read_file
-
--- tmpname() also creates the file on POSIX systems. Remove it again.
--- We just need the name, ignoring any race conditions.
-if uv.fs_stat(tempfile).uid then
-  os.remove(tempfile)
-end
 
 local function assert_file_exists(filepath)
   neq(nil, uv.fs_stat(filepath).uid)
@@ -31,6 +25,7 @@ describe(':profile', function()
   after_each(function()
     n.expect_exit(command, 'qall!')
     if uv.fs_stat(tempfile).uid ~= nil then
+      -- Delete the tempfile. We just need the name, ignoring any race conditions.
       os.remove(tempfile)
     end
   end)

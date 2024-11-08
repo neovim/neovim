@@ -11,19 +11,19 @@
 ---   - `count_a` (`integer`): Hunk size in {a}.
 ---   - `start_b` (`integer`): Start line of hunk in {b}.
 ---   - `count_b` (`integer`): Hunk size in {b}.
---- @field on_hunk fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer
+--- @field on_hunk? fun(start_a: integer, count_a: integer, start_b: integer, count_b: integer): integer?
 ---
 --- Form of the returned diff:
 ---   - `unified`: String in unified format.
 ---   - `indices`: Array of hunk locations.
 --- Note: This option is ignored if `on_hunk` is used.
 --- (default: `'unified'`)
---- @field result_type 'unified'|'indices'
+--- @field result_type? 'unified'|'indices'
 ---
 --- Run linematch on the resulting hunks from xdiff. When integer, only hunks
 --- upto this size in lines are run through linematch.
 --- Requires `result_type = indices`, ignored otherwise.
---- @field linematch boolean|integer
+--- @field linematch? boolean|integer
 ---
 --- Diff algorithm to use. Values:
 ---   - `myers`: the default algorithm
@@ -31,15 +31,15 @@
 ---   - `patience`: patience diff algorithm
 ---   - `histogram`: histogram diff algorithm
 --- (default: `'myers'`)
---- @field algorithm 'myers'|'minimal'|'patience'|'histogram'
---- @field ctxlen integer Context length
---- @field interhunkctxlen integer Inter hunk context length
---- @field ignore_whitespace boolean Ignore whitespace
---- @field ignore_whitespace_change boolean Ignore whitespace change
---- @field ignore_whitespace_change_at_eol boolean Ignore whitespace change at end-of-line.
---- @field ignore_cr_at_eol boolean Ignore carriage return at end-of-line
---- @field ignore_blank_lines boolean Ignore blank lines
---- @field indent_heuristic boolean Use the indent heuristic for the internal diff library.
+--- @field algorithm? 'myers'|'minimal'|'patience'|'histogram'
+--- @field ctxlen? integer Context length
+--- @field interhunkctxlen? integer Inter hunk context length
+--- @field ignore_whitespace? boolean Ignore whitespace
+--- @field ignore_whitespace_change? boolean Ignore whitespace change
+--- @field ignore_whitespace_change_at_eol? boolean Ignore whitespace change at end-of-line.
+--- @field ignore_cr_at_eol? boolean Ignore carriage return at end-of-line
+--- @field ignore_blank_lines? boolean Ignore blank lines
+--- @field indent_heuristic? boolean Use the indent heuristic for the internal diff library.
 
 -- luacheck: no unused args
 
@@ -65,7 +65,7 @@
 ---
 ---@param a string First string to compare
 ---@param b string Second string to compare
----@param opts vim.diff.Opts
+---@param opts? vim.diff.Opts
 ---@return string|integer[][]?
 ---     See {opts.result_type}. `nil` if {opts.on_hunk} is given.
 function vim.diff(a, b, opts) end

@@ -7,6 +7,7 @@ local MsgpackRpcStream = require('test.client.msgpack_rpc_stream')
 --- @field private _prepare uv.uv_prepare_t
 --- @field private _timer uv.uv_timer_t
 --- @field private _is_running boolean
+--- @field exec_lua_setup boolean
 local Session = {}
 Session.__index = Session
 if package.loaded['jit'] then
@@ -96,8 +97,7 @@ end
 
 --- @param method string
 --- @param ... any
---- @return boolean
---- @return table
+--- @return boolean, table
 function Session:request(method, ...)
   local args = { ... }
   local err, result
@@ -114,6 +114,7 @@ function Session:request(method, ...)
   return true, result
 end
 
+--- Runs the event loop.
 function Session:run(request_cb, notification_cb, setup_cb, timeout)
   local function on_request(method, args, response)
     coroutine_exec(request_cb, method, args, function(status, result, flag)

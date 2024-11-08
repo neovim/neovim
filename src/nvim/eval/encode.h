@@ -1,10 +1,10 @@
 #pragma once
 
-#include <msgpack/pack.h>
 #include <string.h>
 
 #include "nvim/eval/typval_defs.h"
 #include "nvim/garray_defs.h"
+#include "nvim/msgpack_rpc/packer_defs.h"
 
 /// Convert Vimscript value to msgpack string
 ///
@@ -13,7 +13,7 @@
 /// @param[in]  objname  Object name, used for error message.
 ///
 /// @return OK in case of success, FAIL otherwise.
-int encode_vim_to_msgpack(msgpack_packer *packer, typval_T *tv, const char *objname);
+int encode_vim_to_msgpack(PackerBuffer *packer, typval_T *tv, const char *objname);
 
 /// Convert Vimscript value to :echo output
 ///

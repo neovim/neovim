@@ -43,6 +43,8 @@ CTRL-D			Scroll window Downwards in the buffer.  The number of
 
 <S-Down>	or				*<S-Down>* *<kPageDown>*
 <PageDown>	or				*<PageDown>* *CTRL-F*
+<S-CR>	or					*<S-CR>* *<S-NL>*
+<S-+>	or					*SHIFT-+* *<S-Plus>*
 CTRL-F			Scroll window [count] pages Forwards (downwards) in
 			the buffer.  See also 'startofline' option.
 			When there is only one window the 'window' option
@@ -80,6 +82,7 @@ CTRL-U			Scroll window Upwards in the buffer.  The number of
 
 <S-Up>		or					*<S-Up>* *<kPageUp>*
 <PageUp>	or					*<PageUp>* *CTRL-B*
+<S-->		or				*<S-Minus>* *SHIFT-MINUS*
 CTRL-B			Scroll window [count] pages Backwards (upwards) in the
 			buffer.  See also 'startofline' option.
 			When there is only one window the 'window' option

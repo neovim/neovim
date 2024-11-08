@@ -401,8 +401,7 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Omni-fullføring (^O^N^P)"
 
 #: ../edit.c:96
-#, fuzzy
-msgid " Spelling suggestion (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
 msgstr " Staveforslag (^S^N^P)"
 
 #: ../edit.c:97
@@ -3979,8 +3978,8 @@ msgstr ""
 "(2) En økt for denne filen kræsjet.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Hvis det er tilfelle, bruk \":recover\" eller \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Hvis det er tilfelle, bruk \":recover\" eller \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

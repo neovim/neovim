@@ -404,7 +404,7 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Doplòování tagù (^I/^N/^P)"
 
 #: ../edit.c:96
-msgid " Spelling suggestion (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
 msgstr ""
 
 #: ../edit.c:97
@@ -4077,8 +4077,8 @@ msgstr ""
 "(2) Editace tohoto souboru byla pøeru¹ena neèekaným ukonèením programu.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Je-li tomu tak, pak pou¾ijte \":recover\" èi \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Je-li tomu tak, pak pou¾ijte \":recover\" èi \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

@@ -49,7 +49,6 @@ typedef struct {
                             ///< buffer-local option: global value
   idopt_T indir;            ///< global option: PV_NONE;
                             ///< local option: indirect option index
-  bool hidden;              ///< option is hidden, any attempt to set its value will be ignored.
   bool immutable;           ///< option is immutable, trying to set its value will give an error.
 
   /// callback function to invoke after an option is modified to validate and
@@ -60,13 +59,7 @@ typedef struct {
   /// cmdline. Only useful for string options.
   opt_expand_cb_T opt_expand_cb;
 
-  // TODO(famiu): Use OptVal for def_val.
-  union {
-    int boolean;
-    OptInt number;
-    char *string;
-  } def_val;         ///< default value for variable
-
+  OptVal def_val;    ///< default value
   LastSet last_set;  ///< script in which the option was last set
 } vimoption_T;
 

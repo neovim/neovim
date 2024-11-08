@@ -10,9 +10,12 @@ func Test_compiler()
   let save_LC_ALL = $LC_ALL
   let $LC_ALL= "C"
 
-  " %:S does not work properly with 'shellslash' set
   let save_shellslash = &shellslash
-  set noshellslash
+  " Nvim doesn't allow setting value of a hidden option to non-default value
+  if exists('+shellslash')
+    " %:S does not work properly with 'shellslash' set
+    set noshellslash
+  endif
 
   e Xfoo.pl
   compiler perl

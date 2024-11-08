@@ -19,6 +19,7 @@
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdhist.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
@@ -104,9 +105,11 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_COLORS
          && xp->xp_context != EXPAND_COMPILER
          && xp->xp_context != EXPAND_DIRECTORIES
+         && xp->xp_context != EXPAND_DIRS_IN_CDPATH
          && xp->xp_context != EXPAND_FILES
          && xp->xp_context != EXPAND_FILES_IN_PATH
          && xp->xp_context != EXPAND_FILETYPE
+         && xp->xp_context != EXPAND_FINDFUNC
          && xp->xp_context != EXPAND_HELP
          && xp->xp_context != EXPAND_KEYMAP
          && xp->xp_context != EXPAND_LUA
@@ -117,6 +120,7 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_PACKADD
          && xp->xp_context != EXPAND_RUNTIME
          && xp->xp_context != EXPAND_SHELLCMD
+         && xp->xp_context != EXPAND_SHELLCMDLINE
          && xp->xp_context != EXPAND_TAGS
          && xp->xp_context != EXPAND_TAGS_LISTFILES
          && xp->xp_context != EXPAND_USER_LIST
@@ -158,7 +162,8 @@ static void wildescape(expand_T *xp, const char *str, int numfiles, char **files
       || xp->xp_context == EXPAND_FILES_IN_PATH
       || xp->xp_context == EXPAND_SHELLCMD
       || xp->xp_context == EXPAND_BUFFERS
-      || xp->xp_context == EXPAND_DIRECTORIES) {
+      || xp->xp_context == EXPAND_DIRECTORIES
+      || xp->xp_context == EXPAND_DIRS_IN_CDPATH) {
     // Insert a backslash into a file name before a space, \, %, #
     // and wildmatch characters, except '~'.
     for (int i = 0; i < numfiles; i++) {
@@ -239,6 +244,9 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
+    if (xp->xp_context == EXPAND_LUA) {
+      nlua_expand_pat(xp);
+    }
     cmd_showtail = expand_showtail(xp);
   }
 
@@ -285,12 +293,6 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     p2 = ExpandOne(xp, p1, xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
                    use_options, type);
     xfree(p1);
-
-    // xp->xp_pattern might have been modified by ExpandOne (for example,
-    // in lua completion), so recompute the pattern index and length
-    i = (int)(xp->xp_pattern - ccline->cmdbuff);
-    xp->xp_pattern_len = (size_t)ccline->cmdpos - (size_t)i;
-
     // Longest match: make sure it is not shorter, happens with :help.
     if (p2 != NULL && type == WILD_LONGEST) {
       int j;
@@ -356,6 +358,8 @@ static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches,
       .pum_info = NULL,
       .pum_extra = NULL,
       .pum_kind = NULL,
+      .pum_user_abbr_hlattr = -1,
+      .pum_user_kind_hlattr = -1,
     };
   }
 
@@ -399,6 +403,20 @@ void cmdline_pum_cleanup(CmdlineInfo *cclp)
 {
   cmdline_pum_remove();
   wildmenu_cleanup(cclp);
+}
+
+/// Returns the current cmdline completion pattern.
+char *cmdline_compl_pattern(void)
+{
+  expand_T *xp = get_cmdline_info()->xpc;
+  return xp == NULL ? NULL : xp->xp_orig;
+}
+
+/// Returns true if fuzzy cmdline completion is active, false otherwise.
+bool cmdline_compl_is_fuzzy(void)
+{
+  expand_T *xp = get_cmdline_info()->xpc;
+  return xp != NULL && cmdline_fuzzy_completion_supported(xp);
 }
 
 /// Return the number of characters that should be skipped in the wildmenu
@@ -655,10 +673,7 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
         ht -= 2;
       }
       findex -= ht;
-      if (findex < 0) {
-        // few entries left, select the first entry
-        findex = 0;
-      }
+      findex = MAX(findex, 0);  // few entries left, select the first entry
     }
   } else if (mode == WILD_PAGEDOWN) {
     if (findex == xp->xp_numfiles - 1) {
@@ -686,18 +701,10 @@ static char *get_next_or_prev_match(int mode, expand_T *xp)
 
   // When wrapping around, return the original string, set findex to -1.
   if (findex < 0) {
-    if (xp->xp_orig == NULL) {
-      findex = xp->xp_numfiles - 1;
-    } else {
-      findex = -1;
-    }
+    findex = xp->xp_orig == NULL ? xp->xp_numfiles - 1 : -1;
   }
   if (findex >= xp->xp_numfiles) {
-    if (xp->xp_orig == NULL) {
-      findex = 0;
-    } else {
-      findex = -1;
-    }
+    findex = xp->xp_orig == NULL ? 0 : -1;
   }
   if (compl_match_array) {
     compl_selected = findex;
@@ -1046,6 +1053,9 @@ int showmatches(expand_T *xp, bool wildmenu)
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
+    if (xp->xp_context == EXPAND_LUA) {
+      nlua_expand_pat(xp);
+    }
     int i = expand_cmdline(xp, ccline->cmdbuff, ccline->cmdpos,
                            &numMatches, &matches);
     showtail = expand_showtail(xp);
@@ -1094,9 +1104,7 @@ int showmatches(expand_T *xp, bool wildmenu)
       } else {
         j = vim_strsize(SHOW_MATCH(i));
       }
-      if (j > maxlen) {
-        maxlen = j;
-      }
+      maxlen = MAX(maxlen, j);
     }
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
@@ -1213,14 +1221,16 @@ char *addstar(char *fname, size_t len, int context)
   if (context != EXPAND_FILES
       && context != EXPAND_FILES_IN_PATH
       && context != EXPAND_SHELLCMD
-      && context != EXPAND_DIRECTORIES) {
+      && context != EXPAND_DIRECTORIES
+      && context != EXPAND_DIRS_IN_CDPATH) {
     // Matching will be done internally (on something other than files).
     // So we convert the file-matching-type wildcards into our kind for
     // use with vim_regcomp().  First work out how long it will be:
 
     // For help tags the translation is done in find_help_tags().
     // For a tag pattern starting with "/" no translation is needed.
-    if (context == EXPAND_HELP
+    if (context == EXPAND_FINDFUNC
+        || context == EXPAND_HELP
         || context == EXPAND_COLORS
         || context == EXPAND_COMPILER
         || context == EXPAND_OWNSYNTAX
@@ -1342,7 +1352,7 @@ char *addstar(char *fname, size_t len, int context)
 ///                          it.
 ///  EXPAND_BUFFERS          Complete file names for :buf and :sbuf commands.
 ///  EXPAND_FILES            After command with EX_XFILE set, or after setting
-///                          with P_EXPAND set.  eg :e ^I, :w>>^I
+///                          with kOptFlagExpand set.  eg :e ^I, :w>>^I
 ///  EXPAND_DIRECTORIES      In some cases this is used instead of the latter
 ///                          when we know only directories are of interest.
 ///                          E.g.  :set dir=^I  and  :cd ^I
@@ -1521,7 +1531,9 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
   xp->xp_context = EXPAND_FILES;
 
   // For a shell command more chars need to be escaped.
-  if (usefilter || eap->cmdidx == CMD_bang || eap->cmdidx == CMD_terminal) {
+  if (usefilter
+      || (eap != NULL && (eap->cmdidx == CMD_bang || eap->cmdidx == CMD_terminal))
+      || *complp == EXPAND_SHELLCMDLINE) {
 #ifndef BACKSLASH_IN_FILENAME
     xp->xp_shell = true;
 #endif
@@ -1817,7 +1829,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_sfind:
   case CMD_tabfind:
     if (xp->xp_context == EXPAND_FILES) {
-      xp->xp_context = EXPAND_FILES_IN_PATH;
+      xp->xp_context = *get_findfunc() != NUL ? EXPAND_FINDFUNC : EXPAND_FILES_IN_PATH;
     }
     break;
   case CMD_cd:
@@ -1827,7 +1839,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_tcd:
   case CMD_tchdir:
     if (xp->xp_context == EXPAND_FILES) {
-      xp->xp_context = EXPAND_DIRECTORIES;
+      xp->xp_context = EXPAND_DIRS_IN_CDPATH;
     }
     break;
   case CMD_help:
@@ -2487,19 +2499,25 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
     }
   }
 
-  if (xp->xp_context == EXPAND_FILES) {
-    flags |= EW_FILE;
-  } else if (xp->xp_context == EXPAND_FILES_IN_PATH) {
-    flags |= (EW_FILE | EW_PATH);
+  int ret = FAIL;
+  if (xp->xp_context == EXPAND_FINDFUNC) {
+    ret = expand_findfunc(pat, matches, numMatches);
   } else {
-    flags = (flags | EW_DIR) & ~EW_FILE;
+    if (xp->xp_context == EXPAND_FILES) {
+      flags |= EW_FILE;
+    } else if (xp->xp_context == EXPAND_FILES_IN_PATH) {
+      flags |= (EW_FILE | EW_PATH);
+    } else if (xp->xp_context == EXPAND_DIRS_IN_CDPATH) {
+      flags = (flags | EW_DIR | EW_CDPATH) & ~EW_FILE;
+    } else {
+      flags = (flags | EW_DIR) & ~EW_FILE;
+    }
+    if (options & WILD_ICASE) {
+      flags |= EW_ICASE;
+    }
+    // Expand wildcards, supporting %:h and the like.
+    ret = expand_wildcards_eval(&pat, numMatches, matches, flags);
   }
-  if (options & WILD_ICASE) {
-    flags |= EW_ICASE;
-  }
-
-  // Expand wildcards, supporting %:h and the like.
-  int ret = expand_wildcards_eval(&pat, numMatches, matches, flags);
   if (free_pat) {
     xfree(pat);
   }
@@ -2703,7 +2721,9 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
 
   if (xp->xp_context == EXPAND_FILES
       || xp->xp_context == EXPAND_DIRECTORIES
-      || xp->xp_context == EXPAND_FILES_IN_PATH) {
+      || xp->xp_context == EXPAND_FILES_IN_PATH
+      || xp->xp_context == EXPAND_FINDFUNC
+      || xp->xp_context == EXPAND_DIRS_IN_CDPATH) {
     return expand_files_and_dirs(xp, pat, matches, numMatches, flags, options);
   }
 
@@ -2782,8 +2802,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   }
 
   if (xp->xp_context == EXPAND_LUA) {
-    ILOG("PAT %s", pat);
-    return nlua_expand_pat(xp, pat, numMatches, matches);
+    return nlua_expand_get_matches(numMatches, matches);
   }
 
   if (!fuzzy) {
@@ -3074,7 +3093,7 @@ static void *call_user_expand_func(user_expand_func_T user_expand_func, expand_T
   typval_T args[4];
   const sctx_T save_current_sctx = current_sctx;
 
-  if (xp->xp_arg == NULL || xp->xp_arg[0] == '\0' || xp->xp_line == NULL) {
+  if (xp->xp_arg == NULL || xp->xp_arg[0] == NUL || xp->xp_line == NULL) {
     return NULL;
   }
 
@@ -3256,7 +3275,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
     copy_option_part(&path, buf, MAXPATHL, ",");
     if (strlen(buf) + strlen(file) + 2 < MAXPATHL) {
       add_pathsep(buf);
-      STRCAT(buf, file);
+      strcat(buf, file);
 
       char **p;
       int num_p = 0;
@@ -3593,9 +3612,18 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     set_context_in_runtime_cmd(&xpc, xpc.xp_pattern);
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
+  if (xpc.xp_context == EXPAND_SHELLCMDLINE) {
+    int context = EXPAND_SHELLCMDLINE;
+    set_context_for_wildcard_arg(NULL, xpc.xp_pattern, false, &xpc, &context);
+    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+  }
 
 theend:
-  ;
+  if (xpc.xp_context == EXPAND_LUA) {
+    xpc.xp_col = (int)strlen(xpc.xp_line);
+    nlua_expand_pat(&xpc);
+    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+  }
   char *pat;
   if (cmdline_fuzzy_completion_supported(&xpc)) {
     // when fuzzy matching, don't modify the search string

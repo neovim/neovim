@@ -6,7 +6,7 @@
       Name='PATH'
       Action='set'
       Permanent='no'
-      System='no'
+      System='yes'
       Part='last'
       Value='[INSTALL_ROOT]bin'
     />

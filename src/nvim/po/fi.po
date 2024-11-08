@@ -526,8 +526,8 @@ msgstr " Käyttäjän määrittelemä täydennys (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " Omnitäydennys (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Oikaisulukuehdotus (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Oikaisulukuehdotus (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Avainsanan paikallinen täydennys (^N^P)"
@@ -3660,8 +3660,8 @@ msgstr ""
 msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) Tiedostonmuokkausistunto on kaatunut.\n"
 
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Jos näin on, käytä komentoa :recover tai vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Jos näin on, käytä komentoa :recover tai nvim -r "
 
 msgid ""
 "\"\n"

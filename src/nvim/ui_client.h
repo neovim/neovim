@@ -14,7 +14,7 @@ EXTERN size_t grid_line_buf_size INIT( = 0);
 EXTERN schar_T *grid_line_buf_char INIT( = NULL);
 EXTERN sattr_T *grid_line_buf_attr INIT( = NULL);
 
-// ID of the ui client channel. If zero, the client is not running.
+// Client-side UI channel. Zero during early startup or if not a (--remote-ui) UI client.
 EXTERN uint64_t ui_client_channel_id INIT( = 0);
 
 // exit status from embedded nvim process

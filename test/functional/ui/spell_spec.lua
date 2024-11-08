@@ -377,4 +377,83 @@ describe("'spell'", function()
                                                  |
     ]])
   end)
+
+  it('overrides syntax when Visual selection is active', function()
+    screen:try_resize(43, 3)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { foreground = Screen.colors.Blue },
+      [2] = { foreground = Screen.colors.Red },
+      [3] = { foreground = Screen.colors.Blue, underline = true },
+      [4] = { foreground = Screen.colors.Red, underline = true },
+      [5] = { bold = true },
+    })
+    exec([[
+      hi! Comment guibg=NONE guifg=Blue gui=NONE guisp=NONE
+      hi! SpellBad guibg=NONE guifg=Red gui=NONE guisp=NONE
+      hi! Visual guibg=NONE guifg=NONE gui=underline guisp=NONE
+      syn match Comment "//.*"
+      call setline(1, '// Here is a misspeld word.')
+      set spell
+    ]])
+    screen:expect([[
+      {1:^// Here is a }{2:misspeld}{1: word.}                |
+      {0:~                                          }|
+                                                 |
+    ]])
+    feed('V')
+    screen:expect([[
+      {1:^/}{3:/ Here is a }{4:misspeld}{3: word.}                |
+      {0:~                                          }|
+      {5:-- VISUAL LINE --}                          |
+    ]])
+  end)
+
+  it("global value works properly for 'spelloptions'", function()
+    screen:try_resize(43, 3)
+    exec('set spell')
+    -- :setglobal applies to future buffers but not current buffer
+    exec('setglobal spelloptions=camel')
+    insert('Here is TheCamelWord being spellchecked')
+    screen:expect([[
+      Here is {1:TheCamelWord} being spellchecke^d    |
+      {0:~                                          }|
+                                                 |
+    ]])
+    exec('enew')
+    insert('There is TheCamelWord being spellchecked')
+    screen:expect([[
+      There is TheCamelWord being spellchecke^d   |
+      {0:~                                          }|
+                                                 |
+    ]])
+    -- :setlocal applies to current buffer but not future buffers
+    exec('setlocal spelloptions=')
+    screen:expect([[
+      There is {1:TheCamelWord} being spellchecke^d   |
+      {0:~                                          }|
+                                                 |
+    ]])
+    exec('enew')
+    insert('What is TheCamelWord being spellchecked')
+    screen:expect([[
+      What is TheCamelWord being spellchecke^d    |
+      {0:~                                          }|
+                                                 |
+    ]])
+    -- :set applies to both current buffer and future buffers
+    exec('set spelloptions=')
+    screen:expect([[
+      What is {1:TheCamelWord} being spellchecke^d    |
+      {0:~                                          }|
+                                                 |
+    ]])
+    exec('enew')
+    insert('Where is TheCamelWord being spellchecked')
+    screen:expect([[
+      Where is {1:TheCamelWord} being spellchecke^d   |
+      {0:~                                          }|
+                                                 |
+    ]])
+  end)
 end)

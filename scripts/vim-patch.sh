@@ -156,7 +156,7 @@ assign_commit_details() {
     local munge_commit_line=true
   else
     # Interpret parameter as commit hash.
-    vim_version="${1:0:12}"
+    vim_version="${1:0:7}"
     vim_tag=
     vim_commit_ref="$vim_version"
     local munge_commit_line=false
@@ -207,14 +207,14 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/\<\%('"${na_rt}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove unwanted Vim doc files.
-  local na_doc='channel\.txt\|if_cscop\.txt\|netbeans\.txt\|os_\w\+\.txt\|print\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|vim9\.txt\|sponsor\.txt\|intro\.txt\|tags'
+  local na_doc='channel\.txt\|if_cscop\.txt\|netbeans\.txt\|os_\w\+\.txt\|print\.txt\|term\.txt\|todo\.txt\|vim9\.txt\|tags'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('"${na_doc}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
-  # Remove gui, option, setup, screen dumps, testdir/Make_*.mak files
-  local na_src_testdir='gen_opt_test\.vim\|gui_.*\|Make_amiga\.mak\|Make_dos\.mak\|Make_ming\.mak\|Make_vms\.mms\|dumps/.*\.dump\|setup_gui\.vim'
+  # Remove gui, setup, screen dumps, testdir/Make_*.mak files
+  local na_src_testdir='gui_.*\|Make_amiga\.mak\|Make_dos\.mak\|Make_ming\.mak\|Make_vms\.mms\|dumps/.*\.dump\|setup_gui\.vim'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('"${na_src_testdir}"'\)\>@exe "norm! d/\\v(^diff)|%$\r"' +w +q "$file"
 
   # Remove testdir/test_*.vim files
@@ -293,8 +293,12 @@ preprocess_patch() {
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/option\.h/\1\/option_vars.h/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
-  # Rename terminal.txt to nvim_terminal_emulator.txt
-  LC_ALL=C sed -Ee 's/( [ab]\/runtime\/doc)\/terminal\.txt/\1\/nvim_terminal_emulator.txt/g' \
+  # Rename version*.txt to news.txt
+  LC_ALL=C sed -Ee 's/( [ab]\/runtime\/doc)\/version[0-9]+\.txt/\1\/news.txt/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename sponsor.txt to intro.txt
+  LC_ALL=C sed -Ee 's/( [ab]\/runtime\/doc)\/sponsor\.txt/\1\/intro.txt/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename test_urls.vim to check_urls.vim

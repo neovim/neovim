@@ -384,8 +384,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " omni-voltooiing (^O^N^P)"
 
 #: ../edit.c:96
-msgid " Spelling suggestion (s^N^P)"
-msgstr " spellingsuggestie (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " spellingsuggestie (^S^N^P)"
 
 #: ../edit.c:97
 msgid " Keyword Local completion (^N^P)"
@@ -3984,8 +3984,8 @@ msgstr ""
 "(2) Een sessie waarin dit bestand werd bewerkt is onverhoeds gestopt.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Als dit het geval is, gebruikt dan \":recover\" of \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Als dit het geval is, gebruikt dan \":recover\" of \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

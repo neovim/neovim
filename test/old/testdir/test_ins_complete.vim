@@ -884,6 +884,114 @@ func Test_complete_with_longest()
   bwipe!
 endfunc
 
+" Test for buffer-local value of 'completeopt'
+func Test_completeopt_buffer_local()
+  set completeopt=menu
+  new
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  call assert_equal('', &l:completeopt)
+  call assert_equal('menu', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+
+  setlocal bufhidden=hide
+  enew
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  call assert_equal('', &l:completeopt)
+  call assert_equal('menu', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+
+  setlocal completeopt+=fuzzy,noinsert
+  call assert_equal('menu,fuzzy,noinsert', &l:completeopt)
+  call assert_equal('menu,fuzzy,noinsert', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>bz\<C-Y>", 'tnix')
+  call assert_equal('foobaz', getline('.'))
+
+  setlocal completeopt=
+  call assert_equal('', &l:completeopt)
+  call assert_equal('menu', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-Y>", 'tnix')
+  call assert_equal('foofoo', getline('.'))
+
+  setlocal completeopt+=longest
+  call assert_equal('menu,longest', &l:completeopt)
+  call assert_equal('menu,longest', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-X>\<C-Z>", 'tnix')
+  call assert_equal('foo', getline('.'))
+
+  setlocal bufhidden=hide
+  buffer #
+  call assert_equal('', &l:completeopt)
+  call assert_equal('menu', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-Y>", 'tnix')
+  call assert_equal('foofoo', getline('.'))
+
+  setlocal completeopt+=fuzzy,noinsert
+  call assert_equal('menu,fuzzy,noinsert', &l:completeopt)
+  call assert_equal('menu,fuzzy,noinsert', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>bz\<C-Y>", 'tnix')
+  call assert_equal('foobaz', getline('.'))
+
+  buffer #
+  call assert_equal('menu,longest', &l:completeopt)
+  call assert_equal('menu,longest', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-X>\<C-Z>", 'tnix')
+  call assert_equal('foo', getline('.'))
+
+  setlocal bufhidden=wipe
+  buffer! #
+  bwipe!
+  call assert_equal('', &l:completeopt)
+  call assert_equal('menu', &completeopt)
+  call assert_equal('menu', &g:completeopt)
+
+  new | only
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  set completeopt&
+  setlocal completeopt=menu,fuzzy,noinsert
+  setglobal completeopt=menu,longest
+  call assert_equal('menu,fuzzy,noinsert', &completeopt)
+  call assert_equal('menu,fuzzy,noinsert', &l:completeopt)
+  call assert_equal('menu,longest', &g:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>bz\<C-Y>", 'tnix')
+  call assert_equal('foobaz', getline('.'))
+  setlocal bufhidden=wipe
+  new | only!
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  call assert_equal('menu,longest', &completeopt)
+  call assert_equal('menu,longest', &g:completeopt)
+  call assert_equal('', &l:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-X>\<C-Z>", 'tnix')
+  call assert_equal('foo', getline('.'))
+  bwipe!
+
+  new | only
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  set completeopt&
+  setlocal completeopt=menu,fuzzy,noinsert
+  set completeopt=menu,longest
+  call assert_equal('menu,longest', &completeopt)
+  call assert_equal('menu,longest', &g:completeopt)
+  call assert_equal('', &l:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-X>\<C-Z>", 'tnix')
+  call assert_equal('foo', getline('.'))
+  setlocal bufhidden=wipe
+  new | only!
+  call setline(1, ['foofoo', 'foobar', 'foobaz', ''])
+  call assert_equal('menu,longest', &completeopt)
+  call assert_equal('menu,longest', &g:completeopt)
+  call assert_equal('', &l:completeopt)
+  call feedkeys("Gccf\<C-X>\<C-N>\<C-X>\<C-Z>", 'tnix')
+  call assert_equal('foo', getline('.'))
+  bwipe!
+
+  set completeopt&
+endfunc
 
 " Test for completing words following a completed word in a line
 func Test_complete_wrapscan()
@@ -1623,15 +1731,32 @@ func Test_completefunc_callback()
   bw!
   delfunc s:CompleteFunc3
 
+  " In Vim9 script s: can be omitted
+  let lines =<< trim END
+      vim9script
+      var CompleteFunc4Args = []
+      def CompleteFunc4(findstart: bool, base: string): any
+        add(CompleteFunc4Args, [findstart, base])
+        return findstart ? 0 : []
+      enddef
+      set completefunc=CompleteFunc4
+      new
+      setline(1, 'script1')
+      feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
+      assert_equal([[1, ''], [0, 'script1']], CompleteFunc4Args)
+      bw!
+  END
+  call CheckScriptSuccess(lines)
+
   " invalid return value
   let &completefunc = {a -> 'abc'}
   call feedkeys("A\<C-X>\<C-U>\<Esc>", 'x')
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set completefunc=(a,\ b)\ =>\ CompleteFunc1(21,\ a,\ b)
+  set completefunc=(a,\ b)\ =>\ CompleteFunc1(21,\ a,\ b)
   new | only
   let g:CompleteFunc1Args = []
-  " call assert_fails('call feedkeys("A\<C-X>\<C-U>\<Esc>", "x")', 'E117:')
+  call assert_fails('call feedkeys("A\<C-X>\<C-U>\<Esc>", "x")', 'E117:')
   call assert_equal([], g:CompleteFunc1Args)
 
   " set 'completefunc' to a partial with dict. This used to cause a crash.
@@ -1885,10 +2010,10 @@ func Test_omnifunc_callback()
   call feedkeys("A\<C-X>\<C-O>\<Esc>", 'x')
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set omnifunc=(a,\ b)\ =>\ OmniFunc1(21,\ a,\ b)
+  set omnifunc=(a,\ b)\ =>\ OmniFunc1(21,\ a,\ b)
   new | only
   let g:OmniFunc1Args = []
-  " call assert_fails('call feedkeys("A\<C-X>\<C-O>\<Esc>", "x")', 'E117:')
+  call assert_fails('call feedkeys("A\<C-X>\<C-O>\<Esc>", "x")', 'E117:')
   call assert_equal([], g:OmniFunc1Args)
 
   " set 'omnifunc' to a partial with dict. This used to cause a crash.
@@ -2143,6 +2268,7 @@ func Test_thesaurusfunc_callback()
     call add(g:TsrFunc3Args, [a:findstart, a:base])
     return a:findstart ? 0 : []
   endfunc
+
   set tsrfu=s:TsrFunc3
   new
   call setline(1, 'script1')
@@ -2158,6 +2284,46 @@ func Test_thesaurusfunc_callback()
   call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
   call assert_equal([[1, ''], [0, 'script2']], g:TsrFunc3Args)
   bw!
+
+  new | only
+  set thesaurusfunc=
+  setlocal thesaurusfunc=NoSuchFunc
+  setglobal thesaurusfunc=s:TsrFunc3
+  call assert_equal('NoSuchFunc', &thesaurusfunc)
+  call assert_equal('NoSuchFunc', &l:thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  new | only
+  call assert_equal('s:TsrFunc3', &thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal('', &l:thesaurusfunc)
+  call setline(1, 'script1')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
+  bw!
+
+  new | only
+  set thesaurusfunc=
+  setlocal thesaurusfunc=NoSuchFunc
+  set thesaurusfunc=s:TsrFunc3
+  call assert_equal('s:TsrFunc3', &thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal('', &l:thesaurusfunc)
+  call setline(1, 'script1')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
+  setlocal bufhidden=wipe
+  new | only!
+  call assert_equal('s:TsrFunc3', &thesaurusfunc)
+  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal('', &l:thesaurusfunc)
+  call setline(1, 'script1')
+  let g:TsrFunc3Args = []
+  call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
+  call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
+  bw!
+
   delfunc s:TsrFunc3
 
   " invalid return value
@@ -2165,10 +2331,10 @@ func Test_thesaurusfunc_callback()
   call feedkeys("A\<C-X>\<C-T>\<Esc>", 'x')
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set thesaurusfunc=(a,\ b)\ =>\ TsrFunc1(21,\ a,\ b)
+  set thesaurusfunc=(a,\ b)\ =>\ TsrFunc1(21,\ a,\ b)
   new | only
   let g:TsrFunc1Args = []
-  " call assert_fails('call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")', 'E117:')
+  call assert_fails('call feedkeys("A\<C-X>\<C-T>\<Esc>", "x")', 'E117:')
   call assert_equal([], g:TsrFunc1Args)
   bw!
 
@@ -2314,7 +2480,7 @@ endfunc
 
 func Test_ins_complete_end_of_line()
   " this was reading past the end of the line
-  new  
+  new
   norm 8oý 
   sil! norm o
 
@@ -2510,6 +2676,113 @@ func Test_completefunc_first_call_complete_add()
   delfunc Complete
   set completeopt& completefunc&
   bwipe!
+endfunc
+
+func Test_complete_fuzzy_match()
+  func OnPumChange()
+    let g:item = get(v:event, 'completed_item', {})
+    let g:word = get(g:item, 'word', v:null)
+  endfunction
+
+  augroup AAAAA_Group
+    au!
+    autocmd CompleteChanged * :call OnPumChange()
+  augroup END
+
+  func Omni_test(findstart, base)
+    if a:findstart
+      return col(".")
+    endif
+    return [#{word: "foo"}, #{word: "foobar"}, #{word: "fooBaz"}, #{word: "foobala"}]
+  endfunc
+
+  new
+  set omnifunc=Omni_test
+  set completeopt+=noinsert,fuzzy
+  call feedkeys("Gi\<C-x>\<C-o>", 'tx')
+  call assert_equal('foo', g:word)
+  call feedkeys("S\<C-x>\<C-o>fb", 'tx')
+  call assert_equal('fooBaz', g:word)
+  call feedkeys("S\<C-x>\<C-o>fa", 'tx')
+  call assert_equal('foobar', g:word)
+  " select next
+  call feedkeys("S\<C-x>\<C-o>fb\<C-n>", 'tx')
+  call assert_equal('foobar', g:word)
+  " can cyclically select next
+  call feedkeys("S\<C-x>\<C-o>fb\<C-n>\<C-n>\<C-n>", 'tx')
+  call assert_equal(v:null, g:word)
+  " select prev
+  call feedkeys("S\<C-x>\<C-o>fb\<C-p>", 'tx')
+  call assert_equal(v:null, g:word)
+  " can cyclically select prev
+  call feedkeys("S\<C-x>\<C-o>fb\<C-p>\<C-p>\<C-p>\<C-p>", 'tx')
+  call assert_equal('fooBaz', g:word)
+
+  func Comp()
+    call complete(col('.'), ["fooBaz", "foobar", "foobala"])
+    return ''
+  endfunc
+  call feedkeys("i\<C-R>=Comp()\<CR>", 'tx')
+  call assert_equal('fooBaz', g:word)
+
+  " respect noselect
+  set completeopt+=noselect
+  call feedkeys("S\<C-x>\<C-o>fb", 'tx')
+  call assert_equal(v:null, g:word)
+  call feedkeys("S\<C-x>\<C-o>fb\<C-n>", 'tx')
+  call assert_equal('fooBaz', g:word)
+
+  " avoid breaking default completion behavior
+  set completeopt=fuzzy,menu
+  call setline(1, ['hello help hero h'])
+  " Use "!" flag of feedkeys() so that ex_normal_busy is not set and
+  " ins_compl_check_keys() is not skipped.
+  " Add a "0" after the <Esc> to avoid waiting for an escape sequence.
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('hello help hero hello', getline('.'))
+  set completeopt+=noinsert
+  call setline(1, ['hello help hero h'])
+  call feedkeys("A\<C-X>\<C-N>\<Esc>0", 'tx!')
+  call assert_equal('hello help hero h', getline('.'))
+
+  " issue #15526
+  set completeopt=fuzzy,menuone,menu,noselect
+  call setline(1, ['Text', 'ToText', ''])
+  call cursor(2, 1)
+  call feedkeys("STe\<C-X>\<C-N>x\<CR>\<Esc>0", 'tx!')
+  call assert_equal('Tex', getline('.'))
+
+  " clean up
+  set omnifunc=
+  bw!
+  set complete& completeopt&
+  autocmd! AAAAA_Group
+  augroup! AAAAA_Group
+  delfunc OnPumChange
+  delfunc Omni_test
+  delfunc Comp
+  unlet g:item
+  unlet g:word
+endfunc
+
+" Check that tie breaking is stable for completeopt+=fuzzy (which should
+" behave the same on different platforms).
+func Test_complete_fuzzy_match_tie()
+  new
+  set completeopt+=fuzzy,noselect
+  call setline(1, ['aaabbccc', 'aaabbCCC', 'aaabbcccc', 'aaabbCCCC', ''])
+
+  call feedkeys("Gcc\<C-X>\<C-N>ab\<C-N>\<C-Y>", 'tx')
+  call assert_equal('aaabbccc', getline('.'))
+  call feedkeys("Gcc\<C-X>\<C-N>ab\<C-N>\<C-N>\<C-Y>", 'tx')
+  call assert_equal('aaabbCCC', getline('.'))
+  call feedkeys("Gcc\<C-X>\<C-N>ab\<C-N>\<C-N>\<C-N>\<C-Y>", 'tx')
+  call assert_equal('aaabbcccc', getline('.'))
+  call feedkeys("Gcc\<C-X>\<C-N>ab\<C-N>\<C-N>\<C-N>\<C-N>\<C-Y>", 'tx')
+  call assert_equal('aaabbCCCC', getline('.'))
+
+  bwipe!
+  set completeopt&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

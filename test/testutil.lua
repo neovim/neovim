@@ -16,7 +16,7 @@ local function shell_quote(str)
   return str
 end
 
---- This module uses functions from the context of the test runner.
+--- Functions executing in the context of the test runner (not the current nvim test session).
 --- @class test.testutil
 local M = {
   paths = Paths,
@@ -40,6 +40,29 @@ function M.isdir(path)
     return false
   end
   return stat.type == 'directory'
+end
+
+--- (Only on Windows) Replaces yucky "\\" slashes with delicious "/" slashes in a string, or all
+--- string values in a table (recursively).
+---
+--- @param obj string|table
+--- @return any
+function M.fix_slashes(obj)
+  if not M.is_os('win') then
+    return obj
+  end
+  if type(obj) == 'string' then
+    local ret = obj:gsub('\\', '/')
+    return ret
+  elseif type(obj) == 'table' then
+    --- @cast obj table<any,any>
+    local ret = {} --- @type table<any,any>
+    for k, v in pairs(obj) do
+      ret[k] = M.fix_slashes(v)
+    end
+    return ret
+  end
+  assert(false, 'expected string or table of strings, got ' .. type(obj))
 end
 
 --- @param ... string|string[]
@@ -143,7 +166,7 @@ end
 ---
 ---@param pat (string) Lua pattern to match lines in the log file
 ---@param logfile? (string) Full path to log file (default=$NVIM_LOG_FILE)
----@param nrlines? (number) Search up to this many log lines
+---@param nrlines? (number) Search up to this many log lines (default 10)
 ---@param inverse? (boolean) Assert that the pattern does NOT match.
 function M.assert_log(pat, logfile, nrlines, inverse)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
@@ -369,9 +392,7 @@ function M.check_logs()
   )
 end
 
-function M.sysname()
-  return uv.os_uname().sysname:lower()
-end
+local sysname = uv.os_uname().sysname:lower()
 
 --- @param s 'win'|'mac'|'freebsd'|'openbsd'|'bsd'
 --- @return boolean
@@ -380,40 +401,28 @@ function M.is_os(s)
     error('unknown platform: ' .. tostring(s))
   end
   return not not (
-    (s == 'win' and (M.sysname():find('windows') or M.sysname():find('mingw')))
-    or (s == 'mac' and M.sysname() == 'darwin')
-    or (s == 'freebsd' and M.sysname() == 'freebsd')
-    or (s == 'openbsd' and M.sysname() == 'openbsd')
-    or (s == 'bsd' and M.sysname():find('bsd'))
+    (s == 'win' and (sysname:find('windows') or sysname:find('mingw')))
+    or (s == 'mac' and sysname == 'darwin')
+    or (s == 'freebsd' and sysname == 'freebsd')
+    or (s == 'openbsd' and sysname == 'openbsd')
+    or (s == 'bsd' and sysname:find('bsd'))
   )
 end
 
-local function tmpdir_get()
-  return os.getenv('TMPDIR') and os.getenv('TMPDIR') or os.getenv('TEMP')
-end
-
---- Is temp directory `dir` defined local to the project workspace?
---- @param dir string?
---- @return boolean
-local function tmpdir_is_local(dir)
-  return not not (dir and dir:find('Xtest'))
-end
-
 local tmpname_id = 0
-local tmpdir = tmpdir_get()
+local tmpdir = os.getenv('TMPDIR') or os.getenv('TEMP')
+local tmpdir_is_local = not not (tmpdir and tmpdir:find('Xtest'))
 
---- Creates a new temporary file for use by tests.
-function M.tmpname()
-  if tmpdir_is_local(tmpdir) then
+local function get_tmpname()
+  if tmpdir_is_local then
     -- Cannot control os.tmpname() dir, so hack our own tmpname() impl.
     tmpname_id = tmpname_id + 1
     -- "…/Xtest_tmpdir/T42.7"
-    local fname = ('%s/%s.%d'):format(tmpdir, (_G._nvim_test_id or 'nvim-test'), tmpname_id)
-    io.open(fname, 'w'):close()
-    return fname
+    return ('%s/%s.%d'):format(tmpdir, (_G._nvim_test_id or 'nvim-test'), tmpname_id)
   end
 
   local fname = os.tmpname()
+
   if M.is_os('win') and fname:sub(1, 2) == '\\s' then
     -- In Windows tmpname() returns a filename starting with
     -- special sequence \s, prepend $TEMP path
@@ -422,7 +431,20 @@ function M.tmpname()
     -- In OS X /tmp links to /private/tmp
     return '/private' .. fname
   end
+  return fname
+end
 
+--- Generates a unique filepath for use by tests, in a test-specific "…/Xtest_tmpdir/T42.7"
+--- directory (which is cleaned up by the test runner).
+---
+--- @param create? boolean (default true) Create the file.
+--- @return string
+function M.tmpname(create)
+  local fname = get_tmpname()
+  os.remove(fname)
+  if create ~= false then
+    assert(io.open(fname, 'w')):close()
+  end
   return fname
 end
 
@@ -447,11 +469,11 @@ function M.check_cores(app, force) -- luacheck: ignore
   local random_skip = false
   -- Workspace-local $TMPDIR, scrubbed and pattern-escaped.
   -- "./Xtest-tmpdir/" => "Xtest%-tmpdir"
-  local local_tmpdir = (
-    tmpdir_is_local(tmpdir_get())
-      and relpath(tmpdir_get()):gsub('^[ ./]+', ''):gsub('%/+$', ''):gsub('([^%w])', '%%%1')
-    or nil
-  )
+  local local_tmpdir = nil
+  if tmpdir_is_local and tmpdir then
+    local_tmpdir = vim.pesc(relpath(tmpdir):gsub('^[ ./]+', ''):gsub('%/+$', ''))
+  end
+
   local db_cmd --- @type string
   local test_glob_dir = os.getenv('NVIM_TEST_CORE_GLOB_DIRECTORY')
   if test_glob_dir and test_glob_dir ~= '' then

@@ -19,9 +19,10 @@
 
 /// Used for the first argument of do_map()
 enum {
-  MAPTYPE_MAP     = 0,
-  MAPTYPE_UNMAP   = 1,
-  MAPTYPE_NOREMAP = 2,
+  MAPTYPE_MAP       = 0,
+  MAPTYPE_UNMAP     = 1,
+  MAPTYPE_NOREMAP   = 2,
+  MAPTYPE_UNMAP_LHS = 3,
 };
 
 /// Adjust chars in a language according to 'langmap' option.

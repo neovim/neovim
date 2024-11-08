@@ -197,6 +197,9 @@ error('Cannot require a meta file')
 --- @field desc? string
 --- @field replace_keycodes? boolean
 
+--- @class vim.api.keyset.ns_opts
+--- @field wins? any[]
+
 --- @class vim.api.keyset.open_term
 --- @field on_input? function
 --- @field force_crlf? boolean
@@ -292,6 +295,7 @@ error('Cannot require a meta file')
 --- @field bufpos? any[]
 --- @field external? boolean
 --- @field focusable? boolean
+--- @field mouse? boolean
 --- @field vertical? boolean
 --- @field zindex? integer
 --- @field border? any

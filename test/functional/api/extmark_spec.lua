@@ -1758,13 +1758,13 @@ describe('API/extmarks', function()
     command('1d 2')
     eq(0, #get_extmarks(-1, 0, -1, {}))
     -- mark is not removed when deleting bytes before the range
-    set_extmark(
-      ns,
-      3,
-      0,
-      4,
-      { invalidate = true, undo_restore = false, hl_group = 'Error', end_col = 7 }
-    )
+    set_extmark(ns, 3, 0, 4, {
+      invalidate = true,
+      undo_restore = true,
+      hl_group = 'Error',
+      end_col = 7,
+      right_gravity = false,
+    })
     feed('dw')
     eq(3, get_extmark_by_id(ns, 3, { details = true })[3].end_col)
     -- mark is not removed when deleting bytes at the start of the range
@@ -1778,15 +1778,18 @@ describe('API/extmarks', function()
     eq(1, get_extmark_by_id(ns, 3, { details = true })[3].end_col)
     -- mark is removed when all bytes in the range are deleted
     feed('hx')
-    eq({}, get_extmark_by_id(ns, 3, {}))
+    eq(true, get_extmark_by_id(ns, 3, { details = true })[3].invalid)
+    -- mark is restored with undo_restore == true if pos did not change
+    command('undo')
+    eq(nil, get_extmark_by_id(ns, 3, { details = true })[3].invalid)
     -- multiline mark is not removed when start of its range is deleted
-    set_extmark(
-      ns,
-      4,
-      1,
-      4,
-      { undo_restore = false, invalidate = true, hl_group = 'Error', end_col = 7, end_row = 3 }
-    )
+    set_extmark(ns, 4, 1, 4, {
+      undo_restore = false,
+      invalidate = true,
+      hl_group = 'Error',
+      end_col = 7,
+      end_row = 3,
+    })
     feed('ddDdd')
     eq({ 0, 0 }, get_extmark_by_id(ns, 4, {}))
     -- multiline mark is removed when entirety of its range is deleted
@@ -1795,10 +1798,15 @@ describe('API/extmarks', function()
   end)
 
   it('can set a URL', function()
-    set_extmark(ns, 1, 0, 0, { url = 'https://example.com', end_col = 3 })
+    local url1 = 'https://example.com'
+    local url2 = 'http://127.0.0.1'
+    set_extmark(ns, 1, 0, 0, { url = url1, end_col = 3 })
+    set_extmark(ns, 2, 0, 3, { url = url2, hl_group = 'Search', end_col = 5 })
     local extmarks = get_extmarks(ns, 0, -1, { details = true })
-    eq(1, #extmarks)
-    eq('https://example.com', extmarks[1][4].url)
+    eq(2, #extmarks)
+    eq(url1, extmarks[1][4].url)
+    eq(url2, extmarks[2][4].url)
+    eq('Search', extmarks[2][4].hl_group)
   end)
 
   it('respects priority', function()

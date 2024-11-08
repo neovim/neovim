@@ -120,7 +120,7 @@ This switches on three very clever mechanisms:
 				*restore-cursor* *last-position-jump*  >
     augroup RestoreCursor
       autocmd!
-      autocmd BufRead * autocmd FileType <buffer> ++once
+      autocmd BufReadPre * autocmd FileType <buffer> ++once
         \ let s:line = line("'\"")
         \ | if s:line >= 1 && s:line <= line("$") && &filetype !~# 'commit'
         \      && index(['xxd', 'gitrebase'], &filetype) == -1
@@ -233,6 +233,22 @@ an archive or as a repository.  For an archive you can follow these steps:
 		~/.local/share/nvim/site/pack/fancy/start/fancytext/plugin/fancy.vim ~
 	   Here "fancytext" is the name of the package, it can be anything
 	   else.
+
+
+Adding nohlsearch package				*nohlsearch-install*
+
+Load the plugin with this command: >
+	packadd nohlsearch
+<
+Automatically execute |:nohlsearch| after 'updatetime' or getting into
+|Insert| mode.
+Thus assuming default updatetime, hlsearch would be suspended/turned off after
+4 seconds of idle time.
+
+To disable the effect of the plugin after it has been loaded: >
+	au! nohlsearch
+<
+
 
 More information about packages can be found here: |packages|.
 

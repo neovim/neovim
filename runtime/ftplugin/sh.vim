@@ -4,7 +4,7 @@
 " Previous Maintainer:	Dan Sharp
 " Contributor:		Enno Nagel <ennonagel+vim@gmail.com>
 "			Eisuke Kawashima
-" Last Change:		2024 May 06 by Vim Project (MANPAGER=)
+" Last Change:		2024 Sep 19 by Vim Project (compiler shellcheck)
 
 if exists("b:did_ftplugin")
   finish
@@ -45,15 +45,18 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
 endif
 
 if get(b:, "is_bash", 0)
-  if !has("gui_running") && executable("less")
-    command! -buffer -nargs=1 ShKeywordPrg silent exe '!bash -c "{ help "<args>" 2>/dev/null || MANPAGER= man "<args>"; } | LESS= less"' | redraw!
-  elseif has("terminal")
+  if exists(':terminal') == 2
     command! -buffer -nargs=1 ShKeywordPrg silent exe ':term bash -c "help "<args>" 2>/dev/null || man "<args>""'
   else
     command! -buffer -nargs=1 ShKeywordPrg echo system('bash -c "help <args>" 2>/dev/null || MANPAGER= man "<args>"')
   endif
   setlocal keywordprg=:ShKeywordPrg
   let b:undo_ftplugin ..= " | setl kp< | sil! delc -buffer ShKeywordPrg"
+
+  if !exists('current_compiler')
+    compiler shellcheck
+  endif
+  let b:undo_ftplugin .= ' | compiler make'
 endif
 
 let &cpo = s:save_cpo

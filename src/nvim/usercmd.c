@@ -91,6 +91,7 @@ static const char *command_complete[] = {
   [EXPAND_PACKADD] = "packadd",
   [EXPAND_RUNTIME] = "runtime",
   [EXPAND_SHELLCMD] = "shellcmd",
+  [EXPAND_SHELLCMDLINE] = "shellcmdline",
   [EXPAND_SIGN] = "sign",
   [EXPAND_TAGS] = "tag",
   [EXPAND_TAGS_LISTFILES] = "tag_listfiles",
@@ -98,6 +99,7 @@ static const char *command_complete[] = {
   [EXPAND_USER_VARS] = "var",
   [EXPAND_BREAKPOINT] = "breakpoint",
   [EXPAND_SCRIPTNAMES] = "scriptnames",
+  [EXPAND_DIRS_IN_CDPATH] = "dir_in_path",
 };
 
 /// List of names of address types.  Must be alphabetical for completion.
@@ -284,8 +286,7 @@ const char *set_context_in_user_cmdarg(const char *cmd FUNC_ATTR_UNUSED, const c
   }
 
   if (argt & EX_XFILE) {
-    // EX_XFILE: file names are handled above.
-    xp->xp_context = context;
+    // EX_XFILE: file names are handled before this call.
     return NULL;
   }
 
@@ -414,7 +415,7 @@ char *get_user_cmd_complete(expand_T *xp, int idx)
     return NULL;
   }
   char *cmd_compl = get_command_complete(idx);
-  if (cmd_compl == NULL) {
+  if (cmd_compl == NULL || idx == EXPAND_USER_LUA) {
     return "";
   }
   return cmd_compl;
@@ -580,7 +581,7 @@ static void uc_list(char *name, size_t name_len)
         IObuff[len++] = ' ';
       } while ((int64_t)len < 25 - over);
 
-      IObuff[len] = '\0';
+      IObuff[len] = NUL;
       msg_outtrans(IObuff, 0);
 
       if (cmd->uc_luaref != LUA_NOREF) {
@@ -674,7 +675,8 @@ int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, 
       *complp = i;
       if (i == EXPAND_BUFFERS) {
         *argt |= EX_BUFNAME;
-      } else if (i == EXPAND_DIRECTORIES || i == EXPAND_FILES) {
+      } else if (i == EXPAND_DIRECTORIES || i == EXPAND_FILES
+                 || i == EXPAND_SHELLCMDLINE) {
         *argt |= EX_XFILE;
       }
       break;
@@ -804,9 +806,7 @@ invalid_count:
         }
       }
 
-      if (*def < 0) {
-        *def = 0;
-      }
+      *def = MAX(*def, 0);
     } else if (STRNICMP(attr, "complete", attrlen) == 0) {
       if (val == NULL) {
         semsg(_(e_argument_required_for_str), "-complete");
@@ -831,7 +831,7 @@ invalid_count:
       }
     } else {
       char ch = attr[len];
-      attr[len] = '\0';
+      attr[len] = NUL;
       semsg(_("E181: Invalid attribute: %s"), attr);
       attr[len] = ch;
       return FAIL;
@@ -1365,7 +1365,7 @@ size_t uc_mods(char *buf, const cmdmod_T *cmod, bool quote)
     if (quote) {
       *buf++ = '"';
     }
-    *buf = '\0';
+    *buf = NUL;
   }
 
   // the modifiers that are simple flags
@@ -1745,14 +1745,14 @@ int do_ucmd(exarg_T *eap, bool preview)
 /// @param buf  Buffer to inspect, or NULL to get global commands.
 ///
 /// @return Map of maps describing commands
-Dictionary commands_array(buf_T *buf, Arena *arena)
+Dict commands_array(buf_T *buf, Arena *arena)
 {
   garray_T *gap = (buf == NULL) ? &ucmds : &buf->b_ucmds;
 
-  Dictionary rv = arena_dict(arena, (size_t)gap->ga_len);
+  Dict rv = arena_dict(arena, (size_t)gap->ga_len);
   for (int i = 0; i < gap->ga_len; i++) {
     char arg[2] = { 0, 0 };
-    Dictionary d = arena_dict(arena, 14);
+    Dict d = arena_dict(arena, 14);
     ucmd_T *cmd = USER_CMD_GA(gap, i);
 
     PUT_C(d, "name", CSTR_AS_OBJ(cmd->uc_name));
@@ -1816,7 +1816,7 @@ Dictionary commands_array(buf_T *buf, Arena *arena)
     }
     PUT_C(d, "addr", obj);
 
-    PUT_C(rv, cmd->uc_name, DICTIONARY_OBJ(d));
+    PUT_C(rv, cmd->uc_name, DICT_OBJ(d));
   }
   return rv;
 }

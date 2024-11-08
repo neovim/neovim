@@ -102,7 +102,7 @@ void win_pos(Integer grid, Window win, Integer startrow, Integer startcol, Integ
              Integer height)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_float_pos(Integer grid, Window win, String anchor, Integer anchor_grid, Float anchor_row,
-                   Float anchor_col, Boolean focusable, Integer zindex)
+                   Float anchor_col, Boolean mouse_enabled, Integer zindex)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_external_pos(Integer grid, Window win)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;

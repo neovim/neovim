@@ -27,6 +27,7 @@ local defaults = {
 ---
 ---Can also be pretty-printed with `:Inspect!`. [:Inspect!]()
 ---
+---@since 11
 ---@param bufnr? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
 ---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor
@@ -84,7 +85,7 @@ function vim.inspect_pos(bufnr, row, col, filter)
 
   -- syntax
   if filter.syntax and vim.api.nvim_buf_is_valid(bufnr) then
-    vim.api.nvim_buf_call(bufnr, function()
+    vim._with({ buf = bufnr }, function()
       for _, i1 in ipairs(vim.fn.synstack(row + 1, col + 1)) do
         results.syntax[#results.syntax + 1] =
           resolve_hl({ hl_group = vim.fn.synIDattr(i1, 'name') })
@@ -145,6 +146,7 @@ end
 ---
 ---Can also be shown with `:Inspect`. [:Inspect]()
 ---
+---@since 11
 ---@param bufnr? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
 ---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor

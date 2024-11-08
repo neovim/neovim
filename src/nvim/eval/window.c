@@ -10,6 +10,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
+#include "nvim/errors.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -271,7 +272,7 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
         // if count is not specified, default to 1
         count = 1;
       }
-      if (endp != NULL && *endp != '\0') {
+      if (endp != NULL && *endp != NUL) {
         if (strequal(endp, "j")) {
           twin = win_vert_neighbor(tp, twin, false, count);
         } else if (strequal(endp, "k")) {

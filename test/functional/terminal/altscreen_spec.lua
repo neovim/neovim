@@ -1,7 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local tt = require('test.functional.terminal.testutil')
+local tt = require('test.functional.testterm')
 local clear, eq, api = n.clear, t.eq, n.api
 local feed = n.feed
 local feed_data = tt.feed_data
@@ -17,7 +17,7 @@ describe(':terminal altscreen', function()
 
   before_each(function()
     clear()
-    screen = tt.screen_setup()
+    screen = tt.setup_screen()
     feed_data({
       'line1',
       'line2',

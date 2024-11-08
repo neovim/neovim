@@ -61,12 +61,6 @@ describe('cmdline autocommands', function()
     clear()
     local screen = Screen.new(72, 8)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-      [4] = { bold = true, reverse = true },
-    })
     command("autocmd CmdlineEnter * echoerr 'FAIL'")
     command("autocmd CmdlineLeave * echoerr 'very error'")
 
@@ -74,22 +68,22 @@ describe('cmdline autocommands', function()
     screen:expect([[
                                                                               |
       {1:~                                                                       }|*3
-      {4:                                                                        }|
+      {3:                                                                        }|
       :                                                                       |
-      {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
+      {9:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
       :^                                                                       |
     ]])
 
     feed("put ='lorem ipsum'<cr>")
     screen:expect([[
                                                                               |
-      {4:                                                                        }|
+      {3:                                                                        }|
       :                                                                       |
-      {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
+      {9:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
       :put ='lorem ipsum'                                                     |
-      {2:CmdlineLeave Autocommands for "*": Vim(echoerr):very error}              |
+      {9:CmdlineLeave Autocommands for "*": Vim(echoerr):very error}              |
                                                                               |
-      {3:Press ENTER or type command to continue}^                                 |
+      {6:Press ENTER or type command to continue}^                                 |
     ]])
 
     -- cmdline was still executed
@@ -108,11 +102,11 @@ describe('cmdline autocommands', function()
     screen:expect([[
                                                                               |
       lorem ipsum                                                             |
-      {4:                                                                        }|
+      {3:                                                                        }|
       :                                                                       |
-      {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
+      {9:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
       :put ='lorem ipsum'                                                     |
-      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
+      {9:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum'^                                                     |
     ]])
 
@@ -120,37 +114,37 @@ describe('cmdline autocommands', function()
     screen:expect([[
                                                                               |
       lorem ipsum                                                             |
-      {4:                                                                        }|
+      {3:                                                                        }|
       :                                                                       |
-      {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
+      {9:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
       :put ='lorem ipsum'                                                     |
-      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
+      {9:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum^'                                                     |
     ]])
 
     -- edit still works
     feed('.')
     screen:expect([[
-      {4:                                                                        }|
+      {3:                                                                        }|
       :                                                                       |
-      {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
+      {9:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
       :put ='lorem ipsum'                                                     |
-      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
+      {9:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum.'                                                    |
-      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
+      {9:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum.^'                                                    |
     ]])
 
     feed('<cr>')
     screen:expect([[
       :put ='lorem ipsum'                                                     |
-      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
+      {9:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum.'                                                    |
-      {2:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
+      {9:CmdlineChanged Autocommands for "*": Vim(echoerr):change erreor}         |
       :put ='lorem ipsum.'                                                    |
-      {2:CmdlineLeave Autocommands for "*": Vim(echoerr):very error}              |
+      {9:CmdlineLeave Autocommands for "*": Vim(echoerr):very error}              |
                                                                               |
-      {3:Press ENTER or type command to continue}^                                 |
+      {6:Press ENTER or type command to continue}^                                 |
     ]])
 
     -- cmdline was still executed

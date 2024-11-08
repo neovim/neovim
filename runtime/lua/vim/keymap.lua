@@ -15,41 +15,37 @@ local keymap = {}
 --- (Default: `false`)
 --- @field remap? boolean
 
---- Adds a new |mapping|.
+--- Defines a |mapping| of |keycodes| to a function or keycodes.
+---
 --- Examples:
 ---
 --- ```lua
---- -- Map to a Lua function:
---- vim.keymap.set('n', 'lhs', function() print("real lua function") end)
---- -- Map to multiple modes:
---- vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer = true })
---- -- Buffer-local mapping:
---- vim.keymap.set('n', '<leader>w', "<cmd>w<cr>", { silent = true, buffer = 5 })
---- -- Expr mapping:
+--- -- Map "x" to a Lua function:
+--- vim.keymap.set('n', 'x', function() print("real lua function") end)
+--- -- Map "<leader>x" to multiple modes for the current buffer:
+--- vim.keymap.set({'n', 'v'}, '<leader>x', vim.lsp.buf.references, { buffer = true })
+--- -- Map <Tab> to an expression (|:map-<expr>|):
 --- vim.keymap.set('i', '<Tab>', function()
 ---   return vim.fn.pumvisible() == 1 and "<C-n>" or "<Tab>"
 --- end, { expr = true })
---- -- <Plug> mapping:
+--- -- Map "[%%" to a <Plug> mapping:
 --- vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
 --- ```
 ---
----@param mode string|string[] Mode short-name, see |nvim_set_keymap()|.
----                            Can also be list of modes to create mapping on multiple modes.
+---@param mode string|string[] Mode "short-name" (see |nvim_set_keymap()|), or a list thereof.
 ---@param lhs string           Left-hand side |{lhs}| of the mapping.
 ---@param rhs string|function  Right-hand side |{rhs}| of the mapping, can be a Lua function.
----
 ---@param opts? vim.keymap.set.Opts
+---
 ---@see |nvim_set_keymap()|
 ---@see |maparg()|
 ---@see |mapcheck()|
 ---@see |mapset()|
 function keymap.set(mode, lhs, rhs, opts)
-  vim.validate({
-    mode = { mode, { 's', 't' } },
-    lhs = { lhs, 's' },
-    rhs = { rhs, { 's', 'f' } },
-    opts = { opts, 't', true },
-  })
+  vim.validate('mode', mode, { 'string', 'table' })
+  vim.validate('lhs', lhs, 'string')
+  vim.validate('rhs', rhs, { 'string', 'function' })
+  vim.validate('opts', opts, 'table', true)
 
   opts = vim.deepcopy(opts or {}, true)
 
@@ -109,11 +105,9 @@ end
 ---@param opts? vim.keymap.del.Opts
 ---@see |vim.keymap.set()|
 function keymap.del(modes, lhs, opts)
-  vim.validate({
-    mode = { modes, { 's', 't' } },
-    lhs = { lhs, 's' },
-    opts = { opts, 't', true },
-  })
+  vim.validate('mode', modes, { 'string', 'table' })
+  vim.validate('lhs', lhs, 'string')
+  vim.validate('opts', opts, 'table', true)
 
   opts = opts or {}
   modes = type(modes) == 'string' and { modes } or modes

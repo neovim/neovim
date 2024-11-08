@@ -240,6 +240,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
@@ -2221,7 +2222,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
           p = getroom(spin, (size_t)l, false);
           char *p_e = p;
           if (compflags != NULL) {
-            p_e = xstpcpy(p_e, compflags);
+            p_e = xstpcpy(p, compflags);
             p_e = xstpcpy(p_e, "/");
           }
           p_e = xstpcpy(p_e, items[1]);
@@ -3388,7 +3389,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
                   MB_PTR_ADV(p);
                 }
               }
-              STRCAT(newword, p);
+              strcat(newword, p);
             } else {
               // suffix: chop/add at the end of the word
               xstrlcpy(newword, word, MAXWLEN);
@@ -3402,7 +3403,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
                 *p = NUL;
               }
               if (ae->ae_add != NULL) {
-                STRCAT(newword, ae->ae_add);
+                strcat(newword, ae->ae_add);
               }
             }
 
@@ -4107,8 +4108,8 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root, const char *n
       perc = (tot - n) * 100 / tot;
     }
     vim_snprintf(IObuff, IOSIZE,
-                 _("Compressed %s of %d nodes; %d (%ld%%) remaining"),
-                 name, tot, tot - n, perc);
+                 _("Compressed %s: %d of %d nodes; %d (%ld%%) remaining"),
+                 name, n, tot, tot - n, perc);
     spell_message(spin, IObuff);
   }
 #ifdef SPELL_PRINTTREE

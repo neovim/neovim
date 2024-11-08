@@ -36,6 +36,7 @@ return {
     'CursorHold', -- cursor in same position for a while
     'CursorHoldI', -- idem, in Insert mode
     'CursorMoved', -- cursor was moved
+    'CursorMovedC', -- cursor was moved in Cmdline mode
     'CursorMovedI', -- cursor was moved in Insert mode
     'DiagnosticChanged', -- diagnostics in a buffer were modified
     'DiffUpdated', -- diffs have been updated
@@ -72,10 +73,10 @@ return {
     'InsertLeavePre', -- just before leaving Insert mode
     'LspAttach', -- after an LSP client attaches to a buffer
     'LspDetach', -- after an LSP client detaches from a buffer
-    'LspRequest', -- after an LSP request is started, canceled, or completed
     'LspNotify', -- after an LSP notice has been sent to the server
-    'LspTokenUpdate', -- after a visible LSP token is updated
     'LspProgress', -- after a LSP progress update
+    'LspRequest', -- after an LSP request is started, canceled, or completed
+    'LspTokenUpdate', -- after a visible LSP token is updated
     'MenuPopup', -- just before popup menu is displayed
     'ModeChanged', -- after changing the mode
     'OptionSet', -- after setting any option
@@ -159,8 +160,8 @@ return {
     LspAttach = true,
     LspDetach = true,
     LspNotify = true,
-    LspRequest = true,
     LspProgress = true,
+    LspRequest = true,
     LspTokenUpdate = true,
     RecordingEnter = true,
     RecordingLeave = true,

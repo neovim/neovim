@@ -66,6 +66,8 @@ modes.
 			where the map command applies.  Disallow mapping of
 			{rhs}, to avoid nested and recursive mappings.  Often
 			used to redefine a command.
+			Note: Keys in {rhs} also won't trigger abbreviation,
+			with the exception of |i_CTRL-]| and |c_CTRL-]|.
 			Note: When <Plug> appears in the {rhs} this part is
 			always applied even if remapping is disallowed.
 
@@ -354,7 +356,8 @@ Note:
 
 							*E1255* *E1136*
 <Cmd> commands must terminate, that is, they must be followed by <CR> in the
-{rhs} of the mapping definition.  |Command-line| mode is never entered.
+{rhs} of the mapping definition.  |Command-line| mode is never entered.  To use
+a literal <CR> in the {rhs}, use |<lt>|.
 
 
 1.3 MAPPING AND MODES					*:map-modes*
@@ -1380,12 +1383,14 @@ completion can be enabled:
 
 	-complete=arglist	file names in argument list
 	-complete=augroup	autocmd groups
+	-complete=breakpoint	|:breakadd| suboptions
 	-complete=buffer	buffer names
-	-complete=behave	:behave suboptions
 	-complete=color		color schemes
 	-complete=command	Ex command (and arguments)
 	-complete=compiler	compilers
+	-complete=diff_buffer	diff buffer names
 	-complete=dir		directory names
+	-complete=dir_in_path	directory names in |'cdpath'|
 	-complete=environment	environment variable names
 	-complete=event		autocommand events
 	-complete=expression	Vim expression
@@ -1395,7 +1400,7 @@ completion can be enabled:
 	-complete=function	function name
 	-complete=help		help subjects
 	-complete=highlight	highlight groups
-	-complete=history	:history suboptions
+	-complete=history	|:history| suboptions
 	-complete=keymap	keyboard mappings
 	-complete=locale	locale names (as output of locale -a)
 	-complete=lua		Lua expression |:lua|
@@ -1405,7 +1410,11 @@ completion can be enabled:
 	-complete=messages	|:messages| suboptions
 	-complete=option	options
 	-complete=packadd	optional package |pack-add| names
+	-complete=runtime	file and directory names in |'runtimepath'|
+	-complete=scriptnames	sourced script names
 	-complete=shellcmd	Shell command
+	-complete=shellcmdline	First is a shell command and subsequent ones
+				are filenames. The same behavior as |:!cmd|
 	-complete=sign		|:sign| suboptions
 	-complete=syntax	syntax file names |'syntax'|
 	-complete=syntime	|:syntime| suboptions
@@ -1679,7 +1688,7 @@ The valid escape sequences are
 		nothing. Supported modifiers are |:aboveleft|, |:belowright|,
 		|:botright|, |:browse|, |:confirm|, |:hide|, |:horizontal|,
 		|:keepalt|, |:keepjumps|, |:keepmarks|, |:keeppatterns|,
-		|:leftabove|, |:lockmarks|, |:noautocmd|, |:noswapfile|
+		|:leftabove|, |:lockmarks|, |:noautocmd|, |:noswapfile|,
 		|:rightbelow|, |:sandbox|, |:silent|, |:tab|, |:topleft|,
 		|:unsilent|, |:verbose|, and |:vertical|.
 		Note that |:filter| is not supported.

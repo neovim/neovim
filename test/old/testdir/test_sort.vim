@@ -1336,6 +1336,34 @@ func Test_sort_cmd()
           \ ]
     endif
   endif
+  if has('float')
+    let tests += [
+          \ {
+          \    'name' : 'float',
+          \    'cmd' : 'sort f',
+          \    'input' : [
+          \	'1.234',
+          \	'0.88',
+          \	'  +  123.456',
+          \	'1.15e-6',
+          \	'-1.1e3',
+          \	'-1.01e3',
+          \	'',
+          \	''
+          \    ],
+          \    'expected' : [
+          \	'',
+          \	'',
+          \	'-1.1e3',
+          \	'-1.01e3',
+          \	'1.15e-6',
+          \	'0.88',
+          \	'1.234',
+          \	'  +  123.456'
+          \    ]
+          \ },
+          \ ]
+  endif
 
   for t in tests
     enew!
@@ -1497,11 +1525,10 @@ func Test_sort_with_no_last_search_pat()
     call writefile(v:errors, 'Xresult')
     qall!
   [SCRIPT]
-  call writefile(lines, 'Xscript')
+  call writefile(lines, 'Xscript', 'D')
   if RunVim([], [], '--clean -S Xscript')
     call assert_equal([], readfile('Xresult'))
   endif
-  call delete('Xscript')
   call delete('Xresult')
 endfunc
 

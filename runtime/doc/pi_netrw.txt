@@ -54,9 +54,10 @@ Copyright: Copyright (C) 2017 Charles E Campbell    *netrw-copyright*
       Browsing With A Horizontally Split Window...........|netrw-o|
       Browsing With A New Tab.............................|netrw-t|
       Browsing With A Vertically Split Window.............|netrw-v|
-      Change File Permission..............................|netrw-gp|
-      Change Listing Style.(thin wide long tree)..........|netrw-i|
+      Change Listing Style (thin wide long tree)..........|netrw-i|
       Changing To A Bookmarked Directory..................|netrw-gb|
+      Quick hide/unhide of dot-files......................|netrw-gh|
+      Changing local-only File Permission.................|netrw-gp|
       Changing To A Predecessor Directory.................|netrw-u|
       Changing To A Successor Directory...................|netrw-U|
       Customizing Browsing With A Special Handler.........|netrw-x|
@@ -1465,98 +1466,106 @@ With either form of the command, netrw will first ask for confirmation
 that the removal is in fact what you want to do.  If netrw doesn't have
 permission to remove a file, it will issue an error message.
 
-						*netrw-gx*
 CUSTOMIZING BROWSING WITH A SPECIAL HANDLER	*netrw-x* *netrw-handler* {{{2
-						(also see |netrw_filehandler|)
 
 Certain files, such as html, gif, jpeg, (word/office) doc, etc, files, are
 best seen with a special handler (ie. a tool provided with your computer's
-operating system).  Netrw allows one to invoke such special handlers by: >
+operating system).  Netrw allows one to invoke such special handlers by:
 
-	* when Exploring, hit the "x" key
-	* when editing, hit gx with the cursor atop the special filename
-<	  (latter not available if the |g:netrw_nogx| variable exists)
+        * hitting gx with the cursor atop the file path or alternatively x
+          in a netrw buffer; the former can be disabled by defining the
+          |g:netrw_nogx| variable
+        * when in command line, typing :Open <path>, see |:Open| below.
 
-Netrw determines which special handler by the following method:
-
-  * if |g:netrw_browsex_viewer| exists, then it will be used to attempt to
-    view files.  Examples of useful settings (place into your <.vimrc>): >
-
-	:let g:netrw_browsex_viewer= "kfmclient exec"
-<   or >
-	:let g:netrw_browsex_viewer= "xdg-open"
-<
-    If g:netrw_browsex_viewer == '-', then netrwFileHandlers#Invoke() will be
-    used instead (see |netrw_filehandler|).
-
-    If the viewer you wish to use does not support handling of a remote URL
-    directory, set |g:netrw_browsex_support_remote| to 0.
-  * for Windows 32 or 64, the URL and FileProtocolHandler dlls are used.
-  * for Gnome (with gnome-open): gnome-open is used.
-  * for KDE (with kfmclient)   : kfmclient is used
-  * for Mac OS X               : open is used.
-  * otherwise the netrwFileHandler plugin is used.
-
-The file's suffix is used by these various approaches to determine an
-appropriate application to use to "handle" these files.  Such things as
-OpenOffice (*.sfx), visualization (*.jpg, *.gif, etc), and PostScript (*.ps,
-*.eps) can be handled.
-
-The gx mapping extends to all buffers; apply "gx" while atop a word and netrw
-will apply a special handler to it (like "x" works when in a netrw buffer).
 One may also use visual mode (see |visual-start|) to select the text that the
-special handler will use.  Normally gx uses expand("<cfile>") to pick up the
-text under the cursor; one may change what |expand()| uses via the
+special handler will use.  Normally gx checks for a close-by URL or file name
+to pick up the text under the cursor; one may change what |expand()| uses via the
 |g:netrw_gx| variable (options include "<cword>", "<cWORD>").  Note that
 expand("<cfile>") depends on the |'isfname'| setting.  Alternatively, one may
 select the text to be used by gx by making a visual selection (see
 |visual-block|) and then pressing gx.
 
+The selection function can be adapted for each filetype by adding a function
+`Netrw_get_URL_<filetype>`, where <filetype> is given by the 'filetype'.
+The function should return the URL or file name to be used by gx, and will
+fall back to the default behavior if it returns an empty string.
+For example, special handlers for links Markdown and HTML are
+
+" make gx work on concealed links regardless of exact cursor position: >
+
+  function Netrw_get_URL_markdown()
+    " markdown URL such as [link text](http://ya.ru 'yandex search')
+    try
+      let save_view = winsaveview()
+      if searchpair('\[.\{-}\](', '', ')\zs', 'cbW', '', line('.')) > 0
+        return matchstr(getline('.')[col('.')-1:],
+          \ '\[.\{-}\](\zs' .. g:netrw_regex_url .. '\ze\(\s\+.\{-}\)\?)')
+      endif
+    finally
+      call winrestview(save_view)
+      return ''
+    endtry
+  endfunction
+
+  function Netrw_get_URL_html()
+    " HTML URL such as <a href='http://www.python.org'>Python is here</a>
+    "                  <a href="http://www.python.org"/>
+    try
+      let save_view = winsaveview()
+      if searchpair('<a\s\+href=', '', '\%(</a>\|/>\)\zs', 'cbW', '', line('.')) > 0
+        return matchstr(getline('.')[col('.') - 1 : ],
+          \ 'href=["'.."'"..']\?\zs\S\{-}\ze["'.."'"..']\?/\?>')
+      endif
+    finally
+      call winrestview(save_view)
+      return ''
+    endtry
+  endfunction
+<
+Other than a file path, the text under the cursor may be a URL.  Netrw uses
+by default the following regular expression to determine if the text under the
+cursor is a URL:
+>
+  :let g:netrw_regex_url = '\%(\%(http\|ftp\|irc\)s\?\|file\)://\S\{-}'
+<
 Associated setting variables:
 	|g:netrw_gx|	control how gx picks up the text under the cursor
 	|g:netrw_nogx|	prevent gx map while editing
 	|g:netrw_suppress_gx_mesg| controls gx's suppression of browser messages
 
-							*netrw_filehandler*
+OPENING FILES AND LAUNCHING APPS                 *netrw-gx* *:Open* *:Launch* {{{2
 
-When |g:netrw_browsex_viewer| exists and is "-", then netrw will attempt to
-handle the special file with a vim function.  The "x" map applies a function
-to a file, based on its extension.  Of course, the handler function must exist
-for it to be called!
->
- Ex. mypgm.html   x -> NFH_html("scp://user@host/some/path/mypgm.html")
+Netrw determines which special handler by the following method:
 
-<	Users may write their own netrw File Handler functions to
-	support more suffixes with special handling.  See
-	<autoload/netrwFileHandlers.vim> for examples on how to make
-	file handler functions.   As an example: >
+  * if |g:netrw_browsex_viewer| exists, then it will be used to attempt to
+    view files.
+    If the viewer you wish to use does not support handling of a remote URL
+    directory, set |g:netrw_browsex_support_remote| to 0.
+  * otherwise:
 
-	" NFH_suffix(filename)
-	fun! NFH_suffix(filename)
-	..do something special with filename..
-	endfun
+    * for Windows			: explorer.exe is used
+    * for Mac OS X			: open is used.
+    * for Linux				: xdg-open is used.
+
+To open a path (or URL) <path> by the appropriate handler, type >
+
+    :Open <path>
 <
-These functions need to be defined in some file in your .vim/plugin
-(vimfiles\plugin) directory.  Vim's function names may not have punctuation
-characters (except for the underscore) in them.  To support suffices that
-contain such characters, netrw will first convert the suffix using the
-following table: >
+No escaping, neither for the shell nor for Vim's command-line, is needed.
 
-    @ -> AT       ! -> EXCLAMATION    % -> PERCENT
-    : -> COLON    = -> EQUAL          ? -> QUESTION
-    , -> COMMA    - -> MINUS          ; -> SEMICOLON
-    $ -> DOLLAR   + -> PLUS           ~ -> TILDE
+To launch a specific application <app> <args>, often <args> being <path> >
+
+    :Launch <app> <args>.
+
+Since <args> can be arbitrarily complex, in particular contain many file
+paths, the escaping is left to the user.
+
+If you disabled the netrw plugin by setting g:loaded_netrwPlugin (see
+|netrw-noload|), then you can use >
+
+    :call netrw#Launch('<app> <args>')
+    :call netrw#Open('<path>')
 <
-So, for example: >
-
-	file.rcs,v  ->  NFH_rcsCOMMAv()
-<
-If more such translations are necessary, please send me email: >
-		NcampObell@SdrPchip.AorgM-NOSPAM
-with a request.  (remove the embedded NOSPAM first)
-
-Associated setting variable: |g:netrw_browsex_viewer|
-
 							*netrw-curdir*
 DELETING BOOKMARKS					*netrw-mB* {{{2
 
@@ -2569,12 +2578,7 @@ your browsing preferences.  (see also: |netrw-settings|)
   *g:netrw_browsex_viewer*	specify user's preference for a viewer: >
 					"kfmclient exec"
 					"gnome-open"
-<				If >
-					"-"
-<				is used, then netrwFileHandler() will look for
-				a script/function to handle the given
-				extension.  (see |netrw_filehandler|).
-
+<
   *g:netrw_browsex_support_remote*
 				specify if the specified viewer supports a
 				remote URL.  (see |netrw-handler|).
@@ -3858,7 +3862,7 @@ netrw:
 				  netrw-safe guioptions
 		Nov 15, 2021	* removed netrw_localrm and netrw_localrmdir
 				  references
-		Aug 18, 2022	* (Miguel Barro) improving compatability with
+		Aug 18, 2022	* (Miguel Barro) improving compatibility with
 				  powershell
 	v171:	Oct 09, 2020	* included code in s:NetrwOptionsSafe()
 				  to allow |'bh'| to be set to delete when

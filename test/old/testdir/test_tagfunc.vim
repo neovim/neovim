@@ -89,11 +89,11 @@ func Test_tagfunc()
     return v:null
   endfunc
   set tags= tfu=NullTagFunc
-  call assert_fails('tag nothing', 'E433')
+  call assert_fails('tag nothing', 'E433:')
   delf NullTagFunc
 
   bwipe!
-  set tags& tfu& cpt& 
+  set tags& tfu& cpt&
   call delete('Xfile1')
 endfunc
 
@@ -291,10 +291,10 @@ func Test_tagfunc_callback()
   call assert_fails("echo taglist('a')", "E987:")
 
   " Using Vim9 lambda expression in legacy context should fail
-  " set tagfunc=(a,\ b,\ c)\ =>\ g:TagFunc1(21,\ a,\ b,\ c)
+  set tagfunc=(a,\ b,\ c)\ =>\ g:TagFunc1(21,\ a,\ b,\ c)
   new
   let g:TagFunc1Args = []
-  " call assert_fails("tag a17", "E117:")
+  call assert_fails("tag a17", "E117:")
   call assert_equal([], g:TagFunc1Args)
   bw!
 

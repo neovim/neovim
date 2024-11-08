@@ -12,7 +12,6 @@
     - To build on Windows, see the [Building on Windows](#building-on-windows) section. _MSVC (Visual Studio) is recommended._
 4. `sudo make install`
     - Default install location is `/usr/local`
-    - On Debian/Ubuntu, instead of installing files directly with `sudo make install`, you can run `cd build && cpack -G DEB && sudo dpkg -i nvim-linux64.deb` to build DEB-package and install it. This should help ensuring the clean removal of installed files.
 
 **Notes**:
 - From the repository's root directory, running `make` will download and build all the needed dependencies and put the `nvim` executable in `build/bin`.
@@ -84,7 +83,7 @@ make deps
       - Right-click _CMakeLists.txt → Delete Cache_.
       - Right-click _CMakeLists.txt → Generate Cache_.
     - If you see an "access violation" from `ntdll`, you can ignore it and continue.
-4. If you set an error like `msgpackc.dll not found`, try the `nvim.exe (Install)` target. Then switch back to `nvim.exe (bin\nvim.exe)`.
+4. If you see an error like `uv.dll not found`, try the `nvim.exe (Install)` target. Then switch back to `nvim.exe (bin\nvim.exe)`.
 
 ### Windows / MSVC PowerShell
 
@@ -240,7 +239,7 @@ cmake --build build
 ### How to build without "bundled" dependencies
 
 1. Manually install the dependencies:
-    - libuv libluv libvterm luajit lua-lpeg lua-mpack msgpack-c tree-sitter tree-sitter-bash tree-sitter-c tree-sitter-lua tree-sitter-markdown tree-sitter-python tree-sitter-query tree-sitter-vim tree-sitter-vimdoc unibilium
+    - libuv libluv libutf8proc luajit lua-lpeg tree-sitter tree-sitter-c tree-sitter-lua tree-sitter-markdown tree-sitter-query tree-sitter-vim tree-sitter-vimdoc unibilium
 2. Run CMake:
    ```sh
    cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
@@ -248,7 +247,7 @@ cmake --build build
    ```
    If all the dependencies are not available in the package, you can use only some of the bundled dependencies as follows (example of using `ninja`):
    ```sh
-   cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LIBVTERM=ON -DUSE_BUNDLED_TS=ON
+   cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_TS=ON
    cmake --build .deps
    cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
    cmake --build build
@@ -260,8 +259,8 @@ cmake --build build
 #### Debian 10 (Buster) example:
 
 ```sh
-sudo apt install luajit libluajit-5.1-dev lua-mpack lua-lpeg libunibilium-dev libmsgpack-dev
-cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LIBUV=ON -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_LIBVTERM=ON -DUSE_BUNDLED_TS=ON
+sudo apt install luajit libluajit-5.1-dev lua-lpeg libunibilium-dev
+cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LIBUV=ON -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_TS=ON -DUSE_BUNDLED_UTF8PROC=ON
 cmake --build .deps
 cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build
@@ -275,7 +274,7 @@ cmake --build build
   ```
 - Example of using a package with some dependencies:
   ```
-  make BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED=OFF -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_TS=ON -DUSE_BUNDLED_LIBVTERM=ON -DUSE_BUNDLED_LIBUV=ON"
+  make BUNDLED_CMAKE_FLAG="-DUSE_BUNDLED=OFF -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_TS=ON -DUSE_BUNDLED_LIBUV=ON"
   ```
 
 ## Build prerequisites
@@ -283,8 +282,9 @@ cmake --build build
 General requirements (see [#1469](https://github.com/neovim/neovim/issues/1469#issuecomment-63058312)):
 
 - Clang or GCC version 4.9+
-- CMake version 3.13+, built with TLS/SSL support
-  - Optional: Get the latest CMake from an [installer](https://github.com/Kitware/CMake/releases) or the [Python package](https://pypi.org/project/cmake/) (`pip install cmake`)
+- CMake version 3.16+, built with TLS/SSL support
+  - Optional: Get the latest CMake from https://cmake.org/download/
+    - Provides a shell script which works on most Linux systems. After running it, ensure the resulting `cmake` binary is in your $PATH so the the Nvim build will find it.
 
 Platform-specific requirements are listed below.
 
@@ -365,13 +365,16 @@ and replacing `neovim-unwrapped` with `neovim-dev`:
 nix-shell '<nixpkgs>' -A neovim-dev
 ```
 
-Neovim contains a Nix flake in the `contrib` folder, with 3 packages:
+A flake for Neovim is hosted at [nix-community/neovim-nightly-overlay](https://github.com/nix-community/neovim-nightly-overlay/), with 3 packages:
 - `neovim` to run the nightly
 - `neovim-debug` to run the package with debug symbols
 - `neovim-developer` to get all the tools to develop on `neovim`
 
-Thus you can run Neovim nightly with `nix run github:neovim/neovim?dir=contrib`.
-Similarly to develop on Neovim: `nix develop github:neovim/neovim?dir=contrib#neovim-developer`.
+Thus you can run Neovim nightly with `nix run github:nix-community/neovim-nightly-overlay`.
+Similarly to develop on Neovim: `nix run github:nix-community/neovim-nightly-overlay#neovim-developer`.
+
+To use a specific version of Neovim, you can pass `--override-input neovim-src .` to use your current directory,
+or a specific SHA1 like `--override-input neovim-src github:neovim/neovim/89dc8f8f4e754e70cbe1624f030fb61bded41bc2`.
 
 ### FreeBSD
 

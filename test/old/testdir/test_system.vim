@@ -53,7 +53,7 @@ func Test_system_exmode()
     let cmd = ' -es -c "source Xscript" +q; echo "result=$?"'
     " Need to put this in a script, "catch" isn't found after an unknown
     " function.
-    call writefile(['try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript')
+    call writefile(['try', 'call doesnotexist()', 'catch', 'endtry'], 'Xscript', 'D')
     let a = system(GetVimCommand() . cmd)
     call assert_match('result=0', a)
     call assert_equal(0, v:shell_error)
@@ -69,7 +69,6 @@ func Test_system_exmode()
   let cmd = ' -es -c "source Xscript" +q'
   let a = system(GetVimCommand() . cmd)
   call assert_notequal(0, v:shell_error)
-  call delete('Xscript')
 
   if has('unix') " echo $? only works on Unix
     let cmd = ' -es -c "call doesnotexist()" +q; echo $?'

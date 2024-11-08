@@ -30,7 +30,7 @@ typedef enum {
 } ChannelStdinMode;
 
 typedef struct {
-  Stream in;
+  RStream in;
   Stream out;
 } StdioPair;
 

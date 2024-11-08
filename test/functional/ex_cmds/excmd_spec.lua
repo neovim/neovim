@@ -29,13 +29,13 @@ describe('Ex cmds', function()
       ':tabnext 9999999999999999999999999999999999999999',
       'Vim(tabnext):E475: Invalid argument: 9999999999999999999999999999999999999999'
     )
-    check_excmd_err(
-      ':N 9999999999999999999999999999999999999999',
-      'Vim(Next):E939: Positive count required'
+    eq(
+      'Vim(Next):E163: There is only one file to edit',
+      pcall_err(command, ':N 9999999999999999999999999999999999999999')
     )
     check_excmd_err(
       ':bdelete 9999999999999999999999999999999999999999',
-      'Vim(bdelete):E939: Positive count required'
+      'Vim(bdelete):E516: No buffers were deleted'
     )
     eq(
       'Vim(menu):E329: No menu "9999999999999999999999999999999999999999"',

@@ -15,6 +15,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
@@ -710,7 +711,7 @@ char *au_event_disable(char *what)
   if (*what == ',' && *p_ei == NUL) {
     STRCPY(new_ei, what + 1);
   } else {
-    STRCAT(new_ei, what);
+    strcat(new_ei, what);
   }
   set_option_direct(kOptEventignore, CSTR_AS_OPTVAL(new_ei), 0, SID_NONE);
   xfree(new_ei);
@@ -1699,19 +1700,33 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   } else {
     sfname = xstrdup(fname);
     // Don't try expanding the following events.
-    if (event == EVENT_CMDLINECHANGED || event == EVENT_CMDLINEENTER
-        || event == EVENT_CMDLINELEAVE || event == EVENT_CMDUNDEFINED
-        || event == EVENT_CMDWINENTER || event == EVENT_CMDWINLEAVE
-        || event == EVENT_COLORSCHEME || event == EVENT_COLORSCHEMEPRE
-        || event == EVENT_DIRCHANGED || event == EVENT_DIRCHANGEDPRE
-        || event == EVENT_FILETYPE || event == EVENT_FUNCUNDEFINED
-        || event == EVENT_MENUPOPUP || event == EVENT_MODECHANGED
-        || event == EVENT_OPTIONSET || event == EVENT_QUICKFIXCMDPOST
-        || event == EVENT_QUICKFIXCMDPRE || event == EVENT_REMOTEREPLY
-        || event == EVENT_SIGNAL || event == EVENT_SPELLFILEMISSING
-        || event == EVENT_SYNTAX || event == EVENT_TABCLOSED
-        || event == EVENT_USER || event == EVENT_WINCLOSED
-        || event == EVENT_WINRESIZED || event == EVENT_WINSCROLLED) {
+    if (event == EVENT_CMDLINECHANGED
+        || event == EVENT_CMDLINEENTER
+        || event == EVENT_CMDLINELEAVE
+        || event == EVENT_CMDUNDEFINED
+        || event == EVENT_CURSORMOVEDC
+        || event == EVENT_CMDWINENTER
+        || event == EVENT_CMDWINLEAVE
+        || event == EVENT_COLORSCHEME
+        || event == EVENT_COLORSCHEMEPRE
+        || event == EVENT_DIRCHANGED
+        || event == EVENT_DIRCHANGEDPRE
+        || event == EVENT_FILETYPE
+        || event == EVENT_FUNCUNDEFINED
+        || event == EVENT_MENUPOPUP
+        || event == EVENT_MODECHANGED
+        || event == EVENT_OPTIONSET
+        || event == EVENT_QUICKFIXCMDPOST
+        || event == EVENT_QUICKFIXCMDPRE
+        || event == EVENT_REMOTEREPLY
+        || event == EVENT_SIGNAL
+        || event == EVENT_SPELLFILEMISSING
+        || event == EVENT_SYNTAX
+        || event == EVENT_TABCLOSED
+        || event == EVENT_USER
+        || event == EVENT_WINCLOSED
+        || event == EVENT_WINRESIZED
+        || event == EVENT_WINSCROLLED) {
       fname = xstrdup(fname);
       autocmd_fname_full = true;  // don't expand it later
     } else {
@@ -2037,7 +2052,7 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     }
 
     MAXSIZE_TEMP_ARRAY(args, 1);
-    ADD_C(args, DICTIONARY_OBJ(data));
+    ADD_C(args, DICT_OBJ(data));
 
     Object result = nlua_call_ref(callback.data.luaref, NULL, args, kRetNilBool, NULL, NULL);
     return LUARET_TRUTHY(result);

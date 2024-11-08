@@ -13,6 +13,7 @@ local fn = n.fn
 local clear = n.clear
 local eval = n.eval
 local feed = n.feed
+local assert_alive = n.assert_alive
 local NIL = vim.NIL
 local eq = t.eq
 
@@ -72,9 +73,9 @@ describe('luaeval()', function()
     end)
     it('are successfully converted to special dictionaries in table keys', function()
       command([[let d = luaeval('{["\0"]=1}')]])
-      eq({_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n'}}, 1}}}, api.nvim_get_var('d'))
+      eq({_TYPE={}, _VAL={{'\000', 1}}}, api.nvim_get_var('d'))
       eq(1, fn.eval('d._TYPE is v:msgpack_types.map'))
-      eq(1, fn.eval('d._VAL[0][0]._TYPE is v:msgpack_types.string'))
+      eq(eval('v:t_blob'), fn.eval('type(d._VAL[0][0])'))
     end)
     it('are successfully converted to blobs from a list', function()
       command([[let l = luaeval('{"abc", "a\0b", "c\0d", "def"}')]])
@@ -125,11 +126,11 @@ describe('luaeval()', function()
     local level = 30
     eq(nested_by_level[level].o, fn.luaeval(nested_by_level[level].s))
 
-    eq({_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n', '\n'}}, '\000\n\000\000'}}},
+    eq({_TYPE={}, _VAL={{'\000\n\000', '\000\n\000\000'}}},
        fn.luaeval([[{['\0\n\0']='\0\n\0\0'}]]))
     eq(1, eval([[luaeval('{["\0\n\0"]="\0\n\0\0"}')._TYPE is v:msgpack_types.map]]))
-    eq(1, eval([[luaeval('{["\0\n\0"]="\0\n\0\0"}')._VAL[0][0]._TYPE is v:msgpack_types.string]]))
-    eq({nested={{_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n', '\n'}}, '\000\n\000\000'}}}}},
+    eq(eval("v:t_blob"), eval([[type(luaeval('{["\0\n\0"]="\0\n\0\0"}')._VAL[0][0])]]))
+    eq({nested={{_TYPE={}, _VAL={{'\000\n\000', '\000\n\000\000'}}}}},
        fn.luaeval([[{nested={{['\0\n\0']='\0\n\0\0'}}}]]))
   end)
 
@@ -177,17 +178,15 @@ describe('luaeval()', function()
   end
 
   it('correctly passes special dictionaries', function()
-    eq({0, '\000\n\000'}, luaevalarg(sp('binary', '["\\n", "\\n"]')))
     eq({0, '\000\n\000'}, luaevalarg(sp('string', '["\\n", "\\n"]')))
     eq({0, true}, luaevalarg(sp('boolean', 1)))
     eq({0, false}, luaevalarg(sp('boolean', 0)))
     eq({0, NIL}, luaevalarg(sp('nil', 0)))
-    eq({0, {[""]=""}}, luaevalarg(mapsp(sp('binary', '[""]'), '""')))
     eq({0, {[""]=""}}, luaevalarg(mapsp(sp('string', '[""]'), '""')))
   end)
 
   it('issues an error in some cases', function()
-    eq("Vim(call):E5100: Cannot convert given lua table: table should contain either only integer keys or only string keys",
+    eq("Vim(call):E5100: Cannot convert given Lua table: table should contain either only integer keys or only string keys",
        exc_exec('call luaeval("{1, foo=2}")'))
 
     startswith("Vim(call):E5107: Error loading lua [string \"luaeval()\"]:",
@@ -511,23 +510,16 @@ describe('v:lua', function()
 
   it('works in func options', function()
     local screen = Screen.new(60, 8)
-    screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {background = Screen.colors.WebGray},
-      [3] = {background = Screen.colors.LightMagenta},
-      [4] = {bold = true},
-      [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    })
     screen:attach()
     api.nvim_set_option_value('omnifunc', 'v:lua.mymod.omni', {})
     feed('isome st<c-x><c-o>')
     screen:expect{grid=[[
       some stuff^                                                  |
-      {1:~   }{2: stuff          }{1:                                        }|
-      {1:~   }{3: steam          }{1:                                        }|
-      {1:~   }{3: strange things }{1:                                        }|
+      {1:~   }{12: stuff          }{1:                                        }|
+      {1:~   }{4: steam          }{1:                                        }|
+      {1:~   }{4: strange things }{1:                                        }|
       {1:~                                                           }|*3
-      {4:-- Omni completion (^O^N^P) }{5:match 1 of 3}                    |
+      {5:-- Omni completion (^O^N^P) }{6:match 1 of 3}                    |
     ]]}
     api.nvim_set_option_value('operatorfunc', 'v:lua.mymod.noisy', {})
     feed('<Esc>g@g@')
@@ -560,5 +552,41 @@ describe('v:lua', function()
     eq("Vim:E107: Missing parentheses: v:lua", pcall_err(eval, "'bad'->v:lua"))
     eq("Vim:E1085: Not a callable type: v:lua", pcall_err(eval, "'bad'->v:lua()"))
     eq([[Vim:E15: Invalid expression: "v:lua.()"]], pcall_err(eval, "'bad'->v:lua.()"))
+
+    eq("Vim:E1085: Not a callable type: v:lua", pcall_err(eval, "v:lua()"))
+    eq([[Vim:E15: Invalid expression: "v:lua.()"]], pcall_err(eval, "v:lua.()"))
+  end)
+
+  describe('invalid use in fold text', function()
+    before_each(function()
+      feed('ifoo<CR>bar<Esc>')
+      command('1,2fold')
+    end)
+
+    it('with missing function name when used as simple function', function()
+      api.nvim_set_option_value('debug', 'throw', {})
+      eq(
+        [[Vim(eval):E15: Invalid expression: "v:lua.()"]],
+        pcall_err(command, 'set foldtext=v:lua.() | eval foldtextresult(1)')
+      )
+    end)
+
+    it('with missing function name when used in expression', function()
+      api.nvim_set_option_value('debug', 'throw', {})
+      eq(
+        [[Vim(eval):E15: Invalid expression: "+v:lua.()"]],
+        pcall_err(command, 'set foldtext=+v:lua.() | eval foldtextresult(1)')
+      )
+    end)
+
+    it('with non-existent function when used as simple function', function()
+      command('set foldtext=v:lua.NoSuchFunc() | eval foldtextresult(1)')
+      assert_alive()
+    end)
+
+    it('with non-existent function when used in expression', function()
+      command('set foldtext=+v:lua.NoSuchFunc() | eval foldtextresult(1)')
+      assert_alive()
+    end)
   end)
 end)

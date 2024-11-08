@@ -6,14 +6,38 @@
 
 Nvim Graphical User Interface				*gui* *GUI*
 
+Any client that supports the Nvim |ui-protocol| can be used as a UI for Nvim.
+And multiple UIs can connect to the same Nvim instance! The terms "UI" and
+"GUI" are often used interchangeably because all Nvim UI clients have the same
+potential capabilities; the "TUI" refers to a UI client that outputs to your
+terminal, whereas a "GUI" outputs directly to the OS graphics system.
+
+Except where noted, this document describes UI capabilities available to both
+TUI and GUI (assuming the UI supports the given feature). See |TUI| for notes
+specific to the terminal UI. Help tags with the "gui-" prefix refer to UI
+features, whereas help tags with the "ui-" prefix refer to the |ui-protocol|.
+
+Nvim provides a default, builtin UI (the |TUI|), but there are many other
+(third-party) GUIs that you can use instead:
+
+- Firenvim (Nvim in your web browser!) https://github.com/glacambre/firenvim
+- vscode-neovim (Nvim in VSCode!) https://github.com/vscode-neovim/vscode-neovim
+- Neovide https://neovide.dev/
+- Goneovim https://github.com/akiyosi/goneovim
+- Nvy https://github.com/RMichelsen/Nvy
+- Neovim-Qt (Qt5) https://github.com/equalsraf/neovim-qt
+- VimR (macOS) https://github.com/qvacua/vimr
+- Others https://github.com/neovim/neovim/wiki/Related-projects#gui
+
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-Starting the GUI				*gui-start* *E229* *E233*
+Starting the GUI				*gui-config* *gui-start*
 
 				*ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
 For GUI-specific configuration Nvim provides the |UIEnter| event.  This
-happens after other |initialization|s, like reading your vimrc file.
+happens after other |initialization|s, or whenever a UI attaches (multiple UIs
+can connect to any Nvim instance).
 
 Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
 	:autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
@@ -140,7 +164,6 @@ menus and menu items.  They are most useful for things that you can't remember
 what the key sequence was.
 
 For creating menus in a different language, see |:menutrans|.
-If you don't want to use menus at all, see |'go-M'|.
 
 							*menu.vim*
 The default menus are read from the file "$VIMRUNTIME/menu.vim".  See
@@ -221,7 +244,7 @@ is right aligned, and the "O" is underlined, to indicate it is the shortcut.
 
 					*:am*  *:amenu*  *:an*      *:anoremenu*
 The ":amenu" command can be used to define menu entries for all modes at once,
-expect for Terminal mode.  To make the command work correctly, a character is
+except for Terminal mode.  To make the command work correctly, a character is
 automatically inserted for some modes:
 	mode		inserted	appended	~
 	Normal		nothing		nothing
@@ -444,6 +467,10 @@ when the right mouse button is pressed, if 'mousemodel' is set to popup or
 popup_setpos.
 
 The default "PopUp" menu is: >vim
+    anoremenu PopUp.Go\ to\ definition      <Cmd>lua vim.lsp.buf.definition()<CR>
+    amenu     PopUp.Open\ in\ web\ browser  gx
+    anoremenu PopUp.Inspect                 <Cmd>Inspect<CR>
+    anoremenu PopUp.-1-                     <Nop>
     vnoremenu PopUp.Cut                     "+x
     vnoremenu PopUp.Copy                    "+y
     anoremenu PopUp.Paste                   "+gP
@@ -452,8 +479,7 @@ The default "PopUp" menu is: >vim
     nnoremenu PopUp.Select\ All             ggVG
     vnoremenu PopUp.Select\ All             gg0oG$
     inoremenu PopUp.Select\ All             <C-Home><C-O>VG
-    anoremenu PopUp.Inspect                 <Cmd>Inspect<CR>
-    anoremenu PopUp.-1-                     <Nop>
+    anoremenu PopUp.-2-                     <Nop>
     anoremenu PopUp.How-to\ disable\ mouse  <Cmd>help disable-mouse<CR>
 <
 
@@ -548,7 +574,7 @@ name and all existing submenus below it are affected.
 
 Examples for Menus					*menu-examples*
 
-Here is an example on how to add menu items with menu's!  You can add a menu
+Here is an example on how to add menu items with menus!  You can add a menu
 item for the keyword under the cursor.  The register "z" is used. >
 
   :nmenu Words.Add\ Var		wb"zye:menu! Words.<C-R>z <C-R>z<CR>
@@ -611,9 +637,6 @@ a menu item - you don't need to do a :tunmenu as well.
 
 You can cause a menu to popup at the cursor.  This behaves similarly to the
 PopUp menus except that any menu tree can be popped up.
-
-This command is for backwards compatibility, using it is discouraged, because
-it behaves in a strange way.
 
 							*:popup* *:popu*
 :popu[p] {name}			Popup the menu {name}.  The menu named must

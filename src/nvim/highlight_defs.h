@@ -101,6 +101,8 @@ typedef enum {
   HLF_SPL,        ///< SpellLocal
   HLF_PNI,        ///< popup menu normal item
   HLF_PSI,        ///< popup menu selected item
+  HLF_PMNI,       ///< popup menu matched text in normal item
+  HLF_PMSI,       ///< popup menu matched text in selected item
   HLF_PNK,        ///< popup menu normal item "kind"
   HLF_PSK,        ///< popup menu selected item "kind"
   HLF_PNX,        ///< popup menu normal item "menu" (extra text)
@@ -125,6 +127,8 @@ typedef enum {
   HLF_CU,         ///< Cursor
   HLF_BTITLE,     ///< Float Border Title
   HLF_BFOOTER,    ///< Float Border Footer
+  HLF_TS,         ///< status line for terminal window
+  HLF_TSNC,       ///< status line for non-current terminal window
   HLF_COUNT,      ///< MUST be the last one
 } hlf_T;
 

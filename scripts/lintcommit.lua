@@ -41,12 +41,6 @@ end
 -- Returns nil if the given commit message is valid, or returns a string
 -- message explaining why it is invalid.
 local function validate_commit(commit_message)
-  -- Return nil if the commit message starts with "fixup" as it signifies it's
-  -- a work in progress and shouldn't be linted yet.
-  if vim.startswith(commit_message, 'fixup') then
-    return nil
-  end
-
   local commit_split = vim.split(commit_message, ':', { plain = true })
   -- Return nil if the type is vim-patch since most of the normal rules don't
   -- apply.
@@ -74,11 +68,12 @@ local function validate_commit(commit_message)
   if after_idx > vim.tbl_count(commit_split) then
     return [[Commit message does not include colons.]]
   end
-  local after_colon = ''
+  local after_colon_split = {}
   while after_idx <= vim.tbl_count(commit_split) do
-    after_colon = after_colon .. commit_split[after_idx]
+    table.insert(after_colon_split, commit_split[after_idx])
     after_idx = after_idx + 1
   end
+  local after_colon = table.concat(after_colon_split, ':')
 
   -- Check if commit introduces a breaking change.
   if vim.endswith(before_colon, '!') then
@@ -229,9 +224,9 @@ function M._test()
     ['vim-patch:8.2.3374: Pyret files are not recognized (#15642)'] = true,
     ['vim-patch:8.1.1195,8.2.{3417,3419}'] = true,
     ['revert: "ci: use continue-on-error instead of "|| true""'] = true,
-    ['fixup'] = true,
-    ['fixup: commit message'] = true,
-    ['fixup! commit message'] = true,
+    ['fixup'] = false,
+    ['fixup: commit message'] = false,
+    ['fixup! commit message'] = false,
     [':no type before colon 1'] = false,
     [' :no type before colon 2'] = false,
     ['  :no type before colon 3'] = false,
@@ -253,8 +248,10 @@ function M._test()
     ['unknown: using unknown type'] = false,
     ['feat: foo:bar'] = true,
     ['feat: :foo:bar'] = true,
+    ['feat: :Foo:Bar'] = true,
     ['feat(something): foo:bar'] = true,
     ['feat(something): :foo:bar'] = true,
+    ['feat(something): :Foo:Bar'] = true,
     ['feat(:grep): read from pipe'] = true,
     ['feat(:grep/:make): read from pipe'] = true,
     ['feat(:grep): foo:bar'] = true,

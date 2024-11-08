@@ -10,10 +10,14 @@
 
 /// Used for popup menu items.
 typedef struct {
-  char *pum_text;          // main menu text
-  char *pum_kind;          // extra kind text (may be truncated)
-  char *pum_extra;         // extra menu text (may be truncated)
-  char *pum_info;          // extra info
+  char *pum_text;       ///< main menu text
+  char *pum_kind;       ///< extra kind text (may be truncated)
+  char *pum_extra;      ///< extra menu text (may be truncated)
+  char *pum_info;       ///< extra info
+  int pum_score;        ///< fuzzy match score
+  int pum_idx;          ///< index of item before sorting by score
+  int pum_user_abbr_hlattr;  ///< highlight attribute for abbr
+  int pum_user_kind_hlattr;  ///< highlight attribute for kind
 } pumitem_T;
 
 EXTERN ScreenGrid pum_grid INIT( = SCREEN_GRID_INIT);

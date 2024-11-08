@@ -316,10 +316,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
     }
   } else {
     // Use specified size.
-    if (minitems < ht->ht_used) {
-      // just in case...
-      minitems = ht->ht_used;
-    }
+    minitems = MAX(minitems, ht->ht_used);
     // array is up to 2/3 full
     minsize = minitems * 3 / 2;
   }

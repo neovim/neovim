@@ -387,8 +387,8 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Completar con método Omni (^O^N^P)"
 
 #: ../edit.c:96
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Sugerencia de ortografía (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Sugerencia de ortografía (^S^N^P)"
 
 # Scroll has it's own msgs, in it's place there is the msg for local
 # * ctrl_x_mode = 0 (eg continue_status & CONT_LOCAL)  -- Acevedo
@@ -4078,8 +4078,8 @@ msgstr ""
 "(2) Falló una sesión de edición de este archivo.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Si es así, use \":recover\" o \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Si es así, use \":recover\" o \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

@@ -1,6 +1,6 @@
 --- @brief
 ---<pre>help
---- health.vim is a minimal framework to help users troubleshoot configuration and
+--- vim.health is a minimal framework to help users troubleshoot configuration and
 --- any other environment conditions that a plugin might care about. Nvim ships
 --- with healthchecks for configuration, performance, python support, ruby
 --- support, clipboard support, and more.
@@ -39,7 +39,7 @@
 ---                         :checkhealth vim*
 --- <
 ---
---- Create a healthcheck                                    *health-dev* *vim.health*
+--- Create a healthcheck                                    *health-dev*
 ---
 --- Healthchecks are functions that check the user environment, configuration, or
 --- any other prerequisites that a plugin cares about. Nvim ships with
@@ -285,8 +285,8 @@ local path2name = function(path)
     -- Remove everything up to the last /lua/ folder
     path = path:gsub('^.*/lua/', '')
 
-    -- Remove the filename (health.lua)
-    path = vim.fs.dirname(path)
+    -- Remove the filename (health.lua) or (health/init.lua)
+    path = vim.fs.dirname(path:gsub('/init%.lua$', ''))
 
     -- Change slashes to dots
     path = path:gsub('/', '.')
@@ -379,7 +379,14 @@ function M._check(mods, plugin_names)
       s_output = {}
       M.error('The healthcheck report for "' .. name .. '" plugin is empty.')
     end
-    local header = { string.rep('=', 78), name .. ': ' .. func, '' }
+
+    local header = {
+      string.rep('=', 78),
+      -- Example: `foo.health: [ …] require("foo.health").check()`
+      ('%s: %s%s'):format(name, (' '):rep(76 - name:len() - func:len()), func),
+      '',
+    }
+
     -- remove empty line after header from report_start
     if s_output[1] == '' then
       local tmp = {} ---@type string[]

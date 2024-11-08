@@ -403,8 +403,8 @@ msgstr " Fuldførelse af brugerdefineret (^U^N^P)"
 msgid " Omni completion (^O^N^P)"
 msgstr " Fuldførelse af omni (^O^N^P)"
 
-msgid " Spelling suggestion (s^N^P)"
-msgstr " Staveforslag (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
+msgstr " Staveforslag (^S^N^P)"
 
 msgid " Keyword Local completion (^N^P)"
 msgstr " Fuldførelse af nøgleord local (^N^P)"
@@ -3663,8 +3663,8 @@ msgstr ""
 msgid "(2) An edit session for this file crashed.\n"
 msgstr "(2) En redigeringssession for filen holdt op med at virke.\n"
 
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Hvis det er tilfældet, så brug \":recover\" eller \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Hvis det er tilfældet, så brug \":recover\" eller \"nvim -r "
 
 msgid ""
 "\"\n"

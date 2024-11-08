@@ -54,6 +54,10 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
   }
 
   if (HAS_KEY_X(opts, buf)) {
+    VALIDATE(!(HAS_KEY_X(opts, scope) && *scope == OPT_GLOBAL), "%s",
+             "cannot use both global 'scope' and 'buf'", {
+      return FAIL;
+    });
     *scope = OPT_LOCAL;
     *req_scope = kOptReqBuf;
     *from = find_buffer_by_handle(opts->buf, err);
@@ -68,11 +72,6 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
     return FAIL;
   });
 
-  VALIDATE((!HAS_KEY_X(opts, scope) || !HAS_KEY_X(opts, buf)), "%s",
-           "cannot use both 'scope' and 'buf'", {
-    return FAIL;
-  });
-
   VALIDATE((!HAS_KEY_X(opts, win) || !HAS_KEY_X(opts, buf)),
            "%s", "cannot use both 'buf' and 'win'", {
     return FAIL;
@@ -81,7 +80,7 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
   *opt_idxp = find_option(name);
   int flags = get_option_attrs(*opt_idxp);
   if (flags == 0) {
-    // hidden or unknown option
+    // unknown option
     api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name);
   } else if (*req_scope == kOptReqBuf || *req_scope == kOptReqWin) {
     // if 'buf' or 'win' is passed, make sure the option supports it
@@ -176,7 +175,6 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   }
 
   OptVal value = get_option_value_for(opt_idx, scope, req_scope, from, err);
-  bool hidden = is_option_hidden(opt_idx);
 
   if (ftbuf != NULL) {
     // restore curwin/curbuf and a few other things
@@ -190,7 +188,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     goto err;
   }
 
-  VALIDATE_S(!hidden && value.type != kOptValTypeNil, "option", name.data, {
+  VALIDATE_S(value.type != kOptValTypeNil, "option", name.data, {
     goto err;
   });
 
@@ -257,13 +255,13 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
 
 /// Gets the option information for all options.
 ///
-/// The dictionary has the full option names as keys and option metadata
-/// dictionaries as detailed at |nvim_get_option_info2()|.
+/// The dict has the full option names as keys and option metadata dicts as detailed at
+/// |nvim_get_option_info2()|.
 ///
 /// @see |nvim_get_commands()|
 ///
-/// @return dictionary of all options
-Dictionary nvim_get_all_options_info(Arena *arena, Error *err)
+/// @return dict of all options
+Dict nvim_get_all_options_info(Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
   return get_all_vimoptions(arena);
@@ -271,7 +269,7 @@ Dictionary nvim_get_all_options_info(Arena *arena, Error *err)
 
 /// Gets the option information for one option from arbitrary buffer or window
 ///
-/// Resulting dictionary has keys:
+/// Resulting dict has keys:
 /// - name: Name of the option (like 'filetype')
 /// - shortname: Shortened name of the option (like 'ft')
 /// - type: type of option ("string", "number" or "boolean")
@@ -302,7 +300,7 @@ Dictionary nvim_get_all_options_info(Arena *arena, Error *err)
 ///                         Implies {scope} is "local".
 /// @param[out] err Error details, if any
 /// @return         Option Information
-Dictionary nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena, Error *err)
+Dict nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(11)
 {
   OptIndex opt_idx = 0;
@@ -311,7 +309,7 @@ Dictionary nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena, 
   void *from = NULL;
   if (!validate_option_value_args(opts, name.data, &opt_idx, &scope, &req_scope, &from, NULL,
                                   err)) {
-    return (Dictionary)ARRAY_DICT_INIT;
+    return (Dict)ARRAY_DICT_INIT;
   }
 
   buf_T *buf = (req_scope == kOptReqBuf) ? (buf_T *)from : curbuf;

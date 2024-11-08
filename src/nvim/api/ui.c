@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <inttypes.h>
-#include <msgpack/pack.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -94,15 +93,15 @@ void remote_ui_free_all_mem(void)
 }
 #endif
 
-/// Wait until ui has connected on stdio channel if only_stdio
-/// is true, otherwise any channel.
+/// Wait until UI has connected.
+///
+/// @param only_stdio UI is expected to connect on stdio.
 void remote_ui_wait_for_attach(bool only_stdio)
 {
   if (only_stdio) {
     Channel *channel = find_channel(CHAN_STDIO);
     if (!channel) {
-      // this function should only be called in --embed mode, stdio channel
-      // can be assumed.
+      // `only_stdio` implies --embed mode, thus stdio channel can be assumed.
       abort();
     }
 
@@ -129,8 +128,7 @@ void remote_ui_wait_for_attach(bool only_stdio)
 /// @param height  Requested screen rows
 /// @param options  |ui-option| map
 /// @param[out] err Error details, if any
-void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictionary options,
-                    Error *err)
+void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dict options, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   if (map_has(uint64_t, &connected_uis, channel_id)) {
@@ -688,8 +686,8 @@ void remote_ui_hl_attr_define(RemoteUI *ui, Integer id, HlAttrs rgb_attrs, HlAtt
     PUT_C(rgb, "url", CSTR_AS_OBJ(url));
   }
 
-  ADD_C(args, DICTIONARY_OBJ(rgb));
-  ADD_C(args, DICTIONARY_OBJ(cterm));
+  ADD_C(args, DICT_OBJ(rgb));
+  ADD_C(args, DICT_OBJ(cterm));
 
   if (ui->ui_ext[kUIHlState]) {
     ADD_C(args, ARRAY_OBJ(info));
@@ -710,7 +708,7 @@ void remote_ui_highlight_set(RemoteUI *ui, int id)
   MAXSIZE_TEMP_DICT(dict, HLATTRS_DICT_SIZE);
   hlattrs2dict(&dict, NULL, syn_attr2entry(id), ui->rgb, false);
   MAXSIZE_TEMP_ARRAY(args, 1);
-  ADD_C(args, DICTIONARY_OBJ(dict));
+  ADD_C(args, DICT_OBJ(dict));
   push_call(ui, "highlight_set", args);
 }
 
@@ -778,16 +776,26 @@ void remote_ui_raw_line(RemoteUI *ui, Integer grid, Integer row, Integer startco
     for (size_t i = 0; i < ncells; i++) {
       repeat++;
       if (i == ncells - 1 || attrs[i] != attrs[i + 1] || chunk[i] != chunk[i + 1]) {
-        if (UI_BUF_SIZE - BUF_POS(ui) < 2 * (1 + 2 + MAX_SCHAR_SIZE + 5 + 5) + 1
+        if (
+            // Close to overflowing the redraw buffer. Finish this event, flush,
+            // and start a new "grid_line" event at the current position.
+            // For simplicity leave place for the final "clear" element as well,
+            // hence the factor of 2 in the check.
+            UI_BUF_SIZE - BUF_POS(ui) < 2 * (1 + 2 + MAX_SCHAR_SIZE + 5 + 5) + 1
+            // Also if there is a lot of packed cells, pass them off to the UI to
+            // let it start processing them.
             || ui->ncells_pending >= 500) {
-          // close to overflowing the redraw buffer. finish this event,
-          // flush, and start a new "grid_line" event at the current position.
-          // For simplicity leave place for the final "clear" element
-          // as well, hence the factor of 2 in the check.
-          // Also if there is a lot of packed cells, pass them of to the UI to
-          // let it start processing them
+          // If the last chunk was all spaces, add an empty clearing chunk,
+          // so it's clear that the last chunk wasn't a clearing chunk.
+          if (was_space) {
+            nelem++;
+            ui->ncells_pending += 1;
+            mpack_array(buf, 3);
+            mpack_str_small(buf, S_LEN(" "));
+            mpack_uint(buf, (uint32_t)clearattr);
+            mpack_uint(buf, 0);
+          }
           mpack_w2(&lenpos, nelem);
-
           // We only ever set the wrap field on the final "grid_line" event for the line.
           mpack_bool(buf, false);
           ui_flush_buf(ui);
@@ -838,7 +846,7 @@ void remote_ui_raw_line(RemoteUI *ui, Integer grid, Integer row, Integer startco
       char sc_buf[MAX_SCHAR_SIZE];
       schar_get(sc_buf, chunk[i]);
       remote_ui_put(ui, sc_buf);
-      if (utf_ambiguous_width(utf_ptr2char(sc_buf))) {
+      if (utf_ambiguous_width(sc_buf)) {
         ui->client_col = -1;  // force cursor update
       }
     }
@@ -911,11 +919,11 @@ static Array translate_contents(RemoteUI *ui, Array contents, Arena *arena)
     Array new_item = arena_array(arena, 2);
     int attr = (int)item.items[0].data.integer;
     if (attr) {
-      Dictionary rgb_attrs = arena_dict(arena, HLATTRS_DICT_SIZE);
+      Dict rgb_attrs = arena_dict(arena, HLATTRS_DICT_SIZE);
       hlattrs2dict(&rgb_attrs, NULL, syn_attr2entry(attr), ui->rgb, false);
-      ADD_C(new_item, DICTIONARY_OBJ(rgb_attrs));
+      ADD_C(new_item, DICT_OBJ(rgb_attrs));
     } else {
-      ADD_C(new_item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
+      ADD_C(new_item, DICT_OBJ((Dict)ARRAY_DICT_INIT));
     }
     ADD_C(new_item, item.items[1]);
     ADD_C(new_contents, ARRAY_OBJ(new_item));

@@ -58,10 +58,18 @@ describe('api metadata', function()
     return by_name
   end
 
-  -- Remove metadata that is not essential to backwards-compatibility.
-  local function filter_function_metadata(f)
+  -- Remove or patch metadata that is not essential to backwards-compatibility.
+  local function normalize_func_metadata(f)
+    -- Dictionary was renamed to Dict. That doesn't break back-compat because clients don't actually
+    -- use the `return_type` field (evidence: "ArrayOf(…)" didn't break clients).
+    f.return_type = f.return_type:gsub('Dictionary', 'Dict')
+
     f.deprecated_since = nil
     for idx, _ in ipairs(f.parameters) do
+      -- Dictionary was renamed to Dict. Doesn't break back-compat because clients don't actually
+      -- use the `parameters` field of API metadata (evidence: "ArrayOf(…)" didn't break clients).
+      f.parameters[idx][1] = f.parameters[idx][1]:gsub('Dictionary', 'Dict')
+
       f.parameters[idx][2] = '' -- Remove parameter name.
     end
 
@@ -141,7 +149,7 @@ describe('api metadata', function()
             )
           end
         else
-          eq(filter_function_metadata(f), filter_function_metadata(funcs_new[f.name]))
+          eq(normalize_func_metadata(f), normalize_func_metadata(funcs_new[f.name]))
         end
       end
       funcs_compat[level] = name_table(old_api[level].functions)

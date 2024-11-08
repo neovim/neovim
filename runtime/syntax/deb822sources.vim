@@ -40,7 +40,7 @@ syn match deb822sourcesUri            '\(https\?://\|ftp://\|[rs]sh://\|debtorre
 syn region deb822sourcesStrictField matchgroup=deb822sourcesEntryField start="^\%(Types\|URIs\|Suites\|Components\): *" end="$" contains=deb822sourcesType,deb822sourcesUri,deb822sourcesSupportedSuites,deb822sourcesUnsupportedSuites,deb822sourcesFreeComponent,deb822sourcesNonFreeComponent oneline
 syn region deb822sourcesField matchgroup=deb822sourcesOptionField start="^\%(Signed-By\|Check-Valid-Until\|Valid-Until-Min\|Valid-Until-Max\|Date-Max-Future\|InRelease-Path\): *" end="$" oneline
 syn region deb822sourcesField matchgroup=deb822sourcesMultiValueOptionField start="^\%(Architectures\|Languages\|Targets\)\%(-Add\|-Remove\)\?: *" end="$" oneline
-syn region deb822sourcesStrictField matchgroup=deb822sourcesBooleanOptionField start="^\%(PDiffs\|Allow-Insecure\|Allow-Weak\|Allow-Downgrade-To-Insecure\|Trusted\|Check-Date\): *" end="$" contains=deb822sourcesYesNo oneline
+syn region deb822sourcesStrictField matchgroup=deb822sourcesBooleanOptionField start="^\%(PDiffs\|Allow-Insecure\|Allow-Weak\|Allow-Downgrade-To-Insecure\|Trusted\|Check-Date\|Enabled\): *" end="$" contains=deb822sourcesYesNo oneline
 syn region deb822sourcesStrictField matchgroup=deb822sourcesForceBooleanOptionField start="^\%(By-Hash\): *" end="$" contains=deb822sourcesForce,deb822sourcesYesNo oneline
 
 hi def link deb822sourcesField                   Default

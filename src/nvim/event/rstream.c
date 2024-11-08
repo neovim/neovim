@@ -11,75 +11,80 @@
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/os/os_defs.h"
-#include "nvim/rbuffer.h"
-#include "nvim/rbuffer_defs.h"
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/rstream.c.generated.h"
 #endif
 
-void rstream_init_fd(Loop *loop, Stream *stream, int fd, size_t bufsize)
+void rstream_init_fd(Loop *loop, RStream *stream, int fd)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  stream_init(loop, stream, fd, NULL);
-  rstream_init(stream, bufsize);
+  stream_init(loop, &stream->s, fd, NULL);
+  rstream_init(stream);
 }
 
-void rstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t bufsize)
+void rstream_init_stream(RStream *stream, uv_stream_t *uvstream)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  stream_init(NULL, stream, -1, uvstream);
-  rstream_init(stream, bufsize);
+  stream_init(NULL, &stream->s, -1, uvstream);
+  rstream_init(stream);
 }
 
-void rstream_init(Stream *stream, size_t bufsize)
+void rstream_init(RStream *stream)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  stream->buffer = rbuffer_new(bufsize);
-  stream->buffer->data = stream;
-  stream->buffer->full_cb = on_rbuffer_full;
-  stream->buffer->nonfull_cb = on_rbuffer_nonfull;
+  stream->read_cb = NULL;
+  stream->num_bytes = 0;
+  stream->buffer = alloc_block();
+  stream->read_pos = stream->write_pos = stream->buffer;
+}
+
+void rstream_start_inner(RStream *stream)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (stream->s.uvstream) {
+    uv_read_start(stream->s.uvstream, alloc_cb, read_cb);
+  } else {
+    uv_idle_start(&stream->s.uv.idle, fread_idle_cb);
+  }
 }
 
 /// Starts watching for events from a `Stream` instance.
 ///
 /// @param stream The `Stream` instance
-void rstream_start(Stream *stream, stream_read_cb cb, void *data)
+void rstream_start(RStream *stream, stream_read_cb cb, void *data)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   stream->read_cb = cb;
-  stream->cb_data = data;
-  if (stream->uvstream) {
-    uv_read_start(stream->uvstream, alloc_cb, read_cb);
-  } else {
-    uv_idle_start(&stream->uv.idle, fread_idle_cb);
+  stream->s.cb_data = data;
+  stream->want_read = true;
+  if (!stream->paused_full) {
+    rstream_start_inner(stream);
   }
 }
 
 /// Stops watching for events from a `Stream` instance.
 ///
 /// @param stream The `Stream` instance
-void rstream_stop(Stream *stream)
+void rstream_stop_inner(RStream *stream)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (stream->uvstream) {
-    uv_read_stop(stream->uvstream);
+  if (stream->s.uvstream) {
+    uv_read_stop(stream->s.uvstream);
   } else {
-    uv_idle_stop(&stream->uv.idle);
+    uv_idle_stop(&stream->s.uv.idle);
   }
 }
 
-static void on_rbuffer_full(RBuffer *buf, void *data)
+/// Stops watching for events from a `Stream` instance.
+///
+/// @param stream The `Stream` instance
+void rstream_stop(RStream *stream)
+  FUNC_ATTR_NONNULL_ALL
 {
-  rstream_stop(data);
-}
-
-static void on_rbuffer_nonfull(RBuffer *buf, void *data)
-{
-  Stream *stream = data;
-  assert(stream->read_cb);
-  rstream_start(stream, stream->read_cb, stream->cb_data);
+  rstream_stop_inner(stream);
+  stream->want_read = false;
 }
 
 // Callbacks used by libuv
@@ -87,11 +92,10 @@ static void on_rbuffer_nonfull(RBuffer *buf, void *data)
 /// Called by libuv to allocate memory for reading.
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
-  Stream *stream = handle->data;
-  // `uv_buf_t.len` happens to have different size on Windows.
-  size_t write_count;
-  buf->base = rbuffer_write_ptr(stream->buffer, &write_count);
-  buf->len = UV_BUF_LEN(write_count);
+  RStream *stream = handle->data;
+  buf->base = stream->write_pos;
+  // `uv_buf_t.len` happens to have different size on Windows (as a treat)
+  buf->len = UV_BUF_LEN(rstream_space(stream));
 }
 
 /// Callback invoked by libuv after it copies the data into the buffer provided
@@ -99,27 +103,27 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 /// 0-length buffer.
 static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 {
-  Stream *stream = uvstream->data;
+  RStream *stream = uvstream->data;
 
   if (cnt <= 0) {
     // cnt == 0 means libuv asked for a buffer and decided it wasn't needed:
     // http://docs.libuv.org/en/latest/stream.html#c.uv_read_start.
     //
-    // We don't need to do anything with the RBuffer because the next call
+    // We don't need to do anything with the buffer because the next call
     // to `alloc_cb` will return the same unused pointer (`rbuffer_produced`
     // won't be called)
     if (cnt == UV_ENOBUFS || cnt == 0) {
       return;
     } else if (cnt == UV_EOF && uvstream->type == UV_TTY) {
       // The TTY driver might signal EOF without closing the stream
-      invoke_read_cb(stream, 0, true);
+      invoke_read_cb(stream, true);
     } else {
       DLOG("closing Stream (%p): %s (%s)", (void *)stream,
            uv_err_name((int)cnt), os_strerror((int)cnt));
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true
       uv_read_stop(uvstream);
-      invoke_read_cb(stream, 0, true);
+      invoke_read_cb(stream, true);
     }
     return;
   }
@@ -127,10 +131,13 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
   // at this point we're sure that cnt is positive, no error occurred
   size_t nread = (size_t)cnt;
   stream->num_bytes += nread;
-  // Data was already written, so all we need is to update 'wpos' to reflect
-  // the space actually used in the buffer.
-  rbuffer_produced(stream->buffer, nread);
-  invoke_read_cb(stream, nread, false);
+  stream->write_pos += cnt;
+  invoke_read_cb(stream, false);
+}
+
+static size_t rstream_space(RStream *stream)
+{
+  return (size_t)((stream->buffer + ARENA_BLOCK_SIZE) - stream->write_pos);
 }
 
 /// Called by the by the 'idle' handle to emulate a reading event
@@ -141,66 +148,91 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 static void fread_idle_cb(uv_idle_t *handle)
 {
   uv_fs_t req;
-  Stream *stream = handle->data;
+  RStream *stream = handle->data;
 
+  stream->uvbuf.base = stream->write_pos;
   // `uv_buf_t.len` happens to have different size on Windows.
-  size_t write_count;
-  stream->uvbuf.base = rbuffer_write_ptr(stream->buffer, &write_count);
-  stream->uvbuf.len = UV_BUF_LEN(write_count);
-
-  // the offset argument to uv_fs_read is int64_t, could someone really try
-  // to read more than 9 quintillion (9e18) bytes?
-  // upcast is meant to avoid tautological condition warning on 32 bits
-  uintmax_t fpos_intmax = stream->fpos;
-  if (fpos_intmax > INT64_MAX) {
-    ELOG("stream offset overflow");
-    preserve_exit("stream offset overflow");
-  }
+  stream->uvbuf.len = UV_BUF_LEN(rstream_space(stream));
 
   // Synchronous read
-  uv_fs_read(handle->loop,
-             &req,
-             stream->fd,
-             &stream->uvbuf,
-             1,
-             (int64_t)stream->fpos,
-             NULL);
+  uv_fs_read(handle->loop, &req, stream->s.fd, &stream->uvbuf, 1, stream->s.fpos, NULL);
 
   uv_fs_req_cleanup(&req);
 
   if (req.result <= 0) {
-    uv_idle_stop(&stream->uv.idle);
-    invoke_read_cb(stream, 0, true);
+    uv_idle_stop(&stream->s.uv.idle);
+    invoke_read_cb(stream, true);
     return;
   }
 
-  // no errors (req.result (ssize_t) is positive), it's safe to cast.
-  size_t nread = (size_t)req.result;
-  rbuffer_produced(stream->buffer, nread);
-  stream->fpos += nread;
-  invoke_read_cb(stream, nread, false);
+  // no errors (req.result (ssize_t) is positive), it's safe to use.
+  stream->write_pos += req.result;
+  stream->s.fpos += req.result;
+  invoke_read_cb(stream, false);
 }
 
 static void read_event(void **argv)
 {
-  Stream *stream = argv[0];
+  RStream *stream = argv[0];
+  stream->pending_read = false;
   if (stream->read_cb) {
-    size_t count = (uintptr_t)argv[1];
-    bool eof = (uintptr_t)argv[2];
-    stream->did_eof = eof;
-    stream->read_cb(stream, stream->buffer, count, stream->cb_data, eof);
+    size_t available = rstream_available(stream);
+    size_t consumed = stream->read_cb(stream, stream->read_pos, available, stream->s.cb_data,
+                                      stream->did_eof);
+    assert(consumed <= available);
+    rstream_consume(stream, consumed);
   }
-  stream->pending_reqs--;
-  if (stream->closed && !stream->pending_reqs) {
-    stream_close_handle(stream);
+  stream->s.pending_reqs--;
+  if (stream->s.closed && !stream->s.pending_reqs) {
+    stream_close_handle(&stream->s, true);
   }
 }
 
-static void invoke_read_cb(Stream *stream, size_t count, bool eof)
+size_t rstream_available(RStream *stream)
 {
-  // Don't let the stream be closed before the event is processed.
-  stream->pending_reqs++;
+  return (size_t)(stream->write_pos - stream->read_pos);
+}
 
-  CREATE_EVENT(stream->events, read_event,
-               stream, (void *)(uintptr_t *)count, (void *)(uintptr_t)eof);
+void rstream_consume(RStream *stream, size_t consumed)
+{
+  stream->read_pos += consumed;
+  size_t remaining = (size_t)(stream->write_pos - stream->read_pos);
+  if (remaining > 0 && stream->read_pos > stream->buffer) {
+    memmove(stream->buffer, stream->read_pos, remaining);
+    stream->read_pos = stream->buffer;
+    stream->write_pos = stream->buffer + remaining;
+  } else if (remaining == 0) {
+    stream->read_pos = stream->write_pos = stream->buffer;
+  }
+
+  if (stream->want_read && stream->paused_full && rstream_space(stream)) {
+    assert(stream->read_cb);
+    stream->paused_full = false;
+    rstream_start_inner(stream);
+  }
+}
+
+static void invoke_read_cb(RStream *stream, bool eof)
+{
+  stream->did_eof |= eof;
+
+  if (!rstream_space(stream)) {
+    rstream_stop_inner(stream);
+    stream->paused_full = true;
+  }
+
+  // we cannot use pending_reqs as a socket can have both pending reads and writes
+  if (stream->pending_read) {
+    return;
+  }
+
+  // Don't let the stream be closed before the event is processed.
+  stream->s.pending_reqs++;
+  stream->pending_read = true;
+  CREATE_EVENT(stream->s.events, read_event, stream);
+}
+
+void rstream_may_close(RStream *stream)
+{
+  stream_may_close(&stream->s, true);
 }

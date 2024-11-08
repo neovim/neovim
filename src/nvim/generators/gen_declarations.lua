@@ -2,6 +2,7 @@ local fname = arg[1]
 local static_fname = arg[2]
 local non_static_fname = arg[3]
 local preproc_fname = arg[4]
+local static_basename = arg[5]
 
 local lpeg = vim.lpeg
 
@@ -69,7 +70,7 @@ local raw_word = concat(w, any_amount(aw))
 local right_word = concat(raw_word, neg_look_ahead(aw))
 local word = branch(
   concat(
-    branch(lit('ArrayOf('), lit('DictionaryOf('), lit('Dict(')), -- typed container macro
+    branch(lit('ArrayOf('), lit('DictOf('), lit('Dict(')), -- typed container macro
     one_or_more(any_character - lit(')')),
     lit(')')
   ),
@@ -207,6 +208,10 @@ if fname:find('.*/src/nvim/.*%.c$') then
 // IWYU pragma: private, include "%s"
 ]]):format(header_fname:gsub('.*/src/nvim/', 'nvim/')) .. non_static
   end
+elseif fname:find('.*/src/nvim/.*%.h$') then
+  static = ([[
+// IWYU pragma: private, include "%s"
+]]):format(fname:gsub('.*/src/nvim/', 'nvim/')) .. static
 elseif non_static_fname:find('/include/api/private/dispatch_wrappers%.h%.generated%.h$') then
   non_static = [[
 // IWYU pragma: private, include "nvim/api/private/dispatch.h"
@@ -235,6 +240,7 @@ local declendpos = 0
 local curdir = nil
 local is_needed_file = false
 local init_is_nl = true
+local any_static = false
 while init ~= nil do
   if init_is_nl and text:sub(init, init) == '#' then
     local line, dir, file = text:match(filepattern, init)
@@ -276,6 +282,9 @@ while init ~= nil do
       end
       declaration = declaration .. '\n'
       if declaration:sub(1, 6) == 'static' then
+        if declaration:find('FUNC_ATTR_') then
+          any_static = true
+        end
         static = static .. declaration
       else
         declaration = 'DLLEXPORT ' .. declaration
@@ -303,6 +312,21 @@ F = io.open(static_fname, 'w')
 F:write(static)
 F:close()
 
+if any_static then
+  F = io.open(fname, 'r')
+  local orig_text = F:read('*a')
+  local pat = '\n#%s?include%s+"' .. static_basename .. '"\n'
+  local pat_comment = '\n#%s?include%s+"' .. static_basename .. '"%s*//'
+  if not string.find(orig_text, pat) and not string.find(orig_text, pat_comment) then
+    error('fail: missing include for ' .. static_basename .. ' in ' .. fname)
+  end
+  F:close()
+end
+
+if non_static_fname == 'SKIP' then
+  return -- only want static declarations
+end
+
 -- Before generating the non-static headers, check if the current file (if
 -- exists) is different from the new one. If they are the same, we won't touch
 -- the current version to avoid triggering an unnecessary rebuilds of modules
@@ -312,7 +336,7 @@ if F ~= nil then
   if F:read('*a') == non_static then
     os.exit(0)
   end
-  io.close(F)
+  F:close()
 end
 
 F = io.open(non_static_fname, 'w')

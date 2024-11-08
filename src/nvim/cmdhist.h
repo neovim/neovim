@@ -23,8 +23,9 @@ enum { HIST_COUNT = HIST_DEBUG + 1, };  ///< Number of history tables
 typedef struct {
   int hisnum;           ///< Entry identifier number.
   char *hisstr;         ///< Actual entry, separator char after the NUL.
+  size_t hisstrlen;     ///< Length of hisstr (excluding the NUL).
   Timestamp timestamp;  ///< Time when entry was added.
-  list_T *additional_elements;  ///< Additional entries from ShaDa file.
+  AdditionalData *additional_data;  ///< Additional entries from ShaDa file.
 } histentry_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

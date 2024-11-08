@@ -1,7 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local tt = require('test.functional.terminal.testutil')
+local tt = require('test.functional.testterm')
 local clear, eq, eval = n.clear, t.eq, n.eval
 local feed, api, command = n.feed, n.api, n.command
 local feed_data = tt.feed_data
@@ -14,10 +14,12 @@ describe(':terminal mouse', function()
   before_each(function()
     clear()
     api.nvim_set_option_value('statusline', '==========', {})
-    command('highlight StatusLine cterm=NONE')
-    command('highlight StatusLineNC cterm=NONE')
-    command('highlight VertSplit cterm=NONE')
-    screen = tt.screen_setup()
+    screen = tt.setup_screen()
+    command('highlight StatusLine NONE')
+    command('highlight StatusLineNC NONE')
+    command('highlight StatusLineTerm NONE')
+    command('highlight StatusLineTermNC NONE')
+    command('highlight VertSplit NONE')
     local lines = {}
     for i = 1, 30 do
       table.insert(lines, 'line' .. tostring(i))

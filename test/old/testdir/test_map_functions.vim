@@ -20,7 +20,7 @@ func Test_maparg()
   call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'foo<C-V>',
         \ 'lhsraw': "foo\x80\xfc\x04V", 'lhsrawalt': "foo\x16",
         \ 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
-        \ 'lnum': lnum + 1, 
+        \ 'lnum': lnum + 1,
 	\ 'rhs': 'is<F4>foo', 'buffer': 0, 'abbr': 0, 'mode_bits': 0x47},
 	\ maparg('foo<C-V>', '', 0, 1))
   call assert_equal({'silent': 1, 'noremap': 1, 'script': 1, 'lhs': 'bar',
@@ -525,6 +525,25 @@ func Test_map_restore_negative_sid()
     call assert_equal([], readfile('Xresult'))
   endif
   call delete('Xresult')
+endfunc
+
+" Check that restoring a mapping doesn't remove a mapping whose {rhs} matches
+" the restored mapping's {lhs}.
+func Test_map_restore_with_rhs_match_lhs()
+  nnoremap <F2> <F3>
+  nnoremap <F3> <F4>
+  call assert_equal('<F3>', maparg('<F2>', 'n'))
+  call assert_equal('<F4>', maparg('<F3>', 'n'))
+  let d = maparg('<F3>', 'n', v:false, v:true)
+  nunmap <F3>
+  call assert_equal('<F3>', maparg('<F2>', 'n'))
+  call assert_equal('', maparg('<F3>', 'n'))
+  call mapset(d)
+  call assert_equal('<F3>', maparg('<F2>', 'n'))
+  call assert_equal('<F4>', maparg('<F3>', 'n'))
+
+  nunmap <F2>
+  nunmap <F3>
 endfunc
 
 func Test_maplist()

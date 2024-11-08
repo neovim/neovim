@@ -108,5 +108,35 @@ func Test_matchparen_pum_clear()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test that matchparen works with multibyte chars in 'matchpairs'
+func Test_matchparen_mbyte()
+  CheckScreendump
+
+  let lines =<< trim END
+    source $VIMRUNTIME/plugin/matchparen.vim
+    call setline(1, ['aaaaaaaa（', 'bbbb）cc'])
+    set matchpairs+=（:）
+  END
+
+  call writefile(lines, 'XmatchparenMbyte', 'D')
+  let buf = RunVimInTerminal('-S XmatchparenMbyte', #{rows: 10})
+  call VerifyScreenDump(buf, 'Test_matchparen_mbyte_1', {})
+  call term_sendkeys(buf, "$")
+  call VerifyScreenDump(buf, 'Test_matchparen_mbyte_2', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_matchparen_mbyte_3', {})
+  call term_sendkeys(buf, "2h")
+  call VerifyScreenDump(buf, 'Test_matchparen_mbyte_4', {})
+  call term_sendkeys(buf, "0")
+  call VerifyScreenDump(buf, 'Test_matchparen_mbyte_5', {})
+  call term_sendkeys(buf, "kA")
+  call VerifyScreenDump(buf, 'Test_matchparen_mbyte_6', {})
+  call term_sendkeys(buf, "\<Down>")
+  call VerifyScreenDump(buf, 'Test_matchparen_mbyte_7', {})
+  call term_sendkeys(buf, "\<C-W>")
+  call VerifyScreenDump(buf, 'Test_matchparen_mbyte_8', {})
+
+  call StopVimInTerminal(buf)
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

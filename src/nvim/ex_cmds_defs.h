@@ -233,5 +233,5 @@ typedef struct {
 typedef struct {
   char *sub;            ///< Previous replacement string.
   Timestamp timestamp;  ///< Time when it was last set.
-  list_T *additional_elements;  ///< Additional data left from ShaDa file.
+  AdditionalData *additional_data;  ///< Additional data left from ShaDa file.
 } SubReplacementString;

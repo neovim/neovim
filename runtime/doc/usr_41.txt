@@ -836,6 +836,7 @@ System functions and manipulation of files:
 	getfperm()		get the permissions of a file
 	setfperm()		set the permissions of a file
 	getftype()		get the kind of a file
+	isabsolutepath()	check if a path is absolute
 	isdirectory()		check if a directory exists
 	getfsize()		get the size of a file
 	getcwd()		get the current working directory
@@ -855,6 +856,7 @@ System functions and manipulation of files:
 	readblob()		read a file into a Blob
 	readdir()		get a List of file names in a directory
 	writefile()		write a List of lines or Blob into a file
+	filecopy()		copy a file {from} to {to}
 
 Date and Time:				*date-functions* *time-functions*
 	getftime()		get last modification time of a file
@@ -904,9 +906,12 @@ Buffers, windows and the argument list:
 	swapname()		get the swap file path of a buffer
 
 Command line:					*command-line-functions*
+	getcmdcomplpat()	get completion pattern of the current command
+				line
 	getcmdcompltype()	get the type of the current command line
 				completion
-	getcmdline()		get the current command line
+	getcmdline()		get the current command line input
+	getcmdprompt()		get the current command line prompt
 	getcmdpos()		get position of the cursor in the command line
 	getcmdscreenpos()	get screen position of the cursor in the
 				command line

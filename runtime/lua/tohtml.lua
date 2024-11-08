@@ -1,6 +1,6 @@
 --- @brief
 ---<pre>help
----:TOhtml {file}                                                       *:TOhtml*
+---:[range]TOhtml {file}                                                *:TOhtml*
 ---Converts the buffer shown in the current window to HTML, opens the generated
 ---HTML in a new split window, and saves its contents to {file}. If {file} is not
 ---given, a temporary file (created by |tempname()|) is used.
@@ -40,13 +40,14 @@
 --- @field winid integer
 --- @field bufnr integer
 --- @field width integer
---- @field buflen integer
+--- @field start integer
+--- @field end_ integer
 
 --- @class (private) vim.tohtml.styletable
 --- @field [integer] vim.tohtml.line (integer: (1-index, exclusive))
 
 --- @class (private) vim.tohtml.line
---- @field virt_lines {[integer]:{[1]:string,[2]:integer}[]}
+--- @field virt_lines {[integer]:[string,integer][]}
 --- @field pre_text string[][]
 --- @field hide? boolean
 --- @field [integer] vim.tohtml.cell? (integer: (1-index, exclusive))
@@ -393,7 +394,7 @@ end
 
 --- @param state vim.tohtml.state
 local function styletable_syntax(state)
-  for row = 1, state.buflen do
+  for row = state.start, state.end_ do
     local prev_id = 0
     local prev_col = nil
     for col = 1, #vim.fn.getline(row) + 1 do
@@ -413,7 +414,7 @@ end
 --- @param state vim.tohtml.state
 local function styletable_diff(state)
   local styletable = state.style
-  for row = 1, state.buflen do
+  for row = state.start, state.end_ do
     local style_line = styletable[row]
     local filler = vim.fn.diff_filler(row)
     if filler ~= 0 then
@@ -423,7 +424,7 @@ local function styletable_diff(state)
         { { fill:rep(state.width), register_hl(state, 'DiffDelete') } }
       )
     end
-    if row == state.buflen + 1 then
+    if row == state.end_ + 1 then
       break
     end
     local prev_id = 0
@@ -465,7 +466,9 @@ local function styletable_treesitter(state)
     if not query then
       return
     end
-    for capture, node, metadata in query:iter_captures(root, buf_highlighter.bufnr, 0, state.buflen) do
+    for capture, node, metadata in
+      query:iter_captures(root, buf_highlighter.bufnr, state.start - 1, state.end_)
+    do
       local srow, scol, erow, ecol = node:range()
       --- @diagnostic disable-next-line: invisible
       local c = q._query.captures[capture]
@@ -481,7 +484,7 @@ local function styletable_treesitter(state)
 end
 
 --- @param state vim.tohtml.state
---- @param extmark {[1]:integer,[2]:integer,[3]:integer,[4]:vim.api.keyset.set_extmark|any}
+--- @param extmark [integer, integer, integer, vim.api.keyset.set_extmark|any]
 --- @param namespaces table<integer,string>
 local function _styletable_extmarks_highlight(state, extmark, namespaces)
   if not extmark[4].hl_group then
@@ -503,7 +506,7 @@ local function _styletable_extmarks_highlight(state, extmark, namespaces)
 end
 
 --- @param state vim.tohtml.state
---- @param extmark {[1]:integer,[2]:integer,[3]:integer,[4]:vim.api.keyset.set_extmark|any}
+--- @param extmark [integer, integer, integer, vim.api.keyset.set_extmark|any]
 --- @param namespaces table<integer,string>
 local function _styletable_extmarks_virt_text(state, extmark, namespaces)
   if not extmark[4].virt_text then
@@ -519,9 +522,12 @@ local function _styletable_extmarks_virt_text(state, extmark, namespaces)
   --- @type integer,integer
   local row, col = extmark[2], extmark[3]
   if
-    extmark[4].virt_text_pos == 'inline'
-    or extmark[4].virt_text_pos == 'eol'
-    or extmark[4].virt_text_pos == 'overlay'
+    row < vim.api.nvim_buf_line_count(state.bufnr)
+    and (
+      extmark[4].virt_text_pos == 'inline'
+      or extmark[4].virt_text_pos == 'eol'
+      or extmark[4].virt_text_pos == 'overlay'
+    )
   then
     if extmark[4].virt_text_pos == 'eol' then
       style_line_insert_virt_text(styletable[row + 1], #vim.fn.getline(row + 1) + 1, { ' ' })
@@ -559,7 +565,7 @@ local function _styletable_extmarks_virt_text(state, extmark, namespaces)
 end
 
 --- @param state vim.tohtml.state
---- @param extmark {[1]:integer,[2]:integer,[3]:integer,[4]:vim.api.keyset.set_extmark|any}
+--- @param extmark [integer, integer, integer, vim.api.keyset.set_extmark|any]
 local function _styletable_extmarks_virt_lines(state, extmark)
   ---TODO(altermo) if the fold start is equal to virt_line start then the fold hides the virt_line
   if not extmark[4].virt_lines then
@@ -580,7 +586,7 @@ local function _styletable_extmarks_virt_lines(state, extmark)
 end
 
 --- @param state vim.tohtml.state
---- @param extmark {[1]:integer,[2]:integer,[3]:integer,[4]:vim.api.keyset.set_extmark|any}
+--- @param extmark [integer, integer, integer, vim.api.keyset.set_extmark|any]
 local function _styletable_extmarks_conceal(state, extmark)
   if not extmark[4].conceal or state.opt.conceallevel == 0 then
     return
@@ -625,7 +631,7 @@ end
 local function styletable_folds(state)
   local styletable = state.style
   local has_folded = false
-  for row = 1, state.buflen do
+  for row = state.start, state.end_ do
     if vim.fn.foldclosed(row) > 0 then
       has_folded = true
       styletable[row].hide = true
@@ -646,9 +652,9 @@ end
 --- @param state vim.tohtml.state
 local function styletable_conceal(state)
   local bufnr = state.bufnr
-  vim.api.nvim_buf_call(bufnr, function()
-    for row = 1, state.buflen do
-      --- @type table<integer,{[1]:integer,[2]:integer,[3]:string}>
+  vim._with({ buf = bufnr }, function()
+    for row = state.start, state.end_ do
+      --- @type table<integer,[integer,integer,string]>
       local conceals = {}
       local line_len_exclusive = #vim.fn.getline(row) + 1
       for col = 1, line_len_exclusive do
@@ -764,8 +770,8 @@ local function styletable_statuscolumn(state)
     if foldcolumn:match('^auto') then
       local max = tonumber(foldcolumn:match('^%w-:(%d)')) or 1
       local maxfold = 0
-      vim.api.nvim_buf_call(state.bufnr, function()
-        for row = 1, vim.api.nvim_buf_line_count(state.bufnr) do
+      vim._with({ buf = state.bufnr }, function()
+        for row = state.start, state.end_ do
           local foldlevel = vim.fn.foldlevel(row)
           if foldlevel > maxfold then
             maxfold = foldlevel
@@ -780,7 +786,7 @@ local function styletable_statuscolumn(state)
 
   --- @type table<integer,any>
   local statuses = {}
-  for row = 1, state.buflen do
+  for row = state.start, state.end_ do
     local status = vim.api.nvim_eval_statusline(
       statuscolumn,
       { winid = state.winid, use_statuscol_lnum = row, highlights = true }
@@ -830,7 +836,7 @@ local function styletable_listchars(state)
   })
 
   if listchars.eol then
-    for row = 1, state.buflen do
+    for row = state.start, state.end_ do
       local style_line = state.style[row]
       style_line_insert_overlay_char(
         style_line,
@@ -997,6 +1003,7 @@ local function extend_style(out, state)
     --TODO(altermo) use local namespace (instead of global 0)
     local fg = vim.fn.synIDattr(hlid, 'fg#')
     local bg = vim.fn.synIDattr(hlid, 'bg#')
+    local sp = vim.fn.synIDattr(hlid, 'sp#')
     local decor_line = {}
     if vim.fn.synIDattr(hlid, 'underline') ~= '' then
       table.insert(decor_line, 'underline')
@@ -1014,6 +1021,8 @@ local function extend_style(out, state)
       ['font-weight'] = vim.fn.synIDattr(hlid, 'bold') ~= '' and 'bold' or nil,
       ['text-decoration-line'] = not vim.tbl_isempty(decor_line) and table.concat(decor_line, ' ')
         or nil,
+      -- TODO(ribru17): fallback to displayed text color if sp not set
+      ['text-decoration-color'] = sp ~= '' and cterm_to_hex(sp) or nil,
       --TODO(altermo) if strikethrough and undercurl then the strikethrough becomes wavy
       ['text-decoration-style'] = vim.fn.synIDattr(hlid, 'undercurl') ~= '' and 'wavy' or nil,
     }
@@ -1124,16 +1133,22 @@ end
 local function extend_pre(out, state)
   local styletable = state.style
   table.insert(out, '<pre>')
+  local out_start = #out
   local hide_count = 0
   --- @type integer[]
   local stack = {}
 
+  local before = ''
+  local after = ''
   local function loop(row)
+    local inside = row <= state.end_ and row >= state.start
     local style_line = styletable[row]
     if style_line.hide and (styletable[row - 1] or {}).hide then
       return
     end
-    _extend_virt_lines(out, state, row)
+    if inside then
+      _extend_virt_lines(out, state, row)
+    end
     --Possible improvement (altermo):
     --Instead of looping over all the buffer characters per line,
     --why not loop over all the style_line cells,
@@ -1143,8 +1158,16 @@ local function extend_pre(out, state)
     end
     local line = vim.api.nvim_buf_get_lines(state.bufnr, row - 1, row, false)[1] or ''
     local s = ''
-    s = s .. _pre_text_to_html(state, row)
-    for col = 1, #line + 1 do
+    if inside then
+      s = s .. _pre_text_to_html(state, row)
+    end
+    local true_line_len = #line + 1
+    for k in pairs(style_line) do
+      if type(k) == 'number' and k > true_line_len then
+        true_line_len = k
+      end
+    end
+    for col = 1, true_line_len do
       local cell = style_line[col]
       --- @type table?
       local char
@@ -1184,18 +1207,18 @@ local function extend_pre(out, state)
           end
         end
 
-        if cell[3] then
+        if cell[3] and inside then
           s = s .. _virt_text_to_html(state, cell)
         end
 
         char = cell[4][#cell[4]]
       end
 
-      if col == #line + 1 and not char then
+      if col == true_line_len and not char then
         break
       end
 
-      if hide_count == 0 then
+      if hide_count == 0 and inside then
         s = s
           .. _char_to_html(
             state,
@@ -1204,12 +1227,20 @@ local function extend_pre(out, state)
           )
       end
     end
-    table.insert(out, s)
+    if row > state.end_ + 1 then
+      after = after .. s
+    elseif row < state.start then
+      before = s .. before
+    else
+      table.insert(out, s)
+    end
   end
 
-  for row = 1, state.buflen + 1 do
+  for row = 1, vim.api.nvim_buf_line_count(state.bufnr) + 1 do
     loop(row)
   end
+  out[out_start] = out[out_start] .. before
+  out[#out] = out[#out] .. after
   assert(#stack == 0, 'an open HTML tag was never closed')
   table.insert(out, '</pre>')
 end
@@ -1241,6 +1272,7 @@ local function global_state_to_state(winid, global_state)
   if not width or width < 1 then
     width = vim.api.nvim_win_get_width(winid)
   end
+  local range = opt.range or { 1, vim.api.nvim_buf_line_count(bufnr) }
   local state = setmetatable({
     winid = winid == 0 and vim.api.nvim_get_current_win() or winid,
     opt = vim.wo[winid],
@@ -1248,7 +1280,8 @@ local function global_state_to_state(winid, global_state)
     bufnr = bufnr,
     tabstop = (' '):rep(vim.bo[bufnr].tabstop),
     width = width,
-    buflen = vim.api.nvim_buf_line_count(bufnr),
+    start = range[1],
+    end_ = range[2],
   }, { __index = global_state })
   return state --[[@as vim.tohtml.state]]
 end
@@ -1260,9 +1293,25 @@ local function opt_to_global_state(opt, title)
   local fonts = {}
   if opt.font then
     fonts = type(opt.font) == 'string' and { opt.font } or opt.font --[[@as (string[])]]
+    for i, v in pairs(fonts) do
+      fonts[i] = ('"%s"'):format(v)
+    end
   elseif vim.o.guifont:match('^[^:]+') then
-    table.insert(fonts, vim.o.guifont:match('^[^:]+'))
+    -- Example:
+    -- Input: "Font,Escape\,comma, Ignore space after comma"
+    -- Output: { "Font","Escape,comma","Ignore space after comma" }
+    local prev = ''
+    for name in vim.gsplit(vim.o.guifont:match('^[^:]+'), ',', { trimempty = true }) do
+      if vim.endswith(name, '\\') then
+        prev = prev .. vim.trim(name:sub(1, -2) .. ',')
+      elseif vim.trim(name) ~= '' then
+        table.insert(fonts, ('"%s%s"'):format(prev, vim.trim(name)))
+        prev = ''
+      end
+    end
   end
+  -- Generic family names (monospace here) must not be quoted
+  -- because the browser recognizes them as font families.
   table.insert(fonts, 'monospace')
   --- @type vim.tohtml.state.global
   local state = {
@@ -1291,7 +1340,7 @@ local styletable_funcs = {
 
 --- @param state vim.tohtml.state
 local function state_generate_style(state)
-  vim.api.nvim_win_call(state.winid, function()
+  vim._with({ win = state.winid }, function()
     for _, fn in ipairs(styletable_funcs) do
       --- @type string?
       local cond
@@ -1307,35 +1356,22 @@ local function state_generate_style(state)
   end)
 end
 
---- @param winid integer[]|integer
+--- @param winid integer
 --- @param opt? vim.tohtml.opt
 --- @return string[]
 local function win_to_html(winid, opt)
-  if type(winid) == 'number' then
-    winid = { winid }
-  end
-  --- @cast winid integer[]
-  assert(#winid > 0, 'no window specified')
   opt = opt or {}
-  local title = table.concat(
-    vim.tbl_map(vim.api.nvim_buf_get_name, vim.tbl_map(vim.api.nvim_win_get_buf, winid)),
-    ','
-  )
+  local title = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(winid))
+
   local global_state = opt_to_global_state(opt, title)
-  --- @type vim.tohtml.state[]
-  local states = {}
-  for _, i in ipairs(winid) do
-    local state = global_state_to_state(i, global_state)
-    state_generate_style(state)
-    table.insert(states, state)
-  end
+  local state = global_state_to_state(winid, global_state)
+  state_generate_style(state)
+
   local html = {}
   extend_html(html, function()
     extend_head(html, global_state)
     extend_body(html, function()
-      for _, state in ipairs(states) do
-        extend_pre(html, state)
-      end
+      extend_pre(html, state)
     end)
   end)
   return html
@@ -1362,6 +1398,10 @@ local M = {}
 --- infinitely.
 --- (default: 'textwidth' if non-zero or window width otherwise)
 --- @field width? integer
+---
+--- Range of rows to use.
+--- (default: entire buffer)
+--- @field range? integer[]
 
 --- Converts the buffer shown in the window {winid} to HTML and returns the output as a list of string.
 --- @param winid? integer Window to convert (defaults to current window)

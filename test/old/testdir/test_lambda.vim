@@ -217,7 +217,9 @@ endfunc
 func Test_lambda_combination()
   call assert_equal(2, {x -> {x -> x}}(1)(2))
   call assert_equal(10, {y -> {x -> x(y)(10)}({y -> y})}({z -> z}))
-  call assert_equal(5.0, {x -> {y -> x / y}}(10)(2.0))
+  if has('float')
+    call assert_equal(5.0, {x -> {y -> x / y}}(10)(2.0))
+  endif
   call assert_equal(6, {x -> {y -> {z -> x + y + z}}}(1)(2)(3))
 
   call assert_equal(6, {x -> {f -> f(x)}}(3)({x -> x * 2}))

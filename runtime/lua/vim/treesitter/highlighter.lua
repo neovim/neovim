@@ -47,7 +47,7 @@ function TSHighlighterQuery:get_hl_from_capture(capture)
   return self.hl_cache[capture]
 end
 
----@package
+---@nodoc
 function TSHighlighterQuery:query()
   return self._query
 end
@@ -75,7 +75,7 @@ local TSHighlighter = {
 
 TSHighlighter.__index = TSHighlighter
 
----@package
+---@nodoc
 ---
 --- Creates a highlighter for `tree`.
 ---
@@ -139,11 +139,14 @@ function TSHighlighter.new(tree, opts)
   -- but use synload.vim rather than syntax.vim to not enable
   -- syntax FileType autocmds. Later on we should integrate with the
   -- `:syntax` and `set syntax=...` machinery properly.
+  -- Still need to ensure that syntaxset augroup exists, so that calling :destroy()
+  -- immediately afterwards will not error.
   if vim.g.syntax_on ~= 1 then
     vim.cmd.runtime({ 'syntax/synload.vim', bang = true })
+    vim.api.nvim_create_augroup('syntaxset', { clear = false })
   end
 
-  api.nvim_buf_call(self.bufnr, function()
+  vim._with({ buf = self.bufnr }, function()
     vim.opt_local.spelloptions:append('noplainbuffer')
   end)
 
@@ -232,7 +235,7 @@ function TSHighlighter:on_changedtree(changes)
 end
 
 --- Gets the query used for @param lang
----@package
+---@nodoc
 ---@param lang string Language used by the highlighter.
 ---@return vim.treesitter.highlighter.Query
 function TSHighlighter:get_query(lang)
@@ -325,7 +328,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         -- The "priority" attribute can be set at the pattern level or on a particular capture
         local priority = (
           tonumber(metadata.priority or metadata[capture] and metadata[capture].priority)
-          or vim.highlight.priorities.treesitter
+          or vim.hl.priorities.treesitter
         ) + spell_pri_offset
 
         -- The "conceal" attribute can be set at the pattern level or on a particular capture
@@ -377,11 +380,15 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
     return
   end
 
+  -- Do not affect potentially populated highlight state. Here we just want a temporary
+  -- empty state so the C code can detect whether the region should be spell checked.
+  local highlight_states = self._highlight_states
   self:prepare_highlight_states(srow, erow)
 
   for row = srow, erow do
     on_line_impl(self, buf, row, true)
   end
+  self._highlight_states = highlight_states
 end
 
 ---@private

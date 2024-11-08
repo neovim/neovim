@@ -1,7 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local tt = require('test.functional.terminal.testutil')
+local tt = require('test.functional.testterm')
 local assert_alive = n.assert_alive
 local clear = n.clear
 local feed = n.feed
@@ -22,10 +22,12 @@ describe(':terminal', function()
     -- set the statusline to a constant value because of variables like pid
     -- and current directory and to improve visibility of splits
     api.nvim_set_option_value('statusline', '==========', {})
-    command('highlight StatusLine cterm=NONE')
-    command('highlight StatusLineNC cterm=NONE')
-    command('highlight VertSplit cterm=NONE')
-    screen = tt.screen_setup(3)
+    screen = tt.setup_screen(3)
+    command('highlight StatusLine NONE')
+    command('highlight StatusLineNC NONE')
+    command('highlight StatusLineTerm NONE')
+    command('highlight StatusLineTermNC NONE')
+    command('highlight VertSplit NONE')
   end)
 
   after_each(function()

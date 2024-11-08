@@ -5,7 +5,6 @@
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/func_attr.h"
 #include "nvim/gettext_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/marktree_defs.h"
@@ -39,7 +38,7 @@ enum bln_values {
   BLN_NOCURWIN = 128,  ///< buffer is not associated with curwin
 };
 
-/// Values for action argument for do_buffer()
+/// Values for action argument for do_buffer_ext() and close_buffer()
 enum dobuf_action_values {
   DOBUF_GOTO   = 0,  ///< go to specified buffer
   DOBUF_SPLIT  = 1,  ///< split window and go to specified buffer
@@ -48,12 +47,19 @@ enum dobuf_action_values {
   DOBUF_WIPE   = 4,  ///< delete specified buffer(s) really
 };
 
-/// Values for start argument for do_buffer()
+/// Values for start argument for do_buffer_ext()
 enum dobuf_start_values {
   DOBUF_CURRENT = 0,  ///< "count" buffer from current buffer
   DOBUF_FIRST   = 1,  ///< "count" buffer from first buffer
   DOBUF_LAST    = 2,  ///< "count" buffer from last buffer
   DOBUF_MOD     = 3,  ///< "count" mod. buffer from current buffer
+};
+
+/// Values for flags argument of do_buffer_ext()
+enum dobuf_flags_value {
+  DOBUF_FORCEIT  = 1,  ///< :cmd!
+  DOBUF_SKIPHELP = 4,  ///< skip or keep help buffers depending on b_help of the
+                       ///< starting buffer
 };
 
 /// flags for buf_freeall()
@@ -69,11 +75,8 @@ EXTERN char *msg_qflist INIT( = N_("[Quickfix List]"));
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.h.generated.h"
+# include "buffer.h.inline.generated.h"
 #endif
-
-static inline varnumber_T buf_get_changedtick(const buf_T *buf)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE
-  REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get b:changedtick value
 ///
@@ -81,6 +84,8 @@ static inline varnumber_T buf_get_changedtick(const buf_T *buf)
 ///
 /// @param[in]  buf  Buffer to get b:changedtick from.
 static inline varnumber_T buf_get_changedtick(const buf_T *const buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf->changedtick_di.di_tv.vval.v_number;
 }

@@ -462,12 +462,8 @@ end:
 /// = row` and `start_col = end_col = col`. To delete the text in a range, use
 /// `replacement = {}`.
 ///
-/// Prefer |nvim_buf_set_lines()| if you are only adding or deleting entire lines.
-///
-/// Prefer |nvim_put()| if you want to insert text at the cursor position.
-///
-/// @see |nvim_buf_set_lines()|
-/// @see |nvim_put()|
+/// @note Prefer |nvim_buf_set_lines()| (for performance) to add or delete entire lines.
+/// @note Prefer |nvim_paste()| or |nvim_put()| to insert (instead of replace) text at cursor.
 ///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
@@ -866,7 +862,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @param[out]  err   Error details, if any
 /// @returns Array of |maparg()|-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer handle.
-ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Arena *arena, Error *err)
+ArrayOf(Dict) nvim_buf_get_keymap(Buffer buffer, String mode, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -1183,12 +1179,12 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Arena *arena, 
   return rv;
 }
 
-/// call a function with buffer as temporary current buffer
+/// Call a function with buffer as temporary current buffer.
 ///
 /// This temporarily switches current buffer to "buffer".
-/// If the current window already shows "buffer", the window is not switched
+/// If the current window already shows "buffer", the window is not switched.
 /// If a window inside the current tabpage (including a float) already shows the
-/// buffer One of these windows will be set as current window temporarily.
+/// buffer, then one of these windows will be set as current window temporarily.
 /// Otherwise a temporary scratch window (called the "autocmd window" for
 /// historical reasons) will be used.
 ///
@@ -1221,14 +1217,14 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
 }
 
 /// @nodoc
-Dictionary nvim__buf_stats(Buffer buffer, Arena *arena, Error *err)
+Dict nvim__buf_stats(Buffer buffer, Arena *arena, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
-    return (Dictionary)ARRAY_DICT_INIT;
+    return (Dict)ARRAY_DICT_INIT;
   }
 
-  Dictionary rv = arena_dict(arena, 7);
+  Dict rv = arena_dict(arena, 7);
   // Number of times the cached line was flushed.
   // This should generally not increase while editing the same
   // line in the same mode.
@@ -1375,7 +1371,7 @@ static inline void init_line_array(lua_State *lstate, Array *a, size_t size, Are
 /// @param s           String to push
 /// @param len         Size of string
 /// @param idx         0-based index to place s (only used for Lua)
-/// @param replace_nl  Replace newlines ('\n') with null ('\0')
+/// @param replace_nl  Replace newlines ('\n') with null (NUL)
 static void push_linestr(lua_State *lstate, Array *a, const char *s, size_t len, int idx,
                          bool replace_nl, Arena *arena)
 {
@@ -1384,7 +1380,7 @@ static void push_linestr(lua_State *lstate, Array *a, const char *s, size_t len,
     if (s && replace_nl && strchr(s, '\n')) {
       // TODO(bfredl): could manage scratch space in the arena, for the NUL case
       char *tmp = xmemdupz(s, len);
-      strchrsub(tmp, '\n', '\0');
+      strchrsub(tmp, '\n', NUL);
       lua_pushlstring(lstate, tmp, len);
       xfree(tmp);
     } else {
@@ -1397,7 +1393,7 @@ static void push_linestr(lua_State *lstate, Array *a, const char *s, size_t len,
       str = CBUF_TO_ARENA_STR(arena, s, len);
       if (replace_nl) {
         // Vim represents NULs as NLs, but this may confuse clients.
-        strchrsub(str.data, '\n', '\0');
+        strchrsub(str.data, '\n', NUL);
       }
     }
 

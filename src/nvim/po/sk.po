@@ -383,8 +383,7 @@ msgid " Omni completion (^O^N^P)"
 msgstr " Doplòovanie tagov (^O^N^P)"
 
 #: ../edit.c:96
-#, fuzzy
-msgid " Spelling suggestion (s^N^P)"
+msgid " Spelling suggestion (^S^N^P)"
 msgstr " Doplòovanie celých riadkov (^S^N^P)"
 
 #: ../edit.c:97
@@ -3976,8 +3975,8 @@ msgstr ""
 "(2) Úprava tohoto súboru bola preru¹ená neoèakávaným ukonèením programu.\n"
 
 #: ../memline.c:3247
-msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Ak je tomu tak, potom pou¾ite \":recover\" alebo \"vim -r "
+msgid "    If this is the case, use \":recover\" or \"nvim -r "
+msgstr "    Ak je tomu tak, potom pou¾ite \":recover\" alebo \"nvim -r "
 
 #: ../memline.c:3249
 msgid ""

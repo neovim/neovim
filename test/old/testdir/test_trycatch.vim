@@ -50,7 +50,7 @@ func T25_F()
   Xpath 'i'
 endfunc
 
-" Also try using "fina" and "final" and "finall" as abbraviations.
+" Also try using "fina" and "final" and "finall" as abbreviations.
 func T25_G()
   if 1
     try

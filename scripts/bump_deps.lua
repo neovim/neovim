@@ -81,6 +81,14 @@ local function get_dependency(dependency_name)
       repo = 'luvit/luv',
       symbol = 'LUV',
     },
+    ['unibilium'] = {
+      repo = 'neovim/unibilium',
+      symbol = 'UNIBILIUM',
+    },
+    ['utf8proc'] = {
+      repo = 'JuliaStrings/utf8proc',
+      symbol = 'UTF8PROC',
+    },
     ['tree-sitter'] = {
       repo = 'tree-sitter/tree-sitter',
       symbol = 'TREESITTER',
@@ -90,11 +98,11 @@ local function get_dependency(dependency_name)
       symbol = 'TREESITTER_C',
     },
     ['tree-sitter-lua'] = {
-      repo = 'MunifTanjim/tree-sitter-lua',
+      repo = 'tree-sitter-grammars/tree-sitter-lua',
       symbol = 'TREESITTER_LUA',
     },
     ['tree-sitter-vim'] = {
-      repo = 'neovim/tree-sitter-vim',
+      repo = 'tree-sitter-grammars/tree-sitter-vim',
       symbol = 'TREESITTER_VIM',
     },
     ['tree-sitter-vimdoc'] = {
@@ -102,8 +110,20 @@ local function get_dependency(dependency_name)
       symbol = 'TREESITTER_VIMDOC',
     },
     ['tree-sitter-query'] = {
-      repo = 'nvim-treesitter/tree-sitter-query',
+      repo = 'tree-sitter-grammars/tree-sitter-query',
       symbol = 'TREESITTER_QUERY',
+    },
+    ['tree-sitter-markdown'] = {
+      repo = 'tree-sitter-grammars/tree-sitter-markdown',
+      symbol = 'TREESITTER_MARKDOWN',
+    },
+    ['wasmtime'] = {
+      repo = 'bytecodealliance/wasmtime',
+      symbol = 'WASMTIME',
+    },
+    ['uncrustify'] = {
+      repo = 'uncrustify/uncrustify',
+      symbol = 'UNCRUSTIFY',
     },
   }
   local dependency = dependency_table[dependency_name]
@@ -305,10 +325,8 @@ function M.commit(dependency_name, commit)
 end
 
 function M.version(dependency_name, version)
-  vim.validate {
-    dependency_name = { dependency_name, 's' },
-    version = { version, 's' },
-  }
+  vim.validate('dependency_name', dependency_name, 'string')
+  vim.validate('version', version, 'string')
   local dependency = assert(get_dependency(dependency_name))
   verify_cmakelists_committed()
   local commit_sha = get_gh_commit_sha(dependency.repo, version)

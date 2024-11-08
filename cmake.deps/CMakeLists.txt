@@ -1,5 +1,5 @@
 # This is not meant to be included by the top-level.
-cmake_minimum_required (VERSION 3.13)
+cmake_minimum_required(VERSION 3.16)
 project(NVIM_DEPS C)
 
 if(POLICY CMP0135)
@@ -27,22 +27,35 @@ set(DEPS_IGNORE_SHA FALSE)
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
-option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
 option(USE_BUNDLED_LPEG "Use the bundled lpeg." ${USE_BUNDLED})
 # PUC Lua is only used for tests, unless explicitly requested.
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
-option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_TS "Use the bundled treesitter runtime." ${USE_BUNDLED})
 option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
+option(USE_BUNDLED_UTF8PROC "Use the bundled utf8proc library." ${USE_BUNDLED})
+
 if(USE_BUNDLED AND MSVC)
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." ON)
 else()
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." OFF)
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." OFF)
+endif()
+
+option(ENABLE_WASMTIME "Use treesitter with wasmtime support." OFF)
+if(ENABLE_WASMTIME)
+  if(USE_BUNDLED)
+    option(USE_BUNDLED_WASMTIME "Use the bundled wasmtime." ON)
+  else()
+    option(USE_BUNDLED_WASMTIME "Use the bundled wasmtime." OFF)
+  endif()
+endif()
+if(NOT ENABLE_WASMTIME AND USE_BUNDLED_WASMTIME)
+  message(FATAL_ERROR "ENABLE_WASMTIME is set to OFF while USE_BUNDLED_WASMTIME is set to ON.\
+  You need set ENABLE_WASMTIME to ON if you want to use wasmtime.")
 endif()
 
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
@@ -96,16 +109,8 @@ if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
 endif()
 
-if(USE_BUNDLED_LIBVTERM)
-  include(BuildLibvterm)
-endif()
-
 if(USE_BUNDLED_LIBUV)
   include(BuildLibuv)
-endif()
-
-if(USE_BUNDLED_MSGPACK)
-  include(BuildMsgpack)
 endif()
 
 if(USE_BUNDLED_LUAJIT)
@@ -136,8 +141,16 @@ if(USE_BUNDLED_TS_PARSERS)
   include(BuildTreesitterParsers)
 endif()
 
+if(USE_BUNDLED_WASMTIME)
+  include(BuildWasmtime)
+endif()
+
 if(USE_BUNDLED_TS)
   include(BuildTreesitter)
+endif()
+
+if(USE_BUNDLED_UTF8PROC)
+  include(BuildUTF8proc)
 endif()
 
 if(WIN32)

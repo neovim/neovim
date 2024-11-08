@@ -22,10 +22,10 @@ describe('vim.treesitter.inspect_tree', function()
       print()
       ]])
 
-    exec_lua([[
+    exec_lua(function()
       vim.treesitter.start(0, 'lua')
       vim.treesitter.inspect_tree()
-    ]])
+    end)
 
     expect_tree [[
       (chunk ; [0, 0] - [2, 0]
@@ -37,22 +37,26 @@ describe('vim.treesitter.inspect_tree', function()
 
   it('can toggle to show anonymous nodes', function()
     insert([[
-      print()
+      print('hello')
       ]])
 
-    exec_lua([[
+    exec_lua(function()
       vim.treesitter.start(0, 'lua')
       vim.treesitter.inspect_tree()
-    ]])
+    end)
     feed('a')
 
     expect_tree [[
       (chunk ; [0, 0] - [2, 0]
-        (function_call ; [0, 0] - [0, 7]
+        (function_call ; [0, 0] - [0, 14]
           name: (identifier) ; [0, 0] - [0, 5]
-          arguments: (arguments ; [0, 5] - [0, 7]
+          arguments: (arguments ; [0, 5] - [0, 14]
             "(" ; [0, 5] - [0, 6]
-            ")"))) ; [0, 6] - [0, 7]
+            (string ; [0, 6] - [0, 13]
+              start: "'" ; [0, 6] - [0, 7]
+              content: (string_content) ; [0, 7] - [0, 12]
+              end: "'") ; [0, 12] - [0, 13]
+            ")"))) ; [0, 13] - [0, 14]
       ]]
   end)
 
@@ -63,11 +67,11 @@ describe('vim.treesitter.inspect_tree', function()
       ```
       ]])
 
-    exec_lua([[
+    exec_lua(function()
       vim.treesitter.start(0, 'markdown')
       vim.treesitter.get_parser():parse()
       vim.treesitter.inspect_tree()
-    ]])
+    end)
 
     expect_tree [[
       (document ; [0, 0] - [4, 0]
@@ -92,11 +96,11 @@ describe('vim.treesitter.inspect_tree', function()
       ```
       ]])
 
-    exec_lua([[
+    exec_lua(function()
       vim.treesitter.start(0, 'markdown')
       vim.treesitter.get_parser():parse()
       vim.treesitter.inspect_tree()
-    ]])
+    end)
     feed('I')
 
     expect_tree [[
@@ -121,28 +125,28 @@ describe('vim.treesitter.inspect_tree', function()
       ]])
 
     -- setup two windows for the source buffer
-    exec_lua([[
-      source_win = vim.api.nvim_get_current_win()
+    exec_lua(function()
+      _G.source_win = vim.api.nvim_get_current_win()
       vim.api.nvim_open_win(0, false, {
         win = 0,
-        split = 'left'
+        split = 'left',
       })
-    ]])
+    end)
 
     -- setup three windows for the tree buffer
-    exec_lua([[
+    exec_lua(function()
       vim.treesitter.start(0, 'lua')
       vim.treesitter.inspect_tree()
-      tree_win = vim.api.nvim_get_current_win()
-      tree_win_copy_1 = vim.api.nvim_open_win(0, false, {
+      _G.tree_win = vim.api.nvim_get_current_win()
+      _G.tree_win_copy_1 = vim.api.nvim_open_win(0, false, {
         win = 0,
-        split = 'left'
+        split = 'left',
       })
-      tree_win_copy_2 = vim.api.nvim_open_win(0, false, {
+      _G.tree_win_copy_2 = vim.api.nvim_open_win(0, false, {
         win = 0,
-        split = 'left'
+        split = 'left',
       })
-    ]])
+    end)
 
     -- close original source window
     exec_lua('vim.api.nvim_win_close(source_win, false)')
@@ -152,10 +156,10 @@ describe('vim.treesitter.inspect_tree', function()
     eq('', n.api.nvim_get_vvar('errmsg'))
 
     -- close original tree window
-    exec_lua([[
-       vim.api.nvim_set_current_win(tree_win_copy_1)
-       vim.api.nvim_win_close(tree_win, false)
-    ]])
+    exec_lua(function()
+      vim.api.nvim_set_current_win(_G.tree_win_copy_1)
+      vim.api.nvim_win_close(_G.tree_win, false)
+    end)
 
     -- navigates correctly to the remaining source buffer window
     feed('<CR>')

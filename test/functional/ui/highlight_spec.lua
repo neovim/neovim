@@ -596,13 +596,13 @@ describe('highlight', function()
     ]])
     screen:expect(
       [[
-      {1:  }^                       |
+      {1:  }{5:^                       }|
       {1:  }{2:01}{3:234 67}{2:89}{5:             }|
       {4:~                        }|*2
       {7:[No Name] [+]            }|
-      {1:  }                       |
       {1:  }{6:-----------------------}|
-      {4:~                        }|
+      {1:  }{6:-----------------------}|
+      {1:  }                       |
       {8:[No Name]                }|
                                |
     ]],
@@ -1075,6 +1075,44 @@ describe('CursorLine and CursorLineNr highlights', function()
       {101:1 }aaaaaaaaaaaaaaaaaa|
       {101:  }{100:>>>}aaaaaaaaaaaa   |
       {5:-- INSERT --}        |
+    ]])
+  end)
+
+  -- oldtest: Test_cursorline_screenline_resize()
+  it("'cursorlineopt' screenline is updated on window resize", function()
+    local screen = Screen.new(75, 8)
+    screen:attach()
+    exec([[
+      50vnew
+      call setline(1, repeat('xyz ', 30))
+      setlocal number cursorline cursorlineopt=screenline
+      normal! $
+    ]])
+    screen:expect([[
+      {8:  1 }xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xy│                        |
+      {8:    }z xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz │{1:~                       }|
+      {8:    }{21:xyz xyz xyz xyz xyz xyz xyz^                   }│{1:~                       }|
+      {1:~                                                 }│{1:~                       }|*3
+      {3:[No Name] [+]                                      }{2:[No Name]               }|
+                                                                                 |
+    ]])
+    command('vertical resize -4')
+    screen:expect([[
+      {8:  1 }xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xy│                            |
+      {8:    }z xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz │{1:~                           }|
+      {8:    }{21:xyz xyz xyz xyz xyz xyz xyz xyz xyz^       }│{1:~                           }|
+      {1:~                                             }│{1:~                           }|*3
+      {3:[No Name] [+]                                  }{2:[No Name]                   }|
+                                                                                 |
+    ]])
+    command('set cpoptions+=n')
+    screen:expect([[
+      {8:  1 }xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xy│                            |
+      z xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz xyz │{1:~                           }|
+      {21:xyz xyz xyz xyz xyz xyz xyz xyz^               }│{1:~                           }|
+      {1:~                                             }│{1:~                           }|*3
+      {3:[No Name] [+]                                  }{2:[No Name]                   }|
+                                                                                 |
     ]])
   end)
 
@@ -1653,6 +1691,7 @@ describe("'winhighlight' highlight", function()
       [29] = { foreground = Screen.colors.Blue1, background = Screen.colors.Red, bold = true },
       [30] = { background = tonumber('0xff8800') },
       [31] = { background = tonumber('0xff8800'), bold = true, foreground = Screen.colors.Blue },
+      [32] = { bold = true, reverse = true, background = Screen.colors.DarkGreen },
     }
     command('hi Background1 guibg=DarkBlue')
     command('hi Background2 guibg=DarkGreen')
@@ -2215,10 +2254,10 @@ describe("'winhighlight' highlight", function()
       some text                               |
       more tex^t                               |
       {0:~                                       }|
-      {3:[No Name]                        }{1:2,9 All}|
+      {3:[No Name]                        }{11:2,9 All}|
       some text                               |
       more text                               |
-      {4:[No Name]                        }{1:1,1 All}|
+      {4:[No Name]                        }{14:1,1 All}|
                                               |
     ]],
     }
@@ -2229,10 +2268,10 @@ describe("'winhighlight' highlight", function()
       some text                               |
       more tex^t                               |
       {0:~                                       }|
-      {3:[No Name]                        }{5:2,9 All}|
+      {3:[No Name]                        }{32:2,9 All}|
       some text                               |
       more text                               |
-      {4:[No Name]                        }{1:1,1 All}|
+      {4:[No Name]                        }{14:1,1 All}|
                                               |
     ]],
     }
@@ -2243,10 +2282,10 @@ describe("'winhighlight' highlight", function()
       some tex^t                               |
       more text                               |
       {0:~                                       }|
-      {3:[No Name]                        }{5:1,9 All}|
+      {3:[No Name]                        }{32:1,9 All}|
       some text                               |
       more text                               |
-      {4:[No Name]                        }{1:1,1 All}|
+      {4:[No Name]                        }{14:1,1 All}|
                                               |
     ]],
     }
@@ -2387,16 +2426,24 @@ describe('highlight namespaces', function()
   end)
 
   it('winhl does not accept invalid value #24586', function()
-    local res = exec_lua([[
-      local curwin = vim.api.nvim_get_current_win()
-      vim.api.nvim_command("set winhl=Normal:Visual")
-      local _, msg = pcall(vim.api.nvim_command,"set winhl='Normal:Wrong'")
-      return { msg, vim.wo[curwin].winhl }
-    ]])
-    eq({
-      'Vim(set):E5248: Invalid character in group name',
-      'Normal:Visual',
-    }, res)
+    command('set winhl=Normal:Visual')
+    for _, cmd in ipairs({
+      [[set winhl='Normal:Wrong']],
+      [[set winhl=Normal:Wrong']],
+      [[set winhl='Normal:Wrong]],
+    }) do
+      local res = exec_lua(
+        [[
+          local _, msg = pcall(vim.api.nvim_command, ...)
+          return { msg, vim.wo.winhl }
+        ]],
+        cmd
+      )
+      eq({
+        'Vim(set):E5248: Invalid character in group name',
+        'Normal:Visual',
+      }, res)
+    end
   end)
 
   it('Normal in set_hl #25474', function()

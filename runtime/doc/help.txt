@@ -127,6 +127,7 @@ PROGRAMMING LANGUAGE SUPPORT
 |filetype|		Settings for specific types of files
 |quickfix|		Commands for a quick edit-compile-fix cycle
 |ft_ada.txt|		Ada filetype plugin
+|ft_hare.txt|		Filetype plugin for Hare
 |ft_ps1.txt|		PowerShell filetype plugin
 |ft_raku.txt|		Raku filetype plugin
 |ft_rust.txt|		Rust filetype plugin
@@ -168,6 +169,7 @@ VERSIONS
 DEVELOPING NVIM
 
 |dev|			Development of Nvim
+|dev-arch|		Internal architecture, modules, data structures
 |dev-style|		Development style guidelines
 |dev-theme|		Design guidelines (colorschemes etc.)
 |dev-tools|		Tools and techniques for developing Nvim
@@ -187,7 +189,7 @@ Local additions ~
 							*local-additions*
 
 ------------------------------------------------------------------------------
-*bars*		Bars example
+Bars example								*bars*
 
 Now that you've jumped here with CTRL-] or a double mouse click, you can use
 CTRL-T, CTRL-O, g<RightMouse>, or <C-RightMouse> to go back to where you were.
@@ -199,5 +201,5 @@ You can use CTRL-] on any word (even if it is not within "|") and Nvim will
 try to find help for it.  Especially for options in single quotes, e.g.
 'hlsearch'.
 
-------------------------------------------------------------------------------
+
  vim:tw=78:isk=!-~,^*,^\|,^\":ts=8:noet:ft=help:norl:

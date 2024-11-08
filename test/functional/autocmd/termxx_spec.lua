@@ -1,6 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
-local tt = require('test.functional.terminal.testutil')
+local tt = require('test.functional.testterm')
 local uv = vim.uv
 
 local clear, command, testprg = n.clear, n.command, n.testprg
@@ -198,8 +198,11 @@ it('autocmd TermEnter, TermLeave', function()
 end)
 
 describe('autocmd TextChangedT', function()
-  clear()
-  local screen = tt.screen_setup()
+  local screen
+  before_each(function()
+    clear()
+    screen = tt.setup_screen()
+  end)
 
   it('works', function()
     command('autocmd TextChangedT * ++once let g:called = 1')

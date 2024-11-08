@@ -8,7 +8,6 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/log.h"
-#include "nvim/rbuffer.h"
 #include "nvim/types_defs.h"
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
@@ -45,6 +44,8 @@ int stream_set_blocking(int fd, bool blocking)
 void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
   FUNC_ATTR_NONNULL_ARG(2)
 {
+  // The underlying stream is either a file or an existing uv stream.
+  assert(uvstream == NULL ? fd >= 0 : fd < 0);
   stream->uvstream = uvstream;
 
   if (fd >= 0) {
@@ -84,29 +85,29 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
     stream->uvstream->data = stream;
   }
 
-  stream->internal_data = NULL;
   stream->fpos = 0;
+  stream->internal_data = NULL;
   stream->curmem = 0;
   stream->maxmem = 0;
   stream->pending_reqs = 0;
-  stream->read_cb = NULL;
   stream->write_cb = NULL;
   stream->close_cb = NULL;
   stream->internal_close_cb = NULL;
   stream->closed = false;
-  stream->buffer = NULL;
   stream->events = NULL;
-  stream->num_bytes = 0;
 }
 
-void stream_close(Stream *stream, stream_close_cb on_stream_close, void *data)
+void stream_may_close(Stream *stream, bool rstream)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  if (stream->closed) {
+    return;
+  }
   assert(!stream->closed);
   DLOG("closing Stream: %p", (void *)stream);
   stream->closed = true;
-  stream->close_cb = on_stream_close;
-  stream->close_cb_data = data;
+  stream->close_cb = NULL;
+  stream->close_cb_data = NULL;
 
 #ifdef MSWIN
   if (UV_TTY == uv_guess_handle(stream->fd)) {
@@ -116,18 +117,11 @@ void stream_close(Stream *stream, stream_close_cb on_stream_close, void *data)
 #endif
 
   if (!stream->pending_reqs) {
-    stream_close_handle(stream);
+    stream_close_handle(stream, rstream);
   }
 }
 
-void stream_may_close(Stream *stream)
-{
-  if (!stream->closed) {
-    stream_close(stream, NULL, NULL);
-  }
-}
-
-void stream_close_handle(Stream *stream)
+void stream_close_handle(Stream *stream, bool rstream)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_handle_t *handle = NULL;
@@ -145,16 +139,22 @@ void stream_close_handle(Stream *stream)
   assert(handle != NULL);
 
   if (!uv_is_closing(handle)) {
-    uv_close(handle, close_cb);
+    uv_close(handle, rstream ? rstream_close_cb : close_cb);
   }
+}
+
+static void rstream_close_cb(uv_handle_t *handle)
+{
+  RStream *stream = handle->data;
+  if (stream->buffer) {
+    free_block(stream->buffer);
+  }
+  close_cb(handle);
 }
 
 static void close_cb(uv_handle_t *handle)
 {
   Stream *stream = handle->data;
-  if (stream->buffer) {
-    rbuffer_free(stream->buffer);
-  }
   if (stream->close_cb) {
     stream->close_cb(stream, stream->close_cb_data);
   }

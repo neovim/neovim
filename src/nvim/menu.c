@@ -13,6 +13,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -1056,7 +1057,7 @@ char *get_menu_names(expand_T *xp, int idx)
       }
       // hack on menu separators:  use a 'magic' char for the separator
       // so that '.' in names gets escaped properly
-      STRCAT(tbuffer, "\001");
+      strcat(tbuffer, "\001");
       str = tbuffer;
     } else {
       if (should_advance) {

@@ -293,7 +293,7 @@ loaded by Vim: >
     ftplugin/sql.vim
     syntax/sqlinformix.vim
     indent/sql.vim
->
+<
 Notice indent/sqlinformix.sql was not loaded.  There is no indent file
 for Informix, Vim loads the default files if the specified files does not
 exist.
@@ -349,7 +349,7 @@ The defaults static maps are: >
 The use of "<C-C>" can be user chosen by using the following in your |init.vim|
 as it may not work properly on all platforms: >
     let g:ftplugin_sql_omni_key = '<C-C>'
->
+<
 The static maps (which are based on the syntax highlight groups) follow this
 format: >
     imap <buffer> <C-C>k <C-\><C-O>:call sqlcomplete#Map('sqlKeyword')<CR><C-X><C-O>
@@ -664,7 +664,7 @@ your |init.vim|: >
 	  filetype is changed temporarily to SQL, the sqlcompletion plugin
 	  will cache the syntax groups listed in the List specified in this
 	  option.
->
+
 
 ------------------------------------------------------------------------------
 4.5 SQL Maps					*sql-completion-maps*

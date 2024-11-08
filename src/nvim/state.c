@@ -66,18 +66,19 @@ getkey:
       // Event was made available after the last multiqueue_process_events call
       key = K_EVENT;
     } else {
-      // Duplicate display updating logic in vgetorpeek()
-      if (((State & MODE_INSERT) != 0 || p_lz) && (State & MODE_CMDLINE) == 0
-          && must_redraw != 0 && !need_wait_return) {
+      // Ensure the screen is fully updated before blocking for input. Because of the duality of
+      // redraw_later, this can't be done in command-line or when waiting for "Press ENTER".
+      // In many of those cases the redraw is expected AFTER the key press, while normally it should
+      // update the screen immediately.
+      if (must_redraw != 0 && !need_wait_return && (State & MODE_CMDLINE) == 0) {
         update_screen();
         setcursor();  // put cursor back where it belongs
       }
       // Flush screen updates before blocking.
       ui_flush();
-      // Call `os_inchar` directly to block for events or user input without
-      // consuming anything from `input_buffer`(os/input.c) or calling the
-      // mapping engine.
-      os_inchar(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
+      // Call `input_get` directly to block for events or user input without consuming anything from
+      // `os/input.c:input_buffer` or calling the mapping engine.
+      input_get(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
       // If an event was put into the queue, we send K_EVENT directly.
       if (!input_available() && !multiqueue_empty(main_loop.events)) {
         key = K_EVENT;
@@ -177,17 +178,8 @@ void get_mode(char *buf)
 {
   int i = 0;
 
-  if (VIsual_active) {
-    if (VIsual_select) {
-      buf[i++] = (char)(VIsual_mode + 's' - 'v');
-    } else {
-      buf[i++] = (char)VIsual_mode;
-      if (restart_VIsual_select) {
-        buf[i++] = 's';
-      }
-    }
-  } else if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE
-             || State == MODE_CONFIRM) {
+  if (State == MODE_HITRETURN || State == MODE_ASKMORE
+      || State == MODE_SETWSIZE || State == MODE_CONFIRM) {
     buf[i++] = 'r';
     if (State == MODE_ASKMORE) {
       buf[i++] = 'm';
@@ -222,6 +214,15 @@ void get_mode(char *buf)
     }
   } else if (State & MODE_TERMINAL) {
     buf[i++] = 't';
+  } else if (VIsual_active) {
+    if (VIsual_select) {
+      buf[i++] = (char)(VIsual_mode + 's' - 'v');
+    } else {
+      buf[i++] = (char)VIsual_mode;
+      if (restart_VIsual_select) {
+        buf[i++] = 's';
+      }
+    }
   } else {
     buf[i++] = 'n';
     if (finish_op) {
@@ -233,8 +234,7 @@ void get_mode(char *buf)
       if (restart_edit == 'I') {
         buf[i++] = 'T';
       }
-    } else if (restart_edit == 'I' || restart_edit == 'R'
-               || restart_edit == 'V') {
+    } else if (restart_edit == 'I' || restart_edit == 'R' || restart_edit == 'V') {
       buf[i++] = 'i';
       buf[i++] = (char)restart_edit;
     }

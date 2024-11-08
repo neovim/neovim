@@ -8,10 +8,9 @@
 # include "msgpack_rpc/packer.c.generated.h"
 #endif
 
-static void check_buffer(PackerBuffer *packer)
+void mpack_check_buffer(PackerBuffer *packer)
 {
-  ptrdiff_t remaining = packer->endptr - packer->ptr;
-  if (remaining < MPACK_ITEM_SIZE) {
+  if (mpack_remaining(packer) < 2 * MPACK_ITEM_SIZE) {
     packer->packer_flush(packer);
   }
 }
@@ -28,15 +27,20 @@ static void mpack_w8(char **b, const char *data)
 #endif
 }
 
+void mpack_uint64(char **ptr, uint64_t i)
+{
+  if (i > 0xfffffff) {
+    mpack_w(ptr, 0xcf);
+    mpack_w8(ptr, (char *)&i);
+  } else {
+    mpack_uint(ptr, (uint32_t)i);
+  }
+}
+
 void mpack_integer(char **ptr, Integer i)
 {
   if (i >= 0) {
-    if (i > 0xfffffff) {
-      mpack_w(ptr, 0xcf);
-      mpack_w8(ptr, (char *)&i);
-    } else {
-      mpack_uint(ptr, (uint32_t)i);
-    }
+    mpack_uint64(ptr, (uint64_t)i);
   } else {
     if (i < -0x80000000LL) {
       mpack_w(ptr, 0xd3);
@@ -80,11 +84,35 @@ void mpack_str(String str, PackerBuffer *packer)
     abort();
   }
 
+  mpack_raw(str.data, len, packer);
+}
+
+void mpack_bin(String str, PackerBuffer *packer)
+{
+  const size_t len = str.size;
+  if (len < 0xff) {
+    mpack_w(&packer->ptr, 0xc4);
+    mpack_w(&packer->ptr, len);
+  } else if (len < 0xffff) {
+    mpack_w(&packer->ptr, 0xc5);
+    mpack_w2(&packer->ptr, (uint32_t)len);
+  } else if (len < 0xffffffff) {
+    mpack_w(&packer->ptr, 0xc6);
+    mpack_w4(&packer->ptr, (uint32_t)len);
+  } else {
+    abort();
+  }
+
+  mpack_raw(str.data, len, packer);
+}
+
+void mpack_raw(const char *data, size_t len, PackerBuffer *packer)
+{
   size_t pos = 0;
   while (pos < len) {
     ptrdiff_t remaining = packer->endptr - packer->ptr;
     size_t to_copy = MIN(len - pos, (size_t)remaining);
-    memcpy(packer->ptr, str.data + pos, to_copy);
+    memcpy(packer->ptr, data + pos, to_copy);
     packer->ptr += to_copy;
     pos += to_copy;
 
@@ -92,6 +120,28 @@ void mpack_str(String str, PackerBuffer *packer)
       packer->packer_flush(packer);
     }
   }
+  mpack_check_buffer(packer);
+}
+
+void mpack_ext(char *buf, size_t len, int8_t type, PackerBuffer *packer)
+{
+  if (len == 1) {
+    mpack_w(&packer->ptr, 0xd4);
+  } else if (len == 2) {
+    mpack_w(&packer->ptr, 0xd5);
+  } else if (len <= 0xff) {
+    mpack_w(&packer->ptr, 0xc7);
+  } else if (len < 0xffff) {
+    mpack_w(&packer->ptr, 0xc8);
+    mpack_w2(&packer->ptr, (uint32_t)len);
+  } else if (len < 0xffffffff) {
+    mpack_w(&packer->ptr, 0xc9);
+    mpack_w4(&packer->ptr, (uint32_t)len);
+  } else {
+    abort();
+  }
+  mpack_w(&packer->ptr, type);
+  mpack_raw(buf, len, packer);
 }
 
 void mpack_handle(ObjectType type, handle_T handle, PackerBuffer *packer)
@@ -113,7 +163,6 @@ void mpack_handle(ObjectType type, handle_T handle, PackerBuffer *packer)
     mpack_w(&packer->ptr, 0xc7);
     mpack_w(&packer->ptr, packsize);
     mpack_w(&packer->ptr, exttype);
-    // check_buffer(packer);
     memcpy(packer->ptr, buf, (size_t)packsize);
     packer->ptr += packsize;
   }
@@ -148,7 +197,7 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
   kvi_init(stack);
 
   while (true) {
-    check_buffer(packer);
+    mpack_check_buffer(packer);
     switch (current->type) {
     case kObjectTypeLuaRef:
       // TODO(bfredl): could also be an error. Though kObjectTypeLuaRef
@@ -177,14 +226,14 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
     case kObjectTypeTabpage:
       mpack_handle(current->type, (handle_T)current->data.integer, packer);
       break;
-    case kObjectTypeDictionary:
+    case kObjectTypeDict:
     case kObjectTypeArray: {}
       size_t current_size;
       if (current->type == kObjectTypeArray) {
         current_size = current->data.array.size;
         mpack_array(&packer->ptr, (uint32_t)current_size);
       } else {
-        current_size = current->data.dictionary.size;
+        current_size = current->data.dict.size;
         mpack_map(&packer->ptr, (uint32_t)current_size);
       }
       if (current_size > 0) {
@@ -221,9 +270,9 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
         container = NULL;
       }
     } else {
-      Dictionary dict = container->data.dictionary;
+      Dict dict = container->data.dict;
       KeyValuePair *it = &dict.items[container_idx++];
-      check_buffer(packer);
+      mpack_check_buffer(packer);
       mpack_str(it->key, packer);
       current = &it->value;
       if (container_idx >= dict.size) {
@@ -232,4 +281,33 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
     }
   }
   kvi_destroy(stack);
+}
+
+PackerBuffer packer_string_buffer(void)
+{
+  const size_t initial_size = 64;  // must be larger than SHADA_MPACK_FREE_SPACE
+  char *alloc = xmalloc(initial_size);
+  return (PackerBuffer) {
+    .startptr = alloc,
+    .ptr = alloc,
+    .endptr = alloc + initial_size,
+    .packer_flush = flush_string_buffer,
+  };
+}
+
+static void flush_string_buffer(PackerBuffer *buffer)
+{
+  size_t current_capacity = (size_t)(buffer->endptr - buffer->startptr);
+  size_t new_capacity = 2 * current_capacity;
+  size_t len = (size_t)(buffer->ptr - buffer->startptr);
+
+  buffer->startptr = xrealloc(buffer->startptr, new_capacity);
+  buffer->ptr = buffer->startptr + len;
+  buffer->endptr = buffer->startptr + new_capacity;
+}
+
+/// can only be used with a PackerBuffer from `packer_string_buffer`
+String packer_take_string(PackerBuffer *buffer)
+{
+  return (String){ .data = buffer->startptr, .size = (size_t)(buffer->ptr - buffer->startptr) };
 }

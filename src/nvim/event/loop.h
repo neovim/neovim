@@ -3,32 +3,26 @@
 #include <stdbool.h>
 #include <uv.h>
 
-#include "klib/klist.h"
+#include "klib/kvec.h"
 #include "nvim/event/defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
-
-typedef void *WatcherPtr;
-
-#define _NOOP(x)
-KLIST_INIT(WatcherPtr, WatcherPtr, _NOOP)
 
 struct loop {
   uv_loop_t uv;
   MultiQueue *events;
   MultiQueue *thread_events;
-  // Immediate events:
-  //    "Processed after exiting uv_run() (to avoid recursion), but before
-  //    returning from loop_poll_events()." 502aee690c98
-  // Practical consequence (for main_loop): these events are processed by
-  //    state_enter()..os_inchar()
-  // whereas "regular" events (main_loop.events) are processed by
-  //    state_enter()..VimState.execute()
-  // But state_enter()..os_inchar() can be "too early" if you want the event
-  // to trigger UI updates and other user-activity-related side-effects.
+  // Immediate events.
+  // - "Processed after exiting `uv_run()` (to avoid recursion), but before returning from
+  //   `loop_poll_events()`." 502aee690c98
+  // - Practical consequence (for `main_loop`):
+  //    - these are processed by `state_enter()..input_get()` whereas "regular" events
+  //      (`main_loop.events`) are processed by `state_enter()..VimState.execute()`
+  //    - `state_enter()..input_get()` can be "too early" if you want the event to trigger UI
+  //      updates and other user-activity-related side-effects.
   MultiQueue *fast_events;
 
   // used by process/job-control subsystem
-  klist_t(WatcherPtr) *children;
+  kvec_t(Proc *) children;
   uv_signal_t children_watcher;
   uv_timer_t children_kill_timer;
 

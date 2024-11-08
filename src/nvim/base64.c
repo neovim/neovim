@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "auto/config.h"  // IWYU pragma: keep
+#include "nvim/ascii_defs.h"
 #include "nvim/base64.h"
 #include "nvim/memory.h"
 
@@ -125,7 +126,7 @@ char *base64_encode(const char *src, size_t src_len)
     dest[out_i] = '=';
   }
 
-  dest[out_len] = '\0';
+  dest[out_len] = NUL;
 
   return dest;
 }
@@ -141,6 +142,7 @@ char *base64_encode(const char *src, size_t src_len)
 /// @param [out] out_lenp Returns the length of the decoded string
 /// @return Decoded string
 char *base64_decode(const char *src, size_t src_len, size_t *out_lenp)
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(src != NULL);
   assert(out_lenp != NULL);

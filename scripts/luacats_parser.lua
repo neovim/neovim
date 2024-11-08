@@ -46,6 +46,7 @@ local luacats_grammar = require('scripts.luacats_grammar')
 --- @field type string
 --- @field desc string
 --- @field access? 'private'|'package'|'protected'
+--- @field nodoc? true
 
 --- @class nvim.luacats.parser.class
 --- @field kind 'class'
@@ -252,9 +253,12 @@ end
 --- @return nvim.luacats.parser.field
 local function fun2field(fun)
   local parts = { 'fun(' }
+
+  local params = {} ---@type string[]
   for _, p in ipairs(fun.params or {}) do
-    parts[#parts + 1] = string.format('%s: %s', p.name, p.type)
+    params[#params + 1] = string.format('%s: %s', p.name, p.type)
   end
+  parts[#parts + 1] = table.concat(params, ', ')
   parts[#parts + 1] = ')'
   if fun.returns then
     parts[#parts + 1] = ': '
@@ -270,6 +274,7 @@ local function fun2field(fun)
     type = table.concat(parts, ''),
     access = fun.access,
     desc = fun.desc,
+    nodoc = fun.nodoc,
   }
 end
 

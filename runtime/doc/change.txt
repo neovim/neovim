@@ -1227,13 +1227,13 @@ Vim fills these registers with text from yank and delete commands.
    Numbered register 0 contains the text from the most recent yank command,
 unless the command specified another register with ["x].
    Numbered register 1 contains the text deleted by the most recent delete or
-change command, unless the command specified another register or the text is
-less than one line (the small delete register is used then).  An exception is
-made for the delete operator with these movement commands: |%|, |(|, |)|, |`|,
-|/|, |?|, |n|, |N|, |{| and |}|.  Register "1 is always used then (this is Vi
-compatible).  The "- register is used as well if the delete is within a line.
-Note that these characters may be mapped.  E.g. |%| is mapped by the matchit
-plugin.
+change command (even when the command specified another register), unless the
+text is less than one line (the small delete register is used then).  An
+exception is made for the delete operator with these movement commands: |%|,
+|(|, |)|, |`|, |/|, |?|, |n|, |N|, |{| and |}|.
+Register "1 is always used then (this is Vi compatible).  The "- register is
+used as well if the delete is within a line. Note that these characters may be
+mapped.  E.g. |%| is mapped by the matchit plugin.
    With each successive deletion or change, Vim shifts the previous contents
 of register 1 into register 2, 2 into 3, and so forth, losing the previous
 contents of register 9.

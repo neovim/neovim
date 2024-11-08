@@ -120,8 +120,7 @@ describe('matchparen', function()
     ]])
 
     feed('i<C-X><C-N><C-N>')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       aa                            |
       aaa                           |
       aaaa                          |
@@ -131,7 +130,79 @@ describe('matchparen', function()
       {4: aaaa           }{1:              }|
       {1:~                             }|
       {5:-- }{6:match 2 of 3}               |
-    ]],
-    }
+    ]])
+  end)
+
+  -- oldtest: Test_matchparen_mbyte()
+  it("works with multibyte chars in 'matchpairs'", function()
+    local screen = Screen.new(30, 10)
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.Cyan },
+      [2] = { bold = true },
+    })
+    screen:attach()
+
+    exec([[
+      source $VIMRUNTIME/plugin/matchparen.vim
+      call setline(1, ['aaaaaaaa（', 'bbbb）cc'])
+      set matchpairs+=（:）
+    ]])
+
+    screen:expect([[
+      ^aaaaaaaa（                    |
+      bbbb）cc                      |
+      {0:~                             }|*7
+                                    |
+    ]])
+    feed('$')
+    screen:expect([[
+      aaaaaaaa{1:^（}                    |
+      bbbb{1:）}cc                      |
+      {0:~                             }|*7
+                                    |
+    ]])
+    feed('j')
+    screen:expect([[
+      aaaaaaaa（                    |
+      bbbb）c^c                      |
+      {0:~                             }|*7
+                                    |
+    ]])
+    feed('2h')
+    screen:expect([[
+      aaaaaaaa{1:（}                    |
+      bbbb{1:^）}cc                      |
+      {0:~                             }|*7
+                                    |
+    ]])
+    feed('0')
+    screen:expect([[
+      aaaaaaaa（                    |
+      ^bbbb）cc                      |
+      {0:~                             }|*7
+                                    |
+    ]])
+    feed('kA')
+    screen:expect([[
+      aaaaaaaa{1:（}^                    |
+      bbbb{1:）}cc                      |
+      {0:~                             }|*7
+      {2:-- INSERT --}                  |
+    ]])
+    feed('<Down>')
+    screen:expect([[
+      aaaaaaaa（                    |
+      bbbb）cc^                      |
+      {0:~                             }|*7
+      {2:-- INSERT --}                  |
+    ]])
+    feed('<C-W>')
+    screen:expect([[
+      aaaaaaaa{1:（}                    |
+      bbbb{1:）}^                        |
+      {0:~                             }|*7
+      {2:-- INSERT --}                  |
+    ]])
   end)
 end)

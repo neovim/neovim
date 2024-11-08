@@ -116,7 +116,7 @@ If you really want to reindent when you type 'o', 'O', 'e', '0', '<', '>',
 "<!>", respectively, for those keys.
 
 For an emacs-style indent mode where lines aren't indented every time you
-press <Enter> but only if you press <Tab>, I suggest:
+press <Enter> but only if you press <Tab>, I suggest: >
 	:set cinkeys=0{,0},:,0#,!<Tab>,!^F
 You might also want to switch off 'autoindent' then.
 

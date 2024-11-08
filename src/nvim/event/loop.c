@@ -20,7 +20,7 @@ void loop_init(Loop *loop, void *data)
   loop->recursive = 0;
   loop->closing = false;
   loop->uv.data = loop;
-  loop->children = kl_init(WatcherPtr);
+  kv_init(loop->children);
   loop->events = multiqueue_new_parent(loop_on_put, loop);
   loop->fast_events = multiqueue_new_child(loop->events);
   loop->thread_events = multiqueue_new_parent(NULL, NULL);
@@ -187,7 +187,7 @@ bool loop_close(Loop *loop, bool wait)
   multiqueue_free(loop->fast_events);
   multiqueue_free(loop->thread_events);
   multiqueue_free(loop->events);
-  kl_destroy(WatcherPtr, loop->children);
+  kv_destroy(loop->children);
   return rv;
 }
 

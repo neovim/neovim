@@ -1,0 +1,19 @@
+-- vim: set ft=lua sw=2 noet:
+
+-- START_INDENT
+function foo(a, b, c, d)
+ return { a, b, c, d }
+end
+
+local a = foo(
+1,
+2,
+"longxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+4
+)
+
+local b = {
+1,
+ 2,
+}
+-- END_INDENT

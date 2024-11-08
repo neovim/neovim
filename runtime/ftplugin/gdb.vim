@@ -3,11 +3,12 @@
 " Maintainer:	Michaël Peeters <NOSPAMm.vim@noekeon.org>
 " Last Changed: 2017-10-26
 "               2024-04-10:	- add Matchit support (by Vim Project)
+"               2024-04-23:	- add space to commentstring (by Riley Bruins) ('commentstring')
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
 
-setlocal commentstring=#%s
+setlocal commentstring=#\ %s
 setlocal include=^\\s*source
 
 " Undo the stuff we changed.

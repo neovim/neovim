@@ -22,6 +22,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/debugger.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
@@ -408,7 +409,7 @@ int do_in_path(const char *path, const char *prefix, char *name, int flags,
         did_one = true;
       } else if (buflen + 2 + strlen(prefix) + strlen(name) < MAXPATHL) {
         add_pathsep(buf);
-        STRCAT(buf, prefix);
+        strcat(buf, prefix);
         tail = buf + strlen(buf);
 
         // Loop over all patterns in "name"
@@ -1099,7 +1100,7 @@ static int load_pack_plugin(bool opt, char *fname)
 
   // If runtime/filetype.lua wasn't loaded yet, the scripts will be
   // found when it loads.
-  if (opt && eval_to_number(cmd) > 0) {
+  if (opt && eval_to_number(cmd, false) > 0) {
     do_cmdline_cmd("augroup filetypedetect");
     vim_snprintf(pat, len, ftpat, ffname);
     gen_expand_wildcards_and_cb(1, &pat, EW_FILE, true, source_callback_vim_lua, NULL);
@@ -1558,7 +1559,7 @@ static inline char *add_env_sep_dirs(char *dest, const char *const val, const ch
     return dest;
   }
   const void *iter = NULL;
-  const char *appname = get_appname();
+  const char *appname = get_appname(false);
   const size_t appname_len = strlen(appname);
   do {
     size_t dir_len;
@@ -1625,7 +1626,7 @@ static inline char *add_dir(char *dest, const char *const dir, const size_t dir_
     if (!after_pathsep(dest - 1, dest)) {
       *dest++ = PATHSEP;
     }
-    const char *appname = get_appname();
+    const char *appname = get_appname(false);
     size_t appname_len = strlen(appname);
     assert(appname_len < (IOSIZE - sizeof("-data")));
     xmemcpyz(IObuff, appname, appname_len);
@@ -1696,7 +1697,7 @@ char *runtimepath_default(bool clean_arg)
   size_t config_len = 0;
   size_t vimruntime_len = 0;
   size_t libdir_len = 0;
-  const char *appname = get_appname();
+  const char *appname = get_appname(false);
   size_t appname_len = strlen(appname);
   if (data_home != NULL) {
     data_len = strlen(data_home);
@@ -2856,7 +2857,7 @@ bool script_autoload(const char *const name, const size_t name_len, const bool r
     // Try loading the package from $VIMRUNTIME/autoload/<name>.vim
     // Use "ret_sid" to avoid loading the same script again.
     int ret_sid;
-    if (do_in_runtimepath(scriptname, 0, source_callback, &ret_sid) == OK) {
+    if (do_in_runtimepath(scriptname, DIP_START, source_callback, &ret_sid) == OK) {
       ret = true;
     }
   }

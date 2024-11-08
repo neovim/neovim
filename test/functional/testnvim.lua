@@ -14,15 +14,14 @@ local is_os = t.is_os
 local ok = t.ok
 local sleep = uv.sleep
 
---- This module uses functions from the context of the test session, i.e. in the context of the
---- nvim being tests.
+--- Functions executing in the current nvim session/process being tested.
 local M = {}
 
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
 M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 M.nvim_set = (
-  'set shortmess+=IS background=light termguicolors noswapfile noautoindent startofline'
+  'set shortmess+=IS background=light noswapfile noautoindent startofline'
   .. ' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
   .. ' belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid'
 )
@@ -251,12 +250,14 @@ function M.set_method_error(err)
   method_error = err
 end
 
+--- Runs the event loop of the given session.
+---
 --- @param lsession test.Session
 --- @param request_cb function?
 --- @param notification_cb function?
 --- @param setup_cb function?
 --- @param timeout integer
---- @return {[1]: integer, [2]: string}
+--- @return [integer, string]
 function M.run_session(lsession, request_cb, notification_cb, setup_cb, timeout)
   local on_request --- @type function?
   local on_notification --- @type function?
@@ -297,6 +298,7 @@ function M.run_session(lsession, request_cb, notification_cb, setup_cb, timeout)
   return lsession.eof_err
 end
 
+--- Runs the event loop of the current global session.
 function M.run(request_cb, notification_cb, setup_cb, timeout)
   assert(session)
   return M.run_session(session, request_cb, notification_cb, setup_cb, timeout)
@@ -456,7 +458,7 @@ end
 --- @param argv string[]
 --- @param merge boolean?
 --- @param env string[]?
---- @param keep boolean
+--- @param keep boolean?
 --- @param io_extra uv.uv_pipe_t? used for stdin_fd, see :help ui-option
 --- @return test.Session
 function M.spawn(argv, merge, env, keep, io_extra)
@@ -757,58 +759,21 @@ function M.assert_visible(bufnr, visible)
   end
 end
 
---- @param path string
-local function do_rmdir(path)
-  local stat = uv.fs_stat(path)
-  if stat == nil then
-    return
-  end
-  if stat.type ~= 'directory' then
-    error(string.format('rmdir: not a directory: %s', path))
-  end
-  for file in vim.fs.dir(path) do
-    if file ~= '.' and file ~= '..' then
-      local abspath = path .. '/' .. file
-      if t.isdir(abspath) then
-        do_rmdir(abspath) -- recurse
-      else
-        local ret, err = os.remove(abspath)
-        if not ret then
-          if not session then
-            error('os.remove: ' .. err)
-          else
-            -- Try Nvim delete(): it handles `readonly` attribute on Windows,
-            -- and avoids Lua cross-version/platform incompatibilities.
-            if -1 == M.call('delete', abspath) then
-              local hint = (is_os('win') and ' (hint: try :%bwipeout! before rmdir())' or '')
-              error('delete() failed' .. hint .. ': ' .. abspath)
-            end
-          end
-        end
-      end
-    end
-  end
-  local ret, err = uv.fs_rmdir(path)
-  if not ret then
-    error('luv.fs_rmdir(' .. path .. '): ' .. err)
-  end
-end
-
 local start_dir = uv.cwd()
 
 function M.rmdir(path)
-  local ret, _ = pcall(do_rmdir, path)
+  local ret, _ = pcall(vim.fs.rm, path, { recursive = true, force = true })
   if not ret and is_os('win') then
     -- Maybe "Permission denied"; try again after changing the nvim
     -- process to the top-level directory.
     M.command([[exe 'cd '.fnameescape(']] .. start_dir .. "')")
-    ret, _ = pcall(do_rmdir, path)
+    ret, _ = pcall(vim.fs.rm, path, { recursive = true, force = true })
   end
   -- During teardown, the nvim process may not exit quickly enough, then rmdir()
   -- will fail (on Windows).
   if not ret then -- Try again.
     sleep(1000)
-    do_rmdir(path)
+    vim.fs.rm(path, { recursive = true, force = true })
   end
 end
 
@@ -835,10 +800,173 @@ function M.exec_capture(code)
   return M.api.nvim_exec2(code, { output = true }).output
 end
 
---- @param code string
+--- @param f function
+--- @return table<string,any>
+local function get_upvalues(f)
+  local i = 1
+  local upvalues = {} --- @type table<string,any>
+  while true do
+    local n, v = debug.getupvalue(f, i)
+    if not n then
+      break
+    end
+    upvalues[n] = v
+    i = i + 1
+  end
+  return upvalues
+end
+
+--- @param f function
+--- @param upvalues table<string,any>
+local function set_upvalues(f, upvalues)
+  local i = 1
+  while true do
+    local n = debug.getupvalue(f, i)
+    if not n then
+      break
+    end
+    if upvalues[n] then
+      debug.setupvalue(f, i, upvalues[n])
+    end
+    i = i + 1
+  end
+end
+
+--- @type fun(f: function): table<string,any>
+_G.__get_upvalues = nil
+
+--- @type fun(f: function, upvalues: table<string,any>)
+_G.__set_upvalues = nil
+
+--- @param self table<string,function>
+--- @param bytecode string
+--- @param upvalues table<string,any>
+--- @param ... any[]
+--- @return any[] result
+--- @return table<string,any> upvalues
+local function exec_lua_handler(self, bytecode, upvalues, ...)
+  local f = assert(loadstring(bytecode))
+  self.set_upvalues(f, upvalues)
+  local ret = { f(...) } --- @type any[]
+  --- @type table<string,any>
+  local new_upvalues = self.get_upvalues(f)
+
+  do -- Check return value types for better error messages
+    local invalid_types = {
+      ['thread'] = true,
+      ['function'] = true,
+      ['userdata'] = true,
+    }
+
+    for k, v in pairs(ret) do
+      if invalid_types[type(v)] then
+        error(
+          string.format(
+            "Return index %d with value '%s' of type '%s' cannot be serialized over RPC",
+            k,
+            tostring(v),
+            type(v)
+          )
+        )
+      end
+    end
+  end
+
+  return ret, new_upvalues
+end
+
+--- Execute Lua code in the wrapped Nvim session.
+---
+--- When `code` is passed as a function, it is converted into Lua byte code.
+---
+--- Direct upvalues are copied over, however upvalues contained
+--- within nested functions are not. Upvalues are also copied back when `code`
+--- finishes executing. See `:help lua-upvalue`.
+---
+--- Only types which can be serialized can be transferred over, e.g:
+--- `table`, `number`, `boolean`, `string`.
+---
+--- `code` runs with a different environment and thus will have a different global
+--- environment. See `:help lua-environments`.
+---
+--- Example:
+--- ```lua
+--- local upvalue1 = 'upvalue1'
+--- exec_lua(function(a, b, c)
+---   print(upvalue1, a, b, c)
+---   (function()
+---     print(upvalue2)
+---   end)()
+--- end, 'a', 'b', 'c'
+--- ```
+--- Prints:
+--- ```
+--- upvalue1 a b c
+--- nil
+--- ```
+---
+--- Not supported:
+--- ```lua
+--- local a = vim.uv.new_timer()
+--- exec_lua(function()
+---   print(a) -- Error: a is of type 'userdata' which cannot be serialized.
+--- end)
+--- ```
+--- @param code string|function
+--- @param ... any
 --- @return any
 function M.exec_lua(code, ...)
-  return M.api.nvim_exec_lua(code, { ... })
+  if type(code) == 'string' then
+    return M.api.nvim_exec_lua(code, { ... })
+  end
+
+  assert(session, 'no Nvim session')
+
+  if not session.exec_lua_setup then
+    assert(
+      session:request(
+        'nvim_exec_lua',
+        [[
+          _G.__test_exec_lua = {
+            get_upvalues = loadstring((select(1,...))),
+            set_upvalues = loadstring((select(2,...))),
+            handler = loadstring((select(3,...)))
+          }
+          setmetatable(_G.__test_exec_lua, { __index = _G.__test_exec_lua })
+        ]],
+        { string.dump(get_upvalues), string.dump(set_upvalues), string.dump(exec_lua_handler) }
+      )
+    )
+    session.exec_lua_setup = true
+  end
+
+  local stat, rv = session:request(
+    'nvim_exec_lua',
+    'return { _G.__test_exec_lua:handler(...) }',
+    { string.dump(code), get_upvalues(code), ... }
+  )
+
+  if not stat then
+    error(rv[2])
+  end
+
+  --- @type any[], table<string,any>
+  local ret, upvalues = unpack(rv)
+
+  -- Update upvalues
+  if next(upvalues) then
+    local caller = debug.getinfo(2)
+    local f = caller.func
+    -- On PUC-Lua, if the function is a tail call, then func will be nil.
+    -- In this case we need to use the current function.
+    if not f then
+      assert(caller.source == '=(tail call)')
+      f = debug.getinfo(1).func
+    end
+    set_upvalues(f, upvalues)
+  end
+
+  return unpack(ret, 1, table.maxn(ret))
 end
 
 function M.get_pathsep()
@@ -892,26 +1020,6 @@ function M.missing_provider(provider)
     return M.exec_lua([[return {require('vim.provider.python').detect_by_module('neovim')}]])[2]
   end
   assert(false, 'Unknown provider: ' .. provider)
-end
-
---- @param obj string|table
---- @return any
-function M.alter_slashes(obj)
-  if not is_os('win') then
-    return obj
-  end
-  if type(obj) == 'string' then
-    local ret = obj:gsub('/', '\\')
-    return ret
-  elseif type(obj) == 'table' then
-    --- @cast obj table<any,any>
-    local ret = {} --- @type table<any,any>
-    for k, v in pairs(obj) do
-      ret[k] = M.alter_slashes(v)
-    end
-    return ret
-  end
-  assert(false, 'expected string or table of strings, got ' .. type(obj))
 end
 
 local load_factor = 1
