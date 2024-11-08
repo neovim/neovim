@@ -722,7 +722,25 @@ void ui_refresh(void)
       eq(exp, pcall_err(exec_lua, "vim.treesitter.query.parse('c', ...)", cquery))
     end
 
-    -- Invalid node type
+    -- Invalid node types
+    test(
+      '.../query.lua:0: Query error at 1:2. Invalid node type ">\\">>":\n'
+        .. '">\\">>" @operator\n'
+        .. ' ^',
+      '">\\">>" @operator'
+    )
+    test(
+      '.../query.lua:0: Query error at 1:2. Invalid node type "\\\\":\n'
+        .. '"\\\\" @operator\n'
+        .. ' ^',
+      '"\\\\" @operator'
+    )
+    test(
+      '.../query.lua:0: Query error at 1:2. Invalid node type ">>>":\n'
+        .. '">>>" @operator\n'
+        .. ' ^',
+      '">>>" @operator'
+    )
     test(
       '.../query.lua:0: Query error at 1:2. Invalid node type "dentifier":\n'
         .. '(dentifier) @variable\n'
