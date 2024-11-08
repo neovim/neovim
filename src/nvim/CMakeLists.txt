@@ -750,6 +750,7 @@ add_custom_target(nvim_runtime_deps)
 if(WIN32)
   # Copy DLLs and third-party tools to bin/ and install them along with nvim
   add_custom_command(TARGET nvim_runtime_deps
+    POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E ${COPY_DIRECTORY} ${PROJECT_BINARY_DIR}/windows_runtime_deps/
       ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   install(DIRECTORY ${PROJECT_BINARY_DIR}/windows_runtime_deps/
@@ -791,7 +792,10 @@ file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
 
 # install treesitter parser if bundled
 if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
-  add_custom_command(TARGET nvim_runtime_deps COMMAND ${CMAKE_COMMAND} -E ${COPY_DIRECTORY} ${DEPS_PREFIX}/lib/nvim/parser ${BINARY_LIB_DIR}/parser)
+  add_custom_command(
+    TARGET nvim_runtime_deps
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E ${COPY_DIRECTORY} ${DEPS_PREFIX}/lib/nvim/parser ${BINARY_LIB_DIR}/parser)
 endif()
 
 install(DIRECTORY ${BINARY_LIB_DIR}
