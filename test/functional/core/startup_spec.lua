@@ -74,6 +74,19 @@ describe('startup', function()
     assert_log("require%('vim%._editor'%)", testfile, 100)
   end)
 
+  it('"--startuptime ." does not seg fault', function()
+    clear()
+    local screen
+    screen = Screen.new(80, 3)
+    screen:attach()
+    fn.termopen({ nvim_prog, '--startuptime', '.' })
+    screen:expect([[
+      ^nvim: Invalid argument after: "--startuptime": "can't write file"               |
+      More info with "nvim -h"                                                        |
+                                                                                      |
+    ]])
+  end)
+
   it('-D does not hang #12647', function()
     clear()
     local screen

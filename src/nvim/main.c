@@ -1,4 +1,5 @@
 // Make sure extern symbols are exported on Windows
+#include <sys/stat.h>
 #ifdef WIN32
 # define EXTERN __declspec(dllexport)
 #else
@@ -145,6 +146,7 @@ static char *argv0 = NULL;
 static const char *err_arg_missing = N_("Argument missing after");
 static const char *err_opt_garbage = N_("Garbage after option argument");
 static const char *err_opt_unknown = N_("Unknown option argument");
+static const char *err_invalid_arg = N_("Invalid argument after");
 static const char *err_too_many_args = N_("Too many edit arguments");
 static const char *err_extra_cmd =
   N_("Too many \"+command\", \"-c command\" or \"--cmd command\" arguments");
@@ -1519,6 +1521,11 @@ static void init_startuptime(mparm_T *paramp)
   }
   for (int i = 1; i < paramp->argc - 1; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0) {
+      struct stat stats;
+      stat(paramp->argv[i + 1], &stats);
+      if (S_ISDIR(stats.st_mode) || access(paramp->argv[i + 1], W_OK)) {
+        mainerr(err_invalid_arg, paramp->argv[i], "can't write file");
+      }
       time_init(paramp->argv[i + 1], is_embed ? "Embedded" : "Primary (or UI client)");
       time_start("--- NVIM STARTING ---");
       break;
