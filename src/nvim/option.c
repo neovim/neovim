@@ -1886,7 +1886,7 @@ static const char *did_set_arabic(optset_T *args)
       // set rightleft mode
       if (!win->w_p_rl) {
         win->w_p_rl = true;
-        changed_window_setting(curwin);
+        changed_window_setting(win);
       }
 
       // Enable Arabic shaping (major part of what Arabic requires)
@@ -1917,7 +1917,7 @@ static const char *did_set_arabic(optset_T *args)
       // reset rightleft mode
       if (win->w_p_rl) {
         win->w_p_rl = false;
-        changed_window_setting(curwin);
+        changed_window_setting(win);
       }
 
       // 'arabicshape' isn't reset, it is a global option and
@@ -1928,8 +1928,8 @@ static const char *did_set_arabic(optset_T *args)
     // window may still want it "on".
 
     // Revert to the default keymap
-    curbuf->b_p_iminsert = B_IMODE_NONE;
-    curbuf->b_p_imsearch = B_IMODE_USE_INSERT;
+    win->w_buffer->b_p_iminsert = B_IMODE_NONE;
+    win->w_buffer->b_p_imsearch = B_IMODE_USE_INSERT;
   }
 
   return errmsg;
@@ -2051,9 +2051,7 @@ static const char *did_set_helpheight(optset_T *args)
 {
   // Change window height NOW
   if (!ONE_WINDOW) {
-    buf_T *buf = (buf_T *)args->os_buf;
-    win_T *win = (win_T *)args->os_win;
-    if (buf->b_help && win->w_height < p_hh) {
+    if (curbuf->b_help && curwin->w_height < p_hh) {
       win_setheight((int)p_hh);
     }
   }
@@ -2382,14 +2380,16 @@ static const char *did_set_pumblend(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'readonly' option value.
 static const char *did_set_readonly(optset_T *args)
 {
+  buf_T *buf = (buf_T *)args->os_buf;
+
   // when 'readonly' is reset globally, also reset readonlymode
-  if (!curbuf->b_p_ro && (args->os_flags & OPT_LOCAL) == 0) {
+  if (!buf->b_p_ro && (args->os_flags & OPT_LOCAL) == 0) {
     readonlymode = false;
   }
 
   // when 'readonly' is set may give W10 again
-  if (curbuf->b_p_ro) {
-    curbuf->b_did_warn = false;
+  if (buf->b_p_ro) {
+    buf->b_did_warn = false;
   }
 
   redraw_titles();
@@ -2505,8 +2505,7 @@ static const char *did_set_swapfile(optset_T *args)
   if (buf->b_p_swf && p_uc) {
     ml_open_file(buf);                     // create the swap file
   } else {
-    // no need to reset curbuf->b_may_swap, ml_open_file() will check
-    // buf->b_p_swf
+    // no need to reset buf->b_may_swap, ml_open_file() will check buf->b_p_swf
     mf_close_file(buf, true);              // remove the swap file
   }
   return NULL;
@@ -2546,8 +2545,10 @@ static const char *did_set_titlelen(optset_T *args)
 /// Process the updated 'undofile' option value.
 static const char *did_set_undofile(optset_T *args)
 {
+  buf_T *buf = (buf_T *)args->os_buf;
+
   // Only take action when the option was set.
-  if (!curbuf->b_p_udf && !p_udf) {
+  if (!buf->b_p_udf && !p_udf) {
     return NULL;
   }
 
@@ -2560,7 +2561,7 @@ static const char *did_set_undofile(optset_T *args)
     // only for the current buffer: Try to read in the undofile,
     // if one exists, the buffer wasn't changed and the buffer was
     // loaded
-    if ((curbuf == bp
+    if ((buf == bp
          || (args->os_flags & OPT_GLOBAL) || args->os_flags == 0)
         && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
       u_compute_hash(bp, hash);
@@ -2600,7 +2601,7 @@ static const char *did_set_undolevels(optset_T *args)
 
   if (pp == &p_ul) {                  // global 'undolevels'
     did_set_global_undolevels(args->os_newval.number, args->os_oldval.number);
-  } else if (pp == &curbuf->b_p_ul) {      // buffer local 'undolevels'
+  } else if (pp == &buf->b_p_ul) {      // buffer local 'undolevels'
     did_set_buflocal_undolevels(buf, args->os_newval.number, args->os_oldval.number);
   }
 
@@ -2665,8 +2666,7 @@ static const char *did_set_winheight(optset_T *args)
 {
   // Change window height NOW
   if (!ONE_WINDOW) {
-    win_T *win = (win_T *)args->os_win;
-    if (win->w_height < p_wh) {
+    if (curwin->w_height < p_wh) {
       win_setheight((int)p_wh);
     }
   }
@@ -2677,9 +2677,7 @@ static const char *did_set_winheight(optset_T *args)
 /// Process the new 'winwidth' option value.
 static const char *did_set_winwidth(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
-
-  if (!ONE_WINDOW && win->w_width < p_wiw) {
+  if (!ONE_WINDOW && curwin->w_width < p_wiw) {
     win_setwidth((int)p_wiw);
   }
   return NULL;

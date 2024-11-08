@@ -892,10 +892,11 @@ int expand_set_chars_option(optexpand_T *args, int *numMatches, char ***matches)
 }
 
 /// The 'cinoptions' option is changed.
-const char *did_set_cinoptions(optset_T *args FUNC_ATTR_UNUSED)
+const char *did_set_cinoptions(optset_T *args)
 {
+  buf_T *buf = (buf_T *)args->os_buf;
   // TODO(vim): recognize errors
-  parse_cino(curbuf);
+  parse_cino(buf);
 
   return NULL;
 }
