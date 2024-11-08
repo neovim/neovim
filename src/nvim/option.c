@@ -207,7 +207,6 @@ static void set_init_default_backupskip(void)
   static char *(names[3]) = { "TMPDIR", "TEMP", "TMP" };
 #endif
   garray_T ga;
-  char *ga_data_e;
   OptIndex opt_idx = kOptBackupskip;
 
   ga_init(&ga, 1, 100);
