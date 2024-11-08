@@ -31,6 +31,13 @@ jobs:
           cmake --preset ci -D CMAKE_BUILD_TYPE='RelWithDebInfo' ${{ inputs.build_flags }}
           cmake --build build
 
+      # FIXME(dundargoc): this workaround is needed as the python3 provider
+      # tests suddenly started to become extremely flaky, and this removes the
+      # flakiness for some reason.
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
       - name: Install test deps
         run: |
           $PSNativeCommandArgumentPassing = 'Legacy'
