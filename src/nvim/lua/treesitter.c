@@ -1528,10 +1528,25 @@ static void query_err_string(const char *src, int error_offset, TSQueryError err
       || error_type == TSQueryErrorField
       || error_type == TSQueryErrorCapture) {
     const char *suffix = src + error_offset;
+    bool is_anonymous = error_type == TSQueryErrorNodeType && suffix[-1] == '"';
     int suffix_len = 0;
     char c = suffix[suffix_len];
-    while (isalnum(c) || c == '_' || c == '-' || c == '.') {
-      c = suffix[++suffix_len];
+    if (is_anonymous) {
+      int backslashes = 0;
+      // Stop when we hit an unescaped double quote
+      while (c != '"' || backslashes % 2 != 0) {
+        if (c == '\\') {
+          backslashes += 1;
+        } else {
+          backslashes = 0;
+        }
+        c = suffix[++suffix_len];
+      }
+    } else {
+      // Stop when we hit the end of the identifier
+      while (isalnum(c) || c == '_' || c == '-' || c == '.') {
+        c = suffix[++suffix_len];
+      }
     }
     snprintf(err, errlen, "\"%.*s\":\n", suffix_len, suffix);
     offset = strlen(err);
