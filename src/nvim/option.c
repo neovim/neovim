@@ -1244,11 +1244,10 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
   }
 
   uint8_t nextchar = (uint8_t)(*p);  // next non-white char after option name
-  uint32_t flags = 0;  // flags for current option
-  void *varp = NULL;  // pointer to variable for current option
-
-  flags = options[opt_idx].flags;
-  varp = get_varp_scope(&(options[opt_idx]), opt_flags);
+  // flags for current option
+  uint32_t flags = options[opt_idx].flags;
+  // pointer to variable for current option
+  void *varp = get_varp_scope(&(options[opt_idx]), opt_flags);
 
   if (validate_opt_idx(curwin, opt_idx, opt_flags, flags, prefix, errmsg) == FAIL) {
     return;
@@ -1325,8 +1324,7 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
     return;
   }
 
-  *errmsg = set_option(opt_idx, varp, newval, opt_flags, 0, false, op == OP_NONE, errbuf,
-                       errbuflen);
+  *errmsg = set_option(opt_idx, newval, opt_flags, 0, false, op == OP_NONE, errbuf, errbuflen);
 }
 
 /// Parse 'arg' for option settings.
@@ -2746,15 +2744,14 @@ static void do_spelllang_source(win_T *win)
 /// Check the bounds of numeric options.
 ///
 /// @param          opt_idx    Index in options[] table. Must not be kOptInvalid.
-/// @param[in]      varp       Pointer to option variable.
 /// @param[in,out]  newval     Pointer to new option value. Will be set to bound checked value.
 /// @param[out]     errbuf     Buffer for error message. Cannot be NULL.
 /// @param          errbuflen  Length of error buffer.
 ///
 /// @return Error message, if any.
-static const char *check_num_option_bounds(OptIndex opt_idx, void *varp, OptInt *newval,
-                                           char *errbuf, size_t errbuflen)
-  FUNC_ATTR_NONNULL_ARG(4)
+static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, char *errbuf,
+                                           size_t errbuflen)
+  FUNC_ATTR_NONNULL_ARG(3)
 {
   const char *errmsg = NULL;
 
@@ -2787,9 +2784,7 @@ static const char *check_num_option_bounds(OptIndex opt_idx, void *varp, OptInt 
     }
     break;
   case kOptScroll:
-    if (varp == &(curwin->w_p_scr)
-        && (*newval <= 0
-            || (*newval > curwin->w_height_inner && curwin->w_height_inner > 0))
+    if ((*newval <= 0 || (*newval > curwin->w_height_inner && curwin->w_height_inner > 0))
         && full_screen) {
       if (*newval != 0) {
         errmsg = e_scroll;
@@ -2807,13 +2802,12 @@ static const char *check_num_option_bounds(OptIndex opt_idx, void *varp, OptInt 
 /// Validate and bound check option value.
 ///
 /// @param          opt_idx    Index in options[] table. Must not be kOptInvalid.
-/// @param[in]      varp       Pointer to option variable.
 /// @param[in,out]  newval     Pointer to new option value. Will be set to bound checked value.
 /// @param[out]     errbuf     Buffer for error message. Cannot be NULL.
 /// @param          errbuflen  Length of error buffer.
 ///
 /// @return Error message, if any.
-static const char *validate_num_option(OptIndex opt_idx, void *varp, OptInt *newval, char *errbuf,
+static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *errbuf,
                                        size_t errbuflen)
 {
   OptInt value = *newval;
@@ -2823,145 +2817,137 @@ static const char *validate_num_option(OptIndex opt_idx, void *varp, OptInt *new
     return e_invarg;
   }
 
-  if (varp == &p_wh) {
+  switch (opt_idx) {
+  case kOptHelpheight:
+  case kOptTitlelen:
+  case kOptUpdatecount:
+  case kOptReport:
+  case kOptUpdatetime:
+  case kOptSidescroll:
+  case kOptFoldlevel:
+  case kOptShiftwidth:
+  case kOptTextwidth:
+  case kOptWritedelay:
+  case kOptTimeoutlen:
+    if (value < 0) {
+      return e_positive;
+    }
+    break;
+  case kOptWinheight:
     if (value < 1) {
       return e_positive;
     } else if (p_wmh > value) {
       return e_winheight;
     }
-  } else if (varp == &p_hh) {
-    if (value < 0) {
-      return e_positive;
-    }
-  } else if (varp == &p_wmh) {
+    break;
+  case kOptWinminheight:
     if (value < 0) {
       return e_positive;
     } else if (value > p_wh) {
       return e_winheight;
     }
-  } else if (varp == &p_wiw) {
+    break;
+  case kOptWinwidth:
     if (value < 1) {
       return e_positive;
     } else if (p_wmw > value) {
       return e_winwidth;
     }
-  } else if (varp == &p_wmw) {
+    break;
+  case kOptWinminwidth:
     if (value < 0) {
       return e_positive;
     } else if (value > p_wiw) {
       return e_winwidth;
     }
-  } else if (varp == &p_mco) {
+    break;
+  case kOptMaxcombine:
     *newval = MAX_MCO;
-  } else if (varp == &p_titlelen) {
-    if (value < 0) {
-      return e_positive;
-    }
-  } else if (varp == &p_uc) {
-    if (value < 0) {
-      return e_positive;
-    }
-  } else if (varp == &p_ch) {
+    break;
+  case kOptCmdheight:
     if (value < 0) {
       return e_positive;
     } else {
       p_ch_was_zero = value == 0;
     }
-  } else if (varp == &p_tm) {
-    if (value < 0) {
-      return e_positive;
-    }
-  } else if (varp == &p_hi) {
+    break;
+  case kOptHistory:
     if (value < 0) {
       return e_positive;
     } else if (value > 10000) {
       return e_invarg;
     }
-  } else if (varp == &p_pyx) {
+    break;
+  case kOptPyxversion:
     if (value == 0) {
       *newval = 3;
     } else if (value != 3) {
       return e_invarg;
     }
-  } else if (varp == &p_re) {
+    break;
+  case kOptRegexpengine:
     if (value < 0 || value > 2) {
       return e_invarg;
     }
-  } else if (varp == &p_report) {
-    if (value < 0) {
-      return e_positive;
-    }
-  } else if (varp == &p_so) {
+    break;
+  case kOptScrolloff:
     if (value < 0 && full_screen) {
       return e_positive;
     }
-  } else if (varp == &p_siso) {
+    break;
+  case kOptSidescrolloff:
     if (value < 0 && full_screen) {
       return e_positive;
     }
-  } else if (varp == &p_cwh) {
+    break;
+  case kOptCmdwinheight:
     if (value < 1) {
       return e_positive;
     }
-  } else if (varp == &p_ut) {
-    if (value < 0) {
-      return e_positive;
-    }
-  } else if (varp == &p_ss) {
-    if (value < 0) {
-      return e_positive;
-    }
-  } else if (varp == &curwin->w_p_fdl || varp == &curwin->w_allbuf_opt.wo_fdl) {
-    if (value < 0) {
-      return e_positive;
-    }
-  } else if (varp == &curwin->w_p_cole || varp == &curwin->w_allbuf_opt.wo_cole) {
+    break;
+  case kOptConceallevel:
     if (value < 0) {
       return e_positive;
     } else if (value > 3) {
       return e_invarg;
     }
-  } else if (varp == &curwin->w_p_nuw || varp == &curwin->w_allbuf_opt.wo_nuw) {
+    break;
+  case kOptNumberwidth:
     if (value < 1) {
       return e_positive;
     } else if (value > MAX_NUMBERWIDTH) {
       return e_invarg;
     }
-  } else if (varp == &curbuf->b_p_iminsert || varp == &p_iminsert) {
+    break;
+  case kOptIminsert:
     if (value < 0 || value > B_IMODE_LAST) {
       return e_invarg;
     }
-  } else if (varp == &curbuf->b_p_imsearch || varp == &p_imsearch) {
+    break;
+  case kOptImsearch:
     if (value < -1 || value > B_IMODE_LAST) {
       return e_invarg;
     }
-  } else if (varp == &curbuf->b_p_channel || varp == &p_channel) {
+    break;
+  case kOptChannel:
     return e_invarg;
-  } else if (varp == &curbuf->b_p_scbk || varp == &p_scbk) {
+  case kOptScrollback:
     if (value < -1 || value > SB_MAX) {
       return e_invarg;
     }
-  } else if (varp == &curbuf->b_p_sw || varp == &p_sw) {
-    if (value < 0) {
-      return e_positive;
-    }
-  } else if (varp == &curbuf->b_p_ts || varp == &p_ts) {
+    break;
+  case kOptTabstop:
     if (value < 1) {
       return e_positive;
     } else if (value > TABSTOP_MAX) {
       return e_invarg;
     }
-  } else if (varp == &curbuf->b_p_tw || varp == &p_tw) {
-    if (value < 0) {
-      return e_positive;
-    }
-  } else if (varp == &p_wd) {
-    if (value < 0) {
-      return e_positive;
-    }
+    break;
+  default:
+    break;
   }
 
-  return check_num_option_bounds(opt_idx, varp, newval, errbuf, errbuflen);
+  return check_num_option_bounds(opt_idx, newval, errbuf, errbuflen);
 }
 
 /// Called after an option changed: check if something needs to be redrawn.
@@ -3126,7 +3112,8 @@ bool optval_equal(OptVal o1, OptVal o2)
     return o1.data.number == o2.data.number;
   case kOptValTypeString:
     return o1.data.string.size == o2.data.string.size
-           && strnequal(o1.data.string.data, o2.data.string.data, o1.data.string.size);
+           && (o1.data.string.data == o2.data.string.data
+               || strnequal(o1.data.string.data, o2.data.string.data, o1.data.string.size));
   }
   UNREACHABLE;
 }
@@ -3588,13 +3575,18 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
 /// Validate the new value for an option.
 ///
 /// @param  opt_idx         Index in options[] table. Must not be kOptInvalid.
-/// @param  varp            Pointer to option variable.
 /// @param  newval[in,out]  New option value. Might be modified.
-static const char *validate_option_value(const OptIndex opt_idx, void *varp, OptVal *newval,
-                                         int opt_flags, char *errbuf, size_t errbuflen)
+static const char *validate_option_value(const OptIndex opt_idx, OptVal *newval, int opt_flags,
+                                         char *errbuf, size_t errbuflen)
 {
   const char *errmsg = NULL;
   vimoption_T *opt = &options[opt_idx];
+
+  // Always allow unsetting local value of global-local option.
+  if (option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL)
+      && optval_equal(*newval, get_option_unset_value(opt_idx))) {
+    return NULL;
+  }
 
   if (newval->type == kOptValTypeNil) {
     // Don't try to unset local value if scope is global.
@@ -3615,7 +3607,7 @@ static const char *validate_option_value(const OptIndex opt_idx, void *varp, Opt
     errmsg = errbuf;
   } else if (newval->type == kOptValTypeNumber) {
     // Validate and bound check num option values.
-    errmsg = validate_num_option(opt_idx, varp, &newval->data.number, errbuf, errbuflen);
+    errmsg = validate_num_option(opt_idx, &newval->data.number, errbuf, errbuflen);
   }
 
   return errmsg;
@@ -3624,7 +3616,6 @@ static const char *validate_option_value(const OptIndex opt_idx, void *varp, Opt
 /// Set the value of an option using an OptVal.
 ///
 /// @param       opt_idx         Index in options[] table. Must not be kOptInvalid.
-/// @param[in]   varp            Option variable pointer, cannot be NULL.
 /// @param       value           New option value. Might get freed.
 /// @param       opt_flags       Option flags.
 /// @param       set_sid         Script ID. Special values:
@@ -3636,17 +3627,16 @@ static const char *validate_option_value(const OptIndex opt_idx, void *varp, Opt
 /// @param       errbuflen       Length of error buffer.
 ///
 /// @return  NULL on success, an untranslated error message on error.
-static const char *set_option(const OptIndex opt_idx, void *varp, OptVal value, int opt_flags,
-                              scid_T set_sid, const bool direct, const bool value_replaced,
-                              char *errbuf, size_t errbuflen)
-  FUNC_ATTR_NONNULL_ARG(2)
+static const char *set_option(const OptIndex opt_idx, OptVal value, int opt_flags, scid_T set_sid,
+                              const bool direct, const bool value_replaced, char *errbuf,
+                              size_t errbuflen)
 {
   assert(opt_idx != kOptInvalid);
 
   const char *errmsg = NULL;
 
   if (!direct) {
-    errmsg = validate_option_value(opt_idx, varp, &value, opt_flags, errbuf, errbuflen);
+    errmsg = validate_option_value(opt_idx, &value, opt_flags, errbuf, errbuflen);
 
     if (errmsg != NULL) {
       optval_free(value);
@@ -3663,11 +3653,9 @@ static const char *set_option(const OptIndex opt_idx, void *varp, OptVal value, 
   const bool is_opt_local_unset = is_option_local_value_unset(opt_idx);
 
   // When using ":set opt=val" for a global option with a local value the local value will be reset,
-  // use the global value here.
-  if (scope_both && option_is_global_local(opt_idx)) {
-    varp = opt->var;
-  }
-
+  // use the global value in that case.
+  void *varp
+    = scope_both && option_is_global_local(opt_idx) ? opt->var : get_varp_scope(opt, opt_flags);
   void *varp_local = get_varp_scope(opt, OPT_LOCAL);
   void *varp_global = get_varp_scope(opt, OPT_GLOBAL);
 
@@ -3741,16 +3729,11 @@ void set_option_direct(OptIndex opt_idx, OptVal value, int opt_flags, scid_T set
 {
   static char errbuf[IOSIZE];
 
-  vimoption_T *opt = get_option(opt_idx);
-
   if (is_option_hidden(opt_idx)) {
     return;
   }
 
-  const bool scope_both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
-  void *varp = get_varp_scope(opt, scope_both ? OPT_LOCAL : opt_flags);
-
-  const char *errmsg = set_option(opt_idx, varp, optval_copy(value), opt_flags, set_sid, true, true,
+  const char *errmsg = set_option(opt_idx, optval_copy(value), opt_flags, set_sid, true, true,
                                   errbuf, sizeof(errbuf));
   assert(errmsg == NULL);
   (void)errmsg;  // ignore unused warning
@@ -3812,14 +3795,7 @@ const char *set_option_value(const OptIndex opt_idx, const OptVal value, int opt
     return _(e_sandbox);
   }
 
-  void *varp = get_varp_scope(&(options[opt_idx]), opt_flags);
-  if (varp == NULL) {
-    // hidden option is not changed
-    return NULL;
-  }
-
-  return set_option(opt_idx, varp, optval_copy(value), opt_flags, 0, false, true, errbuf,
-                    sizeof(errbuf));
+  return set_option(opt_idx, optval_copy(value), opt_flags, 0, false, true, errbuf, sizeof(errbuf));
 }
 
 /// Unset the local value of a global-local option.
