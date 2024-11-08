@@ -20,6 +20,8 @@ local function client_positional_params(params)
   end
 end
 
+local hover_ns = api.nvim_create_namespace('vim_lsp_hover_range')
+
 --- @class vim.lsp.buf.hover.Opts : vim.lsp.util.open_floating_preview.Opts
 --- @field silent? boolean
 
@@ -30,13 +32,24 @@ end
 --- In the floating window, all commands and mappings are available as usual,
 --- except that "q" dismisses the window.
 --- You can scroll the contents the same as you would any other buffer.
+---
+--- Note: to disable hover highlights, add the following to your config:
+---
+--- ```lua
+--- vim.api.nvim_create_autocmd('ColorScheme', {
+---   callback = function()
+---     vim.api.nvim_set_hl(0, 'LspReferenceTarget', {})
+---   end,
+--- })
+--- ```
 --- @param config? vim.lsp.buf.hover.Opts
 function M.hover(config)
   config = config or {}
   config.focus_id = ms.textDocument_hover
 
   lsp.buf_request_all(0, ms.textDocument_hover, client_positional_params(), function(results, ctx)
-    if api.nvim_get_current_buf() ~= ctx.bufnr then
+    local bufnr = assert(ctx.bufnr)
+    if api.nvim_get_current_buf() ~= bufnr then
       -- Ignore result since buffer changed. This happens for slow language servers.
       return
     end
@@ -67,9 +80,10 @@ function M.hover(config)
     local format = 'markdown'
 
     for client_id, result in pairs(results1) do
+      local client = assert(lsp.get_client_by_id(client_id))
       if nresults > 1 then
         -- Show client name if there are multiple clients
-        contents[#contents + 1] = string.format('# %s', lsp.get_client_by_id(client_id).name)
+        contents[#contents + 1] = string.format('# %s', client.name)
       end
       if type(result.contents) == 'table' and result.contents.kind == 'plaintext' then
         if #results1 == 1 then
@@ -87,6 +101,22 @@ function M.hover(config)
       else
         vim.list_extend(contents, util.convert_input_to_markdown_lines(result.contents))
       end
+      local range = result.range
+      if range then
+        local start = range.start
+        local end_ = range['end']
+        local start_idx = util._get_line_byte_from_position(bufnr, start, client.offset_encoding)
+        local end_idx = util._get_line_byte_from_position(bufnr, end_, client.offset_encoding)
+
+        vim.hl.range(
+          bufnr,
+          hover_ns,
+          'LspReferenceTarget',
+          { start.line, start_idx },
+          { end_.line, end_idx },
+          { priority = vim.hl.priorities.user }
+        )
+      end
       contents[#contents + 1] = '---'
     end
 
@@ -100,7 +130,16 @@ function M.hover(config)
       return
     end
 
-    lsp.util.open_floating_preview(contents, format, config)
+    local _, winid = lsp.util.open_floating_preview(contents, format, config)
+
+    api.nvim_create_autocmd('WinClosed', {
+      pattern = tostring(winid),
+      once = true,
+      callback = function()
+        api.nvim_buf_clear_namespace(bufnr, hover_ns, 0, -1)
+        return true
+      end,
+    })
   end)
 end
 
