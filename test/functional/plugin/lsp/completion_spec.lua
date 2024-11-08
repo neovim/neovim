@@ -134,37 +134,6 @@ describe('vim.lsp.completion: item conversion', function()
     eq(expected, result)
   end)
 
-  it('fuzzy matches on filterText', function()
-    local completion_list = {
-      { label = 'foo', filterText = 'foo' },
-      { label = 'faz other', filterText = 'faz other' },
-      { label = 'bar', filterText = 'bar' },
-    }
-    local result = complete('fo|', completion_list)
-    local expected = {
-      {
-        abbr = 'faz other',
-        word = 'faz other',
-      },
-      {
-        abbr = 'foo',
-        word = 'foo',
-      },
-    }
-    result = vim.tbl_map(function(x)
-      return {
-        abbr = x.abbr,
-        word = x.word,
-      }
-    end, result.items)
-    local sorter = function(a, b)
-      return a.word > b.word
-    end
-    table.sort(expected, sorter)
-    table.sort(result, sorter)
-    eq(expected, result)
-  end)
-
   it('does not filter if there is a textEdit', function()
     local range0 = {
       start = { line = 0, character = 0 },
@@ -199,47 +168,11 @@ describe('vim.lsp.completion: item conversion', function()
     eq(expected, result)
   end)
 
-  it('filters on label if filterText is missing', function()
-    local completion_list = {
-      { label = 'foo' },
-      { label = 'bar' },
-    }
-    local result = complete('fo|', completion_list)
-    local expected = {
-      {
-        abbr = 'foo',
-        word = 'foo',
-      },
-    }
-    result = vim.tbl_map(function(x)
-      return {
-        abbr = x.abbr,
-        word = x.word,
-      }
-    end, result.items)
-    eq(expected, result)
-  end)
-
-  it('fuzzy matches on label if completeopt has fuzzy matching enabled', function()
-    exec_lua(function()
-      vim.opt.completeopt:append('fuzzy')
-    end)
-    local completion_list = {
-      { label = 'foo' },
-      { label = 'faz other' },
-      { label = 'bar' },
-    }
-    local result = complete('fo|', completion_list)
-    local expected = {
-      {
-        abbr = 'faz other',
-        word = 'faz other',
-      },
-      {
-        abbr = 'foo',
-        word = 'foo',
-      },
-    }
+  ---@param prefix string
+  ---@param items lsp.CompletionItem[]
+  ---@param expected table[]
+  local assert_completion_matches = function(prefix, items, expected)
+    local result = complete(prefix .. '|', items)
     result = vim.tbl_map(function(x)
       return {
         abbr = x.abbr,
@@ -252,8 +185,52 @@ describe('vim.lsp.completion: item conversion', function()
     table.sort(expected, sorter)
     table.sort(result, sorter)
     eq(expected, result)
-    exec_lua(function()
-      vim.opt.completeopt:remove('fuzzy')
+  end
+
+  describe('when completeopt has fuzzy matching enabled', function()
+    before_each(function()
+      exec_lua(function()
+        vim.opt.completeopt:append('fuzzy')
+      end)
+    end)
+    after_each(function()
+      exec_lua(function()
+        vim.opt.completeopt:remove('fuzzy')
+      end)
+    end)
+
+    it('fuzzy matches on filterText', function()
+      assert_completion_matches('fo', {
+        { label = '?.foo', filterText = 'foo' },
+        { label = 'faz other', filterText = 'faz other' },
+        { label = 'bar', filterText = 'bar' },
+      }, {
+        {
+          abbr = 'faz other',
+          word = 'faz other',
+        },
+        {
+          abbr = '?.foo',
+          word = '?.foo',
+        },
+      })
+    end)
+
+    it('fuzzy matches on label when filterText is missing', function()
+      assert_completion_matches('fo', {
+        { label = 'foo' },
+        { label = 'faz other' },
+        { label = 'bar' },
+      }, {
+        {
+          abbr = 'faz other',
+          word = 'faz other',
+        },
+        {
+          abbr = 'foo',
+          word = 'foo',
+        },
+      })
     end)
   end)
 
@@ -269,28 +246,34 @@ describe('vim.lsp.completion: item conversion', function()
       end)
     end)
 
-    it('matches label case sensitively', function()
-      local completion_list = {
+    it('matches filterText case sensitively', function()
+      assert_completion_matches('Fo', {
+        { label = 'foo', filterText = 'foo' },
+        { label = '?.Foo', filterText = 'Foo' },
+        { label = 'Faz other', filterText = 'Faz other' },
+        { label = 'faz other', filterText = 'faz other' },
+        { label = 'bar', filterText = 'bar' },
+      }, {
+        {
+          abbr = '?.Foo',
+          word = '?.Foo',
+        },
+      })
+    end)
+
+    it('matches label case sensitively when filterText is missing', function()
+      assert_completion_matches('Fo', {
         { label = 'foo' },
         { label = 'Foo' },
         { label = 'Faz other' },
         { label = 'faz other' },
         { label = 'bar' },
-      }
-      local result = complete('Fo|', completion_list)
-      local expected = {
+      }, {
         {
           abbr = 'Foo',
           word = 'Foo',
         },
-      }
-      result = vim.tbl_map(function(x)
-        return {
-          abbr = x.abbr,
-          word = x.word,
-        }
-      end, result.items)
-      eq(expected, result)
+      })
     end)
 
     describe('when ignorecase is enabled', function()
@@ -305,74 +288,79 @@ describe('vim.lsp.completion: item conversion', function()
         end)
       end)
 
-      it('matches label case insensitively if prefix is lowercase', function()
-        exec_lua(function()
-          vim.opt.ignorecase = true
-        end)
-        local completion_list = {
-          { label = 'foo' },
-          { label = 'Foo' },
-          { label = 'Faz other' },
-          { label = 'faz other' },
-          { label = 'bar' },
-        }
-        local result = complete('fo|', completion_list)
-        local expected = {
+      it('matches filterText case insensitively if prefix is lowercase', function()
+        assert_completion_matches('fo', {
+          { label = '?.foo', filterText = 'foo' },
+          { label = '?.Foo', filterText = 'Foo' },
+          { label = 'Faz other', filterText = 'Faz other' },
+          { label = 'faz other', filterText = 'faz other' },
+          { label = 'bar', filterText = 'bar' },
+        }, {
           {
-            abbr = 'Foo',
-            word = 'Foo',
+            abbr = '?.Foo',
+            word = '?.Foo',
           },
           {
-            abbr = 'foo',
-            word = 'foo',
+            abbr = '?.foo',
+            word = '?.foo',
           },
-        }
-        result = vim.tbl_map(function(x)
-          return {
-            abbr = x.abbr,
-            word = x.word,
-          }
-        end, result.items)
-        local sorter = function(a, b)
-          return a.word > b.word
-        end
-        table.sort(expected, sorter)
-        table.sort(result, sorter)
-        eq(expected, result)
-        exec_lua(function()
-          vim.opt.ignorecase = false
-        end)
+        })
       end)
 
-      it('matches label case sensitively if prefix has uppercase letters', function()
-        exec_lua(function()
-          vim.opt.ignorecase = true
-        end)
-        local completion_list = {
-          { label = 'foo' },
-          { label = 'Foo' },
-          { label = 'Faz other' },
-          { label = 'faz other' },
-          { label = 'bar' },
-        }
-        local result = complete('Fo|', completion_list)
-        local expected = {
+      it(
+        'matches label case insensitively if prefix is lowercase and filterText is missing',
+        function()
+          assert_completion_matches('fo', {
+            { label = 'foo' },
+            { label = 'Foo' },
+            { label = 'Faz other' },
+            { label = 'faz other' },
+            { label = 'bar' },
+          }, {
+            {
+              abbr = 'Foo',
+              word = 'Foo',
+            },
+            {
+              abbr = 'foo',
+              word = 'foo',
+            },
+          })
+        end
+      )
+
+      it('matches filterText case sensitively if prefix has uppercase letters', function()
+        assert_completion_matches('Fo', {
+          { label = 'foo', filterText = 'foo' },
+          { label = '?.Foo', filterText = 'Foo' },
+          { label = 'Faz other', filterText = 'Faz other' },
+          { label = 'faz other', filterText = 'faz other' },
+          { label = 'bar', filterText = 'bar' },
+        }, {
           {
-            abbr = 'Foo',
-            word = 'Foo',
+            abbr = '?.Foo',
+            word = '?.Foo',
           },
-        }
-        result = vim.tbl_map(function(x)
-          return {
-            abbr = x.abbr,
-            word = x.word,
-          }
-        end, result.items)
-        eq(expected, result)
-        exec_lua(function()
-          vim.opt.ignorecase = false
-        end)
+        })
       end)
+
+      it(
+        'matches label case sensitively if prefix has uppercase letters and filterText is missing',
+        function()
+          assert_completion_matches('Fo', {
+            { label = 'foo' },
+            { label = 'Foo' },
+            { label = 'Faz other' },
+            { label = 'faz other' },
+            { label = 'bar' },
+          }, {
+            {
+              abbr = 'Foo',
+              word = 'Foo',
+            },
+          })
+        end
+      )
     end)
   end)
 
@@ -388,16 +376,33 @@ describe('vim.lsp.completion: item conversion', function()
       end)
     end)
 
-    it('matches label case insensitively', function()
-      local completion_list = {
+    it('matches filterText case insensitively', function()
+      assert_completion_matches('Fo', {
+        { label = '?.foo', filterText = 'foo' },
+        { label = '?.Foo', filterText = 'Foo' },
+        { label = 'Faz other', filterText = 'Faz other' },
+        { label = 'faz other', filterText = 'faz other' },
+        { label = 'bar', filterText = 'bar' },
+      }, {
+        {
+          abbr = '?.Foo',
+          word = '?.Foo',
+        },
+        {
+          abbr = '?.foo',
+          word = '?.foo',
+        },
+      })
+    end)
+
+    it('matches label case insensitively when filterText is missing', function()
+      assert_completion_matches('Fo', {
         { label = 'foo' },
         { label = 'Foo' },
         { label = 'Faz other' },
         { label = 'faz other' },
         { label = 'bar' },
-      }
-      local result = complete('Fo|', completion_list)
-      local expected = {
+      }, {
         {
           abbr = 'Foo',
           word = 'Foo',
@@ -406,19 +411,7 @@ describe('vim.lsp.completion: item conversion', function()
           abbr = 'foo',
           word = 'foo',
         },
-      }
-      result = vim.tbl_map(function(x)
-        return {
-          abbr = x.abbr,
-          word = x.word,
-        }
-      end, result.items)
-      local sorter = function(a, b)
-        return a.word > b.word
-      end
-      table.sort(expected, sorter)
-      table.sort(result, sorter)
-      eq(expected, result)
+      })
     end)
   end)
 
