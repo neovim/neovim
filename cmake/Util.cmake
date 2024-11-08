@@ -61,6 +61,7 @@ function(add_glob_target)
   if(NOT ARG_COMMAND)
     add_custom_target(${ARG_TARGET})
     add_custom_command(TARGET ${ARG_TARGET}
+      POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E echo "${ARG_TARGET} SKIP: ${ARG_COMMAND} not found")
     return()
   endif()
