@@ -109,9 +109,6 @@ describe('timers', function()
   it('can invoke redraw in blocking getchar() call', function()
     local screen = Screen.new(40, 6)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue },
-    })
 
     api.nvim_buf_set_lines(0, 0, -1, true, { 'ITEM 1', 'ITEM 2' })
     source([[
@@ -229,7 +226,6 @@ describe('timers', function()
   it("doesn't mess up the cmdline", function()
     local screen = Screen.new(40, 6)
     screen:attach()
-    screen:set_default_attr_ids({ [0] = { bold = true, foreground = 255 } })
     source([[
       let g:val = 0
       func! MyHandler(timer)
@@ -247,7 +243,7 @@ describe('timers', function()
     feed(':good')
     screen:expect([[
                                               |
-      {0:~                                       }|*4
+      {1:~                                       }|*4
       :good^                                   |
     ]])
     command('let g:val = 1')

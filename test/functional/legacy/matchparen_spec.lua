@@ -34,20 +34,19 @@ describe('matchparen', function()
   -- oldtest: Test_matchparen_clear_highlight()
   it('matchparen highlight is cleared when switching buffer', function()
     local screen = Screen.new(20, 5)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { background = Screen.colors.Cyan },
-    })
+    screen:add_extra_attr_ids {
+      [100] = { background = Screen.colors.Cyan1 },
+    }
     screen:attach()
 
     local screen1 = [[
-      {1:^()}                  |
-      {0:~                   }|*3
+      {100:^()}                  |
+      {1:~                   }|*3
                           |
     ]]
     local screen2 = [[
       ^aa                  |
-      {0:~                   }|*3
+      {1:~                   }|*3
                           |
     ]]
 
@@ -77,11 +76,9 @@ describe('matchparen', function()
   -- oldtest: Test_matchparen_win_execute()
   it('matchparen highlight when switching buffer in win_execute()', function()
     local screen = Screen.new(20, 5)
-    screen:set_default_attr_ids({
-      [1] = { background = Screen.colors.Cyan },
-      [2] = { reverse = true, bold = true },
-      [3] = { reverse = true },
-    })
+    screen:add_extra_attr_ids {
+      [100] = { background = Screen.colors.Cyan1 },
+    }
     screen:attach()
 
     exec([[
@@ -95,10 +92,10 @@ describe('matchparen', function()
       endfunc
     ]])
     screen:expect([[
-      {1:^{}}                  |
-      {2:[No Name] [+]       }|
-      {}                  |
+      {100:^{}}                  |
       {3:[No Name] [+]       }|
+      {}                  |
+      {2:[No Name] [+]       }|
                           |
     ]])
 
@@ -136,11 +133,9 @@ describe('matchparen', function()
   -- oldtest: Test_matchparen_mbyte()
   it("works with multibyte chars in 'matchpairs'", function()
     local screen = Screen.new(30, 10)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { background = Screen.colors.Cyan },
-      [2] = { bold = true },
-    })
+    screen:add_extra_attr_ids {
+      [100] = { background = Screen.colors.Cyan1 },
+    }
     screen:attach()
 
     exec([[
@@ -152,57 +147,57 @@ describe('matchparen', function()
     screen:expect([[
       ^aaaaaaaa（                    |
       bbbb）cc                      |
-      {0:~                             }|*7
+      {1:~                             }|*7
                                     |
     ]])
     feed('$')
     screen:expect([[
-      aaaaaaaa{1:^（}                    |
-      bbbb{1:）}cc                      |
-      {0:~                             }|*7
+      aaaaaaaa{100:^（}                    |
+      bbbb{100:）}cc                      |
+      {1:~                             }|*7
                                     |
     ]])
     feed('j')
     screen:expect([[
       aaaaaaaa（                    |
       bbbb）c^c                      |
-      {0:~                             }|*7
+      {1:~                             }|*7
                                     |
     ]])
     feed('2h')
     screen:expect([[
-      aaaaaaaa{1:（}                    |
-      bbbb{1:^）}cc                      |
-      {0:~                             }|*7
+      aaaaaaaa{100:（}                    |
+      bbbb{100:^）}cc                      |
+      {1:~                             }|*7
                                     |
     ]])
     feed('0')
     screen:expect([[
       aaaaaaaa（                    |
       ^bbbb）cc                      |
-      {0:~                             }|*7
+      {1:~                             }|*7
                                     |
     ]])
     feed('kA')
     screen:expect([[
-      aaaaaaaa{1:（}^                    |
-      bbbb{1:）}cc                      |
-      {0:~                             }|*7
-      {2:-- INSERT --}                  |
+      aaaaaaaa{100:（}^                    |
+      bbbb{100:）}cc                      |
+      {1:~                             }|*7
+      {5:-- INSERT --}                  |
     ]])
     feed('<Down>')
     screen:expect([[
       aaaaaaaa（                    |
       bbbb）cc^                      |
-      {0:~                             }|*7
-      {2:-- INSERT --}                  |
+      {1:~                             }|*7
+      {5:-- INSERT --}                  |
     ]])
     feed('<C-W>')
     screen:expect([[
-      aaaaaaaa{1:（}                    |
-      bbbb{1:）}^                        |
-      {0:~                             }|*7
-      {2:-- INSERT --}                  |
+      aaaaaaaa{100:（}                    |
+      bbbb{100:）}^                        |
+      {1:~                             }|*7
+      {5:-- INSERT --}                  |
     ]])
   end)
 end)

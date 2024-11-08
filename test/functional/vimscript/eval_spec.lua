@@ -189,11 +189,6 @@ describe('uncaught exception', function()
 
   it('multiline exception remains multiline #25350', function()
     local screen = Screen.new(80, 11)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, reverse = true }, -- MsgSeparator
-      [2] = { foreground = Screen.colors.White, background = Screen.colors.Red }, -- ErrorMsg
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
-    })
     screen:attach()
     exec_lua([[
       function _G.Oops()
@@ -203,17 +198,17 @@ describe('uncaught exception', function()
     feed(':try\rlua _G.Oops()\rendtry\r')
     screen:expect {
       grid = [[
-      {1:                                                                                }|
+      {3:                                                                                }|
       :try                                                                            |
       :  lua _G.Oops()                                                                |
       :  endtry                                                                       |
-      {2:Error detected while processing :}                                               |
-      {2:E5108: Error executing lua [string "<nvim>"]:2: oops}                            |
-      {2:stack traceback:}                                                                |
-      {2:        [C]: in function 'error'}                                                |
-      {2:        [string "<nvim>"]:2: in function 'Oops'}                                 |
-      {2:        [string ":lua"]:1: in main chunk}                                        |
-      {3:Press ENTER or type command to continue}^                                         |
+      {9:Error detected while processing :}                                               |
+      {9:E5108: Error executing lua [string "<nvim>"]:2: oops}                            |
+      {9:stack traceback:}                                                                |
+      {9:        [C]: in function 'error'}                                                |
+      {9:        [string "<nvim>"]:2: in function 'Oops'}                                 |
+      {9:        [string ":lua"]:1: in main chunk}                                        |
+      {6:Press ENTER or type command to continue}^                                         |
     ]],
     }
   end)
