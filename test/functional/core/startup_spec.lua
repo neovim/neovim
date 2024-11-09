@@ -343,7 +343,7 @@ describe('startup', function()
     local screen = Screen.new(25, 3)
     -- Remote UI connected by --embed.
     -- TODO: a lot of tests in this file already use the new default color scheme.
-    -- once we do the batch update of tests to use it, remove this workarond
+    -- once we do the batch update of tests to use it, remove this workaround
     screen._default_attr_ids = nil
     command([[echo has('ttyin') has('ttyout')]])
     screen:expect([[

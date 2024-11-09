@@ -1,6 +1,5 @@
 " Vim filetype plugin
 " Language:     Nvim :checkhealth buffer
-" Last Change:  2022 Nov 10
 
 if exists("b:did_ftplugin")
   finish

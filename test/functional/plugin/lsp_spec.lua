@@ -3499,7 +3499,7 @@ describe('LSP', function()
         }
         return vim.lsp.util.convert_signature_help_to_markdown_lines(signature_help, 'zig', { '(' })
       end)
-      -- Note that although the higlight positions below are 0-indexed, the 2nd parameter
+      -- Note that although the highlight positions below are 0-indexed, the 2nd parameter
       -- corresponds to the 3rd line because the first line is the ``` from the
       -- Markdown block.
       local expected = { 3, 4, 3, 11 }

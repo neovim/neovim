@@ -544,7 +544,7 @@ describe('clipboard (with fake clipboard.vim)', function()
       ]])
       feed('gg^<C-v>') -- Goto start of top line enter visual block mode
       feed('3ljy^k') -- yank 4x2 block & goto initial location
-      feed('P') -- Paste it infront
+      feed('P') -- Paste it before cursor
       expect([[
         aabbaabbcc
         ddeeddeeff
