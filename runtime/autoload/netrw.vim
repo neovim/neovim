@@ -32,6 +32,7 @@
 "   2024 Oct 30 by Vim Project: fix x mapping on cygwin (#13687)
 "   2024 Oct 31 by Vim Project: add netrw#Launch() and netrw#Open() (#15962)
 "   2024 Oct 31 by Vim Project: fix E874 when browsing remote dir (#15964)
+"   2024 Nov 07 by Vim Project: use keeppatterns to prevent polluting the search history
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -9499,7 +9500,7 @@ fun! s:NetrwTreeListing(dirname)
    endif
 
    " update the dictionary for the current directory
-   exe "sil! NetrwKeepj ".w:netrw_bannercnt.',$g@^\.\.\=/$@d _'
+   exe "sil! NetrwKeepj keepp ".w:netrw_bannercnt.',$g@^\.\.\=/$@d _'
    let w:netrw_treedict[a:dirname]= getline(w:netrw_bannercnt,line("$"))
    exe "sil! NetrwKeepj ".w:netrw_bannercnt.",$d _"
 
@@ -9916,7 +9917,7 @@ fun! s:PerformListing(islocal)
   " resolve symbolic links if local and (thin or tree)
   if a:islocal && (w:netrw_liststyle == s:THINLIST || (exists("w:netrw_liststyle") && w:netrw_liststyle == s:TREELIST))
 "   call Decho("--resolve symbolic links if local and thin|tree",'~'.expand("<slnum>"))
-   sil! g/@$/call s:ShowLink()
+   sil! keepp g/@$/call s:ShowLink()
   endif
 
   if exists("w:netrw_bannercnt") && (line("$") >= w:netrw_bannercnt || !g:netrw_banner)
