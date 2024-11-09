@@ -956,7 +956,7 @@ void time_init(const char *fname, const char *proc_name)
   const size_t bufsize = 8192;  // Big enough for the entire --startuptime report.
   time_fd = fopen(fname, "a");
   if (time_fd == NULL) {
-    semsg(_(e_notopen), fname);
+    fprintf(stderr, _(e_notopen), fname);
     return;
   }
   startuptime_buf = xmalloc(sizeof(char) * (bufsize + 1));
@@ -968,8 +968,7 @@ void time_init(const char *fname, const char *proc_name)
     XFREE_CLEAR(startuptime_buf);
     fclose(time_fd);
     time_fd = NULL;
-    ELOG("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
-    semsg("time_init: setvbuf failed: %d %s", r, uv_err_name(r));
+    fprintf(stderr, "time_init: setvbuf failed: %d %s", r, uv_err_name(r));
     return;
   }
   fprintf(time_fd, "--- Startup times for process: %s ---\n", proc_name);
