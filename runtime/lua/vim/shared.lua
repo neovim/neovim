@@ -1142,7 +1142,7 @@ end
 --- @param mod T
 --- @return T
 function vim._defer_require(root, mod)
-  return setmetatable({}, {
+  return setmetatable({ _submodules = mod }, {
     ---@param t table<string, any>
     ---@param k string
     __index = function(t, k)
