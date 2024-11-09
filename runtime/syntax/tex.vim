@@ -109,9 +109,9 @@ if s:tex_fold_enabled && &fdm == "manual"
  setl fdm=syntax
 endif
 if s:tex_fold_enabled && has("folding")
- com! -nargs=* TexFold <args> fold 
+ com! -nargs=* TexFold <args> fold
 else
- com! -nargs=* TexFold <args> 
+ com! -nargs=* TexFold <args>
 endif
 
 " (La)TeX keywords: uses the characters 0-9,a-z,A-Z,192-255 only... {{{1
@@ -162,7 +162,7 @@ endif
 
 " Clusters: {{{1
 " --------
-syn cluster texCmdGroup			contains=texCmdBody,texComment,texDefParm,texDelimiter,texDocType,texInput,texLength,texLigature,texMathDelim,texMathOper,texNewCmd,texNewEnv,texRefZone,texSection,texBeginEnd,texBeginEndName,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,@texMathZones
+syn cluster texCmdGroup			contains=texCmdBody,texComment,texDefParm,texDelimiter,texDocType,texInput,texLength,texLigature,texMathDelim,texMathOper,texMathNumber,texNewCmd,texNewEnv,texRefZone,texSection,texBeginEnd,texBeginEndName,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,@texMathZones
 if !s:tex_no_error
  syn cluster texCmdGroup		add=texMathError
 endif
@@ -202,8 +202,8 @@ if !exists("g:tex_no_math")
  syn cluster texMathZones		contains=texMathZoneV,texMathZoneW,texMathZoneX,texMathZoneY,texMathZoneZ
  syn cluster texMatchGroup		add=@texMathZones
  syn cluster texMathDelimGroup		contains=texMathDelimBad,texMathDelimKey,texMathDelimSet1,texMathDelimSet2
- syn cluster texMathMatchGroup		contains=@texMathZones,texComment,texDefCmd,texDelimiter,texDocType,texInput,texLength,texLigature,texMathDelim,texMathMatcher,texMathOper,texNewCmd,texNewEnv,texRefZone,texSection,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone
- syn cluster texMathZoneGroup		contains=texBadPar,texComment,texDelimiter,texLength,texMathDelim,texMathMatcher,texMathOper,texMathSymbol,texMathText,texRefZone,texSpecialChar,texStatement,texTypeSize,texTypeStyle
+ syn cluster texMathMatchGroup		contains=@texMathZones,texComment,texDefCmd,texDelimiter,texDocType,texInput,texLength,texLigature,texMathDelim,texMathMatcher,texMathOper,texMathNumber,texNewCmd,texNewEnv,texRefZone,texSection,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone
+ syn cluster texMathZoneGroup		contains=texBadPar,texComment,texDelimiter,texLength,texMathDelim,texMathMatcher,texMathOper,texMathNumber,texMathSymbol,texMathText,texRefZone,texSpecialChar,texStatement,texTypeSize,texTypeStyle
  if !s:tex_no_error
   syn cluster texMathMatchGroup		add=texMathError
   syn cluster texMathZoneGroup		add=texMathError
@@ -424,7 +424,7 @@ if s:tex_fast =~# 'b'
     syn region texEmphStyle	matchgroup=texTypeStyle start="\\texts[cfl]\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup,@Spell
     syn region texEmphStyle	matchgroup=texTypeStyle start="\\textup\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup,@Spell
     syn region texEmphStyle	matchgroup=texTypeStyle start="\\texttt\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup,@Spell
-   else                                                                                              
+   else
     syn region texBoldStyle	matchgroup=texTypeStyle start="\\textbf\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texBoldGroup
     syn region texBoldItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup
     syn region texItalStyle	matchgroup=texTypeStyle start="\\textit\s*{" matchgroup=texTypeStyle  end="}" concealends contains=@texItalGroup
@@ -502,6 +502,7 @@ if !exists("g:tex_no_math")
  endif
 
  syn match texMathOper		"[_^=]" contained
+ syn match texMathNumber "\<\d\|\.\d" contained
 
  " Text Inside Math Zones: {{{2
  if s:tex_fast =~# 'M'
@@ -1330,6 +1331,7 @@ if !exists("skip_tex_syntax_inits")
   hi def link texMath		Special
   hi def link texMathDelim	Statement
   hi def link texMathOper	Operator
+  hi def link texMathNumber	Number
   hi def link texNewCmd		Statement
   hi def link texNewEnv		Statement
   hi def link texOption		Number
