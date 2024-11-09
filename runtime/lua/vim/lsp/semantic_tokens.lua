@@ -394,6 +394,23 @@ local function set_mark(bufnr, ns, token, hl_group, priority)
   })
 end
 
+--- @param lnum integer
+--- @param foldend integer?
+--- @return boolean, integer?
+local function check_fold(lnum, foldend)
+  if foldend and lnum <= foldend then
+    return true, foldend
+  end
+
+  local folded = vim.fn.foldclosed(lnum)
+
+  if folded == -1 then
+    return false, nil
+  end
+
+  return folded ~= lnum, vim.fn.foldclosedend(lnum)
+end
+
 --- on_win handler for the decoration provider (see |nvim_set_decoration_provider|)
 ---
 --- If there is a current result for the buffer and the version matches the
@@ -462,15 +479,15 @@ function STHighlighter:on_win(topline, botline)
       local first = lower_bound(highlights, topline, 1, #highlights + 1)
       local last = upper_bound(highlights, botline, first, #highlights + 1) - 1
 
-      local i = first
-      while i <= last do
+      --- @type boolean?, integer?
+      local is_folded, foldend
+
+      for i = first, last do
         local token = highlights[i]
-        local folded = vim.fn.foldclosed(token.line + 1)
 
-        -- Do not highlight folded lines
-        local can_mark = folded == -1 or folded == token.line + 1
+        is_folded, foldend = check_fold(token.line + 1, foldend)
 
-        if can_mark and not token.marked then
+        if not is_folded and not token.marked then
           set_mark0(token, string.format('@lsp.type.%s.%s', token.type, ft), 0)
           for modifier in pairs(token.modifiers) do
             set_mark0(token, string.format('@lsp.mod.%s.%s', modifier, ft), 1)
@@ -486,12 +503,6 @@ function STHighlighter:on_win(topline, botline)
               client_id = client_id,
             },
           })
-        end
-
-        if folded ~= -1 then
-          i = math.min(last, vim.fn.foldclosedend(token.line + 1) - 1)
-        else
-          i = i + 1
         end
       end
     end
