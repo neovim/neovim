@@ -24,11 +24,9 @@ for _, model in ipairs(mousemodels) do
     before_each(function()
       clear()
       screen = Screen.new(40, 8)
-      screen:set_default_attr_ids({
-        [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-        [1] = { bold = true, reverse = true }, -- StatusLine
-        [2] = { bold = true, foreground = Screen.colors.Blue, reverse = true }, -- NonText combined with StatusLine
-      })
+      screen:add_extra_attr_ids {
+        [100] = { bold = true, reverse = true, foreground = Screen.colors.Blue },
+      }
       screen:attach()
       command('set laststatus=2 mousemodel=' .. model)
       exec([=[
@@ -87,8 +85,8 @@ for _, model in ipairs(mousemodels) do
       screen:expect {
         grid = [[
         ^                                        |
-        {0:~                                       }|*5
-        {1:^I}{2:^A^I^A^I}{1:^A                            }|
+        {1:~                                       }|*5
+        {3:^I}{100:^A^I^A^I}{3:^A                            }|
                                                 |
       ]],
       }
@@ -211,8 +209,8 @@ for _, model in ipairs(mousemodels) do
       screen:expect {
         grid = [[
         ^                    │                   |
-        {0:~                   }│{0:~                  }|*5
-        {1:Clicky stuff                Clicky stuff}|
+        {1:~                   }│{1:~                  }|*5
+        {3:Clicky stuff                Clicky stuff}|
                                                 |
       ]],
       }
@@ -257,13 +255,9 @@ describe('global statusline', function()
     clear()
     screen = Screen.new(60, 16)
     screen:attach()
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue },
-      [2] = { bold = true, reverse = true },
-      [3] = { bold = true },
-      [4] = { reverse = true },
-      [5] = { bold = true, foreground = Screen.colors.Fuchsia },
-    })
+    screen:add_extra_attr_ids {
+      [100] = { foreground = Screen.colors.Magenta1, bold = true },
+    }
     command('set laststatus=3')
     command('set ruler')
   end)
@@ -272,7 +266,7 @@ describe('global statusline', function()
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*13
-      {2:[No Name]                                 0,0-1          All}|
+      {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
 
@@ -281,8 +275,8 @@ describe('global statusline', function()
                                                                   |*2
       ^                                                            |
       {1:~                                                           }|*11
-      {2:[No Name] [+]                             3,1            All}|
-      {3:-- INSERT --}                                                |
+      {3:[No Name] [+]                             3,1            All}|
+      {5:-- INSERT --}                                                |
     ]])
   end)
 
@@ -299,7 +293,7 @@ describe('global statusline', function()
       ────────────────────┴────────────────┴─┤{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*3
-      {2:[No Name]                                 0,0-1          All}|
+      {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
   end)
@@ -316,7 +310,7 @@ describe('global statusline', function()
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*13
-      {2:[No Name]                                 0,0-1          All}|
+      {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
 
@@ -325,15 +319,15 @@ describe('global statusline', function()
     screen:expect([[
                           │                │ │^                    |
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
-      {1:~                   }│{4:< Name] 0,0-1   }│{1:~}│{1:~                   }|
+      {1:~                   }│{2:< Name] 0,0-1   }│{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{2:<No Name] 0,0-1  All}|
+      {1:~                   }│{1:~               }│{1:~}│{3:<No Name] 0,0-1  All}|
       {1:~                   }│{1:~               }│{1:~}│                    |
-      {4:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
+      {2:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*3
-      {4:[No Name]            0,0-1          All <No Name] 0,0-1  All}|
+      {2:[No Name]            0,0-1          All <No Name] 0,0-1  All}|
                                                                   |
     ]])
 
@@ -349,7 +343,7 @@ describe('global statusline', function()
       ────────────────────┴────────────────┴─┤{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*3
-      {2:[No Name]                                 0,0-1          All}|
+      {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
 
@@ -357,12 +351,12 @@ describe('global statusline', function()
     screen:expect([[
                           │                │ │^                    |
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
-      {1:~                   }│{4:< Name] 0,0-1   }│{1:~}│{1:~                   }|
+      {1:~                   }│{2:< Name] 0,0-1   }│{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{2:<No Name] 0,0-1  All}|
+      {1:~                   }│{1:~               }│{1:~}│{3:<No Name] 0,0-1  All}|
       {1:~                   }│{1:~               }│{1:~}│                    |
-      {4:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
+      {2:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*4
                                                 0,0-1         All |
@@ -380,7 +374,7 @@ describe('global statusline', function()
       ────────────────────┴────────────────┴─┤{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*3
-      {2:[No Name]                                 0,0-1          All}|
+      {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
   end)
@@ -430,7 +424,7 @@ describe('global statusline', function()
       0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;        |
       0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
       ^0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
-      {2:test/functional/fixtures/bigfile.txt      7,1            Top}|
+      {3:test/functional/fixtures/bigfile.txt      7,1            Top}|
                                                                   |
     ]])
     feed('j')
@@ -445,12 +439,12 @@ describe('global statusline', function()
       0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
       0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
       ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
-      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+      {3:test/functional/fixtures/bigfile.txt      8,1             0%}|
                                                                   |
     ]])
     api.nvim_set_option_value('showtabline', 2, {})
     screen:expect([[
-      {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
+      {5: }{100:2}{5: t/f/f/bigfile.txt }{2:                                       }|
                                                                   |
       {1:~                                                           }|*5
       ────────────────────────────────────────────────────────────|
@@ -460,12 +454,12 @@ describe('global statusline', function()
       0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
       0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
       ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
-      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+      {3:test/functional/fixtures/bigfile.txt      8,1             0%}|
                                                                   |
     ]])
     api.nvim_set_option_value('cmdheight', 0, {})
     screen:expect([[
-      {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
+      {5: }{100:2}{5: t/f/f/bigfile.txt }{2:                                       }|
                                                                   |
       {1:~                                                           }|*5
       ────────────────────────────────────────────────────────────|
@@ -476,11 +470,11 @@ describe('global statusline', function()
       0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
       0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
       ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
-      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+      {3:test/functional/fixtures/bigfile.txt      8,1             0%}|
     ]])
     api.nvim_set_option_value('cmdheight', 1, {})
     screen:expect([[
-      {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
+      {5: }{100:2}{5: t/f/f/bigfile.txt }{2:                                       }|
                                                                   |
       {1:~                                                           }|*5
       ────────────────────────────────────────────────────────────|
@@ -490,7 +484,7 @@ describe('global statusline', function()
       0005;<control>;Cc;0;BN;;;;;N;ENQUIRY;;;;                    |
       0006;<control>;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;                |
       ^0007;<control>;Cc;0;BN;;;;;N;BELL;;;;                       |
-      {2:test/functional/fixtures/bigfile.txt      8,1             0%}|
+      {3:test/functional/fixtures/bigfile.txt      8,1             0%}|
                                                                   |
     ]])
   end)
@@ -509,7 +503,7 @@ describe('global statusline', function()
       ────────────────────────────────────────────────────────────|
       ^                                                            |
       {1:~                                                           }|*6
-      {2:[No Name]                                 0,0-1          All}|
+      {3:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
   end)
@@ -526,10 +520,6 @@ end)
 it('statusline is redrawn with :resize from <Cmd> mapping #19629', function()
   clear()
   local screen = Screen.new(40, 8)
-  screen:set_default_attr_ids({
-    [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    [1] = { bold = true, reverse = true }, -- StatusLine
-  })
   screen:attach()
   exec([[
     set laststatus=2
@@ -539,15 +529,15 @@ it('statusline is redrawn with :resize from <Cmd> mapping #19629', function()
   feed('<Up>')
   screen:expect([[
     ^                                        |
-    {0:~                                       }|*4
-    {1:[No Name]                               }|
+    {1:~                                       }|*4
+    {3:[No Name]                               }|
                                             |*2
   ]])
   feed('<Down>')
   screen:expect([[
     ^                                        |
-    {0:~                                       }|*5
-    {1:[No Name]                               }|
+    {1:~                                       }|*5
+    {3:[No Name]                               }|
                                             |
   ]])
 end)
@@ -555,19 +545,14 @@ end)
 it('showcmdloc=statusline does not show if statusline is too narrow', function()
   clear()
   local screen = Screen.new(40, 8)
-  screen:set_default_attr_ids({
-    [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    [1] = { bold = true, reverse = true }, -- StatusLine
-    [2] = { reverse = true }, -- StatusLineNC
-  })
   screen:attach()
   command('set showcmd')
   command('set showcmdloc=statusline')
   command('1vsplit')
   screen:expect([[
     ^ │                                      |
-    {0:~}│{0:~                                     }|*5
-    {1:< }{2:[No Name]                             }|
+    {1:~}│{1:~                                     }|*5
+    {3:< }{2:[No Name]                             }|
                                             |
   ]])
   feed('1234')
@@ -692,11 +677,6 @@ end)
 it('shows correct ruler in cmdline with no statusline', function()
   clear()
   local screen = Screen.new(30, 8)
-  screen:set_default_attr_ids {
-    [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    [2] = { bold = true, reverse = true }, -- StatusLine
-    [3] = { reverse = true }, -- StatusLineNC
-  }
   screen:attach()
   -- Use long ruler to check 'ruler' with 'rulerformat' set has correct width.
   command [[
@@ -714,7 +694,7 @@ it('shows correct ruler in cmdline with no statusline', function()
   screen:expect [[
     ^                              |
     {1:~                             }|*2
-    {2:[No Name]      1longlonglong  }|
+    {3:[No Name]      1longlonglong  }|
                    │              |
     {1:~              }│{1:~             }|*2
                    3longlonglong  |
@@ -725,7 +705,7 @@ it('shows correct ruler in cmdline with no statusline', function()
   screen:expect [[
                                   |
     {1:~                             }|*2
-    {3:[No Name]      1longlonglong  }|
+    {2:[No Name]      1longlonglong  }|
     ^               │              |
     {1:~              }│{1:~             }|*2
                    2longlonglong  |
@@ -735,7 +715,7 @@ it('shows correct ruler in cmdline with no statusline', function()
   screen:expect [[
                                   |
     {1:~                             }|*2
-    {3:[No Name]      1longlonglong  }|
+    {2:[No Name]      1longlonglong  }|
                    │^              |
     {1:~              }│{1:~             }|*2
                    3longlonglong  |
@@ -746,9 +726,6 @@ it('uses "stl" and "stlnc" fillchars even if they are the same #19803', function
   clear()
   local screen = Screen.new(53, 4)
   screen:attach()
-  screen:set_default_attr_ids({
-    [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-  })
   command('hi clear StatusLine')
   command('hi clear StatusLineNC')
   command('vsplit')
@@ -765,11 +742,6 @@ end)
 it('showcmdloc=statusline works with vertical splits', function()
   clear()
   local screen = Screen.new(53, 4)
-  screen:set_default_attr_ids {
-    [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    [2] = { bold = true, reverse = true }, -- StatusLine
-    [3] = { reverse = true }, -- StatusLineNC
-  }
   screen:attach()
   command('rightbelow vsplit')
   command('set showcmd showcmdloc=statusline')
@@ -777,7 +749,7 @@ it('showcmdloc=statusline works with vertical splits', function()
   screen:expect([[
                               │^                          |
     {1:~                         }│{1:~                         }|
-    {3:[No Name]                  }{2:[No Name]      1234       }|
+    {2:[No Name]                  }{3:[No Name]      1234       }|
                                                          |
   ]])
   feed('<Esc>')
@@ -786,7 +758,7 @@ it('showcmdloc=statusline works with vertical splits', function()
   screen:expect([[
                               │^                          |
     {1:~                         }│{1:~                         }|
-    {2:[No Name]                                 1234       }|
+    {3:[No Name]                                 1234       }|
                                                          |
   ]])
 end)
@@ -794,25 +766,20 @@ end)
 it('keymap is shown with vertical splits #27269', function()
   clear()
   local screen = Screen.new(53, 4)
-  screen:set_default_attr_ids {
-    [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
-    [2] = { bold = true, reverse = true }, -- StatusLine
-    [3] = { reverse = true }, -- StatusLineNC
-  }
   screen:attach()
   command('setlocal keymap=dvorak')
   command('rightbelow vsplit')
   screen:expect([[
                               │^                          |
     {1:~                         }│{1:~                         }|
-    {3:[No Name]         <en-dv>  }{2:[No Name]         <en-dv> }|
+    {2:[No Name]         <en-dv>  }{3:[No Name]         <en-dv> }|
                                                          |
   ]])
   command('set laststatus=3')
   screen:expect([[
                               │^                          |
     {1:~                         }│{1:~                         }|
-    {2:[No Name]                                    <en-dv> }|
+    {3:[No Name]                                    <en-dv> }|
                                                          |
   ]])
 end)
