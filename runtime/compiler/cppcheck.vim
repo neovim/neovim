@@ -1,15 +1,13 @@
 " vim compiler file
 " Compiler:	cppcheck (C++ static checker)
 " Maintainer:   Vincent B. (twinside@free.fr)
-" Last Change:  2024 oct 17 by @Konfekt
+" Last Change:  2024 Oct 17 by @Konfekt
 
-if exists("cppcheck")
-  finish
-endif
+if exists("current_compiler") | finish | endif
 let current_compiler = "cppcheck"
 
 let s:cpo_save = &cpo
-set cpo-=C
+set cpo&vim
 
 let s:slash = has('win32')? '\' : '/'
 
