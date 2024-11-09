@@ -21,16 +21,6 @@ describe('ui/ext_popupmenu', function()
     clear()
     screen = Screen.new(60, 8)
     screen:attach({ rgb = true, ext_popupmenu = true })
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue },
-      [2] = { bold = true },
-      [3] = { reverse = true },
-      [4] = { bold = true, reverse = true },
-      [5] = { bold = true, foreground = Screen.colors.SeaGreen },
-      [6] = { background = Screen.colors.WebGray },
-      [7] = { background = Screen.colors.LightMagenta },
-      [8] = { foreground = Screen.colors.Red },
-    })
     source([[
       function! TestComplete() abort
         call complete(1, [{'word':'foo', 'abbr':'fo', 'menu':'the foo', 'info':'foo-y', 'kind':'x'}, 'bar', 'spam'])
@@ -52,7 +42,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       foo^                                                         |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -67,7 +57,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       ^                                                            |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -83,7 +73,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       ^                                                            |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -98,7 +88,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       bar^                                                         |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
     }
   end)
@@ -110,7 +100,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       foo^                                                         |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -125,7 +115,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       foo^                                                         |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -140,7 +130,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       spam^                                                        |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -154,7 +144,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       foo^                                                         |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]])
 
     feed('<c-w><C-r>=TestComplete()<CR>')
@@ -163,7 +153,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       foo^                                                         |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -178,7 +168,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       foo^                                                         |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -193,7 +183,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       bar^                                                         |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -208,7 +198,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       ^                                                            |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -223,7 +213,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       foo^                                                         |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -237,7 +227,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       ^                                                            |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]])
 
     command('set wildmenu')
@@ -332,7 +322,7 @@ describe('ui/ext_popupmenu', function()
                                                                     |
         foo^                                                         |
         {1:~                                                           }|*5
-        {2:-- INSERT --}                                                |
+        {5:-- INSERT --}                                                |
       ]],
         popupmenu = {
           items = expected,
@@ -347,7 +337,7 @@ describe('ui/ext_popupmenu', function()
                                                                     |
         spam^                                                        |
         {1:~                                                           }|*5
-        {2:-- INSERT --}                                                |
+        {5:-- INSERT --}                                                |
       ]],
         popupmenu = {
           items = expected,
@@ -362,7 +352,7 @@ describe('ui/ext_popupmenu', function()
                                                                     |
         spam^                                                        |
         {1:~                                                           }|*5
-        {2:-- INSERT --}                                                |
+        {5:-- INSERT --}                                                |
       ]],
         popupmenu = {
           items = expected,
@@ -376,7 +366,7 @@ describe('ui/ext_popupmenu', function()
                                                                     |
         bar^                                                         |
         {1:~                                                           }|*5
-        {2:-- INSERT --}                                                |
+        {5:-- INSERT --}                                                |
       ]])
 
       feed('<Esc>:sign <Tab>')
@@ -440,33 +430,33 @@ describe('ui/ext_popupmenu', function()
       screen:expect([[
                                                                     |
         foo^                                                         |
-        {6:fo   x the foo }{1:                                             }|
-        {7:bar            }{1:                                             }|
-        {7:spam           }{1:                                             }|
+        {12:fo   x the foo }{1:                                             }|
+        {4:bar            }{1:                                             }|
+        {4:spam           }{1:                                             }|
         {1:~                                                           }|*2
-        {2:-- INSERT --}                                                |
+        {5:-- INSERT --}                                                |
       ]])
 
       feed('<f1>')
       screen:expect([[
                                                                     |
         spam^                                                        |
-        {7:fo   x the foo }{1:                                             }|
-        {7:bar            }{1:                                             }|
-        {6:spam           }{1:                                             }|
+        {4:fo   x the foo }{1:                                             }|
+        {4:bar            }{1:                                             }|
+        {12:spam           }{1:                                             }|
         {1:~                                                           }|*2
-        {2:-- INSERT --}                                                |
+        {5:-- INSERT --}                                                |
       ]])
 
       feed('<f2>')
       screen:expect([[
                                                                     |
         spam^                                                        |
-        {7:fo   x the foo }{1:                                             }|
-        {7:bar            }{1:                                             }|
-        {7:spam           }{1:                                             }|
+        {4:fo   x the foo }{1:                                             }|
+        {4:bar            }{1:                                             }|
+        {4:spam           }{1:                                             }|
         {1:~                                                           }|*2
-        {2:-- INSERT --}                                                |
+        {5:-- INSERT --}                                                |
       ]])
 
       feed('<f3>')
@@ -474,42 +464,42 @@ describe('ui/ext_popupmenu', function()
                                                                     |
         bar^                                                         |
         {1:~                                                           }|*5
-        {2:-- INSERT --}                                                |
+        {5:-- INSERT --}                                                |
       ]])
 
       feed('<Esc>:sign <Tab>')
       screen:expect([[
                                                                     |
-        bar  {6: define         }                                       |
-        {1:~    }{7: jump           }{1:                                       }|
-        {1:~    }{7: list           }{1:                                       }|
-        {1:~    }{7: place          }{1:                                       }|
-        {1:~    }{7: undefine       }{1:                                       }|
-        {1:~    }{7: unplace        }{1:                                       }|
+        bar  {12: define         }                                       |
+        {1:~    }{4: jump           }{1:                                       }|
+        {1:~    }{4: list           }{1:                                       }|
+        {1:~    }{4: place          }{1:                                       }|
+        {1:~    }{4: undefine       }{1:                                       }|
+        {1:~    }{4: unplace        }{1:                                       }|
         :sign define^                                                |
       ]])
 
       feed('<f1>')
       screen:expect([[
                                                                     |
-        bar  {7: define         }                                       |
-        {1:~    }{7: jump           }{1:                                       }|
-        {1:~    }{6: list           }{1:                                       }|
-        {1:~    }{7: place          }{1:                                       }|
-        {1:~    }{7: undefine       }{1:                                       }|
-        {1:~    }{7: unplace        }{1:                                       }|
+        bar  {4: define         }                                       |
+        {1:~    }{4: jump           }{1:                                       }|
+        {1:~    }{12: list           }{1:                                       }|
+        {1:~    }{4: place          }{1:                                       }|
+        {1:~    }{4: undefine       }{1:                                       }|
+        {1:~    }{4: unplace        }{1:                                       }|
         :sign list^                                                  |
       ]])
 
       feed('<f2>')
       screen:expect([[
                                                                     |
-        bar  {7: define         }                                       |
-        {1:~    }{7: jump           }{1:                                       }|
-        {1:~    }{7: list           }{1:                                       }|
-        {1:~    }{7: place          }{1:                                       }|
-        {1:~    }{7: undefine       }{1:                                       }|
-        {1:~    }{7: unplace        }{1:                                       }|
+        bar  {4: define         }                                       |
+        {1:~    }{4: jump           }{1:                                       }|
+        {1:~    }{4: list           }{1:                                       }|
+        {1:~    }{4: place          }{1:                                       }|
+        {1:~    }{4: undefine       }{1:                                       }|
+        {1:~    }{4: unplace        }{1:                                       }|
         :sign ^                                                      |
       ]])
 
@@ -542,33 +532,33 @@ describe('ui/ext_popupmenu', function()
     screen:expect([[
       aa bb cc                                                    |
       aa^                                                          |
-      {6:aa             }{1:                                             }|
-      {7:bb             }{1:                                             }|
-      {7:cc             }{1:                                             }|
+      {12:aa             }{1:                                             }|
+      {4:bb             }{1:                                             }|
+      {4:cc             }{1:                                             }|
       {1:~                                                           }|*2
-      {2:-- Keyword Local completion (^N^P) }{5:match 1 of 3}             |
+      {5:-- Keyword Local completion (^N^P) }{6:match 1 of 3}             |
     ]])
 
     feed('<f1>')
     screen:expect([[
       aa bb cc                                                    |
       cc^                                                          |
-      {7:aa             }{1:                                             }|
-      {7:bb             }{1:                                             }|
-      {6:cc             }{1:                                             }|
+      {4:aa             }{1:                                             }|
+      {4:bb             }{1:                                             }|
+      {12:cc             }{1:                                             }|
       {1:~                                                           }|*2
-      {2:-- Keyword Local completion (^N^P) }{5:match 3 of 3}             |
+      {5:-- Keyword Local completion (^N^P) }{6:match 3 of 3}             |
     ]])
 
     feed('<f2>')
     screen:expect([[
       aa bb cc                                                    |
       cc^                                                          |
-      {7:aa             }{1:                                             }|
-      {7:bb             }{1:                                             }|
-      {7:cc             }{1:                                             }|
+      {4:aa             }{1:                                             }|
+      {4:bb             }{1:                                             }|
+      {4:cc             }{1:                                             }|
       {1:~                                                           }|*2
-      {2:-- Keyword Local completion (^N^P) }{8:Back at original}         |
+      {5:-- Keyword Local completion (^N^P) }{19:Back at original}         |
     ]])
 
     feed('<f3>')
@@ -576,7 +566,7 @@ describe('ui/ext_popupmenu', function()
       aa bb cc                                                    |
       bb^                                                          |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]])
   end)
 
@@ -619,7 +609,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       January^                                                     |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
       ]],
         popupmenu = {
           items = month_expected,
@@ -671,7 +661,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       January^                                                     |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
       ]],
         popupmenu = {
           items = month_expected,
@@ -726,7 +716,7 @@ describe('ui/ext_popupmenu', function()
                                                                 |
     January^                                                     |
     {1:~                                                           }|*5
-    {2:-- INSERT --}                                                |
+    {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = month_expected,
@@ -740,7 +730,7 @@ describe('ui/ext_popupmenu', function()
                                                                 |
     January^                                                     |
     {1:~                                                           }|*5
-    {2:-- INSERT --}                                                |
+    {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = month_expected,
@@ -832,10 +822,10 @@ describe('ui/ext_popupmenu', function()
       grid = [[
                                       |
       {1:~                               }|*3
-      {4:långfile2                       }|
+      {3:långfile2                       }|
                                       |
       {1:~                               }|*2
-      {3:långfile1                       }|
+      {2:långfile1                       }|
       :b långfile1^                    |
     ]],
       popupmenu = {
@@ -863,7 +853,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       foo^                                                         |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -878,7 +868,7 @@ describe('ui/ext_popupmenu', function()
                                                                   |
       ^                                                            |
       {1:~                                                           }|*5
-      {2:-- INSERT --}                                                |
+      {5:-- INSERT --}                                                |
     ]],
       popupmenu = {
         items = expected,
@@ -899,9 +889,9 @@ describe('ui/ext_popupmenu', function()
     feed('<RightMouse><0,0>')
     screen:expect([[
                                                                   |
-      {7:^foo }                                                        |
-      {7:bar }{1:                                                        }|
-      {7:baz }{1:                                                        }|
+      {4:^foo }                                                        |
+      {4:bar }{1:                                                        }|
+      {4:baz }{1:                                                        }|
       {1:~                                                           }|*3
                                                                   |
     ]])
@@ -3640,37 +3630,36 @@ describe('builtin popupmenu', function()
       it(
         'cascading highlights for matched text (PmenuMatch, PmenuMatchSel) in cmdline pum',
         function()
-          screen:set_default_attr_ids({
-            [1] = { foreground = Screen.colors.Blue1, bold = true },
-            [2] = {
-              underline = true,
+          screen:add_extra_attr_ids {
+            [100] = {
+              background = Screen.colors.Grey,
               italic = true,
+              underline = true,
               foreground = Screen.colors.White,
-              background = Screen.colors.Grey,
             },
-            [3] = {
-              foreground = Screen.colors.Red,
-              background = Screen.colors.Grey,
+            [101] = {
               strikethrough = true,
-              underline = true,
+              foreground = Screen.colors.Grey0,
               italic = true,
-            },
-            [4] = {
-              foreground = Screen.colors.Yellow,
-              background = Screen.colors.Pink,
               bold = true,
               underline = true,
-              italic = true,
-            },
-            [5] = {
-              foreground = Screen.colors.Black,
               background = Screen.colors.White,
+            },
+            [102] = {
+              strikethrough = true,
+              foreground = Screen.colors.Red,
+              italic = true,
+              underline = true,
+              background = Screen.colors.Grey,
+            },
+            [103] = {
+              foreground = Screen.colors.Yellow,
+              italic = true,
               bold = true,
               underline = true,
-              italic = true,
-              strikethrough = true,
+              background = Screen.colors.Pink,
             },
-          })
+          }
           exec([[
             set wildoptions=pum,fuzzy
             hi Pmenu          guifg=White guibg=Grey gui=underline,italic
@@ -3683,8 +3672,8 @@ describe('builtin popupmenu', function()
           screen:expect([[
                                             |
             {1:~                               }|*16
-            {1:~    }{3: }{5:pl}{3:a}{5:c}{3:e          }{1:           }|
-            {1:~    }{2: un}{4:pl}{2:a}{4:c}{2:e        }{1:           }|
+            {1:~    }{102: }{101:pl}{102:a}{101:c}{102:e          }{1:           }|
+            {1:~    }{100: un}{103:pl}{100:a}{103:c}{100:e        }{1:           }|
             :sign place^                     |
           ]])
         end
