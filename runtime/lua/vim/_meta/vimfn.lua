@@ -828,7 +828,7 @@ function vim.fn.charclass(string) end
 ---   echo col('.')    " returns 7
 --- <
 ---
---- @param expr string|integer[]
+--- @param expr string|any[]
 --- @param winid? integer
 --- @return integer
 function vim.fn.charcol(expr, winid) end
@@ -956,7 +956,7 @@ function vim.fn.clearmatches(win) end
 ---   imap <F2> <Cmd>echo col(".").."\n"<CR>
 --- <
 ---
---- @param expr string|integer[]
+--- @param expr string|any[]
 --- @param winid? integer
 --- @return integer
 function vim.fn.col(expr, winid) end
@@ -10546,7 +10546,7 @@ function vim.fn.values(dict) end
 ---     echo max(map(range(1, line('$')), "virtcol([v:val, '$'])"))
 --- <
 ---
---- @param expr string|integer[]
+--- @param expr string|any[]
 --- @param list? boolean
 --- @param winid? integer
 --- @return any

@@ -959,7 +959,7 @@ charcol({expr} [, {winid}])                                          *charcol()*
 <
 
                 Parameters: ~
-                  • {expr} (`string|integer[]`)
+                  • {expr} (`string|any[]`)
                   • {winid} (`integer?`)
 
                 Return: ~
@@ -1100,7 +1100,7 @@ col({expr} [, {winid}])                                                  *col()*
 <
 
                 Parameters: ~
-                  • {expr} (`string|integer[]`)
+                  • {expr} (`string|any[]`)
                   • {winid} (`integer?`)
 
                 Return: ~
@@ -11611,7 +11611,7 @@ virtcol({expr} [, {list} [, {winid}]])                               *virtcol()*
 <
 
                 Parameters: ~
-                  • {expr} (`string|integer[]`)
+                  • {expr} (`string|any[]`)
                   • {list} (`boolean?`)
                   • {winid} (`integer?`)
 
