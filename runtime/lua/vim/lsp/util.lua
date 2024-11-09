@@ -1651,21 +1651,12 @@ do --[[ References ]]
     validate('bufnr', bufnr, 'number', true)
     validate('offset_encoding', offset_encoding, 'string', false)
     for _, reference in ipairs(references) do
-      local start_line = reference.range.start.line
-      local start_char = reference.range.start.character
-      local end_line = reference.range['end'].line
-      local end_char = reference.range['end'].character
+      local range = reference.range
+      local start_line = range.start.line
+      local end_line = range['end'].line
 
-      local start_idx = get_line_byte_from_position(
-        bufnr,
-        { line = start_line, character = start_char },
-        offset_encoding
-      )
-      local end_idx = get_line_byte_from_position(
-        bufnr,
-        { line = start_line, character = end_char },
-        offset_encoding
-      )
+      local start_idx = get_line_byte_from_position(bufnr, range.start, offset_encoding)
+      local end_idx = get_line_byte_from_position(bufnr, range['end'], offset_encoding)
 
       local document_highlight_kind = {
         [protocol.DocumentHighlightKind.Text] = 'LspReferenceText',
