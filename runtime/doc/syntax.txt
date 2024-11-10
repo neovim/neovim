@@ -1209,20 +1209,20 @@ on" command in your .vimrc file.
 When you edit an existing Fortran file, the syntax script will assume free
 source form if the fortran_free_source variable has been set, and assumes
 fixed source form if the fortran_fixed_source variable has been set.  Suppose
-neither of these variables have been set. In that case, the syntax script attempts to
-determine which source form has been used by examining the file extension
-using conventions common to the ifort, gfortran, Cray, NAG, and PathScale
-compilers (.f, .for, .f77 for fixed-source, .f90, .f95, .f03, .f08 for
-free-source). No default is used for the .fpp and .ftn file extensions because
-different compilers treat them differently. If none of this works, then the
-script examines the first five columns of the first 500 lines of your file. If
-no signs of free source form are detected, then the file is assumed to be in
-fixed source form.  The algorithm should work in the vast majority of cases.
-In some cases, such as a file that begins with 500 or more full-line comments,
-the script may incorrectly decide that the code is in fixed form.  If that
-happens, just add a non-comment statement beginning anywhere in the first five
-columns of the first twenty-five lines, save (:w), and then reload (:e!) the
-file.
+neither of these variables have been set. In that case, the syntax script
+attempts to determine which source form has been used by examining the file
+extension using conventions common to the ifort, gfortran, Cray, NAG, and
+PathScale compilers (.f, .for, .f77 for fixed-source, .f90, .f95, .f03, .f08
+for free-source).  No default is used for the .fpp and .ftn file extensions
+because different compilers treat them differently. If none of this works,
+then the script examines the first five columns of the first 500 lines of your
+file. If no signs of free source form are detected, then the file is assumed
+to be in fixed source form.  The algorithm should work in the vast majority of
+cases.  In some cases, such as a file that begins with 500 or more full-line
+comments, the script may incorrectly decide that the code is in fixed form.
+If that happens, just add a non-comment statement beginning anywhere in the
+first five columns of the first twenty-five lines, save (:w), and then reload
+(:e!) the file.
 
 Vendor extensions ~
 Fixed-form Fortran requires a maximum line length of 72 characters but the
@@ -1753,9 +1753,9 @@ define the vim variable 'lace_case_insensitive' in your startup file: >
 LF (LFRC)		*lf.vim* *ft-lf-syntax* *g:lf_shell_syntax*
 						*b:lf_shell_syntax*
 
-For the lf file manager configuration files (lfrc) the shell commands
-syntax highlighting can be changed globally and per buffer by setting
-a different 'include' command search pattern using these variables:
+For the lf file manager configuration files (lfrc) the shell commands syntax
+highlighting can be changed globally and per buffer by setting a different
+'include' command search pattern using these variables: >
 	let g:lf_shell_syntax = "syntax/dosbatch.vim"
 	let b:lf_shell_syntax = "syntax/zsh.vim"
 
@@ -2065,9 +2065,10 @@ set "msql_minlines" to the value you desire.  Example: >
 	:let msql_minlines = 200
 
 
-NEOMUTT			*neomutt.vim* *ft-neomuttrc-syntax* *ft-neomuttlog-syntax*
+NEOMUTT					*neomutt.vim* *ft-neomuttrc-syntax*
+					*ft-neomuttlog-syntax*
 
-To disable the default NeoMutt log colors >
+To disable the default NeoMutt log colors: >
 
 	:let g:neolog_disable_default_colors = 1
 
@@ -2236,9 +2237,9 @@ specified. Default = 1 >
 
 	:let g:pandoc#syntax#codeblocks#embeds#use = 1
 
-For specify what languages and using what syntax files to highlight embeds. This is a
-list of language names. When the language pandoc and vim use don't match, you
-can use the "PANDOC=VIM" syntax. For example: >
+For specify what languages and using what syntax files to highlight embeds.
+This is a list of language names. When the language pandoc and vim use don't
+match, you can use the "PANDOC=VIM" syntax. For example: >
 
 	:let g:pandoc#syntax#codeblocks#embeds#langs = ["ruby", "bash=sh"]
 
@@ -3446,7 +3447,7 @@ set "tf_minlines" to the value you desire.  Example: >
 	:let tf_minlines = your choice
 <
 TYPESCRIPT				*typescript.vim* *ft-typescript-syntax*
-				*typescriptreact.vim* *ft-typescriptreact-syntax*
+			    *typescriptreact.vim* *ft-typescriptreact-syntax*
 
 There is one option to control the TypeScript syntax highlighting.
 

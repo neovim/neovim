@@ -1533,7 +1533,7 @@ Associated setting variables:
 	|g:netrw_nogx|	prevent gx map while editing
 	|g:netrw_suppress_gx_mesg| controls gx's suppression of browser messages
 
-OPENING FILES AND LAUNCHING APPS                 *netrw-gx* *:Open* *:Launch* {{{2
+OPENING FILES AND LAUNCHING APPS	*netrw-gx* *:Open* *:Launch* {{{2
 
 Netrw determines which special handler by the following method:
 
