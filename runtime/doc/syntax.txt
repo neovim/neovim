@@ -3493,7 +3493,7 @@ This option is disabled by default.
 Some folding is now supported with when 'foldmethod' is set to "syntax": >
 
    g:vimsyn_folding == 0 or doesn't exist: no syntax-based folding
-   g:vimsyn_folding =~ 'a' : augroups
+   g:vimsyn_folding =~ 'a' : fold augroups
    g:vimsyn_folding =~ 'f' : fold functions
    g:vimsyn_folding =~ 'h' : fold heredocs
    g:vimsyn_folding =~ 'l' : fold Lua      script
