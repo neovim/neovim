@@ -2104,7 +2104,7 @@ describe('extmark decorations', function()
 
     eq({ { 1, 0, 8, { end_col = 13, end_right_gravity = false, end_row = 0,
                        hl_eol = false, hl_group = "NonText", undo_restore = false,
-                       ns_id = 1, priority = 4096, right_gravity = true } } },
+                       ns_id = ns, priority = 4096, right_gravity = true } } },
        api.nvim_buf_get_extmarks(0, ns, {0,0}, {0, -1}, {details=true}))
   end)
 

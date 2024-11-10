@@ -72,7 +72,7 @@ EDITOR
 
 EVENTS
 
-• TODO
+• |autocmd-groups| are |namespace|s.
 
 LSP
 
