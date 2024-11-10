@@ -4,6 +4,7 @@
 " Former Maintainer: Charles E. Campbell
 " Last Change:	Apr 22, 2022
 "   2024 Feb 19 by Vim Project (announce adoption)
+"   2024 Nov 09 add Number highlight (#11271)
 " Version:	121
 " Former URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
