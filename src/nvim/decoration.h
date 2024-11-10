@@ -58,6 +58,9 @@ typedef struct {
   int draw_col;
 } DecorRange;
 
+/// DecorRange can be removed from `DecorState` list in any order,
+/// so we track available slots using a freelist (with `next_free_i`).
+/// The list head is in `DecorState.free_slot_i`.
 typedef union {
   DecorRange range;
   int next_free_i;
@@ -67,14 +70,16 @@ typedef struct {
   MarkTreeIter itr[1];
   kvec_t(DecorRangeSlot) slots;
   kvec_t(int) ranges_i;
-  /// Indices in [0; current_end) range of `ranges_i` point to ranges that start before the
-  /// current position and are sorted by priority and order of insertion.
+  /// Indices in [0; current_end) of `ranges_i` point to ranges that start
+  /// before current position. Sorted by priority and order of insertion.
   int current_end;
-  /// Indices in [future_begin, kv_size(ranges_i)) range of `ranges_i` point to ranges that
-  /// start after the current position and are sorted by starting position.
+  /// Indices in [future_begin, kv_size(ranges_i)) of `ranges_i` point to
+  /// ranges that start after current position. Sorted by starting position.
   int future_begin;
-  int free_slot_i;  ///< Index of the last freed slot.
-  int new_range_ordering;  ///< Index for keeping track of range insertion order.
+  /// Head of DecorRangeSlot freelist. -1 if none are freed.
+  int free_slot_i;
+  /// Index for keeping track of range insertion order.
+  int new_range_ordering;
   win_T *win;
   int top_row;
   int row;
@@ -91,7 +96,7 @@ typedef struct {
   bool running_decor_provider;
 } DecorState;
 
-EXTERN DecorState decor_state INIT( = { .free_slot_i = -1 });
+EXTERN DecorState decor_state INIT( = { 0 });
 // TODO(bfredl): These should maybe be per-buffer, so that all resources
 // associated with a buffer can be freed when the buffer is unloaded.
 EXTERN kvec_t(DecorSignHighlight) decor_items INIT( = KV_INITIAL_VALUE);
