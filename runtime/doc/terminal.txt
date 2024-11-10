@@ -611,7 +611,7 @@ If you want to customize the breakpoint signs to show `>>` in the signcolumn: >v
 	let g:termdebug_config['sign'] = '>>'
 If you would like to use decimal (base 10) breakpoint signs: >vim
 	let g:termdebug_config['sign_decimal'] = 1
-If there is no g:terminal_config yet you can use: >vim
+If the variable g:termdebug_config does not yet exist, you can use: >vim
 	let g:termdebug_config = {'sign': '>>'}
 Likewise, to enable decimal signs: >vim
 	let g:termdebug_config = {'sign_decimal': 1}
