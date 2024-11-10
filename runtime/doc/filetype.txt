@@ -1046,8 +1046,8 @@ To enable: >
 	let g:typst_folding = 1
 <
 							*g:typst_foldnested*
-When |TRUE| the Typst filetype plugin will fold nested heading under their parents
-(default: |TRUE|)
+When |TRUE| the Typst filetype plugin will fold nested heading under their
+parents. (default: |TRUE|)
 
 To disable: >
 	let g:typst_foldnested = 0

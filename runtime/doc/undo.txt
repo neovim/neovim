@@ -184,7 +184,7 @@ g-			Go to older text state.  With a count repeat that many
 g+			Go to newer text state.  With a count repeat that many
 			times.
 							*:lat* *:later*
-:lat[er] {count}		Go to newer text state {count} times.
+:lat[er] {count}	Go to newer text state {count} times.
 :lat[er] {N}s		Go to newer text state about {N} seconds later.
 :lat[er] {N}m		Go to newer text state about {N} minutes later.
 :lat[er] {N}h		Go to newer text state about {N} hours later.

@@ -154,7 +154,7 @@ or auto suspended with nohlsearch plugin.  See |nohlsearch-install|.
 
 
 When 'shortmess' does not include the "S" flag, Vim will automatically show an
-index, on which the cursor is. This can look like this: >
+index, on which the cursor is.  This can look like this: >
 
   [1/5]		Cursor is on first of 5 matches.
   [1/>99]	Cursor is on first of more than 99 matches.
@@ -743,7 +743,7 @@ overview.
 	\([a-z]\+\)\zs,\1		",abc" in "abc,abc"
 
 \@123<=
-	Like "\@<=" but only look back 123 bytes. This avoids trying lots
+	Like "\@<=" but only look back 123 bytes.  This avoids trying lots
 	of matches that are known to fail and make executing the pattern very
 	slow.  Example, check if there is a "<" just before "span":
 		/<\@1<=span
@@ -769,7 +769,7 @@ overview.
 	\(\/\/.*\)\@<!in	"in" which is not after "//"
 
 \@123<!
-	Like "\@<!" but only look back 123 bytes. This avoids trying lots of
+	Like "\@<!" but only look back 123 bytes.  This avoids trying lots of
 	matches that are known to fail and make executing the pattern very
 	slow.
 
@@ -892,7 +892,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	inside the Visual area put it at the start and just before the end of
 	the pattern, e.g.: >
 		/\%Vfoo.*ba\%Vr
-<	This also works if only "foo bar" was Visually selected. This: >
+<	This also works if only "foo bar" was Visually selected.  This: >
 		/\%Vfoo.*bar\%V
 <	would match "foo bar" if the Visual selection continues after the "r".
 	Only works for the current buffer.
@@ -999,7 +999,7 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 <	To match all characters after the current virtual column (where the
 	cursor is): >
 		/\%>.v.*
-<	Column 17 is not included, because this is a |/zero-width| match. To
+<	Column 17 is not included, because this is a |/zero-width| match.  To
 	include the column use: >
 		/^.*\%17v.
 <	This command does the same thing, but also matches when there is no
@@ -1123,11 +1123,11 @@ x	A single character, with no special meaning, matches itself
 	in the collection: "[^xyz]" matches anything but 'x', 'y' and 'z'.
 	- If two characters in the sequence are separated by '-', this is
 	  shorthand for the full list of ASCII characters between them.  E.g.,
-	  "[0-9]" matches any decimal digit. If the starting character exceeds
-	  the ending character, e.g. [c-a], E944 occurs. Non-ASCII characters
+	  "[0-9]" matches any decimal digit.  If the starting character exceeds
+	  the ending character, e.g. [c-a], E944 occurs.  Non-ASCII characters
 	  can be used, but the character values must not be more than 256 apart
-	  in the old regexp engine. For example, searching by [\u3000-\u4000]
-	  after setting re=1 emits a E945 error. Prepending \%#=2 will fix it.
+	  in the old regexp engine.  For example, searching by [\u3000-\u4000]
+	  after setting re=1 emits a E945 error.  Prepending \%#=2 will fix it.
 	- A character class expression is evaluated to the set of characters
 	  belonging to that character class.  The following character classes
 	  are supported:
@@ -1193,7 +1193,7 @@ x	A single character, with no special meaning, matches itself
 	  any character that's not in "^]-\bdertnoUux".  "[\xyz]" matches '\',
 	  'x', 'y' and 'z'.  It's better to use "\\" though, future expansions
 	  may use other characters after '\'.
-	- Omitting the trailing ] is not considered an error. "[]" works like
+	- Omitting the trailing ] is not considered an error.  "[]" works like
 	  "[]]", it matches the ']' character.
 	- The following translations are accepted when the 'l' flag is not
 	  included in 'cpoptions':
@@ -1425,14 +1425,14 @@ Finally, these constructs are unique to Perl:
 		display you may get unexpected results.  That is because Vim
 		looks for a match in the line where redrawing starts.
 
-		Also see |matcharg()| and |getmatches()|. The former returns
+		Also see |matcharg()| and |getmatches()|.  The former returns
 		the highlight group and pattern of a previous |:match|
 		command.  The latter returns a list with highlight groups and
 		patterns defined by both |matchadd()| and |:match|.
 
 		Highlighting matches using |:match| are limited to three
 		matches (aside from |:match|, |:2match| and |:3match| are
-		available). |matchadd()| does not have this limitation and in
+		available).  |matchadd()| does not have this limitation and in
 		addition makes it possible to prioritize matches.
 
 		Another example, which highlights all characters in virtual
@@ -1461,7 +1461,7 @@ Finally, these constructs are unique to Perl:
 		with the lowest number has priority if several match at the
 		same position.  It uses the match id 3.
 		The ":3match" command is used by (older Vims) |matchparen|
-		plugin. You are suggested to use ":match" for manual matching
+		plugin.  You are suggested to use ":match" for manual matching
 		and ":2match" for another plugin or even better make use of
 		the more flexible |matchadd()| (and similar) functions instead.
 
@@ -1470,10 +1470,10 @@ Finally, these constructs are unique to Perl:
 
 Fuzzy matching refers to matching strings using a non-exact search string.
 Fuzzy matching will match a string, if all the characters in the search string
-are present anywhere in the string in the same order. Case is ignored.  In a
+are present anywhere in the string in the same order.  Case is ignored.  In a
 matched string, other characters can be present between two consecutive
-characters in the search string. If the search string has multiple words, then
-each word is matched separately. So the words in the search string can be
+characters in the search string.  If the search string has multiple words, then
+each word is matched separately.  So the words in the search string can be
 present in any order in a string.
 
 Fuzzy matching assigns a score for each matched string based on the following
@@ -1492,8 +1492,8 @@ will match the strings "GetPattern", "PatternGet", "getPattern", "patGetter",
 "getSomePattern", "MatchpatternGet" etc.
 
 The functions |matchfuzzy()| and |matchfuzzypos()| can be used to fuzzy search
-a string in a List of strings. The matchfuzzy() function returns a List of
-matching strings. The matchfuzzypos() functions returns the List of matches,
+a string in a List of strings.  The matchfuzzy() function returns a List of
+matching strings.  The matchfuzzypos() functions returns the List of matches,
 the matching positions and the fuzzy match scores.
 
 The "f" flag of `:vimgrep` enables fuzzy matching.
