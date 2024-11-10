@@ -195,7 +195,7 @@ syn match	vimNumber	'\%(^\|\A\)\zs#\x\{6}'		skipwhite nextgroup=vimGlobal,vimSub
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
-syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDef,vimDefFold,vimDelcommand,@vimEcho,vimEnddef,vimEndfunction,vimExecute,vimIsCommand,vimExtCmd,vimFor,vimFunction,vimFuncFold,vimGlobal,vimHighlight,vimLet,vimLoadkeymap,vimMap,vimMark,vimMatch,vimNotFunc,vimNorm,vimSet,vimSleep,vimSyntax,vimThrow,vimUnlet,vimUnmap,vimUserCmd,vimMenu,vimMenutranslate,@vim9CmdList
+syn cluster vimCmdList	contains=vimAbb,vimAddress,vimAutoCmd,vimAugroup,vimBehave,vimCall,vimCatch,vimConst,vimDef,vimDefFold,vimDelcommand,@vimEcho,vimEnddef,vimEndfunction,vimExecute,vimIsCommand,vimExtCmd,vimFor,vimFunction,vimFuncFold,vimGlobal,vimHighlight,vimLet,vimLoadkeymap,vimMap,vimMark,vimMatch,vimNotFunc,vimNormal,vimSet,vimSleep,vimSyntax,vimThrow,vimUnlet,vimUnmap,vimUserCmd,vimMenu,vimMenutranslate,@vim9CmdList
 syn cluster vim9CmdList	contains=vim9Class,vim9Const,vim9Enum,vim9Export,vim9Final,vim9For,vim9Interface,vim9Type,vim9Var
 syn match vimCmdSep	"[:|]\+"	skipwhite nextgroup=@vimCmdList,vimSubst1
 syn match vimIsCommand	"\<\%(\h\w*\|[23]mat\%[ch]\)\>"	contains=vimCommand
@@ -207,6 +207,7 @@ syn match vimVar		"\s\zs&t_\S[a-zA-Z0-9]\>"
 syn match vimVar        	"\s\zs&t_k;"
 syn match vimFBVar      contained   "\<[bwglstav]:\h[a-zA-Z0-9#_]*\>"
 syn keyword vimCommand  contained	in
+syn match vimBang	      contained	"!"
 
 syn cluster vimExprList	contains=vimEnvvar,vimFunc,vimNumber,vimOper,vimOperParen,vimLetRegister,vimString,vimVar,@vim9ExprList
 syn cluster vim9ExprList	contains=vim9Boolean,vim9Null
@@ -812,10 +813,10 @@ syn keyword	vimMatchNone	contained	none
 syn case match
 syn region	vimMatchPattern	contained	matchgroup=Delimiter start="\z([!#$%&'()*+,-./:;<=>?@[\]^_`{}~]\)" skip="\\\\\|\\\z1" end="\z1" contains=@vimSubstList oneline
 
-" Norm: {{{2
-" ====
-syn match	vimNorm		"\<norm\%[al]!\=" skipwhite nextgroup=vimNormCmds
-syn match	vimNormCmds contained	".*$"
+" Normal: {{{2
+" ======
+syn match	vimNormal		"\<norm\%[al]\>!\=" skipwhite nextgroup=vimNormalArg contains=vimBang
+syn region	vimNormalArg	contained	start="\S" skip=+\n\s*\\\|\n\s*["#]\\ + end="$" contains=@vimContinue
 
 " Sleep: {{{2
 " =====
@@ -1378,7 +1379,7 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimMenutranslateComment	vimComment
  hi def link vim9MethodName	vimFuncName
  hi def link vimMtchComment	vimComment
- hi def link vimNorm	vimCommand
+ hi def link vimNormal	vimCommand
  hi def link vimNotation	Special
  hi def link vimNotFunc	vimCommand
  hi def link vimNotPatSep	vimString
