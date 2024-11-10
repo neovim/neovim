@@ -2007,7 +2007,7 @@ func Test_diff_overlapped_diff_blocks_will_be_merged()
   call StopVimInTerminal(buf)
 endfunc
 
-" switching windows in diff mode caused an unneccessary scroll
+" switching windows in diff mode caused an unnecessary scroll
 func Test_diff_topline_noscroll()
   CheckScreendump
 

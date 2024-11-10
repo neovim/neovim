@@ -2261,7 +2261,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     if (buf == NULL) {
       goto theend;
     }
-    // autocommands try to edit a file that is goind to be removed, abort
+    // autocommands try to edit a file that is going to be removed, abort
     if (buf_locked(buf)) {
       // window was split, but not editing the new buffer, reset b_nwindows again
       if (oldwin == NULL
