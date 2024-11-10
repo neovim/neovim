@@ -509,6 +509,7 @@ If the current window has enough horizontal space, it will be vertically split
 and the Var window will be shown side by side with the source code window (and
 the height options won't be used).
 
+
 Communication ~
 						*termdebug-communication*
 There is another, hidden, buffer, which is used for Vim to communicate with
@@ -601,15 +602,19 @@ If there is no g:termdebug_config you can use: >vim
 Change default signs ~
 							*termdebug_signs*
 Termdebug uses the hex number of the breakpoint ID in the signcolumn to
-represent breakpoints. if it is greater than "0xFF", then it will be displayed
+represent breakpoints. If it is greater than "0xFF", then it will be displayed
 as "F+", due to we really only have two screen cells for the sign.
+You may also use decimal breakpoint signs instead, in which case IDs greater
+than 99 will be displayed as "9+".
 
-If you want to customize the breakpoint signs: >vim
+If you want to customize the breakpoint signs to show `>>` in the signcolumn: >vim
 	let g:termdebug_config['sign'] = '>>'
+If you would like to use decimal (base 10) breakpoint signs: >vim
+	let g:termdebug_config['sign_decimal'] = 1
 If there is no g:terminal_config yet you can use: >vim
 	let g:termdebug_config = {'sign': '>>'}
-
-After this, breakpoints will be displayed as `>>` in the signcolumn.
+Likewise, to enable decimal signs: >vim
+	let g:termdebug_config = {'sign_decimal': 1}
 
 
 Vim window width ~
