@@ -805,10 +805,11 @@ must handle.
 	    kinds as the empty kind.
 
 	content
-	    Array of `[attr_id, text_chunk]` tuples, building up the message
-	    text of chunks of different highlights. No extra spacing should be
-	    added between chunks, the `text_chunk` by itself contains any
-	    necessary whitespace. Messages can contain line breaks "\n".
+	    Array of `[attr_id, text_chunk, hl_id]` tuples, building up the
+	    message text of chunks of different highlights. No extra spacing
+	    should be added between chunks, the `text_chunk` by itself
+	    contains any necessary whitespace. Messages can contain line
+	    breaks "\n".
 
 	replace_last
 	    Decides how multiple messages should be displayed:

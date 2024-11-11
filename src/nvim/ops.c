@@ -257,7 +257,7 @@ void op_shift(oparg_T *oap, bool curs_top, int amount)
     vim_snprintf(IObuff, IOSIZE,
                  NGETTEXT(msg_line_single, msg_line_plural, oap->line_count),
                  (int64_t)oap->line_count, op, amount);
-    msg_attr_keep(IObuff, 0, true, false);
+    msg_hl_keep(IObuff, 0, true, false);
   }
 
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
@@ -3653,7 +3653,7 @@ void ex_display(exarg_T *eap)
   if (arg != NULL && *arg == NUL) {
     arg = NULL;
   }
-  int attr = HL_ATTR(HLF_8);
+  int hl_id = HLF_8 + 1;
 
   // Highlight title
   msg_puts_title(_("\nType Name Content"));
@@ -3709,18 +3709,18 @@ void ex_display(exarg_T *eap)
         int n = Columns - 11;
         for (size_t j = 0; j < yb->y_size && n > 1; j++) {
           if (j) {
-            msg_puts_attr("^J", attr);
+            msg_puts_hl("^J", hl_id, false);
             n -= 2;
           }
           for (p = yb->y_array[j].data;
                *p != NUL && (n -= ptr2cells(p)) >= 0; p++) {
             int clen = utfc_ptr2len(p);
-            msg_outtrans_len(p, clen, 0);
+            msg_outtrans_len(p, clen, 0, false);
             p += clen - 1;
           }
         }
         if (n > 1 && yb->y_type == kMTLineWise) {
-          msg_puts_attr("^J", attr);
+          msg_puts_hl("^J", hl_id, false);
         }
       }
       os_breakcheck();
@@ -3790,10 +3790,10 @@ static void dis_msg(const char *p, bool skip_esc)
          && (n -= ptr2cells(p)) >= 0) {
     int l;
     if ((l = utfc_ptr2len(p)) > 1) {
-      msg_outtrans_len(p, l, 0);
+      msg_outtrans_len(p, l, 0, false);
       p += l;
     } else {
-      msg_outtrans_len(p++, 1, 0);
+      msg_outtrans_len(p++, 1, 0, false);
     }
   }
   os_breakcheck();

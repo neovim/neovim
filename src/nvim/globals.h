@@ -156,7 +156,7 @@ EXTERN bool msg_scrolled_ign INIT( = false);
 EXTERN bool msg_did_scroll INIT( = false);
 
 EXTERN char *keep_msg INIT( = NULL);         // msg to be shown after redraw
-EXTERN int keep_msg_attr INIT( = 0);         // highlight attr for keep_msg
+EXTERN int keep_msg_hl_id INIT( = 0);        // highlight id for keep_msg
 EXTERN bool need_fileinfo INIT( = false);    // do fileinfo() after redraw
 EXTERN int msg_scroll INIT( = false);        // msg_start() will scroll
 EXTERN bool msg_didout INIT( = false);       // msg_outstr() was used in line

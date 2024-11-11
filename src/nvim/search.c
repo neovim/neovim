@@ -1304,7 +1304,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
             memset(msgbuf + pat_len, ' ', (size_t)(r - msgbuf));
           }
         }
-        msg_outtrans(msgbuf, 0);
+        msg_outtrans(msgbuf, 0, false);
         msg_clr_eos();
         msg_check();
 
@@ -3731,7 +3731,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
                 && action == ACTION_SHOW_ALL && files[i].matched) {
               msg_putchar('\n');  // cursor below last one
               if (!got_int) {  // don't display if 'q' typed at "--more--" message
-                msg_home_replace_hl(new_fname);
+                msg_home_replace(new_fname);
                 msg_puts(_(" (includes previously listed match)"));
                 prev_fname = NULL;
               }
@@ -3772,7 +3772,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           if (new_fname != NULL) {
             // using "new_fname" is more reliable, e.g., when
             // 'includeexpr' is set.
-            msg_outtrans(new_fname, HL_ATTR(HLF_D));
+            msg_outtrans(new_fname, HLF_D + 1, false);
           } else {
             // Isolate the file name.
             // Include the surrounding "" or <> if present.
@@ -3806,7 +3806,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
             }
             char save_char = p[i];
             p[i] = NUL;
-            msg_outtrans(p, HL_ATTR(HLF_D));
+            msg_outtrans(p, HLF_D + 1, false);
             p[i] = save_char;
           }
 
@@ -3858,7 +3858,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
             vim_snprintf(IObuff, IOSIZE,
                          _("Scanning included file: %s"),
                          new_fname);
-            msg_trunc(IObuff, true, HL_ATTR(HLF_R));
+            msg_trunc(IObuff, true, HLF_R + 1);
           } else if (p_verbose >= 5) {
             verbose_enter();
             smsg(0, _("Searching included file %s"), new_fname);
@@ -4032,7 +4032,7 @@ search_line:
           }
           if (!got_int) {             // don't display if 'q' typed
                                       // at "--more--" message
-            msg_home_replace_hl(curr_fname);
+            msg_home_replace(curr_fname);
           }
           prev_fname = curr_fname;
         }
@@ -4233,7 +4233,7 @@ static void show_pat_in_path(char *line, int type, bool did_show, int action, FI
       msg_puts(IObuff);
       snprintf(IObuff, IOSIZE, "%4" PRIdLINENR, *lnum);  // Show line nr.
       // Highlight line numbers.
-      msg_puts_attr(IObuff, HL_ATTR(HLF_N));
+      msg_puts_hl(IObuff, HLF_N + 1, false);
       msg_puts(" ");
     }
     msg_prt_line(line, false);

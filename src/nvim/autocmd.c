@@ -220,14 +220,14 @@ static void au_show_for_event(int group, event_T event, const char *pat)
         // show the group name, if it's not the default group
         if (ac->pat->group != AUGROUP_DEFAULT) {
           if (last_group_name == NULL) {
-            msg_puts_attr(get_deleted_augroup(), HL_ATTR(HLF_E));
+            msg_puts_hl(get_deleted_augroup(), HLF_E + 1, false);
           } else {
-            msg_puts_attr(last_group_name, HL_ATTR(HLF_T));
+            msg_puts_hl(last_group_name, HLF_T + 1, false);
           }
           msg_puts("  ");
         }
         // show the event name
-        msg_puts_attr(event_nr2name(event), HL_ATTR(HLF_T));
+        msg_puts_hl(event_nr2name(event), HLF_T + 1, false);
       }
 
       // Show pattern only if it changed.
@@ -240,7 +240,7 @@ static void au_show_for_event(int group, event_T event, const char *pat)
         }
 
         msg_col = 4;
-        msg_outtrans(ac->pat->pat, 0);
+        msg_outtrans(ac->pat->pat, 0, false);
       }
 
       if (got_int) {
@@ -260,17 +260,17 @@ static void au_show_for_event(int group, event_T event, const char *pat)
         size_t msglen = 100;
         char *msg = xmallocz(msglen);
         if (ac->exec.type == CALLABLE_CB) {
-          msg_puts_attr(exec_to_string, HL_ATTR(HLF_8));
+          msg_puts_hl(exec_to_string, HLF_8 + 1, false);
           snprintf(msg, msglen, " [%s]", ac->desc);
         } else {
           snprintf(msg, msglen, "%s [%s]", exec_to_string, ac->desc);
         }
-        msg_outtrans(msg, 0);
+        msg_outtrans(msg, 0, false);
         XFREE_CLEAR(msg);
       } else if (ac->exec.type == CALLABLE_CB) {
-        msg_puts_attr(exec_to_string, HL_ATTR(HLF_8));
+        msg_puts_hl(exec_to_string, HLF_8 + 1, false);
       } else {
-        msg_outtrans(exec_to_string, 0);
+        msg_outtrans(exec_to_string, 0, false);
       }
       XFREE_CLEAR(exec_to_string);
       if (p_verbose > 0) {

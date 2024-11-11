@@ -350,7 +350,7 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
     msg_scroll = true;  // Don't overwrite messages here.
     msg_silent = 0;     // Must give this prompt.
     // Don't use emsg() here, don't want to flush the buffers.
-    msg(_("WARNING: The file has been changed since reading it!!!"), HL_ATTR(HLF_E));
+    msg(_("WARNING: The file has been changed since reading it!!!"), HLF_E + 1);
     if (ask_yesno(_("Do you really want to write to it"), true) == 'n') {
       return FAIL;
     }
@@ -1150,9 +1150,9 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   if (!filtering) {
     // show that we are busy
 #ifndef UNIX
-    filemess(buf, sfname, "", 0);
+    filemess(buf, sfname, "");
 #else
-    filemess(buf, fname, "", 0);
+    filemess(buf, fname, "");
 #endif
   }
   msg_scroll = false;               // always overwrite the file message now
@@ -1881,11 +1881,9 @@ nofail:
 
     retval = FAIL;
     if (end == 0) {
-      const int attr = HL_ATTR(HLF_E);  // Set highlight for error messages.
-      msg_puts_attr(_("\nWARNING: Original file may be lost or damaged\n"),
-                    attr | MSG_HIST);
-      msg_puts_attr(_("don't quit the editor until the file is successfully written!"),
-                    attr | MSG_HIST);
+      const int hl_id = HLF_E + 1;  // Set highlight for error messages.
+      msg_puts_hl(_("\nWARNING: Original file may be lost or damaged\n"), hl_id, true);
+      msg_puts_hl(_("don't quit the editor until the file is successfully written!"), hl_id, true);
 
       // Update the timestamp to avoid an "overwrite changed file"
       // prompt when writing again.

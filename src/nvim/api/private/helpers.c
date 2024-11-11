@@ -824,16 +824,15 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
 
     String str = copy_string(chunk.items[0].data.string, NULL);
 
-    int attr = 0;
+    int hl_id = 0;
     if (chunk.size == 2) {
       String hl = chunk.items[1].data.string;
       if (hl.size > 0) {
         // TODO(bfredl): use object_to_hl_id and allow integer
-        int hl_id = syn_check_group(hl.data, hl.size);
-        attr = hl_id > 0 ? syn_id2attr(hl_id) : 0;
+        hl_id = syn_check_group(hl.data, hl.size);
       }
     }
-    kv_push(hl_msg, ((HlMessageChunk){ .text = str, .attr = attr }));
+    kv_push(hl_msg, ((HlMessageChunk){ .text = str, .hl_id = hl_id }));
   }
 
   return hl_msg;

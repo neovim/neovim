@@ -2348,7 +2348,7 @@ void ex_scriptnames(exarg_T *eap)
       vim_snprintf(IObuff, IOSIZE, "%3d: %s", i, NameBuff);
       if (!message_filtered(IObuff)) {
         msg_putchar('\n');
-        msg_outtrans(IObuff, 0);
+        msg_outtrans(IObuff, 0, false);
         line_breakcheck();
       }
     }

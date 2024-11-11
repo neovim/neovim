@@ -1407,7 +1407,7 @@ static void list_one_var_a(const char *prefix, const char *name, const ptrdiff_t
   msg_start();
   msg_puts(prefix);
   if (name != NULL) {  // "a:" vars don't have a name stored
-    msg_puts_len(name, name_len, 0);
+    msg_puts_len(name, name_len, 0, false);
   }
   msg_putchar(' ');
   msg_advance(22);
@@ -1429,7 +1429,7 @@ static void list_one_var_a(const char *prefix, const char *name, const ptrdiff_t
     msg_putchar(' ');
   }
 
-  msg_outtrans(string, 0);
+  msg_outtrans(string, 0, false);
 
   if (type == VAR_FUNC || type == VAR_PARTIAL) {
     msg_puts("()");
