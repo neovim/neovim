@@ -764,8 +764,7 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
     return vim._str_byteindex(s, old_index, use_utf16) or error('index out of range')
   end
 
-  -- Note we bypass vim.validate for performance reasons
-
+  -- Avoid vim.validate for performance.
   if type(s) ~= 'string' or type(index) ~= 'number' then
     vim.validate('s', s, 'string')
     vim.validate('index', index, 'number')
