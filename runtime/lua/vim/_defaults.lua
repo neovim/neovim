@@ -376,6 +376,21 @@ do
       local linenr = vim.api.nvim_win_get_cursor(0)[1]
       vim.api.nvim_buf_set_lines(0, linenr, linenr, true, repeated)
     end, { desc = 'Add empty line below cursor' })
+
+    -- Paste linewise unconditionally
+    vim.keymap.set('n', '[p', function()
+      local body = vim.fn.getreg(vim.v.register)
+      body = vim.fn['repeat']({ body }, vim.v.count1)
+      local linenr = vim.api.nvim_win_get_cursor(0)[1]
+      vim.api.nvim_buf_set_lines(0, linenr - 1, linenr - 1, true, body)
+    end, { desc = 'Paste before linewise' })
+
+    vim.keymap.set('n', ']p', function()
+      local body = vim.fn.getreg(vim.v.register)
+      body = vim.fn['repeat']({ body }, vim.v.count1)
+      local linenr = vim.api.nvim_win_get_cursor(0)[1]
+      vim.api.nvim_buf_set_lines(0, linenr, linenr, true, body)
+    end, { desc = 'Paste after linewise' })
   end
 end
 

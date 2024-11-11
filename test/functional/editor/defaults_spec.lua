@@ -200,6 +200,49 @@ describe('default', function()
           ]])
         end)
       end)
+
+      describe('[p', function()
+        it('pastes linewise before the cursor', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed('^yiw[p')
+          n.expect([[
+          first
+          first line]])
+        end)
+
+        it('works with a count', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed('^yiw3[p')
+          n.expect([[
+          first
+          first
+          first
+          first line]])
+        end)
+      end)
+
+      describe(']p', function()
+        it('pastes linewise after the cursor', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[opening line]])
+          n.feed('^yiw]p')
+          n.expect([[
+          opening line
+          opening]])
+        end)
+
+        it('works with a count', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[opening line]])
+          n.feed('^yiw2]p')
+          n.expect([[
+          opening line
+          opening
+          opening]])
+        end)
+      end)
     end)
   end)
 end)
