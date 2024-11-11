@@ -139,7 +139,7 @@ static const char *msg_ext_kind = NULL;
 static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
-static int msg_ext_hl_id;
+static int msg_ext_last_hl_id;
 static size_t msg_ext_cur_len = 0;
 
 static bool msg_ext_overwrite = false;  ///< will overwrite last message
@@ -2128,7 +2128,7 @@ static void msg_ext_emit_chunk(void)
   msg_ext_last_attr = -1;
   String text = ga_take_string(&msg_ext_last_chunk);
   ADD(chunk, STRING_OBJ(text));
-  ADD(chunk, INTEGER_OBJ(msg_ext_hl_id));
+  ADD(chunk, INTEGER_OBJ(msg_ext_last_hl_id));
   ADD(*msg_ext_chunks, ARRAY_OBJ(chunk));
 }
 
@@ -2145,9 +2145,9 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
 
   if (ui_has(kUIMessages)) {
     if (attr != msg_ext_last_attr) {
-      msg_ext_hl_id = hl_id;
       msg_ext_emit_chunk();
       msg_ext_last_attr = attr;
+      msg_ext_last_hl_id = hl_id;
     }
     // Concat pieces with the same highlight
     size_t len = maxlen < 0 ? strlen(str) : strnlen(str, (size_t)maxlen);

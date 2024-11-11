@@ -420,15 +420,15 @@ describe('ui/ext_messages', function()
         {
           content = {
             { '\nErrorMsg      ' },
-            { 'xxx', 9, 0 },
+            { 'xxx', 9, 7 },
             { ' ' },
-            { 'ctermfg=', 18, 0 },
+            { 'ctermfg=', 18, 6 },
             { '15 ' },
-            { 'ctermbg=', 18, 0 },
+            { 'ctermbg=', 18, 6 },
             { '1 ' },
-            { 'guifg=', 18, 0 },
+            { 'guifg=', 18, 6 },
             { 'White ' },
-            { 'guibg=', 18, 0 },
+            { 'guibg=', 18, 6 },
             { 'Red' },
           },
           kind = '',
@@ -502,7 +502,7 @@ describe('ui/ext_messages', function()
         items = { { 'alphpabet', '', '', '' }, { 'alphanum', '', '', '' } },
         pos = 1,
       },
-      showmode = { { '-- Keyword Local completion (^N^P) ', 5, 19 }, { 'match 1 of 2', 6, 19 } },
+      showmode = { { '-- Keyword Local completion (^N^P) ', 5, 12 }, { 'match 1 of 2', 6, 19 } },
     }
 
     -- echomsg and showmode don't overwrite each other, this is the same
@@ -524,7 +524,7 @@ describe('ui/ext_messages', function()
         content = { { 'stuff' } },
         kind = 'echomsg',
       } },
-      showmode = { { '-- Keyword Local completion (^N^P) ', 5, 19 }, { 'match 1 of 2', 6, 19 } },
+      showmode = { { '-- Keyword Local completion (^N^P) ', 5, 12 }, { 'match 1 of 2', 6, 19 } },
     }
 
     feed('<c-p>')
@@ -544,7 +544,7 @@ describe('ui/ext_messages', function()
         content = { { 'stuff' } },
         kind = 'echomsg',
       } },
-      showmode = { { '-- Keyword Local completion (^N^P) ', 5, 19 }, { 'match 2 of 2', 6, 19 } },
+      showmode = { { '-- Keyword Local completion (^N^P) ', 5, 12 }, { 'match 2 of 2', 6, 19 } },
     }
 
     feed('<esc>:messages<cr>')
@@ -945,7 +945,7 @@ stack traceback:
         {
           content = {
             { '\nn  Q             @@\nn  Y             y$\nn  j           ' },
-            { '*', 18, 0 },
+            { '*', 18, 1 },
             { ' k' },
           },
           kind = '',
@@ -1044,7 +1044,7 @@ stack traceback:
     ]],
       messages = {
         {
-          content = { { 'wow, ', 10, 7 }, { 'such\n\nvery ', 9, 13 }, { 'color', 8, 13 } },
+          content = { { 'wow, ', 10, 9 }, { 'such\n\nvery ', 9, 7 }, { 'color', 8, 13 } },
           kind = 'echomsg',
         },
       },
