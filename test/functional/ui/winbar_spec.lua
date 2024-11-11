@@ -18,7 +18,6 @@ describe('winbar', function()
   before_each(function()
     clear()
     screen = Screen.new(60, 13)
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true },
       [2] = { reverse = true },
@@ -548,7 +547,6 @@ describe('local winbar with tabs', function()
   before_each(function()
     clear()
     screen = Screen.new(60, 10)
-    screen:attach()
     api.nvim_set_option_value('winbar', 'foo', { scope = 'local', win = 0 })
   end)
 
@@ -626,7 +624,6 @@ it('winbar works properly when redrawing is postponed #23534', function()
     },
   })
   local screen = Screen.new(60, 6)
-  screen:attach()
   screen:expect([[
     {5:(winbar)                                                    }|
     ^                                                            |

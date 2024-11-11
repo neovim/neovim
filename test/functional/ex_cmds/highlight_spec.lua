@@ -10,12 +10,9 @@ local fn = n.fn
 local api = n.api
 
 describe(':highlight', function()
-  local screen
-
   before_each(function()
     clear()
-    screen = Screen.new()
-    screen:attach()
+    local _ = Screen.new()
   end)
 
   it('invalid color name', function()

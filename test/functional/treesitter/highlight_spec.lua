@@ -161,7 +161,6 @@ describe('treesitter highlighting (C)', function()
   before_each(function()
     clear()
     screen = Screen.new(65, 18)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = { bold = true, foreground = Screen.colors.Blue1 },
       [2] = { foreground = Screen.colors.Blue1 },
@@ -848,7 +847,6 @@ describe('treesitter highlighting (lua)', function()
   before_each(function()
     clear()
     screen = Screen.new(65, 18)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = { bold = true, foreground = Screen.colors.Blue },
       [2] = { foreground = Screen.colors.DarkCyan },
@@ -887,7 +885,6 @@ describe('treesitter highlighting (help)', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 6)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = { foreground = Screen.colors.Blue1 },
       [2] = { bold = true, foreground = Screen.colors.Blue1 },
@@ -1025,7 +1022,6 @@ describe('treesitter highlighting (nested injections)', function()
   before_each(function()
     clear()
     screen = Screen.new(80, 7)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = { foreground = Screen.colors.SlateBlue },
       [2] = { bold = true, foreground = Screen.colors.Brown },
@@ -1093,7 +1089,6 @@ describe('treesitter highlighting (markdown)', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 6)
-    screen:attach()
     exec_lua(function()
       vim.bo.filetype = 'markdown'
       vim.treesitter.start()
@@ -1161,7 +1156,6 @@ it('starting and stopping treesitter highlight in init.lua works #29541', functi
   eq('', api.nvim_get_vvar('errmsg'))
 
   local screen = Screen.new(65, 18)
-  screen:attach()
   screen:set_default_attr_ids {
     [1] = { bold = true, foreground = Screen.colors.Blue1 },
     [2] = { foreground = Screen.colors.Blue1 },

@@ -344,7 +344,6 @@ describe('lua buffer event callbacks: on_lines', function()
 
   it('setting extmark in on_lines callback works', function()
     local screen = Screen.new(40, 6)
-    screen:attach()
 
     api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa', 'bbb', 'ccc' })
     exec_lua(function()

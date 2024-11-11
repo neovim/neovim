@@ -30,10 +30,6 @@ describe(':terminal', function()
     command('highlight VertSplit NONE')
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('next to a closing window', function()
     command('split')
     command('terminal')

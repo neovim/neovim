@@ -12,7 +12,6 @@ describe('Visual highlight', function()
 
   before_each(function()
     screen = Screen.new(50, 6)
-    screen:attach()
   end)
 
   -- oldtest: Test_visual_block_with_virtualedit()

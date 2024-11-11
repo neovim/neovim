@@ -225,8 +225,7 @@ end)
 describe('WinScrolled', function()
   -- oldtest: Test_WinScrolled_mouse()
   it('is triggered by mouse scrolling in another window', function()
-    local screen = Screen.new(75, 10)
-    screen:attach()
+    local _ = Screen.new(75, 10)
     exec([[
       set nowrap scrolloff=0
       set mouse=a
@@ -304,7 +303,6 @@ describe('WinScrolled', function()
 
   it('is triggered by mouse scrolling in unfocused floating window #18222', function()
     local screen = Screen.new(80, 24)
-    screen:attach()
 
     exec([[
       let g:scrolled = 0

@@ -181,11 +181,9 @@ describe('vim.lsp.util', function()
       eq(expected_anchor, string.sub(opts.anchor, 1, 1))
     end
 
-    local screen --- @type test.functional.ui.screen
     before_each(function()
       n.clear()
-      screen = Screen.new(80, 80)
-      screen:attach()
+      local _ = Screen.new(80, 80)
       feed('79i<CR><Esc>') -- fill screen with empty lines
     end)
 

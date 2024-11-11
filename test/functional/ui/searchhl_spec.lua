@@ -16,7 +16,6 @@ describe('search highlighting', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 7)
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true, foreground = Screen.colors.Blue },
       [2] = { background = Screen.colors.Yellow }, -- Search

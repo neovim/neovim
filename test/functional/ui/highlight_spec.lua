@@ -32,7 +32,6 @@ describe('highlight: `:syntax manual`', function()
   before_each(function()
     clear()
     screen = Screen.new(20, 5)
-    screen:attach()
     -- syntax highlight for vimscript's "echo"
   end)
 
@@ -93,7 +92,6 @@ describe('highlight defaults', function()
       [100] = { foreground = Screen.colors.Red, background = Screen.colors.WebGreen },
       [101] = { italic = true },
     }
-    screen:attach()
   end)
 
   it('window status bar', function()
@@ -303,7 +301,6 @@ describe('highlight', function()
 
   it('Visual', function()
     local screen = Screen.new(45, 5)
-    screen:attach()
     insert([[
       line1 foo bar
     abcdefghijklmnopqrs
@@ -428,7 +425,6 @@ describe('highlight', function()
 
   it('cterm=standout gui=standout', function()
     local screen = Screen.new(20, 5)
-    screen:attach()
     screen:add_extra_attr_ids {
       [100] = {
         foreground = Screen.colors.Blue1,
@@ -454,7 +450,6 @@ describe('highlight', function()
 
   it('strikethrough', function()
     local screen = Screen.new(25, 6)
-    screen:attach()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword foo')
     feed_command('hi! Awesome cterm=strikethrough gui=strikethrough')
@@ -490,7 +485,6 @@ describe('highlight', function()
         background = Screen.colors.Yellow,
       },
     }
-    screen:attach()
     feed_command('syntax on')
     feed_command('hi! Underlined cterm=underline gui=underline')
     feed_command('syn keyword Underlined foobar')
@@ -532,7 +526,6 @@ describe('highlight', function()
 
   it('guisp (special/undercurl)', function()
     local screen = Screen.new(25, 10)
-    screen:attach()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword neovim')
     feed_command('syn keyword TmpKeyword1 special')
@@ -585,7 +578,6 @@ describe('highlight', function()
 
   it("'diff', syntax and extmark #23722", function()
     local screen = Screen.new(25, 10)
-    screen:attach()
     exec([[
       new
       call setline(1, ['', '01234 6789'])
@@ -631,7 +623,6 @@ describe("'listchars' highlight", function()
   before_each(function()
     clear()
     screen = Screen.new(20, 5)
-    screen:attach()
   end)
 
   it("'cursorline' and 'cursorcolumn'", function()
@@ -873,7 +864,6 @@ describe('CursorLine and CursorLineNr highlights', function()
       [100] = { background = Screen.colors.LightRed },
       [101] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.Grey90 },
     }
-    screen:attach()
 
     command('filetype on')
     command('syntax on')
@@ -906,7 +896,6 @@ describe('CursorLine and CursorLineNr highlights', function()
       [102] = { foreground = Screen.colors.Grey0, background = Screen.colors.Grey100 },
       [103] = { foreground = Screen.colors.Yellow1, background = Screen.colors.Grey100 },
     }
-    screen:attach()
 
     feed_command('set wrap cursorline')
     feed_command('set showbreak=>>>')
@@ -957,7 +946,6 @@ describe('CursorLine and CursorLineNr highlights', function()
       [102] = { foreground = Screen.colors.Black, background = Screen.colors.Grey100 },
       [103] = { foreground = Screen.colors.WebGreen, background = Screen.colors.Red },
     }
-    screen:attach()
 
     command('set wrap cursorline cursorlineopt=screenline')
     command('set showbreak=>>>')
@@ -1081,7 +1069,6 @@ describe('CursorLine and CursorLineNr highlights', function()
   -- oldtest: Test_cursorline_screenline_resize()
   it("'cursorlineopt' screenline is updated on window resize", function()
     local screen = Screen.new(75, 8)
-    screen:attach()
     exec([[
       50vnew
       call setline(1, repeat('xyz ', 30))
@@ -1123,7 +1110,6 @@ describe('CursorLine and CursorLineNr highlights', function()
       [100] = { background = Screen.colors.LightRed },
       [101] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.Grey90 },
     }
-    screen:attach()
     command('set cursorline relativenumber')
     command('call setline(1, ["","1","2","3",""])')
     feed('Gy3k')
@@ -1151,7 +1137,6 @@ describe('CursorLine and CursorLineNr highlights', function()
       [100] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.Grey90 },
       [101] = { background = Screen.colors.LightRed },
     }
-    screen:attach()
     command('set cursorline')
     command('call setline(1, repeat(["abc"], 50))')
     feed('V<C-f>zbkkjk')
@@ -1166,7 +1151,6 @@ describe('CursorLine and CursorLineNr highlights', function()
   -- oldtest: Test_cursorline_callback()
   it('is updated if cursor is moved up from timer vim-patch:8.2.4591', function()
     local screen = Screen.new(50, 8)
-    screen:attach()
     exec([[
       call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
       set cursorline
@@ -1207,7 +1191,6 @@ describe('CursorLine and CursorLineNr highlights', function()
       [100] = { background = Screen.colors.Plum1, underline = true },
       [101] = { background = Screen.colors.Red1, bold = true, underline = true },
     }
-    screen:attach()
 
     command('hi CursorLine ctermbg=red ctermfg=white guibg=red guifg=white')
     command('set cursorline')
@@ -1267,7 +1250,6 @@ describe('CursorLine and CursorLineNr highlights', function()
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Black, bold = true, background = Screen.colors.Grey100 },
     }
-    screen:attach()
 
     command('hi CursorLine guibg=red guifg=white')
     command('hi CursorLineNr guibg=white guifg=black gui=bold')
@@ -1308,7 +1290,6 @@ describe('CursorColumn highlight', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.Blue1 },
     }
-    screen:attach()
   end)
 
   it('is updated when pressing "i" on a TAB character', function()
@@ -1435,7 +1416,6 @@ describe('ColorColumn highlight', function()
       [101] = { background = Screen.colors.LightRed },
       [102] = { foreground = Screen.colors.Blue1, bold = true, background = Screen.colors.LightRed },
     }
-    screen:attach()
   end)
 
   -- oldtest: Test_colorcolumn()
@@ -1538,7 +1518,6 @@ describe('MsgSeparator highlight and msgsep fillchar', function()
       [12] = { background = Screen.colors.Gray60, bold = true, foreground = tonumber('0x297d4e') },
       [13] = { background = tonumber('0xff4cff'), bold = true, foreground = tonumber('0xb200ff') },
     })
-    screen:attach()
   end)
 
   it('works', function()
@@ -1653,7 +1632,6 @@ describe("'winhighlight' highlight", function()
   before_each(function()
     clear()
     screen = Screen.new(20, 8)
-    screen:attach()
     screen:set_default_attr_ids {
       [0] = { bold = true, foreground = Screen.colors.Blue },
       [1] = { background = Screen.colors.DarkBlue },
@@ -2317,7 +2295,6 @@ describe('highlight namespaces', function()
   before_each(function()
     clear()
     screen = Screen.new(25, 10)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = { foreground = Screen.colors.Blue, bold = true },
       [2] = { background = Screen.colors.DarkGrey },
@@ -2467,10 +2444,8 @@ describe('highlight namespaces', function()
 end)
 
 describe('synIDattr()', function()
-  local screen
   before_each(function()
     clear()
-    screen = Screen.new(50, 7)
     command('highlight Normal ctermfg=252 guifg=#ff0000 guibg=Black')
     -- Salmon #fa8072 Maroon #800000
     command(
@@ -2495,7 +2470,7 @@ describe('synIDattr()', function()
   end)
 
   it('returns gui-color if RGB-capable UI is attached', function()
-    screen:attach({ rgb = true })
+    local _ = Screen.new(50, 7, { rgb = true })
     eq('#ff0000', eval('synIDattr(hlID("Normal"),  "fg")'))
     eq('Black', eval('synIDattr(hlID("Normal"),  "bg")'))
     eq('Salmon', eval('synIDattr(hlID("Keyword"), "fg")'))
@@ -2503,15 +2478,15 @@ describe('synIDattr()', function()
   end)
 
   it('returns #RRGGBB value for fg#/bg#/sp#', function()
-    screen:attach({ rgb = true })
+    local _ = Screen.new(50, 7, { rgb = true })
     eq('#ff0000', eval('synIDattr(hlID("Normal"),  "fg#")'))
     eq('#000000', eval('synIDattr(hlID("Normal"),  "bg#")'))
     eq('#fa8072', eval('synIDattr(hlID("Keyword"), "fg#")'))
     eq('#800000', eval('synIDattr(hlID("Keyword"), "sp#")'))
   end)
 
-  it('returns color number if non-GUI', function()
-    screen:attach({ rgb = false })
+  it('returns color number if non-RGB GUI', function()
+    local _ = Screen.new(50, 7, { rgb = false })
     eq('252', eval('synIDattr(hlID("Normal"), "fg")'))
     eq('79', eval('synIDattr(hlID("Keyword"), "fg")'))
   end)
@@ -2536,10 +2511,8 @@ describe('synIDattr()', function()
 end)
 
 describe('fg/bg special colors', function()
-  local screen
   before_each(function()
     clear()
-    screen = Screen.new(50, 7)
     command('highlight Normal ctermfg=145 ctermbg=16 guifg=#ff0000 guibg=Black')
     command('highlight Visual ctermfg=bg ctermbg=fg guifg=bg guibg=fg guisp=bg')
   end)
@@ -2558,7 +2531,7 @@ describe('fg/bg special colors', function()
   end)
 
   it('resolve to "Normal" values in RGB-capable UI', function()
-    screen:attach({ rgb = true })
+    local _ = Screen.new(50, 7, { rgb = true })
     eq('bg', eval('synIDattr(hlID("Visual"), "fg")'))
     eq(eval('synIDattr(hlID("Normal"), "bg#")'), eval('synIDattr(hlID("Visual"), "fg#")'))
     eq('fg', eval('synIDattr(hlID("Visual"), "bg")'))
@@ -2568,7 +2541,7 @@ describe('fg/bg special colors', function()
   end)
 
   it('resolve after the "Normal" group is modified', function()
-    screen:attach({ rgb = true })
+    local _ = Screen.new(50, 7, { rgb = true })
     local new_guibg = '#282c34'
     local new_guifg = '#abb2bf'
     command('highlight Normal guifg=' .. new_guifg .. ' guibg=' .. new_guibg)

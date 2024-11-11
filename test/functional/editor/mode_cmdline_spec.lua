@@ -44,7 +44,6 @@ describe('cmdline', function()
       -- 'arabicshape' cheats and always redraws everything which trivially works,
       -- this test is for partial redraws in 'noarabicshape' mode.
       command('set noarabicshape')
-      screen:attach()
       fn.setreg('a', '💻')
       feed(':test 🧑‍')
       screen:expect([[
@@ -69,7 +68,6 @@ describe('cmdline', function()
 
   it('redraws statusline when toggling overstrike', function()
     local screen = Screen.new(60, 4)
-    screen:attach()
     command('set laststatus=2 statusline=%!mode(1)')
     feed(':')
     screen:expect {

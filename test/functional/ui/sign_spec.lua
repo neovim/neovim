@@ -12,7 +12,6 @@ describe('Signs', function()
   before_each(function()
     clear()
     screen = Screen.new()
-    screen:attach()
     screen:add_extra_attr_ids {
       [100] = { bold = true, foreground = Screen.colors.Magenta1 },
     }

@@ -12,7 +12,6 @@ describe('ui/cursor', function()
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
-    screen:attach()
   end)
 
   it("'guicursor' is published as a UI event", function()

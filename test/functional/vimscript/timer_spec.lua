@@ -108,7 +108,6 @@ describe('timers', function()
 
   it('can invoke redraw in blocking getchar() call', function()
     local screen = Screen.new(40, 6)
-    screen:attach()
 
     api.nvim_buf_set_lines(0, 0, -1, true, { 'ITEM 1', 'ITEM 2' })
     source([[
@@ -225,7 +224,6 @@ describe('timers', function()
 
   it("doesn't mess up the cmdline", function()
     local screen = Screen.new(40, 6)
-    screen:attach()
     source([[
       let g:val = 0
       func! MyHandler(timer)
@@ -263,7 +261,6 @@ describe('timers', function()
 
   it('can be triggered after an empty string <expr> mapping #17257', function()
     local screen = Screen.new(40, 6)
-    screen:attach()
     command([=[imap <expr> <F2> [timer_start(0, { _ -> execute("throw 'x'", "") }), ''][-1]]=])
     feed('i<F2>')
     screen:expect({ any = 'E605: Exception not caught: x' })

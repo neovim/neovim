@@ -883,7 +883,6 @@ describe('put command', function()
     local screen
     setup(function()
       screen = Screen.new()
-      screen:attach()
     end)
 
     local function bell_test(actions, should_ring)

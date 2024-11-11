@@ -25,8 +25,7 @@ local function test_embed(ext_linegrid)
     clear { args_rm = { '--headless' }, args = { ... } }
 
     -- attach immediately after startup, for early UI
-    screen = Screen.new(60, 8)
-    screen:attach { ext_linegrid = ext_linegrid }
+    screen = Screen.new(60, 8, { ext_linegrid = ext_linegrid })
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.NvimDarkCyan },
       [101] = { foreground = Screen.colors.NvimDarkRed },
@@ -110,9 +109,10 @@ describe('--embed UI', function()
     clear { args_rm = { '--headless' }, io_extra = pipe.read, env = { NVIM_LOG_FILE = testlog } }
 
     -- attach immediately after startup, for early UI
-    local screen = Screen.new(40, 8)
+    -- rpc_async: Avoid hanging. #24888
+    local screen = Screen.new(40, 8, { stdin_fd = 3 }, false)
     screen.rpc_async = true -- Avoid hanging. #24888
-    screen:attach { stdin_fd = 3 }
+    screen:attach()
 
     writer:write 'hello nvim\nfrom external input\n'
     writer:shutdown(function()
@@ -164,9 +164,9 @@ describe('--embed UI', function()
     clear { args_rm = { '--headless' }, args = { '-q', '-' }, io_extra = pipe.read }
 
     -- attach immediately after startup, for early UI
-    local screen = Screen.new(60, 8)
+    local screen = Screen.new(60, 8, { stdin_fd = 3 }, false)
     screen.rpc_async = true -- Avoid hanging. #24888
-    screen:attach { stdin_fd = 3 }
+    screen:attach()
 
     writer:write [[Xbadfile.c:4:12: error: expected ';' before '}' token]]
     writer:shutdown(function()
@@ -212,7 +212,6 @@ describe('--embed UI', function()
       -- attach immediately after startup, for early UI
       screen = Screen.new(40, 8)
       screen._handle_default_colors_set = handle_default_colors_set
-      screen:attach()
     end
 
     startup()
@@ -239,7 +238,6 @@ describe('--embed UI', function()
     clear { args_rm = { '--headless' } }
 
     local screen = Screen.new(40, 8)
-    screen:attach()
 
     screen:expect {
       condition = function()
@@ -326,8 +324,7 @@ describe('--embed --listen UI', function()
     ok(var_ok)
     eq({}, var)
 
-    local child_screen = Screen.new(40, 6)
-    child_screen:attach(nil, child_session)
+    local child_screen = Screen.new(40, 6, nil, child_session)
     child_screen:expect {
       grid = [[
       ^                                        |

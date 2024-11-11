@@ -10,7 +10,6 @@ describe('digraph', function()
   -- oldtest: Test_entering_digraph()
   it('characters displayed on the screen', function()
     local screen = Screen.new(10, 6)
-    screen:attach()
     feed('i<C-K>')
     screen:expect([[
       {18:^?}           |

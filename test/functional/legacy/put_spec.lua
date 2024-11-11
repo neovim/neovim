@@ -10,7 +10,6 @@ describe('put', function()
   -- oldtest: Test_put_other_window()
   it('above topline in buffer in two splits', function()
     local screen = Screen.new(80, 10)
-    screen:attach()
     source([[
       40vsplit
       0put ='some text at the top'
@@ -36,7 +35,6 @@ describe('put', function()
   -- oldtest: Test_put_in_last_displayed_line()
   it('in last displayed line', function()
     local screen = Screen.new(75, 10)
-    screen:attach()
     source([[
       autocmd CursorMoved * eval line('w$')
       let @a = 'x'->repeat(&columns * 2 - 2)

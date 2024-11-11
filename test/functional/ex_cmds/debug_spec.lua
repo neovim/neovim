@@ -15,7 +15,6 @@ describe(':debug', function()
       [3] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
       [4] = { bold = true, foreground = Screen.colors.SeaGreen4 },
     })
-    screen:attach()
   end)
   it('scrolls messages correctly', function()
     feed(':echoerr bork<cr>')

@@ -185,8 +185,7 @@ describe(':TOhtml', function()
   local screen
   before_each(function()
     clear({ args = { '--clean' } })
-    screen = Screen.new(80, 80)
-    screen:attach({ term_name = 'xterm' })
+    screen = Screen.new(80, 80, { term_name = 'xterm' })
     exec('colorscheme default')
   end)
 

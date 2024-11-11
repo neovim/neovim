@@ -18,7 +18,6 @@ describe('prompt buffer', function()
   before_each(function()
     clear()
     screen = Screen.new(25, 10)
-    screen:attach()
     command('set laststatus=0 nohidden')
   end)
 
@@ -67,10 +66,6 @@ describe('prompt buffer', function()
       {5:-- INSERT --}             |
     ]])
   end
-
-  after_each(function()
-    screen:detach()
-  end)
 
   -- oldtest: Test_prompt_basic()
   it('works', function()

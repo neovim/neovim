@@ -94,7 +94,6 @@ describe('clipboard', function()
   before_each(function()
     clear()
     screen = Screen.new(72, 4)
-    screen:attach()
   end)
 
   it('unnamed register works without provider', function()
@@ -318,7 +317,6 @@ describe('clipboard (with fake clipboard.vim)', function()
 
   it('`:redir @+>|bogus_cmd|redir END` must not recurse #7184', function()
     local screen = Screen.new(72, 4)
-    screen:attach()
     feed_command('redir @+> | bogus_cmd | redir END')
     screen:expect([[
       ^                                                                        |
@@ -641,7 +639,6 @@ describe('clipboard (with fake clipboard.vim)', function()
 
   it('supports "+ and "* in registers', function()
     local screen = Screen.new(60, 10)
-    screen:attach()
     feed_command("let g:test_clip['*'] = ['some', 'star data','']")
     feed_command("let g:test_clip['+'] = ['such', 'plus', 'stuff']")
     feed_command('registers')
@@ -709,7 +706,6 @@ describe('clipboard (with fake clipboard.vim)', function()
     feed_command('set mouse=a')
 
     local screen = Screen.new(30, 5)
-    screen:attach()
     insert([[
       the source
       a target]])

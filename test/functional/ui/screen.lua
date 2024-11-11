@@ -6,23 +6,15 @@
 --
 -- Example usage:
 --
+--     -- Attach a screen to the current Nvim instance.
 --     local screen = Screen.new(25, 10)
---     -- Attach the screen to the current Nvim instance.
---     screen:attach()
 --     -- Enter insert-mode and type some text.
 --     feed('ihello screen')
 --     -- Assert the expected screen state.
 --     screen:expect([[
---       hello screen             |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       -- INSERT --             |
+--       hello screen^             |
+--       {1:~                        }|*8
+--       {5:-- INSERT --}             |
 --     ]]) -- <- Last line is stripped
 --
 -- Since screen updates are received asynchronously, expect() actually specifies
@@ -36,36 +28,19 @@
 --    * If the timeout expires, the last match error will be reported and the
 --      test will fail.
 --
--- Continuing the above example, say we want to assert that "-- INSERT --" is
--- highlighted with the bold attribute. The expect() call should look like this:
---
---     NonText = Screen.colors.Blue
---     screen:expect([[
---       hello screen             |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       ~                        |
---       {b:-- INSERT --}             |
---     ]], {b = {bold = true}}, {{bold = true, foreground = NonText}})
---
--- In this case "b" is a string associated with the set composed of one
--- attribute: bold. Note that since the {b:} markup is not a real part of the
+-- The 30 most common highlight groups are predefined, see init_colors() below.
+-- In this case "5" is a predefined highlight associated with the set composed of one
+-- attribute: bold. Note that since the {5:} markup is not a real part of the
 -- screen, the delimiter "|" moved to the right. Also, the highlighting of the
--- NonText markers "~" is ignored in this test.
+-- NonText markers "~" is visible.
 --
--- Tests will often share a group of attribute sets to expect(). Those can be
+-- Tests will often share a group of extra attribute sets to expect(). Those can be
 -- defined at the beginning of a test:
 --
---    NonText = Screen.colors.Blue
---    screen:set_default_attr_ids( {
---      [1] = {reverse = true, bold = true},
---      [2] = {reverse = true}
---    })
+--    screen:add_extra_attr_ids {
+--      [100] = { background = Screen.colors.Plum1, underline = true },
+--      [101] = { background = Screen.colors.Red1, bold = true, underline = true },
+--    }
 --
 -- To help write screen tests, see Screen:snapshot_util().
 -- To debug screen tests, see Screen:redraw_debug().
@@ -180,12 +155,28 @@ local function _init_colors()
   }
 end
 
+--- @class test.functional.ui.screen.Opts
+--- @field ext_linegrid? boolean
+--- @field ext_multigrid? boolean
+--- @field ext_newgrid? boolean
+--- @field ext_popupmenu? boolean
+--- @field ext_wildmenu? boolean
+--- @field rgb? boolean
+--- @field _debug_float? boolean
+
 --- @param width? integer
 --- @param height? integer
+--- @param options? test.functional.ui.screen.Opts
+--- @param session? test.Session|false
 --- @return test.functional.ui.screen
-function Screen.new(width, height)
+function Screen.new(width, height, options, session)
   if not Screen.colors then
     _init_colors()
+  end
+
+  options = options or {}
+  if options.ext_linegrid == nil then
+    options.ext_linegrid = true
   end
 
   local self = setmetatable({
@@ -227,6 +218,7 @@ function Screen.new(width, height)
     _new_attrs = false,
     _width = width or 53,
     _height = height or 14,
+    _options = options,
     _grids = {},
     _grid_win_extmarks = {},
     _cursor = {
@@ -249,6 +241,11 @@ function Screen.new(width, height)
   end
 
   self.uimeths = create_callindex(ui)
+
+  -- session is often nil, which implies the default session
+  if session ~= false then
+    self:attach(session)
+  end
 
   return self
 end
@@ -277,20 +274,10 @@ function Screen:set_rgb_cterm(val)
   self._rgb_cterm = val
 end
 
---- @class test.functional.ui.screen.Opts
---- @field ext_linegrid? boolean
---- @field ext_multigrid? boolean
---- @field ext_newgrid? boolean
---- @field ext_popupmenu? boolean
---- @field ext_wildmenu? boolean
---- @field rgb? boolean
---- @field _debug_float? boolean
-
---- @param options? test.functional.ui.screen.Opts
 --- @param session? test.Session
-function Screen:attach(options, session)
+function Screen:attach(session)
   session = session or get_session()
-  options = options or {}
+  local options = self._options
 
   if options.ext_linegrid == nil then
     options.ext_linegrid = true

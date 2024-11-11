@@ -14,7 +14,6 @@ describe('Screen', function()
   before_each(function()
     clear()
     screen = Screen.new(nil, 10)
-    screen:attach()
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue },
       [1] = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray },

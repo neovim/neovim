@@ -122,13 +122,12 @@ describe('cursor with customized highlighting', function()
     clear()
     command('highlight TermCursor ctermfg=45 ctermbg=46 cterm=NONE')
     command('highlight TermCursorNC ctermfg=55 ctermbg=56 cterm=NONE')
-    screen = Screen.new(50, 7)
+    screen = Screen.new(50, 7, { rgb = false })
     screen:set_default_attr_ids({
       [1] = { foreground = 45, background = 46 },
       [2] = { foreground = 55, background = 56 },
       [3] = { bold = true },
     })
-    screen:attach({ rgb = false })
     command('call termopen(["' .. testprg('tty-test') .. '"])')
     feed('i')
     poke_eventloop()

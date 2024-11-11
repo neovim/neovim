@@ -41,7 +41,6 @@ describe('vim.ui_attach', function()
       [6] = { reverse = true, bold = true },
       [7] = { background = Screen.colors.Yellow1 },
     })
-    screen:attach()
   end)
 
   local function expect_events(expected)
@@ -251,8 +250,7 @@ describe('vim.ui_attach', function()
 
   it('error in callback is logged', function()
     clear({ env = { NVIM_LOG_FILE = testlog } })
-    local screen = Screen.new()
-    screen:attach()
+    local _ = Screen.new()
     exec_lua([[
       local ns = vim.api.nvim_create_namespace('testspace')
       vim.ui_attach(ns, { ext_popupmenu = true }, function() error(42) end)

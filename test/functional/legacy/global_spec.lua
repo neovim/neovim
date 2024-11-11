@@ -12,7 +12,6 @@ describe(':global', function()
   -- oldtest: Test_interrupt_global()
   it('can be interrupted using Ctrl-C in cmdline mode vim-patch:9.0.0082', function()
     local screen = Screen.new(75, 6)
-    screen:attach()
 
     exec([[
       set nohlsearch noincsearch

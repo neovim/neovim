@@ -2114,7 +2114,6 @@ describe('TUI', function()
       [5] = { bold = true, reverse = true },
       [6] = { foreground = Screen.colors.White, background = Screen.colors.DarkGreen },
     })
-    screen:attach()
     fn.termopen({
       nvim_prog,
       '--clean',
@@ -2147,7 +2146,6 @@ describe('TUI', function()
   for _, guicolors in ipairs({ 'notermguicolors', 'termguicolors' }) do
     it('has no black flicker when clearing regions during startup with ' .. guicolors, function()
       local screen = Screen.new(50, 10)
-      screen:attach()
       fn.termopen({
         nvim_prog,
         '--clean',

@@ -215,7 +215,6 @@ describe('linebreak', function()
   -- oldtest: Test_visual_ends_before_showbreak()
   it("Visual area is correct when it ends before multibyte 'showbreak'", function()
     local screen = Screen.new(60, 8)
-    screen:attach()
     exec([[
       let &wrap = v:true
       let &linebreak = v:true

@@ -19,8 +19,7 @@ describe('ui/ext_popupmenu', function()
   local screen
   before_each(function()
     clear()
-    screen = Screen.new(60, 8)
-    screen:attach({ rgb = true, ext_popupmenu = true })
+    screen = Screen.new(60, 8, { rgb = true, ext_popupmenu = true })
     source([[
       function! TestComplete() abort
         call complete(1, [{'word':'foo', 'abbr':'fo', 'menu':'the foo', 'info':'foo-y', 'kind':'x'}, 'bar', 'spam'])
@@ -957,7 +956,6 @@ describe("builtin popupmenu 'pumblend'", function()
       [44] = { foreground = tonumber('0x3f3f3f'), background = tonumber('0x7f5d7f') },
       [45] = { background = Screen.colors.WebGray, blend = 0 },
     })
-    screen:attach()
     command('syntax on')
     command('set mouse=a')
     command('set pumblend=10')
@@ -1107,7 +1105,7 @@ describe("builtin popupmenu 'pumblend'", function()
   end)
 
   it('256-color (non-RGB)', function()
-    local screen = Screen.new(60, 8)
+    local screen = Screen.new(60, 8, { rgb = false })
     screen:set_default_attr_ids({
       [1] = { foreground = Screen.colors.Grey0, background = tonumber('0x000007') },
       [2] = { foreground = tonumber('0x000055'), background = tonumber('0x000007') },
@@ -1120,7 +1118,6 @@ describe("builtin popupmenu 'pumblend'", function()
       [9] = { bold = true },
       [10] = { foreground = tonumber('0x000002') },
     })
-    screen:attach({ rgb = false })
     command('set pumblend=10')
     insert([[
       Lorem ipsum dolor sit amet, consectetur
@@ -1149,7 +1146,7 @@ describe('builtin popupmenu', function()
   local function with_ext_multigrid(multigrid)
     local screen
     before_each(function()
-      screen = Screen.new(32, 20)
+      screen = Screen.new(32, 20, { ext_multigrid = multigrid })
       screen:set_default_attr_ids({
         -- popup selected item / scrollbar track
         s = { background = Screen.colors.Grey },
@@ -1194,7 +1191,6 @@ describe('builtin popupmenu', function()
           underline = true,
         },
       })
-      screen:attach({ ext_multigrid = multigrid })
     end)
 
     it('with preview-window above', function()

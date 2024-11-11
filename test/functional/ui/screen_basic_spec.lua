@@ -29,7 +29,6 @@ describe('screen', function()
     local screen_nvim = spawn(nvim_argv)
     set_session(screen_nvim)
     screen = Screen.new()
-    screen:attach()
   end)
 
   it('default initial screen', function()
@@ -47,8 +46,7 @@ local function screen_tests(linegrid)
 
   before_each(function()
     clear()
-    screen = Screen.new()
-    screen:attach({ rgb = true, ext_linegrid = linegrid })
+    screen = Screen.new(53, 14, { rgb = true, ext_linegrid = linegrid })
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = 255 },
       [1] = { bold = true, reverse = true },
@@ -717,8 +715,7 @@ describe('Screen default colors', function()
     }
     local screen_nvim = spawn(nvim_argv)
     set_session(screen_nvim)
-    screen = Screen.new()
-    screen:attach(termcolors and { rgb = true, ext_termcolors = true } or { rgb = true })
+    screen = Screen.new(53, 14, { rgb = true, ext_termcolors = termcolors or nil })
   end
 
   it('are dark per default', function()
@@ -777,7 +774,6 @@ end)
 it('CTRL-F or CTRL-B scrolls a page after UI attach/resize #20605', function()
   clear()
   local screen = Screen.new(100, 100)
-  screen:attach()
   eq(100, api.nvim_get_option_value('lines', {}))
   eq(99, api.nvim_get_option_value('window', {}))
   eq(99, api.nvim_win_get_height(0))
@@ -810,7 +806,6 @@ end)
 it("showcmd doesn't cause empty grid_line with redrawdebug=compositor #22593", function()
   clear()
   local screen = Screen.new(30, 2)
-  screen:attach()
   command('set showcmd redrawdebug=compositor')
   feed('d')
   screen:expect {
@@ -824,7 +819,6 @@ end)
 it("scrolling in narrow window doesn't draw over separator #29033", function()
   clear()
   local screen = Screen.new(60, 8)
-  screen:attach()
   feed('100Oa<Esc>gg')
   exec([[
     set number nowrap

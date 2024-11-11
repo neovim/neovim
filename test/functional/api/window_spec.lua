@@ -170,7 +170,6 @@ describe('API/win', function()
 
     it('updates the screen, and also when the window is unfocused', function()
       local screen = Screen.new(30, 9)
-      screen:attach()
 
       insert('prologue')
       feed('100o<esc>')
@@ -281,7 +280,6 @@ describe('API/win', function()
 
     it('updates cursorline and statusline ruler in non-current window', function()
       local screen = Screen.new(60, 8)
-      screen:attach()
       command('set ruler')
       command('set cursorline')
       insert([[
@@ -314,7 +312,6 @@ describe('API/win', function()
 
     it('updates cursorcolumn in non-current window', function()
       local screen = Screen.new(60, 8)
-      screen:attach()
       command('set cursorcolumn')
       insert([[
         aaa
@@ -857,7 +854,6 @@ describe('API/win', function()
     it('with two diff windows', function()
       local X = api.nvim_get_vvar('maxcol')
       local screen = Screen.new(45, 22)
-      screen:attach()
       exec([[
         set diffopt+=context:2 number
         let expr = 'printf("%08d", v:val) .. repeat("!", v:val)'
@@ -975,7 +971,6 @@ describe('API/win', function()
     it('with wrapped lines', function()
       local X = api.nvim_get_vvar('maxcol')
       local screen = Screen.new(45, 22)
-      screen:attach()
       exec([[
         set number cpoptions+=n
         call setline(1, repeat([repeat('foobar-', 36)], 3))
@@ -2557,7 +2552,6 @@ describe('API/win', function()
 
     it('updates statusline when moving bottom split', function()
       local screen = Screen.new(10, 10)
-      screen:attach()
       exec([[
         set laststatus=0
         belowright split

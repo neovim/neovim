@@ -17,7 +17,6 @@ describe("'spell'", function()
   before_each(function()
     clear()
     screen = Screen.new(80, 8)
-    screen:attach()
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue },
       [1] = { special = Screen.colors.Red, undercurl = true },

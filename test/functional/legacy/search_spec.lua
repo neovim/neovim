@@ -18,7 +18,6 @@ describe('search cmdline', function()
     clear()
     command('set nohlsearch inccommand=')
     screen = Screen.new(20, 3)
-    screen:attach()
     screen:set_default_attr_ids({
       inc = { reverse = true },
       err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
@@ -747,7 +746,6 @@ describe('Search highlight', function()
   -- oldtest: Test_hlsearch_dump()
   it('beyond line end vim-patch:8.2.2542', function()
     local screen = Screen.new(50, 6)
-    screen:attach()
     exec([[
       set hlsearch noincsearch cursorline
       call setline(1, ["xxx", "xxx", "xxx"])
@@ -773,7 +771,6 @@ describe('Search highlight', function()
       [4] = { background = Screen.colors.Yellow, bold = true }, -- Search
       [5] = { background = Screen.colors.LightGrey, bold = true, foreground = Screen.colors.Black },
     })
-    screen:attach()
     exec([[
       set hlsearch noincsearch
       call setline(1, repeat(["xxx yyy zzz"], 3))

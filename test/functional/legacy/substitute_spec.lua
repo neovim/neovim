@@ -211,7 +211,6 @@ describe(':substitute', function()
 
   it('first char is highlighted with confirmation dialog and empty match', function()
     local screen = Screen.new(60, 8)
-    screen:attach()
     exec([[
       set nohlsearch noincsearch
       call setline(1, ['one', 'two', 'three'])

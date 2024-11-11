@@ -158,7 +158,6 @@ describe('print', function()
 
   it('blank line in message works', function()
     local screen = Screen.new(40, 8)
-    screen:attach()
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue },
       [1] = { bold = true, foreground = Screen.colors.SeaGreen },
@@ -196,7 +195,6 @@ describe('debug.debug', function()
 
   before_each(function()
     screen = Screen.new()
-    screen:attach()
     screen:set_default_attr_ids {
       [0] = { bold = true, foreground = 255 },
       [1] = { bold = true, reverse = true },

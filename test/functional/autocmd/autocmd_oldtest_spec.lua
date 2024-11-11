@@ -102,7 +102,6 @@ describe('oldtests', function()
   -- oldtest: Test_delete_ml_get_errors()
   it('no ml_get error with TextChanged autocommand and delete', function()
     local screen = Screen.new(75, 10)
-    screen:attach()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.Cyan1 },
     }

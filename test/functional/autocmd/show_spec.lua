@@ -46,7 +46,6 @@ describe(':autocmd', function()
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Magenta, bold = true },
     }
-    screen:attach()
     exec([[
       set more
       autocmd! BufEnter

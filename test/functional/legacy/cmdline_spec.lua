@@ -15,7 +15,6 @@ describe('cmdline', function()
   -- oldtest: Test_cmdlineclear_tabenter()
   it('is cleared when switching tabs', function()
     local screen = Screen.new(30, 10)
-    screen:attach()
 
     feed_command([[call setline(1, range(30))]])
     screen:expect([[
@@ -79,7 +78,6 @@ describe('cmdline', function()
   -- oldtest: Test_verbose_option()
   it('prints every executed Ex command if verbose >= 16', function()
     local screen = Screen.new(60, 12)
-    screen:attach()
     exec([[
       command DoSomething echo 'hello' |set ts=4 |let v = '123' |echo v
       call feedkeys("\r", 't') " for the hit-enter prompt
@@ -104,7 +102,6 @@ describe('cmdline', function()
   -- oldtest: Test_cmdline_redraw_tabline()
   it('tabline is redrawn on entering cmdline', function()
     local screen = Screen.new(30, 6)
-    screen:attach()
     exec([[
       set showtabline=2
       autocmd CmdlineEnter * set tabline=foo
@@ -121,7 +118,6 @@ describe('cmdline', function()
   -- oldtest: Test_redraw_in_autocmd()
   it('cmdline cursor position is correct after :redraw with cmdheight=2', function()
     local screen = Screen.new(30, 6)
-    screen:attach()
     exec([[
       set cmdheight=2
       autocmd CmdlineChanged * redraw
@@ -145,7 +141,6 @@ describe('cmdline', function()
 
   it("setting 'cmdheight' works after outputting two messages vim-patch:9.0.0665", function()
     local screen = Screen.new(60, 8)
-    screen:attach()
     exec([[
       set cmdheight=1 laststatus=2
       func EchoTwo()
@@ -175,7 +170,6 @@ describe('cmdline', function()
   -- oldtest: Test_cmdheight_tabline()
   it("changing 'cmdheight' when there is a tabline", function()
     local screen = Screen.new(60, 8)
-    screen:attach()
     api.nvim_set_option_value('laststatus', 2, {})
     api.nvim_set_option_value('showtabline', 2, {})
     api.nvim_set_option_value('cmdheight', 1, {})
@@ -191,7 +185,6 @@ describe('cmdline', function()
   -- oldtest: Test_rulerformat_position()
   it("ruler has correct position with 'rulerformat' set", function()
     local screen = Screen.new(20, 3)
-    screen:attach()
     api.nvim_set_option_value('ruler', true, {})
     api.nvim_set_option_value('rulerformat', 'longish', {})
     api.nvim_set_option_value('laststatus', 0, {})
@@ -218,7 +211,6 @@ describe('cmdwin', function()
       [3] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
       [4] = { bold = true }, -- ModeMsg
     })
-    screen:attach()
     command('set more')
     command('autocmd WinNew * highlight')
     feed('q:')

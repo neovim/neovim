@@ -189,7 +189,6 @@ describe('uncaught exception', function()
 
   it('multiline exception remains multiline #25350', function()
     local screen = Screen.new(80, 11)
-    screen:attach()
     exec_lua([[
       function _G.Oops()
         error("oops")
@@ -230,8 +229,7 @@ describe('listing functions using :function', function()
   end)
 
   it('does not crash if another function is deleted while listing', function()
-    local screen = Screen.new(80, 24)
-    screen:attach()
+    local _ = Screen.new(80, 24)
     matches(
       'Vim%(function%):E454: Function list was modified$',
       pcall_err(
@@ -264,8 +262,7 @@ describe('listing functions using :function', function()
   end)
 
   it('does not crash if the same function is deleted while listing', function()
-    local screen = Screen.new(80, 24)
-    screen:attach()
+    local _ = Screen.new(80, 24)
     matches(
       'Vim%(function%):E454: Function list was modified$',
       pcall_err(

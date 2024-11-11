@@ -17,7 +17,6 @@ describe('thread', function()
   before_each(function()
     clear()
     screen = Screen.new(50, 10)
-    screen:attach()
   end)
 
   it('entry func is executed in protected mode', function()
@@ -257,7 +256,6 @@ describe('threadpool', function()
 
   it('with invalid return value', function()
     local screen = Screen.new(50, 10)
-    screen:attach()
 
     exec_lua [[
       local work = vim.uv.new_work(function() return {} end, function() end)

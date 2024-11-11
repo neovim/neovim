@@ -89,7 +89,6 @@ describe('command-line option', function()
     it('does not crash after reading from stdin in non-headless mode', function()
       skip(is_os('win'))
       local screen = Screen.new(40, 8)
-      screen:attach()
       local args = {
         nvim_prog_abs(),
         '-u',

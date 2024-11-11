@@ -11,7 +11,6 @@ describe('matchparen', function()
   -- oldtest: Test_visual_block_scroll()
   it('redraws properly after scrolling with scrolloff=1', function()
     local screen = Screen.new(30, 7)
-    screen:attach()
     exec([[
       source $VIMRUNTIME/plugin/matchparen.vim
       set scrolloff=1
@@ -37,7 +36,6 @@ describe('matchparen', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.Cyan1 },
     }
-    screen:attach()
 
     local screen1 = [[
       {100:^()}                  |
@@ -79,7 +77,6 @@ describe('matchparen', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.Cyan1 },
     }
-    screen:attach()
 
     exec([[
       source $VIMRUNTIME/plugin/matchparen.vim
@@ -107,7 +104,6 @@ describe('matchparen', function()
   -- oldtest: Test_matchparen_pum_clear()
   it('is cleared when completion popup is shown', function()
     local screen = Screen.new(30, 9)
-    screen:attach()
 
     exec([[
       source $VIMRUNTIME/plugin/matchparen.vim
@@ -136,7 +132,6 @@ describe('matchparen', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.Cyan1 },
     }
-    screen:attach()
 
     exec([[
       source $VIMRUNTIME/plugin/matchparen.vim

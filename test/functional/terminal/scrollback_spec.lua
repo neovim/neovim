@@ -354,8 +354,7 @@ end)
 describe(':terminal prints more lines than the screen height and exits', function()
   it('will push extra lines to scrollback', function()
     clear()
-    local screen = Screen.new(30, 7)
-    screen:attach({ rgb = false })
+    local screen = Screen.new(30, 7, { rgb = false })
     command(("call termopen(['%s', '10']) | startinsert"):format(testprg('tty-test')))
     screen:expect([[
       line6                         |
@@ -580,7 +579,6 @@ describe('pending scrollback line handling', function()
   before_each(function()
     clear()
     screen = Screen.new(30, 7)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = { foreground = Screen.colors.Brown },
       [2] = { reverse = true },

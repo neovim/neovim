@@ -16,7 +16,6 @@ describe('Buffer highlighting', function()
     clear()
     command('syntax on')
     screen = Screen.new(40, 8)
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true, foreground = Screen.colors.Blue },
       [2] = { foreground = Screen.colors.Fuchsia }, -- String
