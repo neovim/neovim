@@ -764,8 +764,11 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
     return vim._str_byteindex(s, old_index, use_utf16) or error('index out of range')
   end
 
-  vim.validate('s', s, 'string')
-  vim.validate('index', index, 'number')
+  -- Avoid vim.validate for performance.
+  if type(s) ~= 'string' or type(index) ~= 'number' then
+    vim.validate('s', s, 'string')
+    vim.validate('index', index, 'number')
+  end
 
   local len = #s
 
@@ -773,11 +776,15 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
     return 0
   end
 
-  vim.validate('encoding', encoding, function(v)
-    return utfs[v], 'invalid encoding'
-  end)
+  if not utfs[encoding] then
+    vim.validate('encoding', encoding, function(v)
+      return utfs[v], 'invalid encoding'
+    end)
+  end
 
-  vim.validate('strict_indexing', strict_indexing, 'boolean', true)
+  if strict_indexing ~= nil and type(strict_indexing) ~= 'boolean' then
+    vim.validate('strict_indexing', strict_indexing, 'boolean', true)
+  end
   if strict_indexing == nil then
     strict_indexing = true
   end
@@ -828,8 +835,11 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
     return col32, col16
   end
 
-  vim.validate('s', s, 'string')
-  vim.validate('index', index, 'number', true)
+  if type(s) ~= 'string' or (index ~= nil and type(index) ~= 'number') then
+    vim.validate('s', s, 'string')
+    vim.validate('index', index, 'number', true)
+  end
+
   if not index then
     index = math.huge
     strict_indexing = false
@@ -839,11 +849,15 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
     return 0
   end
 
-  vim.validate('encoding', encoding, function(v)
-    return utfs[v], 'invalid encoding'
-  end)
+  if not utfs[encoding] then
+    vim.validate('encoding', encoding, function(v)
+      return utfs[v], 'invalid encoding'
+    end)
+  end
 
-  vim.validate('strict_indexing', strict_indexing, 'boolean', true)
+  if strict_indexing ~= nil and type(strict_indexing) ~= 'boolean' then
+    vim.validate('strict_indexing', strict_indexing, 'boolean', true)
+  end
   if strict_indexing == nil then
     strict_indexing = true
   end

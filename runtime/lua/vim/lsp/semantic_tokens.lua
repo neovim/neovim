@@ -99,11 +99,12 @@ local function tokens_to_ranges(data, bufnr, client, request)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
+  local encoding = client.offset_encoding
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local ranges = {} ---@type STTokenRange[]
 
   local start = uv.hrtime()
-  local ms_to_ns = 1000 * 1000
+  local ms_to_ns = 1e6
   local yield_interval_ns = 5 * ms_to_ns
   local co, is_main = coroutine.running()
 
@@ -135,14 +136,13 @@ local function tokens_to_ranges(data, bufnr, client, request)
 
     -- data[i+3] +1 because Lua tables are 1-indexed
     local token_type = token_types[data[i + 3] + 1]
-    local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
-
-    local end_char = start_char + data[i + 2]
-    local buf_line = lines and lines[line + 1] or ''
-    local start_col = vim.str_byteindex(buf_line, client.offset_encoding, start_char, false)
-    local end_col = vim.str_byteindex(buf_line, client.offset_encoding, end_char, false)
 
     if token_type then
+      local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
+      local end_char = start_char + data[i + 2]
+      local buf_line = lines and lines[line + 1] or ''
+      local start_col = vim.str_byteindex(buf_line, encoding, start_char, false)
+      local end_col = vim.str_byteindex(buf_line, encoding, end_char, false)
       ranges[#ranges + 1] = {
         line = line,
         start_col = start_col,
