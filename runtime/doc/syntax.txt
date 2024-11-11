@@ -2196,7 +2196,7 @@ To specify elements that should not be concealed, set the following variable: >
 
 	:let g:pandoc#syntax#conceal#blacklist = []
 
-This is a list of the rules wich can be used here:
+This is a list of the rules which can be used here:
 
   - titleblock
   - image
