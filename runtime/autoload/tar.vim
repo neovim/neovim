@@ -1,6 +1,6 @@
 " tar.vim: Handles browsing tarfiles
 "            AUTOLOAD PORTION
-" Date:		Nov 14, 2023
+" Date:		Nov 11, 2024
 " Version:	32b  (with modifications from the Vim Project)
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer: Charles E Campbell
@@ -23,7 +23,7 @@
 if &cp || exists("g:loaded_tar")
  finish
 endif
-let g:loaded_tar= "v32a"
+let g:loaded_tar= "v32b"
 if v:version < 702
  echohl WarningMsg
  echo "***warning*** this version of tar needs vim 7.2"
@@ -41,7 +41,7 @@ if !exists("g:tar_browseoptions")
  let g:tar_browseoptions= "Ptf"
 endif
 if !exists("g:tar_readoptions")
- let g:tar_readoptions= "OPxf"
+ let g:tar_readoptions= "pPxf"
 endif
 if !exists("g:tar_cmd")
  let g:tar_cmd= "tar"
@@ -80,7 +80,7 @@ if !exists("g:tar_copycmd")
  let g:tar_copycmd= g:netrw_localcopycmd
 endif
 if !exists("g:tar_extractcmd")
- let g:tar_extractcmd= "tar -xf"
+ let g:tar_extractcmd= "tar -pxf"
 endif
 
 " set up shell quoting character
@@ -294,6 +294,41 @@ fun! tar#Read(fname,mode)
   set report=10
   let tarfile = substitute(a:fname,'tarfile:\(.\{-}\)::.*$','\1','')
   let fname   = substitute(a:fname,'tarfile:.\{-}::\(.*\)$','\1','')
+
+" changing the directory to the temporary earlier to allow tar to extract the file with permissions intact
+  if !exists("*mkdir")
+   redraw!
+   echohl Error | echo "***error*** (tar#Write) sorry, mkdir() doesn't work on your system" | echohl None
+   let &report= repkeep
+   return
+  endif
+
+  let curdir= getcwd()
+  let tmpdir= tempname()
+  let b:curdir= tmpdir
+  let b:tmpdir= curdir
+  if tmpdir =~ '\.'
+   let tmpdir= substitute(tmpdir,'\.[^.]*$','','e')
+  endif
+  call mkdir(tmpdir,"p")
+
+  " attempt to change to the indicated directory
+  try
+   exe "cd ".fnameescape(tmpdir)
+  catch /^Vim\%((\a\+)\)\=:E344/
+   redraw!
+   echohl Error | echo "***error*** (tar#Write) cannot cd to temporary directory" | Echohl None
+   let &report= repkeep
+   return
+  endtry
+
+  " place temporary files under .../_ZIPVIM_/
+  if isdirectory("_ZIPVIM_")
+   call s:Rmdir("_ZIPVIM_")
+  endif
+  call mkdir("_ZIPVIM_")
+  cd _ZIPVIM_
+
   if has("win32unix") && executable("cygpath")
    " assuming cygwin
    let tarfile=substitute(system("cygpath -u ".shellescape(tarfile,0)),'\n$','','e')
@@ -332,9 +367,10 @@ fun! tar#Read(fname,mode)
 
   if tarfile =~# '\.bz2$'
    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+   exe "read ".fname
   elseif tarfile =~# '\.\(gz\)$'
    exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
-
+   exe "read ".fname
   elseif tarfile =~# '\(\.tgz\|\.tbz\|\.txz\)'
    if has("unix") && executable("file")
     let filekind= system("file ".shellescape(tarfile,1))
@@ -343,20 +379,27 @@ fun! tar#Read(fname,mode)
    endif
    if filekind =~ "bzip2"
     exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+    exe "read ".fname
    elseif filekind =~ "XZ"
     exe "sil! r! xz -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+    exe "read ".fname
    elseif filekind =~ "Zstandard"
     exe "sil! r! zstd --decompress --stdout -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+    exe "read ".fname
    else
     exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+    exe "read ".fname
    endif
 
   elseif tarfile =~# '\.lrp$'
    exe "sil! r! cat -- ".shellescape(tarfile,1)." | gzip -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+   exe "read ".fname
   elseif tarfile =~# '\.lzma$'
    exe "sil! r! lzma -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+   exe "read ".fname
   elseif tarfile =~# '\.\(xz\|txz\)$'
    exe "sil! r! xz --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+   exe "read ".fname
   else
    if tarfile =~ '^\s*-'
     " A file name starting with a dash is taken as an option.  Prepend ./ to avoid that.
@@ -364,6 +407,16 @@ fun! tar#Read(fname,mode)
    endif
 "   call Decho("8: exe silent r! ".g:tar_cmd." -".g:tar_readoptions.tar_secure.shellescape(tarfile,1)." ".shellescape(fname,1).decmp)
    exe "silent r! ".g:tar_cmd." -".g:tar_readoptions.shellescape(tarfile,1)." ".tar_secure.shellescape(fname,1).decmp
+   exe "read ".fname
+  endif
+
+   redraw!
+
+if v:shell_error != 0
+   cd ..
+   call s:Rmdir("_ZIPVIM_")
+   exe "cd ".fnameescape(curdir)
+   echohl Error | echo "***error*** (tar#Read) sorry, unable to open or extract ".tarfile." with ".fname | echohl None
   endif
 
   if doro
@@ -388,6 +441,10 @@ fun! tar#Write(fname)
 "  call Dfunc("tar#Write(fname<".a:fname.">) b:tarfile<".b:tarfile."> tblfile_".winnr()."<".s:tblfile_{winnr()}.">")
   let repkeep= &report
   set report=10
+  
+  " temporary buffer variable workaround because too fucking tired. but it works now
+  let curdir= b:curdir
+  let tmpdir= b:tmpdir
 
   if !exists("g:tar_secure") && a:fname =~ '^\s*-\|\s\+-'
    redraw!
@@ -404,44 +461,6 @@ fun! tar#Write(fname)
 "   call Dret("tar#Write")
    return
   endif
-  if !exists("*mkdir")
-   redraw!
-"   call Decho("***error*** (tar#Write) sorry, mkdir() doesn't work on your system")
-   echohl Error | echo "***error*** (tar#Write) sorry, mkdir() doesn't work on your system" | echohl None
-   let &report= repkeep
-"   call Dret("tar#Write")
-   return
-  endif
-
-  let curdir= getcwd()
-  let tmpdir= tempname()
-"  call Decho("orig tempname<".tmpdir.">")
-  if tmpdir =~ '\.'
-   let tmpdir= substitute(tmpdir,'\.[^.]*$','','e')
-  endif
-"  call Decho("tmpdir<".tmpdir.">")
-  call mkdir(tmpdir,"p")
-
-  " attempt to change to the indicated directory
-  try
-   exe "cd ".fnameescape(tmpdir)
-  catch /^Vim\%((\a\+)\)\=:E344/
-   redraw!
-"   call Decho("***error*** (tar#Write) cannot cd to temporary directory")
-   echohl Error | echo "***error*** (tar#Write) cannot cd to temporary directory" | Echohl None
-   let &report= repkeep
-"   call Dret("tar#Write")
-   return
-  endtry
-"  call Decho("current directory now: ".getcwd())
-
-  " place temporary files under .../_ZIPVIM_/
-  if isdirectory("_ZIPVIM_")
-   call s:Rmdir("_ZIPVIM_")
-  endif
-  call mkdir("_ZIPVIM_")
-  cd _ZIPVIM_
-"  call Decho("current directory now: ".getcwd())
 
   let tarfile = substitute(b:tarfile,'tarfile:\(.\{-}\)::.*$','\1','')
   let fname   = substitute(b:tarfile,'tarfile:.\{-}::\(.*\)$','\1','')
