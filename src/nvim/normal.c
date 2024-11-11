@@ -1380,7 +1380,7 @@ static void normal_redraw(NormalState *s)
 
   // Display message after redraw. If an external message is still visible,
   // it contains the kept message already.
-  if (keep_msg != NULL && !msg_ext_is_visible()) {
+  if (keep_msg != NULL && !ui_has(kUIMessages)) {
     char *const p = xstrdup(keep_msg);
 
     // msg_start() will set keep_msg to NULL, make a copy

@@ -35,8 +35,6 @@ extern MessageHistoryEntry *first_msg_hist;
 /// Last message
 extern MessageHistoryEntry *last_msg_hist;
 
-EXTERN bool msg_ext_need_clear INIT( = false);
-
 /// allocated grid for messages. Used when display+=msgsep is set, or
 /// ext_multigrid is active. See also the description at msg_scroll_flush()
 EXTERN ScreenGrid msg_grid INIT( = SCREEN_GRID_INIT);
