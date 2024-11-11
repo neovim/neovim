@@ -1342,7 +1342,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       hlID = HLF_CHD;  // Changed line.
     }
   }
-  rettv->vval.v_number = hlID == (hlf_T)0 ? 0 : (hlID + 1);
+  rettv->vval.v_number = hlID;
 }
 
 /// "empty({expr})" function

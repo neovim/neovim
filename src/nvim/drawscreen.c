@@ -952,7 +952,7 @@ int showmode(void)
 
     // Position on the last line in the window, column 0
     msg_pos_mode();
-    int hl_id = HLF_CM + 1;  // Highlight mode
+    int hl_id = HLF_CM;  // Highlight mode
 
     // When the screen is too narrow to show the entire mode message,
     // avoid scrolling and truncate instead.
@@ -987,7 +987,7 @@ int showmode(void)
           }
           if (edit_submode_extra != NULL) {
             msg_puts_hl(" ", hl_id, false);  // Add a space in between.
-            int sub_id = edit_submode_highl < HLF_COUNT ? (int)edit_submode_highl + 1 : hl_id;
+            int sub_id = edit_submode_highl < HLF_COUNT ? (int)edit_submode_highl : hl_id;
             msg_puts_hl(edit_submode_extra, sub_id, false);
           }
         }
@@ -1133,7 +1133,7 @@ void clearmode(void)
   msg_ext_ui_flush();
   msg_pos_mode();
   if (reg_recording != 0) {
-    recording_mode(HLF_CM + 1);
+    recording_mode(HLF_CM);
   }
   msg_clr_eos();
   msg_ext_flush_showmode();

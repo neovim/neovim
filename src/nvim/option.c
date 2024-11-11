@@ -1901,8 +1901,8 @@ static const char *did_set_arabic(optset_T *args)
     if (strcmp(p_enc, "utf-8") != 0) {
       static char *w_arabic = N_("W17: Arabic requires UTF-8, do ':set encoding=utf-8'");
 
-      msg_source(HLF_W + 1);
-      msg(_(w_arabic), HLF_W + 1);
+      msg_source(HLF_W);
+      msg(_(w_arabic), HLF_W);
       set_vim_var_string(VV_WARNINGMSG, _(w_arabic), -1);
     }
 

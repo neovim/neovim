@@ -58,7 +58,8 @@ typedef struct {
 /// Values for index in highlight_attr[].
 /// When making changes, also update hlf_names in highlight.h!
 typedef enum {
-  HLF_8 = 0,      ///< Meta & special keys listed with ":map", text that is
+  HLF_NONE = 0,   ///< no UI highlight active
+  HLF_8,          ///< Meta & special keys listed with ":map", text that is
                   ///< displayed different from what it is
   HLF_EOB,        ///< after the last line in the buffer
   HLF_TERM,       ///< terminal cursor focused

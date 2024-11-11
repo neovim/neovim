@@ -450,7 +450,7 @@ int buf_write_all(buf_T *buf, bool forceit)
                           1, buf->b_ml.ml_line_count, NULL,
                           false, forceit, true, false));
   if (curbuf != old_curbuf) {
-    msg_source(HLF_W + 1);
+    msg_source(HLF_W);
     msg(_("Warning: Entered other buffer unexpectedly (check autocommands)"), 0);
   }
   return retval;

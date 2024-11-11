@@ -3195,7 +3195,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
 
   msg_putchar('\n');
-  msg_outtrans(IObuff, cursel ? HLF_QFL + 1 : qfFile_hl_id, false);
+  msg_outtrans(IObuff, cursel ? HLF_QFL : qfFile_hl_id, false);
 
   if (qfp->qf_lnum != 0) {
     msg_puts_hl(":", qfSep_hl_id, false);
@@ -3277,15 +3277,15 @@ void qf_list(exarg_T *eap)
   // that this depends on syntax items defined in the qf.vim syntax file
   qfFile_hl_id = syn_name2id("qfFileName");
   if (qfFile_hl_id == 0) {
-    qfFile_hl_id = HLF_D + 1;
+    qfFile_hl_id = HLF_D;
   }
   qfSep_hl_id = syn_name2id("qfSeparator");
   if (qfSep_hl_id == 0) {
-    qfSep_hl_id = HLF_D + 1;
+    qfSep_hl_id = HLF_D;
   }
   qfLine_hl_id = syn_name2id("qfLineNr");
   if (qfLine_hl_id == 0) {
-    qfLine_hl_id = HLF_N + 1;
+    qfLine_hl_id = HLF_N;
   }
 
   if (qfl->qf_nonevalid) {

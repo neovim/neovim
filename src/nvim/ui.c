@@ -358,8 +358,8 @@ void vim_beep(unsigned val)
   // a script or executing a function give the user a hint where the beep
   // comes from.
   if (vim_strchr(p_debug, 'e') != NULL) {
-    msg_source(HLF_W + 1);
-    msg(_("Beep!"), HLF_W + 1);
+    msg_source(HLF_W);
+    msg(_("Beep!"), HLF_W);
   }
 }
 

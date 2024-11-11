@@ -1621,7 +1621,7 @@ static void highlight_list_one(const int id)
   if (sgp->sg_link && !got_int) {
     syn_list_header(didh, 0, id, true);
     didh = true;
-    msg_puts_hl("links to", HLF_D + 1, false);
+    msg_puts_hl("links to", HLF_D, false);
     msg_putchar(' ');
     msg_outtrans(hl_table[hl_table[id - 1].sg_link - 1].sg_name, 0, false);
   }
@@ -1751,8 +1751,8 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
   didh = true;
   if (!got_int) {
     if (*name != NUL) {
-      msg_puts_hl(name, HLF_D + 1, false);
-      msg_puts_hl("=", HLF_D + 1, false);
+      msg_puts_hl(name, HLF_D, false);
+      msg_puts_hl("=", HLF_D, false);
     }
     msg_outtrans(ts, 0, false);
   }
@@ -2047,7 +2047,7 @@ static int syn_add_group(const char *name, size_t len)
       return 0;
     } else if (!ASCII_ISALNUM(c) && c != '_' && c != '.' && c != '@' && c != '-') {
       // '.' and '@' are allowed characters for use with treesitter capture names.
-      msg_source(HLF_W + 1);
+      msg_source(HLF_W);
       emsg(_(e_highlight_group_name_invalid_char));
       return 0;
     }
@@ -2246,8 +2246,11 @@ void highlight_changed(void)
 
   need_highlight_changed = false;
 
+  // sentinel value. used when no highlight is active
+  highlight_attr[HLF_NONE] = 0;
+
   /// Translate builtin highlight groups into attributes for quick lookup.
-  for (int hlf = 0; hlf < HLF_COUNT; hlf++) {
+  for (int hlf = 1; hlf < HLF_COUNT; hlf++) {
     int id = syn_check_group(hlf_names[hlf], strlen(hlf_names[hlf]));
     if (id == 0) {
       abort();
@@ -2274,9 +2277,6 @@ void highlight_changed(void)
       highlight_attr_last[hlf] = highlight_attr[hlf];
     }
   }
-
-  // sentinel value. used when no highlight namespace is active
-  highlight_attr[HLF_COUNT] = 0;
 
   // Setup the user highlights
   //
@@ -2361,7 +2361,7 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
 static void highlight_list(void)
 {
   for (int i = 10; --i >= 0;) {
-    highlight_list_two(i, HLF_D + 1);
+    highlight_list_two(i, HLF_D);
   }
   for (int i = 40; --i >= 0;) {
     highlight_list_two(99, 0);

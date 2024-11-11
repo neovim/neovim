@@ -3346,7 +3346,7 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
     KEYVALUE_ENTRY(HL_SKIPEMPTY, "skipempty"),
   };
 
-  const int hl_id = HLF_D + 1;      // highlight like directories
+  const int hl_id = HLF_D;      // highlight like directories
 
   // list the keywords for "id"
   if (!syncing) {
@@ -3451,9 +3451,9 @@ static void syn_list_cluster(int id)
 
   msg_advance(endcol);
   if (SYN_CLSTR(curwin->w_s)[id].scl_list != NULL) {
-    put_id_list("cluster", SYN_CLSTR(curwin->w_s)[id].scl_list, HLF_D + 1);
+    put_id_list("cluster", SYN_CLSTR(curwin->w_s)[id].scl_list, HLF_D);
   } else {
-    msg_puts_hl("cluster", HLF_D + 1, false);
+    msg_puts_hl("cluster", HLF_D, false);
     msg_puts("=NONE");
   }
 }

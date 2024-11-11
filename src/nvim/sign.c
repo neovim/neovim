@@ -270,7 +270,7 @@ static void sign_list_placed(buf_T *rbuf, char *group)
   while (buf != NULL && !got_int) {
     if (buf_has_signs(buf)) {
       vim_snprintf(lbuf, MSG_BUF_LEN, _("Signs for %s:"), buf->b_fname);
-      msg_puts_hl(lbuf, HLF_D + 1, false);
+      msg_puts_hl(lbuf, HLF_D, false);
       msg_putchar('\n');
     }
 

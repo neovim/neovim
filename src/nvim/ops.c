@@ -3653,7 +3653,7 @@ void ex_display(exarg_T *eap)
   if (arg != NULL && *arg == NUL) {
     arg = NULL;
   }
-  int hl_id = HLF_8 + 1;
+  int hl_id = HLF_8;
 
   // Highlight title
   msg_puts_title(_("\nType Name Content"));

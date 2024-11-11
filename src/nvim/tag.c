@@ -736,7 +736,7 @@ void do_tag(char *tag, int type, int count, int forceit, bool verbose)
         }
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
-          msg(IObuff, ic ? HLF_W + 1 : 0);
+          msg(IObuff, ic ? HLF_W : 0);
           msg_scroll = true;  // Don't overwrite this message.
         } else {
           give_warning(IObuff, ic);
@@ -815,10 +815,10 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
     msg_didout = false;     // overwrite previous message
   }
   msg_start();
-  msg_puts_hl(_("  # pri kind tag"), HLF_T + 1, false);
+  msg_puts_hl(_("  # pri kind tag"), HLF_T, false);
   msg_clr_eos();
   taglen_advance(taglen);
-  msg_puts_hl(_("file\n"), HLF_T + 1, false);
+  msg_puts_hl(_("file\n"), HLF_T, false);
 
   for (int i = 0; i < num_matches && !got_int; i++) {
     parse_match(matches[i], &tagp);
@@ -839,7 +839,7 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
       msg_outtrans_len(tagp.tagkind, (int)(tagp.tagkind_end - tagp.tagkind), 0, false);
     }
     msg_advance(13);
-    msg_outtrans_len(tagp.tagname, (int)(tagp.tagname_end - tagp.tagname), HLF_T + 1, false);
+    msg_outtrans_len(tagp.tagname, (int)(tagp.tagname_end - tagp.tagname), HLF_T, false);
     msg_putchar(' ');
     taglen_advance(taglen);
 
@@ -847,7 +847,7 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
     // it and put "..." in the middle
     const char *p = tag_full_fname(&tagp);
     if (p != NULL) {
-      msg_outtrans(p, HLF_D + 1, false);
+      msg_outtrans(p, HLF_D, false);
       XFREE_CLEAR(p);
     }
     if (msg_col > 0) {
@@ -880,7 +880,7 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
           continue;
         }
         // print all other extra fields
-        int hl_id = HLF_CM + 1;
+        int hl_id = HLF_CM;
         while (*p && *p != '\r' && *p != '\n') {
           if (msg_col + ptr2cells(p) >= Columns) {
             msg_putchar('\n');
@@ -1126,7 +1126,7 @@ void do_tags(exarg_T *eap)
                    tagstack[i].tagname,
                    tagstack[i].fmark.mark.lnum);
       msg_outtrans(IObuff, 0, false);
-      msg_outtrans(name, tagstack[i].fmark.fnum == curbuf->b_fnum ? HLF_D + 1 : 0, false);
+      msg_outtrans(name, tagstack[i].fmark.fnum == curbuf->b_fnum ? HLF_D : 0, false);
       xfree(name);
     }
   }

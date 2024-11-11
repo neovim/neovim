@@ -350,7 +350,7 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
     msg_scroll = true;  // Don't overwrite messages here.
     msg_silent = 0;     // Must give this prompt.
     // Don't use emsg() here, don't want to flush the buffers.
-    msg(_("WARNING: The file has been changed since reading it!!!"), HLF_E + 1);
+    msg(_("WARNING: The file has been changed since reading it!!!"), HLF_E);
     if (ask_yesno(_("Do you really want to write to it"), true) == 'n') {
       return FAIL;
     }
@@ -1881,7 +1881,7 @@ nofail:
 
     retval = FAIL;
     if (end == 0) {
-      const int hl_id = HLF_E + 1;  // Set highlight for error messages.
+      const int hl_id = HLF_E;  // Set highlight for error messages.
       msg_puts_hl(_("\nWARNING: Original file may be lost or damaged\n"), hl_id, true);
       msg_puts_hl(_("don't quit the editor until the file is successfully written!"), hl_id, true);
 
