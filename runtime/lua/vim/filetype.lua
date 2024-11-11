@@ -2148,6 +2148,7 @@ local pattern = {
     ['/sway/config$'] = 'swayconfig',
     ['/%.cargo/config$'] = 'toml',
     ['/%.bundle/config$'] = 'yaml',
+    ['/%.kube/config$'] = 'yaml',
   },
   ['/%.'] = {
     ['/%.aws/credentials$'] = 'confini',
