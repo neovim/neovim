@@ -4,7 +4,6 @@
 " Former Maintainer: Charles E. Campbell
 " Last Change:	Apr 22, 2022
 "   2024 Feb 19 by Vim Project (announce adoption)
-"   2024 Nov 09 add Number highlight (#11271)
 " Version:	121
 " Former URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
@@ -163,7 +162,7 @@ endif
 
 " Clusters: {{{1
 " --------
-syn cluster texCmdGroup			contains=texCmdBody,texComment,texDefParm,texDelimiter,texDocType,texInput,texLength,texLigature,texMathDelim,texMathOper,texMathNumber,texNewCmd,texNewEnv,texRefZone,texSection,texBeginEnd,texBeginEndName,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,@texMathZones
+syn cluster texCmdGroup			contains=texCmdBody,texComment,texDefParm,texDelimiter,texDocType,texInput,texLength,texLigature,texMathDelim,texMathOper,texNewCmd,texNewEnv,texRefZone,texSection,texBeginEnd,texBeginEndName,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,@texMathZones
 if !s:tex_no_error
  syn cluster texCmdGroup		add=texMathError
 endif
@@ -203,8 +202,8 @@ if !exists("g:tex_no_math")
  syn cluster texMathZones		contains=texMathZoneV,texMathZoneW,texMathZoneX,texMathZoneY,texMathZoneZ
  syn cluster texMatchGroup		add=@texMathZones
  syn cluster texMathDelimGroup		contains=texMathDelimBad,texMathDelimKey,texMathDelimSet1,texMathDelimSet2
- syn cluster texMathMatchGroup		contains=@texMathZones,texComment,texDefCmd,texDelimiter,texDocType,texInput,texLength,texLigature,texMathDelim,texMathMatcher,texMathOper,texMathNumber,texNewCmd,texNewEnv,texRefZone,texSection,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone
- syn cluster texMathZoneGroup		contains=texBadPar,texComment,texDelimiter,texLength,texMathDelim,texMathMatcher,texMathOper,texMathNumber,texMathSymbol,texMathText,texRefZone,texSpecialChar,texStatement,texTypeSize,texTypeStyle
+ syn cluster texMathMatchGroup		contains=@texMathZones,texComment,texDefCmd,texDelimiter,texDocType,texInput,texLength,texLigature,texMathDelim,texMathMatcher,texMathOper,texNewCmd,texNewEnv,texRefZone,texSection,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,texZone
+ syn cluster texMathZoneGroup		contains=texBadPar,texComment,texDelimiter,texLength,texMathDelim,texMathMatcher,texMathOper,texMathSymbol,texMathText,texRefZone,texSpecialChar,texStatement,texTypeSize,texTypeStyle
  if !s:tex_no_error
   syn cluster texMathMatchGroup		add=texMathError
   syn cluster texMathZoneGroup		add=texMathError
@@ -503,7 +502,6 @@ if !exists("g:tex_no_math")
  endif
 
  syn match texMathOper		"[_^=]" contained
- syn match texMathNumber "\<\d\|\.\d" contained
 
  " Text Inside Math Zones: {{{2
  if s:tex_fast =~# 'M'
@@ -1332,7 +1330,6 @@ if !exists("skip_tex_syntax_inits")
   hi def link texMath		Special
   hi def link texMathDelim	Statement
   hi def link texMathOper	Operator
-  hi def link texMathNumber	Number
   hi def link texNewCmd		Statement
   hi def link texNewEnv		Statement
   hi def link texOption		Number
