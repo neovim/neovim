@@ -34,6 +34,7 @@
 "   2024 Oct 31 by Vim Project: fix E874 when browsing remote dir (#15964)
 "   2024 Nov 07 by Vim Project: use keeppatterns to prevent polluting the search history
 "   2024 Nov 07 by Vim Project: fix a few issues with netrw tree listing (#15996)
+"   2024 Nov 10 by Vim Project: directory symlink not resolved in tree view (#16020)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -4580,6 +4581,12 @@ fun! s:NetrwBrowseChgDir(islocal,newdir,cursor,...)
   if a:cursor && exists("w:netrw_liststyle") && w:netrw_liststyle == s:TREELIST && exists("w:netrw_treetop")
    " dirname is the path to the word under the cursor
    let dirname = s:NetrwTreePath(w:netrw_treetop)
+   " newdir resolves to a directory and points to a directory in dirname
+   " /tmp/test/folder_symlink/ -> /tmp/test/original_folder/
+   if a:islocal && fnamemodify(dirname, ':t') == newdir && isdirectory(resolve(dirname)) && resolve(dirname) == resolve(newdir)
+    let dirname = fnamemodify(resolve(dirname), ':p:h:h')
+    let newdir = fnamemodify(resolve(newdir), ':t')
+   endif
    " Remove trailing "/"
    let dirname = substitute(dirname, "/$", "", "")
 
