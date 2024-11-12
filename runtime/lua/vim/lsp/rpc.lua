@@ -1,7 +1,7 @@
 local uv = vim.uv
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
-local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedule_wrap
+local validate, schedule_wrap = vim.validate, vim.schedule_wrap
 
 local is_win = vim.fn.has('win32') == 1
 
@@ -409,49 +409,44 @@ function Client:handle_body(body)
     local err --- @type lsp.ResponseError|nil
     -- Schedule here so that the users functions don't trigger an error and
     -- we can still use the result.
-    schedule(function()
-      coroutine.wrap(function()
-        local status, result
-        status, result, err = self:try_call(
-          M.client_errors.SERVER_REQUEST_HANDLER_ERROR,
-          self.dispatchers.server_request,
-          decoded.method,
-          decoded.params
-        )
-        log.debug(
-          'server_request: callback result',
-          { status = status, result = result, err = err }
-        )
-        if status then
-          if result == nil and err == nil then
-            error(
-              string.format(
-                'method %q: either a result or an error must be sent to the server in response',
-                decoded.method
-              )
+    vim.schedule(coroutine.wrap(function()
+      local status, result
+      status, result, err = self:try_call(
+        M.client_errors.SERVER_REQUEST_HANDLER_ERROR,
+        self.dispatchers.server_request,
+        decoded.method,
+        decoded.params
+      )
+      log.debug('server_request: callback result', { status = status, result = result, err = err })
+      if status then
+        if result == nil and err == nil then
+          error(
+            string.format(
+              'method %q: either a result or an error must be sent to the server in response',
+              decoded.method
             )
-          end
-          if err then
-            ---@cast err lsp.ResponseError
-            assert(
-              type(err) == 'table',
-              'err must be a table. Use rpc_response_error to help format errors.'
-            )
-            ---@type string
-            local code_name = assert(
-              protocol.ErrorCodes[err.code],
-              'Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.'
-            )
-            err.message = err.message or code_name
-          end
-        else
-          -- On an exception, result will contain the error message.
-          err = M.rpc_response_error(protocol.ErrorCodes.InternalError, result)
-          result = nil
+          )
         end
-        self:send_response(decoded.id, err, result)
-      end)()
-    end)
+        if err then
+          ---@cast err lsp.ResponseError
+          assert(
+            type(err) == 'table',
+            'err must be a table. Use rpc_response_error to help format errors.'
+          )
+          ---@type string
+          local code_name = assert(
+            protocol.ErrorCodes[err.code],
+            'Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.'
+          )
+          err.message = err.message or code_name
+        end
+      else
+        -- On an exception, result will contain the error message.
+        err = M.rpc_response_error(protocol.ErrorCodes.InternalError, result)
+        result = nil
+      end
+      self:send_response(decoded.id, err, result)
+    end))
     -- This works because we are expecting vim.NIL here
   elseif decoded.id and (decoded.result ~= vim.NIL or decoded.error ~= vim.NIL) then
     -- We sent a number, so we expect a number.
