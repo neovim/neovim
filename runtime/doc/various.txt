@@ -267,6 +267,7 @@ gx			Opens the current filepath or URL (decided by
 <
 							*:!cmd* *:!*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
+			For the filter command, see |:range!|.
 
 			The command runs in a non-interactive shell connected
 			to a pipe (not a terminal). Use |:terminal| to run an

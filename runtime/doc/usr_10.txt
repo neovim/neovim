@@ -736,6 +736,11 @@ The "!!" command filters the current line through a filter.  In Unix the "date"
 command prints the current time and date.  "!!date<Enter>" replaces the current
 line with the output of "date".  This is useful to add a timestamp to a file.
 
+Note: There is a difference between "!cmd" (e.g. using it without any file
+range) and "{range}!cmd".  While the former will simply execute the external
+command and Vim will show the output, the latter will filter {range}lines
+through the filter and replace that range by the result of the filter command.
+See |:!| and |:range!| for details.
 
 WHEN IT DOESN'T WORK
 

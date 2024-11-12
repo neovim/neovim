@@ -561,6 +561,8 @@ with ".".  Vim does not recognize a comment (starting with '"') after the
 			program {filter} (for {Visual} see |Visual-mode|).
 
 :{range}![!]{filter} [!][arg]				*:range!*
+			For executing external commands see |:!|
+
 			Filter {range} lines through the external program
 			{filter}.  Vim replaces the optional bangs with the
 			latest given command and appends the optional [arg].
