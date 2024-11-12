@@ -527,7 +527,7 @@ function M.inspect_tree(opts)
     end,
   })
 
-  api.nvim_create_autocmd({ 'BufHidden', 'BufUnload' }, {
+  api.nvim_create_autocmd({ 'BufHidden', 'BufUnload', 'QuitPre' }, {
     group = group,
     buffer = buf,
     once = true,
