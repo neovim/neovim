@@ -809,6 +809,38 @@ Detail:
 	       : GetCSSIndent()	    else
       <!-- --> : -1
 
+IDRIS2							*ft-idris2-indent*
+
+Idris 2 indentation can be configured with several variables that control the
+indentation level for different language constructs:
+
+The "g:idris2_indent_if" variable controls the indentation of `then` and `else`
+blocks after `if` statements. Defaults to 3.
+
+The "g:idris2_indent_case" variable controls the indentation of patterns in
+`case` expressions. Defaults to 5.
+
+The "g:idris2_indent_let" variable controls the indentation after `let`
+bindings. Defaults to 4.
+
+The "g:idris2_indent_rewrite" variable controls the indentation after `rewrite`
+expressions. Defaults to 8.
+
+The "g:idris2_indent_where" variable controls the indentation of `where`
+blocks. Defaults to 6.
+
+The "g:idris2_indent_do" variable controls the indentation in `do` blocks.
+Defaults to 3.
+
+Example configuration: >
+
+	let g:idris2_indent_if = 2
+	let g:idris2_indent_case = 4
+	let g:idris2_indent_let = 4
+	let g:idris2_indent_rewrite = 8
+	let g:idris2_indent_where = 6
+	let g:idris2_indent_do = 3
+<
 
 MATLAB			*ft-matlab-indent* *matlab-indent* *matlab-indenting*
 
