@@ -2851,6 +2851,8 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
 #define CI_WHAT_ITEMS           0x04
 #define CI_WHAT_SELECTED        0x08
 #define CI_WHAT_INSERTED        0x10
+#define CI_WHAT_PREVIEWWIN      0x20
+#define CI_WHAT_PREVIEWBUF      0x40
 #define CI_WHAT_ALL             0xff
   int what_flag;
 
@@ -2873,6 +2875,10 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
         what_flag |= CI_WHAT_SELECTED;
       } else if (strcmp(what, "inserted") == 0) {
         what_flag |= CI_WHAT_INSERTED;
+      } else if (strcmp(what, "preview_winid") == 0) {
+        what_flag |= CI_WHAT_PREVIEWWIN;
+      } else if (strcmp(what, "preview_bufnr") == 0) {
+        what_flag |= CI_WHAT_PREVIEWBUF;
       }
     }
   }
@@ -2929,10 +2935,19 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
     }
     if (ret == OK && (what_flag & CI_WHAT_SELECTED)) {
       ret = tv_dict_add_nr(retdict, S_LEN("selected"), selected_idx);
-      win_T *wp = win_float_find_preview();
-      if (wp != NULL) {
-        tv_dict_add_nr(retdict, S_LEN("preview_winid"), wp->handle);
-        tv_dict_add_nr(retdict, S_LEN("preview_bufnr"), wp->w_buffer->handle);
+    }
+  }
+
+  // Support for preview window and preview buffer information
+  if (ret == OK && (what_flag & (CI_WHAT_PREVIEWWIN | CI_WHAT_PREVIEWBUF))) {
+    win_T *wp = win_float_find_preview();
+    if (wp != NULL) {
+      if (what_flag & CI_WHAT_PREVIEWWIN) {
+        ret = tv_dict_add_nr(retdict, S_LEN("preview_winid"), wp->handle);
+      }
+
+      if (ret == OK && (what_flag & CI_WHAT_PREVIEWBUF)) {
+        ret = tv_dict_add_nr(retdict, S_LEN("preview_bufnr"), wp->w_buffer->handle);
       }
     }
   }
