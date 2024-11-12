@@ -630,6 +630,19 @@ HARE							*ft-hare*
 Since the text for this plugin is rather long it has been put in a separate
 file: |ft_hare.txt|.
 
+IDRIS2							*ft-idris2-plugin*
+
+By default the following options are set: >
+
+	setlocal shiftwidth=2 tabstop=2 expandtab
+	setlocal comments=s1:{-,mb:-,ex:-},:\|\|\|,:--
+	setlocal commentstring=--\ %s
+	setlocal wildignore+=*.ibc
+
+To use tabs instead of spaces for indentation, set the following variable
+in your vimrc: >
+
+	let g:idris2#allow_tabchar = 1
 
 JAVA							*ft-java-plugin*
 
