@@ -220,6 +220,20 @@ local function get_doc(item)
   return ''
 end
 
+---@param value string
+---@param prefix string
+---@return boolean
+local function match_item_by_value(value, prefix)
+  if vim.o.completeopt:find('fuzzy') ~= nil then
+    return next(vim.fn.matchfuzzy({ value }, prefix)) ~= nil
+  end
+
+  if vim.o.ignorecase and (not vim.o.smartcase or not prefix:find('%u')) then
+    return vim.startswith(value:lower(), prefix:lower())
+  end
+  return vim.startswith(value, prefix)
+end
+
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
@@ -244,8 +258,16 @@ function M._lsp_to_complete_items(result, prefix, client_id)
   else
     ---@param item lsp.CompletionItem
     matches = function(item)
-      local text = item.filterText or item.label
-      return next(vim.fn.matchfuzzy({ text }, prefix)) ~= nil
+      if item.filterText then
+        return match_item_by_value(item.filterText, prefix)
+      end
+
+      if item.textEdit then
+        -- server took care of filtering
+        return true
+      end
+
+      return match_item_by_value(item.label, prefix)
     end
   end
 
