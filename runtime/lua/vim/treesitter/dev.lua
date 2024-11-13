@@ -541,6 +541,8 @@ function M.inspect_tree(opts)
       for _, window in pairs(vim.fn.win_findbuf(b)) do
         close_win(window)
       end
+
+      return true
     end,
   })
 end
