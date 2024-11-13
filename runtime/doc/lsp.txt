@@ -1544,6 +1544,14 @@ Lua module: vim.lsp.completion                                *lsp-completion*
       • {convert}?      (`fun(item: lsp.CompletionItem): table`) Transforms an
                         LSP CompletionItem to |complete-items|.
 
+*vim.lsp.completion.get.opts*
+
+    Fields: ~
+      • {convert}?    (`fun(item: lsp.CompletionItem): table`)
+      • {filter}?     (`fun(prefix: string, item: lsp.CompletionItem): boolean`)
+      • {on_result}?  (`fun(startcol: integer, matches: table[])`) defaults to
+                      vim.fn.complete
+
 
                                                  *vim.lsp.completion.enable()*
 enable({enable}, {client_id}, {bufnr}, {opts})
@@ -1557,8 +1565,12 @@ enable({enable}, {client_id}, {bufnr}, {opts})
       • {opts}       (`vim.lsp.completion.BufferOpts?`) See
                      |vim.lsp.completion.BufferOpts|.
 
-trigger()                                       *vim.lsp.completion.trigger()*
+get({opts})                                         *vim.lsp.completion.get()*
     Trigger LSP completion in the current buffer.
+
+    Parameters: ~
+      • {opts}  (`vim.lsp.completion.get.opts?`) See
+                |vim.lsp.completion.get.opts|.
 
 
 ==============================================================================
