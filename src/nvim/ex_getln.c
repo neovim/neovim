@@ -811,7 +811,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     if (!tl_ret && ERROR_SET(&err)) {
       msg_putchar('\n');
       msg_scroll = true;
-      msg_puts_hl(err.msg, HLF_E + 1, true);
+      msg_puts_hl(err.msg, HLF_E, true);
       api_clear_error(&err);
       redrawcmd();
     }
@@ -2660,7 +2660,7 @@ static void do_autocmd_cmdlinechanged(int firstc)
     if (!tl_ret && ERROR_SET(&err)) {
       msg_putchar('\n');
       msg_scroll = true;
-      msg_puts_hl(err.msg, HLF_E + 1, true);
+      msg_puts_hl(err.msg, HLF_E, true);
       api_clear_error(&err);
       redrawcmd();
     }
@@ -3141,7 +3141,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
 #define PRINT_ERRMSG(...) \
   do { \
     msg_putchar('\n'); \
-    msg_printf_hl(HLF_E + 1, __VA_ARGS__); \
+    msg_printf_hl(HLF_E, __VA_ARGS__); \
     printed_errmsg = true; \
   } while (0)
   bool ret = true;

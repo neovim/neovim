@@ -473,7 +473,7 @@ bool check_compl_option(bool dict_opt)
     ctrl_x_mode = CTRL_X_NORMAL;
     edit_submode = NULL;
     msg((dict_opt ? _("'dictionary' option is empty") : _("'thesaurus' option is empty")),
-        HLF_E + 1);
+        HLF_E);
     if (emsg_silent == 0 && !in_assert_fails) {
       vim_beep(BO_COMPL);
       setcursor();
@@ -1564,7 +1564,7 @@ static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
       msg_hist_off = true;  // reset in msg_trunc()
       vim_snprintf(IObuff, IOSIZE,
                    _("Scanning dictionary: %s"), files[i]);
-      msg_trunc(IObuff, true, HLF_R + 1);
+      msg_trunc(IObuff, true, HLF_R);
     }
 
     if (fp == NULL) {
@@ -3046,7 +3046,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
                    : st->ins_buf->b_sfname == NULL
                    ? st->ins_buf->b_fname
                    : st->ins_buf->b_sfname);
-      msg_trunc(IObuff, true, HLF_R + 1);
+      msg_trunc(IObuff, true, HLF_R);
     }
   } else if (*st->e_cpt == NUL) {
     status = INS_COMPL_CPT_END;
@@ -3074,7 +3074,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       if (!shortmess(SHM_COMPLETIONSCAN)) {
         msg_hist_off = true;  // reset in msg_trunc()
         vim_snprintf(IObuff, IOSIZE, "%s", _("Scanning tags."));
-        msg_trunc(IObuff, true, HLF_R + 1);
+        msg_trunc(IObuff, true, HLF_R);
       }
     }
 

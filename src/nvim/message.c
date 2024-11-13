@@ -609,7 +609,7 @@ void msg_source(int hl_id)
   }
   p = get_emsg_lnum();
   if (p != NULL) {
-    msg(p, HLF_N + 1);
+    msg(p, HLF_N);
     xfree(p);
     last_sourcing_lnum = SOURCING_LNUM;      // only once for each line
   }
@@ -738,7 +738,7 @@ bool emsg_multiline(const char *s, bool multiline)
   }
 
   emsg_on_display = true;     // remember there is an error message
-  int hl_id = HLF_E + 1;      // set highlight mode for error messages
+  int hl_id = HLF_E;      // set highlight mode for error messages
   if (msg_scrolled != 0) {
     need_wait_return = true;  // needed in case emsg() is called after
   }                           // wait_return() has reset need_wait_return
@@ -1342,7 +1342,7 @@ static void hit_return_msg(bool newline_sb)
     msg_puts(_("Interrupt: "));
   }
 
-  msg_puts_hl(_("Press ENTER or type command to continue"), HLF_R + 1, false);
+  msg_puts_hl(_("Press ENTER or type command to continue"), HLF_R, false);
   if (!msg_use_printf()) {
     msg_clr_eos();
   }
@@ -1587,7 +1587,7 @@ int msg_outtrans_len(const char *msgstr, int len, int hl_id, bool hist)
           msg_puts_len(plain_start, str - plain_start, hl_id, hist);
         }
         plain_start = str + mb_l;
-        msg_puts_hl(transchar_buf(NULL, c), hl_id == 0 ? HLF_8 + 1 : hl_id, false);
+        msg_puts_hl(transchar_buf(NULL, c), hl_id == 0 ? HLF_8 : hl_id, false);
         retval += char2cells(c);
       }
       len -= mb_l - 1;
@@ -1601,7 +1601,7 @@ int msg_outtrans_len(const char *msgstr, int len, int hl_id, bool hist)
           msg_puts_len(plain_start, str - plain_start, hl_id, hist);
         }
         plain_start = str + 1;
-        msg_puts_hl(s, hl_id == 0 ? HLF_8 + 1 : hl_id, false);
+        msg_puts_hl(s, hl_id == 0 ? HLF_8 : hl_id, false);
         retval += (int)strlen(s);
       } else {
         retval++;
@@ -1662,7 +1662,7 @@ int msg_outtrans_special(const char *strstart, bool from, int maxlen)
   }
   const char *str = strstart;
   int retval = 0;
-  int hl_id = HLF_8 + 1;
+  int hl_id = HLF_8;
 
   while (*str != NUL) {
     const char *text;
@@ -1938,13 +1938,13 @@ void msg_prt_line(const char *s, bool list)
                : curwin->w_p_lcs_chars.tab1;
           sc_extra = curwin->w_p_lcs_chars.tab2;
           sc_final = curwin->w_p_lcs_chars.tab3;
-          hl_id = HLF_0 + 1;
+          hl_id = HLF_0;
         }
       } else if (c == NUL && list && curwin->w_p_lcs_chars.eol != NUL) {
         p_extra = "";
         n_extra = 1;
         sc = curwin->w_p_lcs_chars.eol;
-        hl_id = HLF_AT + 1;
+        hl_id = HLF_AT;
         s--;
       } else if (c != NUL && (n = byte2cells(c)) > 1) {
         n_extra = n - 1;
@@ -1952,7 +1952,7 @@ void msg_prt_line(const char *s, bool list)
         sc = schar_from_ascii(*p_extra++);
         // Use special coloring to be able to distinguish <hex> from
         // the same in plain text.
-        hl_id = HLF_0 + 1;
+        hl_id = HLF_0;
       } else if (c == ' ') {
         if (lead != NULL && s <= lead && in_multispace
             && curwin->w_p_lcs_chars.leadmultispace != NULL) {
@@ -1960,23 +1960,23 @@ void msg_prt_line(const char *s, bool list)
           if (curwin->w_p_lcs_chars.leadmultispace[multispace_pos] == NUL) {
             multispace_pos = 0;
           }
-          hl_id = HLF_0 + 1;
+          hl_id = HLF_0;
         } else if (lead != NULL && s <= lead && curwin->w_p_lcs_chars.lead != NUL) {
           sc = curwin->w_p_lcs_chars.lead;
-          hl_id = HLF_0 + 1;
+          hl_id = HLF_0;
         } else if (trail != NULL && s > trail) {
           sc = curwin->w_p_lcs_chars.trail;
-          hl_id = HLF_0 + 1;
+          hl_id = HLF_0;
         } else if (in_multispace
                    && curwin->w_p_lcs_chars.multispace != NULL) {
           sc = curwin->w_p_lcs_chars.multispace[multispace_pos++];
           if (curwin->w_p_lcs_chars.multispace[multispace_pos] == NUL) {
             multispace_pos = 0;
           }
-          hl_id = HLF_0 + 1;
+          hl_id = HLF_0;
         } else if (list && curwin->w_p_lcs_chars.space != NUL) {
           sc = curwin->w_p_lcs_chars.space;
-          hl_id = HLF_0 + 1;
+          hl_id = HLF_0;
         } else {
           sc = schar_from_ascii(' ');  // SPACE!
         }
@@ -2007,7 +2007,7 @@ void msg_puts(const char *s)
 
 void msg_puts_title(const char *s)
 {
-  msg_puts_hl(s, HLF_T + 1, false);
+  msg_puts_hl(s, HLF_T, false);
 }
 
 /// Show a message in such a way that it always fits in the line.  Cut out a
@@ -2021,7 +2021,7 @@ void msg_outtrans_long(const char *longstr, int hl_id)
   if (len > room && room >= 20) {
     slen = (room - 3) / 2;
     msg_outtrans_len(longstr, slen, hl_id, false);
-    msg_puts_hl("...", HLF_8 + 1, false);
+    msg_puts_hl("...", HLF_8, false);
   }
   msg_outtrans_len(longstr + len - slen, slen, hl_id, len);
 }
@@ -3316,7 +3316,7 @@ void give_warning(const char *message, bool hl)
   set_vim_var_string(VV_WARNINGMSG, message, -1);
   XFREE_CLEAR(keep_msg);
   if (hl) {
-    keep_msg_hl_id = HLF_W + 1;
+    keep_msg_hl_id = HLF_W;
   } else {
     keep_msg_hl_id = 0;
   }
@@ -3659,7 +3659,7 @@ void display_confirm_msg(void)
   confirm_msg_used++;
   if (confirm_msg != NULL) {
     msg_ext_set_kind("confirm");
-    msg_puts_hl(confirm_msg, HLF_M + 1, false);
+    msg_puts_hl(confirm_msg, HLF_M, false);
   }
   confirm_msg_used--;
 }

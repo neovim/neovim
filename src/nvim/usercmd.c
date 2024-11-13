@@ -494,7 +494,7 @@ static void uc_list(char *name, size_t name_len)
         msg_putchar(' ');
       }
 
-      msg_outtrans(cmd->uc_name, HLF_D + 1, false);
+      msg_outtrans(cmd->uc_name, HLF_D, false);
       len = strlen(cmd->uc_name) + 4;
 
       do {
@@ -585,7 +585,7 @@ static void uc_list(char *name, size_t name_len)
 
       if (cmd->uc_luaref != LUA_NOREF) {
         char *fn = nlua_funcref_str(cmd->uc_luaref, NULL);
-        msg_puts_hl(fn, HLF_8 + 1, false);
+        msg_puts_hl(fn, HLF_8, false);
         xfree(fn);
         // put the description on a new line
         if (*cmd->uc_rep != NUL) {

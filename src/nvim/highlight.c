@@ -48,7 +48,7 @@ static Set(cstr_t) urls = SET_INIT;
 
 /// highlight entries private to a namespace
 static Map(ColorKey, ColorItem) ns_hls;
-typedef int NSHlAttr[HLF_COUNT + 1];
+typedef int NSHlAttr[HLF_COUNT];
 static PMap(int) ns_hl_attr;
 
 void highlight_init(void)
@@ -371,8 +371,8 @@ void update_window_hl(win_T *wp, bool invalid)
   bool float_win = wp->w_floating && !wp->w_config.external;
   if (float_win && hl_def[HLF_NFLOAT] != 0 && ns_id > 0) {
     wp->w_hl_attr_normal = hl_def[HLF_NFLOAT];
-  } else if (hl_def[HLF_COUNT] > 0) {
-    wp->w_hl_attr_normal = hl_def[HLF_COUNT];
+  } else if (hl_def[HLF_NONE] > 0) {
+    wp->w_hl_attr_normal = hl_def[HLF_NONE];
   } else if (float_win) {
     wp->w_hl_attr_normal = HL_ATTR(HLF_NFLOAT) > 0
                            ? HL_ATTR(HLF_NFLOAT) : highlight_attr[HLF_NFLOAT];
@@ -433,7 +433,7 @@ void update_ns_hl(int ns_id)
   }
   int *hl_attrs = **alloc;
 
-  for (int hlf = 0; hlf < HLF_COUNT; hlf++) {
+  for (int hlf = 1; hlf < HLF_COUNT; hlf++) {
     int id = syn_check_group(hlf_names[hlf], strlen(hlf_names[hlf]));
     bool optional = (hlf == HLF_INACTIVE || hlf == HLF_NFLOAT);
     hl_attrs[hlf] = hl_get_ui_attr(ns_id, hlf, id, optional);
@@ -444,7 +444,7 @@ void update_ns_hl(int ns_id)
   //
   // haha, tema engine go brrr
   int normality = syn_check_group(S_LEN("Normal"));
-  hl_attrs[HLF_COUNT] = hl_get_ui_attr(ns_id, -1, normality, true);
+  hl_attrs[HLF_NONE] = hl_get_ui_attr(ns_id, -1, normality, true);
 
   // hl_get_ui_attr might have invalidated the decor provider
   p = get_decor_provider(ns_id, true);
@@ -461,7 +461,7 @@ int win_bg_attr(win_T *wp)
   }
 
   if (wp == curwin || hl_attr_active[HLF_INACTIVE] == 0) {
-    return hl_attr_active[HLF_COUNT];
+    return hl_attr_active[HLF_NONE];
   } else {
     return hl_attr_active[HLF_INACTIVE];
   }

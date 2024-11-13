@@ -3035,9 +3035,9 @@ int buf_check_timestamp(buf_T *buf)
     } else {
       if (!autocmd_busy) {
         msg_start();
-        msg_puts_hl(tbuf, HLF_E + 1, true);
+        msg_puts_hl(tbuf, HLF_E, true);
         if (*mesg2 != NUL) {
-          msg_puts_hl(mesg2, HLF_W + 1, true);
+          msg_puts_hl(mesg2, HLF_W, true);
         }
         msg_clr_eos();
         msg_end();

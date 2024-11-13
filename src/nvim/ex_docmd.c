@@ -5501,7 +5501,7 @@ static void ex_tabs(exarg_T *eap)
 
     msg_putchar('\n');
     vim_snprintf(IObuff, IOSIZE, _("Tab page %d"), tabcount++);
-    msg_outtrans(IObuff, HLF_T + 1, false);
+    msg_outtrans(IObuff, HLF_T, false);
     os_breakcheck();
 
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
@@ -7776,7 +7776,7 @@ void verify_command(char *cmd)
   if (strcmp("smile", cmd) != 0) {
     return;  // acceptable non-existing command
   }
-  int a = HLF_E + 1;
+  int a = HLF_E;
   msg(" #xxn`          #xnxx`        ,+x@##@Mz;`        .xxx"
       "xxxxxxnz+,      znnnnnnnnnnnnnnnn.", a);
   msg(" n###z          x####`      :x##########W+`      ,###"

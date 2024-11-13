@@ -852,7 +852,7 @@ void ml_recover(bool checkext)
   // be set to the real value below.
   mfp->mf_page_size = MIN_SWAP_PAGE_SIZE;
 
-  int hl_id = HLF_E + 1;
+  int hl_id = HLF_E;
   // try to read block 0
   if ((hp = mf_get(mfp, 0, 1)) == NULL) {
     msg_start();

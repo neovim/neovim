@@ -3805,7 +3805,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               msg_no_more = true;
               msg_ext_set_kind("confirm_sub");
               // Same highlight as wait_return().
-              smsg(HLF_R + 1, _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
+              smsg(HLF_R, _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = false;
               msg_scroll = i;
               if (!ui_has(kUIMessages)) {

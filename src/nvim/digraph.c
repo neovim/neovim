@@ -1707,7 +1707,7 @@ static void digraph_header(const char *msg)
   if (msg_col > 0) {
     msg_putchar('\n');
   }
-  msg_outtrans(msg, HLF_CM + 1, false);
+  msg_outtrans(msg, HLF_CM, false);
   msg_putchar('\n');
 }
 
@@ -1871,7 +1871,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
   p += utf_char2bytes(dp->result, p);
 
   *p = NUL;
-  msg_outtrans(buf, HLF_8 + 1, false);
+  msg_outtrans(buf, HLF_8, false);
   p = buf;
   if (char2cells(dp->result) == 1) {
     *p++ = ' ';

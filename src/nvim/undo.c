@@ -2712,7 +2712,7 @@ void ex_undolist(exarg_T *eap)
     sort_strings(ga.ga_data, ga.ga_len);
 
     msg_start();
-    msg_puts_hl(_("number changes  when               saved"), HLF_T + 1, false);
+    msg_puts_hl(_("number changes  when               saved"), HLF_T, false);
     for (int i = 0; i < ga.ga_len && !got_int; i++) {
       msg_putchar('\n');
       if (got_int) {

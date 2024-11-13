@@ -239,9 +239,9 @@ static void showmap(mapblock_T *mp, bool local)
   } while (len < 12);
 
   if (mp->m_noremap == REMAP_NONE) {
-    msg_puts_hl("*", HLF_8 + 1, false);
+    msg_puts_hl("*", HLF_8, false);
   } else if (mp->m_noremap == REMAP_SCRIPT) {
-    msg_puts_hl("&", HLF_8 + 1, false);
+    msg_puts_hl("&", HLF_8, false);
   } else {
     msg_putchar(' ');
   }
@@ -256,10 +256,10 @@ static void showmap(mapblock_T *mp, bool local)
   // the rhs, and not M-x etc, true gets both -- webb
   if (mp->m_luaref != LUA_NOREF) {
     char *str = nlua_funcref_str(mp->m_luaref, NULL);
-    msg_puts_hl(str, HLF_8 + 1, false);
+    msg_puts_hl(str, HLF_8, false);
     xfree(str);
   } else if (mp->m_str[0] == NUL) {
-    msg_puts_hl("<Nop>", HLF_8 + 1, false);
+    msg_puts_hl("<Nop>", HLF_8, false);
   } else {
     msg_outtrans_special(mp->m_str, false, 0);
   }

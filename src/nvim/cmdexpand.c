@@ -986,12 +986,12 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
   int lastlen = 999;
   for (int j = linenr; j < numMatches; j += lines) {
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-      msg_outtrans(matches[j], HLF_D + 1, false);
+      msg_outtrans(matches[j], HLF_D, false);
       p = matches[j] + strlen(matches[j]) + 1;
       msg_advance(maxlen + 1);
       msg_puts(p);
       msg_advance(maxlen + 3);
-      msg_outtrans_long(p + 2, HLF_D + 1);
+      msg_outtrans_long(p + 2, HLF_D);
       break;
     }
     for (int i = maxlen - lastlen; --i >= 0;) {
@@ -1028,7 +1028,7 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
       isdir = false;
       p = SHOW_MATCH(j);
     }
-    lastlen = msg_outtrans(p, isdir ? HLF_D + 1 : 0, false);
+    lastlen = msg_outtrans(p, isdir ? HLF_D : 0, false);
   }
   if (msg_col > 0) {  // when not wrapped around
     msg_clr_eos();
@@ -1119,10 +1119,10 @@ int showmatches(expand_T *xp, bool wildmenu)
     }
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-      msg_puts_hl(_("tagname"), HLF_T + 1, false);
+      msg_puts_hl(_("tagname"), HLF_T, false);
       msg_clr_eos();
       msg_advance(maxlen - 3);
-      msg_puts_hl(_(" kind file\n"), HLF_T + 1, false);
+      msg_puts_hl(_(" kind file\n"), HLF_T, false);
     }
 
     // list the files line by line
