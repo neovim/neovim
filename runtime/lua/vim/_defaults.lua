@@ -366,16 +366,16 @@ do
 
     -- Add empty lines
     vim.keymap.set('n', '[<Space>', function()
-      local repeated = vim.fn['repeat']({ '' }, vim.v.count1)
-      local linenr = vim.api.nvim_win_get_cursor(0)[1]
-      vim.api.nvim_buf_set_lines(0, linenr - 1, linenr - 1, true, repeated)
-    end, { desc = 'Add empty line above cursor' })
+      -- TODO: update once it is possible to assign a Lua function to options #25672
+      vim.go.operatorfunc = "v:lua.require'vim._buf'.space_above"
+      return 'g@l'
+    end, { expr = true, desc = 'Add empty line above cursor' })
 
     vim.keymap.set('n', ']<Space>', function()
-      local repeated = vim.fn['repeat']({ '' }, vim.v.count1)
-      local linenr = vim.api.nvim_win_get_cursor(0)[1]
-      vim.api.nvim_buf_set_lines(0, linenr, linenr, true, repeated)
-    end, { desc = 'Add empty line below cursor' })
+      -- TODO: update once it is possible to assign a Lua function to options #25672
+      vim.go.operatorfunc = "v:lua.require'vim._buf'.space_below"
+      return 'g@l'
+    end, { expr = true, desc = 'Add empty line below cursor' })
   end
 end
 
