@@ -381,8 +381,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///               - id : id of the extmark to edit.
 ///               - end_row : ending line of the mark, 0-based inclusive.
 ///               - end_col : ending col of the mark, 0-based exclusive.
-///               - hl_group : name of the highlight group used to highlight
-///                   this mark.
+///               - hl_group : highlight group used for the text range. This and below
+///                   highlight groups can be supplied either as a string or as an integer,
+///                   the latter of which can be obtained using |nvim_get_hl_id_by_name()|.
 ///               - hl_eol : when true, for a multiline highlight covering the
 ///                          EOL of a line, continue the highlight for the rest
 ///                          of the screen line (just like for diff and
@@ -392,9 +393,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   text chunk with specified highlight. `highlight` element
 ///                   can either be a single highlight group, or an array of
 ///                   multiple highlight groups that will be stacked
-///                   (highest priority last). A highlight group can be supplied
-///                   either as a string or as an integer, the latter which
-///                   can be obtained using |nvim_get_hl_id_by_name()|.
+///                   (highest priority last).
 ///               - virt_text_pos : position of virtual text. Possible values:
 ///                 - "eol": right after eol character (default).
 ///                 - "overlay": display over the specified column, without
@@ -465,15 +464,12 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   buffer or end of the line respectively. Defaults to true.
 ///               - sign_text: string of length 1-2 used to display in the
 ///                   sign column.
-///               - sign_hl_group: name of the highlight group used to
-///                   highlight the sign column text.
-///               - number_hl_group: name of the highlight group used to
-///                   highlight the number column.
-///               - line_hl_group: name of the highlight group used to
-///                   highlight the whole line.
-///               - cursorline_hl_group: name of the highlight group used to
-///                   highlight the sign column text when the cursor is on
-///                   the same line as the mark and 'cursorline' is enabled.
+///               - sign_hl_group: highlight group used for the sign column text.
+///               - number_hl_group: highlight group used for the number column.
+///               - line_hl_group: highlight group used for the whole line.
+///               - cursorline_hl_group: highlight group used for the sign
+///                   column text when the cursor is on the same line as the
+///                   mark and 'cursorline' is enabled.
 ///               - conceal: string which should be either empty or a single
 ///                   character. Enable concealing similar to |:syn-conceal|.
 ///                   When a character is supplied it is used as |:syn-cchar|.
