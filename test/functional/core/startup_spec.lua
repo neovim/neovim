@@ -74,6 +74,25 @@ describe('startup', function()
     assert_log("require%('vim%._editor'%)", testfile, 100)
   end)
 
+  it('--startuptime does not crash on error #31125', function()
+    eq(
+      "E484: Can't open file .",
+      fn.system({
+        nvim_prog,
+        '-u',
+        'NONE',
+        '-i',
+        'NONE',
+        '--headless',
+        '--startuptime',
+        '.',
+        '-c',
+        '42cquit',
+      })
+    )
+    eq(42, api.nvim_get_vvar('shell_error'))
+  end)
+
   it('-D does not hang #12647', function()
     clear()
     local screen
