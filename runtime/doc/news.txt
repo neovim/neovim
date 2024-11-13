@@ -45,6 +45,10 @@ API
 • Renamed `nvim__id_dictionary` (unsupported/experimental API) to
   `nvim__id_dict`.
 
+BUILD
+
+On Windows, only building with the UCRT runtime is supported.
+
 DEFAULTS
 
 • |]d-default| and |[d-default| accept a count.
