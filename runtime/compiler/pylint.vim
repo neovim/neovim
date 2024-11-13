@@ -12,8 +12,7 @@ set cpo&vim
 " CompilerSet makeprg=ruff
 let &l:makeprg = 'pylint ' .
       \ '--output-format=text --msg-template="{path}:{line}:{column}:{C}: [{symbol}] {msg}" --reports=no ' .
-      \ get(b:, "pylint_makeprg_params", get(g:, "pylint_makeprg_params",
-      \   (executable('getconf') ? '--jobs='..systemlist('getconf _NPROCESSORS_ONLN')[0] : '')))
+      \ get(b:, "pylint_makeprg_params", get(g:, "pylint_makeprg_params", '--jobs=0'))
 exe 'CompilerSet makeprg='..escape(&l:makeprg, ' "')
 CompilerSet errorformat=%A%f:%l:%c:%t:\ %m,%A%f:%l:\ %m,%A%f:(%l):\ %m,%-Z%p^%.%#,%-G%.%#
 

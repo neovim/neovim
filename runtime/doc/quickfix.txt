@@ -1380,7 +1380,7 @@ RUFF LINTER						*compiler-ruff*
 Commonly used compiler options can be added to 'makeprg' by setting the
 b/g:ruff_makeprg_params variable.  For example: >
 
-	let b:ruff_makeprg_params = "--max-line-length"..&textwidth
+	let b:ruff_makeprg_params = "--max-line-length "..&textwidth
 
 The global default is "--preview".
 
@@ -1389,10 +1389,9 @@ PYLINT LINTER						*compiler-pylint*
 Commonly used compiler options can be added to 'makeprg' by setting the
 b/g:pylint_makeprg_params variable.  For example: >
 
-	let b:pylint_makeprg_params = "--max-line-length"..&textwidth
+	let b:pylint_makeprg_params = "--max-line-length "..&textwidth
 
-The global default is "--jobs=n" where n is the number of cores as reported
-by getconf, if executable. Otherwise it defaults to "".
+The global default is "--jobs=0" to use (almost) all cores.
 
 PYUNIT COMPILER						*compiler-pyunit*
 
