@@ -139,10 +139,17 @@ describe('cmdline', function()
     ]])
   end)
 
-  it("setting 'cmdheight' works after outputting two messages vim-patch:9.0.0665", function()
+  -- oldtest: Test_changing_cmdheight()
+  it("changing 'cmdheight'", function()
     local screen = Screen.new(60, 8)
     exec([[
       set cmdheight=1 laststatus=2
+      func EchoOne()
+        set laststatus=2 cmdheight=1
+        echo 'foo'
+        echo 'bar'
+        set cmdheight=2
+      endfunc
       func EchoTwo()
         set laststatus=2
         set cmdheight=5
@@ -151,6 +158,8 @@ describe('cmdline', function()
         set cmdheight=1
       endfunc
     ]])
+
+    -- setting 'cmdheight' works after outputting two messages
     feed(':call EchoTwo()')
     screen:expect([[
                                                                   |
@@ -164,6 +173,17 @@ describe('cmdline', function()
       {1:~                                                           }|*5
       {3:[No Name]                                                   }|
                                                                   |
+    ]])
+
+    -- increasing 'cmdheight' doesn't clear the messages that need hit-enter
+    feed(':call EchoOne()<CR>')
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|*3
+      {3:                                                            }|
+      foo                                                         |
+      bar                                                         |
+      {6:Press ENTER or type command to continue}^                     |
     ]])
   end)
 
