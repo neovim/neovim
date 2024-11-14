@@ -536,6 +536,7 @@ EXTERN OptInt p_mousescroll_vert INIT( = MOUSESCROLL_VERT_DFLT);
 EXTERN OptInt p_mousescroll_hor INIT( = MOUSESCROLL_HOR_DFLT);
 EXTERN OptInt p_mouset;         ///< 'mousetime'
 EXTERN int p_more;              ///< 'more'
+EXTERN OptInt p_mhi;            ///< 'msghistory'
 EXTERN char *p_nf;              ///< 'nrformats'
 EXTERN char *p_opfunc;          ///< 'operatorfunc'
 EXTERN char *p_para;            ///< 'paragraphs'

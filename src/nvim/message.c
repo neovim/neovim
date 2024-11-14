@@ -981,7 +981,7 @@ static void add_msg_hist_multihl(const char *s, int len, int hl_id, bool multili
   }
 
   // Don't let the message history get too big
-  while (msg_hist_len > MAX_MSG_HIST_LEN) {
+  while (msg_hist_len > p_mhi) {
     delete_first_msg();
   }
 

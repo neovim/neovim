@@ -3016,7 +3016,8 @@ vim.go.hid = vim.go.hidden
 
 --- A history of ":" commands, and a history of previous search patterns
 --- is remembered.  This option decides how many entries may be stored in
---- each of these histories (see `cmdline-editing`).
+--- each of these histories (see `cmdline-editing` and 'msghistory' for
+--- the number of messages to remember).
 --- The maximum value is 10000.
 ---
 --- @type integer
@@ -4377,6 +4378,15 @@ vim.o.mousetime = 500
 vim.o.mouset = vim.o.mousetime
 vim.go.mousetime = vim.o.mousetime
 vim.go.mouset = vim.go.mousetime
+
+--- Determines how many entries are remembered in the `:messages` history.
+--- The maximum value is 10000.
+---
+--- @type integer
+vim.o.msghistory = 500
+vim.o.mhi = vim.o.msghistory
+vim.go.msghistory = vim.o.msghistory
+vim.go.mhi = vim.go.msghistory
 
 --- This defines what bases Vim will consider for numbers when using the
 --- CTRL-A and CTRL-X commands for adding to and subtracting from a number
