@@ -32,15 +32,6 @@ describe('vim.ui_attach', function()
     ]]
 
     screen = Screen.new(40, 5)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { bold = true },
-      [3] = { background = Screen.colors.Grey },
-      [4] = { background = Screen.colors.LightMagenta },
-      [5] = { reverse = true },
-      [6] = { reverse = true, bold = true },
-      [7] = { background = Screen.colors.Yellow1 },
-    })
   end)
 
   local function expect_events(expected)
@@ -55,7 +46,7 @@ describe('vim.ui_attach', function()
       grid = [[
       fo^                                      |
       {1:~                                       }|*3
-      {2:-- INSERT --}                            |
+      {5:-- INSERT --}                            |
     ]],
     }
 
@@ -64,7 +55,7 @@ describe('vim.ui_attach', function()
       grid = [[
       food^                                    |
       {1:~                                       }|*3
-      {2:-- INSERT --}                            |
+      {5:-- INSERT --}                            |
     ]],
     }
     expect_events {
@@ -83,7 +74,7 @@ describe('vim.ui_attach', function()
       grid = [[
       foobar^                                  |
       {1:~                                       }|*3
-      {2:-- INSERT --}                            |
+      {5:-- INSERT --}                            |
     ]],
     }
     expect_events {
@@ -105,10 +96,10 @@ describe('vim.ui_attach', function()
     screen:expect {
       grid = [[
       food^                                    |
-      {3:food           }{1:                         }|
+      {12:food           }{1:                         }|
       {4:foobar         }{1:                         }|
       {4:foo            }{1:                         }|
-      {2:-- INSERT --}                            |
+      {5:-- INSERT --}                            |
     ]],
     }
     expect_events {}
@@ -180,12 +171,17 @@ describe('vim.ui_attach', function()
     exec_lua([[
       _G.cmdline = 0
       vim.ui_attach(ns, { ext_messages = true }, function(ev)
-        vim.cmd.redraw()
+        if ev == 'msg_show' then
+          vim.schedule(function() vim.cmd.redraw() end)
+        else
+          vim.cmd.redraw()
+        end
         _G.cmdline = _G.cmdline + (ev == 'cmdline_show' and 1 or 0)
       end
     )]])
     feed(':')
-    eq(1, exec_lua('return _G.cmdline'))
+    n.assert_alive()
+    eq(2, exec_lua('return _G.cmdline'))
     n.assert_alive()
     feed('version<CR><CR>v<Esc>')
     n.assert_alive()
@@ -211,9 +207,9 @@ describe('vim.ui_attach', function()
     screen:expect({
       grid = [[
         cmdline                                 |
-        {5:cmdline [+]                             }|
+        {2:cmdline [+]                             }|
         fooba^r                                  |
-        {6:[No Name] [+]                           }|
+        {3:[No Name] [+]                           }|
                                                 |
       ]],
     })
@@ -222,9 +218,9 @@ describe('vim.ui_attach', function()
     screen:expect({
       grid = [[
         foo                                     |
-        {5:cmdline [+]                             }|
-        {5:foo}ba^r                                  |
-        {6:[No Name] [+]                           }|
+        {2:cmdline [+]                             }|
+        {2:foo}ba^r                                  |
+        {3:[No Name] [+]                           }|
                                                 |
       ]],
     })
@@ -233,10 +229,121 @@ describe('vim.ui_attach', function()
     screen:expect({
       grid = [[
         %s/bar/baz                              |
-        {5:cmdline [+]                             }|
-        foo{7:ba^z}                                  |
-        {6:[No Name] [+]                           }|
+        {2:cmdline [+]                             }|
+        foo{10:ba^z}                                  |
+        {3:[No Name] [+]                           }|
                                                 |
+      ]],
+    })
+  end)
+
+  it('aborts :function on error with ext_messages', function()
+    exec_lua([[
+    vim.ui_attach(ns, { ext_messages = true }, function(event, _, content)
+      if event == "msg_show" then
+        -- "fast-api" does not prevent aborting :function
+        vim.api.nvim_get_runtime_file("foo", false)
+        -- non-"fast-api" is not allowed in msg_show callback and should be scheduled
+        local _, err = pcall(vim.api.nvim_buf_set_lines, 0, -2, -1, false, { content[1][2] })
+        vim.schedule(function()
+          vim.api.nvim_buf_set_lines(0, -2, -1, false, { content[1][2], err })
+        end)
+      end
+    end)
+    ]])
+    feed(':func Foo()<cr>bar<cr>endf<cr>:func Foo()<cr>')
+    screen:expect({
+      grid = [[
+        ^E122: Function Foo already exists, add !|
+         to replace it                          |
+        E5560: nvim_buf_set_lines must not be ca|
+        lled in a fast event context            |
+        {1:~                                       }|
+      ]],
+      messages = {
+        {
+          content = { { 'E122: Function Foo already exists, add ! to replace it', 9, 7 } },
+          kind = 'emsg',
+        },
+      },
+    })
+  end)
+
+  it('detaches after excessive errors', function()
+    screen:add_extra_attr_ids({ [100] = { bold = true, foreground = Screen.colors.SeaGreen } })
+    exec_lua([[
+      vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function()
+        vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] })
+      end)
+    ]])
+    screen:expect({
+      grid = [[
+        ^                                        |
+        {1:~                                       }|*4
+      ]],
+    })
+    feed('ifoo')
+    screen:expect({
+      grid = [[
+        foo^                                     |
+        {1:~                                       }|*4
+      ]],
+      showmode = { { '-- INSERT --', 5, 12 } },
+    })
+    feed('<esc>:1mes clear<cr>:mes<cr>')
+    screen:expect({
+      grid = [[
+        foo                                     |
+        {3:                                        }|
+        {9:Excessive errors in vim.ui_attach() call}|
+        {9:back from ns: 2.}                        |
+        {100:Press ENTER or type command to continue}^ |
+      ]],
+    })
+    feed('<cr>')
+    -- Also when scheduled
+    exec_lua([[
+      vim.ui_attach(vim.api.nvim_create_namespace(''), { ext_messages = true }, function()
+        vim.schedule(function() vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] }) end)
+      end)
+    ]])
+    screen:expect({
+      any = 'fo^o',
+      messages = {
+        {
+          content = {
+            {
+              'Error executing vim.schedule lua callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
+              9,
+              7,
+            },
+          },
+          kind = 'lua_error',
+        },
+        {
+          content = {
+            {
+              'Error executing vim.schedule lua callback: [string "<nvim>"]:2: attempt to index global \'err\' (a nil value)\nstack traceback:\n\t[string "<nvim>"]:2: in function <[string "<nvim>"]:2>',
+              9,
+              7,
+            },
+          },
+          kind = 'lua_error',
+        },
+        {
+          content = { { 'Press ENTER or type command to continue', 100, 19 } },
+          kind = 'return_prompt',
+        },
+      },
+    })
+    feed('<esc>:1mes clear<cr>:mes<cr>')
+    screen:expect({
+      grid = [[
+        foo                                     |
+        {3:                                        }|
+        {9:Excessive errors in vim.ui_attach() call}|
+        {9:back from ns: 3.}                        |
+        {100:Press ENTER or type command to continue}^ |
       ]],
     })
   end)

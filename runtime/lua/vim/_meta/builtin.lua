@@ -233,6 +233,10 @@ function vim.wait(time, callback, interval, fast_only) end
 --- {callback} receives event name plus additional parameters. See |ui-popupmenu|
 --- and the sections below for event format for respective events.
 ---
+--- Callbacks for `msg_show` events are executed in |api-fast| context.
+---
+--- Excessive errors inside the callback will result in forced detachment.
+---
 --- WARNING: This api is considered experimental.  Usability will vary for
 --- different screen elements. In particular `ext_messages` behavior is subject
 --- to further changes and usability improvements.  This is expected to be

@@ -44,6 +44,7 @@
 
 typedef struct {
   LuaRef cb;
+  uint8_t errors;
   bool ext_widgets[kUIGlobalCount];
 } UIEventCallback;
 
@@ -212,21 +213,20 @@ void ui_refresh(void)
   cursor_row = cursor_col = 0;
   pending_cursor_update = true;
 
+  bool had_message = ui_ext[kUIMessages];
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
+    ui_ext[i] = ext_widgets[i] | ui_cb_ext[i];
     if (i < kUIGlobalCount) {
-      ext_widgets[i] |= ui_cb_ext[i];
+      ui_call_option_set(cstr_as_string(ui_ext_names[i]), BOOLEAN_OBJ(ui_ext[i]));
     }
-    // Set 'cmdheight' to zero for all tabpages when ext_messages becomes active.
-    if (i == kUIMessages && !ui_ext[i] && ext_widgets[i]) {
-      set_option_value(kOptCmdheight, NUMBER_OPTVAL(0), 0);
-      command_height();
-      FOR_ALL_TABS(tp) {
-        tp->tp_ch_used = 0;
-      }
-    }
-    ui_ext[i] = ext_widgets[i];
-    if (i < kUIGlobalCount) {
-      ui_call_option_set(cstr_as_string(ui_ext_names[i]), BOOLEAN_OBJ(ext_widgets[i]));
+  }
+
+  // Reset 'cmdheight' for all tabpages when ext_messages toggles.
+  if (had_message != ui_ext[kUIMessages]) {
+    set_option_value(kOptCmdheight, NUMBER_OPTVAL(had_message), 0);
+    command_height();
+    FOR_ALL_TABS(tp) {
+      tp->tp_ch_used = had_message;
     }
   }
 
@@ -713,13 +713,15 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *err)
   }
 }
 
-void ui_call_event(char *name, Array args)
+void ui_call_event(char *name, bool fast, Array args)
 {
-  UIEventCallback *event_cb;
   bool handled = false;
-  map_foreach_value(&ui_event_cbs, event_cb, {
+  UIEventCallback *event_cb;
+  map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
     Error err = ERROR_INIT;
-    Object res = nlua_call_ref(event_cb->cb, name, args, kRetNilBool, NULL, &err);
+    uint32_t ns_id = ui_event_ns_id;
+    Object res = nlua_call_ref_ctx(fast, event_cb->cb, name, args, kRetNilBool, NULL, &err);
+    ui_event_ns_id = 0;
     // TODO(bfredl/luukvbaal): should this be documented or reconsidered?
     // Why does truthy return from Lua callback mean remote UI should not receive
     // the event.
@@ -728,6 +730,7 @@ void ui_call_event(char *name, Array args)
     }
     if (ERROR_SET(&err)) {
       ELOG("Error executing UI event callback: %s", err.msg);
+      ui_remove_cb(ns_id, true);
     }
     api_clear_error(&err);
   })
@@ -780,12 +783,16 @@ void ui_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
   ui_refresh();
 }
 
-void ui_remove_cb(uint32_t ns_id)
+void ui_remove_cb(uint32_t ns_id, bool checkerr)
 {
-  if (map_has(uint32_t, &ui_event_cbs, ns_id)) {
-    UIEventCallback *item = pmap_del(uint32_t)(&ui_event_cbs, ns_id, NULL);
+  UIEventCallback *item = pmap_get(uint32_t)(&ui_event_cbs, ns_id);
+  if (item && (!checkerr || ++item->errors > 10)) {
+    pmap_del(uint32_t)(&ui_event_cbs, ns_id, NULL);
     free_ui_event_callback(item);
+    ui_cb_update_ext();
+    ui_refresh();
+    if (checkerr) {
+      msg_schedule_semsg("Excessive errors in vim.ui_attach() callback from ns: %d.", ns_id);
+    }
   }
-  ui_cb_update_ext();
-  ui_refresh();
 }

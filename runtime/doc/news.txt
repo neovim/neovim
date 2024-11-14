@@ -72,7 +72,8 @@ EDITOR
 
 EVENTS
 
-• TODO
+• |vim.ui_attach()| callbacks for |ui-messages| `msg_show` events are executed in
+  |api-fast| context.
 
 LSP
 

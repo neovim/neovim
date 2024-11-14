@@ -8616,7 +8616,7 @@ bool eval_has_provider(const char *feat, bool throw_if_fast)
   }
 
   if (throw_if_fast && !nlua_is_deferred_safe()) {
-    semsg(e_luv_api_disabled, "Vimscript function");
+    semsg(e_fast_api_disabled, "Vimscript function");
     return false;
   }
 

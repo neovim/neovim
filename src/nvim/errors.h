@@ -151,7 +151,7 @@ EXTERN const char e_auabort[] INIT(= N_("E855: Autocommands caused command to ab
 
 EXTERN const char e_api_error[] INIT(= N_("E5555: API call: %s"));
 
-EXTERN const char e_luv_api_disabled[] INIT(= N_("E5560: %s must not be called in a lua loop callback"));
+EXTERN const char e_fast_api_disabled[] INIT(= N_("E5560: %s must not be called in a fast event context"));
 
 EXTERN const char e_floatonly[] INIT(= N_("E5601: Cannot close window, only floating window would remain"));
 EXTERN const char e_floatexchange[] INIT(= N_("E5602: Cannot exchange or rotate float"));

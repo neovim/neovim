@@ -187,7 +187,7 @@ static void nlua_luv_error_event(void **argv)
   msg_ext_set_kind("lua_error");
   switch (type) {
   case kCallback:
-    semsg_multiline("Error executing luv callback:\n%s", error);
+    semsg_multiline("Error executing callback:\n%s", error);
     break;
   case kThread:
     semsg_multiline("Error in luv thread:\n%s", error);
@@ -201,13 +201,13 @@ static void nlua_luv_error_event(void **argv)
   xfree(error);
 }
 
-static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags)
+/// Execute callback in "fast" context. Used for luv and some vim.ui_event
+/// callbacks where using the API directly is not safe.
+static int nlua_fast_cfpcall(lua_State *lstate, int nargs, int nresult, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
   int retval;
 
-  // luv callbacks might be executed at any os_breakcheck/line_breakcheck
-  // call, so using the API directly here is not safe.
   in_fast_callback++;
 
   int top = lua_gettop(lstate);
@@ -366,11 +366,13 @@ static int nlua_init_argv(lua_State *const L, char **argv, int argc, int lua_arg
 static void nlua_schedule_event(void **argv)
 {
   LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
+  uint32_t ns_id = (uint32_t)(ptrdiff_t)argv[1];
   lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, cb);
   nlua_unref_global(lstate, cb);
   if (nlua_pcall(lstate, 0, 0)) {
     nlua_error(lstate, _("Error executing vim.schedule lua callback: %.*s"));
+    ui_remove_cb(ns_id, true);
   }
 }
 
@@ -392,8 +394,9 @@ static int nlua_schedule(lua_State *const lstate)
   }
 
   LuaRef cb = nlua_ref_global(lstate, 1);
-
-  multiqueue_put(main_loop.events, nlua_schedule_event, (void *)(ptrdiff_t)cb);
+  // Pass along UI event handler to disable on error.
+  multiqueue_put(main_loop.events, nlua_schedule_event, (void *)(ptrdiff_t)cb,
+                 (void *)(ptrdiff_t)ui_event_ns_id);
   return 0;
 }
 
@@ -425,7 +428,7 @@ static int nlua_wait(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
   if (in_fast_callback) {
-    return luaL_error(lstate, e_luv_api_disabled, "vim.wait");
+    return luaL_error(lstate, e_fast_api_disabled, "vim.wait");
   }
 
   intptr_t timeout = luaL_checkinteger(lstate, 1);
@@ -598,7 +601,7 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread, bool is_stan
     luv_set_cthread(lstate, nlua_luv_thread_cfcpcall);
   } else {
     luv_set_loop(lstate, &main_loop.uv);
-    luv_set_callback(lstate, nlua_luv_cfpcall);
+    luv_set_callback(lstate, nlua_fast_cfpcall);
   }
   luaopen_luv(lstate);
   lua_pushvalue(lstate, -1);
@@ -724,7 +727,7 @@ static int nlua_ui_detach(lua_State *lstate)
     return luaL_error(lstate, "invalid ns_id");
   }
 
-  ui_remove_cb(ns_id);
+  ui_remove_cb(ns_id, false);
   return 0;
 }
 
@@ -1174,7 +1177,7 @@ int nlua_call(lua_State *lstate)
   size_t name_len;
   const char *name = luaL_checklstring(lstate, 1, &name_len);
   if (!nlua_is_deferred_safe() && !viml_func_is_fast(name)) {
-    return luaL_error(lstate, e_luv_api_disabled, "Vimscript function");
+    return luaL_error(lstate, e_fast_api_disabled, "Vimscript function");
   }
 
   int nargs = lua_gettop(lstate) - 1;
@@ -1231,7 +1234,7 @@ free_vim_args:
 static int nlua_rpcrequest(lua_State *lstate)
 {
   if (!nlua_is_deferred_safe()) {
-    return luaL_error(lstate, e_luv_api_disabled, "rpcrequest");
+    return luaL_error(lstate, e_fast_api_disabled, "rpcrequest");
   }
   return nlua_rpc(lstate, true);
 }
@@ -1594,6 +1597,12 @@ bool nlua_ref_is_function(LuaRef ref)
 Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, Arena *arena,
                      Error *err)
 {
+  return nlua_call_ref_ctx(false, ref, name, args, mode, arena, err);
+}
+
+Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, LuaRetMode mode,
+                         Arena *arena, Error *err)
+{
   lua_State *const lstate = global_lstate;
   nlua_pushref(lstate, ref);
   int nargs = (int)args.size;
@@ -1605,7 +1614,13 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, LuaRetMode mode, 
     nlua_push_Object(lstate, &args.items[i], 0);
   }
 
-  if (nlua_pcall(lstate, nargs, 1)) {
+  if (fast) {
+    if (nlua_fast_cfpcall(lstate, nargs, 1, -1) < 0) {
+      // error is already scheduled, set anyways to convey failure.
+      api_set_error(err, kErrorTypeException, "fast context failure");
+    }
+    return NIL;
+  } else if (nlua_pcall(lstate, nargs, 1)) {
     // if err is passed, the caller will deal with the error.
     if (err) {
       size_t len;
