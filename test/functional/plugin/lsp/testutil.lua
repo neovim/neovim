@@ -182,16 +182,17 @@ function M.test_rpc_server(config)
     )
   end
   local client = setmetatable({}, {
-    __index = function(_, name)
+    __index = function(t, name)
       -- Workaround for not being able to yield() inside __index for Lua 5.1 :(
       -- Otherwise I would just return the value here.
-      return function(...)
+      return function(arg1, ...)
+        local ismethod = arg1 == t
         return exec_lua(function(...)
-          if type(_G.TEST_RPC_CLIENT[name]) == 'function' then
-            return _G.TEST_RPC_CLIENT[name](...)
-          else
-            return _G.TEST_RPC_CLIENT[name]
+          local client = _G.TEST_RPC_CLIENT
+          if type(client[name]) == 'function' then
+            return client[name](ismethod and client or arg1, ...)
           end
+          return client[name]
         end, ...)
       end
     end,

@@ -2122,7 +2122,7 @@ function M._refresh(method, opts)
         local first = vim.fn.line('w0', window)
         local last = vim.fn.line('w$', window)
         for _, client in ipairs(clients) do
-          client.request(method, {
+          client:request(method, {
             textDocument = textDocument,
             range = make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
           }, nil, bufnr)
@@ -2131,7 +2131,7 @@ function M._refresh(method, opts)
     end
   else
     for _, client in ipairs(clients) do
-      client.request(method, {
+      client:request(method, {
         textDocument = textDocument,
         range = make_line_range_params(
           bufnr,

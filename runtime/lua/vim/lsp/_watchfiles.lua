@@ -116,7 +116,7 @@ function M.register(reg, client_id)
               local params = {
                 changes = change_queues[client_id],
               }
-              client.notify(ms.workspace_didChangeWatchedFiles, params)
+              client:notify(ms.workspace_didChangeWatchedFiles, params)
               queue_timers[client_id] = nil
               change_queues[client_id] = nil
               change_cache[client_id] = nil

@@ -349,17 +349,17 @@ end
 ---@param bufnr integer
 function lsp._set_defaults(client, bufnr)
   if
-    client.supports_method(ms.textDocument_definition) and is_empty_or_default(bufnr, 'tagfunc')
+    client:supports_method(ms.textDocument_definition) and is_empty_or_default(bufnr, 'tagfunc')
   then
     vim.bo[bufnr].tagfunc = 'v:lua.vim.lsp.tagfunc'
   end
   if
-    client.supports_method(ms.textDocument_completion) and is_empty_or_default(bufnr, 'omnifunc')
+    client:supports_method(ms.textDocument_completion) and is_empty_or_default(bufnr, 'omnifunc')
   then
     vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
   end
   if
-    client.supports_method(ms.textDocument_rangeFormatting)
+    client:supports_method(ms.textDocument_rangeFormatting)
     and is_empty_or_default(bufnr, 'formatprg')
     and is_empty_or_default(bufnr, 'formatexpr')
   then
@@ -367,14 +367,14 @@ function lsp._set_defaults(client, bufnr)
   end
   vim._with({ buf = bufnr }, function()
     if
-      client.supports_method(ms.textDocument_hover)
+      client:supports_method(ms.textDocument_hover)
       and is_empty_or_default(bufnr, 'keywordprg')
       and vim.fn.maparg('K', 'n', false, false) == ''
     then
       vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = bufnr, desc = 'vim.lsp.buf.hover()' })
     end
   end)
-  if client.supports_method(ms.textDocument_diagnostic) then
+  if client:supports_method(ms.textDocument_diagnostic) then
     lsp.diagnostic._enable(bufnr)
   end
 end
@@ -485,12 +485,12 @@ local function text_document_did_save_handler(bufnr)
     local name = api.nvim_buf_get_name(bufnr)
     local old_name = changetracking._get_and_set_name(client, bufnr, name)
     if old_name and name ~= old_name then
-      client.notify(ms.textDocument_didClose, {
+      client:notify(ms.textDocument_didClose, {
         textDocument = {
           uri = vim.uri_from_fname(old_name),
         },
       })
-      client.notify(ms.textDocument_didOpen, {
+      client:notify(ms.textDocument_didOpen, {
         textDocument = {
           version = 0,
           uri = uri,
@@ -506,7 +506,7 @@ local function text_document_did_save_handler(bufnr)
       if type(save_capability) == 'table' and save_capability.includeText then
         included_text = text(bufnr)
       end
-      client.notify(ms.textDocument_didSave, {
+      client:notify(ms.textDocument_didSave, {
         textDocument = {
           uri = uri,
         },
@@ -527,10 +527,10 @@ local function buf_detach_client(bufnr, client)
 
   changetracking.reset_buf(client, bufnr)
 
-  if client.supports_method(ms.textDocument_didClose) then
+  if client:supports_method(ms.textDocument_didClose) then
     local uri = vim.uri_from_bufnr(bufnr)
     local params = { textDocument = { uri = uri } }
-    client.notify(ms.textDocument_didClose, params)
+    client:notify(ms.textDocument_didClose, params)
   end
 
   client.attached_buffers[bufnr] = nil
@@ -564,12 +564,12 @@ local function buf_attach(bufnr)
           },
           reason = protocol.TextDocumentSaveReason.Manual, ---@type integer
         }
-        if client.supports_method(ms.textDocument_willSave) then
-          client.notify(ms.textDocument_willSave, params)
+        if client:supports_method(ms.textDocument_willSave) then
+          client:notify(ms.textDocument_willSave, params)
         end
-        if client.supports_method(ms.textDocument_willSaveWaitUntil) then
+        if client:supports_method(ms.textDocument_willSaveWaitUntil) then
           local result, err =
-            client.request_sync(ms.textDocument_willSaveWaitUntil, params, 1000, ctx.buf)
+            client:request_sync(ms.textDocument_willSaveWaitUntil, params, 1000, ctx.buf)
           if result and result.result then
             util.apply_text_edits(result.result, ctx.buf, client.offset_encoding)
           elseif err then
@@ -603,8 +603,8 @@ local function buf_attach(bufnr)
       local params = { textDocument = { uri = uri } }
       for _, client in ipairs(clients) do
         changetracking.reset_buf(client, bufnr)
-        if client.supports_method(ms.textDocument_didClose) then
-          client.notify(ms.textDocument_didClose, params)
+        if client:supports_method(ms.textDocument_didClose) then
+          client:notify(ms.textDocument_didClose, params)
         end
       end
       for _, client in ipairs(clients) do
@@ -662,7 +662,7 @@ function lsp.buf_attach_client(bufnr, client_id)
   -- Send didOpen for the client if it is initialized. If it isn't initialized
   -- then it will send didOpen on initialize.
   if client.initialized then
-    client:_on_attach(bufnr)
+    client:on_attach(bufnr)
   end
   return true
 end
@@ -740,13 +740,13 @@ function lsp.stop_client(client_id, force)
   for _, id in ipairs(ids) do
     if type(id) == 'table' then
       if id.stop then
-        id.stop(force)
+        id:stop(force)
       end
     else
       --- @cast id -vim.lsp.Client
       local client = all_clients[id]
       if client then
-        client.stop(force)
+        client:stop(force)
       end
     end
   end
@@ -790,7 +790,7 @@ function lsp.get_clients(filter)
       and (filter.id == nil or client.id == filter.id)
       and (filter.bufnr == nil or client.attached_buffers[bufnr])
       and (filter.name == nil or client.name == filter.name)
-      and (filter.method == nil or client.supports_method(filter.method, { bufnr = filter.bufnr }))
+      and (filter.method == nil or client:supports_method(filter.method, filter.bufnr))
       and (filter._uninitialized or client.initialized)
     then
       clients[#clients + 1] = client
@@ -812,7 +812,7 @@ api.nvim_create_autocmd('VimLeavePre', {
     local active_clients = lsp.get_clients()
     log.info('exit_handler', active_clients)
     for _, client in pairs(all_clients) do
-      client.stop()
+      client:stop()
     end
 
     local timeouts = {} --- @type table<integer,integer>
@@ -847,7 +847,7 @@ api.nvim_create_autocmd('VimLeavePre', {
       if not vim.wait(max_timeout, check_clients_closed, poll_time) then
         for client_id, client in pairs(active_clients) do
           if timeouts[client_id] ~= nil then
-            client.stop(true)
+            client:stop(true)
           end
         end
       end
@@ -883,11 +883,11 @@ function lsp.buf_request(bufnr, method, params, handler, on_unsupported)
   local clients = lsp.get_clients({ bufnr = bufnr })
   local client_request_ids = {} --- @type table<integer,integer>
   for _, client in ipairs(clients) do
-    if client.supports_method(method, { bufnr = bufnr }) then
+    if client:supports_method(method, bufnr) then
       method_supported = true
 
       local cparams = type(params) == 'function' and params(client, bufnr) or params --[[@as table?]]
-      local request_success, request_id = client.request(method, cparams, handler, bufnr)
+      local request_success, request_id = client:request(method, cparams, handler, bufnr)
       -- This could only fail if the client shut down in the time since we looked
       -- it up and we did the request, which should be rare.
       if request_success then
@@ -910,7 +910,7 @@ function lsp.buf_request(bufnr, method, params, handler, on_unsupported)
   local function _cancel_all_requests()
     for client_id, request_id in pairs(client_request_ids) do
       local client = all_clients[client_id]
-      client.cancel_request(request_id)
+      client:cancel_request(request_id)
     end
   end
 
@@ -1049,7 +1049,7 @@ function lsp.formatexpr(opts)
   end
   local bufnr = api.nvim_get_current_buf()
   for _, client in pairs(lsp.get_clients({ bufnr = bufnr })) do
-    if client.supports_method(ms.textDocument_rangeFormatting) then
+    if client:supports_method(ms.textDocument_rangeFormatting) then
       local params = util.make_formatting_params()
       local end_line = vim.fn.getline(end_lnum) --[[@as string]]
       local end_col = vim.str_utfindex(end_line, client.offset_encoding)
@@ -1065,7 +1065,7 @@ function lsp.formatexpr(opts)
         },
       }
       local response =
-        client.request_sync(ms.textDocument_rangeFormatting, params, timeout_ms, bufnr)
+        client:request_sync(ms.textDocument_rangeFormatting, params, timeout_ms, bufnr)
       if response and response.result then
         lsp.util.apply_text_edits(response.result, bufnr, client.offset_encoding)
         return 0

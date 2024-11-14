@@ -273,7 +273,7 @@ function STHighlighter:send_request()
     if client and current_result.version ~= version and active_request.version ~= version then
       -- cancel stale in-flight request
       if active_request.request_id then
-        client.cancel_request(active_request.request_id)
+        client:cancel_request(active_request.request_id)
         active_request = {}
         state.active_request = active_request
       end
@@ -288,7 +288,7 @@ function STHighlighter:send_request()
         method = method .. '/delta'
         params.previousResultId = current_result.result_id
       end
-      local success, request_id = client.request(method, params, function(err, response, ctx)
+      local success, request_id = client:request(method, params, function(err, response, ctx)
         -- look client up again using ctx.client_id instead of using a captured
         -- client object
         local c = vim.lsp.get_client_by_id(ctx.client_id)
@@ -519,7 +519,7 @@ function STHighlighter:reset()
     if state.active_request.request_id then
       local client = vim.lsp.get_client_by_id(client_id)
       assert(client)
-      client.cancel_request(state.active_request.request_id)
+      client:cancel_request(state.active_request.request_id)
       state.active_request = {}
     end
   end
@@ -547,7 +547,7 @@ function STHighlighter:mark_dirty(client_id)
   if state.active_request.request_id then
     local client = vim.lsp.get_client_by_id(client_id)
     assert(client)
-    client.cancel_request(state.active_request.request_id)
+    client:cancel_request(state.active_request.request_id)
     state.active_request = {}
   end
 end

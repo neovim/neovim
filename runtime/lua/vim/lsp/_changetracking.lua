@@ -40,7 +40,7 @@ local M = {}
 --- @class vim.lsp.CTGroupState
 --- @field buffers table<integer,vim.lsp.CTBufferState>
 --- @field debounce integer debounce duration in ms
---- @field clients table<integer, table> clients using this state. {client_id, client}
+--- @field clients table<integer, vim.lsp.Client> clients using this state. {client_id, client}
 
 ---@param group vim.lsp.CTGroup
 ---@return string
@@ -273,8 +273,8 @@ local function send_changes(bufnr, sync_kind, state, buf_state)
   end
   local uri = vim.uri_from_bufnr(bufnr)
   for _, client in pairs(state.clients) do
-    if not client.is_stopped() and vim.lsp.buf_is_attached(bufnr, client.id) then
-      client.notify(protocol.Methods.textDocument_didChange, {
+    if not client:is_stopped() and vim.lsp.buf_is_attached(bufnr, client.id) then
+      client:notify(protocol.Methods.textDocument_didChange, {
         textDocument = {
           uri = uri,
           version = util.buf_versions[bufnr],

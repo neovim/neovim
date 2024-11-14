@@ -218,6 +218,7 @@ LSP
 • The client now supports `'utf-8'` and `'utf-32'` position encodings.
 • |vim.lsp.buf.hover()| now highlights hover ranges using the
   |hl-LspReferenceTarget| highlight group.
+• Functions in |vim.lsp.Client| can now be called as methods.
 
 LUA
 

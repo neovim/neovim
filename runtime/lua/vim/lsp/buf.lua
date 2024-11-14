@@ -232,7 +232,7 @@ local function get_locations(method, opts)
   end
   for _, client in ipairs(clients) do
     local params = util.make_position_params(win, client.offset_encoding)
-    client.request(method, params, function(_, result)
+    client:request(method, params, function(_, result)
       on_response(_, result, client)
     end)
   end
@@ -568,12 +568,14 @@ function M.format(opts)
   end
 
   if opts.async then
+    --- @param idx integer
+    --- @param client vim.lsp.Client
     local function do_format(idx, client)
       if not client then
         return
       end
       local params = set_range(client, util.make_formatting_params(opts.formatting_options))
-      client.request(method, params, function(...)
+      client:request(method, params, function(...)
         local handler = client.handlers[method] or lsp.handlers[method]
         handler(...)
         do_format(next(clients, idx))
@@ -584,7 +586,7 @@ function M.format(opts)
     local timeout_ms = opts.timeout_ms or 1000
     for _, client in pairs(clients) do
       local params = set_range(client, util.make_formatting_params(opts.formatting_options))
-      local result, err = client.request_sync(method, params, timeout_ms, bufnr)
+      local result, err = client:request_sync(method, params, timeout_ms, bufnr)
       if result and result.result then
         util.apply_text_edits(result.result, bufnr, client.offset_encoding)
       elseif err then
@@ -648,6 +650,8 @@ function M.rename(new_name, opts)
     )[1]
   end
 
+  --- @param idx integer
+  --- @param client? vim.lsp.Client
   local function try_use_client(idx, client)
     if not client then
       return
@@ -659,15 +663,15 @@ function M.rename(new_name, opts)
       params.newName = name
       local handler = client.handlers[ms.textDocument_rename]
         or lsp.handlers[ms.textDocument_rename]
-      client.request(ms.textDocument_rename, params, function(...)
+      client:request(ms.textDocument_rename, params, function(...)
         handler(...)
         try_use_client(next(clients, idx))
       end, bufnr)
     end
 
-    if client.supports_method(ms.textDocument_prepareRename) then
+    if client:supports_method(ms.textDocument_prepareRename) then
       local params = util.make_position_params(win, client.offset_encoding)
-      client.request(ms.textDocument_prepareRename, params, function(err, result)
+      client:request(ms.textDocument_prepareRename, params, function(err, result)
         if err or result == nil then
           if next(clients, idx) then
             try_use_client(next(clients, idx))
@@ -706,7 +710,7 @@ function M.rename(new_name, opts)
       end, bufnr)
     else
       assert(
-        client.supports_method(ms.textDocument_rename),
+        client:supports_method(ms.textDocument_rename),
         'Client must support textDocument/rename'
       )
       if new_name then
@@ -781,7 +785,7 @@ function M.references(context, opts)
     params.context = context or {
       includeDeclaration = true,
     }
-    client.request(ms.textDocument_references, params, function(_, result)
+    client:request(ms.textDocument_references, params, function(_, result)
       local items = util.locations_to_items(result or {}, client.offset_encoding)
       vim.list_extend(all_items, items)
       remaining = remaining - 1
@@ -813,7 +817,7 @@ local function request_with_id(client_id, method, params, handler, bufnr)
     )
     return
   end
-  client.request(method, params, handler, bufnr)
+  client:request(method, params, handler, bufnr)
 end
 
 --- @param item lsp.TypeHierarchyItem|lsp.CallHierarchyItem
@@ -880,7 +884,7 @@ local function hierarchy(method)
   for _, client in ipairs(clients) do
     local params = util.make_position_params(win, client.offset_encoding)
     --- @param result lsp.CallHierarchyItem[]|lsp.TypeHierarchyItem[]?
-    client.request(prepare_method, params, function(err, result, ctx)
+    client:request(prepare_method, params, function(err, result, ctx)
       if err then
         vim.notify(err.message, vim.log.levels.WARN)
       elseif result then
@@ -1131,8 +1135,8 @@ local function on_code_action_results(results, opts)
     local action = choice.action
     local bufnr = assert(choice.ctx.bufnr, 'Must have buffer number')
 
-    if not action.edit and client.supports_method(ms.codeAction_resolve) then
-      client.request(ms.codeAction_resolve, action, function(err, resolved_action)
+    if not action.edit and client:supports_method(ms.codeAction_resolve) then
+      client:request(ms.codeAction_resolve, action, function(err, resolved_action)
         if err then
           if action.command then
             apply_action(action, client, choice.ctx)
@@ -1253,7 +1257,7 @@ function M.code_action(opts)
       })
     end
 
-    client.request(ms.textDocument_codeAction, params, on_result, bufnr)
+    client:request(ms.textDocument_codeAction, params, on_result, bufnr)
   end
 end
 

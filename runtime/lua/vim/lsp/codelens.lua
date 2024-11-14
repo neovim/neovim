@@ -231,7 +231,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
       countdown()
     else
       assert(client)
-      client.request(ms.codeLens_resolve, lens, function(_, result)
+      client:request(ms.codeLens_resolve, lens, function(_, result)
         if api.nvim_buf_is_loaded(bufnr) and result and result.command then
           lens.command = result.command
           -- Eager display to have some sort of incremental feedback
