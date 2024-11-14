@@ -214,6 +214,7 @@ LSP
   clients.
 • |vim.lsp.buf.signature_help()| can now cycle through different signatures
   using `<C-s>` and also support multiple clients.
+• The client now supports `'utf-8'` and `'utf-32'` position encodings.
 
 LUA
 
