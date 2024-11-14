@@ -1937,12 +1937,10 @@ vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
 *vim.Ringbuf*
 
     Fields: ~
-      • {clear}  (`fun()`) Clear all items
-      • {push}   (`fun(item: T)`) Adds an item, overriding the oldest item if
-                 the buffer is full.
-      • {pop}    (`fun(): T?`) Removes and returns the first unread item
-      • {peek}   (`fun(): T?`) Returns the first unread item without removing
-                 it
+      • {clear}  (`fun()`) See |Ringbuf:clear()|.
+      • {push}   (`fun(item: T)`) See |Ringbuf:push()|.
+      • {pop}    (`fun(): T?`) See |Ringbuf:pop()|.
+      • {peek}   (`fun(): T?`) See |Ringbuf:peek()|.
 
 
 Ringbuf:clear()                                              *Ringbuf:clear()*

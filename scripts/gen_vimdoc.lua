@@ -538,7 +538,8 @@ end
 --- @param generics? table<string,string>
 --- @param classes? table<string,nvim.luacats.parser.class>
 --- @param exclude_types? true
-local function render_fields_or_params(xs, generics, classes, exclude_types)
+--- @param cfg nvim.gen_vimdoc.Config
+local function render_fields_or_params(xs, generics, classes, exclude_types, cfg)
   local ret = {} --- @type string[]
 
   xs = vim.tbl_filter(should_render_field_or_param, xs)
@@ -558,7 +559,9 @@ local function render_fields_or_params(xs, generics, classes, exclude_types)
     p.desc = pdesc
 
     inline_type(p, classes)
-    local nm, ty, desc = p.name, p.type, p.desc
+    local nm, ty = p.name, p.type
+
+    local desc = p.classvar and string.format('See |%s|.', cfg.fn_helptag_fmt(p)) or p.desc
 
     local fnm = p.kind == 'operator' and fmt('op(%s)', nm) or fmt_field_name(nm)
     local pnm = fmt('      • %-' .. indent .. 's', fnm)
@@ -591,7 +594,8 @@ end
 
 --- @param class nvim.luacats.parser.class
 --- @param classes table<string,nvim.luacats.parser.class>
-local function render_class(class, classes)
+--- @param cfg nvim.gen_vimdoc.Config
+local function render_class(class, classes, cfg)
   if class.access or class.nodoc or class.inlinedoc then
     return
   end
@@ -610,7 +614,7 @@ local function render_class(class, classes)
     table.insert(ret, md_to_vimdoc(class.desc, INDENTATION, INDENTATION, TEXT_WIDTH))
   end
 
-  local fields_txt = render_fields_or_params(class.fields, nil, classes)
+  local fields_txt = render_fields_or_params(class.fields, nil, classes, nil, cfg)
   if not fields_txt:match('^%s*$') then
     table.insert(ret, '\n    Fields: ~\n')
     table.insert(ret, fields_txt)
@@ -621,11 +625,12 @@ local function render_class(class, classes)
 end
 
 --- @param classes table<string,nvim.luacats.parser.class>
-local function render_classes(classes)
+--- @param cfg nvim.gen_vimdoc.Config
+local function render_classes(classes, cfg)
   local ret = {} --- @type string[]
 
   for _, class in vim.spairs(classes) do
-    ret[#ret + 1] = render_class(class, classes)
+    ret[#ret + 1] = render_class(class, classes, cfg)
   end
 
   return table.concat(ret)
@@ -655,10 +660,6 @@ local function render_fun_header(fun, cfg)
   end
 
   local proto = fun.table and nm or nm .. '(' .. table.concat(args, ', ') .. ')'
-
-  if not cfg.fn_helptag_fmt then
-    cfg.fn_helptag_fmt = fn_helptag_fmt_common
-  end
 
   local tag = '*' .. cfg.fn_helptag_fmt(fun) .. '*'
 
@@ -774,7 +775,8 @@ local function render_fun(fun, classes, cfg)
   end
 
   if fun.params and #fun.params > 0 then
-    local param_txt = render_fields_or_params(fun.params, fun.generics, classes, cfg.exclude_types)
+    local param_txt =
+      render_fields_or_params(fun.params, fun.generics, classes, cfg.exclude_types, cfg)
     if not param_txt:match('^%s*$') then
       table.insert(ret, '\n    Parameters: ~\n')
       ret[#ret + 1] = param_txt
@@ -957,6 +959,7 @@ end
 
 --- @param cfg nvim.gen_vimdoc.Config
 local function gen_target(cfg)
+  cfg.fn_helptag_fmt = cfg.fn_helptag_fmt or fn_helptag_fmt_common
   print('Target:', cfg.filename)
   local sections = {} --- @type table<string,nvim.gen_vimdoc.Section>
 
@@ -987,7 +990,7 @@ local function gen_target(cfg)
     print('    Processing file:', f)
     local funs_txt = render_funs(funs, all_classes, cfg)
     if next(classes) then
-      local classes_txt = render_classes(classes)
+      local classes_txt = render_classes(classes, cfg)
       if vim.trim(classes_txt) ~= '' then
         funs_txt = classes_txt .. '\n' .. funs_txt
       end

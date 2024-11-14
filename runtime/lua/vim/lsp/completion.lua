@@ -404,7 +404,7 @@ local function request(clients, bufnr, win, callback)
   for _, client in pairs(clients) do
     local client_id = client.id
     local params = lsp.util.make_position_params(win, client.offset_encoding)
-    local ok, request_id = client.request(ms.textDocument_completion, params, function(err, result)
+    local ok, request_id = client:request(ms.textDocument_completion, params, function(err, result)
       responses[client_id] = { err = err, result = result }
       remaining_requests = remaining_requests - 1
       if remaining_requests == 0 then
@@ -421,7 +421,7 @@ local function request(clients, bufnr, win, callback)
     for client_id, request_id in pairs(request_ids) do
       local client = lsp.get_client_by_id(client_id)
       if client then
-        client.cancel_request(request_id)
+        client:cancel_request(request_id)
       end
     end
   end
@@ -582,7 +582,7 @@ local function on_complete_done()
     local changedtick = vim.b[bufnr].changedtick
 
     --- @param result lsp.CompletionItem
-    client.request(ms.completionItem_resolve, completion_item, function(err, result)
+    client:request(ms.completionItem_resolve, completion_item, function(err, result)
       if changedtick ~= vim.b[bufnr].changedtick then
         return
       end

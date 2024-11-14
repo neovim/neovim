@@ -972,54 +972,24 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {capabilities}          (`lsp.ClientCapabilities`) The capabilities
                                 provided by the client (editor or tool)
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`)
-      • {request}               (`fun(method: string, params: table?, handler: lsp.Handler?, bufnr: integer?): boolean, integer?`)
-                                Sends a request to the server. This is a thin
-                                wrapper around {client.rpc.request} with some
-                                additional checking. If {handler} is not
-                                specified and if there's no respective global
-                                handler, then an error will occur. Returns:
-                                {status}, {client_id}?. {status} is a boolean
-                                indicating if the notification was successful.
-                                If it is `false`, then it will always be
-                                `false` (the client has shutdown). If {status}
-                                is `true`, the function returns {request_id}
-                                as the second result. You can use this with
-                                `client.cancel_request(request_id)` to cancel
-                                the request.
-      • {request_sync}          (`fun(method: string, params: table?, timeout_ms: integer?, bufnr: integer): {err: lsp.ResponseError?, result:any}?, string?`)
-                                err # a dict
-      • {notify}                (`fun(method: string, params: table?): boolean`)
-                                Sends a notification to an LSP server.
-                                Returns: a boolean to indicate if the
-                                notification was successful. If it is false,
-                                then it will always be false (the client has
-                                shutdown).
-      • {cancel_request}        (`fun(id: integer): boolean`) Cancels a
-                                request with a given request id. Returns: same
-                                as `notify()`.
-      • {stop}                  (`fun(force?: boolean)`) Stops a client,
-                                optionally with force. By default, it will
-                                just ask the server to shutdown without force.
-                                If you request to stop a client which has
-                                previously been requested to shutdown, it will
-                                automatically escalate and force shutdown.
-      • {on_attach}             (`fun(bufnr: integer)`) Runs the on_attach
-                                function from the client's config if it was
-                                defined. Useful for buffer-local setup.
-      • {supports_method}       (`fun(method: string, opts?: {bufnr: integer?}): boolean`)
-                                Checks if a client supports a given method.
-                                Always returns true for unknown off-spec
-                                methods. {opts} is a optional
-                                `{bufnr?: integer}` table. Some language
-                                server capabilities can be file specific.
-      • {is_stopped}            (`fun(): boolean`) Checks whether a client is
-                                stopped. Returns: true if the client is fully
-                                stopped.
+      • {request}               (`fun(self: vim.lsp.Client, method: string, params: table?, handler: lsp.Handler?, bufnr: integer?): boolean, integer?`)
+                                See |Client:request()|.
+      • {request_sync}          (`fun(self: vim.lsp.Client, method: string, params: table, timeout_ms: integer?, bufnr: integer): {err: lsp.ResponseError?, result:any}?, string?`)
+                                See |Client:request_sync()|.
+      • {notify}                (`fun(self: vim.lsp.Client, method: string, params: table?): boolean`)
+                                See |Client:notify()|.
+      • {cancel_request}        (`fun(self: vim.lsp.Client, id: integer): boolean`)
+                                See |Client:cancel_request()|.
+      • {stop}                  (`fun(self: vim.lsp.Client, force: boolean?)`)
+                                See |Client:stop()|.
+      • {is_stopped}            (`fun(self: vim.lsp.Client): boolean`) See
+                                |Client:is_stopped()|.
       • {exec_cmd}              (`fun(self: vim.lsp.Client, command: lsp.Command, context: {bufnr?: integer}?, handler: lsp.Handler?)`)
-                                Execute a lsp command, either via client
-                                command function (if available) or via
-                                workspace/executeCommand (if supported by the
-                                server)
+                                See |Client:exec_cmd()|.
+      • {on_attach}             (`fun(self: vim.lsp.Client, bufnr: integer)`)
+                                See |Client:on_attach()|.
+      • {supports_method}       (`fun(self: vim.lsp.Client, method: string, bufnr: integer?)`)
+                                See |Client:supports_method()|.
 
 *vim.lsp.Client.Progress*
     Extends: |vim.Ringbuf|
@@ -1150,6 +1120,18 @@ Lua module: vim.lsp.client                                        *lsp-client*
                               on initialization.
 
 
+Client:cancel_request({id})                          *Client:cancel_request()*
+    Cancels a request with a given request id.
+
+    Parameters: ~
+      • {id}  (`integer`) id of request to cancel
+
+    Return: ~
+        (`boolean`) status indicating if the notification was successful.
+
+    See also: ~
+      • |Client:notify()|
+
 Client:exec_cmd({command}, {context}, {handler})           *Client:exec_cmd()*
     Execute a lsp command, either via client command function (if available)
     or via workspace/executeCommand (if supported by the server)
@@ -1158,6 +1140,95 @@ Client:exec_cmd({command}, {context}, {handler})           *Client:exec_cmd()*
       • {command}  (`lsp.Command`)
       • {context}  (`{bufnr?: integer}?`)
       • {handler}  (`lsp.Handler?`) only called if a server command
+
+Client:is_stopped()                                      *Client:is_stopped()*
+    Checks whether a client is stopped.
+
+    Return: ~
+        (`boolean`) true if client is stopped or in the process of being
+        stopped; false otherwise
+
+Client:notify({method}, {params})                            *Client:notify()*
+    Sends a notification to an LSP server.
+
+    Parameters: ~
+      • {method}  (`string`) LSP method name.
+      • {params}  (`table?`) LSP request params.
+
+    Return: ~
+        (`boolean`) status indicating if the notification was successful. If
+        it is false, then the client has shutdown.
+
+Client:on_attach({bufnr})                                 *Client:on_attach()*
+    Runs the on_attach function from the client's config if it was defined.
+    Useful for buffer-local setup.
+
+    Parameters: ~
+      • {bufnr}  (`integer`) Buffer number
+
+                                                            *Client:request()*
+Client:request({method}, {params}, {handler}, {bufnr})
+    Sends a request to the server.
+
+    This is a thin wrapper around {client.rpc.request} with some additional
+    checks for capabilities and handler availability.
+
+    Parameters: ~
+      • {method}   (`string`) LSP method name.
+      • {params}   (`table?`) LSP request params.
+      • {handler}  (`lsp.Handler?`) Response |lsp-handler| for this method.
+      • {bufnr}    (`integer?`) Buffer handle. 0 for current (default).
+
+    Return (multiple): ~
+        (`boolean`) status indicates whether the request was successful. If it
+        is `false`, then it will always be `false` (the client has shutdown).
+        (`integer?`) request_id Can be used with |Client:cancel_request()|.
+        `nil` is request failed.
+
+    See also: ~
+      • |vim.lsp.buf_request_all()|
+
+                                                       *Client:request_sync()*
+Client:request_sync({method}, {params}, {timeout_ms}, {bufnr})
+    Sends a request to the server and synchronously waits for the response.
+
+    This is a wrapper around |Client:request()|
+
+    Parameters: ~
+      • {method}      (`string`) LSP method name.
+      • {params}      (`table`) LSP request params.
+      • {timeout_ms}  (`integer?`) Maximum time in milliseconds to wait for a
+                      result. Defaults to 1000
+      • {bufnr}       (`integer`) Buffer handle (0 for current).
+
+    Return (multiple): ~
+        (`{err: lsp.ResponseError?, result:any}?`) `result` and `err` from the
+        |lsp-handler|. `nil` is the request was unsuccessful
+        (`string?`) err On timeout, cancel or error, where `err` is a string
+        describing the failure reason.
+
+    See also: ~
+      • |vim.lsp.buf_request_sync()|
+
+Client:stop({force})                                           *Client:stop()*
+    Stops a client, optionally with force.
+
+    By default, it will just request the server to shutdown without force. If
+    you request to stop a client which has previously been requested to
+    shutdown, it will automatically escalate and force shutdown.
+
+    Parameters: ~
+      • {force}  (`boolean?`)
+
+Client:supports_method({method}, {bufnr})           *Client:supports_method()*
+    Checks if a client supports a given method. Always returns true for
+    unknown off-spec methods.
+
+    Note: Some language server capabilities can be file specific.
+
+    Parameters: ~
+      • {method}  (`string`)
+      • {bufnr}   (`integer?`)
 
 
 ==============================================================================
@@ -1599,12 +1670,12 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
         local hint = vim.lsp.inlay_hint.get({ bufnr = 0 })[1] -- 0 for current buffer
 
         local client = vim.lsp.get_client_by_id(hint.client_id)
-        local resp = client.request_sync('inlayHint/resolve', hint.inlay_hint, 100, 0)
+        local resp = client:request_sync('inlayHint/resolve', hint.inlay_hint, 100, 0)
         local resolved_hint = assert(resp and resp.result, resp.err)
         vim.lsp.util.apply_text_edits(resolved_hint.textEdits, 0, client.encoding)
 
         location = resolved_hint.label[1].location
-        client.request('textDocument/hover', {
+        client:request('textDocument/hover', {
           textDocument = { uri = location.uri },
           position = location.range.start,
         })

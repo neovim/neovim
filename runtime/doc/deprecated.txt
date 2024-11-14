@@ -56,6 +56,14 @@ LSP
 	No longer support client to server response handlers. Only server to
 	client requests/notification handlers are supported.
 • *vim.lsp.handlers.signature_help()*	Use |vim.lsp.buf.signature_help()| instead.
+• `client.request()`			Use |Client:request()| instead.
+• `client.request_sync()`		Use |Client:request_sync()| instead.
+• `client.notify()`			Use |Client:notify()| instead.
+• `client.cancel_request()`		Use |Client:cancel_request()| instead.
+• `client.stop()`			Use |Client:stop()| instead.
+• `client.is_stopped()`			Use |Client:is_stopped()| instead.
+• `client.supports_method()`		Use |Client:supports_method()| instead.
+• `client.on_attach()`			Use |Client:on_attach()| instead.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*

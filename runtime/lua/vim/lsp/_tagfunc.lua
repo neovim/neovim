@@ -59,7 +59,7 @@ local function query_definition(pattern)
       remaining = remaining - 1
     end
     local params = util.make_position_params(win, client.offset_encoding)
-    client.request(ms.textDocument_definition, params, on_response, bufnr)
+    client:request(ms.textDocument_definition, params, on_response, bufnr)
   end
   vim.wait(1000, function()
     return remaining == 0
