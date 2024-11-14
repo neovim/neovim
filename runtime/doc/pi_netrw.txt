@@ -1501,9 +1501,9 @@ For example, special handlers for links Markdown and HTML are
         return matchstr(getline('.')[col('.')-1:],
           \ '\[.\{-}\](\zs' .. g:netrw_regex_url .. '\ze\(\s\+.\{-}\)\?)')
       endif
+      return ''
     finally
       call winrestview(save_view)
-      return ''
     endtry
   endfunction
 
@@ -1516,9 +1516,9 @@ For example, special handlers for links Markdown and HTML are
         return matchstr(getline('.')[col('.') - 1 : ],
           \ 'href=["'.."'"..']\?\zs\S\{-}\ze["'.."'"..']\?/\?>')
       endif
+      return ''
     finally
       call winrestview(save_view)
-      return ''
     endtry
   endfunction
 <
