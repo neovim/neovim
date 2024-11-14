@@ -34,7 +34,7 @@ jobs:
       # FIXME(dundargoc): this workaround is needed as the python3 provider
       # tests suddenly started to become extremely flaky, and this removes the
       # flakiness for some reason.
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
 
