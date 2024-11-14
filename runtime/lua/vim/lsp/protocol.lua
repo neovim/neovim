@@ -338,7 +338,9 @@ function protocol.make_client_capabilities()
   return {
     general = {
       positionEncodings = {
+        'utf-8',
         'utf-16',
+        'utf-32',
       },
     },
     textDocument = {
