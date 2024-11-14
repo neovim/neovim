@@ -796,6 +796,7 @@ must handle.
 		"echomsg"	|:echomsg| message
 		"echoerr"	|:echoerr| message
 		"lua_error"	Error in |:lua| code
+		"lua_print"	|print()| from |:lua| code
 		"rpc_error"	Error response from |rpcrequest()|
 		"return_prompt"	|press-enter| prompt after a multiple messages
 		"quickfix"	Quickfix navigation message

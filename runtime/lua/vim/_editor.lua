@@ -1151,21 +1151,16 @@ end
 --- @param ... any
 --- @return any # given arguments.
 function vim.print(...)
-  if vim.in_fast_event() then
-    print(...)
-    return ...
-  end
-
+  local msg = {}
   for i = 1, select('#', ...) do
     local o = select(i, ...)
     if type(o) == 'string' then
-      vim.api.nvim_out_write(o)
+      table.insert(msg, o)
     else
-      vim.api.nvim_out_write(vim.inspect(o, { newline = '\n', indent = '  ' }))
+      table.insert(msg, vim.inspect(o, { newline = '\n', indent = '  ' }))
     end
-    vim.api.nvim_out_write('\n')
   end
-
+  print(table.concat(msg, '\n'))
   return ...
 end
 

@@ -189,7 +189,7 @@ void do_ascii(exarg_T *eap)
                    transchar(c), buf1, buf2, cval, cval, cval);
     }
 
-    msg_multiline(IObuff, 0, true, false, &need_clear);
+    msg_multiline(cstr_as_string(IObuff), 0, true, false, &need_clear);
 
     off += (size_t)utf_ptr2len(data);  // needed for overlong ascii?
   }
@@ -224,7 +224,7 @@ void do_ascii(exarg_T *eap)
                    c, c, c);
     }
 
-    msg_multiline(IObuff, 0, true, false, &need_clear);
+    msg_multiline(cstr_as_string(IObuff), 0, true, false, &need_clear);
 
     off += (size_t)utf_ptr2len(data + off);  // needed for overlong ascii?
   }
