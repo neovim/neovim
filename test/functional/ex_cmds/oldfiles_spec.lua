@@ -38,7 +38,6 @@ describe(':oldfiles', function()
 
   it('shows most recently used files', function()
     local screen = Screen.new(100, 5)
-    screen:attach()
     screen._default_attr_ids = nil
     feed_command('edit testfile1')
     feed_command('edit testfile2')

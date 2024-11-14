@@ -17,7 +17,6 @@ describe('breakindent', function()
       [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue }, -- SignColumn
       [2] = { bold = true }, -- ModeMsg
     })
-    screen:attach()
     exec([[
       set listchars=eol:$
       let &signcolumn = 'yes'
@@ -68,7 +67,6 @@ describe('breakindent', function()
       setlocal breakindent
       call setline(1, "\t" .. join(range(100)))
     ]])
-    screen:attach()
 
     feed('v$')
     screen:expect([[

@@ -34,7 +34,6 @@ describe('startup defaults', function()
   describe(':filetype', function()
     local function expect_filetype(expected)
       local screen = Screen.new(50, 4)
-      screen:attach()
       command('filetype')
       screen:expect([[
         ^                                                  |
@@ -127,7 +126,6 @@ describe('startup defaults', function()
     it('vert/fold flags', function()
       clear()
       local screen = Screen.new(50, 5)
-      screen:attach()
       command('set laststatus=0')
       insert([[
         1

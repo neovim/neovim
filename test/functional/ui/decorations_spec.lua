@@ -20,7 +20,6 @@ describe('decorations providers', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 8)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = {bold=true, foreground=Screen.colors.Blue};
       [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red};
@@ -766,7 +765,6 @@ describe('extmark decorations', function()
   before_each( function()
     clear()
     screen = Screen.new(50, 15)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = {bold=true, foreground=Screen.colors.Blue};
       [2] = {foreground = Screen.colors.Brown};
@@ -2501,7 +2499,6 @@ describe('decorations: inline virtual text', function()
   before_each( function()
     clear()
     screen = Screen.new(50, 3)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = {bold=true, foreground=Screen.colors.Blue};
       [2] = {foreground = Screen.colors.Brown};
@@ -4121,7 +4118,6 @@ describe('decorations: virtual lines', function()
   before_each(function()
     clear()
     screen = Screen.new(50, 12)
-    screen:attach()
     screen:add_extra_attr_ids {
         [100] = { foreground = Screen.colors.Blue, background = Screen.colors.Yellow },
     }
@@ -5046,7 +5042,6 @@ describe('decorations: signs', function()
   before_each(function()
     clear()
     screen = Screen.new(50, 10)
-    screen:attach()
     screen:add_extra_attr_ids {
         [100] = { foreground = Screen.colors.Blue, background = Screen.colors.Yellow },
     }
@@ -5662,7 +5657,6 @@ describe('decorations: virt_text', function()
   before_each(function()
     clear()
     screen = Screen.new(50, 10)
-    screen:attach()
   end)
 
   it('avoids regression in #17638', function()
@@ -5737,7 +5731,6 @@ describe('decorations: window scoped', function()
   before_each(function()
     clear()
     screen = Screen.new(20, 10)
-    screen:attach()
     screen:add_extra_attr_ids {
       [100] = { special = Screen.colors.Red, undercurl = true },
       [101] = { url = 'https://example.com' },

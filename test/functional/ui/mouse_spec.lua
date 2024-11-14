@@ -21,7 +21,6 @@ describe('ui/mouse/input', function()
     command('set listchars=eol:$')
     command('setl listchars=nbsp:x')
     screen = Screen.new(25, 5)
-    screen:attach()
     screen:add_extra_attr_ids {
       [100] = {
         bold = true,

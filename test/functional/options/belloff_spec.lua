@@ -16,7 +16,6 @@ describe("'belloff'", function()
   before_each(function()
     clear()
     screen = Screen.new(42, 5)
-    screen:attach()
     screen:expect([[
       ^                                          |
       {1:~                                         }|*3

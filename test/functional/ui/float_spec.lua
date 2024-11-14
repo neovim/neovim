@@ -640,8 +640,7 @@ describe('float window', function()
   end)
 
   it('tp_curwin updated if external window is moved into split', function()
-    local screen = Screen.new(20, 7)
-    screen:attach { ext_multigrid = true }
+    local _ = Screen.new(20, 7, { ext_multigrid = true })
 
     command('tabnew')
     local external_win = api.nvim_open_win(0, true, {external = true, width = 5, height = 5})
@@ -658,8 +657,6 @@ describe('float window', function()
     command('tabnext')
     eq(2, fn.tabpagenr())
     neq(external_win, api.nvim_get_current_win())
-
-    screen:detach()
   end)
 
   it('no crash with relative="win" after %bdelete #30569', function()
@@ -1018,8 +1015,7 @@ describe('float window', function()
   local function with_ext_multigrid(multigrid)
     local screen, attrs
     before_each(function()
-      screen = Screen.new(40,7)
-      screen:attach {ext_multigrid=multigrid}
+      screen = Screen.new(40,7, {ext_multigrid=multigrid})
       attrs = {
         [0] = {bold=true, foreground=Screen.colors.Blue},
         [1] = {background = Screen.colors.LightMagenta},

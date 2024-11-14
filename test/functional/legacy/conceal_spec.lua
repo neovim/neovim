@@ -21,7 +21,6 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_two_windows()
   it('works', function()
     local screen = Screen.new(75, 12)
-    screen:attach()
     exec([[
       let lines = ["one one one one one", "two |hidden| here", "three |hidden| three"]
       call setline(1, lines)
@@ -385,7 +384,6 @@ describe('Conceal', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.LightRed },
     }
-    screen:attach()
     -- Check that cursorcolumn and colorcolumn don't get broken in presence of
     -- wrapped lines containing concealed text
     -- luacheck: push ignore 613 (trailing whitespace in a string)
@@ -434,7 +432,6 @@ describe('Conceal', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.WebGreen },
     }
-    screen:attach()
     exec([[
       call setline(1, 'one one one |hidden| one one one one one one one one')
       syntax match test /|hidden|/ conceal
@@ -463,7 +460,6 @@ describe('Conceal', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.WebGreen },
     }
-    screen:attach()
     exec([[
       call setline(1, 'one one one |hidden| one one one one one one one one')
       syntax match test /|hidden|/ conceal
@@ -489,7 +485,6 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_resize_term()
   it('resize editor', function()
     local screen = Screen.new(75, 6)
-    screen:attach()
     exec([[
       call setline(1, '`one` `two` `three` `four` `five`, the backticks should be concealed')
       setl cocu=n cole=3
@@ -513,7 +508,6 @@ describe('Conceal', function()
   -- oldtest: Test_conceal_linebreak()
   it('with linebreak', function()
     local screen = Screen.new(75, 8)
-    screen:attach()
     exec([[
       let &wrap = v:true
       let &conceallevel = 2
@@ -619,7 +613,6 @@ describe('Conceal', function()
 
   local function test_conceal_virtualedit_after_eol(wrap)
     local screen = Screen.new(60, 3)
-    screen:attach()
     api.nvim_set_option_value('wrap', wrap, {})
     exec([[
       call setline(1, 'abcdefgh|hidden|ijklmnpop')
@@ -670,7 +663,6 @@ describe('Conceal', function()
 
   local function test_conceal_virtualedit_after_eol_rightleft(wrap)
     local screen = Screen.new(60, 3)
-    screen:attach()
     api.nvim_set_option_value('wrap', wrap, {})
     exec([[
       call setline(1, 'abcdefgh|hidden|ijklmnpop')
@@ -724,7 +716,6 @@ describe('Conceal', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.LightRed },
     }
-    screen:attach()
     api.nvim_set_option_value('wrap', wrap, {})
     exec([[
       call setline(1, ['aaaaa口=口bbbbb口=口ccccc', 'foobar'])
@@ -777,7 +768,6 @@ describe('Conceal', function()
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.LightRed },
     }
-    screen:attach()
     exec([[
       call setline(1, 'aaaaaaaaaa口=口bbbbbbbbbb口=口cccccccccc')
       syntax match test /口=口/ conceal cchar=β

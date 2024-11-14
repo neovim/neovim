@@ -21,7 +21,6 @@ describe('terminal channel is closed and later released if', function()
   before_each(function()
     clear()
     screen = Screen.new()
-    screen:attach()
   end)
 
   it('opened by nvim_open_term() and deleted by :bdelete!', function()
@@ -122,7 +121,6 @@ end)
 it('chansend sends lines to terminal channel in proper order', function()
   clear({ args = { '--cmd', 'set laststatus=2' } })
   local screen = Screen.new(100, 20)
-  screen:attach()
   screen._default_attr_ids = nil
   local shells = is_os('win') and { 'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop' } or { 'sh' }
   for _, sh in ipairs(shells) do
@@ -149,7 +147,6 @@ describe('no crash when TermOpen autocommand', function()
     screen:set_default_attr_ids({
       [0] = { bold = true, foreground = Screen.colors.Blue },
     })
-    screen:attach()
   end)
 
   it('processes job exit event when using termopen()', function()
@@ -231,7 +228,6 @@ describe('nvim_open_term', function()
   before_each(function()
     clear()
     screen = Screen.new(8, 10)
-    screen:attach()
   end)
 
   it('with force_crlf=true converts newlines', function()

@@ -20,7 +20,6 @@ describe('argument list commands', function()
 
   it(':confirm quit with unedited files in arglist', function()
     local screen = Screen.new(60, 6)
-    screen:attach()
     command('set nomore')
     command('args a b c')
     feed(':confirm quit\n')

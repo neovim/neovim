@@ -11,7 +11,6 @@ describe('quickfix selection highlight', function()
     clear()
 
     screen = Screen.new(25, 10)
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true, foreground = Screen.colors.Blue },
       [2] = { reverse = true },

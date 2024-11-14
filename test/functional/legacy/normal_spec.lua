@@ -15,7 +15,6 @@ describe('normal', function()
   before_each(function()
     clear()
     screen = Screen.new(40, 19)
-    screen:attach()
   end)
 
   -- oldtest: Test_normal_j_below_botline()

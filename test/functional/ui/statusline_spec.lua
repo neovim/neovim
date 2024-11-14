@@ -27,7 +27,6 @@ for _, model in ipairs(mousemodels) do
       screen:add_extra_attr_ids {
         [100] = { bold = true, reverse = true, foreground = Screen.colors.Blue },
       }
-      screen:attach()
       command('set laststatus=2 mousemodel=' .. model)
       exec([=[
         function! MyClickFunc(minwid, clicks, button, mods)
@@ -254,7 +253,6 @@ describe('global statusline', function()
   before_each(function()
     clear()
     screen = Screen.new(60, 16)
-    screen:attach()
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Magenta1, bold = true },
     }
@@ -520,7 +518,6 @@ end)
 it('statusline is redrawn with :resize from <Cmd> mapping #19629', function()
   clear()
   local screen = Screen.new(40, 8)
-  screen:attach()
   exec([[
     set laststatus=2
     nnoremap <Up> <cmd>resize -1<CR>
@@ -545,7 +542,6 @@ end)
 it('showcmdloc=statusline does not show if statusline is too narrow', function()
   clear()
   local screen = Screen.new(40, 8)
-  screen:attach()
   command('set showcmd')
   command('set showcmdloc=statusline')
   command('1vsplit')
@@ -561,8 +557,7 @@ end)
 
 it('K_EVENT does not trigger a statusline redraw unnecessarily', function()
   clear()
-  local screen = Screen.new(40, 8)
-  screen:attach()
+  local _ = Screen.new(40, 8)
   -- does not redraw on vim.schedule (#17937)
   command([[
     set laststatus=2
@@ -594,7 +589,6 @@ end)
 it('statusline is redrawn on various state changes', function()
   clear()
   local screen = Screen.new(40, 4)
-  screen:attach()
 
   -- recording state change #22683
   command('set ls=2 stl=%{repeat(reg_recording(),5)}')
@@ -660,7 +654,6 @@ end)
 it('ruler is redrawn in cmdline with redrawstatus #22804', function()
   clear()
   local screen = Screen.new(40, 2)
-  screen:attach()
   command([[
     let g:n = 'initial value'
     set ls=1 ru ruf=%{g:n}
@@ -677,7 +670,6 @@ end)
 it('shows correct ruler in cmdline with no statusline', function()
   clear()
   local screen = Screen.new(30, 8)
-  screen:attach()
   -- Use long ruler to check 'ruler' with 'rulerformat' set has correct width.
   command [[
     set ruler rulerformat=%{winnr()}longlonglong ls=0 winwidth=10
@@ -725,7 +717,6 @@ end)
 it('uses "stl" and "stlnc" fillchars even if they are the same #19803', function()
   clear()
   local screen = Screen.new(53, 4)
-  screen:attach()
   command('hi clear StatusLine')
   command('hi clear StatusLineNC')
   command('vsplit')
@@ -742,7 +733,6 @@ end)
 it('showcmdloc=statusline works with vertical splits', function()
   clear()
   local screen = Screen.new(53, 4)
-  screen:attach()
   command('rightbelow vsplit')
   command('set showcmd showcmdloc=statusline')
   feed('1234')
@@ -766,7 +756,6 @@ end)
 it('keymap is shown with vertical splits #27269', function()
   clear()
   local screen = Screen.new(53, 4)
-  screen:attach()
   command('setlocal keymap=dvorak')
   command('rightbelow vsplit')
   screen:expect([[

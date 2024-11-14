@@ -17,7 +17,6 @@ describe('completion', function()
   before_each(function()
     clear()
     screen = Screen.new(60, 8)
-    screen:attach()
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Gray0, background = Screen.colors.Yellow },
       [101] = { background = Screen.colors.Gray0 },

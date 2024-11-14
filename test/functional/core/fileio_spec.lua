@@ -59,7 +59,6 @@ describe('fileio', function()
     local screen_nvim = spawn(argv)
     set_session(screen_nvim)
     local screen = Screen.new(70, 10)
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { foreground = Screen.colors.NvimDarkGrey4 },
       [2] = { background = Screen.colors.NvimDarkGrey1, foreground = Screen.colors.NvimLightGrey3 },
@@ -276,7 +275,6 @@ describe('fileio', function()
     write_file('Xtest-overwrite-forced', 'foobar')
     command('set nofixendofline')
     local screen = Screen.new(40, 4)
-    screen:attach()
     command('set shortmess-=F')
 
     command('e Xtest-overwrite-forced')

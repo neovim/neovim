@@ -109,7 +109,6 @@ describe('shell command :!', function()
   it('handles control codes', function()
     skip(is_os('win'), 'missing printf')
     local screen = Screen.new(50, 4)
-    screen:attach()
     -- Print TAB chars. #2958
     feed([[:!printf '1\t2\t3'<CR>]])
     screen:expect {
@@ -167,7 +166,6 @@ describe('shell command :!', function()
       write_file('bang_filter_spec/f2', 'f2')
       write_file('bang_filter_spec/f3', 'f3')
       screen = Screen.new(53, 10)
-      screen:attach()
     end)
 
     after_each(function()
@@ -241,7 +239,6 @@ describe('shell command :!', function()
     it('powershell supports literal strings', function()
       set_shell_powershell()
       local screen = Screen.new(45, 4)
-      screen:attach()
       feed_command([[!'Write-Output $a']])
       screen:expect([[
         :!'Write-Output $a'                          |

@@ -442,7 +442,6 @@ t3]])
 
   it('updates folds in all windows', function()
     local screen = Screen.new(60, 48)
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue },
       [2] = { bold = true, foreground = Screen.colors.Blue1 },
@@ -603,7 +602,6 @@ t3]])
 
   it("doesn't open folds in diff mode", function()
     local screen = Screen.new(60, 36)
-    screen:attach()
 
     parse('c')
     command(
@@ -660,7 +658,6 @@ t3]])
 
   it('does not extend closed fold with `o`/`O`', function()
     local screen = Screen.new(60, 24)
-    screen:attach()
 
     insert(test_text)
     parse('c')
@@ -727,7 +724,6 @@ t3]])
       [3] = { foreground = Screen.colors.Blue1, bold = true },
       [4] = { bold = true },
     })
-    screen:attach()
 
     insert([[
 # h1

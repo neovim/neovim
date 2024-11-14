@@ -30,8 +30,7 @@ describe('ui/ext_messages', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(25, 5)
-    screen:attach({ rgb = true, ext_messages = true, ext_popupmenu = true })
+    screen = Screen.new(25, 5, { rgb = true, ext_messages = true, ext_popupmenu = true })
     screen:add_extra_attr_ids {
       [100] = { undercurl = true, special = Screen.colors.Red },
     }
@@ -1120,8 +1119,7 @@ describe('ui/builtin messages', function()
   local screen
   before_each(function()
     clear()
-    screen = Screen.new(60, 7)
-    screen:attach({ rgb = true, ext_popupmenu = true })
+    screen = Screen.new(60, 7, { rgb = true, ext_popupmenu = true })
     screen:add_extra_attr_ids {
       [100] = { background = Screen.colors.LightRed },
       [101] = { background = Screen.colors.Grey20 },
@@ -1669,8 +1667,7 @@ describe('ui/ext_messages', function()
 
   before_each(function()
     clear { args_rm = { '--headless' }, args = { '--cmd', 'set shortmess-=I' } }
-    screen = Screen.new(80, 24)
-    screen:attach({ rgb = true, ext_messages = true, ext_popupmenu = true })
+    screen = Screen.new(80, 24, { rgb = true, ext_messages = true, ext_popupmenu = true })
   end)
 
   it('supports intro screen', function()
@@ -1895,8 +1892,7 @@ end)
 
 it('ui/ext_multigrid supports intro screen', function()
   clear { args_rm = { '--headless' }, args = { '--cmd', 'set shortmess-=I' } }
-  local screen = Screen.new(80, 24)
-  screen:attach({ rgb = true, ext_multigrid = true })
+  local screen = Screen.new(80, 24, { rgb = true, ext_multigrid = true })
 
   screen:expect {
     grid = [[
@@ -1971,7 +1967,6 @@ describe('ui/msg_puts_printf', function()
 
     clear({ env = { LANG = 'ja_JP.UTF-8' } })
     screen = Screen.new(25, 5)
-    screen:attach()
 
     if is_os('win') then
       if os.execute('chcp 932 > NUL 2>&1') ~= 0 then
@@ -2012,7 +2007,6 @@ describe('pager', function()
   before_each(function()
     clear()
     screen = Screen.new(35, 8)
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true, foreground = Screen.colors.Blue1 },
       [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
@@ -2808,8 +2802,7 @@ it('pager works in headless mode with UI attached', function()
   end)
 
   local child_session = n.connect(child_server)
-  local child_screen = Screen.new(40, 6)
-  child_screen:attach(nil, child_session)
+  local child_screen = Screen.new(40, 6, nil, child_session)
   child_screen._default_attr_ids = nil -- TODO: unskip with new color scheme
 
   child_session:notify('nvim_command', [[echo range(100)->join("\n")]])

@@ -411,7 +411,6 @@ describe(':terminal buffer', function()
 
   it('handles split UTF-8 sequences #16245', function()
     local screen = Screen.new(50, 7)
-    screen:attach()
     fn.termopen({ testprg('shell-test'), 'UTF-8' })
     screen:expect([[
       ^å                                                 |
@@ -425,7 +424,6 @@ describe(':terminal buffer', function()
 
   it("handles bell respecting 'belloff' and 'visualbell'", function()
     local screen = Screen.new(50, 7)
-    screen:attach()
     local chan = api.nvim_open_term(0, {})
 
     command('set belloff=')
@@ -700,7 +698,6 @@ describe('termopen()', function()
 
     local function test_term_colorterm(expected, opts)
       local screen = Screen.new(50, 4)
-      screen:attach()
       fn.termopen({
         nvim_prog,
         '-u',

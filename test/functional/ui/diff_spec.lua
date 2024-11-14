@@ -53,7 +53,6 @@ describe('Diff mode screen', function()
     feed('<c-w>w:diffthis<cr><c-w>w')
 
     screen = Screen.new(40, 16)
-    screen:attach()
   end)
 
   it('Add a line in beginning of file 2', function()
@@ -1172,7 +1171,6 @@ end)
 it('win_update redraws lines properly', function()
   local screen
   screen = Screen.new(50, 10)
-  screen:attach()
   screen:set_default_attr_ids({
     [1] = { bold = true, foreground = Screen.colors.Blue1 },
     [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
@@ -1250,7 +1248,6 @@ end)
 -- oldtest: Test_diff_rnu()
 it('diff updates line numbers below filler lines', function()
   local screen = Screen.new(40, 14)
-  screen:attach()
   exec([[
     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
     vnew
@@ -1310,7 +1307,6 @@ end)
 -- oldtest: Test_diff_with_scroll_and_change()
 it('Align the filler lines when changing text in diff mode', function()
   local screen = Screen.new(40, 20)
-  screen:attach()
   exec([[
     call setline(1, range(1, 15))
     vnew
@@ -1376,7 +1372,6 @@ end)
 
 it("diff mode doesn't restore invalid 'foldcolumn' value #21647", function()
   local screen = Screen.new(60, 6)
-  screen:attach()
   eq('0', api.nvim_get_option_value('foldcolumn', {}))
   command('diffsplit | bd')
   screen:expect([[
@@ -1389,7 +1384,6 @@ end)
 
 it("'relativenumber' doesn't draw beyond end of window in diff mode #29403", function()
   local screen = Screen.new(60, 12)
-  screen:attach()
   command('set relativenumber')
   feed('10aa<CR><Esc>gg')
   command('vnew')
@@ -1433,7 +1427,6 @@ it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', fun
   screen:add_extra_attr_ids {
     [100] = { foreground = Screen.colors.Blue, bold = true, background = Screen.colors.Red },
   }
-  screen:attach()
   exec([[
     call setline(1, ['a', 'b', "c\n", 'd', 'e', 'f', 'g'])
     vnew
@@ -1510,7 +1503,6 @@ end)
 -- oldtest: Test_diff_breakindent_after_filler()
 it("diff mode draws 'breakindent' correctly after filler lines", function()
   local screen = Screen.new(45, 8)
-  screen:attach()
   exec([[
     set laststatus=0 diffopt+=followwrap breakindent breakindentopt=min:0
     call setline(1, ['a', '  ' .. repeat('c', 50)])
@@ -1562,7 +1554,6 @@ it('diff mode overlapped diff blocks will be merged', function()
   ]])
 
   local screen = Screen.new(35, 20)
-  screen:attach()
   command('set winwidth=10 diffopt=filler,internal')
 
   command('args Xdifile1 Xdifile2 | vert all | windo diffthis')
@@ -2058,7 +2049,6 @@ end)
 -- oldtest: Test_diff_topline_noscroll()
 it('diff mode does not scroll with line("w0")', function()
   local screen = Screen.new(45, 20)
-  screen:attach()
   exec([[
     set scrolloff=5
     call setline(1, range(1,60))

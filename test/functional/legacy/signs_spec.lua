@@ -26,7 +26,6 @@ describe('signs', function()
   -- oldtest: Test_sign_cursor_position()
   it('are drawn correctly', function()
     local screen = Screen.new(75, 6)
-    screen:attach()
     exec([[
       call setline(1, [repeat('x', 75), 'mmmm', 'yyyy'])
       call cursor(2,1)

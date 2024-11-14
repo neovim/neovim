@@ -60,7 +60,6 @@ describe(':Man', function()
         c = { foreground = Screen.colors.Blue }, -- control chars
         eob = { bold = true, foreground = Screen.colors.Blue }, -- empty line '~'s
       })
-      screen:attach()
     end)
 
     it('clears backspaces from text and adds highlights', function()

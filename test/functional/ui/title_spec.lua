@@ -18,7 +18,6 @@ describe('title', function()
   before_each(function()
     clear()
     screen = Screen.new()
-    screen:attach()
   end)
 
   it('has correct default title with unnamed file', function()

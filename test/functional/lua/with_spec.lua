@@ -1029,7 +1029,6 @@ describe('vim._with', function()
         [1] = { bold = true, reverse = true },
         [2] = { bold = true, foreground = Screen.colors.Blue },
       }
-      screen:attach()
       exec_lua [[ vim._with({ silent = true }, function() vim.cmd.echo('"ccc"') end) ]]
       screen:expect [[
         ^                    |
@@ -1178,7 +1177,6 @@ describe('vim._with', function()
         [1] = { reverse = true },
         [2] = { bold = true, reverse = true },
       }
-      screen:attach()
       exec_lua [[
         vim.opt.ruler = true
         local lines = {}

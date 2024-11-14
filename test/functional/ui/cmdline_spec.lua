@@ -13,19 +13,12 @@ local eq = t.eq
 local is_os = t.is_os
 local api = n.api
 
--- TODO(bfredl): make Screen.new(cols, rows, {opts}) just work already
-local function new_screen(opt)
-  local screen = Screen.new(25, 5)
-  screen:attach(opt)
-  return screen
-end
-
 local function test_cmdline(linegrid)
   local screen
 
   before_each(function()
     clear()
-    screen = new_screen({ rgb = true, ext_cmdline = true, ext_linegrid = linegrid })
+    screen = Screen.new(25, 5, { rgb = true, ext_cmdline = true, ext_linegrid = linegrid })
   end)
 
   it('works', function()
@@ -849,7 +842,7 @@ describe('cmdline redraw', function()
   local screen
   before_each(function()
     clear()
-    screen = new_screen({ rgb = true })
+    screen = Screen.new(25, 5, { rgb = true })
   end)
 
   it('with timer', function()
@@ -1014,7 +1007,7 @@ describe('statusline is redrawn on entering cmdline', function()
 
   before_each(function()
     clear()
-    screen = new_screen()
+    screen = Screen.new(25, 5)
     command('set laststatus=2')
   end)
 
@@ -1186,7 +1179,6 @@ end)
 it('tabline is not redrawn in Ex mode #24122', function()
   clear()
   local screen = Screen.new(60, 5)
-  screen:attach()
 
   exec([[
     set showtabline=2
@@ -1226,7 +1218,6 @@ describe('cmdline height', function()
 
   it('does not crash resized screen #14263', function()
     local screen = Screen.new(25, 10)
-    screen:attach()
     command('set cmdheight=9999')
     screen:try_resize(25, 5)
     assert_alive()
@@ -1247,7 +1238,6 @@ describe('cmdheight=0', function()
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
-    screen:attach()
   end)
 
   it('with redrawdebug=invalid resize -1', function()
@@ -1514,7 +1504,7 @@ describe('cmdheight=0', function()
 
   it('with silent! at startup', function()
     clear { args = { '-c', 'set cmdheight=0', '-c', 'autocmd VimEnter * silent! call Foo()' } }
-    screen:attach()
+    screen = Screen.new(25, 5)
     -- doesn't crash while not displaying silent! error message
     screen:expect {
       grid = [[
@@ -1526,7 +1516,7 @@ describe('cmdheight=0', function()
 
   it('with multigrid', function()
     clear { args = { '--cmd', 'set cmdheight=0' } }
-    screen:attach { ext_multigrid = true }
+    screen = Screen.new(25, 5, { ext_multigrid = true })
     api.nvim_buf_set_lines(0, 0, -1, true, { 'p' })
     screen:expect {
       grid = [[
@@ -1689,7 +1679,7 @@ describe('cmdheight=0', function()
 
   it('can be resized with external messages', function()
     clear()
-    screen = new_screen({ rgb = true, ext_messages = true })
+    screen = Screen.new(25, 5, { rgb = true, ext_messages = true })
     command('set laststatus=2 mouse=a')
     command('resize -1')
     screen:expect([[

@@ -11,7 +11,6 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
 
   it('is working', function()
     local screen = Screen.new(40, 5)
-    screen:attach()
 
     command('highlight MyGroup1 term=bold ctermbg=red guibg=red')
     command('highlight MyGroup2 term=italic ctermbg=green guibg=green')

@@ -114,7 +114,6 @@ describe('execute()', function()
 
   it('does not corrupt the command display #5422', function()
     local screen = Screen.new(70, 7)
-    screen:attach()
     feed(':echo execute("hi ErrorMsg")<CR>')
     screen:expect(
       [[
@@ -136,7 +135,6 @@ describe('execute()', function()
 
   it('places cursor correctly #6035', function()
     local screen = Screen.new(40, 6)
-    screen:attach()
     source([=[
       " test 1: non-silenced output goes as usual
       function! Test1()
@@ -263,7 +261,6 @@ describe('execute()', function()
   describe('{silent} argument', function()
     it('captures & displays output for ""', function()
       local screen = Screen.new(40, 5)
-      screen:attach()
       command('let g:mes = execute("echon 42", "")')
       screen:expect([[
       ^                                        |
@@ -287,7 +284,6 @@ describe('execute()', function()
 
     it('captures but does not display output for "silent"', function()
       local screen = Screen.new(40, 5)
-      screen:attach()
       command('let g:mes = execute("echon 42")')
       screen:expect([[
       ^                                        |

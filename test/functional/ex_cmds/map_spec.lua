@@ -103,7 +103,6 @@ describe('Screen', function()
   before_each(function()
     clear()
     screen = Screen.new(20, 5)
-    screen:attach()
   end)
 
   it('cursor is restored after :map <expr> which calls input()', function()

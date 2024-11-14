@@ -637,7 +637,6 @@ describe('lua stdlib', function()
     matches('big failure\nvery async', remove_trace(eval('v:errmsg')))
 
     local screen = Screen.new(60, 5)
-    screen:attach()
     screen:expect {
       grid = [[
       ^                                                            |
@@ -1403,7 +1402,6 @@ describe('lua stdlib', function()
     end)
 
     local screen = Screen.new(50, 7)
-    screen:attach()
     exec_lua([[
       timer = vim.uv.new_timer()
       timer:start(20, 0, function ()
@@ -2130,7 +2128,6 @@ describe('lua stdlib', function()
     eq({ 1, 5 }, api.nvim_win_get_cursor(0))
 
     local screen = Screen.new(60, 3)
-    screen:attach()
     eq(1, eval('v:hlsearch'))
     screen:expect {
       grid = [[
@@ -3401,7 +3398,6 @@ stack traceback:
 
     it('callback is not invoked recursively #30752', function()
       local screen = Screen.new(60, 10)
-      screen:attach()
       exec_lua([[
         vim.on_key(function(key, typed)
           vim.api.nvim_echo({
@@ -3779,7 +3775,6 @@ stack traceback:
 
     it('fails in fast callbacks #26122', function()
       local screen = Screen.new(80, 10)
-      screen:attach()
       exec_lua([[
         local timer = vim.uv.new_timer()
         timer:start(0, 0, function()
@@ -3797,7 +3792,6 @@ stack traceback:
 
   it('vim.notify_once', function()
     local screen = Screen.new(60, 5)
-    screen:attach()
     screen:expect {
       grid = [[
       ^                                                            |
@@ -3994,7 +3988,6 @@ stack traceback:
     it('updates ruler if cursor moved', function()
       -- Fixed for win_execute in vim-patch:8.1.2124, but should've applied to nvim_win_call too!
       local screen = Screen.new(30, 5)
-      screen:attach()
       exec_lua [[
         _G.api = vim.api
         vim.opt.ruler = true
@@ -4137,7 +4130,6 @@ stack traceback:
 
   it('vim.lua_omnifunc', function()
     local screen = Screen.new(60, 5)
-    screen:attach()
     command [[ set omnifunc=v:lua.vim.lua_omnifunc ]]
 
     -- Note: the implementation is shared with lua command line completion.

@@ -17,7 +17,6 @@ describe('messages', function()
   -- oldtest: Test_warning_scroll()
   it('a warning causes scrolling if and only if it has a stacktrace', function()
     screen = Screen.new(75, 6)
-    screen:attach()
 
     -- When the warning comes from a script, messages are scrolled so that the
     -- stacktrace is visible.
@@ -45,7 +44,6 @@ describe('messages', function()
   -- oldtest: Test_message_not_cleared_after_mode()
   it('clearing mode does not remove message', function()
     screen = Screen.new(60, 10)
-    screen:attach()
     exec([[
       nmap <silent> gx :call DebugSilent('normal')<CR>
       vmap <silent> gx :call DebugSilent('visual')<CR>
@@ -101,7 +99,6 @@ describe('messages', function()
         [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
         [2] = { foreground = Screen.colors.Brown }, -- LineNr
       })
-      screen:attach()
 
       command('call setline(1, range(1, 100))')
 
@@ -394,7 +391,6 @@ describe('messages', function()
     -- oldtest: Test_echo_verbose_system()
     it('verbose message before echo command', function()
       screen = Screen.new(60, 10)
-      screen:attach()
 
       command('cd ' .. nvim_dir)
       api.nvim_set_option_value('shell', './shell-test', {})
@@ -494,7 +490,6 @@ describe('messages', function()
     -- oldtest: Test_quit_long_message()
     it('with control characters can be quit vim-patch:8.2.1844', function()
       screen = Screen.new(40, 10)
-      screen:attach()
 
       feed([[:echom range(9999)->join("\x01")<CR>]])
       screen:expect([[
@@ -521,7 +516,6 @@ describe('messages', function()
   describe('mode is cleared when', function()
     before_each(function()
       screen = Screen.new(40, 6)
-      screen:attach()
     end)
 
     -- oldtest: Test_mode_message_at_leaving_insert_by_ctrl_c()
@@ -591,7 +585,6 @@ describe('messages', function()
   -- oldtest: Test_ask_yesno()
   it('y/n prompt works', function()
     screen = Screen.new(75, 6)
-    screen:attach()
     command('set noincsearch nohlsearch inccommand=')
     command('call setline(1, range(1, 2))')
 
@@ -644,7 +637,6 @@ describe('messages', function()
   -- oldtest: Test_fileinfo_tabpage_cmdheight()
   it("fileinfo works when 'cmdheight' has just decreased", function()
     screen = Screen.new(40, 6)
-    screen:attach()
 
     exec([[
       set shortmess-=o
@@ -673,7 +665,6 @@ describe('messages', function()
   -- oldtest: Test_fileinfo_after_echo()
   it('fileinfo does not overwrite echo message vim-patch:8.2.4156', function()
     screen = Screen.new(40, 6)
-    screen:attach()
 
     exec([[
       set shortmess-=F

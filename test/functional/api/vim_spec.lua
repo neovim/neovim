@@ -366,7 +366,6 @@ describe('API', function()
 
     it('displays messages when opts.output=false', function()
       local screen = Screen.new(40, 8)
-      screen:attach()
       api.nvim_exec2("echo 'hello'", { output = false })
       screen:expect {
         grid = [[
@@ -379,7 +378,6 @@ describe('API', function()
 
     it("doesn't display messages when output=true", function()
       local screen = Screen.new(40, 6)
-      screen:attach()
       api.nvim_exec2("echo 'hello'", { output = true })
       screen:expect {
         grid = [[
@@ -1278,7 +1276,6 @@ describe('API', function()
     end)
     it('pasting with empty last chunk in Cmdline mode', function()
       local screen = Screen.new(20, 4)
-      screen:attach()
       feed(':')
       api.nvim_paste('Foo', true, 1)
       api.nvim_paste('', true, 3)
@@ -1290,7 +1287,6 @@ describe('API', function()
     end)
     it('pasting text with control characters in Cmdline mode', function()
       local screen = Screen.new(20, 4)
-      screen:attach()
       feed(':')
       api.nvim_paste('normal! \023\022\006\027', true, -1)
       screen:expect([[
@@ -1675,7 +1671,6 @@ describe('API', function()
       eq({ 1, 5 }, api.nvim_win_get_cursor(0))
 
       local screen = Screen.new(60, 3)
-      screen:attach()
       eq(1, eval('v:hlsearch'))
       screen:expect {
         grid = [[
@@ -2130,7 +2125,6 @@ describe('API', function()
 
     it('does not complete ("interrupt") `d` #3732', function()
       local screen = Screen.new(20, 4)
-      screen:attach()
       command('set listchars=eol:$')
       command('set list')
       feed('ia<cr>b<cr>c<cr><Esc>kkk')
@@ -2391,7 +2385,6 @@ describe('API', function()
 
     before_each(function()
       screen = Screen.new(40, 8)
-      screen:attach()
     end)
 
     it('prints long messages correctly #20534', function()
@@ -2461,7 +2454,6 @@ describe('API', function()
 
     before_each(function()
       screen = Screen.new(40, 8)
-      screen:attach()
     end)
 
     it('can show one line', function()
@@ -2543,7 +2535,6 @@ describe('API', function()
 
     before_each(function()
       screen = Screen.new(40, 8)
-      screen:attach()
     end)
 
     it('shows only one return prompt after all lines are shown', function()
@@ -3100,8 +3091,7 @@ describe('API', function()
       eq({}, api.nvim_list_uis())
     end)
     it('returns attached UIs', function()
-      local screen = Screen.new(20, 4)
-      screen:attach({ override = true })
+      local screen = Screen.new(20, 4, { override = true })
       local expected = {
         {
           chan = 1,
@@ -3129,8 +3119,7 @@ describe('API', function()
       eq(expected, api.nvim_list_uis())
 
       screen:detach()
-      screen = Screen.new(44, 99)
-      screen:attach({ rgb = false })
+      screen = Screen.new(44, 99, { rgb = false }) -- luacheck: ignore
       expected[1].rgb = false
       expected[1].override = false
       expected[1].width = 44
@@ -3165,7 +3154,6 @@ describe('API', function()
       eq(1, api.nvim_get_current_buf())
 
       local screen = Screen.new(20, 4)
-      screen:attach()
       api.nvim_buf_set_lines(2, 0, -1, true, { 'some text' })
       api.nvim_set_current_buf(2)
       screen:expect(
@@ -3229,7 +3217,6 @@ describe('API', function()
       eq(1, api.nvim_get_current_buf())
 
       local screen = Screen.new(20, 4)
-      screen:attach()
 
       --
       -- Editing a scratch-buffer does NOT change its properties.
@@ -3591,7 +3578,6 @@ describe('API', function()
 
     before_each(function()
       screen = Screen.new(40, 8)
-      screen:attach()
       command('highlight Statement gui=bold guifg=Brown')
       command('highlight Special guifg=SlateBlue')
     end)
@@ -3654,7 +3640,6 @@ describe('API', function()
 
     before_each(function()
       screen = Screen.new(100, 35)
-      screen:attach()
       screen:add_extra_attr_ids {
         [100] = { background = tonumber('0xffff40'), bg_indexed = true },
         [101] = {
@@ -3933,7 +3918,6 @@ describe('API', function()
       command('set readonly')
       eq({ str = '[RO]', width = 4 }, api.nvim_eval_statusline('%r', { maxwidth = 5 }))
       local screen = Screen.new(80, 24)
-      screen:attach()
       command('set showcmd')
       feed('1234')
       screen:expect({ any = '1234' })
@@ -4591,7 +4575,6 @@ describe('API', function()
     end)
     it('does not interfere with printing line in Ex mode #19400', function()
       local screen = Screen.new(60, 7)
-      screen:attach()
       insert([[
         foo
         bar]])
@@ -5048,7 +5031,6 @@ describe('API', function()
 
     it("doesn't display messages when output=true", function()
       local screen = Screen.new(40, 6)
-      screen:attach()
       api.nvim_cmd({ cmd = 'echo', args = { [['hello']] } }, { output = true })
       screen:expect {
         grid = [[
@@ -5131,7 +5113,6 @@ describe('API', function()
 
   it('nvim__redraw', function()
     local screen = Screen.new(60, 5)
-    screen:attach()
     eq('at least one action required', pcall_err(api.nvim__redraw, {}))
     eq('at least one action required', pcall_err(api.nvim__redraw, { buf = 0 }))
     eq('at least one action required', pcall_err(api.nvim__redraw, { win = 0 }))

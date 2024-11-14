@@ -129,8 +129,6 @@ describe('eval-API', function()
   end)
 
   it('use buffer numbers and windows ids as handles', function()
-    local screen = Screen.new(40, 8)
-    screen:attach()
     local bnr = eval("bufnr('')")
     local bhnd = eval('nvim_get_current_buf()')
     local wid = eval('win_getid()')
@@ -192,7 +190,6 @@ describe('eval-API', function()
 
   it('are highlighted by vim.vim syntax file', function()
     local screen = Screen.new(40, 8)
-    screen:attach()
 
     command('set ft=vim')
     command('set rtp^=build/runtime/')

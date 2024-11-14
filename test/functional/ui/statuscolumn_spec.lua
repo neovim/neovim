@@ -20,7 +20,6 @@ describe('statuscolumn', function()
   before_each(function()
     clear('--cmd', 'set number nuw=1 | call setline(1, repeat(["aaaaa"], 16)) | norm GM')
     screen = Screen.new()
-    screen:attach()
     exec_lua('ns = vim.api.nvim_create_namespace("")')
   end)
 

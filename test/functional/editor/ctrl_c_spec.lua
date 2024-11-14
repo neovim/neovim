@@ -13,7 +13,6 @@ describe('CTRL-C (mapped)', function()
   before_each(function()
     clear()
     screen = Screen.new(52, 6)
-    screen:attach()
   end)
 
   it('interrupts :global', function()

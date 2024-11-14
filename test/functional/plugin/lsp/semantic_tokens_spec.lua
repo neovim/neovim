@@ -28,7 +28,6 @@ describe('semantic token highlighting', function()
   local screen --- @type test.functional.ui.screen
   before_each(function()
     screen = Screen.new(40, 16)
-    screen:attach()
     screen:set_default_attr_ids {
       [1] = { bold = true, foreground = Screen.colors.Blue1 },
       [2] = { foreground = Screen.colors.DarkCyan },

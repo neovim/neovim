@@ -17,7 +17,7 @@ describe(':terminal highlight', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(50, 7)
+    screen = Screen.new(50, 7, { rgb = false })
     screen:set_default_attr_ids({
       [1] = { foreground = 45 },
       [2] = { background = 46 },
@@ -33,7 +33,6 @@ describe(':terminal highlight', function()
       [12] = { bold = true, underdouble = true },
       [13] = { italic = true, undercurl = true },
     })
-    screen:attach({ rgb = false })
     command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
@@ -130,7 +129,7 @@ end)
 
 it(':terminal highlight has lower precedence than editor #9964', function()
   clear()
-  local screen = Screen.new(30, 4)
+  local screen = Screen.new(30, 4, { rgb = true })
   screen:set_default_attr_ids({
     -- "Normal" highlight emitted by the child nvim process.
     N_child = {
@@ -150,7 +149,6 @@ it(':terminal highlight has lower precedence than editor #9964', function()
       bg_indexed = true,
     },
   })
-  screen:attach({ rgb = true })
   -- Child nvim process in :terminal (with cterm colors).
   fn.termopen({
     nvim_prog_abs(),
@@ -202,7 +200,6 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
     [4] = { background = Screen.colors.Grey90, reverse = true },
     [5] = { background = Screen.colors.Red },
   })
-  screen:attach()
   command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
   screen:expect([[
     ^tty ready                                         |
@@ -308,7 +305,6 @@ describe(':terminal highlight forwarding', function()
       [3] = { { fg_indexed = true, foreground = tonumber('0xe0e000') }, { foreground = 3 } },
       [4] = { { foreground = tonumber('0xff8000') }, {} },
     })
-    screen:attach()
     command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
@@ -343,7 +339,7 @@ describe(':terminal highlight with custom palette', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(50, 7)
+    screen = Screen.new(50, 7, { rgb = true })
     screen:set_default_attr_ids({
       [1] = { foreground = tonumber('0x123456') }, -- no fg_indexed when overridden
       [2] = { foreground = 12 },
@@ -354,7 +350,6 @@ describe(':terminal highlight with custom palette', function()
       [8] = { background = 11 },
       [9] = { bold = true },
     })
-    screen:attach({ rgb = true })
     api.nvim_set_var('terminal_color_3', '#123456')
     command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
     feed('i')
@@ -389,7 +384,6 @@ describe(':terminal', function()
     screen:add_extra_attr_ids {
       [100] = { url = 'https://example.com' },
     }
-    screen:attach()
     local chan = api.nvim_open_term(0, {})
     api.nvim_chan_send(chan, '\027]8;;https://example.com\027\\Example\027]8;;\027\\')
     screen:expect({

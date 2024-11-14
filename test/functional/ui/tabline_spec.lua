@@ -13,8 +13,7 @@ describe('ui/ext_tabline', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(25, 5)
-    screen:attach({ rgb = true, ext_tabline = true })
+    screen = Screen.new(25, 5, { rgb = true, ext_tabline = true })
     function screen:_handle_tabline_update(curtab, tabs, curbuf, buffers)
       event_curtab = curtab
       event_tabs = tabs
@@ -100,7 +99,6 @@ describe('tabline', function()
   before_each(function()
     clear()
     screen = Screen.new(42, 5)
-    screen:attach()
   end)
 
   it('redraws when tabline option is set', function()

@@ -11,8 +11,7 @@ describe('ui mode_change event', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(25, 4)
-    screen:attach({ rgb = true })
+    screen = Screen.new(25, 4, { rgb = true })
   end)
 
   it('works in normal mode', function()

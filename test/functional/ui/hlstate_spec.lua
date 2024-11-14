@@ -17,12 +17,7 @@ describe('ext_hlstate detailed highlights', function()
     clear()
     command('syntax on')
     command('hi VertSplit gui=reverse')
-    screen = Screen.new(40, 8)
-    screen:attach({ ext_hlstate = true })
-  end)
-
-  after_each(function()
-    screen:detach()
+    screen = Screen.new(40, 8, { ext_hlstate = true })
   end)
 
   it('work with combined UI and syntax highlights', function()

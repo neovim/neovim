@@ -112,7 +112,7 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
   api.nvim_command('highlight StatusLineTerm ctermbg=2 ctermfg=0')
   api.nvim_command('highlight StatusLineTermNC ctermbg=2 ctermfg=8')
 
-  local screen = Screen.new(cols, 7 + extra_rows)
+  local screen = Screen.new(cols, 7 + extra_rows, screen_opts or { rgb = false })
   screen:set_default_attr_ids({
     [1] = { reverse = true }, -- focused cursor
     [2] = { background = 11 }, -- unfocused cursor
@@ -133,8 +133,6 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
     [17] = { background = 2, foreground = 0 }, -- StatusLineTerm
     [18] = { background = 2, foreground = 8 }, -- StatusLineTermNC
   })
-
-  screen:attach(screen_opts or { rgb = false })
 
   api.nvim_command('enew')
   api.nvim_call_function('termopen', { cmd, env and { env = env } or nil })

@@ -21,8 +21,7 @@ describe(':terminal', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(50, 4)
-    screen:attach({ rgb = false })
+    screen = Screen.new(50, 4, { rgb = false })
     screen._default_attr_ids = nil
   end)
 
@@ -169,8 +168,7 @@ local function test_terminal_with_fake_shell(backslash)
 
   before_each(function()
     clear()
-    screen = Screen.new(50, 4)
-    screen:attach({ rgb = false })
+    screen = Screen.new(50, 4, { rgb = false })
     screen._default_attr_ids = nil
     api.nvim_set_option_value('shell', shell_path, {})
     api.nvim_set_option_value('shellcmdflag', 'EXE', {})

@@ -18,7 +18,6 @@ describe('vim.hl.range', function()
     screen:add_extra_attr_ids({
       [100] = { foreground = Screen.colors.Blue, background = Screen.colors.Yellow, bold = true },
     })
-    screen:attach()
     api.nvim_set_option_value('list', true, {})
     api.nvim_set_option_value('listchars', 'eol:$', {})
     api.nvim_buf_set_lines(0, 0, -1, true, {

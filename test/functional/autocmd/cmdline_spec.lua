@@ -60,7 +60,6 @@ describe('cmdline autocommands', function()
   it('handles errors correctly', function()
     clear()
     local screen = Screen.new(72, 8)
-    screen:attach()
     command("autocmd CmdlineEnter * echoerr 'FAIL'")
     command("autocmd CmdlineLeave * echoerr 'very error'")
 

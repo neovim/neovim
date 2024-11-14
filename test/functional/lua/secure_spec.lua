@@ -39,7 +39,6 @@ describe('vim.secure', function()
 
     it('works', function()
       local screen = Screen.new(80, 8)
-      screen:attach()
       screen:set_default_attr_ids({
         [1] = { bold = true, foreground = Screen.colors.Blue1 },
         [2] = { bold = true, reverse = true },

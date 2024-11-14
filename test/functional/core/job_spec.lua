@@ -498,7 +498,6 @@ describe('jobs', function()
 
   it('can redefine callbacks being used by a job', function()
     local screen = Screen.new()
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true, foreground = Screen.colors.Blue },
     })
@@ -524,7 +523,6 @@ describe('jobs', function()
 
   it('requires funcrefs for script-local (s:) functions', function()
     local screen = Screen.new(60, 5)
-    screen:attach()
     screen:set_default_attr_ids({
       [1] = { bold = true, foreground = Screen.colors.Blue1 },
       [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
@@ -910,7 +908,6 @@ describe('jobs', function()
 
     it('hides cursor and flushes messages before blocking', function()
       local screen = Screen.new(50, 6)
-      screen:attach()
       command([[let g:id = jobstart([v:progpath, '--clean', '--headless'])]])
       source([[
         func PrintAndWait()
@@ -1223,7 +1220,6 @@ describe('pty process teardown', function()
   before_each(function()
     clear()
     screen = Screen.new(30, 6)
-    screen:attach()
     screen:expect([[
       ^                              |
       {1:~                             }|*4
