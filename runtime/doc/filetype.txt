@@ -787,6 +787,12 @@ To enable folding use this: >
 	let g:markdown_recommended_style = 0
 
 
+ORG							*ft-org-plugin*
+
+To enable folding use this: >
+	let g:org_folding = 1
+<
+
 PDF							*ft-pdf-plugin*
 
 Two maps, <C-]> and <C-T>, are provided to simulate a tag stack for navigating
