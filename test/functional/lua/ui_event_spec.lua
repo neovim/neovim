@@ -237,20 +237,21 @@ describe('vim.ui_attach', function()
     })
   end)
 
-  it('aborts :function on error with ext_messages', function()
+  it('msg_show in fast context', function()
     exec_lua([[
     vim.ui_attach(ns, { ext_messages = true }, function(event, _, content)
       if event == "msg_show" then
-        -- "fast-api" does not prevent aborting :function
         vim.api.nvim_get_runtime_file("foo", false)
         -- non-"fast-api" is not allowed in msg_show callback and should be scheduled
         local _, err = pcall(vim.api.nvim_buf_set_lines, 0, -2, -1, false, { content[1][2] })
+        pcall(vim.api.nvim__redraw, { flush = true })
         vim.schedule(function()
           vim.api.nvim_buf_set_lines(0, -2, -1, false, { content[1][2], err })
         end)
       end
     end)
     ]])
+    -- "fast-api" does not prevent aborting :function
     feed(':func Foo()<cr>bar<cr>endf<cr>:func Foo()<cr>')
     screen:expect({
       grid = [[
@@ -264,6 +265,23 @@ describe('vim.ui_attach', function()
         {
           content = { { 'E122: Function Foo already exists, add ! to replace it', 9, 7 } },
           kind = 'emsg',
+        },
+      },
+    })
+    -- No fast context for prompt message kinds
+    feed(':%s/Function/Replacement/c<cr>')
+    screen:expect({
+      grid = [[
+        ^E122: {10:Function} Foo already exists, add !|
+         to replace it                          |
+        replace with Replacement (y/n/a/q/l/^E/^|
+        Y)?                                     |
+        {1:~                                       }|
+      ]],
+      messages = {
+        {
+          content = { { 'replace with Replacement (y/n/a/q/l/^E/^Y)?', 6, 19 } },
+          kind = 'confirm_sub',
         },
       },
     })

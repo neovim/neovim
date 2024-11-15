@@ -717,6 +717,13 @@ void ui_call_event(char *name, bool fast, Array args)
 {
   bool handled = false;
   UIEventCallback *event_cb;
+
+  // Prompt messages should be shown immediately so must be safe
+  if (strcmp(name, "msg_show") == 0) {
+    char *kind = args.items[0].data.string.data;
+    fast = !kind || (strncmp(kind, "confirm", 7) != 0 && strcmp(kind, "return_prompt") != 0);
+  }
+
   map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
     Error err = ERROR_INIT;
     uint32_t ns_id = ui_event_ns_id;

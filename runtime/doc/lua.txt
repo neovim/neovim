@@ -1083,7 +1083,9 @@ vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
     |ui-popupmenu| and the sections below for event format for respective
     events.
 
-    Callbacks for `msg_show` events are executed in |api-fast| context.
+    Callbacks for `msg_show` events are executed in |api-fast| context unless
+    Nvim will wait for input, in which case messages should be shown
+    immediately.
 
     Excessive errors inside the callback will result in forced detachment.
 
