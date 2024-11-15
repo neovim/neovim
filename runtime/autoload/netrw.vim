@@ -35,6 +35,7 @@
 "   2024 Nov 07 by Vim Project: use keeppatterns to prevent polluting the search history
 "   2024 Nov 07 by Vim Project: fix a few issues with netrw tree listing (#15996)
 "   2024 Nov 10 by Vim Project: directory symlink not resolved in tree view (#16020)
+"   2024 Nov 14 by Vim Project: small fixes to netrw#BrowseX (#16056)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -4999,7 +5000,7 @@ if has('unix')
     let args = a:args
     exe 'silent !' ..
       \ ((args =~? '\v<\f+\.(exe|com|bat|cmd)>') ?
-      \ 'cmd.exe /c start "" /b ' .. args :
+      \ 'cmd.exe /c start /b ' .. args :
       \ 'nohup ' .. args .. ' ' .. s:redir() .. ' &')
       \ | redraw!
   endfun
@@ -5078,10 +5079,7 @@ endif
 "              given filename; typically this means given their extension.
 "              0=local, 1=remote
 fun! netrw#BrowseX(fname,remote)
-  if a:remote == 0 && isdirectory(a:fname)
-   " if its really just a local directory, then do a "gf" instead
-   exe "e ".a:fname
-  elseif a:remote == 1 && a:fname !~ '^https\=:' && a:fname =~ '/$'
+  if a:remote == 1 && a:fname !~ '^https\=:' && a:fname =~ '/$'
    " remote directory, not a webpage access, looks like an attempt to do a directory listing
    norm! gf
   endif
