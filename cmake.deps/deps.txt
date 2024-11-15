@@ -56,7 +56,7 @@ TREESITTER_SHA256 61a21f5d83cfe256472bfa941123a6941fb45073784ee7ec0bc32fdd52f7a4
 WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v25.0.2.tar.gz
 WASMTIME_SHA256 6d1c17c756b83f29f629963228e5fa208ba9d6578421ba2cd07132b6a120accb
 
-UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.79.0.tar.gz
-UNCRUSTIFY_SHA256 e7afaeabf636b7f0ce4e3e9747b95f7bd939613a8db49579755dddf44fedca5f
+UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.80.0.tar.gz
+UNCRUSTIFY_SHA256 8df1a4fb9aeb6c59d21fd328bb8fd34be7a11aef24310636df5cadca0900c729
 LUA_DEV_DEPS_URL https://github.com/neovim/deps/raw/5a1f71cceb24990a0b15fd9a472a5f549f019248/opt/lua-dev-deps.tar.gz
 LUA_DEV_DEPS_SHA256 27db2495f5eddc7fc191701ec9b291486853530c6125609d3197d03481e8d5a2
