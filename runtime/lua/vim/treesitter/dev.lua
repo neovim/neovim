@@ -530,12 +530,19 @@ function M.inspect_tree(opts)
   api.nvim_create_autocmd({ 'BufHidden', 'BufUnload', 'QuitPre' }, {
     group = group,
     buffer = buf,
-    once = true,
     callback = function()
+      -- don't close inpector window if source buffer
+      -- has more than one open window
+      if #vim.fn.win_findbuf(buf) > 1 then
+        return
+      end
+
       -- close all tree windows
       for _, window in pairs(vim.fn.win_findbuf(b)) do
         close_win(window)
       end
+
+      return true
     end,
   })
 end
