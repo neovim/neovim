@@ -626,6 +626,8 @@ call <SID>AddOption("terse", gettext("add 's' flag in 'shortmess' (don't show se
 call <SID>BinOptionG("terse", &terse)
 call <SID>AddOption("shortmess", gettext("list of flags to make messages shorter"))
 call <SID>OptionG("shm", &shm)
+call <SID>AddOption("msghistory", gettext("how many messages are remembered"))
+call append("$", " \tset mhi=" . &mhi)
 call <SID>AddOption("showcmd", gettext("show (partial) command keys in location given by 'showcmdloc'"))
 let &sc = s:old_sc
 call <SID>BinOptionG("sc", &sc)

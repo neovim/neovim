@@ -2874,6 +2874,13 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
       return e_invarg;
     }
     break;
+  case kOptMsghistory:
+    if (value < 0) {
+      return e_positive;
+    } else if (value > 10000) {
+      return e_invarg;
+    }
+    break;
   case kOptPyxversion:
     if (value == 0) {
       *newval = 3;

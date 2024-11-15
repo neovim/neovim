@@ -3197,7 +3197,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	A history of ":" commands, and a history of previous search patterns
 	is remembered.  This option decides how many entries may be stored in
-	each of these histories (see |cmdline-editing|).
+	each of these histories (see |cmdline-editing| and 'msghistory' for
+	the number of messages to remember).
 	The maximum value is 10000.
 
 				*'hlsearch'* *'hls'* *'nohlsearch'* *'nohls'*
@@ -4288,6 +4289,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Defines the maximum time in msec between two mouse clicks for the
 	second click to be recognized as a multi click.
+
+						*'msghistory'* *'mhi'*
+'msghistory' 'mhi'	number	(default 500)
+			global
+	Determines how many entries are remembered in the |:messages| history.
+	The maximum value is 10000.
 
 						*'nrformats'* *'nf'*
 'nrformats' 'nf'	string	(default "bin,hex")

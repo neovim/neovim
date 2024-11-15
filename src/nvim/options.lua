@@ -3962,7 +3962,8 @@ return {
       desc = [=[
         A history of ":" commands, and a history of previous search patterns
         is remembered.  This option decides how many entries may be stored in
-        each of these histories (see |cmdline-editing|).
+        each of these histories (see |cmdline-editing| and 'msghistory' for
+        the number of messages to remember).
         The maximum value is 10000.
       ]=],
       full_name = 'history',
@@ -5756,6 +5757,19 @@ return {
       short_desc = N_('max time between mouse double-click'),
       type = 'number',
       varname = 'p_mouset',
+    },
+    {
+      abbreviation = 'mhi',
+      defaults = { if_true = 500 },
+      desc = [=[
+        Determines how many entries are remembered in the |:messages| history.
+        The maximum value is 10000.
+      ]=],
+      full_name = 'msghistory',
+      scope = { 'global' },
+      short_desc = N_('how many messages are remembered'),
+      type = 'number',
+      varname = 'p_mhi',
     },
     {
       abbreviation = 'nf',
