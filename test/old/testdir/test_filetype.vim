@@ -2718,4 +2718,15 @@ func Test_make_file()
   filetype off
 endfunc
 
+func Test_org_file()
+  filetype on
+
+  call writefile(['* org Headline', '*some bold text*', '/some italic text/'], 'Xfile.org', 'D')
+  split Xfile.org
+  call assert_equal('org', &filetype)
+  bwipe!
+
+  filetype off
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
