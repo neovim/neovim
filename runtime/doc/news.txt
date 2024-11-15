@@ -168,7 +168,7 @@ DEFAULTS
   • |gri| in Normal mode maps to |vim.lsp.buf.implementation()|
   • |gO| in Normal mode maps to |vim.lsp.buf.document_symbol()|
   • |gra| in Normal and Visual mode maps to |vim.lsp.buf.code_action()|
-  • CTRL-S in Insert mode maps to |vim.lsp.buf.signature_help()|
+  • CTRL-S in Insert and Select mode maps to |vim.lsp.buf.signature_help()|
   • Mouse |popup-menu| includes an "Open in web browser" item when you right-click
     on a URL.
   • Mouse |popup-menu| includes a "Go to definition" item when LSP is active

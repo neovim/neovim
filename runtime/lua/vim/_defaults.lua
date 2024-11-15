@@ -179,7 +179,7 @@ do
       vim.lsp.buf.document_symbol()
     end, { desc = 'vim.lsp.buf.document_symbol()' })
 
-    vim.keymap.set('i', '<C-S>', function()
+    vim.keymap.set({ 'i', 's' }, '<C-S>', function()
       vim.lsp.buf.signature_help()
     end, { desc = 'vim.lsp.buf.signature_help()' })
   end
