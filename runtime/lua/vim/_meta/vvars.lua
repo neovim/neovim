@@ -160,6 +160,7 @@ vim.v.errors = ...
 ---                    an aborting condition (e.g. `c_Esc` or
 ---                    `c_CTRL-C` for `CmdlineLeave`).
 ---   chan             `channel-id`
+---   info             Dict of arbitrary event data.
 ---   cmdlevel         Level of cmdline.
 ---   cmdtype          Type of cmdline, `cmdline-char`.
 ---   cwd              Current working directory.
