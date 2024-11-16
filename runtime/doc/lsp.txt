@@ -2149,7 +2149,7 @@ should_log({level})                                 *vim.lsp.log.should_log()*
       • {level}  (`integer`) log level
 
     Return: ~
-        (`bool`) true if would log, false if not
+        (`boolean`) true if would log, false if not
 
 
 ==============================================================================
