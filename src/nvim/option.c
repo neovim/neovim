@@ -303,7 +303,7 @@ static void set_init_default_cdpath(void)
 /// them.
 static void set_init_expand_env(void)
 {
-  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
     vimoption_T *opt = &options[opt_idx];
     if (opt->flags & kOptFlagNoDefExp) {
       continue;
@@ -435,7 +435,7 @@ void set_init_1(bool clean_arg)
 static OptVal get_option_default(const OptIndex opt_idx, int opt_flags)
 {
   vimoption_T *opt = &options[opt_idx];
-  bool is_global_local_option = opt->indir & PV_BOTH;
+  bool is_global_local_option = option_is_global_local(opt_idx);
 
 #ifdef UNIX
   if (opt_idx == kOptModeline && getuid() == ROOT_UID) {
@@ -461,7 +461,7 @@ static OptVal get_option_default(const OptIndex opt_idx, int opt_flags)
 /// This ensures that we don't need to always check if the option default is allocated or not.
 static void alloc_options_default(void)
 {
-  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
     options[opt_idx].def_val = optval_copy(options[opt_idx].def_val);
   }
 }
@@ -500,7 +500,7 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
 /// @param  opt_flags  Option flags.
 static void set_options_default(int opt_flags)
 {
-  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
     if (!(options[opt_idx].flags & kOptFlagNoDefault)) {
       set_option_default(opt_idx, opt_flags);
     }
@@ -564,16 +564,16 @@ static char *find_dup_item(char *origval, const char *newval, const size_t newva
 /// Free all options.
 void free_all_options(void)
 {
-  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
     bool hidden = is_option_hidden(opt_idx);
 
-    if (options[opt_idx].indir == PV_NONE || hidden) {
+    if (option_is_global_only(opt_idx) || hidden) {
       // global option: free value and default value.
       // hidden option: free default value only.
       if (!hidden) {
         optval_free(optval_from_varp(opt_idx, options[opt_idx].var));
       }
-    } else if (options[opt_idx].var != VAR_WIN) {
+    } else if (!option_is_window_local(opt_idx)) {
       // buffer-local option: free global value.
       optval_free(optval_from_varp(opt_idx, options[opt_idx].var));
     }
@@ -977,12 +977,12 @@ static int validate_opt_idx(win_T *win, OptIndex opt_idx, int opt_flags, uint32_
 
   // Skip all options that are not window-local (used when showing
   // an already loaded buffer in a window).
-  if ((opt_flags & OPT_WINONLY) && (opt_idx == kOptInvalid || options[opt_idx].var != VAR_WIN)) {
+  if ((opt_flags & OPT_WINONLY) && (opt_idx == kOptInvalid || !option_is_window_local(opt_idx))) {
     return FAIL;
   }
 
   // Skip all options that are window-local (used for :vimgrep).
-  if ((opt_flags & OPT_NOWIN) && opt_idx != kOptInvalid && options[opt_idx].var == VAR_WIN) {
+  if ((opt_flags & OPT_NOWIN) && opt_idx != kOptInvalid && option_is_window_local(opt_idx)) {
     return FAIL;
   }
 
@@ -999,10 +999,7 @@ static int validate_opt_idx(win_T *win, OptIndex opt_idx, int opt_flags, uint32_
     // In diff mode some options are overruled.  This avoids that
     // 'foldmethod' becomes "marker" instead of "diff" and that
     // "wrap" gets set.
-    if (win->w_p_diff
-        && opt_idx != kOptInvalid              // shut up coverity warning
-        && (options[opt_idx].indir == PV_FDM
-            || options[opt_idx].indir == PV_WRAP)) {
+    if (win->w_p_diff && (opt_idx == kOptFoldmethod || opt_idx == kOptWrap)) {
       return FAIL;
     }
   }
@@ -1099,7 +1096,7 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
   vimoption_T *opt = &options[opt_idx];
   char *arg = *argp;
   // When setting the local value of a global option, the old value may be the global value.
-  const bool oldval_is_global = ((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL);
+  const bool oldval_is_global = option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL);
   OptVal oldval = optval_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp);
   OptVal newval = NIL_OPTVAL;
 
@@ -1285,10 +1282,10 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
       // Mention where the option was last set.
       if (varp == options[opt_idx].var) {
         option_last_set_msg(options[opt_idx].last_set);
-      } else if ((int)options[opt_idx].indir & PV_WIN) {
-        option_last_set_msg(curwin->w_p_script_ctx[(int)options[opt_idx].indir & PV_MASK]);
-      } else if ((int)options[opt_idx].indir & PV_BUF) {
-        option_last_set_msg(curbuf->b_p_script_ctx[(int)options[opt_idx].indir & PV_MASK]);
+      } else if (option_has_scope(opt_idx, kOptScopeWin)) {
+        option_last_set_msg(curwin->w_p_script_ctx[option_scope_idx(opt_idx, kOptScopeWin)]);
+      } else if (option_has_scope(opt_idx, kOptScopeBuf)) {
+        option_last_set_msg(curbuf->b_p_script_ctx[option_scope_idx(opt_idx, kOptScopeBuf)]);
       }
     }
 
@@ -1643,7 +1640,7 @@ static void didset_options2(void)
 /// Check for string options that are NULL (normally only termcap options).
 void check_options(void)
 {
-  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
     if ((option_has_type(opt_idx, kOptValTypeString)) && options[opt_idx].var != NULL) {
       check_string_option((char **)get_varp(&(options[opt_idx])));
     }
@@ -1673,24 +1670,25 @@ uint32_t *insecure_flag(win_T *const wp, OptIndex opt_idx, int opt_flags)
 {
   if (opt_flags & OPT_LOCAL) {
     assert(wp != NULL);
-    switch ((int)options[opt_idx].indir) {
-    case PV_STL:
+    switch (opt_idx) {
+    case kOptStatusline:
       return &wp->w_p_stl_flags;
-    case PV_WBR:
+    case kOptWinbar:
       return &wp->w_p_wbr_flags;
-    case PV_FDE:
+    case kOptFoldexpr:
       return &wp->w_p_fde_flags;
-    case PV_FDT:
+    case kOptFoldtext:
       return &wp->w_p_fdt_flags;
-    case PV_INDE:
+    case kOptIndentexpr:
       return &wp->w_buffer->b_p_inde_flags;
-    case PV_FEX:
+    case kOptFormatexpr:
       return &wp->w_buffer->b_p_fex_flags;
-    case PV_INEX:
+    case kOptIncludeexpr:
       return &wp->w_buffer->b_p_inex_flags;
+    default:
+      break;
     }
   }
-
   // Nothing special, return global flags field.
   return &options[opt_idx].flags;
 }
@@ -1804,7 +1802,6 @@ sctx_T *get_option_sctx(OptIndex opt_idx)
 void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
 {
   bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
-  int indir = (int)options[opt_idx].indir;
   nlua_set_sctx(&script_ctx);
   LastSet last_set = {
     .script_ctx = script_ctx,
@@ -1818,17 +1815,17 @@ void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
 
   // Remember where the option was set.  For local options need to do that
   // in the buffer or window structure.
-  if (both || (opt_flags & OPT_GLOBAL) || (indir & (PV_BUF|PV_WIN)) == 0) {
+  if (both || (opt_flags & OPT_GLOBAL) || option_is_global_only(opt_idx)) {
     options[opt_idx].last_set = last_set;
   }
   if (both || (opt_flags & OPT_LOCAL)) {
-    if (indir & PV_BUF) {
-      curbuf->b_p_script_ctx[indir & PV_MASK] = last_set;
-    } else if (indir & PV_WIN) {
-      curwin->w_p_script_ctx[indir & PV_MASK] = last_set;
+    if (option_has_scope(opt_idx, kOptScopeBuf)) {
+      curbuf->b_p_script_ctx[option_scope_idx(opt_idx, kOptScopeBuf)] = last_set;
+    } else if ((option_has_scope(opt_idx, kOptScopeWin))) {
+      curwin->w_p_script_ctx[option_scope_idx(opt_idx, kOptScopeWin)] = last_set;
       if (both) {
         // also setting the "all buffers" value
-        curwin->w_allbuf_opt.wo_script_ctx[indir & PV_MASK] = last_set;
+        curwin->w_allbuf_opt.wo_script_ctx[option_scope_idx(opt_idx, kOptScopeWin)] = last_set;
       }
     }
   }
@@ -3267,7 +3264,7 @@ OptVal object_as_optval(Object o, bool *error)
 /// Get an allocated string containing a list of valid types for an option.
 /// For options with a singular type, it returns the name of the type. For options with multiple
 /// possible types, it returns a slash separated list of types. For example, if an option can be a
-/// number, boolean or string, the function returns "Number/Boolean/String"
+/// number, boolean or string, the function returns "number/boolean/string"
 static char *option_get_valid_types(OptIndex opt_idx)
 {
   StringBuilder str = KV_INITIAL_VALUE;
@@ -3299,14 +3296,73 @@ static char *option_get_valid_types(OptIndex opt_idx)
 bool is_option_hidden(OptIndex opt_idx)
 {
   // Hidden options are always immutable and point to their default value
-  return opt_idx == kOptInvalid
-         ? false
-         : (options[opt_idx].immutable && options[opt_idx].var == &options[opt_idx].def_val.data);
+  return opt_idx != kOptInvalid && options[opt_idx].immutable
+         && options[opt_idx].var == &options[opt_idx].def_val.data;
 }
 
+/// Check if option is multitype (supports multiple types).
+static bool option_is_multitype(OptIndex opt_idx)
+{
+  const OptTypeFlags type_flags = get_option(opt_idx)->type_flags;
+  assert(type_flags != 0);
+  return !is_power_of_two(type_flags);
+}
+
+/// Check if option supports a specific type.
+bool option_has_type(OptIndex opt_idx, OptValType type)
+{
+  // Ensure that type flags variable can hold all types.
+  STATIC_ASSERT(kOptValTypeSize <= sizeof(OptTypeFlags) * 8,
+                "Option type_flags cannot fit all option types");
+  // Ensure that the type is valid before accessing type_flags.
+  assert(type > kOptValTypeNil && type < kOptValTypeSize);
+  // Bitshift 1 by the value of type to get the type's corresponding flag, and check if it's set in
+  // the type_flags bit field.
+  return get_option(opt_idx)->type_flags & (1 << type);
+}
+
+/// Check if option supports a specific scope.
+bool option_has_scope(OptIndex opt_idx, OptScope scope)
+{
+  // Ensure that scope flags variable can hold all scopes.
+  STATIC_ASSERT(kOptScopeSize <= sizeof(OptScopeFlags) * 8,
+                "Option scope_flags cannot fit all option scopes");
+  // Ensure that the scope is valid before accessing scope_flags.
+  assert(scope >= kOptScopeGlobal && scope < kOptScopeSize);
+  // Bitshift 1 by the value of scope to get the scope's corresponding flag, and check if it's set
+  // in the scope_flags bit field.
+  return get_option(opt_idx)->scope_flags & (1 << scope);
+}
+
+/// Check if option is global-local.
 static inline bool option_is_global_local(OptIndex opt_idx)
 {
-  return opt_idx == kOptInvalid ? false : (options[opt_idx].indir & PV_BOTH);
+  // Global-local options have at least two types, so their type flag cannot be a power of two.
+  return opt_idx != kOptInvalid && !is_power_of_two(options[opt_idx].scope_flags);
+}
+
+/// Check if option only supports global scope.
+static inline bool option_is_global_only(OptIndex opt_idx)
+{
+  // For an option to be global-only, it has to only have a single scope, which means the scope
+  // flags must be a power of two, and it must have the global scope.
+  return opt_idx != kOptInvalid && is_power_of_two(options[opt_idx].scope_flags)
+         && option_has_scope(opt_idx, kOptScopeGlobal);
+}
+
+/// Check if option only supports window scope.
+static inline bool option_is_window_local(OptIndex opt_idx)
+{
+  // For an option to be window-local it has to only have a single scope, which means the scope
+  // flags must be a power of two, and it must have the window scope.
+  return opt_idx != kOptInvalid && is_power_of_two(options[opt_idx].scope_flags)
+         && option_has_scope(opt_idx, kOptScopeWin);
+}
+
+/// Get option index for scope.
+ssize_t option_scope_idx(OptIndex opt_idx, OptScope scope)
+{
+  return options[opt_idx].scope_idx[scope];
 }
 
 /// Get option flags.
@@ -3357,7 +3413,7 @@ static OptVal get_option_unset_value(OptIndex opt_idx)
   vimoption_T *opt = &options[opt_idx];
 
   // For global-local options, use the unset value of the local value.
-  if (opt->indir & PV_BOTH) {
+  if (option_is_global_local(opt_idx)) {
     // String global-local options always use an empty string for the unset value.
     if (option_has_type(opt_idx, kOptValTypeString)) {
       return STATIC_CSTR_AS_OPTVAL("");
@@ -3389,7 +3445,7 @@ static bool is_option_local_value_unset(OptIndex opt_idx)
   vimoption_T *opt = get_option(opt_idx);
 
   // Local value of option that isn't global-local is always considered set.
-  if (!((int)opt->indir & PV_BOTH)) {
+  if (!option_is_global_local(opt_idx)) {
     return false;
   }
 
@@ -3748,10 +3804,10 @@ void set_option_direct(OptIndex opt_idx, OptVal value, int opt_flags, scid_T set
 /// @param      set_sid    Script ID. Special values:
 ///                          0: Use current script ID.
 ///                          SID_NONE: Don't set script ID.
-/// @param      req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param      req_scope  Requested option scope. See OptScope in option.h.
 /// @param[in]  from       Target buffer/window.
 void set_option_direct_for(OptIndex opt_idx, OptVal value, int opt_flags, scid_T set_sid,
-                           OptReqScope req_scope, void *const from)
+                           OptScope req_scope, void *const from)
 {
   buf_T *save_curbuf = curbuf;
   win_T *save_curwin = curwin;
@@ -3760,14 +3816,14 @@ void set_option_direct_for(OptIndex opt_idx, OptVal value, int opt_flags, scid_T
   // side-effects when setting an option directly. Just change the values of curbuf and curwin if
   // needed, no need to properly switch the window / buffer.
   switch (req_scope) {
-  case kOptReqGlobal:
+  case kOptScopeGlobal:
     break;
-  case kOptReqBuf:
-    curbuf = (buf_T *)from;
-    break;
-  case kOptReqWin:
+  case kOptScopeWin:
     curwin = (win_T *)from;
     curbuf = curwin->w_buffer;
+    break;
+  case kOptScopeBuf:
+    curbuf = (buf_T *)from;
     break;
   }
 
@@ -3855,16 +3911,17 @@ void set_option_value_give_err(const OptIndex opt_idx, OptVal value, int opt_fla
 /// Switch current context to get/set option value for window/buffer.
 ///
 /// @param[out]  ctx        Current context. switchwin_T for window and aco_save_T for buffer.
-/// @param       req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param       req_scope  Requested option scope. See OptScope in option.h.
 /// @param[in]   from       Target buffer/window.
 /// @param[out]  err        Error message, if any.
 ///
 /// @return  true if context was switched, false otherwise.
-static bool switch_option_context(void *const ctx, OptReqScope req_scope, void *const from,
-                                  Error *err)
+static bool switch_option_context(void *const ctx, OptScope req_scope, void *const from, Error *err)
 {
   switch (req_scope) {
-  case kOptReqWin: {
+  case kOptScopeGlobal:
+    return false;
+  case kOptScopeWin: {
     win_T *const win = (win_T *)from;
     switchwin_T *const switchwin = (switchwin_T *)ctx;
 
@@ -3884,7 +3941,7 @@ static bool switch_option_context(void *const ctx, OptReqScope req_scope, void *
     }
     return true;
   }
-  case kOptReqBuf: {
+  case kOptScopeBuf: {
     buf_T *const buf = (buf_T *)from;
     aco_save_T *const aco = (aco_save_T *)ctx;
 
@@ -3894,56 +3951,24 @@ static bool switch_option_context(void *const ctx, OptReqScope req_scope, void *
     aucmd_prepbuf(aco, buf);
     return true;
   }
-  case kOptReqGlobal:
-    return false;
   }
   UNREACHABLE;
 }
 
 /// Restore context after getting/setting option for window/buffer. See switch_option_context() for
 /// params.
-static void restore_option_context(void *const ctx, OptReqScope req_scope)
+static void restore_option_context(void *const ctx, OptScope req_scope)
 {
   switch (req_scope) {
-  case kOptReqWin:
+  case kOptScopeGlobal:
+    break;
+  case kOptScopeWin:
     restore_win_noblock((switchwin_T *)ctx, true);
     break;
-  case kOptReqBuf:
+  case kOptScopeBuf:
     aucmd_restbuf((aco_save_T *)ctx);
     break;
-  case kOptReqGlobal:
-    break;
   }
-}
-
-/// Get attributes for an option.
-///
-/// @param  opt_idx  Option index in options[] table.
-///
-/// @return  Option attributes.
-///          0 for hidden or unknown option.
-///          See SOPT_* in option_defs.h for other flags.
-int get_option_attrs(OptIndex opt_idx)
-{
-  if (opt_idx == kOptInvalid) {
-    return 0;
-  }
-
-  vimoption_T *opt = get_option(opt_idx);
-
-  int attrs = 0;
-
-  if (opt->indir == PV_NONE || (opt->indir & PV_BOTH)) {
-    attrs |= SOPT_GLOBAL;
-  }
-  if (opt->indir & PV_WIN) {
-    attrs |= SOPT_WIN;
-  } else if (opt->indir & PV_BUF) {
-    attrs |= SOPT_BUF;
-  }
-
-  assert(attrs != 0);
-  return attrs;
 }
 
 /// Get option value for buffer / window.
@@ -3952,18 +3977,18 @@ int get_option_attrs(OptIndex opt_idx)
 /// @param[out]  flagsp     Set to the option flags (see OptFlags) (if not NULL).
 /// @param[in]   scope      Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 /// @param[out]  hidden     Whether option is hidden.
-/// @param       req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param       req_scope  Requested option scope. See OptScope in option.h.
 /// @param[in]   from       Target buffer/window.
 /// @param[out]  err        Error message, if any.
 ///
 /// @return  Option value. Must be freed by caller.
-OptVal get_option_value_for(OptIndex opt_idx, int scope, const OptReqScope req_scope,
-                            void *const from, Error *err)
+OptVal get_option_value_for(OptIndex opt_idx, int scope, const OptScope req_scope, void *const from,
+                            Error *err)
 {
   switchwin_T switchwin;
   aco_save_T aco;
-  void *ctx = req_scope == kOptReqWin ? (void *)&switchwin
-                                      : (req_scope == kOptReqBuf ? (void *)&aco : NULL);
+  void *ctx = req_scope == kOptScopeWin ? (void *)&switchwin
+                                        : (req_scope == kOptScopeBuf ? (void *)&aco : NULL);
 
   bool switched = switch_option_context(ctx, req_scope, from, err);
   if (ERROR_SET(err)) {
@@ -3985,17 +4010,17 @@ OptVal get_option_value_for(OptIndex opt_idx, int scope, const OptReqScope req_s
 /// @param       opt_idx     Option index in options[] table.
 /// @param[in]   value       Option value.
 /// @param[in]   opt_flags   Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
-/// @param       req_scope   Requested option scope. See OptReqScope in option.h.
+/// @param       req_scope   Requested option scope. See OptScope in option.h.
 /// @param[in]   from        Target buffer/window.
 /// @param[out]  err         Error message, if any.
 void set_option_value_for(const char *name, OptIndex opt_idx, OptVal value, const int opt_flags,
-                          const OptReqScope req_scope, void *const from, Error *err)
+                          const OptScope req_scope, void *const from, Error *err)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   switchwin_T switchwin;
   aco_save_T aco;
-  void *ctx = req_scope == kOptReqWin ? (void *)&switchwin
-                                      : (req_scope == kOptReqBuf ? (void *)&aco : NULL);
+  void *ctx = req_scope == kOptScopeWin ? (void *)&switchwin
+                                        : (req_scope == kOptScopeBuf ? (void *)&aco : NULL);
 
   bool switched = switch_option_context(ctx, req_scope, from, err);
   if (ERROR_SET(err)) {
@@ -4040,7 +4065,7 @@ static void showoptions(bool all, int opt_flags)
     // collect the items in items[]
     int item_count = 0;
     vimoption_T *opt;
-    for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+    for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
       opt = &options[opt_idx];
       // apply :filter /pat/
       if (message_filtered(opt->fullname)) {
@@ -4049,7 +4074,7 @@ static void showoptions(bool all, int opt_flags)
 
       void *varp = NULL;
       if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) != 0) {
-        if (opt->indir != PV_NONE) {
+        if (!option_is_global_only(opt_idx)) {
           varp = get_varp_scope(opt, opt_flags);
         }
       } else {
@@ -4124,7 +4149,7 @@ static int optval_default(OptIndex opt_idx, void *varp)
 /// Send update to UIs with values of UI relevant options
 void ui_refresh_options(void)
 {
-  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
     uint32_t flags = options[opt_idx].flags;
     if (!(flags & kOptFlagUIOption)) {
       continue;
@@ -4204,13 +4229,13 @@ int makeset(FILE *fd, int opt_flags, int local_only)
   // kOptFlagPriMkrc flag and once without.
   for (int pri = 1; pri >= 0; pri--) {
     vimoption_T *opt;
-    for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+    for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
       opt = &options[opt_idx];
 
       if (!(opt->flags & kOptFlagNoMkrc)
           && ((pri == 1) == ((opt->flags & kOptFlagPriMkrc) != 0))) {
         // skip global option when only doing locals
-        if (opt->indir == PV_NONE && !(opt_flags & OPT_GLOBAL)) {
+        if (option_is_global_only(opt_idx) && !(opt_flags & OPT_GLOBAL)) {
           continue;
         }
 
@@ -4237,21 +4262,19 @@ int makeset(FILE *fd, int opt_flags, int local_only)
 
         int round = 2;
         void *varp_local = NULL;  // fresh value
-        if (opt->indir != PV_NONE) {
-          if (opt->var == VAR_WIN) {
-            // skip window-local option when only doing globals
-            if (!(opt_flags & OPT_LOCAL)) {
-              continue;
-            }
-            // When fresh value of window-local option is not at the
-            // default, need to write it too.
-            if (!(opt_flags & OPT_GLOBAL) && !local_only) {
-              void *varp_fresh = get_varp_scope(opt, OPT_GLOBAL);  // local value
-              if (!optval_default(opt_idx, varp_fresh)) {
-                round = 1;
-                varp_local = varp;
-                varp = varp_fresh;
-              }
+        if (option_is_window_local(opt_idx)) {
+          // skip window-local option when only doing globals
+          if (!(opt_flags & OPT_LOCAL)) {
+            continue;
+          }
+          // When fresh value of window-local option is not at the
+          // default, need to write it too.
+          if (!(opt_flags & OPT_GLOBAL) && !local_only) {
+            void *varp_fresh = get_varp_scope(opt, OPT_GLOBAL);  // local value
+            if (!optval_default(opt_idx, varp_fresh)) {
+              round = 1;
+              varp_local = varp;
+              varp = varp_fresh;
             }
           }
         }
@@ -4267,9 +4290,9 @@ int makeset(FILE *fd, int opt_flags, int local_only)
           }
 
           bool do_endif = false;
-          // Don't set 'syntax' and 'filetype' again if the value is
-          // already right, avoids reloading the syntax file.
-          if (opt->indir == PV_SYN || opt->indir == PV_FT) {
+          // Don't set 'syntax' and 'filetype' again if the value is already right, avoids reloading
+          // the syntax file.
+          if (opt_idx == kOptSyntax || opt_idx == kOptFiletype) {
             if (fprintf(fd, "if &%s != '%s'", opt->fullname,
                         *(char **)(varp)) < 0
                 || put_eol(fd) < 0) {
@@ -4325,7 +4348,7 @@ static int put_set(FILE *fd, char *cmd, OptIndex opt_idx, void *varp)
   char *name = opt->fullname;
   uint64_t flags = opt->flags;
 
-  if ((opt->indir & PV_BOTH) && varp != opt->var
+  if (option_is_global_local(opt_idx) && varp != opt->var
       && optval_equal(value, get_option_unset_value(opt_idx))) {
     // Processing unset local value of global-local option. Do nothing.
     return OK;
@@ -4430,76 +4453,80 @@ static int put_set(FILE *fd, char *cmd, OptIndex opt_idx, void *varp)
 
 void *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
 {
-  if ((scope & OPT_GLOBAL) && p->indir != PV_NONE) {
-    if (p->var == VAR_WIN) {
+  OptIndex opt_idx = get_opt_idx(p);
+
+  if ((scope & OPT_GLOBAL) && !option_is_global_only(opt_idx)) {
+    if (option_is_window_local(opt_idx)) {
       return GLOBAL_WO(get_varp_from(p, buf, win));
     }
     return p->var;
   }
-  if ((scope & OPT_LOCAL) && ((int)p->indir & PV_BOTH)) {
-    switch ((int)p->indir) {
-    case PV_FP:
+
+  if ((scope & OPT_LOCAL) && option_is_global_local(opt_idx)) {
+    switch (opt_idx) {
+    case kOptFormatprg:
       return &(buf->b_p_fp);
-    case PV_FFU:
+    case kOptFindfunc:
       return &(buf->b_p_ffu);
-    case PV_EFM:
+    case kOptErrorformat:
       return &(buf->b_p_efm);
-    case PV_GP:
+    case kOptGrepprg:
       return &(buf->b_p_gp);
-    case PV_MP:
+    case kOptMakeprg:
       return &(buf->b_p_mp);
-    case PV_EP:
+    case kOptEqualprg:
       return &(buf->b_p_ep);
-    case PV_KP:
+    case kOptKeywordprg:
       return &(buf->b_p_kp);
-    case PV_PATH:
+    case kOptPath:
       return &(buf->b_p_path);
-    case PV_AR:
+    case kOptAutoread:
       return &(buf->b_p_ar);
-    case PV_TAGS:
+    case kOptTags:
       return &(buf->b_p_tags);
-    case PV_TC:
+    case kOptTagcase:
       return &(buf->b_p_tc);
-    case PV_SISO:
+    case kOptSidescrolloff:
       return &(win->w_p_siso);
-    case PV_SO:
+    case kOptScrolloff:
       return &(win->w_p_so);
-    case PV_DEF:
+    case kOptDefine:
       return &(buf->b_p_def);
-    case PV_INC:
+    case kOptInclude:
       return &(buf->b_p_inc);
-    case PV_COT:
+    case kOptCompleteopt:
       return &(buf->b_p_cot);
-    case PV_DICT:
+    case kOptDictionary:
       return &(buf->b_p_dict);
-    case PV_TSR:
+    case kOptThesaurus:
       return &(buf->b_p_tsr);
-    case PV_TSRFU:
+    case kOptThesaurusfunc:
       return &(buf->b_p_tsrfu);
-    case PV_TFU:
+    case kOptTagfunc:
       return &(buf->b_p_tfu);
-    case PV_SBR:
+    case kOptShowbreak:
       return &(win->w_p_sbr);
-    case PV_STL:
+    case kOptStatusline:
       return &(win->w_p_stl);
-    case PV_WBR:
+    case kOptWinbar:
       return &(win->w_p_wbr);
-    case PV_UL:
+    case kOptUndolevels:
       return &(buf->b_p_ul);
-    case PV_LW:
+    case kOptLispwords:
       return &(buf->b_p_lw);
-    case PV_BKC:
+    case kOptBackupcopy:
       return &(buf->b_p_bkc);
-    case PV_MENC:
+    case kOptMakeencoding:
       return &(buf->b_p_menc);
-    case PV_FCS:
+    case kOptFillchars:
       return &(win->w_p_fcs);
-    case PV_LCS:
+    case kOptListchars:
       return &(win->w_p_lcs);
-    case PV_VE:
+    case kOptVirtualedit:
       return &(win->w_p_ve);
+    default:
+      abort();
     }
-    return NULL;     // "cannot happen"
   }
   return get_varp_from(p, buf, win);
 }
@@ -4521,291 +4548,290 @@ void *get_option_varp_scope_from(OptIndex opt_idx, int scope, buf_T *buf, win_T 
 
 void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
 {
-  // hidden options always use the same var pointer
-  if (is_option_hidden(get_opt_idx(p))) {
+  OptIndex opt_idx = get_opt_idx(p);
+
+  // Hidden options and global-only options always use the same var pointer
+  if (is_option_hidden(opt_idx) || option_is_global_only(opt_idx)) {
     return p->var;
   }
 
-  switch ((int)p->indir) {
-  case PV_NONE:
-    return p->var;
-
+  switch (opt_idx) {
   // global option with local value: use local value if it's been set
-  case PV_EP:
+  case kOptEqualprg:
     return *buf->b_p_ep != NUL ? &buf->b_p_ep : p->var;
-  case PV_KP:
+  case kOptKeywordprg:
     return *buf->b_p_kp != NUL ? &buf->b_p_kp : p->var;
-  case PV_PATH:
+  case kOptPath:
     return *buf->b_p_path != NUL ? &(buf->b_p_path) : p->var;
-  case PV_AR:
+  case kOptAutoread:
     return buf->b_p_ar >= 0 ? &(buf->b_p_ar) : p->var;
-  case PV_TAGS:
+  case kOptTags:
     return *buf->b_p_tags != NUL ? &(buf->b_p_tags) : p->var;
-  case PV_TC:
+  case kOptTagcase:
     return *buf->b_p_tc != NUL ? &(buf->b_p_tc) : p->var;
-  case PV_SISO:
+  case kOptSidescrolloff:
     return win->w_p_siso >= 0 ? &(win->w_p_siso) : p->var;
-  case PV_SO:
+  case kOptScrolloff:
     return win->w_p_so >= 0 ? &(win->w_p_so) : p->var;
-  case PV_BKC:
+  case kOptBackupcopy:
     return *buf->b_p_bkc != NUL ? &(buf->b_p_bkc) : p->var;
-  case PV_DEF:
+  case kOptDefine:
     return *buf->b_p_def != NUL ? &(buf->b_p_def) : p->var;
-  case PV_INC:
+  case kOptInclude:
     return *buf->b_p_inc != NUL ? &(buf->b_p_inc) : p->var;
-  case PV_COT:
+  case kOptCompleteopt:
     return *buf->b_p_cot != NUL ? &(buf->b_p_cot) : p->var;
-  case PV_DICT:
+  case kOptDictionary:
     return *buf->b_p_dict != NUL ? &(buf->b_p_dict) : p->var;
-  case PV_TSR:
+  case kOptThesaurus:
     return *buf->b_p_tsr != NUL ? &(buf->b_p_tsr) : p->var;
-  case PV_TSRFU:
+  case kOptThesaurusfunc:
     return *buf->b_p_tsrfu != NUL ? &(buf->b_p_tsrfu) : p->var;
-  case PV_FP:
+  case kOptFormatprg:
     return *buf->b_p_fp != NUL ? &(buf->b_p_fp) : p->var;
-  case PV_FFU:
+  case kOptFindfunc:
     return *buf->b_p_ffu != NUL ? &(buf->b_p_ffu) : p->var;
-  case PV_EFM:
+  case kOptErrorformat:
     return *buf->b_p_efm != NUL ? &(buf->b_p_efm) : p->var;
-  case PV_GP:
+  case kOptGrepprg:
     return *buf->b_p_gp != NUL ? &(buf->b_p_gp) : p->var;
-  case PV_MP:
+  case kOptMakeprg:
     return *buf->b_p_mp != NUL ? &(buf->b_p_mp) : p->var;
-  case PV_SBR:
+  case kOptShowbreak:
     return *win->w_p_sbr != NUL ? &(win->w_p_sbr) : p->var;
-  case PV_STL:
+  case kOptStatusline:
     return *win->w_p_stl != NUL ? &(win->w_p_stl) : p->var;
-  case PV_WBR:
+  case kOptWinbar:
     return *win->w_p_wbr != NUL ? &(win->w_p_wbr) : p->var;
-  case PV_UL:
+  case kOptUndolevels:
     return buf->b_p_ul != NO_LOCAL_UNDOLEVEL ? &(buf->b_p_ul) : p->var;
-  case PV_LW:
+  case kOptLispwords:
     return *buf->b_p_lw != NUL ? &(buf->b_p_lw) : p->var;
-  case PV_MENC:
+  case kOptMakeencoding:
     return *buf->b_p_menc != NUL ? &(buf->b_p_menc) : p->var;
-  case PV_FCS:
+  case kOptFillchars:
     return *win->w_p_fcs != NUL ? &(win->w_p_fcs) : p->var;
-  case PV_LCS:
+  case kOptListchars:
     return *win->w_p_lcs != NUL ? &(win->w_p_lcs) : p->var;
-  case PV_VE:
+  case kOptVirtualedit:
     return *win->w_p_ve != NUL ? &win->w_p_ve : p->var;
 
-  case PV_ARAB:
+  case kOptArabic:
     return &(win->w_p_arab);
-  case PV_LIST:
+  case kOptList:
     return &(win->w_p_list);
-  case PV_SPELL:
+  case kOptSpell:
     return &(win->w_p_spell);
-  case PV_CUC:
+  case kOptCursorcolumn:
     return &(win->w_p_cuc);
-  case PV_CUL:
+  case kOptCursorline:
     return &(win->w_p_cul);
-  case PV_CULOPT:
+  case kOptCursorlineopt:
     return &(win->w_p_culopt);
-  case PV_CC:
+  case kOptColorcolumn:
     return &(win->w_p_cc);
-  case PV_DIFF:
+  case kOptDiff:
     return &(win->w_p_diff);
-  case PV_FDC:
+  case kOptFoldcolumn:
     return &(win->w_p_fdc);
-  case PV_FEN:
+  case kOptFoldenable:
     return &(win->w_p_fen);
-  case PV_FDI:
+  case kOptFoldignore:
     return &(win->w_p_fdi);
-  case PV_FDL:
+  case kOptFoldlevel:
     return &(win->w_p_fdl);
-  case PV_FDM:
+  case kOptFoldmethod:
     return &(win->w_p_fdm);
-  case PV_FML:
+  case kOptFoldminlines:
     return &(win->w_p_fml);
-  case PV_FDN:
+  case kOptFoldnestmax:
     return &(win->w_p_fdn);
-  case PV_FDE:
+  case kOptFoldexpr:
     return &(win->w_p_fde);
-  case PV_FDT:
+  case kOptFoldtext:
     return &(win->w_p_fdt);
-  case PV_FMR:
+  case kOptFoldmarker:
     return &(win->w_p_fmr);
-  case PV_NU:
+  case kOptNumber:
     return &(win->w_p_nu);
-  case PV_RNU:
+  case kOptRelativenumber:
     return &(win->w_p_rnu);
-  case PV_NUW:
+  case kOptNumberwidth:
     return &(win->w_p_nuw);
-  case PV_WFB:
+  case kOptWinfixbuf:
     return &(win->w_p_wfb);
-  case PV_WFH:
+  case kOptWinfixheight:
     return &(win->w_p_wfh);
-  case PV_WFW:
+  case kOptWinfixwidth:
     return &(win->w_p_wfw);
-  case PV_PVW:
+  case kOptPreviewwindow:
     return &(win->w_p_pvw);
-  case PV_RL:
+  case kOptRightleft:
     return &(win->w_p_rl);
-  case PV_RLC:
+  case kOptRightleftcmd:
     return &(win->w_p_rlc);
-  case PV_SCROLL:
+  case kOptScroll:
     return &(win->w_p_scr);
-  case PV_SMS:
+  case kOptSmoothscroll:
     return &(win->w_p_sms);
-  case PV_WRAP:
+  case kOptWrap:
     return &(win->w_p_wrap);
-  case PV_LBR:
+  case kOptLinebreak:
     return &(win->w_p_lbr);
-  case PV_BRI:
+  case kOptBreakindent:
     return &(win->w_p_bri);
-  case PV_BRIOPT:
+  case kOptBreakindentopt:
     return &(win->w_p_briopt);
-  case PV_SCBIND:
+  case kOptScrollbind:
     return &(win->w_p_scb);
-  case PV_CRBIND:
+  case kOptCursorbind:
     return &(win->w_p_crb);
-  case PV_COCU:
+  case kOptConcealcursor:
     return &(win->w_p_cocu);
-  case PV_COLE:
+  case kOptConceallevel:
     return &(win->w_p_cole);
 
-  case PV_AI:
+  case kOptAutoindent:
     return &(buf->b_p_ai);
-  case PV_BIN:
+  case kOptBinary:
     return &(buf->b_p_bin);
-  case PV_BOMB:
+  case kOptBomb:
     return &(buf->b_p_bomb);
-  case PV_BH:
+  case kOptBufhidden:
     return &(buf->b_p_bh);
-  case PV_BT:
+  case kOptBuftype:
     return &(buf->b_p_bt);
-  case PV_BL:
+  case kOptBuflisted:
     return &(buf->b_p_bl);
-  case PV_CHANNEL:
+  case kOptChannel:
     return &(buf->b_p_channel);
-  case PV_CI:
+  case kOptCopyindent:
     return &(buf->b_p_ci);
-  case PV_CIN:
+  case kOptCindent:
     return &(buf->b_p_cin);
-  case PV_CINK:
+  case kOptCinkeys:
     return &(buf->b_p_cink);
-  case PV_CINO:
+  case kOptCinoptions:
     return &(buf->b_p_cino);
-  case PV_CINSD:
+  case kOptCinscopedecls:
     return &(buf->b_p_cinsd);
-  case PV_CINW:
+  case kOptCinwords:
     return &(buf->b_p_cinw);
-  case PV_COM:
+  case kOptComments:
     return &(buf->b_p_com);
-  case PV_CMS:
+  case kOptCommentstring:
     return &(buf->b_p_cms);
-  case PV_CPT:
+  case kOptComplete:
     return &(buf->b_p_cpt);
 #ifdef BACKSLASH_IN_FILENAME
-  case PV_CSL:
+  case kOptCompleteslash:
     return &(buf->b_p_csl);
 #endif
-  case PV_CFU:
+  case kOptCompletefunc:
     return &(buf->b_p_cfu);
-  case PV_OFU:
+  case kOptOmnifunc:
     return &(buf->b_p_ofu);
-  case PV_EOF:
+  case kOptEndoffile:
     return &(buf->b_p_eof);
-  case PV_EOL:
+  case kOptEndofline:
     return &(buf->b_p_eol);
-  case PV_FIXEOL:
+  case kOptFixendofline:
     return &(buf->b_p_fixeol);
-  case PV_ET:
+  case kOptExpandtab:
     return &(buf->b_p_et);
-  case PV_FENC:
+  case kOptFileencoding:
     return &(buf->b_p_fenc);
-  case PV_FF:
+  case kOptFileformat:
     return &(buf->b_p_ff);
-  case PV_FT:
+  case kOptFiletype:
     return &(buf->b_p_ft);
-  case PV_FO:
+  case kOptFormatoptions:
     return &(buf->b_p_fo);
-  case PV_FLP:
+  case kOptFormatlistpat:
     return &(buf->b_p_flp);
-  case PV_IMI:
+  case kOptIminsert:
     return &(buf->b_p_iminsert);
-  case PV_IMS:
+  case kOptImsearch:
     return &(buf->b_p_imsearch);
-  case PV_INF:
+  case kOptInfercase:
     return &(buf->b_p_inf);
-  case PV_ISK:
+  case kOptIskeyword:
     return &(buf->b_p_isk);
-  case PV_INEX:
+  case kOptIncludeexpr:
     return &(buf->b_p_inex);
-  case PV_INDE:
+  case kOptIndentexpr:
     return &(buf->b_p_inde);
-  case PV_INDK:
+  case kOptIndentkeys:
     return &(buf->b_p_indk);
-  case PV_FEX:
+  case kOptFormatexpr:
     return &(buf->b_p_fex);
-  case PV_LISP:
+  case kOptLisp:
     return &(buf->b_p_lisp);
-  case PV_LOP:
+  case kOptLispoptions:
     return &(buf->b_p_lop);
-  case PV_ML:
+  case kOptModeline:
     return &(buf->b_p_ml);
-  case PV_MPS:
+  case kOptMatchpairs:
     return &(buf->b_p_mps);
-  case PV_MA:
+  case kOptModifiable:
     return &(buf->b_p_ma);
-  case PV_MOD:
+  case kOptModified:
     return &(buf->b_changed);
-  case PV_NF:
+  case kOptNrformats:
     return &(buf->b_p_nf);
-  case PV_PI:
+  case kOptPreserveindent:
     return &(buf->b_p_pi);
-  case PV_QE:
+  case kOptQuoteescape:
     return &(buf->b_p_qe);
-  case PV_RO:
+  case kOptReadonly:
     return &(buf->b_p_ro);
-  case PV_SCBK:
+  case kOptScrollback:
     return &(buf->b_p_scbk);
-  case PV_SI:
+  case kOptSmartindent:
     return &(buf->b_p_si);
-  case PV_STS:
+  case kOptSofttabstop:
     return &(buf->b_p_sts);
-  case PV_SUA:
+  case kOptSuffixesadd:
     return &(buf->b_p_sua);
-  case PV_SWF:
+  case kOptSwapfile:
     return &(buf->b_p_swf);
-  case PV_SMC:
+  case kOptSynmaxcol:
     return &(buf->b_p_smc);
-  case PV_SYN:
+  case kOptSyntax:
     return &(buf->b_p_syn);
-  case PV_SPC:
+  case kOptSpellcapcheck:
     return &(win->w_s->b_p_spc);
-  case PV_SPF:
+  case kOptSpellfile:
     return &(win->w_s->b_p_spf);
-  case PV_SPL:
+  case kOptSpelllang:
     return &(win->w_s->b_p_spl);
-  case PV_SPO:
+  case kOptSpelloptions:
     return &(win->w_s->b_p_spo);
-  case PV_SW:
+  case kOptShiftwidth:
     return &(buf->b_p_sw);
-  case PV_TFU:
+  case kOptTagfunc:
     return &(buf->b_p_tfu);
-  case PV_TS:
+  case kOptTabstop:
     return &(buf->b_p_ts);
-  case PV_TW:
+  case kOptTextwidth:
     return &(buf->b_p_tw);
-  case PV_UDF:
+  case kOptUndofile:
     return &(buf->b_p_udf);
-  case PV_WM:
+  case kOptWrapmargin:
     return &(buf->b_p_wm);
-  case PV_VSTS:
+  case kOptVarsofttabstop:
     return &(buf->b_p_vsts);
-  case PV_VTS:
+  case kOptVartabstop:
     return &(buf->b_p_vts);
-  case PV_KMAP:
+  case kOptKeymap:
     return &(buf->b_p_keymap);
-  case PV_SCL:
+  case kOptSigncolumn:
     return &(win->w_p_scl);
-  case PV_WINHL:
+  case kOptWinhighlight:
     return &(win->w_p_winhl);
-  case PV_WINBL:
+  case kOptWinblend:
     return &(win->w_p_winbl);
-  case PV_STC:
+  case kOptStatuscolumn:
     return &(win->w_p_stc);
   default:
     iemsg(_("E356: get_varp ERROR"));
@@ -5008,25 +5034,7 @@ void didset_window_options(win_T *wp, bool valid_cursor)
   wp->w_grid_alloc.blending = wp->w_p_winbl > 0;
 }
 
-/// Index into the options table for a buffer-local option enum.
-static OptIndex buf_opt_idx[BV_COUNT];
 #define COPY_OPT_SCTX(buf, bv) buf->b_p_script_ctx[bv] = options[buf_opt_idx[bv]].last_set
-
-/// Initialize buf_opt_idx[] if not done already.
-static void init_buf_opt_idx(void)
-{
-  static bool did_init_buf_opt_idx = false;
-
-  if (did_init_buf_opt_idx) {
-    return;
-  }
-  did_init_buf_opt_idx = true;
-  for (OptIndex i = 0; i < kOptIndexCount; i++) {
-    if (options[i].indir & PV_BUF) {
-      buf_opt_idx[options[i].indir & PV_MASK] = i;
-    }
-  }
-}
 
 /// Copy global option values to local options for one buffer.
 /// Used when creating a new buffer and sometimes when entering a buffer.
@@ -5065,7 +5073,6 @@ void buf_copy_options(buf_T *buf, int flags)
 
     if (should_copy || (flags & BCO_ALWAYS)) {
       CLEAR_FIELD(buf->b_p_script_ctx);
-      init_buf_opt_idx();
       // Don't copy the options specific to a help buffer when
       // BCO_NOHELP is given or the options were initialized already
       // (jumping back to a help file with CTRL-T or CTRL-O)
@@ -5101,61 +5108,61 @@ void buf_copy_options(buf_T *buf, int flags)
       }
 
       buf->b_p_ai = p_ai;
-      COPY_OPT_SCTX(buf, BV_AI);
+      COPY_OPT_SCTX(buf, kBufOptAutoindent);
       buf->b_p_ai_nopaste = p_ai_nopaste;
       buf->b_p_sw = p_sw;
-      COPY_OPT_SCTX(buf, BV_SW);
+      COPY_OPT_SCTX(buf, kBufOptShiftwidth);
       buf->b_p_scbk = p_scbk;
-      COPY_OPT_SCTX(buf, BV_SCBK);
+      COPY_OPT_SCTX(buf, kBufOptScrollback);
       buf->b_p_tw = p_tw;
-      COPY_OPT_SCTX(buf, BV_TW);
+      COPY_OPT_SCTX(buf, kBufOptTextwidth);
       buf->b_p_tw_nopaste = p_tw_nopaste;
       buf->b_p_tw_nobin = p_tw_nobin;
       buf->b_p_wm = p_wm;
-      COPY_OPT_SCTX(buf, BV_WM);
+      COPY_OPT_SCTX(buf, kBufOptWrapmargin);
       buf->b_p_wm_nopaste = p_wm_nopaste;
       buf->b_p_wm_nobin = p_wm_nobin;
       buf->b_p_bin = p_bin;
-      COPY_OPT_SCTX(buf, BV_BIN);
+      COPY_OPT_SCTX(buf, kBufOptBinary);
       buf->b_p_bomb = p_bomb;
-      COPY_OPT_SCTX(buf, BV_BOMB);
+      COPY_OPT_SCTX(buf, kBufOptBomb);
       buf->b_p_et = p_et;
-      COPY_OPT_SCTX(buf, BV_ET);
+      COPY_OPT_SCTX(buf, kBufOptExpandtab);
       buf->b_p_fixeol = p_fixeol;
-      COPY_OPT_SCTX(buf, BV_FIXEOL);
+      COPY_OPT_SCTX(buf, kBufOptFixendofline);
       buf->b_p_et_nobin = p_et_nobin;
       buf->b_p_et_nopaste = p_et_nopaste;
       buf->b_p_ml = p_ml;
-      COPY_OPT_SCTX(buf, BV_ML);
+      COPY_OPT_SCTX(buf, kBufOptModeline);
       buf->b_p_ml_nobin = p_ml_nobin;
       buf->b_p_inf = p_inf;
-      COPY_OPT_SCTX(buf, BV_INF);
+      COPY_OPT_SCTX(buf, kBufOptInfercase);
       if (cmdmod.cmod_flags & CMOD_NOSWAPFILE) {
         buf->b_p_swf = false;
       } else {
         buf->b_p_swf = p_swf;
-        COPY_OPT_SCTX(buf, BV_SWF);
+        COPY_OPT_SCTX(buf, kBufOptSwapfile);
       }
       buf->b_p_cpt = xstrdup(p_cpt);
-      COPY_OPT_SCTX(buf, BV_CPT);
+      COPY_OPT_SCTX(buf, kBufOptComplete);
 #ifdef BACKSLASH_IN_FILENAME
       buf->b_p_csl = xstrdup(p_csl);
-      COPY_OPT_SCTX(buf, BV_CSL);
+      COPY_OPT_SCTX(buf, kBufOptCompleteslash);
 #endif
       buf->b_p_cfu = xstrdup(p_cfu);
-      COPY_OPT_SCTX(buf, BV_CFU);
+      COPY_OPT_SCTX(buf, kBufOptCompletefunc);
       set_buflocal_cfu_callback(buf);
       buf->b_p_ofu = xstrdup(p_ofu);
-      COPY_OPT_SCTX(buf, BV_OFU);
+      COPY_OPT_SCTX(buf, kBufOptOmnifunc);
       set_buflocal_ofu_callback(buf);
       buf->b_p_tfu = xstrdup(p_tfu);
-      COPY_OPT_SCTX(buf, BV_TFU);
+      COPY_OPT_SCTX(buf, kBufOptTagfunc);
       set_buflocal_tfu_callback(buf);
       buf->b_p_sts = p_sts;
-      COPY_OPT_SCTX(buf, BV_STS);
+      COPY_OPT_SCTX(buf, kBufOptSofttabstop);
       buf->b_p_sts_nopaste = p_sts_nopaste;
       buf->b_p_vsts = xstrdup(p_vsts);
-      COPY_OPT_SCTX(buf, BV_VSTS);
+      COPY_OPT_SCTX(buf, kBufOptVarsofttabstop);
       if (p_vsts && p_vsts != empty_string_option) {
         tabstop_set(p_vsts, &buf->b_p_vsts_array);
       } else {
@@ -5163,75 +5170,75 @@ void buf_copy_options(buf_T *buf, int flags)
       }
       buf->b_p_vsts_nopaste = p_vsts_nopaste ? xstrdup(p_vsts_nopaste) : NULL;
       buf->b_p_com = xstrdup(p_com);
-      COPY_OPT_SCTX(buf, BV_COM);
+      COPY_OPT_SCTX(buf, kBufOptComments);
       buf->b_p_cms = xstrdup(p_cms);
-      COPY_OPT_SCTX(buf, BV_CMS);
+      COPY_OPT_SCTX(buf, kBufOptCommentstring);
       buf->b_p_fo = xstrdup(p_fo);
-      COPY_OPT_SCTX(buf, BV_FO);
+      COPY_OPT_SCTX(buf, kBufOptFormatoptions);
       buf->b_p_flp = xstrdup(p_flp);
-      COPY_OPT_SCTX(buf, BV_FLP);
+      COPY_OPT_SCTX(buf, kBufOptFormatlistpat);
       buf->b_p_nf = xstrdup(p_nf);
-      COPY_OPT_SCTX(buf, BV_NF);
+      COPY_OPT_SCTX(buf, kBufOptNrformats);
       buf->b_p_mps = xstrdup(p_mps);
-      COPY_OPT_SCTX(buf, BV_MPS);
+      COPY_OPT_SCTX(buf, kBufOptMatchpairs);
       buf->b_p_si = p_si;
-      COPY_OPT_SCTX(buf, BV_SI);
+      COPY_OPT_SCTX(buf, kBufOptSmartindent);
       buf->b_p_channel = 0;
       buf->b_p_ci = p_ci;
 
-      COPY_OPT_SCTX(buf, BV_CI);
+      COPY_OPT_SCTX(buf, kBufOptCopyindent);
       buf->b_p_cin = p_cin;
-      COPY_OPT_SCTX(buf, BV_CIN);
+      COPY_OPT_SCTX(buf, kBufOptCindent);
       buf->b_p_cink = xstrdup(p_cink);
-      COPY_OPT_SCTX(buf, BV_CINK);
+      COPY_OPT_SCTX(buf, kBufOptCinkeys);
       buf->b_p_cino = xstrdup(p_cino);
-      COPY_OPT_SCTX(buf, BV_CINO);
+      COPY_OPT_SCTX(buf, kBufOptCinoptions);
       buf->b_p_cinsd = xstrdup(p_cinsd);
-      COPY_OPT_SCTX(buf, BV_CINSD);
+      COPY_OPT_SCTX(buf, kBufOptCinscopedecls);
       buf->b_p_lop = xstrdup(p_lop);
-      COPY_OPT_SCTX(buf, BV_LOP);
+      COPY_OPT_SCTX(buf, kBufOptLispoptions);
 
       // Don't copy 'filetype', it must be detected
       buf->b_p_ft = empty_string_option;
       buf->b_p_pi = p_pi;
-      COPY_OPT_SCTX(buf, BV_PI);
+      COPY_OPT_SCTX(buf, kBufOptPreserveindent);
       buf->b_p_cinw = xstrdup(p_cinw);
-      COPY_OPT_SCTX(buf, BV_CINW);
+      COPY_OPT_SCTX(buf, kBufOptCinwords);
       buf->b_p_lisp = p_lisp;
-      COPY_OPT_SCTX(buf, BV_LISP);
+      COPY_OPT_SCTX(buf, kBufOptLisp);
       // Don't copy 'syntax', it must be set
       buf->b_p_syn = empty_string_option;
       buf->b_p_smc = p_smc;
-      COPY_OPT_SCTX(buf, BV_SMC);
+      COPY_OPT_SCTX(buf, kBufOptSynmaxcol);
       buf->b_s.b_syn_isk = empty_string_option;
       buf->b_s.b_p_spc = xstrdup(p_spc);
-      COPY_OPT_SCTX(buf, BV_SPC);
+      COPY_OPT_SCTX(buf, kBufOptSpellcapcheck);
       compile_cap_prog(&buf->b_s);
       buf->b_s.b_p_spf = xstrdup(p_spf);
-      COPY_OPT_SCTX(buf, BV_SPF);
+      COPY_OPT_SCTX(buf, kBufOptSpellfile);
       buf->b_s.b_p_spl = xstrdup(p_spl);
-      COPY_OPT_SCTX(buf, BV_SPL);
+      COPY_OPT_SCTX(buf, kBufOptSpelllang);
       buf->b_s.b_p_spo = xstrdup(p_spo);
-      COPY_OPT_SCTX(buf, BV_SPO);
+      COPY_OPT_SCTX(buf, kBufOptSpelloptions);
       buf->b_s.b_p_spo_flags = spo_flags;
       buf->b_p_inde = xstrdup(p_inde);
-      COPY_OPT_SCTX(buf, BV_INDE);
+      COPY_OPT_SCTX(buf, kBufOptIndentexpr);
       buf->b_p_indk = xstrdup(p_indk);
-      COPY_OPT_SCTX(buf, BV_INDK);
+      COPY_OPT_SCTX(buf, kBufOptIndentkeys);
       buf->b_p_fp = empty_string_option;
       buf->b_p_fex = xstrdup(p_fex);
-      COPY_OPT_SCTX(buf, BV_FEX);
+      COPY_OPT_SCTX(buf, kBufOptFormatexpr);
       buf->b_p_sua = xstrdup(p_sua);
-      COPY_OPT_SCTX(buf, BV_SUA);
+      COPY_OPT_SCTX(buf, kBufOptSuffixesadd);
       buf->b_p_keymap = xstrdup(p_keymap);
-      COPY_OPT_SCTX(buf, BV_KMAP);
+      COPY_OPT_SCTX(buf, kBufOptKeymap);
       buf->b_kmap_state |= KEYMAP_INIT;
       // This isn't really an option, but copying the langmap and IME
       // state from the current buffer is better than resetting it.
       buf->b_p_iminsert = p_iminsert;
-      COPY_OPT_SCTX(buf, BV_IMI);
+      COPY_OPT_SCTX(buf, kBufOptIminsert);
       buf->b_p_imsearch = p_imsearch;
-      COPY_OPT_SCTX(buf, BV_IMS);
+      COPY_OPT_SCTX(buf, kBufOptImsearch);
 
       // options that are normally global but also have a local value
       // are not copied, start using the global value
@@ -5252,16 +5259,16 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_def = empty_string_option;
       buf->b_p_inc = empty_string_option;
       buf->b_p_inex = xstrdup(p_inex);
-      COPY_OPT_SCTX(buf, BV_INEX);
+      COPY_OPT_SCTX(buf, kBufOptIncludeexpr);
       buf->b_p_cot = empty_string_option;
       buf->b_cot_flags = 0;
       buf->b_p_dict = empty_string_option;
       buf->b_p_tsr = empty_string_option;
       buf->b_p_tsrfu = empty_string_option;
       buf->b_p_qe = xstrdup(p_qe);
-      COPY_OPT_SCTX(buf, BV_QE);
+      COPY_OPT_SCTX(buf, kBufOptQuoteescape);
       buf->b_p_udf = p_udf;
-      COPY_OPT_SCTX(buf, BV_UDF);
+      COPY_OPT_SCTX(buf, kBufOptUndofile);
       buf->b_p_lw = empty_string_option;
       buf->b_p_menc = empty_string_option;
 
@@ -5278,12 +5285,12 @@ void buf_copy_options(buf_T *buf, int flags)
         }
       } else {
         buf->b_p_isk = xstrdup(p_isk);
-        COPY_OPT_SCTX(buf, BV_ISK);
+        COPY_OPT_SCTX(buf, kBufOptIskeyword);
         did_isk = true;
         buf->b_p_ts = p_ts;
-        COPY_OPT_SCTX(buf, BV_TS);
+        COPY_OPT_SCTX(buf, kBufOptTabstop);
         buf->b_p_vts = xstrdup(p_vts);
-        COPY_OPT_SCTX(buf, BV_VTS);
+        COPY_OPT_SCTX(buf, kBufOptVartabstop);
         if (p_vts && p_vts != empty_string_option && !buf->b_p_vts_array) {
           tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
@@ -5294,7 +5301,7 @@ void buf_copy_options(buf_T *buf, int flags)
           clear_string_option(&buf->b_p_bt);
         }
         buf->b_p_ma = p_ma;
-        COPY_OPT_SCTX(buf, BV_MA);
+        COPY_OPT_SCTX(buf, kBufOptModifiable);
       }
     }
 
@@ -5645,7 +5652,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
       }
     }
     char *str;
-    for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+    for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
       str = options[opt_idx].fullname;
       if (is_option_hidden(opt_idx)) {
         continue;
@@ -6306,11 +6313,11 @@ dict_T *get_winbuf_options(const int bufopt)
 {
   dict_T *const d = tv_dict_alloc();
 
-  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
     vimoption_T *opt = &options[opt_idx];
 
-    if ((bufopt && (opt->indir & PV_BUF))
-        || (!bufopt && (opt->indir & PV_WIN))) {
+    if ((bufopt && (option_has_scope(opt_idx, kOptScopeBuf)))
+        || (!bufopt && (option_has_scope(opt_idx, kOptScopeWin)))) {
       void *varp = get_varp(opt);
 
       if (varp != NULL) {
@@ -6353,8 +6360,8 @@ Dict get_vimoption(String name, int scope, buf_T *buf, win_T *win, Arena *arena,
 
 Dict get_all_vimoptions(Arena *arena)
 {
-  Dict retval = arena_dict(arena, kOptIndexCount);
-  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+  Dict retval = arena_dict(arena, kOptCount);
+  for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
     Dict opt_dict = vimoption2dict(&options[opt_idx], OPT_GLOBAL, curbuf, curwin, arena);
     PUT_C(retval, options[opt_idx].fullname, DICT_OBJ(opt_dict));
   }
@@ -6363,15 +6370,16 @@ Dict get_all_vimoptions(Arena *arena)
 
 static Dict vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, win_T *win, Arena *arena)
 {
+  OptIndex opt_idx = get_opt_idx(opt);
   Dict dict = arena_dict(arena, 13);
 
   PUT_C(dict, "name", CSTR_AS_OBJ(opt->fullname));
   PUT_C(dict, "shortname", CSTR_AS_OBJ(opt->shortname));
 
   const char *scope;
-  if (opt->indir & PV_BUF) {
+  if (option_has_scope(opt_idx, kOptScopeBuf)) {
     scope = "buf";
-  } else if (opt->indir & PV_WIN) {
+  } else if (option_has_scope(opt_idx, kOptScopeWin)) {
     scope = "win";
   } else {
     scope = "global";
@@ -6380,7 +6388,7 @@ static Dict vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, win_T *w
   PUT_C(dict, "scope", CSTR_AS_OBJ(scope));
 
   // welcome to the jungle
-  PUT_C(dict, "global_local", BOOLEAN_OBJ(opt->indir & PV_BOTH));
+  PUT_C(dict, "global_local", BOOLEAN_OBJ(option_is_global_local(opt_idx)));
   PUT_C(dict, "commalist", BOOLEAN_OBJ(opt->flags & kOptFlagComma));
   PUT_C(dict, "flaglist", BOOLEAN_OBJ(opt->flags & kOptFlagFlagList));
 
@@ -6391,11 +6399,11 @@ static Dict vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, win_T *w
     last_set = opt->last_set;
   } else {
     // Scope is either OPT_LOCAL or a fallback mode was requested.
-    if (opt->indir & PV_BUF) {
-      last_set = buf->b_p_script_ctx[opt->indir & PV_MASK];
+    if (option_has_scope(opt_idx, kOptScopeBuf)) {
+      last_set = buf->b_p_script_ctx[opt->scope_idx[kOptScopeBuf]];
     }
-    if (opt->indir & PV_WIN) {
-      last_set = win->w_p_script_ctx[opt->indir & PV_MASK];
+    if (option_has_scope(opt_idx, kOptScopeWin)) {
+      last_set = win->w_p_script_ctx[opt->scope_idx[kOptScopeWin]];
     }
     if (req_scope != OPT_LOCAL && last_set.script_ctx.sc_sid == 0) {
       last_set = opt->last_set;
@@ -6411,25 +6419,4 @@ static Dict vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, win_T *w
   PUT_C(dict, "allows_duplicates", BOOLEAN_OBJ(!(opt->flags & kOptFlagNoDup)));
 
   return dict;
-}
-
-/// Check if option is multitype (supports multiple types).
-static bool option_is_multitype(OptIndex opt_idx)
-{
-  const OptTypeFlags type_flags = get_option(opt_idx)->type_flags;
-  assert(type_flags != 0);
-  return !is_power_of_two(type_flags);
-}
-
-/// Check if option supports a specific type.
-bool option_has_type(OptIndex opt_idx, OptValType type)
-{
-  // Ensure that type flags variable can hold all types.
-  STATIC_ASSERT(kOptValTypeSize <= sizeof(OptTypeFlags) * 8,
-                "Option type_flags cannot fit all option types");
-  // Ensure that the type is valid before accessing type_flags.
-  assert(type > kOptValTypeNil && type < kOptValTypeSize);
-  // Bitshift 1 by the value of type to get the type's corresponding flag, and check if it's set in
-  // the type_flags bit field.
-  return get_option(opt_idx)->type_flags & (1 << type);
 }
