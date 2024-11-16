@@ -869,6 +869,16 @@ function M.log(path, _)
 end
 
 --- @type vim.filetype.mapfn
+function M.ll(_, bufnr)
+  local first_line = getline(bufnr, 1)
+  if matchregex(first_line, [[;\|\<source_filename\>\|\<target\>]]) then
+    return 'llvm'
+  else
+    return 'lifelines'
+  end
+end
+
+--- @type vim.filetype.mapfn
 function M.lpc(_, bufnr)
   if vim.g.lpc_syntax_for_c then
     for _, line in ipairs(getlines(bufnr, 1, 12)) do
