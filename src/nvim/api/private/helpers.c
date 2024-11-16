@@ -771,7 +771,7 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
     int id = (int)obj.data.integer;
     return (1 <= id && id <= highlight_num_groups()) ? id : 0;
   } else {
-    api_set_error(err, kErrorTypeValidation, "Invalid highlight: %s", what);
+    api_set_error(err, kErrorTypeValidation, "Invalid hl_group: %s", what);
     return 0;
   }
 }
@@ -809,27 +809,22 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
 {
   HlMessage hl_msg = KV_INITIAL_VALUE;
   for (size_t i = 0; i < chunks.size; i++) {
-    if (chunks.items[i].type != kObjectTypeArray) {
-      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+    VALIDATE_T("chunk", kObjectTypeArray, chunks.items[i].type, {
       goto free_exit;
-    }
+    });
     Array chunk = chunks.items[i].data.array;
-    if (chunk.size == 0 || chunk.size > 2
-        || chunk.items[0].type != kObjectTypeString
-        || (chunk.size == 2 && chunk.items[1].type != kObjectTypeString)) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Chunk is not an array with one or two strings");
+    VALIDATE((chunk.size > 0 && chunk.size <= 2 && chunk.items[0].type == kObjectTypeString),
+             "%s", "Invalid chunk: expected Array with 1 or 2 Strings", {
       goto free_exit;
-    }
+    });
 
     String str = copy_string(chunk.items[0].data.string, NULL);
 
     int hl_id = 0;
     if (chunk.size == 2) {
-      String hl = chunk.items[1].data.string;
-      if (hl.size > 0) {
-        // TODO(bfredl): use object_to_hl_id and allow integer
-        hl_id = syn_check_group(hl.data, hl.size);
+      hl_id = object_to_hl_id(chunk.items[1], "text highlight", err);
+      if (ERROR_SET(err)) {
+        goto free_exit;
       }
     }
     kv_push(hl_msg, ((HlMessageChunk){ .text = str, .hl_id = hl_id }));

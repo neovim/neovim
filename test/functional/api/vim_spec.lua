@@ -3582,6 +3582,15 @@ describe('API', function()
       command('highlight Special guifg=SlateBlue')
     end)
 
+    it('validation', function()
+      eq("Invalid 'chunk': expected Array, got String", pcall_err(api.nvim_echo, { 'msg' }, 1, {}))
+      eq(
+        'Invalid chunk: expected Array with 1 or 2 Strings',
+        pcall_err(api.nvim_echo, { { '', '', '' } }, 1, {})
+      )
+      eq('Invalid hl_group: text highlight', pcall_err(api.nvim_echo, { { '', false } }, 1, {}))
+    end)
+
     it('should clear cmdline message before echo', function()
       feed(':call nvim_echo([["msg"]], v:false, {})<CR>')
       screen:expect {
@@ -3604,6 +3613,18 @@ describe('API', function()
         ^                                        |
         {1:~                                       }|*6
         msg_a{15:msg_b}{16:msg_c}                         |
+      ]],
+      }
+      async_meths.nvim_echo({
+        { 'msg_d' },
+        { 'msg_e', api.nvim_get_hl_id_by_name('Statement') },
+        { 'msg_f', api.nvim_get_hl_id_by_name('Special') },
+      }, true, {})
+      screen:expect {
+        grid = [[
+        ^                                        |
+        {1:~                                       }|*6
+        msg_d{15:msg_e}{16:msg_f}                         |
       ]],
       }
     end)
