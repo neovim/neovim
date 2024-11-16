@@ -286,6 +286,28 @@ describe('vim.ui_attach', function()
       },
     })
   end)
+end)
+
+describe('vim.ui_attach', function()
+  local screen
+  before_each(function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
+    screen = Screen.new(40, 5)
+  end)
+
+  after_each(function()
+    check_close()
+    os.remove(testlog)
+  end)
+
+  it('error in callback is logged', function()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace('testspace')
+      vim.ui_attach(ns, { ext_popupmenu = true }, function() error(42) end)
+    ]])
+    feed('ifoo<CR>foobar<CR>fo<C-X><C-N>')
+    assert_log('Error executing UI event callback: Error executing lua: .*: 42', testlog, 100)
+  end)
 
   it('detaches after excessive errors', function()
     screen:add_extra_attr_ids({ [100] = { bold = true, foreground = Screen.colors.SeaGreen } })
@@ -314,7 +336,7 @@ describe('vim.ui_attach', function()
         foo                                     |
         {3:                                        }|
         {9:Excessive errors in vim.ui_attach() call}|
-        {9:back from ns: 2.}                        |
+        {9:back from ns: 1.}                        |
         {100:Press ENTER or type command to continue}^ |
       ]],
     })
@@ -360,27 +382,9 @@ describe('vim.ui_attach', function()
         foo                                     |
         {3:                                        }|
         {9:Excessive errors in vim.ui_attach() call}|
-        {9:back from ns: 3.}                        |
+        {9:back from ns: 2.}                        |
         {100:Press ENTER or type command to continue}^ |
       ]],
     })
-  end)
-end)
-
-describe('vim.ui_attach', function()
-  after_each(function()
-    check_close()
-    os.remove(testlog)
-  end)
-
-  it('error in callback is logged', function()
-    clear({ env = { NVIM_LOG_FILE = testlog } })
-    local _ = Screen.new()
-    exec_lua([[
-      local ns = vim.api.nvim_create_namespace('testspace')
-      vim.ui_attach(ns, { ext_popupmenu = true }, function() error(42) end)
-    ]])
-    feed('ifoo<CR>foobar<CR>fo<C-X><C-N>')
-    assert_log('Error executing UI event callback: Error executing lua: .*: 42', testlog, 100)
   end)
 end)
