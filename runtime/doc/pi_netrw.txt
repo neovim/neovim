@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 8.2.  Last change: 2020 Aug 15
+*pi_netrw.txt*  Nvim
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
