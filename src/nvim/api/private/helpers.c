@@ -823,9 +823,6 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
     int hl_id = 0;
     if (chunk.size == 2) {
       hl_id = object_to_hl_id(chunk.items[1], "text highlight", err);
-      if (ERROR_SET(err)) {
-        goto free_exit;
-      }
     }
     kv_push(hl_msg, ((HlMessageChunk){ .text = str, .hl_id = hl_id }));
   }
