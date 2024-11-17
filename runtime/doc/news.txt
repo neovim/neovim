@@ -216,6 +216,8 @@ LSP
 • |vim.lsp.buf.signature_help()| can now cycle through different signatures
   using `<C-s>` and also support multiple clients.
 • The client now supports `'utf-8'` and `'utf-32'` position encodings.
+• |vim.lsp.buf.hover()| now highlights hover ranges using the
+  |hl-LspReferenceTarget| highlight group.
 
 LUA
 

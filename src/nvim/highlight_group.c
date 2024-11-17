@@ -215,6 +215,7 @@ static const char *highlight_init_both[] = {
   "default link LspReferenceRead            LspReferenceText",
   "default link LspReferenceText            Visual",
   "default link LspReferenceWrite           LspReferenceText",
+  "default link LspReferenceTarget          LspReferenceText",
   "default link LspSignatureActiveParameter Visual",
   "default link SnippetTabstop              Visual",
 
