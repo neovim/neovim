@@ -32,12 +32,12 @@ local function notify(msg, level)
   end
 end
 
-local logfilename = vim.fs.joinpath(vim.fn.stdpath('log'), 'lsp.log')
+local logfilename = vim.fs.joinpath(vim.fn.stdpath('log') --[[@as string]], 'lsp.log')
 
 -- TODO: Ideally the directory should be created in open_logfile(), right
 -- before opening the log file, but open_logfile() can be called from libuv
 -- callbacks, where using fn.mkdir() is not allowed.
-vim.fn.mkdir(vim.fn.stdpath('log'), 'p')
+vim.fn.mkdir(vim.fn.stdpath('log') --[[@as string]], 'p')
 
 --- Returns the log filename.
 ---@return string log filename
@@ -82,6 +82,7 @@ end
 
 for level, levelnr in pairs(log_levels) do
   -- Also export the log level on the root object.
+  ---@diagnostic disable-next-line: no-unknown
   log[level] = levelnr
 
   -- Add a reverse lookup.
@@ -93,7 +94,7 @@ end
 --- @return fun(...:any): boolean?
 local function create_logger(level, levelnr)
   return function(...)
-    if levelnr < current_log_level then
+    if not log.should_log(levelnr) then
       return false
     end
     local argc = select('#', ...)
@@ -169,7 +170,7 @@ end
 
 --- Checks whether the level is sufficient for logging.
 ---@param level integer log level
----@return bool : true if would log, false if not
+---@return boolean : true if would log, false if not
 function log.should_log(level)
   return level >= current_log_level
 end
