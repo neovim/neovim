@@ -172,6 +172,30 @@ describe('default', function()
 
           first line]])
         end)
+
+        it('supports dot repetition', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed('[<Space>')
+          n.feed('.')
+          n.expect([[
+
+
+          first line]])
+        end)
+
+        it('supports dot repetition and a count', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed('[<Space>')
+          n.feed('3.')
+          n.expect([[
+
+
+
+
+          first line]])
+        end)
       end)
 
       describe(']<Space>', function()
@@ -192,6 +216,29 @@ describe('default', function()
           first line
 
 
+
+
+          ]])
+        end)
+
+        it('supports dot repetition', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed(']<Space>')
+          n.feed('.')
+          n.expect([[
+          first line
+
+          ]])
+        end)
+
+        it('supports dot repetition and a count', function()
+          n.clear({ args_rm = { '--cmd' } })
+          n.insert([[first line]])
+          n.feed(']<Space>')
+          n.feed('2.')
+          n.expect([[
+          first line
 
 
           ]])
