@@ -8,11 +8,11 @@ endif
 
 runtime! ftplugin/help.vim
 
-setlocal wrap breakindent linebreak
+setlocal wrap breakindent linebreak nolist
 let &l:iskeyword='!-~,^*,^|,^",192-255'
 
 if exists("b:undo_ftplugin")
-  let b:undo_ftplugin .= "|setl wrap< bri< lbr< kp< isk<"
+  let b:undo_ftplugin .= "|setl wrap< bri< lbr< kp< isk< list<"
 else
-  let b:undo_ftplugin = "setl wrap< bri< lbr< kp< isk<"
+  let b:undo_ftplugin = "setl wrap< bri< lbr< kp< isk< list<"
 endif
