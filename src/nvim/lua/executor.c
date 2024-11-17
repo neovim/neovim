@@ -954,41 +954,10 @@ static void nlua_common_free_all_mem(lua_State *lstate)
 
 static void nlua_print_event(void **argv)
 {
-  char *str = argv[0];
-  const size_t len = (size_t)(intptr_t)argv[1] - 1;  // exclude final NUL
-
-  for (size_t i = 0; i < len;) {
-    if (got_int) {
-      break;
-    }
-    const size_t start = i;
-    while (i < len) {
-      switch (str[i]) {
-      case NUL:
-        str[i] = NL;
-        i++;
-        continue;
-      case NL:
-        // TODO(bfredl): use proper multiline msg? Probably should implement
-        // print() in lua in terms of nvim_message(), when it is available.
-        str[i] = NUL;
-        i++;
-        break;
-      default:
-        i++;
-        continue;
-      }
-      break;
-    }
-    msg(str + start, 0);
-    if (msg_silent == 0) {
-      msg_didout = true;  // Make blank lines work properly
-    }
-  }
-  if (len && str[len - 1] == NUL) {  // Last was newline
-    msg("", 0);
-  }
-  xfree(str);
+  HlMessage msg = KV_INITIAL_VALUE;
+  HlMessageChunk chunk = { { .data = argv[0], .size = (size_t)(intptr_t)argv[1] - 1 }, 0 };
+  kv_push(msg, chunk);
+  msg_multihl(msg, "lua_print", true);
 }
 
 /// Print as a Vim message

@@ -277,10 +277,8 @@ describe('startup', function()
 
       -- nvim <vim args> -l foo.lua <vim args>
       assert_l_out(
-        -- luacheck: ignore 611 (Line contains only whitespaces)
         [[
             wrap
-          
           bufs:
           nvim args: 7
           lua args: { "-c", "set wrap?",

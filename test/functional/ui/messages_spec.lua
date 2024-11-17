@@ -1113,6 +1113,33 @@ stack traceback:
     })
     eq(showmode, 1)
   end)
+
+  it('emits single message for multiline print())', function()
+    exec_lua([[print("foo\nbar\nbaz")]])
+    screen:expect({
+      messages = {
+        {
+          content = { { 'foo\nbar\nbaz' } },
+          kind = 'lua_print',
+        },
+      },
+    })
+    exec_lua([[print(vim.inspect({ foo = "bar" }))]])
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { '{\n  foo = "bar"\n}' } },
+          kind = 'lua_print',
+        },
+      },
+    })
+    exec_lua([[vim.print({ foo = "bar" })]])
+    screen:expect_unchanged()
+  end)
 end)
 
 describe('ui/builtin messages', function()
@@ -2062,8 +2089,6 @@ aliquip ex ea commodo consequat.]]
   end)
 
   it('can be quit with Lua #11224 #16537', function()
-    -- NOTE: adds "4" to message history, although not displayed initially
-    --       (triggered the more prompt).
     screen:try_resize(40, 5)
     feed(':lua for i=0,10 do print(i) end<cr>')
     screen:expect {
@@ -2093,13 +2118,13 @@ aliquip ex ea commodo consequat.]]
       {4:-- More --}^                              |
     ]],
     }
-    feed('j')
+    feed('G')
     screen:expect {
       grid = [[
-      1                                       |
-      2                                       |
-      3                                       |
-      4                                       |
+      7                                       |
+      8                                       |
+      9                                       |
+      10                                      |
       {4:Press ENTER or type command to continue}^ |
     ]],
     }
