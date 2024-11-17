@@ -1037,7 +1037,7 @@ end
 
 --- Registers callbacks for the [LanguageTree].
 ---@param cbs table<TSCallbackNameOn,function> An [nvim_buf_attach()]-like table argument with the following handlers:
----           - `on_bytes` : see [nvim_buf_attach()], but this will be called _after_ the parsers callback.
+---           - `on_bytes` : see [nvim_buf_attach()].
 ---           - `on_changedtree` : a callback that will be called every time the tree has syntactical changes.
 ---              It will be passed two arguments: a table of the ranges (as node ranges) that
 ---              changed and the changed tree.
