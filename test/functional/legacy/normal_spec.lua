@@ -102,4 +102,33 @@ describe('normal', function()
       ]],
     })
   end)
+
+  -- oldtest: Test_normal_gm()
+  it('gm sets curswant correctly', function()
+    screen:try_resize(75, 10)
+    exec([[
+      call setline(1, repeat(["  abcd\tefgh\tij"], 10))
+      call cursor(1, 1)
+    ]])
+    feed('jVjzf')
+    -- gm
+    feed('gmk')
+    eq(18, fn.virtcol('.'))
+    -- g0
+    feed('gj0k')
+    eq(1, fn.virtcol('.'))
+    -- g^
+    feed('jg^k')
+    eq(3, fn.virtcol('.'))
+    exec('call cursor(10, 1)')
+    -- gm
+    feed('gmk')
+    eq(18, fn.virtcol('.'))
+    -- g0
+    feed('gj0k')
+    eq(1, fn.virtcol('.'))
+    -- g^
+    feed('jg^k')
+    eq(3, fn.virtcol('.'))
+  end)
 end)
