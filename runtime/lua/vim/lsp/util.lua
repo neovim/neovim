@@ -1887,6 +1887,7 @@ function M.make_position_params(window, offset_encoding)
 end
 
 --- Utility function for getting the encoding of the first LSP client on the given buffer.
+---@deprecated
 ---@param bufnr integer buffer handle or 0 for current, defaults to current
 ---@return string encoding first client if there is one, nil otherwise
 function M._get_offset_encoding(bufnr)
