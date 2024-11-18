@@ -193,4 +193,26 @@ describe('command-line option', function()
     matches('Run "nvim %-V1 %-v"', fn.system({ nvim_prog_abs(), '-v' }))
     matches('Compilation: .*Run :checkhealth', fn.system({ nvim_prog_abs(), '-V1', '-v' }))
   end)
+
+  if is_os('win') then
+    for _, prefix in ipairs({ '~/', '~\\' }) do
+      it('expands ' .. prefix .. ' on Windows', function()
+        local fname = os.getenv('USERPROFILE') .. '\\nvim_test.txt'
+        finally(function()
+          os.remove(fname)
+        end)
+        write_file(fname, 'some text')
+        eq(
+          'some text',
+          fn.system({
+            nvim_prog_abs(),
+            '-es',
+            '+%print',
+            '+q',
+            prefix .. 'nvim_test.txt',
+          }):gsub('\n', '')
+        )
+      end)
+    end
+  end
 end)
