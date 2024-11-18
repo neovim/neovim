@@ -1953,8 +1953,7 @@ make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
                            selection.
       • {bufnr}            (`integer?`) buffer handle or 0 for current,
                            defaults to current
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) defaults to
-                           `offset_encoding` of first client of `bufnr`
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     Return: ~
         (`table`) { textDocument = { uri = `current_file_uri` }, range = {
@@ -1968,9 +1967,7 @@ make_position_params({window}, {offset_encoding})
     Parameters: ~
       • {window}           (`integer?`) window handle or 0 for current,
                            defaults to current
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) defaults to
-                           `offset_encoding` of first client of buffer of
-                           `window`
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     Return: ~
         (`lsp.TextDocumentPositionParams`)
@@ -1988,9 +1985,7 @@ make_range_params({window}, {offset_encoding})
     Parameters: ~
       • {window}           (`integer?`) window handle or 0 for current,
                            defaults to current
-      • {offset_encoding}  (`"utf-8"|"utf-16"|"utf-32"?`) defaults to
-                           `offset_encoding` of first client of buffer of
-                           `window`
+      • {offset_encoding}  (`"utf-8"|"utf-16"|"utf-32"`)
 
     Return: ~
         (`table`) { textDocument = { uri = `current_file_uri` }, range = {

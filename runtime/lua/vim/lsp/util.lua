@@ -1848,12 +1848,11 @@ function M.try_trim_markdown_code_blocks(lines)
 end
 
 ---@param window integer?: window handle or 0 for current, defaults to current
----@param offset_encoding? 'utf-8'|'utf-16'|'utf-32'? defaults to `offset_encoding` of first client of buffer of `window`
+---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
 local function make_position_param(window, offset_encoding)
   window = window or 0
   local buf = api.nvim_win_get_buf(window)
   local row, col = unpack(api.nvim_win_get_cursor(window))
-  offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   row = row - 1
   local line = api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
   if not line then
@@ -1868,13 +1867,19 @@ end
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
 ---@param window integer?: window handle or 0 for current, defaults to current
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32'? defaults to `offset_encoding` of first client of buffer of `window`
+---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.TextDocumentPositionParams
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 function M.make_position_params(window, offset_encoding)
   window = window or 0
   local buf = api.nvim_win_get_buf(window)
-  offset_encoding = offset_encoding or M._get_offset_encoding(buf)
+  if offset_encoding == nil then
+    vim.notify_once(
+      'warning: offset_encoding is required, using the offset_encoding from the first client',
+      vim.log.levels.WARN
+    )
+    offset_encoding = M._get_offset_encoding(buf)
+  end
   return {
     textDocument = M.make_text_document_params(buf),
     position = make_position_param(window, offset_encoding),
@@ -1904,7 +1909,7 @@ function M._get_offset_encoding(bufnr)
       offset_encoding = this_offset_encoding
     elseif offset_encoding ~= this_offset_encoding then
       vim.notify_once(
-        'warning: multiple different client offset_encodings detected for buffer, this is not supported yet',
+        'warning: multiple different client offset_encodings detected for buffer, vim.lsp.util._get_offset_encoding() uses the offset_encoding from the first client',
         vim.log.levels.WARN
       )
     end
@@ -1919,12 +1924,18 @@ end
 --- `textDocument/rangeFormatting`.
 ---
 ---@param window integer? window handle or 0 for current, defaults to current
----@param offset_encoding "utf-8"|"utf-16"|"utf-32"? defaults to `offset_encoding` of first client of buffer of `window`
+---@param offset_encoding "utf-8"|"utf-16"|"utf-32"
 ---@return table { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
 function M.make_range_params(window, offset_encoding)
   local buf = api.nvim_win_get_buf(window or 0)
-  offset_encoding = offset_encoding or M._get_offset_encoding(buf)
+  if offset_encoding == nil then
+    vim.notify_once(
+      'warning: offset_encoding is required, using the offset_encoding from the first client',
+      vim.log.levels.WARN
+    )
+    offset_encoding = M._get_offset_encoding(buf)
+  end
   local position = make_position_param(window, offset_encoding)
   return {
     textDocument = M.make_text_document_params(buf),
@@ -1940,7 +1951,7 @@ end
 ---@param end_pos [integer,integer]? {row,col} mark-indexed position.
 --- Defaults to the end of the last visual selection.
 ---@param bufnr integer? buffer handle or 0 for current, defaults to current
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32'? defaults to `offset_encoding` of first client of `bufnr`
+---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return table { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`start_position`, end = `end_position` } }
 function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
@@ -1948,7 +1959,13 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
   validate('end_pos', end_pos, 'table', true)
   validate('offset_encoding', offset_encoding, 'string', true)
   bufnr = bufnr or api.nvim_get_current_buf()
-  offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
+  if offset_encoding == nil then
+    vim.notify_once(
+      'warning: offset_encoding is required, using the offset_encoding from the first client',
+      vim.log.levels.WARN
+    )
+    offset_encoding = M._get_offset_encoding(bufnr)
+  end
   --- @type [integer, integer]
   local A = { unpack(start_pos or api.nvim_buf_get_mark(bufnr, '<')) }
   --- @type [integer, integer]
