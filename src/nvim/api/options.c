@@ -165,6 +165,14 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 
   buf_T *ftbuf = do_ft_buf(filetype, &aco, err);
   if (ERROR_SET(err)) {
+    if (ftbuf != NULL) {
+      // restore curwin/curbuf and a few other things
+      aucmd_restbuf(&aco);
+
+      assert(curbuf != ftbuf);  // safety check
+      wipe_buffer(ftbuf, false);
+    }
+
     return (Object)OBJECT_INIT;
   }
 
