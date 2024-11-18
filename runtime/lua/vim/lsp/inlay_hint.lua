@@ -65,7 +65,7 @@ function M.on_inlayhint(err, result, ctx)
   if num_unprocessed == 0 then
     client_hints[client_id] = {}
     bufstate.version = ctx.version
-    api.nvim__redraw({ buf = bufnr, valid = true })
+    api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
     return
   end
 
@@ -81,7 +81,7 @@ function M.on_inlayhint(err, result, ctx)
 
   client_hints[client_id] = new_lnum_hints
   bufstate.version = ctx.version
-  api.nvim__redraw({ buf = bufnr, valid = true })
+  api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
 end
 
 --- |lsp-handler| for the method `workspace/inlayHint/refresh`
@@ -215,7 +215,7 @@ local function clear(bufnr)
     end
   end
   api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
-  api.nvim__redraw({ buf = bufnr, valid = true })
+  api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
 end
 
 --- Disable inlay hints for a buffer
