@@ -1925,8 +1925,7 @@ end
 ---
 ---@param window integer? window handle or 0 for current, defaults to current
 ---@param offset_encoding "utf-8"|"utf-16"|"utf-32"
----@return table { textDocument = { uri = `current_file_uri` }, range = { start =
----`current_position`, end = `current_position` } }
+---@return { textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }
 function M.make_range_params(window, offset_encoding)
   local buf = api.nvim_win_get_buf(window or 0)
   if offset_encoding == nil then
@@ -1952,8 +1951,7 @@ end
 --- Defaults to the end of the last visual selection.
 ---@param bufnr integer? buffer handle or 0 for current, defaults to current
 ---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
----@return table { textDocument = { uri = `current_file_uri` }, range = { start =
----`start_position`, end = `end_position` } }
+---@return { textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }
 function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
   validate('start_pos', start_pos, 'table', true)
   validate('end_pos', end_pos, 'table', true)
