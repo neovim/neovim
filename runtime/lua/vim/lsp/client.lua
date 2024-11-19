@@ -92,7 +92,7 @@ local validate = vim.validate
 --- @field name? string
 ---
 --- Language ID as string. Defaults to the buffer filetype.
---- @field get_language_id? fun(bufnr: integer, filetype?: string): string
+--- @field get_language_id? fun(bufnr: integer, filetype: string): string
 ---
 --- The encoding that the LSP server expects. Client does not verify this is correct.
 --- @field offset_encoding? 'utf-8'|'utf-16'|'utf-32'
@@ -212,7 +212,7 @@ local validate = vim.validate
 --- A table with flags for the client. The current (experimental) flags are:
 --- @field flags vim.lsp.Client.Flags
 ---
---- @field get_language_id fun(bufnr: integer, filetype?: string): string
+--- @field get_language_id fun(bufnr: integer, filetype: string): string
 ---
 --- The capabilities provided by the client (editor or tool)
 --- @field capabilities lsp.ClientCapabilities
@@ -340,10 +340,10 @@ end
 --- By default, get_language_id just returns the exact filetype it is passed.
 --- It is possible to pass in something that will calculate a different filetype,
 --- to be sent by the client.
---- @param bufnr integer
---- @param filetype? string
-local function default_get_language_id(bufnr, filetype)
-  return filetype or vim.bo[bufnr].filetype
+--- @param _bufnr integer
+--- @param filetype string
+local function default_get_language_id(_bufnr, filetype)
+  return filetype
 end
 
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
@@ -936,6 +936,11 @@ function Client:_unregister(unregistrations)
   end
 end
 
+--- @private
+function Client:_get_language_id(bufnr)
+  return self.get_language_id(bufnr, vim.bo[bufnr].filetype)
+end
+
 --- @param method string
 --- @param bufnr? integer
 --- @return lsp.Registration?
@@ -946,7 +951,7 @@ function Client:_get_registration(method, bufnr)
       return reg
     end
     local documentSelector = reg.registerOptions.documentSelector
-    local language = self.get_language_id(bufnr)
+    local language = self:_get_language_id(bufnr)
     local uri = vim.uri_from_bufnr(bufnr)
     local fname = vim.uri_to_fname(uri)
     for _, filter in ipairs(documentSelector) do
@@ -1027,7 +1032,7 @@ function Client:_text_document_did_open_handler(bufnr)
     textDocument = {
       version = lsp.util.buf_versions[bufnr],
       uri = vim.uri_from_bufnr(bufnr),
-      languageId = self.get_language_id(bufnr),
+      languageId = self:_get_language_id(bufnr),
       text = lsp._buf_get_full_text(bufnr),
     },
   })

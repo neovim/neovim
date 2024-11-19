@@ -968,7 +968,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                   request before sending kill -15. If set to
                                   false, nvim exits immediately after sending
                                   the "shutdown" request to the server.
-      • {get_language_id}       (`fun(bufnr: integer, filetype?: string): string`)
+      • {get_language_id}       (`fun(bufnr: integer, filetype: string): string`)
       • {capabilities}          (`lsp.ClientCapabilities`) The capabilities
                                 provided by the client (editor or tool)
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`)
@@ -1089,7 +1089,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                               `initialize` in the LSP spec.
       • {name}?               (`string`, default: client-id) Name in log
                               messages.
-      • {get_language_id}?    (`fun(bufnr: integer, filetype?: string): string`)
+      • {get_language_id}?    (`fun(bufnr: integer, filetype: string): string`)
                               Language ID as string. Defaults to the buffer
                               filetype.
       • {offset_encoding}?    (`'utf-8'|'utf-16'|'utf-32'`) The encoding that
