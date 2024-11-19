@@ -1108,7 +1108,7 @@ describe('treesitter highlighting (markdown)', function()
     })
     screen:expect({
       grid = [[
-        {25:[}{100:This link text}{25:](}{101:https://example.com}{25:)} is|
+        {100:[This link text](}{101:https://example.com}{100:)} is|
          a hyperlink^.                           |
         {1:~                                       }|*3
                                                 |
