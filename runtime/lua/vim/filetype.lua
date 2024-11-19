@@ -2214,6 +2214,7 @@ local pattern = {
     ['/screengrab/.*%.conf$'] = 'dosini',
     ['^${GNUPGHOME}/gpg%.conf$'] = 'gpg',
     ['/boot/grub/grub%.conf$'] = 'grub',
+    ['/hypr/.*%.conf$'] = 'hyprlang',
     ['^lilo%.conf'] = starsetf('lilo'),
     ['^named.*%.conf$'] = 'named',
     ['^rndc.*%.conf$'] = 'named',
