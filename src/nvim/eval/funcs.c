@@ -7848,8 +7848,8 @@ static void f_substitute(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       || flg == NULL) {
     rettv->vval.v_string = NULL;
   } else {
-    rettv->vval.v_string = do_string_sub((char *)str, (char *)pat,
-                                         (char *)sub, expr, (char *)flg);
+    rettv->vval.v_string = do_string_sub((char *)str, strlen(str), (char *)pat,
+                                         (char *)sub, expr, (char *)flg, NULL);
   }
 }
 
