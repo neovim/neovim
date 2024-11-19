@@ -504,6 +504,7 @@ func s:GetFilenameChecks() abort
     \ 'mplayerconf': ['mplayer.conf', '/.mplayer/config', 'any/.mplayer/config'],
     \ 'mrxvtrc': ['mrxvtrc', '.mrxvtrc'],
     \ 'msidl': ['file.odl', 'file.mof'],
+    \ 'mss': ['file.mss'],
     \ 'msql': ['file.msql'],
     \ 'mojo': ['file.mojo', 'file.🔥'],
     \ 'msmtp': ['.msmtprc'],
