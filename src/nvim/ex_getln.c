@@ -2280,6 +2280,7 @@ int cmdpreview_get_ns(void)
 /// @return Pointer to command preview buffer if succeeded, NULL if failed.
 static buf_T *cmdpreview_open_buf(void)
 {
+  assert(is_autocmd_blocked());
   buf_T *cmdpreview_buf = cmdpreview_bufnr ? buflist_findnr(cmdpreview_bufnr) : NULL;
 
   // If preview buffer doesn't exist, open one.
@@ -2300,10 +2301,12 @@ static buf_T *cmdpreview_open_buf(void)
   }
 
   // Rename preview buffer.
+  emsg_silent++;
   aco_save_T aco;
   aucmd_prepbuf(&aco, cmdpreview_buf);
   int retv = rename_buffer("[Preview]");
   aucmd_restbuf(&aco);
+  emsg_silent--;
 
   if (retv == FAIL) {
     return NULL;
@@ -2330,6 +2333,7 @@ static buf_T *cmdpreview_open_buf(void)
 static win_T *cmdpreview_open_win(buf_T *cmdpreview_buf)
   FUNC_ATTR_NONNULL_ALL
 {
+  assert(is_autocmd_blocked());
   win_T *save_curwin = curwin;
 
   // Open preview window.
@@ -2362,6 +2366,7 @@ static win_T *cmdpreview_open_win(buf_T *cmdpreview_buf)
 /// Closes any open command preview windows.
 static void cmdpreview_close_win(void)
 {
+  assert(is_autocmd_blocked());
   buf_T *buf = cmdpreview_bufnr ? buflist_findnr(cmdpreview_bufnr) : NULL;
   if (buf != NULL) {
     close_windows(buf, false);
@@ -2485,6 +2490,7 @@ static void cmdpreview_prepare(void)
 /// Restore the state of buffers and windows for command preview.
 static void cmdpreview_restore_state(void)
 {
+  assert(is_autocmd_blocked());
   CpInfo *cpinfo = &g_cpinfo;
   for (size_t i = 0; i < cpinfo->buf_info.size; i++) {
     CpBufInfo cp_bufinfo = cpinfo->buf_info.items[i];
@@ -2608,11 +2614,6 @@ static bool cmdpreview_may_init(void)
   g_cpinfo.buf = NULL;
   g_cpinfo.win = NULL;
 
-  emsg_silent++;                 // Block error reporting as the command may be incomplete,
-                                 // but still update v:errmsg
-  msg_silent++;                  // Block messages, namely ones that prompt
-  block_autocmds();              // Block events
-
   // Save current state and prepare for command preview.
   cmdpreview_save();
   cmdpreview_prepare();
@@ -2638,6 +2639,9 @@ static bool cmdpreview_may_init(void)
 /// @return whether preview should be shown or not.
 static bool cmdpreview_show(void)
 {
+  emsg_silent++;                 // Block error reporting as the command may be incomplete,
+                                 // but still update v:errmsg
+  msg_silent++;                  // Block messages, namely ones that prompt
   // Execute the preview callback and use its return value to determine whether to show preview or
   // open the preview window. The preview callback also handles doing the changes and highlights for
   // the preview.
@@ -2669,6 +2673,8 @@ static bool cmdpreview_show(void)
   if (g_cpinfo.icm_split && g_cpinfo.preview_type == 2 && g_cpinfo.win != NULL) {
     cmdpreview_close_win();
   }
+  msg_silent--;                        // Unblock messages
+  emsg_silent--;                       // Unblock error reporting
 
   return g_cpinfo.preview_type != 0;
 }
@@ -2692,6 +2698,7 @@ static bool cmdpreview_may_show(void)
 {
   bool did_show = false;
   assert(g_cpinfo.preview_type == 0);
+  block_autocmds();  // Block events
   if (!cmdpreview_may_init()) {
     did_show = false;
     goto end;
@@ -2700,11 +2707,9 @@ static bool cmdpreview_may_show(void)
   cmdpreview_restore_state();
   cmdpreview_destroy();
   g_cpinfo.preview_type = 0;
-  unblock_autocmds();                  // Unblock events
-  msg_silent--;                        // Unblock messages
-  emsg_silent--;                       // Unblock error reporting
   redrawcmdline();
 end:
+  unblock_autocmds();  // Unblock events
   return did_show;
 }
 
