@@ -1147,7 +1147,7 @@ stack traceback:
       messages = {
         {
           content = { { '?x ' } },
-          kind = 'search_echo',
+          kind = 'search_cmd',
         },
       },
     })
