@@ -422,7 +422,7 @@ func s:GetFilenameChecks() abort
     \ 'limits': ['/etc/limits', '/etc/anylimits.conf', '/etc/anylimits.d/file.conf', '/etc/limits.conf', '/etc/limits.d/file.conf', '/etc/some-limits.conf', '/etc/some-limits.d/file.conf', 'any/etc/limits', 'any/etc/limits.conf', 'any/etc/limits.d/file.conf', 'any/etc/some-limits.conf', 'any/etc/some-limits.d/file.conf'],
     \ 'liquidsoap': ['file.liq'],
     \ 'liquid': ['file.liquid'],
-    \ 'lisp': ['file.lsp', 'file.lisp', 'file.asd', 'file.el', 'file.cl', '.emacs', '.sawfishrc', 'sbclrc', '.sbclrc', 'file.stsg', 'any/local/share/supertux2/config'],
+    \ 'lisp': ['file.lsp', 'file.lisp', 'file.asd', 'file.el', '.emacs', '.sawfishrc', 'sbclrc', '.sbclrc', 'file.stsg', 'any/local/share/supertux2/config'],
     \ 'lite': ['file.lite', 'file.lt'],
     \ 'litestep': ['/LiteStep/any/file.rc', 'any/LiteStep/any/file.rc'],
     \ 'logcheck': ['/etc/logcheck/file.d-some/file', '/etc/logcheck/file.d/file', 'any/etc/logcheck/file.d-some/file', 'any/etc/logcheck/file.d/file'],
@@ -1189,6 +1189,22 @@ func Test_cfg_file()
   endfor
 
   " clean up
+  filetype off
+endfunc
+
+func Test_cl_file()
+  filetype on
+
+  call writefile(['/*', ' * Xfile.cl', ' */', 'int f() {}'], 'Xfile.cl')
+  split Xfile.cl
+  call assert_equal('opencl', &filetype)
+  bwipe!
+
+  call writefile(['()'], 'Xfile.cl')
+  split Xfile.cl
+  call assert_equal('lisp', &filetype)
+  bwipe!
+
   filetype off
 endfunc
 
