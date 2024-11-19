@@ -792,6 +792,7 @@ local extension = {
   mof = 'msidl',
   odl = 'msidl',
   msql = 'msql',
+  mss = 'mss',
   mu = 'mupad',
   mush = 'mush',
   mustache = 'mustache',
