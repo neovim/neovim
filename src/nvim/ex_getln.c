@@ -2559,9 +2559,9 @@ static void cmdpreview_destroy(void)
   XFREE_CLEAR(cpinfo->cmdline);
 }
 
-static bool cmdpreview_may_init(void)
+/// Check if the current command is previewable.
+static bool cmdpreview_check_cmdline(void)
 {
-  g_cpinfo.preview_type = 0;
   g_cpinfo.cmdline = xstrdup(ccline.cmdbuff);
   const char *errormsg = NULL;
   emsg_off++;  // Block errors when parsing the command line, and don't update v:errmsg
@@ -2577,6 +2577,26 @@ static bool cmdpreview_may_init(void)
     goto end;
   }
 
+  // Swap invalid command range if needed
+  if ((g_cpinfo.ea.argt & EX_RANGE) && g_cpinfo.ea.line1 > g_cpinfo.ea.line2) {
+    linenr_T lnum = g_cpinfo.ea.line1;
+    g_cpinfo.ea.line1 = g_cpinfo.ea.line2;
+    g_cpinfo.ea.line2 = lnum;
+  }
+  return true;
+end:
+  XFREE_CLEAR(g_cpinfo.cmdline);
+  return false;
+}
+
+static bool cmdpreview_may_init(void)
+{
+  g_cpinfo.preview_type = 0;
+
+  if (!cmdpreview_check_cmdline()) {
+    return false;
+  }
+
   // Cursor may be at the end of the message grid rather than at cmdspos.
   // Place it there in case preview callback flushes it. #30696
   cursorcmd();
@@ -2584,12 +2604,6 @@ static bool cmdpreview_may_init(void)
   // currently disallowed during cmdpreview(no longer needed in case that changes).
   cmdline_ui_flush();
 
-  // Swap invalid command range if needed
-  if ((g_cpinfo.ea.argt & EX_RANGE) && g_cpinfo.ea.line1 > g_cpinfo.ea.line2) {
-    linenr_T lnum = g_cpinfo.ea.line1;
-    g_cpinfo.ea.line1 = g_cpinfo.ea.line2;
-    g_cpinfo.ea.line2 = lnum;
-  }
   g_cpinfo.icm_split = *p_icm == 's';  // inccommand=split
   g_cpinfo.buf = NULL;
   g_cpinfo.win = NULL;
@@ -2617,9 +2631,6 @@ static bool cmdpreview_may_init(void)
   // Set cmdpreview state.
   cmdpreview = true;
   return true;
-end:
-  XFREE_CLEAR(g_cpinfo.cmdline);
-  return false;
 }
 
 /// Execute the preview callback and open the preview window if applicable.
