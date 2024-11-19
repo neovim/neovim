@@ -922,13 +922,12 @@ int eval_expr_typval(const typval_T *expr, bool want_func, typval_T *argv, int a
 {
   if (expr->v_type == VAR_PARTIAL) {
     return eval_expr_partial(expr, argv, argc, rettv);
-  } else if (expr->v_type == VAR_FUNC || want_func) {
+  }
+  if (expr->v_type == VAR_FUNC || want_func) {
     return eval_expr_func(expr, argv, argc, rettv);
-  } else {
-    return eval_expr_string(expr, rettv);
   }
 
-  return OK;
+  return eval_expr_string(expr, rettv);
 }
 
 /// Like eval_to_bool() but using a typval_T instead of a string.
@@ -1982,7 +1981,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, bool copy, const bool
 
       // handle +=, -=, *=, /=, %= and .=
       di = NULL;
-      if (eval_variable(lp->ll_name, (int)strlen(lp->ll_name),
+      if (eval_variable(lp->ll_name, (int)lp->ll_name_len,
                         &tv, &di, true, false) == OK) {
         if ((di == NULL
              || (!var_check_ro(di->di_flags, lp->ll_name, TV_CSTRING)
@@ -6857,11 +6856,11 @@ static char *make_expanded_name(const char *in_start, char *expr_start, char *ex
 
   char *temp_result = eval_to_string(expr_start + 1, false, false);
   if (temp_result != NULL) {
-    retval = xmalloc(strlen(temp_result) + (size_t)(expr_start - in_start)
-                     + (size_t)(in_end - expr_end) + 1);
-    STRCPY(retval, in_start);
-    strcat(retval, temp_result);
-    strcat(retval, expr_end + 1);
+    size_t retvalsize = (size_t)(expr_start - in_start)
+                        + strlen(temp_result)
+                        + (size_t)(in_end - expr_end) + 1;
+    retval = xmalloc(retvalsize);
+    vim_snprintf(retval, retvalsize, "%s%s%s", in_start, temp_result, expr_end + 1);
   }
   xfree(temp_result);
 
@@ -8350,9 +8349,10 @@ repeat:
           char *const sub = xmemdupz(s, (size_t)(p - s));
           char *const str = xmemdupz(*fnamep, *fnamelen);
           *usedlen = (size_t)(p + 1 - src);
-          s = do_string_sub(str, pat, sub, NULL, flags);
+          size_t slen;
+          s = do_string_sub(str, *fnamelen, pat, sub, NULL, flags, &slen);
           *fnamep = s;
-          *fnamelen = strlen(s);
+          *fnamelen = slen;
           xfree(*bufp);
           *bufp = s;
           didit = true;
@@ -8391,12 +8391,14 @@ repeat:
 /// When "sub" is NULL "expr" is used, must be a VAR_FUNC or VAR_PARTIAL.
 /// "flags" can be "g" to do a global substitute.
 ///
+/// @param ret_len  length of returned buffer
+///
 /// @return  an allocated string, NULL for error.
-char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char *flags)
+char *do_string_sub(char *str, size_t len, char *pat, char *sub, typval_T *expr, const char *flags,
+                    size_t *ret_len)
 {
   regmatch_T regmatch;
   garray_T ga;
-  char *zero_width = NULL;
 
   // Make 'cpoptions' empty, so that the 'l' flag doesn't work here
   char *save_cpo = p_cpo;
@@ -8404,14 +8406,15 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
 
   ga_init(&ga, 1, 200);
 
-  int do_all = (flags[0] == 'g');
-
   regmatch.rm_ic = p_ic;
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
-    int sublen;
     char *tail = str;
-    char *end = str + strlen(str);
+    char *end = str + len;
+    bool do_all = (flags[0] == 'g');
+    int sublen;
+    char *zero_width = NULL;
+
     while (vim_regexec_nl(&regmatch, str, (colnr_T)(tail - str))) {
       // Skip empty match except for first match.
       if (regmatch.startp[0] == regmatch.endp[0]) {
@@ -8458,12 +8461,17 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
 
     if (ga.ga_data != NULL) {
       STRCPY((char *)ga.ga_data + ga.ga_len, tail);
+      ga.ga_len += (int)(end - tail);
     }
 
     vim_regfree(regmatch.regprog);
   }
 
-  char *ret = xstrdup(ga.ga_data == NULL ? str : ga.ga_data);
+  if (ga.ga_data != NULL) {
+    str = ga.ga_data;
+    len = (size_t)ga.ga_len;
+  }
+  char *ret = xstrnsave(str, len);
   ga_clear(&ga);
   if (p_cpo == empty_string_option) {
     p_cpo = save_cpo;
@@ -8475,6 +8483,10 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
       set_option_value_give_err(kOptCpoptions, CSTR_AS_OPTVAL(save_cpo), 0);
     }
     free_string_option(save_cpo);
+  }
+
+  if (ret_len != NULL) {
+    *ret_len = len;
   }
 
   return ret;
