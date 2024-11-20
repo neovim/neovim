@@ -222,8 +222,8 @@ do
     --- Execute a command and print errors without a stacktrace.
     --- @param opts table Arguments to |nvim_cmd()|
     local function cmd(opts)
-      local _, err = pcall(vim.api.nvim_cmd, opts, {})
-      if err then
+      local ok, err = pcall(vim.api.nvim_cmd, opts, {})
+      if not ok then
         vim.api.nvim_err_writeln(err:sub(#'Vim:' + 1))
       end
     end
