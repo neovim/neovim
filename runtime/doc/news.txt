@@ -128,7 +128,28 @@ LSP
 
 LUA
 
-• todo
+• |vim.o|, |vim.bo|, |vim.wo| and |vim.go| can now be set to Lua functions
+  for the following options:
+
+    • 'completefunc'
+    • 'findfunc'
+    • 'omnifunc'
+    • 'operatorfunc'
+    • 'quickfixtextfunc'
+    • 'tagfunc'
+    • 'thesaurusfunc'
+    • 'diffexpr'
+    • 'foldexpr'
+    • 'formatexpr'
+    • 'includeexpr'
+    • 'indentexpr'
+    • 'modelineexpr'
+    • 'patchexpr'
+    • 'statuscolumn'
+    • 'statusline'
+    • 'tabline'
+    • 'winbar'
+    • 'keywordprg'
 
 OPTIONS
 
