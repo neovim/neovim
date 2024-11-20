@@ -164,7 +164,10 @@ describe('lua stdlib', function()
         return { vim.b.nonexistent == vim.NIL, vim.b.nullvar == vim.NIL }
       end)
 
-      matches([[attempt to index .* nil value]], pcall_err(exec_lua, 'return vim.b[BUF][0].testing'))
+      matches(
+        [[attempt to index .* nil value]],
+        pcall_err(exec_lua, 'return vim.b[BUF][0].testing')
+      )
 
       eq({ hello = 'world' }, fn.luaeval 'vim.b.to_delete')
       exec_lua [[
@@ -174,12 +177,18 @@ describe('lua stdlib', function()
 
       exec_lua(function()
         local counter = 0
-        local function add_counter() counter = counter + 1 end
-        local function get_counter() return counter end
+        local function add_counter()
+          counter = counter + 1
+        end
+        local function get_counter()
+          return counter
+        end
         vim.b.AddCounter = add_counter
         vim.b.GetCounter = get_counter
-        vim.b.fn = {add = add_counter, get = get_counter}
-        vim.b.AddParens = function(s) return '(' .. s .. ')' end
+        vim.b.fn = { add = add_counter, get = get_counter }
+        vim.b.AddParens = function(s)
+          return '(' .. s .. ')'
+        end
       end)
 
       eq(0, eval('b:GetCounter()'))
@@ -199,12 +208,18 @@ describe('lua stdlib', function()
 
       exec_lua(function()
         local counter = 0
-        local function add_counter() counter = counter + 1 end
-        local function get_counter() return counter end
+        local function add_counter()
+          counter = counter + 1
+        end
+        local function get_counter()
+          return counter
+        end
         vim.api.nvim_buf_set_var(0, 'AddCounter', add_counter)
         vim.api.nvim_buf_set_var(0, 'GetCounter', get_counter)
-        vim.api.nvim_buf_set_var(0, 'fn', {add = add_counter, get = get_counter})
-        vim.api.nvim_buf_set_var(0, 'AddParens', function(s) return '(' .. s .. ')' end)
+        vim.api.nvim_buf_set_var(0, 'fn', { add = add_counter, get = get_counter })
+        vim.api.nvim_buf_set_var(0, 'AddParens', function(s)
+          return '(' .. s .. ')'
+        end)
       end)
 
       eq(0, eval('b:GetCounter()'))
@@ -261,7 +276,10 @@ describe('lua stdlib', function()
       eq(NIL, fn.luaeval 'vim.w.nonexistent')
       eq(NIL, fn.luaeval 'vim.w[WIN].nonexistent')
 
-      matches([[attempt to index .* nil value]], pcall_err(exec_lua, 'return vim.w[WIN][0].testing'))
+      matches(
+        [[attempt to index .* nil value]],
+        pcall_err(exec_lua, 'return vim.w[WIN][0].testing')
+      )
 
       eq({ hello = 'world' }, fn.luaeval 'vim.w.to_delete')
       exec_lua [[
@@ -456,7 +474,10 @@ describe('lua stdlib', function()
       eq({ 'one', 'two' }, eval('v:oldfiles'))
       exec_lua([[vim.v.oldfiles = {}]])
       eq({}, eval('v:oldfiles'))
-      eq('Setting v:oldfiles to value with wrong type', pcall_err(exec_lua, [[vim.v.oldfiles = 'a']]))
+      eq(
+        'Setting v:oldfiles to value with wrong type',
+        pcall_err(exec_lua, [[vim.v.oldfiles = 'a']])
+      )
       eq({}, eval('v:oldfiles'))
 
       feed('i foo foo foo<Esc>0/foo<CR>')
@@ -528,6 +549,13 @@ describe('lua stdlib', function()
         matches('Expected Lua string$', pcall_err(exec_lua, 'return vim.bo[0][0].autoread'))
         matches('Invalid buffer id: %-1$', pcall_err(exec_lua, 'return vim.bo[-1].filetype'))
       end)
+
+      it('can set function values', function()
+        eq_exec_lua('v:lua.vim._func_opts.tagfunc_1', function()
+          vim.bo.tagfunc = function() end
+          return vim.bo.tagfunc
+        end)
+      end)
     end)
 
     describe('vim.wo', function()
@@ -567,7 +595,19 @@ describe('lua stdlib', function()
 
       it('errors', function()
         matches('only bufnr=0 is supported', pcall_err(exec_lua, 'vim.wo[0][10].signcolumn = "no"'))
-        matches('only bufnr=0 is supported', pcall_err(exec_lua, 'local a = vim.wo[0][10].signcolumn'))
+        matches(
+          'only bufnr=0 is supported',
+          pcall_err(exec_lua, 'local a = vim.wo[0][10].signcolumn')
+        )
+      end)
+
+      it('can set function values', function()
+        eq_exec_lua('HELLO', function()
+          vim.wo.statusline = function()
+            return 'HELLO'
+          end
+          return vim.api.nvim_eval_statusline(vim.wo.statusline, {}).str
+        end)
       end)
     end)
 
@@ -1073,7 +1113,10 @@ describe('lua stdlib', function()
           )
           matches(
             "Invalid option type 'function' for 'listchars'",
-            pcall_err(exec_lua, [[vim.opt.listchars = function() return "eol:~,space:.,tab:>~" end]])
+            pcall_err(
+              exec_lua,
+              [[vim.opt.listchars = function() return "eol:~,space:.,tab:>~" end]]
+            )
           )
         end)
 
@@ -1198,5 +1241,4 @@ describe('lua stdlib', function()
       end)
     end)
   end)
-
 end)

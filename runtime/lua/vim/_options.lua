@@ -134,6 +134,120 @@ local function get_options_info(name)
   return info
 end
 
+--- @type table<string,function>
+vim._func_opts = {}
+
+-- Options that can be set as a function
+local func_opts = {
+  completefunc = true,
+  findfunc = true,
+  omnifunc = true,
+  operatorfunc = true,
+  quickfixtextfunc = true,
+  tagfunc = true,
+  thesaurusfunc = true,
+}
+
+-- Options that can be set as an expression
+local expr_opts = {
+  diffexpr = true,
+  foldexpr = true,
+  formatexpr = true,
+  includeexpr = true,
+  indentexpr = true,
+  modelineexpr = true,
+  patchexpr = true,
+}
+
+-- Options that can be set as an expression with a prefix of '%!'
+local pct_bang_expr_opts = {
+  statuscolumn = true,
+  statusline = true,
+  tabline = true,
+  winbar = true,
+}
+
+--- @param v integer?
+--- @param f fun():integer
+--- @return integer
+local function resolve_winbuf(v, f)
+  return assert((not v or v == 0) and f() or v)
+end
+
+--- @type table<string,boolean>
+local all_func_opts = vim.tbl_extend('error', func_opts, expr_opts, pct_bang_expr_opts)
+
+--- If the option name is a function option convert it to a string
+--- format and store the function value.
+--- @param name string
+--- @param value any
+--- @param info vim.api.keyset.get_option_info
+--- @param opts vim.api.keyset.option
+local function apply_func_opt(name, value, info, opts)
+  local t = nil
+  local t_str --- @type string?
+
+  -- Find a table to store/clear the function
+  if info.scope == 'global' or info.global_local and opts.scope == 'global' then
+    vim.g._func_opts = vim.g._func_opts or {}
+    t = vim.g._func_opts
+    t_str = 'vim.g._func_opts'
+  elseif info.scope == 'buf' then
+    local buf = resolve_winbuf(opts.buf, api.nvim_get_current_buf)
+    vim.b[buf]._func_opts = vim.b[buf]._func_opts or {}
+    t = vim.b[buf]._func_opts
+    t_str = ('vim.b[%d]._func_opts'):format(buf)
+  else
+    assert(info.scope == 'win')
+    local win = resolve_winbuf(opts.win, api.nvim_get_current_win)
+    if opts.scope == 'local' then
+      local buf = resolve_winbuf(opts.buf, api.nvim_get_current_buf)
+      vim.w[win]._func_opts_local = vim.w[win]._func_opts_local or {}
+      --- @diagnostic disable-next-line:no-unknown
+      vim.w[win]._func_opts_local[buf] = vim.w[win]._func_opts_local[buf] or {}
+      --- @diagnostic disable:no-unknown
+      t = vim.w[win]._func_opts_local[buf]
+      t_str = ('vim.w[%d]._func_opts_local[%d]'):format(win, buf)
+    else
+      vim.w[win]._func_opts = vim.w[win]._func_opts or {}
+      t = vim.w[win]._func_opts
+      t_str = ('vim.w[%d].__func_opts'):format(win)
+    end
+  end
+
+  --- @cast t table<string,function?>
+
+  local fvalue = type(value) == 'function' and value or nil
+
+  -- Note fvalue as nil is used to GC
+  t[name] = fvalue
+
+  if not fvalue then
+    return value
+  end
+
+  -- some expressions must begin with '%!'
+  local pct_bang_pfx = pct_bang_expr_opts[name] ~= nil and '%!' or ''
+  local call_sfx = func_opts[name] and '' or '()'
+  return ('%sv:lua.%s.%s%s'):format(pct_bang_pfx, t_str, name, call_sfx)
+end
+
+--- @param name string
+--- @param value any
+--- @param opts vim.api.keyset.option
+local function set_option_value(name, value, opts)
+  local info = api.nvim_get_option_info2(name, {})
+
+  -- Resolve name if it is a short name
+  name = info.name
+
+  if all_func_opts[name] then
+    value = apply_func_opt(name, value, info, opts)
+  end
+
+  api.nvim_set_option_value(name, value, opts)
+end
+
 --- Environment variables defined in the editor session.
 --- See |expand-env| and |:let-environment| for the Vimscript behavior.
 --- Invalid or unset key returns `nil`.
@@ -158,6 +272,7 @@ vim.env = setmetatable({}, {
   end,
 })
 
+--- @param bufnr? integer
 local function new_buf_opt_accessor(bufnr)
   return setmetatable({}, {
     __index = function(_, k)
@@ -167,8 +282,10 @@ local function new_buf_opt_accessor(bufnr)
       return api.nvim_get_option_value(k, { buf = bufnr or 0 })
     end,
 
+    --- @param k string
+    --- @param v any
     __newindex = function(_, k, v)
-      return api.nvim_set_option_value(k, v, { buf = bufnr or 0 })
+      return set_option_value(k, v, { buf = bufnr or 0 })
     end,
   })
 end
@@ -196,7 +313,7 @@ local function new_win_opt_accessor(winid, bufnr)
     end,
 
     __newindex = function(_, k, v)
-      return api.nvim_set_option_value(k, v, {
+      return set_option_value(k, v, {
         scope = bufnr and 'local' or nil,
         win = winid or 0,
       })
@@ -227,6 +344,14 @@ end
 --- window-scoped options. Note that this must NOT be confused with
 --- |local-options| and |:setlocal|. There is also |vim.go| that only accesses the
 --- global value of a |global-local| option, see |:setglobal|.
+---
+--- Unlike |nvim_set_option_value()|, |vim.o|, |vim.go|, |vim.bo|
+--- and |vim.wo| can be assigned function values.
+---
+--- Example: >lua
+---     vim.bo.tagfunc = vim.lsp.tagfunc
+---     vim.wo[1000].foldexpr = vim.treesitter.foldexpr
+--- <
 --- </pre>
 
 --- Get or set |options|. Like `:set`. Invalid key is an error.
@@ -245,8 +370,10 @@ vim.o = setmetatable({}, {
   __index = function(_, k)
     return api.nvim_get_option_value(k, {})
   end,
+  --- @param k string
+  --- @param v any
   __newindex = function(_, k, v)
-    return api.nvim_set_option_value(k, v, {})
+    return set_option_value(k, v, {})
   end,
 })
 
@@ -268,8 +395,10 @@ vim.go = setmetatable({}, {
   __index = function(_, k)
     return api.nvim_get_option_value(k, { scope = 'global' })
   end,
+  --- @param k string
+  --- @param v any
   __newindex = function(_, k, v)
-    return api.nvim_set_option_value(k, v, { scope = 'global' })
+    return set_option_value(k, v, { scope = 'global' })
   end,
 })
 
