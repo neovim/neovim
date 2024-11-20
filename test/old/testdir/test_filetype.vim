@@ -144,6 +144,7 @@ func s:GetFilenameChecks() abort
     \ 'bzl': ['file.bazel', 'file.bzl', 'WORKSPACE', 'WORKSPACE.bzlmod'],
     \ 'bzr': ['bzr_log.any', 'bzr_log.file'],
     \ 'c': ['enlightenment/file.cfg', 'file.qc', 'file.c', 'some-enlightenment/file.cfg', 'file.mdh', 'file.epro'],
+    \ 'c3': ['file.c3', 'file.c3i', 'file.c3t'],
     \ 'cabal': ['file.cabal'],
     \ 'cabalconfig': ['cabal.config', expand("$HOME/.config/cabal/config")] + s:WhenConfigHome('$XDG_CONFIG_HOME/cabal/config'),
     \ 'cabalproject': ['cabal.project', 'cabal.project.local'],
