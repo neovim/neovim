@@ -285,6 +285,26 @@ describe('vim.ui_attach', function()
         },
       },
     })
+    feed('<esc>:call inputlist(["Select:", "One", "Two"])<cr>')
+    screen:expect({
+      grid = [[
+        E122: {10:Function} Foo already exists, add !|
+         to replace it                          |
+        Type number and <Enter> or click with th|
+        e mouse (q or empty cancels):           |
+        {1:^~                                       }|
+      ]],
+      messages = {
+        {
+          content = { { 'Select:\nOne\nTwo\n' } },
+          kind = 'list_cmd',
+        },
+        {
+          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
+          kind = 'number_prompt',
+        },
+      },
+    })
   end)
 end)
 

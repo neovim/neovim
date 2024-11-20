@@ -1276,6 +1276,7 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
       gotocmdline(true);                // cursor at status line
       *did_show = true;                 // remember that we did a line
     }
+    msg_ext_set_kind("list_cmd");
     showoneopt(&options[opt_idx], opt_flags);
 
     if (p_verbose > 0) {
@@ -4048,6 +4049,7 @@ static void showoptions(bool all, int opt_flags)
 
   vimoption_T **items = xmalloc(sizeof(vimoption_T *) * OPTION_COUNT);
 
+  msg_ext_set_kind("list_cmd");
   // Highlight title
   if (opt_flags & OPT_GLOBAL) {
     msg_puts_title(_("\n--- Global option values ---"));

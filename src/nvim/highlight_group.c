@@ -1001,6 +1001,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 {
   // If no argument, list current highlighting.
   if (!init && ends_excmd((uint8_t)(*line))) {
+    msg_ext_set_kind("list_cmd");
     for (int i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
       // TODO(brammool): only call when the group has attributes set
       highlight_list_one(i);
@@ -1038,6 +1039,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     if (id == 0) {
       semsg(_(e_highlight_group_name_not_found_str), line);
     } else {
+      msg_ext_set_kind("list_cmd");
       highlight_list_one(id);
     }
     return;

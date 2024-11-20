@@ -581,6 +581,9 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   const bool has_lhs = (args->lhs[0] != NUL);
   const bool has_rhs = args->rhs_lua != LUA_NOREF || (args->rhs[0] != NUL) || args->rhs_is_noop;
   const bool do_print = !has_lhs || (maptype != MAPTYPE_UNMAP && !has_rhs);
+  if (do_print) {
+    msg_ext_set_kind("list_cmd");
+  }
 
   // check for :unmap without argument
   if (maptype == MAPTYPE_UNMAP && !has_lhs) {

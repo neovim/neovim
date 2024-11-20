@@ -1084,6 +1084,7 @@ int showmatches(expand_T *xp, bool wildmenu)
     ui_flush();
     cmdline_row = msg_row;
     msg_didany = false;                 // lines_left will be set again
+    msg_ext_set_kind("wildlist");
     msg_start();                        // prepare for paging
   }
 

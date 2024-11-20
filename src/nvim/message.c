@@ -750,6 +750,10 @@ bool emsg_multiline(const char *s, bool multiline)
   msg_scroll = true;
   msg_source(hl_id);
 
+  if (msg_ext_kind == NULL) {
+    msg_ext_set_kind("emsg");
+  }
+
   // Display the error message itself.
   msg_nowait = false;  // Wait for this msg.
   return msg_hl_keep(s, hl_id, false, multiline);

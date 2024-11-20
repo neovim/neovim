@@ -2819,6 +2819,7 @@ void buflist_list(exarg_T *eap)
   garray_T buflist;
   buf_T **buflist_data = NULL;
 
+  msg_ext_set_kind("list_cmd");
   if (vim_strchr(eap->arg, 't')) {
     ga_init(&buflist, sizeof(buf_T *), 50);
     for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
