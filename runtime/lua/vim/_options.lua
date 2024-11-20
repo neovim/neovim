@@ -134,6 +134,145 @@ local function get_options_info(name)
   return info
 end
 
+local func_opts = {
+  -- Options that can be set as a function
+  func = {
+    completefunc = true,
+    findfunc = true,
+    omnifunc = true,
+    operatorfunc = true,
+    quickfixtextfunc = true,
+    tagfunc = true,
+    thesaurusfunc = true,
+  },
+
+  -- Options that can be set as an expression
+  expr = {
+    diffexpr = true,
+    foldexpr = true,
+    formatexpr = true,
+    includeexpr = true,
+    indentexpr = true,
+    modelineexpr = true,
+    patchexpr = true,
+  },
+
+  -- Options that can be set as an expression with a prefix of '%!'
+  pct_bang_expr = {
+    statuscolumn = true,
+    statusline = true,
+    tabline = true,
+    winbar = true,
+  },
+
+  -- Options that can be set as an ex command if prefixed with ':'
+  ex_cmd_expr = {
+    keywordprg = true,
+  },
+}
+
+--- @param v integer?
+--- @return integer
+local function resolve_win(v)
+  return assert((not v or v == 0) and api.nvim_get_current_win() or v)
+end
+
+--- @type table<string,boolean>
+local all_func_opts = {}
+for _, v in pairs(func_opts) do
+  for k in pairs(v) do
+    all_func_opts[k] = true
+  end
+end
+
+--- @type table<string,function?>
+vim._func_opts = setmetatable({}, { __mode = 'v' })
+
+--- If the option name is a function option convert it to a string
+--- format and store the function value.
+--- @param name string
+--- @param value any
+--- @param info vim.api.keyset.get_option_info
+--- @param opts vim.api.keyset.option
+local function apply_func_opt(name, value, info, opts)
+  local idxs --- @type any[]
+
+  -- Find a table keep a references to the function value for an option.
+  -- We store a strong reference to the function in vim.g/b/w so it can be correctly garbage
+  -- collected when the buffer/window is closed. However because `v:lua` does not support
+  -- indexing with [], we need to store a weak reference to the function in another table under a
+  -- single string key.
+  if info.scope == 'global' or info.global_local and opts.scope == 'global' then
+    idxs = { 'g', '_func_opts' }
+  elseif info.scope == 'buf' then
+    idxs = { 'b', vim._resolve_bufnr(opts.buf), '_func_opts' }
+  else
+    assert(info.scope == 'win')
+    idxs = { 'w', resolve_win(opts.win), '_func_opts' }
+    if opts.scope == 'local' then
+      idxs[#idxs + 1] = vim._resolve_bufnr(opts.buf)
+    end
+  end
+
+  local fvalue = type(value) == 'function' and value or nil
+
+  -- If we have a function value, ensure the table for the strong references exists
+  if fvalue then
+    local t = vim --- @type table<string,any>
+    for _, k in ipairs(idxs) do
+      t[k] = t[k] or {}
+      t = t[k]
+    end
+  end
+
+  --- @type table<string,function?>
+  local t = vim.tbl_get(vim, unpack(idxs))
+  if t then
+    -- Note fvalue as nil is used to GC
+    t[name] = fvalue
+  end
+
+  if not fvalue then
+    return value
+  end
+
+  local vlua_key_parts = {} --- @type string[]
+  for _, k in ipairs(idxs) do
+    vlua_key_parts[#vlua_key_parts + 1] = k ~= '_func_opts' and k or nil
+  end
+  vlua_key_parts[#vlua_key_parts + 1] = name
+
+  local vlua_key = table.concat(vlua_key_parts, '_')
+
+  vim._func_opts[vlua_key] = fvalue
+
+  local expr_pfx = (
+    func_opts.pct_bang_expr[name] and '%!'
+    or func_opts.ex_cmd_expr[name] and ':call '
+    or ''
+  )
+
+  local call_sfx = func_opts.func[name] and '' or '()'
+
+  return ('%sv:lua.vim._func_opts.%s%s'):format(expr_pfx, vlua_key, call_sfx)
+end
+
+--- @param name string
+--- @param value any
+--- @param opts vim.api.keyset.option
+local function set_option_value(name, value, opts)
+  local info = api.nvim_get_option_info2(name, {})
+
+  -- Resolve name if it is a short name
+  name = info.name
+
+  if all_func_opts[name] then
+    value = apply_func_opt(name, value, info, opts)
+  end
+
+  api.nvim_set_option_value(name, value, opts)
+end
+
 --- Environment variables defined in the editor session.
 --- See |expand-env| and |:let-environment| for the Vimscript behavior.
 --- Invalid or unset key returns `nil`.
@@ -158,6 +297,7 @@ vim.env = setmetatable({}, {
   end,
 })
 
+--- @param bufnr? integer
 local function new_buf_opt_accessor(bufnr)
   return setmetatable({}, {
     __index = function(_, k)
@@ -167,8 +307,10 @@ local function new_buf_opt_accessor(bufnr)
       return api.nvim_get_option_value(k, { buf = bufnr or 0 })
     end,
 
+    --- @param k string
+    --- @param v any
     __newindex = function(_, k, v)
-      return api.nvim_set_option_value(k, v, { buf = bufnr or 0 })
+      return set_option_value(k, v, { buf = bufnr or 0 })
     end,
   })
 end
@@ -196,7 +338,7 @@ local function new_win_opt_accessor(winid, bufnr)
     end,
 
     __newindex = function(_, k, v)
-      return api.nvim_set_option_value(k, v, {
+      return set_option_value(k, v, {
         scope = bufnr and 'local' or nil,
         win = winid or 0,
       })
@@ -227,6 +369,14 @@ end
 --- window-scoped options. Note that this must NOT be confused with
 --- |local-options| and |:setlocal|. There is also |vim.go| that only accesses the
 --- global value of a |global-local| option, see |:setglobal|.
+---
+--- Unlike |nvim_set_option_value()|, |vim.o|, |vim.go|, |vim.bo|
+--- and |vim.wo| can be assigned function values.
+---
+--- Example: >lua
+---     vim.bo.tagfunc = vim.lsp.tagfunc
+---     vim.wo[1000].foldexpr = vim.treesitter.foldexpr
+--- <
 --- </pre>
 
 --- Get or set |options|. Works like `:set`, so buffer/window-scoped options target the current
@@ -243,8 +393,10 @@ vim.o = setmetatable({}, {
   __index = function(_, k)
     return api.nvim_get_option_value(k, {})
   end,
+  --- @param k string
+  --- @param v any
   __newindex = function(_, k, v)
-    return api.nvim_set_option_value(k, v, {})
+    return set_option_value(k, v, {})
   end,
 })
 
@@ -266,8 +418,10 @@ vim.go = setmetatable({}, {
   __index = function(_, k)
     return api.nvim_get_option_value(k, { scope = 'global' })
   end,
+  --- @param k string
+  --- @param v any
   __newindex = function(_, k, v)
-    return api.nvim_set_option_value(k, v, { scope = 'global' })
+    return set_option_value(k, v, { scope = 'global' })
   end,
 })
 
