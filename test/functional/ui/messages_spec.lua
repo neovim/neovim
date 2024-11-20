@@ -64,7 +64,7 @@ describe('ui/ext_messages', function()
     }
   end)
 
-  it('msg_show kind=confirm,confirm_sub,emsg,wmsg,quickfix', function()
+  it('msg_show kinds', function()
     feed('iline 1\nline 2<esc>')
 
     -- kind=confirm
@@ -172,7 +172,7 @@ describe('ui/ext_messages', function()
         },
         {
           content = { { 'E605: Exception not caught: foo', 9, 7 } },
-          kind = '',
+          kind = 'emsg',
         },
         {
           content = { { 'Press ENTER or type command to continue', 6, 19 } },
@@ -198,6 +198,48 @@ describe('ui/ext_messages', function()
         },
       },
     }
+
+    -- search_cmd
+    feed('?line<cr>')
+    screen:expect({
+      grid = [[
+        ^line 1                   |
+        line 2                   |
+        {1:~                        }|*3
+      ]],
+      messages = { {
+        content = { { '?line ' } },
+        kind = 'search_cmd',
+      } },
+    })
+
+    -- highlight
+    feed(':hi ErrorMsg<cr>')
+    screen:expect({
+      grid = [[
+        ^line 1                   |
+        line 2                   |
+        {1:~                        }|*3
+      ]],
+      messages = {
+        {
+          content = {
+            { '\nErrorMsg      ' },
+            { 'xxx', 9, 7 },
+            { ' ' },
+            { 'ctermfg=', 18, 6 },
+            { '15 ' },
+            { 'ctermbg=', 18, 6 },
+            { '1 ' },
+            { 'guifg=', 18, 6 },
+            { 'White ' },
+            { 'guibg=', 18, 6 },
+            { 'Red' },
+          },
+          kind = 'list_cmd',
+        },
+      },
+    })
   end)
 
   it(':echoerr', function()
@@ -408,34 +450,6 @@ describe('ui/ext_messages', function()
     }
   end)
 
-  it(':hi Group output', function()
-    feed(':hi ErrorMsg<cr>')
-    screen:expect {
-      grid = [[
-      ^                         |
-      {1:~                        }|*4
-    ]],
-      messages = {
-        {
-          content = {
-            { '\nErrorMsg      ' },
-            { 'xxx', 9, 7 },
-            { ' ' },
-            { 'ctermfg=', 18, 6 },
-            { '15 ' },
-            { 'ctermbg=', 18, 6 },
-            { '1 ' },
-            { 'guifg=', 18, 6 },
-            { 'White ' },
-            { 'guibg=', 18, 6 },
-            { 'Red' },
-          },
-          kind = '',
-        },
-      },
-    }
-  end)
-
   it("doesn't crash with column adjustment #10069", function()
     feed(':let [x,y] = [1,2]<cr>')
     feed(':let x y<cr>')
@@ -445,8 +459,8 @@ describe('ui/ext_messages', function()
       {1:~                        }|*4
     ]],
       messages = {
-        { content = { { 'x                     #1' } }, kind = '' },
-        { content = { { 'y                     #2' } }, kind = '' },
+        { content = { { 'x                     #1' } }, kind = 'list_cmd' },
+        { content = { { 'y                     #2' } }, kind = 'list_cmd' },
         {
           content = { { 'Press ENTER or type command to continue', 6, 19 } },
           kind = 'return_prompt',
@@ -947,7 +961,7 @@ stack traceback:
             { '*', 18, 1 },
             { ' k' },
           },
-          kind = '',
+          kind = 'list_cmd',
         },
       },
     }
@@ -964,10 +978,12 @@ stack traceback:
       ^                         |
       {1:~                        }|*6
     ]],
-      messages = { {
-        content = { { 'wildmenu  wildmode' } },
-        kind = '',
-      } },
+      messages = {
+        {
+          content = { { 'wildmenu  wildmode' } },
+          kind = 'wildlist',
+        },
+      },
       cmdline = {
         {
           firstc = ':',
@@ -983,43 +999,46 @@ stack traceback:
     feed('ihelllo<esc>')
 
     feed('z=')
-    screen:expect {
+    screen:expect({
       grid = [[
-      {100:helllo}                   |
-      {1:~                        }|*3
-      {1:^~                        }|
-    ]],
+        {100:helllo}                   |
+        {1:~                        }|*3
+        {1:^~                        }|
+      ]],
       messages = {
         {
-          content = {
-            {
-              'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\nType number and <Enter> or click with the mouse (q or empty cancels): ',
-            },
-          },
-          kind = '',
+          content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
+          kind = 'list_cmd',
+        },
+        {
+          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
+          kind = 'number_prompt',
         },
       },
-    }
+    })
 
     feed('1')
-    screen:expect {
+    screen:expect({
       grid = [[
-      {100:helllo}                   |
-      {1:~                        }|*3
-      {1:^~                        }|
-    ]],
+        {100:helllo}                   |
+        {1:~                        }|*3
+        {1:^~                        }|
+      ]],
       messages = {
         {
-          content = {
-            {
-              'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\nType number and <Enter> or click with the mouse (q or empty cancels): ',
-            },
-          },
+          content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
+          kind = 'list_cmd',
+        },
+        {
+          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
+          kind = 'number_prompt',
+        },
+        {
+          content = { { '1' } },
           kind = '',
         },
-        { content = { { '1' } }, kind = '' },
       },
-    }
+    })
 
     feed('<cr>')
     screen:expect {
@@ -1056,7 +1075,7 @@ stack traceback:
       {1:~                        }|*4
     ]],
       messages = {
-        { content = { { '\n  1 %a   "[No Name]"                    line 1' } }, kind = '' },
+        { content = { { '\n  1 %a   "[No Name]"                    line 1' } }, kind = 'list_cmd' },
       },
     }
 
@@ -1139,18 +1158,6 @@ stack traceback:
     })
     exec_lua([[vim.print({ foo = "bar" })]])
     screen:expect_unchanged()
-  end)
-
-  it('emits single message for normal search)', function()
-    feed('ax<cr>x<esc>?x<cr>')
-    screen:expect({
-      messages = {
-        {
-          content = { { '?x ' } },
-          kind = 'search_cmd',
-        },
-      },
-    })
   end)
 end)
 
@@ -1887,7 +1894,7 @@ describe('ui/ext_messages', function()
       {3:[No Name]                                                                       }|
     ]],
       messages = {
-        { content = { { '  cmdheight=0' } }, kind = '' },
+        { content = { { '  cmdheight=0' } }, kind = 'list_cmd' },
       },
     })
 
@@ -1903,7 +1910,7 @@ describe('ui/ext_messages', function()
       {3:[No Name]                                                                       }|
     ]],
       messages = {
-        { content = { { '  laststatus=3' } }, kind = '' },
+        { content = { { '  laststatus=3' } }, kind = 'list_cmd' },
       },
     })
 
@@ -1923,7 +1930,7 @@ describe('ui/ext_messages', function()
       {3:[No Name]                                                                       }|
     ]],
       messages = {
-        { content = { { '  cmdheight=0' } }, kind = '' },
+        { content = { { '  cmdheight=0' } }, kind = 'list_cmd' },
       },
     })
   end)

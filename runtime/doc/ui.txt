@@ -795,13 +795,16 @@ must handle.
 		"echo"		|:echo| message
 		"echomsg"	|:echomsg| message
 		"echoerr"	|:echoerr| message
+		"list_cmd"	List output for various commands (|:ls|, |:set|, …)
 		"lua_error"	Error in |:lua| code
 		"lua_print"	|print()| from |:lua| code
 		"rpc_error"	Error response from |rpcrequest()|
+		"number_prompt"	Number input prompt (|inputlist()|, |z=|, …)
 		"return_prompt"	|press-enter| prompt after a multiple messages
 		"quickfix"	Quickfix navigation message
 		"search_cmd"	Entered search command
 		"search_count"	Search count message ("S" flag of 'shortmess')
+		"wildlist"	'wildmode' "list" message
 		"wmsg"		Warning ("search hit BOTTOM", |W10|, …)
 	    New kinds may be added in the future; clients should treat unknown
 	    kinds as the empty kind.

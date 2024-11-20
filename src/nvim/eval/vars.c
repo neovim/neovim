@@ -1403,6 +1403,7 @@ static void list_one_var(dictitem_T *v, const char *prefix, int *first)
 static void list_one_var_a(const char *prefix, const char *name, const ptrdiff_t name_len,
                            const VarType type, const char *string, int *first)
 {
+  msg_ext_set_kind("list_cmd");
   // don't use msg() to avoid overwriting "v:statusmsg"
   msg_start();
   msg_puts(prefix);
