@@ -504,63 +504,71 @@ describe('lua stdlib', function()
   end)
 
   describe('options', function()
-    it('vim.bo', function()
-      eq('', fn.luaeval 'vim.bo.filetype')
-      exec_lua(function()
-        _G.BUF = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_set_option_value('filetype', 'markdown', {})
-        vim.api.nvim_set_option_value('modifiable', false, { buf = _G.BUF })
+    describe('vim.bo', function()
+      it('can get and set options', function()
+        eq('', fn.luaeval 'vim.bo.filetype')
+        exec_lua(function()
+          _G.BUF = vim.api.nvim_create_buf(false, true)
+          vim.api.nvim_set_option_value('filetype', 'markdown', {})
+          vim.api.nvim_set_option_value('modifiable', false, { buf = _G.BUF })
+        end)
+        eq(false, fn.luaeval 'vim.bo.modified')
+        eq('markdown', fn.luaeval 'vim.bo.filetype')
+        eq(false, fn.luaeval 'vim.bo[BUF].modifiable')
+        exec_lua(function()
+          vim.bo.filetype = ''
+          vim.bo[_G.BUF].modifiable = true
+        end)
+        eq('', fn.luaeval 'vim.bo.filetype')
+        eq(true, fn.luaeval 'vim.bo[BUF].modifiable')
       end)
-      eq(false, fn.luaeval 'vim.bo.modified')
-      eq('markdown', fn.luaeval 'vim.bo.filetype')
-      eq(false, fn.luaeval 'vim.bo[BUF].modifiable')
-      exec_lua(function()
-        vim.bo.filetype = ''
-        vim.bo[_G.BUF].modifiable = true
+
+      it('errors', function()
+        matches("Unknown option 'nosuchopt'$", pcall_err(exec_lua, 'return vim.bo.nosuchopt'))
+        matches('Expected Lua string$', pcall_err(exec_lua, 'return vim.bo[0][0].autoread'))
+        matches('Invalid buffer id: %-1$', pcall_err(exec_lua, 'return vim.bo[-1].filetype'))
       end)
-      eq('', fn.luaeval 'vim.bo.filetype')
-      eq(true, fn.luaeval 'vim.bo[BUF].modifiable')
-      matches("Unknown option 'nosuchopt'$", pcall_err(exec_lua, 'return vim.bo.nosuchopt'))
-      matches('Expected Lua string$', pcall_err(exec_lua, 'return vim.bo[0][0].autoread'))
-      matches('Invalid buffer id: %-1$', pcall_err(exec_lua, 'return vim.bo[-1].filetype'))
     end)
 
-    it('vim.wo', function()
-      exec_lua(function()
-        vim.api.nvim_set_option_value('cole', 2, {})
-        vim.cmd 'split'
-        vim.api.nvim_set_option_value('cole', 2, {})
-      end)
-      eq(2, fn.luaeval 'vim.wo.cole')
-      exec_lua(function()
-        vim.wo.conceallevel = 0
-      end)
-      eq(0, fn.luaeval 'vim.wo.cole')
-      eq(0, fn.luaeval 'vim.wo[0].cole')
-      eq(0, fn.luaeval 'vim.wo[1001].cole')
-      matches("Unknown option 'notanopt'$", pcall_err(exec_lua, 'return vim.wo.notanopt'))
-      matches('Invalid window id: %-1$', pcall_err(exec_lua, 'return vim.wo[-1].list'))
-      eq(2, fn.luaeval 'vim.wo[1000].cole')
-      exec_lua(function()
-        vim.wo[1000].cole = 0
-      end)
-      eq(0, fn.luaeval 'vim.wo[1000].cole')
+    describe('vim.wo', function()
+      it('can get and set options', function()
+        exec_lua(function()
+          vim.api.nvim_set_option_value('cole', 2, {})
+          vim.cmd 'split'
+          vim.api.nvim_set_option_value('cole', 2, {})
+        end)
+        eq(2, fn.luaeval 'vim.wo.cole')
+        exec_lua(function()
+          vim.wo.conceallevel = 0
+        end)
+        eq(0, fn.luaeval 'vim.wo.cole')
+        eq(0, fn.luaeval 'vim.wo[0].cole')
+        eq(0, fn.luaeval 'vim.wo[1001].cole')
+        matches("Unknown option 'notanopt'$", pcall_err(exec_lua, 'return vim.wo.notanopt'))
+        matches('Invalid window id: %-1$', pcall_err(exec_lua, 'return vim.wo[-1].list'))
+        eq(2, fn.luaeval 'vim.wo[1000].cole')
+        exec_lua(function()
+          vim.wo[1000].cole = 0
+        end)
+        eq(0, fn.luaeval 'vim.wo[1000].cole')
 
-      -- Can handle global-local values
-      exec_lua [[vim.o.scrolloff = 100]]
-      exec_lua [[vim.wo.scrolloff = 200]]
-      eq(200, fn.luaeval 'vim.wo.scrolloff')
-      exec_lua [[vim.wo.scrolloff = -1]]
-      eq(100, fn.luaeval 'vim.wo.scrolloff')
-      exec_lua(function()
-        vim.wo[0][0].scrolloff = 200
-        vim.cmd 'enew'
+        -- Can handle global-local values
+        exec_lua [[vim.o.scrolloff = 100]]
+        exec_lua [[vim.wo.scrolloff = 200]]
+        eq(200, fn.luaeval 'vim.wo.scrolloff')
+        exec_lua [[vim.wo.scrolloff = -1]]
+        eq(100, fn.luaeval 'vim.wo.scrolloff')
+        exec_lua(function()
+          vim.wo[0][0].scrolloff = 200
+          vim.cmd 'enew'
+        end)
+        eq(100, fn.luaeval 'vim.wo.scrolloff')
       end)
-      eq(100, fn.luaeval 'vim.wo.scrolloff')
 
-      matches('only bufnr=0 is supported', pcall_err(exec_lua, 'vim.wo[0][10].signcolumn = "no"'))
-
-      matches('only bufnr=0 is supported', pcall_err(exec_lua, 'local a = vim.wo[0][10].signcolumn'))
+      it('errors', function()
+        matches('only bufnr=0 is supported', pcall_err(exec_lua, 'vim.wo[0][10].signcolumn = "no"'))
+        matches('only bufnr=0 is supported', pcall_err(exec_lua, 'local a = vim.wo[0][10].signcolumn'))
+      end)
     end)
 
     describe('vim.opt', function()
