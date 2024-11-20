@@ -150,25 +150,20 @@ static void redraw_for_cursorline(win_T *wp)
   }
 }
 
-/// Redraw when w_virtcol changes and
+/// Redraw when 'concealcursor' is active, or when w_virtcol changes and:
 /// - 'cursorcolumn' is set, or
 /// - 'cursorlineopt' contains "screenline", or
-/// - 'concealcursor' is active, or
 /// - Visual mode is active.
 static void redraw_for_cursorcolumn(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (wp->w_valid & VALID_VIRTCOL) {
-    return;
-  }
-
   // If the cursor moves horizontally when 'concealcursor' is active, then the
   // current line needs to be redrawn to calculate the correct cursor position.
   if (wp->w_p_cole > 0 && conceal_cursor_line(wp)) {
     redrawWinline(wp, wp->w_cursor.lnum);
   }
 
-  if (pum_visible()) {
+  if ((wp->w_valid & VALID_VIRTCOL) || pum_visible()) {
     return;
   }
 
