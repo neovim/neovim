@@ -1,6 +1,5 @@
 " Vim syntax file
 " Language:     Nvim :checkhealth buffer
-" Last Change:  2022 Nov 10
 
 if exists("b:current_syntax")
   finish

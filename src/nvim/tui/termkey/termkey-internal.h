@@ -47,7 +47,7 @@ struct TermKey {
   int canonflags;
   unsigned char *buffer;
   size_t buffstart;  // First offset in buffer
-  size_t buffcount;  // NUMBER of entires valid in buffer
+  size_t buffcount;  // NUMBER of entries valid in buffer
   size_t buffsize;   // Total malloc'ed size
   size_t hightide;   // Position beyond buffstart at which peekkey() should next start
                      // normally 0, but see also termkey_interpret_csi

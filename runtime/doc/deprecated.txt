@@ -51,7 +51,7 @@ LSP
 • vim.lsp.buf_request_all		The `error` key has been renamed to `err` inside
 					the result parameter of the handler.
 • *vim.lsp.with()*			Pass configuration to equivalent
-					functions in `vim.lsp.buf.*'.
+					functions in `vim.lsp.buf.*`.
 • |vim.lsp.handlers|
 	No longer support client to server response handlers. Only server to
 	client requests/notification handlers are supported.

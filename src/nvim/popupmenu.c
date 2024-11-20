@@ -880,7 +880,7 @@ static void pum_adjust_info_position(win_T *wp, int height, int width)
 /// Used for nvim__complete_set
 ///
 /// @param selected the selected compl item.
-/// @parma info     Info string.
+/// @param info     Info string.
 /// @return a win_T pointer.
 win_T *pum_set_info(int selected, char *info)
 {

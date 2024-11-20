@@ -1119,7 +1119,7 @@ int utf_char2bytes(const int c, char *const buf)
 /// stateful algorithm to determine grapheme clusters. Still available
 /// to support some legacy code which hasn't been refactored yet.
 ///
-/// To check if a char would combine with a preceeding space, use
+/// To check if a char would combine with a preceding space, use
 /// utf_iscomposing_first() instead.
 ///
 /// Based on code from Markus Kuhn.

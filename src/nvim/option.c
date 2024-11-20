@@ -228,7 +228,7 @@ static void set_init_default_backupskip(void)
 #endif
     {
       p = vim_getenv(names[i]);
-      plen = 0;  // will be calcuated below
+      plen = 0;  // will be calculated below
     }
     if (p != NULL && *p != NUL) {
       bool has_trailing_path_sep = false;

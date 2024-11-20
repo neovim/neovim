@@ -414,7 +414,7 @@ TUI:
 - 'term' reflects the terminal type derived from |$TERM| and other environment
   checks.  For debugging only; not reliable during startup. >vim
           :echo &term
--  "builtin_x" means one of the |builtin-terms| was chosen, because the expected
+- "builtin_x" means one of the |builtin-terms| was chosen, because the expected
   terminfo file was not found on the system.
 - Nvim will use 256-colour capability on Linux virtual terminals.  Vim uses
   only 8 colours plus bright foreground on Linux VTs.

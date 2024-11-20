@@ -114,7 +114,7 @@ describe('vim.system', function()
   end)
 
   if t.is_os('win') then
-    it('can resolve windows command extentions.', function()
+    it('can resolve windows command extensions', function()
       t.write_file('test.bat', 'echo hello world')
       system_sync({ 'chmod', '+x', 'test.bat' })
       system_sync({ './test' })
