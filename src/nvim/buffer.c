@@ -3342,96 +3342,11 @@ void maketitle(void)
         title_str = p_titlestring;
       }
     } else {
-      // Format: "fname + (path) (1 of 2) - VIM".
-
-#define SPACE_FOR_FNAME (sizeof(buf) - 100)
-#define SPACE_FOR_DIR   (sizeof(buf) - 20)
-#define SPACE_FOR_ARGNR (sizeof(buf) - 10)  // At least room for " - Nvim".
-      char *buf_p = buf;
-      if (curbuf->b_fname == NULL) {
-        const size_t size = xstrlcpy(buf_p, _("[No Name]"),
-                                     SPACE_FOR_FNAME + 1);
-        buf_p += MIN(size, SPACE_FOR_FNAME);
-      } else {
-        buf_p += transstr_buf(path_tail(curbuf->b_fname), -1, buf_p, SPACE_FOR_FNAME + 1, true);
-      }
-
-      switch (bufIsChanged(curbuf)
-              | (curbuf->b_p_ro << 1)
-              | (!MODIFIABLE(curbuf) << 2)) {
-      case 0:
-        break;
-      case 1:
-        buf_p = strappend(buf_p, " +"); break;
-      case 2:
-        buf_p = strappend(buf_p, " ="); break;
-      case 3:
-        buf_p = strappend(buf_p, " =+"); break;
-      case 4:
-      case 6:
-        buf_p = strappend(buf_p, " -"); break;
-      case 5:
-      case 7:
-        buf_p = strappend(buf_p, " -+"); break;
-      default:
-        abort();
-      }
-
-      if (curbuf->b_fname != NULL) {
-        // Get path of file, replace home dir with ~.
-        *buf_p++ = ' ';
-        *buf_p++ = '(';
-        home_replace(curbuf, curbuf->b_ffname, buf_p,
-                     (SPACE_FOR_DIR - (size_t)(buf_p - buf)), true);
-#ifdef BACKSLASH_IN_FILENAME
-        // Avoid "c:/name" to be reduced to "c".
-        if (isalpha((uint8_t)(*buf_p)) && *(buf_p + 1) == ':') {
-          buf_p += 2;
-        }
-#endif
-        // Remove the file name.
-        char *p = path_tail_with_sep(buf_p);
-        if (p == buf_p) {
-          // Must be a help buffer.
-          xstrlcpy(buf_p, _("help"), SPACE_FOR_DIR - (size_t)(buf_p - buf));
-        } else {
-          *p = NUL;
-        }
-
-        // Translate unprintable chars and concatenate.  Keep some
-        // room for the server name.  When there is no room (very long
-        // file name) use (...).
-        if ((size_t)(buf_p - buf) < SPACE_FOR_DIR) {
-          char *const tbuf = transstr(buf_p, true);
-          const size_t free_space = SPACE_FOR_DIR - (size_t)(buf_p - buf) + 1;
-          const size_t dir_len = xstrlcpy(buf_p, tbuf, free_space);
-          buf_p += MIN(dir_len, free_space - 1);
-          xfree(tbuf);
-        } else {
-          const size_t free_space = SPACE_FOR_ARGNR - (size_t)(buf_p - buf) + 1;
-          const size_t dots_len = xstrlcpy(buf_p, "...", free_space);
-          buf_p += MIN(dots_len, free_space - 1);
-        }
-        *buf_p++ = ')';
-        *buf_p = NUL;
-      } else {
-        *buf_p = NUL;
-      }
-
-      append_arg_number(curwin, buf_p, (int)(SPACE_FOR_ARGNR - (size_t)(buf_p - buf)));
-
-      xstrlcat(buf_p, " - Nvim", (sizeof(buf) - (size_t)(buf_p - buf)));
-
-      if (maxlen > 0) {
-        // Make it shorter by removing a bit in the middle.
-        if (vim_strsize(buf) > maxlen) {
-          trunc_string(buf, buf, maxlen, sizeof(buf));
-        }
-      }
+      // Format: "fname + (path) (1 of 2) - Nvim".
+      char *default_titlestring = "%t%( %M%)%( (%{expand(\"%:~:h\")})%)%a - Nvim";
+      build_stl_str_hl(curwin, buf, sizeof(buf), default_titlestring,
+                       kOptTitlestring, 0, 0, maxlen, NULL, NULL, NULL, NULL);
       title_str = buf;
-#undef SPACE_FOR_FNAME
-#undef SPACE_FOR_DIR
-#undef SPACE_FOR_ARGNR
     }
   }
   bool mustset = value_change(title_str, &lasttitle);
