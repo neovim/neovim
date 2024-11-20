@@ -1203,6 +1203,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
 
       // Compute msg_row early.
       msg_start();
+      msg_ext_set_kind("search_cmd");
 
       // Get the offset, so we know how long it is.
       if (!cmd_silent

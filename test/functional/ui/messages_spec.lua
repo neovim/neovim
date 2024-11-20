@@ -1140,6 +1140,18 @@ stack traceback:
     exec_lua([[vim.print({ foo = "bar" })]])
     screen:expect_unchanged()
   end)
+
+  it('emits single message for normal search)', function()
+    feed('ax<cr>x<esc>?x<cr>')
+    screen:expect({
+      messages = {
+        {
+          content = { { '?x ' } },
+          kind = 'search_cmd',
+        },
+      },
+    })
+  end)
 end)
 
 describe('ui/builtin messages', function()
