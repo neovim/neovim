@@ -476,6 +476,7 @@ void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
   }
 
   win->w_ns_hl = (NS)ns_id;
+  win->w_ns_hl_winhl = -1;
   win->w_hl_needs_update = true;
   redraw_later(win, UPD_NOT_VALID);
 }

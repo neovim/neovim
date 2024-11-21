@@ -1736,8 +1736,14 @@ bool parse_winhl_opt(const char *winhl, win_T *wp)
     p = wp->w_p_winhl;
   }
 
+  if (wp != NULL && wp->w_ns_hl_winhl < 0) {
+    // 'winhighlight' shouldn't be used for this window.
+    // Only check that the value is valid.
+    wp = NULL;
+  }
+
   if (!*p) {
-    if (wp != NULL && wp->w_ns_hl_winhl && wp->w_ns_hl == wp->w_ns_hl_winhl) {
+    if (wp != NULL && wp->w_ns_hl_winhl > 0 && wp->w_ns_hl == wp->w_ns_hl_winhl) {
       wp->w_ns_hl = 0;
       wp->w_hl_needs_update = true;
     }
