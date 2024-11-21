@@ -212,6 +212,10 @@
 ///   - hide: If true the floating window will be hidden.
 ///   - vertical: Split vertically |:vertical|.
 ///   - split: Split direction: "left", "right", "above", "below".
+///   - cmdline: If true, indicate that this window is used for ext_cmdline.
+///     Nvim will anchor the 'wildoptions' popupmenu to this window.
+///   - cmdline_offset: Offset in units of "screen cell width" indicating how much longer
+///     (negative for shorter) the displayed prompt is from the prompt emitted by "cmdline_show".
 ///
 /// @param[out] err Error details, if any
 ///
@@ -293,6 +297,10 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
       api_set_error(err, kErrorTypeException, "Failed to create window");
     }
     goto cleanup;
+  }
+
+  if (fconfig.cmdline) {
+    cmdline_win = wp;
   }
 
   // Autocommands may close `wp` or move it to another tabpage, so update and check `tp` after each
@@ -1318,6 +1326,17 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
 
   if (HAS_KEY_X(config, hide)) {
     fconfig->hide = config->hide;
+  }
+
+  if (HAS_KEY_X(config, cmdline)) {
+    fconfig->cmdline = config->cmdline;
+  }
+
+  if (HAS_KEY_X(config, cmdline_offset)) {
+    if (!fconfig->cmdline) {
+      api_set_error(err, kErrorTypeValidation, "'cmdline_offset' must be used on 'cmdline' window");
+    }
+    fconfig->cmdline_offset = (int)config->cmdline_offset;
   }
 
   return true;

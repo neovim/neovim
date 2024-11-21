@@ -306,6 +306,92 @@ describe('vim.ui_attach', function()
       },
     })
   end)
+
+  it('ext_cmdline completion popupmenu', function()
+    screen:try_resize(screen._width, 10)
+    screen:add_extra_attr_ids { [100] = { background = Screen.colors.Black } }
+    exec_lua([[
+      vim.o.wildoptions = 'pum'
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.cmd('call setline(1, range(1, 10))')
+      _G.win = vim.api.nvim_open_win(buf, false, {
+        relative = 'editor',
+        col = 3,
+        row = 3,
+        width = 20,
+        height = 1,
+        style = 'minimal',
+        focusable = false,
+        zindex = 300,
+        cmdline = true,
+        cmdline_offset = -1, -- not inserting "firstc" below
+      })
+      vim.ui_attach(ns, { ext_cmdline = true }, function(event, ...)
+        if event == 'cmdline_show' then
+          local content = select(1, ...)
+          vim.api.nvim_buf_set_lines(buf, -2, -1, false, {content[1][2]})
+          vim.api.nvim_win_set_cursor(_G.win, {1, #content[1][2]})
+          vim.api.nvim__redraw( { win = _G.win, cursor = true, flush = true })
+        end
+        return true
+      end)
+      vim.api.nvim_set_hl(0, 'Pmenu', {})
+    ]])
+    feed(':call buf<tab>')
+    screen:expect({
+      grid = [[
+        1                                       |
+        2                                       |
+        3                                       |
+        4  call bufadd^(                         |
+        5      {12: bufadd(         }{100: }               |
+        6       bufexists(      {100: }               |
+        7       buffer_exists(  {12: }               |
+        8       buffer_name(    {12: }               |
+        9       buffer_number(  {12: }               |
+                                                |
+      ]],
+    })
+    exec_lua([[
+      vim.api.nvim_win_set_config(_G.win, {
+        relative = 'editor',
+        col = 0,
+        row = 1000,
+        width = 1000,
+        height = 1,
+        cmdline_offset = -1,
+      })
+    ]])
+    screen:expect({
+      grid = [[
+        1                                       |
+        2                                       |
+        3                                       |
+        4                                       |
+        5      {12: bufadd(         }{100: }               |
+        6       bufexists(      {100: }               |
+        7       buffer_exists(  {12: }               |
+        8       buffer_name(    {12: }               |
+        9       buffer_number(  {12: }               |
+        call bufadd^(                            |
+      ]],
+    })
+    feed('<tab>')
+    screen:expect({
+      grid = [[
+        1    bufadd(         {100: }                  |
+        2   {12: bufexists(      }{100: }                  |
+        3    buffer_exists(  {100: }                  |
+        4    buffer_name(    {100: }                  |
+        5    buffer_number(  {100: }                  |
+        6    buflisted(      {100: }                  |
+        7    bufload(        {12: }                  |
+        8    bufloaded(      {12: }                  |
+        9    bufname(        {12: }                  |
+        call bufexists^(                         |
+      ]],
+    })
+  end)
 end)
 
 describe('vim.ui_attach', function()
