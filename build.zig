@@ -193,7 +193,7 @@ pub fn build(b: *std.Build) !void {
         .HAVE_DIRFD_AND_FLOCK = modernUnix,
         .HAVE_FORKPTY = modernUnix and !tag.isDarwin(), // TODO: also on darwin but we lack the headers :(buil
 
-        .HAVE_BE64TOH = isLinux or tag.isBSD(),
+        .HAVE_BE64TOH = modernUnix and !tag.isDarwin(),
         .ORDER_BIG_ENDIAN = t.cpu.arch.endian() == .big,
         .ENDIAN_INCLUDE_FILE = "endian.h",
         .HAVE_EXECINFO_BACKTRACE = modernUnix,
