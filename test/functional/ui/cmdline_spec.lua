@@ -623,8 +623,7 @@ local function test_cmdline(linegrid)
       { 'unplace', '', '', '' },
     }
 
-    command('set wildmode=full')
-    command('set wildmenu')
+    command('set wildmode=full wildmenu wildoptions=pum')
     screen:set_option('ext_popupmenu', true)
     feed(':sign <tab>')
 
