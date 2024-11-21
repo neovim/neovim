@@ -638,14 +638,14 @@ function M.rename(new_name, opts)
   local cword = vim.fn.expand('<cword>')
 
   --- @param range lsp.Range
-  --- @param offset_encoding string
-  local function get_text_at_range(range, offset_encoding)
+  --- @param position_encoding string
+  local function get_text_at_range(range, position_encoding)
     return api.nvim_buf_get_text(
       bufnr,
       range.start.line,
-      util._get_line_byte_from_position(bufnr, range.start, offset_encoding),
+      util._get_line_byte_from_position(bufnr, range.start, position_encoding),
       range['end'].line,
-      util._get_line_byte_from_position(bufnr, range['end'], offset_encoding),
+      util._get_line_byte_from_position(bufnr, range['end'], position_encoding),
       {}
     )[1]
   end

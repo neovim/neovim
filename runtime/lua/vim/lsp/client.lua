@@ -278,7 +278,7 @@ local function validate_encoding(encoding)
   return valid_encodings[encoding:lower()]
     or error(
       string.format(
-        "Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'",
+        "Invalid position encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'",
         encoding
       )
     )

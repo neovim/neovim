@@ -118,9 +118,9 @@ describe('luacats grammar', function()
     type = '"rfc2396" | "rfc2732" | "rfc3986" | nil',
   })
 
-  test('@param offset_encoding "utf-8" | "utf-16" | "utf-32" | nil', {
+  test('@param position_encoding "utf-8" | "utf-16" | "utf-32" | nil', {
     kind = 'param',
-    name = 'offset_encoding',
+    name = 'position_encoding',
     type = '"utf-8" | "utf-16" | "utf-32" | nil',
   })
 
