@@ -1,7 +1,4 @@
 add_library(test_lib INTERFACE)
-if(MINGW)
-  target_link_libraries(test_lib INTERFACE -municode)
-endif()
 if(WIN32)
   target_compile_definitions(test_lib INTERFACE MSWIN)
 endif()

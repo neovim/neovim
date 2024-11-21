@@ -111,6 +111,9 @@
 
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
+# ifndef _UCRT
+#  error UCRT is the only supported C runtime on windows
+# endif
 #endif
 
 #if defined(MSWIN) && !defined(MAKE_LIB)
@@ -241,22 +244,10 @@ void early_init(mparm_T *paramp)
 #ifdef MAKE_LIB
 int nvim_main(int argc, char **argv);  // silence -Wmissing-prototypes
 int nvim_main(int argc, char **argv)
-#elif defined(MSWIN)
-int wmain(int argc, wchar_t **argv_w)  // multibyte args on Windows. #7060
 #else
 int main(int argc, char **argv)
 #endif
 {
-#if defined(MSWIN) && !defined(MAKE_LIB)
-  char **argv = xmalloc((size_t)argc * sizeof(char *));
-  for (int i = 0; i < argc; i++) {
-    char *buf = NULL;
-    utf16_to_utf8(argv_w[i], -1, &buf);
-    assert(buf);
-    argv[i] = buf;
-  }
-#endif
-
   argv0 = argv[0];
 
   if (!appname_is_valid()) {
