@@ -8493,7 +8493,7 @@ char *do_string_sub(char *str, size_t len, char *pat, char *sub, typval_T *expr,
   return ret;
 }
 
-/// common code for getting job callbacks for jobstart, termopen and rpcstart
+/// Common code for getting job callbacks for `jobstart`.
 ///
 /// @return true/false on success/failure.
 bool common_job_callbacks(dict_T *vopts, CallbackReader *on_stdout, CallbackReader *on_stderr,

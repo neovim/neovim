@@ -357,7 +357,7 @@ static void term_output_callback(const char *s, size_t len, void *user_data)
 
 /// Initializes terminal properties, and triggers TermOpen.
 ///
-/// The PTY process (TerminalOptions.data) was already started by termopen(),
+/// The PTY process (TerminalOptions.data) was already started by jobstart(),
 /// via ex_terminal() or the term:// BufReadCmd.
 ///
 /// @param buf Buffer used for presentation of the terminal.

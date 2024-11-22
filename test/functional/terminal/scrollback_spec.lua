@@ -355,7 +355,9 @@ describe(':terminal prints more lines than the screen height and exits', functio
   it('will push extra lines to scrollback', function()
     clear()
     local screen = Screen.new(30, 7, { rgb = false })
-    command(("call termopen(['%s', '10']) | startinsert"):format(testprg('tty-test')))
+    command(
+      ("call jobstart(['%s', '10'], {'term':v:true}) | startinsert"):format(testprg('tty-test'))
+    )
     screen:expect([[
       line6                         |
       line7                         |
@@ -623,7 +625,7 @@ describe('pending scrollback line handling', function()
       local bufnr = vim.api.nvim_create_buf(false, true)
       local args = ...
       vim.api.nvim_buf_call(bufnr, function()
-        vim.fn.termopen(args)
+        vim.fn.jobstart(args, { term = true })
       end)
       vim.api.nvim_win_set_buf(0, bufnr)
       vim.cmd('startinsert')

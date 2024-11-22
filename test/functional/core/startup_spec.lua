@@ -55,7 +55,10 @@ describe('startup', function()
     clear()
     local screen
     screen = Screen.new(84, 3)
-    fn.termopen({ nvim_prog, '-u', 'NONE', '--server', eval('v:servername'), '--remote-ui' })
+    fn.jobstart(
+      { nvim_prog, '-u', 'NONE', '--server', eval('v:servername'), '--remote-ui' },
+      { term = true }
+    )
     screen:expect([[
       ^Cannot attach UI of :terminal child to its parent. (Unset $NVIM to skip this check) |
                                                                                           |*2
@@ -98,7 +101,7 @@ describe('startup', function()
     screen = Screen.new(60, 7)
     -- not the same colors on windows for some reason
     screen._default_attr_ids = nil
-    local id = fn.termopen({
+    local id = fn.jobstart({
       nvim_prog,
       '-u',
       'NONE',
@@ -108,6 +111,7 @@ describe('startup', function()
       'set noruler',
       '-D',
     }, {
+      term = true,
       env = {
         VIMRUNTIME = os.getenv('VIMRUNTIME'),
       },
@@ -360,7 +364,7 @@ describe('startup', function()
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
-    fn.termopen({
+    fn.jobstart({
       nvim_prog,
       '-u',
       'NONE',
@@ -371,6 +375,7 @@ describe('startup', function()
       '-c',
       'echo has("ttyin") has("ttyout")',
     }, {
+      term = true,
       env = {
         VIMRUNTIME = os.getenv('VIMRUNTIME'),
       },
@@ -393,13 +398,14 @@ describe('startup', function()
       os.remove('Xtest_startup_ttyout')
     end)
     -- Running in :terminal
-    fn.termopen(
+    fn.jobstart(
       (
         [["%s" -u NONE -i NONE --cmd "%s"]]
         .. [[ -c "call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')"]]
         .. [[ -c q | cat -v]]
       ):format(nvim_prog, nvim_set),
       {
+        term = true,
         env = {
           VIMRUNTIME = os.getenv('VIMRUNTIME'),
         },
@@ -424,7 +430,7 @@ describe('startup', function()
       os.remove('Xtest_startup_ttyout')
     end)
     -- Running in :terminal
-    fn.termopen(
+    fn.jobstart(
       (
         [[echo foo | ]] -- Input from a pipe.
         .. [["%s" -u NONE -i NONE --cmd "%s"]]
@@ -432,6 +438,7 @@ describe('startup', function()
         .. [[ -c q -- -]]
       ):format(nvim_prog, nvim_set),
       {
+        term = true,
         env = {
           VIMRUNTIME = os.getenv('VIMRUNTIME'),
         },
@@ -454,13 +461,14 @@ describe('startup', function()
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
-    fn.termopen(
+    fn.jobstart(
       (
         [[echo foo | ]]
         .. [["%s" -u NONE -i NONE --cmd "%s"]]
         .. [[ -c "echo has('ttyin') has('ttyout')"]]
       ):format(nvim_prog, nvim_set),
       {
+        term = true,
         env = {
           VIMRUNTIME = os.getenv('VIMRUNTIME'),
         },
@@ -614,7 +622,7 @@ describe('startup', function()
     local screen
     screen = Screen.new(60, 6)
     screen._default_attr_ids = nil
-    local id = fn.termopen({
+    local id = fn.jobstart({
       nvim_prog,
       '-u',
       'NONE',
@@ -625,6 +633,7 @@ describe('startup', function()
       '--cmd',
       'let g:foo = g:bar',
     }, {
+      term = true,
       env = {
         VIMRUNTIME = os.getenv('VIMRUNTIME'),
       },
@@ -1144,7 +1153,8 @@ describe('user config init', function()
 
         local screen = Screen.new(50, 8)
         screen._default_attr_ids = nil
-        fn.termopen({ nvim_prog }, {
+        fn.jobstart({ nvim_prog }, {
+          term = true,
           env = {
             VIMRUNTIME = os.getenv('VIMRUNTIME'),
           },
@@ -1418,7 +1428,7 @@ describe('inccommand on ex mode', function()
     clear()
     local screen
     screen = Screen.new(60, 10)
-    local id = fn.termopen({
+    local id = fn.jobstart({
       nvim_prog,
       '-u',
       'NONE',
@@ -1429,6 +1439,7 @@ describe('inccommand on ex mode', function()
       '-E',
       'test/README.md',
     }, {
+      term = true,
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
     fn.chansend(id, '%s/N')

@@ -16,49 +16,34 @@ Deprecated features
 DEPRECATED IN 0.11					*deprecated-0.11*
 
 API
-- nvim_subscribe()	Plugins must maintain their own "multicast" channels list.
-- nvim_unsubscribe()	Plugins must maintain their own "multicast" channels list.
-
-LUA
-- vim.region()		Use |getregionpos()| instead.
-- *vim.highlight*	Renamed to |vim.hl|.
-- vim.validate(opts: table) Use form 1. See |vim.validate()|.
+• nvim_subscribe()	Plugins must maintain their own "multicast" channels list.
+• nvim_unsubscribe()	Plugins must maintain their own "multicast" channels list.
 
 DIAGNOSTICS
-- *vim.diagnostic.goto_next()*	Use |vim.diagnostic.jump()| with `{count=1, float=true}` instead.
-- *vim.diagnostic.goto_prev()*	Use |vim.diagnostic.jump()| with `{count=-1, float=true}` instead.
-- *vim.diagnostic.get_next_pos()*
-	Use the "lnum" and "col" fields from the return value of
-	|vim.diagnostic.get_next()| instead.
-- *vim.diagnostic.get_prev_pos()*
-	Use the "lnum" and "col" fields from the return value of
-	|vim.diagnostic.get_prev()| instead.
-- The "win_id" parameter used by various functions is deprecated in favor of
+• *vim.diagnostic.goto_next()*	Use |vim.diagnostic.jump()| with `{count=1, float=true}` instead.
+• *vim.diagnostic.goto_prev()*	Use |vim.diagnostic.jump()| with `{count=-1, float=true}` instead.
+• *vim.diagnostic.get_next_pos()* Use the "lnum" and "col" fields from the
+				return value of |vim.diagnostic.get_next()| instead.
+• *vim.diagnostic.get_prev_pos()* Use the "lnum" and "col" fields from the
+				return value of |vim.diagnostic.get_prev()| instead.
+• The "win_id" parameter used by various functions is deprecated in favor of
   "winid" |winid|
-- The "cursor_position" parameter of |vim.diagnostic.JumpOpts| is renamed to
-  "pos"
+• |vim.diagnostic.JumpOpts| renamed its "cursor_position" field to "pos".
 
 HIGHLIGHTS
-• *TermCursorNC*	As of Nvim 0.11, unfocused |terminal| windows no
-			longer have any cursor.
-
-TREESITTER
-• *TSNode:child_containing_descendant()*	Use
-  |TSNode:child_with_descendant()| instead; it is identical except that it can
-  return the descendant itself.
+• *TermCursorNC*	Unfocused |terminal| windows do not have a cursor.
 
 LSP
 • *vim.lsp.util.jump_to_location*	Use |vim.lsp.util.show_document()| with
-  `{focus=true}` instead.
+					`{focus=true}` instead.
 • *vim.lsp.buf.execute_command*		Use |Client:exec_cmd()| instead.
 • *vim.lsp.buf.completion*		Use |vim.lsp.completion.trigger()| instead.
 • vim.lsp.buf_request_all		The `error` key has been renamed to `err` inside
 					the result parameter of the handler.
 • *vim.lsp.with()*			Pass configuration to equivalent
 					functions in `vim.lsp.buf.*`.
-• |vim.lsp.handlers|
-	No longer support client to server response handlers. Only server to
-	client requests/notification handlers are supported.
+• |vim.lsp.handlers| Does not support client-to-server response handlers. Only
+  supports server-to-client requests/notification handlers.
 • *vim.lsp.handlers.signature_help()*	Use |vim.lsp.buf.signature_help()| instead.
 • `client.request()`			Use |Client:request()| instead.
 • `client.request_sync()`		Use |Client:request_sync()| instead.
@@ -69,6 +54,18 @@ LSP
 • `client.supports_method()`		Use |Client:supports_method()| instead.
 • `client.on_attach()`			Use |Client:on_attach()| instead.
 • `vim.lsp.start_client()`		Use |vim.lsp.start()| instead.
+
+LUA
+• vim.region()		Use |getregionpos()| instead.
+• *vim.highlight*	Renamed to |vim.hl|.
+• vim.validate(opts: table) Use form 1. See |vim.validate()|.
+
+TREESITTER
+• *TSNode:child_containing_descendant()* Use |TSNode:child_with_descendant()|
+  instead; it is identical except that it can return the descendant itself.
+
+VIMSCRIPT
+• *termopen()* Use |jobstart() with `{term: v:true}`.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*
@@ -130,198 +127,198 @@ TREESITTER
 DEPRECATED IN 0.9					*deprecated-0.9*
 
 API
-- *nvim_get_hl_by_name()*		Use |nvim_get_hl()| instead.
-- *nvim_get_hl_by_id()*			Use |nvim_get_hl()| instead.
+• *nvim_get_hl_by_name()*		Use |nvim_get_hl()| instead.
+• *nvim_get_hl_by_id()*			Use |nvim_get_hl()| instead.
 
 TREESITTER
-- *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()| instead.
-- *vim.treesitter.get_node_at_pos()*		Use |vim.treesitter.get_node()| instead.
-- *vim.treesitter.get_node_at_cursor()*		Use |vim.treesitter.get_node()|
+• *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()| instead.
+• *vim.treesitter.get_node_at_pos()*		Use |vim.treesitter.get_node()| instead.
+• *vim.treesitter.get_node_at_cursor()*		Use |vim.treesitter.get_node()|
 						and |TSNode:type()| instead.
 • The following top level Treesitter functions have been moved:
-  - *vim.treesitter.inspect_language()*    -> |vim.treesitter.language.inspect()|
-  - *vim.treesitter.get_query_files()*     -> |vim.treesitter.query.get_files()|
-  - *vim.treesitter.set_query()*           -> |vim.treesitter.query.set()|
-  - *vim.treesitter.query.set_query()*     -> |vim.treesitter.query.set()|
-  - *vim.treesitter.get_query()*           -> |vim.treesitter.query.get()|
-  - *vim.treesitter.query.get_query()*     -> |vim.treesitter.query.get()|
-  - *vim.treesitter.parse_query()*         -> |vim.treesitter.query.parse()|
-  - *vim.treesitter.query.parse_query()*   -> |vim.treesitter.query.parse()|
-  - *vim.treesitter.add_predicate()*       -> |vim.treesitter.query.add_predicate()|
-  - *vim.treesitter.add_directive()*       -> |vim.treesitter.query.add_directive()|
-  - *vim.treesitter.list_predicates()*     -> |vim.treesitter.query.list_predicates()|
-  - *vim.treesitter.list_directives()*     -> |vim.treesitter.query.list_directives()|
-  - *vim.treesitter.query.get_range()*     -> |vim.treesitter.get_range()|
-  - *vim.treesitter.query.get_node_text()* -> |vim.treesitter.get_node_text()|
+  • *vim.treesitter.inspect_language()*    -> |vim.treesitter.language.inspect()|
+  • *vim.treesitter.get_query_files()*     -> |vim.treesitter.query.get_files()|
+  • *vim.treesitter.set_query()*           -> |vim.treesitter.query.set()|
+  • *vim.treesitter.query.set_query()*     -> |vim.treesitter.query.set()|
+  • *vim.treesitter.get_query()*           -> |vim.treesitter.query.get()|
+  • *vim.treesitter.query.get_query()*     -> |vim.treesitter.query.get()|
+  • *vim.treesitter.parse_query()*         -> |vim.treesitter.query.parse()|
+  • *vim.treesitter.query.parse_query()*   -> |vim.treesitter.query.parse()|
+  • *vim.treesitter.add_predicate()*       -> |vim.treesitter.query.add_predicate()|
+  • *vim.treesitter.add_directive()*       -> |vim.treesitter.query.add_directive()|
+  • *vim.treesitter.list_predicates()*     -> |vim.treesitter.query.list_predicates()|
+  • *vim.treesitter.list_directives()*     -> |vim.treesitter.query.list_directives()|
+  • *vim.treesitter.query.get_range()*     -> |vim.treesitter.get_range()|
+  • *vim.treesitter.query.get_node_text()* -> |vim.treesitter.get_node_text()|
 
 LUA
-  - *nvim_exec()*				Use |nvim_exec2()| instead.
-  - *vim.pretty_print()*			Use |vim.print()| instead.
+  • *nvim_exec()*				Use |nvim_exec2()| instead.
+  • *vim.pretty_print()*			Use |vim.print()| instead.
 
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.8 OR EARLIER
 
 API
-- *nvim_buf_clear_highlight()*	Use |nvim_buf_clear_namespace()| instead.
-- *nvim_buf_set_virtual_text()*	Use |nvim_buf_set_extmark()| instead.
-- *nvim_command_output()*	Use |nvim_exec2()| instead.
-- *nvim_execute_lua()*		Use |nvim_exec_lua()| instead.
-- *nvim_get_option_info()*	Use |nvim_get_option_info2()| instead.
+• *nvim_buf_clear_highlight()*	Use |nvim_buf_clear_namespace()| instead.
+• *nvim_buf_set_virtual_text()*	Use |nvim_buf_set_extmark()| instead.
+• *nvim_command_output()*	Use |nvim_exec2()| instead.
+• *nvim_execute_lua()*		Use |nvim_exec_lua()| instead.
+• *nvim_get_option_info()*	Use |nvim_get_option_info2()| instead.
 
 COMMANDS
-- *:rv* *:rviminfo*		Deprecated alias to |:rshada| command.
-- *:wv* *:wviminfo*		Deprecated alias to |:wshada| command.
+• *:rv* *:rviminfo*		Deprecated alias to |:rshada| command.
+• *:wv* *:wviminfo*		Deprecated alias to |:wshada| command.
 
 ENVIRONMENT VARIABLES
-- *$NVIM_LISTEN_ADDRESS*
-  - Deprecated way to:
-    - set the server name (use |--listen| or |serverstart()| instead)
-    - get the server name (use |v:servername| instead)
-    - detect a parent Nvim (use |$NVIM| instead)
-  - Ignored if --listen is given.
-  - Unset by |terminal| and |jobstart()| unless explicitly given by the "env"
+• *$NVIM_LISTEN_ADDRESS*
+  • Deprecated way to:
+    • set the server name (use |--listen| or |serverstart()| instead)
+    • get the server name (use |v:servername| instead)
+    • detect a parent Nvim (use |$NVIM| instead)
+  • Ignored if --listen is given.
+  • Unset by |terminal| and |jobstart()| unless explicitly given by the "env"
     option. Example: >vim
 	call jobstart(['foo'], { 'env': { 'NVIM_LISTEN_ADDRESS': v:servername  } })
 <
 
 EVENTS
-- *BufCreate*		Use |BufAdd| instead.
-- *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
-- *FileEncoding*	Never fired; equivalent to |EncodingChanged|.
-- *GUIEnter*		Never fired; use |UIEnter| instead.
-- *GUIFailed*		Never fired.
+• *BufCreate*		Use |BufAdd| instead.
+• *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
+• *FileEncoding*	Never fired; equivalent to |EncodingChanged|.
+• *GUIEnter*		Never fired; use |UIEnter| instead.
+• *GUIFailed*		Never fired.
 
 KEYCODES
-- *<MouseDown>*		Use <ScrollWheelUp> instead.
-- *<MouseUp>*		Use <ScrollWheelDown> instead.
-
-FUNCTIONS
-- *buffer_exists()*	Obsolete name for |bufexists()|.
-- *buffer_name()*	Obsolete name for |bufname()|.
-- *buffer_number()*	Obsolete name for |bufnr()|.
-- *file_readable()*	Obsolete name for |filereadable()|.
-- *highlight_exists()*	Obsolete name for |hlexists()|.
-- *highlightID()*	Obsolete name for |hlID()|.
-- *inputdialog()*	Use |input()| instead.
-- *jobclose()*		Obsolete name for |chanclose()|
-- *jobsend()*		Obsolete name for |chansend()|
-- *last_buffer_nr()*	Obsolete name for bufnr("$").
-- *rpcstart()*		Use |jobstart()| with `{'rpc': v:true}` instead.
-- *rpcstop()*		Use |jobstop()| instead to stop any job, or
-			`chanclose(id, "rpc")` to close RPC communication
-			without stopping the job. Use chanclose(id) to close
-			any socket.
+• *<MouseDown>*		Use <ScrollWheelUp> instead.
+• *<MouseUp>*		Use <ScrollWheelDown> instead.
 
 HIGHLIGHTS
-- *hl-VertSplit*	Use |hl-WinSeparator| instead.
+• *hl-VertSplit*	Use |hl-WinSeparator| instead.
 
 LSP DIAGNOSTICS
 For each of the functions below, use the corresponding function in
 |vim.diagnostic| instead (unless otherwise noted). For example, use
 |vim.diagnostic.get()| instead of |vim.lsp.diagnostic.get()|.
 
-- *vim.lsp.diagnostic.clear()*		Use |vim.diagnostic.hide()| instead.
-- *vim.lsp.diagnostic.disable()*          Use |vim.diagnostic.enable()| instead.
-- *vim.lsp.diagnostic.display()*	Use |vim.diagnostic.show()| instead.
-- *vim.lsp.diagnostic.enable()*
-- *vim.lsp.diagnostic.get()*
-- *vim.lsp.diagnostic.get_all()*	Use |vim.diagnostic.get()| instead.
-- *vim.lsp.diagnostic.get_count()*	Use |vim.diagnostic.count()| instead.
-- *vim.lsp.diagnostic.get_line_diagnostics()* Use |vim.diagnostic.get()| instead.
-- *vim.lsp.diagnostic.get_next()*
-- *vim.lsp.diagnostic.get_next_pos()*
-- *vim.lsp.diagnostic.get_prev()*
-- *vim.lsp.diagnostic.get_prev_pos()*
-- *vim.lsp.diagnostic.get_virtual_text_chunks_for_line()* No replacement. Use
+• *vim.lsp.diagnostic.clear()*		Use |vim.diagnostic.hide()| instead.
+• *vim.lsp.diagnostic.disable()*          Use |vim.diagnostic.enable()| instead.
+• *vim.lsp.diagnostic.display()*	Use |vim.diagnostic.show()| instead.
+• *vim.lsp.diagnostic.enable()*
+• *vim.lsp.diagnostic.get()*
+• *vim.lsp.diagnostic.get_all()*	Use |vim.diagnostic.get()| instead.
+• *vim.lsp.diagnostic.get_count()*	Use |vim.diagnostic.count()| instead.
+• *vim.lsp.diagnostic.get_line_diagnostics()* Use |vim.diagnostic.get()| instead.
+• *vim.lsp.diagnostic.get_next()*
+• *vim.lsp.diagnostic.get_next_pos()*
+• *vim.lsp.diagnostic.get_prev()*
+• *vim.lsp.diagnostic.get_prev_pos()*
+• *vim.lsp.diagnostic.get_virtual_text_chunks_for_line()* No replacement. Use
   options provided by |vim.diagnostic.config()| to customize virtual text.
-- *vim.lsp.diagnostic.goto_next()*
-- *vim.lsp.diagnostic.goto_prev()*
-- *vim.lsp.diagnostic.redraw()*		Use |vim.diagnostic.show()| instead.
-- *vim.lsp.diagnostic.reset()*
-- *vim.lsp.diagnostic.save()*		Use |vim.diagnostic.set()| instead.
-- *vim.lsp.diagnostic.set_loclist()*	Use |vim.diagnostic.setloclist()| instead.
-- *vim.lsp.diagnostic.set_qflist()*	Use |vim.diagnostic.setqflist()| instead.
-- *vim.lsp.diagnostic.show_line_diagnostics()* Use |vim.diagnostic.open_float()| instead.
-- *vim.lsp.diagnostic.show_position_diagnostics()* Use |vim.diagnostic.open_float()| instead.
+• *vim.lsp.diagnostic.goto_next()*
+• *vim.lsp.diagnostic.goto_prev()*
+• *vim.lsp.diagnostic.redraw()*		Use |vim.diagnostic.show()| instead.
+• *vim.lsp.diagnostic.reset()*
+• *vim.lsp.diagnostic.save()*		Use |vim.diagnostic.set()| instead.
+• *vim.lsp.diagnostic.set_loclist()*	Use |vim.diagnostic.setloclist()| instead.
+• *vim.lsp.diagnostic.set_qflist()*	Use |vim.diagnostic.setqflist()| instead.
+• *vim.lsp.diagnostic.show_line_diagnostics()* Use |vim.diagnostic.open_float()| instead.
+• *vim.lsp.diagnostic.show_position_diagnostics()* Use |vim.diagnostic.open_float()| instead.
 
 The following are deprecated without replacement. These functions are moved
 internally and are no longer exposed as part of the API. Instead, use
 |vim.diagnostic.config()| and |vim.diagnostic.show()|.
 
-- *vim.lsp.diagnostic.set_signs()*
-- *vim.lsp.diagnostic.set_underline()*
-- *vim.lsp.diagnostic.set_virtual_text()*
+• *vim.lsp.diagnostic.set_signs()*
+• *vim.lsp.diagnostic.set_underline()*
+• *vim.lsp.diagnostic.set_virtual_text()*
 
 LSP FUNCTIONS
-- *vim.lsp.buf.server_ready()*
+• *vim.lsp.buf.server_ready()*
   Use |LspAttach| instead, depending on your use-case. "Server ready" is not
   part of the LSP spec, so the Nvim LSP client cannot meaningfully implement
   it. "Ready" is ambiguous because:
-  - Language servers may finish analyzing the workspace, but edits can always
+  • Language servers may finish analyzing the workspace, but edits can always
     re-trigger analysis/builds.
-  - Language servers can serve some requests even while processing changes.
-- *vim.lsp.buf.range_code_action()*		Use |vim.lsp.buf.code_action()| with
+  • Language servers can serve some requests even while processing changes.
+• *vim.lsp.buf.range_code_action()*		Use |vim.lsp.buf.code_action()| with
 						the `range` parameter.
-- *vim.lsp.util.diagnostics_to_items()*		Use |vim.diagnostic.toqflist()| instead.
-- *vim.lsp.util.set_qflist()*			Use |setqflist()| instead.
-- *vim.lsp.util.set_loclist()*			Use |setloclist()| instead.
-- *vim.lsp.buf_get_clients()*			Use |vim.lsp.get_clients()| with
+• *vim.lsp.util.diagnostics_to_items()*		Use |vim.diagnostic.toqflist()| instead.
+• *vim.lsp.util.set_qflist()*			Use |setqflist()| instead.
+• *vim.lsp.util.set_loclist()*			Use |setloclist()| instead.
+• *vim.lsp.buf_get_clients()*			Use |vim.lsp.get_clients()| with
 						{buffer=bufnr} instead.
-- *vim.lsp.buf.formatting()*			Use |vim.lsp.buf.format()| with
+• *vim.lsp.buf.formatting()*			Use |vim.lsp.buf.format()| with
 						{async=true} instead.
-- *vim.lsp.buf.formatting_sync()*		Use |vim.lsp.buf.format()| with
+• *vim.lsp.buf.formatting_sync()*		Use |vim.lsp.buf.format()| with
 						{async=false} instead.
-- *vim.lsp.buf.range_formatting()*		Use |vim.lsp.formatexpr()|
+• *vim.lsp.buf.range_formatting()*		Use |vim.lsp.formatexpr()|
 						or |vim.lsp.buf.format()| instead.
 
 LUA
-- vim.register_keystroke_callback()	Use |vim.on_key()| instead.
+• vim.register_keystroke_callback()	Use |vim.on_key()| instead.
 
 NORMAL COMMANDS
-- *]f* *[f*		Same as "gf".
+• *]f* *[f*		Same as "gf".
 
 OPTIONS
-- *cpo-<* *:menu-<special>* *:menu-special* *:map-<special>* *:map-special*
+• *cpo-<* *:menu-<special>* *:menu-special* *:map-<special>* *:map-special*
   `<>` notation is always enabled.
-- *'fe'*		'fenc'+'enc' before Vim 6.0; no longer used.
-- *'highlight'* *'hl'*	Names of builtin |highlight-groups| cannot be changed.
-- *'langnoremap'*	Deprecated alias to 'nolangremap'.
-- 'sessionoptions'	Flags "unix", "slash" are ignored and always enabled.
-- *'vi'*
-- 'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
-- *'viminfo'*		Deprecated alias to 'shada' option.
-- *'viminfofile'*	Deprecated alias to 'shadafile' option.
-- *'paste'* *'nopaste'*	Just Paste It.™  The 'paste' option is obsolete:
+• *'fe'*		'fenc'+'enc' before Vim 6.0; no longer used.
+• *'highlight'* *'hl'*	Names of builtin |highlight-groups| cannot be changed.
+• *'langnoremap'*	Deprecated alias to 'nolangremap'.
+• 'sessionoptions'	Flags "unix", "slash" are ignored and always enabled.
+• *'vi'*
+• 'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
+• *'viminfo'*		Deprecated alias to 'shada' option.
+• *'viminfofile'*	Deprecated alias to 'shadafile' option.
+• *'paste'* *'nopaste'*	Just Paste It.™  The 'paste' option is obsolete:
 			|paste| is handled automatically when you paste text
 			using your terminal's or GUI's paste feature
 			(CTRL-SHIFT-v, CMD-v (macOS), middle-click, …).
 			Enables "paste mode":
-			  - Disables mappings in Insert, Cmdline mode.
-			  - Disables abbreviations.
-			  - Resets 'autoindent' 'expandtab' 'revins' 'ruler'
+			  • Disables mappings in Insert, Cmdline mode.
+			  • Disables abbreviations.
+			  • Resets 'autoindent' 'expandtab' 'revins' 'ruler'
 			    'showmatch' 'smartindent' 'smarttab' 'softtabstop'
 			    'textwidth' 'wrapmargin'.
-			  - Treats 'formatoptions' as empty.
-			  - Disables the effect of these options:
-			    - 'cindent'
-			    - 'indentexpr'
-			    - 'lisp'
+			  • Treats 'formatoptions' as empty.
+			  • Disables the effect of these options:
+			    • 'cindent'
+			    • 'indentexpr'
+			    • 'lisp'
 
 UI EXTENSIONS
-- *ui-wildmenu*		Use |ui-cmdline| with |ui-popupmenu| instead. Enabled
+• *ui-wildmenu*		Use |ui-cmdline| with |ui-popupmenu| instead. Enabled
 			by the `ext_wildmenu` |ui-option|. Emits these events:
-			- `["wildmenu_show", items]`
-			- `["wildmenu_select", selected]`
-			- `["wildmenu_hide"]`
-- *term_background*	Unused. The terminal background color is now detected
+			• `["wildmenu_show", items]`
+			• `["wildmenu_select", selected]`
+			• `["wildmenu_hide"]`
+• *term_background*	Unused. The terminal background color is now detected
 			by the Nvim core directly instead of the TUI.
 
 VARIABLES
-- *b:terminal_job_pid*	Use `jobpid(&channel)` instead.
-- *b:terminal_job_id*	Use `&channel` instead. To access in non-current buffer:
-			- Lua: `vim.bo[bufnr].channel`
-			- Vimscript: `getbufvar(bufnr, '&channel')`
+• *b:terminal_job_pid*	Use `jobpid(&channel)` instead.
+• *b:terminal_job_id*	Use `&channel` instead. To access in non-current buffer:
+			• Lua: `vim.bo[bufnr].channel`
+			• Vimscript: `getbufvar(bufnr, '&channel')`
+
+VIMSCRIPT
+• *buffer_exists()*	Obsolete name for |bufexists()|.
+• *buffer_name()*	Obsolete name for |bufname()|.
+• *buffer_number()*	Obsolete name for |bufnr()|.
+• *file_readable()*	Obsolete name for |filereadable()|.
+• *highlight_exists()*	Obsolete name for |hlexists()|.
+• *highlightID()*	Obsolete name for |hlID()|.
+• *inputdialog()*	Use |input()| instead.
+• *jobclose()*		Obsolete name for |chanclose()|
+• *jobsend()*		Obsolete name for |chansend()|
+• *last_buffer_nr()*	Obsolete name for bufnr("$").
+• *rpcstart()*		Use |jobstart()| with `{'rpc': v:true}` instead.
+• *rpcstop()*		Use |jobstop()| instead to stop any job, or
+			`chanclose(id, "rpc")` to close RPC communication
+			without stopping the job. Use chanclose(id) to close
+			any socket.
 
 
  vim:noet:tw=78:ts=8:ft=help:norl:

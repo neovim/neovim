@@ -115,7 +115,8 @@ describe("preserve and (R)ecover with custom 'directory'", function()
     t.skip(t.is_os('win'))
     local screen0 = Screen.new()
     local child_server = new_pipename()
-    fn.termopen({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', child_server }, {
+    fn.jobstart({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', child_server }, {
+      term = true,
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
     screen0:expect({ any = pesc('[No Name]') }) -- Wait for the child process to start.
@@ -446,9 +447,10 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
   end)
 
   it('(Q)uit at first file argument', function()
-    local chan = fn.termopen(
+    local chan = fn.jobstart(
       { nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', init_dir, '--cmd', init_set, testfile },
       {
+        term = true,
         env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
       }
     )
@@ -468,7 +470,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
   end)
 
   it('(A)bort at second file argument with -p', function()
-    local chan = fn.termopen({
+    local chan = fn.jobstart({
       nvim_prog,
       '-u',
       'NONE',
@@ -482,6 +484,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       otherfile,
       testfile,
     }, {
+      term = true,
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
     retry(nil, nil, function()
@@ -508,7 +511,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       second	%s	/^  \zssecond$/
       third	%s	/^  \zsthird$/]]):format(testfile, testfile, testfile)
     )
-    local chan = fn.termopen({
+    local chan = fn.jobstart({
       nvim_prog,
       '-u',
       'NONE',
@@ -522,6 +525,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       'set tags=' .. otherfile,
       '-tsecond',
     }, {
+      term = true,
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
     retry(nil, nil, function()

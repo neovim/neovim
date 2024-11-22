@@ -65,6 +65,39 @@ describe('jobs', function()
     ]])
   end)
 
+  it('validation', function()
+    matches(
+      "E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set",
+      pcall_err(command, "call jobstart(['cat', '-'], { 'pty': v:true, 'rpc': v:true })")
+    )
+    matches(
+      'E475: Invalid argument: expected valid directory',
+      pcall_err(command, "call jobstart(['cat', '-'], { 'cwd': 9313843 })")
+    )
+    matches(
+      'E475: Invalid argument: expected valid directory',
+      pcall_err(command, "call jobstart(['cat', '-'], { 'cwd': 'bogusssssss/bogus' })")
+    )
+    matches(
+      "E475: Invalid argument: 'term' must be Boolean",
+      pcall_err(command, "call jobstart(['cat', '-'], { 'term': 'bogus' })")
+    )
+    matches(
+      "E475: Invalid argument: 'term' must be Boolean",
+      pcall_err(command, "call jobstart(['cat', '-'], { 'term': 1 })")
+    )
+    command('set modified')
+    matches(
+      vim.pesc('jobstart(...,{term=true}) requires unmodified buffer'),
+      pcall_err(command, "call jobstart(['cat', '-'], { 'term': v:true })")
+    )
+
+    -- Non-failure cases:
+    command('set nomodified')
+    command("call jobstart(['cat', '-'], { 'term': v:true })")
+    command("call jobstart(['cat', '-'], { 'term': v:false })")
+  end)
+
   it('must specify env option as a dict', function()
     command('let g:job_opts.env = v:true')
     local _, err = pcall(function()
@@ -969,13 +1002,6 @@ describe('jobs', function()
     eq({ 'notification', 'exit', { 0, 143 } }, next_msg())
   end)
 
-  it('cannot have both rpc and pty options', function()
-    command('let g:job_opts.pty = v:true')
-    command('let g:job_opts.rpc = v:true')
-    local _, err = pcall(command, "let j = jobstart(['cat', '-'], g:job_opts)")
-    matches("E475: Invalid argument: job cannot have both 'pty' and 'rpc' options set", err)
-  end)
-
   it('does not crash when repeatedly failing to start shell', function()
     source([[
       set shell=nosuchshell
@@ -1230,7 +1256,7 @@ describe('pty process teardown', function()
   it('does not prevent/delay exit. #4798 #4900', function()
     skip(fn.executable('sleep') == 0, 'missing "sleep" command')
     -- Use a nested nvim (in :term) to test without --headless.
-    fn.termopen({
+    fn.jobstart({
       n.nvim_prog,
       '-u',
       'NONE',
@@ -1243,7 +1269,10 @@ describe('pty process teardown', function()
       '+terminal',
       '+!(sleep 300 &)',
       '+qa',
-    }, { env = { VIMRUNTIME = os.getenv('VIMRUNTIME') } })
+    }, {
+      term = true,
+      env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
+    })
 
     -- Exiting should terminate all descendants (PTY, its children, ...).
     screen:expect([[
