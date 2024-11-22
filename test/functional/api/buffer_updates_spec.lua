@@ -879,7 +879,8 @@ describe('API: buffer events:', function()
   it('when :terminal lines change', function()
     local buffer_lines = {}
     local expected_lines = {}
-    fn.termopen({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '-n', '-c', 'set shortmess+=A' }, {
+    fn.jobstart({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '-n', '-c', 'set shortmess+=A' }, {
+      term = true,
       env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
     })
 

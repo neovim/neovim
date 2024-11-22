@@ -20,8 +20,8 @@ There are several ways to open a channel:
 
   2. Through stdin, stdout and stderr of a process spawned by |jobstart()|.
 
-  3. Through the PTY master end of a PTY opened with
-     `jobstart(..., {'pty': v:true})` or |termopen()|.
+  3. Through the PTY master end of a PTY opened with |nvim_open_term()| or
+     `jobstart(…, {'pty': v:true})`.
 
   4. By connecting to a TCP/IP socket or named pipe with |sockconnect()|.
 

@@ -38,7 +38,7 @@
 " NEOVIM COMPATIBILITY
 "
 " The vim specific functionalities were replaced with neovim specific calls:
-" - term_start -> termopen
+" - term_start -> `jobstart(…, {'term': v:true})`
 " - term_sendkeys -> chansend
 " - term_getline -> getbufline
 " - job_info && term_getjob -> nvim_get_chan_info
@@ -251,7 +251,7 @@ endfunc
 " Open a terminal window without a job, to run the debugged program in.
 func s:StartDebug_term(dict)
   execute s:vertical ? 'vnew' : 'new'
-  let s:pty_job_id = termopen('tail -f /dev/null;#gdb program')
+  let s:pty_job_id = jobstart('tail -f /dev/null;#gdb program', {'term': v:true})
   if s:pty_job_id == 0
     call s:Echoerr('Invalid argument (or job table is full) while opening terminal window')
     return
@@ -323,7 +323,7 @@ func s:StartDebug_term(dict)
 
   execute 'new'
   " call ch_log($'executing "{join(gdb_cmd)}"')
-  let s:gdb_job_id = termopen(gdb_cmd, {'on_exit': function('s:EndTermDebug')})
+  let s:gdb_job_id = jobstart(gdb_cmd, {'term': v:true, 'on_exit': function('s:EndTermDebug')})
   if s:gdb_job_id == 0
     call s:Echoerr('Invalid argument (or job table is full) while opening gdb terminal window')
     exe 'bwipe! ' . s:ptybufnr
@@ -491,7 +491,7 @@ func s:StartDebug_prompt(dict)
     " Unix: Run the debugged program in a terminal window.  Open it below the
     " gdb window.
     belowright new
-    let s:pty_job_id = termopen('tail -f /dev/null;#gdb program')
+    let s:pty_job_id = jobstart('tail -f /dev/null;#gdb program', {'term': v:true})
     if s:pty_job_id == 0
       call s:Echoerr('Invalid argument (or job table is full) while opening terminal window')
       return

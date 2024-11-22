@@ -56,7 +56,7 @@ describe(':terminal', function()
       return string.format('\027]52;;%s\027\\', arg)
     end
 
-    fn.termopen({ testprg('shell-test'), '-t', osc52(encoded) })
+    fn.jobstart({ testprg('shell-test'), '-t', osc52(encoded) }, { term = true })
 
     retry(nil, 1000, function()
       eq(text, exec_lua([[ return vim.g.clipboard_data ]]))

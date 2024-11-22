@@ -33,7 +33,7 @@ describe(':terminal highlight', function()
       [12] = { bold = true, underdouble = true },
       [13] = { italic = true, undercurl = true },
     })
-    command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
+    command(("enew | call jobstart(['%s'], {'term':v:true})"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
       tty ready                                         |
@@ -150,7 +150,7 @@ it(':terminal highlight has lower precedence than editor #9964', function()
     },
   })
   -- Child nvim process in :terminal (with cterm colors).
-  fn.termopen({
+  fn.jobstart({
     nvim_prog_abs(),
     '-n',
     '-u',
@@ -163,6 +163,7 @@ it(':terminal highlight has lower precedence than editor #9964', function()
     '+norm! ichild nvim',
     '+norm! oline 2',
   }, {
+    term = true,
     env = {
       VIMRUNTIME = os.getenv('VIMRUNTIME'),
     },
@@ -200,7 +201,7 @@ it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', functi
     [4] = { background = Screen.colors.Grey90, reverse = true },
     [5] = { background = Screen.colors.Red },
   })
-  command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
+  command(("enew | call jobstart(['%s'], {'term':v:true})"):format(testprg('tty-test')))
   screen:expect([[
     ^tty ready                                         |
                                                       |*6
@@ -318,7 +319,7 @@ describe(':terminal highlight forwarding', function()
       [2] = { { fg_indexed = true, foreground = tonumber('0xe0e000') }, { foreground = 3 } },
       [3] = { { foreground = tonumber('0xff8000') }, {} },
     })
-    command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
+    command(("enew | call jobstart(['%s'], {'term':v:true})"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
       tty ready                                         |
@@ -364,7 +365,7 @@ describe(':terminal highlight with custom palette', function()
       [9] = { bold = true },
     })
     api.nvim_set_var('terminal_color_3', '#123456')
-    command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
+    command(("enew | call jobstart(['%s'], {'term':v:true})"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
       tty ready                                         |

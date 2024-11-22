@@ -120,7 +120,7 @@ describe('splitkeep', function()
             row = 0,
             col = 0,
           }))
-          vim.cmd("call termopen([&sh, &shcf, 'true'], { 'on_exit': 'C2' })")
+          vim.cmd("call jobstart([&sh, &shcf, 'true'], { 'term': v:true, 'on_exit': 'C2' })")
       end
     })]])
     feed('j')
