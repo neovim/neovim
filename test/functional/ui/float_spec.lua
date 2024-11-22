@@ -4810,9 +4810,13 @@ describe('float window', function()
       feed(':%s/.')
 
       if multigrid then
+        -- grid 5 corresponds to window 1002, an autocmd window created
+        -- to rename the preview buffer when it is first created
         screen:expect{grid=[[
           ## grid 1
-            [2:----------------------------------------]|*5
+            [2:----------------------------------------]|
+            {5:[No Name]                               }|
+            [6:----------------------------------------]|*3
             {5:[Preview]                               }|
             [3:----------------------------------------]|
           ## grid 2
@@ -4823,6 +4827,10 @@ describe('float window', function()
             {17:f}{1:oo                           }|
             {17:b}{1:ar                           }|
             {1:                              }|
+          ## grid 6
+            |1| {17:f}oo                                 |
+            |2| {17:b}ar                                 |
+            {0:~                                       }|
         ]], float_pos=expected_pos}
       else
         screen:expect([[

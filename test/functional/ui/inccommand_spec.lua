@@ -140,7 +140,7 @@ describe(":substitute, 'inccommand' preserves", function()
   end)
 
   it("'[ and '] marks #26439", function()
-    local screen = Screen.new(30, 10)
+    local screen = Screen.new(30, 100)
     common_setup(screen, 'nosplit', ('abc\ndef\n'):rep(50))
 
     feed('ggyG')
@@ -148,17 +148,18 @@ describe(":substitute, 'inccommand' preserves", function()
     eq({ 0, 1, 1, 0 }, fn.getpos("'["))
     eq({ 0, 101, X, 0 }, fn.getpos("']"))
 
-    feed(":'[,']s/def/")
+    local repl = '/DEF/g'
+
+    feed(":'[,']s/def" .. repl)
+    poke_eventloop()
+    expect(('abc\nDEF\n'):rep(50))
+
+    feed(('<BS>'):rep(#repl))
     poke_eventloop()
     eq({ 0, 1, 1, 0 }, fn.getpos("'["))
     eq({ 0, 101, X, 0 }, fn.getpos("']"))
 
-    feed('DEF/g')
-    poke_eventloop()
-    eq({ 0, 1, 1, 0 }, fn.getpos("'["))
-    eq({ 0, 101, X, 0 }, fn.getpos("']"))
-
-    feed('<CR>')
+    feed(repl .. '<CR>')
     expect(('abc\nDEF\n'):rep(50))
   end)
 
@@ -262,7 +263,14 @@ describe(":substitute, 'inccommand' preserves", function()
         some text 2]])
       feed(':%s/e/XXX/')
       poke_eventloop()
+      if case == '' then
+        eq(expected_tick, eval('b:changedtick'))
+      else
+        eq(1 + expected_tick, eval('b:changedtick'))
+      end
 
+      feed(('<BS>'):rep(#'/XXX/'))
+      poke_eventloop()
       eq(expected_tick, eval('b:changedtick'))
     end)
   end
