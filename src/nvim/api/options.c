@@ -95,7 +95,7 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
     }
   }
 
-  return OK;
+  return ERROR_SET(err) ? FAIL : OK;
 #undef HAS_KEY_X
 }
 

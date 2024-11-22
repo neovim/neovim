@@ -1770,6 +1770,11 @@ describe('API', function()
     end)
 
     it('validation', function()
+      eq("Unknown option 'foobar'", pcall_err(api.nvim_set_option_value, 'foobar', 'baz', {}))
+      eq(
+        "Unknown option 'foobar'",
+        pcall_err(api.nvim_set_option_value, 'foobar', 'baz', { win = api.nvim_get_current_win() })
+      )
       eq(
         "Invalid 'scope': expected 'local' or 'global'",
         pcall_err(api.nvim_get_option_value, 'scrolloff', { scope = 'bogus' })
