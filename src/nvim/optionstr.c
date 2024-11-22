@@ -146,6 +146,9 @@ static char *(p_rdb_values[]) = { "compositor", "nothrottle", "invalid", "nodelt
                                   "flush", NULL };
 static char *(p_sloc_values[]) = { "last", "statusline", "tabline", NULL };
 
+static char *(p_winbd_values[]) = { "single", "double", "none", "rounded", "solid", "shadow",
+                                    NULL };
+
 /// All possible flags for 'shm'.
 /// the literal chars before 0 are removed flags. these are safely ignored
 static char SHM_ALL[] = { SHM_RO, SHM_MOD, SHM_LINES,
@@ -2593,6 +2596,15 @@ const char *did_set_winhighlight(optset_T *args)
   win_T *win = (win_T *)args->os_win;
   char **varp = (char **)args->os_varp;
   if (!parse_winhl_opt(*varp, varp == &win->w_p_winhl ? win : NULL)) {
+    return e_invarg;
+  }
+  return NULL;
+}
+
+/// The 'winborder' option is changed.
+const char *did_set_winborder(optset_T *args)
+{
+  if (check_opt_strings(args->os_newval.string.data, p_winbd_values, false) == false) {
     return e_invarg;
   }
   return NULL;
