@@ -1199,8 +1199,8 @@ Client:request_sync({method}, {params}, {timeout_ms}, {bufnr})
       • {params}      (`table`) LSP request params.
       • {timeout_ms}  (`integer?`) Maximum time in milliseconds to wait for a
                       result. Defaults to 1000
-      • {bufnr}       (`integer?`) integer (default: 0) Buffer handle, or 0
-                      for current.
+      • {bufnr}       (`integer?`) (default: 0) Buffer handle, or 0 for
+                      current.
 
     Return (multiple): ~
         (`{err: lsp.ResponseError?, result:any}?`) `result` and `err` from the
@@ -1384,7 +1384,7 @@ format({opts})                                          *vim.lsp.buf.format()*
                   predicate are included. Example: >lua
                     -- Never request typescript-language-server for formatting
                     vim.lsp.buf.format {
-                      filter = function(client) return client.name ~= "tsserver" end
+                      filter = function(client) return client.name ~= "ts_ls" end
                     }
 <
                 • {async}? (`boolean`, default: false) If true the method

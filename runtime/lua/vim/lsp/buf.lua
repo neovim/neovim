@@ -487,7 +487,7 @@ end
 --- ```lua
 --- -- Never request typescript-language-server for formatting
 --- vim.lsp.buf.format {
----   filter = function(client) return client.name ~= "tsserver" end
+---   filter = function(client) return client.name ~= "ts_ls" end
 --- }
 --- ```
 --- @field filter? fun(client: vim.lsp.Client): boolean?

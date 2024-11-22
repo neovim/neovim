@@ -715,7 +715,7 @@ end
 --- @param params table LSP request params.
 --- @param timeout_ms integer? Maximum time in milliseconds to wait for
 ---                                a result. Defaults to 1000
---- @param bufnr? integer integer (default: 0) Buffer handle, or 0 for current.
+--- @param bufnr? integer (default: 0) Buffer handle, or 0 for current.
 --- @return {err: lsp.ResponseError?, result:any}? `result` and `err` from the |lsp-handler|.
 ---                 `nil` is the request was unsuccessful
 --- @return string? err On timeout, cancel or error, where `err` is a
