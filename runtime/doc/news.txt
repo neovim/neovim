@@ -230,6 +230,8 @@ LSP
 • |vim.lsp.buf.hover()| now highlights hover ranges using the
   |hl-LspReferenceTarget| highlight group.
 • Functions in |vim.lsp.Client| can now be called as methods.
+• Implemented LSP folding: |vim.lsp.foldexpr()|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
 
 LUA
 

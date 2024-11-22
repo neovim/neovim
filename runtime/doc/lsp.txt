@@ -204,6 +204,7 @@ won't run if your server doesn't support them.
 - `'textDocument/diagnostic'`
 - `'textDocument/documentHighlight'`
 - `'textDocument/documentSymbol'`
+- `'textDocument/foldingRange'`
 - `'textDocument/formatting'`
 - `'textDocument/hover'`
 - `'textDocument/implementation'`
@@ -696,6 +697,13 @@ commands                                                    *vim.lsp.commands*
     String command: String arguments?: any[]
 
     The second argument is the `ctx` of |lsp-handler|
+
+foldexpr({lnum})                                          *vim.lsp.foldexpr()*
+    Provides an interface between the built-in client and a `foldexpr`
+    function.
+
+    Parameters: ~
+      • {lnum}  (`integer`) line number
 
 formatexpr({opts})                                      *vim.lsp.formatexpr()*
     Provides an interface between the built-in client and a `formatexpr`

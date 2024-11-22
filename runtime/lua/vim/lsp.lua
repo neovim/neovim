@@ -11,6 +11,7 @@ local lsp = vim._defer_require('vim.lsp', {
   codelens = ..., --- @module 'vim.lsp.codelens'
   completion = ..., --- @module 'vim.lsp.completion'
   diagnostic = ..., --- @module 'vim.lsp.diagnostic'
+  folding_range = ..., --- @module 'vim.lsp.folding_range'
   handlers = ..., --- @module 'vim.lsp.handlers'
   inlay_hint = ..., --- @module 'vim.lsp.inlay_hint'
   log = ..., --- @module 'vim.lsp.log'
@@ -57,6 +58,7 @@ lsp._request_name_to_capability = {
   [ms.textDocument_documentHighlight] = { 'documentHighlightProvider' },
   [ms.textDocument_documentLink] = { 'documentLinkProvider' },
   [ms.textDocument_documentSymbol] = { 'documentSymbolProvider' },
+  [ms.textDocument_foldingRange] = { 'foldingRangeProvider' },
   [ms.textDocument_formatting] = { 'documentFormattingProvider' },
   [ms.textDocument_hover] = { 'hoverProvider' },
   [ms.textDocument_implementation] = { 'implementationProvider' },
@@ -1092,6 +1094,12 @@ end
 ---@return table[] tags A list of matching tags
 function lsp.tagfunc(pattern, flags)
   return vim.lsp._tagfunc(pattern, flags)
+end
+
+--- Provides an interface between the built-in client and a `foldexpr` function.
+---@param lnum integer line number
+function lsp.foldexpr(lnum)
+  return vim.lsp.folding_range._foldexpr(lnum)
 end
 
 ---Checks whether a client is stopped.
