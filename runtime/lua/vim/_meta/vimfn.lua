@@ -4801,7 +4801,7 @@ function vim.fn.jobresize(job, width, height) end
 --- @return any
 function vim.fn.jobsend(...) end
 
---- Note: Prefer |vim.system()| in Lua (unless using the `pty` option).
+--- Note: Prefer |vim.system()| in Lua (unless using `rpc`, `pty`, or `term`).
 ---
 --- Spawns {cmd} as a job.
 --- If {cmd} is a List it runs directly (no 'shell').
@@ -4875,6 +4875,10 @@ function vim.fn.jobsend(...) end
 ---   stdin:      (string) Either "pipe" (default) to connect the
 ---         job's stdin to a channel or "null" to disconnect
 ---         stdin.
+---   term:      (boolean) Spawns {cmd} in a new pseudo-terminal session
+---           connected to the current (unmodified) buffer. Implies "pty".
+---           Default "height" and "width" are set to the current window
+---           dimensions. |jobstart()|. Defaults $TERM to "xterm-256color".
 ---   width:      (number) Width of the `pty` terminal.
 ---
 --- {opts} is passed as |self| dictionary to the callback; the
@@ -10160,6 +10164,7 @@ function vim.fn.tanh(expr) end
 --- @return string
 function vim.fn.tempname() end
 
+--- @deprecated
 --- Spawns {cmd} in a new pseudo-terminal session connected
 --- to the current (unmodified) buffer. Parameters and behavior
 --- are the same as |jobstart()| except "pty", "width", "height",

@@ -5917,7 +5917,7 @@ M.funcs = {
   jobstart = {
     args = { 1, 2 },
     desc = [=[
-      Note: Prefer |vim.system()| in Lua (unless using the `pty` option).
+      Note: Prefer |vim.system()| in Lua (unless using `rpc`, `pty`, or `term`).
 
       Spawns {cmd} as a job.
       If {cmd} is a List it runs directly (no 'shell').
@@ -5991,6 +5991,10 @@ M.funcs = {
         stdin:      (string) Either "pipe" (default) to connect the
       	      job's stdin to a channel or "null" to disconnect
       	      stdin.
+        term:	    (boolean) Spawns {cmd} in a new pseudo-terminal session
+                connected to the current (unmodified) buffer. Implies "pty".
+                Default "height" and "width" are set to the current window
+                dimensions. |jobstart()|. Defaults $TERM to "xterm-256color".
         width:      (number) Width of the `pty` terminal.
 
       {opts} is passed as |self| dictionary to the callback; the
@@ -12188,6 +12192,7 @@ M.funcs = {
     signature = 'tempname()',
   },
   termopen = {
+    deprecated = true,
     args = { 1, 2 },
     desc = [=[
       Spawns {cmd} in a new pseudo-terminal session connected
