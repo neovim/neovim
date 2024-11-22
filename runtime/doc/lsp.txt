@@ -1976,8 +1976,7 @@ locations_to_items({locations}, {offset_encoding})
 
     Parameters: ~
       • {locations}        (`lsp.Location[]|lsp.LocationLink[]`)
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) default to first
-                           client of buffer
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     Return: ~
         (`vim.quickfix.entry[]`) See |setqflist()| for the format
@@ -2179,12 +2178,14 @@ stylize_markdown({bufnr}, {contents}, {opts})
     Return: ~
         (`table`) stripped content
 
-symbols_to_items({symbols}, {bufnr})         *vim.lsp.util.symbols_to_items()*
+                                             *vim.lsp.util.symbols_to_items()*
+symbols_to_items({symbols}, {bufnr}, {offset_encoding})
     Converts symbols to quickfix list items.
 
     Parameters: ~
-      • {symbols}  (`lsp.DocumentSymbol[]|lsp.SymbolInformation[]`)
-      • {bufnr}    (`integer?`)
+      • {symbols}          (`lsp.DocumentSymbol[]|lsp.SymbolInformation[]`)
+      • {bufnr}            (`integer?`)
+      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     Return: ~
         (`vim.quickfix.entry[]`) See |setqflist()| for the format
