@@ -193,6 +193,14 @@ typedef struct {
   bool icm_split;
 } CpInfo;
 
+typedef struct {
+  buf_T *prev_buf;
+  win_T *prev_win;
+  bool prev_icm_split;
+  int prev_preview_type;
+  bool did_prepare;
+} CpTransition;
+
 static CpInfo g_cpinfo = { .preview_type = 0 };
 
 /// Return value when handling keys in command-line mode.
@@ -865,6 +873,9 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   s->state.execute = command_line_execute;
 
   state_enter(&s->state);
+  if (!save_cmdpreview && cmdpreview) {
+    cmdpreview_did_not_show();
+  }
 
   if (has_event(EVENT_CMDLINELEAVE)) {
     save_v_event_T save_v_event;
@@ -2275,7 +2286,21 @@ int cmdpreview_get_ns(void)
   return cmdpreview_ns;
 }
 
-/// Sets up command preview buffer.
+/// Prepare the preview buffer.
+static void cmdpreview_setup_buf(buf_T *buf)
+{
+  assert(is_autocmd_blocked());
+  aco_save_T aco;
+  // Temporarily switch to preview buffer to set it up for previewing.
+  aucmd_prepbuf(&aco, buf);
+  buf_clear();
+  curbuf->b_p_ma = true;
+  curbuf->b_p_ul = -1;
+  curbuf->b_p_tw = 0;  // Reset 'textwidth' (was set by ftplugin)
+  aucmd_restbuf(&aco);
+}
+
+/// Open and set up the command preview buffer.
 ///
 /// @return Pointer to command preview buffer if succeeded, NULL if failed.
 static buf_T *cmdpreview_open_buf(void)
@@ -2312,13 +2337,7 @@ static buf_T *cmdpreview_open_buf(void)
     return NULL;
   }
 
-  // Temporarily switch to preview buffer to set it up for previewing.
-  aucmd_prepbuf(&aco, cmdpreview_buf);
-  buf_clear();
-  curbuf->b_p_ma = true;
-  curbuf->b_p_ul = -1;
-  curbuf->b_p_tw = 0;  // Reset 'textwidth' (was set by ftplugin)
-  aucmd_restbuf(&aco);
+  cmdpreview_setup_buf(cmdpreview_buf);
   cmdpreview_bufnr = cmdpreview_buf->handle;
 
   return cmdpreview_buf;
@@ -2573,14 +2592,14 @@ static bool cmdpreview_check_cmdline(void)
   emsg_off++;  // Block errors when parsing the command line, and don't update v:errmsg
   if (!parse_cmdline(g_cpinfo.cmdline, &g_cpinfo.ea, &g_cpinfo.cmdinfo, &errormsg)) {
     emsg_off--;
-    goto end;
+    return false;
   }
   emsg_off--;
 
   // Check if command is previewable, if not, don't attempt to show preview
   if (!(g_cpinfo.ea.argt & EX_PREVIEW)) {
     undo_cmdmod(&g_cpinfo.cmdinfo.cmdmod);
-    goto end;
+    return false;
   }
 
   // Swap invalid command range if needed
@@ -2590,15 +2609,11 @@ static bool cmdpreview_check_cmdline(void)
     g_cpinfo.ea.line2 = lnum;
   }
   return true;
-end:
-  XFREE_CLEAR(g_cpinfo.cmdline);
-  return false;
 }
 
-static bool cmdpreview_may_init(void)
+static bool cmdpreview_may_init_or_update(CpTransition *tr)
+  FUNC_ATTR_NONNULL_ALL
 {
-  g_cpinfo.preview_type = 0;
-
   if (!cmdpreview_check_cmdline()) {
     return false;
   }
@@ -2610,27 +2625,30 @@ static bool cmdpreview_may_init(void)
   // currently disallowed during cmdpreview(no longer needed in case that changes).
   cmdline_ui_flush();
 
-  g_cpinfo.icm_split = *p_icm == 's';  // inccommand=split
-  g_cpinfo.buf = NULL;
-  g_cpinfo.win = NULL;
+  if (tr->prev_preview_type == 0) {
+    // Save current state and prepare for command preview.
+    cmdpreview_save();
+    cmdpreview_prepare();
 
-  // Save current state and prepare for command preview.
-  cmdpreview_save();
-  cmdpreview_prepare();
-
-  // Open preview buffer if inccommand=split.
-  if (g_cpinfo.icm_split && (g_cpinfo.buf = cmdpreview_open_buf()) == NULL) {
-    // Failed to create preview buffer, so disable preview.
-    set_option_direct(kOptInccommand, STATIC_CSTR_AS_OPTVAL("nosplit"), 0, SID_NONE);
-    g_cpinfo.icm_split = false;
+    // Open preview buffer if inccommand=split.
+    if (g_cpinfo.icm_split && (g_cpinfo.buf = cmdpreview_open_buf()) == NULL) {
+      // Failed to create preview buffer, so disable preview.
+      set_option_direct(kOptInccommand, STATIC_CSTR_AS_OPTVAL("nosplit"), 0, SID_NONE);
+      g_cpinfo.icm_split = false;
+    }
+    // Setup preview namespace if it's not already set.
+    if (!cmdpreview_ns) {
+      cmdpreview_ns = (int)nvim_create_namespace((String)STRING_INIT);
+    }
+  } else {
+    cmdpreview_restore_state();
+    cmdpreview_prepare();
+    if (g_cpinfo.icm_split && g_cpinfo.buf != NULL) {
+      cmdpreview_setup_buf(g_cpinfo.buf);
+    }
   }
-  // Setup preview namespace if it's not already set.
-  if (!cmdpreview_ns) {
-    cmdpreview_ns = (int)nvim_create_namespace((String)STRING_INIT);
-  }
+  tr->did_prepare = true;
 
-  // Set cmdpreview state.
-  cmdpreview = true;
   return true;
 }
 
@@ -2654,63 +2672,127 @@ static bool cmdpreview_show(void)
     g_cpinfo.preview_type = 0;
   }
 
-  // If inccommand=split and preview callback returns 2, open preview window.
-  if (g_cpinfo.icm_split && g_cpinfo.preview_type == 2
-      && (g_cpinfo.win = cmdpreview_open_win(g_cpinfo.buf)) == NULL) {
-    // If there's not enough room to open the preview window, just preview without the window.
-    g_cpinfo.preview_type = 1;
+  // TODO(theofabilous): might need to check if the tab changed/closed after executing the
+  // preview
+
+  // If inccommand=split and preview callback returns 2, open preview window unless it's
+  // already open. If there's not enough room to open the preview window, just preview
+  // without the window. If inccommand=nosplit, set the preview_type to 1.
+  if (g_cpinfo.preview_type == 2) {
+    if (!g_cpinfo.icm_split
+        || (g_cpinfo.win == NULL
+            && (g_cpinfo.win = cmdpreview_open_win(g_cpinfo.buf)) == NULL)) {
+      g_cpinfo.preview_type = 1;
+    }
   }
 
-  // If preview callback return value is nonzero, update screen now.
-  if (g_cpinfo.preview_type != 0) {
-    int save_rd = RedrawingDisabled;
-    RedrawingDisabled = 0;
-    update_screen();
-    RedrawingDisabled = save_rd;
-  }
-
-  // Close preview window if it's open.
-  if (g_cpinfo.icm_split && g_cpinfo.preview_type == 2 && g_cpinfo.win != NULL) {
-    cmdpreview_close_win();
-  }
   msg_silent--;                        // Unblock messages
   emsg_silent--;                       // Unblock error reporting
 
   return g_cpinfo.preview_type != 0;
 }
 
+/// Start cmdpreview updates. Store previous cmdpreview information such that
+/// they can be compared against after executing the preview routines to
+/// determine what needs to be cleaned up, restored and/or freed.
+///
+/// @param[out] CpTransition  Transition object in which information will be
+///                           stored
+static void cmdpreview_transition_begin(CpTransition *tr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tr->did_prepare = g_cpinfo.preview_type != 0;
+  if (g_cpinfo.preview_type != 2) {
+    tr->prev_win = NULL;
+    tr->prev_buf = NULL;
+  }
+  if (g_cpinfo.preview_type != 0) {
+    // Was enabled before
+    XFREE_CLEAR(g_cpinfo.cmdline);
+    tr->prev_win = g_cpinfo.win;
+    tr->prev_buf = g_cpinfo.buf;
+    tr->prev_icm_split = g_cpinfo.icm_split;
+  } else {
+    tr->prev_icm_split = false;
+    g_cpinfo.icm_split = *p_icm == 's';  // inccommand=split
+    g_cpinfo.buf = NULL;
+    g_cpinfo.win = NULL;
+  }
+  tr->prev_preview_type = g_cpinfo.preview_type;
+  g_cpinfo.preview_type = 0;
+  g_cpinfo.cmdline = NULL;
+  block_autocmds();  // Block events
+}
+
+static bool cmdpreview_transition_end(CpTransition *tr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Close preview window if it's open.
+  if (g_cpinfo.preview_type != 2) {
+    if (tr->prev_preview_type == 2) {
+      assert(tr->prev_icm_split);
+      assert(tr->prev_win);
+      assert(tr->prev_buf);
+      cmdpreview_close_win();
+    }
+    g_cpinfo.win = NULL;
+    g_cpinfo.buf = NULL;
+  }
+  if (g_cpinfo.preview_type == 0) {
+    if (tr->did_prepare) {
+      cmdpreview_restore_state();
+      cmdpreview_destroy();
+    }
+    if (g_cpinfo.cmdline) {
+      XFREE_CLEAR(g_cpinfo.cmdline);
+    }
+  }
+  bool did_show = g_cpinfo.preview_type != 0;
+  cmdpreview = did_show;
+  // If preview callback return value is nonzero, update screen now.
+  if (did_show) {
+    int save_rd = RedrawingDisabled;
+    RedrawingDisabled = 0;
+    update_screen();
+    RedrawingDisabled = save_rd;
+  }
+  if (tr->did_prepare) {
+    redrawcmdline();
+  }
+  unblock_autocmds();  // Unblock events
+  return did_show;
+}
+
 /// Show 'inccommand' preview if command is previewable. It works like this:
-///    1. Store current undo information so we can revert to current state later.
-///    2. Execute the preview callback with the parsed command, preview buffer number and preview
+///    1. If preview was active beforehand, revert all changes made by the preview callback.
+///    2. Store current undo information so we can revert to current state later.
+///    3. Execute the preview callback with the parsed command, preview buffer number and preview
 ///       namespace number as arguments. The preview callback sets the highlight and does the
 ///       changes required for the preview if needed.
-///    3. Preview callback returns 0, 1 or 2. 0 means no preview is shown. 1 means preview is shown
+///    4. Preview callback returns 0, 1 or 2. 0 means no preview is shown. 1 means preview is shown
 ///       but preview window doesn't need to be opened. 2 means preview is shown and preview window
 ///       needs to be opened if inccommand=split.
-///    4. Use the return value of the preview callback to determine whether to
+///    5. Use the return value of the preview callback to determine whether to
 ///       open the preview window or not and open preview window if needed.
-///    5. If the return value of the preview callback is not 0, update the screen while the effects
-///       of the preview are still in place.
-///    6. Revert all changes made by the preview callback.
+///    6. If the return value of the preview callback is not 0, update the screen immediately.
+///    7. If an error occured, revert all changes made by the preview callback.
 ///
 /// @return whether preview is shown or not.
 static bool cmdpreview_may_show(void)
 {
-  bool did_show = false;
-  assert(g_cpinfo.preview_type == 0);
-  block_autocmds();  // Block events
-  if (!cmdpreview_may_init()) {
-    did_show = false;
-    goto end;
+  CpTransition tr;
+  cmdpreview_transition_begin(&tr);
+  if (cmdpreview_may_init_or_update(&tr)) {
+    cmdpreview_show();
   }
-  did_show = cmdpreview_show();
-  cmdpreview_restore_state();
-  cmdpreview_destroy();
-  g_cpinfo.preview_type = 0;
-  redrawcmdline();
-end:
-  unblock_autocmds();  // Unblock events
-  return did_show;
+  return cmdpreview_transition_end(&tr);
+}
+
+static void cmdpreview_did_not_show(void)
+{
+  CpTransition tr;
+  cmdpreview_transition_begin(&tr);
+  (void)cmdpreview_transition_end(&tr);
 }
 
 /// Trigger CmdlineChanged autocommands.
@@ -2755,6 +2837,7 @@ static int command_line_changed(CommandLineState *s)
   }
 
   const bool prev_cmdpreview = cmdpreview;
+  bool did_check = false;
   if (s->firstc == ':'
       && current_sctx.sc_sid == 0    // only if interactive
       && *p_icm != NUL       // 'inccommand' is set
@@ -2762,10 +2845,13 @@ static int command_line_changed(CommandLineState *s)
       && curbuf->b_p_ma      // buffer is modifiable
       && cmdline_star == 0   // not typing a password
       && !vpeekc_any()
+      && (did_check = true)
       && cmdpreview_may_show()) {
     // 'inccommand' preview has been shown.
   } else {
-    cmdpreview = false;
+    if (!did_check) {
+      cmdpreview_did_not_show();
+    }
     if (prev_cmdpreview) {
       // TODO(bfredl): add an immediate redraw flag for cmdline mode which will trigger
       // at next wait-for-input
