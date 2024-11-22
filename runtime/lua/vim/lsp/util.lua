@@ -1344,9 +1344,11 @@ local function close_preview_window(winnr, bufnrs)
 
     local augroup = 'preview_window_' .. winnr
     pcall(api.nvim_del_augroup_by_name, augroup)
-    local buf = vim.w[winnr].buf_hold_win
-    if buf and api.nvim_buf_is_valid(buf) then
-      vim.b[buf].lsp_floating_preview = nil
+    if api.nvim_win_is_valid(winnr) then
+      local buf = vim.w[winnr].buf_hold_win
+      if buf and api.nvim_buf_is_valid(buf) then
+        vim.b[buf].lsp_floating_preview = nil
+      end
     end
     pcall(api.nvim_win_close, winnr, true)
   end)
