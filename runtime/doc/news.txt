@@ -172,6 +172,7 @@ API
 
 • |nvim__ns_set()| can set properties for a namespace
 • |vim.json.encode()| has an option to enable forward slash escaping
+• New |nvim_buf_set_extmark()| flag `conceal_lines` to conceal an entire line.
 
 DEFAULTS
 
