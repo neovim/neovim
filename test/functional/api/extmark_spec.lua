@@ -1552,6 +1552,7 @@ describe('API/extmarks', function()
   it('can get details', function()
     set_extmark(ns, marks[1], 0, 0, {
       conceal = 'c',
+      conceal_lines = '',
       cursorline_hl_group = 'Statement',
       end_col = 0,
       end_right_gravity = true,
@@ -1586,6 +1587,7 @@ describe('API/extmarks', function()
       0,
       {
         conceal = 'c',
+        conceal_lines = '',
         cursorline_hl_group = 'Statement',
         end_col = 0,
         end_right_gravity = true,
