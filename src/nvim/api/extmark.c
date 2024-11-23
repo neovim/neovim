@@ -475,6 +475,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   When a character is supplied it is used as |:syn-cchar|.
 ///                   "hl_group" is used as highlight for the cchar if provided,
 ///                   otherwise it defaults to |hl-Conceal|.
+///               - conceal_lines: string which should be either empty or a single
+///                   character. When provided, lines in the range are not drawn
+///                   at all; the next unconcealed line is drawn instead.
 ///               - spell: boolean indicating that spell checking should be
 ///                   performed within this extmark
 ///               - ui_watched: boolean that indicates the mark should be drawn
@@ -573,6 +576,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
         goto error;
       }
     }
+  }
+
+  if (HAS_KEY(opts, set_extmark, conceal_lines)) {
+    hl.flags |= kSHConcealLines;
+    has_hl = true;
   }
 
   if (HAS_KEY(opts, set_extmark, virt_text)) {
@@ -791,6 +799,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       if (sign.number_hl_id || sign.line_hl_id || sign.cursorline_hl_id) {
         decor_flags |= MT_FLAG_DECOR_SIGNHL;
       }
+    }
+
+    if (hl.flags & kSHConcealLines) {
+      decor_flags |= MT_FLAG_DECOR_CONCEAL_LINES;
     }
 
     DecorInline decor = DECOR_INLINE_INIT;
