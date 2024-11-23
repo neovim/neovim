@@ -17,6 +17,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
@@ -317,14 +318,13 @@ void update_topline(win_T *wp)
         halfheight = 2;
       }
       int64_t n;
-      if (hasAnyFolding(wp)) {
+      if (win_lines_concealed(wp)) {
         // Count the number of logical lines between the cursor and
         // topline + p_so (approximation of how much will be
         // scrolled).
         n = 0;
-        for (linenr_T lnum = wp->w_cursor.lnum;
-             lnum < wp->w_topline + *so_ptr; lnum++) {
-          n++;
+        for (linenr_T lnum = wp->w_cursor.lnum; lnum < wp->w_topline + *so_ptr; lnum++) {
+          n += !decor_conceal_line(wp, lnum, false);
           // stop at end of file or when we know we are far off
           assert(wp->w_buffer != 0);
           if (lnum >= wp->w_buffer->b_ml.ml_line_count || n >= halfheight) {
@@ -366,7 +366,7 @@ void update_topline(win_T *wp)
     assert(wp->w_buffer != 0);
     if (wp->w_botline <= wp->w_buffer->b_ml.ml_line_count) {
       if (wp->w_cursor.lnum < wp->w_botline) {
-        if ((wp->w_cursor.lnum >= wp->w_botline - *so_ptr || hasAnyFolding(wp))) {
+        if ((wp->w_cursor.lnum >= wp->w_botline - *so_ptr || win_lines_concealed(wp))) {
           lineoff_T loff;
 
           // Cursor is (a few lines) above botline, check if there are
@@ -398,13 +398,12 @@ void update_topline(win_T *wp)
       }
       if (check_botline) {
         int line_count = 0;
-        if (hasAnyFolding(wp)) {
+        if (win_lines_concealed(wp)) {
           // Count the number of logical lines between the cursor and
           // botline - p_so (approximation of how much will be
           // scrolled).
-          for (linenr_T lnum = wp->w_cursor.lnum;
-               lnum >= wp->w_botline - *so_ptr; lnum--) {
-            line_count++;
+          for (linenr_T lnum = wp->w_cursor.lnum; lnum >= wp->w_botline - *so_ptr; lnum--) {
+            line_count += !decor_conceal_line(wp, lnum - 1, false);
             // stop at end of file or when we know we are far off
             if (lnum <= 0 || line_count > wp->w_height_inner + 1) {
               break;
@@ -461,7 +460,7 @@ static int scrolljump_value(win_T *wp)
 static bool check_top_offset(win_T *wp)
 {
   int so = get_scrolloff_value(wp);
-  if (wp->w_cursor.lnum < wp->w_topline + so || hasAnyFolding(wp)) {
+  if (wp->w_cursor.lnum < wp->w_topline + so || win_lines_concealed(wp)) {
     lineoff_T loff;
     loff.lnum = wp->w_cursor.lnum;
     loff.fill = 0;
@@ -505,6 +504,13 @@ void check_cursor_moved(win_T *wp)
   if (wp->w_cursor.lnum != wp->w_valid_cursor.lnum) {
     wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
                      |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
+
+    // Concealed line visibility toggled.
+    if (wp->w_p_cole >= 2 && !conceal_cursor_line(wp)
+        && (decor_conceal_line(wp, wp->w_cursor.lnum - 1, true)
+            || decor_conceal_line(wp, wp->w_valid_cursor.lnum - 1, true))) {
+      changed_window_setting(wp);
+    }
     wp->w_valid_cursor = wp->w_cursor;
     wp->w_valid_leftcol = wp->w_leftcol;
     wp->w_valid_skipcol = wp->w_skipcol;
@@ -1351,13 +1357,14 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
         // A sequence of folded lines only counts for one logical line
         linenr_T first;
         if (hasFolding(wp, wp->w_topline, &first, NULL)) {
-          done++;
+          done += !decor_conceal_line(wp, first - 1, false);
           if (!byfold) {
             todo -= wp->w_topline - first - 1;
           }
           wp->w_botline -= wp->w_topline - first;
           wp->w_topline = first;
         } else {
+          todo += decor_conceal_line(wp, wp->w_topline - 1, false);
           if (do_sms) {
             int size = linetabsize_eol(wp, wp->w_topline);
             if (size > width1) {
@@ -1400,12 +1407,8 @@ bool scrolldown(win_T *wp, linenr_T line_count, int byfold)
   while (wrow >= wp->w_height_inner && wp->w_cursor.lnum > 1) {
     linenr_T first;
     if (hasFolding(wp, wp->w_cursor.lnum, &first, NULL)) {
-      wrow--;
-      if (first == 1) {
-        wp->w_cursor.lnum = 1;
-      } else {
-        wp->w_cursor.lnum = first - 1;
-      }
+      wrow -= !decor_conceal_line(wp, wp->w_cursor.lnum - 1, false);
+      wp->w_cursor.lnum = MAX(first - 1, 1);
     } else {
       wrow -= plines_win(wp, wp->w_cursor.lnum--, true);
     }
@@ -1433,7 +1436,7 @@ bool scrollup(win_T *wp, linenr_T line_count, bool byfold)
   linenr_T botline = wp->w_botline;
   bool do_sms = wp->w_p_wrap && wp->w_p_sms;
 
-  if (do_sms || (byfold && hasAnyFolding(wp)) || win_may_fill(wp)) {
+  if (do_sms || (byfold && win_lines_concealed(wp)) || win_may_fill(wp)) {
     int width1 = wp->w_width_inner - win_col_off(wp);
     int width2 = width1 + win_col_off2(wp);
     int size = 0;
@@ -1448,6 +1451,7 @@ bool scrollup(win_T *wp, linenr_T line_count, bool byfold)
     // the line, then advance to the next line.
     // folding: count each sequence of folded lines as one logical line.
     for (int todo = line_count; todo > 0; todo--) {
+      todo += decor_conceal_line(wp, wp->w_topline - 1, false);
       if (wp->w_topfill > 0) {
         wp->w_topfill--;
       } else {
@@ -1504,10 +1508,8 @@ bool scrollup(win_T *wp, linenr_T line_count, bool byfold)
 
   check_topfill(wp, false);
 
-  if (hasAnyFolding(wp)) {
-    // Make sure w_topline is at the first of a sequence of folded lines.
-    hasFolding(wp, wp->w_topline, &wp->w_topline, NULL);
-  }
+  // Make sure w_topline is at the first of a sequence of folded lines.
+  hasFolding(wp, wp->w_topline, &wp->w_topline, NULL);
 
   wp->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
   if (wp->w_cursor.lnum < wp->w_topline) {
@@ -1710,8 +1712,8 @@ static void topline_back_winheight(win_T *wp, lineoff_T *lp, int winheight)
     if (lp->lnum < 1) {
       lp->height = MAXCOL;
     } else if (hasFolding(wp, lp->lnum, &lp->lnum, NULL)) {
-      // Add a closed fold
-      lp->height = 1;
+      // Add a closed fold unless concealed.
+      lp->height = !decor_conceal_line(wp, lp->lnum - 1, false);
     } else {
       lp->height = plines_win_nofill(wp, lp->lnum, winheight);
     }
@@ -1740,8 +1742,8 @@ static void botline_forw(win_T *wp, lineoff_T *lp)
     if (lp->lnum > wp->w_buffer->b_ml.ml_line_count) {
       lp->height = MAXCOL;
     } else if (hasFolding(wp, lp->lnum, NULL, &lp->lnum)) {
-      // Add a closed fold
-      lp->height = 1;
+      // Add a closed fold unless concealed.
+      lp->height = !decor_conceal_line(wp, lp->lnum - 1, false);
     } else {
       lp->height = plines_win_nofill(wp, lp->lnum, true);
     }
@@ -1793,9 +1795,8 @@ void scroll_cursor_top(win_T *wp, int min_scroll, int always)
   // Check if the lines from "top" to "bot" fit in the window.  If they do,
   // set new_topline and advance "top" and "bot" to include more lines.
   while (top > 0) {
-    int i = hasFolding(wp, top, &top, NULL)
-            ? 1  // count one logical line for a sequence of folded lines
-            : plines_win_nofill(wp, top, true);
+    int i = plines_win_nofill(wp, top, true);
+    hasFolding(wp, top, &top, NULL);
     if (top < wp->w_topline) {
       scrolled += i;
     }
@@ -1807,12 +1808,7 @@ void scroll_cursor_top(win_T *wp, int min_scroll, int always)
 
     used += i;
     if (extra + i <= off && bot < wp->w_buffer->b_ml.ml_line_count) {
-      if (hasFolding(wp, bot, NULL, &bot)) {
-        // count one logical line for a sequence of folded lines
-        used++;
-      } else {
-        used += plines_win(wp, bot, true);
-      }
+      used += plines_win_full(wp, bot, &bot, NULL, true, true);
     }
     if (used > wp->w_height_inner) {
       break;
@@ -2273,7 +2269,7 @@ void cursor_correct(win_T *wp)
   linenr_T cln = wp->w_cursor.lnum;  // Cursor Line Number
   if (cln >= wp->w_topline + above_wanted
       && cln < wp->w_botline - below_wanted
-      && !hasAnyFolding(wp)) {
+      && !win_lines_concealed(wp)) {
     return;
   }
 
@@ -2298,19 +2294,12 @@ void cursor_correct(win_T *wp)
   int below = wp->w_filler_rows;  // screen lines below botline
   while ((above < above_wanted || below < below_wanted) && topline < botline) {
     if (below < below_wanted && (below <= above || above >= above_wanted)) {
-      if (hasFolding(wp, botline, &botline, NULL)) {
-        below++;
-      } else {
-        below += plines_win(wp, botline, true);
-      }
+      below += plines_win_full(wp, botline, &botline, NULL, true, true);
       botline--;
     }
     if (above < above_wanted && (above < below || below >= below_wanted)) {
-      if (hasFolding(wp, topline, NULL, &topline)) {
-        above++;
-      } else {
-        above += plines_win_nofill(wp, topline, true);
-      }
+      above += plines_win_nofill(wp, topline, true);
+      hasFolding(wp, topline, NULL, &topline);
 
       // Count filler lines below this line as context.
       if (topline < botline) {
@@ -2464,7 +2453,8 @@ int pagescroll(Direction dir, int count, bool half)
     int curscount = count;
     // Adjust count so as to not reveal end of buffer lines.
     if (dir == FORWARD
-        && (curwin->w_topline + curwin->w_height_inner + count > buflen || hasAnyFolding(curwin))) {
+        && (curwin->w_topline + curwin->w_height_inner + count > buflen
+            || win_lines_concealed(curwin))) {
       int n = plines_correct_topline(curwin, curwin->w_topline, NULL, false, NULL);
       if (n - count < curwin->w_height_inner && curwin->w_topline < buflen) {
         n += plines_m_win(curwin, curwin->w_topline + 1, buflen, curwin->w_height_inner + count);
@@ -2482,13 +2472,14 @@ int pagescroll(Direction dir, int count, bool half)
       curwin->w_curswant = prev_curswant;
     }
 
-    // Move the cursor the same amount of screen lines.
+    // Move the cursor the same amount of screen lines, skipping over
+    // concealed lines as those were not included in "curscount".
     if (curwin->w_p_wrap) {
-      nv_screengo(&oa, dir, curscount);
+      nv_screengo(&oa, dir, curscount, true);
     } else if (dir == FORWARD) {
-      cursor_down_inner(curwin, curscount);
+      cursor_down_inner(curwin, curscount, true);
     } else {
-      cursor_up_inner(curwin, curscount);
+      cursor_up_inner(curwin, curscount, true);
     }
   } else {
     // Scroll [count] times 'window' or current window height lines.

@@ -33,6 +33,7 @@
 #define MT_FLAG_DECOR_SIGNHL (((uint16_t)1) << 10)
 #define MT_FLAG_DECOR_VIRT_LINES (((uint16_t)1) << 11)
 #define MT_FLAG_DECOR_VIRT_TEXT_INLINE (((uint16_t)1) << 12)
+#define MT_FLAG_DECOR_CONCEAL_LINES (((uint16_t)1) << 13)
 
 // These _must_ be last to preserve ordering of marks
 #define MT_FLAG_RIGHT_GRAVITY (((uint16_t)1) << 14)
@@ -42,8 +43,8 @@
                              | MT_FLAG_DECOR_SIGNHL | MT_FLAG_DECOR_VIRT_LINES \
                              | MT_FLAG_DECOR_VIRT_TEXT_INLINE)
 
-#define MT_FLAG_EXTERNAL_MASK (MT_FLAG_DECOR_MASK | MT_FLAG_NO_UNDO \
-                               | MT_FLAG_INVALIDATE | MT_FLAG_INVALID)
+#define MT_FLAG_EXTERNAL_MASK (MT_FLAG_DECOR_MASK | MT_FLAG_NO_UNDO | MT_FLAG_INVALIDATE \
+                               | MT_FLAG_INVALID | MT_FLAG_DECOR_CONCEAL_LINES)
 
 // this is defined so that start and end of the same range have adjacent ids
 #define MARKTREE_END_FLAG ((uint64_t)1)
@@ -105,6 +106,11 @@ static inline bool mt_decor_any(MTKey key)
 static inline bool mt_decor_sign(MTKey key)
 {
   return key.flags & (MT_FLAG_DECOR_SIGNTEXT | MT_FLAG_DECOR_SIGNHL);
+}
+
+static inline bool mt_conceal_lines(MTKey key)
+{
+  return key.flags & MT_FLAG_DECOR_CONCEAL_LINES;
 }
 
 static inline uint16_t mt_flags(bool right_gravity, bool no_undo, bool invalidate, bool decor_ext)

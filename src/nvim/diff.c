@@ -24,6 +24,7 @@
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
@@ -2107,7 +2108,7 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
   }
 
   // A closed fold never has filler lines.
-  if (hasFolding(wp, lnum, NULL, NULL)) {
+  if (hasFolding(wp, lnum, NULL, NULL) || decor_conceal_line(wp, lnum - 1, false)) {
     return 0;
   }
 

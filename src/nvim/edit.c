@@ -17,6 +17,7 @@
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
@@ -2586,15 +2587,15 @@ int oneleft(void)
   return OK;
 }
 
-/// Move the cursor up "n" lines in window "wp".
-/// Takes care of closed folds.
-void cursor_up_inner(win_T *wp, linenr_T n)
+/// Move the cursor up "n" lines in window "wp". Takes care of closed folds.
+/// Skips over concealed lines when "skip_conceal" is true.
+void cursor_up_inner(win_T *wp, linenr_T n, bool skip_conceal)
 {
   linenr_T lnum = wp->w_cursor.lnum;
 
   if (n >= lnum) {
     lnum = 1;
-  } else if (hasAnyFolding(wp)) {
+  } else if (win_lines_concealed(wp)) {
     // Count each sequence of folded lines as one logical line.
 
     // go to the start of the current fold
@@ -2603,6 +2604,7 @@ void cursor_up_inner(win_T *wp, linenr_T n)
     while (n--) {
       // move up one line
       lnum--;
+      n += skip_conceal && decor_conceal_line(wp, lnum - 1, true);
       if (lnum <= 1) {
         break;
       }
@@ -2628,7 +2630,7 @@ int cursor_up(linenr_T n, bool upd_topline)
   if (n > 0 && curwin->w_cursor.lnum <= 1) {
     return FAIL;
   }
-  cursor_up_inner(curwin, n);
+  cursor_up_inner(curwin, n, false);
 
   // try to advance to the column we want to be at
   coladvance(curwin, curwin->w_curswant);
@@ -2640,16 +2642,16 @@ int cursor_up(linenr_T n, bool upd_topline)
   return OK;
 }
 
-/// Move the cursor down "n" lines in window "wp".
-/// Takes care of closed folds.
-void cursor_down_inner(win_T *wp, int n)
+/// Move the cursor down "n" lines in window "wp". Takes care of closed folds.
+/// Skips over concealed lines when "skip_conceal" is true.
+void cursor_down_inner(win_T *wp, int n, bool skip_conceal)
 {
   linenr_T lnum = wp->w_cursor.lnum;
   linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
 
   if (lnum + n >= line_count) {
     lnum = line_count;
-  } else if (hasAnyFolding(wp)) {
+  } else if (win_lines_concealed(wp)) {
     linenr_T last;
 
     // count each sequence of folded lines as one logical line
@@ -2659,6 +2661,7 @@ void cursor_down_inner(win_T *wp, int n)
       } else {
         lnum++;
       }
+      n += skip_conceal && decor_conceal_line(wp, lnum - 1, true);
       if (lnum >= line_count) {
         break;
       }
@@ -2680,7 +2683,7 @@ int cursor_down(int n, bool upd_topline)
   if (n > 0 && lnum >= curwin->w_buffer->b_ml.ml_line_count) {
     return FAIL;
   }
-  cursor_down_inner(curwin, n);
+  cursor_down_inner(curwin, n, false);
 
   // try to advance to the column we want to be at
   coladvance(curwin, curwin->w_curswant);

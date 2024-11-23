@@ -205,9 +205,10 @@ static void changed_lines_invalidate_win(win_T *wp, linenr_T lnum, colnr_T col, 
         } else if (xtra != 0) {
           // line below change
           wp->w_lines[i].wl_lnum += xtra;
+          wp->w_lines[i].wl_foldend += xtra;
           wp->w_lines[i].wl_lastlnum += xtra;
         }
-      } else if (wp->w_lines[i].wl_lastlnum >= lnum) {
+      } else if (wp->w_lines[i].wl_foldend >= lnum) {
         // change somewhere inside this range of folded lines,
         // may need to be redrawn
         wp->w_lines[i].wl_valid = false;

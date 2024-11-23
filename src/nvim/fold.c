@@ -194,7 +194,7 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
     const int x = find_wl_entry(win, lnum);
     if (x >= 0) {
       first = win->w_lines[x].wl_lnum;
-      last = win->w_lines[x].wl_lastlnum;
+      last = win->w_lines[x].wl_foldend;
       had_folded = win->w_lines[x].wl_folded;
     }
   }
@@ -971,7 +971,7 @@ int find_wl_entry(win_T *win, linenr_T lnum)
       if (lnum < win->w_lines[i].wl_lnum) {
         return -1;
       }
-      if (lnum <= win->w_lines[i].wl_lastlnum) {
+      if (lnum <= win->w_lines[i].wl_foldend) {
         return i;
       }
     }

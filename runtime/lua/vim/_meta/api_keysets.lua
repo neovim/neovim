@@ -266,6 +266,7 @@ error('Cannot require a meta file')
 --- @field line_hl_group? integer|string
 --- @field cursorline_hl_group? integer|string
 --- @field conceal? string
+--- @field conceal_lines? string
 --- @field spell? boolean
 --- @field ui_watched? boolean
 --- @field undo_restore? boolean

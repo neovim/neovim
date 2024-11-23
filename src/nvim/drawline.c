@@ -1013,6 +1013,7 @@ static int get_rightmost_vcol(win_T *wp, const int *color_cols)
 /// @param endrow       last grid row to be redrawn
 /// @param col_rows     set to the height of the line when only updating the columns,
 ///                     otherwise set to 0
+/// @param concealed    only draw virtual lines belonging to the line above
 /// @param spv          'spell' related variables kept between calls for "wp"
 /// @param foldinfo     fold info for this line
 /// @param[in, out] providers  decoration providers active this line
@@ -1020,8 +1021,8 @@ static int get_rightmost_vcol(win_T *wp, const int *color_cols)
 ///                            or explicitly return `false`.
 ///
 /// @return             the number of last row the line occupies.
-int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, spellvars_T *spv,
-             foldinfo_T foldinfo)
+int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, bool concealed,
+             spellvars_T *spv, foldinfo_T foldinfo)
 {
   colnr_T vcol_prev = -1;             // "wlv.vcol" of previous character
   ScreenGrid *grid = &wp->w_grid;     // grid specific to the window
@@ -1122,14 +1123,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   };
 
   buf_T *buf = wp->w_buffer;
-  const bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
+  // Not drawing text when line is concealed or drawing filler lines beyond last line.
+  const bool draw_text = !concealed && (lnum != buf->b_ml.ml_line_count + 1);
 
-  if (col_rows == 0) {
+  if (col_rows == 0 && draw_text) {
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
     extra_check = wp->w_p_lbr;
-    if (syntax_present(wp) && !wp->w_s->b_syn_error && !wp->w_s->b_syn_slow
-        && !has_foldtext && !end_fill) {
+    if (syntax_present(wp) && !wp->w_s->b_syn_error && !wp->w_s->b_syn_slow && !has_foldtext) {
       // Prepare for syntax highlighting in this line.  When there is an
       // error, stop syntax highlighting.
       int save_did_emsg = did_emsg;
@@ -1146,9 +1147,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
     }
 
-    if (!end_fill) {
-      decor_providers_invoke_line(wp, lnum - 1);
-    }
+    decor_providers_invoke_line(wp, lnum - 1);
 
     has_decor = decor_redraw_line(wp, lnum - 1, &decor_state);
 
@@ -1331,7 +1330,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   int line_attr_save = wlv.line_attr;
   int line_attr_lowprio_save = wlv.line_attr_lowprio;
 
-  if (spv->spv_has_spell && col_rows == 0) {
+  if (spv->spv_has_spell && col_rows == 0 && draw_text) {
     // Prepare for spell checking.
     extra_check = true;
 
@@ -1357,7 +1356,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       char *line = ml_get_buf(wp->w_buffer, lnum + 1);
       spell_cat_line(nextline + SPWORDLEN, line, SPWORDLEN);
     }
-    assert(!end_fill);
     char *line = ml_get_buf(wp->w_buffer, lnum);
 
     // If current line is empty, check first word in next line for capital.
@@ -1394,7 +1392,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   }
 
   // current line
-  char *line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum);
+  char *line = draw_text ? ml_get_buf(wp->w_buffer, lnum) : "";
   // current position in "line"
   char *ptr = line;
 
@@ -1405,7 +1403,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   const schar_T lcs_eol = wp->w_p_lcs_chars.eol;  // 'eol' value
   schar_T lcs_prec_todo = wp->w_p_lcs_chars.prec;  // 'prec' until it's been used, then NUL
 
-  if (wp->w_p_list && !has_foldtext && !end_fill) {
+  if (wp->w_p_list && !has_foldtext && draw_text) {
     if (wp->w_p_lcs_chars.space
         || wp->w_p_lcs_chars.multispace != NULL
         || wp->w_p_lcs_chars.leadmultispace != NULL
@@ -1577,7 +1575,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     }
   }
 
-  if (col_rows == 0 && !has_foldtext && !end_fill) {
+  if (col_rows == 0 && draw_text && !has_foldtext) {
     const int v = (int)(ptr - line);
     area_highlighting |= prepare_search_hl_line(wp, lnum, v,
                                                 &line, &screen_search_hl, &search_attr,
@@ -1645,7 +1643,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         if (wp->w_redr_statuscol) {
           break;
         }
-        if (!end_fill) {
+        if (draw_text) {
           // Get the line again as evaluating 'statuscolumn' may free it.
           line = ml_get_buf(wp->w_buffer, lnum);
           ptr = line + v;
@@ -1681,7 +1679,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             break;
           }
           wlv.filler_todo--;
-          if (wlv.filler_todo == 0 && (wp->w_botfill || end_fill)) {
+          if (wlv.filler_todo == 0 && (wp->w_botfill || !draw_text)) {
             break;
           }
           // win_line_start(wp, &wlv);
@@ -3072,8 +3070,8 @@ end_check:
       virt_line_index = -1;
       virt_line_flags = 0;
       // When the filler lines are actually below the last line of the
-      // file, don't draw the line itself, break here.
-      if (wlv.filler_todo == 0 && (wp->w_botfill || end_fill)) {
+      // file, or we are not drawing text for this line, break here.
+      if (wlv.filler_todo == 0 && (wp->w_botfill || !draw_text)) {
         break;
       }
     }
