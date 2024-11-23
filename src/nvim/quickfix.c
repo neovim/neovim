@@ -2697,7 +2697,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
       // Didn't find it, go to the window before the quickfix
       // window, unless 'switchbuf' contains 'uselast': in this case we
       // try to jump to the previously used window first.
-      if ((swb_flags & SWB_USELAST) && win_valid(prevwin)
+      if ((swb_flags & kOptSwbFlagUselast) && win_valid(prevwin)
           && !prevwin->w_p_wfb) {
         win = prevwin;
       } else if (altwin != NULL) {
@@ -2754,7 +2754,7 @@ static int qf_jump_to_usable_window(int qf_fnum, bool newwin, bool *opened_windo
 
   // If no usable window is found and 'switchbuf' contains "usetab"
   // then search in other tabs.
-  if (!usable_win && (swb_flags & SWB_USETAB)) {
+  if (!usable_win && (swb_flags & kOptSwbFlagUsetab)) {
     usable_win = qf_goto_tabwin_with_file(qf_fnum);
   }
 
@@ -3032,7 +3032,7 @@ static int qf_jump_to_buffer(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, int 
 
   qf_jump_goto_line(qf_ptr->qf_lnum, qf_ptr->qf_col, qf_ptr->qf_viscol, qf_ptr->qf_pattern);
 
-  if ((fdo_flags & FDO_QUICKFIX) && openfold) {
+  if ((fdo_flags & kOptFdoFlagQuickfix) && openfold) {
     foldOpenCursor();
   }
   if (print_message) {

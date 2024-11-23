@@ -234,7 +234,7 @@ void setpcmark(void)
     curwin->w_pcmark.lnum = 1;
   }
 
-  if (jop_flags & JOP_STACK) {
+  if (jop_flags & kOptJopFlagStack) {
     // jumpoptions=stack: if we're somewhere in the middle of the jumplist
     // discard everything after the current index.
     if (curwin->w_jumplistidx < curwin->w_jumplistlen - 1) {
@@ -1473,7 +1473,7 @@ void cleanup_jumplist(win_T *wp, bool loadfiles)
       mustfree = false;
     } else if (i > from + 1) {      // non-adjacent duplicate
       // jumpoptions=stack: remove duplicates only when adjacent.
-      mustfree = !(jop_flags & JOP_STACK);
+      mustfree = !(jop_flags & kOptJopFlagStack);
     } else {                        // adjacent duplicate
       mustfree = true;
     }

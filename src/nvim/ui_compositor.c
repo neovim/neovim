@@ -425,7 +425,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
 
   for (int i = skipstart; i < (endcol - skipend) - startcol; i++) {
     if (attrbuf[i] < 0) {
-      if (rdb_flags & RDB_INVALID) {
+      if (rdb_flags & kOptRdbFlagInvalid) {
         abort();
       } else {
         attrbuf[i] = 0;
@@ -441,7 +441,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
 static void compose_debug(Integer startrow, Integer endrow, Integer startcol, Integer endcol,
                           int syn_id, bool delay)
 {
-  if (!(rdb_flags & RDB_COMPOSITOR) || startcol >= endcol) {
+  if (!(rdb_flags & kOptRdbFlagCompositor) || startcol >= endcol) {
     return;
   }
 
@@ -637,7 +637,7 @@ void ui_comp_grid_scroll(Integer grid, Integer top, Integer bot, Integer left, I
     }
   } else {
     ui_composed_call_grid_scroll(1, top, bot, left, right, rows, cols);
-    if (rdb_flags & RDB_COMPOSITOR) {
+    if (rdb_flags & kOptRdbFlagCompositor) {
       debug_delay(2);
     }
   }

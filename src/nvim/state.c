@@ -146,9 +146,9 @@ bool virtual_active(win_T *wp)
   if (virtual_op != kNone) {
     return virtual_op;
   }
-  return cur_ve_flags == VE_ALL
-         || ((cur_ve_flags & VE_BLOCK) && VIsual_active && VIsual_mode == Ctrl_V)
-         || ((cur_ve_flags & VE_INSERT) && (State & MODE_INSERT));
+  return cur_ve_flags == kOptVeFlagAll
+         || ((cur_ve_flags & kOptVeFlagBlock) && VIsual_active && VIsual_mode == Ctrl_V)
+         || ((cur_ve_flags & kOptVeFlagInsert) && (State & MODE_INSERT));
 }
 
 /// MODE_VISUAL, MODE_SELECT and MODE_OP_PENDING State are never set, they are

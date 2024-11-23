@@ -1423,7 +1423,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
       cmdline_search_stat(dirc, &pos, &curwin->w_cursor,
                           show_top_bot_msg, msgbuf, msgbuflen,
                           (count != 1 || has_offset
-                           || (!(fdo_flags & FDO_SEARCH)
+                           || (!(fdo_flags & kOptFdoFlagSearch)
                                && hasFolding(curwin, curwin->w_cursor.lnum, NULL,
                                              NULL))),
                           SEARCH_STAT_DEF_MAX_COUNT,
@@ -2350,7 +2350,7 @@ void showmatch(int c)
   }
 
   if ((lpos = findmatch(NULL, NUL)) == NULL) {  // no match, so beep
-    vim_beep(BO_MATCH);
+    vim_beep(kOptBoFlagShowmatch);
     return;
   }
 
@@ -2535,7 +2535,7 @@ int current_search(int count, bool forward)
     }
   }
 
-  if (fdo_flags & FDO_SEARCH && KeyTyped) {
+  if (fdo_flags & kOptFdoFlagSearch && KeyTyped) {
     foldOpenCursor();
   }
 

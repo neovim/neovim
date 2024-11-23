@@ -395,7 +395,7 @@ static bool use_cursor_line_highlight(win_T *wp, linenr_T lnum)
 {
   return wp->w_p_cul
          && lnum == wp->w_cursorline
-         && (wp->w_p_culopt_flags & CULOPT_NBR);
+         && (wp->w_p_culopt_flags & kOptCuloptFlagNumber);
 }
 
 /// Setup for drawing the 'foldcolumn', if there is one.
@@ -507,10 +507,10 @@ static bool use_cursor_line_nr(win_T *wp, winlinevars_T *wlv)
 {
   return wp->w_p_cul
          && wlv->lnum == wp->w_cursorline
-         && (wp->w_p_culopt_flags & CULOPT_NBR)
+         && (wp->w_p_culopt_flags & kOptCuloptFlagNumber)
          && (wlv->row == wlv->startrow + wlv->filler_lines
              || (wlv->row > wlv->startrow + wlv->filler_lines
-                 && (wp->w_p_culopt_flags & CULOPT_LINE)));
+                 && (wp->w_p_culopt_flags & kOptCuloptFlagLine)));
 }
 
 static int get_line_number_attr(win_T *wp, winlinevars_T *wlv)
@@ -1165,11 +1165,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   wlv.filler_todo = wlv.filler_lines;
 
   // Cursor line highlighting for 'cursorline' in the current window.
-  if (wp->w_p_cul && wp->w_p_culopt_flags != CULOPT_NBR && lnum == wp->w_cursorline
+  if (wp->w_p_cul && wp->w_p_culopt_flags != kOptCuloptFlagNumber && lnum == wp->w_cursorline
       // Do not show the cursor line in the text when Visual mode is active,
       // because it's not clear what is selected then.
       && !(wp == curwin && VIsual_active)) {
-    cul_screenline = (is_wrapped && (wp->w_p_culopt_flags & CULOPT_SCRLINE));
+    cul_screenline = (is_wrapped && (wp->w_p_culopt_flags & kOptCuloptFlagScreenline));
     if (!cul_screenline) {
       apply_cursorline_highlight(wp, &wlv);
     } else {
@@ -1949,7 +1949,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
       decor_attr = 0;
       if (extra_check) {
-        const bool no_plain_buffer = (wp->w_s->b_p_spo_flags & SPO_NPBUFFER) != 0;
+        const bool no_plain_buffer = (wp->w_s->b_p_spo_flags & kOptSpoFlagNoplainbuffer) != 0;
         bool can_spell = !no_plain_buffer;
 
         // Get extmark and syntax attributes, unless still at the start of the line
@@ -2324,7 +2324,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           if (wlv.n_extra == 0) {
             wlv.n_extra = byte2cells(mb_c) - 1;
           }
-          if ((dy_flags & DY_UHEX) && wp->w_p_rl) {
+          if ((dy_flags & kOptDyFlagUhex) && wp->w_p_rl) {
             rl_mirror_ascii(wlv.p_extra, NULL);   // reverse "<12>"
           }
           wlv.sc_extra = NUL;

@@ -100,7 +100,7 @@ static int compl_selected;
 static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  return (wop_flags & WOP_FUZZY)
+  return (wop_flags & kOptWopFlagFuzzy)
          && xp->xp_context != EXPAND_BOOL_SETTINGS
          && xp->xp_context != EXPAND_COLORS
          && xp->xp_context != EXPAND_COMPILER
@@ -133,7 +133,7 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
 bool cmdline_fuzzy_complete(const char *const fuzzystr)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  return (wop_flags & WOP_FUZZY) && *fuzzystr != NUL;
+  return (wop_flags & kOptWopFlagFuzzy) && *fuzzystr != NUL;
 }
 
 /// Sort function for the completion matches.
@@ -806,7 +806,7 @@ static char *find_longest_match(expand_T *xp, int options)
     }
     if (i < xp->xp_numfiles) {
       if (!(options & WILD_NO_BEEP)) {
-        vim_beep(BO_WILD);
+        vim_beep(kOptBoFlagWildmode);
       }
       break;
     }
@@ -1069,7 +1069,7 @@ int showmatches(expand_T *xp, bool wildmenu)
 
   bool compl_use_pum = (ui_has(kUICmdline)
                         ? ui_has(kUIPopupmenu)
-                        : wildmenu && (wop_flags & WOP_PUM))
+                        : wildmenu && (wop_flags & kOptWopFlagPum))
                        || ui_has(kUIWildmenu);
 
   if (compl_use_pum) {
@@ -1939,7 +1939,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_tjump:
   case CMD_stjump:
   case CMD_ptjump:
-    if (wop_flags & WOP_TAGFILE) {
+    if (wop_flags & kOptWopFlagTagfile) {
       xp->xp_context = EXPAND_TAGS_LISTFILES;
     } else {
       xp->xp_context = EXPAND_TAGS;

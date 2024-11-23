@@ -628,7 +628,7 @@ int main(int argc, char **argv)
   }
 
   // WORKAROUND(mhi): #3023
-  if (cb_flags & CB_UNNAMEDMASK) {
+  if (cb_flags & (kOptCbFlagUnnamed | kOptCbFlagUnnamedplus)) {
     eval_has_provider("clipboard", false);
   }
 

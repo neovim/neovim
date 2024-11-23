@@ -598,12 +598,12 @@ bool terminal_enter(void)
   int save_w_p_cuc = curwin->w_p_cuc;
   OptInt save_w_p_so = curwin->w_p_so;
   OptInt save_w_p_siso = curwin->w_p_siso;
-  if (curwin->w_p_cul && curwin->w_p_culopt_flags & CULOPT_NBR) {
+  if (curwin->w_p_cul && curwin->w_p_culopt_flags & kOptCuloptFlagNumber) {
     if (strcmp(curwin->w_p_culopt, "number") != 0) {
       save_w_p_culopt = curwin->w_p_culopt;
       curwin->w_p_culopt = xstrdup("number");
     }
-    curwin->w_p_culopt_flags = CULOPT_NBR;
+    curwin->w_p_culopt_flags = kOptCuloptFlagNumber;
   } else {
     curwin->w_p_cul = false;
   }
@@ -868,28 +868,28 @@ static bool is_filter_char(int c)
   unsigned flag = 0;
   switch (c) {
   case 0x08:
-    flag = TPF_BS;
+    flag = kOptTpfFlagBS;
     break;
   case 0x09:
-    flag = TPF_HT;
+    flag = kOptTpfFlagHT;
     break;
   case 0x0A:
   case 0x0D:
     break;
   case 0x0C:
-    flag = TPF_FF;
+    flag = kOptTpfFlagFF;
     break;
   case 0x1b:
-    flag = TPF_ESC;
+    flag = kOptTpfFlagESC;
     break;
   case 0x7F:
-    flag = TPF_DEL;
+    flag = kOptTpfFlagDEL;
     break;
   default:
     if (c < ' ') {
-      flag = TPF_C0;
+      flag = kOptTpfFlagC0;
     } else if (c >= 0x80 && c <= 0x9F) {
-      flag = TPF_C1;
+      flag = kOptTpfFlagC1;
     }
   }
   return !!(tpf_flags & flag);
@@ -1181,7 +1181,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 /// Called when the terminal wants to ring the system bell.
 static int term_bell(void *data)
 {
-  vim_beep(BO_TERM);
+  vim_beep(kOptBoFlagTerm);
   return 1;
 }
 

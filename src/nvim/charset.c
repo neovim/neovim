@@ -95,7 +95,7 @@ int buf_init_chartab(buf_T *buf, bool global)
     int c = 0;
 
     while (c < ' ') {
-      g_chartab[c++] = (dy_flags & DY_UHEX) ? 4 : 2;
+      g_chartab[c++] = (dy_flags & kOptDyFlagUhex) ? 4 : 2;
     }
 
     while (c <= '~') {
@@ -109,7 +109,7 @@ int buf_init_chartab(buf_T *buf, bool global)
         g_chartab[c++] = (CT_PRINT_CHAR | CT_FNAME_CHAR) + 1;
       } else {
         // the rest is unprintable by default
-        g_chartab[c++] = (dy_flags & DY_UHEX) ? 4 : 2;
+        g_chartab[c++] = (dy_flags & kOptDyFlagUhex) ? 4 : 2;
       }
     }
   }
@@ -237,7 +237,7 @@ static int parse_isopt(const char *var, buf_T *buf, bool only_check)
           if (c < ' ' || c > '~') {
             if (tilde) {
               g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK)
-                                       + ((dy_flags & DY_UHEX) ? 4 : 2));
+                                       + ((dy_flags & kOptDyFlagUhex) ? 4 : 2));
               g_chartab[c] &= (uint8_t) ~CT_PRINT_CHAR;
             } else {
               g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK) + 1);
@@ -614,7 +614,7 @@ void transchar_nonprint(const buf_T *buf, char *charbuf, int c)
   }
   assert(c <= 0xff);
 
-  if (dy_flags & DY_UHEX || c > 0x7f) {
+  if (dy_flags & kOptDyFlagUhex || c > 0x7f) {
     // 'display' has "uhex"
     transchar_hex(charbuf, c);
   } else {

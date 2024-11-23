@@ -245,7 +245,7 @@ size_t spell_check(win_T *wp, char *ptr, hlf_T *attrp, int *capcol, bool docount
   size_t nrlen = 0;              // found a number first
   size_t wrongcaplen = 0;
   bool count_word = docount;
-  bool use_camel_case = (wp->w_s->b_p_spo_flags & SPO_CAMEL) != 0;
+  bool use_camel_case = (wp->w_s->b_p_spo_flags & kOptSpoFlagCamel) != 0;
   bool is_camel_case = false;
 
   matchinf_T mi;  // Most things are put in "mi" so that it can be passed to functions quickly.
@@ -1407,7 +1407,7 @@ size_t spell_move_to(win_T *wp, int dir, smt_T behaviour, bool curline, hlf_T *a
                             : p - buf) > wp->w_cursor.col)) {
             colnr_T col = (colnr_T)(p - buf);
 
-            bool no_plain_buffer = (wp->w_s->b_p_spo_flags & SPO_NPBUFFER) != 0;
+            bool no_plain_buffer = (wp->w_s->b_p_spo_flags & kOptSpoFlagNoplainbuffer) != 0;
             bool can_spell = !no_plain_buffer;
             switch (decor_spell_nav_col(wp, lnum, &decor_lnum, col)) {
             case kTrue:

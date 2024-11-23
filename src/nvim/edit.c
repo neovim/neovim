@@ -440,7 +440,7 @@ static int insert_check(VimState *state)
   msg_scroll = false;
 
   // Open fold at the cursor line, according to 'foldopen'.
-  if (fdo_flags & FDO_INSERT) {
+  if (fdo_flags & kOptFdoFlagInsert) {
     foldOpenCursor();
   }
 
@@ -751,7 +751,7 @@ static int insert_handle_key(InsertState *s)
     ins_ctrl_o();
 
     // don't move the cursor left when 'virtualedit' has "onemore".
-    if (get_ve_flags(curwin) & VE_ONEMORE) {
+    if (get_ve_flags(curwin) & kOptVeFlagOnemore) {
       ins_at_eol = false;
       s->nomove = true;
     }
@@ -2518,7 +2518,7 @@ int oneright(void)
 
   // move "l" bytes right, but don't end up on the NUL, unless 'virtualedit'
   // contains "onemore".
-  if (ptr[l] == NUL && (get_ve_flags(curwin) & VE_ONEMORE) == 0) {
+  if (ptr[l] == NUL && (get_ve_flags(curwin) & kOptVeFlagOnemore) == 0) {
     return FAIL;
   }
   curwin->w_cursor.col += l;
@@ -2600,7 +2600,7 @@ void cursor_up_inner(win_T *wp, linenr_T n)
       // If we entered a fold, move to the beginning, unless in
       // Insert mode or when 'foldopen' contains "all": it will open
       // in a moment.
-      if (n > 0 || !((State & MODE_INSERT) || (fdo_flags & FDO_ALL))) {
+      if (n > 0 || !((State & MODE_INSERT) || (fdo_flags & kOptFdoFlagAll))) {
         hasFolding(wp, lnum, &lnum, NULL);
       }
     }
@@ -3223,7 +3223,7 @@ static void ins_reg(void)
     check_cursor(curwin);
   }
   if (regname == NUL || !valid_yank_reg(regname, false)) {
-    vim_beep(BO_REG);
+    vim_beep(kOptBoFlagRegister);
     need_redraw = true;  // remove the '"'
   } else {
     if (literally == Ctrl_O || literally == Ctrl_P) {
@@ -3235,7 +3235,7 @@ static void ins_reg(void)
       do_put(regname, NULL, BACKWARD, 1,
              (literally == Ctrl_P ? PUT_FIXINDENT : 0) | PUT_CURSEND);
     } else if (insert_reg(regname, literally) == FAIL) {
-      vim_beep(BO_REG);
+      vim_beep(kOptBoFlagRegister);
       need_redraw = true;  // remove the '"'
     } else if (stop_insert_mode) {
       // When the '=' register was used and a function was invoked that
@@ -3314,7 +3314,7 @@ static void ins_ctrl_g(void)
 
   // Unknown CTRL-G command, reserved for future expansion.
   default:
-    vim_beep(BO_CTRLG);
+    vim_beep(kOptBoFlagCtrlg);
   }
 }
 
@@ -3412,7 +3412,7 @@ static bool ins_esc(int *count, int cmdchar, bool nomove)
       && (curwin->w_cursor.col != 0 || curwin->w_cursor.coladd > 0)
       && (restart_edit == NUL || (gchar_cursor() == NUL && !VIsual_active))
       && !revins_on) {
-    if (curwin->w_cursor.coladd > 0 || get_ve_flags(curwin) == VE_ALL) {
+    if (curwin->w_cursor.coladd > 0 || get_ve_flags(curwin) == kOptVeFlagAll) {
       oneleft();
       if (restart_edit != NUL) {
         curwin->w_cursor.coladd++;
@@ -3598,7 +3598,7 @@ static void ins_del(void)
     const int temp = curwin->w_cursor.col;
     if (!can_bs(BS_EOL)  // only if "eol" included
         || do_join(2, false, true, false, false) == FAIL) {
-      vim_beep(BO_BS);
+      vim_beep(kOptBoFlagBackspace);
     } else {
       curwin->w_cursor.col = temp;
       // Adjust orig_line_count in case more lines have been deleted than
@@ -3610,7 +3610,7 @@ static void ins_del(void)
       }
     }
   } else if (del_char(false) == FAIL) {  // delete char under cursor
-    vim_beep(BO_BS);
+    vim_beep(kOptBoFlagBackspace);
   }
   did_ai = false;
   did_si = false;
@@ -3649,7 +3649,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
               || (!can_bs(BS_INDENT) && !arrow_used && ai_col > 0
                   && curwin->w_cursor.col <= ai_col)
               || (!can_bs(BS_EOL) && curwin->w_cursor.col == 0)))) {
-    vim_beep(BO_BS);
+    vim_beep(kOptBoFlagBackspace);
     return false;
   }
 
@@ -3962,7 +3962,7 @@ static void ins_left(void)
 {
   const bool end_change = dont_sync_undo == kFalse;  // end undoable change
 
-  if ((fdo_flags & FDO_HOR) && KeyTyped) {
+  if ((fdo_flags & kOptFdoFlagHor) && KeyTyped) {
     foldOpenCursor();
   }
   undisplay_dollar();
@@ -3985,14 +3985,14 @@ static void ins_left(void)
     coladvance(curwin, MAXCOL);
     curwin->w_set_curswant = true;  // so we stay at the end
   } else {
-    vim_beep(BO_CRSR);
+    vim_beep(kOptBoFlagCursor);
   }
   dont_sync_undo = kFalse;
 }
 
 static void ins_home(int c)
 {
-  if ((fdo_flags & FDO_HOR) && KeyTyped) {
+  if ((fdo_flags & kOptFdoFlagHor) && KeyTyped) {
     foldOpenCursor();
   }
   undisplay_dollar();
@@ -4008,7 +4008,7 @@ static void ins_home(int c)
 
 static void ins_end(int c)
 {
-  if ((fdo_flags & FDO_HOR) && KeyTyped) {
+  if ((fdo_flags & kOptFdoFlagHor) && KeyTyped) {
     foldOpenCursor();
   }
   undisplay_dollar();
@@ -4025,7 +4025,7 @@ static void ins_end(int c)
 static void ins_s_left(void)
 {
   const bool end_change = dont_sync_undo == kFalse;  // end undoable change
-  if ((fdo_flags & FDO_HOR) && KeyTyped) {
+  if ((fdo_flags & kOptFdoFlagHor) && KeyTyped) {
     foldOpenCursor();
   }
   undisplay_dollar();
@@ -4037,7 +4037,7 @@ static void ins_s_left(void)
     bck_word(1, false, false);
     curwin->w_set_curswant = true;
   } else {
-    vim_beep(BO_CRSR);
+    vim_beep(kOptBoFlagCursor);
   }
   dont_sync_undo = kFalse;
 }
@@ -4046,7 +4046,7 @@ static void ins_s_left(void)
 static void ins_right(void)
 {
   const bool end_change = dont_sync_undo == kFalse;  // end undoable change
-  if ((fdo_flags & FDO_HOR) && KeyTyped) {
+  if ((fdo_flags & kOptFdoFlagHor) && KeyTyped) {
     foldOpenCursor();
   }
   undisplay_dollar();
@@ -4075,7 +4075,7 @@ static void ins_right(void)
     curwin->w_cursor.lnum++;
     curwin->w_cursor.col = 0;
   } else {
-    vim_beep(BO_CRSR);
+    vim_beep(kOptBoFlagCursor);
   }
   dont_sync_undo = kFalse;
 }
@@ -4083,7 +4083,7 @@ static void ins_right(void)
 static void ins_s_right(void)
 {
   const bool end_change = dont_sync_undo == kFalse;  // end undoable change
-  if ((fdo_flags & FDO_HOR) && KeyTyped) {
+  if ((fdo_flags & kOptFdoFlagHor) && KeyTyped) {
     foldOpenCursor();
   }
   undisplay_dollar();
@@ -4096,7 +4096,7 @@ static void ins_s_right(void)
     fwd_word(1, false, 0);
     curwin->w_set_curswant = true;
   } else {
-    vim_beep(BO_CRSR);
+    vim_beep(kOptBoFlagCursor);
   }
   dont_sync_undo = kFalse;
 }
@@ -4120,7 +4120,7 @@ static void ins_up(bool startcol)
     start_arrow(&tpos);
     can_cindent = true;
   } else {
-    vim_beep(BO_CRSR);
+    vim_beep(kOptBoFlagCursor);
   }
 }
 
@@ -4142,7 +4142,7 @@ static void ins_pageup(void)
     start_arrow(&tpos);
     can_cindent = true;
   } else {
-    vim_beep(BO_CRSR);
+    vim_beep(kOptBoFlagCursor);
   }
 }
 
@@ -4165,7 +4165,7 @@ static void ins_down(bool startcol)
     start_arrow(&tpos);
     can_cindent = true;
   } else {
-    vim_beep(BO_CRSR);
+    vim_beep(kOptBoFlagCursor);
   }
 }
 
@@ -4187,7 +4187,7 @@ static void ins_pagedown(void)
     start_arrow(&tpos);
     can_cindent = true;
   } else {
-    vim_beep(BO_CRSR);
+    vim_beep(kOptBoFlagCursor);
   }
 }
 
@@ -4535,7 +4535,7 @@ static int ins_digraph(void)
 int ins_copychar(linenr_T lnum)
 {
   if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
-    vim_beep(BO_COPY);
+    vim_beep(kOptBoFlagCopy);
     return NUL;
   }
 
@@ -4558,7 +4558,7 @@ int ins_copychar(linenr_T lnum)
 
   int c = ci.chr.value < 0 ? (uint8_t)(*ci.ptr) : ci.chr.value;
   if (c == NUL) {
-    vim_beep(BO_COPY);
+    vim_beep(kOptBoFlagCopy);
   }
   return c;
 }

@@ -2156,7 +2156,7 @@ Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena,
       if (statuscol.foldinfo.fi_level != 0 && statuscol.foldinfo.fi_lines > 0) {
         wp->w_cursorline = statuscol.foldinfo.fi_lnum;
       }
-      statuscol.use_cul = lnum == wp->w_cursorline && (wp->w_p_culopt_flags & CULOPT_NBR);
+      statuscol.use_cul = lnum == wp->w_cursorline && (wp->w_p_culopt_flags & kOptCuloptFlagNumber);
     }
 
     statuscol.sign_cul_id = statuscol.use_cul ? cul_id : 0;

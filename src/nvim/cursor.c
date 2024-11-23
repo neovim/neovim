@@ -105,7 +105,7 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
                  || (State & MODE_TERMINAL)
                  || restart_edit != NUL
                  || (VIsual_active && *p_sel != 'o')
-                 || ((get_ve_flags(wp) & VE_ONEMORE) && wcol < MAXCOL);
+                 || ((get_ve_flags(wp) & kOptVeFlagOnemore) && wcol < MAXCOL);
 
   char *line = ml_get_buf(wp->w_buffer, pos->lnum);
   int linelen = ml_get_buf_len(wp->w_buffer, pos->lnum);
@@ -345,7 +345,7 @@ void check_cursor_col(win_T *win)
     // - 'virtualedit' is set
     if ((State & MODE_INSERT) || restart_edit
         || (VIsual_active && *p_sel != 'o')
-        || (cur_ve_flags & VE_ONEMORE)
+        || (cur_ve_flags & kOptVeFlagOnemore)
         || virtual_active(win)) {
       win->w_cursor.col = len;
     } else {
@@ -362,7 +362,7 @@ void check_cursor_col(win_T *win)
   // line.
   if (oldcol == MAXCOL) {
     win->w_cursor.coladd = 0;
-  } else if (cur_ve_flags == VE_ALL) {
+  } else if (cur_ve_flags == kOptVeFlagAll) {
     if (oldcoladd > win->w_cursor.col) {
       win->w_cursor.coladd = oldcoladd - win->w_cursor.col;
 

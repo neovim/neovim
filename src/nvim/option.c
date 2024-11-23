@@ -6013,19 +6013,19 @@ int fill_culopt_flags(char *val, win_T *wp)
     p = val;
   }
   while (*p != NUL) {
-    // Note: Keep this in sync with p_culopt_values.
+    // Note: Keep this in sync with opt_culopt_values.
     if (strncmp(p, "line", 4) == 0) {
       p += 4;
-      culopt_flags_new |= CULOPT_LINE;
+      culopt_flags_new |= kOptCuloptFlagLine;
     } else if (strncmp(p, "both", 4) == 0) {
       p += 4;
-      culopt_flags_new |= CULOPT_LINE | CULOPT_NBR;
+      culopt_flags_new |= kOptCuloptFlagLine | kOptCuloptFlagNumber;
     } else if (strncmp(p, "number", 6) == 0) {
       p += 6;
-      culopt_flags_new |= CULOPT_NBR;
+      culopt_flags_new |= kOptCuloptFlagNumber;
     } else if (strncmp(p, "screenline", 10) == 0) {
       p += 10;
-      culopt_flags_new |= CULOPT_SCRLINE;
+      culopt_flags_new |= kOptCuloptFlagScreenline;
     }
 
     if (*p != ',' && *p != NUL) {
@@ -6037,7 +6037,7 @@ int fill_culopt_flags(char *val, win_T *wp)
   }
 
   // Can't have both "line" and "screenline".
-  if ((culopt_flags_new & CULOPT_LINE) && (culopt_flags_new & CULOPT_SCRLINE)) {
+  if ((culopt_flags_new & kOptCuloptFlagLine) && (culopt_flags_new & kOptCuloptFlagScreenline)) {
     return FAIL;
   }
   wp->w_p_culopt_flags = culopt_flags_new;
@@ -6147,7 +6147,8 @@ char *get_flp_value(buf_T *buf)
 /// Get the local or global value of 'virtualedit' flags.
 unsigned get_ve_flags(win_T *wp)
 {
-  return (wp->w_ve_flags ? wp->w_ve_flags : ve_flags) & ~(VE_NONE | VE_NONEU);
+  return (wp->w_ve_flags ? wp->w_ve_flags : ve_flags)
+         & ~(unsigned)(kOptVeFlagNone | kOptVeFlagNoneU);
 }
 
 /// Get the local or global value of 'showbreak'.

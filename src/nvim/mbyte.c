@@ -1400,11 +1400,11 @@ int utf_fold(int a)
 int mb_toupper(int a)
 {
   // If 'casemap' contains "keepascii" use ASCII style toupper().
-  if (a < 128 && (cmp_flags & CMP_KEEPASCII)) {
+  if (a < 128 && (cmp_flags & kOptCmpFlagKeepascii)) {
     return TOUPPER_ASC(a);
   }
 
-  if (!(cmp_flags & CMP_INTERNAL)) {
+  if (!(cmp_flags & kOptCmpFlagInternal)) {
     return (int)towupper((wint_t)a);
   }
 
@@ -1426,11 +1426,11 @@ bool mb_islower(int a)
 int mb_tolower(int a)
 {
   // If 'casemap' contains "keepascii" use ASCII style tolower().
-  if (a < 128 && (cmp_flags & CMP_KEEPASCII)) {
+  if (a < 128 && (cmp_flags & kOptCmpFlagKeepascii)) {
     return TOLOWER_ASC(a);
   }
 
-  if (!(cmp_flags & CMP_INTERNAL)) {
+  if (!(cmp_flags & kOptCmpFlagInternal)) {
     return (int)towlower((wint_t)a);
   }
 

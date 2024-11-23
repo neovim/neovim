@@ -2277,7 +2277,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
           }
         } while (msg_col & 7);
       } else if (c == BELL) {  // beep (from ":sh")
-        vim_beep(BO_SH);
+        vim_beep(kOptBoFlagShell);
       }
     }
   }
@@ -2332,7 +2332,7 @@ int msg_scrollsize(void)
 
 bool msg_do_throttle(void)
 {
-  return msg_use_grid() && !(rdb_flags & RDB_NOTHROTTLE);
+  return msg_use_grid() && !(rdb_flags & kOptRdbFlagNothrottle);
 }
 
 /// Scroll the screen up one line for displaying the next message line.
@@ -2597,7 +2597,7 @@ void show_sb_text(void)
   // weird, typing a command without output results in one line.
   msgchunk_T *mp = msg_sb_start(last_msgchunk);
   if (mp == NULL || mp->sb_prev == NULL) {
-    vim_beep(BO_MESS);
+    vim_beep(kOptBoFlagMess);
   } else {
     do_more_prompt('G');
     wait_return(false);
