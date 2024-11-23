@@ -22,6 +22,7 @@
 #include "nvim/marktree.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
+#include "nvim/move.h"
 #include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
 #include "nvim/sign.h"
@@ -122,6 +123,15 @@ void decor_redraw_sh(buf_T *buf, int row1, int row2, DecorSignHighlight sh)
       || (sh.flags & (kSHIsSign | kSHSpellOn | kSHSpellOff | kSHConceal))) {
     if (row2 >= row1) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
+    }
+  }
+  if (sh.flags & kSHConcealLines) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      // TODO(luukvbaal): redraw only unconcealed lines, and scroll lines below
+      // it up or down. Also when opening/closing a fold.
+      if (wp->w_buffer == buf) {
+        changed_window_setting(wp);
+      }
     }
   }
   if (sh.flags & kSHUIWatched) {
@@ -830,6 +840,56 @@ next_mark:
   return attr;
 }
 
+static const uint32_t conceal_filter[kMTMetaCount] = {[kMTMetaConcealLines] = kMTFilterSelect };
+
+/// Called by draw, move and plines code to determine whether a line is concealed.
+/// Scans the marktree for conceal_line marks on "row", if necessary.
+///
+/// @param check_cursor If true, avoid an early return for an unconcealed cursorline.
+///                     Depending on the callsite, we still want to know whether the
+///                     cursor line would be concealed if it was not the cursorline.
+///
+/// @return whether "row" is concealed
+bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
+{
+  if (wp->w_p_cole < 2 || !buf_meta_total(wp->w_buffer, kMTMetaConcealLines)
+      || (!check_cursor && wp == curwin && row + 1 == wp->w_cursor.lnum
+          && !conceal_cursor_line(wp))) {
+    return false;
+  }
+
+  // Scan the marktree for any conceal_line marks on this row.
+  MTPair pair;
+  MarkTreeIter itr[1];
+  marktree_itr_get_overlap(wp->w_buffer->b_marktree, row, 0, itr);
+  while (marktree_itr_step_overlap(wp->w_buffer->b_marktree, itr, &pair)) {
+    if (mt_conceal_lines(pair.start) && ns_in_win(pair.start.ns, wp)) {
+      return true;
+    }
+  }
+
+  marktree_itr_step_out_filter(wp->w_buffer->b_marktree, itr, conceal_filter);
+
+  while (itr->x) {
+    MTKey mark = marktree_itr_current(itr);
+    if (mark.pos.row > row) {
+      break;
+    }
+    if (mt_conceal_lines(mark) && ns_in_win(pair.start.ns, wp)) {
+      return true;
+    }
+    marktree_itr_next_filter(wp->w_buffer->b_marktree, itr, row + 1, 0, conceal_filter);
+  }
+  return false;
+}
+
+/// @return whether a window may have folded or concealed lines
+bool win_lines_concealed(win_T *wp)
+{
+  return hasAnyFolding(wp)
+         || (wp->w_p_cole >= 2 && buf_meta_total(wp->w_buffer, kMTMetaConcealLines));
+}
+
 int sign_item_cmp(const void *p1, const void *p2)
 {
   const SignItem *s1 = (SignItem *)p1;
@@ -850,8 +910,8 @@ int sign_item_cmp(const void *p1, const void *p2)
   return 0;
 }
 
-static const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,
-                                        [kMTMetaSignHL] = kMTFilterSelect };
+static const uint32_t sign_filter[kMTMetaCount] = {[kMTMetaSignText] = kMTFilterSelect,
+                                                   [kMTMetaSignHL] = kMTFilterSelect };
 
 /// Return the signs and highest priority sign attributes on a row.
 ///
@@ -873,7 +933,7 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
   // TODO(bfredl): integrate with main decor loop.
   marktree_itr_get_overlap(buf->b_marktree, row, 0, itr);
   while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
-    if (!mt_invalid(pair.start) && mt_decor_sign(pair.start)) {
+    if (!mt_invalid(pair.start) && mt_decor_sign(pair.start) && ns_in_win(pair.start.ns, wp)) {
       DecorSignHighlight *sh = decor_find_sign(mt_decor(pair.start));
       num_text += (sh->text[0] != NUL);
       kv_push(signs, ((SignItem){ sh, pair.start.id }));
@@ -940,7 +1000,7 @@ DecorSignHighlight *decor_find_sign(DecorInline decor)
   }
 }
 
-static const uint32_t signtext_filter[4] = {[kMTMetaSignText] = kMTFilterSelect };
+static const uint32_t signtext_filter[kMTMetaCount] = {[kMTMetaSignText] = kMTFilterSelect };
 
 /// Count the number of signs in a range after adding/removing a sign, or to
 /// (re-)initialize a range in "b_signcols.count".
@@ -1035,7 +1095,7 @@ bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
   return has_virt_pos;
 }
 
-static const uint32_t lines_filter[4] = {[kMTMetaLines] = kMTFilterSelect };
+static const uint32_t lines_filter[kMTMetaCount] = {[kMTMetaLines] = kMTFilterSelect };
 
 /// @param apply_folds Only count virtual lines that are not in folds.
 int decor_virt_lines(win_T *wp, int start_row, int end_row, int *num_below, VirtLines *lines,
@@ -1067,7 +1127,8 @@ int decor_virt_lines(win_T *wp, int start_row, int end_row, int *num_below, Virt
           int mrow = mark.pos.row;
           int draw_row = mrow + (above ? 0 : 1);
           if (draw_row >= start_row && draw_row < end_row
-              && (!apply_folds || !hasFolding(wp, mrow + 1, NULL, NULL))) {
+              && (!apply_folds || !(hasFolding(wp, mrow + 1, NULL, NULL)
+                                    || decor_conceal_line(wp, mrow, false)))) {
             virt_lines += (int)kv_size(vt->data.virt_lines);
             if (lines) {
               kv_splice(*lines, vt->data.virt_lines);
@@ -1135,6 +1196,10 @@ void decor_to_dict_legacy(Dict *dict, DecorInline decor, bool hl_name, Arena *ar
     char buf[MAX_SCHAR_SIZE];
     schar_get(buf, sh_hl.text[0]);
     PUT_C(*dict, "conceal", CSTR_TO_ARENA_OBJ(arena, buf));
+  }
+
+  if (sh_hl.flags & kSHConcealLines) {
+    PUT_C(*dict, "conceal_lines", STRING_OBJ(cstr_as_string("")));
   }
 
   if (sh_hl.flags & kSHSpellOn) {

@@ -6436,9 +6436,9 @@ void win_fix_scroll(bool resize)
 
         // Add difference in height and row to botline.
         if (diff > 0) {
-          cursor_down_inner(wp, diff);
+          cursor_down_inner(wp, diff, false);
         } else {
-          cursor_up_inner(wp, -diff);
+          cursor_up_inner(wp, -diff, false);
         }
 
         // Scroll to put the new cursor position at the bottom of the
@@ -6485,11 +6485,11 @@ static void win_fix_cursor(bool normal)
   linenr_T lnum = wp->w_cursor.lnum;
 
   wp->w_cursor.lnum = wp->w_topline;
-  cursor_down_inner(wp, so);
+  cursor_down_inner(wp, so, false);
   linenr_T top = wp->w_cursor.lnum;
 
   wp->w_cursor.lnum = wp->w_botline - 1;
-  cursor_up_inner(wp, so);
+  cursor_up_inner(wp, so, false);
   linenr_T bot = wp->w_cursor.lnum;
 
   wp->w_cursor.lnum = lnum;
@@ -6583,7 +6583,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
         hasFolding(wp, lnum, &lnum, NULL);
         if (lnum == 1) {
           // first line in buffer is folded
-          line_size = 1;
+          line_size = !decor_conceal_line(wp, lnum - 1, false);
           sline--;
           break;
         }

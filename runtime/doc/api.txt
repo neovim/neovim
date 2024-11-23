@@ -2698,6 +2698,10 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {opts})
                     When a character is supplied it is used as |:syn-cchar|.
                     "hl_group" is used as highlight for the cchar if provided,
                     otherwise it defaults to |hl-Conceal|.
+                  • conceal_lines: string which should be empty. When
+                    provided, lines in the range are not drawn at all
+                    (according to 'conceallevel'); the next unconcealed line
+                    is drawn instead.
                   • spell: boolean indicating that spell checking should be
                     performed within this extmark
                   • ui_watched: boolean that indicates the mark should be
