@@ -4815,6 +4815,9 @@ You can see all the groups currently active with this command: >
     :so $VIMRUNTIME/syntax/hitest.vim
 This will open a new window containing all highlight group names, displayed
 in their own color.
+                                                        *zS-default*
+You can see a short summary of the the highlight groups applied to a given
+position using the keymapping `zS` in normal mode. |default-mappings|
 
 						*:colo* *:colorscheme* *E185*
 :colo[rscheme]		Output the name of the currently active color scheme.
