@@ -810,9 +810,9 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
   // Find the end of the name.
   char *arg_end = NULL;
   OptIndex opt_idx;
-  int scope;
+  int opt_flags;
 
-  char *const p = (char *)find_option_var_end((const char **)&arg, &opt_idx, &scope);
+  char *const p = (char *)find_option_var_end((const char **)&arg, &opt_idx, &opt_flags);
 
   if (p == NULL || (endchars != NULL && vim_strchr(endchars, (uint8_t)(*skipwhite(p))) == NULL)) {
     emsg(_(e_letunexp));
@@ -824,7 +824,7 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
 
   bool is_tty_opt = is_tty_option(arg);
   bool hidden = is_option_hidden(opt_idx);
-  OptVal curval = is_tty_opt ? get_tty_option(arg) : get_option_value(opt_idx, scope);
+  OptVal curval = is_tty_opt ? get_tty_option(arg) : get_option_value(opt_idx, opt_flags);
   OptVal newval = NIL_OPTVAL;
 
   if (curval.type == kOptValTypeNil) {
@@ -881,7 +881,7 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
     }
   }
 
-  const char *err = set_option_value_handle_tty(arg, opt_idx, newval, scope);
+  const char *err = set_option_value_handle_tty(arg, opt_idx, newval, opt_flags);
   arg_end = p;
   if (err != NULL) {
     emsg(_(err));
