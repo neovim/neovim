@@ -1344,10 +1344,6 @@ local function close_preview_window(winnr, bufnrs)
 
     local augroup = 'preview_window_' .. winnr
     pcall(api.nvim_del_augroup_by_name, augroup)
-    local buf = vim.w[winnr].buf_hold_win
-    if buf and api.nvim_buf_is_valid(buf) then
-      vim.b[buf].lsp_floating_window = nil
-    end
     pcall(api.nvim_win_close, winnr, true)
   end)
 end
@@ -1613,13 +1609,28 @@ function M.open_floating_preview(contents, syntax, opts)
       { silent = true, noremap = true, nowait = true }
     )
     close_preview_autocmd(opts.close_events, floating_winnr, { floating_bufnr, bufnr })
-    vim.w[floating_winnr].buf_hold_win = bufnr
 
     -- save focus_id
     if opts.focus_id then
       api.nvim_win_set_var(floating_winnr, opts.focus_id, bufnr)
     end
     api.nvim_buf_set_var(bufnr, 'lsp_floating_preview', floating_winnr)
+  end
+
+  local augroup_name = ('closing_floating_preview_%d'):format(floating_winnr)
+  local ok =
+    pcall(api.nvim_get_autocmds, { group = augroup_name, pattern = tostring(floating_winnr) })
+  if not ok then
+    api.nvim_create_autocmd('WinClosed', {
+      group = api.nvim_create_augroup(augroup_name, {}),
+      pattern = tostring(floating_winnr),
+      callback = function()
+        if api.nvim_buf_is_valid(bufnr) then
+          vim.b[bufnr].lsp_floating_preview = nil
+        end
+        api.nvim_del_augroup_by_name(augroup_name)
+      end,
+    })
   end
 
   if do_stylize then
