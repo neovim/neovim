@@ -36,6 +36,7 @@
 "   2024 Nov 07 by Vim Project: fix a few issues with netrw tree listing (#15996)
 "   2024 Nov 10 by Vim Project: directory symlink not resolved in tree view (#16020)
 "   2024 Nov 14 by Vim Project: small fixes to netrw#BrowseX (#16056)
+"   2024 Nov 23 by Vim Project: update decompress defaults (#16104)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -360,7 +361,39 @@ call s:NetrwInit("g:netrw_cygdrive","/cygdrive")
 " Default values - d-g ---------- {{{3
 call s:NetrwInit("s:didstarstar",0)
 call s:NetrwInit("g:netrw_dirhistcnt"      , 0)
-call s:NetrwInit("g:netrw_decompress"       , '{ ".gz" : "gunzip", ".bz2" : "bunzip2", ".zip" : "unzip", ".tar" : "tar -xf", ".xz" : "unxz" }')
+let s:xz_opt = has('unix') ? "XZ_OPT=-T0" :
+		\ (has("win32") && &shell =~? '\vcmd(\.exe)?$' ?
+		\ "setx XZ_OPT=-T0 &&" : "")
+call s:NetrwInit("g:netrw_decompress ", "{"
+            \ .."'.lz4':      'lz4 -d',"
+            \ .."'.lzo':      'lzop -d',"
+            \ .."'.lz':       'lzip -dk',"
+            \ .."'.7z':       '7za x',"
+            \ .."'.001':      '7za x',"
+            \ .."'.zip':      'unzip',"
+            \ .."'.bz':       'bunzip2 -k',"
+            \ .."'.bz2':      'bunzip2 -k',"
+            \ .."'.gz':       'gunzip -k',"
+            \ .."'.lzma':     'unlzma -T0 -k',"
+            \ .."'.xz':       'unxz -T0 -k',"
+            \ .."'.zst':      'zstd -T0 -d',"
+            \ .."'.Z':        'uncompress -k',"
+            \ .."'.tar':      'tar -xvf',"
+            \ .."'.tar.bz':   'tar -xvjf',"
+            \ .."'.tar.bz2':  'tar -xvjf',"
+            \ .."'.tbz':      'tar -xvjf',"
+            \ .."'.tbz2':     'tar -xvjf',"
+            \ .."'.tar.gz':   'tar -xvzf',"
+            \ .."'.tgz':      'tar -xvzf',"
+            \ .."'.tar.lzma': '"..s:xz_opt.." tar -xvf --lzma',"
+            \ .."'.tlz':      '"..s:xz_opt.." tar -xvf --lzma',"
+            \ .."'.tar.xz':   '"..s:xz_opt.." tar -xvfJ',"
+            \ .."'.txz':      '"..s:xz_opt.." tar -xvfJ',"
+            \ .."'.tar.zst':  '"..s:xz_opt.." tar -xvf --use-compress-program=unzstd',"
+            \ .."'.tzst':     '"..s:xz_opt.." tar -xvf --use-compress-program=unzstd',"
+            \ .."'.rar':      '"..(executable("unrar")?"unrar x -ad":"rar x -ad").."'"
+            \ .."}")
+unlet s:xz_opt
 call s:NetrwInit("g:netrw_dirhistmax"       , 10)
 call s:NetrwInit("g:netrw_fastbrowse"       , 1)
 call s:NetrwInit("g:netrw_ftp_browse_reject", '^total\s\+\d\+$\|^Trying\s\+\d\+.*$\|^KERBEROS_V\d rejected\|^Security extensions not\|No such file\|: connect to address [0-9a-fA-F:]*: No route to host$')
@@ -6495,7 +6528,6 @@ fun! s:NetrwMarkFileArgList(islocal,tomflist)
     NetrwKeepj call winrestview(svpos)
    endif
   endif
-
 endfun
 
 " ---------------------------------------------------------------------
@@ -6521,7 +6553,7 @@ fun! s:NetrwMarkFileCompress(islocal)
 
    " for every filename in the marked list
    for fname in s:netrwmarkfilelist_{curbufnr}
-    let sfx= substitute(fname,'^.\{-}\(\.\a\+\)$','\1','')
+    let sfx= substitute(fname,'^.\{-}\(\.[[:alnum:]]\+\)$','\1','')
     if exists("g:netrw_decompress['".sfx."']")
      " fname has a suffix indicating that its compressed; apply associated decompression routine
      let exe= g:netrw_decompress[sfx]

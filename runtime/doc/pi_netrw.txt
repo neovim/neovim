@@ -2645,10 +2645,34 @@ your browsing preferences.  (see also: |netrw-settings|)
 				  netrw last saw |g:netrw_cursor| >= 5 or when
 				  netrw was initially run.
 
-  *g:netrw_decompress*		= { ".gz"  : "gunzip" ,
-				    ".bz2" : "bunzip2" ,
-				    ".zip" : "unzip" ,
-				    ".tar" : "tar -xf"}
+  *g:netrw_decompress*		= { ".lz4":	 "lz4 -d",
+				    ".lzo":	 "lzop -d",
+				    ".lz":	 "lzip -dk",
+				    ".7z":	 "7za x",
+				    ".001":	 "7za x",
+				    ".tar.bz":	 "tar -xvjf",
+				    ".tar.bz2":  "tar -xvjf",
+				    ".tbz":	 "tar -xvjf",
+				    ".tbz2":	 "tar -xvjf",
+				    ".tar.gz":	 "tar -xvzf",
+				    ".tgz":	 "tar -xvzf",
+				    ".tar.zst":  "tar --use-compress-program=unzstd -xvf",
+				    ".tzst":	 "tar --use-compress-program=unzstd -xvf",
+				    ".tar":	 "tar -xvf",
+				    ".zip":	 "unzip",
+				    ".bz":	 "bunzip2 -k",
+				    ".bz2":	 "bunzip2 -k",
+				    ".gz":	 "gunzip -k",
+				    ".lzma":	 "unlzma -T0 -k",
+				    ".xz":	 "unxz -T0 -k",
+				    ".zst":	 "zstd -T0 -d",
+				    ".Z":	 "uncompress -k",
+				    ".rar":	 "unrar x -ad",
+				    ".tar.lzma": "tar --lzma -xvf",
+				    ".tlz":	 "tar --lzma -xvf",
+				    ".tar.xz":	 "tar -xvJf",
+				    ".txz":	 "tar -xvJf"}
+
 				  A dictionary mapping suffices to
 				  decompression programs.
 
