@@ -58,11 +58,11 @@ describe('mbyte', function()
       lib.schar_get(buf, lib.utfc_ptr2schar(to_string(seq), firstc))
       local str = ffi.string(buf)
       if 1 > 2 then -- for debugging
-        local tabel = {}
+        local tbl = {}
         for i = 1, #str do
-          table.insert(tabel, string.format('0x%02x', string.byte(str, i)))
+          table.insert(tbl, string.format('0x%02x', string.byte(str, i)))
         end
-        print('{ ' .. table.concat(tabel, ', ') .. ' }')
+        print('{ ' .. table.concat(tbl, ', ') .. ' }')
         io.stdout:flush()
       end
       return { str, firstc[0] }
