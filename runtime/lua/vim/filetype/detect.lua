@@ -237,7 +237,8 @@ end
 --- Debian Control
 --- @type vim.filetype.mapfn
 function M.control(_, bufnr)
-  if getline(bufnr, 1):find('^Source:') then
+  local line1 = getline(bufnr, 1)
+  if line1 and findany(line1, { '^Source:', '^Package:' }) then
     return 'debcontrol'
   end
 end
