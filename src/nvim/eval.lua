@@ -9159,6 +9159,7 @@ M.funcs = {
       { 'timeout', 'integer' },
       { 'skip', 'string|function' },
     },
+    returns = 'integer',
     signature = 'search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])',
   },
   searchcount = {
