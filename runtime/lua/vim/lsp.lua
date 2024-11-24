@@ -114,6 +114,22 @@ function lsp._unsupported_method(method)
   return msg
 end
 
+---@private
+---@param workspace_folders string|lsp.WorkspaceFolder[]?
+---@return lsp.WorkspaceFolder[]?
+function lsp._get_workspace_folders(workspace_folders)
+  if type(workspace_folders) == 'table' then
+    return workspace_folders
+  elseif type(workspace_folders) == 'string' then
+    return {
+      {
+        uri = vim.uri_from_fname(workspace_folders),
+        name = workspace_folders,
+      },
+    }
+  end
+end
+
 local wait_result_reason = { [-1] = 'timeout', [-2] = 'interrupted', [-3] = 'error' }
 
 local format_line_ending = {
@@ -196,19 +212,24 @@ local function reuse_client_default(client, config)
     return false
   end
 
-  if config.root_dir then
-    local root = vim.uri_from_fname(config.root_dir)
-    for _, dir in ipairs(client.workspace_folders or {}) do
-      -- note: do not need to check client.root_dir since that should be client.workspace_folders[1]
-      if root == dir.uri then
-        return true
+  local config_folders = lsp._get_workspace_folders(config.workspace_folders or config.root_dir)
+    or {}
+  local config_folders_included = 0
+
+  if not next(config_folders) then
+    return false
+  end
+
+  for _, config_folder in ipairs(config_folders) do
+    for _, client_folder in ipairs(client.workspace_folders) do
+      if config_folder.uri == client_folder.uri then
+        config_folders_included = config_folders_included + 1
+        break
       end
     end
   end
 
-  -- TODO(lewis6991): also check config.workspace_folders
-
-  return false
+  return config_folders_included == #config_folders
 end
 
 --- Reset defaults set by `set_defaults`.
@@ -311,9 +332,10 @@ end
 --- @inlinedoc
 ---
 --- Predicate used to decide if a client should be re-used. Used on all
---- running clients. The default implementation re-uses a client if name and
---- root_dir matches.
---- @field reuse_client? (fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean)
+--- running clients. The default implementation re-uses a client if it has the
+--- same name and if the given workspace folders (or root_dir) are all included
+--- in the client's workspace folders.
+--- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
 ---
 --- Buffer handle to attach to if starting or re-using a client (0 for current).
 --- @field bufnr? integer

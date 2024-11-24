@@ -365,21 +365,6 @@ local function get_name(id, config)
   return tostring(id)
 end
 
---- @param workspace_folders string|lsp.WorkspaceFolder[]?
---- @return lsp.WorkspaceFolder[]?
-local function get_workspace_folders(workspace_folders)
-  if type(workspace_folders) == 'table' then
-    return workspace_folders
-  elseif type(workspace_folders) == 'string' then
-    return {
-      {
-        uri = vim.uri_from_fname(workspace_folders),
-        name = workspace_folders,
-      },
-    }
-  end
-end
-
 --- @generic T
 --- @param x elem_or_list<T>?
 --- @return T[]
@@ -417,7 +402,7 @@ function Client.create(config)
     flags = config.flags or {},
     get_language_id = config.get_language_id or default_get_language_id,
     capabilities = config.capabilities or lsp.protocol.make_client_capabilities(),
-    workspace_folders = get_workspace_folders(config.workspace_folders or config.root_dir),
+    workspace_folders = lsp._get_workspace_folders(config.workspace_folders or config.root_dir),
     root_dir = config.root_dir,
     _before_init_cb = config.before_init,
     _on_init_cbs = ensure_list(config.on_init),
@@ -1174,7 +1159,7 @@ function Client:_add_workspace_folder(dir)
     end
   end
 
-  local wf = assert(get_workspace_folders(dir))
+  local wf = assert(lsp._get_workspace_folders(dir))
 
   self:notify(ms.workspace_didChangeWorkspaceFolders, {
     event = { added = wf, removed = {} },
@@ -1189,7 +1174,7 @@ end
 --- Remove a directory to the workspace folders.
 --- @param dir string?
 function Client:_remove_workspace_folder(dir)
-  local wf = assert(get_workspace_folders(dir))
+  local wf = assert(lsp._get_workspace_folders(dir))
 
   self:notify(ms.workspace_didChangeWorkspaceFolders, {
     event = { added = {}, removed = wf },

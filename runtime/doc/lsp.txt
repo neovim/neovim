@@ -872,7 +872,9 @@ start({config}, {opts})                                      *vim.lsp.start()*
                     (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
                     Predicate used to decide if a client should be re-used.
                     Used on all running clients. The default implementation
-                    re-uses a client if name and root_dir matches.
+                    re-uses a client if it has the same name and if the given
+                    workspace folders (or root_dir) are all included in the
+                    client's workspace folders.
                   • {bufnr}? (`integer`) Buffer handle to attach to if
                     starting or re-using a client (0 for current).
                   • {attach}? (`boolean`) Whether to attach the client to a
