@@ -211,7 +211,7 @@ func s:GetFilenameChecks() abort
     \ 'datascript': ['file.ds'],
     \ 'dcd': ['file.dcd'],
     \ 'debchangelog': ['changelog.Debian', 'changelog.dch', 'NEWS.Debian', 'NEWS.dch', '/debian/changelog'],
-    \ 'debcontrol': ['/debian/control', 'any/debian/control'],
+    \ 'debcontrol': ['/debian/control', 'any/debian/control', 'any/DEBIAN/control'],
     \ 'debcopyright': ['/debian/copyright', 'any/debian/copyright'],
     \ 'debsources': ['/etc/apt/sources.list', '/etc/apt/sources.list.d/file.list', 'any/etc/apt/sources.list', 'any/etc/apt/sources.list.d/file.list'],
     \ 'deb822sources': ['/etc/apt/sources.list.d/file.sources', 'any/etc/apt/sources.list.d/file.sources'],
