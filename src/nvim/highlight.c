@@ -1075,10 +1075,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
       return hlattrs;
     }
     if (HAS_KEY_X(dict, global_link)) {
-      *link_id = object_to_hl_id(dict->global_link, "link", err);
+      *link_id = (int)dict->global_link;
       mask |= HL_GLOBAL;
     } else {
-      *link_id = object_to_hl_id(dict->link, "link", err);
+      *link_id = (int)dict->link;
     }
 
     if (ERROR_SET(err)) {

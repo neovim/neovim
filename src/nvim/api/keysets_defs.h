@@ -8,18 +8,18 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__context_;
-  Array types;
+  ArrayOf(String) types;
 } Dict(context);
 
 typedef struct {
   OptionalKeys is_set__set_decoration_provider_;
-  LuaRef on_start;
-  LuaRef on_buf;
-  LuaRef on_win;
-  LuaRef on_line;
-  LuaRef on_end;
-  LuaRef _on_hl_def;
-  LuaRef _on_spell_nav;
+  LuaRefOf(("start" _, Integer tick)) on_start;
+  LuaRefOf(("buf" _, Integer bufnr, Integer tick)) on_buf;
+  LuaRefOf(("win" _, Integer winid, Integer bufnr, Integer toprow, Integer botrow)) on_win;
+  LuaRefOf(("line" _, Integer winid, Integer bufnr, Integer row)) on_line;
+  LuaRefOf(("end" _, Integer tick)) on_end;
+  LuaRefOf(("hl_def" _)) _on_hl_def;
+  LuaRefOf(("spell_nav" _)) _on_spell_nav;
 } Dict(set_decoration_provider);
 
 typedef struct {
@@ -116,7 +116,7 @@ typedef struct {
   String relative;
   String split;
   Window win;
-  Array bufpos;
+  ArrayOf(Integer) bufpos;
   Boolean external;
   Boolean focusable;
   Boolean mouse;
@@ -172,17 +172,17 @@ typedef struct {
   Boolean altfont;
   Boolean nocombine;
   Boolean default_ DictKey(default);
-  Object cterm;
-  Object foreground;
-  Object fg;
-  Object background;
-  Object bg;
-  Object ctermfg;
-  Object ctermbg;
-  Object special;
-  Object sp;
-  Object link;
-  Object global_link;
+  Union(Integer, String) cterm;
+  Union(Integer, String) foreground;
+  Union(Integer, String) fg;
+  Union(Integer, String) background;
+  Union(Integer, String) bg;
+  Union(Integer, String) ctermfg;
+  Union(Integer, String) ctermbg;
+  Union(Integer, String) special;
+  Union(Integer, String) sp;
+  HLGroupID link;
+  HLGroupID global_link;
   Boolean fallback;
   Integer blend;
   Boolean fg_indexed;
@@ -230,9 +230,9 @@ typedef struct {
 typedef struct {
   OptionalKeys is_set__clear_autocmds_;
   Buffer buffer;
-  Object event;
-  Object group;
-  Object pattern;
+  Union(String, ArrayOf(String)) event;
+  Union(Integer, String) group;
+  Union(String, ArrayOf(String)) pattern;
 } Dict(clear_autocmds);
 
 typedef struct {
@@ -241,31 +241,32 @@ typedef struct {
   Object callback;
   String command;
   String desc;
-  Object group;
+  Union(Integer, String) group;
   Boolean nested;
   Boolean once;
-  Object pattern;
+  Union(String, ArrayOf(String)) pattern;
 } Dict(create_autocmd);
 
 typedef struct {
   OptionalKeys is_set__exec_autocmds_;
   Buffer buffer;
-  Object group;
+  Union(Integer, String) group;
   Boolean modeline;
-  Object pattern;
+  Union(String, ArrayOf(String)) pattern;
   Object data;
 } Dict(exec_autocmds);
 
 typedef struct {
   OptionalKeys is_set__get_autocmds_;
-  Object event;
-  Object group;
-  Object pattern;
-  Object buffer;
+  Union(String, ArrayOf(String)) event;
+  Union(Integer, String) group;
+  Union(String, ArrayOf(String)) pattern;
+  Union(Integer, ArrayOf(Integer)) buffer;
 } Dict(get_autocmds);
 
 typedef struct {
-  Object clear;
+  OptionalKeys is_set__create_augroup_;
+  Boolean clear;
 } Dict(create_augroup);
 
 typedef struct {
@@ -275,12 +276,12 @@ typedef struct {
   Integer count;
   String reg;
   Boolean bang;
-  Array args;
+  ArrayOf(String) args;
   Dict magic;
   Dict mods;
-  Object nargs;
-  Object addr;
-  Object nextcmd;
+  Union(Integer, String) nargs;
+  String addr;
+  String nextcmd;
 } Dict(cmd);
 
 typedef struct {
@@ -333,11 +334,30 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__buf_attach_;
-  LuaRef on_lines;
-  LuaRef on_bytes;
-  LuaRef on_changedtick;
-  LuaRef on_detach;
-  LuaRef on_reload;
+  LuaRefOf(("lines" _,
+            Integer bufnr,
+            Integer changedtick,
+            Integer first,
+            Integer last_old,
+            Integer last_new,
+            Integer byte_count,
+            Integer *deleted_codepoints,
+            Integer *deleted_codeunits), *Boolean) on_lines;
+  LuaRefOf(("bytes" _,
+            Integer bufnr,
+            Integer changedtick,
+            Integer start_row,
+            Integer start_col,
+            Integer start_byte,
+            Integer old_end_row,
+            Integer old_end_col,
+            Integer old_end_byte,
+            Integer new_end_row,
+            Integer new_end_col,
+            Integer new_end_byte), *Boolean) on_bytes;
+  LuaRefOf(("changedtick" _, Integer bufnr, Integer changedtick)) on_changedtick;
+  LuaRefOf(("detach" _, Integer bufnr)) on_detach;
+  LuaRefOf(("reload" _, Integer bufnr)) on_reload;
   Boolean utf_sizes;
   Boolean preview;
 } Dict(buf_attach);
@@ -350,7 +370,7 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__open_term_;
-  LuaRef on_input;
+  LuaRefOf(("input" _, Integer term, Integer bufnr, any data)) on_input;
   Boolean force_crlf;
 } Dict(open_term);
 
@@ -361,12 +381,13 @@ typedef struct {
 
 typedef struct {
   OptionalKeys is_set__xdl_diff_;
-  LuaRef on_hunk;
+  LuaRefOf((Integer start_a, Integer count_a, Integer start_b, Integer count_b),
+           *Integer) on_hunk;
   String result_type;
   String algorithm;
   Integer ctxlen;
   Integer interhunkctxlen;
-  Object linematch;
+  Union(Boolean, Integer) linematch;
   Boolean ignore_whitespace;
   Boolean ignore_whitespace_change;
   Boolean ignore_whitespace_change_at_eol;

@@ -347,12 +347,16 @@ for _, k in ipairs(keysets) do
   local function typename(type)
     if type == 'HLGroupID' then
       return 'kObjectTypeInteger'
+    elseif not type or vim.startswith(type, 'Union') then
+      return 'kObjectTypeNil'
+    elseif vim.startswith(type, 'LuaRefOf') then
+      return 'kObjectTypeLuaRef'
     elseif type == 'StringArray' then
       return 'kUnpackTypeStringArray'
-    elseif type ~= nil then
-      return 'kObjectType' .. type
+    elseif vim.startswith(type, 'ArrayOf') then
+      return 'kObjectTypeArray'
     else
-      return 'kObjectTypeNil'
+      return 'kObjectType' .. type
     end
   end
 

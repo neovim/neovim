@@ -1012,7 +1012,7 @@ function vim.api.nvim_create_namespace(name) end
 --- ```
 ---
 --- @param name string Name of the new user command. Must begin with an uppercase letter.
---- @param command any Replacement command to execute when this user command is executed. When called
+--- @param command string|fun(args: vim.api.keyset.create_user_command.command_args) Replacement command to execute when this user command is executed. When called
 --- from Lua, the command can also be a Lua function. The function is called with a
 --- single table argument that contains the following keys:
 --- - name: (string) Command name

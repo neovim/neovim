@@ -47,6 +47,18 @@ local LUA_API_RETURN_OVERRIDES = {
   nvim_win_get_config = 'vim.api.keyset.win_config',
 }
 
+local LUA_API_KEYSET_OVERRIDES = {
+  create_autocmd = {
+    callback = 'string|(fun(args: vim.api.keyset.create_autocmd.callback_args): boolean?)',
+  },
+}
+
+local LUA_API_PARAM_OVERRIDES = {
+  nvim_create_user_command = {
+    command = 'string|fun(args: vim.api.keyset.create_user_command.command_args)',
+  },
+}
+
 local LUA_META_HEADER = {
   '--- @meta _',
   '-- THIS FILE IS GENERATED',
@@ -118,7 +130,7 @@ local API_TYPES = {
   LuaRef = 'function',
   Dict = 'table<string,any>',
   Float = 'number',
-  HLGroupID = 'number|string',
+  HLGroupID = 'integer|string',
   void = '',
 }
 
@@ -133,6 +145,10 @@ end
 --- @param t string
 --- @return string
 local function api_type(t)
+  if vim.startswith(t, '*') then
+    return api_type(t:sub(2)) .. '?'
+  end
+
   local as0 = t:match('^ArrayOf%((.*)%)')
   if as0 then
     local as = split(as0, ', ')
@@ -147,6 +163,33 @@ local function api_type(t)
   local d0 = t:match('^DictOf%((.*)%)')
   if d0 then
     return 'table<string,' .. api_type(d0) .. '>'
+  end
+
+  local u = t:match('^Union%((.*)%)')
+  if u then
+    local us = vim.split(u, ',%s*')
+    return table.concat(vim.tbl_map(api_type, us), '|')
+  end
+
+  local l = t:match('^LuaRefOf%((.*)%)')
+  if l then
+    --- @type string
+    l = l:gsub('%s+', ' ')
+    --- @type string?, string?
+    local as, r = l:match('%((.*)%),%s*(.*)')
+    if not as then
+      --- @type string
+      as = assert(l:match('%((.*)%)'))
+    end
+
+    local as1 = {} --- @type string[]
+    for a in vim.gsplit(as, ',%s') do
+      local a1 = vim.split(a, '%s+', { trimempty = true })
+      local nm = a1[2]:gsub('%*(.*)$', '%1?')
+      as1[#as1 + 1] = nm .. ': ' .. api_type(a1[1])
+    end
+
+    return ('fun(%s)%s'):format(table.concat(as1, ', '), r and ': ' .. api_type(r) or '')
   end
 
   return API_TYPES[t] or t
@@ -251,11 +294,13 @@ local function get_api_meta()
       sees[#sees + 1] = see.desc
     end
 
+    local pty_overrides = LUA_API_PARAM_OVERRIDES[fun.name] or {}
+
     local params = {} --- @type [string,string][]
     for _, p in ipairs(fun.params) do
       params[#params + 1] = {
         p.name,
-        api_type(p.type),
+        api_type(pty_overrides[p.name] or p.type),
         not deprecated and p.desc or nil,
       }
     end
@@ -382,9 +427,11 @@ local function get_api_keysets_meta()
   local keysets = metadata.keysets
 
   for _, k in ipairs(keysets) do
+    local pty_overrides = LUA_API_KEYSET_OVERRIDES[k.name] or {}
     local params = {}
     for _, key in ipairs(k.keys) do
-      table.insert(params, { key .. '?', api_type(k.types[key] or 'any') })
+      local pty = pty_overrides[key] or k.types[key] or 'any'
+      table.insert(params, { key .. '?', api_type(pty) })
     end
     ret[k.name] = {
       signature = 'NA',
