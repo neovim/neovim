@@ -1094,7 +1094,7 @@ describe('vterm', function()
     push('\x1b[0F', vt)
     cursor(0, 0, state)
 
-    -- Cursor Horizonal Absolute
+    -- Cursor Horizontal Absolute
     push('\n', vt)
     cursor(1, 0, state)
     push('\x1b[20G', vt)
@@ -3067,7 +3067,7 @@ describe('vterm', function()
       screen
     )
 
-    -- Outputing CJK doublewidth in 80th column should wraparound to next line and not crash"
+    -- Outputting CJK doublewidth in 80th column should wraparound to next line and not crash"
     reset(nil, screen)
     push('\x1b[80G\xEF\xBC\x90', vt)
     screen_cell(0, 79, '{} width=1 attrs={} fg=rgb(240,240,240) bg=rgb(0,0,0)', screen)
