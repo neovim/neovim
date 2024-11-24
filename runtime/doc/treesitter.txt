@@ -70,7 +70,7 @@ adds arbitrary metadata and conditional data to a match.
 
 Queries are written in a lisp-like language documented in
 https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax
-Note: The predicates listed there page differ from those Nvim supports. See
+Note: The predicates listed there differ from those Nvim supports. See
 |treesitter-predicates| for a complete list of predicates supported by Nvim.
 
 Nvim looks for queries as `*.scm` files in a `queries` directory under
