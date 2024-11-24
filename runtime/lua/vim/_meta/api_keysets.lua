@@ -236,6 +236,7 @@ error('Cannot require a meta file')
 --- @field on_end? fun(_: "end", tick: integer)
 --- @field _on_hl_def? fun(_: "hl_def")
 --- @field _on_spell_nav? fun(_: "spell_nav")
+--- @field _on_conceal_line? fun(_: "conceal_line")
 
 --- @class vim.api.keyset.set_extmark
 --- @field id? integer
