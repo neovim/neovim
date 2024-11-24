@@ -406,6 +406,8 @@ TREESITTER
 • |LanguageTree:is_valid()| now accepts a range parameter to narrow the scope
   of the validity check.
 • |:InspectTree| now shows which nodes are missing.
+• Bundled markdown highlight queries use `conceal_lines` metadata to conceal
+  code block fence lines vertically.
 
 TUI
 

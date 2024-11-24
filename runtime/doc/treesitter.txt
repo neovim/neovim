@@ -492,10 +492,10 @@ capture marks comments as to be checked: >query
 There is also `@nospell` which disables spellchecking regions with `@spell`.
 
                                                 *treesitter-highlight-conceal*
-Treesitter highlighting supports |conceal| via the `conceal` metadata. By
-convention, nodes to be concealed are captured as `@conceal`, but any capture
-can be used. For example, the following query can be used to hide code block
-delimiters in Markdown: >query
+Treesitter highlighting supports |conceal| via the `conceal` and `conceal_lines`
+metadata. By convention, nodes to be concealed are captured as `@conceal`, but
+any capture can be used. For example, the following query can be used to hide
+code block delimiters in Markdown: >query
 
     ((fenced_code_block_delimiter) @conceal (#set! conceal ""))
 <
@@ -506,7 +506,13 @@ still highlighted the same as other operators: >query
 
     "!=" @operator (#set! conceal "≠")
 <
-Conceals specified in this way respect 'conceallevel'.
+To conceal an entire line (do not draw it at all), a query with `conceal_lines`
+metadata can be used: >query
+
+    ((comment) @comment @spell
+      (#set! conceal_lines ""))
+<
+Conceals specified in this way respect 'conceallevel' and 'concealcursor'.
 
 Note that although you can use any string for `conceal`, only the first
 character will be used: >query
