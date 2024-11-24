@@ -68,7 +68,7 @@ do
   --- https://github.com/tpope/vim-scriptease style mapping for `:Inspect`.
   ---
   --- See |zS-default|
-  vim.keymap.set('n', 'zS', '<Cmd>Inspect<CR>', { desc = ':help zS-default' })
+  vim.keymap.set('n', 'zS', vim.show_pos, { desc = ':help zS-default' })
 
   --- Set undo points when deleting text in insert mode.
   ---
