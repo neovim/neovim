@@ -5894,10 +5894,12 @@ return {
     },
     {
       abbreviation = 'mhi',
+      cb = 'did_set_msghistory',
       defaults = { if_true = 500 },
       desc = [=[
         Determines how many entries are remembered in the |:messages| history.
         The maximum value is 10000.
+        Setting it to zero clears the message history.
       ]=],
       full_name = 'msghistory',
       scope = { 'global' },

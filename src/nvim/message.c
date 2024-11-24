@@ -982,11 +982,6 @@ static void add_msg_hist_multihl(const char *s, int len, int hl_id, bool multili
     return;
   }
 
-  // Don't let the message history get too big
-  while (msg_hist_len > p_mhi) {
-    delete_first_msg();
-  }
-
   // allocate an entry and add the message at the end of the history
   struct msg_hist *p = xmalloc(sizeof(struct msg_hist));
   if (s) {
@@ -1018,6 +1013,8 @@ static void add_msg_hist_multihl(const char *s, int len, int hl_id, bool multili
     first_msg_hist = last_msg_hist;
   }
   msg_hist_len++;
+
+  check_msg_hist();
 }
 
 /// Delete the first (oldest) message from the history.
@@ -1039,6 +1036,14 @@ int delete_first_msg(void)
   xfree(p);
   msg_hist_len--;
   return OK;
+}
+
+void check_msg_hist(void)
+{
+  // Don't let the message history get too big
+  while (msg_hist_len > 0 && msg_hist_len > p_mhi) {
+    (void)delete_first_msg();
+  }
 }
 
 /// :messages command implementation
