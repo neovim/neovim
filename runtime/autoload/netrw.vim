@@ -37,6 +37,7 @@
 "   2024 Nov 10 by Vim Project: directory symlink not resolved in tree view (#16020)
 "   2024 Nov 14 by Vim Project: small fixes to netrw#BrowseX (#16056)
 "   2024 Nov 23 by Vim Project: update decompress defaults (#16104)
+"   2024 Nov 23 by Vim Project: fix powershell escaping issues (#16094)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -11313,9 +11314,7 @@ endfun
 " ---------------------------------------------------------------------
 " s:NetrwExe: executes a string using "!" {{{2
 fun! s:NetrwExe(cmd)
-"  call Dfunc("s:NetrwExe(a:cmd<".a:cmd.">)")
-  if has("win32")
-"    call Decho("using win32:",expand("<slnum>"))
+  if has("win32") && exepath(&shell) !~? '\v[\/]?(cmd|pwsh|powershell)(\.exe)?$' && !g:netrw_cygwin
     let savedShell=[&shell,&shellcmdflag,&shellxquote,&shellxescape,&shellquote,&shellpipe,&shellredir,&shellslash]
     set shell& shellcmdflag& shellxquote& shellxescape&
     set shellquote& shellpipe& shellredir& shellslash&
@@ -11325,13 +11324,11 @@ fun! s:NetrwExe(cmd)
       let [&shell,&shellcmdflag,&shellxquote,&shellxescape,&shellquote,&shellpipe,&shellredir,&shellslash] = savedShell
     endtry
   else
-"   call Decho("exe ".a:cmd,'~'.expand("<slnum>"))
    exe a:cmd
   endif
   if v:shell_error
    call netrw#ErrorMsg(s:WARNING,"shell signalled an error",106)
   endif
-"  call Dret("s:NetrwExe : v:shell_error=".v:shell_error)
 endfun
 
 " ---------------------------------------------------------------------
