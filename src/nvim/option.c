@@ -2199,6 +2199,13 @@ static const char *did_set_modified(optset_T *args)
   return NULL;
 }
 
+/// Process the updated 'msghistory' option value.
+static const char *did_set_msghistory(optset_T *args FUNC_ATTR_UNUSED)
+{
+  check_msg_hist();
+  return NULL;
+}
+
 /// Process the updated 'number' or 'relativenumber' option value.
 static const char *did_set_number_relativenumber(optset_T *args)
 {

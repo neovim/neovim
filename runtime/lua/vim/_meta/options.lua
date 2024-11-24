@@ -4381,6 +4381,7 @@ vim.go.mouset = vim.go.mousetime
 
 --- Determines how many entries are remembered in the `:messages` history.
 --- The maximum value is 10000.
+--- Setting it to zero clears the message history.
 ---
 --- @type integer
 vim.o.msghistory = 500
