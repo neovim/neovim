@@ -291,6 +291,8 @@ TREESITTER
 • |treesitter-directive-trim!| can trim all whitespace (not just empty lines)
   from both sides of a node.
 • |vim.treesitter.get_captures_at_pos()| now returns the `id` of each capture
+• Bundled markdown highlight queries use `conceal_lines` metadata to conceal
+  code block fence lines vertically.
 
 TUI
 
