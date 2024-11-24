@@ -131,7 +131,8 @@ https://github.com/cascent/neovim-cygwin was built on Cygwin 2.9.0. Newer `libuv
 1. From the MSYS2 shell, install these packages:
    ```
    pacman -S \
-       mingw-w64-ucrt-x86_64-{gcc,cmake,make,ninja,diffutils}
+       mingw-w64-ucrt-x86_64-gcc \
+       mingw-w64-x86_64-{cmake,make,ninja,diffutils}
    ```
 2. From the Windows Command Prompt (`cmd.exe`), set up the `PATH` and build.
 
