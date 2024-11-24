@@ -456,7 +456,7 @@ describe('semantic token highlighting', function()
         vim.notify = function(...)
           table.insert(_G.notifications, 1, { ... })
         end
-        return vim.lsp.start_client({ name = 'dummy', cmd = _G.server.cmd })
+        return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd }, { attach = false })
       end)
       eq(false, exec_lua('return vim.lsp.buf_is_attached(0, ...)', client_id))
 

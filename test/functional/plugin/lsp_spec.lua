@@ -95,7 +95,7 @@ describe('LSP', function()
       exec_lua(function()
         _G.lsp = require('vim.lsp')
         function _G.test__start_client()
-          return vim.lsp.start_client {
+          return vim.lsp.start({
             cmd_env = {
               NVIM_LOG_FILE = fake_lsp_logfile,
               NVIM_APPNAME = 'nvim_lsp_test',
@@ -112,7 +112,7 @@ describe('LSP', function()
                 name = 'test_folder',
               },
             },
-          }
+          }, { attach = false })
         end
         _G.TEST_CLIENT1 = _G.test__start_client()
       end)

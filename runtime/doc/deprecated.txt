@@ -64,6 +64,7 @@ LSP
 • `client.is_stopped()`			Use |Client:is_stopped()| instead.
 • `client.supports_method()`		Use |Client:supports_method()| instead.
 • `client.on_attach()`			Use |Client:on_attach()| instead.
+• `vim.lsp.start_client()`		Use |vim.lsp.start()| instead.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*

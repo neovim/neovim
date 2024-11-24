@@ -89,7 +89,7 @@ describe('vim.lsp.diagnostic', function()
         return extmarks
       end
 
-      client_id = assert(vim.lsp.start_client {
+      client_id = assert(vim.lsp.start({
         cmd_env = {
           NVIM_LUA_NOTRACK = '1',
         },
@@ -101,7 +101,7 @@ describe('vim.lsp.diagnostic', function()
           '--headless',
         },
         offset_encoding = 'utf-16',
-      })
+      }, { attach = false }))
     end)
 
     fake_uri = 'file:///fake/uri'
