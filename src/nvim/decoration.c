@@ -12,6 +12,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
@@ -844,9 +845,15 @@ static const uint32_t conceal_filter[kMTMetaCount] = {[kMTMetaConcealLines] = kM
 
 bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
 {
-  if (wp->w_p_cole < 2 || !buf_meta_total(wp->w_buffer, kMTMetaConcealLines)
+  if (wp->w_p_cole < 2
       || (!check_cursor && ((row + 1 == wp->w_cursor.lnum) && !conceal_cursor_line(wp)))) {
     return false;
+  }
+
+  size_t keys = wp->w_buffer->b_marktree->n_keys;
+  if (!buf_meta_total(wp->w_buffer, kMTMetaConcealLines)) {
+    decor_providers_invoke_conceal_line(wp, row);
+    return wp->w_buffer->b_marktree->n_keys > keys;
   }
 
   MTPair pair;
@@ -870,13 +877,16 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
     }
     marktree_itr_next_filter(wp->w_buffer->b_marktree, itr, row + 1, 0, conceal_filter);
   }
-  return false;
+
+  decor_providers_invoke_conceal_line(wp, row);
+  return wp->w_buffer->b_marktree->n_keys > keys;
 }
 
 bool win_lines_concealed(win_T *wp)
 {
   return hasAnyFolding(wp)
-         || (wp->w_p_cole >= 2 && buf_meta_total(wp->w_buffer, kMTMetaConcealLines));
+         || (wp->w_p_cole >= 2
+             && (conceal_provider || buf_meta_total(wp->w_buffer, kMTMetaConcealLines)));
 }
 
 static const uint32_t sign_filter[kMTMetaCount] = {[kMTMetaSignText] = kMTFilterSelect,
