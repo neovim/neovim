@@ -1087,8 +1087,8 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    "menu" or "menuone". No effect if "longest" is present.
 ---
 ---    noselect Same as "noinsert", except that no menu item is
---- 	    pre-selected. If both "noinsert" and "noselect" are present,
---- 	    "noselect" has precedence.
+--- 	    pre-selected. If both "noinsert" and "noselect" are
+--- 	    present, "noselect" has precedence.
 ---
 ---    fuzzy    Enable `fuzzy-matching` for completion candidates. This
 --- 	    allows for more flexible and intuitive matching, where

@@ -8282,7 +8282,7 @@ search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]]) *search()*
                   • {skip} (`string|function?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 searchcount([{options}])                                         *searchcount()*
 		Get or update the last search count, like what is displayed

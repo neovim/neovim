@@ -7537,7 +7537,7 @@ function vim.fn.screenstring(row, col) end
 --- @param stopline? integer
 --- @param timeout? integer
 --- @param skip? string|function
---- @return any
+--- @return integer
 function vim.fn.search(pattern, flags, stopline, timeout, skip) end
 
 --- Get or update the last search count, like what is displayed
