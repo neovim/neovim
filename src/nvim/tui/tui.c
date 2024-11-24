@@ -241,15 +241,18 @@ void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
       tui->unibi_ext.sync = (int)unibi_add_ext_str(tui->ut, "Sync",
                                                    "\x1b[?2026%?%p1%{1}%-%tl%eh%;");
       break;
-    case kTermModeResizeEvents:
-      signal_watcher_stop(&tui->winch_handle);
-      tui_set_term_mode(tui, mode, true);
-      break;
     case kTermModeGraphemeClusters:
       if (!is_set) {
         tui_set_term_mode(tui, mode, true);
         tui->did_set_grapheme_cluster_mode = true;
       }
+      break;
+    case kTermModeThemeUpdates:
+      tui_set_term_mode(tui, mode, true);
+      break;
+    case kTermModeResizeEvents:
+      signal_watcher_stop(&tui->winch_handle);
+      tui_set_term_mode(tui, mode, true);
       break;
     }
   }
@@ -318,6 +321,18 @@ static void tui_reset_key_encoding(TUIData *tui)
   case kKeyEncodingLegacy:
     break;
   }
+}
+
+/// Write the OSC 11 sequence to the terminal emulator to query the current
+/// background color.
+///
+/// The response will be handled by the TermResponse autocommand created in
+/// _defaults.lua.
+void tui_query_bg_color(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  out(tui, S_LEN("\x1b]11;?\x07"));
+  flush_buf(tui);
 }
 
 /// Enable the alternate screen and emit other control sequences to start the TUI.
@@ -438,14 +453,13 @@ static void terminfo_start(TUIData *tui)
   // Enable bracketed paste
   unibi_out_ext(tui, tui->unibi_ext.enable_bracketed_paste);
 
-  // Query support for mode 2026 (Synchronized Output). Some terminals also
-  // support an older DCS sequence for synchronized output, but we will only use
-  // mode 2026.
+  // Query support for private DEC modes that Nvim can take advantage of.
   // Some terminals (such as Terminal.app) do not support DECRQM, so skip the query.
   if (!nsterm) {
     tui_request_term_mode(tui, kTermModeSynchronizedOutput);
-    tui_request_term_mode(tui, kTermModeResizeEvents);
     tui_request_term_mode(tui, kTermModeGraphemeClusters);
+    tui_request_term_mode(tui, kTermModeThemeUpdates);
+    tui_request_term_mode(tui, kTermModeResizeEvents);
   }
 
   // Don't use DECRQSS in screen or tmux, as they behave strangely when receiving it.
@@ -493,6 +507,10 @@ static void terminfo_start(TUIData *tui)
 /// Disable the alternate screen and prepare for the TUI to close.
 static void terminfo_stop(TUIData *tui)
 {
+  // Disable theme update notifications. We do this first to avoid getting any
+  // more notifications after we reset the cursor and any color palette changes.
+  tui_set_term_mode(tui, kTermModeThemeUpdates, false);
+
   // Destroy output stuff
   tui_mode_change(tui, NULL_STRING, SHAPE_IDX_N);
   tui_mouse_off(tui);
@@ -509,6 +527,7 @@ static void terminfo_stop(TUIData *tui)
   if (tui->did_set_grapheme_cluster_mode) {
     tui_set_term_mode(tui, kTermModeGraphemeClusters, false);
   }
+
   // May restore old title before exiting alternate screen.
   tui_set_title(tui, NULL_STRING);
   if (ui_client_exit_status == 0) {

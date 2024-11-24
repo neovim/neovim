@@ -546,8 +546,9 @@ do
     ---
     --- @param option string Option name
     --- @param value any Option value
-    local function setoption(option, value)
-      if vim.api.nvim_get_option_info2(option, {}).was_set then
+    --- @param force boolean? Always set the value, even if already set
+    local function setoption(option, value, force)
+      if not force and vim.api.nvim_get_option_info2(option, {}).was_set then
         -- Don't do anything if option is already set
         return
       end
@@ -563,7 +564,7 @@ do
           once = true,
           nested = true,
           callback = function()
-            setoption(option, value)
+            setoption(option, value, force)
           end,
         })
       end
@@ -645,11 +646,15 @@ do
         return nil, nil, nil
       end
 
-      local timer = assert(vim.uv.new_timer())
-
+      -- This autocommand updates the value of 'background' anytime we receive
+      -- an OSC 11 response from the terminal emulator. If the user has set
+      -- 'background' explictly then we will delete this autocommand,
+      -- effectively disabling automatic background setting.
+      local force = false
       local id = vim.api.nvim_create_autocmd('TermResponse', {
         group = group,
         nested = true,
+        desc = "Update the value of 'background' automatically based on the terminal emulator's background color",
         callback = function(args)
           local resp = args.data ---@type string
           local r, g, b = parseosc11(resp)
@@ -661,27 +666,33 @@ do
             if rr and gg and bb then
               local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
               local bg = luminance < 0.5 and 'dark' or 'light'
-              setoption('background', bg)
-            end
+              setoption('background', bg, force)
 
-            return true
+              -- On the first query response, don't force setting the option in
+              -- case the user has already set it manually. If they have, then
+              -- this autocommand will be deleted. If they haven't, then we do
+              -- want to force setting the option to override the value set by
+              -- this autocommand.
+              if not force then
+                force = true
+              end
+            end
+          end
+        end,
+      })
+
+      vim.api.nvim_create_autocmd('VimEnter', {
+        group = group,
+        nested = true,
+        once = true,
+        callback = function()
+          if vim.api.nvim_get_option_info2('background', {}).was_set then
+            vim.api.nvim_del_autocmd(id)
           end
         end,
       })
 
       io.stdout:write('\027]11;?\007')
-
-      timer:start(1000, 0, function()
-        -- Delete the autocommand if no response was received
-        vim.schedule(function()
-          -- Suppress error if autocommand has already been deleted
-          pcall(vim.api.nvim_del_autocmd, id)
-        end)
-
-        if not timer:is_closing() then
-          timer:close()
-        end
-      end)
     end
 
     --- If the TUI (term_has_truecolor) was able to determine that the host

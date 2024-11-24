@@ -160,12 +160,16 @@ void tinput_init(TermInput *input, Loop *loop)
   // initialize a timer handle for handling ESC with libtermkey
   uv_timer_init(&loop->uv, &input->timer_handle);
   input->timer_handle.data = input;
+
+  uv_timer_init(&loop->uv, &input->bg_query_timer);
+  input->bg_query_timer.data = input;
 }
 
 void tinput_destroy(TermInput *input)
 {
   map_destroy(int, &kitty_key_map);
   uv_close((uv_handle_t *)&input->timer_handle, NULL);
+  uv_close((uv_handle_t *)&input->bg_query_timer, NULL);
   rstream_may_close(&input->read_stream);
   termkey_destroy(input->tk);
 }
@@ -179,6 +183,7 @@ void tinput_stop(TermInput *input)
 {
   rstream_stop(&input->read_stream);
   uv_timer_stop(&input->timer_handle);
+  uv_timer_stop(&input->bg_query_timer);
 }
 
 static void tinput_done_event(void **argv)
@@ -474,6 +479,13 @@ static void tinput_timer_cb(uv_timer_t *handle)
   tinput_flush(input);
 }
 
+static void bg_query_timer_cb(uv_timer_t *handle)
+  FUNC_ATTR_NONNULL_ALL
+{
+  TermInput *input = handle->data;
+  tui_query_bg_color(input->tui_data);
+}
+
 /// Handle focus events.
 ///
 /// If the upcoming sequence of bytes in the input stream matches the termcode
@@ -657,6 +669,33 @@ static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
         int width_chars = args[2];
         tui_set_size(input->tui_data, width_chars, height_chars);
         ui_client_set_size(width_chars, height_chars);
+      }
+    }
+    break;
+  case 'n':
+    // Device Status Report (DSR)
+    if (nparams == 2) {
+      int args[2];
+      for (size_t i = 0; i < ARRAY_SIZE(args); i++) {
+        if (termkey_interpret_csi_param(params[i], &args[i], NULL, NULL) != TERMKEY_RES_KEY) {
+          return;
+        }
+      }
+
+      if (args[0] == 997) {
+        // Theme update notification
+        // https://github.com/contour-terminal/contour/blob/master/docs/vt-extensions/color-palette-update-notifications.md
+        // The second argument tells us whether the OS theme is set to light
+        // mode or dark mode, but all we care about is the background color of
+        // the terminal emulator. We query for that with OSC 11 and the response
+        // is handled by the autocommand created in _defaults.lua. The terminal
+        // may send us multiple notifications all at once so we use a timer to
+        // coalesce the queries.
+        if (uv_timer_get_due_in(&input->bg_query_timer) > 0) {
+          return;
+        }
+
+        uv_timer_start(&input->bg_query_timer, bg_query_timer_cb, 100, 0);
       }
     }
     break;
