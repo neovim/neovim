@@ -73,6 +73,51 @@ error('Cannot require a meta file')
 --- @field buflocal? boolean
 --- @field buffer? integer
 
+--- @class vim.api.keyset.create_autocmd.callback_args
+--- @field id integer autocommand id
+--- @field event string name of the triggered event |autocmd-events|
+--- @field group? integer autocommand group id, if any
+--- @field match string expanded value of <amatch>
+--- @field buf integer expanded value of <abuf>
+--- @field file string expanded value of <afile>
+--- @field data? any arbitrary data passed from |nvim_exec_autocmds()|                       *event-data*
+
+--- @class vim.api.keyset.create_user_command.command_args
+--- @field name string Command name
+---
+--- The args passed to the command, if any <args>
+--- @field args string
+---
+--- The args split by unescaped whitespace
+--- (when more than one argument is allowed), if any <f-args>
+--- @field fargs string[]
+---
+--- Number of arguments |:command-nargs|
+--- @field nargs string
+---
+--- "true" if the command was executed with a ! modifier <bang>
+--- @field bang boolean
+---
+--- The starting line of the command range <line1>
+--- @field line1 integer
+---
+--- The final line of the command range <line2>
+--- @field line2 integer
+---
+--- The number of items in the command range: 0, 1, or 2 <range>
+--- @field range integer
+---
+--- Any count supplied <count>
+--- @field count integer
+--- The optional register, if specified <reg>
+--- @field reg string
+--- Command modifiers, if any <mods>
+--- @field mods string
+---
+--- Command modifiers in a structured format. Has the same structure as the
+--- "mods" key of |nvim_parse_cmd()|.
+--- @field smods table
+
 --- @class vim.api.keyset.command_info
 --- @field name string
 --- @field definition string

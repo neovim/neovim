@@ -3,7 +3,7 @@ local lpeg = vim.lpeg
 -- lpeg grammar for building api metadata from a set of header files. It
 -- ignores comments and preprocessor commands and parses a very small subset
 -- of C prototypes with a limited set of types
-local P, R, S = lpeg.P, lpeg.R, lpeg.S
+local P, R, S, V = lpeg.P, lpeg.R, lpeg.S, lpeg.V
 local C, Ct, Cc, Cg = lpeg.C, lpeg.Ct, lpeg.Cc, lpeg.Cg
 
 --- @param pat vim.lpeg.Pattern
@@ -35,9 +35,39 @@ local cdoc_comment = P('///') * opt(Ct(Cg(rep(space) * rep(not_nl), 'comment')))
 local c_preproc = P('#') * rep(not_nl)
 local dllexport = P('DLLEXPORT') * rep1(ws)
 
-local typed_container = ((P('ArrayOf(') + P('DictOf(') + P('Dict(')) * rep1(any - P(')')) * P(')'))
+--- @param x vim.lpeg.Pattern
+local function comma1(x)
+  return x * rep(fill * P(',') * fill * x)
+end
 
-local c_id = (typed_container + (letter * rep(alpha)))
+-- Define the grammar
+
+local basic_id = letter * rep(alpha)
+
+local str = P('"') * rep(any - P('"')) * P('"')
+
+--- @param x vim.lpeg.Pattern
+local function paren(x)
+  return P('(') * fill * x * fill * P(')')
+end
+
+-- stylua: ignore start
+local typed_container = P({
+  'S',
+  ID = V('S') + basic_id,
+  S = (
+    (P('Union') * paren(comma1(V('ID'))))
+    + (P('ArrayOf') * paren(basic_id * opt(P(',') * fill * rep1(num))))
+    + (P('DictOf') * paren(basic_id))
+    + (P('LuaRefOf') * paren(
+      paren(comma1((V('ID') + str) * rep1(ws) * opt(P('*')) * basic_id))
+      * opt(P(',') * fill * opt(P('*')) * V('ID'))
+    ))
+    + (P('Dict') * paren(basic_id))),
+})
+-- stylua: ignore end
+
+local c_id = typed_container + basic_id
 local c_void = P('void')
 
 local c_param_type = (

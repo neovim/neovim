@@ -226,8 +226,8 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
     addr = "?";
     break;
   }
-  PUT_KEY(result, cmd, addr, CSTR_AS_OBJ(addr));
-  PUT_KEY(result, cmd, nextcmd, CSTR_AS_OBJ(ea.nextcmd));
+  PUT_KEY(result, cmd, addr, cstr_as_string(addr));
+  PUT_KEY(result, cmd, nextcmd, cstr_as_string(ea.nextcmd));
 
   // TODO(bfredl): nested keydict would be nice..
   Dict mods = arena_dict(arena, 20);

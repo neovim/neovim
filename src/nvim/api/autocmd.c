@@ -631,7 +631,7 @@ Integer nvim_create_augroup(uint64_t channel_id, String name, Dict(create_augrou
   FUNC_API_SINCE(9)
 {
   char *augroup_name = name.data;
-  bool clear_autocmds = api_object_to_bool(opts->clear, "clear", true, err);
+  bool clear_autocmds = GET_BOOL_OR_TRUE(opts, create_augroup, clear);
 
   int augroup = -1;
   WITH_SCRIPT_CONTEXT(channel_id, {
