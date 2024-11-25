@@ -1903,7 +1903,7 @@ vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
 vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
     Show all the items at a given buffer position.
 
-    Can also be shown with `:Inspect`.                              *:Inspect*
+    Can also be shown with `:Inspect`, mapped to `zS` in normal mode. *:Inspect*
 
     Attributes: ~
         Since: 0.9.0
