@@ -1534,12 +1534,13 @@ get_namespace({client_id}, {is_pull})
                      client. Defaults to push
 
                                           *vim.lsp.diagnostic.on_diagnostic()*
-on_diagnostic({_}, {result}, {ctx})
+on_diagnostic({error}, {result}, {ctx})
     |lsp-handler| for the method "textDocument/diagnostic"
 
     See |vim.diagnostic.config()| for configuration options.
 
     Parameters: ~
+      • {error}   (`lsp.ResponseError?`)
       • {result}  (`lsp.DocumentDiagnosticReport`)
       • {ctx}     (`lsp.HandlerContext`)
 
