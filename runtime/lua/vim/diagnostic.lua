@@ -1962,6 +1962,7 @@ function M.open_float(opts, ...)
     opts.focus_id = scope
   end
   local float_bufnr, winnr = vim.lsp.util.open_floating_preview(lines, 'plaintext', opts)
+  vim.bo[float_bufnr].path = vim.bo[bufnr].path
   for i, hl in ipairs(highlights) do
     local line = lines[i]
     local prefix_len = hl.prefix and hl.prefix.length or 0
