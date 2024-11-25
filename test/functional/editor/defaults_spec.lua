@@ -95,7 +95,34 @@ describe('default', function()
 
   describe('key mappings', function()
     describe('unimpaired-style mappings', function()
-      it('do not show a full stack trace #30625', function()
+      it('show the command ouptut when successful', function()
+        n.clear({ args_rm = { '--cmd' } })
+        local screen = Screen.new(40, 8)
+        n.fn.setqflist({
+          { filename = 'file1', text = 'item1' },
+          { filename = 'file2', text = 'item2' },
+        })
+
+        n.feed(']q')
+
+        screen:set_default_attr_ids({
+          [1] = { foreground = Screen.colors.NvimDarkGrey4 },
+          [2] = {
+            background = Screen.colors.NvimLightGray3,
+            foreground = Screen.colors.NvimDarkGrey3,
+          },
+        })
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {1:~                                       }|*5
+            {2:file2                 0,0-1          All}|
+            (2 of 2): item2                         |
+          ]],
+        })
+      end)
+
+      it('do not show a full stack trace when unsuccessful #30625', function()
         n.clear({ args_rm = { '--cmd' } })
         local screen = Screen.new(40, 8)
         screen:set_default_attr_ids({
