@@ -11,12 +11,16 @@ For changes in the previous release, see |news-0.10|.
                                        Type |gO| to see the table of contents.
 
 ==============================================================================
-BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
+BREAKING CHANGES IN HEAD OR EXPERIMENTAL                    *news-breaking-dev*
 
               ====== Remove this section before release. ======
 
 The following changes to UNRELEASED features were made during the development
 cycle (Nvim HEAD, the "master" branch).
+
+EXPERIMENTS
+
+• Removed `vim.loader.disable()`. Use `vim.loader.enable(false)` instead.
 
 OPTIONS
 
