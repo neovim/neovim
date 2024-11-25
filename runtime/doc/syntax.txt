@@ -4816,8 +4816,8 @@ You can see all the groups currently active with this command: >
 This will open a new window containing all highlight group names, displayed
 in their own color.
                                                         *zS-default*
-You can see a short summary of the the highlight groups applied to a given
-position using the keymapping `zS` in normal mode. |default-mappings|
+You can view the highlight groups applied to a given position using the
+|:Inspect| command, which is mapped to `zS` in normal mode. |default-mappings|
 
 						*:colo* *:colorscheme* *E185*
 :colo[rscheme]		Output the name of the currently active color scheme.
