@@ -2884,6 +2884,8 @@ describe('LSP', function()
         local expected = {
           {
             col = 1,
+            end_col = 1,
+            end_lnum = 2,
             filename = '',
             kind = 'File',
             lnum = 2,
@@ -2891,6 +2893,8 @@ describe('LSP', function()
           },
           {
             col = 1,
+            end_col = 1,
+            end_lnum = 4,
             filename = '',
             kind = 'Module',
             lnum = 4,
@@ -2898,6 +2902,8 @@ describe('LSP', function()
           },
           {
             col = 1,
+            end_col = 1,
+            end_lnum = 6,
             filename = '',
             kind = 'Namespace',
             lnum = 6,
@@ -2999,6 +3005,8 @@ describe('LSP', function()
         local expected = {
           {
             col = 1,
+            end_col = 1,
+            end_lnum = 2,
             filename = '',
             kind = 'File',
             lnum = 2,
@@ -3006,6 +3014,8 @@ describe('LSP', function()
           },
           {
             col = 1,
+            end_col = 1,
+            end_lnum = 6,
             filename = '',
             kind = 'Namespace',
             lnum = 6,
@@ -3079,6 +3089,8 @@ describe('LSP', function()
       local expected = {
         {
           col = 1,
+          end_col = 1,
+          end_lnum = 3,
           filename = '/test_a',
           kind = 'File',
           lnum = 2,
@@ -3086,6 +3098,8 @@ describe('LSP', function()
         },
         {
           col = 1,
+          end_col = 1,
+          end_lnum = 5,
           filename = '/test_b',
           kind = 'Module',
           lnum = 4,
