@@ -326,6 +326,7 @@ static dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   tv_dict_add_nr(dict, S_LEN("winrow"), wp->w_winrow + 1);
   tv_dict_add_nr(dict, S_LEN("topline"), wp->w_topline);
   tv_dict_add_nr(dict, S_LEN("botline"), wp->w_botline - 1);
+  tv_dict_add_nr(dict, S_LEN("leftcol"), wp->w_leftcol);
   tv_dict_add_nr(dict, S_LEN("winbar"), wp->w_winbar_height);
   tv_dict_add_nr(dict, S_LEN("width"), wp->w_width_inner);
   tv_dict_add_nr(dict, S_LEN("bufnr"), wp->w_buffer->b_fnum);

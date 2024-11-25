@@ -4315,6 +4315,8 @@ getwininfo([{winid}])                                             *getwininfo()*
 			botline		last complete displayed buffer line
 			bufnr		number of buffer in the window
 			height		window height (excluding winbar)
+			leftcol		first column displayed; only used when
+					'wrap' is off
 			loclist		1 if showing a location list
 			quickfix	1 if quickfix or location list window
 			terminal	1 if a terminal window

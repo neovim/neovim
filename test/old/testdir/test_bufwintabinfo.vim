@@ -114,6 +114,18 @@ func Test_getbufwintabinfo()
   wincmd t | only
 endfunc
 
+function Test_get_wininfo_leftcol()
+  set nowrap
+  set winwidth=10
+  vsp
+  call setline(1, ['abcdefghijklmnopqrstuvwxyz'])
+  norm! 5zl
+  call assert_equal(5, getwininfo()[0].leftcol)
+  bwipe!
+  set wrap&
+  set winwidth&
+endfunc
+
 function Test_get_buf_options()
   let opts = bufnr()->getbufvar('&')
   call assert_equal(v:t_dict, type(opts))
