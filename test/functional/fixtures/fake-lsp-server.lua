@@ -386,6 +386,21 @@ function tests.check_forward_content_modified()
   }
 end
 
+function tests.check_forward_server_cancelled()
+  skeleton {
+    on_init = function()
+      return { capabilities = {} }
+    end,
+    body = function()
+      expect_request('error_code_test', function()
+        return { code = -32802 }, nil, { method = 'error_code_test', client_id = 1 }
+      end)
+      expect_notification('finish')
+      notify('finish')
+    end,
+  }
+end
+
 function tests.check_pending_request_tracked()
   skeleton {
     on_init = function(_)

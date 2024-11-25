@@ -264,11 +264,16 @@ describe('vim.lsp.diagnostic', function()
     before_each(function()
       exec_lua(create_server_definition)
       exec_lua([[
+        _G.requests = 0
         server = _create_server({
           capabilities = {
-            diagnosticProvider = {
-            }
-          }
+            diagnosticProvider = {},
+          },
+          handlers = {
+            [vim.lsp.protocol.Methods.textDocument_diagnostic] = function()
+              _G.requests = _G.requests + 1
+            end,
+          },
         })
 
         function get_extmarks(bufnr, client_id)
@@ -408,6 +413,57 @@ describe('vim.lsp.diagnostic', function()
 
       diags = exec_lua([[return vim.diagnostic.get(diagnostic_bufnr)]])
       eq(1, #diags)
+    end)
+
+    it('handles server cancellation', function()
+      eq(
+        1,
+        exec_lua([[
+          vim.lsp.diagnostic.on_diagnostic({
+            code = vim.lsp.protocol.ErrorCodes.ServerCancelled,
+            -- Empty data defaults to retriggering request
+            data = {},
+            message = '',
+          }, {}, {
+            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            client_id = client_id,
+          })
+
+          return _G.requests
+        ]])
+      )
+
+      eq(
+        2,
+        exec_lua([[
+          vim.lsp.diagnostic.on_diagnostic({
+            code = vim.lsp.protocol.ErrorCodes.ServerCancelled,
+            data = { retriggerRequest = true },
+            message = '',
+          }, {}, {
+            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            client_id = client_id,
+          })
+
+          return _G.requests
+        ]])
+      )
+
+      eq(
+        2,
+        exec_lua([[
+          vim.lsp.diagnostic.on_diagnostic({
+            code = vim.lsp.protocol.ErrorCodes.ServerCancelled,
+            data = { retriggerRequest = false },
+            message = '',
+          }, {}, {
+            method = vim.lsp.protocol.Methods.textDocument_diagnostic,
+            client_id = client_id,
+          })
+
+          return _G.requests
+        ]])
+      )
     end)
   end)
 end)
