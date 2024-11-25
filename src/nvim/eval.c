@@ -4114,10 +4114,10 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
 {
   const bool working = (**arg == '+');  // has("+option")
   OptIndex opt_idx;
-  int scope;
+  int opt_flags;
 
   // Isolate the option name and find its value.
-  char *const option_end = (char *)find_option_var_end(arg, &opt_idx, &scope);
+  char *const option_end = (char *)find_option_var_end(arg, &opt_idx, &opt_flags);
 
   if (option_end == NULL) {
     if (rettv != NULL) {
@@ -4145,7 +4145,7 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
 
     ret = FAIL;
   } else if (rettv != NULL) {
-    OptVal value = is_tty_opt ? get_tty_option(*arg) : get_option_value(opt_idx, scope);
+    OptVal value = is_tty_opt ? get_tty_option(*arg) : get_option_value(opt_idx, opt_flags);
     assert(value.type != kOptValTypeNil);
 
     *rettv = optval_as_tv(value, true);
@@ -7988,24 +7988,25 @@ void ex_execute(exarg_T *eap)
 
 /// Skip over the name of an option variable: "&option", "&g:option" or "&l:option".
 ///
-/// @param[in,out]  arg       Points to the "&" or '+' when called, to "option" when returning.
-/// @param[out]     opt_idxp  Set to option index in options[] table.
-/// @param[out]     scope     Set to option scope.
+/// @param[in,out]  arg        Points to the "&" or '+' when called, to "option" when returning.
+/// @param[out]     opt_idxp   Set to option index in options[] table.
+/// @param[out]     opt_flags  Option flags.
 ///
 /// @return NULL when no option name found. Otherwise pointer to the char after the option name.
-const char *find_option_var_end(const char **const arg, OptIndex *const opt_idxp, int *const scope)
+const char *find_option_var_end(const char **const arg, OptIndex *const opt_idxp,
+                                int *const opt_flags)
 {
   const char *p = *arg;
 
   p++;
   if (*p == 'g' && p[1] == ':') {
-    *scope = OPT_GLOBAL;
+    *opt_flags = OPT_GLOBAL;
     p += 2;
   } else if (*p == 'l' && p[1] == ':') {
-    *scope = OPT_LOCAL;
+    *opt_flags = OPT_LOCAL;
     p += 2;
   } else {
-    *scope = 0;
+    *opt_flags = 0;
   }
 
   const char *end = find_option_end(p, opt_idxp);

@@ -429,7 +429,7 @@ void set_init_1(bool clean_arg)
 /// Get default value for option, based on the option's type and scope.
 ///
 /// @param  opt_idx    Option index in options[] table.
-/// @param  opt_flags  Option flags.
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 ///
 /// @return Default value of option for the scope specified in opt_flags.
 static OptVal get_option_default(const OptIndex opt_idx, int opt_flags)
@@ -480,7 +480,7 @@ static void change_option_default(const OptIndex opt_idx, OptVal value)
 /// This does not take care of side effects!
 ///
 /// @param  opt_idx    Option index in options[] table.
-/// @param  opt_flags  Option flags.
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 static void set_option_default(const OptIndex opt_idx, int opt_flags)
 {
   OptVal def_val = get_option_default(opt_idx, opt_flags);
@@ -497,7 +497,7 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
 
 /// Set all options (except terminal options) to their default value.
 ///
-/// @param  opt_flags  Option flags.
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 static void set_options_default(int opt_flags)
 {
   for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
@@ -1475,7 +1475,7 @@ void did_set_title(void)
 
 /// set_options_bin -  called when 'bin' changes value.
 ///
-/// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 void set_options_bin(int oldval, int newval, int opt_flags)
 {
   // The option values that are changed when 'bin' changes are
@@ -1652,7 +1652,7 @@ void check_options(void)
 ///
 /// @param  wp         Window.
 /// @param  opt_idx    Option index in options[] table.
-/// @param  opt_flags  Option flags.
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 ///
 /// @return  True if option was set from a modeline or in secure mode, false if it wasn't.
 int was_set_insecurely(win_T *const wp, OptIndex opt_idx, int opt_flags)
@@ -3391,18 +3391,18 @@ uint32_t get_option_flags(OptIndex opt_idx)
 
 /// Gets the value for an option.
 ///
-/// @param       opt_idx  Option index in options[] table.
-/// @param[in]   scope    Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
+/// @param  opt_idx    Option index in options[] table.
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 ///
 /// @return [allocated] Option value. Returns NIL_OPTVAL for invalid option index.
-OptVal get_option_value(OptIndex opt_idx, int scope)
+OptVal get_option_value(OptIndex opt_idx, int opt_flags)
 {
   if (opt_idx == kOptInvalid) {  // option not in the options[] table.
     return NIL_OPTVAL;
   }
 
   vimoption_T *opt = &options[opt_idx];
-  void *varp = get_varp_scope(opt, scope);
+  void *varp = get_varp_scope(opt, opt_flags);
 
   return optval_copy(optval_from_varp(opt_idx, varp));
 }
@@ -3475,7 +3475,7 @@ static bool is_option_local_value_unset(OptIndex opt_idx)
 /// @param       opt_idx         Index in options[] table. Must not be kOptInvalid.
 /// @param[in]   varp            Option variable pointer, cannot be NULL.
 /// @param       old_value       Old option value.
-/// @param       opt_flags       Option flags.
+/// @param       opt_flags       Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 /// @param       set_sid         Script ID. Special values:
 ///                                0: Use current script ID.
 ///                                SID_NONE: Don't set script ID.
@@ -3487,8 +3487,7 @@ static bool is_option_local_value_unset(OptIndex opt_idx)
 /// @return  NULL on success, an untranslated error message on error.
 static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value, OptVal new_value,
                                   int opt_flags, scid_T set_sid, const bool direct,
-                                  const bool value_replaced, char *errbuf,  // NOLINT(readability-non-const-parameter)
-                                  size_t errbuflen)
+                                  const bool value_replaced, char *errbuf, size_t errbuflen)
 {
   vimoption_T *opt = &options[opt_idx];
   const char *errmsg = NULL;
@@ -3688,7 +3687,7 @@ static const char *validate_option_value(const OptIndex opt_idx, OptVal *newval,
 ///
 /// @param       opt_idx         Index in options[] table. Must not be kOptInvalid.
 /// @param       value           New option value. Might get freed.
-/// @param       opt_flags       Option flags.
+/// @param       opt_flags       Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 /// @param       set_sid         Script ID. Special values:
 ///                                0: Use current script ID.
 ///                                SID_NONE: Don't set script ID.
@@ -3792,7 +3791,7 @@ static const char *set_option(const OptIndex opt_idx, OptVal value, int opt_flag
 ///
 /// @param  opt_idx    Option index in options[] table.
 /// @param  value      Option value.
-/// @param  opt_flags  Option flags.
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 /// @param  set_sid    Script ID. Special values:
 ///                      0: Use current script ID.
 ///                      SID_NONE: Don't set script ID.
@@ -3814,14 +3813,14 @@ void set_option_direct(OptIndex opt_idx, OptVal value, int opt_flags, scid_T set
 ///
 /// @param      opt_idx    Option index in options[] table.
 /// @param      value      Option value.
-/// @param      opt_flags  Option flags.
+/// @param      opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 /// @param      set_sid    Script ID. Special values:
 ///                          0: Use current script ID.
 ///                          SID_NONE: Don't set script ID.
-/// @param      req_scope  Requested option scope. See OptScope in option.h.
+/// @param      scope      Option scope. See OptScope in option.h.
 /// @param[in]  from       Target buffer/window.
 void set_option_direct_for(OptIndex opt_idx, OptVal value, int opt_flags, scid_T set_sid,
-                           OptScope req_scope, void *const from)
+                           OptScope scope, void *const from)
 {
   buf_T *save_curbuf = curbuf;
   win_T *save_curwin = curwin;
@@ -3829,7 +3828,7 @@ void set_option_direct_for(OptIndex opt_idx, OptVal value, int opt_flags, scid_T
   // Don't use switch_option_context(), as that calls aucmd_prepbuf(), which may have unintended
   // side-effects when setting an option directly. Just change the values of curbuf and curwin if
   // needed, no need to properly switch the window / buffer.
-  switch (req_scope) {
+  switch (scope) {
   case kOptScopeGlobal:
     break;
   case kOptScopeWin:
@@ -3912,7 +3911,7 @@ const char *set_option_value_handle_tty(const char *name, OptIndex opt_idx, cons
 ///
 /// @param  opt_idx    Option index in options[] table.
 /// @param  value      Option value. If NIL_OPTVAL, the option value is cleared.
-/// @param  opt_flags  OPT_LOCAL or 0 (both)
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 void set_option_value_give_err(const OptIndex opt_idx, OptVal value, int opt_flags)
 {
   const char *errmsg = set_option_value(opt_idx, value, opt_flags);
@@ -3925,14 +3924,14 @@ void set_option_value_give_err(const OptIndex opt_idx, OptVal value, int opt_fla
 /// Switch current context to get/set option value for window/buffer.
 ///
 /// @param[out]  ctx        Current context. switchwin_T for window and aco_save_T for buffer.
-/// @param       req_scope  Requested option scope. See OptScope in option.h.
+/// @param       scope      Option scope. See OptScope in option.h.
 /// @param[in]   from       Target buffer/window.
 /// @param[out]  err        Error message, if any.
 ///
 /// @return  true if context was switched, false otherwise.
-static bool switch_option_context(void *const ctx, OptScope req_scope, void *const from, Error *err)
+static bool switch_option_context(void *const ctx, OptScope scope, void *const from, Error *err)
 {
-  switch (req_scope) {
+  switch (scope) {
   case kOptScopeGlobal:
     return false;
   case kOptScopeWin: {
@@ -3971,9 +3970,9 @@ static bool switch_option_context(void *const ctx, OptScope req_scope, void *con
 
 /// Restore context after getting/setting option for window/buffer. See switch_option_context() for
 /// params.
-static void restore_option_context(void *const ctx, OptScope req_scope)
+static void restore_option_context(void *const ctx, OptScope scope)
 {
-  switch (req_scope) {
+  switch (scope) {
   case kOptScopeGlobal:
     break;
   case kOptScopeWin:
@@ -3991,28 +3990,28 @@ static void restore_option_context(void *const ctx, OptScope req_scope)
 /// @param[out]  flagsp     Set to the option flags (see OptFlags) (if not NULL).
 /// @param[in]   scope      Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 /// @param[out]  hidden     Whether option is hidden.
-/// @param       req_scope  Requested option scope. See OptScope in option.h.
+/// @param       scope      Option scope. See OptScope in option.h.
 /// @param[in]   from       Target buffer/window.
 /// @param[out]  err        Error message, if any.
 ///
 /// @return  Option value. Must be freed by caller.
-OptVal get_option_value_for(OptIndex opt_idx, int scope, const OptScope req_scope, void *const from,
+OptVal get_option_value_for(OptIndex opt_idx, int opt_flags, const OptScope scope, void *const from,
                             Error *err)
 {
   switchwin_T switchwin;
   aco_save_T aco;
-  void *ctx = req_scope == kOptScopeWin ? (void *)&switchwin
-                                        : (req_scope == kOptScopeBuf ? (void *)&aco : NULL);
+  void *ctx = scope == kOptScopeWin ? (void *)&switchwin
+                                    : (scope == kOptScopeBuf ? (void *)&aco : NULL);
 
-  bool switched = switch_option_context(ctx, req_scope, from, err);
+  bool switched = switch_option_context(ctx, scope, from, err);
   if (ERROR_SET(err)) {
     return NIL_OPTVAL;
   }
 
-  OptVal retv = get_option_value(opt_idx, scope);
+  OptVal retv = get_option_value(opt_idx, opt_flags);
 
   if (switched) {
-    restore_option_context(ctx, req_scope);
+    restore_option_context(ctx, scope);
   }
 
   return retv;
@@ -4024,19 +4023,19 @@ OptVal get_option_value_for(OptIndex opt_idx, int scope, const OptScope req_scop
 /// @param       opt_idx     Option index in options[] table.
 /// @param[in]   value       Option value.
 /// @param[in]   opt_flags   Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
-/// @param       req_scope   Requested option scope. See OptScope in option.h.
+/// @param       scope       Option scope. See OptScope in option.h.
 /// @param[in]   from        Target buffer/window.
 /// @param[out]  err         Error message, if any.
 void set_option_value_for(const char *name, OptIndex opt_idx, OptVal value, const int opt_flags,
-                          const OptScope req_scope, void *const from, Error *err)
+                          const OptScope scope, void *const from, Error *err)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   switchwin_T switchwin;
   aco_save_T aco;
-  void *ctx = req_scope == kOptScopeWin ? (void *)&switchwin
-                                        : (req_scope == kOptScopeBuf ? (void *)&aco : NULL);
+  void *ctx = scope == kOptScopeWin ? (void *)&switchwin
+                                    : (scope == kOptScopeBuf ? (void *)&aco : NULL);
 
-  bool switched = switch_option_context(ctx, req_scope, from, err);
+  bool switched = switch_option_context(ctx, scope, from, err);
   if (ERROR_SET(err)) {
     return;
   }
@@ -4047,14 +4046,14 @@ void set_option_value_for(const char *name, OptIndex opt_idx, OptVal value, cons
   }
 
   if (switched) {
-    restore_option_context(ctx, req_scope);
+    restore_option_context(ctx, scope);
   }
 }
 
 /// if 'all' == false: show changed options
 /// if 'all' == true: show all normal options
 ///
-/// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 static void showoptions(bool all, int opt_flags)
 {
 #define INC 20
@@ -4181,7 +4180,7 @@ void ui_refresh_options(void)
 /// showoneopt: show the value of one option
 /// must not be called with a hidden option!
 ///
-/// @param opt_flags  OPT_LOCAL or OPT_GLOBAL
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 static void showoneopt(vimoption_T *opt, int opt_flags)
 {
   int save_silent = silent_mode;
@@ -4466,18 +4465,18 @@ static int put_set(FILE *fd, char *cmd, OptIndex opt_idx, void *varp)
   return OK;
 }
 
-void *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
+void *get_varp_scope_from(vimoption_T *p, int opt_flags, buf_T *buf, win_T *win)
 {
   OptIndex opt_idx = get_opt_idx(p);
 
-  if ((scope & OPT_GLOBAL) && !option_is_global_only(opt_idx)) {
+  if ((opt_flags & OPT_GLOBAL) && !option_is_global_only(opt_idx)) {
     if (option_is_window_local(opt_idx)) {
       return GLOBAL_WO(get_varp_from(p, buf, win));
     }
     return p->var;
   }
 
-  if ((scope & OPT_LOCAL) && option_is_global_local(opt_idx)) {
+  if ((opt_flags & OPT_LOCAL) && option_is_global_local(opt_idx)) {
     switch (opt_idx) {
     case kOptFormatprg:
       return &(buf->b_p_fp);
@@ -4548,17 +4547,17 @@ void *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
 
 /// Get pointer to option variable, depending on local or global scope.
 ///
-/// @param scope  can be OPT_LOCAL, OPT_GLOBAL or a combination.
-void *get_varp_scope(vimoption_T *p, int scope)
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
+void *get_varp_scope(vimoption_T *p, int opt_flags)
 {
-  return get_varp_scope_from(p, scope, curbuf, curwin);
+  return get_varp_scope_from(p, opt_flags, curbuf, curwin);
 }
 
 /// Get pointer to option variable at 'opt_idx', depending on local or global
 /// scope.
-void *get_option_varp_scope_from(OptIndex opt_idx, int scope, buf_T *buf, win_T *win)
+void *get_option_varp_scope_from(OptIndex opt_idx, int opt_flags, buf_T *buf, win_T *win)
 {
-  return get_varp_scope_from(&(options[opt_idx]), scope, buf, win);
+  return get_varp_scope_from(&(options[opt_idx]), opt_flags, buf, win);
 }
 
 void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
@@ -5359,7 +5358,7 @@ static char expand_option_name[5] = { 't', '_', NUL, NUL, NUL };
 static int expand_option_flags = 0;
 static bool expand_option_append = false;
 
-/// @param opt_flags  OPT_GLOBAL and/or OPT_LOCAL
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
 {
   expand_option_flags = opt_flags;
@@ -5911,12 +5910,12 @@ int ExpandSettingSubtract(expand_T *xp, regmatch_T *regmatch, int *numMatches, c
 /// Get the value for the numeric or string option///opp in a nice format into
 /// NameBuff[].  Must not be called with a hidden option!
 ///
-/// @param opt_flags  OPT_GLOBAL and/or OPT_LOCAL
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 ///
 /// TODO(famiu): Replace this with optval_to_cstr() if possible.
-static void option_value2string(vimoption_T *opt, int scope)
+static void option_value2string(vimoption_T *opt, int opt_flags)
 {
-  void *varp = get_varp_scope(opt, scope);
+  void *varp = get_varp_scope(opt, opt_flags);
   assert(varp != NULL);
 
   if (option_has_type(get_opt_idx(opt), kOptValTypeNumber)) {
@@ -6233,7 +6232,7 @@ int default_fileformat(void)
 /// Sets 'fileformat'.
 ///
 /// @param eol_style End-of-line style.
-/// @param opt_flags OPT_LOCAL and/or OPT_GLOBAL
+/// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 void set_fileformat(int eol_style, int opt_flags)
 {
   char *p = NULL;
@@ -6364,14 +6363,14 @@ int get_sidescrolloff_value(win_T *wp)
   return (int)(wp->w_p_siso < 0 ? p_siso : wp->w_p_siso);
 }
 
-Dict get_vimoption(String name, int scope, buf_T *buf, win_T *win, Arena *arena, Error *err)
+Dict get_vimoption(String name, int opt_flags, buf_T *buf, win_T *win, Arena *arena, Error *err)
 {
   OptIndex opt_idx = find_option_len(name.data, name.size);
   VALIDATE_S(opt_idx != kOptInvalid, "option (not found)", name.data, {
     return (Dict)ARRAY_DICT_INIT;
   });
 
-  return vimoption2dict(&options[opt_idx], scope, buf, win, arena);
+  return vimoption2dict(&options[opt_idx], opt_flags, buf, win, arena);
 }
 
 Dict get_all_vimoptions(Arena *arena)
@@ -6384,7 +6383,7 @@ Dict get_all_vimoptions(Arena *arena)
   return retval;
 }
 
-static Dict vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, win_T *win, Arena *arena)
+static Dict vimoption2dict(vimoption_T *opt, int opt_flags, buf_T *buf, win_T *win, Arena *arena)
 {
   OptIndex opt_idx = get_opt_idx(opt);
   Dict dict = arena_dict(arena, 13);
@@ -6411,7 +6410,7 @@ static Dict vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, win_T *w
   PUT_C(dict, "was_set", BOOLEAN_OBJ(opt->flags & kOptFlagWasSet));
 
   LastSet last_set = { .channel_id = 0 };
-  if (req_scope == OPT_GLOBAL) {
+  if (opt_flags == OPT_GLOBAL) {
     last_set = opt->last_set;
   } else {
     // Scope is either OPT_LOCAL or a fallback mode was requested.
@@ -6421,7 +6420,7 @@ static Dict vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, win_T *w
     if (option_has_scope(opt_idx, kOptScopeWin)) {
       last_set = win->w_p_script_ctx[opt->scope_idx[kOptScopeWin]];
     }
-    if (req_scope != OPT_LOCAL && last_set.script_ctx.sc_sid == 0) {
+    if (opt_flags != OPT_LOCAL && last_set.script_ctx.sc_sid == 0) {
       last_set = opt->last_set;
     }
   }
