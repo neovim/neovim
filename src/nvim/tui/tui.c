@@ -107,7 +107,7 @@ struct TUIData {
   bool busy, is_invisible, want_invisible;
   bool cork, overflow;
   bool set_cursor_color_as_str;
-  bool cursor_color_changed;
+  bool cursor_has_color;
   bool is_starting;
   bool did_set_grapheme_cluster_mode;
   FILE *screenshot;
@@ -336,7 +336,7 @@ static void terminfo_start(TUIData *tui)
   tui->cork = false;
   tui->overflow = false;
   tui->set_cursor_color_as_str = false;
-  tui->cursor_color_changed = false;
+  tui->cursor_has_color = false;
   tui->showing_mode = SHAPE_IDX_N;
   tui->unibi_ext.enable_mouse = -1;
   tui->unibi_ext.disable_mouse = -1;
@@ -521,7 +521,7 @@ static void terminfo_stop(TUIData *tui)
     // Exit alternate screen.
     unibi_out(tui, unibi_exit_ca_mode);
   }
-  if (tui->cursor_color_changed) {
+  if (tui->cursor_has_color) {
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
   }
   // Disable bracketed paste
@@ -1302,11 +1302,12 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
         UNIBI_SET_NUM_VAR(tui->params[0], aep.rgb_bg_color);
       }
       unibi_out_ext(tui, tui->unibi_ext.set_cursor_color);
-      tui->cursor_color_changed = true;
+      tui->cursor_has_color = true;
     }
-  } else if (c.id == 0) {
+  } else if (c.id == 0 && tui->cursor_has_color) {
     // No cursor color for this mode; reset to default.
     tui->want_invisible = false;
+    tui->cursor_has_color = false;
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
   }
 
