@@ -1304,7 +1304,7 @@ static void tui_set_mode(TUIData *tui, ModeShape mode)
       unibi_out_ext(tui, tui->unibi_ext.set_cursor_color);
       tui->cursor_has_color = true;
     }
-  } else if (c.id == 0 && tui->cursor_has_color) {
+  } else if (c.id == 0 && (tui->want_invisible || tui->cursor_has_color)) {
     // No cursor color for this mode; reset to default.
     tui->want_invisible = false;
     tui->cursor_has_color = false;
