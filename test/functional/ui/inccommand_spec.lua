@@ -341,6 +341,158 @@ describe(":substitute, 'inccommand' preserves", function()
   end
 end)
 
+describe(":substitute, 'inccommand=split', preview", function()
+  ---@return integer?
+  ---@return integer?
+  local function find_preview_win_buf()
+    local buf = n.fn.bufnr('[Preview]', false)
+    if buf == -1 then
+      return nil, nil
+    end
+    neq(-1, buf)
+    eq(1, n.fn.bufexists(buf))
+    ---@type integer?
+    local win = n.fn.bufwinid(buf)
+    if win == -1 then
+      win = nil
+    end
+    return win, buf
+  end
+  before_each(clear)
+  local function setup_()
+    local screen = Screen.new(30, 10)
+    common_setup(screen, 'split', 'hello\nhello')
+    command('set cmdwinheight=3')
+    feed(':%s/hello/HELLO')
+    poke_eventloop()
+    local screen_text = [[
+      {20:HELLO}                         |*2
+      {1:~                             }|*2
+      {3:[No Name] [+]                 }|
+      |1| {20:HELLO}                     |
+      |2| {20:HELLO}                     |
+      {1:~                             }|
+      {2:[Preview]                     }|
+      :%s/hello/HELLO^               |
+    ]]
+    screen:expect(screen_text)
+    return screen, screen_text
+  end
+  local function refresh_preview()
+    feed('<Space><BS>')
+    poke_eventloop()
+  end
+  it('window cannot be closed', function()
+    local screen, text = setup_()
+    local win, _ = find_preview_win_buf()
+    neq(nil, win) ---@cast win -nil
+    n.api.nvim_win_close(win, true)
+    eq(true, n.api.nvim_win_is_valid(win), 'preview window is not valid')
+    refresh_preview()
+    screen:expect {
+      grid = text,
+      unchanged = true,
+    }
+  end)
+  it('window cannot be split', function()
+    local screen, text = setup_()
+    local win, _ = find_preview_win_buf()
+    neq(nil, win) ---@cast win -nil
+    local ret = t.pcall_err(n.exec_lua, 'vim.api.nvim_win_call(..., vim.cmd.vs)', win)
+    ok(nil ~= ret:find("E1160: Can't split a window locked by 'inccommand'"))
+    refresh_preview()
+    screen:expect {
+      grid = text,
+      unchanged = true,
+    }
+  end)
+  it('window cannot change buffers', function()
+    local screen, text = setup_()
+    local win, _ = find_preview_win_buf()
+    neq(nil, win) ---@cast win -nil
+    n.api.nvim_set_option_value('winfixbuf', false, {
+      win = win,
+    })
+    local msg = t.pcall_err(n.api.nvim_win_set_buf, win, 1)
+    ok(nil ~= msg:find("E1513: Cannot switch buffer. 'winfixbuf' is enabled"))
+    refresh_preview()
+    screen:expect {
+      grid = text,
+      unchanged = true,
+    }
+  end)
+  it('buffer cannot be entered', function()
+    setup_()
+    feed('<ESC>')
+    local win, buf = find_preview_win_buf()
+    eq(nil, win)
+    local msg = t.pcall_err(command, ('buf %d'):format(buf))
+    ok(nil ~= msg:find("E1161: Can't navigate to buffer locked by 'inccomand'"))
+    for _, cmd in ipairs { 'edit', 'split' } do
+      msg = t.pcall_err(command, cmd .. ' [Preview]')
+      ok(nil ~= msg:find("E1161: Can't navigate to buffer locked by 'inccomand'"))
+    end
+    msg = t.pcall_err(n.exec_lua, 'vim.api.nvim_buf_call(..., vim.cmd.vs)', buf)
+    ok(nil ~= msg:find("E1160: Can't split a window locked by 'inccommand'"))
+    msg = t.pcall_err(n.api.nvim_set_current_buf, buf)
+    ok(nil ~= msg:find("E1161: Can't navigate to buffer locked by 'inccomand'"))
+  end)
+  it('buffer cannot be unloaded if split preview is visible', function()
+    setup_()
+    local win, buf = find_preview_win_buf()
+    neq(nil, win)
+    neq(nil, buf)
+    local msg = t.pcall_err(command, string.format('bwipeout %d', buf))
+    ok(nil ~= msg:find('E937: Attempt to delete a buffer that is in use'))
+  end)
+  it('buffer can be unloaded if split preview is not visible', function()
+    local screen, screen_text = setup_()
+    feed('<ESC>')
+    n.fn.cursor(1, 1)
+    screen:expect [[
+      ^hello                         |
+      hello                         |
+      {1:~                             }|*7
+                                    |
+    ]]
+    local win, buf = find_preview_win_buf()
+    eq(nil, win)
+    command(string.format('bwipeout %d', buf))
+    buf = select(2, find_preview_win_buf())
+    eq(nil, buf)
+
+    feed(':%s/hello/HELLO')
+    screen:expect(screen_text)
+    win, buf = find_preview_win_buf()
+    neq(nil, win)
+    neq(nil, buf)
+    feed('<ESC>')
+    command('2del')
+    screen:expect [[
+      ^hello                         |
+      {1:~                             }|*8
+                                    |
+    ]]
+
+    -- preview is active, but only 1 line changed so no split
+    -- preview is visible. preview buffer can still be unloaded
+    -- in this case
+    feed(':%s/hello/HELLO')
+    screen:expect [[
+      {20:HELLO}                         |
+      {1:~                             }|*8
+      :%s/hello/HELLO^               |
+    ]]
+    win, buf = find_preview_win_buf()
+    eq(nil, win)
+    neq(nil, buf)
+    command(string.format('bwipeout %d', buf))
+    buf = select(2, find_preview_win_buf())
+    eq(nil, buf)
+    screen:expect_unchanged()
+  end)
+end)
+
 describe(":substitute, 'inccommand' preserves undo", function()
   local cases = { '', 'split', 'nosplit' }
 

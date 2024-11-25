@@ -132,12 +132,22 @@ static void log_frame_layout(frame_T *frame)
 }
 #endif
 
+/// Check if the window is locked by cmdpreview. If so, the window may not be
+/// closed or split, and the buffer it holds cannot be changed.
+///
+/// @return If the window is locked by cmdpreview
+static bool win_cp_locked(const win_T *wp)
+{
+  return wp->w_buffer != NULL && wp->w_buffer->b_cp_locked > BCP_NONE;
+}
+
 /// Check if the current window is allowed to move to a different buffer.
 ///
-/// @return If the window has 'winfixbuf', or this function will return false.
+/// @return If the window has 'winfixbuf' or is locked by cmdpreview, this
+/// function will return false.
 bool check_can_set_curbuf_disabled(void)
 {
-  if (curwin->w_p_wfb) {
+  if (curwin->w_p_wfb || win_cp_locked(curwin)) {
     emsg(_(e_winfixbuf_cannot_go_to_buffer));
     return false;
   }
@@ -145,15 +155,18 @@ bool check_can_set_curbuf_disabled(void)
   return true;
 }
 
-/// Check if the current window is allowed to move to a different buffer.
+/// Check if the current window is allowed to move to a different buffer, and attempt
+/// to bypass 'winfixbuf' if `forceit` is true. Always returns false if window is
+/// locked by cmdpreview.
 ///
-/// @param forceit If true, do not error. If false and 'winfixbuf' is enabled, error.
+/// @param forceit Bypass the 'winfixbuf' option. Ignored if window locked
+/// by cmdpreview.
 ///
 /// @return If the window has 'winfixbuf', then forceit must be true
-///     or this function will return false.
+///     or this function will return false. False if locked by cmdpreview.
 bool check_can_set_curbuf_forceit(int forceit)
 {
-  if (!forceit && curwin->w_p_wfb) {
+  if (win_cp_locked(curwin) || (!forceit && curwin->w_p_wfb)) {
     emsg(_(e_winfixbuf_cannot_go_to_buffer));
     return false;
   }
@@ -974,6 +987,11 @@ bool check_split_disallowed_err(const win_T *wp, Error *err)
 {
   if (split_disallowed > 0) {
     api_set_error(err, kErrorTypeException, "E242: Can't split a window while closing another");
+    return false;
+  }
+  if (win_cp_locked(wp)) {
+    api_set_error(err, kErrorTypeException, "%s",
+                  "E1160: Can't split a window locked by 'inccommand'");
     return false;
   }
   if (wp->w_buffer->b_locked_split) {
@@ -7435,7 +7453,7 @@ int get_last_winid(void)
 /// Don't let autocommands close the given window
 int win_locked(win_T *wp)
 {
-  return wp->w_locked;
+  return wp->w_locked || win_cp_locked(wp);
 }
 
 void win_get_tabwin(handle_T id, int *tabnr, int *winnr)

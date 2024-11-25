@@ -149,6 +149,8 @@ EXTERN const char e_using_number_as_bool_nr[] INIT(= N_("E1023: Using a Number a
 EXTERN const char e_not_callable_type_str[] INIT(= N_("E1085: Not a callable type: %s"));
 EXTERN const char e_auabort[] INIT(= N_("E855: Autocommands caused command to abort"));
 
+EXTERN const char e_nav_cplocked[] INIT(= N_("E1161: Can't navigate to buffer locked by 'inccomand'"));
+
 EXTERN const char e_api_error[] INIT(= N_("E5555: API call: %s"));
 
 EXTERN const char e_fast_api_disabled[] INIT(= N_("E5560: %s must not be called in a fast event context"));

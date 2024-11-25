@@ -70,6 +70,16 @@ typedef struct {
 // Mask to check for flags that prevent normal writing
 #define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
 
+// values for b_cp_locked
+#define BCP_NONE        0       // Not locked by command preview.
+#define BCP_HALF_LOCKED 1       // Locked, but not currently in use
+                                // by command preview. Like BCP_FULL_LOCKED,
+                                // but can still be unloaded.
+#define BCP_FULL_LOCKED 2       // Locked and currently in use. Cannot be
+                                // unloaded or entered, and windows containing
+                                // it cannot be closed, split, or change
+                                // buffers.
+
 typedef struct wininfo_S WinInfo;
 typedef struct frame_S frame_T;
 typedef uint64_t disptick_T;  // display tick type
@@ -367,6 +377,9 @@ struct file_buffer {
                                 // a new window with it.
   int b_ro_locked;              // Non-zero when the buffer can't be changed.
                                 // Used for FileChangedRO
+  int b_cp_locked;              // Buffer locked by cmdpreview, disallowing
+                                // closing it and closing/splitting windows
+                                // that contain it
 
   // b_ffname   has the full path of the file (NULL for no name).
   // b_sfname   is the name as the user typed it (or NULL).

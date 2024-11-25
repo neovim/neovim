@@ -2268,6 +2268,9 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
           && curwin->w_buffer->b_nwindows > 1) {
         curwin->w_buffer->b_nwindows--;
       }
+      if (buf->b_cp_locked) {
+        emsg(_(e_nav_cplocked));
+      }
       goto theend;
     }
     if (curwin->w_alt_fnum == buf->b_fnum && prev_alt_fnum != 0) {

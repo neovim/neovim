@@ -2291,6 +2291,7 @@ static void cmdpreview_setup_buf(buf_T *buf)
 {
   assert(is_autocmd_blocked());
   aco_save_T aco;
+  buf->b_cp_locked = BCP_NONE;
   // Temporarily switch to preview buffer to set it up for previewing.
   aucmd_prepbuf(&aco, buf);
   buf_clear();
@@ -2298,6 +2299,7 @@ static void cmdpreview_setup_buf(buf_T *buf)
   curbuf->b_p_ul = -1;
   curbuf->b_p_tw = 0;  // Reset 'textwidth' (was set by ftplugin)
   aucmd_restbuf(&aco);
+  buf->b_cp_locked = BCP_FULL_LOCKED;
 }
 
 /// Open and set up the command preview buffer.
@@ -2365,9 +2367,12 @@ static win_T *cmdpreview_open_win(buf_T *cmdpreview_buf)
   int result = OK;
 
   // Switch to preview buffer
+  assert(cmdpreview_buf->b_cp_locked == BCP_FULL_LOCKED);
+  cmdpreview_buf->b_cp_locked = BCP_NONE;
   TRY_WRAP(&err, {
     result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, cmdpreview_buf->handle, 0);
   });
+  cmdpreview_buf->b_cp_locked = BCP_FULL_LOCKED;
   if (ERROR_SET(&err) || result == FAIL) {
     api_clear_error(&err);
     return NULL;
@@ -2388,7 +2393,9 @@ static void cmdpreview_close_win(void)
   assert(is_autocmd_blocked());
   buf_T *buf = cmdpreview_bufnr ? buflist_findnr(cmdpreview_bufnr) : NULL;
   if (buf != NULL) {
+    buf->b_cp_locked = BCP_NONE;
     close_windows(buf, false);
+    buf->b_cp_locked = BCP_HALF_LOCKED;
   }
 }
 
@@ -2734,6 +2741,9 @@ static bool cmdpreview_transition_end(CpTransition *tr)
       assert(tr->prev_win);
       assert(tr->prev_buf);
       cmdpreview_close_win();
+    } else if (g_cpinfo.icm_split && g_cpinfo.buf) {
+      // buffer may have been opened, but preview callback returned 1
+      g_cpinfo.buf->b_cp_locked = BCP_HALF_LOCKED;
     }
     g_cpinfo.win = NULL;
     g_cpinfo.buf = NULL;
