@@ -100,7 +100,7 @@ LSP
     vim.diagnostic.config(config, vim.lsp.diagnostic.get_namespace(client_id))
 <
 • |vim.lsp.util.make_position_params()|, |vim.lsp.util.make_range_params()|
-  and |vim.lsp.util.make_given_range_params()| now require the `offset_encoding`
+  and |vim.lsp.util.make_given_range_params()| now require the `position_encoding`
   parameter.
 
 LUA

@@ -904,8 +904,9 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {rpc}                   (`vim.lsp.rpc.PublicClient`) RPC client
                                 object, for low level interaction with the
                                 client. See |vim.lsp.rpc.start()|.
-      • {offset_encoding}       (`string`) The encoding used for communicating
-                                with the server. You can modify this in the
+      • {offset_encoding}       (`string`) Called "position encoding" in LSP
+                                spec, the encoding used for communicating with
+                                the server. You can modify this in the
                                 `config`'s `on_init` method before text is
                                 sent to the server.
       • {handlers}              (`table<string,lsp.Handler>`) The handlers
@@ -1062,9 +1063,10 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {get_language_id}?    (`fun(bufnr: integer, filetype: string): string`)
                               Language ID as string. Defaults to the buffer
                               filetype.
-      • {offset_encoding}?    (`'utf-8'|'utf-16'|'utf-32'`) The encoding that
-                              the LSP server expects. Client does not verify
-                              this is correct.
+      • {offset_encoding}?    (`'utf-8'|'utf-16'|'utf-32'`) Called "position
+                              encoding" in LSP spec, the encoding that the LSP
+                              server expects. Client does not verify this is
+                              correct.
       • {on_error}?           (`fun(code: integer, err: string)`) Callback
                               invoked when the client operation throws an
                               error. `code` is a number describing the error.
@@ -1840,7 +1842,7 @@ Lua module: vim.lsp.util                                            *lsp-util*
 
 
                                      *vim.lsp.util.apply_text_document_edit()*
-apply_text_document_edit({text_document_edit}, {index}, {offset_encoding})
+apply_text_document_edit({text_document_edit}, {index}, {position_encoding})
     Applies a `TextDocumentEdit`, which is a list of changes to a single
     document.
 
@@ -1848,30 +1850,30 @@ apply_text_document_edit({text_document_edit}, {index}, {offset_encoding})
       • {text_document_edit}  (`lsp.TextDocumentEdit`)
       • {index}               (`integer?`) Optional index of the edit, if from
                               a list of edits (or nil, if not from a list)
-      • {offset_encoding}     (`'utf-8'|'utf-16'|'utf-32'?`)
+      • {position_encoding}   (`'utf-8'|'utf-16'|'utf-32'?`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
 
                                              *vim.lsp.util.apply_text_edits()*
-apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
+apply_text_edits({text_edits}, {bufnr}, {position_encoding})
     Applies a list of text edits to a buffer.
 
     Parameters: ~
-      • {text_edits}       (`lsp.TextEdit[]`)
-      • {bufnr}            (`integer`) Buffer id
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
+      • {text_edits}         (`lsp.TextEdit[]`)
+      • {bufnr}              (`integer`) Buffer id
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 
                                          *vim.lsp.util.apply_workspace_edit()*
-apply_workspace_edit({workspace_edit}, {offset_encoding})
+apply_workspace_edit({workspace_edit}, {position_encoding})
     Applies a `WorkspaceEdit`.
 
     Parameters: ~
-      • {workspace_edit}   (`lsp.WorkspaceEdit`)
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`) (required)
+      • {workspace_edit}     (`lsp.WorkspaceEdit`)
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`) (required)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
@@ -1883,13 +1885,13 @@ buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
       • {bufnr}  (`integer?`) Buffer id
 
                                      *vim.lsp.util.buf_highlight_references()*
-buf_highlight_references({bufnr}, {references}, {offset_encoding})
+buf_highlight_references({bufnr}, {references}, {position_encoding})
     Shows a list of document highlights for a certain buffer.
 
     Parameters: ~
-      • {bufnr}            (`integer`) Buffer id
-      • {references}       (`lsp.DocumentHighlight[]`) objects to highlight
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
+      • {bufnr}              (`integer`) Buffer id
+      • {references}         (`lsp.DocumentHighlight[]`) objects to highlight
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
@@ -1964,7 +1966,7 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
       • 'shiftwidth'
 
                                            *vim.lsp.util.locations_to_items()*
-locations_to_items({locations}, {offset_encoding})
+locations_to_items({locations}, {position_encoding})
     Returns the items with the byte position calculated correctly and in
     sorted order, for display in quickfix and location lists.
 
@@ -1975,9 +1977,9 @@ locations_to_items({locations}, {offset_encoding})
     |setloclist()|.
 
     Parameters: ~
-      • {locations}        (`lsp.Location[]|lsp.LocationLink[]`)
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) default to first
-                           client of buffer
+      • {locations}          (`lsp.Location[]|lsp.LocationLink[]`)
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) default to first
+                             client of buffer
 
     Return: ~
         (`vim.quickfix.entry[]`) See |setqflist()| for the format
@@ -2012,33 +2014,33 @@ make_formatting_params({options})
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 
                                       *vim.lsp.util.make_given_range_params()*
-make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
+make_given_range_params({start_pos}, {end_pos}, {bufnr}, {position_encoding})
     Using the given range in the current buffer, creates an object that is
     similar to |vim.lsp.util.make_range_params()|.
 
     Parameters: ~
-      • {start_pos}        (`[integer,integer]?`) {row,col} mark-indexed
-                           position. Defaults to the start of the last visual
-                           selection.
-      • {end_pos}          (`[integer,integer]?`) {row,col} mark-indexed
-                           position. Defaults to the end of the last visual
-                           selection.
-      • {bufnr}            (`integer?`) buffer handle or 0 for current,
-                           defaults to current
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
+      • {start_pos}          (`[integer,integer]?`) {row,col} mark-indexed
+                             position. Defaults to the start of the last
+                             visual selection.
+      • {end_pos}            (`[integer,integer]?`) {row,col} mark-indexed
+                             position. Defaults to the end of the last visual
+                             selection.
+      • {bufnr}              (`integer?`) buffer handle or 0 for current,
+                             defaults to current
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     Return: ~
         (`{ textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }`)
 
                                          *vim.lsp.util.make_position_params()*
-make_position_params({window}, {offset_encoding})
+make_position_params({window}, {position_encoding})
     Creates a `TextDocumentPositionParams` object for the current buffer and
     cursor position.
 
     Parameters: ~
-      • {window}           (`integer?`) window handle or 0 for current,
-                           defaults to current
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
+      • {window}             (`integer?`) window handle or 0 for current,
+                             defaults to current
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     Return: ~
         (`lsp.TextDocumentPositionParams`)
@@ -2047,16 +2049,16 @@ make_position_params({window}, {offset_encoding})
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 
                                             *vim.lsp.util.make_range_params()*
-make_range_params({window}, {offset_encoding})
+make_range_params({window}, {position_encoding})
     Using the current position in the current buffer, creates an object that
     can be used as a building block for several LSP requests, such as
     `textDocument/codeAction`, `textDocument/colorPresentation`,
     `textDocument/rangeFormatting`.
 
     Parameters: ~
-      • {window}           (`integer?`) window handle or 0 for current,
-                           defaults to current
-      • {offset_encoding}  (`"utf-8"|"utf-16"|"utf-32"`)
+      • {window}             (`integer?`) window handle or 0 for current,
+                             defaults to current
+      • {position_encoding}  (`"utf-8"|"utf-16"|"utf-32"`)
 
     Return: ~
         (`{ textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }`)
@@ -2138,17 +2140,17 @@ rename({old_fname}, {new_fname}, {opts})               *vim.lsp.util.rename()*
                      • {ignoreIfExists}? (`boolean`)
 
                                                 *vim.lsp.util.show_document()*
-show_document({location}, {offset_encoding}, {opts})
+show_document({location}, {position_encoding}, {opts})
     Shows document and optionally jumps to the location.
 
     Parameters: ~
-      • {location}         (`lsp.Location|lsp.LocationLink`)
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`)
-      • {opts}             (`table?`) A table with the following fields:
-                           • {reuse_win}? (`boolean`) Jump to existing window
-                             if buffer is already open.
-                           • {focus}? (`boolean`) Whether to focus/jump to
-                             location if possible. (defaults: true)
+      • {location}           (`lsp.Location|lsp.LocationLink`)
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`)
+      • {opts}               (`table?`) A table with the following fields:
+                             • {reuse_win}? (`boolean`) Jump to existing
+                               window if buffer is already open.
+                             • {focus}? (`boolean`) Whether to focus/jump to
+                               location if possible. (defaults: true)
 
     Return: ~
         (`boolean`) `true` if succeeded

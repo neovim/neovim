@@ -277,9 +277,9 @@ end
 
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
 ---@param position lsp.Position
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return integer
-local function get_line_byte_from_position(bufnr, position, offset_encoding)
+local function get_line_byte_from_position(bufnr, position, position_encoding)
   -- LSP's line and characters are 0-indexed
   -- Vim's line and columns are 1-indexed
   local col = position.character
@@ -287,7 +287,7 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- character
   if col > 0 then
     local line = get_line(bufnr, position.line) or ''
-    return vim.str_byteindex(line, offset_encoding, col, false)
+    return vim.str_byteindex(line, position_encoding, col, false)
   end
   return col
 end
@@ -295,12 +295,12 @@ end
 --- Applies a list of text edits to a buffer.
 ---@param text_edits lsp.TextEdit[]
 ---@param bufnr integer Buffer id
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
-function M.apply_text_edits(text_edits, bufnr, offset_encoding)
+function M.apply_text_edits(text_edits, bufnr, position_encoding)
   validate('text_edits', text_edits, 'table', false)
   validate('bufnr', bufnr, 'number', false)
-  validate('offset_encoding', offset_encoding, 'string', false)
+  validate('position_encoding', position_encoding, 'string', false)
 
   if not next(text_edits) then
     return
@@ -359,9 +359,9 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
     -- Convert from LSP style ranges to Neovim style ranges.
     local start_row = text_edit.range.start.line
-    local start_col = get_line_byte_from_position(bufnr, text_edit.range.start, offset_encoding)
+    local start_col = get_line_byte_from_position(bufnr, text_edit.range.start, position_encoding)
     local end_row = text_edit.range['end'].line
-    local end_col = get_line_byte_from_position(bufnr, text_edit.range['end'], offset_encoding)
+    local end_col = get_line_byte_from_position(bufnr, text_edit.range['end'], position_encoding)
     local text = vim.split(text_edit.newText, '\n', { plain = true })
 
     local max = api.nvim_buf_line_count(bufnr)
@@ -430,14 +430,14 @@ end
 ---
 ---@param text_document_edit lsp.TextDocumentEdit
 ---@param index? integer: Optional index of the edit, if from a list of edits (or nil, if not from a list)
----@param offset_encoding? 'utf-8'|'utf-16'|'utf-32'
+---@param position_encoding? 'utf-8'|'utf-16'|'utf-32'
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
-function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
+function M.apply_text_document_edit(text_document_edit, index, position_encoding)
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
-  if offset_encoding == nil then
+  if position_encoding == nil then
     vim.notify_once(
-      'apply_text_document_edit must be called with valid offset encoding',
+      'apply_text_document_edit must be called with valid position encoding',
       vim.log.levels.WARN
     )
     return
@@ -459,7 +459,7 @@ function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
     return
   end
 
-  M.apply_text_edits(text_document_edit.edits, bufnr, offset_encoding)
+  M.apply_text_edits(text_document_edit.edits, bufnr, position_encoding)
 end
 
 local function path_components(path)
@@ -619,12 +619,12 @@ end
 --- Applies a `WorkspaceEdit`.
 ---
 ---@param workspace_edit lsp.WorkspaceEdit
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32' (required)
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32' (required)
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
-function M.apply_workspace_edit(workspace_edit, offset_encoding)
-  if offset_encoding == nil then
+function M.apply_workspace_edit(workspace_edit, position_encoding)
+  if position_encoding == nil then
     vim.notify_once(
-      'apply_workspace_edit must be called with valid offset encoding',
+      'apply_workspace_edit must be called with valid position encoding',
       vim.log.levels.WARN
     )
     return
@@ -641,7 +641,7 @@ function M.apply_workspace_edit(workspace_edit, offset_encoding)
       elseif change.kind then --- @diagnostic disable-line:undefined-field
         error(string.format('Unsupported change: %q', vim.inspect(change)))
       else
-        M.apply_text_document_edit(change, idx, offset_encoding)
+        M.apply_text_document_edit(change, idx, position_encoding)
       end
     end
     return
@@ -654,7 +654,7 @@ function M.apply_workspace_edit(workspace_edit, offset_encoding)
 
   for uri, changes in pairs(all_changes) do
     local bufnr = vim.uri_to_bufnr(uri)
-    M.apply_text_edits(changes, bufnr, offset_encoding)
+    M.apply_text_edits(changes, bufnr, position_encoding)
   end
 end
 
@@ -904,17 +904,20 @@ end
 --- Shows document and optionally jumps to the location.
 ---
 ---@param location lsp.Location|lsp.LocationLink
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32'?
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32'?
 ---@param opts? vim.lsp.util.show_document.Opts
 ---@return boolean `true` if succeeded
-function M.show_document(location, offset_encoding, opts)
+function M.show_document(location, position_encoding, opts)
   -- location may be Location or LocationLink
   local uri = location.uri or location.targetUri
   if uri == nil then
     return false
   end
-  if offset_encoding == nil then
-    vim.notify_once('show_document must be called with valid offset encoding', vim.log.levels.WARN)
+  if position_encoding == nil then
+    vim.notify_once(
+      'show_document must be called with valid position encoding',
+      vim.log.levels.WARN
+    )
     return false
   end
   local bufnr = vim.uri_to_bufnr(uri)
@@ -946,7 +949,7 @@ function M.show_document(location, offset_encoding, opts)
   if range then
     -- Jump to new location (adjusting for encoding of characters)
     local row = range.start.line
-    local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
+    local col = get_line_byte_from_position(bufnr, range.start, position_encoding)
     api.nvim_win_set_cursor(win, { row + 1, col })
     vim._with({ win = win }, function()
       -- Open folds under the cursor
@@ -961,12 +964,12 @@ end
 ---
 ---@deprecated use `vim.lsp.util.show_document` with `{focus=true}` instead
 ---@param location lsp.Location|lsp.LocationLink
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32'?
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32'?
 ---@param reuse_win boolean? Jump to existing window if buffer is already open.
 ---@return boolean `true` if the jump succeeded
-function M.jump_to_location(location, offset_encoding, reuse_win)
+function M.jump_to_location(location, position_encoding, reuse_win)
   vim.deprecate('vim.lsp.util.jump_to_location', nil, '0.12')
-  return M.show_document(location, offset_encoding, { reuse_win = reuse_win, focus = true })
+  return M.show_document(location, position_encoding, { reuse_win = reuse_win, focus = true })
 end
 
 --- Previews a location in a floating window
@@ -1661,18 +1664,18 @@ do --[[ References ]]
   ---
   ---@param bufnr integer Buffer id
   ---@param references lsp.DocumentHighlight[] objects to highlight
-  ---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
+  ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
   ---@see https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
-  function M.buf_highlight_references(bufnr, references, offset_encoding)
+  function M.buf_highlight_references(bufnr, references, position_encoding)
     validate('bufnr', bufnr, 'number', true)
-    validate('offset_encoding', offset_encoding, 'string', false)
+    validate('position_encoding', position_encoding, 'string', false)
     for _, reference in ipairs(references) do
       local range = reference.range
       local start_line = range.start.line
       local end_line = range['end'].line
 
-      local start_idx = get_line_byte_from_position(bufnr, range.start, offset_encoding)
-      local end_idx = get_line_byte_from_position(bufnr, range['end'], offset_encoding)
+      local start_idx = get_line_byte_from_position(bufnr, range.start, position_encoding)
+      local end_idx = get_line_byte_from_position(bufnr, range['end'], position_encoding)
 
       local document_highlight_kind = {
         [protocol.DocumentHighlightKind.Text] = 'LspReferenceText',
@@ -1706,16 +1709,16 @@ end)
 --- |setloclist()|.
 ---
 ---@param locations lsp.Location[]|lsp.LocationLink[]
----@param offset_encoding? 'utf-8'|'utf-16'|'utf-32'
+---@param position_encoding? 'utf-8'|'utf-16'|'utf-32'
 ---                         default to first client of buffer
 ---@return vim.quickfix.entry[] # See |setqflist()| for the format
-function M.locations_to_items(locations, offset_encoding)
-  if offset_encoding == nil then
+function M.locations_to_items(locations, position_encoding)
+  if position_encoding == nil then
     vim.notify_once(
-      'locations_to_items must be called with valid offset encoding',
+      'locations_to_items must be called with valid position encoding',
       vim.log.levels.WARN
     )
-    offset_encoding = vim.lsp.get_clients({ bufnr = 0 })[1].offset_encoding
+    position_encoding = vim.lsp.get_clients({ bufnr = 0 })[1].offset_encoding
   end
 
   local items = {} --- @type vim.quickfix.entry[]
@@ -1752,8 +1755,8 @@ function M.locations_to_items(locations, offset_encoding)
       local end_row = end_pos.line
       local line = lines[row] or ''
       local end_line = lines[end_row] or ''
-      local col = vim.str_byteindex(line, offset_encoding, pos.character, false)
-      local end_col = vim.str_byteindex(end_line, offset_encoding, end_pos.character, false)
+      local col = vim.str_byteindex(line, position_encoding, pos.character, false)
+      local end_col = vim.str_byteindex(end_line, position_encoding, end_pos.character, false)
 
       items[#items + 1] = {
         filename = filename,
@@ -1864,8 +1867,8 @@ function M.try_trim_markdown_code_blocks(lines)
 end
 
 ---@param window integer?: window handle or 0 for current, defaults to current
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
-local function make_position_param(window, offset_encoding)
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
+local function make_position_param(window, position_encoding)
   window = window or 0
   local buf = api.nvim_win_get_buf(window)
   local row, col = unpack(api.nvim_win_get_cursor(window))
@@ -1875,7 +1878,7 @@ local function make_position_param(window, offset_encoding)
     return { line = 0, character = 0 }
   end
 
-  col = vim.str_utfindex(line, offset_encoding, col, false)
+  col = vim.str_utfindex(line, position_encoding, col, false)
 
   return { line = row, character = col }
 end
@@ -1883,22 +1886,22 @@ end
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
 ---@param window integer?: window handle or 0 for current, defaults to current
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.TextDocumentPositionParams
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
-function M.make_position_params(window, offset_encoding)
+function M.make_position_params(window, position_encoding)
   window = window or 0
   local buf = api.nvim_win_get_buf(window)
-  if offset_encoding == nil then
+  if position_encoding == nil then
     vim.notify_once(
-      'warning: offset_encoding is required, using the offset_encoding from the first client',
+      'warning: position_encoding is required, using the offset_encoding from the first client',
       vim.log.levels.WARN
     )
-    offset_encoding = M._get_offset_encoding(buf)
+    position_encoding = M._get_offset_encoding(buf)
   end
   return {
     textDocument = M.make_text_document_params(buf),
-    position = make_position_param(window, offset_encoding),
+    position = make_position_param(window, position_encoding),
   }
 end
 
@@ -1941,18 +1944,18 @@ end
 --- `textDocument/rangeFormatting`.
 ---
 ---@param window integer? window handle or 0 for current, defaults to current
----@param offset_encoding "utf-8"|"utf-16"|"utf-32"
+---@param position_encoding "utf-8"|"utf-16"|"utf-32"
 ---@return { textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }
-function M.make_range_params(window, offset_encoding)
+function M.make_range_params(window, position_encoding)
   local buf = api.nvim_win_get_buf(window or 0)
-  if offset_encoding == nil then
+  if position_encoding == nil then
     vim.notify_once(
-      'warning: offset_encoding is required, using the offset_encoding from the first client',
+      'warning: position_encoding is required, using the offset_encoding from the first client',
       vim.log.levels.WARN
     )
-    offset_encoding = M._get_offset_encoding(buf)
+    position_encoding = M._get_offset_encoding(buf)
   end
-  local position = make_position_param(window, offset_encoding)
+  local position = make_position_param(window, position_encoding)
   return {
     textDocument = M.make_text_document_params(buf),
     range = { start = position, ['end'] = position },
@@ -1967,19 +1970,19 @@ end
 ---@param end_pos [integer,integer]? {row,col} mark-indexed position.
 --- Defaults to the end of the last visual selection.
 ---@param bufnr integer? buffer handle or 0 for current, defaults to current
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return { textDocument: { uri: lsp.DocumentUri }, range: lsp.Range }
-function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
+function M.make_given_range_params(start_pos, end_pos, bufnr, position_encoding)
   validate('start_pos', start_pos, 'table', true)
   validate('end_pos', end_pos, 'table', true)
-  validate('offset_encoding', offset_encoding, 'string', true)
+  validate('position_encoding', position_encoding, 'string', true)
   bufnr = bufnr or api.nvim_get_current_buf()
-  if offset_encoding == nil then
+  if position_encoding == nil then
     vim.notify_once(
-      'warning: offset_encoding is required, using the offset_encoding from the first client',
+      'warning: position_encoding is required, using the offset_encoding from the first client',
       vim.log.levels.WARN
     )
-    offset_encoding = M._get_offset_encoding(bufnr)
+    position_encoding = M._get_offset_encoding(bufnr)
   end
   --- @type [integer, integer]
   local A = { unpack(start_pos or api.nvim_buf_get_mark(bufnr, '<')) }
@@ -1988,12 +1991,12 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
   -- convert to 0-index
   A[1] = A[1] - 1
   B[1] = B[1] - 1
-  -- account for offset_encoding.
+  -- account for position_encoding.
   if A[2] > 0 then
-    A[2] = M.character_offset(bufnr, A[1], A[2], offset_encoding)
+    A[2] = M.character_offset(bufnr, A[1], A[2], position_encoding)
   end
   if B[2] > 0 then
-    B[2] = M.character_offset(bufnr, B[1], B[2], offset_encoding)
+    B[2] = M.character_offset(bufnr, B[1], B[2], position_encoding)
   end
   -- we need to offset the end character position otherwise we loose the last
   -- character of the selection, as LSP end position is exclusive
@@ -2100,9 +2103,9 @@ end
 ---@param bufnr integer
 ---@param start_line integer
 ---@param end_line integer
----@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
+---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return lsp.Range
-local function make_line_range_params(bufnr, start_line, end_line, offset_encoding)
+local function make_line_range_params(bufnr, start_line, end_line, position_encoding)
   local last_line = api.nvim_buf_line_count(bufnr) - 1
 
   ---@type lsp.Position
@@ -2111,7 +2114,12 @@ local function make_line_range_params(bufnr, start_line, end_line, offset_encodi
   if end_line == last_line and not vim.bo[bufnr].endofline then
     end_pos = {
       line = end_line,
-      character = M.character_offset(bufnr, end_line, #get_line(bufnr, end_line), offset_encoding),
+      character = M.character_offset(
+        bufnr,
+        end_line,
+        #get_line(bufnr, end_line),
+        position_encoding
+      ),
     }
   else
     end_pos = { line = end_line + 1, character = 0 }

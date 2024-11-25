@@ -48,21 +48,21 @@ local str_utfindex = vim.str_utfindex
 local str_utf_start = vim.str_utf_start
 local str_utf_end = vim.str_utf_end
 
--- Given a line, byte idx, alignment, and offset_encoding convert to the aligned
+-- Given a line, byte idx, alignment, and position_encoding convert to the aligned
 -- utf-8 index and either the utf-16, or utf-32 index.
 ---@param line string the line to index into
 ---@param byte integer the byte idx
----@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
+---@param position_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
 ---@return integer byte_idx of first change position
 ---@return integer char_idx of first change position
-local function align_end_position(line, byte, offset_encoding)
+local function align_end_position(line, byte, position_encoding)
   local char --- @type integer
   -- If on the first byte, or an empty string: the trivial case
   if byte == 1 or #line == 0 then
     char = byte
     -- Called in the case of extending an empty line "" -> "a"
   elseif byte == #line + 1 then
-    char = str_utfindex(line, offset_encoding) + 1
+    char = str_utfindex(line, position_encoding) + 1
   else
     -- Modifying line, find the nearest utf codepoint
     local offset = str_utf_start(line, byte)
@@ -73,9 +73,9 @@ local function align_end_position(line, byte, offset_encoding)
     end
     if byte <= #line then
       --- Convert to 0 based for input, and from 0 based for output
-      char = str_utfindex(line, offset_encoding, byte - 1) + 1
+      char = str_utfindex(line, position_encoding, byte - 1) + 1
     else
-      char = str_utfindex(line, offset_encoding) + 1
+      char = str_utfindex(line, position_encoding) + 1
     end
     -- Extending line, find the nearest utf codepoint for the last valid character
   end
@@ -93,7 +93,7 @@ end
 ---@param firstline integer firstline from on_lines, adjusted to 1-index
 ---@param lastline integer lastline from on_lines, adjusted to 1-index
 ---@param new_lastline integer new_lastline from on_lines, adjusted to 1-index
----@param offset_encoding string utf-8|utf-16|utf-32|nil (fallback to utf-8)
+---@param position_encoding string utf-8|utf-16|utf-32|nil (fallback to utf-8)
 ---@return vim.lsp.sync.Range result table include line_idx, byte_idx, and char_idx of first change position
 local function compute_start_range(
   prev_lines,
@@ -101,7 +101,7 @@ local function compute_start_range(
   firstline,
   lastline,
   new_lastline,
-  offset_encoding
+  position_encoding
 )
   local char_idx --- @type integer?
   local byte_idx --- @type integer?
@@ -115,7 +115,7 @@ local function compute_start_range(
     if line then
       line_idx = firstline - 1
       byte_idx = #line + 1
-      char_idx = str_utfindex(line, offset_encoding) + 1
+      char_idx = str_utfindex(line, position_encoding) + 1
     else
       line_idx = firstline
       byte_idx = 1
@@ -152,11 +152,11 @@ local function compute_start_range(
     char_idx = 1
   elseif start_byte_idx == #prev_line + 1 then
     byte_idx = start_byte_idx
-    char_idx = str_utfindex(prev_line, offset_encoding) + 1
+    char_idx = str_utfindex(prev_line, position_encoding) + 1
   else
     byte_idx = start_byte_idx + str_utf_start(prev_line, start_byte_idx)
     --- Convert to 0 based for input, and from 0 based for output
-    char_idx = vim.str_utfindex(prev_line, offset_encoding, byte_idx - 1) + 1
+    char_idx = vim.str_utfindex(prev_line, position_encoding, byte_idx - 1) + 1
   end
 
   -- Return the start difference (shared for new and prev lines)
@@ -174,7 +174,7 @@ end
 ---@param firstline integer
 ---@param lastline integer
 ---@param new_lastline integer
----@param offset_encoding string
+---@param position_encoding string
 ---@return vim.lsp.sync.Range prev_end_range
 ---@return vim.lsp.sync.Range curr_end_range
 local function compute_end_range(
@@ -184,7 +184,7 @@ local function compute_end_range(
   firstline,
   lastline,
   new_lastline,
-  offset_encoding
+  position_encoding
 )
   -- A special case for the following `firstline == new_lastline` case where lines are deleted.
   -- Even if the buffer has become empty, nvim behaves as if it has an empty line with eol.
@@ -193,7 +193,7 @@ local function compute_end_range(
     return {
       line_idx = lastline - 1,
       byte_idx = #prev_line + 1,
-      char_idx = str_utfindex(prev_line, offset_encoding) + 1,
+      char_idx = str_utfindex(prev_line, position_encoding) + 1,
     }, { line_idx = 1, byte_idx = 1, char_idx = 1 }
   end
   -- If firstline == new_lastline, the first change occurred on a line that was deleted.
@@ -259,7 +259,7 @@ local function compute_end_range(
     prev_end_byte_idx = 1
   end
   local prev_byte_idx, prev_char_idx =
-    align_end_position(prev_line, prev_end_byte_idx, offset_encoding)
+    align_end_position(prev_line, prev_end_byte_idx, position_encoding)
   local prev_end_range =
     { line_idx = prev_line_idx, byte_idx = prev_byte_idx, char_idx = prev_char_idx }
 
@@ -274,7 +274,7 @@ local function compute_end_range(
       curr_end_byte_idx = 1
     end
     local curr_byte_idx, curr_char_idx =
-      align_end_position(curr_line, curr_end_byte_idx, offset_encoding)
+      align_end_position(curr_line, curr_end_byte_idx, position_encoding)
     curr_end_range =
       { line_idx = curr_line_idx, byte_idx = curr_byte_idx, char_idx = curr_char_idx }
   end
@@ -317,7 +317,7 @@ local function extract_text(lines, start_range, end_range, line_ending)
   end
 end
 
--- rangelength depends on the offset encoding
+-- rangelength depends on the position encoding
 -- bytes for utf-8 (clangd with extension)
 -- codepoints for utf-16
 -- codeunits for utf-32
@@ -326,10 +326,10 @@ end
 ---@param lines string[]
 ---@param start_range vim.lsp.sync.Range
 ---@param end_range vim.lsp.sync.Range
----@param offset_encoding string
+---@param position_encoding string
 ---@param line_ending string
 ---@return integer
-local function compute_range_length(lines, start_range, end_range, offset_encoding, line_ending)
+local function compute_range_length(lines, start_range, end_range, position_encoding, line_ending)
   local line_ending_length = #line_ending
   -- Single line case
   if start_range.line_idx == end_range.line_idx then
@@ -339,7 +339,7 @@ local function compute_range_length(lines, start_range, end_range, offset_encodi
   local start_line = lines[start_range.line_idx]
   local range_length --- @type integer
   if start_line and #start_line > 0 then
-    range_length = str_utfindex(start_line, offset_encoding)
+    range_length = str_utfindex(start_line, position_encoding)
       - start_range.char_idx
       + 1
       + line_ending_length
@@ -352,7 +352,7 @@ local function compute_range_length(lines, start_range, end_range, offset_encodi
   for idx = start_range.line_idx + 1, end_range.line_idx - 1 do
     -- Length full line plus newline character
     if #lines[idx] > 0 then
-      range_length = range_length + str_utfindex(lines[idx], offset_encoding) + #line_ending
+      range_length = range_length + str_utfindex(lines[idx], position_encoding) + #line_ending
     else
       range_length = range_length + line_ending_length
     end
@@ -372,7 +372,7 @@ end
 ---@param firstline integer line to begin search for first difference
 ---@param lastline integer line to begin search in old_lines for last difference
 ---@param new_lastline integer line to begin search in new_lines for last difference
----@param offset_encoding string encoding requested by language server
+---@param position_encoding string encoding requested by language server
 ---@param line_ending string
 ---@return lsp.TextDocumentContentChangeEvent : see https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
 function M.compute_diff(
@@ -381,7 +381,7 @@ function M.compute_diff(
   firstline,
   lastline,
   new_lastline,
-  offset_encoding,
+  position_encoding,
   line_ending
 )
   -- Find the start of changes between the previous and current buffer. Common between both.
@@ -393,7 +393,7 @@ function M.compute_diff(
     firstline + 1,
     lastline + 1,
     new_lastline + 1,
-    offset_encoding
+    position_encoding
   )
   -- Find the last position changed in the previous and current buffer.
   -- prev_end_range is sent to the server as as the end of the changed range.
@@ -405,7 +405,7 @@ function M.compute_diff(
     firstline + 1,
     lastline + 1,
     new_lastline + 1,
-    offset_encoding
+    position_encoding
   )
 
   -- Grab the changed text of from start_range to curr_end_range in the current buffer.
@@ -414,7 +414,7 @@ function M.compute_diff(
 
   -- Compute the range of the replaced text. Deprecated but still required for certain language servers
   local range_length =
-    compute_range_length(prev_lines, start_range, prev_end_range, offset_encoding, line_ending)
+    compute_range_length(prev_lines, start_range, prev_end_range, position_encoding, line_ending)
 
   -- convert to 0 based indexing
   local result = {

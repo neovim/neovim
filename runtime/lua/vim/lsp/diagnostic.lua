@@ -77,7 +77,7 @@ end
 local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   local buf_lines = get_buf_lines(bufnr)
   local client = vim.lsp.get_client_by_id(client_id)
-  local offset_encoding = client and client.offset_encoding or 'utf-16'
+  local position_encoding = client and client.offset_encoding or 'utf-16'
   --- @param diagnostic lsp.Diagnostic
   --- @return vim.Diagnostic
   return vim.tbl_map(function(diagnostic)
@@ -95,9 +95,9 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
     --- @type vim.Diagnostic
     return {
       lnum = start.line,
-      col = vim.str_byteindex(line, offset_encoding, start.character, false),
+      col = vim.str_byteindex(line, position_encoding, start.character, false),
       end_lnum = _end.line,
-      end_col = vim.str_byteindex(line, offset_encoding, _end.character, false),
+      end_col = vim.str_byteindex(line, position_encoding, _end.character, false),
       severity = severity_lsp_to_vim(diagnostic.severity),
       message = message,
       source = diagnostic.source,

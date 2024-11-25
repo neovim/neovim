@@ -94,7 +94,8 @@ local validate = vim.validate
 --- Language ID as string. Defaults to the buffer filetype.
 --- @field get_language_id? fun(bufnr: integer, filetype: string): string
 ---
---- The encoding that the LSP server expects. Client does not verify this is correct.
+--- Called "position encoding" in LSP spec, the encoding that the LSP server expects.
+--- Client does not verify this is correct.
 --- @field offset_encoding? 'utf-8'|'utf-16'|'utf-32'
 ---
 --- Callback invoked when the client operation throws an error. `code` is a number describing the error.
@@ -148,8 +149,10 @@ local validate = vim.validate
 --- See |vim.lsp.rpc.start()|.
 --- @field rpc vim.lsp.rpc.PublicClient
 ---
---- The encoding used for communicating with the server. You can modify this in
---- the `config`'s `on_init` method before text is sent to the server.
+--- Called "position encoding" in LSP spec,
+--- the encoding used for communicating with the server.
+--- You can modify this in the `config`'s `on_init` method
+--- before text is sent to the server.
 --- @field offset_encoding string
 ---
 --- The handlers used by the client as described in |lsp-handler|.
@@ -278,7 +281,7 @@ local function validate_encoding(encoding)
   return valid_encodings[encoding:lower()]
     or error(
       string.format(
-        "Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'",
+        "Invalid position encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'",
         encoding
       )
     )
