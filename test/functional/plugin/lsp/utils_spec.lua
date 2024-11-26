@@ -267,38 +267,38 @@ describe('vim.lsp.util', function()
 
         eq(56, opts.height)
       end)
+    end)
+  end)
 
-      describe('vim.lsp.util.open_floating_preview', function()
-        local var_name = 'lsp_floating_preview'
-        local curbuf = api.nvim_get_current_buf()
+  describe('open_floating_preview', function()
+    before_each(function()
+      n.clear()
+      Screen.new(10, 10)
+      feed('9i<CR><Esc>G4k')
+    end)
 
-        it('clean bufvar after fclose', function()
-          exec_lua(function()
-            vim.lsp.util.open_floating_preview({ 'test' }, '', { height = 5, width = 2 })
-          end)
-          eq(true, api.nvim_win_is_valid(api.nvim_buf_get_var(curbuf, var_name)))
-          command('fclose')
-          eq(
-            'Key not found: lsp_floating_preview',
-            pcall_err(api.nvim_buf_get_var, curbuf, var_name)
-          )
-        end)
+    local var_name = 'lsp_floating_preview'
+    local curbuf = api.nvim_get_current_buf()
 
-        it('clean bufvar after CursorMoved', function()
-          local result = exec_lua(function()
-            vim.lsp.util.open_floating_preview({ 'test' }, '', { height = 5, width = 2 })
-            local winnr = vim.b[vim.api.nvim_get_current_buf()].lsp_floating_preview
-            local result = vim.api.nvim_win_is_valid(winnr)
-            vim.api.nvim_feedkeys(vim.keycode('G'), 'txn', false)
-            return result
-          end)
-          eq(true, result)
-          eq(
-            'Key not found: lsp_floating_preview',
-            pcall_err(api.nvim_buf_get_var, curbuf, var_name)
-          )
-        end)
+    it('clean bufvar after fclose', function()
+      exec_lua(function()
+        vim.lsp.util.open_floating_preview({ 'test' }, '', { height = 5, width = 2 })
       end)
+      eq(true, api.nvim_win_is_valid(api.nvim_buf_get_var(curbuf, var_name)))
+      command('fclose')
+      eq('Key not found: lsp_floating_preview', pcall_err(api.nvim_buf_get_var, curbuf, var_name))
+    end)
+
+    it('clean bufvar after CursorMoved', function()
+      local result = exec_lua(function()
+        vim.lsp.util.open_floating_preview({ 'test' }, '', { height = 5, width = 2 })
+        local winnr = vim.b[vim.api.nvim_get_current_buf()].lsp_floating_preview
+        local result = vim.api.nvim_win_is_valid(winnr)
+        vim.api.nvim_feedkeys(vim.keycode('G'), 'txn', false)
+        return result
+      end)
+      eq(true, result)
+      eq('Key not found: lsp_floating_preview', pcall_err(api.nvim_buf_get_var, curbuf, var_name))
     end)
   end)
 
