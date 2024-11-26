@@ -161,29 +161,35 @@ typedef struct {
 } CpUndoInfo;
 
 typedef struct {
-  buf_T *buf;
+  bufref_T buf;
   OptInt save_b_p_ul;
   int save_b_changed;
   pos_T save_b_op_start;
   pos_T save_b_op_end;
   varnumber_T save_changedtick;
   CpUndoInfo undo_info;
+  void *next;
 } CpBufInfo;
 
 typedef struct {
   win_T *win;
+  handle_T handle;
+  handle_T bufhandle;
   pos_T save_w_cursor;
   viewstate_T save_viewstate;
   int save_w_p_cul;
   int save_w_p_cuc;
+  void *next;
 } CpWinInfo;
 
 typedef struct {
-  kvec_t(CpWinInfo) win_info;
-  kvec_t(CpBufInfo) buf_info;
+  PMap(int) win_info;
+  PMap(int) buf_info;
   bool save_hls;
   cmdmod_T save_cmdmod;
   garray_T save_view;
+  tabpage_T *save_curtab;
+  handle_T save_curtab_handle;
   buf_T *buf;
   win_T *win;
   exarg_T ea;
@@ -2438,15 +2444,155 @@ static void cmdpreview_restore_undo(const CpUndoInfo *cp_undoinfo, buf_T *buf)
   }
 }
 
+/// Revert a single buffer to the saved state.
+static void cmdpreview_restore_buf(CpBufInfo *cp_bufinfo)
+  FUNC_ATTR_NONNULL_ALL
+{
+  buf_T *buf = cp_bufinfo->buf.br_buf;
+
+  buf->b_changed = cp_bufinfo->save_b_changed;
+
+  // Clear preview highlights.
+  extmark_clear(buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
+
+  if (buf->b_u_seq_cur != cp_bufinfo->undo_info.save_b_u_seq_cur) {
+    int count = 0;
+
+    // Calculate how many undo steps are necessary to restore earlier state.
+    for (u_header_T *uhp = buf->b_u_curhead ? buf->b_u_curhead : buf->b_u_newhead;
+         uhp != NULL;
+         uhp = uhp->uh_next.ptr, ++count) {}
+
+    aco_save_T aco;
+    aucmd_prepbuf(&aco, buf);
+    // Ensure all the entries will be undone
+    if (curbuf->b_u_synced == false) {
+      u_sync(true);
+    }
+    // Undo invisibly. This also moves the cursor!
+    if (!u_undo_and_forget(count, false)) {
+      abort();
+    }
+    aucmd_restbuf(&aco);
+  }
+
+  u_blockfree(buf);
+  cmdpreview_restore_undo(&cp_bufinfo->undo_info, buf);
+
+  buf->b_op_start = cp_bufinfo->save_b_op_start;
+  buf->b_op_end = cp_bufinfo->save_b_op_end;
+
+  if (cp_bufinfo->save_changedtick != buf_get_changedtick(buf)) {
+    buf_set_changedtick(buf, cp_bufinfo->save_changedtick);
+  }
+
+  buf->b_p_ul = cp_bufinfo->save_b_p_ul;        // Restore 'undolevels'
+}
+
+static bool cmdpreview_tab_valid(void)
+{
+  if (g_cpinfo.save_curtab != NULL) {
+    if (!valid_tabpage_win(g_cpinfo.save_curtab)
+        || g_cpinfo.save_curtab->handle != g_cpinfo.save_curtab_handle) {
+      g_cpinfo.save_curtab = NULL;
+    }
+  }
+  return g_cpinfo.save_curtab != NULL;
+}
+
+/// Cleanup saved window/buffer information. Windows and buffers may have been
+/// deleted during cmdpreview or in between previews.
+///
+/// TODO(theofabilous): this function's logic could probably be merged into
+/// restore_state()
+static void cmdpreview_cleanup_save(void)
+{
+#define ADD_TRAV_LINK(head__, curr__, node__) do { \
+  (node__)->next = NULL; \
+  if ((curr__)) { \
+  (curr__)->next = (node__); \
+  (curr__) = (node__); \
+  } else { \
+  (head__) = (curr__) = (node__); \
+  } \
+} while (0)
+#define FOR_EACH_LINK(tp__, e__, head__) \
+  for (tp__ *(e__) = (head__), *next__ = (e__) ? (e__)->next : NULL; \
+       (e__) != NULL; \
+       (e__) = next__, next__ = next__ ? next__->next : NULL)
+
+  CpInfo *cpinfo = &g_cpinfo;
+
+  bool tab_valid = cmdpreview_tab_valid();
+
+  CpWinInfo *win_head = NULL, *win_curr = NULL;
+  CpWinInfo *cp_wininfo = NULL;
+  map_foreach_value(&cpinfo->win_info, cp_wininfo, {
+    win_T *win = cp_wininfo->win;
+    cp_wininfo->next = NULL;
+    // If the tab isn't valid, then all windows aren't valid either
+    if (!tab_valid
+        || !tabpage_win_valid(cpinfo->save_curtab, win)
+        || win->handle != cp_wininfo->handle) {
+      ADD_TRAV_LINK(win_head, win_curr, cp_wininfo);
+    }
+  })
+  FOR_EACH_LINK(CpWinInfo, curr, win_head) {
+    int k = curr->handle;
+    xfree(curr);
+    pmap_del(int)(&cpinfo->win_info, k, NULL);
+  }
+
+  CpBufInfo *buf_head = NULL, *buf_curr = NULL;
+  CpBufInfo *cp_bufinfo = NULL;
+  map_foreach_value(&cpinfo->buf_info, cp_bufinfo, {
+    bufref_T buf = cp_bufinfo->buf;
+    cp_bufinfo->next = NULL;
+    if (!bufref_valid(&buf)) {
+      ADD_TRAV_LINK(buf_head, buf_curr, cp_bufinfo);
+      continue;
+    }
+    bool found = false;
+    if (tab_valid) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, cpinfo->save_curtab) {
+        if (wp->w_buffer->handle == buf.br_buf->handle) {
+          found = true;
+          break;
+        }
+      }
+    }
+    if (!found) {
+      ADD_TRAV_LINK(buf_head, buf_curr, cp_bufinfo);
+    }
+  })
+  FOR_EACH_LINK(CpBufInfo, curr, buf_head) {
+    int k = curr->buf.br_fnum;
+    if (bufref_valid(&curr->buf)) {
+      cmdpreview_restore_buf(curr);
+    } else {
+      // XXX: the functions that free undo memory require a buffer
+      // argument and use its fields to access undo information, but
+      // the buffer associated with the saved undo information was
+      // deleted, so use a dummy buffer object, restore undo fields
+      // into it, and call the freeing function on it.
+      buf_T dummy = { 0 };
+      cmdpreview_restore_undo(&curr->undo_info, &dummy);
+      u_clearallandblockfree(&dummy);
+    }
+    xfree(curr);
+    pmap_del(int)(&cpinfo->buf_info, k, NULL);
+  }
+
+#undef FOR_EACH_LINK
+#undef ADD_TRAV_LINK
+}
+
 /// Save buffer and window state so that we can revert to it later.
 static void cmdpreview_save(void)
 {
   CpInfo *cpinfo = &g_cpinfo;
-  Set(ptr_t) saved_bufs = SET_INIT;
 
-  kv_init(cpinfo->buf_info);
-  kv_init(cpinfo->win_info);
-
+  assert(cmdpreview_tab_valid() && curtab == g_cpinfo.save_curtab);
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     buf_T *buf = win->w_buffer;
 
@@ -2455,54 +2601,67 @@ static void cmdpreview_save(void)
       continue;
     }
 
-    if (!set_has(ptr_t, &saved_bufs, buf)) {
-      CpBufInfo cp_bufinfo;
-      cp_bufinfo.buf = buf;
-      cp_bufinfo.save_b_p_ul = buf->b_p_ul;
-      cp_bufinfo.save_b_changed = buf->b_changed;
-      cp_bufinfo.save_b_op_start = buf->b_op_start;
-      cp_bufinfo.save_b_op_end = buf->b_op_end;
-      cp_bufinfo.save_changedtick = buf_get_changedtick(buf);
-      cmdpreview_save_undo(&cp_bufinfo.undo_info, buf);
-      kv_push(cpinfo->buf_info, cp_bufinfo);
-      set_put(ptr_t, &saved_bufs, buf);
+    if (!map_has(int, &cpinfo->buf_info, buf->handle)) {
+      CpBufInfo *cp_bufinfo = xmalloc(sizeof *cp_bufinfo);
+      set_bufref(&cp_bufinfo->buf, buf);
+      cp_bufinfo->save_b_p_ul = buf->b_p_ul;
+      cp_bufinfo->save_b_changed = buf->b_changed;
+      cp_bufinfo->save_b_op_start = buf->b_op_start;
+      cp_bufinfo->save_b_op_end = buf->b_op_end;
+      cp_bufinfo->save_changedtick = buf_get_changedtick(buf);
+      cmdpreview_save_undo(&cp_bufinfo->undo_info, buf);
+      pmap_put(int)(&cpinfo->buf_info, buf->handle, cp_bufinfo);
     }
 
-    CpWinInfo cp_wininfo;
-    cp_wininfo.win = win;
+    CpWinInfo *cp_wininfo = pmap_get(int)(&cpinfo->win_info, win->handle);
+    const bool was_null = cp_wininfo == NULL;
+    // If the contained buffer changed, update the saved viewstate
+    if (cp_wininfo == NULL || cp_wininfo->bufhandle != buf->handle) {
+      if (was_null) {
+        cp_wininfo = xmalloc(sizeof *cp_wininfo);
+      }
+      cp_wininfo->win = win;
+      cp_wininfo->handle = win->handle;
+      cp_wininfo->bufhandle = buf->handle;
 
-    // Save window cursor position and viewstate
-    cp_wininfo.save_w_cursor = win->w_cursor;
-    save_viewstate(win, &cp_wininfo.save_viewstate);
+      // Save window cursor position and viewstate
+      cp_wininfo->save_w_cursor = win->w_cursor;
+      save_viewstate(win, &cp_wininfo->save_viewstate);
 
-    // Save 'cursorline' and 'cursorcolumn'
-    cp_wininfo.save_w_p_cul = win->w_p_cul;
-    cp_wininfo.save_w_p_cuc = win->w_p_cuc;
+      // Save 'cursorline' and 'cursorcolumn'
+      cp_wininfo->save_w_p_cul = win->w_p_cul;
+      cp_wininfo->save_w_p_cuc = win->w_p_cuc;
 
-    kv_push(cpinfo->win_info, cp_wininfo);
+      if (was_null) {
+        pmap_put(int)(&cpinfo->win_info, win->handle, cp_wininfo);
+      }
+    }
   }
 
-  set_destroy(ptr_t, &saved_bufs);
-
-  cpinfo->save_hls = p_hls;
   cpinfo->save_cmdmod = cmdmod;
-  win_size_save(&cpinfo->save_view);
+  cpinfo->save_hls = p_hls;
+
+  if (cpinfo->save_view.ga_data == NULL) {
+    win_size_save(&cpinfo->save_view);
+  }
 }
 
 /// Prepare windows and buffers for command preview.
 static void cmdpreview_prepare(void)
 {
   CpInfo *cpinfo = &g_cpinfo;
-  for (uint32_t i = 0; i < cpinfo->buf_info.size; i++) {
-    buf_T *buf = cpinfo->buf_info.items[i].buf;
+  CpBufInfo *cp_bufinfo = NULL;
+  map_foreach_value(&cpinfo->buf_info, cp_bufinfo, {
+    buf_T *buf = cp_bufinfo->buf.br_buf;
     u_clearall(buf);
     buf->b_p_ul = INT_MAX;  // Make sure we can undo all changes
-  }
-  for (uint32_t i = 0; i < cpinfo->win_info.size; i++) {
-    win_T *win = cpinfo->win_info.items[i].win;
+  })
+  CpWinInfo *cp_wininfo = NULL;
+  map_foreach_value(&cpinfo->win_info, cp_wininfo, {
+    win_T *win = cp_wininfo->win;
     win->w_p_cul = false;       // Disable 'cursorline' so it doesn't mess up the highlights
     win->w_p_cuc = false;       // Disable 'cursorcolumn' so it doesn't mess up the highlights
-  }
+  })
   save_search_patterns();
 
   p_hls = false;                 // Don't show search highlighting during live substitution
@@ -2513,81 +2672,67 @@ static void cmdpreview_prepare(void)
   u_sync(true);
 }
 
-/// Restore the state of buffers and windows for command preview.
+/// Restore the state of buffers and windows for command preview. Also discards
+/// any existing saved state for buffers and windows that aren't visible or
+/// valid anymore.
 static void cmdpreview_restore_state(void)
 {
   assert(is_autocmd_blocked());
   CpInfo *cpinfo = &g_cpinfo;
-  for (size_t i = 0; i < cpinfo->buf_info.size; i++) {
-    CpBufInfo cp_bufinfo = cpinfo->buf_info.items[i];
-    buf_T *buf = cp_bufinfo.buf;
 
-    buf->b_changed = cp_bufinfo.save_b_changed;
+  cmdpreview_cleanup_save();
 
-    // Clear preview highlights.
-    extmark_clear(buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
+  CpBufInfo *cp_bufinfo = NULL;
+  map_foreach_value(&cpinfo->buf_info, cp_bufinfo, {
+    cmdpreview_restore_buf(cp_bufinfo);
+  })
 
-    if (buf->b_u_seq_cur != cp_bufinfo.undo_info.save_b_u_seq_cur) {
-      int count = 0;
-
-      // Calculate how many undo steps are necessary to restore earlier state.
-      for (u_header_T *uhp = buf->b_u_curhead ? buf->b_u_curhead : buf->b_u_newhead;
-           uhp != NULL;
-           uhp = uhp->uh_next.ptr, ++count) {}
-
-      aco_save_T aco;
-      aucmd_prepbuf(&aco, buf);
-      // Ensure all the entries will be undone
-      if (curbuf->b_u_synced == false) {
-        u_sync(true);
-      }
-      // Undo invisibly. This also moves the cursor!
-      if (!u_undo_and_forget(count, false)) {
-        abort();
-      }
-      aucmd_restbuf(&aco);
-    }
-
-    u_blockfree(buf);
-    cmdpreview_restore_undo(&cp_bufinfo.undo_info, buf);
-
-    buf->b_op_start = cp_bufinfo.save_b_op_start;
-    buf->b_op_end = cp_bufinfo.save_b_op_end;
-
-    if (cp_bufinfo.save_changedtick != buf_get_changedtick(buf)) {
-      buf_set_changedtick(buf, cp_bufinfo.save_changedtick);
-    }
-
-    buf->b_p_ul = cp_bufinfo.save_b_p_ul;        // Restore 'undolevels'
-  }
-
-  for (size_t i = 0; i < cpinfo->win_info.size; i++) {
-    CpWinInfo cp_wininfo = cpinfo->win_info.items[i];
-    win_T *win = cp_wininfo.win;
+  CpWinInfo *cp_wininfo = NULL;
+  map_foreach_value(&cpinfo->win_info, cp_wininfo, {
+    win_T *win = cp_wininfo->win;
 
     // Restore window cursor position and viewstate
-    win->w_cursor = cp_wininfo.save_w_cursor;
-    restore_viewstate(win, &cp_wininfo.save_viewstate);
+    win->w_cursor = cp_wininfo->save_w_cursor;
+    restore_viewstate(win, &cp_wininfo->save_viewstate);
 
     // Restore 'cursorline' and 'cursorcolumn'
-    win->w_p_cul = cp_wininfo.save_w_p_cul;
-    win->w_p_cuc = cp_wininfo.save_w_p_cuc;
+    win->w_p_cul = cp_wininfo->save_w_p_cul;
+    win->w_p_cuc = cp_wininfo->save_w_p_cuc;
 
     update_topline(win);
-  }
+  })
 
   cmdmod = cpinfo->save_cmdmod;                // Restore cmdmod
   p_hls = cpinfo->save_hls;                    // Restore 'hlsearch'
   restore_search_patterns();           // Restore search patterns
-  win_size_restore(&cpinfo->save_view);        // Restore window sizes
+
+  if (cmdpreview_tab_valid()) {
+    tabpage_T *save_curtab = curtab;
+    if (curtab != g_cpinfo.save_curtab) {
+      goto_tabpage_tp(g_cpinfo.save_curtab, false, false);
+    }
+    win_size_restore(&cpinfo->save_view);        // Restore window sizes
+    if (curtab != save_curtab) {
+      goto_tabpage_tp(save_curtab, false, false);
+    }
+  }
 }
 
 static void cmdpreview_destroy(void)
 {
   CpInfo *cpinfo = &g_cpinfo;
   ga_clear(&cpinfo->save_view);
-  kv_destroy(cpinfo->win_info);
-  kv_destroy(cpinfo->buf_info);
+
+  void *info = NULL;
+  map_foreach_value(&cpinfo->buf_info, info, {
+    xfree(info);
+  })
+  map_foreach_value(&cpinfo->win_info, info, {
+    xfree(info);
+  })
+  map_destroy(int, &cpinfo->buf_info);
+  map_destroy(int, &cpinfo->win_info);
+
   XFREE_CLEAR(cpinfo->cmdline);
 }
 
@@ -2649,6 +2794,7 @@ static bool cmdpreview_may_init_or_update(CpTransition *tr)
     }
   } else {
     cmdpreview_restore_state();
+    cmdpreview_save();
     cmdpreview_prepare();
     if (g_cpinfo.icm_split && g_cpinfo.buf != NULL) {
       cmdpreview_setup_buf(g_cpinfo.buf);
@@ -2705,30 +2851,44 @@ static bool cmdpreview_show(void)
 ///
 /// @param[out] CpTransition  Transition object in which information will be
 ///                           stored
-static void cmdpreview_transition_begin(CpTransition *tr)
+///
+/// @return true if cmdpreview may proceed, false otherwise. Currently, only
+///         returns false if cmdpreview was previously active on different
+///         tab or on a tab that is no longer valid.
+static bool cmdpreview_transition_begin(CpTransition *tr)
   FUNC_ATTR_NONNULL_ALL
 {
+  block_autocmds();  // Block events
   tr->did_prepare = g_cpinfo.preview_type != 0;
-  if (g_cpinfo.preview_type != 2) {
+  tr->prev_preview_type = g_cpinfo.preview_type;
+  g_cpinfo.preview_type = 0;
+  if (tr->prev_preview_type != 2) {
     tr->prev_win = NULL;
     tr->prev_buf = NULL;
   }
-  if (g_cpinfo.preview_type != 0) {
+  if (tr->prev_preview_type != 0) {
     // Was enabled before
     XFREE_CLEAR(g_cpinfo.cmdline);
     tr->prev_win = g_cpinfo.win;
     tr->prev_buf = g_cpinfo.buf;
     tr->prev_icm_split = g_cpinfo.icm_split;
+    // tab was invalidated or it changed
+    if (!cmdpreview_tab_valid() || curtab != g_cpinfo.save_curtab) {
+      return false;
+    }
   } else {
     tr->prev_icm_split = false;
+    g_cpinfo.cmdline = NULL;
+    g_cpinfo.save_curtab = curtab;
+    g_cpinfo.save_curtab_handle = curtab->handle;
+    g_cpinfo.buf_info = (PMap(int)) MAP_INIT;
+    g_cpinfo.win_info = (PMap(int)) MAP_INIT;
+    g_cpinfo.save_view = (garray_T)GA_EMPTY_INIT_VALUE;
     g_cpinfo.icm_split = *p_icm == 's';  // inccommand=split
     g_cpinfo.buf = NULL;
     g_cpinfo.win = NULL;
   }
-  tr->prev_preview_type = g_cpinfo.preview_type;
-  g_cpinfo.preview_type = 0;
-  g_cpinfo.cmdline = NULL;
-  block_autocmds();  // Block events
+  return true;
 }
 
 static bool cmdpreview_transition_end(CpTransition *tr)
@@ -2775,7 +2935,9 @@ static bool cmdpreview_transition_end(CpTransition *tr)
 
 /// Show 'inccommand' preview if command is previewable. It works like this:
 ///    1. If preview was active beforehand, revert all changes made by the preview callback.
-///    2. Store current undo information so we can revert to current state later.
+///    2. Store current undo information so we can revert to current state later. Discard all
+///       existing saved information for buffers and windows that are no longer valid or visible
+///       in the current tabpage.
 ///    3. Execute the preview callback with the parsed command, preview buffer number and preview
 ///       namespace number as arguments. The preview callback sets the highlight and does the
 ///       changes required for the preview if needed.
@@ -2791,9 +2953,12 @@ static bool cmdpreview_transition_end(CpTransition *tr)
 static bool cmdpreview_may_show(void)
 {
   CpTransition tr;
-  cmdpreview_transition_begin(&tr);
-  if (cmdpreview_may_init_or_update(&tr)) {
-    cmdpreview_show();
+  if (cmdpreview_transition_begin(&tr)) {
+    if (cmdpreview_may_init_or_update(&tr)) {
+      cmdpreview_show();
+    }
+  } else {
+    set_option_direct(kOptInccommand, STATIC_CSTR_AS_OPTVAL(""), 0, SID_NONE);
   }
   return cmdpreview_transition_end(&tr);
 }

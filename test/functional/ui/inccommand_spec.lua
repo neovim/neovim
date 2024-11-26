@@ -341,6 +341,85 @@ describe(":substitute, 'inccommand' preserves", function()
   end
 end)
 
+describe(":substitute, 'inccommand'", function()
+  before_each(clear)
+  for _, case in ipairs { 'split', 'nosplit' } do
+    it('temporarily disables preview if tab changes (inccommand=' .. case .. ')', function()
+      local screen = Screen.new(30, 10)
+      common_setup(screen, case, 'hello\nhello')
+      command('set showtabline=0 | tab vs | tabnext')
+      feed(':%s/hello/HELLO')
+      poke_eventloop()
+      screen:expect {
+        any = '{20:HELLO}                         |',
+      }
+      eq(case, eval('&icm'))
+      eq(1, eval('tabpagenr()'))
+      command('tabnext')
+      eq(2, eval('tabpagenr()'))
+      -- TODO(theofabilous): 'feed(<space><bs>)' doesn't seem to
+      -- work... figure out why
+      feed('<Space>')
+      poke_eventloop()
+      feed('<BS>')
+      eq('', eval('&icm'))
+      screen:expect([[
+        {2:hello}                         |
+        hello                         |
+        {1:~                             }|*7
+        :%s/hello/HELLO^               |
+      ]])
+      feed('<C-T>')
+      eq('', eval('&icm'))
+      screen:expect([[
+        hello                         |
+        {2:hello}                         |
+        {1:~                             }|*7
+        :%s/hello/HELLO^               |
+      ]])
+      feed('<Esc>')
+      eq(case, eval('&icm'))
+    end)
+    it(
+      'does not attempt to restore invalid buffers and windows (inccommand=' .. case .. ')',
+      function()
+        local screen = Screen.new(40, 10)
+        common_setup(screen, case, 'hello\nhello')
+        command('set cmdwinheight=3')
+        local bopt_str = 'setlocal buftype=nofile bufhidden=wipe'
+        command(string.format('%s | vert botright new | %s', bopt_str, bopt_str))
+        insert('helloooo')
+        command('wincmd p')
+        feed(':%s/hello/HELL')
+        screen:expect {
+          any = '{20:HELL}                │helloooo           |',
+        }
+        screen:expect {
+          any = '{20:HELL}                │{1:~                  }|',
+          unchanged = true,
+        }
+        command('q!')
+        local num_bufs = #n.api.nvim_list_bufs()
+        local num_wins = #n.api.nvim_list_wins()
+        local expected_num = 1
+        if case == 'split' then
+          expected_num = expected_num + 1
+        end
+        eq(expected_num, num_bufs)
+        eq(expected_num, num_wins)
+        feed('O')
+        -- Same for both split and nosplit, since the range
+        -- is the current line
+        screen:expect([[
+        {20:HELLO}ooo                                |
+        {1:~                                       }|*8
+        :%s/hello/HELLO^                         |
+      ]])
+      end
+    )
+  end
+end)
+
 describe(":substitute, 'inccommand=split', preview", function()
   ---@return integer?
   ---@return integer?
