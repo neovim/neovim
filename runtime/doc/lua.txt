@@ -2496,7 +2496,7 @@ vim.loader.enable({enable})                              *vim.loader.enable()*
     • adds the libs loader
     • removes the default Nvim loader
 
-    Disable (`enable=true`):
+    Disable (`enable=false`):
     • removes the loaders
     • adds the default Nvim loader
 
