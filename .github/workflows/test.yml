@@ -145,6 +145,10 @@ jobs:
           sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
           perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
 
+      - name: Remove .git directory
+        if: ${{ matrix.build.os == 'ubuntu' }}
+        run: cmake -E rm -rf -- .git
+
       - name: Build third-party deps
         run: |
           cmake -S cmake.deps --preset ci -D CMAKE_BUILD_TYPE=Debug ${{ matrix.build.deps_flags }}
