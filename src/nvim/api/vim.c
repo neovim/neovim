@@ -2351,7 +2351,7 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 
   // Redraw pending screen updates when explicitly requested or when determined
   // that it is necessary to properly draw other requested components.
-  if (opts->flush && !cmdpreview) {
+  if (opts->flush) {
     update_screen();
   }
 

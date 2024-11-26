@@ -2773,9 +2773,6 @@ static bool cmdpreview_may_init_or_update(CpTransition *tr)
   // Cursor may be at the end of the message grid rather than at cmdspos.
   // Place it there in case preview callback flushes it. #30696
   cursorcmd();
-  // Flush now: external cmdline may itself wish to update the screen which is
-  // currently disallowed during cmdpreview(no longer needed in case that changes).
-  cmdline_ui_flush();
 
   if (tr->prev_preview_type == 0) {
     // Save current state and prepare for command preview.
@@ -3028,6 +3025,8 @@ static int command_line_changed(CommandLineState *s)
       cmdpreview_did_not_show();
     }
     if (prev_cmdpreview) {
+      // TODO(theofabilous): is the below `todo` still applicable now that redraws
+      // aren't blocked during cmdpreview?
       // TODO(bfredl): add an immediate redraw flag for cmdline mode which will trigger
       // at next wait-for-input
       update_screen();  // Clear 'inccommand' preview.
