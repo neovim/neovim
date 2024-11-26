@@ -81,7 +81,7 @@ local validate = vim.validate
 --- Commands passed to start_client take precedence over the global command registry. Each key
 --- must be a unique command name, and the value is a function which is called if any LSP action
 --- (code action, code lenses, ...) triggers the command.
---- @field commands? table<string,fun(command: lsp.Command, ctx: table)>
+--- @field commands? table<string, {[1]:function}|vim.api.keyset.user_command>
 ---
 --- Values to pass in the initialization request as `initializationOptions`. See `initialize` in
 --- the LSP spec.
