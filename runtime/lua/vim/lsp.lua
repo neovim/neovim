@@ -1102,6 +1102,12 @@ function lsp.foldexpr(lnum)
   return vim.lsp.folding_range._foldexpr(lnum)
 end
 
+--- Provides a `foldtext` function that shows the `collapsedText` retrieved,
+--- defaults to the first folded line if `collapsedText` is not provided.
+function lsp.foldtext()
+  return vim.lsp.folding_range._foldtext()
+end
+
 ---Checks whether a client is stopped.
 ---
 ---@param client_id (integer)

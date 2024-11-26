@@ -705,6 +705,10 @@ foldexpr({lnum})                                          *vim.lsp.foldexpr()*
     Parameters: ~
       • {lnum}  (`integer`) line number
 
+foldtext()                                                *vim.lsp.foldtext()*
+    Provides a `foldtext` function that shows the `collapsedText` retrieved,
+    defaults to the first folded line if `collapsedText` is not provided.
+
 formatexpr({opts})                                      *vim.lsp.formatexpr()*
     Provides an interface between the built-in client and a `formatexpr`
     function.

@@ -444,7 +444,7 @@ function protocol.make_client_capabilities()
         dynamicRegistration = false,
         lineFoldingOnly = true,
         foldingRange = {
-          collapsedText = false,
+          collapsedText = true,
         },
       },
       formatting = {

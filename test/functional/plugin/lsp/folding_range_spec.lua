@@ -482,6 +482,49 @@ static int foldLevel(linenr_T lnum)
     end)
   end)
 
+  describe('foldtext()', function()
+    --- @type test.functional.ui.screen
+    local screen
+    before_each(function()
+      screen = Screen.new(80, 23)
+      screen:set_default_attr_ids({
+        [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue },
+        [2] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+        [3] = { bold = true, foreground = Screen.colors.Blue1 },
+        [4] = { bold = true, reverse = true },
+        [5] = { reverse = true },
+      })
+      command(
+        [[set foldexpr=v:lua.vim.lsp.foldexpr() foldtext=v:lua.vim.lsp.foldtext() foldlevel=1]]
+      )
+    end)
+
+    it('shows the first folded line if `collapsedText` does not exist', function()
+      screen:expect({
+        grid = [[
+{1:-}// foldLevel() {{{2                                                            |
+{1:│}/// @return  fold level at line number "lnum" in the current window.           |
+{1: }static int foldLevel(linenr_T lnum)                                            |
+{1:-}{                                                                              |
+{1:+}{2:  // While updating the folds lines between invalid_top and invalid_bot have···}|
+{1:+}{2:  if (invalid_top == 0) {······················································}|
+{1:+}{2:  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {························}|
+{1:+}{2:  } else if (lnum >= invalid_top && lnum <= invalid_bot) {·····················}|
+{1:│}  }                                                                            |
+{1:│}                                                                               |
+{1:│}  // Return quickly when there is no folding at all in this window.            |
+{1:+}{2:  if (!hasAnyFolding(curwin)) {················································}|
+{1:│}  }                                                                            |
+{1:│}                                                                               |
+{1:│}  return foldLevelWin(curwin, lnum);                                           |
+{1: }^}                                                                              |
+{3:~                                                                               }|*6
+                                                                                |
+  ]],
+      })
+    end)
+  end)
+
   describe('foldclose()', function()
     --- @type test.functional.ui.screen
     local screen

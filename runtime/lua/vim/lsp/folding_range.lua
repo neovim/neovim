@@ -13,7 +13,10 @@ local M = {}
 ---@field row_level table<integer, [integer, ">" | "<"?]?>
 ---
 --- Index in the form of start_row -> kinds
----@field row_kinds table<integer, table<lsp.FoldingRangeKind, boolean>?>>
+---@field row_kinds table<integer, table<lsp.FoldingRangeKind, true?>?>>
+---
+--- Index in the form of start_row -> collapsed_text
+---@field row_text table<integer, string?>
 
 ---@type table<integer, vim.lsp.folding_range.BufState?>
 local bufstates = {}
@@ -24,12 +27,15 @@ local bufstates = {}
 local function rangeadd(bufstate, ranges)
   local row_level = bufstate.row_level
   local row_kinds = bufstate.row_kinds
+  local row_text = bufstate.row_text
 
   for _, range in ipairs(ranges) do
     local start_row = range.startLine
     local end_row = range.endLine
     -- Adding folds within a single line is not supported by Nvim.
     if start_row ~= end_row then
+      row_text[start_row] = range.collapsedText
+
       local kind = range.kind
       if kind then
         local kinds = row_kinds[start_row] or {}
@@ -104,6 +110,7 @@ local function handler(err, result, ctx)
   local bufstate = assert(bufstates[bufnr])
   bufstate.row_level = {}
   bufstate.row_kinds = {}
+  bufstate.row_text = {}
 
   rangeadd(bufstate, result)
   bufstate.version = ctx.version
@@ -154,6 +161,7 @@ local function setup(bufnr)
   bufstates[bufnr] = {
     row_level = {},
     row_kinds = {},
+    row_text = {},
   }
 
   -- Event hooks from `buf_attach` can't be removed externally.
@@ -171,6 +179,7 @@ local function setup(bufnr)
       bufstates[bufnr] = {
         row_level = {},
         row_kinds = {},
+        row_text = {},
       }
       for _, client in
         ipairs(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange }))
@@ -219,6 +228,7 @@ local function setup(bufnr)
           bufstates[bufnr] = {
             row_level = {},
             row_kinds = {},
+            row_text = {},
           }
           foldupdate(bufnr)
         end
@@ -339,6 +349,18 @@ function M.foldclose(kind, winid)
       end
     end,
   })
+end
+
+---@return string
+function M._foldtext()
+  local bufnr = api.nvim_get_current_buf()
+  local lnum = vim.v.foldstart
+  local row = lnum - 1
+  local bufstate = bufstates[bufnr]
+  if bufstate and bufstate.row_text[row] then
+    return bufstate.row_text[row]
+  end
+  return vim.fn.getline(lnum)
 end
 
 ---@param lnum? integer
