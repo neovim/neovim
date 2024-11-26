@@ -5689,8 +5689,13 @@ void may_trigger_win_scrolled_resized(void)
   int cwsr = check_window_scroll_resize(&size_count,
                                         &first_scroll_win, &first_size_win,
                                         NULL, NULL);
-  bool trigger_resize = do_resize && size_count > 0;
-  bool trigger_scroll = do_scroll && cwsr != 0;
+  bool any_resized = size_count > 0;
+  bool any_scrolled = cwsr != 0;
+  if (any_resized || any_scrolled) {
+    (void)cmdpreview_may_refresh();
+  }
+  bool trigger_resize = do_resize && any_resized;
+  bool trigger_scroll = do_scroll && any_scrolled;
   if (!trigger_resize && !trigger_scroll) {
     return;  // no relevant changes
   }

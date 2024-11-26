@@ -398,6 +398,9 @@ void screen_resize(int width, int height)
         }
       }
     }
+    if (cmdpreview_may_refresh()) {
+      update_screen();
+    }
     ui_flush();
   }
   resizing_screen = false;

@@ -31,6 +31,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
+#include "nvim/eval/window.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
@@ -190,6 +191,8 @@ typedef struct {
   garray_T save_view;
   tabpage_T *save_curtab;
   handle_T save_curtab_handle;
+  handle_T save_curbuf_handle;
+  handle_T save_curwin_handle;
   buf_T *buf;
   win_T *win;
   exarg_T ea;
@@ -205,6 +208,7 @@ typedef struct {
   bool prev_icm_split;
   int prev_preview_type;
   bool did_prepare;
+  bool external;
 } CpTransition;
 
 static CpInfo g_cpinfo = { .preview_type = 0 };
@@ -2700,6 +2704,7 @@ static void cmdpreview_restore_state(void)
     win->w_p_cuc = cp_wininfo->save_w_p_cuc;
 
     update_topline(win);
+    validate_botline(win);
   })
 
   cmdmod = cpinfo->save_cmdmod;                // Restore cmdmod
@@ -2737,9 +2742,11 @@ static void cmdpreview_destroy(void)
 }
 
 /// Check if the current command is previewable.
-static bool cmdpreview_check_cmdline(void)
+static bool cmdpreview_check_cmdline(CpTransition *tr)
 {
-  g_cpinfo.cmdline = xstrdup(ccline.cmdbuff);
+  if (!tr->external) {
+    g_cpinfo.cmdline = xstrdup(ccline.cmdbuff);
+  }
   const char *errormsg = NULL;
   emsg_off++;  // Block errors when parsing the command line, and don't update v:errmsg
   if (!parse_cmdline(g_cpinfo.cmdline, &g_cpinfo.ea, &g_cpinfo.cmdinfo, &errormsg)) {
@@ -2766,7 +2773,7 @@ static bool cmdpreview_check_cmdline(void)
 static bool cmdpreview_may_init_or_update(CpTransition *tr)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!cmdpreview_check_cmdline()) {
+  if (!cmdpreview_check_cmdline(tr)) {
     return false;
   }
 
@@ -2810,6 +2817,11 @@ static bool cmdpreview_show(void)
   emsg_silent++;                 // Block error reporting as the command may be incomplete,
                                  // but still update v:errmsg
   msg_silent++;                  // Block messages, namely ones that prompt
+  // `execute_cmd` may modify the cmdline, but sometimes we need to get the original
+  // cmdline string in arbitrary contexts and can't directly fetch it from ccline
+  // (like when a scroll/resize occurs, we might call the preview routines again but
+  // could be in a nested cmdline state where ccline isn't the same)
+  char *cmdsave = xstrdup(g_cpinfo.cmdline);
   // Execute the preview callback and use its return value to determine whether to show preview or
   // open the preview window. The preview callback also handles doing the changes and highlights for
   // the preview.
@@ -2821,6 +2833,8 @@ static bool cmdpreview_show(void)
     api_clear_error(&err);
     g_cpinfo.preview_type = 0;
   }
+  xfree(g_cpinfo.cmdline);
+  g_cpinfo.cmdline = cmdsave;
 
   // TODO(theofabilous): might need to check if the tab changed/closed after executing the
   // preview
@@ -2848,14 +2862,18 @@ static bool cmdpreview_show(void)
 ///
 /// @param[out] CpTransition  Transition object in which information will be
 ///                           stored
+/// @param external True if called from a non command-line routine, like
+///                 from a resize or scroll event that may need to refresh
+///                 cmdpreview
 ///
 /// @return true if cmdpreview may proceed, false otherwise. Currently, only
 ///         returns false if cmdpreview was previously active on different
 ///         tab or on a tab that is no longer valid.
-static bool cmdpreview_transition_begin(CpTransition *tr)
+static bool cmdpreview_transition_begin(CpTransition *tr, bool external)
   FUNC_ATTR_NONNULL_ALL
 {
   block_autocmds();  // Block events
+  tr->external = external;
   tr->did_prepare = g_cpinfo.preview_type != 0;
   tr->prev_preview_type = g_cpinfo.preview_type;
   g_cpinfo.preview_type = 0;
@@ -2865,7 +2883,9 @@ static bool cmdpreview_transition_begin(CpTransition *tr)
   }
   if (tr->prev_preview_type != 0) {
     // Was enabled before
-    XFREE_CLEAR(g_cpinfo.cmdline);
+    if (!external) {
+      XFREE_CLEAR(g_cpinfo.cmdline);
+    }
     tr->prev_win = g_cpinfo.win;
     tr->prev_buf = g_cpinfo.buf;
     tr->prev_icm_split = g_cpinfo.icm_split;
@@ -2884,6 +2904,10 @@ static bool cmdpreview_transition_begin(CpTransition *tr)
     g_cpinfo.icm_split = *p_icm == 's';  // inccommand=split
     g_cpinfo.buf = NULL;
     g_cpinfo.win = NULL;
+  }
+  if (!external) {
+    g_cpinfo.save_curbuf_handle = curbuf->handle;
+    g_cpinfo.save_curwin_handle = curwin->handle;
   }
   return true;
 }
@@ -2923,7 +2947,7 @@ static bool cmdpreview_transition_end(CpTransition *tr)
     update_screen();
     RedrawingDisabled = save_rd;
   }
-  if (tr->did_prepare) {
+  if (tr->did_prepare && !tr->external) {
     redrawcmdline();
   }
   unblock_autocmds();  // Unblock events
@@ -2950,7 +2974,7 @@ static bool cmdpreview_transition_end(CpTransition *tr)
 static bool cmdpreview_may_show(void)
 {
   CpTransition tr;
-  if (cmdpreview_transition_begin(&tr)) {
+  if (cmdpreview_transition_begin(&tr, false)) {
     if (cmdpreview_may_init_or_update(&tr)) {
       cmdpreview_show();
     }
@@ -2960,10 +2984,98 @@ static bool cmdpreview_may_show(void)
   return cmdpreview_transition_end(&tr);
 }
 
+/// Refresh the 'inccommand' preview if applicable. Intended to be called when a scroll or
+/// resize ocurrs, which may reveal lines that should be affected by 'inccommand', but
+/// were not previously within the viewport.
+bool cmdpreview_may_refresh(void)
+{
+  static int recursive = 0;
+  // Preview callback might itself resize/scroll/etc, make sure we don't enter
+  // this function again
+  if (recursive > 0) {
+    return false;
+  }
+  bool did_refresh = false;
+  recursive++;
+  if (*p_icm == NUL || g_cpinfo.preview_type == 0 || !cmdpreview_tab_valid()) {
+    goto end;
+  }
+  // Ensure that the original window still exists AND holds the same buffer AND
+  // the buffer is valid.
+  //
+  // We set these restrictions because we need to reparse the last saved
+  // cmdline, but the parsed result depends on the current buffer and window.
+  // This function can be called anywhere, possibly by deferred functions,
+  // autocmds, etc. where we can't always reasonably assume that the user
+  // intends/expects to preview the current context. So only refresh the
+  // cmdpreview if the original tab is still valid, the previous window still
+  // exits and holds the same buffer.
+  //
+  // We allow the tab to have changed (in which case we'll temporarily switch
+  // to it) because we may eventually return to the original tab later and
+  // redraw, bypassing the refresh routine and potentially showing an incomplete
+  // preview
+  CpBufInfo *bufinfo = pmap_get(int)(&g_cpinfo.buf_info, g_cpinfo.save_curbuf_handle);
+  if (!bufinfo || !bufref_valid(&bufinfo->buf)) {
+    goto end;
+  }
+  bufref_T br = bufinfo->buf;
+  CpWinInfo *wininfo = pmap_get(int)(&g_cpinfo.win_info, g_cpinfo.save_curwin_handle);
+  // Window isn't valid or doesn't hold the same buffer
+  if (!wininfo
+      || !tabpage_win_valid(g_cpinfo.save_curtab, wininfo->win)
+      || wininfo->win->w_buffer != br.br_buf) {
+    goto end;
+  }
+  tabpage_T *save_curtab = curtab;
+  win_T *save_curwin = curwin;
+  handle_T save_curwin_handle = curwin->handle;
+  bufref_T save_curbuf;
+  set_bufref(&save_curbuf, curbuf);
+
+  switchwin_T sw;
+  if (switch_win(&sw, wininfo->win, g_cpinfo.save_curtab, true) == FAIL) {
+    // Shouldn't happen, win and tabpage are valid
+    abort();
+  }
+
+  // Not fool-proof: w_locked is just true/false, and some functions just
+  // blindly toggle it, likely assuming it was false to begin with.
+  // This doesn't guarantee the window will still exist
+  save_curwin->w_locked = true;
+  save_curbuf.br_buf->b_locked++;
+
+  CpTransition tr;
+  if (!cmdpreview_transition_begin(&tr, true)) {
+    abort();
+  }
+  if (cmdpreview_may_init_or_update(&tr)) {
+    cmdpreview_show();
+  }
+  did_refresh = cmdpreview_transition_end(&tr);
+
+  if (!bufref_valid(&save_curbuf)) {
+    // shouldn't happen, we locked the buffer
+    abort();
+  }
+
+  restore_win(&sw, true);
+
+  save_curbuf.br_buf->b_locked--;
+  if (valid_tabpage_win(save_curtab)
+      && tabpage_win_valid(save_curtab, save_curwin)
+      && save_curwin->handle == save_curwin_handle) {
+    save_curwin->w_locked = false;
+  }
+end:
+  recursive--;
+  return did_refresh;
+}
+
 static void cmdpreview_did_not_show(void)
 {
   CpTransition tr;
-  cmdpreview_transition_begin(&tr);
+  cmdpreview_transition_begin(&tr, false);
   (void)cmdpreview_transition_end(&tr);
 }
 
