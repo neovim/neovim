@@ -2072,7 +2072,7 @@ static void win_update(win_T *wp)
                         // match in fixed position might need redraw
                         // if lines were inserted or deleted
                         || (wp->w_match_head != NULL
-                            && buf->b_mod_xlines != 0)))))
+                            && buf->b_mod_set && buf->b_mod_xlines != 0)))))
         || lnum == wp->w_cursorline
         || lnum == wp->w_last_cursorline) {
       if (lnum == mod_top) {
@@ -2291,7 +2291,8 @@ static void win_update(win_T *wp)
       // - 'number' is set and below inserted/deleted lines, or
       // - 'relativenumber' is set and cursor moved vertically,
       // the text doesn't need to be redrawn, but the number column does.
-      if ((wp->w_p_nu && mod_top != 0 && lnum >= mod_bot && buf->b_mod_xlines != 0)
+      if ((wp->w_p_nu && mod_top != 0 && lnum >= mod_bot
+           && buf->b_mod_set && buf->b_mod_xlines != 0)
           || (wp->w_p_rnu && wp->w_last_cursor_lnum_rnu != wp->w_cursor.lnum)) {
         foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum
                           ? cursorline_fi : fold_info(wp, lnum);
