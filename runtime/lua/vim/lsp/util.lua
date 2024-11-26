@@ -1620,18 +1620,16 @@ function M.open_floating_preview(contents, syntax, opts)
     api.nvim_buf_set_var(bufnr, 'lsp_floating_preview', floating_winnr)
   end
 
-  local augroup_name = ('closing_floating_preview_%d'):format(floating_winnr)
-  local ok =
-    pcall(api.nvim_get_autocmds, { group = augroup_name, pattern = tostring(floating_winnr) })
-  if not ok then
+  local augroup_name = 'nvim_closing_floating_preview'
+  if vim.fn.exists(('#%s'):format(augroup_name)) == 0 then
     api.nvim_create_autocmd('WinClosed', {
-      group = api.nvim_create_augroup(augroup_name, {}),
-      pattern = tostring(floating_winnr),
-      callback = function()
-        if api.nvim_buf_is_valid(bufnr) then
+      group = api.nvim_create_augroup(augroup_name, { clear = true }),
+      callback = function(args)
+        if
+          tonumber(args.match) == vim.b[bufnr].lsp_floating_preview and api.nvim_buf_is_valid(bufnr)
+        then
           vim.b[bufnr].lsp_floating_preview = nil
         end
-        api.nvim_del_augroup_by_name(augroup_name)
       end,
     })
   end
