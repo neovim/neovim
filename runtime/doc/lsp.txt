@@ -1448,7 +1448,7 @@ references({context}, {opts})                       *vim.lsp.buf.references()*
     window.
 
     Parameters: ~
-      • {context}  (`table?`) Context for the request
+      • {context}  (`lsp.ReferenceContext?`) Context for the request
       • {opts}     (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
 
     See also: ~
