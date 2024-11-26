@@ -71,6 +71,7 @@
 #include "nvim/input.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
@@ -4222,8 +4223,36 @@ static void f_json_decode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// json_encode() function
 static void f_json_encode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = encode_tv2json(&argvars[0], NULL);
+  // Check if vim.json.encode exists
+  if (!nlua_func_exists("vim.json.encode")) {
+    emsg(_("E474: vim.json.encode does not exist"));
+    rettv->v_type = VAR_NUMBER;
+    rettv->vval.v_number = 0;
+    return;
+  }
+
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  Arena arena = ARENA_EMPTY;
+  ADD_C(args, vim_to_object(&argvars[0], &arena, false));
+  Error err = ERROR_INIT;
+  Object result = NLUA_EXEC_STATIC("return vim.json.encode(...)", args, false, NULL, &err);
+
+  if (ERROR_SET(&err) || result.type != kObjectTypeString) {
+    semsg(_("E474: Failed to encode to JSON: %s"), err.msg ? err.msg : "unknown error");
+    rettv->v_type = VAR_NUMBER;
+    rettv->vval.v_number = 0;
+  } else {
+    // Retrieve the JSON string result from the Object
+    object_to_vim(result, rettv, &err);
+    if (ERROR_SET(&err)) {
+      semsg(_("E474: Failed to convert JSON result to VimL: %s"), err.msg ? err.msg : "unknown error");
+      rettv->v_type = VAR_NUMBER;
+      rettv->vval.v_number = 0;
+    }
+  }
+
+  arena_mem_free(arena_finish(&arena));
+  api_clear_error(&err);
 }
 
 /// "keytrans()" function
