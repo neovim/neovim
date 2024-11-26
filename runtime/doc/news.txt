@@ -284,6 +284,8 @@ TUI
     :lua =vim.api.nvim_get_chan_info(vim.api.nvim_list_uis()[1].chan)
 • |log| messages written by the builtin UI client (TUI, |--remote-ui|) are
   now prefixed with "ui" instead of "?".
+• The TUI will re-query the terminal's background color when a theme update
+  notification is received and Nvim will update 'background' accordingly.
 
 UI
 

@@ -32,6 +32,7 @@ typedef struct {
   TermKey *tk;
   TermKey_Terminfo_Getstr_Hook *tk_ti_hook_fn;  ///< libtermkey terminfo hook
   uv_timer_t timer_handle;
+  uv_timer_t bg_query_timer;  ///< timer used to batch background color queries
   Loop *loop;
   RStream read_stream;
   TUIData *tui_data;
