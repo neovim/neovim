@@ -98,7 +98,7 @@ local function call_ui_event_method(output, ev)
 end
 
 events = vim.tbl_filter(function(ev)
-  return ev[1] ~= 'empty'
+  return ev[1] ~= 'empty' and ev[1] ~= 'preproc'
 end, events)
 
 for i = 1, #events do
