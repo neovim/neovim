@@ -399,50 +399,51 @@ function M.reset(path)
   end
 end
 
---- Enables the experimental Lua module loader:
---- * overrides loadfile
+--- Enables or disables the experimental Lua module loader:
+---
+--- Enable (`enable=true`):
+--- * overrides |loadfile()|
 --- * adds the Lua loader using the byte-compilation cache
 --- * adds the libs loader
 --- * removes the default Nvim loader
 ---
---- @since 0
-function M.enable()
-  if M.enabled then
-    return
-  end
-  M.enabled = true
-  vim.fn.mkdir(vim.fn.fnamemodify(M.path, ':p'), 'p')
-  _G.loadfile = loadfile_cached
-  -- add Lua loader
-  table.insert(loaders, 2, loader_cached)
-  -- add libs loader
-  table.insert(loaders, 3, loader_lib_cached)
-  -- remove Nvim loader
-  for l, loader in ipairs(loaders) do
-    if loader == vim._load_package then
-      table.remove(loaders, l)
-      break
-    end
-  end
-end
-
---- Disables the experimental Lua module loader:
+--- Disable (`enable=false`):
 --- * removes the loaders
 --- * adds the default Nvim loader
 ---
 --- @since 0
-function M.disable()
-  if not M.enabled then
+---
+--- @param enable? (boolean) true/nil to enable, false to disable
+function M.enable(enable)
+  enable = enable == nil and true or enable
+  if enable == M.enabled then
     return
   end
-  M.enabled = false
-  _G.loadfile = _loadfile
-  for l, loader in ipairs(loaders) do
-    if loader == loader_cached or loader == loader_lib_cached then
-      table.remove(loaders, l)
+  M.enabled = enable
+
+  if enable then
+    vim.fn.mkdir(vim.fn.fnamemodify(M.path, ':p'), 'p')
+    _G.loadfile = loadfile_cached
+    -- add Lua loader
+    table.insert(loaders, 2, loader_cached)
+    -- add libs loader
+    table.insert(loaders, 3, loader_lib_cached)
+    -- remove Nvim loader
+    for l, loader in ipairs(loaders) do
+      if loader == vim._load_package then
+        table.remove(loaders, l)
+        break
+      end
     end
+  else
+    _G.loadfile = _loadfile
+    for l, loader in ipairs(loaders) do
+      if loader == loader_cached or loader == loader_lib_cached then
+        table.remove(loaders, l)
+      end
+    end
+    table.insert(loaders, 2, vim._load_package)
   end
-  table.insert(loaders, 2, vim._load_package)
 end
 
 --- Tracks the time spent in a function

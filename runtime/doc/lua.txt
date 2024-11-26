@@ -2485,21 +2485,23 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
 ==============================================================================
 Lua module: vim.loader                                            *vim.loader*
 
-vim.loader.disable()                                    *vim.loader.disable()*
+vim.loader.enable({enable})                              *vim.loader.enable()*
     WARNING: This feature is experimental/unstable.
 
-    Disables the experimental Lua module loader:
-    • removes the loaders
-    • adds the default Nvim loader
+    Enables or disables the experimental Lua module loader:
 
-vim.loader.enable()                                      *vim.loader.enable()*
-    WARNING: This feature is experimental/unstable.
-
-    Enables the experimental Lua module loader:
-    • overrides loadfile
+    Enable (`enable=true`):
+    • overrides |loadfile()|
     • adds the Lua loader using the byte-compilation cache
     • adds the libs loader
     • removes the default Nvim loader
+
+    Disable (`enable=false`):
+    • removes the loaders
+    • adds the default Nvim loader
+
+    Parameters: ~
+      • {enable}  (`boolean?`) true/nil to enable, false to disable
 
 vim.loader.find({modname}, {opts})                         *vim.loader.find()*
     WARNING: This feature is experimental/unstable.
