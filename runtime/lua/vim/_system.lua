@@ -8,7 +8,7 @@ local uv = vim.uv
 --- @field env? table<string,string|number>
 --- @field clear_env? boolean
 --- @field text? boolean
---- @field timeout? integer Timeout in ms
+--- @field timeout? integer Timeout in ms (>= 1)
 --- @field detach? boolean
 
 --- @class vim.SystemCompleted
@@ -90,21 +90,27 @@ end
 
 local MAX_TIMEOUT = 2 ^ 31
 
---- @param timeout? integer
+--- @param timeout? integer timeout (in milliseconds), must be >= 1.
 --- @return vim.SystemCompleted
 function SystemObj:wait(timeout)
   local state = self._state
 
-  local done = vim.wait(timeout or state.timeout or MAX_TIMEOUT, function()
+  -- If timeout < 1, vim.wait() will return immediately and uv timer won't schedule on_exit(),
+  -- in which state.result will be set. We don't exactly specify the behavior,
+  -- but just terminate the process immediately for now
+  timeout = math.max(1, timeout or state.timeout or MAX_TIMEOUT)
+
+  local done = vim.wait(timeout, function()
     return state.result ~= nil
   end, nil, true)
 
   if not done then
-    -- Send sigkill since this cannot be caught
-    self:_timeout(SIG.KILL)
-    vim.wait(timeout or state.timeout or MAX_TIMEOUT, function()
+    self:_timeout(SIG.TERM)
+    -- Wait a bit more until state.result is set after SIGTERM
+    vim.wait(timeout, function()
       return state.result ~= nil
     end, nil, true)
+    -- TODO: if the process still does not terminate after SIGTERM, send SIGKILL
   end
 
   return state.result
