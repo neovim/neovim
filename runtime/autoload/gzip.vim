@@ -1,6 +1,6 @@
 " Vim autoload file for editing compressed files.
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
+" Last Change:	2024 Nov 25
 " Former Maintainer: Bram Moolenaar <Bram@vim.org>
 
 " These functions are used by the gzip plugin.
@@ -147,6 +147,9 @@ fun gzip#read(cmd)
       let fname = fnameescape(expand("%:r"))
     else
       let fname = escape(expand("%:r"), " \t\n*?[{`$\\%#'\"|!<")
+    endif
+    if filereadable(undofile(expand("%")))
+      exe "sil rundo " . fnameescape(undofile(expand("%")))
     endif
     if &verbose >= 8
       execute "doau BufReadPost " . fname
