@@ -63,6 +63,10 @@ local M = {}
 --- (default: `true`)
 --- @field signs? boolean|vim.diagnostic.Opts.Signs|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Signs
 ---
+--- Use the quickfix list for diagnostics |quickfix|.
+--- (default: `true`)
+--- @field qflist? boolean|vim.diagnostic.Opts.Qflist|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Qflist
+---
 --- Options for floating windows. See |vim.diagnostic.Opts.Float|.
 --- @field float? boolean|vim.diagnostic.Opts.Float|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Float
 ---
@@ -88,6 +92,7 @@ local M = {}
 --- @field underline vim.diagnostic.Opts.Underline
 --- @field virtual_text vim.diagnostic.Opts.VirtualText
 --- @field signs vim.diagnostic.Opts.Signs
+--- @field qflist vim.diagnostic.Opts.Qflist
 --- @field severity_sort {reverse?:boolean}
 
 --- @class vim.diagnostic.Opts.Float
@@ -243,6 +248,18 @@ local M = {}
 --- A table mapping |diagnostic-severity| to the highlight group used for the
 --- whole line the sign is placed in.
 --- @field linehl? table<vim.diagnostic.Severity,string>
+
+--- @class vim.diagnostic.Opts.Qflist
+---
+--- Open quickfix list after setting.
+--- (default: `false`)
+--- @field open? boolean
+---
+--- Title of quickfix list. Defaults to "Diagnostics".
+--- @field title? string
+---
+--- See |diagnostic-severity|.
+--- @field severity? vim.diagnostic.SeverityFilter
 
 --- @class vim.diagnostic.Opts.Jump
 ---
@@ -845,7 +862,8 @@ local function set_list(loclist, opts)
   end
   -- Don't clamp line numbers since the quickfix list can already handle line
   -- numbers beyond the end of the buffer
-  local diagnostics = get_diagnostics(bufnr, opts --[[@as vim.diagnostic.GetOpts]], false)
+  local diagnostics = opts.diagnostics
+    or get_diagnostics(bufnr, opts --[[@as vim.diagnostic.GetOpts]], false)
   local items = M.toqflist(diagnostics)
   if loclist then
     vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
@@ -1591,6 +1609,39 @@ M.handlers.virtual_text = {
   end,
 }
 
+M.handlers.qflist = {
+  show = function(namespace, bufnr, diagnostics, opts)
+    vim.validate('namespace', namespace, 'number')
+    vim.validate('bufnr', bufnr, 'number')
+    vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
+    vim.validate('opts', opts, 'table', true)
+
+    bufnr = get_bufnr(bufnr)
+    opts = opts or {}
+    opts.qflist = opts.qflist or {}
+
+    if not api.nvim_buf_is_loaded(bufnr) then
+      return
+    end
+
+    M.setqflist({
+      diagnostics = diagnostics,
+      namespace = namespace,
+      severity = opts.qflist.severity,
+      open = opts.qflist.open or false,
+      title = opts.qflist.title,
+    })
+  end,
+
+  --- @param namespace integer
+  --- @param bufnr integer
+  hide = function(namespace, bufnr)
+    -- TODO: only remove current namespace
+    -- Probably needs something similar to https://github.com/neovim/neovim/pull/30868
+    vim.fn.setqflist({}, 'r')
+  end,
+}
+
 --- Get virtual text chunks to display using |nvim_buf_set_extmark()|.
 ---
 --- Exported for backward compatibility with
@@ -2018,6 +2069,9 @@ end
 --- @class vim.diagnostic.setqflist.Opts
 --- @inlinedoc
 ---
+--- Only add diagnostics from given list.
+--- @field diagnostics? vim.Diagnostic[]
+---
 --- Only add diagnostics from the given namespace.
 --- @field namespace? integer
 ---
@@ -2031,7 +2085,7 @@ end
 --- See |diagnostic-severity|.
 --- @field severity? vim.diagnostic.SeverityFilter
 
---- Add all diagnostics to the quickfix list.
+--- Add diagnostics to the quickfix list.
 ---
 ---@param opts? vim.diagnostic.setqflist.Opts
 function M.setqflist(opts)
@@ -2041,6 +2095,9 @@ end
 ---Configuration table with the following keys:
 --- @class vim.diagnostic.setloclist.Opts
 --- @inlinedoc
+---
+--- Only add diagnostics from given list.
+--- @field diagnostics? vim.Diagnostic[]
 ---
 --- Only add diagnostics from the given namespace.
 --- @field namespace? integer
