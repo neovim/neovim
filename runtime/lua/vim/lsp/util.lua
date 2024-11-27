@@ -1894,7 +1894,7 @@ function M.make_position_params(window, position_encoding)
   local buf = api.nvim_win_get_buf(window)
   if position_encoding == nil then
     vim.notify_once(
-      'warning: position_encoding is required, using the offset_encoding from the first client',
+      'position_encoding param is required in vim.lsp.util.make_position_params. Defaulting to position encoding of the first client.',
       vim.log.levels.WARN
     )
     position_encoding = M._get_offset_encoding(buf)
@@ -1950,7 +1950,7 @@ function M.make_range_params(window, position_encoding)
   local buf = api.nvim_win_get_buf(window or 0)
   if position_encoding == nil then
     vim.notify_once(
-      'warning: position_encoding is required, using the offset_encoding from the first client',
+      'position_encoding param is required in vim.lsp.util.make_range_params. Defaulting to position encoding of the first client.',
       vim.log.levels.WARN
     )
     position_encoding = M._get_offset_encoding(buf)
@@ -1979,7 +1979,7 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, position_encoding)
   bufnr = bufnr or api.nvim_get_current_buf()
   if position_encoding == nil then
     vim.notify_once(
-      'warning: position_encoding is required, using the offset_encoding from the first client',
+      'position_encoding param is required in vim.lsp.util.make_given_range_params. Defaulting to position encoding of the first client.',
       vim.log.levels.WARN
     )
     position_encoding = M._get_offset_encoding(bufnr)
