@@ -124,8 +124,10 @@ end
 RSC[ms.client_registerCapability] = function(_, params, ctx)
   local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
   client:_register(params.registrations)
-  for bufnr in pairs(client.attached_buffers) do
-    vim.lsp._set_defaults(client, bufnr)
+  if client.config.lsp_defaults then
+    for bufnr in pairs(client.attached_buffers) do
+      vim.lsp._set_defaults(client, bufnr)
+    end
   end
   return vim.NIL
 end

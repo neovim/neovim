@@ -56,9 +56,11 @@ Follow these steps to get LSP features:
                                                         *lsp-defaults*
 When the Nvim LSP client starts it enables diagnostics |vim.diagnostic| (see
 |vim.diagnostic.config()| to customize). It also sets various default options,
-listed below, if (1) the language server supports the functionality and (2)
-the options are empty or were set by the builtin runtime (ftplugin) files. The
-options are not restored when the LSP client is stopped or detached.
+listed below, if (1) `lsp_defaults` was set to `true` (by default) in the
+|vim.lsp.ClientConfig| object passed to |vim.lsp.start()|, and (2) the
+language server supports the functionality, and (3) the options are empty or
+were set by the builtin runtime (ftplugin) files. The options are not restored
+when the LSP client is stopped or detached.
 
 - 'omnifunc' is set to |vim.lsp.omnifunc()|, use |i_CTRL-X_CTRL-O| to trigger
   completion.
@@ -84,8 +86,16 @@ If not wanted, these keymaps can be removed at any time using
 |vim.keymap.del()| or |:unmap| (see also |gr-default|).
 
                                                         *lsp-defaults-disable*
-To override or delete any of the above defaults, set or unset the options on
-|LspAttach|: >lua
+To disable the above defaults, pass a |vim.lsp.ClientConfig| object to
+|vim.lsp.start()| with field `lsp_defaults` set to `false`: >lua
+
+vim.lsp.start {
+  ..., -- Other configuration omitted.
+  lsp_defaults = false,
+}
+<
+
+Alternatively, set or unset the options on |LspAttach|: >lua
 
     vim.api.nvim_create_autocmd('LspAttach', {
       callback = function(args)
@@ -1120,6 +1130,10 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {root_dir}?           (`string`) Directory where the LSP server will
                               base its workspaceFolders, rootUri, and rootPath
                               on initialization.
+      • {lsp_defaults}?       (`boolean`) Allow various default options to be
+                              set for language server upon attach.
+                              |lsp-defaults| (default: true)
+
 
 
 Client:cancel_request({id})                          *Client:cancel_request()*

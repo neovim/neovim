@@ -132,6 +132,10 @@ local validate = vim.validate
 ---
 --- Directory where the LSP server will base its workspaceFolders, rootUri, and rootPath on initialization.
 --- @field root_dir? string
+---
+--- Allow various default options to be set for language server upon attach. |lsp-defaults|
+--- (default: true)
+--- @field lsp_defaults? boolean
 
 --- @class vim.lsp.Client.Progress: vim.Ringbuf<{token: integer|string, value: any}>
 --- @field pending table<lsp.ProgressToken,lsp.LSPAny>
@@ -327,6 +331,7 @@ local function validate_config(config)
   validate('offset_encoding', config.offset_encoding, 'string', true)
   validate('flags', config.flags, 'table', true)
   validate('get_language_id', config.get_language_id, 'function', true)
+  validate('lsp_defaults', config.lsp_defaults, 'boolean', true)
 
   assert(
     (
@@ -1014,7 +1019,9 @@ end
 function Client:on_attach(bufnr)
   self:_text_document_did_open_handler(bufnr)
 
-  lsp._set_defaults(self, bufnr)
+  if self.config.lsp_defaults then
+    lsp._set_defaults(self, bufnr)
+  end
 
   api.nvim_exec_autocmds('LspAttach', {
     buffer = bufnr,
