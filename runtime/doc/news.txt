@@ -234,6 +234,7 @@ LSP
 LUA
 
 • |vim.fs.rm()| can delete files and directories.
+• |vim.fs.exists()| can check whether file or directory exists.
 • |vim.validate()| now has a new signature which uses less tables,
   is more performant and easier to read.
 • |vim.str_byteindex()| and |vim.str_utfindex()| gained overload signatures

@@ -667,4 +667,14 @@ function M.rm(path, opts)
   end
 end
 
+--- @param filename string
+--- @return boolean
+function M.exists(filename)
+  local stat = uv.fs_stat(filename)
+  if stat then
+    return true
+  end
+  return false
+end
+
 return M
