@@ -9,6 +9,12 @@ local M = {}
 ---
 ---@field version? integer
 ---
+--- Never use this directly, `renew()` the cached foldinfo
+--- then use on demand via `row_*` fields.
+---
+--- Index In the form of client_id -> ranges
+---@field client_ranges table<integer, lsp.FoldingRange[]?>
+---
 --- Index in the form of row -> [foldlevel, mark]
 ---@field row_level table<integer, [integer, ">" | "<"?]?>
 ---
@@ -21,42 +27,54 @@ local M = {}
 ---@type table<integer, vim.lsp.folding_range.BufState?>
 local bufstates = {}
 
---- Add `ranges` into the given `bufstate`.
----@param bufstate vim.lsp.folding_range.BufState
----@param ranges lsp.FoldingRange[]
-local function rangeadd(bufstate, ranges)
-  local row_level = bufstate.row_level
-  local row_kinds = bufstate.row_kinds
-  local row_text = bufstate.row_text
+--- Renew the cached foldinfo in the buffer.
+---@param bufnr integer
+local function renew(bufnr)
+  local bufstate = assert(bufstates[bufnr])
 
-  for _, range in ipairs(ranges) do
-    local start_row = range.startLine
-    local end_row = range.endLine
-    -- Adding folds within a single line is not supported by Nvim.
-    if start_row ~= end_row then
-      row_text[start_row] = range.collapsedText
+  ---@type table<integer, [integer, ">" | "<"?]?>
+  local row_level = {}
+  ---@type table<integer, table<lsp.FoldingRangeKind, true?>?>>
+  local row_kinds = {}
+  ---@type table<integer, string?>
+  local row_text = {}
 
-      local kind = range.kind
-      if kind then
-        local kinds = row_kinds[start_row] or {}
-        kinds[kind] = true
-        row_kinds[start_row] = kinds
+  for _, ranges in pairs(bufstate.client_ranges) do
+    for _, range in ipairs(ranges) do
+      local start_row = range.startLine
+      local end_row = range.endLine
+      -- Adding folds within a single line is not supported by Nvim.
+      if start_row ~= end_row then
+        row_text[start_row] = range.collapsedText
+
+        local kind = range.kind
+        if kind then
+          local kinds = row_kinds[start_row] or {}
+          kinds[kind] = true
+          row_kinds[start_row] = kinds
+        end
+
+        for row = start_row, end_row do
+          local level = row_level[row] or { 0 }
+          level[1] = level[1] + 1
+          row_level[row] = level
+        end
+        row_level[start_row][2] = '>'
+        row_level[end_row][2] = '<'
       end
-
-      for row = start_row, end_row do
-        local level = row_level[row] or { 0 }
-        level[1] = level[1] + 1
-        row_level[row] = level
-      end
-      row_level[start_row][2] = '>'
-      row_level[end_row][2] = '<'
     end
   end
+
+  bufstate.row_level = row_level
+  bufstate.row_kinds = row_kinds
+  bufstate.row_text = row_text
 end
 
---- Force `foldexpr()` to be re-evaluated, without opening folds.
+--- Renew the cached foldinfo then force `foldexpr()` to be re-evaluated,
+--- without opening folds.
 ---@param bufnr integer
 local function foldupdate(bufnr)
+  renew(bufnr)
   for _, winid in ipairs(vim.fn.win_findbuf(bufnr)) do
     local wininfo = vim.fn.getwininfo(winid)[1]
     if wininfo and wininfo.tabnr == vim.fn.tabpagenr() then
@@ -97,10 +115,6 @@ local function handler(err, result, ctx)
     return
   end
 
-  if not result then
-    return
-  end
-
   local bufnr = assert(ctx.bufnr)
   -- Handling responses from outdated buffer only causes performance overhead.
   if util.buf_versions[bufnr] ~= ctx.version then
@@ -108,11 +122,7 @@ local function handler(err, result, ctx)
   end
 
   local bufstate = assert(bufstates[bufnr])
-  bufstate.row_level = {}
-  bufstate.row_kinds = {}
-  bufstate.row_text = {}
-
-  rangeadd(bufstate, result)
+  bufstate.client_ranges[ctx.client_id] = result
   bufstate.version = ctx.version
 
   if api.nvim_get_mode().mode:match('^i') then
@@ -159,6 +169,7 @@ local function setup(bufnr)
 
   -- Register the new `bufstate`.
   bufstates[bufnr] = {
+    client_ranges = {},
     row_level = {},
     row_kinds = {},
     row_text = {},
@@ -177,6 +188,7 @@ local function setup(bufnr)
     -- Reset `bufstate` and request folding ranges.
     on_reload = function()
       bufstates[bufnr] = {
+        client_ranges = {},
         row_level = {},
         row_kinds = {},
         row_text = {},
@@ -215,28 +227,32 @@ local function setup(bufnr)
     group = augroup_setup,
     buffer = bufnr,
     callback = function(args)
+      if not api.nvim_buf_is_loaded(bufnr) then
+        return
+      end
+
+      ---@type integer
+      local client_id = args.data.client_id
+      bufstates[bufnr].client_ranges[client_id] = nil
+
       ---@type vim.lsp.Client[]
       local clients = vim
         .iter(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange }))
         ---@param client vim.lsp.Client
         :filter(function(client)
-          return client.id ~= args.data.client_id
+          return client.id ~= client_id
         end)
         :totable()
       if #clients == 0 then
-        if api.nvim_buf_is_loaded(bufnr) then
-          bufstates[bufnr] = {
-            row_level = {},
-            row_kinds = {},
-            row_text = {},
-          }
-          foldupdate(bufnr)
-        end
-      else
-        for _, client in ipairs(clients) do
-          request(bufnr, client)
-        end
+        bufstates[bufnr] = {
+          client_ranges = {},
+          row_level = {},
+          row_kinds = {},
+          row_text = {},
+        }
       end
+
+      foldupdate(bufnr)
     end,
   })
   api.nvim_create_autocmd('LspAttach', {
