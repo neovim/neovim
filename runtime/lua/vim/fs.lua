@@ -1,3 +1,15 @@
+--- @brief <pre>help
+--- *vim.fs.exists()*
+--- Use |uv.fs_stat()| to check a file's type, and whether it exists.
+---
+--- Example:
+---
+--- >lua
+---   if vim.uv.fs_stat(file) then
+---     vim.print("file exists")
+---   end
+--- <
+
 local uv = vim.uv
 
 local M = {}
