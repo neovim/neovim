@@ -159,9 +159,15 @@ jobs:
           cmake --preset ci -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.build.flags }}
           cmake --build build
 
-      - name: ${{ matrix.test }}
+      - if: ${{ matrix.test == 'oldtest' }}
+        name: ${{ matrix.test }}
         timeout-minutes: 20
-        run: make ${{ matrix.test }}
+        run: make -C test/old/testdir NVIM_PRG=$(realpath build)/bin/nvim
+
+      - if: ${{ matrix.test != 'oldtest' }}
+        name: ${{ matrix.test }}
+        timeout-minutes: 20
+        run: cmake --build build --target ${{ matrix.test }}
 
       - name: Install
         run: |
