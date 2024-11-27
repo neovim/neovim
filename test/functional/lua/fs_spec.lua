@@ -273,14 +273,14 @@ describe('vim.fs', function()
     end)
 
     it('works with a single marker', function()
-      eq(test_source_path, exec_lua([[return vim.fs.root(0, '.git')]]))
+      eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
     end)
 
     it('works with multiple markers', function()
       local bufnr = api.nvim_get_current_buf()
       eq(
         vim.fs.joinpath(test_source_path, 'test/functional/fixtures'),
-        exec_lua([[return vim.fs.root(..., {'CMakeLists.txt', '.git'})]], bufnr)
+        exec_lua([[return vim.fs.root(..., {'CMakeLists.txt', 'CMakePresets.json'})]], bufnr)
       )
     end)
 
@@ -295,26 +295,26 @@ describe('vim.fs', function()
     end)
 
     it('works with a filename argument', function()
-      eq(test_source_path, exec_lua([[return vim.fs.root(..., '.git')]], nvim_prog))
+      eq(test_source_path, exec_lua([[return vim.fs.root(..., 'CMakePresets.json')]], nvim_prog))
     end)
 
     it('works with a relative path', function()
       eq(
         test_source_path,
-        exec_lua([[return vim.fs.root(..., '.git')]], vim.fs.basename(nvim_prog))
+        exec_lua([[return vim.fs.root(..., 'CMakePresets.json')]], vim.fs.basename(nvim_prog))
       )
     end)
 
     it('uses cwd for unnamed buffers', function()
       command('new')
-      eq(test_source_path, exec_lua([[return vim.fs.root(0, '.git')]]))
+      eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
     end)
 
     it("uses cwd for buffers with non-empty 'buftype'", function()
       command('new')
       command('set buftype=nofile')
       command('file lua://')
-      eq(test_source_path, exec_lua([[return vim.fs.root(0, '.git')]]))
+      eq(test_source_path, exec_lua([[return vim.fs.root(0, 'CMakePresets.json')]]))
     end)
   end)
 
