@@ -2926,6 +2926,17 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
 ==============================================================================
 Lua module: vim.fs                                                    *vim.fs*
 
+
+                                                             *vim.fs.exists()*
+Use |uv.fs_stat()| to check a file's type, and whether it exists.
+
+Example: >lua
+  if vim.uv.fs_stat(file) then
+    vim.print("file exists")
+  end
+<
+
+
 vim.fs.basename({file})                                    *vim.fs.basename()*
     Return the basename of the given path
 
