@@ -120,10 +120,12 @@ end
 --- `foldupdate()` is scheduled once after the request is completed.
 ---@param bufnr integer
 ---@param client vim.lsp.Client The client whose server supports `foldingRange`.
+---@return integer? request_id
 local function request(bufnr, client)
   ---@type lsp.FoldingRangeParams
   local params = { textDocument = util.make_text_document_params(bufnr) }
-  client:request(ms.textDocument_foldingRange, params, handler, bufnr)
+  local _, request_id = client:request(ms.textDocument_foldingRange, params, handler, bufnr)
+  return request_id
 end
 
 -- NOTE:
@@ -279,7 +281,19 @@ end
 
 --- Close all {kind} of folds in the the window with {winid}.
 ---
----@param kind lsp.FoldingRangeKind 'comment' | 'imports' | 'region'
+--- To automatically fold imports when opening a file, you can use an autocmd:
+---
+--- ```lua
+--- vim.api.nvim_create_autocmd('LspNotify', {
+---   callback = function(args)
+---     if args.data.method == 'textDocument/didOpen' then
+---       vim.lsp.folding_range.foldclose('imports', vim.fn.bufwinid(args.buf))
+---     end
+---   end,
+--- })
+--- ```
+---
+---@param kind lsp.FoldingRangeKind Kind to close, one of "comment", "imports" or "region".
 ---@param winid? integer Defaults to the current window.
 function M.foldclose(kind, winid)
   vim.validate('kind', kind, 'string')
@@ -292,7 +306,39 @@ function M.foldclose(kind, winid)
     return
   end
 
-  foldclose(kind, winid)
+  if bufstate.version == util.buf_versions[bufnr] then
+    foldclose(kind, winid)
+    return
+  end
+  -- Schedule `foldclose()` if the buffer is not up-to-date.
+
+  --- Index in the form of request_id -> true?
+  ---@type table<integer, true?>
+  local scheduled_request = {}
+  for _, client in
+    ipairs(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange }))
+  do
+    local request_id = request(bufnr, client)
+    if request_id then
+      scheduled_request[request_id] = true
+    end
+  end
+
+  api.nvim_create_autocmd('LspRequest', {
+    buffer = bufnr,
+    callback = function(args)
+      ---@type integer
+      local request_id = args.data.request_id
+      if scheduled_request[request_id] and args.data.request.type == 'complete' then
+        scheduled_request[request_id] = nil
+      end
+      -- Do `foldclose()` if all the requests is completed.
+      if next(scheduled_request) == nil then
+        foldclose(kind, winid)
+        return true
+      end
+    end,
+  })
 end
 
 ---@param lnum? integer

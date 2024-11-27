@@ -1662,8 +1662,19 @@ Lua module: vim.lsp.folding_range                          *lsp-folding_range*
 foldclose({kind}, {winid})                 *vim.lsp.folding_range.foldclose()*
     Close all {kind} of folds in the the window with {winid}.
 
+    To automatically fold imports when opening a file, you can use an autocmd: >lua
+        vim.api.nvim_create_autocmd('LspNotify', {
+          callback = function(args)
+            if args.data.method == 'textDocument/didOpen' then
+              vim.lsp.folding_range.foldclose('imports', vim.fn.bufwinid(args.buf))
+            end
+          end,
+        })
+<
+
     Parameters: ~
-      • {kind}   (`lsp.FoldingRangeKind`) 'comment' | 'imports' | 'region'
+      • {kind}   (`lsp.FoldingRangeKind`) Kind to close, one of "comment",
+                 "imports" or "region".
       • {winid}  (`integer?`) Defaults to the current window.
 
 
