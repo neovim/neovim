@@ -639,7 +639,7 @@ end
 --- @param method string LSP method name.
 --- @param params? table LSP request params.
 --- @param handler? lsp.Handler Response |lsp-handler| for this method.
---- @param bufnr? integer Buffer handle. 0 for current (default).
+--- @param bufnr? integer (default: 0) Buffer handle, or 0 for current.
 --- @return boolean status indicates whether the request was successful.
 ---     If it is `false`, then it will always be `false` (the client has shutdown).
 --- @return integer? request_id Can be used with |Client:cancel_request()|.
@@ -718,7 +718,7 @@ end
 --- @param params table LSP request params.
 --- @param timeout_ms integer? Maximum time in milliseconds to wait for
 ---                                a result. Defaults to 1000
---- @param bufnr integer Buffer handle (0 for current).
+--- @param bufnr? integer (default: 0) Buffer handle, or 0 for current.
 --- @return {err: lsp.ResponseError?, result:any}? `result` and `err` from the |lsp-handler|.
 ---                 `nil` is the request was unsuccessful
 --- @return string? err On timeout, cancel or error, where `err` is a

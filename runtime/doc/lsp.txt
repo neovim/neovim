@@ -975,7 +975,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`)
       • {request}               (`fun(self: vim.lsp.Client, method: string, params: table?, handler: lsp.Handler?, bufnr: integer?): boolean, integer?`)
                                 See |Client:request()|.
-      • {request_sync}          (`fun(self: vim.lsp.Client, method: string, params: table, timeout_ms: integer?, bufnr: integer): {err: lsp.ResponseError?, result:any}?, string?`)
+      • {request_sync}          (`fun(self: vim.lsp.Client, method: string, params: table, timeout_ms: integer?, bufnr: integer?): {err: lsp.ResponseError?, result:any}?, string?`)
                                 See |Client:request_sync()|.
       • {notify}                (`fun(self: vim.lsp.Client, method: string, params: table?): boolean`)
                                 See |Client:notify()|.
@@ -1179,7 +1179,7 @@ Client:request({method}, {params}, {handler}, {bufnr})
       • {method}   (`string`) LSP method name.
       • {params}   (`table?`) LSP request params.
       • {handler}  (`lsp.Handler?`) Response |lsp-handler| for this method.
-      • {bufnr}    (`integer?`) Buffer handle. 0 for current (default).
+      • {bufnr}    (`integer?`) (default: 0) Buffer handle, or 0 for current.
 
     Return (multiple): ~
         (`boolean`) status indicates whether the request was successful. If it
@@ -1201,7 +1201,8 @@ Client:request_sync({method}, {params}, {timeout_ms}, {bufnr})
       • {params}      (`table`) LSP request params.
       • {timeout_ms}  (`integer?`) Maximum time in milliseconds to wait for a
                       result. Defaults to 1000
-      • {bufnr}       (`integer`) Buffer handle (0 for current).
+      • {bufnr}       (`integer?`) (default: 0) Buffer handle, or 0 for
+                      current.
 
     Return (multiple): ~
         (`{err: lsp.ResponseError?, result:any}?`) `result` and `err` from the
@@ -1385,7 +1386,7 @@ format({opts})                                          *vim.lsp.buf.format()*
                   predicate are included. Example: >lua
                     -- Never request typescript-language-server for formatting
                     vim.lsp.buf.format {
-                      filter = function(client) return client.name ~= "tsserver" end
+                      filter = function(client) return client.name ~= "ts_ls" end
                     }
 <
                 • {async}? (`boolean`, default: false) If true the method
