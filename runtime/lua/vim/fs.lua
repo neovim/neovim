@@ -205,7 +205,7 @@ end
 ---
 --- Do not traverse matching directories.
 --- If omitted, all directories are searched recursively.
---- @field skip? (fun(dir_name: string): boolean)|nil
+--- @field skip? (fun(dir: string): boolean)
 ---
 --- Follow symbolic links.
 --- (default: `true`)
