@@ -163,9 +163,9 @@ show a sign for the highest severity diagnostic on a given line: >lua
     }
 <
 
-                                          *diagnostic-handlers-example-loclist*
-To automatically update the |location-list| list with new diagnostics, we can
-create a new handler: >lua
+                                          *diagnostic-loclist-example*
+Whenever the |location-list| is opened, the following `show` handler will show
+the most recent diagnostics: >lua
 
   vim.diagnostic.handlers.loclist = {
     show = function(_, _, _, opts)
@@ -176,12 +176,8 @@ create a new handler: >lua
   }
 <
 
-The "hide" function can be omitted for this handler.
-
-Now, everytime the |location-list| is opened, it will show the most recent
-diagnostics. The handler accepts the same options as
-|vim.diagnostic.setloclist()| and can be configured using
-|vim.diagnostic.config()|: >lua
+The handler accepts the same options as |vim.diagnostic.setloclist()| and can be
+configured using |vim.diagnostic.config()|: >lua
 
   vim.diagnostic.config({
     loclist = {
