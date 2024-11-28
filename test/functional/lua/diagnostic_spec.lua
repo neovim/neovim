@@ -3210,6 +3210,27 @@ describe('vim.diagnostic', function()
 
       assert(loc_list[1].lnum < loc_list[2].lnum)
     end)
+
+    it('preserves cursor position when opened', function()
+      local winid = api.nvim_get_current_win()
+      local curpos = api.nvim_win_get_position(winid)
+      exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Lower Diagnostic', 1, 1, 1, 1),
+        })
+
+        vim.diagnostic.set(_G.other_ns, _G.diagnostic_bufnr, {
+          _G.make_warning('Farther Diagnostic', 4, 4, 4, 4),
+        })
+
+        vim.diagnostic.setloclist({ open = true })
+      end)
+
+      eq(winid, api.nvim_get_current_win())
+      eq(curpos, api.nvim_win_get_position(winid))
+    end)
   end)
 
   describe('match()', function()

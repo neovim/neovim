@@ -853,7 +853,9 @@ local function set_list(loclist, opts)
     vim.fn.setqflist({}, ' ', { title = title, items = items })
   end
   if open then
+    local winid = api.nvim_get_current_win()
     api.nvim_command(loclist and 'lwindow' or 'botright cwindow')
+    api.nvim_set_current_win(winid)
   end
 end
 
