@@ -542,7 +542,7 @@ static int foldLevel(linenr_T lnum)
 
     it('closes all folds of one kind immediately', function()
       exec_lua(function()
-        vim.lsp.folding_range.foldclose('comment')
+        vim.lsp.foldclose('comment')
       end)
       screen:expect({
         grid = [[
@@ -573,7 +573,7 @@ static int foldLevel(linenr_T lnum)
 
     it('closes the smallest fold first', function()
       exec_lua(function()
-        vim.lsp.folding_range.foldclose('region')
+        vim.lsp.foldclose('region')
       end)
       screen:expect({
         grid = [[
@@ -615,7 +615,7 @@ static int foldLevel(linenr_T lnum)
     it('is defered when the buffer is not up-to-date', function()
       command('1,2d')
       exec_lua(function()
-        vim.lsp.folding_range.foldclose('comment')
+        vim.lsp.foldclose('comment')
       end)
       screen:expect({
         grid = [[

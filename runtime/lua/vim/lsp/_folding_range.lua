@@ -305,22 +305,8 @@ local function foldclose(kind, winid)
   end)
 end
 
---- Close all {kind} of folds in the the window with {winid}.
----
---- To automatically fold imports when opening a file, you can use an autocmd:
----
---- ```lua
---- vim.api.nvim_create_autocmd('LspNotify', {
----   callback = function(args)
----     if args.data.method == 'textDocument/didOpen' then
----       vim.lsp.folding_range.foldclose('imports', vim.fn.bufwinid(args.buf))
----     end
----   end,
---- })
---- ```
----
----@param kind lsp.FoldingRangeKind Kind to close, one of "comment", "imports" or "region".
----@param winid? integer Defaults to the current window.
+---@param kind lsp.FoldingRangeKind
+---@param winid? integer
 function M.foldclose(kind, winid)
   vim.validate('kind', kind, 'string')
   vim.validate('winid', winid, 'number', true)
@@ -368,7 +354,7 @@ function M.foldclose(kind, winid)
 end
 
 ---@return string
-function M._foldtext()
+function M.foldtext()
   local bufnr = api.nvim_get_current_buf()
   local lnum = vim.v.foldstart
   local row = lnum - 1
@@ -381,7 +367,7 @@ end
 
 ---@param lnum? integer
 ---@return string level
-function M._foldexpr(lnum)
+function M.foldexpr(lnum)
   local bufnr = api.nvim_get_current_buf()
   local bufstate = bufstates[bufnr] or setup(bufnr)
   if not bufstate then

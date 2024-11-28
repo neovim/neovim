@@ -3,6 +3,7 @@ local validate = vim.validate
 
 local lsp = vim._defer_require('vim.lsp', {
   _changetracking = ..., --- @module 'vim.lsp._changetracking'
+  _folding_range = ..., --- @module 'vim.lsp._folding_range'
   _snippet_grammar = ..., --- @module 'vim.lsp._snippet_grammar'
   _tagfunc = ..., --- @module 'vim.lsp._tagfunc'
   _watchfiles = ..., --- @module 'vim.lsp._watchfiles'
@@ -11,7 +12,6 @@ local lsp = vim._defer_require('vim.lsp', {
   codelens = ..., --- @module 'vim.lsp.codelens'
   completion = ..., --- @module 'vim.lsp.completion'
   diagnostic = ..., --- @module 'vim.lsp.diagnostic'
-  folding_range = ..., --- @module 'vim.lsp.folding_range'
   handlers = ..., --- @module 'vim.lsp.handlers'
   inlay_hint = ..., --- @module 'vim.lsp.inlay_hint'
   log = ..., --- @module 'vim.lsp.log'
@@ -1099,13 +1099,33 @@ end
 --- Provides an interface between the built-in client and a `foldexpr` function.
 ---@param lnum integer line number
 function lsp.foldexpr(lnum)
-  return vim.lsp.folding_range._foldexpr(lnum)
+  return vim.lsp._folding_range.foldexpr(lnum)
+end
+
+--- Close all {kind} of folds in the the window with {winid}.
+---
+--- To automatically fold imports when opening a file, you can use an autocmd:
+---
+--- ```lua
+--- vim.api.nvim_create_autocmd('LspNotify', {
+---   callback = function(args)
+---     if args.data.method == 'textDocument/didOpen' then
+---       vim.lsp.foldclose('imports', vim.fn.bufwinid(args.buf))
+---     end
+---   end,
+--- })
+--- ```
+---
+---@param kind lsp.FoldingRangeKind Kind to close, one of "comment", "imports" or "region".
+---@param winid? integer Defaults to the current window.
+function lsp.foldclose(kind, winid)
+  return vim.lsp._folding_range.foldclose(kind, winid)
 end
 
 --- Provides a `foldtext` function that shows the `collapsedText` retrieved,
 --- defaults to the first folded line if `collapsedText` is not provided.
 function lsp.foldtext()
-  return vim.lsp.folding_range._foldtext()
+  return vim.lsp._folding_range.foldtext()
 end
 
 ---Checks whether a client is stopped.
