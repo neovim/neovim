@@ -107,14 +107,9 @@ local function schedule_foldupdate(bufnr)
   end
 end
 
----@param result lsp.FoldingRange[]?
----@type lsp.Handler
-local function handler(err, result, ctx)
-  if err then
-    log.error(err)
-    return
-  end
-
+---@param results table<integer,{err: lsp.ResponseError?, result: lsp.FoldingRange[]?}>
+---@type lsp.MultiHandler
+local function multi_handler(results, ctx)
   local bufnr = assert(ctx.bufnr)
   -- Handling responses from outdated buffer only causes performance overhead.
   if util.buf_versions[bufnr] ~= ctx.version then
@@ -122,7 +117,13 @@ local function handler(err, result, ctx)
   end
 
   local bufstate = assert(bufstates[bufnr])
-  bufstate.client_ranges[ctx.client_id] = result
+  for client_id, result in pairs(results) do
+    if result.err then
+      log.error(result.err)
+    else
+      bufstate.client_ranges[client_id] = result.result
+    end
+  end
   bufstate.version = ctx.version
 
   if api.nvim_get_mode().mode:match('^i') then
@@ -133,16 +134,30 @@ local function handler(err, result, ctx)
   end
 end
 
+---@param result lsp.FoldingRange[]?
+---@type lsp.Handler
+local function handler(err, result, ctx)
+  multi_handler({ [ctx.client_id] = { err = err, result = result } }, ctx)
+end
+
 --- Request `textDocument/foldingRange` from the server.
 --- `foldupdate()` is scheduled once after the request is completed.
 ---@param bufnr integer
----@param client vim.lsp.Client The client whose server supports `foldingRange`.
----@return integer? request_id
+---@param client? vim.lsp.Client The client whose server supports `foldingRange`.
 local function request(bufnr, client)
   ---@type lsp.FoldingRangeParams
   local params = { textDocument = util.make_text_document_params(bufnr) }
-  local _, request_id = client:request(ms.textDocument_foldingRange, params, handler, bufnr)
-  return request_id
+
+  if client then
+    client:request(ms.textDocument_foldingRange, params, handler, bufnr)
+    return
+  end
+
+  if not next(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange })) then
+    return
+  end
+
+  vim.lsp.buf_request_all(bufnr, ms.textDocument_foldingRange, params, multi_handler)
 end
 
 -- NOTE:
@@ -193,11 +208,7 @@ local function setup(bufnr)
         row_kinds = {},
         row_text = {},
       }
-      for _, client in
-        ipairs(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange }))
-      do
-        request(bufnr, client)
-      end
+      request(bufnr)
     end,
     --- Sync changed rows with their previous foldlevels before applying new ones.
     on_bytes = function(_, _, _, start_row, _, _, old_row, _, _, new_row, _, _)
@@ -280,11 +291,7 @@ local function setup(bufnr)
     end,
   })
 
-  for _, client in
-    ipairs(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange }))
-  do
-    request(bufnr, client)
-  end
+  request(bufnr)
 
   return bufstates[bufnr]
 end
@@ -324,33 +331,15 @@ function M.foldclose(kind, winid)
   end
   -- Schedule `foldclose()` if the buffer is not up-to-date.
 
-  --- Index in the form of request_id -> true?
-  ---@type table<integer, true?>
-  local scheduled_request = {}
-  for _, client in
-    ipairs(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange }))
-  do
-    local request_id = request(bufnr, client)
-    if request_id then
-      scheduled_request[request_id] = true
-    end
+  if not next(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange })) then
+    return
   end
-
-  api.nvim_create_autocmd('LspRequest', {
-    buffer = bufnr,
-    callback = function(args)
-      ---@type integer
-      local request_id = args.data.request_id
-      if scheduled_request[request_id] and args.data.request.type == 'complete' then
-        scheduled_request[request_id] = nil
-      end
-      -- Do `foldclose()` if all the requests is completed.
-      if next(scheduled_request) == nil then
-        foldclose(kind, winid)
-        return true
-      end
-    end,
-  })
+  ---@type lsp.FoldingRangeParams
+  local params = { textDocument = util.make_text_document_params(bufnr) }
+  vim.lsp.buf_request_all(bufnr, ms.textDocument_foldingRange, params, function(...)
+    multi_handler(...)
+    foldclose(kind, winid)
+  end)
 end
 
 ---@return string

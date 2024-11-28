@@ -613,31 +613,31 @@ static int foldLevel(linenr_T lnum)
     end)
 
     it('is defered when the buffer is not up-to-date', function()
-      command('1,2d')
       exec_lua(function()
         vim.lsp.foldclose('comment')
+        vim.lsp.util.buf_versions[bufnr] = 0
       end)
       screen:expect({
         grid = [[
-{1:-}^static int foldLevel(linenr_T lnum)                                            |
-{1:│}{                                                                              |
-{1: }  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1:-}  // an undefined fold level.  Otherwise update the folds first.               |
+{1:+}{2:+--  2 lines: foldLevel()······················································}|
+{1: }static int foldLevel(linenr_T lnum)                                            |
+{1:-}{                                                                              |
+{1:+}{2:+---  2 lines: While updating the folds lines between invalid_top and invalid_b}|
 {1:-}  if (invalid_top == 0) {                                                      |
 {1:2}    checkupdate(curwin);                                                       |
 {1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
 {1:2}    return prev_lnum_lvl;                                                      |
 {1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
 {1:2}    return -1;                                                                 |
-{1:-}  }                                                                            |
-{1:2}                                                                               |
+{1:│}  }                                                                            |
+{1:│}                                                                               |
 {1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:│}  if (!hasAnyFolding(curwin)) {                                                |
-{1:│}    return 0;                                                                  |
-{1:-}  }                                                                            |
-{1:2}                                                                               |
+{1:-}  if (!hasAnyFolding(curwin)) {                                                |
+{1:2}    return 0;                                                                  |
+{1:│}  }                                                                            |
+{1:│}                                                                               |
 {1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1:│}}                                                                              |
+{1: }^}                                                                              |
 {3:~                                                                               }|*3
                                                                                 |
   ]],
