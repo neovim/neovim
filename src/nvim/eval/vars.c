@@ -1888,12 +1888,46 @@ static void getwinvar(typval_T *argvars, typval_T *rettv, int off)
   get_var_from(varname, rettv, &argvars[off + 2], 'w', tp, win, NULL);
 }
 
-/// Convert typval to option value for a particular option.
+/// Convert typval to option value directly without trying to coerce the typval to any option type.
 ///
 /// @param[in]   tv      typval to convert.
-/// @param[in]   option  Option name.
-/// @param[in]   flags   Option flags.
-/// @param[out]  error   Whether an error occurred.
+/// @param[out]  error   Whether an error occurred. Only happens when typval type doesn't have a
+///                      corresponding option type.
+///
+/// @return  Typval converted to OptVal. Returns NIL_OPTVAL for invalid type.
+static OptVal tv_as_optval_direct(typval_T *tv, const char *option, bool *error)
+{
+  *error = false;
+
+  switch (tv->v_type) {
+  case VAR_BOOL:
+    return BOOLEAN_OPTVAL(TRISTATE_FROM_INT(tv->vval.v_bool));
+  case VAR_NUMBER:
+    return NUMBER_OPTVAL(tv->vval.v_number);
+  case VAR_STRING:
+  case VAR_FUNC:
+    return CSTR_AS_OPTVAL(tv->vval.v_string);
+    break;
+  case VAR_PARTIAL:
+  case VAR_BLOB:
+  case VAR_FLOAT:
+  case VAR_LIST:
+  case VAR_DICT:
+  case VAR_SPECIAL:
+  case VAR_UNKNOWN:
+    *error = true;
+    return NIL_OPTVAL;
+    break;
+  }
+  UNREACHABLE;
+}
+
+/// Convert typval to option value for a particular option.
+///
+/// @param[in]   tv       typval to convert.
+/// @param[in]   opt_idx  Option index.
+/// @param[in]   option   Option name.
+/// @param[out]  error    Whether an error occurred.
 ///
 /// @return  Typval converted to OptVal. Must be freed by caller.
 ///          Returns NIL_OPTVAL for invalid option name.
@@ -1901,48 +1935,101 @@ static void getwinvar(typval_T *argvars, typval_T *rettv, int off)
 /// TODO(famiu): Refactor this to support multitype options.
 static OptVal tv_to_optval(typval_T *tv, OptIndex opt_idx, const char *option, bool *error)
 {
-  OptVal value = NIL_OPTVAL;
-  char nbuf[NUMBUFLEN];
-  bool err = false;
-  const bool is_tty_opt = is_tty_option(option);
-  const bool option_has_bool = !is_tty_opt && option_has_type(opt_idx, kOptValTypeBoolean);
-  const bool option_has_num = !is_tty_opt && option_has_type(opt_idx, kOptValTypeNumber);
-  const bool option_has_str = is_tty_opt || option_has_type(opt_idx, kOptValTypeString);
+  static char errbuf[IOSIZE];
 
-  if (!is_tty_opt && (get_option(opt_idx)->flags & kOptFlagFunc) && tv_is_func(*tv)) {
-    // If the option can be set to a function reference or a lambda
-    // and the passed value is a function reference, then convert it to
-    // the name (string) of the function reference.
-    char *strval = encode_tv2string(tv, NULL);
-    err = strval == NULL;
-    value = CSTR_AS_OPTVAL(strval);
-  } else if (option_has_bool || option_has_num) {
-    varnumber_T n = option_has_num ? tv_get_number_chk(tv, &err) : tv_get_bool_chk(tv, &err);
-    // This could be either "0" or a string that's not a number.
-    // So we need to check if it's actually a number.
-    if (!err && tv->v_type == VAR_STRING && n == 0) {
-      unsigned idx;
-      for (idx = 0; tv->vval.v_string[idx] == '0'; idx++) {}
-      if (tv->vval.v_string[idx] != NUL || idx == 0) {
-        // There's another character after zeros or the string is empty.
-        // In both cases, we are trying to set a num option using a string.
-        err = true;
-        semsg(_("E521: Number required: &%s = '%s'"), option, tv->vval.v_string);
-      }
-    }
-    value = option_has_num ? NUMBER_OPTVAL((OptInt)n) : BOOLEAN_OPTVAL(TRISTATE_FROM_INT(n));
-  } else if (option_has_str) {
-    // Avoid setting string option to a boolean or a special value.
-    if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
-      const char *strval = tv_get_string_buf_chk(tv, nbuf);
-      err = strval == NULL;
+  OptVal value = NIL_OPTVAL;
+  bool err = false;
+  char nbuf[NUMBUFLEN];
+
+  if (is_tty_option(option)) {
+    const char *strval = tv_get_string_buf_chk(tv, nbuf);
+
+    if (!(err = strval == NULL)) {
       value = CSTR_TO_OPTVAL(strval);
-    } else if (!is_tty_opt) {
-      err = true;
-      emsg(_(e_stringreq));
     }
   } else {
-    abort();  // This should never happen.
+    // Iterate through all option types and try to convert the typval to every supported type until
+    // a successful conversion is found.
+    for (OptValType type = 0; type < kOptValTypeSize; type++) {
+      // Unsupported type, skip.
+      if (!option_has_type(opt_idx, type)) {
+        continue;
+      }
+
+      // Try to convert the typval to the current option type.
+      switch (type) {
+      case kOptValTypeBoolean:
+      case kOptValTypeNumber: {
+        varnumber_T n
+          = type == kOptValTypeBoolean ? tv_get_bool_chk(tv, &err) : tv_get_number_chk(tv, &err);
+        // This could be either "0" or a string that's not a number.
+        // So we need to check if it's actually a number.
+        if (!err && tv->v_type == VAR_STRING && n == 0) {
+          unsigned idx;
+          for (idx = 0; tv->vval.v_string[idx] == '0'; idx++) {
+          }
+          if (tv->vval.v_string[idx] != NUL || idx == 0) {
+            // There's another character after zeros or the string is empty.
+            // In both cases, we are trying to set a num option using a string.
+            err = true;
+          }
+        }
+
+        if (!err) {
+          value = type == kOptValTypeBoolean ? BOOLEAN_OPTVAL(TRISTATE_FROM_INT(n))
+                                             : NUMBER_OPTVAL((OptInt)n);
+        }
+        break;
+      }
+      case kOptValTypeString: {
+        if ((get_option(opt_idx)->flags & kOptFlagFunc) && tv_is_func(*tv)) {
+          // If the option can be set to a function reference or a lambda and the passed value is a
+          // function reference, then convert it to the name (string) of the function reference.
+          const char *strval = encode_tv2string(tv, NULL);
+
+          if (!(err = strval == NULL)) {
+            value = CSTR_AS_OPTVAL(strval);
+          }
+        } else if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
+          // Avoid setting string option to a boolean or a special value.
+          const char *strval = tv_get_string_buf_chk(tv, nbuf);
+
+          if (!(err = strval == NULL)) {
+            value = CSTR_TO_OPTVAL(strval);
+          }
+        } else {
+          err = true;
+        }
+        break;
+      }
+      case kOptValTypeNil:
+        break;
+      }
+
+      // Check if the conversion was successful. If it was, stop the loop, otherwise reset the error
+      // flag and continue.
+      if (!err) {
+        break;
+      } else {
+        err = false;
+      }
+    }
+
+    // All conversions failed, the typval type is not compatible with the option type.
+    if (value.type == kOptValTypeNil) {
+      err = true;
+
+      bool conv_err = false;
+      // Try to convert the typval to an OptVal to display the error message.
+      OptVal optval = tv_as_optval_direct(tv, option, &conv_err);
+
+      if (!conv_err) {
+        semsg("E5399: %s",
+              print_invalid_optval_err(opt_idx, option, optval, errbuf, sizeof(errbuf)));
+      } else {
+        semsg(_(e_invarg2), option);
+      }
+    }
   }
 
   if (error != NULL) {

@@ -53,7 +53,7 @@ achieve special effects.  These options come in three forms:
 			  'lines'
 			Warning: This may have a lot of side effects.
 
-					    *:set-args* *:set=* *E487* *E521*
+					    *:set-args* *:set=* *E487* *E521* *E5399*
 :se[t] {option}={value}		or
 :se[t] {option}:{value}
 			Set string or number option to {value}.

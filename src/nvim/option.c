@@ -1121,7 +1121,8 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
     TriState newval_bool;
 
     // ":set opt!": invert
-    if (nextchar == '!') {
+    // ":set invopt": invert
+    if (nextchar == '!' || prefix == PREFIX_INV) {
       switch (oldval.data.boolean) {
       case kNone:
         newval_bool = kNone;
@@ -1134,13 +1135,8 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
         break;
       }
     } else {
-      // ":set invopt": invert
       // ":set opt" or ":set noopt": set or reset
-      if (prefix == PREFIX_INV) {
-        newval_bool = *(int *)varp ^ 1;
-      } else {
-        newval_bool = prefix == PREFIX_NO ? 0 : 1;
-      }
+      newval_bool = prefix == PREFIX_NO ? 0 : 1;
     }
 
     newval = BOOLEAN_OPTVAL(newval_bool);
@@ -3133,17 +3129,15 @@ bool optval_equal(OptVal o1, OptVal o2)
   UNREACHABLE;
 }
 
-/// Get type of option. Does not support multitype options.
-static OptValType option_get_type(const OptIndex opt_idx)
+/// Get option type.
+///
+/// @param  opt_idx    Option index in options[] table.
+/// @param  opt_flags  Option flags.
+///
+/// @return Option type.
+OptValType option_get_type(OptIndex opt_idx, int opt_flags)
 {
-  assert(!option_is_multitype(opt_idx));
-
-  // If the option only supports a single type, it means that the index of the option's type flag
-  // corresponds to the value of the type enum. So get the index of the type flag using xctz() and
-  // use that as the option's type.
-  OptValType type = xctz(options[opt_idx].type_flags);
-  assert(type > kOptValTypeNil && type < kOptValTypeSize);
-  return type;
+  return optval_from_varp(opt_idx, get_varp_scope(&options[opt_idx], opt_flags)).type;
 }
 
 /// Create OptVal from var pointer.
@@ -3166,7 +3160,11 @@ OptVal optval_from_varp(OptIndex opt_idx, void *varp)
     return *(OptVal *)varp;
   }
 
-  OptValType type = option_get_type(opt_idx);
+  // If the option only supports a single type, it means that the index of the option's type flag
+  // corresponds to the value of the type enum. So get the index of the type flag using xctz() and
+  // use that as the option's type.
+  OptValType type = xctz(options[opt_idx].type_flags);
+  assert(type > kOptValTypeNil && type < kOptValTypeSize);
 
   switch (type) {
   case kOptValTypeNil:
@@ -3194,6 +3192,12 @@ static void set_option_varp(OptIndex opt_idx, void *varp, OptVal value, bool fre
 
   if (free_oldval) {
     optval_free(optval_from_varp(opt_idx, varp));
+  }
+
+  if (option_is_multitype(opt_idx)) {
+    // Multitype options are stored as OptVal.
+    *(OptVal *)varp = value;
+    return;
   }
 
   switch (value.type) {
@@ -3671,6 +3675,9 @@ const char *print_invalid_optval_err(OptIndex opt_idx, const char *name, OptVal 
 ///
 /// @param  opt_idx         Index in options[] table. Must not be kOptInvalid.
 /// @param  newval[in,out]  New option value. Might be modified.
+/// @param  opt_flags       Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
+/// @param  errbuf          Buffer for error message.
+/// @param  errbuflen       Length of error buffer.
 static const char *validate_option_value(const OptIndex opt_idx, OptVal *newval, int opt_flags,
                                          char *errbuf, size_t errbuflen)
 {
@@ -3781,6 +3788,7 @@ static const char *set_option(const OptIndex opt_idx, OptVal value, int opt_flag
 
   // Set option through its variable pointer.
   set_option_varp(opt_idx, varp, value, false);
+
   // Process any side effects.
   errmsg = did_set_option(opt_idx, varp, old_value, value, opt_flags, set_sid, direct,
                           value_replaced, errbuf, errbuflen);
@@ -4166,17 +4174,12 @@ static void showoptions(bool all, int opt_flags)
 /// Return true if option "p" has its default value.
 static int optval_default(OptIndex opt_idx, void *varp)
 {
-  vimoption_T *opt = &options[opt_idx];
-
   // Hidden options always use their default value.
   if (is_option_hidden(opt_idx)) {
     return true;
   }
 
-  OptVal current_val = optval_from_varp(opt_idx, varp);
-  OptVal default_val = opt->def_val;
-
-  return optval_equal(current_val, default_val);
+  return optval_equal(optval_from_varp(opt_idx, varp), options[opt_idx].def_val);
 }
 
 /// Send update to UIs with values of UI relevant options
@@ -6448,7 +6451,7 @@ static Dict vimoption2dict(vimoption_T *opt, int opt_flags, buf_T *buf, win_T *w
   PUT_C(dict, "last_set_linenr", INTEGER_OBJ(last_set.script_ctx.sc_lnum));
   PUT_C(dict, "last_set_chan", INTEGER_OBJ((int64_t)last_set.channel_id));
 
-  PUT_C(dict, "type", CSTR_AS_OBJ(optval_type_get_name(option_get_type(get_opt_idx(opt)))));
+  PUT_C(dict, "type", CSTR_AS_OBJ(optval_type_get_name(option_get_type(opt_idx, opt_flags))));
   PUT_C(dict, "default", optval_as_object(opt->def_val));
   PUT_C(dict, "allows_duplicates", BOOLEAN_OBJ(!(opt->flags & kOptFlagNoDup)));
 
