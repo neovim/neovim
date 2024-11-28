@@ -6311,6 +6311,7 @@ vim.wo.stc = vim.wo.statuscolumn
 --- All fields except the {item} are optional.  A single percent sign can
 --- be given as "%%".
 ---
+--- 						*stl-%!*
 --- When the option starts with "%!" then it is used as an expression,
 --- evaluated and the result is used as the option value.  Example:
 ---
