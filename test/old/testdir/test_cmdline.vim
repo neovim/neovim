@@ -4036,6 +4036,27 @@ func Test_rulerformat_position()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test for using "%!" in 'rulerformat' to use a function
+func Test_rulerformat_function()
+  CheckScreendump
+
+  let lines =<< trim END
+    func TestRulerFn()
+      return '10,20%=30%%'
+    endfunc
+  END
+  call writefile(lines, 'Xrulerformat_function', 'D')
+
+  let buf = RunVimInTerminal('-S Xrulerformat_function', #{rows: 2, cols: 40})
+  call term_sendkeys(buf, ":set ruler rulerformat=%!TestRulerFn()\<CR>")
+  call term_sendkeys(buf, ":redraw!\<CR>")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_rulerformat_function', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_getcompletion_usercmd()
   command! -nargs=* -complete=command TestCompletion echo <q-args>
 

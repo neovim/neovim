@@ -216,6 +216,22 @@ describe('cmdline', function()
                 longish   |
     ]]
   end)
+
+  -- oldtest: Test_rulerformat_function()
+  it("'rulerformat' can use %!", function()
+    local screen = Screen.new(40, 2)
+    exec([[
+      func TestRulerFn()
+        return '10,20%=30%%'
+      endfunc
+    ]])
+    api.nvim_set_option_value('ruler', true, {})
+    api.nvim_set_option_value('rulerformat', '%!TestRulerFn()', {})
+    screen:expect([[
+      ^                                        |
+                            10,20         30% |
+    ]])
+  end)
 end)
 
 describe('cmdwin', function()
