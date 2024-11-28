@@ -163,36 +163,36 @@ show a sign for the highest severity diagnostic on a given line: >lua
     }
 <
 
-                                           *diagnostic-handlers-example-qflist*
-To automatically update the |quickfix| list with new diagnostics, we can
+                                          *diagnostic-handlers-example-loclist*
+To automatically update the |location-list| list with new diagnostics, we can
 create a new handler: >lua
 
-  vim.diagnostic.handlers.qflist = {
+  vim.diagnostic.handlers.loclist = {
     show = function(_, _, _, opts)
       -- Generally don't want it to open on every update
-      opts.qflist.open = opts.qflist.open or false
-      vim.diagnostic.setqflist(opts.qflist)
+      opts.loclist.open = opts.loclist.open or false
+      vim.diagnostic.setloclist(opts.loclist)
     end
   }
 <
 
 The "hide" function can be omitted for this handler.
 
-Now, everytime the |quickfix| list is opened, it will show the most recent
+Now, everytime the |location-list| is opened, it will show the most recent
 diagnostics. The handler accepts the same options as
-|vim.diagnostic.setqflist()| and can be configured using
+|vim.diagnostic.setloclist()| and can be configured using
 |vim.diagnostic.config()|: >lua
 
   vim.diagnostic.config({
-    qflist = {
+    loclist = {
       open = true,
       severity = { min = vim.diagnostic.severity.WARN },
     }
   })
 <
 
-This will open the quickfix window on every diagnostic change, and only list
-warnings and errors.
+This will open the location list window on every diagnostic change, and only
+list warnings and errors.
 
 ==============================================================================
 HIGHLIGHTS                                              *diagnostic-highlights*
