@@ -758,7 +758,7 @@ int ins_compl_add_infercase(char *str_arg, int len, bool icase, char *fname, Dir
     flags |= CP_ICASE;
   }
 
-  int res = ins_compl_add(str, len, fname, NULL, false, NULL, dir, flags, false, -1, -1);
+  int res = ins_compl_add(str, len, fname, NULL, false, NULL, dir, flags, false, NULL);
   xfree(tofree);
   return res;
 }
@@ -798,7 +798,7 @@ static inline void free_cptext(char *const *const cptext)
 ///         returned in case of error.
 static int ins_compl_add(char *const str, int len, char *const fname, char *const *const cptext,
                          const bool cptext_allocated, typval_T *user_data, const Direction cdir,
-                         int flags_arg, const bool adup, int user_abbr_hlattr, int user_kind_hlattr)
+                         int flags_arg, const bool adup, int *extra_hl)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   compl_T *match;
@@ -864,8 +864,8 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
     match->cp_fname = NULL;
   }
   match->cp_flags = flags;
-  match->cp_user_abbr_hlattr = user_abbr_hlattr;
-  match->cp_user_kind_hlattr = user_kind_hlattr;
+  match->cp_user_abbr_hlattr = extra_hl ? extra_hl[0] : -1;
+  match->cp_user_kind_hlattr = extra_hl ? extra_hl[1] : -1;
 
   if (cptext != NULL) {
     int i;
@@ -999,7 +999,7 @@ static void ins_compl_add_matches(int num_matches, char **matches, int icase)
   for (int i = 0; i < num_matches && add_r != FAIL; i++) {
     if ((add_r = ins_compl_add(matches[i], -1, NULL, NULL, false, NULL, dir,
                                CP_FAST | (icase ? CP_ICASE : 0),
-                               false, -1, -1)) == OK) {
+                               false, NULL)) == OK) {
       // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
     }
@@ -2573,9 +2573,8 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
   int flags = fast ? CP_FAST : 0;
   char *(cptext[CPT_COUNT]);
   char *user_abbr_hlname = NULL;
-  int user_abbr_hlattr = -1;
   char *user_kind_hlname = NULL;
-  int user_kind_hlattr = -1;
+  int extra_hl[2] = { -1, -1 };
   typval_T user_data;
 
   user_data.v_type = VAR_UNKNOWN;
@@ -2587,10 +2586,10 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     cptext[CPT_INFO] = tv_dict_get_string(tv->vval.v_dict, "info", true);
 
     user_abbr_hlname = tv_dict_get_string(tv->vval.v_dict, "abbr_hlgroup", false);
-    user_abbr_hlattr = get_user_highlight_attr(user_abbr_hlname);
+    extra_hl[0] = get_user_highlight_attr(user_abbr_hlname);
 
     user_kind_hlname = tv_dict_get_string(tv->vval.v_dict, "kind_hlgroup", false);
-    user_kind_hlattr = get_user_highlight_attr(user_kind_hlname);
+    extra_hl[1] = get_user_highlight_attr(user_kind_hlname);
 
     tv_dict_get_tv(tv->vval.v_dict, "user_data", &user_data);
 
@@ -2613,8 +2612,7 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     return FAIL;
   }
   int status = ins_compl_add((char *)word, -1, NULL, cptext, true,
-                             &user_data, dir, flags, dup,
-                             user_abbr_hlattr, user_kind_hlattr);
+                             &user_data, dir, flags, dup, extra_hl);
   if (status != OK) {
     tv_clear(&user_data);
   }
@@ -2707,7 +2705,7 @@ static void set_completion(colnr_T startcol, list_T *list)
     flags |= CP_ICASE;
   }
   if (ins_compl_add(compl_orig_text, -1, NULL, NULL, false, NULL, 0,
-                    flags | CP_FAST, false, -1, -1) != OK) {
+                    flags | CP_FAST, false, NULL) != OK) {
     return;
   }
 
@@ -3452,7 +3450,7 @@ static void get_next_bufname_token(void)
       char *tail = path_tail(b->b_sfname);
       if (strncmp(tail, compl_orig_text, strlen(compl_orig_text)) == 0) {
         ins_compl_add(tail, (int)strlen(tail), NULL, NULL, false, NULL, 0,
-                      p_ic ? CP_ICASE : 0, false, -1, -1);
+                      p_ic ? CP_ICASE : 0, false, NULL);
       }
     }
   }
@@ -4490,7 +4488,7 @@ static int ins_compl_start(void)
     flags |= CP_ICASE;
   }
   if (ins_compl_add(compl_orig_text, -1, NULL, NULL, false, NULL, 0,
-                    flags, false, -1, -1) != OK) {
+                    flags, false, NULL) != OK) {
     XFREE_CLEAR(compl_pattern);
     compl_patternlen = 0;
     XFREE_CLEAR(compl_orig_text);
