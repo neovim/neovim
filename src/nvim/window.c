@@ -6189,7 +6189,7 @@ const char *did_set_winminheight(optset_T *args FUNC_ATTR_UNUSED)
   // loop until there is a 'winminheight' that is possible
   while (p_wmh > 0) {
     const int room = Rows - (int)p_ch;
-    const int needed = min_rows();
+    const int needed = min_rows_for_all_tabpages();
     if (room >= needed) {
       break;
     }
@@ -7067,6 +7067,22 @@ int last_stl_height(bool morewin)
 /// Return the minimal number of rows that is needed on the screen to display
 /// the current number of windows.
 int min_rows(void)
+{
+  if (firstwin == NULL) {       // not initialized yet
+    return MIN_LINES;
+  }
+
+  int total = frame_minheight(curtab->tp_topframe, NULL);
+  total += tabline_height() + global_stl_height();
+  if (p_ch > 0) {
+    total += 1;           // count the room for the command line
+  }
+  return total;
+}
+
+/// Return the minimal number of rows that is needed on the screen to display
+/// the current number of windows for all tab pages.
+int min_rows_for_all_tabpages(void)
 {
   if (firstwin == NULL) {       // not initialized yet
     return MIN_LINES;

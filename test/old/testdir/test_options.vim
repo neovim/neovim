@@ -2255,13 +2255,46 @@ func Test_opt_default()
 endfunc
 
 " Test for the 'cmdheight' option
-func Test_cmdheight()
+func Test_opt_cmdheight()
   %bw!
   let ht = &lines
   set cmdheight=9999
   call assert_equal(1, winheight(0))
   call assert_equal(ht - 1, &cmdheight)
   set cmdheight&
+
+  " The status line should be taken into account.
+  set laststatus=2
+  set cmdheight=9999
+  call assert_equal(ht - 2, &cmdheight)
+  set cmdheight& laststatus=1  " Accommodate Nvim default
+
+  " The tabline should be taken into account only non-GUI.
+  set showtabline=2
+  set cmdheight=9999
+  if has('gui_running')
+    call assert_equal(ht - 1, &cmdheight)
+  else
+    call assert_equal(ht - 2, &cmdheight)
+  endif
+  set cmdheight& showtabline&
+
+  " The 'winminheight' should be taken into account.
+  set winheight=3 winminheight=3
+  split
+  set cmdheight=9999
+  call assert_equal(ht - 8, &cmdheight)
+  %bw!
+  set cmdheight& winminheight& winheight&
+
+  " Only the windows in the current tabpage are taken into account.
+  set winheight=3 winminheight=3 showtabline=0
+  split
+  tabnew
+  set cmdheight=9999
+  call assert_equal(ht - 3, &cmdheight)
+  %bw!
+  set cmdheight& winminheight& winheight& showtabline&
 endfunc
 
 " To specify a control character as an option value, '^' can be used
