@@ -2252,6 +2252,14 @@ func Test_opt_default()
   call assert_equal('vt', &formatoptions)
   set formatoptions&vim
   call assert_equal('tcq', &formatoptions)
+
+  call assert_equal('ucs-bom,utf-8,default,latin1', &fencs)
+  set fencs=latin1
+  set fencs&
+  call assert_equal('ucs-bom,utf-8,default,latin1', &fencs)
+  set fencs=latin1
+  set all&
+  call assert_equal('ucs-bom,utf-8,default,latin1', &fencs)
 endfunc
 
 " Test for the 'cmdheight' option
