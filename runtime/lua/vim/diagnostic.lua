@@ -2,6 +2,8 @@ local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
+local _qf_id = nil
+
 --- [diagnostic-structure]()
 ---
 --- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
@@ -865,10 +867,47 @@ local function set_list(loclist, opts)
   local diagnostics = opts.diagnostics
     or get_diagnostics(bufnr, opts --[[@as vim.diagnostic.GetOpts]], false)
   local items = M.toqflist(diagnostics)
+
+  local current_context = {
+    namespace = opts.namespace,
+    bufnr = opts.bufnr,
+    title = opts.title,
+  }
+
+  for _, item in ipairs(items) do
+    item.user_data = {
+      context = current_context
+    }
+  end
+
+
   if loclist then
-    vim.fn.setloclist(winnr, {}, ' ', { title = title, items = items })
+    vim.fn.setloclist(winnr, {}, 'u', { title = title, items = items })
   else
-    vim.fn.setqflist({}, ' ', { title = title, items = items })
+    -- Check if the diagnostics quickfix list no longer exists.
+    if _qf_id and vim.fn.getqflist({ id = _qf_id }).id == 0 then
+      _qf_id = nil
+    end
+
+    -- if _qf_id ~= nil then
+    --   for _, old_item in ipairs(vim.fn.getqflist({ id = _qf_id, items = {} }).items) do
+    --     if not vim.deep_equal(old_item.user_data.context, current_context) then
+    --       table.insert(items, old_item)
+    --     end
+    --   end
+    -- end
+
+    -- If we already have a diagnostics quickfix, update it rather than creating a new one.
+    -- This avoids polluting the finite set of quickfix lists, and preserves the currently selected
+    -- entry.
+    vim.fn.setqflist({}, _qf_id and 'u' or ' ', {
+      title = title,
+      items = items,
+      id = _qf_id,
+    })
+
+    -- Get the id of the newly created quickfix list.
+    _qf_id = vim.fn.getqflist({ id = 0 }).id
   end
   if open then
     api.nvim_command(loclist and 'lwindow' or 'botright cwindow')
@@ -1625,6 +1664,7 @@ M.handlers.qflist = {
     end
 
     M.setqflist({
+      bufnr = bufnr,
       diagnostics = diagnostics,
       namespace = namespace,
       severity = opts.qflist.severity,
@@ -1638,7 +1678,8 @@ M.handlers.qflist = {
   hide = function(namespace, bufnr)
     -- TODO: only remove current namespace
     -- Probably needs something similar to https://github.com/neovim/neovim/pull/30868
-    vim.fn.setqflist({}, 'r')
+    -- vim.print('hide called')
+    -- vim.fn.setqflist({}, 'r')
   end,
 }
 
