@@ -12,4 +12,5 @@ local M = {}
 function M.render(image, opts) end
 
 return {
+  iterm2 = require("vim.img._backend.iterm2"),
 }
