@@ -1100,6 +1100,9 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     CHECK_FLAG(cterm, cterm_mask, italic, , HL_ITALIC);
     CHECK_FLAG(cterm, cterm_mask, underline, , HL_UNDERLINE);
     CHECK_FLAG(cterm, cterm_mask, undercurl, , HL_UNDERCURL);
+    CHECK_FLAG(cterm, cterm_mask, underdouble, , HL_UNDERDOUBLE);
+    CHECK_FLAG(cterm, cterm_mask, underdotted, , HL_UNDERDOTTED);
+    CHECK_FLAG(cterm, cterm_mask, underdashed, , HL_UNDERDASHED);
     CHECK_FLAG(cterm, cterm_mask, standout, , HL_STANDOUT);
     CHECK_FLAG(cterm, cterm_mask, strikethrough, , HL_STRIKETHROUGH);
     CHECK_FLAG(cterm, cterm_mask, altfont, , HL_ALTFONT);
