@@ -120,6 +120,11 @@ end
 -- * event hooks require the previous `bufstate` for updates.
 -- Since they are manually created and destroyed,
 -- we ensure their lifecycles are always synchronized.
+--
+-- TODO(ofseed):
+-- 1. Implement clearing `bufstate` and event hooks
+--    when no clients in the buffer support the corresponding method.
+-- 2. Then generalize this state management to other LSP modules.
 local augroup_setup = api.nvim_create_augroup('vim_lsp_folding_range/setup', {})
 
 --- Initialize `bufstate` and event hooks, then request folding ranges.
