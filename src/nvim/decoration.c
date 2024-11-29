@@ -473,6 +473,8 @@ bool decor_redraw_line(win_T *wp, int row, DecorState *state)
   int const cur_end = state->current_end;
   int fut_beg = state->future_begin;
 
+  // Move future ranges to start right after current ranges.
+  // Otherwise future ranges will grow forward indefinitely.
   if (fut_beg == count) {
     fut_beg = count = cur_end;
   } else if (fut_beg != cur_end) {
@@ -528,6 +530,7 @@ static void decor_range_insert(DecorState *state, DecorRange *range)
   range->ordering = state->new_range_ordering++;
 
   int index;
+  // Get space for a new `DecorRange` from the freelist or allocate.
   if (state->free_slot_i >= 0) {
     index = state->free_slot_i;
     DecorRangeSlot *slot = &kv_A(state->slots, index);
@@ -635,11 +638,11 @@ void decor_init_draw_col(int win_col, bool hidden, DecorRange *item)
 
 void decor_recheck_draw_col(int win_col, bool hidden, DecorState *state)
 {
-  int const count = state->current_end;
+  int const end = state->current_end;
   int *const indices = state->ranges_i.items;
   DecorRangeSlot *const slots = state->slots.items;
 
-  for (int i = 0; i < count; i++) {
+  for (int i = 0; i < end; i++) {
     DecorRange *const r = &slots[indices[i]].range;
     if (r->draw_col == -3) {
       decor_init_draw_col(win_col, hidden, r);
@@ -683,6 +686,7 @@ next_mark:
   int cur_end = state->current_end;
   int fut_beg = state->future_begin;
 
+  // Promote future ranges before the cursor to active.
   for (; fut_beg < count; fut_beg++) {
     int const index = indices[fut_beg];
     DecorRange *const r = &slots[index].range;
@@ -711,7 +715,7 @@ next_mark:
     cur_end++;
   }
 
-  if (fut_beg != count) {
+  if (fut_beg < count) {
     DecorRange *r = &slots[indices[fut_beg]].range;
     if (r->start_row == row) {
       col_until = MIN(col_until, r->start_col - 1);

@@ -256,11 +256,11 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
   int right_pos = max_col;
   bool const do_eol = state->eol_col > -1;
 
-  int const count = state->current_end;
+  int const end = state->current_end;
   int *const indices = state->ranges_i.items;
   DecorRangeSlot *const slots = state->slots.items;
 
-  for (int i = 0; i < count; i++) {
+  for (int i = 0; i < end; i++) {
     DecorRange *item = &slots[indices[i]].range;
     if (!(item->start_row == state->row && decor_virt_pos(item))) {
       continue;
@@ -796,11 +796,11 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
       wlv->virt_inline = VIRTTEXT_EMPTY;
       wlv->virt_inline_i = 0;
       DecorState *state = &decor_state;
-      int const count = state->current_end;
+      int const end = state->current_end;
       int *const indices = state->ranges_i.items;
       DecorRangeSlot *const slots = state->slots.items;
 
-      for (int i = 0; i < count; i++) {
+      for (int i = 0; i < end; i++) {
         DecorRange *item = &slots[indices[i]].range;
         if (item->draw_col == -3) {
           // No more inline virtual text before this non-inline virtual text item,

@@ -27,17 +27,19 @@ typedef enum {
   kDecorKindVirtText,
   kDecorKindVirtLines,
   kDecorKindUIWatched,
-} DecorRangeKind;
+} DecorRangeKindEnum;
+
+typedef uint8_t DecorRangeKind;
 
 typedef struct {
   int start_row;
   int start_col;
   int end_row;
   int end_col;
-  int ordering;
+  int ordering;  ///< range insertion order
   DecorPriority priority;
   bool owned;  ///< ephemeral decoration, free memory immediately
-  DecorRangeKind kind: 8;
+  DecorRangeKind kind;
   // next pointers MUST NOT be used, these are separate ranges
   // vt->next could be pointing to freelist memory at this point
   union {
