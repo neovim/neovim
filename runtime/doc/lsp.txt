@@ -204,6 +204,7 @@ won't run if your server doesn't support them.
 - `'textDocument/diagnostic'`
 - `'textDocument/documentHighlight'`
 - `'textDocument/documentSymbol'`
+- `'textDocument/foldingRange'`
 - `'textDocument/formatting'`
 - `'textDocument/hover'`
 - `'textDocument/implementation'`
@@ -696,6 +697,35 @@ commands                                                    *vim.lsp.commands*
     String command: String arguments?: any[]
 
     The second argument is the `ctx` of |lsp-handler|
+
+foldclose({kind}, {winid})                               *vim.lsp.foldclose()*
+    Close all {kind} of folds in the the window with {winid}.
+
+    To automatically fold imports when opening a file, you can use an autocmd: >lua
+        vim.api.nvim_create_autocmd('LspNotify', {
+          callback = function(args)
+            if args.data.method == 'textDocument/didOpen' then
+              vim.lsp.foldclose('imports', vim.fn.bufwinid(args.buf))
+            end
+          end,
+        })
+<
+
+    Parameters: ~
+      • {kind}   (`lsp.FoldingRangeKind`) Kind to close, one of "comment",
+                 "imports" or "region".
+      • {winid}  (`integer?`) Defaults to the current window.
+
+foldexpr({lnum})                                          *vim.lsp.foldexpr()*
+    Provides an interface between the built-in client and a `foldexpr`
+    function.
+
+    Parameters: ~
+      • {lnum}  (`integer`) line number
+
+foldtext()                                                *vim.lsp.foldtext()*
+    Provides a `foldtext` function that shows the `collapsedText` retrieved,
+    defaults to the first folded line if `collapsedText` is not provided.
 
 formatexpr({opts})                                      *vim.lsp.formatexpr()*
     Provides an interface between the built-in client and a `formatexpr`

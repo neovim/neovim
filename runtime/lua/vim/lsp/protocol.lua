@@ -440,6 +440,13 @@ function protocol.make_client_capabilities()
           properties = { 'command' },
         },
       },
+      foldingRange = {
+        dynamicRegistration = false,
+        lineFoldingOnly = true,
+        foldingRange = {
+          collapsedText = true,
+        },
+      },
       formatting = {
         dynamicRegistration = true,
       },

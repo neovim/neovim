@@ -3,6 +3,7 @@ local validate = vim.validate
 
 local lsp = vim._defer_require('vim.lsp', {
   _changetracking = ..., --- @module 'vim.lsp._changetracking'
+  _folding_range = ..., --- @module 'vim.lsp._folding_range'
   _snippet_grammar = ..., --- @module 'vim.lsp._snippet_grammar'
   _tagfunc = ..., --- @module 'vim.lsp._tagfunc'
   _watchfiles = ..., --- @module 'vim.lsp._watchfiles'
@@ -57,6 +58,7 @@ lsp._request_name_to_capability = {
   [ms.textDocument_documentHighlight] = { 'documentHighlightProvider' },
   [ms.textDocument_documentLink] = { 'documentLinkProvider' },
   [ms.textDocument_documentSymbol] = { 'documentSymbolProvider' },
+  [ms.textDocument_foldingRange] = { 'foldingRangeProvider' },
   [ms.textDocument_formatting] = { 'documentFormattingProvider' },
   [ms.textDocument_hover] = { 'hoverProvider' },
   [ms.textDocument_implementation] = { 'implementationProvider' },
@@ -1092,6 +1094,38 @@ end
 ---@return table[] tags A list of matching tags
 function lsp.tagfunc(pattern, flags)
   return vim.lsp._tagfunc(pattern, flags)
+end
+
+--- Provides an interface between the built-in client and a `foldexpr` function.
+---@param lnum integer line number
+function lsp.foldexpr(lnum)
+  return vim.lsp._folding_range.foldexpr(lnum)
+end
+
+--- Close all {kind} of folds in the the window with {winid}.
+---
+--- To automatically fold imports when opening a file, you can use an autocmd:
+---
+--- ```lua
+--- vim.api.nvim_create_autocmd('LspNotify', {
+---   callback = function(args)
+---     if args.data.method == 'textDocument/didOpen' then
+---       vim.lsp.foldclose('imports', vim.fn.bufwinid(args.buf))
+---     end
+---   end,
+--- })
+--- ```
+---
+---@param kind lsp.FoldingRangeKind Kind to close, one of "comment", "imports" or "region".
+---@param winid? integer Defaults to the current window.
+function lsp.foldclose(kind, winid)
+  return vim.lsp._folding_range.foldclose(kind, winid)
+end
+
+--- Provides a `foldtext` function that shows the `collapsedText` retrieved,
+--- defaults to the first folded line if `collapsedText` is not provided.
+function lsp.foldtext()
+  return vim.lsp._folding_range.foldtext()
 end
 
 ---Checks whether a client is stopped.

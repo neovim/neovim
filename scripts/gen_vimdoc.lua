@@ -274,6 +274,7 @@ local config = {
       'diagnostic.lua',
       'codelens.lua',
       'completion.lua',
+      'folding_range.lua',
       'inlay_hint.lua',
       'tagfunc.lua',
       'semantic_tokens.lua',
