@@ -14,7 +14,7 @@ if exists("current_compiler")
 endif
 let current_compiler = "maven"
 
-CompilerSet makeprg=mvn\ --batch-mode
+execute $'CompilerSet makeprg=mvn\ --batch-mode\ {escape(get(b:, 'maven_makeprg_params', get(g:, 'maven_makeprg_params', '')), ' \|"')}'
 
 " Error message for POM
 CompilerSet errorformat=[FATAL]\ Non-parseable\ POM\ %f:\ %m%\\s%\\+@%.%#line\ %l\\,\ column\ %c%.%#,
