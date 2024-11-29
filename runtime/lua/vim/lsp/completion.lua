@@ -468,8 +468,7 @@ local function trigger(bufnr, clients)
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
         local client = lsp.get_client_by_id(client_id)
         local encoding = client and client.offset_encoding or 'utf-16'
-        local client_matches
-        client_matches, server_start_boundary = M._convert_results(
+        local client_matches, boundary = M._convert_results(
           line,
           cursor_row - 1,
           cursor_col,
@@ -479,7 +478,10 @@ local function trigger(bufnr, clients)
           result,
           encoding
         )
-        vim.list_extend(matches, client_matches)
+        if next(client_matches) then
+          vim.list_extend(matches, client_matches)
+          server_start_boundary = boundary
+        end
       end
     end
     local start_col = (server_start_boundary or word_boundary) + 1
