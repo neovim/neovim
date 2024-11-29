@@ -852,7 +852,13 @@ void ui_ext_win_position(win_T *wp, bool validate)
       }
     }
 
+    bool resort = wp->w_grid_alloc.comp_index != 0
+                  && wp->w_grid_alloc.zindex != wp->w_config.zindex;
+    bool raise = resort && wp->w_grid_alloc.zindex < wp->w_config.zindex;
     wp->w_grid_alloc.zindex = wp->w_config.zindex;
+    if (resort) {
+      ui_comp_layers_adjust(wp->w_grid_alloc.comp_index, raise);
+    }
     if (ui_has(kUIMultigrid)) {
       String anchor = cstr_as_string(float_anchor_str[c.anchor]);
       if (!c.hide) {
