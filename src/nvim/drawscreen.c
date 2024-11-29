@@ -396,7 +396,7 @@ void check_screensize(void)
 {
   // Limit Rows and Columns to avoid an overflow in Rows * Columns.
   // need room for one window and command line
-  Rows = MIN(MAX(Rows, min_rows()), 1000);
+  Rows = MIN(MAX(Rows, min_rows_for_all_tabpages()), 1000);
   Columns = MIN(MAX(Columns, MIN_COLUMNS), 10000);
 }
 
