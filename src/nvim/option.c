@@ -2764,10 +2764,11 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, cha
 
   switch (opt_idx) {
   case kOptLines:
-    if (*newval < min_rows() && full_screen) {
-      vim_snprintf(errbuf, errbuflen, _("E593: Need at least %d lines"), min_rows());
+    if (*newval < min_rows_for_all_tabpages() && full_screen) {
+      vim_snprintf(errbuf, errbuflen, _("E593: Need at least %d lines"),
+                   min_rows_for_all_tabpages());
       errmsg = errbuf;
-      *newval = min_rows();
+      *newval = min_rows_for_all_tabpages();
     }
     // True max size is defined by check_screensize().
     *newval = MIN(*newval, INT_MAX);
