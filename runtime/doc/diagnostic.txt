@@ -181,6 +181,7 @@ the most recent diagnostics: >lua
 The handler accepts the same options as |vim.diagnostic.setloclist()| and can be
 configured using |vim.diagnostic.config()|: >lua
 
+  -- Open the location list on every diagnostic change (warnings/errors only).
   vim.diagnostic.config({
     loclist = {
       open = true,
@@ -188,9 +189,6 @@ configured using |vim.diagnostic.config()|: >lua
     }
   })
 <
-
-This will open the location list window on every diagnostic change, and only
-list warnings and errors.
 
 ==============================================================================
 HIGHLIGHTS                                              *diagnostic-highlights*
