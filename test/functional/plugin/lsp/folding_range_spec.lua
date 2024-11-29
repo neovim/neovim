@@ -481,4 +481,92 @@ static int foldLevel(linenr_T lnum)
       })
     end)
   end)
+
+  describe('foldclose()', function()
+    --- @type test.functional.ui.screen
+    local screen
+    before_each(function()
+      screen = Screen.new(80, 23)
+      screen:set_default_attr_ids({
+        [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue },
+        [2] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+        [3] = { bold = true, foreground = Screen.colors.Blue1 },
+        [4] = { bold = true, reverse = true },
+        [5] = { reverse = true },
+      })
+      command([[set foldexpr=v:lua.vim.lsp.foldexpr()]])
+    end)
+
+    it('closes all folds of one kind immediately', function()
+      exec_lua(function()
+        vim.lsp.folding_range.foldclose('comment')
+      end)
+      screen:expect({
+        grid = [[
+{1:+}{2:+--  2 lines: foldLevel()······················································}|
+{1: }static int foldLevel(linenr_T lnum)                                            |
+{1:-}{                                                                              |
+{1:+}{2:+---  2 lines: While updating the folds lines between invalid_top and invalid_b}|
+{1:-}  if (invalid_top == 0) {                                                      |
+{1:2}    checkupdate(curwin);                                                       |
+{1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+{1:2}    return prev_lnum_lvl;                                                      |
+{1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+{1:2}    return -1;                                                                 |
+{1:│}  }                                                                            |
+{1:│}                                                                               |
+{1:│}  // Return quickly when there is no folding at all in this window.            |
+{1:-}  if (!hasAnyFolding(curwin)) {                                                |
+{1:2}    return 0;                                                                  |
+{1:│}  }                                                                            |
+{1:│}                                                                               |
+{1:│}  return foldLevelWin(curwin, lnum);                                           |
+{1: }^}                                                                              |
+{3:~                                                                               }|*3
+                                                                                |
+  ]],
+      })
+    end)
+
+    it('closes the smallest fold first', function()
+      exec_lua(function()
+        vim.lsp.folding_range.foldclose('region')
+      end)
+      screen:expect({
+        grid = [[
+{1:-}// foldLevel() {{{2                                                            |
+{1:│}/// @return  fold level at line number "lnum" in the current window.           |
+{1: }static int foldLevel(linenr_T lnum)                                            |
+{1:+}{2:+-- 17 lines: {································································}|
+{1: }^}                                                                              |
+{3:~                                                                               }|*17
+                                                                                |
+  ]],
+      })
+      command('4foldopen')
+      screen:expect({
+        grid = [[
+{1:-}// foldLevel() {{{2                                                            |
+{1:│}/// @return  fold level at line number "lnum" in the current window.           |
+{1: }static int foldLevel(linenr_T lnum)                                            |
+{1:-}{                                                                              |
+{1:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
+{1:2}  // an undefined fold level.  Otherwise update the folds first.               |
+{1:+}{2:+---  2 lines: if (invalid_top == 0) {·········································}|
+{1:+}{2:+---  2 lines: } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {···········}|
+{1:+}{2:+---  2 lines: } else if (lnum >= invalid_top && lnum <= invalid_bot) {········}|
+{1:│}  }                                                                            |
+{1:│}                                                                               |
+{1:│}  // Return quickly when there is no folding at all in this window.            |
+{1:+}{2:+---  2 lines: if (!hasAnyFolding(curwin)) {···································}|
+{1:│}  }                                                                            |
+{1:│}                                                                               |
+{1:│}  return foldLevelWin(curwin, lnum);                                           |
+{1: }^}                                                                              |
+{3:~                                                                               }|*5
+                                                                                |
+  ]],
+      })
+    end)
+  end)
 end)

@@ -1657,6 +1657,17 @@ trigger()                                       *vim.lsp.completion.trigger()*
 
 
 ==============================================================================
+Lua module: vim.lsp.folding_range                          *lsp-folding_range*
+
+foldclose({kind}, {winid})                 *vim.lsp.folding_range.foldclose()*
+    Close all {kind} of folds in the the window with {winid}.
+
+    Parameters: ~
+      • {kind}   (`lsp.FoldingRangeKind`) 'comment' | 'imports' | 'region'
+      • {winid}  (`integer?`) Defaults to the current window.
+
+
+==============================================================================
 Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
 enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*

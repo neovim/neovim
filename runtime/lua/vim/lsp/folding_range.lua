@@ -11,6 +11,9 @@ local M = {}
 ---
 --- Index in the form of row -> [foldlevel, mark]
 ---@field row_level table<integer, [integer, ">" | "<"?]?>
+---
+--- Index in the form of start_row -> kinds
+---@field row_kinds table<integer, table<lsp.FoldingRangeKind, boolean>?>>
 
 ---@type table<integer, vim.lsp.folding_range.BufState?>
 local bufstates = {}
@@ -20,12 +23,20 @@ local bufstates = {}
 ---@param ranges lsp.FoldingRange[]
 local function rangeadd(bufstate, ranges)
   local row_level = bufstate.row_level
+  local row_kinds = bufstate.row_kinds
 
   for _, range in ipairs(ranges) do
     local start_row = range.startLine
     local end_row = range.endLine
     -- Adding folds within a single line is not supported by Nvim.
     if start_row ~= end_row then
+      local kind = range.kind
+      if kind then
+        local kinds = row_kinds[start_row] or {}
+        kinds[kind] = true
+        row_kinds[start_row] = kinds
+      end
+
       for row = start_row, end_row do
         local level = row_level[row] or { 0 }
         level[1] = level[1] + 1
@@ -92,6 +103,7 @@ local function handler(err, result, ctx)
 
   local bufstate = assert(bufstates[bufnr])
   bufstate.row_level = {}
+  bufstate.row_kinds = {}
 
   rangeadd(bufstate, result)
   bufstate.version = ctx.version
@@ -139,6 +151,7 @@ local function setup(bufnr)
   -- Register the new `bufstate`.
   bufstates[bufnr] = {
     row_level = {},
+    row_kinds = {},
   }
 
   -- Event hooks from `buf_attach` can't be removed externally.
@@ -155,6 +168,7 @@ local function setup(bufnr)
     on_reload = function()
       bufstates[bufnr] = {
         row_level = {},
+        row_kinds = {},
       }
       for _, client in
         ipairs(vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_foldingRange }))
@@ -202,6 +216,7 @@ local function setup(bufnr)
         if api.nvim_buf_is_loaded(bufnr) then
           bufstates[bufnr] = {
             row_level = {},
+            row_kinds = {},
           }
           foldupdate(bufnr)
         end
@@ -244,6 +259,40 @@ local function setup(bufnr)
   end
 
   return bufstates[bufnr]
+end
+
+---@param kind lsp.FoldingRangeKind
+---@param winid integer
+local function foldclose(kind, winid)
+  vim._with({ win = winid }, function()
+    local bufnr = api.nvim_win_get_buf(winid)
+    local row_kinds = bufstates[bufnr].row_kinds
+    -- Reverse traverse to ensure that the smallest ranges are closed first.
+    for row = api.nvim_buf_line_count(bufnr) - 1, 0, -1 do
+      local kinds = row_kinds[row]
+      if kinds and kinds[kind] then
+        vim.cmd(row + 1 .. 'foldclose')
+      end
+    end
+  end)
+end
+
+--- Close all {kind} of folds in the the window with {winid}.
+---
+---@param kind lsp.FoldingRangeKind 'comment' | 'imports' | 'region'
+---@param winid? integer Defaults to the current window.
+function M.foldclose(kind, winid)
+  vim.validate('kind', kind, 'string')
+  vim.validate('winid', winid, 'number', true)
+
+  winid = winid or api.nvim_get_current_win()
+  local bufnr = api.nvim_win_get_buf(winid)
+  local bufstate = bufstates[bufnr]
+  if not bufstate then
+    return
+  end
+
+  foldclose(kind, winid)
 end
 
 ---@param lnum? integer
