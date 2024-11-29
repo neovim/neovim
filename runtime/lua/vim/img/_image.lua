@@ -33,6 +33,37 @@ function M:size()
   return string.len(self.data or "")
 end
 
+---Iterates over the chunks of the image, invoking `f` per chunk.
+---@param f fun(chunk:string, pos:integer, has_more:boolean)
+---@param opts? {size?:integer}
+function M:for_each_chunk(f, opts)
+  opts = opts or {}
+
+  -- Chunk size, defaulting to 4k
+  local chunk_size = opts.size or 4096
+
+  local data = self.data
+  if not data then
+    return
+  end
+
+  local pos = 1
+  local len = string.len(data)
+  while pos <= len do
+    -- Get our next chunk from [pos, pos + chunk_size)
+    local end_pos = pos + chunk_size - 1
+    local chunk = data:sub(pos, end_pos)
+
+    -- If we have a chunk available, invoke our callback
+    if string.len(chunk) > 0 then
+      local has_more = end_pos + 1 <= len
+      pcall(f, chunk, pos, has_more)
+    end
+
+    pos = end_pos + 1
+  end
+end
+
 ---Loads data for an image from a file, replacing any existing data.
 ---If a callback provided, will load asynchronously; otherwise, is blocking.
 ---@param filename string
