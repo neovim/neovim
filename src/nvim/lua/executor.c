@@ -1985,6 +1985,33 @@ int nlua_expand_get_matches(int *num_results, char ***results)
   return *num_results > 0;
 }
 
+/// Calls vim.inspect() on given object and returns the string representation.
+///
+/// @param       obj  Object to inspect.
+/// @param[out]  err  Error details, if any.
+///
+/// @return  String representation of the object on success, NULL on error.
+const char *nlua_inspect(Object obj, Error *err)
+{
+  lua_State *const lstate = global_lstate;
+
+  lua_getglobal(lstate, "vim");
+  lua_getfield(lstate, -1, "inspect");
+
+  nlua_push_Object(lstate, &obj, 0);
+
+  if (nlua_pcall(lstate, 1, 1)) {
+    api_set_error(err, kErrorTypeException, "Error executing vim.inspect(): %s",
+                  lua_tostring(lstate, -1));
+    lua_pop(lstate, 2);
+    return NULL;
+  }
+
+  const char *result = lua_tostring(lstate, -1);
+  lua_pop(lstate, 2);
+  return result;
+}
+
 static int nlua_is_thread(lua_State *lstate)
 {
   lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");

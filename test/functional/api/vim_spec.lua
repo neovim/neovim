@@ -1720,7 +1720,7 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_get_option_value, nvim_set_option_value', function()
+  describe('nvim_{get,set}_option_value', function()
     it('works', function()
       ok(api.nvim_get_option_value('equalalways', {}))
       api.nvim_set_option_value('equalalways', false, {})
@@ -1792,11 +1792,11 @@ describe('API', function()
         pcall_err(api.nvim_set_option_value, 'scrolloff', {}, {})
       )
       eq(
-        "Invalid value for option 'scrolloff': expected number, got boolean true",
+        "Invalid value for option 'scrolloff': expected number, got boolean: true",
         pcall_err(api.nvim_set_option_value, 'scrolloff', true, {})
       )
       eq(
-        'Invalid value for option \'scrolloff\': expected number, got string "wrong"',
+        'Invalid value for option \'scrolloff\': expected number, got string: "wrong"',
         pcall_err(api.nvim_set_option_value, 'scrolloff', 'wrong', {})
       )
     end)

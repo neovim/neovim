@@ -3212,63 +3212,67 @@ static void set_option_varp(OptIndex opt_idx, void *varp, OptVal value, bool fre
   UNREACHABLE;
 }
 
-/// Return C-string representation of OptVal. Caller must free the returned C-string.
-static char *optval_to_cstr(OptVal o)
+/// Get C-string representation of OptVal. Uses vim.inspect() under the hood.
+/// Always returns a valid C-string.
+///
+/// @param  value  Option value.
+///
+/// @return  C-string representation of value.
+static const char *optval_to_cstr(OptVal value)
 {
-  switch (o.type) {
-  case kOptValTypeNil:
-    return xstrdup("");
-  case kOptValTypeBoolean:
-    return xstrdup(o.data.boolean ? "true" : "false");
-  case kOptValTypeNumber: {
-    char *buf = xmalloc(NUMBUFLEN);
-    snprintf(buf, NUMBUFLEN, "%" PRId64, o.data.number);
-    return buf;
+  Error err = ERROR_INIT;
+  const char *res = nlua_inspect(optval_as_object(value), &err);
+
+  if (ERROR_SET(&err)) {
+    // This conversion should never fail unless something is seriously wrong.
+    abort();
   }
-  case kOptValTypeString: {
-    char *buf = xmalloc(o.data.string.size + 3);
-    snprintf(buf, o.data.string.size + 3, "\"%s\"", o.data.string.data);
-    return buf;
-  }
-  }
-  UNREACHABLE;
+
+  return res;
 }
 
-/// Convert an OptVal to an API Object.
-Object optval_as_object(OptVal o)
+/// Convert an OptVal to an API Object. Always returns a valid Object.
+///
+/// @param  value  OptVal to convert.
+Object optval_as_object(OptVal value)
 {
-  switch (o.type) {
+  switch (value.type) {
   case kOptValTypeNil:
     return NIL;
   case kOptValTypeBoolean:
-    switch (o.data.boolean) {
+    switch (value.data.boolean) {
     case kFalse:
     case kTrue:
-      return BOOLEAN_OBJ(o.data.boolean);
+      return BOOLEAN_OBJ(value.data.boolean);
     case kNone:
       return NIL;
     }
     UNREACHABLE;
   case kOptValTypeNumber:
-    return INTEGER_OBJ(o.data.number);
+    return INTEGER_OBJ(value.data.number);
   case kOptValTypeString:
-    return STRING_OBJ(o.data.string);
+    return STRING_OBJ(value.data.string);
   }
   UNREACHABLE;
 }
 
 /// Convert an API Object to an OptVal.
-OptVal object_as_optval(Object o, bool *error)
+///
+/// @param  value  API Object to convert.
+/// @param  error  Set to true if an error occurred during conversion.
+///
+/// @return  OptVal representation of Object on success, NIL_OPTVAL on error.
+OptVal object_as_optval(Object value, bool *error)
 {
-  switch (o.type) {
+  switch (value.type) {
   case kObjectTypeNil:
     return NIL_OPTVAL;
   case kObjectTypeBoolean:
-    return BOOLEAN_OPTVAL(o.data.boolean);
+    return BOOLEAN_OPTVAL(value.data.boolean);
   case kObjectTypeInteger:
-    return NUMBER_OPTVAL((OptInt)o.data.integer);
+    return NUMBER_OPTVAL((OptInt)value.data.integer);
   case kObjectTypeString:
-    return STRING_OPTVAL(o.data.string);
+    return STRING_OPTVAL(value.data.string);
   default:
     *error = true;
     return NIL_OPTVAL;
@@ -3643,6 +3647,26 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
   return errmsg;
 }
 
+/// Print error message for an invalid option value to buffer.
+///
+/// @param  opt_idx  Option index in options[] table.
+/// @param  name     Option name.
+/// @param  value    Provided option value.
+/// @param  errbuf   Buffer for error message.
+/// @param  errbuflen  Length of error buffer.
+///
+/// @return  Error message.
+const char *print_invalid_optval_err(OptIndex opt_idx, const char *name, OptVal value, char *errbuf,
+                                     size_t errbuflen)
+{
+  char *valid_types = option_get_valid_types(opt_idx);
+  snprintf(errbuf, errbuflen, _("Invalid value for option '%s': expected %s, got %s: %s"),
+           name, valid_types, optval_type_get_name(value.type), optval_to_cstr(value));
+  xfree(valid_types);
+
+  return errbuf;
+}
+
 /// Validate the new value for an option.
 ///
 /// @param  opt_idx         Index in options[] table. Must not be kOptInvalid.
@@ -3669,13 +3693,7 @@ static const char *validate_option_value(const OptIndex opt_idx, OptVal *newval,
       *newval = optval_copy(get_option_unset_value(opt_idx));
     }
   } else if (!option_has_type(opt_idx, newval->type)) {
-    char *rep = optval_to_cstr(*newval);
-    char *valid_types = option_get_valid_types(opt_idx);
-    snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
-             opt->fullname, valid_types, optval_type_get_name(newval->type), rep);
-    xfree(rep);
-    xfree(valid_types);
-    errmsg = errbuf;
+    errmsg = print_invalid_optval_err(opt_idx, opt->fullname, *newval, errbuf, errbuflen);
   } else if (newval->type == kOptValTypeNumber) {
     // Validate and bound check num option values.
     errmsg = validate_num_option(opt_idx, &newval->data.number, errbuf, errbuflen);
