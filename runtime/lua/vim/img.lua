@@ -1,6 +1,7 @@
 local img = vim._defer_require('vim.img', {
   _backend = ..., --- @module 'vim.img._backend'
   _image = ..., --- @module 'vim.img._image'
+  _terminal = ..., --- @module 'vim.img._terminal'
 })
 
 ---Loads an image into memory, returning a wrapper around the image.
