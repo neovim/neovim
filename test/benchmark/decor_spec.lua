@@ -8,7 +8,7 @@ describe('decor perf', function()
   it('can handle long lines', function()
     Screen.new(100, 101)
 
-    local result = exec_lua [==[
+    local result = exec_lua(function()
       local ephemeral_pattern = {
         { 0, 4, 'Comment', 11 },
         { 0, 3, 'Keyword', 12 },
@@ -61,7 +61,7 @@ describe('decor perf', function()
           return true
         end,
         on_line = function()
-            add_pattern(ephemeral_pattern, true)
+          add_pattern(ephemeral_pattern, true)
         end,
       })
 
@@ -69,16 +69,16 @@ describe('decor perf', function()
 
       local total = {}
       local provider = {}
-      for i = 1, 100 do
+      for _ = 1, 100 do
         local tic = vim.uv.hrtime()
-        vim.cmd'redraw!'
+        vim.cmd 'redraw!'
         local toc = vim.uv.hrtime()
         table.insert(total, toc - tic)
         table.insert(provider, pe - ps)
       end
 
       return { total, provider }
-    ]==]
+    end)
 
     local total, provider = unpack(result)
     table.sort(total)
