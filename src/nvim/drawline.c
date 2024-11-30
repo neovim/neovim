@@ -1006,6 +1006,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   buf_T *buf = wp->w_buffer;
   const bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
 
+  int decor_provider_end_col;
+  bool check_decor_providers = false;
+
   if (col_rows == 0) {
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
@@ -1031,11 +1034,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     has_decor = decor_redraw_line(wp, lnum - 1, &decor_state);
 
     if (!end_fill) {
-      decor_providers_invoke_line(wp, lnum - 1, &has_decor);
-    }
-
-    if (has_decor) {
-      extra_check = true;
+      check_decor_providers = true;
     }
 
     // Check for columns to display for 'colorcolumn'.
@@ -1445,6 +1444,27 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     }
   }
 
+  if (check_decor_providers) {
+    decor_provider_end_col = (int)(ptr - line);
+    int new_col = decor_provider_end_col + 500;
+
+    bool added_decor = false;
+    decor_providers_invoke_line(wp, lnum - 1, &added_decor);
+    has_decor |= added_decor;
+    decor_providers_invoke_range(wp,
+                                 lnum - 1,
+                                 decor_provider_end_col,
+                                 lnum - 1,
+                                 new_col,
+                                 &added_decor);
+    decor_provider_end_col = new_col;
+    has_decor |= added_decor;
+  }
+
+  if (has_decor) {
+    extra_check = true;
+  }
+
   // Correct highlighting for cursor that can't be disabled.
   // Avoids having to check this for each character.
   if (wlv.fromcol >= 0) {
@@ -1493,6 +1513,19 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     int decor_conceal = 0;
 
     bool did_decrement_ptr = false;
+
+    if (check_decor_providers && (int)(ptr - line) >= decor_provider_end_col) {
+      int const new_col = decor_provider_end_col + 500;
+
+      bool added_decor = false;
+      decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
+                                   lnum - 1, new_col, &added_decor);
+      decor_provider_end_col = new_col;
+      has_decor |= added_decor;
+    }
+    if (has_decor) {
+      extra_check = true;
+    }
 
     // Skip this quickly when working on the text.
     if (draw_cols) {
@@ -2530,6 +2563,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
     // At end of the text line.
     if (mb_schar == NUL) {
+      if (check_decor_providers) {
+        bool added_decor = false;
+        decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
+                                     lnum, 0, &added_decor);
+        decor_provider_end_col = INT_MAX;
+        has_decor |= added_decor;
+      }
+      if (has_decor) {
+        extra_check = true;
+      }
+
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
 
       // check if line ends before left margin
