@@ -140,6 +140,7 @@ typedef struct {
   LuaRef redraw_buf;
   LuaRef redraw_win;
   LuaRef redraw_line;
+  LuaRef redraw_range;
   LuaRef redraw_end;
   LuaRef hl_def;
   LuaRef spell_nav;

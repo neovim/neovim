@@ -17,6 +17,8 @@ typedef struct {
   LuaRefOf(("buf" _, Integer bufnr, Integer tick)) on_buf;
   LuaRefOf(("win" _, Integer winid, Integer bufnr, Integer toprow, Integer botrow)) on_win;
   LuaRefOf(("line" _, Integer winid, Integer bufnr, Integer row)) on_line;
+  LuaRefOf(("range" _, Integer winid, Integer bufnr, Integer sr, Integer sc, Integer er,
+            Integer ec)) on_range;
   LuaRefOf(("end" _, Integer tick)) on_end;
   LuaRefOf(("hl_def" _)) _on_hl_def;
   LuaRefOf(("spell_nav" _)) _on_spell_nav;

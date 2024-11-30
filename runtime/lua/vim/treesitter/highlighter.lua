@@ -55,6 +55,7 @@ end
 ---@class (private) vim.treesitter.highlighter.State
 ---@field tstree TSTree
 ---@field next_row integer
+---@field next_col integer
 ---@field iter vim.treesitter.highlighter.Iter?
 ---@field highlighter_query vim.treesitter.highlighter.Query
 
@@ -197,6 +198,7 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
     table.insert(self._highlight_states, {
       tstree = tstree,
       next_row = 0,
+      next_col = 0,
       iter = nil,
       highlighter_query = highlighter_query,
     })
@@ -280,27 +282,34 @@ end
 ---@param buf integer
 ---@param line integer
 ---@param is_spell_nav boolean
-local function on_line_impl(self, buf, line, is_spell_nav)
+local function on_range_impl(self, buf, from_line, from_col, until_line, until_col, is_spell_nav)
   self:for_each_highlight_state(function(state)
     local root_node = state.tstree:root()
     local root_start_row, _, root_end_row, _ = root_node:range()
 
     -- Only consider trees that contain this line
-    if root_start_row > line or root_end_row < line then
+    if root_start_row > until_line or root_end_row < from_line then
       return
     end
 
-    if state.iter == nil or state.next_row < line then
+    if
+      state.iter == nil
+      or state.next_row < from_line
+      or (state.next_row == from_line and state.next_col < from_col)
+    then
       -- Mainly used to skip over folds
 
       -- TODO(lewis6991): Creating a new iterator loses the cached predicate results for query
       -- matches. Move this logic inside iter_captures() so we can maintain the cache.
-      state.iter =
-        state.highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
+      state.iter = state.highlighter_query
+        :query()
+        :iter_captures2(root_node, self.bufnr, from_line, from_col, root_end_row + 1, 0)
     end
 
-    while line >= state.next_row do
-      local capture, node, metadata, match = state.iter(line)
+    while
+      until_line > state.next_row or (until_line == state.next_row and until_col > state.next_col)
+    do
+      local capture, node, metadata, match = state.iter(until_line, until_col)
 
       local range = { root_end_row + 1, 0, root_end_row + 1, 0 }
       if node then
@@ -326,7 +335,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
 
         local url = get_url(match, buf, capture, metadata)
 
-        if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
+        if hl and end_row >= from_line and (not is_spell_nav or spell ~= nil) then
           api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
             end_line = end_row,
             end_col = end_col,
@@ -340,8 +349,13 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         end
       end
 
-      if start_row > line then
+      if start_row > until_line or (start_row == until_line and start_col >= until_col) then
         state.next_row = start_row
+        state.next_col = start_col
+      end
+
+      if not capture then
+        break
       end
     end
   end)
@@ -351,13 +365,13 @@ end
 ---@param _win integer
 ---@param buf integer
 ---@param line integer
-function TSHighlighter._on_line(_, _win, buf, line, _)
+function TSHighlighter._on_range(_, _win, buf, sr, sc, er, ec, _)
   local self = TSHighlighter.active[buf]
   if not self then
     return
   end
 
-  on_line_impl(self, buf, line, false)
+  on_range_impl(self, buf, sr, sc, er, ec, false)
 end
 
 ---@private
@@ -375,9 +389,7 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
   local highlight_states = self._highlight_states
   self:prepare_highlight_states(srow, erow)
 
-  for row = srow, erow do
-    on_line_impl(self, buf, row, true)
-  end
+  on_range_impl(self, buf, srow, 0, erow, 0, true)
   self._highlight_states = highlight_states
 end
 
@@ -399,7 +411,7 @@ end
 
 api.nvim_set_decoration_provider(ns, {
   on_win = TSHighlighter._on_win,
-  on_line = TSHighlighter._on_line,
+  on_range = TSHighlighter._on_range,
   _on_spell_nav = TSHighlighter._on_spell_nav,
 })
 
