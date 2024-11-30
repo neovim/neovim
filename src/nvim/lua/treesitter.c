@@ -1334,6 +1334,53 @@ int tslua_push_querycursor(lua_State *L)
   return 1;
 }
 
+int tslua_push_querycursor2(lua_State *L)
+{
+  TSNode node = node_check(L, 1);
+
+  TSQuery *query = query_check(L, 2);
+  TSQueryCursor *cursor = ts_query_cursor_new();
+  ts_query_cursor_exec(cursor, query, node);
+
+  uint32_t sr = (uint32_t)luaL_checkinteger(L, 3);
+  uint32_t sc = (uint32_t)luaL_checkinteger(L, 4);
+  uint32_t er = (uint32_t)luaL_checkinteger(L, 5);
+  uint32_t ec = (uint32_t)luaL_checkinteger(L, 6);
+
+  ts_query_cursor_set_point_range(cursor, (TSPoint){ sr, sc }, (TSPoint){ er, ec });
+
+  if (lua_gettop(L) >= 7 && !lua_isnil(L, 7)) {
+    luaL_argcheck(L, lua_istable(L, 7), 7, "table expected");
+    lua_pushnil(L);  // [dict, ..., nil]
+    while (lua_next(L, 7)) {
+      // [dict, ..., key, value]
+      if (lua_type(L, -2) == LUA_TSTRING) {
+        char *k = (char *)lua_tostring(L, -2);
+        if (strequal("max_start_depth", k)) {
+          uint32_t max_start_depth = (uint32_t)lua_tointeger(L, -1);
+          ts_query_cursor_set_max_start_depth(cursor, max_start_depth);
+        } else if (strequal("match_limit", k)) {
+          uint32_t match_limit = (uint32_t)lua_tointeger(L, -1);
+          ts_query_cursor_set_match_limit(cursor, match_limit);
+        }
+      }
+      // pop the value; lua_next will pop the key.
+      lua_pop(L, 1);  // [dict, ..., key]
+    }
+  }
+
+  TSQueryCursor **ud = lua_newuserdata(L, sizeof(*ud));  // [node, query, ..., udata]
+  *ud = cursor;
+  lua_getfield(L, LUA_REGISTRYINDEX, TS_META_QUERYCURSOR);  // [node, query, ..., udata, meta]
+  lua_setmetatable(L, -2);  // [node, query, ..., udata]
+
+  // Copy the fenv which contains the nodes tree.
+  lua_getfenv(L, 1);  // [udata, reftable]
+  lua_setfenv(L, -2);  // [udata]
+
+  return 1;
+}
+
 static int querycursor_remove_match(lua_State *L)
 {
   TSQueryCursor *cursor = querycursor_check(L, 1);
