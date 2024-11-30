@@ -886,6 +886,41 @@ function Query:iter_captures(node, source, start, stop)
   return iter
 end
 
+function Query:iter_captures2(node, source, sr, sc, er, ec)
+  if type(source) == 'number' and source == 0 then
+    source = api.nvim_get_current_buf()
+  end
+
+  local cursor =
+    vim._create_ts_querycursor2(node, self.query, sr, sc, er, ec, { match_limit = 256 })
+
+  local apply_directives = memoize(match_id_hash, self.apply_directives, true)
+  local match_preds = memoize(match_id_hash, self.match_preds, true)
+
+  local function iter(end_line, end_col)
+    local capture, captured_node, match = cursor:next_capture()
+
+    if not capture then
+      return
+    end
+
+    if not match_preds(self, match, source) then
+      local match_id = match:info()
+      cursor:remove_match(match_id)
+      local row, col = captured_node:range()
+      if row > end_line or (row == end_line and col > end_col) then
+        return nil, captured_node, nil, nil
+      end
+      return iter(end_line, end_col) -- tail call: try next match
+    end
+
+    local metadata = apply_directives(self, match, source)
+
+    return capture, captured_node, metadata, match
+  end
+  return iter
+end
+
 --- Iterates the matches of self on a given range.
 ---
 --- Iterate over all matches within a {node}. The arguments are the same as for
