@@ -33,6 +33,12 @@ function M:size()
   return string.len(self.data or '')
 end
 
+---Displays the image within the terminal used by neovim.
+---@param opts? vim.img.Opts
+function M:show(opts)
+  vim.img.show(self, opts)
+end
+
 ---Loads data for an image from a file, replacing any existing data.
 ---If a callback provided, will load asynchronously; otherwise, is blocking.
 ---@param filename string
