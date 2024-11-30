@@ -1517,6 +1517,13 @@ Useful values for the 'makeprg' options therefore are:
  setlocal makeprg=./alltests.py " Run a testsuite
  setlocal makeprg=python\ %:S   " Run a single testcase
 
+PYTEST COMPILER						*compiler-pytest*
+Commonly used compiler options can be added to 'makeprg' by setting the
+b/g:pytest_makeprg_params variable.  For example: >
+
+  let b:pytest_makeprg_params = "--verbose --no-summary --disable-warnings"
+
+The global default is "--tb=short --quiet"; Python warnings are suppressed.
 
 TEX COMPILER						*compiler-tex*
 
