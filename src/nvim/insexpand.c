@@ -1176,6 +1176,20 @@ static int ins_compl_build_pum(void)
   bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0;
   bool compl_fuzzy_match = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
   compl_T *match_head = NULL, *match_tail = NULL;
+
+  // If the current match is the original text don't find the first
+  // match after it, don't highlight anything.
+  bool shown_match_ok = match_at_original_text(compl_shown_match);
+
+  if (strequal(compl_leader, compl_orig_text) && !shown_match_ok) {
+    compl_shown_match = compl_no_select ? compl_first_match : compl_first_match->cp_next;
+  }
+
+  bool did_find_shown_match = false;
+  compl_T *shown_compl = NULL;
+  int i = 0;
+  int cur = -1;
+
   do {
     // When 'completeopt' contains "fuzzy" and leader is not NULL or empty,
     // set the cp_score for later comparisons.
@@ -1194,6 +1208,53 @@ static int ins_compl_build_pum(void)
         match_tail->cp_match_next = comp;
       }
       match_tail = comp;
+      if (!shown_match_ok && !compl_fuzzy_match) {
+        if (comp == compl_shown_match || did_find_shown_match) {
+          // This item is the shown match or this is the
+          // first displayed item after the shown match.
+          compl_shown_match = comp;
+          did_find_shown_match = true;
+          shown_match_ok = true;
+        } else {
+          // Remember this displayed match for when the
+          // shown match is just below it.
+          shown_compl = comp;
+        }
+        cur = i;
+      } else if (compl_fuzzy_match) {
+        if (i == 0) {
+          shown_compl = comp;
+        }
+        // Update the maximum fuzzy score and the shown match
+        // if the current item's score is higher
+        if (comp->cp_score > max_fuzzy_score) {
+          did_find_shown_match = true;
+          max_fuzzy_score = comp->cp_score;
+          if (!compl_no_select) {
+            compl_shown_match = comp;
+          }
+        }
+        if (!shown_match_ok && comp == compl_shown_match && !compl_no_select) {
+          cur = i;
+          shown_match_ok = true;
+        }
+      }
+      i++;
+    }
+
+    if (comp == compl_shown_match && !compl_fuzzy_match) {
+      did_find_shown_match = true;
+      // When the original text is the shown match don't set
+      // compl_shown_match.
+      if (match_at_original_text(comp)) {
+        shown_match_ok = true;
+      }
+      if (!shown_match_ok && shown_compl != NULL) {
+        // The shown match isn't displayed, set it to the
+        // previously displayed match.
+        compl_shown_match = shown_compl;
+        shown_match_ok = true;
+      }
     }
     comp = comp->cp_next;
   } while (comp != NULL && !is_first_match(comp));
@@ -1205,65 +1266,9 @@ static int ins_compl_build_pum(void)
   assert(compl_match_arraysize >= 0);
   compl_match_array = xcalloc((size_t)compl_match_arraysize, sizeof(pumitem_T));
 
-  // If the current match is the original text don't find the first
-  // match after it, don't highlight anything.
-  bool shown_match_ok = match_at_original_text(compl_shown_match);
-
-  if (strequal(compl_leader, compl_orig_text) && !shown_match_ok) {
-    compl_shown_match = compl_no_select ? compl_first_match : compl_first_match->cp_next;
-  }
-
-  compl_T *shown_compl = NULL;
-  bool did_find_shown_match = match_head == match_tail ? true : false;
-  int cur = -1;
-  int i = 0;
+  i = 0;
   comp = match_head;
   while (comp != NULL) {
-    if (!shown_match_ok && !compl_fuzzy_match) {
-      if (comp == compl_shown_match || did_find_shown_match) {
-        // This item is the shown match or this is the
-        // first displayed item after the shown match.
-        compl_shown_match = comp;
-        did_find_shown_match = true;
-        shown_match_ok = true;
-      } else {
-        // Remember this displayed match for when the
-        // shown match is just below it.
-        shown_compl = comp;
-      }
-      cur = i;
-    } else if (compl_fuzzy_match) {
-      if (i == 0) {
-        shown_compl = comp;
-      }
-      // Update the maximum fuzzy score and the shown match
-      // if the current item's score is higher
-      if (comp->cp_score > max_fuzzy_score) {
-        did_find_shown_match = true;
-        max_fuzzy_score = comp->cp_score;
-        if (!compl_no_select) {
-          compl_shown_match = comp;
-        }
-      }
-
-      if (!shown_match_ok && comp == compl_shown_match && !compl_no_select) {
-        cur = i;
-        shown_match_ok = true;
-      }
-
-      // If there is no "no select" condition and the max fuzzy
-      // score is positive, or there is no completion leader or the
-      // leader length is zero, mark the shown match as valid and
-      // reset the current index.
-      if (!compl_no_select
-          && (max_fuzzy_score > 0
-              || (compl_leader == NULL || lead_len == 0))) {
-        if (match_at_original_text(compl_shown_match)) {
-          compl_shown_match = shown_compl;
-        }
-      }
-    }
-
     if (comp->cp_text[CPT_ABBR] != NULL) {
       compl_match_array[i].pum_text = comp->cp_text[CPT_ABBR];
     } else {
@@ -1278,23 +1283,6 @@ static int ins_compl_build_pum(void)
       compl_match_array[i++].pum_extra = comp->cp_text[CPT_MENU];
     } else {
       compl_match_array[i++].pum_extra = comp->cp_fname;
-    }
-
-    if (comp == compl_shown_match && !compl_fuzzy_match) {
-      did_find_shown_match = true;
-
-      // When the original text is the shown match don't set
-      // compl_shown_match.
-      if (match_at_original_text(comp)) {
-        shown_match_ok = true;
-      }
-
-      if (!shown_match_ok && shown_compl != NULL) {
-        // The shown match isn't displayed, set it to the
-        // previously displayed match.
-        compl_shown_match = shown_compl;
-        shown_match_ok = true;
-      }
     }
     compl_T *match_next = comp->cp_match_next;
     comp->cp_match_next = NULL;
