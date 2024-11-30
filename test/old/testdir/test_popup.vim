@@ -1675,4 +1675,29 @@ func Test_pum_completeitemalign()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_keep_select()
+  CheckScreendump
+  let lines =<< trim END
+    set completeopt=menu,menuone,noinsert
+  END
+  call writefile(lines, 'Xscript', 'D')
+  let buf = RunVimInTerminal('-S Xscript', {})
+  call TermWait(buf)
+
+  call term_sendkeys(buf, "ggSFab\<CR>Five\<CR>find\<CR>film\<CR>\<C-X>\<C-P>")
+  call TermWait(buf, 50)
+  call VerifyScreenDump(buf, 'Test_pum_keep_select_01', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+  call TermWait(buf, 50)
+
+  call term_sendkeys(buf, "S\<C-X>\<C-P>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "F")
+  call VerifyScreenDump(buf, 'Test_pum_keep_select_02', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call TermWait(buf, 50)
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
