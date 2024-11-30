@@ -6,5 +6,6 @@
 ---@field pos? {row:integer, col:integer} units are cells
 ---@field size? {width:integer, height:integer} units are cells
 
-return {
-}
+return vim._defer_require('vim.img._backend', {
+  iterm2 = ..., --- @module 'vim.img._backend.iterm2'
+})
