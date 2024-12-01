@@ -1097,6 +1097,22 @@ function lsp.tagfunc(pattern, flags)
 end
 
 --- Provides an interface between the built-in client and a `foldexpr` function.
+---
+--- To use, check for the "textDocument/foldingRange" capability in an
+--- |LspAttach| autocommand. Example:
+---
+--- ```lua
+--- vim.api.nvim_create_autocommand('LspAttach', {
+---   callback = function(args)
+---     local client = vim.lsp.get_client_by_id(args.data.client_id)
+---     if client:supports_method('textDocument/foldingRange') then
+---       vim.wo.foldmethod = 'expr'
+---       vim.wo.foldexpr = 'v:lua.vim.lsp.foldexpr()'
+---     end
+---   end,
+--- })
+--- ```
+---
 ---@param lnum integer line number
 function lsp.foldexpr(lnum)
   return vim.lsp._folding_range.foldexpr(lnum)
