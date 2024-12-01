@@ -1466,20 +1466,30 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   }
 
   if (check_decor_providers) {
+    int line_len = ml_get_buf_len(buf, lnum);
     decor_provider_end_col = (int)(ptr - line);
-    int new_col = decor_provider_end_col + 500;
+    int rem_bytes = line_len - decor_provider_end_col;
 
+    // Approximate the number of bytes that will be drawn.
+    // Assume we're dealing with 1-cell ascii and ignore
+    // the effects of 'linebreak', 'breakindent', etc.
+    int rem_vcols;
+    if (wp->w_p_wrap) {
+      int width = wp->w_width_inner - win_col_off(wp);
+      int width2 = width + win_col_off2(wp);
+      rem_vcols = width + (endrow - startrow) * width2;
+    } else {
+      rem_vcols = wp->w_width_inner - win_col_off(wp);
+    }
+
+    int const new_col = decor_provider_end_col + MIN(rem_bytes, rem_vcols + 1);
     bool added_decor = false;
     decor_providers_invoke_line(wp, lnum - 1, &added_decor);
     has_decor |= added_decor;
-    decor_providers_invoke_range(wp,
-                                 lnum - 1,
-                                 decor_provider_end_col,
-                                 lnum - 1,
-                                 new_col,
-                                 &added_decor);
-    decor_provider_end_col = new_col;
+    decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
+                                 lnum - 1, new_col, &added_decor);
     has_decor |= added_decor;
+    decor_provider_end_col = new_col;
   }
 
   if (has_decor) {
@@ -1536,13 +1546,20 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     bool did_decrement_ptr = false;
 
     if (check_decor_providers && (int)(ptr - line) >= decor_provider_end_col) {
-      int const new_col = decor_provider_end_col + 500;
-
-      bool added_decor = false;
-      decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
-                                   lnum - 1, new_col, &added_decor);
-      decor_provider_end_col = new_col;
-      has_decor |= added_decor;
+      if (*ptr == NUL) {
+        bool added_decor = false;
+        decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
+                                     lnum, 0, &added_decor);
+        has_decor |= added_decor;
+        decor_provider_end_col = INT_MAX;
+      } else {
+        int const new_col = decor_provider_end_col + 100;
+        bool added_decor = false;
+        decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
+                                     lnum - 1, new_col, &added_decor);
+        has_decor |= added_decor;
+        decor_provider_end_col = new_col;
+      }
     }
     if (has_decor) {
       extra_check = true;
@@ -2584,17 +2601,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
     // At end of the text line.
     if (mb_schar == NUL) {
-      if (check_decor_providers) {
-        bool added_decor = false;
-        decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
-                                     lnum, 0, &added_decor);
-        // decor_provider_end_col = INT_MAX;
-        // has_decor |= added_decor;
-      }
-      if (has_decor) {
-        extra_check = true;
-      }
-
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
 
       // check if line ends before left margin
