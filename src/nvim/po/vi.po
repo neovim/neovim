@@ -6285,8 +6285,31 @@ msgid "by Bram Moolenaar et al."
 msgstr "Do Bram Moolenaar và những người khác thực hiện"
 
 #: ../version.c:774
-msgid "Vim is open source and freely distributable"
-msgstr "Vim là phần mềm mã nguồn mở và được tự do phân phối"
+msgid "Nvim is open source and freely distributable"
+msgstr "Nvim là phần mềm mã nguồn mở và được tự do phân phối"
+
+                                                                                      |
+                       type  :help nvim{18:<Enter>}       if you are new!                  |
+                       type  :checkhealth{18:<Enter>}     to optimize Nvim                 |
+                       type  :q{18:<Enter>}               to exit                          |
+                       type  :help{18:<Enter>}            for help                         |
+                                                                                      |
+      {MATCH: +}type  :help news{18:<Enter>} to see changes in v{MATCH:%d+%.%d+ +}|
+
+msgid "type  :help nvim<Enter>       if you are new!"
+msgstr "hãy gõ :help nvim<Enter>       nếu bạn mới chưa từng dùng Nvim!"
+
+msgid "type  :checkhealth<Enter>     to optimize Nvim"
+msgstr "hãy gõ :checkhealth<Enter>     để tối ưu hóa Nvim"
+
+msgid "type  :q<Enter>               to exit"
+msgstr "hãy gõ :q<Enter>               để thoát"
+
+msgid "type  :help<Enter>            for help"
+msgstr "hãy gõ :help<Enter>            để xem trợ giúp"
+
+msgid "type  :help news<Enter>        to see changes in "
+msgstr "hãy gõ :help news<Enter>        để xem các thay đổi trong "
 
 #: ../version.c:776
 msgid "Help poor children in Uganda!"
@@ -6295,10 +6318,6 @@ msgstr "Hãy cứu giúp trẻ em nghèo ở Uganda!"
 #: ../version.c:777
 msgid "type  :help iccf<Enter>       for information "
 msgstr "hãy gõ :help iccf<Enter>       để biết thêm thông tin"
-
-#: ../version.c:779
-msgid "type  :q<Enter>               to exit         "
-msgstr "    hãy gõ :q<Enter>               để thoát khỏi chương trình     "
 
 #: ../version.c:780
 msgid "type  :help<Enter>  or  <F1>  for on-line help"
@@ -7716,3 +7735,5 @@ msgstr "E233: không mở được màn hình"
 
 msgid "E463: Region is guarded, cannot modify"
 msgstr "E463: Không thể sửa vùng đã được bảo vệ"
+
+
