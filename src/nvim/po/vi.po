@@ -6288,14 +6288,6 @@ msgstr "Do Bram Moolenaar và những người khác thực hiện"
 msgid "Nvim is open source and freely distributable"
 msgstr "Nvim là phần mềm mã nguồn mở và được tự do phân phối"
 
-                                                                                      |
-                       type  :help nvim{18:<Enter>}       if you are new!                  |
-                       type  :checkhealth{18:<Enter>}     to optimize Nvim                 |
-                       type  :q{18:<Enter>}               to exit                          |
-                       type  :help{18:<Enter>}            for help                         |
-                                                                                      |
-      {MATCH: +}type  :help news{18:<Enter>} to see changes in v{MATCH:%d+%.%d+ +}|
-
 msgid "type  :help nvim<Enter>       if you are new!"
 msgstr "hãy gõ :help nvim<Enter>       nếu bạn mới chưa từng dùng Nvim!"
 
