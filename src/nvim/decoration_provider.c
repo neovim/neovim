@@ -55,14 +55,13 @@ static bool decor_provider_invoke(int provider_idx, const char *name, LuaRef ref
   // We get the provider here via an index in case the above call to nlua_call_ref causes
   // decor_providers to be reallocated.
   DecorProvider *provider = &kv_A(decor_providers, provider_idx);
-
   if (!ERROR_SET(&err)
       && api_object_to_bool(ret, "provider %s retval", default_true, &err)) {
     provider->error_count = 0;
     return true;
   }
 
-  if (ERROR_SET(&err)) {
+  if (ERROR_SET(&err) && provider->error_count < DP_MAX_ERROR) {
     decor_provider_error(provider, name, err.msg);
     provider->error_count++;
 
