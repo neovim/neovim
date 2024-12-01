@@ -17,6 +17,7 @@ local lsp = vim._defer_require('vim.lsp', {
   log = ..., --- @module 'vim.lsp.log'
   protocol = ..., --- @module 'vim.lsp.protocol'
   rpc = ..., --- @module 'vim.lsp.rpc'
+  selection_range = ..., --- @module 'vim.lsp.selection_range'
   semantic_tokens = ..., --- @module 'vim.lsp.semantic_tokens'
   util = ..., --- @module 'vim.lsp.util'
 })
