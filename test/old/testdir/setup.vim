@@ -1,6 +1,5 @@
 if exists('s:did_load')
   " Align Nvim defaults to Vim.
-  set backspace=
   set commentstring=/*\ %s\ */
   set complete=.,w,b,u,t,i
   set define=^\\s*#\\s*define

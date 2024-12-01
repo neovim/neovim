@@ -1198,8 +1198,8 @@ func Test_OptionSet()
   call assert_equal(g:opt[0], g:opt[1])
 
   " 14: Setting option backspace through :let"
-  let g:options = [['backspace', '', '', '', 'eol,indent,start', 'global', 'set']]
-  let &bs = "eol,indent,start"
+  let g:options = [['backspace', 'indent,eol,start', 'indent,eol,start', 'indent,eol,start', '', 'global', 'set']]
+  let &bs = ''
   call assert_equal([], g:options)
   call assert_equal(g:opt[0], g:opt[1])
 
