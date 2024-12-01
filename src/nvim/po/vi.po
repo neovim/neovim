@@ -337,7 +337,7 @@ msgstr ""
 #: ../edit.c:82
 msgid " Keyword completion (^N^P)"
 msgstr " Tự động kết thúc cho từ khóa (^N^P)"
-https://github.com/brianhuster/neovim
+
 #. ctrl_x_mode == 0, ^P/^N compl.
 #: ../edit.c:83
 #, fuzzy
