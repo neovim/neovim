@@ -2567,8 +2567,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         bool added_decor = false;
         decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
                                      lnum, 0, &added_decor);
-        decor_provider_end_col = INT_MAX;
-        has_decor |= added_decor;
+        // decor_provider_end_col = INT_MAX;
+        // has_decor |= added_decor;
       }
       if (has_decor) {
         extra_check = true;
