@@ -1466,9 +1466,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   }
 
   if (check_decor_providers) {
-    int line_len = ml_get_buf_len(buf, lnum);
-    decor_provider_end_col = (int)(ptr - line);
-    int rem_bytes = line_len - decor_provider_end_col;
+    int const line_len = ml_get_buf_len(buf, lnum);
+    int const col = (int)(ptr - line);
 
     // Approximate the number of bytes that will be drawn.
     // Assume we're dealing with 1-cell ascii and ignore
@@ -1482,14 +1481,16 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       rem_vcols = wp->w_width_inner - win_col_off(wp);
     }
 
-    int const new_col = decor_provider_end_col + MIN(rem_bytes, rem_vcols + 1);
+    int const new_col = col + MIN(line_len - col, rem_vcols + 1);
     bool added_decor = false;
     decor_providers_invoke_line(wp, lnum - 1, &added_decor);
     has_decor |= added_decor;
-    decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
-                                 lnum - 1, new_col, &added_decor);
+    decor_providers_invoke_range(wp, lnum - 1, col, lnum - 1, new_col, &added_decor);
     has_decor |= added_decor;
     decor_provider_end_col = new_col;
+
+    line = ml_get_buf(wp->w_buffer, lnum);
+    ptr = line + col;
   }
 
   if (has_decor) {
@@ -1546,6 +1547,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     bool did_decrement_ptr = false;
 
     if (check_decor_providers && (int)(ptr - line) >= decor_provider_end_col) {
+      int const col = (int)(ptr - line);
+
       if (*ptr == NUL) {
         bool added_decor = false;
         decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
@@ -1560,6 +1563,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         has_decor |= added_decor;
         decor_provider_end_col = new_col;
       }
+
+      line = ml_get_buf(wp->w_buffer, lnum);
+      ptr = line + col;
     }
     if (has_decor) {
       extra_check = true;
