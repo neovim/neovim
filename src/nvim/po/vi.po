@@ -320,7 +320,7 @@ msgstr ""
 
 #: ../digraph.c:1598
 msgid "E104: Escape not allowed in digraph"
-msgstr "E104: Không hợp lệ dùng ký tự thoát Escape trong chữ ghép"
+msgstr "E104: Không được dùng ký tự thoát Escape trong chữ ghép"
 
 #: ../digraph.c:1760
 msgid "E544: Keymap file not found"
@@ -814,7 +814,7 @@ msgstr ""
 #: ../eval.c:10841
 #, fuzzy
 msgid "E786: Range not allowed"
-msgstr "E786: Không hợp lệ sử dụng phạm vi"
+msgstr "E786: Phạm vi không được phép"
 
 #: ../eval.c:11140
 #, fuzzy
@@ -1196,7 +1196,7 @@ msgstr "E141: Không có tên tập tin cho bộ đệm %<PRId64>"
 
 #: ../ex_cmds.c:2412
 msgid "E142: File not written: Writing is disabled by 'write' option"
-msgstr "E142: Tập tin chưa được ghi: Ghi nhớ bị tắt bởi tùy chọn 'write'"
+msgstr "E142: Tập tin chưa được ghi: Lưu bị tắt bởi tùy chọn 'write'"
 
 #: ../ex_cmds.c:2434
 #, fuzzy, c-format
@@ -1205,7 +1205,7 @@ msgid ""
 "Do you wish to write anyway?"
 msgstr ""
 "Tùy chọn 'readonly' được đặt cho \"%.*s\".\n"
-"Ghi nhớ bằng mọi giá?"
+"Lưu bằng mọi giá?"
 
 #: ../ex_cmds.c:2439
 #, c-format
@@ -1428,7 +1428,7 @@ msgstr ""
 #: ../ex_cmds2.c:1269
 #, fuzzy, c-format
 msgid "Save changes to \"%s\"?"
-msgstr "Ghi nhớ thay đổi vào \"%.*s\"?"
+msgstr "Lưu thay đổi vào \"%.*s\"?"
 
 #: ../ex_cmds2.c:1271 ../ex_docmd.c:8851
 msgid "Untitled"
@@ -1609,7 +1609,7 @@ msgstr "E319: Xin lỗi, câu lệnh này không có trong phiên bản này"
 
 #: ../ex_docmd.c:3752
 msgid "E172: Only one file name allowed"
-msgstr "E172: Chỉ hợp lệ sử dụng một tên tập tin"
+msgstr "E172: Chỉ được dùng một tên tập tin"
 
 #: ../ex_docmd.c:4238
 msgid "1 more file to edit.  Quit anyway?"
@@ -1692,12 +1692,12 @@ msgstr "E184: Không có câu lệnh người dùng định nghĩa như vậy: %
 #: ../ex_docmd.c:5219
 #, c-format
 msgid "E180: Invalid complete value: %s"
-msgstr "E180: Giá trị phần phụ không hợp lệ: %s"
+msgstr "E180: Nội dung hoàn thành không hợp lệ: %s"
 
 #: ../ex_docmd.c:5225
 msgid "E468: Completion argument only allowed for custom completion"
 msgstr ""
-"E468: Tham số tự động kết thúc chỉ hợp lệ sử dụng với phần phụ đặc biệt"
+"E468: Tham số hoàn thành chỉ được dùng với phần phụ đặc biệt"
 
 #: ../ex_docmd.c:5231
 msgid "E467: Custom completion requires a function argument"
@@ -1967,12 +1967,12 @@ msgstr "E193: lệnh :endfunction chỉ được sử dụng trong một hàm"
 #: ../ex_getln.c:1643
 #, fuzzy
 msgid "E788: Not allowed to edit another buffer now"
-msgstr "E48: Không hợp lệ trong hộp cát (sandbox)"
+msgstr "E788: Bạn không được chỉnh sửa bộ đệm khác bây giờ"
 
 #: ../ex_getln.c:1656
 #, fuzzy
 msgid "E811: Not allowed to change buffer information now"
-msgstr "E94: Không có bộ đệm tương ứng với %s"
+msgstr "E811: Bạn không được thay đổi thông tin bộ đệm bây giờ"
 
 #: ../ex_getln.c:3178
 msgid "tagname"
@@ -2925,11 +2925,11 @@ msgstr "E255: Không đọc được dữ liệu về ký tự!"
 
 #: ../globals.h:1086
 msgid "E72: Close error on swap file"
-msgstr "E72: Lỗi đóng tập tin trao đổi (swap)"
+msgstr "E72: Lỗi đóng tệp hoán đổi (swap)"
 
 #: ../globals.h:1087
 msgid "E73: tag stack empty"
-msgstr "E73: đống thẻ ghi rỗng"
+msgstr "E73: ngăn xếp thẻ ghi rỗng"
 
 #: ../globals.h:1088
 msgid "E74: Command too complex"
@@ -3474,7 +3474,7 @@ msgstr "-w <scriptout>\tThêm tất cả các lệnh đã gõ vào tập tin <sc
 
 #: ../main.c:2238
 msgid "-W <scriptout>\tWrite all typed commands to file <scriptout>"
-msgstr "-W <scriptout>\tGhi nhớ tất cả các lệnh đã gõ vào tập tin <scriptout>"
+msgstr "-W <scriptout>\tLưu tất cả các lệnh đã gõ vào tập tin <scriptout>"
 
 #: ../main.c:2240
 msgid "--startuptime <file>\tWrite startup timing messages to <file>"
@@ -3563,19 +3563,19 @@ msgstr "E293: khối chưa bị khóa"
 
 #: ../memfile.c:799
 msgid "E294: Seek error in swap file read"
-msgstr "E294: Lỗi tìm kiếm khi đọc tập tin trao đổi (swap)"
+msgstr "E294: Lỗi tìm kiếm khi đọc tệp hoán đổi (swap)"
 
 #: ../memfile.c:803
 msgid "E295: Read error in swap file"
-msgstr "E295: Lỗi đọc tập tin trao đổi (swap)"
+msgstr "E295: Lỗi đọc tệp hoán đổi (swap)"
 
 #: ../memfile.c:849
 msgid "E296: Seek error in swap file write"
-msgstr "E296: Lỗi tìm kiếm khi ghi tập tin trao đổi (swap)"
+msgstr "E296: Lỗi tìm kiếm khi ghi tệp hoán đổi (swap)"
 
 #: ../memfile.c:865
 msgid "E297: Write error in swap file"
-msgstr "E297: Lỗi ghi tập tin trao đổi (swap)"
+msgstr "E297: Lỗi ghi tệp hoán đổi (swap)"
 
 #: ../memfile.c:1036
 msgid "E300: Swap file already exists (symlink attack?)"
@@ -3597,17 +3597,17 @@ msgstr "E298: Chưa lấy khối số 2?"
 #. could not (re)open the swap file, what can we do????
 #: ../memline.c:465
 msgid "E301: Oops, lost the swap file!!!"
-msgstr "E301: Ối, mất tập tin trao đổi (swap)!!!"
+msgstr "E301: Ối, mất tệp hoán đổi (swap)!!!"
 
 #: ../memline.c:477
 msgid "E302: Could not rename swap file"
-msgstr "E302: Không đổi được tên tập tin trao đổi (swap)"
+msgstr "E302: Không đổi được tên tệp hoán đổi (swap)"
 
 #: ../memline.c:554
 #, c-format
 msgid "E303: Unable to open swap file for \"%s\", recovery impossible"
 msgstr ""
-"E303: Không mở được tập tin trao đổi (swap) cho \"%s\", nên không thể phục "
+"E303: Không mở được tệp hoán đổi (swap) cho \"%s\", nên không thể phục "
 "hồi"
 
 #: ../memline.c:666
@@ -3619,11 +3619,11 @@ msgstr "E304: ml_timestamp: Chưa lấy khối số 0??"
 #: ../memline.c:830
 #, c-format
 msgid "E305: No swap file found for %s"
-msgstr "E305: Không tìm thấy tập tin trao đổi (swap) cho %s"
+msgstr "E305: Không tìm thấy tệp hoán đổi (swap) cho %s"
 
 #: ../memline.c:839
 msgid "Enter number of swap file to use (0 to quit): "
-msgstr "Hãy nhập số của tập tin trao đổi (swap) muốn sử dụng (0 để thoát): "
+msgstr "Hãy nhập số của tệp hoán đổi (swap) muốn sử dụng (0 để thoát): "
 
 #: ../memline.c:879
 #, c-format
@@ -3640,7 +3640,7 @@ msgid ""
 "Maybe no changes were made or Vim did not update the swap file."
 msgstr ""
 "\n"
-"Chưa có thay đổi nào hoặc Vim không thể cập nhật tập tin trao đổi (swap)"
+"Chưa có thay đổi nào hoặc Vim không thể cập nhật tệp hoán đổi (swap)"
 
 #: ../memline.c:909
 msgid " cannot be used with this version of Vim.\n"
@@ -3653,7 +3653,7 @@ msgstr "Hãy sử dụng Vim phiên bản 3.0.\n"
 #: ../memline.c:916
 #, c-format
 msgid "E307: %s does not look like a Vim swap file"
-msgstr "E307: %s không phải là tập tin trao đổi (swap) của Vim"
+msgstr "E307: %s không phải là tệp hoán đổi (swap) của Vim"
 
 #: ../memline.c:922
 msgid " cannot be used on this computer.\n"
@@ -3678,7 +3678,7 @@ msgstr ""
 #: ../memline.c:974
 #, c-format
 msgid "Using swap file \"%s\""
-msgstr "Đang sử dụng tập tin trao đổi (swap) \"%s\""
+msgstr "Đang sử dụng tệp hoán đổi (swap) \"%s\""
 
 #: ../memline.c:980
 #, c-format
@@ -3779,7 +3779,7 @@ msgstr ""
 #. use msg() to start the scrolling properly
 #: ../memline.c:1327
 msgid "Swap files found:"
-msgstr "Tìm thấy tập tin trao đổi (swap):"
+msgstr "Tìm thấy tệp hoán đổi (swap):"
 
 #: ../memline.c:1446
 msgid "   In current directory:\n"
@@ -3815,7 +3815,7 @@ msgstr "         [từ Vim phiên bản 3.0]"
 
 #: ../memline.c:1550
 msgid "         [does not look like a Vim swap file]"
-msgstr "         [không phải là tập tin trao đổi (swap) của Vim]"
+msgstr "         [không phải là tệp hoán đổi (swap) của Vim]"
 
 #: ../memline.c:1552
 msgid "         file name: "
@@ -3887,11 +3887,11 @@ msgstr "         [không mở được]"
 
 #: ../memline.c:1698
 msgid "E313: Cannot preserve, there is no swap file"
-msgstr "E313: Không cập nhật được tập tin trao đổi (swap) vì không tìm thấy nó"
+msgstr "E313: Không cập nhật được tệp hoán đổi (swap) vì không tìm thấy nó"
 
 #: ../memline.c:1747
 msgid "File preserved"
-msgstr "Đã cập nhật tập tin trao đổi (swap)"
+msgstr "Đã cập nhật tệp hoán đổi (swap)"
 
 #: ../memline.c:1749
 msgid "E314: Preserve failed"
@@ -3909,7 +3909,7 @@ msgstr "E316: ml_get: không tìm được dòng %<PRId64>"
 
 #: ../memline.c:2236
 msgid "E317: pointer block id wrong 3"
-msgstr "E317: Giá trị của pointer khối số 3 không hợp lệ"
+msgstr "E317: id của khối trỏ (pointer block) không hợp lệ 3"
 
 #: ../memline.c:2311
 msgid "stack_idx should be 0"
@@ -3921,7 +3921,7 @@ msgstr "E318: Đã cập nhật quá nhiều khối?"
 
 #: ../memline.c:2511
 msgid "E317: pointer block id wrong 4"
-msgstr "E317: Giá trị của pointer khối số 4 không hợp lệ"
+msgstr "E317: id của khối trỏ (pointer block) không hợp lệ 4"
 
 #: ../memline.c:2536
 msgid "deleted block 1?"
@@ -3934,7 +3934,7 @@ msgstr "E320: Không tìm được dòng %<PRId64>"
 
 #: ../memline.c:2916
 msgid "E317: pointer block id wrong"
-msgstr "E317: giá trị của pointer khối không hợp lệ"
+msgstr "E317: giá trị của khối trỏ (pointer block) không hợp lệ"
 
 #: ../memline.c:2930
 msgid "pe_line_count is zero"
@@ -3952,16 +3952,16 @@ msgstr "E323: giá trị đếm dòng không hợp lệ trong khối %<PRId64>"
 
 #: ../memline.c:2999
 msgid "Stack size increases"
-msgstr "Kích thước của đống tăng lên"
+msgstr "Kích thước ngăn xếp tăng"
 
 #: ../memline.c:3038
 msgid "E317: pointer block id wrong 2"
-msgstr "E317: Giá trị của cái chỉ (pointer) khối số 2 không hợp lệ"
+msgstr "E317: id của khối trỏ (pointer block) không hợp lệ 2"
 
 #: ../memline.c:3070
 #, c-format
 msgid "E773: Symlink loop for \"%s\""
-msgstr ""
+msgstr "E773: Vòng lặp liên kết mềm (symlink loop) cho \"%s\""
 
 #: ../memline.c:3221
 msgid "E325: ATTENTION"
@@ -3973,7 +3973,7 @@ msgid ""
 "Found a swap file by the name \""
 msgstr ""
 "\n"
-"Tìm thấy một tập tin trao đổi (swap) với tên \""
+"Tìm thấy một tệp hoán đổi (swap) với tên \""
 
 #: ../memline.c:3226
 msgid "While opening file \""
@@ -3981,7 +3981,7 @@ msgstr "Khi mở tập tin: \""
 
 #: ../memline.c:3239
 msgid "      NEWER than swap file!\n"
-msgstr "                    MỚI hơn so với tập tin trao đổi (swap)\n"
+msgstr "                    MỚI hơn tệp hoán đổi (swap)\n"
 
 #: ../memline.c:3244
 #, fuzzy
@@ -3999,7 +3999,7 @@ msgstr ""
 #: ../memline.c:3245
 #, fuzzy
 msgid "  Quit, or continue with caution.\n"
-msgstr "    Thoát hoặc tiếp tục với sự cẩn thận.\n"
+msgstr "    Thoát, hoặc tiếp tục và hãy thận trọng\n"
 
 #: ../memline.c:3246
 #, fuzzy
@@ -4024,7 +4024,7 @@ msgstr ""
 #: ../memline.c:3250
 msgid "    If you did this already, delete the swap file \""
 msgstr ""
-"    Nếu đã thực hiện thao tác này rồi, thì hãy xóa tập tin trao đổi (swap) \""
+"    Nếu đã thực hiện thao tác này rồi, thì hãy xóa tệp hoán đổi (swap) \""
 
 #: ../memline.c:3252
 msgid ""
@@ -4090,7 +4090,7 @@ msgstr ""
 #. ".saa": tried enough, give up
 #: ../memline.c:3528
 msgid "E326: Too many swap files found"
-msgstr "E326: Tìm thấy quá nhiều tập tin trao đổi (swap)"
+msgstr "E326: Tìm thấy quá nhiều tệp hoán đổi (swap)"
 
 #: ../memory.c:227
 #, c-format
@@ -4230,7 +4230,7 @@ msgid ""
 "&Cancel"
 msgstr ""
 "&Có\n"
-"&Không&Ghi nhớ tất cả\n"
+"&Không&Lưu tất cả\n"
 "&Vứt bỏ tất cả\n"
 "&Dừng lại"
 
@@ -4289,7 +4289,7 @@ msgstr ""
 #: ../misc2.c:738
 #, c-format
 msgid "Calling shell to execute: \"%s\""
-msgstr "Gọi shell để thực hiện: \"%s\""
+msgstr "Gọi shell để thực thi: \"%s\""
 
 #: ../normal.c:183
 msgid "E349: No identifier under cursor"
@@ -4316,15 +4316,15 @@ msgstr ""
 
 #: ../normal.c:5897
 msgid "E664: changelist is empty"
-msgstr "E664: danh sách những thay đổi trống rỗng"
+msgstr "E664: danh sách thay đổi trống"
 
 #: ../normal.c:5899
 msgid "E662: At start of changelist"
-msgstr "E662: Ở đầu danh sách những thay đổi"
+msgstr "E662: Ở đầu danh sách thay đổi"
 
 #: ../normal.c:5901
 msgid "E663: At end of changelist"
-msgstr "E663: Ở cuối danh sách những thay đổi"
+msgstr "E663: Ở cuối danh sách thay đổi"
 
 #: ../normal.c:7053
 msgid "Type  :quit<Enter>  to exit Nvim"
@@ -4367,7 +4367,7 @@ msgstr "%<PRId64> dòng đã thụt đầu"
 #: ../ops.c:938
 #, fuzzy
 msgid "E748: No previously used register"
-msgstr "E186: Không có thư mục trước"
+msgstr "E748: Không có register được sử dụng trước đó"
 
 #. must display the prompt
 #: ../ops.c:1433
@@ -4527,11 +4527,11 @@ msgstr "E589: giá trị của tùy chọn 'backupext' và 'patchmode' bằng nh
 
 #: ../option.c:3964
 msgid "E834: Conflicts with value of 'listchars'"
-msgstr ""
+msgstr "E834: Xung đột với giá trị của 'listchars'"
 
 #: ../option.c:3966
 msgid "E835: Conflicts with value of 'fillchars'"
-msgstr ""
+msgstr "E835: Xung đột với giá trị của 'fillchars'"
 
 #: ../option.c:4163
 msgid "E524: Missing colon"
@@ -4752,11 +4752,11 @@ msgstr " (dòng bị xóa)"
 
 #: ../quickfix.c:1863
 msgid "E380: At bottom of quickfix stack"
-msgstr "E380: Ở dưới của đống sửa nhanh"
+msgstr "E380: Ở dưới của ngăn xếp sửa nhanh"
 
 #: ../quickfix.c:1869
 msgid "E381: At top of quickfix stack"
-msgstr "E381: Ở đầu của đống sửa nhanh"
+msgstr "E381: Ở đầu của ngăn xếp sửa nhanh"
 
 #: ../quickfix.c:1880
 #, c-format
@@ -4765,7 +4765,7 @@ msgstr "danh sách lỗi %d của %d; %d lỗi"
 
 #: ../quickfix.c:2427
 msgid "E382: Cannot write, 'buftype' option is set"
-msgstr "E382: Không ghi được, giá trị 'buftype' không phải là chuỗi rỗng"
+msgstr "E382: Không ghi được, giá trị 'buftype' không rỗng"
 
 #: ../quickfix.c:2812
 msgid "E683: File name missing or invalid pattern"
@@ -5151,7 +5151,7 @@ msgstr ""
 #: ../spell.c:951
 #, fuzzy
 msgid "E759: Format error in spell file"
-msgstr "E297: Lỗi ghi tập tin trao đổi (swap)"
+msgstr "E297: Lỗi ghi tệp hoán đổi (swap)"
 
 #: ../spell.c:952
 msgid "E758: Truncated spell file"
@@ -5192,7 +5192,7 @@ msgstr ""
 #: ../spell.c:2473
 #, fuzzy, c-format
 msgid "Reading spell file \"%s\""
-msgstr "Đang sử dụng tập tin trao đổi (swap) \"%s\""
+msgstr "Đang sử dụng tệp hoán đổi (swap) \"%s\""
 
 #: ../spell.c:2496
 #, fuzzy
@@ -5555,7 +5555,7 @@ msgstr "Xin lỗi, chỉ có gợi ý %<PRId64>"
 #: ../spell.c:8704
 #, fuzzy, c-format
 msgid "Change \"%.*s\" to:"
-msgstr "Ghi nhớ thay đổi vào \"%.*s\"?"
+msgstr "Lưu thay đổi vào \"%.*s\"?"
 
 #: ../spell.c:8737
 #, c-format
@@ -5575,7 +5575,7 @@ msgstr "E334: Không tìm thấy trình đơn: %s"
 #: ../spell.c:9276
 #, fuzzy, c-format
 msgid "E778: This does not look like a .sug file: %s"
-msgstr "E307: %s không phải là tập tin trao đổi (swap) của Vim"
+msgstr "E778: Cái này không có vẻ gì là tập tin .sug: %s"
 
 #: ../spell.c:9282
 #, c-format
@@ -5868,11 +5868,11 @@ msgstr "E849: Quá nhiều nhóm tô sáng và cú pháp"
 
 #: ../tag.c:104
 msgid "E555: at bottom of tag stack"
-msgstr "E555: ở cuối đống thẻ ghi"
+msgstr "E555: ở cuối ngăn xếp thẻ ghi"
 
 #: ../tag.c:105
 msgid "E556: at top of tag stack"
-msgstr "E556: ở đầu đống thẻ ghi"
+msgstr "E556: ở đầu ngăn xếp thẻ ghi"
 
 #: ../tag.c:380
 msgid "E425: Cannot go before first matching tag"
@@ -6230,7 +6230,7 @@ msgstr "  Tính năng có (+) hoặc không (-):\n"
 
 #: ../version.c:667
 msgid "   system vimrc file: \""
-msgstr "            tập tin vimrc chung cho hệ thống: \""
+msgstr "            tập tin vimrc hệ thống: \""
 
 #: ../version.c:672
 msgid "     user vimrc file: \""
@@ -6286,7 +6286,7 @@ msgstr "Do Bram Moolenaar và những người khác thực hiện"
 
 #: ../version.c:774
 msgid "Vim is open source and freely distributable"
-msgstr "Vim là phần mềm mã nguồn mở và có thể phân phối tự do"
+msgstr "Vim là phần mềm mã nguồn mở và được tự do phân phối"
 
 #: ../version.c:776
 msgid "Help poor children in Uganda!"
@@ -6303,14 +6303,6 @@ msgstr "    hãy gõ :q<Enter>               để thoát khỏi chương trình
 #: ../version.c:780
 msgid "type  :help<Enter>  or  <F1>  for on-line help"
 msgstr " hãy gõ :help<Enter> hoặc <F1>  để xem trợ giúp"
-
-#: ../version.c:781
-msgid "type  :help version7<Enter>   for version info"
-msgstr "hãy gõ :help version7<Enter>   để biết về phiên bản này  "
-
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "Đang trong chế độ tương thích với Vi"
 
 #: ../version.c:785
 msgid "type  :set nocp<Enter>        for Vim defaults"
@@ -6385,1362 +6377,1342 @@ msgstr "Không tìm thấy hướng dẫn (tutorial) có tên đó"
 msgid "Only one argument accepted (check spaces)"
 msgstr "Chỉ chấp nhận một tham số (vui lòng kiểm tra dấu cách)"
 
-#~ msgid "[Error List]"
-#~ msgstr "[Danh sách lỗi]"
+msgid "[Error List]"
+msgstr "[Danh sách lỗi]"
 
-#~ msgid "[No File]"
-#~ msgstr "[Không có tập tin]"
+msgid "[No File]"
+msgstr "[Không có tập tin]"
 
-#~ msgid "Patch file"
-#~ msgstr "Tập tin vá lỗi (patch)"
+msgid "Patch file"
+msgstr "Tập tin vá lỗi (patch)"
 
-#~ msgid "E106: Unknown variable: \"%s\""
-#~ msgstr "E106: Biến không biết: \"%s\""
+msgid "E106: Unknown variable: \"%s\""
+msgstr "E106: Biến không xác định: \"%s\""
 
-#~ msgid ""
-#~ "&OK\n"
-#~ "&Cancel"
-#~ msgstr ""
-#~ "&OK\n"
-#~ "&Hủy bỏ"
+msgid ""
+"&OK\n"
+"&Cancel"
+msgstr ""
+"&OK\n"
+"&Hủy bỏ"
 
-#~ msgid "E240: No connection to Vim server"
-#~ msgstr "E240: Không có kết nối với máy chủ Vim"
+msgid "E240: No connection to Vim server"
+msgstr "E240: Không có kết nối với máy chủ Vim"
 
-#~ msgid "E277: Unable to read a server reply"
-#~ msgstr "E277: Máy chủ không trả lời"
+msgid "E277: Unable to read a server reply"
+msgstr "E277: Không thể đọc phản hồi của máy chủ"
 
-#~ msgid "E241: Unable to send to %s"
-#~ msgstr "E241: Không thể gửi tin nhắn tới %s"
+msgid "E241: Unable to send to %s"
+msgstr "E241: Không thể gửi tới %s"
 
-#~ msgid "E130: Undefined function: %s"
-#~ msgstr "E130: Hàm %s chưa xác định"
+msgid "E130: Undefined function: %s"
+msgstr "E130: Chưa khai báo hàm %s"
 
-#~ msgid "Save As"
-#~ msgstr "Lưu như"
+msgid "Save As"
+msgstr "Lưu như"
 
-#~ msgid "Source Vim script"
-#~ msgstr "Thực thi Vimscript"
+msgid "Source Vim script"
+msgstr "Thực thi Vimscript"
 
-#~ msgid "Edit File"
-#~ msgstr "Soạn thảo tập tin"
+msgid "Edit File"
+msgstr "Soạn thảo tập tin"
 
-#~ msgid " (NOT FOUND)"
-#~ msgstr " (KHÔNG TÌM THẤY)"
+msgid " (NOT FOUND)"
+msgstr " (KHÔNG TÌM THẤY)"
 
-#~ msgid "Edit File in new window"
-#~ msgstr "Soạn thảo tập tin trong cửa sổ mới"
+msgid "Edit File in new window"
+msgstr "Soạn thảo tập tin trong cửa sổ mới"
 
-#~ msgid "Append File"
-#~ msgstr "Thêm tập tin"
+msgid "Append File"
+msgstr "Thêm tập tin"
 
-#~ msgid "Window position: X %d, Y %d"
-#~ msgstr "Vị trí cửa sổ: X %d, Y %d"
+msgid "Window position: X %d, Y %d"
+msgstr "Vị trí cửa sổ: X %d, Y %d"
 
-#~ msgid "Save Redirection"
-#~ msgstr "Chuyển hướng ghi"
+msgid "Save Redirection"
+msgstr "Chuyển hướng ghi"
 
-#~ msgid "Save View"
-#~ msgstr "Ghi nhớ vẻ ngoài"
+msgid "Save View"
+msgstr "Lưu vẻ ngoài"
 
-#~ msgid "Save Session"
-#~ msgstr "Ghi nhớ buổi làm việc"
+msgid "Save Session"
+msgstr "Lưu phiên làm việc"
 
-#~ msgid "Save Setup"
-#~ msgstr "Ghi nhớ cấu hình"
+msgid "Save Setup"
+msgstr "Lưu cấu hình"
 
-#~ msgid "E196: No digraphs in this version"
-#~ msgstr "E196: Trong phiên bản này chữ ghép không được hỗ trợ"
+msgid "E196: No digraphs in this version"
+msgstr "E196: Trong phiên bản này chữ ghép không được hỗ trợ"
 
-#~ msgid "[NL found]"
-#~ msgstr "[tìm thấy ký tự NL]"
+msgid "[NL found]"
+msgstr "[tìm thấy ký tự NL]"
 
-#~ msgid "[crypted]"
-#~ msgstr "[đã mã hóa]"
+msgid "[crypted]"
+msgstr "[đã mã hóa (crypted)]"
 
-#~ msgid "[CONVERSION ERROR]"
-#~ msgstr "[LỖI CHUYỂN BẢNG MÃ]"
+msgid "[CONVERSION ERROR]"
+msgstr "[LỖI CHUYỂN BẢNG MÃ]"
 
-#~ msgid "NetBeans disallows writes of unmodified buffers"
-#~ msgstr "NetBeans không hợp lệ ghi bộ đệm chưa có thay đổi nào"
+msgid "NetBeans disallows writes of unmodified buffers"
+msgstr "NetBeans không cho phép ghi bộ đệm chưa được chỉnh sửa"
 
-#~ msgid "Partial writes disallowed for NetBeans buffers"
-#~ msgstr "Ghi nhớ một phần bộ đệm NetBeans không được hợp lệ"
+msgid "Partial writes disallowed for NetBeans buffers"
+msgstr "Lưu một phần bộ đệm NetBeans không được phép"
 
-#~ msgid "E460: The resource fork would be lost (add ! to override)"
-#~ msgstr ""
-#~ "E460: Nhánh tài nguyên sẽ bị mất (thêm ! để bỏ qua việc kiểm tra lại)"
+msgid "E460: The resource fork would be lost (add ! to override)"
+msgstr ""
+"E460: Nhánh tài nguyên sẽ bị mất (thêm ! để bỏ qua việc kiểm tra lại)"
 
-#~ msgid "<cannot open> "
-#~ msgstr "<không thể mở> "
+msgid "<cannot open> "
+msgstr "<không thể mở> "
 
-#~ msgid "E616: vim_SelFile: can't get font %s"
-#~ msgstr "E616: vim_SelFile: không tìm thấy phông chữ %s"
+msgid "E616: vim_SelFile: can't get font %s"
+msgstr "E616: vim_SelFile: không tìm thấy phông chữ %s"
 
-#~ msgid "E614: vim_SelFile: can't return to current directory"
-#~ msgstr "E614: vim_SelFile: không trở lại được thư mục hiện thời"
+msgid "E614: vim_SelFile: can't return to current directory"
+msgstr "E614: vim_SelFile: không trở lại được thư mục hiện thời"
 
-#~ msgid "Pathname:"
-#~ msgstr "Đường dẫn tới tập tin:"
+msgid "Pathname:"
+msgstr "Tên đường dẫn:"
 
-#~ msgid "E615: vim_SelFile: can't get current directory"
-#~ msgstr "E615: vim_SelFile: không tìm thấy thư mục hiện thời"
+msgid "E615: vim_SelFile: can't get current directory"
+msgstr "E615: vim_SelFile: không tìm thấy thư mục hiện thời"
 
-#~ msgid "OK"
-#~ msgstr "Đồng ý"
+msgid "OK"
+msgstr "Đồng ý"
 
-#~ msgid "Cancel"
-#~ msgstr "Hủy bỏ"
+msgid "Cancel"
+msgstr "Hủy"
 
-#~ msgid "Vim dialog"
-#~ msgstr "Hộp thoại Vim"
+msgid "Vim dialog"
+msgstr "Hộp thoại Vim"
 
-#~ msgid "Scrollbar Widget: Could not get geometry of thumb pixmap."
-#~ msgstr "Thanh cuộn: Không thể xác định hình học của thanh cuộn."
+msgid "Scrollbar Widget: Could not get geometry of thumb pixmap."
+msgstr "Thanh cuộn: Không thể xác định hình học của thanh cuộn."
 
-#~ msgid "E232: Cannot create BalloonEval with both message and callback"
-#~ msgstr ""
-#~ "E232: Không tạo được BalloonEval với cả thông báo và lời gọi ngược lại"
+msgid "E232: Cannot create BalloonEval with both message and callback"
+msgstr ""
+"E232: Không tạo được BalloonEval với cả thông báo và lời gọi ngược lại"
 
-#~ msgid "E229: Cannot start the GUI"
-#~ msgstr "E229: Không chạy được giao diện đồ họa GUI"
+msgid "E229: Cannot start the GUI"
+msgstr "E229: Không khởi chạy được giao diện đồ họa (GUI)"
 
-#~ msgid "E230: Cannot read from \"%s\""
-#~ msgstr "E230: Không đọc được từ \"%s\""
+msgid "E230: Cannot read from \"%s\""
+msgstr "E230: Không đọc được từ \"%s\""
 
-#~ msgid "E665: Cannot start GUI, no valid font found"
-#~ msgstr ""
-#~ "E665: Không chạy được giao diện đồ họa GUI, đưa ra phông chữ không hợp lệ"
+msgid "E665: Cannot start GUI, no valid font found"
+msgstr ""
+"E665: Không khởi chạy được giao diện đồ họa (GUI), không tìm thấy phông chữ hợp lệ"
 
-#~ msgid "E231: 'guifontwide' invalid"
-#~ msgstr "E231: 'guifontwide' có giá trị không hợp lệ"
+msgid "E231: 'guifontwide' invalid"
+msgstr "E231: 'guifontwide' không hợp lệ"
 
-#~ msgid "E599: Value of 'imactivatekey' is invalid"
-#~ msgstr "E599: Giá trị của 'imactivatekey' không hợp lệ"
+msgid "E599: Value of 'imactivatekey' is invalid"
+msgstr "E599: Giá trị của 'imactivatekey' không hợp lệ"
 
-#~ msgid "E254: Cannot allocate color %s"
-#~ msgstr "E254: Không chỉ định được màu %s"
+msgid "E254: Cannot allocate color %s"
+msgstr "E254: Không chỉ định được màu %s"
 
-#~ msgid "Vim dialog..."
-#~ msgstr "Hộp thoại Vim..."
+msgid "Vim dialog..."
+msgstr "Hộp thoại Vim..."
 
-#~ msgid "Input _Methods"
-#~ msgstr "Phương pháp _nhập liệu"
+msgid "Input _Methods"
+msgstr "Phương thức _nhập"
 
-#~ msgid "VIM - Search and Replace..."
-#~ msgstr "VIM - Tìm kiếm và thay thế..."
+msgid "VIM - Search and Replace..."
+msgstr "VIM - Tìm và thay thế..."
 
-#~ msgid "VIM - Search..."
-#~ msgstr "VIM - Tìm kiếm..."
+msgid "VIM - Search..."
+msgstr "VIM - Tìm kiếm..."
 
-#~ msgid "Find what:"
-#~ msgstr "Tìm kiếm gì:"
+msgid "Find what:"
+msgstr "Tìm kiếm gì:"
 
-#~ msgid "Replace with:"
-#~ msgstr "Thay thế bởi:"
+msgid "Replace with:"
+msgstr "Thay thế bởi:"
 
-#~ msgid "Match whole word only"
-#~ msgstr "Chỉ tìm tương ứng hoàn toàn với từ"
+msgid "Match whole word only"
+msgstr "Chỉ tìm mẫu khớp toàn bộ từ"
 
-#~ msgid "Match case"
-#~ msgstr "Có tính kiểu chữ"
+msgid "Match case"
+msgstr "Phân biệt chữ hoa chữ thường"
 
-#~ msgid "Direction"
-#~ msgstr "Hướng"
+msgid "Direction"
+msgstr "Hướng"
 
-#~ msgid "Up"
-#~ msgstr "Lên"
+msgid "Up"
+msgstr "Lên"
 
-#~ msgid "Down"
-#~ msgstr "Xuống"
+msgid "Down"
+msgstr "Xuống"
 
-#~ msgid "Find Next"
-#~ msgstr "Tìm tiếp"
+msgid "Find Next"
+msgstr "Tìm tiếp"
 
-#~ msgid "Replace"
-#~ msgstr "Thay thế"
+msgid "Replace"
+msgstr "Thay thế"
 
-#~ msgid "Replace All"
-#~ msgstr "Thay thế tất cả"
+msgid "Replace All"
+msgstr "Thay tất cả"
 
-#~ msgid "Vim: Received \"die\" request from session manager\n"
-#~ msgstr "Vim: Nhận được yêu cầu \"chết\" (dừng) từ trình quản lý màn hình\n"
+msgid "Vim: Received \"die\" request from session manager\n"
+msgstr "Vim: Nhận được yêu cầu \"chết\" (dừng) từ trình quản lý phiên\n"
 
-#~ msgid "Vim: Main window unexpectedly destroyed\n"
-#~ msgstr "Vim: Cửa sổ chính đã bị đóng đột ngột\n"
+msgid "Vim: Main window unexpectedly destroyed\n"
+msgstr "Vim: Cửa sổ chính đã bị đóng đột ngột\n"
 
-#~ msgid "Font Selection"
-#~ msgstr "Chọn phông chữ"
+msgid "Font Selection"
+msgstr "Chọn phông chữ"
 
-#~ msgid "Used CUT_BUFFER0 instead of empty selection"
-#~ msgstr "Sử dụng CUT_BUFFER0 thay cho lựa chọn trống rỗng"
+msgid "Used CUT_BUFFER0 instead of empty selection"
+msgstr "Sử dụng CUT_BUFFER0 thay cho lựa chọn trống rỗng"
 
-#~ msgid "Filter"
-#~ msgstr "Đầu lọc"
+msgid "Filter"
+msgstr "Đầu lọc"
 
-#~ msgid "Directories"
-#~ msgstr "Thư mục"
+msgid "Directories"
+msgstr "Thư mục"
 
-#~ msgid "Help"
-#~ msgstr "Trợ giúp"
+msgid "Help"
+msgstr "Trợ giúp"
 
-#~ msgid "Files"
-#~ msgstr "Tập tin"
+msgid "Files"
+msgstr "Tập tin"
 
-#~ msgid "Selection"
-#~ msgstr "Lựa chọn"
+msgid "Selection"
+msgstr "Lựa chọn"
 
-#~ msgid "Undo"
-#~ msgstr "Hoàn tác"
+msgid "Undo"
+msgstr "Hoàn tác"
 
-#~ msgid "E671: Cannot find window title \"%s\""
-#~ msgstr "E671: Không tìm được tiêu đề cửa sổ \"%s\""
+msgid "E671: Cannot find window title \"%s\""
+msgstr "E671: Không tìm được tiêu đề cửa sổ \"%s\""
 
-#~ msgid "E243: Argument not supported: \"-%s\"; Use the OLE version."
-#~ msgstr ""
-#~ "E243: Tham số không được hỗ trợ: \"-%s\"; Hãy sử dụng phiên bản OLE."
+msgid "E243: Argument not supported: \"-%s\"; Use the OLE version."
+msgstr ""
+"E243: Tham số không được hỗ trợ: \"-%s\"; Hãy sử dụng phiên bản OLE."
 
-#~ msgid "E672: Unable to open window inside MDI application"
-#~ msgstr "E672: Không mở được cửa sổ bên trong ứng dụng MDI"
+msgid "E672: Unable to open window inside MDI application"
+msgstr "E672: Không mở được cửa sổ bên trong ứng dụng MDI"
 
-#~ msgid "Find string (use '\\\\' to find  a '\\')"
-#~ msgstr "Tìm kiếm chuỗi (hãy sử dụng '\\\\' để tìm kiếm dấu '\\')"
+msgid "Find string (use '\\\\' to find  a '\\')"
+msgstr "Tìm kiếm chuỗi (hãy sử dụng '\\\\' để tìm kiếm dấu '\\')"
 
-#~ msgid "Find & Replace (use '\\\\' to find  a '\\')"
-#~ msgstr "Tìm kiếm và Thay thế (hãy sử dụng '\\\\' để tìm kiếm dấu '\\')"
+msgid "Find & Replace (use '\\\\' to find  a '\\')"
+msgstr "Tìm kiếm và Thay thế (hãy sử dụng '\\\\' để tìm kiếm dấu '\\')"
 
-#~ msgid ""
-#~ "Vim E458: Cannot allocate colormap entry, some colors may be incorrect"
-#~ msgstr ""
-#~ "Vim E458: Không chỉ định được bản ghi trong bảng màu, một vài màu có thể "
-#~ "hiển thị không chính xác"
+msgid ""
+"Vim E458: Cannot allocate colormap entry, some colors may be incorrect"
+msgstr ""
+"Vim E458: Không chỉ định được bản ghi trong bảng màu, một vài màu có thể "
+"hiển thị không chính xác"
 
-#~ msgid "E250: Fonts for the following charsets are missing in fontset %s:"
-#~ msgstr "E250: Trong bộ phông chữ %s thiếu phông cho các bảng mã sau:"
+msgid "E250: Fonts for the following charsets are missing in fontset %s:"
+msgstr "E250: Trong bộ phông chữ %s thiếu phông cho các bảng mã sau:"
 
-#~ msgid "E252: Fontset name: %s"
-#~ msgstr "E252: Bộ phông chữ: %s"
+msgid "E252: Fontset name: %s"
+msgstr "E252: Bộ phông chữ: %s"
 
-#~ msgid "Font '%s' is not fixed-width"
-#~ msgstr "Phông chữ '%s' không phải là phông có độ rộng cố định (fixed-width)"
+msgid "Font '%s' is not fixed-width"
+msgstr "Phông chữ '%s' không phải là phông có độ rộng cố định (fixed-width)"
 
-#~ msgid "E253: Fontset name: %s\n"
-#~ msgstr "E253: Bộ phông chữ: %s\n"
+msgid "E253: Fontset name: %s\n"
+msgstr "E253: Bộ phông chữ: %s\n"
 
-#~ msgid "Font0: %s\n"
-#~ msgstr "Font0: %s\n"
+msgid "Font0: %s\n"
+msgstr "Font0: %s\n"
 
-#~ msgid "Font1: %s\n"
-#~ msgstr "Font1: %s\n"
+msgid "Font1: %s\n"
+msgstr "Font1: %s\n"
 
-#~ msgid "Font%<PRId64> width is not twice that of font0\n"
-#~ msgstr ""
-#~ "Chiều rộng phông chữ font%<PRId64> phải lớn hơn hai lần so với chiều rộng "
-#~ "font0\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
+msgstr ""
+"Chiều rộng phông chữ font%<PRId64> phải lớn hơn hai lần so với chiều rộng "
+"font0\n"
 
-#~ msgid "Font0 width: %<PRId64>\n"
-#~ msgstr "Chiều rộng font0: %<PRId64>\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "Chiều rộng font0: %<PRId64>\n"
 
-#~ msgid ""
-#~ "Font1 width: %<PRId64>\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Chiều rộng font1: %<PRId64>\n"
-#~ "\n"
+msgid ""
+"Font1 width: %<PRId64>\n"
+"\n"
+msgstr ""
+"Chiều rộng font1: %<PRId64>\n"
+"\n"
 
-#~ msgid "E256: Hangul automata ERROR"
-#~ msgstr "E256: LỖI máy tự động Hangual (tiếng Hàn)"
+msgid "E256: Hangul automata ERROR"
+msgstr "E256: LỖI máy tự động Hangul"
 
-#~ msgid "E563: stat error"
-#~ msgstr "E563: lỗi stat"
+msgid "E563: stat error"
+msgstr "E563: lỗi lấy thông tin về tập tin"
 
-#~ msgid "E625: cannot open cscope database: %s"
-#~ msgstr "E625: không mở được cơ sở dữ liệu cscope: %s"
+msgid "E625: cannot open cscope database: %s"
+msgstr "E625: không mở được cơ sở dữ liệu cscope: %s"
 
-#~ msgid "E626: cannot get cscope database information"
-#~ msgstr "E626: không lấy được thông tin về cơ sở dữ liệu cscope"
+msgid "E626: cannot get cscope database information"
+msgstr "E626: không lấy được thông tin về cơ sở dữ liệu cscope"
 
-#~ msgid "E569: maximum number of cscope connections reached"
-#~ msgstr "E569: đã đạt tới số kết nối lớn nhất hợp lệ với cscope"
+msgid "E569: maximum number of cscope connections reached"
+msgstr "E569: đã đạt tới số kết nối lớn nhất hợp lệ với cscope"
 
-#~ msgid ""
-#~ "E263: Sorry, this command is disabled, the Python library could not be "
-#~ "loaded."
-#~ msgstr ""
-#~ "E263: Rất tiếc câu lệnh này không làm việc, vì thư viện Python chưa được "
-#~ "nạp."
+msgid ""
+"E263: Sorry, this command is disabled, the Python library could not be "
+"loaded."
+msgstr ""
+"E263: Rất tiếc câu lệnh đã bị vô hiệu hóa, thư viện Python không thể "
+"nạp."
 
-#~ msgid "E659: Cannot invoke Python recursively"
-#~ msgstr "E659: Không thể gọi Python một cách đệ quy"
+msgid "E659: Cannot invoke Python recursively"
+msgstr "E659: Không thể gọi Python một cách đệ quy"
 
-#~ msgid "can't delete OutputObject attributes"
-#~ msgstr "Không xóa được thuộc tính OutputObject"
+msgid "can't delete OutputObject attributes"
+msgstr "Không xóa được thuộc tính OutputObject"
 
-#~ msgid "softspace must be an integer"
-#~ msgstr "giá trị softspace phải là một số nguyên"
+msgid "softspace must be an integer"
+msgstr "softspace phải là số nguyên"
 
-#~ msgid "invalid attribute"
-#~ msgstr "thuộc tính không hợp lệ"
+msgid "invalid attribute"
+msgstr "thuộc tính không hợp lệ"
 
-#~ msgid "writelines() requires list of strings"
-#~ msgstr "writelines() yêu cầu một danh sách các chuỗi"
+msgid "writelines() requires list of strings"
+msgstr "writelines() yêu cầu một danh sách các chuỗi"
 
-#~ msgid "E264: Python: Error initialising I/O objects"
-#~ msgstr "E264: Python: Lỗi khi bắt đầu sử dụng vật thể I/O"
+msgid "E264: Python: Error initialising I/O objects"
+msgstr "E264: Python: Lỗi khởi tạo đối tượng nhập xuất (I/O)"
 
-#~ msgid "invalid expression"
-#~ msgstr "biểu thức không hợp lệ"
+msgid "invalid expression"
+msgstr "biểu thức không hợp lệ"
 
-#~ msgid "expressions disabled at compile time"
-#~ msgstr "biểu thức bị tắt khi biên dịch"
+msgid "expressions disabled at compile time"
+msgstr "biểu thức bị vô hiệu khi biên dịch"
 
-#~ msgid "attempt to refer to deleted buffer"
-#~ msgstr "cố chỉ đến bộ đệm đã bị xóa"
+msgid "attempt to refer to deleted buffer"
+msgstr "cố chỉ đến bộ đệm đã bị xóa"
 
-#~ msgid "line number out of range"
-#~ msgstr "số thứ tự của dòng vượt quá giới hạn"
+msgid "line number out of range"
+msgstr "số thứ tự của dòng vượt quá giới hạn"
 
-#~ msgid "<buffer object (deleted) at %8lX>"
-#~ msgstr "<vật thể của bộ đệm (bị xóa) tại %8lX>"
+msgid "<buffer object (deleted) at %8lX>"
+msgstr "<đối tượng bộ đệm (bị xóa) tại %8lX>"
 
-#~ msgid "invalid mark name"
-#~ msgstr "tên dấu hiệu không hợp lệ"
+msgid "invalid mark name"
+msgstr "tên dấu hiệu không hợp lệ"
 
-#~ msgid "no such buffer"
-#~ msgstr "không có bộ đệm như vậy"
+msgid "no such buffer"
+msgstr "không có bộ đệm như vậy"
 
-#~ msgid "attempt to refer to deleted window"
-#~ msgstr "cố chỉ đến cửa sổ đã bị đóng"
+msgid "attempt to refer to deleted window"
+msgstr "cố chỉ đến cửa sổ đã bị đóng"
 
-#~ msgid "readonly attribute"
-#~ msgstr "thuộc tính chỉ đọc"
+msgid "readonly attribute"
+msgstr "thuộc tính chỉ đọc"
 
-#~ msgid "cursor position outside buffer"
-#~ msgstr "vị trí con trỏ nằm ngoài bộ đệm"
+msgid "cursor position outside buffer"
+msgstr "vị trí con trỏ nằm ngoài bộ đệm"
 
-#~ msgid "<window object (deleted) at %.8lX>"
-#~ msgstr "<vật thể của cửa sổ (bị xóa) tại %.8lX>"
+msgid "<window object (deleted) at %.8lX>"
+msgstr "<đối tượng cửa sổ (bị xóa) tại %.8lX>"
 
-#~ msgid "<window object (unknown) at %.8lX>"
-#~ msgstr "<vật thể của cửa sổ (không rõ) tại %.8lX>"
+msgid "<window object (unknown) at %.8lX>"
+msgstr "<đối tượng cửa sổ (không rõ) tại %.8lX>"
 
-#~ msgid "<window %d>"
-#~ msgstr "<cửa sổ %d>"
+msgid "<window %d>"
+msgstr "<cửa sổ %d>"
 
-#~ msgid "no such window"
-#~ msgstr "không có cửa sổ như vậy"
+msgid "no such window"
+msgstr "không có cửa sổ như vậy"
 
-#~ msgid "cannot save undo information"
-#~ msgstr "không ghi được thông tin về việc hủy thao tác"
+msgid "cannot save undo information"
+msgstr "không ghi được thông tin về việc hủy thao tác"
 
-#~ msgid "cannot delete line"
-#~ msgstr "không xóa được dòng"
+msgid "cannot delete line"
+msgstr "không xóa được dòng"
 
-#~ msgid "cannot replace line"
-#~ msgstr "không thay thế được dòng"
+msgid "cannot replace line"
+msgstr "không thay thế được dòng"
 
-#~ msgid "cannot insert line"
-#~ msgstr "không chèn được dòng"
+msgid "cannot insert line"
+msgstr "không chèn được dòng"
 
-#~ msgid "string cannot contain newlines"
-#~ msgstr "chuỗi không thể chứa ký tự dòng mới"
+msgid "string cannot contain newlines"
+msgstr "chuỗi không thể chứa ký tự dòng mới"
 
-#~ msgid ""
-#~ "E266: Sorry, this command is disabled, the Ruby library could not be "
-#~ "loaded."
-#~ msgstr ""
-#~ "E266: Rất tiếc câu lệnh này không làm việc, vì thư viện Ruby chưa đượcnạp."
+msgid ""
+"E266: Sorry, this command is disabled, the Ruby library could not be "
+"loaded."
+msgstr ""
+"E266: Rất tiếc câu lệnh này bị vô hiệu hóa, thư viện Ruby không thể được "
+"nạp."
 
-#~ msgid "E273: unknown longjmp status %d"
-#~ msgstr "E273: không rõ trạng thái của longjmp %d"
+msgid "E273: unknown longjmp status %d"
+msgstr "E273: không rõ trạng thái của longjmp %d"
 
-#~ msgid "Toggle implementation/definition"
-#~ msgstr "Bật tắt giữa thi hành/định nghĩa"
+msgid "Toggle implementation/definition"
+msgstr "Chuyển đổi giữa thi hành/định nghĩa"
 
-#~ msgid "Show base class of"
-#~ msgstr "Hiển thị hạng cơ bản của"
+msgid "Show base class of"
+msgstr "Hiển thị hạng cơ bản của"
 
-#~ msgid "Show overridden member function"
-#~ msgstr "Hiển thị hàm bị nạp đè lên"
+msgid "Show overridden member function"
+msgstr "Hiển thị hàm bị nạp đè lên"
 
-#~ msgid "Retrieve from file"
-#~ msgstr "Nhận từ tập tin"
+msgid "Retrieve from file"
+msgstr "Nhận từ tập tin"
 
-#~ msgid "Retrieve from project"
-#~ msgstr "Nhận từ dự án"
+msgid "Retrieve from project"
+msgstr "Nhận từ dự án"
 
-#~ msgid "Retrieve from all projects"
-#~ msgstr "Nhận từ tất cả các dự án"
+msgid "Retrieve from all projects"
+msgstr "Nhận từ tất cả các dự án"
 
-#~ msgid "Retrieve"
-#~ msgstr "Nhận"
+msgid "Retrieve"
+msgstr "Nhận"
 
-#~ msgid "Show source of"
-#~ msgstr "Hiển thị mã nguồn"
+msgid "Show source of"
+msgstr "Hiển thị mã nguồn"
 
-#~ msgid "Find symbol"
-#~ msgstr "Tìm ký hiệu"
+msgid "Find symbol"
+msgstr "Tìm ký hiệu"
 
-#~ msgid "Browse class"
-#~ msgstr "Duyệt hạng"
+msgid "Browse class"
+msgstr "Duyệt hạng"
 
-#~ msgid "Show class in hierarchy"
-#~ msgstr "Hiển thị hạng trong hệ thống cấp bậc"
+msgid "Show class in hierarchy"
+msgstr "Hiển thị hạng trong hệ thống cấp bậc"
 
-#~ msgid "Show class in restricted hierarchy"
-#~ msgstr "Hiển thị hạng trong hệ thống cấp bậc giới hạn"
+msgid "Show class in restricted hierarchy"
+msgstr "Hiển thị hạng trong hệ thống cấp bậc giới hạn"
 
-#~ msgid "Xref refers to"
-#~ msgstr "Xref chỉ đến"
+msgid "Xref refers to"
+msgstr "Xref chỉ đến"
 
-#~ msgid "Xref referred by"
-#~ msgstr "Liên kết đến xref từ"
+msgid "Xref referred by"
+msgstr "Liên kết đến xref từ"
 
-#~ msgid "Xref has a"
-#~ msgstr "Xref có một"
+msgid "Xref has a"
+msgstr "Xref có một"
 
-#~ msgid "Xref used by"
-#~ msgstr "Xref được sử dụng bởi"
+msgid "Xref used by"
+msgstr "Xref được sử dụng bởi"
 
-#~ msgid "Show docu of"
-#~ msgstr "Hiển thị docu của"
+msgid "Show docu of"
+msgstr "Hiển thị tài liệu của"
 
-#~ msgid "Generate docu for"
-#~ msgstr "Tạo docu cho"
+msgid "Generate docu for"
+msgstr "Tạo tài liệu cho"
 
-#~ msgid ""
-#~ "Cannot connect to SNiFF+. Check environment (sniffemacs must be found in "
-#~ "$PATH).\n"
-#~ msgstr ""
-#~ "Không kết nối được tới SNiFF+. Hãy kiểm tra cấu hình môi trường."
-#~ "(sniffemacs phải được chỉ ra trong biến $PATH).\n"
+msgid ""
+"Cannot connect to SNiFF+. Check environment (sniffemacs must be found in "
+"$PATH).\n"
+msgstr ""
+"Không kết nối được tới SNiFF+. Hãy kiểm tra cấu hình môi trường."
+"(sniffemacs phải được chỉ ra trong biến $PATH).\n"
 
-#~ msgid "E274: Sniff: Error during read. Disconnected"
-#~ msgstr "E274: Sniff: Lỗi trong thời gian đọc. Ngắt kết nối"
+msgid "E274: Sniff: Error during read. Disconnected"
+msgstr "E274: Sniff: Lỗi trong thời gian đọc. Ngắt kết nối"
 
-#~ msgid "SNiFF+ is currently "
-#~ msgstr "Trong thời điểm hiện nay SNiFF+ "
+msgid "SNiFF+ is currently "
+msgstr "Trong thời điểm hiện nay SNiFF+ "
 
-#~ msgid "not "
-#~ msgstr "không "
+msgid "not "
+msgstr "không "
 
-#~ msgid "connected"
-#~ msgstr "được kết nối"
+msgid "connected"
+msgstr "được kết nối"
 
-#~ msgid "E275: Unknown SNiFF+ request: %s"
-#~ msgstr "E275: không rõ yêu cầu của SNiFF+: %s"
+msgid "E275: Unknown SNiFF+ request: %s"
+msgstr "E275: không rõ yêu cầu của SNiFF+: %s"
 
-#~ msgid "E276: Error connecting to SNiFF+"
-#~ msgstr "E276: Lỗi kết nối với SNiFF+"
+msgid "E276: Error connecting to SNiFF+"
+msgstr "E276: Lỗi kết nối với SNiFF+"
 
-#~ msgid "E278: SNiFF+ not connected"
-#~ msgstr "E278: SNiFF+ chưa được kết nối"
+msgid "E278: SNiFF+ not connected"
+msgstr "E278: SNiFF+ chưa được kết nối"
 
-#~ msgid "Sniff: Error during write. Disconnected"
-#~ msgstr "Sniff: Lỗi trong thời gian ghi. Ngắt kết nối"
+msgid "Sniff: Error during write. Disconnected"
+msgstr "Sniff: Lỗi trong thời gian ghi. Ngắt kết nối"
 
-#~ msgid "not implemented yet"
-#~ msgstr "tạm thời chưa được thực thi"
+msgid "not implemented yet"
+msgstr "tạm thời chưa được thực thi"
 
-#~ msgid "unknown option"
-#~ msgstr "tùy chọn không rõ"
+msgid "unknown option"
+msgstr "tùy chọn không rõ"
 
-#~ msgid "cannot set line(s)"
-#~ msgstr "không thể đặt (các) dòng"
+msgid "cannot set line(s)"
+msgstr "không thể đặt (các) dòng"
 
-#~ msgid "mark not set"
-#~ msgstr "dấu hiệu chưa được đặt"
+msgid "mark not set"
+msgstr "dấu hiệu chưa được đặt"
 
-#~ msgid "row %d column %d"
-#~ msgstr "hàng %d cột %d"
+msgid "row %d column %d"
+msgstr "hàng %d cột %d"
 
-#~ msgid "cannot insert/append line"
-#~ msgstr "không thể chèn hoặc thêm dòng"
+msgid "cannot insert/append line"
+msgstr "không thể chèn hoặc thêm dòng"
 
-#~ msgid "unknown flag: "
-#~ msgstr "cờ không biết: "
+msgid "unknown flag: "
+msgstr "cờ không biết: "
 
-#~ msgid "unknown vimOption"
-#~ msgstr "không rõ tùy chọn vimOption"
+msgid "unknown vimOption"
+msgstr "không rõ tùy chọn vimOption"
 
-#~ msgid "keyboard interrupt"
-#~ msgstr "sự gián đoạn của bàn phím"
+msgid "keyboard interrupt"
+msgstr "sự gián đoạn của bàn phím"
 
-#~ msgid "vim error"
-#~ msgstr "lỗi của vim"
+msgid "vim error"
+msgstr "lỗi của vim"
 
-#~ msgid "cannot create buffer/window command: object is being deleted"
-#~ msgstr ""
-#~ "không tạo được câu lệnh của bộ đệm hay của cửa sổ: vật thể đang bị xóa"
+msgid "cannot create buffer/window command: object is being deleted"
+msgstr ""
+"không tạo được câu lệnh của bộ đệm hay cửa sổ: đối tượng đang bị xóa"
 
-#~ msgid ""
-#~ "cannot register callback command: buffer/window is already being deleted"
-#~ msgstr ""
-#~ "không đăng ký được câu lệnh gọi ngược: bộ đệm hoặc cửa sổ đang bị xóa"
+msgid ""
+"cannot register callback command: buffer/window is already being deleted"
+msgstr ""
+"không đăng ký được câu lệnh gọi ngược: bộ đệm hoặc cửa sổ đang bị xóa"
 
-#~ msgid ""
-#~ "E280: TCL FATAL ERROR: reflist corrupt!? Please report this to vim-"
-#~ "dev@vim.org"
-#~ msgstr ""
-#~ "E280: LỖI NẶNG CỦA TCL: bị hỏng danh sách liên kết!? Hãy thông báo việc "
-#~ "nàyđến danh sách thư (mailing list) vim-dev@vim.org"
+msgid ""
+"E280: TCL FATAL ERROR: reflist corrupt!? Please report this to vim-"
+"dev@vim.org"
+msgstr ""
+"E280: LỖI NẶNG CỦA TCL: bị hỏng danh sách liên kết!? Hãy thông báo việc "
+"nàyđến danh sách thư (mailing list) vim-dev@vim.org"
 
-#~ msgid "cannot register callback command: buffer/window reference not found"
-#~ msgstr ""
-#~ "không đăng ký được câu lệnh gọi ngược: không tìm thấy liên kết đến bộ đệm "
-#~ "hoặc cửa sổ"
+msgid "cannot register callback command: buffer/window reference not found"
+msgstr ""
+"không đăng ký được câu lệnh gọi ngược: không tìm thấy liên kết đến bộ đệm "
+"hoặc cửa sổ"
 
-#~ msgid ""
-#~ "E571: Sorry, this command is disabled: the Tcl library could not be "
-#~ "loaded."
-#~ msgstr ""
-#~ "E571: Rất tiếc là câu lệnh này không làm việc, vì thư viện Tcl chưa được "
-#~ "nạp"
+msgid ""
+"E571: Sorry, this command is disabled: the Tcl library could not be "
+"loaded."
+msgstr ""
+"E571: Rất tiếc là câu lệnh này không làm việc, vì thư viện Tcl chưa được "
+"nạp"
 
-#~ msgid ""
-#~ "E281: TCL ERROR: exit code is not int!? Please report this to vim-dev@vim."
-#~ "org"
-#~ msgstr ""
-#~ "E281: LỖI TCL: mã thoát ra không phải là một số nguyên!? Hãy thông báo "
-#~ "điều này đến danh sách thư (mailing list) vim-dev@vim.org"
+msgid "cannot get line"
+msgstr "không nhận được dòng"
 
-#~ msgid "cannot get line"
-#~ msgstr "không nhận được dòng"
+msgid "Unable to register a command server name"
+msgstr "Không đăng ký được một tên cho máy chủ câu lệnh"
 
-#~ msgid "Unable to register a command server name"
-#~ msgstr "Không đăng ký được một tên cho máy chủ câu lệnh"
+msgid "E248: Failed to send command to the destination program"
+msgstr "E248: Gửi câu lệnh vào chương trình khác không thành công"
 
-#~ msgid "E248: Failed to send command to the destination program"
-#~ msgstr "E248: Gửi câu lệnh vào chương trình khác không thành công"
+msgid "E251: VIM instance registry property is badly formed.  Deleted!"
+msgstr "E251: Thuộc tính đăng ký của Vim được định dạng không hợp lệ.  Xóa!"
 
-#~ msgid "E251: VIM instance registry property is badly formed.  Deleted!"
-#~ msgstr "E251: Thuộc tính đăng ký của Vim được định dạng không hợp lệ.  Xóa!"
+msgid "-register\t\tRegister this gvim for OLE"
+msgstr "-register\t\tĐăng ký gvim này cho OLE"
 
-#~ msgid "This Vim was not compiled with the diff feature."
-#~ msgstr "Vim không được biên dịch với tính năng hỗ trợ xem khác biệt (diff)."
+msgid "-unregister\t\tUnregister gvim for OLE"
+msgstr "-unregister\t\tBỏ đăng ký gvim này cho OLE"
 
-#~ msgid "-register\t\tRegister this gvim for OLE"
-#~ msgstr "-register\t\tĐăng ký gvim này cho OLE"
+msgid "-g\t\t\tRun using GUI (like \"gvim\")"
+msgstr "-g\t\t\tSử dụng giao diện đồ họa GUI (như \"gvim\")"
 
-#~ msgid "-unregister\t\tUnregister gvim for OLE"
-#~ msgstr "-unregister\t\tBỏ đăng ký gvim này cho OLE"
+msgid "-f  or  --nofork\tForeground: Don't fork when starting GUI"
+msgstr ""
+"-f  hoặc  --nofork\tTrong chương trình hoạt động: Không thực hiện fork "
+"khi chạy GUI"
 
-#~ msgid "-g\t\t\tRun using GUI (like \"gvim\")"
-#~ msgstr "-g\t\t\tSử dụng giao diện đồ họa GUI (giống \"gvim\")"
+msgid "-V[N]\t\tVerbose level"
+msgstr "-V[N]\t\tMức độ chi tiết của thông báo"
 
-#~ msgid "-f  or  --nofork\tForeground: Don't fork when starting GUI"
-#~ msgstr ""
-#~ "-f  hoặc  --nofork\tTrong chương trình hoạt động: Không thực hiện fork "
-#~ "khi chạy GUI"
+msgid "-f\t\t\tDon't use newcli to open window"
+msgstr "-f\t\t\tKhông sử dụng newcli để mở cửa sổ"
 
-#~ msgid "-V[N]\t\tVerbose level"
-#~ msgstr "-V[N]\t\tMức độ chi tiết của thông báo"
+msgid "-dev <device>\t\tUse <device> for I/O"
+msgstr "-dev <thiết bị>\t\tSử dụng <thiết bị> cho I/O"
 
-#~ msgid "-f\t\t\tDon't use newcli to open window"
-#~ msgstr "-f\t\t\tKhông sử dụng newcli để mở cửa sổ"
+msgid "-U <gvimrc>\t\tUse <gvimrc> instead of any .gvimrc"
+msgstr "-U <gvimrc>\t\tSử dụng <gvimrc> thay thế cho mọi .gvimrc"
 
-#~ msgid "-dev <device>\t\tUse <device> for I/O"
-#~ msgstr "-dev <thiết bị>\t\tSử dụng <thiết bị> cho I/O"
+msgid "-x\t\t\tEdit encrypted files"
+msgstr "-x\t\t\tChỉnh sửa tập tin đã mã hóa"
 
-#~ msgid "-U <gvimrc>\t\tUse <gvimrc> instead of any .gvimrc"
-#~ msgstr "-U <gvimrc>\t\tSử dụng <gvimrc> thay thế cho mọi .gvimrc"
+msgid "-display <display>\tConnect vim to this particular X-server"
+msgstr "-display <màn hình>\tKết nối vim tới máy chủ X cụ thể này"
 
-#~ msgid "-x\t\t\tEdit encrypted files"
-#~ msgstr "-x\t\t\tSoạn thảo tập tin đã mã hóa"
+msgid "-X\t\t\tDo not connect to X server"
+msgstr "-X\t\t\tKhông thực hiện việc kết nối tới máy chủ X"
 
-#~ msgid "-display <display>\tConnect vim to this particular X-server"
-#~ msgstr "-display <màn hình>\tKết nối vim tới máy chủ X đã chỉ ra"
+msgid "--remote <files>\tEdit <files> in a Vim server if possible"
+msgstr "--remote <tập tin>\tSoạn thảo <tập tin> trên máy chủ Vim nếu có thể"
 
-#~ msgid "-X\t\t\tDo not connect to X server"
-#~ msgstr "-X\t\t\tKhông thực hiện việc kết nối tới máy chủ X"
+msgid "--remote-silent <files>  Same, don't complain if there is no server"
+msgstr ""
+"--remote-silent <tập tin>  Cũng vậy, nhưng không kêu ca dù không có máy "
+"chủ"
 
-#~ msgid "--remote <files>\tEdit <files> in a Vim server if possible"
-#~ msgstr "--remote <tập tin>\tSoạn thảo <tập tin> trên máy chủ Vim nếu có thể"
+msgid ""
+"--remote-wait <files>  As --remote but wait for files to have been edited"
+msgstr "--remote-wait <tập tin>  Cũng như --remote, nhưng chờ sự kết thúc"
 
-#~ msgid "--remote-silent <files>  Same, don't complain if there is no server"
-#~ msgstr ""
-#~ "--remote-silent <tập tin>  Cũng vậy, nhưng không kêu ca dù không có máy "
-#~ "chủ"
+msgid ""
+"--remote-wait-silent <files>  Same, don't complain if there is no server"
+msgstr ""
+"--remote-wait-silent <tập tin>  Tương tự, nhưng không báo lỗi dù không có "
+"máy chủ"
 
-#~ msgid ""
-#~ "--remote-wait <files>  As --remote but wait for files to have been edited"
-#~ msgstr "--remote-wait <tập tin>  Cũng như --remote, nhưng chờ sự kết thúc"
+msgid "--remote-send <keys>\tSend <keys> to a Vim server and exit"
+msgstr "--remote-send <phím>\tGửi <phím> lên máy chủ Vim và thoát"
 
-#~ msgid ""
-#~ "--remote-wait-silent <files>  Same, don't complain if there is no server"
-#~ msgstr ""
-#~ "--remote-wait-silent <tập tin>  Cũng vậy, nhưng không kêu ca dù không có "
-#~ "máy chủ"
+msgid ""
+"--remote-expr <expr>\tEvaluate <expr> in a Vim server and print result"
+msgstr ""
+"--remote-expr <biểu thức>\tTính <biểu thức> trên máy chủ Vim và in ra kết "
+"quả"
 
-#~ msgid "--remote-send <keys>\tSend <keys> to a Vim server and exit"
-#~ msgstr "--remote-send <phím>\tGửi <phím> lên máy chủ Vim và thoát"
+msgid "--serverlist\t\tList available Vim server names and exit"
+msgstr "--serverlist\t\tHiển thị danh sách máy chủ Vim và thoát"
 
-#~ msgid ""
-#~ "--remote-expr <expr>\tEvaluate <expr> in a Vim server and print result"
-#~ msgstr ""
-#~ "--remote-expr <biểu thức>\tTính <biểu thức> trên máy chủ Vim và in ra kết "
-#~ "quả"
+msgid "--servername <name>\tSend to/become the Vim server <name>"
+msgstr "--servername <tên>\tGửi lên (hoặc trở thành) máy chủ Vim với <tên>"
 
-#~ msgid "--serverlist\t\tList available Vim server names and exit"
-#~ msgstr "--serverlist\t\tHiển thị danh sách máy chủ Vim và thoát"
+msgid ""
+"\n"
+"Arguments recognised by gvim (Motif version):\n"
+msgstr ""
+"\n"
+"Tham số mà gvim (bản Mô-típ) nhận dạng được:\n"
 
-#~ msgid "--servername <name>\tSend to/become the Vim server <name>"
-#~ msgstr "--servername <tên>\tGửi lên (hoặc trở thành) máy chủ Vim với <tên>"
+msgid ""
+"\n"
+"Arguments recognised by gvim (neXtaw version):\n"
+msgstr ""
+"\n"
+"Tham số mà gvim (bản neXtaw) nhận dạng được:\n"
 
-#~ msgid ""
-#~ "\n"
-#~ "Arguments recognised by gvim (Motif version):\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Tham số cho gvim (phiên bản Motif):\n"
+msgid ""
+"\n"
+"Arguments recognised by gvim (Athena version):\n"
+msgstr ""
+"\n"
+"Tham số mà gvim (bản Athena) nhận dạng được:\n"
 
-#~ msgid ""
-#~ "\n"
-#~ "Arguments recognised by gvim (neXtaw version):\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Tham số cho gvim (phiên bản neXtaw):\n"
+msgid "-display <display>\tRun vim on <display>"
+msgstr "-display <màn hình>\tChạy vim trong <màn hình> đã chỉ ra"
 
-#~ msgid ""
-#~ "\n"
-#~ "Arguments recognised by gvim (Athena version):\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Tham số cho gvim (phiên bản Athena):\n"
+msgid "-iconic\t\tStart vim iconified"
+msgstr "-iconic\t\tChạy vim ở dạng thu nhỏ"
 
-#~ msgid "-display <display>\tRun vim on <display>"
-#~ msgstr "-display <màn hình>\tChạy vim trong <màn hình> đã chỉ ra"
+msgid "-name <name>\t\tUse resource as if vim was <name>"
+msgstr "-name <tên>\t\tSử dụng tài nguyên như khi vim là <tên>"
 
-#~ msgid "-iconic\t\tStart vim iconified"
-#~ msgstr "-iconic\t\tChạy vim ở dạng thu nhỏ"
+msgid "\t\t\t  (Unimplemented)\n"
+msgstr "\t\t\t  (Chưa được thực thi)\n"
 
-#~ msgid "-name <name>\t\tUse resource as if vim was <name>"
-#~ msgstr "-name <tên>\t\tSử dụng tài nguyên giống như khi vim có <tên>"
+msgid "-background <color>\tUse <color> for the background (also: -bg)"
+msgstr "-background <màu>\tSử dụng <màu> cho nền (như: -bg)"
 
-#~ msgid "\t\t\t  (Unimplemented)\n"
-#~ msgstr "\t\t\t  (Chưa được thực thi)\n"
+msgid "-foreground <color>\tUse <color> for normal text (also: -fg)"
+msgstr ""
+"-foreground <màu>\tSử dụng <màu> cho văn bản thường (như: -fg)"
 
-#~ msgid "-background <color>\tUse <color> for the background (also: -bg)"
-#~ msgstr "-background <màu>\tSử dụng <màu> chỉ ra cho nền (cũng như: -bg)"
+msgid "-font <font>\t\tUse <font> for normal text (also: -fn)"
+msgstr ""
+"-font <phông>\t\tSử dụng <phông> chữ cho văn bản thông thường (như: -"
+"fn)"
 
-#~ msgid "-foreground <color>\tUse <color> for normal text (also: -fg)"
-#~ msgstr ""
-#~ "-foreground <màu>\tSử dụng <màu> cho văn bản thông thường (cũng như: -fg)"
+msgid "-boldfont <font>\tUse <font> for bold text"
+msgstr "-boldfont <phông>\tSử dụng <phông> chữ cho văn bản đậm"
 
-#~ msgid "-font <font>\t\tUse <font> for normal text (also: -fn)"
-#~ msgstr ""
-#~ "-font <phông>\t\tSử dụng <phông> chữ cho văn bản thông thường (cũng như: -"
-#~ "fn)"
+msgid "-italicfont <font>\tUse <font> for italic text"
+msgstr "-italicfont <phông>\tSử dụng <phông> chữ cho văn bản nghiêng"
 
-#~ msgid "-boldfont <font>\tUse <font> for bold text"
-#~ msgstr "-boldfont <phông>\tSử dụng <phông> chữ cho văn bản in đậm"
+msgid "-geometry <geom>\tUse <geom> for initial geometry (also: -geom)"
+msgstr ""
+"-geometry <kích thước>\tSử dụng <kích thước> ban đầu (như: -geom)"
 
-#~ msgid "-italicfont <font>\tUse <font> for italic text"
-#~ msgstr "-italicfont <phông>\tSử dụng <phông> chữ cho văn bản in nghiêng"
+msgid "-borderwidth <width>\tUse a border width of <width> (also: -bw)"
+msgstr ""
+"-borderwidth <rộng>\tSử dụng đường viền có chiều <rộng> (như: -bw)"
 
-#~ msgid "-geometry <geom>\tUse <geom> for initial geometry (also: -geom)"
-#~ msgstr ""
-#~ "-geometry <kích thước>\tSử dụng <kích thước> ban đầu (cũng như: -geom)"
+msgid ""
+"-scrollbarwidth <width>  Use a scrollbar width of <width> (also: -sw)"
+msgstr ""
+"-scrollbarwidth <rộng> Sử dụng thanh cuộn với chiều <rộng> (như: -sw)"
 
-#~ msgid "-borderwidth <width>\tUse a border width of <width> (also: -bw)"
-#~ msgstr ""
-#~ "-borderwidth <rộng>\tSử dụng đường viền có chiều <rộng> (cũng như: -bw)"
+msgid "-menuheight <height>\tUse a menu bar height of <height> (also: -mh)"
+msgstr ""
+"-menuheight <cao>\tSử dụng thanh trình đơn với chiều <cao> (như: -mh)"
 
-#~ msgid ""
-#~ "-scrollbarwidth <width>  Use a scrollbar width of <width> (also: -sw)"
-#~ msgstr ""
-#~ "-scrollbarwidth <rộng> Sử dụng thanh cuộn với chiều <rộng> (cũng như: -sw)"
+msgid "-reverse\t\tUse reverse video (also: -rv)"
+msgstr "-reverse\t\tSử dụng chế độ video đảo ngược (như: -rv)"
 
-#~ msgid "-menuheight <height>\tUse a menu bar height of <height> (also: -mh)"
-#~ msgstr ""
-#~ "-menuheight <cao>\tSử dụng thanh trình đơn với chiều <cao> (cũng như: -mh)"
+msgid "+reverse\t\tDon't use reverse video (also: +rv)"
+msgstr "+reverse\t\tKhông sử dụng chế độ video đảo ngược (như: +rv)"
 
-#~ msgid "-reverse\t\tUse reverse video (also: -rv)"
-#~ msgstr "-reverse\t\tSử dụng chế độ video đảo ngược (cũng như: -rv)"
+msgid "-xrm <resource>\tSet the specified resource"
+msgstr "-xrm <tài nguyên>\tĐặt <tài nguyên> chỉ ra"
 
-#~ msgid "+reverse\t\tDon't use reverse video (also: +rv)"
-#~ msgstr "+reverse\t\tKhông sử dụng chế độ video đảo ngược (cũng như: +rv)"
+msgid ""
+"\n"
+"Arguments recognised by gvim (RISC OS version):\n"
+msgstr ""
+"\n"
+"Tham số mà gvim (bản RISC OS) nhận dạng được:\n"
 
-#~ msgid "-xrm <resource>\tSet the specified resource"
-#~ msgstr "-xrm <tài nguyên>\tĐặt <tài nguyên> chỉ ra"
+msgid "--columns <number>\tInitial width of window in columns"
+msgstr "--columns <số>\tChiều rộng ban đầu của cửa sổ tính theo số cột"
 
-#~ msgid ""
-#~ "\n"
-#~ "Arguments recognised by gvim (RISC OS version):\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Tham số cho gvim (phiên bản RISC OS):\n"
+msgid "--rows <number>\tInitial height of window in rows"
+msgstr "--rows <số>\tChiều cao ban đầu của cửa sổ tính theo số dòng"
 
-#~ msgid "--columns <number>\tInitial width of window in columns"
-#~ msgstr "--columns <số>\tChiều rộng ban đầu của cửa sổ tính theo số cột"
+msgid ""
+"\n"
+"Arguments recognised by gvim (GTK+ version):\n"
+msgstr ""
+"\n"
+"Tham số mà gvim (bản GTK+) nhận dạng được:\n"
 
-#~ msgid "--rows <number>\tInitial height of window in rows"
-#~ msgstr "--rows <số>\tChiều cao ban đầu của cửa sổ tính theo số dòng"
+msgid "-display <display>\tRun vim on <display> (also: --display)"
+msgstr ""
+"-display <màn hình>\tChạy vim trên <màn hình> chỉ ra (như: --display)"
 
-#~ msgid ""
-#~ "\n"
-#~ "Arguments recognised by gvim (GTK+ version):\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Tham số cho gvim (phiên bản GTK+):\n"
+msgid "--role <role>\tSet a unique role to identify the main window"
+msgstr "--role <vai trò>\tĐặt <vai trò> duy nhất để nhận diện cửa sổ chính"
 
-#~ msgid "-display <display>\tRun vim on <display> (also: --display)"
-#~ msgstr ""
-#~ "-display <màn hình>\tChạy vim trên <màn hình> chỉ ra (cũng như: --display)"
+msgid "--socketid <xid>\tOpen Vim inside another GTK widget"
+msgstr "--socketid <xid>\tMở Vim bên trong thành phần GTK khác"
 
-#~ msgid "--role <role>\tSet a unique role to identify the main window"
-#~ msgstr "--role <vai trò>\tĐặt <vai trò> duy nhất để nhận diện cửa sổ chính"
+msgid "-P <parent title>\tOpen Vim inside parent application"
+msgstr "-P <tiêu đề của mẹ>\tMở Vim bên trong ứng dụng mẹ"
 
-#~ msgid "--socketid <xid>\tOpen Vim inside another GTK widget"
-#~ msgstr "--socketid <xid>\tMở Vim bên trong thành phần GTK khác"
+msgid "No display"
+msgstr "Không có màn hình"
 
-#~ msgid "-P <parent title>\tOpen Vim inside parent application"
-#~ msgstr "-P <tiêu đề của mẹ>\tMở Vim bên trong ứng dụng mẹ"
+msgid ": Send failed.\n"
+msgstr ": Gửi không thành công.\n"
 
-#~ msgid "No display"
-#~ msgstr "Không có màn hình"
+msgid ": Send failed. Trying to execute locally\n"
+msgstr ": Gửi không thành công. Thử thực thi cục bộ\n"
 
-#~ msgid ": Send failed.\n"
-#~ msgstr ": Gửi không thành công.\n"
+msgid "%d of %d edited"
+msgstr "đã soạn thảo %d từ %d"
 
-#~ msgid ": Send failed. Trying to execute locally\n"
-#~ msgstr ": Gửi không thành công. Thử thực hiện nội bộ\n"
+msgid "No display: Send expression failed.\n"
+msgstr "Không có màn hình: gửi biểu thức không thành công.\n"
 
-#~ msgid "%d of %d edited"
-#~ msgstr "đã soạn thảo %d từ %d"
+msgid ": Send expression failed.\n"
+msgstr ": Gửi biểu thức không thành công.\n"
 
-#~ msgid "No display: Send expression failed.\n"
-#~ msgstr "Không có màn hình: gửi biểu thức không thành công.\n"
+msgid "E543: Not a valid codepage"
+msgstr "E543: Bảng mã không hợp lệ"
 
-#~ msgid ": Send expression failed.\n"
-#~ msgstr ": Gửi biểu thức không thành công.\n"
+msgid "E285: Failed to create input context"
+msgstr "E285: Tạo được ngữ cảnh nhập liệu không thành công"
 
-#~ msgid "E543: Not a valid codepage"
-#~ msgstr "E543: Bảng mã không hợp lệ"
+msgid "E286: Failed to open input method"
+msgstr "E286: Mở phương pháp nhập không thành công"
 
-#~ msgid "E285: Failed to create input context"
-#~ msgstr "E285: Không tạo được nội dung nhập vào"
+msgid "E287: Warning: Could not set destroy callback to IM"
+msgstr ""
+"E287: Cảnh báo: không đặt được hàm callback dọn dẹp cho phương thức nhập "
 
-#~ msgid "E286: Failed to open input method"
-#~ msgstr "E286: Việc thử mở phương pháp nhập không thành công"
+msgid "E288: input method doesn't support any style"
+msgstr "E288: phương pháp nhập không hỗ trợ bất kỳ phong cách (style) nào"
 
-#~ msgid "E287: Warning: Could not set destroy callback to IM"
-#~ msgstr ""
-#~ "E287: Cảnh báo: không đặt được sự gọi ngược hủy diệt thành phương pháp "
-#~ "nhập"
+msgid "E289: input method doesn't support my preedit type"
+msgstr "E289: phương pháp nhập không hỗ trợ kiểu preedit"
 
-#~ msgid "E288: input method doesn't support any style"
-#~ msgstr "E288: phương pháp nhập không hỗ trợ bất kỳ phong cách (style) nào"
+msgid "E290: over-the-spot style requires fontset"
+msgstr "E290: over-the-spot style yêu cầu một bộ phông chữ"
 
-#~ msgid "E289: input method doesn't support my preedit type"
-#~ msgstr "E289: phương pháp nhập không hỗ trợ loại soạn thảo trước của Vim"
+msgid "E291: Your GTK+ is older than 1.2.3. Status area disabled"
+msgstr "E291: GTK+ cũ hơn 1.2.3. Vùng chỉ trạng thái không làm việc"
 
-#~ msgid "E290: over-the-spot style requires fontset"
-#~ msgstr "E290: phong cách over-the-spot yêu cầu một bộ phông chữ"
+msgid "E292: Input Method Server is not running"
+msgstr "E292: Máy chủ phương pháp nhập liệu chưa được chạy"
 
-#~ msgid "E291: Your GTK+ is older than 1.2.3. Status area disabled"
-#~ msgstr "E291: GTK+ cũ hơn 1.2.3. Vùng chỉ trạng thái không làm việc"
+msgid ""
+"\n"
+"         [not usable with this version of Vim]"
+msgstr ""
+"\n"
+"         [không sử dụng được với phiên bản này của Vim]"
 
-#~ msgid "E292: Input Method Server is not running"
-#~ msgstr "E292: Máy chủ phương pháp nhập liệu chưa được chạy"
+msgid ""
+"&Open Read-Only\n"
+"&Edit anyway\n"
+"&Recover\n"
+"&Quit\n"
+"&Abort\n"
+"&Delete it"
+msgstr ""
+"&O Mở chỉ để đọc\n"
+"&E Vẫn soạn thảo\n"
+"&R Phục hồi\n"
+"&Q Thoát\n"
+"&A Gián đoạn&D Xóa nó"
 
-#~ msgid ""
-#~ "\n"
-#~ "         [not usable with this version of Vim]"
-#~ msgstr ""
-#~ "\n"
-#~ "         [không sử dụng được với phiên bản này của Vim]"
+msgid "Tear off this menu"
+msgstr "Chia cắt trình đơn này"
 
-#~ msgid ""
-#~ "&Open Read-Only\n"
-#~ "&Edit anyway\n"
-#~ "&Recover\n"
-#~ "&Quit\n"
-#~ "&Abort\n"
-#~ "&Delete it"
-#~ msgstr ""
-#~ "&O Mở chỉ để đọc\n"
-#~ "&E Vẫn soạn thảo\n"
-#~ "&R Phục hồi\n"
-#~ "&Q Thoát\n"
-#~ "&A Gián đoạn&D Xóa nó"
+msgid "[string too long]"
+msgstr "[chuỗi quá dài]"
 
-#~ msgid "Tear off this menu"
-#~ msgstr "Chia cắt trình đơn này"
+msgid "Hit ENTER to continue"
+msgstr "Nhấn phím ENTER để tiếp tục"
 
-#~ msgid "[string too long]"
-#~ msgstr "[chuỗi quá dài]"
+msgid " (RET/BS: line, SPACE/b: page, d/u: half page, q: quit)"
+msgstr " (RET/BS: dòng, SPACE/b: trang, d/u: nửa trang, q: thoát)"
 
-#~ msgid "Hit ENTER to continue"
-#~ msgstr "Nhấn phím ENTER để tiếp tục"
+msgid " (RET: line, SPACE: page, d: half page, q: quit)"
+msgstr " (RET: dòng, SPACE: trang, d: nửa trang, q: thoát)"
 
-#~ msgid " (RET/BS: line, SPACE/b: page, d/u: half page, q: quit)"
-#~ msgstr " (RET/BS: dòng, SPACE/b: trang, d/u: nửa trang, q: thoát)"
+msgid "Save File dialog"
+msgstr "Lưu tập tin"
 
-#~ msgid " (RET: line, SPACE: page, d: half page, q: quit)"
-#~ msgstr " (RET: dòng, SPACE: trang, d: nửa trang, q: thoát)"
+msgid "Open File dialog"
+msgstr "Mở tập tin"
 
-#~ msgid "Save File dialog"
-#~ msgstr "Ghi nhớ tập tin"
+msgid "E338: Sorry, no file browser in console mode"
+msgstr ""
+"E338: Rất tiếc, không có trình duyệt tệp trong chế độ cửa sổ lệnh (console)"
 
-#~ msgid "Open File dialog"
-#~ msgstr "Mở tập tin"
+msgid "Vim: preserving files...\n"
+msgstr "Vim: ghi các tập tin...\n"
 
-#~ msgid "E338: Sorry, no file browser in console mode"
-#~ msgstr ""
-#~ "E338: Xin lỗi nhưng không có trình duyệt tập tin trong chế độ kênh giao "
-#~ "tác (console)"
+msgid "Vim: Finished.\n"
+msgstr "Vim: Đã xong.\n"
 
-#~ msgid "Vim: preserving files...\n"
-#~ msgstr "Vim: ghi các tập tin...\n"
+msgid "ERROR: "
+msgstr "LỖI: "
 
-#~ msgid "Vim: Finished.\n"
-#~ msgstr "Vim: Đã xong.\n"
+msgid ""
+"\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use "
+"%<PRIu64>\n"
+msgstr ""
+"\n"
+"[byte] tổng phân phối-còn trống %<PRIu64>-%<PRIu64>, sử dụng %<PRIu64>, "
+"píc sử dụng %<PRIu64>\n"
 
-#~ msgid "ERROR: "
-#~ msgstr "LỖI: "
+msgid ""
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
+"\n"
+msgstr ""
+"[gọi] tổng re/malloc() %<PRIu64>, tổng free() %<PRIu64>\n"
+"\n"
 
-#~ msgid ""
-#~ "\n"
-#~ "[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use "
-#~ "%<PRIu64>\n"
-#~ msgstr ""
-#~ "\n"
-#~ "[byte] tổng phân phối-còn trống %<PRIu64>-%<PRIu64>, sử dụng %<PRIu64>, "
-#~ "píc sử dụng %<PRIu64>\n"
+msgid "E340: Line is becoming too long"
+msgstr "E340: Dòng đang trở thành quá dài"
 
-#~ msgid ""
-#~ "[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
-#~ "\n"
-#~ msgstr ""
-#~ "[gọi] tổng re/malloc() %<PRIu64>, tổng free() %<PRIu64>\n"
-#~ "\n"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: Lỗi nội bộ: lalloc(%<PRId64>, )"
 
-#~ msgid "E340: Line is becoming too long"
-#~ msgstr "E340: Dòng đang trở thành quá dài"
+msgid "E547: Illegal mouseshape"
+msgstr "E547: Dạng trỏ chuột không hợp lệ"
 
-#~ msgid "E341: Internal error: lalloc(%<PRId64>, )"
-#~ msgstr "E341: Lỗi nội bộ: lalloc(%<PRId64>, )"
+msgid "Enter encryption key: "
+msgstr "Nhập mật khẩu để mã hóa: "
 
-#~ msgid "E547: Illegal mouseshape"
-#~ msgstr "E547: Dạng trỏ chuột không hợp lệ"
+msgid "Enter same key again: "
+msgstr "      Nhập lại mật khẩu:"
 
-#~ msgid "Enter encryption key: "
-#~ msgstr "Nhập mật khẩu để mã hóa: "
+msgid "Keys don't match!"
+msgstr "Hai mật khẩu không trùng nhau!"
 
-#~ msgid "Enter same key again: "
-#~ msgstr "      Nhập lại mật khẩu:"
+msgid "Cannot connect to Netbeans #2"
+msgstr "Không kết nối được với Netbeans #2"
 
-#~ msgid "Keys don't match!"
-#~ msgstr "Hai mật khẩu không trùng nhau!"
+msgid "Cannot connect to Netbeans"
+msgstr "Không kết nối được với NetBeans"
 
-#~ msgid "Cannot connect to Netbeans #2"
-#~ msgstr "Không kết nối được với Netbeans #2"
+msgid "E668: Wrong access mode for NetBeans connection info file: \"%s\""
+msgstr ""
+"E668: Chế độ truy cập thông tin về liên kết với NetBeans không hợp lệ: \"%s"
+"\""
 
-#~ msgid "Cannot connect to Netbeans"
-#~ msgstr "Không kết nối được với NetBeans"
+msgid "read from Netbeans socket"
+msgstr "đọc từ socket NetBeans"
 
-#~ msgid "E668: Wrong access mode for NetBeans connection info file: \"%s\""
-#~ msgstr ""
-#~ "E668: Chế độ truy cập thông tin về liên kết với NetBeans không hợp lệ: \"%s"
-#~ "\""
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: Bị mất liên kết với NetBeans cho bộ đệm %<PRId64>"
 
-#~ msgid "read from Netbeans socket"
-#~ msgstr "đọc từ socket NetBeans"
+msgid "freeing %<PRId64> lines"
+msgstr "đã làm sạch %<PRId64> dòng"
 
-#~ msgid "E658: NetBeans connection lost for buffer %<PRId64>"
-#~ msgstr "E658: Bị mất liên kết với NetBeans cho bộ đệm %<PRId64>"
+msgid "E530: Cannot change term in GUI"
+msgstr "E530: Không thể thay đổi terminal trong giao diện đồ họa GUI"
 
-#~ msgid "freeing %<PRId64> lines"
-#~ msgstr "đã làm sạch %<PRId64> dòng"
+msgid "E531: Use \":gui\" to start the GUI"
+msgstr "E531: Hãy sử dụng \":gui\" để chạy giao diện đồ họa GUI"
 
-#~ msgid "E530: Cannot change term in GUI"
-#~ msgstr "E530: Không thể thay đổi terminal trong giao diện đồ họa GUI"
+msgid "E617: Cannot be changed in the GTK+ 2 GUI"
+msgstr "E617: Không thể thay đổi trong giao diện đồ họa GTK+ 2"
 
-#~ msgid "E531: Use \":gui\" to start the GUI"
-#~ msgstr "E531: Hãy sử dụng \":gui\" để chạy giao diện đồ họa GUI"
+msgid "E597: can't select fontset"
+msgstr "E597: không chọn được bộ phông chữ"
 
-#~ msgid "E617: Cannot be changed in the GTK+ 2 GUI"
-#~ msgstr "E617: Không thể thay đổi trong giao diện đồ họa GTK+ 2"
+msgid "E598: Invalid fontset"
+msgstr "E598: Bộ phông chữ không hợp lệ"
 
-#~ msgid "E597: can't select fontset"
-#~ msgstr "E597: không chọn được bộ phông chữ"
+msgid "E533: can't select wide font"
+msgstr "E533: không chọn được phông chữ với các ký tự có chiều rộng gấp đôi"
 
-#~ msgid "E598: Invalid fontset"
-#~ msgstr "E598: Bộ phông chữ không hợp lệ"
+msgid "E534: Invalid wide font"
+msgstr "E534: Phông chữ, với ký tự có chiều rộng gấp đôi, không hợp lệ"
 
-#~ msgid "E533: can't select wide font"
-#~ msgstr "E533: không chọn được phông chữ với các ký tự có chiều rộng gấp đôi"
+msgid "E538: No mouse support"
+msgstr "E538: Chuột không được hỗ trợ"
 
-#~ msgid "E534: Invalid wide font"
-#~ msgstr "E534: Phông chữ, với ký tự có chiều rộng gấp đôi, không hợp lệ"
+msgid "cannot open "
+msgstr "không mở được "
 
-#~ msgid "E538: No mouse support"
-#~ msgstr "E538: Chuột không được hỗ trợ"
+msgid "VIM: Can't open window!\n"
+msgstr "VIM: Không mở được cửa sổ!\n"
 
-#~ msgid "cannot open "
-#~ msgstr "không mở được "
+msgid "Need Amigados version 2.04 or later\n"
+msgstr "Cần Amigados phiên bản 2.04 hoặc mới hơn\n"
 
-#~ msgid "VIM: Can't open window!\n"
-#~ msgstr "VIM: Không mở được cửa sổ!\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Cần %s phiên bản %<PRId64>\n"
 
-#~ msgid "Need Amigados version 2.04 or later\n"
-#~ msgstr "Cần Amigados phiên bản 2.04 hoặc mới hơn\n"
+msgid "Cannot open NIL:\n"
+msgstr "Không mở được NIL:\n"
 
-#~ msgid "Need %s version %<PRId64>\n"
-#~ msgstr "Cần %s phiên bản %<PRId64>\n"
+msgid "Cannot create "
+msgstr "Không tạo được "
 
-#~ msgid "Cannot open NIL:\n"
-#~ msgstr "Không mở được NIL:\n"
+msgid "Vim exiting with %d\n"
+msgstr "Thoát Vim với mã %d\n"
 
-#~ msgid "Cannot create "
-#~ msgstr "Không tạo được "
+msgid "cannot change console mode ?!\n"
+msgstr "không thay đổi được chế độ kênh giao tác (console)?!\n"
 
-#~ msgid "Vim exiting with %d\n"
-#~ msgstr "Thoát Vim với mã %d\n"
+msgid "mch_get_shellsize: not a console??\n"
+msgstr "mch_get_shellsize: không phải là kênh giao tác (console)??\n"
 
-#~ msgid "cannot change console mode ?!\n"
-#~ msgstr "không thay đổi được chế độ kênh giao tác (console)?!\n"
+msgid "Cannot execute "
+msgstr "Không chạy được "
 
-#~ msgid "mch_get_shellsize: not a console??\n"
-#~ msgstr "mch_get_shellsize: không phải là kênh giao tác (console)??\n"
+msgid "shell "
+msgstr "shell "
 
-#~ msgid "Cannot execute "
-#~ msgstr "Không chạy được "
+msgid " returned\n"
+msgstr " thoát\n"
 
-#~ msgid "shell "
-#~ msgstr "shell "
+msgid "ANCHOR_BUF_SIZE too small."
+msgstr "Giá trị ANCHOR_BUF_SIZE quá nhỏ."
 
-#~ msgid " returned\n"
-#~ msgstr " thoát\n"
+msgid "I/O ERROR"
+msgstr "LỖI I/O (NHẬP/XUẤT)"
 
-#~ msgid "ANCHOR_BUF_SIZE too small."
-#~ msgstr "Giá trị ANCHOR_BUF_SIZE quá nhỏ."
+msgid "...(truncated)"
+msgstr "...(bị cắt bớt)"
 
-#~ msgid "I/O ERROR"
-#~ msgstr "LỖI I/O (NHẬP/XUẤT)"
+msgid "'columns' is not 80, cannot execute external commands"
+msgstr ""
+"Tùy chọn 'columns' khác 80, chương trình ngoại trú không thể thực hiện"
 
-#~ msgid "...(truncated)"
-#~ msgstr "...(bị cắt bớt)"
+msgid "to %s on %s"
+msgstr "tới %s trên %s"
 
-#~ msgid "'columns' is not 80, cannot execute external commands"
-#~ msgstr ""
-#~ "Tùy chọn 'columns' khác 80, chương trình ngoại trú không thể thực hiện"
+msgid "E613: Unknown printer font: %s"
+msgstr "E613: Không rõ phông chữ của máy in: %s"
 
-#~ msgid "to %s on %s"
-#~ msgstr "tới %s trên %s"
+msgid "E238: Print error: %s"
+msgstr "E238: Lỗi in: %s"
 
-#~ msgid "E613: Unknown printer font: %s"
-#~ msgstr "E613: Không rõ phông chữ của máy in: %s"
+msgid "Printing '%s'"
+msgstr "Đang in '%s'"
 
-#~ msgid "E238: Print error: %s"
-#~ msgstr "E238: Lỗi in: %s"
+msgid "E244: Illegal charset name \"%s\" in font name \"%s\""
+msgstr "E244: Tên bảng mã không hợp lệ \"%s\" trong tên phông chữ \"%s\""
 
-#~ msgid "Printing '%s'"
-#~ msgstr "Đang in '%s'"
+msgid "E245: Illegal char '%c' in font name \"%s\""
+msgstr "E245: Ký tự không hợp lệ '%c' trong tên phông chữ \"%s\""
 
-#~ msgid "E244: Illegal charset name \"%s\" in font name \"%s\""
-#~ msgstr "E244: Tên bảng mã không hợp lệ \"%s\" trong tên phông chữ \"%s\""
+msgid "Vim: Double signal, exiting\n"
+msgstr "Vim: Tín hiệu đôi, thoát\n"
 
-#~ msgid "E245: Illegal char '%c' in font name \"%s\""
-#~ msgstr "E245: Ký tự không hợp lệ '%c' trong tên phông chữ \"%s\""
+msgid "Vim: Caught deadly signal %s\n"
+msgstr "Vim: Nhận được tín hiệu chết %s\n"
 
-#~ msgid "Vim: Double signal, exiting\n"
-#~ msgstr "Vim: Tín hiệu đôi, thoát\n"
+msgid "Vim: Caught deadly signal\n"
+msgstr "Vim: Nhận được tín hiệu chết\n"
 
-#~ msgid "Vim: Caught deadly signal %s\n"
-#~ msgstr "Vim: Nhận được tín hiệu chết %s\n"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "Mở màn hình X mất %<PRId64> mili giây"
 
-#~ msgid "Vim: Caught deadly signal\n"
-#~ msgstr "Vim: Nhận được tín hiệu chết\n"
+msgid ""
+"\n"
+"Vim: Got X error\n"
+msgstr ""
+"\n"
+"Vim: Lỗi X\n"
 
-#~ msgid "Opening the X display took %<PRId64> msec"
-#~ msgstr "Mở màn hình X mất %<PRId64> mili giây"
+msgid "Testing the X display failed"
+msgstr "Kiểm tra màn hình X không thành công"
 
-#~ msgid ""
-#~ "\n"
-#~ "Vim: Got X error\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Vim: Lỗi X\n"
+msgid "Opening the X display timed out"
+msgstr "Không mở được màn hình X trong thời gian hợp lệ (time out)"
 
-#~ msgid "Testing the X display failed"
-#~ msgstr "Kiểm tra màn hình X không thành công"
+msgid ""
+"\n"
+"Cannot execute shell sh\n"
+msgstr ""
+"\n"
+"Không chạy được shell sh\n"
 
-#~ msgid "Opening the X display timed out"
-#~ msgstr "Không mở được màn hình X trong thời gian hợp lệ (time out)"
+msgid ""
+"\n"
+"Cannot create pipes\n"
+msgstr ""
+"\n"
+"Không tạo được đường ống (pipe)\n"
 
-#~ msgid ""
-#~ "\n"
-#~ "Cannot execute shell sh\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Không chạy được shell sh\n"
+msgid ""
+"\n"
+"Cannot fork\n"
+msgstr ""
+"\n"
+"Không fork được\n"
 
-#~ msgid ""
-#~ "\n"
-#~ "Cannot create pipes\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Không tạo được đường ống (pipe)\n"
+msgid ""
+"\n"
+"Command terminated\n"
+msgstr ""
+"\n"
+"Câu lệnh bị gián đoạn\n"
 
-#~ msgid ""
-#~ "\n"
-#~ "Cannot fork\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Không thực hiện được fork()\n"
+msgid "XSMP lost ICE connection"
+msgstr "XSMP mất kết nối ICE"
 
-#~ msgid ""
-#~ "\n"
-#~ "Command terminated\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Câu lệnh bị gián đoạn\n"
+msgid "Opening the X display failed"
+msgstr "Mở màn hình X không thành công"
 
-#~ msgid "XSMP lost ICE connection"
-#~ msgstr "XSMP mất kết nối ICE"
+msgid "XSMP handling save-yourself request"
+msgstr "XSMP xử lý yêu cầu tự động ghi"
 
-#~ msgid "Opening the X display failed"
-#~ msgstr "Mở màn hình X không thành công"
+msgid "XSMP opening connection"
+msgstr "XSMP mở kết nối"
 
-#~ msgid "XSMP handling save-yourself request"
-#~ msgstr "XSMP xử lý yêu cầu tự động ghi"
+msgid "XSMP ICE connection watch failed"
+msgstr "XSMP mất theo dõi kết nối ICE"
 
-#~ msgid "XSMP opening connection"
-#~ msgstr "XSMP mở kết nối"
+msgid "XSMP SmcOpenConnection failed: %s"
+msgstr "XSMP thực hiện SmcOpenConnection không thành công: %s"
 
-#~ msgid "XSMP ICE connection watch failed"
-#~ msgstr "XSMP mất theo dõi kết nối ICE"
+msgid "At line"
+msgstr "Tại dòng"
 
-#~ msgid "XSMP SmcOpenConnection failed: %s"
-#~ msgstr "XSMP thực hiện SmcOpenConnection không thành công: %s"
+msgid "Could not allocate memory for command line."
+msgstr "Không phân chia được bộ nhớ cho dòng lệnh."
 
-#~ msgid "At line"
-#~ msgstr "Tại dòng"
+msgid "VIM Error"
+msgstr "Lỗi VIM"
 
-#~ msgid "Could not allocate memory for command line."
-#~ msgstr "Không phân chia được bộ nhớ cho dòng lệnh."
+msgid "Could not load vim32.dll!"
+msgstr "Không nạp được vim32.dll!"
 
-#~ msgid "VIM Error"
-#~ msgstr "Lỗi VIM"
+msgid "Could not fix up function pointers to the DLL!"
+msgstr "Không sửa được cái chỉ (pointer) hàm tới DLL!"
 
-#~ msgid "Could not load vim32.dll!"
-#~ msgstr "Không nạp được vim32.dll!"
+msgid "shell returned %d"
+msgstr "thoát shell với mã %d"
 
-#~ msgid "Could not fix up function pointers to the DLL!"
-#~ msgstr "Không sửa được cái chỉ (pointer) hàm tới DLL!"
+msgid "Vim: Caught %s event\n"
+msgstr "Vim: Nhận được sự kiện %s\n"
 
-#~ msgid "shell returned %d"
-#~ msgstr "thoát shell với mã %d"
+msgid "close"
+msgstr "đóng"
 
-#~ msgid "Vim: Caught %s event\n"
-#~ msgstr "Vim: Nhận được sự kiện %s\n"
+msgid "logoff"
+msgstr "thoát"
 
-#~ msgid "close"
-#~ msgstr "đóng"
+msgid "shutdown"
+msgstr "tắt máy"
 
-#~ msgid "logoff"
-#~ msgstr "thoát"
+msgid "E371: Command not found"
+msgstr "E371: Câu lệnh không tìm thấy"
 
-#~ msgid "shutdown"
-#~ msgstr "tắt máy"
+msgid ""
+"VIMRUN.EXE not found in your $PATH.\n"
+"External commands will not pause after completion.\n"
+"See  :help win32-vimrun  for more information."
+msgstr ""
+"Không tìm thấy VIMRUN.EXE trong $PATH.\n"
+"Lệnh ngoại trú sẽ không dừng lại sau khi hoàn thành.\n"
+"Thông tin chi tiết xem trong :help win32-vimrun"
 
-#~ msgid "E371: Command not found"
-#~ msgstr "E371: Câu lệnh không tìm thấy"
+msgid "Vim Warning"
+msgstr "Cảnh báo Vim"
 
-#~ msgid ""
-#~ "VIMRUN.EXE not found in your $PATH.\n"
-#~ "External commands will not pause after completion.\n"
-#~ "See  :help win32-vimrun  for more information."
-#~ msgstr ""
-#~ "Không tìm thấy VIMRUN.EXE trong $PATH.\n"
-#~ "Lệnh ngoại trú sẽ không dừng lại sau khi hoàn thành.\n"
-#~ "Thông tin chi tiết xem trong :help win32-vimrun"
+msgid "E56: %s* operand could be empty"
+msgstr "E56: operand %s* không thể rỗng"
 
-#~ msgid "Vim Warning"
-#~ msgstr "Cảnh báo Vim"
+msgid "E57: %s+ operand could be empty"
+msgstr "E57: operand %s+ không thể rỗng"
 
-#~ msgid "E56: %s* operand could be empty"
-#~ msgstr "E56: operand %s* không thể rỗng"
+msgid "E58: %s{ operand could be empty"
+msgstr "E58: operand %s{ không thể rỗng"
 
-#~ msgid "E57: %s+ operand could be empty"
-#~ msgstr "E57: operand %s+ không thể rỗng"
+msgid "E361: Crash intercepted; regexp too complex?"
+msgstr "E361: Sự cố được ngăn chặn; biểu thức chính quy quá phức tạp?"
 
-#~ msgid "E58: %s{ operand could be empty"
-#~ msgstr "E58: operand %s{ không thể rỗng"
+msgid "E363: pattern caused out-of-stack error"
+msgstr "E363: sử dụng mẫu (pattern) gây ra lỗi out-of-stack"
 
-#~ msgid "E361: Crash intercepted; regexp too complex?"
-#~ msgstr "E361: Sự cố được ngăn chặn; biểu thức chính quy quá phức tạp?"
+msgid "E396: containedin argument not accepted here"
+msgstr "E396: không được sử dụng tham số containedin ở đây"
 
-#~ msgid "E363: pattern caused out-of-stack error"
-#~ msgstr "E363: sử dụng mẫu (pattern) gây ra lỗi out-of-stack"
+msgid "Enter nr of choice (<CR> to abort): "
+msgstr "Hãy chọn số cần thiết (<CR> để dừng):"
 
-#~ msgid "E396: containedin argument not accepted here"
-#~ msgstr "E396: không được sử dụng tham số containedin ở đây"
+msgid "E430: Tag file path truncated for %s\n"
+msgstr "E430: Đường dẫn tới tập tin thẻ ghi bị cắt bớt cho %s\n"
 
-#~ msgid "Enter nr of choice (<CR> to abort): "
-#~ msgstr "Hãy chọn số cần thiết (<CR> để dừng):"
+msgid "new shell started\n"
+msgstr "đã chạy shell mới\n"
 
-#~ msgid "E430: Tag file path truncated for %s\n"
-#~ msgstr "E430: Đường dẫn tới tập tin thẻ ghi bị cắt bớt cho %s\n"
+msgid "No undo possible; continue anyway"
+msgstr "Không thể hủy thao tác; tiếp tục thực hiện"
 
-#~ msgid "new shell started\n"
-#~ msgstr "đã chạy shell mới\n"
+msgid ""
+"\n"
+"MS-Windows 16/32-bit GUI version"
+msgstr ""
+"\n"
+"Phiên bản với giao diện đồ họa GUI cho MS-Windows 16/32 bit"
 
-#~ msgid "No undo possible; continue anyway"
-#~ msgstr "Không thể hủy thao tác; tiếp tục thực hiện"
+msgid ""
+"\n"
+"MS-Windows 32-bit GUI version"
+msgstr ""
+"\n"
+"Phiên bản với giao diện đồ họa GUI cho MS-Windows 32 bit"
 
-#~ msgid ""
-#~ "\n"
-#~ "MS-Windows 16/32-bit GUI version"
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản với giao diện đồ họa GUI cho MS-Windows 16/32 bit"
+msgid " in Win32s mode"
+msgstr " trong chế độ Win32"
 
-#~ msgid ""
-#~ "\n"
-#~ "MS-Windows 32-bit GUI version"
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản với giao diện đồ họa GUI cho MS-Windows 32 bit"
+msgid " with OLE support"
+msgstr " với hỗ trợ OLE"
 
-#~ msgid " in Win32s mode"
-#~ msgstr " trong chế độ Win32"
+msgid ""
+"\n"
+"MS-Windows 32-bit console version"
+msgstr ""
+"\n"
+"Phiên bản console cho MS-Windows 32 bit"
 
-#~ msgid " with OLE support"
-#~ msgstr " với hỗ trợ OLE"
+msgid ""
+"\n"
+"MS-Windows 16-bit version"
+msgstr ""
+"\n"
+"Phiên bản cho MS-Windows 16 bit"
 
-#~ msgid ""
-#~ "\n"
-#~ "MS-Windows 32-bit console version"
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản console cho MS-Windows 32 bit"
+msgid ""
+"\n"
+"32-bit MS-DOS version"
+msgstr ""
+"\n"
+"Phiên bản cho MS-DOS 32 bit"
 
-#~ msgid ""
-#~ "\n"
-#~ "MS-Windows 16-bit version"
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản cho MS-Windows 16 bit"
+msgid ""
+"\n"
+"16-bit MS-DOS version"
+msgstr ""
+"\n"
+"Phiên bản cho MS-DOS 16 bit"
 
-#~ msgid ""
-#~ "\n"
-#~ "32-bit MS-DOS version"
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản cho MS-DOS 32 bit"
+msgid ""
+"\n"
+"MacOS X (unix) version"
+msgstr ""
+"\n"
+"Phiên bản cho MacOS X (unix)"
 
-#~ msgid ""
-#~ "\n"
-#~ "16-bit MS-DOS version"
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản cho MS-DOS 16 bit"
+msgid ""
+"\n"
+"MacOS X version"
+msgstr ""
+"\n"
+"Phiên bản cho MacOS X"
 
-#~ msgid ""
-#~ "\n"
-#~ "MacOS X (unix) version"
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản cho MacOS X (unix)"
+msgid ""
+"\n"
+"MacOS version"
+msgstr ""
+"\n"
+"Phiên bản cho MacOS"
 
-#~ msgid ""
-#~ "\n"
-#~ "MacOS X version"
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản cho MacOS X"
+msgid ""
+"\n"
+"RISC OS version"
+msgstr ""
+"\n"
+"Phiên bản cho RISC OS"
 
-#~ msgid ""
-#~ "\n"
-#~ "MacOS version"
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản cho MacOS"
+msgid ""
+"\n"
+"Big version "
+msgstr ""
+"\n"
+"Phiên bản lớn "
 
-#~ msgid ""
-#~ "\n"
-#~ "RISC OS version"
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản cho RISC OS"
+msgid ""
+"\n"
+"Normal version "
+msgstr ""
+"\n"
+"Phiên bản thông thường "
 
-#~ msgid ""
-#~ "\n"
-#~ "Big version "
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản lớn "
+msgid ""
+"\n"
+"Small version "
+msgstr ""
+"\n"
+"Phiên bản nhỏ "
 
-#~ msgid ""
-#~ "\n"
-#~ "Normal version "
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản thông thường "
+msgid ""
+"\n"
+"Tiny version "
+msgstr ""
+"\n"
+"Phiên bản \"tí hon\" "
 
-#~ msgid ""
-#~ "\n"
-#~ "Small version "
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản nhỏ "
+msgid "with GTK2-GNOME GUI."
+msgstr "với giao diện đồ họa GUI GTK2-GNOME."
 
-#~ msgid ""
-#~ "\n"
-#~ "Tiny version "
-#~ msgstr ""
-#~ "\n"
-#~ "Phiên bản \"tí hon\" "
+msgid "with GTK-GNOME GUI."
+msgstr "với giao diện đồ họa GUI GTK-GNOME."
 
-#~ msgid "with GTK2-GNOME GUI."
-#~ msgstr "với giao diện đồ họa GUI GTK2-GNOME."
+msgid "with GTK2 GUI."
+msgstr "với giao diện đồ họa GUI GTK2."
 
-#~ msgid "with GTK-GNOME GUI."
-#~ msgstr "với giao diện đồ họa GUI GTK-GNOME."
+msgid "with GTK GUI."
+msgstr "với giao diện đồ họa GUI GTK."
 
-#~ msgid "with GTK2 GUI."
-#~ msgstr "với giao diện đồ họa GUI GTK2."
+msgid "with X11-Motif GUI."
+msgstr "với giao diện đồ họa GUI X11-Motif."
 
-#~ msgid "with GTK GUI."
-#~ msgstr "với giao diện đồ họa GUI GTK."
+msgid "with X11-neXtaw GUI."
+msgstr "với giao diện đồ họa GUI X11-neXtaw."
 
-#~ msgid "with X11-Motif GUI."
-#~ msgstr "với giao diện đồ họa GUI X11-Motif."
+msgid "with X11-Athena GUI."
+msgstr "với giao diện đồ họa GUI X11-Athena."
 
-#~ msgid "with X11-neXtaw GUI."
-#~ msgstr "với giao diện đồ họa GUI X11-neXtaw."
+msgid "with BeOS GUI."
+msgstr "với giao diện đồ họa GUI BeOS."
 
-#~ msgid "with X11-Athena GUI."
-#~ msgstr "với giao diện đồ họa GUI X11-Athena."
+msgid "with Photon GUI."
+msgstr "với giao diện đồ họa GUI Photon."
 
-#~ msgid "with BeOS GUI."
-#~ msgstr "với giao diện đồ họa GUI BeOS."
+msgid "with GUI."
+msgstr "với giao diện đồ họa GUI."
 
-#~ msgid "with Photon GUI."
-#~ msgstr "với giao diện đồ họa GUI Photon."
+msgid "with Carbon GUI."
+msgstr "với giao diện đồ họa GUI Carbon."
 
-#~ msgid "with GUI."
-#~ msgstr "với giao diện đồ họa GUI."
+msgid "with Cocoa GUI."
+msgstr "với giao diện đồ họa GUI Cocoa."
 
-#~ msgid "with Carbon GUI."
-#~ msgstr "với giao diện đồ họa GUI Carbon."
+msgid "with (classic) GUI."
+msgstr "với giao diện đồ họa (cổ điển) GUI."
 
-#~ msgid "with Cocoa GUI."
-#~ msgstr "với giao diện đồ họa GUI Cocoa."
+msgid "  system gvimrc file: \""
+msgstr "            tập tin gvimrc chung cho hệ thống: \""
 
-#~ msgid "with (classic) GUI."
-#~ msgstr "với giao diện đồ họa (cổ điển) GUI."
+msgid "    user gvimrc file: \""
+msgstr "         tập tin gvimrc của người dùng: \""
 
-#~ msgid "  system gvimrc file: \""
-#~ msgstr "            tập tin gvimrc chung cho hệ thống: \""
+msgid "2nd user gvimrc file: \""
+msgstr "  tập tin gvimrc thứ hai của người dùng: \""
 
-#~ msgid "    user gvimrc file: \""
-#~ msgstr "         tập tin gvimrc của người dùng: \""
+msgid "3rd user gvimrc file: \""
+msgstr "  tập tin gvimrc thứ ba của người dùng: \""
 
-#~ msgid "2nd user gvimrc file: \""
-#~ msgstr "  tập tin gvimrc thứ hai của người dùng: \""
+msgid "    system menu file: \""
+msgstr "             tập tin trình đơn chung cho hệ thống: \""
 
-#~ msgid "3rd user gvimrc file: \""
-#~ msgstr "  tập tin gvimrc thứ ba của người dùng: \""
+msgid "Compiler: "
+msgstr "Trình biên dịch: "
 
-#~ msgid "    system menu file: \""
-#~ msgstr "             tập tin trình đơn chung cho hệ thống: \""
+msgid "menu  Help->Orphans           for information    "
+msgstr "trình đơn Trợ giúp->Mồ côi             để có thêm thông tin     "
 
-#~ msgid "Compiler: "
-#~ msgstr "Trình biên dịch: "
+msgid "Running modeless, typed text is inserted"
+msgstr "Không chế độ, văn bản nhập vào sẽ được chèn"
 
-#~ msgid "menu  Help->Orphans           for information    "
-#~ msgstr "trình đơn Trợ giúp->Mồ côi             để có thêm thông tin     "
+msgid "menu  Edit->Global Settings->Toggle Insert Mode  "
+msgstr ""
+"trình đơn Soạn thảo->Thiết lập chung->Chế độ chèn                     "
 
-#~ msgid "Running modeless, typed text is inserted"
-#~ msgstr "Không chế độ, văn bản nhập vào sẽ được chèn"
+msgid "                              for two modes      "
+msgstr "                                 cho hai chế độ               "
 
-#~ msgid "menu  Edit->Global Settings->Toggle Insert Mode  "
-#~ msgstr ""
-#~ "trình đơn Soạn thảo->Thiết lập chung->Chế độ chèn                     "
+msgid "menu  Edit->Global Settings->Toggle Vi Compatible"
+msgstr ""
+"trình đơn Soạn thảo->Thiết lập chung->Tương thích với Vi                "
 
-#~ msgid "                              for two modes      "
-#~ msgstr "                                 cho hai chế độ               "
+msgid "                              for Vim defaults   "
+msgstr ""
+"                                 để chuyển vào chế độ Vim mặc định       "
 
-#~ msgid "menu  Edit->Global Settings->Toggle Vi Compatible"
-#~ msgstr ""
-#~ "trình đơn Soạn thảo->Thiết lập chung->Tương thích với Vi                "
+msgid "WARNING: Windows 95/98/ME detected"
+msgstr "CẢNH BÁO: nhận ra Windows 95/98/ME"
 
-#~ msgid "                              for Vim defaults   "
-#~ msgstr ""
-#~ "                                 để chuyển vào chế độ Vim mặc định       "
+msgid "type  :help windows95<Enter>  for info on this"
+msgstr "hãy gõ :help windows95<Enter>  để biết thêm thông tin     "
 
-#~ msgid "WARNING: Windows 95/98/ME detected"
-#~ msgstr "CẢNH BÁO: nhận ra Windows 95/98/ME"
+msgid "E370: Could not load library %s"
+msgstr "E370: Không nạp được thư viện %s"
 
-#~ msgid "type  :help windows95<Enter>  for info on this"
-#~ msgstr "hãy gõ :help windows95<Enter>  để biết thêm thông tin     "
+msgid ""
+"Sorry, this command is disabled: the Perl library could not be loaded."
+msgstr "Xin lỗi, câu lệnh này bị tắt: không nạp được thư viện Perl."
 
-#~ msgid "E370: Could not load library %s"
-#~ msgstr "E370: Không nạp được thư viện %s"
+msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
+msgstr ""
+"E299: Không hợp lệ sự tính toán Perl trong hộp cát mà không có môđun An "
+"toàn"
 
-#~ msgid ""
-#~ "Sorry, this command is disabled: the Perl library could not be loaded."
-#~ msgstr "Xin lỗi, câu lệnh này bị tắt: không nạp được thư viện Perl."
+msgid "Edit with &multiple Vims"
+msgstr "Soạn thảo trong nhiều Vi&m"
 
-#~ msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
-#~ msgstr ""
-#~ "E299: Không hợp lệ sự tính toán Perl trong hộp cát mà không có môđun An "
-#~ "toàn"
+msgid "Edit with single &Vim"
+msgstr "Soạn thảo trong một &Vim"
 
-#~ msgid "Edit with &multiple Vims"
-#~ msgstr "Soạn thảo trong nhiều Vi&m"
+msgid "&Diff with Vim"
+msgstr "&So sánh (diff) qua Vim"
 
-#~ msgid "Edit with single &Vim"
-#~ msgstr "Soạn thảo trong một &Vim"
+msgid "Edit with &Vim"
+msgstr "Soạn thảo trong &Vim"
 
-#~ msgid "&Diff with Vim"
-#~ msgstr "&So sánh (diff) qua Vim"
+msgid "Edit with existing Vim - &"
+msgstr "Soạn thảo trong Vim đã chạy - &"
 
-#~ msgid "Edit with &Vim"
-#~ msgstr "Soạn thảo trong &Vim"
+msgid "Edits the selected file(s) with Vim"
+msgstr "Soạn thảo (các) tập tin đã chọn trong Vim"
 
-#~ msgid "Edit with existing Vim - &"
-#~ msgstr "Soạn thảo trong Vim đã chạy - &"
+msgid "Error creating process: Check if gvim is in your path!"
+msgstr "Lỗi tạo tiến trình: Hãy kiểm tra xem gvim có trong đường dẫn không!"
 
-#~ msgid "Edits the selected file(s) with Vim"
-#~ msgstr "Soạn thảo (các) tập tin đã chọn trong Vim"
+msgid "gvimext.dll error"
+msgstr "lỗi gvimext.dll"
 
-#~ msgid "Error creating process: Check if gvim is in your path!"
-#~ msgstr "Lỗi tạo tiến trình: Hãy kiểm tra xem gvim có trong đường dẫn không!"
+msgid "Path length too long!"
+msgstr "Đường dẫn quá dài!"
 
-#~ msgid "gvimext.dll error"
-#~ msgstr "lỗi gvimext.dll"
+msgid "E234: Unknown fontset: %s"
+msgstr "E234: Không rõ bộ phông chữ: %s"
 
-#~ msgid "Path length too long!"
-#~ msgstr "Đường dẫn quá dài!"
+msgid "E235: Unknown font: %s"
+msgstr "E235: Không rõ phông chữ: %s"
 
-#~ msgid "E234: Unknown fontset: %s"
-#~ msgstr "E234: Không rõ bộ phông chữ: %s"
+msgid "E448: Could not load library function %s"
+msgstr "E448: Nạp hàm %s của thư viện không thành công"
 
-#~ msgid "E235: Unknown font: %s"
-#~ msgstr "E235: Không rõ phông chữ: %s"
+msgid "E247: no registered server named \"%s\""
+msgstr "E247: máy chủ \"%s\" chưa được đăng ký"
 
-#~ msgid "E448: Could not load library function %s"
-#~ msgstr "E448: Nạp hàm %s của thư viện không thành công"
+msgid "E233: cannot open display"
+msgstr "E233: không mở được màn hình"
 
-#~ msgid "E26: Hebrew cannot be used: Not enabled at compile time\n"
-#~ msgstr "E26: Tiếng Do thái không được chọn khi biên dịch\n"
-
-#~ msgid "E27: Farsi cannot be used: Not enabled at compile time\n"
-#~ msgstr "E27: Tiếng Farsi không được chọn khi biên dịch\n"
-
-#~ msgid "E800: Arabic cannot be used: Not enabled at compile time\n"
-#~ msgstr "E800: Tiếng Ả Rập không được chọn khi biên dịch\n"
-
-#~ msgid "E247: no registered server named \"%s\""
-#~ msgstr "E247: máy chủ \"%s\" chưa đăng ký"
-
-#~ msgid "E233: cannot open display"
-#~ msgstr "E233: không mở được màn hình"
-
-#~ msgid "E463: Region is guarded, cannot modify"
-#~ msgstr "E463: Không thể thay đổi vùng đã được bảo vệ"
+msgid "E463: Region is guarded, cannot modify"
+msgstr "E463: Không thể sửa vùng đã được bảo vệ"
