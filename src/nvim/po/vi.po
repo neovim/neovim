@@ -18,27 +18,27 @@ msgstr ""
 #: ../api/private/helpers.c:201
 #, fuzzy
 msgid "Unable to get option value"
-msgstr "E258: Không thể trả lời cho máy con"
+msgstr "Không thể lấy giá trị của tùy chọn này"
 
 #: ../api/private/helpers.c:204
 msgid "internal error: unknown option type"
-msgstr ""
+msgstr "Lỗi nội bộ: không có tùy chọn loại này"
 
 #: ../buffer.c:92
 msgid "[Location List]"
-msgstr ""
+msgstr "[Danh sách vị trí]"
 
 #: ../buffer.c:93
 msgid "[Quickfix List]"
-msgstr ""
+msgstr "[Danh sách sửa nhanh]"
 
 #: ../buffer.c:94
 msgid "E855: Autocommands caused command to abort"
-msgstr ""
+msgstr "E855: Lệnh bị hủy bởi các lệnh tự động"
 
 #: ../buffer.c:135
 msgid "E82: Cannot allocate any buffer, exiting..."
-msgstr "E82: Không thể phân chia bộ nhớ thậm chí cho một bộ đệm, thoát..."
+msgstr "E82: Không thể phân bổ cho bất kỳ bộ đệm nào, thoát..."
 
 #: ../buffer.c:138
 msgid "E83: Cannot allocate buffer, using other one..."
@@ -120,17 +120,17 @@ msgstr ""
 #. wrap around (may cause duplicates)
 #: ../buffer.c:1423
 msgid "W14: Warning: List of file names overflow"
-msgstr "W14: Cảnh báo: Danh sách tên tập tin quá đầy"
+msgstr "W14: Cảnh báo: Danh sách tên file quá nhiều"
 
 #: ../buffer.c:1555 ../quickfix.c:3361
 #, c-format
 msgid "E92: Buffer %<PRId64> not found"
-msgstr "E92: Bộ đệm %<PRId64> không được tìm thấy"
+msgstr "E92: Không tìm thấy bộ đệm %<PRId64>"
 
 #: ../buffer.c:1798
 #, c-format
 msgid "E93: More than one match for %s"
-msgstr "E93: Tìm thấy vài tương ứng với %s"
+msgstr "E93: Tìm thấy vài mẫu khớp với %s"
 
 #: ../buffer.c:1800
 #, c-format
@@ -148,11 +148,11 @@ msgstr "E95: Đã có bộ đệm với tên như vậy"
 
 #: ../buffer.c:2498
 msgid " [Modified]"
-msgstr " [Đã thay đổi]"
+msgstr " [Đã sửa đổi]"
 
 #: ../buffer.c:2501
 msgid "[Not edited]"
-msgstr "[Chưa soạn thảo]"
+msgstr "[Chưa chỉnh sửa]"
 
 #: ../buffer.c:2504
 msgid "[New file]"
@@ -188,7 +188,7 @@ msgstr "dòng %<PRId64> của %<PRId64> --%d%%-- cột "
 #: ../buffer.c:2632 ../buffer.c:4292 ../memline.c:1554
 #, fuzzy
 msgid "[No Name]"
-msgstr "[Không có tập tin]"
+msgstr "[Không tên]"
 
 #. must be a help buffer
 #: ../buffer.c:2667
@@ -252,15 +252,15 @@ msgstr "E545: Thiếu dấu hai chấm"
 
 #: ../cursor_shape.c:70 ../cursor_shape.c:94
 msgid "E546: Illegal mode"
-msgstr "E546: Chế độ không cho phép"
+msgstr "E546: Chế độ không hợp lệ"
 
 #: ../cursor_shape.c:134
 msgid "E548: digit expected"
-msgstr "E548: yêu cầu một số"
+msgstr "E548: yêu cầu một chữ số"
 
 #: ../cursor_shape.c:138
 msgid "E549: Illegal percentage"
-msgstr "E549: Tỷ lệ phần trăm không cho phép"
+msgstr "E549: Tỷ lệ phần trăm không hợp lệ"
 
 #: ../diff.c:146
 #, c-format
@@ -320,11 +320,11 @@ msgstr ""
 
 #: ../digraph.c:1598
 msgid "E104: Escape not allowed in digraph"
-msgstr "E104: Không cho phép dùng ký tự thoát Escape trong chữ ghép"
+msgstr "E104: Không hợp lệ dùng ký tự thoát Escape trong chữ ghép"
 
 #: ../digraph.c:1760
 msgid "E544: Keymap file not found"
-msgstr "E544: Không tìm thấy tập tin sơ đồ bàn phím"
+msgstr "E544: Không tìm thấy file sơ đồ phím"
 
 #: ../digraph.c:1785
 msgid "E105: Using :loadkeymap not in a sourced file"
@@ -337,7 +337,7 @@ msgstr ""
 #: ../edit.c:82
 msgid " Keyword completion (^N^P)"
 msgstr " Tự động kết thúc cho từ khóa (^N^P)"
-
+https://github.com/brianhuster/neovim
 #. ctrl_x_mode == 0, ^P/^N compl.
 #: ../edit.c:83
 #, fuzzy
@@ -374,46 +374,46 @@ msgstr " Tự động kết thúc từ đồng âm (^T^N^P)"
 
 #: ../edit.c:93
 msgid " Command-line completion (^V^N^P)"
-msgstr " Tự động kết thúc dòng lệnh (^V^N^P)"
+msgstr " Hoàn thành dòng lệnh (^V^N^P)"
 
 #: ../edit.c:94
 #, fuzzy
 msgid " User defined completion (^U^N^P)"
-msgstr " Tự động kết thúc cho cả dòng (^L^N^P)"
+msgstr " Chức năng hoàn thành được định nghĩa bởi người dùng (^L^N^P)"
 
 #: ../edit.c:95
 #, fuzzy
 msgid " Omni completion (^O^N^P)"
-msgstr " Tự động kết thúc thẻ đánh dấu (^]^N^P)"
+msgstr " Hoàn thành kiểu omni (^]^N^P)"
 
 #: ../edit.c:96
 #, fuzzy
 msgid " Spelling suggestion (^S^N^P)"
-msgstr " Tự động kết thúc cho cả dòng (^L^N^P)"
+msgstr " Gợi ý chính tả (^L^N^P)"
 
 #: ../edit.c:97
 msgid " Keyword Local completion (^N^P)"
-msgstr " Tự động kết thúc nội bộ cho từ khóa (^N^P)"
+msgstr " Tự động hoàn thành từ khóa (^N^P)"
 
 #: ../edit.c:100
 msgid "Hit end of paragraph"
-msgstr "Kết thúc của đoạn văn"
+msgstr "Đã đến kết thúc của đoạn văn"
 
 #: ../edit.c:101
 msgid "E839: Completion function changed window"
-msgstr ""
+msgstr "E839: Hàm hoàn thành đã thay đổi cửa sổ"
 
 #: ../edit.c:102
 msgid "E840: Completion function deleted text"
-msgstr ""
+msgstr "E840: Hàm hoàn thành đã xóa văn bản"
 
 #: ../edit.c:1847
 msgid "'dictionary' option is empty"
-msgstr "Không đưa ra giá trị của tùy chọn 'dictionary'"
+msgstr "Tùy chọn 'dictionary' đang rỗng"
 
 #: ../edit.c:1848
 msgid "'thesaurus' option is empty"
-msgstr "Không đưa ra giá trị của tùy chọn 'thesaurus'"
+msgstr "Tùy chọn 'thesaurus' đang rỗng"
 
 #: ../edit.c:2655
 #, c-format
@@ -484,7 +484,7 @@ msgstr "E322: số thứ tự dòng vượt quá giới hạn : %<PRId64>"
 #: ../eval.c:139
 #, c-format
 msgid "E121: Undefined variable: %s"
-msgstr "E121: Biến không xác định: %s"
+msgstr "E121: Chưa khai báo biến: %s"
 
 #: ../eval.c:140
 msgid "E111: Missing ']'"
@@ -493,27 +493,27 @@ msgstr "E111: Thiếu ']'"
 #: ../eval.c:141
 #, fuzzy, c-format
 msgid "E686: Argument of %s must be a List"
-msgstr "E487: Tham số phải là một số dương"
+msgstr "E686: Tham số của %s phải là một danh sách (List)"
 
 #: ../eval.c:143
 #, fuzzy, c-format
 msgid "E712: Argument of %s must be a List or Dictionary"
-msgstr "E487: Tham số phải là một số dương"
+msgstr "E712: Tham số của %s phải là một danh sách (List) hoặc từ điển (Dictionary)"
 
 #: ../eval.c:144
 #, fuzzy
 msgid "E713: Cannot use empty key for Dictionary"
-msgstr "E214: Không tìm thấy tập tin tạm thời (temp) để ghi nhớ"
+msgstr "E713: Không thể sử dụng khóa rỗng cho từ điển"
 
 #: ../eval.c:145
 #, fuzzy
 msgid "E714: List required"
-msgstr "E471: Cần chỉ ra tham số"
+msgstr "E714: Yêu cầu phải có một danh sách (List)"
 
 #: ../eval.c:146
 #, fuzzy
 msgid "E715: Dictionary required"
-msgstr "E129: Cần tên hàm số"
+msgstr "E715: Yêu cầu phải có một từ điển (Dictionary)"
 
 #: ../eval.c:147
 #, c-format
@@ -523,58 +523,58 @@ msgstr "E118: Quá nhiều tham số cho hàm: %s"
 #: ../eval.c:148
 #, c-format
 msgid "E716: Key not present in Dictionary: %s"
-msgstr ""
+msgstr "E716: Khóa không có trong từ điển: %s"
 
 #: ../eval.c:150
 #, c-format
 msgid "E122: Function %s already exists, add ! to replace it"
-msgstr "E122: Hàm số %s đã có, hãy thêm ! để thay thế nó."
+msgstr "E122: Hàm %s đã tồn tại, hãy thêm ! để thay thế nó."
 
 #: ../eval.c:151
 #, fuzzy
 msgid "E717: Dictionary entry already exists"
-msgstr "E95: Đã có bộ đệm với tên như vậy"
+msgstr "E717: Mục từ điển đã tồn tại"
 
 #: ../eval.c:152
 #, fuzzy
 msgid "E718: Funcref required"
-msgstr "E129: Cần tên hàm số"
+msgstr "E718: Yêu cầu phải có một hàm (Funcref)"
 
 #: ../eval.c:153
 #, fuzzy
 msgid "E719: Cannot use [:] with a Dictionary"
-msgstr "E360: Không chạy được shell với tùy chọn -f"
+msgstr "E719: Không thể sử dụng [:] với một từ điển"
 
 #: ../eval.c:154
 #, c-format
 msgid "E734: Wrong variable type for %s="
-msgstr ""
+msgstr "E734: Kiểu biến không hợp lệ %s="
 
 #: ../eval.c:155
 #, fuzzy, c-format
 msgid "E130: Unknown function: %s"
-msgstr "E117: Hàm số không biết: %s"
+msgstr "E117: Hàm không xác định: %s"
 
 #: ../eval.c:156
 #, c-format
 msgid "E461: Illegal variable name: %s"
-msgstr "E461: Tên biến không cho phép: %s"
+msgstr "E461: Tên biến không hợp lệ: %s"
 
 #: ../eval.c:157
 msgid "E806: using Float as a String"
-msgstr ""
+msgstr "E816: dùng số thực như một chuỗi"
 
 #: ../eval.c:1830
 msgid "E687: Less targets than List items"
-msgstr ""
+msgstr "E687: Có ít mục tiêu hơn số mục trong danh sách"
 
 #: ../eval.c:1834
 msgid "E688: More targets than List items"
-msgstr ""
+msgstr "E668: Có nhiều mục tiêu hơn số mục trong danh sách"
 
 #: ../eval.c:1906
 msgid "Double ; in list of variables"
-msgstr ""
+msgstr "Double ; trong danh sách biến"
 
 #: ../eval.c:2078
 #, fuzzy, c-format
@@ -583,23 +583,23 @@ msgstr "E138: Không thể ghi tập tin viminfo %s!"
 
 #: ../eval.c:2391
 msgid "E689: Can only index a List or Dictionary"
-msgstr ""
+msgstr "E689: Chỉ có thể index một danh sách hoặc từ điển"
 
 #: ../eval.c:2396
 msgid "E708: [:] must come last"
-msgstr ""
+msgstr "E708: [:] phải đến cuối cùng"
 
 #: ../eval.c:2439
 msgid "E709: [:] requires a List value"
-msgstr ""
+msgstr "E709: [:] yêu cầu một giá trị Danh sách"
 
 #: ../eval.c:2674
 msgid "E710: List value has more items than target"
-msgstr ""
+msgstr "E710: Giá trị danh sách có nhiều items hơn số mục tiêu"
 
 #: ../eval.c:2678
 msgid "E711: List value has not enough items"
-msgstr ""
+msgstr "E711: Giá trị danh sách không đủ items"
 
 #: ../eval.c:2867
 #, fuzzy
@@ -609,16 +609,16 @@ msgstr "E69: Thiếu ] sau %s%%["
 #: ../eval.c:3063
 #, c-format
 msgid "E107: Missing parentheses: %s"
-msgstr "E107: Thiếu dấu ngoặc: %s"
+msgstr "E107: Thiếu dấu ngoặc tròn: %s"
 
 #: ../eval.c:3263
 #, c-format
 msgid "E108: No such variable: \"%s\""
-msgstr "E108: Không có biến như vậy: \"%s\""
+msgstr "E108: Không tồn tại biến như vậy: \"%s\""
 
 #: ../eval.c:3333
 msgid "E743: variable nested too deep for (un)lock"
-msgstr ""
+msgstr "E743: variable nested too deep for (un)lock"
 
 #: ../eval.c:3630
 msgid "E109: Missing ':' after '?'"
@@ -626,35 +626,35 @@ msgstr "E109: Thiếu ':' sau '?'"
 
 #: ../eval.c:3893
 msgid "E691: Can only compare List with List"
-msgstr ""
+msgstr "E691: Chỉ được so sánh danh sách với danh sách"
 
 #: ../eval.c:3895
 #, fuzzy
 msgid "E692: Invalid operation for Lists"
-msgstr "E449: Nhận được một biểu thức không cho phép"
+msgstr "E449: Nhận được một biểu thức không hợp lệ"
 
 #: ../eval.c:3915
 msgid "E735: Can only compare Dictionary with Dictionary"
-msgstr ""
+msgstr "E735: Chỉ được so sánh từ điển với từ điển"
 
 #: ../eval.c:3917
 #, fuzzy
 msgid "E736: Invalid operation for Dictionary"
-msgstr "E116: Tham số cho hàm %s đưa ra không đúng"
+msgstr "E116: Tham số cho hàm %s đưa ra không hợp lệ"
 
 #: ../eval.c:3932
 msgid "E693: Can only compare Funcref with Funcref"
-msgstr ""
+msgstr "E693: Chỉ được so sánh Tham chiếu hàm (Funcref) với Tham chiếu hàm"
 
 #: ../eval.c:3934
 #, fuzzy
 msgid "E694: Invalid operation for Funcrefs"
-msgstr "E116: Tham số cho hàm %s đưa ra không đúng"
+msgstr "E694: Không thể thực hiện phép toán này trên Tham chiếu hàm"
 
 #: ../eval.c:4277
 #, fuzzy
 msgid "E804: Cannot use '%' with Float"
-msgstr "E360: Không chạy được shell với tùy chọn -f"
+msgstr "E804: Không thể sử dụng '%' với số thực"
 
 #: ../eval.c:4478
 msgid "E110: Missing ')'"
@@ -668,12 +668,12 @@ msgstr "E90: Không thể bỏ nạp từ bộ nhớ bộ đệm cuối cùng"
 #: ../eval.c:4839
 #, c-format
 msgid "E112: Option name missing: %s"
-msgstr "E112: Không đưa ra tên tùy chọn: %s"
+msgstr "E112: Thiếu tên tùy chọn: %s"
 
 #: ../eval.c:4855
 #, c-format
 msgid "E113: Unknown option: %s"
-msgstr "E113: Tùy chọn không biết: %s"
+msgstr "E113: Tùy chọn không xác định: %s"
 
 #: ../eval.c:4904
 #, c-format
@@ -688,17 +688,17 @@ msgstr "E115: Thiếu ngoặc kép: %s"
 #: ../eval.c:5084
 #, fuzzy, c-format
 msgid "E696: Missing comma in List: %s"
-msgstr "E405: Thiếu dấu bằng: %s"
+msgstr "E696: Thiếu dấu phẩy trong Danh sách: %s"
 
 #: ../eval.c:5091
 #, fuzzy, c-format
 msgid "E697: Missing end of List ']': %s"
-msgstr "E398: Thiếu '=': %s"
+msgstr "E697: Danh sách %s thiếu dấu ']'"
 
 #: ../eval.c:6475
 #, fuzzy, c-format
 msgid "E720: Missing colon in Dictionary: %s"
-msgstr "E405: Thiếu dấu bằng: %s"
+msgstr "E720: Thiếu dấu hai chấm trong từ điển: %s"
 
 #: ../eval.c:6499
 #, c-format
@@ -713,27 +713,27 @@ msgstr "E527: Thiếu dấu phẩy"
 #: ../eval.c:6524
 #, fuzzy, c-format
 msgid "E723: Missing end of Dictionary '}': %s"
-msgstr "E126: Thiếu lệnh :endfunction"
+msgstr "E723: Từ điển %s thiếu dấu '}'"
 
 #: ../eval.c:6555
 #, fuzzy
 msgid "E724: variable nested too deep for displaying"
-msgstr "E22: Các script lồng vào nhau quá sâu"
+msgstr "E724: biến lồng quá sâu để hiển thị"
 
 #: ../eval.c:7188
 #, fuzzy, c-format
 msgid "E740: Too many arguments for function %s"
-msgstr "E118: Quá nhiều tham số cho hàm: %s"
+msgstr "E740: Quá nhiều tham số cho hàm: %s"
 
 #: ../eval.c:7190
 #, c-format
 msgid "E116: Invalid arguments for function %s"
-msgstr "E116: Tham số cho hàm %s đưa ra không đúng"
+msgstr "E116: Tham số cho hàm %s không hợp lệ"
 
 #: ../eval.c:7377
 #, c-format
 msgid "E117: Unknown function: %s"
-msgstr "E117: Hàm số không biết: %s"
+msgstr "E117: Hàm không xác định: %s"
 
 #: ../eval.c:7383
 #, c-format
@@ -748,27 +748,27 @@ msgstr "E120: Sử dụng <SID> ngoài script: %s"
 #: ../eval.c:7391
 #, c-format
 msgid "E725: Calling dict function without Dictionary: %s"
-msgstr ""
+msgstr "E725: Gọi hàm từ điển mà không có từ điển: %s"
 
 #: ../eval.c:7453
 #, fuzzy
 msgid "E808: Number or Float required"
-msgstr "E521: Sau dấu = cần đưa ra một số"
+msgstr "E808: Yêu cầu một Số hoặc Số thực"
 
 #: ../eval.c:7503
 #, fuzzy
 msgid "add() argument"
-msgstr "Tham số không được phép cho"
+msgstr ""
 
 #: ../eval.c:7907
 #, fuzzy
 msgid "E699: Too many arguments"
-msgstr "Có quá nhiều tham số soạn thảo"
+msgstr "E699: Quá nhiều tham số"
 
 #: ../eval.c:8073
 #, fuzzy
 msgid "E785: complete() can only be used in Insert mode"
-msgstr "E328: Trình đơn chỉ có trong chế độ khác"
+msgstr "E785: complete() chỉ khả dụng trong chế độ chèn"
 
 #: ../eval.c:8156
 msgid "&Ok"
@@ -777,7 +777,7 @@ msgstr "&Ok"
 #: ../eval.c:8676
 #, fuzzy, c-format
 msgid "E737: Key already exists: %s"
-msgstr "E227: đã có ánh xạ cho %s"
+msgstr "E737: Mục từ điển đã tồn tại"
 
 #: ../eval.c:8692
 msgid "extend() argument"
@@ -786,7 +786,7 @@ msgstr ""
 #: ../eval.c:8915
 #, fuzzy
 msgid "map() argument"
-msgstr " vim [các tham số] "
+msgstr ""
 
 #: ../eval.c:8916
 msgid "filter() argument"
@@ -800,26 +800,26 @@ msgstr "+-%s%3ld dòng: "
 #: ../eval.c:9291
 #, fuzzy, c-format
 msgid "E700: Unknown function: %s"
-msgstr "E117: Hàm số không biết: %s"
+msgstr "E117: Hàm không xác định: %s"
 
 #: ../eval.c:10729
 msgid "called inputrestore() more often than inputsave()"
-msgstr "Hàm số inputrestore() được gọi nhiều hơn hàm inputsave()"
+msgstr "Hàm inputrestore() được gọi nhiều hơn hàm inputsave()"
 
 #: ../eval.c:10771
 #, fuzzy
 msgid "insert() argument"
-msgstr "Có quá nhiều tham số soạn thảo"
+msgstr ""
 
 #: ../eval.c:10841
 #, fuzzy
 msgid "E786: Range not allowed"
-msgstr "E481: Không cho phép sử dụng phạm vi"
+msgstr "E786: Không hợp lệ sử dụng phạm vi"
 
 #: ../eval.c:11140
 #, fuzzy
 msgid "E701: Invalid type for len()"
-msgstr "E596: Phông chữ không đúng"
+msgstr "E701: Kiểu cho len() không hợp lệ"
 
 #: ../eval.c:11980
 msgid "E726: Stride is zero"
@@ -831,7 +831,7 @@ msgstr ""
 
 #: ../eval.c:12024 ../eval.c:15297
 msgid "<empty>"
-msgstr ""
+msgstr "<rỗng>"
 
 #: ../eval.c:12282
 msgid "remove() argument"
@@ -839,7 +839,7 @@ msgstr ""
 
 #: ../eval.c:12466
 msgid "E655: Too many symbolic links (cycle?)"
-msgstr "E655: Quá nhiều liên kết tượng trưng (vòng lặp?)"
+msgstr "E655: Quá nhiều liên kết tượng trưng (vòng luẩn quẩn?)"
 
 #: ../eval.c:12593
 msgid "reverse() argument"
@@ -852,41 +852,41 @@ msgstr ""
 #: ../eval.c:13721
 #, fuzzy
 msgid "uniq() argument"
-msgstr "Tham số không được phép cho"
+msgstr ""
 
 #: ../eval.c:13776
 #, fuzzy
 msgid "E702: Sort compare function failed"
-msgstr "E237: Chọn máy in không thành công"
+msgstr "E702: Hàm so sánh sắp xếp thất bại"
 
 #: ../eval.c:13806
 msgid "E882: Uniq compare function failed"
-msgstr ""
+msgstr "E882: Hàm so sánh uniq thất bại"
 
 #: ../eval.c:14085
 msgid "(Invalid)"
-msgstr "(Không đúng)"
+msgstr "(Không hợp lệ)"
 
 #: ../eval.c:14590
 #, fuzzy
 msgid "E677: Error writing temp file"
-msgstr "E208: Lỗi ghi nhớ vào \"%s\""
+msgstr "E677: Lỗi khi ghi tập tin tạm thời"
 
 #: ../eval.c:16159
 msgid "E805: Using a Float as a Number"
-msgstr ""
+msgstr "E805: Dùng số thực như số nguyên"
 
 #: ../eval.c:16162
 msgid "E703: Using a Funcref as a Number"
-msgstr ""
+msgstr "E703: Dùng tham chiếu hàm như số nguyên"
 
 #: ../eval.c:16170
 msgid "E745: Using a List as a Number"
-msgstr ""
+msgstr "E745: Dùng danh sách như số nguyên"
 
 #: ../eval.c:16173
 msgid "E728: Using a Dictionary as a Number"
-msgstr ""
+msgstr "E728: Dùng từ điển như số nguyên"
 
 #: ../eval.c:16259
 msgid "E729: using Funcref as a String"
@@ -895,11 +895,11 @@ msgstr ""
 #: ../eval.c:16262
 #, fuzzy
 msgid "E730: using List as a String"
-msgstr "E374: Thiếu ] trong chuỗi định dạng"
+msgstr "E730: Dùng danh sách như chuỗi"
 
 #: ../eval.c:16265
 msgid "E731: using Dictionary as a String"
-msgstr ""
+msgstr "E731: Dùng từ điển như chuỗi"
 
 #: ../eval.c:16619
 #, fuzzy, c-format
@@ -909,22 +909,22 @@ msgstr "E93: Tìm thấy vài tương ứng với %s"
 #: ../eval.c:16705
 #, fuzzy, c-format
 msgid "E795: Cannot delete variable %s"
-msgstr "E46: Không thay đổi được biến chỉ đọc \"%s\""
+msgstr "E795: Không thể xóa biến %s"
 
 #: ../eval.c:16724
 #, fuzzy, c-format
 msgid "E704: Funcref variable name must start with a capital: %s"
-msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+msgstr "E704: Tên biến tham chiếu hàm phải bắt đầu với một chữ cái hoa: %s"
 
 #: ../eval.c:16732
 #, c-format
 msgid "E705: Variable name conflicts with existing function: %s"
-msgstr ""
+msgstr "E705: Tên biến xung đột với hàm có sẵn: %s"
 
 #: ../eval.c:16763
 #, c-format
 msgid "E741: Value is locked: %s"
-msgstr ""
+msgstr "E741: Giá trị bị khóa: %s"
 
 #: ../eval.c:16764 ../eval.c:16769 ../message.c:1839
 msgid "Unknown"
@@ -933,16 +933,16 @@ msgstr "Không rõ"
 #: ../eval.c:16768
 #, fuzzy, c-format
 msgid "E742: Cannot change value of %s"
-msgstr "E284: Không đặt được giá trị nội dung nhập vào (IC)"
+msgstr "E742: Không thể thay đổi giá trị của %s"
 
 #: ../eval.c:16838
 msgid "E698: variable nested too deep for making a copy"
-msgstr ""
+msgstr "E698: biến lồng quá sâu để sao chép"
 
 #: ../eval.c:17249
 #, c-format
 msgid "E123: Undefined function: %s"
-msgstr "E123: Hàm số không xác định: %s"
+msgstr "E123: Chưa khai báo hàm: %s"
 
 #: ../eval.c:17260
 #, c-format
@@ -952,64 +952,64 @@ msgstr "E124: Thiếu '(': %s"
 #: ../eval.c:17293
 #, fuzzy
 msgid "E862: Cannot use g: here"
-msgstr "E284: Không đặt được giá trị nội dung nhập vào (IC)"
+msgstr "E862: Không thể sử dụng g: ở đây"
 
 #: ../eval.c:17312
 #, c-format
 msgid "E125: Illegal argument: %s"
-msgstr "E125: Tham số không cho phép: %s"
+msgstr "E125: Tham số không hợp lệ: %s"
 
 #: ../eval.c:17323
 #, fuzzy, c-format
 msgid "E853: Duplicate argument name: %s"
-msgstr "E154: Thẻ ghi lặp lại \"%s\" trong tập tin %s"
+msgstr "E853: Tên tham số trùng lặp: %s"
 
 #: ../eval.c:17416
 msgid "E126: Missing :endfunction"
-msgstr "E126: Thiếu lệnh :endfunction"
+msgstr "E126: Thiếu :endfunction"
 
 #: ../eval.c:17537
 #, fuzzy, c-format
 msgid "E707: Function name conflicts with variable: %s"
-msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+msgstr "E707: Tên hàm xung đột với biến: %s"
 
 #: ../eval.c:17549
 #, c-format
 msgid "E127: Cannot redefine function %s: It is in use"
-msgstr "E127: Không thể định nghĩa lại hàm số %s: hàm đang được sử dụng"
+msgstr "E127: Không thể định nghĩa lại hàm %s: nó đang được sử dụng"
 
 #: ../eval.c:17604
 #, fuzzy, c-format
 msgid "E746: Function name does not match script file name: %s"
-msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+msgstr "E746: Tên hàm không khớp tên file script: %s"
 
 #: ../eval.c:17716
 msgid "E129: Function name required"
-msgstr "E129: Cần tên hàm số"
+msgstr "E129: Cần tên hàm"
 
 #: ../eval.c:17824
 #, fuzzy, c-format
 msgid "E128: Function name must start with a capital or \"s:\": %s"
-msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+msgstr "E128: Tên hàm phải bắt đầu với một chữ cái hoa: %s"
 
 #: ../eval.c:17833
 #, fuzzy, c-format
 msgid "E884: Function name cannot contain a colon: %s"
-msgstr "E128: Tên hàm số phải bắt đầu với một chữ cái hoa: %s"
+msgstr "E884: Tên hàm không thể chứa dấu hai chấm: %s"
 
 #: ../eval.c:18336
 #, c-format
 msgid "E131: Cannot delete function %s: It is in use"
-msgstr "E131: Không thể xóa hàm số %s: Hàm đang được sử dụng"
+msgstr "E131: Không thể xóa hàm %s: Hàm đang được sử dụng"
 
 #: ../eval.c:18441
 msgid "E132: Function call depth is higher than 'maxfuncdepth'"
-msgstr "E132: Độ sâu của lời gọi hàm số lớn hơn giá trị 'maxfuncdepth'"
+msgstr "E132: Độ sâu của lời gọi hàm lớn hơn giá trị 'maxfuncdepth'"
 
 #: ../eval.c:18568
 #, c-format
 msgid "calling %s"
-msgstr "lời gọi %s"
+msgstr "đang gọi %s"
 
 #: ../eval.c:18651
 #, c-format
@@ -1019,12 +1019,12 @@ msgstr "%s dừng"
 #: ../eval.c:18653
 #, c-format
 msgid "%s returning #%<PRId64>"
-msgstr "%s trả lại #%<PRId64>"
+msgstr "%s trả về #%<PRId64>"
 
 #: ../eval.c:18670
 #, fuzzy, c-format
 msgid "%s returning %s"
-msgstr "%s trả lại \"%s\""
+msgstr "%s trả về \"%s\""
 
 #: ../eval.c:18691 ../ex_cmds2.c:2695
 #, c-format
@@ -1033,7 +1033,7 @@ msgstr "tiếp tục trong %s"
 
 #: ../eval.c:18795
 msgid "E133: :return not inside a function"
-msgstr "E133: lệnh :return ở ngoài một hàm"
+msgstr "E133: lệnh :return ở ngoài hàm"
 
 #: ../eval.c:19159
 msgid ""
@@ -1041,7 +1041,7 @@ msgid ""
 "# global variables:\n"
 msgstr ""
 "\n"
-"# biến toàn cầu:\n"
+"# biến toàn cục:\n"
 
 #: ../eval.c:19254
 msgid ""
@@ -1049,27 +1049,27 @@ msgid ""
 "\tLast set from "
 msgstr ""
 "\n"
-"\tLần cuối cùng tùy chọn thay đổi vào "
+"\tLần cuối cùng được set từ "
 
 #: ../eval.c:19272
 #, fuzzy
 msgid "No old files"
-msgstr "Không có tập tin được tính đến"
+msgstr "Không có tập tin cũ"
 
 #: ../ex_cmds.c:122
 #, c-format
-msgid "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
-msgstr "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
+msgid "<%s>%s%s  %d,  Hệ thập lục phân %02x,  Hệ bát phân %03o"
+msgstr "<%s>%s%s  %d,  Hệ thập lục phân %02x,  Hệ bát phân %03o"
 
 #: ../ex_cmds.c:145
 #, c-format
-msgid "> %d, Hex %04x, Octal %o"
-msgstr "> %d, Hex %04x, Octal %o"
+msgid "> %d, Hệ thập lục phân %04x, Hệ bát phân %o"
+msgstr "> %d, Hệ thập lục phân %04x, Hệ bát phân %o"
 
 #: ../ex_cmds.c:146
 #, c-format
-msgid "> %d, Hex %08x, Octal %o"
-msgstr "> %d, Hex %08x, Octal %o"
+msgid "> %d, Hệ thập lục phân %08x, Hệ bát phân %o"
+msgstr "> %d, Hệ thập lục phân %08x, Hệ bát phân %o"
 
 #: ../ex_cmds.c:684
 msgid "E134: Move lines into themselves"
@@ -1095,7 +1095,7 @@ msgstr "E135: Các lệnh tự động *Filter* không được thay đổi bộ
 
 #: ../ex_cmds.c:1244
 msgid "[No write since last change]\n"
-msgstr "[Thay đổi chưa được ghi nhớ]\n"
+msgstr "[Không có lần ghi nào kể từ lần thay đổi cuối]\n"
 
 #: ../ex_cmds.c:1424
 #, c-format
@@ -1109,7 +1109,7 @@ msgstr "E136: viminfo: Quá nhiều lỗi, phần còn lại của tập tin s�
 #: ../ex_cmds.c:1458
 #, c-format
 msgid "Reading viminfo file \"%s\"%s%s%s"
-msgstr "Đọc tập tin viminfo \"%s\"%s%s%s"
+msgstr "Đang đọc file viminfo \"%s\"%s%s%s"
 
 #: ../ex_cmds.c:1460
 msgid " info"
@@ -1117,12 +1117,12 @@ msgstr " thông tin"
 
 #: ../ex_cmds.c:1461
 msgid " marks"
-msgstr " dấu hiệu"
+msgstr " dấu"
 
 #: ../ex_cmds.c:1462
 #, fuzzy
 msgid " oldfiles"
-msgstr "Không có tập tin được tính đến"
+msgstr ""
 
 #: ../ex_cmds.c:1463
 msgid " FAILED"
@@ -1132,7 +1132,7 @@ msgstr " KHÔNG THÀNH CÔNG"
 #: ../ex_cmds.c:1541
 #, c-format
 msgid "E137: Viminfo file is not writable: %s"
-msgstr "E137: Thiếu quyền ghi lên tập tin viminfo: %s"
+msgstr "E137: Thiếu quyền ghi tập tin viminfo: %s"
 
 #: ../ex_cmds.c:1626
 #, c-format
@@ -1142,7 +1142,7 @@ msgstr "E138: Không thể ghi tập tin viminfo %s!"
 #: ../ex_cmds.c:1635
 #, c-format
 msgid "Writing viminfo file \"%s\""
-msgstr "Ghi tập tin viminfo \"%s\""
+msgstr "Đang ghi tập tin viminfo \"%s\""
 
 #. Write the info:
 #: ../ex_cmds.c:1720
@@ -1164,15 +1164,15 @@ msgstr "# Giá trị của tùy chọn 'encoding' vào thời điểm ghi tập 
 
 #: ../ex_cmds.c:1800
 msgid "Illegal starting char"
-msgstr "Ký tự đầu tiên không cho phép"
+msgstr "Ký tự đầu tiên không hợp lệ"
 
 #: ../ex_cmds.c:2162
 msgid "Write partial file?"
-msgstr "Ghi nhớ một phần tập tin?"
+msgstr "Ghi một phần tập tin?"
 
 #: ../ex_cmds.c:2166
 msgid "E140: Use ! to write partial buffer"
-msgstr "E140: Sử dụng ! để ghi nhớ một phần bộ đệm"
+msgstr "E140: Sử dụng ! để ghi một phần bộ đệm"
 
 #: ../ex_cmds.c:2281
 #, fuzzy, c-format
@@ -1196,7 +1196,7 @@ msgstr "E141: Không có tên tập tin cho bộ đệm %<PRId64>"
 
 #: ../ex_cmds.c:2412
 msgid "E142: File not written: Writing is disabled by 'write' option"
-msgstr "E142: Tập tin chưa được ghi nhớ: Ghi nhớ bị tắt bởi tùy chọn 'write'"
+msgstr "E142: Tập tin chưa được ghi: Ghi nhớ bị tắt bởi tùy chọn 'write'"
 
 #: ../ex_cmds.c:2434
 #, fuzzy, c-format
@@ -1218,7 +1218,7 @@ msgstr ""
 #: ../ex_cmds.c:2451
 #, fuzzy, c-format
 msgid "E505: \"%s\" is read-only (add ! to override)"
-msgstr "là tập tin chỉ đọc (thêm ! để ghi nhớ bằng mọi giá)"
+msgstr "là tập tin chỉ đọc (thêm ! để ghi bằng mọi giá)"
 
 #: ../ex_cmds.c:3120
 #, c-format
@@ -1373,12 +1373,12 @@ msgstr "E159: Thiếu số của ký hiệu"
 #: ../ex_cmds.c:5971
 #, c-format
 msgid "E158: Invalid buffer name: %s"
-msgstr "E158: Tên bộ đệm không đúng: %s"
+msgstr "E158: Tên bộ đệm không hợp lệ: %s"
 
 #: ../ex_cmds.c:6008
 #, c-format
 msgid "E157: Invalid sign ID: %<PRId64>"
-msgstr "E157: ID của ký hiệu không đúng: %<PRId64>"
+msgstr "E157: ID của ký hiệu không hợp lệ: %<PRId64>"
 
 #: ../ex_cmds.c:6066
 msgid " (not supported)"
@@ -1437,7 +1437,7 @@ msgstr "Chưa đặt tên"
 #: ../ex_cmds2.c:1421
 #, c-format
 msgid "E162: No write since last change for buffer \"%s\""
-msgstr "E162: Thay đổi chưa được ghi nhớ trong bộ đệm \"%s\""
+msgstr "E162: Thay đổi chưa được ghi trong bộ đệm \"%s\""
 
 #: ../ex_cmds2.c:1480
 msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
@@ -1533,7 +1533,7 @@ msgstr "Lỗi và sự gián đoạn"
 
 #: ../ex_cmds2.c:3020
 msgid "W15: Warning: Wrong line separator, ^M may be missing"
-msgstr "W15: Cảnh báo: Ký tự phân cách dòng không đúng. Rất có thể thiếu ^M"
+msgstr "W15: Cảnh báo: Ký tự phân cách dòng không hợp lệ. Rất có thể thiếu ^M"
 
 #: ../ex_cmds2.c:3139
 msgid "E167: :scriptencoding used outside of a sourced file"
@@ -1579,7 +1579,7 @@ msgstr "Kết thúc tập tin script"
 
 #: ../ex_docmd.c:1086
 msgid "End of function"
-msgstr "Kết thúc của hàm số"
+msgstr "Kết thúc của hàm"
 
 #: ../ex_docmd.c:1628
 msgid "E464: Ambiguous use of user-defined command"
@@ -1609,7 +1609,7 @@ msgstr "E319: Xin lỗi, câu lệnh này không có trong phiên bản này"
 
 #: ../ex_docmd.c:3752
 msgid "E172: Only one file name allowed"
-msgstr "E172: Chỉ cho phép sử dụng một tên tập tin"
+msgstr "E172: Chỉ hợp lệ sử dụng một tên tập tin"
 
 #: ../ex_docmd.c:4238
 msgid "1 more file to edit.  Quit anyway?"
@@ -1651,7 +1651,7 @@ msgstr "E175: Không có tham số được chỉ ra"
 
 #: ../ex_docmd.c:4583
 msgid "E176: Invalid number of arguments"
-msgstr "E176: Số lượng tham số không đúng"
+msgstr "E176: Số lượng tham số không hợp lệ"
 
 #: ../ex_docmd.c:4594
 msgid "E177: Count cannot be specified twice"
@@ -1659,7 +1659,7 @@ msgstr "E177: Số đếm không thể được chỉ ra hai lần"
 
 #: ../ex_docmd.c:4603
 msgid "E178: Invalid default value for count"
-msgstr "E178: Giá trị của số đếm theo mặc định không đúng"
+msgstr "E178: Giá trị của số đếm theo mặc định không hợp lệ"
 
 #: ../ex_docmd.c:4625
 #, fuzzy
@@ -1669,11 +1669,11 @@ msgstr "E179: yêu cầu đưa ra tham số để kết thúc"
 #: ../ex_docmd.c:4635
 #, c-format
 msgid "E181: Invalid attribute: %s"
-msgstr "E181: Thuộc tính không đúng: %s"
+msgstr "E181: Thuộc tính không hợp lệ: %s"
 
 #: ../ex_docmd.c:4678
 msgid "E182: Invalid command name"
-msgstr "E182: Tên câu lệnh không đúng"
+msgstr "E182: Tên câu lệnh không hợp lệ"
 
 #: ../ex_docmd.c:4691
 msgid "E183: User defined commands must start with an uppercase letter"
@@ -1692,12 +1692,12 @@ msgstr "E184: Không có câu lệnh người dùng định nghĩa như vậy: %
 #: ../ex_docmd.c:5219
 #, c-format
 msgid "E180: Invalid complete value: %s"
-msgstr "E180: Giá trị phần phụ không đúng: %s"
+msgstr "E180: Giá trị phần phụ không hợp lệ: %s"
 
 #: ../ex_docmd.c:5225
 msgid "E468: Completion argument only allowed for custom completion"
 msgstr ""
-"E468: Tham số tự động kết thúc chỉ cho phép sử dụng với phần phụ đặc biệt"
+"E468: Tham số tự động kết thúc chỉ hợp lệ sử dụng với phần phụ đặc biệt"
 
 #: ../ex_docmd.c:5231
 msgid "E467: Custom completion requires a function argument"
@@ -1770,7 +1770,7 @@ msgstr "E189: \"%s\" đã có (thêm !, để ghi đè)"
 #: ../ex_docmd.c:7273
 #, c-format
 msgid "E190: Cannot open \"%s\" for writing"
-msgstr "E190: Không mở được \"%s\" để ghi nhớ"
+msgstr "E190: Không mở được \"%s\" để ghi"
 
 #. set mark
 #: ../ex_docmd.c:7294
@@ -1814,7 +1814,7 @@ msgstr "E499: Tên tập tin rỗng cho '%' hoặc '#', chỉ làm việc với 
 
 #: ../ex_docmd.c:7905
 msgid "E500: Evaluates to an empty string"
-msgstr "E500: Kết quả của biểu thức là một chuỗi rỗng"
+msgstr "E500: Kết quả của biểu thức rỗng"
 
 #: ../ex_docmd.c:8838
 msgid "E195: Cannot open viminfo file for reading"
@@ -1962,12 +1962,12 @@ msgstr "E602: :endtry không có :try"
 
 #: ../ex_eval.c:2026
 msgid "E193: :endfunction not inside a function"
-msgstr "E193: lệnh :endfunction chỉ được sử dụng trong một hàm số"
+msgstr "E193: lệnh :endfunction chỉ được sử dụng trong một hàm"
 
 #: ../ex_getln.c:1643
 #, fuzzy
 msgid "E788: Not allowed to edit another buffer now"
-msgstr "E48: Không cho phép trong hộp cát (sandbox)"
+msgstr "E48: Không hợp lệ trong hộp cát (sandbox)"
 
 #: ../ex_getln.c:1656
 #, fuzzy
@@ -1993,7 +1993,7 @@ msgid ""
 "# %s History (newest to oldest):\n"
 msgstr ""
 "\n"
-"# %s, Lịch sử (bắt đầu từ mới nhất tới cũ nhất):\n"
+"# %s, Lịch sử (từ mới nhất tới cũ nhất):\n"
 
 #: ../ex_getln.c:5047
 msgid "Command Line"
@@ -2021,7 +2021,7 @@ msgstr "E199: Cửa sổ hoặc bộ đệm hoạt động bị xóa"
 
 #: ../file_search.c:203
 msgid "E854: path too long for completion"
-msgstr ""
+msgstr "E854: đường dẫn quá dài để hoàn thành"
 
 #: ../file_search.c:446
 #, c-format
@@ -2029,8 +2029,8 @@ msgid ""
 "E343: Invalid path: '**[number]' must be at the end of the path or be "
 "followed by '%s'."
 msgstr ""
-"E343: Đường dẫn đưa ra không đúng: '**[số]' phải ở cuối đường dẫn hoặc theo "
-"sau bởi '%s'"
+"E343: Đường dẫn đưa ra không hợp lệ: '**[số nguyên]' phải ở cuối đường dẫn hoặc "
+"đứng trước '%s'"
 
 #: ../file_search.c:1505
 #, c-format
@@ -2059,7 +2059,7 @@ msgstr "E135: Các lệnh tự động *Filter* không được thay đổi bộ
 
 #: ../fileio.c:368
 msgid "Illegal file name"
-msgstr "Tên tập tin không cho phép"
+msgstr "Tên tập tin không hợp lệ"
 
 #: ../fileio.c:395 ../fileio.c:476 ../fileio.c:2543 ../fileio.c:2578
 msgid "is a directory"
@@ -2096,12 +2096,12 @@ msgstr "E201: Câu lệnh tự động *ReadPre không được thay đổi bộ
 
 #: ../fileio.c:672
 msgid "Nvim: Reading from stdin...\n"
-msgstr "Vim: Đọc từ đầu vào tiêu chuẩn stdin...\n"
+msgstr "Nvim: Đang đọc từ đầu vào tiêu chuẩn...\n"
 
 #. Re-opening the original file failed!
 #: ../fileio.c:909
 msgid "E202: Conversion made file unreadable!"
-msgstr "E202: Sự biến đổi làm cho tập tin trở thành không thể đọc!"
+msgstr "E202: Việc chuyển đổi định dạng làm cho tập tin trở thành không thể đọc!"
 
 #. fifo or socket
 #: ../fileio.c:1782
@@ -2122,7 +2122,7 @@ msgstr "[socket]"
 #: ../fileio.c:1801
 #, fuzzy
 msgid "[character special]"
-msgstr "1 ký tự"
+msgstr "[ký tự đặc biệt]"
 
 #: ../fileio.c:1815
 msgid "[CR missing]"
@@ -2143,12 +2143,12 @@ msgstr "[đã chuyển bảng mã]"
 #: ../fileio.c:1831
 #, fuzzy, c-format
 msgid "[CONVERSION ERROR in line %<PRId64>]"
-msgstr "[BYTE KHÔNG CHO PHÉP trên dòng %<PRId64>]"
+msgstr "[BYTE KHÔNG ĐƯỢC PHÉP trên dòng %<PRId64>]"
 
 #: ../fileio.c:1835
 #, c-format
 msgid "[ILLEGAL BYTE in line %<PRId64>]"
-msgstr "[BYTE KHÔNG CHO PHÉP trên dòng %<PRId64>]"
+msgstr "[BYTE KHÔNG ĐƯỢC PHÉP trên dòng %<PRId64>]"
 
 #: ../fileio.c:1838
 msgid "[READ ERRORS]"
@@ -2156,7 +2156,7 @@ msgstr "[LỖI ĐỌC]"
 
 #: ../fileio.c:2104
 msgid "Can't find temp file for conversion"
-msgstr "Không tìm thấy tập tin tạm thời (temp) để chuyển bảng mã"
+msgstr "Không tìm thấy tập tin tạm thời (temp) để chuyển đổi"
 
 #: ../fileio.c:2110
 msgid "Conversion with 'charconvert' failed"
@@ -2173,7 +2173,7 @@ msgstr "Không có câu lệnh tự động tương ứng"
 
 #: ../fileio.c:2466
 msgid "E203: Autocommands deleted or unloaded buffer to be written"
-msgstr "E203: Câu lệnh tự động đã xóa hoặc bỏ nạp bộ đệm cần ghi nhớ"
+msgstr "E203: Câu lệnh tự động đã xóa hoặc bỏ nạp bộ đệm cần ghi"
 
 #: ../fileio.c:2486
 msgid "E204: Autocommand changed number of lines in unexpected way"
@@ -2181,16 +2181,16 @@ msgstr "E204: Câu lệnh tự động đã thay đổ số dòng theo cách kh�
 
 #: ../fileio.c:2548 ../fileio.c:2565
 msgid "is not a file or writable device"
-msgstr "không phải là một tập tin thay một thiết bị có thể ghi nhớ"
+msgstr "không phải là một tập tin thay một thiết bị có thể ghi"
 
 #: ../fileio.c:2601
 msgid "is read-only (add ! to override)"
-msgstr "là tập tin chỉ đọc (thêm ! để ghi nhớ bằng mọi giá)"
+msgstr "là tập tin chỉ đọc (thêm ! để ghi bằng mọi giá)"
 
 #: ../fileio.c:2886
 msgid "E506: Can't write to backup file (add ! to override)"
 msgstr ""
-"E506: Không thể ghi nhớ vào tập tin lưu trữ (thêm ! để ghi nhớ bằng mọi giá"
+"E506: Không thể ghi vào tập tin lưu trữ (thêm ! để ghi nhớ bằng mọi giá"
 
 #: ../fileio.c:2898
 msgid "E507: Close error for backup file (add ! to override)"
@@ -2214,24 +2214,24 @@ msgstr ""
 #. Can't write without a tempfile!
 #: ../fileio.c:3121
 msgid "E214: Can't find temp file for writing"
-msgstr "E214: Không tìm thấy tập tin tạm thời (temp) để ghi nhớ"
+msgstr "E214: Không tìm thấy tập tin tạm thời (temp) để ghi"
 
 #: ../fileio.c:3134
 msgid "E213: Cannot convert (add ! to write without conversion)"
 msgstr ""
-"E213: Không thể chuyển đổi bảng mã (thêm ! để ghi nhớ mà không chuyển đổi)"
+"E213: Không thể chuyển đổi bảng mã (thêm ! để ghi mà không chuyển đổi)"
 
 #: ../fileio.c:3169
 msgid "E166: Can't open linked file for writing"
-msgstr "E166: Không thể mở tập tin liên kết để ghi nhớ"
+msgstr "E166: Không thể mở tập tin liên kết để ghi"
 
 #: ../fileio.c:3173
 msgid "E212: Can't open file for writing"
-msgstr "E212: Không thể mở tập tin để ghi nhớ"
+msgstr "E212: Không thể mở tập tin để ghi"
 
 #: ../fileio.c:3363
 msgid "E667: Fsync failed"
-msgstr "E667: Không thực hiện thành công hàm số fsync()"
+msgstr "E667: Không thực hiện thành công hàm fsync()"
 
 #: ../fileio.c:3398
 msgid "E512: Close failed"
@@ -2240,7 +2240,7 @@ msgstr "E512: Thao tác đóng không thành công"
 #: ../fileio.c:3436
 #, fuzzy
 msgid "E513: write error, conversion failed (make 'fenc' empty to override)"
-msgstr "E513: Lỗi ghi nhớ, biến đổi không thành công"
+msgstr "E513: Lỗi ghi, biến đổi không thành công"
 
 #: ../fileio.c:3441
 #, c-format
@@ -2251,7 +2251,7 @@ msgstr ""
 
 #: ../fileio.c:3448
 msgid "E514: write error (file system full?)"
-msgstr "E514: lỗi ghi nhớ (không còn chỗ trống?)"
+msgstr "E514: lỗi ghi (không còn chỗ trống?)"
 
 #: ../fileio.c:3506
 msgid " CONVERSION ERROR"
@@ -2288,7 +2288,7 @@ msgstr " đã ghi"
 
 #: ../fileio.c:3579
 msgid "E205: Patchmode: can't save original file"
-msgstr "E205: Chế độ vá lỗi (patch): không thể ghi nhớ tập tin gốc"
+msgstr "E205: Chế độ vá lỗi (patch): không thể ghi tập tin gốc"
 
 #: ../fileio.c:3602
 msgid "E206: patchmode: can't touch empty original file"
@@ -2311,7 +2311,7 @@ msgstr ""
 #: ../fileio.c:3675
 msgid "don't quit the editor until the file is successfully written!"
 msgstr ""
-"đừng thoát khởi trình soạn thảo, khi tập tin còn chưa được ghi nhớ thành cồng"
+"đừng thoát khởi trình soạn thảo, khi tập tin còn chưa được ghi thành cồng"
 
 #: ../fileio.c:3795
 msgid "[dos]"
@@ -2372,12 +2372,12 @@ msgstr "CẢNH BÁO: Tập tin đã thay đổi so với thời điểm đọc!!
 
 #: ../fileio.c:3867
 msgid "Do you really want to write to it"
-msgstr "Bạn có chắc muốn ghi nhớ vào tập tin này"
+msgstr "Bạn có chắc muốn ghi vào tập tin này"
 
 #: ../fileio.c:4648
 #, c-format
 msgid "E208: Error writing to \"%s\""
-msgstr "E208: Lỗi ghi nhớ vào \"%s\""
+msgstr "E208: Lỗi ghi vào \"%s\""
 
 #: ../fileio.c:4655
 #, c-format
@@ -2480,7 +2480,7 @@ msgstr "E367: Nhóm \"%s\" không tồn tại"
 #: ../fileio.c:5897
 #, c-format
 msgid "E215: Illegal character after *: %s"
-msgstr "E215: Ký tự không cho phép sau *: %s"
+msgstr "E215: Ký tự không hợp lệ sau *: %s"
 
 #: ../fileio.c:5905
 #, c-format
@@ -2504,7 +2504,7 @@ msgstr ""
 #: ../fileio.c:6293
 #, fuzzy, c-format
 msgid "E680: <buffer=%d>: invalid buffer number "
-msgstr "số của bộ đệm không đúng"
+msgstr "số của bộ đệm không hợp lệ"
 
 #: ../fileio.c:6370
 msgid "E217: Can't execute autocommands for ALL events"
@@ -2599,7 +2599,7 @@ msgstr "Không tìm thấy ánh xạ"
 
 #: ../getchar.c:3974
 msgid "E228: makemap: Illegal mode"
-msgstr "E228: makemap: Chế độ không cho phép"
+msgstr "E228: makemap: Chế độ không hợp lệ"
 
 #. key value of 'cedit' option
 #. type of cmdline window or 0
@@ -2631,7 +2631,7 @@ msgstr "E11: Lỗi trong cửa sổ dòng lệnh; <CR> thực hiện, CTRL-C tho
 #: ../globals.h:1002
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""
-"E12: Câu lệnh không cho phép từ exrc/vimrc trong thư mục hiện thời hoặc "
+"E12: Câu lệnh không hợp lệ từ exrc/vimrc trong thư mục hiện thời hoặc "
 "trong tìm kiếm thẻ ghi"
 
 #: ../globals.h:1003
@@ -2678,52 +2678,52 @@ msgstr "Bị gián đoạn"
 
 #: ../globals.h:1013
 msgid "E14: Invalid address"
-msgstr "E14: Địa chỉ không cho phép"
+msgstr "E14: Địa chỉ không hợp lệ"
 
 #: ../globals.h:1014
 msgid "E474: Invalid argument"
-msgstr "E474: Tham số không cho phép"
+msgstr "E474: Tham số không hợp lệ"
 
 #: ../globals.h:1015
 #, c-format
 msgid "E475: Invalid argument: %s"
-msgstr "E475: Tham số không cho phép: %s"
+msgstr "E475: Tham số không hợp lệ: %s"
 
 #: ../globals.h:1016
 #, c-format
 msgid "E15: Invalid expression: %s"
-msgstr "E15: Biểu thức không cho phép: %s"
+msgstr "E15: Biểu thức không hợp lệ: %s"
 
 #: ../globals.h:1017
 msgid "E16: Invalid range"
-msgstr "E16: Vùng không cho phép"
+msgstr "E16: Vùng không hợp lệ"
 
 #: ../globals.h:1018
 msgid "E476: Invalid command"
-msgstr "E476: Câu lệnh không cho phép"
+msgstr "E476: Câu lệnh không hợp lệ"
 
 #: ../globals.h:1019
 #, c-format
 msgid "E17: \"%s\" is a directory"
-msgstr "E17: \"%s\" là mộ thư mục"
+msgstr "E17: \"%s\" là một thư mục"
 
 #: ../globals.h:1020
 #, fuzzy
 msgid "E900: Invalid job id"
-msgstr "E49: Kích thước thanh cuộn không cho phép"
+msgstr "E900: ID job không hợp lệ"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
+msgstr "E901: Bảng job đầy"
 
 #: ../globals.h:1024
 #, c-format
 msgid "E364: Library call failed for \"%s()\""
-msgstr "E364: Gọi hàm số \"%s()\" của thư viện không thành công"
+msgstr "E364: Gọi hàm \"%s()\" của thư viện không thành công"
 
 #: ../globals.h:1026
 msgid "E19: Mark has invalid line number"
-msgstr "E19: Dấu hiệu chỉ đến một số thứ tự dòng không đúng"
+msgstr "E19: Dấu hiệu chỉ đến một số thứ tự dòng không hợp lệ"
 
 #: ../globals.h:1027
 msgid "E20: Mark not set"
@@ -2747,7 +2747,7 @@ msgstr "E24: Không có chữ viết tắt như vậy"
 
 #: ../globals.h:1033
 msgid "E477: No ! allowed"
-msgstr "E477: Không cho phép !"
+msgstr "E477: Không hợp lệ !"
 
 #: ../globals.h:1035
 msgid "E25: Nvim does not have a built-in GUI"
@@ -2797,7 +2797,7 @@ msgstr "E35: Không có biểu thức chính quy trước"
 
 #: ../globals.h:1047
 msgid "E481: No range allowed"
-msgstr "E481: Không cho phép sử dụng phạm vi"
+msgstr "E481: Không hợp lệ sử dụng phạm vi"
 
 #: ../globals.h:1048
 msgid "E36: Not enough room"
@@ -2824,16 +2824,16 @@ msgstr "E485: Không đọc được tập tin %s"
 
 #: ../globals.h:1054
 msgid "E37: No write since last change (add ! to override)"
-msgstr "E37: Thay đổi chưa được ghi nhớ (thêm ! để bỏ qua ghi nhớ)"
+msgstr "E37: Thay đổi chưa được ghi (thêm ! để bỏ qua ghi nhớ)"
 
 #: ../globals.h:1055
 #, fuzzy
 msgid "E37: No write since last change"
-msgstr "[Thay đổi chưa được ghi nhớ]\n"
+msgstr "[Thay đổi chưa được ghi]\n"
 
 #: ../globals.h:1056
 msgid "E38: Null argument"
-msgstr "E38: Tham sô bằng 0"
+msgstr "E38: Tham sô không có dữ liệu (null)"
 
 #: ../globals.h:1057
 msgid "E39: Number expected"
@@ -2859,7 +2859,7 @@ msgstr "E486: Không tìm thấy mẫu (pattern): %s"
 
 #: ../globals.h:1062
 msgid "E487: Argument must be positive"
-msgstr "E487: Tham số phải là một số dương"
+msgstr "E487: Tham số phải dương"
 
 #: ../globals.h:1064
 msgid "E459: Cannot go back to previous directory"
@@ -2871,11 +2871,11 @@ msgstr "E42: Không có lỗi"
 
 #: ../globals.h:1067
 msgid "E776: No location list"
-msgstr ""
+msgstr "E776: Không có danh sách vị trí"
 
 #: ../globals.h:1068
 msgid "E43: Damaged match string"
-msgstr "E43: Chuỗi tương ứng bị hỏng"
+msgstr "E43: Chuỗi khớp bị hỏng"
 
 #: ../globals.h:1069
 msgid "E44: Corrupted regexp program"
@@ -2901,11 +2901,11 @@ msgstr "E47: Lỗi khi đọc tập tin lỗi"
 
 #: ../globals.h:1078
 msgid "E48: Not allowed in sandbox"
-msgstr "E48: Không cho phép trong hộp cát (sandbox)"
+msgstr "E48: Không hợp lệ trong hộp cát (sandbox)"
 
 #: ../globals.h:1080
 msgid "E523: Not allowed here"
-msgstr "E523: Không cho phép ở đây"
+msgstr "E523: Không hợp lệ ở đây"
 
 #: ../globals.h:1082
 msgid "E359: Screen mode setting not supported"
@@ -2913,11 +2913,11 @@ msgstr "E359: Chế độ màn hình không được hỗ trợ"
 
 #: ../globals.h:1083
 msgid "E49: Invalid scroll size"
-msgstr "E49: Kích thước thanh cuộn không cho phép"
+msgstr "E49: Kích thước thanh cuộn không hợp lệ"
 
 #: ../globals.h:1084
 msgid "E91: 'shell' option is empty"
-msgstr "E91: Tùy chọn 'shell' là một chuỗi rỗng"
+msgstr "E91: Tùy chọn 'shell' rỗng"
 
 #: ../globals.h:1085
 msgid "E255: Couldn't read in sign data!"
@@ -2969,7 +2969,7 @@ msgstr "E592: giá trị của 'winwidth' không thể nhỏ hơn 'winminwidth'"
 
 #: ../globals.h:1099
 msgid "E80: Error while writing"
-msgstr "E80: Lỗi khi ghi nhớ"
+msgstr "E80: Lỗi khi ghi"
 
 #: ../globals.h:1100
 msgid "Zero count"
@@ -2982,21 +2982,21 @@ msgstr "E81: Sử dụng <SID> ngoài phạm vi script"
 #: ../globals.h:1102
 #, fuzzy, c-format
 msgid "E685: Internal error: %s"
-msgstr "E473: Lỗi nội bộ"
+msgstr "E685: Lỗi nội bộ"
 
 #: ../globals.h:1104
 msgid "E363: pattern uses more memory than 'maxmempattern'"
-msgstr ""
+msgstr "E363: mẫu dùng nhiều bộ nhớ hơn 'maxmempattern'"
 
 #: ../globals.h:1105
 #, fuzzy
 msgid "E749: empty buffer"
-msgstr "E279: Đây không phải là bộ đệm SNiFF+"
+msgstr "E279: Đây không phải là bộ đệm SNiF"
 
 #: ../globals.h:1108
 #, fuzzy
 msgid "E682: Invalid search pattern or delimiter"
-msgstr "E383: Chuỗi tìm kiếm không đúng: %s"
+msgstr "E383: Chuỗi tìm kiếm không hợp lệ: %s"
 
 #: ../globals.h:1109
 msgid "E139: File is loaded in another buffer"
@@ -3010,7 +3010,7 @@ msgstr "E236: Phông chữ \"%s\" không có độ rộng cố định (fixed-wi
 #: ../globals.h:1111
 #, fuzzy
 msgid "E850: Invalid register name"
-msgstr "E354: Tên sổ đăng ký không cho phép: '%s'"
+msgstr "E354: Tên register không hợp lệ: '%s'"
 
 #: ../globals.h:1114
 msgid "search hit TOP, continuing at BOTTOM"
@@ -3026,7 +3026,7 @@ msgstr "Thêm một cơ sở dữ liệu mới"
 
 #: ../if_cscope.c:87
 msgid "Query for a pattern"
-msgstr "Yêu cầu theo một mẫu"
+msgstr "Truy vấn cho một mẫu"
 
 #: ../if_cscope.c:89
 msgid "Show this message"
@@ -3360,7 +3360,7 @@ msgstr "-R\t\t\tChế độ chỉ đọc (giống \"view\")"
 
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
-msgstr "-m\t\t\tKhông có khả năng ghi nhớ thay đổi (ghi nhớ tập tin)"
+msgstr "-m\t\t\tKhông có khả năng ghi thay đổi (ghi nhớ tập tin)"
 
 #: ../main.c:2210
 msgid "-M\t\t\tModifications in text not allowed"
@@ -3571,11 +3571,11 @@ msgstr "E295: Lỗi đọc tập tin trao đổi (swap)"
 
 #: ../memfile.c:849
 msgid "E296: Seek error in swap file write"
-msgstr "E296: Lỗi tìm kiếm khi ghi nhớ tập tin trao đổi (swap)"
+msgstr "E296: Lỗi tìm kiếm khi ghi tập tin trao đổi (swap)"
 
 #: ../memfile.c:865
 msgid "E297: Write error in swap file"
-msgstr "E297: Lỗi ghi nhớ tập tin trao đổi (swap)"
+msgstr "E297: Lỗi ghi tập tin trao đổi (swap)"
 
 #: ../memfile.c:1036
 msgid "E300: Swap file already exists (symlink attack?)"
@@ -3755,7 +3755,7 @@ msgid ""
 "(You might want to write out this file under another name\n"
 msgstr ""
 "\n"
-"(Có thể ghi nhớ tập tin với tên khác và so sánh với tập\n"
+"(Có thể ghi tập tin với tên khác và so sánh với tập\n"
 
 #: ../memline.c:1252
 #, fuzzy
@@ -3900,7 +3900,7 @@ msgstr "E314: Cập nhật không thành công"
 #: ../memline.c:1819
 #, c-format
 msgid "E315: ml_get: invalid lnum: %<PRId64>"
-msgstr "E315: ml_get: giá trị lnum không đúng: %<PRId64>"
+msgstr "E315: ml_get: giá trị lnum không hợp lệ: %<PRId64>"
 
 #: ../memline.c:1851
 #, c-format
@@ -3909,7 +3909,7 @@ msgstr "E316: ml_get: không tìm được dòng %<PRId64>"
 
 #: ../memline.c:2236
 msgid "E317: pointer block id wrong 3"
-msgstr "E317: Giá trị của pointer khối số 3 không đúng"
+msgstr "E317: Giá trị của pointer khối số 3 không hợp lệ"
 
 #: ../memline.c:2311
 msgid "stack_idx should be 0"
@@ -3921,7 +3921,7 @@ msgstr "E318: Đã cập nhật quá nhiều khối?"
 
 #: ../memline.c:2511
 msgid "E317: pointer block id wrong 4"
-msgstr "E317: Giá trị của pointer khối số 4 không đúng"
+msgstr "E317: Giá trị của pointer khối số 4 không hợp lệ"
 
 #: ../memline.c:2536
 msgid "deleted block 1?"
@@ -3934,7 +3934,7 @@ msgstr "E320: Không tìm được dòng %<PRId64>"
 
 #: ../memline.c:2916
 msgid "E317: pointer block id wrong"
-msgstr "E317: giá trị của pointer khối không đúng"
+msgstr "E317: giá trị của pointer khối không hợp lệ"
 
 #: ../memline.c:2930
 msgid "pe_line_count is zero"
@@ -3948,7 +3948,7 @@ msgstr "E322: số thứ tự dòng vượt quá giới hạn : %<PRId64>"
 #: ../memline.c:2959
 #, c-format
 msgid "E323: line count wrong in block %<PRId64>"
-msgstr "E323: giá trị đếm dòng không đúng trong khối %<PRId64>"
+msgstr "E323: giá trị đếm dòng không hợp lệ trong khối %<PRId64>"
 
 #: ../memline.c:2999
 msgid "Stack size increases"
@@ -3956,7 +3956,7 @@ msgstr "Kích thước của đống tăng lên"
 
 #: ../memline.c:3038
 msgid "E317: pointer block id wrong 2"
-msgstr "E317: Giá trị của cái chỉ (pointer) khối số 2 không đúng"
+msgstr "E317: Giá trị của cái chỉ (pointer) khối số 2 không hợp lệ"
 
 #: ../memline.c:3070
 #, c-format
@@ -4175,7 +4175,7 @@ msgstr "dòng %4ld:"
 #: ../message.c:617
 #, c-format
 msgid "E354: Invalid register name: '%s'"
-msgstr "E354: Tên sổ đăng ký không cho phép: '%s'"
+msgstr "E354: Tên sổ đăng ký không hợp lệ: '%s'"
 
 #: ../message.c:986
 msgid "Interrupt: "
@@ -4237,7 +4237,7 @@ msgstr ""
 #: ../message.c:3058
 #, fuzzy
 msgid "E766: Insufficient arguments for printf()"
-msgstr "E116: Tham số cho hàm %s đưa ra không đúng"
+msgstr "E116: Tham số cho hàm %s đưa ra không hợp lệ"
 
 #: ../message.c:3119
 msgid "E807: Expected Float argument for printf()"
@@ -4298,7 +4298,7 @@ msgstr "E349: Không có tên ở vị trí con trỏ"
 #: ../normal.c:1866
 #, fuzzy
 msgid "E774: 'operatorfunc' is empty"
-msgstr "E91: Tùy chọn 'shell' là một chuỗi rỗng"
+msgstr "E91: Tùy chọn 'shell' trống"
 
 #: ../normal.c:2637
 msgid "Warning: terminal cannot highlight"
@@ -4418,7 +4418,7 @@ msgstr ""
 
 #: ../ops.c:4455
 msgid "Illegal register name"
-msgstr "Tên sổ đăng ký không cho phép"
+msgstr "Tên sổ đăng ký không hợp lệ"
 
 #: ../ops.c:4533
 msgid ""
@@ -4498,7 +4498,7 @@ msgstr "E519: Tùy chọn không được hỗ trợ"
 
 #: ../option.c:2740
 msgid "E520: Not allowed in a modeline"
-msgstr "E520: Không cho phép trên dòng chế độ (modeline)"
+msgstr "E520: Không hợp lệ trên dòng chế độ (modeline)"
 
 #: ../option.c:2815
 msgid "E846: Key code not set"
@@ -4515,7 +4515,7 @@ msgstr "E522: Không tìm thấy trong termcap"
 #: ../option.c:3335
 #, c-format
 msgid "E539: Illegal character <%s>"
-msgstr "E539: Ký tự không cho phép <%s>"
+msgstr "E539: Ký tự không hợp lệ <%s>"
 
 #: ../option.c:3862
 msgid "E529: Cannot set 'term' to empty string"
@@ -4721,12 +4721,12 @@ msgstr "E375: %%%c không được hỗ trợ trong chuỗi định dạng"
 #: ../quickfix.c:448
 #, c-format
 msgid "E376: Invalid %%%c in format string prefix"
-msgstr "E376: Không cho phép %%%c trong tiền tố của chuỗi định dạng"
+msgstr "E376: Không hợp lệ %%%c trong tiền tố của chuỗi định dạng"
 
 #: ../quickfix.c:454
 #, c-format
 msgid "E377: Invalid %%%c in format string"
-msgstr "E377: Không cho phép %%%c trong chuỗi định dạng"
+msgstr "E377: Không hợp lệ %%%c trong chuỗi định dạng"
 
 #. nothing found
 #: ../quickfix.c:477
@@ -4765,7 +4765,7 @@ msgstr "danh sách lỗi %d của %d; %d lỗi"
 
 #: ../quickfix.c:2427
 msgid "E382: Cannot write, 'buftype' option is set"
-msgstr "E382: Không ghi nhớ được, giá trị 'buftype' không phải là chuỗi rỗng"
+msgstr "E382: Không ghi được, giá trị 'buftype' không phải là chuỗi rỗng"
 
 #: ../quickfix.c:2812
 msgid "E683: File name missing or invalid pattern"
@@ -4789,7 +4789,7 @@ msgstr "E548: yêu cầu một số"
 #: ../regexp.c:359
 #, c-format
 msgid "E369: invalid item in %s%%[]"
-msgstr "E369: phần tử không cho phép trong %s%%[]"
+msgstr "E369: phần tử không hợp lệ trong %s%%[]"
 
 #: ../regexp.c:374
 #, fuzzy, c-format
@@ -4849,7 +4849,7 @@ msgstr "E52: Không có cặp cho \\z("
 #: ../regexp.c:1637
 #, c-format
 msgid "E59: invalid character after %s@"
-msgstr "E59: ký tự không cho phép sau %s@"
+msgstr "E59: ký tự không hợp lệ sau %s@"
 
 #: ../regexp.c:1672
 #, c-format
@@ -4868,7 +4868,7 @@ msgstr "E62: %s%c lồng vào"
 
 #: ../regexp.c:1800
 msgid "E63: invalid use of \\_"
-msgstr "E63: không cho phép sử dụng \\_"
+msgstr "E63: không hợp lệ sử dụng \\_"
 
 #: ../regexp.c:1850
 #, c-format
@@ -4877,21 +4877,21 @@ msgstr "E64: %s%c không theo sau gì cả"
 
 #: ../regexp.c:1902
 msgid "E65: Illegal back reference"
-msgstr "E65: Không cho phép liên kết ngược lại"
+msgstr "E65: Không hợp lệ liên kết ngược lại"
 
 #: ../regexp.c:1943
 msgid "E68: Invalid character after \\z"
-msgstr "E68: Ký tự không cho phép sau \\z"
+msgstr "E68: Ký tự không hợp lệ sau \\z"
 
 #: ../regexp.c:2049 ../regexp_nfa.c:1296
 #, fuzzy, c-format
 msgid "E678: Invalid character after %s%%[dxouU]"
-msgstr "E71: Ký tự không cho phép sau %s%%"
+msgstr "E71: Ký tự không hợp lệ sau %s%%"
 
 #: ../regexp.c:2107
 #, c-format
 msgid "E71: Invalid character after %s%%"
-msgstr "E71: Ký tự không cho phép sau %s%%"
+msgstr "E71: Ký tự không hợp lệ sau %s%%"
 
 #: ../regexp.c:3017
 #, c-format
@@ -4987,7 +4987,7 @@ msgstr ""
 #: ../regexp_nfa.c:6049
 #, fuzzy
 msgid "Could not open temporary log file for writing "
-msgstr "E214: Không tìm thấy tập tin tạm thời (temp) để ghi nhớ"
+msgstr "Không tìm thấy tập tin log tạm thời (temp) để ghi"
 
 #: ../screen.c:7435
 msgid " VREPLACE"
@@ -5019,11 +5019,11 @@ msgstr " (thay thế ảo)"
 
 #: ../screen.c:7449
 msgid " Hebrew"
-msgstr " Do thái"
+msgstr " Tiếng Do Thái"
 
 #: ../screen.c:7454
 msgid " Arabic"
-msgstr " Ả rập"
+msgstr " Tiếng Ả Rập"
 
 #: ../screen.c:7456
 msgid " (lang)"
@@ -5039,7 +5039,7 @@ msgstr " CHẾ ĐỘ VISUAL"
 
 #: ../screen.c:7470
 msgid " VISUAL LINE"
-msgstr " DÒNG VISUAL"
+msgstr " VISUAL LINE"
 
 #: ../screen.c:7471
 msgid " VISUAL BLOCK"
@@ -5064,7 +5064,7 @@ msgstr "đang ghi"
 #: ../search.c:487
 #, c-format
 msgid "E383: Invalid search string: %s"
-msgstr "E383: Chuỗi tìm kiếm không đúng: %s"
+msgstr "E383: Chuỗi tìm kiếm không hợp lệ: %s"
 
 #: ../search.c:832
 #, c-format
@@ -5087,7 +5087,7 @@ msgstr " (gồm cả những tương ứng đã liệt kê trước đây)"
 #. cursor at status line
 #: ../search.c:4104
 msgid "--- Included files "
-msgstr "--- Tập tin tính đến "
+msgstr "--- Bao gồm các tập tin "
 
 #: ../search.c:4106
 msgid "not found "
@@ -5151,7 +5151,7 @@ msgstr ""
 #: ../spell.c:951
 #, fuzzy
 msgid "E759: Format error in spell file"
-msgstr "E297: Lỗi ghi nhớ tập tin trao đổi (swap)"
+msgstr "E297: Lỗi ghi tập tin trao đổi (swap)"
 
 #: ../spell.c:952
 msgid "E758: Truncated spell file"
@@ -5197,7 +5197,7 @@ msgstr "Đang sử dụng tập tin trao đổi (swap) \"%s\""
 #: ../spell.c:2496
 #, fuzzy
 msgid "E757: This does not look like a spell file"
-msgstr "E307: %s không phải là tập tin trao đổi (swap) của Vim"
+msgstr "E307: Cái này không có vẻ gì là spell file"
 
 #: ../spell.c:2501
 msgid "E771: Old spell file, needs to be updated"
@@ -5210,37 +5210,37 @@ msgstr ""
 #: ../spell.c:2602
 #, fuzzy
 msgid "E770: Unsupported section in spell file"
-msgstr "E297: Lỗi ghi nhớ tập tin trao đổi (swap)"
+msgstr ""
 
 #: ../spell.c:3762
 #, fuzzy, c-format
 msgid "Warning: region %s not supported"
-msgstr "E519: Tùy chọn không được hỗ trợ"
+msgstr "E519: Vùng %s không được hỗ trợ"
 
 #: ../spell.c:4550
 #, fuzzy, c-format
 msgid "Reading affix file %s ..."
-msgstr "Tìm kiếm tập tin thẻ ghi %s"
+msgstr "Đang đọc tập tin thẻ ghi %s ..."
 
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
 msgid "Conversion failure for word in %s line %d: %s"
-msgstr ""
+msgstr "Chuyển mã thất bại cho từ trong %s dòng %d: %s"
 
 #: ../spell.c:4630 ../spell.c:6170
 #, c-format
 msgid "Conversion in %s not supported: from %s to %s"
-msgstr ""
+msgstr "Chuyển đổi trong %s không được hỗ trợ: từ %s sang %s"
 
 #: ../spell.c:4642
 #, c-format
 msgid "Invalid value for FLAG in %s line %d: %s"
-msgstr ""
+msgstr "Giá trị CỜ không hợp lệ trong %s dòng %d: %s"
 
 #: ../spell.c:4655
 #, c-format
 msgid "FLAG after using flags in %s line %d: %s"
-msgstr ""
+msgstr "CỜ sau khi sử dụng các cờ trong %s dòng %d: %s"
 
 #: ../spell.c:4723
 #, c-format
@@ -5248,6 +5248,8 @@ msgid ""
 "Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in %s line "
 "%d"
 msgstr ""
+"Khai báo COMPOUNDFORBIDFLAG sau mục PFX có thể cho kết quả không chính xác trong %s dòng "
+"%d"
 
 #: ../spell.c:4731
 #, c-format
@@ -5255,6 +5257,8 @@ msgid ""
 "Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in %s line "
 "%d"
 msgstr ""
+"Khai báo COMPOUNDPERMITFLAG sau mục PFX có thể cho kết quả không chính xác trong %s dòng "
+"%d"
 
 #: ../spell.c:4747
 #, c-format
@@ -5444,7 +5448,7 @@ msgstr ""
 #: ../spell.c:6224
 #, fuzzy, c-format
 msgid "Invalid region nr in %s line %d: %s"
-msgstr "E573: Sử dụng id máy chủ không đúng: %s"
+msgstr "E573: Sử dụng id máy chủ không hợp lệ: %s"
 
 #: ../spell.c:6230
 #, c-format
@@ -5493,17 +5497,17 @@ msgstr ""
 
 #: ../spell.c:7820
 msgid "E751: Output file name must not have region name"
-msgstr ""
+msgstr "E751: Tên tập tin đầu ra không được có tên vùng"
 
 #: ../spell.c:7822
 #, fuzzy
 msgid "E754: Only up to 8 regions supported"
-msgstr "E519: Tùy chọn không được hỗ trợ"
+msgstr "E754: Chỉ hỗ trợ tối đa 8 vùng"
 
 #: ../spell.c:7846
 #, fuzzy, c-format
 msgid "E755: Invalid region in %s"
-msgstr "E15: Biểu thức không cho phép: %s"
+msgstr "E755: Vùng không hợp lệ: %s"
 
 #: ../spell.c:7907
 msgid "Warning: both compounding and NOBREAK specified"
@@ -5516,7 +5520,7 @@ msgstr "Ghi tập tin viminfo \"%s\""
 
 #: ../spell.c:7925
 msgid "Done!"
-msgstr ""
+msgstr "Xong!"
 
 #: ../spell.c:8034
 #, c-format
@@ -5531,20 +5535,20 @@ msgstr ""
 #: ../spell.c:8117
 #, c-format
 msgid "Word '%.*s' added to %s"
-msgstr ""
+msgstr "Từ '%.*s' được thêm vào %s"
 
 #: ../spell.c:8381
 msgid "E763: Word characters differ between spell files"
-msgstr ""
+msgstr "E763: Ký tự từ khác nhau giữa các tập tin chính tả"
 
 #: ../spell.c:8684
 msgid "Sorry, no suggestions"
-msgstr ""
+msgstr "Xin lỗi, không có gợi ý"
 
 #: ../spell.c:8687
 #, fuzzy, c-format
 msgid "Sorry, only %<PRId64> suggestions"
-msgstr " trên %<PRId64> dòng"
+msgstr "Xin lỗi, chỉ có gợi ý %<PRId64>"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -5556,7 +5560,7 @@ msgstr "Ghi nhớ thay đổi vào \"%.*s\"?"
 #: ../spell.c:8737
 #, c-format
 msgid " < \"%.*s\""
-msgstr ""
+msgstr " < \"%.*s\""
 
 #: ../spell.c:8882
 #, fuzzy
@@ -5576,17 +5580,17 @@ msgstr "E307: %s không phải là tập tin trao đổi (swap) của Vim"
 #: ../spell.c:9282
 #, c-format
 msgid "E779: Old .sug file, needs to be updated: %s"
-msgstr ""
+msgstr "E779: Tập tin .sug đã cũ, cần cập nhật: %s"
 
 #: ../spell.c:9286
 #, c-format
 msgid "E780: .sug file is for newer version of Vim: %s"
-msgstr ""
+msgstr "E780: Tập tin .sug dành cho phiên bản Vim mới hơn: %s"
 
 #: ../spell.c:9295
 #, c-format
 msgid "E781: .sug file doesn't match .spl file: %s"
-msgstr ""
+msgstr "E781: Tập tin .sug không khớp với tập tin .spl: %s"
 
 #: ../spell.c:9305
 #, fuzzy, c-format
@@ -5606,7 +5610,7 @@ msgstr "Không có phần tử cú pháp nào được định nghĩa cho bộ �
 #: ../syntax.c:3083 ../syntax.c:3104 ../syntax.c:3127
 #, c-format
 msgid "E390: Illegal argument: %s"
-msgstr "E390: Tham số không cho phép: %s"
+msgstr "E390: Tham số không hợp lệ: %s"
 
 #: ../syntax.c:3299
 #, c-format
@@ -5681,7 +5685,7 @@ msgstr "E395: không được sử dụng tham số contains ở đây"
 #: ../syntax.c:4096
 #, fuzzy
 msgid "E844: invalid cchar value"
-msgstr "E474: Tham số không cho phép"
+msgstr "E474: Tham số không hợp lệ"
 
 #: ../syntax.c:4107
 msgid "E393: group[t]here not accepted here"
@@ -5743,7 +5747,7 @@ msgstr "E403: đồng bộ hóa cú pháp: mẫu tiếp tục của dòng chỉ 
 #: ../syntax.c:5169
 #, c-format
 msgid "E404: Illegal arguments: %s"
-msgstr "E404: Tham số không cho phép: %s"
+msgstr "E404: Tham số không hợp lệ: %s"
 
 #: ../syntax.c:5217
 #, c-format
@@ -5758,7 +5762,7 @@ msgstr "E406: Tham số trống rỗng: %s"
 #: ../syntax.c:5240
 #, c-format
 msgid "E407: %s not allowed here"
-msgstr "E407: %s không được cho phép ở đây"
+msgstr "E407: %s không được hợp lệ ở đây"
 
 #: ../syntax.c:5246
 #, c-format
@@ -5773,7 +5777,7 @@ msgstr "E409: Tên nhóm không biết: %s"
 #: ../syntax.c:5512
 #, c-format
 msgid "E410: Invalid :syntax subcommand: %s"
-msgstr "E410: Câu lệnh con :syntax không đúng: %s"
+msgstr "E410: Câu lệnh con :syntax không hợp lệ: %s"
 
 #: ../syntax.c:5854
 msgid ""
@@ -5821,7 +5825,7 @@ msgstr "E417: thiếu tham số: %s"
 #: ../syntax.c:6446
 #, c-format
 msgid "E418: Illegal value: %s"
-msgstr "E418: Giá trị không cho phép: %s"
+msgstr "E418: Giá trị không hợp lệ: %s"
 
 #: ../syntax.c:6496
 msgid "E419: FG color unknown"
@@ -5834,7 +5838,7 @@ msgstr "E420: Không rõ màu nền sau (BG)"
 #: ../syntax.c:6564
 #, c-format
 msgid "E421: Color name or number not recognized: %s"
-msgstr "E421: Tên hoặc số của màu không được nhận ra: %s"
+msgstr "E421: Tên hoặc số của màu không được nhận dạng: %s"
 
 #: ../syntax.c:6714
 #, c-format
@@ -5844,7 +5848,7 @@ msgstr "E422: mã terminal quá dài: %s"
 #: ../syntax.c:6753
 #, c-format
 msgid "E423: Illegal argument: %s"
-msgstr "E423: Tham số không cho phép: %s"
+msgstr "E423: Tham số không hợp lệ: %s"
 
 #: ../syntax.c:6925
 msgid "E424: Too many different highlighting attributes in use"
@@ -5852,15 +5856,15 @@ msgstr "E424: Sử dụng quá nhiều thuộc tính chiếu sáng cú pháp"
 
 #: ../syntax.c:7427
 msgid "E669: Unprintable character in group name"
-msgstr "E669: Ký tự không thể tin ra trong tên nhóm"
+msgstr "E669: Ký tự không thể in trong tên nhóm"
 
 #: ../highlight_group.c:1756
 msgid "E5248: Invalid character in group name"
-msgstr "E5248: Ký tự không cho phép trong tên nhóm"
+msgstr "E5248: Ký tự không hợp lệ trong tên nhóm"
 
 #: ../syntax.c:7448
 msgid "E849: Too many highlight and syntax groups"
-msgstr ""
+msgstr "E849: Quá nhiều nhóm tô sáng và cú pháp"
 
 #: ../tag.c:104
 msgid "E555: at bottom of tag stack"
@@ -5935,7 +5939,7 @@ msgstr "Tìm kiếm tập tin thẻ ghi %s"
 
 #: ../tag.c:1545
 msgid "Ignoring long line in tags file"
-msgstr ""
+msgstr "Bỏ qua dòng dài trong tập tin thẻ ghi"
 
 #: ../tag.c:1915
 #, c-format
@@ -5968,7 +5972,7 @@ msgstr "E435: Không tìm thấy thẻ ghi, đang thử đoán!"
 #: ../tag.c:2797
 #, c-format
 msgid "Duplicate field name: %s"
-msgstr ""
+msgstr "Tên trường lặp lại: %s"
 
 #: ../term.c:1442
 msgid "' not known. Available builtin terminals are:"
@@ -6016,31 +6020,31 @@ msgstr "Vim: Lỗi đọc dữ liệu nhập, thoát...\n"
 #. * file in a way it becomes shorter.
 #: ../undo.c:379
 msgid "E881: Line count changed unexpectedly"
-msgstr ""
+msgstr "E881: Số dòng thay đổi bất ngờ"
 
 #: ../undo.c:627
 #, fuzzy, c-format
 msgid "E828: Cannot open undo file for writing: %s"
-msgstr "E212: Không thể mở tập tin để ghi nhớ"
+msgstr "E212: Không thể mở tập tin để ghi"
 
 #: ../undo.c:717
 #, c-format
 msgid "E825: Corrupted undo file (%s): %s"
-msgstr ""
+msgstr "E825: Tập tin hoàn tác bị hỏng (%s): %s"
 
 #: ../undo.c:1039
 msgid "Cannot write undo file in any directory in 'undodir'"
-msgstr ""
+msgstr "Không thể ghi tập tin hoàn tác vào bất kỳ thư mục nào trong 'undodir'"
 
 #: ../undo.c:1074
 #, c-format
 msgid "Will not overwrite with undo file, cannot read: %s"
-msgstr ""
+msgstr "Sẽ không ghi đè bằng tập tin hoàn tác, không thể đọc: %s"
 
 #: ../undo.c:1092
 #, c-format
 msgid "Will not overwrite, this is not an undo file: %s"
-msgstr ""
+msgstr "Sẽ không ghi đè, đây không phải là tập tin hoàn tác: %s"
 
 #: ../undo.c:1108
 msgid "Skipping undo file write, nothing to undo"
@@ -6054,7 +6058,7 @@ msgstr "Ghi tập tin viminfo \"%s\""
 #: ../undo.c:1213
 #, fuzzy, c-format
 msgid "E829: write error in undo file: %s"
-msgstr "E297: Lỗi ghi nhớ tập tin trao đổi (swap)"
+msgstr "E829: lỗi ghi trong tập tin hoàn tác: %s"
 
 #: ../undo.c:1280
 #, c-format
@@ -6083,20 +6087,20 @@ msgstr "E484: Không mở được tập tin %s"
 
 #: ../undo.c:1328
 msgid "File contents changed, cannot use undo info"
-msgstr ""
+msgstr "Nội dung file đã thay đổi, không thể dùng thông tin hoàn tác"
 
 #: ../undo.c:1497
 #, fuzzy, c-format
 msgid "Finished reading undo file %s"
-msgstr "thực hiện xong %s"
+msgstr "Đã đọc xong tập tin hoàn tác %s"
 
 #: ../undo.c:1586 ../undo.c:1812
 msgid "Already at oldest change"
-msgstr ""
+msgstr "Đã ở thay đổi cũ nhất"
 
 #: ../undo.c:1597 ../undo.c:1814
 msgid "Already at newest change"
-msgstr ""
+msgstr "Đã ở thay đổi mới nhất"
 
 #: ../undo.c:1806
 #, fuzzy, c-format
@@ -6105,7 +6109,7 @@ msgstr "E92: Bộ đệm %<PRId64> không được tìm thấy"
 
 #: ../undo.c:1979
 msgid "E438: u_undo: line numbers wrong"
-msgstr "E438: u_undo: số thứ tự dòng không đúng"
+msgstr "E438: u_undo: số thứ tự dòng không hợp lệ"
 
 #: ../undo.c:2183
 #, fuzzy
@@ -6144,16 +6148,16 @@ msgstr "Trên %<PRId64> dòng %s %d lần"
 
 #: ../undo.c:2228
 msgid "before"
-msgstr ""
+msgstr "trước"
 
 #: ../undo.c:2228
 msgid "after"
-msgstr ""
+msgstr "sau"
 
 #: ../undo.c:2325
 #, fuzzy
 msgid "Nothing to undo"
-msgstr "Không tìm thấy ánh xạ"
+msgstr "Không có gì để hoàn tác"
 
 #: ../undo.c:2330
 msgid "number changes  when               saved"
@@ -6167,7 +6171,7 @@ msgstr "%<PRId64> Cột; "
 #: ../undo.c:2372
 #, fuzzy
 msgid "E790: undojoin is not allowed after undo"
-msgstr "E407: %s không được cho phép ở đây"
+msgstr ""
 
 #: ../undo.c:2466
 msgid "E439: undo list corrupt"
@@ -6234,11 +6238,11 @@ msgstr "         tập tin vimrc của người dùng: \""
 
 #: ../version.c:677
 msgid " 2nd user vimrc file: \""
-msgstr "  tập tin vimrc thứ hai của người dùng: \""
+msgstr " tập tin vimrc thứ hai của người dùng: \""
 
 #: ../version.c:682
 msgid " 3rd user vimrc file: \""
-msgstr "  tập tin vimrc thứ ba của người dùng: \""
+msgstr " tập tin vimrc thứ ba của người dùng: \""
 
 #: ../version.c:687
 msgid "      user exrc file: \""
@@ -6282,11 +6286,11 @@ msgstr "Do Bram Moolenaar và những người khác thực hiện"
 
 #: ../version.c:774
 msgid "Vim is open source and freely distributable"
-msgstr "Vim là chương trình mã nguồn mở và phân phối tự do"
+msgstr "Vim là phần mềm mã nguồn mở và có thể phân phối tự do"
 
 #: ../version.c:776
 msgid "Help poor children in Uganda!"
-msgstr "Hãy giúp đỡ trẻ em nghèo Uganda!"
+msgstr "Hãy cứu giúp trẻ em nghèo ở Uganda!"
 
 #: ../version.c:777
 msgid "type  :help iccf<Enter>       for information "
@@ -6298,7 +6302,7 @@ msgstr "    hãy gõ :q<Enter>               để thoát khỏi chương trình
 
 #: ../version.c:780
 msgid "type  :help<Enter>  or  <F1>  for on-line help"
-msgstr " hãy gõ :help<Enter> hoặc <F1>  để có được trợ giúp        "
+msgstr " hãy gõ :help<Enter> hoặc <F1>  để xem trợ giúp"
 
 #: ../version.c:781
 msgid "type  :help version7<Enter>   for version info"
@@ -6306,7 +6310,7 @@ msgstr "hãy gõ :help version7<Enter>   để biết về phiên bản này  "
 
 #: ../version.c:784
 msgid "Running in Vi compatible mode"
-msgstr "Làm việc trong chế độ tương thích với Vi"
+msgstr "Đang trong chế độ tương thích với Vi"
 
 #: ../version.c:785
 msgid "type  :set nocp<Enter>        for Vim defaults"
@@ -6369,11 +6373,17 @@ msgstr "E444: Không được đóng cửa sổ cuối cùng"
 
 #: ../window.c:2717
 msgid "E445: Other window contains changes"
-msgstr "E445: Cửa sổ khác có thay đổi chưa được ghi nhớ"
+msgstr "E445: Cửa sổ khác có thay đổi chưa được ghi"
 
 #: ../window.c:4805
 msgid "E446: No file name under cursor"
 msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
+
+msgid "No tutorial with that name found"
+msgstr "Không tìm thấy hướng dẫn (tutorial) có tên đó"
+
+msgid "Only one argument accepted (check spaces)"
+msgstr "Chỉ chấp nhận một tham số (vui lòng kiểm tra dấu cách)"
 
 #~ msgid "[Error List]"
 #~ msgstr "[Danh sách lỗi]"
@@ -6404,13 +6414,13 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "E241: Không thể gửi tin nhắn tới %s"
 
 #~ msgid "E130: Undefined function: %s"
-#~ msgstr "E130: Hàm số %s chưa xác định"
+#~ msgstr "E130: Hàm %s chưa xác định"
 
 #~ msgid "Save As"
-#~ msgstr "Ghi nhớ như"
+#~ msgstr "Lưu như"
 
 #~ msgid "Source Vim script"
-#~ msgstr "Thực hiện script của Vim"
+#~ msgstr "Thực thi Vimscript"
 
 #~ msgid "Edit File"
 #~ msgstr "Soạn thảo tập tin"
@@ -6428,7 +6438,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "Vị trí cửa sổ: X %d, Y %d"
 
 #~ msgid "Save Redirection"
-#~ msgstr "Chuyển hướng ghi nhớ"
+#~ msgstr "Chuyển hướng ghi"
 
 #~ msgid "Save View"
 #~ msgstr "Ghi nhớ vẻ ngoài"
@@ -6452,10 +6462,10 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "[LỖI CHUYỂN BẢNG MÃ]"
 
 #~ msgid "NetBeans disallows writes of unmodified buffers"
-#~ msgstr "NetBeans không cho phép ghi nhớ bộ đệm chưa có thay đổi nào"
+#~ msgstr "NetBeans không hợp lệ ghi bộ đệm chưa có thay đổi nào"
 
 #~ msgid "Partial writes disallowed for NetBeans buffers"
-#~ msgstr "Ghi nhớ một phần bộ đệm NetBeans không được cho phép"
+#~ msgstr "Ghi nhớ một phần bộ đệm NetBeans không được hợp lệ"
 
 #~ msgid "E460: The resource fork would be lost (add ! to override)"
 #~ msgstr ""
@@ -6500,13 +6510,13 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 
 #~ msgid "E665: Cannot start GUI, no valid font found"
 #~ msgstr ""
-#~ "E665: Không chạy được giao diện đồ họa GUI, đưa ra phông chữ không đúng"
+#~ "E665: Không chạy được giao diện đồ họa GUI, đưa ra phông chữ không hợp lệ"
 
 #~ msgid "E231: 'guifontwide' invalid"
-#~ msgstr "E231: 'guifontwide' có giá trị không đúng"
+#~ msgstr "E231: 'guifontwide' có giá trị không hợp lệ"
 
 #~ msgid "E599: Value of 'imactivatekey' is invalid"
-#~ msgstr "E599: Giá trị của 'imactivatekey' không đúng"
+#~ msgstr "E599: Giá trị của 'imactivatekey' không hợp lệ"
 
 #~ msgid "E254: Cannot allocate color %s"
 #~ msgstr "E254: Không chỉ định được màu %s"
@@ -6581,7 +6591,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "Lựa chọn"
 
 #~ msgid "Undo"
-#~ msgstr "Hủy thao tác"
+#~ msgstr "Hoàn tác"
 
 #~ msgid "E671: Cannot find window title \"%s\""
 #~ msgstr "E671: Không tìm được tiêu đề cửa sổ \"%s\""
@@ -6651,7 +6661,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "E626: không lấy được thông tin về cơ sở dữ liệu cscope"
 
 #~ msgid "E569: maximum number of cscope connections reached"
-#~ msgstr "E569: đã đạt tới số kết nối lớn nhất cho phép với cscope"
+#~ msgstr "E569: đã đạt tới số kết nối lớn nhất hợp lệ với cscope"
 
 #~ msgid ""
 #~ "E263: Sorry, this command is disabled, the Python library could not be "
@@ -6670,7 +6680,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "giá trị softspace phải là một số nguyên"
 
 #~ msgid "invalid attribute"
-#~ msgstr "thuộc tính không đúng"
+#~ msgstr "thuộc tính không hợp lệ"
 
 #~ msgid "writelines() requires list of strings"
 #~ msgstr "writelines() yêu cầu một danh sách các chuỗi"
@@ -6679,7 +6689,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "E264: Python: Lỗi khi bắt đầu sử dụng vật thể I/O"
 
 #~ msgid "invalid expression"
-#~ msgstr "biểu thức không đúng"
+#~ msgstr "biểu thức không hợp lệ"
 
 #~ msgid "expressions disabled at compile time"
 #~ msgstr "biểu thức bị tắt khi biên dịch"
@@ -6694,7 +6704,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "<vật thể của bộ đệm (bị xóa) tại %8lX>"
 
 #~ msgid "invalid mark name"
-#~ msgstr "tên dấu hiệu không đúng"
+#~ msgstr "tên dấu hiệu không hợp lệ"
 
 #~ msgid "no such buffer"
 #~ msgstr "không có bộ đệm như vậy"
@@ -6751,7 +6761,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "Hiển thị hạng cơ bản của"
 
 #~ msgid "Show overridden member function"
-#~ msgstr "Hiển thị hàm số bị nạp đè lên"
+#~ msgstr "Hiển thị hàm bị nạp đè lên"
 
 #~ msgid "Retrieve from file"
 #~ msgstr "Nhận từ tập tin"
@@ -6827,7 +6837,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "E278: SNiFF+ chưa được kết nối"
 
 #~ msgid "Sniff: Error during write. Disconnected"
-#~ msgstr "Sniff: Lỗi trong thời gian ghi nhớ. Ngắt kết nối"
+#~ msgstr "Sniff: Lỗi trong thời gian ghi. Ngắt kết nối"
 
 #~ msgid "not implemented yet"
 #~ msgstr "tạm thời chưa được thực thi"
@@ -6904,7 +6914,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "E248: Gửi câu lệnh vào chương trình khác không thành công"
 
 #~ msgid "E251: VIM instance registry property is badly formed.  Deleted!"
-#~ msgstr "E251: Thuộc tính đăng ký của Vim được định dạng không đúng.  Xóa!"
+#~ msgstr "E251: Thuộc tính đăng ký của Vim được định dạng không hợp lệ.  Xóa!"
 
 #~ msgid "This Vim was not compiled with the diff feature."
 #~ msgstr "Vim không được biên dịch với tính năng hỗ trợ xem khác biệt (diff)."
@@ -7106,7 +7116,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr ": Gửi biểu thức không thành công.\n"
 
 #~ msgid "E543: Not a valid codepage"
-#~ msgstr "E543: Bảng mã không cho phép"
+#~ msgstr "E543: Bảng mã không hợp lệ"
 
 #~ msgid "E285: Failed to create input context"
 #~ msgstr "E285: Không tạo được nội dung nhập vào"
@@ -7182,7 +7192,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ "tác (console)"
 
 #~ msgid "Vim: preserving files...\n"
-#~ msgstr "Vim: ghi nhớ các tập tin...\n"
+#~ msgstr "Vim: ghi các tập tin...\n"
 
 #~ msgid "Vim: Finished.\n"
 #~ msgstr "Vim: Đã xong.\n"
@@ -7213,7 +7223,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "E341: Lỗi nội bộ: lalloc(%<PRId64>, )"
 
 #~ msgid "E547: Illegal mouseshape"
-#~ msgstr "E547: Dạng trỏ chuột không cho phép"
+#~ msgstr "E547: Dạng trỏ chuột không hợp lệ"
 
 #~ msgid "Enter encryption key: "
 #~ msgstr "Nhập mật khẩu để mã hóa: "
@@ -7232,7 +7242,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 
 #~ msgid "E668: Wrong access mode for NetBeans connection info file: \"%s\""
 #~ msgstr ""
-#~ "E668: Chế độ truy cập thông tin về liên kết với NetBeans không đúng: \"%s"
+#~ "E668: Chế độ truy cập thông tin về liên kết với NetBeans không hợp lệ: \"%s"
 #~ "\""
 
 #~ msgid "read from Netbeans socket"
@@ -7257,13 +7267,13 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "E597: không chọn được bộ phông chữ"
 
 #~ msgid "E598: Invalid fontset"
-#~ msgstr "E598: Bộ phông chữ không đúng"
+#~ msgstr "E598: Bộ phông chữ không hợp lệ"
 
 #~ msgid "E533: can't select wide font"
 #~ msgstr "E533: không chọn được phông chữ với các ký tự có chiều rộng gấp đôi"
 
 #~ msgid "E534: Invalid wide font"
-#~ msgstr "E534: Phông chữ, với ký tự có chiều rộng gấp đôi, không đúng"
+#~ msgstr "E534: Phông chữ, với ký tự có chiều rộng gấp đôi, không hợp lệ"
 
 #~ msgid "E538: No mouse support"
 #~ msgstr "E538: Chuột không được hỗ trợ"
@@ -7330,10 +7340,10 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "Đang in '%s'"
 
 #~ msgid "E244: Illegal charset name \"%s\" in font name \"%s\""
-#~ msgstr "E244: Tên bảng mã không cho phép \"%s\" trong tên phông chữ \"%s\""
+#~ msgstr "E244: Tên bảng mã không hợp lệ \"%s\" trong tên phông chữ \"%s\""
 
 #~ msgid "E245: Illegal char '%c' in font name \"%s\""
-#~ msgstr "E245: Ký tự không cho phép '%c' trong tên phông chữ \"%s\""
+#~ msgstr "E245: Ký tự không hợp lệ '%c' trong tên phông chữ \"%s\""
 
 #~ msgid "Vim: Double signal, exiting\n"
 #~ msgstr "Vim: Tín hiệu đôi, thoát\n"
@@ -7358,7 +7368,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "Kiểm tra màn hình X không thành công"
 
 #~ msgid "Opening the X display timed out"
-#~ msgstr "Không mở được màn hình X trong thời gian cho phép (time out)"
+#~ msgstr "Không mở được màn hình X trong thời gian hợp lệ (time out)"
 
 #~ msgid ""
 #~ "\n"
@@ -7395,7 +7405,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "Mở màn hình X không thành công"
 
 #~ msgid "XSMP handling save-yourself request"
-#~ msgstr "XSMP xử lý yêu cầu tự động ghi nhớ"
+#~ msgstr "XSMP xử lý yêu cầu tự động ghi"
 
 #~ msgid "XSMP opening connection"
 #~ msgstr "XSMP mở kết nối"
@@ -7419,7 +7429,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "Không nạp được vim32.dll!"
 
 #~ msgid "Could not fix up function pointers to the DLL!"
-#~ msgstr "Không sửa được cái chỉ (pointer) hàm số tới DLL!"
+#~ msgstr "Không sửa được cái chỉ (pointer) hàm tới DLL!"
 
 #~ msgid "shell returned %d"
 #~ msgstr "thoát shell với mã %d"
@@ -7678,7 +7688,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 
 #~ msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
 #~ msgstr ""
-#~ "E299: Không cho phép sự tính toán Perl trong hộp cát mà không có môđun An "
+#~ "E299: Không hợp lệ sự tính toán Perl trong hộp cát mà không có môđun An "
 #~ "toàn"
 
 #~ msgid "Edit with &multiple Vims"
@@ -7715,7 +7725,7 @@ msgstr "E446: Không có tên tập tin tại vị trí con trỏ"
 #~ msgstr "E235: Không rõ phông chữ: %s"
 
 #~ msgid "E448: Could not load library function %s"
-#~ msgstr "E448: Nạp hàm số %s của thư viện không thành công"
+#~ msgstr "E448: Nạp hàm %s của thư viện không thành công"
 
 #~ msgid "E26: Hebrew cannot be used: Not enabled at compile time\n"
 #~ msgstr "E26: Tiếng Do thái không được chọn khi biên dịch\n"
