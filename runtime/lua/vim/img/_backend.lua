@@ -8,4 +8,5 @@
 
 return vim._defer_require('vim.img._backend', {
   iterm2 = ..., --- @module 'vim.img._backend.iterm2'
+  kitty = ..., --- @module 'vim.img._backend.kitty'
 })
