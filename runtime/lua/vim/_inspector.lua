@@ -146,6 +146,13 @@ end
 ---
 ---Can also be shown with `:Inspect`. [:Inspect]()
 ---
+---Example: To bind this function to the vim-scriptease
+---inspired `zS` in Normal mode:
+---
+---```lua
+---vim.keymap.set('n', 'zS', vim.show_pos)
+---```
+---
 ---@since 11
 ---@param bufnr? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
