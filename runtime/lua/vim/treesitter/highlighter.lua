@@ -302,7 +302,8 @@ local function on_range_impl(self, buf, range_br, range_bc, range_er, range_ec, 
     local root_node = state.tstree:root()
     local root_br, root_bc, root_er, root_ec = root_node:range()
 
-    local root_intersects = false
+    --- @type boolean
+    local root_intersects
 
     local range_empty = cmp_eq(range_br, range_bc, range_er, range_ec)
     local root_empty = cmp_eq(root_br, root_bc, root_er, root_ec)
