@@ -167,6 +167,7 @@ The following new features were added.
 API
 
 • |nvim__ns_set()| can set properties for a namespace
+• |vim.fn.getfpermoctal()| can get the file permissions in octal
 
 DEFAULTS
 

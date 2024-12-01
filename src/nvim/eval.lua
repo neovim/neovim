@@ -3952,6 +3952,24 @@ M.funcs = {
     returns = 'string',
     signature = 'getfperm({fname})',
   },
+  getfpermoctal = {
+    args = 1,
+    base = 1,
+    desc = [=[
+      This is a copy of |getfperm()|, but the result is in octal (like o744).
+      The result is a String, which is the read, write, and execute
+      permissions of the given file {fname}, represented in octal, with an o
+      prepended.
+      If {fname} does not exist or its directory cannot be read, an
+      empty string is returned.
+    ]=],
+    fast = true,
+    name = 'getfpermoctal',
+    params = { { 'fname', 'string' } },
+    returns = 'string',
+    signature = 'getfpermoctal({fname})',
+  },
+
   getfsize = {
     args = 1,
     base = 1,

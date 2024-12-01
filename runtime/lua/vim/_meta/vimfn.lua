@@ -3154,6 +3154,17 @@ function vim.fn.getfontname(name) end
 --- @return string
 function vim.fn.getfperm(fname) end
 
+--- This is a copy of |getfperm()|, but the result is in octal (like o744).
+--- The result is a String, which is the read, write, and execute
+--- permissions of the given file {fname}, represented in octal, with an o
+--- prepended.
+--- If {fname} does not exist or its directory cannot be read, an
+--- empty string is returned.
+---
+--- @param fname string
+--- @return string
+function vim.fn.getfpermoctal(fname) end
+
 --- The result is a Number, which is the size in bytes of the
 --- given file {fname}.
 --- If {fname} is a directory, 0 is returned.

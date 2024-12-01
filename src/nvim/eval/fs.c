@@ -409,6 +409,22 @@ void f_getfperm(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_string = perm;
 }
 
+/// "getfpermoctal({fname})" function
+void f_getfpermoctal(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  char *octal_perm = NULL;
+
+  const char *filename = tv_get_string(&argvars[0]);
+  int32_t file_perm = os_getperm(filename);
+  if (file_perm >= 0) {
+    octal_perm = xmalloc(5);
+    int statchmod = file_perm & (S_IRWXU | S_IRWXG | S_IRWXO);
+    snprintf(octal_perm, sizeof(octal_perm), "o%o", statchmod);
+  }
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = octal_perm;
+}
+
 /// "getfsize({fname})" function
 void f_getfsize(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
