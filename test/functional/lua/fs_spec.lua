@@ -218,7 +218,11 @@ describe('vim.fs', function()
 
   describe('find()', function()
     before_each(function()
-      vim.uv.fs_symlink(test_source_path .. '/build', test_source_path .. '/build_link')
+      vim.uv.fs_symlink(
+        test_source_path .. '/build',
+        test_source_path .. '/build_link',
+        { junction = true, dir = true }
+      )
     end)
 
     after_each(function()
