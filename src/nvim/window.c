@@ -7065,17 +7065,17 @@ int last_stl_height(bool morewin)
 }
 
 /// Return the minimal number of rows that is needed on the screen to display
-/// the current number of windows.
-int min_rows(void)
+/// the current number of windows for the given tab page.
+int min_rows(tabpage_T *tp) FUNC_ATTR_NONNULL_ALL
 {
   if (firstwin == NULL) {       // not initialized yet
     return MIN_LINES;
   }
 
-  int total = frame_minheight(curtab->tp_topframe, NULL);
+  int total = frame_minheight(tp->tp_topframe, NULL);
   total += tabline_height() + global_stl_height();
-  if (p_ch > 0) {
-    total += 1;           // count the room for the command line
+  if ((tp == curtab ? p_ch : tp->tp_ch_used) > 0) {
+    total++;  // count the room for the command line
   }
   return total;
 }
@@ -7091,12 +7091,12 @@ int min_rows_for_all_tabpages(void)
   int total = 0;
   FOR_ALL_TABS(tp) {
     int n = frame_minheight(tp->tp_topframe, NULL);
+    if ((tp == curtab ? p_ch : tp->tp_ch_used) > 0) {
+      n++;  // count the room for the command line
+    }
     total = MAX(total, n);
   }
   total += tabline_height() + global_stl_height();
-  if (p_ch > 0) {
-    total += 1;           // count the room for the command line
-  }
   return total;
 }
 

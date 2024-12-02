@@ -1977,8 +1977,8 @@ static const char *did_set_cmdheight(optset_T *args)
 {
   OptInt old_value = args->os_oldval.number;
 
-  if (p_ch > Rows - min_rows() + 1) {
-    p_ch = Rows - min_rows() + 1;
+  if (p_ch > Rows - min_rows(curtab) + 1) {
+    p_ch = Rows - min_rows(curtab) + 1;
   }
 
   // if p_ch changed value, change the command line height
