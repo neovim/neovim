@@ -93,28 +93,28 @@ describe('api metadata', function()
   local function clean_level_0(metadata)
     for _, f in ipairs(metadata.functions) do
       f.can_fail = nil
-      f.async = nil
+      f.async = nil -- XXX: renamed to "fast".
       f.receives_channel_id = nil
       f.since = 0
     end
   end
 
-  local api_info, compat, stable, api_level
+  local api_info --[[@type table]]
+  local compat --[[@type integer]]
+  local stable --[[@type integer]]
+  local api_level --[[@type integer]]
   local old_api = {}
   setup(function()
     clear() -- Ensure a session before requesting api_info.
+    --[[@type { version: {api_compatible: integer, api_level: integer, api_prerelease: boolean} }]]
     api_info = api.nvim_get_api_info()[2]
     compat = api_info.version.api_compatible
     api_level = api_info.version.api_level
-    if api_info.version.api_prerelease then
-      stable = api_level - 1
-    else
-      stable = api_level
-    end
+    stable = api_info.version.api_prerelease and api_level - 1 or api_level
 
     for level = compat, stable do
       local path = ('test/functional/fixtures/api_level_' .. tostring(level) .. '.mpack')
-      old_api[level] = read_mpack_file(path)
+      old_api[level] = read_mpack_file(path) --[[@type table]]
       if old_api[level] == nil then
         local errstr = 'missing metadata fixture for stable level ' .. level .. '. '
         if level == api_level and not api_info.version.api_prerelease then
