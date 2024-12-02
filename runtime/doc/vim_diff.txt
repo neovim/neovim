@@ -39,7 +39,6 @@ Defaults                                                    *nvim-defaults*
 - 'autoindent' is enabled
 - 'autoread' is enabled (works in all UIs, including terminal)
 - 'background' defaults to "dark" (unless set automatically by the terminal/UI)
-- 'backspace' defaults to "indent,eol,start"
 - 'backupdir' defaults to .,~/.local/state/nvim/backup// (|xdg|), auto-created
 - 'belloff' defaults to "all"
 - 'comments' includes "fb:•"

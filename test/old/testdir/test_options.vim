@@ -496,7 +496,7 @@ func Test_set_completion_string_values()
   " but don't exhaustively validate their results.
   call assert_equal('single', getcompletion('set ambw=', 'cmdline')[0])
   call assert_match('light\|dark', getcompletion('set bg=', 'cmdline')[1])
-  call assert_equal('indent', getcompletion('set backspace=', 'cmdline')[0])
+  call assert_equal('indent,eol,start', getcompletion('set backspace=', 'cmdline')[0])
   call assert_equal('yes', getcompletion('set backupcopy=', 'cmdline')[1])
   call assert_equal('backspace', getcompletion('set belloff=', 'cmdline')[1])
   call assert_equal('min:', getcompletion('set briopt=', 'cmdline')[1])

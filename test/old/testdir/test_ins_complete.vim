@@ -1509,7 +1509,7 @@ func Test_complete_item_refresh_always()
   set completefunc=Tcomplete
   exe "normal! iup\<C-X>\<C-U>\<BS>\<BS>\<BS>\<BS>\<BS>"
   call assert_equal('up', getline(1))
-  call assert_equal(2, g:CallCount)
+  call assert_equal(6, g:CallCount)
   set completeopt&
   set completefunc&
   bw!
