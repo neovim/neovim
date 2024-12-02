@@ -309,6 +309,15 @@ describe('API: set highlight', function()
     eq({ underdotted = true }, api.nvim_get_hl_by_name('Test_hl', true))
   end)
 
+  it('can set all underline cterm attributes #31385', function()
+    local ns = get_ns()
+    local attrs = { 'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed' }
+    for _, attr in ipairs(attrs) do
+      api.nvim_set_hl(ns, 'Test_' .. attr, { cterm = { [attr] = true } })
+      eq({ [attr] = true }, api.nvim_get_hl_by_name('Test_' .. attr, false))
+    end
+  end)
+
   it('can set a highlight in the global namespace', function()
     api.nvim_set_hl(0, 'Test_hl', highlight2_config)
     eq(
