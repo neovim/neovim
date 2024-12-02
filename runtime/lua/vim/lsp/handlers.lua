@@ -716,7 +716,8 @@ for k, fn in pairs(M) do
       })
     end
 
-    if err then
+    -- ServerCancelled errors should be propagated to the request handler
+    if err and err.code ~= protocol.ErrorCodes.ServerCancelled then
       -- LSP spec:
       -- interface ResponseError:
       --  code: integer;
