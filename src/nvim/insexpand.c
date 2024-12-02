@@ -1805,6 +1805,7 @@ static void ins_compl_new_leader(void)
   ins_compl_del_pum();
   ins_compl_delete();
   ins_bytes(compl_leader + get_compl_len());
+  restore_orig_extmarks();
   compl_used_match = false;
 
   if (compl_started) {
