@@ -1954,16 +1954,16 @@ void f_digraph_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "digraph_getlist()" function
 void f_digraph_getlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  if (tv_check_for_opt_bool_arg(argvars, 0) == FAIL) {
+    return;
+  }
+
   bool flag_list_all;
 
   if (argvars[0].v_type == VAR_UNKNOWN) {
     flag_list_all = false;
   } else {
-    bool error = false;
-    varnumber_T flag = tv_get_number_chk(&argvars[0], &error);
-    if (error) {
-      return;
-    }
+    varnumber_T flag = tv_get_bool(&argvars[0]);
     flag_list_all = flag != 0;
   }
 
