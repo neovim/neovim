@@ -290,9 +290,23 @@ void screen_resize(int width, int height)
   Rows = height;
   Columns = width;
   check_screensize();
-  int max_p_ch = Rows - min_rows() + 1;
-  if (!ui_has(kUIMessages) && p_ch > 0 && p_ch > max_p_ch) {
-    p_ch = max_p_ch ? max_p_ch : 1;
+  if (!ui_has(kUIMessages)) {
+    // clamp 'cmdheight'
+    int max_p_ch = Rows - min_rows(curtab) + 1;
+    if (p_ch > 0 && p_ch > max_p_ch) {
+      p_ch = MAX(max_p_ch, 1);
+      curtab->tp_ch_used = p_ch;
+    }
+    // clamp 'cmdheight' for other tab pages
+    FOR_ALL_TABS(tp) {
+      if (tp == curtab) {
+        continue;  // already set above
+      }
+      int max_tp_ch = Rows - min_rows(tp) + 1;
+      if (tp->tp_ch_used > 0 && tp->tp_ch_used > max_tp_ch) {
+        tp->tp_ch_used = MAX(max_tp_ch, 1);
+      }
+    }
   }
   height = Rows;
   width = Columns;
