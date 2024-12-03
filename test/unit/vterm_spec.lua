@@ -79,7 +79,11 @@ local bit = require('bit')
 --- @field vterm_state_set_callbacks function
 --- @field vterm_state_set_selection_callbacks function
 --- @field vterm_state_set_unrecognised_fallbacks function
-local vterm = t.cimport('./src/vterm/vterm.h', './src/vterm/vterm_internal.h')
+local vterm = t.cimport(
+  './src/vterm/vterm.h',
+  './src/vterm/vterm_internal.h',
+  './test/unit/fixtures/vterm_test.h'
+)
 
 --- @return string
 local function read_rm()
