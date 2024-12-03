@@ -12,7 +12,7 @@ manual.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Key mapping				*key-mapping* *mapping* *macro*
+1. Key mapping			      *keybind* *key-mapping* *mapping* *macro*
 
 Key mapping is used to change the meaning of typed keys.  The most common use
 is to define a sequence of commands for a function key.  Example: >

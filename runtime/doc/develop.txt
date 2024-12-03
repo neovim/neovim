@@ -300,7 +300,7 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
     --- @returns false if client should cancel the paste.
 
 
-LUA STDLIB DESIGN GUIDELINES                            *dev-lua*
+STDLIB DESIGN GUIDELINES                                             *dev-lua*
 
 See also |dev-naming|.
 
@@ -337,7 +337,7 @@ preference):
     way. Advantage is that propagation happens for free and it's harder to
     accidentally swallow errors. (E.g. using
     `uv_handle/pipe:write()` without checking return values is common.)
-4. `on_error` parameter
+4. `on_error` callback
   - For async and "visitors" traversing a graph, where many errors may be
     collected while work continues.
 5. `vim.notify` (sometimes with optional `opts.silent` (async, visitors ^))
@@ -434,7 +434,9 @@ Use existing common {verb} names (actions) if possible:
     - eval:         Evaluates an expression
     - exec:         Executes code, may return a result
     - fmt:          Formats
-    - get:          Gets things (often by a query)
+    - get:          Gets things. Two variants (overloads):
+                    1. `get<T>(id: int): T` returns one item.
+                    2. `get<T>(filter: dict): T[]` returns a list.
     - inspect:      Presents a high-level, often interactive, view
     - is_enabled:   Checks if functionality is enabled.
     - open:         Opens something (a buffer, window, …)

@@ -20,8 +20,9 @@ features, whereas help tags with the "ui-" prefix refer to the |ui-protocol|.
 Nvim provides a default, builtin UI (the |TUI|), but there are many other
 (third-party) GUIs that you can use instead:
 
-- Firenvim (Nvim in your web browser!) https://github.com/glacambre/firenvim
+							*vscode*
 - vscode-neovim (Nvim in VSCode!) https://github.com/vscode-neovim/vscode-neovim
+- Firenvim (Nvim in your web browser!) https://github.com/glacambre/firenvim
 - Neovide https://neovide.dev/
 - Goneovim https://github.com/akiyosi/goneovim
 - Nvy https://github.com/RMichelsen/Nvy

@@ -788,7 +788,7 @@ must handle.
 
 	kind
 	    Name indicating the message kind:
-		"" (empty)	Unknown (consider a feature-request: |bugs|)
+		"" (empty)	Unknown (consider a |feature-request|)
 		"confirm"	|confirm()| or |:confirm| dialog
 		"confirm_sub"	|:substitute| confirm dialog |:s_c|
 		"emsg"		Error (|errors|, internal error, |:throw|, …)

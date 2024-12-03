@@ -5443,7 +5443,7 @@ jobwait({jobs} [, {timeout}])                                        *jobwait()*
                   • {timeout} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer[]`)
 
 join({list} [, {sep}])                                                  *join()*
 		Join the items in {list} together into one String.
@@ -7986,7 +7986,7 @@ rpcnotify({channel}, {event} [, {args}...])                        *rpcnotify()*
                 Parameters: ~
                   • {channel} (`integer`)
                   • {event} (`string`)
-                  • {args} (`any?`)
+                  • {...} (`any`)
 
                 Return: ~
                   (`any`)
@@ -8001,7 +8001,7 @@ rpcrequest({channel}, {method} [, {args}...])                     *rpcrequest()*
                 Parameters: ~
                   • {channel} (`integer`)
                   • {method} (`string`)
-                  • {args} (`any?`)
+                  • {...} (`any`)
 
                 Return: ~
                   (`any`)
@@ -10234,6 +10234,7 @@ str2list({string} [, {utf8}])                                       *str2list()*
 		and exists only for backwards-compatibility.
 		With UTF-8 composing characters are handled properly: >vim
 			echo str2list("á")		" returns [97, 769]
+<
 
                 Parameters: ~
                   • {string} (`string`)
@@ -11991,7 +11992,7 @@ winlayout([{tabnr}])                                               *winlayout()*
                   • {tabnr} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`any[]`)
 
 winline()                                                            *winline()*
 		The result is a Number, which is the screen line of the cursor

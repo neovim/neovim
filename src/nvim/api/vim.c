@@ -1040,7 +1040,7 @@ fail:
 /// Open a terminal instance in a buffer
 ///
 /// By default (and currently the only option) the terminal will not be
-/// connected to an external process. Instead, input send on the channel
+/// connected to an external process. Instead, input sent on the channel
 /// will be echoed directly by the terminal. This is useful to display
 /// ANSI terminal sequences returned as part of a rpc message, or similar.
 ///
@@ -1050,6 +1050,18 @@ fail:
 /// then display it using |nvim_open_win()|, and then  call this function.
 /// Then |nvim_chan_send()| can be called immediately to process sequences
 /// in a virtual terminal having the intended size.
+///
+/// Example: this `TermHl` command can be used to display and highlight raw ANSI termcodes, so you
+/// can use Nvim as a "scrollback pager" (for terminals like kitty): [terminal-scrollback-pager]()
+///
+/// ```lua
+/// vim.api.nvim_create_user_command('TermHl', function()
+///   local b = vim.api.nvim_create_buf(false, true)
+///   local chan = vim.api.nvim_open_term(b, {})
+///   vim.api.nvim_chan_send(chan, table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '\n'))
+///   vim.api.nvim_win_set_buf(0, b)
+/// end, { desc = 'Highlights ANSI termcodes in curbuf' })
+/// ```
 ///
 /// @param buffer the buffer to use (expected to be empty)
 /// @param opts   Optional parameters.

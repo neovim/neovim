@@ -49,17 +49,19 @@ For more information try one of these:
 ==============================================================================
 Nvim on the interwebs					*internet*
 
-			*www* *distribution* *download*
+			*www* *distribution*
+- Nvim home page: https://neovim.io/
+- Vim FAQ: https://vimhelp.org/vim_faq.txt.html
 
-	Nvim home page:	  https://neovim.io/
-	Downloads:	  https://github.com/neovim/neovim/releases
-	Vim FAQ:	  https://vimhelp.org/vim_faq.txt.html
+			*download* *upgrade* *ubuntu*
+To install or upgrade Nvim, you can...
+- Download a pre-built archive:
+  https://github.com/neovim/neovim/releases
+- Use your system package manager:
+  https://github.com/neovim/neovim/blob/master/INSTALL.md#install-from-package
 
-
-			*bugs* *bug-report*
-Report bugs and request features here:
-https://github.com/neovim/neovim/issues
-
+			*bugs* *bug-report* *feature-request*
+Report bugs and request features here: https://github.com/neovim/neovim/issues
 Be brief, yet complete.  Always give a reproducible example and try to find
 out which settings or other things trigger the bug.
 
