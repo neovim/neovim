@@ -929,6 +929,88 @@ describe('api/buf', function()
       eq({ 1, 4 }, api.nvim_win_get_cursor(win2))
     end)
 
+    describe('keep visual select range', function()
+      it('keep the cursor position when in visual select mode', function()
+        insert([[1234]])
+        api.nvim_win_set_cursor(0, { 1, 1 })
+        feed('vl')
+        exec_lua([[
+          vim.defer_fn(function() vim.api.nvim_buf_set_text(0,0,0,0,0,{"0"}) end, 50)
+          vim.wait(50)
+        ]])
+        eq({ '23' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = fn.mode() }))
+      end)
+
+      it('handles multi-line visual selection after insertion', function()
+        api.nvim_buf_set_lines(0, 0, -1, false, { 'line1', 'line2', 'line3' })
+        api.nvim_win_set_cursor(0, { 1, 1 })
+        feed('vj') -- Select 'ine1' and 'li'
+        exec_lua([[
+          vim.defer_fn(function() vim.api.nvim_buf_set_text(0,0,0,0,0,{"0"}) end, 50)
+          vim.wait(50)
+        ]])
+        eq({ 'ine1', 'li' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = fn.mode() }))
+      end)
+
+      it('handles blockwise visual selection after insertion', function()
+        api.nvim_buf_set_lines(0, 0, -1, false, { '1234', '5678' })
+        api.nvim_win_set_cursor(0, { 1, 1 })
+        feed('<C-v>jl') -- Blockwise select the first two characters from the first two lines
+        exec_lua([[
+          vim.defer_fn(function() vim.api.nvim_buf_set_text(0,0,0,0,0,{"0"}) end, 50)
+          vim.wait(50)
+        ]])
+        eq({ '23', '78' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = fn.mode() }))
+      end)
+
+      it('handles reverse selection after insertion', function()
+        api.nvim_buf_set_lines(0, 0, -1, false, { 'abcdef' })
+        api.nvim_win_set_cursor(0, { 1, 6 }) -- Start from the end of the line
+        feed('v2h') -- Visual select 'ef'
+        exec_lua([[
+          vim.defer_fn(function() vim.api.nvim_buf_set_text(0,0,0,0,0,{"0"}) end, 50)
+          vim.wait(50)
+        ]])
+        eq({ 'def' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = fn.mode() }))
+      end)
+
+      it('handles visual selection with virtualedit at EOL after insertion', function()
+        api.nvim_buf_set_lines(0, 0, -1, false, { 'line1', 'line2' })
+        command('set virtualedit=onemore') -- Enable virtualedit
+        api.nvim_win_set_cursor(0, { 1, 6 }) -- Cursor beyond line end
+        feed('v$') -- Visual select till the end of line
+        exec_lua([[
+          vim.defer_fn(function() vim.api.nvim_buf_set_text(0,0,0,0,0,{"0"}) end, 50)
+          vim.wait(50)
+        ]])
+        eq({ '' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = fn.mode() }))
+      end)
+
+      it('handles blockwise visual selection with virtualedit after insertion', function()
+        api.nvim_buf_set_lines(0, 0, -1, false, { '1234', '5678' })
+        command('set virtualedit=block') -- Enable virtualedit for blockwise mode
+        api.nvim_win_set_cursor(0, { 1, 2 }) -- Cursor beyond line end
+        feed('<C-v>j2l') -- Blockwise select two characters from the first two lines
+        exec_lua([[
+          vim.defer_fn(function() vim.api.nvim_buf_set_text(0,0,0,0,0,{"0"}) end, 50)
+          vim.wait(50)
+        ]])
+        eq({ '34', '8 ' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = fn.mode() }))
+      end)
+
+      it('handles cross-line visual selection with virtualedit after insertion', function()
+        api.nvim_buf_set_lines(0, 0, -1, false, { 'first', 'second' })
+        command('set virtualedit=all') -- Enable full virtualedit
+        api.nvim_win_set_cursor(0, { 1, 5 }) -- Cursor beyond line end
+        feed('vj') -- Visual select to the next line
+        exec_lua([[
+          vim.defer_fn(function() vim.api.nvim_buf_set_text(0,0,0,0,0,{"0"}) end, 50)
+          vim.wait(50)
+        ]])
+        eq({ '', 'second' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = fn.mode() }))
+      end)
+    end)
+
     describe('when text is being added right at cursor position #22526', function()
       it('updates the cursor position in NORMAL mode', function()
         insert([[
