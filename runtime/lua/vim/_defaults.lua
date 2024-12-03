@@ -492,6 +492,9 @@ do
       vim.bo.textwidth = 0
       vim.wo[0][0].wrap = false
       vim.wo[0][0].list = false
+      vim.wo[0][0].number = false
+      vim.wo[0][0].relativenumber = false
+      vim.wo[0][0].signcolumn = 'no'
 
       -- This is gross. Proper list options support when?
       local winhl = vim.o.winhighlight
