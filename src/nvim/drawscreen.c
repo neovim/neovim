@@ -1516,10 +1516,12 @@ static void win_update(win_T *wp)
 
   decor_providers_invoke_win(wp);
 
-  if (win_redraw_signcols(wp)) {
-    wp->w_lines_valid = 0;
-    wp->w_redr_type = UPD_NOT_VALID;
-    changed_line_abv_curs_win(wp);
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+    if (win->w_buffer == wp->w_buffer && win_redraw_signcols(win)) {
+      win->w_lines_valid = 0;
+      changed_line_abv_curs_win(win);
+      redraw_later(win, UPD_NOT_VALID);
+    }
   }
 
   init_search_hl(wp, &screen_search_hl);
