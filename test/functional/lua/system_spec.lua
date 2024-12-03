@@ -18,8 +18,7 @@ local function system_sync(cmd, opts)
     local res = obj:wait()
 
     -- Check the process is no longer running
-    local proc = vim.api.nvim_get_proc(obj.pid)
-    assert(not proc, 'process still exists')
+    assert(not vim.api.nvim_get_proc(obj.pid), 'process still exists')
 
     return res
   end)
@@ -27,23 +26,23 @@ end
 
 local function system_async(cmd, opts)
   return exec_lua(function()
-    _G.done = false
+    local done = false
+    local res --- @type vim.SystemCompleted?
     local obj = vim.system(cmd, opts, function(obj)
-      _G.done = true
-      _G.ret = obj
+      done = true
+      res = obj
     end)
 
     local ok = vim.wait(10000, function()
-      return _G.done
+      return done
     end)
 
     assert(ok, 'process did not exit')
 
     -- Check the process is no longer running
-    local proc = vim.api.nvim_get_proc(obj.pid)
-    assert(not proc, 'process still exists')
+    assert(not vim.api.nvim_get_proc(obj.pid), 'process still exists')
 
-    return _G.ret
+    return res
   end)
 end
 
@@ -120,4 +119,32 @@ describe('vim.system', function()
       system_sync({ './test' })
     end)
   end
+
+  it('always captures all content of stdout/stderr #30846', function()
+    t.skip(n.fn.executable('git') == 0, 'missing "git" command')
+    eq(
+      0,
+      exec_lua(function()
+        local done = 0
+        local fail = 0
+        for _ = 1, 200 do
+          vim.system(
+            { 'git', 'show', ':0:test/functional/plugin/lsp_spec.lua' },
+            { text = true },
+            function(o)
+              if o.code ~= 0 or #o.stdout == 0 then
+                fail = fail + 1
+              end
+              done = done + 1
+            end
+          )
+        end
+
+        local ok = vim.wait(10000, function()
+          return done == 200
+        end, 200)
+        return fail + (ok and 0 or 1)
+      end)
+    )
+  end)
 end)
