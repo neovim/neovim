@@ -159,10 +159,7 @@ char *estack_sfile(estack_arg_T which)
 {
   const estack_T *entry = ((estack_T *)exestack.ga_data) + exestack.ga_len - 1;
   if (which == ESTACK_SFILE && entry->es_type != ETYPE_UFUNC) {
-    if (entry->es_name == NULL) {
-      return NULL;
-    }
-    return xstrdup(entry->es_name);
+    return entry->es_name != NULL ? xstrdup(entry->es_name) : NULL;
   }
 
   // If evaluated in a function or autocommand, return the path of the script
@@ -499,7 +496,6 @@ static void runtime_search_path_unref(RuntimeSearchPath path, const int *ref)
 /// return FAIL when no file could be sourced, OK otherwise.
 static int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, void *cookie)
 {
-  char *tail;
   bool did_one = false;
 
   char buf[MAXPATHL];
@@ -533,7 +529,7 @@ static int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, 
     } else if (buflen + strlen(name) + 2 < MAXPATHL) {
       STRCPY(buf, item.path);
       add_pathsep(buf);
-      tail = buf + strlen(buf);
+      char *tail = buf + strlen(buf);
 
       // Loop over all patterns in "name"
       char *np = name;
@@ -935,7 +931,6 @@ static int gen_expand_wildcards_and_cb(int num_pat, char **pats, int flags, bool
 /// @param is_pack whether the added dir is a "pack/*/start/*/" style package
 static int add_pack_dir_to_rtp(char *fname, bool is_pack)
 {
-  char *p;
   char *afterdir = NULL;
   int retval = FAIL;
 
@@ -943,7 +938,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   char *p2 = p1;
   char *p3 = p1;
   char *p4 = p1;
-  for (p = p1; *p; MB_PTR_ADV(p)) {
+  for (char *p = p1; *p; MB_PTR_ADV(p)) {
     if (vim_ispathsep_nocolon(*p)) {
       p4 = p3;
       p3 = p2;
@@ -970,21 +965,21 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
   // Also stop at the first "after" directory
   size_t fname_len = strlen(ffname);
-  char *buf = try_malloc(MAXPATHL);
-  if (buf == NULL) {
-    goto theend;
-  }
+  char buf[MAXPATHL];
   const char *insp = NULL;
   const char *after_insp = NULL;
-  for (const char *entry = p_rtp; *entry != NUL;) {
+  const char *entry = p_rtp;
+  while (*entry != NUL) {
     const char *cur_entry = entry;
-
     copy_option_part((char **)&entry, buf, MAXPATHL, ",");
 
-    if ((p = strstr(buf, "after")) != NULL
-        && p > buf
-        && vim_ispathsep(p[-1])
-        && (vim_ispathsep(p[5]) || p[5] == NUL || p[5] == ',')) {
+    char *p = strstr(buf, "after");
+    bool is_after = p != NULL
+                    && p > buf
+                    && vim_ispathsep(p[-1])
+                    && (vim_ispathsep(p[5]) || p[5] == NUL || p[5] == ',');
+
+    if (is_after) {
       if (insp == NULL) {
         // Did not find "ffname" before the first "after" directory,
         // insert it before this entry.
@@ -1000,12 +995,11 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
       if (rtp_ffname == NULL) {
         goto theend;
       }
-      bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
-      xfree(rtp_ffname);
-      if (match) {
+      if (path_fnamencmp(rtp_ffname, ffname, fname_len) == 0) {
         // Insert "ffname" after this entry (and comma).
         insp = entry;
       }
+      xfree(rtp_ffname);
     }
   }
 
@@ -1075,7 +1069,6 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   retval = OK;
 
 theend:
-  xfree(buf);
   xfree(ffname);
   xfree(afterdir);
   return retval;
@@ -1123,7 +1116,7 @@ static void add_pack_plugins(bool opt, int num_fnames, char **fnames, bool all, 
   bool did_one = false;
 
   if (cookie != &APP_LOAD) {
-    char *buf = xmalloc(MAXPATHL);
+    char buf[MAXPATHL];
     for (int i = 0; i < num_fnames; i++) {
       bool found = false;
 
@@ -1138,7 +1131,6 @@ static void add_pack_plugins(bool opt, int num_fnames, char **fnames, bool all, 
       if (!found) {
         // directory is not yet in 'runtimepath', add it
         if (add_pack_dir_to_rtp(fnames[i], false) == FAIL) {
-          xfree(buf);
           return;
         }
       }
@@ -1147,7 +1139,6 @@ static void add_pack_plugins(bool opt, int num_fnames, char **fnames, bool all, 
         break;
       }
     }
-    xfree(buf);
   }
 
   if (!all && did_one) {
@@ -1276,25 +1267,23 @@ void ex_packadd(exarg_T *eap)
   static const char plugpat[] = "pack/*/%s/%s";  // NOLINT
   int res = OK;
 
-  // Round 1: use "start", round 2: use "opt".
-  for (int round = 1; round <= 2; round++) {
-    // Only look under "start" when loading packages wasn't done yet.
-    if (round == 1 && did_source_packages) {
-      continue;
-    }
+  const size_t len = sizeof(plugpat) + strlen(eap->arg) + 5;
+  char *pat = xmallocz(len);
+  void *cookie = eap->forceit ? &APP_ADD_DIR : &APP_BOTH;
 
-    const size_t len = sizeof(plugpat) + strlen(eap->arg) + 5;
-    char *pat = xmallocz(len);
-    vim_snprintf(pat, len, plugpat, round == 1 ? "start" : "opt", eap->arg);
-    // The first round don't give a "not found" error, in the second round
-    // only when nothing was found in the first round.
-    res =
-      do_in_path(p_pp, "", pat,
-                 DIP_ALL + DIP_DIR + (round == 2 && res == FAIL ? DIP_ERR : 0),
-                 round == 1 ? add_start_pack_plugins : add_opt_pack_plugins,
-                 eap->forceit ? &APP_ADD_DIR : &APP_BOTH);
-    xfree(pat);
+  // Only look under "start" when loading packages wasn't done yet.
+  if (!did_source_packages) {
+    vim_snprintf(pat, len, plugpat, "start", eap->arg);
+    res = do_in_path(p_pp, "", pat, DIP_ALL + DIP_DIR,
+                     add_start_pack_plugins, cookie);
   }
+
+  // Give a "not found" error if nothing was found in 'start' or 'opt'.
+  vim_snprintf(pat, len, plugpat, "opt", eap->arg);
+  do_in_path(p_pp, "", pat, DIP_ALL + DIP_DIR + (res == FAIL ? DIP_ERR : 0),
+             add_opt_pack_plugins, cookie);
+
+  xfree(pat);
 }
 
 static void ExpandRTDir_int(char *pat, size_t pat_len, int flags, bool keep_ext, garray_T *gap,
@@ -2726,22 +2715,15 @@ retry:
 /// Without the multi-byte feature it's simply ignored.
 void ex_scriptencoding(exarg_T *eap)
 {
-  source_cookie_T *sp;
-  char *name;
-
   if (!getline_equal(eap->ea_getline, eap->cookie, getsourceline)) {
     emsg(_("E167: :scriptencoding used outside of a sourced file"));
     return;
   }
 
-  if (*eap->arg != NUL) {
-    name = enc_canonize(eap->arg);
-  } else {
-    name = eap->arg;
-  }
+  char *name = (*eap->arg != NUL) ? enc_canonize(eap->arg) : eap->arg;
 
   // Setup for conversion from the specified encoding to 'encoding'.
-  sp = (source_cookie_T *)getline_cookie(eap->ea_getline, eap->cookie);
+  source_cookie_T *sp = (source_cookie_T *)getline_cookie(eap->ea_getline, eap->cookie);
   convert_setup(&sp->conv, name, p_enc);
 
   if (name != eap->arg) {
