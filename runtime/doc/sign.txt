@@ -10,7 +10,7 @@ Sign Support Features				*sign-support*
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Introduction					*sign-intro* *signs*
+1. Introduction					*sign-intro* *signs* *gutter*
 
 When a debugger or other IDE tool is driving an editor it needs to be able
 to give specific highlights which quickly tell the user useful information
