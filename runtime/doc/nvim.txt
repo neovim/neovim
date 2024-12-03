@@ -6,18 +6,19 @@
 
 Nvim                                              *nvim* *neovim* *nvim-intro*
 
-Nvim is based on Vim by Bram Moolenaar.
+Nvim is based on Vim by Bram Moolenaar. Nvim is emphatically a fork of Vim,
+not a clone: compatibility with Vim (especially editor and Vimscript features,
+except |Vim9script|) is maintained where possible. See |vim-differences| for
+the complete reference.
 
-If you already use Vim see |nvim-from-vim| for a quickstart.
-If you are new to Vim, try the 30-minute tutorial: >vim
+If you already use Vim, see |nvim-from-vim| for a quickstart. If you just
+installed Nvim and have never used it before, watch this 10-minute
+video: https://youtu.be/TQn2hJeHQbM .
+
+To learn how to use Vim in 30 minutes, try the tutorial: >vim
 
     :Tutor<Enter>
-
-Nvim is emphatically a fork of Vim, not a clone: compatibility with Vim
-(especially editor and Vimscript features, except |Vim9script|) is maintained
-where possible. See |vim-differences| for the complete reference of
-differences from Vim.
-
+<
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
@@ -74,7 +75,7 @@ the same Nvim configuration on all of your machines, by creating
 ==============================================================================
 What next?                                                   *nvim-quickstart*
 
-If you are just trying out Vim/Nvim for a few minutes, and want to see the
+If you are just trying out Nvim for a few minutes, and want to see the
 extremes of what it can do, try one of these popular "extension packs" or
 "distributions" (Note: Nvim is not affiliated with these projects, and does
 not support them):

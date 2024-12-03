@@ -60,7 +60,7 @@ To install or upgrade Nvim, you can...
 - Use your system package manager:
   https://github.com/neovim/neovim/blob/master/INSTALL.md#install-from-package
 
-			*bugs* *bug-report*
+			*bugs* *bug-report* *feature-request*
 Report bugs and request features here: https://github.com/neovim/neovim/issues
 Be brief, yet complete.  Always give a reproducible example and try to find
 out which settings or other things trigger the bug.

@@ -435,8 +435,8 @@ Use existing common {verb} names (actions) if possible:
     - exec:         Executes code, may return a result
     - fmt:          Formats
     - get:          Gets things. Two variants (overloads):
-                    1. `get(id: int): any` returns one item.
-                    2. `get(filter: dict): any[]` returns a list.
+                    1. `get<T>(id: int): T` returns one item.
+                    2. `get<T>(filter: dict): T[]` returns a list.
     - inspect:      Presents a high-level, often interactive, view
     - is_enabled:   Checks if functionality is enabled.
     - open:         Opens something (a buffer, window, …)
