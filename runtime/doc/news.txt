@@ -303,8 +303,9 @@ UI
   |hl-PmenuSel| and |hl-PmenuMatch| both inherit from |hl-Pmenu|, and
   |hl-PmenuMatchSel| inherits highlights from both |hl-PmenuSel| and
   |hl-PmenuMatch|.
-
 • |ui-messages| content chunks now also contain the highlight group ID.
+• |health| can be displayed in a floating window and controlled by
+  the |g:health| variable.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

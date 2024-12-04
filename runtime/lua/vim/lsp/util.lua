@@ -875,13 +875,16 @@ function M.make_floating_popup_options(width, height, opts)
     title_pos = opts.title_pos or 'center'
   end
 
+  local in_center = opts.pos == 'center'
   return {
     anchor = anchor,
-    col = col + (opts.offset_x or 0),
+    row = in_center and math.floor((vim.o.lines - height) / 2) or row + (opts.offset_y or 0),
+    col = in_center and math.floor((vim.o.columns - width) / 2) or col + (opts.offset_x or 0),
     height = height,
     focusable = opts.focusable,
-    relative = opts.relative == 'mouse' and 'mouse' or 'cursor',
-    row = row + (opts.offset_y or 0),
+    relative = opts.relative == 'mouse' and 'mouse'
+      or opts.relative == 'editor' and 'editor'
+      or 'cursor',
     style = 'minimal',
     width = width,
     border = opts.border or default_border,
@@ -1494,9 +1497,10 @@ end
 --- @field zindex? integer override `zindex`, defaults to 50
 --- @field title? string
 --- @field title_pos? 'left'|'center'|'right'
+--- @field pos? 'center'
 ---
 --- (default: `'cursor'`)
---- @field relative? 'mouse'|'cursor'
+--- @field relative? 'mouse'|'cursor'|'editor'
 ---
 --- - "auto": place window based on which side of the cursor has more lines
 --- - "above": place the window above the cursor unless there are not enough lines
