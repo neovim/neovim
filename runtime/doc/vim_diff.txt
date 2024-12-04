@@ -186,6 +186,9 @@ nvim_terminal:
     - 'textwidth' set to 0
     - 'nowrap'
     - 'nolist'
+    - 'nonumber'
+    - 'norelativenumber'
+    - 'signcolumn' set to "no"
     - 'winhighlight' uses |hl-StatusLineTerm| and |hl-StatusLineTermNC| in
       place of |hl-StatusLine| and |hl-StatusLineNC|
 

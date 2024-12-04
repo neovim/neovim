@@ -511,7 +511,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
 
   before_each(function()
     clear()
-    command('set number')
+    command('au TermOpen * set number')
   end)
 
   describe('in a line with no multibyte chars or trailing spaces,', function()
