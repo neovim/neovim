@@ -136,6 +136,7 @@ end
 ---             - skip: (fun(dir_name: string): boolean)|nil Predicate
 ---               to control traversal. Return false to stop searching the current directory.
 ---               Only useful when depth > 1
+---             - follow: boolean|nil Follow symbolic links. (default: true)
 ---
 ---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
 ---        "name" is the basename of the item relative to {path}.
@@ -147,6 +148,7 @@ function M.dir(path, opts)
   vim.validate('path', path, 'string')
   vim.validate('depth', opts.depth, 'number', true)
   vim.validate('skip', opts.skip, 'function', true)
+  vim.validate('follow', opts.follow, 'boolean', true)
 
   path = M.normalize(path)
   if not opts.depth or opts.depth == 1 then
@@ -177,7 +179,9 @@ function M.dir(path, opts)
         if
           opts.depth
           and level < opts.depth
-          and t == 'directory'
+          and (t == 'directory' or (t == 'link' and opts.follow ~= false and (vim.uv.fs_stat(
+            M.joinpath(path, f)
+          ) or {}).type == 'directory'))
           and (not opts.skip or opts.skip(f) ~= false)
         then
           dirs[#dirs + 1] = { f, level + 1 }
