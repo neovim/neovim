@@ -307,6 +307,8 @@ error('Cannot require a meta file')
 --- @field noautocmd? boolean
 --- @field fixed? boolean
 --- @field hide? boolean
+--- @field cmdline? boolean
+--- @field cmdline_offset? integer
 
 --- @class vim.api.keyset.win_text_height
 --- @field start_row? integer

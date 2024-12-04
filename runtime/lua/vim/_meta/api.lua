@@ -1858,6 +1858,10 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- - hide: If true the floating window will be hidden.
 --- - vertical: Split vertically `:vertical`.
 --- - split: Split direction: "left", "right", "above", "below".
+--- - cmdline: If true, indicate that this window is used for ext_cmdline.
+---   Nvim will anchor the 'wildoptions' popupmenu to this window.
+--- - cmdline_offset: Offset in units of "screen cell width" indicating how much longer
+---   (negative for shorter) the displayed prompt is from the prompt emitted by "cmdline_show".
 --- @return integer # Window handle, or 0 on error
 function vim.api.nvim_open_win(buffer, enter, config) end
 

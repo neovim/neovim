@@ -295,7 +295,7 @@ UI
   which controls the tool used to open the given path or URL. If you want to
   globally set this, you can override vim.ui.open using the same approach
   described at |vim.paste()|.
-- `vim.ui.open()` now supports
+• `vim.ui.open()` now supports
   [lemonade](https://github.com/lemonade-command/lemonade) as an option for
   opening urls/files. This is handy if you are in an ssh connection and use
   `lemonade`.
@@ -303,8 +303,9 @@ UI
   |hl-PmenuSel| and |hl-PmenuMatch| both inherit from |hl-Pmenu|, and
   |hl-PmenuMatchSel| inherits highlights from both |hl-PmenuSel| and
   |hl-PmenuMatch|.
-
 • |ui-messages| content chunks now also contain the highlight group ID.
+• |ui-cmdline| can set a target cmdline window through |nvim_open_win()| to
+  which Nvim will anchor the |cmdline-completion| popupmenu.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

@@ -958,6 +958,8 @@ typedef struct {
   bool noautocmd;
   bool fixed;
   bool hide;
+  bool cmdline;
+  int cmdline_offset;
 } WinConfig;
 
 #define WIN_CONFIG_INIT ((WinConfig){ .height = 0, .width = 0, \
@@ -971,7 +973,9 @@ typedef struct {
                                       .style = kWinStyleUnused, \
                                       .noautocmd = false, \
                                       .hide = false, \
-                                      .fixed = false })
+                                      .fixed = false, \
+                                      .cmdline = false, \
+                                      .cmdline_offset = 0 })
 
 // Structure to store last cursor position and topline.  Used by check_lnums()
 // and reset_lnums().
