@@ -233,7 +233,7 @@ end
 ---
 --- -- get all files ending with .cpp or .hpp inside lib/
 --- local cpp_hpp = vim.fs.find(function(name, path)
----   return name:match('.*%.[ch]pp$') and path:match('[/\\\\]lib$')
+---   return name:match('.*%.[ch]pp$') and path:match('[/\\]lib$')
 --- end, {limit = math.huge, type = 'file'})
 --- ```
 ---
