@@ -5,7 +5,7 @@
 " Contributor:		Dorai Sitaram <ds26@gte.com>
 "			C.D. MacEachern <craig.daniel.maceachern@gmail.com>
 "			Tyler Miller <tmillr@proton.me>
-" Last Change:		2024 Jan 14
+" Last Change:		2024 Dec 03
 
 if exists("b:did_ftplugin")
   finish
@@ -47,6 +47,64 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   endif
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
+
+if has("folding") && get(g:, "lua_folding", 0)
+  setlocal foldmethod=expr
+  setlocal foldexpr=LuaFold(v:lnum)
+  let b:lua_lasttick = -1
+  let b:undo_ftplugin ..= "|setl foldexpr< foldmethod< | unlet! b:lua_lasttick b:lua_foldlists"
+endif
+
+
+" The rest of the file needs to be :sourced only once per Vim session
+if exists('s:loaded_lua') || &cp
+  let &cpo = s:cpo_save
+  unlet s:cpo_save
+  finish
+endif
+let s:loaded_lua = 1
+
+let s:patterns = [
+      \ ['do', 'end'],
+      \ ['if\s+.+\s+then', 'end'],
+      \ ['repeat', 'until\s+.+'],
+      \ ['for\s+.+\s+do', 'end'],
+      \ ['while\s+.+\s+do', 'end'],
+      \ ['function.+', 'end'],
+      \ ['return\s+function.+', 'end'],
+      \ ['local\s+function\s+.+', 'end'],
+      \ ]
+
+function! LuaFold(lnum) abort
+  if b:lua_lasttick == b:changedtick
+    return b:lua_foldlists[a:lnum-1]
+  endif
+  let b:lua_lasttick = b:changedtick
+
+  let b:lua_foldlists = []
+  let foldlist = []
+  let buf = getline(1, '$')
+  for line in buf
+    for t in s:patterns
+      let tagopen = '\v^\s*'..t[0]..'\s*$'
+      let tagclose = '\v^\s*'..t[1]..'\s*$'
+      if line =~# tagopen
+        call add(foldlist, t)
+        break
+      elseif line =~# tagclose
+        if len(foldlist) > 0 && line =~# foldlist[-1][1]
+          call remove(foldlist, -1)
+        else
+          let foldlist = []
+        endif
+        break
+      endif
+    endfor
+    call add(b:lua_foldlists, len(foldlist))
+  endfor
+
+  return lua_foldlists[a:lnum-1]
+endfunction
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

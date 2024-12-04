@@ -695,6 +695,11 @@ To enable the recognition of Markdown comments each time after removing
 re-source "javaformat.vim" for Vim versions greater than `8.2.1397`: >
 	runtime autoload/javaformat.vim
 <
+LUA                                                     *ft-lua-plugin*
+
+You can enable folding of lua functions using |fold-expr| by: >
+
+	let g:lua_folding = 1
 
 MAIL							*ft-mail-plugin*
 
