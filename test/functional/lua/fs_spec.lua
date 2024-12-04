@@ -217,12 +217,44 @@ describe('vim.fs', function()
   end)
 
   describe('find()', function()
+    before_each(function()
+      vim.uv.fs_symlink(
+        test_source_path .. '/build',
+        test_source_path .. '/build_link',
+        { junction = true, dir = true }
+      )
+    end)
+
+    after_each(function()
+      vim.uv.fs_unlink(test_source_path .. '/build_link')
+    end)
+
     it('works', function()
       eq(
         { test_build_dir .. '/build' },
         vim.fs.find('build', { path = nvim_dir, upward = true, type = 'directory' })
       )
       eq({ nvim_prog }, vim.fs.find(nvim_prog_basename, { path = test_build_dir, type = 'file' }))
+
+      eq(
+        { nvim_prog, test_source_path .. '/build_link/bin/' .. nvim_prog_basename },
+        vim.fs.find(nvim_prog_basename, {
+          path = test_source_path,
+          type = 'file',
+          limit = 2,
+          follow = true,
+        })
+      )
+
+      eq(
+        { nvim_prog },
+        vim.fs.find(nvim_prog_basename, {
+          path = test_source_path,
+          type = 'file',
+          limit = 2,
+          follow = false,
+        })
+      )
 
       local parent, name = nvim_dir:match('^(.*/)([^/]+)$')
       eq({ nvim_dir }, vim.fs.find(name, { path = parent, upward = true, type = 'directory' }))
