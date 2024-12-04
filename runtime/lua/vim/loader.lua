@@ -446,6 +446,12 @@ function M.enable(enable)
   end
 end
 
+--- @deprecated
+function M.disable()
+  vim.deprecate('vim.loader.disable', 'vim.loader.enable(false)', '0.12')
+  vim.loader.enable(false)
+end
+
 --- Tracks the time spent in a function
 --- @generic F: function
 --- @param f F
