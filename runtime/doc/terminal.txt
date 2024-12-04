@@ -108,6 +108,9 @@ global configuration.
 
 - 'list' is disabled
 - 'wrap' is disabled
+- 'number' is disabled
+- 'relativenumber' is disabled
+- 'signcolumn' is set to "no"
 
 You can change the defaults with a TermOpen autocommand: >vim
     au TermOpen * setlocal list
