@@ -404,7 +404,7 @@ describe('treesitter highlighting (C)', function()
       ]],
     })
 
-    feed 'u'
+    feed 'u:<esc>'
 
     screen:expect({
       grid = [[
@@ -425,7 +425,7 @@ describe('treesitter highlighting (C)', function()
             }                                                            |
           }                                                              |
         ^}                                                                |
-        19 changes; before #2  0 seconds ago                             |
+                                                                         |
       ]],
     })
   end)
