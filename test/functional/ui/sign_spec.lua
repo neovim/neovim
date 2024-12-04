@@ -607,4 +607,77 @@ describe('Signs', function()
     eq(6, infos[1].textoff)
     eq(6, infos[2].textoff)
   end)
+
+  it('auto width updated in all windows after sign placed in on_win #31438', function()
+    exec_lua([[
+      vim.cmd.call('setline(1, range(1, 500))')
+      vim.cmd('wincmd s | wincmd v | wincmd j | wincmd v')
+
+      _G.log, _G.needs_clear = {}, false
+      local ns_id, mark_id = vim.api.nvim_create_namespace('test'), nil
+
+      -- Add decoration which possibly clears all extmarks and adds one on line 499
+      local on_win = function(_, winid, bufnr, toprow, botrow)
+        if _G.needs_clear then
+          vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
+          _G.needs_clear = false
+        end
+
+        if toprow < 499 and 499 <= botrow then
+          mark_id = vim.api.nvim_buf_set_extmark(bufnr, ns_id, 499, 0, { id = mark_id, sign_text = '!', invalidate = true })
+        end
+      end
+      vim.api.nvim_set_decoration_provider(ns_id, { on_win = on_win })
+    ]])
+    screen:expect([[
+      1                         │1                         |
+      2                         │2                         |
+      3                         │3                         |
+      4                         │4                         |
+      5                         │5                         |
+      6                         │6                         |
+      {2:[No Name] [+]              [No Name] [+]             }|
+      ^1                         │1                         |
+      2                         │2                         |
+      3                         │3                         |
+      4                         │4                         |
+      5                         │5                         |
+      {3:[No Name] [+]              }{2:[No Name] [+]             }|
+                                                           |
+    ]])
+    feed('G')
+    screen:expect([[
+      {7:  }1                       │{7:  }1                       |
+      {7:  }2                       │{7:  }2                       |
+      {7:  }3                       │{7:  }3                       |
+      {7:  }4                       │{7:  }4                       |
+      {7:  }5                       │{7:  }5                       |
+      {7:  }6                       │{7:  }6                       |
+      {2:[No Name] [+]              [No Name] [+]             }|
+      {7:  }496                     │{7:  }1                       |
+      {7:  }497                     │{7:  }2                       |
+      {7:  }498                     │{7:  }3                       |
+      {7:  }499                     │{7:  }4                       |
+      ! ^500                     │{7:  }5                       |
+      {3:[No Name] [+]              }{2:[No Name] [+]             }|
+                                                           |
+    ]])
+    feed(':lua log, needs_clear = {}, true<CR>')
+    screen:expect([[
+      {7:  }1                       │{7:  }1                       |
+      {7:  }2                       │{7:  }2                       |
+      {7:  }3                       │{7:  }3                       |
+      {7:  }4                       │{7:  }4                       |
+      {7:  }5                       │{7:  }5                       |
+      {7:  }6                       │{7:  }6                       |
+      {2:[No Name] [+]              [No Name] [+]             }|
+      {7:  }496                     │{7:  }1                       |
+      {7:  }497                     │{7:  }2                       |
+      {7:  }498                     │{7:  }3                       |
+      {7:  }499                     │{7:  }4                       |
+      ! ^500                     │{7:  }5                       |
+      {3:[No Name] [+]              }{2:[No Name] [+]             }|
+      :lua log, needs_clear = {}, true                     |
+    ]])
+  end)
 end)
