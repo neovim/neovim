@@ -604,7 +604,7 @@ static int insert_execute(VimState *state, int key)
            || (ins_compl_enter_selects()
                && (s->c == CAR || s->c == K_KENTER || s->c == NL)))
           && stop_arrow() == OK) {
-        ins_compl_delete();
+        ins_compl_delete(false);
         ins_compl_insert(false);
       }
     }
