@@ -78,7 +78,7 @@ local validate = vim.validate
 --- @field settings? table
 ---
 --- Table that maps string of clientside commands to user-defined functions.
---- Commands passed to start_client take precedence over the global command registry. Each key
+--- Commands passed to `start()` take precedence over the global command registry. Each key
 --- must be a unique command name, and the value is a function which is called if any LSP action
 --- (code action, code lenses, ...) triggers the command.
 --- @field commands? table<string,fun(command: lsp.Command, ctx: table)>
@@ -104,7 +104,7 @@ local validate = vim.validate
 --- @field on_error? fun(code: integer, err: string)
 ---
 --- Callback invoked before the LSP "initialize" phase, where `params` contains the parameters
---- being sent to the server and `config` is the config that was passed to |vim.lsp.start_client()|.
+--- being sent to the server and `config` is the config that was passed to |vim.lsp.start()|.
 --- You can use this to modify parameters before they are sent.
 --- @field before_init? fun(params: lsp.InitializeParams, config: vim.lsp.ClientConfig)
 ---
@@ -167,7 +167,7 @@ local validate = vim.validate
 --- @field requests table<integer,{ type: string, bufnr: integer, method: string}>
 ---
 --- copy of the table that was passed by the user
---- to |vim.lsp.start_client()|.
+--- to |vim.lsp.start()|.
 --- @field config vim.lsp.ClientConfig
 ---
 --- Response from the server sent on `initialize` describing the server's
@@ -307,7 +307,7 @@ local function default_get_language_id(_bufnr, filetype)
   return filetype
 end
 
---- Validates a client configuration as given to |vim.lsp.start_client()|.
+--- Validates a client configuration as given to |vim.lsp.start()|.
 --- @param config vim.lsp.ClientConfig
 local function validate_config(config)
   validate('config', config, 'table')

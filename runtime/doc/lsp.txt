@@ -841,12 +841,11 @@ start({config}, {opts})                                      *vim.lsp.start()*
         })
 <
 
-    See |vim.lsp.start_client()| for all available options. The most important
+    See |vim.lsp.ClientConfig| for all available options. The most important
     are:
     • `name` arbitrary name for the LSP client. Should be unique per language
       server.
-    • `cmd` command string[] or function, described at
-      |vim.lsp.start_client()|.
+    • `cmd` command string[] or function.
     • `root_dir` path to the project root. By default this is used to decide
       if an existing client should be re-used. The example above uses
       |vim.fs.root()| to detect the root by traversing the file system upwards
@@ -868,7 +867,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
     Parameters: ~
       • {config}  (`vim.lsp.ClientConfig`) Configuration for the server. See
                   |vim.lsp.ClientConfig|.
-      • {opts}    (`table?`) Optional keyword arguments
+      • {opts}    (`table?`) Optional keyword arguments.
                   • {reuse_client}?
                     (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
                     Predicate used to decide if a client should be re-used.
@@ -876,24 +875,14 @@ start({config}, {opts})                                      *vim.lsp.start()*
                     re-uses a client if name and root_dir matches.
                   • {bufnr}? (`integer`) Buffer handle to attach to if
                     starting or re-using a client (0 for current).
+                  • {attach}? (`boolean`) Whether to attach the client to a
+                    buffer (default true). If set to `false`, `reuse_client`
+                    and `bufnr` will be ignored.
                   • {silent}? (`boolean`) Suppress error reporting if the LSP
                     server fails to start (default false).
 
     Return: ~
         (`integer?`) client_id
-
-start_client({config})                                *vim.lsp.start_client()*
-    Starts and initializes a client with the given configuration.
-
-    Parameters: ~
-      • {config}  (`vim.lsp.ClientConfig`) Configuration for the server. See
-                  |vim.lsp.ClientConfig|.
-
-    Return (multiple): ~
-        (`integer?`) client_id |vim.lsp.get_client_by_id()| Note: client may
-        not be fully initialized. Use `on_init` to do any actions once the
-        client has been initialized.
-        (`string?`) Error message, if any
 
 status()                                                    *vim.lsp.status()*
     Consumes the latest progress messages from all clients and formats them as
@@ -968,8 +957,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 server.
       • {config}                (`vim.lsp.ClientConfig`) copy of the table
                                 that was passed by the user to
-                                |vim.lsp.start_client()|. See
-                                |vim.lsp.ClientConfig|.
+                                |vim.lsp.start()|. See |vim.lsp.ClientConfig|.
       • {server_capabilities}   (`lsp.ServerCapabilities?`) Response from the
                                 server sent on `initialize` describing the
                                 server's capabilities.
@@ -1093,7 +1081,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {commands}?           (`table<string,fun(command: lsp.Command, ctx: table)>`)
                               Table that maps string of clientside commands to
                               user-defined functions. Commands passed to
-                              start_client take precedence over the global
+                              `start()` take precedence over the global
                               command registry. Each key must be a unique
                               command name, and the value is a function which
                               is called if any LSP action (code action, code
@@ -1122,9 +1110,9 @@ Lua module: vim.lsp.client                                        *lsp-client*
                               Callback invoked before the LSP "initialize"
                               phase, where `params` contains the parameters
                               being sent to the server and `config` is the
-                              config that was passed to
-                              |vim.lsp.start_client()|. You can use this to
-                              modify parameters before they are sent.
+                              config that was passed to |vim.lsp.start()|. You
+                              can use this to modify parameters before they
+                              are sent.
       • {on_init}?            (`elem_or_list<fun(client: vim.lsp.Client, initialize_result: lsp.InitializeResult)>`)
                               Callback invoked after LSP "initialize", where
                               `result` is a table of `capabilities` and
@@ -2296,7 +2284,7 @@ connect({host_or_path}, {port})                        *vim.lsp.rpc.connect()*
     • a host and port via TCP
 
     Return a function that can be passed to the `cmd` field for
-    |vim.lsp.start_client()| or |vim.lsp.start()|.
+    |vim.lsp.start()|.
 
     Parameters: ~
       • {host_or_path}  (`string`) host to connect to or path to a pipe/domain

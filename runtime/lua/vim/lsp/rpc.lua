@@ -617,7 +617,7 @@ end
 ---  - a host and port via TCP
 ---
 --- Return a function that can be passed to the `cmd` field for
---- |vim.lsp.start_client()| or |vim.lsp.start()|.
+--- |vim.lsp.start()|.
 ---
 ---@param host_or_path string host to connect to or path to a pipe/domain socket
 ---@param port integer? TCP port to connect to. If absent the first argument must be a pipe

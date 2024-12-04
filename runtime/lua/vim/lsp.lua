@@ -211,16 +211,116 @@ local function reuse_client_default(client, config)
   return false
 end
 
+--- Reset defaults set by `set_defaults`.
+--- Must only be called if the last client attached to a buffer exits.
+local function reset_defaults(bufnr)
+  if vim.bo[bufnr].tagfunc == 'v:lua.vim.lsp.tagfunc' then
+    vim.bo[bufnr].tagfunc = nil
+  end
+  if vim.bo[bufnr].omnifunc == 'v:lua.vim.lsp.omnifunc' then
+    vim.bo[bufnr].omnifunc = nil
+  end
+  if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then
+    vim.bo[bufnr].formatexpr = nil
+  end
+  vim._with({ buf = bufnr }, function()
+    local keymap = vim.fn.maparg('K', 'n', false, true)
+    if keymap and keymap.callback == vim.lsp.buf.hover and keymap.buffer == 1 then
+      vim.keymap.del('n', 'K', { buffer = bufnr })
+    end
+  end)
+end
+
+--- @param code integer
+--- @param signal integer
+--- @param client_id integer
+local function on_client_exit(code, signal, client_id)
+  local client = all_clients[client_id]
+
+  vim.schedule(function()
+    for bufnr in pairs(client.attached_buffers) do
+      if client and client.attached_buffers[bufnr] and api.nvim_buf_is_valid(bufnr) then
+        api.nvim_exec_autocmds('LspDetach', {
+          buffer = bufnr,
+          modeline = false,
+          data = { client_id = client_id },
+        })
+      end
+
+      client.attached_buffers[bufnr] = nil
+
+      if #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0 then
+        reset_defaults(bufnr)
+      end
+    end
+
+    local namespace = vim.lsp.diagnostic.get_namespace(client_id)
+    vim.diagnostic.reset(namespace)
+  end)
+
+  local name = client.name or 'unknown'
+
+  -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
+  -- autocommands
+  vim.schedule(function()
+    all_clients[client_id] = nil
+
+    -- Client can be absent if executable starts, but initialize fails
+    -- init/attach won't have happened
+    if client then
+      changetracking.reset(client)
+    end
+    if code ~= 0 or (signal ~= 0 and signal ~= 15) then
+      local msg = string.format(
+        'Client %s quit with exit code %s and signal %s. Check log for errors: %s',
+        name,
+        code,
+        signal,
+        lsp.get_log_path()
+      )
+      vim.notify(msg, vim.log.levels.WARN)
+    end
+  end)
+end
+
+--- Creates and initializes a client with the given configuration.
+--- @param config vim.lsp.ClientConfig Configuration for the server.
+--- @return integer? client_id |vim.lsp.get_client_by_id()| Note: client may not be
+---         fully initialized. Use `on_init` to do any actions once
+---         the client has been initialized.
+--- @return string? # Error message, if any
+local function create_and_initialize_client(config)
+  local ok, res = pcall(require('vim.lsp.client').create, config)
+  if not ok then
+    return nil, res --[[@as string]]
+  end
+
+  local client = assert(res)
+
+  --- @diagnostic disable-next-line: invisible
+  table.insert(client._on_exit_cbs, on_client_exit)
+
+  all_clients[client.id] = client
+
+  client:initialize()
+
+  return client.id, nil
+end
+
 --- @class vim.lsp.start.Opts
 --- @inlinedoc
 ---
 --- Predicate used to decide if a client should be re-used. Used on all
 --- running clients. The default implementation re-uses a client if name and
 --- root_dir matches.
---- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
+--- @field reuse_client? (fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean)
 ---
 --- Buffer handle to attach to if starting or re-using a client (0 for current).
 --- @field bufnr? integer
+---
+--- Whether to attach the client to a buffer (default true).
+--- If set to `false`, `reuse_client` and `bufnr` will be ignored.
+--- @field attach? boolean
 ---
 --- Suppress error reporting if the LSP server fails to start (default false).
 --- @field silent? boolean
@@ -239,10 +339,10 @@ end
 --- })
 --- ```
 ---
---- See |vim.lsp.start_client()| for all available options. The most important are:
+--- See |vim.lsp.ClientConfig| for all available options. The most important are:
 ---
 --- - `name` arbitrary name for the LSP client. Should be unique per language server.
---- - `cmd` command string[] or function, described at |vim.lsp.start_client()|.
+--- - `cmd` command string[] or function.
 --- - `root_dir` path to the project root. By default this is used to decide if an existing client
 ---   should be re-used. The example above uses |vim.fs.root()| to detect the root by traversing
 ---   the file system upwards starting from the current directory until either a `pyproject.toml`
@@ -262,7 +362,7 @@ end
 --- `ftplugin/<filetype_name>.lua` (See |ftplugin-name|)
 ---
 --- @param config vim.lsp.ClientConfig Configuration for the server.
---- @param opts vim.lsp.start.Opts? Optional keyword arguments
+--- @param opts vim.lsp.start.Opts? Optional keyword arguments.
 --- @return integer? client_id
 function lsp.start(config, opts)
   opts = opts or {}
@@ -271,6 +371,10 @@ function lsp.start(config, opts)
 
   for _, client in pairs(all_clients) do
     if reuse_client(client, config) then
+      if opts.attach == false then
+        return client.id
+      end
+
       if lsp.buf_attach_client(bufnr, client.id) then
         return client.id
       else
@@ -279,12 +383,16 @@ function lsp.start(config, opts)
     end
   end
 
-  local client_id, err = lsp.start_client(config)
+  local client_id, err = create_and_initialize_client(config)
   if err then
     if not opts.silent then
       vim.notify(err, vim.log.levels.WARN)
     end
     return nil
+  end
+
+  if opts.attach == false then
+    return client_id
   end
 
   if client_id and lsp.buf_attach_client(bufnr, client_id) then
@@ -383,78 +491,7 @@ function lsp._set_defaults(client, bufnr)
   end
 end
 
---- Reset defaults set by `set_defaults`.
---- Must only be called if the last client attached to a buffer exits.
-local function reset_defaults(bufnr)
-  if vim.bo[bufnr].tagfunc == 'v:lua.vim.lsp.tagfunc' then
-    vim.bo[bufnr].tagfunc = nil
-  end
-  if vim.bo[bufnr].omnifunc == 'v:lua.vim.lsp.omnifunc' then
-    vim.bo[bufnr].omnifunc = nil
-  end
-  if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then
-    vim.bo[bufnr].formatexpr = nil
-  end
-  vim._with({ buf = bufnr }, function()
-    local keymap = vim.fn.maparg('K', 'n', false, true)
-    if keymap and keymap.callback == vim.lsp.buf.hover and keymap.buffer == 1 then
-      vim.keymap.del('n', 'K', { buffer = bufnr })
-    end
-  end)
-end
-
---- @param code integer
---- @param signal integer
---- @param client_id integer
-local function on_client_exit(code, signal, client_id)
-  local client = all_clients[client_id]
-
-  vim.schedule(function()
-    for bufnr in pairs(client.attached_buffers) do
-      if client and client.attached_buffers[bufnr] and api.nvim_buf_is_valid(bufnr) then
-        api.nvim_exec_autocmds('LspDetach', {
-          buffer = bufnr,
-          modeline = false,
-          data = { client_id = client_id },
-        })
-      end
-
-      client.attached_buffers[bufnr] = nil
-
-      if #lsp.get_clients({ bufnr = bufnr, _uninitialized = true }) == 0 then
-        reset_defaults(bufnr)
-      end
-    end
-
-    local namespace = vim.lsp.diagnostic.get_namespace(client_id)
-    vim.diagnostic.reset(namespace)
-  end)
-
-  local name = client.name or 'unknown'
-
-  -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
-  -- autocommands
-  vim.schedule(function()
-    all_clients[client_id] = nil
-
-    -- Client can be absent if executable starts, but initialize fails
-    -- init/attach won't have happened
-    if client then
-      changetracking.reset(client)
-    end
-    if code ~= 0 or (signal ~= 0 and signal ~= 15) then
-      local msg = string.format(
-        'Client %s quit with exit code %s and signal %s. Check log for errors: %s',
-        name,
-        code,
-        signal,
-        lsp.get_log_path()
-      )
-      vim.notify(msg, vim.log.levels.WARN)
-    end
-  end)
-end
-
+--- @deprecated
 --- Starts and initializes a client with the given configuration.
 --- @param config vim.lsp.ClientConfig Configuration for the server.
 --- @return integer? client_id |vim.lsp.get_client_by_id()| Note: client may not be
@@ -462,21 +499,8 @@ end
 ---         the client has been initialized.
 --- @return string? # Error message, if any
 function lsp.start_client(config)
-  local ok, res = pcall(require('vim.lsp.client').create, config)
-  if not ok then
-    return nil, res --[[@as string]]
-  end
-
-  local client = assert(res)
-
-  --- @diagnostic disable-next-line: invisible
-  table.insert(client._on_exit_cbs, on_client_exit)
-
-  all_clients[client.id] = client
-
-  client:initialize()
-
-  return client.id, nil
+  vim.deprecate('vim.lsp.start_client()', 'vim.lsp.start()', '0.13')
+  return create_and_initialize_client(config)
 end
 
 ---Buffer lifecycle handler for textDocument/didSave
