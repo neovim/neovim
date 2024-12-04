@@ -188,9 +188,9 @@ describe('command-line option', function()
 
   it('nvim -v, :version', function()
     matches('Run ":verbose version"', fn.execute(':version'))
-    matches('Compilation: .*Run :checkhealth', fn.execute(':verbose version'))
+    matches('fall%-back for %$VIM: .*Run :checkhealth', fn.execute(':verbose version'))
     matches('Run "nvim %-V1 %-v"', fn.system({ nvim_prog_abs(), '-v' }))
-    matches('Compilation: .*Run :checkhealth', fn.system({ nvim_prog_abs(), '-V1', '-v' }))
+    matches('fall%-back for %$VIM: .*Run :checkhealth', fn.system({ nvim_prog_abs(), '-V1', '-v' }))
   end)
 
   if is_os('win') then

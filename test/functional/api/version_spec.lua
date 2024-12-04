@@ -43,7 +43,7 @@ describe("api_info()['version']", function()
     eq(0, fn.has('nvim-' .. major .. '.' .. minor .. '.' .. (patch + 1)))
     eq(0, fn.has('nvim-' .. major .. '.' .. (minor + 1) .. '.' .. patch))
     eq(0, fn.has('nvim-' .. (major + 1) .. '.' .. minor .. '.' .. patch))
-    assert(build == nil or type(build) == 'string')
+    assert(build == vim.NIL or type(build) == 'string')
   end)
 end)
 
