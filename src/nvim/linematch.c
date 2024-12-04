@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "nvim/globals.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/linematch.h"
 #include "nvim/macros_defs.h"
@@ -12,6 +13,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "xdiff/xdiff.h"
+#include "nvim/os/input.h"
 
 #define LN_MAX_BUFS 8
 #define LN_DECISION_MAX 255  // pow(2, LN_MAX_BUFS(8)) - 1 = 255
@@ -253,8 +255,15 @@ static size_t unwrap_indexes(const int *values, const int *diff_len, const size_
 /// @param diff_blk
 static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *diffcmppath,
                             const int *diff_len, const size_t ndiffs, const mmfile_t **diff_blk,
-                            bool iwhite)
+                            bool iwhite, bool *linematchCanceled)
 {
+  if (*linematchCanceled == true) {
+    return;
+  }
+  fast_breakcheck();
+  if (got_int) {
+    *linematchCanceled = true;
+  }
   if (ch_dim == ndiffs) {
     int npaths = 0;
     size_t paths[LN_MAX_BUFS];
@@ -276,7 +285,7 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
   for (int i = 0; i <= diff_len[ch_dim]; i++) {
     df_iters[ch_dim] = i;
     populate_tensor(df_iters, ch_dim + 1, diffcmppath, diff_len,
-                    ndiffs, diff_blk, iwhite);
+                    ndiffs, diff_blk, iwhite, linematchCanceled);
   }
 }
 
@@ -336,7 +345,7 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
 /// @param [out] [allocated] decisions
 /// @return the length of decisions
 size_t linematch_nbuffers(const mmfile_t **diff_blk, const int *diff_len, const size_t ndiffs,
-                          int **decisions, bool iwhite)
+                          int **decisions, bool iwhite, bool *linematchCanceled)
 {
   assert(ndiffs <= LN_MAX_BUFS);
 
@@ -361,24 +370,26 @@ size_t linematch_nbuffers(const mmfile_t **diff_blk, const int *diff_len, const 
 
   // memory for avoiding repetitive calculations of score
   int df_iters[LN_MAX_BUFS];
-  populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite);
+  populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite, linematchCanceled);
 
-  const size_t u = unwrap_indexes(diff_len, diff_len, ndiffs);
-  diffcmppath_T *startNode = &diffcmppath[u];
-
-  *decisions = xmalloc(sizeof(int) * memsize_decisions);
   size_t n_optimal = 0;
-  test_charmatch_paths(startNode, 0);
-  while (startNode->df_path_n > 0) {
-    size_t j = startNode->df_optimal_choice;
-    (*decisions)[n_optimal++] = startNode->df_choice[j];
-    startNode = startNode->df_decision[j];
-  }
-  // reverse array
-  for (size_t i = 0; i < (n_optimal / 2); i++) {
-    int tmp = (*decisions)[i];
-    (*decisions)[i] = (*decisions)[n_optimal - 1 - i];
-    (*decisions)[n_optimal - 1 - i] = tmp;
+  if (*linematchCanceled == false) {
+    *decisions = xmalloc(sizeof(int) * memsize_decisions);
+    const size_t u = unwrap_indexes(diff_len, diff_len, ndiffs);
+    diffcmppath_T *startNode = &diffcmppath[u];
+
+    test_charmatch_paths(startNode, 0);
+    while (startNode->df_path_n > 0) {
+      size_t j = startNode->df_optimal_choice;
+      (*decisions)[n_optimal++] = startNode->df_choice[j];
+      startNode = startNode->df_decision[j];
+    }
+    // reverse array
+    for (size_t i = 0; i < (n_optimal / 2); i++) {
+      int tmp = (*decisions)[i];
+      (*decisions)[i] = (*decisions)[n_optimal - 1 - i];
+      (*decisions)[n_optimal - 1 - i] = tmp;
+    }
   }
 
   xfree(diffcmppath);
