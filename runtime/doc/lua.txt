@@ -2983,6 +2983,7 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                 • skip: (fun(dir_name: string): boolean)|nil Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1
+                • follow: boolean|nil Follow symbolic links. (default: true)
 
     Return: ~
         (`Iterator`) over items in {path}. Each iteration yields two values:
