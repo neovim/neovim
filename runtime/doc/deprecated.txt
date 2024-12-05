@@ -38,6 +38,12 @@ DIAGNOSTICS
 - The "cursor_position" parameter of |vim.diagnostic.JumpOpts| is renamed to
   "pos"
 
+LSP
+• *vim.lsp.buf.clear_references()*
+• *vim.lsp.buf.document_highlight()*
+• *vim.lsp.util.buf_clear_references()*
+• *vim.lsp.util.buf_highlight_references()*
+
 TREESITTER
 • *TSNode:child_containing_descendant()*	Use
   |TSNode:child_with_descendant()| instead; it is identical except that it can
