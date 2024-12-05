@@ -119,7 +119,7 @@ local exclude_invalid_urls = {
 -- Deprecated, brain-damaged files that I don't care about.
 local ignore_errors = {
   ['pi_netrw.txt'] = true,
-  ['backers.txt'] = true,
+  ['credits.txt'] = true,
 }
 
 local function tofile(fname, text)

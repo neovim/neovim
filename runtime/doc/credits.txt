@@ -1,4 +1,4 @@
-*backers.txt*          Nvim
+*credits.txt*          Nvim
 
 
                      NVIM REFERENCE MANUAL
@@ -112,7 +112,7 @@ Vim     Nvim is based on Vim.  https://www.vim.org/
 
 
 ==============================================================================
-Neovim fundraiser backers
+Neovim fundraiser backers                                        *backers.txt*
 
 Thank you to everyone who backed the original Neovim Fundraiser.
 

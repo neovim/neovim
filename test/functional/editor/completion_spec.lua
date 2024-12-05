@@ -1023,18 +1023,18 @@ describe('completion', function()
 
   it("'ignorecase' 'infercase' CTRL-X CTRL-N #6451", function()
     feed_command('set ignorecase infercase')
-    feed_command('edit runtime/doc/backers.txt')
+    feed_command('edit runtime/doc/credits.txt')
     feed('oX<C-X><C-N>')
     screen:expect {
       grid = [[
-      *backers.txt*          Nvim                                 |
-      Xnull^                                                       |
-      {12:Xnull          }{101: }                                            |
-      {4:Xoxomoon       }{101: }                                            |
-      {4:Xu             }{101: }     NVIM REFERENCE MANUAL                  |
-      {4:Xpayn          }{12: }                                            |
-      {4:Xinity         }{12: }                                            |
-      {5:-- Keyword Local completion (^N^P) }{6:match 1 of 7}             |
+      *credits.txt*          Nvim                                 |
+      Xvi^                                                         |
+      {12:Xvi            }{101: }                                            |
+      {4:Xvim           }{101: }                                            |
+      {4:X11            }{12: }     NVIM REFERENCE MANUAL                  |
+      {4:Xnull          }{12: }                                            |
+      {4:Xoxomoon       }{12: }                                            |
+      {5:-- Keyword Local completion (^N^P) }{6:match 1 of 10}            |
     ]],
     }
   end)
