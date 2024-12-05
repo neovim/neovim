@@ -253,6 +253,91 @@ func Test_CompleteDoneNone()
   au! CompleteDone
 endfunc
 
+func Test_CompleteDone_vevent_keys()
+  func OnDone()
+    let g:complete_word = get(v:event, 'complete_word', v:null)
+    let g:complete_type = get(v:event, 'complete_type', v:null)
+  endfunction
+
+  autocmd CompleteDone * :call OnDone()
+
+  func CompleteFunc(findstart, base)
+    if a:findstart
+      return col(".")
+    endif
+    return [#{word: "foo"}, #{word: "bar"}]
+  endfunc
+  set omnifunc=CompleteFunc
+  set completefunc=CompleteFunc
+  set completeopt+=menuone
+
+  new
+  call feedkeys("A\<C-X>\<C-O>\<Esc>", 'tx')
+  call assert_equal('', g:complete_word)
+  call assert_equal('omni', g:complete_type)
+
+  call feedkeys("S\<C-X>\<C-O>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('foo', g:complete_word)
+  call assert_equal('omni', g:complete_type)
+
+  call feedkeys("S\<C-X>\<C-O>\<C-N>\<C-Y>\<Esc>0", 'tx')
+  call assert_equal('bar', g:complete_word)
+  call assert_equal('omni', g:complete_type)
+
+  call feedkeys("Shello vim visual v\<C-X>\<C-N>\<ESC>", 'tx')
+  call assert_equal('', g:complete_word)
+  call assert_equal('keyword', g:complete_type)
+
+  call feedkeys("Shello vim visual v\<C-X>\<C-N>\<C-Y>", 'tx')
+  call assert_equal('vim', g:complete_word)
+  call assert_equal('keyword', g:complete_type)
+
+  call feedkeys("Shello vim visual v\<C-X>\<C-N>\<C-Y>", 'tx')
+  call assert_equal('vim', g:complete_word)
+  call assert_equal('keyword', g:complete_type)
+
+  call feedkeys("Shello vim\<CR>completion test\<CR>\<C-X>\<C-l>\<C-Y>", 'tx')
+  call assert_equal('completion test', g:complete_word)
+  call assert_equal('whole_line', g:complete_type)
+
+  call feedkeys("S\<C-X>\<C-U>\<C-Y>", 'tx')
+  call assert_equal('foo', g:complete_word)
+  call assert_equal('function', g:complete_type)
+
+  inoremap <buffer> <f3> <cmd>call complete(1, ["red", "blue"])<cr>
+  call feedkeys("S\<f3>\<C-Y>", 'tx')
+  call assert_equal('red', g:complete_word)
+  call assert_equal('eval', g:complete_type)
+
+  call feedkeys("S\<C-X>\<C-V>\<C-Y>", 'tx')
+  call assert_equal('!', g:complete_word)
+  call assert_equal('cmdline', g:complete_type)
+
+  call writefile([''], 'foo_test', 'D')
+  call feedkeys("Sfoo\<C-X>\<C-F>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('foo_test', g:complete_word)
+  call assert_equal('files', g:complete_type)
+
+  call writefile(['hello help'], 'test_case.txt', 'D')
+  set dictionary=test_case.txt
+  call feedkeys("ggdGSh\<C-X>\<C-K>\<C-Y>\<Esc>", 'tx')
+  call assert_equal('hello', g:complete_word)
+  call assert_equal('dictionary', g:complete_type)
+
+  set spell spelllang=en_us
+  call feedkeys("STheatre\<C-X>s\<C-Y>\<Esc>", 'tx')
+  call assert_equal('Theater', g:complete_word)
+  call assert_equal('spell', g:complete_type)
+
+  bwipe!
+  set completeopt& omnifunc& completefunc& spell& spelllang& dictionary&
+  autocmd! CompleteDone
+  delfunc OnDone
+  delfunc CompleteFunc
+  unlet g:complete_word
+  unlet g:complete_type
+endfunc
+
 func Test_CompleteDoneDict()
   au CompleteDonePre * :call <SID>CompleteDone_CheckCompletedItemDict(1)
   au CompleteDone * :call <SID>CompleteDone_CheckCompletedItemDict(0)

@@ -463,6 +463,10 @@ CompleteDone			After Insert mode completion is done.  Either
 				|v:completed_item| gives the completed item.
 
 				Sets these |v:event| keys:
+				    complete_word	The word that was
+							selected, empty if
+							abandoned complete.
+				    complete_type	|complete_info_mode|
 				    reason	Reason for completion being
 						done. Can be one of:
 						- "accept": completion was
