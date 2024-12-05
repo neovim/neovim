@@ -71,6 +71,7 @@ local new_layout = {
   ['editorconfig.txt'] = true,
   ['faq.txt'] = true,
   ['gui.txt'] = true,
+  ['intro.txt'] = true,
   ['lua.txt'] = true,
   ['luaref.txt'] = true,
   ['news.txt'] = true,
@@ -85,6 +86,7 @@ local new_layout = {
 
 -- Map of new:old pages, to redirect renamed pages.
 local redirects = {
+  ['credits'] = 'backers',
   ['tui'] = 'term',
   ['terminal'] = 'nvim_terminal_emulator',
 }
