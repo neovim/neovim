@@ -19,6 +19,13 @@ local globalstate = {
 ---`nil` indicates following the global state.
 ---@field enabled? boolean
 ---
+---Each data change generates a unique version,
+---not garanteed, numbers may be reused over time.
+---@field version integer
+---
+---Latest `version` with data applied.
+---@field applied? integer
+---
 ---Each client attached to this buffer must exists.
 ---
 ---Index in the form of client_id -> (row -> highlights)
@@ -33,7 +40,7 @@ local bufstates = {}
 for _, client in ipairs(vim.lsp.get_clients()) do
   for _, bufnr in ipairs(vim.lsp.get_buffers_by_client_id(client.id)) do
     if client:supports_method(ms.textDocument_documentHighlight, bufnr) then
-      local bufstate = bufstates[bufnr] or {}
+      local bufstate = bufstates[bufnr] or { version = 0 }
       local client_highlights = bufstate.client_highlights or {}
 
       if not client_highlights[client.id] then
@@ -60,7 +67,7 @@ api.nvim_create_autocmd('LspAttach', {
 
     ---@type integer
     local bufnr = args.buf
-    local bufstate = bufstates[bufnr] or {}
+    local bufstate = bufstates[bufnr] or { version = 0 }
     bufstates[bufnr] = bufstate
 
     local client_highlights = bufstate.client_highlights or {}
@@ -112,6 +119,7 @@ function M.on_document_highlight(err, result, ctx)
   local bufstate = assert(bufstates[bufnr])
   local client_highlights = bufstate.client_highlights
   client_highlights[client_id] = row_highlights
+  bufstate.version = (bufstate.version + 1) % 8
 
   api.nvim__redraw({ buf = bufnr, valid = true })
 end
@@ -215,6 +223,10 @@ api.nvim_set_decoration_provider(namespace, {
       return
     end
 
+    if bufstate.version == bufstate.applied then
+      return
+    end
+
     local enabled = bufstate.enabled
     if enabled == nil then
       enabled = globalstate.enabled
@@ -228,19 +240,14 @@ api.nvim_set_decoration_provider(namespace, {
 
     for row = toprow, botrow do
       api.nvim_buf_clear_namespace(bufnr, namespace, row, row + 1)
-      -- TODO(ofseed): When deleting characters at the end of a line or the entire line,
-      -- the extmark range might still remain as it was before the deletion,
-      -- causing outbounds error when trying to set the extmark.
-      -- Better to avoid rendering expired extmarks.
-      local max_col = #api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1]
 
       for _, row_highlights in pairs(client_highlights) do
         local highlights = row_highlights[row] or {}
 
         for _, highlight in pairs(highlights) do
-          local col = math.min(highlight.range['start'].character, max_col)
+          local col = highlight.range['start'].character
           local end_row = highlight.range['end'].line
-          local end_col = math.min(highlight.range['end'].character, max_col)
+          local end_col = highlight.range['end'].character
 
           api.nvim_buf_set_extmark(bufnr, namespace, row, col, {
             end_row = end_row,
@@ -251,6 +258,8 @@ api.nvim_set_decoration_provider(namespace, {
         end
       end
     end
+
+    bufstate.applied = bufstate.version
   end,
 })
 
