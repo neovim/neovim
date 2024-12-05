@@ -208,6 +208,8 @@ M.vars = {
                          changing window  (or tab) on |DirChanged|.
         status           Job status or exit code, -1 means "unknown". |TermClose|
         reason           Reason for completion being done. |CompleteDone|
+        complete_word    The word that was selected, empty if abandoned complete.
+        complete_type    See |complete_info_mode|
     ]=],
   },
   exception = {
