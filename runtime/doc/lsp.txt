@@ -1611,6 +1611,8 @@ jump({opts})                               *vim.lsp.document_highlight.jump()*
                   find the nearest highlight. Default is the current cursor
                   position.
                 • {winid}? (`integer`, default: `0`) Window ID
+                • {refresh}? (`boolean`) Refresh documents highlights
+                  immediately before jumping.
 
                           *vim.lsp.document_highlight.on_document_highlight()*
 on_document_highlight({result}, {ctx})

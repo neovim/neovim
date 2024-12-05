@@ -141,7 +141,7 @@ function M.on_document_highlight(err, result, ctx)
 end
 
 ---@param bufnr integer
----@param opts? {client_id?: integer}
+---@param opts? {client_id?: integer, sync?: boolean}
 local function refresh(bufnr, opts)
   local bufstate = assert(bufstates[bufnr])
   local enabled = bufstate.enabled
@@ -167,7 +167,21 @@ local function refresh(bufnr, opts)
 
   for _, client in ipairs(clients) do
     local params = util.make_position_params(0, client.offset_encoding)
-    client:request(ms.textDocument_documentHighlight, params, nil, bufnr)
+
+    if opts.sync then
+      local response = client:request_sync(ms.textDocument_documentHighlight, params, nil, bufnr)
+      if response == nil then
+        return
+      end
+
+      M.on_document_highlight(
+        response.err,
+        response.result,
+        { bufnr = bufnr, client_id = client.id, method = ms.textDocument_documentHighlight }
+      )
+    else
+      client:request(ms.textDocument_documentHighlight, params, nil, bufnr)
+    end
   end
 end
 
@@ -436,6 +450,9 @@ end
 ---Window ID
 ---(default: `0`)
 ---@field winid? integer
+---
+---Refresh documents highlights immediately before jumping.
+---@field refresh? boolean
 
 ---Move to a document highlight
 ---@param opts vim.lsp.document_highlight.JumpOpts
@@ -454,6 +471,10 @@ function M.jump(opts)
   local bufstate = bufstates[bufnr]
   if not bufstate then
     return
+  end
+
+  if opts.refresh then
+    refresh(bufnr, { sync = true })
   end
 
   while count > 0 do
