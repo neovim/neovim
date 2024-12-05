@@ -70,6 +70,7 @@ local new_layout = {
   ['dev_vimpatch.txt'] = true,
   ['editorconfig.txt'] = true,
   ['faq.txt'] = true,
+  ['gui.txt'] = true,
   ['lua.txt'] = true,
   ['luaref.txt'] = true,
   ['news.txt'] = true,
