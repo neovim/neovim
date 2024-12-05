@@ -193,7 +193,7 @@ registers. Nvim looks for these clipboard tools, in order of priority:
   - xclip (if $DISPLAY is set)
   - lemonade (for SSH) https://github.com/pocke/lemonade
   - doitclient (for SSH) https://www.chiark.greenend.org.uk/~sgtatham/doit/
-  - win32yank (Windows)
+  - *win32yank* (Windows)
   - putclip, getclip (Windows) https://cygwin.com/packages/summary/cygutils.html
   - clip, powershell (Windows) https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/clip
   - termux (via termux-clipboard-set, termux-clipboard-set)

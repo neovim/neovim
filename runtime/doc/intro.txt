@@ -53,19 +53,33 @@ Nvim on the interwebs					*internet*
 - Nvim home page: https://neovim.io/
 - Vim FAQ: https://vimhelp.org/vim_faq.txt.html
 
-			*download* *upgrade* *ubuntu*
+			*download* *upgrade* *install* *ubuntu*
 To install or upgrade Nvim, you can...
 - Download a pre-built archive:
   https://github.com/neovim/neovim/releases
 - Use your system package manager:
   https://github.com/neovim/neovim/blob/master/INSTALL.md#install-from-package
+- Build from source:
+  https://github.com/neovim/neovim/blob/master/INSTALL.md#install-from-source
 
 			*bugs* *bug-report* *feature-request*
 Report bugs and request features here: https://github.com/neovim/neovim/issues
 Be brief, yet complete.  Always give a reproducible example and try to find
-out which settings or other things trigger the bug.
+out which settings or other things trigger the bug. If Nvim crashed, try to
+get a backtrace (see |dev-tools-backtrace|).
 
-If Nvim crashes, try to get a backtrace.  See |debug.txt|.
+			*uninstall*
+To un-install Nvim:
+- If you downloaded a pre-built archive or built Nvim from source (e.g. `make
+  install`), just delete its files, typically located in: >
+  /usr/local/bin/nvim
+  /usr/local/share/nvim
+<
+- If you installed via package manager, read your package manager's
+  documentation. Common examples:
+  - APT (Debian, Ubuntu, …): `apt-get remove neovim`
+  - Homebrew (macOS): `brew install neovim`
+  - Scoop (Windows): `scoop install neovim`
 
 ==============================================================================
 Sponsor Vim/Nvim development				*sponsor* *register*

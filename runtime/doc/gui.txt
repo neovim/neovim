@@ -1,10 +1,10 @@
 *gui.txt*       Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+                  VIM REFERENCE MANUAL    by Bram Moolenaar
 
 
-Nvim Graphical User Interface				*gui* *GUI*
+Nvim Graphical User Interface                           *gui* *GUI*
 
 Any client that supports the Nvim |ui-protocol| can be used as a UI for Nvim.
 And multiple UIs can connect to the same Nvim instance! The terms "UI" and
@@ -20,7 +20,7 @@ features, whereas help tags with the "ui-" prefix refer to the |ui-protocol|.
 Nvim provides a default, builtin UI (the |TUI|), but there are many other
 (third-party) GUIs that you can use instead:
 
-							*vscode*
+                                                        *vscode*
 - vscode-neovim (Nvim in VSCode!) https://github.com/vscode-neovim/vscode-neovim
 - Firenvim (Nvim in your web browser!) https://github.com/glacambre/firenvim
 - Neovide https://neovide.dev/
@@ -33,71 +33,71 @@ Nvim provides a default, builtin UI (the |TUI|), but there are many other
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-Starting the GUI				*gui-config* *gui-start*
+Starting the GUI                                *gui-config* *gui-start*
 
-				*ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
+                                *ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
 For GUI-specific configuration Nvim provides the |UIEnter| event.  This
 happens after other |initialization|s, or whenever a UI attaches (multiple UIs
 can connect to any Nvim instance).
 
 Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
-	:autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
+        :autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
 <
 
-						*:winp* *:winpos* *E188*
+                                                *:winp* *:winpos* *E188*
 :winp[os]
-		Display current position of the top left corner of the GUI vim
-		window in pixels.  Does not work in all versions.
-		Also see |getwinpos()|, |getwinposx()| and |getwinposy()|.
+                Display current position of the top left corner of the GUI vim
+                window in pixels.  Does not work in all versions.
+                Also see |getwinpos()|, |getwinposx()| and |getwinposy()|.
 
-:winp[os] {X} {Y}							*E466*
-		Put the GUI vim window at the given {X} and {Y} coordinates.
-		The coordinates should specify the position in pixels of the
-		top left corner of the window.
-		When the GUI window has not been opened yet, the values are
-		remembered until the window is opened.  The position is
-		adjusted to make the window fit on the screen (if possible).
+:winp[os] {X} {Y}                                                       *E466*
+                Put the GUI vim window at the given {X} and {Y} coordinates.
+                The coordinates should specify the position in pixels of the
+                top left corner of the window.
+                When the GUI window has not been opened yet, the values are
+                remembered until the window is opened.  The position is
+                adjusted to make the window fit on the screen (if possible).
 
-					    *:wi* *:win* *:winsize* *E465*
+                                            *:wi* *:win* *:winsize* *E465*
 :win[size] {width} {height}
-		Set the window height to {width} by {height} characters.
-		Obsolete, use ":set lines=11 columns=22".
+                Set the window height to {width} by {height} characters.
+                Obsolete, use ":set lines=11 columns=22".
 
 ==============================================================================
-Scrollbars						*gui-scrollbars*
+Scrollbars                                              *gui-scrollbars*
 
 There are vertical scrollbars and a horizontal scrollbar.  You may
 configure which ones appear with the 'guioptions' option.
 
 The interface looks like this (with `:set guioptions=mlrb`):
 >
-		       +------------------------------+ `
-		       | File  Edit		 Help | <- Menu bar (m) `
-		       +-+--------------------------+-+ `
-		       |^|			    |^| `
-		       |#| Text area.		    |#| `
-		       | |			    | | `
-		       |v|__________________________|v| `
- Normal status line -> |-+ File.c	       5,2  +-| `
+                       +------------------------------+ `
+                       | File  Edit              Help | <- Menu bar (m) `
+                       +-+--------------------------+-+ `
+                       |^|                          |^| `
+                       |#| Text area.               |#| `
+                       | |                          | | `
+                       |v|__________________________|v| `
+ Normal status line -> |-+ File.c              5,2  +-| `
  between Vim windows   |^|""""""""""""""""""""""""""|^| `
-		       | |			    | | `
-		       | | Another file buffer.     | | `
-		       | |			    | | `
-		       |#|			    |#| `
- Left scrollbar (l) -> |#|			    |#| <- Right `
-		       |#|			    |#|    scrollbar (r) `
-		       | |			    | | `
-		       |v|			    |v| `
-		       +-+--------------------------+-+ `
-		       | |< ####		   >| | <- Bottom `
-		       +-+--------------------------+-+    scrollbar (b) `
+                       | |                          | | `
+                       | | Another file buffer.     | | `
+                       | |                          | | `
+                       |#|                          |#| `
+ Left scrollbar (l) -> |#|                          |#| <- Right `
+                       |#|                          |#|    scrollbar (r) `
+                       | |                          | | `
+                       |v|                          |v| `
+                       +-+--------------------------+-+ `
+                       | |< ####                   >| | <- Bottom `
+                       +-+--------------------------+-+    scrollbar (b) `
 <
 Any of the scrollbar or menu components may be turned off by not putting the
 appropriate letter in the 'guioptions' string.  The bottom scrollbar is
 only useful when 'nowrap' is set.
 
 
-VERTICAL SCROLLBARS					*gui-vert-scroll*
+VERTICAL SCROLLBARS                                     *gui-vert-scroll*
 
 Each Vim window has a scrollbar next to it which may be scrolled up and down
 to move through the text in that buffer.  The size of the scrollbar-thumb
@@ -116,7 +116,7 @@ is on the left half, the right scrollbar column will contain scrollbars for
 the rightmost windows.  The same happens on the other side.
 
 
-HORIZONTAL SCROLLBARS					*gui-horiz-scroll*
+HORIZONTAL SCROLLBARS                                   *gui-horiz-scroll*
 
 The horizontal scrollbar (at the bottom of the Vim GUI) may be used to
 scroll text sideways when the 'wrap' option is turned off.  The
@@ -132,7 +132,7 @@ include the 'h' flag in 'guioptions'.  Then the scrolling is limited by the
 text of the current cursor line.
 
 ==============================================================================
-Drag and drop						*drag-n-drop*
+Drag and drop                                           *drag-n-drop*
 
 You can drag and drop one or more files into the Vim window, where they will
 be opened as if a |:drop| command was used.
@@ -151,12 +151,12 @@ names with any Ex command.  Special characters (space, tab, double quote and
 "|"; backslash on non-MS-Windows systems) will be escaped.
 
 ==============================================================================
-Menus							*menus*
+Menus                                                   *menus*
 
 For an introduction see |usr_42.txt| in the user manual.
 
 
-Using Menus						*using-menus*
+Using Menus                                             *using-menus*
 
 Basically, menus can be used just like mappings.  You can define your own
 menus, as many as you like.
@@ -166,45 +166,45 @@ what the key sequence was.
 
 For creating menus in a different language, see |:menutrans|.
 
-							*menu.vim*
+                                                        *menu.vim*
 The default menus are read from the file "$VIMRUNTIME/menu.vim".  See
 |$VIMRUNTIME| for where the path comes from.  You can set up your own menus.
 Starting off with the default set is a good idea.  You can add more items, or,
 if you don't like the defaults at all, start with removing all menus
 |:unmenu-all|.  You can also avoid the default menus being loaded by adding
 this line to your vimrc file (NOT your gvimrc file!): >
-	:let did_install_default_menus = 1
+        :let did_install_default_menus = 1
 If you also want to avoid the Syntax menu: >
-	:let did_install_syntax_menu = 1
+        :let did_install_syntax_menu = 1
 The first item in the Syntax menu can be used to show all available filetypes
 in the menu (which can take a bit of time to load).  If you want to have all
 filetypes already present at startup, add: >
-	:let do_syntax_sel_menu = 1
+        :let do_syntax_sel_menu = 1
 
 Note that the menu.vim is sourced when `:syntax on` or `:filetype on` is
 executed or after your .vimrc file is sourced.  This means that the 'encoding'
 option and the language of messages (`:language messages`) must be set before
 that (if you want to change them).
 
-							*console-menus*
+                                                        *console-menus*
 Although this documentation is in the GUI section, you can actually use menus
 in console mode too.  You will have to load |menu.vim| explicitly then, it is
 not done by default.  You can use the |:emenu| command and command-line
 completion with 'wildmenu' to access the menu entries almost like a real menu
 system.  To do this, put these commands in your vimrc file: >
-	:source $VIMRUNTIME/menu.vim
-	:set wildmenu
-	:set cpo-=<
-	:set wcm=<C-Z>
-	:map <F4> :emenu <C-Z>
+        :source $VIMRUNTIME/menu.vim
+        :set wildmenu
+        :set cpo-=<
+        :set wcm=<C-Z>
+        :map <F4> :emenu <C-Z>
 Pressing <F4> will start the menu.  You can now use the cursor keys to select
 a menu entry.  Hit <Enter> to execute it.  Hit <Esc> if you want to cancel.
 
-Creating New Menus					*creating-menus*
+Creating New Menus                                      *creating-menus*
 
-				*:me*  *:menu*  *:noreme*  *:noremenu*
-				*E330* *E327* *E331* *E336* *E333*
-				*E328* *E329* *E337* *E792*
+                                *:me*  *:menu*  *:noreme*  *:noremenu*
+                                *E330* *E327* *E331* *E336* *E333*
+                                *E328* *E329* *E337* *E792*
 To create a new menu item, use the ":menu" commands.  They are mostly like
 the ":map" set of commands (see |map-modes|), but the first argument is a menu
 item name, given as a path of menus and submenus with a '.' between them,
@@ -225,15 +225,16 @@ tooltips for menus. See |terminal-input|.
 
 Special characters in a menu name:
 
-							*menu-shortcut*
-	&	The next character is the shortcut key.  Make sure each
-		shortcut key is only used once in a (sub)menu.  If you want to
-		insert a literal "&" in the menu name use "&&".
-							*menu-text*
-	<Tab>	Separates the menu name from right-aligned text.  This can be
-		used to show the equivalent typed command.  The text "<Tab>"
-		can be used here for convenience.  If you are using a real
-		tab, don't forget to put a backslash before it!
+                                                        *menu-shortcut*
+- & The next character is the shortcut key.  Make sure each shortcut key is
+  only used once in a (sub)menu.  If you want to insert a literal "&" in the
+  menu name use "&&".
+                                                        *menu-text*
+- <Tab> Separates the menu name from right-aligned text.  This can be used to
+  show the equivalent typed command.  The text "<Tab>" can be used here for
+  convenience.  If you are using a real tab, don't forget to put a backslash
+  before it!
+
 Example: >
 
    :amenu &File.&Open<Tab>:e  :browse e<CR>
@@ -243,99 +244,99 @@ With the shortcut "F" (while keeping the <Alt> key pressed), and then "O",
 this menu can be used.  The second part is shown as "Open     :e".  The ":e"
 is right aligned, and the "O" is underlined, to indicate it is the shortcut.
 
-					*:am*  *:amenu*  *:an*      *:anoremenu*
+                                        *:am*  *:amenu*  *:an*      *:anoremenu*
 The ":amenu" command can be used to define menu entries for all modes at once,
 except for Terminal mode.  To make the command work correctly, a character is
-automatically inserted for some modes:
-	mode		inserted	appended	~
-	Normal		nothing		nothing
-	Visual		<C-C>		<C-\><C-G>
-	Insert		<C-\><C-O>
-	Cmdline		<C-C>		<C-\><C-G>
-	Op-pending	<C-C>		<C-\><C-G>
-
+automatically inserted for some modes: >
+    mode            inserted        appended
+    Normal          nothing         nothing
+    Visual          <C-C>           <C-\><C-G>
+    Insert          <C-\><C-O>
+    Cmdline         <C-C>           <C-\><C-G>
+    Op-pending      <C-C>           <C-\><C-G>
+<
 Example: >
 
-   :amenu File.Next	:next^M
+    :amenu File.Next     :next^M
 
 is equal to: >
 
-   :nmenu File.Next	:next^M
-   :vmenu File.Next	^C:next^M^\^G
-   :imenu File.Next	^\^O:next^M
-   :cmenu File.Next	^C:next^M^\^G
-   :omenu File.Next	^C:next^M^\^G
+    :nmenu File.Next     :next^M
+    :vmenu File.Next     ^C:next^M^\^G
+    :imenu File.Next     ^\^O:next^M
+    :cmenu File.Next     ^C:next^M^\^G
+    :omenu File.Next     ^C:next^M^\^G
 
 Careful: In Insert mode this only works for a SINGLE Normal mode command,
 because of the CTRL-O.  If you have two or more commands, you will need to use
 the ":imenu" command.  For inserting text in any mode, you can use the
 expression register: >
 
-   :amenu Insert.foobar   "='foobar'<CR>P
+    :amenu Insert.foobar   "='foobar'<CR>P
 
 The special text <Cmd> begins a "command menu", it executes the command
 directly without changing modes.  Where you might use ":...<CR>" you can
 instead use "<Cmd>...<CR>".  See |<Cmd>| for more info.  Example: >
-	anoremenu File.Next <Cmd>next<CR>
+    anoremenu File.Next <Cmd>next<CR>
 
 Note that <Esc> in Cmdline mode executes the command, like in a mapping.  This
 is Vi compatible.  Use CTRL-C to quit Cmdline mode.
 
-		*:nme* *:nmenu*  *:nnoreme* *:nnoremenu* *:nunme* *:nunmenu*
+                *:nme* *:nmenu*  *:nnoreme* *:nnoremenu* *:nunme* *:nunmenu*
 Menu commands starting with "n" work in Normal mode. |mapmode-n|
 
-		*:ome* *:omenu*  *:onoreme* *:onoremenu* *:ounme* *:ounmenu*
+                *:ome* *:omenu*  *:onoreme* *:onoremenu* *:ounme* *:ounmenu*
 Menu commands starting with "o" work in Operator-pending mode. |mapmode-o|
 
-		*:vme* *:vmenu*  *:vnoreme* *:vnoremenu* *:vunme* *:vunmenu*
+                *:vme* *:vmenu*  *:vnoreme* *:vnoremenu* *:vunme* *:vunmenu*
 Menu commands starting with "v" work in Visual mode. |mapmode-v|
 
-		*:xme* *:xmenu*  *:xnoreme* *:xnoremenu* *:xunme* *:xunmenu*
+                *:xme* *:xmenu*  *:xnoreme* *:xnoremenu* *:xunme* *:xunmenu*
 Menu commands starting with "x" work in Visual and Select mode. |mapmode-x|
 
-		*:sme* *:smenu*  *:snoreme* *:snoremenu* *:sunme* *:sunmenu*
+                *:sme* *:smenu*  *:snoreme* *:snoremenu* *:sunme* *:sunmenu*
 Menu commands starting with "s" work in Select mode. |mapmode-s|
 
-		*:ime* *:imenu*  *:inoreme* *:inoremenu* *:iunme* *:iunmenu*
+                *:ime* *:imenu*  *:inoreme* *:inoremenu* *:iunme* *:iunmenu*
 Menu commands starting with "i" work in Insert mode. |mapmode-i|
 
-		*:cme* *:cmenu*  *:cnoreme* *:cnoremenu* *:cunme* *:cunmenu*
+                *:cme* *:cmenu*  *:cnoreme* *:cnoremenu* *:cunme* *:cunmenu*
 Menu commands starting with "c" work in Cmdline mode. |mapmode-c|
 
-		*:tlm* *:tlmenu* *:tln*     *:tlnoremenu* *:tlu*   *:tlunmenu*
+                *:tlm* *:tlmenu* *:tln*     *:tlnoremenu* *:tlu*   *:tlunmenu*
 Menu commands starting with "tl" work in Terminal mode. |mapmode-t|
 
-						*:menu-<silent>* *:menu-silent*
+                                                *:menu-<silent>* *:menu-silent*
 To define a menu which will not be echoed on the command line, add
 "<silent>" as the first argument.  Example: >
-	:menu <silent> Settings.Ignore\ case  :set ic<CR>
+        :menu <silent> Settings.Ignore\ case  :set ic<CR>
 The ":set ic" will not be echoed when using this menu.  Messages from the
 executed command are still given though.  To shut them up too, add a ":silent"
 in the executed command: >
-	:menu <silent> Search.Header :exe ":silent normal /Header\r"<CR>
+        :menu <silent> Search.Header :exe ":silent normal /Header\r"<CR>
 "<silent>" may also appear just after "<script>".
 
-						*:menu-<script>* *:menu-script*
+                                                *:menu-<script>* *:menu-script*
 The "to" part of the menu will be inspected for mappings.  If you don't want
 this, use the ":noremenu" command (or the similar one for a specific mode).
 If you do want to use script-local mappings, add "<script>" as the very first
 argument to the ":menu" command or just after "<silent>".
 
-							*menu-priority*
+                                                        *menu-priority*
 You can give a priority to a menu.  Menus with a higher priority go more to
 the right.  The priority is given as a number before the ":menu" command.
 Example: >
-	:80menu Buffer.next :bn<CR>
+        :80menu Buffer.next :bn<CR>
 
-The default menus have these priorities:
-	File		10
-	Edit		20
-	Tools		40
-	Syntax		50
-	Buffers		60
-	Window		70
-	Help		9999
-
+The default menus have these priorities: >
+        File            10
+        Edit            20
+        Tools           40
+        Syntax          50
+        Buffers         60
+        Window          70
+        Help            9999
+<
 When no or zero priority is given, 500 is used.
 The priority for the PopUp menu is not used.
 
@@ -343,18 +344,18 @@ You can use a priority higher than 9999, to make it go after the Help menu,
 but that is non-standard and is discouraged.  The highest possible priority is
 about 32000.  The lowest is 1.
 
-							*sub-menu-priority*
+                                                        *sub-menu-priority*
 The same mechanism can be used to position a sub-menu.  The priority is then
 given as a dot-separated list of priorities, before the menu name: >
-	:menu 80.500 Buffer.next :bn<CR>
+        :menu 80.500 Buffer.next :bn<CR>
 Giving the sub-menu priority is only needed when the item is not to be put
 in a normal position.  For example, to put a sub-menu before the other items: >
-	:menu 80.100 Buffer.first :brew<CR>
+        :menu 80.100 Buffer.first :brew<CR>
 Or to put a sub-menu after the other items, and further items with default
 priority will be put before it: >
-	:menu 80.900 Buffer.last :blast<CR>
+        :menu 80.900 Buffer.last :blast<CR>
 When a number is missing, the default value 500 will be used: >
-	:menu .900 myMenu.test :echo "text"<CR>
+        :menu .900 myMenu.test :echo "text"<CR>
 The menu priority is only used when creating a new menu.  When it already
 existed, e.g., in another mode, the priority will not change.  Thus, the
 priority only needs to be given the first time a menu is used.
@@ -364,49 +365,49 @@ menus can be different.  This is different from menu-bar menus, which have
 the same order for all modes.
 NOTE: sub-menu priorities currently don't work for all versions of the GUI.
 
-							*menu-separator* *E332*
+                                                        *menu-separator* *E332*
 Menu items can be separated by a special item that inserts some space between
 items.  Depending on the system this is displayed as a line or a dotted line.
 These items must start with a '-' and end in a '-'.  The part in between is
 used to give it a unique name.  Priorities can be used as with normal items.
 Example: >
-	:menu Example.item1	:do something
-	:menu Example.-Sep-	:
-	:menu Example.item2	:do something different
+        :menu Example.item1     :do something
+        :menu Example.-Sep-     :
+        :menu Example.item2     :do something different
 Note that the separator also requires a rhs.  It doesn't matter what it is,
 because the item will never be selected.  Use a single colon to keep it
 simple.
 
-							*gui-toolbar*
+                                                        *gui-toolbar*
 The default toolbar is setup in menu.vim.  The display of the toolbar is
 controlled by the 'guioptions' letter 'T'.  You can thus have menu & toolbar
 together, or either on its own, or neither.  The appearance is controlled by
 the 'toolbar' option.  You can choose between an image, text or both.
 
-							*toolbar-icon*
+                                                        *toolbar-icon*
 The toolbar is defined as a special menu called ToolBar, which only has one
 level.  Vim interprets the items in this menu as follows:
-1)  If an "icon=" argument was specified, the file with this name is used.
+- 1 If an "icon=" argument was specified, the file with this name is used.
     The file can either be specified with the full path or with the base name.
     In the last case it is searched for in the "bitmaps" directory in
     'runtimepath', like in point 3.  Examples: >
-	:amenu icon=/usr/local/pixmaps/foo_icon.xpm ToolBar.Foo :echo "Foo"<CR>
-	:amenu icon=FooIcon ToolBar.Foo :echo "Foo"<CR>
+        :amenu icon=/usr/local/pixmaps/foo_icon.xpm ToolBar.Foo :echo "Foo"<CR>
+        :amenu icon=FooIcon ToolBar.Foo :echo "Foo"<CR>
 <   Note that in the first case the extension is included, while in the second
     case it is omitted.
     If the file cannot be opened the next points are tried.
     A space in the file name must be escaped with a backslash.
     A menu priority must come _after_ the icon argument: >
-	:amenu icon=foo 1.42 ToolBar.Foo :echo "42!"<CR>
-2)  An item called 'BuiltIn##', where ## is a number, is taken as number ## of
+        :amenu icon=foo 1.42 ToolBar.Foo :echo "42!"<CR>
+- 2 An item called 'BuiltIn##', where ## is a number, is taken as number ## of
     the built-in bitmaps available in Vim.  Currently there are 31 numbered
     from 0 to 30 which cover most common editing operations |builtin-tools|. >
-	:amenu ToolBar.BuiltIn22 :call SearchNext("back")<CR>
-3)  An item with another name is first searched for in the directory
+        :amenu ToolBar.BuiltIn22 :call SearchNext("back")<CR>
+- 3 An item with another name is first searched for in the directory
     "bitmaps" in 'runtimepath'.  If found, the bitmap file is used as the
     toolbar button image.  Note that the exact filename is OS-specific: For
     example, under Win32 the command >
-	:amenu ToolBar.Hello :echo "hello"<CR>
+        :amenu ToolBar.Hello :echo "hello"<CR>
 <   would find the file 'hello.bmp'.  Under X11 it is 'Hello.xpm'.
     For MS-Windows and the bitmap is scaled to fit the button.  For
     MS-Windows a size of 18 by 18 pixels works best.
@@ -414,55 +415,56 @@ level.  Vim interprets the items in this menu as follows:
     The light grey pixels will be changed to the Window frame color and the
     dark grey pixels to the window shadow color.  More colors might also work,
     depending on your system.
-4)  If the bitmap is still not found, Vim checks for a match against its list
+- 4 If the bitmap is still not found, Vim checks for a match against its list
     of built-in names.  Each built-in button image has a name.
     So the command >
-	:amenu ToolBar.Open :e
+        :amenu ToolBar.Open :e
 <   will show the built-in "open a file" button image if no open.bmp exists.
     All the built-in names can be seen used in menu.vim.
-5)  If all else fails, a blank, but functioning, button is displayed.
+- 5 If all else fails, a blank, but functioning, button is displayed.
 
-							*builtin-tools*
-nr  Name		Normal action  ~
-00  New			open new window
-01  Open		browse for file to open in current window
-02  Save		write buffer to file
-03  Undo		undo last change
-04  Redo		redo last undone change
-05  Cut			delete selected text to clipboard
-06  Copy		copy selected text to clipboard
-07  Paste		paste text from clipboard
-08  Print		print current buffer
-09  Help		open a buffer on Vim's builtin help
-10  Find		start a search command
-11  SaveAll		write all modified buffers to file
-12  SaveSesn		write session file for current situation
-13  NewSesn		write new session file
-14  LoadSesn		load session file
-15  RunScript		browse for file to run as a Vim script
-16  Replace		prompt for substitute command
-17  WinClose		close current window
-18  WinMax		make current window use many lines
-19  WinMin		make current window use few lines
-20  WinSplit		split current window
-21  Shell		start a shell
-22  FindPrev		search again, backward
-23  FindNext		search again, forward
-24  FindHelp		prompt for word to search help for
-25  Make		run make and jump to first error
-26  TagJump		jump to tag under the cursor
-27  RunCtags		build tags for files in current directory
-28  WinVSplit		split current window vertically
-29  WinMaxWidth		make current window use many columns
-30  WinMinWidth		make current window use few columns
-
-					*hidden-menus* *win32-hidden-menus*
+                                                        *builtin-tools*
+>
+    nr  Name                Normal action
+    00  New                 open new window
+    01  Open                browse for file to open in current window
+    02  Save                write buffer to file
+    03  Undo                undo last change
+    04  Redo                redo last undone change
+    05  Cut                 delete selected text to clipboard
+    06  Copy                copy selected text to clipboard
+    07  Paste               paste text from clipboard
+    08  Print               print current buffer
+    09  Help                open a buffer on Vim's builtin help
+    10  Find                start a search command
+    11  SaveAll             write all modified buffers to file
+    12  SaveSesn            write session file for current situation
+    13  NewSesn             write new session file
+    14  LoadSesn            load session file
+    15  RunScript           browse for file to run as a Vim script
+    16  Replace             prompt for substitute command
+    17  WinClose            close current window
+    18  WinMax              make current window use many lines
+    19  WinMin              make current window use few lines
+    20  WinSplit            split current window
+    21  Shell               start a shell
+    22  FindPrev            search again, backward
+    23  FindNext            search again, forward
+    24  FindHelp            prompt for word to search help for
+    25  Make                run make and jump to first error
+    26  TagJump             jump to tag under the cursor
+    27  RunCtags            build tags for files in current directory
+    28  WinVSplit           split current window vertically
+    29  WinMaxWidth         make current window use many columns
+    30  WinMinWidth         make current window use few columns
+<
+                                        *hidden-menus* *win32-hidden-menus*
 In the Win32 GUI, starting a menu name with ']' excludes that menu from the
 main menu bar.  You must then use the |:popup| command to display it.
 
 When splitting the window the window toolbar is not copied to the new window.
 
-							*popup-menu*
+                                                        *popup-menu*
 You can define the special menu "PopUp".  This is the menu that is displayed
 when the right mouse button is pressed, if 'mousemodel' is set to popup or
 popup_setpos.
@@ -484,7 +486,7 @@ The default "PopUp" menu is: >vim
     anoremenu PopUp.How-to\ disable\ mouse  <Cmd>help disable-mouse<CR>
 <
 
-Showing What Menus Are Mapped To			*showing-menus*
+Showing What Menus Are Mapped To                        *showing-menus*
 
 To see what an existing menu is mapped to, use just one argument after the
 menu commands (just like you would with the ":map" commands).  If the menu
@@ -503,25 +505,25 @@ Note that hitting <Tab> while entering a menu name after a menu command may
 be used to complete the name of the menu item.
 
 
-Executing Menus						*execute-menus*
+Executing Menus                                         *execute-menus*
 
-						*:em*  *:emenu* *E334* *E335*
-:[range]em[enu] {menu}		Execute {menu} from the command line.
-				The default is to execute the Normal mode
-				menu.  If a range is specified, it executes
-				the Visual mode menu.
-				If used from <c-o>, it executes the
-				insert-mode menu Eg: >
-	:emenu File.Exit
+                                                *:em*  *:emenu* *E334* *E335*
+:[range]em[enu] {menu}          Execute {menu} from the command line.
+                                The default is to execute the Normal mode
+                                menu.  If a range is specified, it executes
+                                the Visual mode menu.
+                                If used from <c-o>, it executes the
+                                insert-mode menu Eg: >
+        :emenu File.Exit
 
-:[range]em[enu] {mode} {menu}	Like above, but execute the menu for {mode}:
-				    'n': |:nmenu|  Normal mode
-				    'v': |:vmenu|  Visual mode
-				    's': |:smenu|  Select mode
-				    'o': |:omenu|  Operator-pending mode
-				    't': |:tlmenu| Terminal mode
-				    'i': |:imenu|  Insert mode
-				    'c': |:cmenu|  Cmdline mode
+:[range]em[enu] {mode} {menu}   Like above, but execute the menu for {mode}:
+                                - 'n': |:nmenu|  Normal mode
+                                - 'v': |:vmenu|  Visual mode
+                                - 's': |:smenu|  Select mode
+                                - 'o': |:omenu|  Operator-pending mode
+                                - 't': |:tlmenu| Terminal mode
+                                - 'i': |:imenu|  Insert mode
+                                - 'c': |:cmenu|  Cmdline mode
 
 
 You can use :emenu to access useful menu items you may have got used to from
@@ -532,10 +534,10 @@ When using a range, if the lines match with '<,'>, then the menu is executed
 using the last visual selection.
 
 
-Deleting Menus						*delete-menus*
+Deleting Menus                                          *delete-menus*
 
-						*:unme*  *:unmenu*
-						*:aun*   *:aunmenu*
+                                                *:unme*  *:unmenu*
+                                                *:aun*   *:aunmenu*
 To delete a menu item or a whole submenu, use the unmenu commands, which are
 analogous to the unmap commands.  Eg: >
     :unmenu! Edit.Paste
@@ -546,26 +548,26 @@ Command-line modes.
 Note that hitting <Tab> while entering a menu name after an umenu command
 may be used to complete the name of the menu item for the appropriate mode.
 
-To remove all menus use:			*:unmenu-all*  >
-	:unmenu *	" remove all menus in Normal and visual mode
-	:unmenu! *	" remove all menus in Insert and Command-line mode
-	:aunmenu *	" remove all menus in all modes, except for Terminal
-			" mode
-	:tlunmenu *	" remove all menus in Terminal mode
+To remove all menus use:                        *:unmenu-all*  >
+        :unmenu *       " remove all menus in Normal and visual mode
+        :unmenu! *      " remove all menus in Insert and Command-line mode
+        :aunmenu *      " remove all menus in all modes, except for Terminal
+                        " mode
+        :tlunmenu *     " remove all menus in Terminal mode
 
 If you want to get rid of the menu bar: >
-	:set guioptions-=m
+        :set guioptions-=m
 
 
-Disabling Menus						*disable-menus*
+Disabling Menus                                         *disable-menus*
 
-						*:menu-disable* *:menu-enable*
+                                                *:menu-disable* *:menu-enable*
 If you do not want to remove a menu, but disable it for a moment, this can be
 done by adding the "enable" or "disable" keyword to a ":menu" command.
 Examples: >
-	:menu disable &File.&Open\.\.\.
-	:amenu enable *
-	:amenu disable &Tools.*
+        :menu disable &File.&Open\.\.\.
+        :amenu enable *
+        :amenu disable &Tools.*
 
 The command applies to the modes as used with all menu commands.  Note that
 characters like "&" need to be included for translated names to be found.
@@ -573,36 +575,36 @@ When the argument is "*", all menus are affected.  Otherwise the given menu
 name and all existing submenus below it are affected.
 
 
-Examples for Menus					*menu-examples*
+Examples for Menus                                      *menu-examples*
 
 Here is an example on how to add menu items with menus!  You can add a menu
 item for the keyword under the cursor.  The register "z" is used. >
 
-  :nmenu Words.Add\ Var		wb"zye:menu! Words.<C-R>z <C-R>z<CR>
-  :nmenu Words.Remove\ Var	wb"zye:unmenu! Words.<C-R>z<CR>
-  :vmenu Words.Add\ Var		"zy:menu! Words.<C-R>z <C-R>z <CR>
-  :vmenu Words.Remove\ Var	"zy:unmenu! Words.<C-R>z<CR>
-  :imenu Words.Add\ Var		<Esc>wb"zye:menu! Words.<C-R>z <C-R>z<CR>a
-  :imenu Words.Remove\ Var	<Esc>wb"zye:unmenu! Words.<C-R>z<CR>a
+  :nmenu Words.Add\ Var         wb"zye:menu! Words.<C-R>z <C-R>z<CR>
+  :nmenu Words.Remove\ Var      wb"zye:unmenu! Words.<C-R>z<CR>
+  :vmenu Words.Add\ Var         "zy:menu! Words.<C-R>z <C-R>z <CR>
+  :vmenu Words.Remove\ Var      "zy:unmenu! Words.<C-R>z<CR>
+  :imenu Words.Add\ Var         <Esc>wb"zye:menu! Words.<C-R>z <C-R>z<CR>a
+  :imenu Words.Remove\ Var      <Esc>wb"zye:unmenu! Words.<C-R>z<CR>a
 
 (the rhs is in <> notation, you can copy/paste this text to try out the
 mappings, or put these lines in your gvimrc; "<C-R>" is CTRL-R, "<CR>" is
 the <CR> key.  |<>|)
 
-							*tooltips* *menu-tips*
+                                                        *tooltips* *menu-tips*
 Tooltips & Menu tips
 
 See section |42.4| in the user manual.
 
-							*:tmenu*
-:tm[enu] {menupath} {rhs}	Define a tip for a menu or tool.  (only in
-				X11 and Win32 GUI)
+                                                        *:tmenu*
+:tm[enu] {menupath} {rhs}       Define a tip for a menu or tool.  (only in
+                                X11 and Win32 GUI)
 
-:tm[enu] [menupath]		List menu tips. (only in X11 and Win32 GUI)
+:tm[enu] [menupath]             List menu tips. (only in X11 and Win32 GUI)
 
-							*:tunmenu*
-:tu[nmenu] {menupath}		Remove a tip for a menu or tool.
-				(only in X11 and Win32 GUI)
+                                                        *:tunmenu*
+:tu[nmenu] {menupath}           Remove a tip for a menu or tool.
+                                (only in X11 and Win32 GUI)
 
 Note: To create menus for terminal mode, use |:tlmenu| instead.
 
@@ -616,11 +618,11 @@ highlight group to change its colors.
 
 A "tip" can be defined for each menu item.  For example, when defining a menu
 item like this: >
-	:amenu MyMenu.Hello :echo "Hello"<CR>
+        :amenu MyMenu.Hello :echo "Hello"<CR>
 The tip is defined like this: >
-	:tmenu MyMenu.Hello Displays a greeting.
+        :tmenu MyMenu.Hello Displays a greeting.
 And delete it with: >
-	:tunmenu MyMenu.Hello
+        :tunmenu MyMenu.Hello
 
 Tooltips are currently only supported for the X11 and Win32 GUI.  However, they
 should appear for the other gui platforms in the not too distant future.
@@ -639,24 +641,24 @@ a menu item - you don't need to do a :tunmenu as well.
 You can cause a menu to popup at the cursor.  This behaves similarly to the
 PopUp menus except that any menu tree can be popped up.
 
-							*:popup* *:popu*
-:popu[p] {name}			Popup the menu {name}.  The menu named must
-				have at least one subentry, but need not
-				appear on the menu-bar (see |hidden-menus|).
+                                                        *:popup* *:popu*
+:popu[p] {name}                 Popup the menu {name}.  The menu named must
+                                have at least one subentry, but need not
+                                appear on the menu-bar (see |hidden-menus|).
 
-:popu[p]! {name}		Like above, but use the position of the mouse
-				pointer instead of the cursor.
+:popu[p]! {name}                Like above, but use the position of the mouse
+                                pointer instead of the cursor.
 
 Example: >
-	:popup File
+        :popup File
 will make the "File" menu (if there is one) appear at the text cursor (mouse
 pointer if ! was used). >
 
-	:amenu ]Toolbar.Make	:make<CR>
-	:popup ]Toolbar
+        :amenu ]Toolbar.Make    :make<CR>
+        :popup ]Toolbar
 This creates a popup menu that doesn't exist on the main menu-bar.
 
 Note that a menu that starts with ']' will not be displayed.
 
 
- vim:tw=78:sw=4:ts=8:noet:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:et:ft=help:norl:
