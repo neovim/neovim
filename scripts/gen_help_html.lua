@@ -48,7 +48,7 @@ local spell_dict = {
 --- specify the list of keywords to ignore (i.e. allow), or true to disable spell check completely.
 --- @type table<string, true|string[]>
 local spell_ignore_files = {
-  ['backers.txt'] = true,
+  ['credits.txt'] = { 'Neovim' },
   ['news.txt'] = { 'tree-sitter' }, -- in news, may refer to the upstream "tree-sitter" library
   ['news-0.10.txt'] = { 'tree-sitter' },
 }
