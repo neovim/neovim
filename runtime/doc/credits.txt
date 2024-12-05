@@ -1,11 +1,118 @@
-*backers.txt*          Nvim
+*credits.txt*          Nvim
 
 
                      NVIM REFERENCE MANUAL
 
 
 ==============================================================================
-Fundraiser Backers
+Credits                                                 *credits*
+
+Most of Vim was written by Bram Moolenaar <Bram@vim.org> |Bram-Moolenaar|.
+
+Parts of the documentation come from several Vi manuals, written by:
+        W.N. Joy
+        Alan P.W. Hewett
+        Mark Horton
+
+The Vim editor is based on Stevie and includes (ideas from) other software,
+worked on by the people mentioned here.  Other people helped by sending me
+patches, suggestions and giving feedback about what is good and bad in Vim.
+
+Vim would never have become what it is now, without the help of these people!
+
+        Ron Aaron               Win32 GUI changes
+        Mohsin Ahmed            encryption
+        Zoltan Arpadffy         work on VMS port
+        Tony Andrews            Stevie
+        Gert van Antwerpen      changes for DJGPP on MS-DOS
+        Berkeley DB(3)          ideas for swap file implementation
+        Keith Bostic            Nvi
+        Walter Briscoe          Makefile updates, various patches
+        Ralf Brown              SPAWNO library for MS-DOS
+        Robert Colon            many useful remarks
+        Marcin Dalecki          GTK+ GUI port, toolbar icons, gettext()
+        Kayhan Demirel          sent me news in Uganda
+        Chris & John Downey     xvi (ideas for multi-windows version)
+        Henk Elbers             first VMS port
+        Daniel Elstner          GTK+ 2 port
+        Eric Fischer            Mac port, 'cindent', and other improvements
+        Benji Fisher            Answering lots of user questions
+        Bill Foster             Athena GUI port (later removed)
+        Google                  Let Bram work on Vim one day a week
+        Loic Grenie             xvim (ideas for multi windows version)
+        Sven Guckes             Vim promoter and previous WWW page maintainer
+        Darren Hiebert          Exuberant ctags
+        Jason Hildebrand        GTK+ 2 port
+        Bruce Hunsaker          improvements for VMS port
+        Andy Kahn               Cscope support, GTK+ GUI port
+        Oezguer Kesim           Maintainer of Vim Mailing Lists
+        Axel Kielhorn           work on the Macintosh port
+        Steve Kirkendall        Elvis
+        Roger Knobbe            original port to Windows NT
+        Sergey Laskavy          Vim's help from Moscow
+        Felix von Leitner       Previous maintainer of Vim Mailing Lists
+        David Leonard           Port of Python extensions to Unix
+        Avner Lottem            Edit in right-to-left windows
+        Flemming Madsen         X11 client-server, various features and patches
+        Tony Mechelynck         answers many user questions
+        Paul Moore              Python interface extensions, many patches
+        Katsuhito Nagano        Work on multibyte versions
+        Sung-Hyun Nam           Work on multibyte versions
+        Vince Negri             Win32 GUI and generic console enhancements
+        Steve Oualline          Author of the first Vim book |frombook|
+        Dominique Pelle         Valgrind reports and many fixes
+        A.Politz                Many bug reports and some fixes
+        George V. Reilly        Win32 port, Win32 GUI start-off
+        Stephen Riehm           bug collector
+        Stefan Roemer           various patches and help to users
+        Ralf Schandl            IBM OS/390 port
+        Olaf Seibert            DICE and BeBox version, regexp improvements
+        Mortaza Shiran          Farsi patches
+        Peter da Silva          termlib
+        Paul Slootman           OS/2 port
+        Henry Spencer           regular expressions
+        Dany St-Amant           Macintosh port
+        Tim Thompson            Stevie
+        G. R. (Fred) Walter     Stevie
+        Sven Verdoolaege        Perl interface
+        Robert Webb             Command-line completion, GUI versions, and
+                                lots of patches
+        Ingo Wilken             Tcl interface
+        Mike Williams           PostScript printing
+        Juergen Weigert         Lattice version, AUX improvements, Unix and
+                                MS-DOS ports, autoconf
+        Stefan 'Sec' Zehl       Maintainer of vim.org
+        Yasuhiro Matsumoto      many MS-Windows improvements
+        Ken Takata              fixes and features
+        Kazunobu Kuriyama       GTK 3
+        Christian Brabandt      many fixes, features, user support, etc.
+        Yegappan Lakshmanan     many quickfix features
+
+I wish to thank all the people that sent me bug reports and suggestions.  The
+list is too long to mention them all here.  Vim would not be the same without
+the ideas from all these people: They keep Vim alive!
+*love* *peace* *friendship* *gross-national-happiness*
+
+
+Documentation may refer to other versions of Vi:
+                                                        *Vi* *vi*
+Vi      "the original".  Without further remarks this is the version
+        of Vi that appeared in Sun OS 4.x.  ":version" returns
+        "Version 3.7, 6/7/85".  Source code only available with a license.
+                                                        *Nvi*
+Nvi     The "New" Vi.  The version of Vi that comes with BSD 4.4 and FreeBSD.
+        Very good compatibility with the original Vi, with a few extensions.
+        The version used is 1.79.  ":version" returns "Version 1.79
+        (10/23/96)".  Source code is freely available.
+                                                        *Elvis*
+Elvis   Another Vi clone, made by Steve Kirkendall.  Very compact but isn't
+        as flexible as Vim.  Source code is freely available.
+
+Vim     Nvim is based on Vim.  https://www.vim.org/
+
+
+==============================================================================
+Neovim fundraiser backers                                        *backers.txt*
 
 Thank you to everyone who backed the original Neovim Fundraiser.
 

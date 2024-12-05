@@ -48,7 +48,7 @@ local spell_dict = {
 --- specify the list of keywords to ignore (i.e. allow), or true to disable spell check completely.
 --- @type table<string, true|string[]>
 local spell_ignore_files = {
-  ['backers.txt'] = true,
+  ['credits.txt'] = { 'Neovim' },
   ['news.txt'] = { 'tree-sitter' }, -- in news, may refer to the upstream "tree-sitter" library
   ['news-0.10.txt'] = { 'tree-sitter' },
 }
@@ -71,6 +71,7 @@ local new_layout = {
   ['editorconfig.txt'] = true,
   ['faq.txt'] = true,
   ['gui.txt'] = true,
+  ['intro.txt'] = true,
   ['lua.txt'] = true,
   ['luaref.txt'] = true,
   ['news.txt'] = true,
@@ -85,6 +86,7 @@ local new_layout = {
 
 -- Map of new:old pages, to redirect renamed pages.
 local redirects = {
+  ['credits'] = 'backers',
   ['tui'] = 'term',
   ['terminal'] = 'nvim_terminal_emulator',
 }
@@ -117,7 +119,7 @@ local exclude_invalid_urls = {
 -- Deprecated, brain-damaged files that I don't care about.
 local ignore_errors = {
   ['pi_netrw.txt'] = true,
-  ['backers.txt'] = true,
+  ['credits.txt'] = true,
 }
 
 local function tofile(fname, text)
