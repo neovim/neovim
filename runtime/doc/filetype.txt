@@ -597,7 +597,7 @@ To disable this behavior, set the following variable in your vimrc: >
 	let g:gdscript_recommended_style = 0
 
 
-GIT COMMIT                                              *ft-gitcommit-plugin*
+GIT COMMIT						*ft-gitcommit-plugin*
 
 One command, :DiffGitCached, is provided to show a diff of the current commit
 in the preview window.  It is equivalent to calling "git diff --cached" plus
@@ -778,7 +778,7 @@ An alternative to using `MANPAGER` in shell can be redefined `man`, for example:
           nvim "+hide Man $1"
      }
 
-MARKDOWN                                                *ft-markdown-plugin*
+MARKDOWN						*ft-markdown-plugin*
 
 To enable folding use this: >
 	let g:markdown_folding = 1
@@ -870,7 +870,7 @@ To enable this behavior, set the following variable in your vimrc: >
 	let g:rst_style = 1
 
 
-RNOWEB							      *ft-rnoweb-plugin*
+RNOWEB							*ft-rnoweb-plugin*
 
 The 'formatexpr' option is set dynamically with different values for R code
 and for LaTeX code. If you prefer that 'formatexpr' is not set, add to your
