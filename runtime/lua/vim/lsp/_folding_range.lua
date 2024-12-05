@@ -271,7 +271,9 @@ local function setup(bufnr)
     buffer = bufnr,
     callback = function(args)
       local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
-      request(bufnr, client)
+      if client:supports_method(vim.lsp.protocol.Methods.textDocument_foldingRange, bufnr) then
+        request(bufnr, client)
+      end
     end,
   })
   api.nvim_create_autocmd('LspNotify', {
