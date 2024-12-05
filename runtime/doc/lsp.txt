@@ -1571,6 +1571,43 @@ on_publish_diagnostics({_}, {result}, {ctx})
 
 
 ==============================================================================
+Lua module: vim.lsp.document_highlight                *lsp-document_highlight*
+
+enable({enable}, {filter})               *vim.lsp.document_highlight.enable()*
+    Enables or disables document highlights for the {filter}ed scope.
+
+    To "toggle", pass the inverse of `is_enabled()`: >lua
+        vim.lsp.document_highlight.enable(not vim.lsp.document_highlight.is_enabled())
+<
+
+    Parameters: ~
+      • {enable}  (`boolean?`)
+      • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
+                  • {bufnr}? (`integer`) Buffer number, or 0 for current
+                    buffer, or nil for all.
+
+is_enabled({filter})                 *vim.lsp.document_highlight.is_enabled()*
+    Query whether document highlight is enabled in the {filter}ed scope
+
+    Parameters: ~
+      • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
+                  • {bufnr}? (`integer`) Buffer number, or 0 for current
+                    buffer, or nil for all.
+
+    Return: ~
+        (`boolean`)
+
+                          *vim.lsp.document_highlight.on_document_highlight()*
+on_document_highlight({result}, {ctx})
+    |lsp-handler| for the method `textDocument/documentHighlight` Store hints
+    for a specific buffer and client
+
+    Parameters: ~
+      • {result}  (`lsp.DocumentHighlight[]?`)
+      • {ctx}     (`lsp.HandlerContext`)
+
+
+==============================================================================
 Lua module: vim.lsp.codelens                                    *lsp-codelens*
 
 clear({client_id}, {bufnr})                         *vim.lsp.codelens.clear()*

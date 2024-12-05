@@ -40,9 +40,13 @@ DIAGNOSTICS
 
 LSP
 • *vim.lsp.buf.clear_references()*
+	Use |vim.lsp.document_highlight.enable()| with `false` instead.
 • *vim.lsp.buf.document_highlight()*
+	Use |vim.lsp.document_highlight.enable()| instead.
 • *vim.lsp.util.buf_clear_references()*
+	Use |vim.lsp.document_highlight.enable()| with `false` instead.
 • *vim.lsp.util.buf_highlight_references()*
+	Use |vim.lsp.document_highlight.enable()| instead.
 
 TREESITTER
 • *TSNode:child_containing_descendant()*	Use
