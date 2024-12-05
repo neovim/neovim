@@ -3141,7 +3141,7 @@ static void spell_soundfold_wsal(slang_T *slang, const char *inword, char *res)
               c = *ws;
             }
             if (strstr(s, "^^") != NULL) {
-              if (c != NUL) {
+              if (c != NUL && reslen < MAXWLEN) {
                 wres[reslen++] = c;
               }
               memmove(word, word + i + 1, sizeof(int) * (size_t)(wordlen - (i + 1) + 1));
