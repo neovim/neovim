@@ -867,7 +867,9 @@ local function set_list(loclist, opts)
     })
 
     -- Get the id of the newly created quickfix list.
-    _qf_id = vim.fn.getqflist({ id = 0 }).id
+    if _qf_id == nil then
+      _qf_id = vim.fn.getqflist({ id = 0 }).id
+    end
   end
   if open then
     api.nvim_command(loclist and 'lwindow' or 'botright cwindow')
