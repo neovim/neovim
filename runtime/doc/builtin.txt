@@ -2997,7 +2997,7 @@ getbufline({buf}, {lnum} [, {end}])                               *getbufline()*
                 Parameters: ~
                   • {buf} (`integer|string`)
                   • {lnum} (`integer`)
-                  • {end_} (`integer?`)
+                  • {end} (`integer?`)
 
                 Return: ~
                   (`any`)
@@ -3635,7 +3635,7 @@ getline({lnum} [, {end}])                                            *getline()*
 
                 Parameters: ~
                   • {lnum} (`integer|string`)
-                  • {end_} (`nil|false?`)
+                  • {end} (`nil|false?`)
 
                 Return: ~
                   (`string`)
@@ -6292,7 +6292,7 @@ matchbufline({buf}, {pat}, {lnum}, {end}, [, {dict}])           *matchbufline()*
                   • {buf} (`string|integer`)
                   • {pat} (`string`)
                   • {lnum} (`string|integer`)
-                  • {end_} (`string|integer`)
+                  • {end} (`string|integer`)
                   • {dict} (`table?`)
 
                 Return: ~
@@ -7786,7 +7786,7 @@ reltime({start}, {end})
 
                 Parameters: ~
                   • {start} (`any?`)
-                  • {end_} (`any?`)
+                  • {end} (`any?`)
 
                 Return: ~
                   (`any`)
@@ -7847,7 +7847,7 @@ remove({list}, {idx}, {end})
                 Parameters: ~
                   • {list} (`any[]`)
                   • {idx} (`integer`)
-                  • {end_} (`integer?`)
+                  • {end} (`integer?`)
 
                 Return: ~
                   (`any`)
@@ -7869,7 +7869,7 @@ remove({blob}, {idx}, {end})
                 Parameters: ~
                   • {blob} (`any`)
                   • {idx} (`integer`)
-                  • {end_} (`integer?`)
+                  • {end} (`integer?`)
 
                 Return: ~
                   (`any`)
@@ -8500,7 +8500,7 @@ searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeo
                 Parameters: ~
                   • {start} (`string`)
                   • {middle} (`string`)
-                  • {end_} (`string`)
+                  • {end} (`string`)
                   • {flags} (`string?`)
                   • {skip} (`string|function?`)
                   • {stopline} (`integer?`)
@@ -8524,7 +8524,7 @@ searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {ti
                 Parameters: ~
                   • {start} (`string`)
                   • {middle} (`string`)
-                  • {end_} (`string`)
+                  • {end} (`string`)
                   • {flags} (`string?`)
                   • {skip} (`string|function?`)
                   • {stopline} (`integer?`)
@@ -9840,7 +9840,7 @@ slice({expr}, {start} [, {end}])                                       *slice()*
                 Parameters: ~
                   • {expr} (`any`)
                   • {start} (`integer`)
-                  • {end_} (`integer?`)
+                  • {end} (`integer?`)
 
                 Return: ~
                   (`any`)
