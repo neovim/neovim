@@ -49,10 +49,10 @@ do
 
     vim.keymap.set('x', '*', function()
       return _visual_search('/')
-    end, { desc = ':help v_star-default', expr = true, silent = true })
+    end, { desc = ':help v_star-default', expr = true, replace_keycodes = false })
     vim.keymap.set('x', '#', function()
       return _visual_search('?')
-    end, { desc = ':help v_#-default', expr = true, silent = true })
+    end, { desc = ':help v_#-default', expr = true, replace_keycodes = false })
   end
 
   --- Map Y to y$. This mimics the behavior of D and C. See |Y-default|
