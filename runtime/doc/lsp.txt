@@ -344,22 +344,17 @@ Each response handler has this signature: >
                                                       *lsp-handler-resolution*
 Handlers can be set by (in increasing priority):
 
-- Setting a field in vim.lsp.handlers.                      *vim.lsp.handlers*
-  `vim.lsp.handlers` is a global table that contains the default mapping of
-  |lsp-method| names to lsp-handlers.
-
+                                                            *vim.lsp.handlers*
+- Setting a field in `vim.lsp.handlers`. This global table contains the
+  default mappings of |lsp-method| names to handlers. (Note: only for
+  server-to-client requests/notifications, not client-to-server.)
   Example: >lua
-
     vim.lsp.handlers['textDocument/publishDiagnostics'] = my_custom_diagnostics_handler
 <
-  Note: this only applies for requests/notifications made by the
-  server to the client.
-
-- The {handlers} parameter of |vim.lsp.start()|. This sets the default
-  |lsp-handler| for a specific server.
-
+- Passing a {handlers} parameter to |vim.lsp.start()|. This sets the default
+  |lsp-handler| for a specific server. (Note: only for server-to-client
+  requests/notifications, not client-to-server.)
   Example: >lua
-
     vim.lsp.start {
       ..., -- Other configuration omitted.
       handlers = {
@@ -367,14 +362,9 @@ Handlers can be set by (in increasing priority):
       },
     }
 <
-  Note: this only applies for requests/notifications made by the
-  server to the client.
-
-- The {handler} parameter of |vim.lsp.buf_request_all()|. This sets
-  the |lsp-handler| ONLY for the given request(s).
-
+- Passing a {handler} parameter to |vim.lsp.buf_request_all()|. This sets the
+  |lsp-handler| ONLY for the given request(s).
   Example: >lua
-
     vim.lsp.buf_request_all(
       0,
       'textDocument/publishDiagnostics',

@@ -11,21 +11,20 @@ Nvim asynchronous IO					*channel*
 ==============================================================================
 1. Introduction						    *channel-intro*
 
-Channels are nvim's way of communicating with external processes.
+Channels are Nvim's way of communicating with external processes.
 
 There are several ways to open a channel:
 
-  1. Through stdin/stdout when `nvim` is started with `--headless`, and a startup
-     script or --cmd  command opens the stdio channel using |stdioopen()|.
+  1. Through stdin/stdout when `nvim` is started with `--headless` and a startup
+     script or `--cmd` command opens the stdio channel using |stdioopen()|.
 
   2. Through stdin, stdout and stderr of a process spawned by |jobstart()|.
 
-  3. Through the PTY master end of a PTY opened with |nvim_open_term()| or
-     `jobstart(…, {'pty': v:true})`.
+  3. Through the PTY master end opened with `jobstart(…, {'pty': v:true})`.
 
   4. By connecting to a TCP/IP socket or named pipe with |sockconnect()|.
 
-  5. By another process connecting to a socket listened to by nvim. This only
+  5. By another process connecting to a socket listened to by Nvim. This only
      supports RPC channels, see |rpc-connecting|.
 
 Channels support multiple modes or protocols. In the most basic
@@ -146,7 +145,7 @@ from the host TTY, or if Nvim is |--headless| it uses default values: >vim
     :echo system('nvim --headless +"te stty -a" +"sleep 1" +"1,/^$/print" +q')
 
 ==============================================================================
-3. Communicating using msgpack-rpc			      *channel-rpc*
+3. Communicating with msgpack RPC			      *channel-rpc*
 
 When channels are opened with the `rpc` option set to true, the channel can be
 used for remote method calls in both directions, see |msgpack-rpc|. Note that

@@ -105,9 +105,13 @@ function M.basename(file)
   return file:match('/$') and '' or (file:match('[^/]*$'))
 end
 
---- Concatenates partial paths into one path. Slashes are normalized (redundant slashes are removed, and on Windows backslashes are replaced with forward-slashes)
---- (e.g., `"foo/"` and `"/bar"` get joined to `"foo/bar"`)
---- (windows: e.g `"a\foo\"` and `"\bar"` are joined to `"a/foo/bar"`)
+--- Concatenates partial paths (one absolute or relative path followed by zero or more relative
+--- paths). Slashes are normalized: redundant slashes are removed, and (on Windows) backslashes are
+--- replaced with forward-slashes.
+---
+--- Examples:
+--- - "foo/", "/bar" => "foo/bar"
+--- - Windows: "a\foo\", "\bar" => "a/foo/bar"
 ---
 ---@since 12
 ---@param ... string

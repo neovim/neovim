@@ -152,7 +152,7 @@ describe('vim.json.encode()', function()
     clear()
   end)
 
-  it('dumps strings with & without escaped slash', function()
+  it('escape_slash', function()
     -- With slash
     eq('"Test\\/"', exec_lua([[return vim.json.encode('Test/', { escape_slash = true })]]))
     eq(
