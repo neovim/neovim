@@ -1265,7 +1265,7 @@ describe('completion', function()
     command([[
       call setline(1, ['aaaa'])
       let ns_id = nvim_create_namespace('extmark')
-      let mark_id = nvim_buf_set_extmark(0, ns_id, 0, 0, { 'end_col':2, 'hl_group':'Error'})
+      let mark_id = nvim_buf_set_extmark(0, ns_id, 0, 0, { 'end_col':2, 'hl_group':'Error' })
       let mark = nvim_buf_get_extmark_by_id(0, ns_id, mark_id, { 'details':1 })
       inoremap <C-x> <C-r>=Complete()<CR>
       function Complete() abort
@@ -1310,6 +1310,19 @@ describe('completion', function()
         {4:aaaa           }                                             |
         {4:aaaaa          }                                             |
         {5:-- Keyword completion (^N^P) }{19:Back at original}               |
+      ]],
+    })
+    -- But still grows with end_right_gravity #31437
+    command(
+      "call nvim_buf_set_extmark(0, ns_id, 1, 0, { 'end_col':2, 'hl_group':'Error', 'end_right_gravity': 1 })"
+    )
+    feed('<Esc>ji<C-N>a')
+    screen:expect({
+      grid = [[
+        {9:aa}aaa                                                       |
+        {9:aaa}^aa                                                       |
+        aaaaa                                                       |
+        {5:-- INSERT --}                                                |
       ]],
     })
   end)
