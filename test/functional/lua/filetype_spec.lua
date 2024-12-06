@@ -208,7 +208,7 @@ describe('filetype.lua', function()
     eq('gitconfig', api.nvim_get_option_value('filetype', {}))
   end)
 
-  pending('works with :doautocmd BufRead #31306', function()
+  it('works with :doautocmd BufRead #31306', function()
     clear({ args = { '--clean' } })
     eq('', api.nvim_get_option_value('filetype', {}))
     command('doautocmd BufRead README.md')
