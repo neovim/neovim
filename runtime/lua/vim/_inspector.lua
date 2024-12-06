@@ -191,7 +191,12 @@ function vim.show_pos(bufnr, row, col, filter)
     append('Treesitter', 'Title')
     nl()
     for _, capture in ipairs(items.treesitter) do
-      item(capture, capture.lang)
+      item(
+        capture,
+        capture.metadata.priority
+            and string.format('%s priority: %d', capture.lang, capture.metadata.priority)
+          or capture.lang
+      )
     end
     nl()
   end
