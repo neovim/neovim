@@ -13,8 +13,8 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
     end
     local ft, on_detect = vim.filetype.match({
       -- The unexpanded file name is needed here. #27914
-      -- Neither args.file nor args.match are guaranteed to be unexpanded.
-      filename = vim.fn.bufname(args.buf),
+      -- However, bufname() can't be used, as it doesn't work with :doautocmd. #31306
+      filename = args.file,
       buf = args.buf,
     })
     if not ft then
