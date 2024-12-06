@@ -390,8 +390,10 @@ local function render_api_meta(_f, fun, write)
   local params = process_params(fun.params)
   for _, p in ipairs(params) do
     param_names[#param_names + 1] = p[1]
-    local pdesc = p[3]
-    if pdesc then
+    local pdesc = not fun.deprecated and p[3] or nil
+    if fun.deprecated then -- luacheck: ignore 542
+      -- Skip @param description for deprecated functions.
+    elseif pdesc then
       local s = '--- @param ' .. p[1] .. ' ' .. p[2] .. ' '
       local pdesc_a = split(vim.trim(norm_text(pdesc)))
       write(s .. pdesc_a[1])
@@ -478,10 +480,11 @@ local function render_eval_meta(f, fun, write)
   write('')
   if fun.deprecated then
     write('--- @deprecated')
+    write(render_fun_sig(funname, params))
+    return
   end
 
   local desc = fun.desc
-
   if desc then
     --- @type string
     desc = desc:gsub('\n%s*\n%s*$', '\n')
@@ -492,7 +495,6 @@ local function render_eval_meta(f, fun, write)
   end
 
   local req_args = type(fun.args) == 'table' and fun.args[1] or fun.args or 0
-
   for i, param in ipairs(params) do
     local pname, ptype = param[1], param[2]
     local optional = (pname ~= '...' and i > req_args) and '?' or ''

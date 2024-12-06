@@ -286,10 +286,6 @@ function vim.api.nvim_buf_attach(buffer, send_buffer, opts) end
 function vim.api.nvim_buf_call(buffer, fun) end
 
 --- @deprecated
---- @param buffer integer
---- @param ns_id integer
---- @param line_start integer
---- @param line_end integer
 function vim.api.nvim_buf_clear_highlight(buffer, ns_id, line_start, line_end) end
 
 --- Clears `namespace`d objects (highlights, `extmarks`, virtual text) from
@@ -493,7 +489,6 @@ function vim.api.nvim_buf_get_mark(buffer, name) end
 function vim.api.nvim_buf_get_name(buffer) end
 
 --- @deprecated
---- @param buffer integer
 --- @return integer
 function vim.api.nvim_buf_get_number(buffer) end
 
@@ -513,8 +508,6 @@ function vim.api.nvim_buf_get_number(buffer) end
 function vim.api.nvim_buf_get_offset(buffer, index) end
 
 --- @deprecated
---- @param buffer integer
---- @param name string
 --- @return any
 function vim.api.nvim_buf_get_option(buffer, name) end
 
@@ -755,9 +748,6 @@ function vim.api.nvim_buf_set_mark(buffer, name, line, col, opts) end
 function vim.api.nvim_buf_set_name(buffer, name) end
 
 --- @deprecated
---- @param buffer integer
---- @param name string
---- @param value any
 function vim.api.nvim_buf_set_option(buffer, name, value) end
 
 --- Sets (replaces) a range in the buffer
@@ -794,11 +784,6 @@ function vim.api.nvim_buf_set_text(buffer, start_row, start_col, end_row, end_co
 function vim.api.nvim_buf_set_var(buffer, name, value) end
 
 --- @deprecated
---- @param buffer integer
---- @param src_id integer
---- @param line integer
---- @param chunks any[]
---- @param opts vim.api.keyset.empty
 --- @return integer
 function vim.api.nvim_buf_set_virtual_text(buffer, src_id, line, chunks, opts) end
 
@@ -895,7 +880,6 @@ function vim.api.nvim_command(command) end
 
 --- @deprecated
 --- @see vim.api.nvim_exec2
---- @param command string
 --- @return string
 function vim.api.nvim_command_output(command) end
 
@@ -1157,8 +1141,6 @@ function vim.api.nvim_eval_statusline(str, opts) end
 
 --- @deprecated
 --- @see vim.api.nvim_exec2
---- @param src string
---- @param output boolean
 --- @return string
 function vim.api.nvim_exec(src, output) end
 
@@ -1384,15 +1366,11 @@ function vim.api.nvim_get_hl(ns_id, opts) end
 
 --- @deprecated
 --- @see vim.api.nvim_get_hl_by_name
---- @param hl_id integer
---- @param rgb boolean
 --- @return table<string,any>
 function vim.api.nvim_get_hl_by_id(hl_id, rgb) end
 
 --- @deprecated
 --- @see vim.api.nvim_get_hl_by_id
---- @param name string
---- @param rgb boolean
 --- @return table<string,any>
 function vim.api.nvim_get_hl_by_name(name, rgb) end
 
@@ -1449,12 +1427,10 @@ function vim.api.nvim_get_mode() end
 function vim.api.nvim_get_namespaces() end
 
 --- @deprecated
---- @param name string
 --- @return any
 function vim.api.nvim_get_option(name) end
 
 --- @deprecated
---- @param name string
 --- @return vim.api.keyset.get_option_info
 function vim.api.nvim_get_option_info(name) end
 
@@ -2255,8 +2231,6 @@ function vim.api.nvim_set_hl_ns_fast(ns_id) end
 function vim.api.nvim_set_keymap(mode, lhs, rhs, opts) end
 
 --- @deprecated
---- @param name string
---- @param value any
 function vim.api.nvim_set_option(name, value) end
 
 --- Sets the value of an option. The behavior of this function matches that of
@@ -2407,8 +2381,6 @@ function vim.api.nvim_win_get_height(window) end
 function vim.api.nvim_win_get_number(window) end
 
 --- @deprecated
---- @param window integer
---- @param name string
 --- @return any
 function vim.api.nvim_win_get_option(window, name) end
 
@@ -2496,9 +2468,6 @@ function vim.api.nvim_win_set_height(window, height) end
 function vim.api.nvim_win_set_hl_ns(window, ns_id) end
 
 --- @deprecated
---- @param window integer
---- @param name string
---- @param value any
 function vim.api.nvim_win_set_option(window, name, value) end
 
 --- Sets a window-scoped (w:) variable
