@@ -315,8 +315,8 @@ UI
   |hl-PmenuSel| and |hl-PmenuMatch| both inherit from |hl-Pmenu|, and
   |hl-PmenuMatchSel| inherits highlights from both |hl-PmenuSel| and
   |hl-PmenuMatch|.
-• |vim.diagnostic.setqflist()| updates existing diagnostics quickfix list if one
-  exists.
+• |vim.diagnostic.setqflist()| updates an existing quickfix list with the
+  given title if found
 
 • |ui-messages| content chunks now also contain the highlight group ID.
 
