@@ -111,7 +111,7 @@ To abort this type CTRL-C twice.
 ==============================================================================
 Complex repeats						*complex-repeat*
 
-							*q* *recording*
+							*q* *recording* *macro*
 q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
 			(uppercase to append).  The 'q' command is disabled
 			while executing a register, and it doesn't work inside
