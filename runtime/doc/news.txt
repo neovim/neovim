@@ -60,6 +60,7 @@ DEFAULTS
   current buffer, respectively.
 • 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
   |terminal| buffers. See |terminal-config| for an example of changing these defaults.
+• |vim.json.encode()| no longer escapes the forward slash symbol by default
 
 DIAGNOSTICS
 
@@ -169,6 +170,7 @@ The following new features were added.
 API
 
 • |nvim__ns_set()| can set properties for a namespace
+• |vim.json.encode()| has an option to enable forward slash escaping
 
 DEFAULTS
 

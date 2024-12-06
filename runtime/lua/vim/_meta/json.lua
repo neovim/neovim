@@ -35,5 +35,8 @@ function vim.json.decode(str, opts) end
 
 --- Encodes (or "packs") Lua object {obj} as JSON in a Lua string.
 ---@param obj any
+---@param opts? table<string,any> Options table with keys:
+---                                 - escape_slash: (boolean) (default false) When true, escapes `/`
+---                                                           character in JSON strings
 ---@return string
-function vim.json.encode(obj) end
+function vim.json.encode(obj, opts) end
