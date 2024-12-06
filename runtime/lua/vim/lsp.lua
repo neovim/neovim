@@ -328,39 +328,6 @@ local function create_and_initialize_client(config)
   return client.id, nil
 end
 
-local client_config_list_keys = {
-  filetypes = true,
-  on_attach = true,
-  on_exit = true,
-  on_init = true,
-  root_markers = true,
-}
-
---- Similar to `vim.tbl_deep_extend('force', ...)`, except that lists specified in
---- `client_config_list_keys` are extended instead of replaced.
---- @param ... vim.lsp.Config
---- @return vim.lsp.Config
-local function merge_configs(...)
-  local ret = {} --- @type table<any,any>
-
-  for i = 1, select('#', ...) do
-    for k, v in
-      pairs(select(i, ...) or {} --[[@as table<string,any>]])
-    do
-      if ret[k] and client_config_list_keys[k] then
-        ret[k] = vim._ensure_list(ret[k])
-        vim.list_extend(ret[k], vim._ensure_list(v))
-      elseif type(ret[k]) == 'table' and type(v) == 'table' then
-        ret[k] = vim.tbl_deep_extend('force', ret[k], v)
-      else
-        ret[k] = v
-      end
-    end
-  end
-
-  return ret
-end
-
 --- @class vim.lsp.Config : vim.lsp.ClientConfig
 ---
 --- See `cmd` in [vim.lsp.ClientConfig].
@@ -434,9 +401,9 @@ end
 lsp._enabled_configs = {} --- @type table<string,{resolved_config:vim.lsp.Config?}>
 
 --- If a config in vim.lsp.config() is accessed then the resolved config becomes invalid.
---- @param name string?
+--- @param name string
 local function invalidate_enabled_config(name)
-  if not name or name == '*' then
+  if name == '*' then
     for _, v in pairs(lsp._enabled_configs) do
       v.resolved_config = nil
     end
@@ -467,14 +434,17 @@ lsp.config = setmetatable({ _configs = {} }, {
     validate('name', name, 'string')
     validate('cfg', cfg, 'table')
     invalidate_enabled_config(name)
-    self._configs[name] = vim.tbl_deep_extend('force', self._configs[name] or {}, cfg)
+    self._configs[name] = cfg
   end,
 
   --- @param self vim.lsp.config
   --- @param name string
   --- @param cfg vim.lsp.Config
   __call = function(self, name, cfg)
-    self[name] = merge_configs(self._configs[name], cfg)
+    validate('name', name, 'string')
+    validate('cfg', cfg, 'table')
+    invalidate_enabled_config(name)
+    self[name] = vim.tbl_deep_extend('force', self._configs[name] or {}, cfg)
   end,
 })
 
@@ -482,18 +452,28 @@ lsp.config = setmetatable({ _configs = {} }, {
 --- @param name string
 --- @return vim.lsp.Config
 function lsp._resolve_config(name)
-  local econfig = lsp._enabled_configs[name] or lsp.config._configs[name]
+  local econfig = lsp._enabled_configs[name] or {}
 
   if not econfig.resolved_config then
     -- Resolve configs from lsp/*.lua
+    -- Calls to vim.lsp.config in lsp/* have a lower precedence than calls from other sites.
+    local orig_configs = lsp.config._configs
+    lsp.config._configs = {}
     for _, f in ipairs(api.nvim_get_runtime_file(('lsp/%s.lua'):format(name), true)) do
       local chunk = loadfile(f)
       if chunk then
         pcall(chunk)
       end
     end
+    local rtp_configs = lsp.config._configs
+    lsp.config._configs = orig_configs
 
-    local config = merge_configs(lsp.config._configs['*'], lsp.config._configs[name])
+    local config = vim.tbl_deep_extend(
+      'force',
+      lsp.config._configs['*'] or {},
+      rtp_configs[name] or {},
+      lsp.config._configs[name] or {}
+    )
 
     config.name = name
 

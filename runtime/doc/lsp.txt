@@ -69,16 +69,73 @@ Follow these steps to get LSP features:
 
 Configurations for LSP clients is done via |vim.lsp.config()|.
 
-When an LSP client starts, it resolves a config by first sourcing
-all the `lsp/<name>.lua` files in 'runtimepath'. After that it merges in
-the special `*` configuration which applies to all clients.
+When an LSP client starts, it resolves a configuration by merging
+configurations, in increasing priority, from the following:
 
-The merge semantics of configurations follow the behaviour of |
-vim.tbl_deep_extend()| with the following differences.
-- Lists are extended (e.g.: `filetypes`, `root_markers`).
-- Fields which can be a single item or list, are coerced into lists
-  (e.g.: `on_attach`, `on_init`, `on_error`).
+1. Configuration defined for the `'*'` name.
 
+2. Configuration from the result of sourcing all `lsp/<name>.lua` files
+   in 'runtimepath' for a server of name `name`.
+
+   Note: becuase of this, calls to |vim.lsp.config()| in `lsp/*.lua` are
+   treated independently to other calls. This is to ensure configurations
+   defined in `lsp/*.lua` have a lower priority.
+
+3. Configurations defined anywhere else.
+
+Note: The merge semantics of configurations follow the behaviour of
+|vim.tbl_deep_extend()|.
+
+Example:
+
+Given: >lua
+  -- Defined in init.lua
+  vim.lsp.config('*', {
+    capabilities = {
+      textDocument = {
+        semanticTokens = {
+          multilineTokenSupport = true,
+        }
+      }
+    }
+    root_markers = { '.git' },
+  })
+
+  -- Defined in ../lsp/clangd.lua
+  vim.lsp.config('clangd', {
+    cmd = { 'clangd' },
+    root_markers = { '.clangd', 'compile_commands.json' },
+    filetypes = { 'c', 'cpp' },
+  })
+
+  -- Defined in init.lua
+  vim.lsp.config('clangd', {
+    filetypes = { 'c' },
+  })
+<
+Results in the configuration: >lua
+  {
+    -- From the clangd configuration in <rtp>/lsp/clangd.lua
+    cmd = { 'clangd' },
+
+    -- From the clangd configuration in <rtp>/lsp/clangd.lua
+    -- Overrides the * configuration in init.lua
+    root_markers = { '.clangd', 'compile_commands.json' },
+
+    -- From the clangd configuration in init.lua
+    -- Overrides the * configuration in init.lua
+    filetypes = { 'c' },
+
+    -- From the * configuration in init.lua
+    capabilities = {
+      textDocument = {
+        semanticTokens = {
+          multilineTokenSupport = true,
+        }
+      }
+    }
+  }
+<
                                                         *lsp-defaults*
 When the Nvim LSP client starts it enables diagnostics |vim.diagnostic| (see
 |vim.diagnostic.config()| to customize). It also sets various default options,

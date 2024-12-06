@@ -6136,14 +6136,11 @@ describe('LSP', function()
         {
           name = 'foo',
           cmd = { 'foo' },
-          root_markers = { '.git', '.foorc' },
+          root_markers = { '.git' },
         },
         exec_lua(function()
           vim.lsp.config('*', { root_markers = { '.git' } })
-          vim.lsp.config('foo', {
-            cmd = { 'foo' },
-            root_markers = { '.foorc' },
-          })
+          vim.lsp.config('foo', { cmd = { 'foo' } })
 
           return vim.lsp._resolve_config('foo')
         end)
