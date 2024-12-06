@@ -111,6 +111,7 @@ global configuration.
 - 'number' is disabled
 - 'relativenumber' is disabled
 - 'signcolumn' is set to "no"
+- 'foldcolumn' is set to "0"
 
 You can change the defaults with a TermOpen autocommand: >vim
     au TermOpen * setlocal list

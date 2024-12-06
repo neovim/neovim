@@ -495,6 +495,7 @@ do
       vim.wo[0][0].number = false
       vim.wo[0][0].relativenumber = false
       vim.wo[0][0].signcolumn = 'no'
+      vim.wo[0][0].foldcolumn = '0'
 
       -- This is gross. Proper list options support when?
       local winhl = vim.o.winhighlight
