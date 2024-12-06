@@ -249,7 +249,7 @@ describe('API/extmarks', function()
     set_extmark(ns, 2, 1, 0, { right_gravity = false })
     eq({ { 1, 0, 0 }, { 2, 1, 0 } }, get_extmarks(ns, { 0, 0 }, { -1, -1 }))
     feed('u')
-    eq({ { 1, 0, 0 }, { 2, 1, 0 } }, get_extmarks(ns, { 0, 0 }, { -1, -1 }))
+    eq({ { 1, 0, 0 }, { 2, 0, 0 } }, get_extmarks(ns, { 0, 0 }, { -1, -1 }))
     api.nvim_buf_clear_namespace(0, ns, 0, -1)
   end)
 
