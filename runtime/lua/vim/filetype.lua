@@ -958,6 +958,7 @@ local extension = {
   ps1xml = 'ps1xml',
   psf = 'psf',
   psl = 'psl',
+  ptx = 'ptx',
   pug = 'pug',
   purs = 'purescript',
   arr = 'pyret',
