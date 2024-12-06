@@ -273,54 +273,72 @@ describe('autocmd api', function()
       eq({}, api.nvim_get_autocmds({ event = 'User', pattern = 'Test' }))
     end)
 
-    it('receives an args table', function()
+    local function test_autocmd_args(event)
+      local function get_amatch(pat)
+        return event == 'User' and pat or vim.fs.normalize(n.fn.fnamemodify(pat, ':p'))
+      end
+
       local group_id = api.nvim_create_augroup('TestGroup', {})
       -- Having an existing autocmd calling expand("<afile>") shouldn't change args #18964
-      api.nvim_create_autocmd('User', {
+      api.nvim_create_autocmd(event, {
         group = 'TestGroup',
         pattern = 'Te*',
         command = 'call expand("<afile>")',
       })
 
-      local autocmd_id = exec_lua [[
-        return vim.api.nvim_create_autocmd("User", {
+      local autocmd_id = exec_lua(([[
+        return vim.api.nvim_create_autocmd(%q, {
           group = "TestGroup",
           pattern = "Te*",
           callback = function(args)
             vim.g.autocmd_args = args
           end,
         })
-      ]]
+      ]]):format(event))
 
-      api.nvim_exec_autocmds('User', { pattern = 'Test pattern' })
+      local exec_pat = 'Test pattern'
+      local amatch = get_amatch(exec_pat)
+      api.nvim_exec_autocmds(event, { pattern = exec_pat })
       eq({
         id = autocmd_id,
         group = group_id,
-        event = 'User',
-        match = 'Test pattern',
-        file = 'Test pattern',
+        event = event,
+        match = amatch,
+        file = exec_pat,
         buf = 1,
       }, api.nvim_get_var('autocmd_args'))
 
       -- Test without a group
-      autocmd_id = exec_lua [[
-        return vim.api.nvim_create_autocmd("User", {
+      autocmd_id = exec_lua(([[
+        return vim.api.nvim_create_autocmd(%q, {
           pattern = "*",
           callback = function(args)
             vim.g.autocmd_args = args
           end,
         })
-      ]]
+      ]]):format(event))
 
-      api.nvim_exec_autocmds('User', { pattern = 'some_pat' })
+      exec_pat = 'some_pat'
+      amatch = get_amatch(exec_pat)
+      api.nvim_exec_autocmds(event, { pattern = exec_pat })
       eq({
         id = autocmd_id,
         group = nil,
-        event = 'User',
-        match = 'some_pat',
-        file = 'some_pat',
+        event = event,
+        match = amatch,
+        file = exec_pat,
         buf = 1,
       }, api.nvim_get_var('autocmd_args'))
+    end
+
+    describe('receives correct args table', function()
+      it('for event that takes non-file pattern', function()
+        test_autocmd_args('User')
+      end)
+
+      it('for event that takes file pattern', function()
+        test_autocmd_args('BufEnter')
+      end)
     end)
 
     it('can receive arbitrary data', function()

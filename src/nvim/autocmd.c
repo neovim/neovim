@@ -1666,7 +1666,9 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   } else {
     autocmd_fname = fname_io;
   }
+  char *afile_orig = NULL;  ///< Unexpanded <afile>
   if (autocmd_fname != NULL) {
+    afile_orig = xstrdup(autocmd_fname);
     // Allocate MAXPATHL for when eval_vars() resolves the fullpath.
     autocmd_fname = xstrnsave(autocmd_fname, MAXPATHL);
   }
@@ -1798,6 +1800,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     // save vector size, to avoid an endless loop when more patterns
     // are added when executing autocommands
     .ausize = kv_size(autocmds[(int)event]),
+    .afile_orig = afile_orig,
     .fname = fname,
     .sfname = sfname,
     .tail = tail,
@@ -1865,6 +1868,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   autocmd_nested = save_autocmd_nested;
   xfree(SOURCING_NAME);
   estack_pop();
+  xfree(afile_orig);
   xfree(autocmd_fname);
   autocmd_fname = save_autocmd_fname;
   autocmd_fname_full = save_autocmd_fname_full;
@@ -2029,8 +2033,8 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     MAXSIZE_TEMP_DICT(data, 7);
     PUT_C(data, "id", INTEGER_OBJ(ac->id));
     PUT_C(data, "event", CSTR_AS_OBJ(event_nr2name(apc->event)));
+    PUT_C(data, "file", CSTR_AS_OBJ(apc->afile_orig));
     PUT_C(data, "match", CSTR_AS_OBJ(autocmd_match));
-    PUT_C(data, "file", CSTR_AS_OBJ(autocmd_fname));
     PUT_C(data, "buf", INTEGER_OBJ(autocmd_bufnr));
 
     if (apc->data) {
