@@ -169,6 +169,7 @@ The following new features were added.
 API
 
 • |nvim__ns_set()| can set properties for a namespace
+• New |nvim_buf_set_extmark()| flag `conceal_lines` to conceal an entire line.
 
 DEFAULTS
 
@@ -280,6 +281,8 @@ TREESITTER
 • |LanguageTree:node_for_range()| gets anonymous and named nodes for a range
 • |vim.treesitter.get_node()| now takes an option `include_anonymous`, default
   false, which allows it to return anonymous nodes as well as named nodes.
+• Bundled markdown highlight queries use `conceal_lines` metadata to conceal
+  code block fence lines vertically.
 
 TUI
 

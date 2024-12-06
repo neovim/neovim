@@ -11,6 +11,7 @@ local M = {}
 ---@field lang string name of the language for this parser
 ---@field captures string[] list of (unique) capture names defined in query
 ---@field info vim.treesitter.QueryInfo contains information used in the query (e.g. captures, predicates, directives)
+---@field conceal_line boolean whether this query sets conceal_lines metadata.
 ---@field query TSQuery userdata query object
 local Query = {}
 Query.__index = Query
@@ -30,6 +31,17 @@ function Query.new(lang, ts_query)
     patterns = query_info.patterns,
   }
   self.captures = self.info.captures
+
+  -- Instruct highlighter to place marks when query contains conceal_lines metadata.
+  for _, preds in pairs(self.info.patterns) do
+    for _, pred in ipairs(preds) do
+      if vim.deep_equal(pred, { 'set!', 'conceal_lines', '' }) then
+        self.conceal_line = true
+        break
+      end
+    end
+  end
+
   return self
 end
 

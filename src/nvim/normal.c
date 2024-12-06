@@ -24,6 +24,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdhist.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
@@ -3620,12 +3621,11 @@ static void nv_scroll(cmdarg_T *cap)
     if (cap->count1 - 1 >= curwin->w_cursor.lnum) {
       curwin->w_cursor.lnum = 1;
     } else {
-      if (hasAnyFolding(curwin)) {
+      if (win_lines_concealed(curwin)) {
         // Count a fold for one screen line.
-        for (n = cap->count1 - 1; n > 0
-             && curwin->w_cursor.lnum > curwin->w_topline; n--) {
-          hasFolding(curwin, curwin->w_cursor.lnum,
-                     &curwin->w_cursor.lnum, NULL);
+        for (n = cap->count1 - 1; n > 0 && curwin->w_cursor.lnum > curwin->w_topline; n--) {
+          hasFolding(curwin, curwin->w_cursor.lnum, &curwin->w_cursor.lnum, NULL);
+          n += decor_conceal_line(curwin, curwin->w_cursor.lnum, true);
           if (curwin->w_cursor.lnum > curwin->w_topline) {
             curwin->w_cursor.lnum--;
           }
@@ -3638,8 +3638,7 @@ static void nv_scroll(cmdarg_T *cap)
     if (cap->cmdchar == 'M') {
       int used = 0;
       // Don't count filler lines above the window.
-      used -= win_get_fill(curwin, curwin->w_topline)
-              - curwin->w_topfill;
+      used -= win_get_fill(curwin, curwin->w_topline) - curwin->w_topfill;
       validate_botline(curwin);  // make sure w_empty_rows is valid
       int half = (curwin->w_height_inner - curwin->w_empty_rows + 1) / 2;
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
@@ -3662,10 +3661,11 @@ static void nv_scroll(cmdarg_T *cap)
       }
     } else {  // (cap->cmdchar == 'H')
       n = cap->count1 - 1;
-      if (hasAnyFolding(curwin)) {
+      if (win_lines_concealed(curwin)) {
         // Count a fold for one screen line.
         lnum = curwin->w_topline;
-        while (n-- > 0 && lnum < curwin->w_botline - 1) {
+        while ((decor_conceal_line(curwin, lnum - 1, true) || n-- > 0)
+               && lnum < curwin->w_botline - 1) {
           hasFolding(curwin, lnum, NULL, &lnum);
           lnum++;
         }

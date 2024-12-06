@@ -6624,7 +6624,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
         hasFolding(wp, lnum, &lnum, NULL);
         if (lnum == 1) {
           // first line in buffer is folded
-          line_size = 1;
+          line_size = !decor_conceal_line(wp, lnum - 1, false);
           sline--;
           break;
         }
