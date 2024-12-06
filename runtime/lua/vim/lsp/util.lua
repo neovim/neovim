@@ -2162,6 +2162,11 @@ function M._refresh(method, opts)
         local first = vim.fn.line('w0', window)
         local last = vim.fn.line('w$', window)
         for _, client in ipairs(clients) do
+          for rid, req in pairs(client.requests) do
+            if req.method == method and req.type == 'pending' and req.bufnr == bufnr then
+              client:cancel_request(rid)
+            end
+          end
           client:request(method, {
             textDocument = textDocument,
             range = make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
