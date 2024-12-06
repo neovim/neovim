@@ -134,6 +134,15 @@ local API_TYPES = {
   void = '',
 }
 
+--- @param s string
+--- @return string
+local function luaescape(s)
+  if LUA_KEYWORDS[s] then
+    return s .. '_'
+  end
+  return s
+end
+
 --- @param x string
 --- @param sep? string
 --- @return string[]
@@ -208,7 +217,7 @@ local function render_fun_sig(f, params)
         --- @param v [string,string]
         --- @return string
         function(v)
-          return v[1]
+          return luaescape(v[1])
         end,
         params
       ),
@@ -224,7 +233,6 @@ local function render_fun_sig(f, params)
 end
 
 --- Uniquify names
---- Fix any names that are lua keywords
 --- @param params [string,string,string][]
 --- @return [string,string,string][]
 local function process_params(params)
@@ -232,9 +240,6 @@ local function process_params(params)
   local sfx = 1
 
   for _, p in ipairs(params) do
-    if LUA_KEYWORDS[p[1]] then
-      p[1] = p[1] .. '_'
-    end
     if seen[p[1]] then
       p[1] = p[1] .. sfx
       sfx = sfx + 1
@@ -389,10 +394,10 @@ local function render_api_meta(_f, fun, write)
   local param_names = {} --- @type string[]
   local params = process_params(fun.params)
   for _, p in ipairs(params) do
-    param_names[#param_names + 1] = p[1]
-    local pdesc = p[3]
+    local pname, ptype, pdesc = luaescape(p[1]), p[2], p[3]
+    param_names[#param_names + 1] = pname
     if pdesc then
-      local s = '--- @param ' .. p[1] .. ' ' .. p[2] .. ' '
+      local s = '--- @param ' .. pname .. ' ' .. ptype .. ' '
       local pdesc_a = split(vim.trim(norm_text(pdesc)))
       write(s .. pdesc_a[1])
       for i = 2, #pdesc_a do
@@ -402,7 +407,7 @@ local function render_api_meta(_f, fun, write)
         write('--- ' .. pdesc_a[i])
       end
     else
-      write('--- @param ' .. p[1] .. ' ' .. p[2])
+      write('--- @param ' .. pname .. ' ' .. ptype)
     end
   end
 
@@ -494,7 +499,7 @@ local function render_eval_meta(f, fun, write)
   local req_args = type(fun.args) == 'table' and fun.args[1] or fun.args or 0
 
   for i, param in ipairs(params) do
-    local pname, ptype = param[1], param[2]
+    local pname, ptype = luaescape(param[1]), param[2]
     local optional = (pname ~= '...' and i > req_args) and '?' or ''
     write(fmt('--- @param %s%s %s', pname, optional, ptype))
   end
