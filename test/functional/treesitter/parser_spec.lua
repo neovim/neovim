@@ -696,14 +696,14 @@ print()
     end)
 
     it('trims only empty lines by default (backwards compatible)', function()
-      insert [[
+      insert(dedent [[
       ## Heading
 
       With some text
 
       ## And another
 
-      With some more]]
+      With some more here]])
 
       local query_text = [[
         ; query
@@ -716,8 +716,35 @@ print()
       end)
 
       eq({
-        { 'fold', { 0, 0, 3, 0 } },
-        { 'fold', { 4, 0, 7, 0 } },
+        { 'fold', { 0, 0, 2, 14 } },
+        { 'fold', { 4, 0, 6, 19 } },
+      }, run_query('markdown', query_text))
+    end)
+
+    it('can trim lines', function()
+      insert(dedent [[
+      - Fold list
+        - Fold list
+          - Fold list
+          - Fold list
+        - Fold list
+      - Fold list
+      ]])
+
+      local query_text = [[
+        ; query
+        ((list_item
+          (list)) @fold
+          (#trim! @fold 1 1 1 1))
+      ]]
+
+      exec_lua(function()
+        vim.treesitter.start(0, 'markdown')
+      end)
+
+      eq({
+        { 'fold', { 0, 0, 4, 13 } },
+        { 'fold', { 1, 2, 3, 15 } },
       }, run_query('markdown', query_text))
     end)
   end)
