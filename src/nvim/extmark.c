@@ -367,10 +367,21 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
   marktree_itr_get(buf->b_marktree, (int32_t)l_row, l_col, itr);
   while (true) {
     MTKey mark = marktree_itr_current(itr);
-    if (mark.pos.row < 0
-        || mark.pos.row > u_row
-        || (mark.pos.row == u_row && mark.pos.col > u_col)) {
+    if (mark.pos.row < 0 || mark.pos.row > u_row) {
       break;
+    }
+
+    bool copy = true;
+    // No need to copy left gravity marks at the beginning of the range,
+    // and right gravity marks at the end of the range, unless invalidated.
+    if (mark.pos.row == l_row && mark.pos.col - !mt_right(mark) < l_col) {
+      copy = false;
+    } else if (mark.pos.row == u_row) {
+      if (mark.pos.col > u_col + 1) {
+        break;
+      } else if (mark.pos.col + mt_right(mark) > u_col) {
+        copy = false;
+      }
     }
 
     bool invalidated = false;
@@ -388,6 +399,7 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
           extmark_del(buf, itr, mark, true);
           continue;
         } else {
+          copy = true;
           invalidated = true;
           mt_itr_rawkey(itr).flags |= MT_FLAG_INVALID;
           marktree_revise_meta(buf->b_marktree, itr, mark);
@@ -397,7 +409,7 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
     }
 
     // Push mark to undo header
-    if (only_copy || (uvp != NULL && op == kExtmarkUndo && !mt_no_undo(mark))) {
+    if (copy && (only_copy || (uvp != NULL && op == kExtmarkUndo && !mt_no_undo(mark)))) {
       ExtmarkSavePos pos = {
         .mark = mt_lookup_key(mark),
         .invalidated = invalidated,
@@ -541,10 +553,8 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
 
   if (old_row > 0 || old_col > 0) {
     // Copy and invalidate marks that would be effected by delete
-    // TODO(bfredl): Be "smart" about gravity here, left-gravity at the
-    // beginning and right-gravity at the end need not be preserved.
-    // Also be smart about marks that already have been saved (important for
-    // merge!)
+    // TODO(bfredl): Be smart about marks that already have been
+    // saved (important for merge!)
     int end_row = start_row + old_row;
     int end_col = (old_row ? 0 : start_col) + old_col;
     u_header_T *uhp = u_force_get_undo_header(buf);
