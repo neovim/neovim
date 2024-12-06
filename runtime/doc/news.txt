@@ -58,8 +58,8 @@ DEFAULTS
 • |]d-default| and |[d-default| accept a count.
 • |[D-default| and |]D-default| jump to the first and last diagnostic in the
   current buffer, respectively.
-• 'number', 'relativenumber', and 'signcolumn' are disabled in |terminal|
-  buffers. See |terminal-config| for an example of changing these defaults.
+• 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
+  |terminal| buffers. See |terminal-config| for an example of changing these defaults.
 
 DIAGNOSTICS
 
