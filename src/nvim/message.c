@@ -26,6 +26,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
@@ -94,6 +95,16 @@ static char *confirm_msg_tail;              // tail of confirm_msg
 MessageHistoryEntry *first_msg_hist = NULL;
 MessageHistoryEntry *last_msg_hist = NULL;
 static int msg_hist_len = 0;
+static int msg_hist_max = 500;  // The default max value is 500
+
+// args in 'messagesopt' option
+#define MESSAGES_OPT_HIT_ENTER "hit-enter"
+#define MESSAGES_OPT_WAIT "wait:"
+#define MESSAGES_OPT_HISTORY "history:"
+
+// The default is "hit-enter,history:500"
+static int msg_flags = kOptMoptFlagHitEnter | kOptMoptFlagHistory;
+static int msg_wait = 0;
 
 static FILE *verbose_fd = NULL;
 static bool verbose_did_open = false;
@@ -1038,12 +1049,67 @@ int delete_first_msg(void)
   return OK;
 }
 
-void check_msg_hist(void)
+static void check_msg_hist(void)
 {
   // Don't let the message history get too big
-  while (msg_hist_len > 0 && msg_hist_len > p_mhi) {
+  while (msg_hist_len > 0 && msg_hist_len > msg_hist_max) {
     (void)delete_first_msg();
   }
+}
+
+int messagesopt_changed(void)
+{
+  int messages_flags_new = 0;
+  int messages_wait_new = 0;
+  int messages_history_new = 0;
+
+  char *p = p_meo;
+  while (*p != NUL) {
+    if (strnequal(p, S_LEN(MESSAGES_OPT_HIT_ENTER))) {
+      p += STRLEN_LITERAL(MESSAGES_OPT_HIT_ENTER);
+      messages_flags_new |= kOptMoptFlagHitEnter;
+    } else if (strnequal(p, S_LEN(MESSAGES_OPT_WAIT))
+               && ascii_isdigit(p[STRLEN_LITERAL(MESSAGES_OPT_WAIT)])) {
+      p += STRLEN_LITERAL(MESSAGES_OPT_WAIT);
+      messages_wait_new = getdigits_int(&p, false, INT_MAX);
+      messages_flags_new |= kOptMoptFlagWait;
+    } else if (strnequal(p, S_LEN(MESSAGES_OPT_HISTORY))
+               && ascii_isdigit(p[STRLEN_LITERAL(MESSAGES_OPT_HISTORY)])) {
+      p += STRLEN_LITERAL(MESSAGES_OPT_HISTORY);
+      messages_history_new = getdigits_int(&p, false, INT_MAX);
+      messages_flags_new |= kOptMoptFlagHistory;
+    }
+
+    if (*p != ',' && *p != NUL) {
+      return FAIL;
+    }
+    if (*p == ',') {
+      p++;
+    }
+  }
+
+  // Either "wait" or "hit-enter" is required
+  if (!(messages_flags_new & (kOptMoptFlagHitEnter | kOptMoptFlagWait))) {
+    return FAIL;
+  }
+
+  // "history" must be set
+  if (!(messages_flags_new & kOptMoptFlagHistory)) {
+    return FAIL;
+  }
+
+  // "history" must be <= 10000
+  if (messages_history_new > 10000) {
+    return FAIL;
+  }
+
+  msg_flags = messages_flags_new;
+  msg_wait = messages_wait_new;
+
+  msg_hist_max = messages_history_new;
+  check_msg_hist();
+
+  return OK;
 }
 
 /// :messages command implementation
@@ -1209,83 +1275,88 @@ void wait_return(int redraw)
       cmdline_row = Rows - 1;
     }
 
-    hit_return_msg(true);
+    if (msg_flags & kOptMoptFlagHitEnter) {
+      hit_return_msg(true);
 
-    do {
-      // Remember "got_int", if it is set vgetc() probably returns a
-      // CTRL-C, but we need to loop then.
-      had_got_int = got_int;
+      do {
+        // Remember "got_int", if it is set vgetc() probably returns a
+        // CTRL-C, but we need to loop then.
+        had_got_int = got_int;
 
-      // Don't do mappings here, we put the character back in the
-      // typeahead buffer.
-      no_mapping++;
-      allow_keys++;
+        // Don't do mappings here, we put the character back in the
+        // typeahead buffer.
+        no_mapping++;
+        allow_keys++;
 
-      // Temporarily disable Recording. If Recording is active, the
-      // character will be recorded later, since it will be added to the
-      // typebuf after the loop
-      const int save_reg_recording = reg_recording;
-      save_scriptout = scriptout;
-      reg_recording = 0;
-      scriptout = NULL;
-      c = safe_vgetc();
-      if (had_got_int && !global_busy) {
-        got_int = false;
-      }
-      no_mapping--;
-      allow_keys--;
-      reg_recording = save_reg_recording;
-      scriptout = save_scriptout;
-
-      // Allow scrolling back in the messages.
-      // Also accept scroll-down commands when messages fill the screen,
-      // to avoid that typing one 'j' too many makes the messages
-      // disappear.
-      if (p_more) {
-        if (c == 'b' || c == 'k' || c == 'u' || c == 'g'
-            || c == K_UP || c == K_PAGEUP) {
-          if (msg_scrolled > Rows) {
-            // scroll back to show older messages
-            do_more_prompt(c);
-          } else {
-            msg_didout = false;
-            c = K_IGNORE;
-            msg_col = 0;
-          }
-          if (quit_more) {
-            c = CAR;                            // just pretend CR was hit
-            quit_more = false;
-            got_int = false;
-          } else if (c != K_IGNORE) {
-            c = K_IGNORE;
-            hit_return_msg(false);
-          }
-        } else if (msg_scrolled > Rows - 2
-                   && (c == 'j' || c == 'd' || c == 'f'
-                       || c == K_DOWN || c == K_PAGEDOWN)) {
-          c = K_IGNORE;
+        // Temporarily disable Recording. If Recording is active, the
+        // character will be recorded later, since it will be added to the
+        // typebuf after the loop
+        const int save_reg_recording = reg_recording;
+        save_scriptout = scriptout;
+        reg_recording = 0;
+        scriptout = NULL;
+        c = safe_vgetc();
+        if (had_got_int && !global_busy) {
+          got_int = false;
         }
-      }
-    } while ((had_got_int && c == Ctrl_C)
-             || c == K_IGNORE
-             || c == K_LEFTDRAG || c == K_LEFTRELEASE
-             || c == K_MIDDLEDRAG || c == K_MIDDLERELEASE
-             || c == K_RIGHTDRAG || c == K_RIGHTRELEASE
-             || c == K_MOUSELEFT || c == K_MOUSERIGHT
-             || c == K_MOUSEDOWN || c == K_MOUSEUP
-             || c == K_MOUSEMOVE);
-    os_breakcheck();
+        no_mapping--;
+        allow_keys--;
+        reg_recording = save_reg_recording;
+        scriptout = save_scriptout;
 
-    // Avoid that the mouse-up event causes visual mode to start.
-    if (c == K_LEFTMOUSE || c == K_MIDDLEMOUSE || c == K_RIGHTMOUSE
-        || c == K_X1MOUSE || c == K_X2MOUSE) {
-      jump_to_mouse(MOUSE_SETPOS, NULL, 0);
-    } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C) {
-      // Put the character back in the typeahead buffer.  Don't use the
-      // stuff buffer, because lmaps wouldn't work.
-      ins_char_typebuf(vgetc_char, vgetc_mod_mask, true);
-      do_redraw = true;             // need a redraw even though there is
-                                    // typeahead
+        // Allow scrolling back in the messages.
+        // Also accept scroll-down commands when messages fill the screen,
+        // to avoid that typing one 'j' too many makes the messages
+        // disappear.
+        if (p_more) {
+          if (c == 'b' || c == 'k' || c == 'u' || c == 'g'
+              || c == K_UP || c == K_PAGEUP) {
+            if (msg_scrolled > Rows) {
+              // scroll back to show older messages
+              do_more_prompt(c);
+            } else {
+              msg_didout = false;
+              c = K_IGNORE;
+              msg_col = 0;
+            }
+            if (quit_more) {
+              c = CAR;  // just pretend CR was hit
+              quit_more = false;
+              got_int = false;
+            } else if (c != K_IGNORE) {
+              c = K_IGNORE;
+              hit_return_msg(false);
+            }
+          } else if (msg_scrolled > Rows - 2
+                     && (c == 'j' || c == 'd' || c == 'f'
+                         || c == K_DOWN || c == K_PAGEDOWN)) {
+            c = K_IGNORE;
+          }
+        }
+      } while ((had_got_int && c == Ctrl_C)
+               || c == K_IGNORE
+               || c == K_LEFTDRAG || c == K_LEFTRELEASE
+               || c == K_MIDDLEDRAG || c == K_MIDDLERELEASE
+               || c == K_RIGHTDRAG || c == K_RIGHTRELEASE
+               || c == K_MOUSELEFT || c == K_MOUSERIGHT
+               || c == K_MOUSEDOWN || c == K_MOUSEUP
+               || c == K_MOUSEMOVE);
+      os_breakcheck();
+
+      // Avoid that the mouse-up event causes visual mode to start.
+      if (c == K_LEFTMOUSE || c == K_MIDDLEMOUSE || c == K_RIGHTMOUSE
+          || c == K_X1MOUSE || c == K_X2MOUSE) {
+        jump_to_mouse(MOUSE_SETPOS, NULL, 0);
+      } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C) {
+        // Put the character back in the typeahead buffer.  Don't use the
+        // stuff buffer, because lmaps wouldn't work.
+        ins_char_typebuf(vgetc_char, vgetc_mod_mask, true);
+        do_redraw = true;  // need a redraw even though there is typeahead
+      }
+    } else {
+      c = CAR;
+      // Wait to allow the user to verify the output.
+      do_sleep(msg_wait, true);
     }
   }
   redir_off = false;

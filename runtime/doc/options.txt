@@ -3197,7 +3197,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	A history of ":" commands, and a history of previous search patterns
 	is remembered.  This option decides how many entries may be stored in
-	each of these histories (see |cmdline-editing| and 'msghistory' for
+	each of these histories (see |cmdline-editing| and 'messagesopt' for
 	the number of messages to remember).
 	The maximum value is 10000.
 
@@ -4045,6 +4045,25 @@ A jump table for the options with a short description can be found at |Q_op|.
 	generated from a list of items, e.g., the Buffers menu.  Changing this
 	option has no direct effect, the menu must be refreshed first.
 
+						*'messagesopt'* *'mopt'*
+'messagesopt' 'mopt'	string	(default "hit-enter,history:500")
+			global
+	Option settings when outputting messages.  It can consist of the
+	following items.  Items must be separated by a comma.
+
+	hit-enter	Use |hit-enter| prompt when the message is longer than
+			'cmdheight' size.
+
+	wait:{n}	Ignored when "hit-enter" is present.  Instead of using
+			|hit-enter| prompt, will simply wait for {n}
+			milliseconds so the user has a chance to read the
+			message, use 0 to disable sleep (but then the user may
+			miss an important message).
+
+	history:{n}	Determines how many entries are remembered in the
+			|:messages| history.  The maximum value is 10000.
+			Setting it to zero clears the message history.
+
 						*'mkspellmem'* *'msm'*
 'mkspellmem' 'msm'	string	(default "460000,2000,500")
 			global
@@ -4289,13 +4308,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Defines the maximum time in msec between two mouse clicks for the
 	second click to be recognized as a multi click.
-
-						*'msghistory'* *'mhi'*
-'msghistory' 'mhi'	number	(default 500)
-			global
-	Determines how many entries are remembered in the |:messages| history.
-	The maximum value is 10000.
-	Setting it to zero clears the message history.
 
 						*'nrformats'* *'nf'*
 'nrformats' 'nf'	string	(default "bin,hex")

@@ -2199,13 +2199,6 @@ static const char *did_set_modified(optset_T *args)
   return NULL;
 }
 
-/// Process the updated 'msghistory' option value.
-static const char *did_set_msghistory(optset_T *args FUNC_ATTR_UNUSED)
-{
-  check_msg_hist();
-  return NULL;
-}
-
 /// Process the updated 'number' or 'relativenumber' option value.
 static const char *did_set_number_relativenumber(optset_T *args)
 {
@@ -2880,13 +2873,6 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
     }
     break;
   case kOptHistory:
-    if (value < 0) {
-      return e_positive;
-    } else if (value > 10000) {
-      return e_invarg;
-    }
-    break;
-  case kOptMsghistory:
     if (value < 0) {
       return e_positive;
     } else if (value > 10000) {

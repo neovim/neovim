@@ -644,6 +644,10 @@ func Test_set_completion_string_values()
   " call feedkeys(":set hl=8b i\<Left>\<Left>\<Tab>\<C-B>\"\<CR>", 'xt')
   " call assert_equal("\"set hl=8bi i", @:)
 
+  " messagesopt
+  call assert_equal(['history:', 'hit-enter', 'wait:'],
+        \ getcompletion('set messagesopt+=', 'cmdline')->sort())
+
   "
   " Test flag lists
   "
@@ -743,7 +747,6 @@ func Test_set_option_errors()
   call assert_fails('set backupcopy=', 'E474:')
   call assert_fails('set regexpengine=3', 'E474:')
   call assert_fails('set history=10001', 'E474:')
-  call assert_fails('set msghistory=10001', 'E474:')
   call assert_fails('set numberwidth=21', 'E474:')
   call assert_fails('set colorcolumn=-a', 'E474:')
   call assert_fails('set colorcolumn=a', 'E474:')
@@ -757,7 +760,6 @@ func Test_set_option_errors()
   endif
   call assert_fails('set helpheight=-1', 'E487:')
   call assert_fails('set history=-1', 'E487:')
-  call assert_fails('set msghistory=-1', 'E487:')
   call assert_fails('set report=-1', 'E487:')
   call assert_fails('set shiftwidth=-1', 'E487:')
   call assert_fails('set sidescroll=-1', 'E487:')
@@ -2517,6 +2519,7 @@ func Test_string_option_revert_on_failure()
         \ ['lispoptions', 'expr:1', 'a123'],
         \ ['listchars', 'tab:->', 'tab:'],
         \ ['matchpairs', '<:>', '<:'],
+        \ ['messagesopt', 'hit-enter,history:100', 'a123'],
         \ ['mkspellmem', '100000,1000,100', '100000'],
         \ ['mouse', 'nvi', 'z'],
         \ ['mousemodel', 'extend', 'a123'],

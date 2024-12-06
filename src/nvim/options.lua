@@ -4094,7 +4094,7 @@ return {
       desc = [=[
         A history of ":" commands, and a history of previous search patterns
         is remembered.  This option decides how many entries may be stored in
-        each of these histories (see |cmdline-editing| and 'msghistory' for
+        each of these histories (see |cmdline-editing| and 'messagesopt' for
         the number of messages to remember).
         The maximum value is 10000.
       ]=],
@@ -5449,6 +5449,38 @@ return {
       varname = 'p_mis',
     },
     {
+      abbreviation = 'mopt',
+      cb = 'did_set_messagesopt',
+      defaults = { if_true = 'hit-enter,history:500' },
+      values = { 'hit-enter', 'wait:', 'history:' },
+      flags = true,
+      deny_duplicates = true,
+      desc = [=[
+        Option settings when outputting messages.  It can consist of the
+        following items.  Items must be separated by a comma.
+
+        hit-enter	Use |hit-enter| prompt when the message is longer than
+        		'cmdheight' size.
+
+        wait:{n}	Ignored when "hit-enter" is present.  Instead of using
+        		|hit-enter| prompt, will simply wait for {n}
+        		milliseconds so the user has a chance to read the
+        		message, use 0 to disable sleep (but then the user may
+        		miss an important message).
+
+        history:{n}	Determines how many entries are remembered in the
+        		|:messages| history.  The maximum value is 10000.
+        		Setting it to zero clears the message history.
+      ]=],
+      expand_cb = 'expand_set_messagesopt',
+      full_name = 'messagesopt',
+      list = 'onecommacolon',
+      scope = { 'global' },
+      short_desc = N_('options for outputting messages'),
+      type = 'string',
+      varname = 'p_meo',
+    },
+    {
       abbreviation = 'msm',
       cb = 'did_set_mkspellmem',
       defaults = { if_true = '460000,2000,500' },
@@ -5891,21 +5923,6 @@ return {
       short_desc = N_('max time between mouse double-click'),
       type = 'number',
       varname = 'p_mouset',
-    },
-    {
-      abbreviation = 'mhi',
-      cb = 'did_set_msghistory',
-      defaults = { if_true = 500 },
-      desc = [=[
-        Determines how many entries are remembered in the |:messages| history.
-        The maximum value is 10000.
-        Setting it to zero clears the message history.
-      ]=],
-      full_name = 'msghistory',
-      scope = { 'global' },
-      short_desc = N_('how many messages are remembered'),
-      type = 'number',
-      varname = 'p_mhi',
     },
     {
       abbreviation = 'nf',

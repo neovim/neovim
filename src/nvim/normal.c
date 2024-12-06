@@ -812,7 +812,7 @@ static void normal_get_additional_char(NormalState *s)
       // There is a busy wait here when typing "f<C-\>" and then
       // something different from CTRL-N.  Can't be avoided.
       while ((s->c = vpeekc()) <= 0 && towait > 0) {
-        do_sleep(towait > 50 ? 50 : towait);
+        do_sleep(towait > 50 ? 50 : towait, false);
         towait -= 50;
       }
       if (s->c > 0) {
@@ -5561,7 +5561,7 @@ static void nv_g_cmd(cmdarg_T *cap)
 
   // "gs": Goto sleep.
   case 's':
-    do_sleep(cap->count1 * 1000);
+    do_sleep(cap->count1 * 1000, false);
     break;
 
   // "ga": Display the ascii value of the character under the

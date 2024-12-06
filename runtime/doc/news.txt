@@ -25,6 +25,7 @@ EXPERIMENTS
 OPTIONS
 
 • 'jumpoptions' flag "unload" has been renamed to "clean".
+• The `msghistory` option has been removed in favor of 'messagesopt'.
 
 ==============================================================================
 BREAKING CHANGES                                                *news-breaking*
@@ -248,7 +249,7 @@ LUA
 OPTIONS
 
 • 'completeopt' flag "fuzzy" enables |fuzzy-matching| during |ins-completion|.
-• 'msghistory' controls maximum number of messages to remember.
+• 'messagesopt' configures |:messages| and |hit-enter| prompt.
 • 'tabclose' controls which tab page to focus when closing a tab page.
 
 PERFORMANCE
