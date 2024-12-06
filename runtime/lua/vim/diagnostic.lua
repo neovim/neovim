@@ -2,7 +2,20 @@ local api, if_nil = vim.api, vim.F.if_nil
 
 local M = {}
 
-local _qf_id = nil
+local _qf_id_by_title = {}
+
+--- @param title string
+--- @return integer?
+local function get_qf_id_for_title(title)
+  local qf_id = _qf_id_by_title[title]
+  -- Check if the quickfix list no longer exists.
+  if qf_id and vim.fn.getqflist({ id = qf_id }).id == 0 then
+    qf_id = nil
+    _qf_id_by_title[title] = nil
+  end
+
+  return qf_id
+end
 
 --- [diagnostic-structure]()
 ---
@@ -852,23 +865,20 @@ local function set_list(loclist, opts)
   if loclist then
     vim.fn.setloclist(winnr, {}, 'u', { title = title, items = items })
   else
-    -- Check if the diagnostics quickfix list no longer exists.
-    if _qf_id and vim.fn.getqflist({ id = _qf_id }).id == 0 then
-      _qf_id = nil
-    end
+    local qf_id = get_qf_id_for_title(title)
 
     -- If we already have a diagnostics quickfix, update it rather than creating a new one.
     -- This avoids polluting the finite set of quickfix lists, and preserves the currently selected
     -- entry.
-    vim.fn.setqflist({}, _qf_id and 'u' or ' ', {
+    vim.fn.setqflist({}, qf_id and 'u' or ' ', {
       title = title,
       items = items,
-      id = _qf_id,
+      id = qf_id,
     })
 
-    -- Get the id of the newly created quickfix list.
-    if _qf_id == nil then
-      _qf_id = vim.fn.getqflist({ id = 0 }).id
+    -- If we just created a new quickfix list, store its id.
+    if qf_id == nil then
+      _qf_id_by_title[title] = vim.fn.getqflist({ id = 0 }).id
     end
   end
   if open then
