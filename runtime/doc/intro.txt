@@ -32,8 +32,9 @@ and |user-manual|.
 Resources                                               *resources*
 
                                                 *internet* *www* *distribution*
-- Nvim home page: https://neovim.io/
-- Vim FAQ: https://vimhelp.org/vim_faq.txt.html
+Nvim home page:
+
+        https://neovim.io/
 
                                                 *book*
 There are many resources to learn Vi, Vim, and Nvim.  We recommend:
@@ -48,6 +49,7 @@ There are many resources to learn Vi, Vim, and Nvim.  We recommend:
 - For more information try one of these:
   - https://iccf-holland.org/click5.html
   - https://www.vim.org/iccf/click5.html
+- Vim FAQ: https://vimhelp.org/vim_faq.txt.html
 
                                                 *bugs* *bug-report* *feature-request*
 Report bugs and request features here: https://github.com/neovim/neovim/issues
@@ -67,18 +69,24 @@ To install or upgrade Nvim, you can...
 - Build from source:
   https://github.com/neovim/neovim/blob/master/INSTALL.md#install-from-source
 
-                                                *uninstall*
+------------------------------------------------------------------------------
+Un-installing Nvim                                      *uninstall*
+
 To uninstall Nvim:
-- If you downloaded a pre-built archive or built Nvim from source (e.g. `make
-  install`), just delete its files, typically located in: >
+- If you downloaded a pre-built archive or built Nvim from source (e.g.
+  `make install`), just delete its files, typically located in: >
   /usr/local/bin/nvim
   /usr/local/share/nvim
+<
+  - To find where Nvim is installed, run these commands: >
+    :echo v:progpath
+    :echo $VIMRUNTIME
 <
 - If you installed via package manager, read your package manager's
   documentation. Common examples:
   - APT (Debian, Ubuntu, …): `apt-get remove neovim`
-  - Homebrew (macOS): `brew install neovim`
-  - Scoop (Windows): `scoop install neovim`
+  - Homebrew (macOS): `brew uninstall neovim`
+  - Scoop (Windows): `scoop uninstall neovim`
 
 ==============================================================================
 Sponsor Vim/Nvim development                            *sponsor* *register*

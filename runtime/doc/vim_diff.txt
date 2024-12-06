@@ -24,7 +24,7 @@ User configuration and data files are found in standard |base-directories|
   session information.  |shada|
 
 ==============================================================================
-Defaults                                                    *nvim-defaults*
+Defaults                                            *defaults* *nvim-defaults*
 
 - Filetype detection is enabled by default. This can be disabled by adding
   ":filetype off" to |init.vim|.
@@ -291,7 +291,8 @@ Commands:
   User commands can support |:command-preview| to show results as you type
 - |:write| with "++p" flag creates parent directories.
 
-Events:
+Events (autocommands):
+- Fixed inconsistent behavior in execution of nested autocommands #23368
 - |RecordingEnter|
 - |RecordingLeave|
 - |SearchWrapped|
@@ -299,6 +300,8 @@ Events:
 - |TabNewEntered|
 - |TermClose|
 - |TermOpen|
+- |TermResponse| is fired for any OSC sequence received from the terminal,
+  instead of the Primary Device Attributes response. |v:termresponse|
 - |UIEnter|
 - |UILeave|
 
@@ -366,7 +369,7 @@ Options:
 - 'shortmess'
     - "F" flag does not affect output from autocommands.
     - "q" flag fully hides macro recording message.
-- 'signcolumn'  supports up to 9 dynamic/fixed columns
+- 'signcolumn'  can show multiple signs (dynamic or fixed columns)
 - 'statuscolumn' full control of columns using 'statusline' format
 - 'tabline'     middle-click on tabpage label closes tabpage,
                 and %@Func@foo%X can call any function on mouse-click
@@ -374,6 +377,10 @@ Options:
 - 'ttimeout', 'ttimeoutlen' behavior was simplified
 - 'winblend'    pseudo-transparency in floating windows |api-floatwin|
 - 'winhighlight' window-local highlights
+
+Performance:
+- Signs are implemented using Nvim's internal "marktree" (btree) structure.
+- Folds are not updated during insert-mode.
 
 Providers:
 - If a Python interpreter is available on your `$PATH`, |:python| and
@@ -392,6 +399,7 @@ Shell:
 - |system()| does not support writing/reading "backgrounded" commands. |E5677|
 
 Signs:
+- 'signcolumn' can show multiple signs.
 - Signs are removed if the associated line is deleted.
 - Signs placed twice with the same identifier in the same group are moved.
 
@@ -584,9 +592,6 @@ Mappings:
 Motion:
 - The |jumplist| avoids useless/phantom jumps.
 
-Performance:
-- Folds are not updated during insert-mode.
-
 Syntax highlighting:
 - syncolor.vim has been removed. Nvim now sets up default highlighting groups
   automatically for both light and dark backgrounds, regardless of whether or
@@ -610,12 +615,6 @@ Working directory (Vim implemented some of these after Nvim):
   window number, and its only possible returns values are 0 and 1.
 - `getcwd(-1)` is equivalent to `getcwd(-1, 0)` instead of returning the global
   working directory. Use `getcwd(-1, -1)` to get the global working directory.
-
-Autocommands:
-- Fixed inconsistent behavior in execution of nested autocommands:
-  https://github.com/neovim/neovim/issues/23368
-- |TermResponse| is fired for any OSC sequence received from the terminal,
-  instead of the Primary Device Attributes response. |v:termresponse|
 
 Options:
 - 'titlestring' uses printf-style '%' items (see: 'statusline') to implement
