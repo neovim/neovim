@@ -41,15 +41,19 @@ thus you cannot edit beyond that.
 The command-lines that you enter are remembered in a history table.  You can
 recall them with the up and down cursor keys.  There are actually five
 history tables:
+
 - one for ':' commands
 - one for search strings
 - one for expressions
 - one for input lines, typed for the |input()| function.
 - one for debug mode commands
+
 These are completely separate.  Each history can only be accessed when
 entering the same type of line.
 Use the 'history' option to set the number of lines that are remembered.
+
 Notes:
+
 - When you enter a command-line that is exactly the same as an older one, the
   old one is removed (to avoid repeated commands moving older commands out of
   the history).
