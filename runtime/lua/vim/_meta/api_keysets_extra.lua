@@ -159,6 +159,7 @@ error('Cannot require a meta file')
 --- @field bg? integer
 --- @field sp? integer
 --- @field default? true
+--- @field link? string
 --- @field blend? integer
 --- @field cterm? vim.api.keyset.hl_info.cterm
 
