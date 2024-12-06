@@ -52,6 +52,7 @@ struct AutoPatCmd_S {
   AutoPat *lastpat;         ///< Last matched AutoPat
   size_t auidx;             ///< Current autocmd index to execute
   size_t ausize;            ///< Saved AutoCmd vector size
+  char *afile_orig;         ///< Unexpanded <afile>
   char *fname;              ///< Fname to match with
   char *sfname;             ///< Sfname to match with
   char *tail;               ///< Tail of fname
