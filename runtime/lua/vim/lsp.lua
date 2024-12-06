@@ -459,12 +459,7 @@ function lsp._resolve_config(name)
     -- Calls to vim.lsp.config in lsp/* have a lower precedence than calls from other sites.
     local orig_configs = lsp.config._configs
     lsp.config._configs = {}
-    for _, f in ipairs(api.nvim_get_runtime_file(('lsp/%s.lua'):format(name), true)) do
-      local chunk = loadfile(f)
-      if chunk then
-        pcall(chunk)
-      end
-    end
+    pcall(vim.cmd.runtime, { ('lsp/%s.lua'):format(name), bang = true })
     local rtp_configs = lsp.config._configs
     lsp.config._configs = orig_configs
 
