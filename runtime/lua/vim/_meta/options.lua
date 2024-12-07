@@ -4095,6 +4095,7 @@ vim.go.mis = vim.go.menuitems
 --- 		milliseconds so the user has a chance to read the
 --- 		message, use 0 to disable sleep (but then the user may
 --- 		miss an important message).
+--- 		The maximum value is 10000.
 ---
 --- history:{n}	Determines how many entries are remembered in the
 --- 		`:messages` history.  The maximum value is 10000.

@@ -1103,6 +1103,11 @@ int messagesopt_changed(void)
     return FAIL;
   }
 
+  // "wait" must be <= 10000
+  if (messages_wait_new > 10000) {
+    return FAIL;
+  }
+
   msg_flags = messages_flags_new;
   msg_wait = messages_wait_new;
 
