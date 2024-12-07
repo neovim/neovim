@@ -467,16 +467,16 @@ vim.cmd = setmetatable({}, {
   end,
 })
 
---- @class (private) vim.var_accessor
+--- @class (private) vim.vim_accessor
 --- @field [string] any
---- @field [integer] vim.var_accessor
+--- @field [integer] vim.vim_accessor
 
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
   --- @param scope string
   --- @param handle? false|integer
-  --- @return vim.var_accessor
-  local function make_dict_accessor(scope, handle)
+  --- @return vim.vim_accessor
+  local function make_vim_accessor(scope, handle)
     vim.validate('scope', scope, 'string')
     local mt = {}
     function mt:__newindex(k, v)
@@ -484,18 +484,64 @@ do
     end
     function mt:__index(k)
       if handle == nil and type(k) == 'number' then
-        return make_dict_accessor(scope, k)
+        return make_vim_accessor(scope, k)
       end
       return vim._getvar(scope, handle or 0, k)
     end
     return setmetatable({}, mt)
   end
 
-  vim.g = make_dict_accessor('g', false)
-  vim.v = make_dict_accessor('v', false) --[[@as vim.v]]
-  vim.b = make_dict_accessor('b')
-  vim.w = make_dict_accessor('w')
-  vim.t = make_dict_accessor('t')
+  vim.g = make_vim_accessor('g', false)
+  vim.v = make_vim_accessor('v', false) --[[@as vim.v]]
+  vim.b = make_vim_accessor('b')
+  vim.w = make_vim_accessor('w')
+  vim.t = make_vim_accessor('t')
+end
+
+--- @class (private) vim.lua_accessor
+--- @field [string] any
+--- @field [integer] vim.lua_accessor
+
+-- These are the scoped lua variable magic accessors.
+do
+  --- @generic T
+  --- @param v T
+  --- @return fun(): T
+  local function store_lua_var(v)
+    return function()
+      return v
+    end
+  end
+
+  --- @param vim_accessor vim.vim_accessor
+  --- @return vim.lua_accessor
+  local function make_lua_accessor(vim_accessor)
+    local mt = {}
+    function mt:__newindex(k, v)
+      if type(k) == 'string' then
+        ---@cast k string
+        vim_accessor['lua_var_' .. k] = store_lua_var(v)
+      end
+    end
+    function mt:__index(k)
+      if type(k) == 'number' then
+        ---@cast k integer
+        return make_lua_accessor(vim_accessor[k])
+      elseif type(k) == 'string' then
+        ---@cast k string
+        local v = vim_accessor['lua_var_' .. k]
+        if type(v) == 'function' then
+          return v()
+        end
+      end
+    end
+    return setmetatable({}, mt)
+  end
+
+  vim.gl = make_lua_accessor(vim.g)
+  vim.bl = make_lua_accessor(vim.b)
+  vim.wl = make_lua_accessor(vim.w)
+  vim.tl = make_lua_accessor(vim.t)
 end
 
 --- @deprecated
