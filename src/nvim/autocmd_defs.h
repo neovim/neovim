@@ -14,16 +14,18 @@
 /// Struct to save values in before executing autocommands for a buffer that is
 /// not the current buffer.
 typedef struct {
-  int use_aucmd_win_idx;          ///< index in aucmd_win[] if >= 0
-  handle_T save_curwin_handle;    ///< ID of saved curwin
-  handle_T new_curwin_handle;     ///< ID of new curwin
-  handle_T save_prevwin_handle;   ///< ID of saved prevwin
-  bufref_T new_curbuf;            ///< new curbuf
-  char *tp_localdir;              ///< saved value of tp_localdir
-  char *globaldir;                ///< saved value of globaldir
-  bool save_VIsual_active;        ///< saved VIsual_active
-  int save_State;                 ///< saved State
-  int save_prompt_insert;         ///< saved b_prompt_insert
+  int use_aucmd_win_idx;             ///< index in aucmd_win[] if >= 0
+  handle_T save_curwin_handle;       ///< ID of saved curwin
+  handle_T save_curtab_handle;       ///< ID of saved curtab. -1 if not switched.
+  handle_T new_curwin_handle;        ///< ID of new curwin
+  handle_T save_buf_handle;          ///< ID of saved buffer of new curwin. -1 if not switched.
+  handle_T save_prevwin_handle;      ///< ID of saved prevwin
+  bufref_T new_curbuf;               ///< new curbuf
+  char *tp_localdir;                 ///< saved value of tp_localdir
+  char *globaldir;                   ///< saved value of globaldir
+  bool save_VIsual_active;           ///< saved VIsual_active
+  int save_State;                    ///< saved State
+  int save_prompt_insert;            ///< saved b_prompt_insert
 } aco_save_T;
 
 typedef struct {
