@@ -689,4 +689,43 @@ describe('messages', function()
     ]])
     os.remove('b.txt')
   end)
+
+  -- oldtest: Test_messagesopt_wait()
+  it('&messagesopt "wait"', function()
+    screen = Screen.new(45, 6)
+    command('set cmdheight=1')
+
+    -- Check hit-enter prompt
+    command('set messagesopt=hit-enter,history:500')
+    feed(":echo 'foo' | echo 'bar' | echo 'baz'\n")
+    screen:expect([[
+                                                   |
+      {3:                                             }|
+      foo                                          |
+      bar                                          |
+      baz                                          |
+      {6:Press ENTER or type command to continue}^      |
+    ]])
+    feed('<CR>')
+
+    -- Check no hit-enter prompt when "wait:" is set
+    command('set messagesopt=wait:100,history:500')
+    feed(":echo 'foo' | echo 'bar' | echo 'baz'\n")
+    screen:expect({
+      grid = [[
+                                                   |
+      {1:~                                            }|
+      {3:                                             }|
+      foo                                          |
+      bar                                          |
+      baz                                          |
+    ]],
+      timeout = 100,
+    })
+    screen:expect([[
+      ^                                             |
+      {1:~                                            }|*4
+                                                   |
+    ]])
+  end)
 end)

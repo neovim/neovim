@@ -47,7 +47,9 @@ end
 --- @param s string
 --- @return string
 local lowercase_to_titlecase = function(s)
-  return s:sub(1, 1):upper() .. s:sub(2)
+  return table.concat(vim.tbl_map(function(word) --- @param word string
+    return word:sub(1, 1):upper() .. word:sub(2)
+  end, vim.split(s, '[-_]')))
 end
 
 -- Generate options enum file
@@ -177,7 +179,7 @@ for _, option in ipairs(options_meta) do
       vars_w(
         ('  kOpt%sFlag%s = 0x%02x,'):format(
           opt_name,
-          lowercase_to_titlecase(flag_name),
+          lowercase_to_titlecase(flag_name:gsub(':$', '')),
           enum_values[flag_name]
         )
       )

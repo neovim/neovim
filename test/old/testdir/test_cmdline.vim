@@ -4181,30 +4181,4 @@ func Test_cd_bslash_completion_windows()
   let &shellslash = save_shellslash
 endfunc
 
-func Test_msghistory()
-  " After setting 'msghistory' to 2 and outputting a message 4 times with
-  " :echomsg, is the number of output lines of :messages 2?
-  set msghistory=2
-  echomsg 'foo'
-  echomsg 'bar'
-  echomsg 'baz'
-  echomsg 'foobar'
-  call assert_equal(['baz', 'foobar'], GetMessages())
-
-  " When the number of messages is 10 and 'msghistory' is changed to 5, is the
-  " number of output lines of :messages 5?
-  set msghistory=10
-  for num in range(1, 10)
-    echomsg num
-  endfor
-  set msghistory=5
-  call assert_equal(5, len(GetMessages()))
-
-  " Check empty list
-  set msghistory=0
-  call assert_true(empty(GetMessages()))
-
-  set msghistory&
-endfunc
-
 " vim: shiftwidth=2 sts=2 expandtab
