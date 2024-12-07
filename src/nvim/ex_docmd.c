@@ -6101,7 +6101,9 @@ static void ex_sleep(exarg_T *eap)
   default:
     semsg(_(e_invarg2), eap->arg); return;
   }
-  do_sleep(len, false);
+
+  // Hide the cursor if invoked with !
+  do_sleep(len, eap->forceit);
 }
 
 /// Sleep for "msec" milliseconds, but return early on CTRL-C.
