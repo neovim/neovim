@@ -237,6 +237,9 @@ LSP
 • Functions in |vim.lsp.Client| can now be called as methods.
 • Implemented LSP folding: |vim.lsp.foldexpr()|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
+• |vim.lsp.config()| has been added to define default configurations for
+  servers. In addition, configurations can be specified in `lsp/<name>.lua`.
+• |vim.lsp.enable()| has been added to enable servers.
 
 LUA
 
