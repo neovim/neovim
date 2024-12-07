@@ -1063,7 +1063,7 @@ int messagesopt_changed(void)
   int messages_wait_new = 0;
   int messages_history_new = 0;
 
-  char *p = p_meo;
+  char *p = p_mopt;
   while (*p != NUL) {
     if (strnequal(p, S_LEN(MESSAGES_OPT_HIT_ENTER))) {
       p += STRLEN_LITERAL(MESSAGES_OPT_HIT_ENTER);

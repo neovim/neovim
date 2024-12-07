@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2024 Jul 12
+" Last Change:	2024 Dec 07
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " If there already is an option window, jump to that one.
@@ -626,7 +626,7 @@ call <SID>AddOption("terse", gettext("add 's' flag in 'shortmess' (don't show se
 call <SID>BinOptionG("terse", &terse)
 call <SID>AddOption("shortmess", gettext("list of flags to make messages shorter"))
 call <SID>OptionG("shm", &shm)
-call <SID>AddOption("messagesopt", gettext("Option settings when outputting messages"))
+call <SID>AddOption("messagesopt", gettext("options for outputting messages"))
 call <SID>OptionG("mopt", &mopt)
 call <SID>AddOption("showcmd", gettext("show (partial) command keys in location given by 'showcmdloc'"))
 let &sc = s:old_sc

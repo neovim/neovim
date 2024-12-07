@@ -646,12 +646,12 @@ func Test_messagesopt_wait()
 
   " Check hit-enter prompt
   call term_sendkeys(buf, ":set messagesopt=hit-enter,history:500\n")
-  call term_sendkeys(buf, ":echo 'foo' | echo 'bar' echo 'baz'\n")
+  call term_sendkeys(buf, ":echo 'foo' | echo 'bar' | echo 'baz'\n")
   call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
 
   " Check no hit-enter prompt when "wait:" is set
   call term_sendkeys(buf, ":set messagesopt=wait:100,history:500\n")
-  call term_sendkeys(buf, ":echo 'foo' | echo 'bar' echo 'baz'\n")
+  call term_sendkeys(buf, ":echo 'foo' | echo 'bar' | echo 'baz'\n")
   call WaitForAssert({-> assert_equal('                           0,0-1         All', term_getline(buf, 6))})
 
   " clean up
