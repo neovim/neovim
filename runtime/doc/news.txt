@@ -254,7 +254,8 @@ OPTIONS
 
 PERFORMANCE
 
-• TODO
+• LSP diagnostics and inlay hints are de-duplicated (new requests cancel
+  inflight requests). This greatly improves performance with slow LSP servers.
 
 PLUGINS
 
