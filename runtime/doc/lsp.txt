@@ -946,7 +946,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {handlers}              (`table<string,lsp.Handler>`) The handlers
                                 used by the client as described in
                                 |lsp-handler|.
-      • {requests}              (`table<integer,{ type: string, bufnr: integer, method: string}>`)
+      • {requests}              (`table<integer,{ type: string, bufnr: integer, method: string}?>`)
                                 The current pending requests in flight to the
                                 server. Entries are key-value pairs with the
                                 key being the request id while the value is a
@@ -982,9 +982,9 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 lenses, ...) triggers the command. Client
                                 commands take precedence over the global
                                 command registry.
-      • {settings}              (`table`) Map with language server specific
-                                settings. These are returned to the language
-                                server if requested via
+      • {settings}              (`lsp.LSPObject`) Map with language server
+                                specific settings. These are returned to the
+                                language server if requested via
                                 `workspace/configuration`. Keys are
                                 case-sensitive.
       • {flags}                 (`table`) A table with flags for the client.
@@ -1077,8 +1077,8 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 an array.
       • {handlers}?           (`table<string,function>`) Map of language
                               server method names to |lsp-handler|
-      • {settings}?           (`table`) Map with language server specific
-                              settings. See the {settings} in
+      • {settings}?           (`lsp.LSPObject`) Map with language server
+                              specific settings. See the {settings} in
                               |vim.lsp.Client|.
       • {commands}?           (`table<string,fun(command: lsp.Command, ctx: table)>`)
                               Table that maps string of clientside commands to
@@ -1088,9 +1088,10 @@ Lua module: vim.lsp.client                                        *lsp-client*
                               command name, and the value is a function which
                               is called if any LSP action (code action, code
                               lenses, ...) triggers the command.
-      • {init_options}?       (`table`) Values to pass in the initialization
-                              request as `initializationOptions`. See
-                              `initialize` in the LSP spec.
+      • {init_options}?       (`lsp.LSPObject`) Values to pass in the
+                              initialization request as
+                              `initializationOptions`. See `initialize` in the
+                              LSP spec.
       • {name}?               (`string`, default: client-id) Name in log
                               messages.
       • {get_language_id}?    (`fun(bufnr: integer, filetype: string): string`)

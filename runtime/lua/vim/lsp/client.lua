@@ -75,7 +75,7 @@ local validate = vim.validate
 ---
 --- Map with language server specific settings.
 --- See the {settings} in |vim.lsp.Client|.
---- @field settings? table
+--- @field settings? lsp.LSPObject
 ---
 --- Table that maps string of clientside commands to user-defined functions.
 --- Commands passed to `start()` take precedence over the global command registry. Each key
@@ -85,7 +85,7 @@ local validate = vim.validate
 ---
 --- Values to pass in the initialization request as `initializationOptions`. See `initialize` in
 --- the LSP spec.
---- @field init_options? table
+--- @field init_options? lsp.LSPObject
 ---
 --- Name in log messages.
 --- (default: client-id)
@@ -164,7 +164,7 @@ local validate = vim.validate
 --- for an active request, or "cancel" for a cancel request. It will be
 --- "complete" ephemerally while executing |LspRequest| autocmds when replies
 --- are received from the server.
---- @field requests table<integer,{ type: string, bufnr: integer, method: string}>
+--- @field requests table<integer,{ type: string, bufnr: integer, method: string}?>
 ---
 --- copy of the table that was passed by the user
 --- to |vim.lsp.start()|.
@@ -189,9 +189,6 @@ local validate = vim.validate
 ---
 --- @field attached_buffers table<integer,true>
 ---
---- Buffers that should be attached to upon initialize()
---- @field package _buffers_to_attach table<integer,true>
----
 --- @field private _log_prefix string
 ---
 --- Track this so that we can escalate automatically if we've already tried a
@@ -210,7 +207,7 @@ local validate = vim.validate
 --- Map with language server specific settings. These are returned to the
 --- language server if requested via `workspace/configuration`. Keys are
 --- case-sensitive.
---- @field settings table
+--- @field settings lsp.LSPObject
 ---
 --- A table with flags for the client. The current (experimental) flags are:
 --- @field flags vim.lsp.Client.Flags
@@ -265,9 +262,6 @@ local valid_encodings = {
   ['utf8'] = 'utf-8',
   ['utf16'] = 'utf-16',
   ['utf32'] = 'utf-32',
-  UTF8 = 'utf-8',
-  UTF16 = 'utf-16',
-  UTF32 = 'utf-32',
 }
 
 --- Normalizes {encoding} to valid LSP encoding names.
@@ -276,7 +270,7 @@ local valid_encodings = {
 local function validate_encoding(encoding)
   validate('encoding', encoding, 'string', true)
   if not encoding then
-    return valid_encodings.UTF16
+    return valid_encodings.utf16
   end
   return valid_encodings[encoding:lower()]
     or error(
@@ -604,6 +598,57 @@ function Client:_resolve_handler(method)
   return self.handlers[method] or lsp.handlers[method]
 end
 
+--- @private
+--- @param id integer
+--- @param req_type 'pending'|'complete'|'cancel'|
+--- @param bufnr? integer (only required for req_type='pending')
+--- @param method? string (only required for req_type='pending')
+function Client:_process_request(id, req_type, bufnr, method)
+  local pending = req_type == 'pending'
+
+  validate('id', id, 'number')
+  if pending then
+    validate('bufnr', bufnr, 'number')
+    validate('method', method, 'string')
+  end
+
+  local cur_request = self.requests[id]
+
+  if pending and cur_request then
+    log.error(
+      self._log_prefix,
+      ('Cannot create request with id %d as one already exists'):format(id)
+    )
+    return
+  elseif not pending and not cur_request then
+    log.error(
+      self._log_prefix,
+      ('Cannot find request with id %d whilst attempting to %s'):format(id, req_type)
+    )
+    return
+  end
+
+  if cur_request then
+    bufnr = cur_request.bufnr
+    method = cur_request.method
+  end
+
+  assert(bufnr and method)
+
+  local request = { type = req_type, bufnr = bufnr, method = method }
+
+  -- Clear 'complete' requests
+  -- Note 'pending' and 'cancelled' requests are cleared when the server sends a response
+  -- which is processed via the notify_reply_callback argument to rpc.request.
+  self.requests[id] = req_type ~= 'complete' and request or nil
+
+  api.nvim_exec_autocmds('LspRequest', {
+    buffer = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
+    modeline = false,
+    data = { client_id = self.id, request_id = id, request = request },
+  })
+end
+
 --- Sends a request to the server.
 ---
 --- This is a thin wrapper around {client.rpc.request} with some additional
@@ -632,33 +677,20 @@ function Client:request(method, params, handler, bufnr)
   local version = lsp.util.buf_versions[bufnr]
   log.debug(self._log_prefix, 'client.request', self.id, method, params, handler, bufnr)
   local success, request_id = self.rpc.request(method, params, function(err, result)
-    local context = {
+    handler(err, result, {
       method = method,
       client_id = self.id,
       bufnr = bufnr,
       params = params,
       version = version,
-    }
-    handler(err, result, context)
-  end, function(request_id)
-    local request = self.requests[request_id]
-    request.type = 'complete'
-    api.nvim_exec_autocmds('LspRequest', {
-      buffer = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
-      modeline = false,
-      data = { client_id = self.id, request_id = request_id, request = request },
     })
-    self.requests[request_id] = nil
+  end, function(request_id)
+    -- Called when the server sends a response to the request (including cancelled acknowledgment).
+    self:_process_request(request_id, 'complete')
   end)
 
   if success and request_id then
-    local request = { type = 'pending', bufnr = bufnr, method = method }
-    self.requests[request_id] = request
-    api.nvim_exec_autocmds('LspRequest', {
-      buffer = api.nvim_buf_is_valid(bufnr) and bufnr or nil,
-      modeline = false,
-      data = { client_id = self.id, request_id = request_id, request = request },
-    })
+    self:_process_request(request_id, 'pending', bufnr, method)
   end
 
   return success, request_id
@@ -756,16 +788,7 @@ end
 --- @return boolean status indicating if the notification was successful.
 --- @see |Client:notify()|
 function Client:cancel_request(id)
-  validate('id', id, 'number')
-  local request = self.requests[id]
-  if request and request.type == 'pending' then
-    request.type = 'cancel'
-    api.nvim_exec_autocmds('LspRequest', {
-      buffer = api.nvim_buf_is_valid(request.bufnr) and request.bufnr or nil,
-      modeline = false,
-      data = { client_id = self.id, request_id = id, request = request },
-    })
-  end
+  self:_process_request(id, 'cancel')
   return self.rpc.notify(ms.dollar_cancelRequest, { id = id })
 end
 
