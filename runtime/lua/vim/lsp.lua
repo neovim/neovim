@@ -506,6 +506,10 @@ local function lsp_enable_callback(bufnr)
     local config = lsp._resolve_config(name)
 
     if can_start(config) then
+      -- Deepcopy config so changes done in the client
+      -- do not propagate back to the enabled configs.
+      config = vim.deepcopy(config)
+
       vim.lsp.start(config, {
         bufnr = bufnr,
         reuse_client = config.reuse_client,
