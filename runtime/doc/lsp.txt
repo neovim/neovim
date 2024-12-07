@@ -77,8 +77,8 @@ configurations, in increasing priority, from the following:
 2. Configuration from the result of sourcing all `lsp/<name>.lua` files
    in 'runtimepath' for a server of name `name`.
 
-   Note: becuase of this, calls to |vim.lsp.config()| in `lsp/*.lua` are
-   treated independently to other calls. This is to ensure configurations
+   Note: because of this, calls to |vim.lsp.config()| in `lsp/*.lua` are
+   treated independently to other calls. This ensures configurations
    defined in `lsp/*.lua` have a lower priority.
 
 3. Configurations defined anywhere else.
