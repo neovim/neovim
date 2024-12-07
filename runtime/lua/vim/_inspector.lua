@@ -53,7 +53,7 @@ function vim.inspect_pos(bufnr, row, col, filter)
     local cursor = vim.api.nvim_win_get_cursor(win)
     row, col = cursor[1] - 1, cursor[2]
   end
-  bufnr = bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr
+  bufnr = vim._resolve_bufnr(bufnr)
 
   local results = {
     treesitter = {}, --- @type table[]

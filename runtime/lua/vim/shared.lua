@@ -1399,4 +1399,14 @@ function vim._with(context, f)
   return vim._with_c(context, callback)
 end
 
+--- @param bufnr? integer
+--- @return integer
+function vim._resolve_bufnr(bufnr)
+  if bufnr == nil or bufnr == 0 then
+    return vim.api.nvim_get_current_buf()
+  end
+  vim.validate('bufnr', bufnr, 'number')
+  return bufnr
+end
+
 return vim

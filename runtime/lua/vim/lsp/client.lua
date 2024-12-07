@@ -604,18 +604,6 @@ function Client:_resolve_handler(method)
   return self.handlers[method] or lsp.handlers[method]
 end
 
---- Returns the buffer number for the given {bufnr}.
----
---- @param bufnr integer? Buffer number to resolve. Defaults to current buffer
---- @return integer bufnr
-local function resolve_bufnr(bufnr)
-  validate('bufnr', bufnr, 'number', true)
-  if bufnr == nil or bufnr == 0 then
-    return api.nvim_get_current_buf()
-  end
-  return bufnr
-end
-
 --- Sends a request to the server.
 ---
 --- This is a thin wrapper around {client.rpc.request} with some additional
@@ -640,7 +628,7 @@ function Client:request(method, params, handler, bufnr)
   end
   -- Ensure pending didChange notifications are sent so that the server doesn't operate on a stale state
   changetracking.flush(self, bufnr)
-  bufnr = resolve_bufnr(bufnr)
+  bufnr = vim._resolve_bufnr(bufnr)
   local version = lsp.util.buf_versions[bufnr]
   log.debug(self._log_prefix, 'client.request', self.id, method, params, handler, bufnr)
   local success, request_id = self.rpc.request(method, params, function(err, result)
@@ -891,7 +879,7 @@ end
 --- @param bufnr? integer
 --- @return lsp.Registration?
 function Client:_get_registration(method, bufnr)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  bufnr = vim._resolve_bufnr(bufnr)
   for _, reg in ipairs(self.registrations[method] or {}) do
     if not reg.registerOptions or not reg.registerOptions.documentSelector then
       return reg
@@ -928,7 +916,7 @@ end
 --- @param handler? lsp.Handler only called if a server command
 function Client:exec_cmd(command, context, handler)
   context = vim.deepcopy(context or {}, true) --[[@as lsp.HandlerContext]]
-  context.bufnr = context.bufnr or api.nvim_get_current_buf()
+  context.bufnr = vim._resolve_bufnr(context.bufnr)
   context.client_id = self.id
   local cmdname = command.command
   local fn = self.commands[cmdname] or lsp.commands[cmdname]

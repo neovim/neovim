@@ -716,7 +716,7 @@ end
 --- @param bufnr integer Buffer handle, or 0 for the current buffer
 --- @param opts? vim.lsp.completion.BufferOpts
 function M.enable(enable, client_id, bufnr, opts)
-  bufnr = (bufnr == 0 and api.nvim_get_current_buf()) or bufnr
+  bufnr = vim._resolve_bufnr(bufnr)
 
   if enable then
     enable_completions(client_id, bufnr, opts or {})

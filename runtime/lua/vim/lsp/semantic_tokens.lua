@@ -600,9 +600,7 @@ function M.start(bufnr, client_id, opts)
   vim.validate('bufnr', bufnr, 'number')
   vim.validate('client_id', client_id, 'number')
 
-  if bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  bufnr = vim._resolve_bufnr(bufnr)
 
   opts = opts or {}
   assert(
@@ -655,9 +653,7 @@ function M.stop(bufnr, client_id)
   vim.validate('bufnr', bufnr, 'number')
   vim.validate('client_id', client_id, 'number')
 
-  if bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  bufnr = vim._resolve_bufnr(bufnr)
 
   local highlighter = STHighlighter.active[bufnr]
   if not highlighter then
@@ -691,9 +687,7 @@ end
 ---        - modifiers (table) token modifiers as a set. E.g., { static = true, readonly = true }
 ---        - client_id (integer)
 function M.get_at_pos(bufnr, row, col)
-  if bufnr == nil or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  bufnr = vim._resolve_bufnr(bufnr)
 
   local highlighter = STHighlighter.active[bufnr]
   if not highlighter then
@@ -739,8 +733,7 @@ function M.force_refresh(bufnr)
   vim.validate('bufnr', bufnr, 'number', true)
 
   local buffers = bufnr == nil and vim.tbl_keys(STHighlighter.active)
-    or bufnr == 0 and { api.nvim_get_current_buf() }
-    or { bufnr }
+    or { vim._resolve_bufnr(bufnr) }
 
   for _, buffer in ipairs(buffers) do
     local highlighter = STHighlighter.active[buffer]
@@ -770,9 +763,7 @@ end
 ---@param hl_group (string) Highlight group name
 ---@param opts? vim.lsp.semantic_tokens.highlight_token.Opts  Optional parameters:
 function M.highlight_token(token, bufnr, client_id, hl_group, opts)
-  if bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
+  bufnr = vim._resolve_bufnr(bufnr)
   local highlighter = STHighlighter.active[bufnr]
   if not highlighter then
     return
