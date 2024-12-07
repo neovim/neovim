@@ -593,6 +593,11 @@ local directive_handlers = {
     local start_row, start_col, end_row, end_col = node:range()
 
     local node_text = vim.split(vim.treesitter.get_node_text(node, bufnr), '\n')
+    if end_col == 0 then
+      -- get_node_text() will ignore the last line if the node ends at column 0
+      node_text[#node_text + 1] = ''
+    end
+
     local end_idx = #node_text
     local start_idx = 1
 
@@ -600,6 +605,9 @@ local directive_handlers = {
       while end_idx > 0 and node_text[end_idx]:find('^%s*$') do
         end_idx = end_idx - 1
         end_row = end_row - 1
+        -- set the end position to the last column of the next line, or 0 if we just trimmed the
+        -- last line
+        end_col = end_idx > 0 and #node_text[end_idx] or 0
       end
     end
     if trim_end_cols then
@@ -616,6 +624,7 @@ local directive_handlers = {
       while start_idx <= end_idx and node_text[start_idx]:find('^%s*$') do
         start_idx = start_idx + 1
         start_row = start_row + 1
+        start_col = 0
       end
     end
     if trim_start_cols and node_text[start_idx] then
