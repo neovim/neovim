@@ -89,18 +89,6 @@ lsp._request_name_to_capability = {
 
 -- TODO improve handling of scratch buffers with LSP attached.
 
---- Returns the buffer number for the given {bufnr}.
----
----@param bufnr (integer|nil) Buffer number to resolve. Defaults to current buffer
----@return integer bufnr
-local function resolve_bufnr(bufnr)
-  validate('bufnr', bufnr, 'number', true)
-  if bufnr == nil or bufnr == 0 then
-    return api.nvim_get_current_buf()
-  end
-  return bufnr
-end
-
 ---@private
 --- Called by the client when trying to call a method that's not
 --- supported in any of the servers registered for the current buffer.
@@ -389,7 +377,7 @@ end
 function lsp.start(config, opts)
   opts = opts or {}
   local reuse_client = opts.reuse_client or reuse_client_default
-  local bufnr = resolve_bufnr(opts.bufnr)
+  local bufnr = vim._resolve_bufnr(opts.bufnr)
 
   for _, client in pairs(all_clients) do
     if reuse_client(client, config) then
@@ -528,7 +516,7 @@ end
 ---Buffer lifecycle handler for textDocument/didSave
 --- @param bufnr integer
 local function text_document_did_save_handler(bufnr)
-  bufnr = resolve_bufnr(bufnr)
+  bufnr = vim._resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = once(lsp._buf_get_full_text)
   for _, client in ipairs(lsp.get_clients({ bufnr = bufnr })) do
@@ -689,7 +677,7 @@ end
 function lsp.buf_attach_client(bufnr, client_id)
   validate('bufnr', bufnr, 'number', true)
   validate('client_id', client_id, 'number')
-  bufnr = resolve_bufnr(bufnr)
+  bufnr = vim._resolve_bufnr(bufnr)
   if not api.nvim_buf_is_loaded(bufnr) then
     log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
     return false
@@ -726,7 +714,7 @@ end
 function lsp.buf_detach_client(bufnr, client_id)
   validate('bufnr', bufnr, 'number', true)
   validate('client_id', client_id, 'number')
-  bufnr = resolve_bufnr(bufnr)
+  bufnr = vim._resolve_bufnr(bufnr)
 
   local client = all_clients[client_id]
   if not client or not client.attached_buffers[bufnr] then
@@ -832,7 +820,7 @@ function lsp.get_clients(filter)
 
   local clients = {} --- @type vim.lsp.Client[]
 
-  local bufnr = filter.bufnr and resolve_bufnr(filter.bufnr)
+  local bufnr = filter.bufnr and vim._resolve_bufnr(filter.bufnr)
 
   for _, client in pairs(all_clients) do
     if
@@ -928,7 +916,7 @@ function lsp.buf_request(bufnr, method, params, handler, on_unsupported)
   validate('handler', handler, 'function', true)
   validate('on_unsupported', on_unsupported, 'function', true)
 
-  bufnr = resolve_bufnr(bufnr)
+  bufnr = vim._resolve_bufnr(bufnr)
   local method_supported = false
   local clients = lsp.get_clients({ bufnr = bufnr })
   local client_request_ids = {} --- @type table<integer,integer>
@@ -1208,7 +1196,7 @@ end
 function lsp.buf_get_clients(bufnr)
   vim.deprecate('vim.lsp.buf_get_clients()', 'vim.lsp.get_clients()', '0.12')
   local result = {} --- @type table<integer,vim.lsp.Client>
-  for _, client in ipairs(lsp.get_clients({ bufnr = resolve_bufnr(bufnr) })) do
+  for _, client in ipairs(lsp.get_clients({ bufnr = vim._resolve_bufnr(bufnr) })) do
     result[client.id] = client
   end
   return result
@@ -1262,7 +1250,7 @@ function lsp.for_each_buffer_client(bufnr, fn)
     'lsp.get_clients({ bufnr = bufnr }) with regular loop',
     '0.12'
   )
-  bufnr = resolve_bufnr(bufnr)
+  bufnr = vim._resolve_bufnr(bufnr)
 
   for _, client in pairs(lsp.get_clients({ bufnr = bufnr })) do
     fn(client, client.id, bufnr)

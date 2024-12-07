@@ -519,7 +519,7 @@ end
 --- @param opts? vim.lsp.buf.format.Opts
 function M.format(opts)
   opts = opts or {}
-  local bufnr = opts.bufnr or api.nvim_get_current_buf()
+  local bufnr = vim._resolve_bufnr(opts.bufnr)
   local mode = api.nvim_get_mode().mode
   local range = opts.range
   -- Try to use visual selection if no range is given
@@ -617,7 +617,7 @@ end
 ---@param opts? vim.lsp.buf.rename.Opts Additional options:
 function M.rename(new_name, opts)
   opts = opts or {}
-  local bufnr = opts.bufnr or api.nvim_get_current_buf()
+  local bufnr = vim._resolve_bufnr(opts.bufnr)
   local clients = lsp.get_clients({
     bufnr = bufnr,
     name = opts.name,

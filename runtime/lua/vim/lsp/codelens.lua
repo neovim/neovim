@@ -104,16 +104,12 @@ function M.run()
   end
 end
 
-local function resolve_bufnr(bufnr)
-  return bufnr == 0 and api.nvim_get_current_buf() or bufnr
-end
-
 --- Clear the lenses
 ---
 ---@param client_id integer|nil filter by client_id. All clients if nil
 ---@param bufnr integer|nil filter by buffer. All buffers if nil, 0 for current buffer
 function M.clear(client_id, bufnr)
-  bufnr = bufnr and resolve_bufnr(bufnr)
+  bufnr = bufnr and vim._resolve_bufnr(bufnr)
   local buffers = bufnr and { bufnr }
     or vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
   for _, iter_bufnr in pairs(buffers) do
@@ -296,7 +292,7 @@ end
 --- @param opts? vim.lsp.codelens.refresh.Opts Optional fields
 function M.refresh(opts)
   opts = opts or {}
-  local bufnr = opts.bufnr and resolve_bufnr(opts.bufnr)
+  local bufnr = opts.bufnr and vim._resolve_bufnr(opts.bufnr)
   local buffers = bufnr and { bufnr }
     or vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
 
