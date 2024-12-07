@@ -4084,21 +4084,24 @@ vim.o.mis = vim.o.menuitems
 vim.go.menuitems = vim.o.menuitems
 vim.go.mis = vim.go.menuitems
 
---- Option settings when outputting messages.  It can consist of the
+--- Option settings for outputting messages.  It can consist of the
 --- following items.  Items must be separated by a comma.
 ---
---- hit-enter	Use `hit-enter` prompt when the message is longer than
+--- hit-enter	Use a `hit-enter` prompt when the message is longer than
 --- 		'cmdheight' size.
 ---
---- wait:{n}	Ignored when "hit-enter" is present.  Instead of using
---- 		`hit-enter` prompt, will simply wait for {n}
---- 		milliseconds so the user has a chance to read the
---- 		message, use 0 to disable sleep (but then the user may
---- 		miss an important message).
+--- wait:{n}	Instead of using a `hit-enter` prompt, simply wait for
+--- 		{n} milliseconds so that the user has a chance to read
+--- 		the message.  The maximum value of {n} is 10000.  Use
+--- 		0 to disable the wait (but then the user may miss an
+--- 		important message).
+--- 		This item is ignored when "hit-enter" is present, but
+--- 		required when "hit-enter" is not present.
 ---
 --- history:{n}	Determines how many entries are remembered in the
 --- 		`:messages` history.  The maximum value is 10000.
 --- 		Setting it to zero clears the message history.
+--- 		This item must always be present.
 ---
 --- @type string
 vim.o.messagesopt = "hit-enter,history:500"
