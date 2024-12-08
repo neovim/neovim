@@ -1,0 +1,101 @@
+diff --git a/src/nvim/insexpand.c b/src/nvim/insexpand.c
+index fb67c489b2..94278946df 100644
+--- a/src/nvim/insexpand.c
++++ b/src/nvim/insexpand.c
+@@ -3476,17 +3498,15 @@ static void get_next_filename_completion(void)
+   char_u *ptr;
+   garray_T fuzzy_indices;
+   int i;
+   int score;
+   char_u *leader = ins_compl_leader();
+-  size_t leader_len = STRLEN(leader);
++  size_t leader_len = ins_compl_leader_len();
+   int in_fuzzy = ((get_cot_flags() & COT_FUZZY) != 0 && leader_len > 0);
+   char_u **sorted_matches;
+   int *fuzzy_indices_data;
+   char_u *last_sep = NULL;
+-  size_t path_with_wildcard_len;
+-  char_u *path_with_wildcard;
+ 
+ #ifdef BACKSLASH_IN_FILENAME
+   char pathsep = (curbuf->b_p_csl[0] == 's')
+                  ? '/' : (curbuf->b_p_csl[0] == 'b') ? '\\' : PATHSEP;
+ #else
+@@ -3494,58 +3514,62 @@ static void get_next_filename_completion(void)
+ #endif
+ 
+   if (in_fuzzy) {
+ #ifdef BACKSLASH_IN_FILENAME
+     if (curbuf->b_p_csl[0] == 's') {
+-      for (i = 0; i < leader_len; i++) {
++      for (i = 0; i < (int)leader_len; i++) {
+         if (leader[i] == '\\') {
+           leader[i] = '/';
+         }
+       }
+     } else if (curbuf->b_p_csl[0] == 'b') {
+-      for (i = 0; i < leader_len; i++) {
++      for (i = 0; i < (int)leader_len; i++) {
+         if (leader[i] == '/') {
+           leader[i] = '\\';
+         }
+       }
+     }
+ #endif
+     last_sep = vim_strrchr(leader, pathsep);
+     if (last_sep == NULL) {
+       // No path separator or separator is the last character,
+       // fuzzy match the whole leader
+-      vim_free(compl_pattern);
+-      compl_pattern = vim_strsave((char_u *)"*");
+-      compl_patternlen = STRLEN(compl_pattern);
++      VIM_CLEAR_STRING(compl_pattern);
++      compl_pattern.string = vim_strnsave((char_u *)"*", 1);
++      if (compl_pattern.string == NULL) {
++        return;
++      }
++      compl_pattern.length = 1;
+     } else if (*(last_sep + 1) == '\0') {
+       in_fuzzy = FALSE;
+     } else {
+       // Split leader into path and file parts
+       int path_len = last_sep - leader + 1;
+-      path_with_wildcard_len = path_len + 2;
+-      path_with_wildcard = alloc(path_with_wildcard_len);
++      char_u *path_with_wildcard;
++
++      path_with_wildcard = alloc(path_len + 2);
+       if (path_with_wildcard != NULL) {
+-        vim_strncpy(path_with_wildcard, leader, path_len);
+-        vim_strcat(path_with_wildcard, (char_u *)"*", path_with_wildcard_len);
+-        vim_free(compl_pattern);
+-        compl_pattern = path_with_wildcard;
+-        compl_patternlen = STRLEN(compl_pattern);
++        vim_snprintf((char *)path_with_wildcard, path_len + 2, "%*.*s*", path_len, path_len,
++                     leader);
++        VIM_CLEAR_STRING(compl_pattern);
++        compl_pattern.string = path_with_wildcard;
++        compl_pattern.length = path_len + 1;
+ 
+         // Move leader to the file part
+         leader = last_sep + 1;
+-        leader_len = STRLEN(leader);
++        leader_len -= path_len;
+       }
+     }
+   }
+ 
+-  if (expand_wildcards(1, &compl_pattern, &num_matches, &matches,
++  if (expand_wildcards(1, &compl_pattern.string, &num_matches, &matches,
+                        EW_FILE|EW_DIR|EW_ADDSLASH|EW_SILENT) != OK) {
+     return;
+   }
+ 
+   // May change home directory back to "~".
+-  tilde_replace(compl_pattern, num_matches, matches);
++  tilde_replace(compl_pattern.string, num_matches, matches);
+ #ifdef BACKSLASH_IN_FILENAME
+   if (curbuf->b_p_csl[0] != NUL) {
+     for (i = 0; i < num_matches; ++i) {
+       ptr = matches[i];
+       while (*ptr != NUL) {
