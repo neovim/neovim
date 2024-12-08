@@ -2433,14 +2433,15 @@ should_log({level})                                 *vim.lsp.log.should_log()*
 Lua module: vim.lsp.rpc                                              *lsp-rpc*
 
 *vim.lsp.rpc.PublicClient*
+    Client RPC object
 
     Fields: ~
-      • {request}     (`fun(method: string, params: table?, callback: fun(err: lsp.ResponseError?, result: any), notify_reply_callback: fun(message_id: integer)?):boolean,integer?`)
-                      see |vim.lsp.rpc.request()|
-      • {notify}      (`fun(method: string, params: any):boolean`) see
+      • {request}     (`fun(method: string, params: table?, callback: fun(err?: lsp.ResponseError, result: any), notify_reply_callback?: fun(message_id: integer)):boolean,integer?`)
+                      See |vim.lsp.rpc.request()|
+      • {notify}      (`fun(method: string, params: any): boolean`) See
                       |vim.lsp.rpc.notify()|
-      • {is_closing}  (`fun(): boolean`)
-      • {terminate}   (`fun()`)
+      • {is_closing}  (`fun(): boolean`) Indicates if the RPC is closing.
+      • {terminate}   (`fun()`) Terminates the RPC client.
 
 
 connect({host_or_path}, {port})                        *vim.lsp.rpc.connect()*
@@ -2541,12 +2542,7 @@ start({cmd}, {dispatchers}, {extra_spawn_params})        *vim.lsp.rpc.start()*
                                 See |vim.system()|
 
     Return: ~
-        (`vim.lsp.rpc.PublicClient`) Client RPC object, with these methods:
-        • `notify()` |vim.lsp.rpc.notify()|
-        • `request()` |vim.lsp.rpc.request()|
-        • `is_closing()` returns a boolean indicating if the RPC is closing.
-        • `terminate()` terminates the RPC client. See
-          |vim.lsp.rpc.PublicClient|.
+        (`vim.lsp.rpc.PublicClient`) See |vim.lsp.rpc.PublicClient|.
 
 
 ==============================================================================
