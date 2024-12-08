@@ -619,6 +619,7 @@ bool terminal_enter(void)
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
   showmode();
   curwin->w_redr_status = true;  // For mode() in statusline. #8323
+  redraw_custom_title_later();
   ui_busy_start();
   apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
   may_trigger_modechanged();

@@ -1372,10 +1372,6 @@ static void normal_redraw(NormalState *s)
     }
   }
 
-  if (need_maketitle) {
-    maketitle();
-  }
-
   curbuf->b_last_used = time(NULL);
 
   // Display message after redraw. If an external message is still visible,

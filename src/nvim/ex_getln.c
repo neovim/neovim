@@ -847,6 +847,10 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
       found_one = true;
     }
 
+    if (redraw_custom_title_later()) {
+      found_one = true;
+    }
+
     if (found_one) {
       redraw_statuslines();
     }
@@ -959,6 +963,7 @@ theend:
     msg_ext_clear_later();
   }
   if (!cmd_silent) {
+    redraw_custom_title_later();
     status_redraw_all();  // redraw to show mode change
   }
 
