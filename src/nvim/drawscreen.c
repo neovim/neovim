@@ -853,6 +853,7 @@ void setcursor_mayforce(win_T *wp, bool force)
 
     grid_adjust(&grid, &row, &col);
     ui_grid_cursor_goto(grid->handle, row, col);
+    ui_call_reset_cursor();
   }
 }
 

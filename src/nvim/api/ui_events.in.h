@@ -35,6 +35,10 @@ void set_title(String title)
   FUNC_API_SINCE(3);
 void set_icon(String icon)
   FUNC_API_SINCE(3);
+void set_cursor(void)
+  FUNC_API_SINCE(3);
+void reset_cursor(void)
+  FUNC_API_SINCE(3);
 void screenshot(String path)
   FUNC_API_SINCE(7);
 void option_set(String name, Object value)
