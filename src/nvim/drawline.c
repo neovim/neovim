@@ -1468,7 +1468,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   }
 
   if (check_decor_providers) {
-    int const line_len = ml_get_buf_len(buf, lnum);
+    int const line_len = ml_get_buf_len(wp->w_buffer, lnum);
     int const col = (int)(ptr - line);
 
     // Approximate the number of bytes that will be drawn.
@@ -1478,18 +1478,30 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     if (wp->w_p_wrap) {
       int width = wp->w_width_inner - win_col_off(wp);
       int width2 = width + win_col_off2(wp);
-      rem_vcols = width + (endrow - startrow) * width2;
+
+      int first_row_width = start_col == 0 ? width : width2;
+      rem_vcols = first_row_width + (endrow - startrow - 1) * width2;
     } else {
       rem_vcols = wp->w_width_inner - win_col_off(wp);
     }
+    int expected_end = col + rem_vcols + 1;
 
-    int const new_col = col + MIN(line_len - col, rem_vcols + 1);
+    // Call it here since we need to invalidate the line pointer anyway.
     bool added_decor = false;
     decor_providers_invoke_line(wp, lnum - 1, &added_decor);
     has_decor |= added_decor;
-    decor_providers_invoke_range(wp, lnum - 1, col, lnum - 1, new_col, &added_decor);
-    has_decor |= added_decor;
-    decor_provider_end_col = new_col;
+
+    if (line_len > expected_end) {
+      decor_providers_invoke_range(wp, lnum - 1, col, lnum - 1, 
+                                   expected_end, &added_decor);
+      has_decor |= added_decor;
+      decor_provider_end_col = expected_end;
+    }
+    else {
+      decor_providers_invoke_range(wp, lnum - 1, col, lnum, 0, &added_decor);
+      has_decor |= added_decor;
+      decor_provider_end_col = INT_MAX;
+    }
 
     line = ml_get_buf(wp->w_buffer, lnum);
     ptr = line + col;
@@ -1553,21 +1565,24 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     bool did_decrement_ptr = false;
 
     if (check_decor_providers && (int)(ptr - line) >= decor_provider_end_col) {
+      int const line_len = ml_get_buf_len(wp->w_buffer, lnum);
       int const col = (int)(ptr - line);
 
-      if (*ptr == NUL) {
+      int const col_increment = 100;
+      if (line_len - decor_provider_end_col > col_increment) {
+        int const new_col = decor_provider_end_col + col_increment;
+        bool added_decor = false;
+        decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col, 
+                                     lnum - 1, new_col, &added_decor);
+        has_decor |= added_decor;
+        decor_provider_end_col = new_col;
+      }
+      else {
         bool added_decor = false;
         decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
                                      lnum, 0, &added_decor);
         has_decor |= added_decor;
         decor_provider_end_col = INT_MAX;
-      } else {
-        int const new_col = decor_provider_end_col + 100;
-        bool added_decor = false;
-        decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
-                                     lnum - 1, new_col, &added_decor);
-        has_decor |= added_decor;
-        decor_provider_end_col = new_col;
       }
 
       line = ml_get_buf(wp->w_buffer, lnum);
