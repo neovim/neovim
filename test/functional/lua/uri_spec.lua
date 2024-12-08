@@ -252,4 +252,12 @@ describe('URI methods', function()
       end
     )
   end)
+
+  describe('encode to uri', function()
+    it('rfc2732 including brackets', function()
+      exec_lua("str = '[:]'")
+      exec_lua("rfc = 'rfc2732'")
+      eq('[%3a]', exec_lua('return vim.uri_encode(str, rfc)'))
+    end)
+  end)
 end)
