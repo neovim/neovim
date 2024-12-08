@@ -315,6 +315,9 @@ UI
 
 • |ui-messages| content chunks now also contain the highlight group ID.
 
+• |complete_info()| returns a `pum_matches` item to indicate which items are put
+  in the |ins-completion-menu|.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
