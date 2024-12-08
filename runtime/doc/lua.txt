@@ -3013,7 +3013,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
 
         -- get all files ending with .cpp or .hpp inside lib/
         local cpp_hpp = vim.fs.find(function(name, path)
-          return name:match('.*%.[ch]pp$') and path:match('[/\\\\]lib$')
+          return name:match('.*%.[ch]pp$') and path:match('[/\\]lib$')
         end, {limit = math.huge, type = 'file'})
 <
 
@@ -3042,6 +3042,11 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • {limit}? (`number`, default: `1`) Stop the search after
                    finding this many matches. Use `math.huge` to place no
                    limit on the number of matches.
+                 • {skip}? (`fun(dir: string): boolean`) Do not traverse
+                   matching directories. If omitted, all directories are
+                   searched recursively.
+                 • {follow}? (`boolean`, default: `true`) Follow symbolic
+                   links.
 
     Return: ~
         (`string[]`) Normalized paths |vim.fs.normalize()| of all matching
