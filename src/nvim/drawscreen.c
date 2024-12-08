@@ -679,6 +679,10 @@ int update_screen(void)
 
   updating_screen = false;
 
+  if (need_maketitle) {
+    maketitle();
+  }
+
   // Clear or redraw the command line.  Done last, because scrolling may
   // mess up the command line.
   if (clear_cmdline || redraw_cmdline || redraw_mode) {
@@ -856,6 +860,19 @@ void setcursor_mayforce(win_T *wp, bool force)
   }
 }
 
+/// Mark the title and icon for redraw if either of them uses statusline format.
+///
+/// @return  whether either title or icon uses statusline format.
+bool redraw_custom_title_later(void)
+{
+  if ((p_icon && (stl_syntax & STL_IN_ICON))
+      || (p_title && (stl_syntax & STL_IN_TITLE))) {
+    need_maketitle = true;
+    return true;
+  }
+  return false;
+}
+
 /// Show current cursor info in ruler and various other places
 ///
 /// @param always  if false, only show ruler if position has changed.
@@ -889,10 +906,7 @@ void show_cursor_info_later(bool force)
       curwin->w_redr_status = true;
     }
 
-    if ((p_icon && (stl_syntax & STL_IN_ICON))
-        || (p_title && (stl_syntax & STL_IN_TITLE))) {
-      need_maketitle = true;
-    }
+    redraw_custom_title_later();
   }
 
   curwin->w_stl_cursor = curwin->w_cursor;
@@ -2772,6 +2786,10 @@ void redraw_statuslines(void)
   win_check_ns_hl(NULL);
   if (redraw_tabline) {
     draw_tabline();
+  }
+
+  if (need_maketitle) {
+    maketitle();
   }
 }
 
