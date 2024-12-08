@@ -348,43 +348,16 @@ size_t memcnt(const void *data, char c, size_t len)
   return cnt;
 }
 
-/// Copies the string pointed to by src (including the terminating NUL
-/// character) into the array pointed to by dst.
-///
-/// @returns pointer to the terminating NUL char copied into the dst buffer.
-///          This is the only difference with strcpy(), which returns dst.
-///
-/// WARNING: If copying takes place between objects that overlap, the behavior
-/// is undefined.
-///
-/// Nvim version of POSIX 2008 stpcpy(3). We do not require POSIX 2008, so
-/// implement our own version.
-///
-/// @param dst
-/// @param src
+#ifndef HAVE_STPCPY
 char *xstpcpy(char *restrict dst, const char *restrict src)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   const size_t len = strlen(src);
   return (char *)memcpy(dst, src, len + 1) + len;
 }
+#endif
 
-/// Copies not more than n bytes (bytes that follow a NUL character are not
-/// copied) from the array pointed to by src to the array pointed to by dst.
-///
-/// If a NUL character is written to the destination, xstpncpy() returns the
-/// address of the first such NUL character. Otherwise, it shall return
-/// &dst[maxlen].
-///
-/// WARNING: If copying takes place between objects that overlap, the behavior
-/// is undefined.
-///
-/// WARNING: xstpncpy will ALWAYS write maxlen bytes. If src is shorter than
-/// maxlen, zeroes will be written to the remaining bytes.
-///
-/// @param dst
-/// @param src
-/// @param maxlen
+#ifndef HAVE_STPNCPY
 char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
@@ -399,6 +372,7 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
     return dst + maxlen;
   }
 }
+#endif
 
 /// xstrlcpy - Copy a NUL-terminated string into a sized buffer
 ///
