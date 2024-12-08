@@ -1749,6 +1749,31 @@ is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
 
 
 ==============================================================================
+Lua module: vim.lsp.selection_range                      *lsp-selection_range*
+
+expand({opts})                              *vim.lsp.selection_range.expand()*
+    Create or expand a selection.
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {winid}? (`integer`, default: current window) Window ID
+                • {pos}? (`[integer, integer]`, default: current cursor
+                  position) Cursor position as a `(row, col)` tuple. See
+                  |nvim_win_get_cursor()|.
+                • {count}? (`integer`, default: 1) Number of times to expand
+                  the selection.
+
+shrink({opts})                              *vim.lsp.selection_range.shrink()*
+    Shrink the previous selection.
+
+    Parameters: ~
+      • {opts}  (`table?`) A table with the following fields:
+                • {winid}? (`integer`, default: current window) Window ID
+                • {count}? (`integer`, default: 1) Number of times to shrink
+                  the selection.
+
+
+==============================================================================
 Lua module: vim.lsp.semantic_tokens                      *lsp-semantic_tokens*
 
 force_refresh({bufnr})               *vim.lsp.semantic_tokens.force_refresh()*
