@@ -260,6 +260,10 @@ PLUGINS
 
 • EditorConfig
   • spelling_language property is now supported.
+• Commenting
+  • 'commentstring' values can now be specified in a Treesitter capture's
+    `bo.commentstring` metadata field, providing finer grained support for
+    languages like `JSX`.
 
 STARTUP
 
