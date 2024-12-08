@@ -477,7 +477,9 @@ end
 function M.expand(input)
   local snippet = G.parse(input)
   local snippet_text = {}
-  local base_indent = vim.api.nvim_get_current_line():match('^%s*') or ''
+  local curbuf = vim.api.nvim_get_current_buf()
+  local expandtab = vim.bo[curbuf].expandtab
+  local base_indent = expandtab and (' '):rep(vim.fn.indent('.')) or ''
 
   -- Get the placeholders we should use for each tabstop index.
   --- @type table<integer, string>
@@ -518,8 +520,6 @@ function M.expand(input)
     end
 
     local shiftwidth = vim.fn.shiftwidth()
-    local curbuf = vim.api.nvim_get_current_buf()
-    local expandtab = vim.bo[curbuf].expandtab
 
     local lines = {} --- @type string[]
     for i, line in ipairs(text_to_lines(text)) do
