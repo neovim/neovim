@@ -826,6 +826,7 @@ target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
 #-------------------------------------------------------------------------------
 
 find_program(CLANG_TIDY_PRG clang-tidy)
+mark_as_advanced(CLANG_TIDY_PRG)
 set(EXCLUDE_CLANG_TIDY typval_encode.c.h ui_events.in.h)
 if(WIN32)
   list(APPEND EXCLUDE_CLANG_TIDY
