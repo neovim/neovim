@@ -160,9 +160,9 @@ local typedef = P({
   return vim.trim(match):gsub('^%((.*)%)$', '%1'):gsub('%?+', '?')
 end
 
-local opt_exact = opt(Cg(Pf('(exact)'), 'access'))
 local access = P('private') + P('protected') + P('package')
 local caccess = Cg(access, 'access')
+local cattr = Cg(comma(access + P('exact')), 'access')
 local desc_delim = Sf '#:' + ws
 local desc = Cg(rep(any), 'desc')
 local opt_desc = opt(desc_delim * desc)
@@ -178,7 +178,7 @@ local grammar = P {
     + annot('type', comma1(Ct(v.ctype)) * opt_desc)
     + annot('cast', ty_name * ws * opt(Sf('+-')) * v.ctype)
     + annot('generic', ty_name * opt(colon * v.ctype))
-    + annot('class', opt_exact * opt(paren(caccess)) * fill * ty_name * opt_parent)
+    + annot('class', opt(paren(cattr)) * fill * ty_name * opt_parent)
     + annot('field', opt(caccess * ws) * v.field_name * ws * v.ctype * opt_desc)
     + annot('operator', ty_name * opt(paren(Cg(v.ctype, 'argtype'))) * colon * v.ctype)
     + annot(access)
