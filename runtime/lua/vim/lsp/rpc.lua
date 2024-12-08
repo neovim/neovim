@@ -16,34 +16,21 @@ local function format_message_with_content_length(message)
   })
 end
 
----@class (private) vim.lsp.rpc.Headers: {string: any}
----@field content_length integer
-
---- Parses an LSP Message's header
+--- Extract content-length from the msg header
 ---
----@param header string The header to parse.
----@return vim.lsp.rpc.Headers#parsed headers
-local function parse_headers(header)
-  assert(type(header) == 'string', 'header must be a string')
-  --- @type vim.lsp.rpc.Headers
-  local headers = {}
-  for line in vim.gsplit(header, '\r\n', { plain = true }) do
+---@param header string The header to parse
+---@return integer?
+local function get_content_length(header)
+  for line in header:gmatch('(.-)\r\n') do
     if line == '' then
       break
     end
-    --- @type string?, string?
     local key, value = line:match('^%s*(%S+)%s*:%s*(.+)%s*$')
-    if key then
-      key = key:lower():gsub('%-', '_') --- @type string
-      headers[key] = value
-    else
-      log.error('invalid header line %q', line)
-      error(string.format('invalid header line %q', line))
+    if key:lower() == 'content-length' then
+      return tonumber(value)
     end
   end
-  headers.content_length = tonumber(headers.content_length)
-    or error(string.format('Content-Length not found in headers. %q', header))
-  return headers
+  error('Content-Length not found in header: ' .. header)
 end
 
 -- This is the start of any possible header patterns. The gsub converts it to a
@@ -58,9 +45,9 @@ local function request_parser_loop()
   while true do
     -- A message can only be complete if it has a double CRLF and also the full
     -- payload, so first let's check for the CRLFs
-    local start, finish = buffer:find('\r\n\r\n', 1, true)
+    local header_end, body_start = buffer:find('\r\n\r\n', 1, true)
     -- Start parsing the headers
-    if start then
+    if header_end then
       -- This is a workaround for servers sending initial garbage before
       -- sending headers, such as if a bash script sends stdout. It assumes
       -- that we know all of the headers ahead of time. At this moment, the
@@ -76,13 +63,13 @@ local function request_parser_loop()
           )
         )
       end
-      local headers = parse_headers(buffer:sub(buffer_start, start - 1))
-      local content_length = headers.content_length
+      local header = buffer:sub(buffer_start, header_end + 1)
+      local content_length = get_content_length(header)
       -- Use table instead of just string to buffer the message. It prevents
       -- a ton of strings allocating.
       -- ref. http://www.lua.org/pil/11.6.html
       ---@type string[]
-      local body_chunks = { buffer:sub(finish + 1) }
+      local body_chunks = { buffer:sub(body_start + 1) }
       local body_length = #body_chunks[1]
       -- Keep waiting for data until we have enough.
       while body_length < content_length do
@@ -103,7 +90,7 @@ local function request_parser_loop()
       -- Yield our data.
 
       --- @type string
-      local data = coroutine.yield(headers, body)
+      local data = coroutine.yield(body)
         or error('Expected more data for the body. The server may have died.')
       buffer = rest .. data
     else
@@ -237,7 +224,7 @@ local default_dispatchers = {
 --- @param on_exit? fun()
 --- @param on_error fun(err: any)
 function M.create_read_loop(handle_body, on_exit, on_error)
-  local parse_chunk = coroutine.wrap(request_parser_loop) --[[@as fun(chunk: string?): vim.lsp.rpc.Headers?, string?]]
+  local parse_chunk = coroutine.wrap(request_parser_loop) --[[@as fun(chunk: string?): string]]
   parse_chunk()
   return function(err, chunk)
     if err then
@@ -253,9 +240,9 @@ function M.create_read_loop(handle_body, on_exit, on_error)
     end
 
     while true do
-      local headers, body = parse_chunk(chunk)
-      if headers then
-        handle_body(assert(body))
+      local body = parse_chunk(chunk)
+      if body then
+        handle_body(body)
         chunk = ''
       else
         break
