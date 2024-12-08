@@ -10,6 +10,7 @@ M.vars = {
     ]=],
   },
   char = {
+    type = 'string',
     desc = [=[
       Argument for evaluating 'formatexpr' and used for the typed
       character when using <expr> in an abbreviation |:map-<expr>|.
@@ -63,6 +64,7 @@ M.vars = {
     ]=],
   },
   completed_item = {
+    type = 'vim.v.completed_item',
     desc = [=[
       Dictionary containing the |complete-items| for the most
       recently completed word after |CompleteDone|.  Empty if the
@@ -94,6 +96,7 @@ M.vars = {
     ]=],
   },
   ctype = {
+    type = 'string',
     desc = [=[
       The current locale setting for characters of the runtime
       environment.  This allows Vim scripts to be aware of the
@@ -158,6 +161,7 @@ M.vars = {
     ]=],
   },
   event = {
+    type = 'vim.v.event',
     desc = [=[
       Dictionary of event data for the current |autocommand|.  Valid
       only during the event lifetime; storing or passing v:event is
@@ -238,6 +242,7 @@ M.vars = {
     ]=],
   },
   exiting = {
+    type = 'integer?',
     desc = [=[
       Exit code, or |v:null| before invoking the |VimLeavePre|
       and |VimLeave| autocmds.  See |:q|, |:x| and |:cquit|.
@@ -470,6 +475,7 @@ M.vars = {
     ]=],
   },
   msgpack_types = {
+    type = 'table',
     desc = [=[
       Dictionary containing msgpack types used by |msgpackparse()|
       and |msgpackdump()|. All types inside dictionary are fixed
@@ -635,6 +641,7 @@ M.vars = {
     ]=],
   },
   scrollstart = {
+    type = 'string',
     desc = [=[
       String describing the script or function that caused the
       screen to scroll up.  It's only set when it is empty, thus the
@@ -798,11 +805,13 @@ M.vars = {
     ]=],
   },
   testing = {
+    type = 'integer',
     desc = [=[
       Must be set before using `test_garbagecollect_now()`.
     ]=],
   },
   this_session = {
+    type = 'string',
     desc = [=[
       Full filename of the last loaded or saved session file.
       Empty when no session file has been saved.  See |:mksession|.
@@ -810,6 +819,7 @@ M.vars = {
     ]=],
   },
   throwpoint = {
+    type = 'string',
     desc = [=[
       The point where the exception most recently caught and not
       finished was thrown.  Not set when commands are typed.  See

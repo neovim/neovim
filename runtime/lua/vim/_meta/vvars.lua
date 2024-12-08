@@ -15,7 +15,7 @@ vim.v.argv = ...
 --- Argument for evaluating 'formatexpr' and used for the typed
 --- character when using <expr> in an abbreviation `:map-<expr>`.
 --- It is also used by the `InsertCharPre` and `InsertEnter` events.
---- @type any
+--- @type string
 vim.v.char = ...
 
 --- The name of the character encoding of a file to be converted.
@@ -60,7 +60,7 @@ vim.v.collate = ...
 --- mode.
 --- Note: Plugins can modify the value to emulate the builtin
 --- `CompleteDone` event behavior.
---- @type any
+--- @type vim.v.completed_item
 vim.v.completed_item = ...
 
 --- The count given for the last Normal mode command.  Can be used
@@ -90,7 +90,7 @@ vim.v.count1 = ...
 --- This variable can not be set directly, use the `:language`
 --- command.
 --- See `multi-lang`.
---- @type any
+--- @type string
 vim.v.ctype = ...
 
 --- Normally zero.  When a deadly signal is caught it's set to
@@ -199,7 +199,7 @@ vim.v.errors = ...
 ---   reason           Reason for completion being done. `CompleteDone`
 ---   complete_word    The word that was selected, empty if abandoned complete.
 ---   complete_type    See `complete_info_mode`
---- @type any
+--- @type vim.v.event
 vim.v.event = ...
 
 --- The value of the exception most recently caught and not
@@ -225,7 +225,7 @@ vim.v.exception = ...
 --- ```vim
 ---   :au VimLeave * echo "Exit value is " .. v:exiting
 --- ```
---- @type any
+--- @type integer?
 vim.v.exiting = ...
 
 --- Special value used to put "false" in JSON and msgpack.  See
@@ -421,7 +421,7 @@ vim.v.mouse_winid = ...
 --- and `msgpackdump()`. All types inside dictionary are fixed
 --- (not editable) empty lists. To check whether some list is one
 --- of msgpack types, use `is` operator.
---- @type any
+--- @type table
 vim.v.msgpack_types = ...
 
 --- Special value used to put "null" in JSON and NIL in msgpack.
@@ -565,7 +565,7 @@ vim.v.relnum = ...
 --- typed command.
 --- This can be used to find out why your script causes the
 --- hit-enter prompt.
---- @type any
+--- @type string
 vim.v.scrollstart = ...
 
 --- Search direction:  1 after a forward search, 0 after a
@@ -707,13 +707,13 @@ vim.v.termrequest = ...
 vim.v.termresponse = ...
 
 --- Must be set before using `test_garbagecollect_now()`.
---- @type any
+--- @type integer
 vim.v.testing = ...
 
 --- Full filename of the last loaded or saved session file.
 --- Empty when no session file has been saved.  See `:mksession`.
 --- Modifiable (can be set).
---- @type any
+--- @type string
 vim.v.this_session = ...
 
 --- The point where the exception most recently caught and not
@@ -730,7 +730,7 @@ vim.v.this_session = ...
 --- ```
 ---
 --- Output: "Exception from test.vim, line 2"
---- @type any
+--- @type string
 vim.v.throwpoint = ...
 
 --- Special value used to put "true" in JSON and msgpack.  See
