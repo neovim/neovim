@@ -254,7 +254,8 @@ OPTIONS
 
 PERFORMANCE
 
-• TODO
+• Significantly reduced redraw time for long lines with treesitter
+  highlighting.
 
 PLUGINS
 

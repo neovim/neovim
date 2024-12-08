@@ -120,7 +120,8 @@ void decor_providers_invoke_win(win_T *wp)
 {
   // this might change in the future
   // then we would need decor_state.running_decor_provider just like "on_line" below
-  assert(kv_size(decor_state.active) == 0);
+  assert(decor_state.current_end == 0
+         && decor_state.future_begin == (int)kv_size(decor_state.ranges_i));
 
   if (kv_size(decor_providers) > 0) {
     validate_botline(wp);

@@ -251,12 +251,17 @@ static int line_putchar(buf_T *buf, const char **pp, schar_T *dest, int maxcells
 
 static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int win_row)
 {
-  DecorState *state = &decor_state;
-  const int max_col = wp->w_grid.cols;
+  DecorState *const state = &decor_state;
+  int const max_col = wp->w_grid.cols;
   int right_pos = max_col;
-  bool do_eol = state->eol_col > -1;
-  for (size_t i = 0; i < kv_size(state->active); i++) {
-    DecorRange *item = &kv_A(state->active, i);
+  bool const do_eol = state->eol_col > -1;
+
+  int const end = state->current_end;
+  int *const indices = state->ranges_i.items;
+  DecorRangeSlot *const slots = state->slots.items;
+
+  for (int i = 0; i < end; i++) {
+    DecorRange *item = &slots[indices[i]].range;
     if (!(item->start_row == state->row && decor_virt_pos(item))) {
       continue;
     }
@@ -756,17 +761,28 @@ static bool has_more_inline_virt(winlinevars_T *wlv, ptrdiff_t v)
   if (wlv->virt_inline_i < kv_size(wlv->virt_inline)) {
     return true;
   }
-  DecorState *state = &decor_state;
-  for (size_t i = 0; i < kv_size(state->active); i++) {
-    DecorRange *item = &kv_A(state->active, i);
-    if (item->start_row != state->row
-        || item->kind != kDecorKindVirtText
-        || item->data.vt->pos != kVPosInline
-        || item->data.vt->width == 0) {
-      continue;
-    }
-    if (item->draw_col >= -1 && item->start_col >= v) {
-      return true;
+
+  int const count = (int)kv_size(decor_state.ranges_i);
+  int const cur_end = decor_state.current_end;
+  int const fut_beg = decor_state.future_begin;
+  int *const indices = decor_state.ranges_i.items;
+  DecorRangeSlot *const slots = decor_state.slots.items;
+
+  int const beg_pos[] = { 0, fut_beg };
+  int const end_pos[] = { cur_end, count };
+
+  for (int pos_i = 0; pos_i < 2; pos_i++) {
+    for (int i = beg_pos[pos_i]; i < end_pos[pos_i]; i++) {
+      DecorRange *item = &slots[indices[i]].range;
+      if (item->start_row != decor_state.row
+          || item->kind != kDecorKindVirtText
+          || item->data.vt->pos != kVPosInline
+          || item->data.vt->width == 0) {
+        continue;
+      }
+      if (item->draw_col >= -1 && item->start_col >= v) {
+        return true;
+      }
     }
   }
   return false;
@@ -780,8 +796,12 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
       wlv->virt_inline = VIRTTEXT_EMPTY;
       wlv->virt_inline_i = 0;
       DecorState *state = &decor_state;
-      for (size_t i = 0; i < kv_size(state->active); i++) {
-        DecorRange *item = &kv_A(state->active, i);
+      int const end = state->current_end;
+      int *const indices = state->ranges_i.items;
+      DecorRangeSlot *const slots = state->slots.items;
+
+      for (int i = 0; i < end; i++) {
+        DecorRange *item = &slots[indices[i]].range;
         if (item->draw_col == -3) {
           // No more inline virtual text before this non-inline virtual text item,
           // so its position can be decided now.
