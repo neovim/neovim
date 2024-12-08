@@ -817,8 +817,8 @@ vim.json.encode({obj}, {opts})                             *vim.json.encode()*
     Parameters: ~
       • {obj}   (`any`)
       • {opts}  (`table<string,any>?`) Options table with keys:
-                • escape_slash: (boolean) (default false) When true, escapes
-                  `/` character in JSON strings
+                • escape_slash: (boolean) (default false) Escape slash
+                  characters "/" in string values.
 
     Return: ~
         (`string`)
