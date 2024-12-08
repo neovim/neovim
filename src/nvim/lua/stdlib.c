@@ -619,6 +619,7 @@ static int nlua_with(lua_State *L)
   int rets = 0;
 
   cmdmod_T save_cmdmod = cmdmod;
+  CLEAR_FIELD(cmdmod);
   cmdmod.cmod_flags = flags;
   apply_cmdmod(&cmdmod);
 
