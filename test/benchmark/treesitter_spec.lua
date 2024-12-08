@@ -49,15 +49,14 @@ describe('treesitter perf', function()
     ]]
   end)
 
-  local long_line = 'local a = { ' .. ('a = 5, '):rep(500) .. '}'
-  local function test_long_line(pos, wrap, grid)
+  local function test_long_line(pos, wrap, line, grid)
     local screen = Screen.new(20, 11)
 
     local result = exec_lua(
       [==[
-        local pos, wrap, text = ...
+        local pos, wrap, line = ...
 
-        vim.api.nvim_buf_set_lines(0, 0, 0, false, { text })
+        vim.api.nvim_buf_set_lines(0, 0, 0, false, { line })
         local ns = vim.api.nvim_create_namespace('treesitter_spec.lua')
         vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
@@ -78,7 +77,7 @@ describe('treesitter perf', function()
       ]==],
       pos,
       wrap,
-      long_line
+      line
     )
 
     screen:expect({ grid = grid or '' })
@@ -98,6 +97,7 @@ describe('treesitter perf', function()
     print('\nTotal ' .. res)
   end
 
+  local long_line = 'local a = { ' .. ('a = 5, '):rep(500) .. '}'
   it('can redraw the beginning of a long line with wrapping', function()
     local grid = [[
       {15:^local} {25:a} {15:=} {16:{} {25:a} {15:=} {26:5}{16:,} {25:a}|
@@ -112,7 +112,7 @@ describe('treesitter perf', function()
       {25:a} {15:=} {26:5}{16:,} {25:a} {15:=} {26:5}{16:,} {25:a} {15:=} {26:5}{16:,}|
                           |
     ]]
-    test_long_line({ 1, 0 }, true, grid)
+    test_long_line({ 1, 0 }, true, long_line, grid)
   end)
 
   it('can redraw the middle of a long line with wrapping', function()
@@ -129,7 +129,7 @@ describe('treesitter perf', function()
        {25:a} {15:=} {26:5}{16:,} {25:a} {15:=} {26:5}{16:,} {25:a}^ {15:=} {26:5}|
                           |
     ]]
-    test_long_line({ 1, math.floor(#long_line / 2) }, true, grid)
+    test_long_line({ 1, math.floor(#long_line / 2) }, true, long_line, grid)
   end)
 
   it('can redraw the end of a long line with wrapping', function()
@@ -146,7 +146,7 @@ describe('treesitter perf', function()
       {15:=} {26:5}{16:,} {25:a} {15:=} {26:5}{16:,} {16:^}}       |
                           |
     ]]
-    test_long_line({ 1, #long_line - 1 }, true, grid)
+    test_long_line({ 1, #long_line - 1 }, true, long_line, grid)
   end)
 
   it('can redraw the beginning of a long line without wrapping', function()
@@ -156,7 +156,7 @@ describe('treesitter perf', function()
       {1:~                   }|*8
                           |
     ]]
-    test_long_line({ 1, 0 }, false, grid)
+    test_long_line({ 1, 0 }, false, long_line, grid)
   end)
 
   it('can redraw the middle of a long line without wrapping', function()
@@ -166,7 +166,7 @@ describe('treesitter perf', function()
       {1:~                   }|*8
                           |
     ]]
-    test_long_line({ 1, math.floor(#long_line / 2) }, false, grid)
+    test_long_line({ 1, math.floor(#long_line / 2) }, false, long_line, grid)
   end)
 
   it('can redraw the end of a long line without wrapping', function()
@@ -176,6 +176,24 @@ describe('treesitter perf', function()
       {1:~                   }|*8
                           |
     ]]
-    test_long_line({ 1, #long_line - 1 }, false, grid)
+    test_long_line({ 1, #long_line - 1 }, false, long_line, grid)
+  end)
+
+  local long_line_mb = 'local a = { ' .. ('À = 5, '):rep(500) .. '}'
+  it('can redraw the middle of a long line with multibyte characters', function()
+    local grid = [[
+      {1:<<<}{26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} |
+      {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,}|
+       {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}|
+      {16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} |
+      {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=}|
+       {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} |
+      {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À}|
+       {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} |
+      {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,}|
+       {25:À} {15:=} {26:5}{16:,} {25:À} {15:=} {26:5}{16:,} {25:À}^ {15:=} {26:5}|
+                          |
+    ]]
+    test_long_line({ 1, math.floor(#long_line_mb / 2) }, true, long_line_mb, grid)
   end)
 end)
