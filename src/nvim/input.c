@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/ex_getln.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -157,105 +158,26 @@ int get_keystroke(MultiQueue *events)
   return n;
 }
 
-/// Get a number from the user.
-/// When "mouse_used" is not NULL allow using the mouse.
-///
-/// @param colon  allow colon to abort
-int get_number(int colon, bool *mouse_used)
-{
-  int n = 0;
-  int typed = 0;
-
-  if (mouse_used != NULL) {
-    *mouse_used = false;
-  }
-
-  // When not printing messages, the user won't know what to type, return a
-  // zero (as if CR was hit).
-  if (msg_silent != 0) {
-    return 0;
-  }
-
-  no_mapping++;
-  allow_keys++;  // no mapping here, but recognize keys
-  while (true) {
-    ui_cursor_goto(msg_row, msg_col);
-    int c = safe_vgetc();
-    if (ascii_isdigit(c)) {
-      if (vim_append_digit_int(&n, c - '0') == FAIL) {
-        return 0;
-      }
-      msg_putchar(c);
-      typed++;
-    } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H) {
-      if (typed > 0) {
-        msg_puts("\b \b");
-        typed--;
-      }
-      n /= 10;
-    } else if (mouse_used != NULL && c == K_LEFTMOUSE) {
-      *mouse_used = true;
-      n = mouse_row + 1;
-      break;
-    } else if (n == 0 && c == ':' && colon) {
-      stuffcharReadbuff(':');
-      if (!exmode_active) {
-        cmdline_row = msg_row;
-      }
-      skip_redraw = true;           // skip redraw once
-      do_redraw = false;
-      break;
-    } else if (c == Ctrl_C || c == ESC || c == 'q') {
-      n = 0;
-      break;
-    } else if (c == CAR || c == NL) {
-      break;
-    }
-  }
-  no_mapping--;
-  allow_keys--;
-  return n;
-}
-
 /// Ask the user to enter a number.
-///
-/// When "mouse_used" is not NULL allow using the mouse and in that case return
-/// the line number.
-int prompt_for_number(bool *mouse_used)
+int prompt_for_number(char *prompt)
 {
-  msg_ext_set_kind("number_prompt");
-  // When using ":silent" assume that <CR> was entered.
-  if (mouse_used != NULL) {
-    msg_puts(_("Type number and <Enter> or click with the mouse "
-               "(q or empty cancels): "));
-  } else {
-    msg_puts(_("Type number and <Enter> (q or empty cancels): "));
+  int ret = 0;
+  cmdline_row = msg_row;
+
+  if (prompt == NULL) {
+    prompt = _("Type number and <Enter> (empty cancels):");
   }
 
-  // Set the state such that text can be selected/copied/pasted and we still
-  // get mouse events.
-  int save_cmdline_row = cmdline_row;
-  cmdline_row = 0;
-  int save_State = State;
-  State = MODE_ASKMORE;  // prevents a screen update when using a timer
-  // May show different mouse shape.
-  setmouse();
-
-  int i = get_number(true, mouse_used);
-  if (KeyTyped) {
-    // don't call wait_return() now
-    if (msg_row > 0) {
-      cmdline_row = msg_row - 1;
-    }
+  while (ret == 0) {
+    char *input = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL, CALLBACK_NONE);
     need_wait_return = false;
     msg_didany = false;
     msg_didout = false;
-  } else {
-    cmdline_row = save_cmdline_row;
+    if (input == NULL || *input == NUL) {
+      break; // Break on <Esc>, <C-c>, or empty
+    }
+    ret = atoi(input);
   }
-  State = save_State;
-  // May need to restore mouse shape.
-  setmouse();
 
-  return i;
+  return ret;
 }
