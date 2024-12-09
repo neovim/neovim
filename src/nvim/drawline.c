@@ -1469,12 +1469,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     has_decor |= added_decor;
 
     if (line_len > expected_end) {
-      decor_providers_invoke_range(wp, lnum - 1, col, lnum - 1, 
+      decor_providers_invoke_range(wp, lnum - 1, col, lnum - 1,
                                    expected_end, &added_decor);
       has_decor |= added_decor;
       decor_provider_end_col = expected_end;
-    }
-    else {
+    } else {
       decor_providers_invoke_range(wp, lnum - 1, col, lnum, 0, &added_decor);
       has_decor |= added_decor;
       decor_provider_end_col = INT_MAX;
@@ -1545,12 +1544,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       if (line_len - decor_provider_end_col > col_increment) {
         int const new_col = decor_provider_end_col + col_increment;
         bool added_decor = false;
-        decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col, 
+        decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
                                      lnum - 1, new_col, &added_decor);
         has_decor |= added_decor;
         decor_provider_end_col = new_col;
-      }
-      else {
+      } else {
         bool added_decor = false;
         decor_providers_invoke_range(wp, lnum - 1, decor_provider_end_col,
                                      lnum, 0, &added_decor);

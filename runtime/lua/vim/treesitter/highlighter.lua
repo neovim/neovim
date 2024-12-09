@@ -1,10 +1,13 @@
 local api = vim.api
 local query = vim.treesitter.query
 local Range = require('vim.treesitter._range')
+local cmp_eq = Range.cmp_pos.eq
+local cmp_lt = Range.cmp_pos.lt
+local cmp_lte = Range.cmp_pos.le
 
 local ns = api.nvim_create_namespace('treesitter/highlighter')
 
----@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch
+---@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil, end_col: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch
 
 ---@class (private) vim.treesitter.highlighter.Query
 ---@field private _query vim.treesitter.Query?
@@ -278,18 +281,6 @@ local function get_spell(capture_name)
   return nil, 0
 end
 
-local function cmp_eq(rowa, cola, rowb, colb)
-  return rowa == rowb and cola == colb
-end
-
-local function cmp_lt(rowa, cola, rowb, colb)
-  return rowa < rowb or (rowa == rowb and cola < colb)
-end
-
-local function cmp_lte(rowa, cola, rowb, colb)
-  return rowa < rowb or (rowa == rowb and cola <= colb)
-end
-
 ---@param self vim.treesitter.highlighter
 ---@param buf integer
 ---@param range_br integer
@@ -328,9 +319,13 @@ local function on_range_impl(self, buf, range_br, range_bc, range_er, range_ec, 
 
       -- TODO(lewis6991): Creating a new iterator loses the cached predicate results for query
       -- matches. Move this logic inside iter_captures() so we can maintain the cache.
-      state.iter = state.highlighter_query
-        :query()
-        :iter_captures2(root_node, self.bufnr, range_br, range_bc, root_er + 1, 0)
+      state.iter = state.highlighter_query:query():iter_captures(
+        root_node,
+        self.bufnr,
+        range_br,
+        root_er,
+        { col_begin = range_bc, col_end = root_ec }
+      )
     end
 
     while cmp_lte(next_row, next_col, range_er, range_ec) do
