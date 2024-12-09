@@ -1,6 +1,7 @@
 " Language:    Typst
-" Maintainer:  Gregory Anders
-" Last Change: 2024 Nov 02
+" Previous Maintainer:  Gregory Anders
+" Maintainer:  Luca Saccarola <github.e41mv@aleeas.com>
+" Last Change: 2024 Dec 09
 " Based on:    https://github.com/kaarmu/typst.vim
 
 function! typst#indentexpr() abort
