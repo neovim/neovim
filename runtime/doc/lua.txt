@@ -2477,7 +2477,7 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
 
     Parameters: ~
       • {name}       (`string`) Argument name
-      • {value}      (`string`) Argument value
+      • {value}      (`any`) Argument value
       • {validator}  (`vim.validate.Validator`)
                      • (`string|string[]`): Any value that can be returned
                        from |lua-type()| in addition to `'callable'`:
