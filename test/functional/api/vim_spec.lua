@@ -5368,4 +5368,27 @@ describe('API', function()
     api.nvim__redraw({ win = 0, range = { 0, -1 } })
     n.assert_alive()
   end)
+
+  it('nvim__complete_set', function()
+    exec_lua([[
+      function _G.omni_test(findstart, base)
+        if findstart == 1 then
+          return vim.fn.col('.') - 1
+        end
+        return { { word = 'one' } }
+      end
+      vim.api.nvim_create_autocmd('CompleteChanged', {
+        callback = function()
+          local ok, err = pcall(vim.api.nvim__complete_set, 0, { info = '1info' })
+          if not ok then
+            vim.g.err_msg = err
+          end
+        end,
+      })
+      vim.opt.completeopt = 'menu,menuone'
+      vim.opt.omnifunc = 'v:lua.omni_test'
+    ]])
+    feed('S<C-X><C-O>')
+    eq('completeopt option does not include popup', api.nvim_get_var('err_msg'))
+  end)
 end)
