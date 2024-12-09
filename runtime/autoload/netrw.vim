@@ -38,6 +38,8 @@
 "   2024 Nov 14 by Vim Project: small fixes to netrw#BrowseX (#16056)
 "   2024 Nov 23 by Vim Project: update decompress defaults (#16104)
 "   2024 Nov 23 by Vim Project: fix powershell escaping issues (#16094)
+"   2024 Dec 04 by Vim Project: do not detach for gvim (#16168)
+"   2024 Dec 08 by Vim Project: check the first arg of netrw_browsex_viewer for being executable (#16185)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -5040,7 +5042,7 @@ if has('unix')
   endfun
  else
   fun! netrw#Launch(args)
-    exe ':silent ! nohup' a:args s:redir() '&' | redraw!
+    exe ':silent ! nohup' a:args s:redir() (has('gui_running') ? '' : '&') | redraw!
   endfun
  endif
 elseif has('win32')
@@ -5070,7 +5072,9 @@ elseif executable('open')
 endif
 
 fun! s:viewer()
-  if exists('g:netrw_browsex_viewer') && executable(g:netrw_browsex_viewer)
+  " g:netrw_browsex_viewer could be a string of program + its arguments,
+  " test if first argument is executable
+  if exists('g:netrw_browsex_viewer') && executable(split(g:netrw_browsex_viewer)[0])
     " extract any viewing options.  Assumes that they're set apart by spaces.
     "   call Decho("extract any viewing options from g:netrw_browsex_viewer<".g:netrw_browsex_viewer.">",'~'.expand("<slnum>"))
     if g:netrw_browsex_viewer =~ '\s'
