@@ -1013,7 +1013,7 @@ do
   --- best performance.
   ---
   --- @param name string Argument name
-  --- @param value string Argument value
+  --- @param value any Argument value
   --- @param validator vim.validate.Validator
   ---   - (`string|string[]`): Any value that can be returned from |lua-type()| in addition to
   ---     `'callable'`: `'boolean'`, `'callable'`, `'function'`, `'nil'`, `'number'`, `'string'`, `'table'`,
