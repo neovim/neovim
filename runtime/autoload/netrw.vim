@@ -38,6 +38,7 @@
 "   2024 Nov 14 by Vim Project: small fixes to netrw#BrowseX (#16056)
 "   2024 Nov 23 by Vim Project: update decompress defaults (#16104)
 "   2024 Nov 23 by Vim Project: fix powershell escaping issues (#16094)
+"   2024 Dec 04 by Vim Project: do not detach for gvim (#16168)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -5040,7 +5041,7 @@ if has('unix')
   endfun
  else
   fun! netrw#Launch(args)
-    exe ':silent ! nohup' a:args s:redir() '&' | redraw!
+    exe ':silent ! nohup' a:args s:redir() (has('gui_running') ? '' : '&') | redraw!
   endfun
  endif
 elseif has('win32')
