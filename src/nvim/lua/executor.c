@@ -1887,9 +1887,6 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, tslua_push_querycursor);
   lua_setfield(lstate, -2, "_create_ts_querycursor");
 
-  lua_pushcfunction(lstate, tslua_push_querycursor2);
-  lua_setfield(lstate, -2, "_create_ts_querycursor2");
-
   lua_pushcfunction(lstate, tslua_add_language_from_object);
   lua_setfield(lstate, -2, "_ts_add_language_from_object");
 
