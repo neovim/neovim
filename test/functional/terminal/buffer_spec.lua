@@ -669,7 +669,7 @@ if is_os('win') then
   end)
 end
 
-describe('termopen()', function()
+describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', function()
   before_each(clear)
 
   it('disallowed when textlocked and in cmdwin buffer', function()
