@@ -110,6 +110,9 @@ LSP
 • |vim.lsp.util.make_position_params()|, |vim.lsp.util.make_range_params()|
   and |vim.lsp.util.make_given_range_params()| now require the `position_encoding`
   parameter.
+• |vim.lsp.buf.document_highlight()|, |vim.lsp.buf.clear_references()|,
+  |vim.lsp.util.buf_highlight_references()|, and
+  |vim.lsp.util.buf_clear_references()| are now deprecated.
 
 LUA
 
@@ -237,6 +240,8 @@ LSP
 • Functions in |vim.lsp.Client| can now be called as methods.
 • Implemented LSP folding: |vim.lsp.foldexpr()|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
+• LSP document highlight has been reimplemented: |lsp-document_highlight|
+  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentHighlight
 
 LUA
 
