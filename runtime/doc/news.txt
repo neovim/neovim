@@ -241,6 +241,7 @@ LSP
 LUA
 
 • |vim.fs.rm()| can delete files and directories.
+• |vim.filetype.match()| now takes `fast` option to perform fast detection.
 • |vim.validate()| now has a new signature which uses less tables,
   is more performant and easier to read.
 • |vim.str_byteindex()| and |vim.str_utfindex()| gained overload signatures
@@ -254,7 +255,7 @@ OPTIONS
 
 PERFORMANCE
 
-• TODO
+• |vim.filetype.match()| overall performance is improved.
 
 PLUGINS
 
