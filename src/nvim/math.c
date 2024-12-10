@@ -106,3 +106,9 @@ int vim_append_digit_int(int *value, int digit)
   *value = x * 10 + digit;
   return OK;
 }
+
+/// Return something that fits into an int.
+int trim_to_int(int64_t x)
+{
+  return x > INT_MAX ? INT_MAX : x < INT_MIN ? INT_MIN : (int)x;
+}

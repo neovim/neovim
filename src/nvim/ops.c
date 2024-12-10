@@ -48,6 +48,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
+#include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
@@ -273,21 +274,53 @@ void op_shift(oparg_T *oap, bool curs_top, int amount)
   changed_lines(curbuf, oap->start.lnum, 0, oap->end.lnum + 1, 0, true);
 }
 
-/// Shift the current line one shiftwidth left (if left != 0) or right
-/// leaves cursor on first blank in the line.
-///
-/// @param call_changed_bytes  call changed_bytes()
-void shift_line(bool left, bool round, int amount, int call_changed_bytes)
+/// Return the tabstop width at the index of the variable tabstop array.  If an
+/// index greater than the length of the array is given, the last tabstop width
+/// in the array is returned.
+static int get_vts(const int *vts_array, int index)
 {
-  int sw_val = get_sw_value_indent(curbuf, left);
-  if (sw_val == 0) {
-    sw_val = 1;              // shouldn't happen, just in case
+  int ts;
+
+  if (index < 1) {
+    ts = 0;
+  } else if (index <= vts_array[0]) {
+    ts = vts_array[index];
+  } else {
+    ts = vts_array[vts_array[0]];
   }
-  int count = get_indent();  // get current indent
+
+  return ts;
+}
+
+/// Return the sum of all the tabstops through the index-th.
+static int get_vts_sum(const int *vts_array, int index)
+{
+  int sum = 0;
+  int i;
+
+  // Perform the summation for indeces within the actual array.
+  for (i = 1; i <= index && i <= vts_array[0]; i++) {
+    sum += vts_array[i];
+  }
+
+  // Add topstops whose indeces exceed the actual array.
+  if (i <= index) {
+    sum += vts_array[vts_array[0]] * (index - vts_array[0]);
+  }
+
+  return sum;
+}
+
+/// @param left    true if shift is to the left
+/// @param count   true if new indent is to be to a tabstop
+/// @param amount  number of shifts
+static int64_t get_new_sw_indent(bool left, bool round, int64_t amount, int64_t sw_val)
+{
+  int64_t count = get_indent();  // get current indent
 
   if (round) {  // round off indent
-    int i = count / sw_val;  // number of 'shiftwidth' rounded down
-    int j = count % sw_val;  // extra spaces
+    int64_t i = trim_to_int(count / sw_val);  // number of 'shiftwidth' rounded down
+    int64_t j = trim_to_int(count % sw_val);  // extra spaces
     if (j && left) {  // first remove extra spaces
       amount--;
     }
@@ -305,11 +338,94 @@ void shift_line(bool left, bool round, int amount, int call_changed_bytes)
     }
   }
 
+  return count;
+}
+
+/// @param left    true if shift is to the left
+/// @param count   true if new indent is to be to a tabstop
+/// @param amount  number of shifts
+static int64_t get_new_vts_indent(bool left, bool round, int amount, int *vts_array)
+{
+  int64_t indent = get_indent();
+  int vtsi = 0;
+  int vts_indent = 0;
+  int ts = 0;         // Silence uninitialized variable warning.
+
+  // Find the tabstop at or to the left of the current indent.
+  while (vts_indent <= indent) {
+    vtsi++;
+    ts = get_vts(vts_array, vtsi);
+    vts_indent += ts;
+  }
+  vts_indent -= ts;
+  vtsi--;
+
+  // Extra indent spaces to the right of the tabstop
+  int64_t offset = indent - vts_indent;
+
+  if (round) {
+    if (left) {
+      if (offset == 0) {
+        indent = get_vts_sum(vts_array, vtsi - amount);
+      } else {
+        indent = get_vts_sum(vts_array, vtsi - (amount - 1));
+      }
+    } else {
+      indent = get_vts_sum(vts_array, vtsi + amount);
+    }
+  } else {
+    if (left) {
+      if (amount > vtsi) {
+        indent = 0;
+      } else {
+        indent = get_vts_sum(vts_array, vtsi - amount) + offset;
+      }
+    } else {
+      indent = get_vts_sum(vts_array, vtsi + amount) + offset;
+    }
+  }
+
+  return indent;
+}
+
+/// Shift the current line 'amount' shiftwidth(s) left (if 'left' is true) or
+/// right.
+///
+/// The rules for choosing a shiftwidth are:  If 'shiftwidth' is non-zero, use
+/// 'shiftwidth'; else if 'vartabstop' is not empty, use 'vartabstop'; else use
+/// 'tabstop'.  The Vim documentation says nothing about 'softtabstop' or
+/// 'varsofttabstop' affecting the shiftwidth, and neither affects the
+/// shiftwidth in current versions of Vim, so they are not considered here.
+///
+/// @param left                true if shift is to the left
+/// @param count               true if new indent is to be to a tabstop
+/// @param amount              number of shifts
+/// @param call_changed_bytes  call changed_bytes()
+void shift_line(bool left, bool round, int amount, int call_changed_bytes)
+{
+  int64_t count;
+  int64_t sw_val = curbuf->b_p_sw;
+  int64_t ts_val = curbuf->b_p_ts;
+  int *vts_array = curbuf->b_p_vts_array;
+
+  if (sw_val != 0) {
+    // 'shiftwidth' is not zero; use it as the shift size.
+    count = get_new_sw_indent(left, round, amount, sw_val);
+  } else if ((vts_array == NULL) || (vts_array[0] == 0)) {
+    // 'shiftwidth' is zero and 'vartabstop' is empty; use 'tabstop' as the
+    // shift size.
+    count = get_new_sw_indent(left, round, amount, ts_val);
+  } else {
+    // 'shiftwidth' is zero and 'vartabstop' is defined; use 'vartabstop'
+    // to determine the new indent.
+    count = get_new_vts_indent(left, round, amount, vts_array);
+  }
+
   // Set new indent
   if (State & VREPLACE_FLAG) {
-    change_indent(INDENT_SET, count, false, call_changed_bytes);
+    change_indent(INDENT_SET, trim_to_int(count), false, call_changed_bytes);
   } else {
-    set_indent(count, call_changed_bytes ? SIN_CHANGED : 0);
+    set_indent(trim_to_int(count), call_changed_bytes ? SIN_CHANGED : 0);
   }
 }
 
