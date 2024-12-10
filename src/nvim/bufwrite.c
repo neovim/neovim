@@ -1148,6 +1148,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     msg_scroll = true;              // don't overwrite previous file message
   }
   if (!filtering) {
+    msg_ext_set_kind("bufwrite");
     // show that we are busy
 #ifndef UNIX
     filemess(buf, sfname, "");
@@ -1763,6 +1764,7 @@ restore_backup:
     if (msg_add_fileformat(fileformat)) {
       insert_space = true;
     }
+    msg_ext_set_kind("bufwrite");
     msg_add_lines(insert_space, lnum, nchars);       // add line/char count
     if (!shortmess(SHM_WRITE)) {
       if (append) {
