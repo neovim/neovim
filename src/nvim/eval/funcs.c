@@ -2402,14 +2402,15 @@ static void f_getchangelist(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
   if (buf == curwin->w_buffer) {
     changelistindex = curwin->w_changelistidx;
   } else {
-    wininfo_T *wip;
+    changelistindex = buf->b_changelistlen;
 
-    FOR_ALL_BUF_WININFO(buf, wip) {
+    for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
+      WinInfo *wip = kv_A(buf->b_wininfo, i);
       if (wip->wi_win == curwin) {
+        changelistindex = wip->wi_changelistidx;
         break;
       }
     }
-    changelistindex = wip != NULL ? wip->wi_changelistidx : buf->b_changelistlen;
   }
   tv_list_append_number(rettv->vval.v_list, (varnumber_T)changelistindex);
 

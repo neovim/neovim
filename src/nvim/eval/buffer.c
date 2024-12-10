@@ -66,12 +66,11 @@ buf_T *find_buffer(typval_T *avar)
 /// If there is a window for "curbuf", make it the current window.
 static void find_win_for_curbuf(void)
 {
-  wininfo_T *wip;
-
   // The b_wininfo list should have the windows that recently contained the
   // buffer, going over this is faster than going over all the windows.
   // Do check the buffer is still there.
-  FOR_ALL_BUF_WININFO(curbuf, wip) {
+  for (size_t i = 0; i < kv_size(curbuf->b_wininfo); i++) {
+    WinInfo *wip = kv_A(curbuf->b_wininfo, i);
     if (wip->wi_win != NULL && wip->wi_win->w_buffer == curbuf) {
       curwin = wip->wi_win;
       break;
