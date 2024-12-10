@@ -119,7 +119,7 @@ typedef struct {
   ArrayOf(Integer) bufpos;
   Boolean external;
   Boolean focusable;
-  Boolean mouse;
+  Object mouse;
   Boolean vertical;
   Integer zindex;
   Object border;
