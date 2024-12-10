@@ -296,17 +296,17 @@ void shift_line(bool left, bool round, int amount, int call_changed_bytes)
     } else {
       i += amount;
     }
-    count = i * sw_val;
+    count = (int64_t)i * (int64_t)sw_val;
   } else {  // original vi indent
     if (left) {
-      count = MAX(count - sw_val * amount, 0);
+      count = MAX(count - (int64_t)sw_val * (int64_t)amount, 0);
     } else {
-      if ((int64_t)sw_val * (int64_t)amount > INT_MAX - count) {
-        count = INT_MAX;
-      } else {
-        count += (int64_t)sw_val * (int64_t)amount;
-      }
+      count += (int64_t)sw_val * (int64_t)amount;
     }
+  }
+
+  if (count > INT_MAX) {
+    count = INT_MAX;
   }
 
   // Set new indent
