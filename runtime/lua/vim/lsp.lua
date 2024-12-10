@@ -316,6 +316,240 @@ local function create_and_initialize_client(config)
   return client.id, nil
 end
 
+--- @class vim.lsp.Config : vim.lsp.ClientConfig
+---
+--- See `cmd` in [vim.lsp.ClientConfig].
+--- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient
+---
+--- Filetypes the client will attach to, if activated by `vim.lsp.enable()`.
+--- If not provided, then the client will attach to all filetypes.
+--- @field filetypes? string[]
+---
+--- Directory markers (.e.g. '.git/') where the LSP server will base its workspaceFolders,
+--- rootUri, and rootPath on initialization. Unused if `root_dir` is provided.
+--- @field root_markers? string[]
+---
+--- Predicate used to decide if a client should be re-used. Used on all
+--- running clients. The default implementation re-uses a client if name and
+--- root_dir matches.
+--- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
+
+--- Update the configuration for an LSP client.
+---
+--- Use name '*' to set default configuration for all clients.
+---
+--- Can also be table-assigned to redefine the configuration for a client.
+---
+--- Examples:
+---
+--- - Add a root marker for all clients:
+---   ```lua
+---      vim.lsp.config('*', {
+---          root_markers = { '.git' },
+---        })
+---        ```
+--- - Add additional capabilities to all clients:
+---   ```lua
+---      vim.lsp.config('*', {
+---          capabilities = {
+---            textDocument = {
+---              semanticTokens = {
+---                multilineTokenSupport = true,
+---              }
+---            }
+---          }
+---        })
+---        ```
+--- - (Re-)define the configuration for clangd:
+---   ```lua
+---      vim.lsp.config.clangd = {
+---          cmd = {
+---            'clangd',
+---            '--clang-tidy',
+---            '--background-index',
+---            '--offset-encoding=utf-8',
+---          },
+---          root_markers = { '.clangd', 'compile_commands.json' },
+---          filetypes = { 'c', 'cpp' },
+---        }
+---        ```
+--- - Get configuration for luals:
+---   ```lua
+---      local cfg = vim.lsp.config.luals
+---        ```
+---
+--- @param name string
+--- @param cfg vim.lsp.Config
+--- @diagnostic disable-next-line:assign-type-mismatch
+function lsp.config(name, cfg)
+  local _, _ = name, cfg -- ignore unused
+  -- dummy proto for docs
+end
+
+lsp._enabled_configs = {} --- @type table<string,{resolved_config:vim.lsp.Config?}>
+
+--- If a config in vim.lsp.config() is accessed then the resolved config becomes invalid.
+--- @param name string
+local function invalidate_enabled_config(name)
+  if name == '*' then
+    for _, v in pairs(lsp._enabled_configs) do
+      v.resolved_config = nil
+    end
+  elseif lsp._enabled_configs[name] then
+    lsp._enabled_configs[name].resolved_config = nil
+  end
+end
+
+--- @nodoc
+--- @class vim.lsp.config
+--- @field [string] vim.lsp.Config
+--- @field package _configs table<string,vim.lsp.Config>
+lsp.config = setmetatable({ _configs = {} }, {
+  --- @param self vim.lsp.config
+  --- @param name string
+  --- @return vim.lsp.Config
+  __index = function(self, name)
+    validate('name', name, 'string')
+    invalidate_enabled_config(name)
+    self._configs[name] = self._configs[name] or {}
+    return self._configs[name]
+  end,
+
+  --- @param self vim.lsp.config
+  --- @param name string
+  --- @param cfg vim.lsp.Config
+  __newindex = function(self, name, cfg)
+    validate('name', name, 'string')
+    validate('cfg', cfg, 'table')
+    invalidate_enabled_config(name)
+    self._configs[name] = cfg
+  end,
+
+  --- @param self vim.lsp.config
+  --- @param name string
+  --- @param cfg vim.lsp.Config
+  __call = function(self, name, cfg)
+    validate('name', name, 'string')
+    validate('cfg', cfg, 'table')
+    invalidate_enabled_config(name)
+    self[name] = vim.tbl_deep_extend('force', self._configs[name] or {}, cfg)
+  end,
+})
+
+--- @private
+--- @param name string
+--- @return vim.lsp.Config
+function lsp._resolve_config(name)
+  local econfig = lsp._enabled_configs[name] or {}
+
+  if not econfig.resolved_config then
+    -- Resolve configs from lsp/*.lua
+    -- Calls to vim.lsp.config in lsp/* have a lower precedence than calls from other sites.
+    local orig_configs = lsp.config._configs
+    lsp.config._configs = {}
+    pcall(vim.cmd.runtime, { ('lsp/%s.lua'):format(name), bang = true })
+    local rtp_configs = lsp.config._configs
+    lsp.config._configs = orig_configs
+
+    local config = vim.tbl_deep_extend(
+      'force',
+      lsp.config._configs['*'] or {},
+      rtp_configs[name] or {},
+      lsp.config._configs[name] or {}
+    )
+
+    config.name = name
+
+    validate('cmd', config.cmd, { 'function', 'table' })
+    validate('cmd', config.reuse_client, 'function', true)
+    -- All other fields are validated in client.create
+
+    econfig.resolved_config = config
+  end
+
+  return assert(econfig.resolved_config)
+end
+
+local lsp_enable_autocmd_id --- @type integer?
+
+--- @param bufnr integer
+local function lsp_enable_callback(bufnr)
+  -- Only ever attach to buffers that represent an actual file.
+  if vim.bo[bufnr].buftype ~= '' then
+    return
+  end
+
+  --- @param config vim.lsp.Config
+  local function can_start(config)
+    if config.filetypes and not vim.tbl_contains(config.filetypes, vim.bo[bufnr].filetype) then
+      return false
+    elseif type(config.cmd) == 'table' and vim.fn.executable(config.cmd[1]) == 0 then
+      return false
+    end
+
+    return true
+  end
+
+  for name in vim.spairs(lsp._enabled_configs) do
+    local config = lsp._resolve_config(name)
+
+    if can_start(config) then
+      -- Deepcopy config so changes done in the client
+      -- do not propagate back to the enabled configs.
+      config = vim.deepcopy(config)
+
+      vim.lsp.start(config, {
+        bufnr = bufnr,
+        reuse_client = config.reuse_client,
+        _root_markers = config.root_markers,
+      })
+    end
+  end
+end
+
+--- Enable an LSP server to automatically start when opening a buffer.
+---
+--- Uses configuration defined with `vim.lsp.config`.
+---
+--- Examples:
+---
+--- ```lua
+---   vim.lsp.enable('clangd')
+---
+---   vim.lsp.enable({'luals', 'pyright'})
+--- ```
+---
+--- @param name string|string[] Name(s) of client(s) to enable.
+--- @param enable? boolean `true|nil` to enable, `false` to disable.
+function lsp.enable(name, enable)
+  validate('name', name, { 'string', 'table' })
+
+  local names = vim._ensure_list(name) --[[@as string[] ]]
+  for _, nm in ipairs(names) do
+    if nm == '*' then
+      error('Invalid name')
+    end
+    lsp._enabled_configs[nm] = enable == false and nil or {}
+  end
+
+  if not next(lsp._enabled_configs) then
+    if lsp_enable_autocmd_id then
+      api.nvim_del_autocmd(lsp_enable_autocmd_id)
+      lsp_enable_autocmd_id = nil
+    end
+    return
+  end
+
+  -- Only ever create autocmd once to reuse computation of config merging.
+  lsp_enable_autocmd_id = lsp_enable_autocmd_id
+    or api.nvim_create_autocmd('FileType', {
+      group = api.nvim_create_augroup('nvim.lsp.enable', {}),
+      callback = function(args)
+        lsp_enable_callback(args.buf)
+      end,
+    })
+end
+
 --- @class vim.lsp.start.Opts
 --- @inlinedoc
 ---
@@ -334,6 +568,8 @@ end
 ---
 --- Suppress error reporting if the LSP server fails to start (default false).
 --- @field silent? boolean
+---
+--- @field package _root_markers? string[]
 
 --- Create a new LSP client and start a language server or reuses an already
 --- running client if one is found matching `name` and `root_dir`.
@@ -379,6 +615,11 @@ function lsp.start(config, opts)
   local reuse_client = opts.reuse_client or reuse_client_default
   local bufnr = vim._resolve_bufnr(opts.bufnr)
 
+  if not config.root_dir and opts._root_markers then
+    config = vim.deepcopy(config)
+    config.root_dir = vim.fs.root(bufnr, opts._root_markers)
+  end
+
   for _, client in pairs(all_clients) do
     if reuse_client(client, config) then
       if opts.attach == false then
@@ -387,9 +628,8 @@ function lsp.start(config, opts)
 
       if lsp.buf_attach_client(bufnr, client.id) then
         return client.id
-      else
-        return nil
       end
+      return
     end
   end
 
@@ -398,7 +638,7 @@ function lsp.start(config, opts)
     if not opts.silent then
       vim.notify(err, vim.log.levels.WARN)
     end
-    return nil
+    return
   end
 
   if opts.attach == false then
@@ -408,8 +648,6 @@ function lsp.start(config, opts)
   if client_id and lsp.buf_attach_client(bufnr, client_id) then
     return client_id
   end
-
-  return nil
 end
 
 --- Consumes the latest progress messages from all clients and formats them as a string.
@@ -1275,7 +1513,7 @@ end
 --- and the value is a function which is called if any LSP action
 --- (code action, code lenses, ...) triggers the command.
 ---
---- If a LSP response contains a command for which no matching entry is
+--- If an LSP response contains a command for which no matching entry is
 --- available in this registry, the command will be executed via the LSP server
 --- using `workspace/executeCommand`.
 ---
