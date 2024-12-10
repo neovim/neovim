@@ -70,7 +70,7 @@ typedef struct {
 // Mask to check for flags that prevent normal writing
 #define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
 
-typedef struct wininfo_S wininfo_T;
+typedef struct wininfo_S WinInfo;
 typedef struct frame_S frame_T;
 typedef uint64_t disptick_T;  // display tick type
 
@@ -85,7 +85,7 @@ typedef struct {
 
 // Structure that contains all options that are local to a window.
 // Used twice in a window: for the current buffer and for all buffers.
-// Also used in wininfo_T.
+// Also used in WinInfo.
 typedef struct {
   int wo_arab;
 #define w_p_arab w_onebuf_opt.wo_arab  // 'arabic'
@@ -219,8 +219,6 @@ typedef struct {
 // The window-info is kept in a list at b_wininfo.  It is kept in
 // most-recently-used order.
 struct wininfo_S {
-  wininfo_T *wi_next;         // next entry or NULL for last entry
-  wininfo_T *wi_prev;         // previous entry or NULL for first entry
   win_T *wi_win;          // pointer to window that did set wi_mark
   fmark_T wi_mark;                // last cursor mark in the file
   bool wi_optset;               // true when wi_opt has useful values
@@ -411,7 +409,7 @@ struct file_buffer {
                                 // change
   linenr_T b_mod_xlines;        // number of extra buffer lines inserted;
                                 // negative when lines were deleted
-  wininfo_T *b_wininfo;         // list of last used info for each window
+  kvec_t(WinInfo *) b_wininfo;  // list of last used info for each window
   disptick_T b_mod_tick_syn;    // last display tick syntax was updated
   disptick_T b_mod_tick_decor;  // last display tick decoration providers
                                 // where invoked

@@ -875,6 +875,7 @@ static void free_buffer(buf_T *buf)
   aubuflocal_remove(buf);
   xfree(buf->additional_data);
   xfree(buf->b_prompt_text);
+  kv_destroy(buf->b_wininfo);
   callback_free(&buf->b_prompt_callback);
   callback_free(&buf->b_prompt_interrupt);
   clear_fmark(&buf->b_last_cursor, 0);
@@ -901,13 +902,10 @@ static void free_buffer(buf_T *buf)
 /// Free the b_wininfo list for buffer "buf".
 static void clear_wininfo(buf_T *buf)
 {
-  wininfo_T *wip;
-
-  while (buf->b_wininfo != NULL) {
-    wip = buf->b_wininfo;
-    buf->b_wininfo = wip->wi_next;
-    free_wininfo(wip, buf);
+  for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
+    free_wininfo(kv_A(buf->b_wininfo, i), buf);
   }
+  kv_size(buf->b_wininfo) = 0;
 }
 
 /// Free stuff in the buffer for ":bdel" and when wiping out the buffer.
@@ -1926,7 +1924,8 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   }
 
   clear_wininfo(buf);
-  buf->b_wininfo = xcalloc(1, sizeof(wininfo_T));
+  WinInfo *curwin_info = xcalloc(1, sizeof(WinInfo));
+  kv_push(buf->b_wininfo, curwin_info);
 
   if (buf == curbuf) {
     free_buffer_stuff(buf, kBffInitChangedtick);  // delete local vars et al.
@@ -1964,9 +1963,9 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     buf_copy_options(buf, BCO_ALWAYS);
   }
 
-  buf->b_wininfo->wi_mark = (fmark_T)INIT_FMARK;
-  buf->b_wininfo->wi_mark.mark.lnum = lnum;
-  buf->b_wininfo->wi_win = curwin;
+  curwin_info->wi_mark = (fmark_T)INIT_FMARK;
+  curwin_info->wi_mark.mark.lnum = lnum;
+  curwin_info->wi_win = curwin;
 
   hash_init(&buf->b_s.b_keywtab);
   hash_init(&buf->b_s.b_keywtab_ic);
@@ -2631,30 +2630,26 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
                      bool copy_options)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  wininfo_T *wip;
+  WinInfo *wip;
 
-  for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+  size_t i;
+  for (i = 0; i < kv_size(buf->b_wininfo); i++) {
+    wip = kv_A(buf->b_wininfo, i);
     if (wip->wi_win == win) {
       break;
     }
   }
-  if (wip == NULL) {
+
+  if (i == kv_size(buf->b_wininfo)) {
     // allocate a new entry
-    wip = xcalloc(1, sizeof(wininfo_T));
+    wip = xcalloc(1, sizeof(WinInfo));
     wip->wi_win = win;
     if (lnum == 0) {            // set lnum even when it's 0
       lnum = 1;
     }
   } else {
     // remove the entry from the list
-    if (wip->wi_prev) {
-      wip->wi_prev->wi_next = wip->wi_next;
-    } else {
-      buf->b_wininfo = wip->wi_next;
-    }
-    if (wip->wi_next) {
-      wip->wi_next->wi_prev = wip->wi_prev;
-    }
+    kv_shift(buf->b_wininfo, i, 1);
     if (copy_options && wip->wi_optset) {
       clear_winopt(&wip->wi_opt);
       deleteFoldRecurse(buf, &wip->wi_folds);
@@ -2679,17 +2674,15 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
   }
 
   // insert the entry in front of the list
-  wip->wi_next = buf->b_wininfo;
-  buf->b_wininfo = wip;
-  wip->wi_prev = NULL;
-  if (wip->wi_next) {
-    wip->wi_next->wi_prev = wip;
-  }
+  kv_pushp(buf->b_wininfo);
+  memmove(&kv_A(buf->b_wininfo, 1), &kv_A(buf->b_wininfo, 0),
+          (kv_size(buf->b_wininfo) - 1) * sizeof(kv_A(buf->b_wininfo, 0)));
+  kv_A(buf->b_wininfo, 0) = wip;
 }
 
 /// Check that "wip" has 'diff' set and the diff is only for another tab page.
 /// That's because a diff is local to a tab page.
-static bool wininfo_other_tab_diff(wininfo_T *wip)
+static bool wininfo_other_tab_diff(WinInfo *wip)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   if (!wip->wi_opt.wo_diff) {
@@ -2713,21 +2706,16 @@ static bool wininfo_other_tab_diff(wininfo_T *wip)
 /// @param skip_diff_buffer  when true, avoid windows with 'diff' set that is in another tab page.
 ///
 /// @return  NULL when there isn't any info.
-static wininfo_T *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buffer)
+static WinInfo *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buffer)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  wininfo_T *wip;
-
-  for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+  for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
+    WinInfo *wip = kv_A(buf->b_wininfo, i);
     if (wip->wi_win == curwin
         && (!skip_diff_buffer || !wininfo_other_tab_diff(wip))
         && (!need_options || wip->wi_optset)) {
-      break;
+      return wip;
     }
-  }
-
-  if (wip != NULL) {
-    return wip;
   }
 
   // If no wininfo for curwin, use the first in the list (that doesn't have
@@ -2736,19 +2724,20 @@ static wininfo_T *find_wininfo(buf_T *buf, bool need_options, bool skip_diff_buf
   // unless the window is editing "buf", so we can copy from the window
   // itself.
   if (skip_diff_buffer) {
-    for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+    for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
+      WinInfo *wip = kv_A(buf->b_wininfo, i);
       if (!wininfo_other_tab_diff(wip)
           && (!need_options
               || wip->wi_optset
               || (wip->wi_win != NULL
                   && wip->wi_win->w_buffer == buf))) {
-        break;
+        return wip;
       }
     }
-  } else {
-    wip = buf->b_wininfo;
+  } else if (kv_size(buf->b_wininfo)) {
+    return kv_A(buf->b_wininfo, 0);
   }
-  return wip;
+  return NULL;
 }
 
 /// Reset the local window options to the values last used in this window.
@@ -2760,7 +2749,7 @@ void get_winopts(buf_T *buf)
   clear_winopt(&curwin->w_onebuf_opt);
   clearFolding(curwin);
 
-  wininfo_T *const wip = find_wininfo(buf, true, true);
+  WinInfo *const wip = find_wininfo(buf, true, true);
   if (wip != NULL && wip->wi_win != curwin && wip->wi_win != NULL
       && wip->wi_win->w_buffer == buf) {
     win_T *wp = wip->wi_win;
@@ -2800,7 +2789,7 @@ fmark_T *buflist_findfmark(buf_T *buf)
 {
   static fmark_T no_position = { { 1, 0, 0 }, 0, 0, { 0 }, NULL };
 
-  wininfo_T *const wip = find_wininfo(buf, false, false);
+  WinInfo *const wip = find_wininfo(buf, false, false);
   return (wip == NULL) ? &no_position : &(wip->wi_mark);
 }
 
