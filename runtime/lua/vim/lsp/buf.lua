@@ -991,28 +991,14 @@ function M.workspace_symbol(query, opts)
   request_with_opts(ms.workspace_symbol, params, opts)
 end
 
---- Send request to the server to resolve document highlights for the current
---- text document position. This request can be triggered by a  key mapping or
---- by events such as `CursorHold`, e.g.:
----
---- ```vim
---- autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()
---- autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()
---- autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
---- ```
----
---- Note: Usage of |vim.lsp.buf.document_highlight()| requires the following highlight groups
----       to be defined or you won't be able to see the actual highlights.
----         |hl-LspReferenceText|
----         |hl-LspReferenceRead|
----         |hl-LspReferenceWrite|
+--- @deprecated
 function M.document_highlight()
-  lsp.buf_request(0, ms.textDocument_documentHighlight, client_positional_params())
+  vim.deprecate('vim.lsp.buf.document_highlight()', 'vim.lsp.document_highlight.enable()', '0.12')
 end
 
---- Removes document highlights from current buffer.
+--- @deprecated
 function M.clear_references()
-  util.buf_clear_references()
+  vim.deprecate('vim.lsp.buf.clear_references()', 'vim.lsp.document_highlight.enable()', '0.12')
 end
 
 ---@nodoc
