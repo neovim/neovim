@@ -276,4 +276,16 @@ func Test_formatting_keeps_first_line_indent()
   bwipe!
 endfunc
 
+" Test for indenting with large amount, causes overflow
+func Test_indent_overflow_count()
+  throw 'skipped: TODO: '
+  new
+  setl sw=8
+  call setline(1, "abc")
+  norm! V2147483647>
+  " indents by INT_MAX
+  call assert_equal(2147483647, indent(1))
+  close!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

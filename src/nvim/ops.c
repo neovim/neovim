@@ -283,11 +283,11 @@ void shift_line(bool left, bool round, int amount, int call_changed_bytes)
   if (sw_val == 0) {
     sw_val = 1;              // shouldn't happen, just in case
   }
-  int count = get_indent();  // get current indent
+  int64_t count = get_indent();  // get current indent
 
   if (round) {  // round off indent
-    int i = count / sw_val;  // number of 'shiftwidth' rounded down
-    int j = count % sw_val;  // extra spaces
+    int i = (int)(count / sw_val);  // number of 'shiftwidth' rounded down
+    int j = (int)(count % sw_val);  // extra spaces
     if (j && left) {  // first remove extra spaces
       amount--;
     }
@@ -301,15 +301,19 @@ void shift_line(bool left, bool round, int amount, int call_changed_bytes)
     if (left) {
       count = MAX(count - sw_val * amount, 0);
     } else {
-      count += sw_val * amount;
+      if ((int64_t)sw_val * (int64_t)amount > INT_MAX - count) {
+        count = INT_MAX;
+      } else {
+        count += (int64_t)sw_val * (int64_t)amount;
+      }
     }
   }
 
   // Set new indent
   if (State & VREPLACE_FLAG) {
-    change_indent(INDENT_SET, count, false, call_changed_bytes);
+    change_indent(INDENT_SET, (int)count, false, call_changed_bytes);
   } else {
-    set_indent(count, call_changed_bytes ? SIN_CHANGED : 0);
+    set_indent((int)count, call_changed_bytes ? SIN_CHANGED : 0);
   }
 }
 
