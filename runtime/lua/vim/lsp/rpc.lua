@@ -26,7 +26,7 @@ local function get_content_length(header)
       break
     end
     local key, value = line:match('^%s*(%S+)%s*:%s*(%d+)%s*$')
-    if key:lower() == 'content-length' then
+    if key and key:lower() == 'content-length' then
       return tonumber(value)
     end
   end
