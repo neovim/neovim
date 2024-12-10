@@ -237,6 +237,8 @@ LSP
 • Functions in |vim.lsp.Client| can now be called as methods.
 • Implemented LSP folding: |vim.lsp.foldexpr()|
   https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
+• Implemented LSP selection: |lsp-selection_range|
+  https://microsoft.github.io/language-server-protocol/specification/#textDocument_selectionRange
 
 LUA
 
