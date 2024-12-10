@@ -1049,6 +1049,7 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
     { "on_buf", &opts->on_buf, &p->redraw_buf },
     { "on_win", &opts->on_win, &p->redraw_win },
     { "on_line", &opts->on_line, &p->redraw_line },
+    { "on_range", &opts->on_range, &p->redraw_range },
     { "on_end", &opts->on_end, &p->redraw_end },
     { "_on_hl_def", &opts->_on_hl_def, &p->hl_def },
     { "_on_spell_nav", &opts->_on_spell_nav, &p->spell_nav },
