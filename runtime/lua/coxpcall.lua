@@ -1,5 +1,9 @@
 -------------------------------------------------------------------------------
+-- (Not needed for LuaJIT or Lua 5.2+)
+--
 -- Coroutine safe xpcall and pcall versions
+--
+-- https://keplerproject.github.io/coxpcall/
 --
 -- Encapsulates the protected calls with a coroutine based loop, so errors can
 -- be dealed without the usual Lua 5.x pcall/xpcall issues with coroutines
