@@ -1112,7 +1112,7 @@ stack traceback:
     command('write ' .. fname)
     screen:expect({
       messages = {
-        { content = { { string.format('"%s" [New] 0L, 0B written', fname) } }, kind = '' },
+        { content = { { string.format('"%s" [New] 0L, 0B written', fname) } }, kind = 'bufwrite' },
       },
     })
   end)
