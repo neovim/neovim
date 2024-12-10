@@ -14,6 +14,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark_defs.h"
+#include "nvim/math.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
@@ -1708,7 +1709,7 @@ void parse_cino(buf_T *buf)
       } else {
         n *= sw;
         if (divider) {
-          n += (sw * fraction + divider / 2) / divider;
+          n += ((int64_t)sw * fraction + divider / 2) / divider;
         }
       }
       p++;
@@ -1717,11 +1718,7 @@ void parse_cino(buf_T *buf)
       n = -n;
     }
 
-    if (n > INT_MAX) {
-      n = INT_MAX;
-    } else if (n < INT_MIN) {
-      n = INT_MIN;
-    }
+    n = trim_to_int(n);
 
     // When adding an entry here, also update the default 'cinoptions' in
     // doc/indent.txt, and add explanation for it!

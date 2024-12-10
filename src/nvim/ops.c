@@ -48,6 +48,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
+#include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
@@ -286,8 +287,8 @@ void shift_line(bool left, bool round, int amount, int call_changed_bytes)
   int64_t count = get_indent();  // get current indent
 
   if (round) {  // round off indent
-    int i = (int)(count / sw_val);  // number of 'shiftwidth' rounded down
-    int j = (int)(count % sw_val);  // extra spaces
+    int i = trim_to_int(count / sw_val);  // number of 'shiftwidth' rounded down
+    int j = trim_to_int(count % sw_val);  // extra spaces
     if (j && left) {  // first remove extra spaces
       amount--;
     }
@@ -305,15 +306,11 @@ void shift_line(bool left, bool round, int amount, int call_changed_bytes)
     }
   }
 
-  if (count > INT_MAX) {
-    count = INT_MAX;
-  }
-
   // Set new indent
   if (State & VREPLACE_FLAG) {
-    change_indent(INDENT_SET, (int)count, false, call_changed_bytes);
+    change_indent(INDENT_SET, trim_to_int(count), false, call_changed_bytes);
   } else {
-    set_indent((int)count, call_changed_bytes ? SIN_CHANGED : 0);
+    set_indent(trim_to_int(count), call_changed_bytes ? SIN_CHANGED : 0);
   }
 }
 
