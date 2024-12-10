@@ -12,3 +12,6 @@ if vim.fn.isdirectory('/usr/include') == 1 then
 end
 
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '') .. '\n setl commentstring< define< include< path<'
+vim.b.match_words = vim.b.match_words..
+  ",\\<switch\\>:\\<case\\>:\\<default\\>".. -- (switches)
+  ",\\(else\\s\\+\\)\\@<!if\\>:\\<else\\s\\+if\\>:\\<else\\(\\s\\+if\\)\\@!\\>".. -- (if else if else statements)
