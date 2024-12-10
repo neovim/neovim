@@ -38,6 +38,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/buffer.h"
 #include "nvim/eval/decode.h"
+#include "nvim/eval/deprecated.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/executor.h"
 #include "nvim/eval/funcs.h"
@@ -3839,7 +3840,7 @@ static const char *required_env_vars[] = {
   NULL
 };
 
-static dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, const bool pty,
+dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, const bool pty,
                                   const char * const pty_term_name)
 {
   dict_T *env = tv_dict_alloc();
@@ -3932,7 +3933,7 @@ static dict_T *create_environment(const dictitem_T *job_env, const bool clear_en
 }
 
 /// "jobstart()" function
-static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
@@ -3941,8 +3942,9 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
+  const char *cmd;
   bool executable = true;
-  char **argv = tv_to_argv(&argvars[0], NULL, &executable);
+  char **argv = tv_to_argv(&argvars[0], &cmd, &executable);
   dict_T *env = NULL;
   if (!argv) {
     rettv->vval.v_number = executable ? 0 : -1;
@@ -3960,6 +3962,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool detach = false;
   bool rpc = false;
   bool pty = false;
+  bool term = false;
   bool clear_env = false;
   bool overlapped = false;
   ChannelStdinMode stdin_mode = kChannelStdinPipe;
@@ -3974,6 +3977,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     detach = tv_dict_get_number(job_opts, "detach") != 0;
     rpc = tv_dict_get_number(job_opts, "rpc") != 0;
     pty = tv_dict_get_number(job_opts, "pty") != 0;
+    term = tv_dict_get_number(job_opts, "term") != 0;
     clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
     overlapped = tv_dict_get_number(job_opts, "overlapped") != 0;
 
@@ -4031,15 +4035,33 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   uint16_t height = 0;
   char *term_name = NULL;
 
+  if (term) {
+    if (text_locked()) {
+      text_locked_msg();
+      shell_free_argv(argv);
+      return;
+    }
+    if (curbuf->b_changed) {
+      emsg(_("Can only call this function in an unmodified buffer"));
+      return;
+    }
+    term_name = "xterm-256color";
+    pty = true;
+    cwd = ".";
+    overlapped = false;
+    detach = false;
+    rpc = false;
+    stdin_mode = kChannelStdinPipe;
+    width = (uint16_t)MAX(0, curwin->w_width_inner - win_col_off(curwin));
+  }
+
   if (pty) {
-    width = (uint16_t)tv_dict_get_number(job_opts, "width");
-    height = (uint16_t)tv_dict_get_number(job_opts, "height");
+    width = width ? width : (uint16_t)tv_dict_get_number(job_opts, "width");
+    height = height ? height : (uint16_t)tv_dict_get_number(job_opts, "height");
     // Legacy method, before env option existed, to specify $TERM.  No longer
     // documented, but still usable to avoid breaking scripts.
-    term_name = tv_dict_get_string(job_opts, "TERM", false);
-    if (!term_name) {
-      term_name = "ansi";
-    }
+    term_name = term_name ? term_name : tv_dict_get_string(job_opts, "TERM", false);
+    term_name = term_name ? term_name : "ansi";
   }
 
   env = create_environment(job_env, clear_env, pty, term_name);
@@ -4047,7 +4069,54 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   Channel *chan = channel_job_start(argv, NULL, on_stdout, on_stderr, on_exit, pty,
                                     rpc, overlapped, detach, stdin_mode, cwd,
                                     width, height, env, &rettv->vval.v_number);
-  if (chan) {
+  if (term) {
+    if (rettv->vval.v_number <= 0) {
+      return;
+    }
+
+    int pid = chan->stream.pty.proc.pid;
+
+    // "./…" => "/home/foo/…"
+    vim_FullName(cwd, NameBuff, sizeof(NameBuff), false);
+    // "/home/foo/…" => "~/…"
+    size_t len = home_replace(NULL, NameBuff, IObuff, sizeof(IObuff), true);
+    // Trim slash.
+    if (len != 1 && (IObuff[len - 1] == '\\' || IObuff[len - 1] == '/')) {
+      IObuff[len - 1] = NUL;
+    }
+
+    if (len == 1 && IObuff[0] == '/') {
+      // Avoid ambiguity in the URI when CWD is root directory.
+      IObuff[1] = '.';
+      IObuff[2] = NUL;
+    }
+
+    // Terminal URI: "term://$CWD//$PID:$CMD"
+    snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s", IObuff, pid, cmd);
+    // at this point the buffer has no terminal instance associated yet, so unset
+    // the 'swapfile' option to ensure no swap file will be created
+    curbuf->b_p_swf = false;
+
+    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
+    setfname(curbuf, NameBuff, NULL, true);
+    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+
+    // Save the job id and pid in b:terminal_job_{id,pid}
+    Error err = ERROR_INIT;
+    // deprecated: use 'channel' buffer option
+    dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_id"),
+                 INTEGER_OBJ((Integer)chan->id), false, false, NULL, &err);
+    api_clear_error(&err);
+    dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
+                 INTEGER_OBJ(pid), false, false, NULL, &err);
+    api_clear_error(&err);
+
+    channel_incref(chan);
+    channel_terminal_open(curbuf, chan);
+    channel_create_event(chan, NULL);
+    channel_decref(chan);
+  }
+  else if (chan) {
     channel_create_event(chan, NULL);
   }
 }
@@ -8130,134 +8199,6 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
   get_tags(tv_list_alloc_ret(rettv, kListLenUnknown),
            (char *)tag_pattern, (char *)fname);
-}
-
-/// "termopen(cmd[, cwd])" function
-static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  if (check_secure()) {
-    return;
-  }
-  if (text_locked()) {
-    text_locked_msg();
-    return;
-  }
-  if (curbuf->b_changed) {
-    emsg(_("Can only call this function in an unmodified buffer"));
-    return;
-  }
-
-  const char *cmd;
-  bool executable = true;
-  char **argv = tv_to_argv(&argvars[0], &cmd, &executable);
-  if (!argv) {
-    rettv->vval.v_number = executable ? 0 : -1;
-    return;  // Did error message in tv_to_argv.
-  }
-
-  if (argvars[1].v_type != VAR_DICT && argvars[1].v_type != VAR_UNKNOWN) {
-    // Wrong argument type
-    semsg(_(e_invarg2), "expected dictionary");
-    shell_free_argv(argv);
-    return;
-  }
-
-  CallbackReader on_stdout = CALLBACK_READER_INIT;
-  CallbackReader on_stderr = CALLBACK_READER_INIT;
-  Callback on_exit = CALLBACK_NONE;
-  dict_T *job_opts = NULL;
-  const char *cwd = ".";
-  dict_T *env = NULL;
-  const bool pty = true;
-  bool clear_env = false;
-  dictitem_T *job_env = NULL;
-
-  if (argvars[1].v_type == VAR_DICT) {
-    job_opts = argvars[1].vval.v_dict;
-
-    const char *const new_cwd = tv_dict_get_string(job_opts, "cwd", false);
-    if (new_cwd && *new_cwd != NUL) {
-      cwd = new_cwd;
-      // The new cwd must be a directory.
-      if (!os_isdir(cwd)) {
-        semsg(_(e_invarg2), "expected valid directory");
-        shell_free_argv(argv);
-        return;
-      }
-    }
-
-    job_env = tv_dict_find(job_opts, S_LEN("env"));
-    if (job_env && job_env->di_tv.v_type != VAR_DICT) {
-      semsg(_(e_invarg2), "env");
-      shell_free_argv(argv);
-      return;
-    }
-
-    clear_env = tv_dict_get_number(job_opts, "clear_env") != 0;
-
-    if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
-      shell_free_argv(argv);
-      return;
-    }
-  }
-
-  env = create_environment(job_env, clear_env, pty, "xterm-256color");
-
-  const bool rpc = false;
-  const bool overlapped = false;
-  const bool detach = false;
-  ChannelStdinMode stdin_mode = kChannelStdinPipe;
-  uint16_t term_width = (uint16_t)MAX(0, curwin->w_width_inner - win_col_off(curwin));
-  Channel *chan = channel_job_start(argv, NULL, on_stdout, on_stderr, on_exit,
-                                    pty, rpc, overlapped, detach, stdin_mode,
-                                    cwd, term_width, (uint16_t)curwin->w_height_inner,
-                                    env, &rettv->vval.v_number);
-  if (rettv->vval.v_number <= 0) {
-    return;
-  }
-
-  int pid = chan->stream.pty.proc.pid;
-
-  // "./…" => "/home/foo/…"
-  vim_FullName(cwd, NameBuff, sizeof(NameBuff), false);
-  // "/home/foo/…" => "~/…"
-  size_t len = home_replace(NULL, NameBuff, IObuff, sizeof(IObuff), true);
-  // Trim slash.
-  if (len != 1 && (IObuff[len - 1] == '\\' || IObuff[len - 1] == '/')) {
-    IObuff[len - 1] = NUL;
-  }
-
-  if (len == 1 && IObuff[0] == '/') {
-    // Avoid ambiguity in the URI when CWD is root directory.
-    IObuff[1] = '.';
-    IObuff[2] = NUL;
-  }
-
-  // Terminal URI: "term://$CWD//$PID:$CMD"
-  snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s",
-           IObuff, pid, cmd);
-  // at this point the buffer has no terminal instance associated yet, so unset
-  // the 'swapfile' option to ensure no swap file will be created
-  curbuf->b_p_swf = false;
-
-  apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-  setfname(curbuf, NameBuff, NULL, true);
-  apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
-
-  // Save the job id and pid in b:terminal_job_{id,pid}
-  Error err = ERROR_INIT;
-  // deprecated: use 'channel' buffer option
-  dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_id"),
-               INTEGER_OBJ((Integer)chan->id), false, false, NULL, &err);
-  api_clear_error(&err);
-  dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
-               INTEGER_OBJ(pid), false, false, NULL, &err);
-  api_clear_error(&err);
-
-  channel_incref(chan);
-  channel_terminal_open(curbuf, chan);
-  channel_create_event(chan, NULL);
-  channel_decref(chan);
 }
 
 /// "timer_info([timer])" function
