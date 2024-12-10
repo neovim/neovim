@@ -1,5 +1,9 @@
+if vim.fn.get(vim.g, 'skip_defaults_lua', 0) then
+  return
+end
+
 --- Default user commands
-do
+if not vim.fn.get(vim.g, 'skip_defaults_lua_commands', 0) then
   vim.api.nvim_create_user_command('Inspect', function(cmd)
     if cmd.bang then
       vim.print(vim.inspect_pos())
@@ -27,7 +31,7 @@ do
 end
 
 --- Default mappings
-do
+if not vim.fn.get(vim.g, 'skip_defaults_lua_mappings', 0) then
   --- Default maps for * and # in visual mode.
   ---
   --- See |v_star-default| and |v_#-default|
@@ -380,7 +384,7 @@ do
 end
 
 --- Default menus
-do
+if not vim.fn.get(vim.g, 'skip_defaults_lua_menus', 0) then
   --- Right click popup menu
   vim.cmd([[
     anoremenu PopUp.Go\ to\ definition      <Cmd>lua vim.lsp.buf.definition()<CR>
@@ -428,7 +432,7 @@ do
 end
 
 --- Default autocommands. See |default-autocmds|
-do
+if not vim.fn.get(vim.g, 'skip_defaults_lua_autocmds', 0) then
   local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim_terminal', {})
   vim.api.nvim_create_autocmd('BufReadCmd', {
     pattern = 'term://*',
@@ -805,7 +809,7 @@ do
 end
 
 --- Default options
-do
+if not vim.fn.get(vim.g, 'skip_defaults_lua_options', 0) then
   --- Default 'grepprg' to ripgrep if available.
   if vim.fn.executable('rg') == 1 then
     -- Use -uu to make ripgrep not check ignore files/skip dot-files

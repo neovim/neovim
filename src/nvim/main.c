@@ -429,10 +429,6 @@ int main(int argc, char **argv)
     }
   }
 
-  nlua_init_defaults();
-
-  TIME_MSG("init default mappings & autocommands");
-
   bool vimrc_none = strequal(params.use_vimrc, "NONE");
 
   // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.
@@ -461,6 +457,10 @@ int main(int argc, char **argv)
     // disable syntax highlighting with `:syntax off` if they wish.
     syn_maybe_enable();
   }
+
+  nlua_init_defaults();
+
+  TIME_MSG("init default mappings & autocommands");
 
   // Read all the plugin files.
   load_plugins();

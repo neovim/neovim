@@ -350,6 +350,11 @@ These existing features changed their behavior.
   `%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim`. This is only an
   implementation simplification, not a behavior change.
 
+• Default `_defaults.lua` is loaded after user config. `_defaults.lua` loading
+  is disabled when "g:skip_defaults_lua" variables are set.
+  See |startup|.
+
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
