@@ -277,6 +277,7 @@ local config = {
       'folding_range.lua',
       'inlay_hint.lua',
       'tagfunc.lua',
+      'selection_range.lua',
       'semantic_tokens.lua',
       'handlers.lua',
       'util.lua',

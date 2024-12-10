@@ -503,6 +503,9 @@ function protocol.make_client_capabilities()
         dynamicRegistration = true,
         contentFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
       },
+      selectionRange = {
+        dynamicRegistration = false,
+      },
       signatureHelp = {
         dynamicRegistration = false,
         signatureInformation = {
