@@ -1,5 +1,7 @@
 -- use treesitter over syntax (for highlighted code blocks)
-vim.treesitter.start()
+if not vim.fn.get(vim.g, 'help_no_treesitter', 0) then
+  vim.treesitter.start()
+end
 
 -- Add custom highlights for list in `:h highlight-groups`.
 local bufname = vim.fs.normalize(vim.api.nvim_buf_get_name(0))

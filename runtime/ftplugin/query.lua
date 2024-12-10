@@ -8,7 +8,9 @@ end
 -- Do not set vim.b.did_ftplugin = 1 to allow loading of ftplugin/lisp.vim
 
 -- use treesitter over syntax
-vim.treesitter.start()
+if not vim.fn.get(vim.g, 'query_no_treesitter', 0) then
+  vim.treesitter.start()
+end
 
 -- set omnifunc
 vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'

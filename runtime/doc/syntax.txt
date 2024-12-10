@@ -1386,6 +1386,12 @@ will force TeX highlighting for a particular buffer.  It has to be
 set before turning syntax highlighting on for the buffer or
 loading a file.
 
+HELP						*html.vim* *ft-help-syntax*
+
+						*g:help_no_treesitter*
+By default, use treesitter over syntax.  It is disabled by setting
+g:help_no_treesitter to true.
+
 
 HTML						*html.vim* *ft-html-syntax*
 
@@ -1863,6 +1869,10 @@ lua_version and lua_subversion. For example, to activate Lua
 
 	:let lua_version = 5
 	:let lua_subversion = 1
+<
+						*g:lua_no_treesitter*
+By default, use treesitter over syntax.  It is disabled by setting
+g:lua_no_treesitter to true.
 
 
 MAIL						*mail.vim* *ft-mail.vim*
@@ -2671,6 +2681,12 @@ set to highlight commands only available in Quake 3 Arena: >
 
 Any combination of these three variables is legal, but might highlight more
 commands than are actually available to you by the game.
+
+QUERY						*ft-query-syntax*
+
+						*g:query_no_treesitter*
+By default, use treesitter over syntax.  It is disabled by setting
+g:query_no_treesitter to true.
 
 
 R							*r.vim* *ft-r-syntax*
