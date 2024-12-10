@@ -17,10 +17,14 @@ TUI and GUI (assuming the UI supports the given feature). See |TUI| for notes
 specific to the terminal UI. Help tags with the "gui-" prefix refer to UI
 features, whereas help tags with the "ui-" prefix refer to the |ui-protocol|.
 
-Nvim provides a default, builtin UI (the |TUI|), but there are many other
-(third-party) GUIs that you can use instead:
+==============================================================================
+Third-party GUIs                                *third-party-guis* *vscode*
 
-                                                        *vscode*
+Nvim provides a builtin "terminal UI" (|TUI|), but also works with many
+(third-party) GUIs which may provide a fresh look or extra features on top of
+Nvim. For example, "vscode-neovim" essentally allows you to use VSCode as
+a Nvim GUI.
+
 - vscode-neovim (Nvim in VSCode!) https://github.com/vscode-neovim/vscode-neovim
 - Firenvim (Nvim in your web browser!) https://github.com/glacambre/firenvim
 - Neovide https://neovide.dev/
