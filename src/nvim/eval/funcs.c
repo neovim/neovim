@@ -3553,11 +3553,7 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   });
 
   // Ask for choice.
-  bool mouse_used;
-  int selected = prompt_for_number(&mouse_used);
-  if (mouse_used) {
-    selected -= lines_left;
-  }
+  int selected = prompt_for_number(NULL);
 
   rettv->vval.v_number = selected;
 }

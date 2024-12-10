@@ -1001,18 +1001,20 @@ stack traceback:
     feed('z=')
     screen:expect({
       grid = [[
-        {100:helllo}                   |
-        {1:~                        }|*3
-        {1:^~                        }|
+        {100:^helllo}                   |
+        {1:~                        }|*4
       ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          pos = 0,
+          prompt = 'Type number and <Enter> (empty cancels):',
+        },
+      },
       messages = {
         {
           content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
           kind = 'list_cmd',
-        },
-        {
-          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
-          kind = 'number_prompt',
         },
       },
     })
@@ -1020,22 +1022,20 @@ stack traceback:
     feed('1')
     screen:expect({
       grid = [[
-        {100:helllo}                   |
-        {1:~                        }|*3
-        {1:^~                        }|
+        {100:^helllo}                   |
+        {1:~                        }|*4
       ]],
+      cmdline = {
+        {
+          content = { { '1' } },
+          pos = 1,
+          prompt = 'Type number and <Enter> (empty cancels):',
+        },
+      },
       messages = {
         {
           content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
           kind = 'list_cmd',
-        },
-        {
-          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
-          kind = 'number_prompt',
-        },
-        {
-          content = { { '1' } },
-          kind = '',
         },
       },
     })

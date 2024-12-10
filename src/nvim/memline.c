@@ -1,5 +1,7 @@
 // for debugging
 // #define CHECK(c, s) do { if (c) emsg(s); } while (0)
+#include <stdlib.h>
+#include "nvim/ex_getln.h"
 #define CHECK(c, s) do {} while (0)
 
 // memline.c: Contains the functions for appending, deleting and changing the
@@ -805,8 +807,7 @@ void ml_recover(bool checkext)
       // list the names of the swapfiles
       recover_names(fname, true, NULL, 0, NULL);
       msg_putchar('\n');
-      msg_puts(_("Enter number of swap file to use (0 to quit): "));
-      i = get_number(false, NULL);
+      i = prompt_for_number(_("Enter number of swap file to use (0 to quit): "));
       if (i < 1 || i > len) {
         goto theend;
       }
