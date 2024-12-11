@@ -17,6 +17,7 @@
 --- @field deprecated? true
 --- @field returns? string|false
 --- @field returns_desc? string
+--- @field generics? string[] Used to write `---@generic` annotations over a function.
 --- @field signature? string
 --- @field desc? string
 --- @field params [string, string, string][]
@@ -1521,9 +1522,10 @@ M.funcs = {
       A |Dictionary| is copied in a similar way as a |List|.
       Also see |deepcopy()|.
     ]=],
+    generics = { 'T' },
     name = 'copy',
-    params = { { 'expr', 'any' } },
-    returns = 'any',
+    params = { { 'expr', 'T' } },
+    returns = 'T',
     signature = 'copy({expr})',
   },
   cos = {
@@ -1739,8 +1741,10 @@ M.funcs = {
       Also see |copy()|.
 
     ]=],
+    generics = { 'T' },
     name = 'deepcopy',
-    params = { { 'expr', 'any' }, { 'noref', 'boolean' } },
+    params = { { 'expr', 'T' }, { 'noref', 'boolean' } },
+    returns = 'T',
     signature = 'deepcopy({expr} [, {noref}])',
   },
   delete = {
@@ -5894,7 +5898,7 @@ M.funcs = {
       the index.
     ]=],
     name = 'items',
-    params = { { 'dict', 'any' } },
+    params = { { 'dict', 'table' } },
     signature = 'items({dict})',
   },
   jobclose = {
@@ -7309,6 +7313,7 @@ M.funcs = {
     ]=],
     name = 'max',
     params = { { 'expr', 'any' } },
+    returns = 'number',
     signature = 'max({expr})',
   },
   menu_get = {
@@ -8520,7 +8525,13 @@ M.funcs = {
       <
     ]=],
     name = 'reduce',
-    params = { { 'object', 'any' }, { 'func', 'function' }, { 'initial', 'any' } },
+    generics = { 'T' },
+    params = {
+      { 'object', 'any' },
+      { 'func', 'fun(accumulator: T, current: any): any' },
+      { 'initial', 'any' },
+    },
+    returns = 'T',
     signature = 'reduce({object}, {func} [, {initial}])',
   },
   reg_executing = {
@@ -8785,7 +8796,9 @@ M.funcs = {
       <
     ]=],
     name = 'reverse',
-    params = { { 'object', 'any' } },
+    generics = { 'T' },
+    params = { { 'object', 'T[]' } },
+    returns = 'T[]',
     signature = 'reverse({object})',
   },
   round = {
@@ -10924,7 +10937,9 @@ M.funcs = {
       <
     ]=],
     name = 'sort',
-    params = { { 'list', 'any' }, { 'how', 'string|function' }, { 'dict', 'any' } },
+    generics = { 'T' },
+    params = { { 'list', 'T[]' }, { 'how', 'string|function' }, { 'dict', 'any' } },
+    returns = 'T[]',
     signature = 'sort({list} [, {how} [, {dict}]])',
   },
   soundfold = {
