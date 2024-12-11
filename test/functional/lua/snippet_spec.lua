@@ -52,7 +52,7 @@ describe('vim.snippet', function()
     test_expand_success(
       { 'function $1($2)', '  $0', 'end' },
       { '  function ()', '    ', '  end' },
-      '',
+      'vim.opt.expandtab = true',
       '  '
     )
   end)
