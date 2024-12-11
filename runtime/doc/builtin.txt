@@ -1407,7 +1407,7 @@ ctxset({context} [, {index}])                                         *ctxset()*
                   • {index} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 ctxsize()                                                            *ctxsize()*
 		Returns the size of the |context-stack|.
@@ -1618,7 +1618,7 @@ did_filetype()                                                  *did_filetype()*
 		file.
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 diff_filler({lnum})                                              *diff_filler()*
 		Returns the number of filler lines above line {lnum}.
@@ -1633,7 +1633,7 @@ diff_filler({lnum})                                              *diff_filler()*
                   • {lnum} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 diff_hlID({lnum}, {col})                                           *diff_hlID()*
 		Returns the highlight ID for diff mode at line {lnum} column
@@ -1674,7 +1674,7 @@ digraph_get({chars})                                       *digraph_get()* *E121
                   • {chars} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 digraph_getlist([{listall}])                                 *digraph_getlist()*
 		Return a list of digraphs.  If the {listall} argument is given
@@ -1695,7 +1695,7 @@ digraph_getlist([{listall}])                                 *digraph_getlist()*
                   • {listall} (`boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`string[][]`)
 
 digraph_set({chars}, {digraph})                                  *digraph_set()*
 		Add digraph {chars} to the list.  {chars} must be a string
@@ -1756,7 +1756,7 @@ empty({expr})                                                          *empty()*
                   • {expr} (`any`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 environ()                                                            *environ()*
 		Return all of environment variables as dictionary. You can
@@ -1783,7 +1783,7 @@ escape({string}, {chars})                                             *escape()*
                   • {chars} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 eval({string})                                                          *eval()*
 		Evaluate {string} and return the result.  Especially useful to
@@ -2666,7 +2666,7 @@ foreach({expr1}, {expr2})                                            *foreach()*
                   • {expr2} (`string|function`)
 
                 Return: ~
-                  (`any`)
+                  (`string|table`)
 
 fullcommand({name})                                              *fullcommand()*
 		Get the full command name from a short abbreviated command
@@ -3000,7 +3000,7 @@ getbufline({buf}, {lnum} [, {end}])                               *getbufline()*
                   • {end} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 getbufoneline({buf}, {lnum})                                   *getbufoneline()*
 		Just like `getbufline()` but only get one line and return it
@@ -3295,7 +3295,7 @@ getcmdscreenpos()                                            *getcmdscreenpos()*
 		|setcmdline()|.
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 getcmdtype()                                                      *getcmdtype()*
 		Return the current command-line type. Possible return values
@@ -4299,7 +4299,7 @@ gettext({text})                                                      *gettext()*
                   • {text} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 getwininfo([{winid}])                                             *getwininfo()*
 		Returns information about windows as a |List| with Dictionaries.
@@ -4467,7 +4467,7 @@ glob2regpat({string})                                            *glob2regpat()*
                   • {string} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 globpath({path}, {expr} [, {nosuf} [, {list} [, {allinks}]]])       *globpath()*
 		Perform glob() for String {expr} on all directories in {path}
@@ -4824,7 +4824,7 @@ iconv({string}, {from}, {to})                                          *iconv()*
                   • {to} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 id({expr})                                                                *id()*
 		Returns a |String| which is a unique identifier of the
@@ -4847,7 +4847,7 @@ id({expr})                                                                *id()*
                   • {expr} (`any`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 indent({lnum})                                                        *indent()*
 		The result is a Number, which is indent of line {lnum} in the
@@ -4897,7 +4897,7 @@ index({object}, {expr} [, {start} [, {ic}]])                           *index()*
                   • {ic} (`boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 indexof({object}, {expr} [, {opts}])                                 *indexof()*
 		Returns the index of an item in {object} where {expr} is
@@ -4944,7 +4944,7 @@ indexof({object}, {expr} [, {opts}])                                 *indexof()*
                   • {opts} (`table?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 input({prompt} [, {text} [, {completion}]])                            *input()*
 
@@ -4954,7 +4954,7 @@ input({prompt} [, {text} [, {completion}]])                            *input()*
                   • {completion} (`string?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 input({opts})
 		The result is a String, which is whatever the user typed on
@@ -5071,7 +5071,7 @@ input({opts})
                   • {opts} (`table`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 inputlist({textlist})                                              *inputlist()*
 		{textlist} must be a |List| of strings.  This |List| is
@@ -5103,7 +5103,7 @@ inputrestore()                                                  *inputrestore()*
 		Returns TRUE when there is nothing to restore, FALSE otherwise.
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 inputsave()                                                        *inputsave()*
 		Preserve typeahead (also from mappings) and clear it, so that
@@ -5114,7 +5114,7 @@ inputsave()                                                        *inputsave()*
 		Returns TRUE when out of memory, FALSE otherwise.
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 inputsecret({prompt} [, {text}])                                 *inputsecret()*
 		This function acts much like the |input()| function with but
@@ -5132,7 +5132,7 @@ inputsecret({prompt} [, {text}])                                 *inputsecret()*
                   • {text} (`string?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 insert({object}, {item} [, {idx}])                                    *insert()*
 		When {object} is a |List| or a |Blob| insert {item} at the start
@@ -5183,10 +5183,10 @@ invert({expr})                                                        *invert()*
 <
 
                 Parameters: ~
-                  • {expr} (`number`)
+                  • {expr} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 isabsolutepath({path})                                        *isabsolutepath()*
 		The result is a Number, which is |TRUE| when {path} is an
@@ -5399,7 +5399,7 @@ jobstart({cmd} [, {opts}])                                          *jobstart()*
                   • {opts} (`table?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 jobstop({id})                                                        *jobstop()*
 		Stop |job-id| {id} by sending SIGTERM to the job process. If
@@ -5415,7 +5415,7 @@ jobstop({id})                                                        *jobstop()*
                   • {id} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 jobwait({jobs} [, {timeout}])                                        *jobwait()*
 		Waits for jobs and their |on_exit| handlers to complete.
@@ -5461,7 +5461,7 @@ join({list} [, {sep}])                                                  *join()*
                   • {sep} (`string?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 json_decode({expr})                                              *json_decode()*
 		Convert {expr} from JSON object.  Accepts |readfile()|-style
@@ -5500,7 +5500,7 @@ json_encode({expr})                                              *json_encode()*
                   • {expr} (`any`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 keys({dict})                                                            *keys()*
 		Return a |List| with all the keys of {dict}.  The |List| is in
@@ -5510,7 +5510,7 @@ keys({dict})                                                            *keys()*
                   • {dict} (`table`)
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 keytrans({string})                                                  *keytrans()*
 		Turn the internal byte representation of keys into a form that
@@ -5523,7 +5523,7 @@ keytrans({string})                                                  *keytrans()*
                   • {string} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 len({expr})                                                         *len()* *E701*
 		The result is a Number, which is the length of the argument.
@@ -5537,10 +5537,10 @@ len({expr})                                                         *len()* *E70
 		Otherwise an error is given and returns zero.
 
                 Parameters: ~
-                  • {expr} (`any`)
+                  • {expr} (`any[]`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 libcall({libname}, {funcname}, {argument})                 *libcall()* *E364* *E368*
 		Call function {funcname} in the run-time library {libname}
@@ -5666,7 +5666,7 @@ lispindent({lnum})                                                *lispindent()*
                   • {lnum} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 list2blob({list})                                                  *list2blob()*
 		Return a Blob concatenating all the number values in {list}.
@@ -5682,7 +5682,7 @@ list2blob({list})                                                  *list2blob()*
                   • {list} (`any[]`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 list2str({list} [, {utf8}])                                         *list2str()*
 		Convert each number in {list} to a character string can
@@ -5705,14 +5705,14 @@ list2str({list} [, {utf8}])                                         *list2str()*
                   • {utf8} (`boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 localtime()                                                        *localtime()*
 		Return the current time, measured as seconds since 1st Jan
 		1970.  See also |strftime()|, |strptime()| and |getftime()|.
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 log({expr})                                                              *log()*
 		Return the natural logarithm (base e) of {expr} as a |Float|.
@@ -5729,7 +5729,7 @@ log({expr})                                                              *log()*
                   • {expr} (`number`)
 
                 Return: ~
-                  (`any`)
+                  (`number`)
 
 log10({expr})                                                          *log10()*
 		Return the logarithm of Float {expr} to base 10 as a |Float|.
@@ -5745,7 +5745,7 @@ log10({expr})                                                          *log10()*
                   • {expr} (`number`)
 
                 Return: ~
-                  (`any`)
+                  (`number`)
 
 luaeval({expr} [, {expr}])                                           *luaeval()*
 		Evaluate Lua expression {expr} and return its result converted
@@ -6714,7 +6714,7 @@ min({expr})                                                              *min()*
                   • {expr} (`any`)
 
                 Return: ~
-                  (`any`)
+                  (`number`)
 
 mkdir({name} [, {flags} [, {prot}]])                              *mkdir()* *E739*
 		Create directory {name}.
@@ -6762,7 +6762,7 @@ mkdir({name} [, {flags} [, {prot}]])                              *mkdir()* *E73
                   • {prot} (`string?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 mode([{expr}])                                                          *mode()*
 		Return a string that indicates the current mode.
@@ -6937,7 +6937,7 @@ nextnonblank({lnum})                                            *nextnonblank()*
                   • {lnum} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 nr2char({expr} [, {utf8}])                                           *nr2char()*
 		Return a string with a single character, which has the number
@@ -6959,7 +6959,7 @@ nr2char({expr} [, {utf8}])                                           *nr2char()*
                   • {utf8} (`boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 nvim_...({...})                                      *nvim_...()* *E5555* *eval-api*
 		Call nvim |api| functions. The type checking of arguments will
@@ -7016,7 +7016,7 @@ pathshorten({path} [, {len}])                                    *pathshorten()*
                   • {len} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 perleval({expr})                                                    *perleval()*
 		Evaluate |perl| expression {expr} and return its result
@@ -7056,7 +7056,7 @@ pow({x}, {y})                                                            *pow()*
                   • {y} (`number`)
 
                 Return: ~
-                  (`any`)
+                  (`number`)
 
 prevnonblank({lnum})                                            *prevnonblank()*
 		Return the line number of the first line at or above {lnum}
@@ -7071,7 +7071,7 @@ prevnonblank({lnum})                                            *prevnonblank()*
                   • {lnum} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 printf({fmt}, {expr1} ...)                                            *printf()*
 		Return a String with {fmt}, where "%" items are replaced by
@@ -7901,7 +7901,7 @@ rename({from}, {to})                                                  *rename()*
                   • {to} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 repeat({expr}, {count})                                               *repeat()*
 		Repeat {expr} {count} times and return the concatenated
@@ -7937,7 +7937,7 @@ resolve({filename})                                             *resolve()* *E65
                   • {filename} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 reverse({object})                                                    *reverse()*
 		Reverse the order of items in {object}.  {object} can be a
@@ -7974,7 +7974,7 @@ round({expr})                                                          *round()*
                   • {expr} (`number`)
 
                 Return: ~
-                  (`any`)
+                  (`number`)
 
 rpcnotify({channel}, {event} [, {args}...])                        *rpcnotify()*
 		Sends {event} to {channel} via |RPC| and returns immediately.
@@ -7989,7 +7989,7 @@ rpcnotify({channel}, {event} [, {args}...])                        *rpcnotify()*
                   • {...} (`any`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 rpcrequest({channel}, {method} [, {args}...])                     *rpcrequest()*
 		Sends a request to {channel} to invoke {method} via
@@ -8033,7 +8033,7 @@ screenattr({row}, {col})                                          *screenattr()*
                   • {col} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 screenchar({row}, {col})                                          *screenchar()*
 		The result is a Number, which is the character at position
@@ -8050,7 +8050,7 @@ screenchar({row}, {col})                                          *screenchar()*
                   • {col} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 screenchars({row}, {col})                                        *screenchars()*
 		The result is a |List| of Numbers.  The first number is the same
@@ -8064,7 +8064,7 @@ screenchars({row}, {col})                                        *screenchars()*
                   • {col} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer[]`)
 
 screencol()                                                        *screencol()*
 		The result is a Number, which is the current screen column of
@@ -8082,7 +8082,7 @@ screencol()                                                        *screencol()*
 <
 
                 Return: ~
-                  (`any`)
+                  (`integer[]`)
 
 screenpos({winid}, {lnum}, {col})                                  *screenpos()*
 		The result is a Dict with the screen position of the text
@@ -8125,7 +8125,7 @@ screenrow()                                                        *screenrow()*
 		Note: Same restrictions as with |screencol()|.
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 screenstring({row}, {col})                                      *screenstring()*
 		The result is a String that contains the base character and
@@ -8140,7 +8140,7 @@ screenstring({row}, {col})                                      *screenstring()*
                   • {col} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 search({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]]) *search()*
 		Search for regexp pattern {pattern}.  The search starts at the
@@ -8567,7 +8567,7 @@ serverlist()                                                      *serverlist()*
 <
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 serverstart([{address}])                                         *serverstart()*
 		Opens a socket or named pipe at {address} and listens for
@@ -8607,7 +8607,7 @@ serverstart([{address}])                                         *serverstart()*
                   • {address} (`string?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 serverstop({address})                                             *serverstop()*
 		Closes the pipe or socket at {address}.
@@ -8619,7 +8619,7 @@ serverstop({address})                                             *serverstop()*
                   • {address} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 setbufline({buf}, {lnum}, {text})                                 *setbufline()*
 		Set line {lnum} to {text} in buffer {buf}.  This works like
@@ -8652,7 +8652,7 @@ setbufline({buf}, {lnum}, {text})                                 *setbufline()*
                   • {text} (`string|string[]`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 setbufvar({buf}, {varname}, {val})                                 *setbufvar()*
 		Set option or local variable {varname} in buffer {buf} to
@@ -8772,7 +8772,7 @@ setcmdline({str} [, {pos}])                                       *setcmdline()*
                   • {pos} (`integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 setcmdpos({pos})                                                   *setcmdpos()*
 		Set the cursor position in the command line to byte position
@@ -9104,7 +9104,7 @@ setqflist({list} [, {action} [, {what}]])                          *setqflist()*
                   • {what} (`vim.fn.setqflist.what?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 setreg({regname}, {value} [, {options}])                              *setreg()*
 		Set the register {regname} to {value}.
@@ -9275,7 +9275,7 @@ sha256({string})                                                      *sha256()*
                   • {string} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 shellescape({string} [, {special}])                              *shellescape()*
 		Escape {string} for use as a shell command argument.
@@ -9314,7 +9314,7 @@ shellescape({string} [, {special}])                              *shellescape()*
                   • {special} (`boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 shiftwidth([{col}])                                               *shiftwidth()*
 		Returns the effective value of 'shiftwidth'. This is the
@@ -9792,7 +9792,7 @@ simplify({filename})                                                *simplify()*
                   • {filename} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 sin({expr})                                                              *sin()*
 		Return the sine of {expr}, measured in radians, as a |Float|.
@@ -9808,7 +9808,7 @@ sin({expr})                                                              *sin()*
                   • {expr} (`number`)
 
                 Return: ~
-                  (`any`)
+                  (`number`)
 
 sinh({expr})                                                            *sinh()*
 		Return the hyperbolic sine of {expr} as a |Float| in the range
@@ -9971,7 +9971,7 @@ soundfold({word})                                                  *soundfold()*
                   • {word} (`string`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 spellbadword([{sentence}])                                      *spellbadword()*
 		Without argument: The result is the badly spelled word under
@@ -10030,7 +10030,7 @@ spellsuggest({word} [, {max} [, {capital}]])                    *spellsuggest()*
                   • {capital} (`boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 split({string} [, {pattern} [, {keepempty}]])                          *split()*
 		Make a |List| out of {string}.  When {pattern} is omitted or
@@ -10063,7 +10063,7 @@ split({string} [, {pattern} [, {keepempty}]])                          *split()*
                   • {keepempty} (`boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`string[]`)
 
 sqrt({expr})                                                            *sqrt()*
 		Return the non-negative square root of Float {expr} as a
@@ -11188,7 +11188,7 @@ termopen({cmd} [, {opts}])                                          *termopen()*
                   • {opts} (`table?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 test_garbagecollect_now()                            *test_garbagecollect_now()*
 		Like |garbagecollect()|, but executed right away.  This must
@@ -11649,7 +11649,7 @@ virtcol2col({winid}, {lnum}, {col})                              *virtcol2col()*
                   • {col} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 visualmode([{expr}])                                              *visualmode()*
 		The result is a String, which describes the last Visual mode
@@ -11673,7 +11673,7 @@ visualmode([{expr}])                                              *visualmode()*
                   • {expr} (`boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 wait({timeout}, {condition} [, {interval}])                             *wait()*
 		Waits until {condition} evaluates to |TRUE|, where {condition}
@@ -11815,7 +11815,7 @@ win_id2win({expr})                                                *win_id2win()*
                   • {expr} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 win_move_separator({nr}, {offset})                        *win_move_separator()*
 		Move window {nr}'s vertical separator (i.e., the right border)
@@ -12040,7 +12040,7 @@ winnr([{arg}])                                                         *winnr()*
                   • {arg} (`string|integer?`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 winrestcmd()                                                      *winrestcmd()*
 		Returns a sequence of |:resize| commands that should restore
@@ -12054,7 +12054,7 @@ winrestcmd()                                                      *winrestcmd()*
 <
 
                 Return: ~
-                  (`any`)
+                  (`string`)
 
 winrestview({dict})                                              *winrestview()*
 		Uses the |Dictionary| returned by |winsaveview()| to restore
@@ -12126,7 +12126,7 @@ winwidth({nr})                                                      *winwidth()*
                   • {nr} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 wordcount()                                                        *wordcount()*
 		The result is a dictionary of byte/chars/word statistics for
@@ -12216,11 +12216,11 @@ xor({expr}, {expr})                                                      *xor()*
 <
 
                 Parameters: ~
-                  • {expr} (`number`)
-                  • {expr1} (`number`)
+                  • {expr} (`integer`)
+                  • {expr1} (`integer`)
 
                 Return: ~
-                  (`any`)
+                  (`integer`)
 
 ==============================================================================
 2. Matching a pattern in a String			*string-match*
