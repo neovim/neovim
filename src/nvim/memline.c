@@ -804,8 +804,7 @@ void ml_recover(bool checkext)
       // list the names of the swapfiles
       recover_names(fname, true, NULL, 0, NULL);
       msg_putchar('\n');
-      msg_puts(_("Enter number of swap file to use (0 to quit): "));
-      i = get_number(false, NULL);
+      i = prompt_for_input(_("Enter number of swap file to use (0 to quit): "), 0, false, NULL);
       if (i < 1 || i > len) {
         goto theend;
       }

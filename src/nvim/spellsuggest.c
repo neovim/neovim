@@ -444,7 +444,7 @@ void spell_suggest(int count)
   char wcopy[MAXWLEN + 2];
   suginfo_T sug;
   suggest_T *stp;
-  bool mouse_used;
+  bool mouse_used = false;
   int selected = count;
   int badlen = 0;
   int msg_scroll_save = msg_scroll;
@@ -594,15 +594,11 @@ void spell_suggest(int count)
     cmdmsg_rl = false;
     msg_col = 0;
     // Ask for choice.
-    selected = prompt_for_number(&mouse_used);
-
-    if (ui_has(kUIMessages)) {
-      ui_call_msg_clear();
-    }
-
+    selected = prompt_for_input(NULL, 0, false, &mouse_used);
     if (mouse_used) {
-      selected -= lines_left;
+      selected = sug.su_ga.ga_len + 1 - (cmdline_row - mouse_row);
     }
+
     lines_left = Rows;                  // avoid more prompt
     // don't delay for 'smd' in normal_cmd()
     msg_scroll = msg_scroll_save;
