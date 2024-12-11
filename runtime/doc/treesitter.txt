@@ -902,8 +902,8 @@ get_captures_at_pos({bufnr}, {row}, {col})
     Returns a list of highlight captures at the given position
 
     Each capture is represented by a table containing the capture name as a
-    string as well as a table of metadata (`priority`, `conceal`, ...; empty
-    if none are defined).
+    string, the capture's language, a table of metadata (`priority`,
+    `conceal`, ...; empty if none are defined), and the id of the capture.
 
     Parameters: ~
       • {bufnr}  (`integer`) Buffer number (0 for current buffer)
@@ -911,7 +911,7 @@ get_captures_at_pos({bufnr}, {row}, {col})
       • {col}    (`integer`) Position column
 
     Return: ~
-        (`{capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata}[]`)
+        (`{capture: string, lang: string, metadata: vim.treesitter.query.TSMetadata, id: integer}[]`)
 
 get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position

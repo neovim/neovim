@@ -289,6 +289,7 @@ TREESITTER
   false, which allows it to return anonymous nodes as well as named nodes.
 • |treesitter-directive-trim!| can trim all whitespace (not just empty lines)
   from both sides of a node.
+• |vim.treesitter.get_captures_at_pos()| now returns the `id` of each capture
 
 TUI
 
