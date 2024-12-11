@@ -116,7 +116,7 @@ describe('NULL', function()
     null_expr_test(
       'is accepted as an empty list by inputlist()',
       '[feedkeys("\\n"), inputlist(L)]',
-      'Type number and <Enter> or click with the mouse (q or empty cancels): ',
+      '',
       { 0, 0 }
     )
     null_expr_test(

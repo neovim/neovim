@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/ex_getln.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -34,44 +35,35 @@
 /// No other characters are accepted, the message is repeated until a valid
 /// reply is entered or <C-c> is hit.
 ///
-/// @param[in]  str  Prompt: question to ask user. Is always followed by
-///                  " (y/n)?".
-/// @param[in]  direct  Determines what function to use to get user input. If
-///                     true then input_get() will be used, otherwise vgetc().
-///                     I.e. when direct is true then characters are obtained
-///                     directly from the user without buffers involved.
+/// @param[in]  str  Prompt: question to ask user. Is always followed by " (y/n)?".
 ///
 /// @return 'y' or 'n'. Last is also what will be returned in case of interrupt.
-int ask_yesno(const char *const str, const bool direct)
+int ask_yesno(const char *const str)
 {
   const int save_State = State;
 
   no_wait_return++;
   State = MODE_CONFIRM;  // Mouse behaves like with :confirm.
   setmouse();  // Disable mouse in xterm.
-  no_mapping++;
-  allow_keys++;  // no mapping here, but recognize keys
+  snprintf(IObuff, IOSIZE, _("%s (y/n)?"), str);
+  char *prompt = xstrdup(IObuff);
 
   int r = ' ';
   while (r != 'y' && r != 'n') {
     // same highlighting as for wait_return()
-    smsg(HLF_R, "%s (y/n)?", str);
-    if (direct) {
-      r = get_keystroke(NULL);
-    } else {
-      r = plain_vgetc();
-    }
+    r = prompt_for_key(prompt, HLF_R);
     if (r == Ctrl_C || r == ESC) {
       r = 'n';
+      if (!ui_has(kUIMessages)) {
+        msg_putchar(r);
+      }
     }
-    msg_putchar(r);  // Show what you typed.
-    ui_flush();
   }
+
   no_wait_return--;
   State = save_State;
   setmouse();
-  no_mapping--;
-  allow_keys--;
+  xfree(prompt);
 
   return r;
 }
@@ -157,105 +149,73 @@ int get_keystroke(MultiQueue *events)
   return n;
 }
 
-/// Get a number from the user.
-/// When "mouse_used" is not NULL allow using the mouse.
-///
-/// @param colon  allow colon to abort
-int get_number(int colon, bool *mouse_used)
+/// Output messages, set cmdline_row and save potential "keep_msg",
+/// which is otherwise lost to msg_start() in gotocmdline().
+static char *prepare_prompt(void)
 {
-  int n = 0;
-  int typed = 0;
-
-  if (mouse_used != NULL) {
-    *mouse_used = false;
-  }
-
-  // When not printing messages, the user won't know what to type, return a
-  // zero (as if CR was hit).
-  if (msg_silent != 0) {
-    return 0;
-  }
-
-  no_mapping++;
-  allow_keys++;  // no mapping here, but recognize keys
-  while (true) {
-    ui_cursor_goto(msg_row, msg_col);
-    int c = safe_vgetc();
-    if (ascii_isdigit(c)) {
-      if (vim_append_digit_int(&n, c - '0') == FAIL) {
-        return 0;
-      }
-      msg_putchar(c);
-      typed++;
-    } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H) {
-      if (typed > 0) {
-        msg_puts("\b \b");
-        typed--;
-      }
-      n /= 10;
-    } else if (mouse_used != NULL && c == K_LEFTMOUSE) {
-      *mouse_used = true;
-      n = mouse_row + 1;
-      break;
-    } else if (n == 0 && c == ':' && colon) {
-      stuffcharReadbuff(':');
-      if (!exmode_active) {
-        cmdline_row = msg_row;
-      }
-      skip_redraw = true;           // skip redraw once
-      do_redraw = false;
-      break;
-    } else if (c == Ctrl_C || c == ESC || c == 'q') {
-      n = 0;
-      break;
-    } else if (c == CAR || c == NL) {
-      break;
-    }
-  }
-  no_mapping--;
-  allow_keys--;
-  return n;
+  ui_flush();
+  cmdline_row = msg_row;
+  return keep_msg ? xstrdup(keep_msg) : NULL;
 }
 
 /// Ask the user to enter a number.
 ///
 /// When "mouse_used" is not NULL allow using the mouse and in that case return
 /// the line number.
-int prompt_for_number(bool *mouse_used)
+int prompt_for_number(char *prompt, bool *mouse_used)
 {
-  msg_ext_set_kind("number_prompt");
-  // When using ":silent" assume that <CR> was entered.
-  if (mouse_used != NULL) {
-    msg_puts(_("Type number and <Enter> or click with the mouse "
-               "(q or empty cancels): "));
-  } else {
-    msg_puts(_("Type number and <Enter> (q or empty cancels): "));
+  if (prompt == NULL) {
+    if (mouse_used != NULL) {
+      prompt = _("Type number and <Enter> or click with the mouse (q or empty cancels):");
+    } else {
+      prompt = _("Type number and <Enter> (q or empty cancels):");
+    }
   }
 
-  // Set the state such that text can be selected/copied/pasted and we still
-  // get mouse events.
-  int save_cmdline_row = cmdline_row;
-  cmdline_row = 0;
-  int save_State = State;
-  State = MODE_ASKMORE;  // prevents a screen update when using a timer
-  // May show different mouse shape.
-  setmouse();
+  int ret = 0;
+  char *kmsg = prepare_prompt();
 
-  int i = get_number(true, mouse_used);
-  if (KeyTyped) {
-    // don't call wait_return() now
-    if (msg_row > 0) {
-      cmdline_row = msg_row - 1;
-    }
+  while (ret == 0) {
+    char *resp = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL,
+                                   CALLBACK_NONE, false, mouse_used);
     need_wait_return = false;
     msg_didany = false;
     msg_didout = false;
-  } else {
-    cmdline_row = save_cmdline_row;
-  }
-  State = save_State;
-  // May need to restore mouse shape.
-  setmouse();
 
-  return i;
+    if (resp == NULL || *resp == NUL || (mouse_used && *mouse_used)) {
+      xfree(resp);
+      break;
+    }
+
+    ret = atoi(resp);
+    xfree(resp);
+  }
+
+  if (kmsg != NULL) {
+    set_keep_msg(kmsg, keep_msg_hl_id);
+    xfree(kmsg);
+  }
+
+  return ret;
+}
+
+/// Ask the user to enter a key.
+int prompt_for_key(char *prompt, int hl_id)
+{
+  int ret = ESC;
+  char *kmsg = prepare_prompt();
+  char *resp = getcmdline_prompt(-1, prompt, hl_id, EXPAND_NOTHING, NULL,
+                                 CALLBACK_NONE, true, NULL);
+  need_wait_return = msg_scrolled;
+  if (resp != NULL) {
+    ret = (int)(*resp);
+    xfree(resp);
+  }
+
+  if (kmsg != NULL) {
+    set_keep_msg(kmsg, keep_msg_hl_id);
+    xfree(kmsg);
+  }
+
+  return ret;
 }

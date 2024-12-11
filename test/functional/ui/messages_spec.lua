@@ -42,18 +42,25 @@ describe('ui/ext_messages', function()
   it('msg_clear follows msg_show kind of confirm', function()
     feed('iline 1<esc>')
     feed(':call confirm("test")<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
-      line ^1                   |
-      {1:~                        }|*4
-    ]],
+        line ^1                   |
+        {1:~                        }|*4
+      ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          pos = 0,
+          prompt = '[O]k: ',
+        },
+      },
       messages = {
         {
-          content = { { '\ntest\n[O]k: ', 6, 11 } },
+          content = { { '\ntest\n', 6, 11 } },
           kind = 'confirm',
         },
       },
-    }
+    })
 
     feed('<cr>')
     screen:expect {
@@ -67,22 +74,29 @@ describe('ui/ext_messages', function()
   it('msg_show kinds', function()
     feed('iline 1\nline 2<esc>')
 
-    -- kind=confirm
+    -- confirm is now cmdline prompt
     feed(':echo confirm("test")<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
-      line 1                   |
-      line ^2                   |
-      {1:~                        }|*3
-    ]],
+        line 1                   |
+        line ^2                   |
+        {1:~                        }|*3
+      ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          pos = 0,
+          prompt = '[O]k: ',
+        },
+      },
       messages = {
         {
-          content = { { '\ntest\n[O]k: ', 6, 11 } },
+          content = { { '\ntest\n', 6, 11 } },
           kind = 'confirm',
         },
       },
-    }
-    feed('<cr><cr>')
+    })
+    feed('<cr>')
     screen:expect {
       grid = [[
       line 1                   |
@@ -91,7 +105,7 @@ describe('ui/ext_messages', function()
     ]],
       messages = {
         {
-          content = { { '\ntest\n[O]k: ', 6, 11 } },
+          content = { { '\ntest\n', 6, 11 } },
           kind = 'confirm',
         },
         {
@@ -104,23 +118,24 @@ describe('ui/ext_messages', function()
         },
       },
     }
-    feed('<cr><cr>')
+    feed('<cr>')
 
-    -- kind=confirm_sub
+    -- :substitute confirm is now cmdline prompt
     feed(':%s/i/X/gc<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
-      l{2:i}ne 1                   |
-      l{10:i}ne ^2                   |
-      {1:~                        }|*3
-    ]],
-      messages = {
+        l{2:^i}ne 1                   |
+        l{10:i}ne 2                   |
+        {1:~                        }|*3
+      ]],
+      cmdline = {
         {
-          content = { { 'replace with X (y/n/a/q/l/^E/^Y)?', 6, 19 } },
-          kind = 'confirm_sub',
+          content = { { '' } },
+          pos = 0,
+          prompt = 'replace with X (y/n/a/q/l/^E/^Y)?',
         },
       },
-    }
+    })
     feed('nq')
 
     -- kind=wmsg (editing readonly file)
@@ -1001,18 +1016,20 @@ stack traceback:
     feed('z=')
     screen:expect({
       grid = [[
-        {100:helllo}                   |
-        {1:~                        }|*3
-        {1:^~                        }|
+        {100:^helllo}                   |
+        {1:~                        }|*4
       ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          pos = 0,
+          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels):',
+        },
+      },
       messages = {
         {
           content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
           kind = 'list_cmd',
-        },
-        {
-          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
-          kind = 'number_prompt',
         },
       },
     })
@@ -1020,22 +1037,20 @@ stack traceback:
     feed('1')
     screen:expect({
       grid = [[
-        {100:helllo}                   |
-        {1:~                        }|*3
-        {1:^~                        }|
+        {100:^helllo}                   |
+        {1:~                        }|*4
       ]],
+      cmdline = {
+        {
+          content = { { '1' } },
+          pos = 1,
+          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels):',
+        },
+      },
       messages = {
         {
           content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
           kind = 'list_cmd',
-        },
-        {
-          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
-          kind = 'number_prompt',
-        },
-        {
-          content = { { '1' } },
-          kind = '',
         },
       },
     })

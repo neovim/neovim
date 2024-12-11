@@ -1456,13 +1456,12 @@ describe('cmdheight=0', function()
     }
 
     feed(':%s/foo/bar/gc<CR>')
-    screen:expect {
-      grid = [[
-      {2:foo}                      |
-      {1:~                        }|*3
-      {6:replace wi...q/l/^E/^Y)?}^ |
-    ]],
-    }
+    screen:expect([[
+      {3:                         }|
+                               |*2
+      {6:replace with bar (y/n/a/q}|
+      {6:/l/^E/^Y)?}^               |
+    ]])
 
     feed('y')
     screen:expect {
