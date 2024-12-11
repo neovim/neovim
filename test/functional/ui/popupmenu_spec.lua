@@ -1684,25 +1684,26 @@ describe('builtin popupmenu', function()
           }
         end
 
-        -- info window position should be adjusted when new leader add
-        feed('<C-P>o')
+        -- delete one character make the pum width smaller than before
+        -- info window position should be adjusted when popupmenu width changed
+        feed('<BS>')
         if multigrid then
-          screen:expect {
+          screen:expect({
             grid = [[
-          ## grid 1
-            [2:----------------------------------------]|*10
-            [3:----------------------------------------]|
-          ## grid 2
-            o^                                       |
-            {1:~                                       }|*9
-          ## grid 3
-            {2:-- }{8:Back at original}                     |
-          ## grid 4
-            {n:1info}|
-            {n:     }|
-          ## grid 5
-            {n:one            }|
-          ]],
+            ## grid 1
+              [2:----------------------------------------]|*10
+              [3:----------------------------------------]|
+            ## grid 2
+              on^                                      |
+              {1:~                                       }|*9
+            ## grid 3
+              {2:-- }{5:match 1 of 3}                         |
+            ## grid 4
+              {n:1info}|
+              {n:     }|
+            ## grid 5
+              {s:one            }|
+            ]],
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100 },
               [4] = { 1001, 'NW', 1, 1, 15, false, 50 },
@@ -1713,7 +1714,7 @@ describe('builtin popupmenu', function()
                 topline = 0,
                 botline = 2,
                 curline = 0,
-                curcol = 1,
+                curcol = 2,
                 linecount = 1,
                 sum_scroll_delta = 0,
               },
@@ -1727,22 +1728,88 @@ describe('builtin popupmenu', function()
                 sum_scroll_delta = 0,
               },
             },
-          }
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+              [4] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1001,
+              },
+            },
+          })
         else
-          screen:expect {
+          screen:expect({
             grid = [[
-            o^                                       |
-            {n:one            1info}{1:                    }|
-            {1:~              }{n:     }{1:                    }|
-            {1:~                                       }|*7
-            {2:-- }{8:Back at original}                     |
-          ]],
-          }
+              on^                                      |
+              {s:one            }{n:1info}{1:                    }|
+              {1:~              }{n:     }{1:                    }|
+              {1:~                                       }|*7
+              {2:-- }{5:match 1 of 3}                         |
+            ]],
+          })
+        end
+
+        -- when back to original the preview float should be closed.
+        feed('<C-P>')
+        if multigrid then
+          screen:expect({
+            grid = [[
+            ## grid 1
+              [2:----------------------------------------]|*10
+              [3:----------------------------------------]|
+            ## grid 2
+              on^                                      |
+              {1:~                                       }|*9
+            ## grid 3
+              {2:-- }{8:Back at original}                     |
+            ## grid 5
+              {n:one            }|
+            ]],
+            float_pos = {
+              [5] = { -1, 'NW', 2, 1, 0, false, 100 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 2,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+            },
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+            },
+          })
+        else
+          screen:expect({
+            grid = [[
+              on^                                      |
+              {n:one            }{1:                         }|
+              {1:~                                       }|*8
+              {2:-- }{8:Back at original}                     |
+            ]],
+          })
         end
 
         -- test nvim__complete_set_info
-        feed('<ESC>cc<C-X><C-O><C-N><C-N>')
-        vim.uv.sleep(10)
+        feed('<ESC>S<C-X><C-O><C-N><C-N>')
         if multigrid then
           screen:expect {
             grid = [[
@@ -1758,13 +1825,13 @@ describe('builtin popupmenu', function()
             {n:one                }|
             {n:two                }|
             {s:looooooooooooooong }|
-          ## grid 6
+          ## grid 7
             {n:3info}|
             {n:     }|
           ]],
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100 },
-              [6] = { 1002, 'NW', 1, 1, 19, false, 50 },
+              [7] = { 1003, 'NW', 1, 1, 19, false, 50 },
             },
             win_viewport = {
               [2] = {
@@ -1776,8 +1843,8 @@ describe('builtin popupmenu', function()
                 linecount = 1,
                 sum_scroll_delta = 0,
               },
-              [6] = {
-                win = 1002,
+              [7] = {
+                win = 1003,
                 topline = 0,
                 botline = 2,
                 curline = 0,
@@ -1819,12 +1886,12 @@ describe('builtin popupmenu', function()
             {s: one                }|
             {n: two                }|
             {n: looooooooooooooong }|
-          ## grid 7
+          ## grid 8
             {n:1info}|
             {n:     }|
           ]],
             float_pos = {
-              [7] = { 1003, 'NW', 1, 1, 14, false, 50 },
+              [8] = { 1004, 'NW', 1, 1, 14, false, 50 },
               [5] = { -1, 'NW', 2, 1, 19, false, 100 },
             },
             win_viewport = {
@@ -1837,8 +1904,8 @@ describe('builtin popupmenu', function()
                 linecount = 1,
                 sum_scroll_delta = 0,
               },
-              [7] = {
-                win = 1003,
+              [8] = {
+                win = 1004,
                 topline = 0,
                 botline = 2,
                 curline = 0,
