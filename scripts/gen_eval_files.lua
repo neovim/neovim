@@ -496,6 +496,10 @@ local function render_eval_meta(f, fun, write)
     end
   end
 
+  for _, text in ipairs(vim.fn.reverse(fun.generics or {})) do
+    write(fmt('--- @generic %s', text))
+  end
+
   local req_args = type(fun.args) == 'table' and fun.args[1] or fun.args or 0
 
   for i, param in ipairs(params) do

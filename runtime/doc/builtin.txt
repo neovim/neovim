@@ -1305,10 +1305,10 @@ copy({expr})                                                            *copy()*
 		Also see |deepcopy()|.
 
                 Parameters: ~
-                  • {expr} (`any`)
+                  • {expr} (`T`)
 
                 Return: ~
-                  (`any`)
+                  (`T`)
 
 cos({expr})                                                              *cos()*
 		Return the cosine of {expr}, measured in radians, as a |Float|.
@@ -1490,11 +1490,11 @@ deepcopy({expr} [, {noref}])                                   *deepcopy()* *E69
 		Also see |copy()|.
 
                 Parameters: ~
-                  • {expr} (`any`)
+                  • {expr} (`T`)
                   • {noref} (`boolean?`)
 
                 Return: ~
-                  (`any`)
+                  (`T`)
 
 delete({fname} [, {flags}])                                           *delete()*
 		Without {flags} or with {flags} empty: Deletes the file by the
@@ -5281,7 +5281,7 @@ items({dict})                                                          *items()*
 		the index.
 
                 Parameters: ~
-                  • {dict} (`any`)
+                  • {dict} (`table`)
 
                 Return: ~
                   (`any`)
@@ -6567,7 +6567,7 @@ max({expr})                                                              *max()*
                   • {expr} (`any`)
 
                 Return: ~
-                  (`any`)
+                  (`number`)
 
 menu_get({path} [, {modes}])                                        *menu_get()*
 		Returns a |List| of |Dictionaries| describing |menus| (defined
@@ -7733,11 +7733,11 @@ reduce({object}, {func} [, {initial}])                           *reduce()* *E99
 
                 Parameters: ~
                   • {object} (`any`)
-                  • {func} (`function`)
+                  • {func} (`fun(accumulator: T, current: any): any`)
                   • {initial} (`any?`)
 
                 Return: ~
-                  (`any`)
+                  (`T`)
 
 reg_executing()                                                *reg_executing()*
 		Returns the single letter name of the register being executed.
@@ -7951,10 +7951,10 @@ reverse({object})                                                    *reverse()*
 <
 
                 Parameters: ~
-                  • {object} (`any`)
+                  • {object} (`T[]`)
 
                 Return: ~
-                  (`any`)
+                  (`T[]`)
 
 round({expr})                                                          *round()*
 		Round off {expr} to the nearest integral value and return it
@@ -9952,12 +9952,12 @@ sort({list} [, {how} [, {dict}]])                                  *sort()* *E70
 <
 
                 Parameters: ~
-                  • {list} (`any`)
+                  • {list} (`T[]`)
                   • {how} (`string|function?`)
                   • {dict} (`any?`)
 
                 Return: ~
-                  (`any`)
+                  (`T[]`)
 
 soundfold({word})                                                  *soundfold()*
 		Return the sound-folded equivalent of {word}.  Uses the first
