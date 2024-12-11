@@ -250,6 +250,17 @@ describe('vim.fs', function()
       )
       eq({ nvim_prog }, vim.fs.find(nvim_prog_basename, { path = test_build_dir, type = 'file' }))
 
+      eq(
+        {},
+        vim.fs.find(nvim_prog_basename, {
+          path = vim.fs.dirname(test_build_dir),
+          type = 'file',
+          skip = function(dir)
+            return not (vim.fs.basename(dir):match('^build'))
+          end,
+        })
+      )
+
       local parent, name = nvim_dir:match('^(.*/)([^/]+)$')
       eq({ nvim_dir }, vim.fs.find(name, { path = parent, upward = true, type = 'directory' }))
     end)
