@@ -15,7 +15,7 @@ local PATTERNS = {
   rfc2396 = "^A-Za-z0-9%-_.!~*'()",
   -- RFC 2732
   -- https://tools.ietf.org/html/rfc2732
-  rfc2732 = "^A-Za-z0-9%-_.!~*'()[]",
+  rfc2732 = "^A-Za-z0-9%-_.!~*'()%[%]",
   -- RFC 3986
   -- https://tools.ietf.org/html/rfc3986#section-2.2
   rfc3986 = "^A-Za-z0-9%-._~!$&'()*+,;=:@/",
