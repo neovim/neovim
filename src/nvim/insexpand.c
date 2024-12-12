@@ -2374,7 +2374,7 @@ static void copy_global_to_buflocal_cb(Callback *globcb, Callback *bufcb)
 /// lambda expression.
 const char *did_set_completefunc(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_ctx.buf;
   if (option_set_callback_func(buf->b_p_cfu, &cfu_cb) == FAIL) {
     return e_invarg;
   }
@@ -2395,7 +2395,7 @@ void set_buflocal_cfu_callback(buf_T *buf)
 /// lambda expression.
 const char *did_set_omnifunc(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_ctx.buf;
   if (option_set_callback_func(buf->b_p_ofu, &ofu_cb) == FAIL) {
     return e_invarg;
   }
@@ -2416,7 +2416,7 @@ void set_buflocal_ofu_callback(buf_T *buf)
 /// lambda expression.
 const char *did_set_thesaurusfunc(optset_T *args FUNC_ATTR_UNUSED)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_ctx.buf;
   int retval;
 
   if (args->os_flags & OPT_LOCAL) {
