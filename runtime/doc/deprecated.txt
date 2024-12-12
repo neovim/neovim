@@ -38,6 +38,10 @@ DIAGNOSTICS
 - The "cursor_position" parameter of |vim.diagnostic.JumpOpts| is renamed to
   "pos"
 
+HIGHLIGHTS
+• *TermCursorNC*	As of Nvim 0.11, unfocused |terminal| windows no
+			longer have any cursor.
+
 TREESITTER
 • *TSNode:child_containing_descendant()*	Use
   |TSNode:child_with_descendant()| instead; it is identical except that it can

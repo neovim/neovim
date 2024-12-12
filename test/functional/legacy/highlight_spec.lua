@@ -29,8 +29,8 @@ describe(':highlight', function()
                                          |
       TermCursor     {2:xxx} {18:cterm=}reverse   |
                          {18:gui=}reverse     |
-      TermCursorNC   xxx cleared         |
       NonText        {1:xxx} {18:ctermfg=}12      |
+                         {18:gui=}bold        |
       {6:-- More --}^                         |
     ]])
     feed('q')

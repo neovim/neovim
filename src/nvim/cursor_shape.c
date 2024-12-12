@@ -45,6 +45,7 @@ cursorentry_T shape_table[SHAPE_IDX_COUNT] = {
   { "more", 0, 0, 0,   0,   0,   0, 0, 0, "m", SHAPE_MOUSE },
   { "more_lastline", 0, 0, 0,   0,   0,   0, 0, 0, "ml", SHAPE_MOUSE },
   { "showmatch", 0, 0, 0, 100, 100, 100, 0, 0, "sm", SHAPE_CURSOR },
+  { "terminal", 0, 0, 0, 0, 0, 0, 0, 0, "t", SHAPE_CURSOR },
 };
 
 /// Converts cursor_shapes into an Array of Dictionaries
@@ -321,6 +322,8 @@ int cursor_get_mode_idx(void)
 {
   if (State == MODE_SHOWMATCH) {
     return SHAPE_IDX_SM;
+  } else if (State == MODE_TERMINAL) {
+    return SHAPE_IDX_TERM;
   } else if (State & VREPLACE_FLAG) {
     return SHAPE_IDX_R;
   } else if (State & REPLACE_FLAG) {

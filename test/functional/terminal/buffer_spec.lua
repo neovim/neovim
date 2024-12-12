@@ -89,7 +89,7 @@ describe(':terminal buffer', function()
       feed('<c-\\><c-n>')
       screen:expect([[
         tty ready                                         |
-        {2:^ }                                                 |
+        ^                                                  |
                                                           |*5
       ]])
     end)
@@ -109,7 +109,7 @@ describe(':terminal buffer', function()
     feed('<c-\\><c-n>dd')
     screen:expect([[
       tty ready                                         |
-      {2:^ }                                                 |
+      ^                                                  |
                                                         |*4
       {8:E21: Cannot make changes, 'modifiable' is off}     |
     ]])
@@ -122,7 +122,7 @@ describe(':terminal buffer', function()
     screen:expect([[
       ^tty ready                                         |
       appended tty ready                                |*2
-      {2: }                                                 |
+                                                        |
                                                         |*2
       :let @a = "appended " . @a                        |
     ]])
@@ -142,7 +142,7 @@ describe(':terminal buffer', function()
     screen:expect([[
       ^tty ready                                         |
       appended tty ready                                |
-      {2: }                                                 |
+                                                        |
                                                         |*3
       :put a                                            |
     ]])
@@ -151,7 +151,7 @@ describe(':terminal buffer', function()
     screen:expect([[
       tty ready                                         |
       appended tty ready                                |*2
-      {2: }                                                 |
+                                                        |
                                                         |
       ^                                                  |
       :6put a                                           |
@@ -198,7 +198,7 @@ describe(':terminal buffer', function()
       {4:~                                                 }|
       {5:==========                                        }|
       rows: 2, cols: 50                                 |
-      {2: }                                                 |
+                                                        |
       {18:==========                                        }|
                                                         |
     ]])
@@ -234,7 +234,7 @@ describe(':terminal buffer', function()
     command('set rightleft')
     screen:expect([[
                                                ydaer ytt|
-      {1:a}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
                                                         |*4
       {3:-- TERMINAL --}                                    |
     ]])
@@ -277,7 +277,7 @@ describe(':terminal buffer', function()
     screen:expect {
       grid = [[
       tty ready                                         |
-      {2:^ }                                                 |
+      ^                                                  |
                                                         |*4
       {3:-- (terminal) --}                                  |
     ]],
@@ -288,7 +288,7 @@ describe(':terminal buffer', function()
     screen:expect {
       grid = [[
       tty ready                                         |
-      {2: }                                                 |
+                                                        |
                                                         |*4
       :let g:x = 17^                                     |
     ]],
@@ -298,7 +298,7 @@ describe(':terminal buffer', function()
     screen:expect {
       grid = [[
       tty ready                                         |
-      {1: }                                                 |
+      ^                                                  |
                                                         |*4
       {3:-- TERMINAL --}                                    |
     ]],
@@ -534,7 +534,7 @@ describe('terminal input', function()
       'while 1 | redraw | echo keytrans(getcharstr()) | endwhile',
     })
     screen:expect([[
-      {1: }                                                 |
+      ^                                                  |
       {4:~                                                 }|*3
       {5:[No Name]                       0,0-1          All}|
                                                         |
@@ -594,7 +594,7 @@ describe('terminal input', function()
                                                           |
         {4:~                                                 }|*3
         {5:[No Name]                       0,0-1          All}|
-        %s{1: }{MATCH: *}|
+        %s^ {MATCH: *}|
         {3:-- TERMINAL --}                                    |
       ]]):format(key))
     end
@@ -624,7 +624,7 @@ if is_os('win') then
       > :: appended :: tty ready                        |
       > :: tty ready                                    |
       > :: appended :: tty ready                        |
-      ^> {2: }                                               |
+      ^>                                                 |
       :let @a = @a . "\n:: appended " . @a . "\n\n"     |
       ]])
       -- operator count is also taken into consideration
@@ -635,7 +635,7 @@ if is_os('win') then
       > :: appended :: tty ready                        |
       > :: tty ready                                    |
       > :: appended :: tty ready                        |
-      ^> {2: }                                               |
+      ^>                                                 |
       :let @a = @a . "\n:: appended " . @a . "\n\n"     |
       ]])
     end)
@@ -649,7 +649,7 @@ if is_os('win') then
                                                         |
       > :: tty ready                                    |
       > :: appended :: tty ready                        |
-      > {2: }                                               |
+      >                                                 |
                                                         |
       ^                                                  |
       :put a                                            |
@@ -662,7 +662,7 @@ if is_os('win') then
       > :: appended :: tty ready                        |
       > :: tty ready                                    |
       > :: appended :: tty ready                        |
-      ^> {2: }                                               |
+      ^>                                                 |
       :6put a                                           |
       ]])
     end)

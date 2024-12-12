@@ -15,7 +15,6 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_8] = "SpecialKey",
   [HLF_EOB] = "EndOfBuffer",
   [HLF_TERM] = "TermCursor",
-  [HLF_TERMNC] = "TermCursorNC",
   [HLF_AT] = "NonText",
   [HLF_D] = "Directory",
   [HLF_E] = "ErrorMsg",

@@ -29,6 +29,10 @@ function M.feed_termcode(data)
   M.feed_data('\027' .. data)
 end
 
+function M.feed_csi(data)
+  M.feed_termcode('[' .. data)
+end
+
 function M.make_lua_executor(session)
   return function(code, ...)
     local status, rv = session:request('nvim_exec_lua', code, { ... })
@@ -78,6 +82,9 @@ end
 function M.set_undercurl()
   M.feed_termcode('[4:3m')
 end
+function M.set_reverse()
+  M.feed_termcode('[7m')
+end
 function M.set_strikethrough()
   M.feed_termcode('[9m')
 end
@@ -108,7 +115,6 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
   cols = cols and cols or 50
 
   api.nvim_command('highlight TermCursor cterm=reverse')
-  api.nvim_command('highlight TermCursorNC ctermbg=11')
   api.nvim_command('highlight StatusLineTerm ctermbg=2 ctermfg=0')
   api.nvim_command('highlight StatusLineTermNC ctermbg=2 ctermfg=8')
 
@@ -154,7 +160,7 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
     local empty_line = (' '):rep(cols)
     local expected = {
       'tty ready' .. (' '):rep(cols - 9),
-      '{1: }' .. (' '):rep(cols - 1),
+      '^' .. (' '):rep(cols),
       empty_line,
       empty_line,
       empty_line,

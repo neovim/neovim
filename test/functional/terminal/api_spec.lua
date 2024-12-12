@@ -33,7 +33,7 @@ describe('api', function()
   it('qa! RPC request during insert-mode', function()
     screen:expect {
       grid = [[
-      {1: }                                                 |
+      ^                                                  |
       {4:~                                                 }|*4
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -45,7 +45,7 @@ describe('api', function()
 
     -- Wait for socket creation.
     screen:expect([[
-      {1: }                                                 |
+      ^                                                  |
       {4:~                                                 }|*4
       ]] .. socket_name .. [[                       |
       {3:-- TERMINAL --}                                    |
@@ -57,7 +57,7 @@ describe('api', function()
     tt.feed_data('i[tui] insert-mode')
     -- Wait for stdin to be processed.
     screen:expect([[
-      [tui] insert-mode{1: }                                |
+      [tui] insert-mode^                                 |
       {4:~                                                 }|*4
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -73,7 +73,7 @@ describe('api', function()
       [tui] insert-mode                                 |
       [socket 1] this is more t                         |
       han 25 columns                                    |
-      [socket 2] input{1: }                                 |
+      [socket 2] input^                                  |
       {4:~                        }                         |
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |

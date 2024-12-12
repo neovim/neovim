@@ -1198,7 +1198,7 @@ describe('jobs', function()
     })
     -- Wait for startup to complete, so that all terminal responses are received.
     screen:expect([[
-      {1: }                                                 |
+      ^                                                  |
       ~                                                 |*3
       {1:[No Name]                       0,0-1          All}|
                                                         |
@@ -1208,7 +1208,7 @@ describe('jobs', function()
     feed(':q<CR>')
     screen:expect([[
                                                         |
-      [Process exited 0]{1: }                               |
+      [Process exited 0]^                                |
                                                         |*4
       {3:-- TERMINAL --}                                    |
     ]])

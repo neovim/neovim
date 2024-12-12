@@ -3631,7 +3631,9 @@ return {
     {
       abbreviation = 'gcr',
       cb = 'did_set_guicursor',
-      defaults = { if_true = 'n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20' },
+      defaults = {
+        if_true = 'n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:block-blinkon500-blinkoff500-TermCursor',
+      },
       deny_duplicates = true,
       desc = [=[
         Configures the cursor style for each mode. Works in the GUI and many
@@ -3660,6 +3662,7 @@ return {
         	ci	Command-line Insert mode
         	cr	Command-line Replace mode
         	sm	showmatch in Insert mode
+        	t	Terminal mode
         	a	all modes
         The argument-list is a dash separated list of these arguments:
         	hor{N}	horizontal bar, {N} percent of the character height
@@ -3676,7 +3679,8 @@ return {
         		cursor is not shown.  Times are in msec.  When one of
         		the numbers is zero, there is no blinking. E.g.: >vim
         			set guicursor=n:blinkon0
-        <			- Default is "blinkon0" for each mode.
+        <
+        		Default is "blinkon0" for each mode.
         	{group-name}
         		Highlight group that decides the color and font of the
         		cursor.

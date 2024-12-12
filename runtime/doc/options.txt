@@ -2977,7 +2977,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	An |OptionSet| autocmd can be used to set it up to match automatically.
 
 				*'guicursor'* *'gcr'* *E545* *E546* *E548* *E549*
-'guicursor' 'gcr'	string	(default "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20")
+'guicursor' 'gcr'	string	(default "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:block-blinkon500-blinkoff500-TermCursor")
 			global
 	Configures the cursor style for each mode. Works in the GUI and many
 	terminals.  See |tui-cursor-shape|.
@@ -3005,6 +3005,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		ci	Command-line Insert mode
 		cr	Command-line Replace mode
 		sm	showmatch in Insert mode
+		t	Terminal mode
 		a	all modes
 	The argument-list is a dash separated list of these arguments:
 		hor{N}	horizontal bar, {N} percent of the character height
@@ -3021,7 +3022,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			cursor is not shown.  Times are in msec.  When one of
 			the numbers is zero, there is no blinking. E.g.: >vim
 				set guicursor=n:blinkon0
-<			- Default is "blinkon0" for each mode.
+<
+			Default is "blinkon0" for each mode.
 		{group-name}
 			Highlight group that decides the color and font of the
 			cursor.

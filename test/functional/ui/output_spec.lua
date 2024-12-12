@@ -34,7 +34,7 @@ describe('shell command :!', function()
       n.nvim_set .. ' notermguicolors',
     })
     screen:expect([[
-      {1: }                                                 |
+      ^                                                  |
       {4:~                                                 }|*4
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -78,7 +78,7 @@ describe('shell command :!', function()
       29999: foo                                        |
       30000: foo                                        |
                                                         |
-      {10:Press ENTER or type command to continue}{1: }          |
+      {10:Press ENTER or type command to continue}^           |
       {3:-- TERMINAL --}                                    |
     ]],
       {

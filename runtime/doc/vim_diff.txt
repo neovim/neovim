@@ -325,7 +325,6 @@ Highlight groups:
 - |hl-MsgSeparator| highlights separator for scrolled messages
 - |hl-Substitute|
 - |hl-TermCursor|
-- |hl-TermCursorNC|
 - |hl-WinSeparator| highlights window separators
 - |hl-Whitespace| highlights 'listchars' whitespace
 - |hl-WinBar| highlights 'winbar'

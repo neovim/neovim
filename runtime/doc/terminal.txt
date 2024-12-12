@@ -101,7 +101,7 @@ Configuration					*terminal-config*
 
 Options:		'modified', 'scrollback'
 Events:			|TermOpen|, |TermEnter|, |TermLeave|, |TermClose|
-Highlight groups:	|hl-TermCursor|, |hl-TermCursorNC|
+Highlight groups:	|hl-TermCursor|
 
 Terminal sets local defaults for some options, which may differ from your
 global configuration.

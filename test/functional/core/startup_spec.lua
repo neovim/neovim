@@ -1153,7 +1153,7 @@ describe('user config init', function()
         -- `i` to enter Terminal mode, `a` to allow
         feed('ia')
         screen:expect([[
-                                                            |
+          ^                                                  |
           ~                                                 |*4
           [No Name]                       0,0-1          All|
                                                             |
@@ -1162,7 +1162,7 @@ describe('user config init', function()
         feed(':echo g:exrc_file<CR>')
         screen:expect(string.format(
           [[
-                                                            |
+          ^                                                  |
           ~                                                 |*4
           [No Name]                       0,0-1          All|
           %s%s|
