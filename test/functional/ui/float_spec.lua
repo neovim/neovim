@@ -8542,6 +8542,111 @@ describe('float window', function()
                                                   |
         ]]}
       end
+
+      --
+      -- Check that floats are positioned correctly after changing the zindexes.
+      --
+      command('fclose')
+      exec_lua([[
+        local win1, win3 = ...
+        vim.api.nvim_win_set_config(win1, { zindex = 400, title = 'win_400', title_pos = 'center', border = 'double' })
+        vim.api.nvim_win_set_config(win3, { zindex = 300, title = 'win_300', title_pos = 'center', border = 'single' })
+      ]], win1, win3)
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            {5:╔══════}{11:win_400}{5:═══════╗}|
+            {5:║}{7:                    }{5:║}|
+            {5:║}{7:~                   }{5:║}|*2
+            {5:╚════════════════════╝}|
+          ## grid 6
+            {5:┌──────}{11:win_300}{5:───────┐}|
+            {5:│}{8:                    }{5:│}|
+            {5:│}{8:~                   }{5:│}|*2
+            {5:└────────────────────┘}|
+          ]], float_pos={
+          [4] = {1001, "NW", 1, 1, 5, true, 400};
+          [6] = {1003, "NW", 1, 3, 7, true, 300};
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [6] = {win = 1003, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+          [4] = { bottom = 1, left = 1, right = 1, top = 1, win = 1001 },
+          [6] = { bottom = 1, left = 1, right = 1, top = 1, win = 1003 }
+        }})
+      else
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {0:~    }{5:╔══════}{11:win_400}{5:═══════╗}{0:             }|
+            {0:~    }{5:║}{7:                    }{5:║─┐}{0:           }|
+            {0:~    }{5:║}{7:~                   }{5:║}{8: }{5:│}{0:           }|*2
+            {0:~    }{5:╚════════════════════╝}{8: }{5:│}{0:           }|
+                   {5:└────────────────────┘}           |
+          ]]
+        })
+      end
+      exec_lua([[
+        local win1, win3 = ...
+        vim.api.nvim_win_set_config(win1, { zindex = 100, title='win_100' })
+        vim.api.nvim_win_set_config(win3, { zindex = 150, title='win_150' })
+      ]], win1, win3)
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            {5:╔}{11:win_100}{5:═════════════╗}|
+            {5:║}{7:                    }{5:║}|
+            {5:║}{7:~                   }{5:║}|*2
+            {5:╚════════════════════╝}|
+          ## grid 6
+            {5:┌}{11:win_150}{5:─────────────┐}|
+            {5:│}{8:                    }{5:│}|
+            {5:│}{8:~                   }{5:│}|*2
+            {5:└────────────────────┘}|
+          ]], float_pos={
+          [4] = {1001, "NW", 1, 1, 5, true, 100};
+          [6] = {1003, "NW", 1, 3, 7, true, 150};
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [6] = {win = 1003, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
+          [4] = { bottom = 1, left = 1, right = 1, top = 1, win = 1001 },
+          [6] = { bottom = 1, left = 1, right = 1, top = 1, win = 1003 }
+        }})
+      else
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {0:~    }{5:╔}{11:w}{5:┌}{11:win_150}{5:─────────────┐}{0:           }|
+            {0:~    }{5:║}{7: }{5:│}{8:                    }{5:│}{0:           }|
+            {0:~    }{5:║}{7:~}{5:│}{8:~                   }{5:│}{0:           }|*2
+            {0:~    }{5:╚═└────────────────────┘}{0:           }|
+                                                    |
+          ]]
+        })
+      end
     end)
 
     it('can use winbar', function()
