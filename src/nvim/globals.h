@@ -405,9 +405,6 @@ EXTERN buf_T *curbuf INIT( = NULL);    // currently active buffer
 #define FOR_ALL_BUFFERS_BACKWARDS(buf) \
   for (buf_T *buf = lastbuf; buf != NULL; buf = buf->b_prev)
 
-#define FOR_ALL_BUF_WININFO(buf, wip) \
-  for ((wip) = (buf)->b_wininfo; (wip) != NULL; (wip) = (wip)->wi_next)
-
 // List of files being edited (global argument list).  curwin->w_alist points
 // to this when the window is using the global argument list.
 EXTERN alist_T global_alist;    // global argument list
