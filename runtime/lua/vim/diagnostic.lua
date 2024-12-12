@@ -854,10 +854,11 @@ local function set_list(loclist, opts)
   -- numbers beyond the end of the buffer
   local diagnostics = get_diagnostics(bufnr, opts --[[@as vim.diagnostic.GetOpts]], false)
   local items = M.toqflist(diagnostics)
+  local qf_id = nil
   if loclist then
     vim.fn.setloclist(winnr, {}, 'u', { title = title, items = items })
   else
-    local qf_id = get_qf_id_for_title(title)
+    qf_id = get_qf_id_for_title(title)
 
     -- If we already have a diagnostics quickfix, update it rather than creating a new one.
     -- This avoids polluting the finite set of quickfix lists, and preserves the currently selected
@@ -868,16 +869,17 @@ local function set_list(loclist, opts)
       id = qf_id,
     })
   end
+
   if open then
-    if loclist then
-      api.nvim_command('lwindow')
-    else
+    if qf_id then
       -- First navigate to the diagnostics quickfix list.
-      local nr = vim.fn.getqflist({ id = _qf_id, nr = 0 }).nr
+      local nr = vim.fn.getqflist({ id = qf_id, nr = 0 }).nr
       api.nvim_command(nr .. 'chistory')
 
       -- Now open the quickfix list.
       api.nvim_command('botright cwindow')
+    else
+      api.nvim_command('lwindow')
     end
   end
 end
