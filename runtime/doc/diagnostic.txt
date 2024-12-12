@@ -874,7 +874,8 @@ setqflist({opts})                                 *vim.diagnostic.setqflist()*
                 • {open}? (`boolean`, default: `true`) Open quickfix list
                   after setting.
                 • {title}? (`string`) Title of quickfix list. Defaults to
-                  "Diagnostics".
+                  "Diagnostics". If there's already a quickfix list with this
+                  title, it's updated. If not, a new quickfix list is created.
                 • {severity}? (`vim.diagnostic.SeverityFilter`) See
                   |diagnostic-severity|.
 
