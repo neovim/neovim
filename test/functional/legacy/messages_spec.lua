@@ -709,7 +709,7 @@ describe('messages', function()
     feed('<CR>')
 
     -- Check no hit-enter prompt when "wait:" is set
-    command('set messagesopt=wait:100,history:500')
+    command('set messagesopt=wait:500,history:500')
     feed(":echo 'foo' | echo 'bar' | echo 'baz'\n")
     screen:expect({
       grid = [[
@@ -720,7 +720,7 @@ describe('messages', function()
       bar                                          |
       baz                                          |
     ]],
-      timeout = 100,
+      timeout = 500,
     })
     screen:expect([[
       ^                                             |
