@@ -40,6 +40,7 @@
 "   2024 Nov 23 by Vim Project: fix powershell escaping issues (#16094)
 "   2024 Dec 04 by Vim Project: do not detach for gvim (#16168)
 "   2024 Dec 08 by Vim Project: check the first arg of netrw_browsex_viewer for being executable (#16185)
+"   2024 Dec 12 by Vim Project: do not pollute the search history (#16206)
 "   }}}
 " Former Maintainer:	Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
@@ -11759,7 +11760,8 @@ endfun
 " s:ShowLink: used to modify thin and tree listings to show links {{{2
 fun! s:ShowLink()
   if exists("b:netrw_curdir")
-   norm! $?\a
+   keepp :norm! $?\a
+   "call histdel("/",-1)
    if exists("w:netrw_liststyle") && w:netrw_liststyle == s:TREELIST && exists("w:netrw_treetop")
     let basedir = s:NetrwTreePath(w:netrw_treetop)
    else
