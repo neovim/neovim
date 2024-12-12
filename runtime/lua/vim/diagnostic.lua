@@ -873,7 +873,7 @@ local function set_list(loclist, opts)
       api.nvim_command('lwindow')
     else
       -- First navigate to the diagnostics quickfix list.
-      local nr = vim.fn.getqflist({ id = _qf_id, nr = 0 }).nr
+      local nr = vim.fn.getqflist({ id = qf_id, nr = 0 }).nr
       api.nvim_command(nr .. 'chistory')
 
       -- Now open the quickfix list.
