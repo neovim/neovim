@@ -869,7 +869,16 @@ local function set_list(loclist, opts)
     })
   end
   if open then
-    api.nvim_command(loclist and 'lwindow' or 'botright cwindow')
+    if loclist then
+      api.nvim_command('lwindow')
+    else
+      -- First navigate to the diagnostics quickfix list.
+      local nr = vim.fn.getqflist({ id = _qf_id, nr = 0 }).nr
+      api.nvim_command(nr .. 'chistory')
+
+      -- Now open the quickfix list.
+      api.nvim_command('botright cwindow')
+    end
   end
 end
 
