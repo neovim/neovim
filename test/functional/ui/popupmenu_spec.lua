@@ -1603,7 +1603,7 @@ describe('builtin popupmenu', function()
       end)
     end
 
-    describe('floating window preview #popup', function()
+    describe('floating window preview popup', function()
       it('pum popup preview', function()
         --row must > 10
         screen:try_resize(40, 11)
@@ -1618,15 +1618,18 @@ describe('builtin popupmenu', function()
           set completeopt=menu,popup
 
           funct Set_info()
-            let comp_info = complete_info()
+            let comp_info = complete_info(['selected', 'preview_bufnr', 'preview_winid'])
+            let g:preview_bufnr = get(comp_info, 'preview_bufnr', -1000)
+            let g:preview_winid = get(comp_info, 'preview_winid', -1000)
             if comp_info['selected'] == 2
               call nvim__complete_set(comp_info['selected'], {"info": "3info"})
             endif
           endfunc
           autocmd CompleteChanged * call Set_info()
         ]])
+
+        -- floating preview in right
         feed('Gi<C-x><C-o>')
-        --floating preview in right
         if multigrid then
           screen:expect {
             grid = [[
@@ -1683,6 +1686,9 @@ describe('builtin popupmenu', function()
           ]],
           }
         end
+        -- can get preview_winid and preview_bufnr from complete_info
+        eq(true, api.nvim_buf_is_valid(api.nvim_get_var('preview_bufnr')))
+        eq(true, api.nvim_win_is_valid(api.nvim_get_var('preview_winid')))
 
         -- delete one character make the pum width smaller than before
         -- info window position should be adjusted when popupmenu width changed
