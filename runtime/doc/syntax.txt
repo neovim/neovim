@@ -414,12 +414,15 @@ There are many types of assembly languages that all use the same file name
 extensions.  Therefore you will have to select the type yourself, or add a
 line in the assembly file that Vim will recognize.  Currently these syntax
 files are included:
-	asm		GNU assembly (the default)
+	asm		GNU assembly (usually have .s or .S extension and were
+			already built using C compiler such as GCC or CLANG)
 	asm68k		Motorola 680x0 assembly
 	asmh8300	Hitachi H-8300 version of GNU assembly
 	ia64		Intel Itanium 64
 	fasm		Flat assembly (https://flatassembler.net)
-	masm		Microsoft assembly (probably works for any 80x86)
+	masm		Microsoft assembly (.masm files are compiled with
+			Microsoft's Macro Assembler. This is only supported
+			for x86, x86_64, ARM and AARCH64 CPU families)
 	nasm		Netwide assembly
 	tasm		Turbo Assembly (with opcodes 80x86 up to Pentium, and
 			MMX)
