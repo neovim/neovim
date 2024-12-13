@@ -178,6 +178,7 @@ API
 
 • Improved API "meta" docstrings and :help documentation.
 • |nvim__ns_set()| can set properties for a namespace
+• Decoration provider has `on_range()` callback.
 
 DEFAULTS
 
@@ -329,6 +330,7 @@ TREESITTER
 • New |TSNode:child_with_descendant()|, which is nearly identical to
   |TSNode:child_containing_descendant()| except that it can return the
   descendant itself.
+• |Query:iter_captures()| supports specifying starting and ending columns.
 
 TUI
 
