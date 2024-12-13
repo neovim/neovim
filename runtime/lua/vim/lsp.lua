@@ -201,23 +201,28 @@ local function reuse_client_default(client, config)
   end
 
   local config_folders = lsp._get_workspace_folders(config.workspace_folders or config.root_dir)
-    or {}
-  local config_folders_included = 0
 
-  if not next(config_folders) then
-    return false
+  if not config_folders or not next(config_folders) then
+    -- Reuse if the client was configured with no workspace folders
+    local client_config_folders =
+      lsp._get_workspace_folders(client.config.workspace_folders or client.config.root_dir)
+    return not client_config_folders or not next(client_config_folders)
   end
 
   for _, config_folder in ipairs(config_folders) do
+    local found = false
     for _, client_folder in ipairs(client.workspace_folders) do
       if config_folder.uri == client_folder.uri then
-        config_folders_included = config_folders_included + 1
+        found = true
         break
       end
     end
+    if not found then
+      return false
+    end
   end
 
-  return config_folders_included == #config_folders
+  return true
 end
 
 --- Reset defaults set by `set_defaults`.

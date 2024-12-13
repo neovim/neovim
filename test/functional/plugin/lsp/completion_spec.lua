@@ -731,9 +731,10 @@ describe('vim.lsp.completion: item conversion', function()
   )
 end)
 
+--- @param name string
 --- @param completion_result lsp.CompletionList
 --- @return integer
-local function create_server(completion_result)
+local function create_server(name, completion_result)
   return exec_lua(function()
     local server = _G._create_server({
       capabilities = {
@@ -751,7 +752,7 @@ local function create_server(completion_result)
     local bufnr = vim.api.nvim_get_current_buf()
     vim.api.nvim_win_set_buf(0, bufnr)
     return vim.lsp.start({
-      name = 'dummy',
+      name = name,
       cmd = server.cmd,
       on_attach = function(client, bufnr0)
         vim.lsp.completion.enable(true, client.id, bufnr0, {
@@ -800,7 +801,7 @@ describe('vim.lsp.completion: protocol', function()
   end
 
   it('fetches completions and shows them using complete on trigger', function()
-    create_server({
+    create_server('dummy', {
       isIncomplete = false,
       items = {
         {
@@ -892,7 +893,7 @@ describe('vim.lsp.completion: protocol', function()
   end)
 
   it('merges results from multiple clients', function()
-    create_server({
+    create_server('dummy1', {
       isIncomplete = false,
       items = {
         {
@@ -900,7 +901,7 @@ describe('vim.lsp.completion: protocol', function()
         },
       },
     })
-    create_server({
+    create_server('dummy2', {
       isIncomplete = false,
       items = {
         {
@@ -933,7 +934,7 @@ describe('vim.lsp.completion: protocol', function()
         },
       },
     }
-    local client_id = create_server(completion_list)
+    local client_id = create_server('dummy', completion_list)
 
     exec_lua(function()
       _G.called = false
@@ -970,7 +971,7 @@ describe('vim.lsp.completion: protocol', function()
   end)
 
   it('enable(…,{convert=fn}) custom word/abbr format', function()
-    create_server({
+    create_server('dummy', {
       isIncomplete = false,
       items = {
         {
@@ -1012,7 +1013,7 @@ describe('vim.lsp.completion: integration', function()
     exec_lua(function()
       vim.o.completeopt = 'menuone,noselect'
     end)
-    create_server(completion_list)
+    create_server('dummy', completion_list)
     feed('i world<esc>0ih<c-x><c-o>')
     retry(nil, nil, function()
       eq(
