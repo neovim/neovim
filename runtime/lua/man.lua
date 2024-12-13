@@ -576,9 +576,8 @@ function M.man_complete(arg_lead, cmd_line, _)
   end
 
   if #args == 1 then
-    -- returning full completion is laggy. Require some arg_lead to complete
-    -- return complete('', '', '')
-    return {}
+    -- XXX: This (full completion) is laggy, but without it tab-complete is broken. #31512
+    return complete('', '', '')
   end
 
   if arg_lead:match('^[^()]+%([^()]*$') then
