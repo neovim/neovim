@@ -5184,8 +5184,8 @@ describe('LSP', function()
         local win = vim.api.nvim_get_current_win()
         vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, { 'local x = 10', '', 'print(x)' })
         vim.api.nvim_win_set_cursor(win, { 3, 6 })
-        local client_id1 = assert(vim.lsp.start({ name = 'dummy', cmd = server1.cmd }))
-        local client_id2 = assert(vim.lsp.start({ name = 'dummy', cmd = server2.cmd }))
+        local client_id1 = assert(vim.lsp.start({ name = 'dummy1', cmd = server1.cmd }))
+        local client_id2 = assert(vim.lsp.start({ name = 'dummy2', cmd = server2.cmd }))
         local response
         vim.lsp.buf.definition({
           on_list = function(r)
@@ -6200,6 +6200,34 @@ describe('LSP', function()
           local foos = vim.lsp.get_clients({ bufnr = assert(_G.foo_buf) })
           local bars = vim.lsp.get_clients({ bufnr = assert(_G.bar_buf) })
           return { #foos, foos[1].name, #bars, bars[1].name }
+        end)
+      )
+    end)
+
+    it('does not attach to buffers more than once if no root_dir', function()
+      exec_lua(create_server_definition)
+
+      local tmp1 = t.tmpname(true)
+
+      eq(
+        1,
+        exec_lua(function()
+          local server = _G._create_server({
+            handlers = {
+              initialize = function(_, _, callback)
+                callback(nil, { capabilities = {} })
+              end,
+            },
+          })
+
+          vim.lsp.config('foo', { cmd = server.cmd, filetypes = { 'foo' } })
+          vim.lsp.enable('foo')
+
+          vim.cmd.edit(assert(tmp1))
+          vim.bo.filetype = 'foo'
+          vim.bo.filetype = 'foo'
+
+          return #vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })
         end)
       )
     end)
