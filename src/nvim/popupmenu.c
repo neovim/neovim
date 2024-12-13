@@ -234,12 +234,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     }
 
     // Figure out the size and position of the pum.
-    if (size < PUM_DEF_HEIGHT) {
-      pum_height = size;
-    } else {
-      pum_height = PUM_DEF_HEIGHT;
-    }
-
+    pum_height = MIN(size, PUM_DEF_HEIGHT);
     if (p_ph > 0 && pum_height > p_ph) {
       pum_height = (int)p_ph;
     }
@@ -256,11 +251,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         context_lines = 0;
       } else {
         // Leave two lines of context if possible
-        if (curwin->w_wrow - curwin->w_cline_row >= 2) {
-          context_lines = 2;
-        } else {
-          context_lines = curwin->w_wrow - curwin->w_cline_row;
-        }
+        context_lines = MIN(2, curwin->w_wrow - curwin->w_cline_row);
       }
 
       if (pum_win_row - min_row >= size + context_lines) {
@@ -285,20 +276,13 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
       } else {
         // Leave two lines of context if possible
         validate_cheight(curwin);
-        if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3) {
-          context_lines = 3;
-        } else {
-          context_lines = curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow;
-        }
+        int cline_visible_offset = curwin->w_cline_row +
+                                   curwin->w_cline_height - curwin->w_wrow;
+        context_lines = MIN(3, cline_visible_offset);
       }
 
       pum_row = pum_win_row + context_lines;
-      if (size > below_row - pum_row) {
-        pum_height = below_row - pum_row;
-      } else {
-        pum_height = size;
-      }
-
+      pum_height = MIN(below_row - pum_row, size);
       if (p_ph > 0 && pum_height > p_ph) {
         pum_height = (int)p_ph;
       }
@@ -353,15 +337,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         pum_width = max_col - pum_col - pum_scrollbar;
       }
 
-      if (pum_width > max_width + pum_kind_width + pum_extra_width + 1
-          && pum_width > p_pw) {
-        // the width is more than needed for the items, make it
-        // narrower
-        pum_width = max_width + pum_kind_width + pum_extra_width + 1;
-
-        if (pum_width < p_pw) {
-          pum_width = (int)p_pw;
-        }
+      int content_width = max_width + pum_kind_width + pum_extra_width + 1;
+      if (pum_width > content_width && pum_width > p_pw) {
+        // Reduce width to fit item
+        pum_width = MAX(content_width, (int)p_pw);
       } else if (((cursor_col - min_col > p_pw
                    || cursor_col - min_col > max_width) && !pum_rl)
                  || (pum_rl && (cursor_col < max_col - p_pw
@@ -373,13 +352,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
             pum_col = max_col - 1;
           }
         } else if (!pum_rl) {
-          if (win_start_col > max_col - max_width - pum_scrollbar
-              && max_width <= p_pw) {
+          int right_edge_col = max_col - max_width - pum_scrollbar;
+          if (win_start_col > right_edge_col && max_width <= p_pw) {
             // use full width to end of the screen
-            pum_col = max_col - max_width - pum_scrollbar;
-            if (pum_col < min_col) {
-              pum_col = min_col;
-            }
+            pum_col = MAX(min_col, right_edge_col);
           }
         }
 
@@ -400,12 +376,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
               pum_width = max_col - pum_col - 1;
             }
           }
-        } else if (pum_width > max_width + pum_kind_width + pum_extra_width + 1
-                   && pum_width > p_pw) {
-          pum_width = max_width + pum_kind_width + pum_extra_width + 1;
-          if (pum_width < p_pw) {
-            pum_width = (int)p_pw;
-          }
+        } else if (pum_width > content_width && pum_width > p_pw) {
+          pum_width = MAX(content_width, (int)p_pw);
         }
       }
     } else if (max_col - min_col < def_width) {
@@ -997,9 +969,7 @@ static bool pum_set_selected(int n, int repeat)
       }
     }
     // adjust for the number of lines displayed
-    if (pum_first > pum_size - pum_height) {
-      pum_first = pum_size - pum_height;
-    }
+    pum_first = MIN(pum_first, pum_size - pum_height);
 
     // Show extra info in the preview window if there is something and
     // 'completeopt' contains "preview".
