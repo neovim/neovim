@@ -377,7 +377,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
             }
           }
         } else if (pum_width > content_width && pum_width > p_pw) {
-          pum_width = MIN(content_width, (int)p_pw);
+          pum_width = MAX(content_width, (int)p_pw);
         }
       }
     } else if (max_col - min_col < def_width) {
