@@ -21,9 +21,12 @@ end
 local function system(cmd, silent, env)
   local r = vim.system(cmd, { env = env, timeout = 10000 }):wait()
 
-  if r.code ~= 0 and not silent then
-    local cmd_str = table.concat(cmd, ' ')
-    man_error(string.format("command error '%s': %s", cmd_str, r.stderr))
+  if not silent then
+    if r.code ~= 0 then
+      local cmd_str = table.concat(cmd, ' ')
+      man_error(string.format("command error '%s': %s", cmd_str, r.stderr))
+    end
+    assert(r.stdout ~= '')
   end
 
   return assert(r.stdout)

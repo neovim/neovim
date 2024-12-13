@@ -263,4 +263,14 @@ describe(':Man', function()
       { '1', 'other_man' },
     }, get_search_history('other_man(1)'))
   end)
+
+  it('can complete', function()
+    t.skip(t.is_os('mac') and t.is_arch('x86_64'), 'not supported on intel mac')
+    eq(
+      true,
+      exec_lua(function()
+        return #require('man').man_complete('f', 'Man g') > 0
+      end)
+    )
+  end)
 end)

@@ -409,6 +409,17 @@ function M.is_os(s)
   )
 end
 
+local architecture = uv.os_uname().machine
+
+--- @param s 'x86_64'|'arm64'
+--- @return boolean
+function M.is_arch(s)
+  if not (s == 'x86_64' or s == 'arm64') then
+    error('unknown architecture: ' .. tostring(s))
+  end
+  return s == architecture
+end
+
 local tmpname_id = 0
 local tmpdir = os.getenv('TMPDIR') or os.getenv('TEMP')
 local tmpdir_is_local = not not (tmpdir and tmpdir:find('Xtest'))
