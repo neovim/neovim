@@ -1731,7 +1731,7 @@ describe('API/extmarks', function()
     -- mark with invalidate is removed
     command('d2')
     screen:expect([[
-      S2^aaa bbb ccc                           |
+      {7:S2}^aaa bbb ccc                           |
       {7:  }aaa bbb ccc                           |*3
       {7:  }                                      |
                                               |
@@ -1739,9 +1739,9 @@ describe('API/extmarks', function()
     -- mark is restored with undo_restore == true
     command('silent undo')
     screen:expect([[
-      S1{7:  }^aaa bbb ccc                         |
-      S2S1aaa bbb ccc                         |
-      S2{7:  }aaa bbb ccc                         |
+      {7:S1  }^aaa bbb ccc                         |
+      {7:S2S1}aaa bbb ccc                         |
+      {7:S2  }aaa bbb ccc                         |
       {7:    }aaa bbb ccc                         |*2
                                               |
     ]])

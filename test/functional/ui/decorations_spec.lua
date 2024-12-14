@@ -631,7 +631,7 @@ describe('decorations providers', function()
       {14:  }hello97                               |
       {14:  }hello98                               |
       {14:  }hello99                               |
-      X ^hello100                              |
+      {14:X }^hello100                              |
       {14:  }hello101                              |
       {14:  }hello102                              |
       {14:  }hello103                              |
@@ -2301,13 +2301,16 @@ describe('extmark decorations', function()
 
   it('works with both hl_group and sign_hl_group', function()
     screen:try_resize(50, 3)
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.WebGray, foreground = Screen.colors.Blue, bold = true },
+    })
     insert('abcdefghijklmn')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text='S', sign_hl_group='NonText', hl_group='Error', end_col=14})
-    screen:expect{grid=[[
-      {1:S }{4:abcdefghijklm^n}                                  |
+    screen:expect([[
+      {100:S }{9:abcdefghijklm^n}                                  |
       {1:~                                                 }|
                                                         |
-    ]]}
+    ]])
   end)
 
   it('virt_text_repeat_linebreak repeats virtual text on wrapped lines', function()
@@ -5064,16 +5067,16 @@ l5
 
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S'})
 
-    screen:expect{grid=[[
+    screen:expect([[
       {7:  }^l1                                              |
-      S l2                                              |
+      {7:S }l2                                              |
       {7:  }l3                                              |
       {7:  }l4                                              |
       {7:  }l5                                              |
       {7:  }                                                |
       {1:~                                                 }|*3
                                                         |
-    ]]}
+    ]])
   end)
 
   it('can add a single sign (with end row)', function()
@@ -5082,16 +5085,16 @@ l5
 
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S', end_row=1})
 
-    screen:expect{grid=[[
+    screen:expect([[
       {7:  }^l1                                              |
-      S l2                                              |
+      {7:S }l2                                              |
       {7:  }l3                                              |
       {7:  }l4                                              |
       {7:  }l5                                              |
       {7:  }                                                |
       {1:~                                                 }|*3
                                                         |
-    ]]}
+    ]])
   end)
 
   it('can add a single sign and text highlight', function()
@@ -5099,16 +5102,16 @@ l5
     feed 'gg'
 
     api.nvim_buf_set_extmark(0, ns, 1, 0, {sign_text='S', hl_group='Todo', end_col=1})
-    screen:expect{grid=[[
+    screen:expect([[
       {7:  }^l1                                              |
-      S {100:l}2                                              |
+      {7:S }{100:l}2                                              |
       {7:  }l3                                              |
       {7:  }l4                                              |
       {7:  }l5                                              |
       {7:  }                                                |
       {1:~                                                 }|*3
                                                         |
-    ]]}
+    ]])
 
     api.nvim_buf_clear_namespace(0, ns, 0, -1)
   end)
@@ -5119,16 +5122,16 @@ l5
 
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S', end_row = 2})
 
-    screen:expect{grid=[[
+    screen:expect([[
       {7:  }^l1                                              |
-      S l2                                              |
-      S l3                                              |
+      {7:S }l2                                              |
+      {7:S }l3                                              |
       {7:  }l4                                              |
       {7:  }l5                                              |
       {7:  }                                                |
       {1:~                                                 }|*3
                                                         |
-    ]]}
+    ]])
   end)
 
   it('can add multiple signs (multiple extmarks)', function()
@@ -5138,16 +5141,16 @@ l5
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S1'})
     api.nvim_buf_set_extmark(0, ns, 3, -1, {sign_text='S2', end_row = 4})
 
-    screen:expect{grid=[[
+    screen:expect([[
       {7:  }^l1                                              |
-      S1l2                                              |
+      {7:S1}l2                                              |
       {7:  }l3                                              |
-      S2l4                                              |
-      S2l5                                              |
+      {7:S2}l4                                              |
+      {7:S2}l5                                              |
       {7:  }                                                |
       {1:~                                                 }|*3
                                                         |
-    ]]}
+    ]])
   end)
 
   it('can add multiple signs (multiple extmarks) 2', function()
@@ -5156,16 +5159,16 @@ l5
 
     api.nvim_buf_set_extmark(0, ns, 3, -1, {sign_text='S1'})
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S2', end_row = 3})
-    screen:expect{grid=[[
+    screen:expect([[
       {7:    }^l1                                            |
-      S2{7:  }l2                                            |
-      S2{7:  }l3                                            |
-      S2S1l4                                            |
+      {7:S2  }l2                                            |
+      {7:S2  }l3                                            |
+      {7:S2S1}l4                                            |
       {7:    }l5                                            |
       {7:    }                                              |
       {1:~                                                 }|*3
                                                         |
-    ]]}
+    ]])
   end)
 
   it('can add multiple signs (multiple extmarks) 3', function()
@@ -5176,16 +5179,16 @@ l5
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S1', end_row=2})
     api.nvim_buf_set_extmark(0, ns, 2, -1, {sign_text='S2', end_row=3})
 
-    screen:expect{grid=[[
+    screen:expect([[
       {7:    }^l1                                            |
-      S1{7:  }l2                                            |
-      S2S1l3                                            |
-      S2{7:  }l4                                            |
+      {7:S1  }l2                                            |
+      {7:S2S1}l3                                            |
+      {7:S2  }l4                                            |
       {7:    }l5                                            |
       {7:    }                                              |
       {1:~                                                 }|*3
                                                         |
-    ]]}
+    ]])
   end)
 
   it('can add multiple signs (multiple extmarks) 4', function()
@@ -5195,16 +5198,16 @@ l5
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1', end_row=0})
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S2', end_row=1})
 
-    screen:expect{grid=[[
-      S1^l1                                              |
-      S2l2                                              |
+    screen:expect([[
+      {7:S1}^l1                                              |
+      {7:S2}l2                                              |
       {7:  }l3                                              |
       {7:  }l4                                              |
       {7:  }l5                                              |
       {7:  }                                                |
       {1:~                                                 }|*3
                                                         |
-    ]]}
+    ]])
   end)
 
   it('works with old signs', function()
@@ -5219,16 +5222,16 @@ l5
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S4'})
     api.nvim_buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
 
-    screen:expect{grid=[[
-      S4S1^l1                                            |
-      S2x l2                                            |
-      S5{7:  }l3                                            |
+    screen:expect([[
+      {7:S4S1}^l1                                            |
+      {7:S2x }l2                                            |
+      {7:S5  }l3                                            |
       {7:    }l4                                            |
       {7:    }l5                                            |
       {7:    }                                              |
       {1:~                                                 }|*3
                                                         |
-    ]]}
+    ]])
   end)
 
   it('works with old signs (with range)', function()
@@ -5244,16 +5247,16 @@ l5
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S4'})
     api.nvim_buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
 
-    screen:expect{grid=[[
-      S4S3S1^l1                                          |
-      S3S2x l2                                          |
-      S5S3{7:  }l3                                          |
-      S3{7:    }l4                                          |
-      S3{7:    }l5                                          |
+    screen:expect([[
+      {7:S4S3S1}^l1                                          |
+      {7:S3S2x }l2                                          |
+      {7:S5S3  }l3                                          |
+      {7:S3    }l4                                          |
+      {7:S3    }l5                                          |
       {7:      }                                            |
       {1:~                                                 }|*3
                                                         |
-    ]]}
+    ]])
   end)
 
   it('can add a ranged sign (with start out of view)', function()
@@ -5264,14 +5267,14 @@ l5
 
     api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='X', end_row=3})
 
-    screen:expect{grid=[[
-      X {7:  }^l3                                            |
-      X {7:  }l4                                            |
+    screen:expect([[
+      {7:X   }^l3                                            |
+      {7:X   }l4                                            |
       {7:    }l5                                            |
       {7:    }                                              |
       {1:~                                                 }|*5
                                                         |
-    ]]}
+    ]])
   end)
 
   it('can add lots of signs', function()
@@ -5293,11 +5296,11 @@ l5
       api.nvim_buf_set_extmark(0, ns, i, -1, { sign_text='Z' })
     end
 
-    screen:expect{grid=[[
-      Z Y X W {100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:h}                 |*8
-      Z Y X W {100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:^h}                 |
+    screen:expect([[
+      {7:Z Y X W }{100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:h}                 |*8
+      {7:Z Y X W }{100:a} {100:b} {100:c} {100:d} {100:e} {100:f} {100:g} {100:^h}                 |
                                               |
-    ]]}
+    ]])
   end)
 
   it('works with priority #19716', function()
@@ -5313,20 +5316,20 @@ l5
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S5', priority=200})
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1', priority=1})
 
-    screen:expect{grid=[[
-      S5S4O3S2S1^l1        |
+    screen:expect([[
+      {7:S5S4O3S2S1}^l1        |
       {7:          }l2        |
                           |
-    ]]}
+    ]])
 
     -- Check truncation works too
     api.nvim_set_option_value('signcolumn', 'auto', {})
 
-    screen:expect{grid=[[
-      S5^l1                |
+    screen:expect([[
+      {7:S5}^l1                |
       {7:  }l2                |
                           |
-    ]]}
+    ]])
   end)
 
   it('does not overflow with many old signs #23852', function()
@@ -5343,21 +5346,21 @@ l5
     command([[exe 'sign place 07 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
     command([[exe 'sign place 08 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
     command([[exe 'sign place 09 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
-    screen:expect{grid=[[
-      O3O3O3O3O3O3O3O3O3^  |
+    screen:expect([[
+      {7:O3O3O3O3O3O3O3O3O3}^  |
       {1:~                   }|
                           |
-    ]]}
+    ]])
 
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1', priority=1})
     screen:expect_unchanged()
 
     api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S5', priority=200})
-    screen:expect{grid=[[
-      S5O3O3O3O3O3O3O3O3^  |
+    screen:expect([[
+      {7:S5O3O3O3O3O3O3O3O3}^  |
       {1:~                   }|
                           |
-    ]]}
+    ]])
 
     assert_alive()
   end)
@@ -5383,12 +5386,12 @@ l5
     api.nvim_buf_set_extmark(0, ns, 1, -1, {invalidate = true, sign_text='S3'})
     feed('2Gdd')
 
-    screen:expect{grid=[[
-      S1l1                |
-      S1^l3                |
-      S1l4                |
+    screen:expect([[
+      {7:S1}l1                |
+      {7:S1}^l3                |
+      {7:S1}l4                |
                           |
-    ]]}
+    ]])
   end)
 
   it('correct width with multiple overlapping signs', function()
@@ -5400,36 +5403,36 @@ l5
     feed('gg')
 
     local s1 = [[
-      S2S1^l1              |
-      S3S2l2              |
-      S3S2l3              |
+      {7:S2S1}^l1              |
+      {7:S3S2}l2              |
+      {7:S3S2}l3              |
                           |
     ]]
-    screen:expect{grid=s1}
+    screen:expect(s1)
     -- Correct width when :move'ing a line with signs
     command('move2')
-    screen:expect{grid=[[
-      S3{7:    }l2            |
-      S3S2S1^l1            |
+    screen:expect([[
+      {7:S3    }l2            |
+      {7:S3S2S1}^l1            |
       {7:      }l3            |
                           |
-    ]]}
+    ]])
     command('silent undo')
     screen:expect{grid=s1}
     command('d')
-    screen:expect{grid=[[
-      S3S2S1^l2            |
-      S3S2{7:  }l3            |
+    screen:expect([[
+      {7:S3S2S1}^l2            |
+      {7:S3S2  }l3            |
       {7:      }l4            |
                           |
-    ]]}
+    ]])
     command('d')
-    screen:expect{grid=[[
-      S3S2S1^l3            |
+    screen:expect([[
+      {7:S3S2S1}^l3            |
       {7:      }l4            |
       {7:      }l5            |
                           |
-    ]]}
+    ]])
   end)
 
   it('correct width when adding and removing multiple signs', function()
@@ -5452,12 +5455,12 @@ l5
       redraw!
       call nvim_buf_del_extmark(0, ns, s1)
     ]])
-    screen:expect{grid=[[
-      S1^l1                |
-      S1l2                |
-      S1l3                |
+    screen:expect([[
+      {7:S1}^l1                |
+      {7:S1}l2                |
+      {7:S1}l3                |
                           |
-    ]]}
+    ]])
   end)
 
   it('correct width when deleting lines', function()
@@ -5472,12 +5475,12 @@ l5
       call nvim_buf_del_extmark(0, ns, s3)
       norm 4Gdd
     ]])
-    screen:expect{grid=[[
+    screen:expect([[
       {7:    }l3              |
-      S2S1l5              |
+      {7:S2S1}l5              |
       {7:    }^                |
                           |
-    ]]}
+    ]])
   end)
 
   it('correct width when splitting lines with signs on different columns', function()
@@ -5487,12 +5490,12 @@ l5
     api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text='S1'})
     api.nvim_buf_set_extmark(0, ns, 0, 1, {sign_text='S2'})
     feed('a<cr><esc>')
-    screen:expect{grid=[[
-      S1l                 |
-      S2^1                 |
+    screen:expect([[
+      {7:S1}l                 |
+      {7:S2}^1                 |
       {7:  }l2                |
                           |
-    ]]}
+    ]])
   end)
 
   it('correct width after wiping a buffer', function()
@@ -5501,12 +5504,12 @@ l5
     feed('gg')
     local buf = api.nvim_get_current_buf()
     api.nvim_buf_set_extmark(buf, ns, 0, 0, { sign_text = 'h' })
-    screen:expect{grid=[[
-      h ^l1                |
+    screen:expect([[
+      {7:h }^l1                |
       {7:  }l2                |
       {7:  }l3                |
                           |
-    ]]}
+    ]])
     api.nvim_win_set_buf(0, api.nvim_create_buf(false, true))
     api.nvim_buf_delete(buf, {unload=true, force=true})
     api.nvim_buf_set_lines(buf, 0, -1, false, {''})
@@ -5537,12 +5540,12 @@ l5
       end)
     ]])
 
-    screen:expect{grid=[[
-      S1^l1                |
-      S2l2                |
-      S4l3                |
+    screen:expect([[
+      {7:S1}^l1                |
+      {7:S2}l2                |
+      {7:S4}l3                |
                           |
-    ]]}
+    ]])
   end)
 
   it('no crash with sign after many marks #27137', function()
@@ -5553,11 +5556,11 @@ l5
     end
     api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text = 'S1'})
 
-    screen:expect{grid=[[
-      S1{9:^a}                 |
+    screen:expect([[
+      {7:S1}{9:^a}                 |
       {1:~                   }|*2
                           |
-    ]]}
+    ]])
   end)
 
   it('correct sort order with multiple namespaces and same id', function()
@@ -5565,11 +5568,11 @@ l5
     api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text = 'S1', id = 1})
     api.nvim_buf_set_extmark(0, ns2, 0, 0, {sign_text = 'S2', id = 1})
 
-    screen:expect{grid=[[
-      S2S1^                                              |
+    screen:expect([[
+      {7:S2S1}^                                              |
       {1:~                                                 }|*8
                                                         |
-    ]]}
+    ]])
   end)
 
   it('correct number of signs after deleting text (#27046)', function()
@@ -5586,12 +5589,12 @@ l5
     api.nvim_buf_set_extmark(0, ns, 30, 0, {end_row = 30, end_col = 3, hl_group = 'Error'})
     command('0d29')
 
-    screen:expect{grid=[[
-      S4S3S2S1{9:^foo}                                       |
-      S5{7:      }{9:foo}                                       |
+    screen:expect([[
+      {7:S4S3S2S1}{9:^foo}                                       |
+      {7:S5      }{9:foo}                                       |
       {1:~                                                 }|*7
       29 fewer lines                                    |
-    ]]}
+    ]])
 
     api.nvim_buf_clear_namespace(0, ns, 0, -1)
   end)
@@ -5599,21 +5602,17 @@ l5
   it([[correct numberwidth with 'signcolumn' set to "number" #28984]], function()
     command('set number numberwidth=1 signcolumn=number')
     api.nvim_buf_set_extmark(0, ns, 0, 0, { sign_text = 'S1' })
-    screen:expect({
-      grid = [[
-        S1 ^                                               |
-        {1:~                                                 }|*8
-                                                          |
-      ]]
-    })
+    screen:expect([[
+      {7:S1 }^                                               |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
     api.nvim_buf_del_extmark(0, ns, 1)
-    screen:expect({
-      grid = [[
-        {8:1 }^                                                |
-        {1:~                                                 }|*8
-                                                          |
-      ]]
-    })
+    screen:expect([[
+      {8:1 }^                                                |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
   end)
 
   it('supports emoji as signs', function()
@@ -5626,10 +5625,10 @@ l5
     api.nvim_buf_set_extmark(0, ns, 4, 0, {sign_text='❤x'})
     screen:expect([[
       {7:  }^l1                                              |
-      🧑‍🌾l2                                              |
-      ❤️l3                                              |
-      ❤ l4                                              |
-      ❤xl5                                              |
+      {7:🧑‍🌾}l2                                              |
+      {7:❤️}l3                                              |
+      {7:❤ }l4                                              |
+      {7:❤x}l5                                              |
       {7:  }                                                |
       {1:~                                                 }|*3
                                                         |

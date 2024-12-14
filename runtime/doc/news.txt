@@ -307,7 +307,7 @@ UI
   which controls the tool used to open the given path or URL. If you want to
   globally set this, you can override vim.ui.open using the same approach
   described at |vim.paste()|.
-- `vim.ui.open()` now supports
+• `vim.ui.open()` now supports
   [lemonade](https://github.com/lemonade-command/lemonade) as an option for
   opening urls/files. This is handy if you are in an ssh connection and use
   `lemonade`.
@@ -317,7 +317,6 @@ UI
   |hl-PmenuMatch|.
 • |vim.diagnostic.setqflist()| updates an existing quickfix list with the
   given title if found
-
 • |ui-messages| content chunks now also contain the highlight group ID.
 
 ==============================================================================
@@ -339,9 +338,9 @@ These existing features changed their behavior.
   more emoji characters than before, including those encoded with multiple
   emoji codepoints combined with ZWJ (zero width joiner) codepoints.
 
-• Text in the 'statusline', 'tabline', and 'winbar' now inherits highlights
-  from the respective |hl-StatusLine|, |hl-TabLine|, and |hl-WinBar| highlight
-  groups.
+• Custom highlights in 'rulerformat', 'statuscolumn', 'statusline', 'tabline',
+  'winbar' and the number column (through |:sign-define| `numhl`) now combine
+  with their respective highlight groups, as opposed to |hl-Normal|.
 
 • |vim.on_key()| callbacks won't be invoked recursively when a callback itself
   consumes input.
