@@ -888,7 +888,7 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
-  if (!buf) {
+  if (!buf || curwin->w_buffer == buf) {
     return;
   }
 
