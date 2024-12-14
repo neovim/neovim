@@ -5214,6 +5214,8 @@ vim.go.sect = vim.go.sections
 --- selection.
 --- When "old" is used and 'virtualedit' allows the cursor to move past
 --- the end of line the line break still isn't included.
+--- When "exclusive" is used, cursor position in visual mode will be
+--- adjusted for inclusive motions `inclusive-motion-selection-exclusive`.
 --- Note that when "exclusive" is used and selecting from the end
 --- backwards, you cannot include the last character of a line, when
 --- starting in Normal mode and 'virtualedit' empty.
