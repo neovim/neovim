@@ -547,7 +547,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                              Use virtual lines for diagnostics.
       • {signs}?             (`boolean|vim.diagnostic.Opts.Signs|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Signs`, default: `true`)
                              Use signs for diagnostics |diagnostic-signs|.
-      • {float}?             (`boolean|vim.diagnostic.Opts.Float|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Float`)
+      • {float}?             (`boolean|vim.diagnostic.Opts.Float|fun(namespace?: integer|integer[], bufnr:integer): vim.diagnostic.Opts.Float`)
                              Options for floating windows. See
                              |vim.diagnostic.Opts.Float|.
       • {status}?            (`vim.diagnostic.Opts.Status`) Options for the
