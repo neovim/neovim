@@ -26,6 +26,9 @@ describe('signs', function()
   -- oldtest: Test_sign_cursor_position()
   it('are drawn correctly', function()
     local screen = Screen.new(75, 6)
+    screen:add_extra_attr_ids({
+      [100] = { foreground = Screen.colors.Blue4, background = Screen.colors.Yellow },
+    })
     exec([[
       call setline(1, [repeat('x', 75), 'mmmm', 'yyyy'])
       call cursor(2,1)
@@ -37,7 +40,7 @@ describe('signs', function()
     screen:expect([[
       {7:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
       {7:  }xx                                                                       |
-      {10:=>}^mmmm                                                                     |
+      {100:=>}^mmmm                                                                     |
       {7:  }yyyy                                                                     |
       {1:~                                                                          }|
                                                                                  |
@@ -48,7 +51,7 @@ describe('signs', function()
     screen:expect([[
       {7:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
       {7:  }xx                                                                       |
-      {10:-)}^mmmm                                                                     |
+      {100:-)}^mmmm                                                                     |
       {7:  }yyyy                                                                     |
       {1:~                                                                          }|
                                                                                  |
@@ -59,7 +62,7 @@ describe('signs', function()
     screen:expect([[
       {7:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
       {7:  }xx                                                                       |
-      {10:-)}{4:^mmmm                                                                     }|
+      {100:-)}{4:^mmmm                                                                     }|
       {7:  }yyyy                                                                     |
       {1:~                                                                          }|
                                                                                  |

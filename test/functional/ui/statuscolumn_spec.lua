@@ -236,6 +236,11 @@ describe('statuscolumn', function()
     command("call setline(1,repeat([repeat('aaaaa',10)],16))")
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Red, background = Screen.colors.LightGray },
+      [101] = {
+        bold = true,
+        background = Screen.colors.WebGray,
+        foreground = Screen.colors.DarkBlue,
+      },
     }
     command('hi! CursorLine guifg=Red guibg=NONE')
     screen:expect([[
@@ -308,7 +313,7 @@ describe('statuscolumn', function()
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
       {7: }{8: 7│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
-      {7:+}{15: 8│}{7:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {101:+}{15: 8│}{101:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7: }{8: 9│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
       {7: }{8:10│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -326,7 +331,7 @@ describe('statuscolumn', function()
       {7: }{8: 6│}{7:    }{8: }aaaaaa                                      |
       {7: }{8: 7│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8: 7│}{7:    }{8: }aaaaaa                                      |
-      {7:+}{15: 8│}{7:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {101:+}{15: 8│}{101:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7: }{8: 9│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8: 9│}{7:    }{8: }aaaaaa                                      |
       {7: }{8:10│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -344,7 +349,7 @@ describe('statuscolumn', function()
       {7: }{8:  2│}{7:    }{8: }aaaaaaa                                    |
       {7: }{8:  1│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  1│}{7:    }{8: }aaaaaaa                                    |
-      {7:+}{15:  0│}{7:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {101:+}{15:  0│}{101:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7: }{8:  1│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  1│}{7:    }{8: }aaaaaaa                                    |
       {7: }{8:  2│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -361,7 +366,7 @@ describe('statuscolumn', function()
       {7: }{8:   │}{7:    }{8: }aaaaaaa                                    |
       {7: }{8:  1│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:    }{8: }aaaaaaa                                    |
-      {7:+}{15:  0│}{7:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {101:+}{15:  0│}{101:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7: }{8:  1│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:    }{8: }aaaaaaa                                    |
       {7: }{8:  2│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -386,7 +391,7 @@ describe('statuscolumn', function()
       {7: }{8:   │}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaa        |
       {7: }{8:  1│}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaa        |
-      {7:+}{15:  0│}{7:                  }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaa}|
+      {101:+}{15:  0│}{101:                  }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaa}|
       {7: }{8:  1│}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaa        |
       {7: }{8:  2│}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -397,7 +402,7 @@ describe('statuscolumn', function()
     command('set cpoptions+=n')
     feed('Hgjg0')
     screen:expect([[
-      {7: }{15:  0│}{8:>>}{7:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {101: }{15:  0│>>}{101:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7:                   }{19:^aaaaaaaaaaaaaaaaaaaaa             }|
       {7: }{8:  3│}{1:>!}{7:                }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:                   }aaaaaaaaaaaaaaaaaaaaa             |
@@ -416,7 +421,7 @@ describe('statuscolumn', function()
     command('sign unplace 2')
     feed('J2gjg0')
     screen:expect([[
-      {7: }{15:  0│}{8:>>}{7:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {101: }{15:  0│>>}{101:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7:                   }     {19:aaaaaaaaaaaaaaaaaaaaa aaaaaaa}|
       {7:                   }     {19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7:                   }     {19:^aaaaaaaaaaaaaa               }|
@@ -434,7 +439,7 @@ describe('statuscolumn', function()
     command('set nobreakindent')
     feed('$g0')
     screen:expect([[
-      {7: }{15:  0│}{8:>>}{7:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {101: }{15:  0│>>}{101:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7:                   }{19:aaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaa}|
       {7:                   }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7:                   }{19:^aaaa                              }|

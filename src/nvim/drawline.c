@@ -462,10 +462,12 @@ void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, in
 static void draw_sign(bool nrcol, win_T *wp, winlinevars_T *wlv, int sign_idx, int sign_cul_attr)
 {
   SignTextAttrs sattr = wlv->sattrs[sign_idx];
+  int scl_attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLS : HLF_SC);
 
   if (sattr.text[0] && wlv->row == wlv->startrow + wlv->filler_lines && wlv->filler_todo <= 0) {
     int attr = (use_cursor_line_highlight(wp, wlv->lnum) && sign_cul_attr)
                ? sign_cul_attr : sattr.hl_id ? syn_id2attr(sattr.hl_id) : 0;
+    attr = hl_combine_attr(scl_attr, attr);
     int fill = nrcol ? number_width(wp) + 1 : SIGN_WIDTH;
     draw_col_fill(wlv, schar_from_ascii(' '), fill, attr);
     int sign_pos = wlv->off - SIGN_WIDTH - (int)nrcol;
@@ -474,8 +476,7 @@ static void draw_sign(bool nrcol, win_T *wp, winlinevars_T *wlv, int sign_idx, i
     linebuf_char[sign_pos + 1] = sattr.text[1];
   } else {
     assert(!nrcol);  // handled in draw_lnum_col()
-    int attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLS : HLF_SC);
-    draw_col_fill(wlv, schar_from_ascii(' '), SIGN_WIDTH, attr);
+    draw_col_fill(wlv, schar_from_ascii(' '), SIGN_WIDTH, scl_attr);
   }
 }
 
@@ -559,8 +560,8 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, int 
     } else {
       // Draw the line number (empty space after wrapping).
       int width = number_width(wp) + 1;
-      int attr = (sign_num_attr > 0 && wlv->filler_todo <= 0)
-                 ? sign_num_attr : get_line_number_attr(wp, wlv);
+      int attr = hl_combine_attr(get_line_number_attr(wp, wlv),
+                                 wlv->filler_todo <= 0 ? sign_num_attr : 0);
       if (wlv->row == wlv->startrow + wlv->filler_lines
           && (wp->w_skipcol == 0 || wlv->row > 0 || (wp->w_p_nu && wp->w_p_rnu))) {
         char buf[32];
@@ -640,7 +641,7 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
     draw_col_buf(wp, wlv, transbuf, translen, attr, false);
     p = sp->start;
     int hl = sp->userhl;
-    attr = hl < 0 ? syn_id2attr(-hl) : stcp->num_attr;
+    attr = hl < 0 ? hl_combine_attr(stcp->num_attr, syn_id2attr(-hl)) : stcp->num_attr;
   }
   size_t translen = transstr_buf(p, buf + len - p, transbuf, MAXPATHL, true);
   draw_col_buf(wp, wlv, transbuf, translen, attr, false);
