@@ -756,7 +756,7 @@ int ins_compl_add_infercase(char *str_arg, int len, bool icase, char *fname, Dir
 
     // "char_len" may be smaller than "compl_char_len" when using
     // thesaurus, only use the minimum when comparing.
-    int min_len = char_len < compl_char_len ? char_len : compl_char_len;
+    int min_len = MIN(char_len, compl_char_len);
 
     str = ins_compl_infercase_gettext(str, char_len, compl_char_len, min_len, &tofree);
   }
@@ -1007,9 +1007,9 @@ static void ins_compl_add_matches(int num_matches, char **matches, int icase)
   Direction dir = compl_direction;
 
   for (int i = 0; i < num_matches && add_r != FAIL; i++) {
-    if ((add_r = ins_compl_add(matches[i], -1, NULL, NULL, false, NULL, dir,
-                               CP_FAST | (icase ? CP_ICASE : 0),
-                               false, NULL)) == OK) {
+    add_r = ins_compl_add(matches[i], -1, NULL, NULL, false, NULL, dir,
+                          CP_FAST | (icase ? CP_ICASE : 0), false, NULL);
+    if (add_r == OK) {
       // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
     }
@@ -1277,21 +1277,15 @@ static int ins_compl_build_pum(void)
   i = 0;
   comp = match_head;
   while (comp != NULL) {
-    if (comp->cp_text[CPT_ABBR] != NULL) {
-      compl_match_array[i].pum_text = comp->cp_text[CPT_ABBR];
-    } else {
-      compl_match_array[i].pum_text = comp->cp_str;
-    }
+    compl_match_array[i].pum_text = comp->cp_text[CPT_ABBR] != NULL
+                                    ? comp->cp_text[CPT_ABBR] : comp->cp_str;
     compl_match_array[i].pum_kind = comp->cp_text[CPT_KIND];
     compl_match_array[i].pum_info = comp->cp_text[CPT_INFO];
     compl_match_array[i].pum_score = comp->cp_score;
     compl_match_array[i].pum_user_abbr_hlattr = comp->cp_user_abbr_hlattr;
     compl_match_array[i].pum_user_kind_hlattr = comp->cp_user_kind_hlattr;
-    if (comp->cp_text[CPT_MENU] != NULL) {
-      compl_match_array[i++].pum_extra = comp->cp_text[CPT_MENU];
-    } else {
-      compl_match_array[i++].pum_extra = comp->cp_fname;
-    }
+    compl_match_array[i++].pum_extra = comp->cp_text[CPT_MENU] != NULL
+                                       ? comp->cp_text[CPT_MENU] : comp->cp_fname;
     compl_T *match_next = comp->cp_match_next;
     comp->cp_match_next = NULL;
     comp = match_next;
@@ -1578,11 +1572,7 @@ static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
       char *ptr = buf;
       while (vim_regexec(regmatch, buf, (colnr_T)(ptr - buf))) {
         ptr = regmatch->startp[0];
-        if (ctrl_x_mode_line_or_eval()) {
-          ptr = find_line_end(ptr);
-        } else {
-          ptr = find_word_end(ptr);
-        }
+        ptr = ctrl_x_mode_line_or_eval() ? find_line_end(ptr) : find_word_end(ptr);
         int add_r = ins_compl_add_infercase(regmatch->startp[0],
                                             (int)(ptr - regmatch->startp[0]),
                                             p_ic, files[i], *dir, false);
