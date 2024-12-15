@@ -404,6 +404,7 @@ func s:GetFilenameChecks() abort
     \ 'kscript': ['file.ks'],
     \ 'kwt': ['file.k'],
     \ 'lace': ['file.ace', 'file.ACE'],
+    \ 'lalrpop': ['file.lalrpop'],
     \ 'latte': ['file.latte', 'file.lte'],
     \ 'ld': ['file.ld', 'any/usr/lib/aarch64-xilinx-linux/ldscripts/aarch64elf32b.x'],
     \ 'ldapconf': ['ldap.conf', '.ldaprc', 'ldaprc'],
