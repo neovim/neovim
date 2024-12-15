@@ -672,6 +672,7 @@ local extension = {
   k = 'kwt',
   ACE = 'lace',
   ace = 'lace',
+  lalrpop = 'lalrpop',
   latte = 'latte',
   lte = 'latte',
   ld = 'ld',
