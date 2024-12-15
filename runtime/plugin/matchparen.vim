@@ -109,6 +109,10 @@ func s:Highlight_Matching_Pair()
 
   if !has("syntax") || !exists("g:syntax_on")
     let s_skip = "0"
+  elseif exists("b:ts_highlight") && &syntax != 'on'
+    let s_skip = "match(v:lua.vim.treesitter.get_captures_at_cursor(), '"
+          \ .. 'string\|character\|singlequote\|escape\|symbol\|comment'
+          \ .. "') != -1"
   else
     " Build an expression that detects whether the current cursor position is
     " in certain syntax types (string, comment, etc.), for use as
