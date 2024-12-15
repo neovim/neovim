@@ -5,6 +5,7 @@ local command = n.command
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
+local neq = t.neq
 local matches = t.matches
 local api = n.api
 local pcall_err = t.pcall_err
@@ -3261,6 +3262,22 @@ describe('vim.diagnostic', function()
       end)
 
       neq(result[1], result[2])
+    end)
+
+    it('opens quickfix window when open=true', function()
+      local qf_winid = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error', 1, 1, 1, 1),
+        })
+
+        vim.diagnostic.setqflist({ open = true })
+
+        return vim.fn.getqflist({ winid = 0 }).winid
+      end)
+
+      neq(0, qf_winid)
     end)
   end)
 
