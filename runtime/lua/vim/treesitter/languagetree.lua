@@ -86,6 +86,7 @@ local TSCallbackNames = {
 ---@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
 ---Each key is the index of region, which is synced with _regions and _valid.
 ---@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
+---@field private _destroyed boolean If the LanguageTree has been destroyed
 ---@field private _logger? fun(logtype: string, msg: string)
 ---@field private _logfile? file*
 local LanguageTree = {}
@@ -534,6 +535,12 @@ function LanguageTree:destroy()
   for _, child in pairs(self._children) do
     child:destroy()
   end
+  self._destroyed = true
+end
+
+---@nodoc
+function LanguageTree:_is_destroyed()
+  return self._destroyed
 end
 
 ---@param region Range6[]
