@@ -596,6 +596,7 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Arena *arena, Er
   int flags = DIP_DIRFILE | (all ? DIP_ALL : 0);
   TryState tstate;
 
+  // XXX: intentionally not using `TRY_WRAP`, to avoid `did_emsg=false` in `try_end`.
   try_enter(&tstate);
   do_in_runtimepath((name.size ? name.data : ""), flags, find_runtime_cb, &cookie);
   vim_ignored = try_leave(&tstate, err);
