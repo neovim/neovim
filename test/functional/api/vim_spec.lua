@@ -695,7 +695,7 @@ describe('API', function()
         pcall_err(request, 'nvim_call_dict_function', 42, 'f', { 1, 2 })
       )
       eq(
-        'Failed to evaluate dict expression',
+        'Vim:E121: Undefined variable: foo',
         pcall_err(request, 'nvim_call_dict_function', 'foo', 'f', { 1, 2 })
       )
       eq('dict not found', pcall_err(request, 'nvim_call_dict_function', '42', 'f', { 1, 2 }))
@@ -1957,6 +1957,16 @@ describe('API', function()
       api.nvim_set_current_win(api.nvim_list_wins()[2])
       eq(api.nvim_list_wins()[2], api.nvim_get_current_win())
     end)
+
+    it('failure modes', function()
+      n.command('split')
+
+      eq('Invalid window id: 9999', pcall_err(api.nvim_set_current_win, 9999))
+
+      -- XXX: force nvim_set_current_win to fail somehow.
+      n.command("au WinLeave * throw 'foo'")
+      eq('WinLeave Autocommands for "*": foo', pcall_err(api.nvim_set_current_win, 1000))
+    end)
   end)
 
   describe('nvim_{get,set}_current_tabpage, nvim_list_tabpages', function()
@@ -1975,6 +1985,16 @@ describe('API', function()
       api.nvim_set_current_tabpage(api.nvim_list_tabpages()[2])
       eq(api.nvim_list_tabpages()[2], api.nvim_get_current_tabpage())
       eq(api.nvim_list_wins()[2], api.nvim_get_current_win())
+    end)
+
+    it('failure modes', function()
+      n.command('tabnew')
+
+      eq('Invalid tabpage id: 999', pcall_err(api.nvim_set_current_tabpage, 999))
+
+      -- XXX: force nvim_set_current_tabpage to fail somehow.
+      n.command("au TabLeave * throw 'foo'")
+      eq('TabLeave Autocommands for "*": foo', pcall_err(api.nvim_set_current_tabpage, 1))
     end)
   end)
 

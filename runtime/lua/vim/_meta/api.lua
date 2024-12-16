@@ -885,10 +885,8 @@ function vim.api.nvim_cmd(cmd, opts) end
 ---
 --- On execution error: fails with Vimscript error, updates v:errmsg.
 ---
---- Prefer using `nvim_cmd()` or `nvim_exec2()` over this. To evaluate multiple lines of Vim script
---- or an Ex command directly, use `nvim_exec2()`. To construct an Ex command using a structured
---- format and then execute it, use `nvim_cmd()`. To modify an Ex command before evaluating it, use
---- `nvim_parse_cmd()` in conjunction with `nvim_cmd()`.
+--- Prefer `nvim_cmd()` or `nvim_exec2()` instead. To modify an Ex command in a structured way
+--- before executing it, modify the result of `nvim_parse_cmd()` then pass it to `nvim_cmd()`.
 ---
 --- @param command string Ex command string
 function vim.api.nvim_command(command) end

@@ -125,19 +125,17 @@ theend:
 ///
 /// On execution error: fails with Vimscript error, updates v:errmsg.
 ///
-/// Prefer using |nvim_cmd()| or |nvim_exec2()| over this. To evaluate multiple lines of Vim script
-/// or an Ex command directly, use |nvim_exec2()|. To construct an Ex command using a structured
-/// format and then execute it, use |nvim_cmd()|. To modify an Ex command before evaluating it, use
-/// |nvim_parse_cmd()| in conjunction with |nvim_cmd()|.
+/// Prefer |nvim_cmd()| or |nvim_exec2()| instead. To modify an Ex command in a structured way
+/// before executing it, modify the result of |nvim_parse_cmd()| then pass it to |nvim_cmd()|.
 ///
 /// @param command  Ex command string
 /// @param[out] err Error details (Vim error), if any
 void nvim_command(String command, Error *err)
   FUNC_API_SINCE(1)
 {
-  try_start();
-  do_cmdline_cmd(command.data);
-  try_end(err);
+  TRY_WRAP(err, {
+    do_cmdline_cmd(command.data);
+  });
 }
 
 /// Evaluates a Vimscript |expression|. Dicts and Lists are recursively expanded.
@@ -283,13 +281,11 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
   bool mustfree = false;
   switch (dict.type) {
   case kObjectTypeString:
-    try_start();
-    if (eval0(dict.data.string.data, &rettv, NULL, &EVALARG_EVALUATE) == FAIL) {
-      api_set_error(err, kErrorTypeException,
-                    "Failed to evaluate dict expression");
-    }
-    clear_evalarg(&EVALARG_EVALUATE, NULL);
-    if (try_end(err)) {
+    TRY_WRAP(err, {
+      eval0(dict.data.string.data, &rettv, NULL, &EVALARG_EVALUATE);
+      clear_evalarg(&EVALARG_EVALUATE, NULL);
+    });
+    if (ERROR_SET(err)) {
       return rv;
     }
     // Evaluation of the string arg created a new dict or increased the
