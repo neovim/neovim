@@ -1,30 +1,19 @@
 local api, fn = vim.api, vim.fn
 
-local FIND_ARG = '-w'
-local localfile_arg = true -- Always use -l if possible. #6683
-
----@type table[]
-local buf_hls = {}
-
 local M = {}
 
-local function man_error(msg)
-  M.errormsg = 'man.lua: ' .. vim.inspect(msg)
-  error(M.errormsg)
-end
-
--- Run a system command and timeout after 30 seconds.
----@param cmd string[]
----@param silent boolean?
----@param env? table<string,string|number>
----@return string
+--- Run a system command and timeout after 10 seconds.
+--- @param cmd string[]
+--- @param silent boolean?
+--- @param env? table<string,string|number>
+--- @return string
 local function system(cmd, silent, env)
   local r = vim.system(cmd, { env = env, timeout = 10000 }):wait()
 
   if not silent then
     if r.code ~= 0 then
       local cmd_str = table.concat(cmd, ' ')
-      man_error(string.format("command error '%s': %s", cmd_str, r.stderr))
+      error(string.format("command error '%s': %s", cmd_str, r.stderr))
     end
     assert(r.stdout ~= '')
   end
@@ -32,65 +21,64 @@ local function system(cmd, silent, env)
   return assert(r.stdout)
 end
 
----@param line string
----@param linenr integer
-local function highlight_line(line, linenr)
-  ---@type string[]
+--- @enum Man.Attribute
+local Attrs = {
+  None = 0,
+  Bold = 1,
+  Underline = 2,
+  Italic = 3,
+}
+
+--- @param line string
+--- @param row integer
+--- @param hls {attr:Man.Attribute,row:integer,start:integer,final:integer}[]
+--- @return string
+local function render_line(line, row, hls)
+  --- @type string[]
   local chars = {}
   local prev_char = ''
   local overstrike, escape, osc8 = false, false, false
 
-  ---@type table<integer,{attr:integer,start:integer,final:integer}>
-  local hls = {} -- Store highlight groups as { attr, start, final }
-
-  local NONE, BOLD, UNDERLINE, ITALIC = 0, 1, 2, 3
-  local hl_groups = { [BOLD] = 'manBold', [UNDERLINE] = 'manUnderline', [ITALIC] = 'manItalic' }
-  local attr = NONE
+  local attr = Attrs.None
   local byte = 0 -- byte offset
 
-  local function end_attr_hl(attr_)
-    for i, hl in ipairs(hls) do
-      if hl.attr == attr_ and hl.final == -1 then
-        hl.final = byte
-        hls[i] = hl
-      end
-    end
-  end
+  local hls_start = #hls + 1
 
+  --- @param code integer
   local function add_attr_hl(code)
     local continue_hl = true
     if code == 0 then
-      attr = NONE
+      attr = Attrs.None
       continue_hl = false
     elseif code == 1 then
-      attr = BOLD
+      attr = Attrs.Bold
     elseif code == 22 then
-      attr = BOLD
+      attr = Attrs.Bold
       continue_hl = false
     elseif code == 3 then
-      attr = ITALIC
+      attr = Attrs.Italic
     elseif code == 23 then
-      attr = ITALIC
+      attr = Attrs.Italic
       continue_hl = false
     elseif code == 4 then
-      attr = UNDERLINE
+      attr = Attrs.Underline
     elseif code == 24 then
-      attr = UNDERLINE
+      attr = Attrs.Underline
       continue_hl = false
     else
-      attr = NONE
+      attr = Attrs.None
       return
     end
 
     if continue_hl then
-      hls[#hls + 1] = { attr = attr, start = byte, final = -1 }
+      hls[#hls + 1] = { attr = attr, row = row, start = byte, final = -1 }
     else
-      if attr == NONE then
-        for a, _ in pairs(hl_groups) do
-          end_attr_hl(a)
+      for _, a in pairs(attr == Attrs.None and Attrs or { attr }) do
+        for i = hls_start, #hls do
+          if hls[i].attr == a and hls[i].final == -1 then
+            hls[i].final = byte
+          end
         end
-      else
-        end_attr_hl(attr)
       end
     end
   end
@@ -103,11 +91,11 @@ local function highlight_line(line, linenr)
     if overstrike then
       local last_hl = hls[#hls]
       if char == prev_char then
-        if char == '_' and attr == ITALIC and last_hl and last_hl.final == byte then
+        if char == '_' and attr == Attrs.Italic and last_hl and last_hl.final == byte then
           -- This underscore is in the middle of an italic word
-          attr = ITALIC
+          attr = Attrs.Italic
         else
-          attr = BOLD
+          attr = Attrs.Bold
         end
       elseif prev_char == '_' then
         -- Even though underline is strictly what this should be. <bs>_ was used by nroff to
@@ -116,26 +104,26 @@ local function highlight_line(line, linenr)
         -- See:
         -- - https://unix.stackexchange.com/questions/274658/purpose-of-ascii-text-with-overstriking-file-format/274795#274795
         -- - https://cmd.inp.nsk.su/old/cmd2/manuals/unix/UNIX_Unleashed/ch08.htm
-        -- attr = UNDERLINE
-        attr = ITALIC
+        -- attr = Attrs.Underline
+        attr = Attrs.Italic
       elseif prev_char == '+' and char == 'o' then
         -- bullet (overstrike text '+^Ho')
-        attr = BOLD
+        attr = Attrs.Bold
         char = '·'
       elseif prev_char == '·' and char == 'o' then
         -- bullet (additional handling for '+^H+^Ho^Ho')
-        attr = BOLD
+        attr = Attrs.Bold
         char = '·'
       else
         -- use plain char
-        attr = NONE
+        attr = Attrs.None
       end
 
       -- Grow the previous highlight group if possible
       if last_hl and last_hl.attr == attr and last_hl.final == byte then
         last_hl.final = byte + #char
       else
-        hls[#hls + 1] = { attr = attr, start = byte, final = byte + #char }
+        hls[#hls + 1] = { attr = attr, row = row, start = byte, final = byte + #char }
       end
 
       overstrike = false
@@ -154,14 +142,15 @@ local function highlight_line(line, linenr)
       -- We only want to match against SGR sequences, which consist of ESC
       -- followed by '[', then a series of parameter and intermediate bytes in
       -- the range 0x20 - 0x3f, then 'm'. (See ECMA-48, sections 5.4 & 8.3.117)
-      ---@type string?
+      --- @type string?
       local sgr = prev_char:match('^%[([\032-\063]*)m$')
       -- Ignore escape sequences with : characters, as specified by ITU's T.416
       -- Open Document Architecture and interchange format.
-      if sgr and not string.find(sgr, ':') then
-        local match ---@type string?
+      if sgr and not sgr:find(':') then
+        local match --- @type string?
         while sgr and #sgr > 0 do
           -- Match against SGR parameters, which may be separated by ';'
+          --- @type string?, string?
           match, sgr = sgr:match('^(%d*);?(.*)')
           add_attr_hl(match + 0) -- coerce to number
         end
@@ -187,55 +176,40 @@ local function highlight_line(line, linenr)
     end
   end
 
-  for _, hl in ipairs(hls) do
-    if hl.attr ~= NONE then
-      buf_hls[#buf_hls + 1] = {
-        0,
-        -1,
-        hl_groups[hl.attr],
-        linenr - 1,
-        hl.start,
-        hl.final,
-      }
-    end
-  end
-
   return table.concat(chars, '')
 end
+
+local HlGroups = {
+  [Attrs.Bold] = 'manBold',
+  [Attrs.Underline] = 'manUnderline',
+  [Attrs.Italic] = 'manItalic',
+}
 
 local function highlight_man_page()
   local mod = vim.bo.modifiable
   vim.bo.modifiable = true
 
   local lines = api.nvim_buf_get_lines(0, 0, -1, false)
+
+  --- @type {attr:Man.Attribute,row:integer,start:integer,final:integer}[]
+  local hls = {}
+
   for i, line in ipairs(lines) do
-    lines[i] = highlight_line(line, i)
+    lines[i] = render_line(line, i - 1, hls)
   end
+
   api.nvim_buf_set_lines(0, 0, -1, false, lines)
 
-  for _, args in ipairs(buf_hls) do
-    api.nvim_buf_add_highlight(unpack(args))
+  for _, hl in ipairs(hls) do
+    api.nvim_buf_add_highlight(0, -1, HlGroups[hl.attr], hl.row, hl.start, hl.final)
   end
-  buf_hls = {}
 
   vim.bo.modifiable = mod
 end
 
--- replace spaces in a man page name with underscores
--- intended for PostgreSQL, which has man pages like 'CREATE_TABLE(7)';
--- while editing SQL source code, it's nice to visually select 'CREATE TABLE'
--- and hit 'K', which requires this transformation
----@param str string
----@return string
-local function spaces_to_underscores(str)
-  local res = str:gsub('%s', '_')
-  return res
-end
-
----@param sect string|nil
----@param name string|nil
----@param silent boolean
-local function get_path(sect, name, silent)
+--- @param name? string
+--- @param sect? string
+local function get_path(name, sect)
   name = name or ''
   sect = sect or ''
   -- Some man implementations (OpenBSD) return all available paths from the
@@ -256,14 +230,14 @@ local function get_path(sect, name, silent)
   --
   -- Finally, we can avoid relying on -S or -s here since they are very
   -- inconsistently supported. Instead, call -w with a section and a name.
-  local cmd ---@type string[]
+  local cmd --- @type string[]
   if sect == '' then
-    cmd = { 'man', FIND_ARG, name }
+    cmd = { 'man', '-w', name }
   else
-    cmd = { 'man', FIND_ARG, sect, name }
+    cmd = { 'man', '-w', sect, name }
   end
 
-  local lines = system(cmd, silent)
+  local lines = system(cmd, true)
   local results = vim.split(lines, '\n', { trimempty = true })
 
   if #results == 0 then
@@ -279,87 +253,73 @@ local function get_path(sect, name, silent)
   end
 
   -- find any that match the specified name
-  ---@param v string
+  --- @param v string
   local namematches = vim.tbl_filter(function(v)
     local tail = fn.fnamemodify(v, ':t')
-    return string.find(tail, name, 1, true)
+    return tail:find(name, 1, true) ~= nil
   end, results) or {}
   local sectmatches = {}
 
   if #namematches > 0 and sect ~= '' then
-    ---@param v string
+    --- @param v string
     sectmatches = vim.tbl_filter(function(v)
       return fn.fnamemodify(v, ':e') == sect
     end, namematches)
   end
 
-  return fn.substitute(sectmatches[1] or namematches[1] or results[1], [[\n\+$]], '', '')
+  return (sectmatches[1] or namematches[1] or results[1]):gsub('\n+$', '')
 end
 
----@param text string
----@param pat_or_re string
-local function matchstr(text, pat_or_re)
-  local re = type(pat_or_re) == 'string' and vim.regex(pat_or_re) or pat_or_re
-
-  ---@type integer, integer
-  local s, e = re:match_str(text)
-
-  if s == nil then
-    return
+--- Attempt to extract the name and sect out of 'name(sect)'
+--- otherwise just return the largest string of valid characters in ref
+--- @param ref string
+--- @return string? name
+--- @return string? sect
+--- @return string? err
+local function parse_ref(ref)
+  if ref == '' or ref:sub(1, 1) == '-' then
+    return nil, nil, ('invalid manpage reference "%s"'):format(ref)
   end
 
-  return text:sub(vim.str_utfindex(text, 'utf-32', s) + 1, vim.str_utfindex(text, 'utf-32', e))
+  -- match "<name>(<sect>)"
+  -- note: name can contain spaces
+  local name, sect = ref:match('([^()]+)%(([^()]+)%)')
+  if name then
+    -- see ':Man 3X curses' on why tolower.
+    -- TODO(nhooyr) Not sure if this is portable across OSs
+    -- but I have not seen a single uppercase section.
+    return name, sect:lower()
+  end
+
+  name = ref:match('[^()]+')
+  if not name then
+    return nil, nil, ('invalid manpage reference "%s"'):format(ref)
+  end
+  return name
 end
 
--- attempt to extract the name and sect out of 'name(sect)'
--- otherwise just return the largest string of valid characters in ref
----@param ref string
----@return string, string
-local function extract_sect_and_name_ref(ref)
-  ref = ref or ''
-  if ref:sub(1, 1) == '-' then -- try ':Man -pandoc' with this disabled.
-    man_error("manpage name cannot start with '-'")
-  end
-  local ref1 = ref:match('[^()]+%([^()]+%)')
-  if not ref1 then
-    local name = ref:match('[^()]+')
-    if not name then
-      man_error('manpage reference cannot contain only parentheses: ' .. ref)
-    end
-    return '', name
-  end
-  local parts = vim.split(ref1, '(', { plain = true })
-  -- see ':Man 3X curses' on why tolower.
-  -- TODO(nhooyr) Not sure if this is portable across OSs
-  -- but I have not seen a single uppercase section.
-  local sect = vim.split(parts[2] or '', ')', { plain = true })[1]:lower()
-  local name = parts[1]
-  return sect, name
-end
-
--- find_path attempts to find the path to a manpage
--- based on the passed section and name.
---
--- 1. If manpage could not be found with the given sect and name,
---    then try all the sections in b:man_default_sects.
--- 2. If it still could not be found, then we try again without a section.
--- 3. If still not found but $MANSECT is set, then we try again with $MANSECT
---    unset.
--- 4. If a path still wasn't found, return nil.
----@param sect string?
----@param name string
-function M.find_path(sect, name)
+--- Attempts to find the path to a manpage based on the passed section and name.
+---
+--- 1. If manpage could not be found with the given sect and name,
+---    then try all the sections in b:man_default_sects.
+--- 2. If it still could not be found, then we try again without a section.
+--- 3. If still not found but $MANSECT is set, then we try again with $MANSECT
+---    unset.
+--- 4. If a path still wasn't found, return nil.
+--- @param name string?
+--- @param sect string?
+--- @return string? path
+function M._find_path(name, sect)
   if sect and sect ~= '' then
-    local ret = get_path(sect, name, true)
+    local ret = get_path(name, sect)
     if ret then
       return ret
     end
   end
 
   if vim.b.man_default_sects ~= nil then
-    local sects = vim.split(vim.b.man_default_sects, ',', { plain = true, trimempty = true })
-    for _, sec in ipairs(sects) do
-      local ret = get_path(sec, name, true)
+    for sec in vim.gsplit(vim.b.man_default_sects, ',', { trimempty = true }) do
+      local ret = get_path(name, sec)
       if ret then
         return ret
       end
@@ -367,17 +327,18 @@ function M.find_path(sect, name)
   end
 
   -- if none of the above worked, we will try with no section
-  local res_empty_sect = get_path('', name, true)
-  if res_empty_sect then
-    return res_empty_sect
+  local ret = get_path(name)
+  if ret then
+    return ret
   end
 
   -- if that still didn't work, we will check for $MANSECT and try again with it
   -- unset
   if vim.env.MANSECT then
+    --- @type string
     local mansect = vim.env.MANSECT
     vim.env.MANSECT = nil
-    local res = get_path('', name, true)
+    local res = get_path(name)
     vim.env.MANSECT = mansect
     if res then
       return res
@@ -388,24 +349,27 @@ function M.find_path(sect, name)
   return nil
 end
 
-local EXT_RE = vim.regex([[\.\%([glx]z\|bz2\|lzma\|Z\)$]])
-
--- Extracts the name/section from the 'path/name.sect', because sometimes the actual section is
--- more specific than what we provided to `man` (try `:Man 3 App::CLI`).
--- Also on linux, name seems to be case-insensitive. So for `:Man PRIntf`, we
--- still want the name of the buffer to be 'printf'.
----@param path string
----@return string, string
-local function extract_sect_and_name_path(path)
+--- Extracts the name/section from the 'path/name.sect', because sometimes the
+--- actual section is more specific than what we provided to `man`
+--- (try `:Man 3 App::CLI`). Also on linux, name seems to be case-insensitive.
+--- So for `:Man PRIntf`, we still want the name of the buffer to be 'printf'.
+--- @param path string
+--- @return string name
+--- @return string sect
+local function parse_path(path)
   local tail = fn.fnamemodify(path, ':t')
-  if EXT_RE:match_str(path) then -- valid extensions
+  if
+    path:match('%.[glx]z$')
+    or path:match('%.bz2$')
+    or path:match('%.lzma$')
+    or path:match('%.Z$')
+  then
     tail = fn.fnamemodify(tail, ':r')
   end
-  local name, sect = tail:match('^(.+)%.([^.]+)$')
-  return sect, name
+  return tail:match('^(.+)%.([^.]+)$')
 end
 
----@return boolean
+--- @return boolean
 local function find_man()
   if vim.bo.filetype == 'man' then
     return true
@@ -433,20 +397,30 @@ local function set_options()
   vim.bo.filetype = 'man'
 end
 
----@param path string
----@param silent boolean?
----@return string
+--- Always use -l if possible. #6683
+--- @type boolean?
+local localfile_arg
+
+--- @param path string
+--- @param silent boolean?
+--- @return string
 local function get_page(path, silent)
   -- Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   -- Soft-wrap: ftplugin/man.lua sets wrap/breakindent/….
   -- Hard-wrap: driven by `man`.
-  local manwidth ---@type integer|string
+  local manwidth --- @type integer|string
   if (vim.g.man_hardwrap or 1) ~= 1 then
     manwidth = 999
   elseif vim.env.MANWIDTH then
-    manwidth = vim.env.MANWIDTH
+    manwidth = vim.env.MANWIDTH --- @type string|integer
   else
     manwidth = api.nvim_win_get_width(0) - vim.o.wrapmargin
+  end
+
+  if localfile_arg == nil then
+    local mpath = get_path('man')
+    -- Check for -l support.
+    localfile_arg = (mpath and system({ 'man', '-l', mpath }, true) or '') ~= ''
   end
 
   local cmd = localfile_arg and { 'man', '-l', path } or { 'man', path }
@@ -461,47 +435,17 @@ local function get_page(path, silent)
   })
 end
 
----@param lnum integer
----@return string
-local function getline(lnum)
-  ---@diagnostic disable-next-line
-  return fn.getline(lnum)
-end
-
----@param page string
-local function put_page(page)
-  vim.bo.modifiable = true
-  vim.bo.readonly = false
-  vim.bo.swapfile = false
-
-  api.nvim_buf_set_lines(0, 0, -1, false, vim.split(page, '\n'))
-
-  while getline(1):match('^%s*$') do
-    api.nvim_buf_set_lines(0, 0, 1, false, {})
-  end
-  -- XXX: nroff justifies text by filling it with whitespace.  That interacts
-  -- badly with our use of $MANWIDTH=999.  Hack around this by using a fixed
-  -- size for those whitespace regions.
-  -- Use try/catch to avoid setting v:errmsg.
-  vim.cmd([[
-    try
-      keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g
-    catch
-    endtry
-  ]])
-  vim.cmd('1') -- Move cursor to first line
-  highlight_man_page()
-  set_options()
-end
-
+--- @param path string
+--- @param psect string
 local function format_candidate(path, psect)
-  if matchstr(path, [[\.\%(pdf\|in\)$]]) then -- invalid extensions
+  if vim.endswith(path, '.pdf') or vim.endswith(path, '.in') then
+    -- invalid extensions
     return ''
   end
-  local sect, name = extract_sect_and_name_path(path)
+  local name, sect = parse_path(path)
   if sect == psect then
     return name
-  elseif sect and name and matchstr(sect, psect .. '.\\+$') then -- invalid extensions
+  elseif sect:match(psect .. '.+$') then -- invalid extensions
     -- We include the section if the user provided section is a prefix
     -- of the actual section.
     return ('%s(%s)'):format(name, sect)
@@ -509,63 +453,54 @@ local function format_candidate(path, psect)
   return ''
 end
 
----@generic T
----@param list T[]
----@param elem T
----@return T[]
-local function move_elem_to_head(list, elem)
-  ---@diagnostic disable-next-line:no-unknown
-  local list1 = vim.tbl_filter(function(v)
-    return v ~= elem
-  end, list)
-  return { elem, unpack(list1) }
-end
-
----@param sect string
----@param name string
----@return string[]
-local function get_paths(sect, name)
+--- @param name string
+--- @param sect? string
+--- @return string[] paths
+--- @return string? err
+local function get_paths(name, sect)
   -- Try several sources for getting the list man directories:
-  --   1. `man -w` (works on most systems)
-  --   2. `manpath`
+  --   1. `manpath -q`
+  --   2. `man -w` (works on most systems)
   --   3. $MANPATH
-  local mandirs_raw = vim.F.npcall(system, { 'man', FIND_ARG })
-    or vim.F.npcall(system, { 'manpath', '-q' })
+  --
+  -- Note we prefer `manpath -q` because `man -w`:
+  -- - does not work on MacOS 14 and later.
+  -- - only returns '/usr/bin/man' on MacOS 13 and earlier.
+  --- @type string?
+  local mandirs_raw = vim.F.npcall(system, { 'manpath', '-q' })
+    or vim.F.npcall(system, { 'man', '-w' })
     or vim.env.MANPATH
 
   if not mandirs_raw then
-    man_error("Could not determine man directories from: 'man -w', 'manpath' or $MANPATH")
+    return {}, "Could not determine man directories from: 'man -w', 'manpath' or $MANPATH"
   end
 
   local mandirs = table.concat(vim.split(mandirs_raw, '[:\n]', { trimempty = true }), ',')
-  ---@type string[]
+
+  sect = sect or ''
+
+  --- @type string[]
   local paths = fn.globpath(mandirs, 'man[^\\/]*/' .. name .. '*.' .. sect .. '*', false, true)
 
   -- Prioritize the result from find_path as it obeys b:man_default_sects.
-  local first = M.find_path(sect, name)
+  local first = M._find_path(name, sect)
   if first then
-    paths = move_elem_to_head(paths, first)
+    --- @param v string
+    paths = vim.tbl_filter(function(v)
+      return v ~= first
+    end, paths)
+    table.insert(paths, 1, first)
   end
 
   return paths
 end
 
----@param sect string
----@param psect string
----@param name string
----@return string[]
-local function complete(sect, psect, name)
-  local pages = get_paths(sect, name)
-  -- We remove duplicates in case the same manpage in different languages was found.
-  return fn.uniq(fn.sort(vim.tbl_map(function(v)
-    return format_candidate(v, psect)
-  end, pages) or {}, 'i'))
-end
-
--- see extract_sect_and_name_ref on why tolower(sect)
----@param arg_lead string
----@param cmd_line string
-function M.man_complete(arg_lead, cmd_line, _)
+--- @param arg_lead string
+--- @param cmd_line string
+--- @return string? sect
+--- @return string? psect
+--- @return string? name
+local function parse_cmdline(arg_lead, cmd_line)
   local args = vim.split(cmd_line, '%s+', { trimempty = true })
   local cmd_offset = fn.index(args, 'Man')
   if cmd_offset > 0 then
@@ -575,13 +510,13 @@ function M.man_complete(arg_lead, cmd_line, _)
   end
 
   if #args > 3 then
-    return {}
+    return
   end
 
   if #args == 1 then
     -- returning full completion is laggy. Require some arg_lead to complete
-    -- return complete('', '', '')
-    return {}
+    -- return '', '', ''
+    return
   end
 
   if arg_lead:match('^[^()]+%([^()]*$') then
@@ -590,18 +525,19 @@ function M.man_complete(arg_lead, cmd_line, _)
     -- It will offer 'priclass.d(1m)' even though section is specified as 1.
     local tmp = vim.split(arg_lead, '(', { plain = true })
     local name = tmp[1]
+    -- See extract_sect_and_name_ref on why :lower()
     local sect = (tmp[2] or ''):lower()
-    return complete(sect, '', name)
+    return sect, '', name
   end
 
   if not args[2]:match('^[^()]+$') then
     -- cursor (|) is at ':Man 3() |' or ':Man (3|' or ':Man 3() pri|'
     -- or ':Man 3() pri |'
-    return {}
+    return
   end
 
   if #args == 2 then
-    ---@type string, string
+    --- @type string, string
     local name, sect
     if arg_lead == '' then
       -- cursor (|) is at ':Man 1 |'
@@ -617,52 +553,77 @@ function M.man_complete(arg_lead, cmd_line, _)
       name = arg_lead
       sect = ''
     end
-    return complete(sect, sect, name)
+    return sect, sect, name
   end
 
   if not arg_lead:match('[^()]+$') then
     -- cursor (|) is at ':Man 3 printf |' or ':Man 3 (pr)i|'
-    return {}
+    return
   end
 
   -- cursor (|) is at ':Man 3 pri|'
-  local name = arg_lead
-  local sect = args[2]:lower()
-  return complete(sect, sect, name)
+  local name, sect = arg_lead, args[2]:lower()
+  return sect, sect, name
 end
 
----@param pattern string
----@return {name:string,filename:string,cmd:string}[]
-function M.goto_tag(pattern, _, _)
-  local sect, name = extract_sect_and_name_ref(pattern)
-
-  local paths = get_paths(sect, name)
-  ---@type {name:string,title:string}[]
-  local structured = {}
-
-  for _, path in ipairs(paths) do
-    sect, name = extract_sect_and_name_path(path)
-    if sect and name then
-      structured[#structured + 1] = {
-        name = name,
-        title = name .. '(' .. sect .. ')',
-      }
-    end
+--- @param arg_lead string
+--- @param cmd_line string
+function M.man_complete(arg_lead, cmd_line)
+  local sect, psect, name = parse_cmdline(arg_lead, cmd_line)
+  if not (sect and psect and name) then
+    return {}
   end
 
-  ---@param entry {name:string,title:string}
-  return vim.tbl_map(function(entry)
-    return {
-      name = entry.name,
-      filename = 'man://' .. entry.title,
-      cmd = '1',
-    }
-  end, structured)
+  local pages = get_paths(name, sect)
+
+  -- We check for duplicates in case the same manpage in different languages
+  -- was found.
+  local pages_fmt = {} --- @type string[]
+  local pages_fmt_keys = {} --- @type table<string,true>
+  for _, v in ipairs(pages) do
+    local x = format_candidate(v, psect)
+    local xl = x:lower() -- ignore case when searching avoiding duplicates
+    if not pages_fmt_keys[xl] then
+      pages_fmt[#pages_fmt + 1] = x
+      pages_fmt_keys[xl] = true
+    end
+  end
+  table.sort(pages_fmt)
+
+  return pages_fmt
 end
 
--- Called when Nvim is invoked as $MANPAGER.
+--- @param pattern string
+--- @return {name:string,filename:string,cmd:string}[]
+function M.goto_tag(pattern, _, _)
+  local name, sect, err = parse_ref(pattern)
+  if err then
+    error(err)
+  end
+
+  local paths, err2 = get_paths(assert(name), sect)
+  if err2 then
+    error(err2)
+  end
+
+  --- @type table[]
+  local ret = {}
+
+  for _, path in ipairs(paths) do
+    local pname, psect = parse_path(path)
+    ret[#ret + 1] = {
+      name = pname,
+      filename = ('man://%s(%s)'):format(pname, psect),
+      cmd = '1',
+    }
+  end
+
+  return ret
+end
+
+--- Called when Nvim is invoked as $MANPAGER.
 function M.init_pager()
-  if getline(1):match('^%s*$') then
+  if fn.getline(1):match('^%s*$') then
     api.nvim_buf_set_lines(0, 0, 1, false, {})
   else
     vim.cmd('keepjumps 1')
@@ -670,9 +631,10 @@ function M.init_pager()
   highlight_man_page()
   -- Guess the ref from the heading (which is usually uppercase, so we cannot
   -- know the correct casing, cf. `man glDrawArraysInstanced`).
-  local ref = fn.substitute(matchstr(getline(1), [[^[^)]\+)]]) or '', ' ', '_', 'g')
-  local ok, res = pcall(extract_sect_and_name_ref, ref)
-  vim.b.man_sect = ok and res or ''
+  --- @type string
+  local ref = (fn.getline(1):match('^[^)]+%)') or ''):gsub(' ', '_')
+  local _, sect, err = pcall(parse_ref, ref)
+  vim.b.man_sect = err ~= nil and sect or ''
 
   if not fn.bufname('%'):match('man://') then -- Avoid duplicate buffers, E95.
     vim.cmd.file({ 'man://' .. fn.fnameescape(ref):lower(), mods = { silent = true } })
@@ -681,50 +643,64 @@ function M.init_pager()
   set_options()
 end
 
----@param count integer
----@param args string[]
+--- Combine the name and sect into a manpage reference so that all
+--- verification/extraction can be kept in a single function.
+--- @param args string[]
+--- @return string? ref
+local function ref_from_args(args)
+  if #args <= 1 then
+    return args[1]
+  elseif args[1]:match('^%d$') or args[1]:match('^%d%a') or args[1]:match('^%a$') then
+    -- NB: Valid sections are not only digits, but also:
+    --  - <digit><word> (see POSIX mans),
+    --  - and even <letter> and <word> (see, for example, by tcl/tk)
+    -- NB2: don't optimize to :match("^%d"), as it will match manpages like
+    --    441toppm and others whose name starts with digit
+    local sect = args[1]
+    table.remove(args, 1)
+    local name = table.concat(args, ' ')
+    return ('%s(%s)'):format(name, sect)
+  end
+
+  return table.concat(args, ' ')
+end
+
+--- @param count integer
+--- @param args string[]
+--- @return string? err
 function M.open_page(count, smods, args)
-  local ref ---@type string
-  if #args == 0 then
+  local ref = ref_from_args(args)
+  if not ref then
     ref = vim.bo.filetype == 'man' and fn.expand('<cWORD>') or fn.expand('<cword>')
     if ref == '' then
-      man_error('no identifier under cursor')
-    end
-  elseif #args == 1 then
-    ref = args[1]
-  else
-    -- Combine the name and sect into a manpage reference so that all
-    -- verification/extraction can be kept in a single function.
-    if args[1]:match('^%d$') or args[1]:match('^%d%a') or args[1]:match('^%a$') then
-      -- NB: Valid sections are not only digits, but also:
-      --  - <digit><word> (see POSIX mans),
-      --  - and even <letter> and <word> (see, for example, by tcl/tk)
-      -- NB2: don't optimize to :match("^%d"), as it will match manpages like
-      --    441toppm and others whose name starts with digit
-      local sect = args[1]
-      table.remove(args, 1)
-      local name = table.concat(args, ' ')
-      ref = ('%s(%s)'):format(name, sect)
-    else
-      ref = table.concat(args, ' ')
+      return 'no identifier under cursor'
     end
   end
 
-  local sect, name = extract_sect_and_name_ref(ref)
+  local name, sect, err = parse_ref(ref)
+  if err then
+    return err
+  end
+  assert(name)
+
   if count >= 0 then
     sect = tostring(count)
   end
 
   -- Try both spaces and underscores, use the first that exists.
-  local path = M.find_path(sect, name)
-  if path == nil then
-    path = M.find_path(sect, spaces_to_underscores(name))
-    if path == nil then
-      man_error('no manual entry for ' .. name)
+  local path = M._find_path(name, sect)
+  if not path then
+    --- Replace spaces in a man page name with underscores
+    --- intended for PostgreSQL, which has man pages like 'CREATE_TABLE(7)';
+    --- while editing SQL source code, it's nice to visually select 'CREATE TABLE'
+    --- and hit 'K', which requires this transformation
+    path = M._find_path(name:gsub('%s', '_'), sect)
+    if not path then
+      return 'no manual entry for ' .. name
     end
   end
 
-  sect, name = extract_sect_and_name_path(path)
+  name, sect = parse_path(path)
   local buf = api.nvim_get_current_buf()
   local save_tfu = vim.bo[buf].tagfunc
   vim.bo[buf].tagfunc = "v:lua.require'man'.goto_tag"
@@ -747,24 +723,51 @@ function M.open_page(count, smods, args)
 
   if not ok then
     error(ret)
-  else
-    set_options()
   end
+  set_options()
 
   vim.b.man_sect = sect
 end
 
--- Called when a man:// buffer is opened.
+--- Called when a man:// buffer is opened.
+--- @return string? err
 function M.read_page(ref)
-  local sect, name = extract_sect_and_name_ref(ref)
-  local path = M.find_path(sect, name)
-  if path == nil then
-    man_error('no manual entry for ' .. name)
+  local name, sect, err = parse_ref(ref)
+  if err then
+    return err
   end
-  sect = extract_sect_and_name_path(path)
+
+  local path = M._find_path(name, sect)
+  if not path then
+    return 'no manual entry for ' .. name
+  end
+
+  local _, sect1 = parse_path(path)
   local page = get_page(path)
-  vim.b.man_sect = sect
-  put_page(page)
+
+  vim.b.man_sect = sect1
+  vim.bo.modifiable = true
+  vim.bo.readonly = false
+  vim.bo.swapfile = false
+
+  api.nvim_buf_set_lines(0, 0, -1, false, vim.split(page, '\n'))
+
+  while fn.getline(1):match('^%s*$') do
+    api.nvim_buf_set_lines(0, 0, 1, false, {})
+  end
+  -- XXX: nroff justifies text by filling it with whitespace.  That interacts
+  -- badly with our use of $MANWIDTH=999.  Hack around this by using a fixed
+  -- size for those whitespace regions.
+  -- Use try/catch to avoid setting v:errmsg.
+  vim.cmd([[
+    try
+      keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g
+    catch
+    endtry
+  ]])
+  vim.cmd('1') -- Move cursor to first line
+  highlight_man_page()
+  set_options()
 end
 
 function M.show_toc()
@@ -776,29 +779,18 @@ function M.show_toc()
     return
   end
 
-  ---@type {bufnr:integer, lnum:integer, text:string}[]
+  --- @type {bufnr:integer, lnum:integer, text:string}[]
   local toc = {}
 
   local lnum = 2
   local last_line = fn.line('$') - 1
-  local section_title_re = vim.regex([[^\%( \{3\}\)\=\S.*$]])
-  local flag_title_re = vim.regex([[^\s\+\%(+\|-\)\S\+]])
   while lnum and lnum < last_line do
-    local text = getline(lnum)
-    if section_title_re:match_str(text) then
-      -- if text is a section title
+    local text = fn.getline(lnum)
+    if text:match('^%s+[-+]%S') or text:match('^   %S') or text:match('^%S') then
       toc[#toc + 1] = {
         bufnr = bufnr,
         lnum = lnum,
-        text = text,
-      }
-    elseif flag_title_re:match_str(text) then
-      -- if text is a flag title. we strip whitespaces and prepend two
-      -- spaces to have a consistent format in the loclist.
-      toc[#toc + 1] = {
-        bufnr = bufnr,
-        lnum = lnum,
-        text = '  ' .. fn.substitute(text, [[^\s*\(.\{-}\)\s*$]], [[\1]], ''),
+        text = text:gsub('^%s+', ''):gsub('%s+$', ''),
       }
     end
     lnum = fn.nextnonblank(lnum + 1)
@@ -809,20 +801,5 @@ function M.show_toc()
   vim.cmd.lopen()
   vim.w.qf_toc = bufname
 end
-
-local function init()
-  local path = get_path('', 'man', true)
-  local page ---@type string?
-  if path ~= nil then
-    -- Check for -l support.
-    page = get_page(path, true)
-  end
-
-  if page == '' or page == nil then
-    localfile_arg = false
-  end
-end
-
-init()
 
 return M
