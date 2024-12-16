@@ -871,7 +871,7 @@ local function set_list(loclist, opts)
   end
 
   if open then
-    if qf_id then
+    if not loclist then
       -- First navigate to the diagnostics quickfix list.
       local nr = vim.fn.getqflist({ id = qf_id, nr = 0 }).nr
       api.nvim_command(nr .. 'chistory')

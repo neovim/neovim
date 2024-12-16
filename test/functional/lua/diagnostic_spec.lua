@@ -5,6 +5,7 @@ local command = n.command
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
+local neq = t.neq
 local matches = t.matches
 local api = n.api
 local pcall_err = t.pcall_err
@@ -3209,6 +3210,74 @@ describe('vim.diagnostic', function()
       end)
 
       assert(loc_list[1].lnum < loc_list[2].lnum)
+    end)
+  end)
+
+  describe('setqflist()', function()
+    it('updates existing diagnostics quickfix if one already exists', function()
+      local result = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.fn.setqflist({}, ' ', { title = 'Diagnostics' })
+        local diagnostics_qf_id = vim.fn.getqflist({ id = 0 }).id
+
+        vim.diagnostic.setqflist({ title = 'Diagnostics' })
+        local qf_id = vim.fn.getqflist({ id = 0, nr = '$' }).id
+
+        return { diagnostics_qf_id, qf_id }
+      end)
+
+      eq(result[1], result[2])
+    end)
+
+    it('navigates to existing diagnostics quickfix if one already exists and open=true', function()
+      local result = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.fn.setqflist({}, ' ', { title = 'Diagnostics' })
+        local diagnostics_qf_id = vim.fn.getqflist({ id = 0 }).id
+
+        vim.fn.setqflist({}, ' ', { title = 'Other' })
+
+        vim.diagnostic.setqflist({ title = 'Diagnostics', open = true })
+        local qf_id = vim.fn.getqflist({ id = 0 }).id
+
+        return { diagnostics_qf_id, qf_id }
+      end)
+
+      eq(result[1], result[2])
+    end)
+
+    it('sets new diagnostics quickfix as active when open=true', function()
+      local result = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.fn.setqflist({}, ' ', { title = 'Other' })
+        local other_qf_id = vim.fn.getqflist({ id = 0 }).id
+
+        vim.diagnostic.setqflist({ title = 'Diagnostics', open = true })
+        local qf_id = vim.fn.getqflist({ id = 0 }).id
+
+        return { other_qf_id, qf_id }
+      end)
+
+      neq(result[1], result[2])
+    end)
+
+    it('opens quickfix window when open=true', function()
+      local qf_winid = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error', 1, 1, 1, 1),
+        })
+
+        vim.diagnostic.setqflist({ open = true })
+
+        return vim.fn.getqflist({ winid = 0 }).winid
+      end)
+
+      neq(0, qf_winid)
     end)
   end)
 
