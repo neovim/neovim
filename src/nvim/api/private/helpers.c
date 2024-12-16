@@ -101,6 +101,8 @@ bool try_leave(const TryState *const tstate, Error *const err)
   return ret;
 }
 
+/// TODO(justinmk): use TRY_WRAP everywhere; do not call this directly.
+///
 /// Start block that may cause vimscript exceptions
 ///
 /// Each try_start() call should be mirrored by try_end() call.
@@ -114,6 +116,8 @@ void try_start(void)
   trylevel++;
 }
 
+/// TODO(justinmk): use TRY_WRAP everywhere; do not call this directly.
+///
 /// End try block, set the error message if any and return true if an error
 /// occurred.
 ///

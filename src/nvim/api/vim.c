@@ -888,22 +888,18 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
-  if (!buf || curwin->w_buffer == buf) {
+  if (!buf) {
     return;
   }
 
-  if (curwin->w_p_wfb) {
-    api_set_error(err, kErrorTypeException, "%s", e_winfixbuf_cannot_go_to_buffer);
-    return;
-  }
+  int result = FAIL;
+  TRY_WRAP(err, {
+    result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
+  });
 
-  try_start();
-  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
-  if (!try_end(err) && result == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to buffer %d",
-                  buffer);
+  // XXX: Fallback, should not be needed?
+  if (!ERROR_SET(err) && result == FAIL) {
+    api_set_error(err, kErrorTypeException, "Failed to switch to buffer %d", buffer);
   }
 }
 
