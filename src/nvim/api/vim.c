@@ -669,16 +669,9 @@ void nvim_set_current_dir(String dir, Error *err)
   memcpy(string, dir.data, dir.size);
   string[dir.size] = NUL;
 
-  try_start();
-
-  if (!changedir_func(string, kCdScopeGlobal)) {
-    if (!try_end(err)) {
-      api_set_error(err, kErrorTypeException, "Failed to change directory");
-    }
-    return;
-  }
-
-  try_end(err);
+  TRY_WRAP(err, {
+    changedir_func(string, kCdScopeGlobal);
+  });
 }
 
 /// Gets the current line.
@@ -942,14 +935,9 @@ void nvim_set_current_win(Window window, Error *err)
     return;
   }
 
-  try_start();
-  goto_tabpage_win(win_find_tabpage(win), win);
-  if (!try_end(err) && win != curwin) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to window %d",
-                  window);
-  }
+  TRY_WRAP(err, {
+    goto_tabpage_win(win_find_tabpage(win), win);
+  });
 }
 
 /// Creates a new, empty, unnamed buffer.
@@ -1208,14 +1196,9 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
     return;
   }
 
-  try_start();
-  goto_tabpage_tp(tp, true, true);
-  if (!try_end(err) && tp != curtab) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to tabpage %d",
-                  tabpage);
-  }
+  TRY_WRAP(err, {
+    goto_tabpage_tp(tp, true, true);
+  });
 }
 
 /// Pastes at cursor (in any mode), and sets "redo" so dot (|.|) will repeat the input. UIs call
