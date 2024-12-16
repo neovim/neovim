@@ -2017,13 +2017,13 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			save the output of the command, which can be set to
 			include stderr or not.  {cmd} is executed like with
 			":!{cmd}", any '!' is replaced with the previous
-			command |:!|. See |++opt| for the possible values of
-			[++opt].
+			command |:!|.
+			See |++opt| for the possible values of [++opt].
 
 							*:r:* *:read:*
 :[range]r[ead] :{cmd}
 			Execute Ex command {cmd} and insert its output below
-			the cursor or the specified line
+			the cursor or the specified line.
 
 These commands insert the contents of a file, or the output of a command,
 into the buffer.  They can be undone.  They cannot be repeated with the "."

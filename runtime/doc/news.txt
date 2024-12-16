@@ -212,8 +212,8 @@ EDITOR
   "~/" are now expanded to the user's profile directory, not a relative path
   to a literal "~" directory.
 • |hl-PmenuMatch| and |hl-PmenuMatchSel| show matched text in completion popup.
-• |:read:| reads the output of an Ex command into the buffer. Example:> :read
-  :ls
+• |:read:| reads the output of an Ex command into the buffer. Example:>
+    :read :ls
 
 EVENTS
 
