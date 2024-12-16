@@ -3933,7 +3933,7 @@ static bool switch_option_context(void *const ctx, OptScope scope, void *const f
         == FAIL) {
       restore_win_noblock(switchwin, true);
 
-      if (try_end(err)) {
+      if (ERROR_SET(err)) {
         return false;
       }
       api_set_error(err, kErrorTypeException, "Problem while switching windows");

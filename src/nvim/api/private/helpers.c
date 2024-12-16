@@ -42,8 +42,10 @@
 
 /// Start block that may cause Vimscript exceptions while evaluating another code
 ///
-/// Used when caller is supposed to be operating when other Vimscript code is being
-/// processed and that “other Vimscript code” must not be affected.
+/// Used just in case caller is supposed to be operating when other Vimscript code
+/// is being processed and that “other Vimscript code” must not be affected.
+///
+/// @warning Avoid calling directly; use TRY_WRAP instead.
 ///
 /// @param[out]  tstate  Location where try state should be saved.
 void try_enter(TryState *const tstate)
@@ -55,75 +57,33 @@ void try_enter(TryState *const tstate)
     .current_exception = current_exception,
     .msg_list = (const msglist_T *const *)msg_list,
     .private_msg_list = NULL,
-    .trylevel = trylevel,
     .got_int = got_int,
     .did_throw = did_throw,
     .need_rethrow = need_rethrow,
     .did_emsg = did_emsg,
   };
+  // `msg_list` controls the collection of abort-causing non-exception errors,
+  // which would otherwise be ignored.  This pattern is from do_cmdline().
   msg_list = &tstate->private_msg_list;
   current_exception = NULL;
-  trylevel = 1;
   got_int = false;
   did_throw = false;
   need_rethrow = false;
   did_emsg = false;
-}
-
-/// End try block, set the error message if any and restore previous state
-///
-/// @warning Return is consistent with most functions (false on error), not with
-///          try_end (true on error).
-///
-/// @param[in]  tstate  Previous state to restore.
-/// @param[out]  err  Location where error should be saved.
-///
-/// @return false if error occurred, true otherwise.
-bool try_leave(const TryState *const tstate, Error *const err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  const bool ret = !try_end(err);
-  assert(trylevel == 0);
-  assert(!need_rethrow);
-  assert(!got_int);
-  assert(!did_throw);
-  assert(!did_emsg);
-  assert(msg_list == &tstate->private_msg_list);
-  assert(*msg_list == NULL);
-  assert(current_exception == NULL);
-  msg_list = (msglist_T **)tstate->msg_list;
-  current_exception = tstate->current_exception;
-  trylevel = tstate->trylevel;
-  got_int = tstate->got_int;
-  did_throw = tstate->did_throw;
-  need_rethrow = tstate->need_rethrow;
-  did_emsg = tstate->did_emsg;
-  return ret;
-}
-
-/// Starts a block that may cause Vimscript exceptions; must be mirrored by `try_end()` call.
-///
-/// Note: use `TRY_WRAP` instead (except in `FUNC_API_FAST` functions such as nvim_get_runtime_file).
-///
-/// To be used as a replacement of `:try … catch … endtry` in C code, in cases
-/// when error flag could not already be set. If there may be pending error
-/// state at the time try_start() is executed which needs to be preserved,
-/// try_enter()/try_leave() pair should be used instead.
-void try_start(void)
-{
   trylevel++;
 }
 
-/// Ends a `try_start` block; sets error message if any and returns true if an error occurred.
+/// Ends a `try_enter` block; sets error message if any.
 ///
-/// Note: use `TRY_WRAP` instead (except in `FUNC_API_FAST` functions such as nvim_get_runtime_file).
+/// @warning Avoid calling directly; use TRY_WRAP instead.
 ///
-/// @param err Pointer to the stack-allocated error object
-/// @return true if an error occurred
-bool try_end(Error *err)
+/// @param[out] err Pointer to the stack-allocated error object
+void try_leave(const TryState *const tstate, Error *const err)
+  FUNC_ATTR_NONNULL_ALL
 {
   // Note: all globals manipulated here should be saved/restored in
   // try_enter/try_leave.
+  assert(trylevel > 0);
   trylevel--;
 
   // Set by emsg(), affects aborting().  See also enter_cleanup().
@@ -166,7 +126,20 @@ bool try_end(Error *err)
     discard_current_exception();
   }
 
-  return ERROR_SET(err);
+  assert(msg_list == &tstate->private_msg_list);
+  assert(*msg_list == NULL);
+  assert(current_exception == NULL);
+  assert(!got_int);
+  assert(!did_throw);
+  assert(!need_rethrow);
+  assert(!did_emsg);
+  // Restore the exception context.
+  msg_list = (msglist_T **)tstate->msg_list;
+  current_exception = tstate->current_exception;
+  got_int = tstate->got_int;
+  did_throw = tstate->did_throw;
+  need_rethrow = tstate->need_rethrow;
+  did_emsg = tstate->did_emsg;
 }
 
 /// Recursively expands a vimscript value in a dict

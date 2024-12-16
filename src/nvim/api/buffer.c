@@ -360,93 +360,91 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
     memchrsub(lines[i], NUL, NL, l.size);
   }
 
-  try_start();
-
-  if (!MODIFIABLE(buf)) {
-    api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
-    goto end;
-  }
-
-  if (u_save_buf(buf, (linenr_T)(start - 1), (linenr_T)end) == FAIL) {
-    api_set_error(err, kErrorTypeException, "Failed to save undo information");
-    goto end;
-  }
-
-  bcount_t deleted_bytes = get_region_bytecount(buf, (linenr_T)start, (linenr_T)end, 0, 0);
-
-  // If the size of the range is reducing (ie, new_len < old_len) we
-  // need to delete some old_len. We do this at the start, by
-  // repeatedly deleting line "start".
-  size_t to_delete = (new_len < old_len) ? old_len - new_len : 0;
-  for (size_t i = 0; i < to_delete; i++) {
-    if (ml_delete_buf(buf, (linenr_T)start, false) == FAIL) {
-      api_set_error(err, kErrorTypeException, "Failed to delete line");
-      goto end;
-    }
-  }
-
-  if (to_delete > 0) {
-    extra -= (ptrdiff_t)to_delete;
-  }
-
-  // For as long as possible, replace the existing old_len with the
-  // new old_len. This is a more efficient operation, as it requires
-  // less memory allocation and freeing.
-  size_t to_replace = old_len < new_len ? old_len : new_len;
-  bcount_t inserted_bytes = 0;
-  for (size_t i = 0; i < to_replace; i++) {
-    int64_t lnum = start + (int64_t)i;
-
-    VALIDATE(lnum < MAXLNUM, "%s", "Index out of bounds", {
-      goto end;
-    });
-
-    if (ml_replace_buf(buf, (linenr_T)lnum, lines[i], false, true) == FAIL) {
-      api_set_error(err, kErrorTypeException, "Failed to replace line");
+  TRY_WRAP(err, {
+    if (!MODIFIABLE(buf)) {
+      api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
       goto end;
     }
 
-    inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
-  }
-
-  // Now we may need to insert the remaining new old_len
-  for (size_t i = to_replace; i < new_len; i++) {
-    int64_t lnum = start + (int64_t)i - 1;
-
-    VALIDATE(lnum < MAXLNUM, "%s", "Index out of bounds", {
-      goto end;
-    });
-
-    if (ml_append_buf(buf, (linenr_T)lnum, lines[i], 0, false) == FAIL) {
-      api_set_error(err, kErrorTypeException, "Failed to insert line");
+    if (u_save_buf(buf, (linenr_T)(start - 1), (linenr_T)end) == FAIL) {
+      api_set_error(err, kErrorTypeException, "Failed to save undo information");
       goto end;
     }
 
-    inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
+    bcount_t deleted_bytes = get_region_bytecount(buf, (linenr_T)start, (linenr_T)end, 0, 0);
 
-    extra++;
-  }
-
-  // Adjust marks. Invalidate any which lie in the
-  // changed range, and move any in the remainder of the buffer.
-  linenr_T adjust = end > start ? MAXLNUM : 0;
-  mark_adjust_buf(buf, (linenr_T)start, (linenr_T)(end - 1), adjust, (linenr_T)extra,
-                  true, true, kExtmarkNOOP);
-
-  extmark_splice(buf, (int)start - 1, 0, (int)(end - start), 0,
-                 deleted_bytes, (int)new_len, 0, inserted_bytes,
-                 kExtmarkUndo);
-
-  changed_lines(buf, (linenr_T)start, 0, (linenr_T)end, (linenr_T)extra, true);
-
-  FOR_ALL_TAB_WINDOWS(tp, win) {
-    if (win->w_buffer == buf) {
-      fix_cursor(win, (linenr_T)start, (linenr_T)end, (linenr_T)extra);
+    // If the size of the range is reducing (ie, new_len < old_len) we
+    // need to delete some old_len. We do this at the start, by
+    // repeatedly deleting line "start".
+    size_t to_delete = (new_len < old_len) ? old_len - new_len : 0;
+    for (size_t i = 0; i < to_delete; i++) {
+      if (ml_delete_buf(buf, (linenr_T)start, false) == FAIL) {
+        api_set_error(err, kErrorTypeException, "Failed to delete line");
+        goto end;
+      }
     }
-  }
 
-end:
-  try_end(err);
+    if (to_delete > 0) {
+      extra -= (ptrdiff_t)to_delete;
+    }
+
+    // For as long as possible, replace the existing old_len with the
+    // new old_len. This is a more efficient operation, as it requires
+    // less memory allocation and freeing.
+    size_t to_replace = old_len < new_len ? old_len : new_len;
+    bcount_t inserted_bytes = 0;
+    for (size_t i = 0; i < to_replace; i++) {
+      int64_t lnum = start + (int64_t)i;
+
+      VALIDATE(lnum < MAXLNUM, "%s", "Index out of bounds", {
+        goto end;
+      });
+
+      if (ml_replace_buf(buf, (linenr_T)lnum, lines[i], false, true) == FAIL) {
+        api_set_error(err, kErrorTypeException, "Failed to replace line");
+        goto end;
+      }
+
+      inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
+    }
+
+    // Now we may need to insert the remaining new old_len
+    for (size_t i = to_replace; i < new_len; i++) {
+      int64_t lnum = start + (int64_t)i - 1;
+
+      VALIDATE(lnum < MAXLNUM, "%s", "Index out of bounds", {
+        goto end;
+      });
+
+      if (ml_append_buf(buf, (linenr_T)lnum, lines[i], 0, false) == FAIL) {
+        api_set_error(err, kErrorTypeException, "Failed to insert line");
+        goto end;
+      }
+
+      inserted_bytes += (bcount_t)strlen(lines[i]) + 1;
+
+      extra++;
+    }
+
+    // Adjust marks. Invalidate any which lie in the
+    // changed range, and move any in the remainder of the buffer.
+    linenr_T adjust = end > start ? MAXLNUM : 0;
+    mark_adjust_buf(buf, (linenr_T)start, (linenr_T)(end - 1), adjust, (linenr_T)extra,
+                    true, true, kExtmarkNOOP);
+
+    extmark_splice(buf, (int)start - 1, 0, (int)(end - start), 0,
+                   deleted_bytes, (int)new_len, 0, inserted_bytes,
+                   kExtmarkUndo);
+
+    changed_lines(buf, (linenr_T)start, 0, (linenr_T)end, (linenr_T)extra, true);
+
+    FOR_ALL_TAB_WINDOWS(tp, win) {
+      if (win->w_buffer == buf) {
+        fix_cursor(win, (linenr_T)start, (linenr_T)end, (linenr_T)extra);
+      }
+    }
+    end:;
+  });
 }
 
 /// Sets (replaces) a range in the buffer
@@ -593,101 +591,99 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     new_byte += (bcount_t)(last_item.size) + 1;
   }
 
-  try_start();
-
-  if (!MODIFIABLE(buf)) {
-    api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
-    goto end;
-  }
-
-  // Small note about undo states: unlike set_lines, we want to save the
-  // undo state of one past the end_row, since end_row is inclusive.
-  if (u_save_buf(buf, (linenr_T)start_row - 1, (linenr_T)end_row + 1) == FAIL) {
-    api_set_error(err, kErrorTypeException, "Failed to save undo information");
-    goto end;
-  }
-
-  ptrdiff_t extra = 0;  // lines added to text, can be negative
-  size_t old_len = (size_t)(end_row - start_row + 1);
-
-  // If the size of the range is reducing (ie, new_len < old_len) we
-  // need to delete some old_len. We do this at the start, by
-  // repeatedly deleting line "start".
-  size_t to_delete = (new_len < old_len) ? old_len - new_len : 0;
-  for (size_t i = 0; i < to_delete; i++) {
-    if (ml_delete_buf(buf, (linenr_T)start_row, false) == FAIL) {
-      api_set_error(err, kErrorTypeException, "Failed to delete line");
-      goto end;
-    }
-  }
-
-  if (to_delete > 0) {
-    extra -= (ptrdiff_t)to_delete;
-  }
-
-  // For as long as possible, replace the existing old_len with the
-  // new old_len. This is a more efficient operation, as it requires
-  // less memory allocation and freeing.
-  size_t to_replace = old_len < new_len ? old_len : new_len;
-  for (size_t i = 0; i < to_replace; i++) {
-    int64_t lnum = start_row + (int64_t)i;
-
-    VALIDATE((lnum < MAXLNUM), "%s", "Index out of bounds", {
-      goto end;
-    });
-
-    if (ml_replace_buf(buf, (linenr_T)lnum, lines[i], false, true) == FAIL) {
-      api_set_error(err, kErrorTypeException, "Failed to replace line");
-      goto end;
-    }
-  }
-
-  // Now we may need to insert the remaining new old_len
-  for (size_t i = to_replace; i < new_len; i++) {
-    int64_t lnum = start_row + (int64_t)i - 1;
-
-    VALIDATE((lnum < MAXLNUM), "%s", "Index out of bounds", {
-      goto end;
-    });
-
-    if (ml_append_buf(buf, (linenr_T)lnum, lines[i], 0, false) == FAIL) {
-      api_set_error(err, kErrorTypeException, "Failed to insert line");
+  TRY_WRAP(err, {
+    if (!MODIFIABLE(buf)) {
+      api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
       goto end;
     }
 
-    extra++;
-  }
+    // Small note about undo states: unlike set_lines, we want to save the
+    // undo state of one past the end_row, since end_row is inclusive.
+    if (u_save_buf(buf, (linenr_T)start_row - 1, (linenr_T)end_row + 1) == FAIL) {
+      api_set_error(err, kErrorTypeException, "Failed to save undo information");
+      goto end;
+    }
 
-  colnr_T col_extent = (colnr_T)(end_col
-                                 - ((end_row == start_row) ? start_col : 0));
+    ptrdiff_t extra = 0;  // lines added to text, can be negative
+    size_t old_len = (size_t)(end_row - start_row + 1);
 
-  // Adjust marks. Invalidate any which lie in the
-  // changed range, and move any in the remainder of the buffer.
-  // Do not adjust any cursors. need to use column-aware logic (below)
-  linenr_T adjust = end_row >= start_row ? MAXLNUM : 0;
-  mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row, adjust, (linenr_T)extra,
-                  true, true, kExtmarkNOOP);
-
-  extmark_splice(buf, (int)start_row - 1, (colnr_T)start_col,
-                 (int)(end_row - start_row), col_extent, old_byte,
-                 (int)new_len - 1, (colnr_T)last_item.size, new_byte,
-                 kExtmarkUndo);
-
-  changed_lines(buf, (linenr_T)start_row, 0, (linenr_T)end_row + 1, (linenr_T)extra, true);
-
-  FOR_ALL_TAB_WINDOWS(tp, win) {
-    if (win->w_buffer == buf) {
-      if (win->w_cursor.lnum >= start_row && win->w_cursor.lnum <= end_row) {
-        fix_cursor_cols(win, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row,
-                        (colnr_T)end_col, (linenr_T)new_len, (colnr_T)last_item.size);
-      } else {
-        fix_cursor(win, (linenr_T)start_row, (linenr_T)end_row, (linenr_T)extra);
+    // If the size of the range is reducing (ie, new_len < old_len) we
+    // need to delete some old_len. We do this at the start, by
+    // repeatedly deleting line "start".
+    size_t to_delete = (new_len < old_len) ? old_len - new_len : 0;
+    for (size_t i = 0; i < to_delete; i++) {
+      if (ml_delete_buf(buf, (linenr_T)start_row, false) == FAIL) {
+        api_set_error(err, kErrorTypeException, "Failed to delete line");
+        goto end;
       }
     }
-  }
 
-end:
-  try_end(err);
+    if (to_delete > 0) {
+      extra -= (ptrdiff_t)to_delete;
+    }
+
+    // For as long as possible, replace the existing old_len with the
+    // new old_len. This is a more efficient operation, as it requires
+    // less memory allocation and freeing.
+    size_t to_replace = old_len < new_len ? old_len : new_len;
+    for (size_t i = 0; i < to_replace; i++) {
+      int64_t lnum = start_row + (int64_t)i;
+
+      VALIDATE((lnum < MAXLNUM), "%s", "Index out of bounds", {
+        goto end;
+      });
+
+      if (ml_replace_buf(buf, (linenr_T)lnum, lines[i], false, true) == FAIL) {
+        api_set_error(err, kErrorTypeException, "Failed to replace line");
+        goto end;
+      }
+    }
+
+    // Now we may need to insert the remaining new old_len
+    for (size_t i = to_replace; i < new_len; i++) {
+      int64_t lnum = start_row + (int64_t)i - 1;
+
+      VALIDATE((lnum < MAXLNUM), "%s", "Index out of bounds", {
+        goto end;
+      });
+
+      if (ml_append_buf(buf, (linenr_T)lnum, lines[i], 0, false) == FAIL) {
+        api_set_error(err, kErrorTypeException, "Failed to insert line");
+        goto end;
+      }
+
+      extra++;
+    }
+
+    colnr_T col_extent = (colnr_T)(end_col
+                                   - ((end_row == start_row) ? start_col : 0));
+
+    // Adjust marks. Invalidate any which lie in the
+    // changed range, and move any in the remainder of the buffer.
+    // Do not adjust any cursors. need to use column-aware logic (below)
+    linenr_T adjust = end_row >= start_row ? MAXLNUM : 0;
+    mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row, adjust, (linenr_T)extra,
+                    true, true, kExtmarkNOOP);
+
+    extmark_splice(buf, (int)start_row - 1, (colnr_T)start_col,
+                   (int)(end_row - start_row), col_extent, old_byte,
+                   (int)new_len - 1, (colnr_T)last_item.size, new_byte,
+                   kExtmarkUndo);
+
+    changed_lines(buf, (linenr_T)start_row, 0, (linenr_T)end_row + 1, (linenr_T)extra, true);
+
+    FOR_ALL_TAB_WINDOWS(tp, win) {
+      if (win->w_buffer == buf) {
+        if (win->w_cursor.lnum >= start_row && win->w_cursor.lnum <= end_row) {
+          fix_cursor_cols(win, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row,
+                          (colnr_T)end_col, (linenr_T)new_len, (colnr_T)last_item.size);
+        } else {
+          fix_cursor(win, (linenr_T)start_row, (linenr_T)end_row, (linenr_T)extra);
+        }
+      }
+    }
+    end:;
+  });
 }
 
 /// Gets a range from the buffer.
@@ -965,26 +961,27 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
     return;
   }
 
-  try_start();
+  int ren_ret = OK;
+  TRY_WRAP(err, {
+    const bool is_curbuf = buf == curbuf;
+    const int save_acd = p_acd;
+    if (!is_curbuf) {
+      // Temporarily disable 'autochdir' when setting file name for another buffer.
+      p_acd = false;
+    }
 
-  const bool is_curbuf = buf == curbuf;
-  const int save_acd = p_acd;
-  if (!is_curbuf) {
-    // Temporarily disable 'autochdir' when setting file name for another buffer.
-    p_acd = false;
-  }
+    // Using aucmd_*: autocommands will be executed by rename_buffer
+    aco_save_T aco;
+    aucmd_prepbuf(&aco, buf);
+    ren_ret = rename_buffer(name.data);
+    aucmd_restbuf(&aco);
 
-  // Using aucmd_*: autocommands will be executed by rename_buffer
-  aco_save_T aco;
-  aucmd_prepbuf(&aco, buf);
-  int ren_ret = rename_buffer(name.data);
-  aucmd_restbuf(&aco);
+    if (!is_curbuf) {
+      p_acd = save_acd;
+    }
+  });
 
-  if (!is_curbuf) {
-    p_acd = save_acd;
-  }
-
-  if (try_end(err)) {
+  if (ERROR_SET(err)) {
     return;
   }
 
@@ -1204,15 +1201,18 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   if (!buf) {
     return NIL;
   }
-  try_start();
-  aco_save_T aco;
-  aucmd_prepbuf(&aco, buf);
 
-  Array args = ARRAY_DICT_INIT;
-  Object res = nlua_call_ref(fun, NULL, args, kRetLuaref, NULL, err);
+  Object res = OBJECT_INIT;
+  TRY_WRAP(err, {
+    aco_save_T aco;
+    aucmd_prepbuf(&aco, buf);
 
-  aucmd_restbuf(&aco);
-  try_end(err);
+    Array args = ARRAY_DICT_INIT;
+    res = nlua_call_ref(fun, NULL, args, kRetLuaref, NULL, err);
+
+    aucmd_restbuf(&aco);
+  });
+
   return res;
 }
 

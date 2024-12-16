@@ -146,11 +146,9 @@ void nvim_tabpage_set_win(Tabpage tabpage, Window win, Error *err)
   }
 
   if (tp == curtab) {
-    try_start();
-    win_goto(wp);
-    if (!try_end(err) && curwin != wp) {
-      api_set_error(err, kErrorTypeException, "Failed to switch to window %d", win);
-    }
+    TRY_WRAP(err, {
+      win_goto(wp);
+    });
   } else if (tp->tp_curwin != wp) {
     tp->tp_prevwin = tp->tp_curwin;
     tp->tp_curwin = wp;
