@@ -135,6 +135,10 @@
          : 0UL)), \
      &(v).items[(i)]))
 
+#define kv_shift(v, i, n) ((v).size -= (n), (i) < (v).size \
+                           && memmove(&kv_A(v, (i)), &kv_A(v, (i)+(n)), \
+                                      ((v).size-(i))*sizeof(kv_A(v, i))))
+
 #define kv_printf(v, ...) kv_do_printf(&(v), __VA_ARGS__)
 
 /// Type of a vector with a few first members allocated on stack
