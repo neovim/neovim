@@ -101,9 +101,9 @@ bool try_leave(const TryState *const tstate, Error *const err)
   return ret;
 }
 
-/// Start block that may cause vimscript exceptions
+/// Starts a block that may cause Vimscript exceptions; must be mirrored by `try_end()` call.
 ///
-/// Each try_start() call should be mirrored by try_end() call.
+/// Note: use `TRY_WRAP` instead (except in `FUNC_API_FAST` functions such as nvim_get_runtime_file).
 ///
 /// To be used as a replacement of `:try … catch … endtry` in C code, in cases
 /// when error flag could not already be set. If there may be pending error
@@ -114,8 +114,9 @@ void try_start(void)
   trylevel++;
 }
 
-/// End try block, set the error message if any and return true if an error
-/// occurred.
+/// Ends a `try_start` block; sets error message if any and returns true if an error occurred.
+///
+/// Note: use `TRY_WRAP` instead (except in `FUNC_API_FAST` functions such as nvim_get_runtime_file).
 ///
 /// @param err Pointer to the stack-allocated error object
 /// @return true if an error occurred

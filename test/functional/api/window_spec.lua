@@ -1664,7 +1664,7 @@ describe('API/win', function()
         autocmd BufWinEnter * ++once let fired = v:true
       ]])
       eq(
-        'Failed to set buffer 2',
+        'Vim:E37: No write since last change (add ! to override)',
         pcall_err(api.nvim_open_win, api.nvim_create_buf(true, true), false, { split = 'left' })
       )
       eq(false, eval('fired'))

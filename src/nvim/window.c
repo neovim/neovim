@@ -746,40 +746,28 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
   RedrawingDisabled++;
 
   switchwin_T switchwin;
-  if (switch_win_noblock(&switchwin, win, tab, true) == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to window %d",
-                  win->handle);
-    goto cleanup;
-  }
 
-  try_start();
+  TRY_WRAP(err, {
+    int win_result = switch_win_noblock(&switchwin, win, tab, true);
+    if (win_result != FAIL) {
+      const int save_acd = p_acd;
+      if (!switchwin.sw_same_win) {
+        // Temporarily disable 'autochdir' when setting buffer in another window.
+        p_acd = false;
+      }
 
-  const int save_acd = p_acd;
-  if (!switchwin.sw_same_win) {
-    // Temporarily disable 'autochdir' when setting buffer in another window.
-    p_acd = false;
-  }
+      do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
 
-  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
-
-  if (!switchwin.sw_same_win) {
-    p_acd = save_acd;
-  }
-
-  if (!try_end(err) && result == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to set buffer %d",
-                  buf->handle);
-  }
+      if (!switchwin.sw_same_win) {
+        p_acd = save_acd;
+      }
+    }
+  });
 
   // If window is not current, state logic will not validate its cursor. So do it now.
   // Still needed if do_buffer returns FAIL (e.g: autocmds abort script after buffer was set).
   validate_cursor(curwin);
 
-cleanup:
   restore_win_noblock(&switchwin, true);
   RedrawingDisabled--;
 }

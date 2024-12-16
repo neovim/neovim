@@ -59,12 +59,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
   buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!win || !buf || win->w_buffer == buf) {
-    return;
-  }
-
-  if (win->w_p_wfb) {
-    api_set_error(err, kErrorTypeException, "%s", e_winfixbuf_cannot_go_to_buffer);
+  if (!win || !buf) {
     return;
   }
 
