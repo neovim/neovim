@@ -1862,6 +1862,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
     u_oldcount = -1;
   }
 
+  msg_ext_set_kind("undo");
   int count = startcount;
   while (count--) {
     // Do the change warning now, so that it triggers FileChangedRO when

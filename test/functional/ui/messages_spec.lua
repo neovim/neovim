@@ -240,6 +240,36 @@ describe('ui/ext_messages', function()
         },
       },
     })
+
+    -- undo
+    feed('uu')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      messages = {
+        {
+          content = { { 'Already at oldest change' } },
+          kind = 'undo',
+        },
+      },
+    })
+
+    feed('<C-r><C-r><C-r>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        line^                     |
+        {1:~                        }|*3
+      ]],
+      messages = {
+        {
+          content = { { 'Already at newest change' } },
+          kind = 'undo',
+        },
+      },
+    })
   end)
 
   it(':echoerr', function()
