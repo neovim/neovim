@@ -59,7 +59,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
   buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!win || !buf) {
+  if (!win || !buf || win->w_buffer == buf) {
     return;
   }
 

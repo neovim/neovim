@@ -8,8 +8,8 @@ describe("Nvim API calls with 'winfixbuf'", function()
     clear()
   end)
 
-  it("Calling vim.api.nvim_win_set_buf with 'winfixbuf'", function()
-    local results = exec_lua([[
+  it('vim.api.nvim_win_set_buf on non-current buffer', function()
+    local ok = exec_lua([[
       local function _setup_two_buffers()
         local buffer = vim.api.nvim_create_buf(true, true)
 
@@ -23,16 +23,16 @@ describe("Nvim API calls with 'winfixbuf'", function()
 
       local other_buffer = _setup_two_buffers()
       local current_window = 0
-      local results, _ = pcall(vim.api.nvim_win_set_buf, current_window, other_buffer)
+      local ok, _ = pcall(vim.api.nvim_win_set_buf, current_window, other_buffer)
 
-      return results
+      return ok
     ]])
 
-    assert(results == false)
+    assert(not ok)
   end)
 
-  it("Calling vim.api.nvim_set_current_buf with 'winfixbuf'", function()
-    local results = exec_lua([[
+  it('vim.api.nvim_set_current_buf on non-current buffer', function()
+    local ok = exec_lua([[
       local function _setup_two_buffers()
         local buffer = vim.api.nvim_create_buf(true, true)
 
@@ -45,11 +45,29 @@ describe("Nvim API calls with 'winfixbuf'", function()
       end
 
       local other_buffer = _setup_two_buffers()
-      local results, _ = pcall(vim.api.nvim_set_current_buf, other_buffer)
+      local ok, _ = pcall(vim.api.nvim_set_current_buf, other_buffer)
 
-      return results
+      return ok
     ]])
 
-    assert(results == false)
+    assert(not ok)
+  end)
+
+  it('vim.api.nvim_win_set_buf on current buffer', function()
+    exec_lua([[
+      vim.wo.winfixbuf = true
+      local curbuf = vim.api.nvim_get_current_buf()
+      vim.api.nvim_win_set_buf(0, curbuf)
+      assert(vim.api.nvim_get_current_buf() == curbuf)
+    ]])
+  end)
+
+  it('vim.api.nvim_set_current_buf on current buffer', function()
+    exec_lua([[
+      vim.wo.winfixbuf = true
+      local curbuf = vim.api.nvim_get_current_buf()
+      vim.api.nvim_set_current_buf(curbuf)
+      assert(vim.api.nvim_get_current_buf() == curbuf)
+    ]])
   end)
 end)
