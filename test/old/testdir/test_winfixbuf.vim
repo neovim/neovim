@@ -2613,7 +2613,7 @@ EOF
 
   try
     pyxdo test_winfixbuf_Test_pythonx_pyxdo_set_buffer()
-  catch /pynvim\.api\.common\.NvimError: E1513:/
+  catch /pynvim\.api\.common\.NvimError: Vim:E1513:/
     let l:caught = 1
   endtry
 
@@ -2644,7 +2644,7 @@ func Test_pythonx_pyxfile()
 
   try
     pyxfile file.py
-  catch /pynvim\.api\.common\.NvimError: E1513:/
+  catch /pynvim\.api\.common\.NvimError: Vim:E1513:/
     let l:caught = 1
   endtry
 
@@ -2676,7 +2676,7 @@ import vim
 buffer = vim.vars["_previous_buffer"]
 vim.current.buffer = vim.buffers[buffer]
 EOF
-  catch /pynvim\.api\.common\.NvimError: E1513:/
+  catch /pynvim\.api\.common\.NvimError: Vim:E1513:/
     let l:caught = 1
   endtry
 
