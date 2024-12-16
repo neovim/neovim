@@ -892,15 +892,9 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
     return;
   }
 
-  int result = FAIL;
   TRY_WRAP(err, {
-    result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
+    do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
   });
-
-  // XXX: Fallback, should not be needed?
-  if (!ERROR_SET(err) && result == FAIL) {
-    api_set_error(err, kErrorTypeException, "Failed to switch to buffer %d", buffer);
-  }
 }
 
 /// Gets the current list of window handles.

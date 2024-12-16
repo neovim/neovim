@@ -745,13 +745,10 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
   // no redrawing and don't set the window title
   RedrawingDisabled++;
 
-  int win_result = FAIL;
-  int buf_result = FAIL;
-
   switchwin_T switchwin;
 
   TRY_WRAP(err, {
-    win_result = switch_win_noblock(&switchwin, win, tab, true);
+    int win_result = switch_win_noblock(&switchwin, win, tab, true);
     if (win_result != FAIL) {
       const int save_acd = p_acd;
       if (!switchwin.sw_same_win) {
@@ -759,21 +756,13 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
         p_acd = false;
       }
 
-      buf_result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
+      do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
 
       if (!switchwin.sw_same_win) {
         p_acd = save_acd;
       }
     }
   });
-
-  if (!ERROR_SET(err) && win_result == FAIL) {
-    // XXX: Fallback, should not be needed?
-    api_set_error(err, kErrorTypeException, "Failed to switch to window %d", win->handle);
-  } else if (!ERROR_SET(err) && buf_result == FAIL) {
-    // XXX: Fallback, should not be needed?
-    api_set_error(err, kErrorTypeException, "Failed to set buffer %d", buf->handle);
-  }
 
   // If window is not current, state logic will not validate its cursor. So do it now.
   // Still needed if do_buffer returns FAIL (e.g: autocmds abort script after buffer was set).
