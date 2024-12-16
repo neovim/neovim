@@ -45,6 +45,7 @@ describe("'winfixbuf'", function()
   end)
 
   it('nvim_set_current_buf on current buffer', function()
+    setup_winfixbuf()
     exec_lua([[
       local curbuf = vim.api.nvim_get_current_buf()
       vim.api.nvim_set_current_buf(curbuf)
