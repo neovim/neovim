@@ -1729,29 +1729,29 @@ func Test_pum_matchins_higlight()
   let buf = RunVimInTerminal('-S Xscript', {})
 
   call TermWait(buf)
-  call term_sendkeys(buf, "S\<C-X>\<C-O>")
+  call term_sendkeys(buf, "Sαβγ \<C-X>\<C-O>")
   call VerifyScreenDump(buf, 'Test_pum_matchins_01', {})
   call term_sendkeys(buf, "\<C-E>\<Esc>")
 
   call TermWait(buf)
-  call term_sendkeys(buf, "S\<C-X>\<C-O>\<C-N>")
+  call term_sendkeys(buf, "Sαβγ \<C-X>\<C-O>\<C-N>")
   call VerifyScreenDump(buf, 'Test_pum_matchins_02', {})
   call term_sendkeys(buf, "\<C-E>\<Esc>")
 
   call TermWait(buf)
-  call term_sendkeys(buf, "S\<C-X>\<C-O>\<C-N>\<C-N>")
+  call term_sendkeys(buf, "Sαβγ \<C-X>\<C-O>\<C-N>\<C-N>")
   call VerifyScreenDump(buf, 'Test_pum_matchins_03', {})
   call term_sendkeys(buf, "\<C-E>\<Esc>")
 
   " restore after accept
   call TermWait(buf)
-  call term_sendkeys(buf, "S\<C-X>\<C-O>\<C-Y>")
+  call term_sendkeys(buf, "Sαβγ \<C-X>\<C-O>\<C-Y>")
   call VerifyScreenDump(buf, 'Test_pum_matchins_04', {})
   call term_sendkeys(buf, "\<C-E>\<Esc>")
 
   " restore after cancel completion
   call TermWait(buf)
-  call term_sendkeys(buf, "S\<C-X>\<C-O>\<Space>")
+  call term_sendkeys(buf, "Sαβγ \<C-X>\<C-O>\<Space>")
   call VerifyScreenDump(buf, 'Test_pum_matchins_05', {})
   call term_sendkeys(buf, "\<C-E>\<Esc>")
 

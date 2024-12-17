@@ -956,7 +956,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   int vi_attr = 0;                      // attributes for Visual and incsearch highlighting
   int area_attr = 0;                    // attributes desired by highlighting
   int search_attr = 0;                  // attributes desired by 'hlsearch'
-  int ins_match_attr = 0;               // attributes desired by PmenuMatch
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int decor_attr = 0;                   // attributes desired by syntax and extmarks
   bool has_syntax = false;              // this buffer has syntax highl.
@@ -1632,8 +1631,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     }
 
     // When still displaying '$' of change command, stop at cursor.
-    if (dollar_vcol >= 0 && wp == curwin
-        && lnum == wp->w_cursor.lnum && wlv.vcol >= wp->w_virtcol) {
+    if (dollar_vcol >= 0 && in_curline && wlv.vcol >= wp->w_virtcol) {
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       // don't clear anything after wlv.col
       wlv_put_linebuf(wp, &wlv, wlv.col, false, bg_attr, 0);
@@ -1787,6 +1785,16 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
       char_attr_base = hl_combine_attr(folded_attr, decor_attr);
       wlv.char_attr = hl_combine_attr(char_attr_base, char_attr_pri);
+    }
+
+    // Apply ComplMatchIns highlight if needed.
+    if (wlv.filler_todo <= 0
+        && (State & MODE_INSERT) && in_curline && ins_compl_active()) {
+      int ins_match_attr = ins_compl_col_range_attr((int)(ptr - line));
+      if (ins_match_attr > 0) {
+        char_attr_pri = hl_combine_attr(char_attr_pri, ins_match_attr);
+        wlv.char_attr = hl_combine_attr(char_attr_base, char_attr_pri);
+      }
     }
 
     if (draw_folded && has_foldtext && wlv.n_extra == 0 && wlv.col == win_col_offset) {
@@ -2449,8 +2457,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     // With 'virtualedit' we may never reach cursor position, but we still
     // need to correct the cursor column, so do that at end of line.
     if (!did_wcol && wlv.filler_todo <= 0
-        && wp == curwin && lnum == wp->w_cursor.lnum
-        && conceal_cursor_line(wp)
+        && in_curline && conceal_cursor_line(wp)
         && (wlv.vcol + wlv.skip_cells >= wp->w_virtcol || mb_schar == NUL)) {
       wp->w_wcol = wlv.col - wlv.boguscols;
       if (wlv.vcol + wlv.skip_cells < wp->w_virtcol) {
@@ -2643,7 +2650,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
       // Update w_cline_height and w_cline_folded if the cursor line was
       // updated (saves a call to plines_win() later).
-      if (wp == curwin && lnum == curwin->w_cursor.lnum) {
+      if (in_curline) {
         curwin->w_cline_row = startrow;
         curwin->w_cline_height = wlv.row - startrow;
         curwin->w_cline_folded = has_fold;
@@ -2705,14 +2712,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
     if (wlv.filler_todo <= 0) {
       vcol_prev = wlv.vcol;
-    }
-
-    if (wlv.filler_todo <= 0
-        && (State & MODE_INSERT) && in_curline && ins_compl_active()) {
-      ins_match_attr = ins_compl_col_range_attr(wlv.col);
-      if (ins_match_attr > 0) {
-        wlv.char_attr = hl_combine_attr(wlv.char_attr, ins_match_attr);
-      }
     }
 
     // Store character to be displayed.
