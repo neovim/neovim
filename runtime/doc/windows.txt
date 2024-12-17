@@ -978,6 +978,13 @@ CTRL-W g }						*CTRL-W_g}*
 		it.  Make the new Preview window (if required) N high.  If N is
 		not given, 'previewheight' is used.
 
+							*:pb* *:pbuffer*
+:[N]pb[uffer][!] [+cmd] [N]
+		Edit buffer [N] from the buffer list in the preview window.
+		If [N] is not given, the current buffer remains being edited.
+		See |:buffer-!| for [!].  This will also edit a buffer that is
+		not in the buffer list, without setting the 'buflisted' flag.
+
 							*:ped* *:pedit*
 :ped[it][!] [++opt] [+cmd] {file}
 		Edit {file} in the preview window.  The preview window is

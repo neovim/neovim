@@ -1472,6 +1472,7 @@ tag		command		action ~
 |:ownsyntax|	:ow[nsyntax]	set new local syntax highlight for this window
 |:packadd|	:pa[ckadd]	add a plugin from 'packpath'
 |:packloadall|	:packl[oadall]	load all packages under 'packpath'
+|:pbuffer|	:pb[uffer]	edit buffer in the preview window
 |:pclose|	:pc[lose]	close preview window
 |:pedit|	:ped[it]	edit file in the preview window
 |:perl|		:pe[rl]		execute perl command
