@@ -677,7 +677,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   FOR_ALL_TAB_WINDOWS(tp, win) {
     if (win->w_buffer == buf) {
-      if (win->w_cursor.lnum >= start_row && win->w_cursor.lnum <= end_row) {
+      if ((win->w_cursor.lnum >= start_row && win->w_cursor.lnum <= end_row)
+          || (VIsual_active && start_row >= VIsual.lnum && VIsual.col >= start_col)) {
         fix_cursor_cols(win, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row,
                         (colnr_T)end_col, (linenr_T)new_len, (colnr_T)last_item.size);
       } else {
@@ -1284,6 +1285,40 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
   colnr_T end_row_change_start = new_rows == 1 ? start_col : 0;
   colnr_T end_row_change_end = end_row_change_start + new_cols_at_end_row;
 
+  // Add visual mode processing for blockwise (CTRL-V) and non-blockwise selections
+  if (VIsual_active && win == curwin) {
+    // Blockwise visual selection (CTRL-V)
+    if (VIsual_mode == Ctrl_V) {
+      // Blockwise visual selection: adjust columns for each row in the block
+      for (linenr_T lnum = VIsual.lnum; lnum <= win->w_cursor.lnum; lnum++) {
+        if (lnum >= start_row && lnum <= end_row) {
+          // Adjust the selected columns for each line in the block
+          if (win->w_cursor.col > end_col) {
+            win->w_cursor.col += end_row_change_end - end_col;
+          }
+          if (VIsual.col > start_col) {
+            VIsual.col += end_row_change_end - end_col;
+          }
+        }
+      }
+    } else {  // Non-blockwise visual mode processing
+      // Multi-line visual selection adjustment
+      if (VIsual.lnum != win->w_cursor.lnum) {
+        if (VIsual.lnum >= start_row && VIsual.lnum <= end_row && VIsual.col > start_col) {
+          VIsual.col += end_row_change_end - end_col;
+        }
+        if (win->w_cursor.lnum >= start_row && win->w_cursor.lnum <= end_row
+            && win->w_cursor.col > end_col) {
+          win->w_cursor.col += end_row_change_end - end_col;
+        }
+      } else {  // Single-line visual selection adjustment
+        if (win->w_cursor.lnum == end_row && VIsual.col > end_col) {
+          VIsual.col += end_row_change_end - end_col;
+        }
+      }
+    }
+  }
+
   // check if cursor is after replaced range or not
   if (win->w_cursor.lnum == end_row && win->w_cursor.col + mode_col_adj > end_col) {
     // if cursor is after replaced range, it's shifted
@@ -1311,7 +1346,7 @@ static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, l
     linenr_T new_end_row = start_row + new_rows - 1;
 
     // make sure cursor row is in the new row range
-    if (win->w_cursor.lnum > new_end_row) {
+    if (win->w_cursor.lnum > new_end_row && !VIsual_active) {
       win->w_cursor.lnum = new_end_row;
 
       // don't simply move cursor up, but to the end
