@@ -2783,6 +2783,7 @@ vim.go.gp = vim.go.grepprg
 --- 	ci	Command-line Insert mode
 --- 	cr	Command-line Replace mode
 --- 	sm	showmatch in Insert mode
+--- 	t	Terminal mode
 --- 	a	all modes
 --- The argument-list is a dash separated list of these arguments:
 --- 	hor{N}	horizontal bar, {N} percent of the character height
@@ -2802,7 +2803,8 @@ vim.go.gp = vim.go.grepprg
 --- ```vim
 --- 			set guicursor=n:blinkon0
 --- ```
---- - Default is "blinkon0" for each mode.
+---
+--- 		Default is "blinkon0" for each mode.
 --- 	{group-name}
 --- 		Highlight group that decides the color and font of the
 --- 		cursor.
@@ -2848,7 +2850,7 @@ vim.go.gp = vim.go.grepprg
 ---
 ---
 --- @type string
-vim.o.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"
+vim.o.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:block-blinkon500-blinkoff500-TermCursor"
 vim.o.gcr = vim.o.guicursor
 vim.go.guicursor = vim.o.guicursor
 vim.go.gcr = vim.go.guicursor

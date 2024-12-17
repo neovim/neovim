@@ -47,7 +47,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
 
     screen:expect {
       grid = [[
-      {1: }                                                 |
+      ^                                                  |
       {4:~                                                 }|*3
       {5:[No Name]                                         }|
                                                         |
@@ -57,7 +57,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
     feed_command('edit ' .. path)
     screen:expect {
       grid = [[
-      {1: }                                                 |
+      ^                                                  |
       {4:~                                                 }|*3
       {5:xtest-foo                                         }|
       :edit xtest-foo                                   |
@@ -68,7 +68,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
     feed_data('\027[O')
     screen:expect {
       grid = [[
-      {1: }                                                 |
+      ^                                                  |
       {4:~                                                 }|*3
       {5:xtest-foo                                         }|
       :edit xtest-foo                                   |
@@ -83,7 +83,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
 
     screen:expect {
       grid = [[
-      {1:l}ine 1                                            |
+      ^line 1                                            |
       line 2                                            |
       line 3                                            |
       line 4                                            |

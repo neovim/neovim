@@ -87,6 +87,11 @@ EVENTS
 • |vim.ui_attach()| callbacks for |ui-messages| `msg_show` events are executed in
   |api-fast| context.
 
+HIGHLIGHTS
+
+• |TermCursorNC| is removed and no longer supported. Unfocused terminals no
+  longer have a cursor.
+
 LSP
 
 • Improved rendering of LSP hover docs. |K-lsp-default|
@@ -281,6 +286,12 @@ TERMINAL
   'scrollback' are not reflown.
 • The |terminal| now supports OSC 8 escape sequences and will display
   hyperlinks in supporting host terminals.
+• The |terminal| now uses the actual cursor, rather than a "virtual" cursor.
+  This means that escape codes sent by applications running in a terminal
+  buffer can change the cursor shape and visibility. However, it also
+  means that the |TermCursorNC| highlight group is no longer supported: an
+  unfocused terminal window will have no cursor at all (so there is nothing to
+  highlight).
 
 TREESITTER
 

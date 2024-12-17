@@ -3785,7 +3785,7 @@ describe('API', function()
       screen:expect {
         grid = [[
                                                           |
-        {1:~}{102: }{4:                                       }{1:         }|
+        {1:~}{4:^                                        }{1:         }|
         {1:~}{4:                                        }{1:         }|*4
         {1:~                                                 }|*3
         {5:-- TERMINAL --}                                    |
@@ -3801,7 +3801,7 @@ describe('API', function()
       screen:expect {
         grid = [[
                                                           |
-        {1:~}{4:herrejösses!}{102: }{4:                           }{1:         }|
+        {1:~}{4:herrejösses!^                            }{1:         }|
         {1:~}{4:                                        }{1:         }|*4
         {1:~                                                 }|*3
         {5:-- TERMINAL --}                                    |

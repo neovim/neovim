@@ -341,9 +341,11 @@ void check_cursor_col(win_T *win)
   } else if (win->w_cursor.col >= len) {
     // Allow cursor past end-of-line when:
     // - in Insert mode or restarting Insert mode
+    // - in Terminal mode
     // - in Visual mode and 'selection' isn't "old"
     // - 'virtualedit' is set
     if ((State & MODE_INSERT) || restart_edit
+        || (State & MODE_TERMINAL)
         || (VIsual_active && *p_sel != 'o')
         || (cur_ve_flags & kOptVeFlagOnemore)
         || virtual_active(win)) {

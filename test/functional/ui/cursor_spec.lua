@@ -190,6 +190,19 @@ describe('ui/cursor', function()
         attr_lm = {},
         short_name = 'sm',
       },
+      [18] = {
+        blinkoff = 500,
+        blinkon = 500,
+        blinkwait = 0,
+        cell_percentage = 0,
+        cursor_shape = 'block',
+        name = 'terminal',
+        hl_id = 3,
+        id_lm = 3,
+        attr = { reverse = true },
+        attr_lm = { reverse = true },
+        short_name = 't',
+      },
     }
 
     screen:expect(function()
@@ -245,17 +258,20 @@ describe('ui/cursor', function()
         end
       end
       if m.hl_id then
-        m.hl_id = 66
+        m.hl_id = 65
         m.attr = { background = Screen.colors.DarkGray }
       end
       if m.id_lm then
-        m.id_lm = 73
+        m.id_lm = 72
+        m.attr_lm = {}
       end
     end
 
     -- Assert the new expectation.
     screen:expect(function()
-      eq(expected_mode_info, screen._mode_info)
+      for i, v in ipairs(expected_mode_info) do
+        eq(v, screen._mode_info[i])
+      end
       eq(true, screen._cursor_style_enabled)
       eq('normal', screen.mode)
     end)

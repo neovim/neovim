@@ -39,7 +39,7 @@ describe(':terminal scrollback', function()
         line28                        |
         line29                        |
         line30                        |
-        {1: }                             |
+        ^                              |
         {3:-- TERMINAL --}                |
       ]])
     end)
@@ -67,7 +67,7 @@ describe(':terminal scrollback', function()
         line2                         |
         line3                         |
         line4                         |
-        {1: }                             |
+        ^                              |
         {3:-- TERMINAL --}                |
       ]])
     end)
@@ -84,7 +84,7 @@ describe(':terminal scrollback', function()
           line3                         |
           line4                         |
           line5                         |
-          {1: }                             |
+          ^                              |
           {3:-- TERMINAL --}                |
         ]])
         eq(7, api.nvim_buf_line_count(0))
@@ -102,7 +102,7 @@ describe(':terminal scrollback', function()
             line5                         |
             line6                         |
             line7                         |
-            line8{1: }                        |
+            line8^                         |
             {3:-- TERMINAL --}                |
           ]])
 
@@ -135,7 +135,7 @@ describe(':terminal scrollback', function()
             line5                         |
             line6                         |
             line7                         |
-            ^line8{2: }                        |
+            ^line8                         |
                                           |
           ]])
         end)
@@ -151,7 +151,7 @@ describe(':terminal scrollback', function()
           line3                       |
           line4                       |
           rows: 5, cols: 28           |
-          {2:^ }                           |
+          ^                            |
                                       |
         ]])
       end
@@ -168,7 +168,7 @@ describe(':terminal scrollback', function()
           screen:expect([[
             rows: 5, cols: 28         |
             rows: 3, cols: 26         |
-            {2:^ }                         |
+            ^                          |
                                       |
           ]])
           eq(8, api.nvim_buf_line_count(0))
@@ -201,7 +201,7 @@ describe(':terminal scrollback', function()
         screen:expect([[
           tty ready                     |
           rows: 4, cols: 30             |
-          {1: }                             |
+          ^                              |
                                         |
           {3:-- TERMINAL --}                |
         ]])
@@ -220,7 +220,7 @@ describe(':terminal scrollback', function()
           screen:expect([[
             rows: 4, cols: 30             |
             rows: 3, cols: 30             |
-            {1: }                             |
+            ^                              |
             {3:-- TERMINAL --}                |
           ]])
           eq(4, api.nvim_buf_line_count(0))
@@ -235,7 +235,7 @@ describe(':terminal scrollback', function()
           screen:expect([[
             rows: 4, cols: 30             |
             rows: 3, cols: 30             |
-            {1: }                             |
+            ^                              |
             {3:-- TERMINAL --}                |
           ]])
         end)
@@ -252,14 +252,14 @@ describe(':terminal scrollback', function()
         line2                         |
         line3                         |
         line4                         |
-        {1: }                             |
+        ^                              |
         {3:-- TERMINAL --}                |
       ]])
       screen:try_resize(screen._width, screen._height - 3)
       screen:expect([[
         line4                         |
         rows: 3, cols: 30             |
-        {1: }                             |
+        ^                              |
         {3:-- TERMINAL --}                |
       ]])
       eq(7, api.nvim_buf_line_count(0))
@@ -278,7 +278,7 @@ describe(':terminal scrollback', function()
           line4                         |
           rows: 3, cols: 30             |
           rows: 4, cols: 30             |
-          {1: }                             |
+          ^                              |
           {3:-- TERMINAL --}                |
         ]])
       end
@@ -300,7 +300,7 @@ describe(':terminal scrollback', function()
             rows: 3, cols: 30             |
             rows: 4, cols: 30             |
             rows: 7, cols: 30             |
-            {1: }                             |
+            ^                              |
             {3:-- TERMINAL --}                |
           ]])
           eq(9, api.nvim_buf_line_count(0))
@@ -337,7 +337,7 @@ describe(':terminal scrollback', function()
               rows: 4, cols: 30             |
               rows: 7, cols: 30             |
               rows: 11, cols: 30            |
-              {1: }                             |
+              ^                              |
                                             |
               {3:-- TERMINAL --}                |
             ]])
@@ -362,7 +362,7 @@ describe(':terminal prints more lines than the screen height and exits', functio
       line8                         |
       line9                         |
                                     |
-      [Process exited 0]{2: }           |
+      [Process exited 0]^            |
       {5:-- TERMINAL --}                |
     ]])
     feed('<cr>')
@@ -454,7 +454,7 @@ describe("'scrollback' option", function()
         39: line                      |
         40: line                      |
                                       |
-        ${1: }                            |
+        $^                             |
         {3:-- TERMINAL --}                |
       ]],
       }
@@ -493,7 +493,7 @@ describe("'scrollback' option", function()
         line28                        |
         line29                        |
         line30                        |
-        {1: }                             |
+        ^                              |
         {3:-- TERMINAL --}                |
       ]])
     local term_height = 6 -- Actual terminal screen height, not the scrollback
@@ -634,7 +634,7 @@ describe('pending scrollback line handling', function()
     screen:expect [[
       hi                            |*4
                                     |
-      [Process exited 0]{2: }           |
+      [Process exited 0]^            |
       {3:-- TERMINAL --}                |
     ]]
     assert_alive()

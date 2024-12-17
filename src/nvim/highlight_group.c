@@ -178,7 +178,6 @@ static const char *highlight_init_both[] = {
   "default link StatusLineTermNC StatusLineNC",
   "default link TabLine          StatusLineNC",
   "default link TabLineFill      TabLine",
-  "default link TermCursorNC     NONE",
   "default link VertSplit        WinSeparator",
   "default link VisualNOS        Visual",
   "default link Whitespace       NonText",

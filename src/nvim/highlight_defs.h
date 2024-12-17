@@ -63,7 +63,6 @@ typedef enum {
                   ///< displayed different from what it is
   HLF_EOB,        ///< after the last line in the buffer
   HLF_TERM,       ///< terminal cursor focused
-  HLF_TERMNC,     ///< terminal cursor unfocused
   HLF_AT,         ///< @ characters at end of screen, characters that don't really exist in the text
   HLF_D,          ///< directories in CTRL-D listing
   HLF_E,          ///< error messages
