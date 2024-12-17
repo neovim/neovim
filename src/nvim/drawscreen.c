@@ -93,6 +93,7 @@
 #include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
@@ -727,6 +728,11 @@ void end_search_hl(void)
 
 static void win_redr_bordertext(win_T *wp, VirtText vt, int col, BorderTextType bt)
 {
+  int used_col = col;
+  int width = wp->w_config.width;
+  bool truncate = false;
+  char *new_text = NULL;
+
   for (size_t i = 0; i < kv_size(vt);) {
     int attr = -1;
     char *text = next_virt_text_chunk(vt, &i, &attr);
@@ -737,11 +743,37 @@ static void win_redr_bordertext(win_T *wp, VirtText vt, int col, BorderTextType 
       attr = wp->w_ns_hl_attr[bt == kBorderTextTitle ? HLF_BTITLE : HLF_BFOOTER];
     }
     attr = hl_apply_winblend(wp, attr);
-    col += grid_line_puts(col, text, -1, attr);
+    int cell = (int)mb_string2cells(text);
+    int shift = used_col + cell - width;
+
+    if (shift > 1) {
+      truncate = true;
+      if (used_col > col) {
+        int move_start = col + shift - 1;
+        int start_pos = col;
+        for (int j = move_start; j < used_col; j++) {
+          grid_line_put_schar(start_pos, linebuf_char[j], linebuf_attr[j]);
+          start_pos++;
+        }
+        used_col -= (shift - 1);
+      } else {
+        new_text = xmemdupz(text + shift - 1, strlen(text) - (size_t)shift + 1);
+      }
+    }
+
+    used_col += grid_line_puts(used_col, new_text ? new_text : text, -1, attr);
+    if (new_text) {
+      xfree(new_text);
+      new_text = NULL;
+    }
+  }
+
+  if (truncate) {
+    grid_line_put_schar(col, schar_from_ascii('<'), linebuf_attr[col]);
   }
 }
 
-int win_get_bordertext_col(int total_col, int text_width, AlignTextPos align)
+static int win_get_bordertext_col(int total_col, int text_width, AlignTextPos align)
 {
   switch (align) {
   case kAlignLeft:

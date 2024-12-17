@@ -2050,15 +2050,26 @@ describe('float window', function()
       eq('center', footer_pos)
     end)
 
-    it('center aligned title longer than window width #25746', function()
+    it('truncates title longer than window width #23602', function()
       local buf = api.nvim_create_buf(false, false)
       api.nvim_buf_set_lines(buf, 0, -1, true, {' halloj! ',
                                              ' BORDAA  '})
-      local win = api.nvim_open_win(buf, false, {
+      local config = {
         relative='editor', width=9, height=2, row=2, col=5, border="double",
         title = "abcdefghijklmnopqrstuvwxyz",title_pos = "center",
-      })
+      }
 
+      local expected = [[
+      ^                                        |
+      {0:~                                       }|
+      {0:~    }{5:╔}{11:<stuvwxyz}{5:╗}{0:                        }|
+      {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
+      {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
+      {0:~    }{5:╚═════════╝}{0:                        }|
+                                              |
+      ]]
+
+      local win = api.nvim_open_win(buf, false, config)
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2070,7 +2081,7 @@ describe('float window', function()
         ## grid 3
                                                   |
         ## grid 4
-          {5:╔}{11:abcdefghi}{5:╗}|
+          {5:╔}{11:<stuvwxyz}{5:╗}|
           {5:║}{1: halloj! }{5:║}|
           {5:║}{1: BORDAA  }{5:║}|
           {5:╚═════════╝}|
@@ -2081,17 +2092,38 @@ describe('float window', function()
           [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0};
         }}
       else
-        screen:expect{grid=[[
-          ^                                        |
-          {0:~                                       }|
-          {0:~    }{5:╔}{11:abcdefghi}{5:╗}{0:                        }|
-          {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
-          {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
-          {0:~    }{5:╚═════════╝}{0:                        }|
-                                                  |
-        ]]}
+        screen:expect{grid= expected}
       end
+      api.nvim_win_close(win, false)
+      assert_alive()
 
+      config.title = { {'abcd', 'FloatTitle'}, {'stuvw', 'FloatTitle'}, {'xyz', 'FloatTitle'}}
+      win = api.nvim_open_win(buf, false, config)
+
+      if multigrid then
+        screen:expect({grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 5
+            {5:╔}{11:<stuvwxyz}{5:╗}|
+            {5:║}{1: halloj! }{5:║}|
+            {5:║}{1: BORDAA  }{5:║}|
+            {5:╚═════════╝}|
+          ]], float_pos={
+          [5] = {1002, "NW", 1, 2, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [5] = {win = 1002, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0};
+        }})
+      else
+        screen:expect{grid= expected}
+      end
       api.nvim_win_close(win, false)
       assert_alive()
     end)
