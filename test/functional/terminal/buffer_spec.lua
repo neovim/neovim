@@ -362,7 +362,7 @@ describe(':terminal buffer', function()
       })
       vim.api.nvim_create_autocmd('TermRequest', {
         callback = function(args)
-          if args.data == '\027]11;?' then
+          if args.data.payload == '\027]11;?' then
             table.insert(_G.input, '\027]11;rgb:0000/0000/0000\027\\')
           end
         end
@@ -376,6 +376,22 @@ describe(':terminal buffer', function()
       '\027]11;rgb:0000/0000/0000\027\\',
       '\027[0n',
     }, exec_lua('return _G.input'))
+  end)
+
+  it('TermRequest includes cursor position #31609', function()
+    command('autocmd! nvim_terminal TermRequest')
+    local term = exec_lua([[
+      _G.cursor = {}
+      local term = vim.api.nvim_open_term(0, {})
+      vim.api.nvim_create_autocmd('TermRequest', {
+        callback = function(args)
+          _G.cursor = { row = args.data.row, col = args.data.col }
+        end
+      })
+      return term
+    ]])
+    api.nvim_chan_send(term, 'Hello\nworld!\027]133;D\027\\')
+    eq({ row = 1, col = 6 }, exec_lua('return _G.cursor'))
   end)
 
   it('no heap-buffer-overflow when using termopen(echo) #3161', function()

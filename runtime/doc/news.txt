@@ -86,6 +86,10 @@ EVENTS
 
 • |vim.ui_attach()| callbacks for |ui-messages| `msg_show` events are executed in
   |api-fast| context.
+• |TermRequest| and |TermResponse| |event-data| is now a table. The "payload"
+  field contains the received sequence. |TermRequest| also contains "row" and
+  "col" fields indicating the cursor's position when the sequence was
+  received.
 
 HIGHLIGHTS
 
@@ -292,6 +296,8 @@ TERMINAL
   means that the |TermCursorNC| highlight group is no longer supported: an
   unfocused terminal window will have no cursor at all (so there is nothing to
   highlight).
+• |TermRequest| has "row" and "col" fields in its |event-data| indicating the
+  cursor position when the sequence was received.
 
 TREESITTER
 
