@@ -623,38 +623,32 @@ static int nlua_with(lua_State *L)
   cmdmod.cmod_flags = flags;
   apply_cmdmod(&cmdmod);
 
-  if (buf || win) {
-    try_start();
-  }
-
-  aco_save_T aco;
-  win_execute_T win_execute_args;
   Error err = ERROR_INIT;
+  TRY_WRAP(&err, {
+    aco_save_T aco;
+    win_execute_T win_execute_args;
 
-  if (win) {
-    tabpage_T *tabpage = win_find_tabpage(win);
-    if (!win_execute_before(&win_execute_args, win, tabpage)) {
-      goto end;
+    if (win) {
+      tabpage_T *tabpage = win_find_tabpage(win);
+      if (!win_execute_before(&win_execute_args, win, tabpage)) {
+        goto end;
+      }
+    } else if (buf) {
+      aucmd_prepbuf(&aco, buf);
     }
-  } else if (buf) {
-    aucmd_prepbuf(&aco, buf);
-  }
 
-  int s = lua_gettop(L);
-  lua_pushvalue(L, 2);
-  status = lua_pcall(L, 0, LUA_MULTRET, 0);
-  rets = lua_gettop(L) - s;
+    int s = lua_gettop(L);
+    lua_pushvalue(L, 2);
+    status = lua_pcall(L, 0, LUA_MULTRET, 0);
+    rets = lua_gettop(L) - s;
 
-  if (win) {
-    win_execute_after(&win_execute_args);
-  } else if (buf) {
-    aucmd_restbuf(&aco);
-  }
-
-end:
-  if (buf || win) {
-    try_end(&err);
-  }
+    if (win) {
+      win_execute_after(&win_execute_args);
+    } else if (buf) {
+      aucmd_restbuf(&aco);
+    }
+    end:;
+  });
 
   undo_cmdmod(&cmdmod);
   cmdmod = save_cmdmod;

@@ -787,9 +787,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   setmouse();
   setcursor();
 
-  TryState tstate;
   Error err = ERROR_INIT;
-  bool tl_ret = true;
   char firstcbuf[2];
   firstcbuf[0] = (char)(firstc > 0 ? firstc : '-');
   firstcbuf[1] = 0;
@@ -802,20 +800,19 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
     tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
     tv_dict_set_keys_readonly(dict);
-    try_enter(&tstate);
+    TRY_WRAP(&err, {
+      apply_autocmds(EVENT_CMDLINEENTER, firstcbuf, firstcbuf, false, curbuf);
+      restore_v_event(dict, &save_v_event);
+    });
 
-    apply_autocmds(EVENT_CMDLINEENTER, firstcbuf, firstcbuf, false, curbuf);
-    restore_v_event(dict, &save_v_event);
-
-    tl_ret = try_leave(&tstate, &err);
-    if (!tl_ret && ERROR_SET(&err)) {
+    if (ERROR_SET(&err)) {
       msg_putchar('\n');
       msg_scroll = true;
       msg_puts_hl(err.msg, HLF_E, true);
       api_clear_error(&err);
       redrawcmd();
     }
-    tl_ret = true;
+    err = ERROR_INIT;
   }
   may_trigger_modechanged();
 
@@ -873,10 +870,10 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     // not readonly:
     tv_dict_add_bool(dict, S_LEN("abort"),
                      s->gotesc ? kBoolVarTrue : kBoolVarFalse);
-    try_enter(&tstate);
-    apply_autocmds(EVENT_CMDLINELEAVE, firstcbuf, firstcbuf, false, curbuf);
-    // error printed below, to avoid redraw issues
-    tl_ret = try_leave(&tstate, &err);
+    TRY_WRAP(&err, {
+      apply_autocmds(EVENT_CMDLINELEAVE, firstcbuf, firstcbuf, false, curbuf);
+      // error printed below, to avoid redraw issues
+    });
     if (tv_dict_get_number(dict, "abort") != 0) {
       s->gotesc = true;
     }
@@ -929,7 +926,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   msg_scroll = s->save_msg_scroll;
   redir_off = false;
 
-  if (!tl_ret && ERROR_SET(&err)) {
+  if (ERROR_SET(&err)) {
     msg_putchar('\n');
     emsg(err.msg);
     did_emsg = false;
@@ -937,7 +934,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   }
 
   // When the command line was typed, no need for a wait-return prompt.
-  if (s->some_key_typed && tl_ret) {
+  if (s->some_key_typed && !ERROR_SET(&err)) {
     need_wait_return = false;
   }
 
@@ -2315,11 +2312,13 @@ static win_T *cmdpreview_open_win(buf_T *cmdpreview_buf)
 
   win_T *preview_win = curwin;
   Error err = ERROR_INIT;
+  int result = OK;
 
   // Switch to preview buffer
-  try_start();
-  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, cmdpreview_buf->handle, 0);
-  if (try_end(&err) || result == FAIL) {
+  TRY_WRAP(&err, {
+    result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, cmdpreview_buf->handle, 0);
+  });
+  if (ERROR_SET(&err) || result == FAIL) {
     api_clear_error(&err);
     return NULL;
   }
@@ -2600,9 +2599,10 @@ static bool cmdpreview_may_show(CommandLineState *s)
   // open the preview window. The preview callback also handles doing the changes and highlights for
   // the preview.
   Error err = ERROR_INIT;
-  try_start();
-  cmdpreview_type = execute_cmd(&ea, &cmdinfo, true);
-  if (try_end(&err)) {
+  TRY_WRAP(&err, {
+    cmdpreview_type = execute_cmd(&ea, &cmdinfo, true);
+  });
+  if (ERROR_SET(&err)) {
     api_clear_error(&err);
     cmdpreview_type = 0;
   }
@@ -2643,7 +2643,6 @@ end:
 static void do_autocmd_cmdlinechanged(int firstc)
 {
   if (has_event(EVENT_CMDLINECHANGED)) {
-    TryState tstate;
     Error err = ERROR_INIT;
     save_v_event_T save_v_event;
     dict_T *dict = get_v_event(&save_v_event);
@@ -2656,13 +2655,11 @@ static void do_autocmd_cmdlinechanged(int firstc)
     tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
     tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
     tv_dict_set_keys_readonly(dict);
-    try_enter(&tstate);
-
-    apply_autocmds(EVENT_CMDLINECHANGED, firstcbuf, firstcbuf, false, curbuf);
-    restore_v_event(dict, &save_v_event);
-
-    bool tl_ret = try_leave(&tstate, &err);
-    if (!tl_ret && ERROR_SET(&err)) {
+    TRY_WRAP(&err, {
+      apply_autocmds(EVENT_CMDLINECHANGED, firstcbuf, firstcbuf, false, curbuf);
+      restore_v_event(dict, &save_v_event);
+    });
+    if (ERROR_SET(&err)) {
       msg_putchar('\n');
       msg_scroll = true;
       msg_puts_hl(err.msg, HLF_E, true);
@@ -3179,11 +3176,9 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
   static int prev_prompt_errors = 0;
   Callback color_cb = CALLBACK_NONE;
   bool can_free_cb = false;
-  TryState tstate;
   Error err = ERROR_INIT;
   const char *err_errmsg = e_intern2;
   bool dgc_ret = true;
-  bool tl_ret = true;
 
   if (colored_ccline->prompt_id != prev_prompt_id) {
     prev_prompt_errors = 0;
@@ -3196,16 +3191,16 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     assert(colored_ccline->input_fn);
     color_cb = colored_ccline->highlight_callback;
   } else if (colored_ccline->cmdfirstc == ':') {
-    try_enter(&tstate);
-    err_errmsg = N_("E5408: Unable to get g:Nvim_color_cmdline callback: %s");
-    dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
-                                   &color_cb);
-    tl_ret = try_leave(&tstate, &err);
+    TRY_WRAP(&err, {
+      err_errmsg = N_("E5408: Unable to get g:Nvim_color_cmdline callback: %s");
+      dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
+                                     &color_cb);
+    });
     can_free_cb = true;
   } else if (colored_ccline->cmdfirstc == '=') {
     color_expr_cmdline(colored_ccline, ccline_colors);
   }
-  if (!tl_ret || !dgc_ret) {
+  if (ERROR_SET(&err) || !dgc_ret) {
     goto color_cmdline_error;
   }
 
@@ -3226,20 +3221,22 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
   // correct, with msg_col it just misses leading `:`. Since `redraw!` in
   // callback lags this is least of the user problems.
   //
-  // Also using try_enter() because error messages may overwrite typed
+  // Also using TRY_WRAP because error messages may overwrite typed
   // command-line which is not expected.
   getln_interrupted_highlight = false;
-  try_enter(&tstate);
-  err_errmsg = N_("E5407: Callback has thrown an exception: %s");
-  const int saved_msg_col = msg_col;
-  msg_silent++;
-  const bool cbcall_ret = callback_call(&color_cb, 1, &arg, &tv);
-  msg_silent--;
-  msg_col = saved_msg_col;
-  if (got_int) {
-    getln_interrupted_highlight = true;
-  }
-  if (!try_leave(&tstate, &err) || !cbcall_ret) {
+  bool cbcall_ret = true;
+  TRY_WRAP(&err, {
+    err_errmsg = N_("E5407: Callback has thrown an exception: %s");
+    const int saved_msg_col = msg_col;
+    msg_silent++;
+    cbcall_ret = callback_call(&color_cb, 1, &arg, &tv);
+    msg_silent--;
+    msg_col = saved_msg_col;
+    if (got_int) {
+      getln_interrupted_highlight = true;
+    }
+  });
+  if (ERROR_SET(&err) || !cbcall_ret) {
     goto color_cmdline_error;
   }
   if (tv.v_type != VAR_LIST) {
