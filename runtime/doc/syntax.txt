@@ -5243,6 +5243,8 @@ PmenuMatch	Popup menu: Matched text in normal item. Combined with
 							*hl-PmenuMatchSel*
 PmenuMatchSel	Popup menu: Matched text in selected item. Combined with
 		|hl-PmenuMatch| and |hl-PmenuSel|.
+							*hl-ComplMatchIns*
+ComplMatchIns	Matched text of the currently inserted completion.
 							*hl-Question*
 Question	|hit-enter| prompt and yes/no questions.
 							*hl-QuickFixLine*

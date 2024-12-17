@@ -216,6 +216,7 @@ EDITOR
 • On Windows, filename arguments on the command-line prefixed with "~\" or
   "~/" are now expanded to the user's profile directory, not a relative path
   to a literal "~" directory.
+• |hl-ComplMatchIns| shows matched text of the currently inserted completion.
 • |hl-PmenuMatch| and |hl-PmenuMatchSel| show matched text in completion popup.
 
 EVENTS

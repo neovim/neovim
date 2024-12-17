@@ -31,6 +31,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
+#include "nvim/insexpand.h"
 #include "nvim/mark_defs.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/match.h"
@@ -934,6 +935,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   colnr_T vcol_prev = -1;             // "wlv.vcol" of previous character
   ScreenGrid *grid = &wp->w_grid;     // grid specific to the window
 
+  const bool in_curline = wp == curwin && lnum == curwin->w_cursor.lnum;
   const bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
   const bool has_foldtext = has_fold && *wp->w_p_fdt != NUL;
 
@@ -954,6 +956,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   int vi_attr = 0;                      // attributes for Visual and incsearch highlighting
   int area_attr = 0;                    // attributes desired by highlighting
   int search_attr = 0;                  // attributes desired by 'hlsearch'
+  int ins_match_attr = 0;               // attributes desired by PmenuMatch
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int decor_attr = 0;                   // attributes desired by syntax and extmarks
   bool has_syntax = false;              // this buffer has syntax highl.
@@ -1117,7 +1120,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
 
       // Check if the char under the cursor should be inverted (highlighted).
-      if (!highlight_match && lnum == curwin->w_cursor.lnum && wp == curwin
+      if (!highlight_match && in_curline
           && cursor_is_block_during_visual(*p_sel == 'e')) {
         noinvcur = true;
       }
@@ -2702,6 +2705,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
     if (wlv.filler_todo <= 0) {
       vcol_prev = wlv.vcol;
+    }
+
+    if (wlv.filler_todo <= 0
+        && (State & MODE_INSERT) && in_curline && ins_compl_active()) {
+      ins_match_attr = ins_compl_col_range_attr(wlv.col);
+      if (ins_match_attr > 0) {
+        wlv.char_attr = hl_combine_attr(wlv.char_attr, ins_match_attr);
+      }
     }
 
     // Store character to be displayed.
