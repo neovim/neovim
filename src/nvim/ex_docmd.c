@@ -4502,6 +4502,12 @@ static void ex_bunload(exarg_T *eap)
 /// :[N]sbuffer [N]      to buffer N
 static void ex_buffer(exarg_T *eap)
 {
+  do_exbuffer(eap);
+}
+
+/// ":buffer" command and alike.
+static void do_exbuffer(exarg_T *eap)
+{
   if (*eap->arg) {
     eap->errmsg = ex_errmsg(e_trailing_arg, eap->arg);
   } else {
@@ -7002,14 +7008,35 @@ static void ex_ptag(exarg_T *eap)
 static void ex_pedit(exarg_T *eap)
 {
   win_T *curwin_save = curwin;
-
-  // Open the preview window or popup and make it the current window.
-  g_do_tagpreview = (int)p_pvh;
-  prepare_tagpreview(true);
+  prepare_preview_window();
 
   // Edit the file.
   do_exedit(eap, NULL);
 
+  back_to_current_window(curwin_save);
+}
+
+/// ":pbuffer"
+static void ex_pbuffer(exarg_T *eap)
+{
+  win_T *curwin_save = curwin;
+  prepare_preview_window();
+
+  // Go to the buffer.
+  do_exbuffer(eap);
+
+  back_to_current_window(curwin_save);
+}
+
+static void prepare_preview_window(void)
+{
+  // Open the preview window or popup and make it the current window.
+  g_do_tagpreview = (int)p_pvh;
+  prepare_tagpreview(true);
+}
+
+static void back_to_current_window(win_T *curwin_save)
+{
   if (curwin != curwin_save && win_valid(curwin_save)) {
     // Return cursor to where we were
     validate_cursor(curwin);

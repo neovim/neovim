@@ -1542,6 +1542,81 @@ describe('builtin popupmenu', function()
     end)
 
     if not multigrid then
+      describe('popup and preview window do not overlap', function()
+        before_each(function()
+          screen:try_resize(53, 20)
+        end)
+
+        -- oldtest: Test_popup_and_previewwindow_dump_pedit()
+        it('with :pedit', function()
+          exec([[
+            set previewheight=9
+            silent! pedit
+            call setline(1, map(repeat(["ab"], 10), "v:val .. v:key"))
+            exec "norm! G\<C-E>\<C-E>"
+          ]])
+          feed('o')
+          n.poke_eventloop()
+          feed('<C-X><C-N>')
+          screen:expect([[
+            ab0                                                  |
+            ab1                                                  |
+            ab2                                                  |
+            ab3                                                  |
+            ab4                                                  |
+            ab5                                                  |
+            ab6                                                  |
+            ab7                                                  |
+            ab8                                                  |
+            {s:ab0            }{c: }{3:ew][+]                               }|
+            {n:ab1            }{c: }                                     |
+            {n:ab2            }{c: }                                     |
+            {n:ab3            }{c: }                                     |
+            {n:ab4            }{s: }                                     |
+            {n:ab5            }{s: }                                     |
+            {n:ab6            }{s: }                                     |
+            ab0^                                                  |
+            {1:~                                                    }|
+            {4:[No Name] [+]                                        }|
+            {2:-- Keyword Local completion (^N^P) }{5:match 1 of 10}     |
+          ]])
+        end)
+
+        -- oldtest: Test_popup_and_previewwindow_dump_pbuffer()
+        it('with :pbuffer', function()
+          exec([[
+            set previewheight=9
+            silent! pbuffer
+            call setline(1, map(repeat(["ab"], 10), "v:val .. v:key"))
+            exec "norm! G\<C-E>\<C-E>\<C-E>"
+          ]])
+          feed('o')
+          n.poke_eventloop()
+          feed('<C-X><C-N>')
+          screen:expect([[
+            ab0                                                  |
+            ab1                                                  |
+            ab2                                                  |
+            ab3                                                  |
+            ab4                                                  |
+            ab5                                                  |
+            ab6                                                  |
+            ab7                                                  |
+            ab8                                                  |
+            {s:ab0            }{c: }{3:ew][+]                               }|
+            {n:ab1            }{c: }                                     |
+            {n:ab2            }{c: }                                     |
+            {n:ab3            }{s: }                                     |
+            {n:ab4            }{s: }                                     |
+            {n:ab5            }{s: }                                     |
+            ab0^                                                  |
+            {1:~                                                    }|*2
+            {4:[No Name] [+]                                        }|
+            {2:-- Keyword Local completion (^N^P) }{5:match 1 of 10}     |
+          ]])
+        end)
+      end)
+
       -- oldtest: Test_pum_with_preview_win()
       it('preview window opened during completion', function()
         exec([[

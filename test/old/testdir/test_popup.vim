@@ -748,17 +748,11 @@ func Test_popup_and_preview_autocommand()
   bw!
 endfunc
 
-func Test_popup_and_previewwindow_dump()
+func s:run_popup_and_previewwindow_dump(lines, dumpfile)
   CheckScreendump
   CheckFeature quickfix
 
-  let lines =<< trim END
-    set previewheight=9
-    silent! pedit
-    call setline(1, map(repeat(["ab"], 10), "v:val .. v:key"))
-    exec "norm! G\<C-E>\<C-E>"
-  END
-  call writefile(lines, 'Xscript')
+  call writefile(a:lines, 'Xscript', 'D')
   let buf = RunVimInTerminal('-S Xscript', {})
 
   " wait for the script to finish
@@ -768,11 +762,30 @@ func Test_popup_and_previewwindow_dump()
   call term_sendkeys(buf, "o")
   call TermWait(buf, 50)
   call term_sendkeys(buf, "\<C-X>\<C-N>")
-  call VerifyScreenDump(buf, 'Test_popup_and_previewwindow_01', {})
+  call VerifyScreenDump(buf, a:dumpfile, {})
 
   call term_sendkeys(buf, "\<Esc>u")
   call StopVimInTerminal(buf)
-  call delete('Xscript')
+endfunc
+
+func Test_popup_and_previewwindow_dump_pedit()
+  let lines =<< trim END
+    set previewheight=9
+    silent! pedit
+    call setline(1, map(repeat(["ab"], 10), "v:val .. v:key"))
+    exec "norm! G\<C-E>\<C-E>"
+  END
+  call s:run_popup_and_previewwindow_dump(lines, 'Test_popup_and_previewwindow_pedit')
+endfunc
+
+func Test_popup_and_previewwindow_dump_pbuffer()
+  let lines =<< trim END
+    set previewheight=9
+    silent! pbuffer
+    call setline(1, map(repeat(["ab"], 10), "v:val .. v:key"))
+    exec "norm! G\<C-E>\<C-E>\<C-E>"
+  END
+  call s:run_popup_and_previewwindow_dump(lines, 'Test_popup_and_previewwindow_pbuffer')
 endfunc
 
 func Test_balloon_split()

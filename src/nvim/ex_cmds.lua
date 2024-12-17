@@ -1947,6 +1947,12 @@ M.cmds = {
     func = 'ex_packloadall',
   },
   {
+    command = 'pbuffer',
+    flags = bit.bor(BANG, RANGE, BUFNAME, BUFUNL, COUNT, EXTRA, CMDARG, TRLBAR),
+    addr_type = 'ADDR_BUFFERS',
+    func = 'ex_pbuffer',
+  },
+  {
     command = 'pclose',
     flags = bit.bor(BANG, TRLBAR),
     addr_type = 'ADDR_NONE',
