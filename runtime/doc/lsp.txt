@@ -1126,6 +1126,9 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {server_capabilities}   (`lsp.ServerCapabilities?`) Response from the
                                 server sent on `initialize` describing the
                                 server's capabilities.
+      • {server_info}           (`lsp.ServerInfo?`) Response from the server
+                                sent on `initialize` describing information
+                                about the server.
       • {progress}              (`vim.lsp.Client.Progress`) A ring buffer
                                 (|vim.ringbuf()|) containing progress messages
                                 sent by the server. See

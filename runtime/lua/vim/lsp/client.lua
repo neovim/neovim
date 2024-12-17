@@ -174,6 +174,10 @@ local validate = vim.validate
 --- capabilities.
 --- @field server_capabilities lsp.ServerCapabilities?
 ---
+--- Response from the server sent on `initialize` describing information about
+--- the server.
+--- @field server_info lsp.ServerInfo?
+---
 --- A ring buffer (|vim.ringbuf()|) containing progress messages
 --- sent by the server.
 --- @field progress vim.lsp.Client.Progress
@@ -555,6 +559,8 @@ function Client:initialize()
     if self.server_capabilities.positionEncoding then
       self.offset_encoding = self.server_capabilities.positionEncoding
     end
+
+    self.server_info = result.serverInfo
 
     if next(self.settings) then
       self:notify(ms.workspace_didChangeConfiguration, { settings = self.settings })
