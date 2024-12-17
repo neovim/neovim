@@ -211,7 +211,7 @@ local function reuse_client_default(client, config)
 
   for _, config_folder in ipairs(config_folders) do
     local found = false
-    for _, client_folder in ipairs(client.workspace_folders) do
+    for _, client_folder in ipairs(client.workspace_folders or {}) do
       if config_folder.uri == client_folder.uri then
         found = true
         break
