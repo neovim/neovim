@@ -111,6 +111,9 @@ EVENTS
     • `history` argument indicating if the message was added to the history.
     • new message kinds: "bufwrite", "completion", "list_cmd", "lua_print",
       "search_cmd", "shell_out/err/ret", "undo", "verbose", wildlist".
+• |TermRequest| and |TermResponse| |event-data| is now a table. The "sequence"
+  field contains the received sequence. |TermRequest| also contains a "cursor"
+  field indicating the cursor's position when the sequence was received.
 
 HIGHLIGHTS
 
@@ -396,6 +399,8 @@ TERMINAL
   codes" mode is currently supported.
 • The |terminal| emits a |TermRequest| autocommand event when the child process
   emits an APC control sequence.
+• |TermRequest| has a "cursor" field in its |event-data| indicating the
+  cursor position when the sequence was received.
 
 TREESITTER
 

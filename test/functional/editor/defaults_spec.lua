@@ -10,7 +10,7 @@ local Screen = require('test.functional.ui.screen')
 
 describe('default', function()
   describe('autocommands', function()
-    it('nvim_terminal.TermClose closes terminal with default shell on success', function()
+    it('nvim.terminal.TermClose closes terminal with default shell on success', function()
       n.clear()
       n.api.nvim_set_option_value('shell', n.testprg('shell-test'), {})
       n.command('set shellcmdflag=EXIT shellredir= shellpipe= shellquote= shellxquote=')

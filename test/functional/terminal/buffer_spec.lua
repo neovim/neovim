@@ -373,7 +373,7 @@ describe(':terminal buffer', function()
       })
       vim.api.nvim_create_autocmd('TermRequest', {
         callback = function(args)
-          if args.data == '\027]11;?' then
+          if args.data.sequence == '\027]11;?' then
             table.insert(_G.input, '\027]11;rgb:0000/0000/0000\027\\')
           end
         end
@@ -387,6 +387,42 @@ describe(':terminal buffer', function()
       '\027]11;rgb:0000/0000/0000\027\\',
       '\027[0n',
     }, exec_lua('return _G.input'))
+  end)
+
+  it('TermRequest includes cursor position #31609', function()
+    command('autocmd! nvim.terminal TermRequest')
+    local screen = Screen.new(50, 10)
+    local term = exec_lua([[
+      _G.cursor = {}
+      local term = vim.api.nvim_open_term(0, {})
+      vim.api.nvim_create_autocmd('TermRequest', {
+        callback = function(args)
+          _G.cursor = args.data.cursor
+        end
+      })
+      return term
+    ]])
+    -- Enter terminal mode so that the cursor follows the output
+    feed('a')
+
+    -- Put some lines into the scrollback. This tests the conversion from terminal line to buffer
+    -- line.
+    api.nvim_chan_send(term, string.rep('>\n', 20))
+    screen:expect([[
+      >                                                 |*8
+      ^                                                  |
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    -- Emit an OSC escape sequence
+    api.nvim_chan_send(term, 'Hello\nworld!\027]133;D\027\\')
+    screen:expect([[
+      >                                                 |*7
+      Hello                                             |
+      world!^                                            |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq({ 22, 6 }, exec_lua('return _G.cursor'))
   end)
 
   it('no heap-buffer-overflow when using jobstart("echo",{term=true}) #3161', function()
