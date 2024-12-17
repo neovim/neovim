@@ -1443,18 +1443,17 @@ since formatting is highly dependent on the type of file.  It makes
 sense to use an |autoload| script, so the corresponding script is only loaded
 when actually needed and the script should be called <filetype>format.vim.
 
-For example, the XML filetype plugin distributed with Vim in the $VIMRUNTIME
-directory, sets the 'formatexpr' option to: >
+For example, the XML filetype plugin distributed with Vim in the
+$VIMRUNTIME/ftplugin directory, sets the 'formatexpr' option to: >
 
    setlocal formatexpr=xmlformat#Format()
 
 That means, you will find the corresponding script, defining the
-xmlformat#Format() function, in the directory:
-`$VIMRUNTIME/autoload/xmlformat.vim`
+xmlformat#Format() function, in the file `$VIMRUNTIME/autoload/xmlformat.vim`
 
 Here is an example script that removes trailing whitespace from the selected
-text.  Put it in your autoload directory, e.g. ~/.vim/autoload/format.vim: >
-
+text.  Put it in your autoload directory, e.g. ~/.vim/autoload/format.vim:
+>vim
   func! format#Format()
     " only reformat on explicit gq command
     if mode() != 'n'
@@ -1487,7 +1486,7 @@ debugging it helps to set the 'debug' option.
 
 							*right-justify*
 There is no command in Vim to right justify text.  You can do it with
-an external command, like "par" (e.g.: "!}par" to format until the end of the
+an external command, like "par" (e.g.: `:.,}!par` to format until the end of the
 paragraph) or set 'formatprg' to "par".
 
 							*format-comments*
@@ -1553,7 +1552,7 @@ type of comment string.  A part consists of:
 	some indent for the start or end part that can be removed.
 
 When a string has none of the 'f', 's', 'm' or 'e' flags, Vim assumes the
-comment string repeats at the start of each line.  The flags field may be
+comment string repeats at the start of each line.  The {flags} field may be
 empty.
 
 Any blank space in the text before and after the {string} is part of the

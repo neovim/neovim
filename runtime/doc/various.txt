@@ -323,6 +323,9 @@ gx			Opens the current filepath or URL (decided by
 			To avoid the hit-enter prompt use: >
 				:silent !{cmd}
 <
+							*:!-range*
+:{range}!{cmd}		Like |:!| but execute {cmd} for each line in the
+			{range}.
 							*:!!*
 :!!			Repeat last ":!{cmd}".
 
