@@ -2718,4 +2718,50 @@ func Test_visual_block_cursor_insert_enter()
   bwipe!
 endfunc
 
+func Test_visual_block_exclusive_selection()
+  new
+  set selection=exclusive
+  call setline(1, ['asöd asdf', 'asdf asdf', 'as€d asdf', 'asdf asdf'])
+  call cursor(1, 1)
+  exe ":norm! \<c-v>eh3j~"
+  call assert_equal(['ASÖd asdf', 'ASDf asdf', 'AS€d asdf', 'ASDf asdf'], getline(1, '$'))
+  exe ":norm! 1v~"
+  call assert_equal(['asöd asdf', 'asdf asdf', 'as€d asdf', 'asdf asdf'], getline(1, '$'))
+  bwipe!
+  set selection&vim
+endfunc
+
+func Test_visual_block_exclusive_selection_adjusted()
+  new
+  " Test that the end-position of the visual selection is adjusted for exclusive selection
+  set selection=exclusive
+  call setline(1, ['asöd asdf  ', 'asdf asdf  ', 'as€d asdf  ', 'asdf asdf  '])
+  call cursor(1, 1)
+  " inclusive motion
+  exe ":norm! \<c-v>e3jy"
+  call assert_equal([0, 4, 5, 0], getpos("'>"))
+  " exclusive motion
+  exe ":norm! \<c-v>ta3jy"
+  call assert_equal([0, 4, 6, 0], getpos("'>"))
+  " another inclusive motion
+  exe ":norm! \<c-v>g_3jy"
+  call assert_equal([0, 4, 10, 0], getpos("'>"))
+
+  " Reset selection option to Vim default
+  set selection&vim
+  call cursor(1, 1)
+
+  " inclusive motion
+  exe ":norm! \<c-v>e3jy"
+  call assert_equal([0, 4, 4, 0], getpos("'>"))
+  " exclusive motion
+  exe ":norm! \<c-v>ta3jy"
+  call assert_equal([0, 4, 5, 0], getpos("'>"))
+  " another inclusive motion
+  exe ":norm! \<c-v>g_3jy"
+  call assert_equal([0, 4, 9, 0], getpos("'>"))
+  bwipe!
+  set selection&vim
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
