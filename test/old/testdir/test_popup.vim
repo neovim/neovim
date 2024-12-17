@@ -1713,7 +1713,7 @@ func Test_pum_keep_select()
   call StopVimInTerminal(buf)
 endfunc
 
-func Test_pum_matchins_higlight()
+func Test_pum_matchins_highlight()
   CheckScreendump
   let lines =<< trim END
     func Omni_test(findstart, base)

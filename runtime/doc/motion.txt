@@ -118,8 +118,8 @@ Note that when using ":" any motion becomes charwise exclusive.
 					*inclusive-motion-selection-exclusive*
 When 'selection' is "exclusive", |Visual| mode is active and an inclusive
 motion has been used, the cursor position will be adjusted by another
-character to the right, so that visual selction includes the expected text and
-can be acted upon.
+character to the right, so that the Visual selection includes the expected
+text and can be acted upon.
 
 								*forced-motion*
 FORCING A MOTION TO BE LINEWISE, CHARWISE OR BLOCKWISE

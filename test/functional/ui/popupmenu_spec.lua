@@ -5562,7 +5562,7 @@ describe('builtin popupmenu', function()
         feed('<C-E><ESC>')
       end)
 
-      -- oldtest: Test_pum_matchins_higlight()
+      -- oldtest: Test_pum_matchins_highlight()
       it('with ComplMatchIns highlight', function()
         exec([[
           func Omni_test(findstart, base)
