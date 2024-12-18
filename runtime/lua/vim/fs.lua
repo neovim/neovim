@@ -127,6 +127,7 @@ end
 ---             - skip: (fun(dir_name: string): boolean)|nil Predicate
 ---               to control traversal. Return false to stop searching the current directory.
 ---               Only useful when depth > 1
+---             - follow: boolean|nil Follow symbolic links. (default: true)
 ---
 ---@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
 ---        "name" is the basename of the item relative to {path}.
@@ -138,6 +139,7 @@ function M.dir(path, opts)
   vim.validate('path', path, 'string')
   vim.validate('depth', opts.depth, 'number', true)
   vim.validate('skip', opts.skip, 'function', true)
+  vim.validate('follow', opts.follow, 'boolean', true)
 
   path = M.normalize(path)
   if not opts.depth or opts.depth == 1 then
@@ -168,7 +170,9 @@ function M.dir(path, opts)
         if
           opts.depth
           and level < opts.depth
-          and t == 'directory'
+          and (t == 'directory' or (t == 'link' and opts.follow ~= false and (vim.uv.fs_stat(
+            M.joinpath(path, f)
+          ) or {}).type == 'directory'))
           and (not opts.skip or opts.skip(f) ~= false)
         then
           dirs[#dirs + 1] = { f, level + 1 }
@@ -202,6 +206,10 @@ end
 --- Use `math.huge` to place no limit on the number of matches.
 --- (default: `1`)
 --- @field limit? number
+---
+--- Follow symbolic links.
+--- (default: `true`)
+--- @field follow? boolean
 
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
 ---
@@ -225,7 +233,7 @@ end
 ---
 --- -- get all files ending with .cpp or .hpp inside lib/
 --- local cpp_hpp = vim.fs.find(function(name, path)
----   return name:match('.*%.[ch]pp$') and path:match('[/\\\\]lib$')
+---   return name:match('.*%.[ch]pp$') and path:match('[/\\]lib$')
 --- end, {limit = math.huge, type = 'file'})
 --- ```
 ---
@@ -235,6 +243,7 @@ end
 ---             If {names} is a function, it is called for each traversed item with args:
 ---             - name: base name of the current item
 ---             - path: full path of the current item
+---
 ---             The function should return `true` if the given item is considered a match.
 ---
 ---@param opts vim.fs.find.Opts Optional keyword arguments:
@@ -247,6 +256,7 @@ function M.find(names, opts)
   vim.validate('stop', opts.stop, 'string', true)
   vim.validate('type', opts.type, 'string', true)
   vim.validate('limit', opts.limit, 'number', true)
+  vim.validate('follow', opts.follow, 'boolean', true)
 
   if type(names) == 'string' then
     names = { names }
@@ -336,7 +346,14 @@ function M.find(names, opts)
           end
         end
 
-        if type_ == 'directory' then
+        if
+          type_ == 'directory'
+          or (
+            type_ == 'link'
+            and opts.follow ~= false
+            and (vim.uv.fs_stat(f) or {}).type == 'directory'
+          )
+        then
           dirs[#dirs + 1] = f
         end
       end
