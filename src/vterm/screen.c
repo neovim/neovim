@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "nvim/grid.h"
 #include "nvim/mbyte.h"
 #include "nvim/tui/termkey/termkey.h"
 
@@ -41,7 +42,7 @@ typedef struct
 /* Internal representation of a screen cell */
 typedef struct
 {
-  uint32_t chars[VTERM_MAX_CHARS_PER_CELL];
+  schar_T schar;
   ScreenPen pen;
 } ScreenCell;
 
@@ -79,7 +80,7 @@ struct VTermScreen
 
 static inline void clearcell(const VTermScreen *screen, ScreenCell *cell)
 {
-  cell->chars[0] = 0;
+  cell->schar = 0;
   cell->pen = screen->pen;
 }
 
@@ -182,16 +183,13 @@ static int putglyph(VTermGlyphInfo *info, VTermPos pos, void *user)
   if(!cell)
     return 0;
 
-  int i;
-  for(i = 0; i < VTERM_MAX_CHARS_PER_CELL && info->chars[i]; i++) {
-    cell->chars[i] = info->chars[i];
+  cell->schar = info->schar;
+  if (info->schar != 0) {
     cell->pen = screen->pen;
   }
-  if(i < VTERM_MAX_CHARS_PER_CELL)
-    cell->chars[i] = 0;
 
   for(int col = 1; col < info->width; col++)
-    getcell(screen, pos.row, pos.col + col)->chars[0] = (uint32_t)-1;
+    getcell(screen, pos.row, pos.col + col)->schar = (uint32_t)-1;
 
   VTermRect rect = {
     .start_row = pos.row,
@@ -284,7 +282,7 @@ static int erase_internal(VTermRect rect, int selective, void *user)
       if(selective && cell->pen.protected_cell)
         continue;
 
-      cell->chars[0] = 0;
+      cell->schar = 0;
       cell->pen = (ScreenPen){
         /* Only copy .fg and .bg; leave things like rv in reset state */
         .fg = screen->pen.fg,
@@ -504,7 +502,7 @@ static int bell(void *user)
 static int line_popcount(ScreenCell *buffer, int row, int rows, int cols)
 {
   int col = cols - 1;
-  while(col >= 0 && buffer[row * cols + col].chars[0] == 0)
+  while(col >= 0 && buffer[row * cols + col].schar == 0)
     col--;
   return col + 1;
 }
@@ -690,11 +688,7 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
         VTermScreenCell *src = &screen->sb_buffer[pos.col];
         ScreenCell *dst = &new_buffer[pos.row * new_cols + pos.col];
 
-        for(int i = 0; i < VTERM_MAX_CHARS_PER_CELL; i++) {
-          dst->chars[i] = src->chars[i];
-          if(!src->chars[i])
-            break;
-        }
+        dst->schar = src->schar;
 
         dst->pen.bold      = src->attrs.bold;
         dst->pen.underline = src->attrs.underline;
@@ -713,7 +707,7 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
         dst->pen.uri = src->uri;
 
         if(src->width == 2 && pos.col < (new_cols-1))
-          (dst + 1)->chars[0] = (uint32_t) -1;
+          (dst + 1)->schar = (uint32_t) -1;
       }
       for( ; pos.col < new_cols; pos.col++)
         clearcell(screen, &new_buffer[pos.row * new_cols + pos.col]);
@@ -914,64 +908,46 @@ void vterm_screen_reset(VTermScreen *screen, int hard)
   vterm_screen_flush_damage(screen);
 }
 
-static size_t _get_chars(const VTermScreen *screen, const int utf8, void *buffer, size_t len, const VTermRect rect)
+size_t vterm_screen_get_text(const VTermScreen *screen, char *buffer, size_t len, const VTermRect rect)
 {
   size_t outpos = 0;
   int padding = 0;
 
-#define PUT(c)                                             \
-  if(utf8) {                                               \
-    size_t thislen = utf_char2len(c);                      \
+#define PUT(bytes, thislen)                                \
+  if(true) {                                               \
     if(buffer && outpos + thislen <= len)                  \
-      outpos += fill_utf8((c), (char *)buffer + outpos);   \
-    else                                                   \
-      outpos += thislen;                                   \
+      memcpy((char *)buffer + outpos, bytes, thislen);     \
+    outpos += thislen;                                     \
   }                                                        \
-  else {                                                   \
-    if(buffer && outpos + 1 <= len)                        \
-      ((uint32_t*)buffer)[outpos++] = (c);                 \
-    else                                                   \
-      outpos++;                                            \
-  }
 
   for(int row = rect.start_row; row < rect.end_row; row++) {
     for(int col = rect.start_col; col < rect.end_col; col++) {
       ScreenCell *cell = getcell(screen, row, col);
 
-      if(cell->chars[0] == 0)
+      if(cell->schar == 0)
         // Erased cell, might need a space
         padding++;
-      else if(cell->chars[0] == (uint32_t)-1)
+      else if(cell->schar == (uint32_t)-1)
         // Gap behind a double-width char, do nothing
         ;
       else {
         while(padding) {
-          PUT(UNICODE_SPACE);
+          PUT(" ", 1);
           padding--;
         }
-        for(int i = 0; i < VTERM_MAX_CHARS_PER_CELL && cell->chars[i]; i++) {
-          PUT(cell->chars[i]);
-        }
+        char buf[MAX_SCHAR_SIZE + 1];
+        size_t thislen = schar_get(buf, cell->schar);
+        PUT(buf, thislen);
       }
     }
 
     if(row < rect.end_row - 1) {
-      PUT(UNICODE_LINEFEED);
+      PUT("\n", 1);
       padding = 0;
     }
   }
 
   return outpos;
-}
-
-size_t vterm_screen_get_chars(const VTermScreen *screen, uint32_t *chars, size_t len, const VTermRect rect)
-{
-  return _get_chars(screen, 0, chars, len, rect);
-}
-
-size_t vterm_screen_get_text(const VTermScreen *screen, char *str, size_t len, const VTermRect rect)
-{
-  return _get_chars(screen, 1, str, len, rect);
 }
 
 /* Copy internal to external representation of a screen cell */
@@ -981,11 +957,7 @@ int vterm_screen_get_cell(const VTermScreen *screen, VTermPos pos, VTermScreenCe
   if(!intcell)
     return 0;
 
-  for(int i = 0; i < VTERM_MAX_CHARS_PER_CELL; i++) {
-    cell->chars[i] = intcell->chars[i];
-    if(!intcell->chars[i])
-      break;
-  }
+  cell->schar = intcell->schar;
 
   cell->attrs.bold      = intcell->pen.bold;
   cell->attrs.underline = intcell->pen.underline;
@@ -1007,7 +979,7 @@ int vterm_screen_get_cell(const VTermScreen *screen, VTermPos pos, VTermScreenCe
   cell->uri = intcell->pen.uri;
 
   if(pos.col < (screen->cols - 1) &&
-     getcell(screen, pos.row, pos.col + 1)->chars[0] == (uint32_t)-1)
+     getcell(screen, pos.row, pos.col + 1)->schar == (uint32_t)-1)
     cell->width = 2;
   else
     cell->width = 1;
@@ -1020,7 +992,7 @@ int vterm_screen_is_eol(const VTermScreen *screen, VTermPos pos)
   /* This cell is EOL if this and every cell to the right is black */
   for(; pos.col < screen->cols; pos.col++) {
     ScreenCell *cell = getcell(screen, pos.row, pos.col);
-    if(cell->chars[0] != 0)
+    if(cell->schar != 0)
       return 0;
   }
 
