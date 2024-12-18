@@ -15,9 +15,20 @@ local skip = t.skip
 describe(':terminal cursor', function()
   local screen
 
+  local terminal_mode_idx ---@type number
+
   before_each(function()
     clear()
     screen = tt.setup_screen()
+
+    if terminal_mode_idx == nil then
+      for i, v in ipairs(screen._mode_info) do
+        if v.name == 'terminal' then
+          terminal_mode_idx = i
+        end
+      end
+      assert(terminal_mode_idx)
+    end
   end)
 
   it('moves the screen cursor when focused', function()
@@ -143,13 +154,6 @@ describe(':terminal cursor', function()
 
   it('can be modified by application #3681', function()
     skip(is_os('win'), '#31587')
-    local idx ---@type number
-    for i, v in ipairs(screen._mode_info) do
-      if v.name == 'terminal' then
-        idx = i
-      end
-    end
-    assert(idx)
 
     local states = {
       [1] = { blink = true, shape = 'block' },
@@ -171,13 +175,13 @@ describe(':terminal cursor', function()
       ]],
         condition = function()
           if v.blink then
-            eq(500, screen._mode_info[idx].blinkon)
-            eq(500, screen._mode_info[idx].blinkoff)
+            eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+            eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
           else
-            eq(0, screen._mode_info[idx].blinkon)
-            eq(0, screen._mode_info[idx].blinkoff)
+            eq(0, screen._mode_info[terminal_mode_idx].blinkon)
+            eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
           end
-          eq(v.shape, screen._mode_info[idx].cursor_shape)
+          eq(v.shape, screen._mode_info[terminal_mode_idx].cursor_shape)
         end,
       })
     end
@@ -191,20 +195,13 @@ describe(':terminal cursor', function()
     ]])
 
     -- Cursor returns to default on TermLeave
-    eq(500, screen._mode_info[idx].blinkon)
-    eq(500, screen._mode_info[idx].blinkoff)
-    eq('block', screen._mode_info[idx].cursor_shape)
+    eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+    eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
+    eq('block', screen._mode_info[terminal_mode_idx].cursor_shape)
   end)
 
   it('can be modified per terminal', function()
     skip(is_os('win'), '#31587')
-    local idx ---@type number
-    for i, v in ipairs(screen._mode_info) do
-      if v.name == 'terminal' then
-        idx = i
-      end
-    end
-    assert(idx)
 
     -- Set cursor to vertical bar with blink
     tt.feed_csi('5 q')
@@ -216,9 +213,9 @@ describe(':terminal cursor', function()
       {3:-- TERMINAL --}                                    |
     ]],
       condition = function()
-        eq(500, screen._mode_info[idx].blinkon)
-        eq(500, screen._mode_info[idx].blinkoff)
-        eq('vertical', screen._mode_info[idx].cursor_shape)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
+        eq('vertical', screen._mode_info[terminal_mode_idx].cursor_shape)
       end,
     })
 
@@ -231,9 +228,9 @@ describe(':terminal cursor', function()
       {3:-- TERMINAL --}                                    |
     ]],
       condition = function()
-        eq(500, screen._mode_info[idx].blinkon)
-        eq(500, screen._mode_info[idx].blinkoff)
-        eq('vertical', screen._mode_info[idx].cursor_shape)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
+        eq('vertical', screen._mode_info[terminal_mode_idx].cursor_shape)
       end,
     })
 
@@ -256,9 +253,9 @@ describe(':terminal cursor', function()
     ]],
       condition = function()
         -- New terminal, cursor resets to defaults
-        eq(500, screen._mode_info[idx].blinkon)
-        eq(500, screen._mode_info[idx].blinkoff)
-        eq('block', screen._mode_info[idx].cursor_shape)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
+        eq('block', screen._mode_info[terminal_mode_idx].cursor_shape)
       end,
     })
 
@@ -275,9 +272,9 @@ describe(':terminal cursor', function()
       {3:-- TERMINAL --}                                    |
     ]],
       condition = function()
-        eq(0, screen._mode_info[idx].blinkon)
-        eq(0, screen._mode_info[idx].blinkoff)
-        eq('horizontal', screen._mode_info[idx].cursor_shape)
+        eq(0, screen._mode_info[terminal_mode_idx].blinkon)
+        eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
+        eq('horizontal', screen._mode_info[terminal_mode_idx].cursor_shape)
       end,
     })
 
@@ -294,9 +291,9 @@ describe(':terminal cursor', function()
       {3:-- TERMINAL --}                                    |
     ]],
       condition = function()
-        eq(500, screen._mode_info[idx].blinkon)
-        eq(500, screen._mode_info[idx].blinkoff)
-        eq('vertical', screen._mode_info[idx].cursor_shape)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
+        eq('vertical', screen._mode_info[terminal_mode_idx].cursor_shape)
       end,
     })
   end)
@@ -325,6 +322,32 @@ describe(':terminal cursor', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('preserves guicursor value on TermLeave #31612', function()
+    eq(3, screen._mode_info[terminal_mode_idx].hl_id)
+
+    -- Change 'guicursor' while terminal mode is active
+    command('set guicursor+=t:Error')
+
+    local error_hl_id = call('hlID', 'Error')
+
+    screen:expect({
+      condition = function()
+        eq(error_hl_id, screen._mode_info[terminal_mode_idx].hl_id)
+      end,
+    })
+
+    -- Exit terminal mode
+    feed([[<C-\><C-N>]])
+
+    screen:expect([[
+      tty ready                                         |
+      ^                                                  |
+                                                        |*5
+    ]])
+
+    eq(error_hl_id, screen._mode_info[terminal_mode_idx].hl_id)
   end)
 end)
 
