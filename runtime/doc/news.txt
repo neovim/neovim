@@ -115,6 +115,7 @@ LSP
 • |vim.lsp.util.make_position_params()|, |vim.lsp.util.make_range_params()|
   and |vim.lsp.util.make_given_range_params()| now require the `position_encoding`
   parameter.
+• `:checkhealth vim.lsp` displays the server version (if available).
 
 LUA
 

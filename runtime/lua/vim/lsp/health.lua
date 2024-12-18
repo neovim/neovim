@@ -40,6 +40,8 @@ local function check_active_clients()
   local clients = vim.lsp.get_clients()
   if next(clients) then
     for _, client in pairs(clients) do
+      local server_version = vim.tbl_get(client, 'server_info', 'version')
+        or '? (no serverInfo.version response)'
       local cmd ---@type string
       local ccmd = client.config.cmd
       if type(ccmd) == 'table' then
@@ -62,6 +64,7 @@ local function check_active_clients()
       end
       report_info(table.concat({
         string.format('%s (id: %d)', client.name, client.id),
+        string.format('- Version: %s', server_version),
         dirs_info,
         string.format('- Command: %s', cmd),
         string.format('- Settings: %s', vim.inspect(client.settings, { newline = '\n  ' })),
