@@ -2847,8 +2847,8 @@ nvim_set_decoration_provider({ns_id}, {opts})
                  • on_start: called first on each screen redraw >
                     ["start", tick]
 <
-                 • on_buf: called for each buffer being redrawn (before window
-                   callbacks) >
+                 • on_buf: called for each buffer being redrawn (once per
+                   edit, before window callbacks) >
                     ["buf", bufnr, tick]
 <
                  • on_win: called when starting to redraw a specific window. >
