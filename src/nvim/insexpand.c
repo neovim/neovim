@@ -958,7 +958,7 @@ static void ins_compl_insert_bytes(char *p, int len)
   }
   assert(len >= 0);
   ins_bytes_len(p, (size_t)len);
-  compl_ins_end_col = curwin->w_cursor.col - 1;
+  compl_ins_end_col = curwin->w_cursor.col;
 }
 
 /// Checks if the column is within the currently inserted completion text
@@ -2147,6 +2147,8 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
       && pum_visible()) {
     word = xstrdup(compl_shown_match->cp_str);
     retval = true;
+    // May need to remove ComplMatchIns highlight.
+    redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 
   // CTRL-E means completion is Ended, go back to the typed text.
@@ -3648,6 +3650,7 @@ void ins_compl_delete(bool new_leader)
       return;
     }
     backspace_until_column(col);
+    compl_ins_end_col = curwin->w_cursor.col;
   }
 
   // TODO(vim): is this sufficient for redrawing?  Redrawing everything

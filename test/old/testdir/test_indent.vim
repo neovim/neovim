@@ -308,7 +308,7 @@ endfunc
 
 " Test that mouse shape is restored to Normal mode after using "gq" when
 " 'indentexpr' executes :normal.
-func Test_indent_norm_with_gq()
+func Test_mouse_shape_indent_norm_with_gq()
   CheckFeature mouseshape
   CheckCanRunGui
 

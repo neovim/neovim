@@ -955,7 +955,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   bool area_highlighting = false;       // Visual or incsearch highlighting in this line
   int vi_attr = 0;                      // attributes for Visual and incsearch highlighting
   int area_attr = 0;                    // attributes desired by highlighting
-  int search_attr = 0;                  // attributes desired by 'hlsearch'
+  int search_attr = 0;                  // attributes desired by 'hlsearch' or ComplMatchIns
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int decor_attr = 0;                   // attributes desired by syntax and extmarks
   bool has_syntax = false;              // this buffer has syntax highl.
@@ -969,7 +969,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   int spell_attr = 0;                   // attributes desired by spelling
   int word_end = 0;                     // last byte with same spell_attr
   int cur_checked_col = 0;              // checked column for current line
-  bool extra_check = 0;                 // has syntax or linebreak
+  bool extra_check = false;             // has extra highlighting
   int multi_attr = 0;                   // attributes desired by multibyte
   int mb_l = 1;                         // multi-byte byte length
   int mb_c = 0;                         // decoded multi-byte character
@@ -1495,6 +1495,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     ptr = line + v;  // "line" may have been updated
   }
 
+  if ((State & MODE_INSERT) && in_curline && ins_compl_active()) {
+    area_highlighting = true;
+  }
+
   win_line_start(wp, &wlv);
   bool draw_cols = true;
   int leftcols_width = 0;
@@ -1740,6 +1744,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         if (*ptr == NUL) {
           has_match_conc = 0;
         }
+
+        // Check if ComplMatchIns highlight is needed.
+        if ((State & MODE_INSERT) && in_curline && ins_compl_active()) {
+          int ins_match_attr = ins_compl_col_range_attr((int)(ptr - line));
+          if (ins_match_attr > 0) {
+            search_attr = hl_combine_attr(search_attr, ins_match_attr);
+          }
+        }
       }
 
       if (wlv.diff_hlf != (hlf_T)0) {
@@ -1785,16 +1797,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
       }
       char_attr_base = hl_combine_attr(folded_attr, decor_attr);
       wlv.char_attr = hl_combine_attr(char_attr_base, char_attr_pri);
-    }
-
-    // Apply ComplMatchIns highlight if needed.
-    if (wlv.filler_todo <= 0
-        && (State & MODE_INSERT) && in_curline && ins_compl_active()) {
-      int ins_match_attr = ins_compl_col_range_attr((int)(ptr - line));
-      if (ins_match_attr > 0) {
-        char_attr_pri = hl_combine_attr(char_attr_pri, ins_match_attr);
-        wlv.char_attr = hl_combine_attr(char_attr_base, char_attr_pri);
-      }
     }
 
     if (draw_folded && has_foldtext && wlv.n_extra == 0 && wlv.col == win_col_offset) {
