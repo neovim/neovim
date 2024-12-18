@@ -1485,16 +1485,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     }
 
     // Call it here since we need to invalidate the line pointer anyway.
-    bool added_decor = false;
-    decor_providers_invoke_line(wp, lnum - 1, &added_decor);
-    has_decor |= added_decor;
+    decor_providers_invoke_line(wp, lnum - 1, &has_decor);
 
     decor_provider_end_col = invoke_range_next(wp, lnum, col, rem_vcols + 1, &has_decor);
 
     line = ml_get_buf(wp->w_buffer, lnum);
     ptr = line + col;
   }
-
   if (has_decor) {
     extra_check = true;
   }
@@ -3051,18 +3048,16 @@ static int invoke_range_next(win_T *wp, int lnum, colnr_T begin_col, colnr_T col
   int const line_len = ml_get_buf_len(wp->w_buffer, lnum);
   col_off = MAX(col_off, 1);
 
-  bool added_decor = false;
   colnr_T new_col;
   if (col_off <= line_len - begin_col) {
     int end_col = begin_col + col_off;
     end_col += mb_off_next(line, line + end_col);
-    decor_providers_invoke_range(wp, lnum - 1, begin_col, lnum - 1, end_col, &added_decor);
+    decor_providers_invoke_range(wp, lnum - 1, begin_col, lnum - 1, end_col, has_decor);
     new_col = end_col;
   } else {
-    decor_providers_invoke_range(wp, lnum - 1, begin_col, lnum, 0, &added_decor);
+    decor_providers_invoke_range(wp, lnum - 1, begin_col, lnum, 0, has_decor);
     new_col = INT_MAX;
   }
 
-  *has_decor |= added_decor;
   return new_col;
 }
