@@ -49,33 +49,28 @@ describe('treesitter perf', function()
     ]]
   end)
 
-  local function test_long_line(pos, wrap, line, grid)
+  local function test_long_line(_pos, _wrap, _line, grid)
     local screen = Screen.new(20, 11)
 
-    local result = exec_lua(
-      [==[
-        local pos, wrap, line = ...
+    local result = exec_lua(function(...)
+      local pos, wrap, line = ...
 
-        vim.api.nvim_buf_set_lines(0, 0, 0, false, { line })
-        vim.api.nvim_win_set_cursor(0, pos)
-        vim.api.nvim_set_option_value('wrap', wrap, { win = 0 })
+      vim.api.nvim_buf_set_lines(0, 0, 0, false, { line })
+      vim.api.nvim_win_set_cursor(0, pos)
+      vim.api.nvim_set_option_value('wrap', wrap, { win = 0 })
 
-        vim.treesitter.start(0, 'lua')
+      vim.treesitter.start(0, 'lua')
 
-        local total = {}
-        for i = 1, 100 do
-          local tic = vim.uv.hrtime()
-          vim.cmd'redraw!'
-          local toc = vim.uv.hrtime()
-          table.insert(total, toc - tic)
-        end
+      local total = {}
+      for _ = 1, 100 do
+        local tic = vim.uv.hrtime()
+        vim.cmd 'redraw!'
+        local toc = vim.uv.hrtime()
+        table.insert(total, toc - tic)
+      end
 
-        return { total }
-      ]==],
-      pos,
-      wrap,
-      line
-    )
+      return { total }
+    end, _pos, _wrap, _line)
 
     screen:expect({ grid = grid or '' })
 
