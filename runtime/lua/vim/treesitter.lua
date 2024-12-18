@@ -61,7 +61,7 @@ function M._create_parser(bufnr, lang, opts)
     { on_bytes = bytes_cb, on_detach = detach_cb, on_reload = reload_cb, preview = true }
   )
 
-  self:parse()
+  self:parse(nil, function() end)
 
   return self
 end
@@ -397,6 +397,8 @@ end
 --- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
 --- In this case, add `vim.bo.syntax = 'on'` after the call to `start`.
 ---
+--- Note: By default, the highlighter parses code asynchronously, using a segment time of 3ms.
+---
 --- Example:
 ---
 --- ```lua
@@ -408,12 +410,15 @@ end
 --- })
 --- ```
 ---
----@param bufnr (integer|nil) Buffer to be highlighted (default: current buffer)
----@param lang (string|nil) Language of the parser (default: from buffer filetype)
-function M.start(bufnr, lang)
+---@param bufnr integer? Buffer to be highlighted (default: current buffer)
+---@param lang string? Language of the parser (default: from buffer filetype)
+---@param opts table? Options to pass to the highlighter
+---          - sync (`boolean?`) Whether to use synchronous parsing in the highlighter. Default
+---          `false`.
+function M.start(bufnr, lang, opts)
   bufnr = vim._resolve_bufnr(bufnr)
   local parser = assert(M.get_parser(bufnr, lang, { error = false }))
-  M.highlighter.new(parser)
+  M.highlighter.new(parser, opts)
 end
 
 --- Stops treesitter highlighting for a buffer

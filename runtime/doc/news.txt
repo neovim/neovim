@@ -266,6 +266,7 @@ PERFORMANCE
 
 • Significantly reduced redraw time for long lines with treesitter
   highlighting.
+• Treesitter highlighting is now asynchronous.
 
 PLUGINS
 
@@ -303,6 +304,8 @@ TREESITTER
 • |treesitter-directive-trim!| can trim all whitespace (not just empty lines)
   from both sides of a node.
 • |vim.treesitter.get_captures_at_pos()| now returns the `id` of each capture
+• |LanguageTree:parse()| optionally supports asynchronous invocation, which is
+  activated by passing the `on_parse` callback parameter.
 
 TUI
 
