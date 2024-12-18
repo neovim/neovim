@@ -127,7 +127,7 @@ describe('vim.treesitter.inspect_tree', function()
     -- setup two windows for the source buffer
     exec_lua(function()
       _G.source_win = vim.api.nvim_get_current_win()
-      vim.api.nvim_open_win(0, false, {
+      _G.source_win_copy = vim.api.nvim_open_win(0, false, {
         win = 0,
         split = 'left',
       })
@@ -148,12 +148,19 @@ describe('vim.treesitter.inspect_tree', function()
       })
     end)
 
-    -- close original source window
-    exec_lua('vim.api.nvim_win_close(source_win, false)')
+    -- close original source window without closing tree views
+    exec_lua('vim.api.nvim_set_current_win(source_win)')
+    feed(':q<CR>')
+    eq('', n.api.nvim_get_vvar('errmsg'))
+    eq(true, exec_lua('return vim.api.nvim_win_is_valid(tree_win)'))
+    eq(true, exec_lua('return vim.api.nvim_win_is_valid(tree_win_copy_1)'))
+    eq(true, exec_lua('return vim.api.nvim_win_is_valid(tree_win_copy_2)'))
 
     -- navigates correctly to the remaining source buffer window
+    exec_lua('vim.api.nvim_set_current_win(tree_win)')
     feed('<CR>')
     eq('', n.api.nvim_get_vvar('errmsg'))
+    eq(true, exec_lua('return vim.api.nvim_get_current_win() == source_win_copy'))
 
     -- close original tree window
     exec_lua(function()
@@ -164,10 +171,11 @@ describe('vim.treesitter.inspect_tree', function()
     -- navigates correctly to the remaining source buffer window
     feed('<CR>')
     eq('', n.api.nvim_get_vvar('errmsg'))
+    eq(true, exec_lua('return vim.api.nvim_get_current_win() == source_win_copy'))
 
     -- close source buffer window and all remaining tree windows
-    t.pcall_err(exec_lua, 'vim.api.nvim_win_close(0, false)')
-
+    feed(':q<CR>')
+    t.eq('E162: No write since last change for buffer "[No Name]"', n.api.nvim_get_vvar('errmsg'))
     eq(false, exec_lua('return vim.api.nvim_win_is_valid(tree_win_copy_1)'))
     eq(false, exec_lua('return vim.api.nvim_win_is_valid(tree_win_copy_2)'))
   end)
