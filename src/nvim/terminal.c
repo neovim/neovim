@@ -641,9 +641,6 @@ bool terminal_enter(void)
   curwin->w_p_so = 0;
   curwin->w_p_siso = 0;
 
-  // Save the existing cursor entry since it may be modified by the application
-  cursorentry_T save_cursorentry = shape_table[SHAPE_IDX_TERM];
-
   // Update the cursor shape table and flush changes to the UI
   s->term->pending.cursor = true;
   refresh_cursor(s->term);
@@ -674,8 +671,8 @@ bool terminal_enter(void)
   RedrawingDisabled = s->save_rd;
   apply_autocmds(EVENT_TERMLEAVE, NULL, NULL, false, curbuf);
 
-  shape_table[SHAPE_IDX_TERM] = save_cursorentry;
-  ui_mode_info_set();
+  // Restore the terminal cursor to what is set in 'guicursor'
+  (void)parse_shape_opt(SHAPE_CURSOR);
 
   if (save_curwin == curwin->handle) {  // Else: window was closed.
     curwin->w_p_cul = save_w_p_cul;
