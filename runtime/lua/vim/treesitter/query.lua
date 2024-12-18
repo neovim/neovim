@@ -889,8 +889,8 @@ end
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
 ---
----@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch):
----        capture id, capture node, metadata, match
+---@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree):
+---        capture id, capture node, metadata, match, tree
 ---
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
 function Query:iter_captures(node, source, start, stop)
@@ -900,6 +900,8 @@ function Query:iter_captures(node, source, start, stop)
 
   start, stop = value_or_node_range(start, stop, node)
 
+  -- Copy the tree to ensure it is valid during the entire lifetime of the iterator
+  local tree = node:tree():copy()
   local cursor = vim._create_ts_querycursor(node, self.query, start, stop, { match_limit = 256 })
 
   local apply_directives = memoize(match_id_hash, self.apply_directives, true)
@@ -923,7 +925,7 @@ function Query:iter_captures(node, source, start, stop)
 
     local metadata = apply_directives(self, match, source)
 
-    return capture, captured_node, metadata, match
+    return capture, captured_node, metadata, match, tree
   end
   return iter
 end
@@ -964,7 +966,7 @@ end
 ---   (last) node instead of the full list of matching nodes. This option is only for backward
 ---   compatibility and will be removed in a future release.
 ---
----@return (fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata): pattern id, match, metadata
+---@return (fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree): pattern id, match, metadata, tree
 function Query:iter_matches(node, source, start, stop, opts)
   opts = opts or {}
   opts.match_limit = opts.match_limit or 256
@@ -975,6 +977,8 @@ function Query:iter_matches(node, source, start, stop, opts)
 
   start, stop = value_or_node_range(start, stop, node)
 
+  -- Copy the tree to ensure it is valid during the entire lifetime of the iterator
+  local tree = node:tree():copy()
   local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
 
   local function iter()
@@ -1007,7 +1011,7 @@ function Query:iter_matches(node, source, start, stop, opts)
     end
 
     -- TODO(lewis6991): create a new function that returns {match, metadata}
-    return pattern, captures, metadata
+    return pattern, captures, metadata, tree
   end
   return iter
 end
