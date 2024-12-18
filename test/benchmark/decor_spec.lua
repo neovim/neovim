@@ -99,7 +99,6 @@ describe('decor perf', function()
     print('\nTotal ' .. fmt(total) .. '\nDecoration provider: ' .. fmt(provider))
   end)
 
-
   it('can handle full screen of highlighting', function()
     Screen.new(100, 51)
 
