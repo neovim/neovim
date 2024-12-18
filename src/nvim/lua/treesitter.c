@@ -1291,23 +1291,22 @@ static inline bool set_uint32(lua_State *L, int idx, char const *name, uint32_t 
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
 {
   lua_getfield(L, idx, name);
-
-  if (!lua_isnil(L, -1)) {
-    int64_t value = lua_tointeger(L, -1);
-    if (value < 0U) {
-      *res = 0U;
-      return true;
-    } else if (value > UINT32_MAX) {
-      *res = UINT32_MAX;
-      return true;
-    } else {
-      *res = (uint32_t)value;
-      return true;
-    }
+  if (lua_isnil(L, -1)) {
+    lua_pop(L, 1);
+    return false;
   }
+
+  int64_t value = lua_tointeger(L, -1);
   lua_pop(L, 1);
 
-  return false;
+  if (value < 0U) {
+    *res = 0U;
+  } else if (value > UINT32_MAX) {
+    *res = UINT32_MAX;
+  } else {
+    *res = (uint32_t)value;
+  }
+  return true;
 }
 
 int tslua_push_querycursor(lua_State *L)
