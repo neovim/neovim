@@ -1713,4 +1713,49 @@ func Test_pum_keep_select()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_matchins_highlight()
+  CheckScreendump
+  let lines =<< trim END
+    func Omni_test(findstart, base)
+      if a:findstart
+        return col(".")
+      endif
+      return [#{word: "foo"}, #{word: "bar"}, #{word: "你好"}]
+    endfunc
+    set omnifunc=Omni_test
+    hi ComplMatchIns ctermfg=red
+  END
+  call writefile(lines, 'Xscript', 'D')
+  let buf = RunVimInTerminal('-S Xscript', {})
+
+  call TermWait(buf)
+  call term_sendkeys(buf, "Sαβγ \<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_matchins_01', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call TermWait(buf)
+  call term_sendkeys(buf, "Sαβγ \<C-X>\<C-O>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_matchins_02', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call TermWait(buf)
+  call term_sendkeys(buf, "Sαβγ \<C-X>\<C-O>\<C-N>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_matchins_03', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  " restore after accept
+  call TermWait(buf)
+  call term_sendkeys(buf, "Sαβγ \<C-X>\<C-O>\<C-Y>")
+  call VerifyScreenDump(buf, 'Test_pum_matchins_04', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  " restore after cancel completion
+  call TermWait(buf)
+  call term_sendkeys(buf, "Sαβγ \<C-X>\<C-O>\<Space>")
+  call VerifyScreenDump(buf, 'Test_pum_matchins_05', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

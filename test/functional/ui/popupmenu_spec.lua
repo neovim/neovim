@@ -5561,6 +5561,71 @@ describe('builtin popupmenu', function()
         ]])
         feed('<C-E><ESC>')
       end)
+
+      -- oldtest: Test_pum_matchins_highlight()
+      it('with ComplMatchIns highlight', function()
+        exec([[
+          func Omni_test(findstart, base)
+            if a:findstart
+              return col(".")
+            endif
+            return [#{word: "foo"}, #{word: "bar"}, #{word: "你好"}]
+          endfunc
+          set omnifunc=Omni_test
+          hi ComplMatchIns guifg=red
+        ]])
+
+        feed('Sαβγ <C-X><C-O>')
+        screen:expect([[
+          αβγ {8:foo}^                         |
+          {1:~  }{s: foo            }{1:             }|
+          {1:~  }{n: bar            }{1:             }|
+          {1:~  }{n: 你好           }{1:             }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
+
+        feed('Sαβγ <C-X><C-O><C-N>')
+        screen:expect([[
+          αβγ {8:bar}^                         |
+          {1:~  }{n: foo            }{1:             }|
+          {1:~  }{s: bar            }{1:             }|
+          {1:~  }{n: 你好           }{1:             }|
+          {1:~                               }|*15
+          {2:-- }{5:match 2 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
+
+        feed('Sαβγ <C-X><C-O><C-N><C-N>')
+        screen:expect([[
+          αβγ {8:你好}^                        |
+          {1:~  }{n: foo            }{1:             }|
+          {1:~  }{n: bar            }{1:             }|
+          {1:~  }{s: 你好           }{1:             }|
+          {1:~                               }|*15
+          {2:-- }{5:match 3 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
+
+        -- restore after accept
+        feed('Sαβγ <C-X><C-O><C-Y>')
+        screen:expect([[
+          αβγ foo^                         |
+          {1:~                               }|*18
+          {2:-- INSERT --}                    |
+        ]])
+        feed('<Esc>')
+
+        -- restore after cancel completion
+        feed('Sαβγ <C-X><C-O><Space>')
+        screen:expect([[
+          αβγ foo ^                        |
+          {1:~                               }|*18
+          {2:-- INSERT --}                    |
+        ]])
+        feed('<Esc>')
+      end)
     end
   end
 
