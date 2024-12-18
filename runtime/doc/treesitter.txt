@@ -1479,6 +1479,21 @@ anyway as they will be very frequent. Rather a plugin that does any kind of
 analysis on a tree should use a timer to throttle too frequent updates.
 
 
+LanguageTree:async_parse({range}, {opts})         *LanguageTree:async_parse()*
+    Like |LanguageTree:parse()|, but asynchronous.
+
+    Parameters: ~
+      • {range}  (`boolean|Range?`) Parse this range in the parser's source.
+                 Set to `true` to run a complete parse of the source (Note:
+                 Can be slow!) Set to `false|nil` to only parse regions with
+                 empty ranges (typically only the root tree without
+                 injections).
+      • {opts}   (`AsyncParseOpts?`) Options:
+                 • timeout_ms: (integer?) The maximum time (in milliseconds)
+                   that each parse segment should take.
+                 • callback: (fun(trees: table<integer, TSTree>)?) A callback
+                   to run after parsing completes.
+
 LanguageTree:children()                              *LanguageTree:children()*
     Returns a map of language to child tree.
 
