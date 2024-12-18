@@ -373,12 +373,6 @@ describe('buffer cursor position is correct in terminal without number column', 
     }, {
       cols = 70,
     })
-    screen:set_default_attr_ids({
-      [1] = { foreground = 253, background = 11 },
-      [2] = { reverse = true },
-      [3] = { bold = true },
-      [4] = { background = 11 },
-    })
     -- Also check for real cursor position, as it is used for stuff like input methods
     screen._handle_busy_start = function() end
     screen._handle_busy_stop = function() end
@@ -689,13 +683,6 @@ describe('buffer cursor position is correct in terminal with number column', fun
       'set notermguicolors',
     }, {
       cols = 70,
-    })
-    screen:set_default_attr_ids({
-      [1] = { foreground = 253, background = 11 },
-      [2] = { reverse = true },
-      [3] = { bold = true },
-      [4] = { background = 11 },
-      [7] = { foreground = 130 },
     })
     -- Also check for real cursor position, as it is used for stuff like input methods
     screen._handle_busy_start = function() end
