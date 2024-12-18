@@ -44,6 +44,8 @@ local query = require('vim.treesitter.query')
 local language = require('vim.treesitter.language')
 local Range = require('vim.treesitter._range')
 
+local default_parse_timeout_ms = 3
+
 ---@alias TSCallbackName
 ---| 'changedtree'
 ---| 'bytes'
@@ -57,6 +59,8 @@ local Range = require('vim.treesitter._range')
 ---| 'on_detach'
 ---| 'on_child_added'
 ---| 'on_child_removed'
+
+---@alias TSTrees table<integer, TSTree>
 
 --- @type table<TSCallbackNameOn,TSCallbackName>
 local TSCallbackNames = {
@@ -83,7 +87,7 @@ local TSCallbackNames = {
 ---@field private _lang string Language name
 ---@field private _parent? vim.treesitter.LanguageTree Parent LanguageTree
 ---@field private _source (integer|string) Buffer or string to parse
----@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
+---@field private _trees TSTrees Reference to parsed tree (one for each language).
 ---Each key is the index of region, which is synced with _regions and _valid.
 ---@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
 ---@field private _logger? fun(logtype: string, msg: string)
@@ -97,6 +101,10 @@ local LanguageTree = {}
 ---@field injections? table<string,string>
 
 LanguageTree.__index = LanguageTree
+
+function LanguageTree:_buf()
+  return vim.b[self._source]
+end
 
 --- @nodoc
 ---
@@ -252,7 +260,7 @@ end
 --- * this LanguageTree is the root, in which case the result is empty or a singleton list; or
 --- * the root LanguageTree is fully parsed.
 ---
----@return table<integer, TSTree>
+---@return TSTrees
 function LanguageTree:trees()
   return self._trees
 end
@@ -334,10 +342,12 @@ end
 
 --- @private
 --- @param range boolean|Range?
+--- @param timeout integer?
 --- @return Range6[] changes
 --- @return integer no_regions_parsed
 --- @return number total_parse_time
-function LanguageTree:_parse_regions(range)
+--- @return boolean is_unfinished whether async parsing still needs time
+function LanguageTree:_parse_regions(range, timeout)
   local changes = {}
   local no_regions_parsed = 0
   local total_parse_time = 0
@@ -357,8 +367,17 @@ function LanguageTree:_parse_regions(range)
       )
     then
       self._parser:set_included_ranges(ranges)
+      if timeout then
+        self._parser:set_timeout(timeout * 1000) -- ms -> micros
+      else
+        self._parser:set_timeout(0)
+      end
       local parse_time, tree, tree_changes =
         tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
+
+      if not tree then
+        return changes, no_regions_parsed, total_parse_time, true
+      end
 
       -- Pass ranges if this is an initial parse
       local cb_changes = self._trees[i] and tree_changes or tree:included_ranges(true)
@@ -373,7 +392,7 @@ function LanguageTree:_parse_regions(range)
     end
   end
 
-  return changes, no_regions_parsed, total_parse_time
+  return changes, no_regions_parsed, total_parse_time, false
 end
 
 --- @private
@@ -409,6 +428,45 @@ function LanguageTree:_add_injections()
   return query_time
 end
 
+--- Run an asynchronous parse, calling {on_parse} when complete.
+---
+--- @param range boolean|Range|nil
+--- @param on_parse fun(trees: TSTrees, timeout_reached: boolean)
+function LanguageTree:_async_parse(range, on_parse)
+  coroutine.resume(coroutine.create(function()
+    local co = coroutine.running()
+    local ct = self:_buf().changedtick
+    local total_parse_time = 0
+    local redrawtime = vim.o.redrawtime
+    ---@type TSTrees, boolean
+    local trees, unfinished
+
+    while total_parse_time <= redrawtime do
+      -- If buffer was changed in the middle of parsing, reset parse state
+      if self:_buf().changedtick ~= ct then
+        self._parser:reset()
+        self:invalidate()
+        total_parse_time = 0
+        coroutine.yield()
+      end
+
+      trees, unfinished = self:_parse(range, default_parse_timeout_ms)
+      total_parse_time = total_parse_time + default_parse_timeout_ms
+
+      if unfinished then
+        vim.schedule(function()
+          coroutine.resume(co)
+        end)
+        coroutine.yield()
+      else
+        break
+      end
+    end
+
+    on_parse(trees, unfinished)
+  end))
+end
+
 --- Recursively parse all regions in the language tree using |treesitter-parsers|
 --- for the corresponding languages and run injection queries on the parsed trees
 --- to determine whether child trees should be created and parsed.
@@ -420,11 +478,27 @@ end
 ---     Set to `true` to run a complete parse of the source (Note: Can be slow!)
 ---     Set to `false|nil` to only parse regions with empty ranges (typically
 ---     only the root tree without injections).
---- @return table<integer, TSTree>
-function LanguageTree:parse(range)
+--- @param on_parse fun(trees: TSTrees, timeout_reached: boolean)? Function invoked when parsing
+---     completes. When provided, parsing will run asynchronously. The function is passed the list
+---     of trees returned by the parse, as well as a boolean indicating whether or not the parse
+---     timed out, determined by 'redrawtime'.
+--- @return TSTrees?
+function LanguageTree:parse(range, on_parse)
+  if on_parse then
+    return self:_async_parse(range, on_parse)
+  end
+  local trees, _ = self:_parse(range)
+  return trees
+end
+
+--- @param range boolean|Range|nil
+--- @param timeout integer?
+--- @return TSTrees
+--- @return boolean
+function LanguageTree:_parse(range, timeout)
   if self:is_valid() then
     self:_log('valid')
-    return self._trees
+    return self._trees, false
   end
 
   local changes --- @type Range6[]?
@@ -433,10 +507,15 @@ function LanguageTree:parse(range)
   local no_regions_parsed = 0
   local query_time = 0
   local total_parse_time = 0
+  local is_unfinished --- @type boolean
 
   -- At least 1 region is invalid
   if not self:is_valid(true) then
-    changes, no_regions_parsed, total_parse_time = self:_parse_regions(range)
+    changes, no_regions_parsed, total_parse_time, is_unfinished =
+      self:_parse_regions(range, timeout)
+    if is_unfinished then
+      return self._trees, is_unfinished
+    end
     -- Need to run injections when we parsed something
     if no_regions_parsed > 0 then
       self._injections_processed = false
@@ -457,10 +536,13 @@ function LanguageTree:parse(range)
   })
 
   for _, child in pairs(self._children) do
-    child:parse(range)
+    local _, child_unfinished = child:_parse(range, timeout)
+    if child_unfinished then
+      return self._trees, child_unfinished
+    end
   end
 
-  return self._trees
+  return self._trees, false
 end
 
 --- Invokes the callback for each |LanguageTree| recursively.
