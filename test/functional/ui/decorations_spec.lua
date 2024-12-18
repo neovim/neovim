@@ -716,46 +716,44 @@ describe('decorations providers', function()
     setup_screen(screen)
 
     local function record()
-      exec_lua [[
-        p_min = { math.huge, math.huge }
-        p_max = { -math.huge, -math.huge }
-        function pos_gt(a, b)
+      exec_lua(function()
+        _G.p_min = { math.huge, math.huge }
+        _G.p_max = { -math.huge, -math.huge }
+        function _G.pos_gt(a, b)
           return a[1] > b[1] or (a[1] == b[1] and a[2] > b[2])
         end
-        function pos_lt(a, b)
+        function _G.pos_lt(a, b)
           return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
         end
-      ]]
+      end)
       setup_provider [[
         local function on_do(kind, _, bufnr, br, bc, er, ec)
           if kind == 'range' then
             local b = { br, bc }
             local e = { er, ec }
-            if pos_gt(p_min, b) then
-              p_min = b
+            if _G.pos_gt(_G.p_min, b) then
+              _G.p_min = b
             end
-            if pos_lt(p_max, e) then
-              p_max = e
+            if _G.pos_lt(_G.p_max, e) then
+              _G.p_max = e
             end
           end
         end
       ]]
     end
     local function check(min, max)
-      local function pos_gt(a, b)
-        return a[1] > b[1] or (a[1] == b[1] and a[2] > b[2])
-      end
-      local function pos_lt(a, b)
-        return a[1] < b[1] or (a[1] == b[1] and a[2] < b[2])
-      end
-      local p_min = exec_lua('return p_min')
-      assert(not pos_gt(p_min, min),
+      local p_min = exec_lua('return _G.p_min')
+      assert(
+        p_min[1] < min[1] or (p_min[1] == min[1] and p_min[2] <= min[2]),
         "minimum position " .. vim.inspect(p_min)
-        .. " should be before the first char")
-      local p_max = exec_lua('return p_max')
-      assert(not pos_lt(p_max, max),
+        .. " should be before the first char"
+      )
+      local p_max = exec_lua('return _G.p_max')
+      assert(
+        p_max[1] > max[1] or (p_max[1] == max[1] and p_max[2] >= max[2]),
         "maximum position " .. vim.inspect(p_max)
-        .. " should be on or after the last char")
+        .. " should be on or after the last char"
+      )
     end
 
     -- Multiple lines.
