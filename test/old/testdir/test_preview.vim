@@ -59,7 +59,8 @@ func Test_window_preview_terminal()
   CheckFeature quickfix
   " CheckFeature terminal
 
-  term " ++curwin
+  " term ++curwin
+  term
   const buf_num = bufnr('$')
   call assert_equal(1, winnr('$'))
   exe 'pbuffer' . buf_num
