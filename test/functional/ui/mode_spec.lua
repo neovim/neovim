@@ -94,7 +94,7 @@ describe('ui mode_change event', function()
     }
   end)
 
-  -- oldtest: Test_indent_norm_with_gq()
+  -- oldtest: Test_mouse_shape_indent_norm_with_gq()
   it('is restored to Normal mode after "gq" indents using :normal #12309', function()
     screen:try_resize(60, 6)
     n.exec([[
