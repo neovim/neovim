@@ -409,6 +409,19 @@ describe(':terminal buffer', function()
     end)
   end)
 
+  it('handles extended grapheme clusters', function()
+    local screen = Screen.new(50, 7)
+    feed 'i'
+    local chan = api.nvim_open_term(0, {})
+    api.nvim_chan_send(chan, '🏴‍☠️ yarrr')
+    screen:expect([[
+      🏴‍☠️ yarrr^                                          |
+                                                        |*5
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq('🏴‍☠️ yarrr', api.nvim_get_current_line())
+  end)
+
   it('handles split UTF-8 sequences #16245', function()
     local screen = Screen.new(50, 7)
     fn.termopen({ testprg('shell-test'), 'UTF-8' })

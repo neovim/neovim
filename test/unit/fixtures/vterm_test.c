@@ -1,6 +1,7 @@
 #include "vterm_test.h"
 
 #include <stdio.h>
+#include "nvim/grid.h"
 
 int parser_text(const char bytes[], size_t len, void *user)
 {
@@ -210,9 +211,10 @@ int state_putglyph(VTermGlyphInfo *info, VTermPos pos, void *user)
 
   FILE *f = fopen(VTERM_TEST_FILE, "a");
   fprintf(f, "putglyph ");
-  for(int i = 0; i < VTERM_MAX_CHARS_PER_CELL && info->chars[i]; i++) {
-    fprintf(f, i ? ",%x" : "%x", info->chars[i]);
-  }
+  abort();  // nejdue
+  //for(int i = 0; i < VTERM_MAX_CHARS_PER_CELL && info->chars[i]; i++) {
+  //  fprintf(f, i ? ",%x" : "%x", info->chars[i]);
+ // }
   fprintf(f, " %d %d,%d", info->width, pos.row, pos.col);
   if(info->protected_cell) {
     fprintf(f, " prot");
@@ -442,14 +444,15 @@ int screen_sb_pushline(int cols, const VTermScreenCell *cells, void *user)
   }
 
   int eol = cols;
-  while(eol && !cells[eol-1].chars[0]) {
+  while(eol && !cells[eol-1].schar) {
     eol--;
   }
 
   FILE *f = fopen(VTERM_TEST_FILE, "a");
   fprintf(f, "sb_pushline %d =", cols);
   for(int c = 0; c < eol; c++) {
-    fprintf(f, " %02X", cells[c].chars[0]);
+    abort(); // halljo
+    //fprintf(f, " %02X", cells[c].chars[0]);
   }
   fprintf(f, "\n");
 
@@ -467,9 +470,9 @@ int screen_sb_popline(int cols, VTermScreenCell *cells, void *user)
   // All lines of scrollback contain "ABCDE"
   for(int col = 0; col < cols; col++) {
     if(col < 5) {
-      cells[col].chars[0] = (uint32_t)('A' + col);
+      cells[col].schar = schar_from_ascii((uint32_t)('A' + col));
     } else {
-      cells[col].chars[0] = 0;
+      cells[col].schar = 0;
     }
 
     cells[col].width = 1;
