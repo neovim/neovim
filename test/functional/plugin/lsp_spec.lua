@@ -1854,6 +1854,20 @@ describe('LSP', function()
         end,
       }
     end)
+
+    it('vim.lsp.start when existing client has no workspace_folders', function()
+      exec_lua(create_server_definition)
+      eq(
+        { 2, 'foo', 'foo' },
+        exec_lua(function()
+          local server = _G._create_server()
+          vim.lsp.start { cmd = server.cmd, name = 'foo' }
+          vim.lsp.start { cmd = server.cmd, name = 'foo', root_dir = 'bar' }
+          local foos = vim.lsp.get_clients()
+          return { #foos, foos[1].name, foos[2].name }
+        end)
+      )
+    end)
   end)
 
   describe('parsing tests', function()
