@@ -400,13 +400,26 @@ describe(':terminal buffer', function()
     assert_alive()
   end)
 
-  it('truncates number of composing characters to 5', function()
+  it('truncates the size of grapheme clusters', function()
     local chan = api.nvim_open_term(0, {})
     local composing = ('a̳'):sub(2)
-    api.nvim_chan_send(chan, 'a' .. composing:rep(8))
+    api.nvim_chan_send(chan, 'a' .. composing:rep(20))
     retry(nil, nil, function()
-      eq('a' .. composing:rep(5), api.nvim_get_current_line())
+      eq('a' .. composing:rep(14), api.nvim_get_current_line())
     end)
+  end)
+
+  it('handles extended grapheme clusters', function()
+    local screen = Screen.new(50, 7)
+    feed 'i'
+    local chan = api.nvim_open_term(0, {})
+    api.nvim_chan_send(chan, '🏴‍☠️ yarrr')
+    screen:expect([[
+      🏴‍☠️ yarrr^                                          |
+                                                        |*5
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq('🏴‍☠️ yarrr', api.nvim_get_current_line())
   end)
 
   it('handles split UTF-8 sequences #16245', function()
