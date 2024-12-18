@@ -94,6 +94,46 @@ describe('ui mode_change event', function()
     }
   end)
 
+  -- oldtest: Test_indent_norm_with_gq()
+  it('is restored to Normal mode after "gq" indents using :normal #12309', function()
+    screen:try_resize(60, 6)
+    n.exec([[
+      func Indent()
+        exe "normal! \<Ignore>"
+        return 0
+      endfunc
+
+      setlocal indentexpr=Indent()
+      call setline(1, [repeat('a', 80), repeat('b', 80)])
+    ]])
+
+    feed('ggVG')
+    screen:expect {
+      grid = [[
+      {17:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {17:aaaaaaaaaaaaaaaaaaaa}                                        |
+      ^b{17:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}|
+      {17:bbbbbbbbbbbbbbbbbbbb}                                        |
+      {1:~                                                           }|
+      {5:-- VISUAL LINE --}                                           |
+    ]],
+      mode = 'visual',
+    }
+
+    feed('gq')
+    screen:expect {
+      grid = [[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa                                        |
+      ^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      bbbbbbbbbbbbbbbbbbbb                                        |
+      {1:~                                                           }|
+                                                                  |
+    ]],
+      mode = 'normal',
+    }
+  end)
+
   it('works in insert mode', function()
     feed('i')
     screen:expect {

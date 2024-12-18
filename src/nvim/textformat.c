@@ -35,6 +35,7 @@
 #include "nvim/strings.h"
 #include "nvim/textformat.h"
 #include "nvim/textobject.h"
+#include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -1049,12 +1050,18 @@ void format_lines(linenr_T line_count, bool avoid_fex)
         State = MODE_INSERT;         // for open_line()
         smd_save = p_smd;
         p_smd = false;
+
         insertchar(NUL, INSCHAR_FORMAT
                    + (do_comments ? INSCHAR_DO_COM : 0)
                    + (do_comments && do_comments_list ? INSCHAR_COM_LIST : 0)
                    + (avoid_fex ? INSCHAR_NO_FEX : 0), second_indent);
+
         State = old_State;
         p_smd = smd_save;
+        // Cursor shape may have been updated (e.g. by :normal) in insertchar(),
+        // so it needs to be updated here.
+        ui_cursor_shape();
+
         second_indent = -1;
         // at end of par.: need to set indent of next par.
         need_set_indent = is_end_par;
