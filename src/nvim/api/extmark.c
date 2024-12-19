@@ -1012,8 +1012,8 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///               ```
 ///                 ["start", tick]
 ///               ```
-///             - on_buf: called for each buffer being redrawn (before
-///               window callbacks)
+///             - on_buf: called for each buffer being redrawn (once per edit,
+///               before window callbacks)
 ///               ```
 ///                 ["buf", bufnr, tick]
 ///               ```
