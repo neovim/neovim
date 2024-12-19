@@ -92,7 +92,7 @@ describe('TUI', function()
       _G.termresponse = nil
       vim.api.nvim_create_autocmd('TermResponse', {
         once = true,
-        callback = function(ev) _G.termresponse = ev.data end,
+        callback = function(ev) _G.termresponse = ev.data.payload end,
       })
     ]])
     feed_data('\027P0$r\027\\')
@@ -2076,7 +2076,7 @@ describe('TUI', function()
       vim.api.nvim_create_autocmd('TermRequest', {
         buffer = buf,
         callback = function(args)
-          local req = args.data
+          local req = args.data.payload
           if not req then
             return
           end
@@ -3070,7 +3070,7 @@ describe('TUI', function()
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
         callback = function(args)
-          local req = args.data
+          local req = args.data.payload
           local payload = req:match('^\027P%+q([%x;]+)$')
           if payload then
             local t = {}
@@ -3124,7 +3124,7 @@ describe('TUI', function()
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
         callback = function(args)
-          local req = args.data
+          local req = args.data.payload
           vim.g.termrequest = req
           local xtgettcap = req:match('^\027P%+q([%x;]+)$')
           if xtgettcap then
@@ -3179,7 +3179,7 @@ describe('TUI', function()
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
         callback = function(args)
-          local req = args.data
+          local req = args.data.payload
           local payload = req:match('^\027P%+q([%x;]+)$')
           if payload and vim.text.hexdecode(payload) == 'Ms' then
             vim.g.xtgettcap = 'Ms'
@@ -3269,7 +3269,7 @@ describe('TUI bg color', function()
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
         callback = function(args)
-          local req = args.data
+          local req = args.data.payload
           if req == '\027]11;?' then
             vim.g.oscrequest = true
             return true

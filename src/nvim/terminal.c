@@ -204,12 +204,20 @@ static void emit_termrequest(void **argv)
   char *payload = argv[1];
   size_t payload_length = (size_t)argv[2];
   StringBuilder *pending_send = argv[3];
+  int row = (int)(intptr_t)argv[4];
+  int col = (int)(intptr_t)argv[5];
+
+  set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
+
+  MAXSIZE_TEMP_DICT(data, 3);
+  String termrequest = { .data = payload, .size = payload_length };
+  PUT_C(data, "payload", STRING_OBJ(termrequest));
+  PUT_C(data, "row", INTEGER_OBJ(row));
+  PUT_C(data, "col", INTEGER_OBJ(col));
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
-  String termrequest = { .data = payload, .size = payload_length };
-  Object data = STRING_OBJ(termrequest);
-  set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
-  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, buf, NULL, &data);
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, buf, NULL,
+                       &DICT_OBJ(data));
   xfree(payload);
 
   StringBuilder *term_pending_send = term->pending.send;
@@ -229,7 +237,8 @@ static void schedule_termrequest(Terminal *term, char *payload, size_t payload_l
   term->pending.send = xmalloc(sizeof(StringBuilder));
   kv_init(*term->pending.send);
   multiqueue_put(main_loop.events, emit_termrequest, term, payload, (void *)payload_length,
-                 term->pending.send);
+                 term->pending.send, (void *)(intptr_t)term->cursor.row,
+                 (void *)(intptr_t)term->cursor.col);
 }
 
 static int parse_osc8(VTermStringFragment frag, int *attr)
