@@ -368,7 +368,7 @@ describe('input non-printable chars', function()
       "Xtest-overwrite"                                           |
       {9:WARNING: The file has been changed since reading it!!!}      |
       {6:Do you really want to write to it (y/n)?}u                   |
-      {6:Do you really want to write to it (y/n)?}                    |
+      {6:Do you really want to write to it (y/n)?}{18:^E}                  |
       {6:Do you really want to write to it (y/n)?}^                    |
     ]])
 
@@ -379,7 +379,7 @@ describe('input non-printable chars', function()
       "Xtest-overwrite"                                           |
       {9:WARNING: The file has been changed since reading it!!!}      |
       {6:Do you really want to write to it (y/n)?}u                   |
-      {6:Do you really want to write to it (y/n)?}                    |
+      {6:Do you really want to write to it (y/n)?}{18:^E}                  |
       {6:Do you really want to write to it (y/n)?}n                   |
       {6:Press ENTER or type command to continue}^                     |
     ]])
