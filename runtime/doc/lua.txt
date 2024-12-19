@@ -3998,6 +3998,7 @@ vim.version.range({spec})                                *vim.version.range()*
         (`table?`) A table with the following fields:
         • {from} (`vim.Version`)
         • {to}? (`vim.Version`)
+        • {has} (`fun(self: vim.VersionRange, version: string|vim.Version)`)
 
     See also: ~
       • https://github.com/npm/node-semver#ranges
