@@ -47,8 +47,19 @@ func Test_window_preview_from_pbuffer()
   edit Xpreview.c
   const buf_num = bufnr('%')
   enew
+
+  call feedkeys(":pbuffer Xpre\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"pbuffer Xpreview.c", @:)
+
   call assert_equal(1, winnr('$'))
   exe 'pbuffer ' .  buf_num
+  call assert_equal(2, winnr('$'))
+  call assert_equal(0, &previewwindow)
+
+  call s:goto_preview_and_close()
+
+  call assert_equal(1, winnr('$'))
+  pbuffer Xpreview.c
   call assert_equal(2, winnr('$'))
   call assert_equal(0, &previewwindow)
 
