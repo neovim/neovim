@@ -65,6 +65,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
+#include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
@@ -1347,7 +1348,7 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
   // copy to vterm state
   memcpy(cells, sbrow->cells, sizeof(cells[0]) * cols_to_copy);
   for (size_t col = cols_to_copy; col < (size_t)cols; col++) {
-    cells[col].chars[0] = 0;
+    cells[col].schar = 0;
     cells[col].width = 1;
   }
 
@@ -1857,12 +1858,8 @@ static void fetch_row(Terminal *term, int row, int end_col)
   while (col < end_col) {
     VTermScreenCell cell;
     fetch_cell(term, row, col, &cell);
-    if (cell.chars[0]) {
-      int cell_len = 0;
-      for (int i = 0; i < VTERM_MAX_CHARS_PER_CELL && cell.chars[i]; i++) {
-        cell_len += utf_char2bytes((int)cell.chars[i], ptr + cell_len);
-      }
-      ptr += cell_len;
+    if (cell.schar) {
+      schar_get_adv(&ptr, cell.schar);
       line_len = (size_t)(ptr - term->textbuf);
     } else {
       *ptr++ = ' ';
@@ -1883,7 +1880,7 @@ static bool fetch_cell(Terminal *term, int row, int col, VTermScreenCell *cell)
     } else {
       // fill the pointer with an empty cell
       *cell = (VTermScreenCell) {
-        .chars = { 0 },
+        .schar = 0,
         .width = 1,
       };
       return false;
