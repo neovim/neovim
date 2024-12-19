@@ -130,8 +130,9 @@ local validate = vim.validate
 --- A table with flags for the client. The current (experimental) flags are:
 --- @field flags? vim.lsp.Client.Flags
 ---
---- Directory where the LSP server will base its workspaceFolders, rootUri, and rootPath on initialization.
---- @field root_dir? string
+--- Directory (or a function which returns a directory) where the LSP server will base its
+--- workspaceFolders, rootUri, and rootPath on initialization.
+--- @field root_dir? string|fun():string
 
 --- @class vim.lsp.Client.Progress: vim.Ringbuf<{token: integer|string, value: any}>
 --- @field pending table<lsp.ProgressToken,lsp.LSPAny>
@@ -373,6 +374,11 @@ function Client.create(config)
   local id = client_index
   local name = get_name(id, config)
 
+  local root_dir = config.root_dir
+  if type(root_dir) == 'function' then
+    root_dir = root_dir()
+  end
+
   --- @class vim.lsp.Client
   local self = {
     id = id,
@@ -390,8 +396,8 @@ function Client.create(config)
     flags = config.flags or {},
     get_language_id = config.get_language_id or default_get_language_id,
     capabilities = config.capabilities,
-    workspace_folders = lsp._get_workspace_folders(config.workspace_folders or config.root_dir),
-    root_dir = config.root_dir,
+    workspace_folders = lsp._get_workspace_folders(config.workspace_folders or root_dir),
+    root_dir = root_dir,
     _before_init_cb = config.before_init,
     _on_init_cbs = vim._ensure_list(config.on_init),
     _on_exit_cbs = vim._ensure_list(config.on_exit),
