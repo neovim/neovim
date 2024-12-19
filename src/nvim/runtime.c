@@ -2847,3 +2847,20 @@ bool script_autoload(const char *const name, const size_t name_len, const bool r
   xfree(tofree);
   return ret;
 }
+
+/// validate VIMRUNTIME env by sourcing a harmless file
+void validate_vimruntime_env(void) {
+  char *val = vim_getenv("VIMRUNTIME");
+  if (val == NULL || *val == '\0') {
+    emsg(_("E5009: $VIMRUNTIME is empty or unset"));
+    xfree(val);
+    return;
+  }
+
+  const size_t env_len = strlen(val);
+  val = concat_fnames_realloc(val, "autoload/health.vim", true);
+  if (os_isdir(val) || !os_file_is_readable(val)) {
+    semsg(_("E5009: Invalid $VIMRUNTIME: %.*s"), (int)env_len, val);
+  }
+  xfree(val);
+}
