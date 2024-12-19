@@ -271,6 +271,33 @@ describe('LSP', function()
       }
     end)
 
+    it('supports a function for root_dir', function()
+      clear()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server({})
+
+        local client_id = vim.lsp.start({
+          name = 'dummy',
+          cmd = server.cmd,
+          root_dir = function()
+            return 'some_directory'
+          end
+        })
+
+        if not client_id then
+          return 'vim.lsp.start did not return client_id'
+        end
+
+        local client = vim.lsp.get_client_by_id(client_id)
+        if not client then
+          return 'No client found with id ' .. client_id
+        end
+        return client.root_dir
+      end)
+      eq('some_directory', result)
+    end)
+
     it('should send didChangeConfiguration after initialize if there are settings', function()
       test_rpc_server({
         test_name = 'basic_init_did_change_configuration',

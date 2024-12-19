@@ -1317,9 +1317,10 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 request before sending kill -15. If set to
                                 false, nvim exits immediately after sending
                                 the "shutdown" request to the server.
-      • {root_dir}?           (`string`) Directory where the LSP server will
-                              base its workspaceFolders, rootUri, and rootPath
-                              on initialization.
+      • {root_dir}?           (`string|fun():string`) Directory (or a function
+                              which returns a directory) where the LSP server
+                              will base its workspaceFolders, rootUri, and
+                              rootPath on initialization.
 
 
 Client:cancel_request({id})                          *Client:cancel_request()*
