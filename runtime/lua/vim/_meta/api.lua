@@ -2134,8 +2134,8 @@ function vim.api.nvim_set_current_win(window) end
 ---   ```
 ---     ["start", tick]
 ---   ```
---- - on_buf: called for each buffer being redrawn (before
----   window callbacks)
+--- - on_buf: called for each buffer being redrawn (once per edit,
+---   before window callbacks)
 ---   ```
 ---     ["buf", bufnr, tick]
 ---   ```
