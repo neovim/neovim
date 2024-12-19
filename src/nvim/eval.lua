@@ -5945,7 +5945,7 @@ M.funcs = {
   jobstart = {
     args = { 1, 2 },
     desc = [=[
-      Note: Prefer |vim.system()| in Lua (unless using the `pty` option).
+      Note: Prefer |vim.system()| in Lua (unless using `rpc`, `pty`, or `term`).
 
       Spawns {cmd} as a job.
       If {cmd} is a List it runs directly (no 'shell').
@@ -5953,8 +5953,11 @@ M.funcs = {
         call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
       <(See |shell-unquoting| for details.)
 
-      Example: >vim
-        call jobstart('nvim -h', {'on_stdout':{j,d,e->append(line('.'),d)}})
+      Example: start a job and handle its output: >vim
+        call jobstart(['nvim', '-h'], {'on_stdout':{j,d,e->append(line('.'),d)}})
+      <
+      Example: start a job in a |terminal| connected to the current buffer: >vim
+        call jobstart(['nvim', '-h'], {'term':v:true})
       <
       Returns |job-id| on success, 0 on invalid arguments (or job
       table is full), -1 if {cmd}[0] or 'shell' is not executable.
@@ -6019,6 +6022,10 @@ M.funcs = {
         stdin:      (string) Either "pipe" (default) to connect the
       	      job's stdin to a channel or "null" to disconnect
       	      stdin.
+        term:	    (boolean) Spawns {cmd} in a new pseudo-terminal session
+                connected to the current (unmodified) buffer. Implies "pty".
+                Default "height" and "width" are set to the current window
+                dimensions. |jobstart()|. Defaults $TERM to "xterm-256color".
         width:      (number) Width of the `pty` terminal.
 
       {opts} is passed as |self| dictionary to the callback; the
@@ -12271,21 +12278,10 @@ M.funcs = {
     signature = 'tempname()',
   },
   termopen = {
+    deprecated = true,
     args = { 1, 2 },
     desc = [=[
-      Spawns {cmd} in a new pseudo-terminal session connected
-      to the current (unmodified) buffer. Parameters and behavior
-      are the same as |jobstart()| except "pty", "width", "height",
-      and "TERM" are ignored: "height" and "width" are taken from
-      the current window. Note that termopen() implies a "pty" arg
-      to jobstart(), and thus has the implications documented at
-      |jobstart()|.
-
-      Returns the same values as jobstart().
-
-      Terminal environment is initialized as in |jobstart-env|,
-      except $TERM is set to "xterm-256color". Full behavior is
-      described in |terminal|.
+      Use |jobstart()| with `{term: v:true}` instead.
     ]=],
     name = 'termopen',
     params = { { 'cmd', 'string|string[]' }, { 'opts', 'table' } },

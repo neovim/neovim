@@ -378,7 +378,7 @@ describe(':terminal buffer', function()
     }, exec_lua('return _G.input'))
   end)
 
-  it('no heap-buffer-overflow when using termopen(echo) #3161', function()
+  it('no heap-buffer-overflow when using jobstart("echo",{term=true}) #3161', function()
     local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
     write_file(testfilename, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaa')
     finally(function()
@@ -387,8 +387,8 @@ describe(':terminal buffer', function()
     feed_command('edit ' .. testfilename)
     -- Move cursor away from the beginning of the line
     feed('$')
-    -- Let termopen() modify the buffer
-    feed_command('call termopen("echo")')
+    -- Let jobstart(…,{term=true}) modify the buffer
+    feed_command([[call jobstart("echo", {'term':v:true})]])
     assert_alive()
     feed_command('bdelete!')
   end)
@@ -411,7 +411,7 @@ describe(':terminal buffer', function()
 
   it('handles split UTF-8 sequences #16245', function()
     local screen = Screen.new(50, 7)
-    fn.termopen({ testprg('shell-test'), 'UTF-8' })
+    fn.jobstart({ testprg('shell-test'), 'UTF-8' }, { term = true })
     screen:expect([[
       ^å                                                 |
       ref: å̲                                            |
@@ -669,7 +669,7 @@ if is_os('win') then
   end)
 end
 
-describe('termopen()', function()
+describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', function()
   before_each(clear)
 
   it('disallowed when textlocked and in cmdwin buffer', function()

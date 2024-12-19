@@ -294,6 +294,7 @@ TERMINAL
   means that the |TermCursorNC| highlight group is no longer supported: an
   unfocused terminal window will have no cursor at all (so there is nothing to
   highlight).
+• |jobstart()| gained the "term" flag.
 
 TREESITTER
 

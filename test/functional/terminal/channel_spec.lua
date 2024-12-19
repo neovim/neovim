@@ -75,8 +75,8 @@ describe('terminal channel is closed and later released if', function()
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
 
-  it('opened by termopen(), exited, and deleted by pressing a key', function()
-    command([[let id = termopen('echo')]])
+  it('opened by jobstart(…,{term=true}), exited, and deleted by pressing a key', function()
+    command([[let id = jobstart('echo',{'term':v:true})]])
     local chans = eval('len(nvim_list_chans())')
     -- wait for process to exit
     screen:expect({ any = '%[Process exited 0%]' })
@@ -96,8 +96,8 @@ describe('terminal channel is closed and later released if', function()
   end)
 
   -- This indirectly covers #16264
-  it('opened by termopen(), exited, and deleted by :bdelete', function()
-    command([[let id = termopen('echo')]])
+  it('opened by jobstart(…,{term=true}), exited, and deleted by :bdelete', function()
+    command([[let id = jobstart('echo', {'term':v:true})]])
     local chans = eval('len(nvim_list_chans())')
     -- wait for process to exit
     screen:expect({ any = '%[Process exited 0%]' })
@@ -124,7 +124,7 @@ it('chansend sends lines to terminal channel in proper order', function()
   screen._default_attr_ids = nil
   local shells = is_os('win') and { 'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop' } or { 'sh' }
   for _, sh in ipairs(shells) do
-    command([[let id = termopen(']] .. sh .. [[')]])
+    command([[let id = jobstart(']] .. sh .. [[', {'term':v:true})]])
     command([[call chansend(id, ['echo "hello"', 'echo "world"', ''])]])
     screen:expect {
       any = [[echo "hello".*echo "world"]],
@@ -149,7 +149,7 @@ describe('no crash when TermOpen autocommand', function()
     })
   end)
 
-  it('processes job exit event when using termopen()', function()
+  it('processes job exit event when using jobstart(…,{term=true})', function()
     command([[autocmd TermOpen * call input('')]])
     async_meths.nvim_command('terminal foobar')
     screen:expect {
@@ -179,7 +179,7 @@ describe('no crash when TermOpen autocommand', function()
     assert_alive()
   end)
 
-  it('wipes buffer and processes events when using termopen()', function()
+  it('wipes buffer and processes events when using jobstart(…,{term=true})', function()
     command([[autocmd TermOpen * bwipe! | call input('')]])
     async_meths.nvim_command('terminal foobar')
     screen:expect {

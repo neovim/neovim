@@ -272,12 +272,12 @@ function vim.api.nvim_buf_attach(buffer, send_buffer, opts) end
 --- This temporarily switches current buffer to "buffer".
 --- If the current window already shows "buffer", the window is not switched.
 --- If a window inside the current tabpage (including a float) already shows the
---- buffer, then one of these windows will be set as current window temporarily.
+--- buffer, then one of those windows will be set as current window temporarily.
 --- Otherwise a temporary scratch window (called the "autocmd window" for
 --- historical reasons) will be used.
 ---
 --- This is useful e.g. to call Vimscript functions that only work with the
---- current buffer/window currently, like `termopen()`.
+--- current buffer/window currently, like `jobstart(…, {'term': v:true})`.
 ---
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param fun function Function to call inside the buffer (currently Lua callable

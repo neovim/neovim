@@ -26,7 +26,7 @@ Start						*terminal-start*
 There are several ways to create a terminal buffer:
 
 - Run the |:terminal| command.
-- Call the |nvim_open_term()| or |termopen()| function.
+- Call |nvim_open_term()| or `jobstart(…, {'term': v:true})`.
 - Edit a "term://" buffer. Examples: >vim
     :edit term://bash
     :vsplit term://top

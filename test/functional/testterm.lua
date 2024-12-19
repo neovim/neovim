@@ -141,7 +141,7 @@ function M.setup_screen(extra_rows, cmd, cols, env, screen_opts)
   })
 
   api.nvim_command('enew')
-  api.nvim_call_function('termopen', { cmd, env and { env = env } or nil })
+  api.nvim_call_function('jobstart', { cmd, { term = true, env = (env and env or nil) } })
   api.nvim_input('<CR>')
   local vim_errmsg = api.nvim_eval('v:errmsg')
   if vim_errmsg and '' ~= vim_errmsg then
