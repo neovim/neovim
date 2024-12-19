@@ -1,7 +1,5 @@
 #pragma once
 
-#include "nvim/api/private/defs.h"
-
 /// Flags for shada_read_file and children
 typedef enum {
   kShaDaWantInfo = 1,       ///< Load non-mark information

@@ -23,7 +23,6 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
-#include "nvim/drawscreen.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"

@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <string.h>
 #include <uv.h>
 
 #include "nvim/event/multiqueue.h"
@@ -9,7 +8,8 @@
 #include "nvim/event/stream.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
-#include "nvim/main.h"
+#include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/types_defs.h"
 

@@ -39,7 +39,6 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
-#include "nvim/option_vars.h"
 #include "nvim/os/os.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"

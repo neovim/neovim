@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stddef.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
@@ -10,6 +9,7 @@
 #include "nvim/ex_eval_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
+#include "nvim/memory.h"
 #include "nvim/message_defs.h"  // IWYU pragma: keep
 
 #define OBJECT_OBJ(o) o
