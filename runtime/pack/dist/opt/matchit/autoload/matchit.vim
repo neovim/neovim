@@ -222,6 +222,7 @@ function matchit#Match_wrapper(word, forward, mode) range
   let view = winsaveview()
   call cursor(0, curcol + 1)
   if skip =~ 'synID' && !(has("syntax") && exists("g:syntax_on"))
+        \ || skip =~ 'v:lua.vim.treesitter' && !exists('b:ts_highlight')
     let skip = "0"
   else
     execute "if " .. skip .. "| let skip = '0' | endif"
@@ -678,6 +679,7 @@ fun! matchit#MultiMatch(spflag, mode)
   let middlepat = substitute(middlepat, ',', '\\|', 'g')
 
   if skip =~ 'synID' && !(has("syntax") && exists("g:syntax_on"))
+        \ || skip =~ 'v:lua.vim.treesitter' && !exists('b:ts_highlight')
     let skip = '0'
   else
     try
@@ -760,10 +762,16 @@ endfun
 "   S:foo becomes (current syntax item) !~ foo
 "   r:foo becomes (line before cursor) =~ foo
 "   R:foo becomes (line before cursor) !~ foo
+"   t:foo becomes (current treesitter captures) =~ foo
+"   T:foo becomes (current treesitter captures) !~ foo
 fun! s:ParseSkip(str)
   let skip = a:str
   if skip[1] == ":"
-    if skip[0] ==# "s"
+    if skip[0] ==# "t" || skip[0] ==# "s" && &syntax != 'on' && exists("b:ts_highlight")
+      let skip = "match(v:lua.vim.treesitter.get_captures_at_cursor(), '" .. strpart(skip,2) .. "') != -1"
+    elseif skip[0] ==# "T" || skip[0] ==# "S" && &syntax != 'on' && exists("b:ts_highlight")
+      let skip = "match(v:lua.vim.treesitter.get_captures_at_cursor(), '" .. strpart(skip,2) .. "') == -1"
+    elseif skip[0] ==# "s"
       let skip = "synIDattr(synID(line('.'),col('.'),1),'name') =~? '" ..
         \ strpart(skip,2) .. "'"
     elseif skip[0] ==# "S"

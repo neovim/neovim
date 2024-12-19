@@ -237,6 +237,8 @@ supported by matchit.vim:
 	S:foo becomes (current syntax item) !~ foo
 	r:foo becomes (line before cursor) =~ foo
 	R:foo becomes (line before cursor) !~ foo
+	t:foo becomes (current treesitter captures) =~ foo
+	T:foo becomes (current treesitter captures) !~ foo
 (The "s" is meant to suggest "syntax", and the "r" is meant to suggest
 "regular expression".)
 
