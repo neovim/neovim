@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <lauxlib.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -7,7 +8,6 @@
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/typval.h"
@@ -15,6 +15,7 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 

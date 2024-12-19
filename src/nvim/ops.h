@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/extmark_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"

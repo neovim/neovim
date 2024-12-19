@@ -2,7 +2,6 @@
 
 #include <stdbool.h>
 
-#include "nvim/event/loop.h"
 #include "nvim/types_defs.h"
 
 // Maximum number of commands from + or -c arguments.

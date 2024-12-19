@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"

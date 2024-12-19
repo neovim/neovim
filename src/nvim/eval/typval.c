@@ -9,6 +9,7 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
@@ -32,6 +33,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/os/input.h"
 #include "nvim/pos_defs.h"
