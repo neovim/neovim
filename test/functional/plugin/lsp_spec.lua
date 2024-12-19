@@ -6245,5 +6245,38 @@ describe('LSP', function()
         end)
       )
     end)
+
+    it('supports a function for root_dir', function()
+      exec_lua(create_server_definition)
+
+      local tmp1 = t.tmpname(true)
+
+      eq(
+        'some_dir',
+        exec_lua(function()
+          local server = _G._create_server({
+            handlers = {
+              initialize = function(_, _, callback)
+                callback(nil, { capabilities = {} })
+              end,
+            },
+          })
+
+          vim.lsp.config('foo', {
+            cmd = server.cmd,
+            filetypes = { 'foo' },
+            root_dir = function(cb)
+              cb('some_dir')
+            end,
+          })
+          vim.lsp.enable('foo')
+
+          vim.cmd.edit(assert(tmp1))
+          vim.bo.filetype = 'foo'
+
+          return vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })[1].root_dir
+        end)
+      )
+    end)
   end)
 end)
