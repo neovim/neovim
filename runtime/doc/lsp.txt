@@ -687,6 +687,10 @@ Lua module: vim.lsp                                                 *lsp-core*
                          the LSP server will base its workspaceFolders,
                          rootUri, and rootPath on initialization. Unused if
                          `root_dir` is provided.
+      • {root_dir}?      (`string|fun():string`) Directory (or a function
+                         which returns a directory) where the LSP server will
+                         base its workspaceFolders, rootUri, and rootPath on
+                         initialization.
       • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
                          Predicate used to decide if a client should be
                          re-used. Used on all running clients. The default
