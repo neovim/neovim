@@ -1433,16 +1433,26 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
         (`fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata`)
         pattern id, match, metadata
 
-set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
+set({lang}, {query_name}, {text}, {opts})         *vim.treesitter.query.set()*
     Sets the runtime query named {query_name} for {lang}
 
-    This allows users to override any runtime files and/or configuration set
-    by plugins.
+    This allows users to override or extend any runtime files and/or
+    configuration set by plugins.
 
     Parameters: ~
       • {lang}        (`string`) Language to use for the query
       • {query_name}  (`string`) Name of the query (e.g., "highlights")
       • {text}        (`string`) Query text (unparsed).
+      • {opts}        (`table?`) A table with the following fields:
+                      • {bufnr}? (`integer`) Buffer this query should apply to
+                        (`0` for current buffer, `nil` for all buffers for
+                        {lang}).
+                      • {inherits}? (`string|string[]`) Language(s) this query
+                        should inherit from (see
+                        |treesitter-query-modeline-inherits|).
+                      • {extends}? (`boolean`) Whether the query should be an
+                        extension query (see
+                        |treesitter-query-modeline-extends|).
 
 
 ==============================================================================
