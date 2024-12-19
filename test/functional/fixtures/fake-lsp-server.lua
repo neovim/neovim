@@ -150,9 +150,16 @@ function tests.check_workspace_configuration()
           { section = 'testSetting2' },
           { section = 'test.Setting3' },
           { section = 'test.Setting4' },
+          {},
+          { section = '' },
         },
       })
-      expect_notification('workspace/configuration', { true, false, 'nested', vim.NIL })
+      local all = {
+        testSetting1 = true,
+        testSetting2 = false,
+        test = { Setting3 = 'nested' },
+      }
+      expect_notification('workspace/configuration', { true, false, 'nested', vim.NIL, all, all })
       notify('shutdown')
     end,
   }
