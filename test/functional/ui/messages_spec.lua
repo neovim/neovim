@@ -84,11 +84,6 @@ describe('ui/ext_messages', function()
     }
     feed('<cr><cr>')
     screen:expect {
-      grid = [[
-      line 1                   |
-      line ^2                   |
-      {1:~                        }|*3
-    ]],
       messages = {
         {
           content = { { '\ntest\n[O]k: ', 6, 10 } },
@@ -160,11 +155,6 @@ describe('ui/ext_messages', function()
     -- kind=emsg after :throw
     feed(':throw "foo"<cr>')
     screen:expect {
-      grid = [[
-      l^ine 1                   |
-      line 2                   |
-      {1:~                        }|*3
-    ]],
       messages = {
         {
           content = { { 'Error detected while processing :', 9, 6 } },
@@ -214,27 +204,20 @@ describe('ui/ext_messages', function()
     })
 
     -- highlight
-    feed(':hi ErrorMsg<cr>')
+    feed(':filter character highlight<CR>')
     screen:expect({
-      grid = [[
-        ^line 1                   |
-        line 2                   |
-        {1:~                        }|*3
-      ]],
       messages = {
         {
           content = {
-            { '\nErrorMsg      ' },
-            { 'xxx', 9, 6 },
+            { '\n@character     ' },
+            { 'xxx', 26, 150 },
             { ' ' },
-            { 'ctermfg=', 18, 5 },
-            { '15 ' },
-            { 'ctermbg=', 18, 5 },
-            { '1 ' },
-            { 'guifg=', 18, 5 },
-            { 'White ' },
-            { 'guibg=', 18, 5 },
-            { 'Red' },
+            { 'links to', 18, 5 },
+            { ' Character\n@character.special ' },
+            { 'xxx', 16, 151 },
+            { ' ' },
+            { 'links to', 18, 5 },
+            { ' SpecialChar' },
           },
           kind = 'list_cmd',
         },

@@ -2129,8 +2129,8 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   // If redirection is on, also write to the redirection file.
   redir_write(str, len);
 
-  // Don't print anything when using ":silent cmd".
-  if (msg_silent != 0) {
+  // Don't print anything when using ":silent cmd" or empty message.
+  if (msg_silent != 0 || *str == NUL) {
     return;
   }
 
@@ -2238,6 +2238,11 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     size_t len = maxlen < 0 ? strlen(str) : strnlen(str, (size_t)maxlen);
     ga_concat_len(&msg_ext_last_chunk, str, len);
     msg_ext_cur_len += len;
+    // When message ends in newline, reset variables used to format message: msg_advance().
+    if (str[len - 1] == '\n') {
+      msg_ext_cur_len = 0;
+      msg_col = 0;
+    }
     return;
   }
 
