@@ -2114,7 +2114,7 @@ describe('TUI', function()
       [5] = { bold = true, reverse = true },
       [6] = { foreground = Screen.colors.White, background = Screen.colors.DarkGreen },
     })
-    fn.termopen({
+    fn.jobstart({
       nvim_prog,
       '--clean',
       '--cmd',
@@ -2124,6 +2124,7 @@ describe('TUI', function()
       '--cmd',
       'let start = reltime() | while v:true | if reltimefloat(reltime(start)) > 2 | break | endif | endwhile',
     }, {
+      term = true,
       env = {
         VIMRUNTIME = os.getenv('VIMRUNTIME'),
       },
@@ -2146,7 +2147,7 @@ describe('TUI', function()
   for _, guicolors in ipairs({ 'notermguicolors', 'termguicolors' }) do
     it('has no black flicker when clearing regions during startup with ' .. guicolors, function()
       local screen = Screen.new(50, 10)
-      fn.termopen({
+      fn.jobstart({
         nvim_prog,
         '--clean',
         '--cmd',
@@ -2154,6 +2155,7 @@ describe('TUI', function()
         '--cmd',
         'sleep 10',
       }, {
+        term = true,
         env = {
           VIMRUNTIME = os.getenv('VIMRUNTIME'),
         },

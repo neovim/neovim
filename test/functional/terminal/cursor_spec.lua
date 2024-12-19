@@ -239,7 +239,7 @@ describe(':terminal cursor', function()
     feed([[<C-\><C-N>]])
     command('set statusline=~~~')
     command('new')
-    call('termopen', { testprg('tty-test') })
+    call('jobstart', { testprg('tty-test') }, { term = true })
     feed('i')
     screen:expect({
       grid = [[

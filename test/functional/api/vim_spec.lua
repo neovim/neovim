@@ -2704,7 +2704,8 @@ describe('API', function()
       -- :terminal with args + running process.
       command('enew')
       local progpath_esc = eval('shellescape(v:progpath)')
-      fn.termopen(('%s -u NONE -i NONE'):format(progpath_esc), {
+      fn.jobstart(('%s -u NONE -i NONE'):format(progpath_esc), {
+        term = true,
         env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
       })
       eq(-1, eval('jobwait([&channel], 0)[0]')) -- Running?
