@@ -200,12 +200,17 @@ local function reuse_client_default(client, config)
     return false
   end
 
-  local config_folders = lsp._get_workspace_folders(config.workspace_folders or config.root_dir)
+  local root_dir = config.root_dir
+  if type(root_dir) == 'function' then
+    root_dir = root_dir()
+  end
+
+  local config_folders = lsp._get_workspace_folders(config.workspace_folders or root_dir)
 
   if not config_folders or not next(config_folders) then
     -- Reuse if the client was configured with no workspace folders
     local client_config_folders =
-      lsp._get_workspace_folders(client.config.workspace_folders or client.config.root_dir)
+      lsp._get_workspace_folders(client.config.workspace_folders or client.root_dir)
     return not client_config_folders or not next(client_config_folders)
   end
 
