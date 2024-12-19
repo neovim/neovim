@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>  // IWYU pragma: keep
 
 #include "nvim/api/keysets_defs.h"  // IWYU pragma: keep

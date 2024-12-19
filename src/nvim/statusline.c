@@ -35,7 +35,6 @@
 #include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
-#include "nvim/optionstr.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/path.h"

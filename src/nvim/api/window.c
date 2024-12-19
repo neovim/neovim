@@ -1,4 +1,3 @@
-#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -28,7 +27,7 @@
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/window.c.generated.h"
+# include "api/window.c.generated.h"  // IWYU pragma: keep
 #endif
 
 /// Gets the current buffer in a window

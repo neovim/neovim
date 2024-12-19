@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stddef.h>
-
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 

@@ -1,9 +1,7 @@
 #include <assert.h>
-#include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -52,7 +50,6 @@
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
 #include "nvim/match.h"
-#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"

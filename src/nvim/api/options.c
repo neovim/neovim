@@ -14,6 +14,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/option.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"

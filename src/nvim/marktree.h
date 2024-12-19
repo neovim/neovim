@@ -4,7 +4,6 @@
 #include <stddef.h>  // IWYU pragma: keep
 #include <stdint.h>
 
-#include "nvim/buffer_defs.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/marktree_defs.h"  // IWYU pragma: keep
 #include "nvim/pos_defs.h"  // IWYU pragma: keep
