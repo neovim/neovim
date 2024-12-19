@@ -131,6 +131,7 @@ typedef struct {
   Boolean noautocmd;
   Boolean fixed;
   Boolean hide;
+  Integer _cmdline_offset;
 } Dict(win_config);
 
 typedef struct {
