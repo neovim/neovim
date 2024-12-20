@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>  // IWYU pragma: keep
+
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 
