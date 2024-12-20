@@ -58,5 +58,5 @@ WASMTIME_SHA256 6d1c17c756b83f29f629963228e5fa208ba9d6578421ba2cd07132b6a120accb
 
 UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.80.1.tar.gz
 UNCRUSTIFY_SHA256 0e2616ec2f78e12816388c513f7060072ff7942b42f1175eb28b24cb75aaec48
-LUA_DEV_DEPS_URL https://github.com/neovim/deps/raw/5a1f71cceb24990a0b15fd9a472a5f549f019248/opt/lua-dev-deps.tar.gz
-LUA_DEV_DEPS_SHA256 27db2495f5eddc7fc191701ec9b291486853530c6125609d3197d03481e8d5a2
+LUA_DEV_DEPS_URL https://github.com/neovim/deps/raw/06ef2b58b0876f8de1a3f5a710473dcd7afff251/opt/lua-dev-deps.tar.gz
+LUA_DEV_DEPS_SHA256 49f8399e453103064a23c65534f266f3067cda716b6502f016bfafeed5799354
