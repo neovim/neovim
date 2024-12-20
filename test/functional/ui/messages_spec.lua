@@ -253,6 +253,20 @@ describe('ui/ext_messages', function()
         },
       },
     })
+
+    -- kind=completion
+    command('set noshowmode')
+    feed('i<C-n>')
+    screen:expect({
+      messages = {
+        {
+          content = { { 'The only match' } },
+          kind = 'completion',
+        },
+      },
+    })
+    feed('<Esc>')
+    command('set showmode')
   end)
 
   it(':echoerr', function()

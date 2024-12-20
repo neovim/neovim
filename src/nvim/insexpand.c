@@ -1582,6 +1582,7 @@ static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
     FILE *fp = os_fopen(files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT && !shortmess(SHM_COMPLETIONSCAN)) {
       msg_hist_off = true;  // reset in msg_trunc()
+      msg_ext_set_kind("completion");
       vim_snprintf(IObuff, IOSIZE,
                    _("Scanning dictionary: %s"), files[i]);
       msg_trunc(IObuff, true, HLF_R);
@@ -3060,6 +3061,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
     }
     if (!shortmess(SHM_COMPLETIONSCAN)) {
       msg_hist_off = true;  // reset in msg_trunc()
+      msg_ext_set_kind("completion");
       vim_snprintf(IObuff, IOSIZE, _("Scanning: %s"),
                    st->ins_buf->b_fname == NULL
                    ? buf_spname(st->ins_buf)
@@ -3092,6 +3094,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
     } else if (*st->e_cpt == ']' || *st->e_cpt == 't') {
       compl_type = CTRL_X_TAGS;
       if (!shortmess(SHM_COMPLETIONSCAN)) {
+        msg_ext_set_kind("completion");
         msg_hist_off = true;  // reset in msg_trunc()
         vim_snprintf(IObuff, IOSIZE, "%s", _("Scanning tags."));
         msg_trunc(IObuff, true, HLF_R);
@@ -4602,6 +4605,7 @@ static void ins_compl_show_statusmsg(void)
     if (edit_submode_extra != NULL) {
       if (!p_smd) {
         msg_hist_off = true;
+        msg_ext_set_kind("completion");
         msg(edit_submode_extra, (edit_submode_highl < HLF_COUNT
                                  ? (int)edit_submode_highl + 1 : 0));
         msg_hist_off = false;
