@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stddef.h>
+#include <stddef.h>  // IWYU pragma: keep
 #include <stdint.h>
 #include <string.h>  // IWYU pragma: keep
 

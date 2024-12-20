@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "nvim/eval/typval_defs.h"
+#include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/normal_defs.h"  // IWYU pragma: keep
 #include "nvim/os/time_defs.h"
 #include "nvim/pos_defs.h"

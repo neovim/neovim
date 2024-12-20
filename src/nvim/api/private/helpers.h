@@ -11,6 +11,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/message_defs.h"  // IWYU pragma: keep
+#include "nvim/memory.h"
 
 #define OBJECT_OBJ(o) o
 
