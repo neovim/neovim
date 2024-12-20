@@ -79,7 +79,8 @@ function SystemObj:_timeout(signal)
   self:kill(signal or SIG.TERM)
 end
 
-local MAX_TIMEOUT = 2 ^ 31
+-- Use max 32-bit signed int value to avoid overflow on 32-bit systems. #31633
+local MAX_TIMEOUT = 2 ^ 31 - 1
 
 --- @param timeout? integer
 --- @return vim.SystemCompleted
