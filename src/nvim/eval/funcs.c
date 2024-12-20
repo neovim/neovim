@@ -4130,7 +4130,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// "jobstop()" function
-static void f_jobstop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+void f_jobstop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
@@ -4315,20 +4315,6 @@ static void f_keytrans(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char *escaped = vim_strsave_escape_ks(argvars[0].vval.v_string);
   rettv->vval.v_string = str2special_save(escaped, true, true);
   xfree(escaped);
-}
-
-/// "last_buffer_nr()" function.
-static void f_last_buffer_nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  int n = 0;
-
-  FOR_ALL_BUFFERS(buf) {
-    if (n < buf->b_fnum) {
-      n = buf->b_fnum;
-    }
-  }
-
-  rettv->vval.v_number = n;
 }
 
 /// "len()" function
@@ -6423,103 +6409,6 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 end:
   arena_mem_free(res_mem);
   api_clear_error(&err);
-}
-
-/// "rpcstart()" function (DEPRECATED)
-static void f_rpcstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_STRING
-      || (argvars[1].v_type != VAR_LIST && argvars[1].v_type != VAR_UNKNOWN)) {
-    // Wrong argument types
-    emsg(_(e_invarg));
-    return;
-  }
-
-  list_T *args = NULL;
-  int argsl = 0;
-  if (argvars[1].v_type == VAR_LIST) {
-    args = argvars[1].vval.v_list;
-    argsl = tv_list_len(args);
-    // Assert that all list items are strings
-    int i = 0;
-    TV_LIST_ITER_CONST(args, arg, {
-      if (TV_LIST_ITEM_TV(arg)->v_type != VAR_STRING) {
-        semsg(_("E5010: List item %d of the second argument is not a string"),
-              i);
-        return;
-      }
-      i++;
-    });
-  }
-
-  if (argvars[0].vval.v_string == NULL || argvars[0].vval.v_string[0] == NUL) {
-    emsg(_(e_api_spawn_failed));
-    return;
-  }
-
-  // Allocate extra memory for the argument vector and the NULL pointer
-  int argvl = argsl + 2;
-  char **argv = xmalloc(sizeof(char *) * (size_t)argvl);
-
-  // Copy program name
-  argv[0] = xstrdup(argvars[0].vval.v_string);
-
-  int i = 1;
-  // Copy arguments to the vector
-  if (argsl > 0) {
-    TV_LIST_ITER_CONST(args, arg, {
-      argv[i++] = xstrdup(tv_get_string(TV_LIST_ITEM_TV(arg)));
-    });
-  }
-
-  // The last item of argv must be NULL
-  argv[i] = NULL;
-
-  Channel *chan = channel_job_start(argv, NULL, CALLBACK_READER_INIT,
-                                    CALLBACK_READER_INIT, CALLBACK_NONE,
-                                    false, true, false, false,
-                                    kChannelStdinPipe, NULL, 0, 0, NULL,
-                                    &rettv->vval.v_number);
-  if (chan) {
-    channel_create_event(chan, NULL);
-  }
-}
-
-/// "rpcstop()" function
-static void f_rpcstop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER) {
-    // Wrong argument types
-    emsg(_(e_invarg));
-    return;
-  }
-
-  // if called with a job, stop it, else closes the channel
-  uint64_t id = (uint64_t)argvars[0].vval.v_number;
-  if (find_job(id, false)) {
-    f_jobstop(argvars, rettv, fptr);
-  } else {
-    const char *error;
-    rettv->vval.v_number =
-      channel_close((uint64_t)argvars[0].vval.v_number, kChannelPartRpc, &error);
-    if (!rettv->vval.v_number) {
-      emsg(error);
-    }
-  }
 }
 
 static void screenchar_adjust(ScreenGrid **grid, int *row, int *col)
