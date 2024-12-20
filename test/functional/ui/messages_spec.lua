@@ -47,6 +47,7 @@ describe('ui/ext_messages', function()
       line ^1                   |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { '\ntest\n[O]k: ', 6, 10 } },
@@ -75,6 +76,7 @@ describe('ui/ext_messages', function()
       line ^2                   |
       {1:~                        }|*3
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { '\ntest\n[O]k: ', 6, 10 } },
@@ -109,6 +111,7 @@ describe('ui/ext_messages', function()
       l{10:i}ne ^2                   |
       {1:~                        }|*3
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'replace with X (y/n/a/q/l/^E/^Y)?', 6, 18 } },
@@ -144,6 +147,7 @@ describe('ui/ext_messages', function()
       line 2                   |
       {1:~                        }|*3
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'search hit BOTTOM, continuing at TOP', 19, 26 } },
@@ -155,6 +159,7 @@ describe('ui/ext_messages', function()
     -- kind=emsg after :throw
     feed(':throw "foo"<cr>')
     screen:expect {
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'Error detected while processing :', 9, 6 } },
@@ -181,6 +186,7 @@ describe('ui/ext_messages', function()
       ^line 2                   |
       {1:~                        }|*3
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { '(2 of 2): line2' } },
@@ -197,6 +203,7 @@ describe('ui/ext_messages', function()
         line 2                   |
         {1:~                        }|*3
       ]],
+      cmdline = { { abort = false } },
       messages = { {
         content = { { '?line ' } },
         kind = 'search_cmd',
@@ -206,6 +213,7 @@ describe('ui/ext_messages', function()
     -- highlight
     feed(':filter character highlight<CR>')
     screen:expect({
+      cmdline = { { abort = false } },
       messages = {
         {
           content = {
@@ -276,6 +284,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = { {
         content = { { 'raa', 9, 6 } },
         kind = 'echoerr',
@@ -302,6 +311,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'bork', 9, 6 } },
@@ -324,6 +334,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'bork', 9, 6 } },
@@ -366,6 +377,7 @@ describe('ui/ext_messages', function()
       cmdline = {
         {
           prompt = 'foo> ',
+          hl_id = 0,
           content = { { '' } },
           pos = 0,
         },
@@ -378,6 +390,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
     }
     eq('solution', eval('x'))
 
@@ -387,6 +400,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       msg_history = {
         { kind = 'echoerr', content = { { 'raa', 9, 6 } } },
         { kind = 'echoerr', content = { { 'bork', 9, 6 } } },
@@ -419,6 +433,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'bork\nfail', 9, 6 } },
@@ -433,6 +448,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'Press ENTER or type command to continue', 6, 18 } },
@@ -459,6 +475,7 @@ describe('ui/ext_messages', function()
       {10:line} 2                   |
       {1:~                        }|*3
     ]],
+      cmdline = { { abort = false } },
       messages = {
         { content = { { '/line      W [1/2]' } }, kind = 'search_count' },
       },
@@ -485,6 +502,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         { content = { { 'x                     #1' } }, kind = 'list_cmd' },
         { content = { { 'y                     #2' } }, kind = 'list_cmd' },
@@ -595,6 +613,7 @@ describe('ui/ext_messages', function()
       alphpabe^t                |
       {1:~                        }|*2
     ]],
+      cmdline = { { abort = false } },
       msg_history = { {
         content = { { 'stuff' } },
         kind = 'echomsg',
@@ -793,6 +812,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = { {
         content = { { 'howdy' } },
         kind = 'echomsg',
@@ -821,6 +841,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = { {
         content = { { 'bork', 9, 6 } },
         kind = 'echoerr',
@@ -833,6 +854,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = { {
         content = { { 'xyz' } },
         kind = 'echo',
@@ -845,6 +867,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'E117: Unknown function: nosuchfunction', 9, 6 } },
@@ -859,6 +882,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       msg_history = {
         { kind = 'echomsg', content = { { 'howdy' } } },
         { kind = '', content = { { 'Type  :qa  and press <Enter> to exit Nvim' } } },
@@ -892,11 +916,14 @@ describe('ui/ext_messages', function()
     }
 
     feed('<cr>')
-    screen:expect([[
-      ^                         |
-      {1:~                        }|*3
-                               |
-    ]])
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = { { abort = false } },
+    })
     eq(1, eval('&cmdheight'))
 
     feed(':set cmdheight=0')
@@ -915,10 +942,15 @@ describe('ui/ext_messages', function()
       },
     }
     feed('<cr>')
-    screen:expect([[
-      ^                         |
-      {1:~                        }|*4
-    ]])
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*4
+      ]],
+      cmdline = { {
+        abort = false
+      } },
+    })
     eq(0, eval('&cmdheight'))
   end)
 
@@ -929,6 +961,7 @@ describe('ui/ext_messages', function()
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = {
@@ -957,6 +990,7 @@ stack traceback:
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = {
@@ -981,6 +1015,7 @@ stack traceback:
     feed(':map<cr>')
 
     screen:expect {
+      cmdline = { { abort = false } },
       messages = {
         {
           content = {
@@ -1101,6 +1136,7 @@ stack traceback:
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         { content = { { '\n  1 %a   "[No Name]"                    line 1' } }, kind = 'list_cmd' },
       },
@@ -1112,6 +1148,7 @@ stack traceback:
       ^                         |
       {1:~                        }|*4
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'Press ENTER or type command to continue', 6, 18 } },
@@ -1853,6 +1890,7 @@ describe('ui/ext_messages', function()
                        type  :help iccf{18:<Enter>}       for information                  |
                                                                                       |*5
     ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'Press ENTER or type command to continue', 6, 18 } },
@@ -1935,6 +1973,7 @@ describe('ui/ext_messages', function()
       {1:~                                                                               }|*10
       {3:[No Name]                                                                       }|
     ]],
+      cmdline = { { abort = false } },
       messages = {
         { content = { { '  cmdheight=0' } }, kind = 'list_cmd' },
       },
@@ -1951,6 +1990,7 @@ describe('ui/ext_messages', function()
       {1:~                                                                               }|*9
       {3:[No Name]                                                                       }|
     ]],
+      cmdline = { { abort = false } },
       messages = {
         { content = { { '  laststatus=3' } }, kind = 'list_cmd' },
       },
@@ -1971,6 +2011,7 @@ describe('ui/ext_messages', function()
       {1:~                                                                               }|*10
       {3:[No Name]                                                                       }|
     ]],
+      cmdline = { { abort = false } },
       messages = {
         { content = { { '  cmdheight=0' } }, kind = 'list_cmd' },
       },

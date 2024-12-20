@@ -79,6 +79,7 @@ end
 --- @field win_position table<integer,table<string,integer>>
 --- @field float_pos table<integer,table>
 --- @field cmdline table<integer,table>
+--- @field cmdline_hide_level integer?
 --- @field cmdline_block table[]
 --- @field hl_groups table<string,integer>
 --- @field messages table<integer,table>
@@ -652,6 +653,12 @@ screen:redraw_debug() to show all intermediate screen states.]]
           )
         end
       end
+    end
+
+    -- Only test the abort state of a cmdline level once.
+    if self.cmdline_hide_level ~= nil then
+      self.cmdline[self.cmdline_hide_level] = nil
+      self.cmdline_hide_level = nil
     end
 
     if expected.hl_groups ~= nil then
@@ -1296,7 +1303,7 @@ function Screen:_handle_popupmenu_hide()
   self.popupmenu = nil
 end
 
-function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level)
+function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
   if firstc == '' then
     firstc = nil
   end
@@ -1320,11 +1327,13 @@ function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level
     firstc = firstc,
     prompt = prompt,
     indent = indent,
+    hl_id = prompt and hl_id,
   }
 end
 
-function Screen:_handle_cmdline_hide(level)
-  self.cmdline[level] = nil
+function Screen:_handle_cmdline_hide(level, abort)
+  self.cmdline[level] = { abort = abort }
+  self.cmdline_hide_level = level
 end
 
 function Screen:_handle_cmdline_special_char(char, shift, level)
@@ -1468,7 +1477,9 @@ function Screen:_extstate_repr(attr_state)
   local cmdline = {}
   for i, entry in pairs(self.cmdline) do
     entry = shallowcopy(entry)
-    entry.content = self:_chunks_repr(entry.content, attr_state)
+    if entry.content ~= nil then
+      entry.content = self:_chunks_repr(entry.content, attr_state)
+    end
     cmdline[i] = entry
   end
 

@@ -91,25 +91,27 @@ local function test_cmdline(linegrid)
       {1:~                        }|*3
                                |
     ]],
+      cmdline = { { abort = true } },
     }
   end)
 
   it('works with input()', function()
     feed(':call input("input", "default")<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
-      ^                         |
-      {1:~                        }|*3
-                               |
-    ]],
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
       cmdline = {
         {
-          prompt = 'input',
           content = { { 'default' } },
+          hl_id = 0,
           pos = 7,
+          prompt = 'input',
         },
       },
-    }
+    })
 
     feed('<cr>')
     screen:expect {
@@ -118,6 +120,7 @@ local function test_cmdline(linegrid)
       {1:~                        }|*3
                                |
     ]],
+      cmdline = { { abort = false } },
     }
   end)
 
@@ -210,6 +213,7 @@ local function test_cmdline(linegrid)
           content = { { 'xx3' } },
           pos = 3,
         },
+        { abort = false },
       },
     }
 
@@ -220,6 +224,7 @@ local function test_cmdline(linegrid)
       {1:~                        }|*3
                                |
     ]],
+      cmdline = { { abort = true } },
     }
   end)
 
@@ -294,6 +299,7 @@ local function test_cmdline(linegrid)
       {1:~                        }|*3
                                |
     ]],
+      cmdline = { { abort = false } },
     }
 
     -- Try once more, to check buffer is reinitialized. #8007
@@ -324,6 +330,7 @@ local function test_cmdline(linegrid)
       {1:~                        }|*3
                                |
     ]],
+      cmdline = { { abort = false } },
     }
   end)
 
@@ -353,6 +360,7 @@ local function test_cmdline(linegrid)
       {3:[Command Line]           }|
                                |
     ]],
+      cmdline = { { abort = false } },
     }
 
     -- nested cmdline
@@ -404,6 +412,7 @@ local function test_cmdline(linegrid)
       {3:[Command Line]           }|
                                |
     ]],
+      cmdline = { [2] = { abort = true } },
     }
 
     feed('<c-c>')
@@ -452,6 +461,7 @@ local function test_cmdline(linegrid)
       cmdline = {
         {
           prompt = 'secret:',
+          hl_id = 0,
           content = { { '******' } },
           pos = 6,
         },
@@ -495,6 +505,7 @@ local function test_cmdline(linegrid)
       cmdline = {
         {
           prompt = '>',
+          hl_id = 0,
           content = {
             { '(', 30 },
             { 'a' },
@@ -797,11 +808,14 @@ local function test_cmdline(linegrid)
     -- This used to send an invalid event where pos where larger than the total
     -- length of content. Checked in _handle_cmdline_show.
     feed('<esc>')
-    screen:expect([[
-      ^                         |
-      {1:~                        }|*3
-                               |
-    ]])
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = { { abort = true } },
+    })
   end)
 
   it('does not move cursor to curwin #20309', function()
@@ -826,6 +840,30 @@ local function test_cmdline(linegrid)
         pos = 0,
       } },
     }
+  end)
+
+  it('show prompt hl_id', function()
+    screen:expect([[
+      ^                         |
+      {1:~                        }|*3
+                               |
+    ]])
+    feed(':echohl Error | call input("Prompt:")<CR>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          hl_id = 237,
+          pos = 0,
+          prompt = 'Prompt:',
+        },
+      },
+    })
   end)
 end
 
