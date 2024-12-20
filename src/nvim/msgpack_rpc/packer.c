@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <lauxlib.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stddef.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
