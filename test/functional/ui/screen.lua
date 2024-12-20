@@ -79,6 +79,7 @@ end
 --- @field win_position table<integer,table<string,integer>>
 --- @field float_pos table<integer,table>
 --- @field cmdline table<integer,table>
+--- @field cmdline_abort? boolean
 --- @field cmdline_block table[]
 --- @field hl_groups table<string,integer>
 --- @field messages table<integer,table>
@@ -1296,7 +1297,7 @@ function Screen:_handle_popupmenu_hide()
   self.popupmenu = nil
 end
 
-function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level)
+function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
   if firstc == '' then
     firstc = nil
   end
@@ -1320,11 +1321,13 @@ function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level
     firstc = firstc,
     prompt = prompt,
     indent = indent,
+    hl_id = prompt and hl_id,
   }
 end
 
-function Screen:_handle_cmdline_hide(level)
+function Screen:_handle_cmdline_hide(level, abort)
   self.cmdline[level] = nil
+  self.cmdline_abort = abort
 end
 
 function Screen:_handle_cmdline_special_char(char, shift, level)
