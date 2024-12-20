@@ -6,7 +6,7 @@
 1. Install [build prerequisites](#build-prerequisites) on your system
 2. `git clone https://github.com/neovim/neovim`
 3. `cd neovim && make CMAKE_BUILD_TYPE=RelWithDebInfo`
-    - If you want the **stable release**, also run `git checkout stable`.
+    - If you want the **stable release**, also run `git checkout release-0.10`.
     - If you want to install to a custom location, set `CMAKE_INSTALL_PREFIX`. See also [INSTALL.md](./INSTALL.md#install-from-source).
     - On BSD, use `gmake` instead of `make`.
     - To build on Windows, see the [Building on Windows](#building-on-windows) section. _MSVC (Visual Studio) is recommended._
