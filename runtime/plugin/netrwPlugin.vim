@@ -1,12 +1,13 @@
 " netrwPlugin.vim: Handles file transfer and remote directory listing across a network
 "            PLUGIN SECTION
-" Maintainer:	This runtime file is looking for a new maintainer.
-" Date:		Sep 09, 2021
+" Maintainer:   This runtime file is looking for a new maintainer.
+" Date:         Sep 09, 2021
 " Last Change:
 "   2024 May 08 by Vim Project: cleanup legacy Win9X checks
 "   2024 Oct 27 by Vim Project: cleanup gx mapping
 "   2024 Oct 28 by Vim Project: further improvements
 "   2024 Oct 31 by Vim Project: use autoloaded functions
+"   2024 Dec 19 by Vim Project: change style (#16248)
 " Former Maintainer:   Charles E Campbell
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 1999-2021 Charles E. Campbell {{{1
@@ -24,7 +25,7 @@
 " =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 " Load Once: {{{1
 if &cp || exists("g:loaded_netrwPlugin")
- finish
+  finish
 endif
 let g:loaded_netrwPlugin = "v173"
 let s:keepcpo = &cpo
@@ -40,71 +41,71 @@ command -complete=file     -nargs=1   Open    call netrw#Open(trim(<q-args>))
 " " }}}
 " Local Browsing Autocmds: {{{2
 augroup FileExplorer
- au!
- au BufLeave *  if &ft != "netrw"|let w:netrw_prvfile= expand("%:p")|endif
- au BufEnter *	sil call s:LocalBrowse(expand("<amatch>"))
- au VimEnter *	sil call s:VimEnter(expand("<amatch>"))
- if has("win32")
-  au BufEnter .* sil call s:LocalBrowse(expand("<amatch>"))
- endif
+  au!
+  au BufLeave *  if &ft != "netrw"|let w:netrw_prvfile= expand("%:p")|endif
+  au BufEnter * sil call s:LocalBrowse(expand("<amatch>"))
+  au VimEnter * sil call s:VimEnter(expand("<amatch>"))
+  if has("win32")
+    au BufEnter .* sil call s:LocalBrowse(expand("<amatch>"))
+  endif
 augroup END
 
 " Network Browsing Reading Writing: {{{2
 augroup Network
- au!
- au BufReadCmd   file://*											call netrw#FileUrlEdit(expand("<amatch>"))
- au BufReadCmd   ftp://*,rcp://*,scp://*,http://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe "sil doau BufReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(2,expand("<amatch>"))|exe "sil doau BufReadPost ".fnameescape(expand("<amatch>"))
- au FileReadCmd  ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe "sil doau FileReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(1,expand("<amatch>"))|exe "sil doau FileReadPost ".fnameescape(expand("<amatch>"))
- au BufWriteCmd  ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://*			exe "sil doau BufWritePre ".fnameescape(expand("<amatch>"))|exe 'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau BufWritePost ".fnameescape(expand("<amatch>"))
- au FileWriteCmd ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://*			exe "sil doau FileWritePre ".fnameescape(expand("<amatch>"))|exe "'[,']".'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau FileWritePost ".fnameescape(expand("<amatch>"))
- try
-  au SourceCmd   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe 'Nsource '.fnameescape(expand("<amatch>"))
- catch /^Vim\%((\a\+)\)\=:E216/
-  au SourcePre   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe 'Nsource '.fnameescape(expand("<amatch>"))
- endtry
+  au!
+  au BufReadCmd   file://*                                                                                      call netrw#FileUrlEdit(expand("<amatch>"))
+  au BufReadCmd   ftp://*,rcp://*,scp://*,http://*,https://*,dav://*,davs://*,rsync://*,sftp://*        exe "sil doau BufReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(2,expand("<amatch>"))|exe "sil doau BufReadPost ".fnameescape(expand("<amatch>"))
+  au FileReadCmd  ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*       exe "sil doau FileReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(1,expand("<amatch>"))|exe "sil doau FileReadPost ".fnameescape(expand("<amatch>"))
+  au BufWriteCmd  ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://*                 exe "sil doau BufWritePre ".fnameescape(expand("<amatch>"))|exe 'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau BufWritePost ".fnameescape(expand("<amatch>"))
+  au FileWriteCmd ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://*                 exe "sil doau FileWritePre ".fnameescape(expand("<amatch>"))|exe "'[,']".'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau FileWritePost ".fnameescape(expand("<amatch>"))
+  try
+    au SourceCmd   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*      exe 'Nsource '.fnameescape(expand("<amatch>"))
+  catch /^Vim\%((\a\+)\)\=:E216/
+    au SourcePre   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*      exe 'Nsource '.fnameescape(expand("<amatch>"))
+  endtry
 augroup END
 
 " Commands: :Nread, :Nwrite, :NetUserPass {{{2
-com! -count=1 -nargs=*	Nread		let s:svpos= winsaveview()<bar>call netrw#NetRead(<count>,<f-args>)<bar>call winrestview(s:svpos)
-com! -range=% -nargs=*	Nwrite		let s:svpos= winsaveview()<bar><line1>,<line2>call netrw#NetWrite(<f-args>)<bar>call winrestview(s:svpos)
-com! -nargs=*		NetUserPass	call NetUserPass(<f-args>)
-com! -nargs=*	        Nsource		let s:svpos= winsaveview()<bar>call netrw#NetSource(<f-args>)<bar>call winrestview(s:svpos)
-com! -nargs=?		Ntree		call netrw#SetTreetop(1,<q-args>)
+com! -count=1 -nargs=*  Nread           let s:svpos= winsaveview()<bar>call netrw#NetRead(<count>,<f-args>)<bar>call winrestview(s:svpos)
+com! -range=% -nargs=*  Nwrite          let s:svpos= winsaveview()<bar><line1>,<line2>call netrw#NetWrite(<f-args>)<bar>call winrestview(s:svpos)
+com! -nargs=*           NetUserPass     call NetUserPass(<f-args>)
+com! -nargs=*           Nsource         let s:svpos= winsaveview()<bar>call netrw#NetSource(<f-args>)<bar>call winrestview(s:svpos)
+com! -nargs=?           Ntree           call netrw#SetTreetop(1,<q-args>)
 
 " Commands: :Explore, :Sexplore, Hexplore, Vexplore, Lexplore {{{2
-com! -nargs=* -bar -bang -count=0 -complete=dir	Explore		call netrw#Explore(<count>,0,0+<bang>0,<q-args>)
-com! -nargs=* -bar -bang -count=0 -complete=dir	Sexplore	call netrw#Explore(<count>,1,0+<bang>0,<q-args>)
-com! -nargs=* -bar -bang -count=0 -complete=dir	Hexplore	call netrw#Explore(<count>,1,2+<bang>0,<q-args>)
-com! -nargs=* -bar -bang -count=0 -complete=dir	Vexplore	call netrw#Explore(<count>,1,4+<bang>0,<q-args>)
-com! -nargs=* -bar       -count=0 -complete=dir	Texplore	call netrw#Explore(<count>,0,6        ,<q-args>)
-com! -nargs=* -bar -bang			Nexplore	call netrw#Explore(-1,0,0,<q-args>)
-com! -nargs=* -bar -bang			Pexplore	call netrw#Explore(-2,0,0,<q-args>)
-com! -nargs=* -bar -bang -count=0 -complete=dir Lexplore	call netrw#Lexplore(<count>,<bang>0,<q-args>)
+com! -nargs=* -bar -bang -count=0 -complete=dir Explore         call netrw#Explore(<count>,0,0+<bang>0,<q-args>)
+com! -nargs=* -bar -bang -count=0 -complete=dir Sexplore        call netrw#Explore(<count>,1,0+<bang>0,<q-args>)
+com! -nargs=* -bar -bang -count=0 -complete=dir Hexplore        call netrw#Explore(<count>,1,2+<bang>0,<q-args>)
+com! -nargs=* -bar -bang -count=0 -complete=dir Vexplore        call netrw#Explore(<count>,1,4+<bang>0,<q-args>)
+com! -nargs=* -bar       -count=0 -complete=dir Texplore        call netrw#Explore(<count>,0,6        ,<q-args>)
+com! -nargs=* -bar -bang                        Nexplore        call netrw#Explore(-1,0,0,<q-args>)
+com! -nargs=* -bar -bang                        Pexplore        call netrw#Explore(-2,0,0,<q-args>)
+com! -nargs=* -bar -bang -count=0 -complete=dir Lexplore        call netrw#Lexplore(<count>,<bang>0,<q-args>)
 
 " Commands: NetrwSettings {{{2
-com! -nargs=0	NetrwSettings	call netrwSettings#NetrwSettings()
-com! -bang	NetrwClean	call netrw#Clean(<bang>0)
+com! -nargs=0   NetrwSettings   call netrwSettings#NetrwSettings()
+com! -bang      NetrwClean      call netrw#Clean(<bang>0)
 
 " Maps:
 if !exists("g:netrw_nogx")
- if maparg('gx','n') == ""
-  if !hasmapto('<Plug>NetrwBrowseX')
-   nmap <unique> gx <Plug>NetrwBrowseX
+  if maparg('gx','n') == ""
+    if !hasmapto('<Plug>NetrwBrowseX')
+      nmap <unique> gx <Plug>NetrwBrowseX
+    endif
+    nno <silent> <Plug>NetrwBrowseX :call netrw#BrowseX(netrw#GX(),netrw#CheckIfRemote(netrw#GX()))<cr>
   endif
-  nno <silent> <Plug>NetrwBrowseX :call netrw#BrowseX(netrw#GX(),netrw#CheckIfRemote(netrw#GX()))<cr>
- endif
- if maparg('gx','x') == ""
-  if !hasmapto('<Plug>NetrwBrowseXVis')
-   xmap <unique> gx <Plug>NetrwBrowseXVis
+  if maparg('gx','x') == ""
+    if !hasmapto('<Plug>NetrwBrowseXVis')
+      xmap <unique> gx <Plug>NetrwBrowseXVis
+    endif
+    xno <silent> <Plug>NetrwBrowseXVis :<c-u>call netrw#BrowseXVis()<cr>
   endif
-  xno <silent> <Plug>NetrwBrowseXVis :<c-u>call netrw#BrowseXVis()<cr>
- endif
 endif
 if exists("g:netrw_usetab") && g:netrw_usetab
- if maparg('<c-tab>','n') == ""
-  nmap <unique> <c-tab> <Plug>NetrwShrink
- endif
- nno <silent> <Plug>NetrwShrink :call netrw#Shrink()<cr>
+  if maparg('<c-tab>','n') == ""
+    nmap <unique> <c-tab> <Plug>NetrwShrink
+  endif
+  nno <silent> <Plug>NetrwShrink :call netrw#Shrink()<cr>
 endif
 
 " ---------------------------------------------------------------------
@@ -115,43 +116,43 @@ fun! s:LocalBrowse(dirname)
   " the DBG buffer are made.
 
   if !exists("s:vimentered")
-   " If s:vimentered doesn't exist, then the VimEnter event hasn't fired.  It will,
-   " and so s:VimEnter() will then be calling this routine, but this time with s:vimentered defined.
-"   call Dfunc("s:LocalBrowse(dirname<".a:dirname.">)  (s:vimentered doesn't exist)")
-"   call Dret("s:LocalBrowse")
-   return
+    " If s:vimentered doesn't exist, then the VimEnter event hasn't fired.  It will,
+    " and so s:VimEnter() will then be calling this routine, but this time with s:vimentered defined.
+    "   call Dfunc("s:LocalBrowse(dirname<".a:dirname.">)  (s:vimentered doesn't exist)")
+    "   call Dret("s:LocalBrowse")
+    return
   endif
 
-"  call Dfunc("s:LocalBrowse(dirname<".a:dirname.">)  (s:vimentered=".s:vimentered.")")
+  "  call Dfunc("s:LocalBrowse(dirname<".a:dirname.">)  (s:vimentered=".s:vimentered.")")
 
   if has("amiga")
-   " The check against '' is made for the Amiga, where the empty
-   " string is the current directory and not checking would break
-   " things such as the help command.
-"   call Decho("(LocalBrowse) dirname<".a:dirname.">  (isdirectory, amiga)")
-   if a:dirname != '' && isdirectory(a:dirname)
-    sil! call netrw#LocalBrowseCheck(a:dirname)
-    if exists("w:netrw_bannercnt") && line('.') < w:netrw_bannercnt
-     exe w:netrw_bannercnt
+    " The check against '' is made for the Amiga, where the empty
+    " string is the current directory and not checking would break
+    " things such as the help command.
+    "   call Decho("(LocalBrowse) dirname<".a:dirname.">  (isdirectory, amiga)")
+    if a:dirname != '' && isdirectory(a:dirname)
+      sil! call netrw#LocalBrowseCheck(a:dirname)
+      if exists("w:netrw_bannercnt") && line('.') < w:netrw_bannercnt
+        exe w:netrw_bannercnt
+      endif
     endif
-   endif
 
   elseif isdirectory(a:dirname)
-"   call Decho("(LocalBrowse) dirname<".a:dirname."> ft=".&ft."  (isdirectory, not amiga)")
-"   call Dredir("LocalBrowse ft last set: ","verbose set ft")
-   " Jul 13, 2021: for whatever reason, preceding the following call with
-   " a   sil!  causes an unbalanced if-endif vim error
-   call netrw#LocalBrowseCheck(a:dirname)
-   if exists("w:netrw_bannercnt") && line('.') < w:netrw_bannercnt
-    exe w:netrw_bannercnt
-   endif
+    "   call Decho("(LocalBrowse) dirname<".a:dirname."> ft=".&ft."  (isdirectory, not amiga)")
+    "   call Dredir("LocalBrowse ft last set: ","verbose set ft")
+    " Jul 13, 2021: for whatever reason, preceding the following call with
+    " a   sil!  causes an unbalanced if-endif vim error
+    call netrw#LocalBrowseCheck(a:dirname)
+    if exists("w:netrw_bannercnt") && line('.') < w:netrw_bannercnt
+      exe w:netrw_bannercnt
+    endif
 
   else
-   " not a directory, ignore it
-"   call Decho("(LocalBrowse) dirname<".a:dirname."> not a directory, ignoring...")
+    " not a directory, ignore it
+    "   call Decho("(LocalBrowse) dirname<".a:dirname."> not a directory, ignoring...")
   endif
 
-"  call Dret("s:LocalBrowse")
+  "  call Dret("s:LocalBrowse")
 endfun
 
 " ---------------------------------------------------------------------
@@ -162,72 +163,72 @@ endfun
 "             It also sets s:vimentered, letting s:LocalBrowse() know that s:VimEnter()
 "             has already been called.
 fun! s:VimEnter(dirname)
-"  call Dfunc("s:VimEnter(dirname<".a:dirname.">) expand(%)<".expand("%").">")
+  "  call Dfunc("s:VimEnter(dirname<".a:dirname.">) expand(%)<".expand("%").">")
   if has('nvim') || v:version < 802
-  " Johann Höchtl: reported that the call range... line causes an E488: Trailing characters
-  "                error with neovim. I suspect its because neovim hasn't updated with recent
-  "                vim patches. As is, this code will have problems with popup terminals
-  "                instantiated before the VimEnter event runs.
-  " Ingo Karkat  : E488 also in Vim 8.1.1602
-  let curwin       = winnr()
-  let s:vimentered = 1
-  windo call s:LocalBrowse(expand("%:p"))
-  exe curwin."wincmd w"
- else
-  " the following complicated expression comes courtesy of lacygoill; largely does the same thing as the windo and 
-  " wincmd which are commented out, but avoids some side effects. Allows popup terminal before VimEnter.
-  let s:vimentered = 1
-  call range(1, winnr('$'))->map({_, v -> win_execute(win_getid(v), 'call expand("%:p")->s:LocalBrowse()')})
- endif
-"  call Dret("s:VimEnter")
+    " Johann Höchtl: reported that the call range... line causes an E488: Trailing characters
+    "                error with neovim. I suspect its because neovim hasn't updated with recent
+    "                vim patches. As is, this code will have problems with popup terminals
+    "                instantiated before the VimEnter event runs.
+    " Ingo Karkat  : E488 also in Vim 8.1.1602
+    let curwin       = winnr()
+    let s:vimentered = 1
+    windo call s:LocalBrowse(expand("%:p"))
+    exe curwin."wincmd w"
+  else
+    " the following complicated expression comes courtesy of lacygoill; largely does the same thing as the windo and
+    " wincmd which are commented out, but avoids some side effects. Allows popup terminal before VimEnter.
+    let s:vimentered = 1
+    call range(1, winnr('$'))->map({_, v -> win_execute(win_getid(v), 'call expand("%:p")->s:LocalBrowse()')})
+  endif
+  "  call Dret("s:VimEnter")
 endfun
 
 " ---------------------------------------------------------------------
 " NetrwStatusLine: {{{1
 fun! NetrwStatusLine()
-"  let g:stlmsg= "Xbufnr=".w:netrw_explore_bufnr." bufnr=".bufnr("%")." Xline#".w:netrw_explore_line." line#".line(".")
+  "  let g:stlmsg= "Xbufnr=".w:netrw_explore_bufnr." bufnr=".bufnr("%")." Xline#".w:netrw_explore_line." line#".line(".")
   if !exists("w:netrw_explore_bufnr") || w:netrw_explore_bufnr != bufnr("%") || !exists("w:netrw_explore_line") || w:netrw_explore_line != line(".") || !exists("w:netrw_explore_list")
-   let &stl= s:netrw_explore_stl
-   if exists("w:netrw_explore_bufnr")|unlet w:netrw_explore_bufnr|endif
-   if exists("w:netrw_explore_line")|unlet w:netrw_explore_line|endif
-   return ""
+    let &stl= s:netrw_explore_stl
+    if exists("w:netrw_explore_bufnr")|unlet w:netrw_explore_bufnr|endif
+    if exists("w:netrw_explore_line")|unlet w:netrw_explore_line|endif
+    return ""
   else
-   return "Match ".w:netrw_explore_mtchcnt." of ".w:netrw_explore_listlen
+    return "Match ".w:netrw_explore_mtchcnt." of ".w:netrw_explore_listlen
   endif
 endfun
 
 " ------------------------------------------------------------------------
 " NetUserPass: set username and password for subsequent ftp transfer {{{1
-"   Usage:  :call NetUserPass()			-- will prompt for userid and password
-"	    :call NetUserPass("uid")		-- will prompt for password
-"	    :call NetUserPass("uid","password") -- sets global userid and password
+"   Usage:  :call NetUserPass()                 -- will prompt for userid and password
+"           :call NetUserPass("uid")            -- will prompt for password
+"           :call NetUserPass("uid","password") -- sets global userid and password
 fun! NetUserPass(...)
 
- " get/set userid
- if a:0 == 0
-"  call Dfunc("NetUserPass(a:0<".a:0.">)")
-  if !exists("g:netrw_uid") || g:netrw_uid == ""
-   " via prompt
-   let g:netrw_uid= input('Enter username: ')
+  " get/set userid
+  if a:0 == 0
+    "  call Dfunc("NetUserPass(a:0<".a:0.">)")
+    if !exists("g:netrw_uid") || g:netrw_uid == ""
+      " via prompt
+      let g:netrw_uid= input('Enter username: ')
+    endif
+  else  " from command line
+    "  call Dfunc("NetUserPass(a:1<".a:1.">) {")
+    let g:netrw_uid= a:1
   endif
- else	" from command line
-"  call Dfunc("NetUserPass(a:1<".a:1.">) {")
-  let g:netrw_uid= a:1
- endif
 
- " get password
- if a:0 <= 1 " via prompt
-"  call Decho("a:0=".a:0." case <=1:")
-  let g:netrw_passwd= inputsecret("Enter Password: ")
- else " from command line
-"  call Decho("a:0=".a:0." case >1: a:2<".a:2.">")
-  let g:netrw_passwd=a:2
- endif
-"  call Dret("NetUserPass")
+  " get password
+  if a:0 <= 1 " via prompt
+    "  call Decho("a:0=".a:0." case <=1:")
+    let g:netrw_passwd= inputsecret("Enter Password: ")
+  else " from command line
+    "  call Decho("a:0=".a:0." case >1: a:2<".a:2.">")
+    let g:netrw_passwd=a:2
+  endif
+  "  call Dret("NetUserPass")
 endfun
 
 " ------------------------------------------------------------------------
 " Modelines And Restoration: {{{1
 let &cpo= s:keepcpo
 unlet s:keepcpo
-" vim:ts=8 fdm=marker
+" vim:ts=8 sts=2 sw=2 et fdm=marker
