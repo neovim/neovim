@@ -2239,6 +2239,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     ga_concat_len(&msg_ext_last_chunk, str, len);
     msg_ext_cur_len += len;
     // When message ends in newline, reset variables used to format message: msg_advance().
+    assert(len > 0);
     if (str[len - 1] == '\n') {
       msg_ext_cur_len = 0;
       msg_col = 0;
