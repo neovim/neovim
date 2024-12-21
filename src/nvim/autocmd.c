@@ -2108,11 +2108,19 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
 
   char *retval;
   if (ac->exec.type == CALLABLE_CB) {
+    AutoCmd ac_copy = *ac;
+
+    if (oneshot) {
+      ac->pat = NULL;  // Assign NULL to prevent calling autocommand with once=true again
+    }
+
     // Can potentially reallocate kvec_t data and invalidate the ac pointer
-    if (call_autocmd_callback(ac, apc)) {
+    if (call_autocmd_callback(&ac_copy, apc)) {
       // If an autocommand callback returns true, delete the autocommand
       oneshot = true;
     }
+
+    kv_A(*acs, apc->auidx).pat = ac_copy.pat;  // Restore aucmd reference
 
     // TODO(tjdevries):
     //
