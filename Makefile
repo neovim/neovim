@@ -133,6 +133,9 @@ generated-sources benchmark $(FORMAT) $(LINT) $(TEST) doc: | build/.ran-cmake
 
 test: $(TEST)
 
+# iwyu-fix-includes can be downloaded from
+# https://github.com/include-what-you-use/include-what-you-use/blob/master/fix_includes.py.
+# Create a iwyu-fix-includes shell script in your $PATH that invokes the python script.
 iwyu: build/.ran-cmake
 	$(CMAKE) --preset iwyu
 	$(CMAKE) --build build > build/iwyu.log
