@@ -22,6 +22,12 @@ EXPERIMENTS
 
 • Removed `vim.loader.disable()`. Use `vim.loader.enable(false)` instead.
 
+LSP
+
+• `lsp/` runtimepath files should return a table instead of calling
+  |vim.lsp.config()| (or assigning to `vim.lsp.config`). See |lsp-config|
+
+
 OPTIONS
 
 • 'jumpoptions' flag "unload" has been renamed to "clean".
