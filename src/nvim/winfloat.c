@@ -46,6 +46,9 @@
 /// @param config  must already have been validated!
 win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
 {
+  if (check_split_disallowed_err(curwin, err)) {
+    return NULL;
+  }
   if (wp == NULL) {
     tabpage_T *tp = NULL;
     win_T *tp_last = last ? lastwin : lastwin_nofloating();
