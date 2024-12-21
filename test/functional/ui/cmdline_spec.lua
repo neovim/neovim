@@ -96,20 +96,21 @@ local function test_cmdline(linegrid)
 
   it('works with input()', function()
     feed(':call input("input", "default")<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
-      ^                         |
-      {1:~                        }|*3
-                               |
-    ]],
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
       cmdline = {
         {
-          prompt = 'input',
           content = { { 'default' } },
+          hl_id = 0,
           pos = 7,
+          prompt = 'input',
         },
       },
-    }
+    })
 
     feed('<cr>')
     screen:expect {
@@ -452,6 +453,7 @@ local function test_cmdline(linegrid)
       cmdline = {
         {
           prompt = 'secret:',
+          hl_id = 0,
           content = { { '******' } },
           pos = 6,
         },
@@ -495,6 +497,7 @@ local function test_cmdline(linegrid)
       cmdline = {
         {
           prompt = '>',
+          hl_id = 0,
           content = {
             { '(', 30 },
             { 'a' },
@@ -826,6 +829,51 @@ local function test_cmdline(linegrid)
         pos = 0,
       } },
     }
+  end)
+
+  it('hide abort', function()
+    local tests = {
+      { ':<Esc>', true },
+      { ':<C-F>', false },
+      { '<C-C>', nil },
+      { '<C-C>', true },
+      { ':<CR>', false },
+    }
+    for _, test in ipairs(tests) do
+      feed(test[1])
+      screen:expect({
+        unchanged = true,
+        condition = function()
+          screen.cmdline = {}
+          eq(test[2], screen.cmdline_abort)
+          screen.cmdline_abort = nil
+        end,
+      })
+    end
+  end)
+
+  it('show prompt hl_id', function()
+    screen:expect([[
+      ^                         |
+      {1:~                        }|*3
+                               |
+    ]])
+    feed(':echohl Error | call input("Prompt:")<CR>')
+    screen:expect({
+      grid = [[
+        ^                         |
+        {1:~                        }|*3
+                                 |
+      ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          hl_id = 237,
+          pos = 0,
+          prompt = 'Prompt:',
+        },
+      },
+    })
   end)
 end
 

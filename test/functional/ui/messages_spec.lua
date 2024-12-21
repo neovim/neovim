@@ -366,6 +366,7 @@ describe('ui/ext_messages', function()
       cmdline = {
         {
           prompt = 'foo> ',
+          hl_id = 0,
           content = { { '' } },
           pos = 0,
         },
