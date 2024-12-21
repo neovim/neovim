@@ -152,7 +152,7 @@ describe('vim.fs', function()
       )
     end)
 
-    it('works with opts.depth and opts.skip', function()
+    it('works with opts.depth, opts.skip and opts.follow', function()
       io.open('testd/a1', 'w'):close()
       io.open('testd/b1', 'w'):close()
       io.open('testd/c1', 'w'):close()
@@ -166,7 +166,7 @@ describe('vim.fs', function()
       io.open('testd/a/b/c/b4', 'w'):close()
       io.open('testd/a/b/c/c4', 'w'):close()
 
-      local function run(dir, depth, skip)
+      local function run(dir, depth, skip, follow)
         return exec_lua(function()
           local r = {}
           local skip_f
@@ -177,7 +177,7 @@ describe('vim.fs', function()
               end
             end
           end
-          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f }) do
+          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f, follow = follow }) do
             r[name] = type_
           end
           return r
@@ -197,6 +197,7 @@ describe('vim.fs', function()
       exp['a/b2'] = 'file'
       exp['a/c2'] = 'file'
       exp['a/b'] = 'directory'
+      local lexp = vim.deepcopy(exp)
 
       eq(exp, run('testd', 2))
 
@@ -213,16 +214,58 @@ describe('vim.fs', function()
       exp['a/b/c/c4'] = 'file'
 
       eq(exp, run('testd', 999))
+
+      vim.uv.fs_symlink('a', 'testd/l', { junction = true, dir = true })
+      lexp['l'] = 'link'
+      eq(lexp, run('testd', 2, nil, false))
+
+      lexp['l/a2'] = 'file'
+      lexp['l/b2'] = 'file'
+      lexp['l/c2'] = 'file'
+      lexp['l/b'] = 'directory'
+      eq(lexp, run('testd', 2, nil, true))
     end)
   end)
 
   describe('find()', function()
+    before_each(function()
+      vim.uv.fs_symlink(
+        test_source_path .. '/build',
+        test_source_path .. '/build_link',
+        { junction = true, dir = true }
+      )
+    end)
+
+    after_each(function()
+      vim.uv.fs_unlink(test_source_path .. '/build_link')
+    end)
+
     it('works', function()
       eq(
         { test_build_dir .. '/build' },
         vim.fs.find('build', { path = nvim_dir, upward = true, type = 'directory' })
       )
       eq({ nvim_prog }, vim.fs.find(nvim_prog_basename, { path = test_build_dir, type = 'file' }))
+
+      eq(
+        { nvim_prog, test_source_path .. '/build_link/bin/' .. nvim_prog_basename },
+        vim.fs.find(nvim_prog_basename, {
+          path = test_source_path,
+          type = 'file',
+          limit = 2,
+          follow = true,
+        })
+      )
+
+      eq(
+        { nvim_prog },
+        vim.fs.find(nvim_prog_basename, {
+          path = test_source_path,
+          type = 'file',
+          limit = 2,
+          follow = false,
+        })
+      )
 
       local parent, name = nvim_dir:match('^(.*/)([^/]+)$')
       eq({ nvim_dir }, vim.fs.find(name, { path = parent, upward = true, type = 'directory' }))
