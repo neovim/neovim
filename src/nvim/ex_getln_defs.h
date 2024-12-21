@@ -65,4 +65,6 @@ struct cmdline_info {
   char special_char;            ///< last putcmdline char (used for redraws)
   bool special_shift;           ///< shift of last putcmdline char
   CmdRedraw redraw_state;       ///< needed redraw for external cmdline
+  bool one_key;                 ///< return after one key press for button prompt
+  bool *mouse_used;             ///< mouse clicked in prompt
 };

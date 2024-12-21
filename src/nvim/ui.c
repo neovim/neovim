@@ -377,6 +377,7 @@ void ui_attach_impl(RemoteUI *ui, uint64_t chanid)
   if (ui_count == MAX_UI_COUNT) {
     abort();
   }
+
   if (!ui->ui_ext[kUIMultigrid] && !ui->ui_ext[kUIFloatDebug]
       && !ui_client_channel_id) {
     ui_comp_attach(ui);
@@ -718,10 +719,10 @@ void ui_call_event(char *name, bool fast, Array args)
   bool handled = false;
   UIEventCallback *event_cb;
 
-  // Prompt messages should be shown immediately so must be safe
+  // Return prompt is still a non-fast event, other prompt messages are
+  // followed by a "cmdline_show" event.
   if (strcmp(name, "msg_show") == 0) {
-    char *kind = args.items[0].data.string.data;
-    fast = !kind || ((strncmp(kind, "confirm", 7) != 0 && strstr(kind, "_prompt") == NULL));
+    fast = !strequal(args.items[0].data.string.data, "return_prompt");
   }
 
   map_foreach(&ui_event_cbs, ui_event_ns_id, event_cb, {
