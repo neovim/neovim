@@ -158,6 +158,9 @@ TREESITTER
 • New |TSNode:child_with_descendant()|, which is nearly identical to
   |TSNode:child_containing_descendant()| except that it can return the
   descendant itself.
+• |vim.treesitter.get_parser()| and |vim.treesitter.start()| no longer parse
+  the tree before returning. Users must manually ensure that the tree is
+  parsed after these functions, using |LanguageTree:parse()|.
 
 TUI
 

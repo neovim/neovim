@@ -61,8 +61,6 @@ function M._create_parser(bufnr, lang, opts)
     { on_bytes = bytes_cb, on_detach = detach_cb, on_reload = reload_cb, preview = true }
   )
 
-  self:parse(nil, function() end)
-
   return self
 end
 
