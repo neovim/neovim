@@ -244,7 +244,7 @@ void msg_grid_validate(void)
 int verb_msg(const char *s)
 {
   verbose_enter();
-  int n = msg_hl_keep(s, 0, false, false);
+  int n = msg_keep(s, 0, false, false);
   verbose_leave();
 
   return n;
@@ -257,7 +257,7 @@ int verb_msg(const char *s)
 bool msg(const char *s, const int hl_id)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  return msg_hl_keep(s, hl_id, false, false);
+  return msg_keep(s, hl_id, false, false);
 }
 
 /// Similar to msg_outtrans_len, but support newlines and tabs.
@@ -278,7 +278,7 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
         msg_clr_eos();
         *need_clear = false;
       }
-      msg_putchar_hl((uint8_t)(*s), hl_id);
+      msg_putchar_hl_id((uint8_t)(*s), hl_id);
       chunk = s + 1;
     }
     s++;
@@ -309,7 +309,7 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history)
 }
 
 /// @param keep set keep_msg if it doesn't scroll
-bool msg_hl_keep(const char *s, int hl_id, bool keep, bool multiline)
+bool msg_keep(const char *s, int hl_id, bool keep, bool multiline)
   FUNC_ATTR_NONNULL_ALL
 {
   static int entered = 0;
@@ -514,7 +514,7 @@ int smsg(int hl_id, const char *s, ...)
   return msg(IObuff, hl_id);
 }
 
-int smsg_hl_keep(int hl_id, const char *s, ...)
+int smsg_keep(int hl_id, const char *s, ...)
   FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;
@@ -522,7 +522,7 @@ int smsg_hl_keep(int hl_id, const char *s, ...)
   va_start(arglist, s);
   vim_vsnprintf(IObuff, IOSIZE, s, arglist);
   va_end(arglist);
-  return msg_hl_keep(IObuff, hl_id, true, false);
+  return msg_keep(IObuff, hl_id, true, false);
 }
 
 // Remember the last sourcing name/lnum used in an error message, so that it
@@ -767,7 +767,7 @@ bool emsg_multiline(const char *s, bool multiline)
 
   // Display the error message itself.
   msg_nowait = false;  // Wait for this msg.
-  return msg_hl_keep(s, hl_id, false, multiline);
+  return msg_keep(s, hl_id, false, multiline);
 }
 
 /// emsg() - display an error message
@@ -1193,7 +1193,7 @@ void ex_messages(exarg_T *eap)
       if (kv_size(p->multihl)) {
         msg_multihl(p->multihl, p->kind, false);
       } else if (p->msg != NULL) {
-        msg_hl_keep(p->msg, p->hl_id, false, p->multiline);
+        msg_keep(p->msg, p->hl_id, false, p->multiline);
       }
     }
     msg_hist_off = false;
@@ -1427,7 +1427,7 @@ static void hit_return_msg(bool newline_sb)
     msg_puts(_("Interrupt: "));
   }
 
-  msg_puts_hl(_("Press ENTER or type command to continue"), HLF_R, false);
+  msg_puts_hl_id(_("Press ENTER or type command to continue"), HLF_R, false);
   if (!msg_use_printf()) {
     msg_clr_eos();
   }
@@ -1569,10 +1569,10 @@ void msg_starthere(void)
 
 void msg_putchar(int c)
 {
-  msg_putchar_hl(c, 0);
+  msg_putchar_hl_id(c, 0);
 }
 
-void msg_putchar_hl(int c, int hl_id)
+void msg_putchar_hl_id(int c, int hl_id)
 {
   char buf[MB_MAXCHAR + 1];
 
@@ -1584,7 +1584,7 @@ void msg_putchar_hl(int c, int hl_id)
   } else {
     buf[utf_char2bytes(c, buf)] = NUL;
   }
-  msg_puts_hl(buf, hl_id, false);
+  msg_puts_hl_id(buf, hl_id, false);
 }
 
 void msg_outnum(int n)
@@ -1597,10 +1597,10 @@ void msg_outnum(int n)
 
 void msg_home_replace(const char *fname)
 {
-  msg_home_replace_hl(fname, 0);
+  msg_home_replace_hl_id(fname, 0);
 }
 
-static void msg_home_replace_hl(const char *fname, int hl_id)
+static void msg_home_replace_hl_id(const char *fname, int hl_id)
 {
   char *name = home_replace_save(NULL, fname);
   msg_outtrans(name, hl_id, false);
@@ -1628,7 +1628,7 @@ const char *msg_outtrans_one(const char *p, int hl_id, bool hist)
     msg_outtrans_len(p, l, hl_id, hist);
     return p + l;
   }
-  msg_puts_hl(transchar_byte_buf(NULL, (uint8_t)(*p)), hl_id, hist);
+  msg_puts_hl_id(transchar_byte_buf(NULL, (uint8_t)(*p)), hl_id, hist);
   return p + 1;
 }
 
@@ -1672,7 +1672,7 @@ int msg_outtrans_len(const char *msgstr, int len, int hl_id, bool hist)
           msg_puts_len(plain_start, str - plain_start, hl_id, hist);
         }
         plain_start = str + mb_l;
-        msg_puts_hl(transchar_buf(NULL, c), hl_id == 0 ? HLF_8 : hl_id, false);
+        msg_puts_hl_id(transchar_buf(NULL, c), hl_id == 0 ? HLF_8 : hl_id, false);
         retval += char2cells(c);
       }
       len -= mb_l - 1;
@@ -1686,7 +1686,7 @@ int msg_outtrans_len(const char *msgstr, int len, int hl_id, bool hist)
           msg_puts_len(plain_start, str - plain_start, hl_id, hist);
         }
         plain_start = str + 1;
-        msg_puts_hl(s, hl_id == 0 ? HLF_8 : hl_id, false);
+        msg_puts_hl_id(s, hl_id == 0 ? HLF_8 : hl_id, false);
         retval += (int)strlen(s);
       } else {
         retval++;
@@ -1767,7 +1767,7 @@ int msg_outtrans_special(const char *strstart, bool from, int maxlen)
       break;
     }
     // Highlight special keys
-    msg_puts_hl(text, (len > 1 && utfc_ptr2len(text) <= 1 ? hl_id : 0), false);
+    msg_puts_hl_id(text, (len > 1 && utfc_ptr2len(text) <= 1 ? hl_id : 0), false);
     retval += len;
   }
   return retval;
@@ -2077,7 +2077,7 @@ void msg_prt_line(const char *s, bool list)
     // TODO(bfredl): this is such baloney. need msg_put_schar
     char buf[MAX_SCHAR_SIZE];
     schar_get(buf, sc);
-    msg_puts_hl(buf, hl_id, false);
+    msg_puts_hl_id(buf, hl_id, false);
     col++;
   }
   msg_clr_eos();
@@ -2087,12 +2087,12 @@ void msg_prt_line(const char *s, bool list)
 /// Update msg_row and msg_col for the next message.
 void msg_puts(const char *s)
 {
-  msg_puts_hl(s, 0, false);
+  msg_puts_hl_id(s, 0, false);
 }
 
 void msg_puts_title(const char *s)
 {
-  msg_puts_hl(s, HLF_T, false);
+  msg_puts_hl_id(s, HLF_T, false);
 }
 
 /// Show a message in such a way that it always fits in the line.  Cut out a
@@ -2103,16 +2103,16 @@ void msg_outtrans_long(const char *longstr, int hl_id)
   int len = (int)strlen(longstr);
   int slen = len;
   int room = Columns - msg_col;
-  if (len > room && room >= 20) {
+  if (!ui_has(kUIMessages) && len > room && room >= 20) {
     slen = (room - 3) / 2;
     msg_outtrans_len(longstr, slen, hl_id, false);
-    msg_puts_hl("...", HLF_8, false);
+    msg_puts_hl_id("...", HLF_8, false);
   }
-  msg_outtrans_len(longstr + len - slen, slen, hl_id, len);
+  msg_outtrans_len(longstr + len - slen, slen, hl_id, false);
 }
 
 /// Basic function for writing a message with highlight id.
-void msg_puts_hl(const char *const s, const int hl_id, const bool hist)
+void msg_puts_hl_id(const char *const s, const int hl_id, const bool hist)
 {
   msg_puts_len(s, -1, hl_id, hist);
 }
@@ -2176,27 +2176,6 @@ void msg_puts_len(const char *const str, const ptrdiff_t len, int hl_id, bool hi
   }
 
   need_fileinfo = false;
-}
-
-/// Print a formatted message
-///
-/// Message printed is limited by #IOSIZE. Must not be used from inside
-/// msg_puts_hl_id().
-///
-/// @param[in]  hl_id  Highlight id.
-/// @param[in]  fmt  Format string.
-void msg_printf_hl(const int hl_id, const char *const fmt, ...)
-  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_PRINTF(2, 3)
-{
-  static char msgbuf[IOSIZE];
-
-  va_list ap;
-  va_start(ap, fmt);
-  const size_t len = (size_t)vim_vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap);
-  va_end(ap);
-
-  msg_scroll = true;
-  msg_puts_len(msgbuf, (ptrdiff_t)len, hl_id, true);
 }
 
 static void msg_ext_emit_chunk(void)
@@ -3751,7 +3730,7 @@ void display_confirm_msg(void)
   confirm_msg_used++;
   if (confirm_msg != NULL) {
     msg_ext_set_kind("confirm");
-    msg_puts_hl(confirm_msg, HLF_M, false);
+    msg_puts_hl_id(confirm_msg, HLF_M, false);
   }
   confirm_msg_used--;
 }

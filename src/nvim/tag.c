@@ -815,10 +815,10 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
     msg_didout = false;     // overwrite previous message
   }
   msg_start();
-  msg_puts_hl(_("  # pri kind tag"), HLF_T, false);
+  msg_puts_hl_id(_("  # pri kind tag"), HLF_T, false);
   msg_clr_eos();
   taglen_advance(taglen);
-  msg_puts_hl(_("file\n"), HLF_T, false);
+  msg_puts_hl_id(_("file\n"), HLF_T, false);
 
   for (int i = 0; i < num_matches && !got_int; i++) {
     parse_match(matches[i], &tagp);
@@ -891,7 +891,7 @@ static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, cha
           }
           p = msg_outtrans_one(p, hl_id, false);
           if (*p == TAB) {
-            msg_puts_hl(" ", hl_id, false);
+            msg_puts_hl_id(" ", hl_id, false);
             break;
           }
           if (*p == ':') {

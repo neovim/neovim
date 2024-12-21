@@ -1120,10 +1120,10 @@ int showmatches(expand_T *xp, bool wildmenu)
     }
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-      msg_puts_hl(_("tagname"), HLF_T, false);
+      msg_puts_hl_id(_("tagname"), HLF_T, false);
       msg_clr_eos();
       msg_advance(maxlen - 3);
-      msg_puts_hl(_(" kind file\n"), HLF_T, false);
+      msg_puts_hl_id(_(" kind file\n"), HLF_T, false);
     }
 
     // list the files line by line

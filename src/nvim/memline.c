@@ -856,10 +856,10 @@ void ml_recover(bool checkext)
   // try to read block 0
   if ((hp = mf_get(mfp, 0, 1)) == NULL) {
     msg_start();
-    msg_puts_hl(_("Unable to read block 0 from "), hl_id, true);
+    msg_puts_hl_id(_("Unable to read block 0 from "), hl_id, true);
     msg_outtrans(mfp->mf_fname, hl_id, true);
-    msg_puts_hl(_("\nMaybe no changes were made or Nvim did not update the swap file."), hl_id,
-                true);
+    msg_puts_hl_id(_("\nMaybe no changes were made or Nvim did not update the swap file."),
+                   hl_id, true);
     msg_end();
     goto theend;
   }
@@ -867,8 +867,8 @@ void ml_recover(bool checkext)
   if (strncmp(b0p->b0_version, "VIM 3.0", 7) == 0) {
     msg_start();
     msg_outtrans(mfp->mf_fname, 0, true);
-    msg_puts_hl(_(" cannot be used with this version of Nvim.\n"), 0, true);
-    msg_puts_hl(_("Use Vim version 3.0.\n"), 0, true);
+    msg_puts_hl_id(_(" cannot be used with this version of Nvim.\n"), 0, true);
+    msg_puts_hl_id(_("Use Vim version 3.0.\n"), 0, true);
     msg_end();
     goto theend;
   }
@@ -879,12 +879,12 @@ void ml_recover(bool checkext)
   if (b0_magic_wrong(b0p)) {
     msg_start();
     msg_outtrans(mfp->mf_fname, hl_id, true);
-    msg_puts_hl(_(" cannot be used on this computer.\n"), hl_id, true);
-    msg_puts_hl(_("The file was created on "), hl_id, true);
+    msg_puts_hl_id(_(" cannot be used on this computer.\n"), hl_id, true);
+    msg_puts_hl_id(_("The file was created on "), hl_id, true);
     // avoid going past the end of a corrupted hostname
     b0p->b0_fname[0] = NUL;
-    msg_puts_hl(b0p->b0_hname, hl_id, true);
-    msg_puts_hl(_(",\nor the file has been damaged."), hl_id, true);
+    msg_puts_hl_id(b0p->b0_hname, hl_id, true);
+    msg_puts_hl_id(_(",\nor the file has been damaged."), hl_id, true);
     msg_end();
     goto theend;
   }
@@ -898,7 +898,8 @@ void ml_recover(bool checkext)
     if (mfp->mf_page_size < previous_page_size) {
       msg_start();
       msg_outtrans(mfp->mf_fname, hl_id, true);
-      msg_puts_hl(_(" has been damaged (page size is smaller than minimum value).\n"), hl_id, true);
+      msg_puts_hl_id(_(" has been damaged (page size is smaller than minimum value).\n"),
+                     hl_id, true);
       msg_end();
       goto theend;
     }

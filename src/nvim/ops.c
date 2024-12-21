@@ -258,7 +258,7 @@ void op_shift(oparg_T *oap, bool curs_top, int amount)
     vim_snprintf(IObuff, IOSIZE,
                  NGETTEXT(msg_line_single, msg_line_plural, oap->line_count),
                  (int64_t)oap->line_count, op, amount);
-    msg_hl_keep(IObuff, 0, true, false);
+    msg_keep(IObuff, 0, true, false);
   }
 
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
@@ -3825,7 +3825,7 @@ void ex_display(exarg_T *eap)
         int n = Columns - 11;
         for (size_t j = 0; j < yb->y_size && n > 1; j++) {
           if (j) {
-            msg_puts_hl("^J", hl_id, false);
+            msg_puts_hl_id("^J", hl_id, false);
             n -= 2;
           }
           for (p = yb->y_array[j].data;
@@ -3836,7 +3836,7 @@ void ex_display(exarg_T *eap)
           }
         }
         if (n > 1 && yb->y_type == kMTLineWise) {
-          msg_puts_hl("^J", hl_id, false);
+          msg_puts_hl_id("^J", hl_id, false);
         }
       }
       os_breakcheck();

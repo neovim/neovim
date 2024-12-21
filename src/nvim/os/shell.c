@@ -1102,7 +1102,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, bool eo
   const char *end = output + *count;
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
-      msg_putchar_hl((uint8_t)(*p), 0);
+      msg_putchar_hl_id((uint8_t)(*p), 0);
       p++;
     } else {
       // Note: this is not 100% precise:
