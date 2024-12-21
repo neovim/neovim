@@ -33,6 +33,7 @@ local tbl_map = vim.tbl_map
 local tbl_filter = vim.tbl_filter
 local endswith = vim.endswith
 local check_close = n.check_close
+local luaclient2 = require('test.client2.neovim')
 
 local testlog = 'Xtest-startupspec-log'
 
@@ -154,8 +155,9 @@ describe('startup', function()
 
     it('failure modes', function()
       -- nvim -l <empty>
-      matches('nvim%.?e?x?e?: Argument missing after: "%-l"', fn.system({ nvim_prog, '-l' }))
-      eq(1, eval('v:shell_error'))
+      local r = luaclient2.new_proc({ nvim_prog, '-l' })
+      matches('nvim%.?e?x?e?: Argument missing after: "%-l"', r.stderr .. r.stdout)
+      eq(1, r.code)
     end)
 
     it('os.exit() sets Nvim exitcode', function()
@@ -182,6 +184,14 @@ describe('startup', function()
     end)
 
     it('Lua-error sets Nvim exitcode', function()
+      -- local proc = luaclient2.new_proc({ nvim_prog, '--listen' })
+      local uv_stream = require('test.client.uv_stream')
+      local ProcStream = uv_stream.ProcStream
+      local proc = ProcStream.spawn({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' })
+      proc:read_start()
+      proc:wait()
+      -- proc:close()
+      eq('x', proc.stdout .. proc.stderr)
       eq(0, eval('v:shell_error'))
       matches(
         'E5113: .* my pearls!!',
