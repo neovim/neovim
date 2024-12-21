@@ -164,6 +164,9 @@ TREESITTER
 • New |TSNode:child_with_descendant()|, which is nearly identical to
   |TSNode:child_containing_descendant()| except that it can return the
   descendant itself.
+• |LanguageTree:trees()| no longer guarantees that the returned table is
+  list-like even after a full parse. Always use |next()| or |pairs()| to
+  access it.
 
 TUI
 
@@ -310,6 +313,9 @@ TREESITTER
 • |treesitter-directive-trim!| can trim all whitespace (not just empty lines)
   from both sides of a node.
 • |vim.treesitter.get_captures_at_pos()| now returns the `id` of each capture
+• |LanguageTree:parse()| runs injection query only on the provided list of
+  ranges as long as the language does not have a combined injection,
+  significantly improving |treesitter-highlight| performance.
 
 TUI
 
