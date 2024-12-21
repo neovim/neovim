@@ -5,12 +5,13 @@
 
 1. Install [build prerequisites](#build-prerequisites) on your system
 2. `git clone https://github.com/neovim/neovim`
-3. `cd neovim && make CMAKE_BUILD_TYPE=RelWithDebInfo`
+3. `cd neovim`
     - If you want the **stable release**, also run `git checkout stable`.
+4. `make CMAKE_BUILD_TYPE=RelWithDebInfo`
     - If you want to install to a custom location, set `CMAKE_INSTALL_PREFIX`. See also [INSTALL.md](./INSTALL.md#install-from-source).
     - On BSD, use `gmake` instead of `make`.
     - To build on Windows, see the [Building on Windows](#building-on-windows) section. _MSVC (Visual Studio) is recommended._
-4. `sudo make install`
+5. `sudo make install`
     - Default install location is `/usr/local`
     - On Debian/Ubuntu, instead of `sudo make install`, you can try `cd build && cpack -G DEB && sudo dpkg -i nvim-linux64.deb` to build DEB-package and install it. This helps ensure clean removal of installed files. Note: This is an unsupported, "best-effort" feature of the Nvim build.
 
