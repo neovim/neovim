@@ -450,16 +450,20 @@ function lsp._resolve_config(name)
   if not econfig.resolved_config then
     -- Resolve configs from lsp/*.lua
     -- Calls to vim.lsp.config in lsp/* have a lower precedence than calls from other sites.
-    local orig_configs = lsp.config._configs
-    lsp.config._configs = {}
-    pcall(vim.cmd.runtime, { ('lsp/%s.lua'):format(name), bang = true })
-    local rtp_configs = lsp.config._configs
-    lsp.config._configs = orig_configs
+    local rtp_config = {} ---@type vim.lsp.Config
+    for _, v in ipairs(api.nvim_get_runtime_file(('lsp/%s.lua'):format(name), true)) do
+      local config = assert(loadfile(v))() ---@type any?
+      if type(config) == 'table' then
+        rtp_config = vim.tbl_deep_extend('force', rtp_config, config)
+      else
+        log.warn(string.format('%s does not return a table, ignoring', v))
+      end
+    end
 
     local config = vim.tbl_deep_extend(
       'force',
       lsp.config._configs['*'] or {},
-      rtp_configs[name] or {},
+      rtp_config,
       lsp.config._configs[name] or {}
     )
 

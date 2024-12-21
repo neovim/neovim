@@ -74,12 +74,8 @@ configurations, in increasing priority, from the following:
 
 1. Configuration defined for the `'*'` name.
 
-2. Configuration from the result of sourcing all `lsp/<name>.lua` files
-   in 'runtimepath' for a server of name `name`.
-
-   Note: because of this, calls to |vim.lsp.config()| in `lsp/*.lua` are
-   treated independently to other calls. This ensures configurations
-   defined in `lsp/*.lua` have a lower priority.
+2. Configuration from the result of merging all tables returned by
+   `lsp/<name>.lua` files in 'runtimepath' for a server of name `name`.
 
 3. Configurations defined anywhere else.
 
@@ -102,11 +98,11 @@ Given: >lua
   })
 
   -- Defined in ../lsp/clangd.lua
-  vim.lsp.config('clangd', {
+  return {
     cmd = { 'clangd' },
     root_markers = { '.clangd', 'compile_commands.json' },
     filetypes = { 'c', 'cpp' },
-  })
+  }
 
   -- Defined in init.lua
   vim.lsp.config('clangd', {
