@@ -5,7 +5,8 @@
 #include "vterm/vterm.h"
 
 int parser_text(const char bytes[], size_t len, void *user);
-int parser_csi(const char *leader, const long args[], int argcount, const char *intermed, char command, void *user);
+int parser_csi(const char *leader, const long args[], int argcount, const char *intermed,
+               char command, void *user);
 int parser_osc(int command, VTermStringFragment frag, void *user);
 int parser_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user);
 int parser_apc(VTermStringFragment frag, void *user);
