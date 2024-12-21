@@ -1,6 +1,7 @@
 local api = vim.api
 local language = require('vim.treesitter.language')
 local memoize = vim.func._memoize
+local cmp_ge = require('vim.treesitter._range').cmp_pos.ge
 
 local M = {}
 
@@ -875,24 +876,33 @@ end
 ---@param source (integer|string) Source buffer or string to extract text from
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
+---@param opts? { col_begin?: integer, col_end?: integer } Optional parameters.
 ---
----@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch):
+---@return (fun(end_line: integer|nil, end_col: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch):
 ---        capture id, capture node, metadata, match
 ---
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
-function Query:iter_captures(node, source, start, stop)
+function Query:iter_captures(node, source, start, stop, opts)
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
 
+  opts = opts or {}
   start, stop = value_or_node_range(start, stop, node)
 
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, { match_limit = 256 })
+  local cursor_opts = {
+    row_begin = start,
+    col_begin = opts.col_begin,
+    row_end = stop,
+    col_end = opts.col_end,
+    match_limit = 256,
+  }
+  local cursor = vim._create_ts_querycursor(node, self.query, cursor_opts)
 
   local apply_directives = memoize(match_id_hash, self.apply_directives, true)
   local match_preds = memoize(match_id_hash, self.match_preds, true)
 
-  local function iter(end_line)
+  local function iter(end_line, end_col)
     local capture, captured_node, match = cursor:next_capture()
 
     if not capture then
@@ -902,10 +912,11 @@ function Query:iter_captures(node, source, start, stop)
     if not match_preds(self, match, source) then
       local match_id = match:info()
       cursor:remove_match(match_id)
-      if end_line and captured_node:range() > end_line then
+      local row, col = captured_node:range()
+      if end_line and cmp_ge(row, col, end_line, end_col or 0) then
         return nil, captured_node, nil, nil
       end
-      return iter(end_line) -- tail call: try next match
+      return iter(end_line, end_col) -- tail call: try next match
     end
 
     local metadata = apply_directives(self, match, source)
@@ -961,8 +972,12 @@ function Query:iter_matches(node, source, start, stop, opts)
   end
 
   start, stop = value_or_node_range(start, stop, node)
+  opts.row_begin = start
+  opts.col_begin = 0
+  opts.row_end = stop
+  opts.col_end = 0
 
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
+  local cursor = vim._create_ts_querycursor(node, self.query, opts)
 
   local function iter()
     local match = cursor:next_match()
