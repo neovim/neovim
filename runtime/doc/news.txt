@@ -158,6 +158,11 @@ TREESITTER
   if no languages are explicitly registered.
 • |vim.treesitter.language.add()| returns `true` if a parser was loaded
   successfully and `nil,errmsg` otherwise instead of throwing an error.
+• |vim.treesitter.get_parser()| and |vim.treesitter.start()| no longer parse
+  the tree before returning. Scripts must call |LanguageTree:parse()| explicitly. >lua
+    local p = vim.treesitter.get_parser(0, 'c')
+    p:parse()
+<
 
 TUI
 

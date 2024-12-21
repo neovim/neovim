@@ -148,8 +148,6 @@ function TSHighlighter.new(tree, opts)
     vim.opt_local.spelloptions:append('noplainbuffer')
   end)
 
-  self.tree:parse(nil, function() end)
-
   return self
 end
 

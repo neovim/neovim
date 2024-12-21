@@ -1142,11 +1142,13 @@ print()
       feed(':set ft=help<cr>')
 
       exec_lua(function()
-        vim.treesitter.get_parser(0, 'vimdoc', {
-          injections = {
-            vimdoc = '((codeblock (language) @injection.language (code) @injection.content) (#set! injection.include-children))',
-          },
-        })
+        vim.treesitter
+          .get_parser(0, 'vimdoc', {
+            injections = {
+              vimdoc = '((codeblock (language) @injection.language (code) @injection.content) (#set! injection.include-children))',
+            },
+          })
+          :parse()
       end)
     end)
 
