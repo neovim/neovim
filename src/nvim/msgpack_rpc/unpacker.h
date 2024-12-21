@@ -1,8 +1,10 @@
 #pragma once
 
 #include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "mpack/mpack_core.h"
 #include "mpack/object.h"
 #include "nvim/api/private/defs.h"

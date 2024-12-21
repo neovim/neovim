@@ -1,11 +1,11 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stddef.h>
+#include <stddef.h>  // IWYU pragma: keep
 #include <stdint.h>
-#include <string.h>
+#include <string.h>  // IWYU pragma: keep
 
-#include "nvim/api/private/defs.h"
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/msgpack_rpc/packer_defs.h"
 
 #define mpack_w(b, byte) *(*(b))++ = (char)(byte);

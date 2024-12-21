@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "klib/kvec.h"
@@ -21,6 +22,7 @@
 #include "nvim/garray_defs.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/vim_defs.h"
 #include "nvim/viml/parser/expressions.h"

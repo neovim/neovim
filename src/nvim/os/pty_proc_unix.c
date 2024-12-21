@@ -30,6 +30,7 @@
 #endif
 
 #include "auto/config.h"
+#include "klib/kvec.h"
 #include "nvim/eval/typval.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"

@@ -4,10 +4,10 @@
 #include <lua.h>
 #include <stdbool.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/usercmd.h"  // IWYU pragma: keep

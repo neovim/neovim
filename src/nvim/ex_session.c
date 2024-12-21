@@ -9,10 +9,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/arglist.h"
 #include "nvim/arglist_defs.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/errors.h"

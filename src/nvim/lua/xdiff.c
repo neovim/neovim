@@ -1,4 +1,5 @@
 #include <lauxlib.h>
+#include <limits.h>
 #include <lua.h>
 #include <stdbool.h>
 #include <stdint.h>

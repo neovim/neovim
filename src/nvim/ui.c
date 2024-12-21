@@ -6,7 +6,6 @@
 #include <string.h>
 #include <uv.h>
 
-#include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/api/ui.h"

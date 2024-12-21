@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/api/private/defs.h"
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 
 /// Flags for shada_read_file and children
 typedef enum {
