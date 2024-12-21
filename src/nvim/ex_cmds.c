@@ -1469,7 +1469,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, bool list)
   if (curwin->w_p_nu || use_number) {
     vim_snprintf(numbuf, sizeof(numbuf), "%*" PRIdLINENR " ",
                  number_width(curwin), lnum);
-    msg_puts_hl(numbuf, HLF_N + 1, false);  // Highlight line nrs.
+    msg_puts_hl_id(numbuf, HLF_N + 1, false);  // Highlight line nrs.
   }
   msg_prt_line(ml_get(lnum), list);
 }

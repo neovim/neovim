@@ -4234,7 +4234,7 @@ static void show_pat_in_path(char *line, int type, bool did_show, int action, FI
       msg_puts(IObuff);
       snprintf(IObuff, IOSIZE, "%4" PRIdLINENR, *lnum);  // Show line nr.
       // Highlight line numbers.
-      msg_puts_hl(IObuff, HLF_N, false);
+      msg_puts_hl_id(IObuff, HLF_N, false);
       msg_puts(" ");
     }
     msg_prt_line(line, false);

@@ -7875,7 +7875,7 @@ void ex_echo(exarg_T *eap)
           msg_start();
         }
       } else if (eap->cmdidx == CMD_echo) {
-        msg_puts_hl(" ", echo_hl_id, false);
+        msg_puts_hl_id(" ", echo_hl_id, false);
       }
       char *tofree = encode_tv2echo(&rettv, NULL);
       if (*tofree != NUL) {

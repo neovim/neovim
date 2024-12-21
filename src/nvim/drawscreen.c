@@ -989,7 +989,7 @@ int showmode(void)
     lines_left = 0;
 
     if (do_mode) {
-      msg_puts_hl("--", hl_id, false);
+      msg_puts_hl_id("--", hl_id, false);
       // CTRL-X in Insert mode
       if (edit_submode != NULL && !shortmess(SHM_COMPLETIONMENU)) {
         // These messages can get long, avoid a wrap in a narrow window.
@@ -1009,49 +1009,49 @@ int showmode(void)
           }
           if (length - vim_strsize(edit_submode) > 0) {
             if (edit_submode_pre != NULL) {
-              msg_puts_hl(edit_submode_pre, hl_id, false);
+              msg_puts_hl_id(edit_submode_pre, hl_id, false);
             }
-            msg_puts_hl(edit_submode, hl_id, false);
+            msg_puts_hl_id(edit_submode, hl_id, false);
           }
           if (edit_submode_extra != NULL) {
-            msg_puts_hl(" ", hl_id, false);  // Add a space in between.
+            msg_puts_hl_id(" ", hl_id, false);  // Add a space in between.
             int sub_id = edit_submode_highl < HLF_COUNT ? (int)edit_submode_highl : hl_id;
-            msg_puts_hl(edit_submode_extra, sub_id, false);
+            msg_puts_hl_id(edit_submode_extra, sub_id, false);
           }
         }
       } else {
         if (State & MODE_TERMINAL) {
-          msg_puts_hl(_(" TERMINAL"), hl_id, false);
+          msg_puts_hl_id(_(" TERMINAL"), hl_id, false);
         } else if (State & VREPLACE_FLAG) {
-          msg_puts_hl(_(" VREPLACE"), hl_id, false);
+          msg_puts_hl_id(_(" VREPLACE"), hl_id, false);
         } else if (State & REPLACE_FLAG) {
-          msg_puts_hl(_(" REPLACE"), hl_id, false);
+          msg_puts_hl_id(_(" REPLACE"), hl_id, false);
         } else if (State & MODE_INSERT) {
           if (p_ri) {
-            msg_puts_hl(_(" REVERSE"), hl_id, false);
+            msg_puts_hl_id(_(" REVERSE"), hl_id, false);
           }
-          msg_puts_hl(_(" INSERT"), hl_id, false);
+          msg_puts_hl_id(_(" INSERT"), hl_id, false);
         } else if (restart_edit == 'I' || restart_edit == 'i'
                    || restart_edit == 'a' || restart_edit == 'A') {
           if (curbuf->terminal) {
-            msg_puts_hl(_(" (terminal)"), hl_id, false);
+            msg_puts_hl_id(_(" (terminal)"), hl_id, false);
           } else {
-            msg_puts_hl(_(" (insert)"), hl_id, false);
+            msg_puts_hl_id(_(" (insert)"), hl_id, false);
           }
         } else if (restart_edit == 'R') {
-          msg_puts_hl(_(" (replace)"), hl_id, false);
+          msg_puts_hl_id(_(" (replace)"), hl_id, false);
         } else if (restart_edit == 'V') {
-          msg_puts_hl(_(" (vreplace)"), hl_id, false);
+          msg_puts_hl_id(_(" (vreplace)"), hl_id, false);
         }
         if (State & MODE_LANGMAP) {
           if (curwin->w_p_arab) {
-            msg_puts_hl(_(" Arabic"), hl_id, false);
+            msg_puts_hl_id(_(" Arabic"), hl_id, false);
           } else if (get_keymap_str(curwin, " (%s)", NameBuff, MAXPATHL)) {
-            msg_puts_hl(NameBuff, hl_id, false);
+            msg_puts_hl_id(NameBuff, hl_id, false);
           }
         }
         if ((State & MODE_INSERT) && p_paste) {
-          msg_puts_hl(_(" (paste)"), hl_id, false);
+          msg_puts_hl_id(_(" (paste)"), hl_id, false);
         }
 
         if (VIsual_active) {
@@ -1075,9 +1075,9 @@ int showmode(void)
           default:
             p = N_(" SELECT BLOCK"); break;
           }
-          msg_puts_hl(_(p), hl_id, false);
+          msg_puts_hl_id(_(p), hl_id, false);
         }
-        msg_puts_hl(" --", hl_id, false);
+        msg_puts_hl_id(" --", hl_id, false);
       }
 
       need_clear = true;
@@ -1180,10 +1180,10 @@ static void recording_mode(int hl_id)
     return;
   }
 
-  msg_puts_hl(_("recording"), hl_id, false);
+  msg_puts_hl_id(_("recording"), hl_id, false);
   char s[4];
   snprintf(s, ARRAY_SIZE(s), " @%c", reg_recording);
-  msg_puts_hl(s, hl_id, false);
+  msg_puts_hl_id(s, hl_id, false);
 }
 
 #define COL_RULER 17        // columns needed by standard ruler

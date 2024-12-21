@@ -1624,7 +1624,7 @@ static void highlight_list_one(const int id)
   if (sgp->sg_link && !got_int) {
     syn_list_header(didh, 0, id, true);
     didh = true;
-    msg_puts_hl("links to", HLF_D, false);
+    msg_puts_hl_id("links to", HLF_D, false);
     msg_putchar(' ');
     msg_outtrans(hl_table[hl_table[id - 1].sg_link - 1].sg_name, 0, false);
   }
@@ -1754,8 +1754,8 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
   didh = true;
   if (!got_int) {
     if (*name != NUL) {
-      msg_puts_hl(name, HLF_D, false);
-      msg_puts_hl("=", HLF_D, false);
+      msg_puts_hl_id(name, HLF_D, false);
+      msg_puts_hl_id("=", HLF_D, false);
     }
     msg_outtrans(ts, 0, false);
   }
@@ -1917,7 +1917,7 @@ bool syn_list_header(const bool did_header, const int outlen, const int id, bool
     if (endcol == Columns - 1 && endcol <= name_col) {
       msg_putchar(' ');
     }
-    msg_puts_hl("xxx", id, false);
+    msg_puts_hl_id("xxx", id, false);
     msg_putchar(' ');
   }
 
@@ -2372,7 +2372,7 @@ static void highlight_list(void)
 
 static void highlight_list_two(int cnt, int id)
 {
-  msg_puts_hl(&("N \bI \b!  \b"[cnt / 11]), id, false);
+  msg_puts_hl_id(&("N \bI \b!  \b"[cnt / 11]), id, false);
   msg_clr_eos();
   ui_flush();
   os_delay(cnt == 99 ? 40 : (uint64_t)cnt * 50, false);

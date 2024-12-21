@@ -2937,7 +2937,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
     msg_scroll = false;
   }
   msg_ext_set_kind("quickfix");
-  msg_hl_keep(gap->ga_data, 0, true, false);
+  msg_keep(gap->ga_data, 0, true, false);
   msg_scroll = (int)i;
 
   qfga_clear();
@@ -3198,7 +3198,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   msg_outtrans(IObuff, cursel ? HLF_QFL : qfFile_hl_id, false);
 
   if (qfp->qf_lnum != 0) {
-    msg_puts_hl(":", qfSep_hl_id, false);
+    msg_puts_hl_id(":", qfSep_hl_id, false);
   }
   garray_T *gap = qfga_get();
   if (qfp->qf_lnum != 0) {
@@ -3206,14 +3206,14 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
   ga_concat(gap, qf_types(qfp->qf_type, qfp->qf_nr));
   ga_append(gap, NUL);
-  msg_puts_hl(gap->ga_data, qfLine_hl_id, false);
-  msg_puts_hl(":", qfSep_hl_id, false);
+  msg_puts_hl_id(gap->ga_data, qfLine_hl_id, false);
+  msg_puts_hl_id(":", qfSep_hl_id, false);
   if (qfp->qf_pattern != NULL) {
     gap = qfga_get();
     qf_fmt_text(gap, qfp->qf_pattern);
     ga_append(gap, NUL);
     msg_puts(gap->ga_data);
-    msg_puts_hl(":", qfSep_hl_id, false);
+    msg_puts_hl_id(":", qfSep_hl_id, false);
   }
   msg_puts(" ");
 

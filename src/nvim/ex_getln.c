@@ -808,7 +808,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     if (ERROR_SET(&err)) {
       msg_putchar('\n');
       msg_scroll = true;
-      msg_puts_hl(err.msg, HLF_E, true);
+      msg_puts_hl_id(err.msg, HLF_E, true);
       api_clear_error(&err);
       redrawcmd();
     }
@@ -2662,7 +2662,7 @@ static void do_autocmd_cmdlinechanged(int firstc)
     if (ERROR_SET(&err)) {
       msg_putchar('\n');
       msg_scroll = true;
-      msg_puts_hl(err.msg, HLF_E, true);
+      msg_puts_hl_id(err.msg, HLF_E, true);
       api_clear_error(&err);
       redrawcmd();
     }
@@ -3142,8 +3142,9 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
 
 #define PRINT_ERRMSG(...) \
   do { \
+    msg_scroll = true; \
     msg_putchar('\n'); \
-    msg_printf_hl(HLF_E, __VA_ARGS__); \
+    smsg(HLF_E, __VA_ARGS__); \
     printed_errmsg = true; \
   } while (0)
   bool ret = true;
@@ -3790,7 +3791,7 @@ static void redrawcmdprompt(void)
     msg_putchar(ccline.cmdfirstc);
   }
   if (ccline.cmdprompt != NULL) {
-    msg_puts_hl(ccline.cmdprompt, ccline.hl_id, false);
+    msg_puts_hl_id(ccline.cmdprompt, ccline.hl_id, false);
     ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
     // do the reverse of cmd_startcol()
     if (ccline.cmdfirstc != NUL) {

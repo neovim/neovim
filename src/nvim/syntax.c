@@ -3399,9 +3399,9 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
     }
     if (spp->sp_flags & (HL_SYNC_HERE|HL_SYNC_THERE)) {
       if (spp->sp_flags & HL_SYNC_HERE) {
-        msg_puts_hl("grouphere", hl_id, false);
+        msg_puts_hl_id("grouphere", hl_id, false);
       } else {
-        msg_puts_hl("groupthere", hl_id, false);
+        msg_puts_hl_id("groupthere", hl_id, false);
       }
       msg_putchar(' ');
       if (spp->sp_sync_idx >= 0) {
@@ -3417,7 +3417,7 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
   // list the link, if there is one
   if (highlight_link_id(id - 1) && (did_header || link_only) && !got_int) {
     syn_list_header(did_header, 0, id, true);
-    msg_puts_hl("links to", hl_id, false);
+    msg_puts_hl_id("links to", hl_id, false);
     msg_putchar(' ');
     msg_outtrans(highlight_group_name(highlight_link_id(id - 1) - 1), 0, false);
   }
@@ -3427,7 +3427,7 @@ static void syn_list_flags(keyvalue_T *nlist, size_t nr_entries, int flags, int 
 {
   for (size_t i = 0; i < nr_entries; i++) {
     if (flags & nlist[i].key) {
-      msg_puts_hl(nlist[i].value, hl_id, false);
+      msg_puts_hl_id(nlist[i].value, hl_id, false);
       msg_putchar(' ');
     }
   }
@@ -3453,14 +3453,14 @@ static void syn_list_cluster(int id)
   if (SYN_CLSTR(curwin->w_s)[id].scl_list != NULL) {
     put_id_list("cluster", SYN_CLSTR(curwin->w_s)[id].scl_list, HLF_D);
   } else {
-    msg_puts_hl("cluster", HLF_D, false);
+    msg_puts_hl_id("cluster", HLF_D, false);
     msg_puts("=NONE");
   }
 }
 
 static void put_id_list(const char *const name, const int16_t *const list, const int hl_id)
 {
-  msg_puts_hl(name, hl_id, false);
+  msg_puts_hl_id(name, hl_id, false);
   msg_putchar('=');
   for (const int16_t *p = list; *p; p++) {
     if (*p >= SYNID_ALLBUT && *p < SYNID_TOP) {
@@ -3497,7 +3497,7 @@ static void put_pattern(const char *const s, const int c, const synpat_T *const 
   // May have to write "matchgroup=group"
   if (last_matchgroup != spp->sp_syn_match_id) {
     last_matchgroup = spp->sp_syn_match_id;
-    msg_puts_hl("matchgroup", hl_id, false);
+    msg_puts_hl_id("matchgroup", hl_id, false);
     msg_putchar('=');
     if (last_matchgroup == 0) {
       msg_outtrans("NONE", 0, false);
@@ -3508,7 +3508,7 @@ static void put_pattern(const char *const s, const int c, const synpat_T *const 
   }
 
   // Output the name of the pattern and an '=' or ' '.
-  msg_puts_hl(s, hl_id, false);
+  msg_puts_hl_id(s, hl_id, false);
   msg_putchar(c);
 
   // output the pattern, in between a char that is not in the pattern
@@ -3600,7 +3600,7 @@ static bool syn_list_keywords(const int id, const hashtab_T *const ht, bool did_
         }
         did_header = true;
         if (prev_contained != (kp->flags & HL_CONTAINED)) {
-          msg_puts_hl("contained", hl_id, false);
+          msg_puts_hl_id("contained", hl_id, false);
           msg_putchar(' ');
           prev_contained = (kp->flags & HL_CONTAINED);
         }
@@ -3614,17 +3614,17 @@ static bool syn_list_keywords(const int id, const hashtab_T *const ht, bool did_
           msg_putchar(' ');
           prev_next_list = kp->next_list;
           if (kp->flags & HL_SKIPNL) {
-            msg_puts_hl("skipnl", hl_id, false);
+            msg_puts_hl_id("skipnl", hl_id, false);
             msg_putchar(' ');
             prev_skipnl = (kp->flags & HL_SKIPNL);
           }
           if (kp->flags & HL_SKIPWHITE) {
-            msg_puts_hl("skipwhite", hl_id, false);
+            msg_puts_hl_id("skipwhite", hl_id, false);
             msg_putchar(' ');
             prev_skipwhite = (kp->flags & HL_SKIPWHITE);
           }
           if (kp->flags & HL_SKIPEMPTY) {
-            msg_puts_hl("skipempty", hl_id, false);
+            msg_puts_hl_id("skipempty", hl_id, false);
             msg_putchar(' ');
             prev_skipempty = (kp->flags & HL_SKIPEMPTY);
           }

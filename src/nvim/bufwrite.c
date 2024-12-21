@@ -1883,9 +1883,9 @@ nofail:
 
     retval = FAIL;
     if (end == 0) {
-      const int hl_id = HLF_E;  // Set highlight for error messages.
-      msg_puts_hl(_("\nWARNING: Original file may be lost or damaged\n"), hl_id, true);
-      msg_puts_hl(_("don't quit the editor until the file is successfully written!"), hl_id, true);
+      const int id = HLF_E;  // Set highlight for error messages.
+      msg_puts_hl_id(_("\nWARNING: Original file may be lost or damaged\n"), id, true);
+      msg_puts_hl_id(_("don't quit the editor until the file is successfully written!"), id, true);
 
       // Update the timestamp to avoid an "overwrite changed file"
       // prompt when writing again.
