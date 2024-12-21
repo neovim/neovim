@@ -1,8 +1,9 @@
-#include <string.h>
 #include <stdlib.h>
-#include "nvim/event/multiqueue.h"
+#include <string.h>
+
 #include "multiqueue.h"
 
+#include "nvim/event/multiqueue.h"
 
 void ut_multiqueue_put(MultiQueue *self, const char *str)
 {
