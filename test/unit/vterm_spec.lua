@@ -17,7 +17,6 @@ local bit = require('bit')
 --- @field VTERM_KEY_NONE integer
 --- @field VTERM_KEY_TAB integer
 --- @field VTERM_KEY_UP integer
---- @field VTERM_MAX_CHARS_PER_CELL integer
 --- @field VTERM_MOD_ALT integer
 --- @field VTERM_MOD_CTRL integer
 --- @field VTERM_MOD_SHIFT integer
@@ -80,6 +79,8 @@ local bit = require('bit')
 --- @field vterm_state_set_selection_callbacks function
 --- @field vterm_state_set_unrecognised_fallbacks function
 local vterm = t.cimport(
+  './src/nvim/mbyte.h',
+  './src/nvim/grid.h',
   './src/vterm/vterm.h',
   './src/vterm/vterm_internal.h',
   './test/unit/fixtures/vterm_test.h'
@@ -302,16 +303,12 @@ local function screen_chars(start_row, start_col, end_row, end_col, expected, sc
   rect['end_row'] = end_row
   rect['end_col'] = end_col
 
-  local len = vterm.vterm_screen_get_chars(screen, nil, 0, rect)
+  local len = vterm.vterm_screen_get_text(screen, nil, 0, rect)
 
-  local chars = t.ffi.new('uint32_t[?]', len)
-  vterm.vterm_screen_get_chars(screen, chars, len, rect)
+  local text = t.ffi.new('unsigned char[?]', len)
+  vterm.vterm_screen_get_text(screen, text, len, rect)
 
-  local actual = ''
-  for i = 0, tonumber(len) - 1 do
-    actual = actual .. string.char(chars[i])
-  end
-
+  local actual = t.ffi.string(text, len)
   t.eq(expected, actual)
 end
 
@@ -349,7 +346,7 @@ local function screen_row(row, expected, screen, end_col)
   local text = t.ffi.new('unsigned char[?]', len)
   vterm.vterm_screen_get_text(screen, text, len, rect)
 
-  t.eq(expected, t.ffi.string(text))
+  t.eq(expected, t.ffi.string(text, len))
 end
 
 local function screen_cell(row, col, expected, screen)
@@ -360,14 +357,20 @@ local function screen_cell(row, col, expected, screen)
   local cell = t.ffi.new('VTermScreenCell')
   vterm.vterm_screen_get_cell(screen, pos, cell)
 
+  local buf = t.ffi.new('unsigned char[32]')
+  vterm.schar_get(buf, cell.schar)
+
   local actual = '{'
-  for i = 0, vterm.VTERM_MAX_CHARS_PER_CELL - 1 do
-    if cell['chars'][i] ~= 0 then
-      if i > 0 then
-        actual = actual .. ','
-      end
-      actual = string.format('%s%02x', actual, cell['chars'][i])
+  local i = 0
+  while buf[i] > 0 do
+    local char = vterm.utf_ptr2char(buf + i)
+    local charlen = vterm.utf_ptr2len(buf + i)
+    if i > 0 then
+      actual = actual .. ','
     end
+    local invalid = char >= 128 and charlen == 1
+    actual = string.format('%s%s%02x', actual, invalid and '?' or '', char)
+    i = i + charlen
   end
   actual = string.format('%s} width=%d attrs={', actual, cell['width'])
   actual = actual .. (cell['attrs'].bold ~= 0 and 'B' or '')
@@ -962,8 +965,8 @@ describe('vterm', function()
 
     -- Spare combining chars get truncated
     reset(state, nil)
-    push('e' .. string.rep('\xCC\x81', 10), vt)
-    expect('putglyph 65,301,301,301,301,301 1 0,0') -- and nothing more
+    push('e' .. string.rep('\xCC\x81', 20), vt)
+    expect('putglyph 65,301,301,301,301,301,301,301,301,301,301,301,301,301,301 1 0,0') -- and nothing more
 
     reset(state, nil)
     push('e', vt)
@@ -3046,7 +3049,7 @@ describe('vterm', function()
     screen_cell(
       0,
       0,
-      '{65,301,302,303,304,305} width=1 attrs={} fg=rgb(240,240,240) bg=rgb(0,0,0)',
+      '{65,301,302,303,304,305,306,307,308,309,30a} width=1 attrs={} fg=rgb(240,240,240) bg=rgb(0,0,0)',
       screen
     )
 
@@ -3063,7 +3066,7 @@ describe('vterm', function()
     screen_cell(
       0,
       0,
-      '{65,301,301,301,301,301} width=1 attrs={} fg=rgb(240,240,240) bg=rgb(0,0,0)',
+      '{65,301,301,301,301,301,301,301,301,301,301,301,301,301,301} width=1 attrs={} fg=rgb(240,240,240) bg=rgb(0,0,0)',
       screen
     )
 
@@ -3125,7 +3128,7 @@ describe('vterm', function()
     screen = wantscreen(vt, { b = true })
     resize(20, 80, vt)
     expect(
-      'sb_pushline 80 = 54 6F 70\nsb_pushline 80 =\nsb_pushline 80 =\nsb_pushline 80 =\nsb_pushline 80 ='
+      'sb_pushline 80 = 54 6f 70\nsb_pushline 80 =\nsb_pushline 80 =\nsb_pushline 80 =\nsb_pushline 80 ='
     )
     -- TODO(dundargoc): fix or remove
     -- screen_row( 0  , "",screen)

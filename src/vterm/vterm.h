@@ -10,6 +10,7 @@ extern "C" {
 #include <stdbool.h>
 
 #include "nvim/macros_defs.h"
+#include "nvim/types_defs.h"
 #include "vterm_keycodes.h"
 
 #define VTERM_VERSION_MAJOR 0
@@ -18,11 +19,6 @@ extern "C" {
 
 #define VTERM_CHECK_VERSION \
         vterm_check_version(VTERM_VERSION_MAJOR, VTERM_VERSION_MINOR)
-
-/* Any cell can contain at most one basic printing character and 5 combining
- * characters. This number could be changed but will be ABI-incompatible if
- * you do */
-enum{ VTERM_MAX_CHARS_PER_CELL=6};
 
 typedef struct VTerm VTerm;
 typedef struct VTermState VTermState;
@@ -292,7 +288,7 @@ typedef enum {
 } VTermSelectionMask;
 
 typedef struct {
-  const uint32_t *chars;
+  schar_T schar;
   int             width;
   unsigned int    protected_cell:1;  /* DECSCA-protected against DECSEL/DECSED */
   unsigned int    dwl:1;             /* DECDWL or DECDHL double-width line */
@@ -528,7 +524,7 @@ enum {
 };
 
 typedef struct {
-  uint32_t chars[VTERM_MAX_CHARS_PER_CELL];
+  schar_T schar;
   char     width;
   VTermScreenCellAttrs attrs;
   VTermColor fg, bg;
