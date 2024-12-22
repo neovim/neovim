@@ -616,6 +616,7 @@ local extension = {
   janet = 'janet',
   jav = 'java',
   java = 'java',
+  jsh = 'java',
   jj = 'javacc',
   jjt = 'javacc',
   es = 'javascript',
