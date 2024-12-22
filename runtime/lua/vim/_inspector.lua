@@ -186,7 +186,7 @@ function vim.show_pos(bufnr, row, col, filter)
         capture,
         string.format(
           'priority: %d   language: %s',
-          capture.metadata.priority or vim.hl.priorities.treesitter,
+          capture.metadata.priority or vim.highlight.priorities.treesitter,
           capture.lang
         )
       )
