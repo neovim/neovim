@@ -784,7 +784,7 @@ will be set to zero, but can be changed and used for the replacing cmdline or
 message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
 must handle.
 
-["msg_show", kind, content, replace_last] ~
+["msg_show", kind, content, replace_last, history] ~
 	Display a message to the user.
 
 	kind
@@ -826,6 +826,9 @@ must handle.
 		   that are still visible.
 	    true:  Replace the message in the most-recent `msg_show` call,
 		   but any other visible message should still remain.
+
+	history
+	    True if the message was added to the |:messages| history.
 
 ["msg_clear"] ~
 	Clear all messages currently displayed by "msg_show". (Messages sent
