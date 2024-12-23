@@ -152,7 +152,7 @@ describe(':terminal cursor', function()
     end)
   end)
 
-  it('can be modified by application #3681', function()
+  it('can be modified by application #3681 #31685', function()
     skip(is_os('win'), '#31587')
 
     local states = {
@@ -181,7 +181,15 @@ describe(':terminal cursor', function()
             eq(0, screen._mode_info[terminal_mode_idx].blinkon)
             eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
           end
+
           eq(v.shape, screen._mode_info[terminal_mode_idx].cursor_shape)
+
+          -- Cell percentages are hard coded for each shape in terminal.c
+          if v.shape == 'horizontal' then
+            eq(20, screen._mode_info[terminal_mode_idx].cell_percentage)
+          elseif v.shape == 'vertical' then
+            eq(25, screen._mode_info[terminal_mode_idx].cell_percentage)
+          end
         end,
       })
     end
