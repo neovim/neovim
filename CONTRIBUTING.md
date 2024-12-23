@@ -83,7 +83,7 @@ a comment.
 ### Commit messages
 
 Follow the [conventional commits guidelines][conventional_commits] to *make reviews easier* and to make
-the VCS/git logs more valuable. The structure of a commit message is:
+the VCS/git logs more valuable (try `make lintcommit`). The structure of a commit message is:
 
     type(scope): subject
 
