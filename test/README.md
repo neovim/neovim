@@ -138,6 +138,163 @@ Debugging tests
   Then put `screen:snapshot_util()` anywhere in your test. See the comments in
   `test/functional/ui/screen.lua` for more info.
 
+Debugging Lua test code
+-----------------------
+
+Debugging Lua test code is a bit involved. Get your shopping list ready, you'll
+need to install and configure:
+
+1. [nvim-dap](https://github.com/mfussenegger/nvim-dap)
+2. [local-lua-debugger-vscode](https://github.com/mfussenegger/nvim-dap/wiki/Debug-Adapter-installation#local-lua-debugger-vscode)
+3. [nlua](https://github.com/mfussenegger/nlua)
+4. [one-small-step-for-vimkind](https://github.com/jbyuki/one-small-step-for-vimkind) (called `osv`)
+5. A `nbusted` command in `$PATH`. This command can be a copy of `busted` with
+   `exec '/usr/bin/lua5.1'"` replaced with `"exec '/usr/bin/nlua'"` (or the
+   path to your `nlua`)
+
+
+The setup roughly looks like this:
+
+```
+ ┌─────────────────────────┐
+ │ nvim used for debugging │◄────┐
+ └─────────────────────────┘     │
+            │                    │
+            ▼                    │
+   ┌─────────────────┐           │
+   │ local-lua-debug │           │
+   └─────────────────┘           │
+           │                     │
+           ▼                     │
+      ┌─────────┐                │
+      │ nbusted │                │
+      └─────────┘                │
+           │                     │
+           ▼                     │
+      ┌───────────┐              │
+      │ test-case │              │
+      └───────────┘              │
+           │                     │
+           ▼                     │
+   ┌────────────────────┐        │
+   │ nvim test-instance │        │
+   └────────────────────┘        │
+     │   ┌─────┐                 │
+     └──►│ osv │─────────────────┘
+         └─────┘
+```
+
+
+With these installed you can use a configuration like this:
+
+
+```lua
+local dap = require("dap")
+
+
+local function free_port()
+  local tcp = vim.loop.new_tcp()
+  assert(tcp)
+  tcp:bind('127.0.0.1', 0)
+  local port = tcp:getsockname().port
+  tcp:shutdown()
+  tcp:close()
+  return port
+end
+
+
+local name = "nvim-test-case" -- arbitrary name
+local config = {
+  name = name,
+
+  -- value of type must match the key used in `dap.adapters["local-lua"] = ...` from step 2)
+  type = "local-lua",
+
+  request = "launch",
+  cwd = "${workspaceFolder}",
+  program = {
+    command = "nbusted",
+  },
+  args = {
+    "--ignore-lua",
+    "--lazy",
+    "--helper=test/functional/preload.lua",
+    "--lpath=build/?.lua",
+    "--lpath=?.lua",
+
+    -- path to file to debug, could be replaced with a hardcoded string
+    function()
+      return vim.api.nvim_buf_get_name(0)
+    end,
+
+    -- You can filter to specific test-case by adding:
+    -- '--filter="' .. test_case_name .. '"',
+  },
+  env = {
+    OSV_PORT = free_port
+  }
+}
+
+-- Whenever the config is used it needs to launch a second debug session that attaches to `osv`
+-- This makes it possible to step into `exec_lua` code blocks
+setmetatable(config, {
+
+  __call = function(c)
+    ---@param session dap.Session
+    dap.listeners.after.event_initialized["nvim_debug"] = function(session)
+      if session.config.name ~= name then
+        return
+      end
+      dap.listeners.after.event_initialized["nvim_debug"] = nil
+      vim.defer_fn(function()
+        dap.run({
+          name = "attach-osv",
+          type = "nlua", -- value must match the `dap.adapters` definition key for osv
+          request = "attach",
+          port = session.config.env.OSV_PORT,
+        })
+      end, 500)
+    end
+
+    return c
+  end,
+})
+
+```
+
+You can either add this configuration to your `dap.configurations.lua` list as
+described in `:help dap-configuration` or create it dynamically in a
+user-command or function and call it directly via `dap.run(config)`. The latter
+is useful if you use tree-sitter to find the test case around a cursor location
+with a query like the following and set the `--filter` property to it.
+
+```query
+(function_call
+  name: (identifier) @name (#any-of? @name "describe" "it")
+  arguments: (arguments
+    (string) @str
+  )
+)
+```
+
+Limitations:
+
+- You need to add the following boilerplate to each spec file where you want to
+  be able to stop at breakpoints within the test-case code:
+
+```
+if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+  require("lldebugger").start()
+end
+```
+
+This is a [local-lua-debugger
+limitation](https://github.com/tomblind/local-lua-debugger-vscode?tab=readme-ov-file#busted)
+
+- You cannot step into code of files which get baked into the nvim binary like
+  the `shared.lua`.
+
+
 Filtering Tests
 ---------------
 
@@ -379,3 +536,6 @@ Number; !must be defined to function properly):
 
 - `NVIM_TEST_MAXTRACE` (U) (N): specifies maximum number of trace lines to
   keep. Default is 1024.
+
+- `OSV_PORT`: (F): launches `osv` listening on the given port within nvim test
+  instances.

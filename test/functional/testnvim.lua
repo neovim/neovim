@@ -48,6 +48,16 @@ M.nvim_argv = {
   'unlet g:colors_name',
   '--embed',
 }
+if os.getenv('OSV_PORT') then
+  table.insert(M.nvim_argv, '--cmd')
+  table.insert(
+    M.nvim_argv,
+    string.format(
+      "lua require('osv').launch({ port = %s, blocking = true })",
+      os.getenv('OSV_PORT')
+    )
+  )
+end
 
 -- Directory containing nvim.
 M.nvim_dir = M.nvim_prog:gsub('[/\\][^/\\]+$', '')
