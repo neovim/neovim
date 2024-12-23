@@ -17,6 +17,8 @@
 
 #ifdef HAVE_WASMTIME
 # include <wasm.h>
+
+# include "nvim/os/fs.h"
 #endif
 
 #include "nvim/api/private/helpers.h"
