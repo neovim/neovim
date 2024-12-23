@@ -227,8 +227,7 @@ end
 ---@field to? vim.Version
 local VersionRange = {}
 
---- @private
----
+---@nodoc
 ---@param version string|vim.Version
 function VersionRange:has(version)
   if type(version) == 'string' then
