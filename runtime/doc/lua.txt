@@ -3047,6 +3047,16 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
         (`string[]`) Normalized paths |vim.fs.normalize()| of all matching
         items
 
+vim.fs.is_relative_to({path}, {root})                *vim.fs.is_relative_to()*
+    Returns `true` if `path` is relative to `root`
+
+    Parameters: ~
+      • {path}  (`string`)
+      • {root}  (`string`)
+
+    Return: ~
+        (`boolean`)
+
 vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Concatenate directories and/or file paths into a single path with
     normalization (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)

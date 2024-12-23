@@ -263,6 +263,7 @@ LSP
 
 LUA
 
+• |vim.fs.is_relative_to()| checks if a path is relative to a root path
 • |vim.fs.rm()| can delete files and directories.
 • |vim.validate()| now has a new signature which uses less tables,
   is more performant and easier to read.
