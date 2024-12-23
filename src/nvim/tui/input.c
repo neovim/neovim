@@ -8,7 +8,6 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
-#include "nvim/event/stream.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"

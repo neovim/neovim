@@ -1,5 +1,6 @@
 /// Nvim's own UI client, which attaches to a child or remote Nvim server.
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>

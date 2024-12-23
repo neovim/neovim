@@ -7,11 +7,12 @@
 #include "nvim/api/vim.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
-#include "nvim/memory.h"
+#include "nvim/memory_defs.h"
+#include "nvim/types_defs.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/tabpage.c.generated.h"
+# include "api/tabpage.c.generated.h"  // IWYU pragma: keep
 #endif
 
 /// Gets the windows in a tabpage

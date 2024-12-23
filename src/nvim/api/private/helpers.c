@@ -31,13 +31,10 @@
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
-#include "nvim/ui.h"
-#include "nvim/ui_defs.h"
-#include "nvim/version.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/api_metadata.generated.h"
-# include "api/private/helpers.c.generated.h"
+# include "api/private/helpers.c.generated.h"  // IWYU pragma: keep
 #endif
 
 /// Start block that may cause Vimscript exceptions while evaluating another code

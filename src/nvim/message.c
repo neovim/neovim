@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -46,6 +47,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/ops.h"

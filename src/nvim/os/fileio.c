@@ -8,16 +8,13 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <string.h>
 #include <uv.h>
 
 #include "auto/config.h"
-#include "nvim/gettext_defs.h"
-#include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
-#include "nvim/message.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
@@ -28,7 +25,7 @@
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/fileio.c.generated.h"
+# include "os/fileio.c.generated.h"  // IWYU pragma: keep
 #endif
 
 /// Open file

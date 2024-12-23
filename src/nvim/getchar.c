@@ -2,7 +2,6 @@
 // file, manipulations with redo buffer and stuff buffer.
 
 #include <assert.h>
-#include <lauxlib.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -11,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
@@ -29,6 +29,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
+#include "nvim/ex_getln_defs.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
@@ -38,6 +39,7 @@
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
+#include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/mapping.h"
 #include "nvim/mapping_defs.h"
@@ -45,6 +47,7 @@
 #include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
@@ -53,6 +56,7 @@
 #include "nvim/ops.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fileio.h"
+#include "nvim/os/fileio_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"

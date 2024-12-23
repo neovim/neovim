@@ -1,16 +1,16 @@
-#include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unibilium.h>
+#include <uv.h>
 
 #include "nvim/memory.h"
 #include "nvim/tui/termkey/driver-ti.h"
 #include "nvim/tui/termkey/termkey-internal.h"
-#include "nvim/tui/termkey/termkey.h"
+#include "nvim/tui/termkey/termkey_defs.h"
 
 #ifndef _WIN32
 # include <unistd.h>

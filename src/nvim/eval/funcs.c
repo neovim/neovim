@@ -13,6 +13,8 @@
 #include <uv.h>
 
 #include "auto/config.h"
+#include "klib/kvec.h"
+#include "mpack/mpack_core.h"
 #include "mpack/object.h"
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
@@ -38,7 +40,6 @@
 #include "nvim/eval.h"
 #include "nvim/eval/buffer.h"
 #include "nvim/eval/decode.h"
-#include "nvim/eval/deprecated.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/executor.h"
 #include "nvim/eval/funcs.h"
@@ -90,6 +91,7 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/packer.h"
+#include "nvim/msgpack_rpc/packer_defs.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/normal_defs.h"

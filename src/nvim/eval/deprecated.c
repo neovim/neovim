@@ -12,7 +12,7 @@
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/deprecated.c.generated.h"
+# include "eval/deprecated.c.generated.h"  // IWYU pragma: keep
 #endif
 
 /// "termopen(cmd[, cwd])" function

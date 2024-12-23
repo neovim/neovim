@@ -2,11 +2,11 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
 #include "nvim/errors.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/gettext_defs.h"
-#include "nvim/globals.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/secure.h"
 #include "nvim/memory.h"

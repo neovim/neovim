@@ -1,9 +1,9 @@
 #include <ctype.h>
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/tui/termkey/driver-csi.h"
@@ -13,9 +13,7 @@
 #include "nvim/tui/termkey/termkey_defs.h"
 
 #ifndef _WIN32
-# include <poll.h>
-# include <strings.h>
-# include <unistd.h>
+# include <termios.h>
 #else
 # include <io.h>
 #endif

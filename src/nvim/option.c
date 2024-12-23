@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uv.h>
 
 #include "auto/config.h"
 #include "klib/kvec.h"
@@ -47,6 +48,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_cmds_defs.h"
@@ -58,6 +60,7 @@
 #include "nvim/garray_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
+#include "nvim/grid_defs.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
@@ -74,6 +77,7 @@
 #include "nvim/memfile.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
@@ -88,7 +92,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/path.h"
-#include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
@@ -104,7 +107,6 @@
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
-#include "nvim/ui_defs.h"
 #include "nvim/undo.h"
 #include "nvim/undo_defs.h"
 #include "nvim/vim_defs.h"

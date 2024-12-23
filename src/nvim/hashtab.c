@@ -26,6 +26,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/hashtab.h"
+#include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/vim_defs.h"

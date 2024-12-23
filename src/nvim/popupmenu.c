@@ -4,22 +4,18 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
-#include "nvim/api/buffer.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/buffer_updates.h"
-#include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
@@ -27,6 +23,7 @@
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -46,7 +43,6 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
-#include "nvim/optionstr.h"
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"

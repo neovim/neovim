@@ -1,11 +1,10 @@
 #include <assert.h>
-#include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nvim/memory.h"
 #include "nvim/tui/termkey/driver-csi.h"
 #include "nvim/tui/termkey/termkey-internal.h"
-#include "nvim/tui/termkey/termkey.h"
 #include "nvim/tui/termkey/termkey_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -43,6 +43,7 @@
 #include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"

@@ -11,6 +11,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
+#include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"

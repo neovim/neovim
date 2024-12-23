@@ -20,6 +20,7 @@
 #include "nvim/hashtab.h"
 #include "nvim/keycodes.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/shada.h"

@@ -1,8 +1,17 @@
 #include <assert.h>
+#include <lauxlib.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/lua/executor.h"
+#include "nvim/macros_defs.h"
+#include "nvim/memory.h"
 #include "nvim/msgpack_rpc/packer.h"
+#include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/packer.c.generated.h"
