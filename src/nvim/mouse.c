@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
@@ -13,6 +15,7 @@
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/window.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -20,6 +23,7 @@
 #include "nvim/grid.h"
 #include "nvim/grid_defs.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
@@ -222,6 +226,45 @@ static void call_click_def_func(StlClickDefinition *click_defs, int col, int whi
   got_click = false;
 }
 
+/// When mouse events happen in a window with a mouse callback, invoke it.
+///
+/// @param  button  !is_scroll: return value of get_mouse_button()
+///                 is_scroll: a MSCR_* enum
+///
+/// @return  whether to proceeded with mouse handling.
+static bool handle_mouse_cb(bool is_click, bool is_drag, bool is_scroll, int button)
+{
+  static handle_T last_click_win = 0;
+  int grid = mouse_grid;
+  int row = mouse_row;
+  int col = mouse_col;
+
+  win_T *wp = NULL;
+  if (!is_click && !is_scroll && button != MOUSE_RELEASE) {  // drag or release
+    if (last_click_win > 0) {
+      wp = win_id2wp(last_click_win);
+    }
+  } else {  // click, scroll or move
+    wp = mouse_find_win(&grid, &row, &col);
+    if (is_click) {
+      last_click_win = wp != NULL ? wp->handle : 0;
+    }
+  }
+  if (wp == NULL || wp->w_config.mouse != kWinMouseCallback) {
+    return true;
+  }
+
+  Error err = ERROR_INIT;
+  Object res = nlua_call_ref(wp->w_config.mouse_cb, NULL, (Array)ARRAY_DICT_INIT,
+                             kRetNilBool, NULL, &err);
+  bool retval = LUARET_TRUTHY(res);
+  if (ERROR_SET(&err)) {
+    semsg_multiline("E5108: %s", err.msg);
+    api_clear_error(&err);
+  }
+  return retval;
+}
+
 /// Translate window coordinates to buffer position without any side effects.
 /// Returns IN_BUFFER and sets "mpos->col" to the column when in buffer text.
 /// The column is one for the first column.
@@ -369,6 +412,10 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       }
     }
     break;
+  }
+
+  if (!handle_mouse_cb(is_click, is_drag, false, which_button)) {
+    return false;
   }
 
   if (c == K_MOUSEMOVE) {
@@ -1063,6 +1110,10 @@ void do_mousescroll(cmdarg_T *cap)
 /// of the MSCR_ values.
 void ins_mousescroll(int dir)
 {
+  if (!handle_mouse_cb(false, false, true, dir)) {
+    return;
+  }
+
   cmdarg_T cap;
   oparg_T oa;
   CLEAR_FIELD(cap);
@@ -1572,6 +1623,10 @@ static bool do_mousescroll_horiz(colnr_T leftcol)
 /// "cap->arg", which is one of the MSCR_ values.
 void nv_mousescroll(cmdarg_T *cap)
 {
+  if (!handle_mouse_cb(false, false, true, cap->arg)) {
+    return;
+  }
+
   win_T *const old_curwin = curwin;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
@@ -1740,7 +1795,7 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
   } else if (*gridp > 1) {
     win_T *wp = get_win_by_grid_handle(*gridp);
     if (wp && wp->w_grid_alloc.chars
-        && !(wp->w_floating && !wp->w_config.mouse)) {
+        && !(wp->w_floating && wp->w_config.mouse == kWinMouseIgnore)) {
       *rowp = MIN(*rowp - wp->w_grid.row_offset, wp->w_grid.rows - 1);
       *colp = MIN(*colp - wp->w_grid.col_offset, wp->w_grid.cols - 1);
       return wp;
