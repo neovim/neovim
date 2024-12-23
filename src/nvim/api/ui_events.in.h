@@ -136,13 +136,13 @@ void tabline_update(Tabpage current, Array tabs, Buffer current_buffer, Array bu
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
 void cmdline_show(Array content, Integer pos, String firstc, String prompt, Integer indent,
-                  Integer level)
+                  Integer level, Integer hl_id)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void cmdline_pos(Integer pos, Integer level)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void cmdline_special_char(String c, Boolean shift, Integer level)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
-void cmdline_hide(Integer level)
+void cmdline_hide(Integer level, Boolean abort)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void cmdline_block_show(Array lines)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
@@ -158,7 +158,7 @@ void wildmenu_select(Integer selected)
 void wildmenu_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
-void msg_show(String kind, Array content, Boolean replace_last)
+void msg_show(String kind, Array content, Boolean replace_last, Boolean history)
   FUNC_API_SINCE(6) FUNC_API_FAST FUNC_API_REMOTE_ONLY;
 void msg_clear(void)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;

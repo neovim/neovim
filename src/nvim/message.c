@@ -153,6 +153,7 @@ static sattr_T msg_ext_last_attr = -1;
 static int msg_ext_last_hl_id;
 static size_t msg_ext_cur_len = 0;
 
+static bool msg_ext_history = false;  ///< message was added to history
 static bool msg_ext_overwrite = false;  ///< will overwrite last message
 static int msg_ext_visible = 0;  ///< number of messages currently visible
 
@@ -988,7 +989,7 @@ static void add_msg_hist(const char *s, int len, int hl_id, bool multiline)
 static void add_msg_hist_multihl(const char *s, int len, int hl_id, bool multiline,
                                  HlMessage multihl)
 {
-  if (msg_hist_off || msg_silent != 0) {
+  if (msg_hist_off || msg_silent != 0 || (s != NULL && *s == NUL)) {
     hl_msg_free(multihl);
     return;
   }
@@ -999,12 +1000,13 @@ static void add_msg_hist_multihl(const char *s, int len, int hl_id, bool multili
     if (len < 0) {
       len = (int)strlen(s);
     }
+    assert(len > 0);
     // remove leading and trailing newlines
-    while (len > 0 && *s == '\n') {
+    while (*s == '\n') {
       s++;
       len--;
     }
-    while (len > 0 && s[len - 1] == '\n') {
+    while (s[len - 1] == '\n') {
       len--;
     }
     p->msg = xmemdupz(s, (size_t)len);
@@ -1024,6 +1026,7 @@ static void add_msg_hist_multihl(const char *s, int len, int hl_id, bool multili
     first_msg_hist = last_msg_hist;
   }
   msg_hist_len++;
+  msg_ext_history = true;
 
   check_msg_hist();
 }
@@ -3138,13 +3141,14 @@ void msg_ext_ui_flush(void)
   msg_ext_emit_chunk();
   if (msg_ext_chunks->size > 0) {
     Array *tofree = msg_ext_init_chunks();
-    ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite);
+    ui_call_msg_show(cstr_as_string(msg_ext_kind), *tofree, msg_ext_overwrite, msg_ext_history);
     api_free_array(*tofree);
     xfree(tofree);
     if (!msg_ext_overwrite) {
       msg_ext_visible++;
     }
     msg_ext_overwrite = false;
+    msg_ext_history = false;
     msg_ext_kind = NULL;
   }
 }

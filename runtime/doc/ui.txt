@@ -715,7 +715,7 @@ Activated by the `ext_cmdline` |ui-option|.
 This UI extension delegates presentation of the |cmdline| (except 'wildmenu').
 For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 
-["cmdline_show", content, pos, firstc, prompt, indent, level] ~
+["cmdline_show", content, pos, firstc, prompt, indent, level, hl_id] ~
         content: List of [attrs, string]
 	         [[{}, "t"], [attrs, "est"], ...]
 
@@ -728,8 +728,8 @@ For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 	`firstc` and `prompt` are text, that if non-empty should be
 	displayed in front of the command line. `firstc` always indicates
 	built-in command lines such as `:` (ex command) and `/` `?` (search),
-	while `prompt` is an |input()| prompt. `indent` tells how many spaces
-	the content should be indented.
+	while `prompt` is an |input()| prompt, highlighted with `hl_id`.
+	`indent` tells how many spaces the content should be indented.
 
 	The Nvim command line can be invoked recursively, for instance by
 	typing `<c-r>=` at the command line prompt. The `level` field is used
@@ -749,8 +749,9 @@ For command-line 'wildmenu' UI events, activate |ui-popupmenu|.
 
 	Should be hidden at next cmdline_show.
 
-["cmdline_hide"] ~
-	Hide the cmdline.
+["cmdline_hide", abort] ~
+	Hide the cmdline. `abort` is true if the cmdline is hidden after an
+	aborting condition (|c_Esc| or |c_CTRL-C|).
 
 ["cmdline_block_show", lines] ~
 	Show a block of context to the current command line. For example if
@@ -783,7 +784,7 @@ will be set to zero, but can be changed and used for the replacing cmdline or
 message window. Cmdline state is emitted as |ui-cmdline| events, which the UI
 must handle.
 
-["msg_show", kind, content, replace_last] ~
+["msg_show", kind, content, replace_last, history] ~
 	Display a message to the user.
 
 	kind
@@ -825,6 +826,9 @@ must handle.
 		   that are still visible.
 	    true:  Replace the message in the most-recent `msg_show` call,
 		   but any other visible message should still remain.
+
+	history
+	    True if the message was added to the |:messages| history.
 
 ["msg_clear"] ~
 	Clear all messages currently displayed by "msg_show". (Messages sent

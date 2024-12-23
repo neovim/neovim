@@ -79,6 +79,7 @@ end
 --- @field win_position table<integer,table<string,integer>>
 --- @field float_pos table<integer,table>
 --- @field cmdline table<integer,table>
+--- @field cmdline_hide_level integer?
 --- @field cmdline_block table[]
 --- @field hl_groups table<string,integer>
 --- @field messages table<integer,table>
@@ -652,6 +653,12 @@ screen:redraw_debug() to show all intermediate screen states.]]
           )
         end
       end
+    end
+
+    -- Only test the abort state of a cmdline level once.
+    if self.cmdline_hide_level ~= nil then
+      self.cmdline[self.cmdline_hide_level] = nil
+      self.cmdline_hide_level = nil
     end
 
     if expected.hl_groups ~= nil then
@@ -1296,7 +1303,7 @@ function Screen:_handle_popupmenu_hide()
   self.popupmenu = nil
 end
 
-function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level)
+function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
   if firstc == '' then
     firstc = nil
   end
@@ -1320,11 +1327,13 @@ function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level
     firstc = firstc,
     prompt = prompt,
     indent = indent,
+    hl_id = prompt and hl_id,
   }
 end
 
-function Screen:_handle_cmdline_hide(level)
-  self.cmdline[level] = nil
+function Screen:_handle_cmdline_hide(level, abort)
+  self.cmdline[level] = { abort = abort }
+  self.cmdline_hide_level = level
 end
 
 function Screen:_handle_cmdline_special_char(char, shift, level)
@@ -1360,12 +1369,12 @@ function Screen:_handle_wildmenu_hide()
   self.wildmenu_items, self.wildmenu_pos = nil, nil
 end
 
-function Screen:_handle_msg_show(kind, chunks, replace_last)
+function Screen:_handle_msg_show(kind, chunks, replace_last, history)
   local pos = #self.messages
   if not replace_last or pos == 0 then
     pos = pos + 1
   end
-  self.messages[pos] = { kind = kind, content = chunks }
+  self.messages[pos] = { kind = kind, content = chunks, history = history }
 end
 
 function Screen:_handle_msg_clear()
@@ -1468,7 +1477,9 @@ function Screen:_extstate_repr(attr_state)
   local cmdline = {}
   for i, entry in pairs(self.cmdline) do
     entry = shallowcopy(entry)
-    entry.content = self:_chunks_repr(entry.content, attr_state)
+    if entry.content ~= nil then
+      entry.content = self:_chunks_repr(entry.content, attr_state)
+    end
     cmdline[i] = entry
   end
 
@@ -1479,7 +1490,11 @@ function Screen:_extstate_repr(attr_state)
 
   local messages = {}
   for i, entry in ipairs(self.messages) do
-    messages[i] = { kind = entry.kind, content = self:_chunks_repr(entry.content, attr_state) }
+    messages[i] = {
+      kind = entry.kind,
+      content = self:_chunks_repr(entry.content, attr_state),
+      history = entry.history,
+    }
   end
 
   local msg_history = {}

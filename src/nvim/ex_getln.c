@@ -956,7 +956,7 @@ theend:
   char *p = ccline.cmdbuff;
 
   if (ui_has(kUICmdline)) {
-    ui_call_cmdline_hide(ccline.level);
+    ui_call_cmdline_hide(ccline.level, s->gotesc);
     msg_ext_clear_later();
   }
   if (!cmd_silent) {
@@ -3423,8 +3423,7 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
   ui_call_cmdline_show(content, line->cmdpos,
                        cstr_as_string(charbuf),
                        cstr_as_string((line->cmdprompt)),
-                       line->cmdindent,
-                       line->level);
+                       line->cmdindent, line->level, line->hl_id);
   if (line->special_char) {
     charbuf[0] = line->special_char;
     ui_call_cmdline_special_char(cstr_as_string(charbuf),
@@ -4478,7 +4477,7 @@ static int open_cmdwin(void)
   invalidate_botline(curwin);
   if (ui_has(kUICmdline)) {
     ccline.redraw_state = kCmdRedrawNone;
-    ui_call_cmdline_hide(ccline.level);
+    ui_call_cmdline_hide(ccline.level, false);
   }
   redraw_later(curwin, UPD_SOME_VALID);
 

@@ -92,6 +92,13 @@ EVENTS
 
 • |vim.ui_attach()| callbacks for |ui-messages| `msg_show` events are executed in
   |api-fast| context.
+• New/enhanced arguments in these existing UI events:
+  • `cmdline_show`: `hl_id` argument to highlight the prompt text.
+  • `cmdline_hide`: `abort` argument indicating if the cmdline was aborted.
+  • `msg_show`:
+    • `history` argument indicating if the message was added to the history.
+    • new message kinds: "bufwrite", "completion", "list_cmd",
+      "lua_print", "number_prompt", "search_cmd", "undo", "wildlist".
 
 HIGHLIGHTS
 
