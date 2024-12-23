@@ -13,7 +13,10 @@
 #include "nvim/tui/termkey/termkey_defs.h"
 
 #ifndef _WIN32
-# include <termios.h>
+// Include these directly instead of <termios.h> which is system-dependent. #31704
+# include <poll.h>  // IWYU pragma: keep
+# include <strings.h>  // IWYU pragma: keep
+# include <unistd.h>  // IWYU pragma: keep
 #else
 # include <io.h>
 #endif
