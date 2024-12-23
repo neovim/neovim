@@ -1961,9 +1961,11 @@ static void refresh_cursor(Terminal *term)
     break;
   case VTERM_PROP_CURSORSHAPE_UNDERLINE:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_HOR;
+    shape_table[SHAPE_IDX_TERM].percentage = 20;
     break;
   case VTERM_PROP_CURSORSHAPE_BAR_LEFT:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_VER;
+    shape_table[SHAPE_IDX_TERM].percentage = 25;
     break;
   }
 
