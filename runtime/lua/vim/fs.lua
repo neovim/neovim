@@ -679,4 +679,29 @@ function M.rm(path, opts)
   end
 end
 
+--- Returns `true` if `path` is relative to `root`
+--- @param path string
+--- @param root string
+--- @return boolean
+function M.is_relative_to(path, root)
+  vim.validate('path', path, 'string')
+  vim.validate('root', root, 'string')
+  if root == path then
+    return true
+  end
+  path = vim.fs.normalize(path)
+  root = vim.fs.normalize(root)
+  -- TODO(dundargoc): should normalize convert paths to lowercase instead?
+  if iswin then
+    path = vim.fn.tolower(path)
+    root = vim.fn.tolower(root)
+  end
+  for dir in vim.fs.parents(path) do
+    if dir == root then
+      return true
+    end
+  end
+  return false
+end
+
 return M
