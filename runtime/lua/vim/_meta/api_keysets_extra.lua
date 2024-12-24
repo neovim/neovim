@@ -173,6 +173,26 @@ error('Cannot require a meta file')
 --- @field force? true
 --- @field cterm? vim.api.keyset.hl_info.cterm
 
+--- @class vim.api.keyset.get_keymap
+--- @field abbr? 0|1
+--- @field buffer? 0|1
+--- @field callback? function
+--- @field desc? string
+--- @field expr? 0|1
+--- @field lhs? string
+--- @field lhsraw? string
+--- @field lhsrawalt? string
+--- @field lnum? integer
+--- @field mode? string
+--- @field mode_bits? integer
+--- @field noremap? 0|1
+--- @field nowait? 0|1
+--- @field rhs? string
+--- @field script? 0|1
+--- @field scriptversion? integer
+--- @field sid? integer
+--- @field silent? 0|1
+
 --- @class vim.api.keyset.get_mode
 --- @field blocking boolean
 --- @field mode string
