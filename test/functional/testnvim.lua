@@ -4,7 +4,7 @@ local t = require('test.testutil')
 local Session = require('test.client.session')
 local uv_stream = require('test.client.uv_stream')
 local SocketStream = uv_stream.SocketStream
-local ChildProcessStream = uv_stream.ChildProcessStream
+local ProcStream = uv_stream.ProcStream
 
 local check_cores = t.check_cores
 local check_logs = t.check_logs
@@ -468,7 +468,7 @@ end
 --- @param argv string[]
 --- @param merge boolean?
 --- @param env string[]?
---- @param keep boolean?
+--- @param keep boolean? Don't close the current global session.
 --- @param io_extra uv.uv_pipe_t? used for stdin_fd, see :help ui-option
 --- @return test.Session
 function M.spawn(argv, merge, env, keep, io_extra)
@@ -476,9 +476,8 @@ function M.spawn(argv, merge, env, keep, io_extra)
     M.check_close()
   end
 
-  local child_stream =
-    ChildProcessStream.spawn(merge and M.merge_args(prepend_argv, argv) or argv, env, io_extra)
-  return Session.new(child_stream)
+  local proc = ProcStream.spawn(merge and M.merge_args(prepend_argv, argv) or argv, env, io_extra)
+  return Session.new(proc)
 end
 
 -- Creates a new Session connected by domain socket (named pipe) or TCP.
@@ -490,6 +489,8 @@ function M.connect(file_or_address)
 end
 
 -- Starts (and returns) a new global Nvim session.
+--
+-- Use `spawn_argv()` to get a new session without replacing the current global session.
 --
 -- Parameters are interpreted as startup args, OR a map with these keys:
 --    args:       List: Args appended to the default `nvim_argv` set.
@@ -506,8 +507,10 @@ function M.clear(...)
   return M.get_session()
 end
 
---- same params as clear, but does returns the session instead
---- of replacing the default session
+--- Same as clear(), but doesn't replace the current global session.
+---
+--- @param keep boolean Don't close the current global session.
+---
 --- @return test.Session
 function M.spawn_argv(keep, ...)
   local argv, env, io_extra = M.new_argv(...)
