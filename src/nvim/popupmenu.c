@@ -439,6 +439,7 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
   const char *ptr = text;
   int cell_idx = 0;
   uint32_t char_pos = 0;
+  bool is_select = hlf == HLF_PSI;
 
   while (*ptr != NUL) {
     int new_attr = win_hl_attr(curwin, (int)hlf);
@@ -447,14 +448,14 @@ static int *pum_compute_text_attrs(char *text, hlf_T hlf, int user_hlattr)
       // Handle fuzzy matching
       for (int i = 0; i < ga->ga_len; i++) {
         if (char_pos == ((uint32_t *)ga->ga_data)[i]) {
-          new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
+          new_attr = win_hl_attr(curwin, is_select ? HLF_PMSI : HLF_PMNI);
           new_attr = hl_combine_attr(win_hl_attr(curwin, HLF_PMNI), new_attr);
           new_attr = hl_combine_attr(win_hl_attr(curwin, (int)hlf), new_attr);
           break;
         }
       }
     } else if (matched_start && ptr < text + leader_len) {
-      new_attr = win_hl_attr(curwin, hlf == HLF_PSI ? HLF_PMSI : HLF_PMNI);
+      new_attr = win_hl_attr(curwin, is_select ? HLF_PMSI : HLF_PMNI);
       new_attr = hl_combine_attr(win_hl_attr(curwin, HLF_PMNI), new_attr);
       new_attr = hl_combine_attr(win_hl_attr(curwin, (int)hlf), new_attr);
     }
@@ -520,6 +521,15 @@ static inline char *pum_get_item(int index, int type)
   return NULL;
 }
 
+static inline int pum_user_attr_combine(int idx, int type, int attr)
+{
+  int user_attr[] = {
+    pum_array[idx].pum_user_abbr_hlattr,
+    pum_array[idx].pum_user_kind_hlattr,
+  };
+  return user_attr[type] > 0 ? hl_combine_attr(attr, user_attr[type]) : attr;
+}
+
 /// Redraw the popup menu, using "pum_first" and "pum_selected".
 void pum_redraw(void)
 {
@@ -583,19 +593,16 @@ void pum_redraw(void)
                           pum_row - row_off, pum_left_col, false, pum_grid.zindex);
   }
 
+  int scroll_range = pum_size - pum_height;
   // Never display more than we have
-  if (pum_first > pum_size - pum_height) {
-    pum_first = pum_size - pum_height;
-  }
+  pum_first = MIN(pum_first, scroll_range);
 
   if (pum_scrollbar) {
     thumb_height = pum_height * pum_height / pum_size;
     if (thumb_height == 0) {
       thumb_height = 1;
     }
-    thumb_pos = (pum_first * (pum_height - thumb_height)
-                 + (pum_size - pum_height) / 2)
-                / (pum_size - pum_height);
+    thumb_pos = (pum_first * (pum_height - thumb_height) + scroll_range / 2) / scroll_range;
   }
 
   for (int i = 0; i < pum_height; i++) {
@@ -633,13 +640,8 @@ void pum_redraw(void)
       attr = win_hl_attr(curwin, (int)hlf);
       attr = hl_combine_attr(win_hl_attr(curwin, HLF_PNI), attr);
       orig_attr = attr;
-      int user_abbr_hlattr = pum_array[idx].pum_user_abbr_hlattr;
-      int user_kind_hlattr = pum_array[idx].pum_user_kind_hlattr;
-      if (item_type == CPT_ABBR && user_abbr_hlattr > 0) {
-        attr = hl_combine_attr(attr, user_abbr_hlattr);
-      }
-      if (item_type == CPT_KIND && user_kind_hlattr > 0) {
-        attr = hl_combine_attr(attr, user_kind_hlattr);
+      if (item_type < 2) {  // try combine attr with user custom
+        attr = pum_user_attr_combine(idx, item_type, attr);
       }
       int width = 0;
       char *s = NULL;
@@ -667,7 +669,7 @@ void pum_redraw(void)
 
             int *attrs = NULL;
             if (item_type == CPT_ABBR) {
-              attrs = pum_compute_text_attrs(st, hlf, user_abbr_hlattr);
+              attrs = pum_compute_text_attrs(st, hlf, pum_array[idx].pum_user_abbr_hlattr);
             }
 
             if (pum_rl) {
@@ -907,6 +909,7 @@ static bool pum_set_selected(int n, int repeat)
   int prev_selected = pum_selected;
 
   pum_selected = n;
+  int scroll_offset = pum_selected - pum_height;
   unsigned cur_cot_flags = get_cot_flags();
   bool use_float = (cur_cot_flags & kOptCotFlagPopup) != 0;
 
@@ -933,35 +936,24 @@ static bool pum_set_selected(int n, int repeat)
       } else {
         pum_first = pum_selected;
       }
-    } else if (pum_first < pum_selected - pum_height + 5) {
+    } else if (pum_first < scroll_offset + 5) {
       // scroll up; when we did a jump it's probably a PageDown then
       // scroll a whole page
-      if (pum_first < pum_selected - pum_height + 1 + 2) {
-        pum_first += pum_height - 2;
-        if (pum_first < pum_selected - pum_height + 1) {
-          pum_first = pum_selected - pum_height + 1;
-        }
+      if (pum_first < scroll_offset + 3) {
+        pum_first = MAX(pum_first + pum_height - 2, scroll_offset + 1);
       } else {
-        pum_first = pum_selected - pum_height + 1;
+        pum_first = scroll_offset + 1;
       }
     }
 
     // Give a few lines of context when possible.
-    if (context > 3) {
-      context = 3;
-    }
+    context = MIN(context, 3);
 
     if (pum_height > 2) {
       if (pum_first > pum_selected - context) {
-        // scroll down
-        pum_first = pum_selected - context;
-
-        if (pum_first < 0) {
-          pum_first = 0;
-        }
+        pum_first = MAX(pum_selected - context, 0);  // scroll down
       } else if (pum_first < pum_selected + context - pum_height + 1) {
-        // scroll up
-        pum_first = pum_selected + context - pum_height + 1;
+        pum_first = pum_selected + context - pum_height + 1;  // up
       }
     }
     // adjust for the number of lines displayed
@@ -1048,9 +1040,7 @@ static bool pum_set_selected(int n, int repeat)
           // Increase the height of the preview window to show the
           // text, but no more than 'previewheight' lines.
           if (repeat == 0 && !use_float) {
-            if (lnum > p_pvh) {
-              lnum = (linenr_T)p_pvh;
-            }
+            lnum = MIN(lnum, (linenr_T)p_pvh);
 
             if (curwin->w_height < lnum) {
               win_setheight((int)lnum);
@@ -1313,9 +1303,7 @@ static void pum_position_at_mouse(int min_width)
     pum_width = max_col - pum_col;
   }
 
-  if (pum_width > pum_base_width + 1) {
-    pum_width = pum_base_width + 1;
-  }
+  pum_width = MIN(pum_width, pum_base_width + 1);
 }
 
 /// Select the pum entry at the mouse position.

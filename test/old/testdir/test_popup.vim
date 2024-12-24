@@ -1716,11 +1716,15 @@ endfunc
 func Test_pum_matchins_highlight()
   CheckScreendump
   let lines =<< trim END
+    let g:change = 0
     func Omni_test(findstart, base)
       if a:findstart
         return col(".")
       endif
-      return [#{word: "foo"}, #{word: "bar"}, #{word: "你好"}]
+      if g:change == 0
+        return [#{word: "foo"}, #{word: "bar"}, #{word: "你好"}]
+      endif
+      return [#{word: "foo", info: "info"}, #{word: "bar"}, #{word: "你好"}]
     endfunc
     set omnifunc=Omni_test
     hi ComplMatchIns ctermfg=red
@@ -1767,6 +1771,10 @@ func Test_pum_matchins_highlight()
   call VerifyScreenDump(buf, 'Test_pum_matchins_10', {})
   call term_sendkeys(buf, "\<Esc>")
 
+  call term_sendkeys(buf, ":let g:change=1\<CR>S\<C-X>\<C-O>")
+  call VerifyScreenDump(buf, 'Test_pum_matchins_11', {})
+  call term_sendkeys(buf, "\<Esc>")
+
   call StopVimInTerminal(buf)
 endfunc
 
@@ -1810,6 +1818,17 @@ func Test_pum_matchins_highlight_combine()
   call term_sendkeys(buf, "\<Esc>")
 
   call StopVimInTerminal(buf)
+endfunc
+
+" this used to crash
+func Test_popup_completion_many_ctrlp()
+  new
+  let candidates=repeat(['a0'], 99)
+  call setline(1, candidates)
+  exe ":norm! VGg\<C-A>"
+  norm! G
+  call feedkeys("o" .. repeat("\<c-p>", 100), 'tx')
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

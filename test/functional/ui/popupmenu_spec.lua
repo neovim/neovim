@@ -5567,11 +5567,15 @@ describe('builtin popupmenu', function()
       -- oldtest: Test_pum_matchins_highlight()
       it('with ComplMatchIns highlight', function()
         exec([[
+          let g:change = 0
           func Omni_test(findstart, base)
             if a:findstart
               return col(".")
             endif
-            return [#{word: "foo"}, #{word: "bar"}, #{word: "你好"}]
+            if g:change == 0
+              return [#{word: "foo"}, #{word: "bar"}, #{word: "你好"}]
+            endif
+            return [#{word: "foo", info: "info"}, #{word: "bar"}, #{word: "你好"}]
           endfunc
           set omnifunc=Omni_test
           hi ComplMatchIns guifg=red
@@ -5661,6 +5665,21 @@ describe('builtin popupmenu', function()
           αβγ 你好^ foo                    |
           {1:~                               }|*18
           {2:-- INSERT --}                    |
+        ]])
+        feed('<Esc>')
+
+        feed(':let g:change=1<CR>S<C-X><C-O>')
+        screen:expect([[
+          info                            |
+          {1:~                               }|*2
+          {3:[Scratch] [Preview]             }|
+          {8:foo}^                             |
+          {s:foo            }{1:                 }|
+          {n:bar            }{1:                 }|
+          {n:你好           }{1:                 }|
+          {1:~                               }|*10
+          {4:[No Name] [+]                   }|
+          {2:-- }{5:match 1 of 3}                 |
         ]])
         feed('<Esc>')
       end)

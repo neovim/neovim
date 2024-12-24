@@ -1722,6 +1722,12 @@ bool ins_compl_active(void)
   return compl_started;
 }
 
+/// Return true when wp is the actual completion window
+bool ins_compl_win_active(win_T *wp)
+{
+  return ins_compl_active() && !(wp->w_p_pvw || wp->w_float_is_info);
+}
+
 /// Selected one of the matches.  When false the match was edited or using the
 /// longest common string.
 bool ins_compl_used_match(void)
