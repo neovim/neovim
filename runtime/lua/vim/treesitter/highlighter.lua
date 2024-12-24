@@ -299,6 +299,8 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         state.highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
     end
 
+    local captures = state.highlighter_query:query().captures
+
     while line >= state.next_row do
       local capture, node, metadata, match = state.iter(line)
 
@@ -311,7 +313,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
       if capture then
         local hl = state.highlighter_query:get_hl_from_capture(capture)
 
-        local capture_name = state.highlighter_query:query().captures[capture]
+        local capture_name = captures[capture]
 
         local spell, spell_pri_offset = get_spell(capture_name)
 
