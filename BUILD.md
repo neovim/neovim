@@ -5,12 +5,13 @@
 
 1. Install [build prerequisites](#build-prerequisites) on your system
 2. `git clone https://github.com/neovim/neovim`
-3. `cd neovim && make CMAKE_BUILD_TYPE=RelWithDebInfo`
+3. `cd neovim`
     - If you want the **stable release**, also run `git checkout stable`.
+4. `make CMAKE_BUILD_TYPE=RelWithDebInfo`
     - If you want to install to a custom location, set `CMAKE_INSTALL_PREFIX`. See also [INSTALL.md](./INSTALL.md#install-from-source).
     - On BSD, use `gmake` instead of `make`.
     - To build on Windows, see the [Building on Windows](#building-on-windows) section. _MSVC (Visual Studio) is recommended._
-4. `sudo make install`
+5. `sudo make install`
     - Default install location is `/usr/local`
     - On Debian/Ubuntu, instead of `sudo make install`, you can try `cd build && cpack -G DEB && sudo dpkg -i nvim-linux64.deb` to build DEB-package and install it. This helps ensure clean removal of installed files. Note: This is an unsupported, "best-effort" feature of the Nvim build.
 
@@ -131,7 +132,8 @@ https://github.com/cascent/neovim-cygwin was built on Cygwin 2.9.0. Newer `libuv
 1. From the MSYS2 shell, install these packages:
    ```
    pacman -S \
-       mingw-w64-ucrt-x86_64-{gcc,cmake,make,ninja,diffutils}
+       mingw-w64-ucrt-x86_64-gcc \
+       mingw-w64-x86_64-{cmake,make,ninja,diffutils}
    ```
 2. From the Windows Command Prompt (`cmd.exe`), set up the `PATH` and build.
 
@@ -292,13 +294,13 @@ Platform-specific requirements are listed below.
 ### Ubuntu / Debian
 
 ```sh
-sudo apt-get install ninja-build gettext cmake unzip curl build-essential
+sudo apt-get install ninja-build gettext cmake curl build-essential
 ```
 
 ### RHEL / Fedora
 
 ```
-sudo dnf -y install ninja-build cmake gcc make unzip gettext curl glibc-gconv-extra
+sudo dnf -y install ninja-build cmake gcc make gettext curl glibc-gconv-extra
 ```
 
 ### openSUSE
@@ -310,13 +312,13 @@ sudo zypper install ninja cmake gcc-c++ gettext-tools curl
 ### Arch Linux
 
 ```
-sudo pacman -S base-devel cmake unzip ninja curl
+sudo pacman -S base-devel cmake ninja curl
 ```
 
 ### Alpine Linux
 
 ```
-apk add build-base cmake coreutils curl unzip gettext-tiny-dev
+apk add build-base cmake coreutils curl gettext-tiny-dev
 ```
 
 ### Void Linux
@@ -380,7 +382,7 @@ or a specific SHA1 like `--override-input neovim-src github:neovim/neovim/89dc8f
 ### FreeBSD
 
 ```
-sudo pkg install cmake gmake sha unzip wget gettext curl
+sudo pkg install cmake gmake sha wget gettext curl
 ```
 
 If you get an error regarding a `sha256sum` mismatch, where the actual SHA-256 hash is `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`, then this is your issue (that's the `sha256sum` of an empty file).
@@ -388,7 +390,7 @@ If you get an error regarding a `sha256sum` mismatch, where the actual SHA-256 h
 ### OpenBSD
 
 ```sh
-doas pkg_add gmake cmake unzip curl gettext-tools
+doas pkg_add gmake cmake curl gettext-tools
 ```
 
 Build can sometimes fail when using the top level `Makefile`, apparently due to some third-party component (see [#2445-comment](https://github.com/neovim/neovim/issues/2445#issuecomment-108124236)). The following instructions use CMake:
