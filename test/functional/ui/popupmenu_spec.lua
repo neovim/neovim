@@ -1680,7 +1680,7 @@ describe('builtin popupmenu', function()
       end)
     end
 
-    describe('floating window preview #popup', function()
+    describe('floating window preview popup', function()
       it('pum popup preview', function()
         --row must > 10
         screen:try_resize(40, 11)
@@ -1693,14 +1693,29 @@ describe('builtin popupmenu', function()
           endfunc
           set omnifunc=Omni_test
           set completeopt=menu,popup
-
           funct Set_info()
             let comp_info = complete_info()
             if comp_info['selected'] == 2
               call nvim__complete_set(comp_info['selected'], {"info": "3info"})
             endif
           endfunc
-          autocmd CompleteChanged * call Set_info()
+          funct TsHl()
+            let comp_info = complete_info()
+            if get(comp_info, 'previewbufnr', 0) > 0
+              call v:lua.vim.treesitter.start(comp_info['preview_bufnr'], 'markdown')
+            endif
+            if comp_info['selected'] == 0
+              call nvim__complete_set(comp_info['selected'], {"info": "```lua\nfunction test()\n  print('foo')\nend\n```"})
+            endif
+          endfunc
+          augroup Group
+            au!
+            autocmd CompleteChanged * :call Set_info()
+          augroup END
+          funct TestTs()
+            autocmd! Group
+            autocmd CompleteChanged * call TsHl()
+          endfunc
         ]])
         feed('Gi<C-x><C-o>')
         --floating preview in right
@@ -2003,6 +2018,90 @@ describe('builtin popupmenu', function()
             {2:-- }{5:match 1 of 3}                         |
           ]],
           }
+        end
+        feed('<C-E><Esc>')
+
+        -- works when scroll with treesitter highlight
+        command('call TestTs()')
+        feed('S<C-x><C-o>')
+        if multigrid then
+          screen:expect({
+            grid = [[
+            ## grid 1
+              [2:----------------------------------------]|*10
+              [3:----------------------------------------]|
+            ## grid 2
+              one^                                     |
+              {1:~                                       }|*9
+            ## grid 3
+              {2:-- }{5:match 1 of 3}                         |
+            ## grid 5
+              {s:one                }|
+              {n:two                }|
+              {n:looooooooooooooong }|
+            ## grid 9
+              {n:```lua         }|
+              {n:function test()}|
+              {n:  print('foo') }|
+              {n:end            }|
+              {n:```            }|
+              {n:               }|
+            ]],
+            float_pos = {
+              [5] = { -1, 'NW', 2, 1, 0, false, 100 },
+              [9] = { 1005, 'NW', 1, 1, 19, false, 50 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 3,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+              [9] = {
+                win = 1005,
+                topline = 0,
+                botline = 6,
+                curline = 0,
+                curcol = 0,
+                linecount = 5,
+                sum_scroll_delta = 0,
+              },
+            },
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+              [9] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1005,
+              },
+            },
+          })
+        else
+          screen:expect({
+            grid = [[
+              one^                                     |
+              {s:one                }{n:```lua         }{1:      }|
+              {n:two                function test()}{1:      }|
+              {n:looooooooooooooong   print('foo') }{1:      }|
+              {1:~                  }{n:end            }{1:      }|
+              {1:~                  }{n:```            }{1:      }|
+              {1:~                  }{n:               }{1:      }|
+              {1:~                                       }|*3
+              {2:-- }{5:match 1 of 3}                         |
+            ]],
+          })
         end
       end)
     end)
