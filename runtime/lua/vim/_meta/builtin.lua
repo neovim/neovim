@@ -233,9 +233,8 @@ function vim.wait(time, callback, interval, fast_only) end
 --- {callback} receives event name plus additional parameters. See |ui-popupmenu|
 --- and the sections below for event format for respective events.
 ---
---- Callbacks for `msg_show` events are executed in |api-fast| context unless
---- Nvim will wait for input, in which case messages should be shown
---- immediately.
+--- Callbacks for `msg_show` events are executed in |api-fast| context; showing
+--- the message should be scheduled.
 ---
 --- Excessive errors inside the callback will result in forced detachment.
 ---
@@ -267,7 +266,7 @@ function vim.wait(time, callback, interval, fast_only) end
 ---
 --- @param ns integer
 --- @param options table<string, any>
---- @param callback fun()
+--- @param callback fun(event: string, ...)
 function vim.ui_attach(ns, options, callback) end
 
 --- Detach a callback previously attached with |vim.ui_attach()| for the
