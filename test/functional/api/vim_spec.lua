@@ -5385,16 +5385,11 @@ describe('API', function()
         13                                                          |
       ]],
     })
-    -- takes buffer line count from correct buffer with "win" and {0, -1} "range"
   end)
 
   it('nvim__redraw range parameter', function()
     Screen.new(10, 5)
-
-    fn.setline(1, '1')
-    fn.setline(2, '2')
-    fn.setline(3, '3')
-    fn.setline(4, '4')
+    fn.setline(1, fn.range(4))
 
     exec_lua([[
       _G.lines_list = {}
