@@ -3042,6 +3042,9 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • {limit}? (`number`, default: `1`) Stop the search after
                    finding this many matches. Use `math.huge` to place no
                    limit on the number of matches.
+                 • {skip}? (`fun(dir: string): boolean`) Do not traverse
+                   matching directories. If omitted, all directories are
+                   searched recursively.
 
     Return: ~
         (`string[]`) Normalized paths |vim.fs.normalize()| of all matching
