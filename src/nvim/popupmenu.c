@@ -906,10 +906,10 @@ static bool pum_set_selected(int n, int repeat)
 {
   bool resized = false;
   int context = pum_height / 2;
-  int scroll_offset = pum_selected - pum_height;
   int prev_selected = pum_selected;
 
   pum_selected = n;
+  int scroll_offset = pum_selected - pum_height;
   unsigned cur_cot_flags = get_cot_flags();
   bool use_float = (cur_cot_flags & kOptCotFlagPopup) != 0;
 
@@ -940,7 +940,7 @@ static bool pum_set_selected(int n, int repeat)
       // scroll up; when we did a jump it's probably a PageDown then
       // scroll a whole page
       if (pum_first < scroll_offset + 3) {
-        pum_first = MAX(pum_first, scroll_offset + 1);
+        pum_first = MAX(pum_first + pum_height - 2, scroll_offset + 1);
       } else {
         pum_first = scroll_offset + 1;
       }
@@ -953,7 +953,7 @@ static bool pum_set_selected(int n, int repeat)
       if (pum_first > pum_selected - context) {
         pum_first = MAX(pum_selected - context, 0);  // scroll down
       } else if (pum_first < pum_selected + context - pum_height + 1) {
-        pum_first = pum_selected + context - pum_height + 1; // up
+        pum_first = pum_selected + context - pum_height + 1;  // up
       }
     }
     // adjust for the number of lines displayed
