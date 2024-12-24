@@ -334,6 +334,11 @@ end
 --- rootUri, and rootPath on initialization. Unused if `root_dir` is provided.
 --- @field root_markers? string[]
 ---
+--- Directory where the LSP server will base its workspaceFolders, rootUri, and rootPath on
+--- initialization. If a function, it accepts a single callback argument which must be called with
+--- the value of root_dir to use. The LSP server will not be started until the callback is called.
+--- @field root_dir? string|fun(cb:fun(string))
+---
 --- Predicate used to decide if a client should be re-used. Used on all
 --- running clients. The default implementation re-uses a client if name and
 --- root_dir matches.
@@ -499,6 +504,15 @@ local function lsp_enable_callback(bufnr)
     return true
   end
 
+  --- @param config vim.lsp.Config
+  local function start(config)
+    return vim.lsp.start(config, {
+      bufnr = bufnr,
+      reuse_client = config.reuse_client,
+      _root_markers = config.root_markers,
+    })
+  end
+
   for name in vim.spairs(lsp._enabled_configs) do
     local config = lsp._resolve_config(name)
 
@@ -507,11 +521,14 @@ local function lsp_enable_callback(bufnr)
       -- do not propagate back to the enabled configs.
       config = vim.deepcopy(config)
 
-      vim.lsp.start(config, {
-        bufnr = bufnr,
-        reuse_client = config.reuse_client,
-        _root_markers = config.root_markers,
-      })
+      if type(config.root_dir) == 'function' then
+        config.root_dir(function(root_dir)
+          config.root_dir = root_dir
+          start(config)
+        end)
+      else
+        start(config)
+      end
     end
   end
 end
