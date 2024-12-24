@@ -270,48 +270,6 @@ describe('vim.ui_attach', function()
         },
       },
     })
-    -- No fast context for prompt message kinds
-    feed(':%s/Function/Replacement/c<cr>')
-    screen:expect({
-      grid = [[
-        ^E122: {10:Function} Foo already exists, add !|
-         to replace it                          |
-        replace with Replacement (y/n/a/q/l/^E/^|
-        Y)?                                     |
-        {1:~                                       }|
-      ]],
-      cmdline = { { abort = false } },
-      messages = {
-        {
-          content = { { 'replace with Replacement (y/n/a/q/l/^E/^Y)?', 6, 18 } },
-          history = true,
-          kind = 'confirm_sub',
-        },
-      },
-    })
-    feed('<esc>:call inputlist(["Select:", "One", "Two"])<cr>')
-    screen:expect({
-      grid = [[
-        E122: {10:Function} Foo already exists, add !|
-         to replace it                          |
-        Type number and <Enter> or click with th|
-        e mouse (q or empty cancels):           |
-        {1:^~                                       }|
-      ]],
-      cmdline = { { abort = false } },
-      messages = {
-        {
-          content = { { 'Select:\nOne\nTwo\n' } },
-          history = false,
-          kind = 'list_cmd',
-        },
-        {
-          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
-          history = false,
-          kind = 'number_prompt',
-        },
-      },
-    })
   end)
 end)
 

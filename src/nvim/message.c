@@ -92,7 +92,7 @@ static int confirm_msg_used = false;            // displaying confirm_msg
 # include "message.c.generated.h"
 #endif
 static char *confirm_msg = NULL;            // ":confirm" message
-static char *confirm_msg_tail;              // tail of confirm_msg
+static char *confirm_buttons;               // ":confirm" buttons sent to cmdline as prompt
 
 MessageHistoryEntry *first_msg_hist = NULL;
 MessageHistoryEntry *last_msg_hist = NULL;
@@ -2286,7 +2286,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
         if (p_more && lines_left == 0 && State != MODE_HITRETURN
             && !msg_no_more && !exmode_active) {
           if (do_more_prompt(NUL)) {
-            s = confirm_msg_tail;
+            s = confirm_buttons;
           }
           if (quit_more) {
             return;
@@ -2778,7 +2778,7 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
 /// When at hit-enter prompt "typed_char" is the already typed character,
 /// otherwise it's NUL.
 ///
-/// @return  true when jumping ahead to "confirm_msg_tail".
+/// @return  true when jumping ahead to "confirm_buttons".
 static bool do_more_prompt(int typed_char)
 {
   static bool entered = false;
@@ -3502,10 +3502,10 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
     }
 
     // Get a typed character directly from the user.
-    int c = get_keystroke(NULL);
+    int c = prompt_for_input(confirm_buttons, HLF_M, true, NULL);
     switch (c) {
     case CAR:                 // User accepts default option
-    case NL:
+    case NUL:
       retval = dfltbutton;
       break;
     case Ctrl_C:              // User aborts/cancels
@@ -3514,6 +3514,7 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
       break;
     default:                  // Could be a hotkey?
       if (c < 0) {            // special keys are ignored here
+        msg_didout = msg_didany = false;
         continue;
       }
       if (c == ':' && ex_cmd) {
@@ -3536,6 +3537,7 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
         break;
       }
       // No hotkey match, so keep waiting
+      msg_didout = msg_didany = false;
       continue;
     }
     break;
@@ -3589,19 +3591,20 @@ static char *console_dialog_alloc(const char *message, const char *buttons, bool
   has_hotkey[0] = false;
 
   // Compute the size of memory to allocate.
-  int len = 0;
+  int msg_len = 0;
+  int button_len = 0;
   int idx = 0;
   const char *r = buttons;
   while (*r) {
     if (*r == DLG_BUTTON_SEP) {
-      len += 3;                         // '\n' -> ', '; 'x' -> '(x)'
+      button_len += 3;                  // '\n' -> ', '; 'x' -> '(x)'
       lenhotkey += HOTK_LEN;            // each button needs a hotkey
       if (idx < HAS_HOTKEY_LEN - 1) {
         has_hotkey[++idx] = false;
       }
     } else if (*r == DLG_HOTKEY_CHAR) {
       r++;
-      len++;                    // '&a' -> '[a]'
+      button_len++;                     // '&a' -> '[a]'
       if (idx < HAS_HOTKEY_LEN - 1) {
         has_hotkey[idx] = true;
       }
@@ -3611,21 +3614,22 @@ static char *console_dialog_alloc(const char *message, const char *buttons, bool
     MB_PTR_ADV(r);
   }
 
-  len += (int)(strlen(message)
-               + 2                          // for the NL's
-               + strlen(buttons)
-               + 3);                        // for the ": " and NUL
-  lenhotkey++;                               // for the NUL
+  msg_len += (int)strlen(message) + 3;     // for the NL's and NUL
+  button_len += (int)strlen(buttons) + 3;  // for the ": " and NUL
+  lenhotkey++;                             // for the NUL
 
   // If no hotkey is specified, first char is used.
   if (!has_hotkey[0]) {
-    len += 2;                                // "x" -> "[x]"
+    button_len += 2;                       // "x" -> "[x]"
   }
 
   // Now allocate space for the strings
   xfree(confirm_msg);
-  confirm_msg = xmalloc((size_t)len);
-  *confirm_msg = NUL;
+  confirm_msg = xmalloc((size_t)msg_len);
+  snprintf(confirm_msg, (size_t)msg_len, "\n%s\n", message);
+
+  xfree(confirm_buttons);
+  confirm_buttons = xmalloc((size_t)button_len);
 
   return xmalloc((size_t)lenhotkey);
 }
@@ -3643,41 +3647,33 @@ static char *msg_show_console_dialog(const char *message, const char *buttons, i
   bool has_hotkey[HAS_HOTKEY_LEN] = { false };
   char *hotk = console_dialog_alloc(message, buttons, has_hotkey);
 
-  copy_hotkeys_and_msg(message, buttons, dfltbutton, has_hotkey, hotk);
+  copy_confirm_hotkeys(buttons, dfltbutton, has_hotkey, hotk);
 
   display_confirm_msg();
   return hotk;
 }
 
-/// Copies hotkeys & dialog message into the memory allocated for it
+/// Copies hotkeys into the memory allocated for it
 ///
-/// @param message Message which will be part of the confirm_msg
 /// @param buttons String containing button names
 /// @param default_button_idx Number of default button
 /// @param has_hotkey An element in this array is true if corresponding button
 ///                   has a hotkey
 /// @param[out] hotkeys_ptr Pointer to the memory location where hotkeys will be copied
-static void copy_hotkeys_and_msg(const char *message, const char *buttons, int default_button_idx,
+static void copy_confirm_hotkeys(const char *buttons, int default_button_idx,
                                  const bool has_hotkey[], char *hotkeys_ptr)
 {
-  *confirm_msg = '\n';
-  STRCPY(confirm_msg + 1, message);
-
-  char *msgp = confirm_msg + 1 + strlen(message);
-
   // Define first default hotkey. Keep the hotkey string NUL
   // terminated to avoid reading past the end.
   hotkeys_ptr[copy_char(buttons, hotkeys_ptr, true)] = NUL;
-
-  // Remember where the choices start, displaying starts here when
-  // "hotkeys_ptr" typed at the more prompt.
-  confirm_msg_tail = msgp;
-  *msgp++ = '\n';
 
   bool first_hotkey = false;  // Is the first char of button a hotkey
   if (!has_hotkey[0]) {
     first_hotkey = true;     // If no hotkey is specified, first char is used
   }
+
+  // Remember where the choices start, sent as prompt to cmdline.
+  char *msgp = confirm_buttons;
 
   int idx = 0;
   const char *r = buttons;

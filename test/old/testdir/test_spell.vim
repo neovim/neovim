@@ -471,7 +471,9 @@ func Test_spellsuggest_option_number()
   \ .. "Change \"baord\" to:\n"
   \ .. " 1 \"board\"\n"
   \ .. " 2 \"bard\"\n"
-  \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  "\ Nvim: Prompt message is sent to cmdline prompt.
+  "\ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  \ , a)
 
   set spell spellsuggest=0
   call assert_equal("\nSorry, no suggestions", execute('norm $z='))
@@ -509,7 +511,9 @@ func Test_spellsuggest_option_expr()
   \ .. " 1 \"BARD\"\n"
   \ .. " 2 \"BOARD\"\n"
   \ .. " 3 \"BROAD\"\n"
-  \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  "\ Nvim: Prompt message is sent to cmdline prompt.
+  "\ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  \ , a)
 
   " With verbose, z= should show the score i.e. word length with
   " our SpellSuggest() function.
@@ -521,7 +525,9 @@ func Test_spellsuggest_option_expr()
   \ .. " 1 \"BARD\"                      (4 - 0)\n"
   \ .. " 2 \"BOARD\"                     (5 - 0)\n"
   \ .. " 3 \"BROAD\"                     (5 - 0)\n"
-  \ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  "\ Nvim: Prompt message is sent to cmdline prompt.
+  "\ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  \ , a)
 
   set spell& spellsuggest& verbose&
   bwipe!

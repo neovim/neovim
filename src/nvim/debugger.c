@@ -153,8 +153,7 @@ void do_debug(char *cmd)
     debug_break_level = -1;
 
     xfree(cmdline);
-    cmdline = getcmdline_prompt('>', NULL, 0, EXPAND_NOTHING, NULL,
-                                CALLBACK_NONE);
+    cmdline = getcmdline_prompt('>', NULL, 0, EXPAND_NOTHING, NULL, CALLBACK_NONE, false, NULL);
 
     debug_break_level = n;
     if (typeahead_saved) {
