@@ -86,7 +86,7 @@ function M.handler(bytecode, upvalues, ...)
   set_upvalues(f, upvalues)
 
   -- Run in pcall so we can return any print messages
-  local ret = { pcall(f, ...) } --- @type any[]
+  local ret = { xpcall(f, debug.traceback, ...) } --- @type any[]
 
   _G.print = orig_print
 
