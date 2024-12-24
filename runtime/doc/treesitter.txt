@@ -1091,6 +1091,9 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
     required for some plugins. In this case, add `vim.bo.syntax = 'on'` after
     the call to `start`.
 
+    Note: By default, the highlighter parses code asynchronously, using a
+    segment time of 3ms.
+
     Example: >lua
         vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
             callback = function(args)
@@ -1594,7 +1597,7 @@ LanguageTree:node_for_range({range}, {opts})
     Return: ~
         (`TSNode?`)
 
-LanguageTree:parse({range})                             *LanguageTree:parse()*
+LanguageTree:parse({range}, {on_parse})                 *LanguageTree:parse()*
     Recursively parse all regions in the language tree using
     |treesitter-parsers| for the corresponding languages and run injection
     queries on the parsed trees to determine whether child trees should be
@@ -1605,14 +1608,26 @@ LanguageTree:parse({range})                             *LanguageTree:parse()*
     if {range} is `true`).
 
     Parameters: ~
-      • {range}  (`boolean|Range?`) Parse this range in the parser's source.
-                 Set to `true` to run a complete parse of the source (Note:
-                 Can be slow!) Set to `false|nil` to only parse regions with
-                 empty ranges (typically only the root tree without
-                 injections).
+      • {range}     (`boolean|Range?`) Parse this range in the parser's
+                    source. Set to `true` to run a complete parse of the
+                    source (Note: Can be slow!) Set to `false|nil` to only
+                    parse regions with empty ranges (typically only the root
+                    tree without injections).
+      • {on_parse}  (`fun(trees?: table<integer, TSTree>, err?: string)?`)
+                    Function invoked when parsing completes. When provided,
+                    parsing will run asynchronously. The first argument to the
+                    function is the list of trees returned by the parse (upon
+                    success), or `nil` if the parse timed out (determined by
+                    'redrawtime'). In the case of a failure, a string
+                    representing the error type will also be passed to the
+                    callback (currently only possible for timeouts).
+
+                    If parsing was still able to finish synchronously (within
+                    3ms), `parse()` returns the list of trees. Otherwise, it
+                    returns `nil`.
 
     Return: ~
-        (`table<integer, TSTree>`)
+        (`table<integer, TSTree>?`)
 
                                                  *LanguageTree:register_cbs()*
 LanguageTree:register_cbs({cbs}, {recursive})

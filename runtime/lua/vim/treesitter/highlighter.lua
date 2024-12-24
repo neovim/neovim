@@ -69,6 +69,7 @@ end
 ---@field private _queries table<string,vim.treesitter.highlighter.Query>
 ---@field tree vim.treesitter.LanguageTree
 ---@field private redraw_count integer
+---@field private parsing boolean true if we are parsing asyncronously
 local TSHighlighter = {
   active = {},
 }
@@ -82,7 +83,6 @@ TSHighlighter.__index = TSHighlighter
 ---@param tree vim.treesitter.LanguageTree parser object to use for highlighting
 ---@param opts (table|nil) Configuration of the highlighter:
 ---           - queries table overwrite queries used by the highlighter
----@return vim.treesitter.highlighter Created highlighter object
 function TSHighlighter.new(tree, opts)
   local self = setmetatable({}, TSHighlighter)
 
@@ -147,8 +147,6 @@ function TSHighlighter.new(tree, opts)
     vim.opt_local.spelloptions:append('noplainbuffer')
   end)
 
-  self.tree:parse()
-
   return self
 end
 
@@ -173,7 +171,7 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
   self._highlight_states = {}
 
   self.tree:for_each_tree(function(tstree, tree)
-    if not tstree then
+    if not tstree or not tree:is_valid(true) then
       return
     end
 
@@ -382,19 +380,30 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
 end
 
 ---@private
----@param _win integer
 ---@param buf integer
 ---@param topline integer
 ---@param botline integer
-function TSHighlighter._on_win(_, _win, buf, topline, botline)
+function TSHighlighter._on_win(_, _, buf, topline, botline)
   local self = TSHighlighter.active[buf]
-  if not self then
+  if not self or self.parsing then
     return false
   end
-  self.tree:parse({ topline, botline + 1 })
-  self:prepare_highlight_states(topline, botline + 1)
+  self.parsing = self.tree:parse({ topline, botline + 1 }, function(trees)
+    if trees then
+      self:_async_parse_callback(buf)
+    end
+  end) == nil
   self.redraw_count = self.redraw_count + 1
-  return true
+  self:prepare_highlight_states(topline, botline)
+  return #self._highlight_states > 0
+end
+
+---@param buf integer
+function TSHighlighter:_async_parse_callback(buf)
+  if self.parsing then
+    self.parsing = false
+    api.nvim__redraw({ buf = buf, valid = false, flush = false })
+  end
 end
 
 api.nvim_set_decoration_provider(ns, {

@@ -61,8 +61,6 @@ function M._create_parser(bufnr, lang, opts)
     { on_bytes = bytes_cb, on_detach = detach_cb, on_reload = reload_cb, preview = true }
   )
 
-  self:parse()
-
   return self
 end
 
@@ -396,6 +394,8 @@ end
 ---
 --- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
 --- In this case, add `vim.bo.syntax = 'on'` after the call to `start`.
+---
+--- Note: By default, the highlighter parses code asynchronously, using a segment time of 3ms.
 ---
 --- Example:
 ---
