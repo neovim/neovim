@@ -2495,6 +2495,209 @@ describe('extmark decorations', function()
                                                         |
     ]])
   end)
+
+  it ('conceal_lines', function()
+    insert(example_text)
+    exec('set number conceallevel=3')
+    feed('ggj')
+    local not_concealed = {
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  2 }^    local text, hl_id_cell, count = unpack(ite|
+        {2:    }m)                                            |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  4 }        hl_id = hl_id_cell                    |
+        {2:  5 }    end                                       |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|
+                                                          |
+      ]]
+    }
+    screen:expect(not_concealed)
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { conceal_lines = "" })
+    screen:expect_unchanged()
+    feed('j')
+    local concealed = {
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }^    if hl_id_cell ~= nil then                 |
+        {2:  4 }        hl_id = hl_id_cell                    |
+        {2:  5 }    end                                       |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*3
+                                                          |
+      ]]
+    }
+    screen:expect(concealed)
+    feed('k')
+    screen:expect(not_concealed)
+    exec('set concealcursor=n')
+    screen:expect(concealed)
+    api.nvim_buf_set_extmark(0, ns, 3, 0, { conceal_lines = "" })
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }^    if hl_id_cell ~= nil then                 |
+        {2:  5 }    end                                       |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*4
+                                                          |
+      ]]
+    })
+    feed('kjj')
+    screen:expect_unchanged()
+    api.nvim_buf_set_extmark(0, ns, 4, 0, { conceal_lines = "" })
+    feed('kjjjC')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  5 }^                                              |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*4
+        {24:-- INSERT --}                                      |
+      ]]
+    })
+    feed('<esc>')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  6 }^    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*5
+                                                          |
+      ]]
+    })
+    feed('kji')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  5 }^                                              |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*4
+        {24:-- INSERT --}                                      |
+      ]]
+    })
+    feed('conceal text')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  5 }conceal text^                                  |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*4
+        {24:-- INSERT --}                                      |
+      ]]
+    })
+    feed('<esc>')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  6 }    for _ =^ 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*5
+                                                          |
+      ]]
+    })
+    feed('ggzfj')
+    screen:expect({
+      grid = [[
+        {2:  1 }{33:^+--  2 lines: for _,item in ipairs(items) do··}|
+        {2:  3 }    if hl_id_cell ~= nil then                 |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*5
+                                                          |
+      ]]
+    })
+    feed('j')
+    screen:expect({
+      grid = [[
+        {2:  1 }{33:+--  2 lines: for _,item in ipairs(items) do··}|
+        {2:  3 }^    if hl_id_cell ~= nil then                 |
+        {2:  6 }    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*5
+                                                          |
+      ]]
+    })
+    feed('ggzdjzfj')
+    screen:expect({
+      grid = [[
+        {2:  1 }for _,item in ipairs(items) do                |
+        {2:  6 }^    for _ = 1, (count or 1) do                |
+        {2:  7 }        local cell = line[colpos]             |
+        {2:  8 }        cell.text = text                      |
+        {2:  9 }        cell.hl_id = hl_id                    |
+        {2: 10 }        colpos = colpos+1                     |
+        {2: 11 }    end                                       |
+        {2: 12 }end                                           |
+        {1:~                                                 }|*6
+                                                          |
+      ]]
+    })
+    feed('jj')
+    screen:expect_unchanged()
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
