@@ -504,6 +504,7 @@ local extension = {
   gdshader = 'gdshader',
   shader = 'gdshader',
   ged = 'gedcom',
+  gel = 'gel',
   gmi = 'gemtext',
   gemini = 'gemtext',
   gift = 'gift',
