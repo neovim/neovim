@@ -5385,8 +5385,53 @@ describe('API', function()
         13                                                          |
       ]],
     })
-    -- takes buffer line count from correct buffer with "win" and {0, -1} "range"
-    api.nvim__redraw({ win = 0, range = { 0, -1 } })
+  end)
+
+  it('nvim__redraw range parameter', function()
+    Screen.new(10, 5)
+    fn.setline(1, fn.range(4))
+
+    exec_lua([[
+      _G.lines_list = {}
+      ns = vim.api.nvim_create_namespace('')
+      vim.api.nvim_set_decoration_provider(ns, {
+        on_win = function()
+        end,
+        on_line = function(_, _, _, line)
+          table.insert(_G.lines_list, line)
+        end,
+      })
+      function _G.get_lines()
+        local lines = _G.lines_list
+        _G.lines_list = {}
+        return lines
+      end
+    ]])
+
+    api.nvim__redraw({ flush = true, valid = false })
+    exec_lua('_G.get_lines()')
+
+    local actual_lines = {}
+    local function test(range)
+      api.nvim__redraw({ win = 0, range = range })
+      table.insert(actual_lines, exec_lua('return _G.get_lines()'))
+    end
+
+    test({ 0, -1 })
+    test({ 2, 2 ^ 31 })
+    test({ 2, 2 ^ 32 })
+    test({ 2 ^ 31 - 1, 2 })
+    test({ 2 ^ 32 - 1, 2 })
+
+    local expected_lines = {
+      { 0, 1, 2, 3 },
+      { 2, 3 },
+      { 2, 3 },
+      {},
+      {},
+    }
+    eq(expected_lines, actual_lines)
+
     n.assert_alive()
   end)
 end)
