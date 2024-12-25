@@ -31,9 +31,9 @@ local buf_handles = {}
 --- @nodoc
 --- @class vim.lsp.completion.Context
 local Context = {
-  cursor = nil, --- @type [integer, integer]?
+  cursor = nil,            --- @type [integer, integer]?
   last_request_time = nil, --- @type integer?
-  pending_requests = {}, --- @type function[]
+  pending_requests = {},   --- @type function[]
   isIncomplete = false,
 }
 
@@ -277,10 +277,11 @@ function M._lsp_to_complete_items(result, prefix, client_id)
   for _, item in ipairs(items) do
     if matches(item) then
       local word = get_completion_word(item)
+      word = string.gsub(word, "[\r\n\t]", " ") -- fix complete() bug on lsp-snippet
       local hl_group = ''
       if
-        item.deprecated
-        or vim.list_contains((item.tags or {}), protocol.CompletionTag.Deprecated)
+          item.deprecated
+          or vim.list_contains((item.tags or {}), protocol.CompletionTag.Deprecated)
       then
         hl_group = 'DiagnosticDeprecated'
       end
@@ -355,14 +356,14 @@ end
 --- @return table[] matches
 --- @return integer? server_start_boundary
 function M._convert_results(
-  line,
-  lnum,
-  cursor_col,
-  client_id,
-  client_start_boundary,
-  server_start_boundary,
-  result,
-  encoding
+    line,
+    lnum,
+    cursor_col,
+    client_id,
+    client_start_boundary,
+    server_start_boundary,
+    result,
+    encoding
 )
   -- Completion response items may be relative to a position different than `client_start_boundary`.
   -- Concrete example, with lua-language-server:
@@ -397,7 +398,7 @@ end
 --- @param callback fun(responses: table<integer, { err: lsp.ResponseError, result: vim.lsp.CompletionResult }>)
 --- @return function # Cancellation function
 local function request(clients, bufnr, win, callback)
-  local responses = {} --- @type table<integer, { err: lsp.ResponseError, result: any }>
+  local responses = {}   --- @type table<integer, { err: lsp.ResponseError, result: any }>
   local request_ids = {} --- @type table<integer, integer>
   local remaining_requests = vim.tbl_count(clients)
 
@@ -517,6 +518,38 @@ local function on_insert_char_pre(handle)
   end
 end
 
+--- @param handle vim.lsp.completion.BufHandle
+local function on_text_changed(handle)
+  if tonumber(vim.fn.pumvisible()) == 1 then
+    if Context.isIncomplete then
+      reset_timer()
+
+      local debounce_ms = next_debounce()
+      if debounce_ms == 0 then
+        vim.schedule(M.trigger)
+      else
+        completion_timer = new_timer()
+        completion_timer:start(debounce_ms, 0, vim.schedule_wrap(M.trigger))
+      end
+    end
+
+    return
+  end
+
+  local line = api.nvim_get_current_line()
+  local col = api.nvim_win_get_cursor(0)[2]
+  if col == 0 then -- cursor at the head of line
+    return
+  end
+  local char = line:sub(col, col)
+  if not completion_timer and (handle.triggers[char] or char:match("%w")) then
+    completion_timer = assert(vim.uv.new_timer())
+    completion_timer:start(25, 0, function()
+      reset_timer()
+      vim.schedule(M.trigger)
+    end)
+  end
+end
 local function on_insert_leave()
   reset_timer()
   Context.cursor = nil
@@ -532,7 +565,8 @@ local function on_complete_done()
 
   local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0)) --- @type integer, integer
   cursor_row = cursor_row - 1
-  local completion_item = completed_item.user_data.nvim.lsp.completion_item --- @type lsp.CompletionItem
+  local completion_item = completed_item.user_data.nvim.lsp
+      .completion_item                                          --- @type lsp.CompletionItem
   local client_id = completed_item.user_data.nvim.lsp.client_id --- @type integer
   if not completion_item or not client_id then
     Context:reset()
@@ -541,7 +575,7 @@ local function on_complete_done()
 
   local bufnr = api.nvim_get_current_buf()
   local expand_snippet = completion_item.insertTextFormat == protocol.InsertTextFormat.Snippet
-    and (completion_item.textEdit ~= nil or completion_item.insertText ~= nil)
+      and (completion_item.textEdit ~= nil or completion_item.insertText ~= nil)
 
   Context:reset()
 
@@ -630,7 +664,7 @@ local function enable_completions(client_id, bufnr, opts)
 
     -- Set up autocommands.
     local group =
-      api.nvim_create_augroup(string.format('vim/lsp/completion-%d', bufnr), { clear = true })
+        api.nvim_create_augroup(string.format('vim/lsp/completion-%d', bufnr), { clear = true })
     api.nvim_create_autocmd('CompleteDone', {
       group = group,
       buffer = bufnr,
@@ -642,11 +676,18 @@ local function enable_completions(client_id, bufnr, opts)
       end,
     })
     if opts.autotrigger then
-      api.nvim_create_autocmd('InsertCharPre', {
+      -- api.nvim_create_autocmd('InsertCharPre', {
+      --   group = group,
+      --   buffer = bufnr,
+      --   callback = function()
+      --     on_insert_char_pre(buf_handles[bufnr])
+      --   end,
+      -- })
+      api.nvim_create_autocmd({ 'TextChangedI', 'TextChangedP' }, {
         group = group,
         buffer = bufnr,
         callback = function()
-          on_insert_char_pre(buf_handles[bufnr])
+          on_text_changed(buf_handles[bufnr])
         end,
       })
       api.nvim_create_autocmd('InsertLeave', {
