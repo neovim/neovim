@@ -1636,6 +1636,7 @@ local filename = {
   ['.luaurc'] = 'jsonc',
   ['.swrc'] = 'jsonc',
   ['.vsconfig'] = 'jsonc',
+  ['bun.lock'] = 'jsonc',
   ['.justfile'] = 'just',
   ['justfile'] = 'just',
   ['Justfile'] = 'just',
