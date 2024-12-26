@@ -319,7 +319,7 @@ local function remove_duplicate_values(t)
   --- @type table, table<any,true>
   local result, seen = {}, {}
   for _, v in
-    ipairs(t --[[@as any[] ]])
+  ipairs(t --[[@as any[] ]])
   do
     if not seen[v] then
       table.insert(result, v)
@@ -770,7 +770,7 @@ end
 ---
 ---
 --- A special interface |vim.opt| exists for conveniently interacting with list-
---- and map-style option from Lua: It allows accessing them as Lua tables and
+--- and map-style options from Lua: It allows accessing them as Lua tables and
 --- offers object-oriented method for adding and removing entries.
 ---
 ---     Examples: ~
