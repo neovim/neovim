@@ -3184,7 +3184,6 @@ describe('TUI', function()
           local req = args.data
           local payload = req:match('^\027P%+q([%x;]+)$')
           if payload and vim.text.hexdecode(payload) == 'Ms' then
-            vim.g.xtgettcap = 'Ms'
             local resp = string.format('\027P1+r%s=%s\027\\', payload, vim.text.hexencode('\027]52;;\027\\'))
             vim.api.nvim_chan_send(vim.bo[args.buf].channel, resp)
             return true
@@ -3202,9 +3201,6 @@ describe('TUI', function()
     }, {
       env = {
         VIMRUNTIME = os.getenv('VIMRUNTIME'),
-
-        -- Only queries when SSH_TTY is set
-        SSH_TTY = '/dev/pts/1',
       },
     })
 
@@ -3212,8 +3208,7 @@ describe('TUI', function()
 
     local child_session = n.connect(child_server)
     retry(nil, 1000, function()
-      eq('Ms', eval("get(g:, 'xtgettcap', '')"))
-      eq({ true, 'OSC 52' }, { child_session:request('nvim_eval', 'g:clipboard.name') })
+      eq({ true, { osc52 = true } }, { child_session:request('nvim_eval', 'g:termfeatures') })
     end)
   end)
 end)

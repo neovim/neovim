@@ -259,23 +259,21 @@ For Windows WSL, try this g:clipboard definition:
 							    *clipboard-osc52*
 Nvim bundles a clipboard provider that allows copying to the system clipboard
 using OSC 52. OSC 52 is an Operating System Command control sequence that
-writes the copied text to the terminal emulator. If the terminal emulator
-supports OSC 52 then it will write the copied text into the system clipboard.
+causes the terminal emulator to write to or read from the system clipboard.
 
-Nvim will attempt to automatically determine if the host terminal emulator
-supports the OSC 52 sequence and enable the OSC 52 clipboard provider if it
-does as long as all of the following are true:
+When Nvim is running in the |TUI|, it will automatically attempt to determine if
+the host terminal emulator supports OSC 52. If it does, then Nvim will use OSC
+52 for copying and pasting if no other |clipboard-tool| is found and when
+'clipboard' is unset.
 
-  • Nvim is running in the |TUI|
-  • |g:clipboard| is unset
-  • 'clipboard' is not set to "unnamed" or "unnamedplus"
-  • $SSH_TTY is set
-
-If any of the above conditions are not met then the OSC 52 clipboard provider
-will not be used by default and Nvim will fall back to discovering a
-|clipboard-tool| through the usual process.
-
-To force Nvim to use the OSC 52 provider you can use the following
+							*g:termfeatures*
+To disable the automatic detection, set the "osc52" key of |g:termfeatures| to
+|v:false| in the |config| file. Example: >lua
+	local termfeatures = vim.g.termfeatures or {}
+	termfeatures.osc52 = false
+	vim.g.termfeatures = termfeatures
+<
+To force Nvim to always use the OSC 52 provider you can use the following
 |g:clipboard| definition: >lua
 
     vim.g.clipboard = {

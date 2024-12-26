@@ -174,7 +174,9 @@ TREESITTER
 
 TUI
 
-• TODO
+• OSC 52 is used as a fallback clipboard provider when no other
+  |clipboard-tool| is found, even when not using SSH |clipboard-osc52|. To
+  disable OSC 52 queries, set the "osc52" key of |g:termfeatures| to false.
 
 VIMSCRIPT
 
