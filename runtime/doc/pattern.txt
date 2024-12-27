@@ -1485,6 +1485,7 @@ criteria:
     - Matches at a camel case character (e.g. Case in CamelCase)
     - Matches after a path separator or a hyphen.
     - The number of unmatched characters in a string.
+    - A full/exact match is preferred.
 The matching string with the highest score is returned first.
 
 For example, when you search for the "get pat" string using fuzzy matching, it
