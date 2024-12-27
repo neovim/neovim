@@ -399,12 +399,22 @@ func Test_compiler_spotbugs_properties()
   endfunc
   defer execute('delfunction g:SpotBugsPostCommand')
 
+  func! g:SpotBugsPostCompilerActionExecutor(action) abort
+    try
+      " XXX: Notify the spotbugs compiler about success or failure.
+      cc
+    catch /\<E42:/
+      execute a:action
+    endtry
+  endfunc
+  defer execute('delfunction g:SpotBugsPostCompilerActionExecutor')
+
   " TEST INTEGRATION WITH A SUPPORTED COMPILER PLUGIN.
   if filereadable($VIMRUNTIME .. '/compiler/maven.vim')
     if !executable('mvn')
       if has('win32')
         " This is what ":help executable()" suggests.
-        call writefile([], 'Xspotbugs/mvn.exe')
+        call writefile([], 'Xspotbugs/mvn.cmd')
       else
         let $PATH = 'Xspotbugs:' .. $PATH
         call writefile([], 'Xspotbugs/mvn')
@@ -590,6 +600,8 @@ func Test_compiler_spotbugs_properties()
         \ 'DefaultPreCompilerTestCommand': function('g:SpotBugsPreTestCommand'),
         \ 'DefaultPreCompilerCommand': function('g:SpotBugsPreCommand'),
         \ 'DefaultPostCompilerCommand': function('g:SpotBugsPostCommand'),
+        \ 'PostCompilerActionExecutor': function('g:SpotBugsPostCompilerActionExecutor'),
+        \ 'augroupForPostCompilerAction': 'java_spotbugs_test',
         \ 'sourceDirPath': ['Xspotbugs/src'],
         \ 'classDirPath': ['Xspotbugs/src'],
         \ 'testSourceDirPath': ['tests'],
@@ -626,6 +638,56 @@ func Test_compiler_spotbugs_properties()
     call assert_true(s:spotbugs_results.preTestActionDone)
     call assert_equal('test-compile', s:spotbugs_results.preTestCommandArguments)
     " For a pre-match, a post-action.
+    call assert_true(s:spotbugs_results.postActionDone)
+    call assert_equal('%:S', s:spotbugs_results.postCommandArguments)
+
+    " With a match, confirm that ":compiler spotbugs" has run.
+    if has('win32')
+      call assert_match('^spotbugs\.bat\s', &l:makeprg)
+    else
+      call assert_match('^spotbugs\s', &l:makeprg)
+    endif
+
+    setlocal makeprg=
+    let s:spotbugs_results.preActionDone = 0
+    let s:spotbugs_results.preTestActionOtherDone = 0
+    let s:spotbugs_results.preTestLocalActionDone = 0
+    let s:spotbugs_results.postActionDone = 0
+    let s:spotbugs_results.preCommandArguments = ''
+    let s:spotbugs_results.preTestCommandArguments = ''
+    let s:spotbugs_results.postCommandArguments = ''
+
+    " When "PostCompilerActionExecutor", "Pre*Action" and/or "Pre*TestAction",
+    " and "Post*Action" are available, "#java_spotbugs_post" must be defined.
+    call assert_true(exists('#java_spotbugs_post'))
+    call assert_true(exists('#java_spotbugs_post#User'))
+    call assert_false(exists('#java_spotbugs_post#ShellCmdPost'))
+    call assert_false(exists('#java_spotbugs_test#ShellCmdPost'))
+
+    " Re-link a Funcref on the fly.
+    func! g:SpotBugsPreTestCommand(arguments) abort
+      let s:spotbugs_results.preTestActionOtherDone = 1
+      let s:spotbugs_results.preTestCommandArguments = a:arguments
+      " Define a once-only ":autocmd" for "#java_spotbugs_test#ShellCmdPost".
+      doautocmd java_spotbugs_post User
+      " XXX: Do NOT use ":cc" to notify the spotbugs compiler about success or
+      " failure, and assume the transfer of control to a ShellCmdPost command.
+    endfunc
+
+    doautocmd java_spotbugs User
+    " No match: "test_file !~# 'Xspotbugs/src'".
+    call assert_false(s:spotbugs_results.preActionDone)
+    call assert_true(empty(s:spotbugs_results.preCommandArguments))
+    " A match: "test_file =~# 'tests'".
+    call assert_true(s:spotbugs_results.preTestActionOtherDone)
+    call assert_equal('test-compile', s:spotbugs_results.preTestCommandArguments)
+    " For a pre-match, no post-action (without ":cc") UNLESS a ShellCmdPost
+    " event is consumed whose command will invoke "PostCompilerActionExecutor"
+    " and the latter will accept a post-compiler action argument.
+    call assert_false(s:spotbugs_results.postActionDone)
+    call assert_true(exists('#java_spotbugs_test#ShellCmdPost'))
+    doautocmd ShellCmdPost
+    call assert_false(exists('#java_spotbugs_test#ShellCmdPost'))
     call assert_true(s:spotbugs_results.postActionDone)
     call assert_equal('%:S', s:spotbugs_results.postCommandArguments)
 
