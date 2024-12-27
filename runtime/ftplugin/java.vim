@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Dan Sharp
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Dec 16
+" Last Change:		2024 Dec 25
 "			2024 Jan 14 by Vim Project (browsefilter)
 "			2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 
@@ -113,7 +113,7 @@ if (!empty(get(g:, 'spotbugs_properties', {})) ||
     endfunction
 
     " Work around ":bar"s and ":autocmd"s.
-    function! s:ExecuteActionOnce(cleanup_cmd, action_cmd) abort
+    function! JavaFileTypeExecuteActionOnce(cleanup_cmd, action_cmd) abort
 	try
 	    execute a:cleanup_cmd
 	finally
@@ -285,7 +285,7 @@ if (!empty(get(g:, 'spotbugs_properties', {})) ||
 	for s:action in s:actions
 	    if has_key(s:action, 'once')
 		execute printf('autocmd java_spotbugs %s <buffer> ' .
-			\ 'call s:ExecuteActionOnce(%s, %s)',
+			\ 'call JavaFileTypeExecuteActionOnce(%s, %s)',
 		    \ s:action.event,
 		    \ string(printf('autocmd! java_spotbugs %s <buffer>',
 			\ s:action.event)),
@@ -297,7 +297,41 @@ if (!empty(get(g:, 'spotbugs_properties', {})) ||
 	    endif
 	endfor
 
-	unlet! s:action s:actions s:idx s:dispatcher
+	if s:SpotBugsHasProperty('PostCompilerActionExecutor') &&
+		\ (s:request == 7 || s:request == 6 ||
+		\ s:request == 5 || s:request == 4)
+	    let s:augroup = s:SpotBugsGetProperty(
+		\ 'augroupForPostCompilerAction',
+		\ 'java_spotbugs_post')
+	    let s:augroup = !empty(s:augroup) ? s:augroup : 'java_spotbugs_post'
+
+	    for s:candidate in ['java_spotbugs_post', s:augroup]
+		if !exists("#" . s:candidate)
+		    execute printf('augroup %s | augroup END', s:candidate)
+		endif
+	    endfor
+
+	    silent! autocmd! java_spotbugs_post User <buffer>
+
+	    " Define a User ":autocmd" to define a once-only ShellCmdPost
+	    " ":autocmd" that will invoke "PostCompilerActionExecutor" and let
+	    " it decide whether to proceed with ":compiler spotbugs" etc.; and
+	    " seek explicit synchronisation with ":doautocmd ShellCmdPost" by
+	    " omitting "nested" for "java_spotbugs_post" and "java_spotbugs".
+	    execute printf('autocmd java_spotbugs_post User <buffer> ' .
+				\ 'call JavaFileTypeExecuteActionOnce(%s, %s)',
+		\ string(printf('autocmd! %s ShellCmdPost <buffer>', s:augroup)),
+		\ string(printf('autocmd %s ShellCmdPost <buffer> ' .
+				\ 'call JavaFileTypeExecuteActionOnce(%s, %s)',
+		    \ s:augroup,
+		    \ string(printf('autocmd! %s ShellCmdPost <buffer>', s:augroup)),
+		    \ string(printf('call call(%s, [%s])',
+			\ string(s:SpotBugsGetProperties().PostCompilerActionExecutor),
+			\ string(printf('compiler spotbugs | call call(%s, [])',
+			    \ string(s:SpotBugsGetProperties().PostCompilerAction))))))))
+	endif
+
+	unlet! s:candidate s:augroup s:action s:actions s:idx s:dispatcher
     endif
 
     delfunction s:SpotBugsGetProperties
@@ -310,9 +344,11 @@ function! JavaFileTypeCleanUp() abort
     setlocal suffixes< suffixesadd< formatoptions< comments< commentstring< path< includeexpr<
     unlet! b:browsefilter
 
-    " The concatenated removals may be misparsed as a User autocmd.
+    " The concatenated ":autocmd" removals may be misparsed as an ":autocmd".
+    " A _once-only_ ShellCmdPost ":autocmd" is always a call-site definition.
     silent! autocmd! java_spotbugs User <buffer>
     silent! autocmd! java_spotbugs Syntax <buffer>
+    silent! autocmd! java_spotbugs_post User <buffer>
 endfunction
 
 " Undo the stuff we changed.

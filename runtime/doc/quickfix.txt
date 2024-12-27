@@ -1410,6 +1410,70 @@ of |:make|, and assigning its |Funcref| to the selected key.  For example:
 			\ function('GenericPostCompilerCommand'),
 	\ }
 
+When "PostCompilerAction" is available, "PostCompilerActionExecutor" is also
+supported.  Its value must be a Funcref pointing to a function that always
+declares a single parameter of type string and decides whether |:execute| can
+be dispatched on its argument, containing a pending post-compiler action,
+after ascertaining the current status of |:cc| (or |:ll|): >vim
+
+	function! GenericPostCompilerActionExecutor(action) abort
+		try
+			cc
+		catch /\<E42:/
+			execute a:action
+		endtry
+	endfunction
+
+Complementary, some or all of the available "Pre*Action"s (or "*Pre*Command"s)
+may run `:doautocmd java_spotbugs_post User` in their implementations before
+|:make| (or its equivalent) to define a once-only |ShellCmdPost| `:autocmd`
+that will arrange for "PostCompilerActionExecutor" to be invoked; and then run
+`:doautocmd java_spotbugs_post ShellCmdPost` to consume this event: >vim
+
+	function! GenericPreCompilerCommand(arguments) abort
+		if !exists('g:spotbugs_compilation_done')
+			doautocmd java_spotbugs_post User
+			execute 'make ' . a:arguments
+			" only run doautocmd when :make was synchronous
+			" see note below
+			doautocmd java_spotbugs_post ShellCmdPost " XXX: (a)
+			let g:spotbugs_compilation_done = 1
+		else
+			cc
+		endif
+	endfunction
+
+	function! GenericPreCompilerTestCommand(arguments) abort
+		if !exists('g:spotbugs_test_compilation_done')
+			doautocmd java_spotbugs_post User
+			execute 'make ' . a:arguments
+			" only run doautocmd when :make was synchronous
+			" see note below
+			doautocmd java_spotbugs_post ShellCmdPost " XXX: (b)
+			let g:spotbugs_test_compilation_done = 1
+		else
+			cc
+		endif
+	endfunction
+
+	let g:spotbugs_properties = {
+		\ 'compiler':		'maven',
+		\ 'DefaultPreCompilerCommand':
+			\ function('GenericPreCompilerCommand'),
+		\ 'DefaultPreCompilerTestCommand':
+			\ function('GenericPreCompilerTestCommand'),
+		\ 'PostCompilerActionExecutor':
+			\ function('GenericPostCompilerActionExecutor'),
+	\ }
+
+If a command equivalent of `:make` is capable of asynchronous execution and
+consuming `ShellCmdPost` events, `:doautocmd java_spotbugs_post ShellCmdPost`
+must be removed from such "*Action" (or "*Command") implementations (i.e. the
+lines `(a)` and `(b)` in the listed examples) to retain a sequential order for
+non-blocking execution, and any notification (see below) must be suppressed.
+A `ShellCmdPost` `:autocmd` can be associated with any |:augroup| by assigning
+its name to the "augroupForPostCompilerAction" key.
+
 When default actions are not suited to a desired workflow, proceed by writing
 arbitrary functions yourself and matching their Funcrefs to the supported
 keys: "PreCompilerAction", "PreCompilerTestAction", and "PostCompilerAction".

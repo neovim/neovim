@@ -1,7 +1,7 @@
 " Vim compiler file
 " Compiler:     Spotbugs (Java static checker; needs javac compiled classes)
-" Maintainer:   @konfekt and @zzzyxwvut
-" Last Change:  2024 Dec 14
+" Maintainers:  @konfekt and @zzzyxwvut
+" Last Change:  2024 Dec 20
 
 if exists('g:current_compiler') || bufname() !~# '\.java\=$' || wordcount().chars < 9
   finish
