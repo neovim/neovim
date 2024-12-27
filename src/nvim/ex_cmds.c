@@ -3793,10 +3793,11 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
 
               curwin->w_p_fen = save_p_fen;
 
-              snprintf(IObuff, IOSIZE, _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
-              char *prompt = xstrdup(IObuff);
-              typed = prompt_for_input(prompt, HLF_R, true, NULL);
-              xfree(prompt);
+              char *p = _("replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)");
+              snprintf(IObuff, IOSIZE, p, sub);
+              p = xstrdup(IObuff);
+              typed = prompt_for_input(p, HLF_R, true, NULL);
+              xfree(p);
 
               p_lz = save_p_lz;
               RedrawingDisabled = temp;

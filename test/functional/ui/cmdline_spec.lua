@@ -1485,10 +1485,10 @@ describe('cmdheight=0', function()
   it('when substitute text', function()
     command('set cmdheight=0 noruler laststatus=3')
     feed('ifoo<ESC>')
-    screen:try_resize(screen._width, 6)
+    screen:try_resize(screen._width, 7)
     screen:expect([[
       fo^o                      |
-      {1:~                        }|*4
+      {1:~                        }|*5
       {3:[No Name] [+]            }|
     ]])
 
@@ -1497,14 +1497,15 @@ describe('cmdheight=0', function()
       {2:foo}                      |
       {3:                         }|
                                |*2
-      {6:replace with bar (y/n/a/q}|
-      {6:/l/^E/^Y)?}^               |
+      {6:replace with bar? (y)es/(}|
+      {6:n)o/(a)ll/(q)uit/(l)ast/s}|
+      {6:croll up(^E)/down(^Y)}^    |
     ]])
 
     feed('y')
     screen:expect([[
       ^bar                      |
-      {1:~                        }|*4
+      {1:~                        }|*5
       {3:[No Name] [+]            }|
     ]])
 

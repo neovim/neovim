@@ -1991,8 +1991,8 @@ msgstr "E146: 正则表达式不能用字母作分界"
 #. Same highlight as wait_return().
 #: ../ex_cmds.c:3952
 #, c-format
-msgid "replace with %s (y/n/a/q/l/^E/^Y)?"
-msgstr "替换为 %s (y/n/a/q/l/^E/^Y)？"
+msgid "replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
+msgstr "替换为 %s？(y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
 
 #: ../ex_cmds.c:4462
 msgid "(Interrupted) "
