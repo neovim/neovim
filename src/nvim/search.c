@@ -2995,6 +2995,7 @@ static int fuzzy_match_compute_score(const char *const str, const int strSz,
   assert(numMatches > 0);  // suppress clang "result of operation is garbage"
   // Initialize score
   int score = 100;
+  bool is_exact_match = true;
 
   // Apply leading letter penalty
   int penalty = LEADING_LETTER_PENALTY * (int)matches[0];
@@ -3048,6 +3049,14 @@ static int fuzzy_match_compute_score(const char *const str, const int strSz,
       // First letter
       score += FIRST_LETTER_BONUS;
     }
+    // Check exact match condition
+    if (currIdx != (uint32_t)i) {
+      is_exact_match = false;
+    }
+  }
+  // Boost score for exact matches
+  if (is_exact_match && numMatches == strSz) {
+    score += 100;
   }
   return score;
 }

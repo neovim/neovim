@@ -23,6 +23,8 @@ func Test_matchfuzzy()
   call assert_equal(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], matchfuzzy(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], 'aa'))
   call assert_equal(256, matchfuzzy([repeat('a', 256)], repeat('a', 256))[0]->len())
   call assert_equal([], matchfuzzy([repeat('a', 300)], repeat('a', 257)))
+  " full match has highest score
+  call assert_equal(['Cursor', 'lCursor'], matchfuzzy(["hello", "lCursor", "Cursor"], "Cursor"))
   " matches with same score should not be reordered
   let l = ['abc1', 'abc2', 'abc3']
   call assert_equal(l, l->matchfuzzy('abc'))
@@ -101,7 +103,7 @@ func Test_matchfuzzypos()
   call assert_equal([['curl', 'world'], [[2,3], [2,3]], [128, 127]], matchfuzzypos(['world', 'curl'], 'rl'))
   call assert_equal([['curl', 'world'], [[2,3], [2,3]], [128, 127]], matchfuzzypos(['world', 'one', 'curl'], 'rl'))
   call assert_equal([['hello', 'hello world hello world'],
-        \ [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]], [275, 257]],
+        \ [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]], [375, 257]],
         \ matchfuzzypos(['hello world hello world', 'hello', 'world'], 'hello'))
   call assert_equal([['aaaaaaa'], [[0, 1, 2]], [191]], matchfuzzypos(['aaaaaaa'], 'aaa'))
   call assert_equal([['a  b'], [[0, 3]], [219]], matchfuzzypos(['a  b'], 'a  b'))
@@ -136,7 +138,7 @@ func Test_matchfuzzypos()
   call assert_equal([['foo bar baz'], [[0, 1, 2, 3, 4, 5, 10]], [326]], ['foo bar baz', 'foo', 'foo bar', 'baz bar']->matchfuzzypos('foo baz', {'matchseq': 1}))
   call assert_equal([[], [], []], ['foo bar baz', 'foo', 'foo bar', 'baz bar']->matchfuzzypos('one two'))
   call assert_equal([[], [], []], ['foo bar']->matchfuzzypos(" \t "))
-  call assert_equal([['grace'], [[1, 2, 3, 4, 2, 3, 4, 0, 1, 2, 3, 4]], [657]], ['grace']->matchfuzzypos('race ace grace'))
+  call assert_equal([['grace'], [[1, 2, 3, 4, 2, 3, 4, 0, 1, 2, 3, 4]], [757]], ['grace']->matchfuzzypos('race ace grace'))
 
   let l = [{'id' : 5, 'val' : 'crayon'}, {'id' : 6, 'val' : 'camera'}]
   call assert_equal([[{'id' : 6, 'val' : 'camera'}], [[0, 1, 2]], [192]],
