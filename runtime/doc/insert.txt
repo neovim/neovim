@@ -2026,7 +2026,7 @@ the cursor is, or below the specified line.  To insert text above the first
 line use the command ":0r {name}".
 
 After the ":read" command, the cursor is left on the first non-blank in the
-first new line.  Unless in Ex mode, then the cursor is left on the last new
+first new line.  If in Ex mode, then the cursor is left on the last new
 line (sorry, this is Vi compatible).
 
 If a file name is given with ":r", it becomes the alternate file.  This can be
