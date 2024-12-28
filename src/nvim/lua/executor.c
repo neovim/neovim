@@ -811,6 +811,10 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
 
+  // vim._fs_expand_tilde
+  lua_pushcfunction(lstate, &nlua_fs_expand_tilde);
+  lua_setfield(lstate, -2, "_fs_expand_tilde");
+
   nlua_state_add_stdlib(lstate, false);
 
   lua_setglobal(lstate, "vim");
@@ -1913,6 +1917,25 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_pushcfunction(lstate, tslua_get_minimum_language_version);
   lua_setfield(lstate, -2, "_ts_get_minimum_language_version");
+}
+
+/// Expand ~ and ~user in a path. Invalid paths are returned as-is.
+/// NOTE: ~user is not supported on Windows.
+static int nlua_fs_expand_tilde(lua_State *lstate)
+{
+  const char *path = luaL_checkstring(lstate, 1);
+
+  if (path[0] != '~') {
+    lua_pushstring(lstate, path);
+  } else if (strcmp(path, "~") == 0) {
+    lua_pushstring(lstate, os_homedir());
+  } else {
+    char *expanded = os_get_userdir(path + 1);
+    lua_pushstring(lstate, expanded ? expanded : path);
+    xfree(expanded);
+  }
+
+  return 1;
 }
 
 static garray_T expand_result_array = GA_EMPTY_INIT_VALUE;

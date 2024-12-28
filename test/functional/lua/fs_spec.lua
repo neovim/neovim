@@ -456,8 +456,8 @@ describe('vim.fs', function()
   end)
 
   describe('abspath', function()
-    local cwd = is_os('win') and vim.uv.cwd():gsub('\\', '/') or vim.uv.cwd()
-    local home = is_os('win') and vim.uv.os_homedir():gsub('\\', '/') or vim.uv.os_homedir()
+    local cwd = t.fix_slashes(assert(vim.uv.cwd())) --[[ @as string ]]
+    local home = t.fix_slashes(assert(vim.uv.os_homedir())) --[[ @as string ]]
 
     it('works', function()
       eq(cwd .. '/foo', vim.fs.abspath('foo'))

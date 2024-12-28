@@ -505,22 +505,18 @@ local function path_resolve_dot(path)
   return (is_path_absolute and '/' or '') .. table.concat(new_path_components, '/')
 end
 
---- Expand tilde (~) character at the beginning of the path to the user's home directory.
+--- Expand ~ and ~user (POSIX) in paths. Requires path to use / as path separator.
 ---
 --- @param path string Path to expand.
 --- @param sep string|nil Path separator to use. Uses os_sep by default.
 --- @return string Expanded path.
 local function expand_home(path, sep)
-  sep = sep or os_sep
-
   if vim.startswith(path, '~') then
-    local home = uv.os_homedir() or '~' --- @type string
+    local sep_idx = path:find(sep or os_sep)
+    local tilde_path = path:sub(1, sep_idx and sep_idx - 1 or #path)
+    local expanded = vim._fs_expand_tilde(tilde_path) --[[ @as string ]]
 
-    if home:sub(-1) == sep then
-      home = home:sub(1, -2)
-    end
-
-    path = home .. path:sub(2)
+    path = expanded .. path:sub(#tilde_path + 1)
   end
 
   return path
@@ -589,17 +585,17 @@ function M.normalize(path, opts)
     return ''
   end
 
+  if win then
+    -- Convert path separator to `/`
+    path = path:gsub(os_sep_local, '/')
+  end
+
   -- Expand ~ to user's home directory
   path = expand_home(path, os_sep_local)
 
   -- Expand environment variables if `opts.expand_env` isn't `false`
   if opts.expand_env == nil or opts.expand_env then
     path = path:gsub('%$([%w_]+)', uv.os_getenv)
-  end
-
-  if win then
-    -- Convert path separator to `/`
-    path = path:gsub(os_sep_local, '/')
   end
 
   -- Check for double slashes at the start of the path because they have special meaning
@@ -704,11 +700,11 @@ end
 function M.abspath(path)
   vim.validate('path', path, 'string')
 
-  -- Expand ~ to user's home directory
-  path = expand_home(path)
-
   -- Convert path separator to `/`
   path = path:gsub(os_sep, '/')
+
+  -- Expand ~ to user's home directory
+  path = expand_home(path)
 
   local prefix = ''
 
