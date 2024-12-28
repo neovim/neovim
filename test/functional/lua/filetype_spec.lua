@@ -119,7 +119,7 @@ describe('vim.filetype', function()
 
   it('works with contents #22180', function()
     eq(
-      'sh',
+      'bash',
       exec_lua(function()
         -- Needs to be set so detect#sh doesn't fail
         vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'
