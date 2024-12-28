@@ -314,21 +314,6 @@ end
 
 --- @param o vim.option_meta
 --- @return string
-local function get_type_flags(o)
-  local opt_types = (type(o.type) == 'table') and o.type or { o.type }
-  local type_flags = '0'
-  assert(type(opt_types) == 'table')
-
-  for _, opt_type in ipairs(opt_types) do
-    assert(type(opt_type) == 'string')
-    type_flags = ('%s | (1 << %s)'):format(type_flags, opt_type_enum(opt_type))
-  end
-
-  return type_flags
-end
-
---- @param o vim.option_meta
---- @return string
 local function get_scope_flags(o)
   local scope_flags = '0'
 
@@ -427,8 +412,8 @@ local function dump_option(i, o)
   if o.abbreviation then
     w('    .shortname=' .. cstr(o.abbreviation))
   end
+  w('    .type=' .. opt_type_enum(o.type))
   w('    .flags=' .. get_flags(o))
-  w('    .type_flags=' .. get_type_flags(o))
   w('    .scope_flags=' .. get_scope_flags(o))
   w('    .scope_idx=' .. get_scope_idx(o))
   if o.enable_if then
