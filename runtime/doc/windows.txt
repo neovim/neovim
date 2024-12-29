@@ -984,6 +984,7 @@ CTRL-W g }						*CTRL-W_g}*
 		If [N] is not given, the current buffer remains being edited.
 		See |:buffer-!| for [!].  This will also edit a buffer that is
 		not in the buffer list, without setting the 'buflisted' flag.
+		Also see |+cmd|.
 
 							*:ped* *:pedit*
 :ped[it][!] [++opt] [+cmd] {file}
