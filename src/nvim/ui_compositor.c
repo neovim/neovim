@@ -314,13 +314,28 @@ ScreenGrid *ui_comp_mouse_focus(int row, int col)
 }
 
 /// Compute which grid is on top at supplied screen coordinates
-ScreenGrid *ui_comp_get_grid_at_coord(int row, int col)
+ScreenGrid *ui_comp_get_grid_at_coord(int *row, int *col)
 {
-  for (ssize_t i = (ssize_t)kv_size(layers) - 1; i > 0; i--) {
-    ScreenGrid *grid = kv_A(layers, i);
-    if (row >= grid->comp_row && row < grid->comp_row + grid->rows
-        && col >= grid->comp_col && col < grid->comp_col + grid->cols) {
-      return grid;
+  if (ui_has(kUIMultigrid)) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      ScreenGrid *grid = &wp->w_grid_alloc;
+      if (wp && grid && !grid->comp_disabled
+          && *row >= wp->w_winrow && *row < wp->w_winrow + wp->w_height
+          && *col >= wp->w_wincol && *col < wp->w_wincol + wp->w_width) {
+        *row -= wp->w_winrow;
+        *col -= wp->w_wincol;
+        return grid;
+      }
+    }
+  } else {
+    for (ssize_t i = (ssize_t)kv_size(layers) - 1; i > 0; i--) {
+      ScreenGrid *grid = kv_A(layers, i);
+      if (*row >= grid->comp_row && *row < grid->comp_row + grid->rows
+          && *col >= grid->comp_col && *col < grid->comp_col + grid->cols) {
+        *row -= grid->comp_row;
+        *col -= grid->comp_col;
+        return grid;
+      }
     }
   }
   return &default_grid;

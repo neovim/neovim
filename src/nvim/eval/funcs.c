@@ -6426,11 +6426,7 @@ static void screenchar_adjust(ScreenGrid **grid, int *row, int *col)
   // have its own buffer, this should just read from it instead.
   msg_scroll_flush();
 
-  *grid = ui_comp_get_grid_at_coord(*row, *col);
-
-  // Make `row` and `col` relative to the grid
-  *row -= (*grid)->comp_row;
-  *col -= (*grid)->comp_col;
+  *grid = ui_comp_get_grid_at_coord(row, col);
 }
 
 /// "screenattr()" function

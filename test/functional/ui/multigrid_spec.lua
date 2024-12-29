@@ -1184,6 +1184,7 @@ describe('ext_multigrid', function()
       it, ^sed do eiusmo                                    |
       {1:~                                                    }|*4
     ]]}
+    eq({screencol = 5, coladd = 0, screenrow = 2, column = 58, winrow = 2, line = 1, wincol = 5, winid = 1001}, fn.getmousepos())
 
     screen:try_resize_grid(4, 80, 2)
     screen:expect{grid=[[
@@ -1708,6 +1709,39 @@ describe('ext_multigrid', function()
       {1:~                             }|*3
     ]]}
     eq('eiusmo', fn.getreg('"'))
+  end)
+
+  it('getmousepos() screenstring() return collect value', function()
+    command('set mouse=a')
+    insert('abcd\nefgh')
+    command('vnew')
+    insert('ijkl\nmnop')
+    command('new')
+    insert('qrst\nuvwx')
+
+    api.nvim_input_mouse('left', 'press', '', 1, 1, 0)
+    eq({screencol = 1, coladd = 0, screenrow = 2, column = 1, winrow = 2, line = 2, wincol = 1, winid = 1002}, fn.getmousepos())
+
+    api.nvim_input_mouse('left', 'press', '', 2, 0, 1)
+    eq({screencol = 29, coladd = 0, screenrow = 1, column = 2, winrow = 1, line = 1, wincol = 2, winid = 1000}, fn.getmousepos())
+
+    api.nvim_input_mouse('left', 'press', '', 4, 0, 1)
+    eq({screencol = 2, coladd = 0, screenrow = 8, column = 2, winrow = 1, line = 1, wincol = 2, winid = 1001}, fn.getmousepos())
+
+    api.nvim_input_mouse('left', 'press', '', 5, 0, 1)
+    eq({screencol = 2, coladd = 0, screenrow = 1, column = 2, winrow = 1, line = 1, wincol = 2, winid = 1002}, fn.getmousepos())
+
+    eq('q', fn.screenstring(1, 1))
+    eq('t', fn.screenstring(1, 4))
+    eq('u', fn.screenstring(2, 1))
+
+    eq('i', fn.screenstring(8, 1))
+    eq('l', fn.screenstring(8, 4))
+    eq('m', fn.screenstring(9, 1))
+
+    eq('a', fn.screenstring(1, 28))
+    eq('d', fn.screenstring(1, 31))
+    eq('e', fn.screenstring(2, 28))
   end)
 
   it('supports mouse drag with mouse=a', function()

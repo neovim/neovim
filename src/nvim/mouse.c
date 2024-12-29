@@ -1912,6 +1912,8 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int col = mouse_col;
   int grid = mouse_grid;
   varnumber_T winid = 0;
+  varnumber_T screenrow = row + 1;
+  varnumber_T screencol = col + 1;
   varnumber_T winrow = 0;
   varnumber_T wincol = 0;
   linenr_T lnum = 0;
@@ -1920,11 +1922,8 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   tv_dict_alloc_ret(rettv);
   dict_T *d = rettv->vval.v_dict;
-
-  tv_dict_add_nr(d, S_LEN("screenrow"), (varnumber_T)mouse_row + 1);
-  tv_dict_add_nr(d, S_LEN("screencol"), (varnumber_T)mouse_col + 1);
-
   win_T *wp = mouse_find_win(&grid, &row, &col);
+
   if (wp != NULL) {
     int height = wp->w_height + wp->w_hsep_height + wp->w_status_height;
     // The height is adjusted by 1 when there is a bottom border. This is not
@@ -1939,8 +1938,14 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         column = col + 1;
       }
     }
+    if (mouse_grid > 0) {
+      screenrow += wp->w_winrow;
+      screencol += wp->w_wincol;
+    }
   }
   tv_dict_add_nr(d, S_LEN("winid"), winid);
+  tv_dict_add_nr(d, S_LEN("screenrow"), screenrow);
+  tv_dict_add_nr(d, S_LEN("screencol"), screencol);
   tv_dict_add_nr(d, S_LEN("winrow"), winrow);
   tv_dict_add_nr(d, S_LEN("wincol"), wincol);
   tv_dict_add_nr(d, S_LEN("line"), (varnumber_T)lnum);
