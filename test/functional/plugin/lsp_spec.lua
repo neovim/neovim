@@ -6147,7 +6147,7 @@ describe('LSP', function()
           vim.lsp.config('*', { root_markers = { '.git' } })
           vim.lsp.config('foo', { cmd = { 'foo' } })
 
-          return vim.lsp._resolve_config('foo')
+          return vim.lsp.config['foo']
         end)
       )
     end)
