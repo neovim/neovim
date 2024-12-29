@@ -184,7 +184,7 @@ local function check_enabled_configs()
   vim.health.start('vim.lsp: Enabled Configurations')
 
   for name in vim.spairs(vim.lsp._enabled_configs) do
-    local config = vim.lsp._resolve_config(name)
+    local config = vim.lsp.config[name]
     local text = {} --- @type string[]
     text[#text + 1] = ('%s:'):format(name)
     for k, v in

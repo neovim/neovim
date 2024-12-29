@@ -420,9 +420,33 @@ lsp.config = setmetatable({ _configs = {} }, {
   --- @return vim.lsp.Config
   __index = function(self, name)
     validate('name', name, 'string')
-    invalidate_enabled_config(name)
+
+    local rconfig = lsp._enabled_configs[name] or {}
     self._configs[name] = self._configs[name] or {}
-    return self._configs[name]
+
+    if not rconfig.resolved_config then
+      -- Resolve configs from lsp/*.lua
+      -- Calls to vim.lsp.config in lsp/* have a lower precedence than calls from other sites.
+      local rtp_config = {} ---@type vim.lsp.Config
+      for _, v in ipairs(api.nvim_get_runtime_file(('lsp/%s.lua'):format(name), true)) do
+        local config = assert(loadfile(v))() ---@type any?
+        if type(config) == 'table' then
+          rtp_config = vim.tbl_deep_extend('force', rtp_config, config)
+        else
+          log.warn(string.format('%s does not return a table, ignoring', v))
+        end
+      end
+
+      rconfig.resolved_config = vim.tbl_deep_extend(
+        'force',
+        lsp.config._configs['*'] or {},
+        rtp_config,
+        lsp.config._configs[name] or {}
+      )
+      rconfig.resolved_config.name = name
+    end
+
+    return rconfig.resolved_config
   end,
 
   --- @param self vim.lsp.config
@@ -445,44 +469,6 @@ lsp.config = setmetatable({ _configs = {} }, {
     self[name] = vim.tbl_deep_extend('force', self._configs[name] or {}, cfg)
   end,
 })
-
---- @private
---- @param name string
---- @return vim.lsp.Config
-function lsp._resolve_config(name)
-  local econfig = lsp._enabled_configs[name] or {}
-
-  if not econfig.resolved_config then
-    -- Resolve configs from lsp/*.lua
-    -- Calls to vim.lsp.config in lsp/* have a lower precedence than calls from other sites.
-    local rtp_config = {} ---@type vim.lsp.Config
-    for _, v in ipairs(api.nvim_get_runtime_file(('lsp/%s.lua'):format(name), true)) do
-      local config = assert(loadfile(v))() ---@type any?
-      if type(config) == 'table' then
-        rtp_config = vim.tbl_deep_extend('force', rtp_config, config)
-      else
-        log.warn(string.format('%s does not return a table, ignoring', v))
-      end
-    end
-
-    local config = vim.tbl_deep_extend(
-      'force',
-      lsp.config._configs['*'] or {},
-      rtp_config,
-      lsp.config._configs[name] or {}
-    )
-
-    config.name = name
-
-    validate('cmd', config.cmd, { 'function', 'table' })
-    validate('cmd', config.reuse_client, 'function', true)
-    -- All other fields are validated in client.create
-
-    econfig.resolved_config = config
-  end
-
-  return assert(econfig.resolved_config)
-end
 
 local lsp_enable_autocmd_id --- @type integer?
 
@@ -514,7 +500,9 @@ local function lsp_enable_callback(bufnr)
   end
 
   for name in vim.spairs(lsp._enabled_configs) do
-    local config = lsp._resolve_config(name)
+    local config = lsp.config[name]
+    validate('cmd', config.cmd, { 'function', 'table' })
+    validate('cmd', config.reuse_client, 'function', true)
 
     if can_start(config) then
       -- Deepcopy config so changes done in the client
@@ -522,6 +510,7 @@ local function lsp_enable_callback(bufnr)
       config = vim.deepcopy(config)
 
       if type(config.root_dir) == 'function' then
+        ---@param root_dir string
         config.root_dir(function(root_dir)
           config.root_dir = root_dir
           start(config)
