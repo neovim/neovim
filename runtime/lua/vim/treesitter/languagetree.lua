@@ -708,6 +708,51 @@ local function get_or_new(tab, key)
   return value
 end
 
+---Ranges are end-inclusive.
+---@param region Region
+---@param range Range6
+local function sorted_region_insert(region, range)
+  if range[6] < range[3] then
+    return
+  end
+  local r_begin = range[3]
+
+  local bi = 1
+  local ei = #region + 1
+  while bi < ei do
+    local mi = bi + math.floor((ei - bi) / 2)
+    local mr_begin = region[mi][3]
+    if r_begin > mr_begin then
+      bi = mi + 1
+    else
+      ei = mi
+    end
+  end
+  table.insert(region, bi, range)
+end
+
+---@param regions Region[] All regions have at least 1 range
+---@param region Region
+local function sorted_regions_insert(regions, region)
+  if #region == 0 then
+    return
+  end
+  local r_begin = region[1][3]
+
+  local bi = 1
+  local ei = #regions + 1
+  while bi < ei do
+    local mi = bi + math.floor((ei - bi) / 2)
+    local mr_begin = regions[mi][1][3]
+    if r_begin > mr_begin then
+      bi = mi + 1
+    else
+      ei = mi
+    end
+  end
+  table.insert(regions, bi, region)
+end
+
 ---@private
 ---@param injections table<string, vim.treesitter.languagetree.LangInjections>
 ---@param tree_i integer
@@ -756,7 +801,7 @@ function LanguageTree:_add_injection(injections, tree_i, pattern_i, injection)
   end
 
   for _, range in ipairs(injection.ranges) do
-    table.insert(tree_region, range)
+    sorted_region_insert(tree_region, range)
   end
 end
 
@@ -830,10 +875,7 @@ function LanguageTree:_get_injection(match, metadata)
         local ft = vim.filetype.match({ filename = text })
         result.lang = ft and resolve_lang(ft)
       elseif name == 'injection.content' then
-        local r = get_node_ranges(node, self._source, metadata[id], include_children)
-        for _, range in ipairs(r) do
-          table.insert(result.ranges, range)
-        end
+        result.ranges = get_node_ranges(node, self._source, metadata[id], include_children)
       elseif name == 'injection.root' then
         result.root = node:id()
       end
@@ -887,20 +929,20 @@ function LanguageTree:_get_injections()
     ---@type Region[]
     local regions = {}
 
-    for _, ranges in ipairs(lang_injections.separate) do
-      table.insert(regions, ranges)
+    for _, region in ipairs(lang_injections.separate) do
+      sorted_regions_insert(regions, region)
     end
 
     for _, by_pattern in pairs(lang_injections.scoped) do
       for _, by_tree in pairs(by_pattern) do
-        for _, ranges in pairs(by_tree) do
-          table.insert(regions, ranges)
+        for _, region in pairs(by_tree) do
+          sorted_regions_insert(regions, region)
         end
       end
     end
 
     for _, region in ipairs(lang_injections.combined) do
-      table.insert(regions, region)
+      sorted_regions_insert(regions, region)
     end
 
     if #regions > 0 then
