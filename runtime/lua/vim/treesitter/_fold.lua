@@ -378,8 +378,10 @@ api.nvim_create_autocmd('OptionSet', {
   pattern = { 'foldminlines', 'foldnestmax' },
   desc = 'Refresh treesitter folds',
   callback = function()
-    local bufs = vim.v.option_type == 'local' and { api.nvim_get_current_buf() }
-      or vim.tbl_keys(foldinfos)
+    local buf = api.nvim_get_current_buf()
+    local bufs = vim.v.option_type == 'global' and vim.tbl_keys(foldinfos)
+      or foldinfos[buf] and { buf }
+      or {}
     for _, bufnr in ipairs(bufs) do
       foldinfos[bufnr] = FoldInfo.new()
       api.nvim_buf_call(bufnr, function()
