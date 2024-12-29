@@ -329,7 +329,6 @@ local sig_help_ns = api.nvim_create_namespace('vim_lsp_signature_help')
 --- @class vim.lsp.buf.signature_help.Opts : vim.lsp.util.open_floating_preview.Opts
 --- @field silent? boolean
 
--- TODO(lewis6991): support multiple clients
 --- Displays signature information about the symbol under the cursor in a
 --- floating window.
 --- @param config? vim.lsp.buf.signature_help.Opts
@@ -356,6 +355,7 @@ function M.signature_help(config)
 
     local ft = vim.bo[ctx.bufnr].filetype
     local total = #signatures
+    local can_cycle = total > 1 and config.focusable
     local idx = 0
 
     --- @param update_win? integer
@@ -371,7 +371,7 @@ function M.signature_help(config)
         return
       end
 
-      local sfx = total > 1 and string.format(' (%d/%d) (<C-s> to cycle)', idx, total) or ''
+      local sfx = can_cycle and string.format(' (%d/%d) (<C-s> to cycle)', idx, total) or ''
       local title = string.format('Signature Help: %s%s', client.name, sfx)
       if config.border then
         config.title = title
@@ -402,7 +402,7 @@ function M.signature_help(config)
 
     local fbuf, fwin = show_signature()
 
-    if total > 1 then
+    if can_cycle then
       vim.keymap.set('n', '<C-s>', function()
         show_signature(fwin)
       end, {
