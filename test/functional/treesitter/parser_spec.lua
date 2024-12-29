@@ -345,6 +345,16 @@ end]]
       end)
     end
 
+    local function get_regions()
+      return exec_lua(function()
+        local result = {}
+        _G.parser:for_each_tree(function(tree)
+          table.insert(result, tree:included_ranges(false))
+        end)
+        return result
+      end)
+    end
+
     before_each(function()
       insert([[
 int x = INT_MAX;
@@ -442,6 +452,51 @@ int x = INT_MAX;
           { 4, 14, 5, 18 }, -- VALUE 123
           -- VALUE1 123
         }, get_ranges())
+      end)
+    end)
+
+    describe('when parsing scoped injections', function()
+      local query = [[
+(call_expression
+  arguments: (argument_list (string_literal) @injection.content) @injection.root
+  (#set! injection.include-children)
+  (#set! injection.language c)
+  (#set! injection.scoped))
+        ]]
+
+      it('joins the ranges under the same root', function()
+        exec_lua(function()
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, {
+            [[int y = function("foo", "bar", "baz");]],
+            [[int abc = function('a', "some", 5, "text", (Struct){ .v = "more" });]],
+          })
+
+          _G.parser = vim.treesitter.get_parser(0, 'c', { injections = { c = query } })
+          _G.parser:parse(true)
+        end)
+
+        eq({
+          { { 0, 0, 2 ^ 32 - 1, 2 ^ 32 - 1 } },
+          { { 0, 17, 0, 22 }, { 0, 24, 0, 29 }, { 0, 31, 0, 36 } },
+          { { 1, 24, 1, 30 }, { 1, 35, 1, 41 } },
+        }, get_regions())
+      end)
+
+      it('keeps the ranges for child scopes separate', function()
+        exec_lua(function()
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, {
+            [[int y = function("foo", function("more", "text"), "baz");]],
+          })
+
+          _G.parser = vim.treesitter.get_parser(0, 'c', { injections = { c = query } })
+          _G.parser:parse(true)
+        end)
+
+        eq({
+          { { 0, 0, 2 ^ 32 - 1, 2 ^ 32 - 1 } },
+          { { 0, 17, 0, 22 }, { 0, 50, 0, 55 } },
+          { { 0, 33, 0, 39 }, { 0, 41, 0, 47 } },
+        }, get_regions())
       end)
     end)
 
