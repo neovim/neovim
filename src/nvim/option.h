@@ -55,10 +55,10 @@ static inline const char *optval_type_get_name(const OptValType type)
 #define NUMBER_OPTVAL(n) ((OptVal) { .type = kOptValTypeNumber, .data.number = n })
 #define STRING_OPTVAL(s) ((OptVal) { .type = kOptValTypeString, .data.string = s })
 
-#define CSTR_AS_OPTVAL(s) STRING_OPTVAL(cstr_as_string(s))
-#define CSTR_TO_OPTVAL(s) STRING_OPTVAL(cstr_to_string(s))
-#define STATIC_CSTR_AS_OPTVAL(s) STRING_OPTVAL(STATIC_CSTR_AS_STRING(s))
-#define STATIC_CSTR_TO_OPTVAL(s) STRING_OPTVAL(STATIC_CSTR_TO_STRING(s))
+#define CSTR_AS_OPTVAL(s) STRING_OPTVAL(ref_string_from_cstr(s))
+#define CSTR_TO_OPTVAL(s) STRING_OPTVAL(ref_string_from_cstr_alloc(s))
+#define STATIC_CSTR_AS_OPTVAL(s) STRING_OPTVAL(STATIC_CSTR_AS_REFSTRING(s))
+#define STATIC_CSTR_TO_OPTVAL(s) STRING_OPTVAL(STATIC_CSTR_TO_REFSTRING(s))
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.h.generated.h"

@@ -72,7 +72,7 @@ typedef union {
   // boolean options are actually tri-states because they have a third "None" value.
   TriState boolean;
   OptInt number;
-  String string;
+  RefString string;
 } OptValData;
 
 /// Option value
