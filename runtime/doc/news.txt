@@ -264,13 +264,14 @@ LSP
 
 LUA
 
+• |vim.fs.abspath()| converts paths to absolute paths.
+• |vim.fs.relpath()| gets relative path compared to base path.
 • |vim.fs.rm()| can delete files and directories.
 • |vim.validate()| now has a new signature which uses less tables,
   is more performant and easier to read.
 • |vim.str_byteindex()| and |vim.str_utfindex()| gained overload signatures
   supporting two new parameters, `encoding` and `strict_indexing`.
 • |vim.json.encode()| has an option to enable forward slash escaping
-• |vim.fs.abspath()| converts paths to absolute paths.
 
 OPTIONS
 
