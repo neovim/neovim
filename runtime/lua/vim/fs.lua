@@ -112,7 +112,7 @@ end
 ---@param ... string
 ---@return string
 function M.joinpath(...)
-  return (table.concat({ ... }, '/'):gsub('//+', '/'))
+  return M.normalize((table.concat({ ... }, '/'):gsub('//+', '/')))
 end
 
 ---@alias Iterator fun(): string?, string?
