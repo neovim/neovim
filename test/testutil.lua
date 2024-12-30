@@ -22,13 +22,6 @@ local M = {
   paths = Paths,
 }
 
---- @param p string
---- @return string
-local function relpath(p)
-  p = vim.fs.normalize(p)
-  return (p:gsub('^' .. uv.cwd, ''))
-end
-
 --- @param path string
 --- @return boolean
 function M.isdir(path)
@@ -45,14 +38,15 @@ end
 --- (Only on Windows) Replaces yucky "\\" slashes with delicious "/" slashes in a string, or all
 --- string values in a table (recursively).
 ---
---- @param obj string|table
---- @return any
+--- @generic T: string|table
+--- @param obj T
+--- @return T|nil
 function M.fix_slashes(obj)
   if not M.is_os('win') then
     return obj
   end
   if type(obj) == 'string' then
-    local ret = obj:gsub('\\', '/')
+    local ret = string.gsub(obj, '\\', '/')
     return ret
   elseif type(obj) == 'table' then
     --- @cast obj table<any,any>
@@ -482,7 +476,8 @@ function M.check_cores(app, force) -- luacheck: ignore
   -- "./Xtest-tmpdir/" => "Xtest%-tmpdir"
   local local_tmpdir = nil
   if tmpdir_is_local and tmpdir then
-    local_tmpdir = vim.pesc(relpath(tmpdir):gsub('^[ ./]+', ''):gsub('%/+$', ''))
+    local_tmpdir =
+      vim.pesc(vim.fs.relpath(assert(vim.uv.cwd()), tmpdir):gsub('^[ ./]+', ''):gsub('%/+$', ''))
   end
 
   local db_cmd --- @type string
