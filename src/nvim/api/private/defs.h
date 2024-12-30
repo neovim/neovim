@@ -9,6 +9,7 @@
 
 #define ARRAY_DICT_INIT KV_INITIAL_VALUE
 #define STRING_INIT { .data = NULL, .size = 0 }
+#define REFSTRING_INIT { .data = NULL, .size = 0, .refcount = NULL }
 #define OBJECT_INIT { .type = kObjectTypeNil }
 #define ERROR_INIT ((Error) { .type = kErrorTypeNone, .msg = NULL })
 #define REMOTE_TYPE(type) typedef handle_T type
@@ -81,6 +82,13 @@ typedef struct {
   char *data;
   size_t size;
 } String;
+
+/// Copy-on-write, reference-counted string.
+typedef struct {
+  const char *data;
+  size_t size;
+  size_t *refcount;
+} RefString;
 
 REMOTE_TYPE(Buffer);
 REMOTE_TYPE(Window);

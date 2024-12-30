@@ -1085,3 +1085,145 @@ sctx_T api_set_sctx(uint64_t channel_id)
   }
   return old_current_sctx;
 }
+
+/// Initializes a new RefString reference count and returns it.
+static size_t *ref_string_init_refcount(void)
+{
+  size_t *refcount = xmalloc(sizeof(size_t));
+  *refcount = 1;
+  return refcount;
+}
+
+/// Create a new RefString from a String without copying the data.
+///
+/// @note The RefString will own the data of the String.
+///
+/// @param  str  The String to create a RefString from.
+/// @return Created RefString.
+RefString ref_string_new(String str)
+{
+  return (RefString){
+    .data = str.data,
+    .size = str.size,
+    .refcount = str.data == NULL ? NULL : ref_string_init_refcount(),
+  };
+}
+
+/// Create a new RefString from a String by copying the data.
+///
+/// @param  str  The string to create a RefString from.
+/// @return [allocated] Created RefString.
+RefString ref_string_new_alloc(String str)
+{
+  return (RefString){
+    .data = str.data == NULL ? NULL : xmemdupz(str.data, str.size),
+    .size = str.size,
+    .refcount = str.data == NULL ? NULL : ref_string_init_refcount(),
+  };
+}
+
+/// Create a new RefString from a C string.
+///
+/// @param  str  The C string to create a RefString from.
+/// @return Created RefString.
+RefString ref_string_from_cstr(const char *str)
+{
+  return ref_string_new(cstr_as_string(str));
+}
+
+/// Create a new RefString from a C string by copying the data.
+///
+/// @param  str  The C string to create a RefString from.
+/// @return [allocated] Created RefString.
+RefString ref_string_from_cstr_alloc(const char *str)
+{
+  return ref_string_new_alloc(cstr_as_string(str));
+}
+
+/// Copy a RefString.
+///
+/// @param  refstr  The RefString to copy.
+/// @return Copied RefString.
+RefString ref_string_copy(RefString *refstr)
+{
+  // If refstring doesn't have an allocated refcount, it's either a static string or NULL.
+  // In that case, we don't need to increment the refcount.
+  if (refstr->refcount) {
+    (*(refstr->refcount))++;
+  }
+
+  return *refstr;
+}
+
+/// Decrements the reference count of a RefString and free the memory if the count reaches zero.
+static void ref_string_decref(RefString *refstr)
+{
+  if (refstr->refcount && --(*(refstr->refcount)) == 0) {
+    xfree((char *)refstr->data);
+    xfree(refstr->refcount);
+  }
+}
+
+/// Free a RefString.
+void ref_string_free(RefString *refstr)
+{
+  ref_string_decref(refstr);
+  *refstr = (RefString)REFSTRING_INIT;
+}
+
+/// Set the value of a RefString.
+///
+/// @note The RefString will own the data of the String.
+///
+/// @param  refstr  The RefString to set the value of.
+/// @param  str     The new value of the RefString.
+void ref_string_set(RefString *refstr, String str)
+{
+  ref_string_decref(refstr);
+  refstr->refcount = ref_string_init_refcount();
+  refstr->data = str.data;
+  refstr->size = str.size;
+}
+
+/// Convert a RefString to a String. Consumes the RefString (decrements the refcount).
+String ref_string_as_string(RefString *refstr)
+{
+  if(refstr->refcount && *(refstr->refcount) == 0) {
+    abort();
+  }
+
+  String retv = { .size = refstr->size };
+
+  // If the refcount is 1, we can return the data directly.
+  if (refstr->refcount && *(refstr->refcount) == 1) {
+    retv.data = (char *)refstr->data;
+    xfree(refstr->refcount);
+  } else {
+    retv.data = xmemdupz(refstr->data, refstr->size);
+    ref_string_decref(refstr);
+  }
+
+  *refstr = (RefString)REFSTRING_INIT;
+  return retv;
+}
+
+/// Convert a RefString to a C string. Consumes the RefString (decrements the refcount).
+char *ref_string_as_cstr(RefString *refstr)
+{
+  return ref_string_as_string(refstr).data;
+}
+
+const char *ref_string_get_data(RefString *refstr)
+{
+  if (refstr->refcount && *(refstr->refcount) == 0) {
+    abort();
+  }
+
+  return refstr->data;
+}
+
+/// Check if two RefStrings are equal.
+bool ref_string_eq(const RefString *a, const RefString *b)
+{
+  return a->size == b->size && (a->data == b->data || memcmp(a->data, b->data, a->size) == 0);
+}

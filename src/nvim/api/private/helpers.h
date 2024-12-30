@@ -104,9 +104,14 @@ typedef kvec_withinit_t(Object, 16) ArrayBuilder;
 /// Create a new String instance, putting data in allocated memory
 ///
 /// @param[in]  s  String to work with. Must be a string literal.
-#define STATIC_CSTR_TO_STRING(s) ((String){ \
+#define STATIC_CSTR_TO_STRING(s) ((String) { \
     .data = xmemdupz(s, sizeof(s) - 1), \
     .size = sizeof(s) - 1 })
+
+#define STATIC_CSTR_AS_REFSTRING(s) \
+  ((RefString) { .data = s, .size = sizeof("" s) - 1, .refcount = NULL })
+#define STATIC_CSTR_TO_REFSTRING(s) \
+  ref_string_from_cstr_alloc(s, NULL)
 
 #define STATIC_CSTR_AS_OBJ(s) STRING_OBJ(STATIC_CSTR_AS_STRING(s))
 #define STATIC_CSTR_TO_OBJ(s) STRING_OBJ(STATIC_CSTR_TO_STRING(s))
