@@ -872,11 +872,15 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
       } else {
         newval = BOOLEAN_OPTVAL(TRISTATE_FROM_INT(new_n));
       }
-    } else if (!hidden && is_string
-               && curval.data.string.data != NULL && newval.data.string.data != NULL) {  // string
-      OptVal newval_old = newval;
-      newval = CSTR_AS_OPTVAL(concat_str(curval.data.string.data, newval.data.string.data));
-      optval_free(newval_old);
+    } else if (!hidden && is_string) {  // string
+      const char *curval_data = curval.data.string.data;
+      const char *newval_data = newval.data.string.data;
+
+      if (curval_data != NULL && newval_data != NULL) {
+        OptVal newval_old = newval;
+        newval = CSTR_AS_OPTVAL(concat_str(curval_data, newval_data));
+        optval_free(newval_old);
+      }
     }
   }
 
