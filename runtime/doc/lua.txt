@@ -3148,6 +3148,23 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
         (`nil`)
         (`string?`)
 
+vim.fs.relpath({base}, {target}, {opts})                    *vim.fs.relpath()*
+    Gets `target` path relative to `base`, or `nil` if `base` is not an
+    ancestor.
+
+    Example: >lua
+        vim.fs.relpath('/var', '/var/lib') -- 'lib'
+        vim.fs.relpath('/var', '/usr/bin') -- nil
+<
+
+    Parameters: ~
+      • {base}    (`string`)
+      • {target}  (`string`)
+      • {opts}    (`table?`) Reserved for future use
+
+    Return: ~
+        (`string?`)
+
 vim.fs.rm({path}, {opts})                                        *vim.fs.rm()*
     WARNING: This feature is experimental/unstable.
 
