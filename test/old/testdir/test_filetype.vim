@@ -885,7 +885,7 @@ func s:GetFilenameChecks() abort
     \ 'xml': ['/etc/blkid.tab', '/etc/blkid.tab.old', 'file.xmi', 'file.csproj', 'file.csproj.user', 'file.fsproj', 'file.fsproj.user', 'file.vbproj', 'file.vbproj.user', 'file.ui',
     \         'file.tpm', '/etc/xdg/menus/file.menu', 'fglrxrc', 'file.xlf', 'file.xliff', 'file.xul', 'file.wsdl', 'file.wpl', 'any/etc/blkid.tab', 'any/etc/blkid.tab.old',
     \         'any/etc/xdg/menus/file.menu', 'file.atom', 'file.rss', 'file.cdxml', 'file.psc1', 'file.mpd', 'fonts.conf', 'file.xcu', 'file.xlb', 'file.xlc', 'file.xba', 'file.xpr',
-    \         'file.xpfm', 'file.spfm', 'file.bxml', 'file.mmi', 'file.slnx'],
+    \         'file.xpfm', 'file.spfm', 'file.bxml', 'file.mmi', 'file.slnx', 'Directory.Packages.props', 'Directory.Build.targets', 'Directory.Build.props'],
     \ 'xmodmap': ['anyXmodmap', 'Xmodmap', 'some-Xmodmap', 'some-xmodmap', 'some-xmodmap-file', 'xmodmap', 'xmodmap-file'],
     \ 'xpm': ['file.xpm'],
     \ 'xpm2': ['file.xpm2'],
