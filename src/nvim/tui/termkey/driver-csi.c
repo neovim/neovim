@@ -528,7 +528,7 @@ TermKeyResult termkey_interpret_csi_param(TermKeyCsiParam param, int *paramp, in
     if (c == ':') {
       if (length == 0) {
         *paramp = arg;
-      } else {
+      } else if (subparams != NULL) {
         subparams[length - 1] = arg;
       }
 
@@ -543,7 +543,7 @@ TermKeyResult termkey_interpret_csi_param(TermKeyCsiParam param, int *paramp, in
 
   if (length == 0) {
     *paramp = arg;
-  } else {
+  } else if (subparams != NULL) {
     subparams[length - 1] = arg;
   }
 
