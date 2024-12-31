@@ -10,7 +10,7 @@
     {
       "name": "default",
       "displayName": "RelWithDebInfo",
-      "description": "Enables optimizations (-Og or -O2) with debug information",
+      "description": "Enables optimizations (-O2) with debug information",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       },
