@@ -834,6 +834,9 @@ static TermKeyResult peekkey(TermKey *tk, TermKeyKey *key, int force, size_t *nb
     return TERMKEY_RES_ERROR;
   }
 
+  // Press is the default event type.
+  key->event = TERMKEY_EVENT_PRESS;
+
 #ifdef DEBUG
   fprintf(stderr, "getkey(force=%d): buffer ", force);
   print_buffer(tk);

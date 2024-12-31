@@ -177,9 +177,21 @@ static TermKeyResult handle_csi_u(TermKey *tk, TermKeyKey *key, int cmd, TermKey
         return TERMKEY_RES_ERROR;
       }
 
-      if (nsubparams > 0 && subparam != 1) {
-        // Not a press event. Ignore for now
-        return TERMKEY_RES_NONE;
+      if (nsubparams > 0) {
+        switch (subparam) {
+        case 1:
+          key->event = TERMKEY_EVENT_PRESS;
+          break;
+        case 2:
+          key->event = TERMKEY_EVENT_REPEAT;
+          break;
+        case 3:
+          key->event = TERMKEY_EVENT_RELEASE;
+          break;
+        default:
+          // Invalid event
+          return TERMKEY_RES_NONE;
+        }
       }
 
       key->modifiers = args[1] - 1;
