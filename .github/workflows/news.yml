@@ -19,15 +19,15 @@ jobs:
             message=$(git log -n1 --pretty=format:%s $commit)
             type="$(echo "$message" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')"
             breaking="$(echo "$message" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')"
-            if [[ "$type" == "feat" ]] || [[ "$breaking" == "breaking-change" ]]; then
+            if [[ "$type" == "feat" ]] || [[ "$type" == "perf" ]] || [[ "$breaking" == "breaking-change" ]]; then
               ! git diff HEAD~${{ github.event.pull_request.commits }}..HEAD --quiet runtime/doc/news.txt ||
               {
                 echo "
-                  Pull request includes a new feature or a breaking change, but
-                  news.txt hasn't been updated yet. This is just a reminder
-                  that news.txt may need to be updated. You can ignore this CI
-                  failure if you think the change won't be of interest to
-                  users."
+                  Pull request includes a new feature, performance improvement
+                  or a breaking change, but news.txt hasn't been updated yet.
+                  This is just a reminder that news.txt may need to be updated.
+                  You can ignore this CI failure if you think the change won't
+                  be of interest to users."
                   exit 1
                }
             fi
