@@ -124,6 +124,7 @@ typedef enum {
 } TermKeyMouseEvent;
 
 typedef enum {
+  TERMKEY_EVENT_UNKNOWN,
   TERMKEY_EVENT_PRESS,
   TERMKEY_EVENT_REPEAT,
   TERMKEY_EVENT_RELEASE,
