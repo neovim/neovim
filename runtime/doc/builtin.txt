@@ -1174,10 +1174,15 @@ complete_info([{what}])                                        *complete_info()*
 				See |complete_info_mode| for the values.
 		   pum_visible	|TRUE| if popup menu is visible.
 				See |pumvisible()|.
-		   items	List of completion matches.  Each item is a
-				dictionary containing the entries "word",
+		   items	List of all completion candidates.  Each item
+				is a dictionary containing the entries "word",
 				"abbr", "menu", "kind", "info" and "user_data".
 				See |complete-items|.
+		   matches	Same as "items", but only returns items that
+				are matching current query. If both "matches"
+				and "items" are in "what", the returned list
+				will still be named "items", but each item
+				will have an additional "match" field.
 		   selected	Selected item index.  First index is zero.
 				Index is -1 if no item is selected (showing
 				typed text only, or the last completion after

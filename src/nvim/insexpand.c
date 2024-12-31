@@ -164,6 +164,7 @@ struct compl_S {
   int cp_flags;                  ///< CP_ values
   int cp_number;                 ///< sequence number
   int cp_score;                  ///< fuzzy match score
+  bool cp_in_match_array;        ///< collected by compl_match_array
   int cp_user_abbr_hlattr;       ///< highlight attribute for abbr
   int cp_user_kind_hlattr;       ///< highlight attribute for kind
 };
@@ -1223,6 +1224,7 @@ static int ins_compl_build_pum(void)
   int cur = -1;
 
   do {
+    comp->cp_in_match_array = false;
     // When 'completeopt' contains "fuzzy" and leader is not NULL or empty,
     // set the cp_score for later comparisons.
     if (compl_fuzzy_match && compl_leader != NULL && lead_len > 0) {
@@ -1234,6 +1236,7 @@ static int ins_compl_build_pum(void)
             || ins_compl_equal(comp, compl_leader, (size_t)lead_len)
             || (compl_fuzzy_match && comp->cp_score > 0))) {
       compl_match_arraysize++;
+      comp->cp_in_match_array = true;
       if (match_head == NULL) {
         match_head = comp;
       } else {
@@ -2875,11 +2878,12 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
 #define CI_WHAT_ITEMS           0x04
 #define CI_WHAT_SELECTED        0x08
 #define CI_WHAT_INSERTED        0x10
+#define CI_WHAT_MATCHES         0x20
 #define CI_WHAT_ALL             0xff
   int what_flag;
 
   if (what_list == NULL) {
-    what_flag = CI_WHAT_ALL;
+    what_flag = CI_WHAT_ALL & ~CI_WHAT_MATCHES;
   } else {
     what_flag = 0;
     for (listitem_T *item = tv_list_first(what_list)
@@ -2897,6 +2901,8 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
         what_flag |= CI_WHAT_SELECTED;
       } else if (strcmp(what, "inserted") == 0) {
         what_flag |= CI_WHAT_INSERTED;
+      } else if (strcmp(what, "matches") == 0) {
+        what_flag |= CI_WHAT_MATCHES;
       }
     }
   }
@@ -2910,12 +2916,16 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
     ret = tv_dict_add_nr(retdict, S_LEN("pum_visible"), pum_visible());
   }
 
-  if (ret == OK && (what_flag & CI_WHAT_ITEMS || what_flag & CI_WHAT_SELECTED)) {
+  if (ret == OK && (what_flag & CI_WHAT_ITEMS || what_flag & CI_WHAT_SELECTED
+                    || what_flag & CI_WHAT_MATCHES)) {
     list_T *li = NULL;
     int selected_idx = -1;
-    if (what_flag & CI_WHAT_ITEMS) {
+    bool has_items = what_flag & CI_WHAT_ITEMS;
+    bool has_matches = what_flag & CI_WHAT_MATCHES;
+    if (has_items || has_matches) {
       li = tv_list_alloc(kListLenMayKnow);
-      ret = tv_dict_add_list(retdict, S_LEN("items"), li);
+      const char *key = (has_matches && !has_items) ? "matches" : "items";
+      ret = tv_dict_add_list(retdict, key, strlen(key), li);
     }
     if (ret == OK && what_flag & CI_WHAT_SELECTED) {
       if (compl_curr_match != NULL && compl_curr_match->cp_number == -1) {
@@ -2927,7 +2937,7 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
       compl_T *match = compl_first_match;
       do {
         if (!match_at_original_text(match)) {
-          if (what_flag & CI_WHAT_ITEMS) {
+          if (has_items || (has_matches && match->cp_in_match_array)) {
             dict_T *di = tv_dict_alloc();
             tv_list_append_dict(li, di);
             tv_dict_add_str(di, S_LEN("word"), match->cp_str);
@@ -2935,6 +2945,9 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
             tv_dict_add_str(di, S_LEN("menu"), match->cp_text[CPT_MENU]);
             tv_dict_add_str(di, S_LEN("kind"), match->cp_text[CPT_KIND]);
             tv_dict_add_str(di, S_LEN("info"), match->cp_text[CPT_INFO]);
+            if (has_matches && has_items) {
+              tv_dict_add_bool(di, S_LEN("match"), match->cp_in_match_array);
+            }
             if (match->cp_user_data.v_type == VAR_UNKNOWN) {
               // Add an empty string for backwards compatibility
               tv_dict_add_str(di, S_LEN("user_data"), "");
