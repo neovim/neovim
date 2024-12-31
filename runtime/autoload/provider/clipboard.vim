@@ -169,6 +169,14 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'tmux'
+  elseif get(get(g:, 'termfeatures', {}), 'osc52') && &clipboard ==# ''
+    " Don't use OSC 52 when 'clipboard' is set. It can be slow and cause a lot
+    " of user prompts. Users can opt-in to it by setting g:clipboard manually.
+    let s:copy['+'] = v:lua.require'vim.ui.clipboard.osc52'.copy('+')
+    let s:copy['*'] = v:lua.require'vim.ui.clipboard.osc52'.copy('*')
+    let s:paste['+'] = v:lua.require'vim.ui.clipboard.osc52'.paste('+')
+    let s:paste['*'] = v:lua.require'vim.ui.clipboard.osc52'.paste('*')
+    return 'OSC 52'
   endif
 
   let s:err = 'clipboard: No clipboard tool. :help clipboard'

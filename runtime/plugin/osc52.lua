@@ -6,7 +6,15 @@ for _, ui in ipairs(vim.api.nvim_list_uis()) do
   end
 end
 
-if not tty or vim.g.clipboard ~= nil or vim.o.clipboard ~= '' or not os.getenv('SSH_TTY') then
+-- Do not query when any of the following is true:
+--   * TUI is not attached
+--   * OSC 52 support is explicitly disabled via g:termfeatures
+--   * Using a badly behaved terminal
+if
+  not tty
+  or (vim.g.termfeatures ~= nil and vim.g.termfeatures.osc52 == false)
+  or vim.env.TERM_PROGRAM == 'Apple_Terminal'
+then
   return
 end
 
@@ -17,28 +25,13 @@ require('vim.termcap').query('Ms', function(cap, found, seq)
 
   assert(cap == 'Ms')
 
-  -- Check 'clipboard' and g:clipboard again to avoid a race condition
-  if vim.o.clipboard ~= '' or vim.g.clipboard ~= nil then
-    return
-  end
-
   -- If the terminal reports a sequence other than OSC 52 for the Ms capability
   -- then ignore it. We only support OSC 52 (for now)
   if not seq or not seq:match('^\027%]52') then
     return
   end
 
-  local osc52 = require('vim.ui.clipboard.osc52')
-
-  vim.g.clipboard = {
-    name = 'OSC 52',
-    copy = {
-      ['+'] = osc52.copy('+'),
-      ['*'] = osc52.copy('*'),
-    },
-    paste = {
-      ['+'] = osc52.paste('+'),
-      ['*'] = osc52.paste('*'),
-    },
-  }
+  local termfeatures = vim.g.termfeatures or {}
+  termfeatures.osc52 = true
+  vim.g.termfeatures = termfeatures
 end)
