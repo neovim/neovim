@@ -973,6 +973,39 @@ describe('jobs', function()
       feed('<CR>')
       fn.jobstop(api.nvim_get_var('id'))
     end)
+
+    it('does not set UI busy with zero timeout #31712', function()
+      local screen = Screen.new(50, 6)
+      command([[let g:id = jobstart(['sleep', '0.3'])]])
+      local busy = 0
+      screen._handle_busy_start = (function(orig)
+        return function()
+          orig(screen)
+          busy = busy + 1
+        end
+      end)(screen._handle_busy_start)
+      source([[
+        func PrintAndPoll()
+          echon "aaa\nbbb"
+          call jobwait([g:id], 0)
+          echon "\nccc"
+        endfunc
+      ]])
+      feed_command('call PrintAndPoll()')
+      screen:expect {
+        grid = [[
+                                                          |
+        {3:                                                  }|
+        aaa                                               |
+        bbb                                               |
+        ccc                                               |
+        {6:Press ENTER or type command to continue}^           |
+      ]],
+      }
+      feed('<CR>')
+      fn.jobstop(api.nvim_get_var('id'))
+      eq(0, busy)
+    end)
   end)
 
   pending('exit event follows stdout, stderr', function()
