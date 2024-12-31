@@ -2,7 +2,7 @@
 " Language:	TI Linker map
 " Document:	https://downloads.ti.com/docs/esd/SPRUI03A/Content/SPRUI03A_HTML/linker_description.html
 " Maintainer:	Wu, Zhenyu <wuzhenyu@ustc.edu>
-" Last Change:	2024 Dec 25
+" Last Change:	2024 Dec 30
 
 if exists("b:current_syntax")
   finish
@@ -19,7 +19,7 @@ syn match lnkmapFile			'[^ =]\+\%(\.\S\+\)\+\>'
 syn match lnkmapLibFile			'[^ =]\+\.lib\>'
 syn match lnkmapAttrib			'\<[RWIX]\+\>'
 syn match lnkmapAttrib			'\s\zs--HOLE--\ze\%\(\s\|$\)'
-syn keyword lnkmapAttrib		UNINITIALIZED
+syn keyword lnkmapAttrib		UNINITIALIZED DESCT
 
 
 hi def link lnkmapTime			Comment
