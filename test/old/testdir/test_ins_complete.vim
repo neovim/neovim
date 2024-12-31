@@ -2870,4 +2870,48 @@ func Test_complete_fuzzy_match_tie()
   set completeopt&
 endfunc
 
+func Test_complete_info_matches()
+  let g:what = ['matches']
+  func ShownInfo()
+    let g:compl_info = complete_info(g:what)
+    return ''
+  endfunc
+  set completeopt+=noinsert
+
+  new
+  call setline(1, ['aaa', 'aab', 'aba', 'abb'])
+  inoremap <buffer><F5> <C-R>=ShownInfo()<CR>
+
+  call feedkeys("Go\<C-X>\<C-N>\<F5>\<Esc>dd", 'tx')
+  call assert_equal([
+    \ {'word': 'aaa', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aab', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aba', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'abb', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \], g:compl_info['matches'])
+
+  call feedkeys("Goa\<C-X>\<C-N>b\<F5>\<Esc>dd", 'tx')
+  call assert_equal([
+    \ {'word': 'aba', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'abb', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \], g:compl_info['matches'])
+
+  " items and matches both in what
+  let g:what = ['items', 'matches']
+  call feedkeys("Goa\<C-X>\<C-N>b\<F5>\<Esc>dd", 'tx')
+  call assert_equal([
+    \ {'word': 'aaa', 'menu': '', 'user_data': '', 'match': v:false, 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aab', 'menu': '', 'user_data': '', 'match': v:false, 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aba', 'menu': '', 'user_data': '', 'match': v:true, 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'abb', 'menu': '', 'user_data': '', 'match': v:true, 'info': '', 'kind': '', 'abbr': ''},
+    \], g:compl_info['items'])
+  call assert_false(has_key(g:compl_info, 'matches'))
+
+  bw!
+  bw!
+  unlet g:what
+  delfunc ShownInfo
+  set cot&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

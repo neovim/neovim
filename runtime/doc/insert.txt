@@ -1189,6 +1189,7 @@ items:
 			|hl-PmenuKind| highlight group, allowing for the
 			customization of ctermfg and guifg properties for the
 			completion kind
+	match		See "matches" in |complete_info()|.
 
 All of these except "icase", "equal", "dup" and "empty" must be a string.  If
 an item does not meet these requirements then an error message is given and
