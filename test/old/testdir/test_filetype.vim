@@ -2773,7 +2773,7 @@ func Test_map_file()
   call assert_equal('lnkmap', &filetype)
   bwipe!
 
-  " TI linker map file
+  " UMN mapserver config file
   call writefile(['MAP', 'NAME "local-demo"', 'END'], 'Xfile.map', 'D')
   split Xfile.map
   call assert_equal('map', &filetype)
