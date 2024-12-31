@@ -105,14 +105,19 @@ function M.basename(file)
   return file:match('/$') and '' or (file:match('[^/]*$'))
 end
 
---- Concatenate directories and/or file paths into a single path with normalization
---- (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
+--- Concatenates partial paths into one path. Slashes are normalized (redundant slashes are removed, and on Windows backslashes are replaced with forward-slashes)
+--- (e.g., `"foo/"` and `"/bar"` get joined to `"foo/bar"`)
+--- (windows: e.g `"a\foo\"` and `"\bar"` are joined to `"a/foo/bar"`)
 ---
 ---@since 12
 ---@param ... string
 ---@return string
 function M.joinpath(...)
-  return (table.concat({ ... }, '/'):gsub('//+', '/'))
+  local path = table.concat({ ... }, '/')
+  if iswin then
+    path = path:gsub('\\', '/')
+  end
+  return (path:gsub('//+', '/'))
 end
 
 ---@alias Iterator fun(): string?, string?

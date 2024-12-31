@@ -323,6 +323,20 @@ describe('vim.fs', function()
       eq('foo/bar/baz', vim.fs.joinpath('foo', 'bar', 'baz'))
       eq('foo/bar/baz', vim.fs.joinpath('foo', '/bar/', '/baz'))
     end)
+    it('rewrites backslashes on Windows', function()
+      if is_os('win') then
+        eq('foo/bar/baz/zub/', vim.fs.joinpath([[foo]], [[\\bar\\\\baz]], [[zub\]]))
+      else
+        eq([[foo/\\bar\\\\baz/zub\]], vim.fs.joinpath([[foo]], [[\\bar\\\\baz]], [[zub\]]))
+      end
+    end)
+    it('strips redundant slashes', function()
+      if is_os('win') then
+        eq('foo/bar/baz/zub/', vim.fs.joinpath([[foo//]], [[\\bar\\\\baz]], [[zub\]]))
+      else
+        eq('foo/bar/baz/zub/', vim.fs.joinpath([[foo]], [[//bar////baz]], [[zub/]]))
+      end
+    end)
   end)
 
   describe('normalize()', function()

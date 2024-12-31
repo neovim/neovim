@@ -3062,8 +3062,11 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
         items
 
 vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
-    Concatenate directories and/or file paths into a single path with
-    normalization (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
+    Concatenates partial paths into one path. Slashes are normalized
+    (redundant slashes are removed, and on Windows backslashes are replaced
+    with forward-slashes) (e.g., `"foo/"` and `"/bar"` get joined to
+    `"foo/bar"`) (windows: e.g `"a\foo\"` and `"\bar"` are joined to
+    `"a/foo/bar"`)
 
     Attributes: ~
         Since: 0.10.0
