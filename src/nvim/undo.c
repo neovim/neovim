@@ -3216,3 +3216,42 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
   }
   return uhp;
 }
+
+/// Save the undo state of a buffer for command preview.
+void save_undoinfo(UndoInfo *cp_undoinfo, buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  cp_undoinfo->save_b_u_synced = buf->b_u_synced;
+  cp_undoinfo->save_b_u_oldhead = buf->b_u_oldhead;
+  cp_undoinfo->save_b_u_newhead = buf->b_u_newhead;
+  cp_undoinfo->save_b_u_curhead = buf->b_u_curhead;
+  cp_undoinfo->save_b_u_numhead = buf->b_u_numhead;
+  cp_undoinfo->save_b_u_seq_last = buf->b_u_seq_last;
+  cp_undoinfo->save_b_u_save_nr_last = buf->b_u_save_nr_last;
+  cp_undoinfo->save_b_u_seq_cur = buf->b_u_seq_cur;
+  cp_undoinfo->save_b_u_time_cur = buf->b_u_time_cur;
+  cp_undoinfo->save_b_u_save_nr_cur = buf->b_u_save_nr_cur;
+  cp_undoinfo->save_b_u_line_ptr = buf->b_u_line_ptr;
+  cp_undoinfo->save_b_u_line_lnum = buf->b_u_line_lnum;
+  cp_undoinfo->save_b_u_line_colnr = buf->b_u_line_colnr;
+}
+
+/// Restore the undo state of a buffer for command preview.
+void restore_undoinfo(const UndoInfo *cp_undoinfo, buf_T *buf)
+{
+  buf->b_u_oldhead = cp_undoinfo->save_b_u_oldhead;
+  buf->b_u_newhead = cp_undoinfo->save_b_u_newhead;
+  buf->b_u_curhead = cp_undoinfo->save_b_u_curhead;
+  buf->b_u_numhead = cp_undoinfo->save_b_u_numhead;
+  buf->b_u_seq_last = cp_undoinfo->save_b_u_seq_last;
+  buf->b_u_save_nr_last = cp_undoinfo->save_b_u_save_nr_last;
+  buf->b_u_seq_cur = cp_undoinfo->save_b_u_seq_cur;
+  buf->b_u_time_cur = cp_undoinfo->save_b_u_time_cur;
+  buf->b_u_save_nr_cur = cp_undoinfo->save_b_u_save_nr_cur;
+  buf->b_u_line_ptr = cp_undoinfo->save_b_u_line_ptr;
+  buf->b_u_line_lnum = cp_undoinfo->save_b_u_line_lnum;
+  buf->b_u_line_colnr = cp_undoinfo->save_b_u_line_colnr;
+  if (buf->b_u_curhead == NULL) {
+    buf->b_u_synced = cp_undoinfo->save_b_u_synced;
+  }
+}

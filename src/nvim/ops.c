@@ -2356,7 +2356,29 @@ void op_insert(oparg_T *oap, int count1)
 
   pos_T t1 = oap->start;
   const pos_T start_insert = curwin->w_cursor;
+
+  if (oap->motion_type == kMTBlockWise) {
+    curwin->w_inspinfo.is_block_insert = true;
+    curwin->w_inspinfo.t1 = t1;
+    curwin->w_inspinfo.start_insert = start_insert;
+    curwin->w_inspinfo.oap = *oap;
+    curwin->w_inspinfo.ind_pre_col = ind_pre_col;
+    curwin->w_inspinfo.ind_pre_vcol = ind_pre_vcol;
+    curwin->w_inspinfo.pre_textlen = pre_textlen;
+    curwin->w_inspinfo.bd = bd;
+  }
   edit(NUL, false, (linenr_T)count1);
+  op_insert_after_edit(t1, start_insert, oap, ind_pre_col, ind_pre_vcol, pre_textlen, bd);
+}
+
+void op_insert_after_edit(pos_T t1, const pos_T start_insert, oparg_T *oap, int ind_pre_col,
+                          int ind_pre_vcol, int pre_textlen, struct block_def bd)
+{
+
+  if (State != MODE_INSERT) {
+    curwin->w_inspinfo.is_block_insert = false;
+    curwin->w_is_inspbufinfo_available = false;
+  }
 
   // When a tab was inserted, and the characters in front of the tab
   // have been converted to a tab as well, the column of the cursor
@@ -2474,9 +2496,12 @@ void op_insert(oparg_T *oap, int count1)
         block_insert(oap, ins_text, (size_t)ins_len, (oap->op_type == OP_INSERT), &bd);
       }
 
-      curwin->w_cursor.col = oap->start.col;
-      check_cursor(curwin);
       xfree(ins_text);
+
+      if (State != MODE_INSERT) {
+        curwin->w_cursor.col = oap->start.col;
+        check_cursor(curwin);
+      }
     }
   }
 }
