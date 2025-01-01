@@ -281,11 +281,11 @@ enum {
 #define LISPWORD_VALUE \
   "defun,define,defmacro,set!,lambda,if,case,let,flet,let*,letrec,do,do*,define-syntax,let-syntax,letrec-syntax,destructuring-bind,defpackage,defparameter,defstruct,deftype,defvar,do-all-symbols,do-external-symbols,do-symbols,dolist,dotimes,ecase,etypecase,eval-when,labels,macrolet,multiple-value-bind,multiple-value-call,multiple-value-prog1,multiple-value-setq,prog1,progv,typecase,unless,unwind-protect,when,with-input-from-string,with-open-file,with-open-stream,with-output-to-string,with-package-iterator,define-condition,handler-bind,handler-case,restart-bind,restart-case,with-simple-restart,store-value,use-value,muffle-warning,abort,continue,with-slots,with-slots*,with-accessors,with-accessors*,defclass,defmethod,print-unreadable-object"
 
-// When a string option is NULL, it is set to empty_string_option,
+// When a string option is NULL, it is set to STATIC_CSTR_AS_REF_STRING(""),
 // to avoid having to check for NULL everywhere.
 //
 // TODO(famiu): Remove this when refcounted strings are used for string options.
-EXTERN char empty_string_option[] INIT( = "");
+EXTERN char STATIC_CSTR_AS_REF_STRING("")[] INIT( = "");
 
 // The following are actual variables for the options
 
@@ -592,7 +592,7 @@ EXTERN char *p_ve;              ///< 'virtualedit'
 EXTERN unsigned ve_flags;
 EXTERN OptInt p_verbose;        ///< 'verbose'
 #ifdef IN_OPTION_C
-char *p_vfile = empty_string_option;  ///< used before options are initialized
+char *p_vfile = STATIC_CSTR_AS_REF_STRING("");  ///< used before options are initialized
 #else
 extern char *p_vfile;           ///< 'verbosefile'
 #endif

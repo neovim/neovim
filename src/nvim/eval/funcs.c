@@ -492,7 +492,7 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
   int save_magic = p_magic;
   p_magic = true;
   char *save_cpo = p_cpo;
-  p_cpo = empty_string_option;
+  p_cpo = STATIC_CSTR_AS_REF_STRING("");
 
   buf_T *buf = buflist_findnr(buflist_findpat(name, name + strlen(name),
                                               true, false, curtab_only));
@@ -1646,7 +1646,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char *p_csl_save = p_csl;
 
   // avoid using 'completeslash' here
-  p_csl = empty_string_option;
+  p_csl = STATIC_CSTR_AS_REF_STRING("");
 #endif
 
   rettv->v_type = VAR_STRING;
@@ -4502,7 +4502,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *save_cpo = p_cpo;
-  p_cpo = empty_string_option;
+  p_cpo = STATIC_CSTR_AS_REF_STRING("");
 
   rettv->vval.v_number = -1;
   switch (type) {
@@ -4817,7 +4817,7 @@ static void f_matchbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *const save_cpo = p_cpo;
-  p_cpo = empty_string_option;
+  p_cpo = STATIC_CSTR_AS_REF_STRING("");
 
   regmatch_T regmatch;
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
@@ -4888,7 +4888,7 @@ static void f_matchstrlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *const save_cpo = p_cpo;
-  p_cpo = empty_string_option;
+  p_cpo = STATIC_CSTR_AS_REF_STRING("");
 
   regmatch_T regmatch;
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
@@ -6671,7 +6671,7 @@ int do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *save_cpo = p_cpo;
-  p_cpo = empty_string_option;
+  p_cpo = STATIC_CSTR_AS_REF_STRING("");
 
   // Set the time limit, if there is one.
   proftime_T tm = profile_setlimit(time_limit);
@@ -6803,7 +6803,7 @@ int do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
 
   xfree(pat2);
   xfree(pat3);
-  if (p_cpo == empty_string_option) {
+  if (p_cpo == STATIC_CSTR_AS_REF_STRING("")) {
     p_cpo = save_cpo;
   } else {
     // Darn, evaluating the {skip} expression changed the value.
@@ -7533,7 +7533,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *save_cpo = p_cpo;
-  p_cpo = empty_string_option;
+  p_cpo = STATIC_CSTR_AS_REF_STRING("");
 
   const char *str = tv_get_string(&argvars[0]);
   const char *pat = NULL;

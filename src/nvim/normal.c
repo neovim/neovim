@@ -1893,8 +1893,8 @@ void clear_showcmd(void)
       char *const saved_w_sbr = curwin->w_p_sbr;
 
       // Make 'sbr' empty for a moment to get the correct size.
-      p_sbr = empty_string_option;
-      curwin->w_p_sbr = empty_string_option;
+      p_sbr = STATIC_CSTR_AS_REF_STRING("");
+      curwin->w_p_sbr = STATIC_CSTR_AS_REF_STRING("");
       getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
       p_sbr = saved_sbr;
       curwin->w_p_sbr = saved_w_sbr;
