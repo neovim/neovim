@@ -1526,7 +1526,7 @@ LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
 
     Should only be called when the tracked state of the LanguageTree is not
     valid against the parse tree in treesitter. Doesn't clear filesystem
-    cache. Called often, so needs to be fast.
+    cache.
 
     Parameters: ~
       • {reload}  (`boolean?`)
@@ -1534,7 +1534,8 @@ LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
 LanguageTree:is_valid({exclude_children})            *LanguageTree:is_valid()*
     Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()|
     reflects the latest state of the source. If invalid, user should call
-    |LanguageTree:parse()|.
+    |LanguageTree:parse()|. `is_valid(false)` can be slow because it runs
+    injection on the full source.
 
     Parameters: ~
       • {exclude_children}  (`boolean?`) whether to ignore the validity of
@@ -1594,7 +1595,7 @@ LanguageTree:node_for_range({range}, {opts})
     Return: ~
         (`TSNode?`)
 
-LanguageTree:parse({range})                             *LanguageTree:parse()*
+LanguageTree:parse({ranges})                            *LanguageTree:parse()*
     Recursively parse all regions in the language tree using
     |treesitter-parsers| for the corresponding languages and run injection
     queries on the parsed trees to determine whether child trees should be
@@ -1605,11 +1606,11 @@ LanguageTree:parse({range})                             *LanguageTree:parse()*
     if {range} is `true`).
 
     Parameters: ~
-      • {range}  (`boolean|Range?`) Parse this range in the parser's source.
-                 Set to `true` to run a complete parse of the source (Note:
-                 Can be slow!) Set to `false|nil` to only parse regions with
-                 empty ranges (typically only the root tree without
-                 injections).
+      • {ranges}  (`boolean|Range|(Range)[]?`) Parse this range(s) in the
+                  parser's source. Set to `true` to run a complete parse of
+                  the source (Note: Can be slow!) Set to `false|nil` to only
+                  parse regions with empty ranges (typically only the root
+                  tree without injections).
 
     Return: ~
         (`table<integer, TSTree>`)
@@ -1660,10 +1661,7 @@ LanguageTree:tree_for_range({range}, {opts})
 
 LanguageTree:trees()                                    *LanguageTree:trees()*
     Returns all trees of the regions parsed by this parser. Does not include
-    child languages. The result is list-like if
-    • this LanguageTree is the root, in which case the result is empty or a
-      singleton list; or
-    • the root LanguageTree is fully parsed.
+    child languages.
 
     Return: ~
         (`table<integer, TSTree>`)
