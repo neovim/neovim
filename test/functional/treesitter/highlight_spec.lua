@@ -891,6 +891,78 @@ describe('treesitter highlighting (lua)', function()
       ]],
     })
   end)
+
+  it('draws injected languages on top', function()
+    exec_lua(function()
+      local highlight = [[
+        ((comment) @comment
+         (#set! priority 100))
+
+        ((string_content) @string
+         (#set! priority 100))
+      ]]
+      local injection = [[
+        ((comment_content) @injection.content
+         (#set! injection.self)
+         (#set! injection.combined))
+      ]]
+
+      local parser = vim.treesitter.get_parser(0, 'lua', {
+        injections = { lua = injection },
+      })
+      vim.treesitter.highlighter.new(parser, { queries = { lua = highlight } })
+
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, {
+        '-- print([=[some',
+        '-- text',
+        '-- here]=])',
+      })
+    end)
+
+    -- Note: comment markers should not be 26, but 18
+    screen:expect([[
+      {18:^-- print([=[}{26:some}                                                 |
+      {26:-- text}                                                          |
+      {26:-- here}{18:]=])}                                                      |
+      {1:~                                                                }|*14
+                                                                       |
+    ]])
+  end)
+
+  it('draws highlights on top of regular extmarks with the same priority', function()
+    exec_lua(function()
+      local highlight = [[
+        ((comment_content) @comment
+         (#set! priority 100))
+      ]]
+
+      local parser = vim.treesitter.get_parser(0, 'lua', {})
+      vim.treesitter.highlighter.new(parser, { queries = { lua = highlight } })
+
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, {
+        'local _',
+        '-----',
+        '-----',
+        'local _',
+      })
+
+      local ns = vim.api.nvim_create_namespace('')
+      vim.api.nvim_buf_set_extmark(0, ns, 0, 0, {
+        end_row = 3,
+        end_col = 7,
+        hl_group = '@string',
+        priority = 100,
+      })
+    end)
+
+    screen:expect([[
+      {26:^local _}                                                          |
+      {26:--}{18:---}                                                            |*2
+      {26:local _}                                                          |
+      {1:~                                                                }|*13
+                                                                       |
+    ]])
+  end)
 end)
 
 describe('treesitter highlighting (help)', function()
