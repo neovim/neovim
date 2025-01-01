@@ -108,6 +108,8 @@ typedef kvec_withinit_t(Object, 16) ArrayBuilder;
     .data = xmemdupz(s, sizeof(s) - 1), \
     .size = sizeof(s) - 1 })
 
+#define STATIC_CSTR_AS_REF_STRING(s) (("\xff\xff\xff\xff" s) + 4)
+
 #define STATIC_CSTR_AS_OBJ(s) STRING_OBJ(STATIC_CSTR_AS_STRING(s))
 #define STATIC_CSTR_TO_OBJ(s) STRING_OBJ(STATIC_CSTR_TO_STRING(s))
 
