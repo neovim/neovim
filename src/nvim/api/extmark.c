@@ -993,8 +993,8 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// Note: this function should not be called often. Rather, the callbacks
 /// themselves can be used to throttle unneeded callbacks. the `on_start`
 /// callback can return `false` to disable the provider until the next redraw.
-/// Similarly, return `false` in `on_win` will skip the `on_line` calls
-/// for that window (but any extmarks set in `on_win` will still be used).
+/// Similarly, return `false` in `on_win` will skip the `on_line` and `on_range`
+/// calls for that window (but any extmarks set in `on_win` will still be used).
 /// A plugin managing multiple sources of decoration should ideally only set
 /// one provider, and merge the sources internally. You can use multiple `ns_id`
 /// for the extmarks set/modified inside the callback anyway.
@@ -1005,7 +1005,8 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// Doing `vim.rpcnotify` should be OK, but `vim.rpcrequest` is quite dubious
 /// for the moment.
 ///
-/// Note: It is not allowed to remove or update extmarks in `on_line` callbacks.
+/// Note: It is not allowed to remove or update extmarks
+/// in `on_line` and `on_range` callbacks.
 ///
 /// @param ns_id  Namespace id from |nvim_create_namespace()|
 /// @param opts  Table of callbacks:
@@ -1026,6 +1027,14 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///                 (The interaction with fold lines is subject to change)
 ///               ```
 ///                 ["line", winid, bufnr, row]
+///               ```
+///             - on_range: called for each buffer range being redrawn.
+///               Range is end-exclusive and may span multiple lines. Range
+///               bounds point to the first byte of a character. An end position
+///               of the form (lnum, 0), including (number of lines, 0), is valid
+///               and indicates that EOL of the preceding line is included.
+///               ```
+///                 ["range", winid, bufnr, begin_row, begin_col, end_row, end_col]
 ///               ```
 ///             - on_end: called at the end of a redraw cycle
 ///               ```
@@ -1050,6 +1059,7 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
     { "on_buf", &opts->on_buf, &p->redraw_buf },
     { "on_win", &opts->on_win, &p->redraw_win },
     { "on_line", &opts->on_line, &p->redraw_line },
+    { "on_range", &opts->on_range, &p->redraw_range },
     { "on_end", &opts->on_end, &p->redraw_end },
     { "_on_hl_def", &opts->_on_hl_def, &p->hl_def },
     { "_on_spell_nav", &opts->_on_spell_nav, &p->spell_nav },
