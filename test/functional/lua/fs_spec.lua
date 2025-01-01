@@ -361,8 +361,8 @@ describe('vim.fs', function()
     end)
 
     -- Opts required for testing posix paths and win paths
-    local posix_opts = is_os('win') and { win = false } or {}
-    local win_opts = is_os('win') and {} or { win = true }
+    local posix_opts = { win = false }
+    local win_opts = { win = true }
 
     it('preserves leading double slashes in POSIX paths', function()
       eq('//foo', vim.fs.normalize('//foo', posix_opts))
@@ -483,6 +483,7 @@ describe('vim.fs', function()
       if is_os('win') then
         eq([[C:/foo]], vim.fs.abspath([[C:\foo]]))
         eq([[C:/foo/../.]], vim.fs.abspath([[C:\foo\..\.]]))
+        eq('//foo/bar', vim.fs.abspath('\\\\foo\\bar'))
       else
         eq('/foo/../.', vim.fs.abspath('/foo/../.'))
         eq('/foo/bar', vim.fs.abspath('/foo/bar'))
