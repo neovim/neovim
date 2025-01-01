@@ -287,6 +287,8 @@ PERFORMANCE
   highlighting.
 • LSP diagnostics and inlay hints are de-duplicated (new requests cancel
   inflight requests). This greatly improves performance with slow LSP servers.
+• 10x speedup for |vim.treesitter.foldexpr()| (when no parser exists for the
+  buffer).
 
 PLUGINS
 
