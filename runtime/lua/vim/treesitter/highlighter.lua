@@ -203,11 +203,11 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
   end)
 end
 
----@param fn fun(state: vim.treesitter.highlighter.State)
+---@param fn fun(state: vim.treesitter.highlighter.State, index: number)
 ---@package
 function TSHighlighter:for_each_highlight_state(fn)
-  for _, state in ipairs(self._highlight_states) do
-    fn(state)
+  for i, state in ipairs(self._highlight_states) do
+    fn(state, i)
   end
 end
 
@@ -281,7 +281,7 @@ end
 ---@param line integer
 ---@param is_spell_nav boolean
 local function on_line_impl(self, buf, line, is_spell_nav)
-  self:for_each_highlight_state(function(state)
+  self:for_each_highlight_state(function(state, state_i)
     local root_node = state.tstree:root()
     local root_start_row, _, root_end_row, _ = root_node:range()
 
@@ -333,6 +333,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
             hl_group = hl,
             ephemeral = true,
             priority = priority,
+            subpriority = state_i,
             conceal = conceal,
             spell = spell,
             url = url,

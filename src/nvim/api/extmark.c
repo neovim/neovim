@@ -658,6 +658,14 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     virt_lines.priority = (DecorPriority)opts->priority;
   }
 
+  uint16_t subpriority = 0;
+  if (HAS_KEY(opts, set_extmark, subpriority)) {
+    VALIDATE_RANGE((opts->subpriority >= 0 && opts->subpriority <= UINT16_MAX), "priority", {
+      goto error;
+    });
+    subpriority = (uint16_t)opts->subpriority;
+  }
+
   if (HAS_KEY(opts, set_extmark, sign_text)) {
     sign.text[0] = 0;
     VALIDATE_S(init_sign_text(NULL, sign.text, opts->sign_text.data), "sign_text", "", {
@@ -751,15 +759,18 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     }
 
     if (kv_size(virt_text.data.virt_text)) {
-      decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_text, NULL), true);
+      decor_range_add_virt(&decor_state, r, c, line2, col2,
+                           decor_put_vt(virt_text, NULL), subpriority, true);
     }
     if (kv_size(virt_lines.data.virt_lines)) {
-      decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_lines, NULL), true);
+      decor_range_add_virt(&decor_state, r, c, line2, col2,
+                           decor_put_vt(virt_lines, NULL), subpriority, true);
     }
     if (has_hl) {
       DecorSignHighlight sh = decor_sh_from_inline(hl);
       sh.url = url;
-      decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id);
+      decor_range_add_sh(&decor_state, r, c, line2, col2,
+                         &sh, subpriority, true, (uint32_t)ns_id, id);
     }
   } else {
     if (opts->ephemeral) {
