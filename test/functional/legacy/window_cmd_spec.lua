@@ -299,7 +299,7 @@ describe('splitkeep', function()
       c                                                    |
       {1:~                                                    }|
       {3:[No Name]                                            }|
-                                                           |
+      :call win_move_statusline(win, 1)                    |
     ]])
   end)
 
