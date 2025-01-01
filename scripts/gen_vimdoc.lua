@@ -350,12 +350,14 @@ local config = {
     helptag_fmt = function(name)
       if name:lower() == 'treesitter' then
         return 'lua-treesitter-core'
+      elseif name:lower() == 'query' then
+        return 'lua-treesitter-query'
       elseif name:lower() == 'tstree' then
         return { 'treesitter-tree', 'TSTree' }
       elseif name:lower() == 'tsnode' then
         return { 'treesitter-node', 'TSNode' }
       end
-      return 'lua-treesitter-' .. name:lower()
+      return 'treesitter-' .. name:lower()
     end,
   },
   editorconfig = {

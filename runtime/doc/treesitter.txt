@@ -157,12 +157,12 @@ The following predicates are built in:
                  (field_identifier) @method)) @_parent
              (#has-parent? @_parent template_method function_declarator))
 <
-                                                 *lua-treesitter-not-predicate*
+                                                    *treesitter-predicate-not*
 Each predicate has a `not-` prefixed predicate that is just the negation of
 the predicate.
 
-                                                 *lua-treesitter-all-predicate*
-                                                 *lua-treesitter-any-predicate*
+                                                    *treesitter-predicate-all*
+                                                    *treesitter-predicate-any*
 Queries can use quantifiers to capture multiple nodes. When a capture contains
 multiple nodes, predicates match only if ALL nodes contained by the capture
 match the predicate. Some predicates (`eq?`, `match?`, `lua-match?`,
@@ -1114,7 +1114,7 @@ stop({bufnr})                                          *vim.treesitter.stop()*
 
 
 ==============================================================================
-Lua module: vim.treesitter.language                  *lua-treesitter-language*
+Lua module: vim.treesitter.language                      *treesitter-language*
 
 add({lang}, {opts})                            *vim.treesitter.language.add()*
     Load parser with name {lang}
@@ -1463,7 +1463,7 @@ set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
 
 
 ==============================================================================
-Lua module: vim.treesitter.languagetree          *lua-treesitter-languagetree*
+Lua module: vim.treesitter.languagetree              *treesitter-languagetree*
 
 A *LanguageTree* contains a tree of parsers: the root treesitter parser for
 {lang} and any "injected" language parsers, which themselves may inject other
