@@ -203,7 +203,7 @@ function TSHighlighter:prepare_highlight_states(srow, erow)
   end)
 end
 
----@param fn fun(state: vim.treesitter.highlighter.State, index: number)
+---@param fn fun(state: vim.treesitter.highlighter.State, index: integer)
 ---@package
 function TSHighlighter:for_each_highlight_state(fn)
   for i, state in ipairs(self._highlight_states) do

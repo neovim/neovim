@@ -251,6 +251,7 @@ error('Cannot require a meta file')
 --- @field invalidate? boolean
 --- @field ephemeral? boolean
 --- @field priority? integer
+--- @field subpriority? integer
 --- @field right_gravity? boolean
 --- @field end_right_gravity? boolean
 --- @field virt_lines? any[]

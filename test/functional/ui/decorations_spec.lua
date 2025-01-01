@@ -290,6 +290,71 @@ describe('decorations providers', function()
 
   end)
 
+  it('supports subpriority', function()
+    exec_lua(function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, {
+        'abcdefghijklmnopqrst',
+        'abcdefghijklmnopqrst',
+        'abcdefghijklmnopqrst',
+      })
+    end)
+
+    setup_provider [[
+      local begin_off = { -1, 0, 1 }
+      local ns = api.nvim_create_namespace('')
+
+      local function on_do(kind, _, _, line)
+        if kind ~= 'line' then
+          return
+        end
+
+        local off = begin_off[1 + line]
+
+        api.nvim_buf_set_extmark(0, ns, line, 2, {
+          end_row = line,
+          end_col = 7,
+          hl_group = 'comment',
+          priority = 10,
+          subpriority = 1,
+          ephemeral = true,
+        })
+        api.nvim_buf_set_extmark(0, ns, line, 2 + off, {
+          end_row = line,
+          end_col = 7 + off,
+          hl_group = 'string',
+          priority = 10,
+          subpriority = 0,
+          ephemeral = true,
+        })
+
+        api.nvim_buf_set_extmark(0, ns, line, 10, {
+          end_row = line,
+          end_col = 15,
+          hl_group = 'string',
+          priority = 10,
+          subpriority = 0,
+          ephemeral = true,
+        })
+        api.nvim_buf_set_extmark(0, ns, line, 10 + off, {
+          end_row = line,
+          end_col = 15 + off,
+          hl_group = 'comment',
+          priority = 10,
+          subpriority = 1,
+          ephemeral = true,
+        })
+      end
+    ]]
+
+    screen:expect([[
+      ^a{5:b}{4:cdefg}hi{4:jklmn}{5:o}pqrst                    |
+      ab{4:cdefg}hij{4:klmno}pqrst                    |
+      ab{4:cdefg}{5:h}ij{5:k}{4:lmnop}qrst                    |
+      {1:~                                       }|*4
+                                              |
+    ]])
+  end)
+
   it('can predefine highlights', function()
     screen:try_resize(40, 16)
     insert(mulholland)
