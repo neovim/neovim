@@ -469,7 +469,7 @@ describe('vim.fs', function()
     end)
   end)
 
-  describe('abspath', function()
+  describe('abspath()', function()
     local cwd = is_os('win') and vim.uv.cwd():gsub('\\', '/') or vim.uv.cwd()
     local home = is_os('win') and vim.uv.os_homedir():gsub('\\', '/') or vim.uv.os_homedir()
 

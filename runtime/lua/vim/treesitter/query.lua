@@ -1,3 +1,6 @@
+--- @brief This Lua |treesitter-query| interface allows you to create queries and use them to parse
+--- text. See |vim.treesitter.query.parse()| for a working example.
+
 local api = vim.api
 local language = require('vim.treesitter.language')
 local memoize = vim.func._memoize
@@ -8,9 +11,9 @@ local M = {}
 ---Parsed query, see |vim.treesitter.query.parse()|
 ---
 ---@class vim.treesitter.Query
----@field lang string name of the language for this parser
+---@field lang string parser language name
 ---@field captures string[] list of (unique) capture names defined in query
----@field info vim.treesitter.QueryInfo contains information used in the query (e.g. captures, predicates, directives)
+---@field info vim.treesitter.QueryInfo query context (e.g. captures, predicates, directives)
 ---@field query TSQuery userdata query object
 local Query = {}
 Query.__index = Query
@@ -228,20 +231,28 @@ M.get = memoize('concat-2', function(lang, query_name)
   return M.parse(lang, query_string)
 end)
 
---- Parse {query} as a string. (If the query is in a file, the caller
---- should read the contents into a string before calling).
+--- Parses a {query} string and returns a `Query` object (|lua-treesitter-query|), which can be used
+--- to search the tree for the query patterns (via |Query:iter_captures()|, |Query:iter_matches()|),
+--- or inspect the query via these fields:
+---   - `captures`: a list of unique capture names defined in the query (alias: `info.captures`).
+---   - `info.patterns`: information about predicates.
 ---
---- Returns a `Query` (see |lua-treesitter-query|) object which can be used to
---- search nodes in the syntax tree for the patterns defined in {query}
---- using the `iter_captures` and `iter_matches` methods.
----
---- Exposes `info` and `captures` with additional context about {query}.
----   - `captures` contains the list of unique capture names defined in {query}.
----   - `info.captures` also points to `captures`.
----   - `info.patterns` contains information about predicates.
+--- Example (select the code then run `:'<,'>lua` to try it):
+--- ```lua
+--- local query = vim.treesitter.query.parse('vimdoc', [[
+---   ; query
+---   ((h1) @str
+---     (#trim! @str 1 1 1 1))
+--- ]])
+--- local tree = vim.treesitter.get_parser():parse()[1]
+--- for id, node, metadata in query:iter_captures(tree:root(), 0) do
+---    -- Print the node name and source text.
+---    vim.print({node:type(), vim.treesitter.get_node_text(node, vim.api.nvim_get_current_buf())})
+--- end
+--- ```
 ---
 ---@param lang string Language to use for the query
----@param query string Query in s-expr syntax
+---@param query string Query text, in s-expr syntax
 ---
 ---@return vim.treesitter.Query : Parsed query
 ---
@@ -847,20 +858,22 @@ local function match_id_hash(_, match)
   return (match:info())
 end
 
---- Iterate over all captures from all matches inside {node}
+--- Iterates over all captures from all matches in {node}.
 ---
---- {source} is needed if the query contains predicates; then the caller
+--- {source} is required if the query contains predicates; then the caller
 --- must ensure to use a freshly parsed tree consistent with the current
 --- text of the buffer (if relevant). {start} and {stop} can be used to limit
 --- matches inside a row range (this is typically used with root node
 --- as the {node}, i.e., to get syntax highlight matches in the current
 --- viewport). When omitted, the {start} and {stop} row values are used from the given node.
 ---
---- The iterator returns four values: a numeric id identifying the capture,
---- the captured node, metadata from any directives processing the match,
---- and the match itself.
---- The following example shows how to get captures by name:
+--- The iterator returns four values:
+--- 1. the numeric id identifying the capture
+--- 2. the captured node
+--- 3. metadata from any directives processing the match
+--- 4. the match itself
 ---
+--- Example: how to get captures by name:
 --- ```lua
 --- for id, node, metadata, match in query:iter_captures(tree:root(), bufnr, first, last) do
 ---   local name = query.captures[id] -- name of the capture in the query

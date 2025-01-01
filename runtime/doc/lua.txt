@@ -817,8 +817,8 @@ vim.json.encode({obj}, {opts})                             *vim.json.encode()*
     Parameters: ~
       • {obj}   (`any`)
       • {opts}  (`table<string,any>?`) Options table with keys:
-                • escape_slash: (boolean) (default false) When true, escapes
-                  `/` character in JSON strings
+                • escape_slash: (boolean) (default false) Escape slash
+                  characters "/" in string values.
 
     Return: ~
         (`string`)
@@ -3062,11 +3062,13 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
         items
 
 vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
-    Concatenates partial paths into one path. Slashes are normalized
-    (redundant slashes are removed, and on Windows backslashes are replaced
-    with forward-slashes) (e.g., `"foo/"` and `"/bar"` get joined to
-    `"foo/bar"`) (windows: e.g `"a\foo\"` and `"\bar"` are joined to
-    `"a/foo/bar"`)
+    Concatenates partial paths (one absolute or relative path followed by zero
+    or more relative paths). Slashes are normalized: redundant slashes are
+    removed, and (on Windows) backslashes are replaced with forward-slashes.
+
+    Examples:
+    • "foo/", "/bar" => "foo/bar"
+    • Windows: "a\foo\", "\bar" => "a/foo/bar"
 
     Attributes: ~
         Since: 0.10.0
