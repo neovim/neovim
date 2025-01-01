@@ -615,6 +615,17 @@ function lsp.start(config, opts)
     config.root_dir = vim.fs.root(bufnr, opts._root_markers)
   end
 
+  if
+    not config.root_dir
+    and (not config.workspace_folders or #config.workspace_folders == 0)
+    and config.workspace_required
+  then
+    log.info(
+      ('skipping config "%s": workspace_required=true, no workspace found'):format(config.name)
+    )
+    return
+  end
+
   for _, client in pairs(all_clients) do
     if reuse_client(client, config) then
       if opts.attach == false then
