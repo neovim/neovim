@@ -343,6 +343,9 @@ end
 --- running clients. The default implementation re-uses a client if name and
 --- root_dir matches.
 --- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
+---
+--- (default false) Server requires a workspace (no "single file" support).
+--- @field workspace_required? boolean
 
 --- Update the configuration for an LSP client.
 ---
@@ -633,6 +636,14 @@ function lsp.start(config, opts)
   if not config.root_dir and opts._root_markers then
     config = vim.deepcopy(config)
     config.root_dir = vim.fs.root(bufnr, opts._root_markers)
+  end
+
+  if
+    not config.root_dir
+    and (not config.workspace_folders or #config.workspace_folders == 0)
+    and config.workspace_required
+  then
+    return
   end
 
   for _, client in pairs(all_clients) do
