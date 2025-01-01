@@ -580,7 +580,7 @@ void expand_env(char *src, char *dst, int dstlen)
 /// @param esc        Escape spaces in expanded variables
 /// @param one        `srcp` is a single filename
 /// @param prefix     Start again after this (can be NULL)
-void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool esc, bool one,
+void expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen, bool esc, bool one,
                     char *prefix)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {

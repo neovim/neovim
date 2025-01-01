@@ -1901,7 +1901,7 @@ int makemap(FILE *fd, buf_T *buf)
 // "what": 0 for :map lhs, 1 for :map rhs, 2 for :set
 //
 // return FAIL for failure, OK otherwise
-int put_escstr(FILE *fd, char *strstart, int what)
+int put_escstr(FILE *fd, const char *strstart, int what)
 {
   uint8_t *str = (uint8_t *)strstart;
 
