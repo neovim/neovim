@@ -721,7 +721,7 @@ function M.abspath(path)
     prefix, path = split_windows_path(path)
   end
 
-  if vim.startswith(path, '/') then
+  if prefix == '//' or vim.startswith(path, '/') then
     -- Path is already absolute, do nothing
     return prefix .. path
   end
