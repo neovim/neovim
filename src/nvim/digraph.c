@@ -1714,6 +1714,7 @@ void listdigraphs(bool use_headers)
 {
   result_T previous = 0;
 
+  msg_ext_set_kind("list_cmd");
   msg_putchar('\n');
 
   const digr_T *dp = digraphdefault;

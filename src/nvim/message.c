@@ -2222,6 +2222,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     size_t len = maxlen < 0 ? strlen(str) : strnlen(str, (size_t)maxlen);
     ga_concat_len(&msg_ext_last_chunk, str, len);
     msg_ext_cur_len += len;
+    msg_col += (int)mb_string2cells(str);
     // When message ends in newline, reset variables used to format message: msg_advance().
     assert(len > 0);
     if (str[len - 1] == '\n') {

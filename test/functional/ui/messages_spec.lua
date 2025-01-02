@@ -1121,7 +1121,7 @@ stack traceback:
     ]],
       messages = {
         {
-          content = { { 'wildmenu  wildmode' } },
+          content = { { 'wildmenu  wildmode\n' } },
           history = false,
           kind = 'wildlist',
         },
@@ -1334,6 +1334,21 @@ stack traceback:
     ]])
     feed('i')
     n.assert_alive()
+  end)
+
+  it(':digraph contains newlines', function()
+    command('digraph')
+    screen:expect({
+      condition = function()
+        local nl = 0
+        eq('list_cmd', screen.messages[1].kind)
+        for _, chunk in ipairs(screen.messages[1].content) do
+          nl = nl + (chunk[2]:find('\n') and 1 or 0)
+        end
+        eq(682, nl)
+        screen.messages = {}
+      end,
+    })
   end)
 end)
 
