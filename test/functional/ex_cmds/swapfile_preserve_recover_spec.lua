@@ -220,6 +220,7 @@ describe('swapfile detection', function()
         .. [[%.swp"]],
     }
     feed('e') -- Chose "Edit" at the swap dialog.
+    screen2:expect({ any = pesc('E5555: API call: Vim(edit):E325: ATTENTION') })
     feed('<c-c>')
     screen2:expect(expected_no_dialog)
 
@@ -535,10 +536,6 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
       )
     end)
     api.nvim_chan_send(chan, 'q')
-    retry(nil, nil, function()
-      eq('Press ENTER or type command to continue', eval("getline('$')->trim(' ', 2)"))
-    end)
-    api.nvim_chan_send(chan, '\r')
     retry(nil, nil, function()
       eq(
         { '', '[Process exited 1]', '' },

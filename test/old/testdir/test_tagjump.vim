@@ -1231,8 +1231,10 @@ func Test_tselect_listing()
   2 FS  v    first             Xfoo
                typeref:typename:char 
                2
-Type number and <Enter> (q or empty cancels): 
 [DATA]
+" Type number and <Enter> (q or empty cancels):
+" Nvim: Prompt message is sent to cmdline prompt.
+
   call assert_equal(expected, l)
 
   call delete('Xtags')
