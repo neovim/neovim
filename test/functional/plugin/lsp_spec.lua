@@ -6295,7 +6295,10 @@ describe('LSP', function()
             },
           })
 
-          vim.lsp.config('foo', { cmd = server.cmd, workspace_required = true, filetypes = { 'foo' } })
+          vim.lsp.config(
+            'foo',
+            { cmd = server.cmd, workspace_required = true, filetypes = { 'foo' } }
+          )
           vim.lsp.enable('foo')
 
           vim.cmd.edit(assert(tmp1))
