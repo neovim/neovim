@@ -655,12 +655,6 @@ screen:redraw_debug() to show all intermediate screen states.]]
       end
     end
 
-    -- Only test the abort state of a cmdline level once.
-    if self.cmdline_hide_level ~= nil then
-      self.cmdline[self.cmdline_hide_level] = nil
-      self.cmdline_hide_level = nil
-    end
-
     if expected.hl_groups ~= nil then
       for name, id in pairs(expected.hl_groups) do
         local expected_hl = attr_state.ids[id]
@@ -692,6 +686,11 @@ screen:redraw_debug() to show all intermediate screen states.]]
       end
     end
   end, expected)
+  -- Only test the abort state of a cmdline level once.
+  if self.cmdline_hide_level ~= nil then
+    self.cmdline[self.cmdline_hide_level] = nil
+    self.cmdline_hide_level = nil
+  end
 end
 
 function Screen:expect_unchanged(intermediate, waittime_ms)
