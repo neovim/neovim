@@ -860,4 +860,10 @@ function M.skip_fragile(pending_fn, cond)
   return false
 end
 
+--- @return boolean
+function M.is_forced_multigrid()
+  local forced_multigrid = os.getenv('NVIM_TEST_FORCE_MULTIGRID')
+  return forced_multigrid == '1' or forced_multigrid == ''
+end
+
 return M
