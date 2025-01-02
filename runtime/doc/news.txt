@@ -26,6 +26,9 @@ LSP
 
 • `lsp/` runtimepath files should return a table instead of calling
   |vim.lsp.config()| (or assigning to `vim.lsp.config`). See |lsp-config|
+• `vim.lsp.buf.document_symbol()` uses the |location-list| by default. Use
+  `vim.lsp.buf.document_symbol({ loclist = false })` to use the |quickfix|
+  list.
 
 
 OPTIONS
