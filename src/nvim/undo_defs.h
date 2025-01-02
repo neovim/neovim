@@ -2,7 +2,7 @@
 
 #include <time.h>
 
-#include "nvim/block_defs.h"
+#include "nvim/ops_block_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/mark_defs.h"
