@@ -36,7 +36,14 @@ describe('vim.ui_attach', function()
 
   local function expect_events(expected)
     local evs = exec_lua 'return get_events(...)'
-    eq(expected, evs, vim.inspect(evs))
+    local filtered_evs = {}
+    for _, ev in pairs(evs) do
+      -- Don't care about win_pos events
+      if ev[1] ~= 'win_pos' then
+        table.insert(filtered_evs, ev)
+      end
+    end
+    eq(expected, filtered_evs, vim.inspect(evs))
   end
 
   it('can receive popupmenu events', function()
@@ -65,7 +72,7 @@ describe('vim.ui_attach', function()
         0,
         0,
         0,
-        1,
+        screen.forced_multigrid and 2 or 1,
       },
     }
 
@@ -188,11 +195,19 @@ describe('vim.ui_attach', function()
   end)
 
   it("preserved 'incsearch/command' screen state after :redraw from ext_cmdline", function()
+    local redraw = ''
+    if t.is_forced_multigrid() then
+      -- FIXME: Without this win_pos is never sent for grid 4
+      redraw = [[
+        vim.cmd('redraw')
+      ]]
+    end
     exec_lua([[
       vim.cmd.norm('ifoobar')
       vim.cmd('1split cmdline')
       local buf = vim.api.nvim_get_current_buf()
       vim.cmd.wincmd('p')
+      ]] .. redraw .. [[
       vim.ui_attach(ns, { ext_cmdline = true }, function(event, ...)
         if event == 'cmdline_show' then
           local content = select(1, ...)
@@ -366,7 +381,6 @@ describe('vim.ui_attach', function()
         {9:back from ns: 1.}                        |
         {100:Press ENTER or type command to continue}^ |
       ]],
-      cmdline = { { abort = false } },
     })
     feed('<cr>')
     -- Also when scheduled

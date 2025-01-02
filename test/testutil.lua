@@ -866,4 +866,47 @@ function M.is_forced_multigrid()
   return forced_multigrid == '1' or forced_multigrid == ''
 end
 
+--- @param reason string
+--- @param cond? boolean
+--- @param stackdepth? integer
+function M.skip_forced_mulitgrid(reason, cond, stackdepth)
+  if stackdepth == nil then
+    stackdepth = 2
+  end
+  if cond == nil or cond then
+    if M.is_forced_multigrid() then
+      --- @type fun(reason: string)
+      local pending = getfenv(stackdepth).pending
+      pending('skipped forced multigrid test: ' .. reason)
+    end
+  end
+end
+
+--- @param linegrid? boolean
+function M.skip_forced_multigrid_non_linegrid(linegrid)
+  local reason = 'Linegrid has to be enabled with multigrid'
+  M.skip_forced_mulitgrid(reason, not linegrid, 3)
+end
+
+function M.skip_forced_multigrid_tui()
+  local reason = 'The TUI does not support multigrid'
+  M.skip_forced_mulitgrid(reason, nil, 3)
+end
+
+--- @param cond? boolean
+function M.skip_forced_multigrid_inccomand_split(cond)
+  local reason = 'FIXME: Inccommand split does not work with multigrid #24802'
+  M.skip_forced_mulitgrid(reason, cond, 3)
+end
+
+function M.skip_forced_multigrid_command_c_c()
+  local reason = 'FIXME: C-c closes the commandline window #31811'
+  M.skip_forced_mulitgrid(reason, nil, 3)
+end
+
+function M.skip_forced_multigrid_intro()
+  local reason = 'FIXME: :intro does not work with multigrid #24705'
+  M.skip_forced_mulitgrid(reason, nil, 3)
+end
+
 return M
