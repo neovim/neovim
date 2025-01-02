@@ -634,6 +634,9 @@ screen:redraw_debug() to show all intermediate screen states.]]
     if expected.win_pos == nil then
       extstate.win_pos = nil
     end
+    if expected.cmdline == nil then
+      extstate.cmdline = nil
+    end
 
     if expected.float_pos then
       expected.float_pos = deepcopy(expected.float_pos)
