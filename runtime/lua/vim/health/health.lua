@@ -493,7 +493,153 @@ local function check_external_tools()
   end
 end
 
+local function detect_terminal()
+  local e = vim.env
+  if e.TERM_PROGRAM then
+    local v = e.TERM_PROGRAM_VERSION --- @type string?
+    return e.TERM_PROGRAM_VERSION and (e.TERM_PROGRAM .. ' ' .. v) or e.TERM_PROGRAM
+  end
+
+  local map = {
+    KITTY_WINDOW_ID = 'kitty',
+    ALACRITTY_SOCKET = 'alacritty',
+    ALACRITTY_LOG = 'alacritty',
+    WEZTERM_EXECUTABLE = 'wezterm',
+    KONSOLE_VERSION = function()
+      return 'konsole ' .. e.KONSOLE_VERSION
+    end,
+    VTE_VERSION = function()
+      return 'vte ' .. e.VTE_VERSION
+    end,
+  }
+
+  for key, val in pairs(map) do
+    local env = e[key] --- @type string?
+    if env then
+      return type(val) == 'function' and val() or val
+    end
+  end
+
+  return 'unknown'
+end
+
+local function check_sysinfo()
+  vim.health.start('System Info')
+
+  -- Use :version because vim.version().build returns "Homebrew" for brew installs.
+  local version_output = vim.api.nvim_exec2('version', { output = true }).output
+  local nvim_version = version_output:match('NVIM v[^\n]+') or 'unknown'
+  local commit_hash = nvim_version:match('%+g?(%x+)')
+  local version_for_report = nvim_version
+  if commit_hash then
+    version_for_report = nvim_version:gsub('%+g' .. commit_hash, ' neovim/neovim@' .. commit_hash)
+    local has_git = vim.fn.executable('git') == 0
+    local has_curl = vim.fn.executable('curl') == 1
+    local cmd = has_git and { 'git', 'ls-remote', 'https://github.com/neovim/neovim', 'nightly' }
+      or has_curl and {
+        'curl',
+        '-s',
+        'https://api.github.com/repos/neovim/neovim/commits/nightly',
+        '-H',
+        'Accept: application/vnd.github.sha',
+      }
+      or nil
+
+    if cmd then
+      local result = vim.system(cmd, { text = true }):wait()
+      if result.code == 0 then
+        local sha = has_git and result.stdout:match('^(%x+)') or result.stdout
+        local latest_commit = sha and sha:sub(1, 10)
+        if latest_commit and commit_hash ~= latest_commit then
+          vim.health.warn(
+            string.format('Build is outdated. Local: %s, Latest: %s', commit_hash, latest_commit)
+          )
+        end
+      end
+    else
+      vim.health.warn('Cannot check for updates: git or curl not found')
+    end
+  end
+
+  local os_info = vim.uv.os_uname()
+  local os_string = os_info.sysname .. ' ' .. os_info.release
+  local terminal = detect_terminal()
+  local term_env = vim.env.TERM or 'unknown'
+
+  vim.health.info('Nvim version: ' .. nvim_version)
+  vim.health.info('Operating system: ' .. os_string)
+  vim.health.info('Terminal: ' .. terminal)
+  vim.health.info('$TERM: ' .. term_env)
+
+  local body = vim.text.indent(
+    0,
+    string.format(
+      [[
+    ## Problem:
+
+
+
+    ## Steps to reproduce:
+    ```
+    nvim --clean
+    ```
+
+    ## Expected behavior:
+
+
+
+    ## Nvim version (nvim -v):
+
+    %s
+
+    ## Vim (not Nvim) behaves the same?
+
+
+
+    ## Operating system/version:
+
+    %s
+
+    ## Terminal name/version:
+
+    %s
+
+    ## $TERM environment variable:
+
+    %s
+
+    ## Installation:
+
+]],
+      version_for_report,
+      os_string,
+      terminal,
+      term_env
+    )
+  )
+
+  local encoded_body = vim.uri_encode(body) --- @type string
+  local issue_url = 'https://github.com/neovim/neovim/issues/new?labels=bug&body=' .. encoded_body
+  vim.schedule(function()
+    local win = vim.api.nvim_get_current_win()
+    local buf = vim.api.nvim_win_get_buf(win)
+    if vim.bo[buf].filetype ~= 'checkhealth' then
+      return
+    end
+    _G.nvim_health_bugreport_open = function()
+      vim.ui.open(issue_url)
+    end
+    vim.wo[win].winbar =
+      '%#WarningMsg#%@v:lua.nvim_health_bugreport_open@Click to Create Bug Report on GitHub%X%*'
+    vim.api.nvim_create_autocmd('BufDelete', {
+      buffer = buf,
+      command = 'lua _G.nvim_health_bugreport_open = nil',
+    })
+  end)
+end
+
 function M.check()
+  check_sysinfo()
   check_config()
   check_runtime()
   check_performance()
