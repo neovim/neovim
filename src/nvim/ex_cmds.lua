@@ -3363,6 +3363,12 @@ M.cmds = {
     addr_type = 'ADDR_OTHER',
     func = 'ex_previous',
   },
+  {
+    command = 'bugreport',
+    addr_type = 'ADDR_NONE',
+    flags = bit.bor(TRLBAR, SBOXOK, CMDWIN, LOCK_OK),
+    func = 'ex_bugreport',
+  },
 }
 
 return M
