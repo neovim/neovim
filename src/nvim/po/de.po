@@ -666,8 +666,8 @@ msgstr "E146: Reguläre Ausdrücke können nicht durch Buchstaben begrenzt werden"
 
 #: ../ex_cmds.c:3958
 #, c-format
-msgid "replace with %s (y/n/a/q/l/^E/^Y)?"
-msgstr "ersetze durch %s (y/n/a/q/l/^E/^Y)?"
+msgid "replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
+msgstr "ersetze durch %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
 
 #: ../ex_cmds.c:4373
 msgid "(Interrupted) "

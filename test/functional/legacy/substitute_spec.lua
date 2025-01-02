@@ -220,8 +220,10 @@ describe(':substitute', function()
       {2:o}ne                                                         |
       two                                                         |
       three                                                       |
-      {1:~                                                           }|*4
-      {6:replace with     (y/n/a/q/l/^E/^Y)?}^                         |
+      {1:~                                                           }|*2
+      {3:                                                            }|
+      {6:replace with    ? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^}|
+      {6:E)/down(^Y)}^                                                 |
     ]])
   end)
 end)

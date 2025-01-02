@@ -1353,8 +1353,8 @@ msgid "E146: Regular expressions can't be delimited by letters"
 msgstr "E146: Patrone kan nie deur letters afgebaken word nie"
 
 #, c-format
-msgid "replace with %s (y/n/a/q/l/^E/^Y)?"
-msgstr "vervang met %s (y/n/a/q/l/^E/^Y)?"
+msgid "replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
+msgstr "vervang met %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up (^E)/down(^Y)"
 
 msgid "(Interrupted) "
 msgstr "(Onderbreek) "

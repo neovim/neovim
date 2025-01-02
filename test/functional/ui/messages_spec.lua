@@ -141,7 +141,7 @@ describe('ui/ext_messages', function()
           content = { { '' } },
           hl_id = 18,
           pos = 0,
-          prompt = 'replace with X (y/n/a/q/l/^E/^Y)?',
+          prompt = 'replace with X? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)',
         },
       },
     })

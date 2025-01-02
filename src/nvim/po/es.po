@@ -1243,8 +1243,8 @@ msgstr "E146: Las expresiones regulares no se pueden delimitar con letras"
 
 #: ../ex_cmds.c:3964
 #, c-format
-msgid "replace with %s (y/n/a/q/l/^E/^Y)?"
-msgstr "¿Reemplazar con %s (y/n/a/q/l/^E/^Y)?"
+msgid "replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
+msgstr "¿Reemplazar con %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)"
 
 #: ../ex_cmds.c:4379
 msgid "(Interrupted) "
