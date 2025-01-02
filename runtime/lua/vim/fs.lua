@@ -631,6 +631,10 @@ function M.normalize(path, opts)
 
     -- Remove extraneous slashes from the prefix
     prefix = prefix:gsub('/+', '/')
+
+    -- Unicode-aware case transformation
+    prefix = vim.fn.toupper(prefix)
+    path = vim.fn.tolower(path)
   end
 
   if not opts._fast then
