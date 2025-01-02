@@ -493,6 +493,96 @@ local function check_external_tools()
   end
 end
 
+local function detect_terminal()
+  if vim.env.TERM_PROGRAM then
+    local version = vim.env.TERM_PROGRAM_VERSION or ''
+    return vim.env.TERM_PROGRAM .. (version ~= '' and ' ' .. version or '')
+  end
+
+  if vim.env.KITTY_WINDOW_ID then
+    return 'kitty'
+  end
+
+  if vim.env.ALACRITTY_SOCKET or vim.env.ALACRITTY_LOG then
+    return 'alacritty'
+  end
+
+  if vim.env.WEZTERM_EXECUTABLE then
+    return 'wezterm'
+  end
+
+  if vim.env.KONSOLE_VERSION then
+    return 'konsole ' .. vim.env.KONSOLE_VERSION
+  end
+
+  if vim.env.VTE_VERSION then
+    return 'vte ' .. vim.env.VTE_VERSION
+  end
+
+  return 'unknown'
+end
+
+local function check_sysinfo()
+  vim.health.start('Bug Report Information')
+
+  -- Use :version because vim.version().build returns "Homebrew" for brew installs.
+  local version_output = vim.api.nvim_exec2('version', { output = true }).output
+  local nvim_version = version_output:match('NVIM v[^\n]+') or 'unknown'
+  local commit_hash = nvim_version:match('%+g?(%x+)')
+  local version_for_report = nvim_version
+  if commit_hash then
+    version_for_report = nvim_version:gsub('%+g' .. commit_hash, ' neovim/neovim@' .. commit_hash)
+  end
+
+  local os_info = vim.uv.os_uname()
+  local os_string = os_info.sysname .. ' ' .. os_info.release
+  local terminal = detect_terminal()
+  local term_env = vim.env.TERM or 'unknown'
+
+  vim.health.info('Nvim version: ' .. nvim_version)
+  vim.health.info('Operating system: ' .. os_string)
+  vim.health.info('Terminal: ' .. terminal)
+  vim.health.info('$TERM: ' .. term_env)
+
+  local body = vim.text.indent(
+    0,
+    string.format(
+      '## Problem:\n\n\n\n'
+        .. '## Steps to reproduce:\n\n```\nnvim --clean\n\n```\n\n'
+        .. '## Expected behavior:\n\n\n\n'
+        .. '## Nvim version (nvim -v):\n\n%s\n\n'
+        .. '## Vim (not Nvim) behaves the same?\n\n\n\n'
+        .. '## Operating system/version:\n\n%s\n\n'
+        .. '## Terminal name/version:\n\n%s\n\n'
+        .. '## $TERM environment variable:\n\n%s\n\n'
+        .. '## Installation:\n\n',
+      version_for_report,
+      os_string,
+      terminal,
+      term_env
+    )
+  )
+
+  local encoded_body = vim.uri_encode(body) --- @type string
+  local issue_url = 'https://github.com/neovim/neovim/issues/new?labels=bug&body=' .. encoded_body
+
+  vim.health.info('')
+  local text = 'Press gx to create bug report'
+  vim.health.info(text)
+
+  vim.schedule(function()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local ns = vim.api.nvim_create_namespace('bugreport')
+    local line_count = vim.api.nvim_buf_line_count(bufnr)
+
+    vim.api.nvim_buf_set_extmark(bufnr, ns, line_count - 2, 2, {
+      end_col = #text + 2,
+      url = issue_url,
+      hl_group = 'Underlined',
+    })
+  end)
+end
+
 function M.check()
   check_config()
   check_runtime()
@@ -501,6 +591,7 @@ function M.check()
   check_terminal()
   check_tmux()
   check_external_tools()
+  check_sysinfo()
 end
 
 return M
