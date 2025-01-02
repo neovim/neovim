@@ -174,6 +174,7 @@ function M.cancel(client_id)
       cancel()
     end
   end
+  cancels[client_id] = nil
 end
 
 return M
