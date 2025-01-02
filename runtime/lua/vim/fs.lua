@@ -629,8 +629,8 @@ function M.normalize(path, opts)
       return prefix .. path
     end
 
-    -- Remove extraneous slashes from the prefix
-    prefix = prefix:gsub('/+', '/')
+    -- Ensure capital drive and remove extraneous slashes from the prefix
+    prefix = prefix:gsub('^%a:', string.upper):gsub('/+', '/')
   end
 
   if not opts._fast then
