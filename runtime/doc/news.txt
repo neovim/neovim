@@ -272,6 +272,7 @@ PERFORMANCE
 • Significantly reduced redraw time for long lines with treesitter
   highlighting.
 • Treesitter highlighting is now asynchronous.
+• Treesitter folding is now calculated asynchronously.
 
 PLUGINS
 
