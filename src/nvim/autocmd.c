@@ -1251,56 +1251,82 @@ bool check_nomodeline(char **argp)
   return true;
 }
 
-/// Prepare for executing autocommands for (hidden) buffer `buf`.
-/// If the current buffer is not in any visible window, put it in a temporary
-/// floating window using an entry in `aucmd_win[]`.
-/// Set `curbuf` and `curwin` to match `buf`.
+/// Prepare for executing autocommands for (hidden) buffer `buf` on window `win`
+/// If the buffer of `win` is not `buf`, switch the buffer of `win` to `buf` temporarily.
 ///
-/// @param aco  structure to save values in
-/// @param buf  new curbuf
-void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
+/// @param  aco      Structure to save values in.
+/// @param  buf      New curbuf.
+/// @param  win      New curwin.
+void aucmd_prepbuf_win(aco_save_T *aco, buf_T *buf, win_T *win)
 {
-  win_T *win;
-  bool need_append = true;  // Append `aucmd_win` to the window list.
+  bool need_append = false;  // Append `aucmd_win` to the window list.
+  int auc_idx = -1;  // Index of aucmd_win[] to use. -1 if not using aucmd_win[].
 
-  // Find a window that is for the new buffer
-  if (buf == curbuf) {  // be quick when buf is curbuf
-    win = curwin;
-  } else {
-    win = NULL;
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_buffer == buf) {
-        win = wp;
-        break;
-      }
-    }
-  }
+  aco->save_curtab_handle = -1;
+  aco->save_buf_handle = -1;
 
-  // Allocate a window when needed.
-  win_T *auc_win = NULL;
-  int auc_idx = AUCMD_WIN_COUNT;
   if (win == NULL) {
-    for (auc_idx = 0; auc_idx < AUCMD_WIN_COUNT; auc_idx++) {
-      if (!aucmd_win[auc_idx].auc_win_used) {
-        break;
+    // Window not provided. Find a window that is for the new buffer
+    if (buf == curbuf) {  // be quick when buf is curbuf
+      win = curwin;
+    } else {
+      win = NULL;
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+        if (wp->w_buffer == buf) {
+          win = wp;
+          break;
+        }
       }
     }
 
-    if (auc_idx == AUCMD_WIN_COUNT) {
-      kv_push(aucmd_win_vec, ((aucmdwin_T){
-        .auc_win = NULL,
-        .auc_win_used = false,
-      }));
-    }
+    // Allocate a window when needed.
+    if (win == NULL) {
+      for (auc_idx = 0; auc_idx < AUCMD_WIN_COUNT; auc_idx++) {
+        if (!aucmd_win[auc_idx].auc_win_used) {
+          break;
+        }
+      }
 
-    if (aucmd_win[auc_idx].auc_win == NULL) {
-      win_alloc_aucmd_win(auc_idx);
-      need_append = false;
+      if (auc_idx == AUCMD_WIN_COUNT) {
+        kv_push(aucmd_win_vec, ((aucmdwin_T){
+          .auc_win = NULL,
+          .auc_win_used = false,
+        }));
+      }
+
+      if (aucmd_win[auc_idx].auc_win == NULL) {
+        win_alloc_aucmd_win(auc_idx);
+      } else {
+        need_append = true;
+      }
+      win = aucmd_win[auc_idx].auc_win;
+      aucmd_win[auc_idx].auc_win_used = true;
     }
-    auc_win = aucmd_win[auc_idx].auc_win;
-    aucmd_win[auc_idx].auc_win_used = true;
+  } else {
+    tabpage_T *tp = win_find_tabpage(win);
+
+    // If the window is in another tab page, switch to that tab page temporarily.
+    if (tp != curtab) {
+      aco->save_curtab_handle = curtab->handle;
+      unuse_tabpage(curtab);
+      use_tabpage(tp);
+    }
   }
 
+  // If the buffer of the window is not the target buffer, switch to it temporarily.
+  if (win->w_buffer != buf) {
+    if (auc_idx == -1) {
+      // No need to store old buffer for aucmd_win[].
+      aco->save_buf_handle = win->w_buffer->handle;
+      win->w_buffer->b_nwindows--;
+    }
+
+    win->w_buffer = buf;
+    win->w_s = &buf->b_s;
+    buf->b_nwindows++;
+  }
+
+  aco->use_aucmd_win_idx = auc_idx;
   aco->save_curwin_handle = curwin->handle;
   aco->save_prevwin_handle = prevwin == NULL ? 0 : prevwin->handle;
   aco->save_State = State;
@@ -1308,26 +1334,15 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     aco->save_prompt_insert = curbuf->b_prompt_insert;
   }
 
-  if (win != NULL) {
-    // There is a window for "buf" in the current tab page, make it the
-    // curwin.  This is preferred, it has the least side effects (esp. if
-    // "buf" is curbuf).
-    aco->use_aucmd_win_idx = -1;
-    curwin = win;
-  } else {
-    // There is no window for "buf", use "auc_win".  To minimize the side
-    // effects, insert it in the current tab page.
-    // Anything related to a window (e.g., setting folds) may have
-    // unexpected results.
-    aco->use_aucmd_win_idx = auc_idx;
-    auc_win->w_buffer = buf;
-    auc_win->w_s = &buf->b_s;
-    buf->b_nwindows++;
-    win_init_empty(auc_win);  // set cursor and topline to safe values
+  if (auc_idx >= 0) {
+    // There is no window for "buf", use "win". To minimize the side effects, insert it in the
+    // current tab page. Anything related to a window (e.g., setting folds) may have unexpected
+    // results.
+    win_init_empty(win);  // Set cursor and topline to safe values.
 
-    // Make sure w_localdir, tp_localdir and globaldir are NULL to avoid a
-    // chdir() in win_enter_ext().
-    XFREE_CLEAR(auc_win->w_localdir);
+    // Make sure w_localdir, tp_localdir and globaldir are NULL to avoid a chdir() in
+    // win_enter_ext().
+    XFREE_CLEAR(win->w_localdir);
     aco->tp_localdir = curtab->tp_localdir;
     curtab->tp_localdir = NULL;
     aco->globaldir = globaldir;
@@ -1335,28 +1350,41 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
 
     block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
     if (need_append) {
-      win_append(lastwin, auc_win, NULL);
-      pmap_put(int)(&window_handles, auc_win->handle, auc_win);
-      win_config_float(auc_win, auc_win->w_config);
+      win_append(lastwin, win, NULL);
+      pmap_put(int)(&window_handles, win->handle, win);
+      win_config_float(win, win->w_config);
     }
     // Prevent chdir() call in win_enter_ext(), through do_autochdir()
     const int save_acd = p_acd;
     p_acd = false;
-    // no redrawing and don't set the window title
+    // No redrawing and don't set the window title
     RedrawingDisabled++;
-    win_enter(auc_win, false);
+    win_enter(win, false);
     RedrawingDisabled--;
     p_acd = save_acd;
     unblock_autocmds();
-    curwin = auc_win;
   }
+
+  curwin = win;
   curbuf = buf;
   aco->new_curwin_handle = curwin->handle;
   set_bufref(&aco->new_curbuf, curbuf);
 
-  // disable the Visual area, the position may be invalid in another buffer
+  // Disable the Visual area, the position may be invalid in another buffer
   aco->save_VIsual_active = VIsual_active;
   VIsual_active = false;
+}
+
+/// Prepare for executing autocommands for (hidden) buffer `buf`.
+/// If the current buffer is not in any visible window, put it in a temporary
+/// floating window using an entry in `aucmd_win[]`.
+/// Set `curbuf` and `curwin` to match `buf`.
+///
+/// @param  aco  structure to save values in
+/// @param  buf  new curbuf
+void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
+{
+  aucmd_prepbuf_win(aco, buf, NULL);
 }
 
 /// Cleanup after executing autocommands for a (hidden) buffer.
@@ -1447,6 +1475,19 @@ win_found:
       curwin->w_topfill = 0;
     }
   } else {
+    // Restore old buffer of new window if it was changed.
+    if (aco->save_buf_handle != -1) {
+      win_T *new_win = win_find_by_handle(aco->new_curwin_handle);
+      buf_T *new_win_buf = handle_get_buffer(aco->save_buf_handle);
+
+      if (new_win != NULL && new_win_buf != NULL) {
+        new_win->w_buffer->b_nwindows--;
+        new_win->w_buffer = new_win_buf;
+        new_win->w_s = &new_win_buf->b_s;
+        new_win_buf->b_nwindows++;
+      }
+    }
+
     // Restore curwin.  Use the window ID, a window may have been closed
     // and the memory re-used for another one.
     win_T *const save_curwin = win_find_by_handle(aco->save_curwin_handle);
@@ -1481,6 +1522,13 @@ win_found:
   check_cursor(curwin);  // just in case lines got deleted
   if (VIsual_active) {
     check_pos(curbuf, &VIsual);
+  }
+
+  // Switch back to the original tab page if it was switched.
+  if (aco->save_curtab_handle != -1) {
+    tabpage_T *save_curtab = handle_get_tabpage(aco->save_curtab_handle);
+    unuse_tabpage(curtab);
+    use_tabpage(save_curtab);
   }
 }
 

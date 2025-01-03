@@ -649,8 +649,8 @@ static Object get_option_from(void *from, OptScope scope, String name, Error *er
   OptVal value = NIL_OPTVAL;
 
   if (option_has_scope(opt_idx, scope)) {
-    value = get_option_value_for(opt_idx, scope == kOptScopeGlobal ? OPT_GLOBAL : OPT_LOCAL,
-                                 scope, from, err);
+    value = get_option_value_from(opt_idx, option_ctx_from(scope, from),
+                                  scope == kOptScopeGlobal ? OPT_GLOBAL : OPT_LOCAL);
     if (ERROR_SET(err)) {
       return (Object)OBJECT_INIT;
     }
@@ -701,7 +701,11 @@ static void set_option_to(uint64_t channel_id, void *to, OptScope scope, String 
       : ((scope == kOptScopeGlobal) ? OPT_GLOBAL : OPT_LOCAL);
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, opt_idx, optval, opt_flags, scope, to, err);
+    const char *errmsg
+      = set_option_value_for(opt_idx, optval, option_ctx_from(scope, to), opt_flags);
+    if (errmsg) {
+      api_set_error(err, kErrorTypeException, "%s", errmsg);
+    }
   });
 }
 
