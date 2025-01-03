@@ -354,6 +354,10 @@ UI
   given title if found
 • |ui-messages| content chunks now also contain the highlight group ID.
 
+• Added |nvim_tabpage_get_layout()| to retrieve the window layout for a tabpage.
+
+• Added |nvim_tabpage_set_layout()| to set the window layout of a tabpage.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
