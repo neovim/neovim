@@ -2357,28 +2357,7 @@ void op_insert(oparg_T *oap, int count1)
   pos_T t1 = oap->start;
   const pos_T start_insert = curwin->w_cursor;
 
-  if (oap->motion_type == kMTBlockWise) {
-    curwin->w_inspinfo.is_block_insert = true;
-    curwin->w_inspinfo.t1 = t1;
-    curwin->w_inspinfo.start_insert = start_insert;
-    curwin->w_inspinfo.oap = *oap;
-    curwin->w_inspinfo.ind_pre_col = ind_pre_col;
-    curwin->w_inspinfo.ind_pre_vcol = ind_pre_vcol;
-    curwin->w_inspinfo.pre_textlen = pre_textlen;
-    curwin->w_inspinfo.bd = bd;
-  }
   edit(NUL, false, (linenr_T)count1);
-  op_insert_after_edit(t1, start_insert, oap, ind_pre_col, ind_pre_vcol, pre_textlen, bd);
-}
-
-void op_insert_after_edit(pos_T t1, const pos_T start_insert, oparg_T *oap, int ind_pre_col,
-                          int ind_pre_vcol, int pre_textlen, struct block_def bd)
-{
-
-  if (State != MODE_INSERT) {
-    curwin->w_inspinfo.is_block_insert = false;
-    curwin->w_is_inspbufinfo_available = false;
-  }
 
   // When a tab was inserted, and the characters in front of the tab
   // have been converted to a tab as well, the column of the cursor
@@ -2495,13 +2474,12 @@ void op_insert_after_edit(pos_T t1, const pos_T start_insert, oparg_T *oap, int 
       if (u_save(oap->start.lnum, (linenr_T)(oap->end.lnum + 1)) == OK) {
         block_insert(oap, ins_text, (size_t)ins_len, (oap->op_type == OP_INSERT), &bd);
       }
+      curwin->w_inspinfo.bd = bd;
 
       xfree(ins_text);
 
-      if (State != MODE_INSERT) {
-        curwin->w_cursor.col = oap->start.col;
-        check_cursor(curwin);
-      }
+      curwin->w_cursor.col = oap->start.col;
+      check_cursor(curwin);
     }
   }
 }
@@ -6367,7 +6345,110 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         // trigger TextChangedI
         curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
 
+        if (curwin->w_inspinfo.is_bufinfo_available) {
+          if (curbuf->b_u_seq_cur != curwin->w_inspbufinfo.undo_info.save_b_u_seq_cur) {
+            int count = 0;
+
+            // Calculate how many undo steps are necessary to restore earlier state.
+            for (u_header_T *uhp = curbuf->b_u_curhead ? curbuf->b_u_curhead : curbuf->b_u_newhead;
+                uhp != NULL;
+                uhp = uhp->uh_next.ptr, ++count) {}
+            aco_save_T aco;
+            aucmd_prepbuf(&aco, curbuf);
+            // Ensure all the entries will be undone
+            if (curbuf->b_u_synced == false) {
+              u_sync(true);
+            }
+            // Undo invisibly. This also moves the cursor!
+            if (!u_undo_and_forget(count, false)) {
+              abort();
+            }
+            aucmd_restbuf(&aco);
+          }
+          u_blockfree(curbuf);
+          restore_undoinfo(&curwin->w_inspbufinfo.undo_info, curbuf);
+
+          curbuf->b_op_start = curwin->w_inspbufinfo.save_b_op_start;
+          curbuf->b_op_end = curwin->w_inspbufinfo.save_b_op_end;
+
+          if (curwin->w_inspbufinfo.save_changedtick != buf_get_changedtick(curbuf)) {
+            buf_set_changedtick(curbuf, curwin->w_inspbufinfo.save_changedtick);
+          }
+
+          curbuf->b_p_ul = curwin->w_inspbufinfo.save_b_p_ul;        // Restore 'undolevels'
+          curwin->w_cursor = curwin->w_inspcursor;
+        } else {
+          curwin->w_inspinfo.is_bufinfo_available = true;
+        }
+
+        curwin->w_inspinfo.is_fake_esc = false;
+        curwin->w_inspinfo.is_block_insert = true;
+
         op_insert(oap, cap->count1);
+
+        curwin->w_inspinfo.is_block_insert = false;
+
+        curwin->w_inspbufinfo.buf = curbuf;
+        curwin->w_inspbufinfo.save_b_p_ul = curbuf->b_p_ul;
+        curwin->w_inspbufinfo.save_b_changed = curbuf->b_changed;
+        curwin->w_inspbufinfo.save_b_op_start = curbuf->b_op_start;
+        curwin->w_inspbufinfo.save_b_op_end = curbuf->b_op_end;
+        curwin->w_inspbufinfo.save_changedtick = buf_get_changedtick(curbuf);
+        curwin->w_inspcursor= curwin->w_cursor;
+        save_undoinfo(&curwin->w_inspbufinfo.undo_info, curbuf);
+        u_clearall(curbuf);
+        curbuf->b_p_ul = INT_MAX;  // Make sure we can undo all changes
+
+        if (curwin->w_inspinfo.is_fake_esc == false) {
+          curwin->w_inspinfo.is_bufinfo_available = false;
+
+          if (curbuf->b_u_seq_cur != curwin->w_inspbufinfo.undo_info.save_b_u_seq_cur) {
+            int count = 0;
+
+            // Calculate how many undo steps are necessary to restore earlier state.
+            for (u_header_T *uhp = curbuf->b_u_curhead ? curbuf->b_u_curhead : curbuf->b_u_newhead;
+                uhp != NULL;
+                uhp = uhp->uh_next.ptr, ++count) {}
+            aco_save_T aco;
+            aucmd_prepbuf(&aco, curbuf);
+            // Ensure all the entries will be undone
+            if (curbuf->b_u_synced == false) {
+              u_sync(true);
+            }
+            // Undo invisibly. This also moves the cursor!
+            if (!u_undo_and_forget(count, false)) {
+              abort();
+            }
+            aucmd_restbuf(&aco);
+          }
+          u_blockfree(curbuf);
+          restore_undoinfo(&curwin->w_inspbufinfo.undo_info, curbuf);
+
+          curbuf->b_op_start = curwin->w_inspbufinfo.save_b_op_start;
+          curbuf->b_op_end = curwin->w_inspbufinfo.save_b_op_end;
+
+          if (curwin->w_inspbufinfo.save_changedtick != buf_get_changedtick(curbuf)) {
+            buf_set_changedtick(curbuf, curwin->w_inspbufinfo.save_changedtick);
+          }
+
+          curbuf->b_p_ul = curwin->w_inspbufinfo.save_b_p_ul;        // Restore 'undolevels'
+          curwin->w_cursor = curwin->w_inspcursor;
+        } else {
+          curwin->w_cursor = curbuf->b_visual.vi_start;
+          curwin->w_cursor.col += curwin->w_inspinfo.bd.textlen;
+
+          VIsual_mode = Ctrl_V;
+          VIsual_active = true;
+          VIsual_reselect = true;
+          VIsual = curwin->w_cursor;
+
+          curwin->w_cursor = curbuf->b_visual.vi_end;
+          curwin->w_cursor.col += curwin->w_inspinfo.bd.textlen;
+
+          stuffcharReadbuff('A');
+
+          curwin->w_inspinfo.is_fake_esc = false;
+        }
 
         // Reset linebreak, so that formatting works correctly.
         reset_lbr();

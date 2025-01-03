@@ -1021,12 +1021,8 @@ typedef struct {
 
 typedef struct {
   bool is_block_insert;
-  pos_T t1;
-  pos_T start_insert;
-  oparg_T oap;
-  int ind_pre_col;
-  int ind_pre_vcol;
-  int pre_textlen;
+  bool is_fake_esc;
+  bool is_bufinfo_available;
   struct block_def bd;
 } pinsinfo_T;
 
@@ -1087,7 +1083,6 @@ struct window_S {
   pinsinfo_T w_inspinfo;
   PBufInfo w_inspbufinfo;
   pos_T w_inspcursor;
-  bool w_is_inspbufinfo_available;
 
   linenr_T w_last_cursor_lnum_rnu;  ///< cursor lnum when 'rnu' was last redrawn
 

@@ -704,44 +704,6 @@ static int insert_execute(VimState *state, int key)
 
 static int insert_handle_key(InsertState *s)
 {
-  if (curwin->w_inspinfo.is_block_insert) {
-    if (curwin->w_is_inspbufinfo_available) {
-      if (curbuf->b_u_seq_cur != curwin->w_inspbufinfo.undo_info.save_b_u_seq_cur) {
-        int count = 0;
-
-        // Calculate how many undo steps are necessary to restore earlier state.
-        for (u_header_T *uhp = curbuf->b_u_curhead ? curbuf->b_u_curhead : curbuf->b_u_newhead;
-             uhp != NULL;
-             uhp = uhp->uh_next.ptr, ++count) {}
-        aco_save_T aco;
-        aucmd_prepbuf(&aco, curbuf);
-        // Ensure all the entries will be undone
-        if (curbuf->b_u_synced == false) {
-          u_sync(true);
-        }
-        // Undo invisibly. This also moves the cursor!
-        if (!u_undo_and_forget(count, false)) {
-          abort();
-        }
-        aucmd_restbuf(&aco);
-      }
-      u_blockfree(curbuf);
-      restore_undoinfo(&curwin->w_inspbufinfo.undo_info, curbuf);
-
-      curbuf->b_op_start = curwin->w_inspbufinfo.save_b_op_start;
-      curbuf->b_op_end = curwin->w_inspbufinfo.save_b_op_end;
-
-      if (curwin->w_inspbufinfo.save_changedtick != buf_get_changedtick(curbuf)) {
-        buf_set_changedtick(curbuf, curwin->w_inspbufinfo.save_changedtick);
-      }
-
-      curbuf->b_p_ul = curwin->w_inspbufinfo.save_b_p_ul;        // Restore 'undolevels'
-      curwin->w_cursor = curwin->w_inspcursor;
-    } else {
-      curwin->w_is_inspbufinfo_available = true;
-    }
-  }
-
   // The big switch to handle a character in insert mode.
   // TODO(tarruda): This could look better if a lookup table is used.
   // (similar to normal mode `nv_cmds[]`)
@@ -1253,27 +1215,14 @@ normalchar:
     // When inserting a character the cursor line must never be in a
     // closed fold.
     foldOpenCursor();
+
+    if (curwin->w_inspinfo.is_block_insert && curwin->w_inspinfo.is_fake_esc == false) {
+      stuffcharReadbuff(ESC);
+      curwin->w_inspinfo.is_fake_esc = true;
+    }
+
     break;
   }       // end of switch (s->c)
-
-  if (curwin->w_inspinfo.is_block_insert) {
-    curwin->w_inspbufinfo.buf = curbuf;
-    curwin->w_inspbufinfo.save_b_p_ul = curbuf->b_p_ul;
-    curwin->w_inspbufinfo.save_b_changed = curbuf->b_changed;
-    curwin->w_inspbufinfo.save_b_op_start = curbuf->b_op_start;
-    curwin->w_inspbufinfo.save_b_op_end = curbuf->b_op_end;
-    curwin->w_inspbufinfo.save_changedtick = buf_get_changedtick(curbuf);
-    save_undoinfo(&curwin->w_inspbufinfo.undo_info, curbuf);
-    u_clearall(curbuf);
-    curbuf->b_p_ul = INT_MAX;  // Make sure we can undo all changes
-
-    curwin->w_inspcursor= curwin->w_cursor;
-
-    op_insert_after_edit(curwin->w_inspinfo.t1, curwin->w_inspinfo.start_insert,
-                         &curwin->w_inspinfo.oap, curwin->w_inspinfo.ind_pre_col,
-                         curwin->w_inspinfo.ind_pre_vcol, curwin->w_inspinfo.pre_textlen,
-                         curwin->w_inspinfo.bd);
-  }
 
   return 1;  // continue
 }
