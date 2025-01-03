@@ -509,24 +509,28 @@ static void decor_range_add_from_inline(DecorState *state, int start_row, int st
   if (decor.ext) {
     DecorVirtText *vt = decor.data.ext.vt;
     while (vt) {
-      decor_range_add_virt(state, start_row, start_col, end_row, end_col, vt, owned);
+      decor_range_add_virt(state, start_row, start_col, end_row, end_col,
+                           vt, 0, owned);
       vt = vt->next;
     }
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
-      decor_range_add_sh(state, start_row, start_col, end_row, end_col, sh, owned, ns, mark_id);
+      decor_range_add_sh(state, start_row, start_col, end_row, end_col,
+                         sh, owned, 0, ns, mark_id);
       idx = sh->next;
     }
   } else {
     DecorSignHighlight sh = decor_sh_from_inline(decor.data.hl);
-    decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id);
+    decor_range_add_sh(state, start_row, start_col, end_row, end_col,
+                       &sh, owned, 0, ns, mark_id);
   }
 }
 
 static void decor_range_insert(DecorState *state, DecorRange *range)
 {
-  range->ordering = state->new_range_ordering++;
+  range->priority |= (uint64_t)state->new_range_ordering;
+  state->new_range_ordering++;
 
   int index;
   // Get space for a new `DecorRange` from the freelist or allocate.
@@ -572,7 +576,7 @@ static void decor_range_insert(DecorState *state, DecorRange *range)
 }
 
 void decor_range_add_virt(DecorState *state, int start_row, int start_col, int end_row, int end_col,
-                          DecorVirtText *vt, bool owned)
+                          DecorVirtText *vt, uint16_t subpriority, bool owned)
 {
   bool is_lines = vt->flags & kVTIsLines;
   DecorRange range = {
@@ -581,14 +585,15 @@ void decor_range_add_virt(DecorState *state, int start_row, int start_col, int e
     .data.vt = vt,
     .attr_id = 0,
     .owned = owned,
-    .priority = vt->priority,
+    .priority = ((uint64_t)subpriority << 32) | ((uint64_t)vt->priority << 48),
     .draw_col = -10,
   };
   decor_range_insert(state, &range);
 }
 
 void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end_row, int end_col,
-                        DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id)
+                        DecorSignHighlight *sh, uint16_t subpriority, bool owned, uint32_t ns,
+                        uint32_t mark_id)
 {
   if (sh->flags & kSHIsSign) {
     return;
@@ -600,7 +605,7 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
     .data.sh = *sh,
     .attr_id = 0,
     .owned = owned,
-    .priority = sh->priority,
+    .priority = ((uint64_t)subpriority << 32) | ((uint64_t)sh->priority << 48),
     .draw_col = -10,
   };
 
@@ -692,8 +697,7 @@ next_mark:
     if (r->start_row > row || (r->start_row == row && r->start_col > col)) {
       break;
     }
-    int const ordering = r->ordering;
-    DecorPriority const priority = r->priority;
+    uint64_t const priority = r->priority;
 
     int begin = 0;
     int end = cur_end;
@@ -701,7 +705,7 @@ next_mark:
       int mid = begin + ((end - begin) >> 1);
       int mi = indices[mid];
       DecorRange *mr = &slots[mi].range;
-      if (mr->priority < priority || (mr->priority == priority && mr->ordering < ordering)) {
+      if (mr->priority <= priority) {
         begin = mid + 1;
       } else {
         end = mid;
