@@ -22,6 +22,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('works', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     feed(':')
     screen:expect {
       grid = [[
@@ -96,6 +97,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('works with input()', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     feed(':call input("input", "default")<cr>')
     screen:expect({
       grid = [[
@@ -125,6 +127,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('works with special chars and nested cmdline', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     feed(':xx<c-r>')
     screen:expect {
       grid = [[
@@ -229,6 +232,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('works with function definitions', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     feed(':function Foo()<cr>')
     screen:expect {
       grid = [[
@@ -335,6 +339,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('works with cmdline window', function()
+    t.skip_forced_multigrid_inccomand_split()
     feed(':make')
     screen:expect {
       grid = [[
@@ -451,6 +456,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('works with inputsecret()', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     feed(":call inputsecret('secret:')<cr>abc123")
     screen:expect {
       grid = [[
@@ -470,6 +476,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('works with highlighted cmdline', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     source([[
       highlight RBP1 guibg=Red
       highlight RBP2 guibg=Yellow
@@ -522,6 +529,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('works together with ext_wildmenu', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     local expected = {
       'define',
       'jump',
@@ -625,6 +633,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('works together with ext_popupmenu', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     local expected = {
       { 'define', '', '', '' },
       { 'jump', '', '', '' },
@@ -751,6 +760,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('ext_wildmenu takes precedence over ext_popupmenu', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     local expected = {
       'define',
       'jump',
@@ -785,6 +795,7 @@ local function test_cmdline(linegrid)
   end)
 
   it("doesn't send invalid events when aborting mapping #10000", function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     command('set notimeout')
     command('cnoremap ab c')
 
@@ -819,6 +830,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('does not move cursor to curwin #20309', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     local win = api.nvim_get_current_win()
     command('norm icmdlinewin')
     command('new')
@@ -843,6 +855,7 @@ local function test_cmdline(linegrid)
   end)
 
   it('show prompt hl_id', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     screen:expect([[
       ^                         |
       {1:~                        }|*3
@@ -937,6 +950,7 @@ describe('cmdline redraw', function()
   end)
 
   it('after pressing Ctrl-C in cmdwin in Visual mode #18967', function()
+    t.skip_forced_multigrid_inccomand_split()
     screen:try_resize(40, 10)
     command('set cmdwinheight=3')
     feed('q:iabc<Esc>vhh')

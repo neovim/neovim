@@ -171,7 +171,8 @@ static void ui_ext_msg_set_pos(int row, bool scrolled)
   char buf[MAX_SCHAR_SIZE];
   size_t size = schar_get(buf, curwin->w_p_fcs_chars.msgsep);
   ui_call_msg_set_pos(msg_grid.handle, row, scrolled,
-                      (String){ .data = buf, .size = size });
+                      (String){ .data = buf, .size = size }, msg_grid.zindex,
+                      (int)msg_grid.comp_index);
 }
 
 void msg_grid_set_pos(int row, bool scrolled)
@@ -212,7 +213,6 @@ void msg_grid_validate(void)
     msg_grid_set_pos(pos, msg_scrolled);
     ui_comp_put_grid(&msg_grid, pos, 0, msg_grid.rows, msg_grid.cols,
                      false, true);
-    ui_call_grid_resize(msg_grid.handle, msg_grid.cols, msg_grid.rows);
 
     msg_scrolled_at_flush = msg_scrolled;
     msg_grid.mouse_enabled = false;
@@ -232,6 +232,12 @@ void msg_grid_validate(void)
     if (diff > 0) {
       grid_clear(&msg_grid_adj, Rows - diff, Rows, 0, Columns, HL_ATTR(HLF_MSG));
     }
+  } else if (ui_has(kUIMultigrid) && msg_grid.chars && !msg_grid.throttled) {
+    // The composition index might have changed
+    ui_ext_msg_set_pos(msg_grid_pos, msg_scrolled);
+  }
+  if (ui_has(kUIMultigrid) && msg_grid.chars) {
+    ui_call_grid_resize(msg_grid.handle, msg_grid.cols, msg_grid.rows);
   }
   msg_grid_adj.cols = Columns;
 

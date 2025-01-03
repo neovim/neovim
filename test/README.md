@@ -539,3 +539,8 @@ Number; !must be defined to function properly):
 
 - `OSV_PORT`: (F): launches `osv` listening on the given port within nvim test
   instances.
+
+- `NVIM_TEST_FORCE_MULTIGRID` (F) (1): Force all tests to run with multigrid
+  enabled. The normal non-multigrid tests still work, thanks to a compatibility
+  layer in `screen.lua`, which provides the correct format for the test
+  expectations.

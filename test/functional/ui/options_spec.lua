@@ -48,6 +48,7 @@ describe('UI receives option updates', function()
     -- NB: UI test suite can be run in both "linegrid" and legacy grid mode.
     -- In both cases check that the received value is the one requested.
     defaults.ext_linegrid = screen._options.ext_linegrid or false
+    defaults.ext_multigrid = defaults.ext_multigrid or t.is_forced_multigrid()
     return defaults
   end
 

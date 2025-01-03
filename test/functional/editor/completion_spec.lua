@@ -954,6 +954,7 @@ describe('completion', function()
 
   describe('from the commandline window', function()
     it('is cleared after CTRL-C', function()
+      t.skip_forced_multigrid_command_c_c()
       feed('q:')
       feed('ifoo faa fee f')
       screen:expect([[
