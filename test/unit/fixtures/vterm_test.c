@@ -1,7 +1,11 @@
 #include <stdio.h>
+#include <string.h>
+
 #include "nvim/grid.h"
 #include "nvim/mbyte.h"
-
+#include "nvim/vterm/pen.h"
+#include "nvim/vterm/screen.h"
+#include "nvim/vterm/vterm_internal_defs.h"
 #include "vterm_test.h"
 
 int parser_text(const char bytes[], size_t len, void *user)
@@ -204,7 +208,8 @@ int selection_query(VTermSelectionMask mask, void *user)
   return 1;
 }
 
-static void print_schar(FILE *f, schar_T schar) {
+static void print_schar(FILE *f, schar_T schar)
+{
   char buf[MAX_SCHAR_SIZE];
   schar_get(buf, schar);
   StrCharInfo ci = utf_ptr2StrCharInfo(buf);
@@ -317,6 +322,34 @@ void print_color(const VTermColor *col)
   }
   fprintf(f, ")");
   fclose(f);
+}
+
+static VTermValueType vterm_get_prop_type(VTermProp prop)
+{
+  switch (prop) {
+  case VTERM_PROP_CURSORVISIBLE:
+    return VTERM_VALUETYPE_BOOL;
+  case VTERM_PROP_CURSORBLINK:
+    return VTERM_VALUETYPE_BOOL;
+  case VTERM_PROP_ALTSCREEN:
+    return VTERM_VALUETYPE_BOOL;
+  case VTERM_PROP_TITLE:
+    return VTERM_VALUETYPE_STRING;
+  case VTERM_PROP_ICONNAME:
+    return VTERM_VALUETYPE_STRING;
+  case VTERM_PROP_REVERSE:
+    return VTERM_VALUETYPE_BOOL;
+  case VTERM_PROP_CURSORSHAPE:
+    return VTERM_VALUETYPE_INT;
+  case VTERM_PROP_MOUSE:
+    return VTERM_VALUETYPE_INT;
+  case VTERM_PROP_FOCUSREPORT:
+    return VTERM_VALUETYPE_BOOL;
+
+  case VTERM_N_PROPS:
+    return 0;
+  }
+  return 0;  // UNREACHABLE
 }
 
 bool want_state_settermprop;
@@ -463,14 +496,14 @@ int screen_sb_pushline(int cols, const VTermScreenCell *cells, void *user)
   }
 
   int eol = cols;
-  while (eol && !cells[eol-1].schar) {
+  while (eol && !cells[eol - 1].schar) {
     eol--;
   }
 
   FILE *f = fopen(VTERM_TEST_FILE, "a");
   fprintf(f, "sb_pushline %d =", cols);
   for (int c = 0; c < eol; c++) {
-    fprintf(f, " "); 
+    fprintf(f, " ");
     print_schar(f, cells[c].schar);
   }
   fprintf(f, "\n");
@@ -488,7 +521,7 @@ int screen_sb_popline(int cols, VTermScreenCell *cells, void *user)
 
   // All lines of scrollback contain "ABCDE"
   for (int col = 0; col < cols; col++) {
-    if(col < 5) {
+    if (col < 5) {
       cells[col].schar = schar_from_ascii((uint32_t)('A' + col));
     } else {
       cells[col].schar = 0;
@@ -523,4 +556,232 @@ void term_output(const char *s, size_t len, void *user)
     fprintf(f, "%x%s", (unsigned char)s[i], i < len - 1 ? "," : "\n");
   }
   fclose(f);
+}
+
+int vterm_state_get_penattr(const VTermState *state, VTermAttr attr, VTermValue *val)
+{
+  switch (attr) {
+  case VTERM_ATTR_BOLD:
+    val->boolean = state->pen.bold;
+    return 1;
+
+  case VTERM_ATTR_UNDERLINE:
+    val->number = state->pen.underline;
+    return 1;
+
+  case VTERM_ATTR_ITALIC:
+    val->boolean = state->pen.italic;
+    return 1;
+
+  case VTERM_ATTR_BLINK:
+    val->boolean = state->pen.blink;
+    return 1;
+
+  case VTERM_ATTR_REVERSE:
+    val->boolean = state->pen.reverse;
+    return 1;
+
+  case VTERM_ATTR_CONCEAL:
+    val->boolean = state->pen.conceal;
+    return 1;
+
+  case VTERM_ATTR_STRIKE:
+    val->boolean = state->pen.strike;
+    return 1;
+
+  case VTERM_ATTR_FONT:
+    val->number = state->pen.font;
+    return 1;
+
+  case VTERM_ATTR_FOREGROUND:
+    val->color = state->pen.fg;
+    return 1;
+
+  case VTERM_ATTR_BACKGROUND:
+    val->color = state->pen.bg;
+    return 1;
+
+  case VTERM_ATTR_SMALL:
+    val->boolean = state->pen.small;
+    return 1;
+
+  case VTERM_ATTR_BASELINE:
+    val->number = state->pen.baseline;
+    return 1;
+
+  case VTERM_ATTR_URI:
+    val->number = state->pen.uri;
+    return 1;
+
+  case VTERM_N_ATTRS:
+    return 0;
+  }
+
+  return 0;
+}
+
+static int attrs_differ(VTermAttrMask attrs, ScreenCell *a, ScreenCell *b)
+{
+  if ((attrs & VTERM_ATTR_BOLD_MASK) && (a->pen.bold != b->pen.bold)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_UNDERLINE_MASK) && (a->pen.underline != b->pen.underline)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_ITALIC_MASK) && (a->pen.italic != b->pen.italic)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_BLINK_MASK) && (a->pen.blink != b->pen.blink)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_REVERSE_MASK) && (a->pen.reverse != b->pen.reverse)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_CONCEAL_MASK) && (a->pen.conceal != b->pen.conceal)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_STRIKE_MASK) && (a->pen.strike != b->pen.strike)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_FONT_MASK) && (a->pen.font != b->pen.font)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_FOREGROUND_MASK) && !vterm_color_is_equal(&a->pen.fg, &b->pen.fg)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_BACKGROUND_MASK) && !vterm_color_is_equal(&a->pen.bg, &b->pen.bg)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_SMALL_MASK) && (a->pen.small != b->pen.small)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_BASELINE_MASK) && (a->pen.baseline != b->pen.baseline)) {
+    return 1;
+  }
+  if ((attrs & VTERM_ATTR_URI_MASK) && (a->pen.uri != b->pen.uri)) {
+    return 1;
+  }
+
+  return 0;
+}
+
+int vterm_screen_get_attrs_extent(const VTermScreen *screen, VTermRect *extent, VTermPos pos,
+                                  VTermAttrMask attrs)
+{
+  ScreenCell *target = getcell(screen, pos.row, pos.col);
+
+  // TODO(vterm): bounds check
+  extent->start_row = pos.row;
+  extent->end_row = pos.row + 1;
+
+  if (extent->start_col < 0) {
+    extent->start_col = 0;
+  }
+  if (extent->end_col < 0) {
+    extent->end_col = screen->cols;
+  }
+
+  int col;
+
+  for (col = pos.col - 1; col >= extent->start_col; col--) {
+    if (attrs_differ(attrs, target, getcell(screen, pos.row, col))) {
+      break;
+    }
+  }
+  extent->start_col = col + 1;
+
+  for (col = pos.col + 1; col < extent->end_col; col++) {
+    if (attrs_differ(attrs, target, getcell(screen, pos.row, col))) {
+      break;
+    }
+  }
+  extent->end_col = col - 1;
+
+  return 1;
+}
+
+/// Does not NUL-terminate the buffer
+size_t vterm_screen_get_text(const VTermScreen *screen, char *buffer, size_t len,
+                             const VTermRect rect)
+{
+  size_t outpos = 0;
+  int padding = 0;
+
+#define PUT(bytes, thislen) \
+  if (true) { \
+    if (buffer && outpos + thislen <= len) \
+    memcpy((char *)buffer + outpos, bytes, thislen); \
+    outpos += thislen; \
+  } \
+
+  for (int row = rect.start_row; row < rect.end_row; row++) {
+    for (int col = rect.start_col; col < rect.end_col; col++) {
+      ScreenCell *cell = getcell(screen, row, col);
+
+      if (cell->schar == 0) {
+        // Erased cell, might need a space
+        padding++;
+      } else if (cell->schar == (uint32_t)-1) {
+        // Gap behind a double-width char, do nothing
+      } else {
+        while (padding) {
+          PUT(" ", 1);
+          padding--;
+        }
+        char buf[MAX_SCHAR_SIZE + 1];
+        size_t thislen = schar_get(buf, cell->schar);
+        PUT(buf, thislen);
+      }
+    }
+
+    if (row < rect.end_row - 1) {
+      PUT("\n", 1);
+      padding = 0;
+    }
+  }
+
+  return outpos;
+}
+
+int vterm_screen_is_eol(const VTermScreen *screen, VTermPos pos)
+{
+  // This cell is EOL if this and every cell to the right is black
+  for (; pos.col < screen->cols; pos.col++) {
+    ScreenCell *cell = getcell(screen, pos.row, pos.col);
+    if (cell->schar != 0) {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+void vterm_state_get_cursorpos(const VTermState *state, VTermPos *cursorpos)
+{
+  *cursorpos = state->pos;
+}
+
+void vterm_state_set_bold_highbright(VTermState *state, int bold_is_highbright)
+{
+  state->bold_is_highbright = bold_is_highbright;
+}
+
+/// Compares two colours. Returns true if the colors are equal, false otherwise.
+int vterm_color_is_equal(const VTermColor *a, const VTermColor *b)
+{
+  // First make sure that the two colours are of the same type (RGB/Indexed)
+  if (a->type != b->type) {
+    return false;
+  }
+
+  // Depending on the type inspect the corresponding members
+  if (VTERM_COLOR_IS_INDEXED(a)) {
+    return a->indexed.idx == b->indexed.idx;
+  } else if (VTERM_COLOR_IS_RGB(a)) {
+    return (a->rgb.red == b->rgb.red)
+           && (a->rgb.green == b->rgb.green)
+           && (a->rgb.blue == b->rgb.blue);
+  }
+
+  return 0;
 }

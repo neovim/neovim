@@ -61,7 +61,6 @@ local bit = require('bit')
 --- @field vterm_screen_enable_reflow function
 --- @field vterm_screen_get_attrs_extent function
 --- @field vterm_screen_get_cell function
---- @field vterm_screen_get_chars fun(any, any, any, any):any
 --- @field vterm_screen_get_text fun(any, any, any, any):any
 --- @field vterm_screen_is_eol fun(any, any):any
 --- @field vterm_screen_reset function
@@ -79,10 +78,17 @@ local bit = require('bit')
 --- @field vterm_state_set_selection_callbacks function
 --- @field vterm_state_set_unrecognised_fallbacks function
 local vterm = t.cimport(
-  './src/nvim/mbyte.h',
   './src/nvim/grid.h',
-  './src/vterm/vterm.h',
-  './src/vterm/vterm_internal.h',
+  './src/nvim/mbyte.h',
+  './src/nvim/vterm/encoding.h',
+  './src/nvim/vterm/keyboard.h',
+  './src/nvim/vterm/mouse.h',
+  './src/nvim/vterm/parser.h',
+  './src/nvim/vterm/pen.h',
+  './src/nvim/vterm/screen.h',
+  './src/nvim/vterm/state.h',
+  './src/nvim/vterm/vterm.h',
+  './src/nvim/vterm/vterm_internal.h',
   './test/unit/fixtures/vterm_test.h'
 )
 

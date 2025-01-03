@@ -93,9 +93,15 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
+#include "nvim/vterm/keyboard.h"
+#include "nvim/vterm/mouse.h"
+#include "nvim/vterm/parser.h"
+#include "nvim/vterm/pen.h"
+#include "nvim/vterm/screen.h"
+#include "nvim/vterm/state.h"
+#include "nvim/vterm/vterm.h"
+#include "nvim/vterm/vterm_keycodes_defs.h"
 #include "nvim/window.h"
-#include "vterm/vterm.h"
-#include "vterm/vterm_keycodes.h"
 
 typedef struct {
   VimState state;
