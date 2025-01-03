@@ -12,10 +12,8 @@ local RpcStream = require('test.client.rpc_stream')
 --- @field private _rpc_stream test.RpcStream
 --- @field private _prepare uv.uv_prepare_t
 --- @field private _timer uv.uv_timer_t
---- @field exec_lua_setup boolean
 --- @field private _is_running boolean true during `Session:run()` scope.
---- @field private _stdout_buffer string[] Stores stdout chunks
---- @field public stdout string Full stdout after the process exits
+--- @field exec_lua_setup boolean
 local Session = {}
 Session.__index = Session
 if package.loaded['jit'] then
@@ -231,7 +229,13 @@ function Session:_run(request_cb, notification_cb, timeout)
   end
   self._rpc_stream:read_start(request_cb, notification_cb, function()
     uv.stop()
-    self.eof_err = { 1, 'EOF was received from Nvim. Likely the Nvim process crashed.' }
+
+    --- @diagnostic disable-next-line: invisible
+    local stderr = self._rpc_stream._stream.stderr --[[@as string?]]
+    -- See if `ProcStream.stderr` has anything useful.
+    stderr = '' ~= ((stderr or ''):match('^%s*(.*%S)') or '') and ' stderr:\n' .. stderr or ''
+
+    self.eof_err = { 1, 'EOF was received from Nvim. Likely the Nvim process crashed.' .. stderr }
   end)
   uv.run()
   self._prepare:stop()

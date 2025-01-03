@@ -333,9 +333,9 @@ end
 function M.expect_exit(fn_or_timeout, ...)
   local eof_err_msg = 'EOF was received from Nvim. Likely the Nvim process crashed.'
   if type(fn_or_timeout) == 'function' then
-    eq(eof_err_msg, t.pcall_err(fn_or_timeout, ...))
+    t.matches(eof_err_msg, t.pcall_err(fn_or_timeout, ...))
   else
-    eq(
+    t.matches(
       eof_err_msg,
       t.pcall_err(function(timeout, fn, ...)
         fn(...)

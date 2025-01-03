@@ -127,9 +127,11 @@ end
 --- @field private _child_stdout uv.uv_pipe_t
 --- @field private _child_stderr uv.uv_pipe_t
 --- @field stdout string
+--- stderr is always collected in this field, regardless of `collect_output`.
 --- @field stderr string
 --- @field stdout_eof boolean
 --- @field stderr_eof boolean
+--- Collects stdout in the `stdout` field, and stdout+stderr in `output` field.
 --- @field private collect_output boolean
 --- Exit code
 --- @field status integer
@@ -149,8 +151,6 @@ function ProcStream.spawn(argv, env, io_extra)
     output = '',
     stdout = '',
     stderr = '',
-    stdout_error = nil, -- TODO: not used, remove
-    stderr_error = nil, -- TODO: not used, remove
     stdout_eof = false,
     stderr_eof = false,
     _child_stdin = assert(uv.new_pipe(false)),
@@ -189,14 +189,16 @@ end
 
 function ProcStream:on_read(stream, cb, err, chunk)
   if err then
-    -- stderr_error/stdout_error
-    self[stream .. '_error'] = err ---@type string
-    -- error(err)
+    error(err) -- stream read failed?
   elseif chunk then
-    -- 'stderr' or 'stdout'
+    -- Always collect stderr, in case it gives useful info on failure.
+    if stream == 'stderr' then
+      self.stderr = self.stderr .. chunk ---@type string
+    end
+    -- Collect stdout if `collect_output` is enabled.
     if self.collect_output then
-      self[stream] = self[stream] .. chunk ---@type string
-      --- Collects both stdout + stderr.
+      self.stdout = self.stdout .. chunk ---@type string
+      --- Collect both stdout + stderr in the `output` field.
       self.output = self[stream] .. chunk ---@type string
     end
   else
