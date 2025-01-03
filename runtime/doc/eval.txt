@@ -2848,7 +2848,8 @@ in the variable |v:exception|: >
 	:    echo "Number thrown.  Value is" v:exception
 
 You may also be interested where an exception was thrown.  This is stored in
-|v:throwpoint|.  Note that "v:exception" and "v:throwpoint" are valid for the
+|v:throwpoint|.  And you can obtain the stack trace from |v:stacktrace|.
+Note that "v:exception", "v:stacktrace" and "v:throwpoint" are valid for the
 exception most recently caught as long it is not finished.
    Example: >
 

@@ -6,7 +6,8 @@
 
 Predefined variables                                             *vvars*
 
-Some variables can be set by the user, but the type cannot be changed.
+Most variables are read-only, when a variable can be set by the user, it will
+be mentioned at the variable description below. The type cannot be changed.
 
                                        Type |gO| to see the table of contents.
 
@@ -195,7 +196,8 @@ v:event
 				*v:exception* *exception-variable*
 v:exception
 		The value of the exception most recently caught and not
-		finished.  See also |v:throwpoint| and |throw-variables|.
+		finished.  See also |v:stacktrace|, |v:throwpoint|, and
+		|throw-variables|.
 		Example: >vim
 		  try
 		    throw "oops"
@@ -586,6 +588,13 @@ v:shell_error
 		  endif
 <
 
+				*v:stacktrace* *stacktrace-variable*
+v:stacktrace
+		The stack trace of the exception most recently caught and
+		not finished.  Refer to |getstacktrace()| for the structure of
+		stack trace.  See also |v:exception|, |v:throwpoint|, and
+		|throw-variables|.
+
 				*v:statusmsg* *statusmsg-variable*
 v:statusmsg
 		Last given status message.
@@ -679,7 +688,7 @@ v:this_session
 v:throwpoint
 		The point where the exception most recently caught and not
 		finished was thrown.  Not set when commands are typed.  See
-		also |v:exception| and |throw-variables|.
+		also |v:exception|, |v:stacktrace|, and |throw-variables|.
 		Example: >vim
 		  try
 		    throw "oops"

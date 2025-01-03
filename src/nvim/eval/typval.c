@@ -2633,6 +2633,30 @@ int tv_dict_add_allocated_str(dict_T *const d, const char *const key, const size
   return OK;
 }
 
+/// Add a function entry to dictionary.
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param[in]  fp  Function to add.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_func(dict_T *const d, const char *const key, const size_t key_len,
+                     ufunc_T *const fp)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+{
+  dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
+
+  item->di_tv.v_type = VAR_FUNC;
+  item->di_tv.vval.v_string = xstrdup(fp->uf_name);
+  if (tv_dict_add(d, item) == FAIL) {
+    tv_dict_item_free(item);
+    return FAIL;
+  }
+  func_ref(item->di_tv.vval.v_string);
+  return OK;
+}
+
 //{{{2 Operations on the whole dict
 
 /// Clear all the keys of a Dictionary. "d" remains a valid empty Dictionary.
