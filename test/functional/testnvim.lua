@@ -318,16 +318,6 @@ function M.stop()
   assert(session):stop()
 end
 
-function M.nvim_prog_abs()
-  -- system(['build/bin/nvim']) does not work for whatever reason. It must
-  -- be executable searched in $PATH or something starting with / or ./.
-  if M.nvim_prog:match('[/\\]') then
-    return M.request('nvim_call_function', 'fnamemodify', { M.nvim_prog, ':p' })
-  else
-    return M.nvim_prog
-  end
-end
-
 -- Use for commands which expect nvim to quit.
 -- The first argument can also be a timeout.
 function M.expect_exit(fn_or_timeout, ...)
@@ -526,7 +516,7 @@ function M.spawn_argv(keep, ...)
   return M.spawn(argv, nil, env, keep, io_extra)
 end
 
---- Starts a (`--headless`, non-RPC) Nvim process, waits for exit, and returns output + info.
+--- Starts a (non-RPC, `--headless --listen "Tx"`) Nvim process, waits for exit, and returns result.
 ---
 --- @param ... string Nvim CLI args
 --- @return test.ProcStream
@@ -537,6 +527,7 @@ function M.spawn_wait(...)
   table.insert(opts.args_rm, '--embed')
   local argv, env, io_extra = M.new_argv(opts)
   local proc = ProcStream.spawn(argv, env, io_extra)
+  proc.collect_text = true
   proc:read_start()
   proc:wait()
   proc:close()

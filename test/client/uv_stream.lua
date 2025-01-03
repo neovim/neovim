@@ -126,13 +126,16 @@ end
 --- @field private _child_stdin uv.uv_pipe_t
 --- @field private _child_stdout uv.uv_pipe_t
 --- @field private _child_stderr uv.uv_pipe_t
+--- Collects stdout (if `collect_text=true`). Treats data as text (CRLF converted to LF).
 --- @field stdout string
---- stderr is always collected in this field, regardless of `collect_output`.
+--- Collects stderr as raw data.
 --- @field stderr string
+--- Gets stderr+stdout as text (CRLF converted to LF).
+--- @field output fun(): string
 --- @field stdout_eof boolean
 --- @field stderr_eof boolean
---- Collects stdout in the `stdout` field, and stdout+stderr in `output` field.
---- @field private collect_output boolean
+--- Collects text into the `stdout` field.
+--- @field collect_text boolean
 --- Exit code
 --- @field status integer
 --- @field signal integer
@@ -147,8 +150,13 @@ ProcStream.__index = ProcStream
 --- @return test.ProcStream
 function ProcStream.spawn(argv, env, io_extra)
   local self = setmetatable({
-    collect_output = false,
-    output = '',
+    collect_text = false,
+    output = function(self)
+      if not self.collect_text then
+        error('set collect_text=true')
+      end
+      return (self.stderr .. self.stdout):gsub('\r\n', '\n')
+    end,
     stdout = '',
     stderr = '',
     stdout_eof = false,
@@ -193,13 +201,10 @@ function ProcStream:on_read(stream, cb, err, chunk)
   elseif chunk then
     -- Always collect stderr, in case it gives useful info on failure.
     if stream == 'stderr' then
-      self.stderr = self.stderr .. chunk ---@type string
-    end
-    -- Collect stdout if `collect_output` is enabled.
-    if self.collect_output then
-      self.stdout = self.stdout .. chunk ---@type string
-      --- Collect both stdout + stderr in the `output` field.
-      self.output = self[stream] .. chunk ---@type string
+      self.stderr = self.stderr .. chunk --[[@as string]]
+    elseif stream == 'stdout' and self.collect_text then
+      -- Set `stdout` and convert CRLF => LF.
+      self.stdout = (self.stdout .. chunk):gsub('\r\n', '\n')
     end
   else
     -- stderr_eof/stdout_eof
@@ -214,7 +219,6 @@ end
 
 --- Collects output until the process exits.
 function ProcStream:wait()
-  self.collect_output = true
   while not (self.stdout_eof and self.stderr_eof and (self.status or self.signal)) do
     uv.run('once')
   end
