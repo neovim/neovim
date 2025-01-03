@@ -81,8 +81,8 @@ local bit = require('bit')
 local vterm = t.cimport(
   './src/nvim/mbyte.h',
   './src/nvim/grid.h',
-  './src/vterm/vterm.h',
-  './src/vterm/vterm_internal.h',
+  './src/nvim/vterm/vterm.h',
+  './src/nvim/vterm/vterm_internal.h',
   './test/unit/fixtures/vterm_test.h'
 )
 
