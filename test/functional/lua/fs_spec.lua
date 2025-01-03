@@ -168,8 +168,8 @@ describe('vim.fs', function()
 
       local function run(dir, depth, skip)
         return exec_lua(function()
-          local r = {}
-          local skip_f
+          local r = {} --- @type table<string, string>
+          local skip_f --- @type function
           if skip then
             skip_f = function(n0)
               if vim.tbl_contains(skip or {}, n0) then
@@ -470,8 +470,8 @@ describe('vim.fs', function()
   end)
 
   describe('abspath()', function()
-    local cwd = is_os('win') and vim.uv.cwd():gsub('\\', '/') or vim.uv.cwd()
-    local home = is_os('win') and vim.uv.os_homedir():gsub('\\', '/') or vim.uv.os_homedir()
+    local cwd = assert(t.fix_slashes(assert(vim.uv.cwd())))
+    local home = t.fix_slashes(assert(vim.uv.os_homedir()))
 
     it('works', function()
       eq(cwd .. '/foo', vim.fs.abspath('foo'))
@@ -502,5 +502,28 @@ describe('vim.fs', function()
         eq(cwd .. '/foo', vim.fs.abspath(cwd_drive .. 'foo'))
       end)
     end
+  end)
+
+  describe('relpath()', function()
+    it('works', function()
+      eq(nil, vim.fs.relpath('/var/lib', '/var'))
+      eq(nil, vim.fs.relpath('/var/lib', '/bin'))
+      eq('.', vim.fs.relpath('/var/lib', '/var/lib'))
+      eq('lib', vim.fs.relpath('/var/', '/var/lib'))
+      eq('var/lib', vim.fs.relpath('/', '/var/lib'))
+      eq('bar/package.json', vim.fs.relpath('/foo/test', '/foo/test/bar/package.json'))
+
+      if is_os('win') then
+        eq(nil, vim.fs.relpath('c:/blah\\blah', 'd:/games'))
+        eq(nil, vim.fs.relpath('c:/aaaa/bbbb', 'c:/aaaa'))
+        eq('cccc', vim.fs.relpath('c:/aaaa/', 'c:/aaaa/cccc'))
+        eq('aaaa/bbbb', vim.fs.relpath('c:/', 'c:\\aaaa\\bbbb'))
+        eq('bar/package.json', vim.fs.relpath('C:\\foo\\test', 'C:\\foo\\test\\bar\\package.json'))
+        eq('baz', vim.fs.relpath('\\\\foo\\bar', '\\\\foo\\bar\\baz'))
+        eq(nil, vim.fs.relpath('a/b/c', 'a\\b'))
+        eq('d', vim.fs.relpath('a/b/c', 'a\\b\\c\\d'))
+        eq('.', vim.fs.relpath('\\\\foo\\bar\\baz', '\\\\foo\\bar\\baz'))
+      end
+    end)
   end)
 end)

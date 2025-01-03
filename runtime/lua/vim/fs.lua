@@ -741,4 +741,36 @@ function M.abspath(path)
   return M.joinpath(cwd, path)
 end
 
+--- Gets `target` path relative to `base`, or `nil` if `base` is not an ancestor.
+---
+--- Example:
+---
+--- ```lua
+--- vim.fs.relpath('/var', '/var/lib') -- 'lib'
+--- vim.fs.relpath('/var', '/usr/bin') -- nil
+--- ```
+---
+--- @param base string
+--- @param target string
+--- @return string|nil
+function M.relpath(base, target)
+  vim.validate('base', base, 'string')
+  vim.validate('target', target, 'string')
+
+  base = vim.fs.normalize(vim.fs.abspath(base))
+  target = vim.fs.normalize(vim.fs.abspath(target))
+  if base == target then
+    return '.'
+  end
+
+  local prefix = ''
+  if iswin then
+    prefix, base = split_windows_path(base)
+  end
+  base = base .. (base ~= '/' and '/' or '')
+  base = prefix .. base
+
+  return vim.startswith(target, base) and target:sub(#base + 1) or nil
+end
+
 return M
