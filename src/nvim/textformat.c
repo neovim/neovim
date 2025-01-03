@@ -101,7 +101,6 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     int startcol;                       // Cursor column at entry
     int wantcol;                        // column at textwidth border
     int foundcol;                       // column for start of spaces
-    int end_foundcol = 0;               // column for start of word
     int orig_col = 0;
     char *saved_text = NULL;
     colnr_T col;
@@ -173,9 +172,6 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
         cc = gchar_cursor();
       }
       if (WHITECHAR(cc)) {
-        // remember position of blank just before text
-        colnr_T end_col = curwin->w_cursor.col;
-
         // find start of sequence of blanks
         int wcc = 0;  // counter for whitespace chars
         while (curwin->w_cursor.col > 0 && WHITECHAR(cc)) {
@@ -224,7 +220,6 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
 
         inc_cursor();
 
-        end_foundcol = end_col + 1;
         foundcol = curwin->w_cursor.col;
         if (curwin->w_cursor.col <= (colnr_T)wantcol) {
           break;
@@ -247,7 +242,6 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
           // If we have already checked this position, skip!
           if (curwin->w_cursor.col != skip_pos && allow_break) {
             foundcol = curwin->w_cursor.col;
-            end_foundcol = foundcol;
             if (curwin->w_cursor.col <= (colnr_T)wantcol) {
               break;
             }
@@ -281,7 +275,6 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
         // Must handle this to respect line break prohibition.
         if (allow_break) {
           foundcol = curwin->w_cursor.col;
-          end_foundcol = foundcol;
         }
         if (curwin->w_cursor.col <= (colnr_T)wantcol) {
           const bool ncc_allow_break = utf_allow_break_before(ncc);
@@ -294,7 +287,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
             if (curwin->w_cursor.col == startcol) {
               // We are inserting a non-breakable char, postpone
               // line break check to next insert.
-              end_foundcol = foundcol = 0;
+              foundcol = 0;
               break;
             }
 
@@ -312,7 +305,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
 
             if (allow_break) {
               // Break only when we are not at end of line.
-              end_foundcol = foundcol = ncc == NUL ? 0 : curwin->w_cursor.col;
+              foundcol = ncc == NUL ? 0 : curwin->w_cursor.col;
               break;
             }
             curwin->w_cursor.col = col;
@@ -338,8 +331,6 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     // over the text instead.
     if (State & VREPLACE_FLAG) {
       orig_col = startcol;              // Will start backspacing from here
-    } else {
-      replace_offset = startcol - end_foundcol;
     }
 
     // adjust startcol for spaces that will be deleted and
@@ -389,7 +380,6 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       no_leader = false;
     }
 
-    replace_offset = 0;
     if (first_line) {
       if (!(flags & INSCHAR_COM_LIST)) {
         // This section is for auto-wrap of numeric lists.  When not
