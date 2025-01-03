@@ -1299,7 +1299,7 @@ global value of a |global-local| option, see |:setglobal|.
 
 
 A special interface |vim.opt| exists for conveniently interacting with list-
-and map-style option from Lua: It allows accessing them as Lua tables and
+and map-style options from Lua: It allows accessing them as Lua tables and
 offers object-oriented method for adding and removing entries.
 
     Examples: ~
@@ -1805,7 +1805,7 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
 
         -- Runs synchronously:
         local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
-        -- { code = 0, signal = 0, stdout = 'hello', stderr = '' }
+        -- { code = 0, signal = 0, stdout = 'hello\n', stderr = '' }
 <
 
     See |uv.spawn()| for more details. Note: unlike |uv.spawn()|, vim.system
