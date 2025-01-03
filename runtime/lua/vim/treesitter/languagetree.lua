@@ -467,14 +467,20 @@ end
 ---
 --- Note: This includes the invoking tree's child trees as well.
 ---
----@param fn fun(tree: TSTree, ltree: vim.treesitter.LanguageTree)
+---@param fn fun(tree: TSTree, ltree: vim.treesitter.LanguageTree, nesting_level: integer)
 function LanguageTree:for_each_tree(fn)
+  self:_for_each_tree_impl(fn, 0)
+end
+
+---@param fn fun(tree: TSTree, ltree: vim.treesitter.LanguageTree, nesting_level: integer)
+---@param nesting_level integer
+function LanguageTree:_for_each_tree_impl(fn, nesting_level)
   for _, tree in pairs(self._trees) do
-    fn(tree, self)
+    fn(tree, self, nesting_level)
   end
 
   for _, child in pairs(self._children) do
-    child:for_each_tree(fn)
+    child:_for_each_tree_impl(fn, nesting_level + 1)
   end
 end
 
