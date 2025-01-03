@@ -291,9 +291,10 @@ func Test_changing_cmdheight()
   call term_sendkeys(buf, ":resize -3\<CR>")
   call VerifyScreenDump(buf, 'Test_changing_cmdheight_1', {})
 
-  " using the space available doesn't change the status line
-  call term_sendkeys(buf, ":set cmdheight+=3\<CR>")
+  " :resize now also changes 'cmdheight' accordingly
+  call term_sendkeys(buf, ":set cmdheight+=1\<CR>")
   call VerifyScreenDump(buf, 'Test_changing_cmdheight_2', {})
+  call term_sendkeys(buf, ":set cmdheight-=1\<CR>")
 
   " using more space moves the status line up
   call term_sendkeys(buf, ":set cmdheight+=1\<CR>")
