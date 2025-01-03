@@ -170,27 +170,27 @@ void check_buf_options(buf_T *buf)
 }
 
 /// Free the string allocated for an option.
-/// Checks for the string being empty_string_option. This may happen if we're out of memory,
-/// xstrdup() returned NULL, which was replaced by empty_string_option by check_options().
+/// Checks for the string being STATIC_CSTR_AS_REF_STRING(""). This may happen if we're out of memory,
+/// xstrdup() returned NULL, which was replaced by STATIC_CSTR_AS_REF_STRING("") by check_options().
 void free_string_option(char *p)
 {
-  if (p != empty_string_option) {
+  if (p != STATIC_CSTR_AS_REF_STRING("")) {
     xfree(p);
   }
 }
 
 void clear_string_option(char **pp)
 {
-  if (*pp != empty_string_option) {
+  if (*pp != STATIC_CSTR_AS_REF_STRING("")) {
     xfree(*pp);
   }
-  *pp = empty_string_option;
+  *pp = STATIC_CSTR_AS_REF_STRING("");
 }
 
 void check_string_option(char **pp)
 {
   if (*pp == NULL) {
-    *pp = empty_string_option;
+    *pp = STATIC_CSTR_AS_REF_STRING("");
   }
 }
 
@@ -210,7 +210,7 @@ static bool valid_filetype(const char *val)
 /// @return OK when the value is valid, FAIL otherwise
 int check_signcolumn(char *scl, win_T *wp)
 {
-  char *val = empty_string_option;
+  char *val = STATIC_CSTR_AS_REF_STRING("");
   if (scl != NULL) {
     val = scl;
   } else if (wp != NULL) {

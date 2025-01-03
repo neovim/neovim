@@ -1733,7 +1733,7 @@ void check_blending(win_T *wp)
 /// @return  whether the option value is valid.
 bool parse_winhl_opt(const char *winhl, win_T *wp)
 {
-  const char *p = empty_string_option;
+  const char *p = STATIC_CSTR_AS_REF_STRING("");
   if (winhl != NULL) {
     p = winhl;
   } else if (wp != NULL) {
@@ -2247,7 +2247,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
         if (buf->b_p_vsts_nopaste) {
           xfree(buf->b_p_vsts_nopaste);
         }
-        buf->b_p_vsts_nopaste = buf->b_p_vsts && buf->b_p_vsts != empty_string_option
+        buf->b_p_vsts_nopaste = buf->b_p_vsts && buf->b_p_vsts != STATIC_CSTR_AS_REF_STRING("")
                                 ? xstrdup(buf->b_p_vsts)
                                 : NULL;
       }
@@ -2266,7 +2266,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
       if (p_vsts_nopaste) {
         xfree(p_vsts_nopaste);
       }
-      p_vsts_nopaste = p_vsts && p_vsts != empty_string_option ? xstrdup(p_vsts) : NULL;
+      p_vsts_nopaste = p_vsts && p_vsts != STATIC_CSTR_AS_REF_STRING("") ? xstrdup(p_vsts) : NULL;
     }
 
     // Always set the option values, also when 'paste' is set when it is
@@ -2281,7 +2281,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
       if (buf->b_p_vsts) {
         free_string_option(buf->b_p_vsts);
       }
-      buf->b_p_vsts = empty_string_option;
+      buf->b_p_vsts = STATIC_CSTR_AS_REF_STRING("");
       XFREE_CLEAR(buf->b_p_vsts_array);
     }
 
@@ -2302,7 +2302,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
     if (p_vsts) {
       free_string_option(p_vsts);
     }
-    p_vsts = empty_string_option;
+    p_vsts = STATIC_CSTR_AS_REF_STRING("");
   } else if (old_p_paste) {
     // Paste switched from on to off: Restore saved values.
 
@@ -2316,9 +2316,9 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
       if (buf->b_p_vsts) {
         free_string_option(buf->b_p_vsts);
       }
-      buf->b_p_vsts = buf->b_p_vsts_nopaste ? xstrdup(buf->b_p_vsts_nopaste) : empty_string_option;
+      buf->b_p_vsts = buf->b_p_vsts_nopaste ? xstrdup(buf->b_p_vsts_nopaste) : STATIC_CSTR_AS_REF_STRING("");
       xfree(buf->b_p_vsts_array);
-      if (buf->b_p_vsts && buf->b_p_vsts != empty_string_option) {
+      if (buf->b_p_vsts && buf->b_p_vsts != STATIC_CSTR_AS_REF_STRING("")) {
         tabstop_set(buf->b_p_vsts, &buf->b_p_vsts_array);
       } else {
         buf->b_p_vsts_array = NULL;
@@ -2342,7 +2342,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
     if (p_vsts) {
       free_string_option(p_vsts);
     }
-    p_vsts = p_vsts_nopaste ? xstrdup(p_vsts_nopaste) : empty_string_option;
+    p_vsts = p_vsts_nopaste ? xstrdup(p_vsts_nopaste) : STATIC_CSTR_AS_REF_STRING("");
   }
 
   old_p_paste = p_paste;
@@ -3080,7 +3080,7 @@ void optval_free(OptVal o)
     break;
   case kOptValTypeString:
     // Don't free empty string option
-    if (o.data.string.data != empty_string_option) {
+    if (o.data.string.data != STATIC_CSTR_AS_REF_STRING("")) {
       api_free_string(o.data.string);
     }
     break;
@@ -4887,8 +4887,8 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
 
 static char *copy_option_val(const char *val)
 {
-  if (val == empty_string_option) {
-    return empty_string_option;  // no need to allocate memory
+  if (val == STATIC_CSTR_AS_REF_STRING("")) {
+    return STATIC_CSTR_AS_REF_STRING("");  // no need to allocate memory
   }
   return xstrdup(val);
 }
@@ -4935,7 +4935,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_cocu = copy_option_val(from->wo_cocu);
   to->wo_cole = from->wo_cole;
   to->wo_fdc = copy_option_val(from->wo_fdc);
-  to->wo_fdc_save = from->wo_diff_saved ? xstrdup(from->wo_fdc_save) : empty_string_option;
+  to->wo_fdc_save = from->wo_diff_saved ? xstrdup(from->wo_fdc_save) : STATIC_CSTR_AS_REF_STRING("");
   to->wo_fen = from->wo_fen;
   to->wo_fen_save = from->wo_fen_save;
   to->wo_fdi = copy_option_val(from->wo_fdi);
@@ -4943,7 +4943,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fdl = from->wo_fdl;
   to->wo_fdl_save = from->wo_fdl_save;
   to->wo_fdm = copy_option_val(from->wo_fdm);
-  to->wo_fdm_save = from->wo_diff_saved ? xstrdup(from->wo_fdm_save) : empty_string_option;
+  to->wo_fdm_save = from->wo_diff_saved ? xstrdup(from->wo_fdm_save) : STATIC_CSTR_AS_REF_STRING("");
   to->wo_fdn = from->wo_fdn;
   to->wo_fde = copy_option_val(from->wo_fde);
   to->wo_fdt = copy_option_val(from->wo_fdt);
@@ -4965,7 +4965,7 @@ void check_win_options(win_T *win)
   check_winopt(&win->w_allbuf_opt);
 }
 
-/// Check for NULL pointers in a winopt_T and replace them with empty_string_option.
+/// Check for NULL pointers in a winopt_T and replace them with STATIC_CSTR_AS_REF_STRING("").
 static void check_winopt(winopt_T *wop)
 {
   check_string_option(&wop->wo_fdc);
@@ -5106,8 +5106,8 @@ void buf_copy_options(buf_T *buf, int flags)
           buf->b_p_ff = xstrdup(p_ff);
           break;
         }
-        buf->b_p_bh = empty_string_option;
-        buf->b_p_bt = empty_string_option;
+        buf->b_p_bh = STATIC_CSTR_AS_REF_STRING("");
+        buf->b_p_bt = STATIC_CSTR_AS_REF_STRING("");
       } else {
         free_buf_options(buf, false);
       }
@@ -5168,7 +5168,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_sts_nopaste = p_sts_nopaste;
       buf->b_p_vsts = xstrdup(p_vsts);
       COPY_OPT_SCTX(buf, kBufOptVarsofttabstop);
-      if (p_vsts && p_vsts != empty_string_option) {
+      if (p_vsts && p_vsts != STATIC_CSTR_AS_REF_STRING("")) {
         tabstop_set(p_vsts, &buf->b_p_vsts_array);
       } else {
         buf->b_p_vsts_array = NULL;
@@ -5204,7 +5204,7 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, kBufOptLispoptions);
 
       // Don't copy 'filetype', it must be detected
-      buf->b_p_ft = empty_string_option;
+      buf->b_p_ft = STATIC_CSTR_AS_REF_STRING("");
       buf->b_p_pi = p_pi;
       COPY_OPT_SCTX(buf, kBufOptPreserveindent);
       buf->b_p_cinw = xstrdup(p_cinw);
@@ -5212,10 +5212,10 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_lisp = p_lisp;
       COPY_OPT_SCTX(buf, kBufOptLisp);
       // Don't copy 'syntax', it must be set
-      buf->b_p_syn = empty_string_option;
+      buf->b_p_syn = STATIC_CSTR_AS_REF_STRING("");
       buf->b_p_smc = p_smc;
       COPY_OPT_SCTX(buf, kBufOptSynmaxcol);
-      buf->b_s.b_syn_isk = empty_string_option;
+      buf->b_s.b_syn_isk = STATIC_CSTR_AS_REF_STRING("");
       buf->b_s.b_p_spc = xstrdup(p_spc);
       COPY_OPT_SCTX(buf, kBufOptSpellcapcheck);
       compile_cap_prog(&buf->b_s);
@@ -5230,7 +5230,7 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, kBufOptIndentexpr);
       buf->b_p_indk = xstrdup(p_indk);
       COPY_OPT_SCTX(buf, kBufOptIndentkeys);
-      buf->b_p_fp = empty_string_option;
+      buf->b_p_fp = STATIC_CSTR_AS_REF_STRING("");
       buf->b_p_fex = xstrdup(p_fex);
       COPY_OPT_SCTX(buf, kBufOptFormatexpr);
       buf->b_p_sua = xstrdup(p_sua);
@@ -5249,33 +5249,33 @@ void buf_copy_options(buf_T *buf, int flags)
       // are not copied, start using the global value
       buf->b_p_ar = -1;
       buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
-      buf->b_p_bkc = empty_string_option;
+      buf->b_p_bkc = STATIC_CSTR_AS_REF_STRING("");
       buf->b_bkc_flags = 0;
-      buf->b_p_gp = empty_string_option;
-      buf->b_p_mp = empty_string_option;
-      buf->b_p_efm = empty_string_option;
-      buf->b_p_ep = empty_string_option;
-      buf->b_p_ffu = empty_string_option;
-      buf->b_p_kp = empty_string_option;
-      buf->b_p_path = empty_string_option;
-      buf->b_p_tags = empty_string_option;
-      buf->b_p_tc = empty_string_option;
+      buf->b_p_gp = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_mp = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_efm = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_ep = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_ffu = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_kp = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_path = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_tags = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_tc = STATIC_CSTR_AS_REF_STRING("");
       buf->b_tc_flags = 0;
-      buf->b_p_def = empty_string_option;
-      buf->b_p_inc = empty_string_option;
+      buf->b_p_def = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_inc = STATIC_CSTR_AS_REF_STRING("");
       buf->b_p_inex = xstrdup(p_inex);
       COPY_OPT_SCTX(buf, kBufOptIncludeexpr);
-      buf->b_p_cot = empty_string_option;
+      buf->b_p_cot = STATIC_CSTR_AS_REF_STRING("");
       buf->b_cot_flags = 0;
-      buf->b_p_dict = empty_string_option;
-      buf->b_p_tsr = empty_string_option;
-      buf->b_p_tsrfu = empty_string_option;
+      buf->b_p_dict = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_tsr = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_tsrfu = STATIC_CSTR_AS_REF_STRING("");
       buf->b_p_qe = xstrdup(p_qe);
       COPY_OPT_SCTX(buf, kBufOptQuoteescape);
       buf->b_p_udf = p_udf;
       COPY_OPT_SCTX(buf, kBufOptUndofile);
-      buf->b_p_lw = empty_string_option;
-      buf->b_p_menc = empty_string_option;
+      buf->b_p_lw = STATIC_CSTR_AS_REF_STRING("");
+      buf->b_p_menc = STATIC_CSTR_AS_REF_STRING("");
 
       // Don't copy the options set by ex_help(), use the saved values,
       // when going from a help buffer to a non-help buffer.
@@ -5283,7 +5283,7 @@ void buf_copy_options(buf_T *buf, int flags)
       // or to a help buffer.
       if (dont_do_help) {
         buf->b_p_isk = save_p_isk;
-        if (p_vts && p_vts != empty_string_option && !buf->b_p_vts_array) {
+        if (p_vts && p_vts != STATIC_CSTR_AS_REF_STRING("") && !buf->b_p_vts_array) {
           tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
           buf->b_p_vts_array = NULL;
@@ -5296,7 +5296,7 @@ void buf_copy_options(buf_T *buf, int flags)
         COPY_OPT_SCTX(buf, kBufOptTabstop);
         buf->b_p_vts = xstrdup(p_vts);
         COPY_OPT_SCTX(buf, kBufOptVartabstop);
-        if (p_vts && p_vts != empty_string_option && !buf->b_p_vts_array) {
+        if (p_vts && p_vts != STATIC_CSTR_AS_REF_STRING("") && !buf->b_p_vts_array) {
           tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
           buf->b_p_vts_array = NULL;
@@ -6159,7 +6159,7 @@ char *get_showbreak_value(win_T *const win)
     return p_sbr;
   }
   if (strcmp(win->w_p_sbr, "NONE") == 0) {
-    return empty_string_option;
+    return STATIC_CSTR_AS_REF_STRING("");
   }
   return win->w_p_sbr;
 }
