@@ -1,12 +1,18 @@
-local uv = vim.uv
-local MsgpackRpcStream = require('test.client.msgpack_rpc_stream')
+---
+--- Nvim msgpack-RPC protocol session. Manages requests/notifications/responses.
+---
 
+local uv = vim.uv
+local RpcStream = require('test.client.rpc_stream')
+
+--- Nvim msgpack-RPC protocol session. Manages requests/notifications/responses.
+---
 --- @class test.Session
---- @field private _pending_messages string[]
---- @field private _msgpack_rpc_stream test.MsgpackRpcStream
+--- @field private _pending_messages string[] Requests/notifications received from the remote end.
+--- @field private _rpc_stream test.RpcStream
 --- @field private _prepare uv.uv_prepare_t
 --- @field private _timer uv.uv_timer_t
---- @field private _is_running boolean
+--- @field private _is_running boolean true during `Session:run()` scope.
 --- @field exec_lua_setup boolean
 local Session = {}
 Session.__index = Session
@@ -51,9 +57,10 @@ local function coroutine_exec(func, ...)
   end))
 end
 
+--- Creates a new msgpack-RPC session.
 function Session.new(stream)
   return setmetatable({
-    _msgpack_rpc_stream = MsgpackRpcStream.new(stream),
+    _rpc_stream = RpcStream.new(stream),
     _pending_messages = {},
     _prepare = uv.new_prepare(),
     _timer = uv.new_timer(),
@@ -91,10 +98,13 @@ function Session:next_message(timeout)
   return table.remove(self._pending_messages, 1)
 end
 
+--- Sends a notification to the RPC endpoint.
 function Session:notify(method, ...)
-  self._msgpack_rpc_stream:write(method, { ... })
+  self._rpc_stream:write(method, { ... })
 end
 
+--- Sends a request to the RPC endpoint.
+---
 --- @param method string
 --- @param ... any
 --- @return boolean, table
@@ -114,8 +124,16 @@ function Session:request(method, ...)
   return true, result
 end
 
---- Runs the event loop.
+--- Processes incoming RPC requests/notifications until exhausted.
+---
+--- TODO(justinmk): luaclient2 avoids this via uvutil.cb_wait() + uvutil.add_idle_call()?
+---
+--- @param request_cb function Handles requests from the sever to the local end.
+--- @param notification_cb function Handles notifications from the sever to the local end.
+--- @param setup_cb function
+--- @param timeout number
 function Session:run(request_cb, notification_cb, setup_cb, timeout)
+  --- Handles an incoming request.
   local function on_request(method, args, response)
     coroutine_exec(request_cb, method, args, function(status, result, flag)
       if status then
@@ -126,6 +144,7 @@ function Session:run(request_cb, notification_cb, setup_cb, timeout)
     end)
   end
 
+  --- Handles an incoming notification.
   local function on_notification(method, args)
     coroutine_exec(notification_cb, method, args)
   end
@@ -160,39 +179,45 @@ function Session:close(signal)
   if not self._prepare:is_closing() then
     self._prepare:close()
   end
-  self._msgpack_rpc_stream:close(signal)
+  self._rpc_stream:close(signal)
   self.closed = true
 end
 
+--- Sends a request to the RPC endpoint, without blocking (schedules a coroutine).
 function Session:_yielding_request(method, args)
   return coroutine.yield(function(co)
-    self._msgpack_rpc_stream:write(method, args, function(err, result)
+    self._rpc_stream:write(method, args, function(err, result)
       resume(co, err, result)
     end)
   end)
 end
 
+--- Sends a request to the RPC endpoint, and blocks (polls event loop) until a response is received.
 function Session:_blocking_request(method, args)
   local err, result
 
+  -- Invoked when a request is received from the remote end.
   local function on_request(method_, args_, response)
     table.insert(self._pending_messages, { 'request', method_, args_, response })
   end
 
+  -- Invoked when a notification is received from the remote end.
   local function on_notification(method_, args_)
     table.insert(self._pending_messages, { 'notification', method_, args_ })
   end
 
-  self._msgpack_rpc_stream:write(method, args, function(e, r)
+  self._rpc_stream:write(method, args, function(e, r)
     err = e
     result = r
     uv.stop()
   end)
 
+  -- Poll for incoming requests/notifications received from the remote end.
   self:_run(on_request, on_notification)
   return (err or self.eof_err), result
 end
 
+--- Polls for incoming requests/notifications received from the remote end.
 function Session:_run(request_cb, notification_cb, timeout)
   if type(timeout) == 'number' then
     self._prepare:start(function()
@@ -202,14 +227,21 @@ function Session:_run(request_cb, notification_cb, timeout)
       self._prepare:stop()
     end)
   end
-  self._msgpack_rpc_stream:read_start(request_cb, notification_cb, function()
+  self._rpc_stream:read_start(request_cb, notification_cb, function()
     uv.stop()
-    self.eof_err = { 1, 'EOF was received from Nvim. Likely the Nvim process crashed.' }
+
+    --- @diagnostic disable-next-line: invisible
+    local stderr = self._rpc_stream._stream.stderr --[[@as string?]]
+    -- See if `ProcStream.stderr` has anything useful.
+    stderr = '' ~= ((stderr or ''):match('^%s*(.*%S)') or '') and ' stderr:\n' .. stderr or ''
+
+    self.eof_err = { 1, 'EOF was received from Nvim. Likely the Nvim process crashed.' .. stderr }
   end)
   uv.run()
   self._prepare:stop()
   self._timer:stop()
-  self._msgpack_rpc_stream:read_stop()
+  self._rpc_stream:read_stop()
 end
 
+--- Nvim msgpack-RPC session.
 return Session
