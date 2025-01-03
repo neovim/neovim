@@ -21,4 +21,4 @@ hi def link jjAdded Added
 hi def link jjRemoved Removed
 hi def link jjChanged Changed
 
-let b:current_syntax = 'jj'
+let b:current_syntax = 'jjdescription'
