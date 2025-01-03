@@ -2,8 +2,17 @@
 #include <stdint.h>
 
 #include "nvim/macros_defs.h"
-#include "vterm/vterm.h"
+#include "nvim/vterm/vterm.h"
 
+EXTERN VTermPos state_pos;
+EXTERN bool want_state_putglyph INIT (=false);
+EXTERN bool want_state_movecursor INIT(= false);
+EXTERN bool want_state_erase INIT(= false);
+EXTERN bool want_state_scrollrect INIT(= false);
+EXTERN bool want_state_moverect INIT(= false);
+EXTERN bool want_state_settermprop INIT(= false);
+EXTERN bool want_state_scrollback INIT(= false);
+EXTERN bool want_screen_scrollback INIT(= false);
 int parser_text(const char bytes[], size_t len, void *user);
 int parser_csi(const char *leader, const long args[], int argcount, const char *intermed,
                char command, void *user);
@@ -27,12 +36,10 @@ int screen_sb_pushline(int cols, const VTermScreenCell *cells, void *user);
 int screen_sb_popline(int cols, VTermScreenCell *cells, void *user);
 int screen_sb_clear(void *user);
 void term_output(const char *s, size_t len, void *user);
-EXTERN VTermPos state_pos;
-EXTERN bool want_state_putglyph INIT (=false);
-EXTERN bool want_state_movecursor INIT(= false);
-EXTERN bool want_state_erase INIT(= false);
-EXTERN bool want_state_scrollrect INIT(= false);
-EXTERN bool want_state_moverect INIT(= false);
-EXTERN bool want_state_settermprop INIT(= false);
-EXTERN bool want_state_scrollback INIT(= false);
-EXTERN bool want_screen_scrollback INIT(= false);
+int vterm_state_get_penattr(const VTermState *state, VTermAttr attr, VTermValue *val);
+int vterm_screen_get_attrs_extent(const VTermScreen *screen, VTermRect *extent, VTermPos pos, VTermAttrMask attrs);
+size_t vterm_screen_get_text(const VTermScreen *screen, char *buffer, size_t len,  VTermRect rect);
+int vterm_screen_is_eol(const VTermScreen *screen, VTermPos pos);
+void vterm_state_get_cursorpos(const VTermState *state, VTermPos *cursorpos);
+void vterm_state_set_bold_highbright(VTermState *state, int bold_is_highbright);
+int vterm_color_is_equal(const VTermColor *a, const VTermColor *b);

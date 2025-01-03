@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <utf8proc.h>
 
 #include "nvim/iconv_defs.h"
 
@@ -71,3 +72,5 @@ typedef struct {
   int8_t begin_off;  ///< Offset to the first byte of the codepoint.
   int8_t end_off;    ///< Offset to one past the end byte of the codepoint.
 } CharBoundsOff;
+
+typedef utf8proc_int32_t GraphemeState;

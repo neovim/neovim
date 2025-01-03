@@ -148,8 +148,6 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 * `src/xdiff/`: [xdiff](https://github.com/git/git/tree/master/xdiff)
 * `src/cjson/`: [lua-cjson](https://github.com/openresty/lua-cjson)
 * `src/klib/`: [Klib](https://github.com/attractivechaos/klib)
-* `src/vterm/`: [libvterm](https://www.leonerd.org.uk/code/libvterm/),
-    [mirror](https://github.com/neovim/libvterm)
 * `runtime/lua/vim/inspect.lua`: [inspect.lua](https://github.com/kikito/inspect.lua)
 * `src/nvim/tui/terminfo_defs.h`: terminfo definitions
     * Run `scripts/update_terminfo.sh` to update these definitions.
