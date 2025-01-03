@@ -1,10 +1,10 @@
 #ifndef __VTERM_INTERNAL_H__
 #define __VTERM_INTERNAL_H__
 
-#include "nvim/vterm/vterm.h"
-
 #include <stdarg.h>
+
 #include "nvim/mbyte.h"
+#include "nvim/vterm/vterm.h"
 
 #if defined(__GNUC__)
 # define INTERNAL __attribute__((visibility("internal")))
@@ -34,28 +34,26 @@ typedef struct {
   VTermEncoding *enc;
 
   // This size should be increased if required by other stateful encodings
-  char           data[4*sizeof(uint32_t)];
+  char data[4*sizeof(uint32_t)];
 } VTermEncodingInstance;
 
-struct VTermPen
-{
+struct VTermPen {
   VTermColor fg;
   VTermColor bg;
   int uri;
-  unsigned int bold:1;
-  unsigned int underline:2;
-  unsigned int italic:1;
-  unsigned int blink:1;
-  unsigned int reverse:1;
-  unsigned int conceal:1;
-  unsigned int strike:1;
-  unsigned int font:4; /* To store 0-9 */
-  unsigned int small:1;
-  unsigned int baseline:2;
+  unsigned bold:1;
+  unsigned underline:2;
+  unsigned italic:1;
+  unsigned blink:1;
+  unsigned reverse:1;
+  unsigned conceal:1;
+  unsigned strike:1;
+  unsigned font:4;  // To store 0-9
+  unsigned small:1;
+  unsigned baseline:2;
 };
 
-struct VTermState
-{
+struct VTermState {
   VTerm *vt;
 
   const VTermStateCallbacks *callbacks;
@@ -67,31 +65,35 @@ struct VTermState
   int rows;
   int cols;
 
-  /* Current cursor position */
+  // Current cursor position
   VTermPos pos;
 
-  int at_phantom; /* True if we're on the "81st" phantom column to defer a wraparound */
+  int at_phantom;  // True if we're on the "81st" phantom column to defer a wraparound
 
   int scrollregion_top;
-  int scrollregion_bottom; /* -1 means unbounded */
-#define SCROLLREGION_BOTTOM(state) ((state)->scrollregion_bottom > -1 ? (state)->scrollregion_bottom : (state)->rows)
+  int scrollregion_bottom;  // -1 means unbounded
+#define SCROLLREGION_BOTTOM(state) ((state)->scrollregion_bottom > \
+                                    -1 ? (state)->scrollregion_bottom : (state)->rows)
   int scrollregion_left;
 #define SCROLLREGION_LEFT(state)  ((state)->mode.leftrightmargin ? (state)->scrollregion_left : 0)
-  int scrollregion_right; /* -1 means unbounded */
-#define SCROLLREGION_RIGHT(state) ((state)->mode.leftrightmargin && (state)->scrollregion_right > -1 ? (state)->scrollregion_right : (state)->cols)
+  int scrollregion_right;  // -1 means unbounded
+#define SCROLLREGION_RIGHT(state) ((state)->mode.leftrightmargin \
+                                   && (state)->scrollregion_right > \
+                                   -1 ? (state)->scrollregion_right : (state)->cols)
 
-  /* Bitvector of tab stops */
+  // Bitvector of tab stops
   unsigned char *tabstops;
 
-  /* Primary and Altscreen; lineinfos[1] is lazily allocated as needed */
+  // Primary and Altscreen; lineinfos[1] is lazily allocated as needed
   VTermLineInfo *lineinfos[2];
 
-  /* lineinfo will == lineinfos[0] or lineinfos[1], depending on altscreen */
+  // lineinfo will == lineinfos[0] or lineinfos[1], depending on altscreen
   VTermLineInfo *lineinfo;
-#define ROWWIDTH(state,row) ((state)->lineinfo[(row)].doublewidth ? ((state)->cols / 2) : (state)->cols)
+#define ROWWIDTH(state, \
+                 row) ((state)->lineinfo[(row)].doublewidth ? ((state)->cols / 2) : (state)->cols)
 #define THISROWWIDTH(state) ROWWIDTH(state, (state)->pos.row)
 
-  /* Mouse state */
+  // Mouse state
   int mouse_col, mouse_row;
   int mouse_buttons;
   int mouse_flags;
@@ -99,31 +101,31 @@ struct VTermState
 #define MOUSE_WANT_DRAG  0x02
 #define MOUSE_WANT_MOVE  0x04
 
-  enum { MOUSE_X10, MOUSE_UTF8, MOUSE_SGR, MOUSE_RXVT } mouse_protocol;
+  enum { MOUSE_X10, MOUSE_UTF8, MOUSE_SGR, MOUSE_RXVT, } mouse_protocol;
 
-  /* Last glyph output, for Unicode recombining purposes */
+// Last glyph output, for Unicode recombining purposes
   char grapheme_buf[MAX_SCHAR_SIZE];
   size_t grapheme_len;
   uint32_t grapheme_last;  // last added UTF-32 char
   GraphemeState grapheme_state;
-  int combine_width; // The width of the glyph above
+  int combine_width;  // The width of the glyph above
   VTermPos combine_pos;   // Position before movement
 
   struct {
-    unsigned int keypad:1;
-    unsigned int cursor:1;
-    unsigned int autowrap:1;
-    unsigned int insert:1;
-    unsigned int newline:1;
-    unsigned int cursor_visible:1;
-    unsigned int cursor_blink:1;
-    unsigned int cursor_shape:2;
-    unsigned int alt_screen:1;
-    unsigned int origin:1;
-    unsigned int screen:1;
-    unsigned int leftrightmargin:1;
-    unsigned int bracketpaste:1;
-    unsigned int report_focus:1;
+    unsigned keypad:1;
+    unsigned cursor:1;
+    unsigned autowrap:1;
+    unsigned insert:1;
+    unsigned newline:1;
+    unsigned cursor_visible:1;
+    unsigned cursor_blink:1;
+    unsigned cursor_shape:2;
+    unsigned alt_screen:1;
+    unsigned origin:1;
+    unsigned screen:1;
+    unsigned leftrightmargin:1;
+    unsigned bracketpaste:1;
+    unsigned report_focus:1;
   } mode;
 
   VTermEncodingInstance encoding[4], encoding_utf8;
@@ -133,25 +135,25 @@ struct VTermState
 
   VTermColor default_fg;
   VTermColor default_bg;
-  VTermColor colors[16]; // Store the 8 ANSI and the 8 ANSI high-brights only
+  VTermColor colors[16];  // Store the 8 ANSI and the 8 ANSI high-brights only
 
   int bold_is_highbright;
 
-  unsigned int protected_cell : 1;
+  unsigned protected_cell : 1;
 
-  /* Saved state under DEC mode 1048/1049 */
+// Saved state under DEC mode 1048/1049
   struct {
     VTermPos pos;
     struct VTermPen pen;
 
     struct {
-      unsigned int cursor_visible:1;
-      unsigned int cursor_blink:1;
-      unsigned int cursor_shape:2;
+      unsigned cursor_visible:1;
+      unsigned cursor_blink:1;
+      unsigned cursor_shape:2;
     } mode;
   } saved;
 
-  /* Temporary state for DECRQSS parsing */
+// Temporary state for DECRQSS parsing
   union {
     char decrqss[4];
     struct {
@@ -177,8 +179,7 @@ struct VTermState
   } selection;
 };
 
-struct VTerm
-{
+struct VTerm {
   const VTermAllocatorFunctions *allocator;
   void *allocdata;
 
@@ -186,8 +187,8 @@ struct VTerm
   int cols;
 
   struct {
-    unsigned int utf8:1;
-    unsigned int ctrl8bit:1;
+    unsigned utf8:1;
+    unsigned ctrl8bit:1;
   } mode;
 
   struct {
@@ -197,7 +198,7 @@ struct VTerm
       CSI_ARGS,
       CSI_INTERMED,
       DCS_COMMAND,
-      /* below here are the "string states" */
+      // below here are the "string states"
       OSC_COMMAND,
       OSC,
       DCS,
@@ -236,16 +237,16 @@ struct VTerm
     bool emit_nul;
   } parser;
 
-  /* len == malloc()ed size; cur == number of valid bytes */
+  // len == malloc()ed size; cur == number of valid bytes
 
   VTermOutputCallback *outfunc;
-  void                *outdata;
+  void *outdata;
 
-  char  *outbuffer;
+  char *outbuffer;
   size_t outbuffer_len;
   size_t outbuffer_cur;
 
-  char  *tmpbuffer;
+  char *tmpbuffer;
   size_t tmpbuffer_len;
 
   VTermState *state;
@@ -253,15 +254,14 @@ struct VTerm
 };
 
 struct VTermEncoding {
-  void (*init) (VTermEncoding *enc, void *data);
-  void (*decode)(VTermEncoding *enc, void *data,
-                 uint32_t cp[], int *cpi, int cplen,
+  void (*init)(VTermEncoding *enc, void *data);
+  void (*decode)(VTermEncoding *enc, void *data, uint32_t cp[], int *cpi, int cplen,
                  const char bytes[], size_t *pos, size_t len);
 };
 
 typedef enum {
   ENC_UTF8,
-  ENC_SINGLE_94
+  ENC_SINGLE_94,
 } VTermEncodingType;
 
 void *vterm_allocator_malloc(VTerm *vt, size_t size);

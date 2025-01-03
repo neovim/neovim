@@ -7,7 +7,7 @@ typedef enum {
   VTERM_MOD_ALT   = 0x02,
   VTERM_MOD_CTRL  = 0x04,
 
-  VTERM_ALL_MODS_MASK = 0x07 
+  VTERM_ALL_MODS_MASK = 0x07,
 } VTermModifier;
 
 typedef enum {
@@ -52,10 +52,10 @@ typedef enum {
   VTERM_KEY_KP_ENTER,
   VTERM_KEY_KP_EQUAL,
 
-  VTERM_KEY_MAX, // Must be last
-  VTERM_N_KEYS = VTERM_KEY_MAX
+  VTERM_KEY_MAX,  // Must be last
+  VTERM_N_KEYS = VTERM_KEY_MAX,
 } VTermKey;
 
-#define VTERM_KEY_FUNCTION(n) (VTERM_KEY_FUNCTION_0+(n))
+#define VTERM_KEY_FUNCTION(n) (VTERM_KEY_FUNCTION_0 + (n))
 
 #endif

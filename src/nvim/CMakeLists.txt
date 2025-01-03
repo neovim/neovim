@@ -912,9 +912,7 @@ add_glob_target(
   TARGET lintc-uncrustify
   COMMAND ${UNCRUSTIFY_PRG}
   FLAGS -c ${UNCRUSTIFY_CONFIG} -q --check
-  FILES ${NVIM_SOURCES} ${NVIM_HEADERS}
-  EXCLUDE ${VTERM_SOURCES} ${VTERM_HEADERS}
-)
+  FILES ${NVIM_SOURCES} ${NVIM_HEADERS})
 
 add_glob_target(
   TARGET formatc
