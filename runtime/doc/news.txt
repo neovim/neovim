@@ -40,7 +40,6 @@ These changes may require adaptations in your config or plugins.
 
 API
 
-• Improved API "meta" docstrings and :help documentation.
 • `vim.rpcnotify(0)` and `rpcnotify(0)` broadcast to ALL channels. Previously
   they would "multicast" only to subscribed channels (controlled by
   `nvim_subscribe()`). Plugins and clients that want "multicast" behavior must
@@ -62,16 +61,11 @@ On Windows, only building with the UCRT runtime is supported.
 
 DEFAULTS
 
-• |]d-default| and |[d-default| accept a count.
-• |[D-default| and |]D-default| jump to the first and last diagnostic in the
-  current buffer, respectively.
 • 'number', 'relativenumber', 'signcolumn', and 'foldcolumn' are disabled in
   |terminal| buffers. See |terminal-config| for an example of changing these defaults.
 
 DIAGNOSTICS
 
-• |vim.diagnostic.config()| accepts a "jump" table to specify defaults for
-  |vim.diagnostic.jump()|.
 • The "underline" diagnostics handler sorts diagnostics by severity when using
   the "severity_sort" option.
 
@@ -109,11 +103,6 @@ HIGHLIGHTS
 
 LSP
 
-• Improved rendering of LSP hover docs. |K-lsp-default|
-• |vim.lsp.completion.enable()| gained the `convert` callback which enables
-  customizing the transformation of an LSP CompletionItem to |complete-items|.
-• |vim.lsp.diagnostic.from()| can be used to convert a list of
-  |vim.Diagnostic| objects into their LSP diagnostic representation.
 • |vim.lsp.buf.references()|, |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
   |vim.lsp.buf.type_definition()|, |vim.lsp.buf.implementation()| and
   |vim.lsp.buf.hover()| now support merging the results of multiple clients
@@ -130,15 +119,11 @@ LSP
 • |vim.lsp.util.make_position_params()|, |vim.lsp.util.make_range_params()|
   and |vim.lsp.util.make_given_range_params()| now require the `position_encoding`
   parameter.
-• `:checkhealth vim.lsp` displays the server version (if available).
 
 LUA
 
 • API functions now consistently return an empty dictionary as
   |vim.empty_dict()|. Earlier, a |lua-special-tbl| was sometimes used.
-• Command-line completions for: `vim.g`, `vim.t`, `vim.w`, `vim.b`, `vim.v`,
-  `vim.o`, `vim.wo`, `vim.bo`, `vim.opt`, `vim.opt_local`, `vim.opt_global`,
-  and `vim.fn`.
 • |vim.json.encode()| no longer escapes forward slashes "/" by default
 
 OPTIONS
@@ -171,9 +156,6 @@ TREESITTER
   if no languages are explicitly registered.
 • |vim.treesitter.language.add()| returns `true` if a parser was loaded
   successfully and `nil,errmsg` otherwise instead of throwing an error.
-• New |TSNode:child_with_descendant()|, which is nearly identical to
-  |TSNode:child_containing_descendant()| except that it can return the
-  descendant itself.
 
 TUI
 
@@ -194,6 +176,7 @@ The following new features were added.
 
 API
 
+• Improved API "meta" docstrings and :help documentation.
 • |nvim__ns_set()| can set properties for a namespace
 
 DEFAULTS
@@ -212,6 +195,9 @@ DEFAULTS
     on a URL.
   • Mouse |popup-menu| includes a "Go to definition" item when LSP is active
     in the buffer.
+  • |]d-default| and |[d-default| accept a count.
+  • |[D-default| and |]D-default| jump to the first and last diagnostic in the
+    current buffer, respectively.
   • Mappings inspired by Tim Pope's vim-unimpaired:
     • |[q|, |]q|, |[Q|, |]Q|, |[CTRL-Q|, |]CTRL-Q| navigate through the |quickfix| list
     • |[l|, |]l|, |[L|, |]L|, |[CTRL-L|, |]CTRL-L| navigate through the |location-list|
@@ -225,6 +211,11 @@ DEFAULTS
     when a snippet is active and jumpable forwards.
   • `<S-Tab>` in Insert and Select mode maps to `vim.snippet.jump({ direction = -1 })`
     when a snippet is active and jumpable backwards.
+
+DIAGNOSTICS
+
+• |vim.diagnostic.config()| accepts a "jump" table to specify defaults for
+  |vim.diagnostic.jump()|.
 
 EDITOR
 
@@ -245,6 +236,12 @@ EVENTS
 
 LSP
 
+• Improved rendering of LSP hover docs. |K-lsp-default|
+• |vim.lsp.completion.enable()| gained the `convert` callback which enables
+  customizing the transformation of an LSP CompletionItem to |complete-items|.
+• |vim.lsp.diagnostic.from()| can be used to convert a list of
+  |vim.Diagnostic| objects into their LSP diagnostic representation.
+• `:checkhealth vim.lsp` displays the server version (if available).
 • Completion side effects (including snippet expansion, execution of commands
   and application of additional text edits) is now built-in.
 • |vim.lsp.util.locations_to_items()| sets `end_col` and `end_lnum` fields.
@@ -267,6 +264,9 @@ LSP
 
 LUA
 
+• Command-line completions for: `vim.g`, `vim.t`, `vim.w`, `vim.b`, `vim.v`,
+  `vim.o`, `vim.wo`, `vim.bo`, `vim.opt`, `vim.opt_local`, `vim.opt_global`,
+  and `vim.fn`.
 • |vim.fs.rm()| can delete files and directories.
 • |vim.validate()| now has a new signature which uses less tables,
   is more performant and easier to read.
@@ -325,6 +325,9 @@ TREESITTER
 • |treesitter-directive-trim!| can trim all whitespace (not just empty lines)
   from both sides of a node.
 • |vim.treesitter.get_captures_at_pos()| now returns the `id` of each capture
+• New |TSNode:child_with_descendant()|, which is nearly identical to
+  |TSNode:child_containing_descendant()| except that it can return the
+  descendant itself.
 
 TUI
 
