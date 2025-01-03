@@ -5,7 +5,7 @@ local n = require('test.functional.testnvim')()
 local command = n.command
 local clear = n.clear
 local eval = n.eval
-local spawn = n.spawn
+local new_session = n.new_session
 local nvim_prog = n.nvim_prog
 local set_session = n.set_session
 
@@ -24,7 +24,7 @@ end)
 
 describe('u_* functions', function()
   it('safely fail on new, non-empty buffer', function()
-    local session = spawn({
+    local session = new_session({
       nvim_prog,
       '-u',
       'NONE',

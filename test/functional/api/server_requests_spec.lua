@@ -9,7 +9,7 @@ local nvim_prog, command, fn = n.nvim_prog, n.command, n.fn
 local source, next_msg = n.source, n.next_msg
 local ok = t.ok
 local api = n.api
-local spawn, merge_args = n.spawn, n.merge_args
+local new_session, merge_args = n.new_session, n.merge_args
 local set_session = n.set_session
 local pcall_err = t.pcall_err
 local assert_alive = n.assert_alive
@@ -284,7 +284,7 @@ describe('server -> client', function()
     local nvim_argv = merge_args(n.nvim_argv, { '--headless' })
     local function connect_test(server, mode, address)
       local serverpid = fn.getpid()
-      local client = spawn(nvim_argv, false, nil, true)
+      local client = new_session(nvim_argv, false, nil, true)
       set_session(client)
 
       local clientpid = fn.getpid()
@@ -312,7 +312,7 @@ describe('server -> client', function()
     end
 
     it('via named pipe', function()
-      local server = spawn(nvim_argv)
+      local server = new_session(nvim_argv)
       set_session(server)
       local address = fn.serverlist()[1]
       local first = string.sub(address, 1, 1)
@@ -321,7 +321,7 @@ describe('server -> client', function()
     end)
 
     it('via ipv4 address', function()
-      local server = spawn(nvim_argv)
+      local server = new_session(nvim_argv)
       set_session(server)
       local status, address = pcall(fn.serverstart, '127.0.0.1:')
       if not status then
@@ -332,7 +332,7 @@ describe('server -> client', function()
     end)
 
     it('via ipv6 address', function()
-      local server = spawn(nvim_argv)
+      local server = new_session(nvim_argv)
       set_session(server)
       local status, address = pcall(fn.serverstart, '::1:')
       if not status then
@@ -343,7 +343,7 @@ describe('server -> client', function()
     end)
 
     it('via hostname', function()
-      local server = spawn(nvim_argv)
+      local server = new_session(nvim_argv)
       set_session(server)
       local address = fn.serverstart('localhost:')
       eq('localhost:', string.sub(address, 1, 10))
@@ -351,10 +351,10 @@ describe('server -> client', function()
     end)
 
     it('does not crash on receiving UI events', function()
-      local server = spawn(nvim_argv)
+      local server = new_session(nvim_argv)
       set_session(server)
       local address = fn.serverlist()[1]
-      local client = spawn(nvim_argv, false, nil, true)
+      local client = new_session(nvim_argv, false, nil, true)
       set_session(client)
 
       local id = fn.sockconnect('pipe', address, { rpc = true })

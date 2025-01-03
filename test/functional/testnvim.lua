@@ -455,15 +455,15 @@ function M.check_close()
   session = nil
 end
 
---- Starts `argv` process as a Nvim msgpack-RPC session.
+--- Starts a new Nvim process with the given args and returns a msgpack-RPC session.
 ---
---- @param argv string[]
---- @param merge boolean?
---- @param env string[]?
+--- @param argv string[] Nvim CLI args
+--- @param merge boolean? true: merge args with the default args. false: use only the provided args.
+--- @param env string[]? Environment variables
 --- @param keep boolean? Don't close the current global session.
 --- @param io_extra uv.uv_pipe_t? used for stdin_fd, see :help ui-option
 --- @return test.Session
-function M.spawn(argv, merge, env, keep, io_extra)
+function M.new_session(argv, merge, env, keep, io_extra)
   if not keep then
     M.check_close()
   end
@@ -480,9 +480,9 @@ function M.connect(file_or_address)
   return Session.new(stream)
 end
 
---- Starts (and returns) a new global Nvim session.
+--- Starts a new, global Nvim session and clears the current one.
 ---
---- Use `spawn_argv()` to get a new session without replacing the current global session.
+--- Note: Use `new_session(…, keep=true)` to start a session without clearing the current one.
 ---
 --- Parameters are interpreted as startup args, OR a map with these keys:
 --- - args:       List: Args appended to the default `nvim_argv` set.
@@ -513,7 +513,7 @@ end
 --- @overload fun(opts: test.new_argv.Opts): test.Session
 function M.spawn_argv(keep, ...)
   local argv, env, io_extra = M.new_argv(...)
-  return M.spawn(argv, nil, env, keep, io_extra)
+  return M.new_session(argv, nil, env, keep, io_extra)
 end
 
 --- Starts a (non-RPC, `--headless --listen "Tx"`) Nvim process, waits for exit, and returns result.

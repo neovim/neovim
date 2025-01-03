@@ -31,7 +31,7 @@ local feed_command = n.feed_command
 local skip = t.skip
 local is_os = t.is_os
 local is_ci = t.is_ci
-local spawn = n.spawn
+local new_session = n.new_session
 local set_session = n.set_session
 
 describe('fileio', function()
@@ -56,7 +56,7 @@ describe('fileio', function()
   local function startup(extra_args)
     extra_args = extra_args or {}
     local argv = vim.iter({ args, '--embed', extra_args }):flatten():totable()
-    local screen_nvim = spawn(argv)
+    local screen_nvim = new_session(argv)
     set_session(screen_nvim)
     local screen = Screen.new(70, 10)
     screen:set_default_attr_ids({

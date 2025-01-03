@@ -13,7 +13,7 @@ local nvim_prog = n.nvim_prog
 local new_argv = n.new_argv
 local neq = t.neq
 local set_session = n.set_session
-local spawn = n.spawn
+local new_session = n.new_session
 local tmpname = t.tmpname
 local write_file = t.write_file
 
@@ -32,7 +32,7 @@ describe('Remote', function()
   describe('connect to server and', function()
     local server
     before_each(function()
-      server = spawn(new_argv(), true)
+      server = new_session(new_argv(), true)
       set_session(server)
     end)
 
@@ -49,7 +49,7 @@ describe('Remote', function()
       -- to wait for the remote instance to exit and calling jobwait blocks
       -- the event loop. If the server event loop is blocked, it can't process
       -- our incoming --remote calls.
-      local client_starter = spawn(new_argv(), false, nil, true)
+      local client_starter = new_session(new_argv(), false, nil, true)
       set_session(client_starter)
       -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
       eq(
