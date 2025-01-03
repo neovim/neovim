@@ -103,6 +103,8 @@ HIGHLIGHTS
 
 • |TermCursorNC| is removed and no longer supported. Unfocused terminals no
   longer have a cursor.
+• |vim.hl.priorities| were magnified to allow greater highlight specificity
+  (see |treesitter-highlight-priority|).
 
 LSP
 

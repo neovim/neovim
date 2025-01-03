@@ -510,13 +510,18 @@ Conceals specified in this way respect 'conceallevel'.
 
                                                *treesitter-highlight-priority*
 Treesitter uses |nvim_buf_set_extmark()| to set highlights with a default
-priority of 100. This enables plugins to set a highlighting priority lower or
+priority of 5000. This enables plugins to set a highlighting priority lower or
 higher than treesitter. It is also possible to change the priority of an
 individual query pattern manually by setting its `"priority"` metadata
 attribute: >query
 
-    ((super_important_node) @superimportant (#set! priority 105))
+    ((super_important_node) @superimportant (#set! priority 5100))
 <
+NOTE: Priorities of injected trees are increased so that they have precedence
+over their parent trees. The offset amount is determined by their nesting
+level. For example, an injection within the root tree has its priority
+increased by `1`, and an injection within an injection has its priority
+increased by `2`, etc.
 
 ==============================================================================
 TREESITTER LANGUAGE INJECTIONS                *treesitter-language-injections*
@@ -1526,7 +1531,7 @@ LanguageTree:for_each_tree({fn})                *LanguageTree:for_each_tree()*
     Note: This includes the invoking tree's child trees as well.
 
     Parameters: ~
-      • {fn}  (`fun(tree: TSTree, ltree: vim.treesitter.LanguageTree)`)
+      • {fn}  (`fun(tree: TSTree, ltree: vim.treesitter.LanguageTree, nesting_level: integer)`)
 
 LanguageTree:included_regions()              *LanguageTree:included_regions()*
     Gets the set of included regions managed by this LanguageTree. This can be
