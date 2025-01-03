@@ -6278,5 +6278,35 @@ describe('LSP', function()
         end)
       )
     end)
+
+    it('does not start without workspace and workspace_required = true', function()
+      exec_lua(create_server_definition)
+
+      local tmp1 = t.tmpname(true)
+
+      eq(
+        0,
+        exec_lua(function()
+          local server = _G._create_server({
+            handlers = {
+              initialize = function(_, _, callback)
+                callback(nil, { capabilities = {} })
+              end,
+            },
+          })
+
+          vim.lsp.config(
+            'foo',
+            { cmd = server.cmd, workspace_required = true, filetypes = { 'foo' } }
+          )
+          vim.lsp.enable('foo')
+
+          vim.cmd.edit(assert(tmp1))
+          vim.bo.filetype = 'foo'
+
+          return #vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })
+        end)
+      )
+    end)
   end)
 end)
