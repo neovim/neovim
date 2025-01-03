@@ -14,7 +14,7 @@
 #
 # - Debug:          Disables optimizations (-O0), enables debug information.
 #
-# - RelWithDebInfo: Enables optimizations (-Og or -O2) with debug information.
+# - RelWithDebInfo: Enables optimizations (-O2) with debug information.
 #
 # - MinSizeRel:     Enables all -O2 optimization that do not typically
 #                   increase code size, and performs further optimizations
