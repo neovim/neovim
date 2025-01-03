@@ -1,4 +1,4 @@
-#include "vterm_internal.h"
+#include "nvim/vterm/vterm_internal.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -6,7 +6,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/tui/termkey/termkey.h"
 
-#include "rect.h"
+#include "nvim/vterm/rect.h"
 
 #define UNICODE_SPACE 0x20
 #define UNICODE_LINEFEED 0x0a

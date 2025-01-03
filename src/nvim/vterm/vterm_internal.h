@@ -1,7 +1,7 @@
 #ifndef __VTERM_INTERNAL_H__
 #define __VTERM_INTERNAL_H__
 
-#include "vterm.h"
+#include "nvim/vterm/vterm.h"
 
 #include <stdarg.h>
 #include "nvim/mbyte.h"

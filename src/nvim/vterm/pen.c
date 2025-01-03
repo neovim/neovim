@@ -1,4 +1,4 @@
-#include "vterm_internal.h"
+#include "nvim/vterm/vterm_internal.h"
 
 #include <stdio.h>
 

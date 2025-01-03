@@ -11,7 +11,7 @@ extern "C" {
 
 #include "nvim/macros_defs.h"
 #include "nvim/types_defs.h"
-#include "vterm_keycodes.h"
+#include "nvim/vterm/vterm_keycodes.h"
 
 #define VTERM_VERSION_MAJOR 0
 #define VTERM_VERSION_MINOR 3

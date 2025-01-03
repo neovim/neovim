@@ -1,3 +1,5 @@
+#include "nvim/vterm/vterm.h"
+
 /*
  * Some utility functions on VTermRect structures
  */

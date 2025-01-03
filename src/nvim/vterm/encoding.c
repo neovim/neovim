@@ -1,4 +1,4 @@
-#include "vterm_internal.h"
+#include "nvim/vterm/vterm_internal.h"
 
 #define UNICODE_INVALID 0xFFFD
 
@@ -204,8 +204,8 @@ static void decode_table(VTermEncoding *enc, void *data,
   }
 }
 
-#include "encoding/DECdrawing.inc"
-#include "encoding/uk.inc"
+#include "nvim/vterm/encoding/DECdrawing.inc"
+#include "nvim/vterm/encoding/uk.inc"
 
 static struct {
   VTermEncodingType type;
