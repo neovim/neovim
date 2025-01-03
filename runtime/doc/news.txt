@@ -195,6 +195,7 @@ The following new features were added.
 API
 
 • |nvim__ns_set()| can set properties for a namespace
+• New |nvim_buf_set_extmark()| flag `conceal_lines` to conceal an entire line.
 
 DEFAULTS
 
@@ -325,6 +326,8 @@ TREESITTER
 • |treesitter-directive-trim!| can trim all whitespace (not just empty lines)
   from both sides of a node.
 • |vim.treesitter.get_captures_at_pos()| now returns the `id` of each capture
+• Bundled markdown highlight queries use `conceal_lines` metadata to conceal
+  code block fence lines vertically.
 
 TUI
 

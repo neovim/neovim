@@ -7,6 +7,7 @@
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 EXTERN bool provider_active INIT( = false);
+EXTERN bool conceal_provider INIT( = false);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration_provider.h.generated.h"
