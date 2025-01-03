@@ -134,6 +134,11 @@ typedef struct {
 } Dict(win_config);
 
 typedef struct {
+  OptionalKeys is_set__open_tabpage_opts_;
+  Integer after;
+} Dict(open_tabpage_opts);
+
+typedef struct {
   Boolean is_lua;
   Boolean do_source;
 } Dict(runtime);
