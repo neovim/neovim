@@ -353,6 +353,8 @@ UI
 • |vim.diagnostic.setqflist()| updates an existing quickfix list with the
   given title if found
 • |ui-messages| content chunks now also contain the highlight group ID.
+• |health| can be displayed in a floating window and controlled by
+  the |g:health| variable.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
