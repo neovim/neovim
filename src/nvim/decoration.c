@@ -303,12 +303,20 @@ static void decor_free_inner(DecorVirtText *vt, uint32_t first_idx)
   }
 }
 
+void decor_state_invalidate(buf_T *buf)
+{
+  if (decor_state.win && decor_state.win->w_buffer == buf) {
+    decor_state.itr_valid = false;
+  }
+}
+
 void decor_check_to_be_deleted(void)
 {
   assert(!decor_state.running_decor_provider);
   decor_free_inner(to_free_virt, to_free_sh);
   to_free_virt = NULL;
   to_free_sh = DECOR_ID_INVALID;
+  decor_state.win = NULL;
 }
 
 void decor_state_free(DecorState *state)
@@ -447,6 +455,8 @@ bool decor_redraw_start(win_T *wp, int top_row, DecorState *state)
 {
   buf_T *buf = wp->w_buffer;
   state->top_row = top_row;
+  state->itr_valid = true;
+
   if (!marktree_itr_get_overlap(buf->b_marktree, top_row, 0, state->itr)) {
     return false;
   }
@@ -496,6 +506,11 @@ bool decor_redraw_line(win_T *wp, int row, DecorState *state)
 
   if (cur_end != 0 || fut_beg != count) {
     return true;
+  }
+
+  if (!state->itr_valid) {
+    marktree_itr_get(wp->w_buffer->b_marktree, row, 0, state->itr);
+    state->itr_valid = true;
   }
 
   MTKey k = marktree_itr_current(state->itr);

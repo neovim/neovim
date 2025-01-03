@@ -96,6 +96,7 @@ typedef struct {
   TriState spell;
 
   bool running_decor_provider;
+  bool itr_valid;
 } DecorState;
 
 EXTERN DecorState decor_state INIT( = { 0 });
