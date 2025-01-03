@@ -95,6 +95,7 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
   MTKey mark = { { row, col }, ns_id, id, flags, decor.data };
 
   marktree_put(buf->b_marktree, mark, end_row, end_col, end_right_gravity);
+  decor_state_invalidate(buf);
 
 revised:
   if (decor_flags || decor.ext) {
@@ -184,6 +185,8 @@ void extmark_del(buf_T *buf, MarkTreeIter *itr, MTKey key, bool restore)
     }
   }
 
+  decor_state_invalidate(buf);
+
   // TODO(bfredl): delete it from current undo header, opportunistically?
 }
 
@@ -235,6 +238,10 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
     } else {
       map_del(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, NULL);
     }
+  }
+
+  if (marks_cleared_any) {
+    decor_state_invalidate(buf);
   }
 
   return marks_cleared_any;
