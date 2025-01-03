@@ -197,6 +197,22 @@ local function setup(bufnr)
     -- `on_detach` also runs on buffer reload (`:e`).
     -- Ensure `bufstate` and hooks are cleared to avoid duplication or leftover states.
     on_detach = function()
+      for _, client in
+        ipairs(vim.lsp.get_clients({
+          bufnr = bufnr,
+          method = ms.textDocument_foldingRange,
+        }))
+      do
+        for id, req in pairs(client.requests) do
+          if
+            req.type == 'pending'
+            and req.bufnr == bufnr
+            and req.method == ms.textDocument_foldingRange
+          then
+            client:cancel_request(id)
+          end
+        end
+      end
       bufstates[bufnr] = nil
       api.nvim_clear_autocmds({ buffer = bufnr, group = augroup_setup })
     end,
