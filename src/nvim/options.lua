@@ -7,7 +7,7 @@
 --- @field alias? string|string[]
 --- @field short_desc? string|fun(): string
 --- @field varname? string
---- @field type vim.option_type|vim.option_type[]
+--- @field type vim.option_type
 --- @field immutable? boolean
 --- @field list? 'comma'|'onecomma'|'commacolon'|'onecommacolon'|'flags'|'flagscomma'
 --- @field scope vim.option_scope[]
