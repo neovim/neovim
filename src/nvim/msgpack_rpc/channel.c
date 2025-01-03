@@ -221,8 +221,7 @@ static size_t receive_msgpack(RStream *stream, const char *rbuf, size_t c, void 
   if (eof) {
     channel_close(channel->id, kChannelPartRpc, NULL);
     char buf[256];
-    snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the client",
-             channel->id);
+    snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the peer", channel->id);
     chan_close_with_error(channel, buf, LOGLVL_INF);
   }
 
