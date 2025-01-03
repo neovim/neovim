@@ -373,6 +373,9 @@ These existing features changed their behavior.
   more emoji characters than before, including those encoded with multiple
   emoji codepoints combined with ZWJ (zero width joiner) codepoints.
 
+  This also applies to :terminal output, where width of cells will be calculated
+  using the upgraded implementation.
+
 • Custom highlights in 'rulerformat', 'statuscolumn', 'statusline', 'tabline',
   'winbar' and the number column (through |:sign-define| `numhl`) now combine
   with their respective highlight groups, as opposed to |hl-Normal|.

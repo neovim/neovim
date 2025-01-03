@@ -4,6 +4,7 @@
 #include "vterm.h"
 
 #include <stdarg.h>
+#include "nvim/mbyte.h"
 
 #if defined(__GNUC__)
 # define INTERNAL __attribute__((visibility("internal")))
@@ -101,8 +102,10 @@ struct VTermState
   enum { MOUSE_X10, MOUSE_UTF8, MOUSE_SGR, MOUSE_RXVT } mouse_protocol;
 
   /* Last glyph output, for Unicode recombining purposes */
-  uint32_t *combine_chars;
-  size_t combine_chars_size; // Number of ELEMENTS in the above
+  char grapheme_buf[MAX_SCHAR_SIZE];
+  size_t grapheme_len;
+  uint32_t grapheme_last;  // last added UTF-32 char
+  GraphemeState grapheme_state;
   int combine_width; // The width of the glyph above
   VTermPos combine_pos;   // Position before movement
 
@@ -291,8 +294,5 @@ void vterm_state_push_output_sprintf_CSI(VTermState *vts, const char *format, ..
 void vterm_screen_free(VTermScreen *screen);
 
 VTermEncoding *vterm_lookup_encoding(VTermEncodingType type, char designation);
-
-int vterm_unicode_width(uint32_t codepoint);
-int vterm_unicode_is_combining(uint32_t codepoint);
 
 #endif
