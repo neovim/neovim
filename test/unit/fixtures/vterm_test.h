@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #include "nvim/macros_defs.h"
-#include "vterm/vterm.h"
+#include "nvim/vterm/vterm.h"
 
 int parser_text(const char bytes[], size_t len, void *user);
 int parser_csi(const char *leader, const long args[], int argcount, const char *intermed,

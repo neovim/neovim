@@ -361,8 +361,8 @@ file(MAKE_DIRECTORY ${TOUCHES_DIR} ${GENERATED_DIR} ${GENERATED_INCLUDES_DIR})
 
 file(GLOB NVIM_SOURCES CONFIGURE_DEPENDS *.c)
 file(GLOB NVIM_HEADERS CONFIGURE_DEPENDS *.h)
-file(GLOB EXTERNAL_SOURCES CONFIGURE_DEPENDS ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../vterm/*.c)
-file(GLOB EXTERNAL_HEADERS CONFIGURE_DEPENDS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../vterm/*.h)
+file(GLOB EXTERNAL_SOURCES CONFIGURE_DEPENDS ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c)
+file(GLOB EXTERNAL_HEADERS CONFIGURE_DEPENDS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h)
 
 file(GLOB NLUA0_SOURCES CONFIGURE_DEPENDS ../mpack/*.c)
 
@@ -373,13 +373,17 @@ if(PREFER_LUA)
   target_compile_definitions(main_lib INTERFACE NVIM_VENDOR_BIT)
 endif()
 
+file(GLOB VTERM_SOURCES CONFIGURE_DEPENDS vterm/*.c)
+file(GLOB VTERM_HEADERS CONFIGURE_DEPENDS vterm/*.h)
 # Inlined external projects, we don't maintain it. #9306
 if(MSVC)
   set_source_files_properties(
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_OPTIONS "-wd4090;-wd4244;-wd4267")
+  set_source_files_properties(${VTERM_SOURCES} PROPERTIES COMPILE_OPTIONS "-wd4090;-wd4244;-wd4267")
 else()
   set_source_files_properties(
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_OPTIONS "-Wno-conversion;-Wno-missing-noreturn;-Wno-missing-format-attribute;-Wno-double-promotion;-Wno-strict-prototypes;-Wno-misleading-indentation;-Wno-sign-compare;-Wno-implicit-fallthrough;-Wno-missing-prototypes;-Wno-missing-field-initializers")
+  set_source_files_properties(${VTERM_SOURCES} PROPERTIES COMPILE_OPTIONS "-Wno-conversion;-Wno-missing-noreturn;-Wno-missing-format-attribute;-Wno-double-promotion;-Wno-strict-prototypes;-Wno-misleading-indentation;-Wno-sign-compare;-Wno-implicit-fallthrough;-Wno-missing-prototypes;-Wno-missing-field-initializers")
 endif()
 
 list(APPEND NLUA0_SOURCES ${PROJECT_SOURCE_DIR}/src/nlua0.c)
@@ -391,6 +395,7 @@ foreach(subdir
         msgpack_rpc
         tui
         tui/termkey
+        vterm
         event
         eval
         lua
@@ -715,7 +720,8 @@ target_sources(main_lib INTERFACE
   ${NVIM_SOURCES}
   ${NVIM_HEADERS}
   ${EXTERNAL_SOURCES}
-  ${EXTERNAL_HEADERS})
+  ${EXTERNAL_HEADERS}
+)
 
 if(WIN32)
   # add windows resource file pointing to the neovim icon
@@ -844,7 +850,9 @@ add_glob_target(
   COMMAND ${CLANG_TIDY_PRG}
   FILES ${LINT_NVIM_SOURCES}
   FLAGS --quiet
-  EXCLUDE ${EXCLUDE_CLANG_TIDY})
+  EXCLUDE ${EXCLUDE_CLANG_TIDY}
+  ${VTERM_SOURCES} ${VTERM_HEADERS}
+)
 
 # The checks we ignore are meant to be removed eventually, but we can only
 # enable each warning after we fix all instances of that specific warning as to
@@ -870,7 +878,8 @@ add_glob_target(
   -clang-analyzer-unix.Stream,
   ${CLANG_ANALYZER_IGNORE}
   '
-  EXCLUDE ${EXCLUDE_CLANG_TIDY})
+  EXCLUDE ${EXCLUDE_CLANG_TIDY}
+  ${VTERM_SOURCES} ${VTERM_HEADERS})
 
 add_custom_target(copy_compile_commands
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/compile_commands.json ${PROJECT_SOURCE_DIR}/compile_commands.json)
@@ -889,7 +898,9 @@ add_glob_target(
   FLAGS --output=${LINT_OUTPUT_FORMAT}
   FILES ${LINT_NVIM_SOURCES}
   EXCLUDE
-    tui/terminfo_defs.h)
+    tui/terminfo_defs.h
+  ${VTERM_SOURCES} ${VTERM_HEADERS}
+  )
 
 set(UNCRUSTIFY_PRG ${DEPS_BIN_DIR}/uncrustify)
 set(UNCRUSTIFY_CONFIG ${PROJECT_SOURCE_DIR}/src/uncrustify.cfg)
