@@ -821,7 +821,7 @@ end
 --- @private
 --- @return table<string, Range6[][]>
 function LanguageTree:_get_injections()
-  if not self._injection_query then
+  if not self._injection_query or #self._injection_query.captures == 0 then
     return {}
   end
 
