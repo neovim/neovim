@@ -106,20 +106,15 @@ describe('vim.ui_attach', function()
   end)
 
   it('does not crash on exit', function()
-    fn.system({
-      n.nvim_prog,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+    local p = n.spawn_wait(
       '--cmd',
       [[ lua ns = vim.api.nvim_create_namespace 'testspace' ]],
       '--cmd',
       [[ lua vim.ui_attach(ns, {ext_popupmenu=true}, function() end) ]],
       '--cmd',
-      'quitall!',
-    })
-    eq(0, n.eval('v:shell_error'))
+      'quitall!'
+    )
+    eq(0, p.status)
   end)
 
   it('can receive accurate message kinds even if they are history', function()
