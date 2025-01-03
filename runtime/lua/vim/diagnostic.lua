@@ -257,6 +257,10 @@ end
 --- A table mapping |diagnostic-severity| to the highlight group used for the
 --- whole line the sign is placed in.
 --- @field linehl? table<vim.diagnostic.Severity,string>
+---
+--- A table mapping |diagnostic-severity| to the highlight group used for the
+--- highlight the sign column text when cursor is on target line and 'cursorline' is enabled.
+--- @field cursorlinehl table<vim.diagnostic.Severity,string>
 
 --- @class vim.diagnostic.Opts.Jump
 ---
@@ -1461,6 +1465,7 @@ M.handlers.signs = {
 
     local numhl = opts.signs.numhl or {}
     local linehl = opts.signs.linehl or {}
+    local curlinehl = opts.signs.cursorlinehl or {}
 
     local line_count = api.nvim_buf_line_count(bufnr)
 
@@ -1471,6 +1476,7 @@ M.handlers.signs = {
           sign_hl_group = sign_highlight_map[diagnostic.severity],
           number_hl_group = numhl[diagnostic.severity],
           line_hl_group = linehl[diagnostic.severity],
+          cursorline_hl_group = vim.wo.cursorline and curlinehl[diagnostic.severity] or nil,
           priority = get_priority(diagnostic.severity),
         })
       end
