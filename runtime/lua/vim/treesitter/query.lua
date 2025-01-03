@@ -497,6 +497,7 @@ predicate_handlers['any-vim-match?'] = predicate_handlers['any-match?']
 ---@class vim.treesitter.query.TSMetadata
 ---@field range? Range
 ---@field conceal? string
+---@field bo.commentstring? string
 ---@field [integer]? vim.treesitter.query.TSMetadata
 ---@field [string]? integer|string
 
