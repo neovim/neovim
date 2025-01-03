@@ -902,8 +902,8 @@ function Query:iter_captures(node, source, start, stop)
 
   local cursor = vim._create_ts_querycursor(node, self.query, start, stop, { match_limit = 256 })
 
-  local apply_directives = memoize(match_id_hash, self.apply_directives, true)
-  local match_preds = memoize(match_id_hash, self.match_preds, true)
+  local apply_directives = memoize(match_id_hash, self.apply_directives, false)
+  local match_preds = memoize(match_id_hash, self.match_preds, false)
 
   local function iter(end_line)
     local capture, captured_node, match = cursor:next_capture()
