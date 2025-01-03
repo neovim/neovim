@@ -3,7 +3,7 @@
 " Maintainer:		Aliaksei Budavei <0x000c70 AT gmail DOT com>
 " Former Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " Repository:		https://github.com/zzzyxwvut/java-vim.git
-" Last Change:		2024 Oct 10
+" Last Change:		2025 Jan 02
 
 " Please check ":help java.vim" for comments on some of the options
 " available.
@@ -391,18 +391,32 @@ if !exists("g:java_ignore_javadoc") && (s:with_html || s:with_markdown) && g:mai
   if s:with_markdown
     try
       syntax include @javaMarkdown syntax/markdown.vim
-      let s:ff.WithMarkdown = s:ff.LeftConstant
+
+      try
+	syn clear markdownId markdownLineStart markdownH1 markdownH2 markdownHeadingRule markdownRule markdownCode markdownCodeBlock markdownIdDeclaration
+	let s:ff.WithMarkdown = s:ff.LeftConstant
+      catch /\<E28:/
+	call s:ReportOnce(v:exception)
+	let s:no_support = 1
+	unlet! g:java_ignore_markdown
+	let g:java_ignore_markdown = 28
+      endtry
     catch /\<E48[45]:/
       call s:ReportOnce(v:exception)
-      unlockvar s:with_markdown
-      let s:with_markdown = 0
-      lockvar s:with_markdown
-      hi clear markdownCode
-      hi clear markdownCodeBlock
-      hi clear markdownCodeDelimiter
-      hi clear markdownLinkDelimiter
+      let s:no_support = 1
     finally
       unlet! b:current_syntax
+
+      if exists("s:no_support")
+	unlet s:no_support
+	unlockvar s:with_markdown
+	let s:with_markdown = 0
+	lockvar s:with_markdown
+	hi clear markdownCode
+	hi clear markdownCodeBlock
+	hi clear markdownCodeDelimiter
+	hi clear markdownLinkDelimiter
+      endif
     endtry
   endif
 
@@ -422,7 +436,6 @@ if !exists("g:java_ignore_javadoc") && (s:with_html || s:with_markdown) && g:mai
     exec 'syn region javaMarkdownCommentTitle contained matchgroup=javaMarkdownComment start="\%(///.*\r\=\n\s*\)\@' . s:ff.Peek('80', '') . '<!///\s*\%({@return\>\)\@=" matchgroup=javaMarkdownCommentTitle end="}\%(\s*\.*\)*" contains=javaMarkdownShortcutLink,@javaMarkdown,javaMarkdownCommentMask,javaTodo,@Spell,@javaDocTags,javaTitleSkipBlock'
     exec 'syn region javaMarkdownCommentTitle contained matchgroup=javaMarkdownComment start="\%(///.*\r\=\n\s*\)\@' . s:ff.Peek('80', '') . '<!///\s*\%({@summary\>\)\@=" matchgroup=javaMarkdownCommentTitle end="}" contains=javaMarkdownShortcutLink,@javaMarkdown,javaMarkdownCommentMask,javaTodo,@Spell,@javaDocTags,javaTitleSkipBlock'
 
-    syn clear markdownId markdownLineStart markdownH1 markdownH2 markdownHeadingRule markdownRule markdownCode markdownCodeBlock markdownIdDeclaration
     " REDEFINE THE MARKDOWN ITEMS ANCHORED WITH "^", OBSERVING THE
     " DEFINITION ORDER.
     syn match markdownLineStart		contained "^\s*///\s*[<@]\@!" contains=@markdownBlock,javaMarkdownCommentTitle,javaMarkdownCommentMask nextgroup=@markdownBlock,htmlSpecialChar
