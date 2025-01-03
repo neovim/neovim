@@ -353,6 +353,7 @@ local extension = {
   cql = 'cqlang',
   crm = 'crm',
   cr = 'crystal',
+  cake = 'cs',
   csx = 'cs',
   cs = 'cs',
   csc = 'csc',
