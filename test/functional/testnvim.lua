@@ -501,7 +501,7 @@ end
 --- @return test.Session
 --- @overload fun(opts: test.new_argv.Opts): test.Session
 function M.clear(...)
-  M.set_session(M.spawn_argv(false, ...))
+  M.set_session(M.new_session_keep(false, ...))
   return M.get_session()
 end
 
@@ -510,8 +510,8 @@ end
 --- @param keep boolean Don't close the current global session.
 --- @param ... string Nvim CLI args
 --- @return test.Session
---- @overload fun(opts: test.new_argv.Opts): test.Session
-function M.spawn_argv(keep, ...)
+--- @overload fun(keep: boolean, opts: test.new_argv.Opts): test.Session
+function M.new_session_keep(keep, ...)
   local argv, env, io_extra = M.new_argv(...)
   return M.new_session(argv, nil, env, keep, io_extra)
 end
