@@ -204,9 +204,9 @@ function ProcStream:on_read(stream, cb, err, chunk)
         self.stdout = self.stdout .. chunk
         -- Convert CRLF => LF.
         self.stdout = self.stdout:gsub('\r\n', '\n')
+        self.output = self.stderr .. self.stdout
       end
 
-      self.output = self.stderr .. self.stdout
       -- Convert CRLF => LF.
       self.output = self.output:gsub('\r\n', '\n')
     end
