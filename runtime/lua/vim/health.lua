@@ -407,6 +407,9 @@ function M._check(mods, plugin_names)
   -- Clear the 'Running healthchecks...' message.
   vim.cmd.redraw()
   vim.print('')
+
+  -- Once we're done writing checks, set nomodifiable.
+  vim.bo[bufnr].modifiable = false
 end
 
 return M
