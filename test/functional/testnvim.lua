@@ -493,7 +493,7 @@ end
 --- Does not replace the current global session, unlike `clear()`.
 ---
 --- @param keep boolean (default: false) Don't close the current global session.
---- @param ... string Nvim CLI args
+--- @param ... string Nvim CLI args (or see overload)
 --- @return test.Session
 --- @overload fun(keep: boolean, opts: test.session.Opts): test.Session
 function M.new_session(keep, ...)
@@ -501,7 +501,7 @@ function M.new_session(keep, ...)
     M.check_close()
   end
 
-  local argv, env, io_extra = M.new_argv(...)
+  local argv, env, io_extra = M._new_argv(...)
 
   local proc = ProcStream.spawn(argv, env, io_extra)
   return Session.new(proc)
@@ -509,14 +509,14 @@ end
 
 --- Starts a (non-RPC, `--headless --listen "Tx"`) Nvim process, waits for exit, and returns result.
 ---
---- @param ... string Nvim CLI args
+--- @param ... string Nvim CLI args, or `test.session.Opts` table.
 --- @return test.ProcStream
 --- @overload fun(opts: test.session.Opts): test.ProcStream
 function M.spawn_wait(...)
   local opts = type(...) == 'string' and { args = { ... } } or ...
   opts.args_rm = opts.args_rm and opts.args_rm or {}
   table.insert(opts.args_rm, '--embed')
-  local argv, env, io_extra = M.new_argv(opts)
+  local argv, env, io_extra = M._new_argv(opts)
   local proc = ProcStream.spawn(argv, env, io_extra)
   proc.collect_text = true
   proc:read_start()
@@ -537,14 +537,16 @@ end
 --- Used for stdin_fd, see `:help ui-option`
 --- @field io_extra? uv.uv_pipe_t
 
+--- @private
+---
 --- Builds an argument list for use in `new_session()`, `clear()`, and `spawn_wait()`.
 ---
---- @param ... string Nvim CLI args
+--- @param ... string Nvim CLI args, or `test.session.Opts` table.
 --- @return string[]
 --- @return string[]?
 --- @return uv.uv_pipe_t?
 --- @overload fun(opts: test.session.Opts): string[], string[]?, uv.uv_pipe_t?
-function M.new_argv(...)
+function M._new_argv(...)
   --- @type test.session.Opts|string
   local opts = select(1, ...)
   local merge = type(opts) ~= 'table' and true or opts.merge ~= false

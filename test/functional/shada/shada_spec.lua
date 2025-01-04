@@ -269,13 +269,10 @@ end)
 
 describe('ShaDa support code', function()
   it('does not write NONE file', function()
-    local session = n.new_session(
-      false,
-      {
-        merge = false,
-        args = { '-u', 'NONE', '-i', 'NONE', '--embed', '--headless', '--cmd', 'qall' },
-      }
-    )
+    local session = n.new_session(false, {
+      merge = false,
+      args = { '-u', 'NONE', '-i', 'NONE', '--embed', '--headless', '--cmd', 'qall' },
+    })
     session:close()
     eq(nil, uv.fs_stat('NONE'))
     eq(nil, uv.fs_stat('NONE.tmp.a'))
