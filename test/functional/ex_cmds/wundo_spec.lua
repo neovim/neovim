@@ -5,7 +5,6 @@ local n = require('test.functional.testnvim')()
 local command = n.command
 local clear = n.clear
 local eval = n.eval
-local nvim_prog = n.nvim_prog
 local set_session = n.set_session
 
 describe(':wundo', function()
@@ -23,7 +22,7 @@ end)
 
 describe('u_* functions', function()
   it('safely fail on new, non-empty buffer', function()
-    local session = n.new_session_keep(false, {
+    local session = n.new_session(false, {
       args = {
         '-c',
         'set undodir=. undofile',

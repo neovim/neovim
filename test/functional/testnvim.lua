@@ -482,9 +482,9 @@ end
 ---
 --- @param ... string Nvim CLI args
 --- @return test.Session
---- @overload fun(opts: test.new_argv.Opts): test.Session
+--- @overload fun(opts: test.session.Opts): test.Session
 function M.clear(...)
-  M.set_session(M.new_session_keep(false, ...))
+  M.set_session(M.new_session(false, ...))
   return M.get_session()
 end
 
@@ -495,8 +495,8 @@ end
 --- @param keep boolean (default: false) Don't close the current global session.
 --- @param ... string Nvim CLI args
 --- @return test.Session
---- @overload fun(keep: boolean, opts: test.new_argv.Opts): test.Session
-function M.new_session_keep(keep, ...)
+--- @overload fun(keep: boolean, opts: test.session.Opts): test.Session
+function M.new_session(keep, ...)
   if not keep then
     M.check_close()
   end
@@ -511,7 +511,7 @@ end
 ---
 --- @param ... string Nvim CLI args
 --- @return test.ProcStream
---- @overload fun(opts: test.new_argv.Opts): test.ProcStream
+--- @overload fun(opts: test.session.Opts): test.ProcStream
 function M.spawn_wait(...)
   local opts = type(...) == 'string' and { args = { ... } } or ...
   opts.args_rm = opts.args_rm and opts.args_rm or {}
@@ -525,7 +525,7 @@ function M.spawn_wait(...)
   return proc
 end
 
---- @class test.new_argv.Opts
+--- @class test.session.Opts
 --- Nvim CLI args
 --- @field args? string[]
 --- Remove these args from the default `nvim_argv` args set. Ignored if `merge=false`.
@@ -537,15 +537,15 @@ end
 --- Used for stdin_fd, see `:help ui-option`
 --- @field io_extra? uv.uv_pipe_t
 
---- Builds an argument list for use in clear().
+--- Builds an argument list for use in `new_session()`, `clear()`, and `spawn_wait()`.
 ---
---- @param ... string See clear().
+--- @param ... string Nvim CLI args
 --- @return string[]
 --- @return string[]?
 --- @return uv.uv_pipe_t?
---- @overload fun(opts: test.new_argv.Opts): string[], string[]?, uv.uv_pipe_t?
+--- @overload fun(opts: test.session.Opts): string[], string[]?, uv.uv_pipe_t?
 function M.new_argv(...)
-  --- @type test.new_argv.Opts|string
+  --- @type test.session.Opts|string
   local opts = select(1, ...)
   local merge = type(opts) ~= 'table' and true or opts.merge ~= false
 

@@ -32,10 +32,10 @@ describe('channels', function()
   end)
 
   pending('can connect to socket', function()
-    local server = n.new_session_keep(true)
+    local server = n.new_session(true)
     set_session(server)
     local address = fn.serverlist()[1]
-    local client = n.new_session_keep(true)
+    local client = n.new_session(true)
     set_session(client)
     source(init)
 
@@ -62,7 +62,7 @@ describe('channels', function()
 
   it('dont crash due to garbage in rpc #23781', function()
     local client = get_session()
-    local server = n.new_session_keep(true)
+    local server = n.new_session(true)
     set_session(server)
     local address = fn.serverlist()[1]
     set_session(client)

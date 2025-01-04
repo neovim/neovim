@@ -51,10 +51,10 @@ describe('fileio', function()
   end)
 
   local args = { '--clean', '--cmd', 'set nofsync directory=Xtest_startup_swapdir' }
-  local args2 = { '--embed', '--cmd', 'set nofsync directory=Xtest_startup_swapdir' }
   --- Starts a new nvim session and returns an attached screen.
   local function startup()
-    local screen_nvim = n.new_session_keep(false, { args = args2, merge = false })
+    local argv = vim.iter({ args, '--embed' }):flatten():totable()
+    local screen_nvim = n.new_session(false, { args = argv, merge = false })
     set_session(screen_nvim)
     local screen = Screen.new(70, 10)
     screen:set_default_attr_ids({

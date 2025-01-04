@@ -26,7 +26,7 @@ describe('screen', function()
   }
 
   before_each(function()
-    local screen_nvim = n.new_session_keep(false, { args = nvim_argv, merge = false })
+    local screen_nvim = n.new_session(false, { args = nvim_argv, merge = false })
     set_session(screen_nvim)
     screen = Screen.new()
   end)
@@ -766,7 +766,7 @@ describe('Screen default colors', function()
       'colorscheme vim',
       '--embed',
     }
-    local screen_nvim = n.new_session_keep(false, { args = nvim_argv, merge = false })
+    local screen_nvim = n.new_session(false, { args = nvim_argv, merge = false })
     set_session(screen_nvim)
     screen = Screen.new(53, 14, { rgb = true, ext_termcolors = termcolors or nil })
   end

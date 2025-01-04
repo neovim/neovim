@@ -46,7 +46,7 @@ describe('Remote', function()
       -- to wait for the remote instance to exit and calling jobwait blocks
       -- the event loop. If the server event loop is blocked, it can't process
       -- our incoming --remote calls.
-      local client_starter = n.new_session_keep(true)
+      local client_starter = n.new_session(true)
       set_session(client_starter)
       -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
       eq(

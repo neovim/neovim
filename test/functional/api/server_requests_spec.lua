@@ -282,7 +282,7 @@ describe('server -> client', function()
   describe('connecting to another (peer) nvim', function()
     local function connect_test(server, mode, address)
       local serverpid = fn.getpid()
-      local client = n.new_session_keep(true)
+      local client = n.new_session(true)
       set_session(client)
 
       local clientpid = fn.getpid()
@@ -310,7 +310,7 @@ describe('server -> client', function()
     end
 
     it('via named pipe', function()
-      local server = n.new_session_keep(false)
+      local server = n.new_session(false)
       set_session(server)
       local address = fn.serverlist()[1]
       local first = string.sub(address, 1, 1)
@@ -319,7 +319,7 @@ describe('server -> client', function()
     end)
 
     it('via ipv4 address', function()
-      local server = n.new_session_keep(false)
+      local server = n.new_session(false)
       set_session(server)
       local status, address = pcall(fn.serverstart, '127.0.0.1:')
       if not status then
@@ -330,7 +330,7 @@ describe('server -> client', function()
     end)
 
     it('via ipv6 address', function()
-      local server = n.new_session_keep(false)
+      local server = n.new_session(false)
       set_session(server)
       local status, address = pcall(fn.serverstart, '::1:')
       if not status then
@@ -341,7 +341,7 @@ describe('server -> client', function()
     end)
 
     it('via hostname', function()
-      local server = n.new_session_keep(false)
+      local server = n.new_session(false)
       set_session(server)
       local address = fn.serverstart('localhost:')
       eq('localhost:', string.sub(address, 1, 10))
@@ -349,10 +349,10 @@ describe('server -> client', function()
     end)
 
     it('does not crash on receiving UI events', function()
-      local server = n.new_session_keep(false)
+      local server = n.new_session(false)
       set_session(server)
       local address = fn.serverlist()[1]
-      local client = n.new_session_keep(true)
+      local client = n.new_session(true)
       set_session(client)
 
       local id = fn.sockconnect('pipe', address, { rpc = true })
