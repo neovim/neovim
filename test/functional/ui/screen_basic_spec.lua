@@ -67,6 +67,7 @@ local function screen_tests(linegrid)
 
   describe('bell/visual bell', function()
     it('is forwarded to the UI', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       feed('<left>')
       screen:expect(function()
         eq(true, screen.bell)
@@ -84,6 +85,7 @@ local function screen_tests(linegrid)
 
   describe(':set title', function()
     it('is forwarded to the UI', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       local expected = 'test-title'
       command('set titlestring=' .. expected)
       command('set title')
@@ -101,6 +103,7 @@ local function screen_tests(linegrid)
 
   describe(':set icon', function()
     it('is forwarded to the UI', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       local expected = 'test-icon'
       command('set iconstring=' .. expected)
       command('set icon')
@@ -118,6 +121,7 @@ local function screen_tests(linegrid)
 
   describe('statusline', function()
     it('is redrawn after <c-l>', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       command('set laststatus=2')
       screen:expect([[
         ^                                                     |
@@ -167,6 +171,7 @@ local function screen_tests(linegrid)
   describe('window', function()
     describe('split', function()
       it('horizontal', function()
+        t.skip_forced_multigrid_non_linegrid(linegrid)
         command('sp')
         screen:expect([[
           ^                                                     |
@@ -180,6 +185,7 @@ local function screen_tests(linegrid)
       end)
 
       it('horizontal and resize', function()
+        t.skip_forced_multigrid_non_linegrid(linegrid)
         command('sp')
         command('resize 8')
         screen:expect([[
@@ -194,6 +200,7 @@ local function screen_tests(linegrid)
       end)
 
       it('horizontal and vertical', function()
+        t.skip_forced_multigrid_non_linegrid(linegrid)
         command('sp')
         command('vsp')
         command('vsp')
@@ -222,6 +229,7 @@ local function screen_tests(linegrid)
 
   describe('tabs', function()
     it('tabnew creates a new buffer', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       command('sp')
       command('vsp')
       command('vsp')
@@ -258,6 +266,7 @@ local function screen_tests(linegrid)
     end)
 
     it('tabline is redrawn after messages', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       command('tabnew')
       screen:expect([[
         {4: [No Name] }{2: [No Name] }{3:                              }{4:X}|
@@ -299,6 +308,7 @@ local function screen_tests(linegrid)
     end)
 
     it('redraws properly with :tab split right after scroll', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       feed('15Ofoo<esc>15Obar<esc>gg')
 
       command('vsplit')
@@ -328,6 +338,7 @@ local function screen_tests(linegrid)
     end)
 
     it('redraws unvisited tab #9152', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       insert('hello')
       -- create a tab without visiting it
       command('tabnew|tabnext')
@@ -350,6 +361,7 @@ local function screen_tests(linegrid)
 
   describe('insert mode', function()
     it('move to next line with <cr>', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       feed('iline 1<cr>line 2<cr>')
       screen:expect([[
         line 1                                               |
@@ -364,6 +376,7 @@ local function screen_tests(linegrid)
   describe('normal mode', function()
     -- https://code.google.com/p/vim/issues/detail?id=339
     it("setting 'ruler' doesn't reset the preferred column", function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       command('set virtualedit=')
       feed('i0123456<cr>789<esc>kllj')
       command('set ruler')
@@ -379,6 +392,7 @@ local function screen_tests(linegrid)
 
   describe('command mode', function()
     it('typing commands', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       feed(':ls')
       screen:expect([[
                                                              |
@@ -388,6 +402,7 @@ local function screen_tests(linegrid)
     end)
 
     it('execute command with multi-line output', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       feed(':ls<cr>')
       screen:expect([[
                                                              |
@@ -421,25 +436,28 @@ local function screen_tests(linegrid)
       command('sp')
       command('vsp')
       command('vsp')
-      screen:expect([[
-        and                 │and             │and            |
-        clearing            │clearing        │clearing       |
-        in                  │in              │in             |
-        split               │split           │split          |
-        windows             │windows         │windows        |
-        ^                    │                │               |
-        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
-        clearing                                             |
-        in                                                   |
-        split                                                |
-        windows                                              |
-                                                             |
-        {3:[No Name] [+]                                        }|
-                                                             |
-      ]])
+      if not (t.is_forced_multigrid() and not linegrid) then
+        screen:expect([[
+          and                 │and             │and            |
+          clearing            │clearing        │clearing       |
+          in                  │in              │in             |
+          split               │split           │split          |
+          windows             │windows         │windows        |
+          ^                    │                │               |
+          {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
+          clearing                                             |
+          in                                                   |
+          split                                                |
+          windows                                              |
+                                                               |
+          {3:[No Name] [+]                                        }|
+                                                               |
+        ]])
+      end
     end)
 
     it('only affects the current scroll region', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       feed('6k')
       screen:expect([[
         ^scrolling           │and             │and            |
@@ -564,6 +582,7 @@ local function screen_tests(linegrid)
 
   describe('resize', function()
     it('rebuilds the whole screen', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       screen:try_resize(25, 5)
       feed('iresize')
       screen:expect([[
@@ -574,6 +593,7 @@ local function screen_tests(linegrid)
     end)
 
     it('has minimum width/height values', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       feed('iresize')
       screen:try_resize(1, 1)
       screen:expect([[
@@ -589,6 +609,7 @@ local function screen_tests(linegrid)
     end)
 
     it('VimResized autocommand does not cause invalid UI events #20692 #20759', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       screen:try_resize(25, 5)
       feed('iresize<Esc>')
       command([[autocmd VimResized * redrawtabline]])
@@ -612,32 +633,60 @@ local function screen_tests(linegrid)
     end)
 
     it('messages from the same Ex command as resize are visible #22225', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       feed(':set columns=20 | call<CR>')
-      screen:expect([[
-                            |*9
-        {1:                    }|
-        {8:E471: Argument requi}|
-        {8:red}                 |
-        {7:Press ENTER or type }|
-        {7:command to continue}^ |
-      ]])
-      feed('<CR>')
-      screen:expect([[
-        ^                    |
-        {0:~                   }|*12
-                            |
-      ]])
+      if t.is_forced_multigrid() then
+        -- The ~ are not removed when using multigrid
+        screen:expect([[
+                              |
+          {0:~                   }|*8
+          {1:                    }|
+          {8:E471: Argument requi}|
+          {8:red}                 |
+          {7:Press ENTER or type }|
+          {7:command to continue}^ |
+        ]])
+      else
+        screen:expect([[
+                              |*9
+          {1:                    }|
+          {8:E471: Argument requi}|
+          {8:red}                 |
+          {7:Press ENTER or type }|
+          {7:command to continue}^ |
+        ]])
+      end
       feed(':set columns=0<CR>')
-      screen:expect([[
-                            |
-        {0:~                   }|*7
-        {1:                    }|
-        {8:E594: Need at least }|
-        {8:12 columns: columns=}|
-        {8:0}                   |
-        {7:Press ENTER or type }|
-        {7:command to continue}^ |
-      ]])
+      if t.is_forced_multigrid() then
+        -- The ~ are not removed when using multigrid
+        screen:expect([[
+                              |
+          {0:~                   }|*4
+          {1:                    }|
+          {8:E471: Argument requi}|
+          {8:red}                 |
+          {7:Press ENTER or type }|
+          {8:E594: Need at least }|
+          {8:12 columns: columns=}|
+          {8:0}                   |
+          {7:Press ENTER or type }|
+          {7:command to continue}^ |
+        ]])
+      else
+        screen:expect([[
+                              |*5
+          {1:                    }|
+          {8:E471: Argument requi}|
+          {8:red}                 |
+          {7:Press ENTER or type }|
+          {8:E594: Need at least }|
+          {8:12 columns: columns=}|
+          {8:0}                   |
+          {7:Press ENTER or type }|
+          {7:command to continue}^ |
+        ]])
+      end
+
       feed('<CR>')
       screen:expect([[
         ^                    |
@@ -647,6 +696,7 @@ local function screen_tests(linegrid)
     end)
 
     it('clamps &cmdheight for current tabpage', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       command('set cmdheight=10 laststatus=2')
       screen:expect([[
         ^                                                     |
@@ -664,6 +714,7 @@ local function screen_tests(linegrid)
     end)
 
     it('clamps &cmdheight for another tabpage #31380', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       command('tabnew')
       command('set cmdheight=9 laststatus=2')
       screen:expect([[
@@ -702,6 +753,7 @@ local function screen_tests(linegrid)
 
   describe('press enter', function()
     it('does not crash on <F1> at “Press ENTER”', function()
+      t.skip_forced_multigrid_non_linegrid(linegrid)
       command('nnoremap <F1> :echo "TEST"<CR>')
       feed(':ls<CR>')
       screen:expect([[
@@ -723,6 +775,7 @@ local function screen_tests(linegrid)
 
   -- Regression test for #8357
   it('does not have artifacts after temporary chars in insert mode', function()
+    t.skip_forced_multigrid_non_linegrid(linegrid)
     command('set timeoutlen=10000')
     command('inoremap jk <esc>')
     feed('ifooj')

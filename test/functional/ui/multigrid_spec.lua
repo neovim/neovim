@@ -671,7 +671,7 @@ describe('ext_multigrid', function()
         {21:     }|
         {22:~    }|*4
       ]], float_pos={
-        [4] = {1001, "SE", 2, 16, 58, true, 50};
+        [4] = {1001, "SE", 2, 16, 58, true, 50, 1, 8, 48};
       }}
     end)
 
@@ -693,7 +693,7 @@ describe('ext_multigrid', function()
         {24: foo}|
         {21: bar}|
       ]], float_pos={
-        [4] = {-1, "NW", 2, 15, 55, false, 100};
+        [4] = {-1, "SW", 2, 14, 49, false, 100, 1, 12, 49};
       }}
       feed('<C-E><Esc>')
 
@@ -715,7 +715,7 @@ describe('ext_multigrid', function()
         {24:            oof}|
         {21:            rab}|
       ]], float_pos={
-        [4] = {-1, "NW", 2, 16, 45, false, 100};
+        [4] = {-1, "SW", 2, 15, 45, false, 100, 1, 13, 45};
       }}
       feed('<C-E><Esc>')
 
@@ -737,7 +737,7 @@ describe('ext_multigrid', function()
         {24: undefine       }|
         {21: unplace        }|
       ]], float_pos={
-        [4] = {-1, "SW", 1, 13, 5, false, 250};
+        [4] = {-1, "SW", 1, 13, 5, false, 250, 2, 11, 5};
       }}
     end)
 
@@ -1346,7 +1346,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "NW", 2, 2, 5, false, 250};
+      [6] = {-1, "NW", 2, 2, 5, false, 250, 2, 2, 5};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1420,7 +1420,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "NW", 4, 1, 63, false, 250};
+      [6] = {-1, "NW", 4, 1, 63, false, 250, 2, 1, 63};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1542,7 +1542,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "SW", 4, 9, 0, false, 250};
+      [6] = {-1, "SW", 4, 9, 0, false, 250, 2, 8, 0};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -1674,7 +1674,7 @@ describe('ext_multigrid', function()
     ## grid 6
       {21: Copy }|
     ]], float_pos={
-      [6] = {-1, "NW", 4, 10, 0, false, 250};
+      [6] = {-1, "NW", 4, 10, 0, false, 250, 2, 10, 0};
     }}
     feed('<Down><CR>')
     screen:expect{grid=[[
@@ -2407,6 +2407,22 @@ describe('ext_multigrid', function()
 
   it('with winbar', function()
     command('split')
+    local win_pos ={
+      [2] = {
+        height = 5,
+        startcol = 0,
+        startrow = 7,
+        width = 53,
+        win = 1000
+      },
+      [4] = {
+        height = 6,
+        startcol = 0,
+        startrow = 0,
+        width = 53,
+        win = 1001
+      }
+    }
     screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|*6
@@ -2428,15 +2444,7 @@ describe('ext_multigrid', function()
     }, win_viewport_margins={
       [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
       [4] = {win = 1001, top = 0, bottom = 0, left = 0, right = 0};
-    }}
-
-    -- XXX: hack to get notifications. Could use next_msg() also.
-    local orig_handle_win_pos = screen._handle_win_pos
-    local win_pos = {}
-    function screen._handle_win_pos(self, grid, win, startrow, startcol, width, height)
-      table.insert(win_pos, {grid, win, startrow, startcol, width, height})
-      orig_handle_win_pos(self, grid, win, startrow, startcol, width, height)
-    end
+    }, win_pos = win_pos }
 
     command('setlocal winbar=very%=bar')
     screen:expect{grid=[[
@@ -2461,8 +2469,7 @@ describe('ext_multigrid', function()
     }, win_viewport_margins={
       [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
       [4] = {win = 1001, top = 1, bottom = 0, left = 0, right = 0};
-    }}
-    eq({}, win_pos)
+    }, win_pos = win_pos }
 
     command('setlocal winbar=')
     screen:expect{grid=[[
@@ -2486,8 +2493,7 @@ describe('ext_multigrid', function()
     }, win_viewport_margins={
       [2] = {win = 1000, top = 0, bottom = 0, left = 0, right = 0};
       [4] = {win = 1001, top = 0, bottom = 0, left = 0, right = 0};
-    }}
-    eq({}, win_pos)
+    }, win_pos = win_pos }
   end)
 
   it('with winbar dragging statusline with mouse works correctly', function()

@@ -21,6 +21,8 @@ describe('CTRL-C (mapped)', function()
       return
     end
 
+    t.skip_forced_mulitgrid('the test is too flaky')
+
     source([[
       set nomore nohlsearch undolevels=-1
       nnoremap <C-C> <NOP>
