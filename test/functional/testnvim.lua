@@ -455,23 +455,6 @@ function M.check_close()
   session = nil
 end
 
---- Starts a new Nvim process with the given args and returns a msgpack-RPC session.
----
---- @param keep boolean (default: false) Don't close the current global session.
---- @param argv string[] Nvim CLI args
---- @param merge boolean? true: merge args with the default args. false: use only the provided args.
---- @param env string[]? List of "key=value" environment variables.
---- @param io_extra uv.uv_pipe_t? used for stdin_fd, see :help ui-option
---- @return test.Session
-function M.new_session(keep, argv, merge, env, io_extra)
-  if not keep then
-    M.check_close()
-  end
-
-  local proc = ProcStream.spawn(merge and M.merge_args(prepend_argv, argv) or argv, env, io_extra)
-  return Session.new(proc)
-end
-
 -- Creates a new Session connected by domain socket (named pipe) or TCP.
 function M.connect(file_or_address)
   local addr, port = string.match(file_or_address, '(.*):(%d+)')
@@ -482,7 +465,7 @@ end
 
 --- Starts a new, global Nvim session and clears the current one.
 ---
---- Note: Use `new_session()` to start a session without clearing the current one.
+--- Note: Use `new_session()` to start a session without replacing the current one.
 ---
 --- Parameters are interpreted as startup args, OR a map with these keys:
 --- - args:       List: Args appended to the default `nvim_argv` set.
@@ -505,15 +488,23 @@ function M.clear(...)
   return M.get_session()
 end
 
---- Same as clear(), but doesn't replace the current global session.
+--- Starts a new Nvim process with the given args and returns a msgpack-RPC session.
+---
+--- Does not replace the current global session, unlike `clear()`.
 ---
 --- @param keep boolean (default: false) Don't close the current global session.
 --- @param ... string Nvim CLI args
 --- @return test.Session
 --- @overload fun(keep: boolean, opts: test.new_argv.Opts): test.Session
 function M.new_session_keep(keep, ...)
+  if not keep then
+    M.check_close()
+  end
+
   local argv, env, io_extra = M.new_argv(...)
-  return M.new_session(keep, argv, nil, env, io_extra)
+
+  local proc = ProcStream.spawn(argv, env, io_extra)
+  return Session.new(proc)
 end
 
 --- Starts a (non-RPC, `--headless --listen "Tx"`) Nvim process, waits for exit, and returns result.
@@ -539,10 +530,11 @@ end
 --- @field args? string[]
 --- Remove these args from the default `nvim_argv` args set. Ignored if `merge=false`.
 --- @field args_rm? string[]
---- Merge `args` with the default set. (default: true)
+--- (default: true) Merge `args` with the default set. Else use only the provided `args`.
 --- @field merge? boolean
 --- Environment variables
 --- @field env? table<string,string>
+--- Used for stdin_fd, see `:help ui-option`
 --- @field io_extra? uv.uv_pipe_t
 
 --- Builds an argument list for use in clear().

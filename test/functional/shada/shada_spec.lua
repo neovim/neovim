@@ -278,7 +278,10 @@ describe('ShaDa support code', function()
 
   it('does not read NONE file', function()
     write_file('NONE', '\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
-    local session = n.new_session_keep(false, { merge = false, args = { '-u', 'NONE', '-i', 'NONE', '--embed', '--headless' } })
+    local session = n.new_session_keep(
+      false,
+      { merge = false, args = { '-u', 'NONE', '-i', 'NONE', '--embed', '--headless' } }
+    )
     set_session(session)
     eq('', fn.getreg('a'))
     session:close()
