@@ -82,7 +82,7 @@ describe('messages', function()
       NoSuchFil^e                                                  |
       three                                                       |
       {1:~                                                           }|*5
-      from DebugSilent visual                                     |
+                                                                  |
       {9:E447: Can't find file "NoSuchFile" in path}                  |
     ]])
   end)

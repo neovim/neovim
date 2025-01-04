@@ -56,7 +56,6 @@ func Test_window_cmd_cmdwin_with_vsp()
 endfunc
 
 func Test_cmdheight_not_changed()
-  throw 'Skipped: N/A'
   set cmdheight=2
   set winminheight=0
   augroup Maximize
