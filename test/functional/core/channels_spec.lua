@@ -33,10 +33,10 @@ describe('channels', function()
   end)
 
   pending('can connect to socket', function()
-    local server = new_session(nvim_argv, nil, nil, true)
+    local server = new_session(true, nvim_argv, nil, nil)
     set_session(server)
     local address = fn.serverlist()[1]
-    local client = new_session(nvim_argv, nil, nil, true)
+    local client = new_session(true, nvim_argv, nil, nil)
     set_session(client)
     source(init)
 
@@ -63,7 +63,7 @@ describe('channels', function()
 
   it('dont crash due to garbage in rpc #23781', function()
     local client = get_session()
-    local server = new_session(nvim_argv, nil, nil, true)
+    local server = new_session(true, nvim_argv, nil, nil)
     set_session(server)
     local address = fn.serverlist()[1]
     set_session(client)

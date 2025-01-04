@@ -271,6 +271,7 @@ end)
 describe('ShaDa support code', function()
   it('does not write NONE file', function()
     local session = new_session(
+      false,
       { nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed', '--headless', '--cmd', 'qall' },
       true
     )
@@ -281,7 +282,8 @@ describe('ShaDa support code', function()
 
   it('does not read NONE file', function()
     write_file('NONE', '\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
-    local session = new_session({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed', '--headless' }, true)
+    local session =
+      new_session(false, { nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed', '--headless' }, true)
     set_session(session)
     eq('', fn.getreg('a'))
     session:close()

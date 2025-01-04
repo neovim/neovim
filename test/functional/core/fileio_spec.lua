@@ -56,7 +56,7 @@ describe('fileio', function()
   local function startup(extra_args)
     extra_args = extra_args or {}
     local argv = vim.iter({ args, '--embed', extra_args }):flatten():totable()
-    local screen_nvim = new_session(argv)
+    local screen_nvim = new_session(false, argv)
     set_session(screen_nvim)
     local screen = Screen.new(70, 10)
     screen:set_default_attr_ids({

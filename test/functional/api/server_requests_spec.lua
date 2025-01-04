@@ -284,7 +284,7 @@ describe('server -> client', function()
     local nvim_argv = merge_args(n.nvim_argv, { '--headless' })
     local function connect_test(server, mode, address)
       local serverpid = fn.getpid()
-      local client = new_session(nvim_argv, false, nil, true)
+      local client = new_session(true, nvim_argv, false, nil)
       set_session(client)
 
       local clientpid = fn.getpid()
@@ -312,7 +312,7 @@ describe('server -> client', function()
     end
 
     it('via named pipe', function()
-      local server = new_session(nvim_argv)
+      local server = new_session(false, nvim_argv)
       set_session(server)
       local address = fn.serverlist()[1]
       local first = string.sub(address, 1, 1)
@@ -321,7 +321,7 @@ describe('server -> client', function()
     end)
 
     it('via ipv4 address', function()
-      local server = new_session(nvim_argv)
+      local server = new_session(false, nvim_argv)
       set_session(server)
       local status, address = pcall(fn.serverstart, '127.0.0.1:')
       if not status then
@@ -332,7 +332,7 @@ describe('server -> client', function()
     end)
 
     it('via ipv6 address', function()
-      local server = new_session(nvim_argv)
+      local server = new_session(false, nvim_argv)
       set_session(server)
       local status, address = pcall(fn.serverstart, '::1:')
       if not status then
@@ -343,7 +343,7 @@ describe('server -> client', function()
     end)
 
     it('via hostname', function()
-      local server = new_session(nvim_argv)
+      local server = new_session(false, nvim_argv)
       set_session(server)
       local address = fn.serverstart('localhost:')
       eq('localhost:', string.sub(address, 1, 10))
@@ -351,10 +351,10 @@ describe('server -> client', function()
     end)
 
     it('does not crash on receiving UI events', function()
-      local server = new_session(nvim_argv)
+      local server = new_session(false, nvim_argv)
       set_session(server)
       local address = fn.serverlist()[1]
-      local client = new_session(nvim_argv, false, nil, true)
+      local client = new_session(true, nvim_argv, false, nil)
       set_session(client)
 
       local id = fn.sockconnect('pipe', address, { rpc = true })

@@ -24,7 +24,7 @@ end)
 
 describe('u_* functions', function()
   it('safely fail on new, non-empty buffer', function()
-    local session = new_session({
+    local session = new_session(false, {
       nvim_prog,
       '-u',
       'NONE',
