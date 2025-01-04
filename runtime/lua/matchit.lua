@@ -7,6 +7,8 @@ TODO:
 
 local M = {}
 
+local ns = vim.api.nvim_create_namespace("nvim_matchit")
+
 local ts = vim.treesitter
 
 --- Jump to the start or end of a given node
@@ -93,6 +95,30 @@ function M.decide(backward)
       return
     elseif vim.startswith(capture, "markup.heading") then
       match_capture(node, capture, backward)
+      return
+    end
+  end
+end
+
+-- TODO: insert mode: also when cursor is after bracket
+function M.highlight()
+  -- TODO: for development
+  vim.cmd[[NoMatchParen]]
+  vim.api.nvim_set_hl(0, "MatchParen", { bg = "Red", fg = "Yellow" })
+
+  vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+
+  local node = ts.get_node()
+  if not node then
+    return
+  end
+
+  for _, capture in ipairs(ts.get_captures_at_cursor(0)) do
+    if vim.startswith(capture, "punctuation.bracket") then
+      local open_row, open_col = node:start()
+      local close_row, close_col = node:end_()
+      vim.api.nvim_buf_add_highlight(0, ns, "MatchParen", open_row, open_col, open_col+1)
+      vim.api.nvim_buf_add_highlight(0, ns, "MatchParen", close_row, close_col-1, close_col)
       return
     end
   end
