@@ -6,7 +6,6 @@ local tt = require('test.functional.testterm')
 local feed, clear = n.feed, n.clear
 local api = n.api
 local testprg, command = n.testprg, n.command
-local nvim_prog_abs = n.nvim_prog_abs
 local fn = n.fn
 local nvim_set = n.nvim_set
 local is_os = t.is_os
@@ -151,7 +150,7 @@ it(':terminal highlight has lower precedence than editor #9964', function()
   })
   -- Child nvim process in :terminal (with cterm colors).
   fn.jobstart({
-    nvim_prog_abs(),
+    n.nvim_prog,
     '-n',
     '-u',
     'NORC',

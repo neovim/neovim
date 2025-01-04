@@ -77,22 +77,9 @@ describe('startup', function()
   end)
 
   it('--startuptime does not crash on error #31125', function()
-    eq(
-      "E484: Can't open file .",
-      fn.system({
-        nvim_prog,
-        '-u',
-        'NONE',
-        '-i',
-        'NONE',
-        '--headless',
-        '--startuptime',
-        '.',
-        '-c',
-        '42cquit',
-      })
-    )
-    eq(42, api.nvim_get_vvar('shell_error'))
+    local p = n.spawn_wait('--startuptime', '.', '-c', '42cquit')
+    eq("E484: Can't open file .", p.stderr)
+    eq(42, p.status)
   end)
 
   it('-D does not hang #12647', function()
@@ -308,21 +295,15 @@ describe('startup', function()
   end)
 
   it('--cmd/-c/+ do not truncate long Lua print() message with --headless', function()
-    local out = fn.system({
-      nvim_prog,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
-      '--headless',
+    local p = n.spawn_wait(
       '--cmd',
       'lua print(("A"):rep(1234))',
       '-c',
       'lua print(("B"):rep(1234))',
       '+lua print(("C"):rep(1234))',
-      '+q',
-    })
-    eq(('A'):rep(1234) .. '\r\n' .. ('B'):rep(1234) .. '\r\n' .. ('C'):rep(1234), out)
+      '+q'
+    )
+    eq(('A'):rep(1234) .. '\n' .. ('B'):rep(1234) .. '\n' .. ('C'):rep(1234), p.output)
   end)
 
   it('pipe at both ends: has("ttyin")==0 has("ttyout")==0', function()
@@ -606,15 +587,15 @@ describe('startup', function()
   it('fails on --embed with -es/-Es/-l', function()
     matches(
       'nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
-      fn.system({ nvim_prog, '--embed', '-es' })
+      n.spawn_wait('--embed', '-es').stderr
     )
     matches(
       'nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
-      fn.system({ nvim_prog, '--embed', '-Es' })
+      n.spawn_wait('--embed', '-Es').stderr
     )
     matches(
       'nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
-      fn.system({ nvim_prog, '--embed', '-l', 'foo.lua' })
+      n.spawn_wait('--embed', '-l', 'foo.lua').stderr
     )
   end)
 
@@ -698,20 +679,8 @@ describe('startup', function()
   end)
 
   it('get command line arguments from v:argv', function()
-    local out = fn.system({
-      nvim_prog,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
-      '--headless',
-      '--cmd',
-      nvim_set,
-      '-c',
-      [[echo v:argv[-1:] len(v:argv) > 1]],
-      '+q',
-    })
-    eq("['+q'] 1", out)
+    local p = n.spawn_wait('--cmd', nvim_set, '-c', [[echo v:argv[-1:] len(v:argv) > 1]], '+q')
+    eq("['+q'] 1", p.stderr)
   end)
 end)
 
