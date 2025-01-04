@@ -128,6 +128,44 @@ describe('vim.filetype', function()
     )
   end)
 
+  it('can be fast', function()
+    eq(
+      exec_lua(function()
+        return vim.filetype.match({ filename = 'init.lua', fast = true })
+      end),
+      'lua'
+    )
+    eq(
+      exec_lua(function()
+        return vim.filetype.match({ filename = 'Dockerfile', fast = true })
+      end),
+      'dockerfile'
+    )
+
+    -- Pattern and content matching should be skipped
+    eq(
+      exec_lua(function()
+        return {
+          no_fast = vim.filetype.match({ filename = '/etc/a2ps/top-secret.cfg' }),
+          yes_fast = vim.filetype.match({ filename = '/etc/a2ps/top-secret.cfg', fast = true }),
+        }
+      end),
+      { no_fast = 'a2ps', yes_fast = nil }
+    )
+
+    eq(
+      exec_lua(function()
+        local buf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, { '" vim' })
+        return {
+          no_fast = vim.filetype.match({ buf = buf }),
+          yes_fast = vim.filetype.match({ buf = buf, fast = true }),
+        }
+      end),
+      { no_fast = 'vim', yes_fast = nil }
+    )
+  end)
+
   it('considers extension mappings when matching from hashbang', function()
     eq(
       'fooscript',
