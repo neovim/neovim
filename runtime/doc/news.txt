@@ -221,6 +221,7 @@ DIAGNOSTICS
 
 EDITOR
 
+• Use |yxx| in :help docs to execute Lua and Vimscript code examples.
 • Improved |paste| handling for redo (dot-repeat) and macros (|recording|):
   • Redoing a large paste is significantly faster and ignores 'autoindent'.
   • Replaying a macro with |@| also replays pasted text.
@@ -276,7 +277,6 @@ LUA
   supporting two new parameters, `encoding` and `strict_indexing`.
 • |vim.json.encode()| has an option to enable forward slash escaping
 • |vim.fs.abspath()| converts paths to absolute paths.
-• Lua and vimscript code examples in docs can now be run using `yxx`.
 
 OPTIONS
 
@@ -362,8 +362,8 @@ UI
 • |vim.diagnostic.setqflist()| updates an existing quickfix list with the
   given title if found
 • |ui-messages| content chunks now also contain the highlight group ID.
-• |:checkhealth| can be display in a floating window and controlled by
-  the |g:health| variable.
+• |:checkhealth| can display in a floating window, controlled by the
+  |g:health| variable.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
