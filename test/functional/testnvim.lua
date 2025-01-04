@@ -457,10 +457,10 @@ end
 
 --- Starts a new Nvim process with the given args and returns a msgpack-RPC session.
 ---
---- @param keep boolean Don't close the current global session.
+--- @param keep boolean (default: false) Don't close the current global session.
 --- @param argv string[] Nvim CLI args
 --- @param merge boolean? true: merge args with the default args. false: use only the provided args.
---- @param env string[]? Environment variables
+--- @param env string[]? List of "key=value" environment variables.
 --- @param io_extra uv.uv_pipe_t? used for stdin_fd, see :help ui-option
 --- @return test.Session
 function M.new_session(keep, argv, merge, env, io_extra)
@@ -507,7 +507,7 @@ end
 
 --- Same as clear(), but doesn't replace the current global session.
 ---
---- @param keep boolean Don't close the current global session.
+--- @param keep boolean (default: false) Don't close the current global session.
 --- @param ... string Nvim CLI args
 --- @return test.Session
 --- @overload fun(keep: boolean, opts: test.new_argv.Opts): test.Session
@@ -535,8 +535,13 @@ function M.spawn_wait(...)
 end
 
 --- @class test.new_argv.Opts
+--- Nvim CLI args
 --- @field args? string[]
+--- Remove these args from the default `nvim_argv` args set. Ignored if `merge=false`.
 --- @field args_rm? string[]
+--- Merge `args` with the default set. (default: true)
+--- @field merge? boolean
+--- Environment variables
 --- @field env? table<string,string>
 --- @field io_extra? uv.uv_pipe_t
 
@@ -548,22 +553,28 @@ end
 --- @return uv.uv_pipe_t?
 --- @overload fun(opts: test.new_argv.Opts): string[], string[]?, uv.uv_pipe_t?
 function M.new_argv(...)
-  local args = { unpack(M.nvim_argv) }
-  table.insert(args, '--headless')
-  if _G._nvim_test_id then
-    -- Set the server name to the test-id for logging. #8519
-    table.insert(args, '--listen')
-    table.insert(args, _G._nvim_test_id)
-  end
-  local new_args --- @type string[]
-  local io_extra --- @type uv.uv_pipe_t?
-  local env --- @type string[]?
   --- @type test.new_argv.Opts|string
   local opts = select(1, ...)
+  local merge = type(opts) ~= 'table' and true or opts.merge ~= false
+
+  local args = merge and { unpack(M.nvim_argv) } or { M.nvim_prog }
+  if merge then
+    table.insert(args, '--headless')
+    if _G._nvim_test_id then
+      -- Set the server name to the test-id for logging. #8519
+      table.insert(args, '--listen')
+      table.insert(args, _G._nvim_test_id)
+    end
+  end
+
+  local new_args --- @type string[]
+  local io_extra --- @type uv.uv_pipe_t?
+  local env --- @type string[]? List of "key=value" env vars.
+
   if type(opts) ~= 'table' then
     new_args = { ... }
   else
-    args = remove_args(args, opts.args_rm)
+    args = merge and remove_args(args, opts.args_rm) or args
     if opts.env then
       local env_opt = {} --- @type table<string,string>
       for k, v in pairs(opts.env) do

@@ -5,7 +5,6 @@ local n = require('test.functional.testnvim')()
 local command = n.command
 local clear = n.clear
 local eval = n.eval
-local new_session = n.new_session
 local nvim_prog = n.nvim_prog
 local set_session = n.set_session
 
@@ -24,15 +23,11 @@ end)
 
 describe('u_* functions', function()
   it('safely fail on new, non-empty buffer', function()
-    local session = new_session(false, {
-      nvim_prog,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
-      '--embed',
-      '-c',
-      'set undodir=. undofile',
+    local session = n.new_session_keep(false, {
+      args = {
+        '-c',
+        'set undodir=. undofile',
+      },
     })
     set_session(session)
     command('echo "True"') -- Should not error out due to crashed Neovim
