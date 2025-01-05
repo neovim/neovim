@@ -407,6 +407,15 @@ function M._check(mods, plugin_names)
   -- Clear the 'Running healthchecks...' message.
   vim.cmd.redraw()
   vim.print('')
+
+  -- Quit with 'q' inside healthcheck buffers.
+  vim.api.nvim_buf_set_keymap(
+    bufnr,
+    'n',
+    'q',
+    '<cmd>bdelete<cr>',
+    { silent = true, noremap = true, nowait = true }
+  )
 end
 
 return M
