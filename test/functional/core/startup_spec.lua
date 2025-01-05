@@ -77,22 +77,9 @@ describe('startup', function()
   end)
 
   it('--startuptime does not crash on error #31125', function()
-    eq(
-      "E484: Can't open file .",
-      fn.system({
-        nvim_prog,
-        '-u',
-        'NONE',
-        '-i',
-        'NONE',
-        '--headless',
-        '--startuptime',
-        '.',
-        '-c',
-        '42cquit',
-      })
-    )
-    eq(42, api.nvim_get_vvar('shell_error'))
+    local p = n.spawn_wait('--startuptime', '.', '-c', '42cquit')
+    eq("E484: Can't open file .", p.stderr)
+    eq(42, p.status)
   end)
 
   it('-D does not hang #12647', function()
@@ -154,8 +141,9 @@ describe('startup', function()
 
     it('failure modes', function()
       -- nvim -l <empty>
-      matches('nvim%.?e?x?e?: Argument missing after: "%-l"', fn.system({ nvim_prog, '-l' }))
-      eq(1, eval('v:shell_error'))
+      local proc = n.spawn_wait('-l')
+      matches('nvim%.?e?x?e?: Argument missing after: "%-l"', proc.stderr)
+      eq(1, proc.status)
     end)
 
     it('os.exit() sets Nvim exitcode', function()
@@ -182,12 +170,11 @@ describe('startup', function()
     end)
 
     it('Lua-error sets Nvim exitcode', function()
+      local proc = n.spawn_wait('-l', 'test/functional/fixtures/startup-fail.lua')
+      matches('E5113: .* my pearls!!', proc:output())
+      eq(1, proc.status)
+
       eq(0, eval('v:shell_error'))
-      matches(
-        'E5113: .* my pearls!!',
-        fn.system({ nvim_prog, '-l', 'test/functional/fixtures/startup-fail.lua' })
-      )
-      eq(1, eval('v:shell_error'))
       matches(
         'E5113: .* %[string "error%("whoa"%)"%]:1: whoa',
         fn.system({ nvim_prog, '-l', '-' }, 'error("whoa")')
@@ -606,15 +593,15 @@ describe('startup', function()
   it('fails on --embed with -es/-Es/-l', function()
     matches(
       'nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
-      fn.system({ nvim_prog, '--embed', '-es' })
+      n.spawn_wait('--embed', '-es').stderr
     )
     matches(
       'nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
-      fn.system({ nvim_prog, '--embed', '-Es' })
+      n.spawn_wait('--embed', '-Es').stderr
     )
     matches(
       'nvim[.exe]*: %-%-embed conflicts with %-es/%-Es/%-l',
-      fn.system({ nvim_prog, '--embed', '-l', 'foo.lua' })
+      n.spawn_wait('--embed', '-l', 'foo.lua').stderr
     )
   end)
 
@@ -698,20 +685,8 @@ describe('startup', function()
   end)
 
   it('get command line arguments from v:argv', function()
-    local out = fn.system({
-      nvim_prog,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
-      '--headless',
-      '--cmd',
-      nvim_set,
-      '-c',
-      [[echo v:argv[-1:] len(v:argv) > 1]],
-      '+q',
-    })
-    eq("['+q'] 1", out)
+    local p = n.spawn_wait('--cmd', nvim_set, '-c', [[echo v:argv[-1:] len(v:argv) > 1]], '+q')
+    eq("['+q'] 1", p.stderr)
   end)
 end)
 

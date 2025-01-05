@@ -68,6 +68,192 @@ Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
                 Obsolete, use ":set lines=11 columns=22".
 
 ==============================================================================
+Using the mouse                                         *mouse-using*
+
+                                        *mouse-mode-table* *mouse-overview*
+Overview of what the mouse buttons do, when 'mousemodel' is "extend":
+
+               *<S-LeftMouse>* *<A-RightMouse>* *<S-RightMouse>* *<RightDrag>*
+                                                 *<RightRelease>* *<LeftDrag>*
+Normal Mode: >
+  event         position     selection        change  action
+                 cursor                       window
+  ---------------------------------------------------------------------------
+  <LeftMouse>     yes          end              yes
+  <C-LeftMouse>   yes          end              yes    "CTRL-]" (2)
+  <S-LeftMouse>   yes       no change           yes    "*" (2)
+  <LeftDrag>      yes     start or extend (1)   no
+  <LeftRelease>   yes     start or extend (1)   no
+  <MiddleMouse>   yes       if not active       no     put
+  <MiddleMouse>   yes       if active           no     yank and put
+  <RightMouse>    yes     start or extend       yes
+  <A-RightMouse>  yes start or extend blockw.   yes
+  <S-RightMouse>  yes        no change          yes    "#" (2)
+  <C-RightMouse>  no         no change          no     "CTRL-T"
+  <RightDrag>     yes         extend            no
+  <RightRelease>  yes         extend            no
+
+Insert or Replace Mode: >
+  event         position     selection        change  action
+                 cursor                       window
+  ---------------------------------------------------------------------------
+  <LeftMouse>     yes     (cannot be active)    yes
+  <C-LeftMouse>   yes     (cannot be active)    yes    "CTRL-O^]" (2)
+  <S-LeftMouse>   yes     (cannot be active)    yes    "CTRL-O*" (2)
+  <LeftDrag>      yes     start or extend (1)   no     like CTRL-O (1)
+  <LeftRelease>   yes     start or extend (1)   no     like CTRL-O (1)
+  <MiddleMouse>   no      (cannot be active)    no     put register
+  <RightMouse>    yes     start or extend       yes    like CTRL-O
+  <A-RightMouse>  yes start or extend blockw.   yes
+  <S-RightMouse>  yes     (cannot be active)    yes    "CTRL-O#" (2)
+  <C-RightMouse>  no      (cannot be active)    no     "CTRL-O CTRL-T"
+
+In a help window: >
+  event         position     selection        change  action
+                 cursor                       window
+  ---------------------------------------------------------------------------
+  <2-LeftMouse>   yes     (cannot be active)    no     "^]" (jump to help tag)
+
+When 'mousemodel' is "popup", these are different:
+
+                                                               *<A-LeftMouse>*
+Normal Mode: >
+  event         position     selection        change  action
+                 cursor                       window
+  ---------------------------------------------------------------------------
+  <S-LeftMouse>   yes     start or extend (1)   no
+  <A-LeftMouse>   yes     start/extend blockw   no
+  <RightMouse>    no      popup menu            no
+
+Insert or Replace Mode: >
+  event         position     selection        change  action
+                 cursor                       window
+  ---------------------------------------------------------------------------
+  <S-LeftMouse>   yes     start or extend (1)   no     like CTRL-O (1)
+  <A-LeftMouse>   yes     start/extend blockw   no
+  <RightMouse>    no      popup menu            no
+
+(1) only if mouse pointer moved since press
+(2) only if click is in same buffer
+
+Clicking the left mouse button causes the cursor to be positioned.  If the
+click is in another window that window is made the active window.  When
+editing the command-line the cursor can only be positioned on the
+command-line.  When in Insert mode Vim remains in Insert mode.  If 'scrolloff'
+is set, and the cursor is positioned within 'scrolloff' lines from the window
+border, the text is scrolled.
+
+A selection can be started by pressing the left mouse button on the first
+character, moving the mouse to the last character, then releasing the mouse
+button.  You will not always see the selection until you release the button,
+only in some versions (GUI, Win32) will the dragging be shown immediately.
+Note that you can make the text scroll by moving the mouse at least one
+character in the first/last line in the window when 'scrolloff' is non-zero.
+
+In Normal, Visual and Select mode clicking the right mouse button causes the
+Visual area to be extended.  When 'mousemodel' is "popup", the left button has
+to be used while keeping the shift key pressed.  When clicking in a window
+which is editing another buffer, the Visual or Select mode is stopped.
+
+In Normal, Visual and Select mode clicking the right mouse button with the alt
+key pressed causes the Visual area to become blockwise.  When 'mousemodel' is
+"popup" the left button has to be used with the alt key.  Note that this won't
+work on systems where the window manager consumes the mouse events when the
+alt key is pressed (it may move the window).
+
+                *double-click* *<2-LeftMouse>* *<3-LeftMouse>* *<4-LeftMouse>*
+Double, triple and quadruple clicks are supported.  For selecting text, extra
+clicks extend the selection: >
+
+        click           select
+        ---------------------------------
+        double          word or % match
+        triple          line
+        quadruple       rectangular block
+
+Exception: In a :help window, double-click jumps to help for the word that is
+clicked on.
+
+Double-click on a word selects that word.  'iskeyword' is used to specify
+which characters are included in a word.  Double-click on a character that has
+a match selects until that match (like using "v%").  If the match is an
+#if/#else/#endif block, the selection becomes linewise. The time for
+double-clicking can be set with the 'mousetime' option.
+
+Example: configure double-click to jump to the tag under the cursor: >vim
+        :map <2-LeftMouse> :exe "tag " .. expand("<cword>")<CR>
+
+Dragging the mouse with a double-click (button-down, button-up, button-down
+and then drag) will result in whole words to be selected.  This continues
+until the button is released, at which point the selection is per character
+again.
+
+For scrolling with the mouse see |scroll-mouse-wheel|.
+
+In Insert mode, when a selection is started, Vim goes into Normal mode
+temporarily.  When Visual or Select mode ends, it returns to Insert mode.
+This is like using CTRL-O in Insert mode.  Select mode is used when the
+'selectmode' option contains "mouse".
+
+                                                *X1Mouse* *X1Drag* *X1Release*
+                                                *X2Mouse* *X2Drag* *X2Release*
+                                              *<MiddleRelease>* *<MiddleDrag>*
+Mouse clicks can be mapped using these |keycodes|: >
+      code           mouse button              normal action
+  ---------------------------------------------------------------------------
+  <LeftMouse>     left pressed               set cursor position
+  <LeftDrag>      left moved while pressed   extend selection
+  <LeftRelease>   left released              set selection end
+  <MiddleMouse>   middle pressed             paste text at cursor position
+  <MiddleDrag>    middle moved while pressed -
+  <MiddleRelease> middle released            -
+  <RightMouse>    right pressed              extend selection
+  <RightDrag>     right moved while pressed  extend selection
+  <RightRelease>  right released             set selection end
+  <X1Mouse>       X1 button pressed          -
+  <X1Drag>        X1 moved while pressed     -
+  <X1Release>     X1 button release          -
+  <X2Mouse>       X2 button pressed          -
+  <X2Drag>        X2 moved while pressed     -
+  <X2Release>     X2 button release          -
+
+The X1 and X2 buttons refer to the extra buttons found on some mice (e.g. the
+right thumb).
+
+Examples: >vim
+        :noremap <MiddleMouse> <LeftMouse><MiddleMouse>
+Paste at the position of the middle mouse button click (otherwise the paste
+would be done at the cursor position). >vim
+
+        :noremap <LeftRelease> <LeftRelease>y
+Immediately yank the selection, when using Visual mode.
+
+Note the use of ":noremap" instead of "map" to avoid a recursive mapping.
+>vim
+        :map <X1Mouse> <C-O>
+        :map <X2Mouse> <C-I>
+Map the X1 and X2 buttons to go forwards and backwards in the jump list, see
+|CTRL-O| and |CTRL-I|.
+
+                                                *mouse-swap-buttons*
+To swap the meaning of the left and right mouse buttons: >vim
+        :noremap        <LeftMouse>     <RightMouse>
+        :noremap        <LeftDrag>      <RightDrag>
+        :noremap        <LeftRelease>   <RightRelease>
+        :noremap        <RightMouse>    <LeftMouse>
+        :noremap        <RightDrag>     <LeftDrag>
+        :noremap        <RightRelease>  <LeftRelease>
+        :noremap        g<LeftMouse>    <C-RightMouse>
+        :noremap        g<RightMouse>   <C-LeftMouse>
+        :noremap!       <LeftMouse>     <RightMouse>
+        :noremap!       <LeftDrag>      <RightDrag>
+        :noremap!       <LeftRelease>   <RightRelease>
+        :noremap!       <RightMouse>    <LeftMouse>
+        :noremap!       <RightDrag>     <LeftDrag>
+        :noremap!       <RightRelease>  <LeftRelease>
+<
+
+==============================================================================
 Scrollbars                                              *gui-scrollbars*
 
 There are vertical scrollbars and a horizontal scrollbar.  You may

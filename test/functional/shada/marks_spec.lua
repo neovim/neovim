@@ -218,7 +218,7 @@ describe('ShaDa support code', function()
   -- -c temporary sets lnum to zero to make `+/pat` work, so calling setpcmark()
   -- during -c used to add item with zero lnum to jump list.
   it('does not create incorrect file for non-existent buffers when writing from -c', function()
-    local argv = n.new_argv {
+    local p = n.spawn_wait {
       args_rm = {
         '-i',
         '--embed', -- no --embed
@@ -232,12 +232,13 @@ describe('ShaDa support code', function()
         'qall',
       },
     }
-    eq('', fn.system(argv))
+    eq('', p:output())
+    eq(0, p.status)
     eq(0, exc_exec('rshada'))
   end)
 
   it('does not create incorrect file for non-existent buffers opened from -c', function()
-    local argv = n.new_argv {
+    local p = n.spawn_wait {
       args_rm = {
         '-i',
         '--embed', -- no --embed
@@ -251,7 +252,8 @@ describe('ShaDa support code', function()
         'autocmd VimEnter * qall',
       },
     }
-    eq('', fn.system(argv))
+    eq('', p:output())
+    eq(0, p.status)
     eq(0, exc_exec('rshada'))
   end)
 

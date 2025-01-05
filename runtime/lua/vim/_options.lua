@@ -229,10 +229,8 @@ end
 --- global value of a |global-local| option, see |:setglobal|.
 --- </pre>
 
---- Get or set |options|. Like `:set`. Invalid key is an error.
----
---- Note: this works on both buffer-scoped and window-scoped options using the
---- current buffer and window.
+--- Get or set |options|. Works like `:set`, so buffer/window-scoped options target the current
+--- buffer/window. Invalid key is an error.
 ---
 --- Example:
 ---

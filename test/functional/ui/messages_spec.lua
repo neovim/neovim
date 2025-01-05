@@ -42,55 +42,75 @@ describe('ui/ext_messages', function()
   it('msg_clear follows msg_show kind of confirm', function()
     feed('iline 1<esc>')
     feed(':call confirm("test")<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
-      line ^1                   |
-      {1:~                        }|*4
-    ]],
-      cmdline = { { abort = false } },
+        line ^1                   |
+        {1:~                        }|*4
+      ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          hl_id = 10,
+          pos = 0,
+          prompt = '[O]k: ',
+        },
+      },
       messages = {
         {
-          content = { { '\ntest\n[O]k: ', 6, 10 } },
+          content = { { '\ntest\n', 6, 10 } },
           history = false,
           kind = 'confirm',
         },
       },
-    }
-
+    })
     feed('<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
-      line ^1                   |
-      {1:~                        }|*4
-    ]],
-    }
+        line ^1                   |
+        {1:~                        }|*4
+      ]],
+      cmdline = { { abort = false } },
+    })
   end)
 
   it('msg_show kinds', function()
     feed('iline 1\nline 2<esc>')
 
-    -- kind=confirm
+    -- confirm is now cmdline prompt
     feed(':echo confirm("test")<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
-      line 1                   |
-      line ^2                   |
-      {1:~                        }|*3
-    ]],
-      cmdline = { { abort = false } },
+        line 1                   |
+        line ^2                   |
+        {1:~                        }|*3
+      ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          hl_id = 10,
+          pos = 0,
+          prompt = '[O]k: ',
+        },
+      },
       messages = {
         {
-          content = { { '\ntest\n[O]k: ', 6, 10 } },
+          content = { { '\ntest\n', 6, 10 } },
           history = false,
           kind = 'confirm',
         },
       },
-    }
-    feed('<cr><cr>')
-    screen:expect {
+    })
+    feed('<cr>')
+    screen:expect({
+      grid = [[
+        line 1                   |
+        line ^2                   |
+        {1:~                        }|*3
+      ]],
+      cmdline = { { abort = false } },
       messages = {
         {
-          content = { { '\ntest\n[O]k: ', 6, 10 } },
+          content = { { '\ntest\n', 6, 10 } },
           history = false,
           kind = 'confirm',
         },
@@ -105,38 +125,39 @@ describe('ui/ext_messages', function()
           kind = 'return_prompt',
         },
       },
-    }
-    feed('<cr><cr>')
+    })
+    feed('<cr>')
 
-    -- kind=confirm_sub
+    -- :substitute confirm is now cmdline prompt
     feed(':%s/i/X/gc<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
-      l{2:i}ne 1                   |
-      l{10:i}ne ^2                   |
-      {1:~                        }|*3
-    ]],
-      cmdline = { { abort = false } },
-      messages = {
+        l{2:^i}ne 1                   |
+        l{10:i}ne 2                   |
+        {1:~                        }|*3
+      ]],
+      cmdline = {
         {
-          content = { { 'replace with X (y/n/a/q/l/^E/^Y)?', 6, 18 } },
-          history = true,
-          kind = 'confirm_sub',
+          content = { { '' } },
+          hl_id = 18,
+          pos = 0,
+          prompt = 'replace with X? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)',
         },
       },
-    }
+    })
     feed('nq')
 
     -- kind=wmsg (editing readonly file)
     command('write ' .. fname)
     command('set readonly nohls')
     feed('G$x')
-    screen:expect {
+    screen:expect({
       grid = [[
         line 1                   |
-        line ^2                   |
+        line^                     |
         {1:~                        }|*3
       ]],
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'W10: Warning: Changing a readonly file', 19, 26 } },
@@ -144,7 +165,7 @@ describe('ui/ext_messages', function()
           kind = 'wmsg',
         },
       },
-    }
+    })
 
     -- kind=wmsg ('wrapscan' after search reaches EOF)
     feed('uG$/i<cr>')
@@ -1100,7 +1121,7 @@ stack traceback:
     ]],
       messages = {
         {
-          content = { { 'wildmenu  wildmode' } },
+          content = { { 'wildmenu  wildmode\n' } },
           history = false,
           kind = 'wildlist',
         },
@@ -1122,20 +1143,22 @@ stack traceback:
     feed('z=')
     screen:expect({
       grid = [[
-        {100:helllo}                   |
-        {1:~                        }|*3
-        {1:^~                        }|
+        {100:^helllo}                   |
+        {1:~                        }|*4
       ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          hl_id = 0,
+          pos = 0,
+          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels):',
+        },
+      },
       messages = {
         {
           content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
           history = false,
           kind = 'list_cmd',
-        },
-        {
-          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
-          history = false,
-          kind = 'number_prompt',
         },
       },
     })
@@ -1143,36 +1166,34 @@ stack traceback:
     feed('1')
     screen:expect({
       grid = [[
-        {100:helllo}                   |
-        {1:~                        }|*3
-        {1:^~                        }|
+        {100:^helllo}                   |
+        {1:~                        }|*4
       ]],
+      cmdline = {
+        {
+          content = { { '1' } },
+          hl_id = 0,
+          pos = 1,
+          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels):',
+        },
+      },
       messages = {
         {
           content = { { 'Change "helllo" to:\n 1 "Hello"\n 2 "Hallo"\n 3 "Hullo"\n' } },
           history = false,
           kind = 'list_cmd',
         },
-        {
-          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
-          history = false,
-          kind = 'number_prompt',
-        },
-        {
-          content = { { '1' } },
-          history = false,
-          kind = '',
-        },
       },
     })
 
     feed('<cr>')
-    screen:expect {
+    screen:expect({
       grid = [[
-      ^Hello                    |
-      {1:~                        }|*4
-    ]],
-    }
+        ^Hello                    |
+        {1:~                        }|*4
+      ]],
+      cmdline = { { abort = false } },
+    })
   end)
 
   it('supports nvim_echo messages with multiple attrs', function()
@@ -1313,6 +1334,21 @@ stack traceback:
     ]])
     feed('i')
     n.assert_alive()
+  end)
+
+  it(':digraph contains newlines', function()
+    command('digraph')
+    screen:expect({
+      condition = function()
+        local nl = 0
+        eq('list_cmd', screen.messages[1].kind)
+        for _, chunk in ipairs(screen.messages[1].content) do
+          nl = nl + (chunk[2]:find('\n') and 1 or 0)
+        end
+        eq(682, nl)
+        screen.messages = {}
+      end,
+    })
   end)
 end)
 

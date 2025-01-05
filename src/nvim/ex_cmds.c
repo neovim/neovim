@@ -3707,12 +3707,9 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
           // Loop until 'y', 'n', 'q', CTRL-E or CTRL-Y typed.
           while (subflags.do_ask) {
             if (exmode_active) {
-              char *prompt;
-              char *resp;
-              colnr_T sc, ec;
-
               print_line_no_prefix(lnum, subflags.do_number, subflags.do_list);
 
+              colnr_T sc, ec;
               getvcol(curwin, &curwin->w_cursor, &sc, NULL, NULL);
               curwin->w_cursor.col = MAX(regmatch.endpos[0].col - 1, 0);
 
@@ -3724,10 +3721,11 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
                 ec += numw;
               }
 
-              prompt = xmallocz((size_t)ec + 1);
+              char *prompt = xmallocz((size_t)ec + 1);
               memset(prompt, ' ', (size_t)sc);
               memset(prompt + sc, '^', (size_t)(ec - sc) + 1);
-              resp = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL, CALLBACK_NONE);
+              char *resp = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL,
+                                             CALLBACK_NONE, false, NULL);
               msg_putchar('\n');
               xfree(prompt);
               if (resp != NULL) {
@@ -3794,35 +3792,15 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               redraw_later(curwin, UPD_SOME_VALID);
 
               curwin->w_p_fen = save_p_fen;
-              if (msg_row == Rows - 1) {
-                msg_didout = false;                     // avoid a scroll-up
-              }
-              msg_starthere();
-              i = msg_scroll;
-              msg_scroll = 0;                           // truncate msg when
-                                                        // needed
-              msg_no_more = true;
-              msg_ext_set_kind("confirm_sub");
-              // Same highlight as wait_return().
-              smsg(HLF_R, _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
-              msg_no_more = false;
-              msg_scroll = i;
-              if (!ui_has(kUIMessages)) {
-                ui_cursor_goto(msg_row, msg_col);
-              }
-              RedrawingDisabled = temp;
 
-              no_mapping++;                     // don't map this key
-              allow_keys++;                     // allow special keys
-              typed = plain_vgetc();
-              no_mapping--;
-              allow_keys--;
+              char *p = _("replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)");
+              snprintf(IObuff, IOSIZE, p, sub);
+              p = xstrdup(IObuff);
+              typed = prompt_for_input(p, HLF_R, true, NULL);
+              xfree(p);
 
-              // clear the question
-              msg_didout = false;               // don't scroll up
-              msg_col = 0;
-              gotocmdline(true);
               p_lz = save_p_lz;
+              RedrawingDisabled = temp;
 
               // restore the line
               if (orig_line != NULL) {
@@ -4808,7 +4786,7 @@ void ex_oldfiles(exarg_T *eap)
   // File selection prompt on ":browse oldfiles"
   if (cmdmod.cmod_flags & CMOD_BROWSE) {
     quit_more = false;
-    nr = prompt_for_number(false);
+    nr = prompt_for_input(NULL, 0, false, NULL);
     msg_starthere();
     if (nr > 0 && nr <= tv_list_len(l)) {
       const char *const p = tv_list_find_str(l, nr - 1);

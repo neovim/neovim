@@ -192,7 +192,7 @@ following: >
 Vim finds the first occurrence of "Professor" and displays the text it is
 about to change.  You get the following prompt: >
 
-	replace with Teacher (y/n/a/q/l/^E/^Y)?
+	replace with Teacher? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)
 
 At this point, you must enter one of the following answers:
 

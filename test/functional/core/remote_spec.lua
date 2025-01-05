@@ -10,10 +10,8 @@ local expect = n.expect
 local fn = n.fn
 local insert = n.insert
 local nvim_prog = n.nvim_prog
-local new_argv = n.new_argv
 local neq = t.neq
 local set_session = n.set_session
-local spawn = n.spawn
 local tmpname = t.tmpname
 local write_file = t.write_file
 
@@ -32,8 +30,7 @@ describe('Remote', function()
   describe('connect to server and', function()
     local server
     before_each(function()
-      server = spawn(new_argv(), true)
-      set_session(server)
+      server = n.clear()
     end)
 
     after_each(function()
@@ -49,7 +46,7 @@ describe('Remote', function()
       -- to wait for the remote instance to exit and calling jobwait blocks
       -- the event loop. If the server event loop is blocked, it can't process
       -- our incoming --remote calls.
-      local client_starter = spawn(new_argv(), false, nil, true)
+      local client_starter = n.new_session(true)
       set_session(client_starter)
       -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
       eq(
@@ -144,15 +141,8 @@ describe('Remote', function()
 
   describe('exits with error on', function()
     local function run_and_check_exit_code(...)
-      local bogus_argv = new_argv(...)
-
-      -- Create an nvim instance just to run the remote-invoking nvim. We want
-      -- to wait for the remote instance to exit and calling jobwait blocks
-      -- the event loop. If the server event loop is blocked, it can't process
-      -- our incoming --remote calls.
-      clear()
-      -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
-      eq({ 2 }, exec_lua([[return vim.fn.jobwait({ vim.fn.jobstart(...) })]], bogus_argv))
+      local p = n.spawn_wait { args = { ... } }
+      eq(2, p.status)
     end
     it('bogus subcommand', function()
       run_and_check_exit_code('--remote-bogus')

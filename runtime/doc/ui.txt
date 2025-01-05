@@ -792,7 +792,6 @@ must handle.
 		"" (empty)	Unknown (consider a |feature-request|)
 		"bufwrite"	|:write| message
 		"confirm"	|confirm()| or |:confirm| dialog
-		"confirm_sub"	|:substitute| confirm dialog |:s_c|
 		"emsg"		Error (|errors|, internal error, |:throw|, …)
 		"echo"		|:echo| message
 		"echomsg"	|:echomsg| message
@@ -802,7 +801,6 @@ must handle.
 		"lua_error"	Error in |:lua| code
 		"lua_print"	|print()| from |:lua| code
 		"rpc_error"	Error response from |rpcrequest()|
-		"number_prompt"	Number input prompt (|inputlist()|, |z=|, …)
 		"return_prompt"	|press-enter| prompt after a multiple messages
 		"quickfix"	Quickfix navigation message
 		"search_cmd"	Entered search command

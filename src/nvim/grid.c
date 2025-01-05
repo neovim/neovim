@@ -383,7 +383,8 @@ void grid_line_start(ScreenGrid *grid, int row)
 
   assert((size_t)grid_line_maxcol <= linebuf_size);
 
-  if (rdb_flags & kOptRdbFlagInvalid) {
+  if (full_screen && (rdb_flags & kOptRdbFlagInvalid)) {
+    assert(linebuf_char);
     // Current batch must not depend on previous contents of linebuf_char.
     // Set invalid values which will cause assertion failures later if they are used.
     memset(linebuf_char, 0xFF, sizeof(schar_T) * linebuf_size);

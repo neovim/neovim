@@ -44,6 +44,7 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
+#include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
@@ -2255,9 +2256,13 @@ void nvim_error_event(uint64_t channel_id, Integer lvl, String data)
 /// @return Dict containing these keys:
 ///       - winid: (number) floating window id
 ///       - bufnr: (number) buffer id in floating window
-Dict nvim__complete_set(Integer index, Dict(complete_set) *opts, Arena *arena)
+Dict nvim__complete_set(Integer index, Dict(complete_set) *opts, Arena *arena, Error *err)
 {
   Dict rv = arena_dict(arena, 2);
+  if ((get_cot_flags() & kOptCotFlagPopup) == 0) {
+    api_set_error(err, kErrorTypeException, "completeopt option does not include popup");
+    return rv;
+  }
   if (HAS_KEY(opts, complete_set, info)) {
     win_T *wp = pum_set_info((int)index, opts->info.data);
     if (wp) {

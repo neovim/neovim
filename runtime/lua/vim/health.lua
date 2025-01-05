@@ -416,6 +416,9 @@ function M._check(mods, plugin_names)
     '<c-w>q',
     { silent = true, noremap = true, nowait = true }
   )
+
+  -- Once we're done writing checks, set nomodifiable.
+  vim.bo[bufnr].modifiable = false
 end
 
 return M

@@ -31,7 +31,6 @@ local feed_command = n.feed_command
 local skip = t.skip
 local is_os = t.is_os
 local is_ci = t.is_ci
-local spawn = n.spawn
 local set_session = n.set_session
 
 describe('fileio', function()
@@ -51,12 +50,11 @@ describe('fileio', function()
     rmdir('Xtest_backupdir with spaces')
   end)
 
-  local args = { nvim_prog, '--clean', '--cmd', 'set nofsync directory=Xtest_startup_swapdir' }
+  local args = { '--clean', '--cmd', 'set nofsync directory=Xtest_startup_swapdir' }
   --- Starts a new nvim session and returns an attached screen.
-  local function startup(extra_args)
-    extra_args = extra_args or {}
-    local argv = vim.iter({ args, '--embed', extra_args }):flatten():totable()
-    local screen_nvim = spawn(argv)
+  local function startup()
+    local argv = vim.iter({ args, '--embed' }):flatten():totable()
+    local screen_nvim = n.new_session(false, { args = argv, merge = false })
     set_session(screen_nvim)
     local screen = Screen.new(70, 10)
     screen:set_default_attr_ids({
@@ -100,7 +98,8 @@ describe('fileio', function()
     eq('foozubbaz', trim(read_file('Xtest_startup_file1')))
 
     -- 4. Exit caused by deadly signal (+ 'swapfile').
-    local j = fn.jobstart(vim.iter({ args, '--embed' }):flatten():totable(), { rpc = true })
+    local j =
+      fn.jobstart(vim.iter({ nvim_prog, args, '--embed' }):flatten():totable(), { rpc = true })
     fn.rpcrequest(
       j,
       'nvim_exec2',

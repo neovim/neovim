@@ -106,20 +106,15 @@ describe('vim.ui_attach', function()
   end)
 
   it('does not crash on exit', function()
-    fn.system({
-      n.nvim_prog,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
+    local p = n.spawn_wait(
       '--cmd',
       [[ lua ns = vim.api.nvim_create_namespace 'testspace' ]],
       '--cmd',
       [[ lua vim.ui_attach(ns, {ext_popupmenu=true}, function() end) ]],
       '--cmd',
-      'quitall!',
-    })
-    eq(0, n.eval('v:shell_error'))
+      'quitall!'
+    )
+    eq(0, p.status)
   end)
 
   it('can receive accurate message kinds even if they are history', function()
@@ -267,48 +262,6 @@ describe('vim.ui_attach', function()
           content = { { 'E122: Function Foo already exists, add ! to replace it', 9, 6 } },
           history = true,
           kind = 'emsg',
-        },
-      },
-    })
-    -- No fast context for prompt message kinds
-    feed(':%s/Function/Replacement/c<cr>')
-    screen:expect({
-      grid = [[
-        ^E122: {10:Function} Foo already exists, add !|
-         to replace it                          |
-        replace with Replacement (y/n/a/q/l/^E/^|
-        Y)?                                     |
-        {1:~                                       }|
-      ]],
-      cmdline = { { abort = false } },
-      messages = {
-        {
-          content = { { 'replace with Replacement (y/n/a/q/l/^E/^Y)?', 6, 18 } },
-          history = true,
-          kind = 'confirm_sub',
-        },
-      },
-    })
-    feed('<esc>:call inputlist(["Select:", "One", "Two"])<cr>')
-    screen:expect({
-      grid = [[
-        E122: {10:Function} Foo already exists, add !|
-         to replace it                          |
-        Type number and <Enter> or click with th|
-        e mouse (q or empty cancels):           |
-        {1:^~                                       }|
-      ]],
-      cmdline = { { abort = false } },
-      messages = {
-        {
-          content = { { 'Select:\nOne\nTwo\n' } },
-          history = false,
-          kind = 'list_cmd',
-        },
-        {
-          content = { { 'Type number and <Enter> or click with the mouse (q or empty cancels): ' } },
-          history = false,
-          kind = 'number_prompt',
         },
       },
     })
