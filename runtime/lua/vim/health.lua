@@ -413,7 +413,7 @@ function M._check(mods, plugin_names)
     bufnr,
     'n',
     'q',
-    '<cmd>bdelete<cr>',
+    '<c-w>q',
     { silent = true, noremap = true, nowait = true }
   )
 end
