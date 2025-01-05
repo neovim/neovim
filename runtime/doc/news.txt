@@ -295,6 +295,7 @@ PLUGINS
 
 STARTUP
 
+• |-es| ("script mode") disables shada by default.
 • Nvim will fail if the |--listen| or |$NVIM_LISTEN_ADDRESS| address is
   invalid, instead of silently skipping an invalid address.
 

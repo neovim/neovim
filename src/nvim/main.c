@@ -1228,6 +1228,9 @@ static void command_line_scan(mparm_T *parmp)
         if (exmode_active) {    // "-es" silent (batch) Ex-mode
           silent_mode = true;
           parmp->no_swap_file = true;
+          if (p_shadafile == NULL || *p_shadafile == NUL) {
+            set_option_value_give_err(kOptShadafile, STATIC_CSTR_AS_OPTVAL("NONE"), 0);
+          }
         } else {                // "-s {scriptin}" read from script file
           want_argument = true;
         }
@@ -2085,8 +2088,7 @@ static void source_startup_scripts(const mparm_T *const parmp)
 {
   // If -u given, use only the initializations from that file and nothing else.
   if (parmp->use_vimrc != NULL) {
-    if (strequal(parmp->use_vimrc, "NONE")
-        || strequal(parmp->use_vimrc, "NORC")) {
+    if (strequal(parmp->use_vimrc, "NONE") || strequal(parmp->use_vimrc, "NORC")) {
       // Do nothing.
     } else {
       if (do_source(parmp->use_vimrc, false, DOSO_NONE, NULL) != OK) {

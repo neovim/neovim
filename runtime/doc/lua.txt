@@ -618,20 +618,20 @@ Example: TCP echo-server                                          *tcp-server*
 Multithreading                                            *lua-loop-threading*
 
 Plugins can perform work in separate (os-level) threads using the threading
-APIs in luv, for instance `vim.uv.new_thread`. Note that every thread
-gets its own separate Lua interpreter state, with no access to Lua globals
-in the main thread. Neither can the state of the editor (buffers, windows,
-etc) be directly accessed from threads.
+APIs in luv, for instance `vim.uv.new_thread`. Each thread has its own
+separate Lua interpreter state, with no access to Lua globals on the main
+thread. Neither can the editor state (buffers, windows, etc) be directly
+accessed from threads.
 
-A subset of the `vim.*` API is available in threads. This includes:
+A subset of the `vim.*` stdlib is available in threads, including:
 
 - `vim.uv` with a separate event loop per thread.
 - `vim.mpack` and `vim.json` (useful for serializing messages between threads)
 - `require` in threads can use Lua packages from the global |package.path|
 - `print()` and `vim.inspect`
 - `vim.diff`
-- most utility functions in `vim.*` for working with pure Lua values
-  like `vim.split`, `vim.tbl_*`, `vim.list_*`, and so on.
+- Most utility functions in `vim.*` that work with pure Lua values, like
+  `vim.split`, `vim.tbl_*`, `vim.list_*`, etc.
 - `vim.is_thread()` returns true from a non-main thread.
 
 

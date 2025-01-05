@@ -207,12 +207,12 @@ argument.
 			:print
 			:set
 		With |:verbose| or 'verbose', other commands display on stderr: >
-			nvim -es +":verbose echo 'foo'"
-			nvim -V1 -es +foo
-
-<		User |config| is skipped unless |-u| was given.
-		Swap file is skipped (like |-n|).
-		User |shada| is loaded (unless "-i NONE" is given).
+			nvim -es +"verbose echo 'foo'"
+			nvim -V1 -es +"echo 'foo'"
+<
+		Skips user |config| unless |-u| was given.
+		Disables |shada| unless |-i| was given.
+		Disables swapfile (like |-n|).
 
 							*-l*
 -l {script} [args]
@@ -235,6 +235,11 @@ argument.
 			nvim +q -l foo.lua
 <		This loads Lua module "bar" before executing "foo.lua": >
 			nvim +"lua require('bar')" -l foo.lua
+<								    *lua-shebang*
+		You can set the "shebang" of the script so that Nvim executes
+		the script when called with "./" from a shell (remember to
+		"chmod u+x"): >
+			#!/usr/bin/env -S nvim -l
 <
 		Skips user |config| unless |-u| was given.
 		Disables plugins unless 'loadplugins' was set.
@@ -243,7 +248,7 @@ argument.
 
 							*-ll*
 -ll {script} [args]
-		Execute a Lua script, similarly to |-l|, but the editor is not
+		Executes a Lua script, similarly to |-l|, but the editor is not
 		initialized. This gives a Lua environment similar to a worker
 		thread. See |lua-loop-threading|.
 
