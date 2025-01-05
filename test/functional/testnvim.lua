@@ -458,7 +458,9 @@ end
 
 --- Starts a new, global Nvim session and clears the current one.
 ---
---- Note: Use `new_session()` to start a session without replacing the current one.
+--- Note:
+--- - Use `new_session()` to start a session without replacing the current one.
+--- - Use `spawn_wait()` to start Nvim without connecting a RPC session.
 ---
 --- Parameters are interpreted as startup args, OR a map with these keys:
 --- - args:       List: Args appended to the default `nvim_argv` set.
@@ -488,7 +490,7 @@ local n_processes = 0
 --- Does not replace the current global session, unlike `clear()`.
 ---
 --- @param keep boolean (default: false) Don't close the current global session.
---- @param ... string Nvim CLI args (or see overload)
+--- @param ... string Nvim CLI args
 --- @return test.Session
 --- @overload fun(keep: boolean, opts: test.session.Opts): test.Session
 function M.new_session(keep, ...)

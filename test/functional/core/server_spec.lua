@@ -270,28 +270,24 @@ end)
 
 describe('startup --listen', function()
   -- Tests Nvim output when failing to start, with and without "--headless".
-  -- TODO(justinmk): clear() should have a way to get stdout if Nvim fails to start.
   local function _test(args, env, expected)
     local function run(cmd)
-      return n.exec_lua(function(cmd_, env_)
-        return vim
-          .system(cmd_, {
-            text = true,
-            env = vim.tbl_extend(
-              'force',
-              -- Avoid noise in the logs; we expect failures for these tests.
-              { NVIM_LOG_FILE = testlog },
-              env_ or {}
-            ),
-          })
-          :wait()
-      end, cmd, env) --[[@as vim.SystemCompleted]]
+      return n.spawn_wait {
+        merge = false,
+        args = cmd,
+        env = vim.tbl_extend(
+          'force',
+          -- Avoid noise in the logs; we expect failures for these tests.
+          { NVIM_LOG_FILE = testlog },
+          env or {}
+        ),
+      }
     end
 
-    local cmd = vim.list_extend({ n.nvim_prog, '+qall!', '--headless' }, args)
+    local cmd = vim.list_extend({ '--clean', '+qall!', '--headless' }, args)
     local r = run(cmd)
-    eq(1, r.code)
-    matches(expected, (r.stderr .. r.stdout):gsub('\\n', ' '))
+    eq(1, r.status)
+    matches(expected, r:output():gsub('\\n', ' '))
 
     if is_os('win') then
       return -- On Windows, output without --headless is garbage.
@@ -299,8 +295,8 @@ describe('startup --listen', function()
     table.remove(cmd, 3) -- Remove '--headless'.
     assert(not vim.tbl_contains(cmd, '--headless'))
     r = run(cmd)
-    eq(1, r.code)
-    matches(expected, (r.stderr .. r.stdout):gsub('\\n', ' '))
+    eq(1, r.status)
+    matches(expected, r:output():gsub('\\n', ' '))
   end
 
   it('validates', function()
