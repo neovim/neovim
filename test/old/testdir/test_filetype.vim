@@ -697,7 +697,7 @@ func s:GetFilenameChecks() abort
     \ 'sinda': ['file.sin', 'file.s85'],
     \ 'sisu': ['file.sst', 'file.ssm', 'file.ssi', 'file.-sst', 'file._sst', 'file.sst.meta', 'file.-sst.meta', 'file._sst.meta'],
     \ 'skill': ['file.il', 'file.ils', 'file.cdf'],
-    \ 'slang': ['file.sl'],
+    \ 'slang': ['file.slang'],
     \ 'slice': ['file.ice'],
     \ 'slint': ['file.slint'],
     \ 'slpconf': ['/etc/slp.conf', 'any/etc/slp.conf'],
