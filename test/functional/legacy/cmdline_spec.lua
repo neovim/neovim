@@ -159,6 +159,52 @@ describe('cmdline', function()
       endfunc
     ]])
 
+    feed(':resize -3<CR>')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*2
+      {3:[No Name]                                                   }|
+                                                                  |*4
+    ]])
+
+    -- :resize now also changes 'cmdheight' accordingly
+    feed(':set cmdheight+=1<CR>')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|
+      {3:[No Name]                                                   }|
+                                                                  |*5
+    ]])
+    feed(':set cmdheight-=1<CR>')
+
+    -- using more space moves the status line up
+    feed(':set cmdheight+=1<CR>')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|
+      {3:[No Name]                                                   }|
+                                                                  |*5
+    ]])
+
+    -- reducing cmdheight moves status line down
+    feed(':set cmdheight-=2<CR>')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*3
+      {3:[No Name]                                                   }|
+                                                                  |*3
+    ]])
+
+    -- reducing window size and then setting cmdheight
+    feed(':resize -1<CR>')
+    feed(':set cmdheight=1<CR>')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*5
+      {3:[No Name]                                                   }|
+                                                                  |
+    ]])
+
     -- setting 'cmdheight' works after outputting two messages
     feed(':call EchoTwo()')
     screen:expect([[
