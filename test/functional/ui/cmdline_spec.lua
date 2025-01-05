@@ -1038,6 +1038,18 @@ describe('cmdline redraw', function()
     ]],
     }
   end)
+
+  it('silent prompt', function()
+    command([[nmap <silent> T :call confirm("Save changes?", "&Yes\n&No\n&Cancel")<CR>]])
+    feed('T')
+    screen:expect([[
+                               |
+      {3:                         }|
+                               |
+      {6:Save changes?}            |
+      {6:[Y]es, (N)o, (C)ancel: }^  |
+    ]])
+  end)
 end)
 
 describe('statusline is redrawn on entering cmdline', function()
