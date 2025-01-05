@@ -12,12 +12,10 @@ local fn = n.fn
 local nvim_prog = n.nvim_prog
 local ok = t.ok
 local rmdir = n.rmdir
-local new_argv = n.new_argv
 local new_pipename = n.new_pipename
 local pesc = vim.pesc
 local os_kill = n.os_kill
 local set_session = n.set_session
-local spawn = n.spawn
 local async_meths = n.async_meths
 local expect_msg_seq = n.expect_msg_seq
 local pcall_err = t.pcall_err
@@ -56,7 +54,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
 
   local nvim0
   before_each(function()
-    nvim0 = spawn(new_argv())
+    nvim0 = n.new_session(false)
     set_session(nvim0)
     rmdir(swapdir)
     mkdir(swapdir)
@@ -76,7 +74,8 @@ describe("preserve and (R)ecover with custom 'directory'", function()
 
   local function test_recover(swappath1)
     -- Start another Nvim instance.
-    local nvim2 = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed' }, true)
+    local nvim2 =
+      n.new_session(false, { args = { '-u', 'NONE', '-i', 'NONE', '--embed' }, merge = false })
     set_session(nvim2)
 
     exec(init)
@@ -141,7 +140,7 @@ describe('swapfile detection', function()
     set swapfile fileformat=unix nomodified undolevels=-1 nohidden
   ]]
   before_each(function()
-    nvim0 = spawn(new_argv())
+    nvim0 = n.new_session(false)
     set_session(nvim0)
     rmdir(swapdir)
     mkdir(swapdir)
@@ -168,7 +167,8 @@ describe('swapfile detection', function()
     command('preserve')
 
     -- Start another Nvim instance.
-    local nvim2 = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed' }, true, nil, true)
+    local nvim2 =
+      n.new_session(true, { args = { '-u', 'NONE', '-i', 'NONE', '--embed' }, merge = false })
     set_session(nvim2)
     local screen2 = Screen.new(256, 40)
     screen2._default_attr_ids = nil
@@ -251,7 +251,7 @@ describe('swapfile detection', function()
     command('preserve') -- Make sure the swap file exists.
     local nvimpid = fn.getpid()
 
-    local nvim1 = spawn(new_argv(), true, nil, true)
+    local nvim1 = n.new_session(true)
     set_session(nvim1)
     local screen = Screen.new(75, 18)
     exec(init)
@@ -273,7 +273,7 @@ describe('swapfile detection', function()
       [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
     })
 
-    local nvim1 = spawn(new_argv(), true, nil, true)
+    local nvim1 = n.new_session(true)
     set_session(nvim1)
     screen:attach()
     exec(init)
@@ -292,7 +292,7 @@ describe('swapfile detection', function()
     ]])
     nvim1:close()
 
-    local nvim2 = spawn(new_argv(), true, nil, true)
+    local nvim2 = n.new_session(true)
     set_session(nvim2)
     screen:attach()
     exec(init)

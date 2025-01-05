@@ -5,7 +5,6 @@ local clear, eq, eval, next_msg, ok, source = n.clear, t.eq, n.eval, n.next_msg,
 local command, fn, api = n.command, n.fn, n.api
 local matches = t.matches
 local sleep = vim.uv.sleep
-local spawn, nvim_argv = n.spawn, n.nvim_argv
 local get_session, set_session = n.get_session, n.set_session
 local nvim_prog = n.nvim_prog
 local is_os = t.is_os
@@ -33,10 +32,10 @@ describe('channels', function()
   end)
 
   pending('can connect to socket', function()
-    local server = spawn(nvim_argv, nil, nil, true)
+    local server = n.new_session(true)
     set_session(server)
     local address = fn.serverlist()[1]
-    local client = spawn(nvim_argv, nil, nil, true)
+    local client = n.new_session(true)
     set_session(client)
     source(init)
 
@@ -63,7 +62,7 @@ describe('channels', function()
 
   it('dont crash due to garbage in rpc #23781', function()
     local client = get_session()
-    local server = spawn(nvim_argv, nil, nil, true)
+    local server = n.new_session(true)
     set_session(server)
     local address = fn.serverlist()[1]
     set_session(client)

@@ -6,8 +6,7 @@ local uv = vim.uv
 local paths = t.paths
 
 local api, nvim_command, fn, eq = n.api, n.command, n.fn, t.eq
-local write_file, spawn, set_session, nvim_prog, exc_exec =
-  t.write_file, n.spawn, n.set_session, n.nvim_prog, n.exc_exec
+local write_file, set_session, exc_exec = t.write_file, n.set_session, n.exc_exec
 local is_os = t.is_os
 local skip = t.skip
 
@@ -254,7 +253,7 @@ describe('ShaDa support code', function()
   it('does not crash when ShaDa file directory is not writable', function()
     skip(is_os('win'))
 
-    fn.mkdir(dirname, '', 0)
+    fn.mkdir(dirname, '', '0')
     eq(0, fn.filewritable(dirname))
     reset { shadafile = dirshada, args = { '--cmd', 'set shada=' } }
     api.nvim_set_option_value('shada', "'10", {})
@@ -270,10 +269,10 @@ end)
 
 describe('ShaDa support code', function()
   it('does not write NONE file', function()
-    local session = spawn(
-      { nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed', '--headless', '--cmd', 'qall' },
-      true
-    )
+    local session = n.new_session(false, {
+      merge = false,
+      args = { '-u', 'NONE', '-i', 'NONE', '--embed', '--headless', '--cmd', 'qall' },
+    })
     session:close()
     eq(nil, uv.fs_stat('NONE'))
     eq(nil, uv.fs_stat('NONE.tmp.a'))
@@ -281,7 +280,10 @@ describe('ShaDa support code', function()
 
   it('does not read NONE file', function()
     write_file('NONE', '\005\001\015\131\161na\162rX\194\162rc\145\196\001-')
-    local session = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed', '--headless' }, true)
+    local session = n.new_session(
+      false,
+      { merge = false, args = { '-u', 'NONE', '-i', 'NONE', '--embed', '--headless' } }
+    )
     set_session(session)
     eq('', fn.getreg('a'))
     session:close()

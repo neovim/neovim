@@ -2,7 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
-local spawn, set_session, clear = n.spawn, n.set_session, n.clear
+local set_session, clear = n.set_session, n.clear
 local feed, command = n.feed, n.command
 local exec = n.exec
 local insert = n.insert
@@ -26,7 +26,7 @@ describe('screen', function()
   }
 
   before_each(function()
-    local screen_nvim = spawn(nvim_argv)
+    local screen_nvim = n.new_session(false, { args = nvim_argv, merge = false })
     set_session(screen_nvim)
     screen = Screen.new()
   end)
@@ -766,7 +766,7 @@ describe('Screen default colors', function()
       'colorscheme vim',
       '--embed',
     }
-    local screen_nvim = spawn(nvim_argv)
+    local screen_nvim = n.new_session(false, { args = nvim_argv, merge = false })
     set_session(screen_nvim)
     screen = Screen.new(53, 14, { rgb = true, ext_termcolors = termcolors or nil })
   end

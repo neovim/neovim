@@ -26,7 +26,6 @@ local api = n.api
 local is_ci = t.is_ci
 local is_os = t.is_os
 local new_pipename = n.new_pipename
-local spawn_argv = n.spawn_argv
 local set_session = n.set_session
 local write_file = t.write_file
 local eval = n.eval
@@ -3320,8 +3319,8 @@ describe('TUI as a client', function()
   end)
 
   it('connects to remote instance (with its own TUI)', function()
-    local server_super = spawn_argv(false) -- equivalent to clear()
-    local client_super = spawn_argv(true)
+    local server_super = n.new_session(false)
+    local client_super = n.new_session(true)
 
     set_session(server_super)
     local server_pipe = new_pipename()
@@ -3395,8 +3394,8 @@ describe('TUI as a client', function()
   end)
 
   it('connects to remote instance (--headless)', function()
-    local server = spawn_argv(false) -- equivalent to clear()
-    local client_super = spawn_argv(true, { env = { NVIM_LOG_FILE = testlog } })
+    local server = n.new_session(false)
+    local client_super = n.new_session(true, { env = { NVIM_LOG_FILE = testlog } })
 
     set_session(server)
     local server_pipe = api.nvim_get_vvar('servername')
@@ -3462,8 +3461,8 @@ describe('TUI as a client', function()
   end)
 
   local function test_remote_tui_quit(status)
-    local server_super = spawn_argv(false) -- equivalent to clear()
-    local client_super = spawn_argv(true)
+    local server_super = n.new_session(false)
+    local client_super = n.new_session(true)
 
     set_session(server_super)
     local server_pipe = new_pipename()
