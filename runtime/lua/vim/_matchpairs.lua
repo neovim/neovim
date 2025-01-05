@@ -20,6 +20,13 @@ local function jump_to_node(node, start)
   api.nvim_win_set_cursor(0, { row + 1, col })
 end
 
+--- @param node TSNode
+local function anonymous_children(node)
+  return vim.iter(node:iter_children()):filter(function (child)
+    return not child:named()
+  end)
+end
+
 
 --- @param keyword TSNode Anonymous node
 --- @return boolean
@@ -32,10 +39,7 @@ end
 --- @param current TSNode
 --- @param backward? boolean Search backward for matching keyword
 local function match_keyword(current, backward)
-  -- unnamed (anonymous) nodes are keywords
-  local keywords = vim.iter(current:iter_children()):filter(function(node)
-    return not node:named()
-  end)
+  local keywords = anonymous_children(current)
 
   -- prev for backwards matching, first for wrapping last item
   local prev, first
@@ -94,16 +98,22 @@ function M.decide(backward)
   end
 end
 
+--- @return { [1]: integer, [2]: integer }
 local function norm_cursor_pos()
   local row, col = unpack(api.nvim_win_get_cursor(0))
   return { row - 1, col }
 end
 
+--- @return string
 local function cursor_char()
   local r, c = unpack(norm_cursor_pos())
   return api.nvim_buf_get_text(0, r, c, r, c + 1, {})[1]
 end
 
+--- @param left string left bracket
+--- @param right string right bracket
+--- @param forward boolean forward or backward search (default true)
+--- @return { [1]: integer, [2]: integer }?
 local function searchpair(left, right, forward)
   forward = vim.F.if_nil(forward, true)
   local dir = forward and '' or 'b'
@@ -119,6 +129,7 @@ local function searchpair(left, right, forward)
 end
 
 
+--- @return { [1]: { [1]: integer, [2]: integer }, [2]: { [1]: integer, [2]: integer }}?
 local function syntax_pairs()
   local char = cursor_char()
   for pair in vim.gsplit(vim.o.matchpairs, ',', { trimempty = true }) do
@@ -135,20 +146,28 @@ local function syntax_pairs()
   end
 end
 
+--- @return { [1]: { [1]: integer, [2]: integer }, [2]: { [1]: integer, [2]: integer }}?
 local function ts_pairs()
   local node = ts.get_node()
-  if node then
-    for _, capture in ipairs(ts.get_captures_at_cursor(0)) do
-      if vim.startswith(capture, 'punctuation.bracket') then
-        -- TODO: pairs[1] not working, go to first anon child not start of node
-        local open_row, open_col = node:start()
-        local close_row, close_col = node:end_()
-        return { { open_row, open_col }, { close_row, close_col - 1 } }
-      end
-    end
+  if not node then
+    return
+  end
+
+  if not vim.iter(ts.get_captures_at_cursor(0)):any(function (n)
+    return vim.startswith(n, 'punctuation.bracket')
+  end) then
+    return
+  end
+
+  -- TODO: do we also need to use :last() for closing bracket?
+  local opening = anonymous_children(node):next()
+  if opening then
+    local close_row, close_col = node:end_()
+    return { { opening:start() }, { close_row, close_col - 1 } }
   end
 end
 
+--- @param pos { [1]: integer, [2]: integer }
 local function higlight_bracket(pos)
   local row, col = unpack(pos)
   api.nvim_buf_add_highlight(0, ns, 'MatchParen', row, col, col + 1)
