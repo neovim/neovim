@@ -410,21 +410,9 @@ function M._check(mods, plugin_names)
 
   -- Quit with 'q' inside healthcheck buffers.
   vim.keymap.set('n', 'q', function()
-    local function get_focusable_wins()
-      local wins = {}
-      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(vim.api.nvim_get_current_tabpage())) do
-        if vim.api.nvim_win_get_config(win).focusable then
-          table.insert(wins, win)
-        end
-      end
-
-      return wins
-    end
-
-    if vim.fn.tabpagenr('$') == 1 and #get_focusable_wins() == 1 then
+    local ok, _ = pcall(vim.cmd.close)
+    if not ok then
       vim.cmd.bdelete()
-    else
-      vim.cmd.close()
     end
   end, { buffer = bufnr, silent = true, noremap = true, nowait = true })
 
