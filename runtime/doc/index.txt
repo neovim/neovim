@@ -1190,7 +1190,7 @@ tag		command		action ~
 |:breakdel|	:breakd[el]	delete a debugger breakpoint
 |:breaklist|	:breakl[ist]	list debugger breakpoints
 |:browse|	:bro[wse]	use file selection dialog
-|:bufdo|	:bufdo		execute command in each listed buffer
+|:bufdo|	:bufd[o]	execute command in each listed buffer
 |:buffers|	:buffers	list all files in the buffer list
 |:bunload|	:bun[load]	unload a specific buffer
 |:bwipeout|	:bw[ipeout]	really delete a buffer
@@ -1206,7 +1206,7 @@ tag		command		action ~
 |:cafter|	:caf[ter]	go to error after current cursor
 |:call|		:cal[l]		call a function
 |:catch|	:cat[ch]	part of a :try command
-|:cbefore|	:cbef[ore]	go to error before current cursor
+|:cbefore|	:cbe[fore]	go to error before current cursor
 |:cbelow|	:cbel[ow]	go to error below current line
 |:cbottom|	:cbo[ttom]	scroll to the bottom of the quickfix window
 |:cbuffer|	:cb[uffer]	parse error messages and jump to first error
@@ -1262,6 +1262,7 @@ tag		command		action ~
 |:delete|	:d[elete]	delete lines
 |:debug|	:deb[ug]	run a command in debugging mode
 |:debuggreedy|	:debugg[reedy]	read debug mode commands from normal input
+|:defer|	:defe[r]	call function when current function is done
 |:delcommand|	:delc[ommand]	delete user-defined command
 |:delfunction|	:delf[unction]	delete a user function
 |:delmarks|	:delm[arks]	delete marks
@@ -1271,7 +1272,7 @@ tag		command		action ~
 |:diffpatch|	:diffp[atch]	apply a patch and show differences
 |:diffput|	:diffpu[t]	remove differences in other buffer
 |:diffsplit|	:diffs[plit]	show differences with another file
-|:diffthis|	:diffthis	make current window a diff window
+|:diffthis|	:difft[his]	make current window a diff window
 |:digraphs|	:dig[raphs]	show or enter digraphs
 |:display|	:di[splay]	display registers
 |:djump|	:dj[ump]	jump to #define
@@ -1372,7 +1373,7 @@ tag		command		action ~
 |:last|		:la[st]		go to the last file in the argument list
 |:language|	:lan[guage]	set the language (locale)
 |:later|	:lat[er]	go to newer change, redo
-|:lbefore|	:lbef[ore]	go to location before current cursor
+|:lbefore|	:lbe[fore]	go to location before current cursor
 |:lbelow|	:lbel[ow]	go to location below current line
 |:lbottom|	:lbo[ttom]	scroll to the bottom of the location window
 |:lbuffer|	:lb[uffer]	parse locations and jump to first location
@@ -1410,7 +1411,7 @@ tag		command		action ~
 |:lockmarks|	:loc[kmarks]	following command keeps marks where they are
 |:lockvar|	:lockv[ar]	lock variables
 |:lolder|	:lol[der]	go to older location list
-|:lopen|	:lope[n]	open location window
+|:lopen|	:lop[en]	open location window
 |:lprevious|	:lp[revious]	go to previous location
 |:lpfile|	:lpf[ile]	go to last location in previous file
 |:lrewind|	:lr[ewind]	go to the specified location, default first one
@@ -1618,7 +1619,7 @@ tag		command		action ~
 |:tNext|	:tN[ext]	jump to previous matching tag
 |:tabNext|	:tabN[ext]	go to previous tab page
 |:tabclose|	:tabc[lose]	close current tab page
-|:tabdo|	:tabdo		execute command in each tab page
+|:tabdo|	:tabd[o]	execute command in each tab page
 |:tabedit|	:tabe[dit]	edit a file in a new tab page
 |:tabfind|	:tabf[ind]	find file in 'path', edit it in a new tab page
 |:tabfirst|	:tabfir[st]	go to first tab page
@@ -1687,7 +1688,7 @@ tag		command		action ~
 |:vsplit|	:vs[plit]	split current window vertically
 |:vunmap|	:vu[nmap]	like ":unmap" but for Visual+Select mode
 |:vunmenu|	:vunme[nu]	remove menu for Visual+Select mode
-|:windo|	:windo		execute command in each window
+|:windo|	:wind[o]	execute command in each window
 |:write|	:w[rite]	write to a file
 |:wNext|	:wN[ext]	write to a file and go to previous file in
 				argument list
