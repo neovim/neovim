@@ -835,9 +835,9 @@ void ui_refresh(void)
 
       local result = exec_lua(function()
         local query0 = vim.treesitter.query.parse('c', query)
-        local match_preds = query0.match_preds
+        local match_preds = query0._match_predicates
         local called = 0
-        function query0:match_preds(...)
+        function query0:_match_predicates(...)
           called = called + 1
           return match_preds(self, ...)
         end

@@ -6,8 +6,7 @@ describe('decor perf', function()
   before_each(n.clear)
 
   it('can handle long lines', function()
-    local screen = Screen.new(100, 101)
-    screen:attach()
+    Screen.new(100, 101)
 
     local result = exec_lua [==[
       local ephemeral_pattern = {
@@ -98,5 +97,44 @@ describe('decor perf', function()
     end
 
     print('\nTotal ' .. fmt(total) .. '\nDecoration provider: ' .. fmt(provider))
+  end)
+
+  it('can handle full screen of highlighting', function()
+    Screen.new(100, 51)
+
+    local result = exec_lua(function()
+      local long_line = 'local a={' .. ('a=5,'):rep(22) .. '}'
+      local lines = {}
+      for _ = 1, 50 do
+        table.insert(lines, long_line)
+      end
+      vim.api.nvim_buf_set_lines(0, 0, 0, false, lines)
+      vim.api.nvim_win_set_cursor(0, { 1, 0 })
+      vim.treesitter.start(0, 'lua')
+
+      local total = {}
+      for _ = 1, 100 do
+        local tic = vim.uv.hrtime()
+        vim.cmd 'redraw!'
+        local toc = vim.uv.hrtime()
+        table.insert(total, toc - tic)
+      end
+
+      return { total }
+    end)
+
+    local total = unpack(result)
+    table.sort(total)
+
+    local ms = 1 / 1000000
+    local res = string.format(
+      'min, 25%%, median, 75%%, max:\n\t%0.1fms,\t%0.1fms,\t%0.1fms,\t%0.1fms,\t%0.1fms',
+      total[1] * ms,
+      total[1 + math.floor(#total * 0.25)] * ms,
+      total[1 + math.floor(#total * 0.5)] * ms,
+      total[1 + math.floor(#total * 0.75)] * ms,
+      total[#total] * ms
+    )
+    print('\nTotal ' .. res)
   end)
 end)
