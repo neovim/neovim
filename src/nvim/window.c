@@ -3500,6 +3500,10 @@ static bool is_bottom_win(win_T *wp)
   return true;
 }
 
+// 'cmdheight' value explicitly set by the user: window commands are allowed to
+// resize the topframe to values higher than this minimum, but not lower.
+static OptInt min_set_ch = 1;
+
 /// Set a new height for a frame.  Recursively sets the height for contained
 /// frames and windows.  Caller must take care of positions.
 ///
@@ -3512,11 +3516,11 @@ void frame_new_height(frame_T *topfrp, int height, bool topfirst, bool wfh, bool
 {
   if (topfrp->fr_parent == NULL && set_ch) {
     // topframe: update the command line height, with side effects.
-    OptInt new_ch = MAX(!p_ch_was_zero, p_ch + topfrp->fr_height - height);
+    OptInt new_ch = MAX(min_set_ch, p_ch + topfrp->fr_height - height);
     if (new_ch != p_ch) {
-      const bool was_zero = p_ch_was_zero;
+      const OptInt save_ch = min_set_ch;
       set_option_value(kOptCmdheight, NUMBER_OPTVAL(new_ch), 0);
-      p_ch_was_zero = was_zero;
+      min_set_ch = save_ch;
     }
     height = (int)MIN(ROWS_AVAIL, height);
   }
@@ -6247,7 +6251,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
     room = Rows - cmdline_row;
     if (curfr->fr_next != NULL) {
       room -= (int)p_ch + global_stl_height();
-    } else if (!p_ch_was_zero) {
+    } else if (min_set_ch > 0) {
       room--;
     }
     room = MAX(room, 0);
@@ -6750,7 +6754,7 @@ void command_height(void)
     old_p_ch += h;
     frp = frp->fr_prev;
   }
-  if (p_ch < old_p_ch && command_frame_height) {
+  if (p_ch < old_p_ch && command_frame_height && frp != NULL) {
     frame_add_height(frp, (int)(old_p_ch - p_ch));
   }
 
@@ -6774,6 +6778,7 @@ void command_height(void)
   // GUI starts up, we can't be sure in what order things happen.  And when
   // p_ch was changed in another tab page.
   curtab->tp_ch_used = p_ch;
+  min_set_ch = p_ch;
 }
 
 // Resize frame "frp" to be "n" lines higher (negative for less high).

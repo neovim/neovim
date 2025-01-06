@@ -35,9 +35,6 @@ enum {
 
 EXTERN int tabpage_move_disallowed INIT( = 0);  ///< moving tabpages around disallowed
 
-/// Set to true if 'cmdheight' was explicitly set to 0.
-EXTERN bool p_ch_was_zero INIT( = false);
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "window.h.generated.h"
 #endif
