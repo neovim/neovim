@@ -400,7 +400,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   parse_cmd_address(&ea, &dummy, true);
   if (ea.addr_count > 0) {
     // Allow for reverse match.
-    search_first_line = MIN(ea.line1, ea.line1);
+    search_first_line = MIN(ea.line2, ea.line1);
     search_last_line = MAX(ea.line2, ea.line1);
   } else if (cmd[0] == 's' && cmd[1] != 'o') {
     // :s defaults to the current line
