@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:		Vim
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
-" Last Change:		2025 Jan 3
+" Last Change:		2025 Jan 06
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 " Contributors:		Riley Bruins <ribru17@gmail.com> ('commentstring')
 
@@ -104,7 +104,7 @@ if exists("loaded_matchit")
 	\ '\<aug\%[roup]\s\+\%(END\>\)\@!\S:\<aug\%[roup]\s\+END\>,' ..
 	\ '\<class\>:\<endclass\>,' ..
 	\ '\<interface\>:\<endinterface\>,' ..
-	\ '\<enum\>:\<endenum\>,'
+	\ '\<enum\>:\<endenum\>'
 
   " Ignore syntax region commands and settings, any 'en*' would clobber
   " if-endif.
