@@ -409,6 +409,8 @@ Startup:
 - |-es| and |-Es| have improved behavior:
     - Quits automatically, don't need "-c qa!".
     - Skips swap-file dialog.
+    - Optimized for non-interactive scripts: disables swapfile, shada.
+- |-l| Executes Lua scripts non-interactively.
 - |-s| reads Normal commands from stdin if the script name is "-".
 - Reading text (instead of commands) from stdin |--|:
     - works by default: "-" file is optional

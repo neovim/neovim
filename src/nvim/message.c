@@ -2719,7 +2719,7 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
 }
 
 /// @return  true when messages should be printed to stdout/stderr:
-///          - "batch mode" ("silent mode", -es/-Es)
+///          - "batch mode" ("silent mode", -es/-Es/-l)
 ///          - no UI and not embedded
 int msg_use_printf(void)
 {
