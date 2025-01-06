@@ -15,9 +15,9 @@ end)
 local augroup = vim.api.nvim_create_augroup('nvim_matchpairs', {})
 
 vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI', 'WinEnter' }, {
-  callback = function()
+  callback = vim.schedule_wrap(function ()
     require('vim._matchpairs').highlight()
-  end,
+  end),
   group = augroup,
 })
 

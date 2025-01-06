@@ -1,9 +1,8 @@
-local M = {}
-
-local ns = vim.api.nvim_create_namespace('nvim_matchpairs')
-
 local ts = vim.treesitter
 local api = vim.api
+
+local M = {}
+local ns = api.nvim_create_namespace('nvim_matchpairs')
 
 --- Jump to the start or end of a given node
 --- @param node TSNode The node to jump to
@@ -22,7 +21,7 @@ end
 
 --- @param node TSNode
 local function anonymous_children(node)
-  return vim.iter(node:iter_children()):filter(function (child)
+  return vim.iter(node:iter_children()):filter(function(child)
     return not child:named()
   end)
 end
@@ -117,12 +116,13 @@ end
 local function searchpair(left, right, forward)
   forward = vim.F.if_nil(forward, true)
   local dir = forward and '' or 'b'
-  local row, col = unpack(vim.fn.searchpairpos(
-    '\\M' .. left, -- :h \M
-    '',
-    '\\M' .. right,
-    'nW' .. dir
-  ))
+
+  -- straight from matchparen.vim
+  local skip = 'synstack(".", col("."))->indexof({_, id -> synIDattr(id, "name") =~? "string\\|character\\|singlequote\\|escape\\|symbol\\|comment"}) >= 0'
+
+  local row, col = unpack(
+    vim.fn.searchpairpos('\\M' .. left, '', '\\M' .. right, 'nW' .. dir, skip)
+  )
   if row > 0 and col > 0 then
     return { row - 1, col - 1 }
   end
@@ -153,9 +153,9 @@ local function ts_pairs()
     return
   end
 
-  if not vim.iter(ts.get_captures_at_cursor(0)):any(function (n)
-    return vim.startswith(n, 'punctuation.bracket')
-  end) then
+  if not vim.iter(ts.get_captures_at_cursor(0)):any(function(n)
+        return vim.startswith(n, 'punctuation.bracket')
+      end) then
     return
   end
 
@@ -175,13 +175,16 @@ end
 
 -- TODO: insert mode: also when cursor is after bracket
 function M.highlight()
-  -- TODO: for development
+  --- TODO: this is only to simplify development
   vim.cmd [[NoMatchParen]]
+  vim.cmd [[set syntax=on]]
   api.nvim_set_hl(0, 'MatchParen', { bg = 'Red', fg = 'Yellow' })
+  ---
 
   api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
   local pairs = vim.F.if_nil(ts_pairs(), syntax_pairs())
+  pairs = syntax_pairs()
   if pairs then
     higlight_bracket(pairs[1])
     higlight_bracket(pairs[2])
