@@ -5,7 +5,7 @@
 " 		Lennart Schultz <Lennart.Schultz@ecmwf.int>
 " Last Change:		2024 Mar 04 by Vim Project
 "		2024 Nov 03 by Aliaksei Budavei <0x000c70 AT gmail DOT com> (improved bracket expressions, #15941)
-"		2025 Jan 06 add $0 to bashSpecialVariables (#16394)
+"		2025 Jan 06 add $PS0 to bashSpecialVariables (#16394)
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
