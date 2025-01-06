@@ -253,8 +253,8 @@ and 'winminwidth' are relevant.
 		will be equalized only vertically.
 		Doesn't work for |:execute| and |:normal|.
 
-						*:ho* *:horizontal*
-:ho[rizontal] {cmd}
+						*:hor* *:horizontal*
+:hor[izontal] {cmd}
 		Execute {cmd}.  Currently only makes a difference for
 		the following commands:
 		- `:wincmd =`: equalize windows only horizontally.

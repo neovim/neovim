@@ -1335,7 +1335,7 @@ tag		command		action ~
 |:highlight|	:hi[ghlight]	specify highlighting methods
 |:hide|		:hid[e]		hide current buffer for a command
 |:history|	:his[tory]	print a history list
-|:horizontal|	:ho[rizontal]	following window command work horizontally
+|:horizontal|	:hor[izontal]	following window command work horizontally
 |:insert|	:i[nsert]	insert text
 |:iabbrev|	:ia[bbrev]	like ":abbrev" but for Insert mode
 |:iabclear|	:iabc[lear]	like ":abclear" but for Insert mode
