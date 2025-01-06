@@ -34,7 +34,6 @@ local function cursor_on_keyword(keyword)
   return ts.is_in_node_range(keyword, cursor_row - 1, cursor_col)
 end
 
---- TODO: elif/else not supported
 --- @param current TSNode
 --- @param backward? boolean Search backward for matching keyword
 local function match_keyword(current, backward)
@@ -74,7 +73,7 @@ local function match_punc(current)
   jump_to_node(current, not at_start)
 end
 
-function M.decide(backward)
+function M.jump(backward)
   local node = ts.get_node()
   if not node then
     return
@@ -97,18 +96,34 @@ function M.decide(backward)
   end
 end
 
+--- 0-based line and column position
 --- @return { [1]: integer, [2]: integer }
 local function norm_cursor_pos()
   local row, col = unpack(api.nvim_win_get_cursor(0))
   return { row - 1, col }
 end
 
+--- Current character under cursor
 --- @return string
 local function cursor_char()
   local r, c = unpack(norm_cursor_pos())
   return api.nvim_buf_get_text(0, r, c, r, c + 1, {})[1]
 end
 
+--- Check if matching bracket is in skipable syntax group
+--- @return boolean
+local function searchskip()
+  if not vim.g.syntax_on then
+    return false
+  end
+  local groups = vim.regex("string\\|character\\|singlequote\\|escape\\|symbol\\|comment")
+  return vim.iter(vim.fn.synstack(vim.fn.line("."), vim.fn.col("."))):any(function (id)
+    local name = vim.fn.synIDattr(id, 'name'):lower()
+    return groups:match_str(name) ~= nil
+  end)
+end
+
+--- Search bracket pair using |searchpairpos()|
 --- @param left string left bracket
 --- @param right string right bracket
 --- @param forward boolean forward or backward search (default true)
@@ -117,27 +132,22 @@ local function searchpair(left, right, forward)
   forward = vim.F.if_nil(forward, true)
   local dir = forward and '' or 'b'
 
-  -- straight from matchparen.vim
-  local skip = 'synstack(".", col("."))->indexof({_, id -> synIDattr(id, "name") =~? "string\\|character\\|singlequote\\|escape\\|symbol\\|comment"}) >= 0'
-
   local row, col = unpack(
-    vim.fn.searchpairpos('\\M' .. left, '', '\\M' .. right, 'nW' .. dir, skip)
+    vim.fn.searchpairpos('\\M' .. left, '', '\\M' .. right, 'nW' .. dir, searchskip)
   )
   if row > 0 and col > 0 then
     return { row - 1, col - 1 }
   end
 end
 
-
+--- Find highlight bracket pairs using |syntax|
 --- @return { [1]: { [1]: integer, [2]: integer }, [2]: { [1]: integer, [2]: integer }}?
 local function syntax_pairs()
   local char = cursor_char()
   for pair in vim.gsplit(vim.o.matchpairs, ',', { trimempty = true }) do
-    -- TODO: also recognizes ':'. Rewrite.
-    local idx = pair:find(char, 1, true)
-    if idx ~= nil then
-      local left, right = unpack(vim.split(pair, ':'))
-      local forward = idx == 1 -- "a:b", from a forwards, b backwards
+    local left, right = unpack(vim.split(pair, ':'))
+    if left == char or right == char then
+      local forward = left == char
       local match = searchpair(left, right, forward)
       if match then
         return { norm_cursor_pos(), match }
@@ -146,6 +156,7 @@ local function syntax_pairs()
   end
 end
 
+--- Find highlight bracket pairs using |treesitter-highlight|
 --- @return { [1]: { [1]: integer, [2]: integer }, [2]: { [1]: integer, [2]: integer }}?
 local function ts_pairs()
   local node = ts.get_node()
@@ -159,10 +170,10 @@ local function ts_pairs()
     return
   end
 
-  -- TODO: do we also need to use :last() for closing bracket?
   local opening = anonymous_children(node):next()
-  if opening then
-    local close_row, close_col = node:end_()
+  local closing = anonymous_children(node):last()
+  if opening and closing then
+    local close_row, close_col = closing:end_()
     return { { opening:start() }, { close_row, close_col - 1 } }
   end
 end
@@ -170,7 +181,7 @@ end
 --- @param pos { [1]: integer, [2]: integer }
 local function higlight_bracket(pos)
   local row, col = unpack(pos)
-  api.nvim_buf_add_highlight(0, ns, 'MatchParen', row, col, col + 1)
+  api.nvim_buf_add_highlight(0, ns, 'MyParen', row, col, col + 1)
 end
 
 -- TODO: insert mode: also when cursor is after bracket
@@ -178,16 +189,21 @@ function M.highlight()
   --- TODO: this is only to simplify development
   vim.cmd [[NoMatchParen]]
   vim.cmd [[set syntax=on]]
-  api.nvim_set_hl(0, 'MatchParen', { bg = 'Red', fg = 'Yellow' })
+  api.nvim_set_hl(0, 'MyParen', { bg = 'Red', fg = 'Yellow' })
   ---
 
   api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
-  local pairs = vim.F.if_nil(ts_pairs(), syntax_pairs())
-  pairs = syntax_pairs()
-  if pairs then
-    higlight_bracket(pairs[1])
-    higlight_bracket(pairs[2])
+  local funcs = { ts_pairs, syntax_pairs }
+  -- funcs = { ts_pairs }
+  funcs = { syntax_pairs }
+  for _, func in ipairs(funcs) do
+    local pairs = func()
+    if pairs then
+      higlight_bracket(pairs[1])
+      higlight_bracket(pairs[2])
+      return
+    end
   end
 end
 

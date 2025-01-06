@@ -5,11 +5,11 @@ vim.g.loaded_matchpairs_plugin = true
 
 
 vim.keymap.set('n', 'H', function()
-  require('vim._matchpairs').decide()
+  require('vim._matchpairs').jump()
 end)
 
 vim.keymap.set('n', 'gH', function()
-  require('vim._matchpairs').decide(true)
+  require('vim._matchpairs').jump(true)
 end)
 
 local augroup = vim.api.nvim_create_augroup('nvim_matchpairs', {})
