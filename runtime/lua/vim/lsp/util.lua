@@ -883,7 +883,7 @@ function M.make_floating_popup_options(width, height, opts)
     style = 'minimal',
     width = width,
     border = opts.border or default_border,
-    zindex = opts.zindex or 50,
+    zindex = opts.zindex or (api.nvim_win_get_config(0).zindex or 49) + 1,
     title = title,
     title_pos = title_pos,
   }
