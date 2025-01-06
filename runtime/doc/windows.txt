@@ -253,8 +253,8 @@ and 'winminwidth' are relevant.
 		will be equalized only vertically.
 		Doesn't work for |:execute| and |:normal|.
 
-						*:hor* *:horizontal*
-:hor[izontal] {cmd}
+						*:ho* *:horizontal*
+:ho[rizontal] {cmd}
 		Execute {cmd}.  Currently only makes a difference for
 		the following commands:
 		- `:wincmd =`: equalize windows only horizontally.
@@ -941,8 +941,8 @@ set in the preview window to be able to recognize it.  The 'winfixheight'
 option is set to have it keep the same height when opening/closing other
 windows.
 
-						*:pta* *:ptag*
-:pta[g][!] [tagname]
+						*:pt* *:ptag*
+:pt[ag][!] [tagname]
 		Does ":tag[!] [tagname]" and shows the found tag in a
 		"Preview" window without changing the current buffer or cursor
 		position.  If a "Preview" window already exists, it is re-used
