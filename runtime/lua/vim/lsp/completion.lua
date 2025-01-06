@@ -607,6 +607,8 @@ end
 
 --- @class vim.lsp.completion.BufferOpts
 --- @field autotrigger? boolean  Default: false When true, completion triggers automatically based on the server's `triggerCharacters`.
+--- @field snippet_mappings? vim.snippet.NavigationMappings The keymaps for snippet navigation. Default: `<Tab>`/`<Shift-Tab>` for
+--- jumping to the next and previous tabstop, respetively.
 --- @field convert? fun(item: lsp.CompletionItem): table Transforms an LSP CompletionItem to |complete-items|.
 
 ---@param client_id integer
@@ -656,6 +658,10 @@ local function enable_completions(client_id, bufnr, opts)
       })
     end
   end
+
+  -- Set mappings for snippet navigation.
+  vim.snippet._navigation_mappings = opts.snippet_mappings
+    or { jump_forward = '<Tab>', jump_backward = '<S-Tab>' }
 
   if not buf_handle.clients[client_id] then
     local client = lsp.get_client_by_id(client_id)

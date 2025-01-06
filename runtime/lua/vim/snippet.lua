@@ -2,8 +2,6 @@ local G = vim.lsp._snippet_grammar
 local snippet_group = vim.api.nvim_create_augroup('vim/snippet', {})
 local snippet_ns = vim.api.nvim_create_namespace('vim/snippet')
 local hl_group = 'SnippetTabstop'
-local jump_forward_key = '<tab>'
-local jump_backward_key = '<s-tab>'
 
 --- Returns the 0-based cursor position.
 ---
@@ -179,13 +177,16 @@ function Tabstop:set_right_gravity(right_gravity)
   })
 end
 
+--- @alias vim.snippet.NavigationMappings { jump_forward: string, jump_backward: string }
+
 --- @class (private) vim.snippet.Session
 --- @field bufnr integer
 --- @field extmark_id integer
 --- @field tabstops table<integer, vim.snippet.Tabstop[]>
 --- @field current_tabstop vim.snippet.Tabstop
---- @field tab_keymaps { i: table<string, any>?, s: table<string, any>? }
---- @field shift_tab_keymaps { i: table<string, any>?, s: table<string, any>? }
+--- @field navigation_mappings vim.snippet.NavigationMappings?
+--- @field jump_forward_keymaps { i: table<string, any>?, s: table<string, any>? }
+--- @field jump_backward_keymaps { i: table<string, any>?, s: table<string, any>? }
 local Session = {}
 
 --- Creates a new snippet session in the current buffer.
@@ -194,13 +195,15 @@ local Session = {}
 --- @param bufnr integer
 --- @param snippet_extmark integer
 --- @param tabstop_data table<integer, { range: Range4, choices?: string[] }[]>
+--- @param navigation_mappings vim.snippet.NavigationMappings?
 --- @return vim.snippet.Session
-function Session.new(bufnr, snippet_extmark, tabstop_data)
+function Session.new(bufnr, snippet_extmark, tabstop_data, navigation_mappings)
   local self = setmetatable({
     bufnr = bufnr,
     extmark_id = snippet_extmark,
     tabstops = {},
     current_tabstop = Tabstop.new(0, bufnr, { 0, 0, 0, 0 }),
+    navigation_mappings = navigation_mappings,
     tab_keymaps = { i = nil, s = nil },
     shift_tab_keymaps = { i = nil, s = nil },
   }, { __index = Session })
@@ -222,6 +225,10 @@ end
 ---
 --- @package
 function Session:set_keymaps()
+  if not self.navigation_mappings then
+    return
+  end
+
   local function maparg(key, mode)
     local map = vim.fn.maparg(key, mode, false, true) --[[ @as table ]]
     if not vim.tbl_isempty(map) and map.buffer == 1 then
@@ -239,22 +246,26 @@ function Session:set_keymaps()
     end, { expr = true, silent = true, buffer = self.bufnr })
   end
 
-  self.tab_keymaps = {
-    i = maparg(jump_forward_key, 'i'),
-    s = maparg(jump_forward_key, 's'),
+  self.jump_forward_keymaps = {
+    i = maparg(self.navigation_mappings.jump_forward, 'i'),
+    s = maparg(self.navigation_mappings.jump_forward, 's'),
   }
-  self.shift_tab_keymaps = {
-    i = maparg(jump_backward_key, 'i'),
-    s = maparg(jump_backward_key, 's'),
+  self.jump_backward_keymaps = {
+    i = maparg(self.navigation_mappings.jump_backward, 'i'),
+    s = maparg(self.navigation_mappings.jump_backward, 's'),
   }
-  set(jump_forward_key, 1)
-  set(jump_backward_key, -1)
+  set(self.navigation_mappings.jump_forward, 1)
+  set(self.navigation_mappings.jump_backward, -1)
 end
 
 --- Restores/deletes the keymaps used for snippet navigation.
 ---
 --- @package
 function Session:restore_keymaps()
+  if not self.navigation_mappings then
+    return
+  end
+
   local function restore(keymap, lhs, mode)
     if keymap then
       vim._with({ buf = self.bufnr }, function()
@@ -265,10 +276,10 @@ function Session:restore_keymaps()
     end
   end
 
-  restore(self.tab_keymaps.i, jump_forward_key, 'i')
-  restore(self.tab_keymaps.s, jump_forward_key, 's')
-  restore(self.shift_tab_keymaps.i, jump_backward_key, 'i')
-  restore(self.shift_tab_keymaps.s, jump_backward_key, 's')
+  restore(self.jump_forward_keymaps.i, self.navigation_mappings.jump_forward, 'i')
+  restore(self.jump_forward_keymaps.s, self.navigation_mappings.jump_forward, 's')
+  restore(self.jump_backward_keymaps.i, self.navigation_mappings.jump_backward, 'i')
+  restore(self.jump_backward_keymaps.s, self.navigation_mappings.jump_backward, 's')
 end
 
 --- Returns the destination tabstop index when jumping in the given direction.
@@ -306,7 +317,7 @@ function Session:set_group_gravity(index, right_gravity)
   end
 end
 
-local M = { session = nil }
+local M = { _session = nil, _navigation_mappings = nil }
 
 --- Displays the choices for the given tabstop as completion items.
 ---
@@ -594,7 +605,7 @@ function M.expand(input)
     right_gravity = false,
     end_right_gravity = true,
   })
-  M._session = Session.new(bufnr, snippet_extmark, tabstop_data)
+  M._session = Session.new(bufnr, snippet_extmark, tabstop_data, M._navigation_mappings)
 
   -- Jump to the first tabstop.
   M.jump(1)
