@@ -301,4 +301,32 @@ describe('vim.lsp.util', function()
       end)
     end)
   end)
+
+  it('open_floating_preview zindex greater than current window', function()
+    local screen = Screen.new()
+    exec_lua(function()
+      vim.api.nvim_open_win(0, true, {
+        relative = 'editor',
+        border = 'single',
+        height = 11,
+        width = 51,
+        row = 2,
+        col = 2,
+      })
+      vim.keymap.set('n', 'K', function()
+        vim.lsp.util.open_floating_preview({ 'foo' }, '', { border = 'single' })
+      end, {})
+    end)
+    feed('K')
+    screen:expect([[
+      ┌───────────────────────────────────────────────────┐|
+      │{4:^                                                   }│|
+      │┌───┐{11:                                              }│|
+      ││{4:foo}│{11:                                              }│|
+      │└───┘{11:                                              }│|
+      │{11:~                                                  }│|*7
+      └───────────────────────────────────────────────────┘|
+                                                           |
+    ]])
+  end)
 end)
