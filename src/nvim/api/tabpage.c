@@ -30,7 +30,8 @@
 /// @param config Configuration options. Reserved for future use.
 /// @param[out] err Error details, if any.
 /// @return Tree of windows and frames in tabpage, or an empty array if the tab is invalid
-Dict(tabpage_config) nvim_tabpage_get(Tabpage tabpage, Dict(tabpage_get) *config, Arena *arena, Error *err)
+Dict(tabpage_config) nvim_tabpage_get(Tabpage tabpage, Dict(tabpage_get) *config, Arena *arena,
+                                      Error *err)
   FUNC_API_SINCE(13)
 {
   tabpage_T *tab;
