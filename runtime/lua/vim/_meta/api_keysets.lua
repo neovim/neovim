@@ -200,7 +200,7 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.ns_opts
 --- @field wins? any[]
 
---- @class vim.api.keyset.open_tabpage_opts
+--- @class vim.api.keyset.open_tabpage
 --- @field after? integer
 
 --- @class vim.api.keyset.open_term

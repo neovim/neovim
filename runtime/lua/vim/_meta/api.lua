@@ -1653,7 +1653,7 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 ---
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param enter boolean Boolean, whether to enter the new tabpage
---- @param opts vim.api.keyset.open_tabpage_opts Optional parameters
+--- @param opts vim.api.keyset.open_tabpage Optional parameters
 --- - after: Tabpage handle, open new tabpage after this tabpage.
 ---          Defaults to opening after the current tabpage.
 --- @return integer # Handle to newly created tabpage

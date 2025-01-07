@@ -28,11 +28,11 @@
 ///           Defaults to opening after the current tabpage.
 /// @param[out] err Error details, if any
 /// @return Handle to newly created tabpage
-Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(open_tabpage_opts) *opts, Error *err)
+Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(open_tabpage) *opts, Error *err)
   FUNC_API_SINCE(13)
 {
   int after = 0;
-  if (HAS_KEY(opts, open_tabpage_opts, after)) {
+  if (HAS_KEY(opts, open_tabpage, after)) {
     tabpage_T *tp = find_tab_by_handle((Tabpage)opts->after, err);
     if (!tp) {
       return 0;
@@ -53,7 +53,6 @@ Tabpage nvim_open_tabpage(Buffer buffer, Boolean enter, Dict(open_tabpage_opts) 
     return 0;
   }
 
-  // TODO(willothy): What should happen if the window is immediately closed?
   win_set_buf(tp->tp_firstwin, buf,  err);
 
   // Ensure tabpage wasn't immediately freed
