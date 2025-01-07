@@ -13157,7 +13157,10 @@ M.funcs = {
   winlayout = {
     args = { 0, 1 },
     base = 1,
+    deprecated = true,
     desc = [=[
+      Deprecated. Use |nvim_tabpage_get()|.
+
       The result is a nested List containing the layout of windows
       in a tabpage.
 
