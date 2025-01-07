@@ -1,8 +1,10 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/tabpage.h"
 #include "nvim/api/vim.h"
@@ -22,12 +24,13 @@
 # include "api/tabpage.c.generated.h"  // IWYU pragma: keep
 #endif
 
-/// Gets the layout of a tabpage
+/// Gets the config of a tabpage.
 ///
 /// @param tabpage Tabpage handle, or 0 for current tabpage
+/// @param config Configuration options. Reserved for future use.
 /// @param[out] err Error details, if any.
 /// @return Tree of windows and frames in tabpage, or an empty array if the tab is invalid
-Array nvim_tabpage_get_layout(Tabpage tabpage, Arena *arena, Error *err)
+Dict(tabpage_config) nvim_tabpage_get(Tabpage tabpage, Dict(tabpage_get) *config, Arena *arena, Error *err)
   FUNC_API_SINCE(13)
 {
   tabpage_T *tab;
@@ -37,8 +40,11 @@ Array nvim_tabpage_get_layout(Tabpage tabpage, Arena *arena, Error *err)
     tab = find_tab_by_handle(tabpage, err);
   }
 
+  Dict(tabpage_config) rv = KEYDICT_INIT;
+
   if (!tab) {
-    return (Array)ARRAY_DICT_INIT;
+    rv.layout = (Array)ARRAY_DICT_INIT;
+    return rv;
   }
 
   list_T *fr_list = tv_list_alloc(2);
@@ -50,42 +56,47 @@ Array nvim_tabpage_get_layout(Tabpage tabpage, Arena *arena, Error *err)
     .v_type = VAR_LIST,
   };
 
-  Array rv = vim_to_object(&list_tv, arena, false).data.array;
+  Array layout = vim_to_object(&list_tv, arena, false).data.array;
   tv_clear(&list_tv);
+
+  PUT_KEY(rv, tabpage_config, layout, layout);
+
   return rv;
 }
 
-/// Sets the window layout of a tabpage based on a tree of windows and frames
-///
-/// The layout param expects a nested list, similar to the result of `nvim_tabpage_get_layout()`.
-/// Each element in the list is either a frame or a window.
-///
-/// Frames are represented by a list with two elements:
-/// - The first element is the type of the frame, either "row" or "col"
-/// - The second element is a list of the child frames/windows
-///
-/// Windows are represented by a list with three elements:
-/// - The first element is the type, always "leaf" for windows
-/// - The second element is a buffer handle or filename to be opened in the window
-/// - The third elemnt is a dictionary containing information about the window
-///   - "focused" (Boolean): Whether the window is focused
-///
-/// The following example creates two vertical splits, and focuses the one on the right:
-///
-/// ```lua
-///     vim.api.nvim_tabpage_set_layout(0, {
-///         "row",
-///         {
-///             { "leaf", vim.api.nvim_get_current_buf() },
-///             { "leaf", vim.api.nvim_get_current_buf(), { focused = true } },
-///         }
-///     })
-/// ```
+/// Manages configuration for a tabpage.
 ///
 /// @param tabpage Tabpage handle, or 0 for current tabpage
-/// @param layout The intended layout as a nested list
+/// @param config The tabpage's intended configuration.  keys:
+///   - `layout`: The intended layout as a nested list
+///
+///     The layout param expects a nested list, similar to the result of `nvim_tabpage_get_layout()`.
+///     Each element in the list is either a frame or a window.
+///
+///     Frames are represented by a list with two elements:
+///     - The first element is the type of the frame, either "row" or "col"
+///     - The second element is a list of the child frames/windows
+///
+///     Windows are represented by a list with three elements:
+///     - The first element is the type, always "leaf" for windows
+///     - The second element is a buffer handle or filename to be opened in the window
+///     - The third elemnt is a dictionary containing information about the window
+///       - "focused" (Boolean): Whether the window is focused
+///
+///     The following example creates two vertical splits, and focuses the one on the right:
+///
+///     ```lua
+///         vim.api.nvim_tabpage_set_layout(0, {
+///             "row",
+///             {
+///                 { "leaf", vim.api.nvim_get_current_buf() },
+///                 { "leaf", vim.api.nvim_get_current_buf(), { focused = true } },
+///             }
+///         })
+///     ```
+///
 /// @param[out] err Error details, if any.
-void nvim_tabpage_set_layout(Tabpage tabpage, Array layout, Arena *arena, Error *err)
+void nvim_tabpage_set(Tabpage tabpage, Dict(tabpage_config) *config, Arena *arena, Error *err)
   FUNC_API_SINCE(13)
 {
   tabpage_T *tab;
@@ -100,25 +111,27 @@ void nvim_tabpage_set_layout(Tabpage tabpage, Array layout, Arena *arena, Error 
     return;
   }
 
-  RedrawingDisabled++;
+  if (HAS_KEY(config, tabpage_config, layout)) {
+    RedrawingDisabled++;
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
-    if (wp != tab->tp_curwin) {
-      if (tab == curtab) {
-        win_close(wp, false, true);
-      } else {
-        win_close_othertab(wp, false, tab);
+    FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
+      if (wp != tab->tp_curwin) {
+        if (tab == curtab) {
+          win_close(wp, false, true);
+        } else {
+          win_close_othertab(wp, false, tab);
+        }
       }
     }
+
+    MAXSIZE_TEMP_ARRAY(a, 2);
+    ADD(a, TABPAGE_OBJ(tabpage));
+    ADD(a, ARRAY_OBJ(config->layout));
+
+    NLUA_EXEC_STATIC("vim._set_layout(...)", a, kRetNilBool, arena, err);
+
+    RedrawingDisabled--;
   }
-
-  MAXSIZE_TEMP_ARRAY(a, 2);
-  ADD(a, TABPAGE_OBJ(tabpage));
-  ADD(a, ARRAY_OBJ(layout));
-
-  NLUA_EXEC_STATIC("vim._set_layout(...)", a, kRetNilBool, arena, err);
-
-  RedrawingDisabled--;
 }
 
 /// Gets the windows in a tabpage

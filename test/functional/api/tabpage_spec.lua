@@ -122,7 +122,7 @@ describe('api/tabpage', function()
     end)
   end)
 
-  describe('{get,set}_layout', function()
+  describe('{get,set}', function()
     it('gets the tabpage layout', function()
       local tab = api.nvim_get_current_tabpage()
       local win1 = api.nvim_get_current_win()
@@ -132,7 +132,7 @@ describe('api/tabpage', function()
       local win3 = api.nvim_open_win(0, true, {
         vertical = false,
       })
-      local layout = api.nvim_tabpage_get_layout(tab)
+      local layout = api.nvim_tabpage_get(tab, {}).layout
       eq({
         'row',
         {
@@ -171,7 +171,7 @@ describe('api/tabpage', function()
           },
           { 'leaf', win1 },
         },
-      }, api.nvim_tabpage_get_layout(tab))
+      }, api.nvim_tabpage_get(tab, {}).layout)
     end)
 
     it('sets the tabpage layout', function()
@@ -193,11 +193,11 @@ describe('api/tabpage', function()
       }
       local tab = api.nvim_get_current_tabpage()
 
-      api.nvim_tabpage_set_layout(tab, layout)
+      api.nvim_tabpage_set(tab, { layout = layout })
 
       local win1, win2, win3 = unpack(api.nvim_tabpage_list_wins(tab))
 
-      local tab_layout = api.nvim_tabpage_get_layout(tab)
+      local tab_layout = api.nvim_tabpage_get(tab, {}).layout
       eq({
         'row',
         {
@@ -235,7 +235,7 @@ describe('api/tabpage', function()
         },
       }
       local tab = api.nvim_get_current_tabpage()
-      api.nvim_tabpage_set_layout(tab, layout)
+      api.nvim_tabpage_set(tab, { layout = layout })
       local win1, win2, win3 = unpack(api.nvim_tabpage_list_wins(tab))
       eq(buf1, api.nvim_win_get_buf(win1))
       eq(buf2, api.nvim_win_get_buf(win2))
@@ -246,7 +246,7 @@ describe('api/tabpage', function()
 
     it('sets the layout of non-current tabpage', function()
       local tab1 = api.nvim_get_current_tabpage()
-      local tab1_layout = api.nvim_tabpage_get_layout(tab1)
+      local tab1_layout = api.nvim_tabpage_get(tab1, {}).layout
       command('tabnew')
       local tab2 = api.nvim_get_current_tabpage()
       api.nvim_set_current_tabpage(tab1)
@@ -261,7 +261,7 @@ describe('api/tabpage', function()
           { 'leaf', buf2 },
         },
       }
-      api.nvim_tabpage_set_layout(tab2, layout)
+      api.nvim_tabpage_set(tab2, { layout = layout })
 
       local win1, win2 = unpack(api.nvim_tabpage_list_wins(tab2))
       eq(buf1, api.nvim_win_get_buf(win1))
@@ -272,13 +272,13 @@ describe('api/tabpage', function()
           { 'leaf', win1 },
           { 'leaf', win2 },
         },
-      }, api.nvim_tabpage_get_layout(tab2))
+      }, api.nvim_tabpage_get(tab2, {}).layout)
 
       -- we should not have left the current tabpage
       eq(tab1, api.nvim_get_current_tabpage())
 
       -- tab1 layout should not have changed
-      eq(tab1_layout, api.nvim_tabpage_get_layout(tab1))
+      eq(tab1_layout, api.nvim_tabpage_get(tab1, {}).layout)
     end)
   end)
 
