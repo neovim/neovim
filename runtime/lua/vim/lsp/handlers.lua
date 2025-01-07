@@ -582,9 +582,8 @@ NSC['window/showMessage'] = function(_, params, ctx)
   if message_type == protocol.MessageType.Error then
     err_message('LSP[', client_name, '] ', message)
   else
-    --- @type string
-    local message_type_name = protocol.MessageType[message_type]
-    api.nvim_out_write(string.format('LSP[%s][%s] %s\n', client_name, message_type_name, message))
+    message = ('LSP[%s][%s] %s\n'):format(client_name, protocol.MessageType[message_type], message)
+    api.nvim_echo({ { message } }, true, { err = true })
   end
   return params
 end

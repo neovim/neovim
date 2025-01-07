@@ -1111,17 +1111,12 @@ function vim.api.nvim_del_var(name) end
 ---   redirected to the log_file and suppressed from direct output.
 function vim.api.nvim_echo(chunks, history, opts) end
 
---- Writes a message to the Vim error buffer. Does not append "\n", the
---- message is buffered (won't display) until a linefeed is written.
----
---- @param str string Message
+--- @deprecated
+--- @param str string
 function vim.api.nvim_err_write(str) end
 
---- Writes a message to the Vim error buffer. Appends "\n", so the buffer is
---- flushed (and displayed).
----
---- @see vim.api.nvim_err_write
---- @param str string Message
+--- @deprecated
+--- @param str string
 function vim.api.nvim_err_writeln(str) end
 
 --- Evaluates a Vimscript `expression`. Dicts and Lists are recursively expanded.
@@ -1861,10 +1856,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- @return integer # Window handle, or 0 on error
 function vim.api.nvim_open_win(buffer, enter, config) end
 
---- Writes a message to the Vim output buffer. Does not append "\n", the
---- message is buffered (won't display) until a linefeed is written.
----
---- @param str string Message
+--- @deprecated
+--- @param str string
 function vim.api.nvim_out_write(str) end
 
 --- Parse command line.

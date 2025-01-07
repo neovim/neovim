@@ -58,6 +58,7 @@ vim._extra = {
 
 --- @private
 vim.log = {
+  --- @enum vim.log.levels
   levels = {
     TRACE = 0,
     DEBUG = 1,
@@ -620,13 +621,8 @@ end
 ---@param opts table|nil Optional parameters. Unused by default.
 ---@diagnostic disable-next-line: unused-local
 function vim.notify(msg, level, opts) -- luacheck: no unused args
-  if level == vim.log.levels.ERROR then
-    vim.api.nvim_err_writeln(msg)
-  elseif level == vim.log.levels.WARN then
-    vim.api.nvim_echo({ { msg, 'WarningMsg' } }, true, {})
-  else
-    vim.api.nvim_echo({ { msg } }, true, {})
-  end
+  local chunks = { { msg, level == vim.log.levels.WARN and 'WarningMsg' or nil } }
+  vim.api.nvim_echo(chunks, true, { err = level == vim.log.levels.ERROR })
 end
 
 do
