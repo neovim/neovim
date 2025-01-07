@@ -875,11 +875,13 @@ function M.make_floating_popup_options(width, height, opts)
 
   return {
     anchor = anchor,
+    row = row + (opts.offset_y or 0),
     col = col + (opts.offset_x or 0),
     height = height,
     focusable = opts.focusable,
-    relative = opts.relative == 'mouse' and 'mouse' or 'cursor',
-    row = row + (opts.offset_y or 0),
+    relative = opts.relative == 'mouse' and 'mouse'
+      or opts.relative == 'editor' and 'editor'
+      or 'cursor',
     style = 'minimal',
     width = width,
     border = opts.border or default_border,
@@ -1494,7 +1496,7 @@ end
 --- @field title_pos? 'left'|'center'|'right'
 ---
 --- (default: `'cursor'`)
---- @field relative? 'mouse'|'cursor'
+--- @field relative? 'mouse'|'cursor'|'editor'
 ---
 --- - "auto": place window based on which side of the cursor has more lines
 --- - "above": place the window above the cursor unless there are not enough lines
