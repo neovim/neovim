@@ -2301,7 +2301,24 @@ function vim.api.nvim_tabpage_del_var(tabpage, name) end
 ---
 --- @param tabpage integer Tabpage handle, or 0 for current tabpage
 --- @param config vim.api.keyset.tabpage_get Configuration options. Reserved for future use.
---- @return vim.api.keyset.tabpage_config # Tree of windows and frames in tabpage, or an empty array if the tab is invalid
+--- @return vim.api.keyset.tabpage_config # Tabpage configuration object. Keys:
+--- - layout: Window layout tree.
+---
+---   For a leaf window, it returns: `["leaf", {winid}]`
+---   For horizontally split windows, which form a column, it
+---   returns: `["col", [{nested list of windows}]]`
+---   For vertically split windows, which form a row, it returns: `["row", [{nested list of windows}]]`
+---   Example:
+---   ```vim
+---   	" Only one window in the tab page
+---   	echo nvim_tabpage_get(0, {}) " ['leaf', 1000]
+---   	" Two horizontally split windows
+---   	echo nvim_tabpage_get(0, {}) " ['col', [['leaf', 1000], ['leaf', 1001]]]
+---   	" The second tab page, with three horizontally split
+---   	" windows, with two vertically split windows in the
+---   	" middle window
+---   	echo nvim_tabpage_get(2, {}) " ['col', [['leaf', 1002], ['row', [['leaf', 1003], ['leaf', 1001]]], ['leaf', 1000]]]
+---   ```
 function vim.api.nvim_tabpage_get(tabpage, config) end
 
 --- Gets the tabpage number
@@ -2339,9 +2356,9 @@ function vim.api.nvim_tabpage_list_wins(tabpage) end
 ---
 --- @param tabpage integer Tabpage handle, or 0 for current tabpage
 --- @param config vim.api.keyset.tabpage_config The tabpage's intended configuration.  keys:
---- - `layout`: The intended layout as a nested list
+--- - layout: The intended layout as a nested list
 ---
----   The layout param expects a nested list, similar to the result of `nvim_tabpage_get_layout()`.
+---   The layout param expects a nested list, similar to the result of `nvim_tabpage_get(...).layout`.
 ---   Each element in the list is either a frame or a window.
 ---
 ---   Frames are represented by a list with two elements:
@@ -2357,12 +2374,14 @@ function vim.api.nvim_tabpage_list_wins(tabpage) end
 ---   The following example creates two vertical splits, and focuses the one on the right:
 ---
 ---   ```lua
----       vim.api.nvim_tabpage_set_layout(0, {
+---       vim.api.nvim_tabpage_set(0, {
+---         layout = {
 ---           "row",
 ---           {
 ---               { "leaf", vim.api.nvim_get_current_buf() },
 ---               { "leaf", vim.api.nvim_get_current_buf(), { focused = true } },
 ---           }
+---         }
 ---       })
 ---   ```
 function vim.api.nvim_tabpage_set(tabpage, config) end

@@ -29,7 +29,24 @@
 /// @param tabpage Tabpage handle, or 0 for current tabpage
 /// @param config Configuration options. Reserved for future use.
 /// @param[out] err Error details, if any.
-/// @return Tree of windows and frames in tabpage, or an empty array if the tab is invalid
+/// @return Tabpage configuration object. Keys:
+///   - layout: Window layout tree.
+///
+///     For a leaf window, it returns: `["leaf", {winid}]`
+///     For horizontally split windows, which form a column, it
+///     returns: `["col", [{nested list of windows}]]`
+///     For vertically split windows, which form a row, it returns: `["row", [{nested list of windows}]]`
+///     Example:
+///     ```vim
+///     	" Only one window in the tab page
+///     	echo nvim_tabpage_get(0, {}) " ['leaf', 1000]
+///     	" Two horizontally split windows
+///     	echo nvim_tabpage_get(0, {}) " ['col', [['leaf', 1000], ['leaf', 1001]]]
+///     	" The second tab page, with three horizontally split
+///     	" windows, with two vertically split windows in the
+///     	" middle window
+///     	echo nvim_tabpage_get(2, {}) " ['col', [['leaf', 1002], ['row', [['leaf', 1003], ['leaf', 1001]]], ['leaf', 1000]]]
+///     ```
 Dict(tabpage_config) nvim_tabpage_get(Tabpage tabpage, Dict(tabpage_get) *config, Arena *arena,
                                       Error *err)
   FUNC_API_SINCE(13)
@@ -69,9 +86,9 @@ Dict(tabpage_config) nvim_tabpage_get(Tabpage tabpage, Dict(tabpage_get) *config
 ///
 /// @param tabpage Tabpage handle, or 0 for current tabpage
 /// @param config The tabpage's intended configuration.  keys:
-///   - `layout`: The intended layout as a nested list
+///   - layout: The intended layout as a nested list
 ///
-///     The layout param expects a nested list, similar to the result of `nvim_tabpage_get_layout()`.
+///     The layout param expects a nested list, similar to the result of `nvim_tabpage_get(...).layout`.
 ///     Each element in the list is either a frame or a window.
 ///
 ///     Frames are represented by a list with two elements:
@@ -87,12 +104,14 @@ Dict(tabpage_config) nvim_tabpage_get(Tabpage tabpage, Dict(tabpage_get) *config
 ///     The following example creates two vertical splits, and focuses the one on the right:
 ///
 ///     ```lua
-///         vim.api.nvim_tabpage_set_layout(0, {
+///         vim.api.nvim_tabpage_set(0, {
+///           layout = {
 ///             "row",
 ///             {
 ///                 { "leaf", vim.api.nvim_get_current_buf() },
 ///                 { "leaf", vim.api.nvim_get_current_buf(), { focused = true } },
 ///             }
+///           }
 ///         })
 ///     ```
 ///

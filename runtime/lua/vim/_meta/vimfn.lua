@@ -10854,6 +10854,9 @@ function vim.fn.windowsversion() end
 --- @return integer
 function vim.fn.winheight(nr) end
 
+--- @deprecated
+--- Deprecated. Use |nvim_tabpage_get()|.
+---
 --- The result is a nested List containing the layout of windows
 --- in a tabpage.
 ---
