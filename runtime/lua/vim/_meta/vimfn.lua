@@ -3770,6 +3770,20 @@ function vim.fn.getregtype(regname) end
 --- @return vim.fn.getscriptinfo.ret[]
 function vim.fn.getscriptinfo(opts) end
 
+--- Returns the current stack trace of Vim scripts.
+--- Stack trace is a |List|, of which each item is a |Dictionary|
+--- with the following items:
+---     funcref  The funcref if the stack is at a function,
+---     otherwise this item is omitted.
+---     event  The string of the event description if the
+---     stack is at an autocmd event, otherwise this
+---     item is omitted.
+---     lnum  The line number in the script on the stack.
+---     filepath  The file path of the script on the stack.
+---
+--- @return table[]
+function vim.fn.getstacktrace() end
+
 --- If {tabnr} is not specified, then information about all the
 --- tab pages is returned as a |List|. Each List item is a
 --- |Dictionary|.  Otherwise, {tabnr} specifies the tab page

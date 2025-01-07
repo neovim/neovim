@@ -220,7 +220,8 @@ M.vars = {
     type = 'string',
     desc = [=[
       The value of the exception most recently caught and not
-      finished.  See also |v:throwpoint| and |throw-variables|.
+      finished.  See also |v:stacktrace|, |v:throwpoint|, and
+      |throw-variables|.
       Example: >vim
         try
           throw "oops"
@@ -701,6 +702,15 @@ M.vars = {
       <
     ]=],
   },
+  stacktrace = {
+    type = 'table[]',
+    desc = [=[
+      The stack trace of the exception most recently caught and
+      not finished.  Refer to |getstacktrace()| for the structure of
+      stack trace.  See also |v:exception|, |v:throwpoint|, and
+      |throw-variables|.
+    ]=],
+  },
   statusmsg = {
     type = 'string',
     desc = [=[
@@ -823,7 +833,7 @@ M.vars = {
     desc = [=[
       The point where the exception most recently caught and not
       finished was thrown.  Not set when commands are typed.  See
-      also |v:exception| and |throw-variables|.
+      also |v:exception|, |v:stacktrace|, and |throw-variables|.
       Example: >vim
         try
           throw "oops"

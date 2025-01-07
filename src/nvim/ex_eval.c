@@ -479,6 +479,9 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
     excp->throw_lnum = SOURCING_LNUM;
   }
 
+  excp->stacktrace = stacktrace_create();
+  tv_list_ref(excp->stacktrace);
+
   if (p_verbose >= 13 || debug_break_level > 0) {
     int save_msg_silent = msg_silent;
 
@@ -563,6 +566,7 @@ static void discard_exception(except_T *excp, bool was_finished)
     free_msglist(excp->messages);
   }
   xfree(excp->throw_name);
+  tv_list_unref(excp->stacktrace);
   xfree(excp);
 }
 
@@ -584,6 +588,7 @@ static void catch_exception(except_T *excp)
   excp->caught = caught_stack;
   caught_stack = excp;
   set_vim_var_string(VV_EXCEPTION, excp->value, -1);
+  set_vim_var_list(VV_STACKTRACE, excp->stacktrace);
   if (*excp->throw_name != NUL) {
     if (excp->throw_lnum != 0) {
       vim_snprintf(IObuff, IOSIZE, _("%s, line %" PRId64),
@@ -633,6 +638,7 @@ static void finish_exception(except_T *excp)
   caught_stack = caught_stack->caught;
   if (caught_stack != NULL) {
     set_vim_var_string(VV_EXCEPTION, caught_stack->value, -1);
+    set_vim_var_list(VV_STACKTRACE, caught_stack->stacktrace);
     if (*caught_stack->throw_name != NUL) {
       if (caught_stack->throw_lnum != 0) {
         vim_snprintf(IObuff, IOSIZE,
@@ -651,6 +657,7 @@ static void finish_exception(except_T *excp)
   } else {
     set_vim_var_string(VV_EXCEPTION, NULL, -1);
     set_vim_var_string(VV_THROWPOINT, NULL, -1);
+    set_vim_var_list(VV_STACKTRACE, NULL);
   }
 
   // Discard the exception, but use the finish message for 'verbose'.

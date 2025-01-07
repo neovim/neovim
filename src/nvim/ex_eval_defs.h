@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 
+#include "nvim/eval/typval_defs.h"
 #include "nvim/pos_defs.h"
 
 /// A list used for saving values of "emsg_silent".  Used by ex_try() to save the
@@ -107,6 +108,7 @@ struct vim_exception {
   msglist_T *messages;  ///< message(s) causing error exception
   char *throw_name;     ///< name of the throw point
   linenr_T throw_lnum;  ///< line number of the throw point
+  list_T *stacktrace;   ///< stacktrace
   except_T *caught;     ///< next exception on the caught stack
 };
 

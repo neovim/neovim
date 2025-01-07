@@ -228,6 +228,72 @@ char *estack_sfile(estack_arg_T which)
   return (char *)ga.ga_data;
 }
 
+static void stacktrace_push_item(list_T *const l, ufunc_T *const fp, const char *const event,
+                                 const linenr_T lnum, char *const filepath,
+                                 const bool filepath_alloced)
+{
+  dict_T *const d = tv_dict_alloc_lock(VAR_FIXED);
+  typval_T tv = {
+    .v_type = VAR_DICT,
+    .v_lock = VAR_LOCKED,
+    .vval.v_dict = d,
+  };
+
+  if (fp != NULL) {
+    tv_dict_add_func(d, S_LEN("funcref"), fp);
+  }
+  if (event != NULL) {
+    tv_dict_add_str(d, S_LEN("event"), event);
+  }
+  tv_dict_add_nr(d, S_LEN("lnum"), lnum);
+  if (filepath_alloced) {
+    tv_dict_add_allocated_str(d, S_LEN("filepath"), filepath);
+  } else {
+    tv_dict_add_str(d, S_LEN("filepath"), filepath);
+  }
+
+  tv_list_append_tv(l, &tv);
+}
+
+/// Create the stacktrace from exestack.
+list_T *stacktrace_create(void)
+{
+  list_T *const l = tv_list_alloc(exestack.ga_len);
+
+  for (int i = 0; i < exestack.ga_len; i++) {
+    estack_T *const entry = &((estack_T *)exestack.ga_data)[i];
+    linenr_T lnum = entry->es_lnum;
+
+    if (entry->es_type == ETYPE_SCRIPT) {
+      stacktrace_push_item(l, NULL, NULL, lnum, entry->es_name, false);
+    } else if (entry->es_type == ETYPE_UFUNC) {
+      ufunc_T *const fp = entry->es_info.ufunc;
+      const sctx_T sctx = fp->uf_script_ctx;
+      bool filepath_alloced = false;
+      char *filepath = sctx.sc_sid > 0
+                       ? get_scriptname((LastSet){ .script_ctx = sctx },
+                                        &filepath_alloced) : "";
+      lnum += sctx.sc_lnum;
+      stacktrace_push_item(l, fp, NULL, lnum, filepath, filepath_alloced);
+    } else if (entry->es_type == ETYPE_AUCMD) {
+      const sctx_T sctx = entry->es_info.aucmd->script_ctx;
+      bool filepath_alloced = false;
+      char *filepath = sctx.sc_sid > 0
+                       ? get_scriptname((LastSet){ .script_ctx = sctx },
+                                        &filepath_alloced) : "";
+      lnum += sctx.sc_lnum;
+      stacktrace_push_item(l, NULL, entry->es_name, lnum, filepath, filepath_alloced);
+    }
+  }
+  return l;
+}
+
+/// getstacktrace() function
+void f_getstacktrace(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  tv_list_set_ret(rettv, stacktrace_create());
+}
+
 static bool runtime_search_path_valid = false;
 static int *runtime_search_path_ref = NULL;
 static RuntimeSearchPath runtime_search_path;

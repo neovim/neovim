@@ -203,7 +203,8 @@ vim.v.errors = ...
 vim.v.event = ...
 
 --- The value of the exception most recently caught and not
---- finished.  See also `v:throwpoint` and `throw-variables`.
+--- finished.  See also `v:stacktrace`, `v:throwpoint`, and
+--- `throw-variables`.
 --- Example:
 ---
 --- ```vim
@@ -616,6 +617,13 @@ vim.v.servername = ...
 --- @type integer
 vim.v.shell_error = ...
 
+--- The stack trace of the exception most recently caught and
+--- not finished.  Refer to `getstacktrace()` for the structure of
+--- stack trace.  See also `v:exception`, `v:throwpoint`, and
+--- `throw-variables`.
+--- @type table[]
+vim.v.stacktrace = ...
+
 --- Last given status message.
 --- Modifiable (can be set).
 --- @type string
@@ -718,7 +726,7 @@ vim.v.this_session = ...
 
 --- The point where the exception most recently caught and not
 --- finished was thrown.  Not set when commands are typed.  See
---- also `v:exception` and `throw-variables`.
+--- also `v:exception`, `v:stacktrace`, and `throw-variables`.
 --- Example:
 ---
 --- ```vim
