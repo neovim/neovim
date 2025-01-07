@@ -38,14 +38,14 @@
 ///     For vertically split windows, which form a row, it returns: `["row", [{nested list of windows}]]`
 ///     Example:
 ///     ```vim
-///             " Only one window in the tab page
-///             echo nvim_tabpage_get(0, {}) " ['leaf', 1000]
-///             " Two horizontally split windows
-///             echo nvim_tabpage_get(0, {}) " ['col', [['leaf', 1000], ['leaf', 1001]]]
-///             " The second tab page, with three horizontally split
-///             " windows, with two vertically split windows in the
-///             " middle window
-///             echo nvim_tabpage_get(2, {}) " ['col', [['leaf', 1002], ['row', [['leaf', 1003], ['leaf', 1001]]], ['leaf', 1000]]]
+///       " Only one window in the tab page
+///       echo nvim_tabpage_get(0, {}) " ['leaf', 1000]
+///       " Two horizontally split windows
+///       echo nvim_tabpage_get(0, {}) " ['col', [['leaf', 1000], ['leaf', 1001]]]
+///       " The second tab page, with three horizontally split
+///       " windows, with two vertically split windows in the
+///       " middle window
+///       echo nvim_tabpage_get(2, {}) " ['col', [['leaf', 1002], ['row', [['leaf', 1003], ['leaf', 1001]]], ['leaf', 1000]]]
 ///     ```
 Dict(tabpage_config) nvim_tabpage_get(Tabpage tabpage, Dict(tabpage_get) *config, Arena *arena,
                                       Error *err)
