@@ -28,6 +28,6 @@ runs:
     - uses: actions/cache@v4
       with:
         path: .deps
-        key: ${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ hashFiles('cmake**',
-          '.github/**', 'CMakeLists.txt',
+        key: ${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ hashFiles('cmake*/**/*',
+          '.github/**/*', 'CMakeLists.txt',
           'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}
