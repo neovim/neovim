@@ -4676,12 +4676,12 @@ M.funcs = {
       Returns the current stack trace of Vim scripts.
       Stack trace is a |List|, of which each item is a |Dictionary|
       with the following items:
-          funcref	The funcref if the stack is at the function,
-      		otherwise this item is not exist.
+          funcref	The funcref if the stack is at a function,
+      		otherwise this item is omitted.
           event	The string of the event description if the
-      		stack is at autocmd event, otherwise this item
-      		is not exist.
-          lnum	The line number of the script on the stack.
+      		stack is at an autocmd event, otherwise this
+      		item is omitted.
+          lnum	The line number in the script on the stack.
           filepath	The file path of the script on the stack.
     ]=],
     name = 'getstacktrace',
