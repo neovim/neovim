@@ -584,7 +584,11 @@ NSC['window/showMessage'] = function(_, params, ctx)
   else
     --- @type string
     local message_type_name = protocol.MessageType[message_type]
-    api.nvim_out_write(string.format('LSP[%s][%s] %s\n', client_name, message_type_name, message))
+    vim.api.nvim_echo(
+      { { string.format('LSP[%s][%s] %s\n', client_name, message_type_name, message) } },
+      true,
+      {}
+    )
   end
   return params
 end

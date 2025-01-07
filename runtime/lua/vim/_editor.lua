@@ -621,7 +621,7 @@ end
 ---@diagnostic disable-next-line: unused-local
 function vim.notify(msg, level, opts) -- luacheck: no unused args
   if level == vim.log.levels.ERROR then
-    vim.api.nvim_err_writeln(msg)
+    vim.api.nvim_echo({ { msg, 'ErrorMsg' } }, true, {})
   elseif level == vim.log.levels.WARN then
     vim.api.nvim_echo({ { msg, 'WarningMsg' } }, true, {})
   else
