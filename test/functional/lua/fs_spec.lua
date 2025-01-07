@@ -167,7 +167,7 @@ describe('vim.fs', function()
       io.open('testd/a/b/c/c4', 'w'):close()
 
       local function run(dir, depth, skip, follow)
-        return exec_lua(function()
+        return exec_lua(function(follow_sym)
           local r = {} --- @type table<string, string>
           local skip_f --- @type function
           if skip then
@@ -177,11 +177,11 @@ describe('vim.fs', function()
               end
             end
           end
-          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f, follow = follow }) do
+          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f, follow = follow_sym }) do
             r[name] = type_
           end
           return r
-        end)
+        end, follow)
       end
 
       local exp = {}
@@ -215,7 +215,7 @@ describe('vim.fs', function()
 
       eq(exp, run('testd', 999))
 
-      vim.uv.fs_symlink('a', 'testd/l', { junction = true, dir = true })
+      vim.uv.fs_symlink(vim.uv.fs_realpath('testd/a'), 'testd/l', { junction = true, dir = true })
       lexp['l'] = 'link'
       eq(lexp, run('testd', 2, nil, false))
 
