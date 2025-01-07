@@ -3332,11 +3332,12 @@ nvim_tabpage_del_var({tabpage}, {name})               *nvim_tabpage_del_var()*
       • {tabpage}  Tabpage handle, or 0 for current tabpage
       • {name}     Variable name
 
-nvim_tabpage_get_layout({tabpage})                 *nvim_tabpage_get_layout()*
-    Gets the layout of a tabpage
+nvim_tabpage_get({tabpage}, {config})                     *nvim_tabpage_get()*
+    Gets the config of a tabpage.
 
     Parameters: ~
       • {tabpage}  Tabpage handle, or 0 for current tabpage
+      • {config}   Configuration options. Reserved for future use.
 
     Return: ~
         Tree of windows and frames in tabpage, or an empty array if the tab is
@@ -3388,39 +3389,39 @@ nvim_tabpage_list_wins({tabpage})                   *nvim_tabpage_list_wins()*
     Return: ~
         List of windows in `tabpage`
 
-                                                   *nvim_tabpage_set_layout()*
-nvim_tabpage_set_layout({tabpage}, {layout})
-    Sets the window layout of a tabpage based on a tree of windows and frames
-
-    The layout param expects a nested list, similar to the result of
-    `nvim_tabpage_get_layout()`. Each element in the list is either a frame or
-    a window.
-
-    Frames are represented by a list with two elements:
-    • The first element is the type of the frame, either "row" or "col"
-    • The second element is a list of the child frames/windows
-
-    Windows are represented by a list with three elements:
-    • The first element is the type, always "leaf" for windows
-    • The second element is a buffer handle or filename to be opened in the
-      window
-    • The third elemnt is a dictionary containing information about the window
-      • "focused" (Boolean): Whether the window is focused
-
-    The following example creates two vertical splits, and focuses the one on
-    the right: >lua
-            vim.api.nvim_tabpage_set_layout(0, {
-                "row",
-                {
-                    { "leaf", vim.api.nvim_get_current_buf() },
-                    { "leaf", vim.api.nvim_get_current_buf(), { focused = true } },
-                }
-            })
-<
+nvim_tabpage_set({tabpage}, {config})                     *nvim_tabpage_set()*
+    Manages configuration for a tabpage.
 
     Parameters: ~
       • {tabpage}  Tabpage handle, or 0 for current tabpage
-      • {layout}   The intended layout as a nested list
+      • {config}   The tabpage's intended configuration. keys:
+                   • `layout`: The intended layout as a nested list
+                     The layout param expects a nested list, similar to the
+                     result of `nvim_tabpage_get_layout()`. Each element in
+                     the list is either a frame or a window.
+                     Frames are represented by a list with two elements:
+                     • The first element is the type of the frame, either
+                       "row" or "col"
+                     • The second element is a list of the child
+                       frames/windows
+                     Windows are represented by a list with three elements:
+                     • The first element is the type, always "leaf" for
+                       windows
+                     • The second element is a buffer handle or filename to be
+                       opened in the window
+                     • The third elemnt is a dictionary containing information
+                       about the window
+                       • "focused" (Boolean): Whether the window is focused
+                     The following example creates two vertical splits, and
+                     focuses the one on the right: >lua
+                        vim.api.nvim_tabpage_set_layout(0, {
+                          "row",
+                          {
+                              { "leaf", vim.api.nvim_get_current_buf() },
+                              { "leaf", vim.api.nvim_get_current_buf(), { focused = true } },
+                          }
+                      })
+<
 
                                                       *nvim_tabpage_set_var()*
 nvim_tabpage_set_var({tabpage}, {name}, {value})
