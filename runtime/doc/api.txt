@@ -662,6 +662,8 @@ nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
                    `hl_group` element can be omitted for no highlight.
       • {history}  if true, add to |message-history|.
       • {opts}     Optional parameters.
+                   • err: Treat the message like |:echoerr|. Omitted `hlgroup`
+                     uses |hl-ErrorMsg| instead.
                    • verbose: Message is printed as a result of 'verbose'
                      option. If Nvim was invoked with -V3log_file, the message
                      will be redirected to the log_file and suppressed from

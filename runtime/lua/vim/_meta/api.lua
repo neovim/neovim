@@ -1104,6 +1104,8 @@ function vim.api.nvim_del_var(name) end
 --- `hl_group` element can be omitted for no highlight.
 --- @param history boolean if true, add to `message-history`.
 --- @param opts vim.api.keyset.echo_opts Optional parameters.
+--- - err: Treat the message like `:echoerr`. Omitted `hlgroup`
+---   uses `hl-ErrorMsg` instead.
 --- - verbose: Message is printed as a result of 'verbose' option.
 ---   If Nvim was invoked with -V3log_file, the message will be
 ---   redirected to the log_file and suppressed from direct output.

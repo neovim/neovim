@@ -178,6 +178,8 @@ API
 
 • Improved API "meta" docstrings and :help documentation.
 • |nvim__ns_set()| can set properties for a namespace
+• |nvim_echo()| `err` field to print error messages and `chunks` accepts
+  highlight group IDs.
 
 DEFAULTS
 

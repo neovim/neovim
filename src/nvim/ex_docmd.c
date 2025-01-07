@@ -982,7 +982,7 @@ void handle_did_throw(void)
   if (messages != NULL) {
     do {
       msglist_T *next = messages->next;
-      emsg_multiline(messages->msg, messages->multiline);
+      emsg_multiline(messages->msg, "emsg", HLF_E, messages->multiline);
       xfree(messages->msg);
       xfree(messages->sfile);
       xfree(messages);

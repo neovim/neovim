@@ -7968,8 +7968,7 @@ void ex_execute(exarg_T *eap)
     } else if (eap->cmdidx == CMD_echoerr) {
       // We don't want to abort following commands, restore did_emsg.
       int save_did_emsg = did_emsg;
-      msg_ext_set_kind("echoerr");
-      emsg_multiline(ga.ga_data, true);
+      emsg_multiline(ga.ga_data, "echoerr", HLF_E, true);
       if (!force_abort) {
         did_emsg = save_did_emsg;
       }

@@ -88,6 +88,7 @@ error('Cannot require a meta file')
 --- @field pattern? string|string[]
 
 --- @class vim.api.keyset.echo_opts
+--- @field err? boolean
 --- @field verbose? boolean
 
 --- @class vim.api.keyset.empty
