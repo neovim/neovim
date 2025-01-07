@@ -1097,6 +1097,7 @@ local extension = {
   la = 'sh',
   lai = 'sh',
   mdd = 'sh',
+  slang = 'shaderslang',
   sieve = 'sieve',
   siv = 'sieve',
   sig = detect.sig,
