@@ -294,17 +294,16 @@ func Test_changing_cmdheight()
   " :resize now also changes 'cmdheight' accordingly
   call term_sendkeys(buf, ":set cmdheight+=1\<CR>")
   call VerifyScreenDump(buf, 'Test_changing_cmdheight_2', {})
-  call term_sendkeys(buf, ":set cmdheight-=1\<CR>")
 
   " using more space moves the status line up
   call term_sendkeys(buf, ":set cmdheight+=1\<CR>")
   call VerifyScreenDump(buf, 'Test_changing_cmdheight_3', {})
 
   " reducing cmdheight moves status line down
-  call term_sendkeys(buf, ":set cmdheight-=2\<CR>")
+  call term_sendkeys(buf, ":set cmdheight-=3\<CR>")
   call VerifyScreenDump(buf, 'Test_changing_cmdheight_4', {})
 
-  " reducing window size and then setting cmdheight 
+  " reducing window size and then setting cmdheight
   call term_sendkeys(buf, ":resize -1\<CR>")
   call term_sendkeys(buf, ":set cmdheight=1\<CR>")
   call VerifyScreenDump(buf, 'Test_changing_cmdheight_5', {})
@@ -313,9 +312,13 @@ func Test_changing_cmdheight()
   call term_sendkeys(buf, ":call EchoTwo()\<CR>")
   call VerifyScreenDump(buf, 'Test_changing_cmdheight_6', {})
 
-  " decreasing 'cmdheight' doesn't clear the messages that need hit-enter
+  " increasing 'cmdheight' doesn't clear the messages that need hit-enter
   call term_sendkeys(buf, ":call EchoOne()\<CR>")
   call VerifyScreenDump(buf, 'Test_changing_cmdheight_7', {})
+
+  " window commands do not reduce 'cmdheight' to value lower than :set by user
+  call term_sendkeys(buf, "\<CR>:wincmd _\<CR>")
+  call VerifyScreenDump(buf, 'Test_changing_cmdheight_8', {})
 
   " clean up
   call StopVimInTerminal(buf)

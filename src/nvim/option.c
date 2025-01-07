@@ -2872,8 +2872,6 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
   case kOptCmdheight:
     if (value < 0) {
       return e_positive;
-    } else {
-      p_ch_was_zero = value == 0;
     }
     break;
   case kOptHistory:
