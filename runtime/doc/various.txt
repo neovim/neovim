@@ -554,6 +554,11 @@ gO			Show a filetype-specific, navigable "outline" of the
 							*:sl!* *:sleep!*
 :[N]sl[eep]! [N][m]	Same as above, but hide the cursor.
 
+							*yxx*
+yxx			Executes the current code block.
+
+			Works in |help| buffers.
+
 ==============================================================================
 2. Using Vim like less or more					*less*
 

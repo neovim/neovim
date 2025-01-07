@@ -161,7 +161,7 @@ languages like Python and C#. Example: >lua
     local func_with_opts = function(opts)
         local will_do_foo = opts.foo
         local filename = opts.filename
-        ...
+        -- ...
     end
 
     func_with_opts { foo = true, filename = "hello.world" }
@@ -2428,7 +2428,7 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
          function vim.startswith(s, prefix)
           vim.validate('s', s, 'string')
           vim.validate('prefix', prefix, 'string')
-          ...
+          -- ...
         end
 <
     2. `vim.validate(spec)` (deprecated) where `spec` is of type
@@ -2442,7 +2442,7 @@ vim.validate({name}, {value}, {validator}, {optional}, {message})
             age={age, 'number'},
             hobbies={hobbies, 'table'},
           }
-          ...
+          -- ...
         end
 <
 

@@ -1336,7 +1336,7 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       `info.captures`).
     • `info.patterns`: information about predicates.
 
-    Example (select the code then run `:'<,'>lua` to try it): >lua
+    Example (to try it, use `yxx` or select the code then run `:'<,'>lua`): >lua
         local query = vim.treesitter.query.parse('vimdoc', [[
           ; query
           ((h1) @str
@@ -1422,7 +1422,7 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
               -- `node` was captured by the `name` capture in the match
 
               local node_data = metadata[id] -- Node level metadata
-              ... use the info here ...
+              -- ... use the info here ...
             end
           end
         end
