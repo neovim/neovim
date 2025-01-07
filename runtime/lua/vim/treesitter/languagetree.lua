@@ -443,7 +443,7 @@ function LanguageTree:parse(range)
     end
   end
 
-  if not self._injections_processed and range ~= false and range ~= nil then
+  if not self._injections_processed and range then
     query_time = self:_add_injections()
     self._injections_processed = true
   end
