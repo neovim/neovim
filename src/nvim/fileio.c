@@ -3279,7 +3279,7 @@ static void vim_mktempdir(void)
         if (!os_getenv("TMPDIR")) {
           WLOG("$TMPDIR is unset or null");
         } else {
-          WLOG("$TMPDIR tempdir not a directory (or does not exist): %s", tmp);
+          WLOG("$TMPDIR tempdir not a directory (or does not exist): \"%s\"", tmp);
         }
       }
       continue;
