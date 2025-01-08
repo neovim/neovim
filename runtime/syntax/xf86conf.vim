@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language: XF86Config (XFree86 configuration file)
+" Maintainer: This runtime file is looking for a new maintainer.
+" Last Change: 2025 Jan 06 by Jan-Arvid Harrach (#16397)
 " Former Maintainer: David Ne\v{c}as (Yeti) <yeti@physics.muni.cz>
 " Last Change By David: 2010 Nov 01
-" Last Change: 2023 Jan 23
-" Required Vim Version: 6.0
 "
 " Options: let xf86conf_xfree86_version = 3 or 4
 "          to force XFree86 3.x or 4.x XF86Config syntax
@@ -58,7 +58,7 @@ syn match xf86confModeLineValue "\"[^\"]\+\"\(\_s\+[0-9.]\+\)\{9}" nextgroup=xf8
 
 " Sections and subsections
 if b:xf86conf_xfree86_version >= 4
-	syn region xf86confSection matchgroup=xf86confSectionDelim start="^\s*Section\s\+\"\(Files\|Server[_ ]*Flags\|Input[_ ]*Device\|Device\|Video[_ ]*Adaptor\|Server[_ ]*Layout\|DRI\|Extensions\|Vendor\|Keyboard\|Pointer\|InputClass\)\"" end="^\s*EndSection\>" skip="#.*$\|\"[^\"]*\"" contains=xf86confComment,xf86confOption,xf86confKeyword,xf86confSectionError
+	syn region xf86confSection matchgroup=xf86confSectionDelim start="^\s*Section\s\+\"\(Files\|Server[_ ]*Flags\|Input[_ ]*Device\|Device\|Video[_ ]*Adaptor\|Server[_ ]*Layout\|DRI\|Extensions\|Vendor\|Keyboard\|Pointer\|InputClass\|OutputClass\)\"" end="^\s*EndSection\>" skip="#.*$\|\"[^\"]*\"" contains=xf86confComment,xf86confOption,xf86confKeyword,xf86confSectionError
 	syn region xf86confSectionModule matchgroup=xf86confSectionDelim start="^\s*Section\s\+\"Module\"" end="^\s*EndSection\>" skip="#.*$\|\"[^\"]*\"" contains=xf86confSubsectionAny,xf86confComment,xf86confOption,xf86confKeyword
 	syn region xf86confSectionMonitor matchgroup=xf86confSectionDelim start="^\s*Section\s\+\"Monitor\"" end="^\s*EndSection\>" skip="#.*$\|\"[^\"]*\"" contains=xf86confSubsectionMode,xf86confModeLine,xf86confComment,xf86confOption,xf86confKeyword
 	syn region xf86confSectionModes matchgroup=xf86confSectionDelim start="^\s*Section\s\+\"Modes\"" end="^\s*EndSection\>" skip="#.*$\|\"[^\"]*\"" contains=xf86confSubsectionMode,xf86confModeLine,xf86confComment
@@ -162,7 +162,7 @@ syn match xf86confSync "\(\s\+[+-][CHV]_*Sync\)\+" contained
 
 " Synchronization
 if b:xf86conf_xfree86_version >= 4
-	syn sync match xf86confSyncSection grouphere xf86confSection "^\s*Section\s\+\"\(Files\|Server[_ ]*Flags\|Input[_ ]*Device\|Device\|Video[_ ]*Adaptor\|Server[_ ]*Layout\|DRI\|Extensions\|Vendor\|Keyboard\|Pointer\|InputClass\)\""
+	syn sync match xf86confSyncSection grouphere xf86confSection "^\s*Section\s\+\"\(Files\|Server[_ ]*Flags\|Input[_ ]*Device\|Device\|Video[_ ]*Adaptor\|Server[_ ]*Layout\|DRI\|Extensions\|Vendor\|Keyboard\|Pointer\|InputClass\|OutputClass\)\""
 	syn sync match xf86confSyncSectionModule grouphere xf86confSectionModule "^\s*Section\s\+\"Module\""
 	syn sync match xf86confSyncSectionModes groupthere xf86confSectionModes "^\s*Section\s\+\"Modes\""
 else
