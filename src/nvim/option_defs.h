@@ -81,6 +81,12 @@ typedef struct {
   OptValData data;
 } OptVal;
 
+/// Context that an option is being set for.
+typedef struct {
+  win_T *win;
+  buf_T *buf;
+} OptCtx;
+
 /// :set operator types
 typedef enum {
   OP_NONE = 0,
@@ -122,8 +128,7 @@ typedef struct {
   /// length of the error buffer
   size_t os_errbuflen;
 
-  void *os_win;
-  void *os_buf;
+  OptCtx os_ctx;
 } optset_T;
 
 /// Type for the callback function that is invoked after an option value is
@@ -192,3 +197,12 @@ typedef struct {
   OptVal def_val;                    ///< default value
   LastSet last_set;                  ///< script in which the option was last set
 } vimoption_T;
+
+/// Execute code with autocmd context
+#define WITH_AUCMD_CONTEXT(ctx, code) \
+  do { \
+    aco_save_T _aco; \
+    aucmd_prepbuf_win(&_aco, ctx.buf, ctx.win); \
+    code; \
+    aucmd_restbuf(&_aco); \
+  } while (0)

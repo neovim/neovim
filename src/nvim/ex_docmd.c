@@ -5294,7 +5294,7 @@ static char *findfunc_find_file(char *findarg, size_t findarg_len, int count)
 /// Returns NULL on success and an error message on failure.
 const char *did_set_findfunc(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_ctx.buf;
   int retval;
 
   if (args->os_flags & OPT_LOCAL) {
