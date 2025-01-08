@@ -931,6 +931,9 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
     gap = &ucmds;
   } else {
     buf_T *buf = find_buffer_by_handle(buffer, err);
+    if (ERROR_SET(err)) {
+      return;
+    }
     gap = &buf->b_ucmds;
   }
 
