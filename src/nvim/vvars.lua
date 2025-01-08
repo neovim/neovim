@@ -799,10 +799,10 @@ M.vars = {
   termrequest = {
     type = 'string',
     desc = [=[
-      The value of the most recent OSC or DCS control sequence
-      sent from a process running in the embedded |terminal|.
-      This can be read in a |TermRequest| event handler to respond
-      to queries from embedded applications.
+      The value of the most recent OSC, DCS, DECSET, or DECRST
+      control sequence sent from a process running in the embedded
+      |terminal|. This can be read in a |TermRequest| event handler
+      to respond to queries from embedded applications.
     ]=],
   },
   termresponse = {

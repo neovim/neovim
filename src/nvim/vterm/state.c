@@ -821,7 +821,11 @@ static void set_dec_mode(VTermState *state, int num, int val)
 
   default:
     DEBUG_LOG("libvterm: Unknown DEC mode %d\n", num);
-    return;
+    break;
+  }
+
+  if (state->callbacks && state->callbacks->setdecmode) {
+    (*state->callbacks->setdecmode)(num, val, state->cbdata);
   }
 }
 

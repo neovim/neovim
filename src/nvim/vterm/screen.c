@@ -442,6 +442,16 @@ static int settermprop(VTermProp prop, VTermValue *val, void *user)
   return 1;
 }
 
+static int setdecmode(int mode, bool val, void *user)
+{
+  VTermScreen *screen = user;
+  if (screen->callbacks && screen->callbacks->setdecmode) {
+    return (*screen->callbacks->setdecmode)(mode, val, screen->cbdata);
+  }
+
+  return 1;
+}
+
 static int bell(void *user)
 {
   VTermScreen *screen = user;
@@ -836,6 +846,7 @@ static VTermStateCallbacks state_cbs = {
   .erase = &erase,
   .setpenattr = &setpenattr,
   .settermprop = &settermprop,
+  .setdecmode = &setdecmode,
   .bell = &bell,
   .resize = &resize,
   .setlineinfo = &setlineinfo,

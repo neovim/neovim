@@ -319,6 +319,7 @@ TERMINAL
   unfocused terminal window will have no cursor at all (so there is nothing to
   highlight).
 • |jobstart()| gained the "term" flag.
+• |TermRequest| events are emitted for DECSET/DECRST sequences.
 
 TREESITTER
 
