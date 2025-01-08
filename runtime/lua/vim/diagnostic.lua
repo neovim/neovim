@@ -220,7 +220,7 @@ end
 --- @field virt_text? [string,any][]
 ---
 --- See |nvim_buf_set_extmark()|.
---- @field virt_text_pos? 'eol'|'overlay'|'right_align'|'inline'
+--- @field virt_text_pos? 'eol'|'overlay'|'right_align'|'right_align_trunc'|'inline'
 ---
 --- See |nvim_buf_set_extmark()|.
 --- @field virt_text_win_col? integer

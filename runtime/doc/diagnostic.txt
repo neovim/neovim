@@ -619,8 +619,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {hl_mode}?            (`'replace'|'combine'|'blend'`) See
                               |nvim_buf_set_extmark()|.
       • {virt_text}?          (`[string,any][]`) See |nvim_buf_set_extmark()|.
-      • {virt_text_pos}?      (`'eol'|'overlay'|'right_align'|'inline'`) See
-                              |nvim_buf_set_extmark()|.
+      • {virt_text_pos}?      (`'eol'|'overlay'|'right_align'|'right_align_trunc'|'inline'`)
+                              See |nvim_buf_set_extmark()|.
       • {virt_text_win_col}?  (`integer`) See |nvim_buf_set_extmark()|.
       • {virt_text_hide}?     (`boolean`) See |nvim_buf_set_extmark()|.
 

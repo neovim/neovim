@@ -509,6 +509,64 @@ describe('decorations providers', function()
     ]]}
   end)
 
+  it('can have virtual text of the style: right_align_trunc', function()
+    insert(mulholland)
+    setup_provider [[
+      local hl = api.nvim_get_hl_id_by_name "ErrorMsg"
+      local test_ns = api.nvim_create_namespace "mulholland"
+      function on_do(event, ...)
+        if event == "line" then
+          local win, buf, line = ...
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            virt_text = {{'+'}, {'1234567890', 'ErrorMsg'}};
+            virt_text_pos='right_align_trunc';
+            ephemeral = true;
+          })
+        end
+      end
+    ]]
+
+    screen:expect{grid=[[
+      // just to see if there was an accident |
+      // on Mulholland Drive       +{2:1234567890}|
+      try_start();                 +{2:1234567890}|
+      bufref_T save_buf;           +{2:1234567890}|
+      switch_buffer(&save_buf, buf); +{2:12345678}|
+      posp = getmark(mark, false); +{2:1234567890}|
+      restore_buffer(&save_buf);^   +{2:1234567890}|
+                                              |
+    ]]}
+  end)
+
+  it('Right align prints virtual text on top of buffer text', function()
+    insert(mulholland)
+    setup_provider [[
+      local hl = api.nvim_get_hl_id_by_name "ErrorMsg"
+      local test_ns = api.nvim_create_namespace "mulholland"
+      function on_do(event, ...)
+        if event == "line" then
+          local win, buf, line = ...
+          api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
+            virt_text = {{'+'}, {string.rep(' ', 5), 'ErrorMsg'}};
+            virt_text_pos='right_align';
+            ephemeral = true;
+          })
+        end
+      end
+    ]]
+
+    screen:expect{grid=[[
+      // just to see if there was an acc+{2:     }|
+      // on Mulholland Drive            +{2:     }|
+      try_start();                      +{2:     }|
+      bufref_T save_buf;                +{2:     }|
+      switch_buffer(&save_buf, buf);    +{2:     }|
+      posp = getmark(mark, false);      +{2:     }|
+      restore_buffer(&save_buf);^        +{2:     }|
+                                              |
+    ]]}
+  end)
+
   it('virtual text works with wrapped lines', function()
     insert(mulholland)
     feed('ggJj3JjJ')

@@ -400,6 +400,12 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                 - "overlay": display over the specified column, without
 ///                              shifting the underlying text.
 ///                 - "right_align": display right aligned in the window.
+///                 - "right_align_trunc": display right aligned in the window
+///                                        unless the virtual text is longer
+///                                        than the space available. If the
+///                                        virtual text is too long, it is
+///                                        truncated to fit in the window after
+///                                        the EOL character.
 ///                 - "inline": display at the specified column, and
 ///                             shift the buffer text to the right as needed.
 ///               - virt_text_win_col : position the virtual text at a fixed
@@ -591,6 +597,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       virt_text.pos = kVPosOverlay;
     } else if (strequal("right_align", str.data)) {
       virt_text.pos = kVPosRightAlign;
+    } else if (strequal("right_align_trunc", str.data)) {
+      virt_text.pos = kVPosRightAlignTrunc;
     } else if (strequal("inline", str.data)) {
       virt_text.pos = kVPosInline;
     } else {
