@@ -648,6 +648,10 @@ static Object get_option_from(void *from, OptScope scope, String name, Error *er
   });
 
   OptIndex opt_idx = find_option(name.data);
+  VALIDATE_S(opt_idx != kOptInvalid, "option name", name.data, {
+    return (Object)OBJECT_INIT;
+  });
+
   OptVal value = NIL_OPTVAL;
 
   if (option_has_scope(opt_idx, scope)) {
