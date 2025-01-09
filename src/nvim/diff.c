@@ -1391,8 +1391,8 @@ void diff_win_options(win_T *wp, bool addbuf)
     }
     wp->w_p_fdm_save = xstrdup(wp->w_p_fdm);
   }
-  set_option_direct_for(kOptFoldmethod, STATIC_CSTR_AS_OPTVAL("diff"),
-                        option_ctx_from(kOptScopeWin, wp), OPT_LOCAL, 0);
+  set_option_direct_for(kOptFoldmethod, STATIC_CSTR_AS_OPTVAL("diff"), OPT_LOCAL, 0,
+                        kOptScopeWin, wp);
 
   if (!wp->w_p_diff) {
     wp->w_p_fen_save = wp->w_p_fen;

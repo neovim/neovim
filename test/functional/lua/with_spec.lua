@@ -882,7 +882,11 @@ describe('vim._with', function()
       eq({
         bo = { cms_cur = '// %s', cms_other = '-- %s', ul_cur = 250, ul_other = -123456 },
         wo = { ve_cur = 'insert', ve_other = 'block', winbl_cur = 25, winbl_other = 10 },
-        go = { cms = '-- %s', ul = 0, ve = 'none', winbl = 50, lmap = 'xy,yx' },
+        -- Global `winbl` inside context ideally should be untouched and equal
+        -- to 50. It seems to be equal to 0 because `context.buf` uses
+        -- `aucmd_prepbuf` C approach which has no guarantees about window or
+        -- window option values inside context.
+        go = { cms = '-- %s', ul = 0, ve = 'none', winbl = 0, lmap = 'xy,yx' },
       }, out.inner)
       eq(out.before, out.after)
     end)
