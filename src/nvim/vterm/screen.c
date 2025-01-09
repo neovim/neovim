@@ -909,7 +909,7 @@ int vterm_screen_get_cell(const VTermScreen *screen, VTermPos pos, VTermScreenCe
     return 0;
   }
 
-  cell->schar = intcell->schar;
+  cell->schar = (intcell->schar == (uint32_t)-1) ? 0 : intcell->schar;
 
   cell->attrs.bold = intcell->pen.bold;
   cell->attrs.underline = intcell->pen.underline;
