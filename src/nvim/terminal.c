@@ -1011,7 +1011,7 @@ static void terminal_send_key(Terminal *term, int c)
     c = Ctrl_AT;
   }
 
-  VTermKey key = convert_key(c, &mod);
+  VTermKey key = convert_key(&c, &mod);
 
   if (key) {
     vterm_keyboard_key(term->vt, key, mod);
@@ -1415,19 +1415,23 @@ static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag,
 // }}}
 // input handling {{{
 
-static void convert_modifiers(int key, VTermModifier *statep)
+static void convert_modifiers(int *key, VTermModifier *statep)
 {
   if (mod_mask & MOD_MASK_SHIFT) {
     *statep |= VTERM_MOD_SHIFT;
   }
   if (mod_mask & MOD_MASK_CTRL) {
     *statep |= VTERM_MOD_CTRL;
+    if (!(mod_mask & MOD_MASK_SHIFT) && *key >= 'A' && *key <= 'Z') {
+      // vterm interprets CTRL+A as SHIFT+CTRL, change to CTRL+a
+      *key += ('a' - 'A');
+    }
   }
   if (mod_mask & MOD_MASK_ALT) {
     *statep |= VTERM_MOD_ALT;
   }
 
-  switch (key) {
+  switch (*key) {
   case K_S_TAB:
   case K_S_UP:
   case K_S_DOWN:
@@ -1459,11 +1463,11 @@ static void convert_modifiers(int key, VTermModifier *statep)
   }
 }
 
-static VTermKey convert_key(int key, VTermModifier *statep)
+static VTermKey convert_key(int *key, VTermModifier *statep)
 {
   convert_modifiers(key, statep);
 
-  switch (key) {
+  switch (*key) {
   case K_BS:
     return VTERM_KEY_BACKSPACE;
   case K_S_TAB:
@@ -1791,7 +1795,7 @@ static bool send_mouse_event(Terminal *term, int c)
     }
 
     VTermModifier mod = VTERM_MOD_NONE;
-    convert_modifiers(c, &mod);
+    convert_modifiers(&c, &mod);
     mouse_action(term, button, row, col - offset, pressed, mod);
     return false;
   }
