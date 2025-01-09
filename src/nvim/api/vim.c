@@ -983,10 +983,10 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
     buf_copy_options(buf, BCO_ENTER | BCO_NOHELP);
 
     if (scratch) {
-      set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"),
-                            option_ctx_from(kOptScopeBuf, buf), OPT_LOCAL, 0);
-      set_option_direct_for(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"),
-                            option_ctx_from(kOptScopeBuf, buf), OPT_LOCAL, 0);
+      set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL, 0,
+                            kOptScopeBuf, buf);
+      set_option_direct_for(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL, 0,
+                            kOptScopeBuf, buf);
       assert(buf->b_ml.ml_mfp->mf_fd < 0);  // ml_open() should not have opened swapfile already
       buf->b_p_swf = false;
       buf->b_p_ml = false;
