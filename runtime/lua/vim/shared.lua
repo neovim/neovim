@@ -959,7 +959,7 @@ do
   ---       function vim.startswith(s, prefix)
   ---         vim.validate('s', s, 'string')
   ---         vim.validate('prefix', prefix, 'string')
-  ---         ...
+  ---         -- ...
   ---       end
   ---     ```
   ---
@@ -979,7 +979,7 @@ do
   ---           age={age, 'number'},
   ---           hobbies={hobbies, 'table'},
   ---         }
-  ---         ...
+  ---         -- ...
   ---       end
   ---     ```
   ---

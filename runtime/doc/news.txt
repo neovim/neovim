@@ -276,6 +276,7 @@ LUA
   supporting two new parameters, `encoding` and `strict_indexing`.
 • |vim.json.encode()| has an option to enable forward slash escaping
 • |vim.fs.abspath()| converts paths to absolute paths.
+• Lua and vimscript code examples in docs can now be run using `yxx`.
 
 OPTIONS
 

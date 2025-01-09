@@ -193,6 +193,7 @@ Jump to specific subjects by using tags.  This can be done in two ways:
 
 Use CTRL-T or CTRL-O to jump back.
 Use ":q" to close the help window.
+Use `yxx` to execute the current Lua/Vimscript code block.
 
 If there are several matches for an item you are looking for, this is how you
 can jump to each one of them:

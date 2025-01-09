@@ -292,7 +292,7 @@ end)
 ---   - `captures`: a list of unique capture names defined in the query (alias: `info.captures`).
 ---   - `info.patterns`: information about predicates.
 ---
---- Example (select the code then run `:'<,'>lua` to try it):
+--- Example (to try it, use `yxx` or select the code then run `:'<,'>lua`):
 --- ```lua
 --- local query = vim.treesitter.query.parse('vimdoc', [[
 ---   ; query
@@ -983,7 +983,7 @@ end
 ---       -- `node` was captured by the `name` capture in the match
 ---
 ---       local node_data = metadata[id] -- Node level metadata
----       ... use the info here ...
+---       -- ... use the info here ...
 ---     end
 ---   end
 --- end
