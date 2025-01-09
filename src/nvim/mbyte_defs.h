@@ -74,3 +74,5 @@ typedef struct {
 } CharBoundsOff;
 
 typedef utf8proc_int32_t GraphemeState;
+
+enum { UNICODE_INVALID = 0xFFFD, };
