@@ -1794,6 +1794,16 @@ describe('API/extmarks', function()
     eq({}, get_extmark_by_id(ns, 4, {}))
   end)
 
+  it('no crash checking invalided flag of sign pair end key #31856', function()
+    api.nvim_buf_set_lines(0, 0, 1, false, { '', '' })
+    api.nvim_set_option_value('signcolumn', 'auto:2', {})
+    set_extmark(ns, 1, 0, 0, { sign_text = 'S1', invalidate = true, end_row = 0 })
+    set_extmark(ns, 2, 1, 0, { sign_text = 'S2', end_row = 1 })
+    command('d')
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    n.assert_alive()
+  end)
+
   it('can set a URL', function()
     local url1 = 'https://example.com'
     local url2 = 'http://127.0.0.1'
