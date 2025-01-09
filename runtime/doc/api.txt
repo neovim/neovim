@@ -662,27 +662,12 @@ nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
                    `hl_group` element can be omitted for no highlight.
       • {history}  if true, add to |message-history|.
       • {opts}     Optional parameters.
+                   • err: Treat the message like |:echoerr|. Omitted `hlgroup`
+                     uses |hl-ErrorMsg| instead.
                    • verbose: Message is printed as a result of 'verbose'
                      option. If Nvim was invoked with -V3log_file, the message
                      will be redirected to the log_file and suppressed from
                      direct output.
-
-nvim_err_write({str})                                       *nvim_err_write()*
-    Writes a message to the Vim error buffer. Does not append "\n", the
-    message is buffered (won't display) until a linefeed is written.
-
-    Parameters: ~
-      • {str}  Message
-
-nvim_err_writeln({str})                                   *nvim_err_writeln()*
-    Writes a message to the Vim error buffer. Appends "\n", so the buffer is
-    flushed (and displayed).
-
-    Parameters: ~
-      • {str}  Message
-
-    See also: ~
-      • nvim_err_write()
 
 nvim_eval_statusline({str}, {opts})                   *nvim_eval_statusline()*
     Evaluates statusline string.
@@ -1153,13 +1138,6 @@ nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
 
     Return: ~
         Channel id, or 0 on error
-
-nvim_out_write({str})                                       *nvim_out_write()*
-    Writes a message to the Vim output buffer. Does not append "\n", the
-    message is buffered (won't display) until a linefeed is written.
-
-    Parameters: ~
-      • {str}  Message
 
 nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
     Pastes at cursor (in any mode), and sets "redo" so dot (|.|) will repeat

@@ -958,7 +958,7 @@ static void nlua_print_event(void **argv)
   HlMessage msg = KV_INITIAL_VALUE;
   HlMessageChunk chunk = { { .data = argv[0], .size = (size_t)(intptr_t)argv[1] - 1 }, 0 };
   kv_push(msg, chunk);
-  msg_multihl(msg, "lua_print", true);
+  msg_multihl(msg, "lua_print", true, false);
 }
 
 /// Print as a Vim message

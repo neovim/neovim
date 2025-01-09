@@ -86,8 +86,6 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#define LINE_BUFFER_MIN_SIZE 4096
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.c.generated.h"
 #endif
@@ -775,13 +773,15 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///                `hl_group` element can be omitted for no highlight.
 /// @param history  if true, add to |message-history|.
 /// @param opts  Optional parameters.
+///          - err: Treat the message like |:echoerr|. Omitted `hlgroup`
+///            uses |hl-ErrorMsg| instead.
 ///          - verbose: Message is printed as a result of 'verbose' option.
 ///            If Nvim was invoked with -V3log_file, the message will be
 ///            redirected to the log_file and suppressed from direct output.
 void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
   FUNC_API_SINCE(7)
 {
-  HlMessage hl_msg = parse_hl_msg(chunks, err);
+  HlMessage hl_msg = parse_hl_msg(chunks, opts->err, err);
   if (ERROR_SET(err)) {
     goto error;
   }
@@ -790,7 +790,7 @@ void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
     verbose_enter();
   }
 
-  msg_multihl(hl_msg, history ? "echomsg" : "echo", history);
+  msg_multihl(hl_msg, opts->err ? "echoerr" : history ? "echomsg" : "echo", history, opts->err);
 
   if (opts->verbose) {
     verbose_leave();
@@ -804,37 +804,6 @@ void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
 
 error:
   hl_msg_free(hl_msg);
-}
-
-/// Writes a message to the Vim output buffer. Does not append "\n", the
-/// message is buffered (won't display) until a linefeed is written.
-///
-/// @param str Message
-void nvim_out_write(String str)
-  FUNC_API_SINCE(1)
-{
-  write_msg(str, false, false);
-}
-
-/// Writes a message to the Vim error buffer. Does not append "\n", the
-/// message is buffered (won't display) until a linefeed is written.
-///
-/// @param str Message
-void nvim_err_write(String str)
-  FUNC_API_SINCE(1)
-{
-  write_msg(str, true, false);
-}
-
-/// Writes a message to the Vim error buffer. Appends "\n", so the buffer is
-/// flushed (and displayed).
-///
-/// @param str Message
-/// @see nvim_err_write()
-void nvim_err_writeln(String str)
-  FUNC_API_SINCE(1)
-{
-  write_msg(str, true, true);
 }
 
 /// Gets the current list of buffer handles
@@ -1660,55 +1629,6 @@ Array nvim_list_chans(Arena *arena)
   FUNC_API_SINCE(4)
 {
   return channel_all_info(arena);
-}
-
-/// Writes a message to vim output or error buffer. The string is split
-/// and flushed after each newline. Incomplete lines are kept for writing
-/// later.
-///
-/// @param message  Message to write
-/// @param to_err   true: message is an error (uses `emsg` instead of `msg`)
-/// @param writeln  Append a trailing newline
-static void write_msg(String message, bool to_err, bool writeln)
-{
-  static StringBuilder out_line_buf = KV_INITIAL_VALUE;
-  static StringBuilder err_line_buf = KV_INITIAL_VALUE;
-  StringBuilder *line_buf = to_err ? &err_line_buf : &out_line_buf;
-
-#define PUSH_CHAR(c) \
-  if (kv_max(*line_buf) == 0) { \
-    kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
-  } \
-  if (c == NL) { \
-    kv_push(*line_buf, NUL); \
-    if (to_err) { \
-      emsg(line_buf->items); \
-    } else { \
-      msg(line_buf->items, 0); \
-    } \
-    if (msg_silent == 0) { \
-      msg_didout = true; \
-    } \
-    kv_drop(*line_buf, kv_size(*line_buf)); \
-    kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
-  } else if (c == NUL) { \
-    kv_push(*line_buf, NL); \
-  } else { \
-    kv_push(*line_buf, c); \
-  }
-
-  no_wait_return++;
-  for (uint32_t i = 0; i < message.size; i++) {
-    if (got_int) {
-      break;
-    }
-    PUSH_CHAR(message.data[i]);
-  }
-  if (writeln) {
-    PUSH_CHAR(NL);
-  }
-  no_wait_return--;
-  msg_end();
 }
 
 // Functions used for testing purposes

@@ -315,6 +315,21 @@ describe('ui/ext_messages', function()
     })
     feed('<Esc>')
     command('set showmode')
+
+    -- kind=echoerr for nvim_echo() err
+    feed(':call nvim_echo([["Error"], ["Message", "Special"]], 1, #{ err:1 })<CR>')
+    screen:expect({
+      cmdline = { {
+        abort = false,
+      } },
+      messages = {
+        {
+          content = { { 'Error', 9, 6 }, { 'Message', 16, 99 } },
+          history = true,
+          kind = 'echoerr',
+        },
+      },
+    })
   end)
 
   it(':echoerr', function()

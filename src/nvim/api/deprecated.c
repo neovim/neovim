@@ -21,9 +21,11 @@
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
+#include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/pos_defs.h"
+#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -811,4 +813,82 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
   FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13) FUNC_API_REMOTE_ONLY
 {
   // Does nothing. `rpcnotify(0,…)` broadcasts to all channels, there are no "subscriptions".
+}
+
+enum { LINE_BUFFER_MIN_SIZE = 4096, };
+
+/// Writes a message to vim output or error buffer. The string is split
+/// and flushed after each newline. Incomplete lines are kept for writing
+/// later.
+///
+/// @param message  Message to write
+/// @param to_err   true: message is an error (uses `emsg` instead of `msg`)
+/// @param writeln  Append a trailing newline
+static void write_msg(String message, bool to_err, bool writeln)
+{
+  static StringBuilder out_line_buf = KV_INITIAL_VALUE;
+  static StringBuilder err_line_buf = KV_INITIAL_VALUE;
+  StringBuilder *line_buf = to_err ? &err_line_buf : &out_line_buf;
+
+#define PUSH_CHAR(c) \
+  if (kv_max(*line_buf) == 0) { \
+    kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
+  } \
+  if (c == NL) { \
+    kv_push(*line_buf, NUL); \
+    if (to_err) { \
+      emsg(line_buf->items); \
+    } else { \
+      msg(line_buf->items, 0); \
+    } \
+    if (msg_silent == 0) { \
+      msg_didout = true; \
+    } \
+    kv_drop(*line_buf, kv_size(*line_buf)); \
+    kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
+  } else if (c == NUL) { \
+    kv_push(*line_buf, NL); \
+  } else { \
+    kv_push(*line_buf, c); \
+  }
+
+  no_wait_return++;
+  for (uint32_t i = 0; i < message.size; i++) {
+    if (got_int) {
+      break;
+    }
+    PUSH_CHAR(message.data[i]);
+  }
+  if (writeln) {
+    PUSH_CHAR(NL);
+  }
+  no_wait_return--;
+  msg_end();
+}
+
+/// @deprecated
+///
+/// @param str Message
+void nvim_out_write(String str)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13)
+{
+  write_msg(str, false, false);
+}
+
+/// @deprecated
+///
+/// @param str Message
+void nvim_err_write(String str)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13)
+{
+  write_msg(str, true, false);
+}
+
+/// @deprecated
+///
+/// @param str Message
+void nvim_err_writeln(String str)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13)
+{
+  write_msg(str, true, true);
 }

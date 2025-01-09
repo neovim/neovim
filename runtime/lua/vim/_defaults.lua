@@ -224,7 +224,7 @@ do
     local function cmd(opts)
       local ok, err = pcall(vim.api.nvim_cmd, opts, {})
       if not ok then
-        vim.api.nvim_err_writeln(err:sub(#'Vim:' + 1))
+        vim.api.nvim_echo({ { err:sub(#'Vim:' + 1) } }, true, { err = true })
       end
     end
 

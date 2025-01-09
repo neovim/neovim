@@ -3680,6 +3680,30 @@ describe('API', function()
       async_meths.nvim_echo({ { 'msg\nmsg' }, { 'msg' } }, false, {})
       eq('', exec_capture('messages'))
     end)
+
+    it('can print error message', function()
+      async_meths.nvim_echo({ { 'Error\nMessage' } }, false, { err = true })
+      screen:expect([[
+                                                |
+        {1:~                                       }|*3
+        {3:                                        }|
+        {9:Error}                                   |
+        {9:Message}                                 |
+        {6:Press ENTER or type command to continue}^ |
+      ]])
+      feed(':messages<CR>')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|*6
+                                                |
+      ]])
+      async_meths.nvim_echo({ { 'Error' }, { 'Message', 'Special' } }, false, { err = true })
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|*6
+        {9:Error}{16:Message}                            |
+      ]])
+    end)
   end)
 
   describe('nvim_open_term', function()
