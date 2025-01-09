@@ -1097,18 +1097,20 @@ function vim.api.nvim_del_user_command(name) end
 --- @param name string Variable name
 function vim.api.nvim_del_var(name) end
 
---- Echo a message.
+--- Prints a message given by a list of `[text, hl_group]` "chunks".
 ---
---- @param chunks any[] A list of `[text, hl_group]` arrays, each representing a
---- text chunk with specified highlight group name or ID.
---- `hl_group` element can be omitted for no highlight.
+--- Example:
+--- ```lua
+--- vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true, {})
+--- ```
+---
+--- @param chunks any[] List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
+--- the (optional) name or ID `hl_group`.
 --- @param history boolean if true, add to `message-history`.
 --- @param opts vim.api.keyset.echo_opts Optional parameters.
---- - err: Treat the message like `:echoerr`. Omitted `hlgroup`
----   uses `hl-ErrorMsg` instead.
---- - verbose: Message is printed as a result of 'verbose' option.
----   If Nvim was invoked with -V3log_file, the message will be
----   redirected to the log_file and suppressed from direct output.
+--- - err: Treat the message like `:echoerr`. Sets `hl_group` to `hl-ErrorMsg` by default.
+--- - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
+---   will write the message to the "log" file instead of standard output.
 function vim.api.nvim_echo(chunks, history, opts) end
 
 --- @deprecated
@@ -1276,6 +1278,8 @@ function vim.api.nvim_get_autocmds(opts) end
 
 --- Gets information about a channel.
 ---
+--- See `nvim_list_uis()` for an example of how to get channel info.
+---
 --- @param chan integer channel_id, or 0 for current channel
 --- @return table<string,any> # Channel info dict with these keys:
 --- - "id"       Channel id.
@@ -1293,8 +1297,8 @@ function vim.api.nvim_get_autocmds(opts) end
 ---              "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
 ---              for conpty on Windows).
 --- -  "buffer"  (optional) Buffer connected to |terminal| instance.
---- -  "client"  (optional) Info about the peer (client on the other end of the RPC channel),
----              which it provided via |nvim_set_client_info()|.
+--- -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
+---              by |nvim_set_client_info()|.
 ---
 function vim.api.nvim_get_chan_info(chan) end
 
@@ -1616,6 +1620,14 @@ function vim.api.nvim_list_tabpages() end
 
 --- Gets a list of dictionaries representing attached UIs.
 ---
+--- Example: The Nvim builtin `TUI` sets its channel info as described in `startup-tui`. In
+--- particular, it sets `client.name` to "nvim-tui". So you can check if the TUI is running by
+--- inspecting the client name of each UI:
+---
+--- ```lua
+--- vim.print(vim.api.nvim_get_chan_info(vim.api.nvim_list_uis()[1].chan).client.name)
+--- ```
+---
 --- @return any[] # Array of UI dictionaries, each with these keys:
 --- - "height"  Requested height of the UI
 --- - "width"   Requested width of the UI
@@ -1661,7 +1673,8 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 --- in a virtual terminal having the intended size.
 ---
 --- Example: this `TermHl` command can be used to display and highlight raw ANSI termcodes, so you
---- can use Nvim as a "scrollback pager" (for terminals like kitty): [terminal-scrollback-pager]()
+--- can use Nvim as a "scrollback pager" (for terminals like kitty): [ansi-colorize]()
+--- [terminal-scrollback-pager]()
 ---
 --- ```lua
 --- vim.api.nvim_create_user_command('TermHl', function()

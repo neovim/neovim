@@ -3435,7 +3435,6 @@ stack traceback:
     end)
 
     it('can discard input', function()
-      clear()
       -- discard every other normal 'x' command
       exec_lua [[
         n_key = 0
@@ -3461,7 +3460,6 @@ stack traceback:
     end)
 
     it('callback invalid return', function()
-      clear()
       -- second key produces an error which removes the callback
       exec_lua [[
         n_call = 0

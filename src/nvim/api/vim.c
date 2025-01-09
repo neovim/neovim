@@ -766,18 +766,20 @@ void nvim_set_vvar(String name, Object value, Error *err)
   dict_set_var(&vimvardict, name, value, false, false, NULL, err);
 }
 
-/// Echo a message.
+/// Prints a message given by a list of `[text, hl_group]` "chunks".
 ///
-/// @param chunks  A list of `[text, hl_group]` arrays, each representing a
-///                text chunk with specified highlight group name or ID.
-///                `hl_group` element can be omitted for no highlight.
+/// Example:
+/// ```lua
+/// vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true, {})
+/// ```
+///
+/// @param chunks List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
+///               the (optional) name or ID `hl_group`.
 /// @param history  if true, add to |message-history|.
 /// @param opts  Optional parameters.
-///          - err: Treat the message like |:echoerr|. Omitted `hlgroup`
-///            uses |hl-ErrorMsg| instead.
-///          - verbose: Message is printed as a result of 'verbose' option.
-///            If Nvim was invoked with -V3log_file, the message will be
-///            redirected to the log_file and suppressed from direct output.
+///          - err: Treat the message like `:echoerr`. Sets `hl_group` to |hl-ErrorMsg| by default.
+///          - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
+///            will write the message to the "log" file instead of standard output.
 void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
   FUNC_API_SINCE(7)
 {
@@ -1000,7 +1002,8 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// in a virtual terminal having the intended size.
 ///
 /// Example: this `TermHl` command can be used to display and highlight raw ANSI termcodes, so you
-/// can use Nvim as a "scrollback pager" (for terminals like kitty): [terminal-scrollback-pager]()
+/// can use Nvim as a "scrollback pager" (for terminals like kitty): [ansi-colorize]()
+/// [terminal-scrollback-pager]()
 ///
 /// ```lua
 /// vim.api.nvim_create_user_command('TermHl', function()
@@ -1500,20 +1503,17 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
   return rv;
 }
 
-/// Self-identifies the client.
+/// Self-identifies the client. Sets the `client` object returned by |nvim_get_chan_info()|.
 ///
-/// The client/plugin/application should call this after connecting, to provide
-/// hints about its identity and purpose, for debugging and orchestration.
+/// Clients should call this just after connecting, to provide hints for debugging and
+/// orchestration. (Note: Something is better than nothing! Fields are optional, but at least set
+/// `name`.)
 ///
-/// Can be called more than once; the caller should merge old info if
-/// appropriate. Example: library first identifies the channel, then a plugin
-/// using that library later identifies itself.
-///
-/// @note "Something is better than nothing". You don't need to include all the
-///       fields.
+/// Can be called more than once; the caller should merge old info if appropriate. Example: library
+/// first identifies the channel, then a plugin using that library later identifies itself.
 ///
 /// @param channel_id
-/// @param name Short name for the connected client
+/// @param name Client short-name. Sets the `client.name` field of |nvim_get_chan_info()|.
 /// @param version  Dict describing the version, with these
 ///     (optional) keys:
 ///     - "major" major version (defaults to 0 if not set, for no release yet)
@@ -1587,6 +1587,8 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
 
 /// Gets information about a channel.
 ///
+/// See |nvim_list_uis()| for an example of how to get channel info.
+///
 /// @param chan channel_id, or 0 for current channel
 /// @returns Channel info dict with these keys:
 ///    - "id"       Channel id.
@@ -1604,8 +1606,8 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
 ///                 "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
 ///                 for conpty on Windows).
 ///    -  "buffer"  (optional) Buffer connected to |terminal| instance.
-///    -  "client"  (optional) Info about the peer (client on the other end of the RPC channel),
-///                 which it provided via |nvim_set_client_info()|.
+///    -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
+///                 by |nvim_set_client_info()|.
 ///
 Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
@@ -1701,6 +1703,14 @@ Dict nvim__stats(Arena *arena)
 }
 
 /// Gets a list of dictionaries representing attached UIs.
+///
+/// Example: The Nvim builtin |TUI| sets its channel info as described in |startup-tui|. In
+/// particular, it sets `client.name` to "nvim-tui". So you can check if the TUI is running by
+/// inspecting the client name of each UI:
+///
+/// ```lua
+/// vim.print(vim.api.nvim_get_chan_info(vim.api.nvim_list_uis()[1].chan).client.name)
+/// ```
 ///
 /// @return Array of UI dictionaries, each with these keys:
 ///   - "height"  Requested height of the UI

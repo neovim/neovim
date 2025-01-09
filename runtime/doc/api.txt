@@ -654,20 +654,22 @@ nvim_del_var({name})                                          *nvim_del_var()*
       • {name}  Variable name
 
 nvim_echo({chunks}, {history}, {opts})                           *nvim_echo()*
-    Echo a message.
+    Prints a message given by a list of `[text, hl_group]` "chunks".
+
+    Example: >lua
+        vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true, {})
+<
 
     Parameters: ~
-      • {chunks}   A list of `[text, hl_group]` arrays, each representing a
-                   text chunk with specified highlight group name or ID.
-                   `hl_group` element can be omitted for no highlight.
+      • {chunks}   List of `[text, hl_group]` pairs, where each is a `text`
+                   string highlighted by the (optional) name or ID `hl_group`.
       • {history}  if true, add to |message-history|.
       • {opts}     Optional parameters.
-                   • err: Treat the message like |:echoerr|. Omitted `hlgroup`
-                     uses |hl-ErrorMsg| instead.
-                   • verbose: Message is printed as a result of 'verbose'
-                     option. If Nvim was invoked with -V3log_file, the message
-                     will be redirected to the log_file and suppressed from
-                     direct output.
+                   • err: Treat the message like `:echoerr`. Sets `hl_group`
+                     to |hl-ErrorMsg| by default.
+                   • verbose: Message is controlled by the 'verbose' option.
+                     Nvim invoked with `-V3log` will write the message to the
+                     "log" file instead of standard output.
 
 nvim_eval_statusline({str}, {opts})                   *nvim_eval_statusline()*
     Evaluates statusline string.
@@ -760,6 +762,8 @@ nvim_get_api_info()                                      *nvim_get_api_info()*
 nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
     Gets information about a channel.
 
+    See |nvim_list_uis()| for an example of how to get channel info.
+
     Parameters: ~
       • {chan}  channel_id, or 0 for current channel
 
@@ -781,7 +785,7 @@ nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
           present if a pty is used (e.g. for conpty on Windows).
         • "buffer" (optional) Buffer connected to |terminal| instance.
         • "client" (optional) Info about the peer (client on the other end of
-          the RPC channel), which it provided via |nvim_set_client_info()|.
+          the channel), as set by |nvim_set_client_info()|.
 
 nvim_get_color_by_name({name})                      *nvim_get_color_by_name()*
     Returns the 24-bit RGB value of a |nvim_get_color_map()| color name or
@@ -1064,6 +1068,12 @@ nvim_list_tabpages()                                    *nvim_list_tabpages()*
 nvim_list_uis()                                              *nvim_list_uis()*
     Gets a list of dictionaries representing attached UIs.
 
+    Example: The Nvim builtin |TUI| sets its channel info as described in
+    |startup-tui|. In particular, it sets `client.name` to "nvim-tui". So you
+    can check if the TUI is running by inspecting the client name of each UI: >lua
+        vim.print(vim.api.nvim_get_chan_info(vim.api.nvim_list_uis()[1].chan).client.name)
+<
+
     Return: ~
         Array of UI dictionaries, each with these keys:
         • "height" Requested height of the UI
@@ -1112,7 +1122,7 @@ nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
 
     Example: this `TermHl` command can be used to display and highlight raw
     ANSI termcodes, so you can use Nvim as a "scrollback pager" (for terminals
-    like kitty):                                   *terminal-scrollback-pager* >lua
+    like kitty):                     *ansi-colorize* *terminal-scrollback-pager* >lua
         vim.api.nvim_create_user_command('TermHl', function()
           local b = vim.api.nvim_create_buf(false, true)
           local chan = vim.api.nvim_open_term(b, {})
@@ -1237,25 +1247,23 @@ nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
 
                                                       *nvim_set_client_info()*
 nvim_set_client_info({name}, {version}, {type}, {methods}, {attributes})
-    Self-identifies the client.
+    Self-identifies the client. Sets the `client` object returned by
+    |nvim_get_chan_info()|.
 
-    The client/plugin/application should call this after connecting, to
-    provide hints about its identity and purpose, for debugging and
-    orchestration.
+    Clients should call this just after connecting, to provide hints for
+    debugging and orchestration. (Note: Something is better than nothing!
+    Fields are optional, but at least set `name`.)
 
     Can be called more than once; the caller should merge old info if
     appropriate. Example: library first identifies the channel, then a plugin
     using that library later identifies itself.
 
-    Note: ~
-      • "Something is better than nothing". You don't need to include all the
-        fields.
-
     Attributes: ~
         |RPC| only
 
     Parameters: ~
-      • {name}        Short name for the connected client
+      • {name}        Client short-name. Sets the `client.name` field of
+                      |nvim_get_chan_info()|.
       • {version}     Dict describing the version, with these (optional) keys:
                       • "major" major version (defaults to 0 if not set, for
                         no release yet)
