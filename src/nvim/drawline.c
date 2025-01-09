@@ -276,7 +276,7 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       bool updated = true;
       VirtTextPos pos = decor_virt_pos_kind(item);
 
-      if (pos == kVPosRightAlignTrunc) {
+      if (pos == kVPosEndOfLineRightAlign) {
         if (do_eol && (vt->width <= (right_pos - state->eol_col))) {
           pos = kVPosRightAlign;
         } else {

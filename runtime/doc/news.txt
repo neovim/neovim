@@ -178,7 +178,7 @@ API
 
 • Improved API "meta" docstrings and :help documentation.
 • |nvim__ns_set()| can set properties for a namespace
-• |nvim_buf_set_extmark()| virt_text_pos now accpets `right_align_trunc` to
+• |nvim_buf_set_extmark()| virt_text_pos now accpets `eol_right_align` to
   allow for right aligned text that truncates before covering up buffer text.
 
 DEFAULTS

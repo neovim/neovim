@@ -509,7 +509,7 @@ describe('decorations providers', function()
     ]]}
   end)
 
-  it('can have virtual text of the style: right_align_trunc', function()
+  it('can have virtual text of the style: eol_right_align', function()
     insert(mulholland)
     setup_provider [[
       local hl = api.nvim_get_hl_id_by_name "ErrorMsg"
@@ -519,7 +519,7 @@ describe('decorations providers', function()
           local win, buf, line = ...
           api.nvim_buf_set_extmark(buf, test_ns, line, 0, {
             virt_text = {{'+'}, {'1234567890', 'ErrorMsg'}};
-            virt_text_pos='right_align_trunc';
+            virt_text_pos='eol_right_align';
             ephemeral = true;
           })
         end
