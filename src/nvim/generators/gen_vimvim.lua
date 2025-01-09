@@ -52,11 +52,13 @@ local function is_special_cased_cmd(cmd)
 end
 
 local vimcmd_start = 'syn keyword vimCommand contained '
+local vimcmd_end = ' nextgroup=vimBang'
 w(vimcmd_start)
+
 local prev_cmd = nil
 for _, cmd_desc in ipairs(ex_cmds.cmds) do
   if lld.line_length > 850 then
-    w('\n' .. vimcmd_start)
+    w(vimcmd_end .. '\n' .. vimcmd_start)
   end
   local cmd = cmd_desc.command
   if cmd:match('%w') and cmd ~= 'z' and not is_special_cased_cmd(cmd) then
@@ -79,9 +81,11 @@ for _, cmd_desc in ipairs(ex_cmds.cmds) do
   prev_cmd = cmd
 end
 
+w(vimcmd_end .. '\n')
+
 local vimopt_start = 'syn keyword vimOption contained '
 local vimopt_end = ' skipwhite nextgroup=vimSetEqual,vimSetMod'
-w('\n\n' .. vimopt_start)
+w('\n' .. vimopt_start)
 
 for _, opt_desc in ipairs(options.options) do
   if not opt_desc.immutable then
