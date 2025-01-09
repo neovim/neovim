@@ -776,7 +776,7 @@ char *api_typename(ObjectType t)
   UNREACHABLE;
 }
 
-HlMessage parse_hl_msg(Array chunks, Error *err)
+HlMessage parse_hl_msg(Array chunks, bool is_err, Error *err)
 {
   HlMessage hl_msg = KV_INITIAL_VALUE;
   for (size_t i = 0; i < chunks.size; i++) {
@@ -791,7 +791,7 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
 
     String str = copy_string(chunk.items[0].data.string, NULL);
 
-    int hl_id = 0;
+    int hl_id = is_err ? HLF_E : 0;
     if (chunk.size == 2) {
       hl_id = object_to_hl_id(chunk.items[1], "text highlight", err);
     }

@@ -3257,8 +3257,8 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
                      n);
     validate_virtcol(curwin);
     size_t len = strlen(buffer);
-    col_print(buffer + len, IOSIZE - len,
-              (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
+    (void)col_print(buffer + len, IOSIZE - len,
+                    (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
   }
 
   append_arg_number(curwin, buffer, IOSIZE);
@@ -3286,13 +3286,13 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
   xfree(buffer);
 }
 
-void col_print(char *buf, size_t buflen, int col, int vcol)
+int col_print(char *buf, size_t buflen, int col, int vcol)
 {
   if (col == vcol) {
-    vim_snprintf(buf, buflen, "%d", col);
-  } else {
-    vim_snprintf(buf, buflen, "%d-%d", col, vcol);
+    return vim_snprintf(buf, buflen, "%d", col);
   }
+
+  return vim_snprintf(buf, buflen, "%d-%d", col, vcol);
 }
 
 static char *lasttitle = NULL;
@@ -3416,15 +3416,16 @@ void free_titles(void)
 
 /// Get relative cursor position in window into "buf[buflen]", in the localized
 /// percentage form like %99, 99%; using "Top", "Bot" or "All" when appropriate.
-void get_rel_pos(win_T *wp, char *buf, int buflen)
+int get_rel_pos(win_T *wp, char *buf, int buflen)
 {
   // Need at least 3 chars for writing.
   if (buflen < 3) {
-    return;
+    return 0;
   }
 
   linenr_T above;          // number of lines above window
   linenr_T below;          // number of lines below window
+  int len;
 
   above = wp->w_topline - 1;
   above += win_get_fill(wp, wp->w_topline) - wp->w_topfill;
@@ -3435,25 +3436,24 @@ void get_rel_pos(win_T *wp, char *buf, int buflen)
   }
   below = wp->w_buffer->b_ml.ml_line_count - wp->w_botline + 1;
   if (below <= 0) {
-    xstrlcpy(buf, (above == 0 ? _("All") : _("Bot")), (size_t)buflen);
+    len = vim_snprintf(buf, (size_t)buflen, "%s", (above == 0) ? _("All") : _("Bot"));
   } else if (above <= 0) {
-    xstrlcpy(buf, _("Top"), (size_t)buflen);
+    len = vim_snprintf(buf, (size_t)buflen, "%s", _("Top"));
   } else {
     int perc = (above > 1000000
                 ? (above / ((above + below) / 100))
                 : (above * 100 / (above + below)));
-
-    char *p = buf;
-    size_t l = (size_t)buflen;
-    if (perc < 10) {
-      // prepend one space
-      buf[0] = ' ';
-      p++;
-      l--;
-    }
     // localized percentage value
-    vim_snprintf(p, l, _("%d%%"), perc);
+    len = vim_snprintf(buf, (size_t)buflen, _("%s%d%%"), (perc < 10) ? " " : "", perc);
   }
+  if (len < 0) {
+    buf[0] = NUL;
+    len = 0;
+  } else if (len > buflen - 1) {
+    len = buflen - 1;
+  }
+
+  return len;
 }
 
 /// Append (2 of 8) to "buf[buflen]", if editing more than one file.

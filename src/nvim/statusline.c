@@ -96,53 +96,51 @@ void win_redr_status(win_T *wp)
 
     get_trans_bufname(wp->w_buffer);
     char *p = NameBuff;
-    int len = (int)strlen(p);
+    int plen = (int)strlen(p);
 
     if ((bt_help(wp->w_buffer)
          || wp->w_p_pvw
          || bufIsChanged(wp->w_buffer)
          || wp->w_buffer->b_p_ro)
-        && len < MAXPATHL - 1) {
-      *(p + len++) = ' ';
+        && plen < MAXPATHL - 1) {
+      *(p + plen++) = ' ';
     }
     if (bt_help(wp->w_buffer)) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[Help]"));
-      len += (int)strlen(p + len);
+      plen += snprintf(p + plen, MAXPATHL - (size_t)plen, "%s", _("[Help]"));
     }
     if (wp->w_p_pvw) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[Preview]"));
-      len += (int)strlen(p + len);
+      plen += snprintf(p + plen, MAXPATHL - (size_t)plen, "%s", _("[Preview]"));
     }
     if (bufIsChanged(wp->w_buffer)) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", "[+]");
-      len += (int)strlen(p + len);
+      plen += snprintf(p + plen, MAXPATHL - (size_t)plen, "%s", "[+]");
     }
     if (wp->w_buffer->b_p_ro) {
-      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[RO]"));
-      // len += (int)strlen(p + len);  // dead assignment
+      plen += snprintf(p + plen, MAXPATHL - (size_t)plen, "%s", _("[RO]"));
     }
+    (void)plen;
 
-    int this_ru_col = MAX(ru_col - (Columns - stl_width), (stl_width + 1) / 2);
+    int n = (stl_width + 1) / 2;
+    int this_ru_col = ru_col - (Columns - stl_width);
+    this_ru_col = MAX(this_ru_col, n);
     if (this_ru_col <= 1) {
       p = "<";                // No room for file name!
-      len = 1;
+      plen = 1;
     } else {
       int i;
 
       // Count total number of display cells.
-      int clen = (int)mb_string2cells(p);
+      plen = (int)mb_string2cells(p);
 
       // Find first character that will fit.
       // Going from start to end is much faster for DBCS.
-      for (i = 0; p[i] != NUL && clen >= this_ru_col - 1;
+      for (i = 0; p[i] != NUL && plen >= this_ru_col - 1;
            i += utfc_ptr2len(p + i)) {
-        clen -= utf_ptr2cells(p + i);
+        plen -= utf_ptr2cells(p + i);
       }
-      len = clen;
       if (i > 0) {
         p = p + i - 1;
         *p = '<';
-        len++;
+        plen++;
       }
     }
 
@@ -152,16 +150,17 @@ void win_redr_status(win_T *wp)
     int width = grid_line_puts(off, p, -1, attr);
     grid_line_fill(off + width, off + this_ru_col, fillchar, attr);
 
-    if (get_keymap_str(wp, "<%s>", NameBuff, MAXPATHL)
-        && this_ru_col - len > (int)strlen(NameBuff) + 1) {
-      grid_line_puts(off + this_ru_col - (int)strlen(NameBuff) - 1, NameBuff, -1, attr);
+    int NameBufflen = get_keymap_str(wp, "<%s>", NameBuff, MAXPATHL);
+    if (NameBufflen > 0 && this_ru_col - plen > NameBufflen + 1) {
+      grid_line_puts(off + this_ru_col - NameBufflen - 1, NameBuff, -1, attr);
     }
 
     win_redr_ruler(wp);
 
     // Draw the 'showcmd' information if 'showcmdloc' == "statusline".
     if (p_sc && *p_sloc == 's') {
-      const int sc_width = MIN(10, this_ru_col - len - 2);
+      n = this_ru_col - plen - 2;  // perform the calculation here so we only do it once
+      const int sc_width = MIN(10, n);
 
       if (sc_width > 0) {
         grid_line_puts(off + this_ru_col - sc_width - 1, showcmd_buf, sc_width, attr);
@@ -548,36 +547,40 @@ void win_redr_ruler(win_T *wp)
 #define RULER_BUF_LEN 70
   char buffer[RULER_BUF_LEN];
 
-  // Some sprintfs return the length, some return a pointer.
-  // To avoid portability problems we use strlen() here.
-  vim_snprintf(buffer, RULER_BUF_LEN, "%" PRId64 ",",
-               (wp->w_buffer->b_ml.ml_flags &
-                ML_EMPTY) ? 0 : (int64_t)wp->w_cursor.lnum);
-  size_t len = strlen(buffer);
-  col_print(buffer + len, RULER_BUF_LEN - len,
-            empty_line ? 0 : (int)wp->w_cursor.col + 1,
-            (int)virtcol + 1);
+  int bufferlen = vim_snprintf(buffer, RULER_BUF_LEN, "%" PRId64 ",",
+                               (wp->w_buffer->b_ml.ml_flags & ML_EMPTY)
+                               ? 0
+                               : (int64_t)wp->w_cursor.lnum);
+  bufferlen += col_print(buffer + bufferlen, RULER_BUF_LEN - (size_t)bufferlen,
+                         empty_line ? 0 : (int)wp->w_cursor.col + 1,
+                         (int)virtcol + 1);
 
   // Add a "50%" if there is room for it.
   // On the last line, don't print in the last column (scrolls the
   // screen up on some terminals).
-  int i = (int)strlen(buffer);
-  get_rel_pos(wp, buffer + i + 1, RULER_BUF_LEN - i - 1);
-  int o = i + vim_strsize(buffer + i + 1);
+  char rel_pos[RULER_BUF_LEN];
+  int rel_poslen = get_rel_pos(wp, rel_pos, RULER_BUF_LEN);
+  int n1 = bufferlen + vim_strsize(rel_pos);
   if (wp->w_status_height == 0 && !is_stl_global) {  // can't use last char of screen
-    o++;
+    n1++;
   }
+
+  int this_ru_col = ru_col - (Columns - width);
   // Never use more than half the window/screen width, leave the other half
   // for the filename.
-  int this_ru_col = MAX(ru_col - (Columns - width), (width + 1) / 2);
-  if (this_ru_col + o < width) {
-    // Need at least 3 chars left for get_rel_pos() + NUL.
-    while (this_ru_col + o < width && RULER_BUF_LEN > i + 4) {
-      i += (int)schar_get(buffer + i, fillchar);
-      o++;
+  int n2 = (width + 1) / 2;
+  this_ru_col = MAX(this_ru_col, n2);
+  if (this_ru_col + n1 < width) {
+    // need at least space for rel_pos + NUL
+    while (this_ru_col + n1 < width
+           && RULER_BUF_LEN > bufferlen + rel_poslen + 1) {  // +1 for NUL
+      bufferlen += (int)schar_get(buffer + bufferlen, fillchar);
+      n1++;
     }
-    get_rel_pos(wp, buffer + i, RULER_BUF_LEN - i);
+    bufferlen += vim_snprintf(buffer + bufferlen, RULER_BUF_LEN - (size_t)bufferlen,
+                              "%s", rel_pos);
   }
+  (void)bufferlen;
 
   if (ui_has(kUIMessages) && !part_of_status) {
     MAXSIZE_TEMP_ARRAY(content, 1);
@@ -595,11 +598,11 @@ void win_redr_ruler(win_T *wp)
       did_show_ext_ruler = false;
     }
     // Truncate at window boundary.
-    o = 0;
-    for (i = 0; buffer[i] != NUL; i += utfc_ptr2len(buffer + i)) {
-      o += utf_ptr2cells(buffer + i);
-      if (this_ru_col + o > width) {
-        buffer[i] = NUL;
+    for (n1 = 0, n2 = 0; buffer[n1] != NUL; n1 += utfc_ptr2len(buffer + n1)) {
+      n2 += utf_ptr2cells(buffer + n1);
+      if (this_ru_col + n2 > width) {
+        bufferlen = n1;
+        buffer[bufferlen] = NUL;
         break;
       }
     }
@@ -1536,7 +1539,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       // Store the position percentage in our temporary buffer.
       // Note: We cannot store the value in `num` because
       //       `get_rel_pos` can return a named position. Ex: "Top"
-      get_rel_pos(wp, buf_tmp, TMPLEN);
+      (void)get_rel_pos(wp, buf_tmp, TMPLEN);
       str = buf_tmp;
       break;
 
@@ -1564,7 +1567,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
     case STL_KEYMAP:
       fillable = false;
-      if (get_keymap_str(wp, "<%s>", buf_tmp, TMPLEN)) {
+      if (get_keymap_str(wp, "<%s>", buf_tmp, TMPLEN) > 0) {
         str = buf_tmp;
       }
       break;

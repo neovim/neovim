@@ -293,20 +293,31 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
   }
 }
 
-void msg_multihl(HlMessage hl_msg, const char *kind, bool history)
+// Avoid starting a new message for each chunk and adding message to history in msg_keep().
+static bool is_multihl = false;
+
+void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
 {
   no_wait_return++;
   msg_start();
   msg_clr_eos();
   bool need_clear = false;
+  msg_ext_history = history;
   msg_ext_set_kind(kind);
+  is_multihl = true;
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
-    msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
+    if (err) {
+      emsg_multiline(chunk.text.data, kind, chunk.hl_id, true);
+    } else {
+      msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
+    }
+    assert(msg_ext_kind == kind);
   }
   if (history && kv_size(hl_msg)) {
     add_msg_hist_multihl(NULL, 0, 0, true, hl_msg);
   }
+  is_multihl = false;
   no_wait_return--;
   msg_end();
 }
@@ -342,18 +353,19 @@ bool msg_keep(const char *s, int hl_id, bool keep, bool multiline)
   }
   entered++;
 
-  // Add message to history (unless it's a repeated kept message or a
-  // truncated message)
-  if (s != keep_msg
-      || (*s != '<'
-          && last_msg_hist != NULL
-          && last_msg_hist->msg != NULL
-          && strcmp(s, last_msg_hist->msg) != 0)) {
+  // Add message to history (unless it's a truncated, repeated kept or multihl message).
+  if ((s != keep_msg
+       || (*s != '<'
+           && last_msg_hist != NULL
+           && last_msg_hist->msg != NULL
+           && strcmp(s, last_msg_hist->msg) != 0)) && !is_multihl) {
     add_msg_hist(s, -1, hl_id, multiline);
   }
 
+  if (!is_multihl) {
+    msg_start();
+  }
   // Truncate the message if needed.
-  msg_start();
   char *buf = msg_strtrunc(s, false);
   if (buf != NULL) {
     s = buf;
@@ -368,7 +380,10 @@ bool msg_keep(const char *s, int hl_id, bool keep, bool multiline)
   if (need_clear) {
     msg_clr_eos();
   }
-  bool retval = msg_end();
+  bool retval = true;
+  if (!is_multihl) {
+    retval = msg_end();
+  }
 
   if (keep && retval && vim_strsize(s) < (Rows - cmdline_row - 1) * Columns + sc_col) {
     set_keep_msg(s, 0);
@@ -618,6 +633,9 @@ void msg_source(int hl_id)
     msg_scroll = true;  // this will take more than one line
     msg(p, hl_id);
     xfree(p);
+    if (is_multihl) {
+      msg_start();  // avoided in msg_keep() but need the "msg_didout" newline here
+    }
   }
   p = get_emsg_lnum();
   if (p != NULL) {
@@ -652,7 +670,7 @@ int emsg_not_now(void)
   return false;
 }
 
-bool emsg_multiline(const char *s, bool multiline)
+bool emsg_multiline(const char *s, const char *kind, int hl_id, bool multiline)
 {
   bool ignore = false;
 
@@ -750,14 +768,13 @@ bool emsg_multiline(const char *s, bool multiline)
   }
 
   emsg_on_display = true;     // remember there is an error message
-  int hl_id = HLF_E;      // set highlight mode for error messages
   if (msg_scrolled != 0) {
     need_wait_return = true;  // needed in case emsg() is called after
   }                           // wait_return() has reset need_wait_return
                               // and a redraw is expected because
                               // msg_scrolled is non-zero
   if (msg_ext_kind == NULL) {
-    msg_ext_set_kind("emsg");
+    msg_ext_set_kind(kind);
   }
 
   // Display name and line number for the source of the error.
@@ -765,7 +782,7 @@ bool emsg_multiline(const char *s, bool multiline)
   msg_source(hl_id);
 
   if (msg_ext_kind == NULL) {
-    msg_ext_set_kind("emsg");
+    msg_ext_set_kind(kind);
   }
 
   // Display the error message itself.
@@ -781,7 +798,7 @@ bool emsg_multiline(const char *s, bool multiline)
 /// @return true if wait_return() not called
 bool emsg(const char *s)
 {
-  return emsg_multiline(s, false);
+  return emsg_multiline(s, "emsg", HLF_E, false);
 }
 
 void emsg_invreg(int name)
@@ -821,7 +838,7 @@ bool semsg_multiline(const char *const fmt, ...)
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
   va_end(ap);
 
-  ret = emsg_multiline(errbuf, true);
+  ret = emsg_multiline(errbuf, "emsg", HLF_E, true);
 
   return ret;
 }
@@ -905,7 +922,7 @@ void msg_schedule_semsg(const char *const fmt, ...)
 static void msg_semsg_multiline_event(void **argv)
 {
   char *s = argv[0];
-  emsg_multiline(s, true);
+  emsg_multiline(s, "emsg", HLF_E, true);
   xfree(s);
 }
 
@@ -1196,7 +1213,7 @@ void ex_messages(exarg_T *eap)
     msg_hist_off = true;
     for (; p != NULL && !got_int; p = p->next) {
       if (kv_size(p->multihl)) {
-        msg_multihl(p->multihl, p->kind, false);
+        msg_multihl(p->multihl, p->kind, false, false);
       } else if (p->msg != NULL) {
         msg_keep(p->msg, p->hl_id, false, p->multiline);
       }

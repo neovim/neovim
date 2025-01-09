@@ -86,8 +86,6 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-#define LINE_BUFFER_MIN_SIZE 4096
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.c.generated.h"
 #endif
@@ -768,20 +766,24 @@ void nvim_set_vvar(String name, Object value, Error *err)
   dict_set_var(&vimvardict, name, value, false, false, NULL, err);
 }
 
-/// Echo a message.
+/// Prints a message given by a list of `[text, hl_group]` "chunks".
 ///
-/// @param chunks  A list of `[text, hl_group]` arrays, each representing a
-///                text chunk with specified highlight group name or ID.
-///                `hl_group` element can be omitted for no highlight.
+/// Example:
+/// ```lua
+/// vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true, {})
+/// ```
+///
+/// @param chunks List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
+///               the (optional) name or ID `hl_group`.
 /// @param history  if true, add to |message-history|.
 /// @param opts  Optional parameters.
-///          - verbose: Message is printed as a result of 'verbose' option.
-///            If Nvim was invoked with -V3log_file, the message will be
-///            redirected to the log_file and suppressed from direct output.
+///          - err: Treat the message like `:echoerr`. Sets `hl_group` to |hl-ErrorMsg| by default.
+///          - verbose: Message is controlled by the 'verbose' option. Nvim invoked with `-V3log`
+///            will write the message to the "log" file instead of standard output.
 void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
   FUNC_API_SINCE(7)
 {
-  HlMessage hl_msg = parse_hl_msg(chunks, err);
+  HlMessage hl_msg = parse_hl_msg(chunks, opts->err, err);
   if (ERROR_SET(err)) {
     goto error;
   }
@@ -790,7 +792,7 @@ void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
     verbose_enter();
   }
 
-  msg_multihl(hl_msg, history ? "echomsg" : "echo", history);
+  msg_multihl(hl_msg, opts->err ? "echoerr" : history ? "echomsg" : "echo", history, opts->err);
 
   if (opts->verbose) {
     verbose_leave();
@@ -804,37 +806,6 @@ void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
 
 error:
   hl_msg_free(hl_msg);
-}
-
-/// Writes a message to the Vim output buffer. Does not append "\n", the
-/// message is buffered (won't display) until a linefeed is written.
-///
-/// @param str Message
-void nvim_out_write(String str)
-  FUNC_API_SINCE(1)
-{
-  write_msg(str, false, false);
-}
-
-/// Writes a message to the Vim error buffer. Does not append "\n", the
-/// message is buffered (won't display) until a linefeed is written.
-///
-/// @param str Message
-void nvim_err_write(String str)
-  FUNC_API_SINCE(1)
-{
-  write_msg(str, true, false);
-}
-
-/// Writes a message to the Vim error buffer. Appends "\n", so the buffer is
-/// flushed (and displayed).
-///
-/// @param str Message
-/// @see nvim_err_write()
-void nvim_err_writeln(String str)
-  FUNC_API_SINCE(1)
-{
-  write_msg(str, true, true);
 }
 
 /// Gets the current list of buffer handles
@@ -983,10 +954,10 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
     buf_copy_options(buf, BCO_ENTER | BCO_NOHELP);
 
     if (scratch) {
-      set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"),
-                            option_ctx_from(kOptScopeBuf, buf), OPT_LOCAL, 0);
-      set_option_direct_for(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"),
-                            option_ctx_from(kOptScopeBuf, buf), OPT_LOCAL, 0);
+      set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL, 0,
+                            kOptScopeBuf, buf);
+      set_option_direct_for(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL, 0,
+                            kOptScopeBuf, buf);
       assert(buf->b_ml.ml_mfp->mf_fd < 0);  // ml_open() should not have opened swapfile already
       buf->b_p_swf = false;
       buf->b_p_ml = false;
@@ -1031,7 +1002,8 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// in a virtual terminal having the intended size.
 ///
 /// Example: this `TermHl` command can be used to display and highlight raw ANSI termcodes, so you
-/// can use Nvim as a "scrollback pager" (for terminals like kitty): [terminal-scrollback-pager]()
+/// can use Nvim as a "scrollback pager" (for terminals like kitty): [ansi-colorize]()
+/// [terminal-scrollback-pager]()
 ///
 /// ```lua
 /// vim.api.nvim_create_user_command('TermHl', function()
@@ -1531,20 +1503,17 @@ Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
   return rv;
 }
 
-/// Self-identifies the client.
+/// Self-identifies the client. Sets the `client` object returned by |nvim_get_chan_info()|.
 ///
-/// The client/plugin/application should call this after connecting, to provide
-/// hints about its identity and purpose, for debugging and orchestration.
+/// Clients should call this just after connecting, to provide hints for debugging and
+/// orchestration. (Note: Something is better than nothing! Fields are optional, but at least set
+/// `name`.)
 ///
-/// Can be called more than once; the caller should merge old info if
-/// appropriate. Example: library first identifies the channel, then a plugin
-/// using that library later identifies itself.
-///
-/// @note "Something is better than nothing". You don't need to include all the
-///       fields.
+/// Can be called more than once; the caller should merge old info if appropriate. Example: library
+/// first identifies the channel, then a plugin using that library later identifies itself.
 ///
 /// @param channel_id
-/// @param name Short name for the connected client
+/// @param name Client short-name. Sets the `client.name` field of |nvim_get_chan_info()|.
 /// @param version  Dict describing the version, with these
 ///     (optional) keys:
 ///     - "major" major version (defaults to 0 if not set, for no release yet)
@@ -1618,6 +1587,8 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
 
 /// Gets information about a channel.
 ///
+/// See |nvim_list_uis()| for an example of how to get channel info.
+///
 /// @param chan channel_id, or 0 for current channel
 /// @returns Channel info dict with these keys:
 ///    - "id"       Channel id.
@@ -1635,8 +1606,8 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String
 ///                 "/dev/pts/1". If unknown, the key will still be present if a pty is used (e.g.
 ///                 for conpty on Windows).
 ///    -  "buffer"  (optional) Buffer connected to |terminal| instance.
-///    -  "client"  (optional) Info about the peer (client on the other end of the RPC channel),
-///                 which it provided via |nvim_set_client_info()|.
+///    -  "client"  (optional) Info about the peer (client on the other end of the channel), as set
+///                 by |nvim_set_client_info()|.
 ///
 Dict nvim_get_chan_info(uint64_t channel_id, Integer chan, Arena *arena, Error *err)
   FUNC_API_SINCE(4)
@@ -1660,55 +1631,6 @@ Array nvim_list_chans(Arena *arena)
   FUNC_API_SINCE(4)
 {
   return channel_all_info(arena);
-}
-
-/// Writes a message to vim output or error buffer. The string is split
-/// and flushed after each newline. Incomplete lines are kept for writing
-/// later.
-///
-/// @param message  Message to write
-/// @param to_err   true: message is an error (uses `emsg` instead of `msg`)
-/// @param writeln  Append a trailing newline
-static void write_msg(String message, bool to_err, bool writeln)
-{
-  static StringBuilder out_line_buf = KV_INITIAL_VALUE;
-  static StringBuilder err_line_buf = KV_INITIAL_VALUE;
-  StringBuilder *line_buf = to_err ? &err_line_buf : &out_line_buf;
-
-#define PUSH_CHAR(c) \
-  if (kv_max(*line_buf) == 0) { \
-    kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
-  } \
-  if (c == NL) { \
-    kv_push(*line_buf, NUL); \
-    if (to_err) { \
-      emsg(line_buf->items); \
-    } else { \
-      msg(line_buf->items, 0); \
-    } \
-    if (msg_silent == 0) { \
-      msg_didout = true; \
-    } \
-    kv_drop(*line_buf, kv_size(*line_buf)); \
-    kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
-  } else if (c == NUL) { \
-    kv_push(*line_buf, NL); \
-  } else { \
-    kv_push(*line_buf, c); \
-  }
-
-  no_wait_return++;
-  for (uint32_t i = 0; i < message.size; i++) {
-    if (got_int) {
-      break;
-    }
-    PUSH_CHAR(message.data[i]);
-  }
-  if (writeln) {
-    PUSH_CHAR(NL);
-  }
-  no_wait_return--;
-  msg_end();
 }
 
 // Functions used for testing purposes
@@ -1781,6 +1703,14 @@ Dict nvim__stats(Arena *arena)
 }
 
 /// Gets a list of dictionaries representing attached UIs.
+///
+/// Example: The Nvim builtin |TUI| sets its channel info as described in |startup-tui|. In
+/// particular, it sets `client.name` to "nvim-tui". So you can check if the TUI is running by
+/// inspecting the client name of each UI:
+///
+/// ```lua
+/// vim.print(vim.api.nvim_get_chan_info(vim.api.nvim_list_uis()[1].chan).client.name)
+/// ```
 ///
 /// @return Array of UI dictionaries, each with these keys:
 ///   - "height"  Requested height of the UI

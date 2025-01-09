@@ -2183,22 +2183,22 @@ static void keymap_unload(void)
 /// @param fmt  format string containing one %s item
 /// @param buf  buffer for the result
 /// @param len  length of buffer
-bool get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
+int get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
 {
   char *p;
 
   if (wp->w_buffer->b_p_iminsert != B_IMODE_LMAP) {
-    return false;
+    return 0;
   }
 
   buf_T *old_curbuf = curbuf;
   win_T *old_curwin = curwin;
+  char to_evaluate[] = "b:keymap_name";
 
   curbuf = wp->w_buffer;
   curwin = wp;
-  STRCPY(buf, "b:keymap_name");       // must be writable
   emsg_skip++;
-  char *s = p = eval_to_string(buf, false, false);
+  char *s = p = eval_to_string(to_evaluate, false, false);
   emsg_skip--;
   curbuf = old_curbuf;
   curwin = old_curwin;
@@ -2209,9 +2209,12 @@ bool get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
       p = "lang";
     }
   }
-  if (vim_snprintf(buf, (size_t)len, fmt, p) > len - 1) {
-    buf[0] = NUL;
-  }
+  int plen = vim_snprintf(buf, (size_t)len, fmt, p);
   xfree(s);
-  return buf[0] != NUL;
+  if (plen < 0 || plen > len - 1) {
+    buf[0] = NUL;
+    plen = 0;
+  }
+
+  return plen;
 }

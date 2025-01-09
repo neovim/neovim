@@ -58,6 +58,7 @@ vim._extra = {
 
 --- @private
 vim.log = {
+  --- @enum vim.log.levels
   levels = {
     TRACE = 0,
     DEBUG = 1,
@@ -390,7 +391,7 @@ end
 
 local VIM_CMD_ARG_MAX = 20
 
---- Executes Vim script commands.
+--- Executes Vimscript (|Ex-commands|).
 ---
 --- Note that `vim.cmd` can be indexed with a command name to return a callable function to the
 --- command.
@@ -425,7 +426,7 @@ local VIM_CMD_ARG_MAX = 20
 --- ```
 ---
 ---@param command string|table Command(s) to execute.
----                            If a string, executes multiple lines of Vim script at once. In this
+---                            If a string, executes multiple lines of Vimscript at once. In this
 ---                            case, it is an alias to |nvim_exec2()|, where `opts.output` is set
 ---                            to false. Thus it works identical to |:source|.
 ---                            If a table, executes a single command. In this case, it is an alias
@@ -620,13 +621,8 @@ end
 ---@param opts table|nil Optional parameters. Unused by default.
 ---@diagnostic disable-next-line: unused-local
 function vim.notify(msg, level, opts) -- luacheck: no unused args
-  if level == vim.log.levels.ERROR then
-    vim.api.nvim_err_writeln(msg)
-  elseif level == vim.log.levels.WARN then
-    vim.api.nvim_echo({ { msg, 'WarningMsg' } }, true, {})
-  else
-    vim.api.nvim_echo({ { msg } }, true, {})
-  end
+  local chunks = { { msg, level == vim.log.levels.WARN and 'WarningMsg' or nil } }
+  vim.api.nvim_echo(chunks, true, { err = level == vim.log.levels.ERROR })
 end
 
 do

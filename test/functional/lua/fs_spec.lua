@@ -340,9 +340,6 @@ describe('vim.fs', function()
   end)
 
   describe('normalize()', function()
-    -- local function vim.fs.normalize(path, opts)
-    --   return exec_lua([[return vim.fs.vim.fs.normalize(...)]], path, opts)
-    -- end
     it('removes trailing /', function()
       eq('/home/user', vim.fs.normalize('/home/user/'))
     end)
@@ -389,7 +386,7 @@ describe('vim.fs', function()
       eq('D:foo/test', vim.fs.normalize('d:foo/test/', win_opts))
     end)
 
-    it('does not change case on paths, see #31833', function()
+    it('always treats paths as case-sensitive #31833', function()
       eq('TEST', vim.fs.normalize('TEST', win_opts))
       eq('test', vim.fs.normalize('test', win_opts))
       eq('C:/FOO/test', vim.fs.normalize('C:/FOO/test', win_opts))

@@ -879,8 +879,7 @@ function M.make_floating_popup_options(width, height, opts)
     col = col + (opts.offset_x or 0),
     height = height,
     focusable = opts.focusable,
-    relative = opts.relative == 'mouse' and 'mouse'
-      or opts.relative == 'editor' and 'editor'
+    relative = (opts.relative == 'mouse' or opts.relative == 'editor') and opts.relative
       or 'cursor',
     style = 'minimal',
     width = width,

@@ -11,18 +11,7 @@
 --- <
 --- Plugin authors are encouraged to write new healthchecks. |health-dev|
 ---
----                                                              *g:health*
---- g:health  This global variable controls the behavior and appearance of the
----           `health` floating window. It should be a dictionary containing the
----           following optional keys:
----           - `style`: string? Determines the display style of the `health` window.
----                             Set to `'float'` to enable a floating window. Other
----                             styles are not currently supported.
----
----           Example: >lua
----             vim.g.health = { style = 'float' }
----
---- Commands                                *health-commands*
+--- COMMANDS                                *health-commands*
 ---
 ---                                                              *:che* *:checkhealth*
 --- :che[ckhealth]  Run all healthchecks.
@@ -50,6 +39,23 @@
 ---                         :checkhealth vim*
 --- <
 ---
+--- USAGE                                                        *health-usage*
+---
+--- Local mappings in the healthcheck buffer:
+---
+--- q               Closes the window.
+---
+--- Global configuration:
+---
+---                                                              *g:health*
+--- g:health  Dictionary with the following optional keys:
+---           - `style` (`'float'|nil`) Set to "float" to display :checkhealth in
+---           a floating window instead of the default behavior.
+---
+---           Example: >lua
+---             vim.g.health = { style = 'float' }
+---
+--- --------------------------------------------------------------------------------
 --- Create a healthcheck                                    *health-dev*
 ---
 --- Healthchecks are functions that check the user environment, configuration, or

@@ -423,8 +423,11 @@ TUI:
 <
                         *'term'* *E529* *E530* *E531*
 - 'term' reflects the terminal type derived from |$TERM| and other environment
-  checks.  For debugging only; not reliable during startup. >vim
-          :echo &term
+  checks.  Use `:echo &term` to get its value. For debugging only; not
+  reliable during startup.
+  - Note: If you want to detect when Nvim is running in a terminal, use
+    `has('gui_running')` |has()| or see |nvim_list_uis()| for an example of
+    how to inspect the UI channel.
 - "builtin_x" means one of the |builtin-terms| was chosen, because the expected
   terminfo file was not found on the system.
 - Nvim will use 256-colour capability on Linux virtual terminals.  Vim uses

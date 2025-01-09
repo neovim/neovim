@@ -155,7 +155,7 @@ void decor_providers_invoke_win(win_T *wp)
 /// @param      row       Row to invoke line callback for
 /// @param[out] has_decor Set when at least one provider invokes a line callback
 /// @param[out] err       Provider error
-void decor_providers_invoke_line(win_T *wp, int row, bool *has_decor)
+void decor_providers_invoke_line(win_T *wp, int row)
 {
   decor_state.running_decor_provider = true;
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
@@ -165,9 +165,7 @@ void decor_providers_invoke_line(win_T *wp, int row, bool *has_decor)
       ADD_C(args, WINDOW_OBJ(wp->handle));
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
-      if (decor_provider_invoke((int)i, "line", p->redraw_line, args, true)) {
-        *has_decor = true;
-      } else {
+      if (!decor_provider_invoke((int)i, "line", p->redraw_line, args, true)) {
         // return 'false' or error: skip rest of this window
         kv_A(decor_providers, i).state = kDecorProviderWinDisabled;
       }

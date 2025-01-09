@@ -326,6 +326,7 @@ typedef struct {
 } Dict(cmd_opts);
 
 typedef struct {
+  Boolean err;
   Boolean verbose;
 } Dict(echo_opts);
 

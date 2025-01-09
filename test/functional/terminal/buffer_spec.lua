@@ -435,6 +435,19 @@ describe(':terminal buffer', function()
     ]])
   end)
 
+  it('handles unprintable chars', function()
+    local screen = Screen.new(50, 7)
+    feed 'i'
+    local chan = api.nvim_open_term(0, {})
+    api.nvim_chan_send(chan, '\239\187\191') -- '\xef\xbb\xbf'
+    screen:expect([[
+      {18:<feff>}^                                            |
+                                                        |*5
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq('\239\187\191', api.nvim_get_current_line())
+  end)
+
   it("handles bell respecting 'belloff' and 'visualbell'", function()
     local screen = Screen.new(50, 7)
     local chan = api.nvim_open_term(0, {})
