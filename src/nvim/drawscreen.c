@@ -1045,7 +1045,7 @@ int showmode(void)
         if (State & MODE_LANGMAP) {
           if (curwin->w_p_arab) {
             msg_puts_hl(_(" Arabic"), hl_id, false);
-          } else if (get_keymap_str(curwin, " (%s)", NameBuff, MAXPATHL)) {
+          } else if (get_keymap_str(curwin, " (%s)", NameBuff, MAXPATHL) > 0) {
             msg_puts_hl(NameBuff, hl_id, false);
           }
         }
@@ -1936,7 +1936,7 @@ static void win_update(win_T *wp)
                  pos.lnum += cursor_above ? 1 : -1) {
               colnr_T t;
 
-              pos.col = (colnr_T)strlen(ml_get_buf(wp->w_buffer, pos.lnum));
+              pos.col = ml_get_buf_len(wp->w_buffer, pos.lnum);
               getvvcol(wp, &pos, NULL, NULL, &t);
               toc = MAX(toc, t);
             }
