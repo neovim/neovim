@@ -744,6 +744,30 @@ describe('decorations providers', function()
     ]])
     eq(2, exec_lua([[return _G.cnt]]))
   end)
+
+  it('can do large changes to the marktree', function()
+    insert("line1 with a lot of text\nline2 with a lot of text")
+    setup_provider([[
+      function on_do(event, _, _, row)
+        if event == 'win' or (event == 'line' and row == 1) then
+          vim.api.nvim_buf_clear_namespace(0, ns1, 0, -1)
+          for i = 0,1 do
+            for j = 0,23 do
+              vim.api.nvim_buf_set_extmark(0, ns1, i, j, {hl_group='ErrorMsg', end_col = j+1})
+            end
+          end
+        end
+      end
+    ]])
+
+    -- Doesn't crash when modifying the marktree between line1 and line2
+    screen:expect([[
+      {2:line1 with a lot of text}                |
+      {2:line2 with a lot of tex^t}                |
+      {1:~                                       }|*5
+                                              |
+    ]])
+  end)
 end)
 
 local example_text = [[
