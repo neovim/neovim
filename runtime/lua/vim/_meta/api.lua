@@ -1647,14 +1647,10 @@ function vim.api.nvim_list_wins() end
 --- @return any
 function vim.api.nvim_load_context(dict) end
 
---- Notify the user with a message
----
---- Relays the call to vim.notify . By default forwards your message in the
---- echo area but can be overridden to trigger desktop notifications.
----
---- @param msg string Message to display to the user
---- @param log_level integer The log level
---- @param opts table<string,any> Reserved for future use.
+--- @deprecated
+--- @param msg string
+--- @param log_level integer
+--- @param opts table<string,any>
 --- @return any
 function vim.api.nvim_notify(msg, log_level, opts) end
 
