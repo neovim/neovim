@@ -276,11 +276,48 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       bool updated = true;
       VirtTextPos pos = decor_virt_pos_kind(item);
 
-      if (pos == kVPosEndOfLineRightAlign) {
-        if (do_eol && (vt->width <= (right_pos - state->eol_col))) {
-          pos = kVPosRightAlign;
-        } else {
-          pos = kVPosEndOfLine;
+      if (do_eol && pos == kVPosEndOfLineRightAlign) {
+        /// Total width of all virtual text with "eol_right_align" alignment
+        int totalWidthOfVirtualText = 0;
+
+        // Look ahead to the remaining decor items
+        for (int j = i; j < end; j++) {
+          /// A future decor to be handled in this function's call
+          DecorRange *lookaheadItem = &slots[indices[j]].range;
+
+          if (lookaheadItem->start_row != state->row) {
+            continue;
+          }
+
+          if (!decor_virt_pos(lookaheadItem)) {
+            continue;
+          }
+
+          if (lookaheadItem->draw_col != -1) {
+            continue;
+          }
+
+          /// The Virtual Text of the decor item we're looking ahead to
+          DecorVirtText *lookaheadVt = NULL;
+          if (item->kind == kDecorKindVirtText) {
+            assert(item->data.vt);
+            lookaheadVt = item->data.vt;
+          }
+
+          if (decor_virt_pos_kind(lookaheadItem) == kVPosEndOfLineRightAlign) {
+            // An extra space is added for single character spacing in EOL alignment
+            totalWidthOfVirtualText += (lookaheadVt->width + 1);
+            lookaheadVt->pos = kVPosEndOfLine;
+          }
+        }
+        // Update the pos variable for the current item
+        pos = decor_virt_pos_kind(item);
+
+        // Remove one space from the total width since there's no single space after the last entry
+        totalWidthOfVirtualText--;
+
+        if (totalWidthOfVirtualText <= (right_pos - state->eol_col)) {
+          state->eol_col = (right_pos - totalWidthOfVirtualText);
         }
       }
 
