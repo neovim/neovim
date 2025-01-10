@@ -966,7 +966,11 @@ static void ins_compl_insert_bytes(char *p, int len)
 /// -1 mean normal item.
 int ins_compl_col_range_attr(int col)
 {
-  if (col >= compl_col && col < compl_ins_end_col) {
+  if (get_cot_flags() & kOptCotFlagFuzzy) {
+    return -1;
+  }
+
+  if (col >= (compl_col + (int)compl_leader.size) && col < compl_ins_end_col) {
     return syn_name2attr("ComplMatchIns");
   }
 

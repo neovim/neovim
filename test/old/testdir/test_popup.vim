@@ -1817,6 +1817,20 @@ func Test_pum_matchins_highlight_combine()
   call VerifyScreenDump(buf, 'Test_pum_matchins_combine_06', {})
   call term_sendkeys(buf, "\<Esc>")
 
+  " Does not highlight the compl leader
+  call TermWait(buf)
+  call term_sendkeys(buf, ":set cot+=menuone,noselect\<CR>")
+  call TermWait(buf)
+  call term_sendkeys(buf, "S\<C-X>\<C-O>f\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_matchins_combine_07', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
+  call term_sendkeys(buf, ":set cot+=fuzzy\<CR>")
+  call TermWait(buf)
+  call term_sendkeys(buf, "S\<C-X>\<C-O>f\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_matchins_combine_08', {})
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+
   call StopVimInTerminal(buf)
 endfunc
 
