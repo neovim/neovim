@@ -52,7 +52,7 @@ vim.go.ari = vim.go.allowrevins
 --- set to one of CJK locales.  See Unicode Standard Annex #11
 --- (https://www.unicode.org/reports/tr11).
 ---
---- @type string
+--- @type 'single'|'double'
 vim.o.ambiwidth = "single"
 vim.o.ambw = vim.o.ambiwidth
 vim.go.ambiwidth = vim.o.ambiwidth
@@ -208,7 +208,7 @@ vim.go.awa = vim.go.autowriteall
 --- will change.  To use other settings, place ":highlight" commands AFTER
 --- the setting of the 'background' option.
 ---
---- @type string
+--- @type 'light'|'dark'
 vim.o.background = "dark"
 vim.o.bg = vim.o.background
 vim.go.background = vim.o.background
@@ -595,7 +595,7 @@ vim.wo.briopt = vim.wo.breakindentopt
 --- This option is used together with 'buftype' and 'swapfile' to specify
 --- special kinds of buffers.   See `special-buffers`.
 ---
---- @type string
+--- @type ''|'hide'|'unload'|'delete'|'wipe'
 vim.o.bufhidden = ""
 vim.o.bh = vim.o.bufhidden
 vim.bo.bufhidden = vim.o.bufhidden
@@ -658,7 +658,7 @@ vim.bo.bl = vim.bo.buflisted
 --- without saving.  For writing there must be matching `BufWriteCmd|,
 --- |FileWriteCmd` or `FileAppendCmd` autocommands.
 ---
---- @type string
+--- @type ''|'acwrite'|'help'|'nofile'|'nowrite'|'quickfix'|'terminal'|'prompt'
 vim.o.buftype = ""
 vim.o.bt = vim.o.buftype
 vim.bo.buftype = vim.o.buftype
@@ -1118,7 +1118,7 @@ vim.go.cot = vim.go.completeopt
 --- For Insert mode completion the buffer-local value is used.  For
 --- command line completion the global value is used.
 ---
---- @type string
+--- @type ''|'slash'|'backslash'
 vim.o.completeslash = ""
 vim.o.csl = vim.o.completeslash
 vim.bo.completeslash = vim.o.completeslash
@@ -1824,7 +1824,7 @@ vim.go.dy = vim.go.display
 --- 	hor	horizontally, height of windows is not affected
 --- 	both	width and height of windows is affected
 ---
---- @type string
+--- @type 'both'|'ver'|'hor'
 vim.o.eadirection = "both"
 vim.o.ead = vim.o.eadirection
 vim.go.eadirection = vim.o.eadirection
@@ -2126,7 +2126,7 @@ vim.go.fencs = vim.go.fileencodings
 --- option is set, because the file would be different when written.
 --- This option cannot be changed when 'modifiable' is off.
 ---
---- @type string
+--- @type 'unix'|'dos'|'mac'
 vim.o.fileformat = "unix"
 vim.o.ff = vim.o.fileformat
 vim.bo.fileformat = vim.o.fileformat
@@ -2382,7 +2382,7 @@ vim.go.fcl = vim.go.foldclose
 ---     "[1-9]":      to display a fixed number of columns
 --- See `folding`.
 ---
---- @type string
+--- @type 'auto'|'auto:1'|'auto:2'|'auto:3'|'auto:4'|'auto:5'|'auto:6'|'auto:7'|'auto:8'|'auto:9'|'0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'
 vim.o.foldcolumn = "0"
 vim.o.fdc = vim.o.foldcolumn
 vim.wo.foldcolumn = vim.o.foldcolumn
@@ -2479,7 +2479,7 @@ vim.wo.fmr = vim.wo.foldmarker
 --- `fold-syntax`	syntax	    Syntax highlighting items specify folds.
 --- `fold-diff`	diff	    Fold text that is not changed.
 ---
---- @type string
+--- @type 'manual'|'expr'|'marker'|'indent'|'syntax'|'diff'
 vim.o.foldmethod = "manual"
 vim.o.fdm = vim.o.foldmethod
 vim.wo.foldmethod = vim.o.foldmethod
@@ -3144,7 +3144,7 @@ vim.bo.ims = vim.bo.imsearch
 --- 'redrawtime') then 'inccommand' is automatically disabled until
 --- `Command-line-mode` is done.
 ---
---- @type string
+--- @type 'nosplit'|'split'|''
 vim.o.inccommand = "nosplit"
 vim.o.icm = vim.o.inccommand
 vim.go.inccommand = vim.o.inccommand
@@ -4354,7 +4354,7 @@ vim.go.mh = vim.go.mousehide
 ---     "g<LeftMouse>"  is "<C-LeftMouse>	(jump to tag under mouse click)
 ---     "g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
 ---
---- @type string
+--- @type 'extend'|'popup'|'popup_setpos'
 vim.o.mousemodel = "popup_setpos"
 vim.o.mousem = vim.o.mousemodel
 vim.go.mousemodel = vim.o.mousemodel
@@ -4947,7 +4947,7 @@ vim.wo.rl = vim.wo.rightleft
 --- This is useful for languages such as Hebrew, Arabic and Farsi.
 --- The 'rightleft' option must be set for 'rightleftcmd' to take effect.
 ---
---- @type string
+--- @type 'search'
 vim.o.rightleftcmd = "search"
 vim.o.rlc = vim.o.rightleftcmd
 vim.wo.rightleftcmd = vim.o.rightleftcmd
@@ -5222,7 +5222,7 @@ vim.go.sect = vim.go.sections
 --- backwards, you cannot include the last character of a line, when
 --- starting in Normal mode and 'virtualedit' empty.
 ---
---- @type string
+--- @type 'inclusive'|'exclusive'|'old'
 vim.o.selection = "inclusive"
 vim.o.sel = vim.o.selection
 vim.go.selection = vim.o.selection
@@ -5788,7 +5788,7 @@ vim.go.sc = vim.go.showcmd
 --- place the text.  Without a custom 'statusline' or 'tabline' it will be
 --- displayed in a convenient location.
 ---
---- @type string
+--- @type 'last'|'statusline'|'tabline'
 vim.o.showcmdloc = "last"
 vim.o.sloc = vim.o.showcmdloc
 vim.go.showcmdloc = vim.o.showcmdloc
@@ -5920,7 +5920,7 @@ vim.go.siso = vim.go.sidescrolloff
 ---    "number"	display signs in the 'number' column. If the number
 --- 		column is not present, then behaves like "auto".
 ---
---- @type string
+--- @type 'yes'|'no'|'auto'|'auto:1'|'auto:2'|'auto:3'|'auto:4'|'auto:5'|'auto:6'|'auto:7'|'auto:8'|'auto:9'|'yes:1'|'yes:2'|'yes:3'|'yes:4'|'yes:5'|'yes:6'|'yes:7'|'yes:8'|'yes:9'|'number'
 vim.o.signcolumn = "auto"
 vim.o.scl = vim.o.signcolumn
 vim.wo.signcolumn = vim.o.signcolumn
@@ -6228,7 +6228,7 @@ vim.go.sb = vim.go.splitbelow
 --- with the previous cursor position. For "screen", the text cannot always
 --- be kept on the same screen line when 'wrap' is enabled.
 ---
---- @type string
+--- @type 'cursor'|'screen'|'topline'
 vim.o.splitkeep = "cursor"
 vim.o.spk = vim.o.splitkeep
 vim.go.splitkeep = vim.o.splitkeep
@@ -6876,7 +6876,7 @@ vim.go.tbs = vim.go.tagbsearch
 ---    match	Match case
 ---    smart	Ignore case unless an upper case letter is used
 ---
---- @type string
+--- @type 'followic'|'ignore'|'match'|'followscs'|'smart'
 vim.o.tagcase = "followic"
 vim.o.tc = vim.o.tagcase
 vim.bo.tagcase = vim.o.tagcase
@@ -7758,7 +7758,7 @@ vim.go.wop = vim.go.wildoptions
 --- key is never used for the menu.
 --- This option is not used for <F10>; on Win32.
 ---
---- @type string
+--- @type 'yes'|'menu'|'no'
 vim.o.winaltkeys = "menu"
 vim.o.wak = vim.o.winaltkeys
 vim.go.winaltkeys = vim.o.winaltkeys
