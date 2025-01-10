@@ -133,8 +133,9 @@ function M.add(lang, opts)
     path = paths[1]
   end
 
-  return loadparser(path, lang, symbol_name) or nil,
-    string.format('Cannot load parser %s for language "%s"', path, lang)
+  local res = loadparser(path, lang, symbol_name)
+  return res,
+    res == nil and string.format('Cannot load parser %s for language "%s"', path, lang) or nil
 end
 
 --- @param x string|string[]
