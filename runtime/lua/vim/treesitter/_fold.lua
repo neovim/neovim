@@ -69,8 +69,7 @@ end
 ---@param info TS.FoldInfo
 ---@param srow integer?
 ---@param erow integer? 0-indexed, exclusive
----@param parse_injections? boolean
-local function compute_folds_levels(bufnr, info, srow, erow, parse_injections)
+local function compute_folds_levels(bufnr, info, srow, erow)
   srow = srow or 0
   erow = erow or api.nvim_buf_line_count(bufnr)
 
@@ -79,7 +78,7 @@ local function compute_folds_levels(bufnr, info, srow, erow, parse_injections)
     return
   end
 
-  parser:parse(parse_injections and { srow, erow } or nil)
+  parser:parse()
 
   local enter_counts = {} ---@type table<integer, integer>
   local leave_counts = {} ---@type table<integer, integer>
