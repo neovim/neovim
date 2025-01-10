@@ -312,7 +312,7 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
     } else {
       msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
     }
-    assert(msg_ext_kind == kind);
+    assert(!ui_has(kUIMessages) || msg_ext_kind == kind);
   }
   if (history && kv_size(hl_msg)) {
     add_msg_hist_multihl(NULL, 0, 0, true, hl_msg);
