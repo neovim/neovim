@@ -394,15 +394,18 @@ end
 
 local sysname = uv.os_uname().sysname:lower()
 
---- @param s 'win'|'mac'|'freebsd'|'openbsd'|'bsd'
+--- @param s 'win'|'mac'|'linux'|'freebsd'|'openbsd'|'bsd'
 --- @return boolean
 function M.is_os(s)
-  if not (s == 'win' or s == 'mac' or s == 'freebsd' or s == 'openbsd' or s == 'bsd') then
+  if
+    not (s == 'win' or s == 'mac' or s == 'linux' or s == 'freebsd' or s == 'openbsd' or s == 'bsd')
+  then
     error('unknown platform: ' .. tostring(s))
   end
   return not not (
     (s == 'win' and (sysname:find('windows') or sysname:find('mingw')))
     or (s == 'mac' and sysname == 'darwin')
+    or (s == 'linux' and sysname == 'linux')
     or (s == 'freebsd' and sysname == 'freebsd')
     or (s == 'openbsd' and sysname == 'openbsd')
     or (s == 'bsd' and sysname:find('bsd'))
@@ -411,10 +414,10 @@ end
 
 local architecture = uv.os_uname().machine
 
---- @param s 'x86_64'|'arm64'
+--- @param s 'x86_64'|'arm64'|'aarch64'
 --- @return boolean
 function M.is_arch(s)
-  if not (s == 'x86_64' or s == 'arm64') then
+  if not (s == 'x86_64' or s == 'arm64' or s == 'aarch64') then
     error('unknown architecture: ' .. tostring(s))
   end
   return s == architecture

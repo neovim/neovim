@@ -284,6 +284,8 @@ LUA
   supporting two new parameters, `encoding` and `strict_indexing`.
 • |vim.json.encode()| has an option to enable forward slash escaping
 • |vim.fs.abspath()| converts paths to absolute paths.
+• |vim.fs.dir()| and |vim.fs.find()| now follow symbolic links by default,
+  the behavior can be turn off using the new `follow` option.
 
 OPTIONS
 
