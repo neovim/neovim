@@ -166,7 +166,7 @@ directory indicated in the request. >lua
   })
 
 To try it out, select the above code and source it with `:'<,'>lua` (or
-`yxx`), then run this command in a :terminal buffer: >
+`g==`), then run this command in a :terminal buffer: >
 
     printf "\033]7;file://./foo/bar\033\\"
 
