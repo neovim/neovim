@@ -17,6 +17,8 @@ local mkdir = t.mkdir
 
 local nvim_prog_basename = is_os('win') and 'nvim.exe' or 'nvim'
 
+local link_limit = is_os('win') and 64 or (is_os('mac') or is_os('bsd')) and 33 or 41
+
 local test_basename_dirname_eq = {
   '~/foo/',
   '~/foo',
@@ -167,7 +169,7 @@ describe('vim.fs', function()
       io.open('testd/a/b/c/c4', 'w'):close()
 
       local function run(dir, depth, skip, follow)
-        return exec_lua(function(follow_sym)
+        return exec_lua(function(follow_)
           local r = {} --- @type table<string, string>
           local skip_f --- @type function
           if skip then
@@ -177,7 +179,7 @@ describe('vim.fs', function()
               end
             end
           end
-          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f, follow = follow_sym }) do
+          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f, follow = follow_ }) do
             r[name] = type_
           end
           return r
@@ -225,6 +227,19 @@ describe('vim.fs', function()
       lexp['l/b'] = 'directory'
       eq(lexp, run('testd', 2, nil, true))
     end)
+
+    it('follow=true handles symlink loop', function()
+      local cwd = 'testd/a/b/c'
+      local symlink = cwd .. '/link_loop' ---@type string
+      vim.uv.fs_symlink(vim.uv.fs_realpath(cwd), symlink, { junction = true, dir = true })
+
+      eq(
+        link_limit,
+        exec_lua(function()
+          return #vim.iter(vim.fs.dir(cwd, { depth = math.huge, follow = true })):totable()
+        end)
+      )
+    end)
   end)
 
   describe('find()', function()
@@ -267,6 +282,23 @@ describe('vim.fs', function()
           follow = false,
         })
       )
+    end)
+
+    it('follow=true handles symlink loop', function()
+      local cwd = test_source_path ---@type string
+      local symlink = test_source_path .. '/loop_link' ---@type string
+      vim.uv.fs_symlink(cwd, symlink, { junction = true, dir = true })
+
+      finally(function()
+        vim.uv.fs_unlink(symlink)
+      end)
+
+      eq(link_limit, #vim.fs.find(nvim_prog_basename, {
+        path = test_source_path,
+        type = 'file',
+        limit = math.huge,
+        follow = true,
+      }))
     end)
 
     it('accepts predicate as names', function()
