@@ -516,26 +516,6 @@ Object nvim_exec_lua(String code, Array args, Arena *arena, Error *err)
   return nlua_exec(code, args, kRetObject, arena, err);
 }
 
-/// Notify the user with a message
-///
-/// Relays the call to vim.notify . By default forwards your message in the
-/// echo area but can be overridden to trigger desktop notifications.
-///
-/// @param msg        Message to display to the user
-/// @param log_level  The log level
-/// @param opts       Reserved for future use.
-/// @param[out] err   Error details, if any
-Object nvim_notify(String msg, Integer log_level, Dict opts, Arena *arena, Error *err)
-  FUNC_API_SINCE(7)
-{
-  MAXSIZE_TEMP_ARRAY(args, 3);
-  ADD_C(args, STRING_OBJ(msg));
-  ADD_C(args, INTEGER_OBJ(log_level));
-  ADD_C(args, DICT_OBJ(opts));
-
-  return NLUA_EXEC_STATIC("return vim.notify(...)", args, kRetObject, arena, err);
-}
-
 /// Calculates the number of display cells occupied by `text`.
 /// Control characters including [<Tab>] count as one cell.
 ///

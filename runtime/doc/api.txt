@@ -1094,17 +1094,6 @@ nvim_load_context({dict})                                *nvim_load_context()*
     Parameters: ~
       • {dict}  |Context| map.
 
-nvim_notify({msg}, {log_level}, {opts})                        *nvim_notify()*
-    Notify the user with a message
-
-    Relays the call to vim.notify . By default forwards your message in the
-    echo area but can be overridden to trigger desktop notifications.
-
-    Parameters: ~
-      • {msg}        Message to display to the user
-      • {log_level}  The log level
-      • {opts}       Reserved for future use.
-
 nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
     Open a terminal instance in a buffer
 
