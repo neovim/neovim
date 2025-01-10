@@ -7,7 +7,7 @@
 --- @field alias? string|string[]
 --- @field short_desc? string|fun(): string
 --- @field varname? string
---- @field type vim.option_type|vim.option_type[]
+--- @field type vim.option_type
 --- @field immutable? boolean
 --- @field list? 'comma'|'onecomma'|'commacolon'|'onecommacolon'|'flags'|'flagscomma'
 --- @field scope vim.option_scope[]
@@ -834,7 +834,7 @@ return {
       abbreviation = 'bh',
       cb = 'did_set_bufhidden',
       defaults = { if_true = '' },
-      values = { 'hide', 'unload', 'delete', 'wipe' },
+      values = { '', 'hide', 'unload', 'delete', 'wipe' },
       desc = [=[
         This option specifies what happens when a buffer is no longer
         displayed in a window:
@@ -888,11 +888,12 @@ return {
       cb = 'did_set_buftype',
       defaults = { if_true = '' },
       values = {
+        '',
+        'acwrite',
+        'help',
         'nofile',
         'nowrite',
         'quickfix',
-        'help',
-        'acwrite',
         'terminal',
         'prompt',
       },
@@ -1554,7 +1555,7 @@ return {
       abbreviation = 'csl',
       cb = 'did_set_completeslash',
       defaults = { if_true = '' },
-      values = { 'slash', 'backslash' },
+      values = { '', 'slash', 'backslash' },
       desc = [=[
         		only modifiable in MS-Windows
         When this option is set it overrules 'shellslash' for completion:
@@ -2017,8 +2018,10 @@ return {
         "msg" and "throw" are useful for debugging 'foldexpr', 'formatexpr' or
         'indentexpr'.
       ]=],
+      -- TODO(lewis6991): bug, values currently cannot be combined
       expand_cb = 'expand_set_debug',
       full_name = 'debug',
+      list = 'comma',
       scope = { 'global' },
       short_desc = N_('to "msg" to see all error messages'),
       type = 'string',
@@ -4299,7 +4302,7 @@ return {
       abbreviation = 'icm',
       cb = 'did_set_inccommand',
       defaults = { if_true = 'nosplit' },
-      values = { 'nosplit', 'split' },
+      values = { 'nosplit', 'split', '' },
       desc = [=[
         When nonempty, shows the effects of |:substitute|, |:smagic|,
         |:snomagic| and user commands with the |:command-preview| flag as you
@@ -5735,7 +5738,7 @@ return {
       abbreviation = 'mousem',
       cb = 'did_set_mousemodel',
       defaults = { if_true = 'popup_setpos' },
-      values = { 'extend', 'popup', 'popup_setpos', 'mac' },
+      values = { 'extend', 'popup', 'popup_setpos' },
       desc = [=[
         Sets the model to use for the mouse.  The name mostly specifies what
         the right mouse button is used for:

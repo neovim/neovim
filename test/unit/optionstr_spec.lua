@@ -11,8 +11,8 @@ local check_ff_value = function(ff)
 end
 
 describe('check_ff_value', function()
-  itp('views empty string as valid', function()
-    eq(1, check_ff_value(''))
+  itp('views empty string as invalid', function()
+    eq(0, check_ff_value(''))
   end)
 
   itp('views "unix", "dos" and "mac" as valid', function()
