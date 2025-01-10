@@ -261,6 +261,9 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
   int *const indices = state->ranges_i.items;
   DecorRangeSlot *const slots = state->slots.items;
 
+  /// Total width of all virtual text with "eol_right_align" alignment
+  int totalWidthOfEolRightAlignedVirtText = 0;
+
   for (int i = 0; i < end; i++) {
     DecorRange *item = &slots[indices[i]].range;
     if (!(item->start_row == state->row && decor_virt_pos(item))) {
@@ -277,51 +280,48 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       VirtTextPos pos = decor_virt_pos_kind(item);
 
       if (do_eol && pos == kVPosEndOfLineRightAlign) {
-        /// Total width of all virtual text with "eol_right_align" alignment
-        int totalWidthOfVirtualText = 0;
+        int eolOffset = 0;
+        if (totalWidthOfEolRightAlignedVirtText == 0) {
+          // Look ahead to the remaining decor items
+          for (int j = i; j < end; j++) {
+            /// A future decor to be handled in this function's call
+            DecorRange *lookaheadItem = &slots[indices[j]].range;
 
-        // Look ahead to the remaining decor items
-        for (int j = i; j < end; j++) {
-          /// A future decor to be handled in this function's call
-          DecorRange *lookaheadItem = &slots[indices[j]].range;
+            if (lookaheadItem->start_row != state->row) {
+              continue;
+            }
 
-          if (lookaheadItem->start_row != state->row) {
-            continue;
+            if (!decor_virt_pos(lookaheadItem)) {
+              continue;
+            }
+
+            if (lookaheadItem->draw_col != -1) {
+              continue;
+            }
+
+            /// The Virtual Text of the decor item we're looking ahead to
+            DecorVirtText *lookaheadVt = NULL;
+            if (item->kind == kDecorKindVirtText) {
+              assert(item->data.vt);
+              lookaheadVt = item->data.vt;
+            }
+
+            if (decor_virt_pos_kind(lookaheadItem) == kVPosEndOfLineRightAlign) {
+              // An extra space is added for single character spacing in EOL alignment
+              totalWidthOfEolRightAlignedVirtText += (lookaheadVt->width + 1);
+            }
           }
 
-          if (!decor_virt_pos(lookaheadItem)) {
-            continue;
-          }
+          // Remove one space from the total width since there's no single space after the last entry
+          totalWidthOfEolRightAlignedVirtText--;
 
-          if (lookaheadItem->draw_col != -1) {
-            continue;
-          }
-
-          /// The Virtual Text of the decor item we're looking ahead to
-          DecorVirtText *lookaheadVt = NULL;
-          if (item->kind == kDecorKindVirtText) {
-            assert(item->data.vt);
-            lookaheadVt = item->data.vt;
-          }
-
-          if (decor_virt_pos_kind(lookaheadItem) == kVPosEndOfLineRightAlign) {
-            // An extra space is added for single character spacing in EOL alignment
-            totalWidthOfVirtualText += (lookaheadVt->width + 1);
-            lookaheadVt->pos = kVPosEndOfLine;
+          if (totalWidthOfEolRightAlignedVirtText <= (right_pos - state->eol_col)) {
+            eolOffset = right_pos - totalWidthOfEolRightAlignedVirtText - state->eol_col;
           }
         }
-        // Update the pos variable for the current item
-        pos = decor_virt_pos_kind(item);
 
-        // Remove one space from the total width since there's no single space after the last entry
-        totalWidthOfVirtualText--;
-
-        if (totalWidthOfVirtualText <= (right_pos - state->eol_col)) {
-          state->eol_col = (right_pos - totalWidthOfVirtualText);
-        }
-      }
-
-      if (pos == kVPosRightAlign) {
+        item->draw_col = state->eol_col + eolOffset;
+      } else if (pos == kVPosRightAlign) {
         right_pos -= vt->width;
         item->draw_col = right_pos;
       } else if (pos == kVPosEndOfLine && do_eol) {
@@ -348,7 +348,7 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       int vcol = item->draw_col - col_off;
       int col = draw_virt_text_item(buf, item->draw_col, vt->data.virt_text,
                                     vt->hl_mode, max_col, vcol);
-      if (vt->pos == kVPosEndOfLine && do_eol) {
+      if (do_eol && ((vt->pos == kVPosEndOfLine) || (vt->pos == kVPosEndOfLineRightAlign))) {
         state->eol_col = col + 1;
       }
       *end_col = MAX(*end_col, col);
