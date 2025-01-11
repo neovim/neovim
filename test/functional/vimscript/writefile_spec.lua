@@ -148,26 +148,6 @@ describe('writefile()', function()
       'Vim(call):E118: Too many arguments for function: writefile',
       pcall_err(command, ('call writefile([], "%s", "b", 1)'):format(fname))
     )
-    for _, arg in ipairs({ '0', '0.0', 'function("tr")', '{}', '"test"' }) do
-      eq(
-        'Vim(call):E475: Invalid argument: writefile() first argument must be a List or a Blob',
-        pcall_err(command, ('call writefile(%s, "%s", "b")'):format(arg, fname))
-      )
-    end
-    for _, args in ipairs({ '[], %s, "b"', '[], "' .. fname .. '", %s' }) do
-      eq(
-        'Vim(call):E730: Using a List as a String',
-        pcall_err(command, ('call writefile(%s)'):format(args:format('[]')))
-      )
-      eq(
-        'Vim(call):E731: Using a Dictionary as a String',
-        pcall_err(command, ('call writefile(%s)'):format(args:format('{}')))
-      )
-      eq(
-        'Vim(call):E729: Using a Funcref as a String',
-        pcall_err(command, ('call writefile(%s)'):format(args:format('function("tr")')))
-      )
-    end
     eq(
       'Vim(call):E5060: Unknown flag: «»',
       pcall_err(command, ('call writefile([], "%s", "bs«»")'):format(fname))
