@@ -235,7 +235,7 @@ an archive or as a repository.  For an archive you can follow these steps:
 	   else.
 
 
-Adding nohlsearch package				*nohlsearch-install*
+Adding nohlsearch package	*nohlsearch-install* *package-nohlsearch*
 
 Load the plugin with this command: >
 	packadd nohlsearch
