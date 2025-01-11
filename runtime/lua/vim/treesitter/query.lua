@@ -262,6 +262,7 @@ local explicit_queries = setmetatable({}, {
 ---@param query_name string Name of the query (e.g., "highlights")
 ---@param text string Query text (unparsed).
 function M.set(lang, query_name, text)
+  M.get:clear(lang, query_name)
   explicit_queries[lang][query_name] = M.parse(lang, text)
 end
 
@@ -284,7 +285,15 @@ M.get = memoize('concat-2', function(lang, query_name)
   end
 
   return M.parse(lang, query_string)
-end)
+end, false)
+
+api.nvim_create_autocmd('OptionSet', {
+  pattern = { 'runtimepath' },
+  group = api.nvim_create_augroup('ts_query_cache_reset', { clear = true }),
+  callback = function()
+    M.get:clear()
+  end,
+})
 
 --- Parses a {query} string and returns a `Query` object (|lua-treesitter-query|), which can be used
 --- to search the tree for the query patterns (via |Query:iter_captures()|, |Query:iter_matches()|),
@@ -316,7 +325,7 @@ M.parse = memoize('concat-2', function(lang, query)
   assert(language.add(lang))
   local ts_query = vim._ts_parse_query(lang, query)
   return Query.new(lang, ts_query)
-end)
+end, false)
 
 --- Implementations of predicates that can optionally be prefixed with "any-".
 ---
