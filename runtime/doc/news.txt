@@ -68,6 +68,8 @@ DIAGNOSTICS
 
 • The "underline" diagnostics handler sorts diagnostics by severity when using
   the "severity_sort" option.
+• Diagnostics are filtered by severity before being passed to a diagnostic
+  handler |diagnostic-handlers|.
 
 EDITOR
 
