@@ -405,7 +405,10 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                                      the space available. If the virtual
 ///                                      text is too long, it is truncated to
 ///                                      fit in the window after the EOL
-///                                      character.
+///                                      character. If the line is wrapped, the
+///                                      virtual text is shown after the end of
+///                                      the line rather than the previous
+///                                      screen line.
 ///                 - "inline": display at the specified column, and
 ///                             shift the buffer text to the right as needed.
 ///               - virt_text_win_col : position the virtual text at a fixed
