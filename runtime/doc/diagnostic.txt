@@ -97,8 +97,8 @@ If a diagnostic handler is configured with a "severity" key then the list of
 diagnostics passed to that handler will be filtered using the value of that
 key (see example below).
 
-Nvim provides these handlers by default: "virtual_text", "signs", and
-"underline".
+Nvim provides these handlers by default: "virtual_text", "virtual_lines",
+"signs", and "underline".
 
                                                 *diagnostic-handlers-example*
 The example below creates a new handler that notifies the user of diagnostics
@@ -168,6 +168,16 @@ show a sign for the highest severity diagnostic on a given line: >lua
         orig_signs_handler.hide(ns, bufnr)
       end,
     }
+<
+
+                                          *diagnostic-toggle-virtual-lines-example*
+Diagnostic handlers can also be toggled. For example, you might want to toggle
+the `virtual_lines` handler with the following keymap: >lua
+
+    vim.keymap.set('n', 'gK', function()
+      local new_config = not vim.diagnostic.config().virtual_lines
+      vim.diagnostic.config({ virtual_lines = new_config })
+    end, { desc = 'Toggle diagnostic virtual_lines' })
 <
 
                                           *diagnostic-loclist-example*
@@ -469,6 +479,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                              diagnostics are set for a namespace, one prefix
                              per diagnostic + the last diagnostic message are
                              shown.
+      • {virtual_lines}?     (`boolean|vim.diagnostic.Opts.VirtualLines|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.VirtualLines`, default: `false`)
+                             Use virtual lines for diagnostics.
       • {signs}?             (`boolean|vim.diagnostic.Opts.Signs|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Signs`, default: `true`)
                              Use signs for diagnostics |diagnostic-signs|.
       • {float}?             (`boolean|vim.diagnostic.Opts.Float|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Float`)
@@ -589,6 +601,16 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {severity}?  (`vim.diagnostic.SeverityFilter`) Only underline
                      diagnostics matching the given severity
                      |diagnostic-severity|.
+
+*vim.diagnostic.Opts.VirtualLines*
+
+    Fields: ~
+      • {current_line}?  (`boolean`, default: `false`) Only show diagnostics
+                         for the current line.
+      • {format}?        (`fun(diagnostic:vim.Diagnostic): string`) A function
+                         that takes a diagnostic as input and returns a
+                         string. The return value is the text used to display
+                         the diagnostic.
 
 *vim.diagnostic.Opts.VirtualText*
 

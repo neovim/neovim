@@ -73,6 +73,10 @@ end
 --- (default: `false`)
 --- @field virtual_text? boolean|vim.diagnostic.Opts.VirtualText|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.VirtualText
 ---
+--- Use virtual lines for diagnostics.
+--- (default: `false`)
+--- @field virtual_lines? boolean|vim.diagnostic.Opts.VirtualLines|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.VirtualLines
+---
 --- Use signs for diagnostics |diagnostic-signs|.
 --- (default: `true`)
 --- @field signs? boolean|vim.diagnostic.Opts.Signs|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Signs
@@ -101,6 +105,7 @@ end
 --- @field update_in_insert boolean
 --- @field underline vim.diagnostic.Opts.Underline
 --- @field virtual_text vim.diagnostic.Opts.VirtualText
+--- @field virtual_lines vim.diagnostic.Opts.VirtualLines
 --- @field signs vim.diagnostic.Opts.Signs
 --- @field severity_sort {reverse?:boolean}
 
@@ -228,6 +233,16 @@ end
 --- See |nvim_buf_set_extmark()|.
 --- @field virt_text_hide? boolean
 
+--- @class vim.diagnostic.Opts.VirtualLines
+---
+--- Only show diagnostics for the current line.
+--- (default: `false`)
+--- @field current_line? boolean
+---
+--- A function that takes a diagnostic as input and returns a string.
+--- The return value is the text used to display the diagnostic.
+--- @field format? fun(diagnostic:vim.Diagnostic): string
+
 --- @class vim.diagnostic.Opts.Signs
 ---
 --- Only show virtual text for diagnostics matching the given
@@ -313,6 +328,7 @@ local global_diagnostic_options = {
   signs = true,
   underline = true,
   virtual_text = false,
+  virtual_lines = false,
   float = true,
   update_in_insert = false,
   severity_sort = false,
@@ -328,6 +344,7 @@ local global_diagnostic_options = {
 --- @class (private) vim.diagnostic.Handler
 --- @field show? fun(namespace: integer, bufnr: integer, diagnostics: vim.Diagnostic[], opts?: vim.diagnostic.OptsResolved)
 --- @field hide? fun(namespace:integer, bufnr:integer)
+--- @field _augroup? integer
 
 --- @nodoc
 --- @type table<string,vim.diagnostic.Handler>
@@ -581,6 +598,7 @@ end
 -- TODO(lewis6991): these highlight maps can only be indexed with an integer, however there usage
 -- implies they can be indexed with any vim.diagnostic.Severity
 local virtual_text_highlight_map = make_highlight_map('VirtualText')
+local virtual_lines_highlight_map = make_highlight_map('VirtualLines')
 local underline_highlight_map = make_highlight_map('Underline')
 local floating_highlight_map = make_highlight_map('Floating')
 local sign_highlight_map = make_highlight_map('Sign')
@@ -1599,6 +1617,264 @@ M.handlers.virtual_text = {
       if api.nvim_buf_is_valid(bufnr) then
         api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_text_ns, 0, -1)
       end
+    end
+  end,
+}
+
+--- Some characters (like tabs) take up more than one cell. Additionally, inline
+--- virtual text can make the distance between 2 columns larger.
+--- A diagnostic aligned under such characters needs to account for that and that
+--- many spaces to its left.
+--- @param bufnr integer
+--- @param lnum integer
+--- @param start_col integer
+--- @param end_col integer
+--- @return integer
+local function distance_between_cols(bufnr, lnum, start_col, end_col)
+  return api.nvim_buf_call(bufnr, function()
+    local s = vim.fn.virtcol({ lnum + 1, start_col })
+    local e = vim.fn.virtcol({ lnum + 1, end_col + 1 })
+    return e - 1 - s
+  end)
+end
+
+--- @param namespace integer
+--- @param bufnr integer
+--- @param diagnostics vim.Diagnostic[]
+local function render_virtual_lines(namespace, bufnr, diagnostics)
+  table.sort(diagnostics, function(d1, d2)
+    if d1.lnum == d2.lnum then
+      return d1.col < d2.col
+    else
+      return d1.lnum < d2.lnum
+    end
+  end)
+
+  api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
+
+  if not next(diagnostics) then
+    return
+  end
+
+  -- This loop reads each line, putting them into stacks with some extra data since
+  -- rendering each line requires understanding what is beneath it.
+  local ElementType = { Space = 1, Diagnostic = 2, Overlap = 3, Blank = 4 } ---@enum ElementType
+  local line_stacks = {} ---@type table<integer, {[1]:ElementType, [2]:string|vim.diagnostic.Severity|vim.Diagnostic}[]>
+  local prev_lnum = -1
+  local prev_col = 0
+  for _, diag in ipairs(diagnostics) do
+    if not line_stacks[diag.lnum] then
+      line_stacks[diag.lnum] = {}
+    end
+
+    local stack = line_stacks[diag.lnum]
+
+    if diag.lnum ~= prev_lnum then
+      table.insert(stack, {
+        ElementType.Space,
+        string.rep(' ', distance_between_cols(bufnr, diag.lnum, 0, diag.col)),
+      })
+    elseif diag.col ~= prev_col then
+      table.insert(stack, {
+        ElementType.Space,
+        string.rep(
+          ' ',
+          -- +1 because indexing starts at 0 in one API but at 1 in the other.
+          -- -1 for non-first lines, since the previous column was already drawn.
+          distance_between_cols(bufnr, diag.lnum, prev_col + 1, diag.col) - 1
+        ),
+      })
+    else
+      table.insert(stack, { ElementType.Overlap, diag.severity })
+    end
+
+    if diag.message:find('^%s*$') then
+      table.insert(stack, { ElementType.Blank, diag })
+    else
+      table.insert(stack, { ElementType.Diagnostic, diag })
+    end
+
+    prev_lnum, prev_col = diag.lnum, diag.col
+  end
+
+  local chars = {
+    cross = '┼',
+    horizontal = '─',
+    horizontal_up = '┴',
+    up_right = '└',
+    vertical = '│',
+    vertical_right = '├',
+  }
+
+  for lnum, stack in pairs(line_stacks) do
+    local virt_lines = {}
+
+    -- Note that we read in the order opposite to insertion.
+    for i = #stack, 1, -1 do
+      if stack[i][1] == ElementType.Diagnostic then
+        local diagnostic = stack[i][2]
+        local left = {} ---@type {[1]:string, [2]:string}
+        local overlap = false
+        local multi = false
+
+        -- Iterate the stack for this line to find elements on the left.
+        for j = 1, i - 1 do
+          local type = stack[j][1]
+          local data = stack[j][2]
+          if type == ElementType.Space then
+            if multi then
+              ---@cast data string
+              table.insert(left, {
+                string.rep(chars.horizontal, data:len()),
+                virtual_lines_highlight_map[diagnostic.severity],
+              })
+            else
+              table.insert(left, { data, '' })
+            end
+          elseif type == ElementType.Diagnostic then
+            -- If an overlap follows this line, don't add an extra column.
+            if stack[j + 1][1] ~= ElementType.Overlap then
+              table.insert(left, { chars.vertical, virtual_lines_highlight_map[data.severity] })
+            end
+            overlap = false
+          elseif type == ElementType.Blank then
+            if multi then
+              table.insert(
+                left,
+                { chars.horizontal_up, virtual_lines_highlight_map[data.severity] }
+              )
+            else
+              table.insert(left, { chars.up_right, virtual_lines_highlight_map[data.severity] })
+            end
+            multi = true
+          elseif type == ElementType.Overlap then
+            overlap = true
+          end
+        end
+
+        local center_char ---@type string
+        if overlap and multi then
+          center_char = chars.cross
+        elseif overlap then
+          center_char = chars.vertical_right
+        elseif multi then
+          center_char = chars.horizontal_up
+        else
+          center_char = chars.up_right
+        end
+        local center = {
+          {
+            string.format('%s%s', center_char, string.rep(chars.horizontal, 4) .. ' '),
+            virtual_lines_highlight_map[diagnostic.severity],
+          },
+        }
+
+        -- We can draw on the left side if and only if:
+        -- a. Is the last one stacked this line.
+        -- b. Has enough space on the left.
+        -- c. Is just one line.
+        -- d. Is not an overlap.
+        local msg ---@type string
+        if diagnostic.code then
+          msg = string.format('%s: %s', diagnostic.code, diagnostic.message)
+        else
+          msg = diagnostic.message
+        end
+        for msg_line in msg:gmatch('([^\n]+)') do
+          local vline = {}
+          vim.list_extend(vline, left)
+          vim.list_extend(vline, center)
+          vim.list_extend(vline, { { msg_line, virtual_lines_highlight_map[diagnostic.severity] } })
+
+          table.insert(virt_lines, vline)
+
+          -- Special-case for continuation lines:
+          if overlap then
+            center = {
+              { chars.vertical, virtual_lines_highlight_map[diagnostic.severity] },
+              { '     ', '' },
+            }
+          else
+            center = { { '      ', '' } }
+          end
+        end
+      end
+    end
+
+    api.nvim_buf_set_extmark(bufnr, namespace, lnum, 0, { virt_lines = virt_lines })
+  end
+end
+
+--- @param diagnostics vim.Diagnostic[]
+--- @param namespace integer
+--- @param bufnr integer
+local function render_virtual_lines_at_current_line(diagnostics, namespace, bufnr)
+  local line_diagnostics = {}
+  local lnum = api.nvim_win_get_cursor(0)[1] - 1
+
+  for _, diag in ipairs(diagnostics) do
+    if (lnum == diag.lnum) or (diag.end_lnum and lnum >= diag.lnum and lnum <= diag.end_lnum) then
+      table.insert(line_diagnostics, diag)
+    end
+  end
+
+  render_virtual_lines(namespace, bufnr, line_diagnostics)
+end
+
+M.handlers.virtual_lines = {
+  show = function(namespace, bufnr, diagnostics, opts)
+    vim.validate('namespace', namespace, 'number')
+    vim.validate('bufnr', bufnr, 'number')
+    vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
+    vim.validate('opts', opts, 'table', true)
+
+    bufnr = vim._resolve_bufnr(bufnr)
+    opts = opts or {}
+
+    if not api.nvim_buf_is_loaded(bufnr) then
+      return
+    end
+
+    local ns = M.get_namespace(namespace)
+    if not ns.user_data.virt_lines_ns then
+      ns.user_data.virt_lines_ns =
+        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_lines', ns.name))
+    end
+    if not M.handlers.virtual_lines._augroup then
+      M.handlers.virtual_lines._augroup =
+        api.nvim_create_augroup('nvim.lsp.diagnostic.virt_lines', { clear = true })
+    end
+
+    api.nvim_clear_autocmds({ group = M.handlers.virtual_lines._augroup })
+
+    if opts.virtual_lines.format then
+      diagnostics = reformat_diagnostics(opts.virtual_lines.format, diagnostics)
+    end
+
+    if opts.virtual_lines.current_line == true then
+      api.nvim_create_autocmd('CursorMoved', {
+        buffer = bufnr,
+        group = M.handlers.virtual_lines._augroup,
+        callback = function()
+          render_virtual_lines_at_current_line(diagnostics, ns.user_data.virt_lines_ns, bufnr)
+        end,
+      })
+      -- Also show diagnostics for the current line before the first CursorMoved event.
+      render_virtual_lines_at_current_line(diagnostics, ns.user_data.virt_lines_ns, bufnr)
+    else
+      render_virtual_lines(ns.user_data.virt_lines_ns, bufnr, diagnostics)
+    end
+
+    save_extmarks(ns.user_data.virt_lines_ns, bufnr)
+  end,
+  hide = function(namespace, bufnr)
+    local ns = M.get_namespace(namespace)
+    if ns.user_data.virt_lines_ns then
+      diagnostic_cache_extmarks[bufnr][ns.user_data.virt_lines_ns] = {}
+      if api.nvim_buf_is_valid(bufnr) then
+        api.nvim_buf_clear_namespace(bufnr, ns.user_data.virt_lines_ns, 0, -1)
+      end
+      api.nvim_clear_autocmds({ group = M.handlers.virtual_lines._augroup })
     end
   end,
 }
