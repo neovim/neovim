@@ -179,6 +179,8 @@ struct terminal {
     StringBuilder *send;  ///< When there is a pending TermRequest autocommand, block and store input.
   } pending;
 
+  bool theme_updates;  ///< Send a theme update notification when 'bg' changes
+
   bool color_set[16];
 
   char *selection_buffer;  /// libvterm selection buffer
@@ -193,6 +195,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .movecursor = term_movecursor,
   .settermprop = term_settermprop,
   .bell = term_bell,
+  .theme = term_theme,
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
   .sb_popline = term_sb_pop,
 };
@@ -1141,6 +1144,20 @@ bool terminal_running(const Terminal *term)
   return !term->closed;
 }
 
+void terminal_notify_theme(Terminal *term, bool dark)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (!term->theme_updates) {
+    return;
+  }
+
+  char buf[10];
+  ssize_t ret = snprintf(buf, sizeof(buf), "\x1b[997;%cn", dark ? '1' : '2');
+  assert(ret > 0);
+  assert((size_t)ret <= sizeof(buf));
+  terminal_send(term, buf, (size_t)ret);
+}
+
 static void terminal_focus(const Terminal *term, bool focus)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1259,6 +1276,10 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     invalidate_terminal(term, -1, -1);
     break;
 
+  case VTERM_PROP_THEMEUPDATES:
+    term->theme_updates = val->boolean;
+    break;
+
   default:
     return 0;
   }
@@ -1270,6 +1291,14 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 static int term_bell(void *data)
 {
   vim_beep(kOptBoFlagTerm);
+  return 1;
+}
+
+/// Called when the terminal wants to query the system theme.
+static int term_theme(bool *dark, void *data)
+  FUNC_ATTR_NONNULL_ALL
+{
+  *dark = (*p_bg == 'd');
   return 1;
 }
 

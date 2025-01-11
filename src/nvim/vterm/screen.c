@@ -784,6 +784,17 @@ static int resize(int new_rows, int new_cols, VTermStateFields *fields, void *us
   return 1;
 }
 
+static int theme(bool *dark, void *user)
+{
+  VTermScreen *screen = user;
+
+  if (screen->callbacks && screen->callbacks->theme) {
+    return (*screen->callbacks->theme)(dark, screen->cbdata);
+  }
+
+  return 1;
+}
+
 static int setlineinfo(int row, const VTermLineInfo *newinfo, const VTermLineInfo *oldinfo,
                        void *user)
 {
@@ -838,6 +849,7 @@ static VTermStateCallbacks state_cbs = {
   .settermprop = &settermprop,
   .bell = &bell,
   .resize = &resize,
+  .theme = &theme,
   .setlineinfo = &setlineinfo,
   .sb_clear = &sb_clear,
 };

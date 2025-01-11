@@ -819,6 +819,10 @@ static void set_dec_mode(VTermState *state, int num, int val)
     state->mode.bracketpaste = (unsigned)val;
     break;
 
+  case 2031:
+    settermprop_bool(state, VTERM_PROP_THEMEUPDATES, val);
+    break;
+
   default:
     DEBUG_LOG("libvterm: Unknown DEC mode %d\n", num);
     return;
@@ -892,6 +896,10 @@ static void request_dec_mode(VTermState *state, int num)
 
   case 2004:
     reply = state->mode.bracketpaste;
+    break;
+
+  case 2031:
+    reply = state->mode.theme_updates;
     break;
 
   default:
@@ -1387,6 +1395,7 @@ static int on_csi(const char *leader, const long args[], int argcount, const cha
 
     {
       char *qmark = (leader_byte == '?') ? "?" : "";
+      bool dark = false;
 
       switch (val) {
       case 0:
@@ -1402,6 +1411,13 @@ static int on_csi(const char *leader, const long args[], int argcount, const cha
       case 6:  // CPR - cursor position report
         vterm_push_output_sprintf_ctrl(state->vt, C1_CSI, "%s%d;%dR", qmark, state->pos.row + 1,
                                        state->pos.col + 1);
+        break;
+      case 996:
+        if (state->callbacks && state->callbacks->theme) {
+          if (state->callbacks->theme(&dark, state->cbdata)) {
+            vterm_push_output_sprintf_ctrl(state->vt, C1_CSI, "?997;%cn", dark ? '1' : '2');
+          }
+        }
         break;
       }
     }
@@ -2267,6 +2283,9 @@ int vterm_state_set_termprop(VTermState *state, VTermProp prop, VTermValue *val)
     return 1;
   case VTERM_PROP_FOCUSREPORT:
     state->mode.report_focus = (unsigned)val->boolean;
+    return 1;
+  case VTERM_PROP_THEMEUPDATES:
+    state->mode.theme_updates = (unsigned)val->boolean;
     return 1;
 
   case VTERM_N_PROPS:
