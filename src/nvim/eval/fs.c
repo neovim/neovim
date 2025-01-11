@@ -1365,32 +1365,46 @@ write_list_error:
   return false;
 }
 
+/// Write data to file with descriptor `fp`.
+///
+/// @param[in]  fp    File to write to.
+/// @param[in]  data  Pointer to the data to write.
+/// @param[in]  len   Length of the data to write.
+///
+/// @return true on success, or false on failure.
+static bool write_data(FileDescriptor *const fp, const char *const data, const size_t len)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  int error = 0;
+  if (len > 0) {
+    const ptrdiff_t written = file_write(fp, data, len);
+    if (written < (ptrdiff_t)len) {
+      error = (int)written;
+      goto write_data_error;
+    }
+  }
+  error = file_flush(fp);
+  if (error != 0) {
+    goto write_data_error;
+  }
+  return true;
+
+write_data_error:
+  semsg(_(e_error_while_writing_str), os_strerror(error));
+  return false;
+}
+
 /// Write a blob to file with descriptor `fp`.
 ///
-/// @param[in]  fp  File to write to.
+/// @param[in]  fp    File to write to.
 /// @param[in]  blob  Blob to write.
 ///
 /// @return true on success, or false on failure.
 static bool write_blob(FileDescriptor *const fp, const blob_T *const blob)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  int error = 0;
   const int len = tv_blob_len(blob);
-  if (len > 0) {
-    const ptrdiff_t written = file_write(fp, blob->bv_ga.ga_data, (size_t)len);
-    if (written < (ptrdiff_t)len) {
-      error = (int)written;
-      goto write_blob_error;
-    }
-  }
-  error = file_flush(fp);
-  if (error != 0) {
-    goto write_blob_error;
-  }
-  return true;
-write_blob_error:
-  semsg(_(e_error_while_writing_str), os_strerror(error));
-  return false;
+  return write_data(fp, blob->bv_ga.ga_data, (size_t)len);
 }
 
 /// Write a String to file with descriptor `fp`.
@@ -1399,27 +1413,11 @@ write_blob_error:
 /// @param[in]  data String to write.
 ///
 /// @return true on success, or false on failure.
-
 static bool write_string(FileDescriptor *const fp, const char *const data)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  int error = 0;
-  const int len = strlen(data);
-  if (len > 0) {
-    const ptrdiff_t written = file_write(fp, data, (size_t)len);
-    if (written < (ptrdiff_t)len) {
-      error = (int)written;
-      goto write_string_error;
-    }
-  }
-  error = file_flush(fp);
-  if (error != 0) {
-    goto write_string_error;
-  }
-  return true;
-write_string_error:
-  semsg(_(e_error_while_writing_str), os_strerror(error));
-  return false;
+  const size_t len = strlen(data);
+  return write_data(fp, data, len);
 }
 
 /// "writefile()" function
@@ -1439,7 +1437,7 @@ void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     });
   } else if (argvars[0].v_type != VAR_BLOB && argvars[0].v_type != VAR_STRING) {
     semsg(_(e_invarg2),
-          _("writefile() first argument must be a List or a Blob or String"));
+          _("writefile() first argument must be a List, a Blob or String"));
     return;
   }
 
