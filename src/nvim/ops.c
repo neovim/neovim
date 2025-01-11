@@ -4345,6 +4345,7 @@ void charwise_block_prep(pos_T start, pos_T end, struct block_def *bdp, linenr_T
   colnr_T endcol = MAXCOL;
   colnr_T cs, ce;
   char *p = ml_get(lnum);
+  int plen = ml_get_len(lnum);
 
   bdp->startspaces = 0;
   bdp->endspaces = 0;
@@ -4394,7 +4395,7 @@ void charwise_block_prep(pos_T start, pos_T end, struct block_def *bdp, linenr_T
     bdp->textlen = endcol - startcol + inclusive;
   }
   bdp->textcol = startcol;
-  bdp->textstart = p + startcol;
+  bdp->textstart = startcol <= plen ? p + startcol : p;
 }
 
 /// Handle the add/subtract operator.

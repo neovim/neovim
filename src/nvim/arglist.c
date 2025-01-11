@@ -31,6 +31,7 @@
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/normal.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/input.h"
@@ -1095,6 +1096,10 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   arglist_locked = true;
 
   tabpage_T *const new_lu_tp = curtab;
+
+  // Stop Visual mode, the cursor and "VIsual" may very well be invalid after
+  // switching to another buffer.
+  reset_VIsual_and_resel();
 
   // Try closing all windows that are not in the argument list.
   // Also close windows that are not full width;
