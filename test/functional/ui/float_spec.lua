@@ -9621,6 +9621,116 @@ describe('float window', function()
         })
       end
     end)
+
+    it('#winborder option', function()
+      local buf = api.nvim_create_buf(false,false)
+      local config = {relative='editor', width=4, height=4, row=2, col=2}
+      command('set winborder=single')
+      api.nvim_open_win(buf, true, config)
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+                                                    |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            {5:┌────┐}|
+            {5:│}{1:^    }{5:│}|
+            {5:│}{2:~   }{5:│}|*3
+            {5:└────┘}|
+          ]], float_pos={
+          [4] = {1001, "NW", 1, 2, 2, true, 50};
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1000
+          },
+          [4] = {
+            bottom = 1,
+            left = 1,
+            right = 1,
+            top = 1,
+            win = 1001
+          }
+        }
+        })
+      else
+        screen:expect({
+          grid = [[
+              {5:┌────┐}                                |
+            {0:~ }{5:│}{1:^    }{5:│}{0:                                }|
+            {0:~ }{5:│}{2:~   }{5:│}{0:                                }|*3
+            {0:~ }{5:└────┘}{0:                                }|
+                                                    |
+          ]]
+        })
+      end
+
+      command('fclose')
+      command('set winborder=double')
+      api.nvim_open_win(buf, true, config)
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+                                                    |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 5
+            {5:╔════╗}|
+            {5:║}{1:^    }{5:║}|
+            {5:║}{2:~   }{5:║}|*3
+            {5:╚════╝}|
+          ]], float_pos={
+          [5] = {1002, "NW", 1, 2, 2, true, 50};
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [5] = {win = 1002, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1000
+          },
+          [5] = {
+            bottom = 1,
+            left = 1,
+            right = 1,
+            top = 1,
+            win = 1002
+          }
+        }
+        })
+      else
+        screen:expect({
+          grid = [[
+              {5:╔════╗}                                |
+            {0:~ }{5:║}{1:^    }{5:║}{0:                                }|
+            {0:~ }{5:║}{2:~   }{5:║}{0:                                }|*3
+            {0:~ }{5:╚════╝}{0:                                }|
+                                                    |
+          ]]
+        })
+      end
+      command('fclose!')
+    end)
   end
 
   describe('with ext_multigrid', function()
