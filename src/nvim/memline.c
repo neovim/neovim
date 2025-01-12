@@ -1860,7 +1860,7 @@ int gchar_pos(pos_T *pos)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   // When searching columns is sometimes put at the end of a line.
-  if (pos->col == MAXCOL) {
+  if (pos->col == MAXCOL || pos->col > ml_get_len(pos->lnum)) {
     return NUL;
   }
   return utf_ptr2char(ml_get_pos(pos));
