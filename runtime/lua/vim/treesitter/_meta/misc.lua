@@ -71,8 +71,6 @@ function TSQueryCursor:next_match() end
 
 --- @param node TSNode
 --- @param query TSQuery
---- @param start integer?
---- @param stop integer?
---- @param opts? { max_start_depth?: integer, match_limit?: integer}
+--- @param opts? { max_start_depth?: integer, match_limit?: integer, row_begin?: integer, col_begin?: integer, row_end?: integer, col_end?: integer, byte_begin?: integer, byte_end?: integer }
 --- @return TSQueryCursor
-function vim._create_ts_querycursor(node, query, start, stop, opts) end
+function vim._create_ts_querycursor(node, query, opts) end

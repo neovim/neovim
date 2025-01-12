@@ -194,4 +194,126 @@ function M.add_bytes(source, range)
   return { start_row, start_col, start_byte, end_row, end_col, end_byte }
 end
 
+---@param source integer|string
+function M.line_byte(source, index)
+  if type(source) == 'number' then
+    local count = api.nvim_buf_line_count(source)
+    if index <= 0 then
+      return 0
+    end
+    if index >= count then
+      return 2 ^ 32 - 1
+    end
+    return api.nvim_buf_get_offset(source, index)
+  end
+
+  local byte = 0
+  local next_offset = source:gmatch('()\n')
+  local line = 1
+  while line <= index do
+    local next = next_offset() --[[@as integer?]]
+    if not next then
+      return 2 ^ 32 - 1
+    end
+    byte = next
+    line = line + 1
+  end
+
+  return byte
+end
+
+---@alias Point { [1]: integer, [2]: integer, [3]: integer }
+
+local max = 2 ^ 32 - 1
+---@param byte integer
+local function clamp(byte)
+  return math.min(math.max(0, byte), max)
+end
+
+---@param row integer
+---@param col integer
+---@param byte integer
+---@param off Point
+local function point_add(row, col, byte, off)
+  if row > 0 then
+    row = clamp(row + off[1])
+  else
+    row = clamp(off[1])
+    col = clamp(col + off[2])
+  end
+  byte = clamp(byte + off[3])
+
+  return row, col, byte
+end
+
+---@param row integer
+---@param col integer
+---@param byte integer
+---@param off Point
+local function point_sub(row, col, byte, off)
+  if row > off[1] then
+    row = clamp(row - off[1])
+  elseif row == off[1] then
+    row = 0
+    col = clamp(col - off[2])
+  else
+    row = 0
+    col = 0
+  end
+  byte = clamp(byte - off[3])
+
+  return row, col, byte
+end
+
+---range is end-exclusive, 0-based.
+---@param range Range6
+---@param off Point
+function M.range6_add(range, off)
+  range[1], range[2], range[3] = point_add(range[1], range[2], range[3], off)
+  range[4], range[5], range[6] = point_add(range[4], range[5], range[6], off)
+end
+
+---range is end-exclusive, 0-based.
+---@param range Range6
+---@param off Point
+function M.range6_sub(range, off)
+  range[1], range[2], range[3] = point_sub(range[1], range[2], range[3], off)
+  range[4], range[5], range[6] = point_sub(range[4], range[5], range[6], off)
+end
+
+---Edit a range like teee-sitter would've edited a node.
+---range is end-exclusive, 0-based.
+---@param range Range6
+---@param beg Point
+---@param old_end Point
+---@param new_end Point
+---@return boolean changed
+function M.range6_edit(range, beg, old_end, new_end)
+  -- See `ts_subtree_edit()` in tree-sitter.
+  if range[3] >= old_end[3] then
+    -- Edit is entirely before the range.
+    local len = range[6] - range[3]
+    M.range6_sub(range, old_end)
+    M.range6_add(range, new_end)
+    local len_new = range[6] - range[3]
+    -- Length can change if the end position was clamped to UINT_MAX.
+    return len ~= len_new
+  elseif beg[3] < range[3] then
+    -- Edit starts before the range and ends inside/after.
+    -- Move the tree to the end of the edit and shrink accordingly.
+    M.range6_sub(range, old_end)
+    M.range6_add(range, new_end)
+    return true
+  elseif beg[3] < range[6] or (beg[3] == range[6] and beg[3] == new_end[3]) then
+    -- Edit starts inside the range.
+    -- Include the edit in the range (yes, even if old_end is outside the range).
+    range[4], range[5], range[6] = point_sub(range[4], range[5], range[6], old_end)
+    range[4], range[5], range[6] = point_add(range[4], range[5], range[6], new_end)
+    return true
+  else
+    -- Edit is entirely after the range.
+    return false
+  end
+end
+
 return M
