@@ -170,6 +170,7 @@ local function update_deps_file(symbol, kind, value)
 end
 
 local function verify_branch(branch_suffix)
+  branch_suffix = ''
   local checked_out_branch = assert(run({ 'git', 'rev-parse', '--abbrev-ref', 'HEAD' }))
   if not checked_out_branch:match('^' .. required_branch_prefix) then
     p(
