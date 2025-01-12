@@ -113,6 +113,18 @@ describe('vim.diagnostic', function()
         )
       end
 
+      function _G.get_virt_lines_extmarks(ns)
+        ns = vim.diagnostic.get_namespace(ns)
+        local virt_lines_ns = ns.user_data.virt_lines_ns
+        return vim.api.nvim_buf_get_extmarks(
+          _G.diagnostic_bufnr,
+          virt_lines_ns,
+          0,
+          -1,
+          { details = true }
+        )
+      end
+
       ---@param ns integer
       function _G.get_underline_extmarks(ns)
         ---@type integer
@@ -161,6 +173,11 @@ describe('vim.diagnostic', function()
       'DiagnosticUnderlineOk',
       'DiagnosticUnderlineWarn',
       'DiagnosticUnnecessary',
+      'DiagnosticVirtualLinesError',
+      'DiagnosticVirtualLinesHint',
+      'DiagnosticVirtualLinesInfo',
+      'DiagnosticVirtualLinesOk',
+      'DiagnosticVirtualLinesWarn',
       'DiagnosticVirtualTextError',
       'DiagnosticVirtualTextHint',
       'DiagnosticVirtualTextInfo',
@@ -582,7 +599,7 @@ describe('vim.diagnostic', function()
         vim.diagnostic.set(
           _G.diagnostic_ns,
           _G.diagnostic_bufnr,
-          { { lnum = 0, end_lnum = 0, col = 0, end_col = 0 } }
+          { { message = '', lnum = 0, end_lnum = 0, col = 0, end_col = 0 } }
         )
         vim.cmd('bwipeout! ' .. _G.diagnostic_bufnr)
 
@@ -1017,7 +1034,7 @@ describe('vim.diagnostic', function()
         vim.diagnostic.set(
           _G.diagnostic_ns,
           _G.diagnostic_bufnr,
-          { { lnum = 0, end_lnum = 0, col = 0, end_col = 0 } }
+          { { message = '', lnum = 0, end_lnum = 0, col = 0, end_col = 0 } }
         )
         vim.cmd('bwipeout! ' .. _G.diagnostic_bufnr)
 
@@ -2116,6 +2133,94 @@ describe('vim.diagnostic', function()
           return virt_text
         end)
       )
+    end)
+  end)
+
+  describe('handlers.virtual_lines', function()
+    it('includes diagnostic code and message', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config({ virtual_lines = true })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Missed symbol `,`', 0, 0, 0, 0, 'lua_ls', 'miss-symbol'),
+        })
+
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        return extmarks[1][4].virt_lines
+      end)
+
+      eq('miss-symbol: Missed symbol `,`', result[1][3][1])
+    end)
+
+    it('adds space to the left of the diagnostic', function()
+      local error_offset = 5
+      local result = exec_lua(function()
+        vim.diagnostic.config({ virtual_lines = true })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error here!', 0, error_offset, 0, error_offset, 'foo_server'),
+        })
+
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        return extmarks[1][4].virt_lines
+      end)
+
+      eq(error_offset, result[1][1][1]:len())
+    end)
+
+    it('highlights diagnostics in multiple lines by default', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config({ virtual_lines = true })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error here!', 0, 0, 0, 0, 'foo_server'),
+          _G.make_error('Another error there!', 1, 0, 1, 0, 'foo_server'),
+        })
+
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        return extmarks
+      end)
+
+      eq(2, #result)
+      eq('Error here!', result[1][4].virt_lines[1][3][1])
+      eq('Another error there!', result[2][4].virt_lines[1][3][1])
+    end)
+
+    it('can highlight diagnostics only in the current line', function()
+      local result = exec_lua(function()
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        vim.diagnostic.config({ virtual_lines = { current_line = true } })
+
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error here!', 0, 0, 0, 0, 'foo_server'),
+          _G.make_error('Another error there!', 1, 0, 1, 0, 'foo_server'),
+        })
+
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        return extmarks
+      end)
+
+      eq(1, #result)
+      eq('Error here!', result[1][4].virt_lines[1][3][1])
+    end)
+
+    it('supports a format function for diagnostic messages', function()
+      local result = exec_lua(function()
+        vim.diagnostic.config({
+          virtual_lines = {
+            format = function()
+              return 'Error here!'
+            end,
+          },
+        })
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Invalid syntax', 0, 0, 0, 0),
+        })
+        local extmarks = _G.get_virt_lines_extmarks(_G.diagnostic_ns)
+        return extmarks[1][4].virt_lines
+      end)
+      eq('Error here!', result[1][3][1])
     end)
   end)
 
