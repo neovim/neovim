@@ -923,10 +923,15 @@ function Query:iter_captures(node, source, start, stop)
   end
 
   start, stop = value_or_node_range(start, stop, node)
+  local opts = {
+    match_limit = 256,
+    row_begin = start,
+    row_end = stop,
+  }
 
   -- Copy the tree to ensure it is valid during the entire lifetime of the iterator
   local tree = node:tree():copy()
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, { match_limit = 256 })
+  local cursor = vim._create_ts_querycursor(node, self.query, opts)
 
   -- For faster checks that a match is not in the cache.
   local highest_cached_match_id = -1
@@ -1012,21 +1017,31 @@ end
 --- - all (boolean) When `false` (default `true`), the returned table maps capture IDs to a single
 ---   (last) node instead of the full list of matching nodes. This option is only for backward
 ---   compatibility and will be removed in a future release.
+---   - byte_begin
+---   - byte_end
 ---
 ---@return (fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree): pattern id, match, metadata, tree
 function Query:iter_matches(node, source, start, stop, opts)
-  opts = opts or {}
-  opts.match_limit = opts.match_limit or 256
-
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
 
-  start, stop = value_or_node_range(start, stop, node)
+  if type(start) == 'table' then
+    opts = start
+    opts.match_limit = opts.match_limit or 256
+  else
+    opts = opts or {}
+    opts.match_limit = opts.match_limit or 256
 
-  -- Copy the tree to ensure it is valid during the entire lifetime of the iterator
+    start, stop = value_or_node_range(start, stop, node)
+    opts.row_begin = start
+    opts.col_begin = 0
+    opts.row_end = stop
+    opts.col_end = 0
+  end
+
   local tree = node:tree():copy()
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
+  local cursor = vim._create_ts_querycursor(node, self.query, opts)
 
   local function iter()
     local match = cursor:next_match()

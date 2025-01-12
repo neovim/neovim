@@ -443,7 +443,7 @@ end]]
     -- As stated here, this only includes the function (thus the whole buffer, without the last line)
     local res2 = exec_lua(function()
       local root = _G.parser:parse()[1]:root()
-      _G.parser:set_included_regions({ { root:child(0) } })
+      _G.parser:set_included_regions({ { { root:child(0):range(true) } } })
       _G.parser:invalidate()
       return { _G.parser:parse(true)[1]:root():range() }
     end)
@@ -453,7 +453,8 @@ end]]
     eq({ { { 0, 0, 0, 18, 1, 512 } } }, exec_lua [[ return parser:included_regions() ]])
 
     local range_tbl = exec_lua(function()
-      _G.parser:set_included_regions { { { 0, 0, 17, 1 } } }
+      local range = require('vim.treesitter._range')
+      _G.parser:set_included_regions { { range.add_bytes(_G.parser:source(), { 0, 0, 17, 1 }) } }
       _G.parser:parse()
       return _G.parser:included_regions()
     end)
@@ -468,12 +469,12 @@ end]]
       local parser = vim.treesitter.get_parser(0, 'c')
       local query = vim.treesitter.query.parse('c', '(declaration) @decl')
 
-      local nodes = {}
+      local region = {}
       for _, node in query:iter_captures(parser:parse()[1]:root(), 0) do
-        table.insert(nodes, node)
+        table.insert(region, { node:range(true) })
       end
 
-      parser:set_included_regions({ nodes })
+      parser:set_included_regions({ region })
 
       local root = parser:parse(true)[1]:root()
 
@@ -566,22 +567,22 @@ int x = INT_MAX;
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 7, 0 }, -- root tree
+          { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
           { 3, 14, 3, 17 }, -- VALUE 123
           { 4, 15, 4, 18 }, -- VALUE1 123
           { 5, 15, 5, 18 }, -- VALUE2 123
-          { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-          { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
         n.feed('ggo<esc>')
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 8, 0 }, -- root tree
+          { 2, 26, 2, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          { 3, 29, 3, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
           { 4, 14, 4, 17 }, -- VALUE 123
           { 5, 15, 5, 18 }, -- VALUE1 123
           { 6, 15, 6, 18 }, -- VALUE2 123
-          { 2, 26, 2, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-          { 3, 29, 3, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
     end)
@@ -655,22 +656,22 @@ int x = INT_MAX;
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 7, 0 }, -- root tree
+          { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
           { 3, 14, 3, 17 }, -- VALUE 123
           { 4, 15, 4, 18 }, -- VALUE1 123
           { 5, 15, 5, 18 }, -- VALUE2 123
-          { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-          { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
 
         n.feed('ggo<esc>')
         eq(5, exec_lua('return #parser:children().c:trees()'))
         eq({
           { 0, 0, 8, 0 }, -- root tree
+          { 2, 26, 2, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
+          { 3, 29, 3, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
           { 4, 14, 4, 17 }, -- VALUE 123
           { 5, 15, 5, 18 }, -- VALUE1 123
           { 6, 15, 6, 18 }, -- VALUE2 123
-          { 2, 26, 2, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-          { 3, 29, 3, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())
       end)
     end)
@@ -692,9 +693,6 @@ int x = INT_MAX;
         eq('table', exec_lua('return type(parser:children().c)'))
         eq({
           { 0, 0, 7, 0 }, -- root tree
-          { 3, 16, 3, 16 }, -- VALUE 123
-          { 4, 17, 4, 17 }, -- VALUE1 123
-          { 5, 17, 5, 17 }, -- VALUE2 123
           { 1, 26, 1, 63 }, -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
           { 2, 29, 2, 66 }, -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
         }, get_ranges())

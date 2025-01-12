@@ -461,12 +461,12 @@ describe('treesitter highlighting (C)', function()
       local parser = vim.treesitter.get_parser(0, 'c')
       local query = vim.treesitter.query.parse('c', '(declaration) @decl')
 
-      local nodes = {}
+      local region = {}
       for _, node in query:iter_captures(parser:parse()[1]:root(), 0, 0, 19) do
-        table.insert(nodes, node)
+        table.insert(region, { node:range(true) })
       end
 
-      parser:set_included_regions({ nodes })
+      parser:set_included_regions({ region })
 
       vim.treesitter.highlighter.new(parser, { queries = { c = '(identifier) @type' } })
     end)
