@@ -158,6 +158,9 @@ TREESITTER
   if no languages are explicitly registered.
 • |vim.treesitter.language.add()| returns `true` if a parser was loaded
   successfully and `nil,errmsg` otherwise instead of throwing an error.
+• |LanguageTree:trees()| no longer guarantees that the returned table is
+  list-like even after a full parse. Always use |next()| or |pairs()| to
+  access it.
 
 TUI
 
@@ -339,6 +342,9 @@ TREESITTER
 • New |TSNode:child_with_descendant()|, which is nearly identical to
   |TSNode:child_containing_descendant()| except that it can return the
   descendant itself.
+• |LanguageTree:parse()| runs injection query only on the provided list of
+  ranges as long as the language does not have a combined injection,
+  significantly improving |treesitter-highlight| performance.
 
 TUI
 
