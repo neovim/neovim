@@ -1288,39 +1288,73 @@ static struct luaL_Reg querycursor_meta[] = {
   { NULL, NULL }
 };
 
+static inline bool set_uint32(lua_State *L, int idx, char const *name, uint32_t *res)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  lua_getfield(L, idx, name);
+  if (lua_isnil(L, -1)) {
+    lua_pop(L, 1);
+    return false;
+  }
+
+  int64_t value = lua_tointeger(L, -1);
+  lua_pop(L, 1);
+
+  if (value < 0U) {
+    *res = 0U;
+  } else if (value > UINT32_MAX) {
+    *res = UINT32_MAX;
+  } else {
+    *res = (uint32_t)value;
+  }
+  return true;
+}
+
 int tslua_push_querycursor(lua_State *L)
 {
   TSNode node = node_check(L, 1);
 
   TSQuery *query = query_check(L, 2);
   TSQueryCursor *cursor = ts_query_cursor_new();
-  ts_query_cursor_exec(cursor, query, node);
 
-  if (lua_gettop(L) >= 3) {
-    uint32_t start = (uint32_t)luaL_checkinteger(L, 3);
-    uint32_t end = lua_gettop(L) >= 4 ? (uint32_t)luaL_checkinteger(L, 4) : MAXLNUM;
-    ts_query_cursor_set_point_range(cursor, (TSPoint){ start, 0 }, (TSPoint){ end, 0 });
-  }
+  luaL_argcheck(L, lua_istable(L, 3), 3, "table expected");
 
-  if (lua_gettop(L) >= 5 && !lua_isnil(L, 5)) {
-    luaL_argcheck(L, lua_istable(L, 5), 5, "table expected");
-    lua_pushnil(L);  // [dict, ..., nil]
-    while (lua_next(L, 5)) {
-      // [dict, ..., key, value]
-      if (lua_type(L, -2) == LUA_TSTRING) {
-        char *k = (char *)lua_tostring(L, -2);
-        if (strequal("max_start_depth", k)) {
-          uint32_t max_start_depth = (uint32_t)lua_tointeger(L, -1);
-          ts_query_cursor_set_max_start_depth(cursor, max_start_depth);
-        } else if (strequal("match_limit", k)) {
-          uint32_t match_limit = (uint32_t)lua_tointeger(L, -1);
-          ts_query_cursor_set_match_limit(cursor, match_limit);
-        }
-      }
-      // pop the value; lua_next will pop the key.
-      lua_pop(L, 1);  // [dict, ..., key]
+  TSPoint begin_pos = (TSPoint){ 0, 0 };
+  TSPoint end_pos = (TSPoint){ UINT32_MAX, UINT32_MAX };
+
+  if (set_uint32(L, 3, "row_begin", &begin_pos.row)) {
+    if (!set_uint32(L, 3, "col_begin", &begin_pos.column)) {
+      begin_pos.column = 0;
     }
   }
+
+  if (set_uint32(L, 3, "row_end", &end_pos.row)) {
+    if (!set_uint32(L, 3, "col_end", &end_pos.column)) {
+      end_pos.column = 0;
+    }
+  }
+
+  ts_query_cursor_set_point_range(cursor, begin_pos, end_pos);
+
+  uint32_t begin_byte = 0;
+  uint32_t end_byte = UINT32_MAX;
+
+  set_uint32(L, 3, "byte_begin", &begin_byte);
+  set_uint32(L, 3, "byte_end", &end_byte);
+
+  ts_query_cursor_set_byte_range(cursor, begin_byte, end_byte);
+
+  uint32_t max_start_depth;
+  if (set_uint32(L, 3, "max_start_depth", &max_start_depth)) {
+    ts_query_cursor_set_max_start_depth(cursor, max_start_depth);
+  }
+
+  uint32_t match_limit;
+  if (set_uint32(L, 3, "match_limit", &match_limit)) {
+    ts_query_cursor_set_match_limit(cursor, match_limit);
+  }
+
+  ts_query_cursor_exec(cursor, query, node);
 
   TSQueryCursor **ud = lua_newuserdata(L, sizeof(*ud));  // [node, query, ..., udata]
   *ud = cursor;
