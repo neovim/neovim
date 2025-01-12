@@ -6961,6 +6961,22 @@ describe('builtin popupmenu', function()
           {1:~                               }|*18
           {2:-- }{6:Pattern not found}            |
         ]])
+        feed('<C-E><Esc>')
+
+        command('hi PmenuMatchSel guibg=NONE')
+        command('hi PmenuMatch guibg=NONE')
+        command('set cot=menu,noinsert,fuzzy')
+        feed('S<C-X><C-O>')
+        screen:expect(pum_start)
+        feed('fb')
+        screen:expect([[
+          fb^                              |
+          {ms:f}{s:oo}{ms:B}{s:az  fookind }{1:                }|
+          {mn:f}{n:oo}{mn:b}{n:ar  fookind }{1:                }|
+          {mn:f}{n:oo}{mn:b}{n:ala fookind }{1:                }|
+          {1:~                               }|*15
+          {2:-- }{5:match 1 of 9}                 |
+        ]])
 
         feed('<C-E><Esc>')
       end)
