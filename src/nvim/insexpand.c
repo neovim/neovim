@@ -970,7 +970,7 @@ int ins_compl_col_range_attr(int col)
     return -1;
   }
 
-  if (col >= (compl_col + (int)compl_leader.size) && col < compl_ins_end_col) {
+  if (col >= (compl_col + (int)ins_compl_leader_len()) && col < compl_ins_end_col) {
     return syn_name2attr("ComplMatchIns");
   }
 

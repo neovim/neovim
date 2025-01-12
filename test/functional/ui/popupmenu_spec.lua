@@ -5885,7 +5885,16 @@ describe('builtin popupmenu', function()
           {1:~                               }|*17
           {2:-- }{5:match 1 of 3}                 |
         ]])
-        feed('<Esc>')
+        feed('<C-E><Esc>')
+
+        command('set cot-=fuzzy')
+        feed('Sf<C-N>')
+        screen:expect([[
+          {10:f^                               }|
+          {1:~                               }|*18
+          {2:-- }{6:Pattern not found}            |
+        ]])
+        feed('<C-E><Esc>')
       end)
     end
   end
