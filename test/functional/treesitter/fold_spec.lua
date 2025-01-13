@@ -802,9 +802,10 @@ t2]])
   end)
 
   it('can detect a new parser and refresh folds accordingly', function()
-    write_file('test_fold_file.txt', test_text)
+    local name = t.tmpname()
+    write_file(name, test_text)
+    command('edit ' .. name)
     command [[
-      e test_fold_file.txt
       set filetype=some_filetype_without_treesitter_parser
       set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1 foldlevel=0
     ]]
@@ -818,7 +819,7 @@ t2]])
 
     -- reload buffer as c filetype to simulate new parser being found
     feed('GA// vim: ft=c<Esc>')
-    command([[w | e]])
+    command([[write | edit]])
 
     eq({
       [1] = '>1',
