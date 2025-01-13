@@ -37,7 +37,7 @@ local function get_commentstring(ref_position)
     for _, ft in ipairs(filetypes) do
       local cur_cs = vim.filetype.get_option(ft, 'commentstring')
       if cur_cs ~= '' and level > res_level then
-        ts_cs = cur_cs
+        ts_cs, res_level = cur_cs, level
       end
     end
 
