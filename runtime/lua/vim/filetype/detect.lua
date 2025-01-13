@@ -34,7 +34,7 @@ local matchregex = vim.filetype._matchregex
 -- can be detected from the first five lines of the file.
 --- @type vim.filetype.mapfn
 function M.asm(path, bufnr)
-  -- tiasm uses `* commment`
+  -- tiasm uses `* comment`
   local lines = table.concat(getlines(bufnr, 1, 10), '\n')
   if findany(lines, { '^%*', '\n%*', 'Texas Instruments Incorporated' }) then
     return 'tiasm'

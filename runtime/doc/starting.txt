@@ -290,7 +290,7 @@ argument.
 							*-n*
 -n		Disables |swap-file| by setting 'updatecount' to 0 (after
 		executing any |vimrc|).  Recovery after a crash will be
-		impossible.  Improves peformance when working with a file on
+		impossible.  Improves performance when working with a file on
 		a very slow medium (usb drive, network share).
 
 		Enable it again by setting 'updatecount' to some value, e.g.

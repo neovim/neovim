@@ -652,7 +652,7 @@ do
 
       -- This autocommand updates the value of 'background' anytime we receive
       -- an OSC 11 response from the terminal emulator. If the user has set
-      -- 'background' explictly then we will delete this autocommand,
+      -- 'background' explicitly then we will delete this autocommand,
       -- effectively disabling automatic background setting.
       local force = false
       local id = vim.api.nvim_create_autocmd('TermResponse', {

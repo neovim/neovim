@@ -453,7 +453,7 @@ Example using the API from Vimscript: >vim
 
 
 ==============================================================================
-Floating windows                                                 *api-floatwin*
+Floating windows				*api-floatwin* *floating-windows*
 
 Floating windows ("floats") are displayed on top of normal windows.  This is
 useful to implement simple widgets, such as tooltips displayed next to the
