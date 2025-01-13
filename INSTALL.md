@@ -108,20 +108,20 @@ For arm64:
 The [Releases](https://github.com/neovim/neovim/releases) page provides pre-built binaries for Linux systems.
 
 ```sh
-curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
 sudo rm -rf /opt/nvim
-sudo tar -C /opt -xzf nvim-linux64.tar.gz
+sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
 ```
 
 Then add this to your shell config (`~/.bashrc`, `~/.zshrc`, ...):
 
-    export PATH="$PATH:/opt/nvim-linux64/bin"
+    export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
 
 ### AppImage ("universal" Linux package)
 
 The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppImage](https://appimage.org) that runs on most Linux systems. No installation is needed, just download `nvim-linux-x86_64.appimage` and run it. (It might not work if your Linux distribution is more than 4 years old.) The following instructions assume an `x86_64` architecture; on ARM Linux replace with `arm64`.
 
-    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-86_64.appimage
+    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.appimage
     chmod u+x nvim-linux-x86_64.appimage
     ./nvim-linux-x86_64.appimage
 

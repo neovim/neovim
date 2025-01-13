@@ -537,7 +537,7 @@ static void prepare_call(RemoteUI *ui, const char *name)
     ui_alloc_buf(ui);
   }
 
-  // To optimize data transfer(especially for "grid_line"), we bundle adjacent
+  // To optimize data transfer (especially for "grid_line"), we bundle adjacent
   // calls to same method together, so only add a new call entry if the last
   // method call is different from "name"
 
