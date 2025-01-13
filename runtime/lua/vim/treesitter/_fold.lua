@@ -69,7 +69,8 @@ end
 ---@param info TS.FoldInfo
 ---@param srow integer?
 ---@param erow integer? 0-indexed, exclusive
-local function compute_folds_levels(bufnr, info, srow, erow)
+---@param callback function?
+local function compute_folds_levels(bufnr, info, srow, erow, callback)
   srow = srow or 0
   erow = erow or api.nvim_buf_line_count(bufnr)
 
@@ -78,104 +79,112 @@ local function compute_folds_levels(bufnr, info, srow, erow)
     return
   end
 
-  parser:parse()
-
-  local enter_counts = {} ---@type table<integer, integer>
-  local leave_counts = {} ---@type table<integer, integer>
-  local prev_start = -1
-  local prev_stop = -1
-
-  parser:for_each_tree(function(tree, ltree)
-    local query = ts.query.get(ltree:lang(), 'folds')
-    if not query then
+  parser:parse(nil, function(_, trees)
+    if not trees then
       return
     end
 
-    -- Collect folds starting from srow - 1, because we should first subtract the folds that end at
-    -- srow - 1 from the level of srow - 1 to get accurate level of srow.
-    for _, match, metadata in query:iter_matches(tree:root(), bufnr, math.max(srow - 1, 0), erow) do
-      for id, nodes in pairs(match) do
-        if query.captures[id] == 'fold' then
-          local range = ts.get_range(nodes[1], bufnr, metadata[id])
-          local start, _, stop, stop_col = Range.unpack4(range)
+    local enter_counts = {} ---@type table<integer, integer>
+    local leave_counts = {} ---@type table<integer, integer>
+    local prev_start = -1
+    local prev_stop = -1
 
-          if #nodes > 1 then
-            -- assumes nodes are ordered by range
-            local end_range = ts.get_range(nodes[#nodes], bufnr, metadata[id])
-            local _, _, end_stop, end_stop_col = Range.unpack4(end_range)
-            stop = end_stop
-            stop_col = end_stop_col
-          end
+    parser:for_each_tree(function(tree, ltree)
+      local query = ts.query.get(ltree:lang(), 'folds')
+      if not query then
+        return
+      end
 
-          if stop_col == 0 then
-            stop = stop - 1
-          end
+      -- Collect folds starting from srow - 1, because we should first subtract the folds that end at
+      -- srow - 1 from the level of srow - 1 to get accurate level of srow.
+      for _, match, metadata in query:iter_matches(tree:root(), bufnr, math.max(srow - 1, 0), erow) do
+        for id, nodes in pairs(match) do
+          if query.captures[id] == 'fold' then
+            local range = ts.get_range(nodes[1], bufnr, metadata[id])
+            local start, _, stop, stop_col = Range.unpack4(range)
 
-          local fold_length = stop - start + 1
+            if #nodes > 1 then
+              -- assumes nodes are ordered by range
+              local end_range = ts.get_range(nodes[#nodes], bufnr, metadata[id])
+              local _, _, end_stop, end_stop_col = Range.unpack4(end_range)
+              stop = end_stop
+              stop_col = end_stop_col
+            end
 
-          -- Fold only multiline nodes that are not exactly the same as previously met folds
-          -- Checking against just the previously found fold is sufficient if nodes
-          -- are returned in preorder or postorder when traversing tree
-          if
-            fold_length > vim.wo.foldminlines and not (start == prev_start and stop == prev_stop)
-          then
-            enter_counts[start + 1] = (enter_counts[start + 1] or 0) + 1
-            leave_counts[stop + 1] = (leave_counts[stop + 1] or 0) + 1
-            prev_start = start
-            prev_stop = stop
+            if stop_col == 0 then
+              stop = stop - 1
+            end
+
+            local fold_length = stop - start + 1
+
+            -- Fold only multiline nodes that are not exactly the same as previously met folds
+            -- Checking against just the previously found fold is sufficient if nodes
+            -- are returned in preorder or postorder when traversing tree
+            if
+              fold_length > vim.wo.foldminlines and not (start == prev_start and stop == prev_stop)
+            then
+              enter_counts[start + 1] = (enter_counts[start + 1] or 0) + 1
+              leave_counts[stop + 1] = (leave_counts[stop + 1] or 0) + 1
+              prev_start = start
+              prev_stop = stop
+            end
           end
         end
       end
+    end)
+
+    local nestmax = vim.wo.foldnestmax
+    local level0_prev = info.levels0[srow] or 0
+    local leave_prev = leave_counts[srow] or 0
+
+    -- We now have the list of fold opening and closing, fill the gaps and mark where fold start
+    for lnum = srow + 1, erow do
+      local enter_line = enter_counts[lnum] or 0
+      local leave_line = leave_counts[lnum] or 0
+      local level0 = level0_prev - leave_prev + enter_line
+
+      -- Determine if it's the start/end of a fold
+      -- NB: vim's fold-expr interface does not have a mechanism to indicate that
+      -- two (or more) folds start at this line, so it cannot distinguish between
+      --  ( \n ( \n )) \n (( \n ) \n )
+      -- versus
+      --  ( \n ( \n ) \n ( \n ) \n )
+      -- Both are represented by ['>1', '>2', '2', '>2', '2', '1'], and
+      -- vim interprets as the second case.
+      -- If it did have such a mechanism, (clamped - clamped_prev)
+      -- would be the correct number of starts to pass on.
+      local adjusted = level0 ---@type integer
+      local prefix = ''
+      if enter_line > 0 then
+        prefix = '>'
+        if leave_line > 0 then
+          -- If this line ends a fold f1 and starts a fold f2, then move f1's end to the previous line
+          -- so that f2 gets the correct level on this line. This may reduce the size of f1 below
+          -- foldminlines, but we don't handle it for simplicity.
+          adjusted = level0 - leave_line
+          leave_line = 0
+        end
+      end
+
+      -- Clamp at foldnestmax.
+      local clamped = adjusted
+      if adjusted > nestmax then
+        prefix = ''
+        clamped = nestmax
+      end
+
+      -- Record the "real" level, so that it can be used as "base" of later compute_folds_levels().
+      info.levels0[lnum] = adjusted
+      info.levels[lnum] = prefix .. tostring(clamped)
+
+      leave_prev = leave_line
+      level0_prev = adjusted
+    end
+
+    if callback then
+      callback()
     end
   end)
-
-  local nestmax = vim.wo.foldnestmax
-  local level0_prev = info.levels0[srow] or 0
-  local leave_prev = leave_counts[srow] or 0
-
-  -- We now have the list of fold opening and closing, fill the gaps and mark where fold start
-  for lnum = srow + 1, erow do
-    local enter_line = enter_counts[lnum] or 0
-    local leave_line = leave_counts[lnum] or 0
-    local level0 = level0_prev - leave_prev + enter_line
-
-    -- Determine if it's the start/end of a fold
-    -- NB: vim's fold-expr interface does not have a mechanism to indicate that
-    -- two (or more) folds start at this line, so it cannot distinguish between
-    --  ( \n ( \n )) \n (( \n ) \n )
-    -- versus
-    --  ( \n ( \n ) \n ( \n ) \n )
-    -- Both are represented by ['>1', '>2', '2', '>2', '2', '1'], and
-    -- vim interprets as the second case.
-    -- If it did have such a mechanism, (clamped - clamped_prev)
-    -- would be the correct number of starts to pass on.
-    local adjusted = level0 ---@type integer
-    local prefix = ''
-    if enter_line > 0 then
-      prefix = '>'
-      if leave_line > 0 then
-        -- If this line ends a fold f1 and starts a fold f2, then move f1's end to the previous line
-        -- so that f2 gets the correct level on this line. This may reduce the size of f1 below
-        -- foldminlines, but we don't handle it for simplicity.
-        adjusted = level0 - leave_line
-        leave_line = 0
-      end
-    end
-
-    -- Clamp at foldnestmax.
-    local clamped = adjusted
-    if adjusted > nestmax then
-      prefix = ''
-      clamped = nestmax
-    end
-
-    -- Record the "real" level, so that it can be used as "base" of later compute_folds_levels().
-    info.levels0[lnum] = adjusted
-    info.levels[lnum] = prefix .. tostring(clamped)
-
-    leave_prev = leave_line
-    level0_prev = adjusted
-  end
 end
 
 local M = {}
@@ -266,6 +275,8 @@ local function on_changedtree(bufnr, foldinfo, tree_changes)
   schedule_if_loaded(bufnr, function()
     local srow_upd, erow_upd ---@type integer?, integer?
     local max_erow = api.nvim_buf_line_count(bufnr)
+    -- TODO(ribru17): Replace this with a proper .all() awaiter once #19624 is resolved
+    local iterations = 0
     for _, change in ipairs(tree_changes) do
       local srow, _, erow, ecol = Range.unpack4(change)
       -- If a parser doesn't have any ranges explicitly set, treesitter will
@@ -279,12 +290,14 @@ local function on_changedtree(bufnr, foldinfo, tree_changes)
       end
       -- Start from `srow - foldminlines`, because this edit may have shrunken the fold below limit.
       srow = math.max(srow - vim.wo.foldminlines, 0)
-      compute_folds_levels(bufnr, foldinfo, srow, erow)
       srow_upd = srow_upd and math.min(srow_upd, srow) or srow
       erow_upd = erow_upd and math.max(erow_upd, erow) or erow
-    end
-    if #tree_changes > 0 then
-      foldinfo:foldupdate(bufnr, srow_upd, erow_upd)
+      compute_folds_levels(bufnr, foldinfo, srow, erow, function()
+        iterations = iterations + 1
+        if iterations == #tree_changes then
+          foldinfo:foldupdate(bufnr, srow_upd, erow_upd)
+        end
+      end)
     end
   end)
 end
@@ -342,8 +355,9 @@ local function on_bytes(bufnr, foldinfo, start_row, start_col, old_row, old_col,
       foldinfo.on_bytes_range = nil
       -- Start from `srow - foldminlines`, because this edit may have shrunken the fold below limit.
       srow = math.max(srow - vim.wo.foldminlines, 0)
-      compute_folds_levels(bufnr, foldinfo, srow, erow)
-      foldinfo:foldupdate(bufnr, srow, erow)
+      compute_folds_levels(bufnr, foldinfo, srow, erow, function()
+        foldinfo:foldupdate(bufnr, srow, erow)
+      end)
     end)
   end
 end
@@ -400,9 +414,10 @@ api.nvim_create_autocmd('OptionSet', {
     for _, bufnr in ipairs(bufs) do
       foldinfos[bufnr] = FoldInfo.new(bufnr)
       api.nvim_buf_call(bufnr, function()
-        compute_folds_levels(bufnr, foldinfos[bufnr])
+        compute_folds_levels(bufnr, foldinfos[bufnr], nil, nil, function()
+          foldinfos[bufnr]:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
+        end)
       end)
-      foldinfos[bufnr]:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
     end
   end,
 })
