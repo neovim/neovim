@@ -5772,9 +5772,10 @@ local options = {
       abbreviation = 'mousemev',
       defaults = false,
       desc = [=[
+        						*mouse-hover*
         When on, mouse move events are delivered to the input queue and are
-        available for mapping. The default, off, avoids the mouse movement
-        overhead except when needed.
+        available for mapping |<MouseMove>|. The default, off, avoids the mouse
+        movement overhead except when needed.
         Warning: Setting this option can make pending mappings to be aborted
         when the mouse is moved.
       ]=],

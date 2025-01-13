@@ -6572,9 +6572,8 @@ M.funcs = {
       When {abbr} is there and it is |TRUE| use abbreviations
       instead of mappings.
 
-      When {dict} is there and it is |TRUE| return a dictionary
-      containing all the information of the mapping with the
-      following items:			*mapping-dict*
+      When {dict} is |TRUE|, return a dictionary describing the mapping,
+      with these items:				*mapping-dict*
         "lhs"	     The {lhs} of the mapping as it would be typed
         "lhsraw"   The {lhs} of the mapping as raw bytes
         "lhsrawalt" The {lhs} of the mapping as raw bytes, alternate
@@ -6636,7 +6635,7 @@ M.funcs = {
       { 'abbr', 'boolean' },
       { 'dict', 'true' },
     },
-    returns = 'string|table<string,any>',
+    returns = 'table<string,any>',
   },
   mapcheck = {
     args = { 1, 3 },
@@ -8255,7 +8254,7 @@ M.funcs = {
            endif
          endfunc
          call prompt_setcallback(bufnr(), function('s:TextEntered'))
-
+      <
     ]=],
     name = 'prompt_setcallback',
     params = { { 'buf', 'integer|string' }, { 'expr', 'string|function' } },
@@ -11202,7 +11201,9 @@ M.funcs = {
     tags = { 'E6100' },
     desc = [=[
       Returns |standard-path| locations of various default files and
-      directories.
+      directories. The locations are driven by |base-directories|
+      which you can configure via |$NVIM_APPNAME| or the `$XDG_…`
+      environment variables.
 
       {what}       Type    Description ~
       cache        String  Cache directory: arbitrary temporary
