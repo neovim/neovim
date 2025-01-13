@@ -192,6 +192,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .moverect = term_moverect,
   .movecursor = term_movecursor,
   .settermprop = term_settermprop,
+  .setdecmode = term_setdecmode,
   .bell = term_bell,
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
   .sb_popline = term_sb_pop,
@@ -1263,6 +1264,20 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     return 0;
   }
 
+  return 1;
+}
+
+static int term_setdecmode(int mode, bool val, void *data)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (!has_event(EVENT_TERMREQUEST)) {
+    return 1;
+  }
+
+  Terminal *term = data;
+  StringBuilder request = KV_INITIAL_VALUE;
+  kv_printf(request, "\x1b[?%d%c", mode, val ? 'h' : 'l');
+  schedule_termrequest(term, request.items, request.size);
   return 1;
 }
 

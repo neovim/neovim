@@ -700,10 +700,10 @@ vim.v.t_number = ...
 --- @type integer
 vim.v.t_string = ...
 
---- The value of the most recent OSC or DCS control sequence
---- sent from a process running in the embedded `terminal`.
---- This can be read in a `TermRequest` event handler to respond
---- to queries from embedded applications.
+--- The value of the most recent OSC, DCS, DECSET, or DECRST
+--- control sequence sent from a process running in the embedded
+--- `terminal`. This can be read in a `TermRequest` event handler
+--- to respond to queries from embedded applications.
 --- @type string
 vim.v.termrequest = ...
 

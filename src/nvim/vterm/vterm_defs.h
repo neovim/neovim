@@ -109,6 +109,7 @@ typedef struct {
   int (*moverect)(VTermRect dest, VTermRect src, void *user);
   int (*movecursor)(VTermPos pos, VTermPos oldpos, int visible, void *user);
   int (*settermprop)(VTermProp prop, VTermValue *val, void *user);
+  int (*setdecmode)(int mode, bool val, void *user);
   int (*bell)(void *user);
   int (*resize)(int rows, int cols, void *user);
   int (*sb_pushline)(int cols, const VTermScreenCell *cells, void *user);
@@ -261,6 +262,7 @@ typedef struct {
   int (*initpen)(void *user);
   int (*setpenattr)(VTermAttr attr, VTermValue *val, void *user);
   int (*settermprop)(VTermProp prop, VTermValue *val, void *user);
+  int (*setdecmode)(int mode, bool val, void *user);
   int (*bell)(void *user);
   int (*resize)(int rows, int cols, VTermStateFields *fields, void *user);
   int (*setlineinfo)(int row, const VTermLineInfo *newinfo, const VTermLineInfo *oldinfo,
