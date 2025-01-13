@@ -3,13 +3,18 @@ if vim.g.news_check == false then
   return
 end
 
--- skip when nvim is a release build
+-- skip when nvim is not a prerelease build
 if vim.version().prerelease ~= "dev" then
   return
 end
 
 -- skip in embedded situations
 if vim.g.vscode or vim.g.started_by_firenvim then
+  return
+end
+
+-- skip if nvim was started clean, which by default loads builtin plugins
+if vim.list_contains(vim.v.argv, '--clean') then
   return
 end
 

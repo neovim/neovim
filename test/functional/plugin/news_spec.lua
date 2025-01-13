@@ -22,6 +22,14 @@ describe('news_plugin:', function()
       eq(false, api.nvim_get_var('news_check'))
     end)
 
+    it('nvim was started clean (--clean)', function()
+      clear({
+        args = { '--clean' },
+        args_rm = { '-u', '-i' }
+      })
+      eq(0, fn.exists('news_check'))
+    end)
+
     it('nvim was started by firenvim', function()
       clear({
         args = { '--cmd', 'let g:started_by_firenvim = v:true' },
