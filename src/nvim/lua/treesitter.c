@@ -67,9 +67,9 @@ static TSLanguage *load_language(lua_State *L, const char *path, const char *lan
 {
   uv_lib_t lib;
   if (uv_dlopen(path, &lib)) {
+    xstrlcpy(IObuff, uv_dlerror(&lib), sizeof(IObuff));
     uv_dlclose(&lib);
-    luaL_error(L, "Failed to load parser for language '%s': uv_dlopen: %s",
-               lang_name, uv_dlerror(&lib));
+    luaL_error(L, "Failed to load parser for language '%s': uv_dlopen: %s", lang_name, IObuff);
   }
 
   char symbol_buf[128];
@@ -77,8 +77,9 @@ static TSLanguage *load_language(lua_State *L, const char *path, const char *lan
 
   TSLanguage *(*lang_parser)(void);
   if (uv_dlsym(&lib, symbol_buf, (void **)&lang_parser)) {
+    xstrlcpy(IObuff, uv_dlerror(&lib), sizeof(IObuff));
     uv_dlclose(&lib);
-    luaL_error(L, "Failed to load parser: uv_dlsym: %s", uv_dlerror(&lib));
+    luaL_error(L, "Failed to load parser: uv_dlsym: %s", IObuff);
   }
 
   TSLanguage *lang = lang_parser();
