@@ -3,9 +3,13 @@ if vim.g.loaded_matchpairs_plugin ~= nil then
 end
 vim.g.loaded_matchpairs_plugin = true
 
+-- loaded_matchit is used in ftplugin files to detect matchit
+-- TODO: untested yet
+vim.g.loaded_matchit = true
+
 
 vim.keymap.set('n', 'H', function()
-  require('vim._matchpairs').jump()
+  require('vim._matchpairs').match_syntax()
 end)
 
 vim.keymap.set('n', 'gH', function()
