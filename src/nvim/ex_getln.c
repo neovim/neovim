@@ -2973,10 +2973,9 @@ static int cmd_startcol(void)
 int cmd_screencol(int bytepos)
 {
   int m;  // maximum column
-
   int col = cmd_startcol();
   if (KeyTyped) {
-    m = Columns * Rows;
+    m = cmdline_win ? cmdline_win->w_width_inner * cmdline_win->w_height_inner : Columns * Rows;
     if (m < 0) {        // overflow, Columns or Rows at weird value
       m = MAXCOL;
     }
