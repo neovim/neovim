@@ -3357,6 +3357,19 @@ describe('LSP', function()
       command('set display+=uhex')
       eq({ 40, 3 }, exec_lua [[ return {vim.lsp.util._make_floating_popup_size(contents)} ]])
     end)
+    it('handles empty line', function()
+      exec_lua(function()
+        _G.contents = {
+          '',
+        }
+      end)
+      eq(
+        { 20, 1 },
+        exec_lua(function()
+          return { vim.lsp.util._make_floating_popup_size(_G.contents, { width = 20 }) }
+        end)
+      )
+    end)
   end)
 
   describe('lsp.util.trim.trim_empty_lines', function()
