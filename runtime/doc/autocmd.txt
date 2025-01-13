@@ -446,26 +446,25 @@ CompleteChanged						*CompleteChanged*
 
 							*CompleteDonePre*
 CompleteDonePre			After Insert mode completion is done.  Either
-				when something was completed or abandoning
-				completion. |ins-completion|
-				|complete_info()| can be used, the info is
-				cleared after triggering CompleteDonePre.
-				The |v:completed_item| variable contains
-				information about the completed item.
+				when something was completed or discarded.
+				|ins-completion|
+				|complete_info()| is valid during this event.
+				|v:completed_item| gives the completed item.
 
 							*CompleteDone*
 CompleteDone			After Insert mode completion is done.  Either
-				when something was completed or abandoning
-				completion. |ins-completion|
-				|complete_info()| cannot be used, the info is
-				cleared before triggering CompleteDone.  Use
+				when something was completed or discarded.
+				|ins-completion|
+				|complete_info()| is cleared before this; use
 				CompleteDonePre if you need it.
-				|v:completed_item| gives the completed item.
+				|v:completed_item| gives the completed item,
+				or empty dict if completion was discarded.
 
 				Sets these |v:event| keys:
 				    complete_word	The word that was
 							selected, empty if
-							abandoned complete.
+							completion was
+							abandoned (discarded).
 				    complete_type	|complete_info_mode|
 				    reason	Reason for completion being
 						done. Can be one of:
@@ -474,7 +473,7 @@ CompleteDone			After Insert mode completion is done.  Either
 						- "cancel": completion was
 						  stopped by |complete_CTRL-E.
 						- "discard": completion was
-						  ended for other reason.
+						  abandoned for other reason.
 
 							*CursorHold*
 CursorHold			When the user doesn't press a key for the time

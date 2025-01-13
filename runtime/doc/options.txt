@@ -4295,12 +4295,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    "g<LeftMouse>"  is "<C-LeftMouse>	(jump to tag under mouse click)
 	    "g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
 
-	*'mousemoveevent'* *'mousemev'* *'nomousemoveevent'* *'nomousemev'*
+*'mousemoveevent'* *'mousemev'* *'nomousemoveevent'* *'nomousemev'* *mouse-hover*
 'mousemoveevent' 'mousemev'	boolean	(default off)
 			global
 	When on, mouse move events are delivered to the input queue and are
-	available for mapping. The default, off, avoids the mouse movement
-	overhead except when needed.
+	available for mapping |<MouseMove>|. The default, off, avoids the mouse
+	movement overhead except when needed.
 	Warning: Setting this option can make pending mappings to be aborted
 	when the mouse is moved.
 
