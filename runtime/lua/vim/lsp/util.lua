@@ -1503,6 +1503,7 @@ end
 --- (default: `'cursor'`)
 --- @field relative? 'mouse'|'cursor'|'editor'
 ---
+--- Adjusts placement relative to cursor.
 --- - "auto": place window based on which side of the cursor has more lines
 --- - "above": place the window above the cursor unless there are not enough lines
 ---   to display the full window height.

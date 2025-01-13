@@ -255,24 +255,23 @@ FAQ                                                     *lsp-faq*
 ================================================================================
 LSP API                                                 *lsp-api*
 
-LSP core API is described at |lsp-core|.  Those are the core functions for
-creating and managing clients.
+The |lsp-core| API provides core functions for creating and managing clients.
+The |lsp-buf| functions perform operations for LSP clients attached to the
+current buffer.
 
-The `vim.lsp.buf_…` functions perform operations for all LSP clients attached
-to the given buffer. |lsp-buf|
-
-LSP request/response handlers are implemented as Lua functions (see
-|lsp-handler|).
                                                                   *lsp-method*
-
 Requests and notifications defined by the LSP specification are referred to as
-"LSP methods". The Nvim LSP client provides default handlers in the global
-|vim.lsp.handlers| table, you can list them with this command: >vim
+"LSP methods". These are handled by Lua |lsp-handler| functions.
+
+The |vim.lsp.handlers| global table defines default handlers (only for
+server-to-client requests/notifications, not client-to-server). Note: depends
+on server support; they won't run if your server doesn't support them.
+
+You can list them with: >vim
 
     :lua vim.print(vim.tbl_keys(vim.lsp.handlers))
 <
-They are also listed below. Note that handlers depend on server support: they
-won't run if your server doesn't support them.
+They are also listed below.
 
 - `'callHierarchy/incomingCalls'`
 - `'callHierarchy/outgoingCalls'`
@@ -345,12 +344,18 @@ Each response handler has this signature: >
 Handlers can be set by (in increasing priority):
 
                                                             *vim.lsp.handlers*
+- Directly calling a LSP method via |Client:request()|. This is the only way
+  to "override" the default client-to-server request handling (by
+  side-stepping `vim.lsp.buf` and related interfaces). >lua
+    local client = assert(vim.lsp.get_clients()[1])
+    client:request('textDocument/definition')
+
 - Setting a field in `vim.lsp.handlers`. This global table contains the
   default mappings of |lsp-method| names to handlers. (Note: only for
   server-to-client requests/notifications, not client-to-server.)
   Example: >lua
     vim.lsp.handlers['textDocument/publishDiagnostics'] = my_custom_diagnostics_handler
-<
+
 - Passing a {handlers} parameter to |vim.lsp.start()|. This sets the default
   |lsp-handler| for a specific server. (Note: only for server-to-client
   requests/notifications, not client-to-server.)
@@ -361,7 +366,7 @@ Handlers can be set by (in increasing priority):
         ['textDocument/publishDiagnostics'] = my_custom_server_definition
       },
     }
-<
+
 - Passing a {handler} parameter to |vim.lsp.buf_request_all()|. This sets the
   |lsp-handler| ONLY for the given request(s).
   Example: >lua
@@ -1276,12 +1281,12 @@ Lua module: vim.lsp.client                                        *lsp-client*
                               config that was passed to |vim.lsp.start()|. You
                               can use this to modify parameters before they
                               are sent.
-      • {on_init}?            (`elem_or_list<fun(client: vim.lsp.Client, initialize_result: lsp.InitializeResult)>`)
+      • {on_init}?            (`elem_or_list<fun(client: vim.lsp.Client, init_result: lsp.InitializeResult)>`)
                               Callback invoked after LSP "initialize", where
                               `result` is a table of `capabilities` and
                               anything else the server may send. For example,
-                              clangd sends `initialize_result.offsetEncoding`
-                              if `capabilities.offsetEncoding` was sent to it.
+                              clangd sends `init_result.offsetEncoding` if
+                              `capabilities.offsetEncoding` was sent to it.
                               You can only modify the `client.offset_encoding`
                               here before any notifications are sent.
       • {on_exit}?            (`elem_or_list<fun(code: integer, signal: integer, client_id: integer)>`)
@@ -1430,6 +1435,10 @@ Client:supports_method({method}, {bufnr})           *Client:supports_method()*
 
 ==============================================================================
 Lua module: vim.lsp.buf                                              *lsp-buf*
+
+The `vim.lsp.buf_…` functions perform operations for LSP clients attached to
+the current buffer.
+
 
 *vim.lsp.ListOpts*
 
@@ -1816,6 +1825,28 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
 ==============================================================================
 Lua module: vim.lsp.completion                                *lsp-completion*
 
+The `vim.lsp.completion` module enables insert-mode completion driven by an
+LSP server. Call `enable()` to make it available through Nvim builtin
+completion (via the |CompleteDone| event). Specify `autotrigger=true` to
+activate "auto-completion" when you type any of the server-defined
+`triggerCharacters`.
+
+Example: activate LSP-driven auto-completion: >lua
+    vim.lsp.start({
+      name = 'ts_ls',
+      cmd = …,
+      on_attach = function(client, bufnr)
+        vim.lsp.completion.enable(true, client.id, bufnr, {
+          autotrigger = true,
+          convert = function(item)
+            return { abbr = item.label:gsub('%b()', '') }
+          end,
+        })
+      end,
+    })
+<
+
+
 *vim.lsp.completion.BufferOpts*
 
     Fields: ~
@@ -1839,7 +1870,7 @@ enable({enable}, {client_id}, {bufnr}, {opts})
                      |vim.lsp.completion.BufferOpts|.
 
 trigger()                                       *vim.lsp.completion.trigger()*
-    Trigger LSP completion in the current buffer.
+    Triggers LSP completion once in the current buffer.
 
 
 ==============================================================================
@@ -2026,9 +2057,10 @@ Lua module: vim.lsp.util                                            *lsp-util*
       • {title}?         (`string`)
       • {title_pos}?     (`'left'|'center'|'right'`)
       • {relative}?      (`'mouse'|'cursor'|'editor'`) (default: `'cursor'`)
-      • {anchor_bias}?   (`'auto'|'above'|'below'`, default: `'auto'`) -
-                         "auto": place window based on which side of the
-                         cursor has more lines
+      • {anchor_bias}?   (`'auto'|'above'|'below'`, default: `'auto'`) Adjusts
+                         placement relative to cursor.
+                         • "auto": place window based on which side of the
+                           cursor has more lines
                          • "above": place the window above the cursor unless
                            there are not enough lines to display the full
                            window height.

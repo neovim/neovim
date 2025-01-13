@@ -123,7 +123,7 @@ UI embedders (clients that start Nvim with |--embed| and later call
     nvim --embed
 Nvim will pause before loading startup files and reading buffers, so the UI
 has a chance to invoke requests and do early initialization. Startup will
-continue as soon as the UI invokes |nvim_ui_attach()|.
+continue when the UI invokes |nvim_ui_attach()|.
 
 A simple UI only needs to do a single |nvim_ui_attach()| request and then
 prepare to handle any UI event. A more featureful UI, which might need
@@ -149,17 +149,14 @@ procedure:
    entering normal mode, for example reading variables set by init.vim.
 
 							   *ui-startup-stdin*
-An UI can support the native read from stdin feature as invoked with
-`command | nvim -` for the builtin TUI. |--|
-The embedding process can detect that its stdin is open to a file which
-not is a terminal, just like Nvim does. It then needs to forward this fd
-to Nvim. As fd=0 is already is used to send rpc data from the embedder to
-Nvim, it needs to use some other file descriptor, like fd=3 or higher.
+UIs can support reading from stdin (like `command | nvim -`, see |--|) as follows:
 
-Then, `stdin_fd` option should be passed to `nvim_ui_attach` and Nvim will
-implicitly read it as a buffer. This option can only be used when Nvim is
-launched with `--embed` option, as described above.
-
+1. The embedding process detects that the stdin fd is not a terminal.
+2. It then needs to forward this fd to Nvim. Because fd=0 is already is used
+   to send RPC data from embedder to Nvim, it must use some other file
+   descriptor, like fd=3 or higher.
+3. Then pass the fd as the `stdin_fd` parameter of `nvim_ui_attach`. Nvim will
+   read it as text into buffer 1.
 
 ==============================================================================
 Global Events							    *ui-global*

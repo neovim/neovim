@@ -19,7 +19,7 @@ describe('thread', function()
     screen = Screen.new(50, 10)
   end)
 
-  it('handle non-string error', function()
+  it('non-string error()', function()
     exec_lua [[
       local thread = vim.uv.new_thread(function()
         error()

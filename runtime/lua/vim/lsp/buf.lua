@@ -1,3 +1,6 @@
+--- @brief
+--- The `vim.lsp.buf_…` functions perform operations for LSP clients attached to the current buffer.
+
 local api = vim.api
 local lsp = vim.lsp
 local validate = vim.validate

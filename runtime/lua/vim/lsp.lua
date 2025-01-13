@@ -254,7 +254,7 @@ end
 ---         fully initialized. Use `on_init` to do any actions once
 ---         the client has been initialized.
 --- @return string? # Error message, if any
-local function create_and_initialize_client(config)
+local function create_and_init_client(config)
   local ok, res = pcall(require('vim.lsp.client').create, config)
   if not ok then
     return nil, res --[[@as string]]
@@ -601,7 +601,7 @@ function lsp.start(config, opts)
     end
   end
 
-  local client_id, err = create_and_initialize_client(config)
+  local client_id, err = create_and_init_client(config)
   if err then
     if not opts.silent then
       vim.notify(err, vim.log.levels.WARN)
@@ -716,7 +716,7 @@ end
 --- @return string? # Error message, if any
 function lsp.start_client(config)
   vim.deprecate('vim.lsp.start_client()', 'vim.lsp.start()', '0.13')
-  return create_and_initialize_client(config)
+  return create_and_init_client(config)
 end
 
 ---Buffer lifecycle handler for textDocument/didSave

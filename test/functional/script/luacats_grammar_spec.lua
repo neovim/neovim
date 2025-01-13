@@ -264,7 +264,7 @@ describe('luacats grammar', function()
     -- generics
     { 'elem_or_list<string>' },
     {
-      'elem_or_list<fun(client: vim.lsp.Client, initialize_result: lsp.InitializeResult)>',
+      'elem_or_list<fun(client: vim.lsp.Client, init_result: lsp.InitializeResult)>',
       nil,
     },
   }
