@@ -11956,49 +11956,6 @@ winheight({nr})                                                    *winheight()*
                 Return: ~
                   (`integer`)
 
-winlayout([{tabnr}])                                               *winlayout()*
-		The result is a nested List containing the layout of windows
-		in a tabpage.
-
-		Without {tabnr} use the current tabpage, otherwise the tabpage
-		with number {tabnr}. If the tabpage {tabnr} is not found,
-		returns an empty list.
-
-		For a leaf window, it returns: >
-			["leaf", {winid}]
-<
-		For horizontally split windows, which form a column, it
-		returns: >
-			["col", [{nested list of windows}]]
-<		For vertically split windows, which form a row, it returns: >
-			["row", [{nested list of windows}]]
-<
-		Example: >vim
-			" Only one window in the tab page
-			echo winlayout()
-<		 >
-			['leaf', 1000]
-<		 >vim
-			" Two horizontally split windows
-			echo winlayout()
-<		 >
-			['col', [['leaf', 1000], ['leaf', 1001]]]
-<		 >vim
-			" The second tab page, with three horizontally split
-			" windows, with two vertically split windows in the
-			" middle window
-			echo winlayout(2)
-<		 >
-			['col', [['leaf', 1002], ['row', [['leaf', 1003],
-					    ['leaf', 1001]]], ['leaf', 1000]]]
-<
-
-                Parameters: ~
-                  • {tabnr} (`integer?`)
-
-                Return: ~
-                  (`any[]`)
-
 winline()                                                            *winline()*
 		The result is a Number, which is the screen line of the cursor
 		in the window.  This is counting screen lines from the top of
