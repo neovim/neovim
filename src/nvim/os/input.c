@@ -274,7 +274,7 @@ void input_enqueue_raw(const char *data, size_t size)
   input_write_pos += to_write;
 }
 
-size_t input_enqueue(String keys)
+size_t input_enqueue(uint64_t chan_id, String keys)
 {
   const char *ptr = keys.data;
   const char *end = ptr + keys.size;
@@ -325,6 +325,8 @@ size_t input_enqueue(String keys)
 
   size_t rv = (size_t)(ptr - keys.data);
   process_ctrl_c();
+  input_chan_id = chan_id;
+
   return rv;
 }
 
