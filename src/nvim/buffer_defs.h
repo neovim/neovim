@@ -621,6 +621,9 @@ struct file_buffer {
 
   // end of buffer options
 
+  /// Buffer options.
+  BufOptVars b_opts;
+
   // values set from b_p_cino
   int b_ind_level;
   int b_ind_open_imag;
@@ -1244,6 +1247,8 @@ struct window_S {
   // this window, w_allbuf_opt is for all buffers in this window.
   winopt_T w_onebuf_opt;
   winopt_T w_allbuf_opt;
+  WinOptVars w_opts;
+  WinOptVars w_allbuf_opts;
   // transform a pointer to a "onebuf" option into a "allbuf" option
 #define GLOBAL_WO(p)    ((char *)(p) + sizeof(winopt_T))
 
