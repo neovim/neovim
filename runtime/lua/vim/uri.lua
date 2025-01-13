@@ -9,6 +9,13 @@ local schar = string.char
 local tohex = require('bit').tohex
 local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):.*'
 local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
+-- https://learn.microsoft.com/en-us/troubleshoot/windows-server/identity/naming-conventions-for-computer-domain-site-ou
+-- added also "." to the regex to handle \\wsl.localhost
+-- vim.fs.normalize returns paths formatted with "/" so we don't handle "\" (PR #28203)
+local WINDOWS_UNC_PATTERN = '^//([a-zA-Z.-]+)(/.*)'
+local WINDOWS_VOLUME_PATTERN = '^([a-zA-Z]:)(.*)'
+local IS_WINDOWS = vim.uv.os_uname().version:match('Windows')
+
 local PATTERNS = {
   -- RFC 2396
   -- https://tools.ietf.org/html/rfc2396#section-2.2
@@ -36,8 +43,25 @@ end
 
 ---@param uri string
 ---@return boolean
-local function is_windows_file_uri(uri)
+local function is_windows_volume_uri(uri)
   return uri:match('^file:/+[a-zA-Z]:') ~= nil
+end
+
+---@param uri string
+---@return string?
+local function get_uri_scheme(uri)
+  local scheme ---@type string?
+  -- handle all windows edge cases
+  if IS_WINDOWS then
+    scheme = uri:match(WINDOWS_URI_SCHEME_PATTERN)
+    if not scheme then
+      local volume_path, _ = uri:match(WINDOWS_VOLUME_PATTERN)
+      if volume_path then
+        return nil
+      end
+    end
+  end
+  return scheme or uri:match(URI_SCHEME_PATTERN)
 end
 
 ---URI-encodes a string using percent escapes.
@@ -60,17 +84,17 @@ end
 ---@param path string Path to file
 ---@return string URI
 function M.uri_from_fname(path)
-  local volume_path, fname = path:match('^([a-zA-Z]:)(.*)') ---@type string?
-  local is_windows = volume_path ~= nil
-  if is_windows then
-    path = volume_path .. M.uri_encode(fname:gsub('\\', '/'))
-  else
-    path = M.uri_encode(path)
-  end
+  path = vim.fs.normalize(path)
   local uri_parts = { 'file://' }
-  if is_windows then
-    table.insert(uri_parts, '/')
+  if IS_WINDOWS then
+    local unc_path, _ = path:match(WINDOWS_UNC_PATTERN) ---@type string?,string?
+    if unc_path then
+      path = path:gsub('^//', '')
+    elseif not path:match('^/') then
+      table.insert(uri_parts, '/')
+    end
   end
+  path = M.uri_encode(path)
   table.insert(uri_parts, path)
   return table.concat(uri_parts)
 end
@@ -80,15 +104,7 @@ end
 ---@return string URI
 function M.uri_from_bufnr(bufnr)
   local fname = vim.api.nvim_buf_get_name(bufnr)
-  local volume_path = fname:match('^([a-zA-Z]:).*')
-  local is_windows = volume_path ~= nil
-  local scheme ---@type string?
-  if is_windows then
-    fname = fname:gsub('\\', '/')
-    scheme = fname:match(WINDOWS_URI_SCHEME_PATTERN)
-  else
-    scheme = fname:match(URI_SCHEME_PATTERN)
-  end
+  local scheme = get_uri_scheme(fname)
   if scheme then
     return fname
   else
@@ -110,10 +126,14 @@ function M.uri_to_fname(uri)
   end
   uri = M.uri_decode(uri)
   --TODO improve this.
-  if is_windows_file_uri(uri) then
+  if is_windows_volume_uri(uri) then
     uri = uri:gsub('^file:/+', ''):gsub('/', '\\')
   else
-    uri = uri:gsub('^file:/+', '/') ---@type string
+    if IS_WINDOWS and uri:match('^file://[a-zA-Z.-]') ~= nil then -- handle UNC file uri in windows
+      uri = uri:gsub('^file:/+', '//'):gsub('/', '\\')
+    else
+      uri = uri:gsub('^file:/+', '/')
+    end
   end
   return uri
 end
