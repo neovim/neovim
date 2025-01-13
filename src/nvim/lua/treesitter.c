@@ -489,7 +489,11 @@ static int parser_parse(lua_State *L)
   // Sometimes parsing fails (timeout, or wrong parser ABI)
   // In those case, just return an error.
   if (!new_tree) {
-    return luaL_error(L, "An error occurred when parsing.");
+    if (ts_parser_timeout_micros(p) == 0) {
+      // No timeout set, must have had an error
+      return luaL_error(L, "An error occurred when parsing.");
+    }
+    return 0;
   }
 
   // The new tree will be pushed to the stack, without copy, ownership is now to the lua GC.

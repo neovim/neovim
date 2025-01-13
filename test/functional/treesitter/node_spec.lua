@@ -20,6 +20,7 @@ describe('treesitter node API', function()
     insert('F')
     exec_lua(function()
       vim.treesitter.start(0, 'lua')
+      vim.treesitter.get_parser(0):parse()
       vim.treesitter.get_node():tree()
       vim.treesitter.get_node():tree()
       collectgarbage()
@@ -45,6 +46,7 @@ describe('treesitter node API', function()
     -- this buffer doesn't have filetype set!
     insert('local foo = function() end')
     exec_lua(function()
+      vim.treesitter.get_parser(0, 'lua'):parse()
       _G.node = vim.treesitter.get_node({
         bufnr = 0,
         pos = { 0, 6 }, -- on "foo"

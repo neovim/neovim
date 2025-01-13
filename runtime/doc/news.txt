@@ -158,6 +158,11 @@ TREESITTER
   if no languages are explicitly registered.
 • |vim.treesitter.language.add()| returns `true` if a parser was loaded
   successfully and `nil,errmsg` otherwise instead of throwing an error.
+• |vim.treesitter.get_parser()| and |vim.treesitter.start()| no longer parse
+  the tree before returning. Scripts must call |LanguageTree:parse()| explicitly. >lua
+    local p = vim.treesitter.get_parser(0, 'c')
+    p:parse()
+<
 
 TUI
 
@@ -297,6 +302,8 @@ PERFORMANCE
 • Strong |treesitter-query| caching makes repeat  |vim.treesitter.query.get()|
   and |vim.treesitter.query.parse()| calls significantly faster for large
   queries.
+• Treesitter highlighting is now asynchronous. To force synchronous parsing,
+  use `vim.g._ts_force_sync_parsing = true`.
 
 PLUGINS
 
@@ -339,6 +346,8 @@ TREESITTER
 • New |TSNode:child_with_descendant()|, which is nearly identical to
   |TSNode:child_containing_descendant()| except that it can return the
   descendant itself.
+• |LanguageTree:parse()| optionally supports asynchronous invocation, which is
+  activated by passing the `on_parse` callback parameter.
 
 TUI
 
