@@ -1085,3 +1085,69 @@ sctx_T api_set_sctx(uint64_t channel_id)
   }
   return old_current_sctx;
 }
+
+/// Create a reference counted string from a C string.
+///
+/// @param  str  C string to create a reference counted string from.
+/// @return      Reference counted string.
+const char *ref_string_new(const char *str)
+{
+  /// Allocate memory to store a refcount and the string. Reference count is stored at the beginning
+  /// of the memory as a uint32_t. Reference count of UINT32_MAX indicates that the string is a
+  /// static string and does not need to be freed.
+  uint32_t *refcount = xmalloc(sizeof(uint32_t) + strlen(str) + 1);
+  char *data = (char *)(refcount + 1);
+  *refcount = 1;
+  strcpy(data, str);
+  return data;
+}
+
+/// Copy a reference counted string.
+///
+/// @param  str  Reference counted string to copy.
+/// @return      Copied reference counted string.
+const char *ref_string_copy(const char *str)
+{
+  uint32_t *refcount = (uint32_t *)str - 1;
+  if (*refcount == UINT32_MAX) {
+    // Static string, no need to increment the refcount.
+    return str;
+  }
+
+  if (*refcount == UINT32_MAX - 1) {
+    // Incrementing the refcount would make it have the sentinel value for static strings.
+    // This should realistically never happen.
+    abort();
+  }
+
+  (*refcount)++;
+  return str;
+}
+
+/// Free a reference counted string.
+/// Decrement the reference count, if the reference count reaches 0, the memory is freed.
+///
+/// @param  str  Reference counted string to free.
+void ref_string_free(const char *str)
+{
+  uint32_t *refcount = (uint32_t *)str - 1;
+  if (*refcount == UINT32_MAX) {
+    // Static string, no need to decrement the refcount.
+    return;
+  }
+
+  if (*refcount == 0) {
+    // Reference count is already 0, this should never happen.
+    abort();
+  }
+
+  if (--(*refcount) == 0) {
+    xfree(refcount);
+  }
+}
+
+uint32_t ref_string_get_refcount(const char *str)
+{
+  uint32_t *refcount = (uint32_t *)str - 1;
+  return *refcount;
+}
