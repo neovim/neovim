@@ -1,10 +1,10 @@
--- skip when nvim is a release build
-if vim.version().prerelease ~= "dev" then
+-- skip if user code explicitly disables
+if vim.g.news_check == false then
   return
 end
 
--- skip if user code explicitly disables
-if vim.g.news_check == false then
+-- skip when nvim is a release build
+if vim.version().prerelease ~= "dev" then
   return
 end
 
