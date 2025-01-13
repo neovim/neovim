@@ -187,6 +187,7 @@ API
 • |nvim__ns_set()| can set properties for a namespace
 • |nvim_echo()| `err` field to print error messages and `chunks` accepts
   highlight group IDs.
+• |nvim_open_win()| `relative` field can be set to "laststatus" and "tabline".
 
 DEFAULTS
 

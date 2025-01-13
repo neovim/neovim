@@ -900,6 +900,8 @@ typedef enum {
   kFloatRelativeWindow = 1,
   kFloatRelativeCursor = 2,
   kFloatRelativeMouse = 3,
+  kFloatRelativeTabline = 4,
+  kFloatRelativeLaststatus = 5,
 } FloatRelative;
 
 /// Keep in sync with win_split_str[] in nvim_win_get_config() (api/win_config.c)

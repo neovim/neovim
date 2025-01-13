@@ -835,6 +835,10 @@ void ui_ext_win_position(win_T *wp, bool validate)
           col += tcol - 1;
         }
       }
+    } else if (c.relative == kFloatRelativeLaststatus) {
+      row += Rows - (int)p_ch - last_stl_height(false);
+    } else if (c.relative == kFloatRelativeTabline) {
+      row += tabline_height();
     }
 
     bool resort = wp->w_grid_alloc.comp_index != 0
@@ -1066,6 +1070,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
       return NULL;
     }
     need_status = STATUS_HEIGHT;
+    win_float_anchor_laststatus();
   }
 
   bool do_equal = false;
@@ -6803,6 +6808,7 @@ void last_status(bool morewin)
 {
   // Don't make a difference between horizontal or vertical split.
   last_status_rec(topframe, last_stl_height(morewin) > 0, global_stl_height() > 0);
+  win_float_anchor_laststatus();
 }
 
 // Remove status line from window, replacing it with a horizontal separator if needed.
