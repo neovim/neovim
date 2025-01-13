@@ -117,6 +117,7 @@ error('Cannot require a meta file')
 --- @field group? integer|string
 --- @field pattern? string|string[]
 --- @field buffer? integer|integer[]
+--- @field id? integer
 
 --- @class vim.api.keyset.get_commands
 --- @field builtin? boolean
