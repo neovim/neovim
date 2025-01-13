@@ -513,7 +513,9 @@ local function lsp_enable_callback(bufnr)
         ---@param root_dir string
         config.root_dir(function(root_dir)
           config.root_dir = root_dir
-          start(config)
+          vim.schedule(function()
+            start(config)
+          end)
         end)
       else
         start(config)
