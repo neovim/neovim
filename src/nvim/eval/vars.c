@@ -843,11 +843,10 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
     goto theend;
   }
 
-  // Don't assume current and new values are of the same type in order to future-proof the code for
-  // when an option can have multiple types.
-  const bool is_num = ((curval.type == kOptValTypeNumber || curval.type == kOptValTypeBoolean)
-                       && (newval.type == kOptValTypeNumber || newval.type == kOptValTypeBoolean));
-  const bool is_string = curval.type == kOptValTypeString && newval.type == kOptValTypeString;
+  // Current value and new value must have the same type.
+  assert(curval.type == newval.type);
+  const bool is_num = curval.type == kOptValTypeNumber || curval.type == kOptValTypeBoolean;
+  const bool is_string = curval.type == kOptValTypeString;
 
   if (op != NULL && *op != '=') {
     if (!hidden && is_num) {  // number or bool
@@ -1900,8 +1899,6 @@ static void getwinvar(typval_T *argvars, typval_T *rettv, int off)
 ///
 /// @return  Typval converted to OptVal. Must be freed by caller.
 ///          Returns NIL_OPTVAL for invalid option name.
-///
-/// TODO(famiu): Refactor this to support multitype options.
 static OptVal tv_to_optval(typval_T *tv, OptIndex opt_idx, const char *option, bool *error)
 {
   OptVal value = NIL_OPTVAL;

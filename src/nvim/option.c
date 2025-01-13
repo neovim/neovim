@@ -3121,17 +3121,10 @@ bool optval_equal(OptVal o1, OptVal o2)
   UNREACHABLE;
 }
 
-/// Get type of option. Does not support multitype options.
+/// Get type of option.
 static OptValType option_get_type(const OptIndex opt_idx)
 {
-  assert(!option_is_multitype(opt_idx));
-
-  // If the option only supports a single type, it means that the index of the option's type flag
-  // corresponds to the value of the type enum. So get the index of the type flag using xctz() and
-  // use that as the option's type.
-  OptValType type = xctz(options[opt_idx].type_flags);
-  assert(type > kOptValTypeNil && type < kOptValTypeSize);
-  return type;
+  return options[opt_idx].type;
 }
 
 /// Create OptVal from var pointer.
@@ -3147,11 +3140,6 @@ OptVal optval_from_varp(OptIndex opt_idx, void *varp)
   // changed.
   if ((int *)varp == &curbuf->b_changed) {
     return BOOLEAN_OPTVAL(curbufIsChanged());
-  }
-
-  if (option_is_multitype(opt_idx)) {
-    // Multitype options are stored as OptVal.
-    return *(OptVal *)varp;
   }
 
   OptValType type = option_get_type(opt_idx);
@@ -3264,33 +3252,6 @@ OptVal object_as_optval(Object o, bool *error)
   UNREACHABLE;
 }
 
-/// Get an allocated string containing a list of valid types for an option.
-/// For options with a singular type, it returns the name of the type. For options with multiple
-/// possible types, it returns a slash separated list of types. For example, if an option can be a
-/// number, boolean or string, the function returns "number/boolean/string"
-static char *option_get_valid_types(OptIndex opt_idx)
-{
-  StringBuilder str = KV_INITIAL_VALUE;
-  kv_resize(str, 32);
-
-  // Iterate through every valid option value type and check if the option supports that type
-  for (OptValType type = 0; type < kOptValTypeSize; type++) {
-    if (option_has_type(opt_idx, type)) {
-      const char *typename = optval_type_get_name(type);
-
-      if (str.size == 0) {
-        kv_concat(str, typename);
-      } else {
-        kv_printf(str, "/%s", typename);
-      }
-    }
-  }
-
-  // Ensure that the string is NUL-terminated.
-  kv_push(str, NUL);
-  return str.items;
-}
-
 /// Check if option is hidden.
 ///
 /// @param  opt_idx  Option index in options[] table.
@@ -3303,25 +3264,10 @@ bool is_option_hidden(OptIndex opt_idx)
          && options[opt_idx].var == &options[opt_idx].def_val.data;
 }
 
-/// Check if option is multitype (supports multiple types).
-static bool option_is_multitype(OptIndex opt_idx)
-{
-  const OptTypeFlags type_flags = get_option(opt_idx)->type_flags;
-  assert(type_flags != 0);
-  return !is_power_of_two(type_flags);
-}
-
 /// Check if option supports a specific type.
 bool option_has_type(OptIndex opt_idx, OptValType type)
 {
-  // Ensure that type flags variable can hold all types.
-  STATIC_ASSERT(kOptValTypeSize <= sizeof(OptTypeFlags) * 8,
-                "Option type_flags cannot fit all option types");
-  // Ensure that the type is valid before accessing type_flags.
-  assert(type > kOptValTypeNil && type < kOptValTypeSize);
-  // Bitshift 1 by the value of type to get the type's corresponding flag, and check if it's set in
-  // the type_flags bit field.
-  return get_option(opt_idx)->type_flags & (1 << type);
+  return options[opt_idx].type == type;
 }
 
 /// Check if option supports a specific scope.
@@ -3658,11 +3604,10 @@ static const char *validate_option_value(const OptIndex opt_idx, OptVal *newval,
     }
   } else if (!option_has_type(opt_idx, newval->type)) {
     char *rep = optval_to_cstr(*newval);
-    char *valid_types = option_get_valid_types(opt_idx);
+    const char *type_str = optval_type_get_name(opt->type);
     snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
-             opt->fullname, valid_types, optval_type_get_name(newval->type), rep);
+             opt->fullname, type_str, optval_type_get_name(newval->type), rep);
     xfree(rep);
-    xfree(valid_types);
     errmsg = errbuf;
   } else if (newval->type == kOptValTypeNumber) {
     // Validate and bound check num option values.
