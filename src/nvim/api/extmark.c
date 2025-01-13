@@ -397,9 +397,6 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   (highest priority last).
 ///               - virt_text_pos : position of virtual text. Possible values:
 ///                 - "eol": right after eol character (default).
-///                 - "overlay": display over the specified column, without
-///                              shifting the underlying text.
-///                 - "right_align": display right aligned in the window.
 ///                 - "eol_right_align": display right aligned in the window
 ///                                      unless the virtual text is longer than
 ///                                      the space available. If the virtual
@@ -409,6 +406,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                                      virtual text is shown after the end of
 ///                                      the line rather than the previous
 ///                                      screen line.
+///                 - "overlay": display over the specified column, without
+///                              shifting the underlying text.
+///                 - "right_align": display right aligned in the window.
 ///                 - "inline": display at the specified column, and
 ///                             shift the buffer text to the right as needed.
 ///               - virt_text_win_col : position the virtual text at a fixed
