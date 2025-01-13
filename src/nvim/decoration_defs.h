@@ -22,6 +22,7 @@ typedef enum {
   kVPosOverlay,
   kVPosWinCol,
   kVPosRightAlign,
+  kVPosEndOfLineRightAlign,
   kVPosInline,
 } VirtTextPos;
 
