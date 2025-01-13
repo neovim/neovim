@@ -1519,6 +1519,39 @@ func Test_pum_highlights_match()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_pum_highlights_match_with_abbr()
+  CheckScreendump
+  let lines =<< trim END
+    func Omni_test(findstart, base)
+      if a:findstart
+        return col(".")
+      endif
+      return {
+            \ 'words': [
+            \ { 'word': 'foobar', 'abbr': "foobar\t\t!" },
+            \ { 'word': 'foobaz', 'abbr': "foobaz\t\t!" },
+            \]}
+    endfunc
+
+    set omnifunc=Omni_test
+    set completeopt=menuone,noinsert
+    hi PmenuMatchSel  ctermfg=6 ctermbg=7
+    hi PmenuMatch     ctermfg=4 ctermbg=225
+  END
+  call writefile(lines, 'Xscript', 'D')
+  let  buf = RunVimInTerminal('-S Xscript', {})
+  call TermWait(buf)
+  call term_sendkeys(buf, "i\<C-X>\<C-O>")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "foo")
+  call VerifyScreenDump(buf, 'Test_pum_highlights_19', {})
+
+  call term_sendkeys(buf, "\<C-E>\<Esc>")
+  call TermWait(buf)
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_pum_user_abbr_hlgroup()
   CheckScreendump
   let lines =<< trim END

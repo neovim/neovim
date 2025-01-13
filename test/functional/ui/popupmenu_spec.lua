@@ -5415,6 +5415,45 @@ describe('builtin popupmenu', function()
         feed('<C-E><Esc>')
       end)
 
+      -- oldtest: Test_pum_highlights_match_with_abbr()
+      it('can highlight matched text with abbr', function()
+        exec([[
+          func Omni_test(findstart, base)
+            if a:findstart
+              return col(".")
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'foobar', 'abbr': "foobar\t\t!" },
+                  \ { 'word': 'foobaz', 'abbr': "foobaz\t\t!" },
+                  \]}
+          endfunc
+
+          set omnifunc=Omni_test
+          set completeopt=menuone,noinsert
+          hi PmenuMatchSel  guifg=Blue guibg=Grey
+          hi PmenuMatch     guifg=Blue guibg=Plum1
+        ]])
+        feed('i<C-X><C-O>')
+        screen:expect([[
+          ^                                |
+          {s:foobar    !    }{1:                 }|
+          {n:foobaz    !    }{1:                 }|
+          {1:~                               }|*16
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+        feed('foo')
+        screen:expect([[
+          foo^                             |
+          {ms:foo}{s:bar    !    }{1:                 }|
+          {mn:foo}{n:baz    !    }{1:                 }|
+          {1:~                               }|*16
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+
+        feed('<C-E><Esc>')
+      end)
+
       -- oldtest: Test_pum_user_abbr_hlgroup()
       it('custom abbr_hlgroup override', function()
         exec([[
