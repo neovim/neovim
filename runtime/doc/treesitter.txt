@@ -497,7 +497,7 @@ convention, nodes to be concealed are captured as `@conceal`, but any capture
 can be used. For example, the following query can be used to hide code block
 delimiters in Markdown: >query
 
-    (fenced_code_block_delimiter @conceal (#set! conceal ""))
+    ((fenced_code_block_delimiter) @conceal (#set! conceal ""))
 <
 It is also possible to replace a node with a single character, which (unlike
 legacy syntax) can be given a custom highlight. For example, the following
@@ -507,6 +507,13 @@ still highlighted the same as other operators: >query
     "!=" @operator (#set! conceal "≠")
 <
 Conceals specified in this way respect 'conceallevel'.
+
+Note that although you can use any string for `conceal`, only the first
+character will be used: >query
+
+    ; identifiers will be concealed with 'f'.
+    ((identifier) @conceal (#set! conceal "foo"))
+<
 
                                                *treesitter-highlight-priority*
 Treesitter uses |nvim_buf_set_extmark()| to set highlights with a default
@@ -1666,8 +1673,8 @@ LanguageTree:parse({range}, {on_parse})                 *LanguageTree:parse()*
                     Function invoked when parsing completes. When provided and
                     `vim.g._ts_force_sync_parsing` is not set, parsing will
                     run asynchronously. The first argument to the function is
-                    a string respresenting the error type, in case of a
-                    failure (currently only possible for timeouts). The second
+                    a string representing the error type, in case of a failure
+                    (currently only possible for timeouts). The second
                     argument is the list of trees returned by the parse (upon
                     success), or `nil` if the parse timed out (determined by
                     'redrawtime').

@@ -523,7 +523,7 @@ end
 ---     only the root tree without injections).
 --- @param on_parse fun(err?: string, trees?: table<integer, TSTree>)? Function invoked when parsing completes.
 ---     When provided and `vim.g._ts_force_sync_parsing` is not set, parsing will run
----     asynchronously. The first argument to the function is a string respresenting the error type,
+---     asynchronously. The first argument to the function is a string representing the error type,
 ---     in case of a failure (currently only possible for timeouts). The second argument is the list
 ---     of trees returned by the parse (upon success), or `nil` if the parse timed out (determined
 ---     by 'redrawtime').

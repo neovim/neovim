@@ -2073,7 +2073,7 @@ char *path_shorten_fname(char *full_path, char *dir_name)
 /// @param[in]   flags     Flags passed to expand_wildcards().
 ///
 /// @returns               OK when *file is set to allocated array of matches
-///                        and *num_file(can be zero) to the number of matches.
+///                        and *num_file (can be zero) to the number of matches.
 ///                        If FAIL is returned, *num_file and *file are either
 ///                        unchanged or *num_file is set to 0 and *file is set
 ///                        to NULL or points to "".
