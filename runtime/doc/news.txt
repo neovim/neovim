@@ -70,6 +70,8 @@ DIAGNOSTICS
   the "severity_sort" option.
 • Diagnostics are filtered by severity before being passed to a diagnostic
   handler |diagnostic-handlers|.
+• A "virtual_lines" diagnostic handler was added to render diagnostics using
+  virtual lines below the respective code.
 
 EDITOR
 
