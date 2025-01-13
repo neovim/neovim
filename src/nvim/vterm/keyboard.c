@@ -25,29 +25,32 @@ void vterm_keyboard_unichar(VTerm *vt, uint32_t c, VTermModifier mod)
     return;
   }
 
-  int needs_CSIu;
+  bool needs_CSIu = false;
   switch (c) {
   // Special Ctrl- letters that can't be represented elsewise
   case 'i':
   case 'j':
   case 'm':
   case '[':
-    needs_CSIu = 1;
+    // CSIu encoding is disabled #31926
+    //needs_CSIu = true;
     break;
   // Ctrl-\ ] ^ _ don't need CSUu
   case '\\':
   case ']':
   case '^':
   case '_':
-    needs_CSIu = 0;
     break;
   // Shift-space needs CSIu
   case ' ':
-    needs_CSIu = !!(mod & VTERM_MOD_SHIFT);
+    // CSIu encoding is disabled #31926
+    //needs_CSIu = !!(mod & VTERM_MOD_SHIFT);
     break;
   // All other characters needs CSIu except for letters a-z
   default:
-    needs_CSIu = (c < 'a' || c > 'z');
+    // CSIu encoding is disabled #31926
+    //needs_CSIu = (c < 'a' || c > 'z');
+    break;
   }
 
   // ALT we can just prefix with ESC; anything else requires CSI u
@@ -187,7 +190,8 @@ void vterm_keyboard_key(VTerm *vt, VTermKey key, VTermModifier mod)
 
   case KEYCODE_LITERAL:
                         case_LITERAL:
-    if (mod & (VTERM_MOD_SHIFT|VTERM_MOD_CTRL)) {
+    // CSIu encoding is disabled #31926
+    if (mod & /*(VTERM_MOD_SHIFT|VTERM_MOD_CTRL)*/ 0) {
       vterm_push_output_sprintf_ctrl(vt, C1_CSI, "%d;%du", k.literal, mod + 1);
     } else {
       vterm_push_output_sprintf(vt, mod & VTERM_MOD_ALT ? ESC_S "%c" : "%c", k.literal);
