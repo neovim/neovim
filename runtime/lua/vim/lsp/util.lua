@@ -1432,7 +1432,7 @@ function M._make_floating_popup_size(contents, opts)
       if vim.tbl_isempty(line_widths) then
         for _, line in ipairs(contents) do
           local line_width = vim.fn.strdisplaywidth(line:gsub('%z', '\n'))
-          height = height + math.ceil(line_width / wrap_at)
+          height = height + math.max(1, math.ceil(line_width / wrap_at))
         end
       else
         for i = 1, #contents do
