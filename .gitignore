@@ -8,6 +8,7 @@ compile_commands.json
 /.vs/
 /.vscode/
 /.idea/
+.nvim.lua
 
 # Build/deps dir
 /build/
