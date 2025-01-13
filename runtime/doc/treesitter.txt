@@ -572,6 +572,10 @@ associated with patterns:
     • `injection.parent` - indicates that the captured node’s text should
       be parsed with the same language as the node's parent LanguageTree.
 
+Injection queries are currently run over the entire buffer, which can be slow
+for large buffers. To disable injections for, e.g.,  `c`, just place an
+empty `queries/c/injections.scm` file in your 'runtimepath'.
+
 ==============================================================================
 VIM.TREESITTER                                                *lua-treesitter*
 
