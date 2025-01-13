@@ -604,18 +604,6 @@ end
 
 --- Jumps to the next (or previous) placeholder in the current snippet, if possible.
 ---
---- For example, map `<Tab>` to jump while a snippet is active:
----
---- ```lua
---- vim.keymap.set({ 'i', 's' }, '<Tab>', function()
----    if vim.snippet.active({ direction = 1 }) then
----      return '<Cmd>lua vim.snippet.jump(1)<CR>'
----    else
----      return '<Tab>'
----    end
----  end, { expr = true })
---- ```
----
 --- @param direction (vim.snippet.Direction) Navigation direction. -1 for previous, 1 for next.
 function M.jump(direction)
   -- Get the tabstop index to jump to.
@@ -655,18 +643,6 @@ end
 
 --- Returns `true` if there's an active snippet in the current buffer,
 --- applying the given filter if provided.
----
---- You can use this function to navigate a snippet as follows:
----
---- ```lua
---- vim.keymap.set({ 'i', 's' }, '<Tab>', function()
----    if vim.snippet.active({ direction = 1 }) then
----      return '<Cmd>lua vim.snippet.jump(1)<CR>'
----    else
----      return '<Tab>'
----    end
----  end, { expr = true })
---- ```
 ---
 --- @param filter? vim.snippet.ActiveFilter Filter to constrain the search with:
 --- - `direction` (vim.snippet.Direction): Navigation direction. Will return `true` if the snippet
