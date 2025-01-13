@@ -634,40 +634,13 @@ static void eat_bytes(TermKey *tk, size_t count)
   tk->buffcount -= count;
 }
 
-// TODO(dundargoc): we should be able to replace this with utf_char2bytes from mbyte.c
 int fill_utf8(int codepoint, char *str)
 {
-  int nbytes = utf_char2len(codepoint);
-
+  int nbytes = utf_char2bytes(codepoint, str);
   str[nbytes] = 0;
-
-  // This is easier done backwards
-  int b = nbytes;
-  while (b > 1) {
-    b--;
-    str[b] = (char)0x80 | (codepoint & 0x3f);
-    codepoint >>= 6;
-  }
-
-  switch (nbytes) {
-  case 1:
-    str[0] = (codepoint & 0x7f); break;
-  case 2:
-    str[0] = (char)0xc0 | (codepoint & 0x1f); break;
-  case 3:
-    str[0] = (char)0xe0 | (codepoint & 0x0f); break;
-  case 4:
-    str[0] = (char)0xf0 | (codepoint & 0x07); break;
-  case 5:
-    str[0] = (char)0xf8 | (codepoint & 0x03); break;
-  case 6:
-    str[0] = (char)0xfc | (codepoint & 0x01); break;
-  }
-
   return nbytes;
 }
 
-#define UTF8_INVALID 0xFFFD
 static TermKeyResult parse_utf8(const unsigned char *bytes, size_t len, int *cp, size_t *nbytep)
 {
   unsigned nbytes;
@@ -681,7 +654,7 @@ static TermKeyResult parse_utf8(const unsigned char *bytes, size_t len, int *cp,
     return TERMKEY_RES_KEY;
   } else if (b0 < 0xc0) {
     // Starts with a continuation byte - that's not right
-    *cp = UTF8_INVALID;
+    *cp = UNICODE_INVALID;
     *nbytep = 1;
     return TERMKEY_RES_KEY;
   } else if (b0 < 0xe0) {
@@ -700,7 +673,7 @@ static TermKeyResult parse_utf8(const unsigned char *bytes, size_t len, int *cp,
     nbytes = 6;
     *cp = b0 & 0x01;
   } else {
-    *cp = UTF8_INVALID;
+    *cp = UNICODE_INVALID;
     *nbytep = 1;
     return TERMKEY_RES_KEY;
   }
@@ -714,7 +687,7 @@ static TermKeyResult parse_utf8(const unsigned char *bytes, size_t len, int *cp,
 
     cb = bytes[b];
     if (cb < 0x80 || cb >= 0xc0) {
-      *cp = UTF8_INVALID;
+      *cp = UNICODE_INVALID;
       *nbytep = b;
       return TERMKEY_RES_KEY;
     }
@@ -725,14 +698,14 @@ static TermKeyResult parse_utf8(const unsigned char *bytes, size_t len, int *cp,
 
   // Check for overlong sequences
   if ((int)nbytes > utf_char2len(*cp)) {
-    *cp = UTF8_INVALID;
+    *cp = UNICODE_INVALID;
   }
 
   // Check for UTF-16 surrogates or invalid *cps
   if ((*cp >= 0xD800 && *cp <= 0xDFFF)
       || *cp == 0xFFFE
       || *cp == 0xFFFF) {
-    *cp = UTF8_INVALID;
+    *cp = UNICODE_INVALID;
   }
 
   *nbytep = nbytes;
@@ -962,9 +935,9 @@ static TermKeyResult peekkey_simple(TermKey *tk, TermKeyKey *key, int force, siz
     if (res == TERMKEY_RES_AGAIN && force) {
       // There weren't enough bytes for a complete UTF-8 sequence but caller
       // demands an answer. About the best thing we can do here is eat as many
-      // bytes as we have, and emit a UTF8_INVALID. If the remaining bytes
+      // bytes as we have, and emit a UNICODE_INVALID. If the remaining bytes
       // arrive later, they'll be invalid too.
-      codepoint = UTF8_INVALID;
+      codepoint = UNICODE_INVALID;
       *nbytep = tk->buffcount;
       res = TERMKEY_RES_KEY;
     }

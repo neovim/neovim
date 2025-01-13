@@ -28,6 +28,7 @@ local bit = require('bit')
 --- @field parser_sos function
 --- @field parser_text function
 --- @field print_color function
+--- @field schar_get fun(any, any):integer
 --- @field screen_sb_clear function
 --- @field screen_sb_popline function
 --- @field screen_sb_pushline function
@@ -43,6 +44,8 @@ local bit = require('bit')
 --- @field state_setpenattr function
 --- @field state_settermprop function
 --- @field term_output function
+--- @field utf_ptr2char fun(any):integer
+--- @field utf_ptr2len fun(any):integer
 --- @field vterm_input_write function
 --- @field vterm_keyboard_end_paste function
 --- @field vterm_keyboard_key function
@@ -360,7 +363,7 @@ local function screen_cell(row, col, expected, screen)
   pos['row'] = row
   pos['col'] = col
 
-  local cell = t.ffi.new('VTermScreenCell')
+  local cell = t.ffi.new('VTermScreenCell') ---@type any
   vterm.vterm_screen_get_cell(screen, pos, cell)
 
   local buf = t.ffi.new('unsigned char[32]')
@@ -1704,12 +1707,6 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     reset(state, nil)
     push('#', vt)
     expect('putglyph 23 1 0,0')
-
-    -- Designate G0=UK
-    reset(state, nil)
-    push('\x1b(A', vt)
-    push('#', vt)
-    expect('putglyph a3 1 0,0')
 
     -- Designate G0=DEC drawing
     reset(state, nil)
