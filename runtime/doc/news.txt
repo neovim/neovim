@@ -96,7 +96,7 @@ EVENTS
   • `msg_show`:
     • `history` argument indicating if the message was added to the history.
     • new message kinds: "bufwrite", "completion", "list_cmd", "lua_print",
-      "search_cmd", "undo", "wildlist".
+      "search_cmd", "undo", "verbose", wildlist".
 
 HIGHLIGHTS
 

@@ -330,6 +330,56 @@ describe('ui/ext_messages', function()
         },
       },
     })
+
+    feed(':1verbose filter Diff[AC] hi<CR>')
+    screen:expect({
+      cmdline = { {
+        abort = false,
+      } },
+      messages = {
+        {
+          content = {
+            { '\nDiffAdd        ' },
+            { 'xxx', 22, 30 },
+            { ' ' },
+            { 'ctermbg=', 18, 5 },
+            { '81 ' },
+            { 'guibg=', 18, 5 },
+            { 'LightBlue' },
+          },
+          history = false,
+          kind = 'list_cmd',
+        },
+        {
+          content = { { '\n\tLast set from Lua (run Nvim with -V1 for more details)' } },
+          history = false,
+          kind = 'verbose',
+        },
+        {
+          content = {
+            { '\nDiffChange     ' },
+            { 'xxx', 4, 31 },
+            { ' ' },
+            { 'ctermbg=', 18, 5 },
+            { '225 ' },
+            { 'guibg=', 18, 5 },
+            { 'LightMagenta' },
+          },
+          history = false,
+          kind = 'list_cmd',
+        },
+        {
+          content = { { '\n\tLast set from Lua (run Nvim with -V1 for more details)' } },
+          history = false,
+          kind = 'verbose',
+        },
+        {
+          content = { { 'Press ENTER or type command to continue', 6, 18 } },
+          history = false,
+          kind = 'return_prompt',
+        },
+      },
+    })
   end)
 
   it(':echoerr', function()
