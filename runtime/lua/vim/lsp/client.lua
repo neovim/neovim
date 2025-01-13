@@ -23,6 +23,11 @@ local validate = vim.validate
 --- (default: `150`)
 --- @field debounce_text_changes integer
 ---
+--- Request diagnostics from the server on `didSave` events instead of `didChange` events.
+--- Has no effect if the server does not support pull diagnostics.
+--- (default: `false`)
+--- @field pull_diagnostics_on_save boolean
+---
 --- Milliseconds to wait for server to exit cleanly after sending the
 --- "shutdown" request before sending kill -15. If set to false, nvim exits
 --- immediately after sending the "shutdown" request to the server.
