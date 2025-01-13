@@ -2278,7 +2278,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     // When no matching mapping found or found a non-matching mapping that
     // matches at least what the matching mapping matched:
     // Try to include the modifier into the key when mapping is allowed.
-    if (no_mapping == 0 || allow_keys != 0) {
+    if ((no_mapping == 0 || allow_keys != 0) && !(State & MODE_TERMINAL)) {
       if (tb_c1 == K_SPECIAL
           && (typebuf.tb_len < 2
               || (typebuf.tb_buf[typebuf.tb_off + 1] == KS_MODIFIER && typebuf.tb_len < 4))) {
