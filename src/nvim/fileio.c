@@ -3276,7 +3276,11 @@ static void vim_mktempdir(void)
     expand_env((char *)temp_dirs[i], tmp, TEMP_FILE_PATH_MAXLEN - 64);
     if (!os_isdir(tmp)) {
       if (strequal("$TMPDIR", temp_dirs[i])) {
-        WLOG("$TMPDIR tempdir not a directory (or does not exist): %s", tmp);
+        if (!os_getenv("TMPDIR")) {
+          WLOG("$TMPDIR is unset");
+        } else {
+          WLOG("$TMPDIR tempdir not a directory (or does not exist): \"%s\"", tmp);
+        }
       }
       continue;
     }
