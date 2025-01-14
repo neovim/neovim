@@ -319,9 +319,7 @@ describe('ui/ext_messages', function()
     -- kind=echoerr for nvim_echo() err
     feed(':call nvim_echo([["Error"], ["Message", "Special"]], 1, #{ err:1 })<CR>')
     screen:expect({
-      cmdline = { {
-        abort = false,
-      } },
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { 'Error', 9, 6 }, { 'Message', 16, 99 } },
@@ -331,12 +329,23 @@ describe('ui/ext_messages', function()
       },
     })
 
+    -- kind=verbose for nvim_echo() verbose
+    feed(':call nvim_echo([["Verbose Message"]], 1, #{ verbose:1 })<CR>')
+    screen:expect({
+      cmdline = { { abort = false } },
+      messages = {
+        {
+          content = { { 'Verbose Message' } },
+          history = true,
+          kind = 'verbose',
+        },
+      },
+    })
+
     -- kind=verbose for :verbose messages
     feed(':1verbose filter Diff[AC] hi<CR>')
     screen:expect({
-      cmdline = { {
-        abort = false,
-      } },
+      cmdline = { { abort = false } },
       messages = {
         {
           content = {
@@ -387,9 +396,7 @@ describe('ui/ext_messages', function()
       or '{ echo stdout; echo stderr >&2; exit 3; }'
     feed(('<CR>:!%s<CR>'):format(cmd))
     screen:expect({
-      cmdline = { {
-        abort = false,
-      } },
+      cmdline = { { abort = false } },
       messages = {
         {
           content = { { (':!%s\r\n[No write since last change]\n'):format(cmd) } },
@@ -1126,9 +1133,7 @@ describe('ui/ext_messages', function()
         ^                         |
         {1:~                        }|*4
       ]],
-      cmdline = { {
-        abort = false,
-      } },
+      cmdline = { { abort = false } },
     })
     eq(0, eval('&cmdheight'))
   end)
