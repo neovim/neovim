@@ -44,6 +44,7 @@
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/strings.h"
+#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -532,6 +533,15 @@ const char *did_set_background(optset_T *args)
     check_string_option(&p_bg);
     init_highlight(false, false);
   }
+
+  // Notify all terminal buffers that the background color changed so they can
+  // send a theme update notification
+  FOR_ALL_BUFFERS(buf) {
+    if (buf->terminal) {
+      terminal_notify_theme(buf->terminal, dark);
+    }
+  }
+
   return NULL;
 }
 

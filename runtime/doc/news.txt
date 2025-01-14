@@ -337,6 +337,8 @@ TERMINAL
   unfocused terminal window will have no cursor at all (so there is nothing to
   highlight).
 • |jobstart()| gained the "term" flag.
+• The |terminal| will send theme update notifications when 'background' is
+  changed and DEC mode 2031 is enabled.
 
 TREESITTER
 
