@@ -68,6 +68,8 @@ DIAGNOSTICS
 
 • The "underline" diagnostics handler sorts diagnostics by severity when using
   the "severity_sort" option.
+• Diagnostics are filtered by severity before being passed to a diagnostic
+  handler |diagnostic-handlers|.
 
 EDITOR
 
@@ -94,7 +96,7 @@ EVENTS
   • `msg_show`:
     • `history` argument indicating if the message was added to the history.
     • new message kinds: "bufwrite", "completion", "list_cmd", "lua_print",
-      "search_cmd", "undo", "wildlist".
+      "search_cmd", "undo", "verbose", wildlist".
 
 HIGHLIGHTS
 
@@ -156,6 +158,11 @@ TREESITTER
   if no languages are explicitly registered.
 • |vim.treesitter.language.add()| returns `true` if a parser was loaded
   successfully and `nil,errmsg` otherwise instead of throwing an error.
+• |vim.treesitter.get_parser()| and |vim.treesitter.start()| no longer parse
+  the tree before returning. Scripts must call |LanguageTree:parse()| explicitly. >lua
+    local p = vim.treesitter.get_parser(0, 'c')
+    p:parse()
+<
 
 TUI
 
@@ -180,6 +187,7 @@ API
 • |nvim__ns_set()| can set properties for a namespace
 • |nvim_echo()| `err` field to print error messages and `chunks` accepts
   highlight group IDs.
+• |nvim_open_win()| `relative` field can be set to "laststatus" and "tabline".
 • |nvim_buf_set_extmark()| virt_text_pos accepts `eol_right_align` to
   allow for right aligned text that truncates before covering up buffer text.
 
@@ -279,6 +287,7 @@ LUA
   supporting two new parameters, `encoding` and `strict_indexing`.
 • |vim.json.encode()| has an option to enable forward slash escaping
 • |vim.fs.abspath()| converts paths to absolute paths.
+• |vim.fs.relpath()| gets relative path compared to base path.
 
 OPTIONS
 
@@ -294,6 +303,12 @@ PERFORMANCE
   inflight requests). This greatly improves performance with slow LSP servers.
 • 10x speedup for |vim.treesitter.foldexpr()| (when no parser exists for the
   buffer).
+• Strong |treesitter-query| caching makes repeat  |vim.treesitter.query.get()|
+  and |vim.treesitter.query.parse()| calls significantly faster for large
+  queries.
+• Treesitter highlighting is now asynchronous. To force synchronous parsing,
+  use `vim.g._ts_force_sync_parsing = true`.
+• Treesitter folding is now calculated asynchronously.
 
 PLUGINS
 
@@ -324,6 +339,8 @@ TERMINAL
   unfocused terminal window will have no cursor at all (so there is nothing to
   highlight).
 • |jobstart()| gained the "term" flag.
+• The |terminal| will send theme update notifications when 'background' is
+  changed and DEC mode 2031 is enabled.
 
 TREESITTER
 
@@ -336,6 +353,8 @@ TREESITTER
 • New |TSNode:child_with_descendant()|, which is nearly identical to
   |TSNode:child_containing_descendant()| except that it can return the
   descendant itself.
+• |LanguageTree:parse()| optionally supports asynchronous invocation, which is
+  activated by passing the `on_parse` callback parameter.
 
 TUI
 

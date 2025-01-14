@@ -86,7 +86,7 @@ void ui_refresh(void)
         local before = vim.api.nvim__stats().ts_query_parse_count
         collectgarbage('stop')
         for _ = 1, _n, 1 do
-          vim.treesitter.query.parse('c', long_query, _n)
+          vim.treesitter.query.parse('c', long_query)
         end
         collectgarbage('restart')
         collectgarbage('collect')
@@ -96,8 +96,39 @@ void ui_refresh(void)
     end
 
     eq(1, q(1))
-    -- cache is cleared by garbage collection even if valid "cquery" reference is kept around
-    eq(1, q(100))
+    -- cache is retained even after garbage collection
+    eq(0, q(100))
+  end)
+
+  it('cache is cleared upon runtimepath changes, or setting query manually', function()
+    ---@return number
+    exec_lua(function()
+      _G.query_parse_count = _G.query_parse_count or 0
+      local parse = vim.treesitter.query.parse
+      vim.treesitter.query.parse = function(...)
+        _G.query_parse_count = _G.query_parse_count + 1
+        return parse(...)
+      end
+    end)
+
+    local function q(_n)
+      return exec_lua(function()
+        for _ = 1, _n, 1 do
+          vim.treesitter.query.get('c', 'highlights')
+        end
+        return _G.query_parse_count
+      end)
+    end
+
+    eq(1, q(10))
+    exec_lua(function()
+      vim.opt.rtp:prepend('/another/dir')
+    end)
+    eq(2, q(100))
+    exec_lua(function()
+      vim.treesitter.query.set('c', 'highlights', [[; test]])
+    end)
+    eq(3, q(100))
   end)
 
   it('supports query and iter by capture (iter_captures)', function()

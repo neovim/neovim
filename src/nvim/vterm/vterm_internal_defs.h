@@ -119,6 +119,7 @@ struct VTermState {
     unsigned leftrightmargin:1;
     unsigned bracketpaste:1;
     unsigned report_focus:1;
+    unsigned theme_updates:1;
   } mode;
 
   VTermEncodingInstance encoding[4], encoding_utf8;

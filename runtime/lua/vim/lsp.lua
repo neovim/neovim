@@ -513,7 +513,9 @@ local function lsp_enable_callback(bufnr)
         ---@param root_dir string
         config.root_dir(function(root_dir)
           config.root_dir = root_dir
-          start(config)
+          vim.schedule(function()
+            start(config)
+          end)
         end)
       else
         start(config)
@@ -1389,7 +1391,7 @@ end
 --- |LspAttach| autocommand. Example:
 ---
 --- ```lua
---- vim.api.nvim_create_autocommand('LspAttach', {
+--- vim.api.nvim_create_autocmd('LspAttach', {
 ---   callback = function(args)
 ---     local client = vim.lsp.get_client_by_id(args.data.client_id)
 ---     if client:supports_method('textDocument/foldingRange') then

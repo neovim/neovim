@@ -3309,6 +3309,32 @@ describe('TUI bg color', function()
       {3:-- TERMINAL --}                                    |
     ]])
   end)
+
+  it('sends theme update notifications when background changes #31652', function()
+    command('set background=dark') -- set outer Nvim background
+    local child_server = new_pipename()
+    local screen = tt.setup_child_nvim({
+      '--listen',
+      child_server,
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'colorscheme vim',
+      '--cmd',
+      'set noswapfile',
+    })
+    screen:expect({ any = '%[No Name%]' })
+    local child_session = n.connect(child_server)
+    retry(nil, nil, function()
+      eq({ true, 'dark' }, { child_session:request('nvim_eval', '&background') })
+    end)
+    command('set background=light') -- set outer Nvim background
+    retry(nil, nil, function()
+      eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
+    end)
+  end)
 end)
 
 -- These tests require `tt` because --headless/--embed

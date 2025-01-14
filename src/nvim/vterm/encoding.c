@@ -210,6 +210,7 @@ static void decode_table(VTermEncoding *enc, void *data, uint32_t cp[], int *cpi
   }
 }
 
+// https://en.wikipedia.org/wiki/DEC_Special_Graphics
 static const struct StaticTableEncoding encoding_DECdrawing = {
   { .decode = &decode_table },
   {
@@ -247,13 +248,6 @@ static const struct StaticTableEncoding encoding_DECdrawing = {
   }
 };
 
-static const struct StaticTableEncoding encoding_uk = {
-  { .decode = &decode_table },
-  {
-    [0x23] = 0x00a3,  // £
-  }
-};
-
 static struct {
   VTermEncodingType type;
   char designation;
@@ -262,7 +256,6 @@ static struct {
 encodings[] = {
   { ENC_UTF8,      'u', &encoding_utf8 },
   { ENC_SINGLE_94, '0', (VTermEncoding *)&encoding_DECdrawing },
-  { ENC_SINGLE_94, 'A', (VTermEncoding *)&encoding_uk },
   { ENC_SINGLE_94, 'B', &encoding_usascii },
   { 0 },
 };

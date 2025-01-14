@@ -69,6 +69,7 @@ end
 ---@field private _queries table<string,vim.treesitter.highlighter.Query>
 ---@field tree vim.treesitter.LanguageTree
 ---@field private redraw_count integer
+---@field parsing boolean true if we are parsing asynchronously
 local TSHighlighter = {
   active = {},
 }
@@ -146,8 +147,6 @@ function TSHighlighter.new(tree, opts)
   vim._with({ buf = self.bufnr }, function()
     vim.opt_local.spelloptions:append('noplainbuffer')
   end)
-
-  self.tree:parse()
 
   return self
 end
@@ -384,19 +383,23 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
 end
 
 ---@private
----@param _win integer
 ---@param buf integer
 ---@param topline integer
 ---@param botline integer
-function TSHighlighter._on_win(_, _win, buf, topline, botline)
+function TSHighlighter._on_win(_, _, buf, topline, botline)
   local self = TSHighlighter.active[buf]
-  if not self then
+  if not self or self.parsing then
     return false
   end
-  self.tree:parse({ topline, botline + 1 })
-  self:prepare_highlight_states(topline, botline + 1)
+  self.parsing = self.tree:parse({ topline, botline + 1 }, function(_, trees)
+    if trees and self.parsing then
+      self.parsing = false
+      api.nvim__redraw({ buf = buf, valid = false, flush = false })
+    end
+  end) == nil
   self.redraw_count = self.redraw_count + 1
-  return true
+  self:prepare_highlight_states(topline, botline)
+  return #self._highlight_states > 0
 end
 
 api.nvim_set_decoration_provider(ns, {

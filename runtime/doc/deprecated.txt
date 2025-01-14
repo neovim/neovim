@@ -16,6 +16,7 @@ Deprecated features
 DEPRECATED IN 0.11					*deprecated-0.11*
 
 API
+• nvim_notify()		Use |nvim_echo()| or `nvim_exec_lua("vim.notify(...)", ...)` instead.
 • nvim_subscribe()	Plugins must maintain their own "multicast" channels list.
 • nvim_unsubscribe()	Plugins must maintain their own "multicast" channels list.
 • nvim_out_write()	Use |nvim_echo()|.

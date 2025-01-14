@@ -61,8 +61,6 @@ function M._create_parser(bufnr, lang, opts)
     { on_bytes = bytes_cb, on_detach = detach_cb, on_reload = reload_cb, preview = true }
   )
 
-  self:parse()
-
   return self
 end
 
@@ -397,6 +395,8 @@ end
 --- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
 --- In this case, add `vim.bo.syntax = 'on'` after the call to `start`.
 ---
+--- Note: By default, the highlighter parses code asynchronously, using a segment time of 3ms.
+---
 --- Example:
 ---
 --- ```lua
@@ -408,8 +408,8 @@ end
 --- })
 --- ```
 ---
----@param bufnr (integer|nil) Buffer to be highlighted (default: current buffer)
----@param lang (string|nil) Language of the parser (default: from buffer filetype)
+---@param bufnr integer? Buffer to be highlighted (default: current buffer)
+---@param lang string? Language of the parser (default: from buffer filetype)
 function M.start(bufnr, lang)
   bufnr = vim._resolve_bufnr(bufnr)
   local parser = assert(M.get_parser(bufnr, lang, { error = false }))

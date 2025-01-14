@@ -99,4 +99,4 @@ hi def link tiasmIdentifier	Identifier
 hi def link tiasmType		Type
 hi def link tiasmFunction	Function
 
-let b:current_syntax = "lineartiasm"
+let b:current_syntax = "tiasm"

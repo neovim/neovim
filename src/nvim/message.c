@@ -312,7 +312,7 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
     } else {
       msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
     }
-    assert(msg_ext_kind == kind);
+    assert(!ui_has(kUIMessages) || msg_ext_kind == kind);
   }
   if (history && kv_size(hl_msg)) {
     add_msg_hist_multihl(NULL, 0, 0, true, hl_msg);
@@ -3324,12 +3324,20 @@ int redirecting(void)
          || redir_reg || redir_vname || capture_ga != NULL;
 }
 
+// Save and restore message kind when emitting a verbose message.
+static const char *pre_verbose_kind = NULL;
+static const char *verbose_kind = "verbose";
+
 /// Before giving verbose message.
 /// Must always be called paired with verbose_leave()!
 void verbose_enter(void)
 {
   if (*p_vfile != NUL) {
     msg_silent++;
+  }
+  if (msg_ext_kind != verbose_kind) {
+    pre_verbose_kind = msg_ext_kind;
+    msg_ext_set_kind("verbose");
   }
 }
 
@@ -3342,14 +3350,17 @@ void verbose_leave(void)
       msg_silent = 0;
     }
   }
+  if (pre_verbose_kind != NULL) {
+    msg_ext_set_kind(pre_verbose_kind);
+    pre_verbose_kind = NULL;
+  }
 }
 
 /// Like verbose_enter() and set msg_scroll when displaying the message.
 void verbose_enter_scroll(void)
 {
-  if (*p_vfile != NUL) {
-    msg_silent++;
-  } else {
+  verbose_enter();
+  if (*p_vfile == NUL) {
     // always scroll up, don't overwrite
     msg_scroll = true;
   }
@@ -3358,11 +3369,8 @@ void verbose_enter_scroll(void)
 /// Like verbose_leave() and set cmdline_row when displaying the message.
 void verbose_leave_scroll(void)
 {
-  if (*p_vfile != NUL) {
-    if (--msg_silent < 0) {
-      msg_silent = 0;
-    }
-  } else {
+  verbose_leave();
+  if (*p_vfile == NUL) {
     cmdline_row = msg_row;
   }
 }

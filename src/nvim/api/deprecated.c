@@ -1,3 +1,5 @@
+// Island of misfit toys.
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -895,4 +897,23 @@ void nvim_err_writeln(String str)
   FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(13)
 {
   write_msg(str, true, true);
+}
+
+/// @deprecated
+///
+/// Use `nvim_echo` or `nvim_exec_lua("vim.notify(...)", ...)` instead.
+///
+/// @param msg        Message to display to the user
+/// @param log_level  The log level
+/// @param opts       Reserved for future use.
+/// @param[out] err   Error details, if any
+Object nvim_notify(String msg, Integer log_level, Dict opts, Arena *arena, Error *err)
+  FUNC_API_SINCE(7) FUNC_API_DEPRECATED_SINCE(13)
+{
+  MAXSIZE_TEMP_ARRAY(args, 3);
+  ADD_C(args, STRING_OBJ(msg));
+  ADD_C(args, INTEGER_OBJ(log_level));
+  ADD_C(args, DICT_OBJ(opts));
+
+  return NLUA_EXEC_STATIC("return vim.notify(...)", args, kRetObject, arena, err);
 }

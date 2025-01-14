@@ -5415,6 +5415,45 @@ describe('builtin popupmenu', function()
         feed('<C-E><Esc>')
       end)
 
+      -- oldtest: Test_pum_highlights_match_with_abbr()
+      it('can highlight matched text with abbr', function()
+        exec([[
+          func Omni_test(findstart, base)
+            if a:findstart
+              return col(".")
+            endif
+            return {
+                  \ 'words': [
+                  \ { 'word': 'foobar', 'abbr': "foobar\t\t!" },
+                  \ { 'word': 'foobaz', 'abbr': "foobaz\t\t!" },
+                  \]}
+          endfunc
+
+          set omnifunc=Omni_test
+          set completeopt=menuone,noinsert
+          hi PmenuMatchSel  guifg=Blue guibg=Grey
+          hi PmenuMatch     guifg=Blue guibg=Plum1
+        ]])
+        feed('i<C-X><C-O>')
+        screen:expect([[
+          ^                                |
+          {s:foobar    !    }{1:                 }|
+          {n:foobaz    !    }{1:                 }|
+          {1:~                               }|*16
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+        feed('foo')
+        screen:expect([[
+          foo^                             |
+          {ms:foo}{s:bar    !    }{1:                 }|
+          {mn:foo}{n:baz    !    }{1:                 }|
+          {1:~                               }|*16
+          {2:-- }{5:match 1 of 2}                 |
+        ]])
+
+        feed('<C-E><Esc>')
+      end)
+
       -- oldtest: Test_pum_user_abbr_hlgroup()
       it('custom abbr_hlgroup override', function()
         exec([[
@@ -5853,6 +5892,48 @@ describe('builtin popupmenu', function()
           {2:-- INSERT --}                    |
         ]])
         feed('<Esc>')
+
+        -- Does not highlight the compl leader
+        command('set cot+=menuone,noselect')
+        feed('S<C-X><C-O>')
+        local pum_start = [[
+          {10:^                                }|
+          {n:foo            }{1:                 }|
+          {n:bar            }{1:                 }|
+          {n:你好           }{1:                 }|
+          {1:~                               }|*15
+          {2:-- }{8:Back at original}             |
+        ]]
+        screen:expect(pum_start)
+        feed('f<C-N>')
+        screen:expect([[
+          {10:f}{9:oo}{10:^                             }|
+          {s:foo            }{1:                 }|
+          {1:~                               }|*17
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-E><ESC>')
+
+        command('set cot+=fuzzy')
+        feed('S<C-X><C-O>')
+        screen:expect(pum_start)
+        feed('f<C-N>')
+        screen:expect([[
+          {10:foo^                             }|
+          {s:foo            }{1:                 }|
+          {1:~                               }|*17
+          {2:-- }{5:match 1 of 3}                 |
+        ]])
+        feed('<C-E><Esc>')
+
+        command('set cot-=fuzzy')
+        feed('Sf<C-N>')
+        screen:expect([[
+          {10:f^                               }|
+          {1:~                               }|*18
+          {2:-- }{6:Pattern not found}            |
+        ]])
+        feed('<C-E><Esc>')
       end)
     end
   end

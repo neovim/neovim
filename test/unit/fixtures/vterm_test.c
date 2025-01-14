@@ -345,6 +345,8 @@ static VTermValueType vterm_get_prop_type(VTermProp prop)
     return VTERM_VALUETYPE_INT;
   case VTERM_PROP_FOCUSREPORT:
     return VTERM_VALUETYPE_BOOL;
+  case VTERM_PROP_THEMEUPDATES:
+    return VTERM_VALUETYPE_BOOL;
 
   case VTERM_N_PROPS:
     return 0;

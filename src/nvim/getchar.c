@@ -1518,9 +1518,11 @@ int merge_modifiers(int c_arg, int *modifiers)
 
   if (*modifiers & MOD_MASK_CTRL) {
     if ((c >= '`' && c <= 0x7f) || (c >= '@' && c <= '_')) {
-      c &= 0x1f;
-      if (c == NUL) {
-        c = K_ZERO;
+      if (!(State & MODE_TERMINAL) || !(c == 'I' || c == 'J' || c == 'M' || c == '[')) {
+        c &= 0x1f;
+        if (c == NUL) {
+          c = K_ZERO;
+        }
       }
     } else if (c == '6') {
       // CTRL-6 is equivalent to CTRL-^

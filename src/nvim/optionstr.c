@@ -44,6 +44,7 @@
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/strings.h"
+#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -395,7 +396,9 @@ static int expand_set_opt_string(optexpand_T *args, const char **values, size_t 
   }
 
   for (const char **val = values; *val != NULL; val++) {
-    if (include_orig_val && *option_val != NUL) {
+    if (**val == NUL) {
+      continue;  // Ignore empty
+    } else if (include_orig_val && *option_val != NUL) {
       if (strcmp(*val, option_val) == 0) {
         continue;
       }
@@ -530,6 +533,15 @@ const char *did_set_background(optset_T *args)
     check_string_option(&p_bg);
     init_highlight(false, false);
   }
+
+  // Notify all terminal buffers that the background color changed so they can
+  // send a theme update notification
+  FOR_ALL_BUFFERS(buf) {
+    if (buf->terminal) {
+      terminal_notify_theme(buf->terminal, dark);
+    }
+  }
+
   return NULL;
 }
 
@@ -1091,7 +1103,7 @@ int expand_set_cursorlineopt(optexpand_T *args, int *numMatches, char ***matches
 /// The 'debug' option is changed.
 const char *did_set_debug(optset_T *args FUNC_ATTR_UNUSED)
 {
-  return did_set_opt_strings(p_debug, opt_debug_values, false);
+  return did_set_opt_strings(p_debug, opt_debug_values, true);
 }
 
 int expand_set_debug(optexpand_T *args, int *numMatches, char ***matches)
@@ -2545,7 +2557,7 @@ int expand_set_winhighlight(optexpand_T *args, int *numMatches, char ***matches)
 /// @param list  when true: accept a list of values
 ///
 /// @return  OK for correct value, FAIL otherwise. Empty is always OK.
-static int check_opt_strings(char *val, const char **values, int list)
+static int check_opt_strings(char *val, const char **values, bool list)
 {
   return opt_strings_flags(val, values, NULL, list);
 }
@@ -2562,7 +2574,10 @@ static int opt_strings_flags(const char *val, const char **values, unsigned *fla
 {
   unsigned new_flags = 0;
 
-  while (*val) {
+  // If not list and val is empty, then force one iteration of the while loop
+  bool iter_one = (*val == NUL) && !list;
+
+  while (*val || iter_one) {
     for (unsigned i = 0;; i++) {
       if (values[i] == NULL) {          // val not found in values[]
         return FAIL;
@@ -2576,6 +2591,9 @@ static int opt_strings_flags(const char *val, const char **values, unsigned *fla
         new_flags |= (1U << i);
         break;                  // check next item in val list
       }
+    }
+    if (iter_one) {
+      break;
     }
   }
   if (flagp != NULL) {

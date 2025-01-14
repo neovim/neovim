@@ -391,7 +391,8 @@ endfunc
 
 function Test_termdebug_save_restore_variables()
   " saved mousemodel
-  let &mousemodel=''
+  "let &mousemodel=''
+  let &mousemodel='extend'
 
   " saved keys
   nnoremap K :echo "hello world!"<cr>
@@ -414,7 +415,8 @@ function Test_termdebug_save_restore_variables()
   quit!
   call WaitForAssert({-> assert_equal(1, winnr('$'))})
 
-  call assert_true(empty(&mousemodel))
+  "call assert_true(empty(&mousemodel))
+  call assert_equal(&mousemodel, 'extend')
 
   call assert_true(empty(expected_map_minus))
   call assert_equal(expected_map_K.rhs, maparg('K', 'n', 0, 1).rhs)

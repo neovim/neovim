@@ -307,6 +307,15 @@ void win_check_anchored_floats(win_T *win)
   }
 }
 
+void win_float_anchor_laststatus(void)
+{
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+    if (win->w_config.relative == kFloatRelativeLaststatus) {
+      win->w_pos_changed = true;
+    }
+  }
+}
+
 void win_reconfig_floats(void)
 {
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {

@@ -10,7 +10,7 @@
     {
       "name": "default",
       "displayName": "RelWithDebInfo",
-      "description": "Enables optimizations (-O2) with debug information",
+      "description": "Enables optimizations with debug information",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       },
@@ -19,7 +19,7 @@
     {
       "name": "debug",
       "displayName": "Debug",
-      "description": "Disables optimizations (-O0), enables debug information",
+      "description": "No optimizations, enables debug information",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       },
@@ -28,7 +28,7 @@
     {
       "name": "release",
       "displayName": "Release",
-      "description": "Same as RelWithDebInfo, but disables debug information",
+      "description": "Optimized for performance, disables debug information",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       },

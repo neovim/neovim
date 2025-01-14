@@ -10,6 +10,7 @@ local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
 local feed = n.feed
 local run_query = ts_t.run_query
+local assert_alive = n.assert_alive
 
 describe('treesitter parser API', function()
   before_each(function()
@@ -88,6 +89,197 @@ describe('treesitter parser API', function()
 
     -- unchanged buffer: return the same tree
     eq(true, exec_lua('return parser:parse()[1] == tree2'))
+  end)
+
+  it('parses buffer asynchronously', function()
+    insert([[
+      int main() {
+        int x = 3;
+      }]])
+
+    exec_lua(function()
+      _G.parser = vim.treesitter.get_parser(0, 'c')
+      _G.lang = vim.treesitter.language.inspect('c')
+      _G.parser:parse(nil, function(_, trees)
+        _G.tree = trees[1]
+        _G.root = _G.tree:root()
+      end)
+      vim.wait(100, function() end)
+    end)
+
+    eq('<tree>', exec_lua('return tostring(tree)'))
+    eq('<node translation_unit>', exec_lua('return tostring(root)'))
+    eq({ 0, 0, 3, 0 }, exec_lua('return {root:range()}'))
+
+    eq(1, exec_lua('return root:child_count()'))
+    exec_lua('child = root:child(0)')
+    eq('<node function_definition>', exec_lua('return tostring(child)'))
+    eq({ 0, 0, 2, 1 }, exec_lua('return {child:range()}'))
+
+    eq('function_definition', exec_lua('return child:type()'))
+    eq(true, exec_lua('return child:named()'))
+    eq('number', type(exec_lua('return child:symbol()')))
+    eq(true, exec_lua('return lang.symbols[child:type()]'))
+
+    exec_lua('anon = root:descendant_for_range(0,8,0,9)')
+    eq('(', exec_lua('return anon:type()'))
+    eq(false, exec_lua('return anon:named()'))
+    eq('number', type(exec_lua('return anon:symbol()')))
+    eq(false, exec_lua([=[return lang.symbols[string.format('"%s"', anon:type())]]=]))
+
+    exec_lua('descendant = root:descendant_for_range(1,2,1,12)')
+    eq('<node declaration>', exec_lua('return tostring(descendant)'))
+    eq({ 1, 2, 1, 12 }, exec_lua('return {descendant:range()}'))
+    eq(
+      '(declaration type: (primitive_type) declarator: (init_declarator declarator: (identifier) value: (number_literal)))',
+      exec_lua('return descendant:sexpr()')
+    )
+
+    feed('2G7|ay')
+    exec_lua(function()
+      _G.parser:parse(nil, function(_, trees)
+        _G.tree2 = trees[1]
+        _G.root2 = _G.tree2:root()
+        _G.descendant2 = _G.root2:descendant_for_range(1, 2, 1, 13)
+      end)
+      vim.wait(100, function() end)
+    end)
+    eq(false, exec_lua('return tree2 == tree1'))
+    eq(false, exec_lua('return root2 == root'))
+    eq('<node declaration>', exec_lua('return tostring(descendant2)'))
+    eq({ 1, 2, 1, 13 }, exec_lua('return {descendant2:range()}'))
+
+    eq(true, exec_lua('return child == child'))
+    -- separate lua object, but represents same node
+    eq(true, exec_lua('return child == root:child(0)'))
+    eq(false, exec_lua('return child == descendant2'))
+    eq(false, exec_lua('return child == nil'))
+    eq(false, exec_lua('return child == tree'))
+
+    eq('string', exec_lua('return type(child:id())'))
+    eq(true, exec_lua('return child:id() == child:id()'))
+    -- separate lua object, but represents same node
+    eq(true, exec_lua('return child:id() == root:child(0):id()'))
+    eq(false, exec_lua('return child:id() == descendant2:id()'))
+    eq(false, exec_lua('return child:id() == nil'))
+    eq(false, exec_lua('return child:id() == tree'))
+
+    -- unchanged buffer: return the same tree
+    eq(true, exec_lua('return parser:parse()[1] == tree2'))
+  end)
+
+  it('does not crash when editing large files', function()
+    insert([[printf("%s", "some text");]])
+    feed('yy49999p')
+
+    exec_lua(function()
+      _G.parser = vim.treesitter.get_parser(0, 'c')
+      _G.done = false
+      vim.treesitter.start(0, 'c')
+      _G.parser:parse(nil, function()
+        _G.done = true
+      end)
+      while not _G.done do
+        -- Busy wait until async parsing has completed
+        vim.wait(100, function() end)
+      end
+    end)
+
+    eq(true, exec_lua([[return done]]))
+    exec_lua(function()
+      vim.api.nvim_input('Lxj')
+    end)
+    exec_lua(function()
+      vim.api.nvim_input('xj')
+    end)
+    exec_lua(function()
+      vim.api.nvim_input('xj')
+    end)
+    assert_alive()
+  end)
+
+  it('resets parsing state on tree changes', function()
+    insert([[vim.api.nvim_set_hl(0, 'test2', { bg = 'green' })]])
+    feed('yy1000p')
+
+    exec_lua(function()
+      vim.cmd('set ft=lua')
+
+      vim.treesitter.start(0)
+      local parser = assert(vim.treesitter.get_parser(0))
+
+      parser:parse(true, function() end)
+      vim.api.nvim_buf_set_lines(0, 1, -1, false, {})
+      parser:parse(true)
+    end)
+  end)
+
+  it('resets when buffer was editing during an async parse', function()
+    insert([[printf("%s", "some text");]])
+    feed('yy49999p')
+    feed('gg4jO// Comment<Esc>')
+
+    exec_lua(function()
+      _G.parser = vim.treesitter.get_parser(0, 'c')
+      _G.done = false
+      vim.treesitter.start(0, 'c')
+      _G.parser:parse(nil, function()
+        _G.done = true
+      end)
+    end)
+
+    exec_lua(function()
+      vim.api.nvim_input('ggdj')
+    end)
+
+    eq(false, exec_lua([[return done]]))
+    exec_lua(function()
+      while not _G.done do
+        -- Busy wait until async parsing finishes
+        vim.wait(100, function() end)
+      end
+    end)
+    eq(true, exec_lua([[return done]]))
+    eq('comment', exec_lua([[return parser:parse()[1]:root():named_child(2):type()]]))
+    eq({ 2, 0, 2, 10 }, exec_lua([[return {parser:parse()[1]:root():named_child(2):range()}]]))
+  end)
+
+  it('handles multiple async parse calls', function()
+    insert([[printf("%s", "some text");]])
+    feed('yy49999p')
+
+    exec_lua(function()
+      -- Spy on vim.schedule
+      local schedule = vim.schedule
+      vim.schedule = function(fn)
+        _G.schedules = _G.schedules + 1
+        schedule(fn)
+      end
+      _G.schedules = 0
+      _G.parser = vim.treesitter.get_parser(0, 'c')
+      for i = 1, 5 do
+        _G['done' .. i] = false
+        _G.parser:parse(nil, function()
+          _G['done' .. i] = true
+        end)
+      end
+      schedule(function()
+        _G.schedules_snapshot = _G.schedules
+      end)
+    end)
+
+    eq(2, exec_lua([[return schedules_snapshot]]))
+    eq(
+      { false, false, false, false, false },
+      exec_lua([[return { done1, done2, done3, done4, done5 }]])
+    )
+    exec_lua(function()
+      while not _G.done1 do
+        -- Busy wait until async parsing finishes
+        vim.wait(100, function() end)
+      end
+    end)
+    eq({ true, true, true, true, true }, exec_lua([[return { done1, done2, done3, done4, done5 }]]))
   end)
 
   local test_text = [[
@@ -950,11 +1142,13 @@ print()
       feed(':set ft=help<cr>')
 
       exec_lua(function()
-        vim.treesitter.get_parser(0, 'vimdoc', {
-          injections = {
-            vimdoc = '((codeblock (language) @injection.language (code) @injection.content) (#set! injection.include-children))',
-          },
-        })
+        vim.treesitter
+          .get_parser(0, 'vimdoc', {
+            injections = {
+              vimdoc = '((codeblock (language) @injection.language (code) @injection.content) (#set! injection.include-children))',
+            },
+          })
+          :parse()
       end)
     end)
 

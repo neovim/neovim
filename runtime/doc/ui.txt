@@ -806,6 +806,7 @@ must handle.
 		"search_cmd"	Entered search command
 		"search_count"	Search count message ("S" flag of 'shortmess')
 		"undo"		|:undo| and |:redo| message
+		"verbose"	'verbose' message
 		"wildlist"	'wildmode' "list" message
 		"wmsg"		Warning ("search hit BOTTOM", |W10|, …)
 	    New kinds may be added in the future; clients should treat unknown

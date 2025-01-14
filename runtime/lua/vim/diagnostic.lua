@@ -1395,10 +1395,6 @@ M.handlers.signs = {
       return
     end
 
-    if opts.signs and opts.signs.severity then
-      diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
-    end
-
     -- 10 is the default sign priority when none is explicitly specified
     local priority = opts.signs and opts.signs.priority or 10
     local get_priority = severity_to_extmark_priority(priority, opts)
@@ -1501,10 +1497,6 @@ M.handlers.underline = {
       return
     end
 
-    if opts.underline and opts.underline.severity then
-      diagnostics = filter_by_severity(opts.underline.severity, diagnostics)
-    end
-
     local ns = M.get_namespace(namespace)
     if not ns.user_data.underline_ns then
       ns.user_data.underline_ns =
@@ -1565,7 +1557,6 @@ M.handlers.virtual_text = {
       return
     end
 
-    local severity --- @type vim.diagnostic.SeverityFilter?
     if opts.virtual_text then
       if opts.virtual_text.format then
         diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
@@ -1575,9 +1566,6 @@ M.handlers.virtual_text = {
         and (opts.virtual_text.source ~= 'if_many' or count_sources(bufnr) > 1)
       then
         diagnostics = prefix_source(diagnostics)
-      end
-      if opts.virtual_text.severity then
-        severity = opts.virtual_text.severity
       end
     end
 
@@ -1590,9 +1578,6 @@ M.handlers.virtual_text = {
     local virt_text_ns = ns.user_data.virt_text_ns
     local buffer_line_diagnostics = diagnostic_lines(diagnostics)
     for line, line_diagnostics in pairs(buffer_line_diagnostics) do
-      if severity then
-        line_diagnostics = filter_by_severity(severity, line_diagnostics)
-      end
       local virt_texts = M._get_virt_text_chunks(line_diagnostics, opts.virtual_text)
 
       if virt_texts then
@@ -1797,7 +1782,8 @@ function M.show(namespace, bufnr, diagnostics, opts)
 
   for handler_name, handler in pairs(M.handlers) do
     if handler.show and opts_res[handler_name] then
-      handler.show(namespace, bufnr, diagnostics, opts_res)
+      local filtered = filter_by_severity(opts_res[handler_name].severity, diagnostics)
+      handler.show(namespace, bufnr, filtered, opts_res)
     end
   end
 end

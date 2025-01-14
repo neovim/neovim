@@ -684,6 +684,13 @@ Summary:					*help-summary*  >
 	:help E128
 <    takes you to the |:function| command
 
+27) Documenction for packages distributed with Vim have the form package-<name>.
+     So >
+	:help package-termdebug
+<
+    will bring you to the help section for the included termdebug plugin and
+    how to enable it.
+
 
 ==============================================================================
 

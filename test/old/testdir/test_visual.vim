@@ -470,7 +470,7 @@ func Test_Visual_Block()
 	      \ "\t{",
 	      \ "\t}"], getline(1, '$'))
 
-  close!
+  bw!
 endfunc
 
 " Test for 'p'ut in visual block mode
@@ -1082,7 +1082,7 @@ func Test_star_register()
 
   delmarks < >
   call assert_fails('*yank', 'E20:')
-  close!
+  bw!
 endfunc
 
 " Test for changing text in visual mode with 'exclusive' selection
@@ -1098,7 +1098,7 @@ func Test_exclusive_selection()
   call assert_equal('l      one', getline(1))
   set virtualedit&
   set selection&
-  close!
+  bw!
 endfunc
 
 " Test for starting linewise visual with a count.
@@ -1155,7 +1155,7 @@ func Test_visual_inner_block()
   8,9d
   call cursor(5, 1)
   call assert_beeps('normal ViBiB')
-  close!
+  bw!
 endfunc
 
 func Test_visual_put_in_block()
@@ -2762,6 +2762,24 @@ func Test_visual_block_exclusive_selection_adjusted()
   call assert_equal([0, 4, 9, 0], getpos("'>"))
   bwipe!
   set selection&vim
+endfunc
+
+" the following caused a Heap-Overflow, because Vim was accessing outside of a
+" line end
+func Test_visual_pos_buffer_heap_overflow()
+  set virtualedit=all
+  args Xa Xb
+  all
+  call setline(1, ['', '', ''])
+  call cursor(3, 1)
+  wincmd w
+  call setline(1, 'foobar')
+  normal! $lv0
+  all
+  call setreg('"', 'baz')
+  normal! [P
+  set virtualedit=
+  bw! Xa Xb
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

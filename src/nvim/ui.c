@@ -223,10 +223,10 @@ void ui_refresh(void)
   // Reset 'cmdheight' for all tabpages when ext_messages toggles.
   if (had_message != ui_ext[kUIMessages]) {
     set_option_value(kOptCmdheight, NUMBER_OPTVAL(had_message), 0);
-    command_height();
     FOR_ALL_TABS(tp) {
       tp->tp_ch_used = had_message;
     }
+    msg_scroll_flush();
   }
 
   if (!ui_active()) {
