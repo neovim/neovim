@@ -1,6 +1,6 @@
 local api = vim.api
 
-local namespace = api.nvim_create_namespace('vim.treesitter.query_linter')
+local namespace = api.nvim_create_namespace('nvim.treesitter.query_linter')
 
 local M = {}
 

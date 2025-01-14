@@ -46,7 +46,7 @@ local query = vim.treesitter.query.parse(
     (#set! @code lang @_lang))
 ]]
 )
-local run_message_ns = vim.api.nvim_create_namespace('vimdoc/run_message')
+local run_message_ns = vim.api.nvim_create_namespace('nvim.vimdoc.run_message')
 
 vim.api.nvim_buf_clear_namespace(0, run_message_ns, 0, -1)
 for _, match, metadata in query:iter_matches(tree:root(), 0, 0, -1) do

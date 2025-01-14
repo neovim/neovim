@@ -119,7 +119,7 @@ function TSTreeView:new(bufnr, lang)
   end
 
   local t = {
-    ns = api.nvim_create_namespace('treesitter/dev-inspect'),
+    ns = api.nvim_create_namespace('nvim.treesitter.dev_inspect'),
     nodes = nodes,
     named = named,
     ---@type vim.treesitter.dev.TSTreeViewOpts
@@ -135,7 +135,7 @@ function TSTreeView:new(bufnr, lang)
   return t
 end
 
-local decor_ns = api.nvim_create_namespace('ts.dev')
+local decor_ns = api.nvim_create_namespace('nvim.treesitter.dev')
 
 ---@param range Range4
 ---@return string
@@ -547,7 +547,7 @@ function M.inspect_tree(opts)
   })
 end
 
-local edit_ns = api.nvim_create_namespace('treesitter/dev-edit')
+local edit_ns = api.nvim_create_namespace('nvim.treesitter.dev_edit')
 
 ---@param query_win integer
 ---@param base_win integer

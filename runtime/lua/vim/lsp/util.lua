@@ -1650,7 +1650,7 @@ function M.open_floating_preview(contents, syntax, opts)
 end
 
 do --[[ References ]]
-  local reference_ns = api.nvim_create_namespace('vim_lsp_references')
+  local reference_ns = api.nvim_create_namespace('nvim.lsp.references')
 
   --- Removes document highlights from a buffer.
   ---

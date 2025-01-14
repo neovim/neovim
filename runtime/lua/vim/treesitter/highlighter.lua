@@ -2,7 +2,7 @@ local api = vim.api
 local query = vim.treesitter.query
 local Range = require('vim.treesitter._range')
 
-local ns = api.nvim_create_namespace('treesitter/highlighter')
+local ns = api.nvim_create_namespace('nvim.treesitter.highlighter')
 
 ---@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch
 

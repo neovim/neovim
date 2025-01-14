@@ -20,7 +20,7 @@ local function client_positional_params(params)
   end
 end
 
-local hover_ns = api.nvim_create_namespace('vim_lsp_hover_range')
+local hover_ns = api.nvim_create_namespace('nvim.lsp.hover_range')
 
 --- @class vim.lsp.buf.hover.Opts : vim.lsp.util.open_floating_preview.Opts
 --- @field silent? boolean
@@ -324,7 +324,7 @@ local function process_signature_help_results(results)
   return signatures
 end
 
-local sig_help_ns = api.nvim_create_namespace('vim_lsp_signature_help')
+local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
 
 --- @class vim.lsp.buf.signature_help.Opts : vim.lsp.util.open_floating_preview.Opts
 --- @field silent? boolean
