@@ -6259,37 +6259,42 @@ describe('LSP', function()
       )
     end)
 
-    it('supports a function for root_dir', function()
+    it('supports async function for root_dir', function()
       exec_lua(create_server_definition)
 
       local tmp1 = t.tmpname(true)
-
-      eq(
-        'some_dir',
-        exec_lua(function()
-          local server = _G._create_server({
-            handlers = {
-              initialize = function(_, _, callback)
-                callback(nil, { capabilities = {} })
-              end,
-            },
-          })
-
-          vim.lsp.config('foo', {
-            cmd = server.cmd,
-            filetypes = { 'foo' },
-            root_dir = function(cb)
-              cb('some_dir')
+      exec_lua(function()
+        local server = _G._create_server({
+          handlers = {
+            initialize = function(_, _, callback)
+              callback(nil, { capabilities = {} })
             end,
-          })
-          vim.lsp.enable('foo')
+          },
+        })
 
-          vim.cmd.edit(assert(tmp1))
-          vim.bo.filetype = 'foo'
+        vim.lsp.config('foo', {
+          cmd = server.cmd,
+          filetypes = { 'foo' },
+          root_dir = function(cb)
+            vim.system({ 'sleep', '0' }, {}, function()
+              cb('some_dir')
+            end)
+          end,
+        })
+        vim.lsp.enable('foo')
 
-          return vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })[1].root_dir
-        end)
-      )
+        vim.cmd.edit(assert(tmp1))
+        vim.bo.filetype = 'foo'
+      end)
+
+      retry(nil, 1000, function()
+        eq(
+          'some_dir',
+          exec_lua(function()
+            return vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })[1].root_dir
+          end)
+        )
+      end)
     end)
   end)
 end)
