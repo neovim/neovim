@@ -17,6 +17,9 @@ M.priorities = {
   user = 200,
 }
 
+local range_timer --- @type uv.uv_timer_t?
+local range_hl_clear --- @type fun()?
+
 --- @class vim.hl.range.Opts
 --- @inlinedoc
 ---
@@ -31,6 +34,10 @@ M.priorities = {
 --- Highlight priority
 --- (default: `vim.hl.priorities.user`)
 --- @field priority? integer
+---
+--- Time in ms before highlight is cleared
+--- (default: -1 no timeout)
+--- @field timeout? integer
 
 --- Apply highlight group to range of text.
 ---
@@ -45,6 +52,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   local regtype = opts.regtype or 'v'
   local inclusive = opts.inclusive or false
   local priority = opts.priority or M.priorities.user
+  local timeout = opts.timeout or -1
 
   local v_maxcol = vim.v.maxcol
 
@@ -100,6 +108,19 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
     end
   end
 
+  if range_timer and not range_timer:is_closing() then
+    range_timer:close()
+    assert(range_hl_clear)
+    range_hl_clear()
+  end
+
+  range_hl_clear = function()
+    range_timer = nil
+    range_hl_clear = nil
+    pcall(vim.api.nvim_buf_clear_namespace, bufnr, ns, 0, -1)
+    pcall(vim.api.nvim__ns_set, { wins = {} })
+  end
+
   for _, res in ipairs(region) do
     local start_row = res[1][2] - 1
     local start_col = res[1][3] - 1
@@ -113,11 +134,13 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
       strict = false,
     })
   end
+
+  if timeout ~= -1 then
+    range_timer = vim.defer_fn(range_hl_clear, timeout)
+  end
 end
 
 local yank_ns = api.nvim_create_namespace('nvim.hlyank')
-local yank_timer --- @type uv.uv_timer_t?
-local yank_cancel --- @type fun()?
 
 --- Highlight the yanked text during a |TextYankPost| event.
 ---
@@ -152,31 +175,17 @@ function M.on_yank(opts)
   end
 
   local higroup = opts.higroup or 'IncSearch'
-  local timeout = opts.timeout or 150
 
   local bufnr = vim.api.nvim_get_current_buf()
   local winid = vim.api.nvim_get_current_win()
-  if yank_timer then
-    yank_timer:close()
-    assert(yank_cancel)
-    yank_cancel()
-  end
 
   vim.api.nvim__ns_set(yank_ns, { wins = { winid } })
   M.range(bufnr, yank_ns, higroup, "'[", "']", {
     regtype = event.regtype,
     inclusive = event.inclusive,
     priority = opts.priority or M.priorities.user,
+    timeout = opts.timeout or 150,
   })
-
-  yank_cancel = function()
-    yank_timer = nil
-    yank_cancel = nil
-    pcall(vim.api.nvim_buf_clear_namespace, bufnr, yank_ns, 0, -1)
-    pcall(vim.api.nvim__ns_set, { wins = {} })
-  end
-
-  yank_timer = vim.defer_fn(yank_cancel, timeout)
 end
 
 return M
