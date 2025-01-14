@@ -5715,6 +5715,7 @@ int ExpandStringSetting(expand_T *xp, regmatch_T *regmatch, int *numMatches, cha
 
   optexpand_T args = {
     .oe_varp = get_varp_scope(&options[expand_option_idx], expand_option_flags),
+    .oe_idx = expand_option_idx,
     .oe_append = expand_option_append,
     .oe_regmatch = regmatch,
     .oe_xp = xp,

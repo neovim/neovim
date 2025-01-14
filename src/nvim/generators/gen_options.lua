@@ -37,6 +37,12 @@ local options_meta = options.options
 local cstr = options.cstr
 local valid_scopes = options.valid_scopes
 
+--- @param o vim.option_meta
+--- @return string
+local function get_values_var(o)
+  return ('opt_%s_values'):format(o.abbreviation or o.full_name)
+end
+
 --- Options for each scope.
 --- @type table<string, vim.option_meta[]>
 local scope_options = {}
@@ -191,11 +197,9 @@ end
 
 -- Generate valid values for each option.
 for _, option in ipairs(options_meta) do
-  --- @type function
-  local preorder_traversal
   --- @param prefix string
   --- @param values vim.option_valid_values
-  preorder_traversal = function(prefix, values)
+  local function preorder_traversal(prefix, values)
     vars_w('')
     vars_w(
       ('EXTERN const char *(%s_values[%s]) INIT( = {'):format(prefix, #vim.tbl_keys(values) + 1)
@@ -416,6 +420,9 @@ local function dump_option(i, o)
   w('    .flags=' .. get_flags(o))
   w('    .scope_flags=' .. get_scope_flags(o))
   w('    .scope_idx=' .. get_scope_idx(o))
+  w('    .values=' .. (o.values and get_values_var(o) or 'NULL'))
+  w('    .values_len=' .. (o.values and #o.values or '0'))
+  w('    .flags_var=' .. (o.flags_varname and ('&%s'):format(o.flags_varname) or 'NULL'))
   if o.enable_if then
     w(get_cond(o.enable_if))
   end
@@ -436,12 +443,15 @@ local function dump_option(i, o)
     w('    .var=NULL')
   end
   w('    .immutable=' .. (o.immutable and 'true' or 'false'))
+
   if o.cb then
     w('    .opt_did_set_cb=' .. o.cb)
   end
+
   if o.expand_cb then
     w('    .opt_expand_cb=' .. o.expand_cb)
   end
+
   if o.enable_if then
     w('#else')
     -- Hidden option directly points to default value.
@@ -468,6 +478,19 @@ local function dump_option(i, o)
   w('  },')
 end
 
+--- @param o vim.option_meta
+--- @return vim.option_meta
+local function preprocess(o)
+  o = vim.deepcopy(o)
+
+  if o.values then
+    o.cb = o.cb or 'did_set_str_generic'
+    o.expand_cb = o.expand_cb or 'expand_set_str_generic'
+  end
+
+  return o
+end
+
 -- Generate options[] array.
 w([[
 #include "nvim/ex_docmd.h"
@@ -484,6 +507,6 @@ w([[
 
 static vimoption_T options[] = {]])
 for i, o in ipairs(options.options) do
-  dump_option(i, o)
+  dump_option(i, preprocess(o))
 end
 w('};')
