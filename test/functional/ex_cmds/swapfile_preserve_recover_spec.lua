@@ -173,7 +173,7 @@ describe('swapfile detection', function()
     local screen2 = Screen.new(256, 40)
     screen2._default_attr_ids = nil
     exec(init)
-    command('autocmd! nvim_swapfile') -- Delete the default handler (which skips the dialog).
+    command('autocmd! nvim.swapfile') -- Delete the default handler (which skips the dialog).
 
     -- With shortmess+=F
     command('set shortmess+=F')
@@ -277,7 +277,7 @@ describe('swapfile detection', function()
     set_session(nvim1)
     screen:attach()
     exec(init)
-    command('autocmd! nvim_swapfile') -- Delete the default handler (which skips the dialog).
+    command('autocmd! nvim.swapfile') -- Delete the default handler (which skips the dialog).
     feed(':split Xfile1\n')
     -- The default SwapExists handler does _not_ skip this prompt.
     screen:expect({
@@ -296,7 +296,7 @@ describe('swapfile detection', function()
     set_session(nvim2)
     screen:attach()
     exec(init)
-    command('autocmd! nvim_swapfile') -- Delete the default handler (which skips the dialog).
+    command('autocmd! nvim.swapfile') -- Delete the default handler (which skips the dialog).
     command('set more')
     command('au bufadd * let foo_w = wincol()')
     feed(':e Xfile1<CR>')
@@ -327,7 +327,7 @@ describe('swapfile detection', function()
 
     exec(init)
     if not swapexists then
-      command('autocmd! nvim_swapfile') -- Delete the default handler (which skips the dialog).
+      command('autocmd! nvim.swapfile') -- Delete the default handler (which skips the dialog).
     end
     command('set nohidden')
 

@@ -24,7 +24,7 @@ end, {
   end,
 })
 
-local augroup = vim.api.nvim_create_augroup('man', {})
+local augroup = vim.api.nvim_create_augroup('nvim.man', {})
 
 vim.api.nvim_create_autocmd('BufReadCmd', {
   group = augroup,

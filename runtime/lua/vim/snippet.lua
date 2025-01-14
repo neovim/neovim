@@ -1,5 +1,5 @@
 local G = vim.lsp._snippet_grammar
-local snippet_group = vim.api.nvim_create_augroup('vim/snippet', {})
+local snippet_group = vim.api.nvim_create_augroup('nvim.snippet', {})
 local snippet_ns = vim.api.nvim_create_namespace('nvim.snippet')
 local hl_group = 'SnippetTabstop'
 local jump_forward_key = '<tab>'

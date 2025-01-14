@@ -289,7 +289,7 @@ end, false)
 
 api.nvim_create_autocmd('OptionSet', {
   pattern = { 'runtimepath' },
-  group = api.nvim_create_augroup('ts_query_cache_reset', { clear = true }),
+  group = api.nvim_create_augroup('nvim.treesitter.query_cache_reset', { clear = true }),
   callback = function()
     M.get:clear()
   end,

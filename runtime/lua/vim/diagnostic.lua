@@ -356,7 +356,7 @@ local bufnr_and_namespace_cacher_mt = {
 -- bufnr -> ns -> Diagnostic[]
 local diagnostic_cache = {} --- @type table<integer,table<integer,vim.Diagnostic[]>>
 do
-  local group = api.nvim_create_augroup('DiagnosticBufWipeout', {})
+  local group = api.nvim_create_augroup('nvim.diagnostic.buf_wipeout', {})
   setmetatable(diagnostic_cache, {
     --- @param t table<integer,vim.Diagnostic[]>
     --- @param bufnr integer

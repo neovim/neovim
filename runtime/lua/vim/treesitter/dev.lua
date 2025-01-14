@@ -442,7 +442,7 @@ function M.inspect_tree(opts)
     end,
   })
 
-  local group = api.nvim_create_augroup('treesitter/dev', {})
+  local group = api.nvim_create_augroup('nvim.treesitter.dev', {})
 
   api.nvim_create_autocmd('CursorMoved', {
     group = group,
@@ -633,7 +633,7 @@ function M.edit_query(lang)
   -- can infer the language later.
   api.nvim_buf_set_name(query_buf, string.format('%s/query_editor.scm', lang))
 
-  local group = api.nvim_create_augroup('treesitter/dev-edit', {})
+  local group = api.nvim_create_augroup('nvim.treesitter.dev_edit', {})
   api.nvim_create_autocmd({ 'TextChanged', 'InsertLeave' }, {
     group = group,
     buffer = query_buf,

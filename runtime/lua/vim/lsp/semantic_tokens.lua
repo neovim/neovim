@@ -166,7 +166,7 @@ function STHighlighter.new(bufnr)
   local self = setmetatable({}, { __index = STHighlighter })
 
   self.bufnr = bufnr
-  self.augroup = api.nvim_create_augroup('vim_lsp_semantic_tokens:' .. bufnr, { clear = true })
+  self.augroup = api.nvim_create_augroup('nvim.lsp.semantic_tokens:' .. bufnr, { clear = true })
   self.client_state = {}
 
   STHighlighter.active[bufnr] = self

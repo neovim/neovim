@@ -176,7 +176,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('with no argument, acts like jobstart(…,{term=true})', function()
-    command('autocmd! nvim_terminal TermClose')
+    command('autocmd! nvim.terminal TermClose')
     feed_command('terminal')
     screen:expect([[
       ^ready $                                           |
@@ -246,7 +246,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('ignores writes if the backing stream closes', function()
-    command('autocmd! nvim_terminal TermClose')
+    command('autocmd! nvim.terminal TermClose')
     feed_command('terminal')
     feed('iiXXXXXXX')
     poke_eventloop()
@@ -258,14 +258,14 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('works with findfile()', function()
-    command('autocmd! nvim_terminal TermClose')
+    command('autocmd! nvim.terminal TermClose')
     feed_command('terminal')
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     eq('scripts/shadacat.py', eval('findfile("scripts/shadacat.py", ".")'))
   end)
 
   it('works with :find', function()
-    command('autocmd! nvim_terminal TermClose')
+    command('autocmd! nvim.terminal TermClose')
     feed_command('terminal')
     screen:expect([[
       ^ready $                                           |

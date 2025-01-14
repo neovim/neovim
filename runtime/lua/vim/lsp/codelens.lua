@@ -30,7 +30,7 @@ local namespaces = setmetatable({}, {
 ---@private
 M.__namespaces = namespaces
 
-local augroup = api.nvim_create_augroup('vim_lsp_codelens', {})
+local augroup = api.nvim_create_augroup('nvim.lsp.codelens', {})
 
 api.nvim_create_autocmd('LspDetach', {
   group = augroup,

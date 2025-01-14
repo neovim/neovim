@@ -1,4 +1,4 @@
-local group = vim.api.nvim_create_augroup('editorconfig', {})
+local group = vim.api.nvim_create_augroup('nvim.editorconfig', {})
 vim.api.nvim_create_autocmd({ 'BufNewFile', 'BufRead', 'BufFilePost' }, {
   group = group,
   callback = function(args)

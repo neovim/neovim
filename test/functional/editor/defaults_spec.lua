@@ -32,7 +32,7 @@ describe('default', function()
   describe('popupmenu', function()
     it('can be disabled by user', function()
       n.clear {
-        args = { '+autocmd! nvim_popupmenu', '+aunmenu PopUp' },
+        args = { '+autocmd! nvim.popupmenu', '+aunmenu PopUp' },
       }
       local screen = Screen.new(40, 8)
       n.insert([[

@@ -122,7 +122,7 @@ fully disable the mouse or popup-menu, do any of the following:
 <
 To remove the default popup-menu without disabling mouse: >vim
   aunmenu PopUp
-  autocmd! nvim_popupmenu
+  autocmd! nvim.popupmenu
 
 To remove only the "How-to disable mouse" menu item (and its separator): >vim
   aunmenu PopUp.How-to\ disable\ mouse
