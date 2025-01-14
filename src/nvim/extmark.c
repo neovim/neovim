@@ -112,10 +112,10 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
 {
   MarkTreeIter itr[1] = { 0 };
   MTKey key = marktree_lookup(buf->b_marktree, mark, itr);
-  bool move = key.pos.row >= 0 && (key.pos.row != row || key.pos.col != col);
-  // Already valid keys were being revalidated, presumably when encountering a
-  // SavePos from a modified mark. Avoid adding that to the decor again.
-  invalid = invalid && mt_invalid(key);
+  bool move = key.pos.row != row || key.pos.col != col;
+  if (key.pos.row < 0 || (!move && !invalid)) {
+    return;  // Mark was deleted or no change needed
+  }
 
   // Only the position before undo needs to be redrawn here,
   // as the position after undo should be marked as changed.
@@ -125,13 +125,16 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
 
   int row1 = 0;
   int row2 = 0;
+  MarkTreeIter altitr[1] = { *itr };
+  MTKey alt = marktree_get_alt(buf->b_marktree, key, altitr);
+
   if (invalid) {
     mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
-    marktree_revise_meta(buf->b_marktree, itr, key);
-  } else if (move && key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
-    MTPos end = marktree_get_altpos(buf->b_marktree, key, NULL);
-    row1 = MIN(end.row, MIN(key.pos.row, row));
-    row2 = MAX(end.row, MAX(key.pos.row, row));
+    mt_itr_rawkey(altitr).flags &= (uint16_t) ~MT_FLAG_INVALID;
+    marktree_revise_meta(buf->b_marktree, mt_end(key) ? altitr : itr, mt_end(key) ? alt : key);
+  } else if (!mt_invalid(key) && key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
+    row1 = MIN(alt.pos.row, MIN(key.pos.row, row));
+    row2 = MAX(alt.pos.row, MAX(key.pos.row, row));
     buf_signcols_count_range(buf, row1, row2, 0, kTrue);
   }
 
@@ -140,10 +143,8 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
   }
 
   if (invalid) {
-    MTPos end = marktree_get_altpos(buf->b_marktree, key, itr);
-    mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
-    buf_put_decor(buf, mt_decor(key), row, end.row);
-  } else if (move && key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
+    buf_put_decor(buf, mt_decor(key), MIN(row, key.pos.row), MAX(row, key.pos.row));
+  } else if (!mt_invalid(key) && key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
     buf_signcols_count_range(buf, row1, row2, 0, kNone);
   }
 }
