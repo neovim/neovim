@@ -343,6 +343,8 @@ PERFORMANCE
 • |LanguageTree:parse()| now only runs the injection query on the provided
   range (as long as the language does not have a combined injection),
   significantly improving |treesitter-highlight| performance.
+• Treesitter injection query iteration is now asynchronous, making edits in
+  large buffers with combined injections much quicker.
 
 PLUGINS
 
