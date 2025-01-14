@@ -16,7 +16,7 @@ vim.keymap.set('n', 'gH', function()
   require('vim._matchpairs').jump(true)
 end)
 
-local augroup = vim.api.nvim_create_augroup('nvim_matchpairs', {})
+local augroup = vim.api.nvim_create_augroup('nvim.matchpairs', {})
 
 vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI', 'WinEnter' }, {
   callback = vim.schedule_wrap(function ()
