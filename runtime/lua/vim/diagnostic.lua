@@ -1018,9 +1018,18 @@ local function goto_diagnostic(diagnostic, opts)
     vim.cmd('normal! zv')
   end)
 
-  local float_opts = opts.float
+  --- @type vim.diagnostic.Opts.Float
+  local float_opts
+
+  if type(opts.float) == 'table' then
+    float_opts = opts.float --[[@as vim.diagnostic.Opts.Float]]
+  elseif type(opts.float) == 'function' then
+    float_opts = opts.float(diagnostic.namespace, diagnostic.bufnr)
+  elseif opts.float then
+    float_opts = {}
+  end
+
   if float_opts then
-    float_opts = type(float_opts) == 'table' and float_opts or {}
     vim.schedule(function()
       M.open_float(vim.tbl_extend('keep', float_opts, {
         bufnr = api.nvim_win_get_buf(winid),
@@ -1308,7 +1317,7 @@ end
 --- Unless overridden, the float will show diagnostics at the new cursor
 --- position (as if "cursor" were passed to the "scope" option).
 --- (default: `false`)
---- @field float? boolean|vim.diagnostic.Opts.Float
+--- @field float? boolean|vim.diagnostic.Opts.Float|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Float
 ---
 --- Window ID
 --- (default: `0`)
