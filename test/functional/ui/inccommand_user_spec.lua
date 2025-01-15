@@ -11,14 +11,6 @@ local feed = n.feed
 local command = n.command
 local assert_alive = n.assert_alive
 
-local setup_preview_test_cmd = [[
-  vim.api.nvim_create_user_command("PreviewTest", function() end, {
-    preview = function()
-      return 2
-    end,
-  })
-]]
-
 -- Implements a :Replace command that works like :substitute and has multibuffer support.
 local setup_replace_cmd = [[
   local function show_replace_preview(use_preview_win, preview_ns, preview_buf, matches)
@@ -248,7 +240,6 @@ describe("'inccommand' for user commands", function()
     clear()
     screen = Screen.new(40, 17)
     exec_lua(setup_replace_cmd)
-    exec_lua(setup_preview_test_cmd)
     command('set cmdwinheight=5')
     insert [[
       text on line 1
@@ -262,7 +253,39 @@ describe("'inccommand' for user commands", function()
     ]]
   end)
 
+  it("restores 'modifiable'", function()
+    exec_lua([[
+      vim.api.nvim_create_user_command("PreviewTest", function() end, {
+        preview = function(ev)
+          vim.bo.modifiable = true
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, {"cats"})
+          return 2
+        end,
+      })
+    ]])
+
+    command('set nomodifiable')
+    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+
+    feed(':PreviewTest')
+    screen:expect([[
+      cats                                    |
+      {1:~                                       }|*15
+      :PreviewTest^                            |
+    ]])
+    feed('<Esc>')
+
+    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+  end)
+
   it("can preview 'nomodifiable' buffer", function()
+    exec_lua([[
+      vim.api.nvim_create_user_command("PreviewTest", function() end, {
+        preview = function(ev)
+          return 2
+        end,
+      })
+    ]])
     command('set nomodifiable')
     command('set inccommand=split')
     feed(':PreviewTest')
