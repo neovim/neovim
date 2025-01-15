@@ -1339,7 +1339,7 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       `info.captures`).
     • `info.patterns`: information about predicates.
 
-    Example (to try it, use `yxx` or select the code then run `:'<,'>lua`): >lua
+    Example (to try it, use `g==` or select the code then run `:'<,'>lua`): >lua
         local query = vim.treesitter.query.parse('vimdoc', [[
           ; query
           ((h1) @str

@@ -229,7 +229,7 @@ DIAGNOSTICS
 
 EDITOR
 
-• Use |yxx| in :help docs to execute Lua and Vimscript code examples.
+• Use |g==| in :help docs to execute Lua and Vimscript code examples.
 • Improved |paste| handling for redo (dot-repeat) and macros (|recording|):
   • Redoing a large paste is significantly faster and ignores 'autoindent'.
   • Replaying a macro with |@| also replays pasted text.
