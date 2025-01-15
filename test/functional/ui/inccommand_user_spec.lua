@@ -11,6 +11,14 @@ local feed = n.feed
 local command = n.command
 local assert_alive = n.assert_alive
 
+local setup_preview_test_cmd = [[
+  vim.api.nvim_create_user_command("PreviewTest", function() end, {
+    preview = function()
+      return 2
+    end,
+  })
+]]
+
 -- Implements a :Replace command that works like :substitute and has multibuffer support.
 local setup_replace_cmd = [[
   local function show_replace_preview(use_preview_win, preview_ns, preview_buf, matches)
@@ -240,6 +248,7 @@ describe("'inccommand' for user commands", function()
     clear()
     screen = Screen.new(40, 17)
     exec_lua(setup_replace_cmd)
+    exec_lua(setup_preview_test_cmd)
     command('set cmdwinheight=5')
     insert [[
       text on line 1
@@ -251,6 +260,29 @@ describe("'inccommand' for user commands", function()
       why won't it stop
       make the text stop
     ]]
+  end)
+
+  it("can preview 'nomodifiable' buffer", function()
+    command('set nomodifiable')
+    command('set inccommand=split')
+    feed(':PreviewTest')
+
+    screen:expect([[
+        text on line 1                        |
+        more text on line 2                   |
+        oh no, even more text                 |
+        will the text ever stop               |
+        oh well                               |
+        did the text stop                     |
+        why won't it stop                     |
+        make the text stop                    |
+                                              |
+      {3:[No Name] [+]                           }|
+                                              |
+      {1:~                                       }|*4
+      {2:[Preview]                               }|
+      :PreviewTest^                            |
+    ]])
   end)
 
   it('works with inccommand=nosplit', function()

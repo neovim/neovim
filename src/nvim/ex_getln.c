@@ -2704,7 +2704,6 @@ static int command_line_changed(CommandLineState *s)
       && current_sctx.sc_sid == 0    // only if interactive
       && *p_icm != NUL       // 'inccommand' is set
       && !exmode_active      // not in ex mode
-      && curbuf->b_p_ma      // buffer is modifiable
       && cmdline_star == 0   // not typing a password
       && !vpeekc_any()
       && cmdpreview_may_show(s)) {
