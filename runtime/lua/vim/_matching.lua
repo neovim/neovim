@@ -2,7 +2,7 @@ local ts = vim.treesitter
 local api = vim.api
 
 local M = {}
-local ns = api.nvim_create_namespace('nvim.matchpairs')
+local ns = api.nvim_create_namespace('nvim.matching')
 
 --- Jump to the start or end of a given node
 --- @param node TSNode The node to jump to
