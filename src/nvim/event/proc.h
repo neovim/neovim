@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "nvim/event/defs.h"  // IWYU pragma: keep
+#include "nvim/os/os_defs.h"
 #include "nvim/types_defs.h"
 
 static inline Proc proc_init(Loop *loop, ProcType type, void *data)
