@@ -1658,7 +1658,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
     if (*cms != NUL) {
       // Also delete 'commentstring' if it matches.
       char *cms2 = strstr(cms, "%s");
-      if (p - line >= cms2 - cms
+      if (cms2 != NULL && p - line >= cms2 - cms
           && strncmp(p - (cms2 - cms), cms, (size_t)(cms2 - cms)) == 0
           && strncmp(p + len, cms2 + 2, strlen(cms2 + 2)) == 0) {
         p -= cms2 - cms;
