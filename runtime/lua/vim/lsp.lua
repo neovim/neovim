@@ -546,7 +546,7 @@ function lsp.enable(name, enable)
     if nm == '*' then
       error('Invalid name')
     end
-    lsp._enabled_configs[nm] = enable == false and nil or {}
+    lsp._enabled_configs[nm] = enable ~= false and {} or nil
   end
 
   if not next(lsp._enabled_configs) then
