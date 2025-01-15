@@ -243,20 +243,6 @@ local function dump_option(i, o, write)
   write('  },')
 end
 
---- @param o vim.option_meta
-local function preprocess(o)
-  if o.values then
-    o.cb = o.cb or 'did_set_str_generic'
-    o.expand_cb = o.expand_cb or 'expand_set_str_generic'
-  end
-
-  if type(o.alias) == 'string' then
-    o.alias = {
-      o.alias --[[@as string]],
-    }
-  end
-end
-
 --- @param prefix string
 --- @param values vim.option_valid_values
 local function preorder_traversal(prefix, values)
@@ -539,11 +525,6 @@ local function main()
   local options_enum_file = arg[2]
   local options_map_file = arg[3]
   local option_vars_file = arg[4]
-
-  -- pre-process options_meta
-  for _, o in ipairs(options_meta) do
-    preprocess(o)
-  end
 
   local option_index = gen_enums(options_enum_file)
   gen_map(options_map_file, option_index)
