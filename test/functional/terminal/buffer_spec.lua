@@ -629,6 +629,14 @@ describe('terminal input', function()
   -- TODO(bfredl): getcharstr() erases the distinction between <C-I> and <Tab>.
   -- If it was enhanced or replaced this could get folded into the test above.
   it('can send TAB/C-I and ESC/C-[ separately', function()
+    if
+      skip(
+        is_os('win'),
+        "The escape sequence to enable kitty keyboard mode doesn't work on Windows"
+      )
+    then
+      return
+    end
     clear()
     local screen = tt.setup_child_nvim({
       '-u',

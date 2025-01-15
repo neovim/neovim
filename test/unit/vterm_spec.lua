@@ -2324,6 +2324,9 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     local vt = init()
     local state = wantstate(vt)
 
+    -- Disambiguate escape codes
+    push('\x1b[>1u', vt)
+
     -- Unmodified ASCII
     inchar(41, vt)
     expect('output 29')
@@ -2478,6 +2481,8 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     expect_output('\x1b[I')
     vterm.vterm_state_focus_out(state)
     expect_output('\x1b[O')
+
+    push('\x1b[<u', vt)
   end)
 
   itp('26state_query', function()

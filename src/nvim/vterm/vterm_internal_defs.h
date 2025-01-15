@@ -21,7 +21,14 @@
 #define BUFIDX_PRIMARY   0
 #define BUFIDX_ALTSCREEN 1
 
+#define KEY_ENCODING_DISAMBIGUATE 0x1
+#define KEY_ENCODING_REPORT_EVENTS 0x2
+#define KEY_ENCODING_REPORT_ALTERNATE 0x4
+#define KEY_ENCODING_REPORT_ALL_KEYS 0x8
+#define KEY_ENCODING_REPORT_ASSOCIATED 0x10
+
 typedef struct VTermEncoding VTermEncoding;
+typedef struct VTermKeyEncodingFlags VTermKeyEncodingFlags;
 
 typedef struct {
   VTermEncoding *enc;
@@ -44,6 +51,21 @@ struct VTermPen {
   unsigned font:4;  // To store 0-9
   unsigned small:1;
   unsigned baseline:2;
+};
+
+// https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
+struct VTermKeyEncodingFlags {
+  bool disambiguate:1;
+  bool report_events:1;
+  bool report_alternate:1;
+  bool report_all_keys:1;
+  bool report_associated:1;
+};
+
+struct VTermKeyEncodingStack {
+  VTermKeyEncodingFlags items[16];
+  uint8_t size;  ///< Number of items in the stack. This is at least 1 and at
+                 ///< most the length of the "items" array.
 };
 
 struct VTermState {
@@ -171,6 +193,9 @@ struct VTermState {
     char *buffer;
     size_t buflen;
   } selection;
+
+  // Maintain two stacks, one for primary screen and one for altscreen
+  struct VTermKeyEncodingStack key_encoding_stacks[2];
 };
 
 struct VTerm {
