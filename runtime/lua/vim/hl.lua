@@ -115,7 +115,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
   end
 end
 
-local yank_ns = api.nvim_create_namespace('hlyank')
+local yank_ns = api.nvim_create_namespace('nvim.hlyank')
 local yank_timer --- @type uv.uv_timer_t?
 local yank_cancel --- @type fun()?
 

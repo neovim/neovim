@@ -843,7 +843,7 @@ local function buf_attach(bufnr)
   attached_buffers[bufnr] = true
 
   local uri = vim.uri_from_bufnr(bufnr)
-  local augroup = ('lsp_b_%d_save'):format(bufnr)
+  local augroup = ('nvim.lsp.b_%d_save'):format(bufnr)
   local group = api.nvim_create_augroup(augroup, { clear = true })
   api.nvim_create_autocmd('BufWritePre', {
     group = group,

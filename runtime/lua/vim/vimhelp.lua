@@ -7,7 +7,7 @@ local M = {}
 --- Note: {patterns} is assumed to be sorted by occurrence in the file.
 --- @param patterns {start:string,stop:string,match:string}[]
 function M.highlight_groups(patterns)
-  local ns = vim.api.nvim_create_namespace('vimhelp')
+  local ns = vim.api.nvim_create_namespace('nvim.vimhelp')
   vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
   local save_cursor = vim.fn.getcurpos()

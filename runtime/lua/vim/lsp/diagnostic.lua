@@ -5,7 +5,7 @@ local api = vim.api
 
 local M = {}
 
-local augroup = api.nvim_create_augroup('vim_lsp_diagnostic', {})
+local augroup = api.nvim_create_augroup('nvim.lsp.diagnostic', {})
 
 local DEFAULT_CLIENT_ID = -1
 

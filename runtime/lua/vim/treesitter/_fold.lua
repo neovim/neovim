@@ -192,7 +192,7 @@ local M = {}
 ---@type table<integer,TS.FoldInfo>
 local foldinfos = {}
 
-local group = api.nvim_create_augroup('treesitter/fold', {})
+local group = api.nvim_create_augroup('nvim.treesitter.fold', {})
 
 --- Update the folds in the windows that contain the buffer and use expr foldmethod (assuming that
 --- the user doesn't use different foldexpr for the same buffer).

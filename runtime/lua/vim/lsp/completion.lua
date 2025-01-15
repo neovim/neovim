@@ -630,7 +630,7 @@ local function enable_completions(client_id, bufnr, opts)
 
     -- Set up autocommands.
     local group =
-      api.nvim_create_augroup(string.format('vim/lsp/completion-%d', bufnr), { clear = true })
+      api.nvim_create_augroup(string.format('nvim.lsp.completion_%d', bufnr), { clear = true })
     api.nvim_create_autocmd('CompleteDone', {
       group = group,
       buffer = bufnr,

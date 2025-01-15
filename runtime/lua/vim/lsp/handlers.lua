@@ -382,7 +382,7 @@ end
 --- @diagnostic disable-next-line: deprecated
 RCS[ms.textDocument_hover] = M.hover
 
-local sig_help_ns = api.nvim_create_namespace('vim_lsp_signature_help')
+local sig_help_ns = api.nvim_create_namespace('nvim.lsp.signature_help')
 
 --- @deprecated remove in 0.13
 --- |lsp-handler| for the method "textDocument/signatureHelp".

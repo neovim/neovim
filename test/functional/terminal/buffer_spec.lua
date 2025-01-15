@@ -351,7 +351,7 @@ describe(':terminal buffer', function()
   end)
 
   it('TermRequest synchronization #27572', function()
-    command('autocmd! nvim_terminal TermRequest')
+    command('autocmd! nvim.terminal TermRequest')
     local term = exec_lua([[
       _G.input = {}
       local term = vim.api.nvim_open_term(0, {

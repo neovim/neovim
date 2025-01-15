@@ -1357,7 +1357,7 @@ end
 ---@param bufnrs table list of buffers where the preview window will remain visible
 ---@see autocmd-events
 local function close_preview_autocmd(events, winnr, bufnrs)
-  local augroup = api.nvim_create_augroup('preview_window_' .. winnr, {
+  local augroup = api.nvim_create_augroup('nvim.preview_window_' .. winnr, {
     clear = true,
   })
 
@@ -1619,7 +1619,7 @@ function M.open_floating_preview(contents, syntax, opts)
     api.nvim_buf_set_var(bufnr, 'lsp_floating_preview', floating_winnr)
   end
 
-  local augroup_name = ('closing_floating_preview_%d'):format(floating_winnr)
+  local augroup_name = ('nvim.closing_floating_preview_%d'):format(floating_winnr)
   local ok =
     pcall(api.nvim_get_autocmds, { group = augroup_name, pattern = tostring(floating_winnr) })
   if not ok then
@@ -1650,7 +1650,7 @@ function M.open_floating_preview(contents, syntax, opts)
 end
 
 do --[[ References ]]
-  local reference_ns = api.nvim_create_namespace('vim_lsp_references')
+  local reference_ns = api.nvim_create_namespace('nvim.lsp.references')
 
   --- Removes document highlights from a buffer.
   ---

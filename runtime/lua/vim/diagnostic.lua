@@ -356,7 +356,7 @@ local bufnr_and_namespace_cacher_mt = {
 -- bufnr -> ns -> Diagnostic[]
 local diagnostic_cache = {} --- @type table<integer,table<integer,vim.Diagnostic[]>>
 do
-  local group = api.nvim_create_augroup('DiagnosticBufWipeout', {})
+  local group = api.nvim_create_augroup('nvim.diagnostic.buf_wipeout', {})
   setmetatable(diagnostic_cache, {
     --- @param t table<integer,vim.Diagnostic[]>
     --- @param bufnr integer
@@ -1402,7 +1402,7 @@ M.handlers.signs = {
     local ns = M.get_namespace(namespace)
     if not ns.user_data.sign_ns then
       ns.user_data.sign_ns =
-        api.nvim_create_namespace(string.format('%s/diagnostic/signs', ns.name))
+        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.signs', ns.name))
     end
 
     -- Handle legacy diagnostic sign definitions
@@ -1500,7 +1500,7 @@ M.handlers.underline = {
     local ns = M.get_namespace(namespace)
     if not ns.user_data.underline_ns then
       ns.user_data.underline_ns =
-        api.nvim_create_namespace(string.format('%s/diagnostic/underline', ns.name))
+        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.underline', ns.name))
     end
 
     local underline_ns = ns.user_data.underline_ns
@@ -1572,7 +1572,7 @@ M.handlers.virtual_text = {
     local ns = M.get_namespace(namespace)
     if not ns.user_data.virt_text_ns then
       ns.user_data.virt_text_ns =
-        api.nvim_create_namespace(string.format('%s/diagnostic/virtual_text', ns.name))
+        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.virtual_text', ns.name))
     end
 
     local virt_text_ns = ns.user_data.virt_text_ns
