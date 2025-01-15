@@ -73,103 +73,104 @@ local function match_punc(current)
   jump_to_node(current, not at_start)
 end
 
-local function parse_matchwords()
+--- @param str string
+--- @param sep string
+--- @return fun(): string?
+local function gsplit_escaped(str, sep)
+  local start = 1
+  return function()
+    local end_ = start
+    while end_ <= #str and str:sub(end_, end_) ~= sep do
+      end_ = end_ + 1
+      if str:sub(end_, end_) == '\\' then
+        end_ = end_ + 2
+      end
+    end
+    -- get part before sep
+    local sub = str:sub(start, end_ - 1)
+    -- update start for next group
+    start = end_ + 1
+    return sub ~= "" and sub or nil
+  end
+end
+
+--- Substitute `\1` with the capture group found.
+--- @param str string
+--- @return string
+local function resolve_backref(str)
+  local first_capture = str:match([[\%(.-\%)]]) or [[\1]]
+  local res, _ = str:gsub([[\1]], first_capture)
+  return res
+end
+
+--- @return string[]?
+local function find_match_group(words)
+  for group in gsplit_escaped(words, ',') do
+    group = resolve_backref(group)
+    -- iterate through it because we want to return the group parts
+    local split_groups = vim.iter(gsplit_escaped(group, ':')):totable()
+    for _, pattern in ipairs(split_groups) do
+      local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+      local buf = vim.api.nvim_get_current_buf()
+      local matches = vim.fn.matchbufline(buf, pattern, line, line)
+      for _, match in ipairs(matches) do
+        local match_end = match.byteidx + #match.text
+        if match.byteidx <= col and col <= match_end then
+          return split_groups
+        end
+      end
+    end
+  end
+end
+
+function M.match_syntax(backward)
   local words = vim.b.match_words
   if not words then
-    return {}
+    return
   end
+
   -- Allow b:match_words = "GetVimMatchWords()"
   if not words:find(":") then
     words = api.nvim_eval(words)
   end
 
-  local function resolve(source, target, output)
-  --     let word = a:target
-  -- let i = matchend(word, s:notslash .. '\\\d') - 1
-  -- let table = "----------"
-  -- while i != -2 " There are back references to be replaced.
-  --   let d = word[i]
-  --   let backref = s:Ref(a:source, d)
-  --   " The idea is to replace '\d' with backref.  Before we do this,
-  --   " replace any \(\) groups in backref with :1, :2, ... if they
-  --   " correspond to the first, second, ... group already inserted
-  --   " into backref.  Later, replace :1 with \1 and so on.  The group
-  --   " number w+b within backref corresponds to the group number
-  --   " s within a:source.
-  --   " w = number of '\(' in word before the current one
-  --   let w = s:Count(
-  --   \ substitute(strpart(word, 0, i-1), '\\\\', '', 'g'), '\(', '1')
-  --   let b = 1 " number of the current '\(' in backref
-  --   let s = d " number of the current '\(' in a:source
-  --   while b <= s:Count(substitute(backref, '\\\\', '', 'g'), '\(', '1')
-  --   \ && s < 10
-  --     if table[s] == "-"
-  --       if w + b < 10
-  --         " let table[s] = w + b
-  --         let table = strpart(table, 0, s) .. (w+b) .. strpart(table, s+1)
-  --       endif
-  --       let b = b + 1
-  --       let s = s + 1
-  --     else
-  --       execute s:Ref(backref, b, "start", "len")
-  --       let ref = strpart(backref, start, len)
-  --       let backref = strpart(backref, 0, start) .. ":" .. table[s]
-  --       \ .. strpart(backref, start+len)
-  --       let s = s + s:Count(substitute(ref, '\\\\', '', 'g'), '\(', '1')
-  --     endif
-  --   endwhile
-  --   let word = strpart(word, 0, i-1) .. backref .. strpart(word, i+1)
-  --   let i = matchend(word, s:notslash .. '\\\d') - 1
-  -- endwhile
-  -- let word = substitute(word, s:notslash .. '\zs:', '\\', 'g')
-  -- if a:output == "table"
-  --   return table
-  -- elseif a:output == "word"
-  --   return word
-  -- else
-  --   return table .. word
-  -- endif
-
+  -- 1. find match in b:match_words
+  local group = find_match_group(words)
+  if not group then
+    return
   end
+  local start = group[1]
+  local last = group[#group]
+  local mid = #group > 2 and group[2] or ""
 
-  local notslash = [[\\\@1<!\%(\\\\\)*]]
-  local groups = vim.fn.substitute(
-    words .. ",",
-    notslash .. [[\zs[,:]*,[,:]*]],
-    ',',
-    'g'
-  )
-  groups = vim.fn.substitute(groups, notslash .. [[\zs:\{2,}]], ':', 'g')
-  local parsed = ""
-
-  local empty = vim.regex('[^,:]')
-  while not empty:match_str(groups) do
-    local i = vim.fn.matchend(groups, notslash .. ':')
-    local j = vim.fn.matchend(groups, notslash .. ',')
-    local ini = vim.fn.strpart(groups, 0, i-1)
-    local tail = vim.fn.strpart(groups, i, j-i-1) .. ':'
-    groups = vim.fn.strpart(groups, j)
-    parsed = parsed .. ini
-    i = vim.fn.matchend(tail, notslash .. ':')
-    while i ~= -1 do
-      local word = vim.fn.strpart(tail, 0, i-1)
-      tail = vim.fn.strpart(tail, i)
-      i = vim.fn.matchend(tail, notslash .. ':')
-      parsed = parsed .. ":" .. resolve(ini, word, "word")
-    end
-    parsed = parsed .. ","
-  end
-
-
-  parsed = vim.fn.substitute(parsed, ',$', '', '')
-  return parsed
-end
-
-function M.match_syntax()
-  -- 1. parse b:match_words
-  parse_matchwords()
   -- 2. parse b:match_skip
+  local skip = ''
+
   -- 3. seachpairpos
+  local flags = backward and 'bW' or 'W'
+  local notslash = [[\\\@1<!\%(\\\\\)*]]
+
+  -- unescape : and ,
+  start = start:gsub('\\([:,])', '%1')
+  mid = mid:gsub('\\([:,])', '%1')
+  last = last:gsub('\\([:,])', '%1')
+
+  -- avoid \(\) groups
+  start = vim.fn.substitute(start, notslash .. [[\zs\\(]], [[\\%(]], 'g')
+  mid = vim.fn.substitute(mid, notslash .. [[\zs\\(]], [[\\%(]], 'g')
+  last = vim.fn.substitute(last, notslash .. [[\zs\\(]], [[\\%(]], 'g')
+
+  vim.print({
+    start = start,
+    mid = mid,
+    last = last,
+    flags = flags,
+    skip = skip
+  })
+
+  -- TODO: jump to start if on end (wrap)
+
+  vim.fn.searchpair(start, mid, last, flags, skip)
 end
 
 function M.jump(backward)
@@ -216,7 +217,7 @@ local function searchskip()
     return false
   end
   local groups = vim.regex("string\\|character\\|singlequote\\|escape\\|symbol\\|comment")
-  return vim.iter(vim.fn.synstack(vim.fn.line("."), vim.fn.col("."))):any(function (id)
+  return vim.iter(vim.fn.synstack(vim.fn.line("."), vim.fn.col("."))):any(function(id)
     local name = vim.fn.synIDattr(id, 'name'):lower()
     return groups:match_str(name) ~= nil
   end)

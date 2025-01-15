@@ -13,7 +13,7 @@ vim.keymap.set('n', 'H', function()
 end)
 
 vim.keymap.set('n', 'gH', function()
-  require('vim._matchpairs').jump(true)
+  require('vim._matchpairs').match_syntax(true)
 end)
 
 local augroup = vim.api.nvim_create_augroup('nvim.matchpairs', {})
