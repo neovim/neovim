@@ -157,7 +157,7 @@ distclean:
 	$(MAKE) clean
 
 install: checkprefix nvim
-	$(CMAKE) --install build
+	$(CMAKE_GENERATOR) -C build install
 
 appimage:
 	bash scripts/genappimage.sh
