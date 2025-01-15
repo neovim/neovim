@@ -17,6 +17,8 @@ local mkdir = t.mkdir
 
 local nvim_prog_basename = is_os('win') and 'nvim.exe' or 'nvim'
 
+local link_limit = is_os('win') and 64 or (is_os('mac') or is_os('bsd')) and 33 or 41
+
 local test_basename_dirname_eq = {
   '~/foo/',
   '~/foo',
@@ -152,7 +154,7 @@ describe('vim.fs', function()
       )
     end)
 
-    it('works with opts.depth and opts.skip', function()
+    it('works with opts.depth, opts.skip and opts.follow', function()
       io.open('testd/a1', 'w'):close()
       io.open('testd/b1', 'w'):close()
       io.open('testd/c1', 'w'):close()
@@ -166,8 +168,8 @@ describe('vim.fs', function()
       io.open('testd/a/b/c/b4', 'w'):close()
       io.open('testd/a/b/c/c4', 'w'):close()
 
-      local function run(dir, depth, skip)
-        return exec_lua(function()
+      local function run(dir, depth, skip, follow)
+        return exec_lua(function(follow_)
           local r = {} --- @type table<string, string>
           local skip_f --- @type function
           if skip then
@@ -177,11 +179,11 @@ describe('vim.fs', function()
               end
             end
           end
-          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f }) do
+          for name, type_ in vim.fs.dir(dir, { depth = depth, skip = skip_f, follow = follow_ }) do
             r[name] = type_
           end
           return r
-        end)
+        end, follow)
       end
 
       local exp = {}
@@ -197,6 +199,7 @@ describe('vim.fs', function()
       exp['a/b2'] = 'file'
       exp['a/c2'] = 'file'
       exp['a/b'] = 'directory'
+      local lexp = vim.deepcopy(exp)
 
       eq(exp, run('testd', 2))
 
@@ -213,6 +216,29 @@ describe('vim.fs', function()
       exp['a/b/c/c4'] = 'file'
 
       eq(exp, run('testd', 999))
+
+      vim.uv.fs_symlink(vim.uv.fs_realpath('testd/a'), 'testd/l', { junction = true, dir = true })
+      lexp['l'] = 'link'
+      eq(lexp, run('testd', 2, nil, false))
+
+      lexp['l/a2'] = 'file'
+      lexp['l/b2'] = 'file'
+      lexp['l/c2'] = 'file'
+      lexp['l/b'] = 'directory'
+      eq(lexp, run('testd', 2, nil, true))
+    end)
+
+    it('follow=true handles symlink loop', function()
+      local cwd = 'testd/a/b/c'
+      local symlink = cwd .. '/link_loop' ---@type string
+      vim.uv.fs_symlink(vim.uv.fs_realpath(cwd), symlink, { junction = true, dir = true })
+
+      eq(
+        link_limit,
+        exec_lua(function()
+          return #vim.iter(vim.fs.dir(cwd, { depth = math.huge, follow = true })):totable()
+        end)
+      )
     end)
   end)
 
@@ -226,6 +252,53 @@ describe('vim.fs', function()
 
       local parent, name = nvim_dir:match('^(.*/)([^/]+)$')
       eq({ nvim_dir }, vim.fs.find(name, { path = parent, upward = true, type = 'directory' }))
+    end)
+
+    it('follows symlinks', function()
+      local build_dir = test_source_path .. '/build' ---@type string
+      local symlink = test_source_path .. '/build_link' ---@type string
+      vim.uv.fs_symlink(build_dir, symlink, { junction = true, dir = true })
+
+      finally(function()
+        vim.uv.fs_unlink(symlink)
+      end)
+
+      eq(
+        { nvim_prog, symlink .. '/bin/' .. nvim_prog_basename },
+        vim.fs.find(nvim_prog_basename, {
+          path = test_source_path,
+          type = 'file',
+          limit = 2,
+          follow = true,
+        })
+      )
+
+      eq(
+        { nvim_prog },
+        vim.fs.find(nvim_prog_basename, {
+          path = test_source_path,
+          type = 'file',
+          limit = 2,
+          follow = false,
+        })
+      )
+    end)
+
+    it('follow=true handles symlink loop', function()
+      local cwd = test_source_path ---@type string
+      local symlink = test_source_path .. '/loop_link' ---@type string
+      vim.uv.fs_symlink(cwd, symlink, { junction = true, dir = true })
+
+      finally(function()
+        vim.uv.fs_unlink(symlink)
+      end)
+
+      eq(link_limit, #vim.fs.find(nvim_prog_basename, {
+        path = test_source_path,
+        type = 'file',
+        limit = math.huge,
+        follow = true,
+      }))
     end)
 
     it('accepts predicate as names', function()

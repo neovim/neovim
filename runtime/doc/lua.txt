@@ -2983,6 +2983,7 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                 • skip: (fun(dir_name: string): boolean)|nil Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1
+                • follow: boolean|nil Follow symbolic links. (default: true)
 
     Return: ~
         (`Iterator`) over items in {path}. Each iteration yields two values:
@@ -3024,7 +3025,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
 
         -- get all files ending with .cpp or .hpp inside lib/
         local cpp_hpp = vim.fs.find(function(name, path)
-          return name:match('.*%.[ch]pp$') and path:match('[/\\\\]lib$')
+          return name:match('.*%.[ch]pp$') and path:match('[/\\]lib$')
         end, {limit = math.huge, type = 'file'})
 <
 
@@ -3038,8 +3039,10 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  If {names} is a function, it is called for each traversed
                  item with args:
                  • name: base name of the current item
-                 • path: full path of the current item The function should
-                   return `true` if the given item is considered a match.
+                 • path: full path of the current item
+
+                 The function should return `true` if the given item is
+                 considered a match.
       • {opts}   (`table`) Optional keyword arguments:
                  • {path}? (`string`) Path to begin searching from. If
                    omitted, the |current-directory| is used.
@@ -3053,6 +3056,8 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • {limit}? (`number`, default: `1`) Stop the search after
                    finding this many matches. Use `math.huge` to place no
                    limit on the number of matches.
+                 • {follow}? (`boolean`, default: `true`) Follow symbolic
+                   links.
 
     Return: ~
         (`string[]`) Normalized paths |vim.fs.normalize()| of all matching
