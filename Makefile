@@ -15,6 +15,7 @@ else
   RM := rm -rf
   CMAKE := $(shell (command -v cmake3 || command -v cmake || echo cmake))
   CMAKE_GENERATOR ?= "$(shell (command -v ninja > /dev/null 2>&1 && echo "Ninja") || echo "Unix Makefiles")"
+  GENERATOR_CMD ?= "$(shell (command -v ninja > /dev/null 2>&1 && echo "ninja") || echo "make")"
   define rmdir
     rm -rf $1
   endef
@@ -157,7 +158,7 @@ distclean:
 	$(MAKE) clean
 
 install: checkprefix nvim
-	$(CMAKE_GENERATOR) -C build install
+	$(GENERATOR_CMD) -C build install
 
 appimage:
 	bash scripts/genappimage.sh
