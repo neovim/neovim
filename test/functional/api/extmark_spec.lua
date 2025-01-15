@@ -1794,7 +1794,7 @@ describe('API/extmarks', function()
     eq({}, get_extmark_by_id(ns, 4, {}))
   end)
 
-  it('no crash checking invalided flag of sign pair end key #31856', function()
+  it('no crash checking invalidated flag of sign pair end key #31856', function()
     api.nvim_buf_set_lines(0, 0, 1, false, { '', '' })
     api.nvim_set_option_value('signcolumn', 'auto:2', {})
     set_extmark(ns, 1, 0, 0, { sign_text = 'S1', invalidate = true, end_row = 0 })
