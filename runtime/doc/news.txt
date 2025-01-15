@@ -306,6 +306,8 @@ PERFORMANCE
   queries.
 • Treesitter highlighting is now asynchronous. To force synchronous parsing,
   use `vim.g._ts_force_sync_parsing = true`.
+• Treesitter injections are searched incrementally (when possible).
+  Editing large files with treesitter highlighting is significantly faster.
 • Treesitter folding is now calculated asynchronously.
 
 PLUGINS

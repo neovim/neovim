@@ -560,17 +560,24 @@ The language injection behavior can also be configured by some properties
 associated with patterns:
 
     • `injection.language` - can be used to hard-code the name of a specific
-    language.
+      language.
     • `injection.combined` - indicates that all of the matching nodes in the
-    tree should have their content parsed as one nested document.
+      tree should have their content parsed as one nested document.
     • `injection.include-children` - indicates that the `@injection.content`
-    node's entire text should be re-parsed, including the text of its child
-    nodes. By default, child nodes' text will be excluded from the injected
-    document.
+      node's entire text should be re-parsed, including the text of its child
+      nodes. By default, child nodes' text will be excluded from the injected
+      document.
     • `injection.self` - indicates that the node's text should be parsed with
       the same language as the node's LanguageTree.
     • `injection.parent` - indicates that the captured node’s text should
       be parsed with the same language as the node's parent LanguageTree.
+    • nvim.injection-root - which capture should be used as the "root" of the
+      match. If all patterns in a query have a "root" node, injections can
+      be parsed incrementally. A "root" node in a pattern is such a node
+      for which, whether the pattern matches on it or not, depends only on
+      the text content within its range (including descendants), and node
+      types of its descendants or ancestors. Must not be the root node of
+      the grammar.
 
 ==============================================================================
 VIM.TREESITTER                                                *lua-treesitter*
@@ -1448,6 +1455,8 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
                     IDs to a single (last) node instead of the full list of
                     matching nodes. This option is only for backward
                     compatibility and will be removed in a future release.
+                  • byte_begin
+                  • byte_end
 
     Return: ~
         (`fun(): integer, table<integer, TSNode[]>, vim.treesitter.query.TSMetadata, TSTree`)
