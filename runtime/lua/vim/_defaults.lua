@@ -377,6 +377,18 @@ do
       return 'g@l'
     end, { expr = true, desc = 'Add empty line below cursor' })
   end
+
+  --- Defaults maps for built-in matching (matchpairs / matchit replacement).
+  do
+    -- TODO: change H and gH
+    vim.keymap.set('n', 'H', function()
+      require('vim._matching').match_syntax()
+    end, { desc = 'Jump to the next matching pair' })
+
+    vim.keymap.set('n', 'gH', function()
+      require('vim._matching').match_syntax(true)
+    end, { desc = 'Jump to the previous matching pair' })
+  end
 end
 
 --- Default menus
@@ -801,6 +813,19 @@ do
         end)
       end
     end
+  end
+
+  --- Defaults autocmds for built-in matching (matchpairs / matchit replacement).
+  do
+    local group = vim.api.nvim_create_augroup('nvim.matching', {})
+
+    vim.api.nvim_create_autocmd({ 'CursorMoved', 'CursorMovedI', 'WinEnter' }, {
+      callback = vim.schedule_wrap(function()
+        require('vim._matching').highlight()
+      end),
+      group = group,
+      desc = 'Highlight matching bracket',
+    })
   end
 end
 
