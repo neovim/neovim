@@ -168,18 +168,67 @@ describe('vim.ui_attach', function()
       vim.ui_attach(ns, { ext_messages = true }, function(ev)
         if ev == 'msg_show' then
           vim.schedule(function() vim.cmd.redraw() end)
-        else
-          vim.cmd.redraw()
+        elseif ev:find('cmdline') then
+          _G.cmdline = _G.cmdline + (ev == 'cmdline_show' and 1 or 0)
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, { tostring(_G.cmdline) })
+          vim.cmd('redraw')
         end
-        _G.cmdline = _G.cmdline + (ev == 'cmdline_show' and 1 or 0)
       end
     )]])
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*4
+    ]])
     feed(':')
-    n.assert_alive()
-    eq(2, exec_lua('return _G.cmdline'))
-    n.assert_alive()
+    screen:expect({
+      grid = [[
+        ^1                                       |
+        {1:~                                       }|*4
+      ]],
+      cmdline = { {
+        content = { { '' } },
+        firstc = ':',
+        pos = 0,
+      } },
+    })
     feed('version<CR><CR>v<Esc>')
-    n.assert_alive()
+    screen:expect({
+      grid = [[
+        ^2                                       |
+        {1:~                                       }|*4
+      ]],
+      cmdline = { { abort = false } },
+    })
+    feed([[:call confirm("Save changes?", "&Yes\n&No\n&Cancel")<CR>]])
+    screen:expect({
+      grid = [[
+        ^5                                       |
+        {1:~                                       }|*4
+      ]],
+      cmdline = {
+        {
+          content = { { '' } },
+          hl_id = 10,
+          pos = 0,
+          prompt = '[Y]es, (N)o, (C)ancel: ',
+        },
+      },
+      messages = {
+        {
+          content = { { '\nSave changes?\n', 6, 10 } },
+          history = false,
+          kind = 'confirm',
+        },
+      },
+    })
+    feed('n')
+    screen:expect({
+      grid = [[
+        ^5                                       |
+        {1:~                                       }|*4
+      ]],
+      cmdline = { { abort = false } },
+    })
   end)
 
   it("preserved 'incsearch/command' screen state after :redraw from ext_cmdline", function()
