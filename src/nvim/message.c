@@ -296,6 +296,12 @@ void msg_multiline(String str, int hl_id, bool check_int, bool hist, bool *need_
 // Avoid starting a new message for each chunk and adding message to history in msg_keep().
 static bool is_multihl = false;
 
+/// Print message chunks, each with their own highlight ID.
+///
+/// @param hl_msg Message chunks
+/// @param kind Message kind (can be NULL to avoid setting kind)
+/// @param history Whether to add message to history
+/// @param err Whether to print message as an error
 void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
 {
   no_wait_return++;
@@ -303,7 +309,9 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
   msg_clr_eos();
   bool need_clear = false;
   msg_ext_history = history;
-  msg_ext_set_kind(kind);
+  if (kind != NULL) {
+    msg_ext_set_kind(kind);
+  }
   is_multihl = true;
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
@@ -312,7 +320,7 @@ void msg_multihl(HlMessage hl_msg, const char *kind, bool history, bool err)
     } else {
       msg_multiline(chunk.text, chunk.hl_id, true, false, &need_clear);
     }
-    assert(!ui_has(kUIMessages) || msg_ext_kind == kind);
+    assert(!ui_has(kUIMessages) || kind == NULL || msg_ext_kind == kind);
   }
   if (history && kv_size(hl_msg)) {
     add_msg_hist_multihl(NULL, 0, 0, true, hl_msg);

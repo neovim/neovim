@@ -700,6 +700,7 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
   }
 
   if (!emsg_silent && exitcode != 0 && !(opts & kShellOptSilent)) {
+    msg_ext_set_kind("shell_ret");
     msg_puts(_("\nshell returned "));
     msg_outnum(exitcode);
     msg_putchar('\n');
@@ -1067,7 +1068,7 @@ static void out_data_ring(const char *output, size_t size)
   }
 
   if (output == NULL && size == SIZE_MAX) {   // Print mode
-    out_data_append_to_screen(last_skipped, &last_skipped_len, true);
+    out_data_append_to_screen(last_skipped, &last_skipped_len, STDOUT_FILENO, true);
     return;
   }
 
@@ -1095,14 +1096,15 @@ static void out_data_ring(const char *output, size_t size)
 /// @param output       Data to append to screen lines.
 /// @param count        Size of data.
 /// @param eof          If true, there will be no more data output.
-static void out_data_append_to_screen(const char *output, size_t *count, bool eof)
+static void out_data_append_to_screen(const char *output, size_t *count, int fd, bool eof)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *p = output;
   const char *end = output + *count;
+  msg_ext_set_kind(fd == STDERR_FILENO ? "shell_err" : "shell_out");
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
-      msg_putchar_hl((uint8_t)(*p), 0);
+      msg_putchar_hl((uint8_t)(*p), fd == STDERR_FILENO ? HLF_E : 0);
       p++;
     } else {
       // Note: this is not 100% precise:
@@ -1118,7 +1120,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, bool eo
         goto end;
       }
 
-      msg_outtrans_len(p, i, 0, false);
+      msg_outtrans_len(p, i, fd == STDERR_FILENO ? HLF_E : 0, false);
       p += i;
     }
   }
@@ -1133,7 +1135,7 @@ static size_t out_data_cb(RStream *stream, const char *ptr, size_t count, void *
     // Save the skipped output. If it is the final chunk, we display it later.
     out_data_ring(ptr, count);
   } else if (count > 0) {
-    out_data_append_to_screen(ptr, &count, eof);
+    out_data_append_to_screen(ptr, &count, stream->s.fd, eof);
   }
 
   return count;

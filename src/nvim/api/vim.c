@@ -772,7 +772,8 @@ void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
     verbose_enter();
   }
 
-  msg_multihl(hl_msg, opts->err ? "echoerr" : history ? "echomsg" : "echo", history, opts->err);
+  char *kind = opts->verbose ? NULL : opts->err ? "echoerr" : history ? "echomsg" : "echo";
+  msg_multihl(hl_msg, kind, history, opts->err);
 
   if (opts->verbose) {
     verbose_leave();
