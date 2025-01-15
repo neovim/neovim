@@ -1185,7 +1185,7 @@ static int node_child_containing_descendant(lua_State *L)
 {
   TSNode node = node_check(L, 1);
   TSNode descendant = node_check(L, 2);
-  TSNode child = ts_node_child_containing_descendant(node, descendant);
+  TSNode child = ts_node_child_with_descendant(node, descendant);
   push_node(L, child, 1);
   return 1;
 }
