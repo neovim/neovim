@@ -84,7 +84,7 @@ local function ts_match_keyword(current, backward)
   end
 end
 
---- Find matching punctuation
+--- Find matching brackets
 --- @param node TSNode
 --- @return Pos[]?
 local function ts_match_punc(node)
@@ -191,10 +191,10 @@ local function syntax_match(backward)
     words = api.nvim_eval(words)
   end
 
-  -- add brackets to matching pairs / words
+  -- Combine 'matchpairs' and b:match_words
   words = ('%s,%s'):format(vim.bo.matchpairs, words)
 
-  -- 1. find match in b:match_words
+  -- 1. Try to find a match
   local group = find_match_group(words)
   if not group then
     return
@@ -206,7 +206,7 @@ local function syntax_match(backward)
   -- 2. TODO: parse b:match_skip
   local skip = searchskip
 
-  -- 3. seachpairpos
+  -- Determine search direction for brackets
   local char = cursor_char()
   if start == char or last == char then
     backward = last == char
@@ -231,7 +231,14 @@ local function syntax_match(backward)
     last = '\\M' .. last
   end
 
+  -- |search()| respects 'ignorecase'
+  local prev_ignorecase = vim.o.ignorecase
+  vim.o.ignorecase = vim.b.match_ignorecase or vim.o.ignorecase
+
   local match = vim.fn.searchpairpos(start, mid, last, flags, skip)
+
+  vim.o.ignorecase = prev_ignorecase
+
   if match[1] > 0 and match[2] > 0 then
     match[1] = match[1] - 1
     match[2] = match[2] - 1
@@ -239,8 +246,8 @@ local function syntax_match(backward)
   end
 end
 
---- TODO: Find the matching pairs. First to jump to is the first element.
---- Find a matching pair using treesitter or syntax
+--- Finds the first match group matching the element under the cursor. The
+--- first element is the 'next' element and so on.
 --- @param backward boolean? Search backwards
 --- @return Pos[]?
 local function find_matches(backward)
