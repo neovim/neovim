@@ -153,7 +153,6 @@ static Array *msg_ext_chunks = NULL;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
 static int msg_ext_last_hl_id;
-static size_t msg_ext_cur_len = 0;
 
 static bool msg_ext_history = false;  ///< message was added to history
 static bool msg_ext_overwrite = false;  ///< will overwrite last message
@@ -2246,14 +2245,13 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
     // Concat pieces with the same highlight
     size_t len = maxlen < 0 ? strlen(str) : strnlen(str, (size_t)maxlen);
     ga_concat_len(&msg_ext_last_chunk, str, len);
-    msg_ext_cur_len += len;
-    msg_col += (int)mb_string2cells(str);
-    // When message ends in newline, reset variables used to format message: msg_advance().
-    assert(len > 0);
-    if (str[len - 1] == '\n') {
-      msg_ext_cur_len = 0;
-      msg_col = 0;
-    }
+
+    // Find last newline in the message and calculate the current message column
+    const char *lastline = strrchr(str, '\n');
+    maxlen -= (int)(lastline ? (lastline - str) : 0);
+    const char *p = lastline ? lastline + 1 : str;
+    int col = (int)(maxlen < 0 ? mb_string2cells(p) : mb_string2cells_len(p, (size_t)(maxlen)));
+    msg_col = (lastline ? 0 : msg_col) + col;
     return;
   }
 
@@ -3155,7 +3153,7 @@ static Array *msg_ext_init_chunks(void)
 {
   Array *tofree = msg_ext_chunks;
   msg_ext_chunks = xcalloc(1, sizeof(*msg_ext_chunks));
-  msg_ext_cur_len = 0;
+  msg_col = 0;
   return tofree;
 }
 
@@ -3470,14 +3468,6 @@ void msg_advance(int col)
 {
   if (msg_silent != 0) {        // nothing to advance to
     msg_col = col;              // for redirection, may fill it up later
-    return;
-  }
-  if (ui_has(kUIMessages)) {
-    // TODO(bfredl): use byte count as a basic proxy.
-    // later on we might add proper support for formatted messages.
-    while (msg_ext_cur_len < (size_t)col) {
-      msg_putchar(' ');
-    }
     return;
   }
   col = MIN(col, Columns - 1);  // not enough room
