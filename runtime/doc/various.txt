@@ -653,12 +653,10 @@ Syntax supported matching groups:
 - |b:match_words|: Language-specific keywords.
 
 						*matching-%* *%-default*
-[count]%		Jump [count] matches forwards through the
-			|matching-groups|.
+%			Jump forwards through the |matching-groups|.
 
 						*matching-g%* *g%-default*
-[count]g%		Jump [count] matches backwards through the
-			|matching-groups|.
+g%			Jump backwards through the |matching-groups|.
 
 CONFIGURATION					*matching-configuration*
 

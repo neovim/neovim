@@ -267,15 +267,20 @@ local function find_matches(backward)
   return syntax_match(backward)
 end
 
---- TODO: support [count]%
 function M.jump(opts)
+  -- [count]% goes to the percentage in a file |N%|
+  if vim.v.count1 > 1 then
+    vim.cmd(('normal! %s%%'):format(vim.v.count1))
+    return
+  end
+
   opts = vim.tbl_extend('keep', opts or {}, {
     backward = false,
-    count = 1,
   })
+
   local matches = find_matches(opts.backward)
   if matches then
-    local row, col = unpack(matches[(opts.count - 1) % #matches + 1])
+    local row, col = unpack(matches[1])
     if vim.startswith(vim.fn.mode(1), 'no') then
       vim.cmd('normal! v')
     end
