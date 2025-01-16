@@ -455,11 +455,17 @@ do
   do
     -- TODO: change H and gH
     vim.keymap.set('n', 'H', function()
-      require('vim._matching').jump()
+      require('vim._matching').jump({
+        count = vim.v.count1,
+        backward = false,
+      })
     end, { desc = 'Jump to the next matching pair' })
 
     vim.keymap.set('n', 'gH', function()
-      require('vim._matching').jump(true)
+      require('vim._matching').jump({
+        count = vim.v.count1,
+        backward = true,
+      })
     end, { desc = 'Jump to the previous matching pair' })
   end
 end

@@ -59,7 +59,7 @@ end
 --- TODO: return all keywords as list for highlighting
 --- Find matching keywords (e.g. if/then/end)
 --- @param current TSNode
---- @param backward boolean
+--- @param backward boolean?
 --- @return Pos[]?
 local function ts_match_keyword(current, backward)
   if not current then return end
@@ -189,7 +189,7 @@ end
 
 
 --- TODO: jump to start if on end (wrap)
---- @param backward boolean
+--- @param backward boolean?
 --- @return Pos[]?
 local function syntax_match(backward)
   local words = vim.b.match_words or ""
@@ -250,6 +250,7 @@ end
 
 --- TODO: Find the matching pairs. First to jump to is the first element.
 --- Find a matching pair using treesitter or syntax
+--- @param backward boolean? Search backwards
 --- @return Pos[]?
 local function find_matches(backward)
   local node = ts.get_node()
@@ -266,10 +267,14 @@ end
 
 
 --- TODO: support [count]%
-function M.jump(backward)
-  local matches = find_matches(backward)
+function M.jump(opts)
+  opts = vim.tbl_extend('keep', opts or {}, {
+    backward = false,
+    count = 1,
+  })
+  local matches = find_matches(opts.backward)
   if matches then
-    local row, col = unpack(matches[1])
+    local row, col = unpack(matches[(opts.count - 1) % #matches + 1])
     api.nvim_win_set_cursor(0, { row + 1, col })
   end
 end
