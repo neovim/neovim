@@ -702,14 +702,14 @@ local wait_result_reason = { [-1] = 'timeout', [-2] = 'interrupted', [-3] = 'err
 ---
 --- @param ... string List to write to the buffer
 local function err_message(...)
-  local chunks = { { table.concat({ ... }) } }
+  local chunks = { { table.concat(vim.iter({ ... }):flatten():totable()) } }
   if vim.in_fast_event() then
     vim.schedule(function()
-      vim.api.nvim_echo(chunks, true, { err = true })
+      api.nvim_echo(chunks, true, { err = true })
       api.nvim_command('redraw')
     end)
   else
-    vim.api.nvim_echo(chunks, true, { err = true })
+    api.nvim_echo(chunks, true, { err = true })
     api.nvim_command('redraw')
   end
 end
