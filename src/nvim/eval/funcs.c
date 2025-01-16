@@ -575,22 +575,29 @@ static void f_call(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (func == NULL || *func == NUL) {
     return;         // type error, empty name or null function
   }
+  char *p = func;
+  char *tofree = trans_function_name(&p, false, TFN_INT|TFN_QUIET, NULL, NULL);
+  if (tofree == NULL) {
+    emsg_funcname(e_unknown_function_str, func);
+    return;
+  }
+  func = tofree;
 
   dict_T *selfdict = NULL;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (tv_check_for_dict_arg(argvars, 2) == FAIL) {
-      if (owned) {
-        func_unref(func);
-      }
-      return;
+      goto done;
     }
     selfdict = argvars[2].vval.v_dict;
   }
 
   func_call(func, &argvars[1], partial, selfdict, rettv);
+
+done:
   if (owned) {
     func_unref(func);
   }
+  xfree(tofree);
 }
 
 /// "changenr()" function

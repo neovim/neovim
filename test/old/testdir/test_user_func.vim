@@ -380,7 +380,7 @@ func Test_script_local_func()
   " Try to call a script local function in global scope
   let lines =<< trim [CODE]
     :call assert_fails('call s:Xfunc()', 'E81:')
-    :call assert_fails('let x = call("<SID>Xfunc", [])', 'E120:')
+    :call assert_fails('let x = call("<SID>Xfunc", [])', ['E81:', 'E117:'])
     :call writefile(v:errors, 'Xresult')
     :qall
 
