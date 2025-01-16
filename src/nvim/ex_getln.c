@@ -951,10 +951,9 @@ theend:
   kv_destroy(ccline.last_colors.colors);
 
   char *p = ccline.cmdbuff;
-  // Prevent show events triggered by a (vim.ui_attach) hide callback.
-  ccline.cmdbuff = NULL;
 
   if (ui_has(kUICmdline)) {
+    ccline.redraw_state = kCmdRedrawNone;
     ui_call_cmdline_hide(ccline.level, s->gotesc);
     msg_ext_clear_later();
   }
@@ -967,6 +966,8 @@ theend:
 
   if (did_save_ccline) {
     restore_cmdline(&save_ccline);
+  } else {
+    ccline.cmdbuff = NULL;
   }
 
   return (uint8_t *)p;
@@ -3415,10 +3416,6 @@ static void draw_cmdline(int start, int len)
 
 static void ui_ext_cmdline_show(CmdlineInfo *line)
 {
-  if (line->cmdbuff == NULL) {
-    return;
-  }
-
   Arena arena = ARENA_EMPTY;
   Array content;
   if (cmdline_star) {
