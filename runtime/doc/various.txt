@@ -635,4 +635,62 @@ gc			Text object for the largest contiguous block of
 			`gcgc` uncomments a comment block; `dgc` deletes it).
 			Works only in Operator-pending mode.
 
+==============================================================================
+3. Matching							*matching*
+
+Nvim supports highlighting and jumping to matching groups based on |treesitter|
+nodes or |syntax| groups.
+
+The groups are highlighted with |hl-MatchParen|.
+
+							*matching-groups*
+Treesitter capture groups that count as groups:
+- `@punctuation.bracket`: Braces, brackets, and parentheses pairs.
+- `@keyword`: Language-specific keywords.
+
+Syntax supported matching groups:
+- 'matchpairs': Braces, brackets, and parentheses pairs.
+- |b:match_words|: Language-specific keywords.
+
+							*%* *%-default*
+[count]%		Jump [count] matches forwards through the
+			|matching-groups|.
+
+							*g%* *g%-default*
+[count]g%		Jump [count] matches backwards through the
+			|matching-groups|.
+
+CONFIGURATION					*matching-configuration*
+
+Extending the words recognized as matching groups is done using
+|b:match_words| or 'matchpairs'.
+
+							*b:match_words*
+The format for |b:match_words| is similar to 'matchpairs': a comma
+(,)-separated list of groups. Each group is a colon (:)-separated list of
+patterns |pattern|. Here's an example for some Lua keywords: >vim
+	:let b:match_words = '\<if\>:\<elseif\>:\<else\>:\<end\>,'
+		\ . '\<function\>:\<end\>'
+<
+Where |\<| and |\>| denote word boundaries. |b:match_words| also supports a
+|Funcref| as value: >vim
+	:let b:match_words = 'GetMatchWords()'
+<
+The group definitions also support a single backref group |\1|. For example,
+>vim
+	:let b:match_words = '\<\(if|function\)\>:\<end\1\>'
+<
+matches "if" with "endif" and "function" with "endfunction".
+
+DISABLE							*matching-disable*
+
+To disable highlighting the matching group, clear the "nvim.matching"
+autocmd group |autocmd-groups|: >lua
+	vim.api.nvim_del_augroup_by_name('nvim.matching')
+<
+To disable jumping with |%| and |g%|, unmap the keys: >lua
+	vim.keymap.del('n', '%')
+	vim.keymap.del('n', 'g%')
+<
+
  vim:noet:tw=78:ts=8:ft=help:norl:
