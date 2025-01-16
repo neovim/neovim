@@ -134,6 +134,7 @@ typedef const char *(*opt_did_set_cb_T)(optset_T *args);
 typedef struct {
   /// Pointer to the option variable. It's always a string.
   char *oe_varp;
+  OptIndex oe_idx;
   /// The original option value, escaped.
   char *oe_opt_value;
 
@@ -174,8 +175,12 @@ typedef struct {
   void *var;                         ///< global option: pointer to variable;
                                      ///< window-local option: NULL;
                                      ///< buffer-local option: global value
+  unsigned *flags_var;
   ssize_t scope_idx[kOptScopeSize];  ///< index of option at every scope.
   bool immutable;                    ///< option is immutable, trying to set it will give an error.
+
+  const char **values;               ///< possible values for string options
+  const size_t values_len;           ///< length of values array
 
   /// callback function to invoke after an option is modified to validate and
   /// apply the new value.

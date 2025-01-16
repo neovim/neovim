@@ -4947,7 +4947,7 @@ vim.wo.rl = vim.wo.rightleft
 --- This is useful for languages such as Hebrew, Arabic and Farsi.
 --- The 'rightleft' option must be set for 'rightleftcmd' to take effect.
 ---
---- @type 'search'
+--- @type string
 vim.o.rightleftcmd = "search"
 vim.o.rlc = vim.o.rightleftcmd
 vim.wo.rightleftcmd = vim.o.rightleftcmd

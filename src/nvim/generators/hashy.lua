@@ -55,7 +55,7 @@ function M.build_pos_hash(strings)
 end
 
 function M.switcher(put, tab, maxlen, worst_buck_size)
-  local neworder = {}
+  local neworder = {} --- @type string[]
   put '  switch (len) {\n'
   local bucky = worst_buck_size > 1
   for len = 1, maxlen do
