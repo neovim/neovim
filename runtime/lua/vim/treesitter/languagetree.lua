@@ -575,7 +575,17 @@ function LanguageTree:_parse(range, timeout)
     range = range,
   })
 
+  ---@type vim.treesitter.LanguageTree[]
+  local children = {}
   for _, child in pairs(self._children) do
+    -- We must iterate over self-injections last to prevent infinite recursion.
+    if child:lang() ~= self:lang() then
+      children[#children + 1] = child
+    end
+  end
+  children[#children + 1] = self._children[self:lang()]
+
+  for _, child in ipairs(children) do
     if timeout == 0 then
       return self._trees, false
     end
