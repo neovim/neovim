@@ -1222,10 +1222,10 @@ Thus you can resize the command-line window, but not others.
 The |getcmdwintype()| function returns the type of the command-line being
 edited as described in |cmdwin-char|.
 
-Nvim defines this default CmdWinEnter autocmd in the "nvim_cmdwin" group: >
+Nvim defines this default CmdWinEnter autocmd in the "nvim.cmdwin" group: >
     autocmd CmdWinEnter [:>] syntax sync minlines=1 maxlines=1
 <
-You can disable this in your config with "autocmd! nvim_cmdwin". |default-autocmds|
+You can disable this in your config with "autocmd! nvim.cmdwin". |default-autocmds|
 
 
 AUTOCOMMANDS
