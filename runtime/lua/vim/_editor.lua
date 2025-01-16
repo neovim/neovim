@@ -667,6 +667,28 @@ function vim._on_key(buf, typed_buf)
   return discard
 end
 
+-- Decodes a UTF-8 character to a Unicode code point.
+---@private
+---@param s string
+---@return integer, integer
+local function utf_ptr2char(s)
+  local b1, b2, b3, b4 = s:byte(1, 4)
+
+  if b1 < 0x80 then
+    -- 1-byte sequence (ASCII character)
+    return b1, 1
+  elseif b1 < 0xE0 then
+    -- 2-byte sequence
+    return ((b1 % 0x20) * 0x40) + (b2 % 0x40), 2
+  elseif b1 < 0xF0 then
+    -- 3-byte sequence
+    return ((b1 % 0x10) * 0x1000) + ((b2 % 0x40) * 0x40) + (b3 % 0x40), 3
+  else
+    -- 4-byte sequence
+    return ((b1 % 0x08) * 0x40000) + ((b2 % 0x40) * 0x1000) + ((b3 % 0x40) * 0x40) + (b4 % 0x40), 4
+  end
+end
+
 --- Convert UTF-32, UTF-16 or UTF-8 {index} to byte index.
 --- If {strict_indexing} is false
 --- then then an out of range index will return byte length
@@ -693,8 +715,9 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
       '1.0'
     )
     local old_index = encoding
-    local use_utf16 = index or false
-    return vim._str_byteindex(s, old_index, use_utf16) or error('index out of range')
+    encoding = index and 'utf-16' or 'utf-32'
+    index = old_index
+    strict_indexing = true
   end
 
   -- Avoid vim.validate for performance.
@@ -703,34 +726,62 @@ function vim.str_byteindex(s, encoding, index, strict_indexing)
     vim.validate('index', index, 'number')
   end
 
-  local len = #s
-
-  if index == 0 or len == 0 then
-    return 0
-  end
-
-  if not utfs[encoding] then
-    vim.validate('encoding', encoding, function(v)
-      return utfs[v], 'invalid encoding'
-    end)
-  end
-
   if strict_indexing ~= nil and type(strict_indexing) ~= 'boolean' then
     vim.validate('strict_indexing', strict_indexing, 'boolean', true)
   end
+
   if strict_indexing == nil then
     strict_indexing = true
   end
 
-  if encoding == 'utf-8' then
-    if index > len then
-      return strict_indexing and error('index out of range') or len
-    end
-    return index
+  local utf8_ptr_len = #s
+  if index == 0 then
+    return 0
   end
-  return vim._str_byteindex(s, index, encoding == 'utf-16')
-    or strict_indexing and error('index out of range')
-    or len
+
+  local utf16_ptr, utf16_char = 0, 0
+  local utf32_ptr, utf32_char = 0, 0
+  local utf8_ptr, utf8_char = 1, 1
+
+  if index > utf8_ptr_len then
+    --- Skips the loop if the index is greater than the byte length of the string.
+    utf8_char = utf8_ptr_len + 1
+  end
+
+  if not utfs[encoding] then
+    error('invalid encoding: ' .. encoding)
+  end
+
+  -- Prepare string by removing NUL characters
+  local prepared_string = s:find('%z') and s:gsub('%z', ' ') or s
+  local strlen = vim.fn.strchars(prepared_string)
+
+  -- Traverse the string and calculate pointers for UTF-16 and UTF-32
+  while utf8_char <= strlen do
+    local c, char_len = utf_ptr2char(s:sub(utf8_ptr))
+
+    utf16_char = utf16_char + (c > 0xFFFF and 2 or 1)
+    utf16_ptr = utf16_ptr + char_len
+
+    utf32_ptr = utf32_ptr + char_len
+    utf32_char = utf32_char + 1
+
+    utf8_ptr = utf8_ptr + char_len
+
+    if encoding == 'utf-16' and utf16_char >= index then
+      return utf16_ptr
+    elseif encoding == 'utf-32' and utf32_char >= index then
+      return utf32_ptr
+    elseif encoding == 'utf-8' and utf8_char >= index then
+      return utf8_ptr - 1
+    end
+    utf8_char = utf8_char + 1
+  end
+
+  if strict_indexing then
+    error('index out of range')
+  end
+  return utf8_ptr_len
 end
 
 --- Convert byte index to UTF-32, UTF-16 or UTF-8 indices. If {index} is not
@@ -747,6 +798,7 @@ end
 ---@param strict_indexing? boolean # default: true
 ---@return integer
 function vim.str_utfindex(s, encoding, index, strict_indexing)
+  local legacy_signature = false
   if encoding == nil or type(encoding) == 'number' then
     -- Legacy support for old API
     -- Parameters: ~
@@ -757,16 +809,10 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
       'vim.str_utfindex(s, encoding, index, strict_indexing)',
       '1.0'
     )
-    local old_index = encoding
-    local col32, col16 = vim._str_utfindex(s, old_index) --[[@as integer,integer]]
-    if not col32 or not col16 then
-      error('index out of range')
-    end
-    -- Return (multiple): ~
-    --     (`integer`) UTF-32 index
-    --     (`integer`) UTF-16 index
-    --- @diagnostic disable-next-line: redundant-return-value
-    return col32, col16
+    legacy_signature = true
+
+    index = encoding
+    strict_indexing = true
   end
 
   if type(s) ~= 'string' or (index ~= nil and type(index) ~= 'number') then
@@ -780,10 +826,14 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
   end
 
   if index == 0 then
-    return 0
+    ---@diagnostic disable-next-line: redundant-return-value
+    return 0, legacy_signature and 0 or nil
   end
 
-  if not utfs[encoding] then
+  local len = #s
+  index = index or len
+
+  if not legacy_signature and not utfs[encoding] then
     vim.validate('encoding', encoding, function(v)
       return utfs[v], 'invalid encoding'
     end)
@@ -796,20 +846,36 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
     strict_indexing = true
   end
 
-  if encoding == 'utf-8' then
-    local len = #s
-    return index <= len and index or (strict_indexing and error('index out of range') or len)
+  if index > len then
+    index = strict_indexing and error('index out of range') or len
   end
-  local col32, col16 = vim._str_utfindex(s, index) --[[@as integer?,integer?]]
-  local col = encoding == 'utf-16' and col16 or col32
-  if col then
-    return col
+
+  local utf16_ptr = 0
+  local utf32_ptr = 0
+  local utf8_ptr, utf8_char = 1, 1
+
+  while index > 0 do
+    local c, char_len = utf_ptr2char(s:sub(utf8_char))
+    utf32_ptr = utf32_ptr + 1
+    utf16_ptr = utf16_ptr + (c > 0xFFFF and 2 or 1)
+    utf8_ptr = utf8_ptr + 1
+
+    utf8_char = utf8_char + char_len
+    index = index - char_len
   end
-  if strict_indexing then
-    error('index out of range')
+
+  if legacy_signature then
+    -- Return (multiple): ~
+    --     (`integer`) UTF-32 index
+    --     (`integer`) UTF-16 index
+    ---@diagnostic disable-next-line: redundant-return-value
+    return utf32_ptr, utf16_ptr
+  elseif encoding == 'utf-32' then
+    return utf32_ptr
+  elseif encoding == 'utf-16' then
+    return utf16_ptr
   end
-  local max32, max16 = vim._str_utfindex(s)--[[@as integer integer]]
-  return encoding == 'utf-16' and max16 or max32
+  return utf8_ptr - 1
 end
 
 --- Generates a list of possible completions for the str
