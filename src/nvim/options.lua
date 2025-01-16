@@ -10464,6 +10464,24 @@ local options = {
       type = 'number',
       varname = 'p_wd',
     },
+    {
+      abbreviation = 'wt',
+      defaults = { if_true = '' },
+      desc = [=[
+        Display a timestamp in the given format when writing to a file.
+        Examples: >vim
+        	set writetimestamp=%H:%M:%S
+        	set writetimestamp=%a\ %b\ %d\ %H:%M:%S\ %Y
+        	set writetimestamp=
+        	set writetimestamp=at\ %r\ %Z
+        <
+      ]=],
+      full_name = 'writetimestamp',
+      scope = { 'global' },
+      short_desc = N_('display timestamp when writing to a file'),
+      type = 'string',
+      varname = 'p_wt',
+    },
   },
 }
 

@@ -130,14 +130,15 @@ struct tm *os_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
   return os_localtime_r(&rawtime, result);
 }
 
-/// Portable version of POSIX ctime_r()
+/// Gets the current Unix timestamp using a format string.
 ///
 /// @param clock[in]
 /// @param result[out] Pointer to a 'char' where the result should be placed
 /// @param result_len length of result buffer
+/// @param format format string
 /// @return human-readable string of current local time
-char *os_ctime_r(const time_t *restrict clock, char *restrict result, size_t result_len,
-                 bool add_newline)
+char *os_ctimefmt_r(const time_t *restrict clock, char *restrict result,
+                    size_t result_len, bool add_newline, const char *format)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   struct tm clock_local;
@@ -147,7 +148,7 @@ char *os_ctime_r(const time_t *restrict clock, char *restrict result, size_t res
     xstrlcpy(result, _("(Invalid)"), result_len - 1);
   } else {
     // xgettext:no-c-format
-    if (strftime(result, result_len - 1, _("%a %b %d %H:%M:%S %Y"), clock_local_ptr) == 0) {
+    if (strftime(result, result_len - 1, format, clock_local_ptr) == 0) {
       // Quoting "man strftime":
       // > If the length of the result string (including the terminating
       // > null byte) would exceed max bytes, then strftime() returns 0,
@@ -159,6 +160,33 @@ char *os_ctime_r(const time_t *restrict clock, char *restrict result, size_t res
     xstrlcat(result, "\n", result_len);
   }
   return result;
+}
+
+/// Portable version of POSIX ctime_r()
+///
+/// @param clock[in]
+/// @param result[out] Pointer to a 'char' where the result should be placed
+/// @param result_len length of result buffer
+/// @return human-readable string of current local time
+char *os_ctime_r(const time_t *restrict clock, char *restrict result, size_t result_len,
+                 bool add_newline)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  const char *ctime_posix_format = _("%a %b %d %H:%M:%S %Y");
+  return os_ctimefmt_r(clock, result, result_len, add_newline, ctime_posix_format);
+}
+
+/// Gets the current Unix timestamp using a format string.
+///
+/// @param result[out] Pointer to a 'char' where the result should be placed
+/// @param result_len length of result buffer
+/// @param format format string
+/// @return human-readable string of current local time
+char *os_ctimefmt(char *result, size_t result_len, bool add_newline, const char *format)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  time_t rawtime = time(NULL);
+  return os_ctimefmt_r(&rawtime, result, result_len, add_newline, format);
 }
 
 /// Gets the current Unix timestamp and adjusts it to local time.

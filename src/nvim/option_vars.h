@@ -618,6 +618,7 @@ EXTERN int p_write;             ///< 'write'
 EXTERN int p_wa;                ///< 'writeany'
 EXTERN int p_wb;                ///< 'writebackup'
 EXTERN OptInt p_wd;             ///< 'writedelay'
+EXTERN char *p_wt;              ///< 'writetimestamp'
 EXTERN int p_cdh;               ///< 'cdhome'
 
 // Value for b_p_ul indicating the global value must be used.

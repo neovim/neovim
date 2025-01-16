@@ -42,6 +42,7 @@
 #include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/os/time.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/sha256.h"
@@ -1770,6 +1771,12 @@ restore_backup:
         xstrlcat(IObuff, shortmess(SHM_WRI) ? _(" [a]") : _(" appended"), IOSIZE);
       } else {
         xstrlcat(IObuff, shortmess(SHM_WRI) ? _(" [w]") : _(" written"), IOSIZE);
+      }
+      if (strlen(p_wt) > 0) {
+        char ctime_buf[100];
+        os_ctimefmt(ctime_buf, sizeof(ctime_buf), false, p_wt);
+        xstrlcat(IObuff, _(" "), IOSIZE);
+        xstrlcat(IObuff, ctime_buf, IOSIZE);
       }
     }
 
