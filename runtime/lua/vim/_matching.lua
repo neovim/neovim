@@ -280,18 +280,17 @@ function M.jump(opts)
 end
 
 function M.highlight()
-  -- TODO: for developing only
-  vim.cmd [[NoMatchParen]]
-  api.nvim_set_hl(0, 'MyParen', { bg = 'Red', fg = 'Yellow' })
-  --
-
   api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
   local matches = find_matches()
   for _, match in ipairs(matches or {}) do
     local row, col = unpack(match)
-    api.nvim_buf_add_highlight(0, ns, 'MyParen', row, col, col + 1)
+    api.nvim_buf_add_highlight(0, ns, 'MatchParen', row, col, col + 1)
   end
 end
+
+-- TODO: check if matchit is preferred, otherwise use our implementation
+-- but also set this to let ftplugins know they have to set b:match_words
+vim.g.loaded_matchit = 1
 
 return M

@@ -92,8 +92,6 @@ Defaults                                            *defaults* *nvim-defaults*
 
 - |editorconfig| plugin is enabled, .editorconfig settings are applied.
 - |man.lua| plugin is enabled, so |:Man| is available by default.
-- |matchit| plugin is enabled. To disable it in your config: >vim
-    :let loaded_matchit = 1
 
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
 
@@ -164,6 +162,7 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - |[<Space>|, |]<Space>|
 - Nvim LSP client defaults |lsp-defaults|
   - K |K-lsp-default|
+- |%|, |g%|
 
 DEFAULT AUTOCOMMANDS
                                                         *default-autocmds*
@@ -200,6 +199,10 @@ nvim_swapfile:
 - SwapExists: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
   swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
   swapfile…" message.
+
+nvim.matching:
+- Cursormoved, CursorMovedI, WinEnter: Highlights matching group for element
+  under the cursor |matching|.
 
 ==============================================================================
 New Features                                                   *nvim-features*
@@ -827,7 +830,7 @@ Plugins:
 - *vimball*
 - macmap.vim
 - tools/check_colors.vim
-- macros/{justify,matchit,shellmenu,swapmous}.vim: use `packadd! justify` etc.
+- macros/{justify,shellmenu,swapmous}.vim: use `packadd! justify` etc.
   directly
 
 Providers:
