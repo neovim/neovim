@@ -46,7 +46,10 @@ jobs:
           cmake -S cmake.deps -B .deps -G Ninja
           cmake --build .deps
 
-      - run: cmake -B build -G Ninja -D CI_LINT=ON
+      - run: |
+          cmake -B build -G Ninja -D CI_LINT=ON
+          echo "======= CONFIGZEIT"
+          cat build/cmake.config/auto/config.h
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
@@ -135,6 +138,9 @@ jobs:
       - if: ${{ matrix.test != 'unittest' }}
         name: Set up interpreter packages
         run: |
+          echo "test"
+          ./nvim_test --help || echo "whatever"
+
           echo "Install neovim RubyGem."
           gem install --no-document --bindir "$BIN_DIR" --user-install --pre neovim
 
@@ -157,6 +163,8 @@ jobs:
       - name: Build
         run: |
           cmake --preset ci -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.build.flags }}
+          echo "======= CONFIGZEIT"
+          cat build/cmake.config/auto/config.h
           cmake --build build
 
       - if: ${{ matrix.test == 'oldtest' }}
@@ -226,7 +234,10 @@ jobs:
           cmake --build .deps
 
       - name: Configure
-        run: cmake --preset ci -G "Ninja Multi-Config"
+        run: |
+          cmake --preset ci -G "Ninja Multi-Config"
+          echo "======= CONFIGZEIT"
+          cat build/cmake.config/auto/config.h
 
       - name: RelWithDebInfo
         run: cmake --build build --config RelWithDebInfo

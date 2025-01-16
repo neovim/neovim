@@ -1,7 +1,8 @@
 local fileio_enum_file = arg[1]
 local names_file = arg[2]
+local auevents_file = arg[3]
 
-local auevents = require('auevents')
+local auevents = loadfile(auevents_file)()
 local events = auevents.events
 local aliases = auevents.aliases
 
