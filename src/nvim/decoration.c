@@ -856,9 +856,9 @@ static const uint32_t sign_filter[4] = {[kMTMetaSignText] = kMTFilterSelect,
 /// Return the sign attributes on the currently refreshed row.
 ///
 /// @param[out] sattrs Output array for sign text and texthl id
-/// @param[out] line_attr Highest priority linehl id
-/// @param[out] cul_attr Highest priority culhl id
-/// @param[out] num_attr Highest priority numhl id
+/// @param[out] line_id Highest priority linehl id
+/// @param[out] cul_id Highest priority culhl id
+/// @param[out] num_id Highest priority numhl id
 void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], int *line_id,
                         int *cul_id, int *num_id)
 {
