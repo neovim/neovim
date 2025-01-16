@@ -28,6 +28,7 @@
 #include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
+#include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
@@ -1983,7 +1984,9 @@ Array nvim_get_mark(String name, Dict(empty) *opts, Arena *arena, Error *err)
 ///                     the "highlights" key in {opts} is true. Each element of the array is a
 ///                     |Dict| with these keys:
 ///           - start: (number) Byte index (0-based) of first character that uses the highlight.
-///           - group: (string) Name of highlight group.
+///           - group: (string) Name of highlight group. May be removed in the future, use
+///           `groups` instead.
+///           - groups: (array) Names of stacked highlight groups (highest priority last).
 Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(8) FUNC_API_FAST
 {
@@ -2035,6 +2038,7 @@ Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena,
   });
 
   int stc_hl_id = 0;
+  int scl_hl_id = 0;
   statuscol_T statuscol = { 0 };
   SignTextAttrs sattrs[SIGN_SHOW_MAX] = { 0 };
 
@@ -2043,23 +2047,18 @@ Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena,
     int cul_id = 0;
     int num_id = 0;
     linenr_T lnum = statuscol_lnum;
+    foldinfo_T cursorline_fi = { 0 };
     decor_redraw_signs(wp, wp->w_buffer, lnum - 1, sattrs, &line_id, &cul_id, &num_id);
 
     statuscol.sattrs = sattrs;
     statuscol.foldinfo = fold_info(wp, lnum);
-    wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
+    win_update_cursorline(wp, &cursorline_fi);
+    statuscol.sign_cul_id = use_cursor_line_highlight(wp, lnum) ? cul_id : 0;
+    scl_hl_id = use_cursor_line_highlight(wp, lnum) ? HLF_CLS : HLF_SC;
 
-    if (wp->w_p_cul) {
-      if (statuscol.foldinfo.fi_level != 0 && statuscol.foldinfo.fi_lines > 0) {
-        wp->w_cursorline = statuscol.foldinfo.fi_lnum;
-      }
-      statuscol.use_cul = lnum == wp->w_cursorline && (wp->w_p_culopt_flags & kOptCuloptFlagNumber);
-    }
-
-    statuscol.sign_cul_id = statuscol.use_cul ? cul_id : 0;
     if (num_id) {
       stc_hl_id = num_id;
-    } else if (statuscol.use_cul) {
+    } else if (use_cursor_line_highlight(wp, lnum)) {
       stc_hl_id = HLF_CLN;
     } else if (wp->w_p_rnu) {
       stc_hl_id = (lnum < wp->w_cursor.lnum ? HLF_LNA : HLF_LNB);
@@ -2112,22 +2111,19 @@ Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena,
 
     // If first character doesn't have a defined highlight,
     // add the default highlight at the beginning of the highlight list
+    const char *dfltname = get_default_stl_hl(opts->use_tabline ? NULL : wp,
+                                              opts->use_winbar, stc_hl_id);
     if (hltab->start == NULL || (hltab->start - buf) != 0) {
-      Dict hl_info = arena_dict(arena, 2);
-      const char *grpname = get_default_stl_hl(opts->use_tabline ? NULL : wp,
-                                               opts->use_winbar, stc_hl_id);
-
+      Dict hl_info = arena_dict(arena, 3);
       PUT_C(hl_info, "start", INTEGER_OBJ(0));
-      PUT_C(hl_info, "group", CSTR_AS_OBJ(grpname));
-
+      PUT_C(hl_info, "group", CSTR_AS_OBJ(dfltname));
+      Array groups = arena_array(arena, 1);
+      ADD_C(groups, CSTR_AS_OBJ(dfltname));
+      PUT_C(hl_info, "groups", ARRAY_OBJ(groups));
       ADD_C(hl_values, DICT_OBJ(hl_info));
     }
 
     for (stl_hlrec_t *sp = hltab; sp->start != NULL; sp++) {
-      Dict hl_info = arena_dict(arena, 2);
-
-      PUT_C(hl_info, "start", INTEGER_OBJ(sp->start - buf));
-
       const char *grpname;
       if (sp->userhl == 0) {
         grpname = get_default_stl_hl(opts->use_tabline ? NULL : wp, opts->use_winbar, stc_hl_id);
@@ -2137,7 +2133,18 @@ Dict nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Arena *arena,
         snprintf(user_group, sizeof(user_group), "User%d", sp->userhl);
         grpname = arena_memdupz(arena, user_group, strlen(user_group));
       }
+
+      const char *combine = sp->item == STL_SIGNCOL ? syn_id2name(scl_hl_id)
+                                                    : sp->item == STL_FOLDCOL ? grpname : dfltname;
+      Dict hl_info = arena_dict(arena, 3);
+      PUT_C(hl_info, "start", INTEGER_OBJ(sp->start - buf));
       PUT_C(hl_info, "group", CSTR_AS_OBJ(grpname));
+      Array groups = arena_array(arena, 1 + (combine != grpname));
+      if (combine != grpname) {
+        ADD_C(groups, CSTR_AS_OBJ(combine));
+      }
+      ADD_C(groups, CSTR_AS_OBJ(grpname));
+      PUT_C(hl_info, "groups", ARRAY_OBJ(groups));
       ADD_C(hl_values, DICT_OBJ(hl_info));
     }
     PUT_C(result, "highlights", ARRAY_OBJ(hl_values));
