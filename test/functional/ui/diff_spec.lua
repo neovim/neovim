@@ -2044,6 +2044,26 @@ it('diff mode overlapped diff blocks will be merged', function()
     {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
                                        |
   ]])
+
+  WriteDiffFiles3('a\nb\nc', 'd\ne', 'b\nf')
+  screen:expect([[
+    {7:  }{27:a}{4:        }│{7:  }{27:d}{4:        }│{7:  }{27:^b}{4:        }|
+    {7:  }{27:b}{4:        }│{7:  }{27:e}{4:        }│{7:  }{27:f}{4:        }|
+    {7:  }{22:c        }│{7:  }{23:---------}│{7:  }{23:---------}|
+    {1:~          }│{1:~          }│{1:~          }|*15
+    {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
+                                       |
+  ]])
+
+  WriteDiffFiles3('a\nb\nc', 'd\ne', 'b')
+  screen:expect([[
+    {7:  }{27:a}{4:        }│{7:  }{27:d}{4:        }│{7:  }{27:^b}{4:        }|
+    {7:  }{27:b}{4:        }│{7:  }{27:e}{4:        }│{7:  }{23:---------}|
+    {7:  }{22:c        }│{7:  }{23:---------}│{7:  }{23:---------}|
+    {1:~          }│{1:~          }│{1:~          }|*15
+    {2:Xdifile1    Xdifile2    }{3:Xdifile3   }|
+                                       |
+  ]])
 end)
 
 -- oldtest: Test_diff_topline_noscroll()
