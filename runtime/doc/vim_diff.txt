@@ -97,8 +97,6 @@ Defaults                                            *defaults* *nvim-defaults*
 
 - |editorconfig| plugin is enabled, .editorconfig settings are applied.
 - |man.lua| plugin is enabled, so |:Man| is available by default.
-- |matchit| plugin is enabled. To disable it in your config: >vim
-    :let loaded_matchit = 1
 
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
 
@@ -171,6 +169,7 @@ you never want any default mappings, call |:mapclear| early in your config.
 - |[<Space>|, |]<Space>|
 - Nvim LSP client defaults |lsp-defaults|
   - K |K-lsp-default|
+- |%|, |g%|
 
 DEFAULT AUTOCOMMANDS
                                                         *default-autocmds*
@@ -860,7 +859,7 @@ Plugins:
 - *vimball*
 - macmap.vim
 - tools/check_colors.vim
-- macros/{justify,matchit,shellmenu,swapmous}.vim: use `packadd! justify` etc.
+- macros/{justify,shellmenu,swapmous}.vim: use `packadd! justify` etc.
   directly
 - HelpToc: Use |gO| instead.
 

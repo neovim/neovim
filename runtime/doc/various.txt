@@ -652,11 +652,11 @@ Syntax supported matching groups:
 - 'matchpairs': Braces, brackets, and parentheses pairs.
 - |b:match_words|: Language-specific keywords.
 
-							*%* *%-default*
+						*matching-%* *%-default*
 [count]%		Jump [count] matches forwards through the
 			|matching-groups|.
 
-							*g%* *g%-default*
+						*matching-g%* *g%-default*
 [count]g%		Jump [count] matches backwards through the
 			|matching-groups|.
 
