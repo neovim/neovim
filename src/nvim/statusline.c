@@ -103,7 +103,8 @@ void win_redr_status(win_T *wp)
          || bufIsChanged(wp->w_buffer)
          || wp->w_buffer->b_p_ro)
         && plen < MAXPATHL - 1) {
-      *(p + plen++) = ' ';
+      *(p + plen++) = ' ';        // replace NUL with space
+      *(p + plen) = NUL;          // NUL terminate the string
     }
     if (bt_help(wp->w_buffer)) {
       plen += snprintf(p + plen, MAXPATHL - (size_t)plen, "%s", _("[Help]"));
