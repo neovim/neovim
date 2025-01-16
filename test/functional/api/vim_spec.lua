@@ -3993,8 +3993,8 @@ describe('API', function()
             str = 'TextWithWarningHighlightTextWithUserHighlight',
             width = 45,
             highlights = {
-              { start = 0, group = 'WarningMsg' },
-              { start = 24, group = 'User1' },
+              { start = 0, group = 'WarningMsg', groups = { 'StatusLine', 'WarningMsg' } },
+              { start = 24, group = 'User1', groups = { 'StatusLine', 'User1' } },
             },
           },
           api.nvim_eval_statusline(
@@ -4009,7 +4009,7 @@ describe('API', function()
           str = 'TextWithNoHighlight',
           width = 19,
           highlights = {
-            { start = 0, group = 'StatusLine' },
+            { start = 0, group = 'StatusLine', groups = { 'StatusLine' } },
           },
         }, api.nvim_eval_statusline('TextWithNoHighlight', { highlights = true }))
       end)
@@ -4021,8 +4021,8 @@ describe('API', function()
             str = 'TextWithNoHighlightTextWithWarningHighlight',
             width = 43,
             highlights = {
-              { start = 0, group = 'StatusLineNC' },
-              { start = 19, group = 'WarningMsg' },
+              { start = 0, group = 'StatusLineNC', groups = { 'StatusLineNC' } },
+              { start = 19, group = 'WarningMsg', groups = { 'StatusLineNC', 'WarningMsg' } },
             },
           },
           api.nvim_eval_statusline(
@@ -4038,8 +4038,8 @@ describe('API', function()
             str = 'TextWithNoHighlightTextWithWarningHighlight',
             width = 43,
             highlights = {
-              { start = 0, group = 'TabLineFill' },
-              { start = 19, group = 'WarningMsg' },
+              { start = 0, group = 'TabLineFill', groups = { 'TabLineFill' } },
+              { start = 19, group = 'WarningMsg', groups = { 'TabLineFill', 'WarningMsg' } },
             },
           },
           api.nvim_eval_statusline(
@@ -4055,8 +4055,8 @@ describe('API', function()
             str = 'TextWithNoHighlightTextWithWarningHighlight',
             width = 43,
             highlights = {
-              { start = 0, group = 'WinBar' },
-              { start = 19, group = 'WarningMsg' },
+              { start = 0, group = 'WinBar', groups = { 'WinBar' } },
+              { start = 19, group = 'WarningMsg', groups = { 'WinBar', 'WarningMsg' } },
             },
           },
           api.nvim_eval_statusline(
@@ -4083,11 +4083,11 @@ describe('API', function()
           str = '││bbaa 4 ',
           width = 9,
           highlights = {
-            { group = 'CursorLineFold', start = 0 },
-            { group = 'Normal', start = 6 },
-            { group = 'ErrorMsg', start = 6 },
-            { group = 'IncSearch', start = 8 },
-            { group = 'Normal', start = 10 },
+            { group = 'CursorLineFold', start = 0, groups = { 'CursorLineFold' } },
+            { group = 'Normal', start = 6, groups = { 'Normal' } },
+            { group = 'ErrorMsg', start = 6, groups = { 'CursorLineSign', 'ErrorMsg' } },
+            { group = 'IncSearch', start = 8, groups = { 'CursorLineSign', 'IncSearch' } },
+            { group = 'Normal', start = 10, groups = { 'Normal' } },
           },
         }, api.nvim_eval_statusline(
           '%C%s%=%l ',
@@ -4098,8 +4098,8 @@ describe('API', function()
             str = '       3 ',
             width = 9,
             highlights = {
-              { group = 'LineNr', start = 0 },
-              { group = 'ErrorMsg', start = 8 },
+              { group = 'LineNr', start = 0, groups = { 'LineNr' } },
+              { group = 'ErrorMsg', start = 8, groups = { 'LineNr', 'ErrorMsg' } },
             },
           },
           api.nvim_eval_statusline('%l%#ErrorMsg# ', { use_statuscol_lnum = 3, highlights = true })

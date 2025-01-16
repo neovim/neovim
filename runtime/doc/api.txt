@@ -704,6 +704,8 @@ nvim_eval_statusline({str}, {opts})                   *nvim_eval_statusline()*
           • start: (number) Byte index (0-based) of first character that uses
             the highlight.
           • group: (string) Name of highlight group.
+          • groups: (array) Names of stacked highlight groups (highest
+            priority last).
 
 nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
     Execute Lua code. Parameters (if any) are available as `...` inside the

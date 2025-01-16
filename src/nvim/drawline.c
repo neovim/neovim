@@ -81,6 +81,8 @@ typedef struct {
   int cul_attr;              ///< set when 'cursorline' active
   int line_attr;             ///< attribute for the whole line
   int line_attr_lowprio;     ///< low-priority attribute for the line
+  int sign_num_attr;         ///< line number attribute (sign numhl)
+  int sign_cul_attr;         ///< cursorline sign attribute (sign culhl)
 
   int fromcol;               ///< start of inverting
   int tocol;                 ///< end of inverting
@@ -397,7 +399,7 @@ static void draw_col_fill(winlinevars_T *wlv, schar_T fillchar, int width, int a
 }
 
 /// Return true if CursorLineSign highlight is to be used.
-static bool use_cursor_line_highlight(win_T *wp, linenr_T lnum)
+bool use_cursor_line_highlight(win_T *wp, linenr_T lnum)
 {
   return wp->w_p_cul
          && lnum == wp->w_cursorline
@@ -460,16 +462,15 @@ void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, in
 /// If "nrcol" is true, the sign is going to be displayed in the number column.
 /// Otherwise the sign is going to be displayed in the sign column. If there is no
 /// sign, draw blank cells instead.
-static void draw_sign(bool nrcol, win_T *wp, winlinevars_T *wlv, int sign_idx, int sign_cul_attr)
+static void draw_sign(bool nrcol, win_T *wp, winlinevars_T *wlv, int sign_idx)
 {
   SignTextAttrs sattr = wlv->sattrs[sign_idx];
   int scl_attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLS : HLF_SC);
 
   if (sattr.text[0] && wlv->row == wlv->startrow + wlv->filler_lines && wlv->filler_todo <= 0) {
-    int attr = (use_cursor_line_highlight(wp, wlv->lnum) && sign_cul_attr)
-               ? sign_cul_attr : sattr.hl_id ? syn_id2attr(sattr.hl_id) : 0;
-    attr = hl_combine_attr(scl_attr, attr);
     int fill = nrcol ? number_width(wp) + 1 : SIGN_WIDTH;
+    int attr = wlv->sign_cul_attr ? wlv->sign_cul_attr : sattr.hl_id ? syn_id2attr(sattr.hl_id) : 0;
+    attr = hl_combine_attr(scl_attr, attr);
     draw_col_fill(wlv, schar_from_ascii(' '), fill, attr);
     int sign_pos = wlv->off - SIGN_WIDTH - (int)nrcol;
     assert(sign_pos >= 0);
@@ -544,7 +545,7 @@ static int get_line_number_attr(win_T *wp, winlinevars_T *wlv)
 
 /// Display the absolute or relative line number.  After the first row fill with
 /// blanks when the 'n' flag isn't in 'cpo'.
-static void draw_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, int sign_cul_attr)
+static void draw_lnum_col(win_T *wp, winlinevars_T *wlv)
 {
   bool has_cpo_n = vim_strchr(p_cpo, CPO_NUMCOL) != NULL;
 
@@ -557,12 +558,12 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, int 
     // then display the sign instead of the line number.
     if (wp->w_minscwidth == SCL_NUM && wlv->sattrs[0].text[0]
         && wlv->row == wlv->startrow + wlv->filler_lines && wlv->filler_todo <= 0) {
-      draw_sign(true, wp, wlv, 0, sign_cul_attr);
+      draw_sign(true, wp, wlv, 0);
     } else {
       // Draw the line number (empty space after wrapping).
       int width = number_width(wp) + 1;
       int attr = hl_combine_attr(get_line_number_attr(wp, wlv),
-                                 wlv->filler_todo <= 0 ? sign_num_attr : 0);
+                                 wlv->filler_todo <= 0 ? wlv->sign_num_attr : 0);
       if (wlv->row == wlv->startrow + wlv->filler_lines
           && (wp->w_skipcol == 0 || wlv->row > 0 || (wp->w_p_nu && wp->w_p_rnu))) {
         char buf[32];
@@ -631,22 +632,25 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
 
   char *p = buf;
   char transbuf[MAXPATHL];
-  int attr = stcp->num_attr;
   size_t len = strlen(buf);
+  int scl_attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLS : HLF_SC);
+  int num_attr = hl_combine_attr(get_line_number_attr(wp, wlv),
+                                 wlv->filler_todo <= 0 ? wlv->sign_num_attr : 0);
+  int cur_attr = num_attr;
 
   // Draw each segment with the specified highlighting.
   for (stl_hlrec_t *sp = stcp->hlrec; sp->start != NULL; sp++) {
     ptrdiff_t textlen = sp->start - p;
     // Make all characters printable.
     size_t translen = transstr_buf(p, textlen, transbuf, MAXPATHL, true);
-    draw_col_buf(wp, wlv, transbuf, translen, attr, false);
+    draw_col_buf(wp, wlv, transbuf, translen, cur_attr, false);
+    int attr = sp->item == STL_SIGNCOL ? scl_attr : sp->item == STL_FOLDCOL ? 0 : num_attr;
+    cur_attr = hl_combine_attr(attr, sp->userhl < 0 ? syn_id2attr(-sp->userhl) : 0);
     p = sp->start;
-    int hl = sp->userhl;
-    attr = hl < 0 ? hl_combine_attr(stcp->num_attr, syn_id2attr(-hl)) : stcp->num_attr;
   }
   size_t translen = transstr_buf(p, buf + len - p, transbuf, MAXPATHL, true);
-  draw_col_buf(wp, wlv, transbuf, translen, attr, false);
-  draw_col_fill(wlv, schar_from_ascii(' '), stcp->width - width, stcp->num_attr);
+  draw_col_buf(wp, wlv, transbuf, translen, num_attr, false);
+  draw_col_fill(wlv, schar_from_ascii(' '), stcp->width - width, num_attr);
 }
 
 static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
@@ -1201,11 +1205,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     area_highlighting = true;
   }
 
-  int line_attr = 0;
-  int sign_cul_attr = 0;
-  int sign_num_attr = 0;
+  int sign_line_attr = 0;
   // TODO(bfredl, vigoux): line_attr should not take priority over decoration!
-  decor_redraw_signs(wp, buf, wlv.lnum - 1, wlv.sattrs, &line_attr, &sign_cul_attr, &sign_num_attr);
+  decor_redraw_signs(wp, buf, wlv.lnum - 1, wlv.sattrs,
+                     &sign_line_attr, &wlv.sign_cul_attr, &wlv.sign_num_attr);
 
   statuscol_T statuscol = { 0 };
   if (*wp->w_p_stc != NUL) {
@@ -1214,19 +1217,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     statuscol.sattrs = wlv.sattrs;
     statuscol.foldinfo = foldinfo;
     statuscol.width = win_col_off(wp) - (wp == cmdwin_win);
-    statuscol.use_cul = use_cursor_line_highlight(wp, lnum);
-    statuscol.sign_cul_id = statuscol.use_cul ? sign_cul_attr : 0;
-    statuscol.num_attr = sign_num_attr > 0 ? syn_id2attr(sign_num_attr) : 0;
-  } else {
-    if (sign_cul_attr > 0) {
-      sign_cul_attr = syn_id2attr(sign_cul_attr);
-    }
-    if (sign_num_attr > 0) {
-      sign_num_attr = syn_id2attr(sign_num_attr);
-    }
+    statuscol.sign_cul_id = use_cursor_line_highlight(wp, lnum) ? wlv.sign_cul_attr : 0;
+  } else if (wlv.sign_cul_attr > 0) {
+    wlv.sign_cul_attr = use_cursor_line_highlight(wp, lnum) ? syn_id2attr(wlv.sign_cul_attr) : 0;
   }
-  if (line_attr > 0) {
-    wlv.line_attr = syn_id2attr(line_attr);
+  if (wlv.sign_num_attr > 0) {
+    wlv.sign_num_attr = syn_id2attr(wlv.sign_num_attr);
+  }
+  if (sign_line_attr > 0) {
+    wlv.line_attr = syn_id2attr(sign_line_attr);
   }
 
   // Highlight the current line in the quickfix window.
@@ -1549,9 +1548,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         // skip columns
       } else if (statuscol.draw) {
         // Draw 'statuscolumn' if it is set.
-        if (sign_num_attr == 0) {
-          statuscol.num_attr = get_line_number_attr(wp, &wlv);
-        }
         const int v = (int)(ptr - line);
         draw_statuscol(wp, &wlv, lnum, wlv.row - startrow - wlv.filler_lines, col_rows, &statuscol);
         if (wp->w_redr_statuscol) {
@@ -1568,10 +1564,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
         // wp->w_scwidth is zero if signcol=number is used
         for (int sign_idx = 0; sign_idx < wp->w_scwidth; sign_idx++) {
-          draw_sign(false, wp, &wlv, sign_idx, sign_cul_attr);
+          draw_sign(false, wp, &wlv, sign_idx);
         }
 
-        draw_lnum_col(wp, &wlv, sign_num_attr, sign_cul_attr);
+        draw_lnum_col(wp, &wlv);
       }
 
       win_col_offset = wlv.off;
