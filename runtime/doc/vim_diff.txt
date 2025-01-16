@@ -162,7 +162,7 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - |[<Space>|, |]<Space>|
 - Nvim LSP client defaults |lsp-defaults|
   - K |K-lsp-default|
-- |%|, |g%|
+- |%-default|, |g%-default|
 
 DEFAULT AUTOCOMMANDS
                                                         *default-autocmds*
