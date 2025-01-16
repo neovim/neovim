@@ -162,6 +162,7 @@ typedef struct {
 } CpUndoInfo;
 
 typedef struct {
+  bool saved;
   bufref_T buf;
   OptInt save_b_p_ul;
   int save_b_changed;
@@ -1390,6 +1391,10 @@ static int command_line_execute(VimState *state, int key)
         if (!ui_has(kUICmdline)) {
           msg_cursor_goto(msg_row, 0);
         }
+        if (cmdpreview) {
+          // make sure cmdpreview is cleared before flushing the screen
+          cmdpreview_did_not_show();
+        }
         ui_flush();
       }
       return 0;
@@ -2452,12 +2457,14 @@ static void cmdpreview_restore_undo(const CpUndoInfo *cp_undoinfo, buf_T *buf)
 static void cmdpreview_restore_buf(CpBufInfo *cp_bufinfo)
   FUNC_ATTR_NONNULL_ALL
 {
+  // Don't restore the buffer if !saved, it was already restored
+  if (!cp_bufinfo->saved) {
+    return;
+  }
+
   buf_T *buf = cp_bufinfo->buf.br_buf;
 
   buf->b_changed = cp_bufinfo->save_b_changed;
-
-  // Clear preview highlights.
-  extmark_clear(buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
 
   if (buf->b_u_seq_cur != cp_bufinfo->undo_info.save_b_u_seq_cur) {
     int count = 0;
@@ -2502,6 +2509,37 @@ static bool cmdpreview_tab_valid(void)
     }
   }
   return g_cpinfo.save_curtab != NULL;
+}
+
+/// Traverse all saved buffers and find those that were not changed.
+/// Unchanged buffers will be marked with `bufinfo->saved=false` and
+/// immediately restored. On the next preview update, such buffers will
+/// have their information saved again instead of being restored.
+///
+/// This allows certain buffers to be modified in between preview updates,
+/// otherwise they would be rolled back to the first save state and those
+/// changes would be dropped.
+///
+/// The undo information is also restored immediately so as to maintain the
+/// undo tree for subsequent changes.
+static void cmdpreview_post_scan_changed(void)
+{
+  CpInfo *cpinfo = &g_cpinfo;
+  CpBufInfo *cp_bufinfo = NULL;
+  map_foreach_value(&cpinfo->buf_info, cp_bufinfo, {
+    assert(cp_bufinfo->saved);
+    if (!bufref_valid(&cp_bufinfo->buf)) {
+      continue;
+    }
+    buf_T *buf = cp_bufinfo->buf.br_buf;
+    bool changed =
+      buf->b_u_seq_cur != cp_bufinfo->undo_info.save_b_u_seq_cur
+      || cp_bufinfo->save_changedtick != buf_get_changedtick(buf);
+    if (!changed) {
+      cmdpreview_restore_buf(cp_bufinfo);
+    }
+    cp_bufinfo->saved = changed;
+  })
 }
 
 /// Cleanup saved window/buffer information. Windows and buffers may have been
@@ -2573,7 +2611,8 @@ static void cmdpreview_cleanup_save(void)
     int k = curr->buf.br_fnum;
     if (bufref_valid(&curr->buf)) {
       cmdpreview_restore_buf(curr);
-    } else {
+      extmark_clear(curr->buf.br_buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
+    } else if (curr->saved) {
       // XXX: the functions that free undo memory require a buffer
       // argument and use its fields to access undo information, but
       // the buffer associated with the saved undo information was
@@ -2605,17 +2644,22 @@ static void cmdpreview_save(void)
       continue;
     }
 
-    if (!map_has(int, &cpinfo->buf_info, buf->handle)) {
-      CpBufInfo *cp_bufinfo = xmalloc(sizeof *cp_bufinfo);
+    CpBufInfo *cp_bufinfo = pmap_get(int)(&cpinfo->buf_info, buf->handle);
+    if (cp_bufinfo == NULL) {
+      cp_bufinfo = xmalloc(sizeof *cp_bufinfo);
+      cp_bufinfo->saved = false;
       set_bufref(&cp_bufinfo->buf, buf);
+      pmap_put(int)(&cpinfo->buf_info, buf->handle, cp_bufinfo);
+    }
+    if (!cp_bufinfo->saved) {
       cp_bufinfo->save_b_p_ul = buf->b_p_ul;
       cp_bufinfo->save_b_changed = buf->b_changed;
       cp_bufinfo->save_b_op_start = buf->b_op_start;
       cp_bufinfo->save_b_op_end = buf->b_op_end;
       cp_bufinfo->save_changedtick = buf_get_changedtick(buf);
       cmdpreview_save_undo(&cp_bufinfo->undo_info, buf);
-      pmap_put(int)(&cpinfo->buf_info, buf->handle, cp_bufinfo);
     }
+    cp_bufinfo->saved = true;
 
     CpWinInfo *cp_wininfo = pmap_get(int)(&cpinfo->win_info, win->handle);
     const bool was_null = cp_wininfo == NULL;
@@ -2689,6 +2733,8 @@ static void cmdpreview_restore_state(void)
   CpBufInfo *cp_bufinfo = NULL;
   map_foreach_value(&cpinfo->buf_info, cp_bufinfo, {
     cmdpreview_restore_buf(cp_bufinfo);
+    // Clear preview highlights.
+    extmark_clear(cp_bufinfo->buf.br_buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
   })
 
   CpWinInfo *cp_wininfo = NULL;
@@ -2940,8 +2986,9 @@ static bool cmdpreview_transition_end(CpTransition *tr)
   }
   bool did_show = g_cpinfo.preview_type != 0;
   cmdpreview = did_show;
-  // If preview callback return value is nonzero, update screen now.
   if (did_show) {
+    cmdpreview_post_scan_changed();
+    // If preview callback return value is nonzero, update screen now.
     int save_rd = RedrawingDisabled;
     RedrawingDisabled = 0;
     update_screen();

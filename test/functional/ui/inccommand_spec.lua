@@ -572,6 +572,63 @@ describe(":substitute, 'inccommand=split', preview", function()
   end)
 end)
 
+describe(
+  ":substitute, 'inccommand' does not restore intermediate changes in buffers that were not changed by preview callback",
+  function()
+    local cases = { 'split', 'nosplit' }
+    before_each(clear)
+    for _, case in ipairs(cases) do
+      it("(inccommand='" .. case .. "')", function()
+        local screen = Screen.new(35, 10)
+        common_setup(screen, case, 'some text\nmore text')
+        command('set cmdwinheight=3')
+        command('vert botright new | setlocal buftype=nofile noswapfile bufhidden=hide')
+        local scratch_bufnr = n.api.nvim_get_current_buf()
+        command('wincmd p | 1 | wincmd =')
+        feed(':%s/text')
+        if case == 'split' then
+          screen:expect [[
+            some {20:text}           │              |
+            more {20:text}           │{1:~             }|
+            {1:~                   }│{1:~             }|*2
+            {3:[No Name] [+]        }{2:[Scratch]     }|
+            |1| some {20:text}                      |
+            |2| more {20:text}                      |
+            {1:~                                  }|
+            {2:[Preview]                          }|
+            :%s/text^                           |
+          ]]
+        else
+          screen:expect [[
+            some {20:text}           │              |
+            more {20:text}           │{1:~             }|
+            {1:~                   }│{1:~             }|*6
+            {3:[No Name] [+]        }{2:[Scratch]     }|
+            :%s/text^                           |
+          ]]
+        end
+        n.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, true, { 'beep boop' })
+        command('redraw')
+        screen:expect {
+          any = 'some {20:text}           │beep boop     |',
+        }
+        feed('/')
+        screen:expect {
+          any = 'some                │beep boop     |',
+        }
+        feed('<Esc>')
+        screen:expect [[
+          ^some text           │beep boop     |
+          more text           │{1:~             }|
+          {1:~                   }│{1:~             }|*6
+          {3:[No Name] [+]        }{2:[Scratch]     }|
+                                             |
+        ]]
+      end)
+    end
+  end
+)
+
 describe(":substitute, 'inccommand' preserves undo", function()
   local cases = { '', 'split', 'nosplit' }
 
