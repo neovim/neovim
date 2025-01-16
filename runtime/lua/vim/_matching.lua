@@ -2,12 +2,34 @@ local ts = vim.treesitter
 local api = vim.api
 
 local M = {}
+
 local ns = api.nvim_create_namespace('nvim.matching')
 
---- Jump to the start or end of a given node
---- @param node TSNode The node to jump to
---- @param start? boolean Jump to the start or end of the node
-local function jump_to_node(node, start)
+---@alias Pos { [1]: integer, [2]: integer }
+
+
+--- 0-based line and column position
+--- @return Pos
+local function norm_cursor_pos()
+  local row, col = unpack(api.nvim_win_get_cursor(0))
+  return { row - 1, col }
+end
+
+
+--- Iterate over unnamed children of the node.
+--- @param node TSNode
+--- @return Iter
+local function anonymous_children(node)
+  return vim.iter(node:iter_children()):filter(function(child)
+    return not child:named()
+  end)
+end
+
+
+--- @param node TSNode
+--- @param start? boolean start or end position of the node
+--- @return Pos
+local function node_pos(node, start)
   start = vim.F.if_nil(start, true)
   local row, col
   if start then
@@ -16,62 +38,80 @@ local function jump_to_node(node, start)
     row, col = node:end_()
     col = col - 1
   end
-  api.nvim_win_set_cursor(0, { row + 1, col })
-end
-
---- @param node TSNode
-local function anonymous_children(node)
-  return vim.iter(node:iter_children()):filter(function(child)
-    return not child:named()
-  end)
+  return { row, col }
 end
 
 
---- @param keyword TSNode Anonymous node
+--- TODO: pattern instead of startswith
+--- @param pattern string capture group pattern (without '@')
 --- @return boolean
-local function cursor_on_keyword(keyword)
-  local cursor_row, cursor_col = unpack(api.nvim_win_get_cursor(0))
-  return ts.is_in_node_range(keyword, cursor_row - 1, cursor_col)
+local function on_capture(pattern)
+  local captures = ts.get_captures_at_cursor(0)
+  for _, capture in ipairs(captures) do
+    if vim.startswith(capture, pattern) then
+      return true
+    end
+  end
+  return false
 end
 
+
+--- TODO: return all keywords as list for highlighting
+--- Find matching keywords (e.g. if/then/end)
 --- @param current TSNode
---- @param backward? boolean Search backward for matching keyword
-local function match_keyword(current, backward)
+--- @param backward boolean
+--- @return Pos[]?
+local function ts_match_keyword(current, backward)
+  if not current then return end
   local keywords = anonymous_children(current)
 
   -- prev for backwards matching, first for wrapping last item
   local prev, first
   for keyword in keywords do
-    if cursor_on_keyword(keyword) then
+    -- cursor on keyword
+    if ts.is_in_node_range(keyword, unpack(norm_cursor_pos())) then
+      local match
       if backward then
-        -- if first item, wrap to last item
-        jump_to_node(prev or keywords:last())
+        -- first item wraps to last item
+        match = prev or keywords:last()
       else
-        -- if last item, wrap to first item
-        jump_to_node(keywords:next() or first)
+        -- last item wraps to first item
+        match = keywords:next() or first
       end
-      return
+      if match then
+        return { node_pos(match) }
+      end
     end
     first = vim.F.if_nil(first, keyword)
     prev = keyword
   end
 end
 
---- @param current TSNode
---- @param backward? boolean Search backward for matching keyword
-local function match_capture(current, target_capture, backward)
-  print('not implemented')
+
+--- Find matching punctuation
+--- @param node TSNode
+--- @return Pos[]?
+local function ts_match_punc(node)
+  if not node then return end
+
+  local opening = anonymous_children(node):nth(1)
+  local closing = anonymous_children(node):last()
+
+  if opening and closing then
+    local cursor = norm_cursor_pos()
+
+    local open_pos = node_pos(opening)
+    local close_pos = node_pos(closing, false)
+    local cursor_on_open = vim.deep_equal(cursor, open_pos)
+
+    if cursor_on_open then
+      return { close_pos, open_pos }
+    else
+      return { open_pos, close_pos }
+    end
+  end
 end
 
---- @param current TSNode
-local function match_punc(current)
-  -- TODO: works, but variable names not clear
-  local cursor = api.nvim_win_get_cursor(0)
-  local node_row, node_col, _ = current:start()
-  local node_start = { node_row + 1, node_col }
-  local at_start = vim.deep_equal(cursor, node_start)
-  jump_to_node(current, not at_start)
-end
 
 --- @param str string
 --- @param sep string
@@ -94,6 +134,7 @@ local function gsplit_escaped(str, sep)
   end
 end
 
+
 --- Substitute `\1` with the capture group found.
 --- @param str string
 --- @return string
@@ -102,6 +143,7 @@ local function resolve_backref(str)
   local res, _ = str:gsub([[\1]], first_capture)
   return res
 end
+
 
 --- @return string[]?
 local function find_match_group(words)
@@ -123,92 +165,6 @@ local function find_match_group(words)
   end
 end
 
-function M.match_syntax(backward)
-  local words = vim.b.match_words
-  if not words then
-    return
-  end
-
-  -- Allow b:match_words = "GetVimMatchWords()"
-  if not words:find(":") then
-    words = api.nvim_eval(words)
-  end
-
-  -- 1. find match in b:match_words
-  local group = find_match_group(words)
-  if not group then
-    return
-  end
-  local start = group[1]
-  local last = group[#group]
-  local mid = #group > 2 and group[2] or ""
-
-  -- 2. parse b:match_skip
-  local skip = ''
-
-  -- 3. seachpairpos
-  local flags = backward and 'bW' or 'W'
-  local notslash = [[\\\@1<!\%(\\\\\)*]]
-
-  -- unescape : and ,
-  start = start:gsub('\\([:,])', '%1')
-  mid = mid:gsub('\\([:,])', '%1')
-  last = last:gsub('\\([:,])', '%1')
-
-  -- avoid \(\) groups
-  start = vim.fn.substitute(start, notslash .. [[\zs\\(]], [[\\%(]], 'g')
-  mid = vim.fn.substitute(mid, notslash .. [[\zs\\(]], [[\\%(]], 'g')
-  last = vim.fn.substitute(last, notslash .. [[\zs\\(]], [[\\%(]], 'g')
-
-  vim.print({
-    start = start,
-    mid = mid,
-    last = last,
-    flags = flags,
-    skip = skip
-  })
-
-  -- TODO: jump to start if on end (wrap)
-
-  vim.fn.searchpair(start, mid, last, flags, skip)
-end
-
-function M.jump(backward)
-  local node = ts.get_node()
-  if not node then
-    return
-  end
-  -- TODO: refactor for easier maintaining
-  for _, capture in ipairs(ts.get_captures_at_cursor(0)) do
-    -- TODO: if not on one of these, forward search line for punctuation
-    if not capture then
-      return
-    elseif vim.startswith(capture, 'keyword') then
-      match_keyword(node, backward)
-      return
-    elseif vim.startswith(capture, 'punctuation.bracket') or vim.startswith(capture, 'tag.delimiter') then
-      match_punc(node)
-      return
-    elseif vim.startswith(capture, 'markup.heading') then
-      match_capture(node, capture, backward)
-      return
-    end
-  end
-end
-
---- 0-based line and column position
---- @return { [1]: integer, [2]: integer }
-local function norm_cursor_pos()
-  local row, col = unpack(api.nvim_win_get_cursor(0))
-  return { row - 1, col }
-end
-
---- Current character under cursor
---- @return string
-local function cursor_char()
-  local r, c = unpack(norm_cursor_pos())
-  return api.nvim_buf_get_text(0, r, c, r, c + 1, {})[1]
-end
 
 --- Check if matching bracket is in skipable syntax group
 --- @return boolean
@@ -223,89 +179,114 @@ local function searchskip()
   end)
 end
 
---- Search bracket pair using |searchpairpos()|
---- @param left string left bracket
---- @param right string right bracket
---- @param forward boolean forward or backward search (default true)
---- @return { [1]: integer, [2]: integer }?
-local function searchpair(left, right, forward)
-  forward = vim.F.if_nil(forward, true)
-  local dir = forward and '' or 'b'
 
-  local row, col = unpack(
-    vim.fn.searchpairpos('\\M' .. left, '', '\\M' .. right, 'nW' .. dir, searchskip)
-  )
-  if row > 0 and col > 0 then
-    return { row - 1, col - 1 }
-  end
+--- Current character under cursor
+--- @return string
+local function cursor_char()
+  local r, c = unpack(norm_cursor_pos())
+  return api.nvim_buf_get_text(0, r, c, r, c + 1, {})[1]
 end
 
---- Find highlight bracket pairs using |syntax|
---- @return { [1]: { [1]: integer, [2]: integer }, [2]: { [1]: integer, [2]: integer }}?
-local function syntax_pairs()
+
+--- TODO: jump to start if on end (wrap)
+--- @param backward boolean
+--- @return Pos[]?
+local function syntax_match(backward)
+  local words = vim.b.match_words or ""
+
+  -- Allow b:match_words = "GetVimMatchWords()"
+  if #words > 0 and not words:find(":") then
+    words = api.nvim_eval(words)
+  end
+
+  -- add brackets to matching pairs / words
+  words = ("%s,%s"):format(vim.bo.matchpairs, words)
+
+  -- 1. find match in b:match_words
+  local group = find_match_group(words)
+  if not group then
+    return
+  end
+  local start = group[1]
+  local last = group[#group]
+  local mid = #group > 2 and group[2] or ""
+
+  -- 2. TODO: parse b:match_skip
+  local skip = searchskip
+
+  -- 3. seachpairpos
   local char = cursor_char()
-  for pair in vim.gsplit(vim.o.matchpairs, ',', { trimempty = true }) do
-    local left, right = unpack(vim.split(pair, ':'))
-    if left == char or right == char then
-      local forward = left == char
-      local match = searchpair(left, right, forward)
-      if match then
-        return { norm_cursor_pos(), match }
-      end
-    end
+  if start == char or last == char then
+    backward = last == char
+  end
+
+  local flags = backward and 'bnW' or 'nW'
+
+  -- unescape : and ,
+  start = start:gsub('\\([:,])', '%1')
+  mid = mid:gsub('\\([:,])', '%1')
+  last = last:gsub('\\([:,])', '%1')
+
+  -- avoid \(\) groups
+  local notslash = [[\\\@1<!\%(\\\\\)*]]
+  start = vim.fn.substitute(start, notslash .. [[\zs\\(]], [[\\%(]], 'g')
+  mid = vim.fn.substitute(mid, notslash .. [[\zs\\(]], [[\\%(]], 'g')
+  last = vim.fn.substitute(last, notslash .. [[\zs\\(]], [[\\%(]], 'g')
+
+  -- escape parentheses as these are |magic|
+  if start == '(' then
+    start = '\\M' .. start
+    last = '\\M' .. last
+  end
+
+  local match = vim.fn.searchpairpos(start, mid, last, flags, skip)
+  if match[1] > 0 and match[2] > 0 then
+    match[1] = match[1] - 1
+    match[2] = match[2] - 1
+    return { match, norm_cursor_pos() }
   end
 end
 
---- Find highlight bracket pairs using |treesitter-highlight|
---- @return { [1]: { [1]: integer, [2]: integer }, [2]: { [1]: integer, [2]: integer }}?
-local function ts_pairs()
+
+--- TODO: Find the matching pairs. First to jump to is the first element.
+--- Find a matching pair using treesitter or syntax
+--- @return Pos[]?
+local function find_matches(backward)
   local node = ts.get_node()
-  if not node then
-    return
+
+  if node and on_capture('punctuation.bracket') then
+    return ts_match_punc(node)
+  end
+  if node and on_capture('keyword') then
+    return ts_match_keyword(node, backward)
   end
 
-  if not vim.iter(ts.get_captures_at_cursor(0)):any(function(n)
-        return vim.startswith(n, 'punctuation.bracket')
-      end) then
-    return
-  end
-
-  local opening = anonymous_children(node):next()
-  local closing = anonymous_children(node):last()
-  if opening and closing then
-    local close_row, close_col = closing:end_()
-    return { { opening:start() }, { close_row, close_col - 1 } }
-  end
+  return syntax_match(backward)
 end
 
---- @param pos { [1]: integer, [2]: integer }
-local function higlight_bracket(pos)
-  local row, col = unpack(pos)
-  api.nvim_buf_add_highlight(0, ns, 'MyParen', row, col, col + 1)
+
+--- TODO: support [count]%
+function M.jump(backward)
+  local matches = find_matches(backward)
+  if matches then
+    local row, col = unpack(matches[1])
+    api.nvim_win_set_cursor(0, { row + 1, col })
+  end
 end
 
 function M.highlight()
-  --- TODO: this is only to simplify development
+  -- TODO: for developing only
   vim.cmd [[NoMatchParen]]
-  -- vim.cmd [[set syntax=on]]
   api.nvim_set_hl(0, 'MyParen', { bg = 'Red', fg = 'Yellow' })
-  ---
+  --
 
   api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
-  local funcs = { ts_pairs, syntax_pairs }
-  -- funcs = { ts_pairs }
-  -- funcs = { syntax_pairs }
-  for _, func in ipairs(funcs) do
-    local pairs = func()
-    if pairs then
-      higlight_bracket(pairs[1])
-      higlight_bracket(pairs[2])
-      return
-    end
+  local matches = find_matches()
+  for _, match in ipairs(matches or {}) do
+    local row, col = unpack(match)
+    api.nvim_buf_add_highlight(0, ns, 'MyParen', row, col, col + 1)
   end
-
-  -- TODO: insert mode: also when cursor is after bracket
 end
 
 return M
