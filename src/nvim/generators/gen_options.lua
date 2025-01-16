@@ -36,6 +36,7 @@ local options_meta = options.options
 
 local cstr = options.cstr
 local valid_scopes = options.valid_scopes
+local var_types = options.var_types
 
 --- Options for each scope.
 --- @type table<string, vim.option_meta[]>
@@ -146,7 +147,72 @@ map_w('static ' .. hashfun)
 
 opt_map_fd:close()
 
-vars_w('// IWYU pragma: private, include "nvim/option_vars.h"')
+-- Generate option variables for every scope.
+vars_w('// IWYU pragma: private, include "nvim/option_defs.h"')
+
+for _, scope in ipairs(valid_scopes) do
+  vars_w('')
+  vars_w('typedef struct {')
+
+  --- @param var_name string
+  --- @param var_type string
+  --- @param comment? string
+  local function write_var(var_name, var_type, comment)
+    local is_ptr = var_type:sub(-1) == '*'
+    local comment_str = comment and ('  ///< %s'):format(comment) or ''
+
+    vars_w(('  %s%s%s;%s'):format(var_type, is_ptr and '' or ' ', var_name, comment_str))
+  end
+
+  for _, option in ipairs(scope_options[scope]) do
+    --- @type string
+    local var_type
+    local opt_name = option.abbreviation or option.full_name
+
+    if type(option.type) == 'table' and #option.type > 1 then
+      -- For options with multiple types, OptVal is used as the variable type.
+      var_type = 'OptVal'
+    else
+      local option_type = type(option.type) == 'table' and option.type[1] or option.type
+      --- @cast option_type string
+      var_type = var_types[option_type]
+    end
+
+    write_var(opt_name, var_type, ("'%s'"):format(option.full_name))
+  end
+
+  vars_w(
+    ('  bool is_set[%s];  ///< Whether option value is set at %s scope'):format(
+      get_scope_option(scope, 'Count'),
+      scope
+    )
+  )
+  vars_w(
+    ('  LastSet last_set[%s];  ///< Script in which the option was last set at %s scope'):format(
+      get_scope_option(scope, 'Count'),
+      scope
+    )
+  )
+  vars_w(('} %sOptVars;'):format(lowercase_to_titlecase(scope)))
+end
+
+-- Generate tables containing option variable offsets for each scope.
+for _, scope in ipairs(valid_scopes) do
+  vars_w('')
+  vars_w(('EXTERN const size_t %s_opt_vars_offsets[] INIT( = {'):format(scope))
+
+  for _, option in ipairs(scope_options[scope]) do
+    vars_w(
+      ('  [%s] = offsetof(%sOptVars, %s),'):format(
+        get_scope_option(scope, option.full_name),
+        lowercase_to_titlecase(scope),
+        option.abbreviation or option.full_name
+      )
+    )
+  end
+
+  vars_w('});')
+end
 
 -- Generate enums for option flags.
 for _, option in ipairs(options_meta) do
@@ -420,21 +486,6 @@ local function dump_option(i, o)
     w(get_cond(o.enable_if))
   end
 
-  local is_window_local = #o.scope == 1 and o.scope[1] == 'win'
-
-  if not is_window_local then
-    if o.varname then
-      w('    .var=&' .. o.varname)
-    elseif o.immutable then
-      -- Immutable options can directly point to the default value.
-      w(('    .var=&options[%u].def_val.data'):format(i - 1))
-    else
-      -- Option must be immutable or have a variable.
-      assert(false)
-    end
-  else
-    w('    .var=NULL')
-  end
   w('    .immutable=' .. (o.immutable and 'true' or 'false'))
   if o.cb then
     w('    .opt_did_set_cb=' .. o.cb)
@@ -444,8 +495,6 @@ local function dump_option(i, o)
   end
   if o.enable_if then
     w('#else')
-    -- Hidden option directly points to default value.
-    w(('    .var=&options[%u].def_val.data'):format(i - 1))
     -- Option is always immutable on the false branch of `enable_if`.
     w('    .immutable=true')
     w('#endif')

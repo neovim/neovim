@@ -7,9 +7,12 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/regexp_defs.h"
 
+// uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "options_enum.generated.h"
+# include "options_enum.generated.h"  // NOLINT(llvm-include-order)
+# include "option_vars.generated.h"   // NOLINT(build/include_defs)
 #endif
+// uncrustify:on
 
 /// Option flags.
 typedef enum {
@@ -171,9 +174,6 @@ typedef struct {
   uint32_t flags;                    ///< see above
   OptValType type;                   ///< option type
   OptScopeFlags scope_flags;         ///< option scope flags, see OptScope
-  void *var;                         ///< global option: pointer to variable;
-                                     ///< window-local option: NULL;
-                                     ///< buffer-local option: global value
   ssize_t scope_idx[kOptScopeSize];  ///< index of option at every scope.
   bool immutable;                    ///< option is immutable, trying to set it will give an error.
 

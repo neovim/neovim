@@ -1,13 +1,10 @@
 #pragma once
 
 #include "nvim/macros_defs.h"
+#include "nvim/option_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/sign_defs.h"
 #include "nvim/types_defs.h"
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "option_vars.generated.h"  // NOLINT(build/include_defs)
-#endif
 
 // option_vars.h: definition of global variables for settable options
 
@@ -619,6 +616,9 @@ EXTERN int p_wa;                ///< 'writeany'
 EXTERN int p_wb;                ///< 'writebackup'
 EXTERN OptInt p_wd;             ///< 'writedelay'
 EXTERN int p_cdh;               ///< 'cdhome'
+
+/// Global options.
+EXTERN GlobalOptVars g_opts;
 
 // Value for b_p_ul indicating the global value must be used.
 #define NO_LOCAL_UNDOLEVEL (-123456)
