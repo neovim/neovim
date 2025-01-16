@@ -2914,4 +2914,34 @@ func Test_complete_info_matches()
   set cot&
 endfunc
 
+func Test_complete_info_completed()
+  func ShownInfo()
+    let g:compl_info = complete_info(['completed'])
+    return ''
+  endfunc
+  set completeopt+=noinsert
+
+  new
+  call setline(1, ['aaa', 'aab', 'aba', 'abb'])
+  inoremap <buffer><F5> <C-R>=ShownInfo()<CR>
+
+  call feedkeys("Go\<C-X>\<C-N>\<F5>\<Esc>dd", 'tx')
+  call assert_equal({'word': 'aaa', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},  g:compl_info['completed'])
+
+  call feedkeys("Go\<C-X>\<C-N>\<C-N>\<F5>\<Esc>dd", 'tx')
+  call assert_equal({'word': 'aab', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},  g:compl_info['completed'])
+
+  call feedkeys("Go\<C-X>\<C-N>\<C-N>\<C-N>\<C-N>\<F5>\<Esc>dd", 'tx')
+  call assert_equal({'word': 'abb', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},  g:compl_info['completed'])
+
+  set completeopt+=noselect
+  call feedkeys("Go\<C-X>\<C-N>\<F5>\<Esc>dd", 'tx')
+  call assert_equal({}, g:compl_info)
+
+  bw!
+  bw!
+  delfunc ShownInfo
+  set cot&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
