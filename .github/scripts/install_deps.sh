@@ -30,7 +30,7 @@ if [[ $os == Linux ]]; then
   fi
 
   if [[ -n $TEST ]]; then
-    sudo apt-get install -y locales-all cpanminus attr libattr1-dev gdb inotify-tools
+    sudo apt-get install -y locales-all cpanminus attr libattr1-dev gdb inotify-tools xdg-utils
 
     # Use default CC to avoid compilation problems when installing Python modules
     CC=cc python3 -m pip -q install --user --upgrade --break-system-packages pynvim
