@@ -169,7 +169,7 @@ you never want any default mappings, call |:mapclear| early in your config.
 - |[<Space>|, |]<Space>|
 - Nvim LSP client defaults |lsp-defaults|
   - K |K-lsp-default|
-- |%|, |g%|
+- |%-default|, |g%-default|
 
 DEFAULT AUTOCOMMANDS
                                                         *default-autocmds*

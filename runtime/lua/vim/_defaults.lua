@@ -454,19 +454,17 @@ do
   --- Defaults maps for built-in matching (matchpairs / matchit replacement).
   do
     -- TODO: change H and gH
-    vim.keymap.set('n', 'H', function()
-      require('vim._matching').jump({
-        count = vim.v.count1,
-        backward = false,
-      })
+    vim.keymap.set({ 'n', 'x' }, 'H', function()
+      require('vim._matching').jump()
     end, { desc = 'Jump to the next matching pair' })
 
-    vim.keymap.set('n', 'gH', function()
-      require('vim._matching').jump({
-        count = vim.v.count1,
-        backward = true,
-      })
+    vim.keymap.set({ 'n', 'x' }, 'gH', function()
+      require('vim._matching').jump({ backward = true })
     end, { desc = 'Jump to the previous matching pair' })
+
+    vim.keymap.set('o', '%', function()
+      require('vim._matching').jump()
+    end, { desc = 'Matching group text object' })
   end
 end
 

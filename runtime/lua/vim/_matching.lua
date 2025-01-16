@@ -7,14 +7,12 @@ local ns = api.nvim_create_namespace('nvim.matching')
 
 ---@alias Pos { [1]: integer, [2]: integer }
 
-
 --- 0-based line and column position
 --- @return Pos
 local function norm_cursor_pos()
   local row, col = unpack(api.nvim_win_get_cursor(0))
   return { row - 1, col }
 end
-
 
 --- Iterate over unnamed children of the node.
 --- @param node TSNode
@@ -24,7 +22,6 @@ local function anonymous_children(node)
     return not child:named()
   end)
 end
-
 
 --- @param node TSNode
 --- @param start? boolean start or end position of the node
@@ -41,7 +38,6 @@ local function node_pos(node, start)
   return { row, col }
 end
 
-
 --- TODO: pattern instead of startswith
 --- @param pattern string capture group pattern (without '@')
 --- @return boolean
@@ -55,14 +51,15 @@ local function on_capture(pattern)
   return false
 end
 
-
 --- TODO: return all keywords as list for highlighting
 --- Find matching keywords (e.g. if/then/end)
 --- @param current TSNode
 --- @param backward boolean?
 --- @return Pos[]?
 local function ts_match_keyword(current, backward)
-  if not current then return end
+  if not current then
+    return
+  end
   local keywords = anonymous_children(current)
 
   -- prev for backwards matching, first for wrapping last item
@@ -87,12 +84,13 @@ local function ts_match_keyword(current, backward)
   end
 end
 
-
 --- Find matching punctuation
 --- @param node TSNode
 --- @return Pos[]?
 local function ts_match_punc(node)
-  if not node then return end
+  if not node then
+    return
+  end
 
   local opening = anonymous_children(node):nth(1)
   local closing = anonymous_children(node):last()
@@ -112,7 +110,6 @@ local function ts_match_punc(node)
   end
 end
 
-
 --- @param str string
 --- @param sep string
 --- @return fun(): string?
@@ -130,10 +127,9 @@ local function gsplit_escaped(str, sep)
     local sub = str:sub(start, end_ - 1)
     -- update start for next group
     start = end_ + 1
-    return sub ~= "" and sub or nil
+    return sub ~= '' and sub or nil
   end
 end
-
 
 --- Substitute `\1` with the capture group found.
 --- @param str string
@@ -143,7 +139,6 @@ local function resolve_backref(str)
   local res, _ = str:gsub([[\1]], first_capture)
   return res
 end
-
 
 --- @return string[]?
 local function find_match_group(words)
@@ -165,20 +160,18 @@ local function find_match_group(words)
   end
 end
 
-
 --- Check if matching bracket is in skipable syntax group
 --- @return boolean
 local function searchskip()
   if not vim.g.syntax_on then
     return false
   end
-  local groups = vim.regex("string\\|character\\|singlequote\\|escape\\|symbol\\|comment")
-  return vim.iter(vim.fn.synstack(vim.fn.line("."), vim.fn.col("."))):any(function(id)
+  local groups = vim.regex('string\\|character\\|singlequote\\|escape\\|symbol\\|comment')
+  return vim.iter(vim.fn.synstack(vim.fn.line('.'), vim.fn.col('.'))):any(function(id)
     local name = vim.fn.synIDattr(id, 'name'):lower()
     return groups:match_str(name) ~= nil
   end)
 end
-
 
 --- Current character under cursor
 --- @return string
@@ -187,20 +180,19 @@ local function cursor_char()
   return api.nvim_buf_get_text(0, r, c, r, c + 1, {})[1]
 end
 
-
 --- TODO: jump to start if on end (wrap)
 --- @param backward boolean?
 --- @return Pos[]?
 local function syntax_match(backward)
-  local words = vim.b.match_words or ""
+  local words = vim.b.match_words or ''
 
   -- Allow b:match_words = "GetVimMatchWords()"
-  if #words > 0 and not words:find(":") then
+  if #words > 0 and not words:find(':') then
     words = api.nvim_eval(words)
   end
 
   -- add brackets to matching pairs / words
-  words = ("%s,%s"):format(vim.bo.matchpairs, words)
+  words = ('%s,%s'):format(vim.bo.matchpairs, words)
 
   -- 1. find match in b:match_words
   local group = find_match_group(words)
@@ -209,7 +201,7 @@ local function syntax_match(backward)
   end
   local start = group[1]
   local last = group[#group]
-  local mid = #group > 2 and group[2] or ""
+  local mid = #group > 2 and group[2] or ''
 
   -- 2. TODO: parse b:match_skip
   local skip = searchskip
@@ -247,7 +239,6 @@ local function syntax_match(backward)
   end
 end
 
-
 --- TODO: Find the matching pairs. First to jump to is the first element.
 --- Find a matching pair using treesitter or syntax
 --- @param backward boolean? Search backwards
@@ -265,7 +256,6 @@ local function find_matches(backward)
   return syntax_match(backward)
 end
 
-
 --- TODO: support [count]%
 function M.jump(opts)
   opts = vim.tbl_extend('keep', opts or {}, {
@@ -275,6 +265,9 @@ function M.jump(opts)
   local matches = find_matches(opts.backward)
   if matches then
     local row, col = unpack(matches[(opts.count - 1) % #matches + 1])
+    if vim.startswith(vim.fn.mode(1), 'no') then
+      vim.cmd('normal! v')
+    end
     api.nvim_win_set_cursor(0, { row + 1, col })
   end
 end

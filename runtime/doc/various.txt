@@ -662,18 +662,23 @@ Syntax supported matching groups:
 
 CONFIGURATION					*matching-configuration*
 
-Extending the words recognized as matching groups is done using
-|b:match_words| or 'matchpairs'.
+For filetypes without |treesitter| parser the words that are recognized as
+matching group can be expanded using |matching-b:match_words| and
+'matchpairs'. This is mostly compatible with matchit's |b:match_words|, except
+that it does not support mutiple, possibly nested, backref groups
+|matchit-\1|.
 
-							*b:match_words*
+							*matching-b:match_words*
 The format for |b:match_words| is similar to 'matchpairs': a comma
 (,)-separated list of groups. Each group is a colon (:)-separated list of
-patterns |pattern|. Here's an example for some Lua keywords: >vim
+patterns |pattern|. Here's an example for some Lua keywords:
+>vim
 	:let b:match_words = '\<if\>:\<elseif\>:\<else\>:\<end\>,'
 		\ . '\<function\>:\<end\>'
 <
 Where |\<| and |\>| denote word boundaries. |b:match_words| also supports a
-|Funcref| as value: >vim
+|Funcref| as value:
+>vim
 	:let b:match_words = 'GetMatchWords()'
 <
 The group definitions also support a single backref group |\1|. For example,
@@ -681,16 +686,5 @@ The group definitions also support a single backref group |\1|. For example,
 	:let b:match_words = '\<\(if|function\)\>:\<end\1\>'
 <
 matches "if" with "endif" and "function" with "endfunction".
-
-DISABLE							*matching-disable*
-
-To disable highlighting the matching group, clear the "nvim.matching"
-autocmd group |autocmd-groups|: >lua
-	vim.api.nvim_del_augroup_by_name('nvim.matching')
-<
-To disable jumping with |%| and |g%|, unmap the keys: >lua
-	vim.keymap.del('n', '%')
-	vim.keymap.del('n', 'g%')
-<
 
  vim:noet:tw=78:ts=8:ft=help:norl:
