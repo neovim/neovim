@@ -583,7 +583,7 @@ NSC['window/showMessage'] = function(_, params, ctx)
     err_message('LSP[', client_name, '] ', message)
   else
     message = ('LSP[%s][%s] %s\n'):format(client_name, protocol.MessageType[message_type], message)
-    api.nvim_echo({ { message } }, true, { err = true })
+    api.nvim_echo({ { message } }, true, {})
   end
   return params
 end
