@@ -355,6 +355,8 @@ TREESITTER
   descendant itself.
 • |LanguageTree:parse()| optionally supports asynchronous invocation, which is
   activated by passing the `on_parse` callback parameter.
+• |LanguageTree:is_valid()| can be passed a range which narrows the validity
+  check.
 
 TUI
 
