@@ -1435,14 +1435,10 @@ void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         return;
       }
     });
-  } else if (argvars[0].v_type != VAR_BLOB) {
-    if (argvars[0].v_type == VAR_STRING && current_sctx.sc_sid != SID_LUA) {
-      semsg(_(e_invarg2),
-            _("writefile() does not support Vim calls if the first argument is a string"));
-    } else {
-      semsg(_(e_invarg2),
-            _("writefile() first argument must be a List or a Blob"));
-    }
+  } else if (argvars[0].v_type != VAR_BLOB
+             && !(argvars[0].v_type == VAR_STRING && current_sctx.sc_sid != SID_LUA)) {
+    semsg(_(e_invarg2),
+          _("writefile() first argument must be a List or a Blob"));
     return;
   }
 
