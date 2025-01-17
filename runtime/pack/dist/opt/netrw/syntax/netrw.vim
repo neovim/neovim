@@ -1,15 +1,12 @@
-" Language   : Netrw Listing Syntax
-" Maintainer:	This runtime file is looking for a new maintainer.
-" Former Maintainer: Charles E. Campbell
-" Last Change: Nov 07, 2019
-"   2024 Feb 19 by Vim Project (announce adoption)
-" Version    : 20
-" ---------------------------------------------------------------------
+Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
+" Former Maintainer: Charles E Campbell
+" Upstream: <https://github.com/saccarosium/netrw.vim>
+" Language: Netrw Listing Syntax
+
 if exists("b:current_syntax")
  finish
 endif
 
-" ---------------------------------------------------------------------
 " Directory List Syntax Highlighting: {{{1
 syn cluster NetrwGroup		contains=netrwHide,netrwSortBy,netrwSortSeq,netrwQuickHelp,netrwVersion,netrwCopyTgt
 syn cluster NetrwTreeGroup	contains=netrwDir,netrwSymLink,netrwExe

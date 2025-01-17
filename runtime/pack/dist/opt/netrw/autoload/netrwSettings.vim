@@ -1,10 +1,6 @@
-" netrwSettings.vim: makes netrw settings simpler
-" Date:		Nov 15, 2021
-" Maintainer:   This runtime file is looking for a new maintainer.
+" Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Former Maintainer: Charles E Campbell
-" Version:	18
-" Last Change:
-"   2024 May 08 by Vim Project: cleanup legacy Win9X checks
+" Upstream: <https://github.com/saccarosium/netrw.vim>
 " Copyright:    Copyright (C) 1999-2007 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
@@ -14,15 +10,12 @@
 "               this plugin, you agree that in no event will the copyright
 "               holder be liable for any damages resulting from the use
 "               of this software.
-"
-" Mat 4:23 (WEB) Jesus went about in all Galilee, teaching in their {{{1
-"                synagogues, preaching the gospel of the kingdom, and healing
-"                every disease and every sickness among the people.
+
 " Load Once: {{{1
 if exists("g:loaded_netrwSettings") || &cp
   finish
 endif
-let g:loaded_netrwSettings = "v18"
+let g:loaded_netrwSettings = "v174"
 if v:version < 700
  echohl WarningMsg
  echo "***warning*** this version of netrwSettings needs vim 7.0"
