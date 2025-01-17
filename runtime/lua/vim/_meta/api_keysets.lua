@@ -241,7 +241,7 @@ error('Cannot require a meta file')
 --- @field end_line? integer
 --- @field end_row? integer
 --- @field end_col? integer
---- @field hl_group? integer|string
+--- @field hl_group? any
 --- @field virt_text? any[]
 --- @field virt_text_pos? string
 --- @field virt_text_win_col? integer

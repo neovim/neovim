@@ -385,6 +385,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///               - hl_group : highlight group used for the text range. This and below
 ///                   highlight groups can be supplied either as a string or as an integer,
 ///                   the latter of which can be obtained using |nvim_get_hl_id_by_name()|.
+///
+///                   Multiple highlight groups can be stacked by passing an array (highest
+///                   priority last).
 ///               - hl_eol : when true, for a multiline highlight covering the
 ///                          EOL of a line, continue the highlight for the rest
 ///                          of the screen line (just like for diff and
@@ -499,6 +502,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   DecorVirtText virt_lines = DECOR_VIRT_LINES_INIT;
   char *url = NULL;
   bool has_hl = false;
+  bool has_hl_multiple = false;
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -551,8 +555,33 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     col2 = (int)val;
   }
 
-  hl.hl_id = (int)opts->hl_group;
-  has_hl = hl.hl_id > 0;
+  if (HAS_KEY(opts, set_extmark, hl_group)) {
+    if (opts->hl_group.type == kObjectTypeArray) {
+      Array arr = opts->hl_group.data.array;
+      if (arr.size >= 1) {
+        hl.hl_id = object_to_hl_id(arr.items[0], "hl_group item", err);
+        if (ERROR_SET(err)) {
+          goto error;
+        }
+      }
+      for (size_t i = 1; i < arr.size; i++) {
+        int hl_id = object_to_hl_id(arr.items[i], "hl_group item", err);
+        if (ERROR_SET(err)) {
+          goto error;
+        }
+        if (hl_id) {
+          has_hl_multiple = true;
+        }
+      }
+    } else {
+      hl.hl_id = object_to_hl_id(opts->hl_group, "hl_group", err);
+      if (ERROR_SET(err)) {
+        goto error;
+      }
+    }
+    has_hl = hl.hl_id > 0;
+  }
+
   sign.hl_id = (int)opts->sign_hl_group;
   sign.cursorline_hl_id = (int)opts->cursorline_hl_group;
   sign.number_hl_id = (int)opts->number_hl_group;
@@ -791,6 +820,21 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       }
       if (sign.number_hl_id || sign.line_hl_id || sign.cursorline_hl_id) {
         decor_flags |= MT_FLAG_DECOR_SIGNHL;
+      }
+    }
+
+    if (has_hl_multiple) {
+      Array arr = opts->hl_group.data.array;
+      for (size_t i = arr.size - 1; i > 0; i--) {  // skip hl_group[0], handled as hl.hl_id below
+        int hl_id = object_to_hl_id(arr.items[i], "hl_group item", err);
+        if (hl_id > 0) {
+          DecorSignHighlight sh = DECOR_SIGN_HIGHLIGHT_INIT;
+          sh.hl_id = hl_id;
+          sh.flags = opts->hl_eol ? kSHHlEol : 0;
+          sh.next = decor_indexed;
+          decor_indexed = decor_put_sh(sh);
+          decor_flags |= MT_FLAG_DECOR_HL;
+        }
       }
     }
 
