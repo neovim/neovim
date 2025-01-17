@@ -1,6 +1,6 @@
 name: Bug Report
 description: Report a problem in Nvim
-labels: [bug]
+type: 'bug'
 body:
 
   - type: markdown
