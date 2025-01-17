@@ -369,6 +369,9 @@ describe('vim.diagnostic', function()
   end)
 
   it('handles one namespace clearing highlights while the other still has highlights', function()
+    exec_lua(function()
+      vim.diagnostic.config({ virtual_text = true })
+    end)
     -- 1 Error (1)
     -- 1 Warning (2)
     -- 1 Warning (2) + 1 Warning (1)
@@ -443,6 +446,10 @@ describe('vim.diagnostic', function()
   end)
 
   it('does not display diagnostics when disabled', function()
+    exec_lua(function()
+      vim.diagnostic.config({ virtual_text = true })
+    end)
+
     eq(
       { 0, 2 },
       exec_lua(function()
@@ -916,6 +923,10 @@ describe('vim.diagnostic', function()
 
   describe('reset()', function()
     it('diagnostic count is 0 and displayed diagnostics are 0 after call', function()
+      exec_lua(function()
+        vim.diagnostic.config({ virtual_text = true })
+      end)
+
       -- 1 Error (1)
       -- 1 Warning (2)
       -- 1 Warning (2) + 1 Warning (1)
@@ -2117,7 +2128,11 @@ describe('vim.diagnostic', function()
     end)
 
     it('can perform updates after insert_leave', function()
-      exec_lua [[vim.api.nvim_set_current_buf( _G.diagnostic_bufnr)]]
+      exec_lua(function()
+        vim.diagnostic.config({ virtual_text = true })
+        vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
+      end)
+
       api.nvim_input('o')
       eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
 
@@ -2258,7 +2273,10 @@ describe('vim.diagnostic', function()
     end)
 
     it('can perform updates while in insert mode, if desired', function()
-      exec_lua [[vim.api.nvim_set_current_buf( _G.diagnostic_bufnr)]]
+      exec_lua(function()
+        vim.diagnostic.config({ virtual_text = true })
+        vim.api.nvim_set_current_buf(_G.diagnostic_bufnr)
+      end)
       api.nvim_input('o')
       eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
 
@@ -2292,6 +2310,10 @@ describe('vim.diagnostic', function()
     end)
 
     it('can set diagnostics without displaying them', function()
+      exec_lua(function()
+        vim.diagnostic.config({ virtual_text = true })
+      end)
+
       eq(
         0,
         exec_lua(function()
