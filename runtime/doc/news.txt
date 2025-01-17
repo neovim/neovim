@@ -341,6 +341,9 @@ TERMINAL
 • |jobstart()| gained the "term" flag.
 • The |terminal| will send theme update notifications when 'background' is
   changed and DEC mode 2031 is enabled.
+• The |terminal| has experimental support for the Kitty keyboard protocol
+  (sometimes called "CSI u" key encoding). Only the "Disambiguate escape
+  codes" mode is currently supported.
 
 TREESITTER
 

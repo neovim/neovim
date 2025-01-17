@@ -17,6 +17,9 @@ local bit = require('bit')
 --- @field VTERM_KEY_NONE integer
 --- @field VTERM_KEY_TAB integer
 --- @field VTERM_KEY_UP integer
+--- @field VTERM_KEY_BACKSPACE integer
+--- @field VTERM_KEY_ESCAPE integer
+--- @field VTERM_KEY_DEL integer
 --- @field VTERM_MOD_ALT integer
 --- @field VTERM_MOD_CTRL integer
 --- @field VTERM_MOD_SHIFT integer
@@ -503,6 +506,18 @@ local function strp_key(input_key)
 
   if input_key == 'enter' then
     return vterm.VTERM_KEY_ENTER
+  end
+
+  if input_key == 'bs' then
+    return vterm.VTERM_KEY_BACKSPACE
+  end
+
+  if input_key == 'del' then
+    return vterm.VTERM_KEY_DEL
+  end
+
+  if input_key == 'esc' then
+    return vterm.VTERM_KEY_ESCAPE
   end
 
   if input_key == 'f1' then
@@ -2324,65 +2339,83 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     local vt = init()
     local state = wantstate(vt)
 
+    -- Disambiguate escape codes enabled
+    push('\x1b[>1u', vt)
+
     -- Unmodified ASCII
-    inchar(41, vt)
-    expect('output 29')
-    inchar(61, vt)
-    expect('output 3d')
+    inchar(0x41, vt)
+    expect_output('A')
+    inchar(0x61, vt)
+    expect_output('a')
 
     -- Ctrl modifier on ASCII letters
-    inchar(41, vt, { C = true })
-    expect('output 1b,5b,34,31,3b,35,75')
-    inchar(61, vt, { C = true })
-    expect('output 1b,5b,36,31,3b,35,75')
+    inchar(0x41, vt, { C = true })
+    expect_output('\x1b[97;6u')
+    inchar(0x61, vt, { C = true })
+    expect_output('\x1b[97;5u')
 
     -- Alt modifier on ASCII letters
-    inchar(41, vt, { A = true })
-    expect('output 1b,29')
-    inchar(61, vt, { A = true })
-    expect('output 1b,3d')
+    inchar(0x41, vt, { A = true })
+    expect_output('\x1b[97;4u')
+    inchar(0x61, vt, { A = true })
+    expect_output('\x1b[97;3u')
 
     -- Ctrl-Alt modifier on ASCII letters
-    inchar(41, vt, { C = true, A = true })
-    expect('output 1b,5b,34,31,3b,37,75')
-    inchar(61, vt, { C = true, A = true })
-    expect('output 1b,5b,36,31,3b,37,75')
+    inchar(0x41, vt, { C = true, A = true })
+    expect_output('\x1b[97;8u')
+    inchar(0x61, vt, { C = true, A = true })
+    expect_output('\x1b[97;7u')
 
-    -- Special handling of Ctrl-I
-    inchar(49, vt)
-    expect('output 31')
-    inchar(69, vt)
-    expect('output 45')
-    inchar(49, vt, { C = true })
-    expect('output 1b,5b,34,39,3b,35,75')
-    inchar(69, vt, { C = true })
-    expect('output 1b,5b,36,39,3b,35,75')
-    inchar(49, vt, { A = true })
-    expect('output 1b,31')
-    inchar(69, vt, { A = true })
-    expect('output 1b,45')
-    inchar(49, vt, { A = true, C = true })
-    expect('output 1b,5b,34,39,3b,37,75')
-    inchar(69, vt, { A = true, C = true })
-    expect('output 1b,5b,36,39,3b,37,75')
+    -- Ctrl-I is disambiguated
+    inchar(0x49, vt)
+    expect_output('I')
+    inchar(0x69, vt)
+    expect_output('i')
+    inchar(0x49, vt, { C = true })
+    expect_output('\x1b[105;6u')
+    inchar(0x69, vt, { C = true })
+    expect_output('\x1b[105;5u')
+    inchar(0x49, vt, { A = true })
+    expect_output('\x1b[105;4u')
+    inchar(0x69, vt, { A = true })
+    expect_output('\x1b[105;3u')
+    inchar(0x49, vt, { A = true, C = true })
+    expect_output('\x1b[105;8u')
+    inchar(0x69, vt, { A = true, C = true })
+    expect_output('\x1b[105;7u')
+
+    -- Ctrl+Digits
+    for i = 0, 9 do
+      local c = 0x30 + i
+      inchar(c, vt)
+      expect_output(tostring(i))
+      inchar(c, vt, { C = true })
+      expect_output(string.format('\x1b[%d;5u', c))
+      inchar(c, vt, { C = true, S = true })
+      expect_output(string.format('\x1b[%d;6u', c))
+      inchar(c, vt, { C = true, A = true })
+      expect_output(string.format('\x1b[%d;7u', c))
+      inchar(c, vt, { C = true, A = true, S = true })
+      expect_output(string.format('\x1b[%d;8u', c))
+    end
 
     -- Special handling of Space
-    inchar(20, vt)
-    expect('output 14')
-    inchar(20, vt, { S = true })
-    expect('output 14')
-    inchar(20, vt, { C = true })
-    expect('output 1b,5b,32,30,3b,35,75')
-    inchar(20, vt, { C = true, S = true })
-    expect('output 1b,5b,32,30,3b,35,75')
-    inchar(20, vt, { A = true })
-    expect('output 1b,14')
-    inchar(20, vt, { S = true, A = true })
-    expect('output 1b,14')
-    inchar(20, vt, { C = true, A = true })
-    expect('output 1b,5b,32,30,3b,37,75')
-    inchar(20, vt, { S = true, C = true, A = true })
-    expect('output 1b,5b,32,30,3b,37,75')
+    inchar(0x20, vt)
+    expect_output(' ')
+    inchar(0x20, vt, { S = true })
+    expect_output('\x1b[32;2u')
+    inchar(0x20, vt, { C = true })
+    expect_output('\x1b[32;5u')
+    inchar(0x20, vt, { C = true, S = true })
+    expect_output('\x1b[32;6u')
+    inchar(0x20, vt, { A = true })
+    expect_output('\x1b[32;3u')
+    inchar(0x20, vt, { S = true, A = true })
+    expect_output('\x1b[32;4u')
+    inchar(0x20, vt, { C = true, A = true })
+    expect_output('\x1b[32;7u')
+    inchar(0x20, vt, { S = true, C = true, A = true })
+    expect_output('\x1b[32;8u')
 
     -- Cursor keys in reset (cursor) mode
     inkey('up', vt)
@@ -2413,21 +2446,65 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     inkey('up', vt, { C = true })
     expect_output('\x1b[1;5A')
 
-    -- Shift-Tab should be different
+    -- Tab
     inkey('tab', vt)
     expect_output('\x09')
     inkey('tab', vt, { S = true })
-    expect_output('\x1b[Z')
+    expect_output('\x1b[9;2u')
     inkey('tab', vt, { C = true })
     expect_output('\x1b[9;5u')
     inkey('tab', vt, { A = true })
-    expect_output('\x1b\x09')
+    expect_output('\x1b[9;3u')
     inkey('tab', vt, { C = true, A = true })
     expect_output('\x1b[9;7u')
+
+    -- Backspace
+    inkey('bs', vt)
+    expect_output('\x7f')
+    inkey('bs', vt, { S = true })
+    expect_output('\x1b[127;2u')
+    inkey('bs', vt, { C = true })
+    expect_output('\x1b[127;5u')
+    inkey('bs', vt, { A = true })
+    expect_output('\x1b[127;3u')
+    inkey('bs', vt, { C = true, A = true })
+    expect_output('\x1b[127;7u')
+
+    -- DEL
+    inkey('del', vt)
+    expect_output('\x1b[3~')
+    inkey('del', vt, { S = true })
+    expect_output('\x1b[3;2~')
+    inkey('del', vt, { C = true })
+    expect_output('\x1b[3;5~')
+    inkey('del', vt, { A = true })
+    expect_output('\x1b[3;3~')
+    inkey('del', vt, { C = true, A = true })
+    expect_output('\x1b[3;7~')
+
+    -- ESC
+    inkey('esc', vt)
+    expect_output('\x1b[27;1u')
+    inkey('esc', vt, { S = true })
+    expect_output('\x1b[27;2u')
+    inkey('esc', vt, { C = true })
+    expect_output('\x1b[27;5u')
+    inkey('esc', vt, { A = true })
+    expect_output('\x1b[27;3u')
+    inkey('esc', vt, { C = true, A = true })
+    expect_output('\x1b[27;7u')
 
     -- Enter in linefeed mode
     inkey('enter', vt)
     expect_output('\x0d')
+    inkey('enter', vt, { S = true })
+    expect_output('\x1b[13;2u')
+    inkey('enter', vt, { C = true })
+    expect_output('\x1b[13;5u')
+    inkey('enter', vt, { A = true })
+    expect_output('\x1b[13;3u')
+    inkey('enter', vt, { C = true, A = true })
+    expect_output('\x1b[13;7u')
 
     -- Enter in newline mode
     push('\x1b[20h', vt)
@@ -2448,7 +2525,7 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
 
     -- Keypad in DECKPNM
     inkey('kp0', vt)
-    expect_output('0')
+    expect_output('\x1b[57399;1u')
 
     -- Keypad in DECKPAM
     push('\x1b=', vt)
@@ -2478,6 +2555,77 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     expect_output('\x1b[I')
     vterm.vterm_state_focus_out(state)
     expect_output('\x1b[O')
+
+    -- Disambiguate escape codes disabled
+    push('\x1b[<u', vt)
+
+    -- Unmodified ASCII
+    inchar(0x41, vt)
+    expect_output('A')
+    inchar(0x61, vt)
+    expect_output('a')
+
+    -- Ctrl modifier on ASCII letters
+    inchar(0x41, vt, { C = true })
+    expect_output('\x01')
+    inchar(0x61, vt, { C = true })
+    expect_output('\x01')
+
+    -- Alt modifier on ASCII letters
+    inchar(0x41, vt, { A = true })
+    expect_output('\x1bA')
+    inchar(0x61, vt, { A = true })
+    expect_output('\x1ba')
+
+    -- Ctrl-Alt modifier on ASCII letters
+    inchar(0x41, vt, { C = true, A = true })
+    expect_output('\x1b\x01')
+    inchar(0x61, vt, { C = true, A = true })
+    expect_output('\x1b\x01')
+
+    -- Ctrl-I is ambiguous
+    inchar(0x49, vt)
+    expect_output('I')
+    inchar(0x69, vt)
+    expect_output('i')
+    inchar(0x49, vt, { C = true })
+    expect_output('\x09')
+    inchar(0x69, vt, { C = true })
+    expect_output('\x09')
+    inchar(0x49, vt, { A = true })
+    expect_output('\x1bI')
+    inchar(0x69, vt, { A = true })
+    expect_output('\x1bi')
+    inchar(0x49, vt, { A = true, C = true })
+    expect_output('\x1b\x09')
+    inchar(0x69, vt, { A = true, C = true })
+    expect_output('\x1b\x09')
+
+    -- Ctrl+Digits
+    inchar(0x30, vt, { C = true })
+    expect_output('0')
+    inchar(0x31, vt, { C = true })
+    expect_output('1')
+    inchar(0x32, vt, { C = true })
+    expect_output('\x00')
+    inchar(0x33, vt, { C = true })
+    expect_output('\x1b')
+    inchar(0x34, vt, { C = true })
+    expect_output('\x1c')
+    inchar(0x35, vt, { C = true })
+    expect_output('\x1d')
+    inchar(0x36, vt, { C = true })
+    expect_output('\x1e')
+    inchar(0x37, vt, { C = true })
+    expect_output('\x1f')
+    inchar(0x38, vt, { C = true })
+    expect_output('\x7f')
+    inchar(0x39, vt, { C = true })
+    expect_output('9')
+
+    -- Ctrl+/
+    inchar(0x2F, vt, { C = true })
+    expect_output('\x1f')
   end)
 
   itp('26state_query', function()

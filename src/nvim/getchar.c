@@ -1517,12 +1517,10 @@ int merge_modifiers(int c_arg, int *modifiers)
   int c = c_arg;
 
   if (*modifiers & MOD_MASK_CTRL) {
-    if ((c >= '`' && c <= 0x7f) || (c >= '@' && c <= '_')) {
-      if (!(State & MODE_TERMINAL) || !(c == 'I' || c == 'J' || c == 'M' || c == '[')) {
-        c &= 0x1f;
-        if (c == NUL) {
-          c = K_ZERO;
-        }
+    if (c >= '@' && c <= 0x7f) {
+      c &= 0x1f;
+      if (c == NUL) {
+        c = K_ZERO;
       }
     } else if (c == '6') {
       // CTRL-6 is equivalent to CTRL-^
@@ -2058,6 +2056,12 @@ static bool at_ins_compl_key(void)
 /// @return  the length of the replaced bytes, 0 if nothing changed, -1 for error.
 static int check_simplify_modifier(int max_offset)
 {
+  // We want full modifiers in Terminal mode so that the key can be correctly
+  // encoded
+  if (State & MODE_TERMINAL) {
+    return 0;
+  }
+
   for (int offset = 0; offset < max_offset; offset++) {
     if (offset + 3 >= typebuf.tb_len) {
       break;
