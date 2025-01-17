@@ -1,7 +1,9 @@
 name: Language server (LSP) client bug
 description: Report an issue with Nvim LSP
 title: "LSP: "
-labels: [bug, lsp]
+labels:
+  - lsp
+type: bug
 body:
 
   - type: markdown
