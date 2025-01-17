@@ -189,9 +189,9 @@ function LanguageTree:_set_logger()
 end
 
 ---Measure execution time of a function
----@generic R1, R2, R3
----@param f fun(): R1, R2, R2
----@return number, R1, R2, R3
+---@generic R1, R2, R3, R4, R5, R6, R7, R8, R9
+---@param f fun(): R1, R2, R3, R4, R5, R6, R7, R8, R9
+---@return number, R1, R2, R3, R4, R5, R6, R7, R8, R9
 local function tcall(f, ...)
   local start = vim.uv.hrtime()
   ---@diagnostic disable-next-line
@@ -343,12 +343,12 @@ end
 
 --- @private
 --- @param range boolean|Range?
---- @param timeout integer?
+--- @param thread_state { timeout: integer? }
 --- @return Range6[] changes
 --- @return integer no_regions_parsed
 --- @return number total_parse_time
 --- @return boolean finished whether async parsing still needs time
-function LanguageTree:_parse_regions(range, timeout)
+function LanguageTree:_parse_regions(range, thread_state)
   local changes = {}
   local no_regions_parsed = 0
   local total_parse_time = 0
@@ -368,12 +368,19 @@ function LanguageTree:_parse_regions(range, timeout)
       )
     then
       self._parser:set_included_ranges(ranges)
-      self._parser:set_timeout(timeout and timeout * 1000 or 0) -- ms -> micros
+      self._parser:set_timeout(thread_state.timeout and thread_state.timeout * 1000 or 0) -- ms -> micros
+
       local parse_time, tree, tree_changes =
         tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
+      while true do
+        if not tree then
+          coroutine.yield(changes, no_regions_parsed, total_parse_time, false)
+        else
+          break
+        end
 
-      if not tree then
-        return changes, no_regions_parsed, total_parse_time, false
+        parse_time, tree, tree_changes =
+          tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
       end
 
       -- Pass ranges if this is an initial parse
@@ -475,16 +482,24 @@ function LanguageTree:_async_parse(range, on_parse)
   local ct = buf.changedtick
   local total_parse_time = 0
   local redrawtime = vim.o.redrawtime
-  local timeout = not vim.g._ts_force_sync_parsing and default_parse_timeout_ms or nil
+
+  -- Box the state so it can be accessed between threads.
+  ---@type { timeout: integer? }
+  local thread_state = {}
+
+  ---@type fun(): table<integer, TSTree>, boolean
+  local parse = coroutine.wrap(self._parse)
 
   local function step()
     -- If buffer was changed in the middle of parsing, reset parse state
     if buf.changedtick ~= ct then
       ct = buf.changedtick
       total_parse_time = 0
+      parse = coroutine.wrap(self._parse)
     end
 
-    local parse_time, trees, finished = tcall(self._parse, self, range, timeout)
+    thread_state.timeout = not vim.g._ts_force_sync_parsing and default_parse_timeout_ms or nil
+    local parse_time, trees, finished = tcall(parse, self, range, thread_state)
     total_parse_time = total_parse_time + parse_time
 
     if finished then
@@ -526,16 +541,16 @@ function LanguageTree:parse(range, on_parse)
   if on_parse then
     return self:_async_parse(range, on_parse)
   end
-  local trees, _ = self:_parse(range)
+  local trees, _ = self:_parse(range, {})
   return trees
 end
 
 --- @private
 --- @param range boolean|Range|nil
---- @param timeout integer?
+--- @param thread_state { timeout: integer? }
 --- @return table<integer, TSTree> trees
 --- @return boolean finished
-function LanguageTree:_parse(range, timeout)
+function LanguageTree:_parse(range, thread_state)
   if self:is_valid() then
     self:_log('valid')
     return self._trees, true
@@ -551,10 +566,17 @@ function LanguageTree:_parse(range, timeout)
 
   -- At least 1 region is invalid
   if not self:is_valid(true) then
-    changes, no_regions_parsed, total_parse_time, is_finished = self:_parse_regions(range, timeout)
-    timeout = timeout and math.max(timeout - total_parse_time, 0)
-    if not is_finished then
-      return self._trees, is_finished
+    ---@type fun(self: vim.treesitter.LanguageTree, range: boolean|Range?, thread_state: { timeout: integer? }): Range6[], integer, number, boolean
+    local parse_regions = coroutine.wrap(self._parse_regions)
+    while true do
+      changes, no_regions_parsed, total_parse_time, is_finished =
+        parse_regions(self, range, thread_state)
+      thread_state.timeout = thread_state.timeout and math.max(thread_state.timeout, 0)
+      if not is_finished then
+        coroutine.yield(self._trees, is_finished)
+      else
+        break
+      end
     end
     -- Need to run injections when we parsed something
     if no_regions_parsed > 0 then
@@ -576,13 +598,20 @@ function LanguageTree:_parse(range, timeout)
   })
 
   for _, child in pairs(self._children) do
-    if timeout == 0 then
-      return self._trees, false
+    if thread_state.timeout == 0 then
+      coroutine.yield(self._trees, false)
     end
-    local ctime, _, child_finished = tcall(child._parse, child, range, timeout)
-    timeout = timeout and math.max(timeout - ctime, 0)
-    if not child_finished then
-      return self._trees, child_finished
+
+    ---@type fun(): table<integer, TSTree>, boolean
+    local parse = coroutine.wrap(child._parse)
+
+    while true do
+      local ctime, _, child_finished = tcall(parse, child, range, thread_state)
+      if child_finished then
+        thread_state.timeout = thread_state.timeout and math.max(thread_state.timeout - ctime, 0)
+        break
+      end
+      coroutine.yield(self._trees, child_finished)
     end
   end
 
