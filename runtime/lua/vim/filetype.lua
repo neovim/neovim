@@ -1636,6 +1636,7 @@ local filename = {
   ['.lintstagedrc'] = 'json',
   ['deno.lock'] = 'json',
   ['flake.lock'] = 'json',
+  ['.swcrc'] = 'json',
   ['.babelrc'] = 'jsonc',
   ['.eslintrc'] = 'jsonc',
   ['.hintrc'] = 'jsonc',
