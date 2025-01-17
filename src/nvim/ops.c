@@ -5386,8 +5386,8 @@ void cursor_pos_info(dict_T *dict)
         char *const saved_w_sbr = curwin->w_p_sbr;
 
         // Make 'sbr' empty for a moment to get the correct size.
-        p_sbr = empty_string_option;
-        curwin->w_p_sbr = empty_string_option;
+        p_sbr = STATIC_CSTR_AS_REF_STRING("");
+        curwin->w_p_sbr = STATIC_CSTR_AS_REF_STRING("");
         oparg.is_VIsual = true;
         oparg.motion_type = kMTBlockWise;
         oparg.op_type = OP_NOP;
