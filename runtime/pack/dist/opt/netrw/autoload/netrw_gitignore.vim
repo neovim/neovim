@@ -1,3 +1,7 @@
+" Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
+" Former Maintainer: Bruno Sutic
+" Upstream: <https://github.com/saccarosium/netrw.vim>
+
 " netrw_gitignore#Hide: gitignore-based hiding
 "  Function returns a string of comma separated patterns convenient for
 "  assignment to `g:netrw_list_hide` option.
