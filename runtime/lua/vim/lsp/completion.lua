@@ -127,8 +127,10 @@ end
 --- See https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 ---
 --- @param item lsp.CompletionItem
+--- @param prefix string
+--- @param match fun(text: string, prefix: string):boolean
 --- @return string
-local function get_completion_word(item)
+local function get_completion_word(item, prefix, match)
   if item.insertTextFormat == protocol.InsertTextFormat.Snippet then
     if item.textEdit then
       -- Use label instead of text if text has different starting characters.
@@ -146,7 +148,12 @@ local function get_completion_word(item)
       --
       -- Typing `i` would remove the candidate because newText starts with `t`.
       local text = parse_snippet(item.insertText or item.textEdit.newText)
-      return #text < #item.label and vim.fn.matchstr(text, '\\k*') or item.label
+      local word = #text < #item.label and vim.fn.matchstr(text, '\\k*') or item.label
+      if item.filterText and not match(word, prefix) then
+        return item.filterText
+      else
+        return word
+      end
     elseif item.insertText and item.insertText ~= '' then
       return parse_snippet(item.insertText)
     else
@@ -276,7 +283,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
   local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
   for _, item in ipairs(items) do
     if matches(item) then
-      local word = get_completion_word(item)
+      local word = get_completion_word(item, prefix, match_item_by_value)
       local hl_group = ''
       if
         item.deprecated
