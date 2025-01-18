@@ -295,8 +295,9 @@ end
 ---@param text_edits lsp.TextEdit[]
 ---@param bufnr integer Buffer id
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
+---@param adjust_end? boolean adjust end_col to start_col when end_col equals end of line
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
-function M.apply_text_edits(text_edits, bufnr, position_encoding)
+function M.apply_text_edits(text_edits, bufnr, position_encoding, adjust_end)
   validate('text_edits', text_edits, 'table', false)
   validate('bufnr', bufnr, 'number', false)
   validate('position_encoding', position_encoding, 'string', false)
@@ -392,8 +393,12 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding)
           table.remove(text, #text)
         end
       end
-      -- Make sure we don't go out of bounds for end_col
-      end_col = math.min(last_line_len, end_col)
+      if adjust_end and last_line_len == end_col then
+        end_col = start_col
+      else
+        -- Make sure we don't go out of bounds for end_col
+        end_col = math.min(last_line_len, end_col)
+      end
 
       api.nvim_buf_set_text(bufnr, start_row, start_col, end_row, end_col, text)
     end

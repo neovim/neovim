@@ -323,7 +323,7 @@ RCS[ms.textDocument_completion] = function(_, result, _)
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
   local prefix = line_to_cursor:sub(textMatch + 1)
 
-  local matches = completion._lsp_to_complete_items(result, prefix)
+  local matches = completion._lsp_to_complete_items(textMatch + 1, result, prefix)
   vim.fn.complete(textMatch + 1, matches)
 end
 

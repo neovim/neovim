@@ -149,10 +149,11 @@ end
 --- See https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 ---
 --- @param item lsp.CompletionItem
+--- @param start_col integer
 --- @param prefix string
 --- @param match fun(text: string, prefix: string):boolean
 --- @return string
-local function get_completion_word(item, prefix, match)
+local function get_completion_word(item, start_col, prefix, match)
   if item.insertTextFormat == protocol.InsertTextFormat.Snippet then
     if item.textEdit or (item.insertText and item.insertText ~= '') then
       -- Use label instead of text if text has different starting characters.
@@ -181,7 +182,16 @@ local function get_completion_word(item, prefix, match)
     end
   elseif item.textEdit then
     local word = item.textEdit.newText
-    return word:match('^(%S*)') or word
+    word = word:match('^(%S*)') or word
+    if item.filterText and not match(word, prefix) then
+      local line = api.nvim_get_current_line()
+      local char = line:sub(start_col, start_col)
+      if not vim.startswith(item.filterText, char) then
+        return char .. item.filterText
+      end
+      return item.filterText
+    end
+    return word
   elseif item.insertText and item.insertText ~= '' then
     return item.insertText
   end
@@ -268,12 +278,13 @@ end
 --- |complete-items|.
 ---
 --- @private
+--- @param start_col integer
 --- @param result vim.lsp.CompletionResult Result of `textDocument/completion`
 --- @param prefix string prefix to filter the completion items
 --- @param client_id integer? Client ID
 --- @return table[]
 --- @see complete-items
-function M._lsp_to_complete_items(result, prefix, client_id)
+function M._lsp_to_complete_items(start_col, result, prefix, client_id)
   local items = get_items(result)
   if vim.tbl_isempty(items) then
     return {}
@@ -306,7 +317,7 @@ function M._lsp_to_complete_items(result, prefix, client_id)
   local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
   for _, item in ipairs(items) do
     if matches(item) then
-      local word = get_completion_word(item, prefix, match_item_by_value)
+      local word = get_completion_word(item, start_col, prefix, match_item_by_value)
       local hl_group = ''
       if
         item.deprecated
@@ -416,8 +427,9 @@ function M._convert_results(
   elseif curstartbyte ~= nil and curstartbyte ~= server_start_boundary then
     server_start_boundary = client_start_boundary
   end
-  local prefix = line:sub((server_start_boundary or client_start_boundary) + 1, cursor_col)
-  local matches = M._lsp_to_complete_items(result, prefix, client_id)
+  local start_col = (server_start_boundary or client_start_boundary) + 1
+  local prefix = line:sub(start_col, cursor_col)
+  local matches = M._lsp_to_complete_items(start_col, result, prefix, client_id)
   return matches, server_start_boundary
 end
 
@@ -500,7 +512,7 @@ local function trigger(bufnr, clients, ctx)
       end
 
       local result = response.result
-      if result then
+      if result and next(get_items(result)) ~= nil then
         Context.isIncomplete = Context.isIncomplete or result.isIncomplete
         local client = lsp.get_client_by_id(client_id)
         local encoding = client and client.offset_encoding or 'utf-16'
@@ -517,6 +529,9 @@ local function trigger(bufnr, clients, ctx)
         )
         vim.list_extend(matches, client_matches)
       end
+    end
+    if #matches == 0 then
+      return
     end
     local start_col = (server_start_boundary or word_boundary) + 1
     Context.cursor = { cursor_row, start_col }
@@ -607,7 +622,7 @@ local function on_complete_done()
   local resolve_provider = (client.server_capabilities.completionProvider or {}).resolveProvider
 
   local function clear_word()
-    if not expand_snippet then
+    if not expand_snippet and not completion_item.textEdit then
       return nil
     end
 
@@ -620,6 +635,16 @@ local function on_complete_done()
       cursor_col,
       { '' }
     )
+  end
+
+  local function apply_textEdit()
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    lsp.util.apply_text_edits({ completion_item.textEdit }, bufnr, position_encoding, true)
+    api.nvim_win_set_cursor(0, {
+      cursor_row + 1,
+      completion_item.textEdit.range.start.character
+        + vim.fn.strdisplaywidth(completion_item.textEdit.newText),
+    })
   end
 
   local function apply_snippet_and_command()
@@ -637,6 +662,12 @@ local function on_complete_done()
     clear_word()
     lsp.util.apply_text_edits(completion_item.additionalTextEdits, bufnr, position_encoding)
     apply_snippet_and_command()
+  elseif
+    completion_item.textEdit
+    and completion_item.insertTextFormat ~= lsp.protocol.InsertTextFormat.Snippet
+  then
+    clear_word()
+    apply_textEdit()
   elseif resolve_provider and type(completion_item) == 'table' then
     local changedtick = vim.b[bufnr].changedtick
 
