@@ -450,8 +450,8 @@ function LanguageTree:_run_async_callbacks(range, err, trees)
   for _, cb in ipairs(self._cb_queues[key]) do
     cb(err, trees)
   end
-  self._ranges_being_parsed[key] = false
-  self._cb_queues[key] = {}
+  self._ranges_being_parsed[key] = nil
+  self._cb_queues[key] = nil
 end
 
 --- Run an asynchronous parse, calling {on_parse} when complete.
