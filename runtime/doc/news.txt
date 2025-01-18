@@ -70,7 +70,9 @@ DIAGNOSTICS
   the "severity_sort" option.
 • Diagnostics are filtered by severity before being passed to a diagnostic
   handler |diagnostic-handlers|.
-
+• The "virtual_text" handler is disabled by default. Enable with >lua
+    vim.diagnostic.config({ virtual_text = true })
+<
 EDITOR
 
 • The order in which signs are placed was changed. Higher priority signs will

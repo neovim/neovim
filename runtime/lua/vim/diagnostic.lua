@@ -70,7 +70,7 @@ end
 --- Use virtual text for diagnostics. If multiple diagnostics are set for a
 --- namespace, one prefix per diagnostic + the last diagnostic message are
 --- shown.
---- (default: `true`)
+--- (default: `false`)
 --- @field virtual_text? boolean|vim.diagnostic.Opts.VirtualText|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.VirtualText
 ---
 --- Use signs for diagnostics |diagnostic-signs|.
@@ -312,7 +312,7 @@ M.severity = {
 local global_diagnostic_options = {
   signs = true,
   underline = true,
-  virtual_text = true,
+  virtual_text = false,
   float = true,
   update_in_insert = false,
   severity_sort = false,
