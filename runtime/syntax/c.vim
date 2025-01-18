@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		C
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2025 Jan 15
+" Last Change:		2025 Jan 18
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -317,6 +317,9 @@ syn keyword	cStructure	struct union enum
 syn keyword	cStorageClass	static register auto volatile extern const
 if !exists("c_no_c99") && !s:in_cpp_family
   syn keyword	cStorageClass	inline restrict
+endif
+if (s:ft ==# "c" && !exists("c_no_c23")) || (s:in_cpp_family && !exists("cpp_no_cpp11"))
+  syn keyword	cStorageClass	constexpr
 endif
 if !exists("c_no_c11")
   syn keyword	cStorageClass	_Alignas alignas
