@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -2086,48 +2087,53 @@ static schar_T get_encoded_char_adv(const char **p)
 }
 
 struct chars_tab {
-  schar_T *cp;       ///< char value
-  const char *name;  ///< char id
-  const char *def;   ///< default value
-  const char *fallback;      ///< default value when "def" isn't single-width
+  schar_T *cp;           ///< char value
+  String name;           ///< char id
+  const char *def;       ///< default value
+  const char *fallback;  ///< default value when "def" isn't single-width
 };
+
+#define CHARSTAB_ENTRY(cp, name, def, fallback) \
+  { (cp), { name, STRLEN_LITERAL(name) }, def, fallback }
 
 static fcs_chars_T fcs_chars;
 static const struct chars_tab fcs_tab[] = {
-  { &fcs_chars.stl,        "stl",       " ", NULL },
-  { &fcs_chars.stlnc,      "stlnc",     " ", NULL },
-  { &fcs_chars.wbr,        "wbr",       " ", NULL },
-  { &fcs_chars.horiz,      "horiz",     "─", "-" },
-  { &fcs_chars.horizup,    "horizup",   "┴", "-" },
-  { &fcs_chars.horizdown,  "horizdown", "┬", "-" },
-  { &fcs_chars.vert,       "vert",      "│", "|" },
-  { &fcs_chars.vertleft,   "vertleft",  "┤", "|" },
-  { &fcs_chars.vertright,  "vertright", "├", "|" },
-  { &fcs_chars.verthoriz,  "verthoriz", "┼", "+" },
-  { &fcs_chars.fold,       "fold",      "·", "-" },
-  { &fcs_chars.foldopen,   "foldopen",  "-", NULL },
-  { &fcs_chars.foldclosed, "foldclose", "+", NULL },
-  { &fcs_chars.foldsep,    "foldsep",   "│", "|" },
-  { &fcs_chars.diff,       "diff",      "-", NULL },
-  { &fcs_chars.msgsep,     "msgsep",    " ", NULL },
-  { &fcs_chars.eob,        "eob",       "~", NULL },
-  { &fcs_chars.lastline,   "lastline",  "@", NULL },
+  CHARSTAB_ENTRY(&fcs_chars.stl,        "stl",       " ", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.stlnc,      "stlnc",     " ", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.wbr,        "wbr",       " ", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.horiz,      "horiz",     "─", "-"),
+  CHARSTAB_ENTRY(&fcs_chars.horizup,    "horizup",   "┴", "-"),
+  CHARSTAB_ENTRY(&fcs_chars.horizdown,  "horizdown", "┬", "-"),
+  CHARSTAB_ENTRY(&fcs_chars.vert,       "vert",      "│", "|"),
+  CHARSTAB_ENTRY(&fcs_chars.vertleft,   "vertleft",  "┤", "|"),
+  CHARSTAB_ENTRY(&fcs_chars.vertright,  "vertright", "├", "|"),
+  CHARSTAB_ENTRY(&fcs_chars.verthoriz,  "verthoriz", "┼", "+"),
+  CHARSTAB_ENTRY(&fcs_chars.fold,       "fold",      "·", "-"),
+  CHARSTAB_ENTRY(&fcs_chars.foldopen,   "foldopen",  "-", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.foldclosed, "foldclose", "+", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.foldsep,    "foldsep",   "│", "|"),
+  CHARSTAB_ENTRY(&fcs_chars.diff,       "diff",      "-", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.msgsep,     "msgsep",    " ", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "~", NULL),
+  CHARSTAB_ENTRY(&fcs_chars.lastline,   "lastline",  "@", NULL),
 };
 
 static lcs_chars_T lcs_chars;
 static const struct chars_tab lcs_tab[] = {
-  { &lcs_chars.eol,     "eol",            NULL, NULL },
-  { &lcs_chars.ext,     "extends",        NULL, NULL },
-  { &lcs_chars.nbsp,    "nbsp",           NULL, NULL },
-  { &lcs_chars.prec,    "precedes",       NULL, NULL },
-  { &lcs_chars.space,   "space",          NULL, NULL },
-  { &lcs_chars.tab2,    "tab",            NULL, NULL },
-  { &lcs_chars.lead,    "lead",           NULL, NULL },
-  { &lcs_chars.trail,   "trail",          NULL, NULL },
-  { &lcs_chars.conceal, "conceal",        NULL, NULL },
-  { NULL,               "multispace",     NULL, NULL },
-  { NULL,               "leadmultispace", NULL, NULL },
+  CHARSTAB_ENTRY(&lcs_chars.eol,     "eol",            NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.ext,     "extends",        NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.nbsp,    "nbsp",           NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.prec,    "precedes",       NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.space,   "space",          NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.tab2,    "tab",            NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.lead,    "lead",           NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.trail,   "trail",          NULL, NULL),
+  CHARSTAB_ENTRY(&lcs_chars.conceal, "conceal",        NULL, NULL),
+  CHARSTAB_ENTRY(NULL,               "multispace",     NULL, NULL),
+  CHARSTAB_ENTRY(NULL,               "leadmultispace", NULL, NULL),
 };
+
+#undef CHARSTAB_ENTRY
 
 static char *field_value_err(char *errbuf, size_t errbuflen, const char *fmt, const char *field)
 {
@@ -2209,13 +2215,13 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
     while (*p) {
       int i;
       for (i = 0; i < entries; i++) {
-        const size_t len = strlen(tab[i].name);
-        if (!(strncmp(p, tab[i].name, len) == 0 && p[len] == ':')) {
+        if (!(strncmp(p, tab[i].name.data,
+                      tab[i].name.size) == 0 && p[tab[i].name.size] == ':')) {
           continue;
         }
 
-        if (what == kListchars && strcmp(tab[i].name, "multispace") == 0) {
-          const char *s = p + len + 1;
+        const char *s = p + tab[i].name.size + 1;
+        if (what == kListchars && strcmp(tab[i].name.data, "multispace") == 0) {
           if (round == 0) {
             // Get length of lcs-multispace string in the first round
             last_multispace = p;
@@ -2225,7 +2231,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
               if (c1 == 0) {
                 return field_value_err(errbuf, errbuflen,
                                        e_wrong_character_width_for_field_str,
-                                       tab[i].name);
+                                       tab[i].name.data);
               }
               multispace_len++;
             }
@@ -2233,7 +2239,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
               // lcs-multispace cannot be an empty string
               return field_value_err(errbuf, errbuflen,
                                      e_wrong_number_of_characters_for_field_str,
-                                     tab[i].name);
+                                     tab[i].name.data);
             }
             p = s;
           } else {
@@ -2249,8 +2255,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
           break;
         }
 
-        if (what == kListchars && strcmp(tab[i].name, "leadmultispace") == 0) {
-          const char *s = p + len + 1;
+        if (what == kListchars && strcmp(tab[i].name.data, "leadmultispace") == 0) {
           if (round == 0) {
             // get length of lcs-leadmultispace string in first round
             last_lmultispace = p;
@@ -2260,7 +2265,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
               if (c1 == 0) {
                 return field_value_err(errbuf, errbuflen,
                                        e_wrong_character_width_for_field_str,
-                                       tab[i].name);
+                                       tab[i].name.data);
               }
               lead_multispace_len++;
             }
@@ -2268,7 +2273,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
               // lcs-leadmultispace cannot be an empty string
               return field_value_err(errbuf, errbuflen,
                                      e_wrong_number_of_characters_for_field_str,
-                                     tab[i].name);
+                                     tab[i].name.data);
             }
             p = s;
           } else {
@@ -2284,17 +2289,16 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
           break;
         }
 
-        const char *s = p + len + 1;
         if (*s == NUL) {
           return field_value_err(errbuf, errbuflen,
                                  e_wrong_number_of_characters_for_field_str,
-                                 tab[i].name);
+                                 tab[i].name.data);
         }
         schar_T c1 = get_encoded_char_adv(&s);
         if (c1 == 0) {
           return field_value_err(errbuf, errbuflen,
                                  e_wrong_character_width_for_field_str,
-                                 tab[i].name);
+                                 tab[i].name.data);
         }
         schar_T c2 = 0;
         schar_T c3 = 0;
@@ -2302,20 +2306,20 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
           if (*s == NUL) {
             return field_value_err(errbuf, errbuflen,
                                    e_wrong_number_of_characters_for_field_str,
-                                   tab[i].name);
+                                   tab[i].name.data);
           }
           c2 = get_encoded_char_adv(&s);
           if (c2 == 0) {
             return field_value_err(errbuf, errbuflen,
                                    e_wrong_character_width_for_field_str,
-                                   tab[i].name);
+                                   tab[i].name.data);
           }
           if (!(*s == ',' || *s == NUL)) {
             c3 = get_encoded_char_adv(&s);
             if (c3 == 0) {
               return field_value_err(errbuf, errbuflen,
                                      e_wrong_character_width_for_field_str,
-                                     tab[i].name);
+                                     tab[i].name.data);
             }
           }
         }
@@ -2335,7 +2339,7 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
         } else {
           return field_value_err(errbuf, errbuflen,
                                  e_wrong_number_of_characters_for_field_str,
-                                 tab[i].name);
+                                 tab[i].name.data);
         }
       }
 
@@ -2366,22 +2370,22 @@ const char *set_chars_option(win_T *wp, const char *value, CharsOption what, boo
 /// 'fillchars' option.
 char *get_fillchars_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 {
-  if (idx >= (int)ARRAY_SIZE(fcs_tab)) {
+  if (idx < 0 || idx >= (int)ARRAY_SIZE(fcs_tab)) {
     return NULL;
   }
 
-  return (char *)fcs_tab[idx].name;
+  return fcs_tab[idx].name.data;
 }
 
 /// Function given to ExpandGeneric() to obtain possible arguments of the
 /// 'listchars' option.
 char *get_listchars_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 {
-  if (idx >= (int)ARRAY_SIZE(lcs_tab)) {
+  if (idx < 0 || idx >= (int)ARRAY_SIZE(lcs_tab)) {
     return NULL;
   }
 
-  return (char *)lcs_tab[idx].name;
+  return lcs_tab[idx].name.data;
 }
 
 /// Check all global and local values of 'listchars' and 'fillchars'.
