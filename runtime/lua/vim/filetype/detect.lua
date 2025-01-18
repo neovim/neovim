@@ -1527,7 +1527,6 @@ local function sh(path, contents, name)
       vim.b[b].is_kornshell = nil
       vim.b[b].is_sh = nil
     end
-    return M.shell(path, contents, 'bash'), on_detect
     -- Ubuntu links sh to dash
   elseif matchregex(name, [[\<\(sh\|dash\)\>]]) then
     on_detect = function(b)
