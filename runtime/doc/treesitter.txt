@@ -1456,8 +1456,8 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
 set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
     Sets the runtime query named {query_name} for {lang}
 
-    This allows users to override any runtime files and/or configuration set
-    by plugins.
+    This allows users to override or extend any runtime files and/or
+    configuration set by plugins.
 
     Parameters: ~
       • {lang}        (`string`) Language to use for the query
