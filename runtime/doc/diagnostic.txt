@@ -489,6 +489,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                              |vim.diagnostic.Opts.Jump|.
 
 *vim.diagnostic.Opts.Float*
+    Extends: |vim.lsp.util.open_floating_preview.Opts|
+
 
     Fields: ~
       • {bufnr}?          (`integer`, default: current buffer) Buffer number
