@@ -276,10 +276,9 @@ static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nres
 #endif
     }
     const char *error = lua_tostring(lstate, -1);
-
     loop_schedule_deferred(&main_loop,
                            event_create(nlua_luv_error_event,
-                                        xstrdup(error),
+                                        error != NULL ? xstrdup(error) : NULL,
                                         (void *)(intptr_t)(is_callback
                                                            ? kThreadCallback
                                                            : kThread)));
