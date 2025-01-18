@@ -64,7 +64,6 @@ local buf_handles = {}
 --- @nodoc
 --- @class vim.lsp.completion.Context
 local Context = {
-  cursor = nil, --- @type [integer, integer]?
   last_request_time = nil, --- @type integer?
   pending_requests = {}, --- @type function[]
   isIncomplete = false,
@@ -83,7 +82,6 @@ end
 
 --- @nodoc
 function Context:reset()
-  -- Note that the cursor isn't reset here, it needs to survive a `CompleteDone` event.
   self.isIncomplete = false
   self.last_request_time = nil
   self:cancel_pending()
@@ -246,6 +244,19 @@ local function apply_defaults(item, defaults)
       textEdit.replace = defaults.editRange.replace
     end
   end
+end
+
+--- Leading bytes of `prefix` the server rewrites (e.g. `p.`->`p->`).
+---
+--- @param prefix string boundary..cursor text
+--- @param new_text string textEdit.newText
+--- @return integer # 0 if newText already starts with the operator
+local function rewritten_op_len(prefix, new_text)
+  local op = prefix:match('^[^%w_]*') --[[@as string]]
+  if op == '' or vim.startswith(new_text, op) then
+    return 0
+  end
+  return #op
 end
 
 --- @param result vim.lsp.CompletionResult
@@ -418,26 +429,21 @@ function M._lsp_to_complete_items(
     return {}
   end
 
-  ---@type fun(item: lsp.CompletionItem):boolean
-  local matches
-  if not prefix:find('%w') then
-    matches = function(_)
+  --- @param item lsp.CompletionItem
+  --- @param pfx string
+  --- @return boolean, integer?
+  local function matches(item, pfx)
+    if not pfx:find('%w') then
       return true
     end
-  else
-    ---@param item lsp.CompletionItem
-    matches = function(item)
-      if item.filterText then
-        return match_item_by_value(item.filterText, prefix)
-      end
-
-      if item.textEdit and not item.textEdit.newText then
-        -- server took care of filtering
-        return true
-      end
-
-      return match_item_by_value(item.label, prefix)
+    if item.filterText then
+      return match_item_by_value(item.filterText, pfx)
     end
+    if item.textEdit and not item.textEdit.newText then
+      -- server took care of filtering
+      return true
+    end
+    return match_item_by_value(item.label, pfx)
   end
 
   local candidates = {}
@@ -447,25 +453,43 @@ function M._lsp_to_complete_items(
   local client = client_id and vim.lsp.get_client_by_id(client_id)
   local server_supports_resolve = client and client:supports_method('completionItem/resolve')
   for _, item in ipairs(items) do
-    local match, score = matches(item)
-    if match then
-      local word = get_completion_word(item, prefix, match_item_by_value)
+    local item_start_byte --- @type integer?
+    local op_len = 0
 
-      if server_start_boundary and line and lnum and encoding and item.textEdit then
-        --- @type integer?
-        local item_start_char
-        if item.textEdit.range and item.textEdit.range.start.line == lnum then
-          item_start_char = item.textEdit.range.start.character
-        elseif item.textEdit.insert and item.textEdit.insert.start.line == lnum then
-          item_start_char = item.textEdit.insert.start.character
+    if server_start_boundary and line and lnum and encoding and item.textEdit then
+      local range = item.textEdit.range or item.textEdit.insert
+      if range and range.start.line == lnum and range['end'].line == lnum then
+        item_start_byte = vim.str_byteindex(line, encoding, range.start.character, false)
+        local item_end_byte = vim.str_byteindex(line, encoding, range['end'].character, false)
+        if
+          item.textEdit.newText
+          and item_start_byte == server_start_boundary
+          and item_end_byte > item_start_byte
+        then
+          op_len = rewritten_op_len(prefix, item.textEdit.newText)
         end
+      end
+    end
 
-        if item_start_char then
-          local item_start_byte = vim.str_byteindex(line, encoding, item_start_char, false)
-          if item_start_byte > server_start_boundary then
-            local missing_prefix = line:sub(server_start_boundary + 1, item_start_byte)
-            word = missing_prefix .. word
-          end
+    -- filter only on the part of `prefix` the item covers; drop the operator it rewrites
+    local effective_prefix = prefix
+    if item_start_byte and item_start_byte > server_start_boundary then
+      effective_prefix = prefix:sub(item_start_byte - server_start_boundary + 1)
+    elseif op_len > 0 then
+      effective_prefix = prefix:sub(op_len + 1)
+    end
+
+    local match, score = matches(item, effective_prefix)
+    if match then
+      local word --- @type string
+      if op_len > 0 then
+        -- keep the operator so the leader matches; newText is applied on accept
+        word = prefix:sub(1, op_len) .. (item.filterText or vim.trim(item.label))
+      else
+        word = get_completion_word(item, effective_prefix, match_item_by_value)
+        if line and item_start_byte and item_start_byte > server_start_boundary then
+          -- item starts right of the boundary; keep the gap
+          word = line:sub(server_start_boundary + 1, item_start_byte) .. word
         end
       end
 
@@ -862,24 +886,54 @@ local function on_complete_done()
   local position_encoding = client.offset_encoding or 'utf-16'
   local resolve_provider = (client.server_capabilities.completionProvider or {}).resolveProvider
 
-  -- Keep reference to avoid race where completion/resolve response arrives after on_insert_leave
-  -- and Context.cursor got cleared before clear_word() gets called
-  local context_cursor = assert(Context.cursor)
+  -- inserted `word` ending at the cursor, so it started at cursor_col - #word
+  local word_start_col = math.max(0, cursor_col - #completed_item.word)
+
+  --- textEdit start col on the current line, or nil if outside the replaced span.
+  --- @return integer?
+  local function edit_start_col()
+    local te = completion_item.textEdit
+    local range = te and (te.range or te.insert)
+    if not range or range.start.line ~= cursor_row then
+      return nil
+    end
+    local col = vim.str_byteindex(
+      api.nvim_get_current_line(),
+      position_encoding,
+      range.start.character,
+      false
+    )
+    -- must be inside the replaced span
+    if col < word_start_col or col > cursor_col then
+      return nil
+    end
+    return col
+  end
+
+  -- span end is the cursor, not range['end'] (user may have typed more since the request)
+  local start_col = edit_start_col() or word_start_col
+
+  -- If the inserted word isn't newText (multi-line, filterText-as-word, or an operator
+  -- rewrite `p.x`->`p->x`), apply newText now -- not in the resolve callback below, which
+  -- may be slow or never arrive.
+  local text_edit = not expand_snippet and completion_item.textEdit or nil
+  local new_text = text_edit and text_edit.newText
+  if new_text and api.nvim_get_current_line():sub(start_col + 1, cursor_col) ~= new_text then
+    local lines = vim.split((new_text:gsub('\r\n?', '\n')), '\n', { plain = true })
+    api.nvim_buf_set_text(bufnr, cursor_row, start_col, cursor_row, cursor_col, lines)
+    local last = lines[#lines]
+    api.nvim_win_set_cursor(0, {
+      cursor_row + #lines,
+      #lines == 1 and start_col + #last or #last,
+    })
+  end
 
   local function clear_word()
     if not expand_snippet then
       return nil
     end
-
-    -- Remove the already inserted word.
-    api.nvim_buf_set_text(
-      bufnr,
-      context_cursor[1] - 1,
-      context_cursor[2] - 1,
-      cursor_row,
-      cursor_col,
-      { '' }
-    )
+    -- remove the inserted word; snippet.expand() puts newText in its place
+    api.nvim_buf_set_text(bufnr, cursor_row, start_col, cursor_row, cursor_col, { '' })
   end
 
   local function apply_snippet_and_command()
@@ -1048,7 +1102,6 @@ local function trigger(bufnr, clients, ctx)
     end
 
     local start_col = (server_start_boundary or word_boundary) + 1
-    Context.cursor = { cursor_row, start_col }
     if #matches > 0 and has_completeopt('popup') then
       local group = get_augroup(bufnr)
       if #api.nvim_get_autocmds({ buf = bufnr, event = 'CompleteChanged', group = group }) == 0 then
@@ -1111,7 +1164,6 @@ end
 
 local function on_insert_leave()
   reset_timer()
-  Context.cursor = nil
   Context:reset()
 end
 

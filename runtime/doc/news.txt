@@ -248,6 +248,8 @@ LSP
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
   now supports passing arbitrary positions.
 • Support for nested snippets.
+• |lsp-completion| applies `textEdit` when it differs from the typed word,
+  fixing dropped `clangd` `editsNearCursor` edits such as `p.x` -> `p->x`.
 
 LUA
 
