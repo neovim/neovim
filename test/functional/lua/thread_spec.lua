@@ -27,6 +27,26 @@ describe('thread', function()
     })
   end)
 
+  it('handle non-string error', function()
+    exec_lua [[
+      local thread = vim.uv.new_thread(function()
+        error()
+      end)
+      vim.uv.thread_join(thread)
+    ]]
+
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|*5
+      {2:                                                  }|
+      {3:Error in luv thread:}                              |
+      {3:[NULL]}                                            |
+      {4:Press ENTER or type command to continue}^           |
+    ]])
+    feed('<cr>')
+    assert_alive()
+  end)
+
   it('entry func is executed in protected mode', function()
     exec_lua [[
       local thread = vim.uv.new_thread(function()
