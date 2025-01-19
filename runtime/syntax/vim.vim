@@ -185,13 +185,13 @@ Vim9 syn keyword vim9Boolean	true false
 " Numbers {{{2
 " =======
 syn case ignore
-syn match	vimNumber	'\<\d\+\%(\.\d\+\%(e[+-]\=\d\+\)\=\)\='	skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\<0b[01]\+'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\<0o\=\o\+'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\<0x\x\+'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\<0z\>'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\%(^\|\A\)\zs#\x\{6}'		skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
+syn match	vimNumber	'\<\d\+\%(\.\d\+\%(e[+-]\=\d\+\)\=\)\='	skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\<0b[01]\+'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\<0o\=\o\+'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\<0x\x\+'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\<0z\>'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\%(^\|\A\)\zs#\x\{6}'		skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
@@ -274,10 +274,12 @@ syn keyword vimAugroupKey	contained aug[roup]  skipwhite nextgroup=vimAugroupBan
 " Operators: {{{2
 " =========
 syn cluster	vimOperGroup	contains=vimEnvvar,vimFunc,vimFuncVar,vimOper,vimOperParen,vimNumber,vimString,vimRegister,@vimContinue,vim9Comment,vimVar,vimBoolean,vimNull
-syn match	vimOper	"\a\@<!!"				skipwhite nextgroup=vimString,vimSpecFile
-syn match	vimOper	"||\|&&\|[-+*/%.]"			skipwhite nextgroup=vimString,vimSpecFile
-syn match	vimOper	"\%#=1\(==\|!=\|>=\|<=\|=\~\|!\~\|>\|<\|=\|!\~#\)[?#]\{0,2}"	skipwhite nextgroup=vimString,vimSpecFile
-syn match	vimOper	"\(\<is\|\<isnot\)[?#]\{0,2}\>"			skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"\a\@<!!"			skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"||\|&&\|[-+*/%.]"		skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"="			skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"\%#=1\%(==\|!=\|>=\|<=\|=\~\|!\~\|>\|<\)[?#]\="	skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"\<is\%(not\)\=\>"		skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"\<is\%(not\)\=[?#]"		skipwhite nextgroup=vimString,vimSpecFile
 syn region	vimOperParen 	matchgroup=vimParenSep	start="(" end=")" contains=@vimOperGroup
 syn region	vimOperParen	matchgroup=vimSep		start="#\={" end="}" contains=@vimOperGroup nextgroup=vimVar,vimFuncVar
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_noopererror")
