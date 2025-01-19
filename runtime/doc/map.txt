@@ -1545,7 +1545,7 @@ Your command preview routine must implement this protocol:
 3. Add required highlights to the target buffers. If preview buffer is
    provided, add required highlights to the preview buffer as well. All
    highlights must be added to the preview namespace which is provided as an
-   argument to the preview callback (see |nvim_buf_add_highlight()| and
+   argument to the preview callback (see |vim.hl.range()| and
    |nvim_buf_set_extmark()| for help on how to add highlights to a namespace).
 4. Return an integer (0, 1, 2) which controls how Nvim behaves as follows:
    0: No preview is shown.
@@ -1574,13 +1574,12 @@ supports incremental command preview:
 
 	    if start_idx then
 	      -- Highlight the match
-	      vim.api.nvim_buf_add_highlight(
+	      vim.hl.range(
 	        buf,
 	        preview_ns,
 	        'Substitute',
-	        line1 + i - 2,
-	        start_idx - 1,
-	        end_idx
+	        {line1 + i - 2, start_idx - 1},
+	        {line1 + i - 2, end_idx},
 	      )
 
 	      -- Add lines and set highlights in the preview buffer
@@ -1595,13 +1594,12 @@ supports incremental command preview:
 	          false,
 	          { prefix .. line }
 	        )
-	        vim.api.nvim_buf_add_highlight(
+	        vim.hl.range(
 	          preview_buf,
 	          preview_ns,
 	          'Substitute',
-	          preview_buf_line,
-	          #prefix + start_idx - 1,
-	          #prefix + end_idx
+	          {preview_buf_line, #prefix + start_idx - 1},
+	          {preview_buf_line, #prefix + end_idx},
 	        )
 	        preview_buf_line = preview_buf_line + 1
 	      end
