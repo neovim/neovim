@@ -252,13 +252,13 @@ end
 --- vim.lsp.buf.definition({ on_list = on_list })
 --- vim.lsp.buf.references(nil, { on_list = on_list })
 --- ```
+--- @field on_list? fun(t: vim.lsp.LocationOpts.OnList)
 ---
---- If you prefer loclist instead of qflist:
+--- Whether to use the |location-list| or the |quickfix| list.
 --- ```lua
 --- vim.lsp.buf.definition({ loclist = true })
---- vim.lsp.buf.references(nil, { loclist = true })
+--- vim.lsp.buf.references(nil, { loclist = false })
 --- ```
---- @field on_list? fun(t: vim.lsp.LocationOpts.OnList)
 --- @field loclist? boolean
 
 --- @class vim.lsp.LocationOpts.OnList
@@ -796,9 +796,10 @@ function M.references(context, opts)
   end
 end
 
---- Lists all symbols in the current buffer in the quickfix window.
+--- Lists all symbols in the current buffer in the |location-list|.
 --- @param opts? vim.lsp.ListOpts
 function M.document_symbol(opts)
+  opts = vim.tbl_deep_extend('keep', opts or {}, { loclist = true })
   local params = { textDocument = util.make_text_document_params() }
   request_with_opts(ms.textDocument_documentSymbol, params, opts)
 end
