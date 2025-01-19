@@ -231,6 +231,9 @@ end
 ---@param prefix string
 ---@return boolean
 local function match_item_by_value(value, prefix)
+  if prefix == '' then
+    return true
+  end
   if vim.o.completeopt:find('fuzzy') ~= nil then
     return next(vim.fn.matchfuzzy({ value }, prefix)) ~= nil
   end
