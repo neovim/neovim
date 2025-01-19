@@ -35,7 +35,7 @@ if exists("s:needspatches")
   endfor
 endif
 
-let g:loaded_netrw = "v174"
+let g:loaded_netrw = "v175"
 
 let s:keepcpo= &cpo
 setl cpo&vim
