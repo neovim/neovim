@@ -87,7 +87,7 @@ end
 ---@param srow integer
 ---@param erow integer 0-indexed, exclusive
 function FoldInfo:add_range(srow, erow)
-  list_insert(self.levels, srow + 1, erow, '=')
+  list_insert(self.levels, srow + 1, erow, -1)
   list_insert(self.levels0, srow + 1, erow, -1)
 end
 
@@ -268,6 +268,15 @@ end
 
 ---@package
 function FoldInfo:do_foldupdate(bufnr)
+  -- InsertLeave is not executed when <C-C> is used for exiting the insert mode, leaving
+  -- do_foldupdate untouched. If another execution of foldupdate consumes foldupdate_range, the
+  -- InsertLeave do_foldupdate gets nil foldupdate_range. In that case, skip the update. This is
+  -- correct because the update that consumed the range must have incorporated the range that
+  -- InsertLeave meant to update.
+  if not self.foldupdate_range then
+    return
+  end
+
   local srow, erow = self.foldupdate_range[1], self.foldupdate_range[2]
   self.foldupdate_range = nil
   for _, win in ipairs(vim.fn.win_findbuf(bufnr)) do
@@ -421,9 +430,15 @@ api.nvim_create_autocmd('OptionSet', {
   pattern = { 'foldminlines', 'foldnestmax' },
   desc = 'Refresh treesitter folds',
   callback = function()
-    for bufnr, _ in pairs(foldinfos) do
+    local buf = api.nvim_get_current_buf()
+    local bufs = vim.v.option_type == 'global' and vim.tbl_keys(foldinfos)
+      or foldinfos[buf] and { buf }
+      or {}
+    for _, bufnr in ipairs(bufs) do
       foldinfos[bufnr] = FoldInfo.new()
-      compute_folds_levels(bufnr, foldinfos[bufnr])
+      api.nvim_buf_call(bufnr, function()
+        compute_folds_levels(bufnr, foldinfos[bufnr])
+      end)
       foldinfos[bufnr]:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
     end
   end,
