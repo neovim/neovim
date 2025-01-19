@@ -55,7 +55,7 @@ static char locale_decimal_point = '.';
  * localconv() may not be thread safe (=>crash), and nl_langinfo() is
  * not supported on some platforms. Use sprintf() instead - if the
  * locale does change, at least Lua CJSON won't crash. */
-static void fpconv_update_locale(void)
+static void fpconv_update_locale()
 {
     char buf[8];
 
@@ -202,7 +202,7 @@ int fpconv_g_fmt(char *str, double num, int precision)
     return len;
 }
 
-void fpconv_init(void)
+void fpconv_init()
 {
     fpconv_update_locale();
 }
