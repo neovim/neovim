@@ -239,13 +239,18 @@ describe('vim.lsp.completion: item conversion', function()
           },
         },
       }
-      local expected = {
+      assert_completion_matches('<mo', items, {
         {
           abbr = 'module',
           word = '<module',
         },
-      }
-      assert_completion_matches('<mo', items, expected)
+      })
+      assert_completion_matches('', items, {
+        {
+          abbr = 'module',
+          word = 'module',
+        },
+      })
     end)
 
     it('fuzzy matches on label when filterText is missing', function()
