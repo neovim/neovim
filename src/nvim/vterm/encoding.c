@@ -34,6 +34,7 @@ static void decode_utf8(VTermEncoding *enc, void *data_, uint32_t cp[], int *cpi
                         const char bytes[], size_t *pos, size_t bytelen)
 {
   struct UTF8DecoderData *data = data_;
+  bool beginning_8bit = (bytes[*pos] & 0x80) != 0;
 
 #ifdef DEBUG_PRINT_UTF8
   printf("BEGIN UTF-8\n");
@@ -46,19 +47,28 @@ static void decode_utf8(VTermEncoding *enc, void *data_, uint32_t cp[], int *cpi
     printf(" pos=%zd c=%02x rem=%d\n", *pos, c, data->bytes_remaining);
 #endif
 
-    if (c < 0x20) {  // C0
+    if (c < 0x20 || c == 0x7f) {  // C0 or DEL
+      if (data->bytes_remaining) {
+        cp[(*cpi)++] = UNICODE_INVALID;
+      }
+
+      data->bytes_remaining = 0;
       return;
     } else if (c >= 0x20 && c < 0x7f) {
       if (data->bytes_remaining) {
         cp[(*cpi)++] = UNICODE_INVALID;
       }
 
+      data->bytes_remaining = 0;
+      if (beginning_8bit) {
+        return;
+      }
+
       cp[(*cpi)++] = c;
 #ifdef DEBUG_PRINT_UTF8
       printf(" UTF-8 char: U+%04x\n", c);
 #endif
-      data->bytes_remaining = 0;
-    } else if (c == 0x7f) {  // DEL
+    } else if (!beginning_8bit) {
       return;
     } else if (c >= 0x80 && c < 0xc0) {
       if (!data->bytes_remaining) {
