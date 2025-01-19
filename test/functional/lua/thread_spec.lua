@@ -38,10 +38,10 @@ describe('thread', function()
     screen:expect([[
                                                         |
       {1:~                                                 }|*5
-      {3:                                                  }|
-      {9:Error in luv thread:}                              |
-      {9:[NULL]}                                            |
-      {6:Press ENTER or type command to continue}^           |
+      {2:                                                  }|
+      {3:Error in luv thread:}                              |
+      {3:[NULL]}                                            |
+      {4:Press ENTER or type command to continue}^           |
     ]])
     feed('<cr>')
     assert_alive()
