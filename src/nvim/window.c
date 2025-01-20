@@ -5243,11 +5243,13 @@ void win_free(win_T *wp, tabpage_T *tp)
   // freed memory is re-used for another window.
   FOR_ALL_BUFFERS(buf) {
     WinInfo *wip_wp = NULL;
+    size_t pos_wip = kv_size(buf->b_wininfo);
     size_t pos_null = kv_size(buf->b_wininfo);
     for (size_t i = 0; i < kv_size(buf->b_wininfo); i++) {
       WinInfo *wip = kv_A(buf->b_wininfo, i);
       if (wip->wi_win == wp) {
         wip_wp = wip;
+        pos_wip = i;
       } else if (wip->wi_win == NULL) {
         pos_null = i;
       }
@@ -5255,11 +5257,12 @@ void win_free(win_T *wp, tabpage_T *tp)
 
     if (wip_wp) {
       wip_wp->wi_win = NULL;
-      // If there already is an entry with "wi_win" set to NULL it
-      // must be removed, it would never be used.
+      // If there already is an entry with "wi_win" set to NULL, only
+      // the first entry with NULL will ever be used, delete the other one.
       if (pos_null < kv_size(buf->b_wininfo)) {
-        free_wininfo(kv_A(buf->b_wininfo, pos_null), buf);
-        kv_shift(buf->b_wininfo, pos_null, 1);
+        size_t pos_delete = MAX(pos_null, pos_wip);
+        free_wininfo(kv_A(buf->b_wininfo, pos_delete), buf);
+        kv_shift(buf->b_wininfo, pos_delete, 1);
       }
     }
   }
