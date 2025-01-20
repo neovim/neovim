@@ -22,6 +22,7 @@ API
 • nvim_out_write()	Use |nvim_echo()|.
 • nvim_err_write()	Use |nvim_echo()| with `{err=true}`.
 • nvim_err_writeln()	Use |nvim_echo()| with `{err=true}`.
+• nvim_buf_add_highlight()	Use |vim.hl.range()| or |nvim_buf_set_extmark()|
 
 DIAGNOSTICS
 • *vim.diagnostic.goto_next()*	Use |vim.diagnostic.jump()| with `{count=1, float=true}` instead.

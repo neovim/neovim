@@ -49,7 +49,7 @@ void api_extmark_free_all_mem(void)
 /// Creates a new namespace or gets an existing one. [namespace]()
 ///
 /// Namespaces are used for buffer highlights and virtual text, see
-/// |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.
+/// |nvim_buf_set_extmark()|.
 ///
 /// Namespaces can be named or anonymous. If `name` matches an existing
 /// namespace, the associated id is returned. If `name` is an empty string
@@ -855,95 +855,6 @@ Boolean nvim_buf_del_extmark(Buffer buffer, Integer ns_id, Integer id, Error *er
   });
 
   return extmark_del_id(buf, (uint32_t)ns_id, (uint32_t)id);
-}
-
-uint32_t src2ns(Integer *src_id)
-{
-  if (*src_id == 0) {
-    *src_id = nvim_create_namespace((String)STRING_INIT);
-  }
-  if (*src_id < 0) {
-    return (((uint32_t)1) << 31) - 1;
-  }
-  return (uint32_t)(*src_id);
-}
-
-/// Adds a highlight to buffer.
-///
-/// Useful for plugins that dynamically generate highlights to a buffer
-/// (like a semantic highlighter or linter). The function adds a single
-/// highlight to a buffer. Unlike |matchaddpos()| highlights follow changes to
-/// line numbering (as lines are inserted/removed above the highlighted line),
-/// like signs and marks do.
-///
-/// Namespaces are used for batch deletion/updating of a set of highlights. To
-/// create a namespace, use |nvim_create_namespace()| which returns a namespace
-/// id. Pass it in to this function as `ns_id` to add highlights to the
-/// namespace. All highlights in the same namespace can then be cleared with
-/// single call to |nvim_buf_clear_namespace()|. If the highlight never will be
-/// deleted by an API call, pass `ns_id = -1`.
-///
-/// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
-/// highlight, the allocated id is then returned. If `hl_group` is the empty
-/// string no highlight is added, but a new `ns_id` is still returned. This is
-/// supported for backwards compatibility, new code should use
-/// |nvim_create_namespace()| to create a new empty namespace.
-///
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param ns_id      namespace to use or -1 for ungrouped highlight
-/// @param hl_group   Name of the highlight group to use
-/// @param line       Line to highlight (zero-indexed)
-/// @param col_start  Start of (byte-indexed) column range to highlight
-/// @param col_end    End of (byte-indexed) column range to highlight,
-///                   or -1 to highlight to end of line
-/// @param[out] err   Error details, if any
-/// @return The ns_id that was used
-Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, Integer line,
-                               Integer col_start, Integer col_end, Error *err)
-  FUNC_API_SINCE(1)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-  if (!buf) {
-    return 0;
-  }
-
-  VALIDATE_RANGE((line >= 0 && line < MAXLNUM), "line number", {
-    return 0;
-  });
-  VALIDATE_RANGE((col_start >= 0 && col_start <= MAXCOL), "column", {
-    return 0;
-  });
-
-  if (col_end < 0 || col_end > MAXCOL) {
-    col_end = MAXCOL;
-  }
-
-  uint32_t ns = src2ns(&ns_id);
-
-  if (!(line < buf->b_ml.ml_line_count)) {
-    // safety check, we can't add marks outside the range
-    return ns_id;
-  }
-
-  int hl_id = 0;
-  if (hl_group.size > 0) {
-    hl_id = syn_check_group(hl_group.data, hl_group.size);
-  } else {
-    return ns_id;
-  }
-
-  int end_line = (int)line;
-  if (col_end == MAXCOL) {
-    col_end = 0;
-    end_line++;
-  }
-
-  DecorInline decor = DECOR_INLINE_INIT;
-  decor.data.hl.hl_id = hl_id;
-
-  extmark_set(buf, ns, NULL, (int)line, (colnr_T)col_start, end_line, (colnr_T)col_end,
-              decor, MT_FLAG_DECOR_HL, true, false, false, false, NULL);
-  return ns_id;
 }
 
 /// Clears |namespace|d objects (highlights, |extmarks|, virtual text) from

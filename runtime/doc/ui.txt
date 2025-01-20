@@ -562,7 +562,7 @@ with the following possible keys:
 	"ui":       Builtin UI highlight. |highlight-groups|
 	"syntax":   Highlight applied to a buffer by a syntax declaration or
 		    other runtime/plugin functionality such as
-		    |nvim_buf_add_highlight()|
+		    |nvim_buf_set_extmark()|
 	"terminal": highlight from a process running in a |terminal-emulator|.
 		    Contains no further semantic information.
     `ui_name`:	Highlight name from |highlight-groups|. Only for "ui" kind.

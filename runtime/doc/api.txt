@@ -406,18 +406,9 @@ Another use case are plugins that show output in an append-only buffer, and
 want to add highlights to the outputs. Highlight data cannot be preserved
 on writing and loading a buffer to file, nor in undo/redo cycles.
 
-Highlights are registered using the |nvim_buf_add_highlight()| function. If an
-external highlighter plugin wants to add many highlights in a batch,
-performance can be improved by calling |nvim_buf_add_highlight()| as an
-asynchronous notification, after first (synchronously) requesting a source id.
-
-|nvim_buf_add_highlight()| adds highlights as |extmarks|. If highlights need to
-be tracked or manipulated after adding them, it is better to use
-|nvim_buf_set_extmark()| directly, as this function returns the placed |extmark|
-id. Thus, instead of >lua
-  vim.api.nvim_buf_add_highlight(buf, ns_id, hl_group, line, col_start, col_end)
-<
-use >lua
+Highlights are registered using the |nvim_buf_set_extmark()| function, which
+adds highlights as |extmarks|. If highlights need to be tracked or manipulated
+after adding them, the returned |extmark| id can be used. >lua
   -- create the highlight through an extmark
   extid = vim.api.nvim_buf_set_extmark(buf, ns_id, line, col_start, {end_col = col_end, hl_group = hl_group})
 
@@ -428,29 +419,7 @@ use >lua
   vim.api.nvim_buf_set_extmark(buf, ns_id, NEW_LINE, col_start, {end_col = col_end, hl_group = NEW_HL_GROUP, id = extid})
 <
 
-Example using the Python API client (|pynvim|):
->python
-    src = vim.new_highlight_source()
-    buf = vim.current.buffer
-    for i in range(5):
-        buf.add_highlight("String",i,0,-1,src_id=src)
-    # some time later ...
-    buf.clear_namespace(src)
-<
-If the highlights don't need to be deleted or updated, just pass -1 as
-src_id (this is the default in python). Use |nvim_buf_clear_namespace()| to
-clear highlights from a specific source, in a specific line range or the
-entire buffer by passing in the line range 0, -1 (the latter is the default in
-python as used above).
-
-Example using the API from Vimscript: >vim
-
-    call nvim_buf_set_lines(0, 0, 0, v:true, ["test text"])
-    let src = nvim_buf_add_highlight(0, 0, "String", 1, 0, 4)
-    call nvim_buf_add_highlight(0, src, "Identifier", 0, 5, -1)
-    " some time later ...
-    call nvim_buf_clear_namespace(0, src, 0, -1)
-
+See also |vim.hl.range()|.
 
 ==============================================================================
 Floating windows                                                 *api-floatwin*
@@ -2491,42 +2460,6 @@ nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
 ==============================================================================
 Extmark Functions                                                *api-extmark*
 
-                                                    *nvim_buf_add_highlight()*
-nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line}, {col_start},
-                       {col_end})
-    Adds a highlight to buffer.
-
-    Useful for plugins that dynamically generate highlights to a buffer (like
-    a semantic highlighter or linter). The function adds a single highlight to
-    a buffer. Unlike |matchaddpos()| highlights follow changes to line
-    numbering (as lines are inserted/removed above the highlighted line), like
-    signs and marks do.
-
-    Namespaces are used for batch deletion/updating of a set of highlights. To
-    create a namespace, use |nvim_create_namespace()| which returns a
-    namespace id. Pass it in to this function as `ns_id` to add highlights to
-    the namespace. All highlights in the same namespace can then be cleared
-    with single call to |nvim_buf_clear_namespace()|. If the highlight never
-    will be deleted by an API call, pass `ns_id = -1`.
-
-    As a shorthand, `ns_id = 0` can be used to create a new namespace for the
-    highlight, the allocated id is then returned. If `hl_group` is the empty
-    string no highlight is added, but a new `ns_id` is still returned. This is
-    supported for backwards compatibility, new code should use
-    |nvim_create_namespace()| to create a new empty namespace.
-
-    Parameters: ~
-      • {buffer}     Buffer handle, or 0 for current buffer
-      • {ns_id}      namespace to use or -1 for ungrouped highlight
-      • {hl_group}   Name of the highlight group to use
-      • {line}       Line to highlight (zero-indexed)
-      • {col_start}  Start of (byte-indexed) column range to highlight
-      • {col_end}    End of (byte-indexed) column range to highlight, or -1 to
-                     highlight to end of line
-
-    Return: ~
-        The ns_id that was used
-
                                                   *nvim_buf_clear_namespace()*
 nvim_buf_clear_namespace({buffer}, {ns_id}, {line_start}, {line_end})
     Clears |namespace|d objects (highlights, |extmarks|, virtual text) from a
@@ -2764,7 +2697,7 @@ nvim_create_namespace({name})                        *nvim_create_namespace()*
     Creates a new namespace or gets an existing one.               *namespace*
 
     Namespaces are used for buffer highlights and virtual text, see
-    |nvim_buf_add_highlight()| and |nvim_buf_set_extmark()|.
+    |nvim_buf_set_extmark()|.
 
     Namespaces can be named or anonymous. If `name` matches an existing
     namespace, the associated id is returned. If `name` is an empty string a
