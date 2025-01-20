@@ -250,6 +250,23 @@ describe('autocmd', function()
        --- Autocommands ---]]),
       fn.execute('autocmd Tabnew')
     )
+
+    --
+    -- :autocmd should not recursively call ++once handlers.
+    --
+    exec_lua [[
+      vim.g.count = 0
+      vim.api.nvim_create_autocmd('User', {
+        once = true,
+        pattern = nil,
+        callback = function()
+          vim.g.count = vim.g.count + 1
+          vim.api.nvim_exec_autocmds('User', { pattern = nil })
+        end,
+      })
+      vim.api.nvim_exec_autocmds('User', { pattern = nil })
+    ]]
+    eq(1, eval('g:count')) -- Added autocommands should not be executed
   end)
 
   it('internal `aucmd_win` window', function()
