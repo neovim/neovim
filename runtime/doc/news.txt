@@ -319,6 +319,8 @@ PLUGINS
 
 • EditorConfig
   • spelling_language property is now supported.
+• 'inccommand' incremental preview can run on 'nomodifiable' buffers and
+  restores their 'modifiable' state
 
 STARTUP
 

@@ -163,6 +163,7 @@ typedef struct {
 typedef struct {
   buf_T *buf;
   OptInt save_b_p_ul;
+  int save_b_p_ma;
   int save_b_changed;
   pos_T save_b_op_start;
   pos_T save_b_op_end;
@@ -2419,6 +2420,7 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
     if (!set_has(ptr_t, &saved_bufs, buf)) {
       CpBufInfo cp_bufinfo;
       cp_bufinfo.buf = buf;
+      cp_bufinfo.save_b_p_ma = buf->b_p_ma;
       cp_bufinfo.save_b_p_ul = buf->b_p_ul;
       cp_bufinfo.save_b_changed = buf->b_changed;
       cp_bufinfo.save_b_op_start = buf->b_op_start;
@@ -2509,6 +2511,7 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
     }
 
     buf->b_p_ul = cp_bufinfo.save_b_p_ul;        // Restore 'undolevels'
+    buf->b_p_ma = cp_bufinfo.save_b_p_ma;        // Restore 'modifiable'
   }
 
   for (size_t i = 0; i < cpinfo->win_info.size; i++) {
@@ -2704,7 +2707,6 @@ static int command_line_changed(CommandLineState *s)
       && current_sctx.sc_sid == 0    // only if interactive
       && *p_icm != NUL       // 'inccommand' is set
       && !exmode_active      // not in ex mode
-      && curbuf->b_p_ma      // buffer is modifiable
       && cmdline_star == 0   // not typing a password
       && !vpeekc_any()
       && cmdpreview_may_show(s)) {
