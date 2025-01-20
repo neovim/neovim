@@ -4,6 +4,7 @@
 local api = vim.api
 local language = require('vim.treesitter.language')
 local memoize = vim.func._memoize
+local cmp_ge = require('vim.treesitter._range').cmp_pos.ge
 
 local M = {}
 
@@ -912,28 +913,37 @@ end
 ---@param source (integer|string) Source buffer or string to extract text from
 ---@param start? integer Starting line for the search. Defaults to `node:start()`.
 ---@param stop? integer Stopping line for the search (end-exclusive). Defaults to `node:end_()`.
+---@param opts? { col_begin?: integer, col_end?: integer } Optional parameters.
 ---
----@return (fun(end_line: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree):
+---@return (fun(end_line: integer|nil, end_col: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree):
 ---        capture id, capture node, metadata, match, tree
 ---
 ---@note Captures are only returned if the query pattern of a specific capture contained predicates.
-function Query:iter_captures(node, source, start, stop)
+function Query:iter_captures(node, source, start, stop, opts)
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
 
+  opts = opts or {}
   start, stop = value_or_node_range(start, stop, node)
 
+  local cursor_opts = {
+    row_begin = start,
+    col_begin = opts.col_begin,
+    row_end = stop,
+    col_end = opts.col_end,
+    match_limit = 256,
+  }
   -- Copy the tree to ensure it is valid during the entire lifetime of the iterator
   local tree = node:tree():copy()
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, { match_limit = 256 })
+  local cursor = vim._create_ts_querycursor(node, self.query, cursor_opts)
 
   -- For faster checks that a match is not in the cache.
   local highest_cached_match_id = -1
   ---@type table<integer, vim.treesitter.query.TSMetadata>
   local match_cache = {}
 
-  local function iter(end_line)
+  local function iter(end_line, end_col)
     local capture, captured_node, match = cursor:next_capture()
 
     if not capture then
@@ -958,10 +968,11 @@ function Query:iter_captures(node, source, start, stop)
         local predicates = processed_pattern.predicates
         if not self:_match_predicates(predicates, pattern_i, captures, source) then
           cursor:remove_match(match_id)
-          if end_line and captured_node:range() > end_line then
+          local row, col = captured_node:range()
+          if end_line and cmp_ge(row, col, end_line, end_col or 0) then
             return nil, captured_node, nil, nil
           end
-          return iter(end_line) -- tail call: try next match
+          return iter(end_line, end_col) -- tail call: try next match
         end
 
         local directives = processed_pattern.directives
@@ -1023,10 +1034,14 @@ function Query:iter_matches(node, source, start, stop, opts)
   end
 
   start, stop = value_or_node_range(start, stop, node)
+  opts.row_begin = start
+  opts.col_begin = 0
+  opts.row_end = stop
+  opts.col_end = 0
 
   -- Copy the tree to ensure it is valid during the entire lifetime of the iterator
   local tree = node:tree():copy()
-  local cursor = vim._create_ts_querycursor(node, self.query, start, stop, opts)
+  local cursor = vim._create_ts_querycursor(node, self.query, opts)
 
   local function iter()
     local match = cursor:next_match()

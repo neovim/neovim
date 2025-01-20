@@ -1029,6 +1029,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
   buf_T *buf = wp->w_buffer;
   const bool end_fill = (lnum == buf->b_ml.ml_line_count + 1);
 
+  int decor_provider_end_col;
+  bool check_decor_providers = false;
+
   if (col_rows == 0) {
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
@@ -1052,13 +1055,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     }
 
     if (!end_fill) {
-      decor_providers_invoke_line(wp, lnum - 1);
-    }
-
-    has_decor = decor_redraw_line(wp, lnum - 1, &decor_state);
-
-    if (has_decor) {
-      extra_check = true;
+      check_decor_providers = true;
     }
 
     // Check for columns to display for 'colorcolumn'.
@@ -1468,6 +1465,38 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     }
   }
 
+  if (check_decor_providers) {
+    int const col = (int)(ptr - line);
+
+    // Approximate the number of bytes that will be drawn.
+    // Assume we're dealing with 1-cell ascii and ignore
+    // the effects of 'linebreak', 'breakindent', etc.
+    int rem_vcols;
+    if (wp->w_p_wrap) {
+      int width = wp->w_width_inner - win_col_off(wp);
+      int width2 = width + win_col_off2(wp);
+
+      int first_row_width = start_col == 0 ? width : width2;
+      rem_vcols = first_row_width + (endrow - startrow - 1) * width2;
+    } else {
+      rem_vcols = wp->w_width_inner - win_col_off(wp);
+    }
+
+    // Call it here since we need to invalidate the line pointer anyway.
+    decor_providers_invoke_line(wp, lnum - 1);
+
+    decor_provider_end_col = invoke_range_next(wp, lnum, col, rem_vcols + 1);
+
+    line = ml_get_buf(wp->w_buffer, lnum);
+    ptr = line + col;
+  }
+
+  decor_redraw_line(wp, lnum - 1, &decor_state);
+  if (!has_decor && decor_has_more_decorations(&decor_state, lnum - 1)) {
+    has_decor = true;
+    extra_check = true;
+  }
+
   // Correct highlighting for cursor that can't be disabled.
   // Avoids having to check this for each character.
   if (wlv.fromcol >= 0) {
@@ -1520,6 +1549,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
     int decor_conceal = 0;
 
     bool did_decrement_ptr = false;
+
+    if (check_decor_providers && (int)(ptr - line) >= decor_provider_end_col) {
+      int const col = (int)(ptr - line);
+      decor_provider_end_col = invoke_range_next(wp, lnum, col, 100);
+      line = ml_get_buf(wp->w_buffer, lnum);
+      ptr = line + col;
+      if (!has_decor && decor_has_more_decorations(&decor_state, lnum - 1)) {
+        has_decor = true;
+        extra_check = true;
+      }
+    }
 
     // Skip this quickly when working on the text.
     if (draw_cols) {
@@ -3000,4 +3040,25 @@ static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, boo
   int coloff = 0;
   grid_adjust(&grid, &row, &coloff);
   grid_put_linebuf(grid, row, coloff, startcol, endcol, clear_width, bg_attr, wlv->vcol - 1, flags);
+}
+
+/// @return New begin column, or INT_MAX.
+static int invoke_range_next(win_T *wp, int lnum, colnr_T begin_col, colnr_T col_off)
+{
+  char const *const line = ml_get_buf(wp->w_buffer, lnum);
+  int const line_len = ml_get_buf_len(wp->w_buffer, lnum);
+  col_off = MAX(col_off, 1);
+
+  colnr_T new_col;
+  if (col_off <= line_len - begin_col) {
+    int end_col = begin_col + col_off;
+    end_col += mb_off_next(line, line + end_col);
+    decor_providers_invoke_range(wp, lnum - 1, begin_col, lnum - 1, end_col);
+    new_col = end_col;
+  } else {
+    decor_providers_invoke_range(wp, lnum - 1, begin_col, lnum, 0);
+    new_col = INT_MAX;
+  }
+
+  return new_col;
 }

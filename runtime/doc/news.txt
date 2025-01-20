@@ -192,6 +192,7 @@ API
 • |nvim__ns_set()| can set properties for a namespace
 • |nvim_echo()| `err` field to print error messages and `chunks` accepts
   highlight group IDs.
+• Decoration provider has `on_range()` callback.
 • |nvim_open_win()| `relative` field can be set to "laststatus" and "tabline".
 
 DEFAULTS
@@ -358,6 +359,7 @@ TREESITTER
 • |treesitter-directive-trim!| can trim all whitespace (not just empty lines)
   from both sides of a node.
 • |vim.treesitter.get_captures_at_pos()| now returns the `id` of each capture
+• |Query:iter_captures()| supports specifying starting and ending columns.
 • New |TSNode:child_with_descendant()|, which is nearly identical to
   |TSNode:child_containing_descendant()| except that it can return the
   descendant itself.

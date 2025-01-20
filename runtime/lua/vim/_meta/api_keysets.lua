@@ -232,6 +232,7 @@ error('Cannot require a meta file')
 --- @field on_buf? fun(_: "buf", bufnr: integer, tick: integer)
 --- @field on_win? fun(_: "win", winid: integer, bufnr: integer, toprow: integer, botrow: integer): boolean?
 --- @field on_line? fun(_: "line", winid: integer, bufnr: integer, row: integer): boolean?
+--- @field on_range? fun(_: "range", winid: integer, bufnr: integer, row_begin: integer, col_begin: integer, row_end: integer, col_end: integer): boolean?
 --- @field on_end? fun(_: "end", tick: integer)
 --- @field _on_hl_def? fun(_: "hl_def")
 --- @field _on_spell_nav? fun(_: "spell_nav")
