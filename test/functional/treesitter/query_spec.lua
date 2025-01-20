@@ -812,6 +812,34 @@ void ui_refresh(void)
     )
   end)
 
+  it('supports "; extends" modeline in custom queries', function()
+    insert('int zeero = 0;')
+    local result = exec_lua(function()
+      vim.treesitter.query.set(
+        'c',
+        'highlights',
+        [[; extends
+        (identifier) @spell]]
+      )
+      local query = vim.treesitter.query.get('c', 'highlights')
+      local parser = vim.treesitter.get_parser(0, 'c')
+      local root = parser:parse()[1]:root()
+      local res = {}
+      for id, node in query:iter_captures(root, 0) do
+        table.insert(res, { query.captures[id], vim.treesitter.get_node_text(node, 0) })
+      end
+      return res
+    end)
+    eq({
+      { 'type.builtin', 'int' },
+      { 'variable', 'zeero' },
+      { 'spell', 'zeero' },
+      { 'operator', '=' },
+      { 'number', '0' },
+      { 'punctuation.delimiter', ';' },
+    }, result)
+  end)
+
   describe('Query:iter_captures', function()
     it('includes metadata for all captured nodes #23664', function()
       insert([[
