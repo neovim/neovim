@@ -63,11 +63,16 @@ uint64_t ui_client_start_server(int argc, char **argv)
 
   Channel *channel = channel_job_start(args, get_vim_var_str(VV_PROGPATH),
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
-                                       false, true, true, false, kChannelStdinPipe,
+                                       false, true, true, true, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
   if (!channel) {
     return 0;
   }
+
+  // channel->stream.proc.out.s.close_cb = on_stdio_close;
+  // channel->stream.proc.in.close_cb = on_stdio_close;
+  channel->stream.proc.in.internal_close_cb = on_stdio_close;
+  channel->stream.proc.in.internal_data = channel;
 
   // If stdin is not a pty, it is forwarded to the client.
   // Replace stdin in the TUI process with the tty fd.
@@ -81,6 +86,14 @@ uint64_t ui_client_start_server(int argc, char **argv)
   }
 
   return channel->id;
+}
+
+static void on_stdio_close(Stream *stream, void *data)
+  FUNC_ATTR_NORETURN
+{
+  // Channel *chan = data;
+  ELOG("xxxxxxxxxxxxxxxxxxxxxxxxxxx");
+  os_exit(0);
 }
 
 /// Attaches this client to the UI channel, and sets its client info.
