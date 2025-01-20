@@ -1502,6 +1502,9 @@ analysis on a tree should use a timer to throttle too frequent updates.
 LanguageTree:children()                              *LanguageTree:children()*
     Returns a map of language to child tree.
 
+    Return: ~
+        (`table<string,vim.treesitter.LanguageTree>`)
+
 LanguageTree:contains({range})                       *LanguageTree:contains()*
     Determines whether {range} is contained in the |LanguageTree|.
 
@@ -1566,6 +1569,9 @@ LanguageTree:is_valid({exclude_children})            *LanguageTree:is_valid()*
 LanguageTree:lang()                                      *LanguageTree:lang()*
     Gets the language of this tree node.
 
+    Return: ~
+        (`string`)
+
                                            *LanguageTree:language_for_range()*
 LanguageTree:language_for_range({range})
     Gets the appropriate language that contains {range}.
@@ -1613,6 +1619,12 @@ LanguageTree:node_for_range({range}, {opts})
 
     Return: ~
         (`TSNode?`)
+
+LanguageTree:parent()                                  *LanguageTree:parent()*
+    Returns the parent tree. `nil` for the root tree.
+
+    Return: ~
+        (`vim.treesitter.LanguageTree?`)
 
 LanguageTree:parse({range}, {on_parse})                 *LanguageTree:parse()*
     Recursively parse all regions in the language tree using
@@ -1673,6 +1685,9 @@ LanguageTree:register_cbs({cbs}, {recursive})
 
 LanguageTree:source()                                  *LanguageTree:source()*
     Returns the source content of the language tree (bufnr or string).
+
+    Return: ~
+        (`integer|string`)
 
                                                *LanguageTree:tree_for_range()*
 LanguageTree:tree_for_range({range}, {opts})
