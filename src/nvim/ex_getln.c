@@ -163,12 +163,12 @@ typedef struct {
 typedef struct {
   buf_T *buf;
   OptInt save_b_p_ul;
+  int save_b_p_ma;
   int save_b_changed;
   pos_T save_b_op_start;
   pos_T save_b_op_end;
   varnumber_T save_changedtick;
   CpUndoInfo undo_info;
-  int save_b_p_ma;
 } CpBufInfo;
 
 typedef struct {
