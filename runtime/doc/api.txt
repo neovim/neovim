@@ -422,7 +422,7 @@ after adding them, the returned |extmark| id can be used. >lua
 See also |vim.hl.range()|.
 
 ==============================================================================
-Floating windows                                                 *api-floatwin*
+Floating windows				*api-floatwin* *floating-windows*
 
 Floating windows ("floats") are displayed on top of normal windows.  This is
 useful to implement simple widgets, such as tooltips displayed next to the

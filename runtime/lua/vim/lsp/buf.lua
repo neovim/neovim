@@ -423,7 +423,7 @@ end
 ---
 ---@see vim.lsp.protocol.CompletionTriggerKind
 function M.completion(context)
-  vim.depends('vim.lsp.buf.completion', 'vim.lsp.commpletion.trigger', '0.12')
+  vim.depends('vim.lsp.buf.completion', 'vim.lsp.completion.trigger', '0.12')
   return lsp.buf_request(
     0,
     ms.textDocument_completion,
