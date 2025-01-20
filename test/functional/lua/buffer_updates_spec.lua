@@ -679,81 +679,78 @@ describe('lua: nvim_buf_attach on_bytes', function()
       local check_events = setup_eventcheck(verify, { 'abcde', '12345' })
       api.nvim_set_option_value('inccommand', 'nosplit', {})
 
+      local function feed_esc(s)
+        feed(s)
+        n.poke_eventloop()
+        feed('<esc>')
+      end
+
       -- linewise substitute
       feed(':%s/bcd/')
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 1, 1, 0, 3, 3, 0, 0, 0 },
-        { 'test1', 'bytes', 1, 5, 0, 1, 1, 0, 0, 0, 0, 3, 3 },
       }
 
-      feed('a')
+      feed_esc('a')
       check_events {
+        { 'test1', 'bytes', 1, 5, 0, 1, 1, 0, 0, 0, 0, 3, 3 },
         { 'test1', 'bytes', 1, 3, 0, 1, 1, 0, 3, 3, 0, 1, 1 },
         { 'test1', 'bytes', 1, 5, 0, 1, 1, 0, 1, 1, 0, 3, 3 },
       }
 
-      feed('<esc>')
-
       -- splitting lines
-      feed([[:%s/abc/\r]])
+      feed_esc([[:%s/abc/\r]])
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 0, 0, 0, 3, 3, 1, 0, 1 },
         { 'test1', 'bytes', 1, 6, 0, 0, 0, 1, 0, 1, 0, 3, 3 },
       }
 
-      feed('<esc>')
       -- multi-line regex
-      feed([[:%s/de\n123/a]])
+      feed_esc([[:%s/de\n123/a]])
 
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 3, 3, 1, 3, 6, 0, 1, 1 },
         { 'test1', 'bytes', 1, 6, 0, 3, 3, 0, 1, 1, 1, 3, 6 },
       }
 
-      feed('<esc>')
       -- replacing with unicode
-      feed(':%s/b/→')
+      feed_esc(':%s/b/→')
 
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 1, 1, 0, 1, 1, 0, 3, 3 },
         { 'test1', 'bytes', 1, 5, 0, 1, 1, 0, 3, 3, 0, 1, 1 },
       }
 
-      feed('<esc>')
       -- replacing with expression register
-      feed([[:%s/b/\=5+5]])
+      feed_esc([[:%s/b/\=5+5]])
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 1, 1, 0, 1, 1, 0, 2, 2 },
         { 'test1', 'bytes', 1, 5, 0, 1, 1, 0, 2, 2, 0, 1, 1 },
       }
 
-      feed('<esc>')
       -- replacing with backslash
-      feed([[:%s/b/\\]])
+      feed_esc([[:%s/b/\\]])
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 1, 1, 0, 1, 1, 0, 1, 1 },
         { 'test1', 'bytes', 1, 5, 0, 1, 1, 0, 1, 1, 0, 1, 1 },
       }
 
-      feed('<esc>')
       -- replacing with backslash from expression register
-      feed([[:%s/b/\='\']])
+      feed_esc([[:%s/b/\='\']])
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 1, 1, 0, 1, 1, 0, 1, 1 },
         { 'test1', 'bytes', 1, 5, 0, 1, 1, 0, 1, 1, 0, 1, 1 },
       }
 
-      feed('<esc>')
       -- replacing with backslash followed by another character
-      feed([[:%s/b/\\!]])
+      feed_esc([[:%s/b/\\!]])
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 1, 1, 0, 1, 1, 0, 2, 2 },
         { 'test1', 'bytes', 1, 5, 0, 1, 1, 0, 2, 2, 0, 1, 1 },
       }
 
-      feed('<esc>')
       -- replacing with backslash followed by another character from expression register
-      feed([[:%s/b/\='\!']])
+      feed_esc([[:%s/b/\='\!']])
       check_events {
         { 'test1', 'bytes', 1, 3, 0, 1, 1, 0, 1, 1, 0, 2, 2 },
         { 'test1', 'bytes', 1, 5, 0, 1, 1, 0, 2, 2, 0, 1, 1 },

@@ -140,7 +140,7 @@ describe(":substitute, 'inccommand' preserves", function()
   end)
 
   it("'[ and '] marks #26439", function()
-    local screen = Screen.new(30, 10)
+    local screen = Screen.new(30, 100)
     common_setup(screen, 'nosplit', ('abc\ndef\n'):rep(50))
 
     feed('ggyG')
@@ -148,17 +148,18 @@ describe(":substitute, 'inccommand' preserves", function()
     eq({ 0, 1, 1, 0 }, fn.getpos("'["))
     eq({ 0, 101, X, 0 }, fn.getpos("']"))
 
-    feed(":'[,']s/def/")
+    local repl = '/DEF/g'
+
+    feed(":'[,']s/def" .. repl)
+    poke_eventloop()
+    expect(('abc\nDEF\n'):rep(50))
+
+    feed(('<BS>'):rep(#repl))
     poke_eventloop()
     eq({ 0, 1, 1, 0 }, fn.getpos("'["))
     eq({ 0, 101, X, 0 }, fn.getpos("']"))
 
-    feed('DEF/g')
-    poke_eventloop()
-    eq({ 0, 1, 1, 0 }, fn.getpos("'["))
-    eq({ 0, 101, X, 0 }, fn.getpos("']"))
-
-    feed('<CR>')
+    feed(repl .. '<CR>')
     expect(('abc\nDEF\n'):rep(50))
   end)
 
@@ -262,7 +263,14 @@ describe(":substitute, 'inccommand' preserves", function()
         some text 2]])
       feed(':%s/e/XXX/')
       poke_eventloop()
+      if case == '' then
+        eq(expected_tick, eval('b:changedtick'))
+      else
+        eq(1 + expected_tick, eval('b:changedtick'))
+      end
 
+      feed(('<BS>'):rep(#'/XXX/'))
+      poke_eventloop()
       eq(expected_tick, eval('b:changedtick'))
     end)
   end
@@ -332,6 +340,294 @@ describe(":substitute, 'inccommand' preserves", function()
     end)
   end
 end)
+
+describe(":substitute, 'inccommand'", function()
+  before_each(clear)
+  for _, case in ipairs { 'split', 'nosplit' } do
+    it('temporarily disables preview if tab changes (inccommand=' .. case .. ')', function()
+      local screen = Screen.new(30, 10)
+      common_setup(screen, case, 'hello\nhello')
+      command('set showtabline=0 | tab vs | tabnext')
+      feed(':%s/hello/HELLO')
+      poke_eventloop()
+      screen:expect {
+        any = '{20:HELLO}                         |',
+      }
+      eq(case, eval('&icm'))
+      eq(1, eval('tabpagenr()'))
+      command('tabnext')
+      eq(2, eval('tabpagenr()'))
+      -- TODO(theofabilous): 'feed(<space><bs>)' doesn't seem to
+      -- work... figure out why
+      feed('<Space>')
+      poke_eventloop()
+      feed('<BS>')
+      eq('', eval('&icm'))
+      screen:expect([[
+        {2:hello}                         |
+        hello                         |
+        {1:~                             }|*7
+        :%s/hello/HELLO^               |
+      ]])
+      feed('<C-T>')
+      eq('', eval('&icm'))
+      screen:expect([[
+        hello                         |
+        {2:hello}                         |
+        {1:~                             }|*7
+        :%s/hello/HELLO^               |
+      ]])
+      feed('<Esc>')
+      eq(case, eval('&icm'))
+    end)
+    it(
+      'does not attempt to restore invalid buffers and windows (inccommand=' .. case .. ')',
+      function()
+        local screen = Screen.new(40, 10)
+        common_setup(screen, case, 'hello\nhello')
+        command('set cmdwinheight=3')
+        local bopt_str = 'setlocal buftype=nofile bufhidden=wipe'
+        command(string.format('%s | vert botright new | %s', bopt_str, bopt_str))
+        insert('helloooo')
+        command('wincmd p')
+        feed(':%s/hello/HELL')
+        screen:expect {
+          any = '{20:HELL}                │helloooo           |',
+        }
+        screen:expect {
+          any = '{20:HELL}                │{1:~                  }|',
+          unchanged = true,
+        }
+        command('q!')
+        local num_bufs = #n.api.nvim_list_bufs()
+        local num_wins = #n.api.nvim_list_wins()
+        local expected_num = 1
+        if case == 'split' then
+          expected_num = expected_num + 1
+        end
+        eq(expected_num, num_bufs)
+        eq(expected_num, num_wins)
+        feed('O')
+        -- Same for both split and nosplit, since the range
+        -- is the current line
+        screen:expect([[
+        {20:HELLO}ooo                                |
+        {1:~                                       }|*8
+        :%s/hello/HELLO^                         |
+      ]])
+      end
+    )
+  end
+end)
+
+describe(":substitute, 'inccommand=split', preview", function()
+  ---@return integer?
+  ---@return integer?
+  local function find_preview_win_buf()
+    local buf = n.fn.bufnr('[Preview]', false)
+    if buf == -1 then
+      return nil, nil
+    end
+    neq(-1, buf)
+    eq(1, n.fn.bufexists(buf))
+    ---@type integer?
+    local win = n.fn.bufwinid(buf)
+    if win == -1 then
+      win = nil
+    end
+    return win, buf
+  end
+  before_each(clear)
+  local function setup_()
+    local screen = Screen.new(30, 10)
+    common_setup(screen, 'split', 'hello\nhello')
+    command('set cmdwinheight=3')
+    feed(':%s/hello/HELLO')
+    poke_eventloop()
+    local screen_text = [[
+      {20:HELLO}                         |*2
+      {1:~                             }|*2
+      {3:[No Name] [+]                 }|
+      |1| {20:HELLO}                     |
+      |2| {20:HELLO}                     |
+      {1:~                             }|
+      {2:[Preview]                     }|
+      :%s/hello/HELLO^               |
+    ]]
+    screen:expect(screen_text)
+    return screen, screen_text
+  end
+  local function refresh_preview()
+    feed('<Space><BS>')
+    poke_eventloop()
+  end
+  it('window cannot be closed', function()
+    local screen, text = setup_()
+    local win, _ = find_preview_win_buf()
+    neq(nil, win) ---@cast win -nil
+    n.api.nvim_win_close(win, true)
+    eq(true, n.api.nvim_win_is_valid(win), 'preview window is not valid')
+    refresh_preview()
+    screen:expect {
+      grid = text,
+      unchanged = true,
+    }
+  end)
+  it('window cannot be split', function()
+    local screen, text = setup_()
+    local win, _ = find_preview_win_buf()
+    neq(nil, win) ---@cast win -nil
+    local ret = t.pcall_err(n.exec_lua, 'vim.api.nvim_win_call(..., vim.cmd.vs)', win)
+    ok(nil ~= ret:find("E1160: Can't split a window locked by 'inccommand'"))
+    refresh_preview()
+    screen:expect {
+      grid = text,
+      unchanged = true,
+    }
+  end)
+  it('window cannot change buffers', function()
+    local screen, text = setup_()
+    local win, _ = find_preview_win_buf()
+    neq(nil, win) ---@cast win -nil
+    n.api.nvim_set_option_value('winfixbuf', false, {
+      win = win,
+    })
+    local msg = t.pcall_err(n.api.nvim_win_set_buf, win, 1)
+    ok(nil ~= msg:find("E1513: Cannot switch buffer. 'winfixbuf' is enabled"))
+    refresh_preview()
+    screen:expect {
+      grid = text,
+      unchanged = true,
+    }
+  end)
+  it('buffer cannot be entered', function()
+    setup_()
+    feed('<ESC>')
+    local win, buf = find_preview_win_buf()
+    eq(nil, win)
+    local msg = t.pcall_err(command, ('buf %d'):format(buf))
+    ok(nil ~= msg:find("E1161: Can't navigate to buffer locked by 'inccomand'"))
+    for _, cmd in ipairs { 'edit', 'split' } do
+      msg = t.pcall_err(command, cmd .. ' [Preview]')
+      ok(nil ~= msg:find("E1161: Can't navigate to buffer locked by 'inccomand'"))
+    end
+    msg = t.pcall_err(n.exec_lua, 'vim.api.nvim_buf_call(..., vim.cmd.vs)', buf)
+    ok(nil ~= msg:find("E1160: Can't split a window locked by 'inccommand'"))
+    msg = t.pcall_err(n.api.nvim_set_current_buf, buf)
+    ok(nil ~= msg:find("E1161: Can't navigate to buffer locked by 'inccomand'"))
+  end)
+  it('buffer cannot be unloaded if split preview is visible', function()
+    setup_()
+    local win, buf = find_preview_win_buf()
+    neq(nil, win)
+    neq(nil, buf)
+    local msg = t.pcall_err(command, string.format('bwipeout %d', buf))
+    ok(nil ~= msg:find('E937: Attempt to delete a buffer that is in use'))
+  end)
+  it('buffer can be unloaded if split preview is not visible', function()
+    local screen, screen_text = setup_()
+    feed('<ESC>')
+    n.fn.cursor(1, 1)
+    screen:expect [[
+      ^hello                         |
+      hello                         |
+      {1:~                             }|*7
+                                    |
+    ]]
+    local win, buf = find_preview_win_buf()
+    eq(nil, win)
+    command(string.format('bwipeout %d', buf))
+    buf = select(2, find_preview_win_buf())
+    eq(nil, buf)
+
+    feed(':%s/hello/HELLO')
+    screen:expect(screen_text)
+    win, buf = find_preview_win_buf()
+    neq(nil, win)
+    neq(nil, buf)
+    feed('<ESC>')
+    command('2del')
+    screen:expect [[
+      ^hello                         |
+      {1:~                             }|*8
+                                    |
+    ]]
+
+    -- preview is active, but only 1 line changed so no split
+    -- preview is visible. preview buffer can still be unloaded
+    -- in this case
+    feed(':%s/hello/HELLO')
+    screen:expect [[
+      {20:HELLO}                         |
+      {1:~                             }|*8
+      :%s/hello/HELLO^               |
+    ]]
+    win, buf = find_preview_win_buf()
+    eq(nil, win)
+    neq(nil, buf)
+    command(string.format('bwipeout %d', buf))
+    buf = select(2, find_preview_win_buf())
+    eq(nil, buf)
+    screen:expect_unchanged()
+  end)
+end)
+
+describe(
+  ":substitute, 'inccommand' does not restore intermediate changes in buffers that were not changed by preview callback",
+  function()
+    local cases = { 'split', 'nosplit' }
+    before_each(clear)
+    for _, case in ipairs(cases) do
+      it("(inccommand='" .. case .. "')", function()
+        local screen = Screen.new(35, 10)
+        common_setup(screen, case, 'some text\nmore text')
+        command('set cmdwinheight=3')
+        command('vert botright new | setlocal buftype=nofile noswapfile bufhidden=hide')
+        local scratch_bufnr = n.api.nvim_get_current_buf()
+        command('wincmd p | 1 | wincmd =')
+        feed(':%s/text')
+        if case == 'split' then
+          screen:expect [[
+            some {20:text}           │              |
+            more {20:text}           │{1:~             }|
+            {1:~                   }│{1:~             }|*2
+            {3:[No Name] [+]        }{2:[Scratch]     }|
+            |1| some {20:text}                      |
+            |2| more {20:text}                      |
+            {1:~                                  }|
+            {2:[Preview]                          }|
+            :%s/text^                           |
+          ]]
+        else
+          screen:expect [[
+            some {20:text}           │              |
+            more {20:text}           │{1:~             }|
+            {1:~                   }│{1:~             }|*6
+            {3:[No Name] [+]        }{2:[Scratch]     }|
+            :%s/text^                           |
+          ]]
+        end
+        n.api.nvim_buf_set_lines(scratch_bufnr, 0, -1, true, { 'beep boop' })
+        command('redraw')
+        screen:expect {
+          any = 'some {20:text}           │beep boop     |',
+        }
+        feed('/')
+        screen:expect {
+          any = 'some                │beep boop     |',
+        }
+        feed('<Esc>')
+        screen:expect [[
+          ^some text           │beep boop     |
+          more text           │{1:~             }|
+          {1:~                   }│{1:~             }|*6
+          {3:[No Name] [+]        }{2:[Scratch]     }|
+                                             |
+        ]]
+      end)
+    end
+  end
+)
 
 describe(":substitute, 'inccommand' preserves undo", function()
   local cases = { '', 'split', 'nosplit' }

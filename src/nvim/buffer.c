@@ -461,6 +461,11 @@ bool buf_valid(buf_T *buf)
 static bool can_unload_buffer(buf_T *buf)
 {
   bool can_unload = !buf->b_locked;
+#ifdef EXITFREE
+  can_unload &= buf->b_cp_locked <= BCP_HALF_LOCKED || (exiting && entered_free_all_mem);
+#else
+  can_unload &= buf->b_cp_locked <= BCP_HALF_LOCKED;
+#endif
 
   if (can_unload && updating_screen) {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -480,7 +485,7 @@ static bool can_unload_buffer(buf_T *buf)
 
 bool buf_locked(buf_T *buf)
 {
-  return buf->b_locked || buf->b_locked_split;
+  return buf->b_locked || buf->b_locked_split || buf->b_cp_locked > BCP_NONE;
 }
 
 /// Close the link to a buffer.
@@ -1302,6 +1307,14 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
       && buf != curbuf
       && !check_can_set_curbuf_forceit((flags & DOBUF_FORCEIT) ? true : false)) {
     // disallow navigating to another buffer when 'winfixbuf' is applied
+    return FAIL;
+  }
+
+  if (buf->b_cp_locked > BCP_NONE
+      && (action == DOBUF_SPLIT
+          || (action == DOBUF_GOTO && buf != curbuf && !is_aucmd_win(curwin)))) {
+    // disallow navigating to a buffer locked by cmdpreview
+    emsg(_(e_nav_cplocked));
     return FAIL;
   }
 
