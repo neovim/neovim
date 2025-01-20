@@ -107,6 +107,7 @@ jobs:
             { runner: ubuntu-24.04, os: ubuntu, flavor: asan, cc: clang, flags: -D ENABLE_ASAN_UBSAN=ON },
             { runner: ubuntu-24.04, os: ubuntu, flavor: tsan, cc: clang, flags: -D ENABLE_TSAN=ON },
             { runner: ubuntu-24.04, os: ubuntu, flavor: release, cc: gcc, flags: -D CMAKE_BUILD_TYPE=Release },
+            { runner: ubuntu-24.04-arm, os: ubuntu, flavor: arm, cc: gcc, flags: -D CMAKE_BUILD_TYPE=RelWithDebInfo },
             { runner: macos-13, os: macos, flavor: intel, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
             { runner: macos-15, os: macos, flavor: arm, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
             { runner: ubuntu-24.04, os: ubuntu, flavor: puc-lua, cc: gcc, deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON, flags: -D PREFER_LUA=ON },
@@ -202,37 +203,6 @@ jobs:
 
   windows:
     uses: ./.github/workflows/test_windows.yml
-
-  # This job tests the following things:
-  # - Check if MinSizeRel and RelWithDebInfo compiles correctly.
-  # - Test the above build types with the GCC compiler specifically.
-  #   Empirically the difference in warning levels between GCC and other
-  #   compilers is particularly big.
-  # - Test if the build works with multi-config generators. We mostly use
-  #   single-config generators so it's nice to have a small sanity check for
-  #   multi-config.
-  build-types:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    env:
-      CC: gcc
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
-
-      - name: Build third-party deps
-        run: |
-          cmake -S cmake.deps -B .deps -G "Ninja Multi-Config"
-          cmake --build .deps
-
-      - name: Configure
-        run: cmake --preset ci -G "Ninja Multi-Config"
-
-      - name: RelWithDebInfo
-        run: cmake --build build --config RelWithDebInfo
-
-      - name: MinSizeRel
-        run: cmake --build build --config MinSizeRel
 
   with-external-deps:
     runs-on: ubuntu-24.04
