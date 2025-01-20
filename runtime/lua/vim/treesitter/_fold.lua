@@ -387,7 +387,9 @@ function M.foldexpr(lnum)
 
     parser:register_cbs({
       on_changedtree = function(tree_changes)
-        on_changedtree(bufnr, foldinfos[bufnr], tree_changes)
+        if foldinfos[bufnr] then
+          on_changedtree(bufnr, foldinfos[bufnr], tree_changes)
+        end
       end,
 
       on_bytes = function(_, _, start_row, start_col, _, old_row, old_col, _, new_row, new_col, _)
