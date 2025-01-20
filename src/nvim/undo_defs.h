@@ -2,12 +2,41 @@
 
 #include <time.h>
 
+#include "nvim/ops_block_defs.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/mark_defs.h"
+#include "nvim/normal_defs.h"
 
 enum { UNDO_HASH_SIZE = 32, };  ///< Size in bytes of the hash used in the undo file.
 
 typedef struct u_header u_header_T;
+
+typedef struct {
+  u_header_T *save_b_u_oldhead;
+  u_header_T *save_b_u_newhead;
+  u_header_T *save_b_u_curhead;
+  int save_b_u_numhead;
+  bool save_b_u_synced;
+  int save_b_u_seq_last;
+  int save_b_u_save_nr_last;
+  int save_b_u_seq_cur;
+  time_t save_b_u_time_cur;
+  int save_b_u_save_nr_cur;
+  char *save_b_u_line_ptr;
+  linenr_T save_b_u_line_lnum;
+  colnr_T save_b_u_line_colnr;
+} UndoInfo;
+
+typedef struct {
+  buf_T *buf;
+  OptInt save_b_p_ul;
+  int save_b_changed;
+  pos_T save_b_op_start;
+  pos_T save_b_op_end;
+  varnumber_T save_changedtick;
+  UndoInfo undo_info;
+} PBufInfo;
 
 /// Structure to store info about the Visual area.
 typedef struct {

@@ -1021,6 +1021,13 @@ typedef struct {
   schar_T lastline;
 } fcs_chars_T;
 
+typedef struct {
+  bool is_block_insert;
+  bool is_fake_esc;
+  bool is_bufinfo_available;
+  struct block_def bd;
+} pinsinfo_T;
+
 /// Structure which contains all information that belongs to a window.
 ///
 /// All row numbers are relative to the start of the window, except w_winrow.
@@ -1074,6 +1081,10 @@ struct window_S {
   linenr_T w_old_visual_lnum;       ///< last known start of visual part
   colnr_T w_old_visual_col;         ///< last known start of visual part
   colnr_T w_old_curswant;           ///< last known value of Curswant
+
+  pinsinfo_T w_inspinfo;
+  PBufInfo w_inspbufinfo;
+  pos_T w_inspcursor;
 
   linenr_T w_last_cursor_lnum_rnu;  ///< cursor lnum when 'rnu' was last redrawn
 

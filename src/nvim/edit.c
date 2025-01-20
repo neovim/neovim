@@ -1219,6 +1219,12 @@ normalchar:
     // When inserting a character the cursor line must never be in a
     // closed fold.
     foldOpenCursor();
+
+    if (curwin->w_inspinfo.is_block_insert && curwin->w_inspinfo.is_fake_esc == false) {
+      stuffcharReadbuff(ESC);
+      curwin->w_inspinfo.is_fake_esc = true;
+    }
+
     break;
   }       // end of switch (s->c)
 
