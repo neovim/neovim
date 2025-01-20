@@ -383,10 +383,14 @@ end
 do
   --- Right click popup menu
   vim.cmd([[
+    anoremenu PopUp.Show\ Diagnostics       <Cmd>lua vim.diagnostic.open_float()<CR>
+    anoremenu PopUp.Show\ All\ Diagnostics  <Cmd>lua vim.diagnostic.setqflist()<CR>
+    anoremenu PopUp.Configure\ Diagnostics  <Cmd>help vim.diagnostic.config()<CR>
     anoremenu PopUp.Go\ to\ definition      <Cmd>lua vim.lsp.buf.definition()<CR>
+    anoremenu PopUp.-1-                     <Nop>
     amenu     PopUp.Open\ in\ web\ browser  gx
     anoremenu PopUp.Inspect                 <Cmd>Inspect<CR>
-    anoremenu PopUp.-1-                     <Nop>
+    anoremenu PopUp.-2-                     <Nop>
     vnoremenu PopUp.Cut                     "+x
     vnoremenu PopUp.Copy                    "+y
     anoremenu PopUp.Paste                   "+gP
@@ -395,7 +399,7 @@ do
     nnoremenu PopUp.Select\ All             ggVG
     vnoremenu PopUp.Select\ All             gg0oG$
     inoremenu PopUp.Select\ All             <C-Home><C-O>VG
-    anoremenu PopUp.-2-                     <Nop>
+    anoremenu PopUp.-3-                     <Nop>
     anoremenu PopUp.How-to\ disable\ mouse  <Cmd>help disable-mouse<CR>
   ]])
 
@@ -403,12 +407,32 @@ do
     vim.cmd([[
       amenu disable PopUp.Go\ to\ definition
       amenu disable PopUp.Open\ in\ web\ browser
+      amenu disable PopUp.Show\ Diagnostics
+      amenu disable PopUp.Show\ All\ Diagnostics
+      amenu disable PopUp.Configure\ Diagnostics
     ]])
 
     if ctx == 'url' then
       vim.cmd([[amenu enable PopUp.Open\ in\ web\ browser]])
     elseif ctx == 'lsp' then
       vim.cmd([[anoremenu enable PopUp.Go\ to\ definition]])
+    end
+
+    local lnum = vim.fn.getcurpos()[2] - 1
+    local diagnostic = false
+    if next(vim.diagnostic.get(0, { lnum = lnum })) ~= nil then
+      diagnostic = true
+    end
+
+    if diagnostic then
+      vim.cmd([[anoremenu enable PopUp.Show\ Diagnostics]])
+    end
+
+    if next(vim.diagnostic.count(0)) ~= nil then
+      vim.cmd([[
+        anoremenu enable PopUp.Show\ All\ Diagnostics
+        anoremenu enable PopUp.Configure\ Diagnostics
+      ]])
     end
   end
 
@@ -422,6 +446,7 @@ do
       local urls = require('vim.ui')._get_urls()
       local url = vim.startswith(urls[1], 'http')
       local ctx = url and 'url' or (vim.lsp.get_clients({ bufnr = 0 })[1] and 'lsp' or nil)
+
       enable_ctx_menu(ctx)
     end,
   })
