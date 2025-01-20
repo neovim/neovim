@@ -1648,30 +1648,6 @@ void mb_utflen(const char *s, size_t len, size_t *codepoints, size_t *codeunits)
   *codeunits += count + extra;
 }
 
-ssize_t mb_utf_index_to_bytes(const char *s, size_t len, size_t index, bool use_utf16_units)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t count = 0;
-  size_t clen;
-  if (index == 0) {
-    return 0;
-  }
-  for (size_t i = 0; i < len; i += clen) {
-    clen = (size_t)utf_ptr2len_len(s + i, (int)(len - i));
-    // NB: gets the byte value of invalid sequence bytes.
-    // we only care whether the char fits in the BMP or not
-    int c = (clen > 1) ? utf_ptr2char(s + i) : (uint8_t)s[i];
-    count++;
-    if (use_utf16_units && c > 0xFFFF) {
-      count++;
-    }
-    if (count >= index) {
-      return (ssize_t)(i + clen);
-    }
-  }
-  return -1;
-}
-
 /// Version of strnicmp() that handles multi-byte characters.
 /// Needed for Big5, Shift-JIS and UTF-8 encoding.  Other DBCS encodings can
 /// probably use strnicmp(), because there are no ASCII characters in the
