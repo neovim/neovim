@@ -221,6 +221,8 @@ DEFAULTS
     on a URL.
   • Mouse |popup-menu| includes a "Go to definition" item when LSP is active
     in the buffer.
+  • Mouse |popup-menu| includes "Show Diagnostics", "Show All Diagnostics" and
+    "Configure Diagnostics" items when there are diagnostics in the buffer.
   • |]d-default| and |[d-default| accept a count.
   • |[D-default| and |]D-default| jump to the first and last diagnostic in the
     current buffer, respectively.
