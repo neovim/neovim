@@ -895,7 +895,7 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, 
   *is_present = true;
 }
 
-static bool parse_bordertext_pos(String bordertext_pos, BorderTextType bordertext_type,
+static bool parse_bordertext_pos(win_T *wp, String bordertext_pos, BorderTextType bordertext_type,
                                  WinConfig *fconfig, Error *err)
 {
   AlignTextPos *align;
@@ -909,7 +909,9 @@ static bool parse_bordertext_pos(String bordertext_pos, BorderTextType bordertex
   }
 
   if (bordertext_pos.size == 0) {
-    *align = kAlignLeft;
+    if (!wp) {
+      *align = kAlignLeft;
+    }
     return true;
   }
 
@@ -1250,7 +1252,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     }
 
     // handles unset 'title_pos' same as empty string
-    if (!parse_bordertext_pos(config->title_pos, kBorderTextTitle, fconfig, err)) {
+    if (!parse_bordertext_pos(wp, config->title_pos, kBorderTextTitle, fconfig, err)) {
       goto fail;
     }
   } else {
@@ -1277,7 +1279,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     }
 
     // handles unset 'footer_pos' same as empty string
-    if (!parse_bordertext_pos(config->footer_pos, kBorderTextFooter, fconfig, err)) {
+    if (!parse_bordertext_pos(wp, config->footer_pos, kBorderTextFooter, fconfig, err)) {
       goto fail;
     }
   } else {
