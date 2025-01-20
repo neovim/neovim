@@ -253,7 +253,7 @@ describe("'inccommand' for user commands", function()
     ]]
   end)
 
-  it("restores 'modifiable'", function()
+  it("can preview 'nomodifiable' buffer", function()
     exec_lua([[
       vim.api.nvim_create_user_command("PreviewTest", function() end, {
         preview = function(ev)
@@ -263,33 +263,23 @@ describe("'inccommand' for user commands", function()
         end,
       })
     ]])
+    command('set inccommand=split')
 
     command('set nomodifiable')
     eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
 
     feed(':PreviewTest')
+
     screen:expect([[
       cats                                    |
-      {1:~                                       }|*15
+      {1:~                                       }|*8
+      {3:[No Name] [+]                           }|
+                                              |
+      {1:~                                       }|*4
+      {2:[Preview]                               }|
       :PreviewTest^                            |
     ]])
     feed('<Esc>')
-
-    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
-  end)
-
-  it("can preview 'nomodifiable' buffer", function()
-    exec_lua([[
-      vim.api.nvim_create_user_command("PreviewTest", function() end, {
-        preview = function(ev)
-          return 2
-        end,
-      })
-    ]])
-    command('set nomodifiable')
-    command('set inccommand=split')
-    feed(':PreviewTest')
-
     screen:expect([[
         text on line 1                        |
         more text on line 2                   |
@@ -299,13 +289,12 @@ describe("'inccommand' for user commands", function()
         did the text stop                     |
         why won't it stop                     |
         make the text stop                    |
+      ^                                        |
+      {1:~                                       }|*7
                                               |
-      {3:[No Name] [+]                           }|
-                                              |
-      {1:~                                       }|*4
-      {2:[Preview]                               }|
-      :PreviewTest^                            |
     ]])
+
+    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
   end)
 
   it('works with inccommand=nosplit', function()
