@@ -615,6 +615,12 @@ local function on_complete_done()
   end
 end
 
+---@param bufnr integer
+---@return string
+local function get_augroup(bufnr)
+  return string.format('nvim.lsp.completion_%d', bufnr)
+end
+
 --- @class vim.lsp.completion.BufferOpts
 --- @field autotrigger? boolean  Default: false When true, completion triggers automatically based on the server's `triggerCharacters`.
 --- @field convert? fun(item: lsp.CompletionItem): table Transforms an LSP CompletionItem to |complete-items|.
@@ -639,8 +645,7 @@ local function enable_completions(client_id, bufnr, opts)
     })
 
     -- Set up autocommands.
-    local group =
-      api.nvim_create_augroup(string.format('nvim.lsp.completion_%d', bufnr), { clear = true })
+    local group = api.nvim_create_augroup(get_augroup(bufnr), { clear = true })
     api.nvim_create_autocmd('CompleteDone', {
       group = group,
       buffer = bufnr,
@@ -708,7 +713,7 @@ local function disable_completions(client_id, bufnr)
   handle.clients[client_id] = nil
   if not next(handle.clients) then
     buf_handles[bufnr] = nil
-    api.nvim_del_augroup_by_name(string.format('vim/lsp/completion-%d', bufnr))
+    api.nvim_del_augroup_by_name(get_augroup(bufnr))
   else
     for char, clients in pairs(handle.triggers) do
       --- @param c vim.lsp.Client
