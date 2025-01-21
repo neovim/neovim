@@ -792,17 +792,23 @@ static int terminal_execute(VimState *state, int key)
   case K_LEFTMOUSE:
   case K_LEFTDRAG:
   case K_LEFTRELEASE:
-  case K_MOUSEMOVE:
   case K_MIDDLEMOUSE:
   case K_MIDDLEDRAG:
   case K_MIDDLERELEASE:
   case K_RIGHTMOUSE:
   case K_RIGHTDRAG:
   case K_RIGHTRELEASE:
+  case K_X1MOUSE:
+  case K_X1DRAG:
+  case K_X1RELEASE:
+  case K_X2MOUSE:
+  case K_X2DRAG:
+  case K_X2RELEASE:
   case K_MOUSEDOWN:
   case K_MOUSEUP:
   case K_MOUSELEFT:
   case K_MOUSERIGHT:
+  case K_MOUSEMOVE:
     if (send_mouse_event(s->term, key)) {
       return 0;
     }
@@ -1804,8 +1810,6 @@ static bool send_mouse_event(Terminal *term, int c)
       pressed = true; FALLTHROUGH;
     case K_LEFTRELEASE:
       button = 1; break;
-    case K_MOUSEMOVE:
-      button = 0; break;
     case K_MIDDLEDRAG:
     case K_MIDDLEMOUSE:
       pressed = true; FALLTHROUGH;
@@ -1816,6 +1820,16 @@ static bool send_mouse_event(Terminal *term, int c)
       pressed = true; FALLTHROUGH;
     case K_RIGHTRELEASE:
       button = 3; break;
+    case K_X1DRAG:
+    case K_X1MOUSE:
+      pressed = true; FALLTHROUGH;
+    case K_X1RELEASE:
+      button = 8; break;
+    case K_X2DRAG:
+    case K_X2MOUSE:
+      pressed = true; FALLTHROUGH;
+    case K_X2RELEASE:
+      button = 9; break;
     case K_MOUSEDOWN:
       pressed = true; button = 4; break;
     case K_MOUSEUP:
@@ -1824,6 +1838,8 @@ static bool send_mouse_event(Terminal *term, int c)
       pressed = true; button = 7; break;
     case K_MOUSERIGHT:
       pressed = true; button = 6; break;
+    case K_MOUSEMOVE:
+      button = 0; break;
     default:
       return false;
     }
