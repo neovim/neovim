@@ -508,6 +508,13 @@ still highlighted the same as other operators: >query
 <
 Conceals specified in this way respect 'conceallevel'.
 
+Note that although you can use any string for `conceal`, only the first
+character will be used: >query
+
+    ; identifiers will be concealed with 'f'.
+    ((identifier) @conceal (#set! conceal "foo"))
+<
+
                                                *treesitter-highlight-priority*
 Treesitter uses |nvim_buf_set_extmark()| to set highlights with a default
 priority of 100. This enables plugins to set a highlighting priority lower or
