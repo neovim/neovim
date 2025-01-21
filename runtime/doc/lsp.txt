@@ -533,6 +533,40 @@ the exact definition):
 @lsp.mod.readonly        Readonly variables and member fields (constants)
 @lsp.mod.static          Class members (static members)
 
+------------------------------------------------------------------------------
+LSP COMPLETION HIGHLIGHTS                           *lsp-completion-highlight*
+
+These highlight groups correspond to the LSP CompletionItemKind enumeration
+defined in the LSP specification. They are used by Neovim's built-in LSP client
+to style completion items in the |popup-menu|.
+
+Each group below is mapped to a specific LSP CompletionItemKind:
+
+@lsp.kind.method         Method: Represents a method of a class or object
+@lsp.kind.function       Function: Represents a standalone function
+@lsp.kind.constructor    Constructor: Represents a class constructor
+@lsp.kind.field          Field: Represents a field or member variable
+@lsp.kind.variable       Variable: Represents a variable
+@lsp.kind.class          Class: Represents a class definition
+@lsp.kind.interface      Interface: Represents an interface
+@lsp.kind.module         Module: Represents a module or namespace
+@lsp.kind.property       Property: Represents a property of an object
+@lsp.kind.unit           Unit: Represents a unit (e.g., measurement unit)
+@lsp.kind.value          Value: Represents a constant or literal value
+@lsp.kind.enum           Enum: Represents an enumeration type
+@lsp.kind.keyword        Keyword: Represents a language keyword
+@lsp.kind.snippet        Snippet: Represents a code snippet
+@lsp.kind.color          Color: Represents a color value
+@lsp.kind.file           File: Represents a file
+@lsp.kind.reference      Reference: Represents a reference to a symbol
+@lsp.kind.folder         Folder: Represents a folder or directory
+@lsp.kind.enumMember     Enum Member: Represents a member of an enumeration
+@lsp.kind.constant       Constant: Represents a constant value
+@lsp.kind.struct         Struct: Represents a structure
+@lsp.kind.event          Event: Represents an event
+@lsp.kind.operator       Operator: Represents an operator
+@lsp.kind.typeParameter  Type Parameter: Represents a type parameter in generics
+
 ==============================================================================
 EVENTS                                                            *lsp-events*
 

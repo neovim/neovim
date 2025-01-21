@@ -52,6 +52,7 @@ elseif vim.endswith(bufname, '/doc/lsp.txt') then
   colorize_hl_groups({
     { start = [[\*lsp-highlight\*]], stop = '^------', match = '^(%w+)' },
     { start = [[\*lsp-semantic-highlight\*]], stop = '^======', match = '^@[%w%p]+' },
+    { start = [[\*lsp-completion-highlight\*]], stop = '^======', match = '^@[%w%p]+' },
   })
 end
 
