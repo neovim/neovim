@@ -4,17 +4,17 @@ local M = {}
 
 --- Table with default priorities used for highlighting:
 --- - `syntax`: `50`, used for standard syntax highlighting
---- - `treesitter`: `100`, used for treesitter-based highlighting
---- - `semantic_tokens`: `125`, used for LSP semantic token highlighting
---- - `diagnostics`: `150`, used for code analysis such as diagnostics
---- - `user`: `200`, used for user-triggered highlights such as LSP document
+--- - `treesitter`: `5000`, used for treesitter-based highlighting
+--- - `semantic_tokens`: `10000`, used for LSP semantic token highlighting
+--- - `diagnostics`: `15000`, used for code analysis such as diagnostics
+--- - `user`: `20000`, used for user-triggered highlights such as LSP document
 ---   symbols or `on_yank` autocommands
 M.priorities = {
   syntax = 50,
-  treesitter = 100,
-  semantic_tokens = 125,
-  diagnostics = 150,
-  user = 200,
+  treesitter = 5000,
+  semantic_tokens = 10000,
+  diagnostics = 15000,
+  user = 20000,
 }
 
 --- @class vim.hl.range.Opts
