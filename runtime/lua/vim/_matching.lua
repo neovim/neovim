@@ -294,7 +294,7 @@ function M.highlight()
   local matches = find_matches()
   for _, match in ipairs(matches or {}) do
     local row, col = unpack(match)
-    api.nvim_buf_add_highlight(0, ns, 'MatchParen', row, col, col + 1)
+    vim.hl.range(0, ns, 'MatchParen', { row, col }, { row, col + 1 })
   end
 end
 
