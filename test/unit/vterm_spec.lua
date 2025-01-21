@@ -2079,6 +2079,18 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     mousebtn('u', 1, vt)
     expect_output('\x1b[<0;301;301m')
 
+    -- Button 8 on SGR extended encoding mode
+    mousebtn('d', 8, vt)
+    expect_output('\x1b[<128;301;301M')
+    mousebtn('u', 8, vt)
+    expect_output('\x1b[<128;301;301m')
+
+    -- Button 9 on SGR extended encoding mode
+    mousebtn('d', 9, vt)
+    expect_output('\x1b[<129;301;301M')
+    mousebtn('u', 9, vt)
+    expect_output('\x1b[<129;301;301m')
+
     -- DECRQM on SGR extended encoding mode
     push('\x1b[?1005$p', vt)
     expect_output('\x1b[?1005;2$y')
@@ -2092,6 +2104,18 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     mousebtn('d', 1, vt)
     expect_output('\x1b[0;301;301M')
     mousebtn('u', 1, vt)
+    expect_output('\x1b[3;301;301M')
+
+    -- Button 8 on rxvt extended encoding mode
+    mousebtn('d', 8, vt)
+    expect_output('\x1b[128;301;301M')
+    mousebtn('u', 8, vt)
+    expect_output('\x1b[3;301;301M')
+
+    -- Button 9 on rxvt extended encoding mode
+    mousebtn('d', 9, vt)
+    expect_output('\x1b[129;301;301M')
+    mousebtn('u', 9, vt)
     expect_output('\x1b[3;301;301M')
 
     -- DECRQM on rxvt extended encoding mode

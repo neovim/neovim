@@ -387,6 +387,10 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Middle");
   } else if (button == 3) {
     len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Right");
+  } else if (button == 8) {
+    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "X1");
+  } else if (button == 9) {
+    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "X2");
   }
 
   switch (ev) {

@@ -327,6 +327,12 @@ TermKeyResult termkey_interpret_mouse(TermKey *tk, const TermKeyKey *key, TermKe
     btn = code + 4 - 64;
     break;
 
+  case 128:
+  case 129:
+    *event = drag ? TERMKEY_MOUSE_DRAG : TERMKEY_MOUSE_PRESS;
+    btn = code + 8 - 128;
+    break;
+
   default:
     *event = TERMKEY_MOUSE_UNKNOWN;
   }
