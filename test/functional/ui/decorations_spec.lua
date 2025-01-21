@@ -834,6 +834,9 @@ describe('extmark decorations', function()
       [42] = {undercurl = true, special = Screen.colors.Red};
       [43] = {background = Screen.colors.Yellow, undercurl = true, special = Screen.colors.Red};
       [44] = {background = Screen.colors.LightMagenta};
+      [45] = { background = Screen.colors.Red, special = Screen.colors.Red, foreground = Screen.colors.Red };
+      [46] = { background = Screen.colors.Blue, foreground = Screen.colors.Blue, special = Screen.colors.Red };
+      [47] = { background = Screen.colors.Green, foreground = Screen.colors.Blue, special = Screen.colors.Red };
     }
 
     ns = api.nvim_create_namespace 'test'
@@ -1923,6 +1926,46 @@ describe('extmark decorations', function()
                                                         |
     ]]}
   end)
+
+  it('highlight can combine multiple groups', function()
+    screen:try_resize(50, 3)
+    command('hi Group1 guibg=Red guifg=Red guisp=Red')
+    command('hi Group2 guibg=Blue guifg=Blue')
+    command('hi Group3 guibg=Green')
+    insert([[example text]])
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_row=1, hl_group = {} })
+    screen:expect([[
+      example tex^t                                      |
+      {1:~                                                 }|
+                                                        |
+    ]])
+
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_row=1, hl_group = {'Group1'} })
+    screen:expect([[
+      {45:example tex^t}                                      |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_row = 1, hl_group = {'Group1', 'Group2'} })
+    screen:expect([[
+      {46:example tex^t}                                      |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_row = 1, hl_group = {'Group1', 'Group2', 'Group3'}, hl_eol=true })
+    screen:expect([[
+      {47:example tex^t                                      }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+
+    eq('Invalid hl_group: hl_group item',
+       pcall_err(api.nvim_buf_set_extmark, 0, ns, 0, 0, { end_row = 1, hl_group = {'Group1', 'Group2', {'fail'}}, hl_eol=true }))
+  end)
+
 
   it('highlight works after TAB with sidescroll #14201', function()
     screen:try_resize(50, 3)

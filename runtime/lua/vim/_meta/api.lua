@@ -574,6 +574,9 @@ function vim.api.nvim_buf_line_count(buffer) end
 --- - hl_group : highlight group used for the text range. This and below
 ---     highlight groups can be supplied either as a string or as an integer,
 ---     the latter of which can be obtained using `nvim_get_hl_id_by_name()`.
+---
+---     Multiple highlight groups can be stacked by passing an array (highest
+---     priority last).
 --- - hl_eol : when true, for a multiline highlight covering the
 ---            EOL of a line, continue the highlight for the rest
 ---            of the screen line (just like for diff and

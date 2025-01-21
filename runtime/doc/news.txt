@@ -193,6 +193,7 @@ API
 • |nvim_echo()| `err` field to print error messages and `chunks` accepts
   highlight group IDs.
 • |nvim_open_win()| `relative` field can be set to "laststatus" and "tabline".
+• |nvim_buf_set_extmark()| `hl_group` field can be an array of layered groups
 
 DEFAULTS
 
