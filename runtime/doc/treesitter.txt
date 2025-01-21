@@ -497,7 +497,7 @@ convention, nodes to be concealed are captured as `@conceal`, but any capture
 can be used. For example, the following query can be used to hide code block
 delimiters in Markdown: >query
 
-    (fenced_code_block_delimiter @conceal (#set! conceal ""))
+    ((fenced_code_block_delimiter) @conceal (#set! conceal ""))
 <
 It is also possible to replace a node with a single character, which (unlike
 legacy syntax) can be given a custom highlight. For example, the following
