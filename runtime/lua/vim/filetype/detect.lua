@@ -1877,6 +1877,7 @@ local patterns_hashbang = {
   ruby = 'ruby',
   ['node\\(js\\)\\=\\>\\|js\\>'] = { 'javascript', { vim_regex = true } },
   ['rhino\\>'] = { 'javascript', { vim_regex = true } },
+  just = 'just',
   -- BC calculator
   ['^bc\\>'] = { 'bc', { vim_regex = true } },
   ['sed\\>'] = { 'sed', { vim_regex = true } },
