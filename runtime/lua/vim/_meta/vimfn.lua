@@ -5310,9 +5310,8 @@ function vim.fn.map(expr1, expr2) end
 --- When {abbr} is there and it is |TRUE| use abbreviations
 --- instead of mappings.
 ---
---- When {dict} is there and it is |TRUE| return a dictionary
---- containing all the information of the mapping with the
---- following items:      *mapping-dict*
+--- When {dict} is |TRUE|, return a dictionary describing the mapping,
+--- with these items:        *mapping-dict*
 ---   "lhs"       The {lhs} of the mapping as it would be typed
 ---   "lhsraw"   The {lhs} of the mapping as raw bytes
 ---   "lhsrawalt" The {lhs} of the mapping as raw bytes, alternate
@@ -5364,7 +5363,7 @@ function vim.fn.maparg(name, mode, abbr, dict) end
 --- @param mode string
 --- @param abbr boolean
 --- @param dict true
---- @return string|table<string,any>
+--- @return table<string,any>
 function vim.fn.maparg(name, mode, abbr, dict) end
 
 --- Check if there is a mapping that matches with {name} in mode
@@ -6796,6 +6795,7 @@ function vim.fn.prompt_getprompt(buf) end
 ---      endif
 ---    endfunc
 ---    call prompt_setcallback(bufnr(), function('s:TextEntered'))
+--- <
 ---
 --- @param buf integer|string
 --- @param expr string|function
@@ -9303,7 +9303,9 @@ function vim.fn.state(what) end
 function vim.fn.stdioopen(opts) end
 
 --- Returns |standard-path| locations of various default files and
---- directories.
+--- directories. The locations are driven by |base-directories|
+--- which you can configure via |$NVIM_APPNAME| or the `$XDG_…`
+--- environment variables.
 ---
 --- {what}       Type    Description ~
 --- cache        String  Cache directory: arbitrary temporary
