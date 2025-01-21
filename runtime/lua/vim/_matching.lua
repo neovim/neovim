@@ -268,6 +268,13 @@ local function find_matches(backward)
 end
 
 function M.jump(opts)
+  if vim.o.rtp:find('matchit') ~= nil then
+    vim.cmd.unlet('g:loaded_matchit')
+    vim.cmd.runtime('plugin/matchit.vim')
+    -- doesn't allow both plugins to be used (even with different keymaps)
+    return
+  end
+
   -- [count]% goes to the percentage in a file |N%|
   if vim.v.count1 > 1 then
     vim.cmd(('normal! %s%%'):format(vim.v.count1))
@@ -291,6 +298,12 @@ end
 function M.highlight()
   api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
+  -- self-destruct if matchparen is loaded
+  if vim.o.rtp:find('matchparen') ~= nil then
+    api.nvim_del_augroup_by_name('nvim.matching')
+    return
+  end
+
   local matches = find_matches()
   for _, match in ipairs(matches or {}) do
     local row, col = unpack(match)
@@ -298,8 +311,7 @@ function M.highlight()
   end
 end
 
--- TODO: check if matchit is preferred, otherwise use our implementation
--- but also set this to let ftplugins know they have to set b:match_words
+-- inform ftplugin's to set b:match_words / b:match_ignorecase / b:match_skip
 vim.g.loaded_matchit = 1
 
 return M
