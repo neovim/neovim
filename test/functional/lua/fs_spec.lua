@@ -254,6 +254,52 @@ describe('vim.fs', function()
       eq({ nvim_dir }, vim.fs.find(name, { path = parent, upward = true, type = 'directory' }))
     end)
 
+    it('works with opts.dfs', function()
+      eq(
+        {
+          test_source_path .. '/test/functional/example_spec.lua',
+          test_source_path .. '/test/functional/fixtures/CMakeLists.txt',
+        },
+        vim.fs.find(
+          { 'CMakeLists.txt', 'example_spec.lua' },
+          { path = test_source_path .. '/test/functional', limit = 2, dfs = false }
+        )
+      )
+      eq(
+        {
+          test_source_path .. '/test/functional/fixtures/CMakeLists.txt',
+          test_source_path .. '/test/functional/example_spec.lua',
+        },
+        vim.fs.find(
+          { 'CMakeLists.txt', 'example_spec.lua' },
+          { path = test_source_path .. '/test/functional', limit = 2, dfs = true }
+        )
+      )
+
+      eq(
+        {
+          test_source_path .. '/test/functional/example_spec.lua',
+          test_source_path .. '/test/CMakeLists.txt',
+          test_source_path .. '/CMakeLists.txt',
+        },
+        vim.fs.find(
+          { 'CMakeLists.txt', 'example_spec.lua' },
+          { path = test_source_path .. '/test/functional', limit = 3, upward = true, dfs = false }
+        )
+      )
+      eq(
+        {
+          test_source_path .. '/test/CMakeLists.txt',
+          test_source_path .. '/CMakeLists.txt',
+          test_source_path .. '/test/functional/example_spec.lua',
+        },
+        vim.fs.find(
+          { 'CMakeLists.txt', 'example_spec.lua' },
+          { path = test_source_path .. '/test/functional', limit = 3, upward = true, dfs = true }
+        )
+      )
+    end)
+
     it('follows symlinks', function()
       local build_dir = test_source_path .. '/build' ---@type string
       local symlink = test_source_path .. '/build_link' ---@type string
