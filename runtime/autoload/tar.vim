@@ -1,7 +1,7 @@
 " tar.vim: Handles browsing tarfiles
 "            AUTOLOAD PORTION
-" Date:		Nov 11, 2024
-" Version:	32b  (with modifications from the Vim Project)
+" Date:		Jan 21, 2025
+" Version:	32c  (with modifications from the Vim Project)
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Former Maintainer: Charles E Campbell
 " License:	Vim License  (see vim's :help license)
@@ -23,7 +23,7 @@
 if &cp || exists("g:loaded_tar")
  finish
 endif
-let g:loaded_tar= "v32b"
+let g:loaded_tar= "v32c"
 if v:version < 702
  echohl WarningMsg
  echo "***warning*** this version of tar needs vim 7.2"
@@ -164,7 +164,7 @@ fun! tar#Browse(tarfile)
 "   call Decho("1: exe silent r! gzip -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - ")
    exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
 
-  elseif tarfile =~# '\.\(tgz\)$' || tarfile =~# '\.\(tbz\)$' || tarfile =~# '\.\(txz\)$' || tarfile =~# '\.\(tzst\)$'
+  elseif tarfile =~# '\.\(tgz\)$' || tarfile =~# '\.\(tbz\)$' || tarfile =~# '\.\(txz\)$' || tarfile =~# '\.\(tzst\)$' || tarfile =~# '\.\(tlz4\)$'
    if has("unix") && executable("file")
     let filekind= system("file ".shellescape(tarfile,1))
    else
@@ -177,6 +177,8 @@ fun! tar#Browse(tarfile)
     exe "sil! r! xz -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
    elseif filekind =~ "Zstandard"
     exe "sil! r! zstd --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
+   elseif filekind =~ "LZ4"
+    exe "sil! r! lz4 --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
    else
     exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
    endif
@@ -195,6 +197,8 @@ fun! tar#Browse(tarfile)
    exe "sil! r! xz --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
   elseif tarfile =~# '\.\(zst\|tzst\)$'
    exe "sil! r! zstd --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
+  elseif tarfile =~# '\.\(lz4\|tlz4\)$'
+   exe "sil! r! lz4 --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_browseoptions." - "
   else
    if tarfile =~ '^\s*-'
     " A file name starting with a dash is taken as an option.  Prepend ./ to avoid that.
@@ -351,6 +355,9 @@ fun! tar#Read(fname,mode)
   elseif  fname =~ '\.zst$' && executable("zstdcat")
    let decmp= "|zstdcat"
    let doro = 1
+  elseif  fname =~ '\.lz4$' && executable("lz4cat")
+   let decmp= "|lz4cat"
+   let doro = 1
   else
    let decmp=""
    let doro = 0
@@ -399,6 +406,9 @@ fun! tar#Read(fname,mode)
    exe "read ".fname
   elseif tarfile =~# '\.\(xz\|txz\)$'
    exe "sil! r! xz --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
+   exe "read ".fname
+  elseif tarfile =~# '\.\(lz4\|tlz4\)$'
+   exe "sil! r! lz4 --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
    exe "read ".fname
   else
    if tarfile =~ '^\s*-'
@@ -491,6 +501,10 @@ fun! tar#Write(fname)
    call system("zstd --decompress --rm -- ".shellescape(tarfile,0))
    let tarfile = substitute(tarfile,'\.zst','','e')
    let compress= "zstd --rm -- ".shellescape(tarfile,0)
+  elseif tarfile =~# '\.lz4'
+   call system("lz4 --decompress --rm -- ".shellescape(tarfile,0))
+   let tarfile = substitute(tarfile,'\.lz4','','e')
+   let compress= "lz4 --rm -- ".shellescape(tarfile,0)
   elseif tarfile =~# '\.lzma'
    call system("lzma -d -- ".shellescape(tarfile,0))
    let tarfile = substitute(tarfile,'\.lzma','','e')
@@ -734,6 +748,28 @@ fun! tar#Extract()
    if v:shell_error != 0
     echohl Error | echo "***error*** ".extractcmd." ".tarbase.".tar.zst ".fname.": failed!" | echohl NONE
 "    call Decho("***error*** ".extractcmd." ".tarbase.".tar.zst ".fname.": failed!")
+   else
+    echo "***note*** successfully extracted ".fname
+   endif
+
+  elseif filereadable(tarbase.".tlz4")
+   let extractcmd= substitute(extractcmd,"-","-I lz4","")
+"   call Decho("system(".extractcmd." ".shellescape(tarbase).".tlz4 ".shellescape(fname).")")
+   call system(extractcmd." ".shellescape(tarbase).".tlz4 ".shellescape(fname))
+   if v:shell_error != 0
+    echohl Error | echo "***error*** ".extractcmd." ".tarbase.".tlz4 ".fname.": failed!" | echohl NONE
+"    call Decho("***error*** ".extractcmd." ".tarbase.".tlz4".fname.": failed!")
+   else
+    echo "***note*** successfully extracted ".fname
+   endif
+
+  elseif filereadable(tarbase.".tar.lz4")
+   let extractcmd= substitute(extractcmd,"-","-I lz4","")
+"   call Decho("system(".extractcmd." ".shellescape(tarbase).".tar.lz4 ".shellescape(fname).")")
+   call system(extractcmd." ".shellescape(tarbase).".tar.lz4".shellescape(fname))
+   if v:shell_error != 0
+    echohl Error | echo "***error*** ".extractcmd." ".tarbase.".tar.lz4 ".fname.": failed!" | echohl NONE
+"    call Decho("***error*** ".extractcmd." ".tarbase.".tar.lz4".fname.": failed!")
    else
     echo "***note*** successfully extracted ".fname
    endif

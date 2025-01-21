@@ -41,11 +41,13 @@ augroup tar
   au BufReadCmd   *.tar.Z		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tbz			call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tgz			call tar#Browse(expand("<amatch>"))
-  au BufReadCmd   *.tar.lzma	call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tar.lzma		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar.xz		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.txz			call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar.zst		call tar#Browse(expand("<amatch>"))
-  au BufReadCmd   *.tzst			call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tzst		call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tar.lz4		call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tlz4		call tar#Browse(expand("<amatch>"))
 augroup END
 
 " ---------------------------------------------------------------------
