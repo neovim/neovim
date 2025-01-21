@@ -1633,12 +1633,12 @@ stcsign:
         break;
       }
       foldsignitem = curitem;
+      lnum = (linenr_T)get_vim_var_nr(VV_LNUM);
 
       if (fdc > 0) {
         schar_T fold_buf[9];
-        fill_foldcolumn(wp, stcp->foldinfo, (linenr_T)get_vim_var_nr(VV_LNUM),
-                        0, fdc, NULL, fold_buf);
-        stl_items[curitem].minwid = -(stcp->use_cul ? HLF_CLF : HLF_FC);
+        fill_foldcolumn(wp, stcp->foldinfo, lnum, 0, fdc, NULL, fold_buf);
+        stl_items[curitem].minwid = -(use_cursor_line_highlight(wp, lnum) ? HLF_CLF : HLF_FC);
         size_t buflen = 0;
         // TODO(bfredl): this is very backwards. we must support schar_T
         // being used directly in 'statuscolumn'
@@ -1651,18 +1651,18 @@ stcsign:
       for (int i = 0; i < width; i++) {
         stl_items[curitem].start = out_p + signlen;
         if (fdc == 0) {
-          if (stcp->sattrs[i].text[0] && get_vim_var_nr(VV_VIRTNUM) == 0) {
-            SignTextAttrs sattrs = stcp->sattrs[i];
-            signlen += describe_sign_text(buf_tmp + signlen, sattrs.text);
-            stl_items[curitem].minwid = -(stcp->sign_cul_id ? stcp->sign_cul_id : sattrs.hl_id);
+          SignTextAttrs sattr = stcp->sattrs[i];
+          if (sattr.text[0] && get_vim_var_nr(VV_VIRTNUM) == 0) {
+            signlen += describe_sign_text(buf_tmp + signlen, sattr.text);
+            stl_items[curitem].minwid = -(stcp->sign_cul_id ? stcp->sign_cul_id : sattr.hl_id);
           } else {
             buf_tmp[signlen++] = ' ';
             buf_tmp[signlen++] = ' ';
             buf_tmp[signlen] = NUL;
-            stl_items[curitem].minwid = -(stcp->use_cul ? HLF_CLS : HLF_SC);
+            stl_items[curitem].minwid = 0;
           }
         }
-        stl_items[curitem++].type = Highlight;
+        stl_items[curitem++].type = fdc > 0 ? HighlightFold : HighlightSign;
       }
       str = buf_tmp;
       break;
@@ -2117,9 +2117,12 @@ stcsign:
     *hltab = stl_hltab;
     stl_hlrec_t *sp = stl_hltab;
     for (int l = 0; l < itemcnt; l++) {
-      if (stl_items[l].type == Highlight) {
+      if (stl_items[l].type == Highlight
+          || stl_items[l].type == HighlightFold || stl_items[l].type == HighlightSign) {
         sp->start = stl_items[l].start;
         sp->userhl = stl_items[l].minwid;
+        unsigned type = stl_items[l].type;
+        sp->item = type == HighlightSign ? STL_SIGNCOL : type == HighlightFold ? STL_FOLDCOL : 0;
         sp++;
       }
     }

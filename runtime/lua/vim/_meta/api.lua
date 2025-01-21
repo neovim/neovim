@@ -1129,6 +1129,7 @@ function vim.api.nvim_eval(expr) end
 ---               |Dict| with these keys:
 ---     - start: (number) Byte index (0-based) of first character that uses the highlight.
 ---     - group: (string) Name of highlight group.
+---     - groups: (array) Names of stacked highlight groups (highest priority last).
 function vim.api.nvim_eval_statusline(str, opts) end
 
 --- @deprecated
