@@ -75,7 +75,9 @@ DIAGNOSTICS
   handler |diagnostic-handlers|.
 • The "virtual_text" handler is disabled by default. Enable with >lua
     vim.diagnostic.config({ virtual_text = true })
-<
+• A "virtual_lines" diagnostic handler was added to render diagnostics using
+  virtual lines below the respective code.
+
 EDITOR
 
 • The order in which signs are placed was changed. Higher priority signs will

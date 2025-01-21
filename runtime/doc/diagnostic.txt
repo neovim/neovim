@@ -170,6 +170,16 @@ show a sign for the highest severity diagnostic on a given line: >lua
     }
 <
 
+                                          *diagnostic-toggle-virtual-lines-example*
+Diagnostic handlers can also be toggled. For example, you might want to toggle
+the `virtual_lines` handler with the following keymap: >lua
+
+    vim.keymap.set('n', 'gK', function()
+      local new_config = not vim.diagnostic.config().virtual_lines
+      vim.diagnostic.config({ virtual_lines = new_config })
+    end, { desc = 'Toggle diagnostic virtual_lines' })
+<
+
                                           *diagnostic-loclist-example*
 Whenever the |location-list| is opened, the following `show` handler will show
 the most recent diagnostics: >lua
@@ -589,6 +599,20 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {severity}?  (`vim.diagnostic.SeverityFilter`) Only underline
                      diagnostics matching the given severity
                      |diagnostic-severity|.
+
+*vim.diagnostic.Opts.VirtualLines*
+
+    Fields: ~
+      • {current_line}?  (`boolean`, default: `true`) Only show diagnostics
+                         for the current line.
+      • {format}?        (`fun(diagnostic:vim.Diagnostic): string`) The return
+                         value is the text used to display the diagnostic.
+                         Example: >lua
+                             function(diagnostic)
+                               -- Use only the first line of the message.
+                               return vim.split(diagnostic.message, '\n', { plain = true })[1]
+                             end
+<
 
 *vim.diagnostic.Opts.VirtualText*
 
