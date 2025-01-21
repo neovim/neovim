@@ -13,8 +13,6 @@ local api = n.api
 local pcall_err = t.pcall_err
 local assert_alive = n.assert_alive
 
-local mousemodels = { 'extend', 'popup', 'popup_setpos' }
-
 describe('statuscolumn', function()
   local screen
   before_each(function()
@@ -592,7 +590,7 @@ describe('statuscolumn', function()
     ]])
   end)
 
-  for _, model in ipairs(mousemodels) do
+  for _, model in ipairs({ 'extend', 'popup', 'popup_setpos' }) do
     describe('with mousemodel=' .. model, function()
       before_each(function()
         command('set mousemodel=' .. model)
@@ -651,23 +649,56 @@ describe('statuscolumn', function()
         -- Check that statusline click doesn't register as statuscolumn click
         api.nvim_input_mouse('right', 'press', '', 0, 12, 0)
         eq('', eval('g:testvar'))
+        -- Check that rightclick still opens popupmenu if there is no clickdef
+        if model == 'popup' then
+          api.nvim_set_option_value('statuscolumn', '%0@MyClickFunc@%=%l%TNoClick', {})
+          api.nvim_input_mouse('right', 'press', '', 0, 1, 0)
+          screen:expect([[
+            {5:[No Name]                                            }|
+            {8: 4NoClick}^aaaaa                                       |
+            {8: 5NoClick}aaaaa                                       |
+            {8: 6NoClick}aaaaa                                       |
+            {8: 7NoClick}aaaaa                                       |
+            {8: 8NoClick}aaaaa                                       |
+            {8: 9NoClick}aaaaa                                       |
+            {8:10NoClick}aaaaa                                       |
+            {8:11NoClick}aaaaa                                       |
+            {8:12NoClick}aaaaa                                       |
+            {8:13NoClick}aaaaa                                       |
+            {8:14NoClick}aaaaa                                       |
+            {3:[No Name] [+]                                        }|
+                                                                 |
+          ]])
+          api.nvim_input_mouse('right', 'press', '', 0, 1, 3)
+          screen:expect([[
+            {5:[No Name]                                            }|
+            {8: 4NoClick}^aaaaa                                       |
+            {8: 5}{4: Inspect              }                             |
+            {8: 6}{4:                      }                             |
+            {8: 7}{4: Paste                }                             |
+            {8: 8}{4: Select All           }                             |
+            {8: 9}{4:                      }                             |
+            {8:10}{4: How-to disable mouse }                             |
+            {8:11NoClick}aaaaa                                       |
+            {8:12NoClick}aaaaa                                       |
+            {8:13NoClick}aaaaa                                       |
+            {8:14NoClick}aaaaa                                       |
+            {3:[No Name] [+]                                        }|
+                                                                 |
+          ]])
+        end
       end)
 
       it('clicks and highlights work with control characters', function()
         api.nvim_set_option_value('statuscolumn', '\t%#NonText#\1%0@MyClickFunc@\t\1%T\t%##\1', {})
-        screen:expect {
-          grid = [[
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |*4
-          {1:^I}{0:^A^I^A^I}{1:^A}^aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |*8
+        screen:expect([[
+          {8:^I}{1:^A^I^A^I}{8:^A}aaaaa                                    |*4
+          {8:^I}{1:^A^I^A^I}{8:^A}^aaaaa                                    |
+          {8:^I}{1:^A^I^A^I}{8:^A}aaaaa                                    |*8
                                                                |
-        ]],
-          attr_ids = {
-            [0] = { foreground = Screen.colors.Blue, bold = true }, -- NonText
-            [1] = { foreground = Screen.colors.Brown }, -- LineNr
-          },
-        }
+        ]])
         api.nvim_input_mouse('right', 'press', '', 0, 4, 3)
+        feed('<Esc>') -- Close popupmenu
         eq('', eval('g:testvar'))
         api.nvim_input_mouse('left', 'press', '', 0, 5, 8)
         eq('', eval('g:testvar'))
@@ -710,6 +741,36 @@ describe('statuscolumn', function()
         api.nvim_input_mouse('left', 'release', '', 0, 0, 10)
         screen:expect([[
           {8: 8}^aaaaa                                              |
+                                                               |
+        ]])
+      end)
+
+      it('foldcolumn item can be clicked', function()
+        api.nvim_set_option_value('statuscolumn', '|%C|', {})
+        api.nvim_set_option_value('foldcolumn', '2', {})
+        api.nvim_set_option_value('mousetime', 0, {})
+        feed('ggzfjzfjzo')
+        local s1 = [[
+          {8:|}{7:-+}{8:|}{13:^+---  2 lines: aaaaa·····························}|
+          {8:|}{7:│ }{8:|}aaaaa                                            |
+          {8:|}{7:  }{8:|}aaaaa                                            |*11
+                                                               |
+        ]]
+        screen:expect(s1)
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 2)
+        screen:expect([[
+          {8:|}{7:--}{8:|}^aaaaa                                            |
+          {8:|}{7:││}{8:|}aaaaa                                            |
+          {8:|}{7:│ }{8:|}aaaaa                                            |
+          {8:|}{7:  }{8:|}aaaaa                                            |*10
+                                                               |
+        ]])
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 1)
+        screen:expect(s1)
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 1)
+        screen:expect([[
+          {8:|}{7:+ }{8:|}{13:^+--  3 lines: aaaaa······························}|
+          {8:|}{7:  }{8:|}aaaaa                                            |*12
                                                                |
         ]])
       end)
