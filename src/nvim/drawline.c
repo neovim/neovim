@@ -368,14 +368,14 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
 
 // TODO(bfredl): integrate with grid.c linebuf code? madness?
 static void draw_col_buf(win_T *wp, winlinevars_T *wlv, const char *text, size_t len, int attr,
-                         bool vcol)
+                         const colnr_T *fold_vcol, bool inc_vcol)
 {
   const char *ptr = text;
   while (ptr < text + len && wlv->off < wp->w_grid.cols) {
     int cells = line_putchar(wp->w_buffer, &ptr, &linebuf_char[wlv->off],
                              wp->w_grid.cols - wlv->off, wlv->off);
     int myattr = attr;
-    if (vcol) {
+    if (inc_vcol) {
       advance_color_col(wlv, wlv->vcol);
       if (wlv->color_cols && wlv->vcol == *wlv->color_cols) {
         myattr = hl_combine_attr(win_hl_attr(wp, HLF_MC), myattr);
@@ -383,7 +383,7 @@ static void draw_col_buf(win_T *wp, winlinevars_T *wlv, const char *text, size_t
     }
     for (int c = 0; c < cells; c++) {
       linebuf_attr[wlv->off] = myattr;
-      linebuf_vcol[wlv->off] = vcol ? wlv->vcol++ : -1;
+      linebuf_vcol[wlv->off] = inc_vcol ? wlv->vcol++ : fold_vcol ? *(fold_vcol++) : -1;
       wlv->off++;
     }
   }
@@ -412,7 +412,7 @@ static void draw_foldcolumn(win_T *wp, winlinevars_T *wlv)
   int fdc = compute_foldcolumn(wp, 0);
   if (fdc > 0) {
     int attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLF : HLF_FC);
-    fill_foldcolumn(wp, wlv->foldinfo, wlv->lnum, attr, fdc, &wlv->off, NULL);
+    fill_foldcolumn(wp, wlv->foldinfo, wlv->lnum, attr, fdc, &wlv->off, NULL, NULL);
   }
 }
 
@@ -421,8 +421,9 @@ static void draw_foldcolumn(win_T *wp, winlinevars_T *wlv)
 /// @param fdc  Current width of the foldcolumn
 /// @param[out] wlv_off  Pointer to linebuf offset, incremented for default column
 /// @param[out] out_buffer  Char array to fill, only used for 'statuscolumn'
+/// @param[out] out_vcol  vcol array to fill, only used for 'statuscolumn'
 void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, int fdc, int *wlv_off,
-                     schar_T *out_buffer)
+                     colnr_T *out_vcol, schar_T *out_buffer)
 {
   bool closed = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
   int level = foldinfo.fi_level;
@@ -448,10 +449,12 @@ void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, in
       symbol = schar_from_ascii('>');
     }
 
+    int vcol = i >= level ? -1 : (i == closedcol - 1 && closed) ? -2 : -3;
     if (out_buffer) {
+      out_vcol[i] = vcol;
       out_buffer[i] = symbol;
     } else {
-      linebuf_vcol[*wlv_off] = i >= level ? -1 : (i == closedcol - 1 && closed) ? -2 : -3;
+      linebuf_vcol[*wlv_off] = vcol;
       linebuf_attr[*wlv_off] = attr;
       linebuf_char[(*wlv_off)++] = symbol;
     }
@@ -577,7 +580,7 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv)
           char *num = skipwhite(buf);
           rl_mirror_ascii(num, skiptowhite(num));
         }
-        draw_col_buf(wp, wlv, buf, (size_t)width, attr, false);
+        draw_col_buf(wp, wlv, buf, (size_t)width, attr, NULL, false);
       } else {
         draw_col_fill(wlv, schar_from_ascii(' '), width, attr);
       }
@@ -632,6 +635,7 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
 
   char *p = buf;
   char transbuf[MAXPATHL];
+  colnr_T *fold_vcol = NULL;
   size_t len = strlen(buf);
   int scl_attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLS : HLF_SC);
   int num_attr = hl_combine_attr(get_line_number_attr(wp, wlv),
@@ -643,13 +647,14 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
     ptrdiff_t textlen = sp->start - p;
     // Make all characters printable.
     size_t translen = transstr_buf(p, textlen, transbuf, MAXPATHL, true);
-    draw_col_buf(wp, wlv, transbuf, translen, cur_attr, false);
+    draw_col_buf(wp, wlv, transbuf, translen, cur_attr, fold_vcol, false);
     int attr = sp->item == STL_SIGNCOL ? scl_attr : sp->item == STL_FOLDCOL ? 0 : num_attr;
     cur_attr = hl_combine_attr(attr, sp->userhl < 0 ? syn_id2attr(-sp->userhl) : 0);
+    fold_vcol = sp->item == STL_FOLDCOL ? stcp->fold_vcol : NULL;
     p = sp->start;
   }
   size_t translen = transstr_buf(p, buf + len - p, transbuf, MAXPATHL, true);
-  draw_col_buf(wp, wlv, transbuf, translen, num_attr, false);
+  draw_col_buf(wp, wlv, transbuf, translen, num_attr, fold_vcol, false);
   draw_col_fill(wlv, schar_from_ascii(' '), stcp->width - width, num_attr);
 }
 
@@ -722,7 +727,7 @@ static void handle_showbreak_and_filler(win_T *wp, winlinevars_T *wlv)
     // Combine 'showbreak' with 'cursorline', prioritizing 'showbreak'.
     int attr = hl_combine_attr(wlv->cul_attr, win_hl_attr(wp, HLF_AT));
     colnr_T vcol_before = wlv->vcol;
-    draw_col_buf(wp, wlv, sbr, strlen(sbr), attr, true);
+    draw_col_buf(wp, wlv, sbr, strlen(sbr), attr, NULL, true);
     wlv->vcol_sbr = wlv->vcol;
 
     // Correct start of highlighted area for 'showbreak'.

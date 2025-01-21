@@ -1157,9 +1157,11 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         }
       }
 
-      // If the group is longer than it is allowed to be
-      // truncate by removing bytes from the start of the group text.
-      if (group_len > stl_items[stl_groupitems[groupdepth]].maxwid) {
+      // If the group is longer than it is allowed to be truncate by removing
+      // bytes from the start of the group text. Don't truncate when item is a
+      // 'statuscolumn' fold item to ensure correctness of the mouse clicks.
+      if (group_len > stl_items[stl_groupitems[groupdepth]].maxwid
+          && stl_items[stl_groupitems[groupdepth]].type != HighlightFold) {
         // { Determine the number of bytes to remove
 
         // Find the first character that should be included.
@@ -1637,7 +1639,7 @@ stcsign:
 
       if (fdc > 0) {
         schar_T fold_buf[9];
-        fill_foldcolumn(wp, stcp->foldinfo, lnum, 0, fdc, NULL, fold_buf);
+        fill_foldcolumn(wp, stcp->foldinfo, lnum, 0, fdc, NULL, stcp->fold_vcol, fold_buf);
         stl_items[curitem].minwid = -(use_cursor_line_highlight(wp, lnum) ? HLF_CLF : HLF_FC);
         size_t buflen = 0;
         // TODO(bfredl): this is very backwards. we must support schar_T

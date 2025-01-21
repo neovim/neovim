@@ -103,5 +103,6 @@ typedef struct {
   bool draw;                           ///< whether to draw the statuscolumn
   stl_hlrec_t *hlrec;                  ///< highlight groups
   foldinfo_T foldinfo;                 ///< fold information
+  colnr_T fold_vcol[9];                ///< vcol array filled for fold item
   SignTextAttrs *sattrs;               ///< sign attributes
 } statuscol_T;
