@@ -685,6 +685,8 @@ vim.hl.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
                      whether the range is end-inclusive
                    • {priority}? (`integer`, default:
                      `vim.hl.priorities.user`) Highlight priority
+                   • {timeout}? (`integer`, default: -1 no timeout) Time in ms
+                     before highlight is cleared
 
 
 ==============================================================================
