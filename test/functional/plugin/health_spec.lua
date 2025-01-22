@@ -90,6 +90,7 @@ describe('vim.health', function()
       command('checkhealth full_render')
       n.expect([[
 
+                                                Type |gO| to see the table of contents
       ==============================================================================
       test_plug.full_render:         require("test_plug.full_render.health").check()
 
@@ -113,6 +114,7 @@ describe('vim.health', function()
       command('checkhealth success1 success2 test_plug')
       n.expect([[
 
+                                                  Type |gO| to see the table of contents
         ==============================================================================
         test_plug:                                 require("test_plug.health").check()
 
@@ -143,6 +145,7 @@ describe('vim.health', function()
       command('checkhealth test_plug.submodule')
       n.expect([[
 
+                                                  Type |gO| to see the table of contents
         ==============================================================================
         test_plug.submodule:             require("test_plug.submodule.health").check()
 
@@ -158,6 +161,7 @@ describe('vim.health', function()
       command('checkhealth test_plug.submodule_empty')
       n.expect([[
 
+                                                Type |gO| to see the table of contents
       ==============================================================================
       test_plug.submodule_empty: require("test_plug.submodule_empty.health").check()
 

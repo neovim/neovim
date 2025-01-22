@@ -15,3 +15,9 @@ if exists("b:undo_ftplugin")
 else
   let b:undo_ftplugin = "setl wrap< bri< lbr< kp< isk< list<"
 endif
+
+lua << EOF
+vim.keymap.set('n', 'gO', function()
+  require('vim.vimhelp').show_toc()
+end, { buffer = 0, silent = true })
+EOF

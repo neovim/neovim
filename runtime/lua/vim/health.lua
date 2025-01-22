@@ -388,6 +388,13 @@ function M._check(mods, plugin_names)
   vim.cmd.redraw()
   vim.print('Running healthchecks...')
 
+  local toc_prompt = 'Type |gO| to see the table of contents'
+  -- The +2 comes from the concealed bars aroung gO
+  vim.fn.append(
+    vim.fn.line('$'),
+    string.rep(' ', vim.o.textwidth + 2 - string.len(toc_prompt)) .. toc_prompt
+  )
+
   for name, value in vim.spairs(healthchecks) do
     local func = value[1]
     local type = value[2]
