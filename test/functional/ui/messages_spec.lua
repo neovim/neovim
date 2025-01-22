@@ -1391,13 +1391,25 @@ stack traceback:
       screen_showmode(...)
       showmode = showmode + 1
     end
+    local s1 = [[
+      ^                         |
+      {1:~                        }|*4
+    ]]
+    screen:expect(s1)
+    eq(showmode, 0)
+    feed('i')
     screen:expect({
-      grid = [[
-        ^                         |
-        {1:~                        }|*4
-      ]],
+      grid = s1,
+      showmode = { { '-- INSERT --', 5, 11 } },
     })
-    eq(showmode, 1)
+    eq(showmode, 2)
+    command('set noshowmode')
+    feed('<Esc>')
+    screen:expect(s1)
+    eq(showmode, 3)
+    feed('i')
+    screen:expect_unchanged()
+    eq(showmode, 3)
   end)
 
   it('emits single message for multiline print())', function()
