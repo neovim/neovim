@@ -492,7 +492,7 @@ local function _styletable_extmarks_highlight(state, extmark, namespaces)
   end
   ---TODO(altermo) LSP semantic tokens (and some other extmarks) are only
   ---generated in visible lines, and not in the whole buffer.
-  if (namespaces[extmark[4].ns_id] or ''):find('vim_lsp_semantic_tokens') then
+  if (namespaces[extmark[4].ns_id] or ''):find('nvim.lsp.semantic_tokens') then
     notify('lsp semantic tokens are not supported, HTML may be incorrect')
     return
   end
@@ -514,7 +514,7 @@ local function _styletable_extmarks_virt_text(state, extmark, namespaces)
   end
   ---TODO(altermo) LSP semantic tokens (and some other extmarks) are only
   ---generated in visible lines, and not in the whole buffer.
-  if (namespaces[extmark[4].ns_id] or ''):find('vim_lsp_inlayhint') then
+  if (namespaces[extmark[4].ns_id] or ''):find('nvim.lsp.inlayhint') then
     notify('lsp inlay hints are not supported, HTML may be incorrect')
     return
   end
