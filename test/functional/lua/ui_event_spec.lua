@@ -345,31 +345,36 @@ describe('vim.ui_attach', function()
         vim.api.nvim_buf_set_lines(0, -2, -1, false, { err[1] })
       end)
     ]])
+    local s1 = [[
+      ^                                        |
+      {1:~                                       }|*4
+    ]]
+    screen:expect(s1)
+    feed('QQQQQQ<CR>')
     screen:expect({
       grid = [[
-        ^                                        |
-        {1:~                                       }|*4
-      ]],
-    })
-    feed('ifoo')
-    screen:expect({
-      grid = [[
-        foo^                                     |
-        {1:~                                       }|*4
-      ]],
-      showmode = { { '-- INSERT --', 5, 11 } },
-    })
-    feed('<esc>:1mes clear<cr>:mes<cr>')
-    screen:expect({
-      grid = [[
-        foo                                     |
-        {3:                                        }|
-        {9:Excessive errors in vim.ui_attach() call}|
-        {9:back from ns: 1.}                        |
+        {9:obal 'err' (a nil value)}                |
+        {9:stack traceback:}                        |
+        {9:        [string "<nvim>"]:2: in function}|
+        {9: <[string "<nvim>"]:1>}                  |
         {100:Press ENTER or type command to continue}^ |
       ]],
-      cmdline = { { abort = false } },
+      messages = {
+        {
+          content = { { 'Press ENTER or type command to continue', 100, 18 } },
+          history = true,
+          kind = 'return_prompt',
+        },
+      },
     })
+    feed(':1mes clear<CR>:mes<CR>')
+    screen:expect([[
+                                              |
+      {3:                                        }|
+      {9:Excessive errors in vim.ui_attach() call}|
+      {9:back from ns: 1.}                        |
+      {100:Press ENTER or type command to continue}^ |
+    ]])
     feed('<cr>')
     -- Also when scheduled
     exec_lua([[
@@ -378,7 +383,7 @@ describe('vim.ui_attach', function()
       end)
     ]])
     screen:expect({
-      any = 'fo^o',
+      grid = s1,
       messages = {
         {
           content = {
@@ -410,14 +415,12 @@ describe('vim.ui_attach', function()
       },
     })
     feed('<esc>:1mes clear<cr>:mes<cr>')
-    screen:expect({
-      grid = [[
-        foo                                     |
-        {3:                                        }|
-        {9:Excessive errors in vim.ui_attach() call}|
-        {9:back from ns: 2.}                        |
-        {100:Press ENTER or type command to continue}^ |
-      ]],
-    })
+    screen:expect([[
+                                              |
+      {3:                                        }|
+      {9:Excessive errors in vim.ui_attach() call}|
+      {9:back from ns: 2.}                        |
+      {100:Press ENTER or type command to continue}^ |
+    ]])
   end)
 end)
