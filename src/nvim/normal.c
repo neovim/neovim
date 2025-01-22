@@ -97,7 +97,7 @@ typedef struct {
   bool previous_got_int;             // `got_int` was true
   bool cmdwin;                       // command-line window normal mode
   bool noexmode;                     // true if the normal mode was pushed from
-                                     // ex mode(:global or :visual for example)
+                                     // ex mode (:global or :visual for example)
   bool toplevel;                     // top-level normal mode
   oparg_T oa;                        // operator arguments
   cmdarg_T ca;                       // command arguments
@@ -504,9 +504,9 @@ bool op_pending(void)
 /// Normal state entry point. This is called on:
 ///
 /// - Startup, In this case the function never returns.
-/// - The command-line window is opened(`q:`). Returns when `cmdwin_result` != 0.
+/// - The command-line window is opened (`q:`). Returns when `cmdwin_result` != 0.
 /// - The :visual command is called from :global in ex mode, `:global/PAT/visual`
-///   for example. Returns when re-entering ex mode(because ex mode recursion is
+///   for example. Returns when re-entering ex mode (because ex mode recursion is
 ///   not allowed)
 ///
 /// This used to be called main_loop() on main.c
@@ -642,8 +642,7 @@ static bool normal_need_redraw_mode_message(NormalState *s)
   return (
           // 'showmode' is set and messages can be printed
           ((p_smd && msg_silent == 0
-            // must restart insert mode(ctrl+o or ctrl+l) or we just entered visual
-            // mode
+            // must restart insert mode (ctrl+o or ctrl+l) or just entered visual mode
             && (restart_edit != 0 || (VIsual_active
                                       && s->old_pos.lnum == curwin->w_cursor.lnum
                                       && s->old_pos.col == curwin->w_cursor.col))
@@ -6625,8 +6624,8 @@ static void nv_event(cmdarg_T *cap)
   // `input_get` branch was not executed (!multiqueue_empty(loop.events), which
   // could have `may_garbage_collect` set to true in `normal_check`).
   //
-  // That is because here we may run code that calls `input_get`
-  // later(`f_confirm` or `get_keystroke` for example), but in these cases it is
+  // That is because here we may run code that calls `input_get` later
+  // (`f_confirm` or `get_keystroke` for example), but in these cases it is
   // not safe to perform garbage collection because there could be unreferenced
   // lists or dicts being used.
   may_garbage_collect = false;
