@@ -2993,6 +2993,8 @@ static int fuzzy_match_compute_score(const char *const str, const int strSz,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   assert(numMatches > 0);  // suppress clang "result of operation is garbage"
+  const char *p = str;
+  uint32_t sidx = 0;
   // Initialize score
   int score = 100;
   bool is_exact_match = true;
@@ -3026,12 +3028,12 @@ static int fuzzy_match_compute_score(const char *const str, const int strSz,
     // Check for bonuses based on neighbor character value
     if (currIdx > 0) {
       // Camel case
-      const char *p = str;
       int neighbor = ' ';
 
-      for (uint32_t sidx = 0; sidx < currIdx; sidx++) {
+      while (sidx < currIdx) {
         neighbor = utf_ptr2char(p);
         MB_PTR_ADV(p);
+        sidx++;
       }
       const int curr = utf_ptr2char(p);
 
