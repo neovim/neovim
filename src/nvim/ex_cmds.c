@@ -3799,6 +3799,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               typed = prompt_for_input(p, HLF_R, true, NULL);
               xfree(p);
 
+              msg_didout = false;                 // don't scroll up
+              gotocmdline(true);
               p_lz = save_p_lz;
               RedrawingDisabled = temp;
 
