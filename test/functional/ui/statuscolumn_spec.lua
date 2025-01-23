@@ -227,6 +227,14 @@ describe('statuscolumn', function()
       {1: }{8:8│}aaaaa                                             |
                                                            |
     ]])
+    -- Last segment and fillchar are highlighted properly
+    command("set stc=%#Error#%{v:relnum?'Foo':'FooBar'}")
+    screen:expect([[
+      {9:Foo   }aaaaa                                          |*4
+      {9:FooBar}^aaaaa                                          |
+      {9:Foo   }aaaaa                                          |*8
+                                                           |
+    ]])
   end)
 
   it('works with wrapped lines, signs and folds', function()
