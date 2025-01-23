@@ -654,8 +654,8 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
     p = sp->start;
   }
   size_t translen = transstr_buf(p, buf + len - p, transbuf, MAXPATHL, true);
-  draw_col_buf(wp, wlv, transbuf, translen, num_attr, fold_vcol, false);
-  draw_col_fill(wlv, schar_from_ascii(' '), stcp->width - width, num_attr);
+  draw_col_buf(wp, wlv, transbuf, translen, cur_attr, fold_vcol, false);
+  draw_col_fill(wlv, schar_from_ascii(' '), stcp->width - width, cur_attr);
 }
 
 static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
