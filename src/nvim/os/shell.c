@@ -1208,10 +1208,11 @@ static void read_input(StringBuilder *buf)
   size_t len = 0;
   linenr_T lnum = curbuf->b_op_start.lnum;
   char *lp = ml_get(lnum);
+  size_t lplen = (size_t)ml_get_len(lnum);
 
   while (true) {
-    size_t l = strlen(lp + written);
-    if (l == 0) {
+    lplen -= written;
+    if (lplen == 0) {
       len = 0;
     } else if (lp[written] == NL) {
       // NL -> NUL translation
@@ -1219,11 +1220,11 @@ static void read_input(StringBuilder *buf)
       kv_push(*buf, NUL);
     } else {
       char *s = vim_strchr(lp + written, NL);
-      len = s == NULL ? l : (size_t)(s - (lp + written));
+      len = s == NULL ? lplen : (size_t)(s - (lp + written));
       kv_concat_len(*buf, lp + written, len);
     }
 
-    if (len == l) {
+    if (len == lplen) {
       // Finished a line, add a NL, unless this line should not have one.
       if (lnum != curbuf->b_op_end.lnum
           || (!curbuf->b_p_bin && curbuf->b_p_fixeol)
@@ -1236,6 +1237,7 @@ static void read_input(StringBuilder *buf)
         break;
       }
       lp = ml_get(lnum);
+      lplen = (size_t)ml_get_len(lnum);
       written = 0;
     } else if (len > 0) {
       written += len;
