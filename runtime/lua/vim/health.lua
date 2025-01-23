@@ -13,7 +13,7 @@ local function filepath_to_healthcheck(path)
     func = 'health#' .. name .. '#check'
     filetype = 'v'
   else
-    local subpath = path:gsub('.*lua/', '')
+    local subpath = path:gsub('.*/lua/', '')
     if vim.fs.basename(subpath) == 'health.lua' then
       -- */health.lua
       name = assert(vim.fs.dirname(subpath))
