@@ -1587,8 +1587,8 @@ Object nlua_call_ref_ctx(bool fast, LuaRef ref, const char *name, Array args, Lu
     if (nlua_fast_cfpcall(lstate, nargs, 1, -1) < 0) {
       // error is already scheduled, set anyways to convey failure.
       api_set_error(err, kErrorTypeException, "fast context failure");
+      return NIL;
     }
-    return NIL;
   } else if (nlua_pcall(lstate, nargs, 1)) {
     // if err is passed, the caller will deal with the error.
     if (err) {

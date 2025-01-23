@@ -423,4 +423,13 @@ describe('vim.ui_attach', function()
       {100:Press ENTER or type command to continue}^ |
     ]])
   end)
+
+  it('sourcing invalid file does not crash #32166', function()
+    exec_lua([[
+      local ns = vim.api.nvim_create_namespace("")
+      vim.ui_attach(ns, { ext_messages = true }, function() end)
+    ]])
+    feed((':luafile %s<CR>'):format(testlog))
+    n.assert_alive()
+  end)
 end)
