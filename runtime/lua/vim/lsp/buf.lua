@@ -254,7 +254,7 @@ end
 --- ```
 --- @field on_list? fun(t: vim.lsp.LocationOpts.OnList)
 ---
---- Whether to use the |location-list| or the |quickfix| list.
+--- Whether to use the |location-list| or the |quickfix| list in the default handler.
 --- ```lua
 --- vim.lsp.buf.definition({ loclist = true })
 --- vim.lsp.buf.references(nil, { loclist = false })

@@ -247,12 +247,12 @@ local function response_to_list(map_result, entity, title_fn)
     local items = map_result(result, ctx.bufnr)
 
     local list = { title = title, items = items, context = ctx }
-    if config.loclist then
-      vim.fn.setloclist(0, {}, ' ', list)
-      vim.cmd.lopen()
-    elseif config.on_list then
+    if config.on_list then
       assert(vim.is_callable(config.on_list), 'on_list is not a function')
       config.on_list(list)
+    elseif config.loclist then
+      vim.fn.setloclist(0, {}, ' ', list)
+      vim.cmd.lopen()
     else
       vim.fn.setqflist({}, ' ', list)
       vim.cmd('botright copen')
