@@ -1098,6 +1098,10 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    list of alternatives, but not how the candidates are
 --- 	    collected (using different completion types).
 ---
+---    nosort   Disable sorting of completion candidates based on fuzzy
+--- 	    scores when "fuzzy" is enabled. Candidates will appear
+--- 	    in their original order.
+---
 --- @type string
 vim.o.completeopt = "menu,preview"
 vim.o.cot = vim.o.completeopt

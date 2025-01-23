@@ -1493,6 +1493,7 @@ local options = {
         'noinsert',
         'noselect',
         'fuzzy',
+        'nosort',
       },
       flags = true,
       deny_duplicates = true,
@@ -1537,6 +1538,10 @@ local options = {
         	    difference how completion candidates are reduced from the
         	    list of alternatives, but not how the candidates are
         	    collected (using different completion types).
+
+           nosort   Disable sorting of completion candidates based on fuzzy
+        	    scores when "fuzzy" is enabled. Candidates will appear
+        	    in their original order.
       ]=],
       full_name = 'completeopt',
       list = 'onecomma',
