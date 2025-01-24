@@ -3,6 +3,7 @@
 -- Usage:
 --    ./scripts/bump_deps.lua -h
 
+assert(vim.fn.executable('gh') == 1)
 assert(vim.fn.executable('sed') == 1)
 
 local required_branch_prefix = 'bump-'
@@ -38,14 +39,14 @@ end
 -- Executes and returns the output of `cmd`, or nil on failure.
 -- if die_on_fail is true, process dies with die_msg on failure
 local function _run(cmd, die_on_fail, die_msg)
-  local rv = vim.trim(vim.system(cmd, { text = true }):wait().stdout) or ''
-  if vim.v.shell_error ~= 0 then
+  local rv = vim.system(cmd):wait()
+  if rv.code ~= 0 then
     if die_on_fail then
       die(die_msg)
     end
     return nil
   end
-  return rv
+  return vim.trim(rv.stdout)
 end
 
 -- Run a command, return nil on failure
@@ -70,9 +71,8 @@ local function get_archive_info(repo, ref)
   local archive_path = temp_dir .. '/' .. archive_name
   local archive_url = 'https://github.com/' .. repo .. '/archive/' .. archive_name
 
-  vim.fs.rm(archive_path, { force = true })
   run_die(
-    { 'curl', '-sL', archive_url, '-o', archive_path },
+    { 'curl', '-sfL', archive_url, '-o', archive_path },
     'Failed to download archive from GitHub'
   )
 
@@ -82,6 +82,23 @@ local function get_archive_info(repo, ref)
   )
   local archive_sha = run(shacmd):gmatch('%w+')()
   return { url = archive_url, sha = archive_sha }
+end
+
+local function get_gh_commit_sha(repo, ref)
+  local full_repo = string.format('https://github.com/%s.git', repo)
+  local tag_exists = run_die({ 'git', 'ls-remote', full_repo, 'refs/tags/' .. ref }) ~= ''
+  -- We'd rather use the git tag over commit sha if possible
+  if tag_exists then
+    return ref
+  end
+
+  local sha = assert(
+    run_die(
+      { 'gh', 'api', 'repos/' .. repo .. '/commits/' .. ref, '--jq', '.sha' },
+      'Failed to get commit hash from GitHub. Not a valid ref?'
+    )
+  )
+  return sha
 end
 
 local function update_deps_file(symbol, kind, value)
@@ -103,13 +120,9 @@ local function ref(name, _ref)
     deps_file .. ' has uncommitted changes'
   )
 
-  local full_repo = string.format('https://github.com/%s.git', repo)
-  -- `git ls-remote` returning empty string means provided ref is a regular commit hash and not a
-  -- tag nor HEAD.
-  local sha = vim.split(assert(run_die({ 'git', 'ls-remote', full_repo, _ref })), '\t')[1]
-  local commit_sha = sha == '' and _ref or sha
+  _ref = get_gh_commit_sha(repo, _ref)
 
-  local archive = get_archive_info(repo, commit_sha)
+  local archive = get_archive_info(repo, _ref)
   local comment = string.sub(_ref, 1, 9)
 
   local checked_out_branch = assert(run({ 'git', 'rev-parse', '--abbrev-ref', 'HEAD' }))
