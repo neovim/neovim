@@ -538,7 +538,7 @@ describe('decorations providers', function()
     ]]}
   end)
 
-  it('multiple instances of eol right align', function()
+  it('multiple eol_right_align', function()
     insert(mulholland)
     setup_provider [[
       local hl = api.nvim_get_hl_id_by_name "ErrorMsg"
