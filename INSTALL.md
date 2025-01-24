@@ -15,9 +15,10 @@ Install from download
 Downloads are available on the [Releases](https://github.com/neovim/neovim/releases) page.
 
 * Latest [stable release](https://github.com/neovim/neovim/releases/latest)
-    * [macOS x86](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-x86_64.tar.gz)
-    * [macOS arm](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-arm64.tar.gz)
-    * [Linux](https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz)
+    * [macOS x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-x86_64.tar.gz)
+    * [macOS arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-arm64.tar.gz)
+    * [Linux x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz)
+    * [Linux arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-arm64.tar.gz)
     * [Windows](https://github.com/neovim/neovim/releases/latest/download/nvim-win64.msi)
 * Latest [development prerelease](https://github.com/neovim/neovim/releases/nightly)
 
@@ -118,24 +119,24 @@ Then add this to your shell config (`~/.bashrc`, `~/.zshrc`, ...):
 
 ### AppImage ("universal" Linux package)
 
-The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppImage](https://appimage.org) that runs on most Linux systems. No installation is needed, just download `nvim.appimage` and run it. (It might not work if your Linux distribution is more than 4 years old.)
+The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppImage](https://appimage.org) that runs on most Linux systems. No installation is needed, just download `nvim-linux-x86_64.appimage` and run it. (It might not work if your Linux distribution is more than 4 years old.) The following instructions assume an `x86_64` architecture; on ARM Linux replace with `arm64`.
 
-    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
-    chmod u+x nvim.appimage
-    ./nvim.appimage
+    curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-86_64.appimage
+    chmod u+x nvim-linux-x86_64.appimage
+    ./nvim-linux-x86_64.appimage
 
 To expose nvim globally:
 
     mkdir -p /opt/nvim
-    mv nvim.appimage /opt/nvim/nvim
+    mv nvim-linux-x86_64.appimage /opt/nvim/nvim
 
 And the following line to your shell config (`~/.bashrc`, `~/.zshrc`, ...):
 
     export PATH="$PATH:/opt/nvim/"
 
-If the `./nvim.appimage` command fails, try:
+If the `./nvim-linux-x86_64.appimage` command fails, try:
 ```sh
-./nvim.appimage --appimage-extract
+./nvim-linux-x86_64.appimage --appimage-extract
 ./squashfs-root/AppRun --version
 
 # Optional: exposing nvim globally.

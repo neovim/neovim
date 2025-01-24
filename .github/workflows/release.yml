@@ -39,10 +39,21 @@ jobs:
           printf "appimage_tag=${APPIMAGE_TAG}\n" >> $GITHUB_OUTPUT
 
   linux:
-    runs-on: ubuntu-20.04
     needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ ubuntu-20.04, ubuntu-24.04-arm ]
+        include:
+          - runner: ubuntu-20.04
+            arch: x86_64
+            cc: gcc-10
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+    runs-on: ${{ matrix.runner }}
     env:
-      CC: gcc-10
+      CC: ${{ matrix.cc }}
+      LDAI_NO_APPSTREAM: 1 # skip checking (broken) AppStream metadata for issues
     outputs:
       version: ${{ steps.build.outputs.version }}
     steps:
@@ -52,22 +63,25 @@ jobs:
           fetch-depth: 0
       - run: ./.github/scripts/install_deps.sh
       - run: echo "CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }}" >> $GITHUB_ENV
+      - if: matrix.arch == 'aarch64'
+        run: sudo apt-get update && sudo apt-get install -y libfuse2t64
       - name: appimage
-        run: ./scripts/genappimage.sh ${{ needs.setup.outputs.appimage_tag }}
+        run:  |
+          ./scripts/genappimage.sh ${{ needs.setup.outputs.appimage_tag }}
       - name: tar.gz
         run: cpack --config build/CPackConfig.cmake -G TGZ
       - uses: actions/upload-artifact@v4
         with:
-          name: appimage
+          name: appimage-${{ matrix.arch }}
           path: |
-            build/bin/nvim.appimage
-            build/bin/nvim.appimage.zsync
+            build/bin/nvim-linux-${{ matrix.arch }}.appimage
+            build/bin/nvim-linux-${{ matrix.arch }}.appimage.zsync
           retention-days: 1
       - uses: actions/upload-artifact@v4
         with:
-          name: nvim-linux64
+          name: nvim-linux-${{ matrix.arch }}
           path: |
-            build/nvim-linux64.tar.gz
+            build/nvim-linux-${{ matrix.arch }}.tar.gz
           retention-days: 1
       - name: Export version
         id: build
@@ -75,7 +89,6 @@ jobs:
           printf 'version<<END\n' >> $GITHUB_OUTPUT
           ./build/bin/nvim --version | head -n 3 >> $GITHUB_OUTPUT
           printf 'END\n' >> $GITHUB_OUTPUT
-
   macos:
     needs: setup
     strategy:
@@ -104,7 +117,6 @@ jobs:
             -D CMAKE_BUILD_TYPE=${{ needs.setup.outputs.build_type }} \
             -D CMAKE_FIND_FRAMEWORK=NEVER
           cmake --build .deps
-
       - name: Build neovim
         run: |
           cmake -B build -G Ninja \
@@ -112,7 +124,6 @@ jobs:
             -D ENABLE_LIBINTL=OFF \
             -D CMAKE_FIND_FRAMEWORK=NEVER
           cmake --build build
-
       - name: Package
         run: cpack --config build/CPackConfig.cmake
 
@@ -185,23 +196,45 @@ jobs:
            echo 'PRERELEASE=') >> $GITHUB_ENV
           gh release delete stable --yes || true
           git push origin :stable || true
+      - name: Rename aarch64 artifacts
+        run: |
+          cd ./nvim-linux-aarch64
+          mv nvim-linux-aarch64.tar.gz nvim-linux-arm64.tar.gz
+          cd ../appimage-aarch64
+          mv nvim-linux-aarch64.appimage nvim-linux-arm64.appimage
+          mv nvim-linux-aarch64.appimage.zsync nvim-linux-arm64.appimage.zsync
       # `sha256sum` outputs <sha> <path>, so we cd into each dir to drop the
       # containing folder from the output.
-      - name: Generate Linux64 SHA256 checksums
+      - name: Generate Linux x86_64 SHA256 checksums
         run: |
-          cd ./nvim-linux64
-          sha256sum nvim-linux64.tar.gz > nvim-linux64.tar.gz.sha256sum
-          echo "SHA_LINUX_64_TAR=$(cat nvim-linux64.tar.gz.sha256sum)" >> $GITHUB_ENV
-      - name: Generate App Image SHA256 checksums
+          cd ./nvim-linux-x86_64
+          sha256sum nvim-linux-x86_64.tar.gz > nvim-linux-x86_64.tar.gz.sha256sum
+          echo "SHA_LINUX_X86_64_TAR=$(cat nvim-linux-x86_64.tar.gz.sha256sum)" >> $GITHUB_ENV
+      - name: Generate Linux arm64 SHA256 checksums
         run: |
-          cd ./appimage
-          sha256sum nvim.appimage > nvim.appimage.sha256sum
-          echo "SHA_APP_IMAGE=$(cat nvim.appimage.sha256sum)" >> $GITHUB_ENV
-      - name: Generate App Image Zsync SHA256 checksums
+          cd ./nvim-linux-aarch64
+          sha256sum nvim-linux-arm64.tar.gz > nvim-linux-arm64.tar.gz.sha256sum
+          echo "SHA_LINUX_ARM64_TAR=$(cat nvim-linux-arm64.tar.gz.sha256sum)" >> $GITHUB_ENV
+      - name: Generate AppImage x64_64 SHA256 checksums
         run: |
-          cd ./appimage
-          sha256sum nvim.appimage.zsync > nvim.appimage.zsync.sha256sum
-          echo "SHA_APP_IMAGE_ZSYNC=$(cat nvim.appimage.zsync.sha256sum)" >> $GITHUB_ENV
+          cd ./appimage-x86_64
+          sha256sum nvim-linux-x86_64.appimage > nvim-linux-x86_64.appimage.sha256sum
+          echo "SHA_APPIMAGE_X86_64=$(cat nvim-linux-x86_64.appimage.sha256sum)" >> $GITHUB_ENV
+      - name: Generate AppImage x86_64 Zsync SHA256 checksums
+        run: |
+          cd ./appimage-x86_64
+          sha256sum nvim-linux-x86_64.appimage.zsync > nvim-linux-x86_64.appimage.zsync.sha256sum
+          echo "SHA_APPIMAGE_X86_64_ZSYNC=$(cat nvim-linux-x86_64.appimage.zsync.sha256sum)" >> $GITHUB_ENV
+      - name: Generate AppImage x64_64 SHA256 checksums
+        run: |
+          cd ./appimage-aarch64
+          sha256sum nvim-linux-arm64.appimage > nvim-linux-arm64.appimage.sha256sum
+          echo "SHA_APPIMAGE_ARM64=$(cat nvim-linux-arm64.appimage.sha256sum)" >> $GITHUB_ENV
+      - name: Generate AppImage arm64 Zsync SHA256 checksums
+        run: |
+          cd ./appimage-aarch64
+          sha256sum nvim-linux-arm64.appimage.zsync > nvim-linux-arm64.appimage.zsync.sha256sum
+          echo "SHA_APPIMAGE_ARM64_ZSYNC=$(cat nvim-linux-arm64.appimage.zsync.sha256sum)" >> $GITHUB_ENV
       - name: Generate macos x86_64 SHA256 checksums
         run: |
           cd ./nvim-macos-x86_64
@@ -219,6 +252,16 @@ jobs:
           echo "SHA_WIN_64_ZIP=$(cat nvim-win64.zip.sha256sum)" >> $GITHUB_ENV
           sha256sum nvim-win64.msi > nvim-win64.msi.sha256sum
           echo "SHA_WIN_64_MSI=$(cat nvim-win64.msi.sha256sum)" >> $GITHUB_ENV
+      - name: Create linux64 aliases # For backward compatibility; remove for 0.12
+        run: |
+          cd ./nvim-linux-x86_64
+          cp nvim-linux-x86_64.tar.gz nvim-linux64.tar.gz
+          cp nvim-linux-x86_64.tar.gz.sha256sum nvim-linux64.tar.gz.sha256sum
+          cd ../appimage-x86_64
+          cp nvim-linux-x86_64.appimage nvim.appimage
+          cp nvim-linux-x86_64.appimage.sha256sum nvim.appimage.sha256sum
+          cp nvim-linux-x86_64.appimage.zsync nvim.appimage.zsync
+          cp nvim-linux-x86_64.appimage.zsync.sha256sum nvim.appimage.zsync.sha256sum
       - name: Publish release
         env:
           NVIM_VERSION: ${{ needs.linux.outputs.version }}
@@ -226,6 +269,6 @@ jobs:
         run: |
           envsubst < "$GITHUB_WORKSPACE/.github/workflows/notes.md" > "$RUNNER_TEMP/notes.md"
           if [ "$TAG_NAME" != "nightly" ]; then
-            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux64/* appimage/* nvim-win64/*
+            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-aarch64/* appimage-x86_64/* appimage-aarch64/* nvim-win64/*
           fi
-          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux64/* appimage/* nvim-win64/*
+          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos-x86_64/* nvim-macos-arm64/* nvim-linux-x86_64/* nvim-linux-aarch64/* appimage-x86_64/* appimage-aarch64/* nvim-win64/*
