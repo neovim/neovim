@@ -891,6 +891,7 @@ local function set_list(loclist, opts)
   if open then
     if not loclist then
       -- First navigate to the diagnostics quickfix list.
+      --- @type integer
       local nr = vim.fn.getqflist({ id = qf_id, nr = 0 }).nr
       api.nvim_command(('silent %dchistory'):format(nr))
 
@@ -2250,18 +2251,24 @@ function M.open_float(opts, ...)
   if not opts.focus_id then
     opts.focus_id = scope
   end
+
+  --- @diagnostic disable-next-line: param-type-mismatch
   local float_bufnr, winnr = vim.lsp.util.open_floating_preview(lines, 'plaintext', opts)
   vim.bo[float_bufnr].path = vim.bo[bufnr].path
+
+  --- @diagnostic disable-next-line: deprecated
+  local add_highlight = api.nvim_buf_add_highlight
+
   for i, hl in ipairs(highlights) do
     local line = lines[i]
     local prefix_len = hl.prefix and hl.prefix.length or 0
     local suffix_len = hl.suffix and hl.suffix.length or 0
     if prefix_len > 0 then
-      api.nvim_buf_add_highlight(float_bufnr, -1, hl.prefix.hlname, i - 1, 0, prefix_len)
+      add_highlight(float_bufnr, -1, hl.prefix.hlname, i - 1, 0, prefix_len)
     end
-    api.nvim_buf_add_highlight(float_bufnr, -1, hl.hlname, i - 1, prefix_len, #line - suffix_len)
+    add_highlight(float_bufnr, -1, hl.hlname, i - 1, prefix_len, #line - suffix_len)
     if suffix_len > 0 then
-      api.nvim_buf_add_highlight(float_bufnr, -1, hl.suffix.hlname, i - 1, #line - suffix_len, -1)
+      add_highlight(float_bufnr, -1, hl.suffix.hlname, i - 1, #line - suffix_len, -1)
     end
   end
 

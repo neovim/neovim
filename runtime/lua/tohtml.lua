@@ -317,7 +317,7 @@ end
 --- @return nil|integer
 local function register_hl(state, hl)
   if type(hl) == 'table' then
-    hl = hl[#hl]
+    hl = hl[#hl] --- @type string|integer
   end
   if type(hl) == 'nil' then
     return
@@ -1162,7 +1162,9 @@ local function extend_pre(out, state)
       s = s .. _pre_text_to_html(state, row)
     end
     local true_line_len = #line + 1
-    for k in pairs(style_line) do
+    for k in
+      pairs(style_line --[[@as table<string,any>]])
+    do
       if type(k) == 'number' and k > true_line_len then
         true_line_len = k
       end

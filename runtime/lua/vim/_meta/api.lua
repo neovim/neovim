@@ -3,6 +3,10 @@
 -- DO NOT EDIT
 error('Cannot require a meta file')
 
+--- This file embeds vimdoc as the function descriptions
+--- so ignore any doc related errors.
+--- @diagnostic disable: undefined-doc-name,luadoc-miss-symbol
+
 vim.api = {}
 
 --- @private

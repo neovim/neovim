@@ -834,6 +834,12 @@ TSNode:range({include_bytes})                                 *TSNode:range()*
     Parameters: ~
       • {include_bytes}  (`boolean?`)
 
+    Return (multiple): ~
+        (`integer`)
+        (`integer`)
+        (`integer`)
+        (`integer`)
+
 TSNode:sexpr()                                                *TSNode:sexpr()*
     Get an S-expression representing the node as a string.
 
@@ -942,7 +948,7 @@ get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table
 
     Parameters: ~
-      • {node_or_range}  (`TSNode|table`) Node or table of positions
+      • {node_or_range}  (`TSNode|Range4`) Node or table of positions
 
     Return (multiple): ~
         (`integer`) start_row
@@ -1181,7 +1187,7 @@ inspect({lang})                            *vim.treesitter.language.inspect()*
       • {lang}  (`string`) Language
 
     Return: ~
-        (`table`)
+        (`TSLangInfo`)
 
 register({lang}, {filetype})              *vim.treesitter.language.register()*
     Register a parser named {lang} to be used for {filetype}(s).

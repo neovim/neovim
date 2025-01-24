@@ -881,7 +881,7 @@ end
 --- (refactor of filetype.vim since the patterns are case-insensitive)
 --- @type vim.filetype.mapfn
 function M.log(path, _)
-  path = path:lower()
+  path = path:lower() --- @type string LuaLS bug
   if
     findany(
       path,
@@ -1167,7 +1167,7 @@ end
 --- @type vim.filetype.mapfn
 function M.perl(path, bufnr)
   local dir_name = vim.fs.dirname(path)
-  if fn.expand(path, '%:e') == 't' and (dir_name == 't' or dir_name == 'xt') then
+  if fn.fnamemodify(path, '%:e') == 't' and (dir_name == 't' or dir_name == 'xt') then
     return 'perl'
   end
   local first_line = getline(bufnr, 1)
@@ -1375,7 +1375,7 @@ end
 local udev_rules_pattern = '^%s*udev_rules%s*=%s*"([%^"]+)/*".*'
 --- @type vim.filetype.mapfn
 function M.rules(path)
-  path = path:lower()
+  path = path:lower() --- @type string LuaLS bug
   if
     findany(path, {
       '/etc/udev/.*%.rules$',
@@ -1398,7 +1398,7 @@ function M.rules(path)
     if not ok then
       return 'hog'
     end
-    local dir = fn.expand(path, ':h')
+    local dir = fn.fnamemodify(path, ':h')
     for _, line in ipairs(config_lines) do
       local match = line:match(udev_rules_pattern)
       if match then

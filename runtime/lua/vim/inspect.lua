@@ -1,3 +1,4 @@
+--- @diagnostic disable: no-unknown
 local inspect = {
   _VERSION = 'inspect.lua 3.1.0',
   _URL = 'http://github.com/kikito/inspect.lua',

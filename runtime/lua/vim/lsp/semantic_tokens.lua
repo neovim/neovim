@@ -139,7 +139,7 @@ local function tokens_to_ranges(data, bufnr, client, request)
 
     if token_type then
       local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
-      local end_char = start_char + data[i + 2]
+      local end_char = start_char + data[i + 2] --- @type integer LuaLS bug
       local buf_line = lines and lines[line + 1] or ''
       local start_col = vim.str_byteindex(buf_line, encoding, start_char, false)
       local end_col = vim.str_byteindex(buf_line, encoding, end_char, false)

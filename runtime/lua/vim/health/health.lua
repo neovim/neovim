@@ -183,13 +183,16 @@ end
 local function check_rplugin_manifest()
   health.start('Remote Plugins')
 
-  local existing_rplugins = {}
-  for _, item in ipairs(vim.fn['remote#host#PluginsForHost']('python3')) do
+  local existing_rplugins = {} --- @type table<string,string>
+  --- @type {path:string}[]
+  local items = vim.fn['remote#host#PluginsForHost']('python3')
+  for _, item in ipairs(items) do
     existing_rplugins[item.path] = 'python3'
   end
 
   local require_update = false
   local handle_path = function(path)
+    --- @type string[]
     local python_glob = vim.fn.glob(path .. '/rplugin/python*', true, true)
     if vim.tbl_isempty(python_glob) then
       return
@@ -198,6 +201,7 @@ local function check_rplugin_manifest()
     local python_dir = python_glob[1]
     local python_version = vim.fs.basename(python_dir)
 
+    --- @type string[]
     local scripts = vim.fn.glob(python_dir .. '/*.py', true, true)
     vim.list_extend(scripts, vim.fn.glob(python_dir .. '/*/__init__.py', true, true))
 
@@ -227,7 +231,10 @@ local function check_rplugin_manifest()
     end
   end
 
-  for _, path in ipairs(vim.fn.map(vim.split(vim.o.runtimepath, ','), 'resolve(v:val)')) do
+  --- @type string[]
+  local paths = vim.fn.map(vim.split(vim.o.runtimepath, ','), 'resolve(v:val)')
+
+  for _, path in ipairs(paths) do
     handle_path(path)
   end
 

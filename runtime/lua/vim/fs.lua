@@ -546,7 +546,7 @@ local function expand_home(path, sep)
       home = home:sub(1, -2)
     end
 
-    path = home .. path:sub(2)
+    path = home .. path:sub(2) --- @type string
   end
 
   return path
@@ -620,7 +620,7 @@ function M.normalize(path, opts)
 
   -- Expand environment variables if `opts.expand_env` isn't `false`
   if opts.expand_env == nil or opts.expand_env then
-    path = path:gsub('%$([%w_]+)', uv.os_getenv)
+    path = path:gsub('%$([%w_]+)', uv.os_getenv) --- @type string
   end
 
   if win then

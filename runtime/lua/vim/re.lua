@@ -1,3 +1,4 @@
+--- @diagnostic disable: no-unknown
 --
 -- Copyright 2007-2023, Lua.org & PUC-Rio  (see 'lpeg.html' for license)
 -- written by Roberto Ierusalimschy

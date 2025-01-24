@@ -126,7 +126,7 @@ local function filepath_to_healthcheck(path)
       -- */health/init.lua
       name = vim.fs.dirname(vim.fs.dirname(subpath))
     end
-    name = name:gsub('/', '.')
+    name = assert(name:gsub('/', '.')) --- @type string
 
     func = 'require("' .. name .. '.health").check()'
     filetype = 'l'
@@ -235,7 +235,7 @@ local function format_report_message(status, msg, ...)
     -- Report each suggestion
     for _, v in ipairs(varargs) do
       if v then
-        output = output .. '\n    - ' .. indent_after_line1(v, 6)
+        output = output .. '\n    - ' .. indent_after_line1(v, 6) --- @type string
       end
     end
   end
@@ -445,8 +445,7 @@ function M._check(mods, plugin_names)
 
   -- Quit with 'q' inside healthcheck buffers.
   vim.keymap.set('n', 'q', function()
-    local ok, _ = pcall(vim.cmd.close)
-    if not ok then
+    if not pcall(vim.cmd.close) then
       vim.cmd.bdelete()
     end
   end, { buffer = bufnr, silent = true, noremap = true, nowait = true })

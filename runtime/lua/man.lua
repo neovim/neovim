@@ -201,6 +201,7 @@ local function highlight_man_page()
   api.nvim_buf_set_lines(0, 0, -1, false, lines)
 
   for _, hl in ipairs(hls) do
+    --- @diagnostic disable-next-line: deprecated
     api.nvim_buf_add_highlight(0, -1, HlGroups[hl.attr], hl.row, hl.start, hl.final)
   end
 

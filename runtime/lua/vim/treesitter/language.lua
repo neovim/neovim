@@ -175,7 +175,7 @@ end
 --- (`"`).
 ---
 ---@param lang string Language
----@return table
+---@return TSLangInfo
 function M.inspect(lang)
   M.add(lang)
   return vim._ts_inspect_language(lang)

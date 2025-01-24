@@ -137,14 +137,6 @@ end
 
 local decor_ns = api.nvim_create_namespace('nvim.treesitter.dev')
 
----@param range Range4
----@return string
-local function range_to_string(range)
-  ---@type integer, integer, integer, integer
-  local row, col, end_row, end_col = unpack(range)
-  return string.format('[%d, %d] - [%d, %d]', row, col, end_row, end_col)
-end
-
 ---@param w integer
 ---@return boolean closed Whether the window was closed.
 local function close_win(w)
@@ -227,7 +219,7 @@ function TSTreeView:draw(bufnr)
   local lang_hl_marks = {} ---@type table[]
 
   for i, item in self:iter() do
-    local range_str = range_to_string({ item.node:range() })
+    local range_str = ('[%d, %d] - [%d, %d]'):format(item.node:range())
     local lang_str = self.opts.lang and string.format(' %s', item.lang) or ''
 
     local text ---@type string

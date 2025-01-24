@@ -110,6 +110,7 @@ function TSNode:end_() end
 --- - end column
 --- - end byte (if {include_bytes} is `true`)
 --- @param include_bytes boolean?
+--- @return integer, integer, integer, integer
 function TSNode:range(include_bytes) end
 
 --- @nodoc

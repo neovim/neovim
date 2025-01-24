@@ -10,7 +10,8 @@
       "${3rd}/luv/library"
     ],
     "ignoreDir": [
-      "test"
+      "test",
+      "_vim9script.lua"
     ],
     "checkThirdParty": "Disable"
   },

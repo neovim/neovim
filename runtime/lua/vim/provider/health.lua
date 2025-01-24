@@ -10,22 +10,20 @@ end
 
 -- Attempts to construct a shell command from an args list.
 -- Only for display, to help users debug a failed command.
+--- @param cmd string|string[]
 local function shellify(cmd)
   if type(cmd) ~= 'table' then
     return cmd
   end
-  local escaped = {}
+  local escaped = {} --- @type string[]
   for i, v in ipairs(cmd) do
-    if v:match('[^A-Za-z_/.-]') then
-      escaped[i] = vim.fn.shellescape(v)
-    else
-      escaped[i] = v
-    end
+    escaped[i] = v:match('[^A-Za-z_/.-]') and vim.fn.shellescape(v) or v
   end
   return table.concat(escaped, ' ')
 end
 
 -- Handler for s:system() function.
+--- @param self {output: string, stderr: string, add_stderr_to_output: boolean}
 local function system_handler(self, _, data, event)
   if event == 'stderr' then
     if self.add_stderr_to_output then
@@ -38,7 +36,7 @@ local function system_handler(self, _, data, event)
   end
 end
 
---- @param cmd table List of command arguments to execute
+--- @param cmd string|string[] List of command arguments to execute
 --- @param args? table Optional arguments:
 ---                   - stdin (string): Data to write to the job's stdin
 ---                   - stderr (boolean): Append stderr to stdout
@@ -47,8 +45,8 @@ end
 local function system(cmd, args)
   args = args or {}
   local stdin = args.stdin or ''
-  local stderr = vim.F.if_nil(args.stderr, false)
-  local ignore_error = vim.F.if_nil(args.ignore_error, false)
+  local stderr = args.stderr or false
+  local ignore_error = args.ignore_error or false
 
   local shell_error_code = 0
   local opts = {
@@ -530,13 +528,14 @@ local function version_info(python)
   if rc ~= 0 or nvim_version == '' then
     nvim_version = 'unable to find pynvim module version'
     local base = vim.fs.basename(nvim_path)
-    local metas = vim.fn.glob(base .. '-*/METADATA', true, 1)
-    vim.list_extend(metas, vim.fn.glob(base .. '-*/PKG-INFO', true, 1))
-    vim.list_extend(metas, vim.fn.glob(base .. '.egg-info/PKG-INFO', true, 1))
+    local metas = vim.fn.glob(base .. '-*/METADATA', true, true)
+    vim.list_extend(metas, vim.fn.glob(base .. '-*/PKG-INFO', true, true))
+    vim.list_extend(metas, vim.fn.glob(base .. '.egg-info/PKG-INFO', true, true))
     metas = table.sort(metas, compare)
 
     if metas and next(metas) ~= nil then
       for line in io.lines(metas[1]) do
+        --- @cast line string
         local version = line:match('^Version: (%S+)')
         if version then
           nvim_version = version
@@ -762,6 +761,7 @@ local function python()
   -- subshells launched from Nvim.
   local bin_dir = iswin and 'Scripts' or 'bin'
   local venv_bins = vim.fn.glob(string.format('%s/%s/python*', virtual_env, bin_dir), true, true)
+  --- @param v string
   venv_bins = vim.tbl_filter(function(v)
     -- XXX: Remove irrelevant executables found in bin/.
     return not v:match('python.*%-config')
@@ -809,6 +809,7 @@ local function python()
         msg,
         bin_dir,
         table.concat(
+          --- @param v string
           vim.tbl_map(function(v)
             return vim.fs.basename(v)
           end, venv_bins),
@@ -817,12 +818,15 @@ local function python()
       )
     end
     local conj = '\nBut '
+    local msgs = {} --- @type string[]
     for _, err in ipairs(errors) do
-      msg = msg .. conj .. err
+      msgs[#msgs + 1] = msg
+      msgs[#msgs + 1] = conj
+      msgs[#msgs + 1] = err
       conj = '\nAnd '
     end
-    msg = msg .. '\nSo invoking Python may lead to unexpected results.'
-    health.warn(msg, vim.tbl_keys(hints))
+    msgs[#msgs + 1] = '\nSo invoking Python may lead to unexpected results.'
+    health.warn(table.concat(msgs), vim.tbl_keys(hints))
   else
     health.info(msg)
     health.info(

@@ -425,6 +425,7 @@ local VIM_CMD_ARG_MAX = 20
 --- vim.cmd.colorscheme('blue')
 --- ```
 ---
+---@diagnostic disable-next-line: undefined-doc-param
 ---@param command string|table Command(s) to execute.
 ---                            If a string, executes multiple lines of Vimscript at once. In this
 ---                            case, it is an alias to |nvim_exec2()|, where `opts.output` is set
@@ -441,10 +442,12 @@ vim.cmd = setmetatable({}, {
       return ''
     end
   end,
+  --- @param t table<string,function>
   __index = function(t, command)
     t[command] = function(...)
-      local opts
+      local opts --- @type vim.api.keyset.cmd
       if select('#', ...) == 1 and type(select(1, ...)) == 'table' then
+        --- @type vim.api.keyset.cmd
         opts = select(1, ...)
 
         -- Move indexed positions in opts to opt.args
@@ -455,6 +458,7 @@ vim.cmd = setmetatable({}, {
               break
             end
             opts.args[i] = opts[i]
+            --- @diagnostic disable-next-line: no-unknown
             opts[i] = nil
           end
         end
@@ -529,7 +533,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   end
 
   if pos1[1] > pos2[1] or (pos1[1] == pos2[1] and pos1[2] > pos2[2]) then
-    pos1, pos2 = pos2, pos1
+    pos1, pos2 = pos2, pos1 --- @type [integer, integer], [integer, integer]
   end
 
   -- getpos() may return {0,0,0,0}
@@ -701,6 +705,7 @@ function vim._on_key(buf, typed_buf)
   local discard = false
   for k, v in pairs(on_key_cbs) do
     local fn = v[1]
+    --- @type boolean, any
     local ok, rv = xpcall(function()
       return fn(buf, typed_buf)
     end, debug.traceback)
@@ -828,6 +833,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
     -- Return (multiple): ~
     --     (`integer`) UTF-32 index
     --     (`integer`) UTF-16 index
+    --- @diagnostic disable-next-line: redundant-return-value
     return col32, col16
   end
 
@@ -1000,7 +1006,7 @@ function vim._expand_pat(pat, env)
         or vim.v == final_env and { 'v:', 'var' }
         or { nil, nil }
     )
-    assert(prefix, "Can't resolve final_env")
+    assert(prefix and type, "Can't resolve final_env")
     local vars = vim.fn.getcompletion(prefix .. match_part, type) --- @type string[]
     insert_keys(vim
       .iter(vars)

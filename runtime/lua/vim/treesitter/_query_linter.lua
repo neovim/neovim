@@ -138,7 +138,9 @@ local function lint_match(buf, match, query, lang_context, diagnostics)
       -- perform language-independent checks only for first lang
       if lang_context.is_first_lang and cap_id == 'error' then
         local node_text = vim.treesitter.get_node_text(node, buf):gsub('\n', ' ')
-        add_lint_for_node(diagnostics, { node:range() }, 'Syntax error: ' .. node_text)
+        ---@diagnostic disable-next-line: missing-fields LuaLS varargs bug
+        local range = { node:range() } --- @type Range4
+        add_lint_for_node(diagnostics, range, 'Syntax error: ' .. node_text)
       end
 
       -- other checks rely on Neovim parser introspection

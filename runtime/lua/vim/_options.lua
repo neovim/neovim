@@ -688,6 +688,7 @@ local function remove_value(info, current, new)
 end
 
 local function create_option_accessor(scope)
+  --- @diagnostic disable-next-line: no-unknown
   local option_mt
 
   local function make_option(name, value)
@@ -696,6 +697,7 @@ local function create_option_accessor(scope)
     if type(value) == 'table' and getmetatable(value) == option_mt then
       assert(name == value._name, "must be the same value, otherwise that's weird.")
 
+      --- @diagnostic disable-next-line: no-unknown
       value = value._value
     end
 
@@ -719,6 +721,7 @@ local function create_option_accessor(scope)
     end,
 
     append = function(self, right)
+      --- @diagnostic disable-next-line: no-unknown
       self._value = add_value(self._info, self._value, right)
       self:_set()
     end,
@@ -728,6 +731,7 @@ local function create_option_accessor(scope)
     end,
 
     prepend = function(self, right)
+      --- @diagnostic disable-next-line: no-unknown
       self._value = prepend_value(self._info, self._value, right)
       self:_set()
     end,
@@ -737,6 +741,7 @@ local function create_option_accessor(scope)
     end,
 
     remove = function(self, right)
+      --- @diagnostic disable-next-line: no-unknown
       self._value = remove_value(self._info, self._value, right)
       self:_set()
     end,
