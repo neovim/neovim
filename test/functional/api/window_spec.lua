@@ -506,6 +506,48 @@ describe('API/win', function()
       assert_alive()
     end)
 
+    describe('after closing', function()
+      local buf, win0, win1, win2
+
+      before_each(function()
+        win0 = api.nvim_get_current_win()
+        command('new')
+        buf = api.nvim_get_current_buf()
+        win1 = api.nvim_get_current_win()
+        command('set numberwidth=10')
+        command('split')
+        win2 = api.nvim_get_current_win()
+        command('set numberwidth=15')
+        command('enew')
+        api.nvim_set_current_win(win1)
+        command('normal ix')
+        command('enew')
+        api.nvim_set_current_win(win0)
+        eq(4, api.nvim_get_option_value('numberwidth', {}))
+      end)
+
+      -- at this point buffer `buf` is current in no windows. Closing shouldn't affect its defaults
+      it('0 windows', function()
+        api.nvim_set_current_buf(buf)
+        eq(10, api.nvim_get_option_value('numberwidth', {}))
+      end)
+
+      it('1 window', function()
+        api.nvim_win_close(win1, false)
+
+        api.nvim_set_current_buf(buf)
+        eq(10, api.nvim_get_option_value('numberwidth', {}))
+      end)
+
+      it('2 windows', function()
+        api.nvim_win_close(win1, false)
+        api.nvim_win_close(win2, false)
+
+        api.nvim_set_current_buf(buf)
+        eq(10, api.nvim_get_option_value('numberwidth', {}))
+      end)
+    end)
+
     it('returns values for unset local options', function()
       eq(-1, api.nvim_get_option_value('scrolloff', { win = 0, scope = 'local' }))
     end)

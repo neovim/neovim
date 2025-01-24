@@ -29,8 +29,8 @@ local bufstates = vim.defaulttable(function(_)
   })
 end)
 
-local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
-local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
+local namespace = api.nvim_create_namespace('nvim.lsp.inlayhint')
+local augroup = api.nvim_create_augroup('nvim.lsp.inlayhint', {})
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client

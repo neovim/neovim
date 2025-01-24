@@ -1622,6 +1622,11 @@ static void process_hunk(diff_T **dpp, diff_T **dprevp, int idx_orig, int idx_ne
     } else {
       // second overlap of new block with existing block
       dp->df_count[idx_new] += (linenr_T)hunk->count_new;
+      if ((dp->df_lnum[idx_new] + dp->df_count[idx_new] - 1)
+          > curtab->tp_diffbuf[idx_new]->b_ml.ml_line_count) {
+        dp->df_count[idx_new] = curtab->tp_diffbuf[idx_new]->b_ml.ml_line_count
+                                - dp->df_lnum[idx_new] + 1;
+      }
     }
 
     // Adjust the size of the block to include all the lines to the
@@ -1632,6 +1637,11 @@ static void process_hunk(diff_T **dpp, diff_T **dprevp, int idx_orig, int idx_ne
     if (off < 0) {
       // new change ends in existing block, adjust the end
       dp->df_count[idx_new] += -off;
+      if ((dp->df_lnum[idx_new] + dp->df_count[idx_new] - 1)
+          > curtab->tp_diffbuf[idx_new]->b_ml.ml_line_count) {
+        dp->df_count[idx_new] = curtab->tp_diffbuf[idx_new]->b_ml.ml_line_count
+                                - dp->df_lnum[idx_new] + 1;
+      }
       off = 0;
     }
 

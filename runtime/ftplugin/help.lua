@@ -46,7 +46,7 @@ local query = vim.treesitter.query.parse(
     (#set! @code lang @_lang))
 ]]
 )
-local run_message_ns = vim.api.nvim_create_namespace('vimdoc/run_message')
+local run_message_ns = vim.api.nvim_create_namespace('nvim.vimdoc.run_message')
 
 vim.api.nvim_buf_clear_namespace(0, run_message_ns, 0, -1)
 for _, match, metadata in query:iter_matches(tree:root(), 0, 0, -1) do
@@ -57,7 +57,7 @@ for _, match, metadata in query:iter_matches(tree:root(), 0, 0, -1) do
 
     if name == 'code' then
       vim.api.nvim_buf_set_extmark(0, run_message_ns, start, 0, {
-        virt_text = { { 'Run with `yxx`', 'LspCodeLens' } },
+        virt_text = { { 'Run with `g==`', 'LspCodeLens' } },
       })
       local code = vim.treesitter.get_node_text(node, 0)
       local lang_node = match[metadata[id].lang][1] --[[@as TSNode]]
@@ -69,7 +69,7 @@ for _, match, metadata in query:iter_matches(tree:root(), 0, 0, -1) do
   end
 end
 
-vim.keymap.set('n', 'yxx', function()
+vim.keymap.set('n', 'g==', function()
   local pos = vim.api.nvim_win_get_cursor(0)[1]
   local code_block = code_blocks[pos]
   if not code_block then
@@ -82,5 +82,5 @@ vim.keymap.set('n', 'yxx', function()
 end, { buffer = true })
 
 vim.b.undo_ftplugin = (vim.b.undo_ftplugin or '')
-  .. '\n exe "nunmap <buffer> gO" | exe "nunmap <buffer> yxx"'
+  .. '\n exe "nunmap <buffer> gO" | exe "nunmap <buffer> g=="'
 vim.b.undo_ftplugin = vim.b.undo_ftplugin .. ' | call v:lua.vim.treesitter.stop()'

@@ -177,14 +177,11 @@ bool default_grid_alloc(void)
   resizing = true;
 
   // Allocation of the screen buffers is done only when the size changes and
-  // when Rows and Columns have been set and we have started doing full
-  // screen stuff.
+  // when Rows and Columns have been set.
   if ((default_grid.chars != NULL
        && Rows == default_grid.rows
        && Columns == default_grid.cols)
-      || Rows == 0
-      || Columns == 0
-      || (!full_screen && default_grid.chars == NULL)) {
+      || Rows == 0 || Columns == 0) {
     resizing = false;
     return false;
   }
@@ -2032,14 +2029,7 @@ static void win_update(win_T *wp)
   }
 
   foldinfo_T cursorline_fi = { 0 };
-  wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
-  if (wp->w_p_cul) {
-    // Make sure that the cursorline on a closed fold is redrawn
-    cursorline_fi = fold_info(wp, wp->w_cursor.lnum);
-    if (cursorline_fi.fi_level != 0 && cursorline_fi.fi_lines > 0) {
-      wp->w_cursorline = cursorline_fi.fi_lnum;
-    }
-  }
+  win_update_cursorline(wp, &cursorline_fi);
 
   win_check_ns_hl(wp);
 
@@ -2580,9 +2570,9 @@ int compute_foldcolumn(win_T *wp, int col)
 {
   int fdc = win_fdccol_count(wp);
   int wmw = wp == curwin && p_wmw == 0 ? 1 : (int)p_wmw;
-  int wwidth = wp->w_grid.cols;
+  int n = wp->w_grid.cols - (col + wmw);
 
-  return MIN(fdc, wwidth - (col + wmw));
+  return MIN(fdc, n);
 }
 
 /// Return the width of the 'number' and 'relativenumber' column.
@@ -2864,4 +2854,19 @@ bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
   return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
+}
+
+/// Update w_cursorline, taking care to set it to the to the start of a closed fold.
+///
+/// @param[out] foldinfo foldinfo for the cursor line
+void win_update_cursorline(win_T *wp, foldinfo_T *foldinfo)
+{
+  wp->w_cursorline = win_cursorline_standout(wp) ? wp->w_cursor.lnum : 0;
+  if (wp->w_p_cul) {
+    // Make sure that the cursorline on a closed fold is redrawn
+    *foldinfo = fold_info(wp, wp->w_cursor.lnum);
+    if (foldinfo->fi_level != 0 && foldinfo->fi_lines > 0) {
+      wp->w_cursorline = foldinfo->fi_lnum;
+    }
+  }
 }

@@ -644,7 +644,7 @@ describe('TUI', function()
 
       aunmenu PopUp
       " Delete the default MenuPopup event handler.
-      autocmd! nvim_popupmenu
+      autocmd! nvim.popupmenu
       menu PopUp.foo :let g:menustr = 'foo'<CR>
       menu PopUp.bar :let g:menustr = 'bar'<CR>
       menu PopUp.baz :let g:menustr = 'baz'<CR>

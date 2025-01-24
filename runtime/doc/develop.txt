@@ -508,6 +508,15 @@ be a parameter (typically manifest as mutually-exclusive buf/win/… flags like
 - Example: `nvim_buf_del_mark` acts on a `Buffer` object (the first parameter)
   and uses the "del" {verb}.
 
+                                                        *dev-namespace-name*
+Use namespace names like `nvim.foo.bar`: >
+    vim.api.nvim_create_namespace('nvim.lsp.codelens')
+<
+
+                                                        *dev-augroup-name*
+Use autocommand group names like `nvim.foo.bar`: >
+    vim.api.nvim_create_augroup('nvim.treesitter.dev')
+<
 
 INTERFACE PATTERNS                                      *dev-api-patterns*
 

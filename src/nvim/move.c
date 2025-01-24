@@ -2490,7 +2490,10 @@ int pagescroll(Direction dir, int count, bool half)
     if (!nochange) {
       // Place cursor at top or bottom of window.
       validate_botline(curwin);
-      curwin->w_cursor.lnum = (dir == FORWARD ? curwin->w_topline : curwin->w_botline - 1);
+      linenr_T lnum = (dir == FORWARD ? curwin->w_topline : curwin->w_botline - 1);
+      // In silent Ex mode the value of w_botline - 1 may be 0,
+      // but cursor lnum needs to be at least 1.
+      curwin->w_cursor.lnum = MAX(lnum, 1);
     }
   }
 

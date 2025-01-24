@@ -1,51 +1,6 @@
-" netrw.vim: Handles file transfer and remote directory listing across
-"            AUTOLOAD SECTION
-" Maintainer: This runtime file is looking for a new maintainer.
-" Date:           May 03, 2023
-" Version:      173a
-" Last Change: {{{1
-"   2023 Nov 21 by Vim Project: ignore wildignore when expanding $COMSPEC       (v173a)
-"   2023 Nov 22 by Vim Project: fix handling of very long filename on longlist style    (v173a)
-"   2024 Feb 19 by Vim Project: (announce adoption)
-"   2024 Feb 29 by Vim Project: handle symlinks in tree mode correctly
-"   2024 Apr 03 by Vim Project: detect filetypes for remote edited files
-"   2024 May 08 by Vim Project: cleanup legacy Win9X checks
-"   2024 May 09 by Vim Project: remove hard-coded private.ppk
-"   2024 May 10 by Vim Project: recursively delete directories by default
-"   2024 May 13 by Vim Project: prefer scp over pscp
-"   2024 Jun 04 by Vim Project: set bufhidden if buffer changed, nohidden is set and buffer shall be switched (#14915)
-"   2024 Jun 13 by Vim Project: glob() on Windows fails when a directory name contains [] (#14952)
-"   2024 Jun 23 by Vim Project: save ad restore registers when liststyle = WIDELIST (#15077, #15114)
-"   2024 Jul 22 by Vim Project: avoid endless recursion (#15318)
-"   2024 Jul 23 by Vim Project: escape filename before trying to delete it (#15330)
-"   2024 Jul 30 by Vim Project: handle mark-copy to same target directory (#12112)
-"   2024 Aug 02 by Vim Project: honor g:netrw_alt{o,v} for :{S,H,V}explore (#15417)
-"   2024 Aug 15 by Vim Project: style changes, prevent E121 (#15501)
-"   2024 Aug 22 by Vim Project: fix mf-selection highlight (#15551)
-"   2024 Aug 22 by Vim Project: adjust echo output of mx command (#15550)
-"   2024 Sep 15 by Vim Project: more strict confirmation dialog (#15680)
-"   2024 Sep 19 by Vim Project: mf-selection highlight uses wrong pattern (#15700)
-"   2024 Sep 21 by Vim Project: remove extraneous closing bracket (#15718)
-"   2024 Oct 21 by Vim Project: remove netrwFileHandlers (#15895)
-"   2024 Oct 27 by Vim Project: clean up gx mapping (#15721)
-"   2024 Oct 30 by Vim Project: fix filetype detection for remote files (#15961)
-"   2024 Oct 30 by Vim Project: fix x mapping on cygwin (#13687)
-"   2024 Oct 31 by Vim Project: add netrw#Launch() and netrw#Open() (#15962)
-"   2024 Oct 31 by Vim Project: fix E874 when browsing remote dir (#15964)
-"   2024 Nov 07 by Vim Project: use keeppatterns to prevent polluting the search history
-"   2024 Nov 07 by Vim Project: fix a few issues with netrw tree listing (#15996)
-"   2024 Nov 10 by Vim Project: directory symlink not resolved in tree view (#16020)
-"   2024 Nov 14 by Vim Project: small fixes to netrw#BrowseX (#16056)
-"   2024 Nov 23 by Vim Project: update decompress defaults (#16104)
-"   2024 Nov 23 by Vim Project: fix powershell escaping issues (#16094)
-"   2024 Dec 04 by Vim Project: do not detach for gvim (#16168)
-"   2024 Dec 08 by Vim Project: check the first arg of netrw_browsex_viewer for being executable (#16185)
-"   2024 Dec 12 by Vim Project: do not pollute the search history (#16206)
-"   2024 Dec 19 by Vim Project: change style (#16248)
-"   2024 Dec 20 by Vim Project: change style continued (#16266)
-"   }}}
-" Former Maintainer:    Charles E Campbell
-" GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
+" Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
+" Former Maintainer: Charles E Campbell
+" Upstream: <https://github.com/saccarosium/netrw.vim>
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
@@ -58,12 +13,7 @@
 "
 " Note: the code here was started in 1999 under a much earlier version of vim.  The directory browsing
 "       code was written using vim v6, which did not have Lists (Lists were first offered with vim-v7).
-"
-"redraw!|call DechoSep()|call inputsave()|call input("Press <cr> to continue")|call inputrestore()
-"
-"  But be doers of the Word, and not only hearers, deluding your own selves {{{1
-"  (James 1:22 RSV)
-" =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 " Load Once: {{{1
 if &cp || exists("g:loaded_netrw")
   finish
@@ -85,7 +35,7 @@ if exists("s:needspatches")
   endfor
 endif
 
-let g:loaded_netrw = "v173"
+let g:loaded_netrw = "v175"
 
 let s:keepcpo= &cpo
 setl cpo&vim

@@ -1527,7 +1527,6 @@ local function sh(path, contents, name)
       vim.b[b].is_kornshell = nil
       vim.b[b].is_sh = nil
     end
-    return M.shell(path, contents, 'bash'), on_detect
     -- Ubuntu links sh to dash
   elseif matchregex(name, [[\<\(sh\|dash\)\>]]) then
     on_detect = function(b)
@@ -1878,6 +1877,7 @@ local patterns_hashbang = {
   ruby = 'ruby',
   ['node\\(js\\)\\=\\>\\|js\\>'] = { 'javascript', { vim_regex = true } },
   ['rhino\\>'] = { 'javascript', { vim_regex = true } },
+  just = 'just',
   -- BC calculator
   ['^bc\\>'] = { 'bc', { vim_regex = true } },
   ['sed\\>'] = { 'sed', { vim_regex = true } },

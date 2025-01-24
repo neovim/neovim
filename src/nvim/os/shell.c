@@ -700,6 +700,7 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
   }
 
   if (!emsg_silent && exitcode != 0 && !(opts & kShellOptSilent)) {
+    msg_ext_set_kind("shell_ret");
     msg_puts(_("\nshell returned "));
     msg_outnum(exitcode);
     msg_putchar('\n');
@@ -1067,7 +1068,7 @@ static void out_data_ring(const char *output, size_t size)
   }
 
   if (output == NULL && size == SIZE_MAX) {   // Print mode
-    out_data_append_to_screen(last_skipped, &last_skipped_len, true);
+    out_data_append_to_screen(last_skipped, &last_skipped_len, STDOUT_FILENO, true);
     return;
   }
 
@@ -1095,14 +1096,15 @@ static void out_data_ring(const char *output, size_t size)
 /// @param output       Data to append to screen lines.
 /// @param count        Size of data.
 /// @param eof          If true, there will be no more data output.
-static void out_data_append_to_screen(const char *output, size_t *count, bool eof)
+static void out_data_append_to_screen(const char *output, size_t *count, int fd, bool eof)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *p = output;
   const char *end = output + *count;
+  msg_ext_set_kind(fd == STDERR_FILENO ? "shell_err" : "shell_out");
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
-      msg_putchar_hl((uint8_t)(*p), 0);
+      msg_putchar_hl((uint8_t)(*p), fd == STDERR_FILENO ? HLF_E : 0);
       p++;
     } else {
       // Note: this is not 100% precise:
@@ -1118,7 +1120,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, bool eo
         goto end;
       }
 
-      msg_outtrans_len(p, i, 0, false);
+      msg_outtrans_len(p, i, fd == STDERR_FILENO ? HLF_E : 0, false);
       p += i;
     }
   }
@@ -1133,7 +1135,7 @@ static size_t out_data_cb(RStream *stream, const char *ptr, size_t count, void *
     // Save the skipped output. If it is the final chunk, we display it later.
     out_data_ring(ptr, count);
   } else if (count > 0) {
-    out_data_append_to_screen(ptr, &count, eof);
+    out_data_append_to_screen(ptr, &count, stream->s.fd, eof);
   }
 
   return count;
@@ -1206,10 +1208,11 @@ static void read_input(StringBuilder *buf)
   size_t len = 0;
   linenr_T lnum = curbuf->b_op_start.lnum;
   char *lp = ml_get(lnum);
+  size_t lplen = (size_t)ml_get_len(lnum);
 
   while (true) {
-    size_t l = strlen(lp + written);
-    if (l == 0) {
+    lplen -= written;
+    if (lplen == 0) {
       len = 0;
     } else if (lp[written] == NL) {
       // NL -> NUL translation
@@ -1217,11 +1220,11 @@ static void read_input(StringBuilder *buf)
       kv_push(*buf, NUL);
     } else {
       char *s = vim_strchr(lp + written, NL);
-      len = s == NULL ? l : (size_t)(s - (lp + written));
+      len = s == NULL ? lplen : (size_t)(s - (lp + written));
       kv_concat_len(*buf, lp + written, len);
     }
 
-    if (len == l) {
+    if (len == lplen) {
       // Finished a line, add a NL, unless this line should not have one.
       if (lnum != curbuf->b_op_end.lnum
           || (!curbuf->b_p_bin && curbuf->b_p_fixeol)
@@ -1234,6 +1237,7 @@ static void read_input(StringBuilder *buf)
         break;
       }
       lp = ml_get(lnum);
+      lplen = (size_t)ml_get_len(lnum);
       written = 0;
     } else if (len > 0) {
       written += len;

@@ -188,7 +188,10 @@ describe('context functions', function()
       function RestoreFuncs()
         call ctxpop()
       endfunction
+
+      let g:sid = expand('<SID>')
       ]])
+      local sid = api.nvim_get_var('sid')
 
       eq('Hello, World!', exec_capture([[call Greet('World')]]))
       eq(
@@ -200,11 +203,11 @@ describe('context functions', function()
       call('DeleteSFuncs')
 
       eq(
-        'function Greet, line 1: Vim(call):E117: Unknown function: s:greet',
+        ('function Greet, line 1: Vim(call):E117: Unknown function: %sgreet'):format(sid),
         pcall_err(command, [[call Greet('World')]])
       )
       eq(
-        'function GreetAll, line 1: Vim(call):E117: Unknown function: s:greet_all',
+        ('function GreetAll, line 1: Vim(call):E117: Unknown function: %sgreet_all'):format(sid),
         pcall_err(command, [[call GreetAll('World', 'One', 'Two', 'Three')]])
       )
 

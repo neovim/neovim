@@ -1875,11 +1875,12 @@ void path_fix_case(char *name)
     return;
   }
 
+  size_t taillen = strlen(tail);
   const char *entry;
   while ((entry = os_scandir_next(&dir))) {
     // Only accept names that differ in case and are the same byte
     // length. TODO: accept different length name.
-    if (STRICMP(tail, entry) == 0 && strlen(tail) == strlen(entry)) {
+    if (STRICMP(tail, entry) == 0 && taillen == strlen(entry)) {
       char newname[MAXPATHL + 1];
 
       // Verify the inode is equal.
@@ -2270,14 +2271,12 @@ int append_path(char *path, const char *to_append, size_t max_len)
 
   // Combine the path segments, separated by a slash.
   if (current_length > 0 && !vim_ispathsep_nocolon(path[current_length - 1])) {
-    current_length += 1;  // Count the trailing slash.
-
     // +1 for the NUL at the end.
-    if (current_length + 1 > max_len) {
-      return FAIL;
+    if (current_length + STRLEN_LITERAL(PATHSEPSTR) + 1 > max_len) {
+      return FAIL;  // No space for trailing slash.
     }
-
-    xstrlcat(path, PATHSEPSTR, max_len);
+    xstrlcpy(path + current_length, PATHSEPSTR, max_len - current_length);
+    current_length += STRLEN_LITERAL(PATHSEPSTR);
   }
 
   // +1 for the NUL at the end.
@@ -2285,7 +2284,7 @@ int append_path(char *path, const char *to_append, size_t max_len)
     return FAIL;
   }
 
-  xstrlcat(path, to_append, max_len);
+  xstrlcpy(path + current_length, to_append, max_len - current_length);
   return OK;
 }
 

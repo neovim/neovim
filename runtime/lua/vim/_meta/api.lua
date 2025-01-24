@@ -163,35 +163,14 @@ function vim.api.nvim__stats() end
 --- @return any
 function vim.api.nvim__unpack(str) end
 
---- Adds a highlight to buffer.
----
---- Useful for plugins that dynamically generate highlights to a buffer
---- (like a semantic highlighter or linter). The function adds a single
---- highlight to a buffer. Unlike `matchaddpos()` highlights follow changes to
---- line numbering (as lines are inserted/removed above the highlighted line),
---- like signs and marks do.
----
---- Namespaces are used for batch deletion/updating of a set of highlights. To
---- create a namespace, use `nvim_create_namespace()` which returns a namespace
---- id. Pass it in to this function as `ns_id` to add highlights to the
---- namespace. All highlights in the same namespace can then be cleared with
---- single call to `nvim_buf_clear_namespace()`. If the highlight never will be
---- deleted by an API call, pass `ns_id = -1`.
----
---- As a shorthand, `ns_id = 0` can be used to create a new namespace for the
---- highlight, the allocated id is then returned. If `hl_group` is the empty
---- string no highlight is added, but a new `ns_id` is still returned. This is
---- supported for backwards compatibility, new code should use
---- `nvim_create_namespace()` to create a new empty namespace.
----
---- @param buffer integer Buffer handle, or 0 for current buffer
---- @param ns_id integer namespace to use or -1 for ungrouped highlight
---- @param hl_group string Name of the highlight group to use
---- @param line integer Line to highlight (zero-indexed)
---- @param col_start integer Start of (byte-indexed) column range to highlight
---- @param col_end integer End of (byte-indexed) column range to highlight,
---- or -1 to highlight to end of line
---- @return integer # The ns_id that was used
+--- @deprecated
+--- @param buffer integer
+--- @param ns_id integer
+--- @param hl_group string
+--- @param line integer
+--- @param col_start integer
+--- @param col_end integer
+--- @return integer
 function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start, col_end) end
 
 --- Activates buffer-update events on a channel, or as Lua callbacks.
@@ -595,6 +574,9 @@ function vim.api.nvim_buf_line_count(buffer) end
 --- - hl_group : highlight group used for the text range. This and below
 ---     highlight groups can be supplied either as a string or as an integer,
 ---     the latter of which can be obtained using `nvim_get_hl_id_by_name()`.
+---
+---     Multiple highlight groups can be stacked by passing an array (highest
+---     priority last).
 --- - hl_eol : when true, for a multiline highlight covering the
 ---            EOL of a line, continue the highlight for the rest
 ---            of the screen line (just like for diff and
@@ -996,7 +978,7 @@ function vim.api.nvim_create_buf(listed, scratch) end
 --- Creates a new namespace or gets an existing one. [namespace]()
 ---
 --- Namespaces are used for buffer highlights and virtual text, see
---- `nvim_buf_add_highlight()` and `nvim_buf_set_extmark()`.
+--- `nvim_buf_set_extmark()`.
 ---
 --- Namespaces can be named or anonymous. If `name` matches an existing
 --- namespace, the associated id is returned. If `name` is an empty string
@@ -1158,7 +1140,9 @@ function vim.api.nvim_eval(expr) end
 ---               the "highlights" key in {opts} is true. Each element of the array is a
 ---               |Dict| with these keys:
 ---     - start: (number) Byte index (0-based) of first character that uses the highlight.
----     - group: (string) Name of highlight group.
+---     - group: (string) Name of highlight group. May be removed in the future, use
+---     `groups` instead.
+---     - groups: (array) Names of stacked highlight groups (highest priority last).
 function vim.api.nvim_eval_statusline(str, opts) end
 
 --- @deprecated

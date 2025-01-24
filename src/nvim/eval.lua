@@ -1398,7 +1398,8 @@ M.funcs = {
       		typed text only, or the last completion after
       		no item is selected when using the <Up> or
       		<Down> keys)
-         inserted	Inserted string. [NOT IMPLEMENTED YET]
+         completed	Return a dictionary containing the entries of
+      		the currently selected index item.
          preview_winid     Info floating preview window id.
          preview_bufnr     Info floating preview buffer id.
 

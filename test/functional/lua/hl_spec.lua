@@ -104,6 +104,33 @@ describe('vim.hl.range', function()
                                                                   |
     ]])
   end)
+
+  it('removes highlight after given `timeout`', function()
+    local timeout = 100
+    exec_lua(function()
+      local ns = vim.api.nvim_create_namespace('')
+      vim.hl.range(0, ns, 'Search', { 0, 0 }, { 4, 0 }, { timeout = timeout })
+    end)
+    screen:expect({
+      grid = [[
+      {10:^asdfghjkl}{100:$}                                                  |
+      {10:«口=口»}{100:$}                                                    |
+      {10:qwertyuiop}{100:$}                                                 |
+      {10:口口=口口}{1:$}                                                  |
+      zxcvbnm{1:$}                                                    |
+                                                                  |
+    ]],
+      timeout = timeout,
+    })
+    screen:expect([[
+      ^asdfghjkl{1:$}                                                  |
+      «口=口»{1:$}                                                    |
+      qwertyuiop{1:$}                                                 |
+      口口=口口{1:$}                                                  |
+      zxcvbnm{1:$}                                                    |
+                                                                  |
+    ]])
+  end)
 end)
 
 describe('vim.hl.on_yank', function()
@@ -144,7 +171,7 @@ describe('vim.hl.on_yank', function()
       vim.api.nvim_buf_set_mark(0, ']', 1, 1, {})
       vim.hl.on_yank({ timeout = math.huge, on_macro = true, event = { operator = 'y' } })
     end)
-    local ns = api.nvim_create_namespace('hlyank')
+    local ns = api.nvim_create_namespace('nvim.hlyank')
     local win = api.nvim_get_current_win()
     eq({ win }, api.nvim__ns_get(ns).wins)
     command('wincmd w')
@@ -158,7 +185,7 @@ describe('vim.hl.on_yank', function()
       vim.api.nvim_buf_set_mark(0, ']', 1, 1, {})
       vim.hl.on_yank({ timeout = math.huge, on_macro = true, event = { operator = 'y' } })
     end)
-    local ns = api.nvim_create_namespace('hlyank')
+    local ns = api.nvim_create_namespace('nvim.hlyank')
     eq(api.nvim_get_current_win(), api.nvim__ns_get(ns).wins[1])
     command('wincmd w')
     exec_lua(function()

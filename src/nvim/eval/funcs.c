@@ -548,8 +548,7 @@ static void f_byte2line(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "call(func, arglist [, dict])" function
 static void f_call(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (argvars[1].v_type != VAR_LIST) {
-    emsg(_(e_listreq));
+  if (tv_check_for_list_arg(argvars, 1) == FAIL) {
     return;
   }
   if (argvars[1].vval.v_list == NULL) {
@@ -575,22 +574,32 @@ static void f_call(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (func == NULL || *func == NUL) {
     return;         // type error, empty name or null function
   }
+  char *tofree = NULL;
+  if (argvars[0].v_type == VAR_STRING) {
+    char *p = func;
+    tofree = trans_function_name(&p, false, TFN_INT|TFN_QUIET, NULL, NULL);
+    if (tofree == NULL) {
+      emsg_funcname(e_unknown_function_str, func);
+      return;
+    }
+    func = tofree;
+  }
 
   dict_T *selfdict = NULL;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (tv_check_for_dict_arg(argvars, 2) == FAIL) {
-      if (owned) {
-        func_unref(func);
-      }
-      return;
+      goto done;
     }
     selfdict = argvars[2].vval.v_dict;
   }
 
   func_call(func, &argvars[1], partial, selfdict, rettv);
+
+done:
   if (owned) {
     func_unref(func);
   }
+  xfree(tofree);
 }
 
 /// "changenr()" function

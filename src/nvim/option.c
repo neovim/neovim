@@ -980,12 +980,12 @@ static int validate_opt_idx(win_T *win, OptIndex opt_idx, int opt_flags, uint32_
 
   // Skip all options that are not window-local (used when showing
   // an already loaded buffer in a window).
-  if ((opt_flags & OPT_WINONLY) && (opt_idx == kOptInvalid || !option_is_window_local(opt_idx))) {
+  if ((opt_flags & OPT_WINONLY) && !option_is_window_local(opt_idx)) {
     return FAIL;
   }
 
   // Skip all options that are window-local (used for :vimgrep).
-  if ((opt_flags & OPT_NOWIN) && opt_idx != kOptInvalid && option_is_window_local(opt_idx)) {
+  if ((opt_flags & OPT_NOWIN) && option_is_window_local(opt_idx)) {
     return FAIL;
   }
 
@@ -3267,7 +3267,7 @@ bool is_option_hidden(OptIndex opt_idx)
 /// Check if option supports a specific type.
 bool option_has_type(OptIndex opt_idx, OptValType type)
 {
-  return options[opt_idx].type == type;
+  return opt_idx != kOptInvalid && options[opt_idx].type == type;
 }
 
 /// Check if option supports a specific scope.
@@ -5715,6 +5715,7 @@ int ExpandStringSetting(expand_T *xp, regmatch_T *regmatch, int *numMatches, cha
 
   optexpand_T args = {
     .oe_varp = get_varp_scope(&options[expand_option_idx], expand_option_flags),
+    .oe_idx = expand_option_idx,
     .oe_append = expand_option_append,
     .oe_regmatch = regmatch,
     .oe_xp = xp,

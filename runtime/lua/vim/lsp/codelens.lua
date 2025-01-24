@@ -21,7 +21,7 @@ local lens_cache_by_buf = setmetatable({}, {
 ---client_id -> namespace
 local namespaces = setmetatable({}, {
   __index = function(t, key)
-    local value = api.nvim_create_namespace('vim_lsp_codelens:' .. key)
+    local value = api.nvim_create_namespace('nvim.lsp.codelens:' .. key)
     rawset(t, key, value)
     return value
   end,
@@ -30,7 +30,7 @@ local namespaces = setmetatable({}, {
 ---@private
 M.__namespaces = namespaces
 
-local augroup = api.nvim_create_augroup('vim_lsp_codelens', {})
+local augroup = api.nvim_create_augroup('nvim.lsp.codelens', {})
 
 api.nvim_create_autocmd('LspDetach', {
   group = augroup,

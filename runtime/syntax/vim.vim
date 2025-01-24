@@ -185,13 +185,13 @@ Vim9 syn keyword vim9Boolean	true false
 " Numbers {{{2
 " =======
 syn case ignore
-syn match	vimNumber	'\<\d\+\%(\.\d\+\%(e[+-]\=\d\+\)\=\)\='	skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\<0b[01]\+'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\<0o\=\o\+'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\<0x\x\+'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\<0z\>'			skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
-syn match	vimNumber	'\%(^\|\A\)\zs#\x\{6}'		skipwhite nextgroup=vimGlobal,vimSubst1,vimCommand,@vimComment
+syn match	vimNumber	'\<\d\+\%(\.\d\+\%(e[+-]\=\d\+\)\=\)\='	skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\<0b[01]\+'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\<0o\=\o\+'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\<0x\x\+'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\<0z\>'			skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\<0z\%(\x\x\)\+\%(\.\%(\x\x\)\+\)*'	skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
+syn match	vimNumber	'\%(^\|\A\)\zs#\x\{6}'		skipwhite nextgroup=vimGlobal,vimSubst1,@vimComment
 syn case match
 
 " All vimCommands are contained by vimIsCommand. {{{2
@@ -274,10 +274,16 @@ syn keyword vimAugroupKey	contained aug[roup]  skipwhite nextgroup=vimAugroupBan
 " Operators: {{{2
 " =========
 syn cluster	vimOperGroup	contains=vimEnvvar,vimFunc,vimFuncVar,vimOper,vimOperParen,vimNumber,vimString,vimRegister,@vimContinue,vim9Comment,vimVar,vimBoolean,vimNull
-syn match	vimOper	"\a\@<!!"				skipwhite nextgroup=vimString,vimSpecFile
-syn match	vimOper	"||\|&&\|[-+*/%.]"			skipwhite nextgroup=vimString,vimSpecFile
-syn match	vimOper	"\%#=1\(==\|!=\|>=\|<=\|=\~\|!\~\|>\|<\|=\|!\~#\)[?#]\{0,2}"	skipwhite nextgroup=vimString,vimSpecFile
-syn match	vimOper	"\(\<is\|\<isnot\)[?#]\{0,2}\>"			skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"\a\@<!!"			skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"||\|&&\|[-+*/%.]"		skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"?"			skipwhite nextgroup=@vimExprList
+" distinguish ternary : from ex-colon
+syn match	vimOper	"\s\@1<=:\ze\s\|\s\@1<=:$"		skipwhite nextgroup=@vimExprList
+syn match	vimOper	"??"			skipwhite nextgroup=@vimExprList
+syn match	vimOper	"="			skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"\%#=1\%(==\|!=\|>=\|<=\|=\~\|!\~\|>\|<\)[?#]\="	skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"\<is\%(not\)\=\>"		skipwhite nextgroup=vimString,vimSpecFile
+syn match	vimOper	"\<is\%(not\)\=[?#]"		skipwhite nextgroup=vimString,vimSpecFile
 syn region	vimOperParen 	matchgroup=vimParenSep	start="(" end=")" contains=@vimOperGroup
 syn region	vimOperParen	matchgroup=vimSep		start="#\={" end="}" contains=@vimOperGroup nextgroup=vimVar,vimFuncVar
 if !exists("g:vimsyn_noerror") && !exists("g:vimsyn_noopererror")
@@ -289,9 +295,9 @@ endif
 syn cluster	vimFuncList	contains=vimFuncBang,vimFunctionError,vimFuncKey,vimFuncSID,Tag
 syn cluster	vimDefList	contains=vimFuncBang,vimFunctionError,vimDefKey,vimFuncSID,Tag
 
-syn cluster	vimFuncBodyCommon	contains=@vimCmdList,vimCmplxRepeat,vimContinue,vimCtrlChar,vimDef,vimEnvvar,vimFBVar,vimFunc,vimFunction,vimLetHereDoc,vimNotation,vimNotFunc,vimNumber,vimOper,vimOperParen,vimRegister,vimSearch,vimSpecFile,vimString,vimSubst,vimFuncFold,vimDefFold
-syn cluster	vimFuncBodyList	contains=@vimFuncBodyCommon,vimComment,vimLineComment,vimFuncVar,vimInsert,vimConst,vimLet
-syn cluster	vimDefBodyList	contains=@vimFuncBodyCommon,vim9Comment,vim9LineComment,vim9Const,vim9Final,vim9Var,vim9Null,vim9Boolean,vim9For
+syn cluster	vimFuncBodyCommon	contains=@vimCmdList,vimCmplxRepeat,vimContinue,vimCtrlChar,vimDef,vimEnvvar,vimFBVar,vimFunc,vimFunction,vimLetHereDoc,vimNotation,vimNotFunc,vimNumber,vimOper,vimOperParen,vimRegister,vimSpecFile,vimString,vimSubst,vimFuncFold,vimDefFold
+syn cluster	vimFuncBodyList	contains=@vimFuncBodyCommon,vimComment,vimLineComment,vimFuncVar,vimInsert,vimConst,vimLet,vimSearch
+syn cluster	vimDefBodyList	contains=@vimFuncBodyCommon,vim9Comment,vim9LineComment,vim9Const,vim9Final,vim9Var,vim9Null,vim9Boolean,vim9For,vim9Search
 
 syn region	vimFuncPattern	contained		matchgroup=vimOper start="/" end="$" contains=@vimSubstList
 syn match	vimFunction	"\<fu\%[nction]\>"	skipwhite nextgroup=vimCmdSep,vimComment,vimFuncPattern contains=vimFuncKey
@@ -1017,8 +1023,10 @@ syn match	vim9CommentTitleLeader	'#\s\+'ms=s+1	contained
 
 " Searches And Globals: {{{2
 " ====================
-syn match	vimSearch	'^\s*[/?].*'		contains=vimSearchDelim
+VimL syn match	vimSearch	'^\s*[/?].*'		contains=vimSearchDelim
 syn match	vimSearchDelim	'^\s*\zs[/?]\|[/?]$'	contained
+Vim9 syn match	vim9Search	'^\s*:[/?].*'		contains=vim9SearchDelim
+syn match	vim9SearchDelim	'^\s*\zs:[/?]\|[/?]$'	contained contains=vimCmdSep
 syn region	vimGlobal	matchgroup=Statement start='\<g\%[lobal]!\=/'  skip='\\.' end='/'	skipwhite nextgroup=vimSubst1
 syn region	vimGlobal	matchgroup=Statement start='\<v\%[global]!\=/' skip='\\.' end='/'	skipwhite nextgroup=vimSubst1
 
@@ -1404,8 +1412,8 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimQuoteEscape	vimEscape
  hi def link vimRegister	SpecialChar
  hi def link vimScriptDelim	Comment
- hi def link vimSearchDelim	Statement
  hi def link vimSearch	vimString
+ hi def link vimSearchDelim	Delimiter
  hi def link vimSep	Delimiter
  hi def link vimSet	vimCommand
  hi def link vimSetAll	vimOption
@@ -1498,6 +1506,8 @@ if !exists("skip_vim_syntax_inits")
  hi def link vim9MethodNameError	vimFunctionError
  hi def link vim9Null	Constant
  hi def link vim9Public	vimCommand
+ hi def link vim9Search	vimString
+ hi def link vim9SearchDelim	Delimiter
  hi def link vim9Static	vimCommand
  hi def link vim9Super	Identifier
  hi def link vim9This	Identifier

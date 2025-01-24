@@ -13,8 +13,6 @@ local api = n.api
 local pcall_err = t.pcall_err
 local assert_alive = n.assert_alive
 
-local mousemodels = { 'extend', 'popup', 'popup_setpos' }
-
 describe('statuscolumn', function()
   local screen
   before_each(function()
@@ -229,20 +227,28 @@ describe('statuscolumn', function()
       {1: }{8:8│}aaaaa                                             |
                                                            |
     ]])
+    -- Last segment and fillchar are highlighted properly
+    command("set stc=%#Error#%{v:relnum?'Foo':'FooBar'}")
+    screen:expect([[
+      {9:Foo   }aaaaa                                          |*4
+      {9:FooBar}^aaaaa                                          |
+      {9:Foo   }aaaaa                                          |*8
+                                                           |
+    ]])
   end)
 
   it('works with wrapped lines, signs and folds', function()
-    command([[set stc=%C%s%=%{v:virtnum?'':v:lnum}│\ ]])
-    command("call setline(1,repeat([repeat('aaaaa',10)],16))")
     screen:add_extra_attr_ids {
       [100] = { foreground = Screen.colors.Red, background = Screen.colors.LightGray },
-      [101] = {
-        bold = true,
-        background = Screen.colors.WebGray,
-        foreground = Screen.colors.DarkBlue,
-      },
+      [101] = { background = Screen.colors.Gray90, bold = true },
+      [102] = { foreground = Screen.colors.Brown, background = Screen.colors.Grey },
+      [103] = { bold = true, background = Screen.colors.Grey, foreground = Screen.colors.Blue1 },
     }
-    command('hi! CursorLine guifg=Red guibg=NONE')
+    command([[set cursorline stc=%C%s%=%{v:virtnum?'':v:lnum}│\ ]])
+    command("call setline(1,repeat([repeat('aaaaa',10)],16))")
+    command('hi! CursorLine gui=bold')
+    command('sign define num1 numhl=Special')
+    command('sign place 1 line=8 name=num1 buffer=1')
     screen:expect([[
       {8: 4│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {8:  │ }a                                                |
@@ -252,8 +258,8 @@ describe('statuscolumn', function()
       {8:  │ }a                                                |
       {8: 7│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {8:  │ }a                                                |
-      {8: 8│ }^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {8:  │ }a                                                |
+      {29: 8│ }{101:^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {29:  │ }{101:a                                                }|
       {8: 9│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {8:  │ }a                                                |
       {8:10│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:@@@}|
@@ -261,7 +267,8 @@ describe('statuscolumn', function()
     ]])
     command([[set stc=%C%s%=%l│\ ]])
     screen:expect_unchanged()
-    command('set signcolumn=auto:2 foldcolumn=auto')
+    command('hi! CursorLine guifg=Red guibg=NONE gui=NONE')
+    command('set nocursorline signcolumn=auto:2 foldcolumn=auto')
     command('sign define piet1 text=>> texthl=LineNr')
     command('sign define piet2 text=>! texthl=NonText')
     command('sign place 1 line=4 name=piet1 buffer=1')
@@ -269,11 +276,11 @@ describe('statuscolumn', function()
     command('sign place 3 line=6 name=piet1 buffer=1')
     command('sign place 4 line=6 name=piet2 buffer=1')
     screen:expect([[
-      {8:>>}{7:  }{8: 4│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {102:>>}{7:  }{8: 4│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:    }{8:  │ }aaaaa                                        |
-      {1:>!}{7:  }{8: 5│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {103:>!}{7:  }{8: 5│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:    }{8:  │ }aaaaa                                        |
-      {1:>!}{8:>> 6│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {103:>!}{102:>>}{8: 6│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:    }{8:  │ }aaaaa                                        |
       {7:    }{8: 7│ }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:    }{8:  │ }aaaaa                                        |
@@ -288,11 +295,11 @@ describe('statuscolumn', function()
     -- Check that alignment works properly with signs after %=
     command([[set stc=%C%=%{v:virtnum?'':v:lnum}│%s\ ]])
     screen:expect([[
-      {7: }{8: 4│>>}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8: 4│}{102:>>}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
-      {7: }{8: 5│}{1:>!}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8: 5│}{103:>!}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
-      {7: }{8: 6│}{1:>!}{8:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8: 6│}{103:>!}{102:>>}{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
       {7: }{8: 7│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
@@ -305,15 +312,15 @@ describe('statuscolumn', function()
     ]])
     command('set cursorline')
     screen:expect([[
-      {7: }{8: 4│>>}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8: 4│}{102:>>}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
-      {7: }{8: 5│}{1:>!}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8: 5│}{103:>!}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
-      {7: }{8: 6│}{1:>!}{8:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8: 6│}{103:>!}{102:>>}{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
       {7: }{8: 7│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
-      {101:+}{15: 8│}{101:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {7:+}{15: 8│}{7:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7: }{8: 9│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  │}{7:    }{8: }aaaaaa                                      |
       {7: }{8:10│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -323,15 +330,15 @@ describe('statuscolumn', function()
     -- v:lnum is the same value on wrapped lines
     command([[set stc=%C%=%{v:lnum}│%s\ ]])
     screen:expect([[
-      {7: }{8: 4│>>}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8: 4│}{102:>>}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8: 4│}{7:    }{8: }aaaaaa                                      |
-      {7: }{8: 5│}{1:>!}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8: 5│}{103:>!}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8: 5│}{7:    }{8: }aaaaaa                                      |
-      {7: }{8: 6│}{1:>!}{8:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8: 6│}{103:>!}{102:>>}{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8: 6│}{7:    }{8: }aaaaaa                                      |
       {7: }{8: 7│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8: 7│}{7:    }{8: }aaaaaa                                      |
-      {101:+}{15: 8│}{101:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {7:+}{15: 8│}{7:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7: }{8: 9│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8: 9│}{7:    }{8: }aaaaaa                                      |
       {7: }{8:10│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -341,15 +348,15 @@ describe('statuscolumn', function()
     -- v:relnum is the same value on wrapped lines
     command([[set stc=%C%=\ %{v:relnum}│%s\ ]])
     screen:expect([[
-      {7: }{8:  4│>>}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  4│}{102:>>}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  4│}{7:    }{8: }aaaaaaa                                    |
-      {7: }{8:  3│}{1:>!}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  3│}{103:>!}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  3│}{7:    }{8: }aaaaaaa                                    |
-      {7: }{8:  2│}{1:>!}{8:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  2│}{103:>!}{102:>>}{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  2│}{7:    }{8: }aaaaaaa                                    |
       {7: }{8:  1│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  1│}{7:    }{8: }aaaaaaa                                    |
-      {101:+}{15:  0│}{101:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {7:+}{15:  0│}{7:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7: }{8:  1│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:  1│}{7:    }{8: }aaaaaaa                                    |
       {7: }{8:  2│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -358,15 +365,15 @@ describe('statuscolumn', function()
     ]])
     command([[set stc=%C%=\ %{v:virtnum?'':v:relnum}│%s\ ]])
     screen:expect([[
-      {7: }{8:  4│>>}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  4│}{102:>>}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:    }{8: }aaaaaaa                                    |
-      {7: }{8:  3│}{1:>!}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  3│}{103:>!}{7:  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:    }{8: }aaaaaaa                                    |
-      {7: }{8:  2│}{1:>!}{8:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  2│}{103:>!}{102:>>}{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:    }{8: }aaaaaaa                                    |
       {7: }{8:  1│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:    }{8: }aaaaaaa                                    |
-      {101:+}{15:  0│}{101:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {7:+}{15:  0│}{7:    }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7: }{8:  1│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:    }{8: }aaaaaaa                                    |
       {7: }{8:  2│}{7:    }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -383,15 +390,15 @@ describe('statuscolumn', function()
     command('sign place 10 line=6 name=piet2 buffer=1')
     command('sign place 11 line=6 name=piet1 buffer=1')
     screen:expect([[
-      {7: }{8:  4│>>}{7:                }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  4│}{102:>>}{7:                }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaa        |
-      {7: }{8:  3│}{1:>!}{7:                }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  3│}{103:>!}{7:                }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaa        |
-      {7: }{8:  2│>>}{1:>!}{8:>>}{1:>!}{8:>>}{1:>!}{8:>>}{1:>!}{8:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  2│}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaa        |
       {7: }{8:  1│}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaa        |
-      {101:+}{15:  0│}{101:                  }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaa}|
+      {7:+}{15:  0│}{7:                  }{15: }{100:^+--  1 line: aaaaaaaaaaaaaaaa}|
       {7: }{8:  1│}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7: }{8:   │}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaa        |
       {7: }{8:  2│}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -402,11 +409,11 @@ describe('statuscolumn', function()
     command('set cpoptions+=n')
     feed('Hgjg0')
     screen:expect([[
-      {101: }{15:  0│>>}{101:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {7: }{15:  0│}{102:>>}{7:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7:                   }{19:^aaaaaaaaaaaaaaaaaaaaa             }|
-      {7: }{8:  3│}{1:>!}{7:                }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  3│}{103:>!}{7:                }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:                   }aaaaaaaaaaaaaaaaaaaaa             |
-      {7: }{8:  2│>>}{1:>!}{8:>>}{1:>!}{8:>>}{1:>!}{8:>>}{1:>!}{8:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  2│}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:                   }aaaaaaaaaaaaaaaaaaaaa             |
       {7: }{8:  1│}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:                   }aaaaaaaaaaaaaaaaaaaaa             |
@@ -421,11 +428,11 @@ describe('statuscolumn', function()
     command('sign unplace 2')
     feed('J2gjg0')
     screen:expect([[
-      {101: }{15:  0│>>}{101:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {7: }{15:  0│}{102:>>}{7:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7:                   }     {19:aaaaaaaaaaaaaaaaaaaaa aaaaaaa}|
       {7:                   }     {19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7:                   }     {19:^aaaaaaaaaaaaaa               }|
-      {7: }{8:  1│>>}{1:>!}{8:>>}{1:>!}{8:>>}{1:>!}{8:>>}{1:>!}{8:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  1│}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:                   }     aaaaaaaaaaaaaaaaaaaaa        |
       {7: }{8:  2│}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:                   }     aaaaaaaaaaaaaaaaaaaaa        |
@@ -439,11 +446,11 @@ describe('statuscolumn', function()
     command('set nobreakindent')
     feed('$g0')
     screen:expect([[
-      {101: }{15:  0│>>}{101:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {7: }{15:  0│}{102:>>}{7:                }{15: }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7:                   }{19:aaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaa}|
       {7:                   }{19:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {7:                   }{19:^aaaa                              }|
-      {7: }{8:  1│>>}{1:>!}{8:>>}{1:>!}{8:>>}{1:>!}{8:>>}{1:>!}{8:>> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {7: }{8:  1│}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{103:>!}{102:>>}{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:                   }aaaaaaaaaaaaaaaaaaaaa             |
       {7: }{8:  2│}{7:                  }{8: }aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {7:                   }aaaaaaaaaaaaaaaaaaaaa             |
@@ -465,11 +472,11 @@ describe('statuscolumn', function()
     ]])
     command('set foldcolumn=0 signcolumn=number stc=%l')
     screen:expect([[
-      {8:>>}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {102:>>}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
       {8: 5}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
       {8:  }virt_line                                          |
       {8:  }virt_line above                                    |
-      {8:>>}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+      {102:>>}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
       {8: 7}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
       {15: 8}{100:^+--  1 line: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {8: 9}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
@@ -585,13 +592,13 @@ describe('statuscolumn', function()
     command([[set stc=%6s\ %l]])
     exec_lua('vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {sign_text = "𒀀"})')
     screen:expect([[
-      {8:    𒀀   8}^aaaaa                                       |
+      {8:    }{7:𒀀 }{8:  8}^aaaaa                                       |
       {8:    }{7:  }{8:  9}aaaaa                                       |
                                                            |
     ]])
   end)
 
-  for _, model in ipairs(mousemodels) do
+  for _, model in ipairs({ 'extend', 'popup', 'popup_setpos' }) do
     describe('with mousemodel=' .. model, function()
       before_each(function()
         command('set mousemodel=' .. model)
@@ -650,23 +657,56 @@ describe('statuscolumn', function()
         -- Check that statusline click doesn't register as statuscolumn click
         api.nvim_input_mouse('right', 'press', '', 0, 12, 0)
         eq('', eval('g:testvar'))
+        -- Check that rightclick still opens popupmenu if there is no clickdef
+        if model == 'popup' then
+          api.nvim_set_option_value('statuscolumn', '%0@MyClickFunc@%=%l%TNoClick', {})
+          api.nvim_input_mouse('right', 'press', '', 0, 1, 0)
+          screen:expect([[
+            {5:[No Name]                                            }|
+            {8: 4NoClick}^aaaaa                                       |
+            {8: 5NoClick}aaaaa                                       |
+            {8: 6NoClick}aaaaa                                       |
+            {8: 7NoClick}aaaaa                                       |
+            {8: 8NoClick}aaaaa                                       |
+            {8: 9NoClick}aaaaa                                       |
+            {8:10NoClick}aaaaa                                       |
+            {8:11NoClick}aaaaa                                       |
+            {8:12NoClick}aaaaa                                       |
+            {8:13NoClick}aaaaa                                       |
+            {8:14NoClick}aaaaa                                       |
+            {3:[No Name] [+]                                        }|
+                                                                 |
+          ]])
+          api.nvim_input_mouse('right', 'press', '', 0, 1, 3)
+          screen:expect([[
+            {5:[No Name]                                            }|
+            {8: 4NoClick}^aaaaa                                       |
+            {8: 5}{4: Inspect              }                             |
+            {8: 6}{4:                      }                             |
+            {8: 7}{4: Paste                }                             |
+            {8: 8}{4: Select All           }                             |
+            {8: 9}{4:                      }                             |
+            {8:10}{4: How-to disable mouse }                             |
+            {8:11NoClick}aaaaa                                       |
+            {8:12NoClick}aaaaa                                       |
+            {8:13NoClick}aaaaa                                       |
+            {8:14NoClick}aaaaa                                       |
+            {3:[No Name] [+]                                        }|
+                                                                 |
+          ]])
+        end
       end)
 
       it('clicks and highlights work with control characters', function()
         api.nvim_set_option_value('statuscolumn', '\t%#NonText#\1%0@MyClickFunc@\t\1%T\t%##\1', {})
-        screen:expect {
-          grid = [[
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |*4
-          {1:^I}{0:^A^I^A^I}{1:^A}^aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |*8
+        screen:expect([[
+          {8:^I}{1:^A^I^A^I}{8:^A}aaaaa                                    |*4
+          {8:^I}{1:^A^I^A^I}{8:^A}^aaaaa                                    |
+          {8:^I}{1:^A^I^A^I}{8:^A}aaaaa                                    |*8
                                                                |
-        ]],
-          attr_ids = {
-            [0] = { foreground = Screen.colors.Blue, bold = true }, -- NonText
-            [1] = { foreground = Screen.colors.Brown }, -- LineNr
-          },
-        }
+        ]])
         api.nvim_input_mouse('right', 'press', '', 0, 4, 3)
+        feed('<Esc>') -- Close popupmenu
         eq('', eval('g:testvar'))
         api.nvim_input_mouse('left', 'press', '', 0, 5, 8)
         eq('', eval('g:testvar'))
@@ -709,6 +749,36 @@ describe('statuscolumn', function()
         api.nvim_input_mouse('left', 'release', '', 0, 0, 10)
         screen:expect([[
           {8: 8}^aaaaa                                              |
+                                                               |
+        ]])
+      end)
+
+      it('foldcolumn item can be clicked', function()
+        api.nvim_set_option_value('statuscolumn', '|%C|', {})
+        api.nvim_set_option_value('foldcolumn', '2', {})
+        api.nvim_set_option_value('mousetime', 0, {})
+        feed('ggzfjzfjzo')
+        local s1 = [[
+          {8:|}{7:-+}{8:|}{13:^+---  2 lines: aaaaa·····························}|
+          {8:|}{7:│ }{8:|}aaaaa                                            |
+          {8:|}{7:  }{8:|}aaaaa                                            |*11
+                                                               |
+        ]]
+        screen:expect(s1)
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 2)
+        screen:expect([[
+          {8:|}{7:--}{8:|}^aaaaa                                            |
+          {8:|}{7:││}{8:|}aaaaa                                            |
+          {8:|}{7:│ }{8:|}aaaaa                                            |
+          {8:|}{7:  }{8:|}aaaaa                                            |*10
+                                                               |
+        ]])
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 1)
+        screen:expect(s1)
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 1)
+        screen:expect([[
+          {8:|}{7:+ }{8:|}{13:^+--  3 lines: aaaaa······························}|
+          {8:|}{7:  }{8:|}aaaaa                                            |*12
                                                                |
         ]])
       end)

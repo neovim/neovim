@@ -145,7 +145,7 @@ local vim9 = (function()
   -- work well for calling ":source X" from within a vimscript/vim9script
   -- function
   M.make_source_cmd = function()
-    local group = vim.api.nvim_create_augroup('vim9script-source', {})
+    local group = vim.api.nvim_create_augroup('nvim.vim9script_source', {})
     vim.api.nvim_create_autocmd('SourceCmd', {
       pattern = '*.vim',
       group = group,

@@ -2004,6 +2004,12 @@ func Test_diff_overlapped_diff_blocks_will_be_merged()
   call WriteDiffFiles3(buf, ["a", "b", "c"], ["a", "x", "c"], ["a", "b", "y", "c"])
   call VerifyBoth(buf, "Test_diff_overlapped_3.37", "")
 
+  call WriteDiffFiles3(buf, ["a", "b", "c"], ["d", "e"], ["b", "f"])
+  call VerifyBoth(buf, "Test_diff_overlapped_3.38", "")
+
+  call WriteDiffFiles3(buf, ["a", "b", "c"], ["d", "e"], ["b"])
+  call VerifyBoth(buf, "Test_diff_overlapped_3.39", "")
+
   call StopVimInTerminal(buf)
 endfunc
 

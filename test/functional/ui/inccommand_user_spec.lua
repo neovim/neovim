@@ -253,6 +253,50 @@ describe("'inccommand' for user commands", function()
     ]]
   end)
 
+  it("can preview 'nomodifiable' buffer", function()
+    exec_lua([[
+      vim.api.nvim_create_user_command("PreviewTest", function() end, {
+        preview = function(ev)
+          vim.bo.modifiable = true
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, {"cats"})
+          return 2
+        end,
+      })
+    ]])
+    command('set inccommand=split')
+
+    command('set nomodifiable')
+    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+
+    feed(':PreviewTest')
+
+    screen:expect([[
+      cats                                    |
+      {1:~                                       }|*8
+      {3:[No Name] [+]                           }|
+                                              |
+      {1:~                                       }|*4
+      {2:[Preview]                               }|
+      :PreviewTest^                            |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+        text on line 1                        |
+        more text on line 2                   |
+        oh no, even more text                 |
+        will the text ever stop               |
+        oh well                               |
+        did the text stop                     |
+        why won't it stop                     |
+        make the text stop                    |
+      ^                                        |
+      {1:~                                       }|*7
+                                              |
+    ]])
+
+    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+  end)
+
   it('works with inccommand=nosplit', function()
     command('set inccommand=nosplit')
     feed(':Replace text cats')

@@ -128,13 +128,13 @@ function vim.inspect_pos(bufnr, row, col, filter)
 
   if filter.semantic_tokens then
     results.semantic_tokens = vim.tbl_filter(function(extmark)
-      return extmark.ns:find('vim_lsp_semantic_tokens') == 1
+      return extmark.ns:find('nvim.lsp.semantic_tokens') == 1
     end, extmarks)
   end
 
   if filter.extmarks then
     results.extmarks = vim.tbl_filter(function(extmark)
-      return extmark.ns:find('vim_lsp_semantic_tokens') ~= 1
+      return extmark.ns:find('nvim.lsp.semantic_tokens') ~= 1
         and (filter.extmarks == 'all' or extmark.opts.hl_group)
     end, extmarks)
   end

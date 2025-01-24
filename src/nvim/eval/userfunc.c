@@ -78,7 +78,6 @@ static funccall_T *current_funccal = NULL;
 // item in it is still being used.
 static funccall_T *previous_funccal = NULL;
 
-static const char *e_unknown_function_str = N_("E117: Unknown function: %s");
 static const char *e_funcexts = N_("E122: Function %s already exists, add ! to replace it");
 static const char *e_funcdict = N_("E717: Dictionary entry already exists");
 static const char *e_funcref = N_("E718: Funcref required");

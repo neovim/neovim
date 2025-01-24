@@ -267,6 +267,7 @@ function LanguageTree:trees()
 end
 
 --- Gets the language of this tree node.
+--- @return string
 function LanguageTree:lang()
   return self._lang
 end
@@ -307,11 +308,13 @@ function LanguageTree:is_valid(exclude_children)
 end
 
 --- Returns a map of language to child tree.
+--- @return table<string,vim.treesitter.LanguageTree>
 function LanguageTree:children()
   return self._children
 end
 
 --- Returns the source content of the language tree (bufnr or string).
+--- @return integer|string
 function LanguageTree:source()
   return self._source
 end
@@ -450,8 +453,8 @@ function LanguageTree:_run_async_callbacks(range, err, trees)
   for _, cb in ipairs(self._cb_queues[key]) do
     cb(err, trees)
   end
-  self._ranges_being_parsed[key] = false
-  self._cb_queues[key] = {}
+  self._ranges_being_parsed[key] = nil
+  self._cb_queues[key] = nil
 end
 
 --- Run an asynchronous parse, calling {on_parse} when complete.
@@ -630,7 +633,8 @@ function LanguageTree:add_child(lang)
   return self._children[lang]
 end
 
---- @package
+---Returns the parent tree. `nil` for the root tree.
+---@return vim.treesitter.LanguageTree?
 function LanguageTree:parent()
   return self._parent
 end

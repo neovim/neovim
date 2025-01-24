@@ -412,7 +412,7 @@ do
     end
   end
 
-  local nvim_popupmenu_augroup = vim.api.nvim_create_augroup('nvim_popupmenu', {})
+  local nvim_popupmenu_augroup = vim.api.nvim_create_augroup('nvim.popupmenu', {})
   vim.api.nvim_create_autocmd('MenuPopup', {
     pattern = '*',
     group = nvim_popupmenu_augroup,
@@ -429,7 +429,7 @@ end
 
 --- Default autocommands. See |default-autocmds|
 do
-  local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim_terminal', {})
+  local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim.terminal', {})
   vim.api.nvim_create_autocmd('BufReadCmd', {
     pattern = 'term://*',
     group = nvim_terminal_augroup,
@@ -509,14 +509,14 @@ do
   vim.api.nvim_create_autocmd('CmdwinEnter', {
     pattern = '[:>]',
     desc = 'Limit syntax sync to maxlines=1 in the command window',
-    group = vim.api.nvim_create_augroup('nvim_cmdwin', {}),
+    group = vim.api.nvim_create_augroup('nvim.cmdwin', {}),
     command = 'syntax sync minlines=1 maxlines=1',
   })
 
   vim.api.nvim_create_autocmd('SwapExists', {
     pattern = '*',
     desc = 'Skip the swapfile prompt when the swapfile is owned by a running Nvim process',
-    group = vim.api.nvim_create_augroup('nvim_swapfile', {}),
+    group = vim.api.nvim_create_augroup('nvim.swapfile', {}),
     callback = function()
       local info = vim.fn.swapinfo(vim.v.swapname)
       local user = vim.uv.os_get_passwd().username
@@ -543,7 +543,7 @@ do
   end
 
   if tty then
-    local group = vim.api.nvim_create_augroup('nvim_tty', {})
+    local group = vim.api.nvim_create_augroup('nvim.tty', {})
 
     --- Set an option after startup (so that OptionSet is fired), but only if not
     --- already set by the user.

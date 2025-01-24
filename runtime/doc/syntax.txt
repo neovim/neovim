@@ -593,6 +593,7 @@ Variable		Highlight ~
 *c_no_cformat*		don't highlight %-formats in strings
 *c_no_c99*		don't highlight C99 standard items
 *c_no_c11*		don't highlight C11 standard items
+*c_no_c23*		don't highlight C23 standard items
 *c_no_bsd*		don't highlight BSD specific types
 *c_functions*		highlight function calls and definitions
 *c_function_pointers*	highlight function pointers definitions
@@ -1744,6 +1745,16 @@ To disable numbers having their own color add the following to your vimrc: >
 If you want quotes to have different highlighting than strings >
 	let g:jq_quote_highlight = 1
 
+KCONFIG							*ft-kconfig-syntax*
+
+Kconfig syntax highlighting language.  For syntax syncing, you can configure
+the following variable (default: 50): >
+
+	let kconfig_minlines = 50
+
+To configure a bit more (heavier) highlighting, set the following variable: >
+
+	let kconfig_syntax_heavy = 1
 
 LACE						*lace.vim* *ft-lace-syntax*
 

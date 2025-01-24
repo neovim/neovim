@@ -289,7 +289,7 @@ end, false)
 
 api.nvim_create_autocmd('OptionSet', {
   pattern = { 'runtimepath' },
-  group = api.nvim_create_augroup('ts_query_cache_reset', { clear = true }),
+  group = api.nvim_create_augroup('nvim.treesitter.query_cache_reset', { clear = true }),
   callback = function()
     M.get:clear()
   end,
@@ -301,7 +301,7 @@ api.nvim_create_autocmd('OptionSet', {
 ---   - `captures`: a list of unique capture names defined in the query (alias: `info.captures`).
 ---   - `info.patterns`: information about predicates.
 ---
---- Example (to try it, use `yxx` or select the code then run `:'<,'>lua`):
+--- Example (to try it, use `g==` or select the code then run `:'<,'>lua`):
 --- ```lua
 --- local query = vim.treesitter.query.parse('vimdoc', [[
 ---   ; query

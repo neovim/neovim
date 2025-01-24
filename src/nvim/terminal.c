@@ -783,21 +783,32 @@ static int terminal_execute(VimState *state, int key)
 {
   TerminalState *s = (TerminalState *)state;
 
-  switch (key) {
+  // Check for certain control keys like Ctrl-C and Ctrl-\. We still send the
+  // unmerged key and modifiers to the terminal.
+  int tmp_mod_mask = mod_mask;
+  int mod_key = merge_modifiers(key, &tmp_mod_mask);
+
+  switch (mod_key) {
   case K_LEFTMOUSE:
   case K_LEFTDRAG:
   case K_LEFTRELEASE:
-  case K_MOUSEMOVE:
   case K_MIDDLEMOUSE:
   case K_MIDDLEDRAG:
   case K_MIDDLERELEASE:
   case K_RIGHTMOUSE:
   case K_RIGHTDRAG:
   case K_RIGHTRELEASE:
+  case K_X1MOUSE:
+  case K_X1DRAG:
+  case K_X1RELEASE:
+  case K_X2MOUSE:
+  case K_X2DRAG:
+  case K_X2RELEASE:
   case K_MOUSEDOWN:
   case K_MOUSEUP:
   case K_MOUSELEFT:
   case K_MOUSERIGHT:
+  case K_MOUSEMOVE:
     if (send_mouse_event(s->term, key)) {
       return 0;
     }
@@ -841,13 +852,13 @@ static int terminal_execute(VimState *state, int key)
     FALLTHROUGH;
 
   default:
-    if (key == Ctrl_C) {
+    if (mod_key == Ctrl_C) {
       // terminal_enter() always sets `mapped_ctrl_c` to avoid `got_int`. 8eeda7169aa4
       // But `got_int` may be set elsewhere, e.g. by interrupt() or an autocommand,
       // so ensure that it is cleared.
       got_int = false;
     }
-    if (key == Ctrl_BSL && !s->got_bsl) {
+    if (mod_key == Ctrl_BSL && !s->got_bsl) {
       s->got_bsl = true;
       break;
     }
@@ -1016,7 +1027,7 @@ static void terminal_send_key(Terminal *term, int c)
 
   VTermKey key = convert_key(&c, &mod);
 
-  if (key) {
+  if (key != VTERM_KEY_NONE) {
     vterm_keyboard_key(term->vt, key, mod);
   } else if (!IS_SPECIAL(c)) {
     vterm_keyboard_unichar(term->vt, (uint32_t)c, mod);
@@ -1799,8 +1810,6 @@ static bool send_mouse_event(Terminal *term, int c)
       pressed = true; FALLTHROUGH;
     case K_LEFTRELEASE:
       button = 1; break;
-    case K_MOUSEMOVE:
-      button = 0; break;
     case K_MIDDLEDRAG:
     case K_MIDDLEMOUSE:
       pressed = true; FALLTHROUGH;
@@ -1811,6 +1820,16 @@ static bool send_mouse_event(Terminal *term, int c)
       pressed = true; FALLTHROUGH;
     case K_RIGHTRELEASE:
       button = 3; break;
+    case K_X1DRAG:
+    case K_X1MOUSE:
+      pressed = true; FALLTHROUGH;
+    case K_X1RELEASE:
+      button = 8; break;
+    case K_X2DRAG:
+    case K_X2MOUSE:
+      pressed = true; FALLTHROUGH;
+    case K_X2RELEASE:
+      button = 9; break;
     case K_MOUSEDOWN:
       pressed = true; button = 4; break;
     case K_MOUSEUP:
@@ -1819,6 +1838,8 @@ static bool send_mouse_event(Terminal *term, int c)
       pressed = true; button = 7; break;
     case K_MOUSERIGHT:
       pressed = true; button = 6; break;
+    case K_MOUSEMOVE:
+      button = 0; break;
     default:
       return false;
     }

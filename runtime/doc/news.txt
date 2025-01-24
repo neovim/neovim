@@ -26,6 +26,9 @@ LSP
 
 • `lsp/` runtimepath files should return a table instead of calling
   |vim.lsp.config()| (or assigning to `vim.lsp.config`). See |lsp-config|
+• `vim.lsp.buf.document_symbol()` uses the |location-list| by default. Use
+  `vim.lsp.buf.document_symbol({ loclist = false })` to use the |quickfix|
+  list.
 
 
 OPTIONS
@@ -70,7 +73,9 @@ DIAGNOSTICS
   the "severity_sort" option.
 • Diagnostics are filtered by severity before being passed to a diagnostic
   handler |diagnostic-handlers|.
-
+• The "virtual_text" handler is disabled by default. Enable with >lua
+    vim.diagnostic.config({ virtual_text = true })
+<
 EDITOR
 
 • The order in which signs are placed was changed. Higher priority signs will
@@ -96,7 +101,7 @@ EVENTS
   • `msg_show`:
     • `history` argument indicating if the message was added to the history.
     • new message kinds: "bufwrite", "completion", "list_cmd", "lua_print",
-      "search_cmd", "undo", "verbose", wildlist".
+      "search_cmd", "shell_out/err/ret", "undo", "verbose", wildlist".
 
 HIGHLIGHTS
 
@@ -188,6 +193,8 @@ API
 • |nvim_echo()| `err` field to print error messages and `chunks` accepts
   highlight group IDs.
 • |nvim_open_win()| `relative` field can be set to "laststatus" and "tabline".
+• |nvim_buf_set_extmark()| `hl_group` field can be an array of layered groups
+• |vim.hl.range()| now has a optional `timeout` field which allows for a timed highlight
 • |nvim_buf_set_extmark()| virt_text_pos accepts `eol_right_align` to
   allow for right aligned text that truncates before covering up buffer text.
 
@@ -231,7 +238,7 @@ DIAGNOSTICS
 
 EDITOR
 
-• Use |yxx| in :help docs to execute Lua and Vimscript code examples.
+• Use |g==| in :help docs to execute Lua and Vimscript code examples.
 • Improved |paste| handling for redo (dot-repeat) and macros (|recording|):
   • Redoing a large paste is significantly faster and ignores 'autoindent'.
   • Replaying a macro with |@| also replays pasted text.
@@ -288,6 +295,8 @@ LUA
 • |vim.json.encode()| has an option to enable forward slash escaping
 • |vim.fs.abspath()| converts paths to absolute paths.
 • |vim.fs.relpath()| gets relative path compared to base path.
+• |vim.fs.dir()| and |vim.fs.find()| now follow symbolic links by default,
+  the behavior can be turn off using the new `follow` option.
 
 OPTIONS
 
@@ -314,6 +323,8 @@ PLUGINS
 
 • EditorConfig
   • spelling_language property is now supported.
+• 'inccommand' incremental preview can run on 'nomodifiable' buffers and
+  restores their 'modifiable' state
 
 STARTUP
 
@@ -341,6 +352,9 @@ TERMINAL
 • |jobstart()| gained the "term" flag.
 • The |terminal| will send theme update notifications when 'background' is
   changed and DEC mode 2031 is enabled.
+• The |terminal| has experimental support for the Kitty keyboard protocol
+  (sometimes called "CSI u" key encoding). Only the "Disambiguate escape
+  codes" mode is currently supported.
 
 TREESITTER
 
@@ -409,8 +423,10 @@ These existing features changed their behavior.
   using the upgraded implementation.
 
 • Custom highlights in 'rulerformat', 'statuscolumn', 'statusline', 'tabline',
-  'winbar' and the number column (through |:sign-define| `numhl`) now combine
-  with their respective highlight groups, as opposed to |hl-Normal|.
+  'winbar', and the sign/number column are stacked with their respective
+  highlight groups, as opposed to |hl-Normal|.
+  This is also reflected in the `highlights` from |nvim_eval_statusline()|,
+  with a new `groups` field containing an array of stacked highlight groups.
 
 • |vim.on_key()| callbacks won't be invoked recursively when a callback itself
   consumes input.

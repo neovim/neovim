@@ -67,9 +67,19 @@ describe('command-line option', function()
       eq(#'100500\n', attrs.size)
     end)
 
-    it('does not crash when run completion in Ex mode', function()
+    it('does not crash when running completion in Ex mode', function()
       local p =
         n.spawn_wait('--clean', '-e', '-s', '--cmd', 'exe "norm! i\\<C-X>\\<C-V>"', '--cmd', 'qa!')
+      eq(0, p.status)
+    end)
+
+    it('does not crash when running completion from -l script', function()
+      local lua_fname = 'Xinscompl.lua'
+      write_file(lua_fname, [=[vim.cmd([[exe "norm! i\<C-X>\<C-V>"]])]=])
+      finally(function()
+        os.remove(lua_fname)
+      end)
+      local p = n.spawn_wait('--clean', '-l', lua_fname)
       eq(0, p.status)
     end)
 

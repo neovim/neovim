@@ -21,7 +21,7 @@ local query_lint_on = vim.g.query_lint_on or { 'BufEnter', 'BufWrite' }
 
 if not vim.b.disable_query_linter and #query_lint_on > 0 then
   vim.api.nvim_create_autocmd(query_lint_on, {
-    group = vim.api.nvim_create_augroup('querylint', { clear = false }),
+    group = vim.api.nvim_create_augroup('nvim.querylint', { clear = false }),
     buffer = buf,
     callback = function()
       vim.treesitter.query.lint(buf)

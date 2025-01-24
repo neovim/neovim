@@ -192,7 +192,7 @@ local M = {}
 ---@type table<integer,TS.FoldInfo>
 local foldinfos = {}
 
-local group = api.nvim_create_augroup('treesitter/fold', {})
+local group = api.nvim_create_augroup('nvim.treesitter.fold', {})
 
 --- Update the folds in the windows that contain the buffer and use expr foldmethod (assuming that
 --- the user doesn't use different foldexpr for the same buffer).
@@ -387,7 +387,9 @@ function M.foldexpr(lnum)
 
     parser:register_cbs({
       on_changedtree = function(tree_changes)
-        on_changedtree(bufnr, foldinfos[bufnr], tree_changes)
+        if foldinfos[bufnr] then
+          on_changedtree(bufnr, foldinfos[bufnr], tree_changes)
+        end
       end,
 
       on_bytes = function(_, _, start_row, start_col, _, old_row, old_col, _, new_row, new_col, _)

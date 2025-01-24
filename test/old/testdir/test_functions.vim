@@ -2672,7 +2672,9 @@ endfunc
 func Test_call()
   call assert_equal(3, call('len', [123]))
   call assert_equal(3, 'len'->call([123]))
-  call assert_fails("call call('len', 123)", 'E714:')
+  call assert_equal(4, call({ x -> len(x) }, ['xxxx']))
+  call assert_equal(2, call(function('len'), ['xx']))
+  call assert_fails("call call('len', 123)", 'E1211:')
   call assert_equal(0, call('', []))
   call assert_equal(0, call('len', v:_null_list))
 

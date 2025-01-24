@@ -280,6 +280,54 @@ static int get_fpos_of_mouse(pos_T *mpos)
   return IN_BUFFER;
 }
 
+static int do_popup(int which_button, int m_pos_flag, pos_T m_pos)
+{
+  int jump_flags = 0;
+  if (strcmp(p_mousem, "popup_setpos") == 0) {
+    // First set the cursor position before showing the popup menu.
+    if (VIsual_active) {
+      // set MOUSE_MAY_STOP_VIS if we are outside the selection
+      // or the current window (might have false negative here)
+      if (m_pos_flag != IN_BUFFER) {
+        jump_flags = MOUSE_MAY_STOP_VIS;
+      } else {
+        if (VIsual_mode == 'V') {
+          if ((curwin->w_cursor.lnum <= VIsual.lnum
+               && (m_pos.lnum < curwin->w_cursor.lnum || VIsual.lnum < m_pos.lnum))
+              || (VIsual.lnum < curwin->w_cursor.lnum
+                  && (m_pos.lnum < VIsual.lnum || curwin->w_cursor.lnum < m_pos.lnum))) {
+            jump_flags = MOUSE_MAY_STOP_VIS;
+          }
+        } else if ((ltoreq(curwin->w_cursor, VIsual)
+                    && (lt(m_pos, curwin->w_cursor) || lt(VIsual, m_pos)))
+                   || (lt(VIsual, curwin->w_cursor)
+                       && (lt(m_pos, VIsual) || lt(curwin->w_cursor, m_pos)))) {
+          jump_flags = MOUSE_MAY_STOP_VIS;
+        } else if (VIsual_mode == Ctrl_V) {
+          colnr_T leftcol, rightcol;
+          getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
+          getvcol(curwin, &m_pos, NULL, &m_pos.col, NULL);
+          if (m_pos.col < leftcol || m_pos.col > rightcol) {
+            jump_flags = MOUSE_MAY_STOP_VIS;
+          }
+        }
+      }
+    } else {
+      jump_flags = MOUSE_MAY_STOP_VIS;
+    }
+  }
+  if (jump_flags) {
+    jump_flags = jump_to_mouse(jump_flags, NULL, which_button);
+    redraw_curbuf_later(VIsual_active ? UPD_INVERTED : UPD_VALID);
+    update_screen();
+    setcursor();
+    ui_flush();  // Update before showing popup menu
+  }
+  show_popupmenu();
+  got_click = false;  // ignore release events
+  return jump_flags;
+}
+
 /// Do the appropriate action for the current mouse click in the current mode.
 /// Not used for Command-line mode.
 ///
@@ -324,24 +372,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   int which_button;             // MOUSE_LEFT, _MIDDLE or _RIGHT
   bool is_click;                // If false it's a drag or release event
   bool is_drag;                 // If true it's a drag event
-  int jump_flags = 0;           // flags for jump_to_mouse()
-  pos_T start_visual;
-  bool moved;                   // Has cursor moved?
-  bool in_winbar;               // mouse in window bar
-  bool in_statuscol;            // mouse in status column
-  bool in_status_line;          // mouse in status line
   static bool in_tab_line = false;   // mouse clicked in tab line
-  bool in_sep_line;             // mouse in vertical separator line
-  int c1;
-  win_T *old_curwin = curwin;
   static pos_T orig_cursor;
-  colnr_T leftcol, rightcol;
-  pos_T end_visual;
-  int old_active = VIsual_active;
-  int old_mode = VIsual_mode;
-  int regname;
-
-  pos_T save_cursor = curwin->w_cursor;
 
   while (true) {
     which_button = get_mouse_button(KEY2TERMCAP1(c), &is_click, &is_drag);
@@ -434,12 +466,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     return false;
   }
 
-  if (oap != NULL) {
-    regname = oap->regname;
-  } else {
-    regname = 0;
-  }
-
+  int regname = oap != NULL ? oap->regname : 0;
   // Middle mouse button does a 'put' of the selected text
   if (which_button == MOUSE_MIDDLE) {
     if (State == MODE_NORMAL) {
@@ -496,12 +523,10 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     }
   }
 
+  // flags for jump_to_mouse()
   // When dragging or button-up stay in the same window.
-  if (!is_click) {
-    jump_flags |= MOUSE_FOCUS | MOUSE_DID_MOVE;
-  }
-
-  start_visual.lnum = 0;
+  int jump_flags = is_click ? 0 : (MOUSE_FOCUS|MOUSE_DID_MOVE);
+  win_T *old_curwin = curwin;
 
   if (tab_page_click_defs != NULL) {  // only when initialized
     // Check for clicking in the tab page line.
@@ -515,8 +540,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
 
       // click in a tab selects that tab page
       if (is_click && cmdwin_type == 0 && mouse_col < Columns) {
+        int tabnr = tab_page_click_defs[mouse_col].tabnr;
         in_tab_line = true;
-        c1 = tab_page_click_defs[mouse_col].tabnr;
 
         switch (tab_page_click_defs[mouse_col].type) {
         case kStlClickDisabled:
@@ -527,11 +552,11 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
               // double click opens new page
               end_visual_mode();
               tabpage_new();
-              tabpage_move(c1 == 0 ? 9999 : c1 - 1);
+              tabpage_move(tabnr == 0 ? 9999 : tabnr - 1);
             } else {
               // Go to specified tab page, or next one if not clicking
               // on a label.
-              goto_tabpage(c1);
+              goto_tabpage(tabnr);
 
               // It's like clicking on the status line of a window.
               if (curwin != old_curwin) {
@@ -542,7 +567,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
           }
           FALLTHROUGH;
         case kStlClickTabClose:
-          mouse_tab_close(c1);
+          mouse_tab_close(tabnr);
           break;
         case kStlClickFuncRun:
           call_click_def_func(tab_page_click_defs, mouse_col, which_button);
@@ -556,75 +581,33 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     }
   }
 
+  int m_pos_flag = 0;
+  pos_T m_pos = { 0 };
   // When 'mousemodel' is "popup" or "popup_setpos", translate mouse events:
   // right button up   -> pop-up menu
   // shift-left button -> right button
   // alt-left button   -> alt-right button
   if (mouse_model_popup()) {
-    pos_T m_pos;
-    int m_pos_flag = get_fpos_of_mouse(&m_pos);
-    if (m_pos_flag & (IN_STATUS_LINE|MOUSE_WINBAR|MOUSE_STATUSCOL)) {
-      goto popupexit;
-    }
-    if (which_button == MOUSE_RIGHT
-        && !(mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
+    m_pos_flag = get_fpos_of_mouse(&m_pos);
+    if (!(m_pos_flag & (IN_STATUS_LINE|MOUSE_WINBAR|MOUSE_STATUSCOL))
+        && which_button == MOUSE_RIGHT && !(mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL))) {
       if (!is_click) {
         // Ignore right button release events, only shows the popup
         // menu on the button down event.
         return false;
       }
-      jump_flags = 0;
-      if (strcmp(p_mousem, "popup_setpos") == 0) {
-        // First set the cursor position before showing the popup menu.
-        if (VIsual_active) {
-          // set MOUSE_MAY_STOP_VIS if we are outside the selection
-          // or the current window (might have false negative here)
-          if (m_pos_flag != IN_BUFFER) {
-            jump_flags = MOUSE_MAY_STOP_VIS;
-          } else {
-            if (VIsual_mode == 'V') {
-              if ((curwin->w_cursor.lnum <= VIsual.lnum
-                   && (m_pos.lnum < curwin->w_cursor.lnum || VIsual.lnum < m_pos.lnum))
-                  || (VIsual.lnum < curwin->w_cursor.lnum
-                      && (m_pos.lnum < VIsual.lnum || curwin->w_cursor.lnum < m_pos.lnum))) {
-                jump_flags = MOUSE_MAY_STOP_VIS;
-              }
-            } else if ((ltoreq(curwin->w_cursor, VIsual)
-                        && (lt(m_pos, curwin->w_cursor) || lt(VIsual, m_pos)))
-                       || (lt(VIsual, curwin->w_cursor)
-                           && (lt(m_pos, VIsual) || lt(curwin->w_cursor, m_pos)))) {
-              jump_flags = MOUSE_MAY_STOP_VIS;
-            } else if (VIsual_mode == Ctrl_V) {
-              getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
-              getvcol(curwin, &m_pos, NULL, &m_pos.col, NULL);
-              if (m_pos.col < leftcol || m_pos.col > rightcol) {
-                jump_flags = MOUSE_MAY_STOP_VIS;
-              }
-            }
-          }
-        } else {
-          jump_flags = MOUSE_MAY_STOP_VIS;
-        }
-      }
-      if (jump_flags) {
-        jump_flags = jump_to_mouse(jump_flags, NULL, which_button);
-        redraw_curbuf_later(VIsual_active ? UPD_INVERTED : UPD_VALID);
-        update_screen();
-        setcursor();
-        ui_flush();  // Update before showing popup menu
-      }
-      show_popupmenu();
-      got_click = false;  // ignore release events
-      return (jump_flags & CURSOR_MOVED) != 0;
+      return (do_popup(which_button, m_pos_flag, m_pos) & CURSOR_MOVED);
     }
-    if (which_button == MOUSE_LEFT
-        && (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_ALT))) {
+    // Only do this translation when mouse is over the buffer text
+    if (!(m_pos_flag & (IN_STATUS_LINE|MOUSE_WINBAR|MOUSE_STATUSCOL))
+        && (which_button == MOUSE_LEFT && (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_ALT)))) {
       which_button = MOUSE_RIGHT;
       mod_mask &= ~MOD_MASK_SHIFT;
     }
   }
-popupexit:
 
+  pos_T end_visual = { 0 };
+  pos_T start_visual = { 0 };
   if ((State & (MODE_NORMAL | MODE_INSERT))
       && !(mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
     if (which_button == MOUSE_LEFT) {
@@ -664,15 +647,15 @@ popupexit:
   }
 
   // JUMP!
-  jump_flags = jump_to_mouse(jump_flags,
-                             oap == NULL ? NULL : &(oap->inclusive),
-                             which_button);
+  int old_active = VIsual_active;
+  pos_T save_cursor = curwin->w_cursor;
+  jump_flags = jump_to_mouse(jump_flags, oap == NULL ? NULL : &(oap->inclusive), which_button);
 
-  moved = (jump_flags & CURSOR_MOVED);
-  in_winbar = (jump_flags & MOUSE_WINBAR);
-  in_statuscol = (jump_flags & MOUSE_STATUSCOL);
-  in_status_line = (jump_flags & IN_STATUS_LINE);
-  in_sep_line = (jump_flags & IN_SEP_LINE);
+  bool moved = (jump_flags & CURSOR_MOVED);
+  bool in_winbar = (jump_flags & MOUSE_WINBAR);
+  bool in_statuscol = (jump_flags & MOUSE_STATUSCOL);
+  bool in_status_line = (jump_flags & IN_STATUS_LINE);
+  bool in_sep_line = (jump_flags & IN_SEP_LINE);
 
   if ((in_winbar || in_status_line || in_statuscol) && is_click) {
     // Handle click event on window bar, status line or status column
@@ -705,6 +688,12 @@ popupexit:
     if (click_defs != NULL) {
       switch (click_defs[click_col].type) {
       case kStlClickDisabled:
+        // If there is no click definition, still open the popupmenu for a
+        // statuscolumn click like a click in the sign/number column does.
+        if (in_statuscol && mouse_model_popup()
+            && which_button == MOUSE_RIGHT && !(mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL))) {
+          do_popup(which_button, m_pos_flag, m_pos);
+        }
         break;
       case kStlClickFuncRun:
         call_click_def_func(click_defs, click_col, which_button);
@@ -715,7 +704,9 @@ popupexit:
       }
     }
 
-    return false;
+    if (!(in_statuscol && (jump_flags & (MOUSE_FOLD_CLOSE|MOUSE_FOLD_OPEN)))) {
+      return false;
+    }
   } else if (in_winbar || in_statuscol) {
     // A drag or release event in the window bar and status column has no side effects.
     return false;
@@ -760,6 +751,7 @@ popupexit:
     mouse_row = 0;
   }
 
+  int old_mode = VIsual_mode;
   if (start_visual.lnum) {              // right click in visual mode
     linenr_T diff;
     // When ALT is pressed make Visual mode blockwise.
@@ -770,6 +762,7 @@ popupexit:
     // In Visual-block mode, divide the area in four, pick up the corner
     // that is in the quarter that the cursor is in.
     if (VIsual_mode == Ctrl_V) {
+      colnr_T leftcol, rightcol;
       getvcols(curwin, &start_visual, &end_visual, &leftcol, &rightcol);
       if (curwin->w_curswant > (leftcol + rightcol) / 2) {
         end_visual.col = leftcol;
@@ -831,7 +824,6 @@ popupexit:
 
   // Middle mouse click: Put text before cursor.
   if (which_button == MOUSE_MIDDLE) {
-    int c2;
     if (regname == 0 && eval_has_provider("clipboard", false)) {
       regname = '*';
     }
@@ -843,6 +835,7 @@ popupexit:
       dir = FORWARD;
     }
 
+    int c1, c2;
     if (fixindent) {
       c1 = (dir == BACKWARD) ? '[' : ']';
       c2 = 'p';
@@ -1258,8 +1251,6 @@ retnomove:
   if (flags & MOUSE_SETPOS) {
     goto retnomove;                             // ugly goto...
   }
-  win_T *old_curwin = curwin;
-  pos_T old_cursor = curwin->w_cursor;
 
   if (row < 0 || col < 0) {                   // check if it makes sense
     return IN_UNKNOWN;
@@ -1299,13 +1290,15 @@ retnomove:
     grid = mouse_grid;
   }
 
+  win_T *old_curwin = curwin;
+  pos_T old_cursor = curwin->w_cursor;
   if (!keep_focus) {
     if (on_winbar) {
       return IN_OTHER_WIN | MOUSE_WINBAR;
     }
 
     if (on_statuscol) {
-      return IN_OTHER_WIN | MOUSE_STATUSCOL;
+      goto foldclick;
     }
 
     fdc = win_fdccol_count(wp);
@@ -1497,6 +1490,7 @@ retnomove:
     }
   }
 
+foldclick:;
   colnr_T col_from_screen = -1;
   int mouse_fold_flags = 0;
   mouse_check_grid(&col_from_screen, &mouse_fold_flags);
@@ -1535,7 +1529,7 @@ retnomove:
     *inclusive = false;
   }
 
-  count = IN_BUFFER;
+  count = on_statuscol ? (IN_OTHER_WIN|MOUSE_STATUSCOL) : IN_BUFFER;
   if (curwin != old_curwin || curwin->w_cursor.lnum != old_cursor.lnum
       || curwin->w_cursor.col != old_cursor.col) {
     count |= CURSOR_MOVED;              // Cursor has moved

@@ -216,6 +216,43 @@ describe('vim.lsp.completion: item conversion', function()
       })
     end)
 
+    it('uses filterText as word if label/newText would not match', function()
+      local items = {
+        {
+          filterText = '<module',
+          insertTextFormat = 2,
+          kind = 10,
+          label = 'module',
+          sortText = 'module',
+          textEdit = {
+            newText = '<module>$1</module>$0',
+            range = {
+              start = {
+                character = 0,
+                line = 0,
+              },
+              ['end'] = {
+                character = 0,
+                line = 0,
+              },
+            },
+          },
+        },
+      }
+      assert_completion_matches('<mo', items, {
+        {
+          abbr = 'module',
+          word = '<module',
+        },
+      })
+      assert_completion_matches('', items, {
+        {
+          abbr = 'module',
+          word = 'module',
+        },
+      })
+    end)
+
     it('fuzzy matches on label when filterText is missing', function()
       assert_completion_matches('fo', {
         { label = 'foo' },

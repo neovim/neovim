@@ -464,7 +464,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
     Fields: ~
       • {underline}?         (`boolean|vim.diagnostic.Opts.Underline|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Underline`, default: `true`)
                              Use underline for diagnostics.
-      • {virtual_text}?      (`boolean|vim.diagnostic.Opts.VirtualText|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.VirtualText`, default: `true`)
+      • {virtual_text}?      (`boolean|vim.diagnostic.Opts.VirtualText|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.VirtualText`, default: `false`)
                              Use virtual text for diagnostics. If multiple
                              diagnostics are set for a namespace, one prefix
                              per diagnostic + the last diagnostic message are

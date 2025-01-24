@@ -2884,6 +2884,25 @@ static void ins_compl_update_sequence_numbers(void)
   }
 }
 
+/// Fill the dict of complete_info
+static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
+{
+  tv_dict_add_str(di, S_LEN("word"), match->cp_str.data);
+  tv_dict_add_str(di, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
+  tv_dict_add_str(di, S_LEN("menu"), match->cp_text[CPT_MENU]);
+  tv_dict_add_str(di, S_LEN("kind"), match->cp_text[CPT_KIND]);
+  tv_dict_add_str(di, S_LEN("info"), match->cp_text[CPT_INFO]);
+  if (add_match) {
+    tv_dict_add_bool(di, S_LEN("match"), match->cp_in_match_array);
+  }
+  if (match->cp_user_data.v_type == VAR_UNKNOWN) {
+    // Add an empty string for backwards compatibility
+    tv_dict_add_str(di, S_LEN("user_data"), "");
+  } else {
+    tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
+  }
+}
+
 /// Get complete information
 static void get_complete_info(list_T *what_list, dict_T *retdict)
 {
@@ -2891,13 +2910,13 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
 #define CI_WHAT_PUM_VISIBLE     0x02
 #define CI_WHAT_ITEMS           0x04
 #define CI_WHAT_SELECTED        0x08
-#define CI_WHAT_INSERTED        0x10
+#define CI_WHAT_COMPLETED       0x10
 #define CI_WHAT_MATCHES         0x20
 #define CI_WHAT_ALL             0xff
   int what_flag;
 
   if (what_list == NULL) {
-    what_flag = CI_WHAT_ALL & ~CI_WHAT_MATCHES;
+    what_flag = CI_WHAT_ALL & ~(CI_WHAT_MATCHES|CI_WHAT_COMPLETED);
   } else {
     what_flag = 0;
     for (listitem_T *item = tv_list_first(what_list)
@@ -2913,8 +2932,8 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
         what_flag |= CI_WHAT_ITEMS;
       } else if (strcmp(what, "selected") == 0) {
         what_flag |= CI_WHAT_SELECTED;
-      } else if (strcmp(what, "inserted") == 0) {
-        what_flag |= CI_WHAT_INSERTED;
+      } else if (strcmp(what, "completed") == 0) {
+        what_flag |= CI_WHAT_COMPLETED;
       } else if (strcmp(what, "matches") == 0) {
         what_flag |= CI_WHAT_MATCHES;
       }
@@ -2930,12 +2949,13 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
     ret = tv_dict_add_nr(retdict, S_LEN("pum_visible"), pum_visible());
   }
 
-  if (ret == OK && (what_flag & CI_WHAT_ITEMS || what_flag & CI_WHAT_SELECTED
-                    || what_flag & CI_WHAT_MATCHES)) {
+  if (ret == OK && (what_flag & (CI_WHAT_ITEMS|CI_WHAT_SELECTED
+                                 |CI_WHAT_MATCHES|CI_WHAT_COMPLETED))) {
     list_T *li = NULL;
     int selected_idx = -1;
     bool has_items = what_flag & CI_WHAT_ITEMS;
     bool has_matches = what_flag & CI_WHAT_MATCHES;
+    bool has_completed = what_flag & CI_WHAT_COMPLETED;
     if (has_items || has_matches) {
       li = tv_list_alloc(kListLenMayKnow);
       const char *key = (has_matches && !has_items) ? "matches" : "items";
@@ -2954,20 +2974,7 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
           if (has_items || (has_matches && match->cp_in_match_array)) {
             dict_T *di = tv_dict_alloc();
             tv_list_append_dict(li, di);
-            tv_dict_add_str(di, S_LEN("word"), match->cp_str.data);
-            tv_dict_add_str(di, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
-            tv_dict_add_str(di, S_LEN("menu"), match->cp_text[CPT_MENU]);
-            tv_dict_add_str(di, S_LEN("kind"), match->cp_text[CPT_KIND]);
-            tv_dict_add_str(di, S_LEN("info"), match->cp_text[CPT_INFO]);
-            if (has_matches && has_items) {
-              tv_dict_add_bool(di, S_LEN("match"), match->cp_in_match_array);
-            }
-            if (match->cp_user_data.v_type == VAR_UNKNOWN) {
-              // Add an empty string for backwards compatibility
-              tv_dict_add_str(di, S_LEN("user_data"), "");
-            } else {
-              tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
-            }
+            fill_complete_info_dict(di, match, has_matches && has_items);
           }
           if (compl_curr_match != NULL
               && compl_curr_match->cp_number == match->cp_number) {
@@ -2986,11 +2993,14 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
         tv_dict_add_nr(retdict, S_LEN("preview_bufnr"), wp->w_buffer->handle);
       }
     }
+    if (ret == OK && selected_idx != -1 && has_completed) {
+      dict_T *di = tv_dict_alloc();
+      fill_complete_info_dict(di, compl_curr_match, false);
+      ret = tv_dict_add_dict(retdict, S_LEN("completed"), di);
+    }
   }
 
   (void)ret;
-  // TODO(vim):
-  // if (ret == OK && (what_flag & CI_WHAT_INSERTED))
 }
 
 /// "complete_info()" function

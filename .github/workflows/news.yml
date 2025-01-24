@@ -20,7 +20,7 @@ jobs:
             type="$(echo "$message" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')"
             breaking="$(echo "$message" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')"
             if [[ "$type" == "feat" ]] || [[ "$type" == "perf" ]] || [[ "$breaking" == "breaking-change" ]]; then
-              ! git diff HEAD~${{ github.event.pull_request.commits }}..HEAD --quiet runtime/doc/news.txt ||
+              ! git diff HEAD~${{ github.event.pull_request.commits }}..HEAD --quiet runtime/doc/news.txt runtime/doc/deprecated.txt ||
               {
                 echo "
                   Pull request includes a new feature, performance improvement
