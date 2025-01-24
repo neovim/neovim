@@ -20,9 +20,15 @@ error('Cannot require a meta file')
 ---@class (exact) TSQueryInfo
 ---@field captures string[]
 ---@field patterns table<integer, (integer|string)[][]>
+---
+---@class TSLangInfo
+---@field fields string[]
+---@field symbols table<string,boolean>
+---@field _wasm boolean
+---@field _abi_version integer
 
 --- @param lang string
---- @return table
+--- @return TSLangInfo
 vim._ts_inspect_language = function(lang) end
 
 ---@return integer

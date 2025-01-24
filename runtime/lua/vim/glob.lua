@@ -53,6 +53,7 @@ function M.to_lpeg(pattern)
   end
   -- luacheck: pop
 
+  --- @diagnostic disable-next-line: missing-fields
   local p = P({
     'Pattern',
     Pattern = V('Elem') ^ -1 * V('End'),

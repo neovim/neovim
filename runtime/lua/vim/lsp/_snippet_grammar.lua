@@ -127,6 +127,7 @@ local function node(type)
 end
 
 -- stylua: ignore
+--- @diagnostic disable-next-line: missing-fields
 local G = P({
   'snippet';
   snippet = Ct(Cg(

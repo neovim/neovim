@@ -60,9 +60,10 @@ end
 ---@param path string Path to file
 ---@return string URI
 function M.uri_from_fname(path)
-  local volume_path, fname = path:match('^([a-zA-Z]:)(.*)') ---@type string?
+  local volume_path, fname = path:match('^([a-zA-Z]:)(.*)') ---@type string?, string?
   local is_windows = volume_path ~= nil
   if is_windows then
+    assert(fname)
     path = volume_path .. M.uri_encode(fname:gsub('\\', '/'))
   else
     path = M.uri_encode(path)
@@ -111,7 +112,7 @@ function M.uri_to_fname(uri)
   uri = M.uri_decode(uri)
   --TODO improve this.
   if is_windows_file_uri(uri) then
-    uri = uri:gsub('^file:/+', ''):gsub('/', '\\')
+    uri = uri:gsub('^file:/+', ''):gsub('/', '\\') --- @type string
   else
     uri = uri:gsub('^file:/+', '/') ---@type string
   end

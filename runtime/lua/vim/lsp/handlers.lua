@@ -47,7 +47,7 @@ RSC[ms.dollar_progress] = function(_, params, ctx)
   local value = params.value
 
   if type(value) == 'table' then
-    kind = value.kind
+    kind = value.kind --- @type string
     -- Carry over title of `begin` messages to `report` and `end` messages
     -- So that consumers always have it available, even if they consume a
     -- subset of the full sequence

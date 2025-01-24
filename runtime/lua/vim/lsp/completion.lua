@@ -470,7 +470,7 @@ local function trigger(bufnr, clients)
     local server_start_boundary --- @type integer?
     for client_id, response in pairs(responses) do
       if response.err then
-        vim.notify_once(response.err.message, vim.log.levels.warn)
+        vim.notify_once(response.err.message, vim.log.levels.WARN)
       end
 
       local result = response.result

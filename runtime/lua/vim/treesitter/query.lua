@@ -262,6 +262,7 @@ local explicit_queries = setmetatable({}, {
 ---@param query_name string Name of the query (e.g., "highlights")
 ---@param text string Query text (unparsed).
 function M.set(lang, query_name, text)
+  --- @diagnostic disable-next-line: undefined-field LuaLS bad at generics
   M.get:clear(lang, query_name)
   explicit_queries[lang][query_name] = M.parse(lang, text)
 end
@@ -291,6 +292,7 @@ api.nvim_create_autocmd('OptionSet', {
   pattern = { 'runtimepath' },
   group = api.nvim_create_augroup('nvim.treesitter.query_cache_reset', { clear = true }),
   callback = function()
+    --- @diagnostic disable-next-line: undefined-field LuaLS bad at generics
     M.get:clear()
   end,
 })

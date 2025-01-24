@@ -15,7 +15,6 @@ local sysname = vim.uv.os_uname().sysname
 --- @class vim.lsp.protocol.constants
 --- @nodoc
 local constants = {
-  --- @enum lsp.DiagnosticSeverity
   DiagnosticSeverity = {
     -- Reports an error.
     Error = 1,
@@ -27,7 +26,6 @@ local constants = {
     Hint = 4,
   },
 
-  --- @enum lsp.DiagnosticTag
   DiagnosticTag = {
     -- Unused or unnecessary code
     Unnecessary = 1,
@@ -35,7 +33,6 @@ local constants = {
     Deprecated = 2,
   },
 
-  ---@enum lsp.MessageType
   MessageType = {
     -- An error message.
     Error = 1,
@@ -50,7 +47,6 @@ local constants = {
   },
 
   -- The file event type.
-  ---@enum lsp.FileChangeType
   FileChangeType = {
     -- The file got created.
     Created = 1,
@@ -149,7 +145,6 @@ local constants = {
   },
 
   -- Represents reasons why a text document is saved.
-  ---@enum lsp.TextDocumentSaveReason
   TextDocumentSaveReason = {
     -- Manually triggered, e.g. by the user pressing save, by starting debugging,
     -- or by an API call.
@@ -246,7 +241,6 @@ local constants = {
 
   -- Defines whether the insert text in a completion item should be interpreted as
   -- plain text or a snippet.
-  --- @enum lsp.InsertTextFormat
   InsertTextFormat = {
     -- The primary text to be inserted is treated as a plain string.
     PlainText = 1,
@@ -305,7 +299,6 @@ local constants = {
     SourceOrganizeImports = 'source.organizeImports',
   },
   -- The reason why code actions were requested.
-  ---@enum lsp.CodeActionTriggerKind
   CodeActionTriggerKind = {
     -- Code actions were explicitly requested by the user or by an extension.
     Invoked = 1,

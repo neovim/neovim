@@ -7,8 +7,7 @@
 -- so this wouldn't be a separate case to consider)
 
 ---@nodoc
----@diagnostic disable-next-line: lowercase-global
-vim = vim or {}
+_G.vim = _G.vim or {}
 
 ---@generic T
 ---@param orig T

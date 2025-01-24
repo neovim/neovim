@@ -64,7 +64,7 @@ local state_by_group = setmetatable({}, {
 ---@param client vim.lsp.Client
 ---@return vim.lsp.CTGroup
 local function get_group(client)
-  local allow_inc_sync = vim.F.if_nil(client.flags.allow_incremental_sync, true) --- @type boolean
+  local allow_inc_sync = vim.F.if_nil(client.flags.allow_incremental_sync, true)
   local change_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'change')
   local sync_kind = change_capability or protocol.TextDocumentSyncKind.None
   if not allow_inc_sync and change_capability == protocol.TextDocumentSyncKind.Incremental then

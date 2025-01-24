@@ -1,8 +1,8 @@
 ---@meta
 error('Cannot require a meta file')
 
----@alias lsp.Handler fun(err: lsp.ResponseError?, result: any, context: lsp.HandlerContext): ...any
----@alias lsp.MultiHandler fun(results: table<integer,{err: lsp.ResponseError?, result: any}>, context: lsp.HandlerContext): ...any
+---@alias lsp.Handler fun(err: lsp.ResponseError?, result: any, context: lsp.HandlerContext, config?: table): ...any
+---@alias lsp.MultiHandler fun(results: table<integer,{err: lsp.ResponseError?, result: any}>, context: lsp.HandlerContext, config?: table): ...any
 
 ---@class lsp.HandlerContext
 ---@field method string

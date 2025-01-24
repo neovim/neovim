@@ -49,7 +49,8 @@ local function get_border_size(opts)
     if not border_size[border] then
       border_error(border)
     end
-    return unpack(border_size[border])
+    local r = border_size[border]
+    return r[1], r[2]
   end
 
   if 8 % #border ~= 0 then
@@ -1897,6 +1898,7 @@ function M.make_position_params(window, position_encoding)
       'position_encoding param is required in vim.lsp.util.make_position_params. Defaulting to position encoding of the first client.',
       vim.log.levels.WARN
     )
+    --- @diagnostic disable-next-line: deprecated
     position_encoding = M._get_offset_encoding(buf)
   end
   return {
@@ -1953,6 +1955,7 @@ function M.make_range_params(window, position_encoding)
       'position_encoding param is required in vim.lsp.util.make_range_params. Defaulting to position encoding of the first client.',
       vim.log.levels.WARN
     )
+    --- @diagnostic disable-next-line: deprecated
     position_encoding = M._get_offset_encoding(buf)
   end
   local position = make_position_param(window, position_encoding)
@@ -1982,6 +1985,7 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, position_encoding)
       'position_encoding param is required in vim.lsp.util.make_given_range_params. Defaulting to position encoding of the first client.',
       vim.log.levels.WARN
     )
+    --- @diagnostic disable-next-line: deprecated
     position_encoding = M._get_offset_encoding(bufnr)
   end
   --- @type [integer, integer]
