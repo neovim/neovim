@@ -44,24 +44,24 @@ highlight default link dircolorsExtension Identifier
 highlight default link dircolorsEscape    Special
 
 function! s:set_guicolors() abort
-    let s:termguicolors = {}
+    let s:termguicolors_array = {}
 
-    let s:termguicolors[0]  = "Black"
-    let s:termguicolors[1]  = "DarkRed"
-    let s:termguicolors[2]  = "DarkGreen"
-    let s:termguicolors[3]  = "DarkYellow"
-    let s:termguicolors[4]  = "DarkBlue"
-    let s:termguicolors[5]  = "DarkMagenta"
-    let s:termguicolors[6]  = "DarkCyan"
-    let s:termguicolors[7]  = "Gray"
-    let s:termguicolors[8]  = "DarkGray"
-    let s:termguicolors[9]  = "Red"
-    let s:termguicolors[10] = "Green"
-    let s:termguicolors[11] = "Yellow"
-    let s:termguicolors[12] = "Blue"
-    let s:termguicolors[13] = "Magenta"
-    let s:termguicolors[14] = "Cyan"
-    let s:termguicolors[15] = "White"
+    let s:termguicolors_array[0]  = "Black"
+    let s:termguicolors_array[1]  = "DarkRed"
+    let s:termguicolors_array[2]  = "DarkGreen"
+    let s:termguicolors_array[3]  = "DarkYellow"
+    let s:termguicolors_array[4]  = "DarkBlue"
+    let s:termguicolors_array[5]  = "DarkMagenta"
+    let s:termguicolors_array[6]  = "DarkCyan"
+    let s:termguicolors_array[7]  = "Gray"
+    let s:termguicolors_array[8]  = "DarkGray"
+    let s:termguicolors_array[9]  = "Red"
+    let s:termguicolors_array[10] = "Green"
+    let s:termguicolors_array[11] = "Yellow"
+    let s:termguicolors_array[12] = "Blue"
+    let s:termguicolors_array[13] = "Magenta"
+    let s:termguicolors_array[14] = "Cyan"
+    let s:termguicolors_array[15] = "White"
 
     let xterm_palette = ["00", "5f", "87", "af", "d7", "ff"]
 
@@ -70,7 +70,7 @@ function! s:set_guicolors() abort
     for r in xterm_palette
         for g in xterm_palette
             for b in xterm_palette
-                let s:termguicolors[cur_col] = '#' . r . g . b
+                let s:termguicolors_array[cur_col] = '#' . r . g . b
                 let cur_col += 1
             endfor
         endfor
@@ -78,14 +78,15 @@ function! s:set_guicolors() abort
 
     for i in range(24)
         let g = i * 0xa + 8
-        let s:termguicolors[i + 232] = '#' . g . g . g
+        let s:termguicolors_array[i + 232] = '#' . g . g . g
     endfor
 endfunction
 
 function! s:get_hi_str(color, place) abort
     if a:color >= 0 && a:color <= 255
         if has('gui_running') || &termguicolors
-            return ' gui' . a:place . '=' . s:termguicolors[a:color]
+            " HERE
+            return ' gui' . a:place . '=' . s:termguicolors_array[a:color]
         elseif a:color <= 7 || &t_Co == 256 || &t_Co == 88
             return ' cterm' . a:place . '=' . a:color
         endif
@@ -212,8 +213,12 @@ endif
 if has('gui_running') || &termguicolors || &t_Co != ''
     call s:reset_colors()
 
-    autocmd CursorMoved,CursorMovedI <buffer> call s:preview_color('.')
-    autocmd CursorHold,CursorHoldI   <buffer> call s:reset_colors()
+    autocmd CursorMoved,CursorMovedI <buffer>
+          \ call s:set_guicolors()
+          \ call s:preview_color('.')
+    autocmd CursorHold,CursorHoldI   <buffer>
+          \ call s:set_guicolors()
+          \ | call s:reset_colors()
 endif
 
 let b:current_syntax = "dircolors"
