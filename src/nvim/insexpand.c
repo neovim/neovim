@@ -1212,7 +1212,8 @@ static int ins_compl_build_pum(void)
   int max_fuzzy_score = 0;
   unsigned cur_cot_flags = get_cot_flags();
   bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0;
-  bool compl_fuzzy_match = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
+  bool fuzzy_filter = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
+  bool fuzzy_sort = fuzzy_filter && !(cur_cot_flags & kOptCotFlagNosort);
   compl_T *match_head = NULL, *match_tail = NULL;
 
   // If the current match is the original text don't find the first
@@ -1232,14 +1233,14 @@ static int ins_compl_build_pum(void)
     comp->cp_in_match_array = false;
     // When 'completeopt' contains "fuzzy" and leader is not NULL or empty,
     // set the cp_score for later comparisons.
-    if (compl_fuzzy_match && compl_leader.data != NULL && compl_leader.size > 0) {
+    if (fuzzy_filter && compl_leader.data != NULL && compl_leader.size > 0) {
       comp->cp_score = fuzzy_match_str(comp->cp_str.data, compl_leader.data);
     }
 
     if (!match_at_original_text(comp)
         && (compl_leader.data == NULL
             || ins_compl_equal(comp, compl_leader.data, compl_leader.size)
-            || (compl_fuzzy_match && comp->cp_score > 0))) {
+            || (fuzzy_filter && comp->cp_score > 0))) {
       compl_match_arraysize++;
       comp->cp_in_match_array = true;
       if (match_head == NULL) {
@@ -1248,7 +1249,7 @@ static int ins_compl_build_pum(void)
         match_tail->cp_match_next = comp;
       }
       match_tail = comp;
-      if (!shown_match_ok && !compl_fuzzy_match) {
+      if (!shown_match_ok && !fuzzy_filter) {
         if (comp == compl_shown_match || did_find_shown_match) {
           // This item is the shown match or this is the
           // first displayed item after the shown match.
@@ -1261,18 +1262,20 @@ static int ins_compl_build_pum(void)
           shown_compl = comp;
         }
         cur = i;
-      } else if (compl_fuzzy_match) {
+      } else if (fuzzy_filter) {
         if (i == 0) {
           shown_compl = comp;
         }
         // Update the maximum fuzzy score and the shown match
         // if the current item's score is higher
-        if (comp->cp_score > max_fuzzy_score) {
+        if (fuzzy_sort && comp->cp_score > max_fuzzy_score) {
           did_find_shown_match = true;
           max_fuzzy_score = comp->cp_score;
           if (!compl_no_select) {
             compl_shown_match = comp;
           }
+        } else if (!fuzzy_sort && i == 0 && !compl_no_select) {
+          compl_shown_match = shown_compl;
         }
         if (!shown_match_ok && comp == compl_shown_match && !compl_no_select) {
           cur = i;
@@ -1282,7 +1285,7 @@ static int ins_compl_build_pum(void)
       i++;
     }
 
-    if (comp == compl_shown_match && !compl_fuzzy_match) {
+    if (comp == compl_shown_match && !fuzzy_filter) {
       did_find_shown_match = true;
       // When the original text is the shown match don't set
       // compl_shown_match.
@@ -1323,7 +1326,7 @@ static int ins_compl_build_pum(void)
     comp = match_next;
   }
 
-  if (compl_fuzzy_match && compl_leader.data != NULL && compl_leader.size > 0) {
+  if (fuzzy_sort && compl_leader.data != NULL && compl_leader.size > 0) {
     for (i = 0; i < compl_match_arraysize; i++) {
       compl_match_array[i].pum_idx = i;
     }
