@@ -589,6 +589,15 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---     (highest priority last).
 --- - virt_text_pos : position of virtual text. Possible values:
 ---   - "eol": right after eol character (default).
+---   - "eol_right_align": display right aligned in the window
+---                        unless the virtual text is longer than
+---                        the space available. If the virtual
+---                        text is too long, it is truncated to
+---                        fit in the window after the EOL
+---                        character. If the line is wrapped, the
+---                        virtual text is shown after the end of
+---                        the line rather than the previous
+---                        screen line.
 ---   - "overlay": display over the specified column, without
 ---                shifting the underlying text.
 ---   - "right_align": display right aligned in the window.

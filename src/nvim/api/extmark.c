@@ -400,6 +400,15 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   (highest priority last).
 ///               - virt_text_pos : position of virtual text. Possible values:
 ///                 - "eol": right after eol character (default).
+///                 - "eol_right_align": display right aligned in the window
+///                                      unless the virtual text is longer than
+///                                      the space available. If the virtual
+///                                      text is too long, it is truncated to
+///                                      fit in the window after the EOL
+///                                      character. If the line is wrapped, the
+///                                      virtual text is shown after the end of
+///                                      the line rather than the previous
+///                                      screen line.
 ///                 - "overlay": display over the specified column, without
 ///                              shifting the underlying text.
 ///                 - "right_align": display right aligned in the window.
@@ -620,6 +629,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       virt_text.pos = kVPosOverlay;
     } else if (strequal("right_align", str.data)) {
       virt_text.pos = kVPosRightAlign;
+    } else if (strequal("eol_right_align", str.data)) {
+      virt_text.pos = kVPosEndOfLineRightAlign;
     } else if (strequal("inline", str.data)) {
       virt_text.pos = kVPosInline;
     } else {

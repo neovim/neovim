@@ -195,6 +195,8 @@ API
 • |nvim_open_win()| `relative` field can be set to "laststatus" and "tabline".
 • |nvim_buf_set_extmark()| `hl_group` field can be an array of layered groups
 • |vim.hl.range()| now has a optional `timeout` field which allows for a timed highlight
+• |nvim_buf_set_extmark()| virt_text_pos accepts `eol_right_align` to
+  allow for right aligned text that truncates before covering up buffer text.
 
 DEFAULTS
 

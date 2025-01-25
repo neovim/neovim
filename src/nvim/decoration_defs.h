@@ -19,10 +19,11 @@ typedef kvec_t(VirtTextChunk) VirtText;
 /// Keep in sync with virt_text_pos_str[] in decoration.h
 typedef enum {
   kVPosEndOfLine,
-  kVPosOverlay,
-  kVPosWinCol,
-  kVPosRightAlign,
+  kVPosEndOfLineRightAlign,
   kVPosInline,
+  kVPosOverlay,
+  kVPosRightAlign,
+  kVPosWinCol,
 } VirtTextPos;
 
 typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;
