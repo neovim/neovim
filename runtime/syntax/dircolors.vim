@@ -85,6 +85,9 @@ endfunction
 function! s:get_hi_str(color, place) abort
     if a:color >= 0 && a:color <= 255
         if has('gui_running') || &termguicolors
+            if ! exists("s:termguicolors")
+              call s:set_guicolors()
+            endif
             return ' gui' . a:place . '=' . s:termguicolors[a:color]
         elseif a:color <= 7 || &t_Co == 256 || &t_Co == 88
             return ' cterm' . a:place . '=' . a:color
