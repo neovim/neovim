@@ -1212,8 +1212,8 @@ static int ins_compl_build_pum(void)
   int max_fuzzy_score = 0;
   unsigned cur_cot_flags = get_cot_flags();
   bool compl_no_select = (cur_cot_flags & kOptCotFlagNoselect) != 0;
-  bool fuzzy_nosort = (cur_cot_flags & kOptCotFlagNosort) != 0;
-  bool fuzzy_filter = fuzzy_nosort || (cur_cot_flags & kOptCotFlagFuzzy) != 0;
+  bool fuzzy_filter = (cur_cot_flags & kOptCotFlagFuzzy) != 0;
+  bool fuzzy_sort = fuzzy_filter && !(cur_cot_flags & kOptCotFlagNosort);
   compl_T *match_head = NULL, *match_tail = NULL;
 
   // If the current match is the original text don't find the first
@@ -1268,13 +1268,13 @@ static int ins_compl_build_pum(void)
         }
         // Update the maximum fuzzy score and the shown match
         // if the current item's score is higher
-        if (!fuzzy_nosort && comp->cp_score > max_fuzzy_score) {
+        if (fuzzy_sort && comp->cp_score > max_fuzzy_score) {
           did_find_shown_match = true;
           max_fuzzy_score = comp->cp_score;
           if (!compl_no_select) {
             compl_shown_match = comp;
           }
-        } else if (fuzzy_nosort && i == 0 && !compl_no_select) {
+        } else if (!fuzzy_sort && i == 0 && !compl_no_select) {
           compl_shown_match = shown_compl;
         }
         if (!shown_match_ok && comp == compl_shown_match && !compl_no_select) {
@@ -1326,7 +1326,7 @@ static int ins_compl_build_pum(void)
     comp = match_next;
   }
 
-  if (fuzzy_filter && !fuzzy_nosort && compl_leader.data != NULL && compl_leader.size > 0) {
+  if (fuzzy_sort && compl_leader.data != NULL && compl_leader.size > 0) {
     for (i = 0; i < compl_match_arraysize; i++) {
       compl_match_array[i].pum_idx = i;
     }

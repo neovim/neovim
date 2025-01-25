@@ -2839,8 +2839,8 @@ func Test_complete_fuzzy_match()
 
   " test case for nosort option
   set cot=menuone,menu,noinsert,fuzzy,nosort
-  " fooBaz" should have a higher score when the leader is "fb".
-  " With `nosort`, "foobar" should still be shown first in the popup menu.
+  " "fooBaz" should have a higher score when the leader is "fb".
+  " With "nosort", "foobar" should still be shown first in the popup menu.
   call feedkeys("S\<C-x>\<C-o>fb", 'tx')
   call assert_equal('foobar', g:word)
   call feedkeys("S\<C-x>\<C-o>好", 'tx')
@@ -2851,6 +2851,11 @@ func Test_complete_fuzzy_match()
   call assert_equal(v:null, g:word)
   call feedkeys("S\<C-x>\<C-o>好\<C-N>", 'tx')
   call assert_equal('你好吗', g:word)
+
+  " "nosort" shouldn't enable fuzzy filtering when "fuzzy" isn't present.
+  set cot=menuone,noinsert,nosort
+  call feedkeys("S\<C-x>\<C-o>fooB\<C-Y>", 'tx')
+  call assert_equal('fooBaz', getline('.'))
 
   " clean up
   set omnifunc=
