@@ -65,10 +65,6 @@ LUA
 • *vim.highlight*	Renamed to |vim.hl|.
 • vim.validate(opts: table) Use form 1. See |vim.validate()|.
 
-TREESITTER
-• *TSNode:child_containing_descendant()* Use |TSNode:child_with_descendant()|
-  instead; it is identical except that it can return the descendant itself.
-
 VIMSCRIPT
 • *termopen()* Use |jobstart() with `{term: v:true}`.
 

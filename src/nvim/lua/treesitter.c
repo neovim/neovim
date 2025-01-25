@@ -218,7 +218,7 @@ static int add_language(lua_State *L, bool is_wasm)
                            ? load_language_from_wasm(L, path, lang_name)
                            : load_language_from_object(L, path, lang_name, symbol_name);
 
-  uint32_t lang_version = ts_language_version(lang);
+  uint32_t lang_version = ts_language_abi_version(lang);
   if (lang_version < TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION
       || lang_version > TREE_SITTER_LANGUAGE_VERSION) {
     return luaL_error(L,
@@ -300,7 +300,7 @@ int tslua_inspect_lang(lua_State *L)
   lua_pushboolean(L, ts_language_is_wasm(lang));
   lua_setfield(L, -2, "_wasm");
 
-  lua_pushinteger(L, ts_language_version(lang));  // [retval, version]
+  lua_pushinteger(L, ts_language_abi_version(lang));  // [retval, version]
   lua_setfield(L, -2, "_abi_version");
 
   return 1;
@@ -476,7 +476,7 @@ static int parser_parse(lua_State *L)
 #undef BUFSIZE
     }
 
-    input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8 };
+    input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8, NULL };
     new_tree = ts_parser_parse(p, old_tree, input);
 
     break;
@@ -837,7 +837,6 @@ static struct luaL_Reg node_meta[] = {
   { "named_descendant_for_range", node_named_descendant_for_range },
   { "parent", node_parent },
   { "__has_ancestor", __has_ancestor },
-  { "child_containing_descendant", node_child_containing_descendant },
   { "child_with_descendant", node_child_with_descendant },
   { "iter_children", node_iter_children },
   { "next_sibling", node_next_sibling },
@@ -1178,15 +1177,6 @@ static int __has_ancestor(lua_State *L)
   }
 
   lua_pushboolean(L, false);
-  return 1;
-}
-
-static int node_child_containing_descendant(lua_State *L)
-{
-  TSNode node = node_check(L, 1);
-  TSNode descendant = node_check(L, 2);
-  TSNode child = ts_node_child_containing_descendant(node, descendant);
-  push_node(L, child, 1);
   return 1;
 }
 

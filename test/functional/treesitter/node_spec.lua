@@ -163,32 +163,6 @@ describe('treesitter node API', function()
     eq(3, lua_eval('child:byte_length()'))
   end)
 
-  it('child_containing_descendant() works', function()
-    insert([[
-      int main() {
-        int x = 3;
-      }]])
-
-    exec_lua(function()
-      local tree = vim.treesitter.get_parser(0, 'c'):parse()[1]
-      _G.root = tree:root()
-      _G.main = _G.root:child(0)
-      _G.body = _G.main:child(2)
-      _G.statement = _G.body:child(1)
-      _G.declarator = _G.statement:child(1)
-      _G.value = _G.declarator:child(1)
-    end)
-
-    eq(lua_eval('main:type()'), lua_eval('root:child_containing_descendant(value):type()'))
-    eq(lua_eval('body:type()'), lua_eval('main:child_containing_descendant(value):type()'))
-    eq(lua_eval('statement:type()'), lua_eval('body:child_containing_descendant(value):type()'))
-    eq(
-      lua_eval('declarator:type()'),
-      lua_eval('statement:child_containing_descendant(value):type()')
-    )
-    eq(vim.NIL, lua_eval('declarator:child_containing_descendant(value)'))
-  end)
-
   it('child_with_descendant() works', function()
     insert([[
       int main() {
