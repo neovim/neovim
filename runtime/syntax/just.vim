@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Justfile
 " Maintainer:	Peter Benjamin <@pbnj>
-" Last Change:	2025 Jan 19
+" Last Change:	2025 Jan 25
 " Credits:	The original author, Noah Bogart <https://github.com/NoahTheDuke/vim-just/>
 
 if exists('b:current_syntax')
@@ -402,5 +402,5 @@ hi def link justUserDefinedError                 Exception
 hi def link justVariadicPrefix                   Statement
 hi def link justVariadicPrefixError              Error
 
-let &cpo = s:cpo_sav
-unlet s:cpo_sav
+let &cpo = s:cpo_save
+unlet s:cpo_save
