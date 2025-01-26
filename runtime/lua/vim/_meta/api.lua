@@ -1246,27 +1246,28 @@ function vim.api.nvim_get_all_options_info() end
 --- match any combination of them.
 ---
 --- @param opts vim.api.keyset.get_autocmds Dict with at least one of the following:
---- - group (string|integer): the autocommand group name or id to match against.
---- - event (string|array): event or events to match against `autocmd-events`.
---- - pattern (string|array): pattern or patterns to match against `autocmd-pattern`.
---- Cannot be used with {buffer}
---- - buffer: Buffer number or list of buffer numbers for buffer local autocommands
+--- - buffer: (integer) Buffer number or list of buffer numbers for buffer local autocommands
 --- `autocmd-buflocal`. Cannot be used with {pattern}
+--- - event: (string|table) event or events to match against `autocmd-events`.
+--- - id: (integer) Autocommand ID to match.
+--- - group: (string|table) the autocommand group name or id to match against.
+--- - pattern: (string|table) pattern or patterns to match against `autocmd-pattern`.
+--- Cannot be used with {buffer}
 --- @return vim.api.keyset.get_autocmds.ret[] # Array of autocommands matching the criteria, with each item
 --- containing the following fields:
---- - id (number): the autocommand id (only when defined with the API).
---- - group (integer): the autocommand group id.
---- - group_name (string): the autocommand group name.
---- - desc (string): the autocommand description.
---- - event (string): the autocommand event.
---- - command (string): the autocommand command. Note: this will be empty if a callback is set.
---- - callback (function|string|nil): Lua function or name of a Vim script function
+--- - buffer: (integer) the buffer number.
+--- - buflocal: (boolean) true if the autocommand is buffer local.
+--- - command: (string) the autocommand command. Note: this will be empty if a callback is set.
+--- - callback: (function|string|nil): Lua function or name of a Vim script function
 ---   which is executed when this autocommand is triggered.
---- - once (boolean): whether the autocommand is only run once.
---- - pattern (string): the autocommand pattern.
+--- - desc: (string) the autocommand description.
+--- - event: (string) the autocommand event.
+--- - id: (integer) the autocommand id (only when defined with the API).
+--- - group: (integer) the autocommand group id.
+--- - group_name: (string) the autocommand group name.
+--- - once: (boolean) whether the autocommand is only run once.
+--- - pattern: (string) the autocommand pattern.
 ---   If the autocommand is buffer local |autocmd-buffer-local|:
---- - buflocal (boolean): true if the autocommand is buffer local.
---- - buffer (number): the buffer number.
 function vim.api.nvim_get_autocmds(opts) end
 
 --- Gets information about a channel.

@@ -263,6 +263,7 @@ typedef struct {
   Union(Integer, String) group;
   Union(String, ArrayOf(String)) pattern;
   Union(Integer, ArrayOf(Integer)) buffer;
+  Integer id;
 } Dict(get_autocmds);
 
 typedef struct {

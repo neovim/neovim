@@ -899,6 +899,89 @@ describe('autocmd api', function()
         eq([[:echo "Buffer"]], normalized_aus[1].command)
       end)
     end)
+
+    describe('id', function()
+      it('gets events by ID', function()
+        local id = api.nvim_create_autocmd('BufEnter', {
+          command = 'echo "hello"',
+        })
+        eq({
+          {
+            buflocal = false,
+            command = 'echo "hello"',
+            event = 'BufEnter',
+            id = id,
+            once = false,
+            pattern = '*',
+          },
+        }, api.nvim_get_autocmds({ id = id }))
+      end)
+
+      it('gets events by ID by other filters', function()
+        local group_name = 'NVIM_GET_AUTOCMDS_ID'
+        local group = api.nvim_create_augroup(group_name, { clear = true })
+        local id = api.nvim_create_autocmd('BufEnter', {
+          command = 'set number',
+          group = group,
+        })
+        api.nvim_create_autocmd('WinEnter', {
+          group = group,
+          command = 'set cot&',
+        })
+        eq({
+          {
+            buflocal = false,
+            command = 'set number',
+            event = 'BufEnter',
+            group = group,
+            group_name = group_name,
+            id = id,
+            once = false,
+            pattern = '*',
+          },
+        }, api.nvim_get_autocmds({ id = id, group = group }))
+      end)
+
+      it('gets events by ID and a specific event', function()
+        local id = api.nvim_create_autocmd('InsertEnter', { command = 'set number' })
+        api.nvim_create_autocmd('InsertEnter', { command = 'set wrap' })
+        eq({
+          {
+            buflocal = false,
+            command = 'set number',
+            event = 'InsertEnter',
+            id = id,
+            once = false,
+            pattern = '*',
+          },
+        }, api.nvim_get_autocmds({ id = id, event = 'InsertEnter' }))
+      end)
+
+      it('gets events by ID and a specific pattern', function()
+        local id = api.nvim_create_autocmd('InsertEnter', {
+          pattern = '*.c',
+          command = 'set number',
+        })
+        api.nvim_create_autocmd('InsertEnter', {
+          pattern = '*.c',
+          command = 'set wrap',
+        })
+        eq({
+          {
+            buflocal = false,
+            command = 'set number',
+            event = 'InsertEnter',
+            id = id,
+            once = false,
+            pattern = '*.c',
+          },
+        }, api.nvim_get_autocmds({ id = id, pattern = '*.c' }))
+      end)
+
+      it('empty result when id does not found', function()
+        eq({}, api.nvim_get_autocmds({ id = 255 }))
+      end)
+    end)
   end)
 
   describe('nvim_exec_autocmds', function()
