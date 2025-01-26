@@ -16,7 +16,7 @@ Downloads are available on the [Releases](https://github.com/neovim/neovim/relea
 
 * Latest [stable release](https://github.com/neovim/neovim/releases/latest)
     * [macOS x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-x86_64.tar.gz)
-    * [macOS arm64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-arm64.tar.gz)
+    * [macOS aarch64](https://github.com/neovim/neovim/releases/latest/download/nvim-macos-aarch64.tar.gz)
     * [Linux x86_64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz)
     * [Linux aarch64](https://github.com/neovim/neovim/releases/latest/download/nvim-linux-aarch64.tar.gz)
     * [Windows](https://github.com/neovim/neovim/releases/latest/download/nvim-win64.msi)
@@ -86,11 +86,11 @@ For x86_64:
     tar xzf nvim-macos-x86_64.tar.gz
     ./nvim-macos-x86_64/bin/nvim
 
-For arm64:
+For aarch64:
 
-    curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-macos-arm64.tar.gz
-    tar xzf nvim-macos-arm64.tar.gz
-    ./nvim-macos-arm64/bin/nvim
+    curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-macos-aarch64.tar.gz
+    tar xzf nvim-macos-aarch64.tar.gz
+    ./nvim-macos-aarch64/bin/nvim
 
 ### [Homebrew](https://brew.sh) on macOS or Linux
 
@@ -119,7 +119,7 @@ Then add this to your shell config (`~/.bashrc`, `~/.zshrc`, ...):
 
 ### AppImage ("universal" Linux package)
 
-The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppImage](https://appimage.org) that runs on most Linux systems. No installation is needed, just download `nvim-linux-x86_64.appimage` and run it. (It might not work if your Linux distribution is more than 4 years old.) The following instructions assume an `x86_64` architecture; on ARM Linux replace with `aarch64`.
+The [Releases](https://github.com/neovim/neovim/releases) page provides an [AppImage](https://appimage.org) that runs on most Linux systems. No installation is needed, just download `nvim-linux-x86_64.appimage` and run it. (It might not work if your Linux distribution is more than 4 years old.) The following instructions assume an `x86_64` architecture; on AARCH Linux replace with `aarch64`.
 
     curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-86_64.appimage
     chmod u+x nvim-linux-x86_64.appimage

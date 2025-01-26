@@ -19,6 +19,10 @@ if(XCODE)
   message(FATAL_ERROR [[Xcode generator is not supported. Use "Ninja" or "Unix Makefiles" instead]])
 endif()
 
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+  set(CMAKE_SYSTEM_PROCESSOR aarch64)
+endif()
+
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 

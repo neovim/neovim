@@ -27,12 +27,12 @@ Note: On Windows "Server" you may need to [install vcruntime140.dll](https://lea
 3. Extract: `tar xzvf nvim-macos-x86_64.tar.gz`
 4. Run `./nvim-macos-x86_64/bin/nvim`
 
-### macOS (arm64)
+### macOS (aarch64)
 
-1. Download **nvim-macos-arm64.tar.gz**
-2. Run `xattr -c ./nvim-macos-arm64.tar.gz` (to avoid "unknown developer" warning)
-3. Extract: `tar xzvf nvim-macos-arm64.tar.gz`
-4. Run `./nvim-macos-arm64/bin/nvim`
+1. Download **nvim-macos-aarch64.tar.gz**
+2. Run `xattr -c ./nvim-macos-aarch64.tar.gz` (to avoid "unknown developer" warning)
+3. Extract: `tar xzvf nvim-macos-aarch64.tar.gz`
+4. Run `./nvim-macos-aarch64/bin/nvim`
 
 ### Linux (x86_64)
 
@@ -91,7 +91,7 @@ ${SHA_LINUX_AARCH64_TAR}
 ${SHA_APPIMAGE_X86_64}
 ${SHA_APPIMAGE_X86_64_ZSYNC}
 ${SHA_LINUX_X86_64_TAR}
-${SHA_MACOS_ARM64}
+${SHA_MACOS_AARCH64}
 ${SHA_MACOS_X86_64}
 ${SHA_WIN_64_MSI}
 ${SHA_WIN_64_ZIP}
