@@ -1,10 +1,12 @@
---- @diagnostic disable: duplicate-doc-alias
-
----@param tbl table<string, string|number>
+---@param tbl table<string|number, string|number>
 local function get_value_set(tbl)
   local value_set = {}
-  for _, v in pairs(tbl) do
-    table.insert(value_set, v)
+  for k, v in pairs(tbl) do
+    -- Because the input has reverse lookup entries, only look at the original
+    -- pairs.
+    if type(k) == 'string' then
+      table.insert(value_set, v)
+    end
   end
   table.sort(value_set)
   return value_set
@@ -12,318 +14,17 @@ end
 
 local sysname = vim.uv.os_uname().sysname
 
---- @class vim.lsp.protocol.constants
+--- Protocol for the Microsoft Language Server Protocol (mslsp)
+--- @class vim.lsp.protocol
 --- @nodoc
-local constants = {
-  DiagnosticSeverity = {
-    -- Reports an error.
-    Error = 1,
-    -- Reports a warning.
-    Warning = 2,
-    -- Reports an information.
-    Information = 3,
-    -- Reports a hint.
-    Hint = 4,
-  },
-
-  DiagnosticTag = {
-    -- Unused or unnecessary code
-    Unnecessary = 1,
-    -- Deprecated or obsolete code
-    Deprecated = 2,
-  },
-
-  MessageType = {
-    -- An error message.
-    Error = 1,
-    -- A warning message.
-    Warning = 2,
-    -- An information message.
-    Info = 3,
-    -- A log message.
-    Log = 4,
-    -- A debug message.
-    Debug = 5,
-  },
-
-  -- The file event type.
-  FileChangeType = {
-    -- The file got created.
-    Created = 1,
-    -- The file got changed.
-    Changed = 2,
-    -- The file got deleted.
-    Deleted = 3,
-  },
-
-  -- The kind of a completion entry.
-  CompletionItemKind = {
-    Text = 1,
-    Method = 2,
-    Function = 3,
-    Constructor = 4,
-    Field = 5,
-    Variable = 6,
-    Class = 7,
-    Interface = 8,
-    Module = 9,
-    Property = 10,
-    Unit = 11,
-    Value = 12,
-    Enum = 13,
-    Keyword = 14,
-    Snippet = 15,
-    Color = 16,
-    File = 17,
-    Reference = 18,
-    Folder = 19,
-    EnumMember = 20,
-    Constant = 21,
-    Struct = 22,
-    Event = 23,
-    Operator = 24,
-    TypeParameter = 25,
-  },
-
-  -- How a completion was triggered
-  CompletionTriggerKind = {
-    -- Completion was triggered by typing an identifier (24x7 code
-    -- complete), manual invocation (e.g Ctrl+Space) or via API.
-    Invoked = 1,
-    -- Completion was triggered by a trigger character specified by
-    -- the `triggerCharacters` properties of the `CompletionRegistrationOptions`.
-    TriggerCharacter = 2,
-    -- Completion was re-triggered as the current completion list is incomplete.
-    TriggerForIncompleteCompletions = 3,
-  },
-
+local protocol = {
   -- Completion item tags are extra annotations that tweak the rendering of a
   -- completion item
   CompletionTag = {
     -- Render a completion as obsolete, usually using a strike-out.
     Deprecated = 1,
   },
-
-  -- A document highlight kind.
-  DocumentHighlightKind = {
-    -- A textual occurrence.
-    Text = 1,
-    -- Read-access of a symbol, like reading a variable.
-    Read = 2,
-    -- Write-access of a symbol, like writing to a variable.
-    Write = 3,
-  },
-
-  -- A symbol kind.
-  SymbolKind = {
-    File = 1,
-    Module = 2,
-    Namespace = 3,
-    Package = 4,
-    Class = 5,
-    Method = 6,
-    Property = 7,
-    Field = 8,
-    Constructor = 9,
-    Enum = 10,
-    Interface = 11,
-    Function = 12,
-    Variable = 13,
-    Constant = 14,
-    String = 15,
-    Number = 16,
-    Boolean = 17,
-    Array = 18,
-    Object = 19,
-    Key = 20,
-    Null = 21,
-    EnumMember = 22,
-    Struct = 23,
-    Event = 24,
-    Operator = 25,
-    TypeParameter = 26,
-  },
-
-  -- Represents reasons why a text document is saved.
-  TextDocumentSaveReason = {
-    -- Manually triggered, e.g. by the user pressing save, by starting debugging,
-    -- or by an API call.
-    Manual = 1,
-    -- Automatic after a delay.
-    AfterDelay = 2,
-    -- When the editor lost focus.
-    FocusOut = 3,
-  },
-
-  ErrorCodes = {
-    -- Defined by JSON RPC
-    ParseError = -32700,
-    InvalidRequest = -32600,
-    MethodNotFound = -32601,
-    InvalidParams = -32602,
-    InternalError = -32603,
-    serverErrorStart = -32099,
-    serverErrorEnd = -32000,
-    ServerNotInitialized = -32002,
-    UnknownErrorCode = -32001,
-    -- Defined by the protocol.
-    RequestCancelled = -32800,
-    ContentModified = -32801,
-    ServerCancelled = -32802,
-  },
-
-  -- Describes the content type that a client supports in various
-  -- result literals like `Hover`, `ParameterInfo` or `CompletionItem`.
-  --
-  -- Please note that `MarkupKinds` must not start with a `$`. This kinds
-  -- are reserved for internal usage.
-  MarkupKind = {
-    -- Plain text is supported as a content format
-    PlainText = 'plaintext',
-    -- Markdown is supported as a content format
-    Markdown = 'markdown',
-  },
-
-  ResourceOperationKind = {
-    -- Supports creating new files and folders.
-    Create = 'create',
-    -- Supports renaming existing files and folders.
-    Rename = 'rename',
-    -- Supports deleting existing files and folders.
-    Delete = 'delete',
-  },
-
-  FailureHandlingKind = {
-    -- Applying the workspace change is simply aborted if one of the changes provided
-    -- fails. All operations executed before the failing operation stay executed.
-    Abort = 'abort',
-    -- All operations are executed transactionally. That means they either all
-    -- succeed or no changes at all are applied to the workspace.
-    Transactional = 'transactional',
-    -- If the workspace edit contains only textual file changes they are executed transactionally.
-    -- If resource changes (create, rename or delete file) are part of the change the failure
-    -- handling strategy is abort.
-    TextOnlyTransactional = 'textOnlyTransactional',
-    -- The client tries to undo the operations already executed. But there is no
-    -- guarantee that this succeeds.
-    Undo = 'undo',
-  },
-
-  -- Known error codes for an `InitializeError`;
-  InitializeError = {
-    -- If the protocol version provided by the client can't be handled by the server.
-    -- @deprecated This initialize error got replaced by client capabilities. There is
-    -- no version handshake in version 3.0x
-    unknownProtocolVersion = 1,
-  },
-
-  -- Defines how the host (editor) should sync document changes to the language server.
-  TextDocumentSyncKind = {
-    -- Documents should not be synced at all.
-    None = 0,
-    -- Documents are synced by always sending the full content
-    -- of the document.
-    Full = 1,
-    -- Documents are synced by sending the full content on open.
-    -- After that only incremental updates to the document are
-    -- send.
-    Incremental = 2,
-  },
-
-  WatchKind = {
-    -- Interested in create events.
-    Create = 1,
-    -- Interested in change events
-    Change = 2,
-    -- Interested in delete events
-    Delete = 4,
-  },
-
-  -- Defines whether the insert text in a completion item should be interpreted as
-  -- plain text or a snippet.
-  InsertTextFormat = {
-    -- The primary text to be inserted is treated as a plain string.
-    PlainText = 1,
-    -- The primary text to be inserted is treated as a snippet.
-    --
-    -- A snippet can define tab stops and placeholders with `$1`, `$2`
-    -- and `${3:foo};`. `$0` defines the final tab stop, it defaults to
-    -- the end of the snippet. Placeholders with equal identifiers are linked,
-    -- that is typing in one will update others too.
-    Snippet = 2,
-  },
-
-  -- A set of predefined code action kinds
-  CodeActionKind = {
-    -- Empty kind.
-    Empty = '',
-    -- Base kind for quickfix actions
-    QuickFix = 'quickfix',
-    -- Base kind for refactoring actions
-    Refactor = 'refactor',
-    -- Base kind for refactoring extraction actions
-    --
-    -- Example extract actions:
-    --
-    -- - Extract method
-    -- - Extract function
-    -- - Extract variable
-    -- - Extract interface from class
-    -- - ...
-    RefactorExtract = 'refactor.extract',
-    -- Base kind for refactoring inline actions
-    --
-    -- Example inline actions:
-    --
-    -- - Inline function
-    -- - Inline variable
-    -- - Inline constant
-    -- - ...
-    RefactorInline = 'refactor.inline',
-    -- Base kind for refactoring rewrite actions
-    --
-    -- Example rewrite actions:
-    --
-    -- - Convert JavaScript function to class
-    -- - Add or remove parameter
-    -- - Encapsulate field
-    -- - Make method static
-    -- - Move method to base class
-    -- - ...
-    RefactorRewrite = 'refactor.rewrite',
-    -- Base kind for source actions
-    --
-    -- Source code actions apply to the entire file.
-    Source = 'source',
-    -- Base kind for an organize imports source action
-    SourceOrganizeImports = 'source.organizeImports',
-  },
-  -- The reason why code actions were requested.
-  CodeActionTriggerKind = {
-    -- Code actions were explicitly requested by the user or by an extension.
-    Invoked = 1,
-    -- Code actions were requested automatically.
-    --
-    -- This typically happens when current selection in a file changes, but can
-    -- also be triggered when file content changes.
-    Automatic = 2,
-  },
 }
-
---- Protocol for the Microsoft Language Server Protocol (mslsp)
---- @class vim.lsp.protocol : vim.lsp.protocol.constants
---- @nodoc
-local protocol = {}
-
---- @diagnostic disable:no-unknown
-for k1, v1 in pairs(vim.deepcopy(constants, true)) do
-  for _, k2 in ipairs(vim.tbl_keys(v1)) do
-    local v2 = v1[k2]
-    v1[v2] = k2
-  end
-  protocol[k1] = v1
-end
---- @diagnostic enable:no-unknown
 
 --- Gets a new ClientCapabilities object describing the LSP client
 --- capabilities.
@@ -418,7 +119,7 @@ function protocol.make_client_capabilities()
 
         codeActionLiteralSupport = {
           codeActionKind = {
-            valueSet = get_value_set(constants.CodeActionKind),
+            valueSet = get_value_set(protocol.CodeActionKind),
           },
         },
         isPreferredSupport = true,
@@ -454,18 +155,18 @@ function protocol.make_client_capabilities()
           commitCharactersSupport = false,
           preselectSupport = false,
           deprecatedSupport = true,
-          documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
+          documentationFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
           resolveSupport = {
             properties = {
               'additionalTextEdits',
             },
           },
           tagSupport = {
-            valueSet = get_value_set(constants.CompletionTag),
+            valueSet = get_value_set(protocol.CompletionTag),
           },
         },
         completionItemKind = {
-          valueSet = get_value_set(constants.CompletionItemKind),
+          valueSet = get_value_set(protocol.CompletionItemKind),
         },
         completionList = {
           itemDefaults = {
@@ -494,13 +195,13 @@ function protocol.make_client_capabilities()
       },
       hover = {
         dynamicRegistration = true,
-        contentFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
+        contentFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
       },
       signatureHelp = {
         dynamicRegistration = false,
         signatureInformation = {
           activeParameterSupport = true,
-          documentationFormat = { constants.MarkupKind.Markdown, constants.MarkupKind.PlainText },
+          documentationFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
           parameterInformation = {
             labelOffsetSupport = true,
           },
@@ -515,7 +216,7 @@ function protocol.make_client_capabilities()
       documentSymbol = {
         dynamicRegistration = false,
         symbolKind = {
-          valueSet = get_value_set(constants.SymbolKind),
+          valueSet = get_value_set(protocol.SymbolKind),
         },
         hierarchicalDocumentSymbolSupport = true,
       },
@@ -526,7 +227,7 @@ function protocol.make_client_capabilities()
       publishDiagnostics = {
         relatedInformation = true,
         tagSupport = {
-          valueSet = get_value_set(constants.DiagnosticTag),
+          valueSet = get_value_set(protocol.DiagnosticTag),
         },
         dataSupport = true,
       },
@@ -538,7 +239,7 @@ function protocol.make_client_capabilities()
       symbol = {
         dynamicRegistration = false,
         symbolKind = {
-          valueSet = get_value_set(constants.SymbolKind),
+          valueSet = get_value_set(protocol.SymbolKind),
         },
       },
       configuration = true,
@@ -622,6 +323,640 @@ function protocol.resolve_capabilities(server_capabilities)
 end
 
 -- Generated by gen_lsp.lua, keep at end of file.
+---A set of predefined token types. This set is not fixed
+---an clients can specify additional token types via the
+---corresponding client capabilities.
+---
+---@since 3.16.0
+---@nodoc
+---@enum lsp.SemanticTokenTypes
+protocol.SemanticTokenTypes = {
+  ['namespace'] = 'namespace',
+  ['type'] = 'type',
+  ['class'] = 'class',
+  ['enum'] = 'enum',
+  ['interface'] = 'interface',
+  ['struct'] = 'struct',
+  ['typeParameter'] = 'typeParameter',
+  ['parameter'] = 'parameter',
+  ['variable'] = 'variable',
+  ['property'] = 'property',
+  ['enumMember'] = 'enumMember',
+  ['event'] = 'event',
+  ['function'] = 'function',
+  ['method'] = 'method',
+  ['macro'] = 'macro',
+  ['keyword'] = 'keyword',
+  ['modifier'] = 'modifier',
+  ['comment'] = 'comment',
+  ['string'] = 'string',
+  ['number'] = 'number',
+  ['regexp'] = 'regexp',
+  ['operator'] = 'operator',
+  ['decorator'] = 'decorator',
+  ['label'] = 'label',
+}
+
+---A set of predefined token modifiers. This set is not fixed
+---an clients can specify additional token types via the
+---corresponding client capabilities.
+---
+---@since 3.16.0
+---@nodoc
+---@enum lsp.SemanticTokenModifiers
+protocol.SemanticTokenModifiers = {
+  ['declaration'] = 'declaration',
+  ['definition'] = 'definition',
+  ['readonly'] = 'readonly',
+  ['static'] = 'static',
+  ['deprecated'] = 'deprecated',
+  ['abstract'] = 'abstract',
+  ['async'] = 'async',
+  ['modification'] = 'modification',
+  ['documentation'] = 'documentation',
+  ['defaultLibrary'] = 'defaultLibrary',
+}
+
+---The document diagnostic report kinds.
+---
+---@since 3.17.0
+---@nodoc
+---@enum lsp.DocumentDiagnosticReportKind
+protocol.DocumentDiagnosticReportKind = {
+  ['Full'] = 'full',
+  ['Unchanged'] = 'unchanged',
+}
+
+---Predefined error codes.
+---@nodoc
+---@enum lsp.ErrorCodes
+protocol.ErrorCodes = {
+  ['ParseError'] = -32700,
+  [-32700] = 'ParseError',
+  ['InvalidRequest'] = -32600,
+  [-32600] = 'InvalidRequest',
+  ['MethodNotFound'] = -32601,
+  [-32601] = 'MethodNotFound',
+  ['InvalidParams'] = -32602,
+  [-32602] = 'InvalidParams',
+  ['InternalError'] = -32603,
+  [-32603] = 'InternalError',
+  ['ServerNotInitialized'] = -32002,
+  [-32002] = 'ServerNotInitialized',
+  ['UnknownErrorCode'] = -32001,
+  [-32001] = 'UnknownErrorCode',
+}
+
+---@nodoc
+---@enum lsp.LSPErrorCodes
+protocol.LSPErrorCodes = {
+  ['RequestFailed'] = -32803,
+  [-32803] = 'RequestFailed',
+  ['ServerCancelled'] = -32802,
+  [-32802] = 'ServerCancelled',
+  ['ContentModified'] = -32801,
+  [-32801] = 'ContentModified',
+  ['RequestCancelled'] = -32800,
+  [-32800] = 'RequestCancelled',
+}
+
+---A set of predefined range kinds.
+---@nodoc
+---@enum lsp.FoldingRangeKind
+protocol.FoldingRangeKind = {
+  ['Comment'] = 'comment',
+  ['Imports'] = 'imports',
+  ['Region'] = 'region',
+}
+
+---A symbol kind.
+---@nodoc
+---@enum lsp.SymbolKind
+protocol.SymbolKind = {
+  ['File'] = 1,
+  [1] = 'File',
+  ['Module'] = 2,
+  [2] = 'Module',
+  ['Namespace'] = 3,
+  [3] = 'Namespace',
+  ['Package'] = 4,
+  [4] = 'Package',
+  ['Class'] = 5,
+  [5] = 'Class',
+  ['Method'] = 6,
+  [6] = 'Method',
+  ['Property'] = 7,
+  [7] = 'Property',
+  ['Field'] = 8,
+  [8] = 'Field',
+  ['Constructor'] = 9,
+  [9] = 'Constructor',
+  ['Enum'] = 10,
+  [10] = 'Enum',
+  ['Interface'] = 11,
+  [11] = 'Interface',
+  ['Function'] = 12,
+  [12] = 'Function',
+  ['Variable'] = 13,
+  [13] = 'Variable',
+  ['Constant'] = 14,
+  [14] = 'Constant',
+  ['String'] = 15,
+  [15] = 'String',
+  ['Number'] = 16,
+  [16] = 'Number',
+  ['Boolean'] = 17,
+  [17] = 'Boolean',
+  ['Array'] = 18,
+  [18] = 'Array',
+  ['Object'] = 19,
+  [19] = 'Object',
+  ['Key'] = 20,
+  [20] = 'Key',
+  ['Null'] = 21,
+  [21] = 'Null',
+  ['EnumMember'] = 22,
+  [22] = 'EnumMember',
+  ['Struct'] = 23,
+  [23] = 'Struct',
+  ['Event'] = 24,
+  [24] = 'Event',
+  ['Operator'] = 25,
+  [25] = 'Operator',
+  ['TypeParameter'] = 26,
+  [26] = 'TypeParameter',
+}
+
+---Symbol tags are extra annotations that tweak the rendering of a symbol.
+---
+---@since 3.16
+---@nodoc
+---@enum lsp.SymbolTag
+protocol.SymbolTag = {
+  ['Deprecated'] = 1,
+  [1] = 'Deprecated',
+}
+
+---Moniker uniqueness level to define scope of the moniker.
+---
+---@since 3.16.0
+---@nodoc
+---@enum lsp.UniquenessLevel
+protocol.UniquenessLevel = {
+  ['document'] = 'document',
+  ['project'] = 'project',
+  ['group'] = 'group',
+  ['scheme'] = 'scheme',
+  ['global'] = 'global',
+}
+
+---The moniker kind.
+---
+---@since 3.16.0
+---@nodoc
+---@enum lsp.MonikerKind
+protocol.MonikerKind = {
+  ['import'] = 'import',
+  ['export'] = 'export',
+  ['local'] = 'local',
+}
+
+---Inlay hint kinds.
+---
+---@since 3.17.0
+---@nodoc
+---@enum lsp.InlayHintKind
+protocol.InlayHintKind = {
+  ['Type'] = 1,
+  [1] = 'Type',
+  ['Parameter'] = 2,
+  [2] = 'Parameter',
+}
+
+---The message type
+---@nodoc
+---@enum lsp.MessageType
+protocol.MessageType = {
+  ['Error'] = 1,
+  [1] = 'Error',
+  ['Warning'] = 2,
+  [2] = 'Warning',
+  ['Info'] = 3,
+  [3] = 'Info',
+  ['Log'] = 4,
+  [4] = 'Log',
+  ['Debug'] = 5,
+  [5] = 'Debug',
+}
+
+---Defines how the host (editor) should sync
+---document changes to the language server.
+---@nodoc
+---@enum lsp.TextDocumentSyncKind
+protocol.TextDocumentSyncKind = {
+  ['None'] = 0,
+  [0] = 'None',
+  ['Full'] = 1,
+  [1] = 'Full',
+  ['Incremental'] = 2,
+  [2] = 'Incremental',
+}
+
+---Represents reasons why a text document is saved.
+---@nodoc
+---@enum lsp.TextDocumentSaveReason
+protocol.TextDocumentSaveReason = {
+  ['Manual'] = 1,
+  [1] = 'Manual',
+  ['AfterDelay'] = 2,
+  [2] = 'AfterDelay',
+  ['FocusOut'] = 3,
+  [3] = 'FocusOut',
+}
+
+---The kind of a completion entry.
+---@nodoc
+---@enum lsp.CompletionItemKind
+protocol.CompletionItemKind = {
+  ['Text'] = 1,
+  [1] = 'Text',
+  ['Method'] = 2,
+  [2] = 'Method',
+  ['Function'] = 3,
+  [3] = 'Function',
+  ['Constructor'] = 4,
+  [4] = 'Constructor',
+  ['Field'] = 5,
+  [5] = 'Field',
+  ['Variable'] = 6,
+  [6] = 'Variable',
+  ['Class'] = 7,
+  [7] = 'Class',
+  ['Interface'] = 8,
+  [8] = 'Interface',
+  ['Module'] = 9,
+  [9] = 'Module',
+  ['Property'] = 10,
+  [10] = 'Property',
+  ['Unit'] = 11,
+  [11] = 'Unit',
+  ['Value'] = 12,
+  [12] = 'Value',
+  ['Enum'] = 13,
+  [13] = 'Enum',
+  ['Keyword'] = 14,
+  [14] = 'Keyword',
+  ['Snippet'] = 15,
+  [15] = 'Snippet',
+  ['Color'] = 16,
+  [16] = 'Color',
+  ['File'] = 17,
+  [17] = 'File',
+  ['Reference'] = 18,
+  [18] = 'Reference',
+  ['Folder'] = 19,
+  [19] = 'Folder',
+  ['EnumMember'] = 20,
+  [20] = 'EnumMember',
+  ['Constant'] = 21,
+  [21] = 'Constant',
+  ['Struct'] = 22,
+  [22] = 'Struct',
+  ['Event'] = 23,
+  [23] = 'Event',
+  ['Operator'] = 24,
+  [24] = 'Operator',
+  ['TypeParameter'] = 25,
+  [25] = 'TypeParameter',
+}
+
+---Completion item tags are extra annotations that tweak the rendering of a completion
+---item.
+---
+---@since 3.15.0
+---@nodoc
+---@enum lsp.CompletionItemTag
+protocol.CompletionItemTag = {
+  ['Deprecated'] = 1,
+  [1] = 'Deprecated',
+}
+
+---Defines whether the insert text in a completion item should be interpreted as
+---plain text or a snippet.
+---@nodoc
+---@enum lsp.InsertTextFormat
+protocol.InsertTextFormat = {
+  ['PlainText'] = 1,
+  [1] = 'PlainText',
+  ['Snippet'] = 2,
+  [2] = 'Snippet',
+}
+
+---How whitespace and indentation is handled during completion
+---item insertion.
+---
+---@since 3.16.0
+---@nodoc
+---@enum lsp.InsertTextMode
+protocol.InsertTextMode = {
+  ['asIs'] = 1,
+  [1] = 'asIs',
+  ['adjustIndentation'] = 2,
+  [2] = 'adjustIndentation',
+}
+
+---A document highlight kind.
+---@nodoc
+---@enum lsp.DocumentHighlightKind
+protocol.DocumentHighlightKind = {
+  ['Text'] = 1,
+  [1] = 'Text',
+  ['Read'] = 2,
+  [2] = 'Read',
+  ['Write'] = 3,
+  [3] = 'Write',
+}
+
+---A set of predefined code action kinds
+---@nodoc
+---@enum lsp.CodeActionKind
+protocol.CodeActionKind = {
+  ['Empty'] = '',
+  ['QuickFix'] = 'quickfix',
+  ['Refactor'] = 'refactor',
+  ['RefactorExtract'] = 'refactor.extract',
+  ['RefactorInline'] = 'refactor.inline',
+  ['RefactorMove'] = 'refactor.move',
+  ['RefactorRewrite'] = 'refactor.rewrite',
+  ['Source'] = 'source',
+  ['SourceOrganizeImports'] = 'source.organizeImports',
+  ['SourceFixAll'] = 'source.fixAll',
+  ['Notebook'] = 'notebook',
+}
+
+---Code action tags are extra annotations that tweak the behavior of a code action.
+---
+---@since 3.18.0 - proposed
+---@nodoc
+---@enum lsp.CodeActionTag
+protocol.CodeActionTag = {
+  ['LLMGenerated'] = 1,
+  [1] = 'LLMGenerated',
+}
+
+---@nodoc
+---@enum lsp.TraceValue
+protocol.TraceValue = {
+  ['Off'] = 'off',
+  ['Messages'] = 'messages',
+  ['Verbose'] = 'verbose',
+}
+
+---Describes the content type that a client supports in various
+---result literals like `Hover`, `ParameterInfo` or `CompletionItem`.
+---
+---Please note that `MarkupKinds` must not start with a `$`. This kinds
+---are reserved for internal usage.
+---@nodoc
+---@enum lsp.MarkupKind
+protocol.MarkupKind = {
+  ['PlainText'] = 'plaintext',
+  ['Markdown'] = 'markdown',
+}
+
+---Predefined Language kinds
+---@since 3.18.0
+---@proposed
+---@nodoc
+---@enum lsp.LanguageKind
+protocol.LanguageKind = {
+  ['ABAP'] = 'abap',
+  ['WindowsBat'] = 'bat',
+  ['BibTeX'] = 'bibtex',
+  ['Clojure'] = 'clojure',
+  ['Coffeescript'] = 'coffeescript',
+  ['C'] = 'c',
+  ['CPP'] = 'cpp',
+  ['CSharp'] = 'csharp',
+  ['CSS'] = 'css',
+  ['D'] = 'd',
+  ['Delphi'] = 'pascal',
+  ['Diff'] = 'diff',
+  ['Dart'] = 'dart',
+  ['Dockerfile'] = 'dockerfile',
+  ['Elixir'] = 'elixir',
+  ['Erlang'] = 'erlang',
+  ['FSharp'] = 'fsharp',
+  ['GitCommit'] = 'git-commit',
+  ['GitRebase'] = 'rebase',
+  ['Go'] = 'go',
+  ['Groovy'] = 'groovy',
+  ['Handlebars'] = 'handlebars',
+  ['Haskell'] = 'haskell',
+  ['HTML'] = 'html',
+  ['Ini'] = 'ini',
+  ['Java'] = 'java',
+  ['JavaScript'] = 'javascript',
+  ['JavaScriptReact'] = 'javascriptreact',
+  ['JSON'] = 'json',
+  ['LaTeX'] = 'latex',
+  ['Less'] = 'less',
+  ['Lua'] = 'lua',
+  ['Makefile'] = 'makefile',
+  ['Markdown'] = 'markdown',
+  ['ObjectiveC'] = 'objective-c',
+  ['ObjectiveCPP'] = 'objective-cpp',
+  ['Pascal'] = 'pascal',
+  ['Perl'] = 'perl',
+  ['Perl6'] = 'perl6',
+  ['PHP'] = 'php',
+  ['Powershell'] = 'powershell',
+  ['Pug'] = 'jade',
+  ['Python'] = 'python',
+  ['R'] = 'r',
+  ['Razor'] = 'razor',
+  ['Ruby'] = 'ruby',
+  ['Rust'] = 'rust',
+  ['SCSS'] = 'scss',
+  ['SASS'] = 'sass',
+  ['Scala'] = 'scala',
+  ['ShaderLab'] = 'shaderlab',
+  ['ShellScript'] = 'shellscript',
+  ['SQL'] = 'sql',
+  ['Swift'] = 'swift',
+  ['TypeScript'] = 'typescript',
+  ['TypeScriptReact'] = 'typescriptreact',
+  ['TeX'] = 'tex',
+  ['VisualBasic'] = 'vb',
+  ['XML'] = 'xml',
+  ['XSL'] = 'xsl',
+  ['YAML'] = 'yaml',
+}
+
+---Describes how an {@link InlineCompletionItemProvider inline completion provider} was triggered.
+---
+---@since 3.18.0
+---@proposed
+---@nodoc
+---@enum lsp.InlineCompletionTriggerKind
+protocol.InlineCompletionTriggerKind = {
+  ['Invoked'] = 1,
+  [1] = 'Invoked',
+  ['Automatic'] = 2,
+  [2] = 'Automatic',
+}
+
+---A set of predefined position encoding kinds.
+---
+---@since 3.17.0
+---@nodoc
+---@enum lsp.PositionEncodingKind
+protocol.PositionEncodingKind = {
+  ['UTF8'] = 'utf-8',
+  ['UTF16'] = 'utf-16',
+  ['UTF32'] = 'utf-32',
+}
+
+---The file event type
+---@nodoc
+---@enum lsp.FileChangeType
+protocol.FileChangeType = {
+  ['Created'] = 1,
+  [1] = 'Created',
+  ['Changed'] = 2,
+  [2] = 'Changed',
+  ['Deleted'] = 3,
+  [3] = 'Deleted',
+}
+
+---@nodoc
+---@enum lsp.WatchKind
+protocol.WatchKind = {
+  ['Create'] = 1,
+  [1] = 'Create',
+  ['Change'] = 2,
+  [2] = 'Change',
+  ['Delete'] = 4,
+  [4] = 'Delete',
+}
+
+---The diagnostic's severity.
+---@nodoc
+---@enum lsp.DiagnosticSeverity
+protocol.DiagnosticSeverity = {
+  ['Error'] = 1,
+  [1] = 'Error',
+  ['Warning'] = 2,
+  [2] = 'Warning',
+  ['Information'] = 3,
+  [3] = 'Information',
+  ['Hint'] = 4,
+  [4] = 'Hint',
+}
+
+---The diagnostic tags.
+---
+---@since 3.15.0
+---@nodoc
+---@enum lsp.DiagnosticTag
+protocol.DiagnosticTag = {
+  ['Unnecessary'] = 1,
+  [1] = 'Unnecessary',
+  ['Deprecated'] = 2,
+  [2] = 'Deprecated',
+}
+
+---How a completion was triggered
+---@nodoc
+---@enum lsp.CompletionTriggerKind
+protocol.CompletionTriggerKind = {
+  ['Invoked'] = 1,
+  [1] = 'Invoked',
+  ['TriggerCharacter'] = 2,
+  [2] = 'TriggerCharacter',
+  ['TriggerForIncompleteCompletions'] = 3,
+  [3] = 'TriggerForIncompleteCompletions',
+}
+
+---How a signature help was triggered.
+---
+---@since 3.15.0
+---@nodoc
+---@enum lsp.SignatureHelpTriggerKind
+protocol.SignatureHelpTriggerKind = {
+  ['Invoked'] = 1,
+  [1] = 'Invoked',
+  ['TriggerCharacter'] = 2,
+  [2] = 'TriggerCharacter',
+  ['ContentChange'] = 3,
+  [3] = 'ContentChange',
+}
+
+---The reason why code actions were requested.
+---
+---@since 3.17.0
+---@nodoc
+---@enum lsp.CodeActionTriggerKind
+protocol.CodeActionTriggerKind = {
+  ['Invoked'] = 1,
+  [1] = 'Invoked',
+  ['Automatic'] = 2,
+  [2] = 'Automatic',
+}
+
+---A pattern kind describing if a glob pattern matches a file a folder or
+---both.
+---
+---@since 3.16.0
+---@nodoc
+---@enum lsp.FileOperationPatternKind
+protocol.FileOperationPatternKind = {
+  ['file'] = 'file',
+  ['folder'] = 'folder',
+}
+
+---A notebook cell kind.
+---
+---@since 3.17.0
+---@nodoc
+---@enum lsp.NotebookCellKind
+protocol.NotebookCellKind = {
+  ['Markup'] = 1,
+  [1] = 'Markup',
+  ['Code'] = 2,
+  [2] = 'Code',
+}
+
+---@nodoc
+---@enum lsp.ResourceOperationKind
+protocol.ResourceOperationKind = {
+  ['Create'] = 'create',
+  ['Rename'] = 'rename',
+  ['Delete'] = 'delete',
+}
+
+---@nodoc
+---@enum lsp.FailureHandlingKind
+protocol.FailureHandlingKind = {
+  ['Abort'] = 'abort',
+  ['Transactional'] = 'transactional',
+  ['TextOnlyTransactional'] = 'textOnlyTransactional',
+  ['Undo'] = 'undo',
+}
+
+---@nodoc
+---@enum lsp.PrepareSupportDefaultBehavior
+protocol.PrepareSupportDefaultBehavior = {
+  ['Identifier'] = 1,
+  [1] = 'Identifier',
+}
+
+---@nodoc
+---@enum lsp.TokenFormat
+protocol.TokenFormat = {
+  ['Relative'] = 'relative',
+}
+
 --- @alias vim.lsp.protocol.Method.ClientToServer
 --- | 'callHierarchy/incomingCalls',
 --- | 'callHierarchy/outgoingCalls',
@@ -721,8 +1056,6 @@ end
 --- | vim.lsp.protocol.Method.ClientToServer
 --- | vim.lsp.protocol.Method.ServerToClient
 
--- Generated by gen_lsp.lua, keep at end of file.
----
 --- @enum vim.lsp.protocol.Methods
 --- @see https://microsoft.github.io/language-server-protocol/specification/#metaModel
 --- LSP method names.
