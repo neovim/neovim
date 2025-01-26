@@ -235,6 +235,8 @@ DIAGNOSTICS
 
 • |vim.diagnostic.config()| accepts a "jump" table to specify defaults for
   |vim.diagnostic.jump()|.
+• A "virtual_lines" diagnostic handler was added to render diagnostics using
+  virtual lines below the respective code.
 
 EDITOR
 
