@@ -3,8 +3,8 @@
 " Maintainer:		Doug Kearns dougkearns@gmail.com
 " Previous Maintainers: Erik Wognsen <erik.wognsen@gmail.com>
 "			Kevin Dahlhausen <kdahlhaus@yahoo.com>
-" Contributors:		Ori Avtalion, Lakshay Garg
-" Last Change:		2020 Oct 31
+" Contributors:		Ori Avtalion, Lakshay Garg, Nir Lichtman
+" Last Change:		2025 Jan 26
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -32,6 +32,9 @@ syn match asmType "\.single"
 syn match asmType "\.space"
 syn match asmType "\.string"
 syn match asmType "\.word"
+syn match asmType "\.2byte"
+syn match asmType "\.4byte"
+syn match asmType "\.8byte"
 
 syn match asmIdentifier		"[a-z_][a-z0-9_]*"
 syn match asmLabel		"[a-z_][a-z0-9_]*:"he=e-1
