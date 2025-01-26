@@ -1363,7 +1363,7 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       • |vim.treesitter.query.get()|
 
                                                        *Query:iter_captures()*
-Query:iter_captures({node}, {source}, {start}, {stop})
+Query:iter_captures({node}, {source}, {start}, {stop}, {opts})
     Iterates over all captures from all matches in {node}.
 
     {source} is required if the query contains predicates; then the caller
@@ -1402,9 +1402,11 @@ Query:iter_captures({node}, {source}, {start}, {stop})
                   `node:start()`.
       • {stop}    (`integer?`) Stopping line for the search (end-exclusive).
                   Defaults to `node:end_()`.
+      • {opts}    (`{ col_begin?: integer, col_end?: integer }?`) Optional
+                  parameters.
 
     Return: ~
-        (`fun(end_line: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
+        (`fun(end_line: integer?, end_col: integer?): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree`)
         capture id, capture node, metadata, match, tree
 
                                                         *Query:iter_matches()*

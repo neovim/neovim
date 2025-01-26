@@ -480,7 +480,7 @@ bool decor_redraw_start(win_T *wp, int top_row, DecorState *state)
   return true;  // TODO(bfredl): check if available in the region
 }
 
-bool decor_redraw_line(win_T *wp, int row, DecorState *state)
+void decor_redraw_line(win_T *wp, int row, DecorState *state)
 {
   int count = (int)kv_size(state->ranges_i);
   int const cur_end = state->current_end;
@@ -511,8 +511,15 @@ bool decor_redraw_line(win_T *wp, int row, DecorState *state)
   state->row = row;
   state->col_until = -1;
   state->eol_col = -1;
+}
 
-  if (cur_end != 0 || fut_beg != count) {
+// Checks if there are (likely) more decorations on the current line.
+bool decor_has_more_decorations(DecorState *state, int row)
+{
+  int const count = (int)kv_size(state->ranges_i);
+  int const cur_end = state->current_end;
+  int const fut_beg = state->future_begin;
+  if (cur_end > 0 || fut_beg < count) {
     return true;
   }
 
